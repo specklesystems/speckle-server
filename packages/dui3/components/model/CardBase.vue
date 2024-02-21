@@ -11,11 +11,11 @@
             <CloudArrowUpIcon v-else class="w-4" />
           </CommonBadge>
         </div>
-        <div class="truncate font-bold text-foreground grow select-none">
+        <div class="truncate font-bold text-foreground grow select-none -mt-[2px]">
           {{ modelData.displayName }}
         </div>
         <button
-          v-tippy="'Select objects'"
+          v-tippy="'Highlight objects in app'"
           class="transition hover:text-primary -mt-1"
           @click="app.$baseBinding.highlightModel(modelCard.modelCardId)"
         >

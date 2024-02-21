@@ -18,14 +18,14 @@
         <FormButton
           v-tippy="
             isExpired
-              ? 'Receiving an older version. Click to change.'
-              : 'Receive an older version. Click to change.'
+              ? 'Warning: you have loaded an older version. Click to change.'
+              : 'Change the loaded version'
           "
           :color="isExpired ? 'warning' : 'default'"
           text
           size="sm"
           full-width
-          :icon-left="ClockIcon"
+          :icon-left="!isExpired ? ClockIcon : ExclamationCircleIcon"
           @click="openVersionsDialog = true"
         >
           {{ modelCard.selectedVersionId }}
@@ -61,7 +61,6 @@
         v-if="receiveResultNotification"
         :notification="receiveResultNotification"
         @dismiss="
-          //
           store.patchModel(modelCard.modelCardId, {
             receiveResult: { ...modelCard.receiveResult, display: false }
           })
@@ -72,7 +71,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { ClockIcon } from '@heroicons/vue/24/outline'
+import { ClockIcon, ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import { ModelCardNotification } from '~/lib/models/card/notification'
 import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
 import { IReceiverModelCard } from '~/lib/models/card/receiver'
