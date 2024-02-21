@@ -55,7 +55,8 @@ export default defineNuxtConfig({
       serverName: 'UNDEFINED',
       viewerDebug: false,
       raygunKey: '',
-      logrocketAppId: ''
+      logrocketAppId: '',
+      speedcurveId: 0
     }
   },
 
