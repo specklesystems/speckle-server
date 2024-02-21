@@ -3,25 +3,23 @@
     v-if="projectDetails"
     class="p-2 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
   >
-    <div
-      class="text-foreground-2 flex items-center justify-between hover:bg-blue-500/10 rounded-md transition"
+    <button
+      class="flex w-full items-center text-foreground-2 flex items-center justify-between hover:bg-blue-500/10 rounded-md transition group"
+      @click="showModels = !showModels"
     >
-      <button
-        class="flex items-center transition hover:text-primary h-10 min-w-0"
-        @click="showModels = !showModels"
-      >
+      <div class="flex items-center transition group-hover:text-primary h-10 min-w-0">
         <ChevronDownIcon
           :class="`w-5 ${showModels ? '' : '-rotate-90'} transition mt-1`"
         />
         <div class="font-bold text-left truncate">{{ projectDetails.name }}</div>
-      </button>
+      </div>
 
       <div class="rounded-md px-2 flex items-center space-x-2 justify-end">
-        <button v-tippy="'Open project in browser'">
-          <ArrowTopRightOnSquareIcon class="w-4" @click="$openUrl(projectUrl)" />
+        <button v-tippy="'Open project in browser'" class="hover:text-primary">
+          <ArrowTopRightOnSquareIcon class="w-4" @click.stop="$openUrl(projectUrl)" />
         </button>
       </div>
-    </div>
+    </button>
 
     <div v-show="showModels" class="space-y-4 mt-3 pb-2">
       <ModelSender
