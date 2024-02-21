@@ -20,7 +20,7 @@ const dialogOpen = ref(true)
 
 const dialogButtons = computed(() => [
   {
-    text: 'Skip',
+    text: 'Close',
     props: { color: 'invert', fullWidth: true, outline: true },
     onClick: () => {
       emit('dialog-dismissed')
