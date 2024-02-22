@@ -17,7 +17,7 @@ import {
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
 import { getUser } from '@/modules/core/repositories/users'
-import { Optional, resolveMixpanelUserId } from '@speckle/shared'
+import { Optional } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { Observability } from '@speckle/shared'
 import { pino } from 'pino'
@@ -172,8 +172,7 @@ export async function mixpanelTrackerHelperMiddleware(
 ) {
   const ctx = req.context
   const user = ctx.userId ? await getUser(ctx.userId) : null
-  const mixpanelUserId = user?.email ? resolveMixpanelUserId(user.email) : undefined
-  const mp = mixpanel({ mixpanelUserId })
+  const mp = mixpanel({ userEmail: user?.email })
 
   req.mixpanel = mp
   next()
