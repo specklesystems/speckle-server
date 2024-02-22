@@ -16,13 +16,14 @@
         <span class="truncate">
           {{ item.value.split('.').reverse()[0] || item.value || 'No Name' }}
         </span>
-        <div class="flex gap-1">
-          <span class="text-xs text-foreground-2">
-            ({{ availableTargetIds.length }})
+        <div class="flex">
+          <span
+            v-if="props.item.ids.length !== availableTargetIds.length"
+            class="text-xs text-foreground-2 italic"
+          >
+            {{ availableTargetIds.length }}
           </span>
-          <span v-if="hiddenCount" class="text-xs text-foreground-2 italic">
-            {{ hiddenCount }} hidden
-          </span>
+          <span class="text-xs text-foreground-2">({{ props.item.ids.length }})</span>
         </div>
       </div>
       <!-- 
@@ -96,10 +97,6 @@ const availableTargetIds = computed(() => {
     targets = props.item.ids.filter((id) => !hiddenObjectIds.value.includes(id))
   return targets
 })
-
-const hiddenCount = computed(
-  () => props.item.ids.length - availableTargetIds.value.length
-)
 
 const setSelection = () => {
   if (isSelected.value) return clearSelection()
