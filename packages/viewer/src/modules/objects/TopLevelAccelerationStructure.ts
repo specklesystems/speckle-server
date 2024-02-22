@@ -56,7 +56,6 @@ export class TopLevelAccelerationStructure {
 
   public boxHelpers: Box3Helper[] = []
   public accelerationStructure: AccelerationStructure = null
-  public lastRefitTime = 0
 
   public constructor(batchObjects: BatchObject[]) {
     this.batchObjects = batchObjects
@@ -134,7 +133,6 @@ export class TopLevelAccelerationStructure {
   }
 
   public refit() {
-    const start = performance.now()
     const positions = this.accelerationStructure.geometry.attributes.position.array
     const boxBuffer: Box3 = new Box3()
     for (let k = 0; k < this.batchObjects.length; k++) {
@@ -146,7 +144,6 @@ export class TopLevelAccelerationStructure {
       if (TopLevelAccelerationStructure.debugBoxes) this.boxHelpers[k].box.copy(basBox)
     }
     this.accelerationStructure.bvh.refit()
-    this.lastRefitTime = performance.now() - start
   }
 
   /* Core Cast Functions */
@@ -278,8 +275,7 @@ export class TopLevelAccelerationStructure {
     return ret
   }
 
-  public getBoundingBox(target: Box3): Box3 {
-    this.accelerationStructure.getBoundingBox(target)
-    return target
+  public getBoundingBox(target?: Box3): Box3 {
+    return this.accelerationStructure.getBoundingBox(target ? target : new Box3())
   }
 }
