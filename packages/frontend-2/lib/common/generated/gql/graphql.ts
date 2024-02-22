@@ -1437,6 +1437,8 @@ export type Project = {
   sourceApps: Array<Scalars['String']>;
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime'];
+  /** Retrieve a specific project version by its ID */
+  version?: Maybe<Version>;
   /** Returns a flat list of all project versions */
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
@@ -1479,6 +1481,11 @@ export type ProjectModelsTreeArgs = {
 
 export type ProjectPendingImportedModelsArgs = {
   limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type ProjectVersionArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -2759,9 +2766,11 @@ export type Version = {
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;
+  parents?: Maybe<Array<Maybe<Scalars['String']>>>;
   previewUrl: Scalars['String'];
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
+  totalChildrenCount?: Maybe<Scalars['Int']>;
 };
 
 
