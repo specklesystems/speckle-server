@@ -19,11 +19,13 @@
         <div class="flex">
           <span
             v-if="props.item.ids.length !== availableTargetIds.length"
-            class="text-xs text-foreground-2 italic"
+            class="text-xs text-foreground-2"
           >
-            {{ availableTargetIds.length }}
+            {{ availableTargetIds.length }} ({{ props.item.ids.length }})
           </span>
-          <span class="text-xs text-foreground-2">({{ props.item.ids.length }})</span>
+          <span v-else class="text-xs text-foreground-2">
+            {{ props.item.ids.length }}
+          </span>
         </div>
       </div>
       <!-- 
