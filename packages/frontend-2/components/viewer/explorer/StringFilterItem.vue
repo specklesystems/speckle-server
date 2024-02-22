@@ -7,7 +7,7 @@
       }`"
       @click="setSelection()"
     >
-      <div class="flex space-x-2 items-center flex-shrink truncate text-xs sm:text-sm">
+      <div class="flex gap-1 items-center flex-shrink truncate text-xs sm:text-sm">
         <span
           v-if="color"
           class="w-3 h-3 rounded"
@@ -16,7 +16,14 @@
         <span class="truncate">
           {{ item.value.split('.').reverse()[0] || item.value || 'No Name' }}
         </span>
-        <span class="text-xs text-foreground-2">({{ props.item.ids.length }})</span>
+        <div class="flex gap-1">
+          <span class="text-xs text-foreground-2">
+            ({{ availableTargetIds.length }})
+          </span>
+          <span v-if="hiddenCount" class="text-xs text-foreground-2 italic">
+            {{ hiddenCount }} hidden
+          </span>
+        </div>
       </div>
       <!-- 
         Note: not allowing for hiding/isolation CURRENTLY as there is a larger change needed. 
@@ -89,6 +96,10 @@ const availableTargetIds = computed(() => {
     targets = props.item.ids.filter((id) => !hiddenObjectIds.value.includes(id))
   return targets
 })
+
+const hiddenCount = computed(
+  () => props.item.ids.length - availableTargetIds.value.length
+)
 
 const setSelection = () => {
   if (isSelected.value) return clearSelection()
