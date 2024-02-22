@@ -44,6 +44,7 @@
             size="xs"
             :icon-left="loadedVersionsOnly ? CheckCircleIcon : CheckCircleIconOutlined"
             text
+            class="!text-left"
             @click="
               loadedVersionsOnly = loadedVersionsOnly ? undefined : 'loadedVersionsOnly'
             "
@@ -128,7 +129,6 @@ const {
 
 const showVisibilityOptions = ref(false)
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const loadedVersionsOnly = computed({
   get: () =>
     threadFilters.value.loadedVersionsOnly || false ? 'loadedVersionsOnly' : undefined,

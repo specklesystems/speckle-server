@@ -13,10 +13,10 @@
             </div>
 
             <UserAvatar v-if="!menuOpen" no-bg size="lg" hover-effect>
-              <BellIcon class="text-foreground w-5 h-5" />
+              <BellIcon class="text-primary sm:text-foreground w-5 h-5" />
             </UserAvatar>
             <UserAvatar v-else size="lg" hover-effect no-bg>
-              <XMarkIcon class="text-foreground w-5 h-5" />
+              <XMarkIcon class="text-primary sm:text-foreground w-5 h-5" />
             </UserAvatar>
           </div>
         </div>
@@ -46,7 +46,7 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { XMarkIcon, BellIcon } from '@heroicons/vue/24/solid'
+import { XMarkIcon, BellIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 const { activeUser } = useActiveUser()

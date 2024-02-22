@@ -1,0 +1,37 @@
+image:
+  debug: true
+volumePermissions:
+  enabled: true
+primary:
+  auth:
+    username: postgres
+    password: postgres
+    database: postgres
+  persistence:
+    enabled: true
+    existingClaim: postgres-pvc
+  initdb:
+    scripts:
+      00_speckleserver_database.sql: |
+        -- Speckle
+        CREATE USER speckle WITH PASSWORD 'speckle';
+        CREATE DATABASE speckle
+            WITH
+            OWNER = speckle;
+        GRANT ALL PRIVILEGES ON DATABASE speckle TO speckle;
+        GRANT ALL ON SCHEMA public TO speckle;
+        GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO speckle;
+        GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO speckle;
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON TABLES TO speckle;
+        ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO speckle;
+        -- End Speckle
+        -- Speckle Server Tests
+        CREATE DATABASE speckle2_test
+            WITH
+            OWNER = speckle
+            ENCODING = 'UTF8'
+            LC_COLLATE = 'en_US.UTF-8'
+            LC_CTYPE = 'en_US.UTF-8'
+            TABLESPACE = pg_default
+            CONNECTION LIMIT = -1;
+        -- End Speckle Server Tests

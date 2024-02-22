@@ -120,8 +120,9 @@ export enum ObjectLayers {
 }
 
 export enum UpdateFlags {
-  RENDER = 1,
-  SHADOWS = 2
+  RENDER = 0b1,
+  SHADOWS = 0b10,
+  CLIPPING_PLANES = 0b100
 }
 
 export interface IViewer {

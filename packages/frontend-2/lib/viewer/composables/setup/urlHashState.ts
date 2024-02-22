@@ -5,7 +5,8 @@ import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
 
 export enum ViewerHashStateKeys {
   FocusedThreadId = 'threadId',
-  Diff = 'diff'
+  Diff = 'diff',
+  EmbedOptions = 'embed'
 }
 
 export function setupUrlHashState(): InjectableViewerState['urlHashState'] {

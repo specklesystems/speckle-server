@@ -24,7 +24,7 @@
       </button>
       <ViewerCommentsPortalOrDiv to="mobileComments">
         <div
-          v-if="modelValue.isExpanded"
+          v-if="modelValue.isExpanded && !isEmbedEnabled"
           class="bg-foundation px-2 py-2 text-sm text-primary sm:hidden font-medium flex justify-between items-center"
         >
           Add Comment
@@ -33,7 +33,7 @@
           </button>
         </div>
         <div
-          v-if="modelValue.isExpanded"
+          v-if="modelValue.isExpanded && canPostComment"
           ref="threadContainer"
           class="sm:absolute min-w-[200px] hover:bg-foundation transition bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm sm:rounded-lg shadow-md"
         >
@@ -87,14 +87,19 @@ import {
 } from '~~/lib/viewer/helpers/comments'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+
+const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: ViewerNewThreadBubbleModel): void
   (e: 'close'): void
+  (e: 'login'): void
 }>()
 
 const props = defineProps<{
   modelValue: ViewerNewThreadBubbleModel
+  canPostComment?: Nullable<boolean>
 }>()
 
 const { onKeyDownHandler, updateIsTyping, pauseAutomaticUpdates } =
@@ -114,6 +119,12 @@ const createThread = useSubmitComment()
 
 const onThreadClick = () => {
   const newIsExpanded = !props.modelValue.isExpanded
+
+  if (!props.canPostComment) {
+    emit('login')
+    return
+  }
+
   if (!newIsExpanded) {
     updateIsTyping(false)
   }

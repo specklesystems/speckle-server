@@ -15,8 +15,7 @@ import {
 } from '@/modules/core/repositories/streams'
 import {
   getRateLimitResult,
-  isRateLimitBreached,
-  RateLimitAction
+  isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import {
   createStreamReturnRecord,
@@ -84,10 +83,7 @@ export = {
       return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },
     async create(_parent, args, context) {
-      const rateLimitResult = await getRateLimitResult(
-        RateLimitAction.STREAM_CREATE,
-        context.userId!
-      )
+      const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
       }

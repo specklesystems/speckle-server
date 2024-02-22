@@ -1,5 +1,6 @@
 <template>
   <div
+    v-if="invite"
     class="flex flex-col space-y-4 sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row px-4 py-5 sm:py-2 transition hover:bg-primary-muted"
   >
     <div class="flex space-x-2 items-center grow text-sm">
@@ -32,6 +33,7 @@
       </template>
     </div>
   </div>
+  <div v-else />
 </template>
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -43,6 +45,7 @@ import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 import type { Optional } from '@speckle/shared'
 import { CheckIcon } from '@heroicons/vue/24/solid'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { ToastNotificationType, useGlobalToast } from '~/lib/common/composables/toast'
 
 graphql(`
   fragment ProjectsInviteBanner on PendingStreamCollaborator {
@@ -62,8 +65,9 @@ const emit = defineEmits<{
 
 const props = withDefaults(
   defineProps<{
-    invite: ProjectsInviteBannerFragment
+    invite?: ProjectsInviteBannerFragment
     showStreamName?: boolean
+    autoAccept?: boolean
   }>(),
   { showStreamName: true }
 )
@@ -73,15 +77,16 @@ const { isLoggedIn } = useActiveUser()
 const processInvite = useProcessProjectInvite()
 const postAuthRedirect = usePostAuthRedirect()
 const goToLogin = useNavigateToLogin()
+const { triggerNotification } = useGlobalToast()
 
 const loading = ref(false)
 const mp = useMixpanel()
 const token = computed(
-  () => props.invite.token || (route.query.token as Optional<string>)
+  () => props.invite?.token || (route.query.token as Optional<string>)
 )
 
 const useInvite = async (accept: boolean) => {
-  if (!token.value) return
+  if (!token.value || !props.invite) return
 
   loading.value = true
   const success = await processInvite(
@@ -94,8 +99,14 @@ const useInvite = async (accept: boolean) => {
   )
   loading.value = false
 
-  if (success) {
-    emit('processed', { accepted: accept })
+  if (!success) return
+
+  emit('processed', { accepted: accept })
+  if (accept) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: "You've joined the project!"
+    })
   }
 
   mp.track('Invite Action', {
@@ -111,5 +122,17 @@ const onLoginClick = () => {
       token: token.value || undefined
     }
   })
+}
+
+if (process.client) {
+  watch(
+    () => props.autoAccept,
+    async (newVal, oldVal) => {
+      if (newVal && !oldVal) {
+        await useInvite(true)
+      }
+    },
+    { immediate: true }
+  )
 }
 </script>

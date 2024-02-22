@@ -23,7 +23,7 @@ export default class TextBatch implements Batch {
   public mesh: SpeckleText
 
   public get bounds(): Box3 {
-    return new Box3() //this.mesh.BVH.getBoundingBox(new Box3())
+    return new Box3().setFromObject(this.mesh)
   }
 
   public get drawCalls(): number {

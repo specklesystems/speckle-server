@@ -45,6 +45,9 @@ export class WorldTree {
     }
 
     const renderTreeRoot = subtreeId ? this.findSubtree(subtreeId) : this.root
+    if (!renderTreeRoot) {
+      return null
+    }
     const subtreeRootId = renderTreeRoot.model.id
     if (!this.renderTreeInstances[subtreeRootId]) {
       this.renderTreeInstances[subtreeRootId] = new RenderTree(this, renderTreeRoot)
@@ -99,7 +102,7 @@ export class WorldTree {
       return
     }
     node.model.subtreeId = parent.model.subtreeId
-    if (this.nodeMaps[parent.model.subtreeId].addNode(node)) parent.addChild(node)
+    if (this.nodeMaps[parent.model.subtreeId]?.addNode(node)) parent.addChild(node)
   }
 
   public removeNode(node: TreeNode): void {

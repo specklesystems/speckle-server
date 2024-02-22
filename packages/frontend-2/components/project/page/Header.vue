@@ -1,103 +1,32 @@
 <template>
   <div>
-    <div
-      class="relative mb-3 mt-10 flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between"
-    >
-      <div class="flex group">
-        <label class="max-w-full overflow-hidden">
-          <div class="sr-only">Edit title</div>
-          <div
-            class="grow-textarea max-w-96 overflow-hidden"
-            :data-replicated-value="titleState"
-            :class="titleInputClasses"
-          >
-            <textarea
-              ref="titleInput"
-              v-model="titleState"
-              maxlength="512"
-              :class="titleInputClasses"
-              placeholder="Please enter a valid title"
-              rows="1"
-              spellcheck="false"
-              :cols="titleState.length < 20 ? titleState.length : undefined"
-              :disabled="anyMutationsLoading || !canEdit"
-              @keydown="onUpdatableInputKeydown"
-              @blur="save()"
-              @input="onInputChange()"
-            />
-          </div>
-        </label>
-        <PencilIcon
-          v-if="canEdit"
-          class="shrink-0 ml-2 mt-3 w-4 h-4 opacity-0 group-hover:opacity-100 transition text-foreground-2"
-        />
-      </div>
-      <Portal to="navigation">
-        <HeaderNavLink
-          :to="projectRoute(project.id)"
-          :name="project.name"
-        ></HeaderNavLink>
-      </Portal>
-      <!-- Note: commented out until we scope it properly. -->
-      <!-- <Portal to="primary-actions">
-        <div class="flex space-x-4">
-          <FormButton :icon-left="ShareIcon">Share</FormButton>
-        </div>
-      </Portal> -->
-    </div>
-    <div class="mt-3 flex gap-x-2 group">
-      <div class="hidden md:inline-block shrink-0 text-foreground-2 mt-0.5">
-        <InformationCircleIcon class="w-5 h-5" />
-      </div>
-      <label>
-        <div class="sr-only">Edit description</div>
-        <div
-          class="grow-textarea"
-          :data-replicated-value="descriptionState"
-          :class="descriptionInputClasses"
-        >
-          <textarea
-            ref="descriptionInput"
-            v-model="descriptionState"
-            :class="[
-              ...descriptionInputClasses,
-              descriptionState ? 'focus:min-w-0' : 'min-w-[260px]'
-            ]"
-            :placeholder="
-              descriptionState ? undefined : 'Click here to add a description.'
-            "
-            :disabled="anyMutationsLoading || !canEdit"
-            rows="1"
-            spellcheck="false"
-            maxlength="1000"
-            :cols="descriptionState.length < 20 ? descriptionState.length : undefined"
-            @keydown="onUpdatableInputKeydown"
-            @blur="save()"
-            @input="onInputChange()"
-          />
-        </div>
-      </label>
-      <div class="shrink-0 ml-2 mt-1 text-foreground-2">
-        <PencilIcon
-          v-if="canEdit"
-          class="w-4 h-4 opacity-0 group-hover:opacity-100 transition text-foreground-2"
-        />
-      </div>
-    </div>
+    <Portal to="navigation">
+      <HeaderNavLink
+        :to="projectRoute(project.id)"
+        :name="project.name"
+      ></HeaderNavLink>
+    </Portal>
+
+    <CommonEditableTitleDescription
+      :title="titleState"
+      :description="descriptionState"
+      :can-edit="canEdit"
+      :is-disabled="anyMutationsLoading"
+      @update:title="handleUpdateTitle"
+      @update:description="handleUpdateDescription"
+    />
   </div>
 </template>
+
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
-import { PencilIcon } from '@heroicons/vue/20/solid'
-import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 import type {
   ProjectPageProjectHeaderFragment,
   ProjectUpdateInput
 } from '~~/lib/common/generated/gql/graphql'
 import { projectRoute } from '~~/lib/common/helpers/route'
-import { omit, debounce, trim } from 'lodash-es'
+import { omit, trim } from 'lodash-es'
 import { isNullOrUndefined } from '@speckle/shared'
-import type { Nullable } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
@@ -122,25 +51,10 @@ const mp = useMixpanel()
 const anyMutationsLoading = useMutationLoading()
 const updateProject = useUpdateProject()
 
-const titleInput = ref(null as Nullable<HTMLTextAreaElement>)
-const descriptionInput = ref(null as Nullable<HTMLTextAreaElement>)
 const descriptionState = ref('')
 const titleState = ref('')
 
 const canEdit = computed(() => canEditProject(props.project))
-
-const inputResetClasses = computed(() => [
-  'p-0 bg-transparent border-transparent focus:outline-none focus:ring-0'
-])
-const descriptionInputClasses = computed(() => [
-  'normal placeholder:text-foreground-2 text-foreground-2 focus:text-foreground',
-  'border-0 border-b-2 focus:border-outline-3',
-  ...inputResetClasses.value
-])
-const titleInputClasses = computed(() => [
-  'h3 tracking-tight border-0 border-b-2 transition focus:border-outline-3 max-w-full',
-  ...inputResetClasses.value
-])
 
 const currentUpdate = computed((): ProjectUpdateInput => {
   const project = props.project
@@ -211,47 +125,13 @@ const save = async () => {
   if (res?.id) resetInputs()
 }
 
-const onUpdatableInputKeydown = (e: KeyboardEvent) => {
-  if (e.code === 'Enter') {
-    titleInput.value?.blur()
-    descriptionInput.value?.blur()
-  }
-}
-
-// Auto-save if editing & no key press for a few seconds
-const onInputChange = debounce(() => {
+const handleUpdateTitle = (newTitle: string) => {
+  titleState.value = newTitle
   save()
-}, 2000)
+}
+
+const handleUpdateDescription = (newDescription: string) => {
+  descriptionState.value = newDescription
+  save()
+}
 </script>
-<style scoped>
-/** more info: https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/ */
-.grow-textarea {
-  /* easy way to plop the elements on top of each other and have them both sized based on the tallest one's height */
-  display: grid;
-}
-
-.grow-textarea::after {
-  /* Note the weird space! Needed to preventy jumpy behavior */
-  content: attr(data-replicated-value) ' ';
-
-  /* This is how textarea text behaves */
-  white-space: pre-wrap;
-
-  /* Hidden from view, clicks, and screen readers */
-  visibility: hidden;
-}
-
-.grow-textarea > textarea {
-  /* You could leave this, but after a user resizes, then it ruins the auto sizing */
-  resize: none;
-
-  /* Firefox shows scrollbar on growth, you can hide like this. */
-  overflow: hidden;
-}
-
-.grow-textarea > textarea,
-.grow-textarea::after {
-  /* Place on top of each other - has to have the same styling as the textarea! */
-  grid-area: 1 / 1 / 2 / 2;
-}
-</style>

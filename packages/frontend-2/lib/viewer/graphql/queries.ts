@@ -29,6 +29,7 @@ export const viewerLoadedResourcesQuery = graphql(`
     project(id: $projectId) {
       id
       role
+      allowPublicComments
       models(filter: { ids: $modelIds }) {
         totalCount
         items {

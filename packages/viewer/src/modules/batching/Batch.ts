@@ -16,6 +16,7 @@ export interface DrawGroup {
   materialIndex?: number
 }
 
+/** TO DO: Unify point and mesh batch implementations */
 export interface Batch {
   id: string
   subtreeId: string

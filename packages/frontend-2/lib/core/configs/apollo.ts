@@ -20,9 +20,9 @@ import {
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
 import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
-import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
+import { useAppErrorState } from '~~/lib/core/composables/error'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
-import { omit } from 'lodash-es'
+import { isBoolean, omit } from 'lodash-es'
 import { useRequestId } from '~/lib/core/composables/server'
 
 const appName = 'frontend-2'
@@ -302,15 +302,21 @@ function createLink(params: {
       'need a token to subscribe'
     )
 
-    const shouldSkip = !!res.operation.getContext().skipLoggingErrors
+    const skipLoggingErrors = res.operation.getContext().skipLoggingErrors
+    const shouldSkip = isBoolean(skipLoggingErrors)
+      ? skipLoggingErrors
+      : skipLoggingErrors?.(res)
     if (!isSubTokenMissingError && !shouldSkip) {
+      const errMsg = res.networkError?.message || res.graphQLErrors?.[0]?.message
       logger.error(
         {
           ...omit(res, ['forward', 'response']),
           networkErrorMessage: res.networkError?.message,
-          gqlErrorMessages: res.graphQLErrors?.map((e) => e.message)
+          gqlErrorMessages: res.graphQLErrors?.map((e) => e.message),
+          errorMessage: errMsg,
+          graphql: true
         },
-        'Apollo Client error'
+        'Apollo Client error: {errorMessage}'
       )
     }
 
@@ -384,7 +390,7 @@ function createLink(params: {
     const name = operation.operationName
 
     nuxtApp.$logger.debug(
-      { operation: name },
+      { operation: name, graphql: true },
       `Apollo operation {operation} started...`
     )
     return forward(operation).map((result) => {
@@ -395,7 +401,8 @@ function createLink(params: {
         {
           operation: name,
           elapsed,
-          success
+          success,
+          graphql: true
         },
         `Apollo operation {operation} finished in {elapsed}ms`
       )

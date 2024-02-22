@@ -72,6 +72,7 @@
             >
               New
             </FormButton>
+            <FormButton v-if="false" @click="onTest">Test</FormButton>
           </div>
         </div>
       </div>
@@ -95,6 +96,7 @@ graphql(`
   fragment ProjectPageLatestItemsModels on Project {
     id
     role
+    visibility
     modelCount: models(limit: 0) {
       totalCount
     }
@@ -143,10 +145,34 @@ const updateSearchImmediately = (val?: string) => {
   debouncedSearch.value = (val ?? search.value).trim()
 }
 
+const onTest = () => {
+  // TODO: Remove after RUM tests are done
+
+  // Unhandled rejection
+  void new Promise((_resolve, reject) => {
+    setTimeout(() => {
+      reject(new Error('Unhandled rejection!'))
+    }, 200)
+  })
+
+  // Uncaught error
+  setTimeout(() => {
+    throw new Error('Unhandled exception!')
+  }, 300)
+
+  // Sync error
+  throw new Error('Sync error!')
+}
+
 watch(search, (newVal) => {
   if (newVal) showLoadingBar.value = true
   else showLoadingBar.value = false
 })
 
 watch(queryLoading, (newVal) => (showLoadingBar.value = newVal))
+
+// TODO: Remove after RUM tests are done
+// if (process.server) {
+//   onTest()
+// }
 </script>

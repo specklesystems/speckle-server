@@ -40,8 +40,8 @@
       </div>
     </template>
     <div
-      :class="`relative flex flex-col space-y-2 py-2 px-2 simple-scrollbar overflow-y-scroll overflow-x-hidden shadow-inner ${
-        showAllFilters ? 'h-44 visible' : 'h-0 invisible'
+      :class="`relative flex flex-col space-y-2 px-2 simple-scrollbar overflow-y-scroll overflow-x-hidden shadow-inner ${
+        showAllFilters ? 'h-44 visible py-2' : 'h-0 invisible py-1'
       } transition-[height] border-b-2 border-primary-muted`"
     >
       <div class="sticky top-0">
@@ -185,8 +185,8 @@ const relevantFiltersLimited = computed(() => {
 
 // Too lazy to follow up in here for now, as i think we need a bit of a better strategy in connectors first :/
 const title = computed(() => {
-  const currentFilterKey =
-    propertyFilter.filter.value?.key || speckleTypeFilter.value?.key || 'Loading'
+  const currentFilterKey = activeFilter.value?.key
+  if (!currentFilterKey) return 'Loading'
 
   if (currentFilterKey === 'level.name') return 'Level Name'
   if (currentFilterKey === 'speckle_type') return 'Object Type'

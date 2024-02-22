@@ -170,6 +170,9 @@ export class Viewer extends EventEmitter implements IViewer {
     if (flags & UpdateFlags.SHADOWS) {
       this.speckleRenderer.shadowMapNeedsUpdate = true
     }
+    if (flags & UpdateFlags.CLIPPING_PLANES) {
+      this.speckleRenderer.updateClippingPlanes()
+    }
   }
 
   private frame() {
@@ -287,7 +290,6 @@ export class Viewer extends EventEmitter implements IViewer {
 
     this.loaders[loader.resource] = loader
     const treeBuilt = await loader.load()
-
     if (treeBuilt) {
       const t0 = performance.now()
       for await (const step of this.speckleRenderer.addRenderTree(loader.resource)) {
@@ -307,7 +309,7 @@ export class Viewer extends EventEmitter implements IViewer {
       this.emit(ViewerEvent.LoadComplete, loader.resource)
     }
 
-    this.loaders[loader.resource].dispose()
+    if (this.loaders[loader.resource]) this.loaders[loader.resource].dispose()
     delete this.loaders[loader.resource]
     if (--this.inProgressOperations === 0)
       (this as EventEmitter).emit(ViewerEvent.Busy, false)
@@ -330,6 +332,10 @@ export class Viewer extends EventEmitter implements IViewer {
       if (++this.inProgressOperations === 1)
         (this as EventEmitter).emit(ViewerEvent.Busy, true)
       if (this.tree.findSubtree(resource)) {
+        if (this.loaders[resource]) {
+          await this.cancelLoad(resource, true)
+          return
+        }
         delete this.loaders[resource]
         this.speckleRenderer.removeRenderTree(resource)
         this.tree.getRenderTree(resource).purge()
@@ -350,6 +356,7 @@ export class Viewer extends EventEmitter implements IViewer {
       if (++this.inProgressOperations === 1)
         (this as EventEmitter).emit(ViewerEvent.Busy, true)
       for (const key of Object.keys(this.loaders)) {
+        if (this.loaders[key]) await this.cancelLoad(key, false)
         delete this.loaders[key]
       }
       this.tree.root.children.forEach((node) => {
