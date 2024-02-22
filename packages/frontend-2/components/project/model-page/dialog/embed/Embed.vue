@@ -1,15 +1,15 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    :max-width="visibility == ProjectVisibility.Private ? 'sm' : 'md'"
+    :max-width="project.visibility == ProjectVisibility.Private ? 'sm' : 'md'"
     :buttons="
-      visibility == ProjectVisibility.Private
+      project.visibility == ProjectVisibility.Private
         ? nonDiscoverableButtons
         : discoverableButtons
     "
   >
     <template #header>Embed Model</template>
-    <div v-if="visibility === ProjectVisibility.Private">
+    <div v-if="project.visibility === ProjectVisibility.Private">
       <p>
         <strong>Model embedding only works if the project is “Discoverable”.</strong>
       </p>
@@ -18,17 +18,11 @@
         <strong>Owner</strong>
         project permission.
       </p>
-      <p>
-        Go to
-        <strong>“Project Dashboard > Manage > Access”</strong>
-        and choose
-        <strong>“Discoverable”</strong>
-        from the drop-down list.
-      </p>
+      <ProjectPageTeamDialogManagePermissions :project="project" default-open />
     </div>
     <div v-else>
       <CommonAlert v-if="multipleVersionedResources" class="mb-4 sm:-mt-4" color="info">
-        <template #title>You are about embedding a specific version</template>
+        <template #title>You are embedding a specific version</template>
         <template #description>
           <p>
             This means that any changes you made after this version will not be included
@@ -103,21 +97,29 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { Cog6ToothIcon, EyeIcon } from '@heroicons/vue/24/outline'
-import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectVisibility,
+  type ProjectsModelPageEmbed_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
 import { SpeckleViewer } from '@speckle/shared'
-import { projectRoute } from '~~/lib/common/helpers/route'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment ProjectsModelPageEmbed_Project on Project {
+    id
+    ...ProjectsPageTeamDialogManagePermissions_Project
+  }
+`)
 
 const props = defineProps<{
-  visibility?: ProjectVisibility
-  projectId: string
+  project: ProjectsModelPageEmbed_ProjectFragment
   modelId?: string
   versionId?: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const router = useRouter()
 const route = useRoute()
 const { copy } = useClipboard()
 const {
@@ -149,7 +151,7 @@ const multipleVersionedResources = computed(() => {
 })
 
 const updatedUrl = computed(() => {
-  const url = new URL(`/projects/${encodeURIComponent(props.projectId)}`, baseUrl)
+  const url = new URL(`/projects/${encodeURIComponent(props.project.id)}`, baseUrl)
 
   url.pathname += '/models/'
 
@@ -207,14 +209,6 @@ const nonDiscoverableButtons = computed(() => [
     props: { color: 'invert', fullWidth: true, outline: true },
     onClick: () => {
       isOpen.value = false
-    }
-  },
-  {
-    text: 'Change Access',
-    props: { color: 'primary', fullWidth: true },
-    onClick: () => {
-      isOpen.value = false
-      router.push(`${projectRoute(props.projectId)}?settings=access`)
     }
   }
 ])

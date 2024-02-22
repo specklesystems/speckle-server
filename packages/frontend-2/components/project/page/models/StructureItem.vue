@@ -30,7 +30,7 @@
             <ProjectPageModelsActions
               v-model:open="showActionsMenu"
               :model="model"
-              :project-id="projectId"
+              :project="project"
               :can-edit="canContribute"
               @click.stop.prevent
               @model-updated="$emit('model-updated')"
@@ -56,7 +56,7 @@
         <ProjectCardImportFileArea
           v-if="!isPendingFileUpload(item)"
           ref="importArea"
-          :project-id="projectId"
+          :project-id="project.id"
           :model-name="item.fullName"
           class="hidden"
         />
@@ -75,7 +75,7 @@
           />
           <ProjectCardImportFileArea
             v-else
-            :project-id="projectId"
+            :project-id="project.id"
             :model-name="item.fullName"
             class="h-full w-full"
           />
@@ -93,7 +93,7 @@
           </div>
           <div v-if="model && model.automationStatus" class="text-xs text-foreground-2">
             <ProjectPageModelsCardAutomationStatusRefactor
-              :project-id="props.projectId"
+              :project-id="project.id"
               :model-or-version="{
                 ...model,
                 automationStatus: model.automationStatus
@@ -107,7 +107,7 @@
               rounded
               size="xs"
               :icon-left="ArrowPathRoundedSquareIcon"
-              :to="modelVersionsRoute(projectId, item.model.id)"
+              :to="modelVersionsRoute(project.id, item.model.id)"
             >
               {{ model?.versionCount.totalCount }}
             </FormButton>
@@ -206,7 +206,7 @@
 
           <ProjectPageModelsStructureItem
             :item="child"
-            :project-id="projectId"
+            :project="project"
             :can-contribute="canContribute"
             class="flex-grow"
             @model-updated="onModelUpdated"
@@ -215,7 +215,7 @@
         </div>
         <ProjectPageModelsNewModelStructureItem
           v-if="canContribute"
-          :project-id="projectId"
+          :project-id="project.id"
           :parent-model-name="item.fullName"
         />
       </div>
@@ -238,6 +238,7 @@ import {
 import { ArrowUpOnSquareIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
+  ProjectPageModelsStructureItem_ProjectFragment,
   SingleLevelModelTreeItemFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -259,6 +260,13 @@ enum StructureItemType {
   ModelWithVersionsAndSubmodels, // mixed
   PendingModel
 }
+
+graphql(`
+  fragment ProjectPageModelsStructureItem_Project on Project {
+    id
+    ...ProjectPageModelsActions_Project
+  }
+`)
 
 graphql(`
   fragment SingleLevelModelTreeItem on ModelsTreeItem {
@@ -284,12 +292,12 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   item: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
-  projectId: string
+  project: ProjectPageModelsStructureItem_ProjectFragment
   canContribute?: boolean
   isSearchResult?: boolean
 }>()
 
-provide('projectId', props.projectId)
+provide('projectId', props.project.id)
 
 const importArea = ref(
   null as Nullable<{
@@ -349,7 +357,7 @@ const fullName = computed(() =>
 )
 const expanded = useIsModelExpanded({
   fullName,
-  projectId: computed(() => props.projectId)
+  projectId: computed(() => props.project.id)
 })
 
 const model = computed(() =>
@@ -380,18 +388,18 @@ const modelLink = computed(() => {
     props.item.model?.versionCount.totalCount === 0
   )
     return null
-  return modelRoute(props.projectId, props.item.model.id)
+  return modelRoute(props.project.id, props.item.model.id)
 })
 
 const viewAllUrl = computed(() => {
   if (isPendingFileUpload(props.item)) return undefined
-  return modelRoute(props.projectId, `$${props.item.fullName}`)
+  return modelRoute(props.project.id, `$${props.item.fullName}`)
 })
 
 const { result: childrenResult, refetch: refetchChildren } = useQuery(
   projectModelChildrenTreeQuery,
   () => ({
-    projectId: props.projectId,
+    projectId: props.project.id,
     parentName: isPendingFileUpload(props.item) ? '' : props.item.fullName
   }),
   () => ({

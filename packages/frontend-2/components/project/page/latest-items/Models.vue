@@ -100,6 +100,7 @@ graphql(`
     modelCount: models(limit: 0) {
       totalCount
     }
+    ...ProjectPageModelsStructureItem_Project
   }
 `)
 
