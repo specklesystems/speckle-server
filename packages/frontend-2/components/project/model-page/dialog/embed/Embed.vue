@@ -10,14 +10,19 @@
   >
     <template #header>Embed Model</template>
     <div v-if="project.visibility === ProjectVisibility.Private">
-      <p>
-        <strong>Model embedding only works if the project is “Discoverable”.</strong>
-      </p>
-      <p class="mt-5">
-        To change this setting you must be logged in as a user with the
-        <strong>Owner</strong>
-        project permission.
-      </p>
+      <CommonAlert color="info">
+        <template #title>
+          Model embedding only works if the project is “Discoverable”.
+        </template>
+        <template #description>
+          <p>
+            To change this setting you must be logged in as a user with the
+            <strong>Owner</strong>
+            project permission.
+          </p>
+        </template>
+      </CommonAlert>
+
       <ProjectPageTeamDialogManagePermissions :project="project" default-open />
     </div>
     <div v-else>
