@@ -3,7 +3,7 @@ import { Box3, SectionTool, TreeNode } from '@speckle/viewer'
 import { Vector3 } from '@speckle/viewer'
 import {
   CanonicalView,
-  DebugViewer,
+  Viewer,
   PropertyInfo,
   SelectionEvent,
   SunLightConfiguration,
@@ -26,12 +26,10 @@ import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
-import { SpeckleGeometryConverter } from '@speckle/viewer'
-import { SpeckleType } from '@speckle/viewer'
 import { GroupOperations } from './Extensions/GroupOperations'
 
 export default class Sandbox {
-  private viewer: DebugViewer
+  private viewer: Viewer
   private pane: Pane
   private tabs
   private viewsFolder!: FolderApi
@@ -122,7 +120,7 @@ export default class Sandbox {
 
   public constructor(
     container: HTMLElement,
-    viewer: DebugViewer,
+    viewer: Viewer,
     selectionList: SelectionEvent[]
   ) {
     this.viewer = viewer
@@ -148,7 +146,7 @@ export default class Sandbox {
       this.addStreamControls(url)
       // this.addViewControls()
       this.addBatches()
-      // this.properties = await this.viewer.getObjectProperties()
+      this.properties = await this.viewer.getObjectProperties()
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })

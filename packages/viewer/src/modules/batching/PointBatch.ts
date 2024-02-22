@@ -96,7 +96,7 @@ export default class PointBatch implements Batch {
     renderer
   }
 
-  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+  public setVisibleRange(ranges: BatchUpdateRange[]) {
     /** Entire batch needs to NOT be drawn */
     if (ranges.length === 1 && ranges[0] === NoneBatchUpdateRange) {
       this.geometry.setDrawRange(0, 0)
@@ -199,7 +199,7 @@ export default class PointBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
-  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+  public setBatchBuffers(range: BatchUpdateRange[]): void {
     let minGradientIndex = Infinity
     let maxGradientIndex = 0
     for (let k = 0; k < range.length; k++) {
@@ -231,7 +231,7 @@ export default class PointBatch implements Batch {
       this.updateGradientIndexBuffer()
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(ranges: BatchUpdateRange[]) {
     const materials = ranges.map((val) => {
       return val.material
     })
@@ -306,7 +306,7 @@ export default class PointBatch implements Batch {
     if (count !== this.getCount()) {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
-    this.setBatchBuffers(...ranges)
+    this.setBatchBuffers(ranges)
     this.needsFlatten = true
   }
 

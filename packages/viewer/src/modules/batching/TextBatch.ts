@@ -86,7 +86,7 @@ export default class TextBatch implements Batch {
     renderer
   }
 
-  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+  public setVisibleRange(ranges: BatchUpdateRange[]) {
     // TO DO
   }
 
@@ -107,11 +107,11 @@ export default class TextBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
-  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+  public setBatchBuffers(range: BatchUpdateRange[]): void {
     throw new Error('Method not implemented.')
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(ranges: BatchUpdateRange[]) {
     this.mesh.textMesh.material = ranges[0].material
     if (ranges[0].materialOptions && ranges[0].materialOptions.rampIndexColor) {
       this.mesh.textMesh.material.color.copy(ranges[0].materialOptions.rampIndexColor)

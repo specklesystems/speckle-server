@@ -34,12 +34,12 @@ export interface Batch {
 
   getCount(): number
   setBatchMaterial(material: Material): void
-  setBatchBuffers(...range: BatchUpdateRange[]): void
-  setVisibleRange(...range: BatchUpdateRange[])
+  setBatchBuffers(range: BatchUpdateRange[]): void
+  setVisibleRange(range: BatchUpdateRange[]): void
   getVisibleRange(): BatchUpdateRange
-  setDrawRanges(...ranges: BatchUpdateRange[])
-  resetDrawRanges()
-  buildBatch()
+  setDrawRanges(ranges: BatchUpdateRange[])
+  resetDrawRanges(): void
+  buildBatch(): void
   getRenderView(index: number): NodeRenderView
   getMaterialAtIndex(index: number): Material
   getMaterial(rv: NodeRenderView): Material
@@ -48,7 +48,7 @@ export interface Batch {
   getStencil(): BatchUpdateRange
   onUpdate(deltaTime: number)
   onRender(renderer: WebGLRenderer)
-  purge()
+  purge(): void
 }
 
 export interface BatchUpdateRange {

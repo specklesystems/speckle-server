@@ -15,12 +15,10 @@ import {
   MeasurementsExtension,
   ExplodeExtension,
   DiffExtension,
-  FilteringExtension,
-  SpeckleGeometryConverter
+  FilteringExtension
 } from '@speckle/viewer'
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
-import { GroupOperations } from './Extensions/GroupOperations'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -64,7 +62,6 @@ const createViewer = async (containerName: string, stream: string) => {
   diff // use it
   // rotateCamera // use it
   // boxSelect // use it
-  const groupOperations = viewer.createExtension(GroupOperations)
 
   const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
@@ -92,22 +89,6 @@ const createViewer = async (containerName: string, stream: string) => {
     console.warn(viewer.getRenderer().renderingStats)
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
-    const categories = {}
-    //@ts-ignore
-    const revitInstances = []
-    await viewer.getWorldTree().walkAsync((node) => {
-      //@ts-ignore
-      if (!categories[node.model.raw.speckle_type]) {
-        //@ts-ignore
-        categories[node.model.raw.speckle_type] = 0
-      }
-      //@ts-ignore
-      categories[node.model.raw.speckle_type]++
-      return true
-    })
-
-    sandbox.refresh()
-    await groupOperations.getIds()
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {

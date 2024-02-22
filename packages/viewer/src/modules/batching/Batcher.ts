@@ -378,9 +378,9 @@ export default class Batcher {
       const batch: Batch = this.batches[k]
       const range = ranges[k]
       if (!range) {
-        batch.setVisibleRange(NoneBatchUpdateRange)
+        batch.setVisibleRange([NoneBatchUpdateRange])
       } else {
-        batch.setVisibleRange(range)
+        batch.setVisibleRange([range])
       }
     }
   }
@@ -480,13 +480,15 @@ export default class Batcher {
   public async isolateBatch(batchId: string) {
     for (const k in this.batches) {
       if (k !== batchId) {
-        this.batches[k].setDrawRanges({
-          offset: 0,
-          count: this.batches[k].getCount(),
-          material: this.materials.getFilterMaterial(this.batches[k].renderViews[0], {
-            filterType: FilterMaterialType.GHOST
-          })
-        })
+        this.batches[k].setDrawRanges([
+          {
+            offset: 0,
+            count: this.batches[k].getCount(),
+            material: this.materials.getFilterMaterial(this.batches[k].renderViews[0], {
+              filterType: FilterMaterialType.GHOST
+            })
+          }
+        ])
       }
     }
   }

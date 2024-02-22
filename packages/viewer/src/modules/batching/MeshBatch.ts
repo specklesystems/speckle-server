@@ -118,7 +118,7 @@ export default class MeshBatch implements Batch {
     renderer
   }
 
-  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+  public setVisibleRange(ranges: BatchUpdateRange[]) {
     /** Entire batch needs to NOT be drawn */
     if (ranges.length === 1 && ranges[0] === NoneBatchUpdateRange) {
       this.geometry.setDrawRange(0, 0)
@@ -221,7 +221,7 @@ export default class MeshBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
-  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+  public setBatchBuffers(range: BatchUpdateRange[]): void {
     let minGradientIndex = Infinity
     let maxGradientIndex = 0
     for (let k = 0; k < range.length; k++) {
@@ -253,7 +253,7 @@ export default class MeshBatch implements Batch {
       this.updateGradientIndexBuffer()
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(ranges: BatchUpdateRange[]) {
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(value.material)
@@ -333,7 +333,7 @@ export default class MeshBatch implements Batch {
     if (count !== this.getCount()) {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
-    this.setBatchBuffers(...ranges)
+    this.setBatchBuffers(ranges)
     this.needsFlatten = true
   }
 
@@ -376,7 +376,7 @@ export default class MeshBatch implements Batch {
     return null
   }
 
-  private sortGroups() {
+  private sortGroups(): void {
     this.geometry.groups.sort((a, b) => {
       const materialA: Material = (this.mesh.material as Array<Material>)[
         a.materialIndex
@@ -391,7 +391,7 @@ export default class MeshBatch implements Batch {
     })
   }
 
-  private flattenDrawGroups() {
+  private flattenDrawGroups(): void {
     const materialOrder = []
     this.geometry.groups.reduce((previousValue, currentValue) => {
       if (previousValue.indexOf(currentValue.materialIndex) === -1) {
@@ -478,7 +478,7 @@ export default class MeshBatch implements Batch {
     return ++this.indexBufferIndex % 2 === 0 ? this.indexBuffer0 : this.indexBuffer1
   }
 
-  private shuffleDrawGroups() {
+  private shuffleDrawGroups(): void {
     const groups = this.geometry.groups
       .sort((a, b) => {
         return a.start - b.start
@@ -573,14 +573,16 @@ export default class MeshBatch implements Batch {
       return this.mesh.material[value.materialIndex].visible === false
     })
     if (hiddenGroup) {
-      this.setVisibleRange({
-        offset: 0,
-        count: hiddenGroup.start
-      })
+      this.setVisibleRange([
+        {
+          offset: 0,
+          count: hiddenGroup.start
+        }
+      ])
     }
   }
 
-  public resetDrawRanges() {
+  public resetDrawRanges(): void {
     this.mesh.setBatchMaterial(this.batchMaterial)
     this.mesh.visible = true
     this.geometry.clearGroups()
@@ -798,7 +800,7 @@ export default class MeshBatch implements Batch {
     this.geometry.attributes['gradientIndex'].needsUpdate = true
   }
 
-  public purge() {
+  public purge(): void {
     this.renderViews.length = 0
     this.geometry.dispose()
     this.batchMaterial.dispose()
