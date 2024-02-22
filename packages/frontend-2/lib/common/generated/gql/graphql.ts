@@ -2766,9 +2766,11 @@ export type Version = {
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;
+  parents?: Maybe<Array<Maybe<Scalars['String']>>>;
   previewUrl: Scalars['String'];
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
+  totalChildrenCount?: Maybe<Scalars['Int']>;
 };
 
 

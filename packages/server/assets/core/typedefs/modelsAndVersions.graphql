@@ -206,6 +206,8 @@ type Version {
   createdAt: DateTime!
   model: Model!
   previewUrl: String!
+  totalChildrenCount: Int
+  parents: [String]
 }
 
 type VersionCollection {
