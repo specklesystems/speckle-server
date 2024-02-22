@@ -2,11 +2,9 @@
   <div>
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
-      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md transition-all ${
-        availableTargetIds.length === 0
-          ? 'text-foreground-2 cursor-auto'
-          : 'text-foreground cursor-pointer'
-      } ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}`"
+      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md transition-all text-foreground cursor-pointer ${
+        isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
+      }`"
       @click="setSelection()"
     >
       <div class="flex space-x-2 items-center flex-shrink truncate text-xs sm:text-sm">
@@ -18,7 +16,7 @@
         <span class="truncate">
           {{ item.value.split('.').reverse()[0] || item.value || 'No Name' }}
         </span>
-        <span class="text-xs text-foreground-2">({{ availableTargetIds.length }})</span>
+        <span class="text-xs text-foreground-2">({{ props.item.ids.length }})</span>
       </div>
       <!-- 
         Note: not allowing for hiding/isolation CURRENTLY as there is a larger change needed. 
@@ -27,9 +25,7 @@
         enable isolate this level, and from the remaining objects, isolate the doors only. 
         Requires a larger rework of the viewer state composable & filtering methods.
 
-        Note 21/02/24: We have decided to reimplement some of this functionality, but now the hide
-        and isolate icons are not buttons, but visual indicators. To unhide an object, you can now
-        click on the object in object explorer, which will open the selection info panel.
+        There's v-if=false that's hiding the div below :)
       -->
       <div class="flex items-center gap-1 flex-shrink-0">
         <!-- <button
@@ -84,13 +80,13 @@ const { clearSelection, setSelectionFromObjectIds, objectIds } = useSelectionUti
 const isSelected = computed(() => hasIntersection(objectIds.value, props.item.ids))
 
 const availableTargetIds = computed(() => {
-  const targets = props.item.ids
+  let targets = props.item.ids
 
-  // if (isolatedObjectIds.value.length)
-  //   targets = props.item.ids.filter((id) => isolatedObjectIds.value.includes(id))
+  if (isolatedObjectIds.value.length)
+    targets = props.item.ids.filter((id) => isolatedObjectIds.value.includes(id))
 
-  // if (hiddenObjectIds.value.length)
-  //   targets = props.item.ids.filter((id) => !hiddenObjectIds.value.includes(id))
+  if (hiddenObjectIds.value.length)
+    targets = props.item.ids.filter((id) => !hiddenObjectIds.value.includes(id))
   return targets
 })
 
