@@ -112,6 +112,10 @@ const color = computed(() => {
     ?.color
 })
 
+// It is possible to control the visibility and isolation of objects from here, There are
+// some performance concerns here, so this is something to come back to. For now, the icons
+// are purely indicators
+
 // const hideOrShowObject = () => {
 //   const ids = props.item.ids
 //   if (!isHidden.value) {
