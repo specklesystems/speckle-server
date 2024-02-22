@@ -647,6 +647,12 @@ server:
     ## @param server.fileUploads.enabled If enabled, file uploads on the server will be flagged as enabled
     enabled: true
 
+  migration:
+    ## @param server.migration.movedFrom Indicate the URL where the server moved from
+    movedFrom: ''
+    ## @param server.migration.movedTo Indicate the URL where the server moved to
+    movedTo: ''
+
   monitoring:
     apollo:
       ## @param server.monitoring.apollo.enabled (Optional) If enabled, exports metrics from the GraphQL API to Apollo Graphql Studio.

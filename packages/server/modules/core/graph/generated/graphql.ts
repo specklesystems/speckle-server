@@ -2089,6 +2089,8 @@ export type ServerInfo = {
   description?: Maybe<Scalars['String']>;
   guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
+  /** Server relocation / migration info */
+  migration?: Maybe<ServerMigration>;
   name: Scalars['String'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
   roles: Array<Role>;
@@ -2120,6 +2122,12 @@ export type ServerInviteCreateInput = {
   message?: InputMaybe<Scalars['String']>;
   /** Can only be specified if guest mode is on or if the user is an admin */
   serverRole?: InputMaybe<Scalars['String']>;
+};
+
+export type ServerMigration = {
+  __typename?: 'ServerMigration';
+  movedFrom?: Maybe<Scalars['String']>;
+  movedTo?: Maybe<Scalars['String']>;
 };
 
 export enum ServerRole {
@@ -3122,6 +3130,7 @@ export type ResolversTypes = {
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ResolverTypeWrapper<ServerInviteGraphQLReturnType>;
   ServerInviteCreateInput: ServerInviteCreateInput;
+  ServerMigration: ResolverTypeWrapper<ServerMigration>;
   ServerRole: ServerRole;
   ServerRoleItem: ResolverTypeWrapper<ServerRoleItem>;
   ServerStatistics: ResolverTypeWrapper<GraphQLEmptyReturn>;
@@ -3289,6 +3298,7 @@ export type ResolversParentTypes = {
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ServerInviteGraphQLReturnType;
   ServerInviteCreateInput: ServerInviteCreateInput;
+  ServerMigration: ServerMigration;
   ServerRoleItem: ServerRoleItem;
   ServerStatistics: GraphQLEmptyReturn;
   ServerStats: ServerStats;
@@ -4071,6 +4081,7 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   guestModeEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   inviteOnly?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  migration?: Resolver<Maybe<ResolversTypes['ServerMigration']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   roles?: Resolver<Array<ResolversTypes['Role']>, ParentType, ContextType>;
   scopes?: Resolver<Array<ResolversTypes['Scope']>, ParentType, ContextType>;
@@ -4084,6 +4095,12 @@ export type ServerInviteResolvers<ContextType = GraphQLContext, ParentType exten
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   invitedBy?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ServerMigrationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerMigration'] = ResolversParentTypes['ServerMigration']> = {
+  movedFrom?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  movedTo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -4411,6 +4428,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ServerAppListItem?: ServerAppListItemResolvers<ContextType>;
   ServerInfo?: ServerInfoResolvers<ContextType>;
   ServerInvite?: ServerInviteResolvers<ContextType>;
+  ServerMigration?: ServerMigrationResolvers<ContextType>;
   ServerRoleItem?: ServerRoleItemResolvers<ContextType>;
   ServerStatistics?: ServerStatisticsResolvers<ContextType>;
   ServerStats?: ServerStatsResolvers<ContextType>;
