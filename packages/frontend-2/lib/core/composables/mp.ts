@@ -1,5 +1,6 @@
 import type { OverridedMixpanel } from 'mixpanel-browser'
-import { useActiveUser, useWaitForActiveUser } from '~~/lib/auth/composables/activeUser'
+import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
+import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import md5 from '~~/lib/common/helpers/md5'
 import { useTheme } from '~~/lib/core/composables/theme'
 
@@ -78,10 +79,10 @@ export async function useMixpanelInitialization() {
 
   const mp = useMixpanel()
   const { reidentify } = useMixpanelUserIdentification()
+  const onAuthStateChange = useOnAuthStateChange()
 
-  await useWaitForActiveUser()
-
-  reidentify()
+  // Reidentify on auth change
+  await onAuthStateChange(() => reidentify(), { immediate: true })
 
   // Track app visit
   mp.track(`Visit ${HOST_APP_DISPLAY_NAME}`)

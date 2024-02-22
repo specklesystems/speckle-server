@@ -53,7 +53,11 @@ export default defineNuxtConfig({
       logClientApiEndpoint: '',
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
       serverName: 'UNDEFINED',
-      viewerDebug: false
+      viewerDebug: false,
+      raygunKey: '',
+      logrocketAppId: '',
+      speedcurveId: 0,
+      debugbearId: ''
     }
   },
 
