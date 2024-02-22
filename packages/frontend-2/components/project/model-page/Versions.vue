@@ -82,8 +82,7 @@
     />
     <ProjectModelPageDialogEmbed
       v-model:open="embedDialogOpen"
-      :visibility="project.visibility"
-      :project-id="project.id"
+      :project="project"
       :version-id="currentVersionId"
       :model-id="project.model.id"
     />
@@ -121,6 +120,7 @@ graphql(`
         }
       }
     }
+    ...ProjectsModelPageEmbed_Project
   }
 `)
 
@@ -135,6 +135,7 @@ graphql(`
       }
     }
     ...ProjectModelPageVersionsPagination
+    ...ProjectsModelPageEmbed_Project
   }
 `)
 

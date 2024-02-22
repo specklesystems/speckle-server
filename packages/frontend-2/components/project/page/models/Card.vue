@@ -81,11 +81,10 @@
             {{ versionCount }}
           </FormButton>
           <ProjectPageModelsActions
-            v-if="showActions && !isPendingModelFragment(model)"
+            v-if="project && showActions && !isPendingModelFragment(model)"
             v-model:open="showActionsMenu"
             :model="model"
-            :project-id="projectId"
-            :visibility="project?.visibility"
+            :project="project"
             :can-edit="canEdit"
             @click.stop.prevent
             @upload-version="triggerVersionUpload"
@@ -142,6 +141,7 @@ graphql(`
     id
     role
     visibility
+    ...ProjectPageModelsActions_Project
   }
 `)
 

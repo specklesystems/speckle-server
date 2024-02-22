@@ -82,12 +82,7 @@
       :url="route.path"
     />
     <Portal to="primary-actions">
-      <HeaderNavShare
-        v-if="project"
-        :resource-id-string="modelId"
-        :project-id="project.id"
-        :visibility="project.visibility"
-      />
+      <HeaderNavShare v-if="project" :resource-id-string="modelId" :project="project" />
     </Portal>
   </div>
 </template>
