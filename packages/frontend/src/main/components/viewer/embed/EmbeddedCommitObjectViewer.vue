@@ -18,7 +18,7 @@
         <span v-if="!drawer && !hideLogo" class="caption d-inline-flex align-center">
           <img src="@/assets/logo.svg" height="18" />
           <span style="margin-top: 2px" class="primary--text">
-            <a href="https://speckle.xyz" target="_blank" class="text-decoration-none">
+            <a href="https://speckle.systems" target="_blank" class="text-decoration-none">
               <b>Powered by Speckle</b>
             </a>
           </span>
