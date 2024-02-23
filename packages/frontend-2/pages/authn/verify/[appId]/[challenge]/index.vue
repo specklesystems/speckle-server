@@ -95,16 +95,10 @@
             </Disclosure>
           </div>
           <div class="flex space-x-2 w-full">
-            <FormButton
-              color="secondary"
-              full-width
-              size="lg"
-              :disabled="loading"
-              @click="deny"
-            >
+            <FormButton color="secondary" full-width :disabled="loading" @click="deny">
               Deny
             </FormButton>
-            <FormButton full-width size="lg" :disabled="loading" @click="allow">
+            <FormButton full-width :disabled="loading" @click="allow">
               Authorize
             </FormButton>
           </div>
@@ -149,7 +143,7 @@
             </div>
           </div>
           <div v-if="action" class="label-light text-foreground-2">
-            You will be redirected automatically
+            You will be redirected automatically, please wait a moment.
           </div>
         </div>
       </div>
@@ -265,13 +259,20 @@ const groupedScopes = computed(() => {
   }, {} as Record<string, string[]>)
 })
 
+const goToFinalUrl = (url: string) => {
+  // waiting 2 seconds before actually redirecting
+  setTimeout(() => {
+    window.location.replace(url)
+  }, 2000)
+}
+
 const deny = () => {
   if (process.server || !denyUrl.value || !activeUser.value || loading.value) return
 
   loading.value = true
   action.value = ChosenAction.Deny
   mp.track('App Authorization', { allow: false, type: 'action' })
-  window.location.assign(denyUrl.value)
+  goToFinalUrl(denyUrl.value)
 }
 
 const allow = async () => {
@@ -288,7 +289,7 @@ const allow = async () => {
 
     // Finally redirect
     action.value = ChosenAction.Allow
-    window.location.assign(allowRes.redirectUrl)
+    goToFinalUrl(allowRes.redirectUrl)
   } catch (err) {
     triggerNotification({
       type: ToastNotificationType.Danger,

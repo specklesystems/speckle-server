@@ -193,15 +193,15 @@ const deleteConfirmed = async () => {
 
 const dialogButtons = computed(() => [
   {
+    text: 'Cancel',
+    props: { color: 'secondary', fullWidth: true, outline: true },
+    onClick: (): boolean => (isOpen.value = false)
+  },
+  {
     text: itemActionVerb.value,
     props: { color: 'danger', fullWidth: true },
     disabled: isLoading.value,
     onClick: deleteConfirmed
-  },
-  {
-    text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: (): boolean => (isOpen.value = false)
   }
 ])
 </script>
