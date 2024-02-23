@@ -8,7 +8,7 @@
   >
     <div class="mb-1 flex items-center">
       <button
-        class="flex h-full w-full p-2 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
+        class="flex h-full w-full px-2 py-0.5 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
         :class="unfold && 'text-primary'"
         @click="unfold = !unfold"
       >
@@ -27,7 +27,7 @@
         </div>
       </button>
     </div>
-    <div v-if="unfold" class="ml-1 space-y-1 p-2">
+    <div v-if="unfold" class="ml-1 space-y-1 px-2 py-1">
       <div
         v-for="(kvp, index) in [
           ...categorisedValuePairs.primitives,

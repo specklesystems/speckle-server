@@ -12,18 +12,18 @@
       <!-- Resize Handle -->
       <div
         ref="resizeHandle"
-        class="hidden sm:flex group relative z-10 hover:z-50 w-6 h-full items-center overflow-hidden -mr-1"
+        class="hidden sm:flex group relative z-30 hover:z-50 w-6 h-full items-center overflow-hidden -mr-1"
       >
         <div
-          class="w-5 h-8 bg-foundation group-hover:bg-outline-2 rounded-l translate-x-4 group-hover:translate-x-0.5 transition cursor-ew-resize flex items-center justify-center shadow group-hover:shadow-xl"
+          class="w-5 h-8 mr-1 bg-foundation group-hover:bg-outline-2 rounded-l translate-x-3 group-hover:translate-x-0.5 transition cursor-ew-resize flex items-center justify-center group-hover:shadow-xl"
           @mousedown="startResizing"
         >
           <ArrowsRightLeftIcon
-            class="h-3 w-3 transition opacity-0 group-hover:opacity-80 text-outline-1"
+            class="h-3 w-3 transition opacity-0 group-hover:opacity-80 text-outline-1 -ml-px"
           />
         </div>
         <div
-          class="relative z-10 w-1 h-full pt-[4.2rem] bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition shadow-lg rounded-l"
+          class="relative z-30 w-1 h-full pt-[4.2rem] -ml-1 bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition rounded-l"
           @mousedown="startResizing"
         ></div>
       </div>
