@@ -40,20 +40,30 @@
 </template>
 <script setup lang="ts">
 import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
-import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectsPageTeamDialogManagePermissions_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { LayoutDialogSection } from '@speckle/ui-components'
 import { CommentPermissions } from '~~/lib/projects/helpers/components'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
-import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
+import { useTeamManagePermissionsInternals } from '~~/lib/projects/composables/team'
 import { LockClosedIcon, LockOpenIcon, LinkIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { graphql } from '~~/lib/common/generated/gql/gql'
+
+graphql(`
+  fragment ProjectsPageTeamDialogManagePermissions_Project on Project {
+    id
+    visibility
+    allowPublicComments
+    role
+  }
+`)
 
 const props = defineProps<{
-  project: ProjectPageTeamDialogFragment
+  project: ProjectsPageTeamDialogManagePermissions_ProjectFragment
   defaultOpen: boolean
 }>()
 
-const { isOwner, isServerGuest } = useTeamDialogInternals({
+const { isOwner, isServerGuest } = useTeamManagePermissionsInternals({
   props: toRefs(props)
 })
 const updateProject = useUpdateProject()

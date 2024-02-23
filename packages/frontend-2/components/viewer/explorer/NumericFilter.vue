@@ -7,41 +7,45 @@
     </div>
     <div class="flex flex-col space-y-2">
       <div class="flex items-center justify-between w-full">
-        <div>
+        <div class="flex flex-col gap-2">
           <label class="text-xs text-foreground-2 mr-2" for="min">Min</label>
-          <input
-            id="min"
-            v-model="passMin"
-            class="h-2 mr-2"
-            type="range"
-            name="min"
-            :min="props.filter.min"
-            :max="props.filter.max"
-            step="0.0001"
-            @change="setFilterPass()"
-          />
-        </div>
-        <div class="text-xs text-foreground-2 truncate min-w-0">
-          {{ roundedValues.min }}
+          <div class="flex gap-2 items-center">
+            <input
+              id="min"
+              v-model="passMin"
+              class="h-2 mr-2"
+              type="range"
+              name="min"
+              :min="props.filter.min"
+              :max="props.filter.max"
+              step="0.0001"
+              @change="setFilterPass()"
+            />
+            <div class="text-xs text-foreground-2 truncate min-w-0">
+              {{ roundedValues.min }}
+            </div>
+          </div>
         </div>
       </div>
       <div class="flex items-center justify-between w-full">
-        <div class="flex items-center">
+        <div class="flex flex-col gap-2">
           <label class="text-xs text-foreground-2 mr-2" for="max">Max</label>
-          <input
-            id="max"
-            v-model="passMax"
-            class="h-2 mr-2"
-            type="range"
-            name="max"
-            :min="props.filter.min"
-            :max="props.filter.max"
-            step="0.0001"
-            @change="setFilterPass()"
-          />
-        </div>
-        <div class="text-xs text-foreground-2 truncate min-w-0">
-          {{ roundedValues.max }}
+          <div class="flex gap-2 items-center">
+            <input
+              id="max"
+              v-model="passMax"
+              class="h-2 mr-2"
+              type="range"
+              name="max"
+              :min="props.filter.min"
+              :max="props.filter.max"
+              step="0.0001"
+              @change="setFilterPass()"
+            />
+            <div class="text-xs text-foreground-2 truncate min-w-0 max-w-12">
+              {{ roundedValues.max }}
+            </div>
+          </div>
         </div>
       </div>
     </div>

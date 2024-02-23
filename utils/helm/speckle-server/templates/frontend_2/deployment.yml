@@ -89,6 +89,22 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
                 key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
+          {{- if .Values.analytics.raygun_key }}
+          - name: NUXT_PUBLIC_RAYGUN_KEY
+            value: {{ .Values.analytics.raygun_key | quote }}
+          {{- end }}
+          {{- if .Values.analytics.logrocket_app_id }}
+          - name: NUXT_PUBLIC_LOGROCKET_APP_ID
+            value: {{ .Values.analytics.logrocket_app_id | quote }}
+          {{- end }}
+          {{- if .Values.analytics.speedcurve_id }}
+          - name: NUXT_PUBLIC_SPEEDCURVE_ID
+            value: {{ .Values.analytics.speedcurve_id | quote }}
+          {{- end }}
+          {{- if .Values.analytics.debugbear_id }}
+          - name: NUXT_PUBLIC_DEBUGBEAR_ID
+            value: {{ .Values.analytics.debugbear_id | quote }}
+          {{- end }}
 
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}

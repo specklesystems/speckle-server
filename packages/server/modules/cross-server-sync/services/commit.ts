@@ -86,6 +86,25 @@ const commitMetadataQuery = gql`
   }
 `
 
+// const versionMetadataQuery = gql`
+//   query CrossSyncVersionDownloadMetadata($streamId: String!, $commitId: String!) {
+//     project(id: $streamId) {
+//       version(id: $commitId) {
+//         id
+//         referencedObject
+//         authorUser {
+//           id
+//         }
+//         message
+//         createdAt
+//         sourceApplication
+//         totalChildrenCount
+//         parents
+//       }
+//     }
+//   }
+// `
+
 const viewerResourcesQuery = gql`
   query CrossSyncProjectViewerResources(
     $projectId: String!
@@ -572,6 +591,12 @@ export const downloadCommit = async (
      * Specify if you want comments to be pulled in also
      */
     commentAuthorId?: string
+
+    /**
+     * Specify if you want to sync in automation statuses. If set to true, the Project.version
+     * query will be used, which might not be supported if you're targetting an old server instance.
+     */
+    loadAutomations?: boolean
   },
   options?: Partial<{
     logger: Logger
