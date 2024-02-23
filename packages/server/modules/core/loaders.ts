@@ -26,6 +26,7 @@ import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
 import {
   getCommitBranches,
+  getCommits,
   getSpecificBranchCommits,
   getStreamCommitCounts
 } from '@/modules/core/repositories/commits'
@@ -103,6 +104,35 @@ export function buildRequestLoaders(
 
   const loaders = {
     streams: {
+      /**
+       * Get a specific commit of a specific stream. Each stream ID technically has its own loader &
+       * thus its own query.
+       */
+      getStreamCommit: (() => {
+        type CommitDataLoader = DataLoader<string, Nullable<CommitRecord>>
+        const streamCommitLoaders = new Map<string, CommitDataLoader>()
+        return {
+          clearAll: () => streamCommitLoaders.clear(),
+          forStream(streamId: string): CommitDataLoader {
+            let loader = streamCommitLoaders.get(streamId)
+            if (!loader) {
+              loader = createLoader<string, Nullable<CommitRecord>>(
+                async (commitIds) => {
+                  const results = keyBy(
+                    await getCommits(commitIds.slice(), { streamId }),
+                    'id'
+                  )
+                  return commitIds.map((i) => results[i] || null)
+                }
+              )
+              streamCommitLoaders.set(streamId, loader)
+            }
+
+            return loader
+          }
+        }
+      })(),
+
       /**
        * Get favorite metadata for a specific stream and user
        */

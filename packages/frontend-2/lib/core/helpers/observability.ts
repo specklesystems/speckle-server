@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { Observability } from '@speckle/shared'
+import { Observability, type Optional } from '@speckle/shared'
 import {
   upperFirst,
   get,
@@ -13,6 +13,7 @@ import {
   isString,
   noop
 } from 'lodash-es'
+import type { Logger } from 'pino'
 
 /**
  * Add pino-pretty like formatting
@@ -117,4 +118,74 @@ export const formatAppError = (err: SimpleError) => {
     message: finalMessage,
     stack
   }
+}
+
+export type AbstractErrorHandler = (params: {
+  args: unknown[]
+  firstString: Optional<string>
+  firstError: Optional<Error>
+  otherData: Record<string, unknown>
+  nonObjectOtherData: unknown[]
+}) => void
+
+export type AbstractUnhandledErrorHandler = (params: {
+  event: ErrorEvent | PromiseRejectionEvent
+  isUnhandledRejection: boolean
+  error: Error | unknown
+  message: string
+}) => void
+
+/**
+ * Adds proxy that intercepts error log calls so that they can be sent to any transport
+ */
+export function enableCustomErrorHandling(params: {
+  logger: Logger
+  onError: AbstractErrorHandler
+}): Logger {
+  const { logger, onError } = params
+  return new Proxy(logger, {
+    get(target, prop) {
+      if (
+        ['trace', 'debug', 'info', 'warn', 'error', 'fatal'].includes(prop as string)
+      ) {
+        const logMethod = get(target, prop) as (...args: unknown[]) => void
+        return (...args: unknown[]) => {
+          const log = logMethod.bind(target)
+
+          const firstError = args.find((arg): arg is Error => arg instanceof Error)
+          const isError = ['error', 'fatal'].includes(prop as string) || firstError
+
+          if (isError) {
+            const firstString = args.find(isString)
+            const otherData: unknown[] = args.filter(
+              (o) => !(o instanceof Error) && o !== firstString
+            )
+
+            const errorMessage = firstError?.message ?? firstString ?? `Unknown error`
+            if (errorMessage !== firstString) {
+              otherData.unshift(firstString)
+            }
+
+            const otherDataObjects = otherData.filter(isObjectLike)
+            const otherDataNonObjects = otherData.filter((o) => !isObjectLike(o))
+            const mergedOtherDataObject = Object.assign(
+              {},
+              ...otherDataObjects
+            ) as Record<string, unknown>
+            onError({
+              args,
+              firstError,
+              firstString,
+              otherData: mergedOtherDataObject,
+              nonObjectOtherData: otherDataNonObjects
+            })
+          }
+
+          return log(...args)
+        }
+      }
+
+      return get(target, prop)
+    }
+  })
 }

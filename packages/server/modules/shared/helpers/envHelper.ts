@@ -160,12 +160,37 @@ export function isSSLServer() {
   return /^https:\/\//.test(getBaseUrl())
 }
 
+function parseUrlVar(value: string, name: string) {
+  try {
+    return new URL(value)
+  } catch (err: unknown) {
+    if (err instanceof TypeError && err.message === 'Invalid URL')
+      throw new MisconfiguredEnvironmentError(`${name} has to be a valid URL`)
+    throw err
+  }
+}
+
+export function getServerMovedFrom() {
+  const value = process.env.MIGRATION_SERVER_MOVED_FROM
+  if (!value) return value
+  return parseUrlVar(value, 'MIGRATION_SERVER_MOVED_FROM')
+}
+
+export function getServerMovedTo() {
+  const value = process.env.MIGRATION_SERVER_MOVED_TO
+  if (!value) return value
+  return parseUrlVar(value, 'MIGRATION_SERVER_MOVED_TO')
+}
+
 export function adminOverrideEnabled() {
   return process.env.ADMIN_OVERRIDE_ENABLED === 'true'
 }
 
 export function enableMixpanel() {
-  if (isDevEnv() || isTestEnv()) return false
+  if (isDevEnv() || isTestEnv()) {
+    // Check if explicitly enabled
+    return getBooleanFromEnv('FORCE_ENABLE_MP')
+  }
 
   // if not explicitly set to '0' or 'false', it is enabled by default
   return !['0', 'false'].includes(process.env.ENABLE_MP || 'true')

@@ -123,7 +123,6 @@ const mp = useMixpanel()
 const hideOrShowSelection = () => {
   if (!isHidden.value) {
     hideObjects(allTargetIds.value)
-    clearSelection() // when hiding, the objects disappear. they can't really stay "selected"
     mp.track('Viewer Action', {
       type: 'action',
       name: 'selection',

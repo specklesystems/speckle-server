@@ -53,6 +53,7 @@ graphql(`
         role
       }
     }
+    ...ProjectsPageTeamDialogManagePermissions_Project
   }
 `)
 
