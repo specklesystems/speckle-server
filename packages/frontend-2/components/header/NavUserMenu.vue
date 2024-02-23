@@ -61,7 +61,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="onThemeClick"
+              @click="toggleTheme"
             >
               <Icon class="w-5 h-5" />
               {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
@@ -145,7 +145,7 @@ import {
 import { Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
+import { useTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
 import type { RouteLocationRaw } from 'vue-router'
 import { homeRoute, profileRoute } from '~/lib/common/helpers/route'
@@ -156,7 +156,7 @@ defineProps<{
 
 const { logout } = useAuthManager()
 const { activeUser, isGuest } = useActiveUser()
-const { isDarkTheme, setTheme } = useTheme()
+const { isDarkTheme, toggleTheme } = useTheme()
 const { serverInfo } = useServerInfo()
 const router = useRouter()
 const route = useRoute()
@@ -171,14 +171,6 @@ const isProfileRoute = computed(() => route.path === profileRoute)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
-}
-
-const onThemeClick = () => {
-  if (isDarkTheme.value) {
-    setTheme(AppTheme.Light)
-  } else {
-    setTheme(AppTheme.Dark)
-  }
 }
 
 const goToConnectors = () => {

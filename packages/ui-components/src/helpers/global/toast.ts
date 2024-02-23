@@ -20,4 +20,9 @@ export type ToastNotification = {
     url?: string
     onClick?: (e: MouseEvent) => void
   }
+  /**
+   * Whether or not the toast should disappear automatically after a while.
+   * Defaults to true
+   */
+  autoClose?: boolean
 }
