@@ -300,7 +300,7 @@ workflows:
 jobs:
   get-version:
     docker:
-      - image: cimg/python:3.9.18
+      - image: cimg/python:3.12.1
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
@@ -378,7 +378,7 @@ jobs:
     docker:
       - image: cimg/node:18.19.0
       - image: cimg/redis:7.2.4
-      - image: 'cimg/postgres:14.10'
+      - image: cimg/postgres:14.11
         environment:
           POSTGRES_DB: speckle2_test
           POSTGRES_PASSWORD: speckle
@@ -628,7 +628,7 @@ jobs:
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
     docker: &docker-image
-      - image: cimg/python:3.9.18-node
+      - image: cimg/python:3.12.1-node
     resource_class: small
     working_directory: *work-dir
     steps:
@@ -762,7 +762,7 @@ jobs:
 
   docker-build: &build-job
     docker: &docker-image
-      - image: cimg/python:3.9.18-node
+      - image: cimg/python:3.12.1-node
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -844,7 +844,7 @@ jobs:
 
   docker-publish: &publish-job
     docker:
-      - image: cimg/python:3.9.18-node
+      - image: cimg/python:3.12.1-node
     resource_class: medium
     working_directory: *work-dir
     steps:
