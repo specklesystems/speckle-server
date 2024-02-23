@@ -21,7 +21,7 @@ import {
   Vector3,
   VSMShadowMap
 } from 'three'
-import { Batch, GeometryType } from './batching/Batch'
+import { Batch, BatchUpdateRange, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
 import { Geometry } from './converter/Geometry'
 import Input, { InputEvent, InputOptionsDefault } from './input/Input'
@@ -157,7 +157,7 @@ export default class SpeckleRenderer {
   }
 
   public get clippingVolume(): Box3 {
-    return !this._clippingVolume.isEmpty()
+    return !this._clippingVolume.isEmpty() && this._renderer.localClippingEnabled
       ? new Box3().copy(this._clippingVolume)
       : this.sceneBox
   }
@@ -609,6 +609,7 @@ export default class SpeckleRenderer {
 
     /** We'll just update the shadowcatcher after all batches are loaded */
     this.updateShadowCatcher()
+    this.updateClippingPlanes()
     delete this.cancel[subtreeId]
   }
 
@@ -696,10 +697,11 @@ export default class SpeckleRenderer {
     material: Material
   ) {
     for (const k in rvs) {
-      const ranges = rvs[k].map((value: NodeRenderView) => {
+      const drawRanges = rvs[k].map((value: NodeRenderView) => {
         return { offset: value.batchStart, count: value.batchCount, material }
       })
-      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...ranges)
+      if (this.batcher.batches[k])
+        this.batcher.batches[k].setDrawRanges(...this.flattenDrawRanges(drawRanges))
     }
   }
 
@@ -716,7 +718,8 @@ export default class SpeckleRenderer {
           materialOptions: this.batcher.materials.getFilterMaterialOptions(material)
         }
       })
-      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...drawRanges)
+      if (this.batcher.batches[k])
+        this.batcher.batches[k].setDrawRanges(...this.flattenDrawRanges(drawRanges))
     }
   }
 
@@ -734,8 +737,56 @@ export default class SpeckleRenderer {
           material
         }
       })
-      if (this.batcher.batches[k]) this.batcher.batches[k].setDrawRanges(...drawRanges)
+
+      if (this.batcher.batches[k])
+        this.batcher.batches[k].setDrawRanges(...this.flattenDrawRanges(drawRanges))
     }
+  }
+
+  private flattenDrawRanges(ranges: Array<BatchUpdateRange>): Array<BatchUpdateRange> {
+    if (ranges.length < 3) return ranges
+
+    const flatRanges = []
+    let offset = ranges[0].offset
+    let count = 0
+    for (let k = 0; k < ranges.length - 1; k++) {
+      count += ranges[k].count
+      if (offset + count === ranges[k + 1].offset) {
+        if (k === ranges.length - 2) {
+          flatRanges.push({
+            offset,
+            count: count + ranges[k + 1].count,
+            material: ranges[k].material,
+            ...(ranges[k].materialOptions && {
+              materialOptions: ranges[k].materialOptions
+            })
+          })
+        }
+        continue
+      }
+      flatRanges.push({
+        offset,
+        count,
+        material: ranges[k].material,
+        ...(ranges[k].materialOptions && {
+          materialOptions: ranges[k].materialOptions
+        })
+      })
+      offset = ranges[k + 1].offset
+      count = 0
+      if (k === ranges.length - 2) {
+        flatRanges.push({
+          offset: ranges[k + 1].offset,
+          count: ranges[k + 1].count,
+          material: ranges[k + 1].material,
+          ...(ranges[k].materialOptions && {
+            materialOptions: ranges[k].materialOptions
+          })
+        })
+      }
+    }
+
+    return flatRanges
   }
 
   public getMaterial(rv: NodeRenderView): Material {
@@ -760,9 +811,9 @@ export default class SpeckleRenderer {
     return this.batcher.batches[id]
   }
 
-  protected updateClippingPlanes(planes?: Plane[]) {
+  public updateClippingPlanes() {
     if (!this.allObjects) return
-    if (!planes) planes = this._clippingPlanes
+    const planes = this._clippingPlanes
 
     this.allObjects.traverse((object) => {
       const material = (object as unknown as { material }).material
@@ -1085,9 +1136,9 @@ export default class SpeckleRenderer {
     } else box = this.sceneBox
     for (let k = 0; k < rvs.length; k++) {
       const object = this.getObject(rvs[k])
-      let rvBox = null
-      if ((rvBox = object.aabb) !== null) {
-        box.union(rvBox)
+      const aabb = object ? object.aabb : rvs[k].aabb
+      if (aabb) {
+        box.union(aabb)
       }
     }
     if (box.getSize(new Vector3()).length() === 0) {

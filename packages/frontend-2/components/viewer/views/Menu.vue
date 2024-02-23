@@ -14,7 +14,7 @@
       leave-to-class="opacity-0"
     >
       <MenuItems
-        class="absolute translate-x-0 w-32 left-12 top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col"
+        class="absolute translate-x-0 w-24 sm:w-32 left-10 sm:left-12 -top-1 sm:top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col"
       >
         <!-- Canonical views first -->
         <MenuItem
@@ -27,7 +27,7 @@
             :class="{
               'bg-primary text-foreground-on-primary': active,
               'text-foreground': !active,
-              'text-sm py-2 transition': true
+              'text-xs sm:text-sm py-2 transition': true
             }"
             @click="setView(view.name.toLowerCase() as CanonicalView)"
           >

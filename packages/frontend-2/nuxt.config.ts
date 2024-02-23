@@ -43,14 +43,21 @@ export default defineNuxtConfig({
     public: {
       apiOrigin: 'UNDEFINED',
       backendApiOrigin: '',
+      baseUrl: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,
       logPretty: isLogPretty,
+      logCsrEmitProps: false,
       logClientApiToken: '',
       logClientApiEndpoint: '',
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
-      serverName: 'UNDEFINED'
+      serverName: 'UNDEFINED',
+      viewerDebug: false,
+      raygunKey: '',
+      logrocketAppId: '',
+      speedcurveId: 0,
+      debugbearId: ''
     }
   },
 
@@ -129,11 +136,17 @@ export default defineNuxtConfig({
     // Necessary because of redirects from backend in auth flows
     '/': {
       cors: true,
-      headers: { 'access-control-allow-methods': 'GET' }
+      headers: {
+        'access-control-allow-methods': 'GET',
+        'Access-Control-Expose-Headers': '*'
+      }
     },
     '/authn/login': {
       cors: true,
-      headers: { 'access-control-allow-methods': 'GET' }
+      headers: {
+        'access-control-allow-methods': 'GET',
+        'Access-Control-Expose-Headers': '*'
+      }
     }
   },
 

@@ -466,6 +466,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "image": {
+          "type": "string",
+          "description": "The Docker image to be used for the Speckle Server component. If blank, defaults to speckle/speckle-server:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
+          "default": ""
+        },
         "onboarding": {
           "type": "object",
           "properties": {
@@ -499,6 +504,11 @@
         "adminOverrideEnabled": {
           "type": "boolean",
           "description": "Enables the server side admin authz override",
+          "default": false
+        },
+        "weeklyDigestEnabled": {
+          "type": "boolean",
+          "description": "Enables sending out the serevr weekly digest emails",
           "default": false
         },
         "max_object_size_mb": {
@@ -814,7 +824,7 @@
             "cpu": {
               "type": "string",
               "description": "The CPU that should be available on a node when scheduling this pod.",
-              "default": "500m"
+              "default": "1000m"
             },
             "memory": {
               "type": "string",
@@ -829,7 +839,7 @@
             "cpu": {
               "type": "string",
               "description": "The maximum CPU that will be made available to the server Pod in a given period.",
-              "default": "1000m"
+              "default": "1500m"
             },
             "memory": {
               "type": "string",
@@ -943,13 +953,13 @@
             },
             "get_auth": {
               "type": "number",
-              "description": "The maximum number of requests that can be made to the Speckle server to authenticate in a moving one second window.",
-              "default": 2
+              "description": "The maximum number of requests that can be made to the Speckle server to authenticate in a moving 10 minute window.",
+              "default": 4
             },
             "burst_get_auth": {
               "type": "number",
-              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to authenticate in a moving one minute window.",
-              "default": 20
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to authenticate in a moving thirty minute window.",
+              "default": 10
             }
           }
         },
@@ -970,6 +980,21 @@
               "type": "boolean",
               "description": "If enabled, file uploads on the server will be flagged as enabled",
               "default": true
+            }
+          }
+        },
+        "migration": {
+          "type": "object",
+          "properties": {
+            "movedFrom": {
+              "type": "string",
+              "description": "Indicate the URL where the server moved from",
+              "default": ""
+            },
+            "movedTo": {
+              "type": "string",
+              "description": "Indicate the URL where the server moved to",
+              "default": ""
             }
           }
         },
@@ -1101,7 +1126,7 @@
             "cpu": {
               "type": "string",
               "description": "The CPU that should be available on a node when scheduling this pod.",
-              "default": "500m"
+              "default": "1000m"
             },
             "memory": {
               "type": "string",
@@ -1116,7 +1141,7 @@
             "cpu": {
               "type": "string",
               "description": "The maximum CPU that will be made available to the server Pod in a given period.",
-              "default": "1000m"
+              "default": "1500m"
             },
             "memory": {
               "type": "string",
@@ -1217,6 +1242,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "image": {
+          "type": "string",
+          "description": "The Docker image to be used for the Speckle Frontend component. If blank, defaults to speckle/speckle-frontend:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
+          "default": ""
+        },
         "requests": {
           "type": "object",
           "properties": {
@@ -1294,6 +1324,11 @@
     "frontend_2": {
       "type": "object",
       "properties": {
+        "image": {
+          "type": "string",
+          "description": "The Docker image to be used for the Speckle Frontend 2 component. If blank, defaults to speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
+          "default": ""
+        },
         "logClientApiToken": {
           "type": "string",
           "description": "SEQ API token",
@@ -1406,6 +1441,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "image": {
+          "type": "string",
+          "description": "The Docker image to be used for the Speckle Preview Service component. If blank, defaults to speckle/speckle-preview-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
+          "default": ""
+        },
         "requests": {
           "type": "object",
           "properties": {
@@ -1493,6 +1533,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "image": {
+          "type": "string",
+          "description": "The Docker image to be used for the Speckle Webhook Service component. If blank, defaults to speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
+          "default": ""
+        },
         "requests": {
           "type": "object",
           "properties": {
@@ -1579,6 +1624,11 @@
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
+        },
+        "image": {
+          "type": "string",
+          "description": "The Docker image to be used for the Speckle FileImport Service component. If blank, defaults to speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
+          "default": ""
         },
         "requests": {
           "type": "object",
@@ -1672,6 +1722,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "image": {
+          "type": "string",
+          "description": "The Docker image to be used for the Speckle Monitoring component. If blank, defaults to speckle/speckle-monitoring-deployment:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
+          "default": ""
+        },
         "requests": {
           "type": "object",
           "properties": {
@@ -1758,6 +1813,11 @@
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
+        },
+        "image": {
+          "type": "string",
+          "description": "The Docker image to be used for the Speckle Test component. If blank, defaults to speckle/speckle-test-deployment:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
+          "default": ""
         },
         "requests": {
           "type": "object",

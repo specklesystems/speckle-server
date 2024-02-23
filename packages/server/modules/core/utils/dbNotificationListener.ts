@@ -1,4 +1,4 @@
-import { MaybeAsync, Optional, md5 } from '@speckle/shared'
+import { MaybeAsync, Optional, md5, wait } from '@speckle/shared'
 import { dbNotificationLogger } from '@/logging/logging'
 import { knex } from '@/modules/core/dbSchema'
 import * as Knex from 'knex'
@@ -94,9 +94,11 @@ function setupConnection(connection: pg.Connection) {
 }
 
 function reconnectClient() {
-  const interval = setInterval(async () => {
+  const reconnect = async () => {
     try {
       await endConnection()
+
+      dbNotificationLogger.info('Attempting to (re-)connect...')
 
       const newConnection = await (
         knex.client as Knex.Knex.Client
@@ -105,18 +107,25 @@ function reconnectClient() {
       connection = newConnection
       redisClient = createRedisClient(getRedisUrl(), {})
 
-      clearInterval(interval)
       setupConnection(newConnection)
     } catch (e: unknown) {
       dbNotificationLogger.error(
         e,
         'Notification listener connection acquisition failed'
       )
+      throw e
     }
-  }, 10000)
+  }
+
+  void reconnect().catch(async () => {
+    await wait(5000) // Wait 5s and retry
+    reconnectClient()
+  })
 }
 
 const endConnection = async () => {
+  dbNotificationLogger.info('Ending connection...')
+
   if (connection) {
     connection.end()
     connection = undefined

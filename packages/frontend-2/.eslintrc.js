@@ -39,7 +39,7 @@ const config = {
     ],
     'no-alert': 'error',
     eqeqeq: ['error', 'always', { null: 'always' }],
-    'no-console': 'off',
+    'no-console': 'error',
     'no-var': 'error'
   },
   overrides: [

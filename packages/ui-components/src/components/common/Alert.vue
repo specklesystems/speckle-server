@@ -111,7 +111,7 @@ const containerClasses = computed(() => {
       break
     case 'default':
     default:
-      classParts.push(hasDescription.value ? 'p-4' : 'p-2')
+      classParts.push(hasDescription.value ? 'p-3 sm:p-4' : 'p-2')
       break
   }
 
@@ -185,7 +185,7 @@ const descriptionWrapperClasses = computed(() => {
       break
     case 'default':
     default:
-      classParts.push('mt-2 text-sm')
+      classParts.push('mt-1 sm:mt-2 text-xs sm:text-sm')
       break
   }
 

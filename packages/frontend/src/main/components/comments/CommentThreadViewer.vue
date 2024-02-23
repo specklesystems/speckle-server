@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="!$vuetify.breakpoint.xs || (isEmbed && commentSlideShow)"
+    v-if="!$vuetify.breakpoint.xs"
     class="no-mouse py-2"
     :style="`max-width: 350px; padding-right:30px;
     ${
@@ -450,7 +450,6 @@ import { SMART_EDITOR_SCHEMA } from '@/main/lib/viewer/comments/commentsHelper'
 import { isSuccessfullyUploaded } from '@/main/lib/common/file-upload/fileUploadHelper'
 import { COMMENT_FULL_INFO_FRAGMENT } from '@/graphql/comments'
 import { useCommitObjectViewerParams } from '@/main/lib/viewer/commit-object-viewer/stateManager'
-import { useEmbedViewerQuery } from '@/main/lib/viewer/commit-object-viewer/composables/embed'
 // TODO: The template is a WET mess, need to refactor it
 
 export default {
@@ -587,12 +586,10 @@ export default {
   },
   setup() {
     const { streamId, resourceId, isEmbed } = useCommitObjectViewerParams()
-    const { commentSlideShow } = useEmbedViewerQuery()
     return {
       streamId,
       resourceId,
-      isEmbed,
-      commentSlideShow
+      isEmbed
     }
   },
   data() {

@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="lg">
     <template #header>Add Model</template>
-    <div class="flex flex-col space-y-4">
+    <div class="flex flex-col gap-y-4">
       <LayoutTabs v-slot="{ activeItem }" :items="tabItems">
         <ViewerResourcesAddModelDialogModelTab
           v-if="activeItem.id === 'model'"

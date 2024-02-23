@@ -33,7 +33,7 @@
         />
         <div>
           <div
-            v-if="hasThirdPartyStrategies"
+            v-if="hasThirdPartyStrategies && hasLocalStrategy"
             class="text-center label text-foreground-2 mb-3 text-xs font-normal"
           >
             Or sign up with your email

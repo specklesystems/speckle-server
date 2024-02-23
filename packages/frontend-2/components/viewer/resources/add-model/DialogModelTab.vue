@@ -1,13 +1,14 @@
 <template>
-  <div class="flex flex-col space-y-2">
+  <div class="flex flex-col gap-y-2">
     <div class="flex justify-end">
       <FormTextInput
         v-model="search"
         name="modelsearch"
         :show-label="false"
+        :size="isSmallerOrEqualSm ? 'sm' : 'base'"
         placeholder="Search"
         color="foundation"
-        class="w-60"
+        class="w-48 sm:w-60"
         :show-clear="search !== ''"
         auto-focus
         @change="updateSearchImmediately"
@@ -21,6 +22,7 @@
       :project="project"
       :project-id="project.id"
       :excluded-ids="alreadyLoadedModelIds"
+      :small-view="true"
       :show-actions="false"
       :show-versions="false"
       disable-default-links
@@ -34,12 +36,14 @@
 <script setup lang="ts">
 import { debounce } from 'lodash-es'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
+import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 const emit = defineEmits<{
   (e: 'chosen', val: { modelId: string }): void
 }>()
 
 const { project, resourceItems } = useInjectedViewerLoadedResources()
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const search = ref('')
 const debouncedSearch = ref('')

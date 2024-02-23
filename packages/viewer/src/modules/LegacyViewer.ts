@@ -1,3 +1,4 @@
+import { MathUtils } from 'three'
 import {
   Viewer,
   BatchObject,
@@ -23,14 +24,16 @@ import {
   SpeckleLoader,
   DefaultViewerParams,
   ViewerParams,
-  SelectionEvent
+  SelectionEvent,
+  IViewer
 } from '..'
 import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
-import { PolarView } from './extensions/core-extensions/Providers'
+import { ICameraProvider, PolarView } from './extensions/core-extensions/Providers'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Queries } from './queries/Queries'
 import { Query, QueryArgsResultMap } from './queries/Query'
 import { DataTreeBuilder } from './tree/DataTree'
+import { SelectionExtensionOptions } from './extensions/SelectionExtension'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -39,6 +42,54 @@ class LegacySelectionExtension extends SelectionExtension {
    */
   protected onObjectClicked(selection: SelectionEvent) {
     selection
+  }
+}
+
+class HighlightExtension extends SelectionExtension {
+  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+    super(viewer, cameraProvider)
+    const highlightMaterialData: SelectionExtensionOptions = {
+      selectionMaterialData: {
+        id: MathUtils.generateUUID(),
+        color: 0x04cbfb,
+        opacity: 1,
+        roughness: 1,
+        metalness: 0,
+        vertexColors: false,
+        lineWeight: 1,
+        stencilOutlines: false,
+        pointSize: 4
+      }
+    }
+    this.setOptions(highlightMaterialData)
+  }
+
+  public unselectObjects(ids: Array<string>) {
+    if (!this._enabled) return
+    if (!this.selectedNodes.length) return
+
+    const nodes = []
+    for (let k = 0; k < ids.length; k++) {
+      nodes.push(...this.viewer.getWorldTree().findId(ids[k]))
+    }
+    this.clearSelection(
+      nodes.filter((node: TreeNode) => {
+        return this.selectedNodes.includes(node)
+      })
+    )
+  }
+
+  /** Disable default events */
+  protected onObjectClicked(selection: SelectionEvent) {
+    selection
+  }
+
+  protected onObjectDoubleClick(selection: SelectionEvent) {
+    selection
+  }
+
+  protected onPointerMove(e) {
+    e
   }
 }
 
@@ -51,6 +102,7 @@ export class LegacyViewer extends Viewer {
   private filtering: FilteringExtension = null
   private explodeExtension: ExplodeExtension = null
   private diffExtension: DiffExtension = null
+  private highlightExtension: HighlightExtension = null
 
   public constructor(
     container: HTMLElement,
@@ -65,6 +117,7 @@ export class LegacyViewer extends Viewer {
     this.filtering = this.createExtension(FilteringExtension)
     this.explodeExtension = this.createExtension(ExplodeExtension)
     this.diffExtension = this.createExtension(DiffExtension)
+    this.highlightExtension = this.createExtension(HighlightExtension)
   }
 
   public async init(): Promise<void> {
@@ -119,6 +172,8 @@ export class LegacyViewer extends Viewer {
 
   /** FILTERING */
   public selectObjects(objectIds: string[]): Promise<FilteringState> {
+    if (objectIds.length) this.highlightExtension.unselectObjects(objectIds)
+
     this.selection.selectObjects(objectIds)
     if (!this.filtering.filteringState.selectedObjects)
       this.filtering.filteringState.selectedObjects = []
@@ -216,19 +271,15 @@ export class LegacyViewer extends Viewer {
     })
   }
 
-  public highlightObjects(objectIds: string[], ghost = false): Promise<FilteringState> {
-    ghost
+  public highlightObjects(objectIds: string[]): Promise<FilteringState> {
+    if (!objectIds.length) this.highlightExtension.clearSelection()
+    else this.highlightExtension.selectObjects(objectIds)
     return Promise.resolve(this.filtering.filteringState)
-    // return new Promise<FilteringState>((resolve) => {
-    //   resolve(this.filteringManager.highlightObjects(objectIds, ghost))
-    // })
   }
 
   public resetHighlight(): Promise<FilteringState> {
+    this.highlightExtension.clearSelection()
     return Promise.resolve(this.filtering.filteringState)
-    // return new Promise<FilteringState>((resolve) => {
-    //   resolve(this.filteringManager.resetHighlight())
-    // })
   }
 
   public setColorFilter(property: PropertyInfo, ghost = true): Promise<FilteringState> {

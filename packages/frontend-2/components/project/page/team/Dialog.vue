@@ -2,13 +2,20 @@
   <LayoutDialog v-model:open="isOpen" max-width="sm">
     <template #header>Manage Project</template>
     <div class="flex flex-col text-foreground">
-      <ProjectPageTeamDialogManageUsers always-open :project="project" />
+      <ProjectPageTeamDialogManageUsers
+        :always-open="openSection === OpenSectionType.Team"
+        :project="project"
+      />
       <ProjectPageTeamDialogInviteUser
         v-if="isOwner && !isServerGuest"
         :project="project"
+        :default-open="openSection === OpenSectionType.Invite"
       />
-      <ProjectPageTeamDialogManagePermissions :project="project" />
-      <ProjectPageTeamDialogWebhooks :project="project" />
+      <ProjectPageTeamDialogManagePermissions
+        :project="project"
+        :default-open="openSection === OpenSectionType.Access"
+      />
+      <ProjectPageTeamDialogWebhooks v-if="isOwner" :project="project" />
       <ProjectPageTeamDialogDangerZones
         v-if="isOwner || canLeaveProject"
         :project="project"
@@ -20,6 +27,7 @@
 import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
+import { OpenSectionType } from '~~/lib/projects/helpers/components'
 
 graphql(`
   fragment ProjectPageTeamDialog on Project {
@@ -45,6 +53,7 @@ graphql(`
         role
       }
     }
+    ...ProjectsPageTeamDialogManagePermissions_Project
   }
 `)
 
@@ -55,6 +64,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   open: boolean
   project: ProjectPageTeamDialogFragment
+  openSection?: OpenSectionType
 }>()
 
 const { isOwner, isServerGuest, canLeaveProject } = useTeamDialogInternals({
