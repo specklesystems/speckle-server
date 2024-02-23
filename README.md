@@ -39,8 +39,9 @@ What is Speckle? Check our [![YouTube Video Views](https://img.shields.io/youtub
 
 Give Speckle a try in no time by:
 
-- [![speckle XYZ](https://img.shields.io/badge/https://-speckle.xyz-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://speckle.xyz) ⇒ creating an account at
-- [![create a droplet](https://img.shields.io/badge/Create%20a%20Droplet-0069ff?style=flat-square&logo=digitalocean&logoColor=white)](https://marketplace.digitalocean.com/apps/speckle-server?refcode=947a2b5d7dc1) ⇒ deploying an instance in 1 click
+- [![app.speckle.systems](https://img.shields.io/badge/https://-app.speckle.systems-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://app.speckle.systems) ⇒ Create an account at app.speckle.systems
+- [![Deploy on your own infrastructure with docker compose](https://img.shields.io/badge/https://-speckle.guide-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](<[https://](https://speckle.guide/dev/server-manualsetup.html)>) ⇒ Deploy on your own infrastructure with Docker Compose
+- [![Deploy on your own infrastructure with docker compose](https://img.shields.io/badge/https://-speckle.guide-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](<[https://](https://speckle.guide/dev/server-setup-k8s.html)>) ⇒ Deploy on your own infrastructure with Kubernetes
 
 ## Resources
 
