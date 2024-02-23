@@ -2,6 +2,11 @@ extend type Query {
   serverInfo: ServerInfo!
 }
 
+type ServerMigration {
+  movedFrom: String
+  movedTo: String
+}
+
 """
 Information about this server.
 """
@@ -25,6 +30,10 @@ type ServerInfo {
   Base URL of Speckle Automate, if set
   """
   automateUrl: String
+  """
+  Server relocation / migration info
+  """
+  migration: ServerMigration
 }
 
 type Role {

@@ -20,7 +20,7 @@ import {
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
 import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
-import { useAppErrorState } from '~~/lib/core/composables/appErrorState'
+import { useAppErrorState } from '~~/lib/core/composables/error'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
 import { isBoolean, omit } from 'lodash-es'
 import { useRequestId } from '~/lib/core/composables/server'

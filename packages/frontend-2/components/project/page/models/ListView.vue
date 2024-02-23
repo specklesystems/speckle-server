@@ -1,9 +1,9 @@
 <template>
-  <div v-if="topLevelItems.length" class="space-y-4 max-w-full">
+  <div v-if="topLevelItems.length && project" class="space-y-4 max-w-full">
     <div v-for="item in topLevelItems" :key="item.id">
       <ProjectPageModelsStructureItem
         :item="item"
-        :project-id="projectId"
+        :project="project"
         :can-contribute="canContribute"
         :is-search-result="isUsingSearch"
         @model-updated="onModelUpdated"
