@@ -67,7 +67,7 @@ RUN yarn workspaces focus --production
 
 FROM gcr.io/distroless/python3-debian12:nonroot@sha256:5c7661ddc1f43e50ee97404b12146d34ac34afc9ab7e713c3bac189efb074e10 as python-image
 
-FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:7be61ef4dbb5dc518f64476514a0007479efc3839da74d1ac0928b841455005c as distributable-stage
+FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:c005d386e514be30e1b995961c309365df5c2ffd3f3703217118cf313bc617e1 as distributable-stage
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
