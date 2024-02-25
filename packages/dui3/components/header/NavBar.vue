@@ -33,19 +33,47 @@
       </div>
     </div>
   </nav>
-  <div v-else class="fixed top-1 right-2 z-100">
-    <FormButton size="xs" text @click="uiConfigStore.toggleTheme()">
-      {{ isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme' }}
+  <div v-else class="fixed top-1 right-2 z-100 flex items-center space-x-2">
+    <FormButton
+      v-tippy="isDarkTheme ? 'Switch to light theme' : 'Switch to dark theme'"
+      size="xs"
+      text
+      @click="uiConfigStore.toggleTheme()"
+    >
+      <Component :is="isDarkTheme ? SunIcon : MoonIcon" class="w-4" />
     </FormButton>
+    <div v-if="isDev">
+      <NuxtLink
+        v-tippy="'Test page'"
+        to="test"
+        class="text-xs text-foreground-2 hover:text-primary"
+        exact-active-class="hidden"
+      >
+        <WrenchScrewdriverIcon class="w-4" />
+      </NuxtLink>
+      <NuxtLink
+        v-tippy="'Home'"
+        to="/"
+        class="text-xs text-foreground-2 hover:text-primary"
+        exact-active-class="hidden"
+      >
+        <HomeIcon class="w-4" />
+      </NuxtLink>
+    </div>
   </div>
 </template>
 <script setup lang="ts">
 import { useConfigStore } from '~/store/config'
-import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
+import {
+  Cog6ToothIcon,
+  WrenchScrewdriverIcon,
+  HomeIcon,
+  MoonIcon,
+  SunIcon
+} from '@heroicons/vue/24/solid'
 import { useHostAppStore } from '~/store/hostApp'
-
+const isDev = ref(process.dev)
 const openConfigDialog = ref(false)
-
 // NOTE: make it true to test settings, it might be removed later. TBD
 const testSettings = ref(false)
 

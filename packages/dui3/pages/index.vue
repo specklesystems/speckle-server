@@ -14,27 +14,34 @@
         >
           Hello!
         </h1>
-        <div class="text-foreground-2">
-          There are no Speckle models being published or loaded in this file yet.
-        </div>
-        <div class="grid grid-cols-2 max-[275px]:grid-cols-1 gap-2 mt-4">
-          <div>
-            <FormButton
-              :icon-left="CloudArrowUpIcon"
-              full-width
-              @click="showSendDialog = !showSendDialog"
-            >
-              Publish
-            </FormButton>
+        <div v-if="!!store.documentInfo">
+          <div class="text-foreground-2">
+            There are no Speckle models being published or loaded in this file yet.
           </div>
-          <div>
-            <FormButton
-              :icon-left="CloudArrowDownIcon"
-              full-width
-              @click="showReceiveDialog = !showReceiveDialog"
-            >
-              Load
-            </FormButton>
+          <div class="grid grid-cols-2 max-[275px]:grid-cols-1 gap-2 mt-4">
+            <div>
+              <FormButton
+                :icon-left="CloudArrowUpIcon"
+                full-width
+                @click="showSendDialog = !showSendDialog"
+              >
+                Publish
+              </FormButton>
+            </div>
+            <div>
+              <FormButton
+                :icon-left="CloudArrowDownIcon"
+                full-width
+                @click="showReceiveDialog = !showReceiveDialog"
+              >
+                Load
+              </FormButton>
+            </div>
+          </div>
+        </div>
+        <div v-else>
+          <div class="text-foreground-2">
+            Welcome to Speckle! Please open a file to use this plugin.
           </div>
         </div>
       </LayoutPanel>
