@@ -64,18 +64,11 @@
         :key="index"
         class="text-xs"
       >
-        <div class="text-foreground-2 grid grid-cols-3">
-          <div
-            class="col-span-1 truncate text-xs font-bold"
-            :title="(kvp.key as string)"
-          >
-            {{ kvp.key }}
-          </div>
-          <div class="col-span-2 flex w-full min-w-0 truncate text-xs">
-            <div class="flex-grow truncate">{{ kvp.innerType }} array</div>
-            <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
-          </div>
-        </div>
+        <ViewerSelectionObject
+          :object="(kvp.value as Record<string,unknown>) || {}"
+          :title="`${kvp.key as string} (object array)`"
+          :unfold="false"
+        />
       </div>
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
