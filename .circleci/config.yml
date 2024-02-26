@@ -91,6 +91,10 @@ workflows:
       - pre-commit:
           filters: *filters-allow-all
 
+      - build-image-approval:
+          type: approval
+          filters: *filters-ignore-main-branch-or-all-tags
+
       - docker-build-server:
           context: &build-context
             - github-readonly-public-repos
@@ -99,54 +103,63 @@ workflows:
               only: /.*/
           requires:
             - get-version
+            - build-image-approval
 
       - docker-build-frontend:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
+            - build-image-approval
 
       - docker-build-frontend-2:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
+            - build-image-approval
 
       - docker-build-webhooks:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
+            - build-image-approval
 
       - docker-build-file-imports:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
+            - build-image-approval
 
       - docker-build-previews:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
+            - build-image-approval
 
       - docker-build-test-container:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
+            - build-image-approval
 
       - docker-build-monitor-container:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
+            - build-image-approval
 
       - docker-build-docker-compose-ingress:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
+            - build-image-approval
 
       - publish-approval:
           type: approval
@@ -769,20 +782,7 @@ jobs:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
-      - run:
-          name: determine if draft PR
-          command: |
-            echo "export IS_DRAFT_PR=$(.circleci/is_draft.sh)" >> workspace/env-vars
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: echo "IS_DRAFT_PR=${IS_DRAFT_PR}"
-      - run:
-          name: 'Check if should proceed'
-          command: |
-            [[ "${CIRCLE_TAG}" ]] && echo "proceed because tag is set" && exit 0
-            [[ "${CIRCLE_BRANCH}" == "main" ]] && echo "proceed because main branch" && exit 0
-            [[ "${CIRCLE_BRANCH}" == "testing" ]] && echo "proceed because testing branch" && exit 0
-            [[ "${IS_DRAFT_PR}" == "TRUE" || -z "${CIRCLE_PULL_REQUEST}" ]] && echo "Should not build because either Draft PR or branch without PR, stopping" && exit 1
-            echo "proceeding"
       - setup_remote_docker:
           version: default
           docker_layer_caching: true
