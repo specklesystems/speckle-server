@@ -13,9 +13,9 @@
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
-const props = defineProps<{
-  to: string
-}>()
+const props = defineProps({
+  to: String
+})
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smallerOrEqual('sm')

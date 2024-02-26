@@ -148,8 +148,6 @@ const props = withDefaults(
   { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
 
-const { copy } = useClipboard()
-
 const unfold = ref(props.unfold)
 
 const isAdded = computed(() => {
@@ -224,6 +222,7 @@ const isCopyable = (kvp: Record<string, unknown>) => {
 }
 
 const handleCopy = async (kvp: Record<string, unknown>) => {
+  const { copy } = useClipboard()
   if (isCopyable(kvp)) {
     const keyName = kvp.key as string
     await copy(kvp.value as string, {
