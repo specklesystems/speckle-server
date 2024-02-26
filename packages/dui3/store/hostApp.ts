@@ -160,13 +160,18 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       })
   })
 
-  app.$sendBinding.on('setModelCreatedVersionId', (args) => {
+  const setModelCreatedVersionId = (args: {
+    modelCardId: string
+    versionId: string
+  }) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as ISenderModelCard
     model.latestCreatedVersionId = args.versionId
     model.progress = undefined
-  })
+  }
+
+  app.$sendBinding.on('setModelCreatedVersionId', setModelCreatedVersionId)
 
   /// RECEIVE STUFF
   const receiveModel = async (modelCardId: string) => {
@@ -197,6 +202,24 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = undefined
     await patchModel(model.modelCardId, { receiveResult: args.receiveResult }) // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
   })
+
+  const setModelReceiveResult = async (args: {
+    modelCardId: string
+    receiveResult: {
+      bakedObjectIds: string[]
+      display: boolean
+    }
+  }) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as IReceiverModelCard
+
+    console.log(args)
+    model.progress = undefined
+    await patchModel(model.modelCardId, { receiveResult: args.receiveResult }) // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
+  }
+
+  app.$receiveBinding.on('setModelReceiveResult', setModelReceiveResult)
 
   // GENERIC STUFF
   const handleModelProgressEvents = (args: {
@@ -282,6 +305,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     receiveModel,
     sendModelCancel,
     receiveModelCancel,
-    refreshSendFilters
+    refreshSendFilters,
+    setModelCreatedVersionId,
+    setModelReceiveResult,
+    handleModelProgressEvents
   }
 })
