@@ -63,10 +63,10 @@
             </div>
           </Transition>
           <div
-            class="absolute z-10 w-screen px-8 grid grid-cols-3 gap-2"
+            class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2"
             :class="isEmbedEnabled ? 'bottom-16 mb-1' : 'bottom-6'"
           >
-            <div class="flex items-end">
+            <div class="flex items-end justify-center sm:justify-start">
               <PortalTarget name="pocket-left"></PortalTarget>
             </div>
             <div class="flex flex-col gap-2 items-center justify-end">
@@ -77,7 +77,7 @@
                 <ViewerGlobalFilterReset class="z-20" :embed="!!isEmbedEnabled" />
               </div>
             </div>
-            <div class="flex items-end justify-end">
+            <div class="flex items-end justify-center sm:justify-end">
               <PortalTarget name="pocket-right"></PortalTarget>
             </div>
           </div>
