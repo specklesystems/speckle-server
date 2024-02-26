@@ -203,6 +203,24 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await patchModel(model.modelCardId, { receiveResult: args.receiveResult }) // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
   })
 
+  const setModelReceiveResult = async (args: {
+    modelCardId: string
+    receiveResult: {
+      bakedObjectIds: string[]
+      display: boolean
+    }
+  }) => {
+    const model = documentModelStore.value.models.find(
+      (m) => m.modelCardId === args.modelCardId
+    ) as IReceiverModelCard
+
+    console.log(args)
+    model.progress = undefined
+    await patchModel(model.modelCardId, { receiveResult: args.receiveResult }) // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
+  }
+
+  app.$receiveBinding.on('setModelReceiveResult', setModelReceiveResult)
+
   // GENERIC STUFF
   const handleModelProgressEvents = (args: {
     modelCardId: string
@@ -289,6 +307,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     receiveModelCancel,
     refreshSendFilters,
     setModelCreatedVersionId,
+    setModelReceiveResult,
     handleModelProgressEvents
   }
 })
