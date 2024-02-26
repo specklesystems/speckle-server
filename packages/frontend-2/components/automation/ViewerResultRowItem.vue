@@ -37,6 +37,7 @@ import {
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import type { NumericPropertyInfo } from '@speckle/viewer'
+import { containsAll } from '~~/lib/common/helpers/utils'
 
 type ObjectResultWithOptionalMetadata = {
   category: string
@@ -62,9 +63,7 @@ const {
 
 const { isolateObjects, resetFilters, setPropertyFilter, applyPropertyFilter } =
   useFilterUtilities()
-const { setSelectionFromObjectIds } = useSelectionUtilities()
-
-import { containsAll } from '~~/lib/common/helpers/utils'
+const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
 
 const hasMetadataGradient = computed(() => {
   if (props.result.metadata?.gradient) return true
@@ -90,9 +89,12 @@ const handleClick = () => {
 
 const isolateOrUnisolateObjects = () => {
   const ids = props.result.objectIds
+  const isCurrentlyIsolated = isIsolated.value
 
   resetFilters()
-  if (!isIsolated.value) {
+  if (isCurrentlyIsolated) {
+    clearSelection()
+  } else {
     isolateObjects(ids)
     setSelectionFromObjectIds(ids)
   }
