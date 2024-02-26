@@ -1,43 +1,34 @@
 <template>
-  <ProjectPageStatsBlock>
-    <template #top>
-      <div class="flex items-center">
-        <div class="flex items-center justify-between w-full">
-          <div
-            v-if="activeUser"
-            class="flex items-center gap-0.5 flex-grow select-none"
-          >
-            <Cog6ToothIcon class="h-5 w-5" />
-            <span class="text-sm">Settings</span>
-          </div>
-          <div v-else class="flex items-center gap-0.5 flex-grow select-none">
-            <UsersIcon class="h-5 w-5" />
-            <span class="text-sm">Team</span>
-          </div>
-          <div class="flex items-center text-xs">
-            {{ project.role?.split(':').reverse()[0] }}
-          </div>
+  <div class="rounded-md shadow border-2 border-transparent p-3">
+    <div class="flex items-center">
+      <div class="flex items-end justify-between w-full text-foreground-2">
+        <div v-if="activeUser" class="flex items-center gap-1 flex-grow select-none">
+          <Cog6ToothIcon class="h-4 w-4" />
+          <span class="text-sm font-bold">Settings</span>
+        </div>
+        <div v-else class="flex items-center gap-1 flex-grow select-none">
+          <UsersIcon class="h-4 w-4" />
+          <span class="text-sm font-bold">Team</span>
+        </div>
+        <div class="text-xs">
+          {{ project.role?.split(':').reverse()[0] }}
         </div>
       </div>
-    </template>
-    <template #bottom>
-      <div class="flex items-center justify-between mt-3">
-        <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
-        <div v-if="activeUser">
-          <FormButton class="ml-2" @click="onButtonClick">
-            {{ project.role === 'stream:owner' ? 'Manage' : 'View' }}
-          </FormButton>
-        </div>
+    </div>
+    <div class="flex items-center gap-4 justify-between mt-2">
+      <UserAvatarGroup :users="teamUsers" class="max-w-[130px]" />
+      <div v-if="activeUser">
+        <FormButton size="sm" @click="onButtonClick">
+          {{ project.role === 'stream:owner' ? 'Manage' : 'View' }}
+        </FormButton>
       </div>
-    </template>
-    <template #default>
-      <ProjectPageTeamDialog
-        v-model:open="dialogOpen"
-        :project="project"
-        :open-section="openSection"
-      />
-    </template>
-  </ProjectPageStatsBlock>
+    </div>
+    <ProjectPageTeamDialog
+      v-model:open="dialogOpen"
+      :project="project"
+      :open-section="openSection"
+    />
+  </div>
 </template>
 <script setup lang="ts">
 import { Cog6ToothIcon, UsersIcon } from '@heroicons/vue/24/outline'

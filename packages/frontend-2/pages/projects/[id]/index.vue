@@ -1,28 +1,23 @@
 <template>
   <div>
     <template v-if="project">
-      <ProjectsInviteBanner
-        :invite="invite"
-        :show-stream-name="false"
-        :auto-accept="shouldAutoAcceptInvite"
-        @processed="onInviteAccepted"
-      />
-      <!-- Heading text w/ actions -->
-      <ProjectPageHeader :project="project" />
-      <!-- Stats blocks -->
-      <div class="flex flex-col md:flex-row space-y-2 md:space-x-4 mt-8 mb-14">
-        <ProjectPageStatsBlockSettings
-          :project="project"
-          class="w-full md:w-72 transition"
+      <div>
+        <ProjectsInviteBanner
+          :invite="invite"
+          :show-stream-name="false"
+          :auto-accept="shouldAutoAcceptInvite"
+          @processed="onInviteAccepted"
         />
-        <div class="grow hidden md:flex"></div>
-        <div class="grid grid-cols-3 gap-2">
-          <ProjectPageStatsBlockVersions :project="project" />
-          <ProjectPageStatsBlockModels :project="project" />
-          <ProjectPageStatsBlockComments :project="project" />
+        <div class="flex justify-between mt-6 mb-12">
+          <ProjectPageHeader :project="project" />
+          <ProjectPageStatsBlockSettings
+            :project="project"
+            class="w-full md:w-72 transition"
+          />
         </div>
       </div>
     </template>
+
     <!-- No v-if=project to ensure internal queries trigger ASAP -->
     <div v-show="project" class="flex flex-col space-y-8 sm:space-y-14">
       <!-- Latest models -->

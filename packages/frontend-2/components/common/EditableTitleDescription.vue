@@ -1,5 +1,5 @@
 <template>
-  <div class="my-8">
+  <div>
     <!-- Editable Title -->
     <div class="flex group">
       <label class="max-w-full overflow-hidden">
@@ -32,7 +32,7 @@
     </div>
 
     <!-- Editable Description -->
-    <div class="mt-3 flex gap-x-2 group">
+    <div class="flex gap-x-2 group">
       <div class="hidden md:inline-block shrink-0 text-foreground-2 mt-0.5">
         <InformationCircleIcon class="w-5 h-5" />
       </div>
@@ -114,7 +114,7 @@ const debouncedEmitDescription = debounce(emitDescription, 2000)
 
 const titleInputClasses = computed(() => [
   'h3 tracking-tight border-0 border-b-2 transition focus:border-outline-3 max-w-full',
-  'p-0 bg-transparent border-transparent focus:outline-none focus:ring-0'
+  'p-0 bg-transparent border-transparent focus:outline-none focus:ring-0 font-bold'
 ])
 
 const descriptionInputClasses = computed(() => [
