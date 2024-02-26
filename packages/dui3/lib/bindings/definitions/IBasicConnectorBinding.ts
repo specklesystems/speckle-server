@@ -58,7 +58,7 @@ export class MockedBaseBinding extends BaseBridge {
   private documentModelStore: IModelCard[] = [
     {
       typeDiscriminator: 'SenderModelCard',
-      id: 'sender_test',
+      modelCardId: 'sender_test',
       projectId: useRuntimeConfig().public.speckleSampleProjectId,
       modelId: useRuntimeConfig().public.speckleSampleModelId,
       accountId: useRuntimeConfig().public.speckleAccountId,
@@ -83,7 +83,7 @@ export class MockedBaseBinding extends BaseBridge {
     } as IModelCard,
     {
       typeDiscriminator: 'ReceiverModelCard',
-      id: 'receiver_test',
+      modelCardId: 'receiver_test',
       projectId: useRuntimeConfig().public.speckleSampleProjectId,
       modelId: useRuntimeConfig().public.speckleSampleModelId,
       accountId: useRuntimeConfig().public.speckleAccountId,
@@ -122,7 +122,9 @@ export class MockedBaseBinding extends BaseBridge {
   }
 
   public removeModel(model: IModelCard) {
-    const modelIndex = this.documentModelStore.findIndex((m) => m.id === model.id)
+    const modelIndex = this.documentModelStore.findIndex(
+      (m) => m.modelCardId === model.modelCardId
+    )
     if (modelIndex > -1) {
       this.documentModelStore = this.documentModelStore.splice(modelIndex, 1)
     }

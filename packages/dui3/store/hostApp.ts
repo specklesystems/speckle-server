@@ -160,13 +160,18 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       })
   })
 
-  app.$sendBinding.on('setModelCreatedVersionId', (args) => {
+  const setModelCreatedVersionId = (args: {
+    modelCardId: string
+    versionId: string
+  }) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as ISenderModelCard
     model.latestCreatedVersionId = args.versionId
     model.progress = undefined
-  })
+  }
+
+  app.$sendBinding.on('setModelCreatedVersionId', setModelCreatedVersionId)
 
   /// RECEIVE STUFF
   const receiveModel = async (modelCardId: string) => {
@@ -282,6 +287,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     receiveModel,
     sendModelCancel,
     receiveModelCancel,
-    refreshSendFilters
+    refreshSendFilters,
+    setModelCreatedVersionId,
+    handleModelProgressEvents
   }
 })

@@ -1,7 +1,13 @@
 import { uniqueId } from 'lodash-es'
 import { BaseBridge } from './base'
-import { CreateVersionArgs } from 'lib/bindings/definitions/ISendBinding'
 import ObjectLoader, { ProgressStage } from '@speckle/objectloader'
+import { provideApolloClient, useMutation } from '@vue/apollo-composable'
+import {
+  createCommitMutation,
+  versionDetailsQuery
+} from '~/lib/graphql/mutationsAndQueries'
+import { DUIAccount, useAccountStore } from '~/store/accounts'
+import { useHostAppStore } from '~/store/hostApp'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
@@ -27,10 +33,19 @@ type ReceiveViaBrowserArgs = {
   modelCardId: string
   projectId: string
   modelId: string
-  token: string
-  serverUrl: string
   objectId: string
-  sourceApplication: string
+  accountId: string
+  selectedVersionId: string
+}
+
+type CreateVersionArgs = {
+  modelCardId: string
+  projectId: string
+  modelId: string
+  accountId: string
+  objectId: string
+  message?: string
+  sourceApplication?: string
 }
 
 /**
@@ -51,7 +66,7 @@ export class SketchupBridge extends BaseBridge {
     }
   >
   private bindingName: string
-  private TIMEOUT_MS = 2000 // 2s
+  private TIMEOUT_MS = 5000 // 2s
   private NON_TIMEOUT_METHODS = ['send', 'afterGetObjects']
   public isInitalized: Promise<boolean>
   private resolveIsInitializedPromise!: (v: boolean) => unknown
@@ -90,11 +105,29 @@ export class SketchupBridge extends BaseBridge {
   }
 
   private async receiveViaBrowser(eventPayload: ReceiveViaBrowserArgs) {
+    const accountStore = useAccountStore()
+    const hostAppStore = useHostAppStore()
+    const { accounts } = storeToRefs(accountStore)
+    const account = accounts.value.find(
+      (acc) => acc.accountInfo.id === eventPayload.accountId
+    )
+    provideApolloClient((account as DUIAccount).client)
+
+    // useQuery cannot use in outside of VueComponent.
+    const result = await (account as DUIAccount).client.query({
+      query: versionDetailsQuery,
+      variables: {
+        projectId: eventPayload.projectId,
+        versionId: eventPayload.selectedVersionId,
+        modelId: eventPayload.modelId
+      }
+    })
+
     const loader = new ObjectLoader({
-      serverUrl: eventPayload.serverUrl as string,
-      token: eventPayload.token as string,
+      serverUrl: account?.accountInfo.serverInfo.url as string,
+      token: account?.accountInfo.token as string,
       streamId: eventPayload.projectId,
-      objectId: eventPayload.objectId
+      objectId: result.data.project.model.version.referencedObject
     })
 
     const updateProgress = (e: {
@@ -103,22 +136,25 @@ export class SketchupBridge extends BaseBridge {
       total: number
     }) => {
       const progress = e.current / e.total
-      this.emit('receiverProgress', {
-        id: eventPayload.modelCardId,
-        status: progress === 1 ? 'Constructing' : 'Downloading',
-        progress
-      } as unknown as string)
+      hostAppStore.handleModelProgressEvents({
+        modelCardId: eventPayload.modelCardId,
+        progress: { status: 'Downloading', progress }
+      })
     }
 
     const rootObj = await loader.getAndConstructObject(updateProgress)
-    const args = [eventPayload.modelCardId, eventPayload.sourceApplication, rootObj]
+    const args = [
+      eventPayload.modelCardId,
+      result.data.project.model.version.sourceApplication,
+      rootObj
+    ]
 
+    // CONVERSION WILL START AFTER THAT
     await this.runMethod('afterGetObjects', args as unknown as unknown[])
-    this.emit('receiverProgress', {
-      id: eventPayload.modelCardId,
-      status: 'Completed',
-      progress: 1
-    } as unknown as string)
+    hostAppStore.handleModelProgressEvents({
+      modelCardId: eventPayload.modelCardId,
+      progress: { status: 'Converted', progress: 1 }
+    })
   }
 
   /**
@@ -167,13 +203,33 @@ export class SketchupBridge extends BaseBridge {
       sourceApplication: 'sketchup',
       message: message || 'send from sketchup'
     }
-    this.emit('createVersion', args as unknown as string)
+    const commitCreate = await this.createVersion(args)
 
-    this.emit('senderProgress', {
-      id: modelCardId,
-      status: 'Completed',
-      progress: 1
-    } as unknown as string)
+    const hostAppStore = useHostAppStore()
+    hostAppStore.setModelCreatedVersionId({
+      modelCardId: args.modelCardId,
+      versionId: commitCreate as string
+    })
+  }
+
+  public async createVersion(args: CreateVersionArgs) {
+    const accountStore = useAccountStore()
+    const { accounts } = storeToRefs(accountStore)
+    const account = accounts.value.find((acc) => acc.accountInfo.id === args.accountId)
+
+    const createVersion = provideApolloClient((account as DUIAccount).client)(() =>
+      useMutation(createCommitMutation)
+    )
+
+    const result = await createVersion.mutate({
+      commit: {
+        branchName: args.modelId,
+        objectId: args.objectId,
+        sourceApplication: 'Sketchup',
+        streamId: args.projectId
+      }
+    })
+    return result?.data?.commitCreate
   }
 
   public async create(): Promise<boolean> {
