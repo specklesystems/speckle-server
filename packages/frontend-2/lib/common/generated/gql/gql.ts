@@ -86,8 +86,10 @@ const documents = {
     "\n  mutation DeleteApplication($appId: String!) {\n    appDelete(appId: $appId)\n  }\n": types.DeleteApplicationDocument,
     "\n  mutation CreateApplication($app: AppCreateInput!) {\n    appCreate(app: $app)\n  }\n": types.CreateApplicationDocument,
     "\n  mutation EditApplication($app: AppUpdateInput!) {\n    appUpdate(app: $app)\n  }\n": types.EditApplicationDocument,
+    "\n  mutation RevokeAppAccess($appId: String!) {\n    appRevokeAccess(appId: $appId)\n  }\n": types.RevokeAppAccessDocument,
     "\n  query DeveloperSettingsAccessTokens {\n    activeUser {\n      id\n      apiTokens {\n        id\n        name\n        lastUsed\n        lastChars\n        createdAt\n        scopes\n      }\n    }\n  }\n": types.DeveloperSettingsAccessTokensDocument,
     "\n  query DeveloperSettingsApplications {\n    activeUser {\n      createdApps {\n        id\n        secret\n        name\n        description\n        redirectUrl\n        scopes {\n          name\n          description\n        }\n      }\n      id\n    }\n  }\n": types.DeveloperSettingsApplicationsDocument,
+    "\n  query DeveloperSettingsAuthorizedApps {\n    activeUser {\n      id\n      authorizedApps {\n        id\n        description\n        name\n        author {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n": types.DeveloperSettingsAuthorizedAppsDocument,
     "\n  query SearchProjects($search: String, $onlyWithRoles: [String!] = null) {\n    activeUser {\n      projects(limit: 10, filter: { search: $search, onlyWithRoles: $onlyWithRoles }) {\n        totalCount\n        items {\n          ...FormSelectProjects_Project\n        }\n      }\n    }\n  }\n": types.SearchProjectsDocument,
     "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n": types.ProjectDashboardItemNoModelsFragmentDoc,
     "\n  fragment ProjectDashboardItem on Project {\n    id\n    ...ProjectDashboardItemNoModels\n    models(limit: 4, filter: { onlyWithVersions: true }) {\n      totalCount\n      items {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n    pendingImportedModels(limit: 4) {\n      ...PendingFileUpload\n    }\n  }\n": types.ProjectDashboardItemFragmentDoc,
@@ -484,11 +486,19 @@ export function graphql(source: "\n  mutation EditApplication($app: AppUpdateInp
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  mutation RevokeAppAccess($appId: String!) {\n    appRevokeAccess(appId: $appId)\n  }\n"): (typeof documents)["\n  mutation RevokeAppAccess($appId: String!) {\n    appRevokeAccess(appId: $appId)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  query DeveloperSettingsAccessTokens {\n    activeUser {\n      id\n      apiTokens {\n        id\n        name\n        lastUsed\n        lastChars\n        createdAt\n        scopes\n      }\n    }\n  }\n"): (typeof documents)["\n  query DeveloperSettingsAccessTokens {\n    activeUser {\n      id\n      apiTokens {\n        id\n        name\n        lastUsed\n        lastChars\n        createdAt\n        scopes\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  query DeveloperSettingsApplications {\n    activeUser {\n      createdApps {\n        id\n        secret\n        name\n        description\n        redirectUrl\n        scopes {\n          name\n          description\n        }\n      }\n      id\n    }\n  }\n"): (typeof documents)["\n  query DeveloperSettingsApplications {\n    activeUser {\n      createdApps {\n        id\n        secret\n        name\n        description\n        redirectUrl\n        scopes {\n          name\n          description\n        }\n      }\n      id\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query DeveloperSettingsAuthorizedApps {\n    activeUser {\n      id\n      authorizedApps {\n        id\n        description\n        name\n        author {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query DeveloperSettingsAuthorizedApps {\n    activeUser {\n      id\n      authorizedApps {\n        id\n        description\n        name\n        author {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

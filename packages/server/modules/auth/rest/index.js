@@ -24,6 +24,7 @@ module.exports = (app) => {
    */
   app.get('/auth/accesscode', async (req, res) => {
     try {
+      const preventRedirect = !!req.query.preventRedirect
       const appId = req.query.appId
       const app = await getApp({ id: appId })
 
@@ -42,7 +43,11 @@ module.exports = (app) => {
       await validateScopes(scopes, Scopes.Tokens.Write)
 
       const ac = await createAuthorizationCode({ appId, userId, challenge })
-      return res.redirect(`${app.redirectUrl}?access_code=${ac}`)
+
+      const redirectUrl = `${app.redirectUrl}?access_code=${ac}`
+      return preventRedirect
+        ? res.status(200).json({ redirectUrl })
+        : res.redirect(redirectUrl)
     } catch (err) {
       if (
         err instanceof InvalidAccessCodeRequestError ||

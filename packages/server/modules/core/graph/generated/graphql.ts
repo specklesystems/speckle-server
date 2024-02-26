@@ -2616,7 +2616,7 @@ export type User = {
   /** Returns a list of your personal api tokens. */
   apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
-  authorizedApps?: Maybe<Array<Maybe<ServerAppListItem>>>;
+  authorizedApps?: Maybe<Array<ServerAppListItem>>;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
   /**
@@ -4242,7 +4242,7 @@ export type TokenResourceIdentifierResolvers<ContextType = GraphQLContext, Paren
 export type UserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
   activity?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<UserActivityArgs, 'limit'>>;
   apiTokens?: Resolver<Array<ResolversTypes['ApiToken']>, ParentType, ContextType>;
-  authorizedApps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerAppListItem']>>>, ParentType, ContextType>;
+  authorizedApps?: Resolver<Maybe<Array<ResolversTypes['ServerAppListItem']>>, ParentType, ContextType>;
   avatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   bio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   commits?: Resolver<Maybe<ResolversTypes['CommitCollection']>, ParentType, ContextType, RequireFields<UserCommitsArgs, 'limit'>>;
