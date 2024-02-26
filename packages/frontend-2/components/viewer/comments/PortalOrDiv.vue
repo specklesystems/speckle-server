@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div v-if="!isMobile" :class="divClass">
+    <div v-if="!isMobile">
       <slot></slot>
     </div>
     <Portal v-else :to="props.to">
@@ -15,7 +15,6 @@ import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const props = defineProps<{
   to: string
-  divClass?: string
 }>()
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
