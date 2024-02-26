@@ -242,6 +242,19 @@ export function useSelectionUtilities() {
     selectedObjects.value = objs
   }
 
+  const addToSelectionFromObjectIds = (objectIds: string[]) => {
+    const originalObjects = selectedObjects.value.slice()
+    setSelectionFromObjectIds(objectIds)
+    selectedObjects.value = [...originalObjects, ...selectedObjects.value]
+  }
+
+  const removeFromSelectionObjectIds = (objectIds: string[]) => {
+    const finalObjects = selectedObjects.value.filter(
+      (o) => !objectIds.includes(o.id || '')
+    )
+    selectedObjects.value = finalObjects
+  }
+
   const addToSelection = (object: SpeckleObject) => {
     const idx = selectedObjects.value.findIndex((o) => o.id === object.id)
     if (idx !== -1) return
@@ -268,6 +281,8 @@ export function useSelectionUtilities() {
     removeFromSelection,
     clearSelection,
     setSelectionFromObjectIds,
+    addToSelectionFromObjectIds,
+    removeFromSelectionObjectIds,
     objects: selectedObjects,
     objectIds: selectedObjectIds
   }
