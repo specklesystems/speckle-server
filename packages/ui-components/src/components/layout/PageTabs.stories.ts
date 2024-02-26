@@ -20,7 +20,7 @@ export default {
 } as Meta
 
 const defaultItems: LayoutPageTabItem[] = [
-  { title: 'Models', id: 'models', icon: CubeIcon },
+  { title: 'Models', id: 'models', icon: CubeIcon, count: 300 },
   { title: 'Discussions', id: 'discussions', icon: ChatBubbleLeftRightIcon },
   { title: 'Automations', id: 'automations', icon: BoltIcon },
   { title: 'Settings', id: 'settings', icon: Cog6ToothIcon }
