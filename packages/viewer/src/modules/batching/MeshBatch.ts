@@ -496,7 +496,7 @@ export default class MeshBatch implements Batch {
       })
       .slice()
 
-    this.geometry.groups.sort((a, b) => {
+    groups.sort((a, b) => {
       const materialA: Material = (this.mesh.material as Array<Material>)[
         a.materialIndex
       ]
