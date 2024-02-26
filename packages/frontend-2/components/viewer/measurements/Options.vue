@@ -81,7 +81,7 @@
       </ViewerTip>
     </Portal>
     <Portal to="pocket-actions">
-      <FormButton size="sm" @click="() => clearMeasurements()">
+      <FormButton size="xs" @click="() => clearMeasurements()">
         Reset Measurements
       </FormButton>
     </Portal>
