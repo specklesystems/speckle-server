@@ -6,7 +6,11 @@
       <div class="flex items-center space-x-2 min-w-0">
         <UserAvatar :user="modelData.author" size="sm" class="max-[275px]:hidden" />
         <div class="text-foreground-2 mt-[2px]">
-          <CommonBadge>
+          <CommonBadge
+            color-classes="bg-blue-500/20 text-primary"
+            :rounded="true"
+            class="max-[275px]:-ml-2"
+          >
             <CloudArrowDownIcon v-if="!isSender" class="w-4" />
             <CloudArrowUpIcon v-else class="w-4" />
           </CommonBadge>

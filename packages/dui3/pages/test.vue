@@ -1,11 +1,7 @@
 <template>
   <div class="flex flex-col space-y-2">
-    <Portal to="navigation">
-      <FormButton to="/" size="sm" :icon-left="ArrowLeftIcon" class="ml-2">
-        Back home
-      </FormButton>
-    </Portal>
-    <div class="px-2">
+    <div class="px-2 mt-2">
+      <FormButton to="/" size="sm" :icon-left="ArrowLeftIcon">Home</FormButton>
       <p class="h5">Document info</p>
       <p class="text-sm text-foreground-2 py-2">
         Current document info. This should change on document swaps, closure, opening,

@@ -66,6 +66,7 @@
           })
         "
       />
+      <!-- {{ props.modelCard.receiveResult.display }} -->
     </template>
   </ModelCardBase>
 </template>
@@ -186,6 +187,7 @@ watchOnce(versionDetailsResult, async (newVal) => {
       hasDismissedUpdateWarning: false
     }
   }
+  console.log(newVal)
   // Always update the card's project name and model name, if needed. Note, this is not needed for senders (senders do not need to create layers).
   await store.patchModel(props.modelCard.modelCardId, {
     ...patchObject,
