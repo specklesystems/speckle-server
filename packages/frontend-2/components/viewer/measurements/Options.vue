@@ -16,9 +16,9 @@
         color="danger"
         :icon-left="TrashIcon"
         class="font-normal py-1"
-        @click="() => removeMeasurement()"
+        @click="() => clearMeasurements()"
       >
-        Delete Selected
+        Delete All Measurements
       </FormButton>
     </template>
     <div class="px-3 py-2 sm:p-3 flex flex-col gap-3 border-b border-outline-3">
@@ -113,8 +113,7 @@ const measurementParams = ref({
   precision: measurementPrecision.value
 })
 
-const { setMeasurementOptions, removeMeasurement, clearMeasurements } =
-  useMeasurementUtilities()
+const { setMeasurementOptions, clearMeasurements } = useMeasurementUtilities()
 
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
   measurementParams.value.type = selectedOption.value

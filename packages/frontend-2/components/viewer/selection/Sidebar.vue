@@ -1,70 +1,56 @@
 <template>
-  <ViewerCommentsPortalOrDiv v-if="objects.length !== 0" to="bottomPanel">
-    <div
-      :class="`sm:bg-foundation simple-scrollbar z-20 relative sm:fixed sm:right-4 sm:right-4 sm:mb-4 sm:max-w-64 min-h-[3rem] sm:min-h-[4.75rem] max-h-[50vh] sm:max-h-[calc(100vh-5.5rem)] w-full sm:w-64 overflow-y-auto sm:rounded-md sm:shadow transition ${
-        objects.length !== 0
-          ? 'translate-x-0 opacity-100'
-          : 'translate-x-[120%] opacity-0'
-      } ${isEmbedEnabled ? 'sm:top-2' : 'sm:top-[4rem]'} ${
-        focusedThreadId && isSmallerOrEqualSm ? 'hidden' : ''
-      }`"
-    >
-      <ViewerLayoutPanel @close="trackAndClearSelection()">
-        <template #title>Selection Info</template>
-        <template #actions>
-          <FormButton
-            size="xs"
-            color="secondary"
-            class="opacity-80 hover:opacity-100"
-            @click.stop="hideOrShowSelection"
-          >
-            <div v-if="isHidden" class="flex items-center gap-1">
-              <EyeIcon class="h-4 w-4" />
-              Show
-            </div>
-            <div v-else class="flex items-center gap-1">
-              <EyeSlashIcon class="h-4 w-4" />
-              Hide
-            </div>
-          </FormButton>
-          <FormButton
-            size="xs"
-            color="secondary"
-            class="hover:opacity-100"
-            :class="isIsolated ? 'text-primary opacity-100' : 'opacity-80'"
-            @click.stop="isolateOrUnisolateSelection"
-          >
-            <div class="flex items-center gap-1">
-              <FunnelIconOutline v-if="!isIsolated" class="h-4 w-4" />
-              <FunnelIcon v-else class="h-4 w-4" />
-              Isolate
-            </div>
-          </FormButton>
-        </template>
-        <div class="p-1 mb-2 sm:mb-0 sm:py-2 sm:bg-white/90 dark:sm:bg-neutral-700/90">
-          <div class="space-y-2">
-            <ViewerSelectionObject
-              v-for="object in objectsLimited"
-              :key="(object.id as string)"
-              :object="object"
-              :unfold="false"
-              :root="true"
-            />
+  <ViewerCommentsPortalOrDiv v-if="shouldRenderSidebar" to="bottomPanel">
+    <ViewerSidebar :open="sidebarOpen" @close="onClose">
+      <template #title><div class="select-none">Selection Info</div></template>
+      <template #actions>
+        <FormButton
+          size="xs"
+          color="secondary"
+          class="opacity-80 hover:opacity-100"
+          @click.stop="hideOrShowSelection"
+        >
+          <div class="flex items-center gap-1">
+            <EyeIcon v-if="!isHidden" class="h-4 w-4" />
+            <EyeSlashIcon v-else class="h-4 w-4" />
+            Hide
           </div>
-          <div v-if="itemCount <= objects.length" class="mb-2">
-            <FormButton size="xs" text full-width @click="itemCount += 10">
-              View More ({{ objects.length - itemCount }})
-            </FormButton>
+        </FormButton>
+        <FormButton
+          size="xs"
+          color="secondary"
+          class="hover:opacity-100"
+          :class="isIsolated ? 'text-primary opacity-100' : 'opacity-80'"
+          @click.stop="isolateOrUnisolateSelection"
+        >
+          <div class="flex items-center gap-1">
+            <FunnelIconOutline v-if="!isIsolated" class="h-4 w-4" />
+            <FunnelIcon v-else class="h-4 w-4" />
+            Isolate
           </div>
-          <div
-            v-if="objects.length === 1"
-            class="hidden sm:block text-foreground-2 mt-2 px-2 text-xs"
-          >
-            Hold "shift" to select multiple objects
-          </div>
+        </FormButton>
+      </template>
+      <div class="p-1 mb-2 sm:mb-0 sm:py-2">
+        <div class="space-y-2">
+          <ViewerSelectionObject
+            v-for="object in objectsLimited"
+            :key="(object.id as string)"
+            :object="object"
+            :root="true"
+            :unfold="objectsLimited.length === 1"
+          />
         </div>
-      </ViewerLayoutPanel>
-    </div>
+        <div v-if="itemCount <= objects.length" class="mb-2">
+          <FormButton size="xs" text full-width @click="itemCount += 10">
+            View More ({{ objects.length - itemCount }})
+          </FormButton>
+        </div>
+      </div>
+      <template v-if="!isSmallerOrEqualSm" #footer>
+        <div class="text-foreground-2 text-xs select-none">
+          Hold "shift" to select multiple objects
+        </div>
+      </template>
+    </ViewerSidebar>
   </ViewerCommentsPortalOrDiv>
 </template>
 <script setup lang="ts">
@@ -79,29 +65,31 @@ import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composa
 import { uniqWith } from 'lodash-es'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
-import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 const {
   viewer: {
     metadata: { filteringState }
   },
-  urlHashState: { focusedThreadId },
-  ui: { diff }
+  ui: { diff, measurement }
 } = useInjectedViewerState()
 const { objects, clearSelection } = useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
-const { isEmbedEnabled } = useEmbed()
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
-const itemCount = ref(42)
+const itemCount = ref(20)
+const sidebarOpen = ref(false)
 
 const objectsUniqueByAppId = computed(() => {
   if (!diff.enabled.value) return objects.value
   return uniqWith(objects.value, (a, b) => {
     return a.applicationId === b.applicationId
   })
+})
+
+const shouldRenderSidebar = computed(() => {
+  return (!isSmallerOrEqualSm.value || sidebarOpen.value) && !measurement.enabled.value
 })
 
 const objectsLimited = computed(() => {
@@ -179,6 +167,11 @@ const trackAndClearSelection = () => {
   })
 }
 
+const onClose = () => {
+  sidebarOpen.value = false
+  trackAndClearSelection()
+}
+
 onKeyStroke('Escape', () => {
   // Cleareance of any vis/iso state coming from here should happen in clearSelection()
   // Note: we're not using the trackAndClearSelection method beacuse
@@ -191,4 +184,15 @@ onKeyStroke('Escape', () => {
     source: 'keypress-escape'
   })
 })
+
+watch(
+  () => objects.value.length,
+  (newLength) => {
+    if (newLength !== 0) {
+      sidebarOpen.value = true
+    } else {
+      sidebarOpen.value = false
+    }
+  }
+)
 </script>
