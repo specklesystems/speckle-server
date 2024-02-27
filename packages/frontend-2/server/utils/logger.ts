@@ -1,4 +1,4 @@
-import { Optional } from '@speckle/shared'
+import type { Optional } from '@speckle/shared'
 import type pino from 'pino'
 import { buildLogger } from '~/server/lib/core/helpers/observability'
 

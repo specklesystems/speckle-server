@@ -107,9 +107,10 @@ export const LoggingMiddleware = pinoHttp({
       const realRaw = get(res, 'raw.raw') as typeof res.raw
       const isRequestCompleted = !!realRaw.writableEnded
       const isRequestAborted = !isRequestCompleted
+      const statusCode = res.statusCode || res.raw.statusCode || realRaw.statusCode
 
       return {
-        statusCode: res.raw.statusCode,
+        statusCode,
         // Allowlist useful headers
         headers: resRaw.headers,
         isRequestAborted
