@@ -52,18 +52,10 @@
             </div>
           </div>
         </div>
-        <div
-          class="w-full"
-          :class="
-            isEmbedEnabled
-              ? $slots.actions
-                ? 'h-16'
-                : 'h-10'
-              : $slots.actions
-              ? 'h-8 sm:h-20'
-              : 'h-10'
-          "
-        ></div>
+
+        <!-- Spacer to fill the relative space below the absolutely positioned header elements -->
+        <div class="w-full" :class="$slots.actions ? 'h-24' : 'h-10'"></div>
+
         <div
           class="overflow-y-auto simple-scrollbar h-[calc(50dvh)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2 sm:rounded-b-md"
         >
@@ -85,7 +77,6 @@ import { ref } from 'vue'
 import { useEventListener } from '@vueuse/core'
 import { XMarkIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
-import { useEmbed } from '~~/lib/viewer/composables/setup/embed'
 
 defineProps<{
   open: boolean
@@ -103,7 +94,6 @@ let startWidth = 0
 let startX = 0
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
-const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const startResizing = (event: MouseEvent) => {
   event.preventDefault()
