@@ -93,6 +93,7 @@ export function getMailchimpStatus() {
 }
 
 export function getMailchimpConfig() {
+  if (!getMailchimpStatus()) return null
   if (
     !process.env.MAILCHIMP_API_KEY ||
     !process.env.MAILCHIMP_SERVER_PREFIX ||

@@ -6,12 +6,19 @@ const passport = require('passport')
 
 const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
-const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
+const {
+  getFrontendOrigin,
+  getMailchimpStatus
+} = require('@/modules/shared/helpers/envHelper')
 const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
-const { authLogger } = require('@/logging/logging')
+const { authLogger, logger } = require('@/logging/logging')
 const { createRedisClient } = require('@/modules/shared/redis/redis')
-const { mixpanel } = require('@/modules/shared/utils/mixpanel')
-const { addToMailchimpAudience } = require('./services/mailchimp')
+const { mixpanel, resolveMixpanelUserId } = require('@/modules/shared/utils/mixpanel')
+const {
+  addToMailchimpAudience,
+  triggerMailchimpCustomerJourney
+} = require('./services/mailchimp')
+const { getUserById } = require('@/modules/core/services/users')
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
  * NOTE: it does seem used!
@@ -83,16 +90,29 @@ module.exports = async (app) => {
         urlObj.searchParams.set('register', 'true')
 
         // Send event to MP
+        const mixpanelUserId = req.user.email
+          ? resolveMixpanelUserId(req.user.email)
+          : null
         const isInvite = !!req.user.isInvite
-        if (req.user.email) {
-          await mixpanel({ userEmail: req.user.email }).track('Sign Up', {
+        if (mixpanelUserId) {
+          await mixpanel({ mixpanelUserId }).track('Sign Up', {
             isInvite
           })
         }
-      }
 
-      if (newsletterConsent) {
-        await addToMailchimpAudience(req.user.id)
+        if (getMailchimpStatus()) {
+          const user = await getUserById({ userId: req.user.id })
+          if (!user)
+            logger.warn(
+              'Could not register user for mailchimp lists - no db user record found.'
+            )
+
+          await triggerMailchimpCustomerJourney(user)
+
+          if (newsletterConsent) {
+            await addToMailchimpAudience(req.user)
+          }
+        }
       }
 
       const redirectUrl = urlObj.toString()
