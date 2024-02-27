@@ -5,7 +5,7 @@
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
-      v-if="!isEmbedEnabled && !state.ui.measurement.enabled"
+      v-if="shouldShowNewThread"
       v-model="buttonState"
       :can-post-comment="canPostComment"
       class="z-[13]"
@@ -187,6 +187,10 @@ const onThreadExpandedChange = (isExpanded: boolean) => {
     closeNewThread()
   }
 }
+
+const shouldShowNewThread = computed(
+  () => !isEmbedEnabled.value && !state.ui.measurement.enabled.value
+)
 
 const allThreadsChronologicalOrder = computed(() => {
   const vals = Object.values(commentThreads.value)
