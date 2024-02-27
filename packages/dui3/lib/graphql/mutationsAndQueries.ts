@@ -120,12 +120,13 @@ export const modelVersionsQuery = graphql(`
     $projectId: String!
     $limit: Int!
     $cursor: String
+    $filter: ModelVersionsFilter
   ) {
     project(id: $projectId) {
       id
       model(id: $modelId) {
         id
-        versions(limit: $limit, cursor: $cursor) {
+        versions(limit: $limit, cursor: $cursor, filter: $filter) {
           totalCount
           cursor
           items {
