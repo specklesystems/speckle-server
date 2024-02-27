@@ -6,7 +6,7 @@
     :class="[
       open ? '' : 'pointer-events-none',
       isEmbedEnabled === true
-        ? 'sm:top-2 sm:h-[calc(100dvh-3.3rem)]'
+        ? 'sm:top-2 sm:h-[calc(100dvh-3.8rem)]'
         : 'sm:top-[4.2rem] sm:h-[calc(100dvh-4.2rem)]'
     ]"
   >
@@ -57,18 +57,7 @@
             </div>
           </div>
         </div>
-        <div
-          class="w-full"
-          :class="
-            isEmbedEnabled
-              ? $slots.actions
-                ? 'h-16'
-                : 'h-10'
-              : $slots.actions
-              ? 'h-8 sm:h-20'
-              : 'h-10'
-          "
-        ></div>
+        <div class="w-full" :class="$slots.actions ? 'h-24 sm:h-20' : 'h-10'"></div>
         <div
           class="overflow-y-auto simple-scrollbar h-[calc(50dvh)] sm:h-full bg-foundation w-full pt-2 sm:rounded-b-md"
         >
