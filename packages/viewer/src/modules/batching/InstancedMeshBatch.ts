@@ -330,6 +330,17 @@ export default class InstancedMeshBatch implements Batch {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
     this.setBatchBuffers(...ranges)
+    const groupMaterialIndices = [
+      ...Array.from(new Set(this.groups.map((value) => value.materialIndex)))
+    ]
+    for (let k = 0; k < this.materials.length; k++) {
+      if (!groupMaterialIndices.includes(k)) {
+        this.materials.splice(k, 1)
+        this.groups.forEach((value: DrawGroup) => {
+          if (value.materialIndex > k) value.materialIndex--
+        })
+      }
+    }
     this.needsFlatten = true
   }
 
