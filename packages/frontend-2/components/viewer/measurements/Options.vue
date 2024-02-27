@@ -75,10 +75,15 @@
       </div>
     </div>
     <Portal to="pocket-tip">
-      <ViewerTip>
+      <ViewerTip class="hidden sm:flex">
         <strong>Tip:</strong>
         Right click to cancel measurement
       </ViewerTip>
+    </Portal>
+    <Portal to="pocket-actions">
+      <FormButton size="xs" @click="() => clearMeasurements()">
+        Reset Measurements
+      </FormButton>
     </Portal>
   </ViewerLayoutPanel>
 </template>

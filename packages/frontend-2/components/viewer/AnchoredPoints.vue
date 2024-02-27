@@ -89,25 +89,27 @@
         class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500/40"
       >
         <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
-          <FormButton
-            v-if="spotlightUserSessionId && spotlightUser"
-            size="xs"
-            class="truncate"
-            @click="() => (spotlightUserSessionId = null)"
-          >
-            <span>Stop Following {{ spotlightUser?.userName.split(' ')[0] }}</span>
-          </FormButton>
-          <div
-            v-else
-            v-tippy="followers.map((u) => u.name).join(', ')"
-            class="text-xs p-2 font-bold text-primary"
-          >
-            Followed by {{ followers[0].name.split(' ')[0] }}
-            <span v-if="followers.length > 1">
-              & {{ followers.length - 1 }}
-              {{ followers.length - 1 === 1 ? 'other' : 'others' }}
-            </span>
-          </div>
+          <Portal to="pocket-right">
+            <FormButton
+              v-if="spotlightUserSessionId && spotlightUser"
+              size="xs"
+              class="truncate"
+              @click="() => (spotlightUserSessionId = null)"
+            >
+              <span>Stop Following {{ spotlightUser?.userName.split(' ')[0] }}</span>
+            </FormButton>
+            <div
+              v-else
+              v-tippy="followers.map((u) => u.name).join(', ')"
+              class="text-xs p-2 font-bold text-primary"
+            >
+              Followed by {{ followers[0].name.split(' ')[0] }}
+              <span v-if="followers.length > 1">
+                & {{ followers.length - 1 }}
+                {{ followers.length - 1 === 1 ? 'other' : 'others' }}
+              </span>
+            </div>
+          </Portal>
         </div>
       </div>
     </div>
