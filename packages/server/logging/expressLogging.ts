@@ -106,9 +106,10 @@ export const LoggingExpressMiddleware = HttpLogger({
       }
       const serverRes = get(res, 'raw.raw') as ServerResponse
       const auth = serverRes.req.context
+      const statusCode = res.statusCode || res.raw.statusCode || serverRes.statusCode
 
       return {
-        statusCode: res.raw.statusCode,
+        statusCode,
         // Allowlist useful headers
         headers: Object.fromEntries(
           Object.entries(resRaw.raw.headers).filter(
