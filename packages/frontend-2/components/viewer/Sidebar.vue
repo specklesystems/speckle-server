@@ -81,7 +81,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref, onUnmounted } from 'vue'
+import { ref } from 'vue'
+import { useEventListener } from '@vueuse/core'
 import { XMarkIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~~/lib/viewer/composables/setup/embed'
@@ -95,6 +96,8 @@ const emit = defineEmits<{
 }>()
 
 const resizableElement = ref(null)
+const resizeHandle = ref(null)
+const isResizing = ref(false)
 const width = ref(300)
 let startWidth = 0
 let startX = 0
@@ -104,35 +107,28 @@ const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const startResizing = (event: MouseEvent) => {
   event.preventDefault()
-
-  const element = resizableElement.value as HTMLElement | null
-  if (element) {
-    element.classList.remove('transition-all')
-  }
-
+  isResizing.value = true
   startX = event.clientX
   startWidth = width.value
-
-  document.addEventListener('mousemove', resizing)
-  document.addEventListener('mouseup', stopResizing)
 }
 
-const resizing = (event: MouseEvent) => {
-  const diffX = startX - event.clientX
-  width.value = Math.max(
-    300,
-    Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
-  )
-}
+useEventListener(resizeHandle, 'mousedown', startResizing)
 
-const stopResizing = () => {
-  document.removeEventListener('mousemove', resizing)
-  document.removeEventListener('mouseup', stopResizing)
-  const element = resizableElement.value as HTMLElement | null
-  if (element) {
-    element.classList.add('transition-all')
+useEventListener(document, 'mousemove', (event) => {
+  if (isResizing.value) {
+    const diffX = startX - event.clientX
+    width.value = Math.max(
+      300,
+      Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
+    )
   }
-}
+})
+
+useEventListener(document, 'mouseup', () => {
+  if (isResizing.value) {
+    isResizing.value = false
+  }
+})
 
 const minimize = () => {
   width.value = 300
@@ -142,9 +138,4 @@ const onClose = () => {
   minimize()
   emit('close')
 }
-
-onUnmounted(() => {
-  document.removeEventListener('mousemove', resizing)
-  document.removeEventListener('mouseup', stopResizing)
-})
 </script>
