@@ -1,4 +1,3 @@
-import { Observability } from '@speckle/shared'
 import { defineEventHandler, fromNodeMiddleware } from 'h3'
 import { IncomingMessage, ServerResponse } from 'http'
 import pino from 'pino'
@@ -9,7 +8,10 @@ import { randomUUID } from 'crypto'
 import type { IncomingHttpHeaders } from 'http'
 import { REQUEST_ID_HEADER } from '~~/server/lib/core/helpers/constants'
 import { get } from 'lodash'
-import { serializeRequest } from '~/server/lib/core/helpers/observability'
+import {
+  serializeRequest,
+  getRequestPath
+} from '~/server/lib/core/helpers/observability'
 
 /**
  * Server request logger
@@ -28,10 +30,7 @@ function determineRequestId(
 const generateReqId: GenReqId = (req: IncomingMessage) =>
   determineRequestId(req.headers)
 
-const logger = Observability.getLogger(
-  useRuntimeConfig().public.logLevel,
-  useRuntimeConfig().public.logPretty
-)
+const logger = useLogger()
 
 export const LoggingMiddleware = pinoHttp({
   logger,
@@ -46,8 +45,9 @@ export const LoggingMiddleware = pinoHttp({
     error: Error | undefined
   ) => {
     // Mark some lower importance/spammy endpoints w/ 'debug' to reduce noise
-    const path = req.url?.split('?')[0]
-    const shouldBeDebug = ['/metrics', '/health'].includes(path || '') ?? false
+    const path = getRequestPath(req)
+    const shouldBeDebug =
+      ['/metrics', '/health', '/api/status'].includes(path || '') ?? false
 
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
@@ -66,7 +66,7 @@ export const LoggingMiddleware = pinoHttp({
   customSuccessObject(req, res, val: Record<string, unknown>) {
     const isCompleted = !req.readableAborted && res.writableEnded
     const requestStatus = isCompleted ? 'completed' : 'aborted'
-    const requestPath = req.url?.split('?')[0] || 'unknown'
+    const requestPath = getRequestPath(req) || 'unknown'
     const appBindings = res.vueLoggerBindings || {}
 
     return {
@@ -82,7 +82,7 @@ export const LoggingMiddleware = pinoHttp({
   },
   customErrorObject(req, res, err, val: Record<string, unknown>) {
     const requestStatus = 'failed'
-    const requestPath = req.url?.split('?')[0] || 'unknown'
+    const requestPath = getRequestPath(req) || 'unknown'
     const appBindings = res.vueLoggerBindings || {}
 
     return {
