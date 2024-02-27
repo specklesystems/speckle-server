@@ -1,5 +1,5 @@
 <template>
-  <div class="rounded-md shadow border-2 border-transparent p-3">
+  <div class="rounded-md bg-foundation-2 shadow p-3">
     <div class="flex items-center">
       <div class="flex items-end justify-between w-full text-foreground-2">
         <div v-if="activeUser" class="flex items-center gap-1 flex-grow select-none">

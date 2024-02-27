@@ -25,7 +25,7 @@ useHead({
   },
   bodyAttrs: {
     class:
-      'simple-scrollbar bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent'
+      'simple-scrollbar bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent overflow-x-hidden overflow-y-scroll'
   }
 })
 
