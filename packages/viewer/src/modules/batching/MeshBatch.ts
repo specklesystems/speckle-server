@@ -345,17 +345,6 @@ export default class MeshBatch implements Batch {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
     this.setBatchBuffers(...ranges)
-    const groupMaterialIndices = [
-      ...Array.from(new Set(this.groups.map((value) => value.materialIndex)))
-    ]
-    for (let k = 0; k < this.materials.length; k++) {
-      if (!groupMaterialIndices.includes(k)) {
-        this.materials.splice(k, 1)
-        this.groups.forEach((value: DrawGroup) => {
-          if (value.materialIndex > k) value.materialIndex--
-        })
-      }
-    }
     this.needsFlatten = true
   }
 
@@ -414,6 +403,18 @@ export default class MeshBatch implements Batch {
   }
 
   private flattenDrawGroups() {
+    const groupMaterialIndices = [
+      ...Array.from(new Set(this.groups.map((value) => value.materialIndex)))
+    ]
+    for (let k = 0; k < this.materials.length; k++) {
+      if (!groupMaterialIndices.includes(k)) {
+        this.materials.splice(k, 1)
+        this.groups.forEach((value: DrawGroup) => {
+          if (value.materialIndex >= k) value.materialIndex--
+        })
+      }
+    }
+
     const materialOrder = []
     this.geometry.groups.reduce((previousValue, currentValue) => {
       if (previousValue.indexOf(currentValue.materialIndex) === -1) {
@@ -476,6 +477,7 @@ export default class MeshBatch implements Batch {
           this.materials[value.materialIndex].transparent === true ||
           this.materials[value.materialIndex].visible === false
       )
+
       if (transparentOrHiddenGroup) {
         for (
           let k = this.geometry.groups.indexOf(transparentOrHiddenGroup);

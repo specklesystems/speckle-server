@@ -61,6 +61,7 @@ export default class SpeckleMesh extends Mesh {
   private batchMaterial: Material = null
   private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Material | Material[]> = []
+  private materialCacheLUT: { [id: string]: number } = {}
 
   private _batchObjects: BatchObject[]
   private transformsBuffer: Float32Array = null
@@ -120,19 +121,25 @@ export default class SpeckleMesh extends Mesh {
     this.material.needsUpdate = true
   }
 
+  private lookupMaterial(material: Material) {
+    return (
+      this.materialCache[material.id] ||
+      this.materialCache[this.materialCacheLUT[material.id]]
+    )
+  }
+
   public getCachedMaterial(material: Material, copy = false): Material {
-    // console.log(Object.keys(this.materialCache).length)
-    if (!this.materialCache[material.id]) {
-      this.materialCache[material.id] = material.clone()
+    let cachedMaterial = this.lookupMaterial(material)
+    if (!cachedMaterial) {
+      const clone = material.clone()
+      this.materialCache[material.id] = clone
+      this.materialCacheLUT[clone.id] = material.id
+      cachedMaterial = clone
       this.updateMaterialTransformsUniform(this.materialCache[material.id])
-    } else if (
-      copy ||
-      material['needsCopy'] ||
-      this.materialCache[material.id]['needsCopy']
-    ) {
-      Materials.fastCopy(material, this.materialCache[material.id])
+    } else if (copy || material['needsCopy'] || cachedMaterial['needsCopy']) {
+      Materials.fastCopy(material, cachedMaterial)
     }
-    return this.materialCache[material.id]
+    return cachedMaterial
   }
 
   public restoreMaterial() {
