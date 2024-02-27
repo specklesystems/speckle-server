@@ -16,9 +16,9 @@
         color="danger"
         :icon-left="TrashIcon"
         class="font-normal py-1"
-        @click="() => removeMeasurement()"
+        @click="() => clearMeasurements()"
       >
-        Delete Selected
+        Delete All Measurements
       </FormButton>
     </template>
     <div class="px-3 py-2 sm:p-3 flex flex-col gap-3 border-b border-outline-3">
@@ -75,13 +75,13 @@
       </div>
     </div>
     <Portal to="pocket-tip">
-      <ViewerTip>
+      <ViewerTip class="hidden sm:flex">
         <strong>Tip:</strong>
         Right click to cancel measurement
       </ViewerTip>
     </Portal>
     <Portal to="pocket-actions">
-      <FormButton size="sm" @click="() => clearMeasurements()">
+      <FormButton size="xs" @click="() => clearMeasurements()">
         Reset Measurements
       </FormButton>
     </Portal>
@@ -113,8 +113,7 @@ const measurementParams = ref({
   precision: measurementPrecision.value
 })
 
-const { setMeasurementOptions, removeMeasurement, clearMeasurements } =
-  useMeasurementUtilities()
+const { setMeasurementOptions, clearMeasurements } = useMeasurementUtilities()
 
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
   measurementParams.value.type = selectedOption.value
