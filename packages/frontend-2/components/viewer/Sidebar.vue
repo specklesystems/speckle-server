@@ -1,9 +1,14 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 sm:top-[4.2rem] h-[50dvh] sm:h-[calc(100dvh-4.2rem)] overflow-hidden w-screen sm:pr-3 sm:pb-3 sm:pt-0"
+    class="relative sm:absolute z-10 right-0 h-[50dvh] overflow-hidden w-screen sm:pr-3 sm:pb-3 sm:pt-0"
     :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
-    :class="open ? '' : 'pointer-events-none'"
+    :class="[
+      open ? '' : 'pointer-events-none',
+      isEmbedEnabled === true
+        ? 'sm:top-2 sm:h-[calc(100dvh-3.8rem)]'
+        : 'sm:top-[4.2rem] sm:h-[calc(100dvh-4.2rem)]'
+    ]"
   >
     <div
       class="flex transition-all h-full"
@@ -52,12 +57,9 @@
             </div>
           </div>
         </div>
-
-        <!-- Spacer to fill the relative space below the absolutely positioned header elements -->
-        <div class="w-full" :class="$slots.actions ? 'h-24' : 'h-10'"></div>
-
+        <div class="w-full" :class="$slots.actions ? 'h-24 sm:h-20' : 'h-10'"></div>
         <div
-          class="overflow-y-auto simple-scrollbar h-[calc(50dvh)] sm:h-[calc(100dvh-8rem)] bg-foundation w-full pt-2 sm:rounded-b-md"
+          class="overflow-y-auto simple-scrollbar h-[calc(50dvh)] sm:h-full bg-foundation w-full pt-2 sm:rounded-b-md"
         >
           <slot></slot>
         </div>
@@ -77,6 +79,7 @@ import { ref } from 'vue'
 import { useEventListener } from '@vueuse/core'
 import { XMarkIcon, ArrowsRightLeftIcon } from '@heroicons/vue/24/outline'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 defineProps<{
   open: boolean
@@ -94,6 +97,7 @@ let startWidth = 0
 let startX = 0
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+const { isEnabled: isEmbedEnabled } = useEmbed()
 
 const startResizing = (event: MouseEvent) => {
   event.preventDefault()
