@@ -1,0 +1,148 @@
+print('🚀 Deploying Speckle Server into a Kind Cluster via Tilt...')
+
+# we limit tilt to run only on the kind cluster
+allow_k8s_contexts(['kind-speckle-server'])
+if k8s_context() != 'kind-speckle-server':
+  fail('Failing early as tilt should only ever connect to kind-speckle-server.')
+
+
+# Install extensions
+load('ext://helm_resource', 'helm_resource', 'helm_repo')
+load('ext://k8s_yaml_glob', 'k8s_yaml_glob')
+symbols = None
+IS_CI = os.getenv('CI', "false") == "true"
+if IS_CI:
+  symbols = load_dynamic('./Tiltfile.ci')
+else:
+  symbols = load_dynamic('./Tiltfile.local')
+
+# Prepare the Speckle images
+# (loads the images from tgz file if CI, otherwise builds them or pulls them from remote as a fallback on non-amd64 machines)
+speckle_image = symbols['speckle_image']
+speckle_image('fileimport-service')
+speckle_image('frontend-2')
+speckle_image('monitor-deployment')
+speckle_image('preview-service')
+speckle_image('server')
+speckle_image('test-deployment')
+speckle_image('webhook-service')
+
+# Create namespaces
+k8s_yaml_glob('./manifests/*.namespace.yaml')
+
+# Install volumes
+k8s_yaml('./manifests/postgres.pv.yaml')
+k8s_yaml('./manifests/postgres.pvc.yaml')
+k8s_yaml('./manifests/minio.pv.yaml')
+k8s_yaml('./manifests/minio.pvc.yaml')
+
+# Update CoreDNS to allow for local resolution of services internally (i.e. speckle.internal will be routed to nginx)
+local(command='./coredns-up.sh')
+
+# Install speckle pod-priority and secrets
+k8s_yaml('./manifests/priorityclass.yaml')
+k8s_yaml('./manifests/speckle-server.secret.yaml')
+
+# Install charts
+helm_resource('postgresql',
+            release_name='postgresql',
+            namespace='postgres',
+            chart='oci://registry-1.docker.io/bitnamicharts/postgresql',
+            flags=['--version=^12.0.0',
+                    '--values=./values/postgres.values.yaml',
+                    '--kube-context=kind-speckle-server'],
+            labels=['speckle-dependencies'])
+
+helm_resource('minio',
+            release_name='minio',
+            namespace='minio',
+            chart='oci://registry-1.docker.io/bitnamicharts/minio',
+            flags=['--version=^12.0.0',
+                    '--values=./values/minio.values.yaml',
+                    '--kube-context=kind-speckle-server'],
+            labels=['speckle-dependencies'])
+
+helm_resource('redis',
+            release_name='redis',
+            namespace='redis',
+            chart='oci://registry-1.docker.io/bitnamicharts/redis',
+            flags=['--version=18.7.1',
+                    '--values=./values/redis.values.yaml',
+                    '--kube-context=kind-speckle-server'],
+            labels=['speckle-dependencies'])
+
+#FIXME this helm chart does not deploy any containers, so tilt incorrectly believes it never gets to a final state
+# helm_repo('prometheus-repo',
+#           'https://prometheus-community.github.io/helm-charts')
+# helm_resource('prometheus',
+#             release_name='prometheus-operator-crds',
+#             namespace='prometheus',
+#             resource_deps=['prometheus-repo'],
+#             chart='prometheus-repo/prometheus-operator-crds',
+#             flags=['--version=^7.0.0',
+#                     '--values=./values/prometheus-operator-crds.values.yaml',
+#                     '--kube-context=kind-speckle-server'])
+
+helm_repo('ingress-nginx-repo',
+          'https://kubernetes.github.io/ingress-nginx')
+
+#nginx should be deployed as the last dependency as it opens ports to services
+#it expects these services to exist, which are created by the helm charts above
+helm_resource('ingress-nginx',
+            release_name='ingress-nginx',
+            namespace='ingress-nginx',
+            chart='ingress-nginx-repo/ingress-nginx',
+            flags=['--version=^4.8.0',
+                    '--values=./values/nginx.values.yaml',
+                    '--kube-context=kind-speckle-server'],
+            resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx-repo'],
+            labels=['speckle-dependencies'])
+
+# Uncomment the below, and comment out the other helm_resource('speckle-server'...) to use the speckle-server helm chart
+# helm_repo('speckle-server-repo',
+#           'https://specklesystems.github.io/helm')
+# helm_resource('speckle-server',
+#             release_name='speckle-server',
+#             namespace='speckle-server',
+#             chart='speckle-server-repo/speckle-server',
+#             deps=['./values/speckle-server.values.yaml'],
+#             resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx','speckle-server-repo'],
+#             flags=['--values=./values/speckle-server.values.yaml', '--devel'],
+#             labels=['speckle-server'])
+
+helm_resource('speckle-server',
+              release_name='speckle-server',
+              namespace='speckle-server',
+              chart='./../../utils/helm/speckle-server',
+              flags=['--values=./values/speckle-server.values.yaml',
+                      '--kube-context=kind-speckle-server'],
+              image_deps=[
+                          'speckle/speckle-fileimport-service',
+                          'speckle/speckle-frontend-2',
+                          'speckle/speckle-monitor-deployment',
+                          'speckle/speckle-preview-service',
+                          'speckle/speckle-server',
+                          'speckle/speckle-test-deployment',
+                          'speckle/speckle-webhook-service',
+                          ],
+              image_keys=[
+                          'fileimport_service.image',
+                          'frontend_2.image',
+                          'monitor.image',
+                          'preview_service.image',
+                          'server.image',
+                          'test.image',
+                          'webhook_service.image',
+                          ],
+              deps=['../../utils/helm', './values/speckle-server.values.yaml'],
+              resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx'],
+              labels=['speckle-server'])
+
+  # TODO this is not yet working as it is expecting the updated version of the test container which is not yet released as of 2.17.16
+# local_resource('speckle-server-helm-chart-test',
+#                 # HACK until https://github.com/helm/helm/issues/11236 is fixed. Then replace with --logs flag.
+#                 cmd='helm test speckle-server --namespace=speckle-server --kube-context=kind-speckle-server || \
+#                     (kubectl describe pod --selector="job-name=speckle-test" --namespace speckle-server --context=kind-speckle-server && \
+#                     kubectl logs -n speckle-server -l "job-name=speckle-test" -c test-deployment --context kind-speckle-server --since=0s && \
+#                     exit 1)',
+#                 resource_deps=['speckle-server'])

@@ -1,7 +1,7 @@
 <template>
   <div
     v-show="hasAnyFiltersApplied"
-    class="absolute bottom-4 left-0 w-screen p-2 bg-pink-300/0 flex justify-center pointer-events-none"
+    class="bg-pink-300/0 flex justify-center items-center pointer-events-none"
   >
     <Transition
       enter-active-class="transform ease-out duration-300 transition"
@@ -11,7 +11,7 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <FormButton size="sm" class="pointer-events-auto" @click="trackAndResetFilters">
+      <FormButton size="xs" class="pointer-events-auto" @click="trackAndResetFilters">
         Reset Filters
       </FormButton>
     </Transition>
@@ -20,6 +20,7 @@
 <script setup lang="ts">
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+
 const {
   resetFilters,
   filters: { hasAnyFiltersApplied }

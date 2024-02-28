@@ -17,13 +17,14 @@ import {
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
 import { getUser } from '@/modules/core/repositories/users'
-import { Optional, resolveMixpanelUserId } from '@speckle/shared'
+import { Optional } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { Observability } from '@speckle/shared'
 import { pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
+import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -76,9 +77,19 @@ export async function createAuthContextFromToken(
     if (!tokenValidationResult.valid)
       return { auth: false, err: new ForbiddenError('Your token is not valid.') }
 
-    const { scopes, userId, role, appId } = tokenValidationResult
+    const { scopes, userId, role, appId, resourceAccessRules } = tokenValidationResult
 
-    return { auth: true, userId, role, token, scopes, appId }
+    return {
+      auth: true,
+      userId,
+      role,
+      token,
+      scopes,
+      appId,
+      resourceAccessRules: resourceAccessRules
+        ? resourceAccessRules.map(resourceAccessRuleToIdentifier)
+        : null
+    }
   } catch (err) {
     const surelyError = ensureError(err, 'Unknown error during token validation')
     return { auth: false, err: surelyError }
@@ -161,8 +172,7 @@ export async function mixpanelTrackerHelperMiddleware(
 ) {
   const ctx = req.context
   const user = ctx.userId ? await getUser(ctx.userId) : null
-  const mixpanelUserId = user?.email ? resolveMixpanelUserId(user.email) : undefined
-  const mp = mixpanel({ mixpanelUserId })
+  const mp = mixpanel({ userEmail: user?.email })
 
   req.mixpanel = mp
   next()

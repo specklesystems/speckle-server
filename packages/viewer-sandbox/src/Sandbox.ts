@@ -1,6 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { Box3, SectionTool, TreeNode } from '@speckle/viewer'
-import { Vector3 } from '@speckle/viewer'
 import {
   CanonicalView,
   DebugViewer,
@@ -26,9 +25,12 @@ import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
+import { Viewer } from '@speckle/viewer'
+
+import { Euler, Vector3 } from 'three'
 
 export default class Sandbox {
-  private viewer: DebugViewer
+  private viewer: Viewer
   private pane: Pane
   private tabs
   private viewsFolder!: FolderApi
@@ -37,6 +39,7 @@ export default class Sandbox {
   private selectionList: SelectionEvent[]
   private objectControls: FolderApi | null = null
   private batchesFolder: FolderApi | null = null
+  public ids: Array<string> = []
 
   public urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
@@ -143,22 +146,22 @@ export default class Sandbox {
 
     viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
       this.addStreamControls(url)
-      // this.addViewControls()
+      this.addViewControls()
       this.addBatches()
-      // this.properties = await this.viewer.getObjectProperties()
+      this.properties = await this.viewer.getObjectProperties()
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })
-    viewer.on(ViewerEvent.UnloadComplete, (url: string) => {
+    viewer.on(ViewerEvent.UnloadComplete, async (url: string) => {
       url
       this.removeViewControls()
       this.addViewControls()
-      this.properties = this.viewer.getObjectProperties()
+      this.properties = await this.viewer.getObjectProperties()
     })
-    viewer.on(ViewerEvent.UnloadAllComplete, (url: string) => {
+    viewer.on(ViewerEvent.UnloadAllComplete, async (url: string) => {
       this.removeViewControls()
       this.addViewControls()
-      this.properties = this.viewer.getObjectProperties()
+      this.properties = await this.viewer.getObjectProperties()
       // viewer.World.resetWorld()
       url
     })
@@ -244,7 +247,7 @@ export default class Sandbox {
           title: views[k].name ? views[k].name : 'Unnamed'
         })
         .on('click', () => {
-          this.viewer.setView(views[k], true)
+          this.viewer.getExtension(CameraController).setCameraView(views[k], true)
         })
     }
   }
@@ -285,7 +288,11 @@ export default class Sandbox {
         // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
           // obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          obj.position = position.value
+          obj.position = new Vector3(
+            position.value.x,
+            position.value.y,
+            position.value.z
+          )
         })
         this.viewer.requestRender()
       })
@@ -305,7 +312,12 @@ export default class Sandbox {
         // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
           // obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          obj.euler = rotation.value
+          obj.euler = new Euler(
+            rotation.value.x,
+            rotation.value.y,
+            rotation.value.z,
+            'XYZ'
+          )
         })
         this.viewer.requestRender()
       })
@@ -358,9 +370,9 @@ export default class Sandbox {
         reader.readAsText(file, 'UTF-8')
 
         reader.onload = async (readerEvent) => {
-          const content = readerEvent?.target?.result
+          const content = readerEvent?.target?.result as string
           const loader = new ObjLoader(this.viewer.getWorldTree(), file.name, content)
-          await this.viewer.loadObject(loader, 1, true)
+          await this.viewer.loadObject(loader, true)
         }
       }
       input.click()
@@ -404,11 +416,12 @@ export default class Sandbox {
       title: 'Zoom Extents'
     })
     zoomExtents.on('click', () => {
-      this.viewer.zoom(
-        this.selectionList.map((val) => val.hits[0].object.id) as string[],
-        undefined,
-        true
-      )
+      this.viewer
+        .getExtension(CameraController)
+        .setCameraView(
+          this.selectionList.map((val) => val.hits[0].node.model.id) as string[],
+          true
+        )
     })
 
     this.tabs.pages[0].addSeparator()
@@ -442,13 +455,13 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
+      console.warn(await this.viewer.screenshot())
       // const start = performance.now()
-      const nodes = this.viewer.getWorldTree().root.all(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (node: any) => node.model.raw.id === 'c35234a1e8584b159f7e8be59323cd64'
-      )
-      console.log(nodes)
+      // const nodes = this.viewer.getWorldTree().root.all(
+      //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      //   (node: any) => node.model.raw.id === 'c35234a1e8584b159f7e8be59323cd64'
+      // )
+      // console.log(nodes)
       // this.viewer.cancelLoad(
       //   'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
       // )
@@ -463,8 +476,10 @@ export default class Sandbox {
           setTimeout(resolve, ms)
         })
       for (let i = 0; i < 24; i++) {
-        this.viewer.setView({ azimuth: Math.PI / 12, polar: 0 }, false)
-        this.viewer.getRenderer().resetPipeline(true)
+        this.viewer
+          .getExtension(CameraController)
+          .setCameraView({ azimuth: Math.PI / 12, polar: 0 }, false)
+        this.viewer.getRenderer().resetPipeline()
         await waitForAnimation(1000)
       }
     })
@@ -480,7 +495,9 @@ export default class Sandbox {
           title: sides[k]
         })
         .on('click', () => {
-          this.viewer.setView(sides[k] as CanonicalView)
+          this.viewer
+            .getExtension(CameraController)
+            .setCameraView(sides[k] as CanonicalView, true)
         })
     }
   }
@@ -533,30 +550,6 @@ export default class Sandbox {
       .on('change', () => {
         this.viewer.getRenderer().renderer.toneMappingExposure =
           this.sceneParams.exposure
-        this.viewer.requestRender()
-      })
-
-    postFolder
-      .addInput({ near: 0.01 }, 'near', {
-        min: 0,
-        max: 2,
-        step: 0.001
-      })
-      .on('change', (ev) => {
-        this.viewer.cameraHandler.activeCam.camera.near = ev.value
-        this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
-        this.viewer.requestRender()
-      })
-
-    postFolder
-      .addInput({ far: 10 }, 'far', {
-        min: 0,
-        max: 10000,
-        step: 1
-      })
-      .on('change', (ev) => {
-        this.viewer.cameraHandler.activeCam.camera.far = ev.value
-        this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
         this.viewer.requestRender()
       })
 
@@ -827,8 +820,7 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         this.viewer.getRenderer().sunLight.shadow.bias = value.value
-        this.viewer.requestRenderShadowmap()
-        this.viewer.requestRender()
+        this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
       })
 
     directLightFolder
@@ -840,8 +832,7 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         this.viewer.getRenderer().sunLight.shadow.radius = value.value
-        this.viewer.requestRenderShadowmap()
-        this.viewer.requestRender()
+        this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
       })
 
     const indirectLightsFolder = lightsFolder.addFolder({
@@ -964,7 +955,8 @@ export default class Sandbox {
         Floor: 'Floor',
         Name: 'name',
         TypeName: 'parameters.SYMBOL_NAME_PARAM.value',
-        Id: 'id'
+        Id: 'id',
+        DSD: 'DSD.@TYPE'
       }
     })
 
@@ -1098,7 +1090,7 @@ export default class Sandbox {
       title: 'Undiff'
     })
     unDiffButton.on('click', async () => {
-      this.viewer.undiff()
+      this.viewer.getExtension(DiffExtension).undiff()
     })
 
     container
@@ -1197,6 +1189,13 @@ export default class Sandbox {
       .on('click', () => {
         this.viewer.getExtension(MeasurementsExtension).removeMeasurement()
       })
+    container
+      .addButton({
+        title: 'Delete All'
+      })
+      .on('click', () => {
+        this.viewer.getExtension(MeasurementsExtension).clearMeasurements()
+      })
   }
 
   private getBVHSize() {
@@ -1226,9 +1225,10 @@ export default class Sandbox {
         url,
         authToken,
         true,
+        undefined,
         1
       )
-      await this.viewer.loadObject(loader, 1, true)
+      await this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)
   }

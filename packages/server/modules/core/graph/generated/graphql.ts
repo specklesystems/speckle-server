@@ -170,6 +170,14 @@ export type AppCreateInput = {
   termsAndConditionsLink?: InputMaybe<Scalars['String']>;
 };
 
+export type AppTokenCreateInput = {
+  lifespan?: InputMaybe<Scalars['BigInt']>;
+  /** Optionally limit the token to only have access to specific resources */
+  limitResources?: InputMaybe<Array<TokenResourceIdentifierInput>>;
+  name: Scalars['String'];
+  scopes: Array<Scalars['String']>;
+};
+
 export type AppUpdateInput = {
   description: Scalars['String'];
   id: Scalars['String'];
@@ -1074,7 +1082,7 @@ export type MutationAppRevokeAccessArgs = {
 
 
 export type MutationAppTokenCreateArgs = {
-  token: ApiTokenCreateInput;
+  token: AppTokenCreateInput;
 };
 
 
@@ -1442,6 +1450,8 @@ export type Project = {
   sourceApps: Array<Scalars['String']>;
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime'];
+  /** Retrieve a specific project version by its ID */
+  version?: Maybe<Version>;
   /** Returns a flat list of all project versions */
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
@@ -1484,6 +1494,11 @@ export type ProjectModelsTreeArgs = {
 
 export type ProjectPendingImportedModelsArgs = {
   limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type ProjectVersionArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -1876,8 +1891,6 @@ export type Query = {
    * Pass in the `query` parameter to search by name, description or ID.
    */
   streams?: Maybe<StreamCollection>;
-  testList: Array<TestItem>;
-  testNumber?: Maybe<Scalars['Int']>;
   /**
    * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
@@ -2083,6 +2096,8 @@ export type ServerInfo = {
   description?: Maybe<Scalars['String']>;
   guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
+  /** Server relocation / migration info */
+  migration?: Maybe<ServerMigration>;
   name: Scalars['String'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
   roles: Array<Role>;
@@ -2114,6 +2129,12 @@ export type ServerInviteCreateInput = {
   message?: InputMaybe<Scalars['String']>;
   /** Can only be specified if guest mode is on or if the user is an admin */
   serverRole?: InputMaybe<Scalars['String']>;
+};
+
+export type ServerMigration = {
+  __typename?: 'ServerMigration';
+  movedFrom?: Maybe<Scalars['String']>;
+  movedTo?: Maybe<Scalars['String']>;
 };
 
 export enum ServerRole {
@@ -2556,11 +2577,20 @@ export type SubscriptionViewerUserActivityBroadcastedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
 
-export type TestItem = {
-  __typename?: 'TestItem';
-  bar: Scalars['String'];
-  foo: Scalars['String'];
+export type TokenResourceIdentifier = {
+  __typename?: 'TokenResourceIdentifier';
+  id: Scalars['String'];
+  type: TokenResourceIdentifierType;
 };
+
+export type TokenResourceIdentifierInput = {
+  id: Scalars['String'];
+  type: TokenResourceIdentifierType;
+};
+
+export enum TokenResourceIdentifierType {
+  Project = 'project'
+}
 
 export type UpdateModelInput = {
   description?: InputMaybe<Scalars['String']>;
@@ -2586,7 +2616,7 @@ export type User = {
   /** Returns a list of your personal api tokens. */
   apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
-  authorizedApps?: Maybe<Array<Maybe<ServerAppListItem>>>;
+  authorizedApps?: Maybe<Array<ServerAppListItem>>;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
   /**
@@ -2749,9 +2779,11 @@ export type Version = {
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;
+  parents?: Maybe<Array<Maybe<Scalars['String']>>>;
   previewUrl: Scalars['String'];
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
+  totalChildrenCount?: Maybe<Scalars['Int']>;
 };
 
 
@@ -3008,6 +3040,7 @@ export type ResolversTypes = {
   ApiTokenCreateInput: ApiTokenCreateInput;
   AppAuthor: ResolverTypeWrapper<AppAuthor>;
   AppCreateInput: AppCreateInput;
+  AppTokenCreateInput: AppTokenCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: ResolverTypeWrapper<AuthStrategy>;
   AutomationCreateInput: AutomationCreateInput;
@@ -3121,6 +3154,7 @@ export type ResolversTypes = {
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ResolverTypeWrapper<ServerInviteGraphQLReturnType>;
   ServerInviteCreateInput: ServerInviteCreateInput;
+  ServerMigration: ResolverTypeWrapper<ServerMigration>;
   ServerRole: ServerRole;
   ServerRoleItem: ResolverTypeWrapper<ServerRoleItem>;
   ServerStatistics: ResolverTypeWrapper<GraphQLEmptyReturn>;
@@ -3139,7 +3173,9 @@ export type ResolversTypes = {
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
-  TestItem: ResolverTypeWrapper<TestItem>;
+  TokenResourceIdentifier: ResolverTypeWrapper<TokenResourceIdentifier>;
+  TokenResourceIdentifierInput: TokenResourceIdentifierInput;
+  TokenResourceIdentifierType: TokenResourceIdentifierType;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
   User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projectInvites: Array<ResolversTypes['PendingStreamCollaborator']>, projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
@@ -3184,6 +3220,7 @@ export type ResolversParentTypes = {
   ApiTokenCreateInput: ApiTokenCreateInput;
   AppAuthor: AppAuthor;
   AppCreateInput: AppCreateInput;
+  AppTokenCreateInput: AppTokenCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: AuthStrategy;
   AutomationCreateInput: AutomationCreateInput;
@@ -3286,6 +3323,7 @@ export type ResolversParentTypes = {
   ServerInfoUpdateInput: ServerInfoUpdateInput;
   ServerInvite: ServerInviteGraphQLReturnType;
   ServerInviteCreateInput: ServerInviteCreateInput;
+  ServerMigration: ServerMigration;
   ServerRoleItem: ServerRoleItem;
   ServerStatistics: GraphQLEmptyReturn;
   ServerStats: ServerStats;
@@ -3301,7 +3339,8 @@ export type ResolversParentTypes = {
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: Scalars['String'];
   Subscription: {};
-  TestItem: TestItem;
+  TokenResourceIdentifier: TokenResourceIdentifier;
+  TokenResourceIdentifierInput: TokenResourceIdentifierInput;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
   User: Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projectInvites: Array<ResolversParentTypes['PendingStreamCollaborator']>, projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
@@ -3871,6 +3910,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   team?: Resolver<Array<ResolversTypes['ProjectCollaborator']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType, RequireFields<ProjectVersionArgs, 'id'>>;
   versions?: Resolver<ResolversTypes['VersionCollection'], ParentType, ContextType, RequireFields<ProjectVersionsArgs, 'limit'>>;
   viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'loadedVersionsOnly' | 'resourceIdString'>>;
   visibility?: Resolver<ResolversTypes['ProjectVisibility'], ParentType, ContextType>;
@@ -4006,8 +4046,6 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   streamInvite?: Resolver<Maybe<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType, RequireFields<QueryStreamInviteArgs, 'streamId'>>;
   streamInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
   streams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryStreamsArgs, 'limit'>>;
-  testList?: Resolver<Array<ResolversTypes['TestItem']>, ParentType, ContextType>;
-  testNumber?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<QueryUserArgs>>;
   userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
   userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'emailOnly' | 'limit' | 'query'>>;
@@ -4070,6 +4108,7 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   guestModeEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   inviteOnly?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
+  migration?: Resolver<Maybe<ResolversTypes['ServerMigration']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   roles?: Resolver<Array<ResolversTypes['Role']>, ParentType, ContextType>;
   scopes?: Resolver<Array<ResolversTypes['Scope']>, ParentType, ContextType>;
@@ -4083,6 +4122,12 @@ export type ServerInviteResolvers<ContextType = GraphQLContext, ParentType exten
   email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   invitedBy?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ServerMigrationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ServerMigration'] = ResolversParentTypes['ServerMigration']> = {
+  movedFrom?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  movedTo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -4205,16 +4250,16 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   viewerUserActivityBroadcasted?: SubscriptionResolver<ResolversTypes['ViewerUserActivityMessage'], "viewerUserActivityBroadcasted", ParentType, ContextType, RequireFields<SubscriptionViewerUserActivityBroadcastedArgs, 'target'>>;
 };
 
-export type TestItemResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TestItem'] = ResolversParentTypes['TestItem']> = {
-  bar?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  foo?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+export type TokenResourceIdentifierResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TokenResourceIdentifier'] = ResolversParentTypes['TokenResourceIdentifier']> = {
+  id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['TokenResourceIdentifierType'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type UserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['User'] = ResolversParentTypes['User']> = {
   activity?: Resolver<Maybe<ResolversTypes['ActivityCollection']>, ParentType, ContextType, RequireFields<UserActivityArgs, 'limit'>>;
   apiTokens?: Resolver<Array<ResolversTypes['ApiToken']>, ParentType, ContextType>;
-  authorizedApps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerAppListItem']>>>, ParentType, ContextType>;
+  authorizedApps?: Resolver<Maybe<Array<ResolversTypes['ServerAppListItem']>>, ParentType, ContextType>;
   avatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   bio?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   commits?: Resolver<Maybe<ResolversTypes['CommitCollection']>, ParentType, ContextType, RequireFields<UserCommitsArgs, 'limit'>>;
@@ -4260,9 +4305,11 @@ export type VersionResolvers<ContextType = GraphQLContext, ParentType extends Re
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
+  parents?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   previewUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   referencedObject?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   sourceApplication?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  totalChildrenCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -4411,6 +4458,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ServerAppListItem?: ServerAppListItemResolvers<ContextType>;
   ServerInfo?: ServerInfoResolvers<ContextType>;
   ServerInvite?: ServerInviteResolvers<ContextType>;
+  ServerMigration?: ServerMigrationResolvers<ContextType>;
   ServerRoleItem?: ServerRoleItemResolvers<ContextType>;
   ServerStatistics?: ServerStatisticsResolvers<ContextType>;
   ServerStats?: ServerStatsResolvers<ContextType>;
@@ -4420,7 +4468,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   StreamCollaborator?: StreamCollaboratorResolvers<ContextType>;
   StreamCollection?: StreamCollectionResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
-  TestItem?: TestItemResolvers<ContextType>;
+  TokenResourceIdentifier?: TokenResourceIdentifierResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
   UserProjectsUpdatedMessage?: UserProjectsUpdatedMessageResolvers<ContextType>;
   UserSearchResultCollection?: UserSearchResultCollectionResolvers<ContextType>;

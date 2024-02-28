@@ -148,7 +148,12 @@ export class Intersections {
         )
       )
       results = results.filter((result) => {
-        return this.boundsBuffer.containsPoint(result.point)
+        return (
+          this.boundsBuffer.containsPoint(result.point) ||
+          (result.pointOnLine
+            ? this.boundsBuffer.containsPoint(result.pointOnLine)
+            : false)
+        )
       })
     }
 

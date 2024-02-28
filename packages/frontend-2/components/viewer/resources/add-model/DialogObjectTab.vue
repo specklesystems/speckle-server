@@ -1,23 +1,29 @@
 <template>
-  <div class="flex flex-col space-y-4">
-    <div class="text-foreground normal">
+  <div class="flex flex-col gap-y-4">
+    <div class="text-foreground normal text-sm sm:text-base">
       Add objects from the current project by their IDs or an Object URL.
     </div>
     <form
-      class="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:space-x-4 w-full"
+      class="flex flex-col gap-y-4 sm:space-y-0 sm:flex-row sm:space-x-4 w-full"
       @submit="onSubmit"
     >
       <FormTextInput
         name="objectIdsOrUrl"
         label="Value"
         full-width
-        size="lg"
+        :size="isSmallerOrEqualSm ? 'base' : 'lg'"
         :custom-icon="LinkIcon"
         :rules="[isRequired, isValidValue]"
         placeholder="Comma-delimited object IDs/URLs"
         auto-focus
       />
-      <FormButton :icon-left="PlusIcon" size="lg" submit>Add</FormButton>
+      <FormButton
+        :icon-left="PlusIcon"
+        :size="isSmallerOrEqualSm ? 'base' : 'lg'"
+        submit
+      >
+        Add
+      </FormButton>
     </form>
   </div>
 </template>
@@ -29,6 +35,7 @@ import { isRequired } from '~~/lib/common/helpers/validation'
 import { isObjectId } from '~~/lib/common/helpers/resources'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 import { difference } from 'lodash-es'
+import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 const emit = defineEmits<{
   (e: 'chosen', val: { objectIds: string[] }): void
@@ -39,6 +46,7 @@ const urlRegexp = /\/models\/([a-zA-Z0-_9,@$]+)$/i
 
 const { handleSubmit } = useForm<FormPayload>()
 const { resourceItems } = useInjectedViewerLoadedResources()
+const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const explodeValidatedObjectIds = (commaDelimitedIdList: string) => {
   const idParts = commaDelimitedIdList.split(',')

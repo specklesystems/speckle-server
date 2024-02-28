@@ -20,9 +20,8 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
 import { CodeBracketIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
-import { profileEditDialogQuery } from '~~/lib/user/graphql/queries'
+import { useActiveUser } from '~/lib/auth/composables/activeUser'
 
 type FormButtonColor =
   | 'default'
@@ -42,9 +41,7 @@ const props = defineProps<{
   open: boolean
 }>()
 
-const { result } = useQuery(profileEditDialogQuery)
-
-const user = computed(() => result.value?.activeUser)
+const { activeUser: user } = useActiveUser()
 
 const isOpen = computed({
   get: () => !!(props.open && user.value),

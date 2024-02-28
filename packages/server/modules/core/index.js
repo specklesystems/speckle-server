@@ -40,6 +40,6 @@ exports.init = async (app) => {
 
 exports.finalize = () => {}
 
-exports.shutdown = () => {
-  shutdownResultListener()
+exports.shutdown = async () => {
+  await shutdownResultListener()
 }

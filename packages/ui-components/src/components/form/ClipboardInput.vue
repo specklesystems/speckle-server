@@ -1,14 +1,12 @@
 <template>
   <div class="relative group bg-foundation-page p-2 rounded-lg pr-12">
-    <FormTextArea
+    <div
       v-if="isMultiline"
-      color="transparent"
-      name="contentArea"
-      readonly
-      :model-value="value"
-      class="relative z-10 text-sm text-foreground font-mono"
-      :rows="rows"
-    />
+      class="relative z-10 text-xs sm:text-sm text-foreground font-mono break-all p-2 pl-3 max-h-[4.8rem] simple-scrollbar overflow-y-auto"
+      @keypress="keyboardClick(selectAllText)"
+    >
+      {{ value }}
+    </div>
     <FormTextInput
       v-else
       color="transparent"
@@ -21,7 +19,7 @@
       <FormButton
         color="invert"
         size="sm"
-        :icon-left="ClipboardDocumentIcon"
+        :icon-left="copied ? ClipboardDocumentCheckIcon : ClipboardDocumentIcon"
         hide-text
         @click="handleCopy"
       ></FormButton>
@@ -31,8 +29,13 @@
 
 <script setup lang="ts">
 import { useClipboard } from '@vueuse/core'
-import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
-import { FormTextArea, FormTextInput, FormButton } from '~~/src/lib'
+import {
+  ClipboardDocumentIcon,
+  ClipboardDocumentCheckIcon
+} from '@heroicons/vue/24/outline'
+import { FormTextInput, FormButton } from '~~/src/lib'
+import { ref } from 'vue'
+import { keyboardClick } from '~~/src/helpers/global/accessibility'
 
 type Props = {
   value: string
@@ -48,10 +51,29 @@ const emit = defineEmits<{ (e: 'copy', val: string): void }>()
 
 const { copy } = useClipboard({ legacy: true })
 
+const copied = ref(false)
+
 const handleCopy = async () => {
   if (props.value) {
     await copy(props.value)
+    copied.value = true
     emit('copy', props.value)
+
+    setTimeout(() => {
+      copied.value = false
+    }, 2000)
+  }
+}
+
+const selectAllText = (event: Event) => {
+  const textElement = event.target as HTMLElement
+
+  const selection = window.getSelection()
+  if (selection) {
+    const range = document.createRange()
+    range.selectNodeContents(textElement)
+    selection.removeAllRanges()
+    selection.addRange(range)
   }
 }
 </script>

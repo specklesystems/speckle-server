@@ -144,7 +144,7 @@ export class RenderTree {
   public getRenderableNodes(...types: SpeckleType[]): TreeNode[] {
     return this.root.all((node: TreeNode): boolean => {
       return (
-        node.model.renderView !== null &&
+        node.model.renderView &&
         (node.model.renderView.hasGeometry || node.model.renderView.hasMetadata) &&
         types.includes(node.model.renderView.renderData.speckleType)
       )

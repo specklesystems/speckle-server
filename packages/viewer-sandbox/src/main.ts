@@ -18,6 +18,8 @@ import {
   DiffExtension,
   FilteringExtension
 } from '@speckle/viewer'
+import { SectionTool } from '@speckle/viewer'
+import { SectionOutlines } from '@speckle/viewer'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -43,8 +45,8 @@ const createViewer = async (containerName: string, stream: string) => {
 
   const cameraController = viewer.createExtension(CameraController)
   const selection = viewer.createExtension(SelectionExtension)
-  // const sections = viewer.createExtension(SectionTool)
-  // const sectionOutlines = viewer.createExtension(SectionOutlines)
+  const sections = viewer.createExtension(SectionTool)
+  const sectionOutlines = viewer.createExtension(SectionOutlines)
   const measurements = viewer.createExtension(MeasurementsExtension)
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
@@ -53,8 +55,8 @@ const createViewer = async (containerName: string, stream: string) => {
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
-  // sections // use it
-  // sectionOutlines // use it
+  sections // use it
+  sectionOutlines // use it
   measurements // use it
   filtering // use it
   explode // use it
@@ -88,20 +90,6 @@ const createViewer = async (containerName: string, stream: string) => {
     console.warn(viewer.getRenderer().renderingStats)
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
-    const categories = {}
-    //@ts-ignore
-    await viewer.getWorldTree().walkAsync((node) => {
-      //@ts-ignore
-      if (!categories[node.model.raw.speckle_type]) {
-        //@ts-ignore
-        categories[node.model.raw.speckle_type] = 0
-      }
-      //@ts-ignore
-      categories[node.model.raw.speckle_type]++
-      return true
-    })
-    console.log(categories)
-
     sandbox.refresh()
   })
 
@@ -132,8 +120,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
-    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/6c6e43e5f3'
+    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
     // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
@@ -142,7 +129,7 @@ const getStream = () => {
     // IFC story, a subtree of the above
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216'
     // Izzy's garden
-    'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
+    // 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
     // Small scale lines
     // 'https://speckle.xyz/streams/638d3b1f83/commits/6025e2b546?c=%5B2.18058,-0.20814,9.67642,3.85491,5.05364,0,0,1%5D'
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/d10f2af1ce'
@@ -358,6 +345,26 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/576310a6d5'
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/489d42ca8c'
     // 'https://latest.speckle.dev/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
+
+    // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec'
+
+    // Blender Mega Test Stream
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/2ecb757577'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/3deaea94af'
+    // Text and Dimensions
+    // 'https://latest.speckle.dev/streams/3f895e614f/commits/fbc78286c9'
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/aa72674507'
+
+    // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/a7f74b6524'
+    // 'https://latest.speckle.dev/streams/85e05b8c72/commits/53f4328211'
+    // 'https://latest.speckle.dev/streams/aea12cab71/commits/787ade768e'
+
+    // 'https://latest.speckle.dev/streams/e9285828d7/commits/9b80b7a70c'
+    // 'https://speckle.xyz/streams/b85d53c3b4/commits/be26146460'
+    // Germany
+    // 'https://latest.speckle.dev/streams/7117052f4e/commits/a646bf659e'
+    // 'https://latest.speckle.dev/streams/aea12cab71/commits/787ade768e'
+    // 'https://speckle.xyz/streams/a29e5c7772/commits/a8cfae2645'
   )
 }
 

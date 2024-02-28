@@ -2,6 +2,7 @@ import type { LocationQueryRaw } from 'vue-router'
 import { serializeHashState } from '~~/lib/common/composables/url'
 import { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
 
+export const profileRoute = '/profile'
 export const authBlockedDueToVerificationRoute = '/error-email-verify'
 export const homeRoute = '/'
 export const loginRoute = '/authn/login'
@@ -9,6 +10,7 @@ export const registerRoute = '/authn/register'
 export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const onboardingRoute = '/onboarding'
 export const downloadManagerRoute = '/download-manager'
+export const serverManagementRoute = '/server-management'
 export const projectRoute = (id: string) => `/projects/${id}`
 export const modelRoute = (
   projectId: string,
@@ -30,10 +32,8 @@ export const projectWebhooksRoute = (projectId: string) =>
 export const automationDataPageRoute = (baseUrl: string, automationId: string) =>
   new URL(`/automations/${automationId}`, baseUrl).toString()
 
-/**
- * TODO: Page doesn't exist
- */
-export const userProfileRoute = (userId: string) => `/profile/${userId}`
+export const threadRedirectRoute = (projectId: string, threadId: string) =>
+  `/projects/${projectId}/threads/${threadId}`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()

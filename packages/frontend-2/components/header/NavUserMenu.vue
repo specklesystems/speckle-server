@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Menu as="div" class="ml-2 flex items-center">
+    <Menu as="div" class="flex items-center">
       <MenuButton v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
         <UserAvatar v-if="!userOpen" size="lg" :user="activeUser" hover-effect />
@@ -23,7 +23,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3 border-b border-primary items-center px-3 py-3 text-sm text-primary cursor-pointer transition'
+                'flex gap-3 border-b border-primary items-center px-3 py-3 text-sm text-primary cursor-pointer transition mb-1'
               ]"
               @click="goToConnectors()"
             >
@@ -35,7 +35,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-2.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition'
+                'flex gap-2.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="() => (showProfileEditDialog = true)"
             >
@@ -47,7 +47,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="goToServerManagement()"
             >
@@ -59,9 +59,9 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="onThemeClick"
+              @click="toggleTheme"
             >
               <Icon class="w-5 h-5" />
               {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
@@ -71,7 +71,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleInviteDialog"
             >
@@ -83,7 +83,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               target="_blank"
               to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
@@ -97,7 +97,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-danger cursor-pointer transition'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-danger cursor-pointer transition mx-1 rounded'
               ]"
               @click="logout"
             >
@@ -105,11 +105,11 @@
               Sign Out
             </NuxtLink>
           </MenuItem>
-          <MenuItem v-if="!activeUser" v-slot="{ active }">
+          <MenuItem v-if="!activeUser && loginUrl" v-slot="{ active }">
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-primary cursor-pointer transition'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-primary cursor-pointer transition mx-1 rounded'
               ]"
               :to="loginUrl"
             >
@@ -142,41 +142,35 @@ import {
   CloudArrowDownIcon,
   ChatBubbleLeftRightIcon
 } from '@heroicons/vue/24/outline'
-import { useQuery } from '@vue/apollo-composable'
 import { Roles } from '@speckle/shared'
-import type { Optional } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { loginRoute } from '~~/lib/common/helpers/route'
-import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
-import { serverVersionInfoQuery } from '~~/lib/core/graphql/queries'
+import { useTheme } from '~~/lib/core/composables/theme'
+import { useServerInfo } from '~/lib/core/composables/server'
+import type { RouteLocationRaw } from 'vue-router'
+import { homeRoute, profileRoute } from '~/lib/common/helpers/route'
+
+defineProps<{
+  loginUrl?: RouteLocationRaw
+}>()
 
 const { logout } = useAuthManager()
 const { activeUser, isGuest } = useActiveUser()
-const { isDarkTheme, setTheme } = useTheme()
-const { result } = useQuery(serverVersionInfoQuery)
-const route = useRoute()
+const { isDarkTheme, toggleTheme } = useTheme()
+const { serverInfo } = useServerInfo()
 const router = useRouter()
+const route = useRoute()
 
 const showInviteDialog = ref(false)
 const showProfileEditDialog = ref(false)
-const token = computed(() => route.query.token as Optional<string>)
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
-const version = computed(() => result.value?.serverInfo.version)
-
+const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
+const isProfileRoute = computed(() => route.path === profileRoute)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
-}
-
-const onThemeClick = () => {
-  if (isDarkTheme.value) {
-    setTheme(AppTheme.Light)
-  } else {
-    setTheme(AppTheme.Dark)
-  }
 }
 
 const goToConnectors = () => {
@@ -187,12 +181,14 @@ const goToServerManagement = () => {
   router.push('/server-management')
 }
 
-const loginUrl = computed(() =>
-  router.resolve({
-    path: loginRoute,
-    query: {
-      token: token.value || undefined
+watch(
+  isProfileRoute,
+  (newVal, oldVal) => {
+    if (newVal && !oldVal) {
+      showProfileEditDialog.value = true
+      void router.replace({ path: homeRoute, force: true }) // in-place replace
     }
-  })
+  },
+  { immediate: true }
 )
 </script>

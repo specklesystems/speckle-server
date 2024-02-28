@@ -37,9 +37,15 @@ async function isStreamCollaborator(userId, streamId) {
  * @param {string} [userId] If falsy, will throw for non-public streams
  * @param {string} streamId
  * @param {string} [expectedRole] Defaults to reviewer
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} [userResourceAccessLimits]
  * @returns {Promise<boolean>}
  */
-async function validateStreamAccess(userId, streamId, expectedRole) {
+async function validateStreamAccess(
+  userId,
+  streamId,
+  expectedRole,
+  userResourceAccessLimits
+) {
   expectedRole = expectedRole || Roles.Stream.Reviewer
 
   const streamRoles = Object.values(Roles.Stream)
@@ -50,7 +56,7 @@ async function validateStreamAccess(userId, streamId, expectedRole) {
   userId = userId || null
 
   try {
-    await authorizeResolver(userId, streamId, expectedRole)
+    await authorizeResolver(userId, streamId, expectedRole, userResourceAccessLimits)
   } catch (e) {
     if (e instanceof ForbiddenError) {
       throw new StreamInvalidAccessError(
@@ -77,11 +83,22 @@ async function validateStreamAccess(userId, streamId, expectedRole) {
  * @param {string} streamId
  * @param {string} userId ID of user that should be removed
  * @param {string} removedById ID of user that is doing the removing
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} [removerResourceAccessRules] Resource access rules (if any) for the user doing the removing
  */
-async function removeStreamCollaborator(streamId, userId, removedById) {
+async function removeStreamCollaborator(
+  streamId,
+  userId,
+  removedById,
+  removerResourceAccessRules
+) {
   if (userId !== removedById) {
     // User must be a stream owner to remove others
-    await validateStreamAccess(removedById, streamId, Roles.Stream.Owner)
+    await validateStreamAccess(
+      removedById,
+      streamId,
+      Roles.Stream.Owner,
+      removerResourceAccessRules
+    )
   } else {
     // User must have any kind of role to remove himself
     await isStreamCollaborator(userId, streamId)
@@ -107,6 +124,7 @@ async function removeStreamCollaborator(streamId, userId, removedById) {
  * @param {string} userId ID of user who is being added
  * @param {string} role
  * @param {string} addedById ID of user who is adding the new collaborator
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} [adderResourceAccessRules] Resource access rules (if any) for the user doing the adding
  * @param {{
  *  fromInvite?: boolean,
  * }} param4
@@ -116,6 +134,7 @@ async function addOrUpdateStreamCollaborator(
   userId,
   role,
   addedById,
+  adderResourceAccessRules,
   { fromInvite } = {}
 ) {
   const validRoles = Object.values(Roles.Stream)
@@ -129,7 +148,12 @@ async function addOrUpdateStreamCollaborator(
     )
   }
 
-  await validateStreamAccess(addedById, streamId, Roles.Stream.Owner)
+  await validateStreamAccess(
+    addedById,
+    streamId,
+    Roles.Stream.Owner,
+    adderResourceAccessRules
+  )
 
   // make sure server guests cannot be stream owners
   if (role === Roles.Stream.Owner) {

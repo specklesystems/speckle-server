@@ -1,4 +1,3 @@
-import { Observability } from '@speckle/shared'
 import { defineEventHandler, fromNodeMiddleware } from 'h3'
 import { IncomingMessage, ServerResponse } from 'http'
 import pino from 'pino'
@@ -9,6 +8,10 @@ import { randomUUID } from 'crypto'
 import type { IncomingHttpHeaders } from 'http'
 import { REQUEST_ID_HEADER } from '~~/server/lib/core/helpers/constants'
 import { get } from 'lodash'
+import {
+  serializeRequest,
+  getRequestPath
+} from '~/server/lib/core/helpers/observability'
 
 /**
  * Server request logger
@@ -27,12 +30,7 @@ function determineRequestId(
 const generateReqId: GenReqId = (req: IncomingMessage) =>
   determineRequestId(req.headers)
 
-const logger = Observability.getLogger(
-  useRuntimeConfig().public.logLevel,
-  useRuntimeConfig().public.logPretty
-)
-
-const redactedHeaders = ['authorization', 'cookie']
+const logger = useLogger()
 
 export const LoggingMiddleware = pinoHttp({
   logger,
@@ -47,8 +45,9 @@ export const LoggingMiddleware = pinoHttp({
     error: Error | undefined
   ) => {
     // Mark some lower importance/spammy endpoints w/ 'debug' to reduce noise
-    const path = req.url?.split('?')[0]
-    const shouldBeDebug = ['/metrics', '/health'].includes(path || '') ?? false
+    const path = getRequestPath(req)
+    const shouldBeDebug =
+      ['/metrics', '/health', '/api/status'].includes(path || '') ?? false
 
     if (res.statusCode >= 400 && res.statusCode < 500) {
       return 'info'
@@ -67,11 +66,14 @@ export const LoggingMiddleware = pinoHttp({
   customSuccessObject(req, res, val: Record<string, unknown>) {
     const isCompleted = !req.readableAborted && res.writableEnded
     const requestStatus = isCompleted ? 'completed' : 'aborted'
-    const requestPath = req.url?.split('?')[0] || 'unknown'
+    const requestPath = getRequestPath(req) || 'unknown'
+    const appBindings = res.vueLoggerBindings || {}
+
     return {
       ...val,
       requestStatus,
-      requestPath
+      requestPath,
+      ...appBindings
     }
   },
 
@@ -80,11 +82,14 @@ export const LoggingMiddleware = pinoHttp({
   },
   customErrorObject(req, res, err, val: Record<string, unknown>) {
     const requestStatus = 'failed'
-    const requestPath = req.url?.split('?')[0] || 'unknown'
+    const requestPath = getRequestPath(req) || 'unknown'
+    const appBindings = res.vueLoggerBindings || {}
+
     return {
       ...val,
       requestStatus,
-      requestPath
+      requestPath,
+      ...appBindings
     }
   },
 
@@ -92,24 +97,7 @@ export const LoggingMiddleware = pinoHttp({
   // as we do not know what headers may be sent in a request by a user or client
   // we have to allow list selected headers
   serializers: {
-    req: pino.stdSerializers.wrapRequestSerializer((req) => {
-      return {
-        id: req.raw.id,
-        method: req.raw.method,
-        path: req.raw.url?.split('?')[0], // Remove query params which might be sensitive
-        // Allowlist useful headers
-        headers: Object.keys(req.raw.headers).reduce((obj, key) => {
-          let valueToPrint = req.raw.headers[key]
-          if (redactedHeaders.includes(key.toLocaleLowerCase())) {
-            valueToPrint = `REDACTED[length: ${valueToPrint ? valueToPrint.length : 0}]`
-          }
-          return {
-            ...obj,
-            [key]: valueToPrint
-          }
-        }, {})
-      }
-    }),
+    req: pino.stdSerializers.wrapRequestSerializer((req) => serializeRequest(req.raw)),
     res: pino.stdSerializers.wrapResponseSerializer((res) => {
       const resRaw = res as SerializedResponse & {
         raw: {
@@ -119,9 +107,10 @@ export const LoggingMiddleware = pinoHttp({
       const realRaw = get(res, 'raw.raw') as typeof res.raw
       const isRequestCompleted = !!realRaw.writableEnded
       const isRequestAborted = !isRequestCompleted
+      const statusCode = res.statusCode || res.raw.statusCode || realRaw.statusCode
 
       return {
-        statusCode: res.raw.statusCode,
+        statusCode,
         // Allowlist useful headers
         headers: resRaw.headers,
         isRequestAborted

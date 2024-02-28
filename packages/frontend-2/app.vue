@@ -1,5 +1,8 @@
 <template>
-  <div id="speckle" class="bg-foundation-page text-foreground">
+  <div
+    id="speckle"
+    class="bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent"
+  >
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
@@ -10,6 +13,7 @@
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useMixpanelInitialization } from '~~/lib/core/composables/mp'
+
 const { isDarkTheme } = useTheme()
 
 useHead({
@@ -20,7 +24,8 @@ useHead({
     lang: 'en'
   },
   bodyAttrs: {
-    class: 'simple-scrollbar bg-foundation-page text-foreground'
+    class:
+      'simple-scrollbar bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent'
   }
 })
 

@@ -60,5 +60,12 @@ export enum VersionActionTypes {
   EditMessage = 'edit-message',
   Select = 'select',
   Share = 'share',
-  CopyId = 'copy-id'
+  CopyId = 'copy-id',
+  EmbedModel = 'embed-model'
+}
+
+export enum OpenSectionType {
+  Invite = 'invite',
+  Access = 'access',
+  Team = 'team'
 }

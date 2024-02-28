@@ -73,15 +73,18 @@ function logSubscriptionOperation(params: {
   response?: SubscriptionResponse
 }) {
   const { error, response, ctx, execParams } = params
+  const userId = ctx.userId
   if (!error && !response) return
 
   const logger = ctx.log.child({
     graphql_query: execParams.query.toString(),
     graphql_variables: redactSensitiveVariables(execParams.variables),
     graphql_operation_name: execParams.operationName,
-    graphql_operation_type: 'subscription'
+    graphql_operation_type: 'subscription',
+    userId
   })
 
+  const errMsg = 'GQL subscription event {graphql_operation_name} errored'
   const errors = response?.errors || (error ? [error] : [])
   if (errors.length) {
     for (const error of errors) {
@@ -89,13 +92,13 @@ function logSubscriptionOperation(params: {
         (error instanceof GraphQLError && error.extensions?.code === 'FORBIDDEN') ||
         error instanceof ApolloError
       ) {
-        logger.info(error, 'graphql error')
+        logger.info(error, errMsg)
       } else {
-        logger.error(error, 'graphql error')
+        logger.error(error, errMsg)
       }
     }
   } else if (response?.data) {
-    logger.info('graphql response')
+    logger.info('GQL subscription event {graphql_operation_name} emitted')
   }
 }
 
@@ -120,6 +123,24 @@ function buildApolloSubscriptionServer(
   const metricConnectedClients = new prometheusClient.Gauge({
     name: 'speckle_server_apollo_clients',
     help: 'Number of currently connected clients'
+  })
+
+  prometheusClient.register.removeSingleMetric(
+    'speckle_server_apollo_graphql_total_subscription_operations'
+  )
+  const metricSubscriptionTotalOperations = new prometheusClient.Counter({
+    name: 'speckle_server_apollo_graphql_total_subscription_operations',
+    help: 'Number of total subscription operations served by this instance',
+    labelNames: ['subscriptionType'] as const
+  })
+
+  prometheusClient.register.removeSingleMetric(
+    'speckle_server_apollo_graphql_total_subscription_responses'
+  )
+  const metricSubscriptionTotalResponses = new prometheusClient.Counter({
+    name: 'speckle_server_apollo_graphql_total_subscription_responses',
+    help: 'Number of total subscription responses served by this instance',
+    labelNames: ['subscriptionType', 'status'] as const
   })
 
   return SubscriptionServer.create(
@@ -178,17 +199,29 @@ function buildApolloSubscriptionServer(
         // kinda hacky, but we're using this as an "subscription event emitted"
         // callback to clear subscription connection dataloaders to avoid stale cache
         const baseParams = params[1]
+        metricSubscriptionTotalOperations.inc({
+          subscriptionType: baseParams.operationName
+        })
         const ctx = baseParams.context as GraphQLContext
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         baseParams.formatResponse = (val: SubscriptionResponse) => {
           ctx.loaders.clearAll()
           logSubscriptionOperation({ ctx, execParams: baseParams, response: val })
+          metricSubscriptionTotalResponses.inc({
+            subscriptionType: baseParams.operationName,
+            status: 'success'
+          })
           return val
         }
         baseParams.formatError = (e: Error) => {
           ctx.loaders.clearAll()
           logSubscriptionOperation({ ctx, execParams: baseParams, error: e })
+
+          metricSubscriptionTotalResponses.inc({
+            subscriptionType: baseParams.operationName,
+            status: 'error'
+          })
           return e
         }
 

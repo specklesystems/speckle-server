@@ -223,5 +223,12 @@ export function useCheckViewerCommentingAccess() {
     }
   } = useInjectedViewerState()
   const { activeUser } = useActiveUser()
-  return computed(() => activeUser.value && !!project.value?.role)
+  return computed(() => {
+    if (!activeUser.value) return false
+
+    const hasRole = !!project.value?.role
+    const allowPublicComments = !!project.value?.allowPublicComments
+
+    return hasRole || allowPublicComments
+  })
 }

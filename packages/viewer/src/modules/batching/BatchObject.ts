@@ -8,7 +8,10 @@ import {
 } from '../objects/AccelerationStructure'
 import { MeshBVH } from 'three-mesh-bvh'
 
-export type VectorLike = { x: number; y: number; z?: number; w?: number }
+export type VectorLike =
+  | { x: number; y: number; z?: number; w?: number }
+  | undefined
+  | null
 
 export class BatchObject {
   protected _renderView: NodeRenderView

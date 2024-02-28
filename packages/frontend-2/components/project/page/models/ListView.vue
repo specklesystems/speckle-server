@@ -1,9 +1,9 @@
 <template>
-  <div v-if="topLevelItems.length" class="space-y-4 max-w-full">
+  <div v-if="topLevelItems.length && project" class="space-y-4 max-w-full">
     <div v-for="item in topLevelItems" :key="item.id">
       <ProjectPageModelsStructureItem
         :item="item"
-        :project-id="projectId"
+        :project="project"
         :can-contribute="canContribute"
         :is-search-result="isUsingSearch"
         @model-updated="onModelUpdated"
@@ -12,7 +12,7 @@
     </div>
     <FormButtonSecondaryViewAll
       v-if="showViewAll"
-      :to="allProjectModelsRoute(project.id)"
+      :to="allProjectModelsRoute(projectId)"
     />
   </div>
   <template v-else-if="!areQueriesLoading">
@@ -25,7 +25,7 @@
       @clear-search="$emit('clear-search')"
     />
     <div v-else>
-      <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
+      <ProjectCardImportFileArea :project-id="projectId" class="h-36 col-span-4" />
     </div>
   </template>
   <InfiniteLoading
@@ -35,7 +35,7 @@
   />
   <ProjectPageModelsNewDialog
     v-model:open="showNewDialog"
-    :project-id="project.id"
+    :project-id="projectId"
     :parent-model-name="newSubmodelParent || undefined"
   />
 </template>
@@ -62,7 +62,8 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  project: ProjectPageLatestItemsModelsFragment
+  projectId: string
+  project?: ProjectPageLatestItemsModelsFragment
   search?: string
   disablePagination?: boolean
   sourceApps?: SourceAppDefinition[]
@@ -84,11 +85,10 @@ const showNewDialog = computed({
 
 const evictModelFields = useEvictProjectModelFields()
 const areQueriesLoading = useQueryLoading()
-const projectId = computed(() => props.project.id)
 
 const baseQueryVariables = computed(
   (): ProjectModelsTreeTopLevelQueryVariables => ({
-    projectId: projectId.value,
+    projectId: props.projectId,
     filter: {
       search: props.search || null,
       sourceApps: props.sourceApps?.length
@@ -148,7 +148,9 @@ const topLevelItems = computed(
       props.disablePagination ? 8 : undefined
     )
 )
-const canContribute = computed(() => canModifyModels(props.project))
+const canContribute = computed(() =>
+  props.project ? canModifyModels(props.project) : false
+)
 const isUsingSearch = computed(() => !!resultVariables.value?.filter?.search)
 const moreToLoad = computed(
   () =>
@@ -160,7 +162,7 @@ const showViewAll = computed(() => moreToLoad.value && props.disablePagination)
 
 const onModelUpdated = () => {
   // Evict model data
-  evictModelFields(props.project.id)
+  evictModelFields(props.projectId)
 
   // Reset pagination
   infiniteLoadCacheBuster.value++

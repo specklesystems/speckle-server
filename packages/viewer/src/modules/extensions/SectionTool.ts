@@ -423,7 +423,7 @@ export class SectionTool extends Extension implements ISectionProvider {
     return this.boxGeometry.boundingBox
   }
 
-  public setBox(targetBox, offset = 0.05) {
+  public setBox(targetBox, offset = 0) {
     let box
 
     if (targetBox) box = targetBox

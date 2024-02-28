@@ -39,17 +39,25 @@ export default defineNuxtConfig({
     '@artmizu/nuxt-prometheus'
   ],
   runtimeConfig: {
+    redisUrl: '',
     public: {
       apiOrigin: 'UNDEFINED',
       backendApiOrigin: '',
+      baseUrl: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,
       logPretty: isLogPretty,
+      logCsrEmitProps: false,
       logClientApiToken: '',
       logClientApiEndpoint: '',
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
-      serverName: 'UNDEFINED'
+      serverName: 'UNDEFINED',
+      viewerDebug: false,
+      raygunKey: '',
+      logrocketAppId: '',
+      speedcurveId: 0,
+      debugbearId: ''
     }
   },
 
@@ -105,8 +113,10 @@ export default defineNuxtConfig({
       },
       // older chrome version for CEF 65 support. all identifiers except the chrome one are default ones.
       target: ['es2020', 'edge88', 'firefox78', 'chrome65', 'safari14']
-      // optionally disable minification for debugging
-      // minify: false
+      // // optionally disable minification for debugging
+      // minify: false,
+      // // optionally enable sourcemaps for debugging
+      // sourcemap: 'inline'
     },
     plugins: [
       // again - only for CEF 65
@@ -126,11 +136,17 @@ export default defineNuxtConfig({
     // Necessary because of redirects from backend in auth flows
     '/': {
       cors: true,
-      headers: { 'access-control-allow-methods': 'GET' }
+      headers: {
+        'access-control-allow-methods': 'GET',
+        'Access-Control-Expose-Headers': '*'
+      }
     },
     '/authn/login': {
       cors: true,
-      headers: { 'access-control-allow-methods': 'GET' }
+      headers: {
+        'access-control-allow-methods': 'GET',
+        'Access-Control-Expose-Headers': '*'
+      }
     }
   },
 

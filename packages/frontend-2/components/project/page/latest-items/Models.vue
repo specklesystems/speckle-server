@@ -1,8 +1,8 @@
 <template>
   <ProjectPageLatestItems
-    :count="project.modelCount.totalCount"
+    :count="project?.modelCount.totalCount || 0"
     :title="title"
-    :see-all-url="allProjectModelsRoute(project.id)"
+    :see-all-url="allProjectModelsRoute(projectId)"
     hide-heading-bottom-margin
   >
     <template #default>
@@ -12,6 +12,7 @@
           v-if="gridOrList === GridListToggleValue.List"
           :search="debouncedSearch"
           :project="project"
+          :project-id="projectId"
           disable-pagination
           @update:loading="queryLoading = $event"
           @clear-search=";(search = ''), updateSearchImmediately()"
@@ -20,6 +21,7 @@
           v-if="gridOrList === GridListToggleValue.Grid"
           :search="debouncedSearch"
           :project="project"
+          :project-id="projectId"
           disable-pagination
           @update:loading="queryLoading = $event"
           @clear-search=";(search = ''), updateSearchImmediately()"
@@ -27,7 +29,7 @@
       </div>
       <ProjectPageModelsNewDialog
         v-model:open="showNewDialog"
-        :project-id="project.id"
+        :project-id="projectId"
       />
     </template>
     <template #filters>
@@ -70,6 +72,7 @@
             >
               New
             </FormButton>
+            <FormButton v-if="false" @click="onTest">Test</FormButton>
           </div>
         </div>
       </div>
@@ -86,21 +89,24 @@ import { debounce } from 'lodash-es'
 import { PlusIcon } from '@heroicons/vue/24/solid'
 import { CubeIcon } from '@heroicons/vue/24/outline'
 import { allProjectModelsRoute, modelRoute } from '~~/lib/common/helpers/route'
-import { SpeckleViewer } from '@speckle/shared'
+import { SpeckleViewer, type Optional } from '@speckle/shared'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 graphql(`
   fragment ProjectPageLatestItemsModels on Project {
     id
     role
+    visibility
     modelCount: models(limit: 0) {
       totalCount
     }
+    ...ProjectPageModelsStructureItem_Project
   }
 `)
 
 const props = defineProps<{
-  project: ProjectPageLatestItemsModelsFragment
+  projectId: string
+  project: Optional<ProjectPageLatestItemsModelsFragment>
 }>()
 
 const mp = useMixpanel()
@@ -121,12 +127,14 @@ const title = ref('Models')
 
 const gridOrList = useProjectPageItemViewType(title.value)
 
-const canContribute = computed(() => canModifyModels(props.project))
+const canContribute = computed(() =>
+  props.project ? canModifyModels(props.project) : false
+)
 const allModelsRoute = computed(() => {
   const resourceIdString = SpeckleViewer.ViewerRoute.resourceBuilder()
     .addAllModels()
     .toString()
-  return modelRoute(props.project.id, resourceIdString)
+  return modelRoute(props.projectId, resourceIdString)
 })
 
 const updateDebouncedSearch = debounce(() => {
@@ -138,10 +146,34 @@ const updateSearchImmediately = (val?: string) => {
   debouncedSearch.value = (val ?? search.value).trim()
 }
 
+const onTest = () => {
+  // TODO: Remove after RUM tests are done
+
+  // Unhandled rejection
+  void new Promise((_resolve, reject) => {
+    setTimeout(() => {
+      reject(new Error('Unhandled rejection!'))
+    }, 200)
+  })
+
+  // Uncaught error
+  setTimeout(() => {
+    throw new Error('Unhandled exception!')
+  }, 300)
+
+  // Sync error
+  throw new Error('Sync error!')
+}
+
 watch(search, (newVal) => {
   if (newVal) showLoadingBar.value = true
   else showLoadingBar.value = false
 })
 
 watch(queryLoading, (newVal) => (showLoadingBar.value = newVal))
+
+// TODO: Remove after RUM tests are done
+// if (process.server) {
+//   onTest()
+// }
 </script>

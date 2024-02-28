@@ -16,10 +16,6 @@
       :class="`${iconClasses} ${hideText ? '' : 'mr-2'}`"
     />
     <slot v-if="!hideText">Button</slot>
-    <div v-else style="margin: 0 !important; width: 0.01px">
-      &nbsp;
-      <!-- The point of this is to ensure text & no-text buttons have the same height -->
-    </div>
     <Component
       :is="iconRight"
       v-if="iconRight || !loading"
@@ -34,17 +30,9 @@ import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import { computed, resolveDynamicComponent } from 'vue'
 import type { Nullable, Optional } from '@speckle/shared'
 import { ArrowPathIcon } from '@heroicons/vue/24/solid'
+import type { FormButtonColor, FormButtonTextColor } from '~~/src/helpers/form/button'
 
 type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
-type FormButtonColor =
-  | 'default'
-  | 'invert'
-  | 'danger'
-  | 'warning'
-  | 'success'
-  | 'card'
-  | 'secondary'
-  | 'info'
 
 const emit = defineEmits<{
   /**
@@ -113,6 +101,13 @@ const props = defineProps({
    */
   color: {
     type: String as PropType<FormButtonColor>,
+    default: 'default'
+  },
+  /**
+   * Text color, only used when color=secondary
+   */
+  textColor: {
+    type: String as PropType<FormButtonTextColor>,
     default: 'default'
   },
   /**
@@ -257,12 +252,32 @@ const bgAndBorderClasses = computed(() => {
 
 const foregroundClasses = computed(() => {
   const classParts: string[] = []
+  const hasCustomTextColor = props.textColor !== 'default'
+
+  if (hasCustomTextColor && !isDisabled.value) {
+    switch (props.textColor) {
+      case 'primary':
+        classParts.push('text-primary')
+        break
+      case 'warning':
+        classParts.push('text-warning')
+        break
+      case 'success':
+        classParts.push('text-success')
+        break
+      case 'danger':
+        classParts.push('text-danger')
+        break
+      case 'info':
+        classParts.push('text-info')
+        break
+    }
+  }
+
   if (!props.text && !props.link) {
     if (isDisabled.value) {
-      classParts.push(
-        props.outlined ? 'text-foreground-disabled' : 'text-foreground-disabled'
-      )
-    } else {
+      classParts.push('text-foreground-disabled')
+    } else if (!hasCustomTextColor) {
       switch (props.color) {
         case 'invert':
           classParts.push(
@@ -312,7 +327,7 @@ const foregroundClasses = computed(() => {
   } else {
     if (isDisabled.value) {
       classParts.push('text-foreground-disabled')
-    } else {
+    } else if (!hasCustomTextColor) {
       if (props.color === 'invert') {
         classParts.push(
           'text-foundation hover:text-foundation-2 dark:text-foreground dark:hover:text-foreground'
@@ -433,7 +448,7 @@ const decoratorClasses = computed(() => {
 const buttonClasses = computed(() => {
   const isLinkOrText = props.link || props.text
   return [
-    'transition inline-flex justify-center text-center items-center space-x-2 outline-none select-none',
+    'transition inline-flex justify-center text-center items-center outline-none select-none leading-[0.9rem]',
     generalClasses.value,
     sizeClasses.value,
     foregroundClasses.value,

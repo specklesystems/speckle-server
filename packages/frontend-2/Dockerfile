@@ -1,4 +1,4 @@
-FROM node:18-bookworm-slim@sha256:fe687021c06383a2bc5eafa6db29b627ed28a55f6bdfbcea108f0c624b783c37 as build-stage
+FROM node:18-bookworm-slim@sha256:7642244621c75012ab49a03156639537fd7ab654a1f772e854115c93edb039df as build-stage
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 
@@ -34,7 +34,7 @@ ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:645287632214ec051adca0302e744b850f9ae0e10d13f7dcf07e57de80770e35 as production-stage
+FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:c005d386e514be30e1b995961c309365df5c2ffd3f3703217118cf313bc617e1 as production-stage
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 

@@ -1,4 +1,4 @@
-FROM debian:12-slim@sha256:f80c45482c8d147da87613cb6878a7238b8642bcc24fc11bad78c7bec726f340 AS build-stage
+FROM debian:12-slim@sha256:d02c76d82364cedca16ba3ed6f9102406fa9fa8833076a609cabf14270f43dfc AS build-stage
 
 WORKDIR /build
 
@@ -19,7 +19,7 @@ RUN apt-get update && \
 COPY utils/monitor-deployment/requirements.txt /requirements.txt
 RUN /venv/bin/pip install --disable-pip-version-check --requirement /requirements.txt
 
-FROM gcr.io/distroless/python3-debian12:nonroot@sha256:27d2d6afcfb109e4c147449d4af957f71cb770196527d0da1d1d92b9680b0daa as production-stage
+FROM gcr.io/distroless/python3-debian12:nonroot@sha256:5c7661ddc1f43e50ee97404b12146d34ac34afc9ab7e713c3bac189efb074e10 as production-stage
 ARG PG_CONNECTION_STRING
 ARG NODE_EXTRA_CA_CERTS
 ENV PG_CONNECTION_STRING=${PG_CONNECTION_STRING} \

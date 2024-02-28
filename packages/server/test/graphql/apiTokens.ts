@@ -22,7 +22,7 @@ export const tokenAppInfoQuery = gql`
 `
 
 export const appTokenCreateMutation = gql`
-  mutation AppTokenCreate($token: ApiTokenCreateInput!) {
+  mutation AppTokenCreate($token: AppTokenCreateInput!) {
     appTokenCreate(token: $token)
   }
 `

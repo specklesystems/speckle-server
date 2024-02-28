@@ -48,7 +48,9 @@
             Downloads
           </FormButton>
           <ConnectorsVersionsDownloadDialog v-model:open="dialogOpen" :tag="tag" />
-          <FormButton size="sm" :to="tag.url" target="_blank">Tutorials</FormButton>
+          <FormButton size="sm" :to="tag.url" target="_blank" external>
+            Tutorials
+          </FormButton>
         </div>
       </div>
     </div>

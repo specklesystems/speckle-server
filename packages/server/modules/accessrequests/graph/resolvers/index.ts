@@ -13,7 +13,7 @@ import { LogicError } from '@/modules/shared/errors'
 const resolvers: Resolvers = {
   Mutation: {
     async streamAccessRequestUse(_parent, args, ctx) {
-      const { userId } = ctx
+      const { userId, resourceAccessRules } = ctx
       const { requestId, accept, role } = args
 
       if (!userId) throw new LogicError('User ID unexpectedly false')
@@ -22,7 +22,8 @@ const resolvers: Resolvers = {
         userId,
         requestId,
         accept,
-        mapStreamRoleToValue(role)
+        mapStreamRoleToValue(role),
+        resourceAccessRules
       )
       return true
     },
@@ -67,9 +68,12 @@ const resolvers: Resolvers = {
         throw new LogicError('Unable to find request stream')
       }
 
-      if (!stream.isPublic) {
-        await validateStreamAccess(ctx.userId, stream.id, Roles.Stream.Reviewer)
-      }
+      await validateStreamAccess(
+        ctx.userId,
+        stream.id,
+        Roles.Stream.Reviewer,
+        ctx.resourceAccessRules
+      )
 
       return stream
     }

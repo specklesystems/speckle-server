@@ -1,14 +1,23 @@
 <template>
   <template v-if="itemsCount">
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+    <div
+      class="relative z-10 grid gap-3"
+      :class="
+        smallView
+          ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'
+          : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
+      "
+    >
       <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
       <ProjectPageModelsCard
         v-for="(item, i) in items"
         :key="item.id"
         :model="item"
+        :project-id="projectId"
         :project="project"
         :show-actions="showActions"
         :show-versions="showVersions"
+        height="h-32 sm:h-64"
         :disable-default-link="disableDefaultLinks"
         :style="`z-index: ${items.length - i};`"
         @click="($event) => $emit('model-clicked', { id: item.id, e: $event })"
@@ -17,7 +26,7 @@
     <FormButtonSecondaryViewAll
       v-if="showViewAll"
       class="mt-4"
-      :to="allProjectModelsRoute(project.id)"
+      :to="allProjectModelsRoute(projectId)"
     />
   </template>
   <template v-else-if="!areQueriesLoading">
@@ -26,7 +35,7 @@
       @clear-search="() => $emit('clear-search')"
     />
     <div v-else>
-      <ProjectCardImportFileArea :project-id="project.id" class="h-36 col-span-4" />
+      <ProjectCardImportFileArea :project-id="projectId" class="h-36 col-span-4" />
     </div>
   </template>
   <InfiniteLoading
@@ -46,7 +55,7 @@ import {
   latestModelsPaginationQuery,
   latestModelsQuery
 } from '~~/lib/projects/graphql/queries'
-import type { Nullable, SourceAppDefinition } from '@speckle/shared'
+import type { Nullable, Optional, SourceAppDefinition } from '@speckle/shared'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { allProjectModelsRoute } from '~~/lib/common/helpers/route'
 
@@ -58,7 +67,8 @@ const emit = defineEmits<{
 
 const props = withDefaults(
   defineProps<{
-    project: ProjectPageLatestItemsModelsFragment
+    projectId: string
+    project: Optional<ProjectPageLatestItemsModelsFragment>
     search?: string
     showActions?: boolean
     showVersions?: boolean
@@ -68,6 +78,7 @@ const props = withDefaults(
     disablePagination?: boolean
     sourceApps?: SourceAppDefinition[]
     contributors?: FormUsersSelectItemFragment[]
+    smallView?: boolean
   }>(),
   {
     showActions: true,
@@ -79,20 +90,31 @@ const logger = useLogger()
 const areQueriesLoading = useQueryLoading()
 
 const latestModelsQueryVariables = computed(
-  (): ProjectLatestModelsPaginationQueryVariables => ({
-    projectId: props.project.id,
-    filter: {
-      search: props.search || null,
-      excludeIds: props.excludedIds || null,
-      onlyWithVersions: !!props.excludeEmptyModels,
-      sourceApps: props.sourceApps?.length
-        ? props.sourceApps.map((a) => a.searchKey)
-        : null,
-      contributors: props.contributors?.length
-        ? props.contributors.map((c) => c.id)
+  (): ProjectLatestModelsPaginationQueryVariables => {
+    const shouldHaveFilter =
+      props.search?.length ||
+      props.excludedIds?.length ||
+      props.sourceApps?.length ||
+      props.contributors?.length ||
+      !!props.excludeEmptyModels
+
+    return {
+      projectId: props.projectId,
+      filter: shouldHaveFilter
+        ? {
+            search: props.search || null,
+            excludeIds: props.excludedIds || null,
+            onlyWithVersions: !!props.excludeEmptyModels,
+            sourceApps: props.sourceApps?.length
+              ? props.sourceApps.map((a) => a.searchKey)
+              : null,
+            contributors: props.contributors?.length
+              ? props.contributors.map((c) => c.id)
+              : null
+          }
         : null
     }
-  })
+  }
 )
 
 const infiniteLoaderId = ref('')

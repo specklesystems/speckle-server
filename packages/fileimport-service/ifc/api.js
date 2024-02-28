@@ -125,9 +125,12 @@ module.exports = class ServerAPI {
         this.prepInsertionObjectBatch(batch)
         await Objects().insert(batch).onConflict().ignore()
         this.logger.info(
-          `Inserted ${batch.length} objects from batch ${index + 1} of ${
-            batches.length
-          }`
+          {
+            currentBatchCount: batch.length,
+            currentBatchId: index + 1,
+            totalNumberOfBatches: batches.length
+          },
+          'Inserted {currentBatchCount} objects from batch {currentBatchId} of {totalNumberOfBatches}'
         )
       }
     }
@@ -140,9 +143,12 @@ module.exports = class ServerAPI {
         this.prepInsertionClosureBatch(batch)
         await Closures().insert(batch).onConflict().ignore()
         this.logger.info(
-          `Inserted ${batch.length} closures from batch ${index + 1} of ${
-            batches.length
-          }`
+          {
+            currentBatchCount: batch.length,
+            currentBatchId: index + 1,
+            totalNumberOfBatches: batches.length
+          },
+          'Inserted {currentBatchCount} closures from batch {currentBatchId} of {totalNumberOfBatches}'
         )
       }
     }
@@ -150,7 +156,8 @@ module.exports = class ServerAPI {
   }
 
   prepInsertionObject(streamId, obj) {
-    const MAX_OBJECT_SIZE = 10 * 1024 * 1024
+    const maximumObjectSizeMB = parseInt(process.env['MAX_OBJECT_SIZE_MB'] || '10')
+    const MAX_OBJECT_SIZE = maximumObjectSizeMB * 1024 * 1024
 
     if (obj.hash) obj.id = obj.hash
     else

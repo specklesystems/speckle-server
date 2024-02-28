@@ -160,6 +160,14 @@ export type AppCreateInput = {
   termsAndConditionsLink?: InputMaybe<Scalars['String']>;
 };
 
+export type AppTokenCreateInput = {
+  lifespan?: InputMaybe<Scalars['BigInt']>;
+  /** Optionally limit the token to only have access to specific resources */
+  limitResources?: InputMaybe<Array<TokenResourceIdentifierInput>>;
+  name: Scalars['String'];
+  scopes: Array<Scalars['String']>;
+};
+
 export type AppUpdateInput = {
   description: Scalars['String'];
   id: Scalars['String'];
@@ -1064,7 +1072,7 @@ export type MutationAppRevokeAccessArgs = {
 
 
 export type MutationAppTokenCreateArgs = {
-  token: ApiTokenCreateInput;
+  token: AppTokenCreateInput;
 };
 
 
@@ -1432,6 +1440,8 @@ export type Project = {
   sourceApps: Array<Scalars['String']>;
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime'];
+  /** Retrieve a specific project version by its ID */
+  version?: Maybe<Version>;
   /** Returns a flat list of all project versions */
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
@@ -1474,6 +1484,11 @@ export type ProjectModelsTreeArgs = {
 
 export type ProjectPendingImportedModelsArgs = {
   limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type ProjectVersionArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -1866,8 +1881,6 @@ export type Query = {
    * Pass in the `query` parameter to search by name, description or ID.
    */
   streams?: Maybe<StreamCollection>;
-  testList: Array<TestItem>;
-  testNumber?: Maybe<Scalars['Int']>;
   /**
    * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
@@ -2073,6 +2086,8 @@ export type ServerInfo = {
   description?: Maybe<Scalars['String']>;
   guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
+  /** Server relocation / migration info */
+  migration?: Maybe<ServerMigration>;
   name: Scalars['String'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
   roles: Array<Role>;
@@ -2104,6 +2119,12 @@ export type ServerInviteCreateInput = {
   message?: InputMaybe<Scalars['String']>;
   /** Can only be specified if guest mode is on or if the user is an admin */
   serverRole?: InputMaybe<Scalars['String']>;
+};
+
+export type ServerMigration = {
+  __typename?: 'ServerMigration';
+  movedFrom?: Maybe<Scalars['String']>;
+  movedTo?: Maybe<Scalars['String']>;
 };
 
 export enum ServerRole {
@@ -2546,11 +2567,20 @@ export type SubscriptionViewerUserActivityBroadcastedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
 
-export type TestItem = {
-  __typename?: 'TestItem';
-  bar: Scalars['String'];
-  foo: Scalars['String'];
+export type TokenResourceIdentifier = {
+  __typename?: 'TokenResourceIdentifier';
+  id: Scalars['String'];
+  type: TokenResourceIdentifierType;
 };
+
+export type TokenResourceIdentifierInput = {
+  id: Scalars['String'];
+  type: TokenResourceIdentifierType;
+};
+
+export enum TokenResourceIdentifierType {
+  Project = 'project'
+}
 
 export type UpdateModelInput = {
   description?: InputMaybe<Scalars['String']>;
@@ -2576,7 +2606,7 @@ export type User = {
   /** Returns a list of your personal api tokens. */
   apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
-  authorizedApps?: Maybe<Array<Maybe<ServerAppListItem>>>;
+  authorizedApps?: Maybe<Array<ServerAppListItem>>;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
   /**
@@ -2739,9 +2769,11 @@ export type Version = {
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;
+  parents?: Maybe<Array<Maybe<Scalars['String']>>>;
   previewUrl: Scalars['String'];
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
+  totalChildrenCount?: Maybe<Scalars['Int']>;
 };
 
 

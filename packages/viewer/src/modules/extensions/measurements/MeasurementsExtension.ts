@@ -326,6 +326,15 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
+  public clearMeasurements() {
+    this.removeMeasurement()
+    this.measurements.forEach((measurement: Measurement) => {
+      this.renderer.scene.remove(measurement)
+    })
+    this.measurements = []
+    this.viewer.requestRender()
+  }
+
   protected flashMeasurement() {
     let flashCount = 0
     const maxFlashCount = 5

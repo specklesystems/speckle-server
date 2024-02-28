@@ -2,9 +2,9 @@
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
     <template #title>Measure Mode</template>
     <div
-      class="flex items-center gap-2 text-sm px-3 py-2 border-b border-outline-3 text-foreground-2"
+      class="flex items-center gap-2 text-xs sm:text-sm px-3 py-1.5 sm:py-2 border-b border-outline-3 text-foreground-2"
     >
-      <InformationCircleIcon class="h-6 h-6 shrink-0" />
+      <InformationCircleIcon class="h-5 w-5 sm:h-6 sm:h-6 shrink-0" />
       <span class="max-w-[210px]">
         Reloading the model will delete all measurements.
       </span>
@@ -16,18 +16,19 @@
         color="danger"
         :icon-left="TrashIcon"
         class="font-normal py-1"
-        @click="() => removeMeasurement()"
+        @click="() => clearMeasurements()"
       >
-        Delete Selected
+        Delete All Measurements
       </FormButton>
     </template>
-    <div class="p-3 flex flex-col gap-3 border-b border-outline-3">
+    <div class="px-3 py-2 sm:p-3 flex flex-col gap-3 border-b border-outline-3">
       <div>
-        <h6 class="font-semibold text-sm mb-2">Measurement Type</h6>
+        <h6 class="font-semibold text-xs sm:text-sm mb-2">Measurement Type</h6>
         <FormRadio
           v-for="option in measurementTypeOptions"
           :key="option.value"
           :label="option.title"
+          :description="option.description"
           :value="option.value.toString()"
           name="measurementType"
           :icon="option.icon"
@@ -36,26 +37,28 @@
         />
       </div>
     </div>
-    <div class="p-3 flex items-center border-b border-outline-3">
+    <div class="py-2 px-3 sm:p-3 flex items-center border-b border-outline-3">
       <FormCheckbox
         name="Snap to Objects"
         hide-label
         :model-value="measurementParams.vertexSnap"
         @update:model-value="() => toggleMeasurementsSnap()"
       />
-      <span class="font-normal text-sm">Snap to Vertices</span>
+      <span class="font-normal text-xs sm:text-sm">Snap to Vertices</span>
     </div>
     <div class="p-3 flex flex-col gap-3">
       <div class="flex flex-col gap-2">
-        <h6 class="font-semibold text-sm">Units</h6>
+        <h6 class="font-semibold text-xs sm:text-sm">Units</h6>
         <ViewerMeasurementsUnitSelect
           v-model="selectedUnit"
           mount-menu-on-body
           @update:model-value="onChangeMeasurementUnits"
         />
       </div>
-      <div class="flex flex-col gap-3">
-        <label class="font-semibold text-sm" for="precision">Precision</label>
+      <div class="flex flex-col gap-2 sm:gap-3">
+        <label class="font-semibold text-xs sm:text-sm" for="precision">
+          Precision
+        </label>
         <div class="flex gap-2 items-center">
           <input
             id="precision"
@@ -71,6 +74,17 @@
         </div>
       </div>
     </div>
+    <Portal to="pocket-tip">
+      <ViewerTip class="hidden sm:flex">
+        <strong>Tip:</strong>
+        Right click to cancel measurement
+      </ViewerTip>
+    </Portal>
+    <Portal to="pocket-actions">
+      <FormButton size="xs" @click="() => clearMeasurements()">
+        Reset Measurements
+      </FormButton>
+    </Portal>
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
@@ -99,7 +113,7 @@ const measurementParams = ref({
   precision: measurementPrecision.value
 })
 
-const { setMeasurementOptions, removeMeasurement } = useMeasurementUtilities()
+const { setMeasurementOptions, clearMeasurements } = useMeasurementUtilities()
 
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
   measurementParams.value.type = selectedOption.value
@@ -133,12 +147,14 @@ const measurementTypeOptions = [
   {
     title: 'Point to Point',
     icon: IconPointToPoint,
-    value: MeasurementType.POINTTOPOINT
+    value: MeasurementType.POINTTOPOINT,
+    description: 'Choose two points for precise measurements'
   },
   {
     title: 'Perpendicular',
     icon: IconPerpendicular,
-    value: MeasurementType.PERPENDICULAR
+    value: MeasurementType.PERPENDICULAR,
+    description: 'Tip: Double-click to quick-measure'
   }
 ]
 </script>

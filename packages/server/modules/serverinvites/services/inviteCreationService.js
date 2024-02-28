@@ -62,15 +62,21 @@ function resolveResourceName(params, resource) {
  * Validate that the inviter has access to the resources he's trying to invite people to
  * @param {CreateInviteParams} params
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} inviterResourceAccessLimits
  */
-async function validateInviter(params, inviter) {
+async function validateInviter(params, inviter, inviterResourceAccessLimits) {
   const { resourceId, resourceTarget } = params
   if (!inviter) throw new InviteCreateValidationError('Invalid inviter')
   if (isServerInvite(params)) return
 
   try {
     if (resourceTarget === ResourceTargets.Streams) {
-      await authorizeResolver(inviter.id, resourceId, Roles.Stream.Owner)
+      await authorizeResolver(
+        inviter.id,
+        resourceId,
+        Roles.Stream.Owner,
+        inviterResourceAccessLimits
+      )
     } else {
       throw new InviteCreateValidationError('Unexpected resource target type')
     }
@@ -141,13 +147,20 @@ async function validateResource(params, resource, targetUser) {
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter Inviter, resolved from DB
  * @param {import('@/modules/core/helpers/userHelper').UserRecord | undefined} targetUser Target user, if one exists in our DB
  * @param {Object | null} resource Invite resource (stream or null)
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} inviterResourceAccessLimits
  */
-async function validateInput(params, inviter, targetUser, resource) {
+async function validateInput(
+  params,
+  inviter,
+  targetUser,
+  resource,
+  inviterResourceAccessLimits
+) {
   const { message } = params
 
   // validate inviter & invitee
   validateTargetUser(params, targetUser)
-  await validateInviter(params, inviter)
+  await validateInviter(params, inviter, inviterResourceAccessLimits)
 
   // validate resource
   await validateResource(params, resource, targetUser)
@@ -209,7 +222,7 @@ function buildInviteLink(invite) {
 
   if (resourceTarget === 'streams') {
     return new URL(
-      `${getStreamRoute(resourceId)}?token=${token}`,
+      `${getStreamRoute(resourceId)}?token=${token}&accept=true`,
       getFrontendOrigin()
     ).toString()
   } else {
@@ -325,9 +338,10 @@ async function buildEmailContents(invite, inviter, targetUser, resource) {
 /**
  * Create and send out an invite
  * @param {CreateInviteParams} params
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} inviterResourceAccessLimits
  * @returns {Promise<string>} The ID of the created invite
  */
-async function createAndSendInvite(params) {
+async function createAndSendInvite(params, inviterResourceAccessLimits) {
   const { inviterId, resourceTarget, resourceId, role, serverRole } = params
   let { message, target } = params
 
@@ -343,7 +357,13 @@ async function createAndSendInvite(params) {
   const { userEmail, userId } = resolveTarget(target)
 
   // validate inputs
-  await validateInput(params, inviter, targetUser, resource)
+  await validateInput(
+    params,
+    inviter,
+    targetUser,
+    resource,
+    inviterResourceAccessLimits
+  )
 
   // Sanitize msg
   // TODO: We should just use TipTap here
@@ -432,9 +452,15 @@ async function resendInviteEmail(invite) {
  * @param {string} inviterId
  * @param {string} streamId
  * @param {string[]} userIds
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} inviterResourceAccessLimits
  * @returns {Promise<boolean>}
  */
-async function inviteUsersToStream(inviterId, streamId, userIds) {
+async function inviteUsersToStream(
+  inviterId,
+  streamId,
+  userIds,
+  inviterResourceAccessLimits
+) {
   const users = await getUsers(userIds)
   if (!users.length) return false
 
@@ -446,7 +472,9 @@ async function inviteUsersToStream(inviterId, streamId, userIds) {
     role: Roles.Stream.Contributor
   }))
 
-  await Promise.all(inviteParamsArray.map((p) => createAndSendInvite(p)))
+  await Promise.all(
+    inviteParamsArray.map((p) => createAndSendInvite(p, inviterResourceAccessLimits))
+  )
 
   return true
 }

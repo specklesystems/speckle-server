@@ -376,6 +376,11 @@ server:
   ## @param server.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
+
+  ## @param server.image The Docker image to be used for the Speckle Server component. If blank, defaults to speckle/speckle-server:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
+  ##
+  image: ''
+
   onboarding:
     ## @param server.onboarding.stream_url The (cross-server) URL to the project/stream that should be used as the onboarding project base.
     ##
@@ -391,6 +396,10 @@ server:
 
   ## @param server.adminOverrideEnabled Enables the server side admin authz override
   adminOverrideEnabled: false
+
+  ## @param server.weeklyDigestEnabled Enables sending out the serevr weekly digest emails
+  weeklyDigestEnabled: false
+
   ## @param server.max_object_size_mb The maximum size of an individual object which can be uploaded to the server
   max_object_size_mb: 10
   ## @param server.max_project_models_per_page The maximum number of models that can be returned in a single page of a query for all models of a project
@@ -565,7 +574,7 @@ server:
     ## @param server.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
-    cpu: 500m
+    cpu: 1000m
     ## @param server.requests.memory The Memory that should be available on a node when scheduling this pod.
     ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -576,7 +585,7 @@ server:
     ## If this limit is exceeded, execution of the Pod will be paused until the next period.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
-    cpu: 1000m
+    cpu: 1500m
     ## @param server.limits.memory The maximum Memory that will be made available to the server Pod.
     ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -623,10 +632,10 @@ server:
     post_graphql: 50
     ## @param server.ratelimiting.burst_post_graphql If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the GraphQL API in a moving one minute window.
     burst_post_graphql: 200
-    ## @param server.ratelimiting.get_auth The maximum number of requests that can be made to the Speckle server to authenticate in a moving one second window.
-    get_auth: 2
-    ## @param server.ratelimiting.burst_get_auth If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to authenticate in a moving one minute window.
-    burst_get_auth: 20
+    ## @param server.ratelimiting.get_auth The maximum number of requests that can be made to the Speckle server to authenticate in a moving 10 minute window.
+    get_auth: 4
+    ## @param server.ratelimiting.burst_get_auth If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to authenticate in a moving thirty minute window.
+    burst_get_auth: 10
   serviceAccount:
     ## @param server.serviceAccount.create If enabled, a Kubernetes Service Account will be created for this pod.
     ## This provides additional security by limiting this pod's access to the Kubernetes API and to Secrets on the Kubernetes cluster.
@@ -637,6 +646,12 @@ server:
   fileUploads:
     ## @param server.fileUploads.enabled If enabled, file uploads on the server will be flagged as enabled
     enabled: true
+
+  migration:
+    ## @param server.migration.movedFrom Indicate the URL where the server moved from
+    movedFrom: ''
+    ## @param server.migration.movedTo Indicate the URL where the server moved to
+    movedTo: ''
 
   monitoring:
     apollo:
@@ -718,7 +733,7 @@ objects:
     ## @param objects.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
-    cpu: 500m
+    cpu: 1000m
     ## @param objects.requests.memory The Memory that should be available on a node when scheduling this pod.
     ## Depending on the Kubernetes cluster's configuration, exceeding this value may result in pod eviction from a node.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -729,7 +744,7 @@ objects:
     ## If this limit is exceeded, execution of the Pod will be paused until the next period.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
     ##
-    cpu: 1000m
+    cpu: 1500m
     ## @param objects.limits.memory The maximum Memory that will be made available to the server Pod.
     ## If this limit is exceeded, processes within the pod that request additional memory may be stopped.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -792,6 +807,11 @@ frontend:
   ## @param frontend.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
+
+  ## @param frontend.image The Docker image to be used for the Speckle Frontend component. If blank, defaults to speckle/speckle-frontend:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
+  ##
+  image: ''
+
   requests:
     ## @param frontend.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -849,6 +869,9 @@ frontend:
 ## @descriptionEnd
 ##
 frontend_2:
+  ## @param frontend_2.image The Docker image to be used for the Speckle Frontend 2 component. If blank, defaults to speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
+  ##
+  image: ''
   ## @param frontend_2.logClientApiToken SEQ API token
   ##
   logClientApiToken: ''
@@ -927,6 +950,11 @@ preview_service:
   ## @param preview_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
+
+  ## @param preview_service.image The Docker image to be used for the Speckle Preview Service component. If blank, defaults to speckle/speckle-preview-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
+  ##
+  image: ''
+
   requests:
     ## @param preview_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -990,6 +1018,10 @@ webhook_service:
   ## @param webhook_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
+  ## @param webhook_service.image The Docker image to be used for the Speckle Webhook Service component. If blank, defaults to speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
+  ##
+  image: ''
+
   requests:
     ## @param webhook_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -1053,6 +1085,11 @@ fileimport_service:
   ## @param fileimport_service.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
+
+  ## @param fileimport_service.image The Docker image to be used for the Speckle FileImport Service component. If blank, defaults to speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
+  ##
+  image: ''
+
   requests:
     ## @param fileimport_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -1122,6 +1159,11 @@ monitoring:
   ## @param monitoring.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
+
+  ## @param monitoring.image The Docker image to be used for the Speckle Monitoring component. If blank, defaults to speckle/speckle-monitoring-deployment:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
+  ##
+  image: ''
+
   requests:
     ## @param monitoring.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/
@@ -1187,6 +1229,11 @@ test:
   ## @param test.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
+
+  ## @param test.image The Docker image to be used for the Speckle Test component. If blank, defaults to speckle/speckle-test-deployment:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
+  ##
+  image: ''
+
   requests:
     ## @param test.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/

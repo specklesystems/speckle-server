@@ -1,9 +1,10 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
 import type { TreeNode } from '@speckle/viewer'
-import { CameraController } from '@speckle/viewer'
+import { CameraController, MeasurementsExtension } from '@speckle/viewer'
 import type { MeasurementOptions, PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
+import { useEmbedState } from '~/lib/viewer/composables/setup/embed'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
@@ -12,6 +13,7 @@ import {
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useDiffBuilderUtilities } from '~~/lib/viewer/composables/setup/diff'
+import { useTourStageState } from '~~/lib/viewer/composables/tour'
 
 export function useSectionBoxUtilities() {
   const { instance } = useInjectedViewer()
@@ -221,28 +223,36 @@ export function useFilterUtilities() {
 
 export function useSelectionUtilities() {
   const {
-    filters: { selectedObjects }
+    filters: { selectedObjects, selectedObjectIds }
   } = useInjectedViewerInterfaceState()
   const {
     metadata: { worldTree }
   } = useInjectedViewer()
 
   const setSelectionFromObjectIds = (objectIds: string[]) => {
-    const res = worldTree.value
-      ? worldTree.value.findAll((node: TreeNode) => {
-          const t = node.model as Record<string, unknown>
-          const raw = t.raw as Record<string, unknown>
-          const id = raw.id as string
-          if (!raw || !id) return false
-          if (objectIds.includes(id)) return true
-          return false
-        })
-      : []
-
-    const objs = res.map(
-      (node: TreeNode) => (node.model as Record<string, unknown>).raw as SpeckleObject
-    )
+    const objs: Array<SpeckleObject> = []
+    objectIds.forEach((value: string) => {
+      objs.push(
+        ...((worldTree.value?.findId(value) || []) as unknown as TreeNode[]).map(
+          (node: TreeNode) =>
+            (node.model as Record<string, unknown>).raw as SpeckleObject
+        )
+      )
+    })
     selectedObjects.value = objs
+  }
+
+  const addToSelectionFromObjectIds = (objectIds: string[]) => {
+    const originalObjects = selectedObjects.value.slice()
+    setSelectionFromObjectIds(objectIds)
+    selectedObjects.value = [...originalObjects, ...selectedObjects.value]
+  }
+
+  const removeFromSelectionObjectIds = (objectIds: string[]) => {
+    const finalObjects = selectedObjects.value.filter(
+      (o) => !objectIds.includes(o.id || '')
+    )
+    selectedObjects.value = finalObjects
   }
 
   const addToSelection = (object: SpeckleObject) => {
@@ -271,7 +281,10 @@ export function useSelectionUtilities() {
     removeFromSelection,
     clearSelection,
     setSelectionFromObjectIds,
-    objects: selectedObjects
+    addToSelectionFromObjectIds,
+    removeFromSelectionObjectIds,
+    objects: selectedObjects,
+    objectIds: selectedObjectIds
   }
 }
 
@@ -359,9 +372,46 @@ export function useMeasurementUtilities() {
     }
   }
 
+  const clearMeasurements = () => {
+    state.viewer.instance.getExtension(MeasurementsExtension).clearMeasurements()
+  }
+
   return {
     enableMeasurements,
     setMeasurementOptions,
-    removeMeasurement
+    removeMeasurement,
+    clearMeasurements
+  }
+}
+
+/**
+ * Some conditional rendering values depend on multiple & overlapping states. This utility reconciles that.
+ */
+export function useConditionalViewerRendering() {
+  const tourState = useTourStageState()
+  const embedMode = useEmbedState()
+
+  const showControls = computed(() => {
+    if (tourState.value.showTour && !tourState.value.showViewerControls) return false
+    if (
+      embedMode.embedOptions.value?.isEnabled &&
+      embedMode.embedOptions.value.hideControls
+    ) {
+      return false
+    }
+
+    return true
+  })
+
+  const showNavbar = computed(() => {
+    if (!showControls.value) return false
+    if (tourState.value.showTour && !tourState.value.showNavbar) return false
+    if (embedMode.embedOptions.value?.isEnabled) return false
+    return true
+  })
+
+  return {
+    showNavbar,
+    showControls
   }
 }

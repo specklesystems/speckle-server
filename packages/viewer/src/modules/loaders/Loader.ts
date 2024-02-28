@@ -12,6 +12,7 @@ export abstract class Loader extends EventEmitter {
   protected _resourceData: string | ArrayBuffer
 
   public abstract get resource(): string
+  public abstract get finished(): boolean
 
   protected constructor(resource: string, resourceData: string | ArrayBuffer) {
     super()

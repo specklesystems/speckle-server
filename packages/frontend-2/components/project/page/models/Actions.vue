@@ -14,20 +14,28 @@
     <ProjectPageModelsCardEditDialog
       v-model:open="isRenameDialogOpen"
       :model="model"
-      :project-id="projectId"
+      :project-id="project.id"
       @updated="$emit('model-updated')"
     />
     <ProjectPageModelsCardDeleteDialog
       v-model:open="isDeleteDialogOpen"
       :model="model"
-      :project-id="projectId"
+      :project-id="project.id"
       @deleted="$emit('model-updated')"
+    />
+    <ProjectModelPageDialogEmbed
+      v-model:open="embedDialogOpen"
+      :project="project"
+      :model-id="model.id"
     />
   </div>
 </template>
 <script setup lang="ts">
 import type { Nullable } from '@speckle/shared'
-import type { ProjectPageModelsActionsFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  ProjectPageModelsActionsFragment,
+  ProjectPageModelsActions_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
@@ -36,7 +44,8 @@ import {
   PencilIcon,
   LinkIcon,
   FingerPrintIcon,
-  ArrowUpTrayIcon
+  ArrowUpTrayIcon,
+  CodeBracketIcon
 } from '@heroicons/vue/24/outline'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -48,24 +57,33 @@ graphql(`
   }
 `)
 
+graphql(`
+  fragment ProjectPageModelsActions_Project on Project {
+    id
+    ...ProjectsModelPageEmbed_Project
+  }
+`)
+
 enum ActionTypes {
   Rename = 'rename',
   Delete = 'delete',
   Share = 'share',
   UploadVersion = 'upload-version',
-  CopyId = 'copy-id'
+  CopyId = 'copy-id',
+  Embed = 'embed'
 }
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
   (e: 'model-updated'): void
   (e: 'upload-version'): void
+  (e: 'embed'): void
 }>()
 
 const props = defineProps<{
   open?: boolean
   model: ProjectPageModelsActionsFragment
-  projectId: string
+  project: ProjectPageModelsActions_ProjectFragment
   canEdit?: boolean
 }>()
 
@@ -74,6 +92,7 @@ const { copy } = useClipboard()
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
+const embedDialogOpen = ref(false)
 
 const isMain = computed(() => props.model.name === 'main')
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
@@ -93,7 +112,8 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   ],
   [
     { title: 'Copy Link', id: ActionTypes.Share, icon: LinkIcon },
-    { title: 'Copy ID', id: ActionTypes.CopyId, icon: FingerPrintIcon }
+    { title: 'Copy ID', id: ActionTypes.CopyId, icon: FingerPrintIcon },
+    { title: 'Embed Model', id: ActionTypes.Embed, icon: CodeBracketIcon }
   ],
   [
     {
@@ -127,13 +147,16 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
     case ActionTypes.Share:
       mp.track('Branch Action', { type: 'action', name: 'share' })
-      copyModelLink(props.projectId, props.model.id)
+      copyModelLink(props.project.id, props.model.id)
       break
     case ActionTypes.UploadVersion:
       emit('upload-version')
       break
     case ActionTypes.CopyId:
       copy(props.model.id, { successMessage: 'Copied model ID to clipboard' })
+      break
+    case ActionTypes.Embed:
+      embedDialogOpen.value = true
       break
   }
 }

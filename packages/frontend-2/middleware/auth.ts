@@ -10,7 +10,7 @@ import { loginRoute } from '~~/lib/common/helpers/route'
 export default defineNuxtRouteMiddleware(async (to) => {
   const nuxt = useNuxtApp()
   const client = useApolloClientFromNuxt()
-  const postAuthRedirect = usePostAuthRedirect()
+  const postAuthRedirect = usePostAuthRedirect({ route: to })
 
   const { data } = await client
     .query({
