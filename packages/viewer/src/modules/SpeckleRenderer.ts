@@ -761,7 +761,10 @@ export default class SpeckleRenderer {
           flatRanges.push({
             offset,
             count: count + ranges[k + 1].count,
-            material: ranges[k].material
+            material: ranges[k].material,
+            ...(ranges[k].materialOptions && {
+              materialOptions: ranges[k].materialOptions
+            })
           })
         }
         continue
@@ -769,7 +772,10 @@ export default class SpeckleRenderer {
       flatRanges.push({
         offset,
         count,
-        material: ranges[k].material
+        material: ranges[k].material,
+        ...(ranges[k].materialOptions && {
+          materialOptions: ranges[k].materialOptions
+        })
       })
       offset = ranges[k + 1].offset
       count = 0
@@ -777,7 +783,10 @@ export default class SpeckleRenderer {
         flatRanges.push({
           offset: ranges[k + 1].offset,
           count: ranges[k + 1].count,
-          material: ranges[k + 1].material
+          material: ranges[k + 1].material,
+          ...(ranges[k].materialOptions && {
+            materialOptions: ranges[k].materialOptions
+          })
         })
       }
     }

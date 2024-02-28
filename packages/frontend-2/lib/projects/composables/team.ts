@@ -1,8 +1,31 @@
 import { Roles } from '@speckle/shared'
 import type { Nullable, ServerRoles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  ProjectPageTeamDialogFragment,
+  ProjectsPageTeamDialogManagePermissions_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
+
+export function useTeamManagePermissionsInternals(params: {
+  props: {
+    project: Ref<ProjectsPageTeamDialogManagePermissions_ProjectFragment>
+  }
+}) {
+  const {
+    props: { project }
+  } = params
+
+  const { isGuest: isServerGuest, activeUser } = useActiveUser()
+
+  const isOwner = computed(() => project.value.role === Roles.Stream.Owner)
+
+  return {
+    activeUser,
+    isOwner,
+    isServerGuest
+  }
+}
 
 export function useTeamDialogInternals(params: {
   props: {
@@ -13,7 +36,8 @@ export function useTeamDialogInternals(params: {
     props: { project }
   } = params
 
-  const { activeUser, isGuest: isServerGuest } = useActiveUser()
+  const { isOwner, isServerGuest, activeUser } =
+    useTeamManagePermissionsInternals(params)
 
   const collaboratorListItems = computed((): ProjectCollaboratorListItem[] => {
     const results: ProjectCollaboratorListItem[] = []
@@ -42,8 +66,6 @@ export function useTeamDialogInternals(params: {
 
     return results
   })
-
-  const isOwner = computed(() => project.value.role === Roles.Stream.Owner)
 
   const canLeaveProject = computed(() => {
     if (!activeUser.value) return false

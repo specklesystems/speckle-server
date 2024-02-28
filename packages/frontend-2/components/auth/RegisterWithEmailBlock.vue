@@ -61,7 +61,7 @@
     <FormButton submit full-width class="mt-4" :disabled="loading">Sign up</FormButton>
     <div
       v-if="serverInfo.termsOfService"
-      class="mt-2 text-xs text-foreground-2 text-center linkify-tos"
+      class="mt-2 text-xs text-foreground-2 text-center terms-of-service"
       v-html="serverInfo.termsOfService"
     ></div>
     <div class="mt-2 sm:mt-8 text-center text-xs sm:text-base">
@@ -164,8 +164,3 @@ watch(
   { immediate: true }
 )
 </script>
-<style>
-.linkify-tos a {
-  text-decoration: underline;
-}
-</style>

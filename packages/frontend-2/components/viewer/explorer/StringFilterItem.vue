@@ -2,14 +2,12 @@
   <div>
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
-      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md transition-all ${
-        availableTargetIds.length === 0
-          ? 'text-foreground-2 cursor-auto'
-          : 'text-foreground cursor-pointer'
-      } ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}`"
+      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md transition-all text-foreground cursor-pointer ${
+        isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
+      }`"
       @click="setSelection()"
     >
-      <div class="flex space-x-2 items-center flex-shrink truncate text-xs sm:text-sm">
+      <div class="flex gap-1 items-center flex-shrink truncate text-xs sm:text-sm">
         <span
           v-if="color"
           class="w-3 h-3 rounded"
@@ -18,7 +16,17 @@
         <span class="truncate">
           {{ item.value.split('.').reverse()[0] || item.value || 'No Name' }}
         </span>
-        <span class="text-xs text-foreground-2">({{ availableTargetIds.length }})</span>
+        <div class="flex">
+          <span
+            v-if="props.item.ids.length !== availableTargetIds.length"
+            class="text-xs text-foreground-2"
+          >
+            {{ availableTargetIds.length }} ({{ props.item.ids.length }})
+          </span>
+          <span v-else class="text-xs text-foreground-2">
+            {{ props.item.ids.length }}
+          </span>
+        </div>
       </div>
       <!-- 
         Note: not allowing for hiding/isolation CURRENTLY as there is a larger change needed. 
@@ -29,25 +37,24 @@
 
         There's v-if=false that's hiding the div below :)
       -->
-      <div v-if="false" class="flex items-center flex-shrink-0">
-        <button
+      <div class="flex items-center gap-1 flex-shrink-0">
+        <!-- <button
           :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
             isHidden ? 'opacity-100' : ''
           }`"
           @click.stop="hideOrShowObject"
-        >
-          <EyeIcon v-if="!isHidden" class="h-3 w-3" />
-          <EyeSlashIcon v-else class="h-3 w-3" />
-        </button>
+        > -->
+        <EyeSlashIcon v-if="isHidden" class="h-3 w-3" />
+        <!-- </button>
         <button
           :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
             isIsolated ? 'opacity-100' : ''
           }`"
           @click.stop="isolateOrUnisolateObject"
-        >
-          <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
-          <FunnelIcon v-else class="h-3 w-3" />
-        </button>
+        > -->
+        <FunnelIconOutline v-if="!isIsolated" class="h-3 w-3" />
+        <FunnelIcon v-else class="h-3 w-3" />
+        <!-- </button> -->
       </div>
     </div>
     <!-- Debugging info -->
@@ -57,7 +64,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { EyeIcon, EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
+import { EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import { containsAll, hasIntersection } from '~~/lib/common/helpers/utils'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
@@ -115,22 +122,26 @@ const color = computed(() => {
     ?.color
 })
 
-const hideOrShowObject = () => {
-  // const ids = props.item.ids
-  // if (!isHidden.value) {
-  //   // removeFromSelection(rawSpeckleData)
-  //   filters.hideObjects(ids, stateKey, true)
-  //   return
-  // }
-  // return filters.showObjects(ids, stateKey, true)
-}
+// It is possible to control the visibility and isolation of objects from here, There are
+// some performance concerns here, so this is something to come back to. For now, the icons
+// are purely indicators
 
-const isolateOrUnisolateObject = () => {
-  // const ids = props.item.ids
-  // if (!isIsolated.value) {
-  //   filters.isolateObjects(ids, stateKey, true)
-  //   return
-  // }
-  // return filters.unIsolateObjects(ids, stateKey, true)
-}
+// const hideOrShowObject = () => {
+//   const ids = props.item.ids
+//   if (!isHidden.value) {
+//     // removeFromSelection(rawSpeckleData)
+//     filters.hideObjects(ids, stateKey, true)
+//     return
+//   }
+//   return filters.showObjects(ids, stateKey, true)
+// }
+
+// const isolateOrUnisolateObject = () => {
+//   const ids = props.item.ids
+//   if (!isIsolated.value) {
+//     filters.isolateObjects(ids, stateKey, true)
+//     return
+//   }
+//   return filters.unIsolateObjects(ids, stateKey, true)
+// }
 </script>

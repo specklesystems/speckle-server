@@ -42,14 +42,14 @@
           </div>
 
           <!-- Global loading bar -->
-          <ViewerLoadingBar class="z-20" />
+          <ViewerLoadingBar class="relative z-20" />
 
           <!-- Sidebar controls -->
           <Transition
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerControls v-show="showControls" class="z-20" />
+            <ViewerControls v-show="showControls" class="relative z-20" />
           </Transition>
 
           <!-- Viewer Object Selection Info Display -->
@@ -63,14 +63,22 @@
             </div>
           </Transition>
           <div
-            class="absolute z-10 w-screen flex flex-col items-center justify-center gap-2"
+            class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2"
             :class="isEmbedEnabled ? 'bottom-16 mb-1' : 'bottom-6'"
           >
-            <PortalTarget name="pocket-tip"></PortalTarget>
-            <div class="flex gap-3">
-              <PortalTarget name="pocket-actions"></PortalTarget>
-              <!-- Shows up when filters are applied for an easy return to normality -->
-              <ViewerGlobalFilterReset class="z-20" :embed="!!isEmbedEnabled" />
+            <div class="flex items-end justify-center sm:justify-start">
+              <PortalTarget name="pocket-left"></PortalTarget>
+            </div>
+            <div class="flex flex-col gap-2 items-center justify-end">
+              <PortalTarget name="pocket-tip"></PortalTarget>
+              <div class="flex gap-3">
+                <PortalTarget name="pocket-actions"></PortalTarget>
+                <!-- Shows up when filters are applied for an easy return to normality -->
+                <ViewerGlobalFilterReset class="z-20" :embed="!!isEmbedEnabled" />
+              </div>
+            </div>
+            <div class="flex items-end justify-center sm:justify-end">
+              <PortalTarget name="pocket-right"></PortalTarget>
             </div>
           </div>
         </ClientOnly>
@@ -82,12 +90,7 @@
       :url="route.path"
     />
     <Portal to="primary-actions">
-      <HeaderNavShare
-        v-if="project"
-        :resource-id-string="modelId"
-        :project-id="project.id"
-        :visibility="project.visibility"
-      />
+      <HeaderNavShare v-if="project" :resource-id-string="modelId" :project="project" />
     </Portal>
   </div>
 </template>

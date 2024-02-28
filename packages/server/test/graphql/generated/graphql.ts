@@ -1441,6 +1441,8 @@ export type Project = {
   sourceApps: Array<Scalars['String']>;
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime'];
+  /** Retrieve a specific project version by its ID */
+  version?: Maybe<Version>;
   /** Returns a flat list of all project versions */
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
@@ -1483,6 +1485,11 @@ export type ProjectModelsTreeArgs = {
 
 export type ProjectPendingImportedModelsArgs = {
   limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type ProjectVersionArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -2080,6 +2087,8 @@ export type ServerInfo = {
   description?: Maybe<Scalars['String']>;
   guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
+  /** Server relocation / migration info */
+  migration?: Maybe<ServerMigration>;
   name: Scalars['String'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
   roles: Array<Role>;
@@ -2111,6 +2120,12 @@ export type ServerInviteCreateInput = {
   message?: InputMaybe<Scalars['String']>;
   /** Can only be specified if guest mode is on or if the user is an admin */
   serverRole?: InputMaybe<Scalars['String']>;
+};
+
+export type ServerMigration = {
+  __typename?: 'ServerMigration';
+  movedFrom?: Maybe<Scalars['String']>;
+  movedTo?: Maybe<Scalars['String']>;
 };
 
 export enum ServerRole {
@@ -2592,7 +2607,7 @@ export type User = {
   /** Returns a list of your personal api tokens. */
   apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
-  authorizedApps?: Maybe<Array<Maybe<ServerAppListItem>>>;
+  authorizedApps?: Maybe<Array<ServerAppListItem>>;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
   /**
@@ -2755,9 +2770,11 @@ export type Version = {
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;
+  parents?: Maybe<Array<Maybe<Scalars['String']>>>;
   previewUrl: Scalars['String'];
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
+  totalChildrenCount?: Maybe<Scalars['Int']>;
 };
 
 

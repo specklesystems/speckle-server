@@ -10,7 +10,7 @@ const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
 const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
 const { authLogger } = require('@/logging/logging')
 const { createRedisClient } = require('@/modules/shared/redis/redis')
-const { mixpanel, resolveMixpanelUserId } = require('@/modules/shared/utils/mixpanel')
+const { mixpanel } = require('@/modules/shared/utils/mixpanel')
 const { addToMailchimpAudience } = require('./services/mailchimp')
 /**
  * TODO: Get rid of session entirely, we don't use it for the app and it's not really necessary for the auth flow, so it only complicates things
@@ -83,10 +83,9 @@ module.exports = async (app) => {
         urlObj.searchParams.set('register', 'true')
 
         // Send event to MP
-        const userId = req.user.email ? resolveMixpanelUserId(req.user.email) : null
         const isInvite = !!req.user.isInvite
-        if (userId) {
-          await mixpanel({ mixpanelUserId: userId }).track('Sign Up', {
+        if (req.user.email) {
+          await mixpanel({ userEmail: req.user.email }).track('Sign Up', {
             isInvite
           })
         }

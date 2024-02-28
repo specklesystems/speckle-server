@@ -16,49 +16,49 @@ module.exports = [
   },
   {
     name: Scopes.Profile.Read,
-    description: 'Read your profile information (name, bio, company).',
+    description: 'Read your profile information.',
     public: true
   },
   {
     name: Scopes.Profile.Email,
-    description: 'Grants access to the email address you registered with.',
+    description: 'Read the email address you registered with.',
     public: true
   },
   {
     name: Scopes.Profile.Delete,
-    description: 'Allows a user to delete their account, with all associated data.',
+    description: 'Delete the account with all associated data.',
     public: false
   },
   {
     name: Scopes.Users.Read,
-    description: "Read other users' profile on your behalf.",
+    description: "Read other users' profiles.",
     public: true
   },
   {
     name: Scopes.Server.Stats,
     description:
-      'Request server stats from the api. Only works in conjunction with a "server:admin" role.',
+      'Request server stats from the API. Only works in conjunction with a "server:admin" role.',
     public: true
   },
   {
     name: Scopes.Users.Email,
-    description: 'Access the emails of other users on your behalf.',
+    description: 'Access the emails of other users.',
     public: false
   },
   {
     name: Scopes.Server.Setup,
     description:
-      'Edit server information. Note: only server admins will be able to use this token.',
+      'Edit server information. Note: Only server admins will be able to use this token.',
     public: false
   },
   {
     name: Scopes.Tokens.Read,
-    description: 'Access your api tokens.',
+    description: 'Access API tokens.',
     public: false
   },
   {
     name: Scopes.Tokens.Write,
-    description: 'Create and delete api tokens on your behalf.',
+    description: 'Create and delete API tokens.',
     public: false
   }
 ]

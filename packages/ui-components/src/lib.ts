@@ -1,4 +1,5 @@
 import 'tippy.js/dist/tippy.css'
+import './assets/setup/mentions.css'
 import GlobalToastRenderer from '~~/src/components/global/ToastRenderer.vue'
 import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import type { ToastNotification } from '~~/src/helpers/global/toast'

@@ -35,6 +35,11 @@ extend type Project {
   Returns a flat list of all project versions
   """
   versions(limit: Int! = 25, cursor: String): VersionCollection!
+
+  """
+  Retrieve a specific project version by its ID
+  """
+  version(id: String!): Version
 }
 
 input ProjectModelsTreeFilter {
@@ -201,6 +206,8 @@ type Version {
   createdAt: DateTime!
   model: Model!
   previewUrl: String!
+  totalChildrenCount: Int
+  parents: [String]
 }
 
 type VersionCollection {

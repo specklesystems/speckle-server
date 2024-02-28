@@ -148,7 +148,7 @@ export default class Sandbox {
       this.addStreamControls(url)
       this.addViewControls()
       this.addBatches()
-      // this.properties = await this.viewer.getObjectProperties()
+      this.properties = await this.viewer.getObjectProperties()
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })
@@ -955,7 +955,8 @@ export default class Sandbox {
         Floor: 'Floor',
         Name: 'name',
         TypeName: 'parameters.SYMBOL_NAME_PARAM.value',
-        Id: 'id'
+        Id: 'id',
+        DSD: 'DSD.@TYPE'
       }
     })
 

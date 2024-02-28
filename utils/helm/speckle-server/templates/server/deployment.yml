@@ -131,6 +131,17 @@ spec:
           - name: SPECKLE_AUTOMATE_URL
             value: {{ .Values.server.speckleAutomateUrl }}
 
+
+            {{- if .Values.server.migration.movedFrom }}
+          - name: MIGRATION_SERVER_MOVED_FROM
+            value: {{ .Values.server.migration.movedFrom }}
+            {{- end }}
+
+            {{- if .Values.server.migration.movedTo }}
+          - name: MIGRATION_SERVER_MOVED_TO
+            value: {{ .Values.server.migration.movedTo }}
+            {{- end }}
+
           # *** Redis ***
           - name: REDIS_URL
             valueFrom:
@@ -171,9 +182,9 @@ spec:
             value: "true"
           {{- end }}
 
-          {{- if .Values.server.monitoring.mp.enabled }}
+          {{- if (quote .Values.server.monitoring.mp.enabled) }}
           - name: ENABLE_MP
-            value: {{ default "true" ( .Values.server.monitoring.mp.enabled | quote) }}
+            value: {{ .Values.server.monitoring.mp.enabled | quote }}
           {{- end }}
 
           - name: NODE_TLS_REJECT_UNAUTHORIZED
