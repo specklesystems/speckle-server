@@ -36,6 +36,7 @@
               :account-id="modelCard.accountId"
               :project-id="modelCard.projectId"
               :model-id="modelCard.modelId"
+              :selected-version-id="modelCard.selectedVersionId"
               @next="handleVersionSelection"
             />
           </div>
@@ -108,7 +109,8 @@ const handleVersionSelection = async (
   openVersionsDialog.value = false
   await store.patchModel(props.modelCard.modelCardId, {
     selectedVersionId: selectedVersion.id,
-    latestVersionId: latestVersion.id // patch this dude as well, to make sure
+    latestVersionId: latestVersion.id, // patch this dude as well, to make sure
+    hasSelectedOldVersion: selectedVersion.id === latestVersion.id
   })
   await store.receiveModel(props.modelCard.modelCardId)
 }
@@ -184,10 +186,9 @@ watchOnce(versionDetailsResult, async (newVal) => {
   ) {
     patchObject = {
       latestVersionId: newVal?.project.model.versions.items[0].id,
-      hasDismissedUpdateWarning: false
+      hasDismissedUpdateWarning: props.modelCard.hasSelectedOldVersion ? true : false
     }
   }
-  console.log(newVal)
   // Always update the card's project name and model name, if needed. Note, this is not needed for senders (senders do not need to create layers).
   await store.patchModel(props.modelCard.modelCardId, {
     ...patchObject,
