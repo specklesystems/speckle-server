@@ -1,22 +1,33 @@
 <template>
-  <LayoutDialogSection class="-mt-4" title="Team">
+  <LayoutDialogSection
+    class="-mt-4"
+    title="Team"
+    enlarged
+    :button="{
+      text: 'Invite',
+      iconLeft: UserPlusIcon,
+      color: 'default',
+      onClick: () => emit('invite')
+    }"
+  >
     <template #icon>
       <UsersIcon class="h-full w-full" />
     </template>
     <div class="flex flex-col gap-2">
       <div
-        class="flex flex-col border border-primary-muted max-h-40 overflow-auto simple-scrollbar"
+        class="flex flex-col border border-outline border-b-0 overflow-auto simple-scrollbar"
+        :class="maxHeight ? 'max-h-40' : 'max-w-xl'"
       >
         <div
           v-for="collaborator in collaboratorListItems"
           :key="collaborator.id"
-          class="flex items-center space-x-2 even:bg-primary-muted py-1.5 px-2"
+          class="flex items-center space-x-2 even:bg-primary-muted border-b border-outline py-1.5 px-2"
         >
           <UserAvatar :user="collaborator.user" size="sm" />
           <span class="grow truncate text-xs">{{ collaborator.title }}</span>
 
           <template v-if="!collaborator.inviteId">
-            <ProjectPageTeamPermissionSelect
+            <ProjectPageInvitePermissionSelect
               v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
               class="shrink-0"
               :model-value="collaborator.role"
@@ -61,7 +72,7 @@ import { LayoutDialogSection } from '@speckle/ui-components'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type {
   Project,
-  ProjectPageTeamDialogFragment
+  ProjectPageSettingsFragment
 } from '~~/lib/common/generated/gql/graphql'
 import {
   getCacheId,
@@ -75,12 +86,15 @@ import {
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
-import { UsersIcon } from '@heroicons/vue/24/outline'
+import { UsersIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const props = defineProps<{
-  project: ProjectPageTeamDialogFragment
+  project: ProjectPageSettingsFragment
+  maxHeight?: boolean
 }>()
+
+const emit = defineEmits(['invite'])
 
 const apollo = useApolloClient().client
 const updateRole = useUpdateUserRole()

@@ -1,24 +1,23 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" max-width="sm">
-    <template #header>Manage Project</template>
+  <LayoutDialog
+    v-model:open="isOpen"
+    max-width="sm"
+    :title="`Invite to ${props.project.name}`"
+    :buttons="[
+      {
+        text: 'Cancel',
+        props: { color: 'secondary', fullWidth: true },
+        onClick: () => {
+          isOpen = false
+        }
+      }
+    ]"
+  >
     <div class="flex flex-col text-foreground">
-      <ProjectPageTeamDialogManageUsers
-        :always-open="openSection === OpenSectionType.Team"
-        :project="project"
-      />
-      <ProjectPageTeamDialogInviteUser
+      <ProjectPageInviteDialogInviteUser
         v-if="isOwner && !isServerGuest"
         :project="project"
-        :default-open="openSection === OpenSectionType.Invite"
-      />
-      <ProjectPageTeamDialogManagePermissions
-        :project="project"
-        :default-open="openSection === OpenSectionType.Access"
-      />
-      <ProjectPageTeamDialogWebhooks v-if="isOwner" :project="project" />
-      <ProjectPageTeamDialogDangerZones
-        v-if="isOwner || canLeaveProject"
-        :project="project"
+        default-open
       />
     </div>
   </LayoutDialog>
@@ -35,7 +34,6 @@ graphql(`
     name
     role
     allowPublicComments
-    visibility
     team {
       role
       user {
@@ -67,7 +65,7 @@ const props = defineProps<{
   openSection?: OpenSectionType
 }>()
 
-const { isOwner, isServerGuest, canLeaveProject } = useTeamDialogInternals({
+const { isOwner, isServerGuest } = useTeamDialogInternals({
   props: toRefs(props)
 })
 

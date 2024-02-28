@@ -8,14 +8,12 @@
           :auto-accept="shouldAutoAcceptInvite"
           @processed="onInviteAccepted"
         />
-        <div class="flex justify-between mt-6 mb-12">
+        <div class="flex flex-col sm:flex-row gap-6 justify-between mt-6 mb-8 sm:mb-12">
           <ProjectPageHeader :project="project" />
-          <ProjectPageStatsBlockSettings
-            :project="project"
-            class="w-full md:w-72 transition"
-          />
+          <ProjectPageTeamBlock :project="project" @invite="inviteDialogOpen = true" />
         </div>
       </div>
+      <ProjectPageInviteDialog v-model:open="inviteDialogOpen" :project="project" />
     </template>
 
     <LayoutPageTabs v-show="project" v-slot="{ activeItem }" :items="pageTabItems">
@@ -29,7 +27,11 @@
         :project="project"
         :project-id="projectId"
       />
-      <div v-if="project && activeItem.id === 'settings'">SETTINGS</div>
+      <ProjectPageSettingsTab
+        v-if="project && activeItem.id === 'settings'"
+        :project="project"
+        @invite="inviteDialogOpen = true"
+      />
     </LayoutPageTabs>
   </div>
 </template>
@@ -69,6 +71,9 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+
+const inviteDialogOpen = ref(false)
+
 const projectId = computed(() => route.params.id as string)
 const shouldAutoAcceptInvite = computed(() => route.query.accept === 'true')
 const token = computed(() => route.query.token as Optional<string>)
@@ -126,7 +131,8 @@ const pageTabItems: LayoutPageTabItem[] = [
   {
     title: 'Automations',
     id: 'automations',
-    icon: BoltIcon
+    icon: BoltIcon,
+    tag: 'New'
   },
   { title: 'Settings', id: 'settings', icon: Cog6ToothIcon }
 ]

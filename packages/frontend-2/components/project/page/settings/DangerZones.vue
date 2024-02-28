@@ -5,6 +5,7 @@
       border-b
       title="Leave Project"
       title-color="info"
+      enlarged
     >
       <template #icon>
         <ArrowRightOnRectangleIcon class="h-full w-full" />
@@ -40,6 +41,7 @@
       v-if="isOwner && !isServerGuest"
       title="Delete Project"
       title-color="danger"
+      enlarged
     >
       <template #icon>
         <TrashIcon class="h-full w-full" />

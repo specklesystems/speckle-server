@@ -22,7 +22,7 @@ export default {
 const defaultItems: LayoutPageTabItem[] = [
   { title: 'Models', id: 'models', icon: CubeIcon, count: 300 },
   { title: 'Discussions', id: 'discussions', icon: ChatBubbleLeftRightIcon },
-  { title: 'Automations', id: 'automations', icon: BoltIcon },
+  { title: 'Automations', id: 'automations', icon: BoltIcon, tag: 'New' },
   { title: 'Settings', id: 'settings', icon: Cog6ToothIcon }
 ]
 

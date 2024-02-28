@@ -21,13 +21,13 @@
       "
     >
       <div
-        class="text-sm sm:text-base font-bold flex items-center gap-1 sm:gap-2 select-none"
-        :class="titleClasses"
+        class="font-bold flex items-center gap-1 sm:gap-2 select-none"
+        :class="[colorClasses]"
       >
         <div class="h-4 sm:h-5 h-4 sm:w-5 empty:h-0 empty:w-0">
           <slot name="icon"></slot>
         </div>
-        <span>{{ title }}</span>
+        <span :class="sizeClasses">{{ title }}</span>
       </div>
       <div>
         <ChevronDownIcon
@@ -37,12 +37,12 @@
         />
         <FormButton
           v-if="button"
-          size="sm"
           :to="button.expandContent ? undefined : button.to"
           :color="button.expandContent && isExpanded ? 'invert' : button.color"
           :icon-right="
             button.expandContent && isExpanded ? undefined : button.iconRight
           "
+          :icon-left="button.expandContent && isExpanded ? undefined : button.iconLeft"
           @click="button?.onClick"
           v-on="button?.expandContent ? { click: toggleExpansion } : {}"
         >
@@ -55,7 +55,7 @@
       :class="[
         allowOverflow && isExpanded ? '!overflow-visible' : '',
         isExpanded ? 'mb-3 mt-1' : '',
-        !button && !alwaysOpen ? 'cursor-pointer hover:bg-foundation' : ''
+        !button && !alwaysOpen ? 'cursor-pointer' : ''
       ]"
       :style="
         alwaysOpen
@@ -107,6 +107,10 @@ const props = defineProps({
   borderT: Boolean,
   borderB: Boolean,
   allowOverflow: Boolean,
+  enlarged: {
+    type: Boolean,
+    default: false
+  },
   titleColor: {
     type: String as () => TitleColor,
     default: 'default'
@@ -118,6 +122,7 @@ const props = defineProps({
         to?: string
         color: FormButtonColor
         iconRight?: PropAnyComponent | undefined
+        iconLeft?: PropAnyComponent | undefined
         onClick?: () => void
       }
     | undefined,
@@ -136,17 +141,17 @@ const backgroundClass = computed(() => {
   const classes = []
 
   if (!props.button && !props.alwaysOpen) {
-    classes.push('cursor-pointer', 'hover:bg-foundation')
+    classes.push('cursor-pointer')
   }
 
-  if (isExpanded.value) {
-    classes.push('bg-foundation')
+  if (props.enlarged) {
+    classes.push('border-b border-outline mb-4')
   }
 
   return classes
 })
 
-const titleClasses = computed(() => {
+const colorClasses = computed(() => {
   switch (props.titleColor) {
     case 'danger':
       return 'text-danger'
@@ -161,6 +166,10 @@ const titleClasses = computed(() => {
     default:
       return 'text-foreground'
   }
+})
+
+const sizeClasses = computed(() => {
+  return props.enlarged ? 'text-lg sm:text-xl' : 'text-sm sm:text-base'
 })
 
 const toggleExpansion = async () => {
