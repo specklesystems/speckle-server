@@ -5,7 +5,7 @@ import { useCreateErrorLoggingTransport } from '~/lib/core/composables/error'
 type PluginNuxtApp = Parameters<Plugin>[0]
 
 async function initRumClient(app: PluginNuxtApp) {
-  const { enabled, keys, speckleServerVersion, baseUrl } = resolveInitParams()
+  const { enabled, keys, speckleServerVersion } = resolveInitParams()
   const logger = useLogger()
   const onAuthStateChange = useOnAuthStateChange()
   const router = useRouter()
@@ -20,7 +20,6 @@ async function initRumClient(app: PluginNuxtApp) {
     rg4js('enablePulse', true)
     rg4js('boot')
     rg4js('enableRum', true)
-    rg4js('withTags', [`baseUrl:${baseUrl}`, `version:${speckleServerVersion}`])
 
     await onAuthStateChange(
       (user, { resolveDistinctId }) => {
@@ -185,8 +184,7 @@ function resolveInitParams() {
       logrocketAppId,
       speckleServerVersion,
       speedcurveId,
-      debugbearId,
-      baseUrl
+      debugbearId
     }
   } = useRuntimeConfig()
   const raygun = raygunKey?.length ? raygunKey : null
@@ -203,8 +201,7 @@ function resolveInitParams() {
       speedcurve,
       debugbear
     },
-    speckleServerVersion,
-    baseUrl
+    speckleServerVersion
   }
 }
 

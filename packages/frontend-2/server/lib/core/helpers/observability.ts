@@ -3,7 +3,6 @@ import { Observability } from '@speckle/shared'
 import type { IncomingMessage } from 'node:http'
 import { get } from 'lodash-es'
 import type { Logger } from 'pino'
-import type express from 'express'
 
 const redactedReqHeaders = ['authorization', 'cookie']
 
@@ -45,7 +44,7 @@ export function serializeRequest(req: IncomingMessage) {
   return {
     id: req.id,
     method: req.method,
-    path: getRequestPath(req),
+    path: req.url?.split('?')[0], // Remove query params which might be sensitive
     // Allowlist useful headers
     headers: Object.keys(req.headers).reduce((obj, key) => {
       let valueToPrint = req.headers[key]
@@ -58,11 +57,4 @@ export function serializeRequest(req: IncomingMessage) {
       }
     }, {})
   }
-}
-
-export const getRequestPath = (req: IncomingMessage | express.Request) => {
-  const path = ((get(req, 'originalUrl') || get(req, 'url') || '') as string).split(
-    '?'
-  )[0] as string
-  return path?.length ? path : null
 }
