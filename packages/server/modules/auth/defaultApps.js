@@ -22,7 +22,7 @@ module.exports = async () => {
   await registerOrUpdateApp({ ...SpeckleConnectorApp })
   await registerOrUpdateApp({ ...SpeckleExcel })
   await registerOrUpdateApp({ ...SpecklePowerBi })
-  await registerOrUpdateApp({ ...SpeckleAutomate })
+  if (speckleAutomateUrl()) await registerOrUpdateApp({ ...SpeckleAutomate })
 }
 
 async function registerOrUpdateApp(app) {
