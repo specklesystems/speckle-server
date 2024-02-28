@@ -278,6 +278,10 @@ export class TopLevelAccelerationStructure {
     return ret
   }
 
+  public closestPointToPoint(point: Vector3) {
+    return this.accelerationStructure.bvh.closestPointToPoint(point)
+  }
+
   public getBoundingBox(target: Box3): Box3 {
     this.accelerationStructure.getBoundingBox(target)
     return target
