@@ -1,7 +1,6 @@
 <template>
   <LayoutDialogSection
     allow-overflow
-    border-b
     title="Access"
     :always-open="defaultOpen"
     enlarged
