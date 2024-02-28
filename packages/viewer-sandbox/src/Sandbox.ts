@@ -972,6 +972,8 @@ export default class Sandbox {
         const data = this.properties.find((value) => {
           return value.key === this.filterParams.filterBy
         }) as PropertyInfo
+        data.min = 90.37
+        data.max = 258.17
         this.viewer.getExtension(FilteringExtension).setColorFilter(data)
         // this.viewer
         //   .getExtension(FilteringExtension)
