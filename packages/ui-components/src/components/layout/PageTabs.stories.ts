@@ -45,6 +45,15 @@ export const Default: StoryObj = {
   }),
   args: {
     startItems,
-    endItems
+    endItems,
+    title: 'Settings'
+  }
+}
+
+export const Vertical: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
+    vertical: true
   }
 }

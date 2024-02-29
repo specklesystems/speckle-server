@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialogSection title="Webhooks" enlarged>
+  <LayoutDialogSection title="Webhooks" enlarged always-open>
     <template #icon>
       <IconWebhooks class="h-full w-full" />
     </template>

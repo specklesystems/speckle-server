@@ -1,29 +1,43 @@
 <template>
-  <div class="relative z-10 flex flex-col gap-y-4 sm:gap-y-10">
+  <div
+    class="relative z-10 flex gap-4"
+    :class="vertical ? 'sm:gap-8' : 'sm:gap-10 flex-col'"
+  >
     <div
-      class="relative flex justify-between gap-8 w-full overflow-x-auto no-scrollbar border-b border-outline-3 lg:border-none pr-20 lg:pr-0"
+      class="relative flex justify-between overflow-x-auto"
+      :class="
+        vertical
+          ? 'flex-col w-2/12 border-r border-outline gap-4 pl-4'
+          : 'no-scrollbar border-b border-outline-3 lg:border-none pr-20 lg:pr-0 gap-8 w-full'
+      "
     >
       <div
+        v-if="!vertical"
         class="hidden lg:block absolute bottom-0 left-0 h-px w-full bg-outline-3"
       ></div>
       <div
+        v-if="!vertical"
         :style="borderStyle"
         class="h-px absolute bottom-0 z-20 bg-primary transition-all duration-300"
       ></div>
       <div
         class="lg:hidden h-full absolute right-0 z-30 bg-gradient-to-l from-foundation-page w-20"
       ></div>
-      <div class="flex gap-8">
+      <div class="flex" :class="vertical ? 'flex-col gap-4' : 'gap-8'">
+        <h1 v-if="title" class="font-bold h4" :class="vertical ? '-ml-4 mb-4' : 'mb-2'">
+          {{ title }}
+        </h1>
         <button
           v-for="item in startItems"
           :id="`tab-${item.id}`"
           :key="item.id"
-          class="relative z-10 flex items-center gap-1 pb-2 border-b border-transparent hover:border-outline-2 text-sm sm:text-base"
-          :class="
+          class="relative z-10 flex items-center gap-1 pb-2 border-b border-transparent text-sm sm:text-base max-w-max"
+          :class="[
             activeItem.id === item.id
               ? 'text-primary font-bold hover:text-primary'
-              : 'text-foreground'
-          "
+              : 'text-foreground',
+            vertical ? 'hover:border-outline' : 'hover:border-outline-2'
+          ]"
           @click="onTabClick(item, $event)"
         >
           <Component :is="item.icon" v-if="item.icon" class="h-4 w-4 stroke-[2px]" />
@@ -98,7 +112,9 @@
         </button>
       </div>
     </div>
-    <slot :active-item="activeItem" />
+    <div :class="vertical ? 'w-10/12' : ''">
+      <slot :active-item="activeItem" />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
@@ -109,6 +125,8 @@ import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 const props = defineProps<{
   startItems: LayoutPageTabItem[]
   endItems?: LayoutPageTabItem[]
+  vertical?: boolean
+  title?: string
 }>()
 
 const activeItemId = ref(null as Nullable<string>)
