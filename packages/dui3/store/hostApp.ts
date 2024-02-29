@@ -115,7 +115,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   /**
    * Subscribe to notifications about send filters.
    */
-  app.$sendBinding.on('refreshSendFilters', () => void refreshSendFilters())
+  app.$sendBinding?.on('refreshSendFilters', () => void refreshSendFilters())
 
   /**
    * Send functionality
@@ -150,7 +150,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.latestCreatedVersionId = undefined
   }
 
-  app.$sendBinding.on('setModelsExpired', (modelCardIds) => {
+  app.$sendBinding?.on('setModelsExpired', (modelCardIds) => {
     documentModelStore.value.models
       .filter((m) => modelCardIds.includes(m.modelCardId))
       .forEach((model: ISenderModelCard) => {
@@ -171,7 +171,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = undefined
   }
 
-  app.$sendBinding.on('setModelCreatedVersionId', setModelCreatedVersionId)
+  app.$sendBinding?.on('setModelCreatedVersionId', setModelCreatedVersionId)
 
   /// RECEIVE STUFF
   const receiveModel = async (modelCardId: string) => {
@@ -209,7 +209,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await patchModel(model.modelCardId, { receiveResult: args.receiveResult }) // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
   }
 
-  app.$receiveBinding.on('setModelReceiveResult', setModelReceiveResult)
+  app.$receiveBinding?.on('setModelReceiveResult', setModelReceiveResult)
 
   // GENERIC STUFF
   const handleModelProgressEvents = (args: {
@@ -234,11 +234,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   // EG, new binding "mapper binding" wants to send errors to the model card should
   // be registed here. Why? Each binding gets its own "bridge" parent in .NET, which
   // is hoisted as a separate global js object.
-  app.$sendBinding.on('setModelProgress', handleModelProgressEvents)
-  app.$receiveBinding.on('setModelProgress', handleModelProgressEvents)
+  app.$sendBinding?.on('setModelProgress', handleModelProgressEvents)
+  app.$receiveBinding?.on('setModelProgress', handleModelProgressEvents)
 
-  app.$sendBinding.on('setModelError', handleModelError)
-  app.$receiveBinding.on('setModelError', handleModelError)
+  app.$sendBinding?.on('setModelError', handleModelError)
+  app.$receiveBinding?.on('setModelError', handleModelError)
   app.$baseBinding.on('setModelError', handleModelError)
 
   /**

@@ -18,8 +18,10 @@
           <div class="text-foreground-2">
             There are no Speckle models being published or loaded in this file yet.
           </div>
-          <div class="grid grid-cols-2 max-[275px]:grid-cols-1 gap-2 mt-4">
-            <div>
+          <div
+            class="flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0 mt-4"
+          >
+            <div v-if="app.$sendBinding" class="grow">
               <FormButton
                 :icon-left="CloudArrowUpIcon"
                 full-width
@@ -28,7 +30,7 @@
                 Publish
               </FormButton>
             </div>
-            <div>
+            <div v-if="app.$receiveBinding" class="grow">
               <FormButton
                 :icon-left="CloudArrowDownIcon"
                 full-width
@@ -53,9 +55,9 @@
     </div>
     <div
       v-if="!hasNoModelCards"
-      class="fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 grid grid-cols-2 max-[275px]:grid-cols-1 gap-2"
+      class="fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
     >
-      <div>
+      <div v-if="app.$sendBinding" class="grow">
         <FormButton
           :icon-left="CloudArrowUpIcon"
           full-width
@@ -64,7 +66,7 @@
           Publish
         </FormButton>
       </div>
-      <div>
+      <div v-if="app.$receiveBinding" class="grow">
         <FormButton
           :icon-left="CloudArrowDownIcon"
           full-width
@@ -90,7 +92,7 @@
 import { CloudArrowDownIcon, CloudArrowUpIcon } from '@heroicons/vue/24/solid'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
-
+const app = useNuxtApp()
 // IMPORTANT: the account store needs to be awaited here, and in any other top level page to prevent
 // race conditions on initialisation (model cards get loaded, but accounts are not there yet)
 // TODO: guard against this later, incase we will have more top level entry pages

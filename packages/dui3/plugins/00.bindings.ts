@@ -79,13 +79,9 @@ export default defineNuxtPlugin(async () => {
     (await tryHoistBinding<IBasicConnectorBinding>(IBasicConnectorBindingKey)) ||
     hoistMockBinding(new MockedBaseBinding(), IBasicConnectorBindingKey)
 
-  const sendBinding =
-    (await tryHoistBinding<ISendBinding>(ISendBindingKey)) ||
-    hoistMockBinding(new MockedSendBinding(), ISendBindingKey)
+  const sendBinding = await tryHoistBinding<ISendBinding>(ISendBindingKey)
 
-  const receiveBinding =
-    (await tryHoistBinding<IReceiveBinding>(IReceiveBindingKey)) ||
-    hoistMockBinding(new MockedReceiveBinding(), IReceiveBindingKey)
+  const receiveBinding = await tryHoistBinding<IReceiveBinding>(IReceiveBindingKey)
 
   const selectionBinding =
     (await tryHoistBinding<ISelectionBinding>(ISelectionBindingKey)) ||
