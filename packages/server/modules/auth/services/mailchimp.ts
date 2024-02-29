@@ -1,58 +1,63 @@
 /* eslint-disable camelcase */
 import mailchimp from '@mailchimp/mailchimp_marketing'
-import { logger } from '@/logging/logging'
 import { md5 } from '@/modules/shared/helpers/cryptoHelper'
 import { getMailchimpConfig } from '@/modules/shared/helpers/envHelper'
 // import { getUserById } from '@/modules/core/services/users'
 import { UserRecord } from '@/modules/core/helpers/types'
 
-async function addToMailchimpAudience(user: UserRecord) {
-  // Do not do anything (inc. logging) if we do not explicitely enable it
-  // Note: fails here should not block registration at any cost
-  try {
-    const config = getMailchimpConfig() // Note: throws an error if not configured
-    if (!config) return
+let mailchimpInitialized = false
 
-    mailchimp.setConfig({
-      apiKey: config.apiKey,
-      server: config.serverPrefix
-    })
+function initializeMailchimp() {
+  if (mailchimpInitialized) return
+  const config = getMailchimpConfig() // Note: throws an error if not configured
+  if (!config) throw new Error('Cannot initialize mailchimp without config values')
 
-    const [first, second] = user.name.split(' ')
-    const subscriberHash = md5(user.email.toLowerCase())
-
-    // NOTE: using setListMember (NOT addListMember) to prevent errors for previously
-    // registered members.
-    await mailchimp.lists.setListMember(config.listId, subscriberHash, {
-      status_if_new: 'subscribed',
-      email_address: user.email,
-      merge_fields: {
-        EMAIL: user.email,
-        FNAME: first,
-        LNAME: second,
-        FULLNAME: user.name // NOTE: this field needs to be set in the audience merge fields
-      }
-    })
-  } catch (e) {
-    logger.warn(e, 'Failed to register user to newsletter.')
-  }
+  mailchimp.setConfig({
+    apiKey: config.apiKey,
+    server: config.serverPrefix
+  })
+  mailchimpInitialized = true
 }
 
-async function triggerMailchimpCustomerJourney(user: UserRecord) {
-  try {
-    const config = getMailchimpConfig()
-    if (!config) return
+async function addToMailchimpAudience(user: UserRecord, listId: string) {
+  initializeMailchimp()
+  // Do not do anything (inc. logging) if we do not explicitly enable it
+  // Note: fails here should not block registration at any cost
 
-    mailchimp.setConfig({
-      apiKey: config.apiKey,
-      server: config.serverPrefix
-    })
-    await mailchimp.customerJourneys.trigger(2594, 18154, {
-      email_address: user.email
-    })
-  } catch (err) {
-    logger.warn(err, 'Failed to register user to newsletter.')
+  const [first, second] = user.name.split(' ')
+  const subscriberHash = md5(user.email.toLowerCase())
+
+  // NOTE: using setListMember (NOT addListMember) to prevent errors for previously
+  // registered members.
+  await mailchimp.lists.setListMember(listId, subscriberHash, {
+    status_if_new: 'subscribed',
+    email_address: user.email,
+    merge_fields: {
+      EMAIL: user.email,
+      FNAME: first,
+      LNAME: second,
+      FULLNAME: user.name // NOTE: this field needs to be set in the audience merge fields
+    }
+  })
+}
+
+async function triggerMailchimpCustomerJourney(
+  user: UserRecord,
+  {
+    listId,
+    journeyId,
+    stepId
+  }: {
+    listId: string
+    journeyId: number
+    stepId: number
   }
+) {
+  await addToMailchimpAudience(user, listId)
+  // @ts-expect-error the mailchimp api typing sucks
+  await mailchimp.customerJourneys.trigger(journeyId, stepId, {
+    email_address: user.email
+  })
 }
 
 export { addToMailchimpAudience, triggerMailchimpCustomerJourney }

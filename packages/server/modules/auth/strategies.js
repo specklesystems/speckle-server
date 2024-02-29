@@ -8,7 +8,9 @@ const sentry = require('@/logging/sentryHelper')
 const { createAuthorizationCode } = require('./services/apps')
 const {
   getFrontendOrigin,
-  getMailchimpStatus
+  getMailchimpStatus,
+  getMailchimpNewsletterIds,
+  getMailchimpOnboardingIds
 } = require('@/modules/shared/helpers/envHelper')
 const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
 const { authLogger, logger } = require('@/logging/logging')
@@ -107,10 +109,20 @@ module.exports = async (app) => {
               'Could not register user for mailchimp lists - no db user record found.'
             )
 
-          await triggerMailchimpCustomerJourney(user)
+          try {
+            const onboardingIds = getMailchimpOnboardingIds()
+            await triggerMailchimpCustomerJourney(user, onboardingIds)
+          } catch (error) {
+            logger.warn(error, 'Failed to register user to the onboarding journey.')
+          }
 
           if (newsletterConsent) {
-            await addToMailchimpAudience(req.user)
+            try {
+              const { listId } = getMailchimpNewsletterIds()
+              await addToMailchimpAudience(user, listId)
+            } catch (error) {
+              logger.warn(error, 'Failed to register user to newsletter.')
+            }
           }
         }
       }
