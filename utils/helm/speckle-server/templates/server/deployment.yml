@@ -301,7 +301,7 @@ spec:
             value: "{{ .Values.server.email.from }}"
           {{- end }}
 
-          # *** Newsletter ***
+          # *** Mailchimp ***
           {{- if (default false (.Values.server.mailchimp).enabled) }}
           - name: MAILCHIMP_ENABLED
             value: "true"
@@ -315,11 +315,29 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName ((.Values.server.mailchimp).serverprefix).secretName }}
                 key: {{ default "mailchimp_serverprefix" ((.Values.server.mailchimp).serverprefix).secretKey }}
-          - name: MAILCHIMP_LIST_ID
+          # *** Mailchimp ***
+          - name: MAILCHIMP_NEWSLETTER_LIST_ID
             valueFrom:
               secretKeyRef:
-                name: {{ default .Values.secretName ((.Values.server.mailchimp).listid).secretName }}
-                key: {{ default "mailchimp_listid" ((.Values.server.mailchimp).listid).secretKey }}
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).newsletter_list_id).secretName }}
+                key: {{ default "mailchimp_newsletter_list_id" ((.Values.server.mailchimp).newsletter_list_id).secretKey }}
+
+          - name: MAILCHIMP_ONBOARDING_LIST_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).onboarding_list_id).secretName }}
+                key: {{ default "mailchimp_onboarding_list_id" ((.Values.server.mailchimp).onboarding_list_id).secretKey }}
+          - name: MAILCHIMP_ONBOARDING_JOURNEY_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).onboarding_journey_id).secretName }}
+                key: {{ default "mailchimp_onboarding_journey_id" ((.Values.server.mailchimp).onboarding_journey_id).secretKey }}
+
+          - name: MAILCHIMP_ONBOARDING_STEP_ID
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName ((.Values.server.mailchimp).onboarding_step_id).secretName }}
+                key: {{ default "mailchimp_onboarding_step_id" ((.Values.server.mailchimp).onboarding_step_id).secretKey }}
           {{- end }}
 
           # *** Tracking / Tracing ***
