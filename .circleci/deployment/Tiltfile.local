@@ -12,4 +12,4 @@ def speckle_image(package,original_package_name=None):
                   context='../..',
                   dockerfile='../../{}/Dockerfile'.format(package_dir),
                   platform='linux/amd64',
-                  only=['packages/shared','packages/ui-components','packages/objectloader',package_dir])
+                  only=['packages/shared','packages/ui-components','packages/objectloader','packages/frontend-2','package.json',package_dir])
