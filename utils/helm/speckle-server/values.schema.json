@@ -1095,6 +1095,11 @@
           "description": "The number of instances of the Server pod to be deployed within the cluster.",
           "default": 1
         },
+        "image": {
+          "type": "string",
+          "description": "The Docker image to be used for the Speckle Objects component. If blank, defaults to speckle/speckle-server:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
+          "default": ""
+        },
         "logLevel": {
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",

@@ -24,6 +24,7 @@ speckle_image('frontend-2')
 speckle_image('monitor-deployment')
 speckle_image('preview-service')
 speckle_image('server')
+speckle_image('objects','server')
 speckle_image('test-deployment')
 speckle_image('webhook-service')
 
@@ -51,6 +52,7 @@ helm_resource('postgresql',
             flags=['--version=^12.0.0',
                     '--values=./values/postgres.values.yaml',
                     '--kube-context=kind-speckle-server'],
+            deps=['./values/postgres.values.yaml'],
             labels=['speckle-dependencies'])
 
 helm_resource('minio',
@@ -60,6 +62,7 @@ helm_resource('minio',
             flags=['--version=^12.0.0',
                     '--values=./values/minio.values.yaml',
                     '--kube-context=kind-speckle-server'],
+            deps=['./values/minio.values.yaml'],
             labels=['speckle-dependencies'])
 
 helm_resource('redis',
@@ -69,6 +72,7 @@ helm_resource('redis',
             flags=['--version=18.7.1',
                     '--values=./values/redis.values.yaml',
                     '--kube-context=kind-speckle-server'],
+            deps=['./values/redis.values.yaml'],
             labels=['speckle-dependencies'])
 
 #FIXME this helm chart does not deploy any containers, so tilt incorrectly believes it never gets to a final state
@@ -79,6 +83,7 @@ helm_resource('redis',
 #             namespace='prometheus',
 #             resource_deps=['prometheus-repo'],
 #             chart='prometheus-repo/prometheus-operator-crds',
+#             deps=['./values/prometheus-operator-crds.values.yaml'],
 #             flags=['--version=^7.0.0',
 #                     '--values=./values/prometheus-operator-crds.values.yaml',
 #                     '--kube-context=kind-speckle-server'])
@@ -95,6 +100,7 @@ helm_resource('ingress-nginx',
             flags=['--version=^4.8.0',
                     '--values=./values/nginx.values.yaml',
                     '--kube-context=kind-speckle-server'],
+            deps=['./values/nginx.values.yaml'],
             resource_deps=['postgresql', 'minio', 'redis', 'ingress-nginx-repo'],
             labels=['speckle-dependencies'])
 
@@ -122,7 +128,7 @@ helm_resource('speckle-server',
                           'speckle/speckle-monitor-deployment',
                           'speckle/speckle-preview-service',
                           'speckle/speckle-server',
-                          'speckle/speckle-server',
+                          'speckle/speckle-objects',
                           'speckle/speckle-test-deployment',
                           'speckle/speckle-webhook-service',
                           ],
