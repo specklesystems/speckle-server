@@ -12,6 +12,9 @@ export default defineEventHandler(async () => {
   try {
     const redis = await createRedis({ logger: useLogger() })
     redisConnected = !!redis
+    if (redis) {
+      await redis.quit()
+    }
   } catch (e) {
     const errMsg = ensureError(e).message
     throw createError({

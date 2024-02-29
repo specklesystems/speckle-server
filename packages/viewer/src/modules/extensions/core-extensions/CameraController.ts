@@ -2,7 +2,7 @@ import * as THREE from 'three'
 import CameraControls from 'camera-controls'
 import { Extension } from './Extension'
 import { SpeckleCameraControls } from '../../objects/SpeckleCameraControls'
-import { Box3, OrthographicCamera, PerspectiveCamera, Vector3 } from 'three'
+import { Box3, OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three'
 import { KeyboardKeyHold, HOLD_EVENT_TYPE } from 'hold-event'
 import { CanonicalView, SpeckleView, InlineView, IViewer } from '../../..'
 import {
@@ -11,6 +11,7 @@ import {
   ICameraProvider,
   PolarView
 } from './Providers'
+import Logger from 'js-logger'
 
 export class CameraController extends Extension implements ICameraProvider {
   get provide() {
@@ -146,9 +147,9 @@ export class CameraController extends Extension implements ICameraProvider {
       this.viewer.getContainer().offsetWidth / this.viewer.getContainer().offsetHeight
     this.perspectiveCamera.updateProjectionMatrix()
 
-    const lineOfSight = new THREE.Vector3()
+    const lineOfSight = new Vector3()
     this.perspectiveCamera.getWorldDirection(lineOfSight)
-    const target = new THREE.Vector3()
+    const target = new Vector3()
     this._controls.getTarget(target)
     const distance = target.clone().sub(this.perspectiveCamera.position)
     const depth = distance.dot(lineOfSight)
@@ -191,9 +192,9 @@ export class CameraController extends Extension implements ICameraProvider {
   protected setupOrthoCamera() {
     this._controls.mouseButtons.wheel = CameraControls.ACTION.ZOOM
 
-    const lineOfSight = new THREE.Vector3()
+    const lineOfSight = new Vector3()
     this.perspectiveCamera.getWorldDirection(lineOfSight)
-    const target = new THREE.Vector3().copy(this.viewer.World.worldOrigin)
+    const target = new Vector3().copy(this.viewer.World.worldOrigin)
     const distance = target.clone().sub(this.perspectiveCamera.position)
     const depth = distance.length()
     const dims = {
@@ -346,6 +347,30 @@ export class CameraController extends Extension implements ICameraProvider {
     )
   }
 
+  public setCameraPlanes(targetVolume: Box3, offsetScale: number = 1) {
+    if (targetVolume.isEmpty()) {
+      Logger.error('Cannot set camera planes for empty volume')
+      return
+    }
+
+    const size = targetVolume.getSize(new Vector3())
+    const maxSize = Math.max(size.x, size.y, size.z)
+    const camFov =
+      this._renderingCamera === this.perspectiveCamera ? this.fieldOfView : 55
+    const camAspect =
+      this._renderingCamera === this.perspectiveCamera ? this.aspect : 1.2
+    const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camFov) / 360))
+    const fitWidthDistance = fitHeightDistance / camAspect
+    const distance = offsetScale * Math.max(fitHeightDistance, fitWidthDistance)
+
+    this._controls.minDistance = distance / 100
+    this._controls.maxDistance = distance * 100
+
+    this._renderingCamera.near = distance / 100
+    this._renderingCamera.far = distance * 100
+    this._renderingCamera.updateProjectionMatrix()
+  }
+
   protected zoom(objectIds?: string[], fit?: number, transition?: boolean) {
     if (!objectIds) {
       this.zoomExtents(fit, transition)
@@ -356,7 +381,7 @@ export class CameraController extends Extension implements ICameraProvider {
 
   private zoomExtents(fit = 1.2, transition = true) {
     if (this.viewer.getRenderer().clippingVolume.isEmpty()) {
-      const box = new THREE.Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
+      const box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
       this.zoomToBox(box, fit, transition)
       return
     }
@@ -376,36 +401,17 @@ export class CameraController extends Extension implements ICameraProvider {
 
   private zoomToBox(box, fit = 1.2, transition = true) {
     if (box.max.x === Infinity || box.max.x === -Infinity) {
-      box = new THREE.Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
+      box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
-    const fitOffset = fit
 
-    const size = box.getSize(new Vector3())
-    const target = new THREE.Sphere()
+    const target = new Sphere()
     box.getBoundingSphere(target)
-    target.radius = target.radius * fitOffset
-
-    const maxSize = Math.max(size.x, size.y, size.z)
-    const camFov =
-      this._renderingCamera === this.perspectiveCamera ? this.fieldOfView : 55
-    const camAspect =
-      this._renderingCamera === this.perspectiveCamera ? this.aspect : 1.2
-    const fitHeightDistance = maxSize / (2 * Math.atan((Math.PI * camFov) / 360))
-    const fitWidthDistance = fitHeightDistance / camAspect
-    const distance = fitOffset * Math.max(fitHeightDistance, fitWidthDistance)
-
+    target.radius = target.radius * fit
     this._controls.fitToSphere(target, transition)
 
-    this._controls.minDistance = distance / 100
-    this._controls.maxDistance = distance * 100
-    this._renderingCamera.near = Math.max(distance / 100, 0.1)
-    this._renderingCamera.far = distance * 100
-    this._renderingCamera.updateProjectionMatrix()
+    this.setCameraPlanes(box, fit)
 
     if (this._renderingCamera === this.orthographicCamera) {
-      this._renderingCamera.far = distance * 100
-      this._renderingCamera.updateProjectionMatrix()
-
       // fit the camera inside, so we don't have clipping plane issues.
       // WIP implementation
       const camPos = this._renderingCamera.position
@@ -537,10 +543,10 @@ export class CameraController extends Extension implements ICameraProvider {
       default: {
         let box
         if (this.viewer.getRenderer().allObjects.children.length === 0)
-          box = new THREE.Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
-        else box = new THREE.Box3().setFromObject(this.viewer.getRenderer().allObjects)
+          box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
+        else box = new Box3().setFromObject(this.viewer.getRenderer().allObjects)
         if (box.max.x === Infinity || box.max.x === -Infinity) {
-          box = new THREE.Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
+          box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
         }
         this._controls.setPosition(box.max.x, box.max.y, box.max.z, transition)
         this.zoomExtents()

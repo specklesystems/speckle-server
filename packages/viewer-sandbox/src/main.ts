@@ -347,16 +347,23 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
 
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec'
+
     // Blender Mega Test Stream
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/2ecb757577'
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/3deaea94af'
     // Text and Dimensions
     // 'https://latest.speckle.dev/streams/3f895e614f/commits/fbc78286c9'
     // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/aa72674507'
+
     // 'https://latest.speckle.dev/streams/55cc1cbf0a/commits/a7f74b6524'
     // 'https://latest.speckle.dev/streams/85e05b8c72/commits/53f4328211'
     // 'https://latest.speckle.dev/streams/aea12cab71/commits/787ade768e'
 
+    // 'https://latest.speckle.dev/streams/e9285828d7/commits/9b80b7a70c'
+    // 'https://speckle.xyz/streams/b85d53c3b4/commits/be26146460'
+    // Germany
+    // 'https://latest.speckle.dev/streams/7117052f4e/commits/a646bf659e'
+    // 'https://latest.speckle.dev/streams/aea12cab71/commits/787ade768e'
     // 'https://speckle.xyz/streams/a29e5c7772/commits/a8cfae2645'
   )
 }
