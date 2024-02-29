@@ -111,12 +111,12 @@
       </template>
     </LayoutTable>
 
-    <ProjectWebhooksPageDeleteDialog
+    <ProjectPageSettingsWebhooksDeleteDialog
       v-model:open="showDeleteWebhookDialog"
       :webhook="webhookToModify"
     />
 
-    <ProjectWebhooksPageCreateOrEditDialog
+    <ProjectPageSettingsWebhooksCreateOrEditDialog
       v-model:open="showEditWebhookDialog"
       :webhook="webhookToModify"
       :stream-id="projectId"

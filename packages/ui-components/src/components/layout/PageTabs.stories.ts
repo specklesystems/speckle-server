@@ -19,10 +19,13 @@ export default {
   }
 } as Meta
 
-const defaultItems: LayoutPageTabItem[] = [
+const startItems: LayoutPageTabItem[] = [
   { title: 'Models', id: 'models', icon: CubeIcon, count: 300 },
   { title: 'Discussions', id: 'discussions', icon: ChatBubbleLeftRightIcon },
-  { title: 'Automations', id: 'automations', icon: BoltIcon, tag: 'New' },
+  { title: 'Automations', id: 'automations', icon: BoltIcon, tag: 'New' }
+]
+
+const endItems: LayoutPageTabItem[] = [
   { title: 'Settings', id: 'settings', icon: Cog6ToothIcon }
 ]
 
@@ -41,6 +44,7 @@ export const Default: StoryObj = {
     </div>`
   }),
   args: {
-    items: defaultItems
+    startItems,
+    endItems
   }
 }

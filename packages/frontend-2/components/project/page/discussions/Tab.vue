@@ -1,12 +1,12 @@
 <template>
   <div>
     <div v-if="project">
-      <ProjectDiscussionsHeader
+      <ProjectPageDiscussionsHeader
         v-model:grid-or-list="gridOrList"
         v-model:include-archived="includeArchived"
         :project="project"
       />
-      <ProjectDiscussionsResults
+      <ProjectPageDiscussionsResults
         :grid-or-list="gridOrList"
         :project="project"
         :include-archived="!!includeArchived"

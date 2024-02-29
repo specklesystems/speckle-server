@@ -1,13 +1,16 @@
 <template>
-  <div class="container max-w-4xl mx-auto flex flex-col gap-2 pt-4">
-    <ProjectPageSettingsManageUsers
-      always-open
-      :project="project"
-      @invite="emit('invite')"
-    />
-    <ProjectPageSettingsManagePermissions :project="project" default-open condensed />
-    <ProjectPageSettingsWebhooks :project="project" />
-    <ProjectPageSettingsDangerZones :project="project" />
+  <div class="flex gap-8 pt-4">
+    <div class="w-3/12">12345</div>
+    <div class="w-9/12">
+      <ProjectPageSettingsManageUsers
+        always-open
+        :project="project"
+        @invite="emit('invite')"
+      />
+      <ProjectPageSettingsManagePermissions :project="project" default-open condensed />
+      <ProjectPageSettingsWebhooks :project="project" />
+      <ProjectPageSettingsDangerZones :project="project" />
+    </div>
   </div>
 </template>
 

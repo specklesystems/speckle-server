@@ -3,12 +3,16 @@
     class="-mt-4"
     title="Team"
     enlarged
-    :button="{
-      text: 'Invite',
-      iconLeft: UserPlusIcon,
-      color: 'default',
-      onClick: () => emit('invite')
-    }"
+    :button="
+      project.role === 'stream:owner'
+        ? {
+            text: 'Invite',
+            iconLeft: UserPlusIcon,
+            color: 'default',
+            onClick: () => emit('invite')
+          }
+        : undefined
+    "
   >
     <template #icon>
       <UsersIcon class="h-full w-full" />

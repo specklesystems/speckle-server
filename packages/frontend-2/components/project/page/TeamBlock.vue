@@ -3,7 +3,7 @@
     <div class="flex items-center">
       <div class="flex items-end justify-between w-full text-foreground-2">
         <div class="flex items-center gap-1 flex-grow select-none text-sm font-medium">
-          <component :is="visibilityIcon" class="h-4 w-4" />
+          <component :is="visibilityIcon" class="h-4 w-4 stroke-[2px]" />
           {{ visibilityText }}
         </div>
         <div class="text-xs">

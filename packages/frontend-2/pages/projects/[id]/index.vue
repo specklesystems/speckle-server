@@ -16,13 +16,18 @@
       <ProjectPageInviteDialog v-model:open="inviteDialogOpen" :project="project" />
     </template>
 
-    <LayoutPageTabs v-show="project" v-slot="{ activeItem }" :items="pageTabItems">
-      <ProjectModelsTab
+    <LayoutPageTabs
+      v-show="project"
+      v-slot="{ activeItem }"
+      :start-items="pageTabStartItems"
+      :end-items="pageTabEndItems"
+    >
+      <ProjectPageModelsTab
         v-if="activeItem.id === 'models'"
         :project="project"
         :project-id="projectId"
       />
-      <ProjectDiscussionsTab
+      <ProjectPageDiscussionsTab
         v-if="activeItem.id === 'discussions'"
         :project="project"
         :project-id="projectId"
@@ -115,7 +120,7 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
   }
 }
 
-const pageTabItems: LayoutPageTabItem[] = [
+const pageTabStartItems: LayoutPageTabItem[] = [
   {
     title: 'Models',
     id: 'models',
@@ -133,7 +138,10 @@ const pageTabItems: LayoutPageTabItem[] = [
     id: 'automations',
     icon: BoltIcon,
     tag: 'New'
-  },
+  }
+]
+
+const pageTabEndItems: LayoutPageTabItem[] = [
   { title: 'Settings', id: 'settings', icon: Cog6ToothIcon }
 ]
 </script>
