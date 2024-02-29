@@ -46,6 +46,6 @@ spec:
         path: "/((objects/.*)|(api/.*)|(preview/.*))"
         backend:
           service:
-            name: speckle-server
+            name: speckle-objects
             port:
               name: web

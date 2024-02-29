@@ -26,7 +26,7 @@ server:
   disable_tracing: true
 
 objects:
-  replicas: 0
+  replicas: 1
   # session_secret: secret -> `session_secret`
   auth:
     local:
