@@ -5,6 +5,7 @@ const knex = require(`@/db/knex`)
 
 const { createBareToken, createAppToken } = require(`@/modules/core/services/tokens`)
 const { logger } = require('@/logging/logging')
+const { getDefaultApp } = require('@/modules/auth/defaultApps')
 const Users = () => knex('users')
 const ApiTokens = () => knex('api_tokens')
 const ServerApps = () => knex('server_apps')
@@ -30,6 +31,9 @@ module.exports = {
       .select('id', 'name', 'avatar')
       .where({ id: app.authorId })
       .first()
+
+    const defaultApp = getDefaultApp({ id })
+    if (defaultApp) app.redirectUrl = defaultApp.redirectUrl
     return app
   },
 
@@ -40,6 +44,7 @@ module.exports = {
         'server_apps.name',
         'server_apps.description',
         'server_apps.trustByDefault',
+        'server_apps.redirectUrl',
         'server_apps.logo',
         'server_apps.termsAndConditionsLink',
         'users.name as authorName',
@@ -50,6 +55,9 @@ module.exports = {
       .orderBy('server_apps.trustByDefault', 'DESC')
 
     apps.forEach((app) => {
+      const defaultApp = getDefaultApp({ id: app.id })
+      if (defaultApp) app.redirectUrl = defaultApp.redirectUrl
+
       if (app.authorName && app.authorId) {
         app.author = { name: app.authorName, id: app.authorId }
       }
@@ -100,10 +108,15 @@ module.exports = {
     )
 
     const { rows } = await query
-    return rows.map((r) => ({
-      ...r,
-      author: r.author?.id ? r.author : null
-    }))
+    return rows.map((r) => {
+      const app = {
+        ...r,
+        author: r.author?.id ? r.author : null
+      }
+      const defaultApp = getDefaultApp({ id: app.id })
+      if (defaultApp) app.redirectUrl = defaultApp.redirectUrl
+      return app
+    })
   },
 
   async createApp(app) {
