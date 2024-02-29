@@ -14,6 +14,7 @@ import {
   StringPropertyInfo
 } from '../filtering/PropertyManager'
 
+/** TO DO: Should remove selectedObjects entirely*/
 export type FilteringState = {
   selectedObjects?: string[]
   hiddenObjects?: string[]
