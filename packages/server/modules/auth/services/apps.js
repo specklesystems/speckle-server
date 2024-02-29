@@ -15,6 +15,12 @@ const Scopes = () => knex('scopes')
 const AuthorizationCodes = () => knex('authorization_codes')
 const RefreshTokens = () => knex('refresh_tokens')
 
+const addDefaultAppOverrides = (app) => {
+  const defaultApp = getDefaultApp({ id: app.id })
+  if (defaultApp) app.redirectUrl = defaultApp.redirectUrl
+  return app
+}
+
 module.exports = {
   async getApp({ id }) {
     const allScopes = await Scopes().select('*')
@@ -32,9 +38,7 @@ module.exports = {
       .where({ id: app.authorId })
       .first()
 
-    const defaultApp = getDefaultApp({ id })
-    if (defaultApp) app.redirectUrl = defaultApp.redirectUrl
-    return app
+    return addDefaultAppOverrides(app)
   },
 
   async getAllPublicApps() {
@@ -55,8 +59,7 @@ module.exports = {
       .orderBy('server_apps.trustByDefault', 'DESC')
 
     apps.forEach((app) => {
-      const defaultApp = getDefaultApp({ id: app.id })
-      if (defaultApp) app.redirectUrl = defaultApp.redirectUrl
+      app = addDefaultAppOverrides(app)
 
       if (app.authorName && app.authorId) {
         app.author = { name: app.authorName, id: app.authorId }
@@ -113,9 +116,7 @@ module.exports = {
         ...r,
         author: r.author?.id ? r.author : null
       }
-      const defaultApp = getDefaultApp({ id: app.id })
-      if (defaultApp) app.redirectUrl = defaultApp.redirectUrl
-      return app
+      return addDefaultAppOverrides(app)
     })
   },
 

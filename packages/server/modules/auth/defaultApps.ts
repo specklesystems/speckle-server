@@ -132,5 +132,5 @@ export function getDefaultApps() {
 }
 
 export function getDefaultApp({ id }: { id: string }) {
-  return defaultApps.find((app) => app.id === id) ?? null
+  return defaultApps.find((app) => app.id === id) || null
 }
