@@ -128,6 +128,11 @@ http {
       proxy_set_header Connection "upgrade";
     }
 
+    location ~* ^/((metrics)|(api/health)|(api/heap)) {
+      resolver 127.0.0.11 valid=30s;
+      return 301 /
+    }
+
     error_page   500 502 503 504  /50x.html;
 
     location = /50x.html {
