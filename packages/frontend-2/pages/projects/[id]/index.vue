@@ -17,12 +17,12 @@
     </template>
 
     <LayoutPageTabs v-show="project" v-slot="{ activeItem }" :items="pageTabItems">
-      <ProjectPageLatestItemsModels
+      <ProjectModelsTab
         v-if="activeItem.id === 'models'"
         :project="project"
         :project-id="projectId"
       />
-      <ProjectPageLatestItemsComments
+      <ProjectDiscussionsTab
         v-if="activeItem.id === 'discussions'"
         :project="project"
         :project-id="projectId"
