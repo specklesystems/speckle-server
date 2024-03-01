@@ -312,8 +312,8 @@ workflows:
 
 jobs:
   get-version:
-    docker: &docker-python-image
-      - image: cimg/python:3.12.1
+    docker: &docker-base-image
+      - image: cimg/base:2024.02
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
@@ -771,7 +771,7 @@ jobs:
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
-    docker: *docker-python-image
+    docker: *docker-base-image
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -839,7 +839,7 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   docker-publish: &publish-job
-    docker: *docker-python-image
+    docker: *docker-base-image
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -948,7 +948,8 @@ jobs:
           command: 'yarn workspaces foreach -pv --no-private npm publish --access public'
 
   publish-helm-chart:
-    docker: *docker-python-image
+    docker:
+      - image: cimg/python:3.12.1
     working_directory: *work-dir
     steps:
       - checkout

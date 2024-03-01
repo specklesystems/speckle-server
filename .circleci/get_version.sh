@@ -11,9 +11,9 @@ if [[ "${CIRCLE_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 if [[ "${CIRCLE_BRANCH}" == "main" ]]; then
-    echo "$NEXT_RELEASE-alpha.${CIRCLE_BUILD_NUM}"
+    echo "${NEXT_RELEASE}-alpha.${CIRCLE_BUILD_NUM}"
     exit 0
 fi
 
-echo "$NEXT_RELEASE-branch.${BRANCH_NAME_TRUNCATED}.${CIRCLE_BUILD_NUM}-${COMMIT_SHA1_TRUNCATED}"
+echo "${NEXT_RELEASE}-branch.${BRANCH_NAME_TRUNCATED}.${CIRCLE_BUILD_NUM}-${COMMIT_SHA1_TRUNCATED}"
 exit 0
