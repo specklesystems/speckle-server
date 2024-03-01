@@ -265,6 +265,7 @@ export default class MeshBatch implements Batch {
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
+    // console.log('Existing -> ', this.id, this.groups.slice())
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(value.material)
@@ -342,18 +343,19 @@ export default class MeshBatch implements Batch {
             for (let k = 0; k < engulfedGroups.length; k++) {
               this.geometry.groups.splice(this.groups.indexOf(engulfedGroups[k]), 1)
             }
+            this.geometry.addGroup(
+              sortedRanges[i].offset,
+              sortedRanges[i].count,
+              materialIndex
+            )
           }
-          this.geometry.addGroup(
-            sortedRanges[i].offset,
-            sortedRanges[i].count,
-            materialIndex
-          )
         }
       }
     }
     let count = 0
     this.geometry.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {
+      // console.log('Incoming -> ', this.id, ranges)
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
     this.setBatchBuffers(...ranges)
@@ -518,6 +520,7 @@ export default class MeshBatch implements Batch {
         }
       }
     }
+    // console.log('Flattened -> ', this.id, this.groups.slice())
   }
 
   private getCurrentIndexBuffer(): BufferAttribute {
@@ -628,6 +631,7 @@ export default class MeshBatch implements Batch {
         count: hiddenGroup.start
       })
     }
+    // console.log('Final -> ', this.id, this.groups.slice())
   }
 
   public resetDrawRanges() {

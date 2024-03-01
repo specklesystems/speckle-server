@@ -86,9 +86,7 @@ export default class SpeckleMesh extends Mesh {
   }
 
   public setBatchMaterial(material: Material) {
-    this.batchMaterial = material.clone()
-    this.materialCache[this.batchMaterial.id] = this.batchMaterial
-    this.updateMaterialTransformsUniform(this.batchMaterial)
+    this.batchMaterial = this.getCachedMaterial(material)
     this.material = [this.batchMaterial]
   }
 
