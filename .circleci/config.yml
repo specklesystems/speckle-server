@@ -955,7 +955,7 @@ jobs:
 
   publish-helm-chart:
     docker: &docker-base-image
-      - image: cimg/base:2024.02
+      - image: cimg/python:3.12.1
     working_directory: *work-dir
     steps:
       - checkout
