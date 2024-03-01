@@ -793,8 +793,7 @@ jobs:
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
-    docker: &docker-image
-      - image: cimg/python:3.12.1
+    docker: *docker-image
     resource_class: medium
     working_directory: *work-dir
     steps:
