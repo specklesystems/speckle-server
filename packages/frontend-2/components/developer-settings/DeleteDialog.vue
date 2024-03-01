@@ -1,18 +1,21 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
-    <template #header>Delete {{ itemType }}</template>
+    <template #header>{{ title }}</template>
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>
         Are you sure you want to
-        <strong>permanently delete</strong>
+        <strong>permanently {{ lowerFirst(itemActionVerb) }}</strong>
         the selected {{ itemType.toLowerCase() }}?
+        <template v-if="isAuthorization(item)">
+          (Removing access to an app will log you out of it on all devices.)
+        </template>
       </p>
       <div v-if="item" class="flex flex-col gap-2">
         <strong class="truncate">{{ item.name }}</strong>
       </div>
 
       <p>
-        This
+        This action
         <strong>cannot</strong>
         be undone.
       </p>
@@ -21,49 +24,75 @@
 </template>
 
 <script setup lang="ts">
-import { useMutation } from '@vue/apollo-composable'
+import { useMutation, useMutationLoading } from '@vue/apollo-composable'
 import { LayoutDialog } from '@speckle/ui-components'
 import type {
   ApplicationItem,
-  TokenItem
+  TokenItem,
+  AuthorizedAppItem
 } from '~~/lib/developer-settings/helpers/types'
 import {
   deleteAccessTokenMutation,
-  deleteApplicationMutation
+  deleteApplicationMutation,
+  revokeAppAccessMutation
 } from '~~/lib/developer-settings/graphql/mutations'
 import {
   convertThrowIntoFetchResult,
   getCacheId,
-  getFirstErrorMessage
+  getFirstErrorMessage,
+  modifyObjectFields
 } from '~~/lib/common/helpers/graphql'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
+import { lowerFirst } from 'lodash-es'
+import { useActiveUser } from '~/lib/auth/composables/activeUser'
+import type { User } from '~/lib/common/generated/gql/graphql'
+
+type ItemType = TokenItem | ApplicationItem | AuthorizedAppItem | null
+
+const isToken = (i: ItemType): i is TokenItem => !!(i && 'lastChars' in i)
+const isApplication = (i: ItemType): i is ApplicationItem => !!(i && 'secret' in i)
+const isAuthorization = (i: ItemType): i is AuthorizedAppItem =>
+  !(isToken(i) || isApplication(i))
 
 const props = defineProps<{
-  item: TokenItem | ApplicationItem | null
+  item: ItemType
 }>()
 
 const { triggerNotification } = useGlobalToast()
-const { mutate: deleteTokenMutation } = useMutation(deleteAccessTokenMutation)
-const { mutate: deleteAppMutation } = useMutation(deleteApplicationMutation)
+const isLoading = useMutationLoading()
+const { mutate: deleteToken } = useMutation(deleteAccessTokenMutation)
+const { mutate: deleteApp } = useMutation(deleteApplicationMutation)
+const { mutate: revokeAuthorization } = useMutation(revokeAppAccessMutation)
+const { userId } = useActiveUser()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const itemType = computed(() => {
-  return props.item && 'secret' in props.item ? 'Application' : 'Access Token'
+  if (isToken(props.item)) {
+    return `Access Token`
+  } else if (isApplication(props.item)) {
+    return `Application`
+  } else {
+    return 'Authorization'
+  }
 })
 
-const isApplication = (i: TokenItem | ApplicationItem | null): i is ApplicationItem =>
-  !!(i && 'secret' in i)
+const itemActionVerb = computed(() => {
+  return isToken(props.item) || isApplication(props.item) ? 'Delete' : 'Remove'
+})
+
+const title = computed(() => {
+  return `${itemActionVerb.value} ${itemType.value}`
+})
 
 const deleteConfirmed = async () => {
+  const uid = userId.value
   const itemId = props.item?.id
-
-  if (!itemId) {
+  if (!itemId || !uid) {
     return
   }
 
-  if (!isApplication(props.item)) {
-    const result = await deleteTokenMutation(
+  if (isToken(props.item)) {
+    const result = await deleteToken(
       {
         token: itemId
       },
@@ -92,8 +121,8 @@ const deleteConfirmed = async () => {
         description: errorMessage
       })
     }
-  } else {
-    const result = await deleteAppMutation(
+  } else if (isApplication(props.item)) {
+    const result = await deleteApp(
       {
         appId: itemId
       },
@@ -122,19 +151,57 @@ const deleteConfirmed = async () => {
         description: errorMessage
       })
     }
+  } else {
+    const result = await revokeAuthorization(
+      { appId: itemId },
+      {
+        update: (cache, res) => {
+          if (res.data?.appRevokeAccess) {
+            modifyObjectFields<undefined, User['authorizedApps']>(
+              cache,
+              getCacheId('User', uid),
+              (_fieldName, _variables, value) => {
+                if (!value) return value
+                return value.filter(
+                  (a) => a.__ref !== getCacheId('ServerAppListItem', itemId)
+                )
+              },
+              { fieldNameWhitelist: ['authorizedApps'] }
+            )
+          }
+        }
+      }
+    ).catch(convertThrowIntoFetchResult)
+
+    if (result?.data?.appRevokeAccess) {
+      isOpen.value = false
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Authorization removed',
+        description: 'The application authorization has been successfully removed'
+      })
+    } else {
+      const errorMessage = getFirstErrorMessage(result?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to revoke app authorization',
+        description: errorMessage
+      })
+    }
   }
 }
 
-const dialogButtons = [
-  {
-    text: 'Delete',
-    props: { color: 'danger', fullWidth: true },
-    onClick: deleteConfirmed
-  },
+const dialogButtons = computed(() => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => (isOpen.value = false)
+    onClick: (): boolean => (isOpen.value = false)
+  },
+  {
+    text: itemActionVerb.value,
+    props: { color: 'danger', fullWidth: true },
+    disabled: isLoading.value,
+    onClick: deleteConfirmed
   }
-]
+])
 </script>

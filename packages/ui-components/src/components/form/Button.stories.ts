@@ -11,7 +11,16 @@ export default {
   component: FormButton,
   argTypes: {
     color: {
-      options: ['default', 'invert', 'danger', 'warning', 'secondary', 'info'],
+      options: [
+        'default',
+        'invert',
+        'danger',
+        'warning',
+        'success',
+        'card',
+        'secondary',
+        'info'
+      ],
       control: { type: 'select' }
     },
     outlined: {
@@ -150,6 +159,13 @@ export const SuccessButton: StoryObj = mergeStories(Default, {
 export const SecondaryButton: StoryObj = mergeStories(Default, {
   args: {
     color: 'secondary'
+  }
+})
+
+export const SecondaryWithCustomColor: StoryObj = mergeStories(Default, {
+  args: {
+    color: 'secondary',
+    textColor: 'danger'
   }
 })
 

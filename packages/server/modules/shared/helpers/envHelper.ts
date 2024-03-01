@@ -197,8 +197,7 @@ export function enableMixpanel() {
 }
 
 export function speckleAutomateUrl() {
-  const automateUrl =
-    process.env.SPECKLE_AUTOMATE_URL || 'https://automate.speckle.systems'
+  const automateUrl = process.env.SPECKLE_AUTOMATE_URL
   return automateUrl
 }
 

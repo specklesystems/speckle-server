@@ -59,6 +59,7 @@ import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
 import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter'
 import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh'
 import { BaseSpecklePass } from './pipeline/SpecklePass'
+import { CameraController } from './extensions/core-extensions/CameraController'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -231,6 +232,9 @@ export default class SpeckleRenderer {
       if (this.pipeline.needsAccumulation && data) {
         this.pipeline.reset()
       }
+    })
+    this.cameraProvider.on(CameraControllerEvent.ProjectionChanged, () => {
+      ;(this._cameraProvider as CameraController).setCameraPlanes(this.sceneBox)
     })
   }
 
@@ -606,6 +610,7 @@ export default class SpeckleRenderer {
     /** We'll just update the shadowcatcher after all batches are loaded */
     this.updateShadowCatcher()
     this.updateClippingPlanes()
+    ;(this._cameraProvider as CameraController).setCameraPlanes(this.sceneBox)
     delete this.cancel[subtreeId]
   }
 

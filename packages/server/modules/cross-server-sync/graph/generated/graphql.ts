@@ -2606,7 +2606,7 @@ export type User = {
   /** Returns a list of your personal api tokens. */
   apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
-  authorizedApps?: Maybe<Array<Maybe<ServerAppListItem>>>;
+  authorizedApps?: Maybe<Array<ServerAppListItem>>;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
   /**

@@ -17,7 +17,7 @@ const {
 } = require('../services/apps')
 
 const { Scopes } = require('@/modules/core/helpers/mainConstants')
-const { updateDefaultApp } = require('@/modules/auth/defaultApps')
+const { updateDefaultApp } = require('@/modules/auth/manageDefaultApps')
 const knex = require('@/db/knex')
 const cryptoRandomString = require('crypto-random-string')
 
