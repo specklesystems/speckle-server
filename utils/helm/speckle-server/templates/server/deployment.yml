@@ -301,15 +301,15 @@ spec:
             value: "{{ .Values.server.email.from }}"
           {{- end }}
 
-          # *** Mailchimp ***
-          {{- if (default false (.Values.server.mailchimp).enabled) }}
+          # *** Newsletter ***
+          {{- if .Values.server.mailchimp.enabled }}
           - name: MAILCHIMP_ENABLED
             value: "true"
           - name: MAILCHIMP_API_KEY
             valueFrom:
               secretKeyRef:
-                name: {{ default .Values.secretName ((.Values.server.mailchimp).apikey).secretName }}
-                key: {{ default "mailchimp_apikey" ((.Values.server.mailchimp).apikey).secretKey }}
+                name: {{ default .Values.secretName .Values.server.mailchimp.apikey.secretName }}
+                key: {{ .Values.server.mailchimp.apikey.secretKey }}
           - name: MAILCHIMP_SERVER_PREFIX
             value: "{{ .Values.server.mailchimp.serverPrefix}}"
 
