@@ -312,7 +312,7 @@ workflows:
 
 jobs:
   get-version:
-    docker:
+    docker: &docker-python-image
       - image: cimg/python:3.12.1
     working_directory: &work-dir /tmp/ci
     steps:
@@ -482,7 +482,7 @@ jobs:
       # destination: package/server/coverage
 
   test-frontend-2:
-    docker:
+    docker: &docker-node-browsers-image
       - image: cimg/node:18.19.0-browsers
     resource_class: xlarge
     steps:
@@ -516,7 +516,7 @@ jobs:
           working_directory: 'packages/frontend-2'
 
   test-dui-3:
-    docker:
+    docker: &docker-node-image
       - image: cimg/node:18.19.0
     resource_class: medium+
     steps:
@@ -546,8 +546,7 @@ jobs:
           working_directory: 'packages/dui3'
 
   test-ui-components:
-    docker:
-      - image: cimg/node:18.19.0-browsers
+    docker: *docker-node-browsers-image
     resource_class: xlarge
     steps:
       - checkout
@@ -600,8 +599,7 @@ jobs:
 
   ui-components-chromatic:
     resource_class: medium+
-    docker:
-      - image: cimg/node:18.19.0
+    docker: *docker-node-image
     steps:
       - checkout
       - restore_cache:
@@ -638,8 +636,7 @@ jobs:
     # but it is not possible to scan npm/yarn package.json
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
-    docker:
-      - image: cimg/node:18.19.0
+    docker: *docker-node-image
     resource_class: small
     working_directory: *work-dir
     steps:
@@ -774,8 +771,7 @@ jobs:
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
-    docker: &docker-image
-      - image: cimg/python:3.12.1
+    docker: *docker-python-image
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -843,8 +839,7 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   docker-publish: &publish-job
-    docker:
-      - image: cimg/python:3.12.1-node
+    docker: *docker-python-image
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -908,8 +903,7 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   publish-npm:
-    docker:
-      - image: cimg/node:18.19.0
+    docker: *docker-node-image
     working_directory: *work-dir
     steps:
       - checkout
@@ -954,8 +948,7 @@ jobs:
           command: 'yarn workspaces foreach -pv --no-private npm publish --access public'
 
   publish-helm-chart:
-    docker: &docker-base-image
-      - image: cimg/python:3.12.1
+    docker: *docker-python-image
     working_directory: *work-dir
     steps:
       - checkout
@@ -970,8 +963,7 @@ jobs:
           command: ./.circleci/publish_helm_chart.sh
 
   update-helm-documentation:
-    docker:
-      - image: cimg/node:18.19.0
+    docker: *docker-node-image
     working_directory: *work-dir
     steps:
       - checkout
