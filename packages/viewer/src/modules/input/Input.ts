@@ -1,14 +1,6 @@
 import { Vector2 } from 'three'
 import EventEmitter from '../EventEmitter'
 
-export interface InputOptions {
-  hover: boolean
-}
-
-export const InputOptionsDefault = {
-  hover: false
-}
-
 export enum InputEvent {
   PointerDown,
   PointerUp,
@@ -18,7 +10,7 @@ export enum InputEvent {
   KeyUp
 }
 
-//TO DO: Define proper interface for InputEvent
+//TO DO: Define proper interface for InputEvent data
 export default class Input extends EventEmitter {
   private static readonly MAX_DOUBLE_CLICK_TIMING = 500
   private tapTimeout
@@ -27,9 +19,8 @@ export default class Input extends EventEmitter {
   private touchLocation: Touch
   private container
 
-  constructor(container: HTMLElement, _options: InputOptions) {
+  constructor(container: HTMLElement) {
     super()
-    _options
     this.container = container
 
     // Handle mouseclicks
