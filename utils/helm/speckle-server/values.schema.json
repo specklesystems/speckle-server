@@ -983,6 +983,41 @@
             }
           }
         },
+        "mailchimp": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Mailchimp integration feature flag",
+              "default": false
+            },
+            "serverPrefix": {
+              "type": "string",
+              "description": "Mailchimp api server prefix",
+              "default": ""
+            },
+            "newsletterListId": {
+              "type": "string",
+              "description": "Audience id for the newsletter list",
+              "default": ""
+            },
+            "onboardingListId": {
+              "type": "string",
+              "description": "Audience id for the onboarding list",
+              "default": ""
+            },
+            "onboardingJourneyId": {
+              "type": "string",
+              "description": "Id of the onboarding journey",
+              "default": ""
+            },
+            "onboardingStepId": {
+              "type": "string",
+              "description": "Id of the onboarding journey step we trigger",
+              "default": ""
+            }
+          }
+        },
         "migration": {
           "type": "object",
           "properties": {
