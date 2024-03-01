@@ -650,6 +650,11 @@ server:
   mailchimp:
     ## @param server.mailchimp.enabled Mailchimp integration feature flag
     enabled: false
+    apikey:
+      ## @param server.mailchimp.apikey.secretName The name of the Kubernetes Secret containing the Mailchimp API key.
+      secretName: '' # defaults to .secretName
+      ## @param server.mailchimp.apikey.secretKey The key within the Kubernetes Secret holding the Mailchimp API key as its value.
+      secretKey: 'mailchimp_apikey'
     ## @param server.mailchimp.serverPrefix Mailchimp api server prefix
     serverPrefix: ''
     ## @param server.mailchimp.newsletterListId Audience id for the newsletter list

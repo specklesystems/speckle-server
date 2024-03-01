@@ -991,6 +991,21 @@
               "description": "Mailchimp integration feature flag",
               "default": false
             },
+            "apikey": {
+              "type": "object",
+              "properties": {
+                "secretName": {
+                  "type": "string",
+                  "description": "The name of the Kubernetes Secret containing the Mailchimp API key.",
+                  "default": ""
+                },
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the Mailchimp API key as its value.",
+                  "default": "mailchimp_apikey"
+                }
+              }
+            },
             "serverPrefix": {
               "type": "string",
               "description": "Mailchimp api server prefix",
