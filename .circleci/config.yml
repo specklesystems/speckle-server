@@ -638,35 +638,16 @@ jobs:
     # but it is not possible to scan npm/yarn package.json
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
-    docker: &docker-image
-      - image: cimg/python:3.12.1
+    docker:
+      - image: cimg/node:18.19.0
     resource_class: small
     working_directory: *work-dir
     steps:
       - checkout
-      # create the nix folder with permissive write permissions
-      - run: |
-          sudo mkdir /nix
-          sudo chmod 777 /nix
       - restore_cache:
-          name: Restore nix and Yarn Package cache
+          name: Restore Yarn Package cache
           keys:
-            - nix-{{ checksum "shell.nix" }}
             - yarn-packages-server-{{ checksum "yarn.lock" }}
-      # The cimg/python:*-node images do not constrain the version of node to 18 so we instead use cimg/python:* and install node 18 separately
-      - run:
-          name: Install the nix package manager
-          command: |
-            sh <(curl -L https://nixos.org/nix/install) --daemon --yes
-            echo "source /etc/bashrc" >> "${BASH_ENV}"
-      - run:
-          name: Initialize nix shell
-          command: |
-            nix-shell --run "echo Here, a nix shell for you"
-      - save_cache:
-          key: nix-{{ checksum "shell.nix" }}
-          paths:
-            - /nix
       - run:
           name: Install Dependencies
           command: yarn
@@ -793,7 +774,8 @@ jobs:
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
-    docker: *docker-image
+    docker: &docker-image
+      - image: cimg/python:3.12.1
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -926,36 +908,18 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   publish-npm:
-    docker: *docker-image
+    docker:
+      - image: cimg/node:18.19.0
     working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
-      # create the nix folder with permissive write permissions
-      - run: |
-          sudo mkdir /nix
-          sudo chmod 777 /nix
-      - restore_cache:
-          name: Restore nix and Yarn Package cache
-          keys:
-            - nix-{{ checksum "shell.nix" }}
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      # The cimg/python:*-node images do not constrain the version of node to 18 so we instead use cimg/python:* and install node 18 separately
-      - run:
-          name: Install the nix package manager
-          command: |
-            sh <(curl -L https://nixos.org/nix/install) --daemon --yes
-            echo "source /etc/bashrc" >> "${BASH_ENV}"
-      - run:
-          name: Initialize nix shell
-          command: |
-            nix-shell --run "echo Here, a nix shell for you"
-      - save_cache:
-          key: nix-{{ checksum "shell.nix" }}
-          paths:
-            - /nix
       - run: cat workspace/env-vars >> $BASH_ENV
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
           command: yarn
@@ -968,7 +932,6 @@ jobs:
           paths:
             - .yarn/cache
             - .yarn/unplugged
-
       - run:
           name: auth to npm as Speckle
           command: |
@@ -1007,34 +970,13 @@ jobs:
           command: ./.circleci/publish_helm_chart.sh
 
   update-helm-documentation:
-    docker: *docker-image
+    docker:
+      - image: cimg/node:18.19.0
     working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
-      # create the nix folder with permissive write permissions
-      - run: |
-          sudo mkdir /nix
-          sudo chmod 777 /nix
-      - restore_cache:
-          name: Restore nix cache
-          keys:
-            - nix-{{ checksum "shell.nix" }}
-      # The cimg/python:*-node images do not constrain the version of node to 18 so we instead use cimg/python:* and install node 18 separately
-      - run:
-          name: Install the nix package manager
-          command: |
-            sh <(curl -L https://nixos.org/nix/install) --daemon --yes
-            echo "source /etc/bashrc" >> "${BASH_ENV}"
-      - run:
-          name: Initialize nix shell
-          command: |
-            nix-shell --run "echo Here, a nix shell for you"
-      - save_cache:
-          key: nix-{{ checksum "shell.nix" }}
-          paths:
-            - /nix
       - run: cat workspace/env-vars >> $BASH_ENV
       - add_ssh_keys:
           fingerprints:
