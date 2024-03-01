@@ -800,28 +800,6 @@ jobs:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
-      # create the nix folder with permissive write permissions
-      - run: |
-          sudo mkdir /nix
-          sudo chmod 777 /nix
-      - restore_cache:
-          name: Restore nix cache
-          keys:
-            - nix-{{ checksum "shell.nix" }}
-      # The cimg/python:*-node images do not constrain the version of node to 18 so we instead use cimg/python:* and install node 18 separately
-      - run:
-          name: Install the nix package manager
-          command: |
-            sh <(curl -L https://nixos.org/nix/install) --daemon --yes
-            echo "source /etc/bashrc" >> "${BASH_ENV}"
-      - run:
-          name: Initialize nix shell
-          command: |
-            nix-shell --run "echo Here, a nix shell for you"
-      - save_cache:
-          key: nix-{{ checksum "shell.nix" }}
-          paths:
-            - /nix
       - run: cat workspace/env-vars >> $BASH_ENV
       - setup_remote_docker:
           version: default
