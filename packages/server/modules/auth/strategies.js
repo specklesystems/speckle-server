@@ -103,26 +103,21 @@ module.exports = async (app) => {
         }
 
         if (getMailchimpStatus()) {
-          const user = await getUserById({ userId: req.user.id })
-          if (!user)
-            logger.warn(
-              'Could not register user for mailchimp lists - no db user record found.'
-            )
-
           try {
+            const user = await getUserById({ userId: req.user.id })
+            if (!user)
+              throw new Error(
+                'Could not register user for mailchimp lists - no db user record found.'
+              )
             const onboardingIds = getMailchimpOnboardingIds()
             await triggerMailchimpCustomerJourney(user, onboardingIds)
-          } catch (error) {
-            logger.warn(error, 'Failed to register user to the onboarding journey.')
-          }
 
-          if (newsletterConsent) {
-            try {
+            if (newsletterConsent) {
               const { listId } = getMailchimpNewsletterIds()
               await addToMailchimpAudience(user, listId)
-            } catch (error) {
-              logger.warn(error, 'Failed to register user to newsletter.')
             }
+          } catch (error) {
+            logger.warn(error, 'Failed to sign up user to mailchimp lists')
           }
         }
       }

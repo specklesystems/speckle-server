@@ -647,6 +647,20 @@ server:
     ## @param server.fileUploads.enabled If enabled, file uploads on the server will be flagged as enabled
     enabled: true
 
+  mailchimp:
+    ## @param server.mailchimp.enabled Mailchimp integration feature flag
+    enabled: false
+    ## @param server.mailchimp.serverPrefix Mailchimp api server prefix
+    serverPrefix: ''
+    ## @param server.mailchimp.newsletterListId Audience id for the newsletter list
+    newsletterListId: ''
+    ## @param server.mailchimp.onboardingListId Audience id for the onboarding list
+    onboardingListId: ''
+    ## @param server.mailchimp.onboardingJourneyId Id of the onboarding journey
+    onboardingJourneyId: ''
+    ## @param server.mailchimp.onboardingStepId Id of the onboarding journey step we trigger
+    onboardingStepId: ''
+
   migration:
     ## @param server.migration.movedFrom Indicate the URL where the server moved from
     movedFrom: ''
@@ -676,6 +690,7 @@ server:
   ## @param server.sentry_dns (Optional) The Data Source Name that was provided by Sentry.io
   ## Sentry.io allows events within Speckle to be monitored
   ##
+
   sentry_dns: ''
   ## @param server.disable_tracking If set to true, will prevent tracking metrics from being collected
   ## Setting this value to false requires `sentry_dns` to be set
