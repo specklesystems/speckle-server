@@ -31,15 +31,15 @@ export class CameraController extends Extension implements ICameraProvider {
     this._renderingCamera = value
   }
 
-  public get enabled() {
+  public get enabled(): boolean {
     return this._controls.enabled
   }
 
-  public set enabled(val) {
+  public set enabled(val: boolean) {
     this._controls.enabled = val
   }
 
-  public get fieldOfView() {
+  public get fieldOfView(): number {
     return this.perspectiveCamera.fov
   }
 
@@ -48,7 +48,7 @@ export class CameraController extends Extension implements ICameraProvider {
     this.perspectiveCamera.updateProjectionMatrix()
   }
 
-  public get aspect() {
+  public get aspect(): number {
     return this.perspectiveCamera.aspect
   }
 
@@ -117,9 +117,10 @@ export class CameraController extends Extension implements ICameraProvider {
   setCameraView(objectIds: string[], transition: boolean, fit?: number): void
   setCameraView(
     view: CanonicalView | SpeckleView | InlineView | PolarView,
-    transition: boolean
+    transition: boolean,
+    fit?: number
   ): void
-  setCameraView(bounds: Box3, transition: boolean): void
+  setCameraView(bounds: Box3, transition: boolean, fit?: number): void
   setCameraView(
     arg0: string[] | CanonicalView | SpeckleView | InlineView | PolarView | Box3,
     arg1 = true,
@@ -177,19 +178,19 @@ export class CameraController extends Extension implements ICameraProvider {
     this.viewer.requestRender()
   }
 
-  public setOrthoCameraOn() {
+  public setOrthoCameraOn(): void {
     if (this._renderingCamera === this.orthographicCamera) return
     this.renderingCamera = this.orthographicCamera
     this.setupOrthoCamera()
     this.viewer.requestRender()
   }
 
-  public toggleCameras() {
+  public toggleCameras(): void {
     if (this._renderingCamera === this.perspectiveCamera) this.setOrthoCameraOn()
     else this.setPerspectiveCameraOn()
   }
 
-  protected setupOrthoCamera() {
+  protected setupOrthoCamera(): void {
     this._controls.mouseButtons.wheel = CameraControls.ACTION.ZOOM
 
     const lineOfSight = new Vector3()
@@ -233,11 +234,11 @@ export class CameraController extends Extension implements ICameraProvider {
     this.emit(CameraControllerEvent.ProjectionChanged, CameraProjection.PERSPECTIVE)
   }
 
-  public disableRotations() {
+  public disableRotations(): void {
     this._controls.mouseButtons.left = CameraControls.ACTION.TRUCK
   }
 
-  public enableRotations() {
+  public enableRotations(): void {
     this._controls.mouseButtons.left = CameraControls.ACTION.ROTATE
   }
 

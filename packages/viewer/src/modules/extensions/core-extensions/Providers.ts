@@ -55,8 +55,8 @@ export interface ICameraProvider extends IProvider {
     transition: boolean
   )
   setCameraView(box: Box3, transition: boolean, fit?: number)
-  on(e: CameraControllerEvent, handler: (data: boolean) => void)
-  removeListener(e: SectionToolEvent, handler: (data: Plane[]) => void)
+  on(e: CameraControllerEvent, handler: (data: unknown) => void)
+  removeListener(e: CameraControllerEvent, handler: (data: unknown) => void)
 }
 
 export abstract class ICameraProvider {
