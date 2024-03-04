@@ -24,7 +24,7 @@ import {
 import { Batch, BatchUpdateRange, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
 import { Geometry } from './converter/Geometry'
-import Input, { InputEvent, InputOptionsDefault } from './input/Input'
+import Input, { InputEvent } from './input/Input'
 import { Intersections } from './Intersections'
 import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
 import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
@@ -341,7 +341,7 @@ export default class SpeckleRenderer {
     this.pipeline.configure()
     this.pipeline.pipelineOptions = DefaultPipelineOptions
 
-    this.input = new Input(this._renderer.domElement, InputOptionsDefault)
+    this.input = new Input(this._renderer.domElement)
     this.input.on(InputEvent.Click, this.onClick.bind(this))
     this.input.on(InputEvent.DoubleClick, this.onDoubleClick.bind(this))
 
