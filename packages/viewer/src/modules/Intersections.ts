@@ -16,7 +16,7 @@ import { SpeckleRaycaster } from './objects/SpeckleRaycaster'
 import { ObjectLayers } from '../IViewer'
 
 export class Intersections {
-  private raycaster: SpeckleRaycaster
+  protected raycaster: SpeckleRaycaster
   private boxBuffer: Box3 = new Box3()
   private vec0Buffer: Vector4 = new Vector4()
   private vec1Buffer: Vector4 = new Vector4()
@@ -31,7 +31,7 @@ export class Intersections {
     this.raycaster.onObjectIntersectionTest = this.onObjectIntersection.bind(this)
   }
 
-  private onObjectIntersection(obj: Object3D) {
+  protected onObjectIntersection(obj: Object3D) {
     if (obj instanceof LineSegments2) {
       const box = this.boxBuffer.setFromObject(obj)
       const min = this.vec0Buffer.set(box.min.x, box.min.y, box.min.z, 1)
