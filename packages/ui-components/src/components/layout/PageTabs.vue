@@ -37,10 +37,10 @@
           v-for="item in items"
           :id="`tab-${item.id}`"
           :key="item.id"
-          class="relative z-10 flex items-center gap-1 pb-2 border-b-[2px] border-transparent text-sm sm:text-base max-w-max"
+          class="relative z-10 flex items-center gap-1.5 pb-2 border-b-[2px] border-transparent text-sm sm:text-base max-w-max"
           :class="[
             activeItem.id === item.id
-              ? 'text-primary font-bold hover:text-primary'
+              ? 'text-primary hover:text-primary'
               : 'text-foreground',
             vertical ? 'hover:border-outline' : 'hover:border-outline-2'
           ]"
