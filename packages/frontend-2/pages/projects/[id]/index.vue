@@ -20,23 +20,16 @@
       v-show="project"
       v-slot="{ activeItem }"
       :start-items="pageTabStartItems"
-      :end-items="pageTabEndItems"
     >
-      <ProjectPageModelsTab
-        v-if="activeItem.id === 'models'"
-        :project="project"
-        :project-id="projectId"
-      />
-      <ProjectPageDiscussionsTab
-        v-if="activeItem.id === 'discussions'"
-        :project="project"
-        :project-id="projectId"
-      />
-      <ProjectPageSettingsTab
+      <ProjectPageModelsTab v-if="activeItem.id === 'models'" />
+      <ProjectPageDiscussionsTab v-if="activeItem.id === 'discussions'" />
+      <ProjectPageAutomationsTab v-if="activeItem.id === 'automations'" />
+      <!-- Commented until Settings Tab is fully scoped -->
+      <!-- <ProjectPageSettingsTab
         v-if="project && activeItem.id === 'settings'"
         :project="project"
         @invite="inviteDialogOpen = true"
-      />
+      /> -->
     </LayoutPageTabs>
   </div>
 </template>
@@ -47,12 +40,7 @@ import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import type { LayoutPageTabItem } from '@speckle/ui-components/dist/helpers/layout/components'
 import { LayoutPageTabs } from '@speckle/ui-components'
-import {
-  CubeIcon,
-  Cog6ToothIcon,
-  BoltIcon,
-  ChatBubbleLeftRightIcon
-} from '@heroicons/vue/24/outline'
+import { CubeIcon, BoltIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
 import type { Optional } from '@speckle/shared'
 
 graphql(`
@@ -139,9 +127,6 @@ const pageTabStartItems: LayoutPageTabItem[] = [
     icon: BoltIcon,
     tag: 'New'
   }
-]
-
-const pageTabEndItems: LayoutPageTabItem[] = [
-  { title: 'Settings', id: 'settings', icon: Cog6ToothIcon }
+  // { title: 'Settings', id: 'settings', icon: Cog6ToothIcon }
 ]
 </script>
