@@ -13,7 +13,7 @@
       }
     ]"
   >
-    <div class="flex flex-col text-foreground">
+    <div class="flex flex-col text-foreground -mt-4">
       <ProjectPageInviteDialogInviteUser
         v-if="isOwner && !isServerGuest"
         :project="project"
