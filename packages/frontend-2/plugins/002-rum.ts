@@ -18,8 +18,8 @@ async function initRumClient(app: PluginNuxtApp) {
     rg4js('apiKey', keys.raygun)
     rg4js('enableCrashReporting', true)
     rg4js('enablePulse', true)
-    rg4js('boot')
-    rg4js('enableRum', true)
+    // rg4js('boot')
+    // rg4js('enableRum', true)
     rg4js('withTags', [`baseUrl:${baseUrl}`, `version:${speckleServerVersion}`])
 
     await onAuthStateChange(
