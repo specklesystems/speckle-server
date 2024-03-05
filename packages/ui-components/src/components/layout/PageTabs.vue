@@ -8,7 +8,7 @@
       :class="
         vertical
           ? 'flex-col w-2/12 border-r border-outline gap-4 pl-4'
-          : 'no-scrollbar border-b border-outline-3 lg:border-none pr-20 lg:pr-0 gap-8 w-full'
+          : 'no-scrollbar border-b border-outline-3 lg:border-none gap-8 w-full'
       "
     >
       <div
@@ -19,9 +19,6 @@
         v-if="!vertical"
         :style="borderStyle"
         class="h-px absolute bottom-0 z-20 bg-primary transition-all duration-300"
-      ></div>
-      <div
-        class="lg:hidden h-full absolute right-0 z-30 bg-gradient-to-l from-foundation-page w-20"
       ></div>
       <div class="flex" :class="vertical ? 'flex-col gap-4' : 'gap-8'">
         <h1 v-if="title" class="font-bold h4" :class="vertical ? '-ml-4 mb-4' : 'mb-2'">
