@@ -3,8 +3,7 @@
     <LayoutPageTabs
       v-show="project"
       v-slot="{ activeItem }"
-      :start-items="pageTabStartItems"
-      :end-items="pageTabEndItems"
+      :items="pageTabItems"
       vertical
       class="min-h-[500px]"
       title="Settings"
@@ -89,7 +88,7 @@ const emit = defineEmits(['invite'])
 
 import { computed } from 'vue'
 
-const pageTabStartItems = computed(() => {
+const pageTabItems = computed(() => {
   const items: LayoutPageTabItem[] = [
     {
       title: 'Users',
@@ -110,12 +109,6 @@ const pageTabStartItems = computed(() => {
       icon: LockOpenIcon
     })
   }
-
-  return items
-})
-
-const pageTabEndItems = computed(() => {
-  const items = []
 
   if (canLeaveProject.value) {
     items.push({

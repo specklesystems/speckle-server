@@ -16,11 +16,7 @@
       <ProjectPageInviteDialog v-model:open="inviteDialogOpen" :project="project" />
     </template>
 
-    <LayoutPageTabs
-      v-show="project"
-      v-slot="{ activeItem }"
-      :start-items="pageTabStartItems"
-    >
+    <LayoutPageTabs v-show="project" v-slot="{ activeItem }" :items="pageTabItems">
       <ProjectPageModelsTab v-if="activeItem.id === 'models'" />
       <ProjectPageDiscussionsTab v-if="activeItem.id === 'discussions'" />
       <ProjectPageAutomationsTab v-if="activeItem.id === 'automations'" />
@@ -74,6 +70,8 @@ const inviteDialogOpen = ref(false)
 const projectId = computed(() => route.params.id as string)
 const shouldAutoAcceptInvite = computed(() => route.query.accept === 'true')
 const token = computed(() => route.query.token as Optional<string>)
+const modelCount = computed(() => project.value?.modelCount.totalCount)
+const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
 
 useGeneralProjectPageUpdateTracking({ projectId }, { notifyOnProjectUpdate: true })
 const { result: projectPageResult } = useQuery(
@@ -112,18 +110,18 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
   }
 }
 
-const pageTabStartItems: LayoutPageTabItem[] = [
+const pageTabItems: LayoutPageTabItem[] = [
   {
     title: 'Models',
     id: 'models',
     icon: CubeIcon,
-    count: project.value?.modelCount.totalCount
+    count: modelCount
   },
   {
     title: 'Discussions',
     id: 'discussions',
     icon: ChatBubbleLeftRightIcon,
-    count: project.value?.commentThreadCount.totalCount
+    count: commentCount
   },
   {
     title: 'Automations',
