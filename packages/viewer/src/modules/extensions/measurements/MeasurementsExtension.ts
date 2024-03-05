@@ -61,10 +61,6 @@ export class MeasurementsExtension extends Extension {
     return this._enabled
   }
 
-  public get visible(): boolean {
-    return this._options.visible
-  }
-
   public set enabled(value: boolean) {
     this._enabled = value
     if (this.measurement) {
@@ -74,10 +70,6 @@ export class MeasurementsExtension extends Extension {
     }
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
-  }
-
-  public set paused(value: boolean) {
-    this._paused = value
   }
 
   public set options(options: MeasurementOptions) {
