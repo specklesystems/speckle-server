@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="project">
-      <ProjectModelsPageHeader
+      <ProjectPageModelsHeader
         v-model:selected-apps="selectedApps"
         v-model:selected-members="selectedMembers"
         v-model:grid-or-list="gridOrList"
@@ -10,14 +10,14 @@
         :disabled="loading"
         class="z-[1] relative"
       />
-      <ProjectModelsPageResults
+      <ProjectPageModelsResults
         v-model:grid-or-list="gridOrList"
         v-model:search="search"
         v-model:loading="loading"
         :source-apps="selectedApps"
         :contributors="selectedMembers"
         :project="project"
-        class="z-[0] relative"
+        class="z-[0] relative mt-8"
         @clear-search="clearSearch"
       />
     </div>

@@ -1,15 +1,17 @@
 <template>
-  <div>
-    <Portal to="navigation">
-      <HeaderNavLink :to="projectRoute(projectId)" :name="projectName"></HeaderNavLink>
-      <HeaderNavLink
-        :to="`${projectWebhooksRoute(projectId)}`"
-        name="Webhooks"
-      ></HeaderNavLink>
-    </Portal>
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <h1 class="text-2xl font-bold">Webhooks</h1>
-      <div class="flex gap-2">
+  <LayoutDialogSection title="Webhooks" enlarged always-open>
+    <template #icon>
+      <IconWebhooks class="h-full w-full" />
+    </template>
+    <div
+      class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-16 mb-8"
+    >
+      <p>
+        Webhooks allow you to subscribe to a stream's events and get notified of them in
+        real time. You can then use this to trigger ci apps, automation workflows, and
+        more.
+      </p>
+      <div class="flex gap-2 shrink-0">
         <FormButton
           color="secondary"
           :icon-left="BookOpenIcon"
@@ -17,17 +19,12 @@
           external
           target="_blank"
         >
-          Docs
+          Open Docs
         </FormButton>
         <FormButton :icon-left="PlusIcon" @click="openCreateWebhookDialog">
-          Create
+          Create Webhook
         </FormButton>
       </div>
-    </div>
-    <div class="my-8 text-sm">
-      Webhooks allow you to subscribe to a stream's events and get notified of them in
-      real time. You can then use this to trigger ci apps, automation workflows, and
-      more.
     </div>
 
     <LayoutTable
@@ -65,7 +62,7 @@
       <template #data="{ item }">
         <div class="flex flex-col">
           <h3
-            class="font-bold text-base truncate"
+            class="font-bold text-sm truncate"
             :class="{ 'opacity-60': !item.enabled }"
           >
             {{ item.description }}
@@ -90,11 +87,11 @@
                 class="text-danger"
               />
             </div>
-            <span class="text-foreground opacity-50 text-sm truncate">
+            <span class="text-foreground opacity-40 text-xs truncate">
               {{ getHistoryStatusInfo(item) }}
             </span>
           </div>
-          <span class="text-foreground opacity-50 text-sm truncate">
+          <span class="text-foreground opacity-40 text-xs truncate">
             {{ item.url }}
           </span>
         </div>
@@ -114,18 +111,18 @@
       </template>
     </LayoutTable>
 
-    <ProjectWebhooksPageDeleteDialog
+    <ProjectPageSettingsWebhooksDeleteDialog
       v-model:open="showDeleteWebhookDialog"
       :webhook="webhookToModify"
     />
 
-    <ProjectWebhooksPageCreateOrEditDialog
+    <ProjectPageSettingsWebhooksCreateOrEditDialog
       v-model:open="showEditWebhookDialog"
       :webhook="webhookToModify"
       :stream-id="projectId"
       @webhook-created="handleWebhookCreated"
     />
-  </div>
+  </LayoutDialogSection>
 </template>
 
 <script setup lang="ts">
@@ -143,7 +140,6 @@ import { FormSwitch, ToastNotificationType } from '@speckle/ui-components'
 import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
-import { projectRoute, projectWebhooksRoute } from '~~/lib/common/helpers/route'
 import type { WebhookItem } from '~~/lib/projects/helpers/types'
 import {
   convertThrowIntoFetchResult,
@@ -181,7 +177,6 @@ const webhookToModify = ref<WebhookItem | null>(null)
 const showDeleteWebhookDialog = ref(false)
 const showEditWebhookDialog = ref(false)
 
-const projectName = computed(() => pageResult.value?.project?.name || 'Unknown Project')
 const webhooks = computed<WebhookItem[]>(() => {
   return pageResult.value?.project?.webhooks?.items || []
 })

@@ -3,14 +3,14 @@
     <div class="w-full text-sm overflow-x-auto overflow-y-visible simple-scrollbar">
       <div
         v-if="items.length > 0"
-        class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[900px]"
+        class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[500px]"
         :style="{ paddingRight: paddingRightStyle }"
       >
         <div
           v-for="column in columns"
           :key="column.id"
           :class="getHeaderClasses(column.id)"
-          class="capitalize"
+          class="capitalize !text-sm"
         >
           {{ column.header }}
         </div>
@@ -99,11 +99,11 @@ const paddingRightStyle = computed(() => {
 
 const rowsWrapperClasses = computed(() => {
   const classParts = [
-    'relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[900px] bg-foundation'
+    'relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[500px] w-full bg-foundation'
   ]
 
   if (props.onRowClick) {
-    classParts.push('cursor-pointer hover:bg-primary-muted')
+    classParts.push('hover:bg-primary-muted')
   }
 
   switch (props.rowItemsAlign) {
@@ -128,7 +128,7 @@ const getClasses = (column: C, colIndex: number): string => {
   if (colIndex === 0) {
     return `bg-transparent py-3 pr-5 px-1 ${columnClass}`
   }
-  return `lg:p-0 px-1 my-2 ${columnClass}`
+  return `lg:p-0 px-1 ${columnClass}`
 }
 
 const handleRowClick = (item: T) => {

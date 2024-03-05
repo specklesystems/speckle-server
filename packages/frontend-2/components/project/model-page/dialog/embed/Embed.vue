@@ -23,7 +23,7 @@
         </template>
       </CommonAlert>
 
-      <ProjectPageTeamDialogManagePermissions :project="project" default-open />
+      <ProjectPageSettingsManagePermissions :project="project" default-open />
     </div>
     <div v-else>
       <CommonAlert v-if="multipleVersionedResources" class="mb-4 sm:-mt-4" color="info">

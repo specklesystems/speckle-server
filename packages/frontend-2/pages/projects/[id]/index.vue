@@ -1,49 +1,47 @@
 <template>
   <div>
     <template v-if="project">
-      <ProjectsInviteBanner
-        :invite="invite"
-        :show-stream-name="false"
-        :auto-accept="shouldAutoAcceptInvite"
-        @processed="onInviteAccepted"
-      />
-      <!-- Heading text w/ actions -->
-      <ProjectPageHeader :project="project" />
-      <!-- Stats blocks -->
-      <div class="flex flex-col md:flex-row space-y-2 md:space-x-4 mt-8 mb-14">
-        <ProjectPageStatsBlockSettings
-          :project="project"
-          class="w-full md:w-72 transition"
+      <div>
+        <ProjectsInviteBanner
+          :invite="invite"
+          :show-stream-name="false"
+          :auto-accept="shouldAutoAcceptInvite"
+          @processed="onInviteAccepted"
         />
-        <div class="grow hidden md:flex"></div>
-        <div class="grid grid-cols-3 gap-2">
-          <ProjectPageStatsBlockVersions :project="project" />
-          <ProjectPageStatsBlockModels :project="project" />
-          <ProjectPageStatsBlockComments :project="project" />
+        <div class="flex flex-col sm:flex-row gap-6 justify-between mt-6 mb-8 sm:mb-12">
+          <ProjectPageHeader :project="project" />
+          <ProjectPageTeamBlock :project="project" @invite="inviteDialogOpen = true" />
         </div>
       </div>
+      <ProjectPageInviteDialog v-model:open="inviteDialogOpen" :project="project" />
     </template>
-    <!-- No v-if=project to ensure internal queries trigger ASAP -->
-    <div v-show="project" class="flex flex-col space-y-8 sm:space-y-14">
-      <!-- Latest models -->
-      <div class="relative z-10">
-        <ProjectPageLatestItemsModels :project="project" :project-id="projectId" />
-      </div>
-      <!-- Latest comments -->
-      <div class="relative z-0">
-        <ProjectPageLatestItemsComments :project="project" :project-id="projectId" />
-      </div>
-      <!-- More actions -->
-      <!-- <ProjectPageMoreActions /> -->
-    </div>
+
+    <LayoutPageTabs v-show="project" v-slot="{ activeItem }" :items="pageTabItems">
+      <ProjectPageModelsTab v-if="activeItem.id === 'models'" />
+      <ProjectPageDiscussionsTab v-if="activeItem.id === 'discussions'" />
+      <ProjectPageAutomationsTab v-if="activeItem.id === 'automations'" />
+      <ProjectPageSettingsTab
+        v-if="project && activeItem.id === 'settings'"
+        :project="project"
+        @invite="inviteDialogOpen = true"
+      />
+    </LayoutPageTabs>
   </div>
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import type { Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
+import type { LayoutPageTabItem } from '@speckle/ui-components/dist/helpers/layout/components'
+import { LayoutPageTabs } from '@speckle/ui-components'
+import {
+  CubeIcon,
+  BoltIcon,
+  ChatBubbleLeftRightIcon,
+  Cog6ToothIcon
+} from '@heroicons/vue/24/outline'
+import type { Optional } from '@speckle/shared'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -66,9 +64,14 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+
+const inviteDialogOpen = ref(false)
+
 const projectId = computed(() => route.params.id as string)
 const shouldAutoAcceptInvite = computed(() => route.query.accept === 'true')
 const token = computed(() => route.query.token as Optional<string>)
+const modelCount = computed(() => project.value?.modelCount.totalCount)
+const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
 
 useGeneralProjectPageUpdateTracking({ projectId }, { notifyOnProjectUpdate: true })
 const { result: projectPageResult } = useQuery(
@@ -106,4 +109,26 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
     })
   }
 }
+
+const pageTabItems: LayoutPageTabItem[] = [
+  {
+    title: 'Models',
+    id: 'models',
+    icon: CubeIcon,
+    count: modelCount
+  },
+  {
+    title: 'Discussions',
+    id: 'discussions',
+    icon: ChatBubbleLeftRightIcon,
+    count: commentCount
+  },
+  {
+    title: 'Automations',
+    id: 'automations',
+    icon: BoltIcon,
+    tag: 'New'
+  },
+  { title: 'Settings', id: 'settings', icon: Cog6ToothIcon }
+]
 </script>

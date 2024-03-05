@@ -1,59 +1,49 @@
 <template>
-  <LayoutDialogSection
-    allow-overflow
-    border-b
-    border-t
-    title="Invite"
-    :always-open="defaultOpen"
-  >
-    <template #icon>
-      <UserPlusIcon class="h-full w-full" />
-    </template>
-    <div class="flex flex-col mt-2">
-      <FormTextInput
-        v-model="search"
-        name="search"
-        size="lg"
-        placeholder="Search"
-        help="Search by username or email"
-        input-classes="pr-[85px] text-sm"
-      >
-        <template #input-right>
-          <div class="absolute inset-y-0 right-0 flex items-center pr-2">
-            <ProjectPageTeamPermissionSelect v-model="role" hide-remove />
-          </div>
-        </template>
-      </FormTextInput>
-      <div
-        v-if="searchUsers.length || selectedEmails?.length"
-        class="flex flex-col border bg-foundation border-primary-muted -mt-6"
-      >
-        <template v-if="searchUsers.length">
-          <ProjectPageTeamDialogInviteUserServerUserRow
-            v-for="user in searchUsers"
-            :key="user.id"
-            :user="user"
-            :stream-role="role"
-            :disabled="loading"
-            @invite-user="($event) => onInviteUser($event.user)"
-          />
-        </template>
-        <ProjectPageTeamDialogInviteUserEmailsRow
-          v-else-if="selectedEmails?.length"
-          :selected-emails="selectedEmails"
+  <div class="flex flex-col mt-2">
+    <FormTextInput
+      v-model="search"
+      name="search"
+      size="lg"
+      placeholder="Search"
+      help="Search by username or email"
+      input-classes="pr-[85px] text-sm"
+      label="Add people by email or username"
+      show-label
+    >
+      <template #input-right>
+        <div class="absolute inset-y-0 right-0 flex items-center pr-2">
+          <ProjectPageInvitePermissionSelect v-model="role" hide-remove />
+        </div>
+      </template>
+    </FormTextInput>
+    <div
+      v-if="searchUsers.length || selectedEmails?.length"
+      class="flex flex-col border bg-foundation border-primary-muted -mt-6"
+    >
+      <template v-if="searchUsers.length">
+        <ProjectPageInviteDialogServerUserRow
+          v-for="user in searchUsers"
+          :key="user.id"
+          :user="user"
           :stream-role="role"
           :disabled="loading"
-          :is-guest-mode="isGuestMode"
-          @invite-emails="($event) => onInviteUser($event.emails, $event.serverRole)"
+          @invite-user="($event) => onInviteUser($event.user)"
         />
-      </div>
+      </template>
+      <ProjectPageInviteDialogEmailsRow
+        v-else-if="selectedEmails?.length"
+        :selected-emails="selectedEmails"
+        :stream-role="role"
+        :disabled="loading"
+        :is-guest-mode="isGuestMode"
+        @invite-emails="($event) => onInviteUser($event.emails, $event.serverRole)"
+      />
     </div>
-  </LayoutDialogSection>
+  </div>
 </template>
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
 import type { ServerRoles, StreamRoles } from '@speckle/shared'
-import { LayoutDialogSection } from '@speckle/ui-components'
 import { useUserSearch } from '~~/lib/common/composables/users'
 import type { UserSearchItem } from '~~/lib/common/composables/users'
 import type {
@@ -65,7 +55,6 @@ import { isEmail } from '~~/lib/common/helpers/validation'
 import { isArray, isString } from 'lodash-es'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
 import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
-import { UserPlusIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useServerInfo } from '~~/lib/core/composables/server'
 

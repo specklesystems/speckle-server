@@ -1,9 +1,9 @@
 <template>
   <LayoutDialogSection
     allow-overflow
-    border-b
     title="Access"
     :always-open="defaultOpen"
+    enlarged
   >
     <template #icon>
       <LockOpenIcon
@@ -16,7 +16,7 @@
       />
       <LockClosedIcon v-else class="h-full w-full" />
     </template>
-    <div class="flex flex-col space-y-2">
+    <div class="flex flex-col space-y-2" :class="condensed ? 'max-w-xl' : ''">
       <!-- <div class="text-foreground-2 text-sm">Project Access</div> -->
       <ProjectVisibilitySelect
         :model-value="project.visibility"
@@ -61,6 +61,7 @@ graphql(`
 const props = defineProps<{
   project: ProjectsPageTeamDialogManagePermissions_ProjectFragment
   defaultOpen: boolean
+  condensed?: boolean
 }>()
 
 const { isOwner, isServerGuest } = useTeamManagePermissionsInternals({
