@@ -3,6 +3,15 @@
     v-model:open="isOpen"
     max-width="sm"
     :title="`Invite to ${props.project.name}`"
+    :buttons="[
+      {
+        text: 'Cancel',
+        props: { color: 'secondary', fullWidth: true },
+        onClick: () => {
+          isOpen = false
+        }
+      }
+    ]"
   >
     <div class="flex flex-col text-foreground -mt-4">
       <ProjectPageInviteDialogInviteUser
