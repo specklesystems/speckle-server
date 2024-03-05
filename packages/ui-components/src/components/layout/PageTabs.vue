@@ -1,13 +1,13 @@
 <template>
   <div
     class="relative z-10 flex gap-4"
-    :class="vertical ? 'sm:gap-8' : 'sm:gap-10 flex-col'"
+    :class="vertical ? 'sm:gap-8 flex-col sm:flex-row' : 'sm:gap-10 sm:flex-col'"
   >
     <div
       class="relative flex justify-between overflow-x-auto"
       :class="
         vertical
-          ? 'flex-col w-2/12 border-r border-outline gap-4 pl-4'
+          ? 'sm:flex-col sm:w-2/12 sm:border-r sm:border-outline sm:gap-4 sm:pl-4'
           : 'no-scrollbar border-b border-outline-3 lg:border-none pr-20 lg:pr-0 gap-8 w-full'
       "
     >
@@ -23,8 +23,12 @@
       <div
         class="lg:hidden h-full absolute right-0 z-30 bg-gradient-to-l from-foundation-page w-20"
       ></div>
-      <div class="flex" :class="vertical ? 'flex-col gap-4' : 'gap-8'">
-        <h1 v-if="title" class="font-bold h4" :class="vertical ? '-ml-4 mb-4' : 'mb-2'">
+      <div class="flex" :class="vertical ? 'sm:flex-col gap-4' : 'gap-8'">
+        <h1
+          v-if="title"
+          class="font-bold h4"
+          :class="vertical ? 'sm:-ml-4 sm:mb-4' : 'mb-2'"
+        >
           {{ title }}
         </h1>
         <button
