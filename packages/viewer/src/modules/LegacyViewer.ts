@@ -1,4 +1,4 @@
-import { MathUtils } from 'three'
+import { Box3, MathUtils } from 'three'
 
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Queries } from './queries/Queries'
@@ -62,7 +62,7 @@ class HighlightExtension extends SelectionExtension {
         pointSize: 4
       }
     }
-    this.setOptions(highlightMaterialData)
+    this.options = highlightMaterialData
   }
 
   public unselectObjects(ids: Array<string>) {
@@ -144,7 +144,7 @@ export class LegacyViewer extends Viewer {
     if (!box) {
       box = this.speckleRenderer.sceneBox
     }
-    this.sections.setBox(box, offset)
+    this.sections.setBox(box as Box3, offset)
   }
 
   public getSectionBoxFromObjects(objectIds: string[]) {
@@ -156,7 +156,7 @@ export class LegacyViewer extends Viewer {
   }
 
   public getCurrentSectionBox() {
-    return this.sections.getCurrentBox()
+    return this.sections.getBox()
   }
 
   public toggleSectionBox() {
@@ -179,7 +179,7 @@ export class LegacyViewer extends Viewer {
     if (!this.filtering.filteringState.selectedObjects)
       this.filtering.filteringState.selectedObjects = []
     this.filtering.filteringState.selectedObjects.push(
-      ...this.selection.getSelectedObjects().map((obj) => obj.id)
+      ...this.selection.getSelectedObjects().map((obj) => obj.id as string)
     )
     return Promise.resolve(this.filtering.filteringState)
   }
@@ -207,7 +207,7 @@ export class LegacyViewer extends Viewer {
       )
       if (!filteringState.selectedObjects) filteringState.selectedObjects = []
       filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
+        ...this.selection.getSelectedObjects().map((obj) => obj.id as string)
       )
       resolve(filteringState)
     })
@@ -226,7 +226,7 @@ export class LegacyViewer extends Viewer {
       )
       if (!filteringState.selectedObjects) filteringState.selectedObjects = []
       filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
+        ...this.selection.getSelectedObjects().map((obj) => obj.id as string)
       )
       resolve(filteringState)
     })
@@ -247,7 +247,7 @@ export class LegacyViewer extends Viewer {
       )
       if (!filteringState.selectedObjects) filteringState.selectedObjects = []
       filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
+        ...this.selection.getSelectedObjects().map((obj) => obj.id as string)
       )
       resolve(filteringState)
     })
@@ -266,7 +266,7 @@ export class LegacyViewer extends Viewer {
       )
       if (!filteringState.selectedObjects) filteringState.selectedObjects = []
       filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
+        ...this.selection.getSelectedObjects().map((obj) => obj.id as string)
       )
       resolve(filteringState)
     })
@@ -386,11 +386,11 @@ export class LegacyViewer extends Viewer {
     return new Promise((resolve) => {
       const sectionBoxVisible = this.sections.enabled
       if (sectionBoxVisible) {
-        this.sections.displayOff()
+        this.sections.visible = false
       }
       const screenshot = this.speckleRenderer.renderer.domElement.toDataURL('image/png')
       if (sectionBoxVisible) {
-        this.sections.displayOn()
+        this.sections.visible = true
       }
       resolve(screenshot)
     })

@@ -270,11 +270,11 @@ export class Viewer extends EventEmitter implements IViewer {
     return new Promise((resolve) => {
       // const sectionBoxVisible = this.sectionBox.display.visible
       // if (sectionBoxVisible) {
-      //   this.sectionBox.displayOff()
+      //   this.sectionBox.visible = false
       // }
       const screenshot = this.speckleRenderer.renderer.domElement.toDataURL('image/png')
       // if (sectionBoxVisible) {
-      //   this.sectionBox.displayOn()
+      //   this.sectionBox.visible = true
       // }
       resolve(screenshot)
     })

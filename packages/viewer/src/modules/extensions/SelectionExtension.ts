@@ -56,7 +56,6 @@ export class SelectionExtension extends Extension {
   protected selectedNodes: Array<TreeNode> = []
   protected selectionRvs: { [id: string]: NodeRenderView } = {}
   protected selectionMaterials: { [id: string]: Material } = {}
-  protected options: SelectionExtensionOptions
   protected hoverRv: NodeRenderView
   protected hoverMaterial: Material
   protected selectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
@@ -67,9 +66,11 @@ export class SelectionExtension extends Extension {
   protected transparentHoverMaterialData: RenderMaterial &
     DisplayStyle &
     MaterialOptions
-  protected _enabled = true
 
-  public get enabled() {
+  protected _enabled = true
+  protected _options: SelectionExtensionOptions
+
+  public get enabled(): boolean {
     return this._enabled
   }
 
@@ -77,18 +78,12 @@ export class SelectionExtension extends Extension {
     this._enabled = value
   }
 
-  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
-    super(viewer)
-    this.viewer.on(ViewerEvent.ObjectClicked, this.onObjectClicked.bind(this))
-    this.viewer.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
-    this.viewer
-      .getRenderer()
-      .input.on(InputEvent.PointerMove, this.onPointerMove.bind(this))
-    this.setOptions(DefaultSelectionExtensionOptions)
+  public get options(): SelectionExtensionOptions {
+    return this._options
   }
 
-  public setOptions(options: SelectionExtensionOptions) {
-    this.options = options
+  public set options(value: SelectionExtensionOptions) {
+    this._options = value
     this.selectionMaterialData = Object.assign({}, this.options.selectionMaterialData)
     this.hoverMaterialData = Object.assign({}, this.options.hoverMaterialData)
     this.transparentSelectionMaterialData = Object.assign(
@@ -103,11 +98,24 @@ export class SelectionExtension extends Extension {
     this.transparentHoverMaterialData.opacity = 0.5
   }
 
-  public getSelectedObjects() {
-    return this.selectedNodes.map((v) => v.model.raw)
+  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+    super(viewer)
+    this.viewer.on(ViewerEvent.ObjectClicked, this.onObjectClicked.bind(this))
+    this.viewer.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
+    this.viewer
+      .getRenderer()
+      .input.on(InputEvent.PointerMove, this.onPointerMove.bind(this))
+    this.options = DefaultSelectionExtensionOptions
   }
 
-  public selectObjects(ids: Array<string>, multiSelect = false) {
+  public getSelectedObjects(): Array<Record<string, unknown>> {
+    return this.selectedNodes.map((v) => v.model.raw)
+  }
+  public getSelectedNodes(): Array<TreeNode> {
+    return this.selectedNodes
+  }
+
+  public selectObjects(ids: Array<string>, multiSelect = false): void {
     if (!this._enabled) return
 
     if (!multiSelect) {
@@ -121,7 +129,8 @@ export class SelectionExtension extends Extension {
     this.applySelection()
   }
 
-  public unselectObjects(ids: Array<string>) {
+  /**TO DO: This is redundant */
+  public unselectObjects(ids?: Array<string>): void {
     if (!this._enabled) return
 
     const nodes = []

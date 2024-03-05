@@ -73,6 +73,14 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.viewer.requestRender()
   }
 
+  public get visible(): boolean {
+    return this.display.visible
+  }
+
+  public set visible(value: boolean) {
+    this.display.visible = value
+  }
+
   constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
     super(viewer)
     this.viewer = viewer
@@ -252,7 +260,7 @@ export class SectionTool extends Extension implements ISectionProvider {
       this.prevPosition = this.sphere.position.clone()
     }
     this.viewer.getRenderer().clippingPlanes = this.planes
-    this.viewer.getRenderer().clippingVolume = this.getCurrentBox()
+    this.viewer.getRenderer().clippingVolume = this.getBox()
     this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.requestRender()
   }
@@ -418,12 +426,12 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.controls.showZ = true
   }
 
-  public getCurrentBox() {
+  public getBox(): Box3 {
     if (!this.display.visible) return new Box3()
     return this.boxGeometry.boundingBox
   }
 
-  public setBox(targetBox, offset = 0) {
+  public setBox(targetBox: Box3, offset = 0): void {
     let box
 
     if (targetBox) box = targetBox
@@ -483,19 +491,11 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox)
     this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.getRenderer().clippingPlanes = this.planes
-    this.viewer.getRenderer().clippingVolume = this.getCurrentBox()
+    this.viewer.getRenderer().clippingVolume = this.getBox()
     this.viewer.requestRender()
   }
 
-  public toggle() {
+  public toggle(): void {
     this.enabled = !this._enabled
-  }
-
-  public displayOff() {
-    this.display.visible = false
-  }
-
-  public displayOn() {
-    this.display.visible = true
   }
 }
