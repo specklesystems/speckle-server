@@ -189,7 +189,7 @@ const onThreadExpandedChange = (isExpanded: boolean) => {
 }
 
 const shouldShowNewThread = computed(
-  () => !isEmbedEnabled.value && !state.ui.measurement.enabled.value
+  () => !isEmbedEnabled.value && !state.ui.measurement.enabled.value && canPostComment
 )
 
 const allThreadsChronologicalOrder = computed(() => {
