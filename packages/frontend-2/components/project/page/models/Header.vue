@@ -48,7 +48,7 @@
             multiple
             selector-placeholder="All members"
             label="Filter by members"
-            class="grow shrink"
+            class="grow shrink sm:w-[120px] md:w-44"
             clearable
             fixed-height
           />
@@ -59,7 +59,7 @@
               multiple
               selector-placeholder="All sources"
               label="Filter by sources"
-              class="grow shrink"
+              class="grow shrink sm:w-[120px] md:w-44"
               clearable
               fixed-height
             />
