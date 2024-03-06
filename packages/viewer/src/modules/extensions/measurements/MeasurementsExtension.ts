@@ -72,6 +72,10 @@ export class MeasurementsExtension extends Extension {
     this.renderer.resetPipeline()
   }
 
+  public get options(): MeasurementOptions {
+    return this._options
+  }
+
   public set options(options: MeasurementOptions) {
     const resetMeasurement =
       this._options.type !== options.type &&
@@ -213,7 +217,7 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  protected autoLazerMeasure(data) {
+  protected autoLazerMeasure(data): void {
     if (!this.measurement) return
 
     this.measurement.state = MeasurementState.DANGLING_START
@@ -273,7 +277,7 @@ export class MeasurementsExtension extends Extension {
     this.finishMeasurement()
   }
 
-  protected startMeasurement() {
+  protected startMeasurement(): void {
     if (this._options.type === MeasurementType.PERPENDICULAR)
       this.measurement = new PerpendicularMeasurement()
     else if (this._options.type === MeasurementType.POINTTOPOINT)
@@ -288,14 +292,14 @@ export class MeasurementsExtension extends Extension {
     this.renderer.scene.add(this.measurement)
   }
 
-  protected cancelMeasurement() {
+  protected cancelMeasurement(): void {
     this.renderer.scene.remove(this.measurement)
     this.measurement = null
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
   }
 
-  protected finishMeasurement() {
+  protected finishMeasurement(): void {
     this.measurement.state = MeasurementState.COMPLETE
     this.measurement.update()
     if (this.measurement.value > 0) {
@@ -307,7 +311,7 @@ export class MeasurementsExtension extends Extension {
     this.measurement = null
   }
 
-  public removeMeasurement() {
+  public removeMeasurement(): void {
     if (this.selectedMeasurement) {
       this.measurements.splice(this.measurements.indexOf(this.selectedMeasurement), 1)
       this.renderer.scene.remove(this.selectedMeasurement)
@@ -319,7 +323,7 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  public clearMeasurements() {
+  public clearMeasurements(): void {
     this.removeMeasurement()
     this.measurements.forEach((measurement: Measurement) => {
       this.renderer.scene.remove(measurement)
@@ -392,13 +396,13 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  protected updateClippingPlanes(planes: Plane[]) {
+  protected updateClippingPlanes(planes: Plane[]): void {
     this.measurements.forEach((value) => {
       value.updateClippingPlanes(planes)
     })
   }
 
-  protected applyOptions() {
+  protected applyOptions(): void {
     const all = [this.measurement, ...this.measurements]
     all.forEach((value) => {
       if (value) {
