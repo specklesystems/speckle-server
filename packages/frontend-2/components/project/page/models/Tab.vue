@@ -58,12 +58,4 @@ const clearSearch = () => {
   selectedMembers.value = []
   selectedApps.value = []
 }
-
-const title = computed(() =>
-  project.value?.name.length ? `Models - ${project.value.name}` : ''
-)
-
-useHead({
-  title
-})
 </script>

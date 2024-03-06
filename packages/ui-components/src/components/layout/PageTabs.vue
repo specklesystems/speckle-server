@@ -8,7 +8,7 @@
       :class="
         vertical
           ? 'items-center sm:items-start sm:flex-col sm:w-2/12 border-r border-outline gap-4 pl-4'
-          : 'no-scrollbar border-b border-outline-3 lg:border-none gap-8 w-full'
+          : 'border-b border-outline-3 lg:border-none gap-8 w-full'
       "
     >
       <div
@@ -86,8 +86,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
-import type { Nullable } from '@speckle/shared'
+import { computed, ref, nextTick, watch, onMounted } from 'vue'
 import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 
 const props = defineProps<{
@@ -96,12 +95,11 @@ const props = defineProps<{
   title?: string
 }>()
 
-const activeItemId = ref(null as Nullable<string>)
+const activeItemId = ref<string | null>(null)
 const borderStyle = ref({})
 
 const activeItem = computed(() => {
   const item = props.items.find((i) => i.id === activeItemId.value)
-
   return item || props.items[0]
 })
 
@@ -119,21 +117,31 @@ const onTabClick = (item: LayoutPageTabItem, event: MouseEvent) => {
 }
 
 onMounted(() => {
-  activeItemId.value = props.items[0].id
-
-  const initialActiveElement = document.getElementById(`tab-${activeItemId.value}`)
-  if (initialActiveElement) {
-    updateBorderStyle(initialActiveElement)
+  if (props.items.length > 0 && activeItemId.value === null) {
+    setActiveItem(props.items[0])
   }
 })
-</script>
-<style scoped>
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
 
-.no-scrollbar {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
+watch(
+  () => props.items,
+  (newItems) => {
+    if (newItems.length > 0 && activeItemId.value === null) {
+      setActiveItem(newItems[0])
+    }
+  },
+  { immediate: true }
+)
+
+function setActiveItem(item: LayoutPageTabItem) {
+  if (item.id) {
+    // This check ensures `id` exists and is not empty, adjust according to your data structure
+    activeItemId.value = item.id
+    nextTick(() => {
+      const activeElement = document.getElementById(`tab-${activeItemId.value}`)
+      if (activeElement) {
+        updateBorderStyle(activeElement)
+      }
+    })
+  }
 }
-</style>
+</script>
