@@ -116,6 +116,18 @@ const onTabClick = (item: LayoutPageTabItem, event: MouseEvent) => {
   updateBorderStyle(event.currentTarget as HTMLElement)
 }
 
+const setActiveItem = (item: LayoutPageTabItem) => {
+  if (item.id) {
+    activeItemId.value = item.id
+    nextTick(() => {
+      const activeElement = document.getElementById(`tab-${activeItemId.value}`)
+      if (activeElement) {
+        updateBorderStyle(activeElement)
+      }
+    })
+  }
+}
+
 onMounted(() => {
   if (props.items.length > 0 && activeItemId.value === null) {
     setActiveItem(props.items[0])
@@ -131,16 +143,4 @@ watch(
   },
   { immediate: true }
 )
-
-function setActiveItem(item: LayoutPageTabItem) {
-  if (item.id) {
-    activeItemId.value = item.id
-    nextTick(() => {
-      const activeElement = document.getElementById(`tab-${activeItemId.value}`)
-      if (activeElement) {
-        updateBorderStyle(activeElement)
-      }
-    })
-  }
-}
 </script>
