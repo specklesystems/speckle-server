@@ -15,7 +15,7 @@ const {
 const { isSSLServer, getRedisUrl } = require('@/modules/shared/helpers/envHelper')
 const { authLogger, logger } = require('@/logging/logging')
 const { createRedisClient } = require('@/modules/shared/redis/redis')
-const { mixpanel, resolveMixpanelUserId } = require('@/modules/shared/utils/mixpanel')
+const { mixpanel } = require('@/modules/shared/utils/mixpanel')
 const {
   addToMailchimpAudience,
   triggerMailchimpCustomerJourney
@@ -92,12 +92,10 @@ module.exports = async (app) => {
         urlObj.searchParams.set('register', 'true')
 
         // Send event to MP
-        const mixpanelUserId = req.user.email
-          ? resolveMixpanelUserId(req.user.email)
-          : null
+        const userEmail = req.user.email
         const isInvite = !!req.user.isInvite
-        if (mixpanelUserId) {
-          await mixpanel({ mixpanelUserId }).track('Sign Up', {
+        if (userEmail) {
+          await mixpanel({ userEmail }).track('Sign Up', {
             isInvite
           })
         }
