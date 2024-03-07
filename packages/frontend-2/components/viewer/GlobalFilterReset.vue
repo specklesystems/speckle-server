@@ -11,7 +11,12 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <FormButton size="xs" class="pointer-events-auto" @click="trackAndResetFilters">
+      <FormButton
+        size="sm"
+        :icon-left="ArrowUturnLeftIcon"
+        class="pointer-events-auto"
+        @click="trackAndResetFilters"
+      >
         Reset Filters
       </FormButton>
     </Transition>
@@ -20,6 +25,7 @@
 <script setup lang="ts">
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { ArrowUturnLeftIcon } from '@heroicons/vue/24/outline'
 
 const {
   resetFilters,

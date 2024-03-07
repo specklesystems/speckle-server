@@ -40,11 +40,11 @@
       </div>
     </template>
     <div
-      :class="`relative flex flex-col space-y-2 px-2 simple-scrollbar overflow-y-scroll overflow-x-hidden shadow-inner ${
-        showAllFilters ? 'h-44 visible py-2' : 'h-0 invisible py-1'
+      :class="`relative flex flex-col gap-0.5 simple-scrollbar overflow-y-scroll overflow-x-hidden shadow-inner ${
+        showAllFilters ? 'h-44 visible pb-2' : 'h-0 invisible py-1'
       } transition-[height] border-b-2 border-primary-muted`"
     >
-      <div class="sticky top-0">
+      <div class="sticky top-0 p-2">
         <FormTextInput
           v-model="searchString"
           name="filter search"
@@ -56,10 +56,10 @@
       <div
         v-for="(filter, index) in relevantFiltersLimited"
         :key="index"
-        class="text-xs px-1"
+        class="text-xs"
       >
         <button
-          class="block w-full text-left hover:bg-primary-muted transition truncate rounded-md py-[1px]"
+          class="block w-full text-left hover:bg-primary-muted transition truncate rounded-md py-1 px-2 mx-2"
           @click="
             ;(showAllFilters = false),
               setPropertyFilter(filter),
