@@ -26,10 +26,10 @@ export enum VisualDiffMode {
 }
 
 export interface DiffResult {
-  unchanged: Array<SpeckleObject>
-  added: Array<SpeckleObject>
-  removed: Array<SpeckleObject>
-  modified: Array<Array<SpeckleObject>>
+  unchanged: Array<TreeNode>
+  added: Array<TreeNode>
+  removed: Array<TreeNode>
+  modified: Array<Array<TreeNode>>
 }
 
 interface VisualDiffResult {
@@ -227,7 +227,7 @@ export class DiffExtension extends Extension {
   }
 
   /** Currently, the diff does not store the existing materials. We can do that if we need to */
-  public async undiff() {
+  public async undiff(): Promise<void> {
     const pipelineOptions = this.viewer.getRenderer().pipelineOptions
     pipelineOptions.depthSide = DoubleSide
     this.viewer.getRenderer().pipelineOptions = pipelineOptions
@@ -443,7 +443,7 @@ export class DiffExtension extends Extension {
     return Promise.resolve(diffResult)
   }
 
-  public updateVisualDiff(time?: number, mode?: VisualDiffMode) {
+  public updateVisualDiff(time?: number, mode?: VisualDiffMode): void {
     if (
       (mode !== undefined && mode !== this._diffMode) ||
       this._materialGroups === null

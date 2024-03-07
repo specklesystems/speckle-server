@@ -197,7 +197,7 @@ export class FilteringExtension extends Extension {
     return true
   }
 
-  public setColorFilter(prop: PropertyInfo, ghost = true) {
+  public setColorFilter(prop: PropertyInfo, ghost = true): FilteringState {
     if (prop.type === 'number') {
       this.ColorStringFilterState = null
       this.ColorNumericFilterState = new ColorNumericFilterState()
@@ -346,7 +346,9 @@ export class FilteringExtension extends Extension {
     }
   }
 
-  public setUserObjectColors(groups: { objectIds: string[]; color: string }[]) {
+  public setUserObjectColors(
+    groups: { objectIds: string[]; color: string }[]
+  ): FilteringState {
     this.UserspaceColorState = new UserspaceColorState()
     // Resetting any other filtering color ops as they're not compatible
     this.ColorNumericFilterState = null
@@ -384,7 +386,7 @@ export class FilteringExtension extends Extension {
     return this.setFilters()
   }
 
-  public removeUserObjectColors() {
+  public removeUserObjectColors(): FilteringState {
     this.UserspaceColorState = null
     return this.setFilters()
   }
