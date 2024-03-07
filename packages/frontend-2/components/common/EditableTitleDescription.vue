@@ -114,7 +114,7 @@ const debouncedEmitDescription = debounce(emitDescription, 2000)
 
 const titleInputClasses = computed(() => [
   'h3 tracking-tight border-0 border-b-2 transition focus:border-outline-3 max-w-full',
-  'p-0 bg-transparent border-transparent focus:outline-none focus:ring-0'
+  'p-0 pb-1 bg-transparent border-transparent focus:outline-none focus:ring-0'
 ])
 
 const descriptionInputClasses = computed(() => [
