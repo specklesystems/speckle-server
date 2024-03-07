@@ -3,31 +3,39 @@
     <ViewerSidebar :open="sidebarOpen" @close="onClose">
       <template #title><div class="select-none">Selection Info</div></template>
       <template #actions>
-        <FormButton
-          size="xs"
-          color="secondary"
-          class="opacity-80 hover:opacity-100"
-          @click.stop="hideOrShowSelection"
-        >
-          <div class="flex items-center gap-1">
-            <EyeIcon v-if="!isHidden" class="h-4 w-4" />
-            <EyeSlashIcon v-else class="h-4 w-4" />
-            Hide
+        <div class="flex gap-3 items-center">
+          <div class="flex gap-1">
+            <FormButton size="xs" color="secondary">
+              <IconExpand class="h-4 w-4" />
+              Collaspe
+            </FormButton>
+            <FormButton size="xs" color="secondary">
+              <IconCollapse class="h-4 w-4" />
+              Expand
+            </FormButton>
           </div>
-        </FormButton>
-        <FormButton
-          size="xs"
-          color="secondary"
-          class="hover:opacity-100"
-          :class="isIsolated ? 'text-primary opacity-100' : 'opacity-80'"
-          @click.stop="isolateOrUnisolateSelection"
-        >
-          <div class="flex items-center gap-1">
-            <FunnelIconOutline v-if="!isIsolated" class="h-4 w-4" />
-            <FunnelIcon v-else class="h-4 w-4" />
-            Isolate
+          <div class="h-5 bg-outline-3 w-px block"></div>
+          <div class="flex gap-1">
+            <FormButton
+              size="xs"
+              color="secondary"
+              hide-text
+              :icon-left="isHidden ? EyeSlashIcon : EyeIcon"
+              @click.stop="hideOrShowSelection"
+            >
+              Hide
+            </FormButton>
+            <FormButton
+              size="xs"
+              color="secondary"
+              hide-text
+              :icon-left="isIsolated ? FunnelIcon : FunnelIconOutline"
+              @click.stop="isolateOrUnisolateSelection"
+            >
+              Isolate
+            </FormButton>
           </div>
-        </FormButton>
+        </div>
       </template>
       <div class="p-1 mb-2 sm:mb-0 sm:py-2">
         <div class="space-y-2">
