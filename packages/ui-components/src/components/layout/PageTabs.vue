@@ -25,7 +25,7 @@
         ref="buttonContainer"
         class="flex"
         :class="
-          vertical ? 'flex-wrap sm:flex-nowrap flex-row sm:flex-col gap-4' : 'gap-8'
+          vertical ? 'flex-wrap sm:flex-nowrap flex-row sm:flex-col gap-4' : 'gap-6'
         "
       >
         <h1
@@ -39,7 +39,7 @@
           v-for="item in items"
           :key="item.id"
           :data-tab-id="item.id"
-          class="tab-button relative z-10 flex items-center gap-1.5 pb-2 border-b-[2px] border-transparent text-sm sm:text-base max-w-max"
+          class="tab-button relative z-10 flex items-center gap-1.5 pb-2 border-b-[2px] border-transparent text-base max-w-max px-2"
           :class="[
             activeItem.id === item.id
               ? 'text-primary hover:text-primary'
@@ -53,25 +53,17 @@
             v-if="item.icon"
             class="shrink-0 h-4 w-4 stroke-[2px]"
           />
-          <div class="relative">
-            <!-- Transparent item to stop layout shift when font-bold is added -->
-            <span class="font-bold opacity-0">{{ item.title }}</span>
-            <span class="absolute inset-0">{{ item.title }}</span>
-          </div>
+          <span class="min-w-6">{{ item.title }}</span>
           <div
             v-if="item.count"
-            class="rounded-full px-2 text-[11px]"
+            class="rounded-full px-2 text-[11px] transition-all min-w-6"
             :class="
               activeItem.id === item.id
-                ? 'text-primary-focus bg-blue-100'
-                : 'text-foreground-2 bg-gray-200'
+                ? 'text-primary bg-blue-100'
+                : 'text-foreground-2 bg-gray-200 dark:bg-foundation'
             "
           >
-            <div class="relative">
-              <!-- Transparent item to stop layout shift when font-bold is added -->
-              <span class="font-bold opacity-0">{{ item.count }}</span>
-              <span class="absolute inset-0 select-none">{{ item.count }}</span>
-            </div>
+            <span>{{ item.count }}</span>
           </div>
           <div
             v-if="item.tag"
