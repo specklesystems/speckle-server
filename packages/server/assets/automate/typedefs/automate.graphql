@@ -1,0 +1,99 @@
+enum AutomationRunStatusV2 {
+  INITIALIZING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+# extend type Model {
+#   automations: AutomationCollection!
+# }
+
+# extend type Project {
+#   automations: AutomationCollection!
+# }
+
+type AutomationCollection {
+  items: [Automation!]!
+  totalCount: Int!
+  cursor: String
+}
+
+type Automation {
+  id: ID!
+  name: String!
+  enabled: Boolean!
+  createdAt: DateTime!
+  # revisions: AutomationRevisionCollection!
+  """
+  A shortcut to get the status of the latest revision.
+  """
+  runs(cursor: String, limit: Int! = 25): AutomationRunCollection!
+}
+
+type AutomationRunCollection {
+  items: [AutomationRunV2!]!
+  totalCount: Int!
+  cursor: String
+}
+
+type AutomationRunV2 {
+  id: ID!
+  version: Version
+  createdAt: DateTime!
+  statusUpdatedAt: DateTime!
+  status: AutomationRunStatusV2!
+  # revision: AutomationRevision! # WIP
+  functionRuns: [AutomateFunctionRun!]!
+}
+
+type AutomateFunctionRun {
+  id: ID!
+  functionRelease: AutomateFunctionRelease!
+  elapsed: Float!
+  status: AutomationRunStatus!
+  contextView: String
+  resultVersions: [Version!]!
+  statusMessage: String
+  """
+  NOTE: this is the schema for the results field below!
+  Current schema: {
+    version: "1.0.0",
+    values: {
+      objectResults: Record<str, {
+        category: string
+        level: ObjectResultLevel
+        objectIds: string[]
+        message: str | null
+        metadata: Records<str, unknown> | null
+        visualoverrides: Records<str, unknown> | null
+      }[]>
+      blobIds?: string[]
+    }
+  }
+  """
+  results: JSONObject # blobIds are in here
+}
+
+type AutomateFunction {
+  id: ID!
+  name: String!
+  # TODO: this should be a User reference, but also, organizations data, etc...
+  addedBy: LimitedUser!
+  repoUrl: String!
+  description: String!
+  tags: [String!]!
+  supportedSourceApps: [String!]!
+  # supportedSourceApps: SupportedSourceApps
+  createdAt: DateTime!
+  isFeatured: Boolean!
+  logo: String!
+}
+
+type AutomateFunctionRelease {
+  id: ID!
+  versionTag: String!
+  inputSchema: JSONObject
+  createdAt: DateTime!
+  commitId: String!
+}
