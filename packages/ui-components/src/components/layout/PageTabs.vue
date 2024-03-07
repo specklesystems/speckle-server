@@ -21,6 +21,7 @@
         class="h-[2px] absolute bottom-0 z-20 bg-primary transition-all duration-300"
       ></div>
       <div
+        ref="buttonContainer"
         class="flex"
         :class="
           vertical ? 'flex-wrap sm:flex-nowrap flex-row sm:flex-col gap-4' : 'gap-8'
@@ -35,16 +36,16 @@
         </h1>
         <button
           v-for="item in items"
-          :id="`tab-${item.id}`"
           :key="item.id"
-          class="relative z-10 flex items-center gap-1.5 pb-2 border-b-[2px] border-transparent text-sm sm:text-base max-w-max"
+          :data-tab-id="item.id"
+          class="tab-button relative z-10 flex items-center gap-1.5 pb-2 border-b-[2px] border-transparent text-sm sm:text-base max-w-max"
           :class="[
             activeItem.id === item.id
               ? 'text-primary hover:text-primary'
               : 'text-foreground',
             vertical ? 'hover:border-outline' : 'hover:border-outline-2'
           ]"
-          @click="onTabClick(item, $event)"
+          @click="onTabClick(item)"
         >
           <Component
             :is="item.icon"
@@ -86,8 +87,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref, nextTick, watch, onMounted } from 'vue'
+import { computed, ref, watch, type CSSProperties } from 'vue'
 import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
+import { isClient } from '@vueuse/core'
+import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
@@ -95,51 +98,48 @@ const props = defineProps<{
   title?: string
 }>()
 
+const buttonContainer = ref(null as Nullable<HTMLDivElement>)
 const activeItemId = ref<string | null>(null)
-const borderStyle = ref({})
 
 const activeItem = computed(() => {
   const item = props.items.find((i) => i.id === activeItemId.value)
   return item || props.items[0]
 })
 
-const updateBorderStyle = (element: HTMLElement) => {
-  const { offsetLeft, clientWidth } = element
-  borderStyle.value = {
-    left: `${offsetLeft}px`,
-    width: `${clientWidth}px`
-  }
-}
+const activeItemRef = computed(() => {
+  const id = activeItemId.value
+  if (!id) return null
 
-const onTabClick = (item: LayoutPageTabItem, event: MouseEvent) => {
-  activeItemId.value = item.id
-  updateBorderStyle(event.currentTarget as HTMLElement)
-}
+  const parent = buttonContainer.value
+  if (!parent) return null
 
-const setActiveItem = (item: LayoutPageTabItem) => {
-  if (item.id) {
-    activeItemId.value = item.id
-    nextTick(() => {
-      const activeElement = document.getElementById(`tab-${activeItemId.value}`)
-      if (activeElement) {
-        updateBorderStyle(activeElement)
-      }
-    })
-  }
-}
-
-onMounted(() => {
-  if (props.items.length > 0 && activeItemId.value === null) {
-    setActiveItem(props.items[0])
-  }
+  const btns = [...parent.getElementsByClassName('tab-button')] as HTMLButtonElement[]
+  return btns.find((b) => b.dataset['tabId'] === id) || null
 })
+
+const borderStyle = computed(() => {
+  const element = activeItemRef.value
+  const style: CSSProperties = {
+    left: `${element?.offsetLeft || 0}px`,
+    width: `${element?.clientWidth || 0}px`
+  }
+  return style
+})
+
+const onTabClick = (item: LayoutPageTabItem) => {
+  activeItemId.value = item.id
+}
+
+const setActiveItem = (item: MaybeNullOrUndefined<LayoutPageTabItem>) => {
+  if (!isClient || !item?.id) return
+
+  activeItemId.value = item.id
+}
 
 watch(
   () => props.items,
   (newItems) => {
-    if (newItems.length > 0 && activeItemId.value === null) {
-      setActiveItem(newItems[0])
-    }
+    setActiveItem(newItems[0])
   },
   { immediate: true }
 )
