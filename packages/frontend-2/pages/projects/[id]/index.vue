@@ -37,7 +37,7 @@ import type { Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
-import { LayoutPageTabs } from '@speckle/ui-components'
+import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
 import { CubeIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
 
 graphql(`
@@ -104,18 +104,18 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
   }
 }
 
-const pageTabItems: LayoutPageTabItem[] = [
+const pageTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'Models',
     id: 'models',
     icon: CubeIcon,
-    count: modelCount
+    count: modelCount.value
   },
   {
     title: 'Discussions',
     id: 'discussions',
     icon: ChatBubbleLeftRightIcon,
-    count: commentCount
+    count: commentCount.value
   }
   // {
   //   title: 'Automations',
@@ -123,5 +123,5 @@ const pageTabItems: LayoutPageTabItem[] = [
   //   icon: BoltIcon,
   //   tag: 'New'
   // }
-]
+])
 </script>

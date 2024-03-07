@@ -11,15 +11,16 @@
           : 'border-b border-outline-3 lg:border-none gap-8 w-full'
       "
     >
-      <div
-        v-if="!vertical"
-        class="hidden lg:block absolute bottom-0 left-0 h-px w-full bg-outline-3"
-      ></div>
-      <div
-        v-if="!vertical"
-        :style="borderStyle"
-        class="h-[2px] absolute bottom-0 z-20 bg-primary transition-all duration-300"
-      ></div>
+      <template v-if="!vertical">
+        <div
+          class="hidden lg:block absolute bottom-0 left-0 h-px w-full bg-outline-3"
+        ></div>
+        <div
+          :style="borderStyle"
+          class="h-[2px] absolute bottom-0 z-20 bg-primary transition-all duration-300"
+        ></div>
+      </template>
+
       <div
         ref="buttonContainer"
         class="flex"
