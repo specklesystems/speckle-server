@@ -1,15 +1,5 @@
 <template>
   <div>
-    <Portal to="navigation">
-      <HeaderNavLink
-        :to="projectRoute(project.id)"
-        :name="project.name"
-      ></HeaderNavLink>
-      <HeaderNavLink
-        :to="allProjectModelsRoute(project.id)"
-        name="Models"
-      ></HeaderNavLink>
-    </Portal>
     <div
       class="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:justify-between lg:items-center mb-4"
     >
@@ -69,7 +59,7 @@
               multiple
               selector-placeholder="All sources"
               label="Filter by sources"
-              class="grow shrink w-[120px] md:w-44"
+              class="grow shrink sm:w-[120px] md:w-44"
               clearable
               fixed-height
             />
@@ -111,11 +101,7 @@ import type {
   FormUsersSelectItemFragment,
   ProjectModelsPageHeader_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import {
-  projectRoute,
-  allProjectModelsRoute,
-  modelRoute
-} from '~~/lib/common/helpers/route'
+import { modelRoute } from '~~/lib/common/helpers/route'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { PlusIcon } from '@heroicons/vue/24/solid'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
