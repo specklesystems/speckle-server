@@ -1,15 +1,5 @@
 <template>
   <div>
-    <Portal to="navigation">
-      <HeaderNavLink
-        :to="projectRoute(project.id)"
-        :name="project.name"
-      ></HeaderNavLink>
-      <HeaderNavLink
-        :to="projectDiscussionsRoute(project.id)"
-        name="Discussions"
-      ></HeaderNavLink>
-    </Portal>
     <div class="flex justify-between items-center mb-4">
       <h1 class="block h4 font-bold">Discussions</h1>
       <div class="space-x-2 flex items-center">
@@ -32,7 +22,6 @@
 import type { Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectDiscussionsPageHeader_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { projectRoute, projectDiscussionsRoute } from '~~/lib/common/helpers/route'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 
 graphql(`
