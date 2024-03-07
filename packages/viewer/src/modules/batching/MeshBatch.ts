@@ -26,6 +26,7 @@ import Logger from 'js-logger'
 import { ObjectLayers } from '../../IViewer'
 import { DrawGroup } from './InstancedMeshBatch'
 import Materials from '../materials/Materials'
+import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -246,6 +247,16 @@ export default class MeshBatch implements Batch {
           )
           minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
           maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
+        }
+        /** We need to update the texture here, because each batch uses it's own clone for any material we use on it
+         *  because otherwise three.js won't properly update our custom uniforms
+         */
+        if (range[k].materialOptions.rampTexture !== undefined) {
+          if (range[k].material instanceof SpeckleStandardColoredMaterial) {
+            ;(range[k].material as SpeckleStandardColoredMaterial).setGradientTexture(
+              range[k].materialOptions.rampTexture
+            )
+          }
         }
       }
     }
@@ -485,7 +496,7 @@ export default class MeshBatch implements Batch {
       })
       .slice()
 
-    this.geometry.groups.sort((a, b) => {
+    groups.sort((a, b) => {
       const materialA: Material = (this.mesh.material as Array<Material>)[
         a.materialIndex
       ]

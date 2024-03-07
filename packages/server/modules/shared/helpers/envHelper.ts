@@ -93,19 +93,33 @@ export function getMailchimpStatus() {
 }
 
 export function getMailchimpConfig() {
-  if (
-    !process.env.MAILCHIMP_API_KEY ||
-    !process.env.MAILCHIMP_SERVER_PREFIX ||
-    !process.env.MAILCHIMP_LIST_ID
-  ) {
-    throw new MisconfiguredEnvironmentError('Mailchimp is not configured')
-  }
-
+  if (!getMailchimpStatus()) return null
+  if (!process.env.MAILCHIMP_API_KEY || !process.env.MAILCHIMP_SERVER_PREFIX)
+    throw new MisconfiguredEnvironmentError('Mailchimp api is not configured')
   return {
     apiKey: process.env.MAILCHIMP_API_KEY,
-    serverPrefix: process.env.MAILCHIMP_SERVER_PREFIX,
-    listId: process.env.MAILCHIMP_LIST_ID
+    serverPrefix: process.env.MAILCHIMP_SERVER_PREFIX
   }
+}
+
+export function getMailchimpOnboardingIds() {
+  if (
+    !process.env.MAILCHIMP_ONBOARDING_LIST_ID ||
+    !process.env.MAILCHIMP_ONBOARDING_JOURNEY_ID ||
+    !process.env.MAILCHIMP_ONBOARDING_STEP_ID
+  )
+    throw new MisconfiguredEnvironmentError('Mailchimp onboarding is not configured')
+  return {
+    listId: process.env.MAILCHIMP_ONBOARDING_LIST_ID,
+    journeyId: parseInt(process.env.MAILCHIMP_ONBOARDING_JOURNEY_ID),
+    stepId: parseInt(process.env.MAILCHIMP_ONBOARDING_STEP_ID)
+  }
+}
+
+export function getMailchimpNewsletterIds() {
+  if (!process.env.MAILCHIMP_NEWSLETTER_LIST_ID)
+    throw new MisconfiguredEnvironmentError('Mailchimp newsletter id is not configured')
+  return { listId: process.env.MAILCHIMP_NEWSLETTER_LIST_ID }
 }
 
 /**
@@ -197,8 +211,7 @@ export function enableMixpanel() {
 }
 
 export function speckleAutomateUrl() {
-  const automateUrl =
-    process.env.SPECKLE_AUTOMATE_URL || 'https://automate.speckle.systems'
+  const automateUrl = process.env.SPECKLE_AUTOMATE_URL
   return automateUrl
 }
 
