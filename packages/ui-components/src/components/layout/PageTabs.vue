@@ -134,7 +134,6 @@ watch(
 
 function setActiveItem(item: LayoutPageTabItem) {
   if (item.id) {
-    // This check ensures `id` exists and is not empty, adjust according to your data structure
     activeItemId.value = item.id
     nextTick(() => {
       const activeElement = document.getElementById(`tab-${activeItemId.value}`)
