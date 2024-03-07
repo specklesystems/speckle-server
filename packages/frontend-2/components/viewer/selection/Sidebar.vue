@@ -4,7 +4,7 @@
       <template #title><div class="select-none">Selection Info</div></template>
       <template #actions>
         <div class="flex gap-3 items-center">
-          <div class="flex gap-1">
+          <div class="flex gap-1 -ml-2">
             <FormButton size="xs" color="secondary">
               <IconExpand class="h-4 w-4" />
               Collaspe
