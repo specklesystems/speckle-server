@@ -1,4 +1,4 @@
-import { md5 } from '@speckle/shared'
+import md5 from '~/lib/common/helpers/md5'
 import type { OverridedMixpanel } from 'mixpanel-browser'
 import { useHostAppStore } from '~/store/hostApp'
 import { DUIAccount } from '~/store/accounts'
