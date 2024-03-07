@@ -26,6 +26,8 @@ export async function up(knex: Knex): Promise<void> {
       .inTable(AUTOMATIONS_TABLE_NAME)
       .onDelete('cascade')
     table.boolean('published').notNullable()
+    table.jsonb('triggers').notNullable() // { "triggers": [{ "modelId": "asdf", "type": "commit"}...]}
+    // table.jsonb('triggers').notNullable() // { "triggers": [{ "modelId": "asdf", "versionId": "asdf", "type": "commit"}...]}
     table
       .timestamp('createdAt', { precision: 3, useTz: true })
       .defaultTo(knex.fn.now())
@@ -67,9 +69,9 @@ export async function up(knex: Knex): Promise<void> {
       .inTable('commits')
       .onDelete('cascade')
 
-    table.jsonb('triggers').notNullable() // { "triggers": [{ "modelId": "asdf", "versionId": "asdf", "type": "commit"}...]}
     table.string('status').notNullable()
     table.jsonb('functionRuns').notNullable() // schema defined in code
+    table.jsonb('triggers').notNullable() // { "triggers": [{ "modelId": "asdf", "versionId": "asdf", "triggerType": "versionCreation"}...]}
     // table.jsonb('rawInputPayload').notNullable() // TODO: do we need this for easy reruns?
   })
 }

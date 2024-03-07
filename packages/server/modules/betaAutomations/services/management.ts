@@ -10,7 +10,7 @@ import {
   getLatestAutomationRunsFor,
   getFunctionRunsForAutomationRuns,
   deleteResultVersionsForRuns
-} from '@/modules/automations/repositories/automations'
+} from '@/modules/betaAutomations/repositories/automations'
 import _, { flatMap, uniqBy } from 'lodash'
 import {
   AutomationCreateInput,
@@ -18,16 +18,16 @@ import {
   AutomationRunStatus,
   AutomationRun
 } from '@/modules/core/graph/generated/graphql'
-import { upsertAutomationRunData } from '@/modules/automations/repositories/automations'
+import { upsertAutomationRunData } from '@/modules/betaAutomations/repositories/automations'
 import {
   AutomationFunctionRunRecord,
   AutomationFunctionRunsResultVersionRecord,
   AutomationRunRecord
-} from '@/modules/automations/helpers/types'
+} from '@/modules/betaAutomations/helpers/types'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { Merge } from 'type-fest'
-import { AutomationFunctionRunGraphQLReturn } from '@/modules/automations/helpers/graphTypes'
-import { AutomationRunSchema } from '@/modules/automations/helpers/inputTypes'
+import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes'
+import { AutomationRunSchema } from '@/modules/betaAutomations/helpers/inputTypes'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import {
@@ -35,7 +35,7 @@ import {
   getCommit,
   getCommitBranch
 } from '@/modules/core/repositories/commits'
-import { AutomationNotFoundError } from '@/modules/automations/errors/automations'
+import { AutomationNotFoundError } from '@/modules/betaAutomations/errors/automations'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { Logger } from '@/logging/logging'
