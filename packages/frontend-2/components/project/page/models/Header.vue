@@ -63,11 +63,7 @@
               clearable
               fixed-height
             />
-            <LayoutGridListToggle
-              v-model="finalGridOrList"
-              v-tippy="'Swap Grid/Card View'"
-              class="shrink-0"
-            />
+            <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
           </div>
           <FormButton
             color="secondary"

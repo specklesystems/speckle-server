@@ -25,7 +25,7 @@
       <slot v-if="!hideFilters" name="filters">
         <div class="flex space-x-4 items-center grow justify-end flex-wrap">
           <slot name="filters" />
-          <LayoutGridListToggle v-model="gridOrList" v-tippy="'Swap Grid/Card View'" />
+          <LayoutGridListToggle v-model="gridOrList" />
         </div>
       </slot>
     </div>

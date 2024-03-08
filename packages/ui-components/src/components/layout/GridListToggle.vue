@@ -14,10 +14,16 @@
           class="w-7 h-7 bg-foundation dark:bg-foundation-2 transition rounded shadow"
         />
       </div>
-      <div class="relative z-10 flex gap-1 items-center p-1 rounded-l">
+      <div
+        v-tippy="'Grid View'"
+        class="relative z-10 flex gap-1 items-center p-1 rounded-l"
+      >
         <Squares2X2Icon class="h-5 w-5" />
       </div>
-      <div class="relative z-10 flex gap-1 items-center p-1 rounded-r">
+      <div
+        v-tippy="'List View'"
+        class="relative z-10 flex gap-1 items-center p-1 rounded-r"
+      >
         <Bars3Icon class="h-5 w-5" />
       </div>
     </div>
