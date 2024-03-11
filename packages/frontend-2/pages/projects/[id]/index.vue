@@ -18,10 +18,10 @@
       </div>
     </template>
     <!-- No v-if=project to ensure internal queries trigger ASAP -->
-    <LayoutPageTabs v-if="project" v-slot="{ activeItem }" :items="pageTabItems">
+    <LayoutPageTabs v-slot="{ activeItem }" :items="pageTabItems">
       <ProjectPageModelsTab v-if="activeItem.id === 'models'" />
       <ProjectPageDiscussionsTab v-if="activeItem.id === 'discussions'" />
-      <!-- <ProjectPageAutomationsTab v-if="activeItem.id === 'automations'" /> -->
+      <ProjectPageAutomationsTab v-if="activeItem.id === 'automations'" />
     </LayoutPageTabs>
   </div>
 </template>
@@ -32,7 +32,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
-import { CubeIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
+import { CubeIcon, ChatBubbleLeftRightIcon, BoltIcon } from '@heroicons/vue/24/outline'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -41,11 +41,8 @@ graphql(`
     ...ProjectPageProjectHeader
     ...ProjectPageStatsBlockTeam
     ...ProjectPageTeamDialog
-    ...ProjectPageStatsBlockVersions
     ...ProjectPageStatsBlockModels
     ...ProjectPageStatsBlockComments
-    ...ProjectPageLatestItemsModels
-    ...ProjectPageLatestItemsComments
   }
 `)
 
@@ -110,12 +107,12 @@ const pageTabItems = computed((): LayoutPageTabItem[] => [
     id: 'discussions',
     icon: ChatBubbleLeftRightIcon,
     count: commentCount.value
+  },
+  {
+    title: 'Automations',
+    id: 'automations',
+    icon: BoltIcon,
+    tag: 'New'
   }
-  // {
-  //   title: 'Automations',
-  //   id: 'automations',
-  //   icon: BoltIcon,
-  //   tag: 'New'
-  // }
 ])
 </script>

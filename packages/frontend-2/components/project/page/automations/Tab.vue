@@ -1,5 +1,5 @@
 <template>
-  <!-- <ProjectPageAutomationsHeader :project="project" /> -->
+  <ProjectPageAutomationsHeader />
   <div />
 </template>
 <script setup lang="ts"></script>

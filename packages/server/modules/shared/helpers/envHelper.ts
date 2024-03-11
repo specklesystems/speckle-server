@@ -263,3 +263,8 @@ export function getEmailFromAddress() {
 export function getMaximumProjectModelsPerPage() {
   return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
 }
+
+export function delayGraphqlResponsesBy() {
+  if (!isDevEnv()) return 0
+  return getIntFromEnv('DELAY_GQL_RESPONSES_BY', '0')
+}

@@ -89,7 +89,7 @@
         </div>
       </div>
     </div>
-    <ProjectPageModelsNewDialog v-model:open="showNewDialog" :project-id="project.id" />
+    <ProjectPageModelsNewDialog v-model:open="showNewDialog" :project-id="projectId" />
   </div>
 </template>
 <script setup lang="ts">
@@ -130,7 +130,8 @@ graphql(`
 `)
 
 const props = defineProps<{
-  project: ProjectModelsPageHeader_ProjectFragment
+  projectId: string
+  project?: ProjectModelsPageHeader_ProjectFragment
   selectedMembers: FormUsersSelectItemFragment[]
   selectedApps: SourceAppDefinition[]
   search: string
@@ -149,7 +150,9 @@ const trackFederateAll = () =>
     source: 'project page'
   })
 
-const canContribute = computed(() => canModifyModels(props.project))
+const canContribute = computed(() =>
+  props.project ? canModifyModels(props.project) : false
+)
 const showNewDialog = ref(false)
 
 const debouncedSearch = computed({
@@ -170,19 +173,21 @@ const finalGridOrList = computed({
 })
 
 const availableSourceApps = computed((): SourceAppDefinition[] =>
-  SourceApps.filter((a) =>
-    props.project.sourceApps.find((pa) => pa.toLowerCase().includes(a.searchKey))
-  )
+  props.project
+    ? SourceApps.filter((a) =>
+        props.project!.sourceApps.find((pa) => pa.toLowerCase().includes(a.searchKey))
+      )
+    : []
 )
 
 const allModelsRoute = computed(() => {
   const resourceIdString = SpeckleViewer.ViewerRoute.resourceBuilder()
     .addAllModels()
     .toString()
-  return modelRoute(props.project.id, resourceIdString)
+  return modelRoute(props.projectId, resourceIdString)
 })
 
-const team = computed(() => props.project.team.map((t) => t.user))
+const team = computed(() => props.project?.team.map((t) => t.user) || [])
 
 const updateDebouncedSearch = debounce(() => {
   debouncedSearch.value = localSearch.value.trim()
