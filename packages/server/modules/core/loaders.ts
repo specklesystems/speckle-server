@@ -53,7 +53,7 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { getAutomationFunctionRunResultVersions } from '@/modules/automations/repositories/automations'
+import { getAutomationFunctionRunResultVersions } from '@/modules/betaAutomations/repositories/automations'
 import { getAppScopes } from '@/modules/auth/repositories'
 
 /**

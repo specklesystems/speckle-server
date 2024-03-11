@@ -4,7 +4,7 @@ import {
   AutomationFunctionRunsResultVersionRecord,
   AutomationRecord,
   AutomationRunRecord
-} from '@/modules/automations/helpers/types'
+} from '@/modules/betaAutomations/helpers/types'
 import {
   Automations,
   AutomationRuns,
@@ -134,7 +134,10 @@ export const getLatestAutomationRunsFor = async (
   const { limit = 20 } = options || {}
 
   const runs = await AutomationRuns.knex()
-    .select([...AutomationRuns.cols, 'automations.automationName'])
+    .select([
+      ...AutomationRuns.cols,
+      `${Automations.name}.${Automations.withoutTablePrefix.col.automationName}`
+    ])
     .join(
       Automations.name,
       AutomationRuns.col.automationId,

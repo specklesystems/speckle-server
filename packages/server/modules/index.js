@@ -58,7 +58,8 @@ async function getSpeckleModules() {
     './accessrequests',
     './webhooks',
     './cross-server-sync',
-    './automations'
+    './betaAutomations'
+    // './automate'
   ]
 
   for (const dir of moduleDirs) {
