@@ -212,7 +212,8 @@ export = {
       const users = await getStreamCollaborators(parent.id)
       return users.map((u) => ({
         user: u,
-        role: u.role
+        role: u.streamRole,
+        id: u.id
       }))
     },
     async sourceApps(parent, _args, ctx) {

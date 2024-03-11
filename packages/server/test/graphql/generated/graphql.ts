@@ -1519,6 +1519,7 @@ export type ProjectAutomationsStatusUpdatedMessage = {
 
 export type ProjectCollaborator = {
   __typename?: 'ProjectCollaborator';
+  id: Scalars['ID'];
   role: Scalars['String'];
   user: LimitedUser;
 };

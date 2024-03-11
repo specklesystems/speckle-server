@@ -84,6 +84,7 @@ export const getProjectsQuery = graphql(`
             totalCount
           }
           team {
+            id
             user {
               name
               id

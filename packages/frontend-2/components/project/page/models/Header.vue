@@ -122,6 +122,7 @@ graphql(`
     sourceApps
     role
     team {
+      id
       user {
         ...FormUsersSelectItem
       }

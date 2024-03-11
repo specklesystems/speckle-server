@@ -17,7 +17,8 @@ import {
   Users,
   StreamCommits,
   Commits,
-  Branches
+  Branches,
+  ServerAcl
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
@@ -41,13 +42,13 @@ import {
 import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import dayjs from 'dayjs'
-import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
-import { SetRequired } from 'type-fest'
 import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
+import { UserWithRole } from '@/modules/core/repositories/users'
+import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 
 export type StreamWithOptionalRole = StreamRecord & {
   /**
@@ -607,19 +608,26 @@ export async function getDiscoverableStreams(params: GetDiscoverableStreamsParam
  */
 export async function getStreamCollaborators(streamId: string, type?: StreamRoles) {
   const q = StreamAcl.knex()
-    .select<SetRequired<UserWithOptionalRole, 'role'>[]>([
+    .select<Array<UserWithRole & { streamRole: StreamRoles }>>([
       ...Users.cols,
-      StreamAcl.col.role
+      knex.raw(`${StreamAcl.col.role} as "streamRole"`),
+      knex.raw(`(array_agg(${ServerAcl.col.role}))[1] as "role"`)
     ])
     .where(StreamAcl.col.resourceId, streamId)
     .innerJoin(Users.name, Users.col.id, StreamAcl.col.userId)
-    .orderBy(StreamAcl.col.role)
+    .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    .groupBy(Users.col.id, StreamAcl.col.role)
 
   if (type) {
     q.andWhere(StreamAcl.col.role, type)
   }
 
-  return await q
+  const items = (await q).map((i) => ({
+    ...removePrivateFields(i),
+    streamRole: i.streamRole,
+    role: i.role
+  }))
+  return items
 }
 
 type BaseUserStreamsQueryParams = {

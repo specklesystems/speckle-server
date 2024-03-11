@@ -53,6 +53,7 @@ graphql(`
     id
     role
     team {
+      id
       role
       user {
         ...LimitedUserAvatar

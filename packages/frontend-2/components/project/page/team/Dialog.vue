@@ -37,6 +37,7 @@ graphql(`
     allowPublicComments
     visibility
     team {
+      id
       role
       user {
         ...LimitedUserAvatar

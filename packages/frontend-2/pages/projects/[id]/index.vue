@@ -61,17 +61,17 @@ const { result: projectPageResult } = useQuery(
   projectPageQuery,
   () => ({
     id: projectId.value,
-    token: token.value
+    ...(token.value?.length ? { token: token.value } : {})
   }),
   () => ({
     // Custom error policy so that a failing invitedTeam resolver (due to access rights)
     // doesn't kill the entire query
-    errorPolicy: 'all',
-    context: {
-      skipLoggingErrors: (err) =>
-        err.graphQLErrors?.length === 1 &&
-        err.graphQLErrors.some((e) => !!e.path?.includes('invitedTeam'))
-    }
+    errorPolicy: 'all'
+    // context: {
+    //   skipLoggingErrors: (err) =>
+    //     err.graphQLErrors?.length === 1 &&
+    //     err.graphQLErrors.some((e) => !!e.path?.includes('invitedTeam'))
+    // }
   })
 )
 

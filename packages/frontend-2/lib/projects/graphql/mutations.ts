@@ -45,6 +45,7 @@ export const updateProjectRoleMutation = graphql(`
       updateRole(input: $input) {
         id
         team {
+          id
           role
           user {
             ...LimitedUserAvatar

@@ -1528,6 +1528,7 @@ export type ProjectAutomationsStatusUpdatedMessage = {
 
 export type ProjectCollaborator = {
   __typename?: 'ProjectCollaborator';
+  id: Scalars['ID'];
   role: Scalars['String'];
   user: LimitedUser;
 };
@@ -3910,6 +3911,7 @@ export type ProjectAutomationsStatusUpdatedMessageResolvers<ContextType = GraphQ
 };
 
 export type ProjectCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectCollaborator'] = ResolversParentTypes['ProjectCollaborator']> = {
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   user?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
