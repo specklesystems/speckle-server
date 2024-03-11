@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex justify-between items-center mb-8">
       <h1 class="block h4 font-bold">Discussions</h1>
       <div class="space-x-2 flex items-center">
         <FormCheckbox
