@@ -6,7 +6,7 @@ import type { Plugin } from 'nuxt/dist/app/nuxt'
 type PluginNuxtApp = Parameters<Plugin>[0]
 
 async function initRumClient() {
-  const { enabled, keys, speckleServerVersion, baseUrl } = resolveInitParams()
+  const { enabled, keys } = resolveInitParams()
   const router = useRouter()
   const onAuthStateChange = useOnAuthStateChange()
   const registerErrorTransport = useCreateErrorLoggingTransport()
@@ -15,14 +15,6 @@ async function initRumClient() {
   // RayGun
   const rg4js = window.rg4js
   if (keys.raygun && rg4js) {
-    rg4js('apiKey', keys.raygun)
-    rg4js('enableCrashReporting', true)
-    rg4js('enablePulse', true)
-    rg4js('withTags', [`baseUrl:${baseUrl}`, `version:${speckleServerVersion}`])
-    rg4js('options', {
-      debugMode: !!process.dev
-    })
-
     router.afterEach((to) => {
       rg4js('trackEvent', {
         type: 'pageView',
@@ -70,7 +62,7 @@ async function initRumClient() {
 
 async function initRumServer(app: PluginNuxtApp) {
   const registerErrorTransport = useCreateErrorLoggingTransport()
-  const { enabled, keys } = resolveInitParams()
+  const { enabled, keys, baseUrl, speckleServerVersion } = resolveInitParams()
   if (!enabled) return
 
   // RayGun
@@ -103,6 +95,14 @@ async function initRumServer(app: PluginNuxtApp) {
   f.async=1,f.src=d,g.parentNode.insertBefore(f,g),h=a.onerror,a.onerror=function(b,c,d,f,g){
   h&&h(b,c,d,f,g),g||(g=new Error(b)),a[e].q=a[e].q||[],a[e].q.push({
   e:g})}}(window,document,"script","//cdn.raygun.io/raygun4js/raygun.min.js","rg4js");`
+          },
+          {
+            innerHTML: `
+                rg4js('apiKey', '${keys.raygun}')
+                rg4js('enableCrashReporting', true)
+                rg4js('enablePulse', true)
+                rg4js('withTags', ['baseUrl:${baseUrl}', 'version:${speckleServerVersion}'])
+            `
           }
         ]
       })
