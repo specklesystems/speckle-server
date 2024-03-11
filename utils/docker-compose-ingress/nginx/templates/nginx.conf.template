@@ -113,6 +113,12 @@ http {
       proxy_set_header Connection "upgrade";
     }
 
+
+    location ~* ^/((metrics)|(api/health)|(api/heap)) {
+      resolver 127.0.0.11 valid=30s;
+      return 301 /;
+    }
+
     location ~* ^/(graphql|explorer|(auth/.*)|(objects/.*)|(preview/.*)|(api/.*)|(static/.*)) {
       resolver 127.0.0.11 valid=30s;
       set $upstream_speckle_server speckle-server;
