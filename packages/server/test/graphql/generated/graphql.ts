@@ -189,108 +189,6 @@ export type AuthStrategy = {
   url: Scalars['String'];
 };
 
-export type AutomateFunction = {
-  __typename?: 'AutomateFunction';
-  addedBy: LimitedUser;
-  createdAt: Scalars['DateTime'];
-  description: Scalars['String'];
-  id: Scalars['ID'];
-  isFeatured: Scalars['Boolean'];
-  logo: Scalars['String'];
-  name: Scalars['String'];
-  repoUrl: Scalars['String'];
-  supportedSourceApps: Array<Scalars['String']>;
-  tags: Array<Scalars['String']>;
-};
-
-export type AutomateFunctionRelease = {
-  __typename?: 'AutomateFunctionRelease';
-  commitId: Scalars['String'];
-  createdAt: Scalars['DateTime'];
-  function: AutomateFunction;
-  id: Scalars['ID'];
-  inputSchema?: Maybe<Scalars['JSONObject']>;
-  versionTag: Scalars['String'];
-};
-
-export type AutomateFunctionRun = {
-  __typename?: 'AutomateFunctionRun';
-  contextView?: Maybe<Scalars['String']>;
-  elapsed: Scalars['Float'];
-  functionRelease: AutomateFunctionRelease;
-  id: Scalars['ID'];
-  resultVersions: Array<Version>;
-  /**
-   * NOTE: this is the schema for the results field below!
-   * Current schema: {
-   *   version: "1.0.0",
-   *   values: {
-   *     objectResults: Record<str, {
-   *       category: string
-   *       level: ObjectResultLevel
-   *       objectIds: string[]
-   *       message: str | null
-   *       metadata: Records<str, unknown> | null
-   *       visualoverrides: Records<str, unknown> | null
-   *     }[]>
-   *     blobIds?: string[]
-   *   }
-   * }
-   */
-  results?: Maybe<Scalars['JSONObject']>;
-  status: AutomationRunStatus;
-  statusMessage?: Maybe<Scalars['String']>;
-};
-
-export type AutomateMutations = {
-  __typename?: 'AutomateMutations';
-  create: Automation;
-  createRevision: AutomationRevision;
-  functionRunStatusReport: Scalars['Boolean'];
-};
-
-
-export type AutomateMutationsCreateArgs = {
-  input: AutomationCreateInputV2;
-};
-
-
-export type AutomateMutationsCreateRevisionArgs = {
-  input: AutomationRevisionCreateInput;
-};
-
-
-export type AutomateMutationsFunctionRunStatusReportArgs = {
-  input: AutomationRunStatusUpdateInputV2;
-};
-
-export type Automation = {
-  __typename?: 'Automation';
-  createdAt: Scalars['DateTime'];
-  currentRevision?: Maybe<AutomationRevision>;
-  enabled: Scalars['Boolean'];
-  encryptionKey: Scalars['String'];
-  id: Scalars['ID'];
-  model: Model;
-  name: Scalars['String'];
-  /** A shortcut to get the status of the latest revision. */
-  runs: AutomationRunCollection;
-  status: AutomationRunStatusV2;
-};
-
-
-export type AutomationRunsArgs = {
-  cursor?: InputMaybe<Scalars['String']>;
-  limit?: Scalars['Int'];
-};
-
-export type AutomationCollection = {
-  __typename?: 'AutomationCollection';
-  cursor?: Maybe<Scalars['String']>;
-  items: Array<Automation>;
-  totalCount: Scalars['Int'];
-};
-
 export type AutomationCreateInput = {
   automationId: Scalars['String'];
   automationName: Scalars['String'];
@@ -298,19 +196,6 @@ export type AutomationCreateInput = {
   modelId: Scalars['String'];
   projectId: Scalars['String'];
   webhookId?: InputMaybe<Scalars['String']>;
-};
-
-export type AutomationCreateInputV2 = {
-  enabled: Scalars['Boolean'];
-  modelId: Scalars['String'];
-  name: Scalars['String'];
-  projectId: Scalars['String'];
-};
-
-export type AutomationFunctionInput = {
-  functionId: Scalars['String'];
-  parameters?: InputMaybe<Scalars['String']>;
-  releaseId: Scalars['String'];
 };
 
 export type AutomationFunctionRun = {
@@ -360,24 +245,6 @@ export type AutomationMutationsFunctionRunStatusReportArgs = {
   input: AutomationRunStatusUpdateInput;
 };
 
-export type AutomationRevision = {
-  __typename?: 'AutomationRevision';
-  functions: Array<AutomationRevisionFunction>;
-  id: Scalars['ID'];
-};
-
-export type AutomationRevisionCreateInput = {
-  automationId: Scalars['String'];
-  functions: Array<AutomationFunctionInput>;
-};
-
-export type AutomationRevisionFunction = {
-  __typename?: 'AutomationRevisionFunction';
-  functionRelease: AutomateFunctionRelease;
-  /** The secrets in parameters are redacted */
-  parameters?: Maybe<Scalars['JSONObject']>;
-};
-
 export type AutomationRun = {
   __typename?: 'AutomationRun';
   automationId: Scalars['String'];
@@ -389,13 +256,6 @@ export type AutomationRun = {
   status: AutomationRunStatus;
   updatedAt: Scalars['DateTime'];
   versionId: Scalars['String'];
-};
-
-export type AutomationRunCollection = {
-  __typename?: 'AutomationRunCollection';
-  cursor?: Maybe<Scalars['String']>;
-  items: Array<AutomationRunV2>;
-  totalCount: Scalars['Int'];
 };
 
 export enum AutomationRunStatus {
@@ -411,29 +271,6 @@ export type AutomationRunStatusUpdateInput = {
   automationRunId: Scalars['String'];
   functionRuns: Array<FunctionRunStatusInput>;
   versionId: Scalars['String'];
-};
-
-export type AutomationRunStatusUpdateInputV2 = {
-  automationId: Scalars['String'];
-  automationRunId: Scalars['String'];
-  functionRuns: Array<FunctionRunStatusInputV2>;
-};
-
-export enum AutomationRunStatusV2 {
-  Failed = 'FAILED',
-  Initializing = 'INITIALIZING',
-  Running = 'RUNNING',
-  Succeeded = 'SUCCEEDED'
-}
-
-export type AutomationRunV2 = {
-  __typename?: 'AutomationRunV2';
-  createdAt: Scalars['DateTime'];
-  functionRuns: Array<AutomateFunctionRun>;
-  id: Scalars['ID'];
-  status: AutomationRunStatusV2;
-  statusUpdatedAt: Scalars['DateTime'];
-  version?: Maybe<Version>;
 };
 
 export type AutomationsStatus = {
@@ -877,27 +714,6 @@ export type FunctionRunStatusInput = {
   statusMessage?: InputMaybe<Scalars['String']>;
 };
 
-export type FunctionRunStatusInputV2 = {
-  automationId: Scalars['String'];
-  automationRunId: Scalars['String'];
-  contextView?: InputMaybe<Scalars['String']>;
-  elapsed: Scalars['Float'];
-  id: Scalars['String'];
-  resultVersionIds: Array<Scalars['String']>;
-  /**
-   * Current schema: {
-   *   version: "1.0.0",
-   *   values: {
-   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
-   *     blobIds?: string[]
-   *   }
-   * }
-   */
-  results?: InputMaybe<Scalars['JSONObject']>;
-  status: AutomationRunStatusV2;
-  statusMessage?: InputMaybe<Scalars['String']>;
-};
-
 export type LegacyCommentViewerData = {
   __typename?: 'LegacyCommentViewerData';
   /**
@@ -989,7 +805,6 @@ export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
   automationStatus?: Maybe<AutomationsStatus>;
-  automations: AutomationCollection;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
   /** All comment threads in this model */
@@ -1119,7 +934,6 @@ export type Mutation = {
   appTokenCreate: Scalars['String'];
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
-  automateMutations: AutomateMutations;
   automationMutations: AutomationMutations;
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
@@ -1600,7 +1414,6 @@ export type PendingStreamCollaborator = {
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean'];
-  automations: AutomationCollection;
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime'];
@@ -2951,7 +2764,6 @@ export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
   automationStatus?: Maybe<AutomationsStatus>;
-  automations: AutomationCollection;
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
