@@ -14,9 +14,21 @@
       leave-to-class="opacity-0"
     >
       <PopoverPanel
-        class="absolute translate-x-0 left-10 sm:left-12 top-2 p-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col space-y-2"
+        class="absolute translate-x-0 left-10 sm:left-12 top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col space-y-2"
       >
-        <div class="flex items-center space-x-1">
+        <div class="p-2 border-b border-outline flex gap-2 items-center">
+          <div class="scale-90">
+            <FormSwitch
+              :model-value="sunlightShadows"
+              icons
+              @update:model-value="
+                (newValue) => createLightConfigComputed(item, newValue)
+              "
+            />
+          </div>
+          <span class="text-foreground text-sm">Sun Shadows</span>
+        </div>
+        <div class="flex items-center gap-1 px-2">
           <input
             id="intensity"
             v-model="intensity"
@@ -31,7 +43,7 @@
             Intensity
           </label>
         </div>
-        <div class="flex items-center space-x-1">
+        <div class="flex items-center gap-1 px-2">
           <input
             id="elevation"
             v-model="elevation"
@@ -46,7 +58,7 @@
             Elevation
           </label>
         </div>
-        <div class="flex items-center space-x-1">
+        <div class="flex items-center gap-1 px-2">
           <input
             id="azimuth"
             v-model="azimuth"
@@ -61,7 +73,7 @@
             Azimuth
           </label>
         </div>
-        <div class="flex items-center space-x-1">
+        <div class="flex items-center gap-1 px-2 pb-2">
           <input
             id="indirect"
             v-model="indirectLightIntensity"
@@ -116,4 +128,5 @@ const intensity = createLightConfigComputed('intensity')
 const elevation = createLightConfigComputed('elevation')
 const azimuth = createLightConfigComputed('azimuth')
 const indirectLightIntensity = createLightConfigComputed('indirectLightIntensity')
+const sunlightShadows = createLightConfigComputed('castShadow')
 </script>
