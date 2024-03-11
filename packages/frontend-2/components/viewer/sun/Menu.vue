@@ -18,13 +18,7 @@
       >
         <div class="p-2 border-b border-outline flex gap-2 items-center">
           <div class="scale-90">
-            <FormSwitch
-              :model-value="sunlightShadows"
-              icons
-              @update:model-value="
-                (newValue) => createLightConfigComputed(item, newValue)
-              "
-            />
+            <FormSwitch v-model="sunlightShadows" icons />
           </div>
           <span class="text-foreground text-sm">Sun Shadows</span>
         </div>
@@ -99,6 +93,7 @@ import { SunIcon } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { debounce } from 'lodash-es'
+import { FormSwitch } from '@speckle/ui-components'
 
 const mp = useMixpanel()
 const debounceTrackLightConfigChange = debounce(() => {
