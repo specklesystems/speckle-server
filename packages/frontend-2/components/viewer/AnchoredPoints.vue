@@ -88,7 +88,7 @@
       <div
         class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500"
       >
-        <div class="absolute top-0 left-[50%] -translate-x-1/2 flex">
+        <div class="absolute top-0 left-0 w-full justify-center flex">
           <svg
             class="mt-1"
             width="8"
