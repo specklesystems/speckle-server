@@ -1,23 +1,21 @@
 <template>
   <div>
-    <div
-      class="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:justify-between lg:items-center mb-4"
-    >
-      <div class="flex justify-between items-center flex-wrap sm:flex-nowrap">
+    <div class="flex flex-col xl:flex-row justify-between gap-4 xl:gap-8">
+      <div class="flex justify-between">
         <h1 class="block h4 font-bold">Models</h1>
-        <div class="flex items-center space-x-2 w-full mt-2 sm:w-auto sm:mt-0">
+        <div class="xl:hidden">
           <FormButton
             color="secondary"
             :icon-right="CubeIcon"
             :to="allModelsRoute"
-            class="grow inline-flex sm:grow-0 lg:hidden"
+            class="shrink-0"
             @click="trackFederateAll"
           >
             View all in 3D
           </FormButton>
           <FormButton
             v-if="canContribute"
-            class="grow inline-flex sm:grow-0 lg:hidden"
+            class="shrink-0"
             :icon-right="PlusIcon"
             @click="showNewDialog = true"
           >
@@ -25,58 +23,54 @@
           </FormButton>
         </div>
       </div>
-      <div
-        class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-2"
-      >
+      <div class="flex gap-2 flex-col sm:flex-row justify-end">
         <FormTextInput
           v-model="localSearch"
           name="modelsearch"
           :show-label="false"
           placeholder="Search"
           color="foundation"
-          wrapper-classes="grow lg:grow-0 lg:ml-2 lg:w-40 xl:w-60"
+          wrapper-classes="xl:w-48 xl:w-60"
           :show-clear="localSearch !== ''"
           @change="($event) => updateSearchImmediately($event.value)"
           @update:model-value="updateDebouncedSearch"
         ></FormTextInput>
-        <div
-          class="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0"
-        >
-          <FormSelectUsers
-            v-model="finalSelectedMembers"
-            :users="team"
-            multiple
-            selector-placeholder="All members"
-            label="Filter by members"
-            class="grow shrink sm:w-[120px] md:w-44"
-            clearable
-            fixed-height
-          />
-          <div class="flex items-center space-x-2 grow">
+        <div class="flex flex-col sm:flex-row items-end justify-between gap-2">
+          <div class="flex gap-2">
+            <FormSelectUsers
+              v-model="finalSelectedMembers"
+              :users="team"
+              multiple
+              selector-placeholder="All members"
+              label="Filter by members"
+              class="w-52"
+              clearable
+              fixed-height
+            />
             <FormSelectSourceApps
               v-model="finalSelectedApps"
               :items="availableSourceApps"
               multiple
               selector-placeholder="All sources"
               label="Filter by sources"
-              class="grow shrink sm:w-[120px] md:w-44"
+              class="w-52"
               clearable
               fixed-height
             />
-            <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
           </div>
+          <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
           <FormButton
             color="secondary"
             :icon-right="CubeIcon"
             :to="allModelsRoute"
-            class="hidden lg:inline-flex shrink-0"
+            class="hidden xl:inline-flex shrink-0"
             @click="trackFederateAll"
           >
             View all in 3D
           </FormButton>
           <FormButton
             v-if="canContribute"
-            class="hidden lg:inline-flex shrink-0"
+            class="hidden xl:inline-flex shrink-0"
             :icon-right="PlusIcon"
             @click="showNewDialog = true"
           >
