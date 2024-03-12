@@ -2,13 +2,12 @@
   <div class="elevation-10">
     <portal-target name="nav-bottom">
       <div class="pa-4">
-        <h5>New Speckle Experience</h5>
+        <h5>Try the New Speckle Web App</h5>
         <p class="text-caption mb-0 mt-1 primary--text text--disabled">
-          Your same credentials and data in a new and better environment.
-          <!--TODO - Update Link-->
+          Easier to use, better collaboration, and faster loading times.
           <a
             style="text-decoration: underline; color: inherit"
-            href="https://speckle.systems/blog/"
+            href="https://speckle.systems/the-new-way-to-collaborate-in-aec/"
             target="_blank"
           >
             Learn more
@@ -19,10 +18,10 @@
           small
           color="primary"
           class="align-self-center mt-4"
-          href="https://latest.speckle.systems/"
+          href="https://app.speckle.systems/"
         >
           <v-icon left>mdi-rocket-launch</v-icon>
-          Go to the new site
+          Go to the new web app
         </v-btn>
       </div>
       <v-divider></v-divider>

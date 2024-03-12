@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog :open="dialogOpen" max-width="sm" :buttons="dialogButtons">
     <h2 class="text-2xl sm:text-3xl font-bold text-center sm:-mt-4 mb-2">
-      What's new in Speckle?
+      What's New in Speckle?
     </h2>
     <p class="text-foreground-2 text-center mb-6">A new way to collaborate in AEC.</p>
     <div class="aspect-video w-full">
@@ -33,7 +33,7 @@ const dialogButtons = computed(() => [
       fullWidth: true,
       outline: true,
       iconRight: ArrowTopRightOnSquareIcon,
-      to: 'https://speckle.systems/blog/',
+      to: 'https://speckle.systems/the-new-way-to-collaborate-in-aec/',
       external: true,
       target: '_blank'
     }
