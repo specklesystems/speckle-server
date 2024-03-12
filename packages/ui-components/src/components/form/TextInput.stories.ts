@@ -31,6 +31,26 @@ export default {
     'update:modelValue': {
       type: 'function',
       action: 'v-model'
+    },
+    change: {
+      type: 'function',
+      action: 'change'
+    },
+    input: {
+      type: 'function',
+      action: 'input'
+    },
+    clear: {
+      type: 'function',
+      action: 'clear'
+    },
+    focus: {
+      type: 'function',
+      action: 'focus'
+    },
+    blur: {
+      type: 'function',
+      action: 'blur'
     }
   }
 } as Meta
@@ -57,7 +77,13 @@ export const Default: StoryObj = {
       return { args }
     },
     template: `<div class="bg-foundation p-5">
-    <form-text-input v-bind="args" @update:modelValue="args['update:modelValue']"/>
+    <form-text-input v-bind="args"
+      @update:modelValue="args['update:modelValue']"
+      @change="args['change']"
+      @input="args['input']"
+      @clear="args['clear']"
+      @focus="args['focus']"
+    />
     </div>`
   }),
   play: buildTextWriterPlayFunction('Hello world!'),

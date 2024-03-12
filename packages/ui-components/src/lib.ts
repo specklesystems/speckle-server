@@ -80,6 +80,7 @@ import type { FileTypeSpecifier } from '~~/src/helpers/form/file'
 export * from '~~/src/helpers/common/error'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
 import type { AvatarUser, AvatarUserWithId } from '~~/src/composables/user/avatar'
+import { useDebouncedTextInput } from '~~/src/composables/form/textInput'
 
 export {
   CommonLoadingIcon,
@@ -138,7 +139,8 @@ export {
   writableAsyncComputed,
   useFormCheckboxModel,
   FormTags,
-  keyboardClick
+  keyboardClick,
+  useDebouncedTextInput
 }
 export type {
   ToastNotification,

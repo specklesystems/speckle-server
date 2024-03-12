@@ -60,6 +60,8 @@ import {
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
+import { Roles } from '@speckle/shared'
+import { LimitedUser } from '@/modules/core/graph/generated/graphql'
 
 let graphqlServer: ApolloServer
 
@@ -247,10 +249,54 @@ async function buildMocksConfig(): Promise<{
   if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
 
   // feel free to define mocks for your dev env below
-  // const roles = Object.values(Roles.Stream)
-  // const { faker } = await import('@faker-js/faker')
+  const { faker } = await import('@faker-js/faker')
 
-  return { mocks: false, mockEntireSchema: false }
+  return {
+    mocks: {
+      Project: () => ({
+        automations: () => {
+          // const count = faker.datatype.number({ min: 0, max: 5 })
+          const count = 2
+          return {
+            cursor: null,
+            totalCount: count,
+            items: [...new Array(count)]
+          }
+        }
+      }),
+      Query: () => ({
+        automateFunctions: () => {
+          const count = faker.datatype.number({ min: 4, max: 20 })
+          return {
+            cursor: null,
+            totalCount: count,
+            items: [...new Array(count)]
+          }
+        }
+      }),
+      Automation: () => ({
+        name: () => faker.company.companyName()
+      }),
+      AutomateFunction: () => ({
+        name: () => faker.commerce.productName(),
+        isFeatured: () => faker.datatype.boolean(),
+        description: () => faker.commerce.productDescription()
+      }),
+      LimitedUser: () =>
+        ({
+          id: faker.datatype.uuid(),
+          name: faker.name.findName(),
+          avatar: '',
+          bio: faker.lorem.sentence(),
+          company: faker.company.companyName(),
+          verified: faker.datatype.boolean(),
+          role: Roles.Server.User
+        } as LimitedUser),
+      JSONObject: () => ({}),
+      ID: () => faker.datatype.uuid()
+    },
+    mockEntireSchema: false
+  }
 }
 
 /**

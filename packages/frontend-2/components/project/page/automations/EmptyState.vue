@@ -19,7 +19,7 @@
         <FormButton :icon-left="PlusIcon" size="lg">New Automation</FormButton>
       </div>
     </div>
-    <div class="flex flex-col">
+    <div class="flex flex-col gap-9">
       <div class="flex justify-between items-center">
         <h2 class="h5 font-bold">Featured Functions</h2>
         <FormButton
@@ -30,9 +30,30 @@
           Explore All Functions
         </FormButton>
       </div>
+      <AutomationsFunctionsCardView>
+        <AutomationsFunctionsCard v-for="fn in functions" :key="fn.id" :fn="fn" />
+      </AutomationsFunctionsCardView>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import { graphql } from '~/lib/common/generated/gql'
+import type { ProjectPageAutomationsEmptyState_QueryFragment } from '~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment ProjectPageAutomationsEmptyState_Query on Query {
+    automateFunctions {
+      items {
+        ...AutomationsFunctionsCard_AutomateFunction
+      }
+    }
+  }
+`)
+
+const props = defineProps<{
+  functions?: ProjectPageAutomationsEmptyState_QueryFragment
+}>()
+
+const functions = computed(() => props.functions?.automateFunctions.items || [])
 </script>

@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { useField } from 'vee-validate'
 import type { RuleExpression } from 'vee-validate'
-import { computed, onMounted, ref, unref } from 'vue'
+import { computed, onMounted, ref, unref, watch } from 'vue'
 import type { Ref, ToRefs } from 'vue'
-import type { Nullable } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
-import { isArray } from 'lodash'
+import { debounce, isArray } from 'lodash'
 
 export type InputColor = 'page' | 'foundation' | 'transparent'
 
@@ -112,6 +112,10 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     classParts.push(error.value ? 'text-danger' : 'text-foreground-2')
     return classParts.join(' ')
   })
+  const shouldShowClear = computed(() => {
+    if (!unref(props.showClear)) return false
+    return (value.value?.length || 0) > 0
+  })
 
   const focus = () => {
     inputEl.value?.focus()
@@ -143,6 +147,68 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     errorMessage,
     clear,
     focus,
-    labelClasses
+    labelClasses,
+    shouldShowClear
+  }
+}
+
+/**
+ * Attach returned on and bind using v-on and v-bind, and then you can use the returned `value`
+ * ref to get the input's value while ensuring normal input events are debounced and only change/clear
+ * events cause the value to propagate immediately
+ *
+ * Very useful for search inputs!
+ */
+export function useDebouncedTextInput(params: {
+  /**
+   * For how long should basic input events be debounced.
+   * Default: 1000 (ms)
+   */
+  debouncedBy?: number
+
+  /**
+   * Optionally pass in the model ref that should be used as the source of truth
+   */
+  model?: Ref<MaybeNullOrUndefined<string>>
+}) {
+  const { debouncedBy = 1000 } = params
+
+  const value = params.model || ref('')
+  const model = ref(value.value)
+
+  const debouncedValueUpdate = debounce((val: string) => {
+    value.value = val
+  }, debouncedBy)
+
+  const on = {
+    'update:modelValue': (val: string) => {
+      model.value = val
+      debouncedValueUpdate(val)
+    },
+    clear: () => {
+      debouncedValueUpdate.cancel()
+      model.value = ''
+      value.value = ''
+    },
+    change: (val: { event?: Event; value: string }) => {
+      debouncedValueUpdate.cancel()
+      value.value = val.value
+      model.value = val.value
+    }
+  }
+  const bind = {
+    modelValue: model
+  }
+
+  watch(value, (newVal, oldVal) => {
+    if (oldVal === newVal && !oldVal && !newVal) return
+    if (model.value === value.value) return
+    model.value = value.value
+  })
+
+  return {
+    on,
+    bind,
+    value
   }
 }

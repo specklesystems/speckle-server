@@ -5,7 +5,7 @@
 
 export default defineNuxtPlugin(async () => {
   const {
-    public: { mixpanelApiHost, mixpanelTokenId }
+    public: { mixpanelApiHost, mixpanelTokenId, logCsrEmitProps }
   } = useRuntimeConfig()
 
   const mixpanel = process.client
@@ -26,7 +26,7 @@ export default defineNuxtPlugin(async () => {
   mixpanel.init(mixpanelTokenId, {
     // eslint-disable-next-line camelcase
     api_host: mixpanelApiHost,
-    debug: !!process.dev
+    debug: !!process.dev && logCsrEmitProps
   })
 
   return {

@@ -64,7 +64,7 @@ async function initRumClient() {
 
 async function initRumServer(app: PluginNuxtApp) {
   const registerErrorTransport = useCreateErrorLoggingTransport()
-  const { enabled, keys, baseUrl, speckleServerVersion } = resolveInitParams()
+  const { enabled, keys, baseUrl, speckleServerVersion, debug } = resolveInitParams()
   if (!enabled) return
 
   // RayGun
@@ -105,7 +105,7 @@ async function initRumServer(app: PluginNuxtApp) {
                 rg4js('enablePulse', true)
                 rg4js('withTags', ['baseUrl:${baseUrl}', 'version:${speckleServerVersion}'])
                 rg4js('options', {
-                  debugMode: ${!!process.dev},
+                  debugMode: ${!!debug},
                 })
             `
           }
@@ -117,12 +117,7 @@ async function initRumServer(app: PluginNuxtApp) {
 
 function resolveInitParams() {
   const {
-    public: {
-      raygunKey,
-      speckleServerVersion,
-
-      baseUrl
-    }
+    public: { raygunKey, speckleServerVersion, logCsrEmitProps, baseUrl }
   } = useRuntimeConfig()
   const raygun = raygunKey?.length ? raygunKey : null
   const enabled = !!raygun
@@ -133,7 +128,8 @@ function resolveInitParams() {
       raygun
     },
     speckleServerVersion,
-    baseUrl
+    baseUrl,
+    debug: logCsrEmitProps && process.dev
   }
 }
 

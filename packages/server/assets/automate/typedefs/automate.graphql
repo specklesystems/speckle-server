@@ -1,0 +1,32 @@
+type Automation {
+  id: ID!
+  name: String!
+}
+
+type AutomationCollection {
+  items: [Automation!]!
+  totalCount: Int!
+  cursor: String
+}
+
+type AutomateFunction {
+  id: ID!
+  name: String!
+  creator: LimitedUser!
+  isFeatured: Boolean!
+  description: String!
+}
+
+type AutomateFunctionCollection {
+  items: [AutomateFunction!]!
+  totalCount: Int!
+  cursor: String
+}
+
+extend type Project {
+  automations(filter: String, cursor: String): AutomationCollection!
+}
+
+extend type Query {
+  automateFunctions(filter: String, cursor: String): AutomateFunctionCollection!
+}

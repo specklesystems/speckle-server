@@ -10,6 +10,8 @@
         placeholder="Search Automations"
         wrapper-classes="shrink-0"
         show-clear
+        :model-value="bind.modelValue.value"
+        v-on="on"
       />
       <FormButton
         :icon-left="ArrowTopRightOnSquareIcon"
@@ -24,9 +26,12 @@
 </template>
 <script setup lang="ts">
 import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/24/outline'
-import { FormTextInput } from '@speckle/ui-components'
+import { useDebouncedTextInput } from '@speckle/ui-components'
 
 defineProps<{
   hasAutomations?: boolean
 }>()
+
+const search = defineModel<string>('search', { local: true })
+const { on, bind } = useDebouncedTextInput({ model: search })
 </script>
