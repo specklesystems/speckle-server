@@ -1,15 +1,27 @@
 <template>
-  <v-dialog v-model="dialog" persistent max-width="670px">
+  <v-dialog v-model="dialog" persistent max-width="850px">
     <v-card class="whats-new-dialog">
-      <v-car d-title class="headline d-flex justify-space-between align-center">
+      <v-card
+        d-title
+        class="headline d-flex justify-space-between align-center px-4 py-3"
+      >
         <h4>The New Speckle Web App</h4>
         <v-btn icon @click="dialog = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
-      </v-car>
+      </v-card>
       <v-row no-gutters align="center" justify="space-between" class="pa-6">
-        <v-col cols="12" sm="6">image</v-col>
-        <v-col cols="12" sm="6" class="pt-4 pt-sm-0 pb-sm-2 pr-8">
+        <v-col cols="12" md="7">
+          <iframe
+            style="width: 100%; height: 100%; min-height: 250px"
+            src="https://www.youtube.com/embed/QI5pVV1GCNs?si=op1o9Ud4fOKsQlWe"
+            title="YouTube video player"
+            frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowfullscreen
+          ></iframe>
+        </v-col>
+        <v-col cols="12" md="5" class="pt-4 pt-md-0 pb-md-2 pl-8">
           <h2>What’s New?</h2>
           <div class="d-flex align-center py-2">
             <svg
