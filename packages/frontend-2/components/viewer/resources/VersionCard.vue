@@ -44,7 +44,6 @@
         v-tippy="'Shows a summary of added, deleted and changed elements.'"
         size="xs"
         text
-        class="opacity-0 group-hover:opacity-100 transition"
         @click.stop="handleViewChanges"
       >
         View Changes
