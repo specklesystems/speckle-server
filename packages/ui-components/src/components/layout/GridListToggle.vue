@@ -1,24 +1,29 @@
 <template>
   <button
-    class="max-w-max transition flex justify-center items-center gap-2 outline-none select-none h-8 text-foreground border-2 bg-foundation border-foundation-2 rounded-md hover:ring-2 active:scale-[0.97] grow"
+    class="max-w-max transition flex justify-center items-center gap-2 outline-none select-none h-8 text-foreground border-2 border-primary-muted dark:border-foundation bg-primary-muted rounded-md active:scale-[0.97] grow"
     @click="onClick"
   >
-    <div class="relative flex bg-foundation rounded-md">
+    <div class="relative flex bg-primary-muted rounded-md">
       <div
-        class="absolute -top-[2px] -left-[2px] transition"
+        class="absolute transition"
         :class="{
           'translate-x-7': value !== GridListToggleValue.Grid
         }"
       >
         <div
-          :class="value !== GridListToggleValue.Grid ? 'rounded-r-md' : 'rounded-l-md'"
-          class="w-8 h-8 bg-primary-muted shadow-inner transition"
+          class="w-7 h-7 bg-foundation dark:bg-foundation-2 transition rounded shadow"
         />
       </div>
-      <div class="relative z-10 flex gap-1 items-center p-1 rounded-l">
+      <div
+        v-tippy="'Grid View'"
+        class="relative z-10 flex gap-1 items-center p-1 rounded-l"
+      >
         <Squares2X2Icon class="h-5 w-5" />
       </div>
-      <div class="relative z-10 flex gap-1 items-center p-1 rounded-r">
+      <div
+        v-tippy="'List View'"
+        class="relative z-10 flex gap-1 items-center p-1 rounded-r"
+      >
         <Bars3Icon class="h-5 w-5" />
       </div>
     </div>

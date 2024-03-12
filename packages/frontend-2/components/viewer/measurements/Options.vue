@@ -80,11 +80,6 @@
         Right click to cancel measurement
       </ViewerTip>
     </Portal>
-    <Portal to="pocket-actions">
-      <FormButton size="xs" @click="() => clearMeasurements()">
-        Reset Measurements
-      </FormButton>
-    </Portal>
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">

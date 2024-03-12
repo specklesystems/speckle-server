@@ -302,24 +302,28 @@ spec:
           {{- end }}
 
           # *** Newsletter ***
-          {{- if (default false (.Values.server.mailchimp).enabled) }}
+          {{- if .Values.server.mailchimp.enabled }}
           - name: MAILCHIMP_ENABLED
             value: "true"
           - name: MAILCHIMP_API_KEY
             valueFrom:
               secretKeyRef:
-                name: {{ default .Values.secretName ((.Values.server.mailchimp).apikey).secretName }}
-                key: {{ default "mailchimp_apikey" ((.Values.server.mailchimp).apikey).secretKey }}
+                name: {{ default .Values.secretName .Values.server.mailchimp.apikey.secretName }}
+                key: {{ .Values.server.mailchimp.apikey.secretKey }}
           - name: MAILCHIMP_SERVER_PREFIX
-            valueFrom:
-              secretKeyRef:
-                name: {{ default .Values.secretName ((.Values.server.mailchimp).serverprefix).secretName }}
-                key: {{ default "mailchimp_serverprefix" ((.Values.server.mailchimp).serverprefix).secretKey }}
-          - name: MAILCHIMP_LIST_ID
-            valueFrom:
-              secretKeyRef:
-                name: {{ default .Values.secretName ((.Values.server.mailchimp).listid).secretName }}
-                key: {{ default "mailchimp_listid" ((.Values.server.mailchimp).listid).secretKey }}
+            value: "{{ .Values.server.mailchimp.serverPrefix}}"
+
+          - name: MAILCHIMP_NEWSLETTER_LIST_ID
+            value: "{{ .Values.server.mailchimp.newsletterListId}}"
+
+          - name: MAILCHIMP_ONBOARDING_LIST_ID
+            value: "{{ .Values.server.mailchimp.onboardingListId}}"
+
+          - name: MAILCHIMP_ONBOARDING_JOURNEY_ID
+            value: "{{ .Values.server.mailchimp.onboardingJourneyId}}"
+
+          - name: MAILCHIMP_ONBOARDING_STEP_ID
+            value: "{{ .Values.server.mailchimp.onboardingStepId}}"
           {{- end }}
 
           # *** Tracking / Tracing ***

@@ -1,16 +1,6 @@
 <template>
   <div>
-    <Portal to="navigation">
-      <HeaderNavLink
-        :to="projectRoute(project.id)"
-        :name="project.name"
-      ></HeaderNavLink>
-      <HeaderNavLink
-        :to="projectDiscussionsRoute(project.id)"
-        name="Discussions"
-      ></HeaderNavLink>
-    </Portal>
-    <div class="flex justify-between items-center mb-4">
+    <div class="flex justify-between items-center mb-8">
       <h1 class="block h4 font-bold">Discussions</h1>
       <div class="space-x-2 flex items-center">
         <FormCheckbox
@@ -19,11 +9,7 @@
           :value="true"
           label="Include resolved"
         />
-        <LayoutGridListToggle
-          v-model="finalGridOrList"
-          v-tippy="'Swap Grid/Card View'"
-          class="shrink-0"
-        />
+        <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
       </div>
     </div>
   </div>
@@ -32,7 +18,6 @@
 import type { Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectDiscussionsPageHeader_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { projectRoute, projectDiscussionsRoute } from '~~/lib/common/helpers/route'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 
 graphql(`
