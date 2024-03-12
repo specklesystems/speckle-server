@@ -15,6 +15,7 @@
     "node": "^18.19.0"
   },
   "scripts": {
+    "build:docker": "docker build -t speckle/speckle-fileimport-service:local -f Dockerfile ../..",
     "dev": "cross-env POSTGRES_URL=postgres://speckle:speckle@127.0.0.1/speckle NODE_ENV=development LOG_PRETTY=true SPECKLE_SERVER_URL=http://127.0.0.1:3000 nodemon --no-experimental-fetch ./src/daemon.js",
     "parse:ifc": "node --no-experimental-fetch ./ifc/import_file.js ./ifc/ifcs/steelplates.ifc 33763848d6 2e4bfb467a main File upload: steelplates.ifc",
     "lint": "eslint . --ext .js,.ts"

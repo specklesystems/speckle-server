@@ -3,6 +3,7 @@
   "version": "2.5.4",
   "private": true,
   "scripts": {
+    "build:docker": "docker build -t speckle/speckle-frontend:local -f Dockerfile ../..",
     "dev": "vite",
     "build": "vite build",
     "serve": "vite preview --port 8080",
