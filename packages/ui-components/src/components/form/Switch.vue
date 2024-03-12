@@ -8,11 +8,11 @@
       <div class="absolute inset-0 flex items-center gap-2 px-1 text-white">
         <CheckIcon
           class="h-5 w-5 drop-shadow-md"
-          :class="props.icons ? 'opacity-100' : 'opacity-0'"
+          :class="icons ? 'opacity-100' : 'opacity-0'"
         />
         <XMarkIcon
           class="h-5 w-5 drop-shadow-md"
-          :class="props.icons ? 'opacity-100' : 'opacity-0'"
+          :class="icons ? 'opacity-100' : 'opacity-0'"
         />
       </div>
       <span
@@ -27,7 +27,7 @@
 import { Switch as HeadlessSwitch } from '@headlessui/vue'
 import { CheckIcon, XMarkIcon } from '@heroicons/vue/24/solid'
 
-const props = defineProps<{
+defineProps<{
   icons?: boolean
 }>()
 
