@@ -110,6 +110,7 @@ export class SpeckleMaterial {
     this.copyUniforms(source)
     this.bindUniforms()
     Object.assign(this['defines'], source.defines)
+    if (source.needsCopy) this.needsCopy = source.needsCopy
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
