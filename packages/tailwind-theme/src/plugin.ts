@@ -151,6 +151,11 @@ export default plugin(function ({ addComponents, addBase }) {
   })
 
   addComponents({
+    // Fancy gradient text
+    '.text-fancy-gradient': {
+      '@apply font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 text-transparent bg-clip-text':
+        {}
+    },
     // Font sizes
     '.h1': {
       '@apply text-5xl leading-10': {}

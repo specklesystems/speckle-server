@@ -4,7 +4,7 @@
     :class="vertical ? 'sm:gap-8 flex-col sm:flex-row' : 'sm:gap-10 flex-col'"
   >
     <div
-      class="relative flex sm:justify-between overflow-x-auto"
+      class="relative flex sm:justify-between overflow-x-auto simple-scrollbar"
       :class="
         vertical
           ? 'items-center sm:items-start sm:flex-col sm:w-2/12 border-r border-outline gap-4 pl-4'
