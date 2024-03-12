@@ -35,8 +35,9 @@ import {
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
+import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import type { NumericPropertyInfo } from '@speckle/viewer'
+import { containsAll } from '~~/lib/common/helpers/utils'
 
 type ObjectResultWithOptionalMetadata = {
   category: string
@@ -62,8 +63,7 @@ const {
 
 const { isolateObjects, resetFilters, setPropertyFilter, applyPropertyFilter } =
   useFilterUtilities()
-
-import { containsAll } from '~~/lib/common/helpers/utils'
+const { setSelectionFromObjectIds, clearSelection } = useSelectionUtilities()
 
 const hasMetadataGradient = computed(() => {
   if (props.result.metadata?.gradient) return true
@@ -72,7 +72,7 @@ const hasMetadataGradient = computed(() => {
 
 const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
 const isIsolated = computed(() => {
-  if (!isolatedObjects.value) return false
+  if (!isolatedObjects.value?.length) return false
   if (filteringState.value?.activePropFilterKey === props.functionId) return false
   const ids = props.result.objectIds
   return containsAll(ids, isolatedObjects.value)
@@ -83,17 +83,21 @@ const handleClick = () => {
     setOrUnsetGradient()
     return
   }
+
   isolateOrUnisolateObjects()
 }
 
 const isolateOrUnisolateObjects = () => {
   const ids = props.result.objectIds
-  if (!isIsolated.value) {
-    resetFilters()
-    isolateObjects(ids)
-    return
-  }
+  const isCurrentlyIsolated = isIsolated.value
+
   resetFilters()
+  if (isCurrentlyIsolated) {
+    clearSelection()
+  } else {
+    isolateObjects(ids)
+    setSelectionFromObjectIds(ids)
+  }
 }
 
 const metadataGradientIsSet = ref(false)

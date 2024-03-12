@@ -15,10 +15,21 @@ export function useTheme() {
   const isDarkTheme = computed(() => themeCookie.value === AppTheme.Dark)
   const isLightTheme = computed(() => !isDarkTheme.value)
 
+  const setTheme = (newTheme: AppTheme) => {
+    themeCookie.value = newTheme
+  }
+
+  const toggleTheme = () => {
+    if (isDarkTheme.value) {
+      setTheme(AppTheme.Light)
+    } else {
+      setTheme(AppTheme.Dark)
+    }
+  }
+
   return {
-    setTheme: (newTheme: AppTheme) => {
-      themeCookie.value = newTheme
-    },
+    setTheme,
+    toggleTheme,
     isDarkTheme,
     isLightTheme
   }

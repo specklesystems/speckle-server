@@ -59,6 +59,7 @@ import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
 import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter'
 import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh'
 import { BaseSpecklePass } from './pipeline/SpecklePass'
+import { CameraController } from './extensions/core-extensions/CameraController'
 
 export class RenderingStats {
   private renderTimeAcc = 0
@@ -235,6 +236,9 @@ export default class SpeckleRenderer {
       if (this.pipeline.needsAccumulation && data) {
         this.pipeline.reset()
       }
+    })
+    this.cameraProvider.on(CameraControllerEvent.ProjectionChanged, () => {
+      ;(this._cameraProvider as CameraController).setCameraPlanes(this.sceneBox)
     })
   }
 
@@ -610,6 +614,7 @@ export default class SpeckleRenderer {
     /** We'll just update the shadowcatcher after all batches are loaded */
     this.updateShadowCatcher()
     this.updateClippingPlanes()
+    ;(this._cameraProvider as CameraController).setCameraPlanes(this.sceneBox)
     delete this.cancel[subtreeId]
   }
 
@@ -674,7 +679,7 @@ export default class SpeckleRenderer {
         continue
       }
       if (!rvMap[rvs[k].batchId]) rvMap[rvs[k].batchId] = []
-      rvMap[rvs[k].batchId].push(rvs[k])
+      if (!rvMap[rvs[k].batchId].includes(rvs[k])) rvMap[rvs[k].batchId].push(rvs[k])
     }
 
     if (Materials.isMaterialInstance(material)) {
@@ -745,6 +750,10 @@ export default class SpeckleRenderer {
 
   private flattenDrawRanges(ranges: Array<BatchUpdateRange>): Array<BatchUpdateRange> {
     if (ranges.length < 3) return ranges
+
+    ranges = ranges.sort((a, b) => {
+      return a.offset - b.offset
+    })
 
     const flatRanges = []
     let offset = ranges[0].offset

@@ -46,7 +46,7 @@ extend type User {
   """
   Returns the apps you have authorized.
   """
-  authorizedApps: [ServerAppListItem]
+  authorizedApps: [ServerAppListItem!]
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "apps:read")
 

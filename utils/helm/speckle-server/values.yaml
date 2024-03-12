@@ -647,6 +647,25 @@ server:
     ## @param server.fileUploads.enabled If enabled, file uploads on the server will be flagged as enabled
     enabled: true
 
+  mailchimp:
+    ## @param server.mailchimp.enabled Mailchimp integration feature flag
+    enabled: false
+    apikey:
+      ## @param server.mailchimp.apikey.secretName The name of the Kubernetes Secret containing the Mailchimp API key.
+      secretName: '' # defaults to .secretName
+      ## @param server.mailchimp.apikey.secretKey The key within the Kubernetes Secret holding the Mailchimp API key as its value.
+      secretKey: 'mailchimp_apikey'
+    ## @param server.mailchimp.serverPrefix Mailchimp api server prefix
+    serverPrefix: ''
+    ## @param server.mailchimp.newsletterListId Audience id for the newsletter list
+    newsletterListId: ''
+    ## @param server.mailchimp.onboardingListId Audience id for the onboarding list
+    onboardingListId: ''
+    ## @param server.mailchimp.onboardingJourneyId Id of the onboarding journey
+    onboardingJourneyId: ''
+    ## @param server.mailchimp.onboardingStepId Id of the onboarding journey step we trigger
+    onboardingStepId: ''
+
   migration:
     ## @param server.migration.movedFrom Indicate the URL where the server moved from
     movedFrom: ''
@@ -676,6 +695,7 @@ server:
   ## @param server.sentry_dns (Optional) The Data Source Name that was provided by Sentry.io
   ## Sentry.io allows events within Speckle to be monitored
   ##
+
   sentry_dns: ''
   ## @param server.disable_tracking If set to true, will prevent tracking metrics from being collected
   ## Setting this value to false requires `sentry_dns` to be set
@@ -717,6 +737,9 @@ objects:
   ## @param objects.replicas The number of instances of the Server pod to be deployed within the cluster.
   ##
   replicas: 1
+  ## @param objects.image The Docker image to be used for the Speckle Objects component. If blank, defaults to speckle/speckle-server:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
+  ##
+  image: ''
   ## @param objects.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'

@@ -49,10 +49,7 @@
               @change="($event) => updateSearchImmediately($event.value)"
               @update:model-value="updateDebouncedSearch"
             ></FormTextInput>
-            <LayoutGridListToggle
-              v-model="gridOrList"
-              v-tippy="'Swap Grid/Card View'"
-            />
+            <LayoutGridListToggle v-model="gridOrList" />
           </div>
           <div class="flex items-center space-x-2">
             <FormButton
@@ -100,6 +97,7 @@ graphql(`
     modelCount: models(limit: 0) {
       totalCount
     }
+    ...ProjectPageModelsStructureItem_Project
   }
 `)
 

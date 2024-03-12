@@ -1,6 +1,7 @@
 <template>
   <FormButton
-    link
+    :link="!noUnderline"
+    :text="noUnderline"
     :to="to"
     :external="external"
     :disabled="disabled"
@@ -66,6 +67,10 @@ const props = defineProps({
    * Hide default slot (when you want to show icons only)
    */
   hideText: {
+    type: Boolean,
+    default: false
+  },
+  noUnderline: {
     type: Boolean,
     default: false
   }

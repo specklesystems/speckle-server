@@ -2,7 +2,8 @@ import { AllScopes } from '@speckle/shared'
 import type { Get } from 'type-fest'
 import type {
   DeveloperSettingsAccessTokensQuery,
-  DeveloperSettingsApplicationsQuery
+  DeveloperSettingsApplicationsQuery,
+  DeveloperSettingsAuthorizedAppsQuery
 } from '~~/lib/common/generated/gql/graphql'
 
 export type TokenItem = NonNullable<
@@ -16,6 +17,10 @@ export type TokenFormValues = {
 
 export type ApplicationItem = NonNullable<
   Get<DeveloperSettingsApplicationsQuery, 'activeUser.createdApps[0]'>
+>
+
+export type AuthorizedAppItem = NonNullable<
+  Get<DeveloperSettingsAuthorizedAppsQuery, 'activeUser.authorizedApps[0]'>
 >
 
 export type ApplicationFormValues = {

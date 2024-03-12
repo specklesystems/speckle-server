@@ -24,8 +24,9 @@ import type {
   TiptapEditorSchemaOptions
 } from '~~/lib/common/helpers/tiptap'
 import type { Nullable } from '@speckle/shared'
-import { userProfileRoute } from '~~/lib/common/helpers/route'
+// import { userProfileRoute } from '~~/lib/common/helpers/route'
 import { onKeyDown } from '@vueuse/core'
+import { noop } from 'lodash-es'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', val: JSONContent): void
@@ -95,17 +96,19 @@ const onEditorContentClick = (e: MouseEvent) => {
   e.stopPropagation()
 }
 
-const onMentionClick = (userId: string, e: MouseEvent) => {
-  if (!props.readonly) return
+// TODO: No profile page to link to in FE2 yet
+// const onMentionClick = (userId: string, e: MouseEvent) => {
+//   if (!props.readonly) return
 
-  const path = userProfileRoute(userId)
-  const isMetaKey = e.metaKey || e.ctrlKey
-  if (isMetaKey) {
-    window.open(path, '_blank')
-  } else {
-    window.location.href = path
-  }
-}
+//   const path = userProfileRoute(userId)
+//   const isMetaKey = e.metaKey || e.ctrlKey
+//   if (isMetaKey) {
+//     window.open(path, '_blank')
+//   } else {
+//     window.location.href = path
+//   }
+// }
+const onMentionClick = noop
 
 onKeyDown(
   'Escape',
@@ -184,7 +187,7 @@ onBeforeUnmount(() => {
     box-shadow: unset !important;
 
     .editor-mention {
-      cursor: pointer;
+      /* cursor: pointer; TODO: Reenable once mentions are clickable again */
     }
   }
 }

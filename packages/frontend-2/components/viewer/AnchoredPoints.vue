@@ -5,7 +5,7 @@
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
-      v-if="!isEmbedEnabled"
+      v-if="shouldShowNewThread"
       v-model="buttonState"
       :can-post-comment="canPostComment"
       class="z-[13]"
@@ -86,28 +86,53 @@
       "
     >
       <div
-        class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500/40"
+        class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500"
       >
-        <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
-          <FormButton
-            v-if="spotlightUserSessionId && spotlightUser"
-            size="xs"
-            class="truncate"
-            @click="() => (spotlightUserSessionId = null)"
+        <div class="absolute top-0 left-0 w-full justify-center flex">
+          <svg
+            class="mt-1"
+            width="8"
+            height="8"
+            viewBox="0 0 8 8"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <span>Stop Following {{ spotlightUser?.userName.split(' ')[0] }}</span>
-          </FormButton>
+            <path d="M0 0C4.5 0 8 3.5 8 8V0H0Z" class="fill-blue-500" />
+          </svg>
           <div
-            v-else
-            v-tippy="followers.map((u) => u.name).join(', ')"
-            class="text-xs p-2 font-bold text-primary"
+            class="pointer-events-auto bg-primary text-white text-xs px-3 h-8 flex items-center rounded-b-md cursor-default"
           >
-            Followed by {{ followers[0].name.split(' ')[0] }}
-            <span v-if="followers.length > 1">
-              & {{ followers.length - 1 }}
-              {{ followers.length - 1 === 1 ? 'other' : 'others' }}
-            </span>
+            <div v-if="spotlightUserSessionId && spotlightUser">
+              Following {{ spotlightUser?.userName.split(' ')[0] }}
+              <FormButton
+                color="secondary"
+                size="xs"
+                class="ml-1 -mr-1.5"
+                @click="() => (spotlightUserSessionId = null)"
+              >
+                <span>Stop</span>
+              </FormButton>
+            </div>
+            <div
+              v-else
+              v-tippy="{ placement: 'bottom' }"
+              :content="followers.map((u) => u.name).join(', ')"
+            >
+              Followed by {{ followers[0].name.split(' ')[0] }}
+              <span v-if="followers.length > 1">
+                & {{ followers.length - 1 }}
+                {{ followers.length - 1 === 1 ? 'other' : 'others' }}
+              </span>
+            </div>
           </div>
+          <svg
+            class="mt-1"
+            width="8"
+            height="8"
+            viewBox="0 0 8 8"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M0 0H8C3.5 0 0 3.5 0 8V0Z" class="fill-blue-500" />
+          </svg>
         </div>
       </div>
     </div>
@@ -185,6 +210,10 @@ const onThreadExpandedChange = (isExpanded: boolean) => {
     closeNewThread()
   }
 }
+
+const shouldShowNewThread = computed(
+  () => !isEmbedEnabled.value && !state.ui.measurement.enabled.value
+)
 
 const allThreadsChronologicalOrder = computed(() => {
   const vals = Object.values(commentThreads.value)
