@@ -5,7 +5,14 @@
     </h2>
     <p class="text-foreground-2 text-center mb-6">A new way to collaborate in AEC.</p>
     <div class="aspect-video w-full">
-      <div class="bg-gray-200 w-full h-full"></div>
+      <iframe
+        class="w-full h-full"
+        src="https://www.youtube.com/embed/QI5pVV1GCNs?si=op1o9Ud4fOKsQlWe"
+        title="YouTube video player"
+        frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        allowfullscreen
+      ></iframe>
     </div>
   </LayoutDialog>
 </template>
