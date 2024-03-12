@@ -25,7 +25,7 @@ export class SpeckleLoader extends Loader {
   constructor(
     targetTree: WorldTree,
     resource: string,
-    authToken: string,
+    authToken?: string,
     enableCaching?: boolean,
     resourceData?: string | ArrayBuffer,
     priority: number = 1

@@ -285,7 +285,12 @@ export class LegacyViewer extends Viewer {
 
   public setColorFilter(property: PropertyInfo, ghost = true): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filtering.setColorFilter(property, ghost))
+      const filteringState = this.filtering.setColorFilter(property, ghost)
+      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
+      filteringState.selectedObjects.push(
+        ...this.selection.getSelectedObjects().map((obj) => obj.id as string)
+      )
+      resolve(filteringState)
     })
   }
 

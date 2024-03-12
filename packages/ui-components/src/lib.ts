@@ -41,6 +41,7 @@ import LayoutDialog from '~~/src/components/layout/Dialog.vue'
 import LayoutDialogSection from '~~/src/components/layout/DialogSection.vue'
 import LayoutDisclosure from '~~/src/components/layout/Disclosure.vue'
 import LayoutGridListToggle from '~~/src/components/layout/GridListToggle.vue'
+import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 import { GridListToggleValue } from '~~/src/helpers/layout/components'
 import {
   ThrottleOrDebounce,
@@ -52,6 +53,7 @@ import {
 import LayoutMenu from '~~/src/components/layout/Menu.vue'
 import type { LayoutMenuItem, LayoutTabItem } from '~~/src/helpers/layout/components'
 import LayoutTabs from '~~/src/components/layout/Tabs.vue'
+import LayoutPageTabs from '~~/src/components/layout/PageTabs.vue'
 import LayoutTable from '~~/src/components/layout/Table.vue'
 import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
@@ -128,6 +130,7 @@ export {
   useResponsiveHorizontalDirectionCalculation,
   LayoutMenu,
   LayoutTabs,
+  LayoutPageTabs,
   LayoutTable,
   InfiniteLoading,
   LayoutPanel,
@@ -152,5 +155,6 @@ export type {
   BlobPostResultItem,
   FileTypeSpecifier,
   AvatarUser,
-  AvatarUserWithId
+  AvatarUserWithId,
+  LayoutPageTabItem
 }

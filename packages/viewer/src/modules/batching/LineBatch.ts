@@ -273,6 +273,7 @@ export default class LineBatch implements Batch {
     const data = this.colorBuffer.array as number[]
     const material = this.batchMaterial.clone()
     material.color.setRGB(data[start], data[start + 1], data[start + 2])
+    material.opacity = data[start + 3]
     return material
   }
 

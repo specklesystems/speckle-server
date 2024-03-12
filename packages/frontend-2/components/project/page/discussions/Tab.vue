@@ -38,11 +38,4 @@ const { result } = useQuery(projectDiscussionsPageQuery, () => ({
 useGeneralProjectPageUpdateTracking({ projectId })
 
 const project = computed(() => result.value?.project)
-const title = computed(() =>
-  project.value?.name.length ? `Discussions - ${project.value.name}` : ''
-)
-
-useHead({
-  title
-})
 </script>

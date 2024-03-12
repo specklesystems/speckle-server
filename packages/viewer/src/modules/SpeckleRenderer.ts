@@ -675,7 +675,7 @@ export default class SpeckleRenderer {
         continue
       }
       if (!rvMap[rvs[k].batchId]) rvMap[rvs[k].batchId] = []
-      rvMap[rvs[k].batchId].push(rvs[k])
+      if (!rvMap[rvs[k].batchId].includes(rvs[k])) rvMap[rvs[k].batchId].push(rvs[k])
     }
 
     if (Materials.isMaterialInstance(material)) {
@@ -746,6 +746,10 @@ export default class SpeckleRenderer {
 
   private flattenDrawRanges(ranges: Array<BatchUpdateRange>): Array<BatchUpdateRange> {
     if (ranges.length < 3) return ranges
+
+    ranges = ranges.sort((a, b) => {
+      return a.offset - b.offset
+    })
 
     const flatRanges = []
     let offset = ranges[0].offset

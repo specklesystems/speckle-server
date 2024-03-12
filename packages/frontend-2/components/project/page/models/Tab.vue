@@ -17,7 +17,7 @@
         :source-apps="selectedApps"
         :contributors="selectedMembers"
         :project="project"
-        class="z-[0] relative"
+        class="z-[0] relative mt-8"
         @clear-search="clearSearch"
       />
     </div>
@@ -58,12 +58,4 @@ const clearSearch = () => {
   selectedMembers.value = []
   selectedApps.value = []
 }
-
-const title = computed(() =>
-  project.value?.name.length ? `Models - ${project.value.name}` : ''
-)
-
-useHead({
-  title
-})
 </script>
