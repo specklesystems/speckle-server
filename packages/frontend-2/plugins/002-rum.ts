@@ -15,7 +15,9 @@ async function initRumClient() {
   // RayGun
   const rg4js = window.rg4js
   if (keys.raygun && rg4js) {
-    router.afterEach((to) => {
+    router.beforeEach((to, from) => {
+      if (!from.path || from.path === to.path) return
+
       rg4js('trackEvent', {
         type: 'pageView',
         path: '/' + trimStart(to.path, '/')
@@ -102,6 +104,9 @@ async function initRumServer(app: PluginNuxtApp) {
                 rg4js('enableCrashReporting', true)
                 rg4js('enablePulse', true)
                 rg4js('withTags', ['baseUrl:${baseUrl}', 'version:${speckleServerVersion}'])
+                rg4js('options', {
+                  debugMode: ${!!process.dev},
+                })
             `
           }
         ]
