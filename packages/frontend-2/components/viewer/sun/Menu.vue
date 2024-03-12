@@ -18,7 +18,7 @@
       >
         <div class="p-2 border-b border-outline flex gap-2 items-center">
           <div class="scale-90">
-            <FormSwitch v-model="sunlightShadows" icons />
+            <FormSwitch v-model="sunlightShadows" />
           </div>
           <span class="text-foreground text-sm">Sun Shadows</span>
         </div>

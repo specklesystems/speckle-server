@@ -448,7 +448,7 @@ const decoratorClasses = computed(() => {
 const buttonClasses = computed(() => {
   const isLinkOrText = props.link || props.text
   return [
-    'transition inline-flex justify-center text-center items-center outline-none select-none',
+    'transition inline-flex justify-center text-center items-center outline-none select-none leading-[0.9rem]',
     generalClasses.value,
     sizeClasses.value,
     foregroundClasses.value,

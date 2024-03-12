@@ -56,7 +56,7 @@
           :show-clear="!!searchString"
         />
       </div>
-      <div class="">
+      <div>
         <div
           v-for="(filter, index) in relevantFiltersLimited"
           :key="index"
