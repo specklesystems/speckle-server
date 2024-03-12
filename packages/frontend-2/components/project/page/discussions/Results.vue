@@ -11,7 +11,7 @@
         @infinite="infiniteLoad"
       />
     </template>
-    <div v-else class="mt-20">
+    <div v-else class="mt-8">
       <ProjectPageLatestItemsCommentsIntroCard />
     </div>
   </div>

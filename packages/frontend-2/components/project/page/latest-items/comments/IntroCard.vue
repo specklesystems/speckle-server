@@ -1,68 +1,83 @@
 <template>
-  <div :class="['p-4', 'flex flex-col justify-center items-center gap-2 sm:gap-6']">
-    <div
-      :class="`hidden sm:block w-42 h-42 group transition-[margin-right] mr-0 hover:sm:mr-12 ${
-        small ? 'scale-75' : ''
-      }`"
-    >
-      <template v-if="!isDarkTheme">
-        <img
-          src="~~/assets/images/discussions/d-w-1.png"
-          class="opacity-80 w-36 h-auto shadow-md relative transition grayscale blur-[1px] group-hover:blur-[2px] group-hover:sm:grayscale-0 group-hover:sm:-translate-x-10 group-hover:sm:-translate-y-3 group-hover:sm:scale-105"
-          alt="discussions image"
+  <ProjectEmptyState
+    title="No discussions, yet."
+    text="Open a model and start the collaboration today!"
+  >
+    <template #bottom-svg>
+      <svg
+        width="100"
+        height="100"
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M64.0625 40.625C64.0625 41.4879 64.7621 42.1875 65.625 42.1875C66.4879 42.1875 67.1875 41.4879 67.1875 40.625C67.1875 39.7621 66.4879 39.0625 65.625 39.0625C64.7621 39.0625 64.0625 39.7621 64.0625 40.625ZM64.0625 40.625H65.625M48.4375 40.625C48.4375 41.4879 49.1371 42.1875 50 42.1875C50.8629 42.1875 51.5625 41.4879 51.5625 40.625C51.5625 39.7621 50.8629 39.0625 50 39.0625C49.1371 39.0625 48.4375 39.7621 48.4375 40.625ZM48.4375 40.625H50M32.8125 40.625C32.8125 41.4879 33.5121 42.1875 34.375 42.1875C35.2379 42.1875 35.9375 41.4879 35.9375 40.625C35.9375 39.7621 35.2379 39.0625 34.375 39.0625C33.5121 39.0625 32.8125 39.7621 32.8125 40.625ZM32.8125 40.625H34.375M90.625 53.1639C90.625 59.8351 85.9441 65.6419 79.3439 66.6123C74.8185 67.2777 70.2437 67.7916 65.625 68.1485V87.5L48.1938 70.0688C47.3324 69.2074 46.1694 68.7177 44.9516 68.6876C36.7201 68.4837 28.612 67.7825 20.6563 66.6128C14.056 65.6425 9.375 59.8356 9.375 53.1644V28.0857C9.375 21.4144 14.056 15.6076 20.6563 14.6372C30.2332 13.2292 40.0308 12.5 49.9988 12.5C59.9677 12.5 69.7662 13.2294 79.3439 14.6376C85.9441 15.6081 90.625 21.4148 90.625 28.086V53.1639Z"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         />
-        <img
-          src="~~/assets/images/discussions/d-w-2.png"
-          class="w-36 shadow-md relative ml-10 -mt-20 transition grayscale group-hover:sm:grayscale-0 group-hover:sm:translate-x-5 group-hover:sm:scale-150 group-hover:sm:shadow-xl"
-          alt="discussions image"
+      </svg>
+    </template>
+    <template #top-svg>
+      <svg
+        width="113"
+        height="113"
+        viewBox="0 0 113 113"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M10.5938 60.0753C10.5938 67.6137 15.8832 74.1753 23.3414 75.2719C28.4551 76.0238 33.6246 76.6045 38.8438 77.0078V98.875L58.541 79.1778C59.5143 78.2044 60.8285 77.651 62.2046 77.617C71.5063 77.3866 80.6684 76.5942 89.6584 75.2725C97.1167 74.176 102.406 67.6143 102.406 60.0758V31.7368C102.406 24.1983 97.1167 17.6366 89.6584 16.5401C78.8365 14.949 67.7652 14.125 56.5013 14.125C45.2365 14.125 34.1642 14.9492 23.3414 16.5405C15.8832 17.6371 10.5938 24.1988 10.5938 31.7372V60.0753Z"
+          class="fill-foundation-page"
         />
-      </template>
-      <template v-else>
-        <img
-          src="~~/assets/images/discussions/d-d-1.png"
-          class="opacity-80 w-36 h-auto shadow-md relative transition grayscale blur-[1px] group-hover:blur-[2px] group-hover:grayscale-0 group-hover:-translate-x-10 group-hover:-translate-y-3 group-hover:scale-105"
-          alt="discussions image"
+        <path
+          d="M40.6094 45.9063C40.6094 46.8814 39.8189 47.6719 38.8438 47.6719C37.8686 47.6719 37.0781 46.8814 37.0781 45.9063C37.0781 44.9311 37.8686 44.1406 38.8438 44.1406C39.8189 44.1406 40.6094 44.9311 40.6094 45.9063ZM40.6094 45.9063H38.8438M75.9219 45.9063C75.9219 46.8814 75.1314 47.6719 74.1563 47.6719C73.1811 47.6719 72.3906 46.8814 72.3906 45.9063C72.3906 44.9311 73.1811 44.1406 74.1563 44.1406C75.1314 44.1406 75.9219 44.9311 75.9219 45.9063ZM75.9219 45.9063H74.1563M10.5938 60.0753C10.5938 67.6137 15.8832 74.1753 23.3414 75.2719C28.4551 76.0238 33.6246 76.6045 38.8438 77.0078V98.875L58.541 79.1778C59.5143 78.2044 60.8285 77.651 62.2046 77.617C71.5063 77.3866 80.6684 76.5942 89.6584 75.2725C97.1167 74.176 102.406 67.6143 102.406 60.0758V31.7368C102.406 24.1983 97.1167 17.6366 89.6584 16.5401C78.8365 14.949 67.7652 14.125 56.5013 14.125C45.2365 14.125 34.1642 14.9492 23.3414 16.5405C15.8832 17.6371 10.5938 24.1988 10.5938 31.7372V60.0753Z"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
         />
-        <img
-          src="~~/assets/images/discussions/d-d-2.png"
-          class="w-36 shadow-md relative ml-10 -mt-20 transition grayscale group-hover:grayscale-0 group-hover:translate-x-5 group-hover:scale-150 group-hover:shadow-xl"
-          alt="discussions image"
+        <path
+          d="M60 50.5C60 52.433 58.433 54 56.5 54C54.567 54 53 52.433 53 50.5"
+          stroke="currentColor"
+          stroke-width="3"
+          stroke-linecap="round"
         />
-      </template>
-    </div>
-    <div class="text-foreground text-center text-xs sm:text-sm">
-      <div>Speckle allows for real time discussions straight in your 3D model.</div>
-      <div v-if="!small" class="text-xs text-foreground-2">
-        Head over to a model and start coordinating right away!
-      </div>
-      <div v-else class="mt-3">
-        <FormButton
-          size="sm"
-          :icon-left="PlusIcon"
-          @click="() => $emit('new-discussion')"
-        >
-          New discussion
-        </FormButton>
-      </div>
-    </div>
-  </div>
+      </svg>
+    </template>
+  </ProjectEmptyState>
 </template>
-<script setup lang="ts">
-import { PlusIcon } from '@heroicons/vue/24/solid'
-import { useTheme } from '~~/lib/core/composables/theme'
-
-defineEmits<{
-  (e: 'new-discussion'): void
-}>()
-
-withDefaults(
-  defineProps<{
-    small?: boolean
-  }>(),
-  {
-    small: false
+<script setup lang="ts"></script>
+<style scoped>
+@keyframes move-up {
+  0%,
+  100% {
+    transform: translateY(0);
   }
-)
 
-const { isDarkTheme } = useTheme()
-</script>
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes move-down {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(5px);
+  }
+}
+
+.svg-upward {
+  animation: move-up 4s linear infinite;
+}
+
+.svg-downward {
+  animation: move-down 4s linear infinite;
+}
+</style>
