@@ -1,6 +1,9 @@
 <template>
   <div class="flex flex-col items-center max-w-[180px] mx-auto">
-    <div class="relative text-foreground-2 h-32 w-full">
+    <div
+      class="relative text-foreground-2 h-32 w-full"
+      :class="small ? 'scale-75' : ''"
+    >
       <div class="svg-downward absolute right-0 bottom-0">
         <slot name="bottom-svg"></slot>
       </div>
@@ -18,6 +21,7 @@
 </template>
 <script setup lang="ts">
 defineProps<{
+  small?: boolean
   title: string
   text?: string
 }>()

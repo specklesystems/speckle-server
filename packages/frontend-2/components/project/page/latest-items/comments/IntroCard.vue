@@ -1,5 +1,6 @@
 <template>
   <ProjectEmptyState
+    :small="small"
     title="No discussions, yet."
     text="Open a model and start the collaboration today!"
   >
@@ -49,7 +50,11 @@
     </template>
   </ProjectEmptyState>
 </template>
-<script setup lang="ts"></script>
+<script setup lang="ts">
+defineProps<{
+  small?: boolean
+}>()
+</script>
 <style scoped>
 @keyframes move-up {
   0%,
