@@ -22,8 +22,7 @@ export const createModelMutation = graphql(`
   mutation CreateModel($input: CreateModelInput!) {
     modelMutations {
       create(input: $input) {
-        id
-        name
+        ...ModelListModelItem
       }
     }
   }
@@ -33,8 +32,7 @@ export const createProjectMutation = graphql(`
   mutation CreateProject($input: ProjectCreateInput) {
     projectMutations {
       create(input: $input) {
-        id
-        name
+        ...ProjectListProjectItem
       }
     }
   }

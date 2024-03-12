@@ -24,9 +24,9 @@
       <WizardProjectSelector @next="selectProject" />
     </div>
     <div v-if="step === 2 && selectedProject && selectedAccountId">
-      <div class="flex items-center justify-between mb-2">
+      <!-- <div class="flex items-center justify-between mb-2">
         <div class="h5 font-bold">Select Model</div>
-      </div>
+      </div> -->
       <div>
         <WizardModelSelector
           :project="selectedProject"
