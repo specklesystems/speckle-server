@@ -5,8 +5,8 @@ import type { Plugin } from 'nuxt/dist/app/nuxt'
 
 type PluginNuxtApp = Parameters<Plugin>[0]
 
-async function initRumClient() {
-  const { keys, baseUrl, speckleServerVersion } = resolveInitParams()
+async function initRumClient(app: PluginNuxtApp) {
+  const { keys, baseUrl, speckleServerVersion } = resolveInitParams(app)
   const router = useRouter()
   const onAuthStateChange = useOnAuthStateChange()
   const registerErrorTransport = useCreateErrorLoggingTransport()
@@ -76,7 +76,7 @@ async function initRumClient() {
 async function initRumServer(app: PluginNuxtApp) {
   const registerErrorTransport = useCreateErrorLoggingTransport()
   const { keys, baseUrl, speckleServerVersion, debug, debugCoreWebVitals } =
-    resolveInitParams()
+    resolveInitParams(app)
 
   // RayGun
   if (keys.raygun) {
@@ -150,7 +150,7 @@ async function initRumServer(app: PluginNuxtApp) {
   }
 }
 
-function resolveInitParams() {
+function resolveInitParams(app: PluginNuxtApp) {
   const {
     public: {
       raygunKey,
@@ -163,6 +163,8 @@ function resolveInitParams() {
   const logger = useLogger()
   const raygun = raygunKey?.length ? raygunKey : null
 
+  const shouldDebugCoreWebVitals = debugCoreWebVitals || app._route?.query.cwv === '1'
+
   return {
     keys: {
       raygun
@@ -170,7 +172,7 @@ function resolveInitParams() {
     speckleServerVersion,
     baseUrl,
     debug: logCsrEmitProps && process.dev,
-    debugCoreWebVitals,
+    debugCoreWebVitals: shouldDebugCoreWebVitals,
     logger
   }
 }
@@ -179,6 +181,6 @@ export default defineNuxtPlugin(async (app) => {
   if (process.server) {
     await initRumServer(app)
   } else {
-    await initRumClient()
+    await initRumClient(app)
   }
 })
