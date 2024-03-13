@@ -43,12 +43,15 @@
         </div>
         <div class="flex order-1 md:order-2 justify-end gap-2">
           <FormButton
-            :icon-right="ChevronDownIcon"
             class="md:hidden flex items-center gap-2 mb-2"
             color="secondary"
             @click="mobileFiltersExpanded = !mobileFiltersExpanded"
           >
             <span>Filters</span>
+            <ChevronDownIcon
+              class="h-4 w-4 transition-all duration-300"
+              :class="mobileFiltersExpanded ? 'rotate-180' : ''"
+            />
           </FormButton>
           <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0 order-2" />
         </div>
