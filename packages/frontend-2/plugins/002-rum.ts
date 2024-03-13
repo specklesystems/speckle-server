@@ -112,13 +112,15 @@ async function initRumServer(app: PluginNuxtApp) {
                       onCLS,
                       onFID,
                       onLCP,
-                      onINP
+                      onINP,
+                      onTTFB
                     } from 'https://unpkg.com/web-vitals@3/dist/web-vitals.attribution.js?module';
 
                     onCLS(console.log);
                     onFID(console.log);
                     onLCP(console.log);
                     onINP(console.log);
+                    onTTFB(console.log);
               `,
                   type: 'module'
                 }
