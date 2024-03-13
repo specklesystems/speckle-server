@@ -109,7 +109,9 @@
                 ></FormButton>
               </div>
             </div>
-            <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
+            <div
+              class="relative w-full pr-3 sm:w-80 flex flex-col flex-1 justify-between pb-4 sm:pb-0"
+            >
               <div
                 ref="commentsContainer"
                 class="max-h-[40vh] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
