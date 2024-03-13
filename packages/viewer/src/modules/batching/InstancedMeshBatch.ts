@@ -427,6 +427,7 @@ export default class InstancedMeshBatch implements Batch {
           if (value.materialIndex > k) value.materialIndex--
         })
         k = 0
+        continue
       }
       k++
     }
