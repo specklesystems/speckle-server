@@ -71,7 +71,7 @@ function buildEmailTemplateHtml(
     bodyStart: `<mj-text>
 Hello,<br/>
 <br/>
-<b>${requester.name}</b> requested access to the <b>${stream.name}</b> stream.
+<b>${requester.name}</b> requested access to the <b>${stream.name}</b> project.
 You can add them as a collaborator by clicking the button below.
 </mj-text>
 `,
@@ -87,7 +87,7 @@ function buildEmailTemplateText(
   const { requester, stream } = state
 
   return {
-    bodyStart: `Hello,\n\n${requester.name} requested access to the ${stream.name} stream. You can add them as a collaborator by opening the link below.`,
+    bodyStart: `Hello,\n\n${requester.name} requested access to the ${stream.name} project. You can add them as a collaborator by opening the link below.`,
     bodyEnd: `You received this email because you are an owner on ${stream.name}`
   }
 }
@@ -119,7 +119,7 @@ const handler: NotificationHandler<NewStreamAccessRequestMessage> = async (msg) 
     to: state.targetUser.email,
     text,
     html,
-    subject: 'A user requested access to your stream'
+    subject: 'A user requested access to your project'
   })
 }
 

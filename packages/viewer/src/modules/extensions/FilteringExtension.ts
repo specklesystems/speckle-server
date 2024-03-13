@@ -343,6 +343,7 @@ export class FilteringExtension extends Extension {
       this.ColorNumericFilterState = null
       return this.setFilters()
     }
+    return this.filteringState
   }
 
   public setUserObjectColors(groups: { objectIds: string[]; color: string }[]) {
