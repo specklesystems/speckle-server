@@ -181,6 +181,26 @@ export default class MeshBatch implements Batch {
     return AllBatchUpdateRange
   }
 
+  public getDepth(): BatchUpdateRange {
+    /** If there is any transparent or hidden group return the update range up to it's offset */
+    const transparentOrHiddenGroup = this.groups.find((value) => {
+      return (
+        Materials.isTransparent(this.materials[value.materialIndex]) ||
+        this.materials[value.materialIndex].visible === false ||
+        this.materials[value.materialIndex].colorWrite === false
+      )
+    })
+
+    if (transparentOrHiddenGroup) {
+      return {
+        offset: 0,
+        count: transparentOrHiddenGroup.start
+      }
+    }
+    /** Entire batch is opaque */
+    return AllBatchUpdateRange
+  }
+
   public getTransparent(): BatchUpdateRange {
     /** Look for a transparent group */
     const transparentGroup = this.groups.find((value) => {
@@ -503,7 +523,8 @@ export default class MeshBatch implements Batch {
       const transparentOrHiddenGroup = this.geometry.groups.find(
         (value) =>
           this.materials[value.materialIndex].transparent === true ||
-          this.materials[value.materialIndex].visible === false
+          this.materials[value.materialIndex].visible === false ||
+          this.materials[value.materialIndex].colorWrite === false
       )
 
       if (transparentOrHiddenGroup) {
@@ -545,7 +566,10 @@ export default class MeshBatch implements Batch {
       const materialB: Material = (this.mesh.material as Array<Material>)[
         b.materialIndex
       ]
-      const visibleOrder = +materialB.visible - +materialA.visible
+      const visibleOrder =
+        +materialB.visible +
+        +materialB.colorWrite -
+        (+materialA.visible + +materialA.colorWrite)
       const transparentOrder = +materialA.transparent - +materialB.transparent
       if (visibleOrder !== 0) return visibleOrder
       return transparentOrder

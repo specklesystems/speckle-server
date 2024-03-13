@@ -98,6 +98,9 @@ export default class TextBatch implements Batch {
     if (Materials.isOpaque(this.batchMaterial)) return AllBatchUpdateRange
     return NoneBatchUpdateRange
   }
+  public getDepth(): BatchUpdateRange {
+    return this.getOpaque()
+  }
   public getTransparent(): BatchUpdateRange {
     if (Materials.isTransparent(this.batchMaterial)) return AllBatchUpdateRange
     return NoneBatchUpdateRange
