@@ -1,15 +1,14 @@
 <template>
   <v-dialog v-model="dialog" persistent max-width="850px">
     <v-card class="whats-new-dialog">
-      <v-card
-        d-title
-        class="headline d-flex justify-space-between align-center px-4 py-3"
+      <div
+        class="headline d-flex justify-space-between align-center px-4 py-3 rounded-b-0 shadow-0"
       >
         <h4>The New Speckle Web App</h4>
         <v-btn icon @click="dialog = false">
           <v-icon>mdi-close</v-icon>
         </v-btn>
-      </v-card>
+      </div>
       <v-row no-gutters align="center" justify="space-between" class="pa-6">
         <v-col cols="12" md="7">
           <iframe
@@ -79,7 +78,7 @@
             <p class="ml-3 mb-0">Faster loading times</p>
           </div>
           <h2 class="mt-4 mt-sm-6">How?</h2>
-          <div class="d-flex align-center pt-2 py-sm-2">
+          <div class="d-flex align-center pt-2 py-sm-2 pr-8">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"

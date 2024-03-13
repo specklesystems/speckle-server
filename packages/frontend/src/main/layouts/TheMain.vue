@@ -166,7 +166,6 @@ export default {
     }
   },
   mounted() {
-    console.log(AppLocalStorage.get('newSpeckleDialogDismissed'))
     const dialogDismissed = AppLocalStorage.get('newSpeckleDialogDismissed')
     this.showNewSpeckleDialog = dialogDismissed !== 'true'
   },
