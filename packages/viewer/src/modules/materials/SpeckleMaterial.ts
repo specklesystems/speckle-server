@@ -57,6 +57,12 @@ export class SpeckleMaterial {
       this['stencilZFail'] = ReplaceStencilOp
       this['stencilZPass'] = ReplaceStencilOp
       this['stencilFail'] = ReplaceStencilOp
+      if (!this['visible']) {
+        this['visible'] = true
+        this['colorWrite'] = false
+        this['depthWrite'] = false
+        this['stencilWrite'] = true
+      }
     }
   }
 
