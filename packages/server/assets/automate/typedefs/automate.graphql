@@ -24,9 +24,13 @@ type AutomateFunctionCollection {
 }
 
 extend type Project {
-  automations(filter: String, cursor: String): AutomationCollection!
+  automations(filter: String, cursor: String, limit: Int): AutomationCollection!
 }
 
 extend type Query {
-  automateFunctions(filter: String, cursor: String): AutomateFunctionCollection!
+  automateFunctions(
+    filter: String
+    cursor: String
+    limit: Int
+  ): AutomateFunctionCollection!
 }

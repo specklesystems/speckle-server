@@ -256,7 +256,7 @@ async function buildMocksConfig(): Promise<{
       Project: () => ({
         automations: () => {
           // const count = faker.datatype.number({ min: 0, max: 5 })
-          const count = 2
+          const count = 0
           return {
             cursor: null,
             totalCount: count,

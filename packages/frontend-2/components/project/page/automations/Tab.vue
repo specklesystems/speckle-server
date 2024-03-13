@@ -1,6 +1,10 @@
 <template>
   <div>
-    <ProjectPageAutomationsHeader :has-automations="hasAutomations" class="mb-8" />
+    <ProjectPageAutomationsHeader
+      v-model:search="search"
+      :has-automations="hasAutomations"
+      class="mb-8"
+    />
     <ProjectPageAutomationsEmptyState v-if="!hasAutomations" :functions="result" />
   </div>
 </template>
@@ -9,10 +13,10 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 
 const automationsTabQuery = graphql(`
-  query ProjectAutomationsTab($projectId: String!) {
+  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {
     project(id: $projectId) {
       id
-      automations {
+      automations(filter: $search, cursor: $cursor) {
         totalCount
       }
     }
@@ -22,9 +26,16 @@ const automationsTabQuery = graphql(`
 
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
-const { result } = useQuery(automationsTabQuery, () => ({ projectId: projectId.value }))
+const search = ref('')
+
+const { result } = useQuery(automationsTabQuery, () => ({
+  projectId: projectId.value,
+  search: search.value,
+  // TODO: Pagination
+  cursor: null
+}))
 
 const hasAutomations = computed(
-  () => (result.value?.project.automations.totalCount || 0) > 0
+  () => (result.value?.project.automations.totalCount ?? 1) > 0
 )
 </script>

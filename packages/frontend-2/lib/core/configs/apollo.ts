@@ -102,7 +102,7 @@ function createCache(): InMemoryCache {
             merge: mergeAsObjectsFunction
           },
           automateFunctions: {
-            keyArgs: ['filter'],
+            keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('AutomateFunctionCollection')
           }
         }
@@ -174,7 +174,7 @@ function createCache(): InMemoryCache {
             merge: buildAbstractCollectionMergeFunction('CommentReplyAuthorCollection')
           },
           automations: {
-            keyArgs: ['filter'],
+            keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('AutomationCollection')
           },
           viewerResources: {

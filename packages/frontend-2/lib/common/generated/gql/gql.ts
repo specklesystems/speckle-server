@@ -33,8 +33,8 @@ const documents = {
     "\n  fragment ProjectsModelPageEmbed_Project on Project {\n    id\n    ...ProjectsPageTeamDialogManagePermissions_Project\n  }\n": types.ProjectsModelPageEmbed_ProjectFragmentDoc,
     "\n  fragment ProjectModelPageVersionsCardVersion on Version {\n    id\n    message\n    authorUser {\n      ...LimitedUserAvatar\n    }\n    createdAt\n    previewUrl\n    sourceApplication\n    commentThreadCount: commentThreads(limit: 0) {\n      totalCount\n    }\n    ...ProjectModelPageDialogDeleteVersion\n    ...ProjectModelPageDialogMoveToVersion\n    ...ModelCardAutomationStatus_Version\n  }\n": types.ProjectModelPageVersionsCardVersionFragmentDoc,
     "\n  fragment ProjectPageProjectHeader on Project {\n    id\n    role\n    name\n    description\n    visibility\n    allowPublicComments\n  }\n": types.ProjectPageProjectHeaderFragmentDoc,
-    "\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n": types.ProjectPageAutomationsEmptyState_QueryFragmentDoc,
-    "\n  query ProjectAutomationsTab($projectId: String!) {\n    project(id: $projectId) {\n      id\n      automations {\n        totalCount\n      }\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n": types.ProjectAutomationsTabDocument,
+    "\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions(limit: 9) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n": types.ProjectPageAutomationsEmptyState_QueryFragmentDoc,
+    "\n  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {\n    project(id: $projectId) {\n      id\n      automations(filter: $search, cursor: $cursor) {\n        totalCount\n      }\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n": types.ProjectAutomationsTabDocument,
     "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n  }\n": types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
     "\n  fragment ProjectPageLatestItemsComments on Project {\n    id\n    commentThreadCount: commentThreads(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectPageLatestItemsCommentsFragmentDoc,
@@ -277,11 +277,11 @@ export function graphql(source: "\n  fragment ProjectPageProjectHeader on Projec
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions(limit: 9) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions(limit: 9) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ProjectAutomationsTab($projectId: String!) {\n    project(id: $projectId) {\n      id\n      automations {\n        totalCount\n      }\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n"): (typeof documents)["\n  query ProjectAutomationsTab($projectId: String!) {\n    project(id: $projectId) {\n      id\n      automations {\n        totalCount\n      }\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n"];
+export function graphql(source: "\n  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {\n    project(id: $projectId) {\n      id\n      automations(filter: $search, cursor: $cursor) {\n        totalCount\n      }\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n"): (typeof documents)["\n  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {\n    project(id: $projectId) {\n      id\n      automations(filter: $search, cursor: $cursor) {\n        totalCount\n      }\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

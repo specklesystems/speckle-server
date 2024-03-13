@@ -43,7 +43,7 @@ import type { ProjectPageAutomationsEmptyState_QueryFragment } from '~/lib/commo
 
 graphql(`
   fragment ProjectPageAutomationsEmptyState_Query on Query {
-    automateFunctions {
+    automateFunctions(limit: 9) {
       items {
         ...AutomationsFunctionsCard_AutomateFunction
       }

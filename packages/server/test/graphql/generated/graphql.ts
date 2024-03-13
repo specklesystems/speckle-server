@@ -1485,6 +1485,7 @@ export type Project = {
 export type ProjectAutomationsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 
@@ -1959,6 +1960,7 @@ export type QueryAppArgs = {
 export type QueryAutomateFunctionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 
