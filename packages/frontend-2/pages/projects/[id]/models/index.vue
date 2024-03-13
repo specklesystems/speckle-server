@@ -1,5 +1,14 @@
 <template>
   <div>
+    <div>
+      <Portal to="navigation">
+        <HeaderNavLink
+          :to="projectRoute(project.id)"
+          :name="project.name"
+        ></HeaderNavLink>
+      </Portal>
+    </div>
+
     <div v-if="project">
       <ProjectPageModelsHeader
         v-model:selected-apps="selectedApps"
@@ -25,6 +34,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
+import { projectRoute } from '~~/lib/common/helpers/route'
 import type { SourceAppDefinition } from '@speckle/shared'
 import type { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectModelsPageQuery } from '~~/lib/projects/graphql/queries'
