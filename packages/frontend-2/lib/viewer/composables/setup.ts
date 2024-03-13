@@ -23,7 +23,7 @@ import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { SpeckleViewer, isNonNullable } from '@speckle/shared'
-import { useApolloClient, useQuery } from '@vue/apollo-composable'
+import { useApolloClient, useLazyQuery, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
   viewerLoadedResourcesQuery,
@@ -701,8 +701,8 @@ function setupResponseResourceData(
     variables: viewerLoadedResourcesVariables,
     onError: onViewerLoadedResourcesError,
     onResult: onViewerLoadedResourcesResult,
-    refetch
-  } = useQuery(viewerLoadedResourcesQuery, viewerLoadedResourcesVariablesFunc, {
+    load: loadViewerLoadedResources
+  } = useLazyQuery(viewerLoadedResourcesQuery, viewerLoadedResourcesVariablesFunc, {
     keepPreviousResult: true
   })
 
@@ -713,14 +713,14 @@ function setupResponseResourceData(
       async (newVal, oldVal) => {
         if (!newVal || oldVal) return
 
-        // Reload query once previous query has loaded - unfortunately I can't get this to work without weird promise hacks,
-        // for some reason the query doesn't update if I just update the variables/options
-        await refetch(viewerLoadedResourcesVariablesFunc())
+        // Load only now - once the previous query is done
+        await loadViewerLoadedResources()
         serverResourcesLoadedPromise.resolve()
       },
       { flush: 'sync' }
     )
   } else {
+    loadViewerLoadedResources()
     serverResourcesLoadedPromise.resolve()
   }
 
@@ -811,7 +811,6 @@ function setupResponseResourceData(
   const {
     result: viewerLoadedThreadsResult,
     onError: onViewerLoadedThreadsError,
-    onResult: onViewerLoadadThredsResult,
     variables: threadsQueryVariables
   } = useQuery(
     viewerLoadedThreadsQuery,
@@ -839,20 +838,8 @@ function setupResponseResourceData(
     logger.error(err)
   })
 
-  const threadsLoadedPromise = buildManualPromise<void>()
-  if (process.server) {
-    onViewerLoadadThredsResult(() => {
-      threadsLoadedPromise.resolve()
-    })
-  } else {
-    threadsLoadedPromise.resolve()
-  }
-
   onServerPrefetch(async () => {
-    await Promise.all([
-      threadsLoadedPromise.promise,
-      serverResourcesLoadedPromise.promise
-    ])
+    await Promise.all([serverResourcesLoadedPromise.promise])
   })
 
   return {
