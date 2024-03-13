@@ -13,75 +13,75 @@
           </ViewerScope>
         </Portal>
 
-        <ClientOnly>
-          <!-- Tour host -->
-          <div
-            v-if="showTour"
-            class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
-          >
-            <TourOnboarding />
-          </div>
-          <!-- Viewer host -->
-          <div
-            class="viewer special-gradient absolute z-10 overflow-hidden w-screen"
-            :class="
-              isEmbedEnabled
-                ? isTransparent
-                  ? 'viewer-transparent h-[100dvh]'
-                  : 'h-[calc(100dvh-3.5rem)]'
-                : 'h-[100dvh]'
-            "
-          >
+        <!-- Tour host -->
+        <div
+          v-if="showTour"
+          class="fixed w-full h-[100dvh] flex justify-center items-center pointer-events-none z-[100]"
+        >
+          <TourOnboarding />
+        </div>
+        <!-- Viewer host -->
+        <div
+          class="viewer special-gradient absolute z-10 overflow-hidden w-screen"
+          :class="
+            isEmbedEnabled
+              ? isTransparent
+                ? 'viewer-transparent h-[100dvh]'
+                : 'h-[calc(100dvh-3.5rem)]'
+              : 'h-[100dvh]'
+          "
+        >
+          <ClientOnly>
             <ViewerBase />
-            <Transition
-              enter-from-class="opacity-0"
-              enter-active-class="transition duration-1000"
-            >
-              <ViewerAnchoredPoints v-show="showControls" />
-            </Transition>
-          </div>
-
-          <!-- Global loading bar -->
-          <ViewerLoadingBar class="relative z-20" />
-
-          <!-- Sidebar controls -->
+          </ClientOnly>
           <Transition
             enter-from-class="opacity-0"
             enter-active-class="transition duration-1000"
           >
-            <ViewerControls v-show="showControls" class="relative z-20" />
+            <ViewerAnchoredPoints v-show="showControls" />
           </Transition>
+        </div>
 
-          <!-- Viewer Object Selection Info Display -->
-          <Transition
-            v-if="!hideSelectionInfo"
-            enter-from-class="opacity-0"
-            enter-active-class="transition duration-1000"
-          >
-            <div v-show="showControls">
-              <ViewerSelectionSidebar class="z-20" />
-            </div>
-          </Transition>
-          <div
-            class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2"
-            :class="isEmbedEnabled ? 'bottom-16 mb-1' : 'bottom-6'"
-          >
-            <div class="flex items-end justify-center sm:justify-start">
-              <PortalTarget name="pocket-left"></PortalTarget>
-            </div>
-            <div class="flex flex-col gap-2 items-center justify-end">
-              <PortalTarget name="pocket-tip"></PortalTarget>
-              <div class="flex gap-3">
-                <PortalTarget name="pocket-actions"></PortalTarget>
-                <!-- Shows up when filters are applied for an easy return to normality -->
-                <ViewerGlobalFilterReset class="z-20" :embed="!!isEmbedEnabled" />
-              </div>
-            </div>
-            <div class="flex items-end justify-center sm:justify-end">
-              <PortalTarget name="pocket-right"></PortalTarget>
+        <!-- Global loading bar -->
+        <ViewerLoadingBar class="relative z-20" />
+
+        <!-- Sidebar controls -->
+        <Transition
+          enter-from-class="opacity-0"
+          enter-active-class="transition duration-1000"
+        >
+          <ViewerControls v-show="showControls" class="relative z-20" />
+        </Transition>
+
+        <!-- Viewer Object Selection Info Display -->
+        <Transition
+          v-if="!hideSelectionInfo"
+          enter-from-class="opacity-0"
+          enter-active-class="transition duration-1000"
+        >
+          <div v-show="showControls">
+            <ViewerSelectionSidebar class="z-20" />
+          </div>
+        </Transition>
+        <div
+          class="absolute z-10 w-screen px-8 grid grid-cols-1 sm:grid-cols-3 gap-2"
+          :class="isEmbedEnabled ? 'bottom-16 mb-1' : 'bottom-6'"
+        >
+          <div class="flex items-end justify-center sm:justify-start">
+            <PortalTarget name="pocket-left"></PortalTarget>
+          </div>
+          <div class="flex flex-col gap-2 items-center justify-end">
+            <PortalTarget name="pocket-tip"></PortalTarget>
+            <div class="flex gap-3">
+              <PortalTarget name="pocket-actions"></PortalTarget>
+              <!-- Shows up when filters are applied for an easy return to normality -->
+              <ViewerGlobalFilterReset class="z-20" :embed="!!isEmbedEnabled" />
             </div>
           </div>
-        </ClientOnly>
+          <div class="flex items-end justify-center sm:justify-end">
+            <PortalTarget name="pocket-right"></PortalTarget>
+          </div>
+        </div>
       </div>
     </ViewerPostSetupWrapper>
     <ViewerEmbedFooter

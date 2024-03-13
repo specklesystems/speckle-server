@@ -20,7 +20,7 @@
     "gqlgen:watch": "graphql-codegen --watch"
   },
   "dependencies": {
-    "@apollo/client": "^3.8.4",
+    "@apollo/client": "^3.9.6",
     "@artmizu/nuxt-prometheus": "^2.2.1",
     "@headlessui/vue": "^1.7.13",
     "@heroicons/vue": "^2.0.12",
@@ -44,8 +44,8 @@
     "@tiptap/pm": "2.0.0-beta.220",
     "@tiptap/suggestion": "2.0.0-beta.220",
     "@tiptap/vue-3": "2.0.0-beta.220",
-    "@vue/apollo-composable": "4.0.0-beta.11",
-    "@vue/apollo-ssr": "4.0.0-beta.9",
+    "@vue/apollo-composable": "4.0.2",
+    "@vue/apollo-ssr": "4.0.0",
     "@vueuse/core": "^9.13.0",
     "apollo-upload-client": "^17.0.0",
     "dayjs": "^1.11.7",

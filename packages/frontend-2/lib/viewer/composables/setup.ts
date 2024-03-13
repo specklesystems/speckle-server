@@ -66,6 +66,7 @@ import {
   useSetupViewerScope
 } from '~/lib/viewer/composables/setup/core'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
+import { buildManualPromise } from '@speckle/ui-components'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -164,6 +165,14 @@ export type InjectableViewerState = Readonly<{
       resourceItemsQueryVariables: ComputedRef<
         Optional<ProjectViewerResourcesQueryVariables>
       >
+      /**
+       * Whether or not the initial resource items load has happened (useful in SSR)
+       */
+      resourceItemsLoaded: ComputedRef<boolean>
+      /**
+       * Whether or not the initial resources (models, objects etc.) have been loaded (useful in SSR)
+       */
+      resourcesLoaded: ComputedRef<boolean>
       /**
        * Model GQL objects paired with their loaded version IDs
        */
@@ -391,7 +400,20 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
     projectId,
     sessionId,
     viewer: process.server
-      ? (undefined as unknown as InitialSetupState['viewer'])
+      ? ({
+          instance: undefined,
+          container: undefined,
+          init: {
+            promise: new Promise(() => {}),
+            ref: computed(() => false)
+          },
+          metadata: {
+            worldTree: computed(() => undefined),
+            availableFilters: computed(() => undefined),
+            views: computed(() => []),
+            filteringState: computed(() => undefined)
+          }
+        } as unknown as InitialSetupState['viewer'])
       : {
           instance,
           container,
@@ -504,7 +526,7 @@ function setupResponseResourceItems(
   state: InitialStateWithRequest
 ): Pick<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables'
+  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded'
 > {
   const globalError = useError()
   const {
@@ -514,10 +536,12 @@ function setupResponseResourceItems(
     }
   } = state
 
+  const initLoadDone = ref(process.server ? false : true)
   const {
     result: resolvedResourcesResult,
     variables: resourceItemsQueryVariables,
-    onError
+    onError,
+    onResult
   } = useQuery(
     projectViewerResourcesQuery,
     () => ({
@@ -532,6 +556,11 @@ function setupResponseResourceItems(
       statusCode: 500,
       message: `Viewer resource resolution failed: ${err}`
     })
+    initLoadDone.value = true
+  })
+
+  onResult(() => {
+    initLoadDone.value = true
   })
 
   const resolvedResourceGroups = computed(
@@ -599,9 +628,12 @@ function setupResponseResourceItems(
     return finalItems
   })
 
+  const resourceItemsLoaded = computed(() => initLoadDone.value)
+
   return {
     resourceItems,
-    resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value)
+    resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
+    resourceItemsLoaded
   }
 }
 
@@ -610,7 +642,7 @@ function setupResponseResourceData(
   resourceItemsData: ReturnType<typeof setupResponseResourceItems>
 ): Omit<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables'
+  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded'
 > {
   const apollo = useApolloClient().client
   const globalError = useError()
@@ -624,8 +656,9 @@ function setupResponseResourceData(
     },
     urlHashState: { diff }
   } = state
-  const { resourceItems } = resourceItemsData
+  const { resourceItems, resourceItemsLoaded } = resourceItemsData
 
+  const initLoadDone = ref(process.server ? false : true)
   const objects = computed(() =>
     resourceItems.value.filter((i) => !i.modelId && !i.versionId)
   )
@@ -667,10 +700,29 @@ function setupResponseResourceData(
     result: viewerLoadedResourcesResult,
     variables: viewerLoadedResourcesVariables,
     onError: onViewerLoadedResourcesError,
-    onResult: onViewerLoadedResourcesResult
+    onResult: onViewerLoadedResourcesResult,
+    refetch
   } = useQuery(viewerLoadedResourcesQuery, viewerLoadedResourcesVariablesFunc, {
     keepPreviousResult: true
   })
+
+  const serverResourcesLoadedPromise = buildManualPromise<void>()
+  if (process.server) {
+    watch(
+      () => resourceItemsLoaded.value,
+      async (newVal, oldVal) => {
+        if (!newVal || oldVal) return
+
+        // Reload query once previous query has loaded - unfortunately I can't get this to work without weird promise hacks,
+        // for some reason the query doesn't update if I just update the variables/options
+        await refetch(viewerLoadedResourcesVariablesFunc())
+        serverResourcesLoadedPromise.resolve()
+      },
+      { flush: 'sync' }
+    )
+  } else {
+    serverResourcesLoadedPromise.resolve()
+  }
 
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
@@ -707,10 +759,12 @@ function setupResponseResourceData(
       statusCode: 500,
       message: `Viewer loaded resource resolution failed: ${err}`
     })
+    initLoadDone.value = true
   })
 
   // Load initial batch of cursors for each model
   onViewerLoadedResourcesResult((res) => {
+    initLoadDone.value = true
     if (!res.data?.project?.models) return
 
     for (const model of res.data.project.models.items) {
@@ -757,6 +811,7 @@ function setupResponseResourceData(
   const {
     result: viewerLoadedThreadsResult,
     onError: onViewerLoadedThreadsError,
+    onResult: onViewerLoadadThredsResult,
     variables: threadsQueryVariables
   } = useQuery(
     viewerLoadedThreadsQuery,
@@ -784,6 +839,22 @@ function setupResponseResourceData(
     logger.error(err)
   })
 
+  const threadsLoadedPromise = buildManualPromise<void>()
+  if (process.server) {
+    onViewerLoadadThredsResult(() => {
+      threadsLoadedPromise.resolve()
+    })
+  } else {
+    threadsLoadedPromise.resolve()
+  }
+
+  onServerPrefetch(async () => {
+    await Promise.all([
+      threadsLoadedPromise.promise,
+      serverResourcesLoadedPromise.promise
+    ])
+  })
+
   return {
     objects,
     commentThreads,
@@ -793,7 +864,8 @@ function setupResponseResourceData(
     project,
     resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value),
     threadsQueryVariables: computed(() => threadsQueryVariables.value),
-    loadMoreVersions
+    loadMoreVersions,
+    resourcesLoaded: computed(() => initLoadDone.value)
   }
 }
 

@@ -1,4 +1,4 @@
-import { SpeckleViewer, timeoutAt } from '@speckle/shared'
+import { SpeckleViewer, timeoutAt, type Optional } from '@speckle/shared'
 import type { TreeNode } from '@speckle/viewer'
 import { CameraController, MeasurementsExtension } from '@speckle/viewer'
 import type { MeasurementOptions, PropertyInfo } from '@speckle/viewer'
@@ -63,9 +63,16 @@ export function useCameraUtilities() {
   const setView = (...args: Parameters<typeof instance.setView>) => {
     instance.setView(...args)
   }
-  const cameraController = instance.getExtension(CameraController)
-  const truck = (...args: Parameters<typeof cameraController.controls.truck>) =>
+
+  let cameraController: Optional<CameraController> = undefined
+  const truck = (
+    ...args: Parameters<NonNullable<typeof cameraController>['controls']['truck']>
+  ) => {
+    if (!cameraController) {
+      cameraController = instance.getExtension(CameraController)
+    }
     cameraController.controls.truck(...args)
+  }
 
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
@@ -106,11 +113,7 @@ export function useCameraUtilities() {
 export function useFilterUtilities() {
   // const { instance } = useInjectedViewer()
   const { filters, explodeFactor } = useInjectedViewerInterfaceState()
-  const {
-    viewer: {
-      metadata: { availableFilters }
-    }
-  } = useInjectedViewerState()
+  const { viewer } = useInjectedViewerState()
 
   const isolateObjects = (
     objectIds: string[],
@@ -196,7 +199,7 @@ export function useFilterUtilities() {
     const timeout = options?.timeout || 10000
 
     const res = await Promise.race([
-      until(availableFilters).toMatch(
+      until(viewer.metadata.availableFilters).toMatch(
         (filters) => !!filters?.find((p) => p.key === key)
       ),
       timeoutAt(timeout, 'Waiting for available filter timed out')
@@ -225,15 +228,15 @@ export function useSelectionUtilities() {
   const {
     filters: { selectedObjects, selectedObjectIds }
   } = useInjectedViewerInterfaceState()
-  const {
-    metadata: { worldTree }
-  } = useInjectedViewer()
+  const { metadata } = useInjectedViewer()
 
   const setSelectionFromObjectIds = (objectIds: string[]) => {
     const objs: Array<SpeckleObject> = []
     objectIds.forEach((value: string) => {
       objs.push(
-        ...((worldTree.value?.findId(value) || []) as unknown as TreeNode[]).map(
+        ...(
+          (metadata?.worldTree.value?.findId(value) || []) as unknown as TreeNode[]
+        ).map(
           (node: TreeNode) =>
             (node.model as Record<string, unknown>).raw as SpeckleObject
         )
@@ -347,7 +350,7 @@ export function useThreadUtilities() {
     if (id === focusedThreadId.value) return
     await focusedThreadId.update(id)
     await Promise.all([
-      until(focusedThreadId).toBe(id),
+      until(focusedThreadId).toMatch((tid) => tid === id),
       until(openThread).toMatch((t) => t?.id === id)
     ])
   }
