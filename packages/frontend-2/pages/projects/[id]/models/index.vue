@@ -3,6 +3,7 @@
     <div>
       <Portal to="navigation">
         <HeaderNavLink
+          v-if="project"
           :to="projectRoute(project.id)"
           :name="project.name"
         ></HeaderNavLink>
