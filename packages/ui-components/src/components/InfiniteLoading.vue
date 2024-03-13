@@ -9,12 +9,8 @@
         <CommonLoadingBar :loading="true" class="my-2" />
       </template>
       <template #complete>
-        <div class="w-full flex flex-col items-center my-2 space-y-2 mt-4">
-          <div class="inline-flex items-center space-x-1">
-            <CheckIcon class="w-5 h-5 text-success" />
-            <span class="text-foreground-2">That's it, you've loaded everything!</span>
-          </div>
-        </div>
+        <!-- No "No more items" message, instead a small amount of spacing -->
+        <div class="h-8"></div>
       </template>
       <template #error="{ retry }">
         <div class="w-full flex flex-col items-center my-2 space-y-2 mt-4">
@@ -30,7 +26,7 @@
 </template>
 <script setup lang="ts">
 import InternalInfiniteLoading from 'v3-infinite-loading'
-import { ExclamationTriangleIcon, CheckIcon } from '@heroicons/vue/24/outline'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import type { Nullable } from '@speckle/shared'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'

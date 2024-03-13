@@ -265,6 +265,7 @@ export default class MeshBatch implements Batch {
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
+    // console.log('Existing -> ', this.id, this.groups.slice())
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(value.material)
@@ -336,23 +337,32 @@ export default class MeshBatch implements Batch {
               includingGroup.materialIndex
             )
           }
+        } else {
+          const engulfedGroups = this.getDrawRangeEngulfing(sortedRanges[i])
+          if (engulfedGroups) {
+            for (let k = 0; k < engulfedGroups.length; k++) {
+              this.geometry.groups.splice(this.groups.indexOf(engulfedGroups[k]), 1)
+            }
+            this.geometry.addGroup(
+              sortedRanges[i].offset,
+              sortedRanges[i].count,
+              materialIndex
+            )
+          }
         }
       }
     }
     let count = 0
     this.geometry.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {
+      // console.log('Incoming -> ', this.id, ranges)
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
     this.setBatchBuffers(...ranges)
     this.needsFlatten = true
   }
 
-  private getDrawRangeCollision(range: BatchUpdateRange): {
-    start: number
-    count: number
-    materialIndex?: number
-  } {
+  private getDrawRangeCollision(range: BatchUpdateRange): DrawGroup {
     if (this.geometry.groups.length > 0) {
       for (let i = 0; i < this.geometry.groups.length; i++) {
         if (
@@ -367,11 +377,7 @@ export default class MeshBatch implements Batch {
     return null
   }
 
-  private geDrawRangeInclusion(range: BatchUpdateRange): {
-    start: number
-    count: number
-    materialIndex?: number
-  } {
+  private geDrawRangeInclusion(range: BatchUpdateRange): DrawGroup {
     if (this.geometry.groups.length > 0) {
       for (let i = 0; i < this.geometry.groups.length; i++) {
         if (
@@ -383,6 +389,23 @@ export default class MeshBatch implements Batch {
         }
       }
       return null
+    }
+    return null
+  }
+
+  private getDrawRangeEngulfing(range: BatchUpdateRange): DrawGroup[] | null {
+    const groups = []
+    if (this.geometry.groups.length > 0) {
+      for (let i = 0; i < this.geometry.groups.length; i++) {
+        if (
+          range.offset <= this.geometry.groups[i].start &&
+          range.offset + range.count >=
+            this.geometry.groups[i].start + this.geometry.groups[i].count
+        ) {
+          groups.push(this.geometry.groups[i])
+        }
+      }
+      return groups.length ? groups : null
     }
     return null
   }
@@ -403,6 +426,23 @@ export default class MeshBatch implements Batch {
   }
 
   private flattenDrawGroups() {
+    const materialsInUse = [
+      ...Array.from(
+        new Set(this.groups.map((value) => this.materials[value.materialIndex]))
+      )
+    ]
+    let k = 0
+    while (this.materials.length > materialsInUse.length) {
+      if (!materialsInUse.includes(this.materials[k])) {
+        this.materials.splice(k, 1)
+        this.groups.forEach((value: DrawGroup) => {
+          if (value.materialIndex > k) value.materialIndex--
+        })
+        k = 0
+      }
+      k++
+    }
+
     const materialOrder = []
     this.geometry.groups.reduce((previousValue, currentValue) => {
       if (previousValue.indexOf(currentValue.materialIndex) === -1) {
@@ -465,6 +505,7 @@ export default class MeshBatch implements Batch {
           this.materials[value.materialIndex].transparent === true ||
           this.materials[value.materialIndex].visible === false
       )
+
       if (transparentOrHiddenGroup) {
         for (
           let k = this.geometry.groups.indexOf(transparentOrHiddenGroup);
@@ -479,6 +520,7 @@ export default class MeshBatch implements Batch {
         }
       }
     }
+    // console.log('Flattened -> ', this.id, this.groups.slice())
   }
 
   private getCurrentIndexBuffer(): BufferAttribute {
@@ -589,6 +631,7 @@ export default class MeshBatch implements Batch {
         count: hiddenGroup.start
       })
     }
+    // console.log('Final -> ', this.id, this.groups.slice())
   }
 
   public resetDrawRanges() {

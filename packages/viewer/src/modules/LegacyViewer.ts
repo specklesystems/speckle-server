@@ -238,16 +238,14 @@ export class LegacyViewer extends Viewer {
     ghost = true
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.filtering.isolateObjects(
-        objectIds,
-        stateKey,
-        includeDescendants,
-        ghost
-      )
-      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
-      filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
-      )
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.isolateObjects(
+          objectIds,
+          stateKey,
+          includeDescendants,
+          ghost
+        )
+      })
       resolve(filteringState)
     })
   }
@@ -258,15 +256,9 @@ export class LegacyViewer extends Viewer {
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.filtering.unIsolateObjects(
-        objectIds,
-        stateKey,
-        includeDescendants
-      )
-      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
-      filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
-      )
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.unIsolateObjects(objectIds, stateKey, includeDescendants)
+      })
       resolve(filteringState)
     })
   }
@@ -284,13 +276,19 @@ export class LegacyViewer extends Viewer {
 
   public setColorFilter(property: PropertyInfo, ghost = true): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filtering.setColorFilter(property, ghost))
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.setColorFilter(property, ghost)
+      })
+      resolve(filteringState)
     })
   }
 
   public removeColorFilter(): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filtering.removeColorFilter())
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.removeColorFilter()
+      })
+      resolve(filteringState)
     })
   }
 
@@ -298,14 +296,31 @@ export class LegacyViewer extends Viewer {
     groups: { objectIds: string[]; color: string }[]
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filtering.setUserObjectColors(groups))
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.setUserObjectColors(groups)
+      })
+      resolve(filteringState)
     })
   }
 
   public resetFilters(): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filtering.resetFilters())
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.resetFilters()
+      })
+      resolve(filteringState)
     })
+  }
+
+  private preserveSelectionFilter(filterFn: () => FilteringState): FilteringState {
+    const selectedObjects = this.selection.getSelectedObjects().map((obj) => obj.id)
+    if (selectedObjects.length) this.selection.clearSelection()
+    const filteringState = filterFn()
+    if (!filteringState.selectedObjects)
+      filteringState.selectedObjects = selectedObjects
+
+    this.selection.selectObjects(filteringState.selectedObjects)
+    return filteringState
   }
 
   /** TREE */

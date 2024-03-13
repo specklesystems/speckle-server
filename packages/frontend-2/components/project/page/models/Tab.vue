@@ -1,15 +1,5 @@
 <template>
   <div>
-    <div>
-      <Portal to="navigation">
-        <HeaderNavLink
-          v-if="project"
-          :to="projectRoute(project.id)"
-          :name="project.name"
-        ></HeaderNavLink>
-      </Portal>
-    </div>
-
     <div v-if="project">
       <ProjectPageModelsHeader
         v-model:selected-apps="selectedApps"
@@ -27,7 +17,7 @@
         :source-apps="selectedApps"
         :contributors="selectedMembers"
         :project="project"
-        class="z-[0] relative"
+        class="z-[0] relative mt-8"
         @clear-search="clearSearch"
       />
     </div>
@@ -35,7 +25,6 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import { projectRoute } from '~~/lib/common/helpers/route'
 import type { SourceAppDefinition } from '@speckle/shared'
 import type { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectModelsPageQuery } from '~~/lib/projects/graphql/queries'
@@ -69,12 +58,4 @@ const clearSearch = () => {
   selectedMembers.value = []
   selectedApps.value = []
 }
-
-const title = computed(() =>
-  project.value?.name.length ? `Models - ${project.value.name}` : ''
-)
-
-useHead({
-  title
-})
 </script>

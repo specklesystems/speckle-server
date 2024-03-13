@@ -343,6 +343,7 @@ export class FilteringExtension extends Extension {
       this.ColorNumericFilterState = null
       return this.setFilters()
     }
+    return this.filteringState
   }
 
   public setUserObjectColors(groups: { objectIds: string[]; color: string }[]) {
@@ -433,13 +434,13 @@ export class FilteringExtension extends Extension {
         })
       }
 
-      const ghostNonMatching = this.ColorNumericFilterState.nonMatchingRvs
-
-      if (ghostNonMatching.length) {
-        this.Renderer.setMaterial(ghostNonMatching, {
-          filterType: FilterMaterialType.GHOST
-        })
-      }
+      /** This doesn't seem to be required as it's called further down */
+      // const ghostNonMatching = this.ColorNumericFilterState.nonMatchingRvs
+      // if (ghostNonMatching.length) {
+      //   this.Renderer.setMaterial(ghostNonMatching, {
+      //     filterType: FilterMaterialType.GHOST
+      //   })
+      // }
 
       this.CurrentFilteringState.activePropFilterKey =
         this.ColorNumericFilterState.currentProp.key

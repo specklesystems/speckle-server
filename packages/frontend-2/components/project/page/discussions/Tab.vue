@@ -1,15 +1,5 @@
 <template>
   <div>
-    <div>
-      <Portal to="navigation">
-        <HeaderNavLink
-          v-if="project"
-          :to="projectRoute(project.id)"
-          :name="project.name"
-        ></HeaderNavLink>
-      </Portal>
-    </div>
-
     <div v-if="project">
       <ProjectPageDiscussionsHeader
         v-model:grid-or-list="gridOrList"
@@ -27,7 +17,6 @@
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import type { Optional } from '~~/../shared/dist-esm'
-import { projectRoute } from '~~/lib/common/helpers/route'
 import {
   useGeneralProjectPageUpdateTracking,
   useProjectPageItemViewType
@@ -49,11 +38,4 @@ const { result } = useQuery(projectDiscussionsPageQuery, () => ({
 useGeneralProjectPageUpdateTracking({ projectId })
 
 const project = computed(() => result.value?.project)
-const title = computed(() =>
-  project.value?.name.length ? `Discussions - ${project.value.name}` : ''
-)
-
-useHead({
-  title
-})
 </script>
