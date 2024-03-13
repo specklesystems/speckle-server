@@ -1,49 +1,31 @@
 <template>
-  <div>
-    <div class="flex flex-col xl:flex-row justify-between gap-4 xl:gap-8">
-      <div class="flex justify-between">
-        <h1 class="block h4 font-bold">Models</h1>
-        <div class="xl:hidden">
-          <FormButton
-            color="secondary"
-            :icon-right="CubeIcon"
-            :to="allModelsRoute"
-            class="shrink-0"
-            @click="trackFederateAll"
+  <div class="flex justify-between">
+    <h1 class="block h4 font-bold">Models</h1>
+    <div class="flex flex-col lg:flex-row gap-2 items-end">
+      <div class="flex gap-2 order-2 lg:order-1 flex-col md:flex-row">
+        <div class="flex flex-col order-2 md:order-1">
+          <div
+            class="flex flex-col md:flex-row gap-2 overflow-hidden transition-all duration-300 md:max-h-[120px]"
+            :class="mobileFiltersExpanded ? 'max-h-[120px]' : 'max-h-0'"
           >
-            View all in 3D
-          </FormButton>
-          <FormButton
-            v-if="canContribute"
-            class="shrink-0"
-            :icon-right="PlusIcon"
-            @click="showNewDialog = true"
-          >
-            New
-          </FormButton>
-        </div>
-      </div>
-      <div class="flex gap-2 flex-col sm:flex-row justify-end">
-        <FormTextInput
-          v-model="localSearch"
-          name="modelsearch"
-          :show-label="false"
-          placeholder="Search"
-          color="foundation"
-          wrapper-classes="xl:w-48 xl:w-60"
-          :show-clear="localSearch !== ''"
-          @change="($event) => updateSearchImmediately($event.value)"
-          @update:model-value="updateDebouncedSearch"
-        ></FormTextInput>
-        <div class="flex flex-col sm:flex-row items-end justify-between gap-2">
-          <div class="flex gap-2">
+            <FormTextInput
+              v-model="localSearch"
+              name="modelsearch"
+              :show-label="false"
+              placeholder="Search"
+              color="foundation"
+              wrapper-classes="min-w-[200px] shrink-0"
+              :show-clear="localSearch !== ''"
+              @change="($event) => updateSearchImmediately($event.value)"
+              @update:model-value="updateDebouncedSearch"
+            ></FormTextInput>
             <FormSelectUsers
               v-model="finalSelectedMembers"
               :users="team"
               multiple
               selector-placeholder="All members"
               label="Filter by members"
-              class="w-52"
+              class="min-w-[200px] shrink-0"
               clearable
               fixed-height
             />
@@ -53,30 +35,43 @@
               multiple
               selector-placeholder="All sources"
               label="Filter by sources"
-              class="w-52"
+              class="min-w-[120px] shrink-0"
               clearable
               fixed-height
             />
           </div>
-          <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
-          <FormButton
-            color="secondary"
-            :icon-right="CubeIcon"
-            :to="allModelsRoute"
-            class="hidden xl:inline-flex shrink-0"
-            @click="trackFederateAll"
-          >
-            View all in 3D
-          </FormButton>
-          <FormButton
-            v-if="canContribute"
-            class="hidden xl:inline-flex shrink-0"
-            :icon-right="PlusIcon"
-            @click="showNewDialog = true"
-          >
-            New
-          </FormButton>
         </div>
+        <div class="flex order-1 md:order-2 justify-end gap-2">
+          <FormButton
+            :icon-right="ChevronDownIcon"
+            class="md:hidden flex items-center gap-2 mb-2"
+            color="secondary"
+            @click="mobileFiltersExpanded = !mobileFiltersExpanded"
+          >
+            <span>Filters</span>
+          </FormButton>
+          <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0 order-2" />
+        </div>
+      </div>
+
+      <div class="order-1 lg:order-2 flex gap-2 justify-end">
+        <FormButton
+          color="secondary"
+          :icon-right="CubeIcon"
+          :to="allModelsRoute"
+          class="hidden sm:flex shrink-0"
+          @click="trackFederateAll"
+        >
+          View all in 3D
+        </FormButton>
+        <FormButton
+          v-if="canContribute"
+          class="shrink-0"
+          :icon-right="PlusIcon"
+          @click="showNewDialog = true"
+        >
+          New
+        </FormButton>
       </div>
     </div>
     <ProjectPageModelsNewDialog v-model:open="showNewDialog" :project-id="project.id" />
@@ -93,7 +88,7 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { PlusIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon, ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { CubeIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -129,6 +124,7 @@ const props = defineProps<{
 }>()
 
 const localSearch = ref('')
+const mobileFiltersExpanded = ref(false)
 
 const mp = useMixpanel()
 const trackFederateAll = () =>
