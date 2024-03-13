@@ -36,7 +36,7 @@
         </div>
       </div>
       <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 flex-grow col-span-4 lg:col-span-3"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 flex-grow col-span-4 lg:col-span-3 w-full"
       >
         <ProjectPageModelsCard
           v-for="pendingModel in pendingModels"
