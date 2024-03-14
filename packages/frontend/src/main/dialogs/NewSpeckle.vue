@@ -109,7 +109,7 @@
               block
               color="primary"
               class="align-self-center"
-              href="https://latest.speckle.systems/"
+              href="https://app.speckle.systems/"
             >
               Go to the New Web App
               <v-icon right>mdi-arrow-right</v-icon>

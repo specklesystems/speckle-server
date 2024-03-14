@@ -10,7 +10,7 @@
         <div class="text-foreground text-sm">Announcing the New Speckle Web App</div>
       </div>
       <div class="flex gap-3">
-        <FormButton size="sm" color="default" text @click="emitDismissedOrOpened">
+        <FormButton size="sm" color="default" text @click="emit('dismissed')">
           Skip
         </FormButton>
         <FormButton size="sm" class="px-4" to="/" @click="showDialog = true">
@@ -18,10 +18,7 @@
         </FormButton>
       </div>
     </div>
-    <ProjectsNewSpeckleDialog
-      v-model:open="showDialog"
-      @dialog-dismissed="emitDismissedOrOpened"
-    />
+    <ProjectsNewSpeckleDialog v-model:open="showDialog" />
   </div>
 </template>
 
@@ -30,10 +27,12 @@ import { SparklesIcon } from '@heroicons/vue/24/solid'
 
 const emit = defineEmits<{ dismissed }>()
 
-const emitDismissedOrOpened = () => {
-  showDialog.value = false
-  emit('dismissed')
-}
-
 const showDialog = ref(false)
+
+watch(showDialog, (newValue) => {
+  if (newValue === false) {
+    showDialog.value = false
+    emit('dismissed')
+  }
+})
 </script>

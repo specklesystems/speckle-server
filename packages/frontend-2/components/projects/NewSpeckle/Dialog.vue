@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog :open="dialogOpen" max-width="sm" :buttons="dialogButtons">
+  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <h2 class="text-2xl sm:text-3xl font-bold text-center sm:-mt-4 mb-2">
       What's New in Speckle?
     </h2>
@@ -21,16 +21,14 @@
 import { computed } from 'vue'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 
-const emit = defineEmits<{ 'dialog-dismissed': [] }>()
-
-const dialogOpen = ref(true)
+const open = defineModel<boolean>('open', { required: true })
 
 const dialogButtons = computed(() => [
   {
     text: 'Close',
     props: { color: 'secondary', fullWidth: true },
     onClick: () => {
-      emit('dialog-dismissed')
+      open.value = false
     }
   },
   {
