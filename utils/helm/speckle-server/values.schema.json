@@ -471,6 +471,11 @@
           "description": "The Docker image to be used for the Speckle Server component. If blank, defaults to speckle/speckle-server:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
         },
+        "enableFe2Messaging": {
+          "type": "boolean",
+          "description": "If enabled, the related FE1 deployment will show banners/messages about the new frontend",
+          "default": false
+        },
         "onboarding": {
           "type": "object",
           "properties": {

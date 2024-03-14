@@ -2094,6 +2094,8 @@ export type ServerInfo = {
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
   description?: Maybe<Scalars['String']>;
+  /** Whether or not to show messaging about FE2 (banners etc.) */
+  enableNewWebUiMessaging?: Maybe<Scalars['Boolean']>;
   guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
   /** Server relocation / migration info */
@@ -4089,6 +4091,7 @@ export type ServerInfoResolvers<ContextType = GraphQLContext, ParentType extends
   canonicalUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   company?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  enableNewWebUiMessaging?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   guestModeEnabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   inviteOnly?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   migration?: Resolver<Maybe<ResolversTypes['ServerMigration']>, ParentType, ContextType>;
