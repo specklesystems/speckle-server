@@ -106,23 +106,25 @@ const startResizing = (event: MouseEvent) => {
   startWidth = width.value
 }
 
-useEventListener(resizeHandle, 'mousedown', startResizing)
+if (process.client) {
+  useEventListener(resizeHandle, 'mousedown', startResizing)
 
-useEventListener(document, 'mousemove', (event) => {
-  if (isResizing.value) {
-    const diffX = startX - event.clientX
-    width.value = Math.max(
-      300,
-      Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
-    )
-  }
-})
+  useEventListener(document, 'mousemove', (event) => {
+    if (isResizing.value) {
+      const diffX = startX - event.clientX
+      width.value = Math.max(
+        300,
+        Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
+      )
+    }
+  })
 
-useEventListener(document, 'mouseup', () => {
-  if (isResizing.value) {
-    isResizing.value = false
-  }
-})
+  useEventListener(document, 'mouseup', () => {
+    if (isResizing.value) {
+      isResizing.value = false
+    }
+  })
+}
 
 const minimize = () => {
   width.value = 300

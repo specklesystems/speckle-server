@@ -59,7 +59,10 @@ import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import LayoutPanel from '~~/src/components/layout/Panel.vue'
 import CommonAlert from '~~/src/components/common/Alert.vue'
-import { writableAsyncComputed } from '~~/src/composables/common/async'
+import {
+  writableAsyncComputed,
+  buildManualPromise
+} from '~~/src/composables/common/async'
 import type {
   AsyncWritableComputedOptions,
   AsyncWritableComputedRef
@@ -138,7 +141,8 @@ export {
   writableAsyncComputed,
   useFormCheckboxModel,
   FormTags,
-  keyboardClick
+  keyboardClick,
+  buildManualPromise
 }
 export type {
   ToastNotification,
