@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-model="dialog" persistent max-width="850px">
+  <v-dialog v-if="fe2MessagingEnabled" v-model="dialog" persistent max-width="850px">
     <v-card class="whats-new-dialog">
       <div
         class="headline d-flex justify-space-between align-center px-4 py-3 rounded-b-0 shadow-0"
@@ -109,7 +109,7 @@
               block
               color="primary"
               class="align-self-center"
-              href="https://app.speckle.systems/"
+              :href="migrationMovedTo"
             >
               Go to the New Web App
               <v-icon right>mdi-arrow-right</v-icon>
@@ -122,8 +122,12 @@
 </template>
 <script>
 import { AppLocalStorage } from '@/utils/localStorage'
+import { useFE2Messaging } from '@/main/lib/core/composables/server'
 
 export default {
+  setup() {
+    return { ...useFE2Messaging() }
+  },
   data: () => ({
     dialog: true
   }),

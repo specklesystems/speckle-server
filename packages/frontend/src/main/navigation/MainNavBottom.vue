@@ -1,7 +1,7 @@
 <template>
   <div class="elevation-10">
     <portal-target name="nav-bottom">
-      <div class="pa-4">
+      <div v-if="fe2MessagingEnabled" class="pa-4">
         <h5>Try the New Speckle Web App</h5>
         <p class="text-caption mb-0 mt-1 primary--text text--disabled">
           Easier to use, better collaboration, and faster loading times.
@@ -18,7 +18,7 @@
           small
           color="primary"
           class="align-self-center mt-4"
-          href="https://app.speckle.systems/"
+          :href="migrationMovedTo"
         >
           <v-icon left>mdi-rocket-launch</v-icon>
           Go to the new web app
@@ -69,8 +69,12 @@
 <script>
 import { signOut } from '@/plugins/authHelpers'
 import { setDarkTheme } from '@/main/utils/themeStateManager'
+import { useFE2Messaging } from '@/main/lib/core/composables/server'
 
 export default {
+  setup() {
+    return { ...useFE2Messaging() }
+  },
   methods: {
     signOut() {
       this.$mixpanel.track('Log Out', { type: 'action' })
