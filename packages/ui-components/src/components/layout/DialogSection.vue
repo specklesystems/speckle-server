@@ -24,7 +24,7 @@
         class="text-sm sm:text-base font-bold flex items-center gap-1 sm:gap-2 select-none"
         :class="titleClasses"
       >
-        <div class="h-4 sm:h-5 h-4 sm:w-5 empty:h-0 empty:w-0">
+        <div class="h-4 sm:h-5 w-4 sm:w-5 empty:h-0 empty:w-0">
           <slot name="icon"></slot>
         </div>
         <span>{{ title }}</span>
