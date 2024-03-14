@@ -2,13 +2,6 @@ import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
 import { pick } from 'lodash'
 
 /**
- * @typedef {import('@/modules/core/helpers/types').UserRecord} UserRecord
- */
-/**
- * @typedef {import('@/modules/core/helpers/types').LimitedUserRecord} LimitedUserRecord
- */
-
-/**
  * Fields from the entity that users can see about other users
  */
 export const LIMITED_USER_FIELDS: Array<keyof LimitedUserRecord> = [
@@ -30,3 +23,5 @@ export function removePrivateFields(
   if (!user) return user
   return pick(user, LIMITED_USER_FIELDS)
 }
+
+export type { LimitedUserRecord, UserRecord }
