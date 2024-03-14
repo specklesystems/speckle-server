@@ -51,7 +51,7 @@
         v-if="!hideEmailBanner"
         class="my-2 mx-4 email-banner"
       ></email-verification-banner>
-      <new-speckle-dialog v-if="showNewSpeckleDialog" />
+      <new-speckle-dialog v-if="showNewSpeckleDialog && fe2MessagingEnabled" />
       <v-container fluid class="px-4">
         <transition name="fade">
           <router-view></router-view>
@@ -68,6 +68,7 @@ import { useNavigationDrawerAutoResize } from '../lib/core/composables/dom'
 import { ref } from 'vue'
 import { useIsLoggedIn } from '../lib/core/composables/core'
 import { AppLocalStorage } from '@/utils/localStorage'
+import { useFE2Messaging } from '@/main/lib/core/composables/server'
 
 export default {
   name: 'TheMain',
@@ -121,7 +122,8 @@ export default {
       navDrawer,
       navWidth,
       isLoggedIn,
-      showNewSpeckleDialog
+      showNewSpeckleDialog,
+      ...useFE2Messaging()
     }
   },
   data() {

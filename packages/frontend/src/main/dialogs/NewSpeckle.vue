@@ -1,5 +1,5 @@
 <template>
-  <v-dialog v-if="fe2MessagingEnabled" v-model="dialog" persistent max-width="850px">
+  <v-dialog v-model="dialog" persistent max-width="850px">
     <v-card class="whats-new-dialog">
       <div
         class="headline d-flex justify-space-between align-center px-4 py-3 rounded-b-0 shadow-0"

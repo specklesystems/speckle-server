@@ -29,8 +29,8 @@ const emit = defineEmits<{ dismissed: [] }>()
 
 const showDialog = ref(false)
 
-watch(showDialog, (newValue) => {
-  if (newValue === false) {
+watch(showDialog, (newValue, oldValue) => {
+  if (!newValue && oldValue) {
     showDialog.value = false
     emit('dismissed')
   }
