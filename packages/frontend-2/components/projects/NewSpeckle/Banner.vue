@@ -28,11 +28,11 @@
 <script setup lang="ts">
 import { SparklesIcon } from '@heroicons/vue/24/solid'
 
-const emit = defineEmits<{ 'new-speckle-dismissed-or-opened': [] }>()
+const emit = defineEmits<{ dismissed }>()
 
 const emitDismissedOrOpened = () => {
   showDialog.value = false
-  emit('new-speckle-dismissed-or-opened')
+  emit('dismissed')
 }
 
 const showDialog = ref(false)

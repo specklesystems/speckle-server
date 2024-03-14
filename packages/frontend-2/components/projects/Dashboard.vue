@@ -17,7 +17,7 @@
       />
       <ProjectsNewSpeckleBanner
         v-if="showNewSpeckleBanner"
-        @new-speckle-dismissed-or-opened="onDismissNewSpeckleBanner"
+        @dismissed="onDismissNewSpeckleBanner"
       />
     </div>
     <div
