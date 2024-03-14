@@ -22,10 +22,13 @@ export const modelRoute = (
   }`
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
-export const allProjectModelsRoute = (projectId: string) =>
-  `/projects/${projectId}/models`
-export const projectDiscussionsRoute = (projectId: string) =>
-  `/projects/${projectId}/discussions`
+
+// Temp change to allProjectModelsRoute until tab routing is implemented
+export const allProjectModelsRoute = (projectId: string) => `/projects/${projectId}`
+
+// Temp change to projectDiscussionsRoute until tab routing is implemented
+export const projectDiscussionsRoute = (projectId: string) => `/projects/${projectId}`
+
 export const projectWebhooksRoute = (projectId: string) =>
   `/projects/${projectId}/webhooks`
 
