@@ -34,26 +34,45 @@
             {{ new Date(project.updatedAt).toLocaleString() }}
           </div>
         </div>
+        <div v-if="showNewProject && totalCount === 0 && searchText">
+          <form @submit="createNewProject(searchText)">
+            <FormButton
+              full-width
+              class="block truncate max-w-full overflow-hidden"
+              @click="createNewProject(searchText)"
+            >
+              Create "{{ searchText }}"
+            </FormButton>
+          </form>
+        </div>
         <div class="caption text-center mt-2">{{ totalCount }} projects found.</div>
       </div>
     </div>
     <button
-      v-if="showNewProject"
+      v-if="showNewProject && totalCount !== 0"
       v-tippy="'create new project'"
       class="fixed bottom-2 flex items-center justify-center right-2 z-100 w-12 h-12 rounded-full bg-primary text-foreground-on-primary"
       @click="showNewProjectDialog = true"
     >
       <PlusIcon class="w-6 h-6" />
     </button>
-    <LayoutDialog v-model:open="showNewProjectDialog" hide-closer title="new project">
+    <LayoutDialog
+      v-model:open="showNewProjectDialog"
+      hide-closer
+      title="Create new project"
+    >
       <!-- <div class="-mx-6 -my-5 space-y-2"> -->
       <!-- TODO -->
       <form @submit="onSubmitCreateNewProject">
         <FormTextInput
           v-model="newProjectName"
           placeholder="new project name"
-          name="new project name"
+          name="name"
           :show-clear="!!newProjectName"
+          :rules="[
+            ValidationHelpers.isRequired,
+            ValidationHelpers.isStringOfLength({ minLength: 3 })
+          ]"
           full-width
         />
         <div class="mt-2 flex">
@@ -67,13 +86,17 @@
 </template>
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/20/solid'
-import { useAccountStore } from '~/store/accounts'
-import { projectsListQuery } from '~/lib/graphql/mutationsAndQueries'
-import { useQuery } from '@vue/apollo-composable'
+import { DUIAccount, useAccountStore } from '~/store/accounts'
+import {
+  createProjectMutation,
+  projectsListQuery
+} from '~/lib/graphql/mutationsAndQueries'
+import { useMutation, useQuery, provideApolloClient } from '@vue/apollo-composable'
 import { ProjectListProjectItemFragment } from 'lib/common/generated/gql/graphql'
 import { useForm } from 'vee-validate'
+import { ValidationHelpers } from '@speckle/ui-components'
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'next', accountId: string, project: ProjectListProjectItemFragment): void
 }>()
 
@@ -96,9 +119,25 @@ const accountId = computed(
 const selectedAccountId = ref<string>()
 
 const { handleSubmit } = useForm<{ name: string }>()
-const onSubmitCreateNewProject = handleSubmit(async ({ name }) => {
-  // TODO
+const onSubmitCreateNewProject = handleSubmit((args) => {
+  void createNewProject(args.name)
 })
+
+const createNewProject = async (name: string) => {
+  const account = accountStore.accounts.find(
+    (acc) => acc.accountInfo.id === accountId.value
+  ) as DUIAccount
+
+  const { mutate } = provideApolloClient(account.client)(() =>
+    useMutation(createProjectMutation)
+  )
+  const res = await mutate({ input: { name } })
+  if (res?.data?.projectMutations.create) {
+    emit('next', accountId.value, res?.data?.projectMutations.create)
+  } else {
+    // TODO: Error out
+  }
+}
 
 const { result: projectsResult, loading } = useQuery(
   projectsListQuery,
@@ -108,7 +147,7 @@ const { result: projectsResult, loading } = useQuery(
       search: (searchText.value || '').trim() || null
     }
   }),
-  () => ({ clientId: accountId.value, debounce: 500 })
+  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'cache-and-network' })
 )
 
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
