@@ -40,7 +40,7 @@ const dialogButtons = computed(() => [
       fullWidth: true,
       outline: true,
       iconRight: ArrowTopRightOnSquareIcon,
-      to: 'https://speckle.systems/the-new-way-to-collaborate-in-aec/',
+      to: 'https://speckle.systems/blog/the-new-way-to-collaborate-in-aec/',
       external: true,
       target: '_blank'
     }

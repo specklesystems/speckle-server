@@ -7,7 +7,7 @@
           Easier to use, better collaboration, and faster loading times.
           <a
             style="text-decoration: underline; color: inherit"
-            href="https://speckle.systems/the-new-way-to-collaborate-in-aec/"
+            href="https://speckle.systems/blog/the-new-way-to-collaborate-in-aec/"
             target="_blank"
           >
             Learn more

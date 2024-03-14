@@ -98,7 +98,7 @@
       <p class="mb-0 mt-1 primary--text text--disabled text-body-2 pr-4">
         A better and more powerful web app is replacing this.
         <a
-          href="https://speckle.systems/the-new-way-to-collaborate-in-aec/"
+          href="https://speckle.systems/blog/the-new-way-to-collaborate-in-aec/"
           target="_blank"
           class="primary--text text--disabled"
         >
