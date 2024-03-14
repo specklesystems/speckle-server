@@ -43,8 +43,8 @@ workflows:
             branches:
               ignore: &branches-special
                 - main
-                - hotfix*
-                - testing*
+                - /^hotfix.*$/
+                - /^testing\d*$/
             tags:
               ignore: /.*/
 
