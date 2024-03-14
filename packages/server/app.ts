@@ -51,7 +51,6 @@ import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter
 
 import { get, has, isString, toNumber } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-import { IMocks } from '@graphql-tools/mock'
 import {
   authContextMiddleware,
   buildContext,
@@ -60,8 +59,8 @@ import {
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
-import { Roles } from '@speckle/shared'
-import { LimitedUser } from '@/modules/core/graph/generated/graphql'
+import { addMocksToSchema } from '@graphql-tools/mock'
+import { buildMocksConfig } from '@/modules/mocks'
 
 let graphqlServer: ApolloServer
 
@@ -238,80 +237,6 @@ function buildApolloSubscriptionServer(
 }
 
 /**
- * Define mocking config in dev env
- * https://www.apollographql.com/docs/apollo-server/v3/testing/mocking
- */
-async function buildMocksConfig(): Promise<{
-  mocks: boolean | IMocks
-  mockEntireSchema: boolean
-}> {
-  const isDebugEnv = isDevEnv()
-  if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
-
-  // feel free to define mocks for your dev env below
-  const { faker } = await import('@faker-js/faker')
-
-  return {
-    mocks: {
-      Project: () => ({
-        automations: () => {
-          // const count = faker.datatype.number({ min: 0, max: 5 })
-          const count = 0
-          return {
-            cursor: null,
-            totalCount: count,
-            items: [...new Array(count)]
-          }
-        }
-      }),
-      Query: () => ({
-        automateFunctions: () => {
-          const count = faker.datatype.number({ min: 4, max: 20 })
-          return {
-            cursor: null,
-            totalCount: count,
-            items: [...new Array(count)]
-          }
-        }
-      }),
-      Automation: () => ({
-        name: () => faker.company.companyName()
-      }),
-      AutomateFunction: () => ({
-        name: () => faker.commerce.productName(),
-        isFeatured: () => faker.datatype.boolean(),
-        description: () => {
-          // Random length lorem ipsum
-          return faker.lorem.paragraphs(
-            faker.datatype.number({ min: 1, max: 3 }),
-            '\n\n'
-          )
-        },
-        logo: () => {
-          const random = faker.datatype.number({ min: 0, max: 3 })
-          return random
-            ? faker.image.imageUrl(undefined, undefined, undefined, true)
-            : null
-        }
-      }),
-      LimitedUser: () =>
-        ({
-          id: faker.datatype.uuid(),
-          name: faker.name.findName(),
-          avatar: faker.image.avatar(),
-          bio: faker.lorem.sentence(),
-          company: faker.company.companyName(),
-          verified: faker.datatype.boolean(),
-          role: Roles.Server.User
-        } as LimitedUser),
-      JSONObject: () => ({}),
-      ID: () => faker.datatype.uuid()
-    },
-    mockEntireSchema: false
-  }
-}
-
-/**
  * Create Apollo Server instance
  * @param optionOverrides Optionally override ctor options
  * @param subscriptionServerResolver If you expect to use subscriptions on this instance,
@@ -322,8 +247,18 @@ export async function buildApolloServer(
   subscriptionServerResolver?: () => SubscriptionServer
 ): Promise<ApolloServer> {
   const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
-  const schema = ModulesSetup.graphSchema()
-  const { mockEntireSchema, mocks } = await buildMocksConfig()
+  let schema = ModulesSetup.graphSchema()
+  const { mockEntireSchema, mocks, resolvers } = await buildMocksConfig()
+
+  // Apply mocks manually
+  if (mocks || mockEntireSchema) {
+    schema = addMocksToSchema({
+      schema,
+      mocks: !mocks || mocks === true ? {} : mocks,
+      preserveResolvers: !mockEntireSchema,
+      resolvers
+    })
+  }
 
   const server = new ApolloServer({
     schema,
@@ -362,8 +297,6 @@ export async function buildApolloServer(
     csrfPrevention: true,
     formatError: buildErrorFormatter(debug),
     debug,
-    mocks,
-    mockEntireSchema,
     ...optionOverrides
   })
   await server.start()
