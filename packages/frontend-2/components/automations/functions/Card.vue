@@ -1,5 +1,9 @@
 <template>
-  <div>Test</div>
+  <div
+    class="px-4 py-2 flex flex-col gap-3 rounded-lg border border-outline-3 bg-foundation"
+  >
+    <div class="flex">test</div>
+  </div>
 </template>
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
@@ -14,6 +18,7 @@ graphql(`
     creator {
       id
       name
+      ...LimitedUserAvatar
     }
   }
 `)

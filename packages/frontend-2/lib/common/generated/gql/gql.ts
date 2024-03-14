@@ -19,7 +19,7 @@ const documents = {
     "\n  query EmailVerificationBannerState {\n    activeUser {\n      id\n      email\n      verified\n      hasPendingVerification\n    }\n  }\n": types.EmailVerificationBannerStateDocument,
     "\n  mutation RequestVerification {\n    requestVerification\n  }\n": types.RequestVerificationDocument,
     "\n  fragment AuthStategiesServerInfoFragment on ServerInfo {\n    authStrategies {\n      id\n      name\n      url\n    }\n  }\n": types.AuthStategiesServerInfoFragmentFragmentDoc,
-    "\n  fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {\n    id\n    name\n    isFeatured\n    description\n    creator {\n      id\n      name\n    }\n  }\n": types.AutomationsFunctionsCard_AutomateFunctionFragmentDoc,
+    "\n  fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {\n    id\n    name\n    isFeatured\n    description\n    creator {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n  }\n": types.AutomationsFunctionsCard_AutomateFunctionFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
@@ -221,7 +221,7 @@ export function graphql(source: "\n  fragment AuthStategiesServerInfoFragment on
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {\n    id\n    name\n    isFeatured\n    description\n    creator {\n      id\n      name\n    }\n  }\n"): (typeof documents)["\n  fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {\n    id\n    name\n    isFeatured\n    description\n    creator {\n      id\n      name\n    }\n  }\n"];
+export function graphql(source: "\n  fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {\n    id\n    name\n    isFeatured\n    description\n    creator {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n  }\n"): (typeof documents)["\n  fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {\n    id\n    name\n    isFeatured\n    description\n    creator {\n      id\n      name\n      ...LimitedUserAvatar\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
