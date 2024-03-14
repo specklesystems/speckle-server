@@ -41,9 +41,10 @@ workflows:
           type: approval
           filters: &filters-ignore-main-branch-or-all-tags
             branches:
-              ignore:
+              ignore: &branches-special
                 - main
-                - testing
+                - hotfix*
+                - testing*
             tags:
               ignore: /.*/
 
@@ -270,10 +271,7 @@ workflows:
       - publish-helm-chart:
           filters: &filters-publish
             branches:
-              only:
-                - main
-                - hotfix*
-                - testing
+              only: *branches-special
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
