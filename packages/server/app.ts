@@ -280,13 +280,25 @@ async function buildMocksConfig(): Promise<{
       AutomateFunction: () => ({
         name: () => faker.commerce.productName(),
         isFeatured: () => faker.datatype.boolean(),
-        description: () => faker.commerce.productDescription()
+        description: () => {
+          // Random length lorem ipsum
+          return faker.lorem.paragraphs(
+            faker.datatype.number({ min: 1, max: 3 }),
+            '\n\n'
+          )
+        },
+        logo: () => {
+          const random = faker.datatype.number({ min: 0, max: 3 })
+          return random
+            ? faker.image.imageUrl(undefined, undefined, undefined, true)
+            : null
+        }
       }),
       LimitedUser: () =>
         ({
           id: faker.datatype.uuid(),
           name: faker.name.findName(),
-          avatar: '',
+          avatar: faker.image.avatar(),
           bio: faker.lorem.sentence(),
           company: faker.company.companyName(),
           verified: faker.datatype.boolean(),

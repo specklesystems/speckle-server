@@ -15,6 +15,7 @@ type AutomateFunction {
   creator: LimitedUser!
   isFeatured: Boolean!
   description: String!
+  logo: String
 }
 
 type AutomateFunctionCollection {

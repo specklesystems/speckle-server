@@ -195,6 +195,7 @@ export type AutomateFunction = {
   description: Scalars['String'];
   id: Scalars['ID'];
   isFeatured: Scalars['Boolean'];
+  logo?: Maybe<Scalars['String']>;
   name: Scalars['String'];
 };
 

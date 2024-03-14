@@ -204,6 +204,7 @@ export type AutomateFunction = {
   description: Scalars['String'];
   id: Scalars['ID'];
   isFeatured: Scalars['Boolean'];
+  logo?: Maybe<Scalars['String']>;
   name: Scalars['String'];
 };
 
@@ -3537,6 +3538,7 @@ export type AutomateFunctionResolvers<ContextType = GraphQLContext, ParentType e
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isFeatured?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
