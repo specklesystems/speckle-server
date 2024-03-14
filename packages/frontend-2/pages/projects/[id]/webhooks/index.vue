@@ -59,6 +59,7 @@
       <template #enabled="{ item }">
         <FormSwitch
           :model-value="!!item.enabled"
+          icons
           @update:model-value="(newValue) => onEnabledChange(item, newValue)"
         />
       </template>

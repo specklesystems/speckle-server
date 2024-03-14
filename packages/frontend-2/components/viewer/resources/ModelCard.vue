@@ -42,8 +42,8 @@
           v-if="!showVersions"
           class="flex flex-none items-center space-x-1 text-xs font-bold"
         >
+          <IconVersions class="h-4 w-4" />
           <span>{{ model.versions?.totalCount }}</span>
-          <ArrowPathRoundedSquareIcon class="h-4 w-4" />
         </div>
         <div
           v-else
@@ -108,11 +108,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  XMarkIcon,
-  ArrowPathRoundedSquareIcon,
-  ChevronUpIcon
-} from '@heroicons/vue/24/solid'
+import { XMarkIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
 import type {
   ViewerLoadedResourcesQuery,
   ViewerModelVersionCardItemFragment

@@ -72,12 +72,12 @@
             v-tippy="'View Version Gallery'"
             rounded
             size="xs"
-            :icon-left="ArrowPathRoundedSquareIcon"
             :to="modelVersionsRoute(projectId, model.id)"
-            :class="`transition ${
+            :class="`transition gap-0.5 ml-1 ${
               hovered ? 'inline-block opacity-100' : 'sm:hidden sm:opacity-0'
             }`"
           >
+            <IconVersions class="h-4 w-4" />
             {{ versionCount }}
           </FormButton>
           <ProjectPageModelsActions
@@ -125,10 +125,7 @@ import type {
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import {
-  ArrowPathRoundedSquareIcon,
-  ChatBubbleLeftRightIcon
-} from '@heroicons/vue/24/solid'
+import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'

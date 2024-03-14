@@ -5,17 +5,28 @@ import type { Plugin } from 'nuxt/dist/app/nuxt'
 
 type PluginNuxtApp = Parameters<Plugin>[0]
 
-async function initRumClient() {
-  const { enabled, keys } = resolveInitParams()
+async function initRumClient(app: PluginNuxtApp) {
+  const { keys, baseUrl, speckleServerVersion } = resolveInitParams(app)
   const router = useRouter()
   const onAuthStateChange = useOnAuthStateChange()
   const registerErrorTransport = useCreateErrorLoggingTransport()
-  if (!enabled) return
 
   // RayGun
   const rg4js = window.rg4js
   if (keys.raygun && rg4js) {
+    const setupTags = (extraTags: string[]) => {
+      rg4js('withTags', [
+        `baseUrl:${baseUrl}`,
+        `version:${speckleServerVersion}`,
+        ...extraTags
+      ])
+    }
+
     router.beforeEach((to, from) => {
+      // Update with tags
+      const newTags = (to.meta.raygunTags || []) as string[]
+      setupTags(newTags)
+
       if (!from.path || from.path === to.path) return
 
       rg4js('trackEvent', {
@@ -64,8 +75,8 @@ async function initRumClient() {
 
 async function initRumServer(app: PluginNuxtApp) {
   const registerErrorTransport = useCreateErrorLoggingTransport()
-  const { enabled, keys, baseUrl, speckleServerVersion } = resolveInitParams()
-  if (!enabled) return
+  const { keys, baseUrl, speckleServerVersion, debug, debugCoreWebVitals } =
+    resolveInitParams(app)
 
   // RayGun
   if (keys.raygun) {
@@ -89,8 +100,32 @@ async function initRumServer(app: PluginNuxtApp) {
 
     // Add client-side snippet
     app.hook('app:rendered', (context) => {
+      const initRaygunTags = app._route?.meta.raygunTags || []
+
       context.ssrContext!.head.push({
         script: [
+          ...(debugCoreWebVitals
+            ? [
+                {
+                  innerHTML: `
+                    import {
+                      onCLS,
+                      onFID,
+                      onLCP,
+                      onINP,
+                      onTTFB
+                    } from 'https://unpkg.com/web-vitals@3/dist/web-vitals.attribution.js?module';
+
+                    onCLS(console.log);
+                    onFID(console.log);
+                    onLCP(console.log);
+                    onINP(console.log);
+                    onTTFB(console.log);
+              `,
+                  type: 'module'
+                }
+              ]
+            : []),
           {
             innerHTML: `!function(a,b,c,d,e,f,g,h){a.RaygunObject=e,a[e]=a[e]||function(){
   (a[e].o=a[e].o||[]).push(arguments)},f=b.createElement(c),g=b.getElementsByTagName(c)[0],
@@ -103,9 +138,11 @@ async function initRumServer(app: PluginNuxtApp) {
                 rg4js('apiKey', '${keys.raygun}')
                 rg4js('enableCrashReporting', true)
                 rg4js('enablePulse', true)
-                rg4js('withTags', ['baseUrl:${baseUrl}', 'version:${speckleServerVersion}'])
+                rg4js('withTags', ['baseUrl:${baseUrl}', 'version:${speckleServerVersion}', ...${JSON.stringify(
+              initRaygunTags
+            )}])
                 rg4js('options', {
-                  debugMode: ${!!process.dev},
+                  debugMode: ${!!debug},
                 })
             `
           }
@@ -115,25 +152,30 @@ async function initRumServer(app: PluginNuxtApp) {
   }
 }
 
-function resolveInitParams() {
+function resolveInitParams(app: PluginNuxtApp) {
   const {
     public: {
       raygunKey,
       speckleServerVersion,
-
-      baseUrl
+      logCsrEmitProps,
+      baseUrl,
+      debugCoreWebVitals
     }
   } = useRuntimeConfig()
+  const logger = useLogger()
   const raygun = raygunKey?.length ? raygunKey : null
-  const enabled = !!raygun
+
+  const shouldDebugCoreWebVitals = debugCoreWebVitals || app._route?.query.cwv === '1'
 
   return {
-    enabled,
     keys: {
       raygun
     },
     speckleServerVersion,
-    baseUrl
+    baseUrl,
+    debug: logCsrEmitProps && process.dev,
+    debugCoreWebVitals: shouldDebugCoreWebVitals,
+    logger
   }
 }
 
@@ -141,6 +183,6 @@ export default defineNuxtPlugin(async (app) => {
   if (process.server) {
     await initRumServer(app)
   } else {
-    await initRumClient()
+    await initRumClient(app)
   }
 })

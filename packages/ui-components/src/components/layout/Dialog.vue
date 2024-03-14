@@ -29,7 +29,7 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90dvh]',
+                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
