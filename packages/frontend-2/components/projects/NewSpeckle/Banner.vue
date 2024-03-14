@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { SparklesIcon } from '@heroicons/vue/24/solid'
 
-const emit = defineEmits<{ dismissed }>()
+const emit = defineEmits<{ dismissed: [] }>()
 
 const showDialog = ref(false)
 
