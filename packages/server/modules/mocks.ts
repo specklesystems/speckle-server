@@ -1,9 +1,5 @@
-import {
-  AutomateFunction,
-  Automation,
-  LimitedUser,
-  Resolvers
-} from '@/modules/core/graph/generated/graphql'
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { LimitedUser, Resolvers } from '@/modules/core/graph/generated/graphql'
 import { isDevEnv } from '@/modules/shared/helpers/envHelper'
 import { Roles } from '@speckle/shared'
 import { times } from 'lodash'
@@ -33,28 +29,28 @@ export async function buildMocksConfig(): Promise<{
           return {
             cursor: null,
             totalCount: count,
-            items: times(count, () =>
-              store.get('AutomateFunction')
-            ) as AutomateFunction[]
-          }
+            items: times(count, () => store.get('AutomateFunction'))
+          } as any
         }
       },
       Project: {
         automations: (_parent, args) => {
+          const forceAutomations = true
           const limit = args.limit || faker.datatype.number({ min: 4, max: 20 })
-          const count = faker.datatype.boolean() ? limit : 0
+          const count = forceAutomations ? limit : faker.datatype.boolean() ? limit : 0
 
           return {
             cursor: null,
             totalCount: count,
-            items: times(count, () => store.get('Automation')) as Automation[]
-          }
+            items: times(count, () => store.get('Automation'))
+          } as any
         }
       }
     }),
     mocks: {
       Automation: () => ({
-        name: () => faker.company.companyName()
+        name: () => faker.company.companyName(),
+        enabled: () => faker.datatype.boolean()
       }),
       AutomateFunction: () => ({
         name: () => faker.commerce.productName(),
@@ -73,6 +69,9 @@ export async function buildMocksConfig(): Promise<{
             : null
         }
       }),
+      AutomateFunctionRun: () => ({
+        reason: () => faker.lorem.sentence()
+      }),
       LimitedUser: () =>
         ({
           id: faker.datatype.uuid(),
@@ -84,7 +83,11 @@ export async function buildMocksConfig(): Promise<{
           role: Roles.Server.User
         } as LimitedUser),
       JSONObject: () => ({}),
-      ID: () => faker.datatype.uuid()
+      ID: () => faker.datatype.uuid(),
+      DateTime: () => faker.date.recent().toISOString(),
+      Model: () => ({
+        name: () => faker.commerce.productName()
+      })
     },
     mockEntireSchema: false
   }

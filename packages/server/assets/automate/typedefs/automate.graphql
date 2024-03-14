@@ -1,6 +1,39 @@
+enum AutomateRunStatus {
+  INITIALIZING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
 type Automation {
   id: ID!
   name: String!
+  enabled: Boolean!
+  """
+  TODO: Can there be more models in the future? Can there be 0? (automation on comment)
+  """
+  model: Model!
+  runs(cursor: String, limit: Int): AutomateRunCollection!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AutomateRun {
+  id: ID!
+  status: AutomateRunStatus!
+  reason: String
+  """
+  TODO: Can there be more versions in the future? Can there be 0? (automation on comment)
+  """
+  version: Version!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AutomateRunCollection {
+  items: [AutomateRun!]!
+  totalCount: Int!
+  cursor: String
 }
 
 type AutomationCollection {

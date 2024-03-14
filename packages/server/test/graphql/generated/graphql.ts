@@ -206,10 +206,47 @@ export type AutomateFunctionCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type AutomateRun = {
+  __typename?: 'AutomateRun';
+  createdAt: Scalars['DateTime'];
+  id: Scalars['ID'];
+  reason?: Maybe<Scalars['String']>;
+  status: AutomateRunStatus;
+  updatedAt: Scalars['DateTime'];
+  /** TODO: Can there be more versions in the future? Can there be 0? (automation on comment) */
+  version: Version;
+};
+
+export type AutomateRunCollection = {
+  __typename?: 'AutomateRunCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<AutomateRun>;
+  totalCount: Scalars['Int'];
+};
+
+export enum AutomateRunStatus {
+  Failed = 'FAILED',
+  Initializing = 'INITIALIZING',
+  Running = 'RUNNING',
+  Succeeded = 'SUCCEEDED'
+}
+
 export type Automation = {
   __typename?: 'Automation';
+  createdAt: Scalars['DateTime'];
+  enabled: Scalars['Boolean'];
   id: Scalars['ID'];
+  /** TODO: Can there be more models in the future? Can there be 0? (automation on comment) */
+  model: Model;
   name: Scalars['String'];
+  runs: AutomateRunCollection;
+  updatedAt: Scalars['DateTime'];
+};
+
+
+export type AutomationRunsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 export type AutomationCollection = {

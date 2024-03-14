@@ -215,10 +215,47 @@ export type AutomateFunctionCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type AutomateRun = {
+  __typename?: 'AutomateRun';
+  createdAt: Scalars['DateTime'];
+  id: Scalars['ID'];
+  reason?: Maybe<Scalars['String']>;
+  status: AutomateRunStatus;
+  updatedAt: Scalars['DateTime'];
+  /** TODO: Can there be more versions in the future? Can there be 0? (automation on comment) */
+  version: Version;
+};
+
+export type AutomateRunCollection = {
+  __typename?: 'AutomateRunCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<AutomateRun>;
+  totalCount: Scalars['Int'];
+};
+
+export enum AutomateRunStatus {
+  Failed = 'FAILED',
+  Initializing = 'INITIALIZING',
+  Running = 'RUNNING',
+  Succeeded = 'SUCCEEDED'
+}
+
 export type Automation = {
   __typename?: 'Automation';
+  createdAt: Scalars['DateTime'];
+  enabled: Scalars['Boolean'];
   id: Scalars['ID'];
+  /** TODO: Can there be more models in the future? Can there be 0? (automation on comment) */
+  model: Model;
   name: Scalars['String'];
+  runs: AutomateRunCollection;
+  updatedAt: Scalars['DateTime'];
+};
+
+
+export type AutomationRunsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 export type AutomationCollection = {
@@ -3077,8 +3114,11 @@ export type ResolversTypes = {
   AuthStrategy: ResolverTypeWrapper<AuthStrategy>;
   AutomateFunction: ResolverTypeWrapper<Omit<AutomateFunction, 'creator'> & { creator: ResolversTypes['LimitedUser'] }>;
   AutomateFunctionCollection: ResolverTypeWrapper<Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversTypes['AutomateFunction']> }>;
-  Automation: ResolverTypeWrapper<Automation>;
-  AutomationCollection: ResolverTypeWrapper<AutomationCollection>;
+  AutomateRun: ResolverTypeWrapper<Omit<AutomateRun, 'version'> & { version: ResolversTypes['Version'] }>;
+  AutomateRunCollection: ResolverTypeWrapper<Omit<AutomateRunCollection, 'items'> & { items: Array<ResolversTypes['AutomateRun']> }>;
+  AutomateRunStatus: AutomateRunStatus;
+  Automation: ResolverTypeWrapper<Omit<Automation, 'model' | 'runs'> & { model: ResolversTypes['Model'], runs: ResolversTypes['AutomateRunCollection'] }>;
+  AutomationCollection: ResolverTypeWrapper<Omit<AutomationCollection, 'items'> & { items: Array<ResolversTypes['Automation']> }>;
   AutomationCreateInput: AutomationCreateInput;
   AutomationFunctionRun: ResolverTypeWrapper<AutomationFunctionRunGraphQLReturn>;
   AutomationMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -3260,8 +3300,10 @@ export type ResolversParentTypes = {
   AuthStrategy: AuthStrategy;
   AutomateFunction: Omit<AutomateFunction, 'creator'> & { creator: ResolversParentTypes['LimitedUser'] };
   AutomateFunctionCollection: Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateFunction']> };
-  Automation: Automation;
-  AutomationCollection: AutomationCollection;
+  AutomateRun: Omit<AutomateRun, 'version'> & { version: ResolversParentTypes['Version'] };
+  AutomateRunCollection: Omit<AutomateRunCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateRun']> };
+  Automation: Omit<Automation, 'model' | 'runs'> & { model: ResolversParentTypes['Model'], runs: ResolversParentTypes['AutomateRunCollection'] };
+  AutomationCollection: Omit<AutomationCollection, 'items'> & { items: Array<ResolversParentTypes['Automation']> };
   AutomationCreateInput: AutomationCreateInput;
   AutomationFunctionRun: AutomationFunctionRunGraphQLReturn;
   AutomationMutations: MutationsObjectGraphQLReturn;
@@ -3550,9 +3592,31 @@ export type AutomateFunctionCollectionResolvers<ContextType = GraphQLContext, Pa
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type AutomationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Automation'] = ResolversParentTypes['Automation']> = {
+export type AutomateRunResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomateRun'] = ResolversParentTypes['AutomateRun']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  reason?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['AutomateRunStatus'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  version?: Resolver<ResolversTypes['Version'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AutomateRunCollectionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomateRunCollection'] = ResolversParentTypes['AutomateRunCollection']> = {
+  cursor?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  items?: Resolver<Array<ResolversTypes['AutomateRun']>, ParentType, ContextType>;
+  totalCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type AutomationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Automation'] = ResolversParentTypes['Automation']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  enabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  runs?: Resolver<ResolversTypes['AutomateRunCollection'], ParentType, ContextType, Partial<AutomationRunsArgs>>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -4472,6 +4536,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   AuthStrategy?: AuthStrategyResolvers<ContextType>;
   AutomateFunction?: AutomateFunctionResolvers<ContextType>;
   AutomateFunctionCollection?: AutomateFunctionCollectionResolvers<ContextType>;
+  AutomateRun?: AutomateRunResolvers<ContextType>;
+  AutomateRunCollection?: AutomateRunCollectionResolvers<ContextType>;
   Automation?: AutomationResolvers<ContextType>;
   AutomationCollection?: AutomationCollectionResolvers<ContextType>;
   AutomationFunctionRun?: AutomationFunctionRunResolvers<ContextType>;
