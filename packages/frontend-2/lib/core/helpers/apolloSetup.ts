@@ -92,6 +92,7 @@ export function buildAbstractCollectionMergeFunction<T extends string>(
     }
 
     return {
+      ...(incoming || {}),
       __typename: incoming?.__typename || existing?.__typename || typeName,
       totalCount: incoming.totalCount || 0,
       cursor: incoming.cursor || null,

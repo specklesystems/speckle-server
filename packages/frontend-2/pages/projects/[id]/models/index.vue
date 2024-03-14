@@ -1,7 +1,17 @@
 <template>
   <div>
+    <div>
+      <Portal to="navigation">
+        <HeaderNavLink
+          v-if="project"
+          :to="projectRoute(project.id)"
+          :name="project.name"
+        ></HeaderNavLink>
+      </Portal>
+    </div>
+
     <div v-if="project">
-      <ProjectModelsPageHeader
+      <ProjectPageModelsHeader
         v-model:selected-apps="selectedApps"
         v-model:selected-members="selectedMembers"
         v-model:grid-or-list="gridOrList"
@@ -10,7 +20,7 @@
         :disabled="loading"
         class="z-[1] relative"
       />
-      <ProjectModelsPageResults
+      <ProjectPageModelsResults
         v-model:grid-or-list="gridOrList"
         v-model:search="search"
         v-model:loading="loading"
@@ -25,6 +35,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
+import { projectRoute } from '~~/lib/common/helpers/route'
 import type { SourceAppDefinition } from '@speckle/shared'
 import type { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectModelsPageQuery } from '~~/lib/projects/graphql/queries'

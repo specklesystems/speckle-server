@@ -57,7 +57,8 @@ export default defineNuxtConfig({
       raygunKey: '',
       logrocketAppId: '',
       speedcurveId: 0,
-      debugbearId: ''
+      debugbearId: '',
+      debugCoreWebVitals: false
     }
   },
 

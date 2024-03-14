@@ -1,12 +1,22 @@
 <template>
   <div>
+    <div>
+      <Portal to="navigation">
+        <HeaderNavLink
+          v-if="project"
+          :to="projectRoute(project.id)"
+          :name="project.name"
+        ></HeaderNavLink>
+      </Portal>
+    </div>
+
     <div v-if="project">
-      <ProjectDiscussionsPageHeader
+      <ProjectPageDiscussionsHeader
         v-model:grid-or-list="gridOrList"
         v-model:include-archived="includeArchived"
         :project="project"
       />
-      <ProjectDiscussionsPageResults
+      <ProjectPageDiscussionsResults
         :grid-or-list="gridOrList"
         :project="project"
         :include-archived="!!includeArchived"
@@ -17,6 +27,7 @@
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import type { Optional } from '~~/../shared/dist-esm'
+import { projectRoute } from '~~/lib/common/helpers/route'
 import {
   useGeneralProjectPageUpdateTracking,
   useProjectPageItemViewType

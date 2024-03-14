@@ -22,7 +22,6 @@ export default defineNuxtPlugin(async () => {
   }
 
   // Init
-  // TODO: Separate token for new frontend?
   mixpanel.init(mixpanelTokenId, {
     // eslint-disable-next-line camelcase
     api_host: mixpanelApiHost,
