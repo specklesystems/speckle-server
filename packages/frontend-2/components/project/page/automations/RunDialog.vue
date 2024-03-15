@@ -36,10 +36,7 @@
         <CommonLoadingIcon v-if="showLoader" size="sm" />
       </div>
       <div class="flex flex-col gap-2">
-        <div>
-          <CommonCodeOutput v-if="logsData?.length" :content="logsData" />
-          <span v-else-if="areLogsFullyRead" class="italic">No logs found</span>
-        </div>
+        <CommonCodeOutput :content="codeOutputContent" />
       </div>
     </div>
     <div v-else />
@@ -76,4 +73,15 @@ const {
 })
 
 const showLoader = computed(() => logsLoading.value || !areLogsFullyRead.value)
+const codeOutputContent = computed(() => {
+  if (logsData.value) {
+    return logsData.value
+  }
+
+  if (areLogsFullyRead.value) {
+    return 'No logs found'
+  }
+
+  return ''
+})
 </script>
