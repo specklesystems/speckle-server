@@ -346,6 +346,7 @@ const showFeedbackRequest = computed(() => {
     storedDateString = formattedDate
   }
 
+  if (showNewSpeckleBanner.value) return false
   if (hasDismissedOrOpenedFeedback.value) return false
   if (showChecklist.value) return false
   if (projectsPanelResult?.value?.activeUser?.projectInvites.length) return false
@@ -359,7 +360,6 @@ const showFeedbackRequest = computed(() => {
 const showNewSpeckleBanner = computed(() => {
   if (hasDismissedNewSpeckleBanner.value) return false
   if (projectsPanelResult?.value?.activeUser?.projectInvites.length) return false
-  if (showFeedbackRequest.value) return false
 
   return true
 })
