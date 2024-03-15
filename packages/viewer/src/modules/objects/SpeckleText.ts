@@ -47,7 +47,7 @@ export class SpeckleText extends Mesh {
   private _background: Mesh = null
   private _backgroundSize: Vector3 = new Vector3()
   private _style: SpeckleTextStyle = Object.assign({}, DefaultSpeckleTextStyle)
-  private _resolution: Vector2 = new Vector2()
+  private _resolution: Vector2 = null
 
   private defaultMaterial = /*#__PURE__*/ new MeshBasicMaterial({
     color: 0xffffff,
@@ -101,6 +101,9 @@ export class SpeckleText extends Mesh {
     this.add(this._text)
 
     this.onBeforeRender = (renderer) => {
+      if (this._resolution === null) {
+        this._resolution = new Vector2()
+      }
       renderer.getDrawingBufferSize(this._resolution)
     }
   }
@@ -162,6 +165,7 @@ export class SpeckleText extends Mesh {
           x = Math.sin(x / curveRadius) * curveRadius
         }
         if (this.textMesh.material.defines['BILLBOARD_FIXED']) {
+          if (!this._resolution) return
           const billboardSize = new Vector2().set(
             (this.textMesh.material.billboardPixelHeight / this._resolution.x) * 2,
             (this.textMesh.material.billboardPixelHeight / this._resolution.y) * 2
