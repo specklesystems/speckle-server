@@ -8,7 +8,7 @@
       <div class="label-light">{{ enabledText }}</div>
     </div>
     <div class="truncate">
-      <CommonTextLink :to="modelUrl">{{ automation.model.name }}</CommonTextLink>
+      <CommonTextLink :to="finalModelUrl">{{ automation.model.name }}</CommonTextLink>
     </div>
     <LayoutTable
       :columns="[
@@ -20,19 +20,32 @@
       ]"
       :items="automation.runs.items"
       :buttons="[
-        { icon: EyeIcon, label: 'View', action: () => {}, textColor: 'primary' }
+        {
+          icon: EyeIcon,
+          label: 'View',
+          action: (run) => {
+            $emit('view', run, modelId, automation.id)
+          },
+          textColor: 'primary'
+        }
       ]"
     >
       <template #status="{ item }">
-        <CommonBadge v-tippy="item.reason" :color-classes="runStatusClasses(item)">
-          {{ item.status.toUpperCase() }}
-        </CommonBadge>
+        <AutomationsRunsStatusBadge :run="item" />
       </template>
       <template #runId="{ item }">
         <span class="text-foreground label-light">{{ item.id }}</span>
       </template>
       <template #modelVersion="{ item }">
-        <CommonTextLink :to="runModelVersionUrl(item)">
+        <CommonTextLink
+          :to="
+            runModelVersionUrl({
+              run: item,
+              projectId: projectId,
+              modelId: automation.model.id
+            })
+          "
+        >
           {{ item.version.id }}
         </CommonTextLink>
       </template>
@@ -47,18 +60,10 @@
 </template>
 <script setup lang="ts">
 import { PlayIcon, PauseIcon, EyeIcon } from '@heroicons/vue/24/outline'
-import { SpeckleViewer } from '@speckle/shared'
-import dayjs from 'dayjs'
-import {
-  useFormatDuration,
-  useReactiveNowDate
-} from '~/lib/common/composables/datetime'
+import { useAutomationRunDetailsFns } from '~/lib/automations/composables/runs'
 import { graphql } from '~/lib/common/generated/gql'
-import {
-  AutomateRunStatus,
-  type ProjectPageAutomationsRow_AutomationFragment
-} from '~/lib/common/generated/gql/graphql'
-import { modelRoute } from '~/lib/common/helpers/route'
+import { type ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'
+import { useViewerRouteBuilder } from '~/lib/projects/composables/models'
 
 type AutomateRun = ProjectPageAutomationsRow_AutomationFragment['runs']['items'][0]
 
@@ -74,85 +79,30 @@ graphql(`
     runs(limit: 5) {
       totalCount
       items {
-        id
-        status
-        reason
-        version {
-          id
-        }
-        createdAt
-        updatedAt
+        ...AutomationRunDetails
       }
     }
   }
 `)
+
+defineEmits<{
+  view: [AutomateRun, modelId: string, automationId: string]
+}>()
 
 const props = defineProps<{
   projectId: string
   automation: ProjectPageAutomationsRow_AutomationFragment
 }>()
 
-const formatDuration = useFormatDuration()
-const now = useReactiveNowDate()
+const { runDate, runDuration, runModelVersionUrl } = useAutomationRunDetailsFns()
+const { modelUrl } = useViewerRouteBuilder()
+
+const modelId = computed(() => props.automation.model.id)
 const isEnabled = computed(() => props.automation.enabled)
 const enabledIcon = computed(() => (isEnabled.value ? PauseIcon : PlayIcon))
 const enabledText = computed(() => (isEnabled.value ? 'Enabled' : 'Paused'))
 
-const modelUrl = computed(() => {
-  const builder = SpeckleViewer.ViewerRoute.resourceBuilder()
-  builder.addModel(props.automation.model.id)
-
-  return modelRoute(props.projectId, builder.toString())
-})
-
-const runStatusClasses = (run: AutomateRun) => {
-  const classParts = ['w-24 justify-center']
-  const status = run.status
-
-  switch (status) {
-    case AutomateRunStatus.Initializing:
-      classParts.push('bg-warning-lighter text-warning-darker')
-      break
-    case AutomateRunStatus.Running:
-      classParts.push('bg-info-lighter text-info-darker')
-      break
-    case AutomateRunStatus.Failed:
-      classParts.push('bg-danger-lighter text-danger-darker')
-      break
-    case AutomateRunStatus.Succeeded:
-      classParts.push('bg-success-lighter text-success-darker')
-      break
-  }
-
-  return classParts.join(' ')
-}
-
-const runModelVersionUrl = (run: AutomateRun) => {
-  const builder = SpeckleViewer.ViewerRoute.resourceBuilder()
-  builder.addModel(props.automation.model.id, run.version.id)
-
-  return modelRoute(props.projectId, builder.toString())
-}
-
-const runDate = (run: AutomateRun) => {
-  return dayjs(run.createdAt).fromNow()
-}
-
-const runDuration = (run: AutomateRun) => {
-  const start = run.createdAt
-  const end =
-    run.status === AutomateRunStatus.Running
-      ? now.value
-      : [AutomateRunStatus.Initializing].includes(run.status)
-      ? undefined
-      : run.updatedAt
-  if (!end) return undefined
-
-  const diff = dayjs(end).diff(dayjs(start))
-  const duration = dayjs.duration(diff)
-  const format = formatDuration(duration)
-
-  if (duration.days() > 0) return dayjs.duration(diff).humanize()
-  return dayjs.duration(diff).format(format)
-}
+const finalModelUrl = computed(() =>
+  modelUrl({ projectId: props.projectId, modelId: modelId.value })
+)
 </script>
