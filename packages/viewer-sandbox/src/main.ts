@@ -73,7 +73,7 @@ const createViewer = async (containerName: string, stream: string) => {
   viewer.on(
     ViewerEvent.ObjectClicked,
     (event: { hits: { node: { model: { id: string } } }[] }) => {
-      // if (event) console.log(event.hits[0].node.model.id)
+      if (event) console.log(event.hits[0].node.model.id)
     }
   )
 
@@ -249,7 +249,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
     // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
     // 'https://latest.speckle.dev/streams/f92e060177/commits/f51ee777d5'
-    'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
+    // 'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
     // Big curves
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
     // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
@@ -366,6 +366,10 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/aea12cab71/commits/787ade768e'
     // 'https://speckle.xyz/streams/a29e5c7772/commits/a8cfae2645'
     // 'https://latest.speckle.dev/streams/9d71f041b2/commits/01279333e5'
+    // 'https://speckle.xyz/streams/b4086833f8/commits/94df4c6d16'
+
+    // Rebar
+    'https://speckle.xyz/streams/b4086833f8/commits/94df4c6d16?overlay=c5b9c260ea,e3dc287d61,eaedd7d0a5,7f126ce0dd,02fee34ce3,9bda31611f,110282c4db,533c311e29,bf6814d779,1ba52affcf,cc4e75125e,3fd628e4e3'
   )
 }
 
