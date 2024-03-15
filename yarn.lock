@@ -14197,7 +14197,8 @@ __metadata:
     ws: ^7.5.7
     xml-escape: ^1.1.0
     yargs: ^17.3.1
-    zod: ^3.22.3
+    znv: ^0.4.0
+    zod: ^3.22.4
     zod-validation-error: ^1.5.0
     zxcvbn: ^4.4.2
   languageName: unknown
@@ -48083,6 +48084,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"znv@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "znv@npm:0.4.0"
+  dependencies:
+    colorette: ^2.0.19
+  peerDependencies:
+    zod: ^3.13.2
+  checksum: 7dac62d9b83de85f46ebdcc3a8563a198129a34f60948e99ba339a824594ace4ca37d328ad358646f321ee42b9506ef71d9e9901d41a668cca843ac272194d71
+  languageName: node
+  linkType: hard
+
 "zod-validation-error@npm:^1.5.0":
   version: 1.5.0
   resolution: "zod-validation-error@npm:1.5.0"
@@ -48092,7 +48104,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"zod@npm:^3.22.3":
+"zod@npm:^3.22.4":
   version: 3.22.4
   resolution: "zod@npm:3.22.4"
   checksum: 80bfd7f8039b24fddeb0718a2ec7c02aa9856e4838d6aa4864335a047b6b37a3273b191ef335bf0b2002e5c514ef261ffcda5a589fb084a48c336ffc4cdbab7f
