@@ -4,6 +4,7 @@ import { isDevEnv } from '@/modules/shared/helpers/envHelper'
 import { Roles } from '@speckle/shared'
 import { times } from 'lodash'
 import { IMockStore, IMocks } from '@graphql-tools/mock'
+import dayjs from 'dayjs'
 
 /**
  * Define mocking config in dev env
@@ -45,6 +46,17 @@ export async function buildMocksConfig(): Promise<{
             items: times(count, () => store.get('Automation'))
           } as any
         }
+      },
+      Automation: {
+        runs: (_parent, args) => {
+          const count = args.limit || faker.datatype.number({ min: 4, max: 20 })
+
+          return {
+            cursor: null,
+            totalCount: count,
+            items: times(count, () => store.get('AutomateRun'))
+          } as any
+        }
       }
     }),
     mocks: {
@@ -69,8 +81,14 @@ export async function buildMocksConfig(): Promise<{
             : null
         }
       }),
-      AutomateFunctionRun: () => ({
-        reason: () => faker.lorem.sentence()
+      AutomateRun: () => ({
+        reason: () => faker.lorem.sentence(),
+        id: () => faker.random.alphaNumeric(20),
+        createdAt: () =>
+          faker.date
+            .recent(undefined, dayjs().subtract(1, 'day').toDate())
+            .toISOString(),
+        updatedAt: () => faker.date.recent().toISOString()
       }),
       LimitedUser: () =>
         ({
@@ -87,6 +105,9 @@ export async function buildMocksConfig(): Promise<{
       DateTime: () => faker.date.recent().toISOString(),
       Model: () => ({
         name: () => faker.commerce.productName()
+      }),
+      Version: () => ({
+        id: () => faker.random.alphaNumeric(10)
       })
     },
     mockEntireSchema: false

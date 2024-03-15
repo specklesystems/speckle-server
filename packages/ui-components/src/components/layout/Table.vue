@@ -7,9 +7,9 @@
         :style="{ paddingRight: paddingRightStyle }"
       >
         <div
-          v-for="column in columns"
+          v-for="(column, colIndex) in columns"
           :key="column.id"
-          :class="getHeaderClasses(column.id)"
+          :class="getHeaderClasses(column.id, colIndex)"
           class="capitalize"
         >
           {{ column.header }}
@@ -118,17 +118,26 @@ const rowsWrapperClasses = computed(() => {
   return classParts.join(' ')
 })
 
-const getHeaderClasses = (column: C): string => {
-  return props.columns.find((c) => c.id === column)?.classes || ''
+const getHeaderClasses = (column: C, colIndex: number): string => {
+  const classParts = [props.columns.find((c) => c.id === column)?.classes || '']
+
+  if (colIndex === 0) {
+    classParts.push('px-1')
+  } else {
+    classParts.push('lg:p-0 px-1')
+  }
+
+  return classParts.join(' ')
 }
 
 const getClasses = (column: C, colIndex: number): string => {
-  const columnClass = getHeaderClasses(column)
+  const columnClass = getHeaderClasses(column, colIndex)
 
   if (colIndex === 0) {
-    return `bg-transparent py-3 pr-5 px-1 ${columnClass}`
+    return `bg-transparent py-3 pr-5 ${columnClass}`
+  } else {
+    return `my-2 ${columnClass}`
   }
-  return `lg:p-0 px-1 my-2 ${columnClass}`
 }
 
 const handleRowClick = (item: T) => {
