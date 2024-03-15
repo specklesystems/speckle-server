@@ -92,10 +92,6 @@ workflows:
       - pre-commit:
           filters: *filters-allow-all
 
-      - build-image-approval:
-          type: approval
-          filters: *filters-ignore-main-branch-or-all-tags
-
       - docker-build-server:
           context: &build-context
             - github-readonly-public-repos
@@ -104,63 +100,54 @@ workflows:
               only: /.*/
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-frontend:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-frontend-2:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-webhooks:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-file-imports:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-previews:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-test-container:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-monitor-container:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-docker-compose-ingress:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - publish-approval:
           type: approval
