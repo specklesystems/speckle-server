@@ -15,6 +15,10 @@
         v-if="showFeedbackRequest"
         @feedback-dismissed-or-opened="onDismissOrOpenFeedback"
       />
+      <ProjectsNewSpeckleBanner
+        v-if="showNewSpeckleBanner"
+        @dismissed="onDismissNewSpeckleBanner"
+      />
     </div>
     <div
       v-if="!showEmptyState"
@@ -172,6 +176,10 @@ const onDismissOrOpenFeedback = () => {
   hasDismissedOrOpenedFeedback.value = true
 }
 
+const onDismissNewSpeckleBanner = () => {
+  hasDismissedNewSpeckleBanner.value = true
+}
+
 onUserProjectsUpdate((res) => {
   const activeUserId = activeUser.value?.id
   const event = res.data?.userProjectsUpdated
@@ -311,6 +319,11 @@ const hasDismissedChecklistTimeAgo = computed(() => {
   )
 })
 
+const hasDismissedNewSpeckleBanner = useSynchronizedCookie<boolean | undefined>(
+  `hasDismissedNewSpeckleBanner`,
+  { default: () => false, expires: getFutureDateByDays(999) }
+)
+
 const showChecklist = computed(() => {
   if (hasDismissedChecklistForever.value) return false
   if (hasCompletedChecklistV1.value) return false
@@ -333,6 +346,7 @@ const showFeedbackRequest = computed(() => {
     storedDateString = formattedDate
   }
 
+  if (showNewSpeckleBanner.value) return false
   if (hasDismissedOrOpenedFeedback.value) return false
   if (showChecklist.value) return false
   if (projectsPanelResult?.value?.activeUser?.projectInvites.length) return false
@@ -341,6 +355,13 @@ const showFeedbackRequest = computed(() => {
   const daysDifference = currentDate.diff(firstVisitDate, 'day')
 
   return daysDifference > 14
+})
+
+const showNewSpeckleBanner = computed(() => {
+  if (hasDismissedNewSpeckleBanner.value) return false
+  if (projectsPanelResult?.value?.activeUser?.projectInvites.length) return false
+
+  return true
 })
 
 const clearSearch = () => {

@@ -42,8 +42,8 @@ export class MeasurementsExtension extends Extension {
   protected renderer: SpeckleRenderer = null
 
   protected measurements: Measurement[] = []
-  protected measurement: Measurement = null
-  protected selectedMeasurement: Measurement = null
+  protected _activeMeasurement: Measurement = null
+  protected _selectedMeasurement: Measurement = null
   protected raycaster: Raycaster = null
   protected _options: MeasurementOptions = Object.assign({}, DefaultMeasurementsOptions)
 
@@ -67,9 +67,9 @@ export class MeasurementsExtension extends Extension {
 
   public set enabled(value: boolean) {
     this._enabled = value
-    if (this.measurement) {
-      this.measurement.isVisible = value
-      this.measurement.update()
+    if (this._activeMeasurement) {
+      this._activeMeasurement.isVisible = value
+      this._activeMeasurement.update()
       if (!value) this.cancelMeasurement()
     }
     this.renderer.needsRender = true
@@ -83,14 +83,22 @@ export class MeasurementsExtension extends Extension {
   public set options(options: MeasurementOptions) {
     const resetMeasurement =
       this._options.type !== options.type &&
-      this.measurement &&
-      this.measurement.state === MeasurementState.DANGLING_START
+      this._activeMeasurement &&
+      this._activeMeasurement.state === MeasurementState.DANGLING_START
     Object.assign(this._options, options)
     if (resetMeasurement) {
       this.cancelMeasurement()
       this.startMeasurement()
     }
     this.applyOptions()
+  }
+
+  public get selectedMeasurement(): Measurement {
+    return this._selectedMeasurement
+  }
+
+  public get activeMeasurement(): Measurement {
+    return this._activeMeasurement
   }
 
   public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
@@ -110,8 +118,8 @@ export class MeasurementsExtension extends Extension {
 
     this._frameLock = false
 
-    if (this.measurement)
-      this.measurement.frameUpdate(
+    if (this._activeMeasurement)
+      this._activeMeasurement.frameUpdate(
         this.renderer.renderingCamera,
         this.screenBuff0,
         this.renderer.sceneBox
@@ -158,24 +166,24 @@ export class MeasurementsExtension extends Extension {
       return
     }
 
-    if (!this.measurement) {
+    if (!this._activeMeasurement) {
       this.startMeasurement()
     }
-    this.measurement.isVisible = true
+    this._activeMeasurement.isVisible = true
 
     this.pointBuff.copy(result[0].point)
     this.normalBuff.copy(result[0].face.normal)
     if (this._options.vertexSnap) {
       this.snap(result[0], this.pointBuff, this.normalBuff)
     }
-    if (this.measurement.state === MeasurementState.DANGLING_START) {
-      this.measurement.startPoint.copy(this.pointBuff)
-      this.measurement.startNormal.copy(this.normalBuff)
-    } else if (this.measurement.state === MeasurementState.DANGLING_END) {
-      this.measurement.endPoint.copy(this.pointBuff)
-      this.measurement.endNormal.copy(this.normalBuff)
+    if (this._activeMeasurement.state === MeasurementState.DANGLING_START) {
+      this._activeMeasurement.startPoint.copy(this.pointBuff)
+      this._activeMeasurement.startNormal.copy(this.normalBuff)
+    } else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
+      this._activeMeasurement.endPoint.copy(this.pointBuff)
+      this._activeMeasurement.endNormal.copy(this.normalBuff)
     }
-    this.measurement.update()
+    this._activeMeasurement.update()
 
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
@@ -197,13 +205,13 @@ export class MeasurementsExtension extends Extension {
       return
     }
 
-    if (!this.measurement) return
+    if (!this._activeMeasurement) return
 
     if (!this._sceneHit) return
 
-    if (this.measurement.state === MeasurementState.DANGLING_START)
-      this.measurement.state = MeasurementState.DANGLING_END
-    else if (this.measurement.state === MeasurementState.DANGLING_END) {
+    if (this._activeMeasurement.state === MeasurementState.DANGLING_START)
+      this._activeMeasurement.state = MeasurementState.DANGLING_END
+    else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
       this.finishMeasurement()
     }
   }
@@ -221,9 +229,9 @@ export class MeasurementsExtension extends Extension {
   }
 
   protected autoLazerMeasure(data) {
-    if (!this.measurement) return
+    if (!this._activeMeasurement) return
 
-    this.measurement.state = MeasurementState.DANGLING_START
+    this._activeMeasurement.state = MeasurementState.DANGLING_START
     let result =
       (this.renderer.intersections.intersect(
         this.renderer.scene,
@@ -271,54 +279,54 @@ export class MeasurementsExtension extends Extension {
       return
     }
 
-    this.measurement.startPoint.copy(startPoint)
-    this.measurement.startNormal.copy(startNormal)
-    this.measurement.endPoint.copy(perpResult[0].point)
-    this.measurement.endNormal.copy(perpResult[0].face.normal)
-    this.measurement.state = MeasurementState.DANGLING_END
-    this.measurement.update()
+    this._activeMeasurement.startPoint.copy(startPoint)
+    this._activeMeasurement.startNormal.copy(startNormal)
+    this._activeMeasurement.endPoint.copy(perpResult[0].point)
+    this._activeMeasurement.endNormal.copy(perpResult[0].face.normal)
+    this._activeMeasurement.state = MeasurementState.DANGLING_END
+    this._activeMeasurement.update()
     this.finishMeasurement()
   }
 
   protected startMeasurement() {
     if (this._options.type === MeasurementType.PERPENDICULAR)
-      this.measurement = new PerpendicularMeasurement()
+      this._activeMeasurement = new PerpendicularMeasurement()
     else if (this._options.type === MeasurementType.POINTTOPOINT)
-      this.measurement = new PointToPointMeasurement()
+      this._activeMeasurement = new PointToPointMeasurement()
 
-    this.measurement.state = MeasurementState.DANGLING_START
-    this.measurement.frameUpdate(
+    this._activeMeasurement.state = MeasurementState.DANGLING_START
+    this._activeMeasurement.frameUpdate(
       this.renderer.renderingCamera,
       this.screenBuff0,
       this.renderer.sceneBox
     )
-    this.renderer.scene.add(this.measurement)
+    this.renderer.scene.add(this._activeMeasurement)
   }
 
   protected cancelMeasurement() {
-    this.renderer.scene.remove(this.measurement)
-    this.measurement = null
+    this.renderer.scene.remove(this._activeMeasurement)
+    this._activeMeasurement = null
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
   }
 
   protected finishMeasurement() {
-    this.measurement.state = MeasurementState.COMPLETE
-    this.measurement.update()
-    if (this.measurement.value > 0) {
-      this.measurements.push(this.measurement)
+    this._activeMeasurement.state = MeasurementState.COMPLETE
+    this._activeMeasurement.update()
+    if (this._activeMeasurement.value > 0) {
+      this.measurements.push(this._activeMeasurement)
     } else {
-      this.renderer.scene.remove(this.measurement)
+      this.renderer.scene.remove(this._activeMeasurement)
       Logger.error('Ignoring zero value measurement!')
     }
-    this.measurement = null
+    this._activeMeasurement = null
   }
 
   public removeMeasurement() {
-    if (this.selectedMeasurement) {
-      this.measurements.splice(this.measurements.indexOf(this.selectedMeasurement), 1)
-      this.renderer.scene.remove(this.selectedMeasurement)
-      this.selectedMeasurement = null
+    if (this._selectedMeasurement) {
+      this.measurements.splice(this.measurements.indexOf(this._selectedMeasurement), 1)
+      this.renderer.scene.remove(this._selectedMeasurement)
+      this._selectedMeasurement = null
       this.renderer.needsRender = true
       this.renderer.resetPipeline()
     } else {
@@ -339,7 +347,7 @@ export class MeasurementsExtension extends Extension {
     let flashCount = 0
     const maxFlashCount = 5
     const handle = setInterval(() => {
-      this.measurement.highlight(Boolean(flashCount++ % 2))
+      this._activeMeasurement.highlight(Boolean(flashCount++ % 2))
       if (flashCount >= maxFlashCount) {
         clearInterval(handle)
       }
@@ -360,7 +368,7 @@ export class MeasurementsExtension extends Extension {
   protected selectMeasurement(measurement: Measurement, value: boolean) {
     this.cancelMeasurement()
     measurement.highlight(value)
-    this.selectedMeasurement = measurement
+    this._selectedMeasurement = measurement
   }
 
   protected snap(
@@ -406,7 +414,7 @@ export class MeasurementsExtension extends Extension {
   }
 
   protected applyOptions() {
-    const all = [this.measurement, ...this.measurements]
+    const all = [this._activeMeasurement, ...this.measurements]
     all.forEach((value) => {
       if (value) {
         value.units = this._options.units
@@ -433,6 +441,6 @@ export class MeasurementsExtension extends Extension {
     measurement.update()
     measurement.state = MeasurementState.COMPLETE
     measurement.update()
-    this.measurements.push(this.measurement)
+    this.measurements.push(this._activeMeasurement)
   }
 }

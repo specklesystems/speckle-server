@@ -29,7 +29,7 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90dvh]',
+                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
@@ -57,7 +57,7 @@
               </button>
               <div
                 class="flex-1 simple-scrollbar overflow-y-auto"
-                :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-10'"
+                :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-6 pt-10 sm:p-10'"
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
