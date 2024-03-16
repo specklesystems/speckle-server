@@ -73,7 +73,7 @@ const createViewer = async (containerName: string, stream: string) => {
   viewer.on(
     ViewerEvent.ObjectClicked,
     (event: { hits: { node: { model: { id: string } } }[] }) => {
-      // if (event) console.log(event.hits[0].node.model.id)
+      if (event) console.log(event.hits[0].node.model.id)
     }
   )
 
@@ -366,6 +366,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/aea12cab71/commits/787ade768e'
     // 'https://speckle.xyz/streams/a29e5c7772/commits/a8cfae2645'
     // 'https://latest.speckle.dev/streams/9d71f041b2/commits/01279333e5'
+    // 'https://latest.speckle.dev/streams/65c512f4ea/commits/cc2490830a'
     'https://latest.speckle.dev/streams/65c512f4ea/objects/882497528d1fa06660c28c1fd6aa15e0'
   )
 }

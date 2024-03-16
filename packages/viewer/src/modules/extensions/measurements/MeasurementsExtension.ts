@@ -117,6 +117,7 @@ export class MeasurementsExtension extends Extension {
     if (!this._enabled) return
 
     this._frameLock = false
+    this.renderer.renderer.getDrawingBufferSize(this.screenBuff0)
 
     if (this._activeMeasurement)
       this._activeMeasurement.frameUpdate(
