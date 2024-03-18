@@ -1,5 +1,8 @@
 import { trimStart } from 'lodash-es'
-import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
+import {
+  useGetInitialAuthState,
+  useOnAuthStateChange
+} from '~/lib/auth/composables/auth'
 import { useCreateErrorLoggingTransport } from '~/lib/core/composables/error'
 import type { Plugin } from 'nuxt/dist/app/nuxt'
 
@@ -71,12 +74,31 @@ async function initRumClient(app: PluginNuxtApp) {
       // }
     })
   }
+
+  // Datadog
+  const datadog = window.DD_RUM
+  if (keys.datadog && datadog) {
+    await onAuthStateChange(
+      (user, { resolveDistinctId }) => {
+        const distinctId = resolveDistinctId(user)
+        if (distinctId && user) {
+          datadog.setUser({
+            id: distinctId
+          })
+        } else {
+          datadog.clearUser()
+        }
+      },
+      { immediate: true }
+    )
+  }
 }
 
 async function initRumServer(app: PluginNuxtApp) {
   const registerErrorTransport = useCreateErrorLoggingTransport()
   const { keys, baseUrl, speckleServerVersion, debug, debugCoreWebVitals } =
     resolveInitParams(app)
+  const initUser = useGetInitialAuthState()
 
   // CWV
   if (debugCoreWebVitals) {
@@ -167,17 +189,24 @@ async function initRumServer(app: PluginNuxtApp) {
       datadogEnv
     } = keys.datadog
 
+    const { distinctId } = await initUser()
+
     app.hook('app:rendered', (context) => {
       context.ssrContext!.head.push({
         script: [
           {
-            innerHTML: `
+            innerHTML:
+              `
               (function(h,o,u,n,d) {
                 h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
                 d=o.createElement(u);d.async=1;d.src=n
                 n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
               })(window,document,'script','https://www.datadoghq-browser-agent.com/eu1/v5/datadog-rum.js','DD_RUM')
               window.DD_RUM.onReady(function() {
+                ` +
+              (distinctId ? `window.DD_RUM.setUser({ id: '${distinctId}' });` : '') +
+              `
+                window.DD_RUM.setGlobalContextProperty('serverBaseUrl', '${baseUrl}');
                 window.DD_RUM.init({
                   clientToken: '${datadogClientToken}',
                   applicationId: '${datadogAppId}',
@@ -219,7 +248,11 @@ function resolveInitParams(app: PluginNuxtApp) {
   const logger = useLogger()
   const raygun = raygunKey?.length ? raygunKey : null
   const datadog =
-    datadogClientToken?.length && datadogAppId?.length
+    datadogClientToken?.length &&
+    datadogAppId?.length &&
+    datadogSite?.length &&
+    datadogService?.length &&
+    datadogEnv?.length
       ? { datadogClientToken, datadogAppId, datadogSite, datadogService, datadogEnv }
       : null
 

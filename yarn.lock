@@ -7255,6 +7255,37 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@datadog/browser-core@npm:5.11.0":
+  version: 5.11.0
+  resolution: "@datadog/browser-core@npm:5.11.0"
+  checksum: fecb51873f6bd4fc6460b6c868ffa6c2670275c268aafe4543b6fe9ffaacaf56f8e2a7bfee388df3d0aad030168b1d127234ec9182c0333748fb0b004de76f40
+  languageName: node
+  linkType: hard
+
+"@datadog/browser-rum-core@npm:5.11.0":
+  version: 5.11.0
+  resolution: "@datadog/browser-rum-core@npm:5.11.0"
+  dependencies:
+    "@datadog/browser-core": 5.11.0
+  checksum: c9e8502272c31dd1bdfc9106627d97f74ca240f51a0ae97f73a461295d3c81a3411f6eb04fbca73aad5158430342f4fc7a22236bc4377a127a07e4cbcdfa9a19
+  languageName: node
+  linkType: hard
+
+"@datadog/browser-rum@npm:^5.11.0":
+  version: 5.11.0
+  resolution: "@datadog/browser-rum@npm:5.11.0"
+  dependencies:
+    "@datadog/browser-core": 5.11.0
+    "@datadog/browser-rum-core": 5.11.0
+  peerDependencies:
+    "@datadog/browser-logs": 5.11.0
+  peerDependenciesMeta:
+    "@datadog/browser-logs":
+      optional: true
+  checksum: 05d3dc0d0e93487bfe5942d87866c881bb58c00dabc86ddc143d1c852927578a14e268fe6ee0474d2b672498b39d9c76328640c66ccc965bae76d59f8b7b1870
+  languageName: node
+  linkType: hard
+
 "@discoveryjs/json-ext@npm:^0.5.0, @discoveryjs/json-ext@npm:^0.5.3, @discoveryjs/json-ext@npm:^0.5.7":
   version: 0.5.7
   resolution: "@discoveryjs/json-ext@npm:0.5.7"
@@ -13812,6 +13843,7 @@ __metadata:
     "@babel/preset-env": ^7.19.4
     "@babel/preset-react": ^7.18.6
     "@babel/preset-typescript": ^7.18.6
+    "@datadog/browser-rum": ^5.11.0
     "@graphql-codegen/cli": ^2.13.6
     "@graphql-codegen/client-preset": ^1.2.5
     "@headlessui/vue": ^1.7.13
