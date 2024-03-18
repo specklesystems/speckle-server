@@ -105,6 +105,26 @@ spec:
           - name: NUXT_PUBLIC_DEBUGBEAR_ID
             value: {{ .Values.analytics.debugbear_id | quote }}
           {{- end }}
+          {{- if .Values.analytics.datadog_app_id }}
+          - name: NUXT_PUBLIC_DATADOG_APP_ID
+            value: {{ .Values.analytics.datadog_app_id | quote }}
+          {{- end }}
+          {{- if .Values.analytics.datadog_client_token }}
+          - name: NUXT_PUBLIC_DATADOG_CLIENT_TOKEN
+            value: {{ .Values.analytics.datadog_client_token | quote }}
+          {{- end }}
+          {{- if .Values.analytics.datadog_site }}
+          - name: NUXT_PUBLIC_DATADOG_SITE
+            value: {{ .Values.analytics.datadog_site | quote }}
+          {{- end }}
+          {{- if .Values.analytics.datadog_service }}
+          - name: NUXT_PUBLIC_DATADOG_SERVICE
+            value: {{ .Values.analytics.datadog_service | quote }}
+          {{- end }}
+          {{- if .Values.analytics.datadog_env }}
+          - name: NUXT_PUBLIC_DATADOG_ENV
+            value: {{ .Values.analytics.datadog_env | quote }}
+          {{- end }}
 
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}

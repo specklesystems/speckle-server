@@ -78,6 +78,34 @@ async function initRumServer(app: PluginNuxtApp) {
   const { keys, baseUrl, speckleServerVersion, debug, debugCoreWebVitals } =
     resolveInitParams(app)
 
+  // CWV
+  if (debugCoreWebVitals) {
+    app.hook('app:rendered', (context) => {
+      context.ssrContext!.head.push({
+        script: [
+          {
+            innerHTML: `
+              import {
+                onCLS,
+                onFID,
+                onLCP,
+                onINP,
+                onTTFB
+              } from 'https://unpkg.com/web-vitals@3/dist/web-vitals.attribution.js?module';
+
+              onCLS(console.log);
+              onFID(console.log);
+              onLCP(console.log);
+              onINP(console.log);
+              onTTFB(console.log);
+              `,
+            type: 'module'
+          }
+        ]
+      })
+    })
+  }
+
   // RayGun
   if (keys.raygun) {
     const raygun = (await import('raygun')).default
@@ -104,28 +132,6 @@ async function initRumServer(app: PluginNuxtApp) {
 
       context.ssrContext!.head.push({
         script: [
-          ...(debugCoreWebVitals
-            ? [
-                {
-                  innerHTML: `
-                    import {
-                      onCLS,
-                      onFID,
-                      onLCP,
-                      onINP,
-                      onTTFB
-                    } from 'https://unpkg.com/web-vitals@3/dist/web-vitals.attribution.js?module';
-
-                    onCLS(console.log);
-                    onFID(console.log);
-                    onLCP(console.log);
-                    onINP(console.log);
-                    onTTFB(console.log);
-              `,
-                  type: 'module'
-                }
-              ]
-            : []),
           {
             innerHTML: `!function(a,b,c,d,e,f,g,h){a.RaygunObject=e,a[e]=a[e]||function(){
   (a[e].o=a[e].o||[]).push(arguments)},f=b.createElement(c),g=b.getElementsByTagName(c)[0],
@@ -150,6 +156,49 @@ async function initRumServer(app: PluginNuxtApp) {
       })
     })
   }
+
+  // Datadog
+  if (keys.datadog) {
+    const {
+      datadogAppId,
+      datadogClientToken,
+      datadogSite,
+      datadogService,
+      datadogEnv
+    } = keys.datadog
+
+    app.hook('app:rendered', (context) => {
+      context.ssrContext!.head.push({
+        script: [
+          {
+            innerHTML: `
+              (function(h,o,u,n,d) {
+                h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+                d=o.createElement(u);d.async=1;d.src=n
+                n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+              })(window,document,'script','https://www.datadoghq-browser-agent.com/eu1/v5/datadog-rum.js','DD_RUM')
+              window.DD_RUM.onReady(function() {
+                window.DD_RUM.init({
+                  clientToken: '${datadogClientToken}',
+                  applicationId: '${datadogAppId}',
+                  site: '${datadogSite}',
+                  service: '${datadogService}',
+                  env: '${datadogEnv || 'unknown'}',
+                  version: '${speckleServerVersion}', 
+                  sessionSampleRate: 100,
+                  sessionReplaySampleRate: 0,
+                  trackUserInteractions: true,
+                  trackResources: true,
+                  trackLongTasks: true,
+                  defaultPrivacyLevel: 'mask-user-input',
+                });
+              })
+          `
+          }
+        ]
+      })
+    })
+  }
 }
 
 function resolveInitParams(app: PluginNuxtApp) {
@@ -159,17 +208,27 @@ function resolveInitParams(app: PluginNuxtApp) {
       speckleServerVersion,
       logCsrEmitProps,
       baseUrl,
-      debugCoreWebVitals
+      debugCoreWebVitals,
+      datadogClientToken,
+      datadogAppId,
+      datadogSite,
+      datadogService,
+      datadogEnv
     }
   } = useRuntimeConfig()
   const logger = useLogger()
   const raygun = raygunKey?.length ? raygunKey : null
+  const datadog =
+    datadogClientToken?.length && datadogAppId?.length
+      ? { datadogClientToken, datadogAppId, datadogSite, datadogService, datadogEnv }
+      : null
 
   const shouldDebugCoreWebVitals = debugCoreWebVitals || app._route?.query.cwv === '1'
 
   return {
     keys: {
-      raygun
+      raygun,
+      datadog
     },
     speckleServerVersion,
     baseUrl,
