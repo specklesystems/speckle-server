@@ -21,7 +21,9 @@
     <LayoutPageTabs v-slot="{ activeItem }" :items="pageTabItems">
       <ProjectPageModelsTab v-if="activeItem.id === 'models'" />
       <ProjectPageDiscussionsTab v-if="activeItem.id === 'discussions'" />
-      <ProjectPageAutomationsTab v-if="activeItem.id === 'automations'" />
+      <ProjectPageAutomationsTab
+        v-if="activeItem.id === 'automations' && isAutomateEnabled"
+      />
     </LayoutPageTabs>
   </div>
 </template>
@@ -55,6 +57,7 @@ const router = useRouter()
 const projectId = computed(() => route.params.id as string)
 const shouldAutoAcceptInvite = computed(() => route.query.accept === 'true')
 const token = computed(() => route.query.token as Optional<string>)
+const isAutomateEnabled = useIsAutomateModuleEnabled()
 
 useGeneralProjectPageUpdateTracking({ projectId }, { notifyOnProjectUpdate: true })
 const { result: projectPageResult } = useQuery(
@@ -108,11 +111,15 @@ const pageTabItems = computed((): LayoutPageTabItem[] => [
     icon: ChatBubbleLeftRightIcon,
     count: commentCount.value
   },
-  {
-    title: 'Automations',
-    id: 'automations',
-    icon: BoltIcon,
-    tag: 'New'
-  }
+  ...(isAutomateEnabled
+    ? [
+        {
+          title: 'Automations',
+          id: 'automations',
+          icon: BoltIcon,
+          tag: 'New'
+        }
+      ]
+    : [])
 ])
 </script>
