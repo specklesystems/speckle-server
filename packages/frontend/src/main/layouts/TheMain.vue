@@ -51,6 +51,7 @@
         v-if="!hideEmailBanner"
         class="my-2 mx-4 email-banner"
       ></email-verification-banner>
+      <new-speckle-dialog v-if="showNewSpeckleDialog && fe2MessagingEnabled" />
       <v-container fluid class="px-4">
         <transition name="fade">
           <router-view></router-view>
@@ -66,6 +67,8 @@ import { gql } from '@apollo/client/core'
 import { useNavigationDrawerAutoResize } from '../lib/core/composables/dom'
 import { ref } from 'vue'
 import { useIsLoggedIn } from '../lib/core/composables/core'
+import { AppLocalStorage } from '@/utils/localStorage'
+import { useFE2Messaging } from '@/main/lib/core/composables/server'
 
 export default {
   name: 'TheMain',
@@ -75,6 +78,7 @@ export default {
     SearchBar: () => import('@/main/components/common/SearchBar'),
     GlobalToast: () => import('@/main/components/common/GlobalToast'),
     GlobalLoading: () => import('@/main/components/common/GlobalLoading'),
+    NewSpeckleDialog: () => import('@/main/dialogs/NewSpeckle.vue'),
     EmailVerificationBanner: () =>
       import('@/main/components/user/EmailVerificationBanner')
   },
@@ -105,6 +109,7 @@ export default {
   },
   setup() {
     const navDrawer = ref(null)
+    const showNewSpeckleDialog = ref(true)
 
     const { navWidth } = useNavigationDrawerAutoResize({
       drawerRef: navDrawer
@@ -116,7 +121,9 @@ export default {
     return {
       navDrawer,
       navWidth,
-      isLoggedIn
+      isLoggedIn,
+      showNewSpeckleDialog,
+      ...useFE2Messaging()
     }
   },
   data() {
@@ -159,6 +166,10 @@ export default {
       },
       immediate: true
     }
+  },
+  mounted() {
+    const dialogDismissed = AppLocalStorage.get('newSpeckleDialogDismissed')
+    this.showNewSpeckleDialog = dialogDismissed !== 'true'
   },
   methods: {
     cleanQuery() {
