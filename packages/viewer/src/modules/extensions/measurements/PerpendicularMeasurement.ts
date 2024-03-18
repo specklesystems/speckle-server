@@ -72,7 +72,6 @@ export class PerpendicularMeasurement extends Measurement {
         .applyMatrix4(this.renderingCamera.projectionMatrix)
         .normalize()
       // Move to NDC
-      console.warn(normalNDC.w)
       const normalpDiv = normalNDC.w === 0 ? 1 : normalNDC.w
       normalNDC.multiplyScalar(1 / normalpDiv).normalize()
       // if (this.renderingCamera instanceof PerspectiveCamera) {
