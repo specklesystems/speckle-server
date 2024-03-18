@@ -36,8 +36,8 @@ export async function buildMocksConfig(): Promise<{
       },
       Project: {
         automations: (_parent, args) => {
-          const forceAutomations = false
-          const forceNoAutomations = true
+          const forceAutomations = true
+          const forceNoAutomations = false
 
           const limit = args.limit || faker.datatype.number({ min: 4, max: 20 })
           let count

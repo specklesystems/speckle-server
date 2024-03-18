@@ -23,6 +23,7 @@
           v-else
           :icon-left="PlusIcon"
           size="lg"
+          external
           target="_blank"
           to="https://docs.google.com/forms/d/e/1FAIpQLSc5e4q0gyG8VkGqA3gRzN71c4TDu0P9W0PXeVarFu_8po3qRA/viewform"
         >
