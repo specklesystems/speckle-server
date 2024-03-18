@@ -22,6 +22,7 @@
   "dependencies": {
     "@apollo/client": "^3.9.6",
     "@artmizu/nuxt-prometheus": "^2.2.1",
+    "@datadog/browser-rum": "^5.11.0",
     "@headlessui/vue": "^1.7.13",
     "@heroicons/vue": "^2.0.12",
     "@speckle/shared": "workspace:^",

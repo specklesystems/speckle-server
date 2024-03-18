@@ -70,6 +70,19 @@ export const useOnAuthStateChange = () => {
   }
 }
 
+export const useGetInitialAuthState = () => {
+  const waitForUser = useWaitForActiveUser()
+  const resolveDistinctId = useResolveUserDistinctId()
+
+  return async () => {
+    const user = await waitForUser()
+    return {
+      user: user?.data?.activeUser,
+      distinctId: resolveDistinctId(user?.data?.activeUser)
+    }
+  }
+}
+
 /**
  * Composable that builds a function for resetting the active auth state.
  * This means resetting mixpanel identification, wiping apollo `me` cache etc.
