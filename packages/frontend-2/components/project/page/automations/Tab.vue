@@ -2,13 +2,17 @@
   <div class="flex flex-col gap-8">
     <ProjectPageAutomationsHeader
       v-model:search="search"
-      :has-automations="hasAutomations"
+      :has-automations="hasAutomations && isAutomateEnabled"
     />
     <template v-if="loading">
       <CommonLoadingIcon />
     </template>
     <template v-else>
-      <ProjectPageAutomationsEmptyState v-if="!hasAutomations" :functions="result" />
+      <ProjectPageAutomationsEmptyState
+        v-if="!hasAutomations || !isAutomateEnabled"
+        :functions="result"
+        :is-automate-enabled="isAutomateEnabled"
+      />
       <template v-else>
         <template v-if="!automations.length">TODO: Search empty state</template>
         <template v-else>
@@ -55,6 +59,7 @@ const automationsTabQuery = graphql(`
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 const search = ref('')
+const isAutomateEnabled = useIsAutomateModuleEnabled()
 
 const openedRun = ref<{
   run: AutomationRunDetailsFragment
@@ -63,12 +68,18 @@ const openedRun = ref<{
 }>()
 const runInfoOpen = ref(false)
 
-const { result, loading } = useQuery(automationsTabQuery, () => ({
-  projectId: projectId.value,
-  search: search.value,
-  // TODO: Pagination & search
-  cursor: null
-}))
+const { result, loading } = useQuery(
+  automationsTabQuery,
+  () => ({
+    projectId: projectId.value,
+    search: search.value,
+    // TODO: Pagination & search
+    cursor: null
+  }),
+  () => ({
+    enabled: isAutomateEnabled.value
+  })
+)
 
 const hasAutomations = computed(
   () => (result.value?.project?.automations.totalCount ?? 1) > 0

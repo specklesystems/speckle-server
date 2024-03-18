@@ -5,7 +5,8 @@ export const useIsAutomateModuleEnabled = () => {
   const {
     public: { enableAutomateModule }
   } = useRuntimeConfig()
-  return enableAutomateModule
+
+  return ref(enableAutomateModule)
 }
 
 export { useGlobalToast, useActiveUser }

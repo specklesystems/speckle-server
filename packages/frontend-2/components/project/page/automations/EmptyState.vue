@@ -16,10 +16,21 @@
         </div>
       </div>
       <div>
-        <FormButton :icon-left="PlusIcon" size="lg">New Automation</FormButton>
+        <FormButton v-if="isAutomateEnabled" :icon-left="PlusIcon" size="lg">
+          New Automation
+        </FormButton>
+        <FormButton
+          v-else
+          :icon-left="PlusIcon"
+          size="lg"
+          target="_blank"
+          to="https://docs.google.com/forms/d/e/1FAIpQLSc5e4q0gyG8VkGqA3gRzN71c4TDu0P9W0PXeVarFu_8po3qRA/viewform"
+        >
+          Sign Up for Beta
+        </FormButton>
       </div>
     </div>
-    <div class="flex flex-col gap-9">
+    <div v-if="isAutomateEnabled" class="flex flex-col gap-9">
       <div class="flex justify-between items-center">
         <h2 class="h5 font-bold">Featured Functions</h2>
         <FormButton
@@ -53,6 +64,7 @@ graphql(`
 
 const props = defineProps<{
   functions?: ProjectPageAutomationsEmptyState_QueryFragment
+  isAutomateEnabled: boolean
 }>()
 
 const functions = computed(() => props.functions?.automateFunctions.items || [])
