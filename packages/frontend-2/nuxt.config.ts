@@ -58,7 +58,12 @@ export default defineNuxtConfig({
       logrocketAppId: '',
       speedcurveId: 0,
       debugbearId: '',
-      debugCoreWebVitals: false
+      debugCoreWebVitals: false,
+      datadogAppId: '',
+      datadogClientToken: '',
+      datadogSite: '',
+      datadogService: '',
+      datadogEnv: ''
     }
   },
 
