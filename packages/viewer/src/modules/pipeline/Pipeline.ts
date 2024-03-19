@@ -270,12 +270,13 @@ export class Pipeline {
     ])
     this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     this.overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
-    let restoreVisibility, opaque, stencil
+    let restoreVisibility, opaque, stencil, depth
 
     this.onBeforePipelineRender = () => {
       restoreVisibility = this._batcher.saveVisiblity()
       opaque = this._batcher.getOpaque()
       stencil = this._batcher.getStencil()
+      depth = this._batcher.getDepth()
     }
 
     this.onAfterPipelineRender = () => {
@@ -283,12 +284,12 @@ export class Pipeline {
     }
 
     this.depthPass.onBeforeRender = () => {
-      this._batcher.applyVisibility(opaque)
-      this._batcher.overrideMaterial(opaque, this.depthPass.material)
+      this._batcher.applyVisibility(depth)
+      this._batcher.overrideMaterial(depth, this.depthPass.material)
     }
     this.depthPass.onAfterRender = () => {
       this._batcher.applyVisibility(restoreVisibility)
-      this._batcher.restoreMaterial(opaque)
+      this._batcher.restoreMaterial(depth)
     }
 
     this.normalsPass.onBeforeRender = () => {
