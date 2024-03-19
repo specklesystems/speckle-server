@@ -103,6 +103,8 @@ export class SpeckleText extends Mesh {
     this.onBeforeRender = (renderer) => {
       renderer.getDrawingBufferSize(this._resolution)
     }
+    /** Otherwise three.js is inconsistent in calling our 'onBeforeRender' */
+    this.frustumCulled = false
   }
 
   public async update(params: SpeckleTextParams, updateFinished?: () => void) {
@@ -162,6 +164,7 @@ export class SpeckleText extends Mesh {
           x = Math.sin(x / curveRadius) * curveRadius
         }
         if (this.textMesh.material.defines['BILLBOARD_FIXED']) {
+          if (this._resolution.length() === 0) return
           const billboardSize = new Vector2().set(
             (this.textMesh.material.billboardPixelHeight / this._resolution.x) * 2,
             (this.textMesh.material.billboardPixelHeight / this._resolution.y) * 2
