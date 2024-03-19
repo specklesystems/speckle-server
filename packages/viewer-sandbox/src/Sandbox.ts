@@ -28,6 +28,7 @@ import { UpdateFlags } from '@speckle/viewer'
 import { Viewer } from '@speckle/viewer'
 
 import { Euler, Vector3 } from 'three'
+import { NodeRenderView } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -465,22 +466,12 @@ export default class Sandbox {
       // this.viewer.cancelLoad(
       //   'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
       // )
-      '3841e3cbc45d52c47bc2f1b7b0ad4eb9'
-      const selectedObjects = this.viewer
-        .getExtension(SelectionExtension)
-        .getSelectedObjects()
-        .map((obj: { id: unknown }) => obj.id)
-      if (selectedObjects.length)
-        this.viewer.getExtension(SelectionExtension).clearSelection()
-      const filteringState = this.viewer
-        .getExtension(FilteringExtension)
-        .hideObjects(['3841e3cbc45d52c47bc2f1b7b0ad4eb9'], 'default', true, false)
-      if (!filteringState.selectedObjects)
-        filteringState.selectedObjects = selectedObjects
-
-      this.viewer
-        .getExtension(SelectionExtension)
-        .selectObjects(filteringState.selectedObjects)
+      const rvs = this.viewer
+        .getWorldTree()
+        .getRenderTree()
+        .getRenderViewsForNodeId('be55e5436aacc1f429760a6293c90895')
+        .map((rv: NodeRenderView) => rv.renderData.id)
+      this.viewer.getExtension(FilteringExtension).hideObjects(rvs)
     })
 
     const rotate = this.tabs.pages[0].addButton({
