@@ -259,17 +259,17 @@ function createCache(): InMemoryCache {
   })
 }
 
-async function createWsClient(params: {
+function createWsClient(params: {
   wsEndpoint: string
   authToken: CookieRef<Optional<string>>
   reqId: string
-}): Promise<SubscriptionClient> {
+}): SubscriptionClient {
   const { wsEndpoint, authToken, reqId } = params
 
   // WS IN SSR DOESN'T WORK CURRENTLY CAUSE OF SOME NUXT TRANSPILATION WEIRDNESS
   // SO DON'T RUN createWsClient in SSR
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const wsImplementation = process.server ? (await import('ws')).default : undefined
+  // const wsImplementation = process.server ? (await import('ws')).default : undefined
   return new SubscriptionClient(
     wsEndpoint,
     {
@@ -280,8 +280,8 @@ async function createWsClient(params: {
           ? { Authorization, headers: { Authorization, 'x-request-id': reqId } }
           : {}
       }
-    },
-    wsImplementation
+    }
+    // wsImplementation
   )
 }
 
@@ -414,7 +414,7 @@ function createLink(params: {
   return from([...(process.server ? [loggerLink] : []), errorLink, link])
 }
 
-const defaultConfigResolver: ApolloConfigResolver = async () => {
+const defaultConfigResolver: ApolloConfigResolver = () => {
   const {
     public: { speckleServerVersion = 'unknown' }
   } = useRuntimeConfig()
@@ -427,7 +427,7 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
 
   const authToken = useAuthCookie()
   const wsClient = process.client
-    ? await createWsClient({ wsEndpoint, authToken, reqId })
+    ? createWsClient({ wsEndpoint, authToken, reqId })
     : undefined
   const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp, reqId })
 
