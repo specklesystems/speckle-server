@@ -455,7 +455,7 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
+      console.warn(await this.viewer.screenshot())
       // const start = performance.now()
       // const nodes = this.viewer.getWorldTree().root.all(
       //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -465,22 +465,6 @@ export default class Sandbox {
       // this.viewer.cancelLoad(
       //   'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
       // )
-      '3841e3cbc45d52c47bc2f1b7b0ad4eb9'
-      const selectedObjects = this.viewer
-        .getExtension(SelectionExtension)
-        .getSelectedObjects()
-        .map((obj: { id: unknown }) => obj.id)
-      if (selectedObjects.length)
-        this.viewer.getExtension(SelectionExtension).clearSelection()
-      const filteringState = this.viewer
-        .getExtension(FilteringExtension)
-        .hideObjects(['3841e3cbc45d52c47bc2f1b7b0ad4eb9'], 'default', true, false)
-      if (!filteringState.selectedObjects)
-        filteringState.selectedObjects = selectedObjects
-
-      this.viewer
-        .getExtension(SelectionExtension)
-        .selectObjects(filteringState.selectedObjects)
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -984,17 +968,7 @@ export default class Sandbox {
         const data = this.properties.find((value) => {
           return value.key === this.filterParams.filterBy
         }) as PropertyInfo
-        data.min = 90.37
-        data.max = 258.17
         this.viewer.getExtension(FilteringExtension).setColorFilter(data)
-        // this.viewer
-        //   .getExtension(FilteringExtension)
-        //   .isolateObjects(['2f2ab0d53fc998bd34581e6ac8593eaa'], 'isolate', true, true)
-        // this.viewer
-        //   .getExtension(FilteringExtension)
-        //   .setUserObjectColors([
-        //     { objectIds: ['2f2ab0d53fc998bd34581e6ac8593eaa'], color: '#ff0000' }
-        //   ])
         this.pane.refresh()
       })
 
