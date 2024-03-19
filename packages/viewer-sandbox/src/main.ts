@@ -368,6 +368,10 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/9d71f041b2/commits/01279333e5'
     'https://latest.speckle.dev/streams/65c512f4ea/commits/cc2490830a'
     // 'https://latest.speckle.dev/streams/65c512f4ea/objects/882497528d1fa06660c28c1fd6aa15e0'
+    // 'https://speckle.xyz/streams/b4086833f8/commits/94df4c6d16'
+
+    // Rebar
+    // 'https://speckle.xyz/streams/b4086833f8/commits/94df4c6d16?overlay=c5b9c260ea,e3dc287d61,eaedd7d0a5,7f126ce0dd,02fee34ce3,9bda31611f,110282c4db,533c311e29,bf6814d779,1ba52affcf,cc4e75125e,3fd628e4e3'
   )
 }
 

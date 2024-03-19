@@ -264,6 +264,96 @@ export default class MeshBatch implements Batch {
       this.updateGradientIndexBuffer()
   }
 
+  private integrateUpdateRange(range: BatchUpdateRange) {
+    const materialIndex = this.materials.indexOf(range.material)
+    const collidingGroup = this.getDrawRangeCollision(range)
+    if (collidingGroup) {
+      collidingGroup.materialIndex = this.materials.indexOf(range.material)
+    } else {
+      const includingGroup = this.geDrawRangeInclusion(range)
+      if (includingGroup) {
+        if (includingGroup.materialIndex === materialIndex) return
+        this.geometry.groups.splice(this.geometry.groups.indexOf(includingGroup), 1)
+        if (includingGroup.start === range.offset) {
+          this.geometry.addGroup(range.offset, range.count, materialIndex)
+          this.geometry.addGroup(
+            range.offset + range.count,
+            includingGroup.count - range.count,
+            includingGroup.materialIndex
+          )
+        } else if (
+          range.offset + range.count ===
+          includingGroup.start + includingGroup.count
+        ) {
+          this.geometry.addGroup(
+            includingGroup.start,
+            includingGroup.count - range.count,
+            includingGroup.materialIndex
+          )
+          this.geometry.addGroup(range.offset, range.count, materialIndex)
+        } else {
+          this.geometry.addGroup(
+            includingGroup.start,
+            range.offset - includingGroup.start,
+            includingGroup.materialIndex
+          )
+          this.geometry.addGroup(range.offset, range.count, materialIndex)
+          this.geometry.addGroup(
+            range.offset + range.count,
+            includingGroup.count - (range.count + range.offset - includingGroup.start),
+            includingGroup.materialIndex
+          )
+        }
+      } else {
+        const engulfedGroups = this.getDrawRangeEngulfing(range)
+        if (engulfedGroups) {
+          for (let k = 0; k < engulfedGroups.length; k++) {
+            this.geometry.groups.splice(this.groups.indexOf(engulfedGroups[k]), 1)
+          }
+          this.integrateUpdateRange(range)
+        } else {
+          const intersectedGroupLeft = this.getDrawRangeIntersectionLeft(range)
+          if (
+            intersectedGroupLeft &&
+            intersectedGroupLeft.materialIndex !== materialIndex
+          ) {
+            this.geometry.groups.splice(
+              this.geometry.groups.indexOf(intersectedGroupLeft),
+              1
+            )
+            this.geometry.addGroup(range.offset, range.count, materialIndex)
+            this.geometry.addGroup(
+              range.offset + range.count,
+              intersectedGroupLeft.start +
+                intersectedGroupLeft.count -
+                (range.offset + range.count),
+              intersectedGroupLeft.materialIndex
+            )
+          } else {
+            const intersectedGroupRight = this.getDrawRangeIntersectionRight(range)
+            if (
+              intersectedGroupRight &&
+              intersectedGroupRight.materialIndex !== materialIndex
+            ) {
+              this.geometry.groups.splice(
+                this.geometry.groups.indexOf(intersectedGroupRight),
+                1
+              )
+              this.geometry.addGroup(
+                intersectedGroupRight.start,
+                range.offset - intersectedGroupRight.start,
+                intersectedGroupRight.materialIndex
+              )
+              this.geometry.addGroup(range.offset, range.count, materialIndex)
+            } else {
+              this.geometry.addGroup(range.offset, range.count, materialIndex)
+            }
+          }
+        }
+      }
+    }
+  }
+
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
     // console.log('Existing -> ', this.id, this.groups.slice())
     ranges.forEach((value: BatchUpdateRange) => {
@@ -286,77 +376,16 @@ export default class MeshBatch implements Batch {
     })
 
     for (let i = 0; i < sortedRanges.length; i++) {
-      const materialIndex = this.materials.indexOf(sortedRanges[i].material)
-      const collidingGroup = this.getDrawRangeCollision(sortedRanges[i])
-      if (collidingGroup) {
-        collidingGroup.materialIndex = this.materials.indexOf(sortedRanges[i].material)
-      } else {
-        const includingGroup = this.geDrawRangeInclusion(sortedRanges[i])
-        if (includingGroup && includingGroup.materialIndex !== materialIndex) {
-          this.geometry.groups.splice(this.geometry.groups.indexOf(includingGroup), 1)
-          if (includingGroup.start === sortedRanges[i].offset) {
-            this.geometry.addGroup(
-              sortedRanges[i].offset,
-              sortedRanges[i].count,
-              materialIndex
-            )
-            this.geometry.addGroup(
-              sortedRanges[i].offset + sortedRanges[i].count,
-              includingGroup.count - sortedRanges[i].count,
-              includingGroup.materialIndex
-            )
-          } else if (
-            sortedRanges[i].offset + sortedRanges[i].count ===
-            includingGroup.start + includingGroup.count
-          ) {
-            this.geometry.addGroup(
-              includingGroup.start,
-              includingGroup.count - sortedRanges[i].count,
-              includingGroup.materialIndex
-            )
-            this.geometry.addGroup(
-              sortedRanges[i].offset,
-              sortedRanges[i].count,
-              materialIndex
-            )
-          } else {
-            this.geometry.addGroup(
-              includingGroup.start,
-              sortedRanges[i].offset - includingGroup.start,
-              includingGroup.materialIndex
-            )
-            this.geometry.addGroup(
-              sortedRanges[i].offset,
-              sortedRanges[i].count,
-              materialIndex
-            )
-            this.geometry.addGroup(
-              sortedRanges[i].offset + sortedRanges[i].count,
-              includingGroup.count -
-                (sortedRanges[i].count + sortedRanges[i].offset - includingGroup.start),
-              includingGroup.materialIndex
-            )
-          }
-        } else {
-          const engulfedGroups = this.getDrawRangeEngulfing(sortedRanges[i])
-          if (engulfedGroups) {
-            for (let k = 0; k < engulfedGroups.length; k++) {
-              this.geometry.groups.splice(this.groups.indexOf(engulfedGroups[k]), 1)
-            }
-            this.geometry.addGroup(
-              sortedRanges[i].offset,
-              sortedRanges[i].count,
-              materialIndex
-            )
-          }
-        }
-      }
+      this.integrateUpdateRange(sortedRanges[i])
     }
+
     let count = 0
     this.geometry.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {
-      // console.log('Incoming -> ', this.id, ranges)
-      Logger.error(`Draw groups invalid on ${this.id}`)
+      // console.log('Result -> ', this.id, this.geometry.groups.slice())
+      Logger.error(
+        `Draw groups invalid on ${this.id}, ${this.renderViews[0].renderData.id}`
+      )
     }
     this.setBatchBuffers(...ranges)
     this.needsFlatten = true
@@ -406,6 +435,41 @@ export default class MeshBatch implements Batch {
         }
       }
       return groups.length ? groups : null
+    }
+    return null
+  }
+
+  private getDrawRangeIntersectionLeft(range: BatchUpdateRange): DrawGroup {
+    if (this.geometry.groups.length > 0) {
+      for (let i = 0; i < this.geometry.groups.length; i++) {
+        if (
+          range.offset < this.geometry.groups[i].start &&
+          range.offset + range.count > this.geometry.groups[i].start &&
+          range.offset + range.count <
+            this.geometry.groups[i].start + this.geometry.groups[i].count
+        ) {
+          return this.geometry.groups[i]
+        }
+      }
+      return null
+    }
+    return null
+  }
+
+  private getDrawRangeIntersectionRight(range: BatchUpdateRange): DrawGroup {
+    if (this.geometry.groups.length > 0) {
+      for (let i = 0; i < this.geometry.groups.length; i++) {
+        if (
+          range.offset > this.geometry.groups[i].start &&
+          this.geometry.groups[i].start + this.geometry.groups[i].count >
+            range.offset &&
+          range.offset + range.count >
+            this.geometry.groups[i].start + this.geometry.groups[i].count
+        ) {
+          return this.geometry.groups[i]
+        }
+      }
+      return null
     }
     return null
   }
