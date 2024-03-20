@@ -140,6 +140,13 @@ export = {
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async batchCreate(_parent, args, ctx) {
+      await authorizeResolver(
+        ctx.userId!,
+        args.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
+
       const inviteCount = args.input.length
       if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
         throw new InviteCreateValidationError(
@@ -147,12 +154,6 @@ export = {
         )
       }
 
-      await authorizeResolver(
-        ctx.userId!,
-        args.projectId,
-        Roles.Stream.Owner,
-        ctx.resourceAccessRules
-      )
       const inputBatches = chunk(args.input, 10)
       for (const batch of inputBatches) {
         await Promise.all(
