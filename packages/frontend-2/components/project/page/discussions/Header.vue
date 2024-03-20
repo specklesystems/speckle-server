@@ -1,15 +1,20 @@
 <template>
   <div>
-    <div class="flex justify-between items-center mb-8">
+    <div class="flex justify-between sm:items-center mb-8">
       <h1 class="block h4 font-bold">Discussions</h1>
-      <div class="space-x-2 flex items-center">
-        <FormCheckbox
-          v-model="finalIncludeArchived"
-          name="includeArchived"
-          :value="true"
-          label="Include resolved"
+      <div class="gap-2 flex items-end sm:items-center flex-col sm:flex-row">
+        <div class="order-2 sm:order-1">
+          <FormCheckbox
+            v-model="finalIncludeArchived"
+            name="includeArchived"
+            :value="true"
+            label="Include resolved"
+          />
+        </div>
+        <LayoutGridListToggle
+          v-model="finalGridOrList"
+          class="shrink-0 order-1 sm:order-2"
         />
-        <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
       </div>
     </div>
   </div>

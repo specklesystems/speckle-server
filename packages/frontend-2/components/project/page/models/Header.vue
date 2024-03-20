@@ -1,88 +1,80 @@
 <template>
-  <div>
-    <div
-      class="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:justify-between lg:items-center mb-4"
-    >
-      <div class="flex justify-between items-center flex-wrap sm:flex-nowrap">
-        <h1 class="block h4 font-bold">Models</h1>
-        <div class="flex items-center space-x-2 w-full mt-2 sm:w-auto sm:mt-0">
-          <FormButton
-            color="secondary"
-            :icon-right="CubeIcon"
-            :to="allModelsRoute"
-            class="grow inline-flex sm:grow-0 lg:hidden"
-            @click="trackFederateAll"
+  <div class="flex justify-between">
+    <h1 class="block h4 font-bold">Models</h1>
+    <div class="flex flex-col lg:flex-row gap-2 items-end">
+      <div class="flex gap-2 order-2 lg:order-1 flex-col md:flex-row">
+        <div class="flex flex-col order-2 md:order-1">
+          <div
+            class="flex flex-col md:flex-row gap-2 overflow-hidden transition-all duration-300 md:max-h-[120px]"
+            :class="mobileFiltersExpanded ? 'max-h-[120px]' : 'max-h-0'"
           >
-            View all in 3D
-          </FormButton>
-          <FormButton
-            v-if="canContribute"
-            class="grow inline-flex sm:grow-0 lg:hidden"
-            :icon-right="PlusIcon"
-            @click="showNewDialog = true"
-          >
-            New
-          </FormButton>
-        </div>
-      </div>
-      <div
-        class="flex flex-col space-y-2 md:space-y-0 md:flex-row md:items-center md:space-x-2"
-      >
-        <FormTextInput
-          v-model="localSearch"
-          name="modelsearch"
-          :show-label="false"
-          placeholder="Search"
-          color="foundation"
-          wrapper-classes="grow lg:grow-0 lg:ml-2 lg:w-40 xl:w-60"
-          :show-clear="localSearch !== ''"
-          @change="($event) => updateSearchImmediately($event.value)"
-          @update:model-value="updateDebouncedSearch"
-        ></FormTextInput>
-        <div
-          class="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-x-2 sm:space-y-0"
-        >
-          <FormSelectUsers
-            v-model="finalSelectedMembers"
-            :users="team"
-            multiple
-            selector-placeholder="All members"
-            label="Filter by members"
-            class="grow shrink sm:w-[120px] md:w-44"
-            clearable
-            fixed-height
-          />
-          <div class="flex items-center space-x-2 grow">
+            <FormTextInput
+              v-model="localSearch"
+              name="modelsearch"
+              :show-label="false"
+              placeholder="Search"
+              color="foundation"
+              wrapper-classes="min-w-[200px] shrink-0"
+              :show-clear="localSearch !== ''"
+              @change="($event) => updateSearchImmediately($event.value)"
+              @update:model-value="updateDebouncedSearch"
+            ></FormTextInput>
+            <FormSelectUsers
+              v-model="finalSelectedMembers"
+              :users="team"
+              multiple
+              selector-placeholder="All members"
+              label="Filter by members"
+              class="min-w-[200px] shrink-0"
+              clearable
+              fixed-height
+            />
             <FormSelectSourceApps
               v-model="finalSelectedApps"
               :items="availableSourceApps"
               multiple
               selector-placeholder="All sources"
               label="Filter by sources"
-              class="grow shrink sm:w-[120px] md:w-44"
+              class="min-w-[120px] shrink-0"
               clearable
               fixed-height
             />
-            <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
           </div>
-          <FormButton
-            color="secondary"
-            :icon-right="CubeIcon"
-            :to="allModelsRoute"
-            class="hidden lg:inline-flex shrink-0"
-            @click="trackFederateAll"
-          >
-            View all in 3D
-          </FormButton>
-          <FormButton
-            v-if="canContribute"
-            class="hidden lg:inline-flex shrink-0"
-            :icon-right="PlusIcon"
-            @click="showNewDialog = true"
-          >
-            New
-          </FormButton>
         </div>
+        <div class="flex order-1 md:order-2 justify-end gap-2">
+          <FormButton
+            class="md:hidden flex items-center gap-2 mb-2"
+            color="secondary"
+            @click="mobileFiltersExpanded = !mobileFiltersExpanded"
+          >
+            <span>Filters</span>
+            <ChevronDownIcon
+              class="h-4 w-4 transition-all duration-300"
+              :class="mobileFiltersExpanded ? 'rotate-180' : ''"
+            />
+          </FormButton>
+          <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0 order-2" />
+        </div>
+      </div>
+
+      <div class="order-1 lg:order-2 flex gap-2 justify-end">
+        <FormButton
+          color="secondary"
+          :icon-right="CubeIcon"
+          :to="allModelsRoute"
+          class="hidden sm:flex shrink-0"
+          @click="trackFederateAll"
+        >
+          View all in 3D
+        </FormButton>
+        <FormButton
+          v-if="canContribute"
+          class="shrink-0"
+          :icon-right="PlusIcon"
+          @click="showNewDialog = true"
+        >
+          New
+        </FormButton>
       </div>
     </div>
     <ProjectPageModelsNewDialog v-model:open="showNewDialog" :project-id="project.id" />
@@ -99,7 +91,7 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { PlusIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon, ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { CubeIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -135,6 +127,7 @@ const props = defineProps<{
 }>()
 
 const localSearch = ref('')
+const mobileFiltersExpanded = ref(false)
 
 const mp = useMixpanel()
 const trackFederateAll = () =>
