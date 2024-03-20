@@ -5,7 +5,7 @@ import dayjs from 'dayjs'
 export default defineNuxtPlugin(async (app) => {
   if (process.client) {
     const {
-      public: { survicateWorkspaceKey }
+      public: { survicateWorkspaceKey, survicateSurveyId }
     } = useRuntimeConfig()
 
     const logger = useLogger()
@@ -44,6 +44,11 @@ export default defineNuxtPlugin(async (app) => {
           if (distinctId && shouldShowSurvey) {
             survicateInstance.setVisitorTraits({
               distinctId
+            })
+
+            // Show the specific survey by ID
+            survicateInstance.showSurvey(survicateSurveyId as string, {
+              forceDisplay: true
             })
           }
         },
