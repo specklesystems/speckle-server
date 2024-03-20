@@ -23,7 +23,7 @@ function useDebugViewer() {
   window.VIEWER = instance
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-expect-error
-  window.VIEWER_STATE = () => ({ ...state })
+  window.VIEWER_STATE = () => state
 }
 
 export function setupDebugMode() {
