@@ -86,6 +86,13 @@ export = {
     async serverInviteBatchCreate(_parent, args, context) {
       const { input: paramsArray } = args
 
+      const inviteCount = paramsArray.length
+      if (inviteCount > 10 && context.role !== Roles.Server.Admin) {
+        throw new InviteCreateValidationError(
+          'Maximum 10 invites can be sent at once by non admins'
+        )
+      }
+
       // Batch calls so that we don't kill the server
       const batches = chunk(paramsArray, 50)
       for (const paramsBatchArray of batches) {
