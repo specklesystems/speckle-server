@@ -1,3 +1,5 @@
 <template>
-  <ProjectPageModelsTab />
+  <div>
+    <ProjectPageModelsTab />
+  </div>
 </template>
