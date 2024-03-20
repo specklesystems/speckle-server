@@ -17,10 +17,7 @@
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import type { Optional } from '~~/../shared/dist-esm'
-import {
-  useGeneralProjectPageUpdateTracking,
-  useProjectPageItemViewType
-} from '~~/lib/projects/composables/projectPages'
+import { useProjectPageItemViewType } from '~~/lib/projects/composables/projectPages'
 import { projectDiscussionsPageQuery } from '~~/lib/projects/graphql/queries'
 
 const gridOrList = useProjectPageItemViewType('Discussions')
@@ -31,7 +28,6 @@ const projectId = computed(() => route.params.id as string)
 const { result } = useQuery(projectDiscussionsPageQuery, () => ({
   projectId: projectId.value
 }))
-useGeneralProjectPageUpdateTracking({ projectId })
 
 const project = computed(() => result.value?.project)
 </script>

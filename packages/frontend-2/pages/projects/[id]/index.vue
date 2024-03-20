@@ -53,7 +53,17 @@ graphql(`
 `)
 
 definePageMeta({
-  middleware: ['require-valid-project']
+  middleware: [
+    'require-valid-project',
+    function (to) {
+      // Redirect from /projects/:id/models to /projects/:id
+      const projectId = to.params.id as string
+      if (to.path.endsWith('/models')) {
+        return navigateTo(projectRoute(projectId))
+      }
+    }
+  ],
+  alias: '/projects/:id/models'
 })
 
 const route = useRoute()
