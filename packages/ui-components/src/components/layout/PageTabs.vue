@@ -80,11 +80,12 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, type CSSProperties, onMounted, watch } from 'vue'
 import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 import type { Nullable } from '@speckle/shared'
+import { isClient } from '@vueuse/core'
 
-defineProps<{
+const props = defineProps<{
   items: LayoutPageTabItem[]
   vertical?: boolean
   title?: string
@@ -93,47 +94,45 @@ defineProps<{
 const activeItem = defineModel<LayoutPageTabItem>('activeItem', { required: true })
 const buttonContainer = ref(null as Nullable<HTMLDivElement>)
 
-// const activeItemRef = computed(() => {
-//   const id = activeItem.value?.id
-//   if (!id) return null
+const activeItemRef = computed(() => {
+  const id = activeItem.value?.id
+  if (!id) return null
 
-//   const parent = buttonContainer.value
-//   if (!parent) return null
+  const parent = buttonContainer.value
+  if (!parent) return null
 
-//   const btns = [...parent.getElementsByClassName('tab-button')] as HTMLButtonElement[]
-//   return btns.find((b) => b.dataset['tabId'] === id) || null
-// })
+  const btns = [...parent.getElementsByClassName('tab-button')] as HTMLButtonElement[]
+  return btns.find((b) => b.dataset['tabId'] === id) || null
+})
 
 const borderStyle = computed(() => {
-  return {}
-
-  // const element = activeItemRef.value
-  // const style: CSSProperties = {
-  //   left: `${element?.offsetLeft || 0}px`,
-  //   width: `${element?.clientWidth || 0}px`
-  // }
-  // return style
+  const element = activeItemRef.value
+  const style: CSSProperties = {
+    left: `${element?.offsetLeft || 0}px`,
+    width: `${element?.clientWidth || 0}px`
+  }
+  return style
 })
 
 const setActiveItem = (item: LayoutPageTabItem) => {
   activeItem.value = item
 }
 
-// if (isClient) {
-//   // Doing onMounted & watch separately to avoid hydration mismatch
-//   onMounted(() => {
-//     if (props.items.length && !activeItem.value) {
-//       setActiveItem(props.items[0])
-//     }
-//   })
+if (isClient) {
+  // Doing onMounted & watch separately to avoid hydration mismatch
+  onMounted(() => {
+    if (props.items.length && !activeItem.value) {
+      setActiveItem(props.items[0])
+    }
+  })
 
-//   watch(
-//     () => [props.items, activeItem.value] as const,
-//     ([newItems, activeItem]) => {
-//       if (newItems.length && !activeItem) {
-//         setActiveItem(newItems[0])
-//       }
-//     }
-//   )
-// }
+  watch(
+    () => [props.items, activeItem.value] as const,
+    ([newItems, activeItem]) => {
+      if (newItems.length && !activeItem) {
+        setActiveItem(newItems[0])
+      }
+    }
+  )
+}
 </script>
