@@ -13987,6 +13987,7 @@ __metadata:
     "@speckle/ui-components": "workspace:^"
     "@speckle/ui-components-nuxt": "workspace:^"
     "@speckle/viewer": "workspace:^"
+    "@survicate/survicate-web-surveys-wrapper": ^1.2.1
     "@tailwindcss/forms": ^0.5.3
     "@tailwindcss/line-clamp": ^0.4.2
     "@testing-library/vue": ^6.6.1
@@ -15710,6 +15711,13 @@ __metadata:
     "@vue/compiler-core": ^3.0.0
     vue: ^3.0.0
   checksum: 505f6661f9bf9937ea7fc61fb50e0a109504eb67ab795882cecf1d610227b93f84c0d32e03c07f5286c60daefafc19072c2d637d0c59078704e7b8a1969c3799
+  languageName: node
+  linkType: hard
+
+"@survicate/survicate-web-surveys-wrapper@npm:^1.2.1":
+  version: 1.2.1
+  resolution: "@survicate/survicate-web-surveys-wrapper@npm:1.2.1"
+  checksum: 6becd74381174dc2c880cb30a7384981d8d49ebc74e332312d2281c0624866d2ddcf7773ee7be4e4a562094cc0ed0db36a3cce6de0da46d64b37e17750bc5ad4
   languageName: node
   linkType: hard
 
