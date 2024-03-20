@@ -1,20 +1,38 @@
-import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
+import {
+  useOnAuthStateChange,
+  useGetInitialAuthState
+} from '~/lib/auth/composables/auth'
 import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import dayjs from 'dayjs'
 
 export default defineNuxtPlugin(async (app) => {
-  if (process.client) {
+  const onboardingOrFeedbackDateString = useSynchronizedCookie<string | undefined>(
+    'onboardingOrFeedbackDate',
+    {
+      default: () => new Date().toISOString().split('T')[0],
+      expires: dayjs().add(180, 'day').toDate() // cookie expiration set to 180 days from now
+    }
+  )
+
+  const onboardingOrFeedbackDate = onboardingOrFeedbackDateString.value
+    ? new Date(onboardingOrFeedbackDateString.value)
+    : new Date()
+
+  const shouldShowSurvey = checkSurveyDisplayConditions(onboardingOrFeedbackDate)
+
+  if (process.client && shouldShowSurvey) {
     const {
       public: { survicateWorkspaceKey, survicateSurveyId }
     } = useRuntimeConfig()
 
     const logger = useLogger()
+    const initUser = useGetInitialAuthState()
+    const onAuthStateChange = useOnAuthStateChange()
 
     try {
       const { initSurvicate, getSurvicateInstance } = await import(
         '@survicate/survicate-web-surveys-wrapper/widget_wrapper'
       )
-
       await initSurvicate({ workspaceKey: survicateWorkspaceKey })
       const survicateInstance = getSurvicateInstance()
 
@@ -22,38 +40,26 @@ export default defineNuxtPlugin(async (app) => {
         throw new Error('Survicate instance is not available after initialization.')
       }
 
-      const onboardingOrFeedbackDateString = useSynchronizedCookie<string | undefined>(
-        'onboardingOrFeedbackDate',
-        {
-          default: () => new Date().toISOString().split('T')[0],
-          expires: dayjs().add(180, 'day').toDate() // cookie expiration set to 180 days from now - to confirm
-        }
-      )
+      const { distinctId } = await initUser()
 
-      // Convert string back to date when checking conditions
-      const onboardingOrFeedbackDate = onboardingOrFeedbackDateString.value
-        ? new Date(onboardingOrFeedbackDateString.value)
-        : new Date()
+      if (distinctId) {
+        survicateInstance.setVisitorTraits({ distinctId })
+      }
 
-      const shouldShowSurvey = checkSurveyDisplayConditions(onboardingOrFeedbackDate)
-
-      const onAuthStateChange = useOnAuthStateChange()
-      onAuthStateChange(
+      // Handle authentication state changes
+      await onAuthStateChange(
         (user, { resolveDistinctId }) => {
           const distinctId = resolveDistinctId(user)
-          if (distinctId && shouldShowSurvey) {
-            survicateInstance.setVisitorTraits({
-              distinctId
-            })
-
-            // Show the specific survey by ID
-            survicateInstance.showSurvey(survicateSurveyId as string, {
-              forceDisplay: true
-            })
+          if (distinctId) {
+            survicateInstance.setVisitorTraits({ distinctId })
           }
         },
-        { immediate: true }
+        { immediate: false }
       )
+
+      survicateInstance.showSurvey(survicateSurveyId as string, {
+        forceDisplay: true
+      })
 
       app.provide('survicate', survicateInstance)
     } catch (error) {
