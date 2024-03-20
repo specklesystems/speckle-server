@@ -51,8 +51,6 @@ import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubble
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { Box3, Vector3 } from 'three'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
 import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'

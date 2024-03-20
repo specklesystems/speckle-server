@@ -81,6 +81,9 @@ async function initRumClient(app: PluginNuxtApp) {
     await onAuthStateChange(
       (user, { resolveDistinctId }) => {
         const distinctId = resolveDistinctId(user)
+        // setUser might not be there, if blocked by adblock
+        if (!datadog || !('setUser' in datadog)) return
+
         if (distinctId && user) {
           datadog.setUser({
             id: distinctId

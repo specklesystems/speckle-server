@@ -15,7 +15,8 @@ import {
 import Materials, {
   DisplayStyle,
   MaterialOptions,
-  RenderMaterial
+  RenderMaterial,
+  StencilOutlineType
 } from '../materials/Materials'
 import { TreeNode } from '../tree/WorldTree'
 
@@ -33,7 +34,7 @@ const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
     metalness: 0,
     vertexColors: false,
     lineWeight: 1,
-    stencilOutlines: true,
+    stencilOutlines: StencilOutlineType.OVERLAY,
     pointSize: 4
   }
   // hoverMaterialData: {
@@ -44,7 +45,7 @@ const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
   //   metalness: 0,
   //   vertexColors: false,
   //   lineWeight: 1,
-  //   stencilOutlines: true,
+  //   stencilOutlines: StencilOutlineType.OVERLAY,
   //   pointSize: 4
   // }
 }
@@ -68,6 +69,7 @@ export class SelectionExtension extends Extension {
   protected transparentHoverMaterialData: RenderMaterial &
     DisplayStyle &
     MaterialOptions
+  protected hiddenSelectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
   protected _enabled = true
 
   public get enabled() {
@@ -90,13 +92,24 @@ export class SelectionExtension extends Extension {
 
   public setOptions(options: SelectionExtensionOptions) {
     this.options = options
+    /** Opaque selection */
     this.selectionMaterialData = Object.assign({}, this.options.selectionMaterialData)
-    this.hoverMaterialData = Object.assign({}, this.options.hoverMaterialData)
+    /** Transparent selection */
     this.transparentSelectionMaterialData = Object.assign(
       {},
       this.options.selectionMaterialData
     )
     this.transparentSelectionMaterialData.opacity = 0.5
+    /** Hidden selection */
+    this.hiddenSelectionMaterialData = Object.assign(
+      {},
+      this.options.selectionMaterialData
+    )
+    this.hiddenSelectionMaterialData.stencilOutlines = StencilOutlineType.OUTLINE_ONLY
+
+    /** Opaque hover */
+    this.hoverMaterialData = Object.assign({}, this.options.hoverMaterialData)
+    /** Transparent hover */
     this.transparentHoverMaterialData = Object.assign(
       {},
       this.options.hoverMaterialData
@@ -229,6 +242,7 @@ export class SelectionExtension extends Extension {
     const rvs = Object.values(this.selectionRvs)
     const opaqueRvs = rvs.filter(
       (value) =>
+        this.selectionMaterials[value.guid].visible &&
         this.selectionMaterials[value.guid] &&
         !(
           this.selectionMaterials[value.guid].transparent &&
@@ -237,15 +251,20 @@ export class SelectionExtension extends Extension {
     )
     const transparentRvs = rvs.filter(
       (value) =>
+        this.selectionMaterials[value.guid].visible &&
         this.selectionMaterials[value.guid] &&
         this.selectionMaterials[value.guid].transparent &&
         this.selectionMaterials[value.guid].opacity < 1
+    )
+    const hiddenRvs = rvs.filter(
+      (value) => this.selectionMaterials[value.guid].visible === false
     )
 
     this.viewer.getRenderer().setMaterial(opaqueRvs, this.selectionMaterialData)
     this.viewer
       .getRenderer()
       .setMaterial(transparentRvs, this.transparentSelectionMaterialData)
+    this.viewer.getRenderer().setMaterial(hiddenRvs, this.hiddenSelectionMaterialData)
     this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.CLIPPING_PLANES)
   }
 

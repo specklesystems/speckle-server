@@ -34,6 +34,7 @@ import { Queries } from './queries/Queries'
 import { Query, QueryArgsResultMap } from './queries/Query'
 import { DataTreeBuilder } from './tree/DataTree'
 import { SelectionExtensionOptions } from './extensions/SelectionExtension'
+import { StencilOutlineType } from './materials/Materials'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -57,7 +58,7 @@ class HighlightExtension extends SelectionExtension {
         metalness: 0,
         vertexColors: false,
         lineWeight: 1,
-        stencilOutlines: false,
+        stencilOutlines: StencilOutlineType.NONE,
         pointSize: 4
       }
     }
@@ -197,17 +198,14 @@ export class LegacyViewer extends Viewer {
     ghost = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      this.selection.unselectObjects(objectIds)
-      const filteringState = this.filtering.hideObjects(
-        objectIds,
-        stateKey,
-        includeDescendants,
-        ghost
-      )
-      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
-      filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
-      )
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.hideObjects(
+          objectIds,
+          stateKey,
+          includeDescendants,
+          ghost
+        )
+      })
       resolve(filteringState)
     })
   }
@@ -218,15 +216,9 @@ export class LegacyViewer extends Viewer {
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.filtering.showObjects(
-        objectIds,
-        stateKey,
-        includeDescendants
-      )
-      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
-      filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
-      )
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.showObjects(objectIds, stateKey, includeDescendants)
+      })
       resolve(filteringState)
     })
   }

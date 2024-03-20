@@ -33,7 +33,7 @@
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
-              @submit.prevent="onSubmit"
+              @submit.prevent="onSubmit || noop"
             >
               <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
                 <div
@@ -95,7 +95,7 @@ import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessu
 import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
-import { throttle } from 'lodash'
+import { throttle, noop } from 'lodash'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 

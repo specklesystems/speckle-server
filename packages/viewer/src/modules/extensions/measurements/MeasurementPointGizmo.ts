@@ -8,6 +8,7 @@ import {
   Group,
   InterleavedBufferAttribute,
   Material,
+  MathUtils,
   Mesh,
   OrthographicCamera,
   PerspectiveCamera,
@@ -202,7 +203,7 @@ export class MeasurementPointGizmo extends Group {
     point2.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.add(point2)
 
-    this.text = new SpeckleText('test-text', ObjectLayers.MEASUREMENTS)
+    this.text = new SpeckleText(MathUtils.generateUUID(), ObjectLayers.MEASUREMENTS)
     this.text.textMesh.material = null
 
     this.add(this.point)
