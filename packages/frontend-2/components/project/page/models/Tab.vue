@@ -33,10 +33,6 @@ import {
   useProjectPageItemViewType
 } from '~~/lib/projects/composables/projectPages'
 
-definePageMeta({
-  middleware: ['require-valid-project']
-})
-
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 

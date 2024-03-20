@@ -23,10 +23,6 @@ import {
 } from '~~/lib/projects/composables/projectPages'
 import { projectDiscussionsPageQuery } from '~~/lib/projects/graphql/queries'
 
-definePageMeta({
-  middleware: ['require-valid-project']
-})
-
 const gridOrList = useProjectPageItemViewType('Discussions')
 const includeArchived = ref(undefined as Optional<true>)
 

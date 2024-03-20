@@ -69,7 +69,7 @@ const { value, errorMessage } = useField<ModelType>(props.name, props.rules, {
   initialValue: props.modelValue || undefined
 })
 
-const editMode = defineModel<boolean>('editMode', { local: true })
+const editMode = defineModel<boolean>('editMode')
 
 const modelAsUser = computed(
   (): AvatarUser => ({

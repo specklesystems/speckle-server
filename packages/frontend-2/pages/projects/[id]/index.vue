@@ -17,11 +17,8 @@
         />
       </div>
     </template>
-    <!-- No v-if=project to ensure internal queries trigger ASAP -->
-    <LayoutPageTabs v-if="project" v-slot="{ activeItem }" :items="pageTabItems">
-      <ProjectPageModelsTab v-if="activeItem.id === 'models'" />
-      <ProjectPageDiscussionsTab v-if="activeItem.id === 'discussions'" />
-      <!-- <ProjectPageAutomationsTab v-if="activeItem.id === 'automations'" /> -->
+    <LayoutPageTabs v-model:active-item="activePageTab" :items="pageTabItems">
+      <NuxtPage :foobar="123" />
     </LayoutPageTabs>
   </div>
 </template>
@@ -33,6 +30,7 @@ import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
 import { CubeIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
+import { projectRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -101,15 +99,15 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
 const pageTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'Models',
-    id: 'models',
-    icon: CubeIcon,
-    count: modelCount.value
+    id: 'models'
+    // icon: CubeIcon,
+    // count: modelCount.value
   },
   {
     title: 'Discussions',
-    id: 'discussions',
-    icon: ChatBubbleLeftRightIcon,
-    count: commentCount.value
+    id: 'discussions'
+    // icon: ChatBubbleLeftRightIcon,
+    // count: commentCount.value
   }
   // {
   //   title: 'Automations',
@@ -118,4 +116,27 @@ const pageTabItems = computed((): LayoutPageTabItem[] => [
   //   tag: 'New'
   // }
 ])
+
+// const activePageTab = computed({
+//   get: () => {
+//     const path = router.currentRoute.value.path
+//     if (path.endsWith('discussions')) return pageTabItems.value[1]
+//     if (path.endsWith('automations')) return pageTabItems.value[2]
+//     return pageTabItems.value[0]
+//   },
+//   set: (val: LayoutPageTabItem) => {
+//     switch (val.id) {
+//       case 'models':
+//         router.push({ path: projectRoute(projectId.value, 'models') })
+//         break
+//       case 'discussions':
+//         router.push({ path: projectRoute(projectId.value, 'discussions') })
+//         break
+//       case 'automations':
+//         router.push({ path: projectRoute(projectId.value, 'automations') })
+//         break
+//     }
+//   }
+// })
+const activePageTab = ref()
 </script>

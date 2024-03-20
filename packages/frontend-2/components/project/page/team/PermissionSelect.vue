@@ -8,6 +8,8 @@
     :name="name || 'role'"
     :allow-unset="false"
     :disabled="disabled"
+    :label-id="labelId"
+    :button-id="buttonId"
     hide-checkmarks
     by="id"
     class="min-w-[85px]"
@@ -54,6 +56,8 @@ const props = defineProps<{
   hideOwner?: boolean
 }>()
 
+const labelId = useId()
+const buttonId = useId()
 const items = ref(
   reduce(
     roleSelectItems,

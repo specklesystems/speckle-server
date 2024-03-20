@@ -49,6 +49,8 @@
           :rules="[isItemSelected]"
           show-label
           :items="webhookTriggerItems"
+          :label-id="badgesLabelId"
+          :button-id="badgesButtonId"
           by="id"
         />
       </div>
@@ -100,6 +102,8 @@ const triggers = ref<typeof webhookTriggerItems.value>([])
 const url = ref('')
 const description = ref('')
 const secret = ref('')
+const badgesLabelId = useId()
+const badgesButtonId = useId()
 
 const webhookTriggerItems = computed(() => {
   return Object.values(WebhookTriggers).map((value) => ({

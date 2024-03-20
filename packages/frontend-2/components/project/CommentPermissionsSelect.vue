@@ -7,6 +7,8 @@
     :name="name || 'commentPermissions'"
     :allow-unset="false"
     :disabled="disabled"
+    :label-id="labelId"
+    :button-id="buttonId"
     by="id"
   >
     <template #something-selected="{ value }">
@@ -41,6 +43,8 @@ const props = defineProps<{
   disabled?: boolean
 }>()
 
+const labelId = useId()
+const buttonId = useId()
 const items = ref(commentPermissionsSelectItems)
 
 const selectedValue = computed({
