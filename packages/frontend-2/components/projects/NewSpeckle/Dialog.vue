@@ -26,7 +26,7 @@
       </div>
       <iframe
         title="What's new in Speckle?"
-        src="https://player.vimeo.com/video/925455838?h=052c422cae&autoplay=1&title=0&byline=0&portrait=0&controls=0&muted=1"
+        src="https://player.vimeo.com/video/925455838?h=052c422cae&autoplay=1&title=0&loop=1&byline=0&portrait=0&controls=0&muted=1"
         frameborder="0"
         allow="autoplay; fullscreen;"
         allowfullscreen
