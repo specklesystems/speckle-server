@@ -3,7 +3,7 @@
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useCameraUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useSelectionEvents } from '~~/lib/viewer/composables/viewer'
 
 function useCollectSelection() {
@@ -26,9 +26,7 @@ function useCollectSelection() {
 function useSelectOrZoomOnSelection() {
   const state = useInjectedViewerState()
   const { clearSelection, addToSelection } = useSelectionUtilities()
-  const { zoom } = useCameraUtilities()
   const mp = useMixpanel()
-  const logger = useLogger()
 
   const trackAndClearSelection = () => {
     clearSelection()
@@ -80,29 +78,6 @@ function useSelectOrZoomOnSelection() {
           name: 'selection',
           action: 'select',
           multiple: args.multiple
-        })
-      },
-      doubleClickCallback: (args, { firstVisibleSelectionHit }) => {
-        if (!args) return zoom()
-        if (!args.hits) return zoom()
-        if (args.hits.length === 0) return zoom()
-
-        const firstVisHit = firstVisibleSelectionHit
-        if (!firstVisHit) return clearSelection()
-
-        if (state.ui.filters.selectedObjects.value.length !== 0) {
-          const ids = state.ui.filters.selectedObjects.value.map((o) => o.id as string)
-          zoom(ids)
-        } // else somethingn is weird.
-        else {
-          logger.warn(
-            "Got a double click event but there's no selected object in the state - this should be impossible :)"
-          )
-        }
-        mp.track('Viewer Action', {
-          type: 'action',
-          name: 'zoom',
-          source: 'object-double-click'
         })
       }
     },
