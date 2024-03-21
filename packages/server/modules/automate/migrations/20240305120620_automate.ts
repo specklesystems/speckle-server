@@ -6,6 +6,9 @@ const REVISION_FUNCTIONS_TABLE_NAME = 'automation_revision_functions'
 const AUTOMATION_RUNS_TABLE_NAME = 'automation_runs'
 
 export async function up(knex: Knex): Promise<void> {
+  // TODO: Remove, this is a temporary shortcut to avoid messing up the db schema which makes it difficult to jump to different branches
+  if (process.env.SKIP_AUTOMATE_MIGRATION_DEV) return
+
   await knex.schema.createTable(AUTOMATIONS_TABLE_NAME, (table) => {
     table.text('id').primary({ constraintName: 'automation_id_pk' })
     table.text('name').notNullable()
@@ -77,8 +80,8 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTable(AUTOMATIONS_TABLE_NAME)
-  await knex.schema.dropTable(REVISIONS_TABLE_NAME)
-  await knex.schema.dropTable(REVISION_FUNCTIONS_TABLE_NAME)
   await knex.schema.dropTable(AUTOMATION_RUNS_TABLE_NAME)
+  await knex.schema.dropTable(REVISION_FUNCTIONS_TABLE_NAME)
+  await knex.schema.dropTable(REVISIONS_TABLE_NAME)
+  await knex.schema.dropTable(AUTOMATIONS_TABLE_NAME)
 }
