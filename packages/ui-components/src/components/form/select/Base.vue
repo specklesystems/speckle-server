@@ -10,6 +10,7 @@
       as="div"
     >
       <ListboxLabel
+        :id="labelId"
         class="block label text-foreground-2 mb-2"
         :class="{ 'sr-only': !showLabel }"
       >
@@ -17,7 +18,12 @@
       </ListboxLabel>
       <div :class="buttonsWrapperClasses">
         <!-- <div class="relative flex"> -->
-        <ListboxButton ref="listboxButton" v-slot="{ open }" :class="buttonClasses">
+        <ListboxButton
+          :id="buttonId"
+          ref="listboxButton"
+          v-slot="{ open }"
+          :class="buttonClasses"
+        >
           <div class="flex items-center justify-between w-full">
             <div class="block truncate grow text-left text-xs sm:text-sm">
               <template
@@ -387,6 +393,14 @@ const props = defineProps({
   mountMenuOnBody: {
     type: Boolean,
     default: false
+  },
+  labelId: {
+    type: String,
+    default: undefined
+  },
+  buttonId: {
+    type: String,
+    default: undefined
   }
 })
 
