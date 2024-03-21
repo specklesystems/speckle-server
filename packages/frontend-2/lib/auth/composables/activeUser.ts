@@ -17,6 +17,9 @@ export const activeUserQuery = graphql(`
       createdAt
       verified
       notificationPreferences
+      projects {
+        totalCount
+      }
     }
   }
 `)
@@ -62,6 +65,8 @@ export function useActiveUser() {
   const isGuest = computed(() => activeUser.value?.role === Roles.Server.Guest)
   const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
+  const projectCount = computed(() => activeUser.value?.projects.totalCount)
+
   return {
     activeUser,
     userId,
@@ -70,7 +75,8 @@ export function useActiveUser() {
     refetch,
     onResult,
     isGuest,
-    isAdmin
+    isAdmin,
+    projectCount
   }
 }
 
