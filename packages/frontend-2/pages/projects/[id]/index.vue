@@ -58,7 +58,7 @@ definePageMeta({
     function (to) {
       // Redirect from /projects/:id/models to /projects/:id
       const projectId = to.params.id as string
-      if (to.path.endsWith('/models')) {
+      if (/\/models\/?$/i.test(to.path)) {
         return navigateTo(projectRoute(projectId))
       }
     }
@@ -135,8 +135,8 @@ const pageTabItems = computed((): LayoutPageTabItem[] => [
 const activePageTab = computed({
   get: () => {
     const path = router.currentRoute.value.path
-    if (path.endsWith('discussions')) return pageTabItems.value[1]
-    if (path.endsWith('automations')) return pageTabItems.value[2]
+    if (/\/discussions\/?$/i.test(path)) return pageTabItems.value[1]
+    if (/\/automations\/?$/i.test(path)) return pageTabItems.value[2]
     return pageTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
