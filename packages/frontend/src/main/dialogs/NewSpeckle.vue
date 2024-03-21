@@ -16,7 +16,7 @@
               src="https://player.vimeo.com/video/925455838?h=052c422cae&autoplay=1&title=0&loop=1&byline=0&portrait=0&controls=0&muted=1"
               style="position: absolute; top: 0; left: 0; width: 100%; height: 100%"
               frameborder="0"
-              allow="autoplay; fullscreen;"
+              allow="autoplay"
               allowfullscreen
             ></iframe>
           </div>
