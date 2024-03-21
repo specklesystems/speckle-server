@@ -6,7 +6,7 @@ Images are published based on the logic in [should_publish.sh](./should_publish.
 
 Currently images are published in the following conditions:
 
-- any commit to branches named `main`, `hotfix.*`, or `alpha.*`
+- any commit to branches named `main`, `hotfix.*`, or `beta.*`
 - any branch tagged with [semver](https://semver.org/) `major.minor.patch` (regex: `^[0-9]+\.[0-9]+\.[0-9]+$`)
 
 ## Creating a release

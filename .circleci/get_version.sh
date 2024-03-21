@@ -11,7 +11,7 @@ if [[ "${CIRCLE_TAG}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
 fi
 
 if [[ "${CIRCLE_BRANCH}" == "main" ]]; then
-    echo "${NEXT_RELEASE}-alpha.${CIRCLE_BUILD_NUM}"
+    echo "${NEXT_RELEASE}-beta.${CIRCLE_BUILD_NUM}"
     exit 0
 fi
 
