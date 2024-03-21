@@ -43,7 +43,7 @@ import { arraysEqual, isNonNullable } from '~~/lib/common/helpers/utils'
 import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
-import type { Nullable } from '@speckle/shared'
+import { SafeLocalStorage, type Nullable } from '@speckle/shared'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 import { onKeyStroke, watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
@@ -74,6 +74,8 @@ function useViewerIsBusyEventHandler() {
 function useViewerObjectAutoLoading() {
   if (process.server) return
 
+  const disableViewerCache =
+    SafeLocalStorage.get('FE2_FORCE_DISABLE_VIEWER_CACHE') === 'true'
   const authToken = useAuthCookie()
   const getObjectUrl = useGetObjectUrl()
   const {
@@ -100,7 +102,7 @@ function useViewerObjectAutoLoading() {
       viewer.loadObjectAsync(
         objectUrl,
         authToken.value || undefined,
-        undefined,
+        disableViewerCache ? false : undefined, // TODO: Undo
         options?.zoomToObject
       )
     }
