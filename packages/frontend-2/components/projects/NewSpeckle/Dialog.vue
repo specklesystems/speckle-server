@@ -4,7 +4,7 @@
       What's New in Speckle?
     </h2>
     <p class="text-foreground-2 text-center mb-6">A new way to collaborate in AEC.</p>
-    <div class="relative bg-white">
+    <div class="relative bg-foundation">
       <div class="absolute inset-0 flex items-center justify-center" role="status">
         <svg
           aria-hidden="true"
