@@ -102,7 +102,7 @@ function useViewerObjectAutoLoading() {
       viewer.loadObjectAsync(
         objectUrl,
         authToken.value || undefined,
-        disableViewerCache ? false : undefined, // TODO: Undo
+        disableViewerCache ? false : undefined,
         options?.zoomToObject
       )
     }
