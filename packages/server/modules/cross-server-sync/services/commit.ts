@@ -495,12 +495,7 @@ const createNewObject = async (
     return
   }
 
-  const newObjectId = await createObject(targetStreamId, {
-    ...newObject,
-    id: newObject.id,
-    speckleType: newObject.speckleType || newObject.speckle_type || 'Base'
-  })
-
+  const newObjectId = await createObject(targetStreamId, newObject)
   const newRecord = await getObject(newObjectId, targetStreamId)
   if (!newRecord) {
     throw new CrossServerCommitSyncError(
@@ -564,6 +559,9 @@ const loadAllObjectsFromParent = async (
       batchPromises = []
     }
   }
+
+  // If any remaining promises - await them
+  await Promise.all(batchPromises)
 }
 
 /**
