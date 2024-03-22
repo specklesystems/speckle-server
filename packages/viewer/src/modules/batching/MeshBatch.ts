@@ -332,6 +332,7 @@ export default class MeshBatch implements Batch {
           }
           this.integrateUpdateRange(range)
         } else {
+          let intersects = false
           const intersectedGroupLeft = this.getDrawRangeIntersectionLeft(range)
           if (
             intersectedGroupLeft &&
@@ -349,25 +350,27 @@ export default class MeshBatch implements Batch {
                 (range.offset + range.count),
               intersectedGroupLeft.materialIndex
             )
-          } else {
-            const intersectedGroupRight = this.getDrawRangeIntersectionRight(range)
-            if (
-              intersectedGroupRight &&
-              intersectedGroupRight.materialIndex !== materialIndex
-            ) {
-              this.geometry.groups.splice(
-                this.geometry.groups.indexOf(intersectedGroupRight),
-                1
-              )
-              this.geometry.addGroup(
-                intersectedGroupRight.start,
-                range.offset - intersectedGroupRight.start,
-                intersectedGroupRight.materialIndex
-              )
-              this.geometry.addGroup(range.offset, range.count, materialIndex)
-            } else {
-              this.geometry.addGroup(range.offset, range.count, materialIndex)
-            }
+            intersects = true
+          }
+          const intersectedGroupRight = this.getDrawRangeIntersectionRight(range)
+          if (
+            intersectedGroupRight &&
+            intersectedGroupRight.materialIndex !== materialIndex
+          ) {
+            this.geometry.groups.splice(
+              this.geometry.groups.indexOf(intersectedGroupRight),
+              1
+            )
+            this.geometry.addGroup(
+              intersectedGroupRight.start,
+              range.offset - intersectedGroupRight.start,
+              intersectedGroupRight.materialIndex
+            )
+            this.geometry.addGroup(range.offset, range.count, materialIndex)
+            intersects = true
+          }
+          if (!intersects) {
+            this.geometry.addGroup(range.offset, range.count, materialIndex)
           }
         }
       }
@@ -375,7 +378,9 @@ export default class MeshBatch implements Batch {
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    // console.log('Existing -> ', this.id, this.groups.slice())
+    const existing = this.groups.slice()
+    const incoming = ranges.slice()
+
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(value.material)
@@ -402,9 +407,13 @@ export default class MeshBatch implements Batch {
     let count = 0
     this.geometry.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {
-      // console.log('Result -> ', this.id, this.geometry.groups.slice())
+      console.warn('Existing -> ', existing)
+      console.warn('Incoming -> ', incoming)
+      console.warn('Result -> ', this.geometry.groups.slice())
       Logger.error(
-        `Draw groups invalid on ${this.id}, ${this.renderViews[0].renderData.id}`
+        `Draw groups invalid on ${this.id}, ${
+          this.renderViews[0].renderData.id
+        }, ${this.getCount()}`
       )
     }
     this.setBatchBuffers(...ranges)

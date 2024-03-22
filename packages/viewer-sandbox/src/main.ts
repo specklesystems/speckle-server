@@ -5,7 +5,8 @@ import {
   SelectionEvent,
   ViewerEvent,
   DebugViewer,
-  Viewer
+  Viewer,
+  Batch
 } from '@speckle/viewer'
 
 import './style.css'
@@ -20,6 +21,10 @@ import {
 } from '@speckle/viewer'
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
+import { BoxSelection } from './Extensions/BoxSelection'
+import { GeometryType } from '@speckle/viewer'
+import { SpeckleStandardMaterial } from '@speckle/viewer'
+import { Color, FrontSide } from 'three'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -51,7 +56,7 @@ const createViewer = async (containerName: string, stream: string) => {
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
   const diff = viewer.createExtension(DiffExtension)
-  // const boxSelect = viewer.createExtension(BoxSelection)
+  const boxSelect = viewer.createExtension(BoxSelection)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
@@ -91,6 +96,46 @@ const createViewer = async (containerName: string, stream: string) => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
+
+    const meshBatch = viewer
+      .getRenderer()
+      .batcher.getBatches(undefined, GeometryType.MESH)
+      .find((batch: Batch) => batch.renderViews.length > 2)
+    const geom = meshBatch.mesh.geometry
+    geom.groups.length = 0
+    geom.addGroup(0, 216, 0)
+    geom.addGroup(216, 1323, 0)
+    geom.addGroup(1539, 540, 0)
+    geom.addGroup(2079, 32268, 0)
+
+    const material = new SpeckleStandardMaterial(
+      {
+        color: new Color('#00ff00'),
+        emissive: 0x0,
+        roughness: 1,
+        metalness: 0,
+        opacity: 1,
+        side: FrontSide
+      },
+      ['USE_RTE']
+    )
+    meshBatch.setDrawRanges(
+      {
+        offset: 36,
+        count: 36,
+        material
+      },
+      {
+        offset: 180,
+        count: 1395,
+        material
+      },
+      {
+        offset: 1581,
+        count: 32766,
+        material
+      }
+    )
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -120,7 +165,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
     // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
@@ -156,7 +201,7 @@ const getStream = () => {
     // Arc and lines
     // ' https://speckle.xyz/streams/99abc74dd4/commits/b32fdcf171?c=%5B198440.6051,6522070.21462,19199.49584,176653.24219,6523663.5,0,0,1%5D'
     // AUTOCAD test stream
-    // 'https://latest.speckle.dev/streams/3ed8357f29/commits/b49bfc73ea'
+    'https://latest.speckle.dev/streams/3ed8357f29/commits/b49bfc73ea'
     // REVIT test stream
     // 'https://latest.speckle.dev/streams/c544db35f5/commits/7c29374369'
     // Arcs
@@ -372,6 +417,8 @@ const getStream = () => {
 
     // Rebar
     // 'https://speckle.xyz/streams/b4086833f8/commits/94df4c6d16?overlay=c5b9c260ea,e3dc287d61,eaedd7d0a5,7f126ce0dd,02fee34ce3,9bda31611f,110282c4db,533c311e29,bf6814d779,1ba52affcf,cc4e75125e,3fd628e4e3'
+    // Nice towers
+    // 'https://latest.speckle.dev/streams/f4efe4bd7f/objects/5083dffc2ce54ce64c1fc4fab48ca877'
   )
 }
 
