@@ -28,7 +28,7 @@ export default defineNuxtPlugin(async (app) => {
   }
 
   const {
-    public: { survicateWorkspaceKey, survicateSurveyId }
+    public: { survicateWorkspaceKey, survicateNpsSurveyId }
   } = useRuntimeConfig()
 
   const logger = useLogger()
@@ -63,7 +63,7 @@ export default defineNuxtPlugin(async (app) => {
       { immediate: false }
     )
 
-    survicateInstance.showSurvey(survicateSurveyId as string, {
+    survicateInstance.showSurvey(survicateNpsSurveyId as string, {
       forceDisplay: true
     })
 
