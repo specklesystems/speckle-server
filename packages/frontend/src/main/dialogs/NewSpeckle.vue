@@ -11,16 +11,17 @@
       </div>
       <v-row no-gutters align="center" justify="space-between" class="pa-6">
         <v-col cols="12" md="7">
-          <iframe
-            style="width: 100%; height: 100%; min-height: 250px"
-            src="https://www.youtube.com/embed/QI5pVV1GCNs?si=op1o9Ud4fOKsQlWe"
-            title="YouTube video player"
-            frameborder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowfullscreen
-          ></iframe>
+          <div style="padding: 56.25% 0 0 0; position: relative">
+            <iframe
+              src="https://player.vimeo.com/video/925455838?h=052c422cae&autoplay=1&title=0&loop=1&byline=0&portrait=0&controls=0&muted=1"
+              style="position: absolute; top: 0; left: 0; width: 100%; height: 100%"
+              frameborder="0"
+              allow="autoplay"
+              allowfullscreen
+            ></iframe>
+          </div>
         </v-col>
-        <v-col cols="12" md="5" class="pt-4 pt-md-0 pb-md-2 pl-8">
+        <v-col cols="12" md="5" class="pt-8 pt-md-0 pb-md-2 pl-md-8">
           <h2>What’s New?</h2>
           <div class="d-flex align-center py-2">
             <svg
