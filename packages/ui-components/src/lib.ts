@@ -16,6 +16,7 @@ import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
 import CommonStepsBullet from '~~/src/components/common/steps/Bullet.vue'
 import CommonAnimationInstructional from '~~/src/components/common/animation/Instructional.vue'
+import CommonVideoWrapper from '~~/src/components/common/VideoWrapper.vue'
 import FormCardButton from '~~/src/components/form/CardButton.vue'
 import FormCheckbox from '~~/src/components/form/Checkbox.vue'
 import FormRadio from '~~/src/components/form/Radio.vue'
@@ -102,6 +103,7 @@ export {
   CommonStepsBullet,
   CommonStepsNumber,
   CommonAnimationInstructional,
+  CommonVideoWrapper,
   FormCardButton,
   FormCheckbox,
   FormRadio,
