@@ -32,7 +32,8 @@ export const retry = async <V = unknown>(fn: () => MaybeAsync<V>, n: number) => 
   let lastError: Error | undefined
   for (let i = 0; i < n; i++) {
     try {
-      return await Promise.resolve(fn())
+      const res = await Promise.resolve(fn())
+      return res
     } catch (error) {
       lastError = ensureError(error)
     }
