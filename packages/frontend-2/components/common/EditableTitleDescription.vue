@@ -11,6 +11,7 @@
         >
           <textarea
             v-model="title"
+            name="Title"
             maxlength="512"
             :class="titleInputClasses"
             placeholder="Please enter a valid title"
@@ -42,6 +43,7 @@
         >
           <textarea
             v-model="description"
+            name="Description"
             :class="[
               ...descriptionInputClasses,
               description ? 'focus:min-w-0' : 'min-w-[260px]'
