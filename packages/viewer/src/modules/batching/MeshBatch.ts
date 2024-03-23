@@ -27,6 +27,7 @@ import { ObjectLayers } from '../../IViewer'
 import { DrawGroup } from './InstancedMeshBatch'
 import Materials from '../materials/Materials'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
+import { DrawRanges } from './DrawRanges'
 
 export default class MeshBatch implements Batch {
   public id: string
@@ -38,6 +39,8 @@ export default class MeshBatch implements Batch {
   public mesh: SpeckleMesh
 
   private gradientIndexBuffer: BufferAttribute
+
+  private drawRanges: DrawRanges
 
   private indexBuffer0: BufferAttribute
   private indexBuffer1: BufferAttribute
@@ -402,6 +405,7 @@ export default class MeshBatch implements Batch {
 
     for (let i = 0; i < sortedRanges.length; i++) {
       this.integrateUpdateRange(sortedRanges[i])
+      this.drawRanges.integrateRange(sortedRanges[i])
     }
 
     let count = 0
@@ -826,6 +830,7 @@ export default class MeshBatch implements Batch {
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
     this.mesh.frustumCulled = false
     this.mesh.geometry.addGroup(0, this.getCount(), 0)
+    this.drawRanges = new DrawRanges(this.mesh)
 
     batchObjects.forEach((element: BatchObject) => {
       element.renderView.disposeGeometry()
