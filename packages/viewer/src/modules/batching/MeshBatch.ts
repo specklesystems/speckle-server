@@ -404,10 +404,16 @@ export default class MeshBatch implements Batch {
     })
 
     for (let i = 0; i < sortedRanges.length; i++) {
-      this.integrateUpdateRange(sortedRanges[i])
-      this.drawRanges.integrateRange(sortedRanges[i])
+      this.geometry.groups = this.drawRanges.integrateRange(
+        this.groups,
+        this.materials,
+        sortedRanges[i]
+      )
+      // this.integrateUpdateRange(sortedRanges[i])
     }
-
+    console.warn('Existing -> ', existing)
+    console.warn('Incoming -> ', incoming)
+    console.warn('Result -> ', this.geometry.groups.slice())
     let count = 0
     this.geometry.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {
@@ -830,7 +836,7 @@ export default class MeshBatch implements Batch {
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
     this.mesh.frustumCulled = false
     this.mesh.geometry.addGroup(0, this.getCount(), 0)
-    this.drawRanges = new DrawRanges(this.mesh)
+    this.drawRanges = new DrawRanges()
 
     batchObjects.forEach((element: BatchObject) => {
       element.renderView.disposeGeometry()
