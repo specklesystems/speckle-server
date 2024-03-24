@@ -411,9 +411,7 @@ export default class MeshBatch implements Batch {
       )
       // this.integrateUpdateRange(sortedRanges[i])
     }
-    console.warn('Existing -> ', existing)
-    console.warn('Incoming -> ', incoming)
-    console.warn('Result -> ', this.geometry.groups.slice())
+
     let count = 0
     this.geometry.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {

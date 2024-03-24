@@ -97,45 +97,45 @@ const createViewer = async (containerName: string, stream: string) => {
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
 
-    const meshBatch = viewer
-      .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH)
-      .find((batch: Batch) => batch.renderViews.length > 2)
-    const geom = meshBatch.mesh.geometry
-    geom.groups.length = 0
-    geom.addGroup(0, 216, 0)
-    geom.addGroup(216, 1323, 0)
-    geom.addGroup(1539, 540, 0)
-    geom.addGroup(2079, 32268, 0)
+    // const meshBatch = viewer
+    //   .getRenderer()
+    //   .batcher.getBatches(undefined, GeometryType.MESH)
+    //   .find((batch: Batch) => batch.renderViews.length > 2)
+    // const geom = meshBatch.mesh.geometry
+    // geom.groups.length = 0
+    // geom.addGroup(0, 216, 0)
+    // geom.addGroup(216, 1323, 0)
+    // geom.addGroup(1539, 540, 0)
+    // geom.addGroup(2079, 32268, 0)
 
-    const material = new SpeckleStandardMaterial(
-      {
-        color: new Color('#00ff00'),
-        emissive: 0x0,
-        roughness: 1,
-        metalness: 0,
-        opacity: 1,
-        side: FrontSide
-      },
-      ['USE_RTE']
-    )
-    meshBatch.setDrawRanges(
-      {
-        offset: 36,
-        count: 36,
-        material
-      },
-      {
-        offset: 180,
-        count: 1395,
-        material
-      },
-      {
-        offset: 1581,
-        count: 32766,
-        material
-      }
-    )
+    // const material = new SpeckleStandardMaterial(
+    //   {
+    //     color: new Color('#00ff00'),
+    //     emissive: 0x0,
+    //     roughness: 1,
+    //     metalness: 0,
+    //     opacity: 1,
+    //     side: FrontSide
+    //   },
+    //   ['USE_RTE']
+    // )
+    // meshBatch.setDrawRanges(
+    //   {
+    //     offset: 36,
+    //     count: 36,
+    //     material
+    //   },
+    //   {
+    //     offset: 180,
+    //     count: 1395,
+    //     material
+    //   },
+    //   {
+    //     offset: 1581,
+    //     count: 32766,
+    //     material
+    //   }
+    // )
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
@@ -185,7 +185,7 @@ const getStream = () => {
     // AutoCAD NEW
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/46905429f6'
     //Blizzard world
-    // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
+    'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
     //Car
     // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
     // Jonathon's
@@ -201,7 +201,7 @@ const getStream = () => {
     // Arc and lines
     // ' https://speckle.xyz/streams/99abc74dd4/commits/b32fdcf171?c=%5B198440.6051,6522070.21462,19199.49584,176653.24219,6523663.5,0,0,1%5D'
     // AUTOCAD test stream
-    'https://latest.speckle.dev/streams/3ed8357f29/commits/b49bfc73ea'
+    // 'https://latest.speckle.dev/streams/3ed8357f29/commits/b49bfc73ea'
     // REVIT test stream
     // 'https://latest.speckle.dev/streams/c544db35f5/commits/7c29374369'
     // Arcs
