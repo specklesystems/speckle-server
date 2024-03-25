@@ -46,7 +46,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   })
 
   const labelClasses = computed(() => {
-    const classParts = ['block label text-foreground-2 mb-2']
+    const classParts = ['block label text-foreground-2 mb-1.5']
     if (!unref(props.showLabel)) {
       classParts.push('sr-only')
     }
@@ -80,7 +80,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
     const color = unref(props.color)
     if (color === 'foundation') {
-      classParts.push('bg-foundation shadow-sm hover:shadow')
+      classParts.push('bg-foundation !border border-outline-3 focus:border-transparent')
     } else if (color === 'transparent') {
       classParts.push('bg-transparent')
     } else {

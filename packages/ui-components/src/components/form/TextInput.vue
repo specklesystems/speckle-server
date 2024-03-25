@@ -311,7 +311,7 @@ const sizeClasses = computed((): string => {
       return 'h-14'
     case 'base':
     default:
-      return 'h-8 text-sm'
+      return 'h-9 text-sm'
   }
 })
 
