@@ -1,7 +1,7 @@
 <template>
   <OnboardingDialogBase v-model:open="openState">
     <template #header>Log In 🔑</template>
-    <CommonVideoWrapper
+    <CommonVimeoEmbed
       vimeo-id="925894038"
       title="Onboarding: Log in to your Speckle account"
       autoplay
@@ -16,7 +16,7 @@
 </template>
 <script setup lang="ts">
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
-import { CommonVideoWrapper } from '@speckle/ui-components'
+import { CommonVimeoEmbed } from '@speckle/ui-components'
 
 const props = defineProps<{
   open: boolean

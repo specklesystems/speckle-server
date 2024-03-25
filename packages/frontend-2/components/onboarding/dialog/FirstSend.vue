@@ -1,7 +1,7 @@
 <template>
   <OnboardingDialogBase v-model:open="openState">
     <template #header>Your First Model Upload ⬆️</template>
-    <CommonVideoWrapper
+    <CommonVimeoEmbed
       vimeo-id="925894349"
       title="Onboarding: First Model Upload"
       autoplay
@@ -15,7 +15,7 @@
 <script setup lang="ts">
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { CubeIcon } from '@heroicons/vue/24/solid'
-import { CommonVideoWrapper } from '@speckle/ui-components'
+import { CommonVimeoEmbed } from '@speckle/ui-components'
 
 const props = defineProps<{
   open: boolean

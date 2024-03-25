@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3'
-import CommonVideoWrapper from '~~/src/components/common/VideoWrapper.vue'
+import CommonVimeoEmbed from '~~/src/components/common/VimeoEmbed.vue'
 
 type StoryType = StoryObj<{
   autoplay: boolean
@@ -9,20 +9,17 @@ type StoryType = StoryObj<{
 }>
 
 export default {
-  title: 'Components/Common/VideoWrapper',
-  component: CommonVideoWrapper,
+  title: 'Components/Common/VimeoEmbed',
+  component: CommonVimeoEmbed,
   argTypes: {
     autoplay: {
-      control: { type: 'boolean' },
-      defaultValue: false
+      control: { type: 'boolean' }
     },
     muted: {
-      control: { type: 'boolean' },
-      defaultValue: false
+      control: { type: 'boolean' }
     },
     controls: {
-      control: { type: 'boolean' },
-      defaultValue: false
+      control: { type: 'boolean' }
     },
     vimeoId: {
       control: { type: 'text' }
@@ -36,13 +33,13 @@ export default {
       }
     }
   }
-} as Meta<typeof CommonVideoWrapper>
+} as Meta<typeof CommonVimeoEmbed>
 
 export const Default: StoryType = {
   render: (args) => ({
-    components: { CommonVideoWrapper },
+    components: { CommonVimeoEmbed },
     setup: () => ({ args }),
-    template: '<CommonVideoWrapper v-bind="args" />'
+    template: '<CommonVimeoEmbed v-bind="args" />'
   }),
   args: {
     autoplay: false,

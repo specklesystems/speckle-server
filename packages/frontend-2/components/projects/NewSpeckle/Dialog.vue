@@ -4,7 +4,7 @@
       What's New in Speckle?
     </h2>
     <p class="text-foreground-2 text-center mb-6">A new way to collaborate in AEC.</p>
-    <CommonVideoWrapper
+    <CommonVimeoEmbed
       vimeo-id="925455838"
       title="What's new in Speckle?"
       autoplay
@@ -16,7 +16,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
-import { CommonVideoWrapper } from '@speckle/ui-components'
+import { CommonVimeoEmbed } from '@speckle/ui-components'
 
 const open = defineModel<boolean>('open', { required: true })
 

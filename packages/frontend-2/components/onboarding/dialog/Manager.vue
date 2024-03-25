@@ -1,7 +1,7 @@
 <template>
   <OnboardingDialogBase v-model:open="openState">
     <template #header>Install Manager ⚙️</template>
-    <CommonVideoWrapper
+    <CommonVimeoEmbed
       vimeo-id="925892633"
       title="Onboarding: How to install Manager"
       autoplay
@@ -41,7 +41,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { CommonVideoWrapper } from '@speckle/ui-components'
+import { CommonVimeoEmbed } from '@speckle/ui-components'
 
 const props = defineProps<{
   open: boolean
