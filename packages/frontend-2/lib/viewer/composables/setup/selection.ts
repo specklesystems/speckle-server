@@ -26,8 +26,8 @@ function useCollectSelection() {
 function useSelectOrZoomOnSelection() {
   const state = useInjectedViewerState()
   const { clearSelection, addToSelection } = useSelectionUtilities()
-  const mp = useMixpanel()
   const { zoom } = useCameraUtilities()
+  const mp = useMixpanel()
   const logger = useLogger()
 
   const trackAndClearSelection = () => {
