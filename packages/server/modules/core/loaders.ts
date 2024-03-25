@@ -8,7 +8,8 @@ import {
   getStreamRoles,
   getStreamsSourceApps,
   getCommitStreams,
-  StreamWithCommitId
+  StreamWithCommitId,
+  getUserStreamCounts
 } from '@/modules/core/repositories/streams'
 import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
@@ -412,7 +413,18 @@ export function buildRequestLoaders(
           })
         },
         { cacheKeyFn: (key) => `${key.userId}:${key.key}` }
-      )
+      ),
+
+      /**
+       * Get user stream count. Includes private streams.
+       */
+      getOwnStreamCount: createLoader<string, number>(async (userIds) => {
+        const results = await getUserStreamCounts({
+          publicOnly: false,
+          userIds: userIds.slice()
+        })
+        return userIds.map((i) => results[i] || 0)
+      })
     },
     invites: {
       /**

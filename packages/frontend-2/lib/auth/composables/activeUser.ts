@@ -17,7 +17,7 @@ export const activeUserQuery = graphql(`
       createdAt
       verified
       notificationPreferences
-      projects {
+      projects(limit: 0) {
         totalCount
       }
     }
