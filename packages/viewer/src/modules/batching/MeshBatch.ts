@@ -40,7 +40,7 @@ export default class MeshBatch implements Batch {
 
   private gradientIndexBuffer: BufferAttribute
 
-  private drawRanges: DrawRanges
+  private drawRanges: DrawRanges = new DrawRanges()
 
   private indexBuffer0: BufferAttribute
   private indexBuffer1: BufferAttribute
@@ -834,7 +834,6 @@ export default class MeshBatch implements Batch {
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
     this.mesh.frustumCulled = false
     this.mesh.geometry.addGroup(0, this.getCount(), 0)
-    this.drawRanges = new DrawRanges()
 
     batchObjects.forEach((element: BatchObject) => {
       element.renderView.disposeGeometry()

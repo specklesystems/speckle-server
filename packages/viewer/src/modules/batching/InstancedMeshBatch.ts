@@ -28,6 +28,7 @@ import {
 import { InstancedBatchObject } from './InstancedBatchObject'
 import Logger from 'js-logger'
 import Materials from '../materials/Materials'
+import { DrawRanges } from './DrawRanges'
 
 export interface DrawGroup {
   start: number
@@ -44,6 +45,7 @@ export default class InstancedMeshBatch implements Batch {
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: SpeckleInstancedMesh
+  private drawRanges: DrawRanges = new DrawRanges()
 
   private instanceTransformBuffer0: Float32Array = null
   private instanceTransformBuffer1: Float32Array = null
@@ -377,7 +379,12 @@ export default class InstancedMeshBatch implements Batch {
     })
 
     for (let i = 0; i < sortedRanges.length; i++) {
-      this.integrateUpdateRange(sortedRanges[i])
+      this.mesh.groups = this.drawRanges.integrateRange(
+        this.groups,
+        this.materials,
+        sortedRanges[i]
+      )
+      // this.integrateUpdateRange(sortedRanges[i])
     }
 
     let count = 0
