@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock title="General">
+  <ProjectPageSettingsBlock title="Project Info">
     <template #logo><Cog6ToothIcon class="h-5 w-5" /></template>
     <FormTextInput
       name="projectName"

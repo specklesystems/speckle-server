@@ -19,6 +19,7 @@ import CommonAnimationInstructional from '~~/src/components/common/animation/Ins
 import FormCardButton from '~~/src/components/form/CardButton.vue'
 import FormCheckbox from '~~/src/components/form/Checkbox.vue'
 import FormRadio from '~~/src/components/form/Radio.vue'
+import FormRadioGroup from '~~/src/components/form/RadioGroup.vue'
 import FormTextArea from '~~/src/components/form/TextArea.vue'
 import FormTextInput from '~~/src/components/form/TextInput.vue'
 import * as ValidationHelpers from '~~/src/helpers/common/validation'
@@ -105,6 +106,7 @@ export {
   FormCardButton,
   FormCheckbox,
   FormRadio,
+  FormRadioGroup,
   FormTextArea,
   FormTextInput,
   FormSwitch,
