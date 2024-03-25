@@ -30,7 +30,7 @@ async function initRumClient(app: PluginNuxtApp) {
       const newTags = (to.meta.raygunTags || []) as string[]
       setupTags(newTags)
 
-      if (!from.path || from.path === to.path) return
+      if (!from?.path || from.path === to.path) return
 
       rg4js('trackEvent', {
         type: 'pageView',
@@ -97,7 +97,7 @@ async function initRumClient(app: PluginNuxtApp) {
 
     router.beforeEach((to, from) => {
       if (!('setUser' in datadog)) return
-      if (!from.path || from.path === to.path) return
+      if (!from?.path || from.path === to.path) return
 
       const pathDefinition = to.matched[to.matched.length - 1].path
       const routeName = to.meta.datadogName
