@@ -13,6 +13,7 @@
         :id="labelId"
         class="block label text-foreground-2 mb-2"
         :class="{ 'sr-only': !showLabel }"
+        :for="buttonId"
       >
         {{ label }}
       </ListboxLabel>
