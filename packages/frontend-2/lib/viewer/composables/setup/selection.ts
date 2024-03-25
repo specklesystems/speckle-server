@@ -85,9 +85,9 @@ function useSelectOrZoomOnSelection() {
       },
       doubleClickCallback: (args, { firstVisibleSelectionHit }) => {
         const isMeasureMode = state.ui.measurement.enabled.value
-        const measureMode = state.ui.measurement.options.value.type
+        const measurementType = state.ui.measurement.options.value.type
 
-        if (isMeasureMode && measureMode === MeasurementType.PERPENDICULAR) {
+        if (isMeasureMode && measurementType === MeasurementType.PERPENDICULAR) {
           return
         }
         if (!args) return zoom()
