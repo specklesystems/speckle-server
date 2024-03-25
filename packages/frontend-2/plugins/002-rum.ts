@@ -209,6 +209,12 @@ async function initRumServer(app: PluginNuxtApp) {
                 ` +
               (distinctId ? `window.DD_RUM.setUser({ id: '${distinctId}' });` : '') +
               `
+                // Regexes for view name overrides
+                const viewNameRegexes = [
+                  {rgx: /^\\/projects\\/\\w+?\\/models\\/[\\w,$@]+$/i, name: '/projects/?/models/?'},
+                  {rgx: /^\\/authn\\/verify\\/\\w+?\\/\\w+$/i, name: '/authn/verify/?/?'}
+                ]
+
                 window.DD_RUM.setGlobalContextProperty('serverBaseUrl', '${baseUrl}');
                 window.DD_RUM.init({
                   clientToken: '${datadogClientToken}',
@@ -223,6 +229,17 @@ async function initRumServer(app: PluginNuxtApp) {
                   trackResources: true,
                   trackLongTasks: true,
                   defaultPrivacyLevel: 'mask-user-input',
+                  beforeSend: (event) => {
+                    const path = new URL(event.view.url).pathname
+                    for (const { rgx, name } of viewNameRegexes) {
+                      if (rgx.test(path)) {
+                        event.view.name = name
+                        break
+                      }
+                    }
+
+                    // console.log(event)
+                  }
                 });
               })
           `
