@@ -17,7 +17,7 @@ export const activeUserQuery = graphql(`
       createdAt
       verified
       notificationPreferences
-      projects(limit: 0) {
+      versions(limit: 0) {
         totalCount
       }
     }
@@ -65,7 +65,7 @@ export function useActiveUser() {
   const isGuest = computed(() => activeUser.value?.role === Roles.Server.Guest)
   const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
-  const projectCount = computed(() => activeUser.value?.projects.totalCount)
+  const projectVersionCount = computed(() => activeUser.value?.versions.totalCount)
 
   return {
     activeUser,
@@ -76,7 +76,7 @@ export function useActiveUser() {
     onResult,
     isGuest,
     isAdmin,
-    projectCount
+    projectVersionCount
   }
 }
 

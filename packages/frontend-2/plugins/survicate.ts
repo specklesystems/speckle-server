@@ -75,12 +75,12 @@ export default defineNuxtPlugin(async (app) => {
 })
 
 function checkSurveyDisplayConditions(onboardingOrFeedbackDate: Date): boolean {
-  const { projectCount } = useActiveUser()
+  const { projectVersionCount } = useActiveUser()
 
   const threeDaysAfterOnboarding = dayjs(onboardingOrFeedbackDate).add(3, 'day')
   const isAfterOnboardingPeriod = dayjs().isAfter(threeDaysAfterOnboarding)
 
-  const minimumThreeProjects = (projectCount?.value ?? 0) > 2
+  const minimumThreeVersions = (projectVersionCount?.value ?? 0) > 2
 
-  return isAfterOnboardingPeriod && minimumThreeProjects
+  return isAfterOnboardingPeriod && minimumThreeVersions
 }

@@ -29,7 +29,9 @@ import {
   getCommitBranches,
   getCommits,
   getSpecificBranchCommits,
-  getStreamCommitCounts
+  getStreamCommitCounts,
+  getUserAuthoredCommitCounts,
+  getUserStreamCommitCounts
 } from '@/modules/core/repositories/commits'
 import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
 import {
@@ -423,6 +425,30 @@ export function buildRequestLoaders(
           publicOnly: false,
           userIds: userIds.slice()
         })
+        return userIds.map((i) => results[i] || 0)
+      }),
+
+      /**
+       * Get authored commit count. Includes commits from private streams.
+       */
+      getAuthoredCommitCount: createLoader<string, number>(async (userIds) => {
+        const results = await getUserAuthoredCommitCounts({
+          userIds: userIds.slice(),
+          publicOnly: false
+        })
+
+        return userIds.map((i) => results[i] || 0)
+      }),
+
+      /**
+       * Get count of commits in streams that the user is a contributor in. Includes private streams.
+       */
+      getStreamCommitCount: createLoader<string, number>(async (userIds) => {
+        const results = await getUserStreamCommitCounts({
+          userIds: userIds.slice(),
+          publicOnly: false
+        })
+
         return userIds.map((i) => results[i] || 0)
       })
     },

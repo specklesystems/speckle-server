@@ -805,6 +805,7 @@ export async function getUserStreamCounts(params: {
   publicOnly?: boolean
 }) {
   const { userIds, publicOnly = false } = params
+  if (!userIds.length) return {}
 
   const q = StreamAcl.knex()
     .select<{ userId: string; count: string }[]>([
@@ -815,9 +816,9 @@ export async function getUserStreamCounts(params: {
     .groupBy(StreamAcl.col.userId)
 
   if (publicOnly) {
-    q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
-      .andWhere(Streams.col.isPublic, true)
-      .andWhere(Streams.col.isDiscoverable, true)
+    q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId).andWhere((q1) => {
+      q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+    })
   }
 
   const results = await q
