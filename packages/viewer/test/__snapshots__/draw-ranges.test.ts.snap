@@ -1,0 +1,106 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Draw Ranges > draw-ranges-1 1`] = `
+[
+  {
+    "count": 36,
+    "materialIndex": 0,
+    "start": 0,
+  },
+  {
+    "count": 36,
+    "materialIndex": 1,
+    "start": 36,
+  },
+  {
+    "count": 144,
+    "materialIndex": 0,
+    "start": 72,
+  },
+  {
+    "count": 1323,
+    "materialIndex": 0,
+    "start": 216,
+  },
+  {
+    "count": 540,
+    "materialIndex": 0,
+    "start": 1539,
+  },
+  {
+    "count": 32268,
+    "materialIndex": 0,
+    "start": 2079,
+  },
+]
+`;
+
+exports[`Draw Ranges > draw-ranges-2 1`] = `
+[
+  {
+    "count": 36,
+    "materialIndex": 0,
+    "start": 0,
+  },
+  {
+    "count": 36,
+    "materialIndex": 1,
+    "start": 36,
+  },
+  {
+    "count": 108,
+    "materialIndex": 0,
+    "start": 72,
+  },
+  {
+    "count": 1395,
+    "materialIndex": 1,
+    "start": 180,
+  },
+  {
+    "count": 504,
+    "materialIndex": 0,
+    "start": 1575,
+  },
+  {
+    "count": 32268,
+    "materialIndex": 0,
+    "start": 2079,
+  },
+]
+`;
+
+exports[`Draw Ranges > draw-ranges-3 1`] = `
+[
+  {
+    "count": 36,
+    "materialIndex": 0,
+    "start": 0,
+  },
+  {
+    "count": 36,
+    "materialIndex": 1,
+    "start": 36,
+  },
+  {
+    "count": 108,
+    "materialIndex": 0,
+    "start": 72,
+  },
+  {
+    "count": 1395,
+    "materialIndex": 1,
+    "start": 180,
+  },
+  {
+    "count": 6,
+    "materialIndex": 0,
+    "start": 1575,
+  },
+  {
+    "count": 32766,
+    "materialIndex": 1,
+    "start": 1581,
+  },
+]
+`;

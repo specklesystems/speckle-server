@@ -51,9 +51,9 @@ import {
 import Materials, {
   RenderMaterial,
   DisplayStyle,
-  MaterialOptions,
   FilterMaterial
 } from './materials/Materials'
+import { MaterialOptions } from './materials/MaterialOptions'
 import { SpeckleMaterial } from './materials/SpeckleMaterial'
 import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
 import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter'
