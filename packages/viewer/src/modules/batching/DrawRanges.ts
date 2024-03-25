@@ -2,18 +2,13 @@ import { Material } from 'three'
 import { BatchUpdateRange } from './Batch'
 import { DrawGroup } from './InstancedMeshBatch'
 
-interface DrawRangeEdge {
-  start: number
-  end: number
-  index: number
-}
-
 export class DrawRanges {
   public static mapTime: number
   public static findIndexTime: number
   public static filterTime: number
   public static iterationTime: number
   public static findTime: number
+  public static callCount: number
 
   public integrateRange(
     groups: Array<DrawGroup>,
@@ -21,18 +16,27 @@ export class DrawRanges {
     range: BatchUpdateRange
   ): Array<DrawGroup> {
     let _flatRanges: Array<number> = []
-    let _edges: Array<DrawRangeEdge> = []
+    // let _edges: Array<DrawRangeEdge> = []
     const incomingMaterialIndex = materials.indexOf(range.material)
-    // groups.sort((a, b) => a.start - b.start)
+    groups.sort((a, b) => a.start - b.start)
 
     let start = performance.now()
-    _edges = groups.map((group: DrawGroup) => {
-      return {
-        start: group.start,
-        end: group.start + group.count,
-        index: group.materialIndex
-      }
-    })
+    // _edges = groups.map((group: DrawGroup) => {
+    //   return {
+    //     start: group.start,
+    //     end: group.start + group.count,
+    //     index: group.materialIndex
+    //   }
+    // })
+    const edgesForward = {}
+    const edgesBackwards = {}
+    for (let k = 0, l = groups.length - 1; k < groups.length; k++, l--) {
+      const groupForward = groups[k]
+      const groupBackwards = groups[l]
+      edgesForward[groupForward.start] = groupForward.materialIndex
+      edgesBackwards[groupBackwards.start + groupBackwards.count] =
+        groupBackwards.materialIndex
+    }
 
     _flatRanges = groups.map((group: DrawGroup) => {
       return group.start + group.count
@@ -69,15 +73,23 @@ export class DrawRanges {
           ? incomingMaterialIndex
           : null
       const plm = performance.now()
-      const edge: DrawRangeEdge = _edges.find(
-        (value: DrawRangeEdge) => value.start <= start && value.end >= end
-      )
+
+      // const edge: DrawRangeEdge = _edges.find(
+      //   (value: DrawRangeEdge) => value.start <= start && value.end >= end
+      // )
+      const edgeIndex =
+        edgesForward[start] !== undefined
+          ? edgesForward[start]
+          : edgesBackwards[end] !== undefined
+          ? edgesBackwards[end]
+          : null
       DrawRanges.findTime += performance.now() - plm
       drawRanges.push({
         start,
         count: end - start,
-        materialIndex: rangeMaterialIndex !== null ? rangeMaterialIndex : edge.index
+        materialIndex: rangeMaterialIndex !== null ? rangeMaterialIndex : edgeIndex
       })
+      DrawRanges.callCount++
     }
     DrawRanges.iterationTime += performance.now() - start
 

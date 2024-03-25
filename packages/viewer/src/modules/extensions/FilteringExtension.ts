@@ -403,6 +403,7 @@ export class FilteringExtension extends Extension {
     DrawRanges.filterTime = 0
     DrawRanges.iterationTime = 0
     DrawRanges.findTime = 0
+    DrawRanges.callCount = 0
     return null
   }
 
@@ -530,6 +531,7 @@ export class FilteringExtension extends Extension {
     console.warn('Filter Time -> ', DrawRanges.filterTime)
     console.warn('Iteration Time -> ', DrawRanges.iterationTime)
     console.warn('Find Time -> ', DrawRanges.findTime)
+    console.warn('Call count -> ', DrawRanges.callCount)
     return this.CurrentFilteringState
   }
 
