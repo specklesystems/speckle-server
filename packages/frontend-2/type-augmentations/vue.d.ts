@@ -1,9 +1,13 @@
 declare module 'nuxt/dist/pages/runtime' {
   interface PageMeta {
     /**
-     * Optinal tags to be sent to Raygun
+     * Optional tags to be sent to Raygun
      */
     raygunTags?: string[]
+    /**
+     * Optional view name to override the default one
+     */
+    datadogName?: string
   }
 }
 

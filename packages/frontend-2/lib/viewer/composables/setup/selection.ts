@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 
+import { MeasurementType } from '@speckle/viewer'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
@@ -83,6 +84,12 @@ function useSelectOrZoomOnSelection() {
         })
       },
       doubleClickCallback: (args, { firstVisibleSelectionHit }) => {
+        const isMeasureMode = state.ui.measurement.enabled.value
+        const measurementType = state.ui.measurement.options.value.type
+
+        if (isMeasureMode && measurementType === MeasurementType.PERPENDICULAR) {
+          return
+        }
         if (!args) return zoom()
         if (!args.hits) return zoom()
         if (args.hits.length === 0) return zoom()
