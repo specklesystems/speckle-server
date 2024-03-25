@@ -1,7 +1,4 @@
-import {
-  useOnAuthStateChange,
-  useGetInitialAuthState
-} from '~/lib/auth/composables/auth'
+import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import dayjs from 'dayjs'
@@ -23,7 +20,7 @@ export default defineNuxtPlugin(async (app) => {
 
   const shouldShowSurvey = checkSurveyDisplayConditions(onboardingOrFeedbackDate)
 
-  if (!process.client || !isLoggedIn.value || !shouldShowSurvey) {
+  if (!isLoggedIn.value || !shouldShowSurvey) {
     return
   }
 
@@ -32,7 +29,6 @@ export default defineNuxtPlugin(async (app) => {
   } = useRuntimeConfig()
 
   const logger = useLogger()
-  const initUser = useGetInitialAuthState()
   const onAuthStateChange = useOnAuthStateChange()
 
   try {
@@ -46,12 +42,6 @@ export default defineNuxtPlugin(async (app) => {
       throw new Error('Survicate instance is not available after initialization.')
     }
 
-    const { distinctId } = await initUser()
-
-    if (distinctId) {
-      survicateInstance.setVisitorTraits({ distinctId })
-    }
-
     // Handle authentication state changes
     await onAuthStateChange(
       (user, { resolveDistinctId }) => {
@@ -60,7 +50,7 @@ export default defineNuxtPlugin(async (app) => {
           survicateInstance.setVisitorTraits({ distinctId })
         }
       },
-      { immediate: false }
+      { immediate: true }
     )
 
     survicateInstance.showSurvey(survicateNpsSurveyId as string, {
