@@ -7,7 +7,7 @@
       class="relative flex sm:justify-between overflow-x-auto"
       :class="
         vertical
-          ? 'items-center sm:items-start sm:flex-col sm:w-3/12 gap-4'
+          ? 'items-center sm:items-start sm:flex-col sm:w-3/12 gap-6'
           : 'border-b border-outline-3 lg:border-none gap-8 w-full'
       "
     >
@@ -25,7 +25,9 @@
         ref="buttonContainer"
         class="flex"
         :class="
-          vertical ? 'flex-wrap sm:flex-nowrap flex-row sm:flex-col gap-1' : 'gap-6'
+          vertical
+            ? 'flex-wrap sm:flex-nowrap flex-row sm:flex-col gap-1 w-full'
+            : 'gap-6'
         "
       >
         <h1
@@ -46,7 +48,14 @@
           <Component
             :is="item.icon"
             v-if="item.icon"
-            class="shrink-0 h-4 w-4 stroke-[2px] text-foreground"
+            class="shrink-0 h-4 w-4 stroke-[2px]"
+            :class="
+              vertical
+                ? 'text-foreground'
+                : activeItem?.id === item.id
+                ? 'text-primary'
+                : 'text-foreground'
+            "
           />
           <span class="min-w-6">{{ item.title }}</span>
           <div

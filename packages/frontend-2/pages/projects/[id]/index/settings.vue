@@ -7,8 +7,7 @@
       :items="settingsTabItems"
     >
       <template #default="{ activeItem }">
-        <div>Title: {{ activeItem.title }}</div>
-        <div>ID: {{ activeItem.id }}</div>
+        <ProjectPageSettingsGeneral v-if="activeItem.id === 'general'" />
       </template>
     </LayoutPageTabs>
   </div>
