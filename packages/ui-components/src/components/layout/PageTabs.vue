@@ -7,7 +7,7 @@
       class="relative flex sm:justify-between overflow-x-auto"
       :class="
         vertical
-          ? 'items-center sm:items-start sm:flex-col sm:w-2/12 border-r border-outline gap-4 pl-4'
+          ? 'items-center sm:items-start sm:flex-col sm:w-3/12 gap-4'
           : 'border-b border-outline-3 lg:border-none gap-8 w-full'
       "
     >
@@ -25,13 +25,13 @@
         ref="buttonContainer"
         class="flex"
         :class="
-          vertical ? 'flex-wrap sm:flex-nowrap flex-row sm:flex-col gap-4' : 'gap-6'
+          vertical ? 'flex-wrap sm:flex-nowrap flex-row sm:flex-col gap-1' : 'gap-6'
         "
       >
         <h1
           v-if="title"
           class="font-bold h4"
-          :class="vertical ? 'w-full sm:w-auto -ml-4 mb-4' : 'mb-2'"
+          :class="vertical ? 'w-full sm:w-auto mb-4' : 'mb-2'"
         >
           {{ title }}
         </h1>
@@ -39,19 +39,14 @@
           v-for="item in items"
           :key="item.id"
           :data-tab-id="item.id"
-          class="tab-button relative z-10 flex items-center gap-1.5 pb-2 border-b-[2px] border-transparent text-base max-w-max px-2"
-          :class="[
-            activeItem?.id === item.id
-              ? 'text-primary hover:text-primary'
-              : 'text-foreground',
-            vertical ? 'hover:border-outline' : 'hover:border-outline-2'
-          ]"
+          :class="buttonClass(item)"
+          class="tab-button"
           @click="setActiveItem(item)"
         >
           <Component
             :is="item.icon"
             v-if="item.icon"
-            class="shrink-0 h-4 w-4 stroke-[2px]"
+            class="shrink-0 h-4 w-4 stroke-[2px] text-foreground"
           />
           <span class="min-w-6">{{ item.title }}</span>
           <div
@@ -93,6 +88,36 @@ const props = defineProps<{
 
 const activeItem = defineModel<LayoutPageTabItem>('activeItem', { required: true })
 const buttonContainer = ref(null as Nullable<HTMLDivElement>)
+
+const buttonClass = computed(() => {
+  return (item: LayoutPageTabItem) => {
+    const isActive = activeItem.value?.id === item.id
+    const baseClasses = ['relative', 'z-10', 'flex', 'items-center']
+
+    if (props.vertical) {
+      baseClasses.push('text-sm', 'gap-2', 'border-l-[4px] pl-1.5 py-1.5')
+      if (isActive)
+        baseClasses.push(
+          'font-bold bg-primary-muted border-primary hover:border-outline'
+        )
+      else baseClasses.push('text-foreground border-transparent')
+    } else {
+      baseClasses.push(
+        'text-base',
+        'gap-1.5',
+        'hover:border-outline-2',
+        'pb-2',
+        'border-b-[2px]',
+        'border-transparent',
+        'max-w-max'
+      )
+      if (isActive) baseClasses.push('text-primary', 'hover:text-primary')
+      else baseClasses.push('text-foreground')
+    }
+
+    return baseClasses
+  }
+})
 
 const activeItemRef = computed(() => {
   const id = activeItem.value?.id

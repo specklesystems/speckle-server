@@ -33,7 +33,11 @@ import {
 } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
-import { CubeIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
+import {
+  CubeIcon,
+  ChatBubbleLeftRightIcon,
+  Cog6ToothIcon
+} from '@heroicons/vue/24/outline'
 import { projectRoute } from '~/lib/common/helpers/route'
 import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 
@@ -123,6 +127,11 @@ const pageTabItems = computed((): LayoutPageTabItem[] => [
     id: 'discussions',
     icon: ChatBubbleLeftRightIcon,
     count: commentCount.value
+  },
+  {
+    title: 'Settings',
+    id: 'settings',
+    icon: Cog6ToothIcon
   }
   // {
   //   title: 'Automations',
@@ -136,7 +145,8 @@ const activePageTab = computed({
   get: () => {
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return pageTabItems.value[1]
-    if (/\/automations\/?$/i.test(path)) return pageTabItems.value[2]
+    // if (/\/automations\/?$/i.test(path)) return pageTabItems.value[2]
+    if (/\/settings\/?$/i.test(path)) return pageTabItems.value[2]
     return pageTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
@@ -149,6 +159,9 @@ const activePageTab = computed({
         break
       case 'automations':
         router.push({ path: projectRoute(projectId.value, 'automations') })
+        break
+      case 'settings':
+        router.push({ path: projectRoute(projectId.value, 'settings') })
         break
     }
   }
