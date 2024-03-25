@@ -25,6 +25,7 @@ import {
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import { cancelStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
 import {
   getPendingStreamCollaborators,
@@ -145,6 +146,14 @@ export = {
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
+
+      const inviteCount = args.input.length
+      if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+        throw new InviteCreateValidationError(
+          'Maximum 10 invites can be sent at once by non admins'
+        )
+      }
+
       const inputBatches = chunk(args.input, 10)
       for (const batch of inputBatches) {
         await Promise.all(

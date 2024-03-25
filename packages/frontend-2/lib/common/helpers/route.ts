@@ -11,7 +11,17 @@ export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const onboardingRoute = '/onboarding'
 export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
-export const projectRoute = (id: string) => `/projects/${id}`
+export const projectRoute = (
+  id: string,
+  tab?: 'models' | 'discussions' | 'automations'
+) => {
+  let res = `/projects/${id}`
+  if (tab && tab !== 'models') {
+    res += `/${tab}`
+  }
+
+  return res
+}
 export const modelRoute = (
   projectId: string,
   resourceIdString: string,

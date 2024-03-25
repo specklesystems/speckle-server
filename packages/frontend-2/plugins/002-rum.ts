@@ -30,7 +30,7 @@ async function initRumClient(app: PluginNuxtApp) {
       const newTags = (to.meta.raygunTags || []) as string[]
       setupTags(newTags)
 
-      if (!from.path || from.path === to.path) return
+      if (!from?.path || from.path === to.path) return
 
       rg4js('trackEvent', {
         type: 'pageView',
@@ -94,6 +94,18 @@ async function initRumClient(app: PluginNuxtApp) {
       },
       { immediate: true }
     )
+
+    router.beforeEach((to, from) => {
+      if (!('setUser' in datadog)) return
+      if (!from?.path || from.path === to.path) return
+
+      const pathDefinition = to.matched[to.matched.length - 1].path
+      const routeName = to.meta.datadogName
+
+      datadog.startView({
+        name: routeName || pathDefinition || 'unknown'
+      })
+    })
   }
 }
 
@@ -195,6 +207,10 @@ async function initRumServer(app: PluginNuxtApp) {
     const { distinctId } = await initUser()
 
     app.hook('app:rendered', (context) => {
+      const route = app._route
+      const pathDefinition = route.matched[route.matched.length - 1].path
+      const routeName = route.meta.datadogName
+
       context.ssrContext!.head.push({
         script: [
           {
@@ -223,7 +239,11 @@ async function initRumServer(app: PluginNuxtApp) {
                   trackResources: true,
                   trackLongTasks: true,
                   defaultPrivacyLevel: 'mask-user-input',
+                  trackViewsManually: true
                 });
+                window.DD_RUM.startView({
+                  name: '${routeName || pathDefinition || 'unknown'}'
+                })
               })
           `
           }

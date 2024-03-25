@@ -998,10 +998,15 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   const stateWithResources = setupResourceResponse(initialStateWithRequest)
   const state: InjectableViewerState = setupInterfaceState(stateWithResources)
 
-  // Inject it into descendant components
-  provide(InjectableViewerStateKey, state)
+  // We don't want the state to ever be proxified (e.g. when passed through props),
+  // cause that will break composables (refs will be automatically unwrapped as if
+  // they're accessed in a template)
+  const rawState = markRaw(state)
 
-  return state
+  // Inject it into descendant components
+  provide(InjectableViewerStateKey, rawState)
+
+  return rawState
 }
 
 /**

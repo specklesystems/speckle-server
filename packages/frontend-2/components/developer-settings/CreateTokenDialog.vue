@@ -30,6 +30,8 @@
           show-label
           :items="apiTokenScopes"
           mount-menu-on-body
+          :label-id="badgesLabelId"
+          :button-id="badgesButtonId"
           by="id"
         />
       </div>
@@ -62,6 +64,8 @@ const { handleSubmit } = useForm<TokenFormValues>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
+const badgesLabelId = useId()
+const badgesButtonId = useId()
 const name = ref('')
 const scopes = ref<typeof apiTokenScopes.value>([])
 
