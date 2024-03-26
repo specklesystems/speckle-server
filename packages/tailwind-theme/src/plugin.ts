@@ -238,6 +238,23 @@ export default plugin(function ({ addComponents, addBase }) {
       '&::-webkit-scrollbar-thumb:active': {
         background: 'rgba(90 90 90 10100%)'
       }
+    },
+    // Auto-growing textarea for editable fields
+    // more info: https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/
+    '.grow-textarea': {
+      display: 'grid',
+      '&::after': {
+        content: "attr(data-replicated-value) ' '",
+        visibility: 'hidden',
+        'white-space': 'pre-wrap'
+      },
+      '& > textarea': {
+        resize: 'none',
+        overflow: 'hidden'
+      },
+      '& > textarea, &::after': {
+        'grid-area': '1 / 1 / 2 / 2'
+      }
     }
   })
 }, preset)
