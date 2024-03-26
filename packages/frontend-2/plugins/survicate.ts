@@ -9,7 +9,7 @@ export default defineNuxtPlugin(async (app) => {
   const onboardingOrFeedbackDateString = useSynchronizedCookie<string | undefined>(
     'onboardingOrFeedbackDate',
     {
-      default: () => new Date().toISOString().split('T')[0],
+      default: () => dayjs().startOf('day').format('YYYY-MM-DD'),
       expires: dayjs().add(999, 'day').toDate()
     }
   )
