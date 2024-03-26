@@ -1,7 +1,5 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
-import { parseEnv } from 'znv'
-import { z } from 'zod'
 
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
@@ -274,6 +272,3 @@ export function delayGraphqlResponsesBy() {
   if (!isDevEnv()) return 0
   return getIntFromEnv('DELAY_GQL_RESPONSES_BY', '0')
 }
-export const { ENABLE_AUTOMATE_MODULE } = parseEnv(process.env, {
-  ENABLE_AUTOMATE_MODULE: z.boolean().default(false)
-})

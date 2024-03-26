@@ -30,6 +30,14 @@ tlsRejectUnauthorized: '1'
 ##
 cert_manager_issuer: letsencrypt-staging
 
+## @section Feature flags
+## @descriptionStart
+## This object is a central location to define feature flags for the whole chart.
+## @descriptionEnd
+featureFlags:
+  ## @param featureFlags.enableAutomateModule High level flag fully toggles the integrated automate module
+  enableAutomateModule: false
+
 analytics:
   ## @param analytics.enabled Enable or disable analytics
   enabled: true

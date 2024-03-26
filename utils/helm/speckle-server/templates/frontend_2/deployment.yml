@@ -126,6 +126,9 @@ spec:
             value: {{ .Values.analytics.datadog_env | quote }}
           {{- end }}
 
+          - name: ENABLE_AUTOMATE_MODULE
+            value: {{ .Values.featureFlags.enableAutomateModule | quote }}
+
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.frontend_2.affinity "context" $) | nindent 8 }}

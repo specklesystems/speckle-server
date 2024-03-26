@@ -111,6 +111,9 @@ spec:
           - name: ENABLE_FE2_MESSAGING
             value: {{ .Values.server.enableFe2Messaging | quote }}
 
+          - name: ENABLE_AUTOMATE_MODULE
+            value: {{ .Values.featureFlags.enableAutomateModule | quote }}
+
           - name: ONBOARDING_STREAM_URL
             value: {{ .Values.server.onboarding.stream_url }}
           - name: ONBOARDING_STREAM_CACHE_BUST_NUMBER
