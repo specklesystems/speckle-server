@@ -6,6 +6,8 @@
     :show-label="false"
     :name="name || 'units'"
     :allow-unset="false"
+    :label-id="labelId"
+    :button-id="buttonId"
   >
     <template #something-selected>
       <div>{{ fullUnitName }}</div>
@@ -31,6 +33,9 @@ const props = defineProps<{
   modelValue: string
   name?: string
 }>()
+
+const labelId = useId()
+const buttonId = useId()
 
 // Use a ref for unitDisplayNames
 const unitDisplayNames = ref<UnitDisplayNames>({

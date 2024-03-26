@@ -69,6 +69,9 @@ const { value, errorMessage } = useField<ModelType>(props.name, props.rules, {
   initialValue: props.modelValue || undefined
 })
 
+// 'local' was recently removed, but we still want to keep backwards compatibility w/ older vue versions, so have to use this workaround
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-expect-error
 const editMode = defineModel<boolean>('editMode', { local: true })
 
 const modelAsUser = computed(

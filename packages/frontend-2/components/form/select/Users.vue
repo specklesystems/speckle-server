@@ -9,6 +9,8 @@
     :label="label"
     :show-label="showLabel"
     :name="name || 'users'"
+    :label-id="labelId"
+    :button-id="buttonId"
     by="id"
   >
     <template #nothing-selected>
@@ -138,6 +140,8 @@ const props = defineProps({
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
 const itemContainer = ref(null as Nullable<HTMLElement>)
+const labelId = useId()
+const buttonId = useId()
 
 const { selectedValue, hiddenSelectedItemCount, isArrayValue, isMultiItemArrayValue } =
   useFormSelectChildInternals<FormUsersSelectItemFragment>({

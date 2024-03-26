@@ -564,6 +564,9 @@ const loadAllObjectsFromParent = async (
       batchPromises = []
     }
   }
+
+  // If any remaining promises - await them
+  await Promise.all(batchPromises)
 }
 
 /**

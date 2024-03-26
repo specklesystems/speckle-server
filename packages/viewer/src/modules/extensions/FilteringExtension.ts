@@ -175,8 +175,8 @@ export class FilteringExtension extends Extension {
   }
 
   private visibilityWalk(node: TreeNode): boolean {
-    if (!node.model.atomic) return true
-    if (this.VisibilityState.ids[node.model.raw.id]) {
+    // if (!node.model.atomic) return true
+    if (this.VisibilityState.ids[node.model.id]) {
       this.VisibilityState.rvs.push(
         ...this.WTI.getRenderTree().getRenderViewsForNode(node, node)
       )
