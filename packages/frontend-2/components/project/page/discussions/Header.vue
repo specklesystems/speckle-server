@@ -4,6 +4,7 @@
       <h1 class="block h4 font-bold">Discussions</h1>
       <div class="space-x-2 flex items-center">
         <FormCheckbox
+          :id="checkboxId"
           v-model="finalIncludeArchived"
           name="includeArchived"
           :value="true"
@@ -47,4 +48,6 @@ const finalIncludeArchived = computed({
   get: () => props.includeArchived,
   set: (newVal) => emit('update:include-archived', newVal)
 })
+
+const checkboxId = useId()
 </script>

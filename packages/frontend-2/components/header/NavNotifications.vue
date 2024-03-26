@@ -1,7 +1,7 @@
 <template>
   <div v-if="hasNotifications">
     <Menu as="div" class="flex items-center">
-      <MenuButton v-slot="{ open: menuOpen }" as="div">
+      <MenuButton :id="menuButtonId" v-slot="{ open: menuOpen }" as="div">
         <div class="cursor-pointer">
           <span class="sr-only">Open notifications menu</span>
           <div class="relative">
@@ -50,6 +50,7 @@ import { XMarkIcon, BellIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 
 const { activeUser } = useActiveUser()
+const menuButtonId = useId()
 
 const hasNotifications = computed(() => {
   if (!activeUser.value) return false

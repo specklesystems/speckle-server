@@ -28,10 +28,7 @@ import { useQuery } from '@vue/apollo-composable'
 import type { SourceAppDefinition } from '@speckle/shared'
 import type { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectModelsPageQuery } from '~~/lib/projects/graphql/queries'
-import {
-  useGeneralProjectPageUpdateTracking,
-  useProjectPageItemViewType
-} from '~~/lib/projects/composables/projectPages'
+import { useProjectPageItemViewType } from '~~/lib/projects/composables/projectPages'
 
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
@@ -47,7 +44,6 @@ const { result } = useQuery(projectModelsPageQuery, () => ({
 }))
 
 const project = computed(() => result.value?.project)
-useGeneralProjectPageUpdateTracking({ projectId })
 
 const clearSearch = () => {
   search.value = ''
