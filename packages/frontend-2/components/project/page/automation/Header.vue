@@ -3,10 +3,17 @@
     <CommonTextLink :icon-left="ArrowLeftIcon" size="xs" :to="automationsLink">
       Go Back to Automations
     </CommonTextLink>
-    <div class="flex gap-1 items-center">
+    <div class="flex gap-1 items-center relative">
       <h1 class="block h4 font-bold">Automations</h1>
       <ChevronRightIcon class="w-5 h-5" />
-      <CommonEditableTitle v-model="name" />
+      <CommonEditableTitle
+        v-model="name"
+        :custom-classes="{
+          input: 'h4 font-bold',
+          pencil: 'ml-2 mt-2 w-4 h-4'
+        }"
+        class="relative top-1.5"
+      />
     </div>
   </div>
 </template>
