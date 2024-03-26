@@ -1,20 +1,13 @@
 <template>
   <OnboardingDialogBase v-model:open="openState">
     <template #header>Install Manager ⚙️</template>
-    <div
-      class="w-full aspect-video bg-primary rounded-xl flex items-center justify-center overflow-hidden"
-    >
-      <iframe
-        width="560"
-        height="315"
-        src="https://www.youtube-nocookie.com/embed/ckP97qTGXDQ?rel=0&autoplay=1&"
-        title="YouTube video player"
-        frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        class="w-full h-full"
-      ></iframe>
-    </div>
-    <div>
+    <CommonVimeoEmbed
+      vimeo-id="925892633"
+      title="Onboarding: How to install Manager"
+      autoplay
+      controls
+    />
+    <div class="mt-2">
       <div v-if="hasSupportedOs" class="flex justify-center flex-col space-y-2">
         <FormButton
           size="xl"
@@ -48,6 +41,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { CommonVimeoEmbed } from '@speckle/ui-components'
 
 const props = defineProps<{
   open: boolean

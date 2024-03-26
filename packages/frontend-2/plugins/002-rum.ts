@@ -30,7 +30,7 @@ async function initRumClient(app: PluginNuxtApp) {
       const newTags = (to.meta.raygunTags || []) as string[]
       setupTags(newTags)
 
-      if (!from.path || from.path === to.path) return
+      if (!from?.path || from.path === to.path) return
 
       rg4js('trackEvent', {
         type: 'pageView',
@@ -94,6 +94,14 @@ async function initRumClient(app: PluginNuxtApp) {
       },
       { immediate: true }
     )
+
+    router.beforeEach((to) => {
+      const pathDefinition = to.matched[to.matched.length - 1].path
+      const routeName = to.meta.datadogName || pathDefinition
+      const realPath = to.path
+
+      window.DD_RUM_START_VIEW?.(realPath, routeName)
+    })
   }
 }
 
@@ -195,6 +203,11 @@ async function initRumServer(app: PluginNuxtApp) {
     const { distinctId } = await initUser()
 
     app.hook('app:rendered', (context) => {
+      const route = app._route
+      const pathDefinition = route.matched[route.matched.length - 1].path
+      const pathReal = route.path
+      const routeName = route.meta.datadogName || pathDefinition
+
       context.ssrContext!.head.push({
         script: [
           {
@@ -209,12 +222,6 @@ async function initRumServer(app: PluginNuxtApp) {
                 ` +
               (distinctId ? `window.DD_RUM.setUser({ id: '${distinctId}' });` : '') +
               `
-                // Regexes for view name overrides
-                const viewNameRegexes = [
-                  {rgx: /^\\/projects\\/\\w+?\\/models\\/[\\w,$@]+$/i, name: '/projects/?/models/?'},
-                  {rgx: /^\\/authn\\/verify\\/\\w+?\\/\\w+$/i, name: '/authn/verify/?/?'}
-                ]
-
                 window.DD_RUM.setGlobalContextProperty('serverBaseUrl', '${baseUrl}');
                 window.DD_RUM.init({
                   clientToken: '${datadogClientToken}',
@@ -229,18 +236,19 @@ async function initRumServer(app: PluginNuxtApp) {
                   trackResources: true,
                   trackLongTasks: true,
                   defaultPrivacyLevel: 'mask-user-input',
-                  beforeSend: (event) => {
-                    const path = new URL(event.view.url).pathname
-                    for (const { rgx, name } of viewNameRegexes) {
-                      if (rgx.test(path)) {
-                        event.view.name = name
-                        break
-                      }
-                    }
-
-                    // console.log(event)
-                  }
+                  trackViewsManually: true
                 });
+
+                window.DD_RUM_START_VIEW = (path, name) => {
+                  if (window.DD_RUM_REGISTERED_PATH === path) return
+
+                  window.DD_RUM_REGISTERED_PATH = path
+                  window.DD_RUM.startView({
+                    name
+                  })
+                  console.debug('DDR Started view: ' + name)
+                }
+                window.DD_RUM_START_VIEW('${pathReal}', '${routeName}')
               })
           `
           }
