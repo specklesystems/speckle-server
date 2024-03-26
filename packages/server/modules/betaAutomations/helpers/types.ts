@@ -1,4 +1,4 @@
-import { Results } from '@/modules/automations/helpers/inputTypes'
+import { Results } from '@/modules/betaAutomations/helpers/inputTypes'
 import { AutomationRunStatus } from '@/modules/core/graph/generated/graphql'
 import { Nullable } from '@speckle/shared'
 

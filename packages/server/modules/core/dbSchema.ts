@@ -461,7 +461,7 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'convertedCommitId'
 ])
 
-export const Automations = buildTableHelper('automations', [
+export const Automations = buildTableHelper('beta_automations', [
   'automationId',
   'automationRevisionId',
   'automationName',
@@ -472,7 +472,7 @@ export const Automations = buildTableHelper('automations', [
   'webhookId'
 ])
 
-export const AutomationRuns = buildTableHelper('automation_runs', [
+export const AutomationRuns = buildTableHelper('beta_automation_runs', [
   'automationId',
   'automationRevisionId',
   'automationRunId',
@@ -481,20 +481,23 @@ export const AutomationRuns = buildTableHelper('automation_runs', [
   'updatedAt'
 ])
 
-export const AutomationFunctionRuns = buildTableHelper('automation_function_runs', [
-  'automationRunId',
-  'functionId',
-  'functionName',
-  'functionLogo',
-  'elapsed',
-  'status',
-  'contextView',
-  'statusMessage',
-  'results'
-])
+export const AutomationFunctionRuns = buildTableHelper(
+  'beta_automation_function_runs',
+  [
+    'automationRunId',
+    'functionId',
+    'functionName',
+    'functionLogo',
+    'elapsed',
+    'status',
+    'contextView',
+    'statusMessage',
+    'results'
+  ]
+)
 
 export const AutomationFunctionRunsResultVersions = buildTableHelper(
-  'automation_function_runs_result_versions',
+  'beta_automation_function_runs_result_versions',
   ['automationRunId', 'functionId', 'resultVersionId']
 )
 

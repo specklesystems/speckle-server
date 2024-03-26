@@ -1,0 +1,175 @@
+enum AutomationRunStatusV2 {
+  INITIALIZING
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+extend type Project {
+  automations: AutomationCollection!
+}
+extend type Model {
+  automations: AutomationCollection!
+}
+
+extend type Version {
+  automations: AutomationCollection!
+}
+
+type AutomationCollection {
+  items: [Automation!]!
+  totalCount: Int!
+  cursor: String
+}
+
+type AutomationRevisionFunction {
+  functionRelease: AutomateFunctionRelease!
+  """
+  The secrets in parameters are redacted
+  """
+  parameters: JSONObject
+}
+
+type AutomationRevision {
+  id: ID!
+  functions: [AutomationRevisionFunction!]!
+}
+
+type Automation {
+  id: ID!
+  name: String!
+  encryptionKey: String!
+  model: Model!
+  enabled: Boolean!
+  createdAt: DateTime!
+  # hoisted from the underlying runs
+  status: AutomationRunStatusV2!
+  currentRevision: AutomationRevision
+  """
+  A shortcut to get the status of the latest revision.
+  """
+  runs(cursor: String, limit: Int! = 25): AutomationRunCollection!
+}
+
+type AutomationRunCollection {
+  items: [AutomationRunV2!]!
+  totalCount: Int!
+  cursor: String
+}
+
+type AutomationRunV2 {
+  id: ID!
+  version: Version
+  createdAt: DateTime!
+  statusUpdatedAt: DateTime!
+  status: AutomationRunStatusV2!
+  # revision: AutomationRevision! # WIP
+  functionRuns: [AutomateFunctionRun!]!
+}
+
+type AutomateFunctionRun {
+  id: ID!
+  functionRelease: AutomateFunctionRelease!
+  elapsed: Float!
+  status: AutomationRunStatus!
+  contextView: String
+  resultVersions: [Version!]!
+  statusMessage: String
+  """
+  NOTE: this is the schema for the results field below!
+  Current schema: {
+    version: "1.0.0",
+    values: {
+      objectResults: Record<str, {
+        category: string
+        level: ObjectResultLevel
+        objectIds: string[]
+        message: str | null
+        metadata: Records<str, unknown> | null
+        visualoverrides: Records<str, unknown> | null
+      }[]>
+      blobIds?: string[]
+    }
+  }
+  """
+  results: JSONObject # blobIds are in here
+}
+
+type AutomateFunction {
+  id: ID!
+  name: String!
+  # TODO: this should be a User reference, but also, organizations data, etc...
+  addedBy: LimitedUser!
+  repoUrl: String!
+  description: String!
+  tags: [String!]!
+  supportedSourceApps: [String!]!
+  # supportedSourceApps: SupportedSourceApps
+  createdAt: DateTime!
+  isFeatured: Boolean!
+  logo: String!
+}
+
+type AutomateFunctionRelease {
+  id: ID!
+  function: AutomateFunction!
+  versionTag: String!
+  inputSchema: JSONObject
+  createdAt: DateTime!
+  commitId: String!
+}
+
+input AutomationCreateInputV2 {
+  name: String!
+  modelId: String!
+  enabled: Boolean!
+  projectId: String!
+}
+
+input AutomationFunctionInput {
+  functionId: String!
+  releaseId: String!
+  parameters: String
+}
+
+input AutomationRevisionCreateInput {
+  automationId: String!
+  functions: [AutomationFunctionInput!]!
+}
+
+input FunctionRunStatusInputV2 {
+  automationId: String!
+  automationRunId: String!
+  id: String!
+  elapsed: Float!
+  status: AutomationRunStatusV2!
+  contextView: String
+  resultVersionIds: [String!]!
+  statusMessage: String
+  """
+  Current schema: {
+    version: "1.0.0",
+    values: {
+      speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
+      blobIds?: string[]
+    }
+  }
+  """
+  results: JSONObject
+}
+
+input AutomationRunStatusUpdateInputV2 {
+  automationId: String!
+  automationRunId: String!
+  functionRuns: [FunctionRunStatusInputV2!]!
+}
+
+type AutomateMutations {
+  create(input: AutomationCreateInputV2!): Automation!
+  createRevision(input: AutomationRevisionCreateInput!): AutomationRevision!
+  functionRunStatusReport(input: AutomationRunStatusUpdateInputV2!): Boolean!
+}
+
+extend type Mutation {
+  automateMutations: AutomateMutations!
+}

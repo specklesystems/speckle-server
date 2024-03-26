@@ -2,8 +2,8 @@ import {
   createModelAutomation,
   getAutomationsStatus,
   upsertModelAutomationRunResult
-} from '@/modules/automations/services/management'
-import { formatResults } from '@/modules/automations/services/results'
+} from '@/modules/betaAutomations/services/management'
+import { formatResults } from '@/modules/betaAutomations/services/results'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getStream } from '@/modules/core/repositories/streams'
 import {
