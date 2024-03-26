@@ -61,6 +61,7 @@ workflows:
             - pre-commit
             - deployment-testing-approval
             - test-frontend-2
+            - test-viewer
             - test-server
             - docker-build-server
             - docker-build-frontend
@@ -79,6 +80,7 @@ workflows:
             - pre-commit
             - deployment-testing-approval
             - test-frontend-2
+            - test-viewer
             - test-server
             - docker-build-server
             - docker-build-frontend
@@ -170,6 +172,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-frontend:
@@ -181,6 +184,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-frontend-2:
@@ -192,6 +196,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-webhooks:
@@ -203,6 +208,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-file-imports:
@@ -214,6 +220,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-previews:
@@ -225,6 +232,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-test-container:
@@ -236,6 +244,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-monitor-container:
@@ -247,6 +256,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-docker-compose-ingress:
@@ -297,6 +307,7 @@ workflows:
             - test-server
             - test-ui-components
             - test-frontend-2
+            - test-viewer
 
 jobs:
   get-version:
