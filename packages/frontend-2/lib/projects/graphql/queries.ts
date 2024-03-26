@@ -167,6 +167,7 @@ export const projectModelPageQuery = graphql(`
     $versionsCursor: String
   ) {
     project(id: $projectId) {
+      id
       ...ProjectModelPageHeaderProject
       ...ProjectModelPageVersionsProject
     }
@@ -180,6 +181,7 @@ export const projectModelVersionsQuery = graphql(`
     $versionsCursor: String
   ) {
     project(id: $projectId) {
+      id
       ...ProjectModelPageVersionsPagination
     }
   }
@@ -188,6 +190,7 @@ export const projectModelVersionsQuery = graphql(`
 export const projectModelsPageQuery = graphql(`
   query ProjectModelsPage($projectId: String!) {
     project(id: $projectId) {
+      id
       ...ProjectModelsPageHeader_Project
       ...ProjectModelsPageResults_Project
     }
@@ -197,8 +200,37 @@ export const projectModelsPageQuery = graphql(`
 export const projectDiscussionsPageQuery = graphql(`
   query ProjectDiscussionsPage($projectId: String!) {
     project(id: $projectId) {
+      id
       ...ProjectDiscussionsPageHeader_Project
       ...ProjectDiscussionsPageResults_Project
+    }
+  }
+`)
+
+export const projectAutomationsTabQuery = graphql(`
+  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {
+    project(id: $projectId) {
+      id
+      automations(filter: $search, cursor: $cursor, limit: 5) {
+        totalCount
+        items {
+          ...ProjectPageAutomationsRow_Automation
+        }
+      }
+    }
+    ...ProjectPageAutomationsEmptyState_Query
+  }
+`)
+
+export const projectAutomationPageQuery = graphql(`
+  query ProjectAutomationPage($projectId: String!, $automationId: String!) {
+    project(id: $projectId) {
+      id
+      ...ProjectPageAutomationPage_Project
+      automation(id: $automationId) {
+        id
+        ...ProjectPageAutomationPage_Automation
+      }
     }
   }
 `)

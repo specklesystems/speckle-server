@@ -5,6 +5,7 @@ import { Roles } from '@speckle/shared'
 import { times } from 'lodash'
 import { IMockStore, IMocks } from '@graphql-tools/mock'
 import dayjs from 'dayjs'
+import { Branches } from '@/modules/core/dbSchema'
 
 /**
  * Define mocking config in dev env
@@ -63,6 +64,22 @@ export async function buildMocksConfig(): Promise<{
             totalCount: count,
             items: times(count, () => store.get('AutomateRun'))
           } as any
+        },
+        model: async () => {
+          return Branches.knex().first()
+        }
+      },
+      ProjectAutomationMutations: {
+        update: (_parent, args) => {
+          const {
+            input: { id, name }
+          } = args
+          const automation = store.get('Automation') as any
+          return {
+            ...automation,
+            id,
+            ...(name?.length ? { name } : {})
+          }
         }
       }
     }),
@@ -111,7 +128,9 @@ export async function buildMocksConfig(): Promise<{
       ID: () => faker.datatype.uuid(),
       DateTime: () => faker.date.recent().toISOString(),
       Model: () => ({
-        name: () => faker.commerce.productName()
+        id: () => faker.datatype.uuid(),
+        name: () => faker.commerce.productName(),
+        previewUrl: () => faker.image.imageUrl()
       }),
       Version: () => ({
         id: () => faker.random.alphaNumeric(10)

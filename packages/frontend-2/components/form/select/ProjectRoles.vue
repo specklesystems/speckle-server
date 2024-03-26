@@ -7,6 +7,8 @@
     name="projectRoles"
     label="Project roles"
     class="min-w-[150px]"
+    :label-id="labelId"
+    :button-id="buttonId"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -59,6 +61,8 @@ const props = defineProps<{
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
 const itemContainer = ref(null as Nullable<HTMLElement>)
+const labelId = useId()
+const buttonId = useId()
 
 const { selectedValue, isArrayValue, isMultiItemArrayValue, hiddenSelectedItemCount } =
   useFormSelectChildInternals<StreamRoles>({

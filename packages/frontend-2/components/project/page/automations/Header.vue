@@ -32,6 +32,6 @@ defineProps<{
   hasAutomations?: boolean
 }>()
 
-const search = defineModel<string>('search', { local: true })
+const search = defineModel<string>('search')
 const { on, bind } = useDebouncedTextInput({ model: search })
 </script>

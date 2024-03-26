@@ -11,6 +11,8 @@
     :filter-predicate="searchFilterPredicate"
     :clearable="clearable"
     :help="help"
+    :label-id="labelId"
+    :button-id="buttonId"
     by="name"
   >
     <template #nothing-selected>
@@ -130,6 +132,12 @@ const props = defineProps({
     type: Boolean
   },
   help: {
+    type: String
+  },
+  labelId: {
+    type: String
+  },
+  buttonId: {
     type: String
   }
 })

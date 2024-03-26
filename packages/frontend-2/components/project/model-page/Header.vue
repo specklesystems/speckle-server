@@ -15,8 +15,7 @@
     <CommonEditableTitleDescription
       :title="titleState"
       :description="descriptionState"
-      :can-edit="canEdit"
-      :is-disabled="anyMutationsLoading"
+      :disabled="anyMutationsLoading || !canEdit"
       @update:title="handleUpdateTitle"
       @update:description="handleUpdateDescription"
     />

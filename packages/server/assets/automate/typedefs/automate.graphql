@@ -5,6 +5,19 @@ enum AutomateRunStatus {
   FAILED
 }
 
+type AutomationRevisionFunction {
+  """
+  The secrets in parameters are redacted
+  """
+  parameters: JSONObject
+  release: AutomateFunctionRelease!
+}
+
+type AutomationRevision {
+  id: ID!
+  functions: [AutomationRevisionFunction!]!
+}
+
 type Automation {
   id: ID!
   name: String!
@@ -14,6 +27,7 @@ type Automation {
   """
   model: Model!
   runs(cursor: String, limit: Int): AutomateRunCollection!
+  currentRevision: AutomationRevision
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -51,6 +65,11 @@ type AutomateFunction {
   logo: String
 }
 
+type AutomateFunctionRelease {
+  id: ID!
+  function: AutomateFunction!
+}
+
 type AutomateFunctionCollection {
   items: [AutomateFunction!]!
   totalCount: Int!
@@ -59,6 +78,20 @@ type AutomateFunctionCollection {
 
 extend type Project {
   automations(filter: String, cursor: String, limit: Int): AutomationCollection!
+  automation(id: String!): Automation
+}
+
+input ProjectAutomationUpdateInput {
+  id: ID!
+  name: String
+}
+
+type ProjectAutomationMutations {
+  update(input: ProjectAutomationUpdateInput!): Automation
+}
+
+extend type ProjectMutations {
+  automationMutations(projectId: ID!): ProjectAutomationMutations!
 }
 
 extend type Query {

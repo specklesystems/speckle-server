@@ -163,3 +163,16 @@ export const updateWebhookMutation = graphql(`
     webhookUpdate(webhook: $webhook)
   }
 `)
+
+export const updateAutomationMutation = graphql(`
+  mutation UpdateAutomation($projectId: ID!, $input: ProjectAutomationUpdateInput!) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        update(input: $input) {
+          id
+          ...ProjectPageAutomationPage_Automation
+        }
+      }
+    }
+  }
+`)

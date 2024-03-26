@@ -4,6 +4,7 @@ import knex from '@/db/knex'
 import { BaseMetaRecord } from '@/modules/core/helpers/meta'
 import { Knex } from 'knex'
 import { reduce } from 'lodash'
+import { skipAutomateMigrations } from '@/modules/shared/helpers/envHelper'
 
 type BaseInnerSchemaConfig<T extends string, C extends string> = {
   /**
@@ -461,28 +462,36 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'convertedCommitId'
 ])
 
-export const Automations = buildTableHelper('beta_automations', [
-  'automationId',
-  'automationRevisionId',
-  'automationName',
-  'projectId',
-  'modelId',
-  'createdAt',
-  'updatedAt',
-  'webhookId'
-])
+export const Automations = buildTableHelper(
+  skipAutomateMigrations() ? 'automations' : 'beta_automations',
+  [
+    'automationId',
+    'automationRevisionId',
+    'automationName',
+    'projectId',
+    'modelId',
+    'createdAt',
+    'updatedAt',
+    'webhookId'
+  ]
+)
 
-export const AutomationRuns = buildTableHelper('beta_automation_runs', [
-  'automationId',
-  'automationRevisionId',
-  'automationRunId',
-  'versionId',
-  'createdAt',
-  'updatedAt'
-])
+export const AutomationRuns = buildTableHelper(
+  skipAutomateMigrations() ? 'automation_runs' : 'beta_automation_runs',
+  [
+    'automationId',
+    'automationRevisionId',
+    'automationRunId',
+    'versionId',
+    'createdAt',
+    'updatedAt'
+  ]
+)
 
 export const AutomationFunctionRuns = buildTableHelper(
-  'beta_automation_function_runs',
+  skipAutomateMigrations()
+    ? 'automation_function_runs'
+    : 'beta_automation_function_runs',
   [
     'automationRunId',
     'functionId',
@@ -497,7 +506,9 @@ export const AutomationFunctionRuns = buildTableHelper(
 )
 
 export const AutomationFunctionRunsResultVersions = buildTableHelper(
-  'beta_automation_function_runs_result_versions',
+  skipAutomateMigrations()
+    ? 'automation_function_runs_result_version'
+    : 'beta_automation_function_runs_result_versions',
   ['automationRunId', 'functionId', 'resultVersionId']
 )
 

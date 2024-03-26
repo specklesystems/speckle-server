@@ -31,6 +31,8 @@
           :rules="[isItemSelected]"
           show-label
           :items="applicationScopes"
+          :label-id="badgesLabelId"
+          :button-id="badgesButtonId"
           by="id"
         />
         <FormTextInput
@@ -95,6 +97,8 @@ const { mutate: editApplication } = useMutation(editApplicationMutation)
 const { triggerNotification } = useGlobalToast()
 const { handleSubmit, resetForm } = useForm<ApplicationFormValues>()
 
+const badgesLabelId = useId()
+const badgesButtonId = useId()
 const name = ref('')
 const scopes = ref<typeof applicationScopes.value>([])
 const redirectUrl = ref('')

@@ -5,7 +5,7 @@ import { computed, onMounted, ref, unref, watch } from 'vue'
 import type { Ref, ToRefs } from 'vue'
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
-import { debounce, isArray } from 'lodash'
+import { debounce, isArray, isBoolean, isString, isUndefined, noop } from 'lodash'
 
 export type InputColor = 'page' | 'foundation' | 'transparent'
 
@@ -152,12 +152,14 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   }
 }
 
+type FormInputChangeEvent = { event?: Event; value: string }
+
 /**
  * Attach returned on and bind using v-on and v-bind, and then you can use the returned `value`
  * ref to get the input's value while ensuring normal input events are debounced and only change/clear
  * events cause the value to propagate immediately
  *
- * Very useful for search inputs!
+ * Very useful for search inputs and other kind of auto-submitting inputs!
  */
 export function useDebouncedTextInput(params: {
   /**
@@ -170,30 +172,95 @@ export function useDebouncedTextInput(params: {
    * Optionally pass in the model ref that should be used as the source of truth
    */
   model?: Ref<MaybeNullOrUndefined<string>>
+
+  /**
+   * Set to true if you're tracking changes on a basic HTML input element. This will change the events
+   * being used (e.g. input instead of update:modelValue)
+   *
+   * Default: false
+   */
+  isBasicHtmlInput?: boolean
+
+  /**
+   * Set to false if you don't want the change event to be emitted on Enter key press.
+   * Setting only works for basic html inputs currently!
+   *
+   * Default: Default behavior (true for input, false for textarea)
+   */
+  submitOnEnter?: boolean
+
+  /**
+   * Set to true if you want to see debug output for how events fire and are handled
+   */
+  debug?: boolean | ((...logArgs: unknown[]) => void)
 }) {
-  const { debouncedBy = 1000 } = params
+  const { debouncedBy = 1000, isBasicHtmlInput = false, submitOnEnter } = params
+  const log = params.debug
+    ? isBoolean(params.debug)
+      ? console.debug
+      : params.debug
+    : noop
 
   const value = params.model || ref('')
   const model = ref(value.value)
 
+  const getValue = (val: string | InputEvent | Event | FormInputChangeEvent) => {
+    if (isString(val)) return val
+    if ('value' in val) return val.value
+
+    const target = val.target as Nullable<HTMLInputElement | HTMLTextAreaElement>
+    return target?.value || ''
+  }
+
   const debouncedValueUpdate = debounce((val: string) => {
     value.value = val
+    log('Value updated: ' + val)
   }, debouncedBy)
 
+  const inputEventName = isBasicHtmlInput ? 'input' : 'update:modelValue'
   const on = {
-    'update:modelValue': (val: string) => {
-      model.value = val
-      debouncedValueUpdate(val)
+    [inputEventName]: (val: string | InputEvent) => {
+      const newVal = getValue(val)
+      model.value = newVal
+      debouncedValueUpdate(newVal)
+      log(`Input event [${inputEventName}] triggered: ${newVal}`)
     },
     clear: () => {
       debouncedValueUpdate.cancel()
       model.value = ''
       value.value = ''
+      log('Clear event')
     },
-    change: (val: { event?: Event; value: string }) => {
+    change: (val: FormInputChangeEvent | Event) => {
+      const newVal = getValue(val)
       debouncedValueUpdate.cancel()
-      value.value = val.value
-      model.value = val.value
+      value.value = newVal
+      model.value = newVal
+      log('Change event: ' + newVal)
+    },
+    keydown: (e: KeyboardEvent) => {
+      if (!isBasicHtmlInput) return
+      if (isUndefined(submitOnEnter)) return
+
+      const isEnter = e.key === 'Enter'
+      if (!isEnter) return
+
+      const isTextarea = e.target instanceof HTMLTextAreaElement
+
+      if (isTextarea) {
+        if (submitOnEnter) {
+          log('Triggering submit on enter')
+          e.preventDefault()
+          e.stopPropagation()
+          on.change(e)
+        }
+      } else {
+        if (!submitOnEnter) {
+          log('Preventing submit on enter')
+          e.preventDefault()
+          e.stopPropagation()
+        }
+      }
     }
   }
   const bind = {

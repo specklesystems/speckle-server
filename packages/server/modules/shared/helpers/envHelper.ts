@@ -272,3 +272,10 @@ export function delayGraphqlResponsesBy() {
   if (!isDevEnv()) return 0
   return getIntFromEnv('DELAY_GQL_RESPONSES_BY', '0')
 }
+
+/**
+ * TODO: Remove, this is a temporary shortcut to avoid messing up the db schema which makes it difficult to jump to different branches
+ */
+export function skipAutomateMigrations() {
+  return getBooleanFromEnv('SKIP_AUTOMATE_MIGRATION_DEV')
+}
