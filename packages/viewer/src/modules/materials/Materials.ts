@@ -238,10 +238,10 @@ export default class Materials {
           renderView.geometryType === GeometryType.TEXT)
           ? Materials.renderMaterialToString(materialData as RenderMaterial)
           : Materials.isDisplayStyle(materialData) &&
-            renderView.geometryType !== GeometryType.MESH &&
-            renderView.geometryType !== GeometryType.POINT
-          ? Materials.displayStyleToString(materialData as DisplayStyle)
-          : ''
+              renderView.geometryType !== GeometryType.MESH &&
+              renderView.geometryType !== GeometryType.POINT
+            ? Materials.displayStyleToString(materialData as DisplayStyle)
+            : ''
       if ((materialData as MaterialOptions).stencilOutlines) {
         mat += '/' + (materialData as MaterialOptions).stencilOutlines
       }

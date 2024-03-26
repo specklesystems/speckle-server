@@ -80,7 +80,10 @@ export class SelectionExtension extends Extension {
     this._enabled = value
   }
 
-  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  public constructor(
+    viewer: IViewer,
+    protected cameraProvider: ICameraProvider
+  ) {
     super(viewer)
     this.viewer.on(ViewerEvent.ObjectClicked, this.onObjectClicked.bind(this))
     this.viewer.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))

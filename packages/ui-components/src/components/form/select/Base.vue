@@ -127,7 +127,7 @@
                       active,
                       selected
                     }: {
-                      active: boolean,
+                      active: boolean
                       selected: boolean
                     }"
                     :value="item"

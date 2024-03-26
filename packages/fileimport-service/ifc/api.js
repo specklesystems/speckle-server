@@ -188,10 +188,10 @@ module.exports = class ServerAPI {
       a.parent > b.parent
         ? 1
         : a.parent === b.parent
-        ? a.child > b.child
-          ? 1
+          ? a.child > b.child
+            ? 1
+            : -1
           : -1
-        : -1
     )
   }
 

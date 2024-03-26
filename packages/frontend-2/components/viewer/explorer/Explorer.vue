@@ -29,7 +29,7 @@
           class="bg-foundation rounded-lg"
         >
           <ViewerExplorerTreeItem
-            :item-id="(rootNode.data?.id as string)"
+            :item-id="rootNode.data?.id as string"
             :tree-item="markRaw(rootNode)"
             :sub-header="'Model Version'"
             :debug="false"

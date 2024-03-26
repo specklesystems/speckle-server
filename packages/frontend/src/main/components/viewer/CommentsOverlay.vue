@@ -740,8 +740,12 @@ export default {
   $timing: 0.1s;
   $visibilityTiming: 0.2s;
 
-  transition: left $timing linear, right $timing linear, top $timing linear,
-    bottom $timing linear, opacity $visibilityTiming ease,
+  transition:
+    left $timing linear,
+    right $timing linear,
+    top $timing linear,
+    bottom $timing linear,
+    opacity $visibilityTiming ease,
     visibility $visibilityTiming ease;
 }
 </style>

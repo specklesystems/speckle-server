@@ -11,11 +11,8 @@ import Vue, { VueConstructor } from 'vue'
 import { LooseRequired } from 'vue/types/common'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type GetReactiveVarType<V extends ReactiveVar<any>> = V extends ReactiveVar<
-  infer T
->
-  ? T
-  : unknown
+export type GetReactiveVarType<V extends ReactiveVar<any>> =
+  V extends ReactiveVar<infer T> ? T : unknown
 
 export type SetupProps<P = unknown> = Readonly<LooseRequired<P>>
 

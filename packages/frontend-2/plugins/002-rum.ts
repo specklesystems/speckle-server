@@ -178,8 +178,8 @@ async function initRumServer(app: PluginNuxtApp) {
                 rg4js('enableCrashReporting', true)
                 rg4js('enablePulse', true)
                 rg4js('withTags', ['baseUrl:${baseUrl}', 'version:${speckleServerVersion}', ...${JSON.stringify(
-              initRaygunTags
-            )}])
+                  initRaygunTags
+                )}])
                 rg4js('options', {
                   debugMode: ${!!debug},
                 })

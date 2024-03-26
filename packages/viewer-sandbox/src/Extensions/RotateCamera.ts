@@ -11,7 +11,10 @@ export class RotateCamera extends Extension {
     origin: new Vector3()
   }
 
-  public constructor(viewer: IViewer, private cameraController: ICameraProvider) {
+  public constructor(
+    viewer: IViewer,
+    private cameraController: ICameraProvider
+  ) {
     super(viewer)
   }
 

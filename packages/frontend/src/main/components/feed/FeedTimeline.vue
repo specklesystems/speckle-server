@@ -164,8 +164,7 @@ export default {
           prev.push([curr])
         }
         return prev
-      },
-      [])
+      }, [])
 
       return groupedTimeline
     })

@@ -62,8 +62,8 @@
                     passwordStrength >= 75
                       ? 'green'
                       : passwordStrength >= 50
-                      ? 'orange'
-                      : 'red'
+                        ? 'orange'
+                        : 'red'
                   }`"
                 ></v-progress-linear>
               </v-col>
@@ -72,8 +72,8 @@
                   passwordSuggestion
                     ? passwordSuggestion
                     : password && password === passwordConfirmation
-                    ? 'Looks good.'
-                    : null
+                      ? 'Looks good.'
+                      : null
                 }}
                 <div v-if="password !== passwordConfirmation">
                   <b>Passwords do not match.</b>

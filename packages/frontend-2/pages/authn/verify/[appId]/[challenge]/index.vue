@@ -250,13 +250,16 @@ const trustByDefault = computed(() => {
 const groupedScopes = computed(() => {
   if (!translatedScopes.value) return []
 
-  return translatedScopes.value.reduce((acc, scope) => {
-    const key = upperFirst(scope.name.split(':')[0])
+  return translatedScopes.value.reduce(
+    (acc, scope) => {
+      const key = upperFirst(scope.name.split(':')[0])
 
-    if (!acc[key]) acc[key] = []
-    acc[key].push(scope.description)
-    return acc
-  }, {} as Record<string, string[]>)
+      if (!acc[key]) acc[key] = []
+      acc[key].push(scope.description)
+      return acc
+    },
+    {} as Record<string, string[]>
+  )
 })
 
 const goToFinalUrl = (url: string) => {

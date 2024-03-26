@@ -6,8 +6,8 @@
         showNavbar && !isEmbedEnabled
           ? 'pt-[4.2rem]'
           : isTransparent
-          ? 'pt-2'
-          : 'pt-2 pb-16'
+            ? 'pt-2'
+            : 'pt-2 pb-16'
       "
     >
       <!-- Models -->

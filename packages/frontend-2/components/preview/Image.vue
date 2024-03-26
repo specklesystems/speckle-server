@@ -43,12 +43,14 @@
             height: '100%'
           }"
           @mousemove="(e: MouseEvent) => calculatePanoramaStyle(e)"
-          @touchmove="(e:TouchEvent) =>
-          calculatePanoramaStyle({
-            target: e.target,
-            clientX: e.touches[0].clientX,
-            clientY: e.touches[0].clientY
-          } as MouseEvent)"
+          @touchmove="
+            (e: TouchEvent) =>
+              calculatePanoramaStyle({
+                target: e.target,
+                clientX: e.touches[0].clientX,
+                clientY: e.touches[0].clientY
+              } as MouseEvent)
+          "
         />
       </Transition>
       <Transition

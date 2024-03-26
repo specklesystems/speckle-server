@@ -87,7 +87,13 @@
           :model-value="isUser(item) ? item.role : undefined"
           :disabled="isUser(item) && isCurrentUser(item)"
           fully-control-value
-          @update:model-value="(newRoleValue) => isUser(item) && !isArray(newRoleValue) && newRoleValue && openChangeUserRoleDialog(item, newRoleValue as ServerRoles)"
+          @update:model-value="
+            (newRoleValue) =>
+              isUser(item) &&
+              !isArray(newRoleValue) &&
+              newRoleValue &&
+              openChangeUserRoleDialog(item, newRoleValue as ServerRoles)
+          "
         />
       </template>
     </ServerManagementTable>

@@ -73,7 +73,10 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.viewer.requestRender()
   }
 
-  constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  constructor(
+    viewer: IViewer,
+    protected cameraProvider: ICameraProvider
+  ) {
     super(viewer)
     this.viewer = viewer
 

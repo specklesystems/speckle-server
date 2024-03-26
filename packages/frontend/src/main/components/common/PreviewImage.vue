@@ -5,8 +5,8 @@
       $route.query.transparent === 'true'
         ? ''
         : $vuetify.theme.dark
-        ? 'grey darken-4'
-        : 'grey lighten-4'
+          ? 'grey darken-4'
+          : 'grey lighten-4'
     }`"
     @mouseenter="hovered = true"
     @mouseleave="hovered = false"

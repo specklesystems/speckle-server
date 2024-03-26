@@ -487,9 +487,8 @@ describe('Streams @core-streams', () => {
 
       let previousUpdatedAt: Nullable<Dayjs> = null
       do {
-        const pageStreams: Awaited<ReturnType<typeof requestPage>> = await requestPage(
-          cursor
-        )
+        const pageStreams: Awaited<ReturnType<typeof requestPage>> =
+          await requestPage(cursor)
 
         cursor = pageStreams.cursor || null
         foundItemsCount += pageStreams.items?.length || 0

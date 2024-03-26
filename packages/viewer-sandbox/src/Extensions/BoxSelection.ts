@@ -36,7 +36,10 @@ export class BoxSelection extends Extension {
 
   private idsToSelect: Array<string> | null = []
 
-  public constructor(viewer: IViewer, private cameraController: ICameraProvider) {
+  public constructor(
+    viewer: IViewer,
+    private cameraController: ICameraProvider
+  ) {
     super(viewer)
     /** Get the SelectionExtension. We'll need it to remotely enable/disable it */
     //@ts-ignore

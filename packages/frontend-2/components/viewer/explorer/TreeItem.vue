@@ -25,7 +25,7 @@
           :class="`hover:bg-primary-muted group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1 transition hover:shadow-md
             ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}
           `"
-          @click="(e:MouseEvent) => setSelection(e)"
+          @click="(e: MouseEvent) => setSelection(e)"
         >
           <div
             :class="`truncate ${unfold ? 'font-semibold' : ''} ${
@@ -95,7 +95,7 @@
         <!-- mul col items -->
         <div v-for="collection in arrayCollections" :key="collection?.raw?.name">
           <TreeItem
-            :item-id="(collection.raw?.id as string)"
+            :item-id="collection.raw?.id as string"
             :tree-item="collection"
             :depth="depth + 1"
             :expand-level="props.expandLevel"
@@ -111,7 +111,7 @@
         <!-- single col items -->
         <div v-for="item in singleCollectionItemsPaginated" :key="item.raw?.id">
           <TreeItem
-            :item-id="(item.raw?.id as string)"
+            :item-id="item.raw?.id as string"
             :tree-item="item"
             :depth="depth + 1"
             :expand-level="props.expandLevel"

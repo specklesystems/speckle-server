@@ -97,10 +97,10 @@ const downloadManager = (ext: string | null = null) => {
   const extension = ext
     ? ext
     : os.value === 'Windows'
-    ? 'exe'
-    : os.value === 'Mac OS'
-    ? 'dmg'
-    : null
+      ? 'exe'
+      : os.value === 'Mac OS'
+        ? 'dmg'
+        : null
 
   if (!extension) return
 

@@ -39,7 +39,7 @@
                 <HeaderUserAccount
                   v-for="acc in accounts"
                   :key="acc.accountInfo.id"
-                  :account="(acc as DUIAccount)"
+                  :account="acc as DUIAccount"
                 />
               </div>
             </div>

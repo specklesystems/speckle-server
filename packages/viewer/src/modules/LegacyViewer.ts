@@ -47,7 +47,10 @@ class LegacySelectionExtension extends SelectionExtension {
 }
 
 class HighlightExtension extends SelectionExtension {
-  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  public constructor(
+    viewer: IViewer,
+    protected cameraProvider: ICameraProvider
+  ) {
     super(viewer, cameraProvider)
     const highlightMaterialData: SelectionExtensionOptions = {
       selectionMaterialData: {

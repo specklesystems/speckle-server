@@ -7,7 +7,7 @@
       v-for="fRun in run.functionRuns"
       :key="fRun.id"
       :automation-name="run.automationName"
-      :function-run="(fRun as RemoveOnceBEIsHappy)"
+      :function-run="fRun as RemoveOnceBEIsHappy"
       :project-id="projectId"
       :model-id="modelId"
       :version-id="versionId"

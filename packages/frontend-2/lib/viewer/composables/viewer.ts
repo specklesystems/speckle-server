@@ -160,8 +160,8 @@ export function useViewerCameraTracker(
   const finalCallback = debounceWait
     ? debounce(callbackChangeTrackerWrapper, debounceWait)
     : throttleWait
-    ? throttle(callbackChangeTrackerWrapper, throttleWait)
-    : callbackChangeTrackerWrapper
+      ? throttle(callbackChangeTrackerWrapper, throttleWait)
+      : callbackChangeTrackerWrapper
 
   onMounted(() => {
     const extension = instance.getExtension(CameraController)
