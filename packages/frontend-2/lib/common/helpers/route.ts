@@ -22,6 +22,10 @@ export const projectRoute = (
 
   return res
 }
+export const projectAutomationRoute = (projectId: string, automationId: string) => {
+  return `${projectRoute(projectId, 'automations')}/${automationId}`
+}
+
 export const modelRoute = (
   projectId: string,
   resourceIdString: string,

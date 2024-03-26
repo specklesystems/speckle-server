@@ -207,6 +207,21 @@ export const projectDiscussionsPageQuery = graphql(`
   }
 `)
 
+export const projectAutomationsTabQuery = graphql(`
+  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {
+    project(id: $projectId) {
+      id
+      automations(filter: $search, cursor: $cursor, limit: 5) {
+        totalCount
+        items {
+          ...ProjectPageAutomationsRow_Automation
+        }
+      }
+    }
+    ...ProjectPageAutomationsEmptyState_Query
+  }
+`)
+
 export const projectWebhooksQuery = graphql(`
   query ProjectWebhooks($projectId: String!) {
     project(id: $projectId) {

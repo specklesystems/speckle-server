@@ -27,6 +27,7 @@ import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import type { Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
+  projectAutomationsTabQuery,
   projectDiscussionsPageQuery,
   projectModelsPageQuery,
   projectPageQuery
@@ -133,7 +134,7 @@ const activePageTab = computed({
   get: () => {
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return pageTabItems.value[1]
-    if (/\/automations\/?$/i.test(path)) return pageTabItems.value[2]
+    if (/\/automations\/?.*$/i.test(path)) return pageTabItems.value[2]
     return pageTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
@@ -181,6 +182,15 @@ if (process.server) {
         }
       })
       .catch(convertThrowIntoFetchResult)
+  } else if (serverActiveTab.id === 'automations') {
+    await client.query({
+      query: projectAutomationsTabQuery,
+      variables: {
+        projectId: projectId.value,
+        search: null,
+        cursor: null
+      }
+    })
   }
 }
 </script>

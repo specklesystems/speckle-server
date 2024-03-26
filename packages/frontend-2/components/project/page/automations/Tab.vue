@@ -5,7 +5,7 @@
       :has-automations="hasAutomations && isAutomateEnabled"
     />
     <template v-if="loading">
-      <CommonLoadingIcon />
+      <CommonLoadingBar loading />
     </template>
     <template v-else>
       <ProjectPageAutomationsEmptyState
@@ -36,25 +36,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CommonLoadingIcon } from '@speckle/ui-components'
 import { useQuery } from '@vue/apollo-composable'
-import { graphql } from '~/lib/common/generated/gql'
 import type { AutomationRunDetailsFragment } from '~/lib/common/generated/gql/graphql'
-
-const automationsTabQuery = graphql(`
-  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {
-    project(id: $projectId) {
-      id
-      automations(filter: $search, cursor: $cursor, limit: 5) {
-        totalCount
-        items {
-          ...ProjectPageAutomationsRow_Automation
-        }
-      }
-    }
-    ...ProjectPageAutomationsEmptyState_Query
-  }
-`)
+import { projectAutomationsTabQuery } from '~/lib/projects/graphql/queries'
 
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
@@ -69,10 +53,10 @@ const openedRun = ref<{
 const runInfoOpen = ref(false)
 
 const { result, loading } = useQuery(
-  automationsTabQuery,
+  projectAutomationsTabQuery,
   () => ({
     projectId: projectId.value,
-    search: search.value,
+    search: search.value?.length ? search.value : null,
     // TODO: Pagination & search
     cursor: null
   }),

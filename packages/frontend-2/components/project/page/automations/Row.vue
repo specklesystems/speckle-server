@@ -1,7 +1,14 @@
 <template>
   <div class="flex flex-col gap-4">
     <div class="flex items-center py-2 border-b border-outline-3">
-      <h2 class="h6 font-bold">{{ automation.name }}</h2>
+      <CommonTextLink
+        :icon-right="ChevronRightIcon"
+        size="lg"
+        class="!font-bold"
+        :to="projectAutomationRoute(projectId, automation.id)"
+      >
+        {{ automation.name }}
+      </CommonTextLink>
     </div>
     <div class="flex gap-1 items-center">
       <Component :is="enabledIcon" class="w-5 h-5" />
@@ -59,10 +66,16 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PlayIcon, PauseIcon, EyeIcon } from '@heroicons/vue/24/outline'
+import {
+  PlayIcon,
+  PauseIcon,
+  EyeIcon,
+  ChevronRightIcon
+} from '@heroicons/vue/24/outline'
 import { useAutomationRunDetailsFns } from '~/lib/automations/composables/runs'
 import { graphql } from '~/lib/common/generated/gql'
 import { type ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'
+import { projectAutomationRoute } from '~/lib/common/helpers/route'
 import { useViewerRouteBuilder } from '~/lib/projects/composables/models'
 
 type AutomateRun = ProjectPageAutomationsRow_AutomationFragment['runs']['items'][0]
