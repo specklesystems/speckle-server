@@ -64,6 +64,19 @@ export async function buildMocksConfig(): Promise<{
             items: times(count, () => store.get('AutomateRun'))
           } as any
         }
+      },
+      ProjectAutomationMutations: {
+        update: (_parent, args) => {
+          const {
+            input: { id, name }
+          } = args
+          const automation = store.get('Automation') as any
+          return {
+            ...automation,
+            id,
+            ...(name?.length ? { name } : {})
+          }
+        }
       }
     }),
     mocks: {

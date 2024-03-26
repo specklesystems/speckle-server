@@ -1480,6 +1480,7 @@ export type PendingStreamCollaborator = {
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean'];
+  automation?: Maybe<Automation>;
   automations: AutomationCollection;
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
@@ -1516,6 +1517,11 @@ export type Project = {
   viewerResources: Array<ViewerResourceGroup>;
   visibility: ProjectVisibility;
   webhooks: WebhookCollection;
+};
+
+
+export type ProjectAutomationArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -1581,6 +1587,21 @@ export type ProjectViewerResourcesArgs = {
 
 export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']>;
+};
+
+export type ProjectAutomationMutations = {
+  __typename?: 'ProjectAutomationMutations';
+  update?: Maybe<Automation>;
+};
+
+
+export type ProjectAutomationMutationsUpdateArgs = {
+  input: ProjectAutomationUpdateInput;
+};
+
+export type ProjectAutomationUpdateInput = {
+  id: Scalars['ID'];
+  name?: InputMaybe<Scalars['String']>;
 };
 
 export type ProjectAutomationsStatusUpdatedMessage = {
@@ -1756,6 +1777,7 @@ export enum ProjectModelsUpdatedMessageType {
 
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
+  automationMutations: ProjectAutomationMutations;
   /** Create new project */
   create: Project;
   /**
@@ -1773,6 +1795,11 @@ export type ProjectMutations = {
   update: Project;
   /** Update role for a collaborator */
   updateRole: Project;
+};
+
+
+export type ProjectMutationsAutomationMutationsArgs = {
+  projectId: Scalars['ID'];
 };
 
 

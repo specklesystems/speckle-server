@@ -59,6 +59,20 @@ type AutomateFunctionCollection {
 
 extend type Project {
   automations(filter: String, cursor: String, limit: Int): AutomationCollection!
+  automation(id: String!): Automation
+}
+
+input ProjectAutomationUpdateInput {
+  id: ID!
+  name: String
+}
+
+type ProjectAutomationMutations {
+  update(input: ProjectAutomationUpdateInput!): Automation
+}
+
+extend type ProjectMutations {
+  automationMutations(projectId: ID!): ProjectAutomationMutations!
 }
 
 extend type Query {
