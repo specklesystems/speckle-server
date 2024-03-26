@@ -101,7 +101,10 @@ export class MeasurementsExtension extends Extension {
     return this._activeMeasurement
   }
 
-  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  public constructor(
+    viewer: IViewer,
+    protected cameraProvider: ICameraProvider
+  ) {
     super(viewer)
     this.renderer = viewer.getRenderer()
     this.raycaster = new Raycaster()

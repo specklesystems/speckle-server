@@ -33,7 +33,7 @@
         <div class="space-y-2">
           <ViewerSelectionObject
             v-for="object in objectsLimited"
-            :key="(object.id as string)"
+            :key="object.id as string"
             :object="object"
             :root="true"
             :unfold="objectsLimited.length === 1 && !isSmallerOrEqualSm"

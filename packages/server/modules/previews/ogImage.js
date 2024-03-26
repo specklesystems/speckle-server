@@ -49,8 +49,8 @@ module.exports = {
   
         <rect x="${panelPadding}" y="${panelPadding}" width="${panelWidth}" height="${panelHeight}" fill="#fff" rx="15" filter="url(#dropshadow)" />
         <text x="${panelPadding + 305}" y="${
-      panelPadding + 60
-    }" fill="#000" font-family="DejaVu Sans, sans-serif" font-size="48px">
+          panelPadding + 60
+        }" fill="#000" font-family="DejaVu Sans, sans-serif" font-size="48px">
           ${xmlescape(title)}
         </text>  
       </svg>

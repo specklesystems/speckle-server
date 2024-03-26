@@ -595,7 +595,10 @@ export default {
 
 .new-comment-overlay {
   $timing: 0.1s;
-  transition: left $timing linear, right $timing linear, top $timing linear,
+  transition:
+    left $timing linear,
+    right $timing linear,
+    top $timing linear,
     bottom $timing linear;
 }
 </style>

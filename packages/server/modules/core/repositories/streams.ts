@@ -816,10 +816,9 @@ export async function getStreamsSourceApps(streamIds: string[]) {
   if (!streamIds?.length) return {}
 
   const q = Streams.knex()
-    .select<{ id: string; sourceApplication: string }[]>([
-      Streams.col.id,
-      Commits.col.sourceApplication
-    ])
+    .select<
+      { id: string; sourceApplication: string }[]
+    >([Streams.col.id, Commits.col.sourceApplication])
     .whereIn(Streams.col.id, streamIds)
     .whereNotNull(Commits.col.sourceApplication)
     .innerJoin(StreamCommits.name, StreamCommits.col.streamId, Streams.col.id)

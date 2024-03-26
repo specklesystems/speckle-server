@@ -13,10 +13,9 @@ const {
   getOwnedFavoritesCount
 } = require('@/modules/core/services/streams')
 
-const {
-  pubsub,
-  StreamSubscriptions: StreamPubsubEvents
-} = require(`@/modules/shared/utils/subscriptions`)
+const { pubsub, StreamSubscriptions: StreamPubsubEvents } = require(
+  `@/modules/shared/utils/subscriptions`
+)
 
 const { authorizeResolver, validateScopes } = require(`@/modules/shared`)
 const {

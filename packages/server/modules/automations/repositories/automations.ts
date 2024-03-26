@@ -164,11 +164,14 @@ export const getFunctionRunsForAutomationRuns = async (
     .select<AutomationFunctionRunRecord[]>(AutomationFunctionRuns.cols)
     .whereIn(AutomationFunctionRuns.col.automationRunId, automationRunids)
 
-  const grouped = runs.reduce((acc, run) => {
-    if (!acc[run.automationRunId]) acc[run.automationRunId] = {}
-    acc[run.automationRunId][run.functionId] = run
-    return acc
-  }, {} as Record<string, Record<string, AutomationFunctionRunRecord>>)
+  const grouped = runs.reduce(
+    (acc, run) => {
+      if (!acc[run.automationRunId]) acc[run.automationRunId] = {}
+      acc[run.automationRunId][run.functionId] = run
+      return acc
+    },
+    {} as Record<string, Record<string, AutomationFunctionRunRecord>>
+  )
 
   return grouped
 }
@@ -200,14 +203,17 @@ export const getAutomationFunctionRunResultVersions = async (
 
   const versions = await q
 
-  const grouped = versions.reduce((acc, version) => {
-    if (!acc[version.automationRunId]) acc[version.automationRunId] = {}
-    if (!acc[version.automationRunId][version.functionId])
-      acc[version.automationRunId][version.functionId] = []
+  const grouped = versions.reduce(
+    (acc, version) => {
+      if (!acc[version.automationRunId]) acc[version.automationRunId] = {}
+      if (!acc[version.automationRunId][version.functionId])
+        acc[version.automationRunId][version.functionId] = []
 
-    acc[version.automationRunId][version.functionId].push(version)
-    return acc
-  }, {} as Record<string, Record<string, CommitRecord[]>>)
+      acc[version.automationRunId][version.functionId].push(version)
+      return acc
+    },
+    {} as Record<string, Record<string, CommitRecord[]>>
+  )
 
   return grouped
 }

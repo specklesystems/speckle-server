@@ -38,8 +38,8 @@
           selfUser.role === serverRoles.Admin
             ? 'mdi-key'
             : selfUser.role === serverRoles.ArchivedUser
-            ? 'mdi-account-off'
-            : 'mdi-account'
+              ? 'mdi-account-off'
+              : 'mdi-account'
         }}
       </v-icon>
       <user-role-select

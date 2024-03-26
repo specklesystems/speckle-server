@@ -7,8 +7,8 @@
         $route.query.transparent === 'true'
           ? ''
           : $vuetify.theme.dark
-          ? 'background-dark'
-          : 'background-light'
+            ? 'background-dark'
+            : 'background-light'
       }`"
     ></div>
   </div>

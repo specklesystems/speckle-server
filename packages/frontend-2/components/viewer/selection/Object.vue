@@ -43,13 +43,13 @@
         >
           <div
             class="col-span-1 truncate text-xs font-bold mr-2"
-            :title="(kvp.key as string)"
+            :title="kvp.key as string"
           >
             {{ kvp.key }}
           </div>
           <div
             class="group col-span-2 pl-1 truncate text-xs flex gap-1 items-center"
-            :title="(kvp.value as string)"
+            :title="kvp.value as string"
           >
             <div class="flex gap-1 items-center w-full">
               <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
@@ -77,8 +77,8 @@
         class="pl-2"
       >
         <ViewerSelectionObject
-          :object="(kvp.value as Record<string,unknown>) || {}"
-          :title="(kvp.key as string)"
+          :object="(kvp.value as Record<string, unknown>) || {}"
+          :title="kvp.key as string"
           :unfold="false"
         />
       </div>
@@ -88,10 +88,7 @@
         class="text-xs"
       >
         <div class="text-foreground-2 grid grid-cols-3">
-          <div
-            class="col-span-1 truncate text-xs font-bold"
-            :title="(kvp.key as string)"
-          >
+          <div class="col-span-1 truncate text-xs font-bold" :title="kvp.key as string">
             {{ kvp.key }}
           </div>
           <div class="col-span-2 flex w-full min-w-0 truncate text-xs">
@@ -102,15 +99,12 @@
       </div>
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
-          <div
-            class="col-span-1 truncate text-xs font-bold"
-            :title="(kvp.key as string)"
-          >
+          <div class="col-span-1 truncate text-xs font-bold" :title="kvp.key as string">
             {{ kvp.key }}
           </div>
           <div
             class="col-span-2 flex w-full min-w-0 truncate text-xs"
-            :title="(kvp.value as string)"
+            :title="kvp.value as string"
           >
             <div class="flex-grow truncate">{{ kvp.arrayPreview }}</div>
             <div class="text-foreground-2">({{ kvp.arrayLength }})</div>

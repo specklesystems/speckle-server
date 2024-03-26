@@ -32,7 +32,7 @@
             :version-id="versionId"
             :last="index === modelsAndVersionIds.length - 1"
             :show-remove="showRemove"
-            @remove="(id:string) => removeModel(id)"
+            @remove="(id: string) => removeModel(id)"
           />
         </div>
       </template>

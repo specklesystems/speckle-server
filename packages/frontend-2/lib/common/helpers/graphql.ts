@@ -41,8 +41,8 @@ export type ModifyFnCacheData<Data> = Data extends
       [key in keyof Data]: Data[key] extends { id: string }
         ? CacheObjectReference
         : Data[key] extends { id: string }[]
-        ? CacheObjectReference[]
-        : ModifyFnCacheData<Data[key]>
+          ? CacheObjectReference[]
+          : ModifyFnCacheData<Data[key]>
     }>
   : Data
 

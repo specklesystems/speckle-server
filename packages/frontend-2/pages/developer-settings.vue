@@ -256,7 +256,7 @@
     />
     <DeveloperSettingsCreateEditApplicationDialog
       v-model:open="showCreateEditApplicationDialog"
-      :application="(itemToModify as ApplicationItem)"
+      :application="itemToModify as ApplicationItem"
       @application-created="handleApplicationCreated"
     />
     <DeveloperSettingsRevealSecretDialog
@@ -269,7 +269,7 @@
     />
     <DeveloperSettingsCreateApplicationSuccessDialog
       v-model:open="showCreateApplicationSuccessDialog"
-      :application="(itemToModify as ApplicationItem)"
+      :application="itemToModify as ApplicationItem"
     />
   </div>
 </template>

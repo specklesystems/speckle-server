@@ -55,7 +55,7 @@
   </div>
 </template>
 
-<script setup lang="ts" generic="T extends {id: string}, C extends string">
+<script setup lang="ts" generic="T extends { id: string }, C extends string">
 import { noop, isString } from 'lodash'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'

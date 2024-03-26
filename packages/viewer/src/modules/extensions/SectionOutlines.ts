@@ -57,7 +57,10 @@ export class SectionOutlines extends Extension {
   private sectionPlanesChanged: Plane[] = []
   private _enabled = false
 
-  public constructor(viewer: IViewer, protected sectionProvider: ISectionProvider) {
+  public constructor(
+    viewer: IViewer,
+    protected sectionProvider: ISectionProvider
+  ) {
     super(viewer)
     this.planeOutlines[PlaneId.POSITIVE_X] = this.createPlaneOutline(PlaneId.POSITIVE_X)
     this.planeOutlines[PlaneId.NEGATIVE_X] = this.createPlaneOutline(PlaneId.NEGATIVE_X)

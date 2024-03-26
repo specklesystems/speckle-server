@@ -377,16 +377,14 @@ describe('AuthZ @shared', () => {
     describe('Allow for public stream no role', () => {
       it('not public stream, no auth returns same context ', async () => {
         const input = { context: 'dummy', authResult: 'fake' }
-        const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
-          input
-        )
+        const result =
+          await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(input)
         expect(result).to.deep.equal(input)
       })
       it('public stream, no auth returns same context ', async () => {
         const input = { context: { stream: { isPublic: true } }, authResult: 'fake' }
-        const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
-          input
-        )
+        const result =
+          await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(input)
         expect(result).to.deep.equal(input)
       })
       it('not public stream, with auth returns same context ', async () => {
@@ -394,9 +392,8 @@ describe('AuthZ @shared', () => {
           context: { auth: true, stream: { isPublic: false } },
           authResult: 'fake'
         }
-        const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
-          input
-        )
+        const result =
+          await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(input)
         expect(result).to.deep.equal(input)
       })
       it('public stream, with auth returns authSuccess', async () => {
@@ -404,9 +401,8 @@ describe('AuthZ @shared', () => {
           context: { auth: true, stream: { isPublic: true } },
           authResult: 'fake'
         }
-        const result = await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(
-          input
-        )
+        const result =
+          await allowForRegisteredUsersOnPublicStreamsEvenWithoutRole(input)
         expect(result).to.deep.equal(authSuccess(input.context))
       })
     })

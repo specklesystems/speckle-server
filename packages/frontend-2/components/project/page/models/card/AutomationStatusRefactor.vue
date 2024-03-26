@@ -28,7 +28,7 @@
       <div class="">
         <div v-for="run in automationRuns" :key="run.id">
           <ProjectPageModelsCardAutomationRun
-            :run="(run as AutomationRun)"
+            :run="run as AutomationRun"
             :project-id="projectId"
             :model-id="modelId"
             :version-id="versionId"

@@ -66,8 +66,8 @@
                   !step.active
                     ? activateStep(idx)
                     : idx === 0 || steps[idx - 1].completed
-                    ? step.action()
-                    : goToFirstUncompletedStep()
+                      ? step.action()
+                      : goToFirstUncompletedStep()
                 "
               >
                 <div
