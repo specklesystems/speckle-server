@@ -2,30 +2,23 @@ import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import dayjs from 'dayjs'
+import type { Survicate } from '@survicate/survicate-web-surveys-wrapper'
+import type { Nullable } from '@speckle/shared'
 
-export default defineNuxtPlugin(async (app) => {
+export default defineNuxtPlugin(async () => {
   const { isLoggedIn } = useActiveUser()
+  const survicateInstance = null as Nullable<Survicate>
 
-  const onboardingOrFeedbackDateString = useSynchronizedCookie<string | undefined>(
-    'onboardingOrFeedbackDate',
-    {
-      default: () => dayjs().startOf('day').format('YYYY-MM-DD'),
-      expires: dayjs().add(999, 'day').toDate()
+  if (!isLoggedIn.value) {
+    return {
+      provide: {
+        survicate: survicateInstance
+      }
     }
-  )
-
-  const onboardingOrFeedbackDate = onboardingOrFeedbackDateString.value
-    ? new Date(onboardingOrFeedbackDateString.value)
-    : new Date()
-
-  const shouldShowSurvey = checkSurveyDisplayConditions(onboardingOrFeedbackDate)
-
-  if (!isLoggedIn.value || !shouldShowSurvey) {
-    return
   }
 
   const {
-    public: { survicateWorkspaceKey, survicateNpsSurveyId }
+    public: { survicateWorkspaceKey }
   } = useRuntimeConfig()
 
   const logger = useLogger()
@@ -52,17 +45,46 @@ export default defineNuxtPlugin(async (app) => {
       },
       { immediate: true }
     )
-
-    survicateInstance.showSurvey(survicateNpsSurveyId as string, {
-      forceDisplay: true
-    })
-
-    app.provide('survicate', survicateInstance)
   } catch (error) {
     logger.error('Survicate failed to load:', error)
-    app.provide('survicate', null)
+  }
+
+  if (survicateInstance) {
+    initMainSurvey(survicateInstance)
+  }
+
+  return {
+    provide: {
+      survicate: survicateInstance
+    }
   }
 })
+
+function initMainSurvey(survicateInstance: Survicate) {
+  const {
+    public: { survicateNpsSurveyId }
+  } = useRuntimeConfig()
+
+  const onboardingOrFeedbackDateString = useSynchronizedCookie<string | undefined>(
+    'onboardingOrFeedbackDate',
+    {
+      default: () => dayjs().startOf('day').format('YYYY-MM-DD'),
+      expires: dayjs().add(999, 'day').toDate()
+    }
+  )
+
+  const onboardingOrFeedbackDate = onboardingOrFeedbackDateString.value
+    ? new Date(onboardingOrFeedbackDateString.value)
+    : new Date()
+
+  const shouldShowSurvey = checkSurveyDisplayConditions(onboardingOrFeedbackDate)
+
+  if (shouldShowSurvey) {
+    survicateInstance.showSurvey(survicateNpsSurveyId, {
+      forceDisplay: true
+    })
+  }
+}
 
 function checkSurveyDisplayConditions(onboardingOrFeedbackDate: Date): boolean {
   const { projectVersionCount } = useActiveUser()
