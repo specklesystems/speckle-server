@@ -14580,7 +14580,6 @@ __metadata:
     "@types/three": ^0.136.0
     "@typescript-eslint/eslint-plugin": ^5.39.0
     "@typescript-eslint/parser": ^5.39.0
-    "@vitest/browser": ^1.4.0
     "@vitest/ui": ^1.4.0
     camera-controls: ^1.33.1
     core-js: ^3.21.1
@@ -18421,28 +18420,6 @@ __metadata:
     vite: ^5.0.0
     vue: ^3.2.25
   checksum: e2ec5446daf87e404d537498ca87c01462d0f749d2c8ee92ab67de568fd9937b267babbbb26e3036a84bfd4d37be584e4e07da5e3471d79c8797a468a2f255cc
-  languageName: node
-  linkType: hard
-
-"@vitest/browser@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@vitest/browser@npm:1.4.0"
-  dependencies:
-    "@vitest/utils": 1.4.0
-    magic-string: ^0.30.5
-    sirv: ^2.0.4
-  peerDependencies:
-    playwright: "*"
-    vitest: 1.4.0
-    webdriverio: "*"
-  peerDependenciesMeta:
-    playwright:
-      optional: true
-    safaridriver:
-      optional: true
-    webdriverio:
-      optional: true
-  checksum: 7db3b975e9d4596c991587cb6ac9a8ad31753dec8a07049f34d23613522d45dbdaafc39e161b82685ae07f7c7229363245046469bf22cf695ee513e5b89ad47f
   languageName: node
   linkType: hard
 
