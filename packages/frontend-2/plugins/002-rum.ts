@@ -100,7 +100,7 @@ async function initRumClient(app: PluginNuxtApp) {
       const routeName = to.meta.datadogName || pathDefinition
       const realPath = to.path
 
-      window.DD_RUM_START_VIEW(realPath, routeName)
+      window.DD_RUM_START_VIEW?.(realPath, routeName)
     })
   }
 }

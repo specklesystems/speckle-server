@@ -7,7 +7,7 @@ declare global {
     /**
      * Start a new DD RUM view. Function is idempotent and can be safely called multiple times.
      */
-    DD_RUM_START_VIEW: (path: string, name: string) => void
+    DD_RUM_START_VIEW?: (path: string, name: string) => void
   }
 }
 
