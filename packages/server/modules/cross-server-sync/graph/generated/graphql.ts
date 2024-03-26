@@ -205,6 +205,12 @@ export type AutomateFunctionCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type AutomateFunctionRelease = {
+  __typename?: 'AutomateFunctionRelease';
+  function: AutomateFunction;
+  id: Scalars['ID'];
+};
+
 export type AutomateRun = {
   __typename?: 'AutomateRun';
   createdAt: Scalars['DateTime'];
@@ -233,6 +239,7 @@ export enum AutomateRunStatus {
 export type Automation = {
   __typename?: 'Automation';
   createdAt: Scalars['DateTime'];
+  currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
   /** TODO: Can there be more models in the future? Can there be 0? (automation on comment) */
@@ -309,6 +316,19 @@ export type AutomationMutationsCreateArgs = {
 
 export type AutomationMutationsFunctionRunStatusReportArgs = {
   input: AutomationRunStatusUpdateInput;
+};
+
+export type AutomationRevision = {
+  __typename?: 'AutomationRevision';
+  functions: Array<AutomationRevisionFunction>;
+  id: Scalars['ID'];
+};
+
+export type AutomationRevisionFunction = {
+  __typename?: 'AutomationRevisionFunction';
+  /** The secrets in parameters are redacted */
+  parameters?: Maybe<Scalars['JSONObject']>;
+  release: AutomateFunctionRelease;
 };
 
 export type AutomationRun = {

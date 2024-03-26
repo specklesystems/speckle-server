@@ -5,6 +5,19 @@ enum AutomateRunStatus {
   FAILED
 }
 
+type AutomationRevisionFunction {
+  """
+  The secrets in parameters are redacted
+  """
+  parameters: JSONObject
+  release: AutomateFunctionRelease!
+}
+
+type AutomationRevision {
+  id: ID!
+  functions: [AutomationRevisionFunction!]!
+}
+
 type Automation {
   id: ID!
   name: String!
@@ -14,6 +27,7 @@ type Automation {
   """
   model: Model!
   runs(cursor: String, limit: Int): AutomateRunCollection!
+  currentRevision: AutomationRevision
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -49,6 +63,11 @@ type AutomateFunction {
   isFeatured: Boolean!
   description: String!
   logo: String
+}
+
+type AutomateFunctionRelease {
+  id: ID!
+  function: AutomateFunction!
 }
 
 type AutomateFunctionCollection {

@@ -226,6 +226,7 @@ export const projectAutomationPageQuery = graphql(`
   query ProjectAutomationPage($projectId: String!, $automationId: String!) {
     project(id: $projectId) {
       id
+      ...ProjectPageAutomationPage_Project
       automation(id: $automationId) {
         id
         ...ProjectPageAutomationPage_Automation

@@ -1,6 +1,11 @@
 <template>
-  <div v-if="automation" class="flex flex-col gap-8 items-start">
-    <ProjectPageAutomationHeader :automation="automation" :project-id="projectId" />
+  <div v-if="automation && project" class="flex flex-col gap-8 items-start">
+    <ProjectPageAutomationHeader
+      :automation="automation"
+      :project="project"
+      :project-id="projectId"
+    />
+    <ProjectPageAutomationFunctions :automation="automation" />
   </div>
   <CommonLoadingBar v-else-if="loading" loading />
   <div v-else />
@@ -16,6 +21,14 @@ graphql(`
   fragment ProjectPageAutomationPage_Automation on Automation {
     id
     ...ProjectPageAutomationHeader_Automation
+    ...ProjectPageAutomationFunctions_Automation
+  }
+`)
+
+graphql(`
+  fragment ProjectPageAutomationPage_Project on Project {
+    id
+    ...ProjectPageAutomationHeader_Project
   }
 `)
 
@@ -28,4 +41,5 @@ const { result, loading } = useQuery(projectAutomationPageQuery, () => ({
   automationId: automationId.value
 }))
 const automation = computed(() => result.value?.project.automation || null)
+const project = computed(() => result.value?.project)
 </script>
