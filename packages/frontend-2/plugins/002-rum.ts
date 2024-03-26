@@ -95,16 +95,12 @@ async function initRumClient(app: PluginNuxtApp) {
       { immediate: true }
     )
 
-    router.beforeEach((to, from) => {
-      if (!('setUser' in datadog)) return
-      if (!from?.path || from.path === to.path) return
-
+    router.beforeEach((to) => {
       const pathDefinition = to.matched[to.matched.length - 1].path
-      const routeName = to.meta.datadogName
+      const routeName = to.meta.datadogName || pathDefinition
+      const realPath = to.path
 
-      datadog.startView({
-        name: routeName || pathDefinition || 'unknown'
-      })
+      window.DD_RUM_START_VIEW(realPath, routeName)
     })
   }
 }
@@ -209,7 +205,8 @@ async function initRumServer(app: PluginNuxtApp) {
     app.hook('app:rendered', (context) => {
       const route = app._route
       const pathDefinition = route.matched[route.matched.length - 1].path
-      const routeName = route.meta.datadogName
+      const pathReal = route.path
+      const routeName = route.meta.datadogName || pathDefinition
 
       context.ssrContext!.head.push({
         script: [
@@ -241,9 +238,17 @@ async function initRumServer(app: PluginNuxtApp) {
                   defaultPrivacyLevel: 'mask-user-input',
                   trackViewsManually: true
                 });
-                window.DD_RUM.startView({
-                  name: '${routeName || pathDefinition || 'unknown'}'
-                })
+
+                window.DD_RUM_START_VIEW = (path, name) => {
+                  if (window.DD_RUM_REGISTERED_PATH === path) return
+
+                  window.DD_RUM_REGISTERED_PATH = path
+                  window.DD_RUM.startView({
+                    name
+                  })
+                  console.debug('DDR Started view: ' + name)
+                }
+                window.DD_RUM_START_VIEW('${pathReal}', '${routeName}')
               })
           `
           }
