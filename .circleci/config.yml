@@ -25,10 +25,6 @@ workflows:
       - test-frontend-2:
           filters: *filters-allow-all
 
-      ## TODO: Re-enable when dui3 gets further into development
-      # - test-dui-3:
-      #     filters: *filters-allow-all
-
       - test-ui-components:
           filters: *filters-allow-all
 
@@ -500,36 +496,6 @@ jobs:
           command: yarn lint
           working_directory: 'packages/frontend-2'
 
-  test-dui-3:
-    docker: &docker-node-image
-      - image: cimg/node:18.19.0
-    resource_class: medium+
-    steps:
-      - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
-      - run:
-          name: Lint everything
-          command: yarn lint
-          working_directory: 'packages/dui3'
-
   test-ui-components:
     docker: *docker-node-browsers-image
     resource_class: xlarge
@@ -584,7 +550,8 @@ jobs:
 
   ui-components-chromatic:
     resource_class: medium+
-    docker: *docker-node-image
+    docker: &docker-node-image
+      - image: cimg/node:18.19.0
     steps:
       - checkout
       - restore_cache:
