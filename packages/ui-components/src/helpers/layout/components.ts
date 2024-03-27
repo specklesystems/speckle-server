@@ -13,7 +13,6 @@ export type LayoutTabItem<I extends string = string> = {
 export type LayoutPageTabItem<I extends string = string> = {
   title: string
   id: I
-  icon?: ConcreteComponent
   count?: number
   tag?: string
 }

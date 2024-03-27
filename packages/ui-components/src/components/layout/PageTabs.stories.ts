@@ -1,19 +1,13 @@
 import type { Meta, StoryObj } from '@storybook/vue3'
 import LayoutPageTabs from '~~/src/components/layout/PageTabs.vue'
 import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
-import {
-  CubeIcon,
-  Cog6ToothIcon,
-  BoltIcon,
-  ChatBubbleLeftRightIcon
-} from '@heroicons/vue/24/outline'
 import { useStorybookVmodel } from '~~/src/composables/testing'
 
 const items: LayoutPageTabItem[] = [
-  { title: 'Models', id: 'models', icon: CubeIcon, count: 300 },
-  { title: 'Discussions', id: 'discussions', icon: ChatBubbleLeftRightIcon },
-  { title: 'Automations', id: 'automations', icon: BoltIcon, tag: 'New' },
-  { title: 'Settings', id: 'settings', icon: Cog6ToothIcon }
+  { title: 'Models', id: 'models', count: 300 },
+  { title: 'Discussions', id: 'discussions' },
+  { title: 'Automations', id: 'automations', tag: 'New' },
+  { title: 'Settings', id: 'settings' }
 ]
 
 export default {

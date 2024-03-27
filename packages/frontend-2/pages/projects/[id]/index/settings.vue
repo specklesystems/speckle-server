@@ -13,7 +13,6 @@
         <ProjectPageSettingsWebhooks v-if="activeItem.id === 'webhooks'" />
       </template>
 
-      <!-- Named slots for icons -->
       <template #icon-general>
         <Cog6ToothIcon class="h-5 w-5" />
       </template>

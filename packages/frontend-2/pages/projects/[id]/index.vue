@@ -18,6 +18,22 @@
       </div>
       <LayoutPageTabs v-model:active-item="activePageTab" :items="pageTabItems">
         <NuxtPage />
+
+        <template #icon-models>
+          <CubeIcon class="h-5 w-5" />
+        </template>
+
+        <template #icon-discussions>
+          <ChatBubbleLeftRightIcon class="h-5 w-5" />
+        </template>
+
+        <template #icon-automations>
+          <BoltIcon class="h-5 w-5" />
+        </template>
+
+        <template #icon-settings>
+          <Cog6ToothIcon class="h-5 w-5" />
+        </template>
       </LayoutPageTabs>
     </div>
   </div>
@@ -36,7 +52,8 @@ import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
 import {
   CubeIcon,
   ChatBubbleLeftRightIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  BoltIcon
 } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~/lib/common/helpers/route'
 import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
@@ -119,26 +136,22 @@ const pageTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'Models',
     id: 'models',
-    icon: CubeIcon,
     count: modelCount.value
   },
   {
     title: 'Discussions',
     id: 'discussions',
-    icon: ChatBubbleLeftRightIcon,
     count: commentCount.value
   },
-  {
-    title: 'Settings',
-    id: 'settings',
-    icon: Cog6ToothIcon
-  }
-  // {
+  //   {
   //   title: 'Automations',
   //   id: 'automations',
-  //   icon: BoltIcon,
   //   tag: 'New'
-  // }
+  //   },
+  {
+    title: 'Settings',
+    id: 'settings'
+  }
 ])
 
 const activePageTab = computed({

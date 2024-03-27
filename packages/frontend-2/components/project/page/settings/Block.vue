@@ -12,9 +12,12 @@
         <slot name="logo" />
         <h3 class="text-xl font-bold">{{ title }}</h3>
       </div>
-      <div v-if="$slots.topButtons" class="flex gap-2">
+      <div v-if="$slots.topButtons" class="hidden sm:flex gap-2">
         <slot name="topButtons" />
       </div>
+    </div>
+    <div v-if="$slots.topButtons" class="flex sm:hidden gap-2">
+      <slot name="topButtons" />
     </div>
     <div v-if="$slots.introduction" class="text-sm text-foreground">
       <slot name="introduction" />

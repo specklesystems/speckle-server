@@ -9,7 +9,15 @@
       </p>
     </template>
     <template #topButtons>
-      <FormButton :icon-left="BookOpenIcon" color="invert">Open Docs</FormButton>
+      <FormButton
+        color="invert"
+        :icon-left="BookOpenIcon"
+        to="https://speckle.guide/dev/server-webhooks.html"
+        external
+        target="_blank"
+      >
+        Open Docs
+      </FormButton>
       <FormButton :icon-left="PlusIcon">Create Webhook</FormButton>
     </template>
   </ProjectPageSettingsBlock>

@@ -1,5 +1,5 @@
 <template>
-  <div class="flex gap-3 w-full">
+  <div class="flex flex-col sm:flex-row gap-3 w-full">
     <div
       v-for="option in options"
       :key="option.value"

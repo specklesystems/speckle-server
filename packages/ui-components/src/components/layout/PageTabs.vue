@@ -24,11 +24,7 @@
       <div
         ref="buttonContainer"
         class="flex"
-        :class="
-          vertical
-            ? 'flex-wrap sm:flex-nowrap flex-row sm:flex-col gap-1 w-full'
-            : 'gap-6'
-        "
+        :class="vertical ? 'flex-col gap-1 w-full' : 'gap-6'"
       >
         <h1
           v-if="title"
