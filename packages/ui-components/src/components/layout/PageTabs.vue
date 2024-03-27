@@ -45,18 +45,7 @@
           class="tab-button"
           @click="setActiveItem(item)"
         >
-          <Component
-            :is="item.icon"
-            v-if="item.icon"
-            class="shrink-0 h-4 w-4 stroke-[2px]"
-            :class="
-              vertical
-                ? 'text-foreground'
-                : activeItem?.id === item.id
-                ? 'text-primary'
-                : 'text-foreground'
-            "
-          />
+          <slot :name="'icon-' + item.id"></slot>
           <span class="min-w-6">{{ item.title }}</span>
           <div
             v-if="item.count"

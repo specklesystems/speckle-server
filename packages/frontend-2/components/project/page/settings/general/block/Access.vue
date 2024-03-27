@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock title="Access">
+  <ProjectPageSettingsBlock background title="Access">
     <template #logo><LockClosedIcon class="h-5 w-5" /></template>
     <template #introduction>
       <p>

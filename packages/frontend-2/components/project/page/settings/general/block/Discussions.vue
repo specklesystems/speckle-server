@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock title="Discussions">
+  <ProjectPageSettingsBlock background title="Discussions">
     <template #logo><ChatBubbleLeftRightIcon class="h-5 w-5" /></template>
     <template #introduction>
       <p>Control who can leave comments on your projects:</p>

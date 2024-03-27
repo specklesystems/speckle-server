@@ -6,8 +6,24 @@
       vertical
       :items="settingsTabItems"
     >
+      <!-- Default slot for tab content -->
       <template #default="{ activeItem }">
         <ProjectPageSettingsGeneral v-if="activeItem.id === 'general'" />
+        <ProjectPageSettingsCollaborators v-if="activeItem.id === 'collaborators'" />
+        <ProjectPageSettingsWebhooks v-if="activeItem.id === 'webhooks'" />
+      </template>
+
+      <!-- Named slots for icons -->
+      <template #icon-general>
+        <Cog6ToothIcon class="h-5 w-5" />
+      </template>
+
+      <template #icon-collaborators>
+        <UsersIcon class="h-5 w-5" />
+      </template>
+
+      <template #icon-webhooks>
+        <IconWebhooks class="h-5 w-5" />
       </template>
     </LayoutPageTabs>
   </div>
@@ -19,18 +35,15 @@ import { UsersIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'General',
-    id: 'general',
-    icon: Cog6ToothIcon
+    id: 'general'
   },
   {
-    title: 'Access & Collaborators',
-    id: 'access',
-    icon: UsersIcon
+    title: 'Collaborators',
+    id: 'collaborators'
   },
   {
     title: 'Webhooks',
-    id: 'webhooks',
-    icon: Cog6ToothIcon
+    id: 'webhooks'
   }
 ])
 

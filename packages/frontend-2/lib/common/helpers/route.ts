@@ -13,7 +13,7 @@ export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
 export const projectRoute = (
   id: string,
-  tab?: 'models' | 'discussions' | 'automations'
+  tab?: 'models' | 'discussions' | 'automations' | 'settings'
 ) => {
   let res = `/projects/${id}`
   if (tab && tab !== 'models') {
