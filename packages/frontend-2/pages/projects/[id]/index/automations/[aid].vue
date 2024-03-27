@@ -1,11 +1,8 @@
 <template>
   <div v-if="automation && project" class="flex flex-col gap-8 items-start">
-    <ProjectPageAutomationHeader
-      :automation="automation"
-      :project="project"
-      :project-id="projectId"
-    />
+    <ProjectPageAutomationHeader :automation="automation" :project="project" />
     <ProjectPageAutomationFunctions :automation="automation" />
+    <ProjectPageAutomationRuns />
   </div>
   <CommonLoadingBar v-else-if="loading" loading />
   <div v-else />

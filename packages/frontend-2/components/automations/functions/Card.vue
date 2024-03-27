@@ -25,7 +25,17 @@
         >
           More Info
         </FormButton>
-        <FormButton :icon-left="BoltIcon" outlined class="grow" size="sm">
+        <FormButton
+          v-if="showEdit"
+          :icon-left="PencilIcon"
+          outlined
+          class="grow"
+          size="sm"
+          @click="$emit('edit')"
+        >
+          Edit Details
+        </FormButton>
+        <FormButton v-else :icon-left="BoltIcon" outlined class="grow" size="sm">
           Use
         </FormButton>
       </div>
@@ -45,7 +55,11 @@
 import { cleanFunctionLogo } from '~/lib/automations/helpers/functions'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomationsFunctionsCard_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
-import { ArrowTopRightOnSquareIcon, BoltIcon } from '@heroicons/vue/24/outline'
+import {
+  ArrowTopRightOnSquareIcon,
+  BoltIcon,
+  PencilIcon
+} from '@heroicons/vue/24/outline'
 import { FormButton } from '@speckle/ui-components'
 
 graphql(`
@@ -62,8 +76,13 @@ graphql(`
   }
 `)
 
+defineEmits<{
+  edit: []
+}>()
+
 const props = defineProps<{
   fn: AutomationsFunctionsCard_AutomateFunctionFragment
+  showEdit?: boolean
 }>()
 
 const logo = computed(() => cleanFunctionLogo(props.fn.logo))

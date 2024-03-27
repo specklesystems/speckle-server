@@ -84,6 +84,9 @@ export async function buildMocksConfig(): Promise<{
       }
     }),
     mocks: {
+      AutomationRevision: () => ({
+        functions: () => [undefined] // array of 1 always
+      }),
       Automation: () => ({
         name: () => faker.company.companyName(),
         enabled: () => faker.datatype.boolean()

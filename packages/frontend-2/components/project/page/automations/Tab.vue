@@ -21,36 +21,20 @@
             :key="a.id"
             :automation="a"
             :project-id="projectId"
-            @view="onViewRunDetails"
           />
         </template>
       </template>
     </template>
-    <ProjectPageAutomationsRunDialog
-      v-model:open="runInfoOpen"
-      :run="openedRun?.run"
-      :model-id="openedRun?.modelId"
-      :automation-id="openedRun?.automationId"
-      :project-id="projectId"
-    />
   </div>
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import type { AutomationRunDetailsFragment } from '~/lib/common/generated/gql/graphql'
 import { projectAutomationsTabQuery } from '~/lib/projects/graphql/queries'
 
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 const search = ref('')
 const isAutomateEnabled = useIsAutomateModuleEnabled()
-
-const openedRun = ref<{
-  run: AutomationRunDetailsFragment
-  modelId: string
-  automationId: string
-}>()
-const runInfoOpen = ref(false)
 
 const { result, loading } = useQuery(
   projectAutomationsTabQuery,
@@ -69,13 +53,4 @@ const hasAutomations = computed(
   () => (result.value?.project?.automations.totalCount ?? 1) > 0
 )
 const automations = computed(() => result.value?.project?.automations.items || [])
-
-const onViewRunDetails = (
-  run: AutomationRunDetailsFragment,
-  modelId: string,
-  automationId: string
-) => {
-  openedRun.value = { run, modelId, automationId }
-  runInfoOpen.value = true
-}
 </script>

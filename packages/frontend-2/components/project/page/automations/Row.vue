@@ -17,68 +17,21 @@
     <div class="truncate">
       <CommonTextLink :to="finalModelUrl">{{ automation.model.name }}</CommonTextLink>
     </div>
-    <LayoutTable
-      :columns="[
-        { id: 'status', header: 'status', classes: 'col-span-2' },
-        { id: 'runId', header: 'Run ID', classes: 'col-span-3' },
-        { id: 'modelVersion', header: 'Model Version', classes: 'col-span-2' },
-        { id: 'date', header: 'Date', classes: 'col-span-2' },
-        { id: 'duration', header: 'Duration', classes: 'col-span-3' }
-      ]"
-      :items="automation.runs.items"
-      :buttons="[
-        {
-          icon: EyeIcon,
-          label: 'View',
-          action: (run) => {
-            $emit('view', run, modelId, automation.id)
-          },
-          textColor: 'primary'
-        }
-      ]"
-    >
-      <template #status="{ item }">
-        <AutomationsRunsStatusBadge :run="item" />
-      </template>
-      <template #runId="{ item }">
-        <span class="text-foreground label-light">{{ item.id }}</span>
-      </template>
-      <template #modelVersion="{ item }">
-        <CommonTextLink
-          :to="
-            runModelVersionUrl({
-              run: item,
-              projectId: projectId,
-              modelId: automation.model.id
-            })
-          "
-        >
-          {{ item.version.id }}
-        </CommonTextLink>
-      </template>
-      <template #date="{ item }">
-        <span class="caption">{{ runDate(item) }}</span>
-      </template>
-      <template #duration="{ item }">
-        <span class="caption">{{ runDuration(item) }}</span>
-      </template>
-    </LayoutTable>
+    <AutomationsRunsTable
+      :runs="automation.runs.items"
+      :project-id="projectId"
+      :model-id="automation.model.id"
+      :automation-id="automation.id"
+    />
   </div>
 </template>
 <script setup lang="ts">
-import {
-  PlayIcon,
-  PauseIcon,
-  EyeIcon,
-  ChevronRightIcon
-} from '@heroicons/vue/24/outline'
-import { useAutomationRunDetailsFns } from '~/lib/automations/composables/runs'
+import { AutomationsRunsTable } from '#build/components'
+import { PlayIcon, PauseIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import { type ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'
 import { projectAutomationRoute } from '~/lib/common/helpers/route'
 import { useViewerRouteBuilder } from '~/lib/projects/composables/models'
-
-type AutomateRun = ProjectPageAutomationsRow_AutomationFragment['runs']['items'][0]
 
 graphql(`
   fragment ProjectPageAutomationsRow_Automation on Automation {
@@ -98,16 +51,11 @@ graphql(`
   }
 `)
 
-defineEmits<{
-  view: [AutomateRun, modelId: string, automationId: string]
-}>()
-
 const props = defineProps<{
   projectId: string
   automation: ProjectPageAutomationsRow_AutomationFragment
 }>()
 
-const { runDate, runDuration, runModelVersionUrl } = useAutomationRunDetailsFns()
 const { modelUrl } = useViewerRouteBuilder()
 
 const modelId = computed(() => props.automation.model.id)

@@ -6,13 +6,20 @@
       please select it manually via the edit dialog.
     </div>
     <AutomationsFunctionsCardView class="mt-2">
-      <AutomationsFunctionsCard v-for="fn in functions" :key="fn.id" :fn="fn" />
+      <AutomationsFunctionsCard
+        v-for="fn in functions"
+        :key="fn.id"
+        :fn="fn"
+        show-edit
+      />
     </AutomationsFunctionsCardView>
   </div>
 </template>
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationFunctions_AutomationFragment } from '~/lib/common/generated/gql/graphql'
+
+// TODO: Edit details dialog
 
 graphql(`
   fragment ProjectPageAutomationFunctions_Automation on Automation {
