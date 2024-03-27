@@ -25,6 +25,16 @@ export default defineNuxtPlugin(async () => {
   const onAuthStateChange = useOnAuthStateChange()
   const prepareSurvey = useInitMainSurvey()
 
+  // Skip initialization if the survicateWorkspaceKey is empty or undefined
+  if (!survicateWorkspaceKey?.length) {
+    logger.warn('Survicate workspace key is empty, skipping Survicate initialization.')
+    return {
+      provide: {
+        survicate: survicateInstance
+      }
+    }
+  }
+
   try {
     const { initSurvicate, getSurvicateInstance } = await import(
       '@survicate/survicate-web-surveys-wrapper/widget_wrapper'
