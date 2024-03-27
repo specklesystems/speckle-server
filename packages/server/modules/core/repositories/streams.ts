@@ -797,6 +797,34 @@ export async function createStream(
   return newStream
 }
 
+export async function getUserStreamCounts(params: {
+  userIds: string[]
+  /**
+   * If true, will only count public & discoverable streams
+   */
+  publicOnly?: boolean
+}) {
+  const { userIds, publicOnly = false } = params
+  if (!userIds.length) return {}
+
+  const q = StreamAcl.knex()
+    .select<{ userId: string; count: string }[]>([
+      StreamAcl.col.userId,
+      knex.raw('COUNT(*)')
+    ])
+    .whereIn(StreamAcl.col.userId, userIds)
+    .groupBy(StreamAcl.col.userId)
+
+  if (publicOnly) {
+    q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId).andWhere((q1) => {
+      q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+    })
+  }
+
+  const results = await q
+  return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r.count))
+}
+
 export async function deleteStream(streamId: string) {
   // Delete stream commits (not automatically cascaded)
   await knex.raw(
