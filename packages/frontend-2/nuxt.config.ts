@@ -51,7 +51,6 @@ export default defineNuxtConfig({
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
       survicateWorkspaceKey: '',
-      survicateNpsSurveyId: '',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,
       logPretty: isLogPretty,
       logCsrEmitProps: false,

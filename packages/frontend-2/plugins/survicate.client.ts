@@ -7,7 +7,7 @@ import type { Nullable } from '@speckle/shared'
 
 export default defineNuxtPlugin(async () => {
   const { isLoggedIn } = useActiveUser()
-  const survicateInstance = null as Nullable<Survicate>
+  let survicateInstance = null as Nullable<Survicate>
 
   if (!isLoggedIn.value) {
     return {
@@ -23,13 +23,14 @@ export default defineNuxtPlugin(async () => {
 
   const logger = useLogger()
   const onAuthStateChange = useOnAuthStateChange()
+  const prepareSurvey = useInitMainSurvey()
 
   try {
     const { initSurvicate, getSurvicateInstance } = await import(
       '@survicate/survicate-web-surveys-wrapper/widget_wrapper'
     )
     await initSurvicate({ workspaceKey: survicateWorkspaceKey })
-    const survicateInstance = getSurvicateInstance()
+    survicateInstance = getSurvicateInstance()
 
     if (!survicateInstance) {
       throw new Error('Survicate instance is not available after initialization.')
@@ -39,7 +40,7 @@ export default defineNuxtPlugin(async () => {
     await onAuthStateChange(
       (user, { resolveDistinctId }) => {
         const distinctId = resolveDistinctId(user)
-        if (distinctId) {
+        if (distinctId && survicateInstance) {
           survicateInstance.setVisitorTraits({ distinctId })
         }
       },
@@ -50,7 +51,7 @@ export default defineNuxtPlugin(async () => {
   }
 
   if (survicateInstance) {
-    initMainSurvey(survicateInstance)
+    prepareSurvey(survicateInstance)
   }
 
   return {
@@ -60,11 +61,7 @@ export default defineNuxtPlugin(async () => {
   }
 })
 
-function initMainSurvey(survicateInstance: Survicate) {
-  const {
-    public: { survicateNpsSurveyId }
-  } = useRuntimeConfig()
-
+function useInitMainSurvey() {
   const onboardingOrFeedbackDateString = useSynchronizedCookie<string | undefined>(
     'onboardingOrFeedbackDate',
     {
@@ -72,23 +69,28 @@ function initMainSurvey(survicateInstance: Survicate) {
       expires: dayjs().add(999, 'day').toDate()
     }
   )
+  const { projectVersionCount } = useActiveUser()
 
-  const onboardingOrFeedbackDate = onboardingOrFeedbackDateString.value
-    ? new Date(onboardingOrFeedbackDateString.value)
-    : new Date()
+  return (survicateInstance: Survicate) => {
+    const onboardingOrFeedbackDate = onboardingOrFeedbackDateString.value
+      ? new Date(onboardingOrFeedbackDateString.value)
+      : new Date()
 
-  const shouldShowSurvey = checkSurveyDisplayConditions(onboardingOrFeedbackDate)
+    const shouldShowSurvey = checkSurveyDisplayConditions(
+      onboardingOrFeedbackDate,
+      projectVersionCount
+    )
 
-  if (shouldShowSurvey) {
-    survicateInstance.showSurvey(survicateNpsSurveyId, {
-      forceDisplay: true
-    })
+    if (shouldShowSurvey) {
+      survicateInstance.invokeEvent('nps-survey')
+    }
   }
 }
 
-function checkSurveyDisplayConditions(onboardingOrFeedbackDate: Date): boolean {
-  const { projectVersionCount } = useActiveUser()
-
+function checkSurveyDisplayConditions(
+  onboardingOrFeedbackDate: Date,
+  projectVersionCount: ComputedRef<number | undefined>
+): boolean {
   const threeDaysAfterOnboarding = dayjs(onboardingOrFeedbackDate).add(3, 'day')
   const isAfterOnboardingPeriod = dayjs().isAfter(threeDaysAfterOnboarding)
 
