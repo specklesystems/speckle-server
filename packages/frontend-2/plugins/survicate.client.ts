@@ -39,29 +39,34 @@ export default defineNuxtPlugin(async () => {
     const { initSurvicate, getSurvicateInstance } = await import(
       '@survicate/survicate-web-surveys-wrapper/widget_wrapper'
     )
-    await initSurvicate({ workspaceKey: survicateWorkspaceKey })
-    survicateInstance = getSurvicateInstance()
 
-    if (!survicateInstance) {
-      throw new Error('Survicate instance is not available after initialization.')
-    }
+    // Skip await, cause the survicate codebase stupidly does not handle adblock preventing their script from being loaded
+    // which causes this promise to never resolve (or reject!)
+    // Thus we're initializing survicate asynchronously and letting the plugin (& the app) finish running before that happens
+    void initSurvicate({ workspaceKey: survicateWorkspaceKey })
+      .then(async () => {
+        survicateInstance = getSurvicateInstance()
 
-    // Handle authentication state changes
-    await onAuthStateChange(
-      (user, { resolveDistinctId }) => {
-        const distinctId = resolveDistinctId(user)
-        if (distinctId && survicateInstance) {
-          survicateInstance.setVisitorTraits({ distinctId })
+        if (!survicateInstance) {
+          throw new Error('Survicate instance is not available after initialization.')
         }
-      },
-      { immediate: true }
-    )
+
+        // Handle authentication state changes
+        await onAuthStateChange(
+          (user, { resolveDistinctId }) => {
+            const distinctId = resolveDistinctId(user)
+            if (distinctId && survicateInstance) {
+              survicateInstance.setVisitorTraits({ distinctId })
+            }
+          },
+          { immediate: true }
+        )
+
+        prepareSurvey(survicateInstance)
+      })
+      .catch(logger.error)
   } catch (error) {
     logger.error('Survicate failed to load:', error)
-  }
-
-  if (survicateInstance) {
-    prepareSurvey(survicateInstance)
   }
 
   return {

@@ -38,74 +38,80 @@ const legacyViewerCommitMetadataQuery = graphql(`
  */
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  const path = to.path
-  const apollo = useApolloClientFromNuxt()
+  const logger = useLogger()
 
-  if (['/streams', '/commits'].includes(path)) {
-    return navigateTo(homeRoute)
-  }
+  try {
+    const path = to.path
+    const apollo = useApolloClientFromNuxt()
 
-  const viewerPageRgx =
-    /^\/streams\/([a-zA-Z0-9-_]+)\/(commits|objects)\/([a-zA-Z0-9-_]+)\/?/
+    if (['/streams', '/commits'].includes(path)) {
+      return navigateTo(homeRoute)
+    }
 
-  const [, viewerStreamId, viewerType, viewerId] = path.match(viewerPageRgx) || []
-  if (viewerStreamId && viewerType && viewerId) {
-    const resourceIdStringBuilder = SpeckleViewer.ViewerRoute.resourceBuilder()
+    const viewerPageRgx =
+      /^\/streams\/([a-zA-Z0-9-_]+)\/(commits|objects)\/([a-zA-Z0-9-_]+)\/?/
 
-    if (viewerType === 'objects') {
-      const resourceIdString = resourceIdStringBuilder.addObject(viewerId).toString()
-      return navigateTo(modelRoute(viewerStreamId, resourceIdString))
-    } else {
+    const [, viewerStreamId, viewerType, viewerId] = path.match(viewerPageRgx) || []
+    if (viewerStreamId && viewerType && viewerId) {
+      const resourceIdStringBuilder = SpeckleViewer.ViewerRoute.resourceBuilder()
+
+      if (viewerType === 'objects') {
+        const resourceIdString = resourceIdStringBuilder.addObject(viewerId).toString()
+        return navigateTo(modelRoute(viewerStreamId, resourceIdString))
+      } else {
+        const { data } = await apollo
+          .query({
+            query: legacyViewerCommitMetadataQuery,
+            variables: { streamId: viewerStreamId, commitId: viewerId }
+          })
+          .catch(convertThrowIntoFetchResult)
+        const branchId = data?.stream?.commit?.branch?.id
+
+        return navigateTo(
+          branchId
+            ? modelRoute(
+                viewerStreamId,
+                resourceIdStringBuilder.addModel(branchId, viewerId).toString()
+              )
+            : projectRoute(viewerStreamId)
+        )
+      }
+    }
+
+    const streamBranchPageRgx =
+      /^\/streams\/([a-zA-Z0-9-_]+)\/branches\/([a-zA-Z0-9-_%]+)\/?/
+
+    const [, branchStreamId, branchName] = path.match(streamBranchPageRgx) || []
+    if (branchStreamId && branchName) {
       const { data } = await apollo
         .query({
-          query: legacyViewerCommitMetadataQuery,
-          variables: { streamId: viewerStreamId, commitId: viewerId }
+          query: legacyBranchMetadataQuery,
+          variables: {
+            streamId: branchStreamId,
+            branchName: decodeURIComponent(branchName)
+          }
         })
         .catch(convertThrowIntoFetchResult)
-      const branchId = data?.stream?.commit?.branch?.id
+      const branchId = data?.stream?.branch?.id
 
       return navigateTo(
         branchId
-          ? modelRoute(
-              viewerStreamId,
-              resourceIdStringBuilder.addModel(branchId, viewerId).toString()
-            )
-          : projectRoute(viewerStreamId)
+          ? modelVersionsRoute(branchStreamId, branchId)
+          : projectRoute(branchStreamId)
       )
     }
-  }
 
-  const streamBranchPageRgx =
-    /^\/streams\/([a-zA-Z0-9-_]+)\/branches\/([a-zA-Z0-9-_%]+)\/?/
+    const streamPageRgx = /^\/streams\/([a-zA-Z0-9-_]+)\/?/
+    const [, streamId] = path.match(streamPageRgx) || []
+    if (streamId) {
+      return navigateTo(projectRoute(streamId))
+    }
 
-  const [, branchStreamId, branchName] = path.match(streamBranchPageRgx) || []
-  if (branchStreamId && branchName) {
-    const { data } = await apollo
-      .query({
-        query: legacyBranchMetadataQuery,
-        variables: {
-          streamId: branchStreamId,
-          branchName: decodeURIComponent(branchName)
-        }
-      })
-      .catch(convertThrowIntoFetchResult)
-    const branchId = data?.stream?.branch?.id
-
-    return navigateTo(
-      branchId
-        ? modelVersionsRoute(branchStreamId, branchId)
-        : projectRoute(branchStreamId)
-    )
-  }
-
-  const streamPageRgx = /^\/streams\/([a-zA-Z0-9-_]+)\/?/
-  const [, streamId] = path.match(streamPageRgx) || []
-  if (streamId) {
-    return navigateTo(projectRoute(streamId))
-  }
-
-  const adminPageRgx = /^\/admin\/?/
-  if (adminPageRgx.test(path)) {
-    return navigateTo(serverManagementRoute)
+    const adminPageRgx = /^\/admin\/?/
+    if (adminPageRgx.test(path)) {
+      return navigateTo(serverManagementRoute)
+    }
+  } catch (e) {
+    logger.fatal(e)
   }
 })
