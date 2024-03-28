@@ -328,13 +328,9 @@ export default class PointBatch implements Batch {
   }
 
   private shuffleDrawGroups() {
-    const groups = this.geometry.groups
-      .sort((a, b) => {
-        return a.start - b.start
-      })
-      .slice()
+    const groups = this.geometry.groups.slice()
 
-    this.geometry.groups.sort((a, b) => {
+    groups.sort((a, b) => {
       const materialA: Material = (this.mesh.material as Array<Material>)[
         a.materialIndex
       ]
