@@ -5,7 +5,7 @@ export default defineNitroPlugin((nitroApp) => {
     if (!event) return
 
     if (noStaticAssetFoundRgx.test(err.message)) {
-      setHeader(event, 'Cache-Control', 'no-cache')
+      setHeader(event, 'Cache-Control', 'no-store')
     }
   })
 })
