@@ -47,6 +47,7 @@ export interface Batch {
   getOpaque(): BatchUpdateRange
   getTransparent(): BatchUpdateRange
   getStencil(): BatchUpdateRange
+  getDepth(): BatchUpdateRange
   onUpdate(deltaTime: number)
   onRender(renderer: WebGLRenderer)
   purge(): void

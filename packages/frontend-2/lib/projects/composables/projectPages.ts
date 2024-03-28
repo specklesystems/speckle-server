@@ -16,9 +16,9 @@ export function useProjectPageItemViewType(contentType: string) {
   const viewTypeCookie = useSynchronizedCookie(`projectPage-${contentType}-viewType`)
   const gridOrList = computed({
     get: () =>
-      viewTypeCookie.value === GridListToggleValue.List
-        ? GridListToggleValue.List
-        : GridListToggleValue.Grid,
+      viewTypeCookie.value === GridListToggleValue.Grid
+        ? GridListToggleValue.Grid
+        : GridListToggleValue.List,
     set: (newVal) => {
       viewTypeCookie.value = newVal
     }

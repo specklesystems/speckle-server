@@ -176,6 +176,26 @@ export default class InstancedMeshBatch implements Batch {
     return AllBatchUpdateRange
   }
 
+  public getDepth(): BatchUpdateRange {
+    /** If there is any transparent or hidden group return the update range up to it's offset */
+    const transparentOrHiddenGroup = this.groups.find((value) => {
+      return (
+        Materials.isTransparent(this.materials[value.materialIndex]) ||
+        this.materials[value.materialIndex].visible === false ||
+        this.materials[value.materialIndex].colorWrite === false
+      )
+    })
+
+    if (transparentOrHiddenGroup) {
+      return {
+        offset: 0,
+        count: transparentOrHiddenGroup.start
+      }
+    }
+    /** Entire batch is opaque */
+    return AllBatchUpdateRange
+  }
+
   public getTransparent(): BatchUpdateRange {
     /** Look for a transparent group */
     const transparentGroup = this.groups.find((value) => {
@@ -239,7 +259,97 @@ export default class InstancedMeshBatch implements Batch {
     }
   }
 
-  public setDrawRanges(ranges: BatchUpdateRange[]): void {
+  private integrateUpdateRange(range: BatchUpdateRange) {
+    const materialIndex = this.materials.indexOf(range.material)
+    const collidingGroup = this.getDrawRangeCollision(range)
+    if (collidingGroup) {
+      collidingGroup.materialIndex = this.materials.indexOf(range.material)
+    } else {
+      const includingGroup = this.geDrawRangeInclusion(range)
+      if (includingGroup) {
+        if (includingGroup.materialIndex === materialIndex) return
+        this.geometry.groups.splice(this.geometry.groups.indexOf(includingGroup), 1)
+        if (includingGroup.start === range.offset) {
+          this.geometry.addGroup(range.offset, range.count, materialIndex)
+          this.geometry.addGroup(
+            range.offset + range.count,
+            includingGroup.count - range.count,
+            includingGroup.materialIndex
+          )
+        } else if (
+          range.offset + range.count ===
+          includingGroup.start + includingGroup.count
+        ) {
+          this.geometry.addGroup(
+            includingGroup.start,
+            includingGroup.count - range.count,
+            includingGroup.materialIndex
+          )
+          this.geometry.addGroup(range.offset, range.count, materialIndex)
+        } else {
+          this.geometry.addGroup(
+            includingGroup.start,
+            range.offset - includingGroup.start,
+            includingGroup.materialIndex
+          )
+          this.geometry.addGroup(range.offset, range.count, materialIndex)
+          this.geometry.addGroup(
+            range.offset + range.count,
+            includingGroup.count - (range.count + range.offset - includingGroup.start),
+            includingGroup.materialIndex
+          )
+        }
+      } else {
+        const engulfedGroups = this.getDrawRangeEngulfing(range)
+        if (engulfedGroups) {
+          for (let k = 0; k < engulfedGroups.length; k++) {
+            this.geometry.groups.splice(this.groups.indexOf(engulfedGroups[k]), 1)
+          }
+          this.integrateUpdateRange(range)
+        } else {
+          const intersectedGroupLeft = this.getDrawRangeIntersectionLeft(range)
+          if (
+            intersectedGroupLeft &&
+            intersectedGroupLeft.materialIndex !== materialIndex
+          ) {
+            this.geometry.groups.splice(
+              this.geometry.groups.indexOf(intersectedGroupLeft),
+              1
+            )
+            this.geometry.addGroup(range.offset, range.count, materialIndex)
+            this.geometry.addGroup(
+              range.offset + range.count,
+              intersectedGroupLeft.start +
+                intersectedGroupLeft.count -
+                (range.offset + range.count),
+              intersectedGroupLeft.materialIndex
+            )
+          } else {
+            const intersectedGroupRight = this.getDrawRangeIntersectionRight(range)
+            if (
+              intersectedGroupRight &&
+              intersectedGroupRight.materialIndex !== materialIndex
+            ) {
+              this.geometry.groups.splice(
+                this.geometry.groups.indexOf(intersectedGroupRight),
+                1
+              )
+              this.geometry.addGroup(
+                intersectedGroupRight.start,
+                range.offset - intersectedGroupRight.start,
+                intersectedGroupRight.materialIndex
+              )
+              this.geometry.addGroup(range.offset, range.count, materialIndex)
+            } else {
+              this.geometry.addGroup(range.offset, range.count, materialIndex)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  public setDrawRanges(ranges: BatchUpdateRange[]) {
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(value.material)
@@ -261,75 +371,9 @@ export default class InstancedMeshBatch implements Batch {
     })
 
     for (let i = 0; i < sortedRanges.length; i++) {
-      const materialIndex = this.materials.indexOf(sortedRanges[i].material)
-      const collidingGroup = this.getDrawRangeCollision(sortedRanges[i])
-      if (collidingGroup) {
-        collidingGroup.materialIndex = this.materials.indexOf(sortedRanges[i].material)
-      } else {
-        const includingGroup = this.geDrawRangeInclusion(sortedRanges[i])
-        if (includingGroup && includingGroup.materialIndex !== materialIndex) {
-          this.groups.splice(this.groups.indexOf(includingGroup), 1)
-          if (includingGroup.start === sortedRanges[i].offset) {
-            this.groups.push({
-              start: sortedRanges[i].offset,
-              count: sortedRanges[i].count,
-              materialIndex
-            })
-            if (includingGroup.count - sortedRanges[i].count > 0) {
-              this.groups.push({
-                start: sortedRanges[i].offset + sortedRanges[i].count,
-                count: includingGroup.count - sortedRanges[i].count,
-                materialIndex: includingGroup.materialIndex
-              })
-            }
-          } else if (
-            sortedRanges[i].offset + sortedRanges[i].count ===
-            includingGroup.start + includingGroup.count
-          ) {
-            this.groups.push({
-              start: includingGroup.start,
-              count: includingGroup.count - sortedRanges[i].count,
-              materialIndex: includingGroup.materialIndex
-            })
-            this.groups.push({
-              start: sortedRanges[i].offset,
-              count: sortedRanges[i].count,
-              materialIndex
-            })
-          } else {
-            this.groups.push({
-              start: includingGroup.start,
-              count: sortedRanges[i].offset - includingGroup.start,
-              materialIndex: includingGroup.materialIndex
-            })
-            this.groups.push({
-              start: sortedRanges[i].offset,
-              count: sortedRanges[i].count,
-              materialIndex
-            })
-            this.groups.push({
-              start: sortedRanges[i].offset + sortedRanges[i].count,
-              count:
-                includingGroup.count -
-                (sortedRanges[i].count + sortedRanges[i].offset - includingGroup.start),
-              materialIndex: includingGroup.materialIndex
-            })
-          }
-        } else {
-          const engulfedGroups = this.getDrawRangeEngulfing(sortedRanges[i])
-          if (engulfedGroups) {
-            for (let k = 0; k < engulfedGroups.length; k++) {
-              this.geometry.groups.splice(this.groups.indexOf(engulfedGroups[k]), 1)
-            }
-          }
-          this.geometry.addGroup(
-            sortedRanges[i].offset,
-            sortedRanges[i].count,
-            materialIndex
-          )
-        }
-      }
+      this.integrateUpdateRange(sortedRanges[i])
     }
+
     let count = 0
     this.groups.forEach((value) => (count += value.count))
     if (count !== this.renderViews.length * 16) {
@@ -387,6 +431,41 @@ export default class InstancedMeshBatch implements Batch {
     return null
   }
 
+  private getDrawRangeIntersectionLeft(range: BatchUpdateRange): DrawGroup {
+    if (this.geometry.groups.length > 0) {
+      for (let i = 0; i < this.geometry.groups.length; i++) {
+        if (
+          range.offset < this.geometry.groups[i].start &&
+          range.offset + range.count > this.geometry.groups[i].start &&
+          range.offset + range.count <
+            this.geometry.groups[i].start + this.geometry.groups[i].count
+        ) {
+          return this.geometry.groups[i]
+        }
+      }
+      return null
+    }
+    return null
+  }
+
+  private getDrawRangeIntersectionRight(range: BatchUpdateRange): DrawGroup {
+    if (this.geometry.groups.length > 0) {
+      for (let i = 0; i < this.geometry.groups.length; i++) {
+        if (
+          range.offset > this.geometry.groups[i].start &&
+          this.geometry.groups[i].start + this.geometry.groups[i].count >
+            range.offset &&
+          range.offset + range.count >
+            this.geometry.groups[i].start + this.geometry.groups[i].count
+        ) {
+          return this.geometry.groups[i]
+        }
+      }
+      return null
+    }
+    return null
+  }
+
   private flattenDrawGroups() {
     const materialsInUse = [
       ...Array.from(
@@ -401,6 +480,7 @@ export default class InstancedMeshBatch implements Batch {
           if (value.materialIndex > k) value.materialIndex--
         })
         k = 0
+        continue
       }
       k++
     }
@@ -475,7 +555,10 @@ export default class InstancedMeshBatch implements Batch {
     this.groups.sort((a, b) => {
       const materialA: Material = this.materials[a.materialIndex]
       const materialB: Material = this.materials[b.materialIndex]
-      const visibleOrder = +materialB.visible - +materialA.visible
+      const visibleOrder =
+        +materialB.visible +
+        +materialB.colorWrite -
+        (+materialA.visible + +materialA.colorWrite)
       const transparentOrder = +materialA.transparent - +materialB.transparent
       if (visibleOrder !== 0) return visibleOrder
       return transparentOrder

@@ -25,10 +25,6 @@ workflows:
       - test-frontend-2:
           filters: *filters-allow-all
 
-      ## TODO: Re-enable when dui3 gets further into development
-      # - test-dui-3:
-      #     filters: *filters-allow-all
-
       - test-ui-components:
           filters: *filters-allow-all
 
@@ -41,9 +37,10 @@ workflows:
           type: approval
           filters: &filters-ignore-main-branch-or-all-tags
             branches:
-              ignore:
+              ignore: &branches-special
                 - main
-                - testing
+                - /^hotfix.*$/
+                - /^testing\d*$/
             tags:
               ignore: /.*/
 
@@ -91,10 +88,6 @@ workflows:
       - pre-commit:
           filters: *filters-allow-all
 
-      - build-image-approval:
-          type: approval
-          filters: *filters-ignore-main-branch-or-all-tags
-
       - docker-build-server:
           context: &build-context
             - github-readonly-public-repos
@@ -103,63 +96,54 @@ workflows:
               only: /.*/
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-frontend:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-frontend-2:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-webhooks:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-file-imports:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-previews:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-test-container:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-monitor-container:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-docker-compose-ingress:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - publish-approval:
           type: approval
@@ -270,10 +254,7 @@ workflows:
       - publish-helm-chart:
           filters: &filters-publish
             branches:
-              only:
-                - main
-                - hotfix*
-                - testing
+              only: *branches-special
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
@@ -464,15 +445,16 @@ jobs:
           command: 'IGNORE_MISSING_MIRATIONS=true yarn cli graphql introspect'
           working_directory: 'packages/server'
 
-      - run:
-          name: Checking for GQL schema breakages against speckle.xyz
-          command: 'yarn rover graph check Speckle-Server@speckle-xyz --schema ./introspected-schema.graphql'
-          working_directory: 'packages/server'
+      # TODO: Re-enable once apollo server outage is resolved
+      # - run:
+      #     name: Checking for GQL schema breakages against speckle.xyz
+      #     command: 'yarn rover graph check Speckle-Server@speckle-xyz --schema ./introspected-schema.graphql'
+      #     working_directory: 'packages/server'
 
-      - run:
-          name: Checking for GQL schema breakages against latest.speckle.systems
-          command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
-          working_directory: 'packages/server'
+      # - run:
+      #     name: Checking for GQL schema breakages against latest.speckle.systems
+      #     command: 'yarn rover graph check Speckle-Server@latest-speckle-systems --schema ./introspected-schema.graphql'
+      #     working_directory: 'packages/server'
 
       - store_test_results:
           path: packages/server/reports
@@ -514,36 +496,6 @@ jobs:
           name: Lint everything
           command: yarn lint
           working_directory: 'packages/frontend-2'
-
-  test-dui-3:
-    docker: &docker-node-image
-      - image: cimg/node:18.19.0
-    resource_class: medium+
-    steps:
-      - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
-      - run:
-          name: Lint everything
-          command: yarn lint
-          working_directory: 'packages/dui3'
 
   test-ui-components:
     docker: *docker-node-browsers-image
@@ -599,7 +551,8 @@ jobs:
 
   ui-components-chromatic:
     resource_class: medium+
-    docker: *docker-node-image
+    docker: &docker-node-image
+      - image: cimg/node:18.19.0
     steps:
       - checkout
       - restore_cache:

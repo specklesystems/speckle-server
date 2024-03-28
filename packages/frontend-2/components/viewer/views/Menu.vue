@@ -1,6 +1,6 @@
 <template>
   <Menu as="div" class="relative z-30">
-    <MenuButton v-slot="{ open }" as="template">
+    <MenuButton :id="menuButtonId" v-slot="{ open }" as="template">
       <ViewerControlsButtonToggle flat secondary :active="open">
         <IconViews class="w-5 h-5" />
       </ViewerControlsButtonToggle>
@@ -74,6 +74,7 @@ const {
 } = useInjectedViewerState()
 const { setView: setViewRaw } = useCameraUtilities()
 const mp = useMixpanel()
+const menuButtonId = useId()
 
 const setView = (v: CanonicalView | SpeckleView) => {
   setViewRaw(v)

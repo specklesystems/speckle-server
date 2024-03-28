@@ -1,7 +1,7 @@
 <template>
   <Menu v-slot="{ open: isMenuOpen }" as="div" class="relative inline-block">
     <div>
-      <MenuButton ref="menuButton" class="hidden" @click.stop.prevent />
+      <MenuButton :id="menuId" ref="menuButton" class="hidden" @click.stop.prevent />
       <!-- conditional pointer-events-none is necessary to avoid double events when clicking on the button when the menu is already open -->
       <div :class="isMenuOpen ? 'pointer-events-none' : ''">
         <slot :toggle="toggle" :open="processOpen(isMenuOpen)" />
@@ -69,6 +69,7 @@ const props = defineProps<{
    * 2D array so that items can be grouped with dividers between them
    */
   items: LayoutMenuItem[][]
+  menuId?: string
 }>()
 
 const menuItems = ref(null as Nullable<{ el: HTMLDivElement }>)

@@ -156,7 +156,7 @@ export class TopLevelAccelerationStructure {
     rayBuff.copy(ray)
     const tasResults: Intersection<Object3D>[] = this.accelerationStructure.raycast(
       rayBuff,
-      FrontSide
+      materialOrSide
     )
     if (!tasResults.length) return res
 
@@ -189,7 +189,7 @@ export class TopLevelAccelerationStructure {
     rayBuff.copy(ray)
     const tasRes: Intersection<Object3D> = this.accelerationStructure.raycastFirst(
       rayBuff,
-      FrontSide
+      materialOrSide
     )
     if (!tasRes) return res
 

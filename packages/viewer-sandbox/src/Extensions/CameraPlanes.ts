@@ -13,7 +13,9 @@ export class CameraPlanes extends Extension {
 
   public constructor(viewer: IViewer) {
     super(viewer)
-    this.camerController = viewer.getExtension(CameraController)
+    this.camerController = viewer.getExtension(
+      CameraController as new () => CameraController
+    )
   }
 
   public onEarlyUpdate(): void {

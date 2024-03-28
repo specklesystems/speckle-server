@@ -27,6 +27,7 @@ export abstract class Measurement extends Object3D {
   protected static vec3Buff4: Vector3 = new Vector3()
   protected static vec4Buff0: Vector4 = new Vector4()
   protected static vec4Buff1: Vector4 = new Vector4()
+  protected static vec4Buff2: Vector4 = new Vector4()
   protected static vec2Buff0: Vector2 = new Vector2()
 
   protected _state: MeasurementState = MeasurementState.HIDDEN

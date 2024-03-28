@@ -165,6 +165,26 @@ export default class PointBatch implements Batch {
     return AllBatchUpdateRange
   }
 
+  public getDepth(): BatchUpdateRange {
+    /** If there is any transparent or hidden group return the update range up to it's offset */
+    const transparentOrHiddenGroup = this.groups.find((value) => {
+      return (
+        Materials.isTransparent(this.materials[value.materialIndex]) ||
+        this.materials[value.materialIndex].visible === false ||
+        this.materials[value.materialIndex].colorWrite === false
+      )
+    })
+
+    if (transparentOrHiddenGroup) {
+      return {
+        offset: 0,
+        count: transparentOrHiddenGroup.start
+      }
+    }
+    /** Entire batch is opaque */
+    return AllBatchUpdateRange
+  }
+
   public getTransparent(): BatchUpdateRange {
     /** Look for a transparent group */
     const transparentGroup = this.groups.find((value) => {

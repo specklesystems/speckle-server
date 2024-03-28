@@ -11,7 +11,17 @@ export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const onboardingRoute = '/onboarding'
 export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
-export const projectRoute = (id: string) => `/projects/${id}`
+export const projectRoute = (
+  id: string,
+  tab?: 'models' | 'discussions' | 'automations'
+) => {
+  let res = `/projects/${id}`
+  if (tab && tab !== 'models') {
+    res += `/${tab}`
+  }
+
+  return res
+}
 export const modelRoute = (
   projectId: string,
   resourceIdString: string,
@@ -22,10 +32,13 @@ export const modelRoute = (
   }`
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
-export const allProjectModelsRoute = (projectId: string) =>
-  `/projects/${projectId}/models`
-export const projectDiscussionsRoute = (projectId: string) =>
-  `/projects/${projectId}/discussions`
+
+// Temp change to allProjectModelsRoute until tab routing is implemented
+export const allProjectModelsRoute = (projectId: string) => `/projects/${projectId}`
+
+// Temp change to projectDiscussionsRoute until tab routing is implemented
+export const projectDiscussionsRoute = (projectId: string) => `/projects/${projectId}`
+
 export const projectWebhooksRoute = (projectId: string) =>
   `/projects/${projectId}/webhooks`
 

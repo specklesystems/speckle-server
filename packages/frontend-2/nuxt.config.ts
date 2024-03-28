@@ -24,6 +24,10 @@ export default defineNuxtConfig({
     shim: false,
     strict: true
   },
+  features: {
+    // while nuxt's implementation is broken, we disable this: https://github.com/nuxt/nuxt/issues/26369
+    devLogs: false
+  },
   modules: [
     '@nuxt/devtools',
     '@nuxtjs/tailwindcss',
@@ -46,6 +50,7 @@ export default defineNuxtConfig({
       baseUrl: '',
       mixpanelApiHost: 'UNDEFINED',
       mixpanelTokenId: 'UNDEFINED',
+      survicateWorkspaceKey: '',
       logLevel: NUXT_PUBLIC_LOG_LEVEL,
       logPretty: isLogPretty,
       logCsrEmitProps: false,
@@ -57,7 +62,13 @@ export default defineNuxtConfig({
       raygunKey: '',
       logrocketAppId: '',
       speedcurveId: 0,
-      debugbearId: ''
+      debugbearId: '',
+      debugCoreWebVitals: false,
+      datadogAppId: '',
+      datadogClientToken: '',
+      datadogSite: '',
+      datadogService: '',
+      datadogEnv: ''
     }
   },
 

@@ -421,6 +421,14 @@ export default class Batcher {
     return visibilityRanges
   }
 
+  public getDepth(): Record<string, BatchUpdateRange> {
+    const visibilityRanges = {}
+    for (const k in this.batches) {
+      visibilityRanges[k] = this.batches[k].getDepth()
+    }
+    return visibilityRanges
+  }
+
   public overrideMaterial(
     ranges: Record<string, BatchUpdateRange>,
     material: Material

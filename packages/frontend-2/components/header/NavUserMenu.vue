@@ -1,7 +1,7 @@
 <template>
   <div>
     <Menu as="div" class="flex items-center">
-      <MenuButton v-slot="{ open: userOpen }">
+      <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
         <UserAvatar v-if="!userOpen" size="lg" :user="activeUser" hover-effect />
         <UserAvatar v-else size="lg" hover-effect>
@@ -163,6 +163,7 @@ const route = useRoute()
 
 const showInviteDialog = ref(false)
 const showProfileEditDialog = ref(false)
+const menuButtonId = useId()
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => serverInfo.value?.version)

@@ -34,6 +34,11 @@ type ServerInfo {
   Server relocation / migration info
   """
   migration: ServerMigration
+
+  """
+  Whether or not to show messaging about FE2 (banners etc.)
+  """
+  enableNewWebUiMessaging: Boolean
 }
 
 type Role {

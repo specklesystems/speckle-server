@@ -16,6 +16,7 @@ import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
 import CommonStepsBullet from '~~/src/components/common/steps/Bullet.vue'
 import CommonAnimationInstructional from '~~/src/components/common/animation/Instructional.vue'
+import CommonVimeoEmbed from '~~/src/components/common/VimeoEmbed.vue'
 import FormCardButton from '~~/src/components/form/CardButton.vue'
 import FormCheckbox from '~~/src/components/form/Checkbox.vue'
 import FormRadio from '~~/src/components/form/Radio.vue'
@@ -59,7 +60,10 @@ import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import LayoutPanel from '~~/src/components/layout/Panel.vue'
 import CommonAlert from '~~/src/components/common/Alert.vue'
-import { writableAsyncComputed } from '~~/src/composables/common/async'
+import {
+  writableAsyncComputed,
+  buildManualPromise
+} from '~~/src/composables/common/async'
 import type {
   AsyncWritableComputedOptions,
   AsyncWritableComputedRef
@@ -99,6 +103,7 @@ export {
   CommonStepsBullet,
   CommonStepsNumber,
   CommonAnimationInstructional,
+  CommonVimeoEmbed,
   FormCardButton,
   FormCheckbox,
   FormRadio,
@@ -138,7 +143,8 @@ export {
   writableAsyncComputed,
   useFormCheckboxModel,
   FormTags,
-  keyboardClick
+  keyboardClick,
+  buildManualPromise
 }
 export type {
   ToastNotification,

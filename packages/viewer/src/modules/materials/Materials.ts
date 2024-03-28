@@ -31,9 +31,15 @@ export interface DisplayStyle {
 }
 
 export interface MaterialOptions {
-  stencilOutlines?: boolean
+  stencilOutlines?: StencilOutlineType
   pointSize?: number
   depthWrite?: number
+}
+
+export enum StencilOutlineType {
+  NONE,
+  OVERLAY,
+  OUTLINE_ONLY
 }
 
 export enum FilterMaterialType {
@@ -218,7 +224,7 @@ export default class Materials {
 
   public static getMaterialHash(
     renderView: NodeRenderView,
-    materialData?: RenderMaterial | DisplayStyle
+    materialData?: RenderMaterial | DisplayStyle | MaterialOptions
   ) {
     if (!materialData) {
       materialData =
@@ -237,6 +243,12 @@ export default class Materials {
             renderView.geometryType !== GeometryType.POINT
           ? Materials.displayStyleToString(materialData as DisplayStyle)
           : ''
+      if ((materialData as MaterialOptions).stencilOutlines) {
+        mat += '/' + (materialData as MaterialOptions).stencilOutlines
+      }
+      if ((materialData as MaterialOptions).pointSize) {
+        mat += '/' + (materialData as MaterialOptions).pointSize
+      }
     }
     let geometry = ''
     if (renderView.renderData.geometry.attributes)
@@ -932,7 +944,7 @@ export default class Materials {
 
   public getDataMaterial(
     renderView: NodeRenderView,
-    materialData: RenderMaterial & DisplayStyle
+    materialData: RenderMaterial & DisplayStyle & MaterialOptions
   ): Material {
     const materialHash = Materials.getMaterialHash(renderView, materialData)
     return this.getMaterial(materialHash, materialData, renderView.geometryType)
