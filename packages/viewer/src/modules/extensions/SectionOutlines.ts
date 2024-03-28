@@ -11,7 +11,6 @@ import {
 } from 'three'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
-import MeshBatch from '../batching/MeshBatch'
 import { Geometry } from '../converter/Geometry'
 import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
@@ -21,6 +20,7 @@ import { ISectionProvider } from './core-extensions/Providers'
 import { SectionToolEvent } from './SectionTool'
 import { GeometryType } from '../batching/Batch'
 import { ObjectLayers } from '../../IViewer'
+import { MeshBatch } from '../batching/MeshBatch'
 import Logger from 'js-logger'
 
 export enum PlaneId {

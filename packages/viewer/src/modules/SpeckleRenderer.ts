@@ -39,7 +39,6 @@ import {
   ViewerEvent
 } from '../IViewer'
 import { DefaultPipelineOptions, Pipeline, PipelineOptions } from './pipeline/Pipeline'
-import MeshBatch from './batching/MeshBatch'
 import { Shadowcatcher } from './Shadowcatcher'
 import SpeckleMesh from './objects/SpeckleMesh'
 import { ExtendedIntersection } from './objects/SpeckleRaycaster'
@@ -60,6 +59,7 @@ import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter'
 import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh'
 import { BaseSpecklePass } from './pipeline/SpecklePass'
 import { CameraController } from './extensions/core-extensions/CameraController'
+import { MeshBatch } from './batching/MeshBatch'
 
 export class RenderingStats {
   private renderTimeAcc = 0

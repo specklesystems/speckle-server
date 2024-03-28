@@ -26,6 +26,8 @@ export interface Batch {
   get materials(): Material[]
   get groups(): DrawGroup[]
   get triCount(): number
+  get pointCount(): number
+  get lineCount(): number
   get vertCount(): number
 
   getCount(): number
@@ -44,7 +46,7 @@ export interface Batch {
   getStencil(): BatchUpdateRange
   getDepth(): BatchUpdateRange
   onUpdate(deltaTime: number)
-  onRender(renderer: WebGLRenderer)
+  onRender?(renderer: WebGLRenderer)
   purge()
 }
 

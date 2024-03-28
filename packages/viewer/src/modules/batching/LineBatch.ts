@@ -61,6 +61,12 @@ export default class LineBatch implements Batch {
     this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
+  get pointCount(): number {
+    throw new Error('Method not implemented.')
+  }
+  get lineCount(): number {
+    throw new Error('Method not implemented.')
+  }
 
   public get renderObject(): Object3D {
     return this.mesh
