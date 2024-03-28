@@ -35,8 +35,8 @@ cert_manager_issuer: letsencrypt-staging
 ## This object is a central location to define feature flags for the whole chart.
 ## @descriptionEnd
 featureFlags:
-  ## @param featureFlags.enableAutomateModule High level flag fully toggles the integrated automate module
-  enableAutomateModule: false
+  ## @param featureFlags.automateModuleEnabled High level flag fully toggles the integrated automate module
+  automateModuleEnabled: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics

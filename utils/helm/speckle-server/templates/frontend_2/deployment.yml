@@ -126,8 +126,8 @@ spec:
             value: {{ .Values.analytics.datadog_env | quote }}
           {{- end }}
 
-          - name: ENABLE_AUTOMATE_MODULE
-            value: {{ .Values.featureFlags.enableAutomateModule | quote }}
+          - name: FF_AUTOMATE_MODULE_ENABLED
+            value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
 
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}

@@ -35,7 +35,7 @@
     "featureFlags": {
       "type": "object",
       "properties": {
-        "enableAutomateModule": {
+        "automateModuleEnabled": {
           "type": "boolean",
           "description": "High level flag fully toggles the integrated automate module",
           "default": false
