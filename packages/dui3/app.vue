@@ -6,11 +6,8 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  useMixpanel,
-  useMixpanelUserIdentification
-} from '~/lib/core/composables/mixpanel'
-import { DUIAccount, useAccountStore } from '~/store/accounts'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { useAccountStore } from '~/store/accounts'
 import { useConfigStore } from '~/store/config'
 
 const uiConfigStore = useConfigStore()
@@ -32,11 +29,14 @@ useHead({
 })
 
 onMounted(() => {
-  const mp = useMixpanel()
-  const { reidentify } = useMixpanelUserIdentification()
+  const { trackEvent } = useMixpanel()
   const { selectedAccount } = useAccountStore()
-  reidentify(selectedAccount as DUIAccount)
-  mp.track('Connector Action', { name: 'Init DUI3' })
+  trackEvent(
+    selectedAccount?.accountInfo.userInfo.email as string,
+    selectedAccount?.accountInfo.serverInfo.url as string,
+    'Connector Action',
+    { name: 'Init DUI3' }
+  )
 })
 </script>
 store/config

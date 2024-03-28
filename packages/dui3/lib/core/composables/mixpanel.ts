@@ -1,7 +1,8 @@
 import md5 from '~/lib/common/helpers/md5'
-import type { OverridedMixpanel } from 'mixpanel-browser'
-import { useHostAppStore } from '~/store/hostApp'
-import { DUIAccount } from '~/store/accounts'
+
+interface CustomProperties {
+  [key: string]: object | string
+}
 
 /**
  * Get Mixpanel instance
@@ -9,46 +10,70 @@ import { DUIAccount } from '~/store/accounts'
  * If this composable is invoked during SSR it will return undefined!
  * But in DUI3 we do not have SSR.
  */
-export function useMixpanel(): OverridedMixpanel {
-  const app = useNuxtApp()
-  const $mixpanel = app.$mixpanel as () => OverridedMixpanel
-  return $mixpanel()
-}
+export function useMixpanel() {
+  const isDevMode = ref(true)
 
-export function useMixpanelUserIdentification() {
-  const mixpanel = useMixpanel()
-  return {
-    /**
-     * Identify mixpanel user and server info with different account
-     */
-    reidentify: (account: DUIAccount) => {
-      const hostApp = useHostAppStore()
+  // TODO: Create here other versions of trackEvent functions that lacks account
+  // const lastEmail = ref("")
+  // const lastServer = ref("")
 
-      if (!account) {
-        return
+  async function trackEvent(
+    email: string,
+    server: string,
+    eventName: string,
+    customProperties: CustomProperties = {},
+    isAction: boolean = true
+  ) {
+    const {
+      public: { mixpanelApiHost, mixpanelTokenId }
+    } = useRuntimeConfig()
+
+    // TODO: enable it later somehow
+    //if (isDevMode.value) {
+    //  // Only track in production
+    //  return
+    //}
+
+    try {
+      const hashedEmail = md5(email.toLowerCase() as string).toUpperCase()
+      const hashedServer = md5(server.toLowerCase() as string).toUpperCase()
+      console.log(hashedEmail, 'hashedEmail')
+      console.log(hashedServer, 'hashedServer')
+
+      // Merge base properties with custom ones
+      const properties = {
+        // eslint-disable-next-line camelcase
+        distinct_id: hashedEmail,
+        // eslint-disable-next-line camelcase
+        server_id: hashedServer,
+        token: mixpanelTokenId as string,
+        type: isAction ? 'action' : undefined,
+        ...customProperties
       }
-      // Reset previous user data, if any
-      mixpanel.reset()
 
-      const serverId = md5(
-        account?.accountInfo.serverInfo.url.toLowerCase() as string
-      ).toUpperCase()
+      const eventData = {
+        event: eventName.toString(),
+        properties
+      }
 
-      // Register session
-      mixpanel.register({
-        // eslint-disable-next-line camelcase
-        server_id: serverId,
-        hostApp: hostApp.hostAppName,
-        hostAppVersion: hostApp.hostAppVersion,
-        // eslint-disable-next-line camelcase
-        core_version: hostApp.connectorVersion
+      const response = await fetch(`${mixpanelApiHost as string}/track?ip=1`, {
+        method: 'POST',
+        headers: {
+          Accept: 'text/plain',
+          'Content-Type': 'application/json'
+        },
+        body: `data=${encodeURIComponent(JSON.stringify(eventData))}`
       })
+      console.log(response, 'response')
 
-      // Identify user, if any
-      if (account?.accountInfo.id) {
-        mixpanel.identify(account?.accountInfo.id)
-        mixpanel.people.set('Identified', true)
+      if (!response.ok) {
+        throw new Error(`Analytics event failed: ${response.statusText}`)
       }
+    } catch (error) {
+      console.warn('Failed to track event in MixPanel:', error)
+      // Handle error or logging
     }
   }
+
+  return { trackEvent }
 }
