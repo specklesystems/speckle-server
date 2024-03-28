@@ -12,7 +12,7 @@ spec:
     matchLabels:
 {{ include "frontend_2.selectorLabels" . | indent 6 }}
   strategy:
-    type: Recreate
+    type: RollingUpdate
   template:
     metadata:
       labels:
