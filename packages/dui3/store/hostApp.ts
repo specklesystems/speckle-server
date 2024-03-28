@@ -18,6 +18,8 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
 
   const hostAppName = ref<string>()
+  const hostAppVersion = ref<string>()
+  const connectorVersion = ref<string>()
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
 
@@ -247,6 +249,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const getHostAppName = async () =>
     (hostAppName.value = await app.$baseBinding.getSourceApplicationName())
 
+  const getHostAppVersion = async () =>
+    (hostAppVersion.value = await app.$baseBinding.getSourceApplicationVersion())
+
+  const getConnectorVersion = async () =>
+    (connectorVersion.value = await app.$baseBinding.getConnectorVersion())
+
   /**
    * Used internally in this store store only for initialisation. Refreshed the document info from the host app. Should be called on document changed events.
    */
@@ -280,9 +288,13 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   void refreshDocumentModelStore()
   void refreshSendFilters()
   void getHostAppName()
+  void getHostAppVersion()
+  void getConnectorVersion()
 
   return {
     hostAppName,
+    hostAppVersion,
+    connectorVersion,
     documentInfo,
     projectModelGroups,
     sendFilters,

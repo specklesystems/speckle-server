@@ -6,6 +6,8 @@
   </div>
 </template>
 <script setup lang="ts">
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { useAccountStore } from '~/store/accounts'
 import { useConfigStore } from '~/store/config'
 
 const uiConfigStore = useConfigStore()
@@ -24,6 +26,17 @@ useHead({
   },
   // For standalone vue devtools see: https://devtools.vuejs.org/guide/installation.html#standalone
   script: process.dev ? ['http://localhost:8098'] : []
+})
+
+onMounted(() => {
+  const { trackEvent } = useMixpanel()
+  const { selectedAccount } = useAccountStore()
+  trackEvent(
+    selectedAccount?.accountInfo.userInfo.email as string,
+    selectedAccount?.accountInfo.serverInfo.url as string,
+    'Connector Action',
+    { name: 'Init DUI3' }
+  )
 })
 </script>
 store/config
