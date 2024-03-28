@@ -96,7 +96,7 @@ async function initRumClient(app: PluginNuxtApp) {
     )
 
     router.beforeEach((to) => {
-      const pathDefinition = to.matched[to.matched.length - 1].path
+      const pathDefinition = getRouteDefinition(to)
       const routeName = to.meta.datadogName || pathDefinition
       const realPath = to.path
 
@@ -204,7 +204,7 @@ async function initRumServer(app: PluginNuxtApp) {
 
     app.hook('app:rendered', (context) => {
       const route = app._route
-      const pathDefinition = route.matched[route.matched.length - 1].path
+      const pathDefinition = getRouteDefinition(route)
       const pathReal = route.path
       const routeName = route.meta.datadogName || pathDefinition
 
