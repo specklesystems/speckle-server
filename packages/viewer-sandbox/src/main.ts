@@ -6,7 +6,9 @@ import {
   ViewerEvent,
   DebugViewer,
   Viewer,
-  Batch
+  Batch,
+  DrawRanges,
+  SpeckleBasicMaterial
 } from '@speckle/viewer'
 
 import './style.css'
@@ -97,10 +99,10 @@ const createViewer = async (containerName: string, stream: string) => {
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
 
-    // const meshBatch = viewer
-    //   .getRenderer()
-    //   .batcher.getBatches(undefined, GeometryType.MESH)
-    //   .find((batch: Batch) => batch.renderViews.length > 2)
+    const meshBatch = viewer
+      .getRenderer()
+      .batcher.getBatches(undefined, GeometryType.MESH)
+      .find((batch: Batch) => batch.renderViews.length > 2)
     // const geom = meshBatch.mesh.geometry
     // geom.groups.length = 0
     // geom.addGroup(0, 216, 0)
@@ -124,7 +126,7 @@ const createViewer = async (containerName: string, stream: string) => {
     //     offset: 36,
     //     count: 36,
     //     material
-    //   },
+    //   }
     //   {
     //     offset: 180,
     //     count: 1395,
@@ -135,6 +137,57 @@ const createViewer = async (containerName: string, stream: string) => {
     //     count: 32766,
     //     material
     //   }
+    // )
+    // const material = new SpeckleStandardMaterial(
+    //   {
+    //     color: new Color('#00ff00'),
+    //     emissive: 0x0,
+    //     roughness: 1,
+    //     metalness: 0,
+    //     opacity: 1,
+    //     side: FrontSide
+    //   },
+    //   ['USE_RTE']
+    // )
+    // meshBatch.setDrawRanges(
+    //   {
+    //     offset: 9018,
+    //     count: 36,
+    //     material
+    //   },
+    //   {
+    //     offset: 13878,
+    //     count: 36,
+    //     material
+    //   }
+    // )
+    // const material0 = new SpeckleBasicMaterial({ color: 0xff0000 })
+    // const material1 = new SpeckleBasicMaterial({ color: 0x00ff00 })
+    // let groups = [
+    //   {
+    //     start: 0,
+    //     count: 1350,
+    //     materialIndex: 0
+    //   }
+    // ]
+
+    // const drawRange = new DrawRanges()
+
+    // groups = drawRange.integrateRanges(
+    //   groups,
+    //   [material0, material1],
+    //   [
+    //     {
+    //       offset: 0,
+    //       count: 258,
+    //       material: material1
+    //     },
+    //     {
+    //       offset: 258,
+    //       count: 1032,
+    //       material: material1
+    //     }
+    //   ]
     // )
   })
 
@@ -185,7 +238,7 @@ const getStream = () => {
     // AutoCAD NEW
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/46905429f6'
     //Blizzard world
-    'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
+    // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
     //Car
     // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
     // Jonathon's
@@ -211,7 +264,7 @@ const getStream = () => {
     //Gergo's house
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/78bdd8eb76'
     // Point cloud
-    // 'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
+    'https://latest.speckle.dev/streams/2d19273d31/commits/9ceb423feb'
     // 'https://latest.speckle.dev/streams/7707df6cae/commits/02bdf09092'
     // 'https://latest.speckle.dev/streams/ca0378725b/commits/fbae00db5a'
     // Luis sphere

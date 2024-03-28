@@ -79,6 +79,7 @@ export class DrawRanges {
   ): Array<DrawGroup> {
     let _flatRanges: Array<number> = []
     groups.sort((a, b) => a.start - b.start)
+    ranges.sort((a, b) => a.offset - b.offset)
 
     const edgesForward = {}
     const edgesBackwards = {}
@@ -118,14 +119,28 @@ export class DrawRanges {
     }
 
     const drawRanges = []
+    let groupStart = -1
+    let count = 0
     for (let k = 0; k < _flatRanges.length - 1; k++) {
       const start = _flatRanges[k]
       const end = _flatRanges[k + 1]
+      count += end - start
+      const materialIndex = edgesForward[start]
+      const lastGroup = k === _flatRanges.length - 2
+      if (edgesForward[_flatRanges[k + 1]] === materialIndex || lastGroup) {
+        if (groupStart === -1) {
+          groupStart = start
+        }
+        if (!lastGroup) continue
+      }
+
       drawRanges.push({
-        start,
-        count: end - start,
-        materialIndex: edgesForward[start]
+        start: groupStart === -1 ? start : groupStart,
+        count,
+        materialIndex
       })
+      groupStart = -1
+      count = 0
     }
 
     return drawRanges

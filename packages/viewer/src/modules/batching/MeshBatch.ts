@@ -46,7 +46,6 @@ export default class MeshBatch implements Batch {
   private indexBuffer1: BufferAttribute
   private indexBufferIndex = 0
   private needsShuffle = false
-  private needsFlatten = false
 
   public get bounds(): Box3 {
     return this.mesh.TAS.getBoundingBox(new Box3())
@@ -108,10 +107,6 @@ export default class MeshBatch implements Batch {
 
   public onUpdate(deltaTime: number) {
     deltaTime
-    if (this.needsFlatten) {
-      this.flattenDrawGroups()
-      this.needsFlatten = false
-    }
     if (this.needsShuffle) {
       this.shuffleDrawGroups()
       this.needsShuffle = false
@@ -288,6 +283,8 @@ export default class MeshBatch implements Batch {
   }
 
   public setDrawRanges(...ranges: BatchUpdateRange[]) {
+    // const current = this.groups.slice()
+    // const incoming = ranges.slice()
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(value.material)
@@ -308,112 +305,22 @@ export default class MeshBatch implements Batch {
       this.materials,
       ranges
     )
-    // for (let i = 0; i < ranges.length; i++) {
-    //   this.geometry.groups = this.drawRanges.integrateRange(
-    //     this.groups,
-    //     this.materials,
-    //     ranges[i]
-    //   )
-    // }
 
     let count = 0
     this.geometry.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {
+      // Logger.error('Current -> ', current)
+      // Logger.error('Incoming -> ', incoming)
+      // Logger.error('Current -> ', this.geometry.groups)
       Logger.error(
         `Draw groups invalid on ${this.id}, ${
           this.renderViews[0].renderData.id
-        }, ${this.getCount()}`
+        }, ${this.getCount()}, ${this.getCount() - count}`
       )
     }
     this.setBatchBuffers(...ranges)
-    this.needsFlatten = true
-  }
+    this.cleanMaterials()
 
-  private sortGroups() {
-    this.geometry.groups.sort((a, b) => {
-      const materialA: Material = (this.mesh.material as Array<Material>)[
-        a.materialIndex
-      ]
-      const materialB: Material = (this.mesh.material as Array<Material>)[
-        b.materialIndex
-      ]
-      const visibleOrder = +materialB.visible - +materialA.visible
-      const transparentOrder = +materialA.transparent - +materialB.transparent
-      if (visibleOrder !== 0) return visibleOrder
-      return transparentOrder
-    })
-  }
-
-  private flattenDrawGroups() {
-    const materialsInUse = [
-      ...Array.from(
-        new Set(this.groups.map((value) => this.materials[value.materialIndex]))
-      )
-    ]
-    let k = 0
-    while (this.materials.length > materialsInUse.length) {
-      if (!materialsInUse.includes(this.materials[k])) {
-        this.materials.splice(k, 1)
-        this.groups.forEach((value: DrawGroup) => {
-          if (value.materialIndex > k) value.materialIndex--
-        })
-        k = 0
-        continue
-      }
-      k++
-    }
-
-    const materialOrder = []
-    this.geometry.groups.reduce((previousValue, currentValue) => {
-      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
-        previousValue.push(currentValue.materialIndex)
-      }
-      return previousValue
-    }, materialOrder)
-    const grouped = []
-    for (let k = 0; k < materialOrder.length; k++) {
-      grouped.push(
-        this.geometry.groups.filter((val) => {
-          return val.materialIndex === materialOrder[k]
-        })
-      )
-    }
-    this.geometry.groups = []
-    for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
-      const matGroup = grouped[matIndex].sort((a, b) => {
-        return a.start - b.start
-      })
-      for (let k = 0; k < matGroup.length; ) {
-        let offset = matGroup[k].start
-        let count = matGroup[k].count
-        let runningCount = matGroup[k].count
-        let n = k + 1
-        for (; n < matGroup.length; n++) {
-          if (offset + count === matGroup[n].start) {
-            offset = matGroup[n].start
-            count = matGroup[n].count
-            runningCount += matGroup[n].count
-          } else {
-            const group = {
-              start: matGroup[k].start,
-              count: runningCount,
-              materialIndex: matGroup[k].materialIndex
-            }
-            this.geometry.groups.push(group)
-            break
-          }
-        }
-        if (n === matGroup.length) {
-          const group = {
-            start: matGroup[k].start,
-            count: runningCount,
-            materialIndex: matGroup[k].materialIndex
-          }
-          this.geometry.groups.push(group)
-        }
-        k = n
-      }
-    }
     if (this.drawCalls > this.minDrawCalls + 2) {
       this.needsShuffle = true
     } else {
@@ -441,7 +348,26 @@ export default class MeshBatch implements Batch {
         }
       }
     }
-    // console.log('Flattened -> ', this.id, this.groups.slice())
+  }
+
+  private cleanMaterials() {
+    const materialsInUse = [
+      ...Array.from(
+        new Set(this.groups.map((value) => this.materials[value.materialIndex]))
+      )
+    ]
+    let k = 0
+    while (this.materials.length > materialsInUse.length) {
+      if (!materialsInUse.includes(this.materials[k])) {
+        this.materials.splice(k, 1)
+        this.groups.forEach((value: DrawGroup) => {
+          if (value.materialIndex > k) value.materialIndex--
+        })
+        k = 0
+        continue
+      }
+      k++
+    }
   }
 
   private getCurrentIndexBuffer(): BufferAttribute {
@@ -453,11 +379,7 @@ export default class MeshBatch implements Batch {
   }
 
   private shuffleDrawGroups() {
-    const groups = this.geometry.groups
-      .sort((a, b) => {
-        return a.start - b.start
-      })
-      .slice()
+    const groups = this.geometry.groups.slice()
 
     groups.sort((a, b) => {
       const materialA: Material = (this.mesh.material as Array<Material>)[

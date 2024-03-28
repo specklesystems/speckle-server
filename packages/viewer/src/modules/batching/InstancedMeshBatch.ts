@@ -29,6 +29,7 @@ import { InstancedBatchObject } from './InstancedBatchObject'
 import Logger from 'js-logger'
 import Materials from '../materials/Materials'
 import { DrawRanges } from './DrawRanges'
+import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 
 export interface DrawGroup {
   start: number
@@ -53,7 +54,6 @@ export default class InstancedMeshBatch implements Batch {
   private instanceGradientBuffer: Float32Array = null
 
   private needsShuffle = false
-  private needsFlatten = false
 
   public get bounds(): Box3 {
     return this.mesh.TAS.getBoundingBox(new Box3())
@@ -112,10 +112,6 @@ export default class InstancedMeshBatch implements Batch {
 
   public onUpdate(deltaTime: number) {
     deltaTime
-    if (this.needsFlatten) {
-      this.flattenDrawGroups()
-      this.needsFlatten = false
-    }
     if (this.needsShuffle) {
       this.shuffleDrawGroups()
       this.needsShuffle = false
@@ -263,6 +259,16 @@ export default class InstancedMeshBatch implements Batch {
             0.5 / range[k].materialOptions.rampWidth
           this.updateGradientIndexBufferData(start / 16, shiftedIndex)
         }
+        /** We need to update the texture here, because each batch uses it's own clone for any material we use on it
+         *  because otherwise three.js won't properly update our custom uniforms
+         */
+        if (range[k].materialOptions.rampTexture !== undefined) {
+          if (range[k].material instanceof SpeckleStandardColoredMaterial) {
+            ;(range[k].material as SpeckleStandardColoredMaterial).setGradientTexture(
+              range[k].materialOptions.rampTexture
+            )
+          }
+        }
       }
     }
   }
@@ -284,13 +290,11 @@ export default class InstancedMeshBatch implements Batch {
         this.materials.push(uniqueMaterials[k])
     }
 
-    for (let i = 0; i < ranges.length; i++) {
-      this.mesh.groups = this.drawRanges.integrateRange(
-        this.groups,
-        this.materials,
-        ranges[i]
-      )
-    }
+    this.mesh.groups = this.drawRanges.integrateRanges(
+      this.groups,
+      this.materials,
+      ranges
+    )
 
     let count = 0
     this.groups.forEach((value) => (count += value.count))
@@ -298,10 +302,18 @@ export default class InstancedMeshBatch implements Batch {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
     this.setBatchBuffers(...ranges)
-    this.needsFlatten = true
+    this.cleanMaterials()
+    /** We shuffle only when above a certain fragmentation threshold. We don't want to be shuffling every single time */
+    if (this.drawCalls > this.maxDrawCalls) {
+      this.needsShuffle = true
+    } else
+      this.mesh.updateDrawGroups(
+        this.getCurrentTransformBuffer(),
+        this.getCurrentGradientBuffer()
+      )
   }
 
-  private flattenDrawGroups() {
+  private cleanMaterials() {
     const materialsInUse = [
       ...Array.from(
         new Set(this.groups.map((value) => this.materials[value.materialIndex]))
@@ -319,65 +331,6 @@ export default class InstancedMeshBatch implements Batch {
       }
       k++
     }
-    const materialOrder = []
-    this.groups.reduce((previousValue, currentValue) => {
-      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
-        previousValue.push(currentValue.materialIndex)
-      }
-      return previousValue
-    }, materialOrder)
-    const grouped = []
-    for (let k = 0; k < materialOrder.length; k++) {
-      grouped.push(
-        this.groups.filter((val) => {
-          return val.materialIndex === materialOrder[k]
-        })
-      )
-    }
-    this.groups.length = 0
-    for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
-      const matGroup = grouped[matIndex].sort((a, b) => {
-        return a.start - b.start
-      })
-      for (let k = 0; k < matGroup.length; ) {
-        let offset = matGroup[k].start
-        let count = matGroup[k].count
-        let runningCount = matGroup[k].count
-        let n = k + 1
-        for (; n < matGroup.length; n++) {
-          if (offset + count === matGroup[n].start) {
-            offset = matGroup[n].start
-            count = matGroup[n].count
-            runningCount += matGroup[n].count
-          } else {
-            const group = {
-              start: matGroup[k].start,
-              count: runningCount,
-              materialIndex: matGroup[k].materialIndex
-            }
-            this.groups.push(group)
-            break
-          }
-        }
-        if (n === matGroup.length) {
-          const group = {
-            start: matGroup[k].start,
-            count: runningCount,
-            materialIndex: matGroup[k].materialIndex
-          }
-          this.groups.push(group)
-        }
-        k = n
-      }
-    }
-    /** We shuffle only when above a certain fragmentation threshold. We don't want to be shuffling every single time */
-    if (this.drawCalls > this.maxDrawCalls) {
-      this.needsShuffle = true
-    } else
-      this.mesh.updateDrawGroups(
-        this.getCurrentTransformBuffer(),
-        this.getCurrentGradientBuffer()
-      )
   }
 
   private shuffleDrawGroups() {

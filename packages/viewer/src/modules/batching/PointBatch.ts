@@ -32,7 +32,6 @@ export default class PointBatch implements Batch {
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: Points
-  private needsFlatten = false
   private needsShuffle = false
 
   private gradientIndexBuffer: BufferAttribute
@@ -91,10 +90,6 @@ export default class PointBatch implements Batch {
 
   public onUpdate(deltaTime: number) {
     deltaTime
-    if (this.needsFlatten) {
-      this.flattenDrawGroups()
-      this.needsFlatten = false
-    }
     if (this.needsShuffle) {
       this.shuffleDrawGroups()
       this.needsShuffle = false
@@ -271,13 +266,11 @@ export default class PointBatch implements Batch {
         this.materials.push(uniqueMaterials[k])
     }
 
-    for (let i = 0; i < ranges.length; i++) {
-      this.geometry.groups = this.drawRanges.integrateRange(
-        this.groups,
-        this.materials,
-        ranges[i]
-      )
-    }
+    this.geometry.groups = this.drawRanges.integrateRanges(
+      this.groups,
+      this.materials,
+      ranges
+    )
 
     let count = 0
     this.geometry.groups.forEach((value) => (count += value.count))
@@ -285,63 +278,8 @@ export default class PointBatch implements Batch {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
     this.setBatchBuffers(...ranges)
-    this.needsFlatten = true
-  }
+    this.cleanMaterials()
 
-  private flattenDrawGroups() {
-    const materialOrder = []
-    this.geometry.groups.reduce((previousValue, currentValue) => {
-      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
-        previousValue.push(currentValue.materialIndex)
-      }
-      return previousValue
-    }, materialOrder)
-    const grouped = []
-    for (let k = 0; k < materialOrder.length; k++) {
-      grouped.push(
-        this.geometry.groups.filter((val) => {
-          return val.materialIndex === materialOrder[k]
-        })
-      )
-    }
-    this.geometry.groups = []
-    for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
-      const matGroup = grouped[matIndex].sort((a, b) => {
-        return a.start - b.start
-      })
-      for (let k = 0; k < matGroup.length; ) {
-        let offset = matGroup[k].start
-        let count = matGroup[k].count
-        let runningCount = matGroup[k].count
-        let n = k + 1
-        for (; n < matGroup.length; n++) {
-          if (offset + count === matGroup[n].start) {
-            offset = matGroup[n].start
-            count = matGroup[n].count
-            runningCount += matGroup[n].count
-          } else {
-            const group = {
-              start: matGroup[k].start,
-              count: runningCount,
-              materialIndex: matGroup[k].materialIndex,
-              id: matGroup[k].id
-            }
-            this.geometry.groups.push(group)
-            break
-          }
-        }
-        if (n === matGroup.length) {
-          const group = {
-            start: matGroup[k].start,
-            count: runningCount,
-            materialIndex: matGroup[k].materialIndex,
-            id: matGroup[k].id
-          }
-          this.geometry.groups.push(group)
-        }
-        k = n
-      }
-    }
     if (this.drawCalls > this.minDrawCalls + 2) {
       this.needsShuffle = true
     } else {
@@ -366,6 +304,26 @@ export default class PointBatch implements Batch {
           }
         }
       }
+    }
+  }
+
+  private cleanMaterials() {
+    const materialsInUse = [
+      ...Array.from(
+        new Set(this.groups.map((value) => this.materials[value.materialIndex]))
+      )
+    ]
+    let k = 0
+    while (this.materials.length > materialsInUse.length) {
+      if (!materialsInUse.includes(this.materials[k])) {
+        this.materials.splice(k, 1)
+        this.groups.forEach((value: DrawGroup) => {
+          if (value.materialIndex > k) value.materialIndex--
+        })
+        k = 0
+        continue
+      }
+      k++
     }
   }
 
