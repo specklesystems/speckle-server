@@ -303,13 +303,18 @@ export default class MeshBatch implements Batch {
         this.materials.push(uniqueMaterials[k])
     }
 
-    for (let i = 0; i < ranges.length; i++) {
-      this.geometry.groups = this.drawRanges.integrateRange(
-        this.groups,
-        this.materials,
-        ranges[i]
-      )
-    }
+    this.geometry.groups = this.drawRanges.integrateRanges(
+      this.groups,
+      this.materials,
+      ranges
+    )
+    // for (let i = 0; i < ranges.length; i++) {
+    //   this.geometry.groups = this.drawRanges.integrateRange(
+    //     this.groups,
+    //     this.materials,
+    //     ranges[i]
+    //   )
+    // }
 
     let count = 0
     this.geometry.groups.forEach((value) => (count += value.count))

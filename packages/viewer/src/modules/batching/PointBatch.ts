@@ -23,6 +23,7 @@ import Logger from 'js-logger'
 import { ObjectLayers } from '../../IViewer'
 import { DrawGroup } from './InstancedMeshBatch'
 import Materials from '../materials/Materials'
+import { DrawRanges } from './DrawRanges'
 
 export default class PointBatch implements Batch {
   public id: string
