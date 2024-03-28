@@ -107,7 +107,7 @@
     "zxcvbn": "^4.4.2"
   },
   "devDependencies": {
-    "@apollo/rover": "^0.14.1",
+    "@apollo/rover": "^0.23.0",
     "@bull-board/express": "^4.2.2",
     "@faker-js/faker": "^7.1.0",
     "@graphql-codegen/cli": "^2.16.3",
