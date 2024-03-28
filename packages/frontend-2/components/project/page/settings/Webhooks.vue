@@ -52,19 +52,20 @@
         <FormSwitch
           :model-value="!!item.enabled"
           icons
+          class="scale-90"
           @update:model-value="(newValue) => onEnabledChange(item, newValue)"
         />
       </template>
       <template #data="{ item }">
         <div class="flex flex-col">
           <h3
-            class="font-bold text-base truncate"
+            class="font-bold text-sm truncate"
             :class="{ 'opacity-60': !item.enabled }"
           >
             {{ item.description }}
           </h3>
 
-          <div class="flex gap-1.5 items-center">
+          <div class="flex gap-1 items-center">
             <div class="h-4 w-4" :class="{ grayscale: !item.enabled }">
               <InformationCircleIcon
                 v-if="getHistoryStatus(item) === HistoryStatus.NoEvents"
@@ -83,11 +84,11 @@
                 class="text-danger"
               />
             </div>
-            <span class="text-foreground opacity-50 text-sm truncate">
+            <span class="text-foreground opacity-50 text-xs truncate">
               {{ getHistoryStatusInfo(item) }}
             </span>
           </div>
-          <span class="text-foreground opacity-50 text-sm truncate">
+          <span class="text-foreground opacity-50 text-xs truncate">
             {{ item.url }}
           </span>
         </div>
