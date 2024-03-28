@@ -78,7 +78,6 @@ export class DrawRanges {
     ranges: BatchUpdateRange[]
   ): Array<DrawGroup> {
     let _flatRanges: Array<number> = []
-    // const incomingMaterialIndex = 1 //materials.indexOf(range.material)
     groups.sort((a, b) => a.start - b.start)
 
     const edgesForward = {}
@@ -100,6 +99,7 @@ export class DrawRanges {
       const range = ranges[k]
       const r0 = range.offset
       const r0Index = _flatRanges.findIndex((value) => value > r0)
+      const next = _flatRanges[r0Index]
       _flatRanges.splice(r0Index, 0, r0)
 
       const r1 = range.offset + range.count
@@ -110,27 +110,21 @@ export class DrawRanges {
         return !(value > r0 && value < r1)
       })
       _flatRanges = [...new Set(_flatRanges)]
+
+      const materialIndex = materials.indexOf(range.material)
+      edgesForward[r0] = materialIndex
+      edgesForward[r1] =
+        edgesForward[next] !== undefined ? edgesForward[next] : edgesBackwards[next]
     }
 
     const drawRanges = []
     for (let k = 0; k < _flatRanges.length - 1; k++) {
       const start = _flatRanges[k]
       const end = _flatRanges[k + 1]
-      // const rangeMaterialIndex =
-      //   range.offset === start && range.offset + range.count === end
-      //     ? incomingMaterialIndex
-      //     : null
-
-      // const edgeIndex =
-      //   edgesForward[start] !== undefined
-      //     ? edgesForward[start]
-      //     : edgesBackwards[end] !== undefined
-      //     ? edgesBackwards[end]
-      //     : null
       drawRanges.push({
         start,
         count: end - start,
-        materialIndex: 1
+        materialIndex: edgesForward[start]
       })
     }
 

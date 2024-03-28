@@ -16,18 +16,30 @@ describe('Draw Ranges', () => {
         materialIndex: 0
       } as DrawGroup
     ]
-    groups = drawRange.integrateRange(groups, [material0, material1], {
-      offset: 0,
-      count: 2095,
-      material: material1
-    })
+    groups = drawRange.integrateRanges(
+      groups,
+      [material0, material1],
+      [
+        {
+          offset: 0,
+          count: 2095,
+          material: material1
+        }
+      ]
+    )
     expect(groups).toMatchSnapshot()
 
-    groups = drawRange.integrateRange(groups, [material0, material1], {
-      offset: 0,
-      count: 2094,
-      material: material0
-    })
+    groups = drawRange.integrateRanges(
+      groups,
+      [material0, material1],
+      [
+        {
+          offset: 0,
+          count: 2094,
+          material: material0
+        }
+      ]
+    )
     expect(groups).toMatchSnapshot()
 
     groups = [
@@ -37,11 +49,17 @@ describe('Draw Ranges', () => {
         materialIndex: 0
       } as DrawGroup
     ]
-    groups = drawRange.integrateRange(groups, [material0, material1], {
-      offset: 2094,
-      count: 1,
-      material: material1
-    })
+    groups = drawRange.integrateRanges(
+      groups,
+      [material0, material1],
+      [
+        {
+          offset: 2094,
+          count: 1,
+          material: material1
+        }
+      ]
+    )
     expect(groups).toMatchSnapshot()
   })
 
@@ -71,25 +89,23 @@ describe('Draw Ranges', () => {
 
     const drawRange = new DrawRanges()
 
-    groups = drawRange.integrateRange(groups, [material0, material1], {
-      offset: 36,
-      count: 36,
-      material: material1
-    })
-    expect(groups).toMatchSnapshot()
-
-    groups = drawRange.integrateRange(groups, [material0, material1], {
-      offset: 180,
-      count: 1395,
-      material: material1
-    })
-    expect(groups).toMatchSnapshot()
-
-    groups = drawRange.integrateRange(groups, [material0, material1], {
-      offset: 1581,
-      count: 32766,
-      material: material1
-    })
+    groups = drawRange.integrateRanges(
+      groups,
+      [material0, material1],
+      [
+        { offset: 36, count: 36, material: material1 },
+        {
+          offset: 180,
+          count: 1395,
+          material: material1
+        },
+        {
+          offset: 1581,
+          count: 32766,
+          material: material1
+        }
+      ]
+    )
     expect(groups).toMatchSnapshot()
   })
 
@@ -123,14 +139,16 @@ describe('Draw Ranges', () => {
 
     const drawRange = new DrawRanges()
 
-    groups = drawRange.integrateRange(
+    groups = drawRange.integrateRanges(
       groups,
       [material0, material1, material2, material3, material4],
-      {
-        offset: 36,
-        count: 257,
-        material: material4
-      }
+      [
+        {
+          offset: 36,
+          count: 257,
+          material: material4
+        }
+      ]
     )
     expect(groups).toMatchSnapshot()
   })
