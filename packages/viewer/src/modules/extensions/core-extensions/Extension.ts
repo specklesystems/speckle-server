@@ -1,6 +1,7 @@
 import { IViewer } from '../../..'
 import EventEmitter from '../../EventEmitter'
 
+/**TO DO: Need to add the enabled accesor */
 export abstract class Extension extends EventEmitter {
   public get inject() {
     return []

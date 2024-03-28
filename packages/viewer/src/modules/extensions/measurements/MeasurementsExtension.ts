@@ -61,10 +61,6 @@ export class MeasurementsExtension extends Extension {
     return this._enabled
   }
 
-  public get visible(): boolean {
-    return this._options.visible
-  }
-
   public set enabled(value: boolean) {
     this._enabled = value
     if (this._activeMeasurement) {
@@ -76,8 +72,8 @@ export class MeasurementsExtension extends Extension {
     this.renderer.resetPipeline()
   }
 
-  public set paused(value: boolean) {
-    this._paused = value
+  public get options(): MeasurementOptions {
+    return this._options
   }
 
   public set options(options: MeasurementOptions) {
@@ -144,7 +140,7 @@ export class MeasurementsExtension extends Extension {
     if (this._frameLock) {
       return
     }
-
+    // const start = performance.now()
     let result =
       (this.renderer.intersections.intersect(
         this.renderer.scene,
@@ -190,6 +186,7 @@ export class MeasurementsExtension extends Extension {
     this.renderer.resetPipeline()
     this._frameLock = true
     this._sceneHit = true
+    // console.log('Time -> ', performance.now() - start)
   }
 
   protected onPointerClick(data) {
@@ -289,7 +286,7 @@ export class MeasurementsExtension extends Extension {
     this.finishMeasurement()
   }
 
-  protected startMeasurement() {
+  protected startMeasurement(): void {
     if (this._options.type === MeasurementType.PERPENDICULAR)
       this._activeMeasurement = new PerpendicularMeasurement()
     else if (this._options.type === MeasurementType.POINTTOPOINT)
@@ -335,7 +332,7 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  public clearMeasurements() {
+  public clearMeasurements(): void {
     this.removeMeasurement()
     this.measurements.forEach((measurement: Measurement) => {
       this.renderer.scene.remove(measurement)
@@ -408,7 +405,7 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  protected updateClippingPlanes(planes: Plane[]) {
+  protected updateClippingPlanes(planes: Plane[]): void {
     this.measurements.forEach((value) => {
       value.updateClippingPlanes(planes)
     })

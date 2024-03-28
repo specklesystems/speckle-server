@@ -16,7 +16,9 @@ import {
   AllBatchUpdateRange,
   Batch,
   BatchUpdateRange,
+  DrawGroup,
   GeometryType,
+  INSTANCE_TRANSFORM_BUFFER_STRIDE,
   NoneBatchUpdateRange
 } from './Batch'
 import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh'
@@ -29,15 +31,7 @@ import { InstancedBatchObject } from './InstancedBatchObject'
 import Logger from 'js-logger'
 import Materials from '../materials/Materials'
 
-export interface DrawGroup {
-  start: number
-  count: number
-  materialIndex?: number
-}
-
 export default class InstancedMeshBatch implements Batch {
-  public static readonly INSTANCE_TRANSFORM_BUFFER_STRIDE = 16
-  public static readonly INSTANCE_GRADIENT_BUFFER_STRIDE = 1
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
@@ -125,7 +119,7 @@ export default class InstancedMeshBatch implements Batch {
   }
 
   /** Note: You can only set visibility on ranges that exist as draw groups! */
-  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+  public setVisibleRange(ranges: BatchUpdateRange[]) {
     /** Entire batch needs to NOT be drawn */
     if (ranges.length === 1 && ranges[0] === NoneBatchUpdateRange) {
       this.mesh.children.forEach((instance) => (instance.visible = false))
@@ -246,7 +240,7 @@ export default class InstancedMeshBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
-  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+  public setBatchBuffers(range: BatchUpdateRange[]): void {
     for (let k = 0; k < range.length; k++) {
       if (range[k].materialOptions) {
         if (range[k].materialOptions.rampIndex !== undefined) {
@@ -355,7 +349,7 @@ export default class InstancedMeshBatch implements Batch {
     }
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(ranges: BatchUpdateRange[]) {
     ranges.forEach((value: BatchUpdateRange) => {
       if (value.material) {
         value.material = this.mesh.getCachedMaterial(value.material)
@@ -385,7 +379,7 @@ export default class InstancedMeshBatch implements Batch {
     if (count !== this.renderViews.length * 16) {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
-    this.setBatchBuffers(...ranges)
+    this.setBatchBuffers(ranges)
     this.needsFlatten = true
   }
 
@@ -551,7 +545,7 @@ export default class InstancedMeshBatch implements Batch {
       )
   }
 
-  private shuffleDrawGroups() {
+  private shuffleDrawGroups(): void {
     const groups = this.groups
       .sort((a, b) => {
         return a.start - b.start
@@ -609,12 +603,12 @@ export default class InstancedMeshBatch implements Batch {
         let subArray = sourceTransformBuffer.subarray(start, start + count)
         targetTransformBuffer.set(subArray, targetBufferOffset)
         subArray = sourceGradientBuffer.subarray(
-          start / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
-          (start + count) / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+          start / INSTANCE_TRANSFORM_BUFFER_STRIDE,
+          (start + count) / INSTANCE_TRANSFORM_BUFFER_STRIDE
         )
         targetGradientBuffer.set(
           subArray,
-          targetBufferOffset / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+          targetBufferOffset / INSTANCE_TRANSFORM_BUFFER_STRIDE
         )
         let rvElemCount = 0
         for (let m = 0; m < scratchRvs.length; m++) {
@@ -657,24 +651,25 @@ export default class InstancedMeshBatch implements Batch {
       return this.materials[value.materialIndex].visible === false
     })
     if (hiddenGroup) {
-      this.setVisibleRange({
-        offset: 0,
-        count: hiddenGroup.start
-      })
+      this.setVisibleRange([
+        {
+          offset: 0,
+          count: hiddenGroup.start
+        }
+      ])
     }
   }
 
-  public resetDrawRanges() {
+  public resetDrawRanges(): void {
     this.groups.length = 0
     this.materials.length = 0
     this.groups.push({
       start: 0,
-      count:
-        this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+      count: this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE,
       materialIndex: 0
     })
     this.materials.push(this.batchMaterial)
-    this.setVisibleRange(AllBatchUpdateRange)
+    this.setVisibleRange([AllBatchUpdateRange])
     this.mesh.updateDrawGroups(
       this.getCurrentTransformBuffer(),
       this.getCurrentGradientBuffer()
@@ -697,26 +692,26 @@ export default class InstancedMeshBatch implements Batch {
     return this.instanceGradientBuffer
   }
 
-  public buildBatch() {
+  public buildBatch(): void {
     const batchObjects = []
     let instanceBVH = null
     this.instanceTransformBuffer0 = new Float32Array(
-      this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+      this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE
     )
     this.instanceTransformBuffer1 = new Float32Array(
-      this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+      this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE
     )
     const targetInstanceTransformBuffer = this.getCurrentTransformBuffer()
 
     for (let k = 0; k < this.renderViews.length; k++) {
       this.renderViews[k].renderData.geometry.transform.toArray(
         targetInstanceTransformBuffer,
-        k * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+        k * INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
       this.renderViews[k].setBatchData(
         this.id,
-        k * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
-        InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+        k * INSTANCE_TRANSFORM_BUFFER_STRIDE,
+        INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
       const batchObject = new InstancedBatchObject(this.renderViews[k], k)
       if (!instanceBVH) {
@@ -756,10 +751,6 @@ export default class InstancedMeshBatch implements Batch {
     this.mesh.setBatchObjects(batchObjects)
     this.mesh.setBatchMaterial(this.batchMaterial)
     this.mesh.buildTAS()
-    const bounds = new Box3()
-    for (let k = 0; k < this.renderViews.length; k++) {
-      bounds.union(this.renderViews[k].aabb)
-    }
 
     this.geometry.boundingBox = this.mesh.TAS.getBoundingBox(new Box3())
     this.geometry.boundingSphere = this.geometry.boundingBox.getBoundingSphere(
@@ -772,8 +763,7 @@ export default class InstancedMeshBatch implements Batch {
 
     this.groups.push({
       start: 0,
-      count:
-        this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+      count: this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE,
       materialIndex: 0
     })
     this.mesh.updateDrawGroups(
@@ -847,7 +837,7 @@ export default class InstancedMeshBatch implements Batch {
     data[index] = value
   }
 
-  public purge() {
+  public purge(): void {
     this.renderViews.length = 0
     this.geometry.dispose()
     this.batchMaterial.dispose()

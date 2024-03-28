@@ -17,9 +17,13 @@ import {
 import { BatchObject } from '../batching/BatchObject'
 import Materials from '../materials/Materials'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
-import InstancedMeshBatch, { DrawGroup } from '../batching/InstancedMeshBatch'
 import { ObjectLayers } from '../../IViewer'
 import Logger from 'js-logger'
+import {
+  DrawGroup,
+  INSTANCE_GRADIENT_BUFFER_STRIDE,
+  INSTANCE_TRANSFORM_BUFFER_STRIDE
+} from '../batching/Batch'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -152,21 +156,20 @@ export default class SpeckleInstancedMesh extends Group {
           this.groups[k].start,
           this.groups[k].start + this.groups[k].count
         ),
-        InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+        INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
       group.geometry.setAttribute(
         'gradientIndex',
         new InstancedBufferAttribute(
           gradientBuffer.subarray(
-            this.groups[k].start / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+            this.groups[k].start / INSTANCE_TRANSFORM_BUFFER_STRIDE,
             (this.groups[k].start + this.groups[k].count) /
-              InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+              INSTANCE_TRANSFORM_BUFFER_STRIDE
           ),
-          InstancedMeshBatch.INSTANCE_GRADIENT_BUFFER_STRIDE
+          INSTANCE_GRADIENT_BUFFER_STRIDE
         )
       )
-      group.count =
-        this.groups[k].count / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+      group.count = this.groups[k].count / INSTANCE_TRANSFORM_BUFFER_STRIDE
       group.instanceMatrix.needsUpdate = true
       group.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
       group.frustumCulled = false
@@ -193,8 +196,7 @@ export default class SpeckleInstancedMesh extends Group {
       if (group) {
         const instance: InstancedMesh = this.instances[this.groups.indexOf(group)]
         instance.setMatrixAt(
-          (rv.batchStart - group.start) /
-            InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+          (rv.batchStart - group.start) / INSTANCE_TRANSFORM_BUFFER_STRIDE,
           batchObject.transform
         )
 

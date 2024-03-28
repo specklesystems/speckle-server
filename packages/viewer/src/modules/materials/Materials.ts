@@ -49,6 +49,7 @@ export enum FilterMaterialType {
   HIDDEN
 }
 
+/** TO DO: This still sucks */
 export interface FilterMaterial {
   filterType: FilterMaterialType
   rampIndex?: number

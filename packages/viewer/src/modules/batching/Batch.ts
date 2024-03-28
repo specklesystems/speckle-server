@@ -1,7 +1,6 @@
 import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 import { FilterMaterialOptions } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { DrawGroup } from './InstancedMeshBatch'
 
 export enum GeometryType {
   MESH,
@@ -9,6 +8,12 @@ export enum GeometryType {
   POINT,
   POINT_CLOUD,
   TEXT
+}
+
+export interface DrawGroup {
+  start: number
+  count: number
+  materialIndex?: number
 }
 
 /** TO DO: Unify point and mesh batch implementations */
@@ -30,12 +35,12 @@ export interface Batch {
 
   getCount(): number
   setBatchMaterial(material: Material): void
-  setBatchBuffers(...range: BatchUpdateRange[]): void
-  setVisibleRange(...range: BatchUpdateRange[])
+  setBatchBuffers(range: BatchUpdateRange[]): void
+  setVisibleRange(range: BatchUpdateRange[]): void
   getVisibleRange(): BatchUpdateRange
-  setDrawRanges(...ranges: BatchUpdateRange[])
-  resetDrawRanges()
-  buildBatch()
+  setDrawRanges(ranges: BatchUpdateRange[])
+  resetDrawRanges(): void
+  buildBatch(): void
   getRenderView(index: number): NodeRenderView
   getMaterialAtIndex(index: number): Material
   getMaterial(rv: NodeRenderView): Material
@@ -45,7 +50,7 @@ export interface Batch {
   getDepth(): BatchUpdateRange
   onUpdate(deltaTime: number)
   onRender(renderer: WebGLRenderer)
-  purge()
+  purge(): void
 }
 
 export interface BatchUpdateRange {
@@ -64,3 +69,6 @@ export const AllBatchUpdateRange = {
   offset: 0,
   count: Infinity
 } as BatchUpdateRange
+
+export const INSTANCE_TRANSFORM_BUFFER_STRIDE = 16
+export const INSTANCE_GRADIENT_BUFFER_STRIDE = 1

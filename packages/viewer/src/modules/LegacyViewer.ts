@@ -1,38 +1,39 @@
-import { MathUtils } from 'three'
-import {
-  Viewer,
-  BatchObject,
-  PropertyInfo,
-  DataTree,
-  WorldTree,
-  QueryResult,
-  SunLightConfiguration,
-  SpeckleView,
-  CanonicalView,
-  InlineView,
-  VisualDiffMode,
-  DiffResult,
-  MeasurementOptions,
-  CameraController,
-  DiffExtension,
-  ExplodeExtension,
-  MeasurementsExtension,
-  SectionOutlines,
-  SectionTool,
-  SelectionExtension,
-  TreeNode,
-  SpeckleLoader,
-  DefaultViewerParams,
-  ViewerParams,
-  SelectionEvent,
-  IViewer
-} from '..'
-import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
-import { ICameraProvider, PolarView } from './extensions/core-extensions/Providers'
+import { Box3, MathUtils } from 'three'
+
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Queries } from './queries/Queries'
-import { Query, QueryArgsResultMap } from './queries/Query'
-import { DataTreeBuilder } from './tree/DataTree'
+import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
+import { DataTree, DataTreeBuilder } from './deprecated/DataTree'
+import { CameraController } from './extensions/core-extensions/CameraController'
+import { SelectionExtension } from './extensions/SelectionExtension'
+import { SectionTool } from './extensions/SectionTool'
+import { Viewer } from './Viewer'
+import {
+  DefaultViewerParams,
+  IViewer,
+  SelectionEvent,
+  SpeckleView,
+  SunLightConfiguration,
+  ViewerParams
+} from '../IViewer'
+import { SectionOutlines } from './extensions/SectionOutlines'
+import { TreeNode, WorldTree } from './tree/WorldTree'
+import {
+  MeasurementOptions,
+  MeasurementsExtension
+} from './extensions/measurements/MeasurementsExtension'
+import { ExplodeExtension } from './extensions/ExplodeExtension'
+import { DiffExtension, DiffResult, VisualDiffMode } from './extensions/DiffExtension'
+import { PropertyInfo } from './filtering/PropertyManager'
+import { BatchObject } from './batching/BatchObject'
+import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
+import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
+import {
+  CanonicalView,
+  ICameraProvider,
+  InlineView,
+  PolarView
+} from './extensions/core-extensions/Providers'
 import { SelectionExtensionOptions } from './extensions/SelectionExtension'
 import { StencilOutlineType } from './materials/Materials'
 
@@ -62,7 +63,7 @@ class HighlightExtension extends SelectionExtension {
         pointSize: 4
       }
     }
-    this.setOptions(highlightMaterialData)
+    this.options = highlightMaterialData
   }
 
   public unselectObjects(ids: Array<string>) {
@@ -144,7 +145,7 @@ export class LegacyViewer extends Viewer {
     if (!box) {
       box = this.speckleRenderer.sceneBox
     }
-    this.sections.setBox(box, offset)
+    this.sections.setBox(box as Box3, offset)
   }
 
   public getSectionBoxFromObjects(objectIds: string[]) {
@@ -156,7 +157,7 @@ export class LegacyViewer extends Viewer {
   }
 
   public getCurrentSectionBox() {
-    return this.sections.getCurrentBox()
+    return this.sections.getBox()
   }
 
   public toggleSectionBox() {
@@ -179,7 +180,7 @@ export class LegacyViewer extends Viewer {
     if (!this.filtering.filteringState.selectedObjects)
       this.filtering.filteringState.selectedObjects = []
     this.filtering.filteringState.selectedObjects.push(
-      ...this.selection.getSelectedObjects().map((obj) => obj.id)
+      ...this.selection.getSelectedObjects().map((obj) => obj.id as string)
     )
     return Promise.resolve(this.filtering.filteringState)
   }
@@ -305,7 +306,9 @@ export class LegacyViewer extends Viewer {
   }
 
   private preserveSelectionFilter(filterFn: () => FilteringState): FilteringState {
-    const selectedObjects = this.selection.getSelectedObjects().map((obj) => obj.id)
+    const selectedObjects = this.selection
+      .getSelectedObjects()
+      .map((obj) => obj.id) as string[]
     if (selectedObjects.length) this.selection.clearSelection()
     const filteringState = filterFn()
     if (!filteringState.selectedObjects)
@@ -392,11 +395,11 @@ export class LegacyViewer extends Viewer {
     return new Promise((resolve) => {
       const sectionBoxVisible = this.sections.enabled
       if (sectionBoxVisible) {
-        this.sections.displayOff()
+        this.sections.visible = false
       }
       const screenshot = this.speckleRenderer.renderer.domElement.toDataURL('image/png')
       if (sectionBoxVisible) {
-        this.sections.displayOn()
+        this.sections.visible = true
       }
       resolve(screenshot)
     })

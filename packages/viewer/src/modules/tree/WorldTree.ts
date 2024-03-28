@@ -7,14 +7,14 @@ import { NodeMap } from './NodeMap'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean
-export type AsyncSearchPredicate = (node: TreeNode) => Promise<boolean>
 
 export interface NodeData {
+  id: string
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   raw: { [prop: string]: any }
   children: TreeNode[]
-  nestedNodes: TreeNode[]
   atomic: boolean
+  nestedNodes?: TreeNode[]
   subtreeId?: number
   renderView?: NodeRenderView
   instanced?: boolean
@@ -22,7 +22,7 @@ export interface NodeData {
 
 export class WorldTree {
   private renderTreeInstances: { [id: string]: RenderTree } = {}
-  public nodeMaps: { [id: string]: NodeMap } = {}
+  private nodeMaps: { [id: string]: NodeMap } = {}
   private readonly supressWarnings = true
   public static readonly ROOT_ID = 'ROOT'
   private subtreeId: number = 0
@@ -63,17 +63,17 @@ export class WorldTree {
     return this._root
   }
 
-  public get nextSubtreeId(): number {
+  private get nextSubtreeId(): number {
     return ++this.subtreeId
   }
 
-  public get nodeCount() {
+  public get nodeCount(): number {
     let nodeCount = 0
     for (const k in this.nodeMaps) nodeCount += this.nodeMaps[k].nodeCount
     return nodeCount
   }
 
-  public isRoot(node: TreeNode) {
+  public isRoot(node: TreeNode): boolean {
     return node === this._root
   }
 
@@ -81,7 +81,7 @@ export class WorldTree {
     return node.parent === this._root
   }
 
-  public parse(model) {
+  public parse(model): TreeNode {
     return this.tree.parse(model)
   }
 
@@ -105,7 +105,7 @@ export class WorldTree {
     if (this.nodeMaps[parent.model.subtreeId]?.addNode(node)) parent.addChild(node)
   }
 
-  public removeNode(node: TreeNode) {
+  public removeNode(node: TreeNode): void {
     node.drop()
   }
 
@@ -116,7 +116,7 @@ export class WorldTree {
     return (node ? node : this.root).all(predicate)
   }
 
-  public findId(id: string, subtreeId?: number) {
+  public findId(id: string, subtreeId?: number): TreeNode[] {
     let idNode = null
     if (subtreeId) {
       idNode = this.nodeMaps[subtreeId].getNodeById(id)
@@ -129,6 +129,7 @@ export class WorldTree {
     return idNode
   }
 
+  /** TODO: Would rather not have this */
   public findSubtree(id: string) {
     let idNode = null
     for (const k in this.nodeMaps) {
@@ -141,10 +142,11 @@ export class WorldTree {
     return node.getPath().reverse().slice(1) // We skip the node itself
   }
 
-  public getInstances(subtree: string): { [id: string]: Record<string, TreeNode> } {
-    return this.nodeMaps[subtree].instances
+  public getInstances(subtreeId: string): { [id: string]: Record<string, TreeNode> } {
+    return this.nodeMaps[subtreeId].instances
   }
 
+  /** TO DO: We might want to add boolean as return type here too */
   public walk(predicate: SearchPredicate, node?: TreeNode): void {
     if (!node && !this.supressWarnings) {
       Logger.warn(`Root will be used for searching. You might not want that`)

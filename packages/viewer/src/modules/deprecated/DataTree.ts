@@ -1,7 +1,7 @@
 import TreeModel from 'tree-model'
-import { TreeNode, WorldTree } from './WorldTree'
+import { TreeNode, WorldTree } from '../tree/WorldTree'
+import { SpeckleObject } from '../../IViewer'
 
-export type SpeckleObject = Record<string, unknown>
 export type ObjectPredicate = (guid: string, obj: SpeckleObject) => boolean
 
 export interface DataTree {

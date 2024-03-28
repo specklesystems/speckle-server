@@ -5,6 +5,7 @@ import {
   IViewer,
   ObjectLayers,
   SelectionEvent,
+  SpeckleObject,
   SpeckleView,
   UpdateFlags,
   ViewerEvent,
@@ -16,9 +17,8 @@ import {
   NumericPropertyInfo
 } from './modules/filtering/PropertyManager'
 import { SunLightConfiguration } from './IViewer'
-import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
+import { DataTree, ObjectPredicate } from './modules/deprecated/DataTree'
 import { World } from './modules/World'
-import { DebugViewer } from './modules/DebugViewer'
 import { NodeData, TreeNode, WorldTree } from './modules/tree/WorldTree'
 import {
   PointQuery,
@@ -69,10 +69,11 @@ import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial
 import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial'
 import { SpeckleText } from './modules/objects/SpeckleText'
 import { NodeRenderView } from './modules/tree/NodeRenderView'
+import { ExtendedIntersection } from './modules/objects/SpeckleRaycaster'
+import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter'
 
 export {
   Viewer,
-  DebugViewer,
   LegacyViewer,
   DefaultViewerParams,
   ViewerEvent,
@@ -109,7 +110,8 @@ export {
   SpeckleStandardMaterial,
   SpeckleTextMaterial,
   SpeckleText,
-  NodeRenderView
+  NodeRenderView,
+  SpeckleGeometryConverter
 }
 
 export type {
@@ -136,5 +138,6 @@ export type {
   Utils,
   DiffResult,
   MeasurementOptions,
-  FilteringState
+  FilteringState,
+  ExtendedIntersection
 }

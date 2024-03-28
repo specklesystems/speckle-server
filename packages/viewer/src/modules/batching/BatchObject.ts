@@ -53,10 +53,6 @@ export class BatchObject {
     return this._batchIndex
   }
 
-  public get speckleId(): string {
-    return this._renderView.renderData.id
-  }
-
   public get aabb(): Box3 {
     const box = new Box3().copy(this.renderView.aabb)
     box.applyMatrix4(this.transform)
@@ -138,9 +134,9 @@ export class BatchObject {
 
   public transformTRS(
     translation: VectorLike,
-    euler: VectorLike,
-    scale: VectorLike,
-    pivot: VectorLike
+    euler?: VectorLike,
+    scale?: VectorLike,
+    pivot?: VectorLike
   ) {
     let T: Matrix4 = BatchObject.matBuff0.identity()
     let R: Matrix4 = BatchObject.matBuff1.identity()

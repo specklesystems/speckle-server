@@ -18,11 +18,11 @@ import {
   AllBatchUpdateRange,
   Batch,
   BatchUpdateRange,
+  DrawGroup,
   GeometryType,
   NoneBatchUpdateRange
 } from './Batch'
 import { ObjectLayers } from '../../IViewer'
-import { DrawGroup } from './InstancedMeshBatch'
 import Materials from '../materials/Materials'
 
 export default class LineBatch implements Batch {
@@ -94,7 +94,7 @@ export default class LineBatch implements Batch {
     renderer.getDrawingBufferSize(this.batchMaterial.resolution)
   }
 
-  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+  public setVisibleRange(ranges: BatchUpdateRange[]) {
     if (
       ranges.length === 1 &&
       ranges[0].offset === NoneBatchUpdateRange.offset &&
@@ -154,7 +154,7 @@ export default class LineBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
-  public setBatchBuffers(...ranges: BatchUpdateRange[]): void {
+  public setBatchBuffers(ranges: BatchUpdateRange[]): void {
     const data = this.colorBuffer.array as number[]
 
     for (let i = 0; i < ranges.length; i++) {
@@ -184,16 +184,18 @@ export default class LineBatch implements Batch {
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    this.setBatchBuffers(...ranges)
+  public setDrawRanges(ranges: BatchUpdateRange[]) {
+    this.setBatchBuffers(ranges)
   }
 
   public resetDrawRanges() {
-    this.setDrawRanges({
-      offset: 0,
-      count: Infinity,
-      material: this.batchMaterial
-    })
+    this.setDrawRanges([
+      {
+        offset: 0,
+        count: Infinity,
+        material: this.batchMaterial
+      }
+    ])
     this.mesh.material = this.batchMaterial
     this.mesh.visible = true
     this.batchMaterial.transparent = false

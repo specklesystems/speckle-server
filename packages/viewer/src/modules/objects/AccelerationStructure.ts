@@ -274,9 +274,10 @@ export class AccelerationStructure {
     return output.applyMatrix4(AccelerationStructure.MatBuff) as T
   }
 
-  public getBoundingBox(target) {
-    this._bvh.getBoundingBox(target)
-    return this.transformOutput(target)
+  public getBoundingBox(target?: Box3): Box3 {
+    const _target: Box3 = target ? target : new Box3()
+    this._bvh.getBoundingBox(_target)
+    return this.transformOutput(_target)
   }
 
   public getVertexAtIndex(index: number): Vector3 {

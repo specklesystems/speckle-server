@@ -1,4 +1,4 @@
-import { Box3, Matrix4 } from 'three'
+import { Matrix4 } from 'three'
 import { TreeNode, WorldTree } from './WorldTree'
 import Materials from '../materials/Materials'
 import { NodeRenderData, NodeRenderView } from './NodeRenderView'
@@ -9,12 +9,7 @@ import { Geometry } from '../converter/Geometry'
 export class RenderTree {
   private tree: WorldTree
   private root: TreeNode
-  private _treeBounds: Box3 = new Box3()
   private cancel = false
-
-  public get treeBounds(): Box3 {
-    return this._treeBounds
-  }
 
   public get id(): string {
     return this.root.model.id
@@ -55,7 +50,6 @@ export class RenderTree {
           )
         }
         node.model.renderView.computeAABB()
-        this._treeBounds.union(node.model.renderView.aabb)
       } else if (node.model.renderView.hasMetadata) {
         node.model.renderView.renderData.geometry.bakeTransform.premultiply(transform)
       }
@@ -151,53 +145,31 @@ export class RenderTree {
     })
   }
 
-  /** This gets the render views for a particular node/id.
-   *  Currently it doesn't treat Blocks in a special way, but
-   *  we might want to.
-   */
-  public getRenderViewsForNode(node: TreeNode, parent?: TreeNode): NodeRenderView[] {
-    if (
-      node.model.atomic &&
-      node.model.renderView &&
-      node.model.renderView.renderData.speckleType !== SpeckleType.RevitInstance &&
-      node.model.renderView.renderData.speckleType !== SpeckleType.BlockInstance
-    ) {
-      return [node.model.renderView]
-    }
-
-    return (parent ? parent : node.parent)
-      .all((_node: TreeNode): boolean => {
-        return (
-          _node.model.renderView &&
-          (_node.model.renderView.hasGeometry || _node.model.renderView.hasMetadata)
-        )
-      })
-      .map((val: TreeNode) => val.model.renderView)
+  public getRenderViewsForNode(node: TreeNode): NodeRenderView[] {
+    return this.getRenderViewNodesForNode(node).map(
+      (val: TreeNode) => val.model.renderView
+    )
   }
 
-  public getRenderViewNodesForNode(node: TreeNode, parent?: TreeNode): TreeNode[] {
+  public getRenderViewNodesForNode(node: TreeNode): TreeNode[] {
     if (
       node.model.atomic &&
-      node.model.renderView &&
+      node.model.renderView
+      /** This should not be needed anymore. */
+      /*&&
       node.model.renderView.renderData.speckleType !== SpeckleType.RevitInstance &&
       node.model.renderView.renderData.speckleType !== SpeckleType.BlockInstance
+      */
     ) {
       return [node]
     }
 
-    return (parent ? parent : node.parent).all((_node: TreeNode): boolean => {
+    return node.all((_node: TreeNode): boolean => {
       return (
         _node.model.renderView &&
         (_node.model.renderView.hasGeometry || _node.model.renderView.hasMetadata)
       )
     })
-  }
-
-  public getAtomicParent(node: TreeNode) {
-    if (node.model.atomic) {
-      return node
-    }
-    return this.tree.getAncestors(node).find((node) => node.model.atomic)
   }
 
   public getRenderViewsForNodeId(id: string): NodeRenderView[] {
@@ -208,30 +180,26 @@ export class RenderTree {
     }
     const ret = []
     nodes.forEach((node: TreeNode) => {
-      ret.push(...this.getRenderViewsForNode(node, node))
+      ret.push(...this.getRenderViewsForNode(node))
     })
     return ret
   }
 
-  public getRenderViewForNodeId(id: string): NodeRenderView {
-    const nodes = this.tree.findId(id)
-    if (!nodes) {
-      Logger.warn(`Id ${id} does not exist`)
-      return null
+  public getAtomicParent(node: TreeNode): TreeNode {
+    if (node.model.atomic) {
+      return node
     }
-    if (nodes.length > 1) {
-      Logger.warn(`Multiple nodes with ${id} found. Returning first only`)
-    }
-    return nodes[0].model.renderView
+    return this.tree.getAncestors(node).find((node) => node.model.atomic)
   }
 
   public purge() {
     this.tree = null
   }
 
-  public cancelBuild(subtreeId: string) {
+  /** TO DO: Need to purge only if currently building */
+  public cancelBuild(): void {
     this.cancel = true
-    this.tree.purge(subtreeId)
+    this.tree.purge(this.id)
     this.purge()
   }
 }

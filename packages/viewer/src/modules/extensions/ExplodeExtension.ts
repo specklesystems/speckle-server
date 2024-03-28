@@ -1,6 +1,6 @@
 import { Vector3 } from 'three'
 import { Extension } from './core-extensions/Extension'
-import { UpdateFlags } from '../..'
+import { UpdateFlags } from '../../IViewer'
 
 export class ExplodeExtension extends Extension {
   private explodeTime = -1

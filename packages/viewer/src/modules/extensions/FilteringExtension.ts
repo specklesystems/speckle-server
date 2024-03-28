@@ -14,6 +14,7 @@ import {
   StringPropertyInfo
 } from '../filtering/PropertyManager'
 
+/** TO DO: Should remove selectedObjects entirely*/
 export type FilteringState = {
   selectedObjects?: string[]
   hiddenObjects?: string[]
@@ -155,7 +156,7 @@ export class FilteringExtension extends Extension {
       const rvMap = {}
       this.WTI.walk((node: TreeNode) => {
         if (!node.model.atomic || this.WTI.isRoot(node)) return true
-        const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node, node)
+        const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node)
         if (!this.VisibilityState.ids[node.model.raw.id]) {
           rvNodes.forEach((rvNode: TreeNode) => {
             rvMap[rvNode.model.id] = rvNode.model.renderView
@@ -177,7 +178,7 @@ export class FilteringExtension extends Extension {
     // if (!node.model.atomic) return true
     if (this.VisibilityState.ids[node.model.id]) {
       this.VisibilityState.rvs.push(
-        ...this.WTI.getRenderTree().getRenderViewsForNode(node, node)
+        ...this.WTI.getRenderTree().getRenderViewsForNode(node)
       )
     }
     return true
@@ -185,7 +186,7 @@ export class FilteringExtension extends Extension {
 
   private isolationWalk(node: TreeNode): boolean {
     if (!node.model.atomic || this.WTI.isRoot(node)) return true
-    const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node, node)
+    const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node)
     if (!this.VisibilityState.ids[node.model.raw.id]) {
       this.VisibilityState.rvs.push(...rvs)
     } else {
@@ -196,7 +197,7 @@ export class FilteringExtension extends Extension {
     return true
   }
 
-  public setColorFilter(prop: PropertyInfo, ghost = true) {
+  public setColorFilter(prop: PropertyInfo, ghost = true): FilteringState {
     if (prop.type === 'number') {
       this.ColorStringFilterState = null
       this.ColorNumericFilterState = new ColorNumericFilterState()
@@ -258,7 +259,7 @@ export class FilteringExtension extends Extension {
       if (!node.model.atomic || this.WTI.isRoot(node) || this.WTI.isSubtreeRoot(node))
         return true
 
-      const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node, node)
+      const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node)
       const idx = matchingIds[node.model.raw.id]
       if (!idx) {
         nonMatchingRvs.push(...rvs)
@@ -311,7 +312,7 @@ export class FilteringExtension extends Extension {
       const vg = valueGroupColors.find((v) => {
         return v['idMap'][node.model.raw.id]
       })
-      const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node, node)
+      const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node)
       if (!vg) {
         nonMatchingRvs.push(...rvNodes.map((rvNode) => rvNode.model.renderView))
         return true
@@ -346,7 +347,9 @@ export class FilteringExtension extends Extension {
     return this.filteringState
   }
 
-  public setUserObjectColors(groups: { objectIds: string[]; color: string }[]) {
+  public setUserObjectColors(
+    groups: { objectIds: string[]; color: string }[]
+  ): FilteringState {
     this.UserspaceColorState = new UserspaceColorState()
     // Resetting any other filtering color ops as they're not compatible
     this.ColorNumericFilterState = null
@@ -368,7 +371,7 @@ export class FilteringExtension extends Extension {
           group.nodes.push(...nodes)
           nodes.forEach((node: TreeNode) => {
             const rvsNodes = this.WTI.getRenderTree()
-              .getRenderViewNodesForNode(node, node)
+              .getRenderViewNodesForNode(node)
               .map((rvNode) => rvNode.model.renderView)
             if (rvsNodes) group.rvs.push(...rvsNodes)
           })
@@ -384,7 +387,7 @@ export class FilteringExtension extends Extension {
     return this.setFilters()
   }
 
-  public removeUserObjectColors() {
+  public removeUserObjectColors(): FilteringState {
     this.UserspaceColorState = null
     return this.setFilters()
   }

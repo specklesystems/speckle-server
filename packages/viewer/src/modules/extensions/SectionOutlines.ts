@@ -96,7 +96,7 @@ export class SectionOutlines extends Extension {
     this.sectionProvider.on(SectionToolEvent.Updated, this.sectionUpdated.bind(this))
   }
 
-  public getPlaneOutline(planeId: PlaneId) {
+  private getPlaneOutline(planeId: PlaneId) {
     return this.planeOutlines[planeId]
   }
 
@@ -107,7 +107,7 @@ export class SectionOutlines extends Extension {
     }
   }
 
-  public sectionUpdated(planes: Plane[]) {
+  private sectionUpdated(planes: Plane[]) {
     if (!this.sectionProvider.enabled) this.enable(false)
     for (const plane in this.planeOutlines) {
       const clippingPlanes = planes.filter((value) => this.getPlaneId(value) !== plane)

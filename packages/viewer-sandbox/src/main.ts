@@ -4,7 +4,6 @@ import {
   DefaultViewerParams,
   SelectionEvent,
   ViewerEvent,
-  DebugViewer,
   Viewer
 } from '@speckle/viewer'
 
@@ -40,7 +39,7 @@ const createViewer = async (containerName: string, stream: string) => {
   params.verbose = true
 
   const multiSelectList: SelectionEvent[] = []
-  const viewer: Viewer = new DebugViewer(container, params)
+  const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
   const cameraController = viewer.createExtension(CameraController)
@@ -64,7 +63,7 @@ const createViewer = async (containerName: string, stream: string) => {
   // rotateCamera // use it
   // boxSelect // use it
 
-  const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
+  const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
   window.addEventListener('load', () => {
     viewer.resize()
@@ -120,6 +119,8 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
+    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
@@ -345,6 +346,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/576310a6d5'
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/489d42ca8c'
     // 'https://latest.speckle.dev/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
+    // 'https://speckle.xyz/streams/0ed2cdc8eb/commits/350c4e1a4d'
 
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec'
 
@@ -372,7 +374,6 @@ const getStream = () => {
 
     // Rebar
     // 'https://speckle.xyz/streams/b4086833f8/commits/94df4c6d16?overlay=c5b9c260ea,e3dc287d61,eaedd7d0a5,7f126ce0dd,02fee34ce3,9bda31611f,110282c4db,533c311e29,bf6814d779,1ba52affcf,cc4e75125e,3fd628e4e3'
-    'http://127.0.0.1:3000/streams/30b75f0dea/objects/db765ed44ae10176c0bf8ba60d1ce67d'
   )
 }
 
