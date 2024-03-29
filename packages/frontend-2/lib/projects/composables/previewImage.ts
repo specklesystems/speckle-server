@@ -58,7 +58,7 @@ export function usePreviewImageBlob(
           ? [{ rel: 'preload', as: <const>'image', href: directPreviewUrl }]
           : []),
         ...(directPanoramicUrl?.length
-          ? [{ rel: 'preload', as: <const>'image', href: directPanoramicUrl }]
+          ? [{ rel: 'prefetch', as: <const>'image', href: directPanoramicUrl }]
           : [])
       ]
     })
