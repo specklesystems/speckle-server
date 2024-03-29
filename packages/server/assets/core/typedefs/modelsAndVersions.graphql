@@ -42,6 +42,17 @@ extend type Project {
   version(id: String!): Version
 }
 
+extend type User {
+  """
+  Get (count of) user's versions. By default gets all versions of all projects the user has access to.
+  Set authoredOnly=true to only retrieve versions authored by the user.
+
+  Note: Only count resolution is currently implemented
+  """
+  versions(authoredOnly: Boolean! = false, limit: Int! = 25): CountOnlyCollection!
+    @isOwner
+}
+
 input ProjectModelsTreeFilter {
   """
   Search for specific models. If used, tree items from different levels may be mixed.

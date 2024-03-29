@@ -27,6 +27,16 @@ import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
 
 export = {
+  User: {
+    async versions(parent, args, ctx) {
+      const authoredOnly = args.authoredOnly
+      return {
+        totalCount: authoredOnly
+          ? await ctx.loaders.users.getAuthoredCommitCount.load(parent.id)
+          : await ctx.loaders.users.getStreamCommitCount.load(parent.id)
+      }
+    }
+  },
   Project: {
     async models(parent, args, ctx) {
       // If limit=0 & no filter, short-cut full execution and use data loader

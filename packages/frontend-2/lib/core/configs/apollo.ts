@@ -148,6 +148,10 @@ function createCache(): InMemoryCache {
           projects: {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('ProjectCollection')
+          },
+          versions: {
+            keyArgs: ['authoredOnly', 'limit'],
+            merge: buildAbstractCollectionMergeFunction('CountOnlyCollection')
           }
         }
       },

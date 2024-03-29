@@ -131,9 +131,17 @@ const importVersions = async (params: {
   localAuthorId: string
   origin: string
   syncComments?: boolean
+  token?: string
 }) => {
-  const { logger, projectInfo, origin, localProjectId, syncComments, localAuthorId } =
-    params
+  const {
+    logger,
+    projectInfo,
+    origin,
+    localProjectId,
+    syncComments,
+    localAuthorId,
+    token
+  } = params
   const projectId = projectInfo.projectInfo.id
 
   logger.debug(`Serially downloading ${projectInfo.versions.length} versions...`)
@@ -156,7 +164,8 @@ const importVersions = async (params: {
         commitUrl: url.toString(),
         targetStreamId: localProjectId,
         commentAuthorId: syncComments ? localAuthorId : undefined,
-        branchName
+        branchName,
+        token
       },
       { logger }
     )
@@ -177,19 +186,23 @@ export const downloadProject = async (
      */
     authorId: string
     syncComments?: boolean
+    /**
+     * Specify if target project is private
+     */
+    token?: string
   },
   options?: Partial<{
     logger: Logger
   }>
 ) => {
-  const { projectUrl, authorId, syncComments } = params
+  const { projectUrl, authorId, syncComments, token } = params
   const { logger = crossServerSyncLogger } = options || {}
 
   logger.info(`Project download started at: ${new Date().toISOString()}`)
 
   const localResources = await getLocalResources({ authorId })
   const parsedUrl = parseIncomingUrl(projectUrl)
-  const client = await createApolloClient(parsedUrl.origin)
+  const client = await createApolloClient(parsedUrl.origin, { token })
 
   logger.debug(`Resolving project metadata and associated versions...`)
   const projectInfo = await getProjectMetadata({
@@ -209,7 +222,8 @@ export const downloadProject = async (
     localProjectId: project.id,
     localAuthorId: localResources.user.id,
     origin: parsedUrl.origin,
-    syncComments
+    syncComments,
+    token
   })
   logger.info(`Project download completed at: ${new Date().toISOString()}`)
 
