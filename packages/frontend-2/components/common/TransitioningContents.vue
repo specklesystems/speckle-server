@@ -1,5 +1,10 @@
 <script lang="ts">
-import { waitIntervalUntil, type Nullable, timeoutAt } from '@speckle/shared'
+import {
+  waitIntervalUntil,
+  type Nullable,
+  timeoutAt,
+  WaitIntervalUntilCanceledError
+} from '@speckle/shared'
 import { until } from '@vueuse/core'
 import type { CSSProperties } from 'vue'
 
@@ -14,6 +19,10 @@ export default defineComponent({
     duration: {
       type: Number,
       default: 1000
+    },
+    debug: {
+      type: Boolean,
+      default: false
     }
   },
   setup(props, { slots, expose }) {
@@ -76,7 +85,17 @@ export default defineComponent({
         return true
       })
 
-      await promise
+      try {
+        await promise
+      } catch (e) {
+        if (e instanceof WaitIntervalUntilCanceledError) {
+          if (props.debug) {
+            throw e
+          }
+        } else {
+          throw e
+        }
+      }
     }
 
     /**
