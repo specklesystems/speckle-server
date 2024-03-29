@@ -102,6 +102,30 @@ async function initRumClient(app: PluginNuxtApp) {
 
       window.DD_RUM_START_VIEW?.(realPath, routeName)
     })
+
+    registerErrorTransport({
+      onError: ({ args, firstError, firstString, otherData, nonObjectOtherData }) => {
+        if (!datadog || !('addError' in datadog)) return
+
+        const error = firstError || firstString || args[0]
+        datadog.addError(error, {
+          ...otherData,
+          extraData: nonObjectOtherData,
+          mainErrorMessage: firstString,
+          isProperlySentError: true
+        })
+      },
+      onUnhandledError: ({ isUnhandledRejection, error, message }) => {
+        if (!datadog || !('addError' in datadog)) return
+
+        datadog.addError(error || message, {
+          isUnhandledRejection,
+          message,
+          mainErrorMessage: message,
+          isProperlySentError: true
+        })
+      }
+    })
   }
 }
 
@@ -236,7 +260,15 @@ async function initRumServer(app: PluginNuxtApp) {
                   trackResources: true,
                   trackLongTasks: true,
                   defaultPrivacyLevel: 'mask-user-input',
-                  trackViewsManually: true
+                  trackViewsManually: true,
+                  beforeSend: (event) => {
+                    if (event.type === 'error') {
+                      if (!event.context.isProperlySentError) return false
+                      delete event.context.isProperlySentError
+                      console.log(event)
+                    }
+                    return true 
+                  }
                 });
 
                 window.DD_RUM_START_VIEW = (path, name) => {
