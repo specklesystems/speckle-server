@@ -130,6 +130,9 @@ spec:
             value: {{ .Values.analytics.survicate_workspace_key | quote }}
           {{- end }}
 
+          - name: FF_AUTOMATE_MODULE_ENABLED
+            value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
+
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.frontend_2.affinity "context" $) | nindent 8 }}

@@ -32,6 +32,16 @@
       "description": "The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate",
       "default": "letsencrypt-staging"
     },
+    "featureFlags": {
+      "type": "object",
+      "properties": {
+        "automateModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag fully toggles the integrated automate module",
+          "default": false
+        }
+      }
+    },
     "analytics": {
       "type": "object",
       "properties": {
