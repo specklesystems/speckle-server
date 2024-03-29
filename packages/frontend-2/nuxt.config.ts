@@ -68,7 +68,8 @@ export default defineNuxtConfig({
       datadogClientToken: '',
       datadogSite: '',
       datadogService: '',
-      datadogEnv: ''
+      datadogEnv: '',
+      enableDirectPreviews: false
     }
   },
 

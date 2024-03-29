@@ -28,21 +28,30 @@ export function usePreviewImageBlob(
   const { enabled = ref(true) } = options || {}
   const authToken = useAuthCookie()
   const logger = useLogger()
+  const {
+    public: { enableDirectPreviews }
+  } = useRuntimeConfig()
 
   const url = ref(PreviewPlaceholder as Nullable<string>)
   const hasDoneFirstLoad = ref(false)
   const panoramaUrl = ref(null as Nullable<string>)
   const isLoadingPanorama = ref(false)
   const shouldLoadPanorama = ref(false)
+  const basePanoramaUrl = computed(() => unref(previewUrl) + '/all')
+
   const ret = {
-    previewUrl: computed(() => url.value),
-    panoramaPreviewUrl: computed(() => panoramaUrl.value),
+    previewUrl: computed(() => (enableDirectPreviews ? unref(previewUrl) : url.value)),
+    panoramaPreviewUrl: computed(() =>
+      enableDirectPreviews ? basePanoramaUrl.value : panoramaUrl.value
+    ),
     isLoadingPanorama,
     shouldLoadPanorama,
-    hasDoneFirstLoad: computed(() => hasDoneFirstLoad.value)
+    hasDoneFirstLoad: computed(() =>
+      enableDirectPreviews ? true : hasDoneFirstLoad.value
+    )
   }
 
-  if (process.server) return ret
+  if (process.server || enableDirectPreviews) return ret
 
   const previewUrlPath = computed(() => {
     const basePreviewUrl = unref(previewUrl)
