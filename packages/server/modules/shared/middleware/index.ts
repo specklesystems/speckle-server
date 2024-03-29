@@ -54,10 +54,10 @@ export const getTokenFromRequest = (req: Request | null | undefined): string | n
   const removeBearerPrefix = (token: string) => token.replace('Bearer ', '')
 
   const fromHeader = req?.headers?.authorization || null
-  if (fromHeader) return removeBearerPrefix(fromHeader)
+  if (fromHeader?.length) return removeBearerPrefix(fromHeader)
 
-  const fromCookie = req?.cookies?.authn || null
-  if (fromCookie) return removeBearerPrefix(fromCookie)
+  const fromCookie = (req?.cookies?.authn as Nullable<string>) || null
+  if (fromCookie?.length) return removeBearerPrefix(fromCookie)
 
   return null
 }
