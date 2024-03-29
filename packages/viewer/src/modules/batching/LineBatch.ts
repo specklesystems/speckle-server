@@ -22,7 +22,7 @@ import {
   NoneBatchUpdateRange
 } from './Batch'
 import { ObjectLayers } from '../../IViewer'
-import { DrawGroup } from './InstancedMeshBatch'
+import { DrawGroup } from './Batch'
 import Materials from '../materials/Materials'
 
 export default class LineBatch implements Batch {
@@ -49,7 +49,7 @@ export default class LineBatch implements Batch {
   }
 
   public get triCount(): number {
-    return (this.geometry.index.count / 3) * this.geometry['_maxInstanceCount']
+    return 0
   }
 
   public get vertCount(): number {
@@ -61,11 +61,11 @@ export default class LineBatch implements Batch {
     this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
-  get pointCount(): number {
-    throw new Error('Method not implemented.')
+  public get pointCount(): number {
+    return 0
   }
-  get lineCount(): number {
-    throw new Error('Method not implemented.')
+  public get lineCount(): number {
+    return (this.geometry.index.count / 3) * this.geometry['_maxInstanceCount']
   }
 
   public get renderObject(): Object3D {
@@ -148,13 +148,16 @@ export default class LineBatch implements Batch {
     if (Materials.isOpaque(this.batchMaterial)) return AllBatchUpdateRange
     return NoneBatchUpdateRange
   }
+
   public getDepth(): BatchUpdateRange {
     return this.getOpaque()
   }
+
   public getTransparent(): BatchUpdateRange {
     if (Materials.isTransparent(this.batchMaterial)) return AllBatchUpdateRange
     return NoneBatchUpdateRange
   }
+
   public getStencil(): BatchUpdateRange {
     if (this.batchMaterial.stencilWrite === true) return AllBatchUpdateRange
     return NoneBatchUpdateRange

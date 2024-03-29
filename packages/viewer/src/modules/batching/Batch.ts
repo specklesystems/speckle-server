@@ -1,7 +1,6 @@
 import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 import { FilterMaterialOptions } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { DrawGroup } from './InstancedMeshBatch'
 
 export enum GeometryType {
   MESH,
@@ -66,3 +65,16 @@ export const AllBatchUpdateRange = {
   offset: 0,
   count: Infinity
 } as BatchUpdateRange
+export interface DrawGroup {
+  start: number
+  count: number
+  materialIndex?: number
+}
+export interface DrawGroup {
+  start: number
+  count: number
+  materialIndex?: number
+}
+
+export const INSTANCE_TRANSFORM_BUFFER_STRIDE = 16
+export const INSTANCE_GRADIENT_BUFFER_STRIDE = 1

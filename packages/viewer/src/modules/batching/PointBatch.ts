@@ -11,7 +11,7 @@ import {
 } from 'three'
 import { NodeRenderView } from '../..'
 import { GeometryType, BatchUpdateRange } from './Batch'
-import { DrawGroup } from './InstancedMeshBatch'
+import { DrawGroup } from './Batch'
 import { PrimitiveBatch } from './PrimitiveBatch'
 import { DrawRanges } from './DrawRanges'
 import Logger from 'js-logger'

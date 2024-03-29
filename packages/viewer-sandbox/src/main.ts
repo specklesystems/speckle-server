@@ -347,7 +347,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
     // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
     // 'https://latest.speckle.dev/streams/f92e060177/commits/f51ee777d5'
-    // 'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
+    'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
     // Big curves
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
     // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
@@ -428,7 +428,7 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/76e3acde68/commits/0ea3d47e6c'
     // Point cloud
     // 'https://speckle.xyz/streams/b920636274/commits/8df6496749'
-    'https://multiconsult.speckle.xyz/streams/9721fe797c/objects/ff5d939a8c26bde092152d5b4a0c945d'
+    // 'https://multiconsult.speckle.xyz/streams/9721fe797c/objects/ff5d939a8c26bde092152d5b4a0c945d'
     // 'https://speckle.xyz/streams/87a2be92c7/objects/803c3c413b133ee9a6631160ccb194c9'
     // 'https://latest.speckle.dev/streams/1422d91a81/commits/480d88ba68'
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/14085847b0'

@@ -7,7 +7,7 @@ import {
   GeometryType,
   NoneBatchUpdateRange
 } from './Batch'
-import { DrawGroup } from './InstancedMeshBatch'
+import { DrawGroup } from './Batch'
 import Materials from '../materials/Materials'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
 import Logger from 'js-logger'

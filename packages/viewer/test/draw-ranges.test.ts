@@ -1,7 +1,7 @@
 import { expect, describe, it } from 'vitest'
 import { DrawRanges } from '../src/modules/batching/DrawRanges'
 import SpeckleBasicMaterial from '../src/modules/materials/SpeckleBasicMaterial'
-import { DrawGroup } from '../src/modules/batching/InstancedMeshBatch'
+import { DrawGroup } from '../src/modules/batching/Batch'
 
 const material0 = new SpeckleBasicMaterial({ color: 0xff0000 })
 const material1 = new SpeckleBasicMaterial({ color: 0x00ff00 })

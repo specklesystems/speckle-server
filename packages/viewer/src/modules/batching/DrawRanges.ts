@@ -1,6 +1,6 @@
 import { Material } from 'three'
 import { BatchUpdateRange } from './Batch'
-import { DrawGroup } from './InstancedMeshBatch'
+import { DrawGroup } from './Batch'
 
 export class DrawRanges {
   public static mapTime: number

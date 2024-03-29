@@ -10,7 +10,7 @@ import {
   Sphere
 } from 'three'
 import { GeometryType, BatchUpdateRange } from './Batch'
-import { DrawGroup } from './InstancedMeshBatch'
+import { DrawGroup } from './Batch'
 import { PrimitiveBatch } from './PrimitiveBatch'
 import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
 import Logger from 'js-logger'
