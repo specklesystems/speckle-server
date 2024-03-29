@@ -292,7 +292,19 @@ export default class ObjectLoader {
 
   processLine(chunk) {
     const pieces = chunk.split('\t')
-    return { id: pieces[0], obj: JSON.parse(pieces[1]) }
+    const [id, unparsedObj] = pieces
+
+    let obj
+    try {
+      obj = JSON.parse(unparsedObj)
+    } catch (e) {
+      throw new Error(`Error parsing object ${id}: ${e.message}`)
+    }
+
+    return {
+      id,
+      obj
+    }
   }
 
   supportsCache() {
