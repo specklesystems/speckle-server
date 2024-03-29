@@ -55,7 +55,7 @@ export class MeshBatch extends PrimitiveBatch {
   }
 
   public get geometryType(): GeometryType {
-    return this.renderViews[0].geometryType
+    return GeometryType.MESH
   }
 
   public get mesh(): SpeckleMesh {

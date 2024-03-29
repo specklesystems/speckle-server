@@ -3,7 +3,6 @@ import LineBatch from './LineBatch'
 import Materials, { FilterMaterialType } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Batch, BatchUpdateRange, GeometryType, NoneBatchUpdateRange } from './Batch'
-import PointBatch from './PointBatch'
 import { Material, WebGLRenderer } from 'three'
 import Logger from 'js-logger'
 import { AsyncPause } from '../World'
@@ -15,6 +14,7 @@ import { TreeNode, WorldTree } from '../..'
 import InstancedMeshBatch from './InstancedMeshBatch'
 import { Geometry } from '../converter/Geometry'
 import { MeshBatch } from './MeshBatch'
+import { PointBatch } from './PointBatch'
 
 export default class Batcher {
   private maxHardwareUniformCount = 0
