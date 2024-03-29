@@ -5,6 +5,7 @@ import {
 } from '~/lib/auth/composables/auth'
 import { useCreateErrorLoggingTransport } from '~/lib/core/composables/error'
 import type { Plugin } from 'nuxt/dist/app/nuxt'
+import { isH3Error } from '~/lib/common/helpers/error'
 
 type PluginNuxtApp = Parameters<Plugin>[0]
 
@@ -103,6 +104,16 @@ async function initRumClient(app: PluginNuxtApp) {
       window.DD_RUM_START_VIEW?.(realPath, routeName)
     })
 
+    const resolveH3Data = (error: unknown) =>
+      error && isH3Error(error)
+        ? {
+            statusCode: error.statusCode,
+            fatal: error.fatal,
+            statusMessage: error.statusMessage,
+            h3Data: error.data
+          }
+        : {}
+
     registerErrorTransport({
       onError: ({ args, firstError, firstString, otherData, nonObjectOtherData }) => {
         if (!datadog || !('addError' in datadog)) return
@@ -110,6 +121,7 @@ async function initRumClient(app: PluginNuxtApp) {
         const error = firstError || firstString || args[0]
         datadog.addError(error, {
           ...otherData,
+          ...resolveH3Data(firstError),
           extraData: nonObjectOtherData,
           mainErrorMessage: firstString,
           isProperlySentError: true
@@ -119,6 +131,7 @@ async function initRumClient(app: PluginNuxtApp) {
         if (!datadog || !('addError' in datadog)) return
 
         datadog.addError(error || message, {
+          ...resolveH3Data(error),
           isUnhandledRejection,
           message,
           mainErrorMessage: message,
