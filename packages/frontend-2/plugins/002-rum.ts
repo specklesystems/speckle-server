@@ -262,10 +262,9 @@ async function initRumServer(app: PluginNuxtApp) {
                   defaultPrivacyLevel: 'mask-user-input',
                   trackViewsManually: true,
                   beforeSend: (event) => {
-                    if (event.type === 'error') {
-                      if (!event.context.isProperlySentError) return false
+                    if (event?.type === 'error') {
+                      if (!event.context?.isProperlySentError) return false
                       delete event.context.isProperlySentError
-                      console.log(event)
                     }
                     return true 
                   }
