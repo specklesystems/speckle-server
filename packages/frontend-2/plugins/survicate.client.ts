@@ -27,7 +27,6 @@ export default defineNuxtPlugin(async () => {
 
   // Skip initialization if the survicateWorkspaceKey is empty or undefined
   if (!survicateWorkspaceKey?.length) {
-    logger.warn('Survicate workspace key is empty, skipping Survicate initialization.')
     return {
       provide: {
         survicate: survicateInstance
