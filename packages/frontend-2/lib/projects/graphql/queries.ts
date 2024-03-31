@@ -207,6 +207,16 @@ export const projectDiscussionsPageQuery = graphql(`
   }
 `)
 
+export const projectSettingsGeneralQuery = graphql(`
+  query ProjectSettingsGeneral($projectId: String!) {
+    project(id: $projectId) {
+      id
+      name
+      description
+    }
+  }
+`)
+
 export const projectWebhooksQuery = graphql(`
   query ProjectWebhooks($projectId: String!) {
     project(id: $projectId) {
