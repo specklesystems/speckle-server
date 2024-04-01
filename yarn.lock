@@ -14262,6 +14262,7 @@ __metadata:
     "@types/bcrypt": ^5.0.0
     "@types/bull": ^3.15.9
     "@types/compression": ^1.7.2
+    "@types/cookie-parser": ^1.4.7
     "@types/debug": ^4.1.7
     "@types/deep-equal-in-any-order": ^1.0.1
     "@types/ejs": ^3.1.1
@@ -14295,6 +14296,7 @@ __metadata:
     compression: ^1.7.4
     concurrently: ^7.0.0
     connect-redis: ^6.1.1
+    cookie-parser: ^1.4.6
     cors: ^2.8.5
     cross-env: ^7.0.3
     cross-fetch: ^3.1.5
@@ -16820,6 +16822,15 @@ __metadata:
   dependencies:
     "@types/node": "*"
   checksum: fe81351470f2d3165e8b12ce33542eef89ea893e36dd62e8f7d72566dfb7e448376ae962f9f3ea888547ce8b55a40020ca0e01d637fab5d99567673084542641
+  languageName: node
+  linkType: hard
+
+"@types/cookie-parser@npm:^1.4.7":
+  version: 1.4.7
+  resolution: "@types/cookie-parser@npm:1.4.7"
+  dependencies:
+    "@types/express": "*"
+  checksum: 7b87c59420598e686a57e240be6e0db53967c3c8814be9326bf86609ee2fc39c4b3b9f2263e1deba43526090121d1df88684b64c19f7b494a80a4437caf3d40b
   languageName: node
   linkType: hard
 
@@ -23824,7 +23835,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cookie-parser@npm:~1.4.4":
+"cookie-parser@npm:^1.4.6, cookie-parser@npm:~1.4.4":
   version: 1.4.6
   resolution: "cookie-parser@npm:1.4.6"
   dependencies:

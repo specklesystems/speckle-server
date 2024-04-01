@@ -69,6 +69,7 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
+      enableDirectPreviews: true,
       enableAutomateModule: false
     }
   },
