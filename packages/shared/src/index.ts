@@ -1,5 +1,4 @@
 export * as RichTextEditor from './rich-text-editor'
 export * as Observability from './observability'
 export * as SpeckleViewer from './viewer'
-export * as Environment from './environment'
 export * from './core'

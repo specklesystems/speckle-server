@@ -14363,6 +14363,7 @@ __metadata:
     ws: ^7.5.7
     xml-escape: ^1.1.0
     yargs: ^17.3.1
+    znv: ^0.4.0
     zod: ^3.22.4
     zod-validation-error: ^1.5.0
     zxcvbn: ^4.4.2
@@ -14403,8 +14404,6 @@ __metadata:
     rollup-plugin-typescript2: ^0.34.1
     type-fest: ^3.11.1
     typescript: ^4.5.4
-    znv: ^0.4.0
-    zod: ^3.22.4
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
     pino: ^8.7.0

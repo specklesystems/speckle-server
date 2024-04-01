@@ -3,7 +3,6 @@ import { withoutLeadingSlash } from 'ufo'
 import { sanitizeFilePath } from 'mlly'
 import { filename } from 'pathe/utils'
 import legacy from '@vitejs/plugin-legacy'
-import { Environment } from '@speckle/shared'
 
 // Copied out from nuxt vite-builder source to correctly build output chunk/entry/asset/etc file names
 const buildOutputFileName = (chunkName: string) =>
@@ -16,8 +15,6 @@ const {
   NUXT_PUBLIC_LOG_LEVEL = 'info',
   NUXT_PUBLIC_LOG_PRETTY = false
 } = process.env
-
-const featureFlags = Environment.getFeatureFlags()
 
 const isLogPretty = ['1', 'true', true, 1].includes(NUXT_PUBLIC_LOG_PRETTY)
 
@@ -72,7 +69,7 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      ...featureFlags
+      enableAutomateModule: false
     }
   },
 
