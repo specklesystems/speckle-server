@@ -50,13 +50,13 @@ export function usePreviewImageBlob(
 
   if (enableDirectPreviews) {
     const directPreviewUrl = unref(previewUrl)
-    const directPanoramicUrl = basePanoramaUrl.value
+    // const directPanoramicUrl = basePanoramaUrl.value
 
     useHead({
       link: [
         ...(directPreviewUrl?.length
           ? [{ rel: 'preload', as: <const>'image', href: directPreviewUrl }]
-          : []),
+          : [])
         // ...(directPanoramicUrl?.length
         //   ? [{ rel: 'prefetch', as: <const>'image', href: directPanoramicUrl }]
         //   : [])
