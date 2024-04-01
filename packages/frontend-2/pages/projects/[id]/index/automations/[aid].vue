@@ -2,7 +2,7 @@
   <div v-if="automation && project" class="flex flex-col gap-8 items-start">
     <ProjectPageAutomationHeader :automation="automation" :project="project" />
     <ProjectPageAutomationFunctions :automation="automation" />
-    <ProjectPageAutomationRuns />
+    <ProjectPageAutomationRuns :project-id="projectId" :automation="automation" />
   </div>
   <CommonLoadingBar v-else-if="loading" loading />
   <div v-else />
@@ -19,6 +19,7 @@ graphql(`
     id
     ...ProjectPageAutomationHeader_Automation
     ...ProjectPageAutomationFunctions_Automation
+    ...ProjectPageAutomationRuns_Automation
   }
 `)
 

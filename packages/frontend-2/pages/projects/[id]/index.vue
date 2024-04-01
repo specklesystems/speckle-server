@@ -152,6 +152,7 @@ const activePageTab = computed({
   }
 })
 
+// TODO: Update to preload specific automation page too
 if (process.server) {
   /**
    * There seems to be some sort of vue/nuxt bug where Apollo queries in tabs cause
