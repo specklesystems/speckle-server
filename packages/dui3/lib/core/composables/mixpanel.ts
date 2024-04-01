@@ -56,14 +56,19 @@ export function useMixpanel() {
         properties
       }
 
-      const response = await fetch(`${mixpanelApiHost as string}/track?ip=1`, {
-        method: 'POST',
-        headers: {
-          Accept: 'text/plain',
-          'Content-Type': 'application/json'
-        },
-        body: `data=${encodeURIComponent(JSON.stringify(eventData))}`
-      })
+      const encodedData = btoa(JSON.stringify(eventData))
+      console.log(encodedData, 'encodedData')
+
+      const response = await fetch(
+        `${mixpanelApiHost as string}/track?ip=1&_=${Date.now()}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: `data=${encodedData}`
+        }
+      )
       console.log(response, 'response')
 
       if (!response.ok) {
