@@ -1,10 +1,8 @@
 import { parseEnv } from 'znv'
 import { z } from 'zod'
 
-//INFO
-// As a convention all feature flags should be prefixed with a FF_
 const featureFlagSchema = z.object({
-  FF_AUTOMATE_MODULE_ENABLED: z.boolean().default(false)
+  ENABLE_AUTOMATE_MODULE: z.boolean().default(false)
 })
 
 function parseFeatureFlags() {

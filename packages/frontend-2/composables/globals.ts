@@ -3,10 +3,10 @@ import { useGlobalToast } from '~/lib/common/composables/toast'
 
 export const useIsAutomateModuleEnabled = () => {
   const {
-    public: { FF_AUTOMATE_MODULE_ENABLED }
+    public: { ENABLE_AUTOMATE_MODULE }
   } = useRuntimeConfig()
 
-  return ref(FF_AUTOMATE_MODULE_ENABLED)
+  return ref(ENABLE_AUTOMATE_MODULE)
 }
 
 export { useGlobalToast, useActiveUser }

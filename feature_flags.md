@@ -22,7 +22,7 @@ For any usecase that is not Nuxt based, the code below is the preferred way of u
 ```typescript
 import { Environment } from '@speckle/shared'
 
-if (Environment.getFeatureFlags().FF_AUTOMATE_MODULE_ENABLED)
+if (Environment.getFeatureFlags().ENABLE_AUTOMATE_MODULE)
   console.log("Hurray I'm enabled")
 ```
 
@@ -34,7 +34,7 @@ So using the feature flag is the same as using any nuxt public runtime config va
 ```typescript
 const config = useRuntimeConfig()
 
-if (config.public.FF_AUTOMATE_MODULE_ENABLED) console.log("Hurray I'm enabled")
+if (config.public.ENABLE_AUTOMATE_MODULE) console.log("Hurray I'm enabled")
 ```
 
 ## Definition
@@ -53,9 +53,6 @@ To enable the specific feature, please add an environment variable to the `.env`
 > Note
 >
 > Since `znv` uses 1-1 name matching from the environment variables, we prefer using `MACRO_CASE` names.
-> As a naming convention we've settled on prefixing the feature flags with `FF_`.
-> After that, to provide some structure, the next word should categorize the flag into an app or module its meant to belong to. ie `FF_AUTOMATE_MODULE_ENABLED`.
-> The names should also be declarative rather than imperative so that code like `if (FF_FLAG_NAME) { do something }` reads nicely.
 
 ## Deployment
 

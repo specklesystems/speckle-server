@@ -130,8 +130,8 @@ spec:
             value: {{ .Values.analytics.survicate_workspace_key | quote }}
           {{- end }}
 
-          - name: FF_AUTOMATE_MODULE_ENABLED
-            value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
+          - name: ENABLE_AUTOMATE_MODULE
+            value: {{ .Values.featureFlags.enableAutomateModule | quote }}
 
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}
