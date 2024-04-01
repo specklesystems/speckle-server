@@ -13,7 +13,6 @@ import {
   PropertyInfo,
   StringPropertyInfo
 } from '../filtering/PropertyManager'
-import { DrawRanges } from '../batching/DrawRanges'
 
 export type FilteringState = {
   selectedObjects?: string[]
@@ -398,12 +397,6 @@ export class FilteringExtension extends Extension {
     this.StateKey = null
     this.Renderer.resetMaterials()
     this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
-    DrawRanges.mapTime = 0
-    DrawRanges.findIndexTime = 0
-    DrawRanges.filterTime = 0
-    DrawRanges.iterationTime = 0
-    DrawRanges.findTime = 0
-    DrawRanges.callCount = 0
     return null
   }
 
@@ -526,12 +519,6 @@ export class FilteringExtension extends Extension {
       UpdateFlags.RENDER | UpdateFlags.SHADOWS | UpdateFlags.CLIPPING_PLANES
     )
     this.emit(ViewerEvent.FilteringStateSet, this.CurrentFilteringState)
-    console.warn('Map Time -> ', DrawRanges.mapTime)
-    console.warn('FindIndex Time -> ', DrawRanges.findIndexTime)
-    console.warn('Filter Time -> ', DrawRanges.filterTime)
-    console.warn('Iteration Time -> ', DrawRanges.iterationTime)
-    console.warn('Find Time -> ', DrawRanges.findTime)
-    console.warn('Call count -> ', DrawRanges.callCount)
     return this.CurrentFilteringState
   }
 
