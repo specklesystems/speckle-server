@@ -1,4 +1,5 @@
 import md5 from '~/lib/common/helpers/md5'
+import { useHostAppStore } from '~/store/hostApp'
 
 interface CustomProperties {
   [key: string]: object | string
@@ -12,6 +13,8 @@ interface CustomProperties {
  */
 export function useMixpanel() {
   const isDevMode = ref(true)
+
+  const hostApp = useHostAppStore()
 
   // TODO: Create here other versions of trackEvent functions that lacks account
   // const lastEmail = ref("")
@@ -37,8 +40,6 @@ export function useMixpanel() {
     try {
       const hashedEmail = md5(email.toLowerCase() as string).toUpperCase()
       const hashedServer = md5(server.toLowerCase() as string).toUpperCase()
-      console.log(hashedEmail, 'hashedEmail')
-      console.log(hashedServer, 'hashedServer')
 
       // Merge base properties with custom ones
       const properties = {
@@ -48,6 +49,10 @@ export function useMixpanel() {
         server_id: hashedServer,
         token: mixpanelTokenId as string,
         type: isAction ? 'action' : undefined,
+        hostApp: hostApp.hostAppName,
+        hostAppVersion: hostApp.hostAppVersion,
+        // eslint-disable-next-line camelcase
+        core_version: hostApp.connectorVersion,
         ...customProperties
       }
 
@@ -57,7 +62,6 @@ export function useMixpanel() {
       }
 
       const encodedData = btoa(JSON.stringify(eventData))
-      console.log(encodedData, 'encodedData')
 
       const response = await fetch(
         `${mixpanelApiHost as string}/track?ip=1&_=${Date.now()}`,
@@ -69,7 +73,6 @@ export function useMixpanel() {
           body: `data=${encodedData}`
         }
       )
-      console.log(response, 'response')
 
       if (!response.ok) {
         throw new Error(`Analytics event failed: ${response.statusText}`)
