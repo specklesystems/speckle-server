@@ -266,6 +266,16 @@ function createCache(): InMemoryCache {
       },
       CommentThreadActivityMessage: {
         merge: true
+      },
+      AutomateFunction: {
+        fields: {
+          releases: {
+            keyArgs: ['filter', 'limit'],
+            merge: buildAbstractCollectionMergeFunction(
+              'AutomateFunctionReleaseCollection'
+            )
+          }
+        }
       }
     }
   })

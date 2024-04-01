@@ -1,0 +1,223 @@
+<template>
+  <LayoutDialog
+    v-model:open="open"
+    max-width="md"
+    :title="`Function settings`"
+    @fully-closed="$emit('fully-closed')"
+  >
+    <div v-if="false" class="flex flex-col space-y-4">
+      <CommonLoadingIcon class="mx-auto" />
+    </div>
+    <div v-else-if="revisionFn && functionId" class="flex flex-col space-y-4">
+      <FormSelectAutomateFunctionReleases
+        v-model="selectedRelease"
+        show-label
+        :function-id="functionId"
+        :resolve-first-model-value="resolveFirstModelValue"
+        name="version"
+        label="Function release"
+        button-style="tinted"
+        :class="{ hidden: !selectedRelease }"
+      />
+      <template v-if="!selectedRelease">
+        <CommonLoadingBar loading class="w-full" />
+      </template>
+      <template v-else>
+        <CommonAlert v-if="!inputSchema" color="info">
+          <template #title>
+            No parameters defined for the selected function release
+          </template>
+        </CommonAlert>
+        <FormJsonForm
+          v-else
+          v-model:data="selectedVersionInputs"
+          :schema="inputSchema"
+          class="space-y-4"
+          @change="handler"
+        />
+        <div class="h-32">
+          <!-- To ensure the dropdown doesn't cause a vertical scrollbar -->
+        </div>
+      </template>
+    </div>
+    <template #buttons>
+      <div class="flex w-full space-x-2">
+        <FormButton
+          v-if="revisionFn"
+          text
+          target="_blank"
+          :to="automationFunctionRoute(revisionFn.release.function.id)"
+        >
+          View function
+        </FormButton>
+        <div class="grow" />
+        <FormButton outlined @click="open = false">Close</FormButton>
+        <FormButton :disabled="hasErrors || loading" @click="onSave">Save</FormButton>
+      </div>
+    </template>
+  </LayoutDialog>
+</template>
+<script setup lang="ts">
+import type { Optional } from '@speckle/shared'
+import { automationFunctionRoute } from '~/lib/common/helpers/route'
+import { useJsonFormsChangeHandler } from '~/lib/automate/composables/jsonSchema'
+import {
+  formatJsonFormSchemaInputs,
+  formattedJsonFormSchema
+} from '~/lib/automate/helpers/jsonSchema'
+import { graphql } from '~/lib/common/generated/gql'
+import type {
+  ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment,
+  SearchAutomateFunctionReleaseItemFragment
+} from '~/lib/common/generated/gql/graphql'
+import { useCreateAutomationRevision } from '~/lib/projects/composables/projectManagement'
+
+// TODO: Encryption
+
+type AutomationRevisionFunction =
+  ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment
+
+graphql(`
+  fragment ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunction on AutomationRevisionFunction {
+    parameters
+    release {
+      id
+      inputSchema
+      function {
+        id
+      }
+    }
+  }
+`)
+
+const emit = defineEmits<{
+  (e: 'fully-closed'): void
+  (e: 'save'): void
+}>()
+
+const props = defineProps<{
+  projectId: string
+  automationId: string
+  revisionFn: Optional<AutomationRevisionFunction>
+}>()
+
+const open = defineModel<boolean>('open', { required: true })
+const createNewAutomationRevision = useCreateAutomationRevision()
+const { triggerNotification } = useGlobalToast()
+const logger = useLogger()
+
+const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment>()
+const inputSchema = computed(() =>
+  formattedJsonFormSchema(selectedRelease.value?.inputSchema)
+)
+const {
+  handler,
+  hasErrors: hasJsonFormErrors,
+  reset: resetJsonFormsState
+} = useJsonFormsChangeHandler({ schema: inputSchema })
+
+const selectedVersionInputs = ref<Record<string, unknown>>()
+const loading = ref(false)
+
+const functionId = computed(() => props.revisionFn?.release.function.id)
+const currentReleaseId = computed(() => props.revisionFn?.release.id)
+const selectedReleaseId = computed(() => selectedRelease.value?.id)
+
+const hasErrors = computed(() => {
+  if (hasJsonFormErrors.value) return true
+  if (!selectedRelease.value) return true
+  return false
+})
+
+const resolveFirstModelValue = (items: SearchAutomateFunctionReleaseItemFragment[]) => {
+  const modelValue = currentReleaseId.value
+    ? items.find((i) => i.id === currentReleaseId.value)
+    : undefined
+  if (!modelValue) {
+    // This def shouldn't happen, something's wrong
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Could not find the selected function version',
+      description: 'Please try again or contact support'
+    })
+    logger.error('Could not find the selected function version', {
+      functionId: functionId.value,
+      functionVersionId: currentReleaseId.value
+    })
+  }
+
+  return modelValue
+}
+
+const onSave = async () => {
+  const fId = functionId.value
+  const rId = selectedReleaseId.value
+
+  if (hasErrors.value || !fId || !rId) return
+
+  loading.value = true
+  try {
+    const parameters = JSON.stringify(
+      formatJsonFormSchemaInputs(selectedVersionInputs.value, inputSchema.value, {
+        clone: true
+      })
+    )
+
+    await createNewAutomationRevision({
+      projectId: props.projectId,
+      input: {
+        automationId: props.automationId,
+        functions: [
+          {
+            functionId: fId,
+            releaseId: rId,
+            parameters
+          }
+        ]
+      }
+    })
+  } finally {
+    loading.value = false
+  }
+
+  open.value = false
+  emit('save')
+}
+
+// Reset everything if props change
+watch(
+  () => <const>[props.revisionFn?.release.function.id, props.revisionFn?.release.id],
+  ([newFunctionId, newFunctionRevisionId], [oldFunctionId, oldFunctionRevisionId]) => {
+    if (
+      newFunctionId === oldFunctionId &&
+      newFunctionRevisionId === oldFunctionRevisionId
+    )
+      return
+
+    selectedRelease.value = undefined
+  }
+)
+
+// Update inputs when selected version changes
+watch(selectedRelease, (newSelectedVersion, oldSelectedVersion) => {
+  const id = newSelectedVersion?.id
+  const oldId = oldSelectedVersion?.id
+  if (id === oldId) return
+
+  if (!id || id !== props.revisionFn?.release.id) {
+    selectedVersionInputs.value = undefined
+    resetJsonFormsState()
+    return
+  }
+
+  const existingValues = formatJsonFormSchemaInputs(
+    props.revisionFn.parameters,
+    inputSchema.value,
+    {
+      clone: true
+    }
+  )
+  selectedVersionInputs.value = existingValues
+  resetJsonFormsState()
+})
+</script>

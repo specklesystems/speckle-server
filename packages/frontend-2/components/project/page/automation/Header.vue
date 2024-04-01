@@ -78,8 +78,7 @@ const name = computed({
           automationMutations: {
             update: {
               id: args.input.id,
-              name: args.input.name || props.automation.name,
-              model: props.automation.model
+              name: args.input.name || props.automation.name
             }
           }
         }

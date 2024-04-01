@@ -56,6 +56,10 @@ type AutomationCollection {
   cursor: String
 }
 
+input AutomateFunctionReleasesFilter {
+  search: String
+}
+
 type AutomateFunction {
   id: ID!
   name: String!
@@ -63,11 +67,25 @@ type AutomateFunction {
   isFeatured: Boolean!
   description: String!
   logo: String
+  releases(
+    cursor: String
+    limit: Int
+    filter: AutomateFunctionReleasesFilter
+  ): AutomateFunctionReleaseCollection!
 }
 
 type AutomateFunctionRelease {
   id: ID!
   function: AutomateFunction!
+  versionTag: String!
+  createdAt: DateTime!
+  inputSchema: JSONObject
+}
+
+type AutomateFunctionReleaseCollection {
+  items: [AutomateFunctionRelease!]!
+  totalCount: Int!
+  cursor: String
 }
 
 type AutomateFunctionCollection {
@@ -86,8 +104,23 @@ input ProjectAutomationUpdateInput {
   name: String
 }
 
+input AutomationRevisionCreateFunctionInput {
+  functionId: String!
+  releaseId: String!
+  """
+  Should be encrypted from the client side
+  """
+  parameters: String
+}
+
+input ProjectAutomationRevisionCreateInput {
+  automationId: ID!
+  functions: [AutomationRevisionCreateFunctionInput!]!
+}
+
 type ProjectAutomationMutations {
   update(input: ProjectAutomationUpdateInput!): Automation
+  createRevision(input: ProjectAutomationRevisionCreateInput!): AutomationRevision
 }
 
 extend type ProjectMutations {
@@ -100,4 +133,5 @@ extend type Query {
     cursor: String
     limit: Int
   ): AutomateFunctionCollection!
+  automateFunction(id: ID!): AutomateFunction
 }

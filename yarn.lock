@@ -10931,6 +10931,43 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@jsonforms/core@npm:^3.0.0":
+  version: 3.2.1
+  resolution: "@jsonforms/core@npm:3.2.1"
+  dependencies:
+    "@types/json-schema": ^7.0.3
+    ajv: ^8.6.1
+    ajv-formats: ^2.1.0
+    lodash: ^4.17.21
+  checksum: 610a5de7085274bfca51a1fc1f68ec13e6e0ee64f382fd2c5402efa611b26ef93aaa3295f90754c7ffe6d3a076d61cfc77a83a048f09af358fd429668c2a7c7a
+  languageName: node
+  linkType: hard
+
+"@jsonforms/vue-vanilla@npm:^3.0.0":
+  version: 3.2.1
+  resolution: "@jsonforms/vue-vanilla@npm:3.2.1"
+  dependencies:
+    lodash: ^4.17.21
+  peerDependencies:
+    "@jsonforms/core": 3.2.1
+    "@jsonforms/vue": 3.2.1
+    vue: ^3.2.26
+  checksum: aa09f409ae8ad5122a0814d2b7ddb340d8aaa7b515e635c5bd22f1f20aef10b8bb46adfe75008c0c6acf121faea7560c591ac8f9e846b521cfd0170b77989c62
+  languageName: node
+  linkType: hard
+
+"@jsonforms/vue@npm:^3.0.0":
+  version: 3.2.1
+  resolution: "@jsonforms/vue@npm:3.2.1"
+  dependencies:
+    lodash: ^4.17.21
+  peerDependencies:
+    "@jsonforms/core": 3.2.1
+    vue: ^3.2.26
+  checksum: 4a27342a77ef0f98fbe872c1f29badc23db0dcea7d8bbbc20a80ef4b66b22618c34553a251b422448eb27f865a3de81d41534c35e38f1cd4ad3ed96a95c585e9
+  languageName: node
+  linkType: hard
+
 "@juggle/resize-observer@npm:^3.3.1":
   version: 3.4.0
   resolution: "@juggle/resize-observer@npm:3.4.0"
@@ -13981,6 +14018,9 @@ __metadata:
     "@graphql-codegen/client-preset": ^1.2.5
     "@headlessui/vue": ^1.7.13
     "@heroicons/vue": ^2.0.12
+    "@jsonforms/core": ^3.0.0
+    "@jsonforms/vue": ^3.0.0
+    "@jsonforms/vue-vanilla": ^3.0.0
     "@nuxt/devtools": ^0.2.5
     "@nuxtjs/tailwindcss": ^6.3.0
     "@speckle/shared": "workspace:^"
@@ -17218,6 +17258,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/json-schema@npm:^7.0.3":
+  version: 7.0.15
+  resolution: "@types/json-schema@npm:7.0.15"
+  checksum: 97ed0cb44d4070aecea772b7b2e2ed971e10c81ec87dd4ecc160322ffa55ff330dace1793489540e3e318d90942064bb697cc0f8989391797792d919737b3b98
+  languageName: node
+  linkType: hard
+
 "@types/json-stable-stringify@npm:^1.0.32":
   version: 1.0.34
   resolution: "@types/json-stable-stringify@npm:1.0.34"
@@ -20390,7 +20437,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv-formats@npm:^2.1.1":
+"ajv-formats@npm:^2.1.0, ajv-formats@npm:^2.1.1":
   version: 2.1.1
   resolution: "ajv-formats@npm:2.1.1"
   dependencies:
@@ -20445,6 +20492,18 @@ __metadata:
     require-from-string: ^2.0.2
     uri-js: ^4.2.2
   checksum: 5e0ff226806763be73e93dd7805b634f6f5921e3e90ca04acdf8db81eed9d8d3f0d4c5f1213047f45ebbf8047ffe0c840fa1ef2ec42c3a644899f69aa72b5bef
+  languageName: node
+  linkType: hard
+
+"ajv@npm:^8.6.1":
+  version: 8.12.0
+  resolution: "ajv@npm:8.12.0"
+  dependencies:
+    fast-deep-equal: ^3.1.1
+    json-schema-traverse: ^1.0.0
+    require-from-string: ^2.0.2
+    uri-js: ^4.2.2
+  checksum: 4dc13714e316e67537c8b31bc063f99a1d9d9a497eb4bbd55191ac0dcd5e4985bbb71570352ad6f1e76684fb6d790928f96ba3b2d4fd6e10024be9612fe3f001
   languageName: node
   linkType: hard
 

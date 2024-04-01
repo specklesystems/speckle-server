@@ -197,6 +197,14 @@ export type AutomateFunction = {
   isFeatured: Scalars['Boolean'];
   logo?: Maybe<Scalars['String']>;
   name: Scalars['String'];
+  releases: AutomateFunctionReleaseCollection;
+};
+
+
+export type AutomateFunctionReleasesArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<AutomateFunctionReleasesFilter>;
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 export type AutomateFunctionCollection = {
@@ -208,8 +216,22 @@ export type AutomateFunctionCollection = {
 
 export type AutomateFunctionRelease = {
   __typename?: 'AutomateFunctionRelease';
+  createdAt: Scalars['DateTime'];
   function: AutomateFunction;
   id: Scalars['ID'];
+  inputSchema?: Maybe<Scalars['JSONObject']>;
+  versionTag: Scalars['String'];
+};
+
+export type AutomateFunctionReleaseCollection = {
+  __typename?: 'AutomateFunctionReleaseCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<AutomateFunctionRelease>;
+  totalCount: Scalars['Int'];
+};
+
+export type AutomateFunctionReleasesFilter = {
+  search?: InputMaybe<Scalars['String']>;
 };
 
 export type AutomateRun = {
@@ -323,6 +345,13 @@ export type AutomationRevision = {
   __typename?: 'AutomationRevision';
   functions: Array<AutomationRevisionFunction>;
   id: Scalars['ID'];
+};
+
+export type AutomationRevisionCreateFunctionInput = {
+  functionId: Scalars['String'];
+  /** Should be encrypted from the client side */
+  parameters?: InputMaybe<Scalars['String']>;
+  releaseId: Scalars['String'];
 };
 
 export type AutomationRevisionFunction = {
@@ -1621,12 +1650,23 @@ export type ProjectWebhooksArgs = {
 
 export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
+  createRevision?: Maybe<AutomationRevision>;
   update?: Maybe<Automation>;
+};
+
+
+export type ProjectAutomationMutationsCreateRevisionArgs = {
+  input: ProjectAutomationRevisionCreateInput;
 };
 
 
 export type ProjectAutomationMutationsUpdateArgs = {
   input: ProjectAutomationUpdateInput;
+};
+
+export type ProjectAutomationRevisionCreateInput = {
+  automationId: Scalars['ID'];
+  functions: Array<AutomationRevisionCreateFunctionInput>;
 };
 
 export type ProjectAutomationUpdateInput = {
@@ -1968,6 +2008,7 @@ export type Query = {
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   /** If user is authenticated using an app token, this will describe the app */
   authenticatedAsApp?: Maybe<ServerAppListItem>;
+  automateFunction?: Maybe<AutomateFunction>;
   automateFunctions: AutomateFunctionCollection;
   comment?: Maybe<Comment>;
   /**
@@ -2048,6 +2089,11 @@ export type QueryAdminUsersArgs = {
 
 export type QueryAppArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueryAutomateFunctionArgs = {
+  id: Scalars['ID'];
 };
 
 
