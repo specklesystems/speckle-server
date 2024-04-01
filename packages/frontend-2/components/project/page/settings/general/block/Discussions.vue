@@ -4,9 +4,14 @@
     <template #introduction>
       <p>Control who can leave comments on your projects:</p>
     </template>
-    <FormRadioGroup v-model="selectedOption" :options="radioOptions" />
+    <FormRadioGroup
+      v-model="selectedOption"
+      :options="radioOptions"
+      @update:model-value="emitUpdate"
+    />
   </ProjectPageSettingsBlock>
 </template>
+
 <script setup lang="ts">
 import {
   ChatBubbleLeftRightIcon,
@@ -15,7 +20,13 @@ import {
 } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
 
-const selectedOption = ref('anyone')
+const props = defineProps<{
+  currentCommentsPermission?: boolean
+}>()
+
+const emit = defineEmits(['update-comments-permission'])
+
+const selectedOption = ref(props.currentCommentsPermission ? 'anyone' : 'teamMembers')
 
 const radioOptions = [
   { value: 'anyone', title: 'Anyone', icon: UserGroupIcon },
@@ -26,4 +37,8 @@ const radioOptions = [
     help: 'When the Project Access is “Private” only team members can comment.'
   }
 ]
+
+const emitUpdate = (value: string) => {
+  emit('update-comments-permission', value === 'anyone')
+}
 </script>

@@ -1,16 +1,26 @@
 <template>
   <div class="flex flex-col gap-4">
     <ProjectPageSettingsGeneralBlockProjectInfo
-      :project-name="projectName"
-      :project-description="projectDescription"
-      @update-project="handleProjectUpdate"
+      :project-name="project?.name"
+      :project-description="project?.description"
+      @update-project="({ name, description }) => handleUpdate({ name, description })"
     />
-    <ProjectPageSettingsGeneralBlockAccess />
-    <ProjectPageSettingsGeneralBlockDiscussions />
+    <ProjectPageSettingsGeneralBlockAccess
+      :current-visibility="project?.visibility"
+      @update-visibility="
+        (newVisibility) => handleUpdate({ visibility: newVisibility })
+      "
+    />
+    <ProjectPageSettingsGeneralBlockDiscussions
+      :current-comments-permission="project?.allowPublicComments"
+      @update-comments-permission="
+        (newCommentsPermission) =>
+          handleUpdate({ allowPublicComments: newCommentsPermission })
+      "
+    />
   </div>
 </template>
 <script setup lang="ts">
-import { computed } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
 import { projectSettingsGeneralQuery } from '~~/lib/projects/graphql/queries'
 import { useRoute } from 'vue-router'
@@ -18,34 +28,26 @@ import type { ProjectUpdateInput } from '~/lib/common/generated/gql/graphql'
 import { useUpdateProject } from '~/lib/projects/composables/projectManagement'
 
 const route = useRoute()
+const updateProject = useUpdateProject()
+
 const projectId = computed(() => route.params.id as string)
+
 const { result: pageResult } = useQuery(projectSettingsGeneralQuery, () => ({
   projectId: projectId.value
 }))
 
 const project = computed(() => pageResult.value?.project)
-const projectName = computed(() => pageResult.value?.project.name || '')
-const projectDescription = computed(() => pageResult.value?.project.description)
 
-const updateProject = useUpdateProject()
-
-const handleProjectUpdate = ({
-  name,
-  description
-}: {
-  name: string
-  description?: string | null
-}) => {
+const handleUpdate = (updates: Partial<ProjectUpdateInput>) => {
   if (!project.value) {
     return
   }
 
-  const update: ProjectUpdateInput = {
+  const updatePayload: ProjectUpdateInput = {
     id: project.value.id,
-    name,
-    description
+    ...updates
   }
 
-  updateProject(update)
+  updateProject(updatePayload)
 }
 </script>

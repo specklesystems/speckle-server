@@ -7,9 +7,14 @@
         best suits your needs:
       </p>
     </template>
-    <FormRadioGroup v-model="selectedOption" :options="radioOptions" />
+    <FormRadioGroup
+      v-model="selectedOption"
+      :options="radioOptions"
+      @update:model-value="emitUpdate"
+    />
   </ProjectPageSettingsBlock>
 </template>
+
 <script setup lang="ts">
 import {
   LockClosedIcon,
@@ -17,27 +22,44 @@ import {
   UserCircleIcon
 } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
+import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
 
-const selectedOption = ref('discoverable')
+const props = defineProps<{
+  currentVisibility?: ProjectVisibility
+}>()
+
+const emit = defineEmits(['update-visibility'])
+
+const selectedOption = computed({
+  get: () => props.currentVisibility ?? ProjectVisibility.Private, // Default to Private if undefined
+  set: (value) => {
+    const visibility = value as ProjectVisibility
+    emit('update-visibility', visibility)
+  }
+})
 
 const radioOptions = [
   {
-    value: 'discoverable',
-    title: 'Discoverable',
+    value: ProjectVisibility.Public,
+    title: 'Public',
     introduction: 'Anyone can view and access your project',
     icon: UserGroupIcon
   },
   {
-    value: 'shareable',
-    title: 'Shareable Link',
-    icon: UserCircleIcon,
-    introduction: 'Anyone with the link can access'
+    value: ProjectVisibility.Unlisted,
+    title: 'Unlisted',
+    introduction: 'Anyone with the link can access',
+    icon: UserCircleIcon
   },
   {
-    value: 'private',
+    value: ProjectVisibility.Private,
     title: 'Private',
-    icon: UserCircleIcon,
-    introduction: 'Only team members will have access'
+    introduction: 'Only team members will have access',
+    icon: UserCircleIcon
   }
 ]
+
+const emitUpdate = () => {
+  emit('update-visibility', selectedOption.value)
+}
 </script>

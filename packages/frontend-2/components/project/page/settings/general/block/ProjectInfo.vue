@@ -27,13 +27,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
 import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
-import { defineProps, defineEmits } from 'vue'
 import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
-  projectName: string
+  projectName?: string
   projectDescription?: Nullable<string>
 }>()
 

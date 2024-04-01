@@ -128,7 +128,7 @@ const documents = {
     "\n  query ProjectModelVersions(\n    $projectId: String!\n    $modelId: String!\n    $versionsCursor: String\n  ) {\n    project(id: $projectId) {\n      id\n      ...ProjectModelPageVersionsPagination\n    }\n  }\n": types.ProjectModelVersionsDocument,
     "\n  query ProjectModelsPage($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectModelsPageHeader_Project\n      ...ProjectModelsPageResults_Project\n    }\n  }\n": types.ProjectModelsPageDocument,
     "\n  query ProjectDiscussionsPage($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectDiscussionsPageHeader_Project\n      ...ProjectDiscussionsPageResults_Project\n    }\n  }\n": types.ProjectDiscussionsPageDocument,
-    "\n  query ProjectSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      description\n    }\n  }\n": types.ProjectSettingsGeneralDocument,
+    "\n  query ProjectSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      description\n      visibility\n      allowPublicComments\n    }\n  }\n": types.ProjectSettingsGeneralDocument,
     "\n  query ProjectWebhooks($projectId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      webhooks {\n        items {\n          streamId\n          triggers\n          enabled\n          url\n          id\n          description\n          history(limit: 5) {\n            items {\n              status\n              statusInfo\n            }\n          }\n        }\n        totalCount\n      }\n    }\n  }\n": types.ProjectWebhooksDocument,
     "\n  query Blob($blobId: String!, $streamId: String!) {\n    stream(id: $streamId) {\n      blob(id: $blobId) {\n        id\n        fileName\n        fileType\n        fileSize\n        createdAt\n      }\n    }\n  }\n": types.BlobDocument,
     "\n  subscription OnProjectUpdated($id: String!) {\n    projectUpdated(id: $id) {\n      id\n      type\n      project {\n        ...ProjectPageProject\n        ...ProjectDashboardItemNoModels\n      }\n    }\n  }\n": types.OnProjectUpdatedDocument,
@@ -655,7 +655,7 @@ export function graphql(source: "\n  query ProjectDiscussionsPage($projectId: St
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ProjectSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      description\n    }\n  }\n"): (typeof documents)["\n  query ProjectSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      description\n    }\n  }\n"];
+export function graphql(source: "\n  query ProjectSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      description\n      visibility\n      allowPublicComments\n    }\n  }\n"): (typeof documents)["\n  query ProjectSettingsGeneral($projectId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      description\n      visibility\n      allowPublicComments\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

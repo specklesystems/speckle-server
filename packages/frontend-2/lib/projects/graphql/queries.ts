@@ -213,6 +213,8 @@ export const projectSettingsGeneralQuery = graphql(`
       id
       name
       description
+      visibility
+      allowPublicComments
     }
   }
 `)
