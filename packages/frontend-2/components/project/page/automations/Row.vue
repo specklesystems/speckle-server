@@ -26,7 +26,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { AutomationsRunsTable } from '#build/components'
 import { PlayIcon, PauseIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import { type ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'
