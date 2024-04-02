@@ -58,15 +58,12 @@
         </NuxtLink>
         <div class="hidden sm:flex grow" />
         <div class="flex items-center">
-          <div
+          <ProjectPageModelsCardUpdatedTime
+            :updated-at="updatedAt"
             :class="`text-xs w-full text-foreground-2 sm:mr-1 truncate transition ${
               hovered ? 'sm:w-auto' : 'sm:w-0'
             }`"
-          >
-            updated
-            <b>{{ updatedAt }}</b>
-          </div>
-
+          />
           <FormButton
             v-if="finalShowVersions"
             v-tippy="'View Version Gallery'"
