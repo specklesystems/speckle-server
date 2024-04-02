@@ -75,7 +75,7 @@ export class PointBatch extends PrimitiveBatch {
     if (count !== this.getCount()) {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
-    this.setBatchBuffers(...ranges)
+    this.setBatchBuffers(ranges)
     this.cleanMaterials()
 
     if (this.drawCalls > this.minDrawCalls + 2) {

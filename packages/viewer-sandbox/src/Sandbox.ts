@@ -25,7 +25,6 @@ import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
-import { Viewer } from '@speckle/viewer'
 
 import { Euler, Vector3 } from 'three'
 

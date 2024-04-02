@@ -2,19 +2,16 @@ import {
   DefaultViewerParams,
   SelectionEvent,
   ViewerEvent,
-  DebugViewer,
-  Viewer
-} from '@speckle/viewer'
-
-import './style.css'
-import Sandbox from './Sandbox'
-import {
+  Viewer,
   CameraController,
   SelectionExtension,
   SectionTool,
   SectionOutlines,
   MeasurementsExtension
 } from '@speckle/viewer'
+
+import './style.css'
+import Sandbox from './Sandbox'
 
 // const container0 = document.querySelector<HTMLElement>('#renderer0')
 // if (!container0) {
@@ -44,7 +41,7 @@ const createViewer = async (containerName: string, stream: string) => {
   params.verbose = true
 
   const multiSelectList: SelectionEvent[] = []
-  const viewer: Viewer = new DebugViewer(container, params)
+  const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
   const cameraController = viewer.createExtension(CameraController)
@@ -58,7 +55,7 @@ const createViewer = async (containerName: string, stream: string) => {
   sectionOutlines // use it
   measurements // use it
 
-  const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
+  const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
   window.addEventListener('load', () => {
     viewer.resize()

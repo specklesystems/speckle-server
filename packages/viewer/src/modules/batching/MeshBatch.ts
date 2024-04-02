@@ -121,7 +121,7 @@ export class MeshBatch extends PrimitiveBatch {
     }
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(ranges: BatchUpdateRange[]) {
     // const current = this.groups.slice()
     // const incoming = ranges.slice()
     ranges.forEach((value: BatchUpdateRange) => {
@@ -157,7 +157,7 @@ export class MeshBatch extends PrimitiveBatch {
         }, ${this.getCount()}, ${this.getCount() - count}`
       )
     }
-    this.setBatchBuffers(...ranges)
+    this.setBatchBuffers(ranges)
     this.cleanMaterials()
 
     if (this.drawCalls > this.minDrawCalls + 2) {

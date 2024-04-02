@@ -74,7 +74,7 @@ export abstract class PrimitiveBatch implements Batch {
     }
   }
 
-  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+  public setVisibleRange(ranges: BatchUpdateRange[]) {
     /** Entire batch needs to NOT be drawn */
     if (ranges.length === 1 && ranges[0] === NoneBatchUpdateRange) {
       this.primitive.geometry.setDrawRange(0, 0)
@@ -197,7 +197,7 @@ export abstract class PrimitiveBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
-  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+  public setBatchBuffers(range: BatchUpdateRange[]): void {
     let minGradientIndex = Infinity
     let maxGradientIndex = 0
     for (let k = 0; k < range.length; k++) {
@@ -348,10 +348,12 @@ export abstract class PrimitiveBatch implements Batch {
       return this.primitive.material[value.materialIndex].visible === false
     })
     if (hiddenGroup) {
-      this.setVisibleRange({
-        offset: 0,
-        count: hiddenGroup.start
-      })
+      this.setVisibleRange([
+        {
+          offset: 0,
+          count: hiddenGroup.start
+        }
+      ])
     }
     // console.log('Final -> ', this.id, this.groups.slice())
   }
@@ -372,7 +374,7 @@ export abstract class PrimitiveBatch implements Batch {
     this.primitive.geometry.attributes['gradientIndex'].needsUpdate = true
   }
 
-  public abstract setDrawRanges(...ranges: BatchUpdateRange[])
+  public abstract setDrawRanges(ranges: BatchUpdateRange[])
 
   public resetDrawRanges(): void {
     this.primitive.visible = true
