@@ -12,7 +12,7 @@ import {
 
 import { SpeckleText } from '../objects/SpeckleText'
 import { ObjectLayers } from '../../IViewer'
-import { DrawGroup } from './InstancedMeshBatch'
+import { DrawGroup } from './Batch'
 import Materials from '../materials/Materials'
 
 export default class TextBatch implements Batch {
@@ -49,6 +49,12 @@ export default class TextBatch implements Batch {
     this.id = id
     this.subtreeId = subtreeId
     this.renderViews = renderViews
+  }
+  public get pointCount(): number {
+    return 0
+  }
+  public get lineCount(): number {
+    return 0
   }
 
   public get geometryType(): GeometryType {
