@@ -13834,7 +13834,6 @@ __metadata:
     graphql: ^16.6.0
     graphql-tag: ^2.12.6
     lodash-es: ^4.17.21
-    mixpanel-browser: 2.45.0
     nanoevents: ^8.0.0
     nuxt: ^3.6.3
     pinia: ^2.1.4
@@ -34810,7 +34809,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"mixpanel-browser@npm:2.45.0, mixpanel-browser@npm:^2.39.0, mixpanel-browser@npm:^2.45.0":
+"mixpanel-browser@npm:^2.39.0, mixpanel-browser@npm:^2.45.0":
   version: 2.45.0
   resolution: "mixpanel-browser@npm:2.45.0"
   checksum: 43722dd5019ece65302e933f3d5812ea015aff8525b3ba5347da9cd8694871ed85179047bf2bc7f47cd58c050158ea4ce84cc2810e128988c151fe4457f52f55

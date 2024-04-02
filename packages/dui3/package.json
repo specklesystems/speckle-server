@@ -40,7 +40,6 @@
     "graphql": "^16.6.0",
     "graphql-tag": "^2.12.6",
     "lodash-es": "^4.17.21",
-    "mixpanel-browser": "2.45.0",
     "nanoevents": "^8.0.0",
     "pinia": "^2.1.4",
     "portal-vue": "^3.0.0",
