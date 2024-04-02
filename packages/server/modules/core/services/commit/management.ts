@@ -8,6 +8,7 @@ import {
   CommitDeleteError,
   CommitUpdateError
 } from '@/modules/core/errors/commit'
+import { VersionEvents, VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   CommitUpdateInput,
   UpdateVersionInput
@@ -84,6 +85,11 @@ export async function createCommitByBranchId(params: {
 
   // Link it to a branch & stream
   await Promise.all([
+    VersionsEmitter.emit(VersionEvents.Created, {
+      projectId: streamId,
+      modelId: branchId,
+      version: commit
+    }),
     insertBranchCommits([{ branchId, commitId: id }]),
     insertStreamCommits([{ streamId, commitId: id }])
   ])

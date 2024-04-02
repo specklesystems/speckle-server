@@ -462,7 +462,7 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'convertedCommitId'
 ])
 
-export const Automations = buildTableHelper(
+export const BetaAutomations = buildTableHelper(
   skipAutomateMigrations() ? 'automations' : 'beta_automations',
   [
     'automationId',
@@ -476,7 +476,7 @@ export const Automations = buildTableHelper(
   ]
 )
 
-export const AutomationRuns = buildTableHelper(
+export const BetaAutomationRuns = buildTableHelper(
   skipAutomateMigrations() ? 'automation_runs' : 'beta_automation_runs',
   [
     'automationId',
@@ -488,7 +488,7 @@ export const AutomationRuns = buildTableHelper(
   ]
 )
 
-export const AutomationFunctionRuns = buildTableHelper(
+export const BetaAutomationFunctionRuns = buildTableHelper(
   skipAutomateMigrations()
     ? 'automation_function_runs'
     : 'beta_automation_function_runs',
@@ -505,7 +505,7 @@ export const AutomationFunctionRuns = buildTableHelper(
   ]
 )
 
-export const AutomationFunctionRunsResultVersions = buildTableHelper(
+export const BetaAutomationFunctionRunsResultVersions = buildTableHelper(
   skipAutomateMigrations()
     ? 'automation_function_runs_result_version'
     : 'beta_automation_function_runs_result_versions',
@@ -537,6 +537,54 @@ export const TokenResourceAccess = buildTableHelper('token_resource_access', [
   'tokenId',
   'resourceType',
   'resourceId'
+])
+
+export const AutomationFunctionRuns = buildTableHelper('automation_function_runs', [
+  'id',
+  'runId',
+  'functionId',
+  'functionReleaseId',
+  'elapsed',
+  'status',
+  'contextView',
+  'statusMessage',
+  'results'
+])
+
+export const AutomationRevisionFunctions = buildTableHelper(
+  'automation_revision_functions',
+  ['automationRevisionId', 'functionId', 'functionReleaseId', 'functionInputs']
+)
+
+export const AutomationRevisions = buildTableHelper('automation_revisions', [
+  'id',
+  'automationId',
+  'createdAt'
+])
+
+export const AutomationRuns = buildTableHelper('automation_runs', [
+  'id',
+  'automationRevisionId',
+  'createdAt',
+  'updatedAt',
+  'triggers',
+  'status',
+  'functionRuns',
+  'executionEngineRunId'
+])
+
+export const AutomationTriggers = buildTableHelper('automation_triggers', [
+  'automationRevisionId',
+  'triggerType',
+  'triggeringId'
+])
+
+export const Automations = buildTableHelper('automations', [
+  'id',
+  'name',
+  'projectId',
+  'enabled',
+  'createdAt'
 ])
 
 export { knex }
