@@ -1,45 +1,69 @@
 import md5 from '~/lib/common/helpers/md5'
 import { useHostAppStore } from '~/store/hostApp'
+import { useAccountStore } from '~/store/accounts'
 
 interface CustomProperties {
   [key: string]: object | string
 }
 
+// Cached email and server
+const lastEmail: Ref<string | undefined> = ref(undefined)
+const lastServer: Ref<string | undefined> = ref(undefined)
+
 /**
- * Get Mixpanel instance
- * Note: Mixpanel is not available during SSR because mixpanel-browser only works in the browser!
- * If this composable is invoked during SSR it will return undefined!
- * But in DUI3 we do not have SSR.
+ * Get Mixpanel functions
+ * In DUI3, quite likely to change distinct id of the track operation since we can trigger repetitive calls that belongs to different account.
+ * Also we have some operations that explicitly not belong to any account, i.e. first "Send" or "Load" click,
+ * with this case we use default account on manager to get "email" and "server" and cache them for later anonymous track.
+ * In each call we update "lastEmail" and "lastServer" for the following potential anonymous tracks.
  */
 export function useMixpanel() {
-  const isDevMode = ref(true)
-
   const hostApp = useHostAppStore()
 
-  // TODO: Create here other versions of trackEvent functions that lacks account
-  // const lastEmail = ref("")
-  // const lastServer = ref("")
-
+  /**
+   * Track event for mixpanel which do HTTP request to end point.
+   * @param eventName Event name.
+   * @param customProperties custom properties that will be attached to the properties of track event.
+   * @param accountId account id to track with id. It will populate hashed "distinct_id" from email and "server_id" from url.
+   * @param isAction whether event is action or not.
+   */
   async function trackEvent(
-    email: string,
-    server: string,
     eventName: string,
     customProperties: CustomProperties = {},
+    accountId?: string,
     isAction: boolean = true
   ) {
     const {
       public: { mixpanelApiHost, mixpanelTokenId }
     } = useRuntimeConfig()
 
+    const { selectedAccount, accounts } = useAccountStore()
+
+    if (accountId) {
+      const account = accounts.find((a) => a.accountInfo.id === accountId)
+      lastEmail.value = account?.accountInfo.userInfo.email
+      lastServer.value = account?.accountInfo.serverInfo.url
+    } else {
+      // do not set if they cached already
+      if (lastEmail.value === undefined || lastServer.value === undefined) {
+        lastEmail.value = selectedAccount?.accountInfo.userInfo.email
+        lastServer.value = selectedAccount?.accountInfo.serverInfo.url
+      }
+    }
+
     // TODO: enable it later somehow
-    //if (isDevMode.value) {
-    //  // Only track in production
-    //  return
-    //}
+    // if (process.dev) {
+    //   // Only track in production
+    //   return
+    // }
 
     try {
-      const hashedEmail = md5(email.toLowerCase() as string).toUpperCase()
-      const hashedServer = md5(server.toLowerCase() as string).toUpperCase()
+      if (!lastEmail.value || !lastServer.value) {
+        throw new Error('Email or server not found to track event.')
+      }
+      const hashedEmail =
+        '@' + md5(lastEmail.value.toLowerCase() as string).toUpperCase()
+      const hashedServer = md5(lastServer.value.toLowerCase() as string).toUpperCase()
 
       // Merge base properties with custom ones
       const properties = {
@@ -51,6 +75,7 @@ export function useMixpanel() {
         type: isAction ? 'action' : undefined,
         hostApp: hostApp.hostAppName,
         hostAppVersion: hostApp.hostAppVersion,
+        ui: 'dui3', // Not sure about this but we need to put something to distiguish some events, like "Send", "Receive", alternatively we can have "SendDUI3" not sure!
         // eslint-disable-next-line camelcase
         core_version: hostApp.connectorVersion,
         ...customProperties
@@ -61,7 +86,9 @@ export function useMixpanel() {
         properties
       }
 
-      const encodedData = btoa(JSON.stringify(eventData))
+      if (process.dev) {
+        console.log('MIXPANEL TRACK', eventData)
+      }
 
       const response = await fetch(
         `${mixpanelApiHost as string}/track?ip=1&_=${Date.now()}`,
@@ -70,7 +97,7 @@ export function useMixpanel() {
           headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
           },
-          body: `data=${encodedData}`
+          body: `data=${btoa(JSON.stringify(eventData))}`
         }
       )
 
@@ -78,8 +105,8 @@ export function useMixpanel() {
         throw new Error(`Analytics event failed: ${response.statusText}`)
       }
     } catch (error) {
-      console.warn('Failed to track event in MixPanel:', error)
       // Handle error or logging
+      console.warn('Failed to track event in MixPanel:', error)
     }
   }
 

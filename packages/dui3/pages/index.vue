@@ -25,7 +25,7 @@
               <FormButton
                 :icon-left="CloudArrowUpIcon"
                 full-width
-                @click="showSendDialog = !showSendDialog"
+                @click="handleSendClick"
               >
                 Publish
               </FormButton>
@@ -34,7 +34,7 @@
               <FormButton
                 :icon-left="CloudArrowDownIcon"
                 full-width
-                @click="showReceiveDialog = !showReceiveDialog"
+                @click="handleReceiveClick"
               >
                 Load
               </FormButton>
@@ -58,11 +58,7 @@
       class="fixed bottom-0 left-0 w-full bg-blue-500/50 rounded-t-md p-2 z-100 flex space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 max-[275px]:space-x-0"
     >
       <div v-if="app.$sendBinding" class="grow">
-        <FormButton
-          :icon-left="CloudArrowUpIcon"
-          full-width
-          @click="showSendDialog = !showSendDialog"
-        >
+        <FormButton :icon-left="CloudArrowUpIcon" full-width @click="handleSendClick">
           Publish
         </FormButton>
       </div>
@@ -70,7 +66,7 @@
         <FormButton
           :icon-left="CloudArrowDownIcon"
           full-width
-          @click="showReceiveDialog = !showReceiveDialog"
+          @click="handleReceiveClick"
         >
           Load
         </FormButton>
@@ -92,6 +88,7 @@
 import { CloudArrowDownIcon, CloudArrowUpIcon } from '@heroicons/vue/24/solid'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
 const app = useNuxtApp()
 // IMPORTANT: the account store needs to be awaited here, and in any other top level page to prevent
 // race conditions on initialisation (model cards get loaded, but accounts are not there yet)
@@ -100,9 +97,20 @@ const accountStore = useAccountStore()
 await accountStore.refreshAccounts()
 
 const store = useHostAppStore()
+const { trackEvent } = useMixpanel()
 
 const showSendDialog = ref(false)
 const showReceiveDialog = ref(false)
+
+const handleSendClick = () => {
+  showSendDialog.value = !showSendDialog.value
+  trackEvent('DUI3 Action', { name: 'Publish Click' })
+}
+
+const handleReceiveClick = () => {
+  showReceiveDialog.value = !showReceiveDialog.value
+  trackEvent('DUI3 Action', { name: 'Load Click' })
+}
 
 const hasNoModelCards = computed(() => store.projectModelGroups.length === 0)
 </script>

@@ -3,6 +3,7 @@ import {
   DocumentModelStore
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import { IModelCard, ModelCardProgress } from 'lib/models/card'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { IReceiverModelCard } from 'lib/models/card/receiver'
 import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
 
@@ -16,6 +17,7 @@ export type ProjectModelGroup = {
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
+  const { trackEvent } = useMixpanel()
 
   const hostAppName = ref<string>()
   const hostAppVersion = ref<string>()
@@ -135,6 +137,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.error = undefined
     model.progress = { status: 'Starting to send...' }
     model.expired = false
+    trackEvent('DUI3 Action', { name: 'Send' }, model.accountId)
     void app.$sendBinding.send(modelCardId)
   }
 
@@ -184,6 +187,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.error = undefined
     model.hasDismissedUpdateWarning = true
     model.progress = { status: 'Starting to receive...' }
+    trackEvent('DUI3 Action', { name: 'Receive' }, model.accountId)
     await app.$receiveBinding.receive(modelCardId)
   }
 
