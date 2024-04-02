@@ -7,7 +7,7 @@
       class="relative flex sm:justify-between overflow-x-auto"
       :class="
         vertical
-          ? 'items-center sm:items-start sm:flex-col sm:w-3/12 gap-6'
+          ? 'items-center sm:items-start sm:flex-col sm:w-3/12 shrink-0 gap-6'
           : 'border-b border-outline-3 lg:border-none gap-8 w-full'
       "
     >

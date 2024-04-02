@@ -1,6 +1,6 @@
 <template>
   <div
-    class="flex flex-col gap-3"
+    class="flex flex-col gap-3 w-full"
     :class="
       background
         ? 'bg-foundation border border-primary-muted py-4 px-6 rounded-lg '

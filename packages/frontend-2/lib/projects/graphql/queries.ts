@@ -219,6 +219,32 @@ export const projectSettingsGeneralQuery = graphql(`
   }
 `)
 
+export const projectSettingsCollaboratorsQuery = graphql(`
+  query ProjectSettingsCollaborators($projectId: String!) {
+    project(id: $projectId) {
+      id
+      role
+      team {
+        role
+        user {
+          ...LimitedUserAvatar
+          role
+        }
+      }
+      invitedTeam {
+        id
+        title
+        inviteId
+        role
+        user {
+          ...LimitedUserAvatar
+          role
+        }
+      }
+    }
+  }
+`)
+
 export const projectWebhooksQuery = graphql(`
   query ProjectWebhooks($projectId: String!) {
     project(id: $projectId) {
