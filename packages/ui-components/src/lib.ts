@@ -86,6 +86,8 @@ import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
 import type { AvatarUser, AvatarUserWithId } from '~~/src/composables/user/avatar'
 import { useDebouncedTextInput } from '~~/src/composables/form/textInput'
 
+export { vKeyboardClickable } from '~~/src/directives/accessibility'
+
 export {
   CommonLoadingIcon,
   UniqueFileTypeSpecifier,

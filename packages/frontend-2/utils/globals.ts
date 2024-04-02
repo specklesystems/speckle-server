@@ -16,4 +16,4 @@ export const getRouteDefinition = (route?: RouteLocationNormalized) => {
   return matchedPath || '/404'
 }
 
-export { ToastNotificationType, wrapRefWithTracking }
+export { ToastNotificationType, wrapRefWithTracking, noop }

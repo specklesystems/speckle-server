@@ -234,6 +234,10 @@ export type AutomateFunctionReleasesFilter = {
   search?: InputMaybe<Scalars['String']>;
 };
 
+export type AutomateFunctionsFilter = {
+  search?: InputMaybe<Scalars['String']>;
+};
+
 export type AutomateRun = {
   __typename?: 'AutomateRun';
   createdAt: Scalars['DateTime'];
@@ -2099,7 +2103,7 @@ export type QueryAutomateFunctionArgs = {
 
 export type QueryAutomateFunctionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
-  filter?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<AutomateFunctionsFilter>;
   limit?: InputMaybe<Scalars['Int']>;
 };
 

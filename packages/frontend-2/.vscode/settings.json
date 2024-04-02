@@ -5,7 +5,6 @@
   "stylelint.validate": ["css", "scss", "vue", "postcss"],
   "stylelint.enable": true,
   "stylelint.configFile": "${workspaceFolder}/stylelint.config.js",
-  "volar.completion.preferredTagNameCase": "pascal",
   "javascript.suggest.autoImports": true,
   "typescript.suggest.autoImports": true,
   "typescript.preferences.importModuleSpecifier": "non-relative",

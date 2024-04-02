@@ -49,8 +49,10 @@ export const projectWebhooksRoute = (projectId: string) =>
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`
 
+export const automationFunctionsRoute = '/functions'
+
 export const automationFunctionRoute = (functionId: string) =>
-  `/functions/${functionId}`
+  `${automationFunctionsRoute}/${functionId}`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()

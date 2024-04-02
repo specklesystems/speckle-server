@@ -23,20 +23,14 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useApolloClient, useQuery } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import type { Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  projectAutomationsTabQuery,
-  projectDiscussionsPageQuery,
-  projectModelsPageQuery,
-  projectPageQuery
-} from '~~/lib/projects/graphql/queries'
+import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
 import { CubeIcon, ChatBubbleLeftRightIcon, BoltIcon } from '@heroicons/vue/24/outline'
 import { projectRoute } from '~/lib/common/helpers/route'
-import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -151,47 +145,4 @@ const activePageTab = computed({
     }
   }
 })
-
-// TODO: Update to preload specific automation page too
-if (process.server) {
-  /**
-   * There seems to be some sort of vue/nuxt bug where Apollo queries in tabs cause
-   * weird hydration mismatches. Honestly I've no idea wtf is happening, but if we preload
-   * those queries from the root page it seems to work. This is a hack, but it works.
-   *
-   * Hopefully we can figure this out at some point, cause this is quite nasty
-   */
-
-  const serverActiveTab = activePageTab.value
-  const client = useApolloClient().client
-
-  if (serverActiveTab.id === 'models') {
-    await client
-      .query({
-        query: projectModelsPageQuery,
-        variables: {
-          projectId: projectId.value
-        }
-      })
-      .catch(convertThrowIntoFetchResult)
-  } else if (serverActiveTab.id === 'discussions') {
-    await client
-      .query({
-        query: projectDiscussionsPageQuery,
-        variables: {
-          projectId: projectId.value
-        }
-      })
-      .catch(convertThrowIntoFetchResult)
-  } else if (serverActiveTab.id === 'automations') {
-    await client.query({
-      query: projectAutomationsTabQuery,
-      variables: {
-        projectId: projectId.value,
-        search: null,
-        cursor: null
-      }
-    })
-  }
-}
 </script>

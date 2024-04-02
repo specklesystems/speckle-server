@@ -1,5 +1,10 @@
 <template>
-  <div class="rounded-lg border border-outline-3 bg-foundation relative">
+  <Component
+    :is="noButtons ? NuxtLink : 'div'"
+    class="rounded-lg border border-outline-3 bg-foundation relative"
+    :class="{ 'ring-outline-2 hover:ring-2 cursor-pointer': noButtons }"
+    :to="noButtons ? automationFunctionRoute(fn.id) : undefined"
+  >
     <div class="px-4 py-2 flex flex-col gap-3">
       <div class="flex gap-3 items-center" :class="{ 'pr-24': hasLabel }">
         <div
@@ -16,7 +21,7 @@
       <div class="label-light text-foreground-2 line-clamp-3 h-16">
         {{ fn.description }}
       </div>
-      <div class="flex gap-2">
+      <div v-if="!noButtons" class="flex gap-2">
         <FormButton
           color="secondary"
           class="grow"
@@ -49,7 +54,7 @@
         <template v-if="fn.isFeatured">featured</template>
       </div>
     </div>
-  </div>
+  </Component>
 </template>
 <script setup lang="ts">
 import { cleanFunctionLogo } from '~/lib/automations/helpers/functions'
@@ -60,7 +65,7 @@ import {
   BoltIcon,
   PencilIcon
 } from '@heroicons/vue/24/outline'
-import { FormButton } from '@speckle/ui-components'
+import { automationFunctionRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {
@@ -83,8 +88,10 @@ defineEmits<{
 const props = defineProps<{
   fn: AutomationsFunctionsCard_AutomateFunctionFragment
   showEdit?: boolean
+  noButtons?: boolean
 }>()
 
+const NuxtLink = resolveComponent('NuxtLink')
 const logo = computed(() => cleanFunctionLogo(props.fn.logo))
 const hasLabel = computed(() => props.fn.isFeatured)
 </script>

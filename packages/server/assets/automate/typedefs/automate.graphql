@@ -127,9 +127,13 @@ extend type ProjectMutations {
   automationMutations(projectId: ID!): ProjectAutomationMutations!
 }
 
+input AutomateFunctionsFilter {
+  search: String
+}
+
 extend type Query {
   automateFunctions(
-    filter: String
+    filter: AutomateFunctionsFilter
     cursor: String
     limit: Int
   ): AutomateFunctionCollection!
