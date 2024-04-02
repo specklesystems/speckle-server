@@ -13,6 +13,7 @@ import SpeckleGhostMaterial from './SpeckleGhostMaterial'
 import SpeckleTextMaterial from './SpeckleTextMaterial'
 import { SpeckleMaterial } from './SpeckleMaterial'
 import SpecklePointColouredMaterial from './SpecklePointColouredMaterial'
+import { MaterialOptions } from '../../IViewer'
 
 export interface RenderMaterial {
   id: string
@@ -28,18 +29,6 @@ export interface DisplayStyle {
   color: number
   lineWeight: number
   opacity?: number
-}
-
-export interface MaterialOptions {
-  stencilOutlines?: StencilOutlineType
-  pointSize?: number
-  depthWrite?: number
-}
-
-export enum StencilOutlineType {
-  NONE,
-  OVERLAY,
-  OUTLINE_ONLY
 }
 
 export enum FilterMaterialType {

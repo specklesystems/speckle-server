@@ -17,6 +17,7 @@ import {
   Batch,
   BatchUpdateRange,
   GeometryType,
+  INSTANCE_TRANSFORM_BUFFER_STRIDE,
   NoneBatchUpdateRange
 } from './Batch'
 import SpeckleInstancedMesh from '../objects/SpeckleInstancedMesh'
@@ -28,22 +29,18 @@ import {
 import { InstancedBatchObject } from './InstancedBatchObject'
 import Logger from 'js-logger'
 import Materials from '../materials/Materials'
+import { DrawRanges } from './DrawRanges'
+import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
+import { DrawGroup } from './Batch'
 
-export interface DrawGroup {
-  start: number
-  count: number
-  materialIndex?: number
-}
-
-export default class InstancedMeshBatch implements Batch {
-  public static readonly INSTANCE_TRANSFORM_BUFFER_STRIDE = 16
-  public static readonly INSTANCE_GRADIENT_BUFFER_STRIDE = 1
+export class InstancedMeshBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
   private geometry: BufferGeometry
   public batchMaterial: Material
   public mesh: SpeckleInstancedMesh
+  private drawRanges: DrawRanges = new DrawRanges()
 
   private instanceTransformBuffer0: Float32Array = null
   private instanceTransformBuffer1: Float32Array = null
@@ -51,7 +48,6 @@ export default class InstancedMeshBatch implements Batch {
   private instanceGradientBuffer: Float32Array = null
 
   private needsShuffle = false
-  private needsFlatten = false
 
   public get bounds(): Box3 {
     return this.mesh.TAS.getBoundingBox(new Box3())
@@ -78,10 +74,12 @@ export default class InstancedMeshBatch implements Batch {
     return this.geometry.attributes.position.count * this.renderViews.length
   }
 
-  public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
-    this.id = id
-    this.subtreeId = subtreeId
-    this.renderViews = renderViews
+  public get pointCount(): number {
+    return 0
+  }
+
+  public get lineCount(): number {
+    return 0
   }
 
   public get geometryType(): GeometryType {
@@ -104,16 +102,18 @@ export default class InstancedMeshBatch implements Batch {
     return this.mesh.groups
   }
 
+  public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
+    this.id = id
+    this.subtreeId = subtreeId
+    this.renderViews = renderViews
+  }
+
   public setBatchMaterial(material: Material) {
     this.batchMaterial = material
   }
 
   public onUpdate(deltaTime: number) {
     deltaTime
-    if (this.needsFlatten) {
-      this.flattenDrawGroups()
-      this.needsFlatten = false
-    }
     if (this.needsShuffle) {
       this.shuffleDrawGroups()
       this.needsShuffle = false
@@ -261,94 +261,14 @@ export default class InstancedMeshBatch implements Batch {
             0.5 / range[k].materialOptions.rampWidth
           this.updateGradientIndexBufferData(start / 16, shiftedIndex)
         }
-      }
-    }
-  }
-
-  private integrateUpdateRange(range: BatchUpdateRange) {
-    const materialIndex = this.materials.indexOf(range.material)
-    const collidingGroup = this.getDrawRangeCollision(range)
-    if (collidingGroup) {
-      collidingGroup.materialIndex = this.materials.indexOf(range.material)
-    } else {
-      const includingGroup = this.geDrawRangeInclusion(range)
-      if (includingGroup) {
-        if (includingGroup.materialIndex === materialIndex) return
-        this.geometry.groups.splice(this.geometry.groups.indexOf(includingGroup), 1)
-        if (includingGroup.start === range.offset) {
-          this.geometry.addGroup(range.offset, range.count, materialIndex)
-          this.geometry.addGroup(
-            range.offset + range.count,
-            includingGroup.count - range.count,
-            includingGroup.materialIndex
-          )
-        } else if (
-          range.offset + range.count ===
-          includingGroup.start + includingGroup.count
-        ) {
-          this.geometry.addGroup(
-            includingGroup.start,
-            includingGroup.count - range.count,
-            includingGroup.materialIndex
-          )
-          this.geometry.addGroup(range.offset, range.count, materialIndex)
-        } else {
-          this.geometry.addGroup(
-            includingGroup.start,
-            range.offset - includingGroup.start,
-            includingGroup.materialIndex
-          )
-          this.geometry.addGroup(range.offset, range.count, materialIndex)
-          this.geometry.addGroup(
-            range.offset + range.count,
-            includingGroup.count - (range.count + range.offset - includingGroup.start),
-            includingGroup.materialIndex
-          )
-        }
-      } else {
-        const engulfedGroups = this.getDrawRangeEngulfing(range)
-        if (engulfedGroups) {
-          for (let k = 0; k < engulfedGroups.length; k++) {
-            this.geometry.groups.splice(this.groups.indexOf(engulfedGroups[k]), 1)
-          }
-          this.integrateUpdateRange(range)
-        } else {
-          const intersectedGroupLeft = this.getDrawRangeIntersectionLeft(range)
-          if (
-            intersectedGroupLeft &&
-            intersectedGroupLeft.materialIndex !== materialIndex
-          ) {
-            this.geometry.groups.splice(
-              this.geometry.groups.indexOf(intersectedGroupLeft),
-              1
+        /** We need to update the texture here, because each batch uses it's own clone for any material we use on it
+         *  because otherwise three.js won't properly update our custom uniforms
+         */
+        if (range[k].materialOptions.rampTexture !== undefined) {
+          if (range[k].material instanceof SpeckleStandardColoredMaterial) {
+            ;(range[k].material as SpeckleStandardColoredMaterial).setGradientTexture(
+              range[k].materialOptions.rampTexture
             )
-            this.geometry.addGroup(range.offset, range.count, materialIndex)
-            this.geometry.addGroup(
-              range.offset + range.count,
-              intersectedGroupLeft.start +
-                intersectedGroupLeft.count -
-                (range.offset + range.count),
-              intersectedGroupLeft.materialIndex
-            )
-          } else {
-            const intersectedGroupRight = this.getDrawRangeIntersectionRight(range)
-            if (
-              intersectedGroupRight &&
-              intersectedGroupRight.materialIndex !== materialIndex
-            ) {
-              this.geometry.groups.splice(
-                this.geometry.groups.indexOf(intersectedGroupRight),
-                1
-              )
-              this.geometry.addGroup(
-                intersectedGroupRight.start,
-                range.offset - intersectedGroupRight.start,
-                intersectedGroupRight.materialIndex
-              )
-              this.geometry.addGroup(range.offset, range.count, materialIndex)
-            } else {
-              this.geometry.addGroup(range.offset, range.count, materialIndex)
-            }
           }
         }
       }
@@ -372,13 +292,11 @@ export default class InstancedMeshBatch implements Batch {
         this.materials.push(uniqueMaterials[k])
     }
 
-    const sortedRanges = ranges.sort((a, b) => {
-      return a.offset - b.offset
-    })
-
-    for (let i = 0; i < sortedRanges.length; i++) {
-      this.integrateUpdateRange(sortedRanges[i])
-    }
+    this.mesh.groups = this.drawRanges.integrateRanges(
+      this.groups,
+      this.materials,
+      ranges
+    )
 
     let count = 0
     this.groups.forEach((value) => (count += value.count))
@@ -386,93 +304,18 @@ export default class InstancedMeshBatch implements Batch {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
     this.setBatchBuffers(...ranges)
-    this.needsFlatten = true
+    this.cleanMaterials()
+    /** We shuffle only when above a certain fragmentation threshold. We don't want to be shuffling every single time */
+    if (this.drawCalls > this.maxDrawCalls) {
+      this.needsShuffle = true
+    } else
+      this.mesh.updateDrawGroups(
+        this.getCurrentTransformBuffer(),
+        this.getCurrentGradientBuffer()
+      )
   }
 
-  private getDrawRangeCollision(range: BatchUpdateRange): DrawGroup {
-    if (this.groups.length > 0) {
-      for (let i = 0; i < this.groups.length; i++) {
-        if (
-          range.offset === this.groups[i].start &&
-          range.count === this.groups[i].count
-        ) {
-          return this.groups[i]
-        }
-      }
-      return null
-    }
-    return null
-  }
-
-  private geDrawRangeInclusion(range: BatchUpdateRange): DrawGroup {
-    range
-    if (this.groups.length > 0) {
-      for (let i = 0; i < this.groups.length; i++) {
-        if (
-          range.offset >= this.groups[i].start &&
-          range.offset + range.count <= this.groups[i].start + this.groups[i].count
-        ) {
-          return this.groups[i]
-        }
-      }
-      return null
-    }
-    return null
-  }
-
-  private getDrawRangeEngulfing(range: BatchUpdateRange): DrawGroup[] | null {
-    const groups = []
-    if (this.geometry.groups.length > 0) {
-      for (let i = 0; i < this.geometry.groups.length; i++) {
-        if (
-          range.offset <= this.geometry.groups[i].start &&
-          range.offset + range.count >=
-            this.geometry.groups[i].start + this.geometry.groups[i].count
-        ) {
-          groups.push(this.geometry.groups[i])
-        }
-      }
-      return groups.length ? groups : null
-    }
-    return null
-  }
-
-  private getDrawRangeIntersectionLeft(range: BatchUpdateRange): DrawGroup {
-    if (this.geometry.groups.length > 0) {
-      for (let i = 0; i < this.geometry.groups.length; i++) {
-        if (
-          range.offset < this.geometry.groups[i].start &&
-          range.offset + range.count > this.geometry.groups[i].start &&
-          range.offset + range.count <
-            this.geometry.groups[i].start + this.geometry.groups[i].count
-        ) {
-          return this.geometry.groups[i]
-        }
-      }
-      return null
-    }
-    return null
-  }
-
-  private getDrawRangeIntersectionRight(range: BatchUpdateRange): DrawGroup {
-    if (this.geometry.groups.length > 0) {
-      for (let i = 0; i < this.geometry.groups.length; i++) {
-        if (
-          range.offset > this.geometry.groups[i].start &&
-          this.geometry.groups[i].start + this.geometry.groups[i].count >
-            range.offset &&
-          range.offset + range.count >
-            this.geometry.groups[i].start + this.geometry.groups[i].count
-        ) {
-          return this.geometry.groups[i]
-        }
-      }
-      return null
-    }
-    return null
-  }
-
-  private flattenDrawGroups() {
+  private cleanMaterials() {
     const materialsInUse = [
       ...Array.from(
         new Set(this.groups.map((value) => this.materials[value.materialIndex]))
@@ -490,65 +333,6 @@ export default class InstancedMeshBatch implements Batch {
       }
       k++
     }
-    const materialOrder = []
-    this.groups.reduce((previousValue, currentValue) => {
-      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
-        previousValue.push(currentValue.materialIndex)
-      }
-      return previousValue
-    }, materialOrder)
-    const grouped = []
-    for (let k = 0; k < materialOrder.length; k++) {
-      grouped.push(
-        this.groups.filter((val) => {
-          return val.materialIndex === materialOrder[k]
-        })
-      )
-    }
-    this.groups.length = 0
-    for (let matIndex = 0; matIndex < grouped.length; matIndex++) {
-      const matGroup = grouped[matIndex].sort((a, b) => {
-        return a.start - b.start
-      })
-      for (let k = 0; k < matGroup.length; ) {
-        let offset = matGroup[k].start
-        let count = matGroup[k].count
-        let runningCount = matGroup[k].count
-        let n = k + 1
-        for (; n < matGroup.length; n++) {
-          if (offset + count === matGroup[n].start) {
-            offset = matGroup[n].start
-            count = matGroup[n].count
-            runningCount += matGroup[n].count
-          } else {
-            const group = {
-              start: matGroup[k].start,
-              count: runningCount,
-              materialIndex: matGroup[k].materialIndex
-            }
-            this.groups.push(group)
-            break
-          }
-        }
-        if (n === matGroup.length) {
-          const group = {
-            start: matGroup[k].start,
-            count: runningCount,
-            materialIndex: matGroup[k].materialIndex
-          }
-          this.groups.push(group)
-        }
-        k = n
-      }
-    }
-    /** We shuffle only when above a certain fragmentation threshold. We don't want to be shuffling every single time */
-    if (this.drawCalls > this.maxDrawCalls) {
-      this.needsShuffle = true
-    } else
-      this.mesh.updateDrawGroups(
-        this.getCurrentTransformBuffer(),
-        this.getCurrentGradientBuffer()
-      )
   }
 
   private shuffleDrawGroups() {
@@ -609,12 +393,12 @@ export default class InstancedMeshBatch implements Batch {
         let subArray = sourceTransformBuffer.subarray(start, start + count)
         targetTransformBuffer.set(subArray, targetBufferOffset)
         subArray = sourceGradientBuffer.subarray(
-          start / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
-          (start + count) / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+          start / INSTANCE_TRANSFORM_BUFFER_STRIDE,
+          (start + count) / INSTANCE_TRANSFORM_BUFFER_STRIDE
         )
         targetGradientBuffer.set(
           subArray,
-          targetBufferOffset / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+          targetBufferOffset / INSTANCE_TRANSFORM_BUFFER_STRIDE
         )
         let rvElemCount = 0
         for (let m = 0; m < scratchRvs.length; m++) {
@@ -669,8 +453,7 @@ export default class InstancedMeshBatch implements Batch {
     this.materials.length = 0
     this.groups.push({
       start: 0,
-      count:
-        this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+      count: this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE,
       materialIndex: 0
     })
     this.materials.push(this.batchMaterial)
@@ -701,22 +484,22 @@ export default class InstancedMeshBatch implements Batch {
     const batchObjects = []
     let instanceBVH = null
     this.instanceTransformBuffer0 = new Float32Array(
-      this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+      this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE
     )
     this.instanceTransformBuffer1 = new Float32Array(
-      this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+      this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE
     )
     const targetInstanceTransformBuffer = this.getCurrentTransformBuffer()
 
     for (let k = 0; k < this.renderViews.length; k++) {
       this.renderViews[k].renderData.geometry.transform.toArray(
         targetInstanceTransformBuffer,
-        k * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+        k * INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
       this.renderViews[k].setBatchData(
         this.id,
-        k * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
-        InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+        k * INSTANCE_TRANSFORM_BUFFER_STRIDE,
+        INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
       const batchObject = new InstancedBatchObject(this.renderViews[k], k)
       if (!instanceBVH) {
@@ -772,8 +555,7 @@ export default class InstancedMeshBatch implements Batch {
 
     this.groups.push({
       start: 0,
-      count:
-        this.renderViews.length * InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+      count: this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE,
       materialIndex: 0
     })
     this.mesh.updateDrawGroups(
@@ -784,13 +566,13 @@ export default class InstancedMeshBatch implements Batch {
 
   public getRenderView(index: number): NodeRenderView {
     index
-    Logger.warn('Deprecated! Do not call this anymore')
+    Logger.warn('Deprecated! Use InstancedBatchObject')
     return null
   }
 
   public getMaterialAtIndex(index: number): Material {
     index
-    Logger.warn('Deprecated! Do not call this anymore')
+    Logger.warn('Deprecated! Use InstancedBatchObject')
     return null
   }
 

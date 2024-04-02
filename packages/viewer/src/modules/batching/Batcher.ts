@@ -1,10 +1,8 @@
 import { MathUtils } from 'three'
-import MeshBatch from './MeshBatch'
 import LineBatch from './LineBatch'
 import Materials, { FilterMaterialType } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Batch, BatchUpdateRange, GeometryType, NoneBatchUpdateRange } from './Batch'
-import PointBatch from './PointBatch'
 import { Material, WebGLRenderer } from 'three'
 import Logger from 'js-logger'
 import { AsyncPause } from '../World'
@@ -13,8 +11,10 @@ import TextBatch from './TextBatch'
 import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
 import { SpeckleType } from '../loaders/GeometryConverter'
 import { TreeNode, WorldTree } from '../..'
-import InstancedMeshBatch from './InstancedMeshBatch'
+import { InstancedMeshBatch } from './InstancedMeshBatch'
 import { Geometry } from '../converter/Geometry'
+import { MeshBatch } from './MeshBatch'
+import { PointBatch } from './PointBatch'
 
 export default class Batcher {
   private maxHardwareUniformCount = 0
@@ -206,13 +206,6 @@ export default class Batcher {
         average / materialHashes.length
       }`
     )
-    Logger.warn('Buffer setup -> ', MeshBatch.bufferSetup)
-    Logger.warn('Array work -> ', MeshBatch.arrayWork)
-    Logger.warn('Object BVH -> ', MeshBatch.objectBvh)
-    Logger.warn('Compute normals -> ', MeshBatch.computeNormals)
-    Logger.warn('Compute box and sphere -> ', MeshBatch.computeBoxAndSphere)
-    Logger.warn('Compute RTE -> ', MeshBatch.computeRTE)
-    Logger.warn('Batch BVH -> ', MeshBatch.batchBVH)
     Logger.warn('Total instanced -> ', totalInstanced)
     Logger.warn('Instance gathering -> ', instancedGathering)
     Logger.warn('De-instancing -> ', deInstancing)
@@ -372,7 +365,7 @@ export default class Batcher {
 
   public render(renderer: WebGLRenderer) {
     for (const batchId in this.batches) {
-      this.batches[batchId].onRender(renderer)
+      if (this.batches[batchId].onRender) this.batches[batchId].onRender(renderer)
     }
   }
 
