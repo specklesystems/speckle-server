@@ -125,6 +125,10 @@ spec:
           - name: NUXT_PUBLIC_DATADOG_ENV
             value: {{ .Values.analytics.datadog_env | quote }}
           {{- end }}
+          {{- if .Values.analytics.survicate_workspace_key }}
+          - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
+            value: {{ .Values.analytics.survicate_workspace_key | quote }}
+          {{- end }}
 
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}

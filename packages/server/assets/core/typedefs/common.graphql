@@ -25,3 +25,11 @@ enum SortDirection {
   ASC
   DESC
 }
+
+"""
+Can be used instead of a full item collection, when the implementation doesn't call for it yet. Because
+of the structure, it can be swapped out to a full item collection in the future
+"""
+type CountOnlyCollection {
+  totalCount: Int!
+}

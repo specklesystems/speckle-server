@@ -36,7 +36,7 @@ More info: https://the-guild.dev/blog/unleash-the-power-of-fragments-with-graphq
 
 #### ESLint results doesn't update after GQL type regeneration
 
-Restart the ESLint plugin through VSCode's command palette, this is a bug with the ESLint plugin
+Restart the ESLint plugin through VSCode's command palette, this is a bug with the ESLint plugin.
 
 #### GraphQL codegen throws an error like "Unknown fragment XXX" or something else that doesn't make sense
 

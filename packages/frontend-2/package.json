@@ -29,6 +29,7 @@
     "@speckle/ui-components": "workspace:^",
     "@speckle/ui-components-nuxt": "workspace:^",
     "@speckle/viewer": "workspace:^",
+    "@survicate/survicate-web-surveys-wrapper": "^1.2.1",
     "@tiptap/core": "2.0.0-beta.220",
     "@tiptap/extension-bold": "2.0.0-beta.220",
     "@tiptap/extension-document": "2.0.0-beta.220",
