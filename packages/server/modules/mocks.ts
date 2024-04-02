@@ -108,6 +108,42 @@ export async function buildMocksConfig(): Promise<{
             : null
         }
       }),
+      AutomateFunctionRelease: () => ({
+        versionTag: () => {
+          // Fake semantic version
+          return `${faker.datatype.number({ min: 0, max: 9 })}.${faker.datatype.number({
+            min: 0,
+            max: 9
+          })}.${faker.datatype.number({ min: 0, max: 9 })}`
+        },
+        inputSchema: () => {
+          // random fro 1 to 3
+          const rand = faker.datatype.number({ min: 1, max: 3 })
+          switch (rand) {
+            case 1:
+              return {
+                $schema: 'https://json-schema.org/draft/2020-12/schema',
+                $id: 'https://example.com/product.schema.json',
+                title: 'Product',
+                description: "A product from Acme's catalog",
+                type: 'object',
+                properties: {
+                  name: {
+                    desciption: 'Random name',
+                    type: 'string'
+                  },
+                  productId: {
+                    description: 'The unique identifier for a product',
+                    type: 'integer'
+                  }
+                },
+                required: ['productId']
+              }
+            default:
+              return null
+          }
+        }
+      }),
       AutomateRun: () => ({
         reason: () => faker.lorem.sentence(),
         id: () => faker.random.alphaNumeric(20),

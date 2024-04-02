@@ -13,7 +13,7 @@
     :validate-on-value-update="validateOnValueUpdate"
     :allow-unset="allowUnset"
     class="min-w-[180px]"
-    by="functionVersionId"
+    by="id"
   >
     <template #nothing-selected>
       <template v-if="selectorPlaceholder">

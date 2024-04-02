@@ -103,8 +103,8 @@ const props = defineProps<{
 
 const open = defineModel<boolean>('open', { required: true })
 const createNewAutomationRevision = useCreateAutomationRevision()
-const { triggerNotification } = useGlobalToast()
-const logger = useLogger()
+// const { triggerNotification } = useGlobalToast()
+// const logger = useLogger()
 
 const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment>()
 const inputSchema = computed(() =>
@@ -120,7 +120,7 @@ const selectedVersionInputs = ref<Record<string, unknown>>()
 const loading = ref(false)
 
 const functionId = computed(() => props.revisionFn?.release.function.id)
-const currentReleaseId = computed(() => props.revisionFn?.release.id)
+// const currentReleaseId = computed(() => props.revisionFn?.release.id)
 const selectedReleaseId = computed(() => selectedRelease.value?.id)
 
 const hasErrors = computed(() => {
@@ -130,23 +130,26 @@ const hasErrors = computed(() => {
 })
 
 const resolveFirstModelValue = (items: SearchAutomateFunctionReleaseItemFragment[]) => {
-  const modelValue = currentReleaseId.value
-    ? items.find((i) => i.id === currentReleaseId.value)
-    : undefined
-  if (!modelValue) {
-    // This def shouldn't happen, something's wrong
-    triggerNotification({
-      type: ToastNotificationType.Danger,
-      title: 'Could not find the selected function version',
-      description: 'Please try again or contact support'
-    })
-    logger.error('Could not find the selected function version', {
-      functionId: functionId.value,
-      functionVersionId: currentReleaseId.value
-    })
-  }
+  // TODO: Fix once we have real data
+  return items[0]
 
-  return modelValue
+  // const modelValue = currentReleaseId.value
+  //   ? items.find((i) => i.id === currentReleaseId.value)
+  //   : undefined
+  // if (!modelValue) {
+  //   // This def shouldn't happen, something's wrong
+  //   triggerNotification({
+  //     type: ToastNotificationType.Danger,
+  //     title: 'Could not find the selected function version',
+  //     description: 'Please try again or contact support'
+  //   })
+  //   logger.error('Could not find the selected function version', {
+  //     functionId: functionId.value,
+  //     functionVersionId: currentReleaseId.value
+  //   })
+  // }
+
+  // return modelValue
 }
 
 const onSave = async () => {

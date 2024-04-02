@@ -11,15 +11,31 @@
         :key="fn.id"
         :fn="fn"
         show-edit
+        @edit="onEdit(fn)"
       />
     </AutomationsFunctionsCardView>
+    <ProjectPageAutomationFunctionSettingsDialog
+      v-model:open="dialogOpen"
+      :project-id="projectId"
+      :automation-id="automation.id"
+      :revision-fn="dialogFunction"
+    />
   </div>
 </template>
 <script setup lang="ts">
+import type { Optional } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
-import type { ProjectPageAutomationFunctions_AutomationFragment } from '~/lib/common/generated/gql/graphql'
+import type {
+  AutomationsFunctionsCard_AutomateFunctionFragment,
+  ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment,
+  ProjectPageAutomationFunctions_AutomationFragment
+} from '~/lib/common/generated/gql/graphql'
 
 // TODO: Edit details dialog
+
+type EditableFunction = AutomationsFunctionsCard_AutomateFunctionFragment
+type EditableFunctionRevision =
+  ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment
 
 graphql(`
   fragment ProjectPageAutomationFunctions_Automation on Automation {
@@ -34,16 +50,34 @@ graphql(`
             ...AutomationsFunctionsCard_AutomateFunction
           }
         }
+        ...ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunction
       }
     }
   }
 `)
 
 const props = defineProps<{
+  projectId: string
   automation: ProjectPageAutomationFunctions_AutomationFragment
 }>()
 
-const functions = computed(
-  () => props.automation.currentRevision?.functions.map((f) => f.release.function) || []
+const dialogOpen = ref(false)
+const dialogFunction = ref<Optional<EditableFunctionRevision>>()
+
+const functionRevisions = computed(
+  () => props.automation.currentRevision?.functions || []
 )
+const functions = computed(
+  () => functionRevisions.value.map((f) => f.release.function) || []
+)
+
+const onEdit = (fn: EditableFunction) => {
+  const fid = fn.id
+  const revision = functionRevisions.value.find((f) => f.release.function.id === fid)
+
+  if (revision) {
+    dialogOpen.value = true
+    dialogFunction.value = revision
+  }
+}
 </script>

@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { flatMap } from 'lodash'
 
 /**
  * Speckle role constants
@@ -86,7 +86,7 @@ export const Scopes = Object.freeze(<const>{
 /**
  * All scopes
  */
-export const AllScopes = _.flatMap(Scopes, (v) => Object.values(v))
+export const AllScopes = flatMap(Scopes, (v) => Object.values(v))
 
 export const SourceAppNames = [
   'Dynamo',
