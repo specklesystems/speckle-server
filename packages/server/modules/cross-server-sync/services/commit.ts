@@ -516,6 +516,7 @@ const loadAllObjectsFromParent = async (
     targetStreamId: string
     sourceCommit: CommitMetadata
     parsedCommitUrl: ParsedCommitUrl
+    token?: string
   },
   options?: Partial<{
     logger: typeof crossServerSyncLogger
@@ -525,7 +526,8 @@ const loadAllObjectsFromParent = async (
   const {
     targetStreamId,
     sourceCommit,
-    parsedCommitUrl: { origin, streamId: sourceStreamId }
+    parsedCommitUrl: { origin, streamId: sourceStreamId },
+    token
   } = params
 
   // Initialize ObjectLoader
@@ -533,7 +535,8 @@ const loadAllObjectsFromParent = async (
     serverUrl: origin,
     streamId: sourceStreamId,
     objectId: sourceCommit.referencedObject,
-    options: { fetch, customLogger: noop }
+    options: { fetch, customLogger: noop },
+    token
   })
 
   // Iterate over all objects and download them into the DB
@@ -645,7 +648,8 @@ export const downloadCommit = async (
     {
       targetStreamId,
       sourceCommit: commit,
-      parsedCommitUrl
+      parsedCommitUrl,
+      token
     },
     { logger }
   )

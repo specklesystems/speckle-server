@@ -12,12 +12,9 @@ import {
   UpdateFlags,
   ViewerEvent
 } from '../../IViewer'
-import Materials, {
-  DisplayStyle,
-  MaterialOptions,
-  RenderMaterial,
-  StencilOutlineType
-} from '../materials/Materials'
+import Materials, { DisplayStyle, RenderMaterial } from '../materials/Materials'
+import { StencilOutlineType } from '../../IViewer'
+import { MaterialOptions } from '../materials/MaterialOptions'
 import { TreeNode } from '../tree/WorldTree'
 export interface SelectionExtensionOptions {
   selectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions

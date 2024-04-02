@@ -4,6 +4,7 @@ import { useAuthCookie } from '~~/lib/auth/composables/auth'
 import { onProjectVersionsPreviewGeneratedSubscription } from '~~/lib/projects/graphql/subscriptions'
 import { useSubscription } from '@vue/apollo-composable'
 import { useLock } from '~~/lib/common/composables/singleton'
+import PreviewPlaceholder from '~~/assets/images/preview_placeholder.png'
 
 const previewUrlProjectIdRegexp = /\/preview\/([\w\d]+)\//i
 const previewUrlCommitIdRegexp = /\/commits\/([\w\d]+)/i
@@ -14,22 +15,53 @@ class AngleNotFoundError extends Error {}
 /**
  * Get authenticated preview image URL and subscribes to preview image generation events so that the preview image URL
  * is updated whenever generation finishes
- * NOTE: Returns null during SSR, so make sure you wrap any components that render the image
- * in <ClientOnly> to prevent hydration errors
  */
-export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefined>) {
+export function usePreviewImageBlob(
+  previewUrl: MaybeRef<string | null | undefined>,
+  options?: Partial<{
+    /**
+     * Allows disabling the mechanism conditionally (e.g. if image not in viewport)
+     */
+    enabled: MaybeRef<boolean>
+  }>
+) {
+  const { enabled = ref(true) } = options || {}
   const authToken = useAuthCookie()
   const logger = useLogger()
+  const {
+    public: { enableDirectPreviews }
+  } = useRuntimeConfig()
 
-  const url = ref(null as Nullable<string>)
+  const url = ref(PreviewPlaceholder as Nullable<string>)
+  const hasDoneFirstLoad = ref(false)
   const panoramaUrl = ref(null as Nullable<string>)
   const isLoadingPanorama = ref(false)
   const shouldLoadPanorama = ref(false)
+  const basePanoramaUrl = computed(() => unref(previewUrl) + '/all')
+  const isEnabled = computed(() => (process.server ? true : unref(enabled)))
+
   const ret = {
     previewUrl: computed(() => url.value),
     panoramaPreviewUrl: computed(() => panoramaUrl.value),
     isLoadingPanorama,
-    shouldLoadPanorama
+    shouldLoadPanorama,
+    hasDoneFirstLoad: computed(() => hasDoneFirstLoad.value)
+  }
+
+  if (enableDirectPreviews) {
+    const directPreviewUrl = unref(previewUrl)
+    // const directPanoramicUrl = basePanoramaUrl.value
+
+    useHead({
+      link: [
+        ...(directPreviewUrl?.length
+          ? [{ rel: 'preload', as: <const>'image', href: directPreviewUrl }]
+          : [])
+        // ...(directPanoramicUrl?.length
+        //   ? [{ rel: 'prefetch', as: <const>'image', href: directPanoramicUrl }]
+        //   : [])
+      ]
+    })
   }
 
   if (process.server) return ret
@@ -71,7 +103,7 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
     () => ({
       id: projectId.value || ''
     }),
-    () => ({ enabled: !!projectId.value && hasLock.value })
+    () => ({ enabled: !!projectId.value && hasLock.value && isEnabled.value })
   )
 
   onProjectPreviewGenerated((res) => {
@@ -92,62 +124,101 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
   })
 
   async function processBasePreviewUrl(basePreviewUrl: MaybeNullOrUndefined<string>) {
+    if (!isEnabled.value) return
+
     try {
       if (!basePreviewUrl) {
-        url.value = null
+        url.value = PreviewPlaceholder
+        hasDoneFirstLoad.value = true
         return
       }
 
-      const res = await fetch(basePreviewUrl, {
-        headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
-      })
+      let blobUrl: string
+      if (enableDirectPreviews || process.server) {
+        blobUrl = basePreviewUrl
+      } else {
+        const res = await fetch(basePreviewUrl, {
+          headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
+        })
 
-      if (res.headers.has('X-Preview-Error')) {
-        throw new Error('Failed getting preview')
+        if (res.headers.has('X-Preview-Error')) {
+          throw new Error('Failed getting preview')
+        }
+
+        const blob = await res.blob()
+        blobUrl = URL.createObjectURL(blob)
       }
 
-      const blob = await res.blob()
-      const blobUrl = URL.createObjectURL(blob)
+      // Load img in browser first, before we set the url
+      if (process.client) {
+        const img = new Image()
+        img.src = blobUrl
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+        })
+      }
+
       url.value = blobUrl
     } catch (e) {
       logger.error('Preview image load error', e)
-      url.value = basePreviewUrl || null
+      url.value = PreviewPlaceholder
+    } finally {
+      hasDoneFirstLoad.value = true
     }
   }
 
   async function processPanoramaPreviewUrl() {
+    if (!isEnabled.value) return
+
     const basePreviewUrl = unref(previewUrl)
     try {
       isLoadingPanorama.value = true
       if (!basePreviewUrl) {
-        url.value = null
+        url.value = PreviewPlaceholder
         return
       }
 
-      const res = await fetch(basePreviewUrl + '/all', {
-        headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
-      })
+      let blobUrl: string
+      if (enableDirectPreviews || process.server) {
+        blobUrl = basePanoramaUrl.value
+      } else {
+        const res = await fetch(basePanoramaUrl.value, {
+          headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
+        })
 
-      const errCode = res.headers.get('X-Preview-Error-Code')
-      if (errCode?.length) {
-        if (errCode === 'ANGLE_NOT_FOUND') {
-          throw new AngleNotFoundError()
+        const errCode = res.headers.get('X-Preview-Error-Code')
+        if (errCode?.length) {
+          if (errCode === 'ANGLE_NOT_FOUND') {
+            throw new AngleNotFoundError()
+          }
         }
+
+        if (res.headers.has('X-Preview-Error')) {
+          throw new Error('Failed getting preview')
+        }
+
+        const blob = await res.blob()
+        blobUrl = URL.createObjectURL(blob)
       }
 
-      if (res.headers.has('X-Preview-Error')) {
-        throw new Error('Failed getting preview')
+      // Load img in browser first, before we set the url
+      if (process.client) {
+        const img = new Image()
+        img.src = blobUrl
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+        })
       }
 
-      const blob = await res.blob()
-      const blobUrl = URL.createObjectURL(blob)
       panoramaUrl.value = blobUrl
     } catch (e) {
       if (!(e instanceof AngleNotFoundError)) {
         logger.error('Panorama preview image load error:', e)
       }
 
-      panoramaUrl.value = basePreviewUrl || null
+      panoramaUrl.value = null
     } finally {
       isLoadingPanorama.value = false
     }
@@ -164,6 +235,16 @@ export function usePreviewImageBlob(previewUrl: MaybeRef<string | null | undefin
       if (shouldLoadPanorama.value) processPanoramaPreviewUrl()
     },
     { immediate: true }
+  )
+
+  watch(
+    () => isEnabled.value,
+    (newVal) => {
+      if (!newVal) return
+
+      processBasePreviewUrl(unref(previewUrl))
+      if (shouldLoadPanorama.value) processPanoramaPreviewUrl()
+    }
   )
 
   return ret

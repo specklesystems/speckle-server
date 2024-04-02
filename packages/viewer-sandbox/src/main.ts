@@ -297,6 +297,7 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/88307505eb/objects/a232d760059046b81ff97e6c4530c985'
     // Airport
     // 'https://latest.speckle.dev/streams/92b620fb17/commits/dfb9ca025d'
+    // 'https://latest.speckle.dev/streams/92b620fb17/objects/cf8838025d9963b342b09da8de0f8b6b'
     // 'Blocks with elements
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/00e165cc1c'
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/e48cf53add'
@@ -374,6 +375,18 @@ const getStream = () => {
 
     // Rebar
     // 'https://speckle.xyz/streams/b4086833f8/commits/94df4c6d16?overlay=c5b9c260ea,e3dc287d61,eaedd7d0a5,7f126ce0dd,02fee34ce3,9bda31611f,110282c4db,533c311e29,bf6814d779,1ba52affcf,cc4e75125e,3fd628e4e3'
+    // Nice towers
+    // 'https://latest.speckle.dev/streams/f4efe4bd7f/objects/5083dffc2ce54ce64c1fc4fab48ca877'
+    // 'http://127.0.0.1:3000/streams/30b75f0dea/objects/db765ed44ae10176c0bf8ba60d1ce67d'
+
+    // 'https://speckle.xyz/streams/7b253e5c4c/commits/025fcbb9cf'
+    // BIG railway
+    // 'https://latest.speckle.dev/streams/a64b432b34/commits/cf7725e404'
+    // 'https://latest.speckle.dev/streams/a64b432b34/objects/1806cb8082a4202b01d97601b6e19af8'
+    // 'https://latest.speckle.dev/streams/a64b432b34/objects/a7ab2388948594e89f838f3026b89839'
+    // 'https://latest.speckle.dev/streams/a64b432b34/commits/99d809460a'
+    // Bunch a doors
+    // 'https://latest.speckle.dev/streams/a64b432b34/commits/c184ba7d88'
   )
 }
 

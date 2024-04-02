@@ -3,8 +3,6 @@
 import { speckleLineVert } from './shaders/speckle-line-vert'
 import { speckleLineFrag } from './shaders/speckle-line-frag'
 import { ShaderLib, Vector3, IUniform, Material } from 'three'
-import { Matrix4 } from 'three'
-import { Geometry } from '../converter/Geometry'
 import { ExtendedLineMaterial, Uniforms } from './SpeckleMaterial'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 

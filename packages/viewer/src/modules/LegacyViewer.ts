@@ -5,9 +5,15 @@ import { Queries } from './queries/Queries'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { DataTree, DataTreeBuilder } from './deprecated/DataTree'
 import { CameraController } from './extensions/core-extensions/CameraController'
-import { SelectionExtension } from './extensions/SelectionExtension'
 import { SectionTool } from './extensions/SectionTool'
 import { Viewer } from './Viewer'
+import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
+
+import {
+  SelectionExtension,
+  SelectionExtensionOptions
+} from './extensions/SelectionExtension'
+import { StencilOutlineType } from '../IViewer'
 import {
   DefaultViewerParams,
   IViewer,
@@ -27,15 +33,12 @@ import { DiffExtension, DiffResult, VisualDiffMode } from './extensions/DiffExte
 import { PropertyInfo } from './filtering/PropertyManager'
 import { BatchObject } from './batching/BatchObject'
 import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
-import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
 import {
   CanonicalView,
   ICameraProvider,
   InlineView,
   PolarView
 } from './extensions/core-extensions/Providers'
-import { SelectionExtensionOptions } from './extensions/SelectionExtension'
-import { StencilOutlineType } from './materials/Materials'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler

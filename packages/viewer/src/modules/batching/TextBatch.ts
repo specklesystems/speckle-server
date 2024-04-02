@@ -50,6 +50,12 @@ export default class TextBatch implements Batch {
     this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
+  public get pointCount(): number {
+    return 0
+  }
+  public get lineCount(): number {
+    return 0
+  }
 
   public get geometryType(): GeometryType {
     return GeometryType.TEXT

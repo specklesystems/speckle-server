@@ -3,11 +3,48 @@ import type { MaybeAsync } from './utilityTypes'
 import { ensureError } from './error'
 
 export class TimeoutError extends Error {}
+export class WaitIntervalUntilCanceledError extends Error {}
+
+/**
+ * Build promise that can be resolved/rejected manually outside of the promise's execution scope
+ */
+export const buildManualPromise = <T>() => {
+  let resolve: (value: T) => void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let reject: (reason?: any) => void
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res
+    reject = rej
+  })
+
+  const resolveWrapper: typeof resolve = (...args) => resolve(...args)
+  const rejectWrapper: typeof reject = (...args) => reject(...args)
+
+  return { promise, resolve: resolveWrapper, reject: rejectWrapper }
+}
 
 export const isNullOrUndefined = (val: unknown): val is null | undefined =>
   isNull(val) || isUndefined(val)
 
 export const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+export const waitIntervalUntil = (ms: number, predicate: () => boolean) => {
+  const { promise, resolve, reject } = buildManualPromise<void>()
+  const interval = setInterval(() => {
+    if (predicate()) {
+      clearInterval(interval)
+      resolve()
+    }
+  }, ms)
+
+  const ret = promise as typeof promise & { cancel: () => void }
+  ret.cancel = () => {
+    clearInterval(interval)
+    reject(new WaitIntervalUntilCanceledError())
+  }
+
+  return ret
+}
 
 /**
  * Not nullable type guard, useful in `.filter()` calls for proper TS typed

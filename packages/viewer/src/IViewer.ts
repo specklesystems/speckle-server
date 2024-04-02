@@ -125,6 +125,17 @@ export enum UpdateFlags {
   CLIPPING_PLANES = 0b100
 }
 
+export interface MaterialOptions {
+  stencilOutlines?: StencilOutlineType
+  pointSize?: number
+  depthWrite?: number
+}
+export enum StencilOutlineType {
+  NONE,
+  OVERLAY,
+  OUTLINE_ONLY
+}
+
 export interface IViewer {
   get Utils(): Utils
   get World(): World

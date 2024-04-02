@@ -30,7 +30,8 @@ const config = {
     typescript2({
       tsconfigOverride: {
         sourceMap: sourcemap
-      }
+      },
+      tsconfig: './tsconfig.build.json'
     }),
     babel({
       extensions: [...DEFAULT_EXTENSIONS, '.ts', '.tsx'],
