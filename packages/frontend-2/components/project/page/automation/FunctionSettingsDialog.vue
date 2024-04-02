@@ -166,6 +166,7 @@ const onSave = async () => {
       })
     )
 
+    // TODO: Apollo cache mutation afterwards
     await createNewAutomationRevision({
       projectId: props.projectId,
       input: {
