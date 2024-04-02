@@ -45,8 +45,7 @@ export class DrawRanges {
 
       const materialIndex = materials.indexOf(range.material)
       edgesForward[r0] = materialIndex
-      edgesForward[r1] =
-        edgesForward[next] !== undefined ? edgesForward[next] : edgesBackwards[next]
+      edgesForward[r1] = r1 >= next ? edgesForward[next] : edgesBackwards[next]
     }
 
     const drawRanges = []
