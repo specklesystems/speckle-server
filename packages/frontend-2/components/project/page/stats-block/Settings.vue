@@ -3,44 +3,33 @@
     <template #top>
       <div class="flex items-center">
         <div class="flex items-center justify-between w-full">
-          <div
-            v-if="activeUser"
-            class="flex items-center gap-0.5 flex-grow select-none"
-          >
-            <Cog6ToothIcon class="h-5 w-5" />
-            <span class="text-sm">Settings</span>
-          </div>
-          <div v-else class="flex items-center gap-0.5 flex-grow select-none">
+          <div class="flex items-center gap-1 flex-grow select-none">
             <UsersIcon class="h-5 w-5" />
-            <span class="text-sm">Team</span>
+            <span class="text-sm font-bold">Team</span>
           </div>
-          <div class="flex items-center text-xs">
+          <div class="flex items-center text-sm">
             {{ project.role?.split(':').reverse()[0] }}
           </div>
         </div>
       </div>
     </template>
     <template #bottom>
-      <div class="flex items-center justify-between mt-3">
+      <div class="flex items-center justify-between mt-1">
         <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
         <div v-if="activeUser">
-          <FormButton class="ml-2" @click="onButtonClick">
-            {{ project.role === 'stream:owner' ? 'Manage' : 'View' }}
+          <FormButton class="ml-2" :icon-left="UserPlusIcon" @click="onButtonClick">
+            Invite
           </FormButton>
         </div>
       </div>
     </template>
     <template #default>
-      <ProjectPageTeamDialog
-        v-model:open="dialogOpen"
-        :project="project"
-        :open-section="openSection"
-      />
+      <ProjectPageInviteDialog v-model:open="dialogOpen" />
     </template>
   </ProjectPageStatsBlock>
 </template>
 <script setup lang="ts">
-import { Cog6ToothIcon, UsersIcon } from '@heroicons/vue/24/outline'
+import { UsersIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
 import type { Optional } from '@speckle/shared'
 import { OpenSectionType } from '~/lib/projects/helpers/components'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'

@@ -1,13 +1,13 @@
 <template>
   <div
     class="relative z-10 flex gap-4"
-    :class="vertical ? 'sm:gap-8 flex-col sm:flex-row' : 'sm:gap-10 flex-col'"
+    :class="vertical ? 'md:gap-8 flex-col md:flex-row' : 'md:gap-10 flex-col'"
   >
     <div
-      class="relative flex sm:justify-between overflow-x-auto"
+      class="relative flex md:justify-between overflow-x-auto"
       :class="
         vertical
-          ? 'items-center sm:items-start sm:flex-col sm:w-3/12 shrink-0 gap-6'
+          ? 'items-center md:items-start md:flex-col md:w-2/12 xl:w-3/12 shrink-0 gap-6'
           : 'border-b border-outline-3 lg:border-none gap-8 w-full'
       "
     >
@@ -29,7 +29,7 @@
         <h1
           v-if="title"
           class="font-bold h4"
-          :class="vertical ? 'w-full sm:w-auto mb-4' : 'mb-2'"
+          :class="vertical ? 'w-full md:w-auto mb-4' : 'mb-2'"
         >
           {{ title }}
         </h1>
@@ -63,7 +63,7 @@
         </button>
       </div>
     </div>
-    <div :class="vertical ? 'sm:w-10/12' : ''">
+    <div :class="vertical ? 'md:w-9/12 xl:w-10/12' : ''">
       <slot :active-item="activeItem" />
     </div>
   </div>

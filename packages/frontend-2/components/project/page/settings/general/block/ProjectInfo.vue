@@ -8,6 +8,7 @@
       placeholder="Project Name"
       show-label
       color="foundation"
+      class="mb-4"
     />
     <FormTextArea
       v-model="localProjectDescription"

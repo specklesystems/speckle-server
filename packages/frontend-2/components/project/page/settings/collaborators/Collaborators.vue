@@ -10,11 +10,17 @@
       </FormButton>
     </template>
 
+    <div
+      class="w-full bg-foundation flex justify-between px-3 py-2 rounded-t border-b border-outline text-sm font-bold"
+    >
+      <div>Name</div>
+    </div>
+
     <div class="flex flex-col bg-foundation">
       <div
         v-for="collaborator in collaboratorListItems"
         :key="collaborator.id"
-        class="flex items-center gap-2 py-1.5 px-2"
+        class="flex items-center gap-2 py-1.5 px-2 border-b border-outline"
       >
         <UserAvatar :user="collaborator.user" size="sm" />
         <span class="grow truncate text-xs">{{ collaborator.title }}</span>
@@ -34,28 +40,32 @@
           </span>
         </template>
         <template v-else-if="canEdit">
-          <span class="shrink-0 text-foreground-2 text-xs">
-            {{ roleSelectItems[collaborator.role].title }}
-          </span>
-          <FormButton
-            class="shrink-0"
-            color="danger"
-            size="xs"
-            :disabled="loading"
-            @click="
-              cancelInvite({
-                projectId: projectId,
-                inviteId: collaborator.inviteId || ''
-              })
-            "
+          <div
+            class="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 mb-0.5 sm:mb-0"
           >
-            Cancel Invite
-          </FormButton>
+            <span class="shrink-0 text-foreground-2 text-xs">
+              {{ roleSelectItems[collaborator.role].title }}
+            </span>
+            <FormButton
+              class="shrink-0"
+              color="danger"
+              size="xs"
+              :disabled="loading"
+              @click="
+                cancelInvite({
+                  projectId: projectId,
+                  inviteId: collaborator.inviteId || ''
+                })
+              "
+            >
+              Cancel Invite
+            </FormButton>
+          </div>
         </template>
       </div>
     </div>
 
-    <ProjectPageSettingsCollaboratorsInviteDialog v-model:open="showInviteDialog" />
+    <ProjectPageInviteDialog v-model:open="showInviteDialog" />
   </ProjectPageSettingsBlock>
 </template>
 <script setup lang="ts">
