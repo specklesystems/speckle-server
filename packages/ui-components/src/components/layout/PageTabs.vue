@@ -97,7 +97,7 @@ const buttonClass = computed(() => {
       else baseClasses.push('text-foreground border-transparent')
     } else {
       baseClasses.push(
-        'text-base',
+        'text-sm sm:text-base',
         'gap-1.5',
         'hover:border-outline-2',
         'pb-2',

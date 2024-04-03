@@ -268,16 +268,18 @@ export function useUpdateProject() {
 
   return async (
     update: ProjectUpdateInput,
+    customSuccessMessage?: string,
     options?: Partial<{ optimisticResponse: UpdateProjectMetadataMutation }>
   ) => {
     if (!activeUser.value) return
 
+    const defaultSuccessMessage = 'Project updated'
+    const successMessage = customSuccessMessage || defaultSuccessMessage
+
     const result = await apollo
       .mutate({
         mutation: updateProjectMetadataMutation,
-        variables: {
-          update
-        },
+        variables: { update },
         optimisticResponse: options?.optimisticResponse
       })
       .catch(convertThrowIntoFetchResult)
@@ -285,7 +287,7 @@ export function useUpdateProject() {
     if (result?.data?.projectMutations.update?.id) {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'Project updated'
+        title: successMessage
       })
     } else {
       const errMsg = getFirstErrorMessage(result.errors)

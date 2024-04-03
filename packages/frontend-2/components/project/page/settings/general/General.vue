@@ -3,19 +3,26 @@
     <ProjectPageSettingsGeneralBlockProjectInfo
       :project-name="project?.name"
       :project-description="project?.description"
-      @update-project="({ name, description }) => handleUpdate({ name, description })"
+      @update-project="
+        ({ name, description }) =>
+          handleUpdate({ name, description }, 'Project info updated')
+      "
     />
     <ProjectPageSettingsGeneralBlockAccess
       :current-visibility="project?.visibility"
       @update-visibility="
-        (newVisibility) => handleUpdate({ visibility: newVisibility })
+        (newVisibility) =>
+          handleUpdate({ visibility: newVisibility }, 'Project access updated')
       "
     />
     <ProjectPageSettingsGeneralBlockDiscussions
       :current-comments-permission="project?.allowPublicComments"
       @update-comments-permission="
         (newCommentsPermission) =>
-          handleUpdate({ allowPublicComments: newCommentsPermission })
+          handleUpdate(
+            { allowPublicComments: newCommentsPermission },
+            'Comment permissions updated'
+          )
       "
     />
   </div>
@@ -38,7 +45,10 @@ const { result: pageResult } = useQuery(projectSettingsGeneralQuery, () => ({
 
 const project = computed(() => pageResult.value?.project)
 
-const handleUpdate = (updates: Partial<ProjectUpdateInput>) => {
+const handleUpdate = (
+  updates: Partial<ProjectUpdateInput>,
+  customSuccessMessage?: string
+) => {
   if (!project.value) {
     return
   }
@@ -48,6 +58,6 @@ const handleUpdate = (updates: Partial<ProjectUpdateInput>) => {
     ...updates
   }
 
-  updateProject(updatePayload)
+  updateProject(updatePayload, customSuccessMessage)
 }
 </script>

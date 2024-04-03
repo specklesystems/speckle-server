@@ -11,7 +11,7 @@
     </template>
 
     <div
-      class="w-full bg-foundation flex justify-between px-3 py-2 rounded-t border-b border-outline text-sm font-bold"
+      class="w-full bg-foundation flex justify-between px-3 pt-3 pb-1.5 rounded-t-md border-b border-outline text-sm font-bold"
     >
       <div>Name</div>
     </div>
