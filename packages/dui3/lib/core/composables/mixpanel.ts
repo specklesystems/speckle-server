@@ -64,10 +64,20 @@ export function useMixpanel() {
         '@' + md5(lastEmail.value.toLowerCase() as string).toUpperCase()
       const hashedServer = md5(lastServer.value.toLowerCase() as string).toUpperCase()
 
-      // TODO: add OS info too!!
+      // Get os info from userAgent text
+      // taken from original mixpanel implementation
+      // https://github.com/mixpanel/mixpanel-js/blob/master/examples/commonjs-browserify/bundle.js#L1576
+      const userAgent = navigator.userAgent
+      let os = undefined
+      if (/Windows/i.test(userAgent)) {
+        os = 'Windows'
+      } else if (/Mac/i.test(userAgent)) {
+        os = 'Mac'
+      }
 
       // Merge base properties with custom ones
       const properties = {
+        $os: os,
         // eslint-disable-next-line camelcase
         distinct_id: hashedEmail,
         // eslint-disable-next-line camelcase
