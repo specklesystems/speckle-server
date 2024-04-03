@@ -17,6 +17,6 @@
     "checkJs": false,
     "declaration": true
   },
-  "include": ["./src/**/*"],
+  "include": ["./src/**/*", "test"],
   "exclude": ["dist"]
 }

@@ -37,7 +37,10 @@
     "build:dev": "rollup --config",
     "dev": "rollup --config --watch",
     "prepack": "yarn build",
-    "lint": "eslint . --ext .js,.ts"
+    "lint": "eslint . --ext .js,.ts",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run"
   },
   "author": "AEC Systems",
   "license": "Apache-2.0",
@@ -74,16 +77,19 @@
     "@types/three": "^0.136.0",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
+    "@vitest/ui": "^1.4.0",
     "core-js": "^3.21.1",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
+    "jsdom": "^24.0.0",
     "prettier": "^2.5.1",
     "regenerator-runtime": "^0.13.7",
     "rollup": "^2.70.1",
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-terser": "^7.0.2",
     "rollup-plugin-typescript2": "^0.31.2",
-    "typescript": "^4.5.4"
+    "typescript": "^4.5.4",
+    "vitest": "^1.4.0"
   },
   "gitHead": "5627e490f9a3ecadf19cc4686ad15f344d9ad2d3"
 }
