@@ -2,6 +2,10 @@ import type { RouteLocationNormalized } from 'vue-router'
 import { noop } from 'lodash-es'
 import { wrapRefWithTracking } from '~/lib/common/helpers/debugging'
 import { ToastNotificationType } from '~~/lib/common/composables/toast'
+import {
+  convertThrowIntoFetchResult,
+  getFirstErrorMessage as getFirstGqlErrorMessage
+} from '~/lib/common/helpers/graphql'
 
 /**
  * Debugging helper to ensure variables are available in debugging scope
@@ -16,4 +20,10 @@ export const getRouteDefinition = (route?: RouteLocationNormalized) => {
   return matchedPath || '/404'
 }
 
-export { ToastNotificationType, wrapRefWithTracking, noop }
+export {
+  ToastNotificationType,
+  wrapRefWithTracking,
+  noop,
+  convertThrowIntoFetchResult,
+  getFirstGqlErrorMessage
+}

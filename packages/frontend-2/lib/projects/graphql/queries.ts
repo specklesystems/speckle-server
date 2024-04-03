@@ -235,6 +235,17 @@ export const projectAutomationPageQuery = graphql(`
   }
 `)
 
+export const projectAutomationAccessCheckQuery = graphql(`
+  query ProjectAutomationAccessCheck($projectId: String!, $automationId: String!) {
+    project(id: $projectId) {
+      id
+      automation(id: $automationId) {
+        id
+      }
+    }
+  }
+`)
+
 export const projectWebhooksQuery = graphql(`
   query ProjectWebhooks($projectId: String!) {
     project(id: $projectId) {

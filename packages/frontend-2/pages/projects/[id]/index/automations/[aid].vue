@@ -30,6 +30,10 @@ graphql(`
   }
 `)
 
+definePageMeta({
+  middleware: ['require-valid-automation']
+})
+
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 const automationId = computed(() => route.params.aid as string)

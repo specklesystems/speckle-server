@@ -19,3 +19,11 @@ export const searchAutomateFunctionReleasesQuery = graphql(`
     }
   }
 `)
+
+export const functionAccessCheckQuery = graphql(`
+  query FunctionAccessCheck($id: ID!) {
+    automateFunction(id: $id) {
+      id
+    }
+  }
+`)

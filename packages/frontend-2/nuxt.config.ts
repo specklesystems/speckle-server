@@ -169,7 +169,12 @@ export default defineNuxtConfig({
       '@speckle/ui-components',
       'v3-infinite-loading',
       /prosemirror.*/,
-      /^lodash(?!-es)/
+      /^lodash(?!-es)/,
+      // w/o these there's a weird error where Kind from graphql is undefined in dev mode
+      'graphql',
+      /^graphql\/.+/,
+      'graphql/language/printer',
+      'graphql/utilities/getOperationAST'
     ]
   },
   prometheus: {

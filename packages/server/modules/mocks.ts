@@ -33,6 +33,10 @@ export async function buildMocksConfig(): Promise<{
             totalCount: count,
             items: times(count, () => store.get('AutomateFunction'))
           } as any
+        },
+        automateFunction: (_parent, args) => {
+          const id = args.id
+          return store.get('AutomateFunction', { id }) as any
         }
       },
       Project: {
