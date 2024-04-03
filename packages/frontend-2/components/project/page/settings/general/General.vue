@@ -26,6 +26,18 @@
           )
       "
     />
+    <ProjectPageSettingsGeneralBlockDelete
+      :project="project"
+      :current-comments-permission="project?.allowPublicComments"
+      :current-visibility="project?.visibility"
+      @update-comments-permission="
+        (newCommentsPermission) =>
+          handleUpdate(
+            { allowPublicComments: newCommentsPermission },
+            'Comment permissions updated'
+          )
+      "
+    />
   </div>
 </template>
 <script setup lang="ts">

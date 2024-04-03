@@ -35,7 +35,6 @@ import { OpenSectionType } from '~/lib/projects/helpers/components'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
-const { activeUser } = useActiveUser()
 
 graphql(`
   fragment ProjectPageStatsBlockTeam on Project {
@@ -54,6 +53,8 @@ graphql(`
 const props = defineProps<{
   project: ProjectPageStatsBlockTeamFragment
 }>()
+
+const { activeUser } = useActiveUser()
 
 const dialogOpen = ref(false)
 const openSection = ref<OpenSectionType | undefined>()
