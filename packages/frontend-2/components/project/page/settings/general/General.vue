@@ -17,6 +17,7 @@
     />
     <ProjectPageSettingsGeneralBlockDiscussions
       :current-comments-permission="project?.allowPublicComments"
+      :current-visibility="project?.visibility"
       @update-comments-permission="
         (newCommentsPermission) =>
           handleUpdate(

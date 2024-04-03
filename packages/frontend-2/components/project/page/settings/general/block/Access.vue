@@ -16,11 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  LockClosedIcon,
-  UserGroupIcon,
-  UserCircleIcon
-} from '@heroicons/vue/24/outline'
+import { LockClosedIcon, UserGroupIcon, LinkIcon } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
 import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
 
@@ -30,13 +26,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-visibility'])
 
-const selectedOption = computed({
-  get: () => props.currentVisibility ?? ProjectVisibility.Private, // Default to Private if undefined
-  set: (value) => {
-    const visibility = value as ProjectVisibility
-    emit('update-visibility', visibility)
-  }
-})
+const selectedOption = ref(props.currentVisibility ?? ProjectVisibility.Private)
 
 const radioOptions = [
   {
@@ -49,17 +39,24 @@ const radioOptions = [
     value: ProjectVisibility.Unlisted,
     title: 'Unlisted',
     introduction: 'Anyone with the link can access',
-    icon: UserCircleIcon
+    icon: LinkIcon
   },
   {
     value: ProjectVisibility.Private,
     title: 'Private',
     introduction: 'Only team members will have access',
-    icon: UserCircleIcon
+    icon: LockClosedIcon
   }
 ]
 
-const emitUpdate = () => {
-  emit('update-visibility', selectedOption.value)
+watch(
+  () => props.currentVisibility,
+  (newVal) => {
+    selectedOption.value = newVal ?? ProjectVisibility.Private
+  }
+)
+
+const emitUpdate = (value: ProjectVisibility) => {
+  emit('update-visibility', value)
 }
 </script>
