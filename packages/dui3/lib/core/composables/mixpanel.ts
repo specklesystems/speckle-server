@@ -72,7 +72,7 @@ export function useMixpanel() {
       if (/Windows/i.test(userAgent)) {
         os = 'Windows'
       } else if (/Mac/i.test(userAgent)) {
-        os = 'Mac'
+        os = 'Mac OS X'
       }
 
       // Merge base properties with custom ones
