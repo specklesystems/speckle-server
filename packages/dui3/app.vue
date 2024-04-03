@@ -8,6 +8,7 @@
 <script setup lang="ts">
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useConfigStore } from '~/store/config'
+import { useAccountStore, DUIAccount } from '~/store/accounts'
 
 const uiConfigStore = useConfigStore()
 const { isDarkTheme } = storeToRefs(uiConfigStore)
@@ -28,8 +29,19 @@ useHead({
 })
 
 onMounted(() => {
-  const { trackEvent } = useMixpanel()
-  trackEvent('Connector Action', { name: 'Launch' })
+  const { trackEvent, addConnectorToProfile } = useMixpanel()
+  trackEvent('DUI3 Action', { name: 'Launch' })
+
+  const { accounts } = useAccountStore()
+
+  const uniqueEmails = new Set<string>()
+  accounts.forEach((account: DUIAccount) => {
+    const email = account?.accountInfo.userInfo.email
+    if (email && !uniqueEmails.has(email)) {
+      addConnectorToProfile(email)
+      uniqueEmails.add(email)
+    }
+  })
 })
 </script>
 store/config

@@ -19,6 +19,9 @@ const lastServer: Ref<string | undefined> = ref(undefined)
  */
 export function useMixpanel() {
   const hostApp = useHostAppStore()
+  const {
+    public: { mixpanelApiHost, mixpanelTokenId }
+  } = useRuntimeConfig()
 
   /**
    * Track event for mixpanel which do HTTP request to end point.
@@ -33,10 +36,6 @@ export function useMixpanel() {
     accountId?: string,
     isAction: boolean = true
   ) {
-    const {
-      public: { mixpanelApiHost, mixpanelTokenId }
-    } = useRuntimeConfig()
-
     const { selectedAccount, accounts } = useAccountStore()
 
     if (accountId) {
@@ -64,6 +63,8 @@ export function useMixpanel() {
       const hashedEmail =
         '@' + md5(lastEmail.value.toLowerCase() as string).toUpperCase()
       const hashedServer = md5(lastServer.value.toLowerCase() as string).toUpperCase()
+
+      // TODO: add OS info too!!
 
       // Merge base properties with custom ones
       const properties = {
@@ -110,5 +111,38 @@ export function useMixpanel() {
     }
   }
 
-  return { trackEvent }
+  async function addConnectorToProfile(email: string) {
+    try {
+      const hashedEmail = '@' + md5(email.toLowerCase() as string).toUpperCase()
+
+      const eventData = {
+        // eslint-disable-next-line camelcase
+        $distinct_id: hashedEmail,
+        $token: mixpanelTokenId as string,
+        $union: {
+          Connectors: [hostApp.hostAppName]
+        }
+      }
+
+      const response = await fetch(
+        `${mixpanelApiHost as string}/engage#profile-union`,
+        {
+          method: 'POST',
+          headers: {
+            accept: 'text/plain',
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: `data=${btoa(JSON.stringify(eventData))}`
+        }
+      )
+      if (!response.ok) {
+        throw new Error(`Analytics event failed: ${response.statusText}`)
+      }
+    } catch (error) {
+      // Handle error or logging
+      console.warn('Failed to track event in MixPanel:', error)
+    }
+  }
+
+  return { trackEvent, addConnectorToProfile }
 }
