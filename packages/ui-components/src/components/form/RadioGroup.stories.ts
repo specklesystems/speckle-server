@@ -63,7 +63,8 @@ export const Default: RadioGroupStoryType = {
       {
         value: 'option3',
         title: 'Option 3',
-        introduction: 'Introduction for Option 3',
+        introduction:
+          'Introduction for Option 3 but a bit longer so it drops onto 2 lines',
         icon: WrenchIcon,
         help: 'This is an example helper'
       }
