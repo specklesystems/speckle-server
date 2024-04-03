@@ -1,4 +1,4 @@
-import { userEvent, within } from '@storybook/testing-library'
+import { userEvent, within } from '@storybook/test'
 import FormButton from '~~/src/components/form/Button.vue'
 import type { StoryObj, Meta } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
