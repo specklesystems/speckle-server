@@ -5,6 +5,7 @@ import { DrawGroup } from '../src/modules/batching/Batch'
 
 const material0 = new SpeckleBasicMaterial({ color: 0xff0000 })
 const material1 = new SpeckleBasicMaterial({ color: 0x00ff00 })
+const material2 = new SpeckleBasicMaterial({ color: 0x0000ff })
 
 describe('Draw Ranges', () => {
   it('Boundary Ranges', () => {
@@ -109,8 +110,55 @@ describe('Draw Ranges', () => {
     expect(groups).toMatchSnapshot()
   })
 
+  it('Mixed Ranges 2', () => {
+    let groups = [
+      {
+        start: 0,
+        count: 528,
+        materialIndex: 0
+      } as DrawGroup,
+      {
+        start: 528,
+        count: 3261,
+        materialIndex: 1
+      } as DrawGroup
+    ]
+
+    const drawRange = new DrawRanges()
+
+    groups = drawRange.integrateRanges(
+      groups,
+      [material0, material1, material2],
+      [{ offset: 6, count: 36, material: material2 }]
+    )
+    expect(groups).toMatchSnapshot()
+  })
+
+  it('Mixed Ranges 3', () => {
+    let groups = [
+      {
+        start: 0,
+        count: 528,
+        materialIndex: 0
+      } as DrawGroup,
+      {
+        start: 528,
+        count: 3261,
+        materialIndex: 1
+      } as DrawGroup
+    ]
+
+    const drawRange = new DrawRanges()
+
+    groups = drawRange.integrateRanges(
+      groups,
+      [material0, material1, material2],
+      [{ offset: 530, count: 36, material: material2 }]
+    )
+    expect(groups).toMatchSnapshot()
+  })
+
   it('Multiple Materials', () => {
-    const material2 = new SpeckleBasicMaterial({ color: 0x0000ff })
     const material3 = new SpeckleBasicMaterial({ color: 0x0000ff })
     const material4 = new SpeckleBasicMaterial({ color: 0x0000ff })
 
