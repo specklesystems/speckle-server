@@ -9,7 +9,7 @@ import SpecklePointMaterial from '../materials/SpecklePointMaterial'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { IViewer } from '../../IViewer'
-import { Extension } from './core-extensions/Extension'
+import { Extension } from './Extension'
 import { SpeckleTypeAllRenderables } from '../loaders/GeometryConverter'
 import { SpeckleLoader } from '../loaders/Speckle/SpeckleLoader'
 
@@ -41,6 +41,14 @@ interface VisualDiffResult {
 }
 
 export class DiffExtension extends Extension {
+  public get enabled(): boolean {
+    return this._enabled
+  }
+  /* eslint-disable @typescript-eslint/no-unused-vars */
+  public set enabled(value: boolean) {
+    this._enabled = value
+  }
+
   protected tree: WorldTree = null
   private addedMaterialMesh: SpeckleStandardMaterial = null
   private changedNewMaterialMesh: SpeckleStandardMaterial = null

@@ -7,7 +7,7 @@ import { TreeNode, WorldTree } from './modules/tree/WorldTree'
 import { Utils } from './modules/Utils'
 import { World } from './modules/World'
 import SpeckleRenderer from './modules/SpeckleRenderer'
-import { Extension } from './modules/extensions/core-extensions/Extension'
+import { Extension } from './modules/extensions/Extension'
 import Input from './modules/input/Input'
 import { Loader } from './modules/loaders/Loader'
 

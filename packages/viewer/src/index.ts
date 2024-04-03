@@ -37,20 +37,17 @@ import {
 } from './modules/extensions/measurements/MeasurementsExtension'
 import { Units } from './modules/converter/Units'
 import { SelectionExtension } from './modules/extensions/SelectionExtension'
-import { CameraController } from './modules/extensions/core-extensions/CameraController'
-import {
-  CameraControllerEvent,
-  CanonicalView,
-  ICameraProvider,
-  InlineView
-} from './modules/extensions/core-extensions/Providers'
+import { CameraController } from './modules/extensions/CameraController'
+import { InlineView } from './modules/extensions/CameraController'
+import { CanonicalView } from './modules/extensions/CameraController'
+import { CameraEvent } from './modules/objects/SpeckleCamera'
 import { SectionTool } from './modules/extensions/SectionTool'
 import { SectionOutlines } from './modules/extensions/SectionOutlines'
 import {
   FilteringExtension,
   FilteringState
 } from './modules/extensions/FilteringExtension'
-import { Extension } from './modules/extensions/core-extensions/Extension'
+import { Extension } from './modules/extensions/Extension'
 import { ExplodeExtension } from './modules/extensions/ExplodeExtension'
 import {
   DiffExtension,
@@ -86,14 +83,13 @@ export {
   MeasurementType,
   Units,
   Extension,
-  ICameraProvider,
   SelectionExtension,
   CameraController,
   SectionTool,
   SectionOutlines,
   MeasurementsExtension,
   FilteringExtension,
-  CameraControllerEvent,
+  CameraEvent,
   ExplodeExtension,
   DiffExtension,
   Loader,

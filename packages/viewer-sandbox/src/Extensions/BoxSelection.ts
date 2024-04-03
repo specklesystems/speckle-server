@@ -6,10 +6,10 @@ import { SelectionExtension } from '@speckle/viewer'
 import { BatchObject } from '@speckle/viewer'
 import {
   Extension,
-  ICameraProvider,
   IViewer,
   GeometryType,
-  MeshBatch
+  MeshBatch,
+  CameraController
 } from '@speckle/viewer'
 import {
   Matrix4,
@@ -25,7 +25,7 @@ import {
 
 export class BoxSelection extends Extension {
   get inject() {
-    return [ICameraProvider.Symbol]
+    return [CameraController]
   }
 
   private selectionExtension: SelectionExtension
@@ -36,7 +36,7 @@ export class BoxSelection extends Extension {
 
   private idsToSelect: Array<string> | null = []
 
-  public constructor(viewer: IViewer, private cameraController: ICameraProvider) {
+  public constructor(viewer: IViewer, private cameraController: CameraController) {
     super(viewer)
     /** Get the SelectionExtension. We'll need it to remotely enable/disable it */
     //@ts-ignore

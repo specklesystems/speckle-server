@@ -14,10 +14,9 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 import { Geometry } from '../converter/Geometry'
 import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
-import { Extension } from './core-extensions/Extension'
+import { Extension } from './Extension'
 import { IViewer } from '../..'
-import { ISectionProvider } from './core-extensions/Providers'
-import { SectionToolEvent } from './SectionTool'
+import { SectionTool, SectionToolEvent } from './SectionTool'
 import { GeometryType } from '../batching/Batch'
 import { ObjectLayers } from '../../IViewer'
 import { MeshBatch } from '../batching/MeshBatch'
@@ -38,7 +37,7 @@ export interface PlaneOutline {
 
 export class SectionOutlines extends Extension {
   public get inject() {
-    return [ISectionProvider.Symbol]
+    return [SectionTool]
   }
   private static readonly INITIAL_BUFFER_SIZE = 60000 // Must be a multiple of 6
   private static readonly Z_OFFSET = -0.001
@@ -55,9 +54,8 @@ export class SectionOutlines extends Extension {
   private planeOutlines: Record<string, PlaneOutline> = {}
   private lastSectionPlanes: Plane[] = []
   private sectionPlanesChanged: Plane[] = []
-  private _enabled = false
 
-  public constructor(viewer: IViewer, protected sectionProvider: ISectionProvider) {
+  public constructor(viewer: IViewer, protected sectionProvider: SectionTool) {
     super(viewer)
     this.planeOutlines[PlaneId.POSITIVE_X] = this.createPlaneOutline(PlaneId.POSITIVE_X)
     this.planeOutlines[PlaneId.NEGATIVE_X] = this.createPlaneOutline(PlaneId.NEGATIVE_X)
@@ -100,7 +98,11 @@ export class SectionOutlines extends Extension {
     return this.planeOutlines[planeId]
   }
 
-  public enable(value: boolean) {
+  public get enabled(): boolean {
+    return this._enabled
+  }
+
+  public set enabled(value: boolean) {
     this._enabled = value
     for (const k in this.planeOutlines) {
       this.planeOutlines[k].renderable.visible = value
@@ -108,7 +110,7 @@ export class SectionOutlines extends Extension {
   }
 
   public sectionUpdated(planes: Plane[]) {
-    if (!this.sectionProvider.enabled) this.enable(false)
+    if (!this.sectionProvider.enabled) this.enabled = false
     for (const plane in this.planeOutlines) {
       const clippingPlanes = planes.filter((value) => this.getPlaneId(value) !== plane)
       this.planeOutlines[plane].renderable.material.clippingPlanes = clippingPlanes
@@ -315,7 +317,7 @@ export class SectionOutlines extends Extension {
   }
 
   private onSectionBoxDragStart() {
-    this.enable(false)
+    this.enabled = false
   }
 
   private onSectionBoxDragEnd() {
@@ -346,7 +348,7 @@ export class SectionOutlines extends Extension {
         planes[k]
       )
     }
-    this.enable(this.sectionProvider.enabled)
+    this.enabled = this.sectionProvider.enabled
     Logger.warn('Outline time: ', performance.now() - start)
   }
 

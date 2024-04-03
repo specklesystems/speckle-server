@@ -5,7 +5,7 @@ import { Assets } from '../Assets'
 import SpeckleRenderer from '../SpeckleRenderer'
 import { FilterMaterialType } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Extension } from './core-extensions/Extension'
+import { Extension } from './Extension'
 import { TreeNode, WorldTree } from '../tree/WorldTree'
 import { IViewer, UpdateFlags, ViewerEvent } from '../../IViewer'
 import {
@@ -38,6 +38,13 @@ export class FilteringExtension extends Extension {
 
   public get filteringState(): FilteringState {
     return this.CurrentFilteringState
+  }
+
+  public get enabled(): boolean {
+    return this._enabled
+  }
+  public set enabled(value: boolean) {
+    this._enabled = value
   }
 
   public constructor(viewer: IViewer) {

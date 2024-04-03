@@ -1,11 +1,8 @@
 import { MathUtils } from 'three'
 import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
-import {
-  CanonicalView,
-  ICameraProvider,
-  InlineView,
-  PolarView
-} from './extensions/core-extensions/Providers'
+import { PolarView } from './extensions/CameraController'
+import { InlineView } from './extensions/CameraController'
+import { CanonicalView } from './extensions/CameraController'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Queries } from './queries/Queries'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
@@ -25,7 +22,7 @@ import {
 } from '../IViewer'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import { Viewer } from './Viewer'
-import { CameraController } from './extensions/core-extensions/CameraController'
+import { CameraController } from './extensions/CameraController'
 import { SectionTool } from './extensions/SectionTool'
 import { SectionOutlines } from './extensions/SectionOutlines'
 import {
@@ -49,7 +46,7 @@ class LegacySelectionExtension extends SelectionExtension {
 }
 
 class HighlightExtension extends SelectionExtension {
-  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer, cameraProvider)
     const highlightMaterialData: SelectionExtensionOptions = {
       selectionMaterialData: {

@@ -9,9 +9,9 @@ import { ExtendedIntersection } from '../../objects/SpeckleRaycaster'
 import Logger from 'js-logger'
 import SpeckleMesh from '../../objects/SpeckleMesh'
 import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial'
-import { Extension } from '../core-extensions/Extension'
+import { Extension } from '../Extension'
 import { InputEvent } from '../../input/Input'
-import { ICameraProvider } from '../core-extensions/Providers'
+import { CameraController } from '../CameraController'
 
 export enum MeasurementType {
   PERPENDICULAR,
@@ -36,7 +36,7 @@ const DefaultMeasurementsOptions = {
 
 export class MeasurementsExtension extends Extension {
   public get inject() {
-    return [ICameraProvider.Symbol]
+    return [CameraController]
   }
 
   protected renderer: SpeckleRenderer = null
@@ -48,7 +48,6 @@ export class MeasurementsExtension extends Extension {
   protected _options: MeasurementOptions = Object.assign({}, DefaultMeasurementsOptions)
 
   private _frameLock = false
-  private _enabled = false
   private _paused = false
   private _sceneHit = false
 
@@ -101,7 +100,7 @@ export class MeasurementsExtension extends Extension {
     return this._activeMeasurement
   }
 
-  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer)
     this.renderer = viewer.getRenderer()
     this.raycaster = new Raycaster()

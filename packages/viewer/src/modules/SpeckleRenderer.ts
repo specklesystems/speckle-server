@@ -43,10 +43,7 @@ import { Shadowcatcher } from './Shadowcatcher'
 import SpeckleMesh from './objects/SpeckleMesh'
 import { ExtendedIntersection } from './objects/SpeckleRaycaster'
 import { BatchObject } from './batching/BatchObject'
-import {
-  ICameraProvider,
-  CameraControllerEvent
-} from './extensions/core-extensions/Providers'
+import { CameraEvent, SpeckleCamera } from './objects/SpeckleCamera'
 import Materials, {
   RenderMaterial,
   DisplayStyle,
@@ -58,7 +55,6 @@ import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
 import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter'
 import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh'
 import { BaseSpecklePass } from './pipeline/SpecklePass'
-import { CameraController } from './extensions/core-extensions/CameraController'
 import { MeshBatch } from './batching/MeshBatch'
 
 export class RenderingStats {
@@ -118,7 +114,7 @@ export default class SpeckleRenderer {
   private _shadowcatcher: Shadowcatcher = null
   private cancel: { [subtreeId: string]: boolean } = {}
 
-  private _cameraProvider: ICameraProvider = null
+  private _speckleCamera: SpeckleCamera = null
   private _clippingPlanes: Plane[] = []
   private _clippingVolume: Box3 = new Box3()
 
@@ -217,33 +213,30 @@ export default class SpeckleRenderer {
 
   /********
    * Camera */
-  public get cameraProvider() {
-    return this._cameraProvider
+  public get speckleCamera(): SpeckleCamera {
+    return this._speckleCamera
   }
 
-  public set cameraProvider(value: ICameraProvider) {
-    this._cameraProvider = value
-    this._cameraProvider.on(CameraControllerEvent.Dynamic, () => {
+  public set speckleCamera(value: SpeckleCamera) {
+    this._speckleCamera = value
+    this._speckleCamera.on(CameraEvent.Dynamic, () => {
       this._needsRender = true
       this.pipeline.onStationaryEnd()
     })
-    this._cameraProvider.on(CameraControllerEvent.Stationary, () => {
+    this._speckleCamera.on(CameraEvent.Stationary, () => {
       this._needsRender = true
       this.pipeline.onStationaryBegin()
     })
-    this._cameraProvider.on(CameraControllerEvent.FrameUpdate, (data: boolean) => {
-      this.needsRender = data
-      if (this.pipeline.needsAccumulation && data) {
+    this._speckleCamera.on(CameraEvent.FrameUpdate, (needsUpdate: boolean) => {
+      this.needsRender = needsUpdate
+      if (this.pipeline.needsAccumulation && needsUpdate) {
         this.pipeline.reset()
       }
-    })
-    this.cameraProvider.on(CameraControllerEvent.ProjectionChanged, () => {
-      ;(this._cameraProvider as CameraController).setCameraPlanes(this.sceneBox)
     })
   }
 
   public get renderingCamera() {
-    return this._cameraProvider.renderingCamera
+    return this._speckleCamera.renderingCamera
   }
 
   /**********
@@ -394,7 +387,7 @@ export default class SpeckleRenderer {
   }
 
   public update(deltaTime: number) {
-    if (!this._cameraProvider) return
+    if (!this._speckleCamera) return
     this.batcher.update(deltaTime)
 
     this.renderingCamera.updateMatrixWorld(true)
@@ -548,7 +541,7 @@ export default class SpeckleRenderer {
       return
     }
 
-    if (!this._cameraProvider) return
+    if (!this._speckleCamera) return
     if (this._needsRender || this.pipeline.needsAccumulation) {
       this._renderinStats.frameStart()
       this.batcher.render(this.renderer)
@@ -614,7 +607,7 @@ export default class SpeckleRenderer {
     /** We'll just update the shadowcatcher after all batches are loaded */
     this.updateShadowCatcher()
     this.updateClippingPlanes()
-    ;(this._cameraProvider as CameraController).setCameraPlanes(this.sceneBox)
+    this._speckleCamera.setCameraPlanes(this.sceneBox)
     delete this.cancel[subtreeId]
   }
 

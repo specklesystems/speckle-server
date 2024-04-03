@@ -17,10 +17,10 @@ import {
 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
 import { IViewer, ObjectLayers } from '../../IViewer'
-import { Extension } from './core-extensions/Extension'
-import { CameraControllerEvent, ICameraProvider } from './core-extensions/Providers'
+import { Extension } from './Extension'
+import { CameraEvent } from '../objects/SpeckleCamera'
 import { InputEvent } from '../input/Input'
-import { ISectionProvider } from './core-extensions/Providers'
+import { CameraController } from './CameraController'
 
 export enum SectionToolEvent {
   DragStart = 'section-box-drag-start',
@@ -28,13 +28,9 @@ export enum SectionToolEvent {
   Updated = 'section-box-changed'
 }
 
-export class SectionTool extends Extension implements ISectionProvider {
+export class SectionTool extends Extension {
   public get inject() {
-    return [ICameraProvider.Symbol]
-  }
-
-  public get provide(): string {
-    return ISectionProvider.Symbol
+    return [CameraController]
   }
 
   protected dragging = false
@@ -60,7 +56,6 @@ export class SectionTool extends Extension implements ISectionProvider {
 
   protected raycaster: Raycaster
 
-  private _enabled = false
   public get enabled() {
     return this._enabled
   }
@@ -73,7 +68,7 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.viewer.requestRender()
   }
 
-  constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer)
     this.viewer = viewer
 
@@ -160,11 +155,11 @@ export class SectionTool extends Extension implements ISectionProvider {
     this._setupControls()
     this._attachControlsToBox()
 
-    this.cameraProvider.on(CameraControllerEvent.ProjectionChanged, () => {
+    this.cameraProvider.on(CameraEvent.ProjectionChanged, () => {
       this._setupControls()
       this._attachControlsToBox()
     })
-    this.cameraProvider.on(CameraControllerEvent.FrameUpdate, (data: boolean) => {
+    this.cameraProvider.on(CameraEvent.FrameUpdate, (data: boolean) => {
       this.allowSelection = !data
     })
     this.viewer.getRenderer().input.on(InputEvent.Click, this._clickHandler.bind(this))

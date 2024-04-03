@@ -1,23 +1,38 @@
 import * as THREE from 'three'
 import CameraControls from 'camera-controls'
 import { Extension } from './Extension'
-import { SpeckleCameraControls } from '../../objects/SpeckleCameraControls'
+import { SpeckleCameraControls } from '../objects/SpeckleCameraControls'
 import { Box3, OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three'
 import { KeyboardKeyHold, HOLD_EVENT_TYPE } from 'hold-event'
-import { CanonicalView, SpeckleView, InlineView, IViewer } from '../../..'
-import {
-  CameraControllerEvent,
-  CameraProjection,
-  ICameraProvider,
-  PolarView
-} from './Providers'
+import { CameraProjection } from '../objects/SpeckleCamera'
+import { CameraEvent, SpeckleCamera } from '../objects/SpeckleCamera'
 import Logger from 'js-logger'
+import { IViewer, SpeckleView } from '../../IViewer'
 
-export class CameraController extends Extension implements ICameraProvider {
-  get provide() {
-    return ICameraProvider.Symbol
-  }
+export type CanonicalView =
+  | 'front'
+  | 'back'
+  | 'up'
+  | 'top'
+  | 'down'
+  | 'bottom'
+  | 'right'
+  | 'left'
+  | '3d'
+  | '3D'
 
+export type InlineView = {
+  position: Vector3
+  target: Vector3
+}
+export type PolarView = {
+  azimuth: number
+  polar: number
+  radius?: number
+  origin?: Vector3
+}
+
+export class CameraController extends Extension implements SpeckleCamera {
   protected _renderingCamera: PerspectiveCamera | OrthographicCamera = null
   protected perspectiveCamera: PerspectiveCamera = null
   protected orthographicCamera: OrthographicCamera = null
@@ -99,19 +114,21 @@ export class CameraController extends Extension implements ICameraProvider {
     this.setupWASDControls()
 
     this._controls.addEventListener('rest', () => {
-      this.emit(CameraControllerEvent.Stationary)
+      this.emit(CameraEvent.Stationary)
     })
     this._controls.addEventListener('controlstart', () => {
-      this.emit(CameraControllerEvent.Dynamic)
+      this.emit(CameraEvent.Dynamic)
     })
 
     this._controls.addEventListener('controlend', () => {
-      if (this._controls.hasRested) this.emit(CameraControllerEvent.Stationary)
+      if (this._controls.hasRested) this.emit(CameraEvent.Stationary)
     })
 
     this._controls.addEventListener('control', () => {
-      this.emit(CameraControllerEvent.Dynamic)
+      this.emit(CameraEvent.Dynamic)
     })
+
+    this.viewer.getRenderer().speckleCamera = this
   }
 
   setCameraView(objectIds: string[], transition: boolean, fit?: number): void
@@ -134,12 +151,12 @@ export class CameraController extends Extension implements ICameraProvider {
     } else {
       this.setView(arg0, arg1)
     }
-    this.emit(CameraControllerEvent.Dynamic)
+    this.emit(CameraEvent.Dynamic)
   }
 
   public onEarlyUpdate(deltaTime: number) {
     const changed = this._controls.update(deltaTime)
-    this.emit(CameraControllerEvent.FrameUpdate, changed)
+    this.emit(CameraEvent.FrameUpdate, changed)
   }
 
   public onResize() {
@@ -219,7 +236,8 @@ export class CameraController extends Extension implements ICameraProvider {
     this.orthographicCamera.updateProjectionMatrix()
 
     this._controls.camera = this.orthographicCamera
-    this.emit(CameraControllerEvent.ProjectionChanged, CameraProjection.ORTHOGRAPHIC)
+    this.setCameraPlanes(this.viewer.getRenderer().sceneBox)
+    this.emit(CameraEvent.ProjectionChanged, CameraProjection.ORTHOGRAPHIC)
   }
 
   protected setupPerspectiveCamera() {
@@ -230,7 +248,8 @@ export class CameraController extends Extension implements ICameraProvider {
     this._controls.camera = this.perspectiveCamera
     this._controls.zoomTo(1)
     this.enableRotations()
-    this.emit(CameraControllerEvent.ProjectionChanged, CameraProjection.PERSPECTIVE)
+    this.setCameraPlanes(this.viewer.getRenderer().sceneBox)
+    this.emit(CameraEvent.ProjectionChanged, CameraProjection.PERSPECTIVE)
   }
 
   public disableRotations() {
