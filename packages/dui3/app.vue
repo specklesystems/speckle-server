@@ -29,7 +29,7 @@ useHead({
 })
 
 onMounted(() => {
-  const { trackEvent, addConnectorToProfile } = useMixpanel()
+  const { trackEvent, addConnectorToProfile, identifyProfile } = useMixpanel()
   trackEvent('DUI3 Action', { name: 'Launch' })
 
   const { accounts } = useAccountStore()
@@ -39,6 +39,7 @@ onMounted(() => {
     const email = account?.accountInfo.userInfo.email
     if (email && !uniqueEmails.has(email)) {
       addConnectorToProfile(email)
+      identifyProfile(email)
       uniqueEmails.add(email)
     }
   })

@@ -144,5 +144,35 @@ export function useMixpanel() {
     }
   }
 
-  return { trackEvent, addConnectorToProfile }
+  async function identifyProfile(email: string) {
+    try {
+      const hashedEmail = '@' + md5(email.toLowerCase() as string).toUpperCase()
+
+      const eventData = {
+        // eslint-disable-next-line camelcase
+        $distinct_id: hashedEmail,
+        $token: mixpanelTokenId as string,
+        $set: {
+          Identified: true
+        }
+      }
+
+      const response = await fetch(`${mixpanelApiHost as string}/engage#profile-set`, {
+        method: 'POST',
+        headers: {
+          accept: 'text/plain',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: `data=${btoa(JSON.stringify(eventData))}`
+      })
+      if (!response.ok) {
+        throw new Error(`Analytics event failed: ${response.statusText}`)
+      }
+    } catch (error) {
+      // Handle error or logging
+      console.warn('Failed to track event in MixPanel:', error)
+    }
+  }
+
+  return { trackEvent, addConnectorToProfile, identifyProfile }
 }
