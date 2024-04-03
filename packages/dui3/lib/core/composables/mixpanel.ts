@@ -68,7 +68,7 @@ export function useMixpanel() {
       // taken from original mixpanel implementation
       // https://github.com/mixpanel/mixpanel-js/blob/master/examples/commonjs-browserify/bundle.js#L1576
       const userAgent = navigator.userAgent
-      let os = undefined
+      let os = 'unknown'
       if (/Windows/i.test(userAgent)) {
         os = 'Windows'
       } else if (/Mac/i.test(userAgent)) {
