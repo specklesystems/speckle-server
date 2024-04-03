@@ -3,7 +3,10 @@ const { authorizeResolver } = require(`@/modules/shared`)
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { LogicError } = require('@/modules/shared/errors')
 const { ForbiddenError, UserInputError } = require('apollo-server-express')
-const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
+const {
+  StreamInvalidAccessError,
+  StreamAccessUpdateError
+} = require('@/modules/core/errors/stream')
 const {
   addStreamPermissionsAddedActivity,
   addStreamPermissionsRevokedActivity,
@@ -101,7 +104,10 @@ async function removeStreamCollaborator(
     )
   } else {
     // User must have any kind of role to remove himself
-    await isStreamCollaborator(userId, streamId)
+    const isCollaborator = await isStreamCollaborator(userId, streamId)
+    if (!isCollaborator) {
+      throw new StreamAccessUpdateError('User is not a stream collaborator')
+    }
   }
 
   const stream = await revokeStreamPermissions({ streamId, userId })

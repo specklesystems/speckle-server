@@ -10,6 +10,7 @@ import {
   Streams,
   Users
 } from '@/modules/core/dbSchema'
+import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
 import { mapStreamRoleToValue } from '@/modules/core/helpers/graphTypes'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getStreamCollaborators } from '@/modules/core/repositories/streams'
@@ -39,6 +40,10 @@ import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/strea
 import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import { noop } from 'lodash'
+
+const isNotCollaboratorError = (e: unknown) =>
+  e instanceof StreamAccessUpdateError &&
+  e.message.includes('User is not a stream collaborator')
 
 const createReqAndGetId = async (userId: string, streamId: string) => {
   const createReqRes = await requestStreamAccess(userId, streamId)
@@ -130,7 +135,9 @@ describe('Stream access requests', () => {
     afterEach(async () => {
       // Ensure me doesnt have any roles on stream1
       await removeStreamCollaborator(otherGuysPrivateStream.id, me.id, me.id).catch(
-        noop
+        (e) => {
+          if (!isNotCollaboratorError(e)) throw e
+        }
       )
     })
 
@@ -319,7 +326,9 @@ describe('Stream access requests', () => {
         myPrivateStream.id,
         otherGuy.id,
         otherGuy.id
-      ).catch(noop)
+      ).catch((e) => {
+        if (!isNotCollaboratorError(e)) throw e
+      })
       validReqId = await createReqAndGetId(otherGuy.id, myPrivateStream.id)
     })
 
@@ -371,7 +380,7 @@ describe('Stream access requests', () => {
           const newCollaborator = collaborators.find((c) => c.id === otherGuy.id)
 
           expect(newCollaborator).to.be.ok
-          expect(newCollaborator?.role).to.eq(
+          expect(newCollaborator?.streamRole).to.eq(
             role ? mapStreamRoleToValue(role) : Roles.Stream.Contributor
           )
         } else {
