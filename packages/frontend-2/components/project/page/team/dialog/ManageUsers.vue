@@ -124,8 +124,7 @@ const onCollaboratorRoleChange = async (
         if (fieldName !== 'team') return
         return value.filter(
           (t) =>
-            !t.user ||
-            t.user.__ref !== getObjectReference('LimitedUser', collaborator.id).__ref
+            t.__ref !== getObjectReference('ProjectCollaborator', collaborator.id).__ref
         )
       }
     )
