@@ -22,7 +22,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { LayoutDialog, FormTextInput } from '@speckle/ui-components'
 import { useDeleteProject } from '~~/lib/projects/composables/projectManagement'
 import type { ProjectSettingsQuery } from '~~/lib/common/generated/gql/graphql'

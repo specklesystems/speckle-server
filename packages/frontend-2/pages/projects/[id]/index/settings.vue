@@ -38,4 +38,25 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
 ])
 
 const activeSettingsPageTab = ref(settingsTabItems.value[0])
+
+// const activeSettingsPageTab = computed({
+//   get: () => {
+//     const path = route.path
+//     if (path.includes('/settings/collaborators')) return settingsTabItems.value[1]
+//     if (path.includes('/settings/webhooks')) return settingsTabItems.value[2]
+//     return settingsTabItems.value[0]
+//   },
+//   set: (val: LayoutPageTabItem) => {
+//     switch (val.id) {
+//       case 'collaborators':
+//         router.push({ path: '/settings/collaborators' })
+//         break
+//       case 'webhooks':
+//         router.push({ path: '/settings/webhooks' })
+//         break
+//       default:
+//         router.push({ path: '/settings/general' })
+//     }
+//   }
+// })
 </script>

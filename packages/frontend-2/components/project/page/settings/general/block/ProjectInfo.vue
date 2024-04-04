@@ -41,7 +41,6 @@
 
 <script setup lang="ts">
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
-import { ref, computed } from 'vue'
 import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import {
   FormTextInput,
