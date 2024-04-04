@@ -2,7 +2,7 @@ import { Roles } from '@speckle/shared'
 import type { Nullable, ServerRoles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type {
-  ProjectSettingsCollaboratorsQuery,
+  ProjectSettingsQuery,
   ProjectsPageTeamDialogManagePermissions_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
@@ -27,8 +27,8 @@ export function useTeamManagePermissionsInternals(params: {
   }
 }
 
-export function useTeamDialogInternals(
-  projectData: ComputedRef<ProjectSettingsCollaboratorsQuery['project'] | undefined>
+export function useTeamInternals(
+  projectData: ComputedRef<ProjectSettingsQuery['project'] | undefined>
 ) {
   const { isGuest: isServerGuest, activeUser } = useActiveUser()
 

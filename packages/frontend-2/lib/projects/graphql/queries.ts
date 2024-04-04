@@ -207,22 +207,14 @@ export const projectDiscussionsPageQuery = graphql(`
   }
 `)
 
-export const projectSettingsGeneralQuery = graphql(`
-  query ProjectSettingsGeneral($projectId: String!) {
+export const projectSettingsQuery = graphql(`
+  query ProjectSettings($projectId: String!) {
     project(id: $projectId) {
       id
       name
       description
       visibility
       allowPublicComments
-    }
-  }
-`)
-
-export const projectSettingsCollaboratorsQuery = graphql(`
-  query ProjectSettingsCollaborators($projectId: String!) {
-    project(id: $projectId) {
-      id
       role
       team {
         role

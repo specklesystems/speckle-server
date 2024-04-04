@@ -73,7 +73,7 @@ import type { Nullable, StreamRoles } from '@speckle/shared'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { Project } from '~~/lib/common/generated/gql/graphql'
-import { projectSettingsCollaboratorsQuery } from '~~/lib/projects/graphql/queries'
+import { projectSettingsQuery } from '~~/lib/projects/graphql/queries'
 import {
   getCacheId,
   getObjectReference,
@@ -83,7 +83,7 @@ import {
   useCancelProjectInvite,
   useUpdateUserRole
 } from '~~/lib/projects/composables/projectManagement'
-import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
+import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
 import { UsersIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
@@ -103,14 +103,13 @@ const projectId = computed(() => route.params.id as string)
 
 const canEdit = computed(() => isOwner.value && !isServerGuest.value)
 
-const { result: pageResult } = useQuery(projectSettingsCollaboratorsQuery, () => ({
+const { result: pageResult } = useQuery(projectSettingsQuery, () => ({
   projectId: projectId.value
 }))
 
 const projectData = computed(() => pageResult.value?.project)
 
-const { collaboratorListItems, isOwner, isServerGuest } =
-  useTeamDialogInternals(projectData)
+const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(projectData)
 
 const onCollaboratorRoleChange = async (
   collaborator: ProjectCollaboratorListItem,

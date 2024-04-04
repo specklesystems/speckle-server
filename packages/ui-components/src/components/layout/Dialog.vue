@@ -72,7 +72,7 @@
                     v-for="(button, index) in buttons"
                     :key="index"
                     v-bind="button.props"
-                    :disabled="button.disabled"
+                    :is-disabled="button.disabled"
                     :type="button.submit && 'submit'"
                     @click="button.onClick"
                   >

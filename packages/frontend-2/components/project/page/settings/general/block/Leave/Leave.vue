@@ -6,11 +6,7 @@
       :icon="ArrowRightOnRectangleIcon"
     >
       <template #introduction>
-        <p>
-          As long as you're not the only owner you can remove yourself from this
-          project's list of collaborators.
-        </p>
-        <p class="font-bold my-2 text-sm">
+        <p class="font-bold mb-2 text-sm">
           Removing yourself from the collaborators list is an irreversible action.
         </p>
         <p>
@@ -19,15 +15,15 @@
       </template>
       <div class="flex justify-end w-full">
         <div class="max-w-max">
-          <FormButton color="info" outlined @click="showDeleteDialog = true">
+          <FormButton color="danger" outlined @click="showLeaveDialog = true">
             Leave Project
           </FormButton>
         </div>
       </div>
     </ProjectPageSettingsBlock>
-    <ProjectPageSettingsGeneralBlockDeleteDialog
+    <ProjectPageSettingsGeneralBlockLeaveDialog
       v-if="project"
-      v-model:open="showDeleteDialog"
+      v-model:open="showLeaveDialog"
       :project="project"
     />
   </div>
@@ -35,12 +31,11 @@
 
 <script setup lang="ts">
 import { ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
-import type { ProjectSettingsGeneralQuery } from '~~/lib/common/generated/gql/graphql'
-type ProjectType = ProjectSettingsGeneralQuery['project']
+import type { ProjectSettingsQuery } from '~~/lib/common/generated/gql/graphql'
 
 defineProps<{
-  project?: ProjectType
+  project?: ProjectSettingsQuery['project']
 }>()
 
-const showDeleteDialog = ref(false)
+const showLeaveDialog = ref(false)
 </script>

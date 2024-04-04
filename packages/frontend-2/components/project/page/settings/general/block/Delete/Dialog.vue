@@ -10,25 +10,26 @@
       </p>
       <FormTextInput
         v-model="projectNameInput"
-        name="Delete Project"
+        name="projectName"
         label="Project name"
         placeholder="Type the project name here"
-        :rules="[validateProjectName]"
+        full-width
         hide-error-message
-        color="foundation"
-        size="lg"
-        outlined
-        dense
+        class="text-sm"
       />
     </div>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { LayoutDialog, FormTextInput } from '@speckle/ui-components'
 import { useDeleteProject } from '~~/lib/projects/composables/projectManagement'
-import type { ProjectSettingsGeneralQuery } from '~~/lib/common/generated/gql/graphql'
-type ProjectType = ProjectSettingsGeneralQuery['project']
+import type { ProjectSettingsQuery } from '~~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useTeamInternals } from '~~/lib/projects/composables/team'
+
+type ProjectType = ProjectSettingsQuery['project']
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -38,10 +39,12 @@ const props = defineProps<{
 
 const projectNameInput = ref('')
 
-const deleteProject = useDeleteProject()
+const projectData = computed(() => props.project)
 
-const validateProjectName = (value: string) =>
-  value === props.project.name || 'The project name does not match.'
+const { isOwner } = useTeamInternals(projectData)
+
+const deleteProject = useDeleteProject()
+const mp = useMixpanel()
 
 const dialogButtons = computed(() => [
   {
@@ -49,6 +52,7 @@ const dialogButtons = computed(() => [
     props: { color: 'secondary', fullWidth: true },
     onClick: () => {
       isOpen.value = false
+      projectNameInput.value = ''
     }
   },
   {
@@ -57,13 +61,13 @@ const dialogButtons = computed(() => [
       color: 'danger',
       fullWidth: true,
       outline: true,
-      submit: true,
       disabled: projectNameInput.value !== props.project.name
     },
     onClick: async () => {
-      if (projectNameInput.value === props.project.name) {
+      if (projectNameInput.value === props.project.name && isOwner.value) {
         await deleteProject(props.project.id, { goHome: true })
-        isOpen.value = false // Close dialog upon successful deletion
+        isOpen.value = false
+        mp.track('Stream Action', { type: 'action', name: 'delete' })
       }
     }
   }

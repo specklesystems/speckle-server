@@ -27,8 +27,8 @@
 
 <script setup lang="ts">
 import { TrashIcon } from '@heroicons/vue/24/outline'
-import type { ProjectSettingsGeneralQuery } from '~~/lib/common/generated/gql/graphql'
-type ProjectType = ProjectSettingsGeneralQuery['project']
+import type { ProjectSettingsQuery } from '~~/lib/common/generated/gql/graphql'
+type ProjectType = ProjectSettingsQuery['project']
 
 defineProps<{
   project?: ProjectType
