@@ -10,7 +10,11 @@
         :name="fn.name"
       ></HeaderNavLink>
     </Portal>
-    <h1 class="h3 font-bold">{{ fn.name }}</h1>
+    <div class="flex items-center gap-4">
+      <AutomateFunctionLogo :logo="fn.logo" />
+
+      <h1 class="h3 font-bold">{{ fn.name }}</h1>
+    </div>
     <div class="flex gap-2">
       <FormButton :icon-left="BoltIcon">Create Automation</FormButton>
     </div>

@@ -2,7 +2,8 @@
   <div>
     <CommonLoadingBar :loading="loading" />
     <template v-if="!loading">
-      <AutomateFunctionPageHeader :fn="fn" />
+      <AutomateFunctionPageHeader :fn="fn" class="mb-12" />
+      <AutomateFunctionPageInfo />
     </template>
   </div>
 </template>

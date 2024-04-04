@@ -1,8 +1,8 @@
 <template>
   <div>
-    <AutomationsFunctionsCardView>
-      <AutomationsFunctionsCard v-for="fn in fns" :key="fn.id" :fn="fn" no-buttons />
-    </AutomationsFunctionsCardView>
+    <AutomateFunctionCardView>
+      <AutomateFunctionCard v-for="fn in fns" :key="fn.id" :fn="fn" no-buttons />
+    </AutomateFunctionCardView>
   </div>
 </template>
 <script setup lang="ts">

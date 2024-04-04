@@ -3162,11 +3162,11 @@ export type RequestVerificationMutation = { __typename?: 'Mutation', requestVeri
 
 export type AuthStategiesServerInfoFragmentFragment = { __typename?: 'ServerInfo', authStrategies: Array<{ __typename?: 'AuthStrategy', id: string, name: string, url: string }> };
 
+export type AutomationsFunctionsCard_AutomateFunctionFragment = { __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, creator: { __typename?: 'LimitedUser', id: string, name: string } };
+
 export type AutomateFunctionPageHeader_FunctionFragment = { __typename?: 'AutomateFunction', id: string, name: string, logo?: string | null };
 
 export type AutomateFunctionsPageItems_QueryFragment = { __typename?: 'Query', automateFunctions: { __typename?: 'AutomateFunctionCollection', items: Array<{ __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, creator: { __typename?: 'LimitedUser', id: string, name: string } }> } };
-
-export type AutomationsFunctionsCard_AutomateFunctionFragment = { __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, creator: { __typename?: 'LimitedUser', id: string, name: string } };
 
 export type CommonModelSelectorModelFragment = { __typename?: 'Model', id: string, name: string };
 

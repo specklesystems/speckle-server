@@ -42,9 +42,9 @@
           Explore All Functions
         </FormButton>
       </div>
-      <AutomationsFunctionsCardView>
-        <AutomationsFunctionsCard v-for="fn in functions" :key="fn.id" :fn="fn" />
-      </AutomationsFunctionsCardView>
+      <AutomateFunctionCardView>
+        <AutomateFunctionCard v-for="fn in functions" :key="fn.id" :fn="fn" />
+      </AutomateFunctionCardView>
     </div>
   </div>
 </template>

@@ -5,15 +5,15 @@
       Note: functions do not automatically update to their latest release. To do so,
       please select it manually via the edit dialog.
     </div>
-    <AutomationsFunctionsCardView class="mt-2">
-      <AutomationsFunctionsCard
+    <AutomateFunctionCardView class="mt-2">
+      <AutomateFunctionCard
         v-for="fn in functions"
         :key="fn.id"
         :fn="fn"
         show-edit
         @edit="onEdit(fn)"
       />
-    </AutomationsFunctionsCardView>
+    </AutomateFunctionCardView>
     <ProjectPageAutomationFunctionSettingsDialog
       v-model:open="dialogOpen"
       :project-id="projectId"

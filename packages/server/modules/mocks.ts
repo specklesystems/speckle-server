@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LimitedUser, Resolvers } from '@/modules/core/graph/generated/graphql'
-// import { isDevEnv } from '@/modules/shared/helpers/envHelper'
+import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { Roles } from '@speckle/shared'
 import { times } from 'lodash'
 import { IMockStore, IMocks } from '@graphql-tools/mock'
@@ -17,6 +17,8 @@ export async function buildMocksConfig(): Promise<{
   resolvers?: Resolvers | ((store: IMockStore) => Resolvers)
 }> {
   // TODO: Disable before merging!
+  if (isTestEnv()) return { mocks: false, mockEntireSchema: false }
+
   // const isDebugEnv = isDevEnv()
   // if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
 
@@ -107,7 +109,7 @@ export async function buildMocksConfig(): Promise<{
           )
         },
         logo: () => {
-          const random = faker.datatype.number({ min: 0, max: 3 })
+          const random = faker.datatype.boolean()
           return random
             ? faker.image.imageUrl(undefined, undefined, undefined, true)
             : null
