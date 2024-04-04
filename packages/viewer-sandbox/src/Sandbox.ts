@@ -21,8 +21,8 @@ import { DiffResult } from '@speckle/viewer'
 import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
-import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
+import { MeasurementsExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
 import { Viewer } from '@speckle/viewer'
@@ -1122,7 +1122,7 @@ export default class Sandbox {
       .on('change', () => {
         this.viewer.getExtension(SelectionExtension).enabled =
           !this.measurementsParams.enabled
-        this.viewer.getExtension(MeasurementsExtension).enabled =
+        this.viewer.getExtension<MeasurementsExtension>(MeasurementsExtension).enabled =
           this.measurementsParams.enabled
       })
     container
@@ -1130,7 +1130,7 @@ export default class Sandbox {
         label: 'Visible'
       })
       .on('change', () => {
-        this.viewer.getExtension(MeasurementsExtension).options =
+        this.viewer.getExtension<MeasurementsExtension>(MeasurementsExtension).options =
           this.measurementsParams
       })
     container
@@ -1142,7 +1142,7 @@ export default class Sandbox {
         }
       })
       .on('change', () => {
-        this.viewer.getExtension(MeasurementsExtension).options =
+        this.viewer.getExtension<MeasurementsExtension>(MeasurementsExtension).options =
           this.measurementsParams
       })
     container
@@ -1150,7 +1150,7 @@ export default class Sandbox {
         label: 'Snap'
       })
       .on('change', () => {
-        this.viewer.getExtension(MeasurementsExtension).options =
+        this.viewer.getExtension<MeasurementsExtension>(MeasurementsExtension).options =
           this.measurementsParams
       })
 
@@ -1160,7 +1160,7 @@ export default class Sandbox {
         options: Units
       })
       .on('change', () => {
-        this.viewer.getExtension(MeasurementsExtension).options =
+        this.viewer.getExtension<MeasurementsExtension>(MeasurementsExtension).options =
           this.measurementsParams
       })
     container
@@ -1171,7 +1171,7 @@ export default class Sandbox {
         max: 5
       })
       .on('change', () => {
-        this.viewer.getExtension(MeasurementsExtension).options =
+        this.viewer.getExtension<MeasurementsExtension>(MeasurementsExtension).options =
           this.measurementsParams
       })
     container
@@ -1179,14 +1179,18 @@ export default class Sandbox {
         title: 'Delete'
       })
       .on('click', () => {
-        this.viewer.getExtension(MeasurementsExtension).removeMeasurement()
+        this.viewer
+          .getExtension<MeasurementsExtension>(MeasurementsExtension)
+          .removeMeasurement()
       })
     container
       .addButton({
         title: 'Delete All'
       })
       .on('click', () => {
-        this.viewer.getExtension(MeasurementsExtension).clearMeasurements()
+        this.viewer
+          .getExtension<MeasurementsExtension>(MeasurementsExtension)
+          .clearMeasurements()
       })
   }
 

@@ -1,8 +1,8 @@
-import { Vector3, ICameraProvider, Extension, IViewer } from '@speckle/viewer'
+import { Vector3, Extension, IViewer, CameraController } from '@speckle/viewer'
 
 export class RotateCamera extends Extension {
   get inject() {
-    return [ICameraProvider.Symbol]
+    return [CameraController]
   }
   private polar = {
     azimuth: 0.001,
@@ -11,7 +11,14 @@ export class RotateCamera extends Extension {
     origin: new Vector3()
   }
 
-  public constructor(viewer: IViewer, private cameraController: ICameraProvider) {
+  get enabled(): boolean {
+    return this._enabled
+  }
+  set enabled(value: boolean) {
+    this._enabled = value
+  }
+
+  public constructor(viewer: IViewer, private cameraController: CameraController) {
     super(viewer)
   }
 

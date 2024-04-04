@@ -36,6 +36,13 @@ export class BoxSelection extends Extension {
 
   private idsToSelect: Array<string> | null = []
 
+  get enabled(): boolean {
+    return this._enabled
+  }
+  set enabled(value: boolean) {
+    this._enabled = value
+  }
+
   public constructor(viewer: IViewer, private cameraController: CameraController) {
     super(viewer)
     /** Get the SelectionExtension. We'll need it to remotely enable/disable it */
