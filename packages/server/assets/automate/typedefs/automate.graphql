@@ -63,6 +63,7 @@ input AutomateFunctionReleasesFilter {
 type AutomateFunction {
   id: ID!
   name: String!
+  repoUrl: String!
   creator: LimitedUser!
   isFeatured: Boolean!
   description: String!
@@ -72,6 +73,7 @@ type AutomateFunction {
     limit: Int
     filter: AutomateFunctionReleasesFilter
   ): AutomateFunctionReleaseCollection!
+  automationCount: Int!
 }
 
 type AutomateFunctionRelease {

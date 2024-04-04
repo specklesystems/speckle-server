@@ -461,7 +461,7 @@ const buttonClasses = computed(() => {
 })
 
 const iconClasses = computed(() => {
-  const classParts: string[] = ['']
+  const classParts: string[] = ['shrink-0']
 
   if (props.loading) {
     classParts.push('animate-spin')

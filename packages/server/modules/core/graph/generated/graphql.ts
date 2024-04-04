@@ -200,6 +200,7 @@ export type AuthStrategy = {
 
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
+  automationCount: Scalars['Int'];
   creator: LimitedUser;
   description: Scalars['String'];
   id: Scalars['ID'];
@@ -207,6 +208,7 @@ export type AutomateFunction = {
   logo?: Maybe<Scalars['String']>;
   name: Scalars['String'];
   releases: AutomateFunctionReleaseCollection;
+  repoUrl: Scalars['String'];
 };
 
 
@@ -3723,6 +3725,7 @@ export type AuthStrategyResolvers<ContextType = GraphQLContext, ParentType exten
 };
 
 export type AutomateFunctionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomateFunction'] = ResolversParentTypes['AutomateFunction']> = {
+  automationCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   creator?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
@@ -3730,6 +3733,7 @@ export type AutomateFunctionResolvers<ContextType = GraphQLContext, ParentType e
   logo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   releases?: Resolver<ResolversTypes['AutomateFunctionReleaseCollection'], ParentType, ContextType, Partial<AutomateFunctionReleasesArgs>>;
+  repoUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

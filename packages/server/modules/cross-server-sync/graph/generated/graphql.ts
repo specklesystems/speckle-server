@@ -190,6 +190,7 @@ export type AuthStrategy = {
 
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
+  automationCount: Scalars['Int'];
   creator: LimitedUser;
   description: Scalars['String'];
   id: Scalars['ID'];
@@ -197,6 +198,7 @@ export type AutomateFunction = {
   logo?: Maybe<Scalars['String']>;
   name: Scalars['String'];
   releases: AutomateFunctionReleaseCollection;
+  repoUrl: Scalars['String'];
 };
 
 

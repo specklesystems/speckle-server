@@ -21,6 +21,7 @@ const documents = {
     "\n  fragment AuthStategiesServerInfoFragment on ServerInfo {\n    authStrategies {\n      id\n      name\n      url\n    }\n  }\n": types.AuthStategiesServerInfoFragmentFragmentDoc,
     "\n  fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {\n    id\n    name\n    isFeatured\n    description\n    logo\n    creator {\n      id\n      name\n    }\n  }\n": types.AutomationsFunctionsCard_AutomateFunctionFragmentDoc,
     "\n  fragment AutomateFunctionPageHeader_Function on AutomateFunction {\n    id\n    name\n    logo\n  }\n": types.AutomateFunctionPageHeader_FunctionFragmentDoc,
+    "\n  fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {\n    id\n    repoUrl\n    automationCount\n    releases(limit: 1) {\n      items {\n        id\n        inputSchema\n        createdAt\n      }\n    }\n  }\n": types.AutomateFunctionPageInfo_AutomateFunctionFragmentDoc,
     "\n  fragment AutomateFunctionsPageItems_Query on Query {\n    automateFunctions(limit: 21, filter: { search: $search }) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n": types.AutomateFunctionsPageItems_QueryFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
@@ -192,7 +193,7 @@ const documents = {
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    stream(id: $streamId) {\n      branch(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    stream(id: $streamId) {\n      commit(id: $commitId) {\n        id\n        branch {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
     "\n  query ResolveCommentLink($commentId: String!, $projectId: String!) {\n    comment(id: $commentId, streamId: $projectId) {\n      ...LinkableComment\n    }\n  }\n": types.ResolveCommentLinkDocument,
-    "\n  query AutomateFunctionPage($functionId: ID!) {\n    automateFunction(id: $functionId) {\n      ...AutomateFunctionPageHeader_Function\n    }\n  }\n": types.AutomateFunctionPageDocument,
+    "\n  query AutomateFunctionPage($functionId: ID!) {\n    automateFunction(id: $functionId) {\n      ...AutomateFunctionPageHeader_Function\n      ...AutomateFunctionPageInfo_AutomateFunction\n    }\n  }\n": types.AutomateFunctionPageDocument,
     "\n  query AutomateFunctionsPage($search: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n": types.AutomateFunctionsPageDocument,
     "\n  fragment ProjectPageProject on Project {\n    id\n    createdAt\n    ...ProjectPageProjectHeader\n    ...ProjectPageStatsBlockTeam\n    ...ProjectPageTeamDialog\n    ...ProjectPageStatsBlockModels\n    ...ProjectPageStatsBlockComments\n  }\n": types.ProjectPageProjectFragmentDoc,
     "\n  fragment ProjectPageAutomationPage_Automation on Automation {\n    id\n    ...ProjectPageAutomationHeader_Automation\n    ...ProjectPageAutomationFunctions_Automation\n    ...ProjectPageAutomationRuns_Automation\n  }\n": types.ProjectPageAutomationPage_AutomationFragmentDoc,
@@ -245,6 +246,10 @@ export function graphql(source: "\n  fragment AutomationsFunctionsCard_AutomateF
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment AutomateFunctionPageHeader_Function on AutomateFunction {\n    id\n    name\n    logo\n  }\n"): (typeof documents)["\n  fragment AutomateFunctionPageHeader_Function on AutomateFunction {\n    id\n    name\n    logo\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {\n    id\n    repoUrl\n    automationCount\n    releases(limit: 1) {\n      items {\n        id\n        inputSchema\n        createdAt\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {\n    id\n    repoUrl\n    automationCount\n    releases(limit: 1) {\n      items {\n        id\n        inputSchema\n        createdAt\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -932,7 +937,7 @@ export function graphql(source: "\n  query ResolveCommentLink($commentId: String
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query AutomateFunctionPage($functionId: ID!) {\n    automateFunction(id: $functionId) {\n      ...AutomateFunctionPageHeader_Function\n    }\n  }\n"): (typeof documents)["\n  query AutomateFunctionPage($functionId: ID!) {\n    automateFunction(id: $functionId) {\n      ...AutomateFunctionPageHeader_Function\n    }\n  }\n"];
+export function graphql(source: "\n  query AutomateFunctionPage($functionId: ID!) {\n    automateFunction(id: $functionId) {\n      ...AutomateFunctionPageHeader_Function\n      ...AutomateFunctionPageInfo_AutomateFunction\n    }\n  }\n"): (typeof documents)["\n  query AutomateFunctionPage($functionId: ID!) {\n    automateFunction(id: $functionId) {\n      ...AutomateFunctionPageHeader_Function\n      ...AutomateFunctionPageInfo_AutomateFunction\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

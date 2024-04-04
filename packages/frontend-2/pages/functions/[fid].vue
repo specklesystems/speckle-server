@@ -1,9 +1,9 @@
 <template>
-  <div>
+  <div class="mx-auto max-w-[864px]">
     <CommonLoadingBar :loading="loading" />
     <template v-if="!loading">
       <AutomateFunctionPageHeader :fn="fn" class="mb-12" />
-      <AutomateFunctionPageInfo />
+      <AutomateFunctionPageInfo :fn="fn" />
     </template>
   </div>
 </template>
@@ -18,6 +18,7 @@ const pageQuery = graphql(`
   query AutomateFunctionPage($functionId: ID!) {
     automateFunction(id: $functionId) {
       ...AutomateFunctionPageHeader_Function
+      ...AutomateFunctionPageInfo_AutomateFunction
     }
   }
 `)

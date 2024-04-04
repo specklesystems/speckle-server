@@ -37,6 +37,7 @@
     "@apollo/client": "^3.7.0",
     "@aws-sdk/client-s3": "^3.276.0",
     "@aws-sdk/lib-storage": "^3.100.0",
+    "@faker-js/faker": "^7.1.0",
     "@godaddy/terminus": "^4.9.0",
     "@graphql-tools/schema": "^9.0.4",
     "@mailchimp/mailchimp_marketing": "^3.0.80",
@@ -111,7 +112,6 @@
   "devDependencies": {
     "@apollo/rover": "^0.23.0",
     "@bull-board/express": "^4.2.2",
-    "@faker-js/faker": "^7.1.0",
     "@graphql-codegen/cli": "^2.16.3",
     "@graphql-codegen/typed-document-node": "^5.0.1",
     "@graphql-codegen/typescript": "2.7.2",

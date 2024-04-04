@@ -113,7 +113,9 @@ export async function buildMocksConfig(): Promise<{
           return random
             ? faker.image.imageUrl(undefined, undefined, undefined, true)
             : null
-        }
+        },
+        repoUrl: () =>
+          'https://github.com/specklesystems/speckle-automate-code-compliance-window-safety'
       }),
       AutomateFunctionRelease: () => ({
         versionTag: () => {
