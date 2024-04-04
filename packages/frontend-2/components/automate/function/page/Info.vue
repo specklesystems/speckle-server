@@ -34,8 +34,31 @@
           </div>
         </div>
       </AutomateFunctionPageInfoBlock>
-      <AutomateFunctionPageInfoBlock :icon="InformationCircleIcon" title="Info" />
+      <AutomateFunctionPageInfoBlock :icon="InformationCircleIcon" title="Info">
+        <div class="space-y-3">
+          <div v-if="latestRelease">
+            <span>Last published:&nbsp;</span>
+            <CommonText class="font-bold" :text="publishedAt" />
+          </div>
+          <div>
+            <span>Used by:&nbsp;</span>
+            <CommonText class="font-bold" :text="`${fn.automationCount} automations`" />
+          </div>
+          <CommonTextLink
+            v-if="latestRelease?.inputSchema"
+            :icon-right="ArrowTopRightOnSquareIcon"
+            @click="onViewParameters"
+          >
+            View Parameters
+          </CommonTextLink>
+        </div>
+      </AutomateFunctionPageInfoBlock>
     </div>
+    <AutomateFunctionPageParametersDialog
+      v-if="latestRelease"
+      v-model:open="showParamsDialog"
+      :release="latestRelease"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -44,6 +67,7 @@ import {
   InformationCircleIcon,
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/outline'
+import dayjs from 'dayjs'
 import {
   useGetGithubRepo,
   useResolveGitHubRepoFromUrl
@@ -73,5 +97,17 @@ const props = defineProps<{
 const repoUrl = computed(() => props.fn.repoUrl)
 const { repo } = useResolveGitHubRepoFromUrl(repoUrl)
 const { data: githubDetails } = useGetGithubRepo(computed(() => repo.value || ''))
+
+const showParamsDialog = ref(false)
+
 const license = computed(() => githubDetails.value?.license?.name)
+const latestRelease = computed(() =>
+  props.fn.releases.items.length ? props.fn.releases.items[0] : undefined
+)
+const publishedAt = computed(() => dayjs(latestRelease.value?.createdAt).from(dayjs()))
+
+const onViewParameters = () => {
+  if (!latestRelease.value) return
+  showParamsDialog.value = true
+}
 </script>

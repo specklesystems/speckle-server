@@ -37,3 +37,9 @@ export const formatJsonFormSchemaInputs = (
 
   return clone ? cloneDeep(inputs) : inputs
 }
+
+export function formatVersionParams(
+  params: MaybeNullOrUndefined<Record<string, unknown>>
+) {
+  return formattedJsonFormSchema(params) || null
+}

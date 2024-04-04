@@ -22,6 +22,7 @@ const documents = {
     "\n  fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {\n    id\n    name\n    isFeatured\n    description\n    logo\n    creator {\n      id\n      name\n    }\n  }\n": types.AutomationsFunctionsCard_AutomateFunctionFragmentDoc,
     "\n  fragment AutomateFunctionPageHeader_Function on AutomateFunction {\n    id\n    name\n    logo\n  }\n": types.AutomateFunctionPageHeader_FunctionFragmentDoc,
     "\n  fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {\n    id\n    repoUrl\n    automationCount\n    releases(limit: 1) {\n      items {\n        id\n        inputSchema\n        createdAt\n      }\n    }\n  }\n": types.AutomateFunctionPageInfo_AutomateFunctionFragmentDoc,
+    "\n  fragment AutomateFunctionPageParametersDialog_AutomateFunctionRelease on AutomateFunctionRelease {\n    id\n    inputSchema\n  }\n": types.AutomateFunctionPageParametersDialog_AutomateFunctionReleaseFragmentDoc,
     "\n  fragment AutomateFunctionsPageItems_Query on Query {\n    automateFunctions(limit: 21, filter: { search: $search }) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n": types.AutomateFunctionsPageItems_QueryFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
@@ -250,6 +251,10 @@ export function graphql(source: "\n  fragment AutomateFunctionPageHeader_Functio
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {\n    id\n    repoUrl\n    automationCount\n    releases(limit: 1) {\n      items {\n        id\n        inputSchema\n        createdAt\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {\n    id\n    repoUrl\n    automationCount\n    releases(limit: 1) {\n      items {\n        id\n        inputSchema\n        createdAt\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AutomateFunctionPageParametersDialog_AutomateFunctionRelease on AutomateFunctionRelease {\n    id\n    inputSchema\n  }\n"): (typeof documents)["\n  fragment AutomateFunctionPageParametersDialog_AutomateFunctionRelease on AutomateFunctionRelease {\n    id\n    inputSchema\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
