@@ -1,8 +1,8 @@
 <template>
   <div class="flex flex-col gap-4">
     <ProjectPageSettingsGeneralBlockProjectInfo
-      :project-name="project?.name"
-      :project-description="project?.description"
+      v-if="project"
+      :project="project"
       @update-project="
         ({ name, description }) =>
           handleUpdate({ name, description }, 'Project info updated')
