@@ -283,5 +283,5 @@ export function skipAutomateMigrations() {
 }
 
 export const { ENABLE_AUTOMATE_MODULE } = parseEnv(process.env, {
-  ENABLE_AUTOMATE_MODULE: z.boolean().default(false)
+  ENABLE_AUTOMATE_MODULE: z.boolean().default(true)
 })

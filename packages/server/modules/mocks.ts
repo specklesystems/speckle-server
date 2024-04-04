@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { LimitedUser, Resolvers } from '@/modules/core/graph/generated/graphql'
-import { isDevEnv } from '@/modules/shared/helpers/envHelper'
+// import { isDevEnv } from '@/modules/shared/helpers/envHelper'
 import { Roles } from '@speckle/shared'
 import { times } from 'lodash'
 import { IMockStore, IMocks } from '@graphql-tools/mock'
@@ -16,8 +16,9 @@ export async function buildMocksConfig(): Promise<{
   mockEntireSchema: boolean
   resolvers?: Resolvers | ((store: IMockStore) => Resolvers)
 }> {
-  const isDebugEnv = isDevEnv()
-  if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
+  // TODO: Disable before merging!
+  // const isDebugEnv = isDevEnv()
+  // if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
 
   // feel free to define mocks for your dev env below
   const { faker } = await import('@faker-js/faker')
@@ -41,7 +42,7 @@ export async function buildMocksConfig(): Promise<{
       },
       Project: {
         automations: (_parent, args) => {
-          const forceAutomations = true
+          const forceAutomations = false
           const forceNoAutomations = false
 
           const limit = args.limit || faker.datatype.number({ min: 4, max: 20 })
