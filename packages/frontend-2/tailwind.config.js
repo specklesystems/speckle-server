@@ -6,6 +6,7 @@ const {
   tailwindContentEntry: uiLibEntry
 } = require('@speckle/ui-components/tailwind-configure')
 const formsPlugin = require('@tailwindcss/forms')
+const typographyPlugin = require('@tailwindcss/typography')
 const { createRequire } = require('module')
 
 // i know, this is bizarre - import.meta.url in a CJS file
@@ -27,7 +28,7 @@ const config = {
     themeEntry(req),
     uiLibEntry(req)
   ],
-  plugins: [speckleTheme, formsPlugin]
+  plugins: [speckleTheme, formsPlugin, typographyPlugin]
 }
 
 module.exports = config

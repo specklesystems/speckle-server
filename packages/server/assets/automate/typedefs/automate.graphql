@@ -82,6 +82,7 @@ type AutomateFunctionRelease {
   versionTag: String!
   createdAt: DateTime!
   inputSchema: JSONObject
+  commitId: String!
 }
 
 type AutomateFunctionReleaseCollection {

@@ -217,6 +217,7 @@ export type AutomateFunctionCollection = {
 
 export type AutomateFunctionRelease = {
   __typename?: 'AutomateFunctionRelease';
+  commitId: Scalars['String'];
   createdAt: Scalars['DateTime'];
   function: AutomateFunction;
   id: Scalars['ID'];

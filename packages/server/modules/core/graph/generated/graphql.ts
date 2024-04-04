@@ -227,6 +227,7 @@ export type AutomateFunctionCollection = {
 
 export type AutomateFunctionRelease = {
   __typename?: 'AutomateFunctionRelease';
+  commitId: Scalars['String'];
   createdAt: Scalars['DateTime'];
   function: AutomateFunction;
   id: Scalars['ID'];
@@ -3745,6 +3746,7 @@ export type AutomateFunctionCollectionResolvers<ContextType = GraphQLContext, Pa
 };
 
 export type AutomateFunctionReleaseResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomateFunctionRelease'] = ResolversParentTypes['AutomateFunctionRelease']> = {
+  commitId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   function?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;

@@ -115,7 +115,8 @@ export async function buildMocksConfig(): Promise<{
             : null
         },
         repoUrl: () =>
-          'https://github.com/specklesystems/speckle-automate-code-compliance-window-safety'
+          'https://github.com/specklesystems/speckle-automate-code-compliance-window-safety',
+        automationCount: () => faker.datatype.number({ min: 0, max: 99 })
       }),
       AutomateFunctionRelease: () => ({
         versionTag: () => {
@@ -125,6 +126,7 @@ export async function buildMocksConfig(): Promise<{
             max: 9
           })}.${faker.datatype.number({ min: 0, max: 9 })}`
         },
+        commitId: () => '0c259d384a4df3cce3f24667560e5124e68f202f',
         inputSchema: () => {
           // random fro 1 to 3
           const rand = faker.datatype.number({ min: 1, max: 3 })

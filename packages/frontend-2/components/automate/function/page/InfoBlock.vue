@@ -18,15 +18,17 @@ const props = withDefaults(
     title: string
     roundedTop?: boolean
     roundedBottom?: boolean
+    horizontalPadding?: 'px-2' | 'px-4'
   }>(),
   {
     roundedTop: true,
-    roundedBottom: true
+    roundedBottom: true,
+    horizontalPadding: 'px-2'
   }
 )
 
 const wrapperClasses = computed(() => {
-  const classParts = ['px-2 pb-4 bg-foundation basis-1/2 shrink-0 grow-0']
+  const classParts = ['pb-4 bg-foundation basis-1/2 shrink-0 grow-0']
 
   if (props.roundedTop && props.roundedBottom) {
     classParts.push('rounded-lg')
@@ -35,6 +37,8 @@ const wrapperClasses = computed(() => {
   } else if (props.roundedBottom) {
     classParts.push('rounded-b-lg')
   }
+
+  classParts.push(props.horizontalPadding)
 
   return classParts.join(' ')
 })

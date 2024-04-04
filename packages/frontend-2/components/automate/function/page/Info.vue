@@ -54,13 +54,37 @@
         </div>
       </AutomateFunctionPageInfoBlock>
     </div>
-    <AutomateFunctionPageInfoBlock
-      title="Description"
-      :rounded-bottom="false"
-      :icon="IconNotes"
-    >
-      <CommonProseMarkdownDescription :markdown="description" />
-    </AutomateFunctionPageInfoBlock>
+    <div>
+      <AutomateFunctionPageInfoBlock
+        title="Description"
+        :rounded-bottom="false"
+        horizontal-padding="px-4"
+        :icon="IconNotes"
+      >
+        <CommonProseMarkdownDescription :markdown="description" />
+      </AutomateFunctionPageInfoBlock>
+      <AutomateFunctionPageInfoBlock
+        title="Readme"
+        :icon="BookOpenIcon"
+        horizontal-padding="px-4"
+        :rounded-top="false"
+      >
+        <CommonProseGithubReadme
+          :readme-markdown="rawReadme || ''"
+          :repo="repo || ''"
+          :commit-id="selectedReleaseCommitId"
+        />
+      </AutomateFunctionPageInfoBlock>
+    </div>
+    <div class="mt-9 flex justify-between items-center">
+      <div>
+        <div class="font-bold">Ready to go?</div>
+        <div class="label-light text-foreground-2">
+          Use this function to create an automation on your project.
+        </div>
+      </div>
+      <FormButton :icon-left="BoltIcon">Create Automation</FormButton>
+    </div>
     <AutomateFunctionPageParametersDialog
       v-if="latestRelease"
       v-model:open="showParamsDialog"
@@ -72,16 +96,22 @@
 import {
   CodeBracketIcon,
   InformationCircleIcon,
-  ArrowTopRightOnSquareIcon
+  ArrowTopRightOnSquareIcon,
+  BookOpenIcon,
+  BoltIcon
 } from '@heroicons/vue/24/outline'
 import dayjs from 'dayjs'
 import {
   useGetGithubRepo,
+  useGetRawGithubReadme,
   useResolveGitHubRepoFromUrl
 } from '~/lib/automate/composables/github'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateFunctionPageInfo_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
 import IconNotes from '~~/components/global/icon/Notes.vue'
+
+// TODO: Responsivity everywhere
+// TODO: Create automation
 
 graphql(`
   fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {
@@ -94,6 +124,8 @@ graphql(`
         id
         inputSchema
         createdAt
+        commitId
+        ...AutomateFunctionPageParametersDialog_AutomateFunctionRelease
       }
     }
   }
@@ -104,15 +136,22 @@ const props = defineProps<{
 }>()
 
 const repoUrl = computed(() => props.fn.repoUrl)
+const latestRelease = computed(() =>
+  props.fn.releases.items.length ? props.fn.releases.items[0] : undefined
+)
+const selectedReleaseCommitId = computed(() => latestRelease.value?.commitId)
+
 const { repo } = useResolveGitHubRepoFromUrl(repoUrl)
 const { data: githubDetails } = useGetGithubRepo(computed(() => repo.value || ''))
+const { data: rawReadme } = useGetRawGithubReadme(
+  computed(() => repo.value || ''),
+  selectedReleaseCommitId
+)
 
 const showParamsDialog = ref(false)
 
 const license = computed(() => githubDetails.value?.license?.name)
-const latestRelease = computed(() =>
-  props.fn.releases.items.length ? props.fn.releases.items[0] : undefined
-)
+
 const publishedAt = computed(() => dayjs(latestRelease.value?.createdAt).from(dayjs()))
 const description = computed(() =>
   props.fn.description?.length ? 'No description provided.' : props.fn.description
