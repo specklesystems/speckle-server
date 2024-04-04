@@ -1,6 +1,9 @@
 <template>
-  <ProjectPageSettingsBlock background title="Discussions">
-    <template #logo><ChatBubbleLeftRightIcon class="h-5 w-5" /></template>
+  <ProjectPageSettingsBlock
+    background
+    title="Discussions"
+    :icon="ChatBubbleLeftRightIcon"
+  >
     <template #introduction>
       <p>Control who can leave comments on your projects:</p>
     </template>

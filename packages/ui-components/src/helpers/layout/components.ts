@@ -1,4 +1,5 @@
 import type { ConcreteComponent } from 'vue'
+import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
 export enum GridListToggleValue {
   Grid = 'grid',
@@ -15,6 +16,7 @@ export type LayoutPageTabItem<I extends string = string> = {
   id: I
   count?: number
   tag?: string
+  icon?: PropAnyComponent
 }
 
 export type LayoutMenuItem<I extends string = string> = {

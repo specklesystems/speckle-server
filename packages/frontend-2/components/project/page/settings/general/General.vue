@@ -26,10 +26,10 @@
           )
       "
     />
+    <ProjectPageSettingsGeneralBlockLeave :project="project" />
+
     <ProjectPageSettingsGeneralBlockDelete
       :project="project"
-      :current-comments-permission="project?.allowPublicComments"
-      :current-visibility="project?.visibility"
       @update-comments-permission="
         (newCommentsPermission) =>
           handleUpdate(

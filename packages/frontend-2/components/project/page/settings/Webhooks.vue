@@ -1,6 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock title="Webhooks">
-    <template #logo><IconWebhooks class="h-5 w-5" /></template>
+  <ProjectPageSettingsBlock title="Webhooks" :icon="IconWebhooks">
     <template #introduction>
       <p>
         Webhooks allow you to subscribe to a stream's events and get notified of them in
@@ -141,6 +140,7 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import type { Optional } from '@speckle/shared'
+import IconWebhooks from '~~/components/global/icon/Webhooks.vue'
 
 const projectId = computed(() => route.params.id as string)
 const route = useRoute()

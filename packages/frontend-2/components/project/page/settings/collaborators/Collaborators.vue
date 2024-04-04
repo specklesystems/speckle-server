@@ -1,6 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock title="Collaborators">
-    <template #logo><UsersIcon class="h-5 w-5" /></template>
+  <ProjectPageSettingsBlock title="Collaborators" :icon="UsersIcon">
     <template #introduction>
       <p>Invite new members or edit roles for existing ones.</p>
     </template>

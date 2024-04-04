@@ -41,7 +41,7 @@
           class="tab-button"
           @click="setActiveItem(item)"
         >
-          <slot :name="'icon-' + item.id"></slot>
+          <component :is="item.icon" v-if="item.icon" class="h-5 w-5"></component>
           <span class="min-w-6">{{ item.title }}</span>
           <div
             v-if="item.count"

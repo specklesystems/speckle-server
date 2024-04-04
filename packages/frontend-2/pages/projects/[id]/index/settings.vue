@@ -6,23 +6,10 @@
       vertical
       :items="settingsTabItems"
     >
-      <!-- Default slot for tab content -->
       <template #default="{ activeItem }">
         <ProjectPageSettingsGeneral v-if="activeItem.id === 'general'" />
         <ProjectPageSettingsCollaborators v-if="activeItem.id === 'collaborators'" />
         <ProjectPageSettingsWebhooks v-if="activeItem.id === 'webhooks'" />
-      </template>
-
-      <template #icon-general>
-        <Cog6ToothIcon class="h-5 w-5" />
-      </template>
-
-      <template #icon-collaborators>
-        <UsersIcon class="h-5 w-5" />
-      </template>
-
-      <template #icon-webhooks>
-        <IconWebhooks class="h-5 w-5" />
       </template>
     </LayoutPageTabs>
   </div>
@@ -30,19 +17,23 @@
 <script setup lang="ts">
 import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
 import { UsersIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
+import IconWebhooks from '~~/components/global/icon/Webhooks.vue'
 
 const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'General',
-    id: 'general'
+    id: 'general',
+    icon: Cog6ToothIcon
   },
   {
     title: 'Collaborators',
-    id: 'collaborators'
+    id: 'collaborators',
+    icon: UsersIcon
   },
   {
     title: 'Webhooks',
-    id: 'webhooks'
+    id: 'webhooks',
+    icon: IconWebhooks
   }
 ])
 

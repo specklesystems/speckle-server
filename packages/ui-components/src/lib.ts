@@ -82,6 +82,7 @@ import type {
 } from '~~/src/composables/form/fileUpload'
 import { UniqueFileTypeSpecifier, prettyFileSize } from '~~/src/helpers/form/file'
 import type { FileTypeSpecifier } from '~~/src/helpers/form/file'
+import type { PropAnyComponent } from '~~/src/helpers/common/components'
 export * from '~~/src/helpers/common/error'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
 import type { AvatarUser, AvatarUserWithId } from '~~/src/composables/user/avatar'
@@ -164,5 +165,6 @@ export type {
   FileTypeSpecifier,
   AvatarUser,
   AvatarUserWithId,
-  LayoutPageTabItem
+  LayoutPageTabItem,
+  PropAnyComponent
 }

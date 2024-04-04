@@ -1,6 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock background title="Project Info">
-    <template #logo><Cog6ToothIcon class="h-5 w-5" /></template>
+  <ProjectPageSettingsBlock background title="Project Info" :icon="Cog6ToothIcon">
     <FormTextInput
       v-model="localProjectName"
       name="projectName"

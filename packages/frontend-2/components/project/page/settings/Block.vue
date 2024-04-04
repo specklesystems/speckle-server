@@ -9,7 +9,7 @@
   >
     <div class="flex items-center gap-4 border-b border-outline-3 pb-3 justify-between">
       <div class="flex items-center gap-2">
-        <slot name="logo" />
+        <component :is="icon" v-if="icon" class="h-5 w-5"></component>
         <h3 class="text-xl font-bold">{{ title }}</h3>
       </div>
       <div v-if="$slots.topButtons" class="hidden sm:flex gap-2">
@@ -31,8 +31,11 @@
   </div>
 </template>
 <script setup lang="ts">
+import type { PropAnyComponent } from '@speckle/ui-components'
+
 defineProps<{
   title: string
+  icon: PropAnyComponent
   background?: boolean
 }>()
 </script>

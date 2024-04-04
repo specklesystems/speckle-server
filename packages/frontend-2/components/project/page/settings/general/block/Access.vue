@@ -1,6 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock background title="Access">
-    <template #logo><LockClosedIcon class="h-5 w-5" /></template>
+  <ProjectPageSettingsBlock background title="Access" :icon="LockClosedIcon">
     <template #introduction>
       <p>
         Choose how you want to share your projects with others. Select the option that
