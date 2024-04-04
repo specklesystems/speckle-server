@@ -154,7 +154,7 @@ const license = computed(() => githubDetails.value?.license?.name)
 
 const publishedAt = computed(() => dayjs(latestRelease.value?.createdAt).from(dayjs()))
 const description = computed(() =>
-  props.fn.description?.length ? 'No description provided.' : props.fn.description
+  props.fn.description?.length ? props.fn.description : 'No description provided.'
 )
 
 const onViewParameters = () => {

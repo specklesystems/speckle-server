@@ -101,13 +101,7 @@ export async function buildMocksConfig(): Promise<{
       AutomateFunction: () => ({
         name: () => faker.commerce.productName(),
         isFeatured: () => faker.datatype.boolean(),
-        description: () => {
-          // Random length lorem ipsum
-          return faker.lorem.paragraphs(
-            faker.datatype.number({ min: 1, max: 3 }),
-            '\n\n'
-          )
-        },
+
         logo: () => {
           const random = faker.datatype.boolean()
           return random
@@ -116,7 +110,14 @@ export async function buildMocksConfig(): Promise<{
         },
         repoUrl: () =>
           'https://github.com/specklesystems/speckle-automate-code-compliance-window-safety',
-        automationCount: () => faker.datatype.number({ min: 0, max: 99 })
+        automationCount: () => faker.datatype.number({ min: 0, max: 99 }),
+        description: () => {
+          // Example markdown description
+          return `# ${faker.commerce.productName()}\n${faker.lorem.paragraphs(
+            1,
+            '\n\n'
+          )}\n## Features \n- ${faker.lorem.sentence()}\n - ${faker.lorem.sentence()}\n - ${faker.lorem.sentence()}`
+        }
       }),
       AutomateFunctionRelease: () => ({
         versionTag: () => {
