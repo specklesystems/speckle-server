@@ -10,7 +10,8 @@ import CommonBadge from '~~/src/components/common/Badge.vue'
 import type {
   BulletStepType,
   NumberStepType,
-  HorizontalOrVertical
+  HorizontalOrVertical,
+  PropAnyComponent
 } from '~~/src/helpers/common/components'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
@@ -166,5 +167,6 @@ export type {
   FileTypeSpecifier,
   AvatarUser,
   AvatarUserWithId,
-  LayoutPageTabItem
+  LayoutPageTabItem,
+  PropAnyComponent
 }

@@ -54,6 +54,13 @@
         </div>
       </AutomateFunctionPageInfoBlock>
     </div>
+    <AutomateFunctionPageInfoBlock
+      title="Description"
+      :rounded-bottom="false"
+      :icon="IconNotes"
+    >
+      <CommonProseMarkdownDescription :markdown="description" />
+    </AutomateFunctionPageInfoBlock>
     <AutomateFunctionPageParametersDialog
       v-if="latestRelease"
       v-model:open="showParamsDialog"
@@ -74,12 +81,14 @@ import {
 } from '~/lib/automate/composables/github'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateFunctionPageInfo_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
+import IconNotes from '~~/components/global/icon/Notes.vue'
 
 graphql(`
   fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {
     id
     repoUrl
     automationCount
+    description
     releases(limit: 1) {
       items {
         id
@@ -105,6 +114,9 @@ const latestRelease = computed(() =>
   props.fn.releases.items.length ? props.fn.releases.items[0] : undefined
 )
 const publishedAt = computed(() => dayjs(latestRelease.value?.createdAt).from(dayjs()))
+const description = computed(() =>
+  props.fn.description?.length ? 'No description provided.' : props.fn.description
+)
 
 const onViewParameters = () => {
   if (!latestRelease.value) return

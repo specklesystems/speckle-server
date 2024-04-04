@@ -80,6 +80,11 @@ export default defineNuxtConfig({
   },
 
   vite: {
+    optimizeDeps: {
+      // Should only be ran on serverside anyway. W/o this it tries to transpile it unsuccessfully
+      exclude: ['jsdom']
+    },
+
     vue: {
       script: {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
