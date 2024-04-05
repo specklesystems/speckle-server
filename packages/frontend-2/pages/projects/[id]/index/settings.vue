@@ -37,9 +37,9 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'Webhooks',
     id: 'webhooks',
-    icon: IconWebhooks,
-    disabled: true,
-    disabledMessage: 'Sorry this is disabled'
+    icon: IconWebhooks
+    // disabled: true,
+    // disabledMessage: 'Sorry this is disabled'
   }
 ])
 
