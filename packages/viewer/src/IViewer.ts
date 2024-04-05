@@ -13,7 +13,7 @@ import { Loader } from './modules/loaders/Loader'
 
 export interface ViewerParams {
   showStats: boolean
-  environmentSrc: Asset | string
+  environmentSrc: Asset
   verbose: boolean
 }
 export enum AssetType {
@@ -24,6 +24,7 @@ export enum AssetType {
 }
 
 export interface Asset {
+  id: string
   src: string
   type: AssetType
 }
@@ -43,6 +44,7 @@ export const DefaultViewerParams: ViewerParams = {
   showStats: false,
   verbose: false,
   environmentSrc: {
+    id: 'defaultHDRI',
     src: sampleHdri,
     type: AssetType.TEXTURE_EXR
   }

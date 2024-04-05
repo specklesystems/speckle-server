@@ -15,7 +15,9 @@
       </LayoutDialogSection>
       <UserProfileEditDialogChangePassword :user="user" />
       <UserProfileEditDialogDeleteAccount :user="user" @deleted="isOpen = false" />
-      <div class="text-tiny text-foreground-2 mt-4">User #{{ user.id }}</div>
+      <div class="text-tiny text-foreground-2 mt-4">
+        User #{{ user.id }} {{ distinctId ? ` | ${distinctId}` : '' }}
+      </div>
     </div>
   </LayoutDialog>
 </template>
@@ -41,7 +43,7 @@ const props = defineProps<{
   open: boolean
 }>()
 
-const { activeUser: user } = useActiveUser()
+const { activeUser: user, distinctId } = useActiveUser()
 
 const isOpen = computed({
   get: () => !!(props.open && user.value),
