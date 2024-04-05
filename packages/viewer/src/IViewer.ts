@@ -7,9 +7,10 @@ import { TreeNode, WorldTree } from './modules/tree/WorldTree'
 import { Utils } from './modules/Utils'
 import { World } from './modules/World'
 import SpeckleRenderer from './modules/SpeckleRenderer'
-import { Extension } from './modules/extensions/core-extensions/Extension'
+import { Extension } from './modules/extensions/Extension'
 import Input from './modules/input/Input'
 import { Loader } from './modules/loaders/Loader'
+import { type Constructor } from 'type-fest'
 
 export interface ViewerParams {
   showStats: boolean
@@ -173,8 +174,8 @@ export interface IViewer {
   getRenderer(): SpeckleRenderer
   getContainer(): HTMLElement
 
-  createExtension<T extends Extension>(type: new () => T): T
-  getExtension<T extends Extension>(type: new () => T): T
+  createExtension<T extends Extension>(type: Constructor<T>): T
+  getExtension<T extends Extension>(type: Constructor<T>): T
 
   dispose(): void
 }

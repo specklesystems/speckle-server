@@ -1,12 +1,23 @@
 import { Vector3 } from 'three'
-import { Extension } from './core-extensions/Extension'
+import { Extension } from './Extension'
 import { UpdateFlags } from '../../IViewer'
 
 export class ExplodeExtension extends Extension {
+  protected _enabled: boolean = true
+
+  public get enabled(): boolean {
+    return this._enabled
+  }
+  public set enabled(value: boolean) {
+    this._enabled = value
+  }
+
   private explodeTime = -1
   private explodeRange = 0
 
   public onEarlyUpdate() {
+    if (!this._enabled) return
+
     if (this.explodeTime > -1) {
       this.explode(this.explodeTime, this.explodeRange)
       this.explodeTime = -1
