@@ -4,11 +4,11 @@
       <div
         v-for="option in options"
         :key="option.value"
-        class="w-full flex flex-col border rounded-md"
+        class="w-full flex flex-col sm:border rounded-md"
         :class="[
           disabled ? 'opacity-40' : '',
           selected === option.value
-            ? 'bg-primary-muted border-outline-1'
+            ? 'sm:bg-primary-muted border-outline-1'
             : 'bg-foundation border-primary-muted'
         ]"
       >
