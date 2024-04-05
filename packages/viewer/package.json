@@ -65,6 +65,7 @@
     "three-mesh-bvh": "0.5.17",
     "tree-model": "1.0.7",
     "troika-three-text": "0.47.2",
+    "type-fest": "^4.15.0",
     "underscore": "1.13.6"
   },
   "devDependencies": {

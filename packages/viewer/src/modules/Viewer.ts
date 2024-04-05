@@ -28,6 +28,7 @@ import Input from './input/Input'
 import { CameraController } from './extensions/CameraController'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Loader } from './loaders/Loader'
+import { type Constructor } from 'type-fest'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -85,7 +86,7 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public createExtension<T extends Extension>(type: typeof Extension): T {
+  public createExtension<T extends Extension>(type: Constructor<T>): T {
     const extensionsToInject: Array<new (viewer: IViewer, ...args) => Extension> =
       type.prototype.inject
     const injectedExtensions: Array<Extension> = []
@@ -107,7 +108,7 @@ export class Viewer extends EventEmitter implements IViewer {
     return extension as T
   }
 
-  public getExtension<T extends Extension>(type: typeof Extension): T {
+  public getExtension<T extends Extension>(type: Constructor<T>): T {
     if (this.extensions[type.name]) return this.extensions[type.name] as T
     else {
       for (const k in this.extensions) {
@@ -308,7 +309,7 @@ export class Viewer extends EventEmitter implements IViewer {
       for await (const step of this.speckleRenderer.addRenderTree(loader.resource)) {
         step
         if (zoomToObject) {
-          const extension = this.getExtension<CameraController>(CameraController)
+          const extension = this.getExtension(CameraController)
           if (extension) {
             extension.setCameraView([], false)
             this.speckleRenderer.pipeline.render()

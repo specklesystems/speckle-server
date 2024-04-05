@@ -14606,6 +14606,7 @@ __metadata:
     three-mesh-bvh: 0.5.17
     tree-model: 1.0.7
     troika-three-text: 0.47.2
+    type-fest: ^4.15.0
     typescript: ^4.5.4
     underscore: 1.13.6
     vitest: ^1.4.0
@@ -45773,6 +45774,13 @@ __metadata:
   version: 3.13.1
   resolution: "type-fest@npm:3.13.1"
   checksum: c06b0901d54391dc46de3802375f5579868949d71f93b425ce564e19a428a0d411ae8d8cb0e300d330071d86152c3ea86e744c3f2860a42a79585b6ec2fdae8e
+  languageName: node
+  linkType: hard
+
+"type-fest@npm:^4.15.0":
+  version: 4.15.0
+  resolution: "type-fest@npm:4.15.0"
+  checksum: 8da2b8c4556a6bbafd79c0d50b4f3ba6526942aead9c1687038980276eee72b95a1d195bc6f1408e0ebf96ebfbe9d33436b506b35ed4b68f14f8b3ff56753850
   languageName: node
   linkType: hard
 
