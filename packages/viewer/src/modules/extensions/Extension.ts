@@ -1,7 +1,7 @@
 import { IViewer } from '../..'
 import EventEmitter from '../EventEmitter'
 
-export abstract class Extension extends EventEmitter {
+export class Extension extends EventEmitter {
   public get inject(): Array<new (viewer: IViewer, ...args) => Extension> {
     return []
   }
@@ -9,11 +9,16 @@ export abstract class Extension extends EventEmitter {
   protected viewer: IViewer
   protected _enabled: boolean
 
-  public abstract get enabled(): boolean
+  public get enabled(): boolean {
+    return this._enabled
+  }
 
-  public abstract set enabled(value: boolean)
+  public set enabled(value: boolean) {
+    this._enabled = value
+  }
 
-  public constructor(viewer: IViewer) {
+  public constructor(viewer: IViewer, ...args: Extension[]) {
+    args
     super()
     this.viewer = viewer
   }

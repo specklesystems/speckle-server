@@ -85,9 +85,7 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public createExtension<T extends Extension>(
-    type: new (viewer: IViewer, ...args: Extension[]) => T
-  ): T {
+  public createExtension<T extends Extension>(type: typeof Extension): T {
     const extensionsToInject: Array<new (viewer: IViewer, ...args) => Extension> =
       type.prototype.inject
     const injectedExtensions: Array<Extension> = []
@@ -106,12 +104,10 @@ export class Viewer extends EventEmitter implements IViewer {
 
     const extension = new type(this, ...injectedExtensions)
     this.extensions[type.name] = extension
-    return extension
+    return extension as T
   }
 
-  public getExtension<T extends Extension>(
-    type: new (viewer: IViewer, ...args: Extension[]) => T
-  ): T {
+  public getExtension<T extends Extension>(type: typeof Extension): T {
     if (this.extensions[type.name]) return this.extensions[type.name] as T
     else {
       for (const k in this.extensions) {
@@ -312,7 +308,7 @@ export class Viewer extends EventEmitter implements IViewer {
       for await (const step of this.speckleRenderer.addRenderTree(loader.resource)) {
         step
         if (zoomToObject) {
-          const extension = this.getExtension(CameraController)
+          const extension = this.getExtension<CameraController>(CameraController)
           if (extension) {
             extension.setCameraView([], false)
             this.speckleRenderer.pipeline.render()
