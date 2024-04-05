@@ -107,7 +107,7 @@ const save = async () => {
     action: 'name or description',
     source: 'header'
   })
-  const res = await updateProject(update, {
+  const res = await updateProject(update, 'Project updated', {
     optimisticResponse: {
       projectMutations: {
         __typename: 'ProjectMutations',

@@ -112,6 +112,19 @@ const dialogButtons = computed(() => [
   }
 ])
 
+watch(
+  () => props.project,
+  (newProject, oldProject) => {
+    if (newProject.name !== oldProject.name) {
+      localProjectName.value = newProject.name
+    }
+    if (newProject.description !== oldProject.description) {
+      localProjectDescription.value = newProject.description ?? ''
+    }
+  },
+  { deep: true }
+)
+
 onBeforeRouteLeave((to, from, next) => {
   if (hasChanges.value && !showConfirmDialog.value) {
     targetRoute.value = to
