@@ -46,11 +46,7 @@ graphql(`
     id
     createdAt
     ...ProjectPageProjectHeader
-    ...ProjectPageStatsBlockTeam
     ...ProjectPageTeamDialog
-    ...ProjectPageStatsBlockVersions
-    ...ProjectPageStatsBlockModels
-    ...ProjectPageStatsBlockComments
     ...ProjectPageLatestItemsModels
     ...ProjectPageLatestItemsComments
   }
