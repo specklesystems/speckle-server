@@ -16,6 +16,7 @@
         full-width
         hide-error-message
         class="text-sm"
+        color="foundation"
       />
     </div>
   </LayoutDialog>

@@ -19,6 +19,7 @@
           show-required
           :rules="[isRequired, isUrl]"
           type="text"
+          color="foundation"
         />
         <FormTextInput
           v-model="description"
@@ -27,6 +28,7 @@
           name="hookName"
           show-label
           type="text"
+          color="foundation"
         />
         <FormTextInput
           v-if="!props.webhook"
@@ -36,6 +38,7 @@
           name="hookSecret"
           show-label
           type="text"
+          color="foundation"
         />
         <FormSelectBadges
           v-model="triggers"
