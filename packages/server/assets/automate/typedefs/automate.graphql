@@ -5,6 +5,10 @@ enum AutomateRunStatus {
   FAILED
 }
 
+enum AutomateRunTriggerType {
+  VERSION_CREATED
+}
+
 type AutomationRevisionFunction {
   """
   The secrets in parameters are redacted
@@ -13,31 +17,26 @@ type AutomationRevisionFunction {
   release: AutomateFunctionRelease!
 }
 
+type VersionCreatedTriggerDefinition {
+  type: AutomateRunTriggerType!
+  model: Model
+}
+
+union AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition
+
 type AutomationRevision {
   id: ID!
-  """
-  Trigger definition schema:
-  {
-    version: 1.0.0,
-    definitions: Array<{
-      type: AutomationRunTriggerType.VERSION_CREATED,
-      modelId: string | null, // null means all models
-    }>
-  }
-  """
-  triggerDefinitions: JSONObject!
+  triggerDefinitions: [AutomationRevisionTriggerDefinition!]!
   functions: [AutomationRevisionFunction!]!
 }
 
-enum AutomationRunTriggerType {
-  VERSION_CREATED
-}
-
-type AutomationRunTrigger {
-  type: AutomationRunTriggerType!
+type VersionCreatedTrigger {
+  type: AutomateRunTriggerType!
   version: Version
   model: Model
 }
+
+union AutomationRunTrigger = VersionCreatedTrigger
 
 type Automation {
   id: ID!
@@ -132,7 +131,17 @@ input AutomationRevisionCreateFunctionInput {
 
 input ProjectAutomationRevisionCreateInput {
   automationId: ID!
-  triggerDefinitions: JSONObject! # See triggerDefinitions schema above
+  """
+  Trigger definition schema:
+  {
+    version: 1.0.0,
+    definitions: Array<{
+      type: AutomateRunTriggerType.VERSION_CREATED,
+      modelId: string,
+    }>
+  }
+  """
+  triggerDefinitions: JSONObject!
   functions: [AutomationRevisionCreateFunctionInput!]!
 }
 
