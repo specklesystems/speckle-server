@@ -10,7 +10,7 @@
     </template>
 
     <div
-      class="w-full bg-foundation flex justify-between px-3 pt-3 pb-1.5 rounded-t-md border-b border-outline text-sm font-bold"
+      class="w-full bg-foundation flex justify-between px-3 pt-3 pb-1.5 rounded-t-md border-b border-outline-3 text-sm font-bold"
     >
       <div>Name</div>
     </div>
@@ -19,7 +19,7 @@
       <div
         v-for="collaborator in collaboratorListItems"
         :key="collaborator.id"
-        class="flex items-center gap-2 py-1.5 px-2 border-b border-outline"
+        class="flex items-center gap-2 py-1.5 px-2 border-b border-outline-3 last:border-0"
       >
         <UserAvatar :user="collaborator.user" size="sm" />
         <span class="grow truncate text-xs">{{ collaborator.title }}</span>

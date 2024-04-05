@@ -9,7 +9,7 @@
     </template>
     <FormRadioGroup
       v-model="selectedOption"
-      :disabled="currentVisibility === ProjectVisibility.Private"
+      :disabled="isDisabled"
       :options="radioOptions"
       @update:model-value="emitUpdate"
     />
@@ -28,11 +28,16 @@ import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
 const props = defineProps<{
   currentCommentsPermission?: boolean
   currentVisibility?: ProjectVisibility
+  disabled?: boolean
 }>()
 
 const emit = defineEmits(['update-comments-permission'])
 
 const selectedOption = ref(props.currentCommentsPermission ? 'anyone' : 'teamMembers')
+
+const isDisabled = computed(
+  () => props.currentVisibility === ProjectVisibility.Private || props.disabled
+)
 
 const radioOptions = computed(() => [
   { value: 'anyone', title: 'Anyone', icon: UserGroupIcon },

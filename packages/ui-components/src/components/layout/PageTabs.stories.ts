@@ -7,7 +7,13 @@ const items: LayoutPageTabItem[] = [
   { title: 'Models', id: 'models', count: 300 },
   { title: 'Discussions', id: 'discussions' },
   { title: 'Automations', id: 'automations', tag: 'New' },
-  { title: 'Settings', id: 'settings' }
+  { title: 'Settings', id: 'settings' },
+  {
+    title: 'Disabled Item',
+    id: 'disabled',
+    disabled: true,
+    disabledMessage: 'Example disabled message'
+  }
 ]
 
 export default {

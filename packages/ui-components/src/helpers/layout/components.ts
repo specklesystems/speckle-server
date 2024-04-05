@@ -17,6 +17,8 @@ export type LayoutPageTabItem<I extends string = string> = {
   count?: number
   tag?: string
   icon?: PropAnyComponent
+  disabled?: boolean
+  disabledMessage?: string
 }
 
 export type LayoutMenuItem<I extends string = string> = {

@@ -9,6 +9,7 @@
         show-label
         color="foundation"
         class="mb-4"
+        :disabled="disabled"
       />
       <FormTextArea
         v-model="localProjectDescription"
@@ -17,6 +18,7 @@
         placeholder="Project Description"
         show-label
         color="foundation"
+        :disabled="disabled"
       />
       <template #bottomButtons>
         <FormButton text :disabled="!hasChanges" @click="resetLocalState">
@@ -53,6 +55,7 @@ import type { RouteLocationRaw } from 'vue-router'
 
 const props = defineProps<{
   project: ProjectSettingsQuery['project']
+  disabled?: boolean
 }>()
 
 const emit = defineEmits(['update-project'])

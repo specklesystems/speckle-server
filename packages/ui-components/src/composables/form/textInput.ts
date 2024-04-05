@@ -46,7 +46,10 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   })
 
   const labelClasses = computed(() => {
-    const classParts = ['block label text-foreground-2 mb-1.5']
+    const classParts = [
+      'block label mb-1.5',
+      unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2'
+    ]
     if (!unref(props.showLabel)) {
       classParts.push('sr-only')
     }

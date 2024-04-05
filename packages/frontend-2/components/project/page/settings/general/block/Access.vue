@@ -9,6 +9,7 @@
     <FormRadioGroup
       v-model="selectedOption"
       :options="radioOptions"
+      :disabled="disabled"
       @update:model-value="emitUpdate"
     />
   </ProjectPageSettingsBlock>
@@ -21,6 +22,7 @@ import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   currentVisibility?: ProjectVisibility
+  disabled?: boolean
 }>()
 
 const emit = defineEmits(['update-visibility'])

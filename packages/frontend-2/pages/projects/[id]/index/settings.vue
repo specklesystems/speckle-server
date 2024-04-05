@@ -14,14 +14,27 @@
 import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
 import { UsersIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import IconWebhooks from '~~/components/global/icon/Webhooks.vue'
+import { useTeamInternals } from '~~/lib/projects/composables/team'
+import { projectSettingsQuery } from '~~/lib/projects/graphql/queries'
 import {
   projectCollaboratorsRoute,
   projectSettingsRoute,
   projectWebhooksRoute
 } from '~~/lib/common/helpers/route'
+import { useQuery } from '@vue/apollo-composable'
 
 const route = useRoute()
 const router = useRouter()
+
+const projectId = computed(() => route.params.id as string)
+
+const { result: pageResult } = useQuery(projectSettingsQuery, () => ({
+  projectId: projectId.value
+}))
+
+const projectData = computed(() => pageResult.value?.project)
+
+const { isOwner } = useTeamInternals(projectData)
 
 const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {
@@ -37,11 +50,11 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'Webhooks',
     id: 'webhooks',
-    icon: IconWebhooks
+    icon: IconWebhooks,
+    disabled: !isOwner,
+    disabledMessage: isOwner ? 'You must be an owner' : undefined
   }
 ])
-
-const projectId = computed(() => route.params.id as string)
 
 const activeSettingsPageTab = computed({
   get: () => {

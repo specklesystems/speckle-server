@@ -41,27 +41,35 @@
           :data-tab-id="item.id"
           :class="buttonClass(item)"
           class="tab-button"
+          :disabled="item.disabled"
           @click="setActiveItem(item)"
         >
-          <component :is="item.icon" v-if="item.icon" class="h-5 w-5"></component>
-          <span class="min-w-6">{{ item.title }}</span>
-          <div
-            v-if="item.count"
-            class="rounded-full px-2 text-[11px] transition-all min-w-6"
-            :class="
-              activeItem?.id === item.id
-                ? 'text-primary bg-blue-100'
-                : 'text-foreground-2 bg-gray-200 dark:bg-foundation'
-            "
-          >
-            <span>{{ item.count }}</span>
+          <div class="flex gap-1.5 items-center">
+            <component :is="item.icon" v-if="item.icon" class="h-5 w-5"></component>
+            <span class="min-w-6">{{ item.title }}</span>
+            <div
+              v-if="item.count"
+              class="rounded-full px-2 text-[11px] transition-all min-w-6"
+              :class="
+                activeItem?.id === item.id
+                  ? 'text-primary bg-blue-100'
+                  : 'text-foreground-2 bg-gray-200 dark:bg-foundation'
+              "
+            >
+              <span>{{ item.count }}</span>
+            </div>
+            <div
+              v-if="item.tag"
+              class="text-[10px] leading-tight py-0.5 text-foreground-on-primary font-medium px-1.5 rounded-full bg-gradient-to-tr from-[#7025EB] to-primary select-none mt-0.5"
+            >
+              {{ item.tag }}
+            </div>
           </div>
-          <div
-            v-if="item.tag"
-            class="text-[10px] leading-tight py-0.5 text-foreground-on-primary font-medium px-1.5 rounded-full bg-gradient-to-tr from-[#7025EB] to-primary select-none mt-0.5"
-          >
-            {{ item.tag }}
-          </div>
+          <InformationCircleIcon
+            v-if="item.disabled && item.disabledMessage"
+            v-tippy="item.disabledMessage"
+            class="w-4 h-4 ml-auto opacity-60 hover:opacity-100"
+          />
         </button>
       </div>
     </div>
@@ -75,6 +83,7 @@ import { computed, ref, type CSSProperties, onMounted, watch } from 'vue'
 import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 import type { Nullable } from '@speckle/shared'
 import { isClient } from '@vueuse/core'
+import { InformationCircleIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
@@ -88,10 +97,18 @@ const buttonContainer = ref(null as Nullable<HTMLDivElement>)
 const buttonClass = computed(() => {
   return (item: LayoutPageTabItem) => {
     const isActive = activeItem.value?.id === item.id
-    const baseClasses = ['relative', 'z-10', 'flex', 'items-center']
+    const baseClasses = [
+      'relative',
+      'z-10',
+      'flex',
+      'items-center',
+      'disabled:opacity-60 disabled:hover:border-outline'
+    ]
 
     if (props.vertical) {
-      baseClasses.push('text-sm', 'gap-2', 'border-l-[4px] pl-1.5 py-1.5')
+      baseClasses.push(
+        'text-sm gap-2 border-l-[4px] pl-1.5 py-1.5 hover:bg-primary-muted'
+      )
       if (isActive)
         baseClasses.push(
           'font-bold bg-primary-muted border-primary hover:border-outline'

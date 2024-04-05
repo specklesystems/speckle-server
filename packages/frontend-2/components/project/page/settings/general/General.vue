@@ -3,6 +3,7 @@
     <ProjectPageSettingsGeneralBlockProjectInfo
       v-if="project"
       :project="project"
+      :disabled="isDisabled"
       @update-project="
         ({ name, description }) =>
           handleUpdate({ name, description }, 'Project info updated')
@@ -10,6 +11,7 @@
     />
     <ProjectPageSettingsGeneralBlockAccess
       :current-visibility="project?.visibility"
+      :disabled="isDisabled"
       @update-visibility="
         (newVisibility) =>
           handleUpdate({ visibility: newVisibility }, 'Project access updated')
@@ -18,6 +20,7 @@
     <ProjectPageSettingsGeneralBlockDiscussions
       :current-comments-permission="project?.allowPublicComments"
       :current-visibility="project?.visibility"
+      :disabled="isDisabled"
       @update-comments-permission="
         (newCommentsPermission) =>
           handleUpdate(
@@ -61,6 +64,7 @@ const project = computed(() => pageResult.value?.project)
 
 const { canLeaveProject, isOwner, isServerGuest } = useTeamInternals(project)
 
+const isDisabled = computed(() => !isOwner.value || isServerGuest.value)
 const handleUpdate = (
   updates: Partial<ProjectUpdateInput>,
   customSuccessMessage?: string
