@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-4">
+  <div class="flex flex-col gap-4 mr-4 sm:mr-8 xl:mr-0">
     <ProjectPageSettingsGeneralBlockProjectInfo
       v-if="project"
       :project="project"

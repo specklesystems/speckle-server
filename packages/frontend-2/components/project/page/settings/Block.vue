@@ -7,7 +7,9 @@
         : ''
     "
   >
-    <div class="flex items-center gap-4 border-b border-outline-3 pb-3 justify-between">
+    <div
+      class="flex items-center gap-4 border-b border-outline-3 pb-3 justify-between mr-10 xl:mr-4"
+    >
       <div class="flex items-center gap-2">
         <component :is="icon" v-if="icon" class="h-5 w-5"></component>
         <h3 class="text-xl font-bold">{{ title }}</h3>
@@ -16,10 +18,10 @@
         <slot name="topButtons" />
       </div>
     </div>
-    <div v-if="$slots.topButtons" class="flex sm:hidden gap-2">
+    <div v-if="$slots.topButtons" class="flex sm:hidden gap-2 pr-4 md:pr-0">
       <slot name="topButtons" />
     </div>
-    <div v-if="$slots.introduction" class="text-sm text-foreground">
+    <div v-if="$slots.introduction" class="text-sm text-foreground mr-10 xl:mr-4">
       <slot name="introduction" />
     </div>
     <div class="flex flex-col">

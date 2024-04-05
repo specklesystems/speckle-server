@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="mr-4 sm:mr-8 xl:mr-0">
     <div v-if="project">
       <ProjectPageDiscussionsHeader
         v-model:grid-or-list="gridOrList"

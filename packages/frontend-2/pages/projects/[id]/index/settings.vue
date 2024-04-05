@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="block h4 font-bold mb-8">Settings</h1>
+    <h1 class="block h4 font-bold mb-4 sm:mb-8">Settings</h1>
     <LayoutPageTabs
       v-model:active-item="activeSettingsPageTab"
       vertical
