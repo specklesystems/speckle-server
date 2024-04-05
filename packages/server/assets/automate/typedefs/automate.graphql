@@ -15,17 +15,34 @@ type AutomationRevisionFunction {
 
 type AutomationRevision {
   id: ID!
+  """
+  Trigger definition schema:
+  {
+    version: 1.0.0,
+    definitions: Array<{
+      type: AutomationRunTriggerType.VERSION_CREATED,
+      modelId: string | null, // null means all models
+    }>
+  }
+  """
+  triggerDefinitions: JSONObject!
   functions: [AutomationRevisionFunction!]!
+}
+
+enum AutomationRunTriggerType {
+  VERSION_CREATED
+}
+
+type AutomationRunTrigger {
+  type: AutomationRunTriggerType!
+  version: Version
+  model: Model
 }
 
 type Automation {
   id: ID!
   name: String!
   enabled: Boolean!
-  """
-  TODO: Can there be more models in the future? Can there be 0? (automation on comment)
-  """
-  model: Model!
   runs(cursor: String, limit: Int): AutomateRunCollection!
   currentRevision: AutomationRevision
   createdAt: DateTime!
@@ -34,12 +51,9 @@ type Automation {
 
 type AutomateRun {
   id: ID!
+  trigger: AutomationRunTrigger!
   status: AutomateRunStatus!
   reason: String
-  """
-  TODO: Can there be more versions in the future? Can there be 0? (automation on comment)
-  """
-  version: Version!
   createdAt: DateTime!
   updatedAt: DateTime!
 }
@@ -118,6 +132,7 @@ input AutomationRevisionCreateFunctionInput {
 
 input ProjectAutomationRevisionCreateInput {
   automationId: ID!
+  triggerDefinitions: JSONObject! # See triggerDefinitions schema above
   functions: [AutomationRevisionCreateFunctionInput!]!
 }
 
@@ -141,4 +156,35 @@ extend type Query {
     limit: Int
   ): AutomateFunctionCollection!
   automateFunction(id: ID!): AutomateFunction
+}
+
+input AutomateFunctionRunStatusReportInput {
+  functionRunId: String!
+  status: AutomationRunStatus!
+  statusMessage: String
+  contextView: String
+  """
+  NOTE: this is the schema for the results field below!
+  Current schema: {
+    version: "1.0.0",
+    values: {
+      objectResults: Record<str, {
+        category: string
+        level: ObjectResultLevel
+        objectIds: string[]
+        message: str | null
+        metadata: Records<str, unknown> | null
+        visualoverrides: Records<str, unknown> | null
+      }[]>
+      blobIds?: string[]
+    }
+  }
+  """
+  results: JSONObject
+}
+
+extend type Mutation {
+  automateFunctionRunStatusReport(
+    input: AutomateFunctionRunStatusReportInput!
+  ): Boolean!
 }

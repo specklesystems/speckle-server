@@ -1,36 +1,4 @@
 import DOMPurify from 'dompurify'
-import { debounce } from 'lodash-es'
-
-/**
- * Allow debounced value tracking, common in search input boxes
- */
-export function useDebouncedInputValue(params?: {
-  debounceBy?: number
-  onValueUpdated?: (val: string) => void
-}) {
-  const { debounceBy = 1000, onValueUpdated } = params || {}
-  const val = ref<string>('')
-
-  const updateModelValueHandler = debounce((value: string) => {
-    val.value = value
-  }, debounceBy)
-
-  if (onValueUpdated) {
-    watch(val, (newVal, oldVal) => {
-      if (newVal === oldVal) return
-      onValueUpdated(newVal)
-    })
-  }
-
-  return {
-    value: computed(() => val.value),
-    changeHandler: (params: { value: string }) => {
-      updateModelValueHandler.cancel()
-      val.value = params.value
-    },
-    updateModelValueHandler
-  }
-}
 
 const purify = async (source: string) => {
   let purify: DOMPurify.DOMPurifyI
