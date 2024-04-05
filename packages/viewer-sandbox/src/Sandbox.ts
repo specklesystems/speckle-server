@@ -21,8 +21,8 @@ import { DiffResult } from '@speckle/viewer'
 import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
-import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
+import { MeasurementsExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
 import { Viewer } from '@speckle/viewer'
@@ -401,15 +401,15 @@ export default class Sandbox {
       if (!box) {
         box = this.viewer.getRenderer().sceneBox
       }
-      this.viewer.getExtension<SectionTool>(SectionTool).setBox(box)
-      this.viewer.getExtension<SectionTool>(SectionTool).toggle()
+      this.viewer.getExtension(SectionTool).setBox(box)
+      this.viewer.getExtension(SectionTool).toggle()
     })
 
     const toggleProjection = this.tabs.pages[0].addButton({
       title: 'Toggle Projection'
     })
     toggleProjection.on('click', () => {
-      this.viewer.getExtension<CameraController>(CameraController).toggleCameras()
+      this.viewer.getExtension(CameraController).toggleCameras()
     })
 
     const zoomExtents = this.tabs.pages[0].addButton({

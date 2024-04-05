@@ -5,10 +5,7 @@ import {
   SelectionEvent,
   ViewerEvent,
   DebugViewer,
-  Viewer,
-  Batch,
-  DrawRanges,
-  SpeckleBasicMaterial
+  Viewer
 } from '@speckle/viewer'
 
 import './style.css'
@@ -23,11 +20,6 @@ import {
 } from '@speckle/viewer'
 import { SectionTool } from '@speckle/viewer'
 import { SectionOutlines } from '@speckle/viewer'
-import { BoxSelection } from './Extensions/BoxSelection'
-import { GeometryType } from '@speckle/viewer'
-import { SpeckleStandardMaterial } from '@speckle/viewer'
-import { Color, FrontSide } from 'three'
-
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
 
@@ -58,7 +50,7 @@ const createViewer = async (containerName: string, stream: string) => {
   const filtering = viewer.createExtension(FilteringExtension)
   const explode = viewer.createExtension(ExplodeExtension)
   const diff = viewer.createExtension(DiffExtension)
-  const boxSelect = viewer.createExtension(BoxSelection)
+  // const boxSelect = viewer.createExtension(BoxSelection)
   // const rotateCamera = viewer.createExtension(RotateCamera)
   cameraController // use it
   selection // use it
@@ -98,97 +90,6 @@ const createViewer = async (containerName: string, stream: string) => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)
     sandbox.refresh()
-
-    const meshBatch = viewer
-      .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH)
-      .find((batch: Batch) => batch.renderViews.length > 2)
-    // const geom = meshBatch.mesh.geometry
-    // geom.groups.length = 0
-    // geom.addGroup(0, 216, 0)
-    // geom.addGroup(216, 1323, 0)
-    // geom.addGroup(1539, 540, 0)
-    // geom.addGroup(2079, 32268, 0)
-
-    // const material = new SpeckleStandardMaterial(
-    //   {
-    //     color: new Color('#00ff00'),
-    //     emissive: 0x0,
-    //     roughness: 1,
-    //     metalness: 0,
-    //     opacity: 1,
-    //     side: FrontSide
-    //   },
-    //   ['USE_RTE']
-    // )
-    // meshBatch.setDrawRanges(
-    //   {
-    //     offset: 36,
-    //     count: 36,
-    //     material
-    //   }
-    //   {
-    //     offset: 180,
-    //     count: 1395,
-    //     material
-    //   },
-    //   {
-    //     offset: 1581,
-    //     count: 32766,
-    //     material
-    //   }
-    // )
-    // const material = new SpeckleStandardMaterial(
-    //   {
-    //     color: new Color('#00ff00'),
-    //     emissive: 0x0,
-    //     roughness: 1,
-    //     metalness: 0,
-    //     opacity: 1,
-    //     side: FrontSide
-    //   },
-    //   ['USE_RTE']
-    // )
-    // meshBatch.setDrawRanges(
-    //   {
-    //     offset: 9018,
-    //     count: 36,
-    //     material
-    //   },
-    //   {
-    //     offset: 13878,
-    //     count: 36,
-    //     material
-    //   }
-    // )
-    // const material0 = new SpeckleBasicMaterial({ color: 0xff0000 })
-    // const material1 = new SpeckleBasicMaterial({ color: 0x00ff00 })
-    // let groups = [
-    //   {
-    //     start: 0,
-    //     count: 1350,
-    //     materialIndex: 0
-    //   }
-    // ]
-
-    // const drawRange = new DrawRanges()
-
-    // groups = drawRange.integrateRanges(
-    //   groups,
-    //   [material0, material1],
-    //   [
-    //     {
-    //       offset: 0,
-    //       count: 258,
-    //       material: material1
-    //     },
-    //     {
-    //       offset: 258,
-    //       count: 1032,
-    //       material: material1
-    //     }
-    //   ]
-    // )
   })
 
   viewer.on(ViewerEvent.UnloadComplete, () => {
