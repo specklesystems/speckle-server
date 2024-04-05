@@ -10,6 +10,7 @@
     :allow-unset="allowUnset"
     :label-id="labelId"
     :button-id="buttonId"
+    :help="help"
     by="id"
   >
     <template #nothing-selected>
@@ -104,6 +105,10 @@ const props = defineProps({
   allowUnset: {
     type: Boolean,
     default: false
+  },
+  help: {
+    type: String,
+    default: undefined
   }
 })
 

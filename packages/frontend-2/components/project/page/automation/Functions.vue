@@ -19,6 +19,7 @@
       :project-id="projectId"
       :automation-id="automation.id"
       :revision-fn="dialogFunction"
+      :revision="automation.currentRevision"
     />
   </div>
 </template>
@@ -42,6 +43,7 @@ graphql(`
     id
     currentRevision {
       id
+      ...ProjectPageAutomationFunctionSettingsDialog_AutomationRevision
       functions {
         release {
           id

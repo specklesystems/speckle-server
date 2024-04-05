@@ -8,7 +8,7 @@
     <div v-if="false" class="flex flex-col space-y-4">
       <CommonLoadingIcon class="mx-auto" />
     </div>
-    <div v-else-if="revisionFn && functionId" class="flex flex-col space-y-4">
+    <div v-else-if="hasRequiredData && functionId" class="flex flex-col space-y-4">
       <FormSelectAutomateFunctionReleases
         v-model="selectedRelease"
         show-label
@@ -35,6 +35,15 @@
           class="space-y-4"
           @change="handler"
         />
+        <CommonModelSelect
+          v-model="selectedModel"
+          class="!mt-8"
+          :project-id="projectId"
+          name="model"
+          label="Target model"
+          show-label
+          help="Select model that the function will run on when new versions are created"
+        />
         <div class="h-32">
           <!-- To ensure the dropdown doesn't cause a vertical scrollbar -->
         </div>
@@ -52,13 +61,18 @@
         </FormButton>
         <div class="grow" />
         <FormButton outlined @click="open = false">Close</FormButton>
-        <FormButton :disabled="hasErrors || loading" @click="onSave">Save</FormButton>
+        <FormButton
+          :disabled="hasErrors || loading || !hasRequiredData || !selectedModel"
+          @click="onSave"
+        >
+          Save
+        </FormButton>
       </div>
     </template>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import type { Optional } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { automationFunctionRoute } from '~/lib/common/helpers/route'
 import { useJsonFormsChangeHandler } from '~/lib/automate/composables/jsonSchema'
 import {
@@ -68,6 +82,8 @@ import {
 import { graphql } from '~/lib/common/generated/gql'
 import {
   AutomateRunTriggerType,
+  type CommonModelSelectorModelFragment,
+  type ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFragment,
   type ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment,
   type SearchAutomateFunctionReleaseItemFragment
 } from '~/lib/common/generated/gql/graphql'
@@ -78,6 +94,9 @@ import { Automate } from '@speckle/shared'
 
 type AutomationRevisionFunction =
   ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment
+
+type AutomationRevision =
+  ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFragment
 
 graphql(`
   fragment ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunction on AutomationRevisionFunction {
@@ -92,6 +111,21 @@ graphql(`
   }
 `)
 
+graphql(`
+  fragment ProjectPageAutomationFunctionSettingsDialog_AutomationRevision on AutomationRevision {
+    id
+    triggerDefinitions {
+      ... on VersionCreatedTriggerDefinition {
+        type
+        model {
+          id
+          ...CommonModelSelectorModel
+        }
+      }
+    }
+  }
+`)
+
 const emit = defineEmits<{
   (e: 'fully-closed'): void
   (e: 'save'): void
@@ -100,7 +134,8 @@ const emit = defineEmits<{
 const props = defineProps<{
   projectId: string
   automationId: string
-  revisionFn: Optional<AutomationRevisionFunction>
+  revisionFn: MaybeNullOrUndefined<AutomationRevisionFunction>
+  revision: MaybeNullOrUndefined<AutomationRevision>
 }>()
 
 const open = defineModel<boolean>('open', { required: true })
@@ -108,6 +143,7 @@ const createNewAutomationRevision = useCreateAutomationRevision()
 // const { triggerNotification } = useGlobalToast()
 // const logger = useLogger()
 
+const selectedModel = ref<CommonModelSelectorModelFragment>()
 const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment>()
 const inputSchema = computed(() =>
   formattedJsonFormSchema(selectedRelease.value?.inputSchema)
@@ -121,6 +157,8 @@ const {
 const selectedVersionInputs = ref<Record<string, unknown>>()
 const loading = ref(false)
 
+const parentSelectedModel = computed(() => props.revision?.triggerDefinitions[0]?.model)
+const hasRequiredData = computed(() => !!props.revisionFn && !!props.revision)
 const functionId = computed(() => props.revisionFn?.release.function.id)
 // const currentReleaseId = computed(() => props.revisionFn?.release.id)
 const selectedReleaseId = computed(() => selectedRelease.value?.id)
@@ -157,8 +195,9 @@ const resolveFirstModelValue = (items: SearchAutomateFunctionReleaseItemFragment
 const onSave = async () => {
   const fId = functionId.value
   const rId = selectedReleaseId.value
+  const model = selectedModel.value
 
-  if (hasErrors.value || !fId || !rId) return
+  if (hasErrors.value || !fId || !rId || !hasRequiredData.value || !model) return
 
   loading.value = true
   try {
@@ -185,7 +224,7 @@ const onSave = async () => {
           definitions: [
             {
               type: AutomateRunTriggerType.VersionCreated,
-              modelId: 'XXX' // TODO: Fix after new designs
+              modelId: model.id
             }
           ]
         }
@@ -235,4 +274,15 @@ watch(selectedRelease, (newSelectedVersion, oldSelectedVersion) => {
   selectedVersionInputs.value = existingValues
   resetJsonFormsState()
 })
+
+// Update model when props change
+watch(
+  parentSelectedModel,
+  (newVal, oldVal) => {
+    if (newVal?.id === oldVal?.id) return
+
+    selectedModel.value = newVal
+  },
+  { immediate: true }
+)
 </script>
