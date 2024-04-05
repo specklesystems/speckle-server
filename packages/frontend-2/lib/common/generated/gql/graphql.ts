@@ -238,6 +238,31 @@ export type AutomateFunctionReleasesFilter = {
   search?: InputMaybe<Scalars['String']>;
 };
 
+export type AutomateFunctionRunStatusReportInput = {
+  contextView?: InputMaybe<Scalars['String']>;
+  functionRunId: Scalars['String'];
+  /**
+   * NOTE: this is the schema for the results field below!
+   * Current schema: {
+   *   version: "1.0.0",
+   *   values: {
+   *     objectResults: Record<str, {
+   *       category: string
+   *       level: ObjectResultLevel
+   *       objectIds: string[]
+   *       message: str | null
+   *       metadata: Records<str, unknown> | null
+   *       visualoverrides: Records<str, unknown> | null
+   *     }[]>
+   *     blobIds?: string[]
+   *   }
+   * }
+   */
+  results?: InputMaybe<Scalars['JSONObject']>;
+  status: AutomationRunStatus;
+  statusMessage?: InputMaybe<Scalars['String']>;
+};
+
 export type AutomateFunctionsFilter = {
   search?: InputMaybe<Scalars['String']>;
 };
@@ -248,9 +273,8 @@ export type AutomateRun = {
   id: Scalars['ID'];
   reason?: Maybe<Scalars['String']>;
   status: AutomateRunStatus;
+  trigger: AutomationRunTrigger;
   updatedAt: Scalars['DateTime'];
-  /** TODO: Can there be more versions in the future? Can there be 0? (automation on comment) */
-  version: Version;
 };
 
 export type AutomateRunCollection = {
@@ -267,14 +291,16 @@ export enum AutomateRunStatus {
   Succeeded = 'SUCCEEDED'
 }
 
+export enum AutomateRunTriggerType {
+  VersionCreated = 'VERSION_CREATED'
+}
+
 export type Automation = {
   __typename?: 'Automation';
   createdAt: Scalars['DateTime'];
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
-  /** TODO: Can there be more models in the future? Can there be 0? (automation on comment) */
-  model: Model;
   name: Scalars['String'];
   runs: AutomateRunCollection;
   updatedAt: Scalars['DateTime'];
@@ -353,6 +379,7 @@ export type AutomationRevision = {
   __typename?: 'AutomationRevision';
   functions: Array<AutomationRevisionFunction>;
   id: Scalars['ID'];
+  triggerDefinitions: Array<AutomationRevisionTriggerDefinition>;
 };
 
 export type AutomationRevisionCreateFunctionInput = {
@@ -368,6 +395,8 @@ export type AutomationRevisionFunction = {
   parameters?: Maybe<Scalars['JSONObject']>;
   release: AutomateFunctionRelease;
 };
+
+export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition;
 
 export type AutomationRun = {
   __typename?: 'AutomationRun';
@@ -396,6 +425,8 @@ export type AutomationRunStatusUpdateInput = {
   functionRuns: Array<FunctionRunStatusInput>;
   versionId: Scalars['String'];
 };
+
+export type AutomationRunTrigger = VersionCreatedTrigger;
 
 export type AutomationsStatus = {
   __typename?: 'AutomationsStatus';
@@ -1062,6 +1093,7 @@ export type Mutation = {
   appTokenCreate: Scalars['String'];
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
+  automateFunctionRunStatusReport: Scalars['Boolean'];
   automationMutations: AutomationMutations;
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
@@ -1207,6 +1239,11 @@ export type MutationAppTokenCreateArgs = {
 
 export type MutationAppUpdateArgs = {
   app: AppUpdateInput;
+};
+
+
+export type MutationAutomateFunctionRunStatusReportArgs = {
+  input: AutomateFunctionRunStatusReportInput;
 };
 
 
@@ -1670,6 +1707,17 @@ export type ProjectAutomationMutationsUpdateArgs = {
 export type ProjectAutomationRevisionCreateInput = {
   automationId: Scalars['ID'];
   functions: Array<AutomationRevisionCreateFunctionInput>;
+  /**
+   * Trigger definition schema:
+   * {
+   *   version: 1.0.0,
+   *   definitions: Array<{
+   *     type: AutomateRunTriggerType.VERSION_CREATED,
+   *     modelId: string,
+   *   }>
+   * }
+   */
+  triggerDefinitions: Scalars['JSONObject'];
 };
 
 export type ProjectAutomationUpdateInput = {
@@ -2998,6 +3046,19 @@ export type VersionCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type VersionCreatedTrigger = {
+  __typename?: 'VersionCreatedTrigger';
+  model: Model;
+  type: AutomateRunTriggerType;
+  version: Version;
+};
+
+export type VersionCreatedTriggerDefinition = {
+  __typename?: 'VersionCreatedTriggerDefinition';
+  model: Model;
+  type: AutomateRunTriggerType;
+};
+
 export type VersionMutations = {
   __typename?: 'VersionMutations';
   delete: Scalars['Boolean'];
@@ -3205,15 +3266,15 @@ export type ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFuncti
 
 export type ProjectPageAutomationFunctions_AutomationFragment = { __typename?: 'Automation', id: string, currentRevision?: { __typename?: 'AutomationRevision', id: string, functions: Array<{ __typename?: 'AutomationRevisionFunction', parameters?: {} | null, release: { __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, function: { __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, creator: { __typename?: 'LimitedUser', id: string, name: string } } } }> } | null };
 
-export type ProjectPageAutomationHeader_AutomationFragment = { __typename?: 'Automation', id: string, name: string, model: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, description?: string | null, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, automationStatus?: { __typename?: 'AutomationsStatus', id: string, status: AutomationRunStatus, statusMessage?: string | null, automationRuns: Array<{ __typename?: 'AutomationRun', id: string, automationId: string, automationName: string, createdAt: string, status: AutomationRunStatus, functionRuns: Array<{ __typename?: 'AutomationFunctionRun', id: string, functionId: string, functionName: string, functionLogo?: string | null, elapsed: number, status: AutomationRunStatus, statusMessage?: string | null, contextView?: string | null, results?: {} | null, resultVersions: Array<{ __typename?: 'Version', id: string, model: { __typename?: 'Model', id: string, name: string } }> }> }> } | null } };
+export type ProjectPageAutomationHeader_AutomationFragment = { __typename?: 'Automation', id: string, name: string, currentRevision?: { __typename?: 'AutomationRevision', id: string, triggerDefinitions: Array<{ __typename?: 'VersionCreatedTriggerDefinition', model: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, description?: string | null, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, automationStatus?: { __typename?: 'AutomationsStatus', id: string, status: AutomationRunStatus, statusMessage?: string | null, automationRuns: Array<{ __typename?: 'AutomationRun', id: string, automationId: string, automationName: string, createdAt: string, status: AutomationRunStatus, functionRuns: Array<{ __typename?: 'AutomationFunctionRun', id: string, functionId: string, functionName: string, functionLogo?: string | null, elapsed: number, status: AutomationRunStatus, statusMessage?: string | null, contextView?: string | null, results?: {} | null, resultVersions: Array<{ __typename?: 'Version', id: string, model: { __typename?: 'Model', id: string, name: string } }> }> }> } | null } }> } | null };
 
 export type ProjectPageAutomationHeader_ProjectFragment = { __typename?: 'Project', id: string, role?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean };
 
-export type ProjectPageAutomationRuns_AutomationFragment = { __typename?: 'Automation', id: string, runs: { __typename?: 'AutomateRunCollection', items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, version: { __typename?: 'Version', id: string } }> }, model: { __typename?: 'Model', id: string } };
+export type ProjectPageAutomationRuns_AutomationFragment = { __typename?: 'Automation', id: string, runs: { __typename?: 'AutomateRunCollection', items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, trigger: { __typename?: 'VersionCreatedTrigger', version: { __typename?: 'Version', id: string }, model: { __typename?: 'Model', id: string } } }> } };
 
 export type ProjectPageAutomationsEmptyState_QueryFragment = { __typename?: 'Query', automateFunctions: { __typename?: 'AutomateFunctionCollection', items: Array<{ __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, creator: { __typename?: 'LimitedUser', id: string, name: string } }> } };
 
-export type ProjectPageAutomationsRow_AutomationFragment = { __typename?: 'Automation', id: string, name: string, enabled: boolean, model: { __typename?: 'Model', id: string, name: string }, runs: { __typename?: 'AutomateRunCollection', totalCount: number, items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, version: { __typename?: 'Version', id: string } }> } };
+export type ProjectPageAutomationsRow_AutomationFragment = { __typename?: 'Automation', id: string, name: string, enabled: boolean, currentRevision?: { __typename?: 'AutomationRevision', id: string, triggerDefinitions: Array<{ __typename?: 'VersionCreatedTriggerDefinition', model: { __typename?: 'Model', id: string, name: string } }> } | null, runs: { __typename?: 'AutomateRunCollection', totalCount: number, items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, trigger: { __typename?: 'VersionCreatedTrigger', version: { __typename?: 'Version', id: string }, model: { __typename?: 'Model', id: string } } }> } };
 
 export type ProjectDiscussionsPageHeader_ProjectFragment = { __typename?: 'Project', id: string, name: string };
 
@@ -3341,7 +3402,7 @@ export type FunctionAccessCheckQueryVariables = Exact<{
 
 export type FunctionAccessCheckQuery = { __typename?: 'Query', automateFunction?: { __typename?: 'AutomateFunction', id: string } | null };
 
-export type AutomationRunDetailsFragment = { __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, version: { __typename?: 'Version', id: string } };
+export type AutomationRunDetailsFragment = { __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, trigger: { __typename?: 'VersionCreatedTrigger', version: { __typename?: 'Version', id: string }, model: { __typename?: 'Model', id: string } } };
 
 export type OnModelVersionCardAutomationsStatusUpdatedSubscriptionVariables = Exact<{
   projectId: Scalars['String'];
@@ -3732,7 +3793,7 @@ export type ProjectAutomationsTabQueryVariables = Exact<{
 }>;
 
 
-export type ProjectAutomationsTabQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, automations: { __typename?: 'AutomationCollection', totalCount: number, items: Array<{ __typename?: 'Automation', id: string, name: string, enabled: boolean, model: { __typename?: 'Model', id: string, name: string }, runs: { __typename?: 'AutomateRunCollection', totalCount: number, items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, version: { __typename?: 'Version', id: string } }> } }> } }, automateFunctions: { __typename?: 'AutomateFunctionCollection', items: Array<{ __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, creator: { __typename?: 'LimitedUser', id: string, name: string } }> } };
+export type ProjectAutomationsTabQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, automations: { __typename?: 'AutomationCollection', totalCount: number, items: Array<{ __typename?: 'Automation', id: string, name: string, enabled: boolean, currentRevision?: { __typename?: 'AutomationRevision', id: string, triggerDefinitions: Array<{ __typename?: 'VersionCreatedTriggerDefinition', model: { __typename?: 'Model', id: string, name: string } }> } | null, runs: { __typename?: 'AutomateRunCollection', totalCount: number, items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, trigger: { __typename?: 'VersionCreatedTrigger', version: { __typename?: 'Version', id: string }, model: { __typename?: 'Model', id: string } } }> } }> } }, automateFunctions: { __typename?: 'AutomateFunctionCollection', items: Array<{ __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, creator: { __typename?: 'LimitedUser', id: string, name: string } }> } };
 
 export type ProjectAutomationPageQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -3740,7 +3801,7 @@ export type ProjectAutomationPageQueryVariables = Exact<{
 }>;
 
 
-export type ProjectAutomationPageQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, role?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean, automation?: { __typename?: 'Automation', id: string, name: string, model: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, description?: string | null, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, automationStatus?: { __typename?: 'AutomationsStatus', id: string, status: AutomationRunStatus, statusMessage?: string | null, automationRuns: Array<{ __typename?: 'AutomationRun', id: string, automationId: string, automationName: string, createdAt: string, status: AutomationRunStatus, functionRuns: Array<{ __typename?: 'AutomationFunctionRun', id: string, functionId: string, functionName: string, functionLogo?: string | null, elapsed: number, status: AutomationRunStatus, statusMessage?: string | null, contextView?: string | null, results?: {} | null, resultVersions: Array<{ __typename?: 'Version', id: string, model: { __typename?: 'Model', id: string, name: string } }> }> }> } | null }, currentRevision?: { __typename?: 'AutomationRevision', id: string, functions: Array<{ __typename?: 'AutomationRevisionFunction', parameters?: {} | null, release: { __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, function: { __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, creator: { __typename?: 'LimitedUser', id: string, name: string } } } }> } | null, runs: { __typename?: 'AutomateRunCollection', items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, version: { __typename?: 'Version', id: string } }> } } | null } };
+export type ProjectAutomationPageQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, role?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean, automation?: { __typename?: 'Automation', id: string, name: string, currentRevision?: { __typename?: 'AutomationRevision', id: string, triggerDefinitions: Array<{ __typename?: 'VersionCreatedTriggerDefinition', model: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, description?: string | null, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, automationStatus?: { __typename?: 'AutomationsStatus', id: string, status: AutomationRunStatus, statusMessage?: string | null, automationRuns: Array<{ __typename?: 'AutomationRun', id: string, automationId: string, automationName: string, createdAt: string, status: AutomationRunStatus, functionRuns: Array<{ __typename?: 'AutomationFunctionRun', id: string, functionId: string, functionName: string, functionLogo?: string | null, elapsed: number, status: AutomationRunStatus, statusMessage?: string | null, contextView?: string | null, results?: {} | null, resultVersions: Array<{ __typename?: 'Version', id: string, model: { __typename?: 'Model', id: string, name: string } }> }> }> } | null } }>, functions: Array<{ __typename?: 'AutomationRevisionFunction', parameters?: {} | null, release: { __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, function: { __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, creator: { __typename?: 'LimitedUser', id: string, name: string } } } }> } | null, runs: { __typename?: 'AutomateRunCollection', items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, trigger: { __typename?: 'VersionCreatedTrigger', version: { __typename?: 'Version', id: string }, model: { __typename?: 'Model', id: string } } }> } } | null } };
 
 export type ProjectAutomationAccessCheckQueryVariables = Exact<{
   projectId: Scalars['String'];
@@ -4074,7 +4135,7 @@ export type AutomateFunctionsPageQuery = { __typename?: 'Query', automateFunctio
 
 export type ProjectPageProjectFragment = { __typename?: 'Project', id: string, createdAt: string, role?: string | null, name: string, description?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean, team: Array<{ __typename?: 'ProjectCollaborator', id: string, role: string, user: { __typename?: 'LimitedUser', role?: string | null, id: string, name: string, avatar?: string | null } }>, invitedTeam?: Array<{ __typename?: 'PendingStreamCollaborator', id: string, title: string, inviteId: string, role: string, user?: { __typename?: 'LimitedUser', role?: string | null, id: string, name: string, avatar?: string | null } | null }> | null, modelCount: { __typename?: 'ModelCollection', totalCount: number }, commentThreadCount: { __typename?: 'ProjectCommentCollection', totalCount: number } };
 
-export type ProjectPageAutomationPage_AutomationFragment = { __typename?: 'Automation', id: string, name: string, model: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, description?: string | null, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, automationStatus?: { __typename?: 'AutomationsStatus', id: string, status: AutomationRunStatus, statusMessage?: string | null, automationRuns: Array<{ __typename?: 'AutomationRun', id: string, automationId: string, automationName: string, createdAt: string, status: AutomationRunStatus, functionRuns: Array<{ __typename?: 'AutomationFunctionRun', id: string, functionId: string, functionName: string, functionLogo?: string | null, elapsed: number, status: AutomationRunStatus, statusMessage?: string | null, contextView?: string | null, results?: {} | null, resultVersions: Array<{ __typename?: 'Version', id: string, model: { __typename?: 'Model', id: string, name: string } }> }> }> } | null }, currentRevision?: { __typename?: 'AutomationRevision', id: string, functions: Array<{ __typename?: 'AutomationRevisionFunction', parameters?: {} | null, release: { __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, function: { __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, creator: { __typename?: 'LimitedUser', id: string, name: string } } } }> } | null, runs: { __typename?: 'AutomateRunCollection', items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, version: { __typename?: 'Version', id: string } }> } };
+export type ProjectPageAutomationPage_AutomationFragment = { __typename?: 'Automation', id: string, name: string, currentRevision?: { __typename?: 'AutomationRevision', id: string, triggerDefinitions: Array<{ __typename?: 'VersionCreatedTriggerDefinition', model: { __typename?: 'Model', id: string, name: string, displayName: string, previewUrl?: string | null, createdAt: string, updatedAt: string, description?: string | null, versionCount: { __typename?: 'VersionCollection', totalCount: number }, commentThreadCount: { __typename?: 'CommentCollection', totalCount: number }, pendingImportedVersions: Array<{ __typename?: 'FileUpload', id: string, projectId: string, modelName: string, convertedStatus: number, convertedMessage?: string | null, uploadDate: string, convertedLastUpdate: string, fileType: string, fileName: string }>, automationStatus?: { __typename?: 'AutomationsStatus', id: string, status: AutomationRunStatus, statusMessage?: string | null, automationRuns: Array<{ __typename?: 'AutomationRun', id: string, automationId: string, automationName: string, createdAt: string, status: AutomationRunStatus, functionRuns: Array<{ __typename?: 'AutomationFunctionRun', id: string, functionId: string, functionName: string, functionLogo?: string | null, elapsed: number, status: AutomationRunStatus, statusMessage?: string | null, contextView?: string | null, results?: {} | null, resultVersions: Array<{ __typename?: 'Version', id: string, model: { __typename?: 'Model', id: string, name: string } }> }> }> } | null } }>, functions: Array<{ __typename?: 'AutomationRevisionFunction', parameters?: {} | null, release: { __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, function: { __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, creator: { __typename?: 'LimitedUser', id: string, name: string } } } }> } | null, runs: { __typename?: 'AutomateRunCollection', items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, trigger: { __typename?: 'VersionCreatedTrigger', version: { __typename?: 'Version', id: string }, model: { __typename?: 'Model', id: string } } }> } };
 
 export type ProjectPageAutomationPage_ProjectFragment = { __typename?: 'Project', id: string, role?: string | null, visibility: ProjectVisibility, allowPublicComments: boolean };
 
@@ -4104,8 +4165,8 @@ export const ProjectModelPageVersionsPaginationFragmentDoc = {"kind":"Document",
 export const ProjectModelPageVersionsProjectFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectModelPageVersionsProject"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageProjectHeader"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"pendingImportedVersions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"PendingFileUpload"}}]}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectModelPageVersionsPagination"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectsModelPageEmbed_Project"}}]}}]} as unknown as DocumentNode<ProjectModelPageVersionsProjectFragment, unknown>;
 export const ProjectModelPageDialogEditMessageVersionFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectModelPageDialogEditMessageVersion"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Version"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"message"}}]}}]} as unknown as DocumentNode<ProjectModelPageDialogEditMessageVersionFragment, unknown>;
 export const ProjectPageAutomationsEmptyState_QueryFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationsEmptyState_Query"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Query"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automateFunctions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"9"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectPageAutomationsEmptyState_QueryFragment, unknown>;
-export const AutomationRunDetailsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomationRunDetails"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateRun"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"reason"}},{"kind":"Field","name":{"kind":"Name","value":"version"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]} as unknown as DocumentNode<AutomationRunDetailsFragment, unknown>;
-export const ProjectPageAutomationsRow_AutomationFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationsRow_Automation"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Automation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"runs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"5"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationRunDetails"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectPageAutomationsRow_AutomationFragment, unknown>;
+export const AutomationRunDetailsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomationRunDetails"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateRun"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"reason"}},{"kind":"Field","name":{"kind":"Name","value":"trigger"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"VersionCreatedTrigger"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"version"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]} as unknown as DocumentNode<AutomationRunDetailsFragment, unknown>;
+export const ProjectPageAutomationsRow_AutomationFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationsRow_Automation"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Automation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"currentRevision"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"triggerDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"VersionCreatedTriggerDefinition"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"runs"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"5"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationRunDetails"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectPageAutomationsRow_AutomationFragment, unknown>;
 export const ProjectDiscussionsPageHeader_ProjectFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectDiscussionsPageHeader_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]} as unknown as DocumentNode<ProjectDiscussionsPageHeader_ProjectFragment, unknown>;
 export const ProjectDiscussionsPageResults_ProjectFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectDiscussionsPageResults_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]} as unknown as DocumentNode<ProjectDiscussionsPageResults_ProjectFragment, unknown>;
 export const ProjectPageLatestItemsCommentsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageLatestItemsComments"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","alias":{"kind":"Name","value":"commentThreadCount"},"name":{"kind":"Name","value":"commentThreads"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}}]} as unknown as DocumentNode<ProjectPageLatestItemsCommentsFragment, unknown>;
@@ -4150,10 +4211,10 @@ export const ProjectPageStatsBlockTeamFragmentDoc = {"kind":"Document","definiti
 export const ProjectPageStatsBlockModelsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageStatsBlockModels"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"modelCount"},"name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}}]} as unknown as DocumentNode<ProjectPageStatsBlockModelsFragment, unknown>;
 export const ProjectPageStatsBlockCommentsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageStatsBlockComments"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","alias":{"kind":"Name","value":"commentThreadCount"},"name":{"kind":"Name","value":"commentThreads"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"0"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}}]} as unknown as DocumentNode<ProjectPageStatsBlockCommentsFragment, unknown>;
 export const ProjectPageProjectFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageProject"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageProjectHeader"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageStatsBlockTeam"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageTeamDialog"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageStatsBlockModels"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageStatsBlockComments"}}]}}]} as unknown as DocumentNode<ProjectPageProjectFragment, unknown>;
-export const ProjectPageAutomationHeader_AutomationFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationHeader_Automation"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Automation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageLatestItemsModelItem"}}]}}]}}]} as unknown as DocumentNode<ProjectPageAutomationHeader_AutomationFragment, unknown>;
+export const ProjectPageAutomationHeader_AutomationFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationHeader_Automation"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Automation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"currentRevision"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"triggerDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"VersionCreatedTriggerDefinition"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageLatestItemsModelItem"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<ProjectPageAutomationHeader_AutomationFragment, unknown>;
 export const ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomationRevisionFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"release"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}},{"kind":"Field","name":{"kind":"Name","value":"function"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment, unknown>;
 export const ProjectPageAutomationFunctions_AutomationFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationFunctions_Automation"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Automation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"currentRevision"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"functions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"release"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"function"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"}}]}}]}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunction"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectPageAutomationFunctions_AutomationFragment, unknown>;
-export const ProjectPageAutomationRuns_AutomationFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationRuns_Automation"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Automation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"runs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationRunDetails"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<ProjectPageAutomationRuns_AutomationFragment, unknown>;
+export const ProjectPageAutomationRuns_AutomationFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationRuns_Automation"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Automation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"runs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationRunDetails"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectPageAutomationRuns_AutomationFragment, unknown>;
 export const ProjectPageAutomationPage_AutomationFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationPage_Automation"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Automation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageAutomationHeader_Automation"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageAutomationFunctions_Automation"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageAutomationRuns_Automation"}}]}}]} as unknown as DocumentNode<ProjectPageAutomationPage_AutomationFragment, unknown>;
 export const ProjectPageAutomationHeader_ProjectFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationHeader_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageModelsCardProject"}}]}}]} as unknown as DocumentNode<ProjectPageAutomationHeader_ProjectFragment, unknown>;
 export const ProjectPageAutomationPage_ProjectFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectPageAutomationPage_Project"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageAutomationHeader_Project"}}]}}]} as unknown as DocumentNode<ProjectPageAutomationPage_ProjectFragment, unknown>;

@@ -8,7 +8,6 @@
       class="mt-3"
       :runs="automation.runs.items"
       :project-id="projectId"
-      :model-id="automation.model.id"
       :automation-id="automation.id"
     />
   </div>
@@ -27,9 +26,6 @@ graphql(`
       items {
         ...AutomationRunDetails
       }
-    }
-    model {
-      id
     }
   }
 `)

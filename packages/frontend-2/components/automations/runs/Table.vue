@@ -29,12 +29,11 @@
           :to="
             runModelVersionUrl({
               run: item,
-              projectId,
-              modelId
+              projectId
             })
           "
         >
-          {{ item.version.id }}
+          {{ item.trigger.version.id }}
         </CommonTextLink>
       </template>
       <template #date="{ item }">
@@ -47,7 +46,6 @@
     <ProjectPageAutomationsRunDialog
       v-model:open="runInfoOpen"
       :run="openedRun"
-      :model-id="modelId"
       :automation-id="automationId"
       :project-id="projectId"
     />
@@ -60,7 +58,6 @@ import type { AutomationRunDetailsFragment } from '~/lib/common/generated/gql/gr
 
 defineProps<{
   projectId: string
-  modelId: string
   automationId: string
   runs: AutomationRunDetailsFragment[]
 }>()

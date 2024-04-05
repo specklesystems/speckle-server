@@ -237,6 +237,31 @@ export type AutomateFunctionReleasesFilter = {
   search?: InputMaybe<Scalars['String']>;
 };
 
+export type AutomateFunctionRunStatusReportInput = {
+  contextView?: InputMaybe<Scalars['String']>;
+  functionRunId: Scalars['String'];
+  /**
+   * NOTE: this is the schema for the results field below!
+   * Current schema: {
+   *   version: "1.0.0",
+   *   values: {
+   *     objectResults: Record<str, {
+   *       category: string
+   *       level: ObjectResultLevel
+   *       objectIds: string[]
+   *       message: str | null
+   *       metadata: Records<str, unknown> | null
+   *       visualoverrides: Records<str, unknown> | null
+   *     }[]>
+   *     blobIds?: string[]
+   *   }
+   * }
+   */
+  results?: InputMaybe<Scalars['JSONObject']>;
+  status: AutomationRunStatus;
+  statusMessage?: InputMaybe<Scalars['String']>;
+};
+
 export type AutomateFunctionsFilter = {
   search?: InputMaybe<Scalars['String']>;
 };
@@ -247,9 +272,8 @@ export type AutomateRun = {
   id: Scalars['ID'];
   reason?: Maybe<Scalars['String']>;
   status: AutomateRunStatus;
+  trigger: AutomationRunTrigger;
   updatedAt: Scalars['DateTime'];
-  /** TODO: Can there be more versions in the future? Can there be 0? (automation on comment) */
-  version: Version;
 };
 
 export type AutomateRunCollection = {
@@ -266,14 +290,16 @@ export enum AutomateRunStatus {
   Succeeded = 'SUCCEEDED'
 }
 
+export enum AutomateRunTriggerType {
+  VersionCreated = 'VERSION_CREATED'
+}
+
 export type Automation = {
   __typename?: 'Automation';
   createdAt: Scalars['DateTime'];
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
-  /** TODO: Can there be more models in the future? Can there be 0? (automation on comment) */
-  model: Model;
   name: Scalars['String'];
   runs: AutomateRunCollection;
   updatedAt: Scalars['DateTime'];
@@ -352,6 +378,7 @@ export type AutomationRevision = {
   __typename?: 'AutomationRevision';
   functions: Array<AutomationRevisionFunction>;
   id: Scalars['ID'];
+  triggerDefinitions: Array<AutomationRevisionTriggerDefinition>;
 };
 
 export type AutomationRevisionCreateFunctionInput = {
@@ -367,6 +394,8 @@ export type AutomationRevisionFunction = {
   parameters?: Maybe<Scalars['JSONObject']>;
   release: AutomateFunctionRelease;
 };
+
+export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition;
 
 export type AutomationRun = {
   __typename?: 'AutomationRun';
@@ -395,6 +424,8 @@ export type AutomationRunStatusUpdateInput = {
   functionRuns: Array<FunctionRunStatusInput>;
   versionId: Scalars['String'];
 };
+
+export type AutomationRunTrigger = VersionCreatedTrigger;
 
 export type AutomationsStatus = {
   __typename?: 'AutomationsStatus';
@@ -1066,6 +1097,7 @@ export type Mutation = {
   appTokenCreate: Scalars['String'];
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
+  automateFunctionRunStatusReport: Scalars['Boolean'];
   automationMutations: AutomationMutations;
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
@@ -1211,6 +1243,11 @@ export type MutationAppTokenCreateArgs = {
 
 export type MutationAppUpdateArgs = {
   app: AppUpdateInput;
+};
+
+
+export type MutationAutomateFunctionRunStatusReportArgs = {
+  input: AutomateFunctionRunStatusReportInput;
 };
 
 
@@ -1674,6 +1711,17 @@ export type ProjectAutomationMutationsUpdateArgs = {
 export type ProjectAutomationRevisionCreateInput = {
   automationId: Scalars['ID'];
   functions: Array<AutomationRevisionCreateFunctionInput>;
+  /**
+   * Trigger definition schema:
+   * {
+   *   version: 1.0.0,
+   *   definitions: Array<{
+   *     type: AutomateRunTriggerType.VERSION_CREATED,
+   *     modelId: string,
+   *   }>
+   * }
+   */
+  triggerDefinitions: Scalars['JSONObject'];
 };
 
 export type ProjectAutomationUpdateInput = {
@@ -3000,6 +3048,19 @@ export type VersionCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Version>;
   totalCount: Scalars['Int'];
+};
+
+export type VersionCreatedTrigger = {
+  __typename?: 'VersionCreatedTrigger';
+  model: Model;
+  type: AutomateRunTriggerType;
+  version: Version;
+};
+
+export type VersionCreatedTriggerDefinition = {
+  __typename?: 'VersionCreatedTriggerDefinition';
+  model: Model;
+  type: AutomateRunTriggerType;
 };
 
 export type VersionMutations = {

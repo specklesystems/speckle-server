@@ -39,11 +39,11 @@ const documents = {
     "\n  fragment ProjectPageProjectHeader on Project {\n    id\n    role\n    name\n    description\n    visibility\n    allowPublicComments\n  }\n": types.ProjectPageProjectHeaderFragmentDoc,
     "\n  fragment ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunction on AutomationRevisionFunction {\n    parameters\n    release {\n      id\n      inputSchema\n      function {\n        id\n      }\n    }\n  }\n": types.ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragmentDoc,
     "\n  fragment ProjectPageAutomationFunctions_Automation on Automation {\n    id\n    currentRevision {\n      id\n      functions {\n        release {\n          id\n          function {\n            id\n            ...AutomationsFunctionsCard_AutomateFunction\n          }\n        }\n        ...ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunction\n      }\n    }\n  }\n": types.ProjectPageAutomationFunctions_AutomationFragmentDoc,
-    "\n  fragment ProjectPageAutomationHeader_Automation on Automation {\n    id\n    name\n    model {\n      ...ProjectPageLatestItemsModelItem\n    }\n  }\n": types.ProjectPageAutomationHeader_AutomationFragmentDoc,
+    "\n  fragment ProjectPageAutomationHeader_Automation on Automation {\n    id\n    name\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            ...ProjectPageLatestItemsModelItem\n          }\n        }\n      }\n    }\n  }\n": types.ProjectPageAutomationHeader_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationHeader_Project on Project {\n    id\n    ...ProjectPageModelsCardProject\n  }\n": types.ProjectPageAutomationHeader_ProjectFragmentDoc,
-    "\n  fragment ProjectPageAutomationRuns_Automation on Automation {\n    id\n    runs {\n      items {\n        ...AutomationRunDetails\n      }\n    }\n    model {\n      id\n    }\n  }\n": types.ProjectPageAutomationRuns_AutomationFragmentDoc,
+    "\n  fragment ProjectPageAutomationRuns_Automation on Automation {\n    id\n    runs {\n      items {\n        ...AutomationRunDetails\n      }\n    }\n  }\n": types.ProjectPageAutomationRuns_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions(limit: 9) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n": types.ProjectPageAutomationsEmptyState_QueryFragmentDoc,
-    "\n  fragment ProjectPageAutomationsRow_Automation on Automation {\n    id\n    name\n    enabled\n    model {\n      id\n      name\n    }\n    runs(limit: 5) {\n      totalCount\n      items {\n        ...AutomationRunDetails\n      }\n    }\n  }\n": types.ProjectPageAutomationsRow_AutomationFragmentDoc,
+    "\n  fragment ProjectPageAutomationsRow_Automation on Automation {\n    id\n    name\n    enabled\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            id\n            name\n          }\n        }\n      }\n    }\n    runs(limit: 5) {\n      totalCount\n      items {\n        ...AutomationRunDetails\n      }\n    }\n  }\n": types.ProjectPageAutomationsRow_AutomationFragmentDoc,
     "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n  }\n": types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
     "\n  fragment ProjectPageLatestItemsComments on Project {\n    id\n    commentThreadCount: commentThreads(limit: 0) {\n      totalCount\n    }\n  }\n": types.ProjectPageLatestItemsCommentsFragmentDoc,
@@ -88,7 +88,7 @@ const documents = {
     "\n  fragment SearchAutomateFunctionReleaseItem on AutomateFunctionRelease {\n    id\n    versionTag\n    createdAt\n    inputSchema\n  }\n": types.SearchAutomateFunctionReleaseItemFragmentDoc,
     "\n  query SearchAutomateFunctionReleases(\n    $functionId: ID!\n    $cursor: String\n    $limit: Int\n    $filter: AutomateFunctionReleasesFilter\n  ) {\n    automateFunction(id: $functionId) {\n      id\n      releases(cursor: $cursor, limit: $limit, filter: $filter) {\n        cursor\n        totalCount\n        items {\n          ...SearchAutomateFunctionReleaseItem\n        }\n      }\n    }\n  }\n": types.SearchAutomateFunctionReleasesDocument,
     "\n  query FunctionAccessCheck($id: ID!) {\n    automateFunction(id: $id) {\n      id\n    }\n  }\n": types.FunctionAccessCheckDocument,
-    "\n  fragment AutomationRunDetails on AutomateRun {\n    id\n    status\n    reason\n    version {\n      id\n    }\n    createdAt\n    updatedAt\n  }\n": types.AutomationRunDetailsFragmentDoc,
+    "\n  fragment AutomationRunDetails on AutomateRun {\n    id\n    status\n    reason\n    trigger {\n      ... on VersionCreatedTrigger {\n        version {\n          id\n        }\n        model {\n          id\n        }\n      }\n    }\n    createdAt\n    updatedAt\n  }\n": types.AutomationRunDetailsFragmentDoc,
     "\n  subscription OnModelVersionCardAutomationsStatusUpdated($projectId: String!) {\n    projectAutomationsStatusUpdated(projectId: $projectId) {\n      status {\n        ...ModelCardAutomationStatus_AutomationsStatus\n      }\n      version {\n        id\n      }\n      model {\n        id\n        versions(limit: 1) {\n          items {\n            id\n          }\n        }\n      }\n    }\n  }\n": types.OnModelVersionCardAutomationsStatusUpdatedDocument,
     "\n  query MentionsUserSearch($query: String!, $emailOnly: Boolean = false) {\n    userSearch(\n      query: $query\n      limit: 5\n      cursor: null\n      archived: false\n      emailOnly: $emailOnly\n    ) {\n      items {\n        id\n        name\n        company\n      }\n    }\n  }\n": types.MentionsUserSearchDocument,
     "\n  query UserSearch($query: String!, $limit: Int, $cursor: String, $archived: Boolean) {\n    userSearch(query: $query, limit: $limit, cursor: $cursor, archived: $archived) {\n      cursor\n      items {\n        id\n        name\n        bio\n        company\n        avatar\n        verified\n        role\n      }\n    }\n  }\n": types.UserSearchDocument,
@@ -322,7 +322,7 @@ export function graphql(source: "\n  fragment ProjectPageAutomationFunctions_Aut
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageAutomationHeader_Automation on Automation {\n    id\n    name\n    model {\n      ...ProjectPageLatestItemsModelItem\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageAutomationHeader_Automation on Automation {\n    id\n    name\n    model {\n      ...ProjectPageLatestItemsModelItem\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageAutomationHeader_Automation on Automation {\n    id\n    name\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            ...ProjectPageLatestItemsModelItem\n          }\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageAutomationHeader_Automation on Automation {\n    id\n    name\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            ...ProjectPageLatestItemsModelItem\n          }\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -330,7 +330,7 @@ export function graphql(source: "\n  fragment ProjectPageAutomationHeader_Projec
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageAutomationRuns_Automation on Automation {\n    id\n    runs {\n      items {\n        ...AutomationRunDetails\n      }\n    }\n    model {\n      id\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageAutomationRuns_Automation on Automation {\n    id\n    runs {\n      items {\n        ...AutomationRunDetails\n      }\n    }\n    model {\n      id\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageAutomationRuns_Automation on Automation {\n    id\n    runs {\n      items {\n        ...AutomationRunDetails\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageAutomationRuns_Automation on Automation {\n    id\n    runs {\n      items {\n        ...AutomationRunDetails\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -338,7 +338,7 @@ export function graphql(source: "\n  fragment ProjectPageAutomationsEmptyState_Q
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageAutomationsRow_Automation on Automation {\n    id\n    name\n    enabled\n    model {\n      id\n      name\n    }\n    runs(limit: 5) {\n      totalCount\n      items {\n        ...AutomationRunDetails\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageAutomationsRow_Automation on Automation {\n    id\n    name\n    enabled\n    model {\n      id\n      name\n    }\n    runs(limit: 5) {\n      totalCount\n      items {\n        ...AutomationRunDetails\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageAutomationsRow_Automation on Automation {\n    id\n    name\n    enabled\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            id\n            name\n          }\n        }\n      }\n    }\n    runs(limit: 5) {\n      totalCount\n      items {\n        ...AutomationRunDetails\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageAutomationsRow_Automation on Automation {\n    id\n    name\n    enabled\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            id\n            name\n          }\n        }\n      }\n    }\n    runs(limit: 5) {\n      totalCount\n      items {\n        ...AutomationRunDetails\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -518,7 +518,7 @@ export function graphql(source: "\n  query FunctionAccessCheck($id: ID!) {\n    
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment AutomationRunDetails on AutomateRun {\n    id\n    status\n    reason\n    version {\n      id\n    }\n    createdAt\n    updatedAt\n  }\n"): (typeof documents)["\n  fragment AutomationRunDetails on AutomateRun {\n    id\n    status\n    reason\n    version {\n      id\n    }\n    createdAt\n    updatedAt\n  }\n"];
+export function graphql(source: "\n  fragment AutomationRunDetails on AutomateRun {\n    id\n    status\n    reason\n    trigger {\n      ... on VersionCreatedTrigger {\n        version {\n          id\n        }\n        model {\n          id\n        }\n      }\n    }\n    createdAt\n    updatedAt\n  }\n"): (typeof documents)["\n  fragment AutomationRunDetails on AutomateRun {\n    id\n    status\n    reason\n    trigger {\n      ... on VersionCreatedTrigger {\n        version {\n          id\n        }\n        model {\n          id\n        }\n      }\n    }\n    createdAt\n    updatedAt\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

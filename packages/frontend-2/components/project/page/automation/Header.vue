@@ -15,13 +15,12 @@
         class="relative top-1.5"
       />
     </div>
-    <div class="mt-6 w-full grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-      <ProjectPageModelsCard
-        :project="project"
-        :model="automation.model"
-        :project-id="project.id"
-      />
-    </div>
+    <ProjectModelsBasicCardView
+      :items="triggerModels"
+      :project="project"
+      :project-id="project.id"
+      class="mt-6 w-full"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -39,8 +38,15 @@ graphql(`
   fragment ProjectPageAutomationHeader_Automation on Automation {
     id
     name
-    model {
-      ...ProjectPageLatestItemsModelItem
+    currentRevision {
+      id
+      triggerDefinitions {
+        ... on VersionCreatedTriggerDefinition {
+          model {
+            ...ProjectPageLatestItemsModelItem
+          }
+        }
+      }
     }
   }
 `)
@@ -86,4 +92,7 @@ const name = computed({
     })
   }
 })
+const triggerModels = computed(
+  () => props.automation.currentRevision?.triggerDefinitions.map((t) => t.model) || []
+)
 </script>

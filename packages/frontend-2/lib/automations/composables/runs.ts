@@ -17,8 +17,15 @@ graphql(`
     id
     status
     reason
-    version {
-      id
+    trigger {
+      ... on VersionCreatedTrigger {
+        version {
+          id
+        }
+        model {
+          id
+        }
+      }
     }
     createdAt
     updatedAt
@@ -55,13 +62,12 @@ export const useAutomationRunDetailsFns = () => {
   const runModelVersionUrl = (params: {
     run: AutomationRunDetailsFragment
     projectId: string
-    modelId: string
   }) => {
-    const { run, projectId, modelId } = params
+    const { run, projectId } = params
     return versionUrl({
       projectId,
-      modelId,
-      versionId: run.version.id
+      modelId: run.trigger.model.id,
+      versionId: run.trigger.version.id
     })
   }
 
@@ -92,29 +98,6 @@ export const useAutomationRunDetailsFns = () => {
     runModelVersionUrl,
     runDate,
     runDuration
-  }
-}
-
-export const useAutomationRunDetails = (params: {
-  run: MaybeRef<AutomationRunDetailsFragment>
-  projectId: MaybeRef<string>
-  modelId: MaybeRef<string>
-}) => {
-  const { run, projectId, modelId } = params
-  const { runStatusClasses, runModelVersionUrl, runDate, runDuration } =
-    useAutomationRunDetailsFns()
-
-  return {
-    statusClasses: computed(() => runStatusClasses(unref(run))),
-    modelVersionUrl: computed(() =>
-      runModelVersionUrl({
-        run: unref(run),
-        projectId: unref(projectId),
-        modelId: unref(modelId)
-      })
-    ),
-    date: computed(() => runDate(unref(run))),
-    duration: computed(() => runDuration(unref(run)))
   }
 }
 

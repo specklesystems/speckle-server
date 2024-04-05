@@ -66,11 +66,13 @@ import {
   formattedJsonFormSchema
 } from '~/lib/automate/helpers/jsonSchema'
 import { graphql } from '~/lib/common/generated/gql'
-import type {
-  ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment,
-  SearchAutomateFunctionReleaseItemFragment
+import {
+  AutomateRunTriggerType,
+  type ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment,
+  type SearchAutomateFunctionReleaseItemFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useCreateAutomationRevision } from '~/lib/projects/composables/projectManagement'
+import { Automate } from '@speckle/shared'
 
 // TODO: Encryption
 
@@ -177,7 +179,16 @@ const onSave = async () => {
             releaseId: rId,
             parameters
           }
-        ]
+        ],
+        triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+          version: Automate.AutomateTypes.TRIGGER_DEFINITIONS_SCHEMA_VERSION,
+          definitions: [
+            {
+              type: AutomateRunTriggerType.VersionCreated,
+              modelId: 'XXX' // TODO: Fix after new designs
+            }
+          ]
+        }
       }
     })
   } finally {

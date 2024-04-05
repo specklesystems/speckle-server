@@ -19,7 +19,7 @@ type AutomationRevisionFunction {
 
 type VersionCreatedTriggerDefinition {
   type: AutomateRunTriggerType!
-  model: Model
+  model: Model!
 }
 
 union AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition
@@ -32,8 +32,8 @@ type AutomationRevision {
 
 type VersionCreatedTrigger {
   type: AutomateRunTriggerType!
-  version: Version
-  model: Model
+  version: Version!
+  model: Model!
 }
 
 union AutomationRunTrigger = VersionCreatedTrigger

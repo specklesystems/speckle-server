@@ -15,14 +15,18 @@
         props: {
           fullWidth: true,
           to:
-            run && projectId && modelId
-              ? versionUrl({ projectId, modelId, versionId: run.version.id })
+            run && projectId
+              ? versionUrl({
+                  projectId,
+                  modelId: run.trigger.model.id,
+                  versionId: run.trigger.version.id
+                })
               : undefined
         }
       }
     ]"
   >
-    <div v-if="run && modelId && projectId && automationId" class="flex flex-col gap-2">
+    <div v-if="run && projectId && automationId" class="flex flex-col gap-2">
       <div class="grid gap-2 grid-cols-[auto,1fr] items-center">
         <div class="font-bold">Run:</div>
         <div>{{ run.id }}</div>
@@ -55,7 +59,6 @@ const props = defineProps<{
   // a run to display
   run?: AutomationRunDetailsFragment
   projectId?: string
-  modelId?: string
   automationId?: string
 }>()
 

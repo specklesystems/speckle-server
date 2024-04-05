@@ -14,19 +14,27 @@
       <Component :is="enabledIcon" class="w-5 h-5" />
       <div class="label-light">{{ enabledText }}</div>
     </div>
-    <div class="truncate">
-      <CommonTextLink :to="finalModelUrl">{{ automation.model.name }}</CommonTextLink>
+    <div class="flex flex-col">
+      <div v-for="model in triggerModels" :key="model.id" class="truncate">
+        <CommonTextLink :icon-left="CubeIcon" :to="finalModelUrl(model.id)">
+          {{ model.name }}
+        </CommonTextLink>
+      </div>
     </div>
     <AutomationsRunsTable
       :runs="automation.runs.items"
       :project-id="projectId"
-      :model-id="automation.model.id"
       :automation-id="automation.id"
     />
   </div>
 </template>
 <script setup lang="ts">
-import { PlayIcon, PauseIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import {
+  PlayIcon,
+  PauseIcon,
+  ChevronRightIcon,
+  CubeIcon
+} from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import { type ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'
 import { projectAutomationRoute } from '~/lib/common/helpers/route'
@@ -37,9 +45,16 @@ graphql(`
     id
     name
     enabled
-    model {
+    currentRevision {
       id
-      name
+      triggerDefinitions {
+        ... on VersionCreatedTriggerDefinition {
+          model {
+            id
+            name
+          }
+        }
+      }
     }
     runs(limit: 5) {
       totalCount
@@ -57,12 +72,17 @@ const props = defineProps<{
 
 const { modelUrl } = useViewerRouteBuilder()
 
-const modelId = computed(() => props.automation.model.id)
 const isEnabled = computed(() => props.automation.enabled)
 const enabledIcon = computed(() => (isEnabled.value ? PauseIcon : PlayIcon))
 const enabledText = computed(() => (isEnabled.value ? 'Enabled' : 'Paused'))
 
-const finalModelUrl = computed(() =>
-  modelUrl({ projectId: props.projectId, modelId: modelId.value })
+const triggerModels = computed(
+  () =>
+    props.automation.currentRevision?.triggerDefinitions.map(
+      (trigger) => trigger.model
+    ) || []
 )
+
+const finalModelUrl = (modelId: string) =>
+  modelUrl({ projectId: props.projectId, modelId })
 </script>

@@ -1,11 +1,33 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LimitedUser, Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  AutomateRunTriggerType,
+  LimitedUser,
+  Resolvers
+} from '@/modules/core/graph/generated/graphql'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { Roles } from '@speckle/shared'
 import { times } from 'lodash'
 import { IMockStore, IMocks } from '@graphql-tools/mock'
 import dayjs from 'dayjs'
-import { Branches } from '@/modules/core/dbSchema'
+import { BranchCommits, Branches, Commits } from '@/modules/core/dbSchema'
+
+const getRandomModelVersion = async (offset?: number) => {
+  const versionQ = Commits.knex()
+    .join(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+    .first()
+  if (offset) versionQ.offset(offset)
+  const version = await versionQ
+
+  const model = await Branches.knex()
+    .join(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
+    .where(BranchCommits.col.commitId, version.id)
+    .first()
+
+  return {
+    model,
+    version
+  }
+}
 
 /**
  * Define mocking config in dev env
@@ -71,9 +93,31 @@ export async function buildMocksConfig(): Promise<{
             totalCount: count,
             items: times(count, () => store.get('AutomateRun'))
           } as any
-        },
-        model: async () => {
-          return Branches.knex().first()
+        }
+      },
+      AutomationRevision: {
+        triggerDefinitions: async () => {
+          const res = await Promise.all([
+            getRandomModelVersion(),
+            getRandomModelVersion(1)
+          ])
+
+          return res.map((i) => ({
+            type: AutomateRunTriggerType.VersionCreated,
+            model: i.model,
+            version: i.version
+          }))
+        }
+      },
+      AutomateRun: {
+        trigger: async () => {
+          const { model, version } = await getRandomModelVersion()
+
+          return {
+            type: AutomateRunTriggerType.VersionCreated,
+            version,
+            model
+          }
         }
       },
       ProjectAutomationMutations: {
@@ -92,7 +136,7 @@ export async function buildMocksConfig(): Promise<{
     }),
     mocks: {
       AutomationRevision: () => ({
-        functions: () => [undefined] // array of 1 always
+        functions: () => [undefined] // array of 1 always,
       }),
       Automation: () => ({
         name: () => faker.company.companyName(),
