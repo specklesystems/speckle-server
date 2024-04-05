@@ -11,10 +11,7 @@
         class="flex flex-col md:flex-row md:justify-between md:items-start gap-8 sm:gap-4 my-8"
       >
         <ProjectPageHeader :project="project" />
-        <ProjectPageStatsBlockSettings
-          :project="project"
-          class="w-full md:w-72 shrink-0"
-        />
+        <ProjectPageTeamBlock :project="project" class="w-full md:w-72 shrink-0" />
       </div>
       <LayoutPageTabs v-model:active-item="activePageTab" :items="pageTabItems">
         <NuxtPage />

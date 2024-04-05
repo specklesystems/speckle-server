@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { CheckIcon, InformationCircleIcon } from '@heroicons/vue/24/outline'
 import type { ConcreteComponent } from 'vue'
 
@@ -93,6 +93,13 @@ const props = defineProps<{
 }>()
 
 const selected = ref(props.modelValue)
+
+watch(
+  () => props.modelValue,
+  (newValue) => {
+    selected.value = newValue
+  }
+)
 
 const selectItem = (value: string) => {
   selected.value = value
