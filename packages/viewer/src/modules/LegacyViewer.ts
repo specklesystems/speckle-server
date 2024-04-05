@@ -1,27 +1,30 @@
 import { Box3, MathUtils } from 'three'
-
+import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
+import {
+  InlineView,
+  PolarView,
+  CanonicalView,
+  CameraController
+} from './extensions/CameraController'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Queries } from './queries/Queries'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { DataTree, DataTreeBuilder } from './deprecated/DataTree'
-import { CameraController } from './extensions/core-extensions/CameraController'
-import { SectionTool } from './extensions/SectionTool'
-import { Viewer } from './Viewer'
-import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
-
 import {
   SelectionExtension,
   SelectionExtensionOptions
 } from './extensions/SelectionExtension'
-import { StencilOutlineType } from '../IViewer'
 import {
   DefaultViewerParams,
   IViewer,
   SelectionEvent,
   SpeckleView,
   SunLightConfiguration,
-  ViewerParams
+  ViewerParams,
+  StencilOutlineType
 } from '../IViewer'
+import { Viewer } from './Viewer'
+import { SectionTool } from './extensions/SectionTool'
 import { SectionOutlines } from './extensions/SectionOutlines'
 import { TreeNode, WorldTree } from './tree/WorldTree'
 import {
@@ -33,12 +36,6 @@ import { DiffExtension, DiffResult, VisualDiffMode } from './extensions/DiffExte
 import { PropertyInfo } from './filtering/PropertyManager'
 import { BatchObject } from './batching/BatchObject'
 import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
-import {
-  CanonicalView,
-  ICameraProvider,
-  InlineView,
-  PolarView
-} from './extensions/core-extensions/Providers'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -51,7 +48,7 @@ class LegacySelectionExtension extends SelectionExtension {
 }
 
 class HighlightExtension extends SelectionExtension {
-  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer, cameraProvider)
     const highlightMaterialData: SelectionExtensionOptions = {
       selectionMaterialData: {

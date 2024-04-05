@@ -1,6 +1,5 @@
 import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
-import { Extension } from './core-extensions/Extension'
-import { ICameraProvider } from './core-extensions/Providers'
+import { Extension } from './Extension'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Material } from 'three'
 import { InputEvent } from '../input/Input'
@@ -16,6 +15,8 @@ import Materials, { DisplayStyle, RenderMaterial } from '../materials/Materials'
 import { StencilOutlineType } from '../../IViewer'
 import { MaterialOptions } from '../materials/MaterialOptions'
 import { TreeNode } from '../tree/WorldTree'
+import { CameraController } from './CameraController'
+
 export interface SelectionExtensionOptions {
   selectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
   hoverMaterialData?: RenderMaterial & DisplayStyle & MaterialOptions
@@ -48,7 +49,7 @@ const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
 
 export class SelectionExtension extends Extension {
   public get inject() {
-    return [ICameraProvider.Symbol]
+    return [CameraController]
   }
 
   protected selectedNodes: Array<TreeNode> = []
@@ -106,7 +107,7 @@ export class SelectionExtension extends Extension {
     this.transparentHoverMaterialData.opacity = 0.5
   }
 
-  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer)
     this.viewer.on(ViewerEvent.ObjectClicked, this.onObjectClicked.bind(this))
     this.viewer.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
