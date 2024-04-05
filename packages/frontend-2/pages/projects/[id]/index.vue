@@ -35,7 +35,7 @@ import {
   ChatBubbleLeftRightIcon,
   Cog6ToothIcon
 } from '@heroicons/vue/24/outline'
-import { projectRoute } from '~/lib/common/helpers/route'
+import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
 import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 
 graphql(`
@@ -58,9 +58,14 @@ definePageMeta({
       if (/\/models\/?$/i.test(to.path)) {
         return navigateTo(projectRoute(projectId))
       }
+
+      // Redirect from /projects/:id/webhooks to /projects/:id/settings/webhooks
+      if (/\/projects\/\w*?\/webhooks/i.test(to.path)) {
+        return navigateTo(projectWebhooksRoute(projectId))
+      }
     }
   ],
-  alias: '/projects/:id/models'
+  alias: ['/projects/:id/models', '/projects/:id/webhooks']
 })
 
 const route = useRoute()
@@ -139,7 +144,7 @@ const activePageTab = computed({
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return pageTabItems.value[1]
     // if (/\/automations\/?$/i.test(path)) return pageTabItems.value[2]
-    if (/\/settings\/?$/i.test(path)) return pageTabItems.value[2]
+    if (/\/settings\/?/i.test(path)) return pageTabItems.value[2]
     return pageTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {

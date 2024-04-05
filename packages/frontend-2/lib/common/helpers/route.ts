@@ -39,8 +39,14 @@ export const allProjectModelsRoute = (projectId: string) => `/projects/${project
 // Temp change to projectDiscussionsRoute until tab routing is implemented
 export const projectDiscussionsRoute = (projectId: string) => `/projects/${projectId}`
 
+export const projectSettingsRoute = (projectId: string) =>
+  `/projects/${projectId}/settings`
+
+export const projectCollaboratorsRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/collaborators`
+
 export const projectWebhooksRoute = (projectId: string) =>
-  `/projects/${projectId}/webhooks`
+  `/projects/${projectId}/settings/webhooks`
 
 export const automationDataPageRoute = (baseUrl: string, automationId: string) =>
   new URL(`/automations/${automationId}`, baseUrl).toString()
