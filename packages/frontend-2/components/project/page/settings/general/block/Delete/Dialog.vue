@@ -10,7 +10,7 @@
       </p>
       <FormTextInput
         v-model="projectNameInput"
-        name="projectName"
+        name="projectNameConfirm"
         label="Project name"
         placeholder="Type the project name here"
         full-width
