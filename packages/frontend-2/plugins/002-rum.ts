@@ -105,7 +105,7 @@ async function initRumClient(app: PluginNuxtApp) {
 
       router.beforeEach((to) => {
         const pathDefinition = getRouteDefinition(to)
-        const routeName = to.meta.datadogName || pathDefinition
+        const routeName = (to.meta.datadogName || pathDefinition) as string
         const realPath = to.path
 
         window.DD_RUM_START_VIEW?.(realPath, routeName)
