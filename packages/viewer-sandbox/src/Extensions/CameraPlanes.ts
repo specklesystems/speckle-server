@@ -11,6 +11,13 @@ import { PerspectiveCamera } from 'three'
 export class CameraPlanes extends Extension {
   private camerController: CameraController
 
+  get enabled(): boolean {
+    return this._enabled
+  }
+  set enabled(value: boolean) {
+    this._enabled = value
+  }
+
   public constructor(viewer: IViewer) {
     super(viewer)
     this.camerController = viewer.getExtension(

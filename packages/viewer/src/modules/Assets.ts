@@ -31,92 +31,79 @@ export class Assets {
     }
   }
 
+  private static hdriToPMREM(renderer: WebGLRenderer, hdriTex: Texture): Texture {
+    const generator = new PMREMGenerator(renderer)
+    generator.compileEquirectangularShader()
+    const pmremRT = generator.fromEquirectangular(hdriTex)
+    generator.dispose()
+    return pmremRT.texture
+  }
+
   public static getEnvironment(
-    asset: Asset | string,
+    asset: Asset,
     renderer: WebGLRenderer
   ): Promise<Texture> {
-    let srcUrl: string = null
-    let assetType: AssetType = undefined
-    if ((<Asset>asset).src) {
-      srcUrl = (asset as Asset).src
-      assetType = (asset as Asset).type
-    } else {
-      srcUrl = asset as string
-    }
-    if (this._cache[srcUrl]) {
-      return Promise.resolve(this._cache[srcUrl] as Texture)
+    if (this._cache[asset.id]) {
+      return Promise.resolve(
+        Assets.hdriToPMREM(renderer, this._cache[asset.id] as Texture)
+      )
     }
 
     return new Promise<Texture>((resolve, reject) => {
-      const loader = Assets.getLoader(srcUrl, assetType)
+      const loader = Assets.getLoader(asset.src, asset.type)
       if (loader) {
         loader.load(
-          srcUrl,
+          asset.src,
           (texture) => {
-            const generator = new PMREMGenerator(renderer)
-            generator.compileEquirectangularShader()
-            const pmremRT = generator.fromEquirectangular(texture)
-            this._cache[srcUrl] = pmremRT.texture
-            texture.dispose()
-            generator.dispose()
-            resolve(this._cache[srcUrl] as Texture)
+            this._cache[asset.id] = texture
+            resolve(Assets.hdriToPMREM(renderer, texture))
           },
           undefined,
           (error: ErrorEvent) => {
-            reject(`Loading asset ${srcUrl} failed ${error.message}`)
+            reject(`Loading asset ${asset.id} failed ${error.message}`)
           }
         )
       } else {
-        reject(`Loading asset ${srcUrl} failed`)
+        reject(`Loading asset ${asset.id} failed`)
       }
     })
   }
 
-  /** Will unify with environment fetching soon */
-  public static getTexture(asset: Asset | string): Promise<Texture> {
-    let srcUrl: string = null
-    let assetType: AssetType = undefined
-    if ((<Asset>asset).src) {
-      srcUrl = (asset as Asset).src
-      assetType = (asset as Asset).type
-    } else {
-      srcUrl = asset as string
-    }
-
-    if (this._cache[srcUrl]) {
-      return Promise.resolve(this._cache[srcUrl] as Texture)
+  public static getTexture(asset: Asset): Promise<Texture> {
+    if (this._cache[asset.id]) {
+      return Promise.resolve(this._cache[asset.id] as Texture)
     }
     return new Promise<Texture>((resolve, reject) => {
       // Hack to load 'data:image's - for some reason, the frontend receives the default
       // gradient map as a data image url, rather than a file (?).
-      if (srcUrl.includes('data:image')) {
+      if (asset.src.includes('data:image')) {
         const image = new Image()
-        image.src = srcUrl
+        image.src = asset.src
         image.onload = () => {
           const texture = new Texture(image)
           texture.needsUpdate = true
-          this._cache[srcUrl] = texture
+          this._cache[asset.id] = texture
           resolve(texture)
         }
         image.onerror = (ev) => {
-          reject(`Loading asset ${srcUrl} failed with ${ev.toString()}`)
+          reject(`Loading asset ${asset.id} failed with ${ev.toString()}`)
         }
       } else {
-        const loader = Assets.getLoader(srcUrl, assetType)
+        const loader = Assets.getLoader(asset.src, asset.type)
         if (loader) {
           loader.load(
-            srcUrl,
+            asset.src,
             (texture) => {
-              this._cache[srcUrl] = texture
-              resolve(this._cache[srcUrl] as Texture)
+              this._cache[asset.id] = texture
+              resolve(this._cache[asset.id] as Texture)
             },
             undefined,
             (error: ErrorEvent) => {
-              reject(`Loading asset ${srcUrl} failed ${error.message}`)
+              reject(`Loading asset ${asset.id} failed ${error.message}`)
             }
           )
         } else {
-          reject(`Loading asset ${srcUrl} failed`)
+          reject(`Loading asset ${asset.id} failed`)
         }
       }
     })
@@ -149,7 +136,7 @@ export class Assets {
   }
 
   /** To be used wisely */
-  public static async getTextureData(asset: Asset | string): Promise<ImageData> {
+  public static async getTextureData(asset: Asset): Promise<ImageData> {
     const texture = await Assets.getTexture(asset)
     const canvas = document.createElement('canvas')
     canvas.width = texture.image.width

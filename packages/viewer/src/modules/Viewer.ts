@@ -23,12 +23,12 @@ import Logger from 'js-logger'
 import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
 import { Queries } from './queries/Queries'
 import { Utils } from './Utils'
-import { Extension } from './extensions/core-extensions/Extension'
-import { ICameraProvider, IProvider } from './extensions/core-extensions/Providers'
+import { Extension } from './extensions/Extension'
 import Input from './input/Input'
-import { CameraController } from './extensions/core-extensions/CameraController'
+import { CameraController } from './extensions/CameraController'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Loader } from './loaders/Loader'
+import { type Constructor } from 'type-fest'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -51,7 +51,7 @@ export class Viewer extends EventEmitter implements IViewer {
   protected loaders: { [id: string]: Loader } = {}
 
   protected extensions: {
-    [id: string]: Extension | IProvider
+    [id: string]: Extension
   } = {}
 
   /** various utils/helpers */
@@ -75,41 +75,44 @@ export class Viewer extends EventEmitter implements IViewer {
     return this.speckleRenderer.input
   }
 
-  public createExtension<T extends Extension>(
-    type: new (viewer: IViewer, ...args) => T
-  ): T {
-    const providersToInject = type.prototype.inject
-    const providers = []
-    Object.values(this.extensions).forEach((extension: IProvider) => {
-      const provides = extension.provide
-      if (provides && providersToInject.includes(provides)) providers.push(extension)
+  private getConstructorChain(obj: object) {
+    const cs = []
+    let pt = obj
+    do {
+      if ((pt = Object.getPrototypeOf(pt))) cs.push(pt.constructor || null)
+    } while (pt !== null)
+    return cs.map(function (c) {
+      return c ? c.toString().split(/\s|\(/)[1] : null
     })
-    const extension = new type(this, ...providers)
-    /** Temporary until we implement proper providing for core */
-    if (ICameraProvider.isCameraProvider(extension)) {
-      this.speckleRenderer.cameraProvider = extension
-    }
-    this.extensions[type.name] = extension
-    return extension
   }
 
-  public getExtension<T extends Extension | IProvider>(
-    type: new (viewer: IViewer, ...args) => T
-  ): T {
-    const getConstructorChain = (obj) => {
-      const cs = []
-      let pt = obj
-      do {
-        if ((pt = Object.getPrototypeOf(pt))) cs.push(pt.constructor || null)
-      } while (pt !== null)
-      return cs.map(function (c) {
-        return c ? c.toString().split(/\s|\(/)[1] : null
-      })
-    }
+  public createExtension<T extends Extension>(type: Constructor<T>): T {
+    const extensionsToInject: Array<new (viewer: IViewer, ...args) => Extension> =
+      type.prototype.inject
+    const injectedExtensions: Array<Extension> = []
+    extensionsToInject.forEach((value: new (viewer: IViewer, ...args) => Extension) => {
+      if (this.extensions[value.name]) {
+        injectedExtensions.push(this.extensions[value.name])
+        return
+      }
+      for (const k in this.extensions) {
+        const prototypeChain = this.getConstructorChain(this.extensions[k])
+        if (prototypeChain.includes(value.name)) {
+          injectedExtensions.push(this.extensions[k])
+        }
+      }
+    })
+
+    const extension = new type(this, ...injectedExtensions)
+    this.extensions[type.name] = extension
+    return extension as T
+  }
+
+  public getExtension<T extends Extension>(type: Constructor<T>): T {
     if (this.extensions[type.name]) return this.extensions[type.name] as T
     else {
       for (const k in this.extensions) {
-        const prototypeChain = getConstructorChain(this.extensions[k])
+        const prototypeChain = this.getConstructorChain(this.extensions[k])
         if (prototypeChain.includes(type.name)) {
           return this.extensions[k] as T
         }
