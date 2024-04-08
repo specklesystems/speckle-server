@@ -94,27 +94,44 @@
       </div>
     </div>
     <div class="d-block d-md-none pa-8 pt-0">
-      <h3 class="font-weight-bold mt-0">This is the Legacy Web App</h3>
-      <p class="mb-0 mt-1 primary--text text--disabled text-body-2 pr-4">
-        A better and more powerful web app is replacing this.
-        <a
-          href="https://speckle.systems/blog/the-new-way-to-collaborate-in-aec/"
-          target="_blank"
-          class="primary--text text--disabled"
-        >
-          Learn more.
-        </a>
-      </p>
-      <v-btn
-        href="https://app.speckle.systems/"
-        outlined
-        block
-        class="align-self-center outlined mt-4"
-        small
-      >
-        Go to the new web app
-        <v-icon right>mdi-rocket-launch</v-icon>
-      </v-btn>
+      <v-row align="center" justify="center" class="pt-4 pb-5">
+        <v-col cols="12" class="pb-0">
+          <div class="d-flex align-center">
+            <h3 class="text-h6 font-weight-bold ml-1">This is the Legacy Web App</h3>
+          </div>
+          <p class="mb-0 mt-1 primary--text text--disabled mr-2">
+            A better and more powerful web app is replacing this.
+          </p>
+        </v-col>
+
+        <v-col cols="12" class="d-flex justify-end">
+          <v-row align="center" justify="center">
+            <v-col cols="12" lg="8" class="d-flex justify-end">
+              <v-btn
+                href="https://app.speckle.systems/"
+                color="primary"
+                block
+                class="align-self-center outlined ml-4"
+              >
+                New web app
+                <v-icon right>mdi-rocket-launch</v-icon>
+              </v-btn>
+            </v-col>
+            <v-col cols="12" lg="4" class="d-flex justify-end py-0">
+              <v-btn
+                href="https://speckle.systems/blog/the-new-way-to-collaborate-in-aec/"
+                outlined
+                target="_blank"
+                block
+                class="align-self-center outlined ml-4"
+              >
+                Learn more
+                <v-icon right>mdi-open-in-new</v-icon>
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-col>
+      </v-row>
     </div>
   </v-card>
 </template>
