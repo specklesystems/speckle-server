@@ -1,7 +1,7 @@
 <template>
   <div
     ref="resizableElement"
-    class="relative sm:absolute z-10 right-0 h-[50dvh] overflow-hidden w-screen sm:pr-3 sm:pb-3 sm:pt-0"
+    class="relative sm:absolute z-10 right-0 overflow-hidden w-screen sm:pr-3 sm:pb-3 sm:pt-0"
     :style="!isSmallerOrEqualSm ? { maxWidth: width + 'px' } : {}"
     :class="[
       open ? '' : 'pointer-events-none',
@@ -57,9 +57,9 @@
             </div>
           </div>
         </div>
-        <div class="w-full" :class="$slots.actions ? 'h-24 sm:h-20' : 'h-10'"></div>
+        <div class="w-full" :class="$slots.actions ? 'h-16 sm:h-20' : 'h-10'"></div>
         <div
-          class="overflow-y-auto simple-scrollbar h-[calc(50dvh)] sm:h-full bg-foundation w-full pt-2 sm:rounded-b-md"
+          class="overflow-y-auto simple-scrollbar h-full bg-foundation w-full pt-2 sm:rounded-b-md"
         >
           <slot></slot>
         </div>
@@ -106,23 +106,25 @@ const startResizing = (event: MouseEvent) => {
   startWidth = width.value
 }
 
-useEventListener(resizeHandle, 'mousedown', startResizing)
+if (process.client) {
+  useEventListener(resizeHandle, 'mousedown', startResizing)
 
-useEventListener(document, 'mousemove', (event) => {
-  if (isResizing.value) {
-    const diffX = startX - event.clientX
-    width.value = Math.max(
-      300,
-      Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
-    )
-  }
-})
+  useEventListener(document, 'mousemove', (event) => {
+    if (isResizing.value) {
+      const diffX = startX - event.clientX
+      width.value = Math.max(
+        300,
+        Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
+      )
+    }
+  })
 
-useEventListener(document, 'mouseup', () => {
-  if (isResizing.value) {
-    isResizing.value = false
-  }
-})
+  useEventListener(document, 'mouseup', () => {
+    if (isResizing.value) {
+      isResizing.value = false
+    }
+  })
+}
 
 const minimize = () => {
   width.value = 300

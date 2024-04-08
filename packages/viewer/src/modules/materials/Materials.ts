@@ -6,13 +6,20 @@ import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 import SpecklePointMaterial from './SpecklePointMaterial'
 import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial'
-import defaultGradient from '../../assets/gradient.png'
+import defaultGradientTexture from '../../assets/gradient.png'
 import { Assets } from '../Assets'
 import { getConversionFactor } from '../converter/Units'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
 import SpeckleTextMaterial from './SpeckleTextMaterial'
 import { SpeckleMaterial } from './SpeckleMaterial'
 import SpecklePointColouredMaterial from './SpecklePointColouredMaterial'
+import { Asset, AssetType, MaterialOptions } from '../../IViewer'
+
+const defaultGradient: Asset = {
+  id: 'defaultGradient',
+  src: defaultGradientTexture,
+  type: AssetType.TEXTURE_8BPP
+}
 
 export interface RenderMaterial {
   id: string
@@ -28,12 +35,6 @@ export interface DisplayStyle {
   color: number
   lineWeight: number
   opacity?: number
-}
-
-export interface MaterialOptions {
-  stencilOutlines?: boolean
-  pointSize?: number
-  depthWrite?: number
 }
 
 export enum FilterMaterialType {
@@ -217,7 +218,7 @@ export default class Materials {
 
   public static getMaterialHash(
     renderView: NodeRenderView,
-    materialData?: RenderMaterial | DisplayStyle
+    materialData?: RenderMaterial | DisplayStyle | MaterialOptions
   ) {
     if (!materialData) {
       materialData =
@@ -236,6 +237,12 @@ export default class Materials {
             renderView.geometryType !== GeometryType.POINT
           ? Materials.displayStyleToString(materialData as DisplayStyle)
           : ''
+      if ((materialData as MaterialOptions).stencilOutlines) {
+        mat += '/' + (materialData as MaterialOptions).stencilOutlines
+      }
+      if ((materialData as MaterialOptions).pointSize) {
+        mat += '/' + (materialData as MaterialOptions).pointSize
+      }
     }
     let geometry = ''
     if (renderView.renderData.geometry.attributes)
@@ -931,7 +938,7 @@ export default class Materials {
 
   public getDataMaterial(
     renderView: NodeRenderView,
-    materialData: RenderMaterial & DisplayStyle
+    materialData: RenderMaterial & DisplayStyle & MaterialOptions
   ): Material {
     const materialHash = Materials.getMaterialHash(renderView, materialData)
     return this.getMaterial(materialHash, materialData, renderView.geometryType)

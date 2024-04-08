@@ -48,6 +48,10 @@ export function useNewFrontend() {
   return getBooleanFromEnv('USE_FRONTEND_2')
 }
 
+export function enableNewFrontendMessaging() {
+  return getBooleanFromEnv('ENABLE_FE2_MESSAGING')
+}
+
 export function getRedisUrl() {
   if (!process.env.REDIS_URL) {
     throw new MisconfiguredEnvironmentError('REDIS_URL env var not configured')

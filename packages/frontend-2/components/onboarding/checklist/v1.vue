@@ -170,7 +170,7 @@
         </div>
         <div
           v-else
-          class="hidden sm:flex flex-col sm:flex-row items-center justify-center flex-1 gap-x-2 py-4"
+          class="relative hidden sm:flex flex-col sm:flex-row items-center justify-center flex-1 gap-x-2 py-4"
         >
           <div class="w-6 h-6">
             <!-- <CheckCircleIcon class="absolute w-6 h-6 text-primary" /> -->
@@ -203,7 +203,7 @@
       viewer. It does not directly dismiss the checklist as we still want to show it
       on the main dasboard page.  
     -->
-    <div v-if="showBottomEscape" class="text-center mt-2">
+    <div v-if="showBottomEscape && !allCompleted" class="text-center mt-2">
       <FormButton size="sm" @click="$emit('dismiss')">
         I'll do it later - let me explore first!
       </FormButton>

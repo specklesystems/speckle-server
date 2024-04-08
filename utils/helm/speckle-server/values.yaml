@@ -381,6 +381,10 @@ server:
   ##
   image: ''
 
+  ## @param server.enableFe2Messaging If enabled, the related FE1 deployment will show banners/messages about the new frontend
+  ##
+  enableFe2Messaging: false
+
   onboarding:
     ## @param server.onboarding.stream_url The (cross-server) URL to the project/stream that should be used as the onboarding project base.
     ##

@@ -7,7 +7,7 @@
       <div
         class="absolute transition"
         :class="{
-          'translate-x-7': value !== GridListToggleValue.Grid
+          'translate-x-7': value !== GridListToggleValue.List
         }"
       >
         <div
@@ -15,16 +15,16 @@
         />
       </div>
       <div
-        v-tippy="'Grid View'"
+        v-tippy="'List View'"
         class="relative z-10 flex gap-1 items-center p-1 rounded-l"
       >
-        <Squares2X2Icon class="h-5 w-5" />
+        <Bars3Icon class="h-5 w-5" />
       </div>
       <div
-        v-tippy="'List View'"
+        v-tippy="'Grid View'"
         class="relative z-10 flex gap-1 items-center p-1 rounded-r"
       >
-        <Bars3Icon class="h-5 w-5" />
+        <Squares2X2Icon class="h-5 w-5" />
       </div>
     </div>
   </button>

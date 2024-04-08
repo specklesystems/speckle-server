@@ -1,13 +1,14 @@
 <template>
-  <button
+  <div
     :class="`bg-foundation group relative block w-full space-y-2 rounded-md pb-2 text-left transition ${
       clickable
-        ? 'hover:bg-gray-100 dark:hover:bg-gray-700'
+        ? 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'
         : ' bg-primary-muted cursor-default'
     }
     ${isLoaded ? '' : ''}
     `"
     @click="handleClick"
+    @keypress="keyboardClick(handleClick)"
   >
     <!-- Timeline left border -->
     <div
@@ -66,10 +67,11 @@
         </div>
       </div>
     </div>
-  </button>
+  </div>
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
+import { keyboardClick } from '@speckle/ui-components'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'

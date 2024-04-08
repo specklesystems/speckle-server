@@ -8,6 +8,7 @@ const command: CommandModule<
     projectUrl: string
     authorId: string
     syncComments: boolean
+    token?: string
   }
 > = {
   command: 'project <projectUrl> <authorId> [syncComments]',
@@ -26,6 +27,10 @@ const command: CommandModule<
       describe: 'Whether or not to sync comments as well',
       type: 'boolean',
       default: true
+    },
+    token: {
+      describe: 'Target server auth token, in case the stream is private',
+      type: 'string'
     }
   },
   handler: async (argv) => {

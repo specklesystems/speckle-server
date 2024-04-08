@@ -1,7 +1,7 @@
 <template>
   <div
+    v-if="hasAnyFiltersApplied"
     class="bg-pink-300/0 flex justify-center items-center pointer-events-none transition-all duration-300 ease-in overflow-hidden h-8"
-    :class="hasAnyFiltersApplied ? 'translate-y-0' : 'translate-y-16'"
   >
     <FormButton size="sm" class="pointer-events-auto" @click="trackAndResetFilters">
       Reset Filters

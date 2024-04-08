@@ -41,12 +41,12 @@
           :data-tab-id="item.id"
           class="tab-button relative z-10 flex items-center gap-1.5 pb-2 border-b-[2px] border-transparent text-base max-w-max px-2"
           :class="[
-            activeItem.id === item.id
+            activeItem?.id === item.id
               ? 'text-primary hover:text-primary'
               : 'text-foreground',
             vertical ? 'hover:border-outline' : 'hover:border-outline-2'
           ]"
-          @click="onTabClick(item)"
+          @click="setActiveItem(item)"
         >
           <Component
             :is="item.icon"
@@ -58,7 +58,7 @@
             v-if="item.count"
             class="rounded-full px-2 text-[11px] transition-all min-w-6"
             :class="
-              activeItem.id === item.id
+              activeItem?.id === item.id
                 ? 'text-primary bg-blue-100'
                 : 'text-foreground-2 bg-gray-200 dark:bg-foundation'
             "
@@ -80,10 +80,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import { computed, ref, watch, type CSSProperties } from 'vue'
+import { computed, ref, type CSSProperties, onMounted, watch } from 'vue'
 import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
+import type { Nullable } from '@speckle/shared'
 import { isClient } from '@vueuse/core'
-import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
@@ -91,16 +91,11 @@ const props = defineProps<{
   title?: string
 }>()
 
+const activeItem = defineModel<LayoutPageTabItem>('activeItem', { required: true })
 const buttonContainer = ref(null as Nullable<HTMLDivElement>)
-const activeItemId = ref<string | null>(null)
-
-const activeItem = computed(() => {
-  const item = props.items.find((i) => i.id === activeItemId.value)
-  return item || props.items[0]
-})
 
 const activeItemRef = computed(() => {
-  const id = activeItemId.value
+  const id = activeItem.value?.id
   if (!id) return null
 
   const parent = buttonContainer.value
@@ -119,21 +114,25 @@ const borderStyle = computed(() => {
   return style
 })
 
-const onTabClick = (item: LayoutPageTabItem) => {
-  activeItemId.value = item.id
+const setActiveItem = (item: LayoutPageTabItem) => {
+  activeItem.value = item
 }
 
-const setActiveItem = (item: MaybeNullOrUndefined<LayoutPageTabItem>) => {
-  if (!isClient || !item?.id) return
+if (isClient) {
+  // Doing onMounted & watch separately to avoid hydration mismatch
+  onMounted(() => {
+    if (props.items.length && !activeItem.value) {
+      setActiveItem(props.items[0])
+    }
+  })
 
-  activeItemId.value = item.id
+  watch(
+    () => [props.items, activeItem.value] as const,
+    ([newItems, activeItem]) => {
+      if (newItems.length && !activeItem) {
+        setActiveItem(newItems[0])
+      }
+    }
+  )
 }
-
-watch(
-  () => props.items,
-  (newItems) => {
-    setActiveItem(newItems[0])
-  },
-  { immediate: true }
-)
 </script>

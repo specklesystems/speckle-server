@@ -93,6 +93,29 @@
         </div>
       </div>
     </div>
+    <div class="d-block d-md-none pa-8 pt-0">
+      <h3 class="font-weight-bold mt-0">This is the Legacy Web App</h3>
+      <p class="mb-0 mt-1 primary--text text--disabled text-body-2 pr-4">
+        A better and more powerful web app is replacing this.
+        <a
+          href="https://speckle.systems/blog/the-new-way-to-collaborate-in-aec/"
+          target="_blank"
+          class="primary--text text--disabled"
+        >
+          Learn more.
+        </a>
+      </p>
+      <v-btn
+        href="https://app.speckle.systems/"
+        outlined
+        block
+        class="align-self-center outlined mt-4"
+        small
+      >
+        Go to the new web app
+        <v-icon right>mdi-rocket-launch</v-icon>
+      </v-btn>
+    </div>
   </v-card>
 </template>
 

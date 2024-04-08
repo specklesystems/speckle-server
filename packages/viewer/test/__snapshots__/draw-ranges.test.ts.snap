@@ -1,0 +1,156 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Draw Ranges > Boundary Ranges 1`] = `
+[
+  {
+    "count": 2095,
+    "materialIndex": 1,
+    "start": 0,
+  },
+]
+`;
+
+exports[`Draw Ranges > Boundary Ranges 2`] = `
+[
+  {
+    "count": 2094,
+    "materialIndex": 0,
+    "start": 0,
+  },
+  {
+    "count": 1,
+    "materialIndex": 1,
+    "start": 2094,
+  },
+]
+`;
+
+exports[`Draw Ranges > Boundary Ranges 3`] = `
+[
+  {
+    "count": 2094,
+    "materialIndex": 0,
+    "start": 0,
+  },
+  {
+    "count": 1,
+    "materialIndex": 1,
+    "start": 2094,
+  },
+]
+`;
+
+exports[`Draw Ranges > Mixed Ranges 1`] = `
+[
+  {
+    "count": 36,
+    "materialIndex": 0,
+    "start": 0,
+  },
+  {
+    "count": 36,
+    "materialIndex": 1,
+    "start": 36,
+  },
+  {
+    "count": 108,
+    "materialIndex": 0,
+    "start": 72,
+  },
+  {
+    "count": 1395,
+    "materialIndex": 1,
+    "start": 180,
+  },
+  {
+    "count": 6,
+    "materialIndex": 0,
+    "start": 1575,
+  },
+  {
+    "count": 32766,
+    "materialIndex": 1,
+    "start": 1581,
+  },
+]
+`;
+
+exports[`Draw Ranges > Mixed Ranges 2 1`] = `
+[
+  {
+    "count": 6,
+    "materialIndex": 0,
+    "start": 0,
+  },
+  {
+    "count": 36,
+    "materialIndex": 2,
+    "start": 6,
+  },
+  {
+    "count": 486,
+    "materialIndex": 0,
+    "start": 42,
+  },
+  {
+    "count": 3261,
+    "materialIndex": 1,
+    "start": 528,
+  },
+]
+`;
+
+exports[`Draw Ranges > Mixed Ranges 3 1`] = `
+[
+  {
+    "count": 528,
+    "materialIndex": 0,
+    "start": 0,
+  },
+  {
+    "count": 2,
+    "materialIndex": 1,
+    "start": 528,
+  },
+  {
+    "count": 36,
+    "materialIndex": 2,
+    "start": 530,
+  },
+  {
+    "count": 3223,
+    "materialIndex": 1,
+    "start": 566,
+  },
+]
+`;
+
+exports[`Draw Ranges > Multiple Materials 1`] = `
+[
+  {
+    "count": 36,
+    "materialIndex": 3,
+    "start": 0,
+  },
+  {
+    "count": 257,
+    "materialIndex": 4,
+    "start": 36,
+  },
+  {
+    "count": 1246,
+    "materialIndex": 1,
+    "start": 293,
+  },
+  {
+    "count": 540,
+    "materialIndex": 0,
+    "start": 1539,
+  },
+  {
+    "count": 32268,
+    "materialIndex": 2,
+    "start": 2079,
+  },
+]
+`;

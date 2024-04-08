@@ -11,9 +11,9 @@
         v-if="projectsPanelResult?.activeUser?.projectInvites?.length"
         :invites="projectsPanelResult?.activeUser"
       />
-      <ProjectsFeedbackRequestBanner
-        v-if="showFeedbackRequest"
-        @feedback-dismissed-or-opened="onDismissOrOpenFeedback"
+      <ProjectsNewSpeckleBanner
+        v-if="showNewSpeckleBanner"
+        @dismissed="onDismissNewSpeckleBanner"
       />
     </div>
     <div
@@ -167,9 +167,8 @@ const updateSearchImmediately = () => {
   debouncedSearch.value = search.value.trim()
 }
 
-const onDismissOrOpenFeedback = () => {
-  onboardingOrFeedbackDate.value = undefined
-  hasDismissedOrOpenedFeedback.value = true
+const onDismissNewSpeckleBanner = () => {
+  hasDismissedNewSpeckleBanner.value = true
 }
 
 onUserProjectsUpdate((res) => {
@@ -270,14 +269,6 @@ function getFutureDateByDays(daysToAdd: number) {
   return dayjs().add(daysToAdd, 'day').toDate()
 }
 
-const onboardingOrFeedbackDate = useSynchronizedCookie<string | undefined>(
-  `onboardingOrFeedbackDate`,
-  {
-    default: () => undefined,
-    expires: getFutureDateByDays(180)
-  }
-)
-
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   {
@@ -299,17 +290,17 @@ const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
   }
 )
 
-const hasDismissedOrOpenedFeedback = useSynchronizedCookie<boolean | undefined>(
-  `hasDismissedOrOpenedFeedback`,
-  { default: () => false, expires: getFutureDateByDays(180) }
-)
-
 const hasDismissedChecklistTimeAgo = computed(() => {
   return (
     new Date().getTime() -
     new Date(hasDismissedChecklistTime.value || Date.now()).getTime()
   )
 })
+
+const hasDismissedNewSpeckleBanner = useSynchronizedCookie<boolean | undefined>(
+  `hasDismissedNewSpeckleBanner`,
+  { default: () => false, expires: getFutureDateByDays(999) }
+)
 
 const showChecklist = computed(() => {
   if (hasDismissedChecklistForever.value) return false
@@ -323,24 +314,11 @@ const showChecklist = computed(() => {
   return false
 })
 
-const showFeedbackRequest = computed(() => {
-  let storedDateString = onboardingOrFeedbackDate.value
-  const currentDate = dayjs()
-
-  if (!storedDateString) {
-    const formattedDate = currentDate.format('YYYY-MM-DD')
-    onboardingOrFeedbackDate.value = formattedDate
-    storedDateString = formattedDate
-  }
-
-  if (hasDismissedOrOpenedFeedback.value) return false
-  if (showChecklist.value) return false
+const showNewSpeckleBanner = computed(() => {
+  if (hasDismissedNewSpeckleBanner.value) return false
   if (projectsPanelResult?.value?.activeUser?.projectInvites.length) return false
 
-  const firstVisitDate = dayjs(storedDateString)
-  const daysDifference = currentDate.diff(firstVisitDate, 'day')
-
-  return daysDifference > 14
+  return true
 })
 
 const clearSearch = () => {

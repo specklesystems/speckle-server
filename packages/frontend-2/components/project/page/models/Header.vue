@@ -62,6 +62,8 @@
               class="grow shrink sm:w-[120px] md:w-44"
               clearable
               fixed-height
+              :label-id="sourceAppsLabelId"
+              :button-id="sourceAppsBtnId"
             />
             <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
           </div>
@@ -135,6 +137,8 @@ const props = defineProps<{
 }>()
 
 const localSearch = ref('')
+const sourceAppsLabelId = useId()
+const sourceAppsBtnId = useId()
 
 const mp = useMixpanel()
 const trackFederateAll = () =>

@@ -252,7 +252,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     logger.error(error, 'Unhandled error in Vue app', info)
   }
   nuxtApp.hook('app:error', (error) => {
-    logger.error(error, 'Unhandled app error')
+    logger.error(error, 'Unhandled app error', {
+      isAppError: true
+    })
   })
 
   return {
