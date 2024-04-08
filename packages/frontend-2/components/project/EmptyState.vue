@@ -1,8 +1,8 @@
 <template>
-  <div class="flex flex-col gap-1 items-center max-w-[180px] mx-auto">
+  <div class="flex flex-col items-center max-w-[180px] mx-auto">
     <div
       class="relative text-foreground-2 h-32 w-full"
-      :class="small ? 'scale-75' : ''"
+      :class="small ? 'scale-75 -mb-2' : 'mb-1'"
     >
       <slot name="image"></slot>
     </div>

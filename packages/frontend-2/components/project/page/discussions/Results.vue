@@ -12,7 +12,7 @@
       />
     </template>
     <div v-else class="mt-8">
-      <ProjectPageLatestItemsCommentsIntroCard />
+      <ProjectPageLatestItemsCommentsEmptyState />
     </div>
   </div>
 </template>

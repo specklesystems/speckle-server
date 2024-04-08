@@ -19,7 +19,7 @@
         />
       </template>
       <template v-else>
-        <ProjectPageLatestItemsCommentsIntroCard />
+        <ProjectPageLatestItemsCommentsEmptyState />
       </template>
     </template>
   </ProjectPageLatestItems>

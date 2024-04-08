@@ -59,7 +59,7 @@
         :thread="thread"
       />
       <div v-if="commentThreads.length === 0" class="pb-4">
-        <ProjectPageLatestItemsCommentsIntroCard
+        <ProjectPageLatestItemsCommentsEmptyState
           small
           @new-discussion="onNewDiscussion"
         />

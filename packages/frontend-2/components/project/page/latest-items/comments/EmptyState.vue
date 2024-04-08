@@ -41,34 +41,3 @@ defineProps<{
   small?: boolean
 }>()
 </script>
-<style scoped>
-@keyframes move-up {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-@keyframes move-down {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(5px);
-  }
-}
-
-.svg-upward {
-  animation: move-up 4s linear infinite;
-}
-
-.svg-downward {
-  animation: move-down 4s linear infinite;
-}
-</style>
