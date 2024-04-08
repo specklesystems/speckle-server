@@ -101,8 +101,8 @@ const addModel = async () => {
   model.sendFilter = filter.value as ISendFilter
   model.expired = false
 
+  emit('close')
   await hostAppStore.addModel(model)
   void hostAppStore.sendModel(model.modelCardId)
-  emit('close')
 }
 </script>
