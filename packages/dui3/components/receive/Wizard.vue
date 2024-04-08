@@ -1,6 +1,19 @@
 <template>
   <div>
-    <div class="-mt-4 mb-4 flex items-center justify-left space-x-2">
+    <!-- PROJECT NAME > MODEL NAME title -->
+    <div v-if="step === 2 || step === 3" class="-mt-6 mb-4">
+      <div v-if="step === 2 && selectedProject && selectedAccountId">
+        <div class="h9 font-bold italic">{{ selectedProject.name }}</div>
+      </div>
+      <div v-if="step === 3">
+        <div class="h9 font-bold italic">
+          {{ `${selectedProject.name} > ${selectedModel.name}` }}
+        </div>
+      </div>
+      <hr class="mt-1" />
+    </div>
+    <!-- Stepper -->
+    <div class="mb-3 flex items-center justify-left space-x-2">
       <CloudArrowDownIcon class="w-6 text-primary" />
       <div
         v-for="index in 3"
@@ -24,9 +37,6 @@
       <WizardProjectSelector :show-new-project="false" @next="selectProject" />
     </div>
     <div v-if="step === 2 && selectedProject && selectedAccountId">
-      <div class="flex items-center justify-between mb-2">
-        <div class="h5 font-bold">Select Model</div>
-      </div>
       <div>
         <WizardModelSelector
           :project="selectedProject"
