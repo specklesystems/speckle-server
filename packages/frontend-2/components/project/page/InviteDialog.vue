@@ -50,7 +50,10 @@ import { Roles } from '@speckle/shared'
 import type { ServerRoles, StreamRoles } from '@speckle/shared'
 import { useUserSearch } from '~~/lib/common/composables/users'
 import type { UserSearchItem } from '~~/lib/common/composables/users'
-import type { ProjectInviteCreateInput } from '~~/lib/common/generated/gql/graphql'
+import type {
+  ProjectInviteCreateInput,
+  ProjectPageSettingsCollaboratorsQuery
+} from '~~/lib/common/generated/gql/graphql'
 import type { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { isEmail } from '~~/lib/common/helpers/validation'
 import { isArray, isString } from 'lodash-es'
@@ -58,10 +61,12 @@ import { useInviteUserToProject } from '~~/lib/projects/composables/projectManag
 import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useServerInfo } from '~~/lib/core/composables/server'
-import { useQuery } from '@vue/apollo-composable'
-import { projectSettingsQuery } from '~~/lib/projects/graphql/queries'
 
 type InvitableUser = UserSearchItem | string
+
+const props = defineProps<{
+  project?: ProjectPageSettingsCollaboratorsQuery
+}>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
@@ -82,11 +87,7 @@ const { userSearch, searchVariables } = useUserSearch({
 
 const projectId = computed(() => route.params.id as string)
 
-const { result: pageResult } = useQuery(projectSettingsQuery, () => ({
-  projectId: projectId.value
-}))
-
-const projectData = computed(() => pageResult.value?.project)
+const projectData = computed(() => props.project)
 
 const { collaboratorListItems } = useTeamInternals(projectData)
 

@@ -19,15 +19,24 @@
 import { LockClosedIcon, LinkIcon, GlobeAltIcon } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
 import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
+import type { ProjectPageSettingsGeneralBlockAccess_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment ProjectPageSettingsGeneralBlockAccess_Project on Project {
+    id
+    visibility
+  }
+`)
 
 const props = defineProps<{
-  currentVisibility?: ProjectVisibility
+  project: ProjectPageSettingsGeneralBlockAccess_ProjectFragment
   disabled?: boolean
 }>()
 
 const emit = defineEmits(['update-visibility'])
 
-const selectedOption = ref(props.currentVisibility ?? ProjectVisibility.Private)
+const selectedOption = ref(props.project.visibility ?? ProjectVisibility.Private)
 
 const radioOptions = [
   {
@@ -51,7 +60,7 @@ const radioOptions = [
 ]
 
 watch(
-  () => props.currentVisibility,
+  () => props.project.visibility,
   (newVal) => {
     selectedOption.value = newVal ?? ProjectVisibility.Private
   }

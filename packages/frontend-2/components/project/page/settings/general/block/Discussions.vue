@@ -24,19 +24,28 @@ import {
 } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
 import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
+import type { ProjectPageSettingsGeneralBlockDiscussions_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment ProjectPageSettingsGeneralBlockDiscussions_Project on Project {
+    id
+    visibility
+    allowPublicComments
+  }
+`)
 
 const props = defineProps<{
-  currentCommentsPermission?: boolean
-  currentVisibility?: ProjectVisibility
+  project: ProjectPageSettingsGeneralBlockDiscussions_ProjectFragment
   disabled?: boolean
 }>()
 
 const emit = defineEmits(['update-comments-permission'])
 
-const selectedOption = ref(props.currentCommentsPermission ? 'anyone' : 'teamMembers')
+const selectedOption = ref(props.project.allowPublicComments ? 'anyone' : 'teamMembers')
 
 const isDisabled = computed(
-  () => props.currentVisibility === ProjectVisibility.Private || props.disabled
+  () => props.project.visibility === ProjectVisibility.Private || props.disabled
 )
 
 const radioOptions = computed(() => [
@@ -46,14 +55,14 @@ const radioOptions = computed(() => [
     title: 'Team Members Only',
     icon: UserCircleIcon,
     help:
-      props.currentVisibility === ProjectVisibility.Private
+      props.project.visibility === ProjectVisibility.Private
         ? 'When the Project Access is “Private” only team members can comment.'
         : undefined
   }
 ])
 
 watch(
-  () => props.currentVisibility,
+  () => props.project.visibility,
   (newVisibility) => {
     if (newVisibility === ProjectVisibility.Private) {
       selectedOption.value = 'teamMembers'

@@ -2,7 +2,7 @@ import { Roles } from '@speckle/shared'
 import type { Nullable, ServerRoles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type {
-  ProjectSettingsQuery,
+  ProjectPageSettingsCollaboratorsQuery,
   ProjectsPageTeamDialogManagePermissions_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
@@ -28,16 +28,16 @@ export function useTeamManagePermissionsInternals(params: {
 }
 
 export function useTeamInternals(
-  projectData: ComputedRef<ProjectSettingsQuery['project'] | undefined>
+  projectData: ComputedRef<ProjectPageSettingsCollaboratorsQuery | undefined>
 ) {
   const { isGuest: isServerGuest, activeUser } = useActiveUser()
 
-  const isOwner = computed(() => projectData.value?.role === Roles.Stream.Owner)
+  const isOwner = computed(() => projectData.value?.project.role === Roles.Stream.Owner)
 
   const collaboratorListItems = computed((): ProjectCollaboratorListItem[] => {
     const results: ProjectCollaboratorListItem[] = []
 
-    for (const invitedUser of projectData.value?.invitedTeam || []) {
+    for (const invitedUser of projectData.value?.project.invitedTeam || []) {
       results.push({
         id: invitedUser.id,
         title: invitedUser.title,
@@ -48,7 +48,7 @@ export function useTeamInternals(
       })
     }
 
-    for (const collaborator of projectData.value?.team ?? []) {
+    for (const collaborator of projectData.value?.project.team ?? []) {
       results.push({
         id: collaborator.user.id,
         title: collaborator.user.name,
@@ -63,12 +63,14 @@ export function useTeamInternals(
   })
 
   const canLeaveProject = computed(() => {
-    if (!activeUser.value || !projectData.value?.role) {
+    if (!activeUser.value || !projectData.value?.project.role) {
       return false
     }
 
     const userId = activeUser.value.id
-    const owners = projectData.value.team.filter((t) => t.role === Roles.Stream.Owner)
+    const owners = projectData.value.project.team.filter(
+      (t) => t.role === Roles.Stream.Owner
+    )
     return owners.length !== 1 || owners[0].user.id !== userId
   })
 

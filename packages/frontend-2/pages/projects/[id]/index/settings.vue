@@ -19,9 +19,24 @@ import {
   projectSettingsRoute,
   projectWebhooksRoute
 } from '~~/lib/common/helpers/route'
+import { graphql } from '~~/lib/common/generated/gql'
+import type { ProjectPageProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import { Roles } from '@speckle/shared'
 
+graphql(`
+  fragment ProjectPageSettingsTab_Project on Project {
+    id
+    role
+  }
+`)
+
+const attrs = useAttrs() as {
+  project: ProjectPageProjectFragment
+}
 const route = useRoute()
 const router = useRouter()
+
+const isOwner = computed(() => attrs.project.role === Roles.Stream.Owner)
 
 const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {
@@ -37,9 +52,9 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'Webhooks',
     id: 'webhooks',
-    icon: IconWebhooks
-    // disabled: true,
-    // disabledMessage: 'Sorry this is disabled'
+    icon: IconWebhooks,
+    disabled: !isOwner.value,
+    disabledMessage: !isOwner.value ? 'Sorry this is disabled' : undefined
   }
 ])
 

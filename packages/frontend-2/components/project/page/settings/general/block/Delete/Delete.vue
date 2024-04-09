@@ -27,11 +27,25 @@
 
 <script setup lang="ts">
 import { TrashIcon } from '@heroicons/vue/24/outline'
-import type { ProjectSettingsQuery } from '~~/lib/common/generated/gql/graphql'
-type ProjectType = ProjectSettingsQuery['project']
+import { graphql } from '~~/lib/common/generated/gql'
+import type { ProjectPageSettingsGeneralBlockDelete_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment ProjectPageSettingsGeneralBlockDelete_Project on Project {
+    id
+    name
+    role
+    models {
+      totalCount
+    }
+    commentThreads {
+      totalCount
+    }
+  }
+`)
 
 defineProps<{
-  project?: ProjectType
+  project?: ProjectPageSettingsGeneralBlockDelete_ProjectFragment
 }>()
 
 const showDeleteDialog = ref(false)

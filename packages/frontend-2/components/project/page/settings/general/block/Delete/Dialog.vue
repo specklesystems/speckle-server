@@ -33,23 +33,17 @@
 <script setup lang="ts">
 import { LayoutDialog, FormTextInput } from '@speckle/ui-components'
 import { useDeleteProject } from '~~/lib/projects/composables/projectManagement'
-import type { ProjectSettingsQuery } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useTeamInternals } from '~~/lib/projects/composables/team'
-
-type ProjectType = ProjectSettingsQuery['project']
+import type { ProjectPageSettingsGeneralBlockDelete_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import { Roles } from '@speckle/shared'
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const props = defineProps<{
-  project: ProjectType
+  project: ProjectPageSettingsGeneralBlockDelete_ProjectFragment
 }>()
 
 const projectNameInput = ref('')
-
-const projectData = computed(() => props.project)
-
-const { isOwner } = useTeamInternals(projectData)
 
 const deleteProject = useDeleteProject()
 const mp = useMixpanel()
@@ -79,7 +73,10 @@ const dialogButtons = computed(() => [
       disabled: projectNameInput.value !== props.project.name
     },
     onClick: async () => {
-      if (projectNameInput.value === props.project.name && isOwner.value) {
+      if (
+        projectNameInput.value === props.project.name &&
+        props.project.role === Roles.Stream.Owner
+      ) {
         await deleteProject(props.project.id, { goHome: true })
         isOpen.value = false
         mp.track('Stream Action', { type: 'action', name: 'delete' })

@@ -14,7 +14,7 @@
         <ProjectPageTeamBlock :project="project" class="w-full md:w-72 shrink-0" />
       </div>
       <LayoutPageTabs v-model:active-item="activePageTab" :items="pageTabItems">
-        <NuxtPage />
+        <NuxtPage :project="project" />
       </LayoutPageTabs>
     </div>
   </div>

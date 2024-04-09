@@ -31,10 +31,19 @@
 
 <script setup lang="ts">
 import { ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
-import type { ProjectSettingsQuery } from '~~/lib/common/generated/gql/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
+import type { ProjectPageSettingsGeneralBlockLeave_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+
+graphql(`
+  fragment ProjectPageSettingsGeneralBlockLeave_Project on Project {
+    id
+    name
+    role
+  }
+`)
 
 defineProps<{
-  project?: ProjectSettingsQuery['project']
+  project?: ProjectPageSettingsGeneralBlockLeave_ProjectFragment
 }>()
 
 const showLeaveDialog = ref(false)

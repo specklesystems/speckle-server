@@ -50,11 +50,21 @@ import {
   FormButton,
   LayoutDialog
 } from '@speckle/ui-components'
-import type { ProjectSettingsQuery } from '~~/lib/common/generated/gql/graphql'
+import type { ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import type { RouteLocationRaw } from 'vue-router'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment ProjectPageSettingsGeneralBlockProjectInfo_Project on Project {
+    id
+    role
+    name
+    description
+  }
+`)
 
 const props = defineProps<{
-  project: ProjectSettingsQuery['project']
+  project: ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragment
   disabled?: boolean
 }>()
 

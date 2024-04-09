@@ -14,20 +14,17 @@
 <script setup lang="ts">
 import { LayoutDialog } from '@speckle/ui-components'
 import { useLeaveProject } from '~~/lib/projects/composables/projectManagement'
-import type { ProjectSettingsQuery } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useTeamInternals } from '~~/lib/projects/composables/team'
+import type { ProjectPageSettingsGeneralBlockLeave_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
 const props = defineProps<{
-  project: ProjectSettingsQuery['project']
+  project: ProjectPageSettingsGeneralBlockLeave_ProjectFragment
 }>()
 
 const leaveProject = useLeaveProject()
 const mp = useMixpanel()
-
-const projectData = computed(() => props.project)
 
 const dialogButtons = computed(() => [
   {
@@ -49,10 +46,7 @@ const dialogButtons = computed(() => [
   }
 ])
 
-const { canLeaveProject } = useTeamInternals(projectData)
-
 const onLeave = async () => {
-  if (!canLeaveProject.value) return
   await leaveProject(props.project.id, { goHome: true })
   mp.track('Stream Action', { type: 'action', name: 'leave' })
 }
