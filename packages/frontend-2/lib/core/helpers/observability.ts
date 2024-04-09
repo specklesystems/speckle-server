@@ -135,6 +135,8 @@ export type AbstractUnhandledErrorHandler = (params: {
   message: string
 }) => void
 
+export type AbstractErrorHandlerParams = Parameters<AbstractErrorHandler>[0]
+
 /**
  * Adds proxy that intercepts error log calls so that they can be sent to any transport
  */
