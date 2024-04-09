@@ -13,6 +13,10 @@ declare module '#app' {
      */
     __scopedStates?: Record<string | symbol, any>
   }
+
+  interface NuxtPayload {
+    serverFatalError?: import('~~/lib/core/helpers/observability').AbstractErrorHandlerParams
+  }
 }
 
 declare module 'vue' {
