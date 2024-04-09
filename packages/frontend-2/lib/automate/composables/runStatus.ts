@@ -8,14 +8,11 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import {
   CheckCircleIcon,
-  CheckIcon,
-  XCircleIcon,
-  XMarkIcon,
   EllipsisHorizontalCircleIcon,
   EllipsisHorizontalIcon,
-  ArrowRightCircleIcon,
-  ArrowRightIcon
-} from '@heroicons/vue/24/solid'
+  ExclamationCircleIcon,
+  ArrowPathIcon
+} from '@heroicons/vue/24/outline'
 
 // TODO: Clean up lib - multiple automate folders
 
@@ -139,32 +136,32 @@ export const useRunStatusMetadata = (params: {
       case AutomateRunStatus.Succeeded:
         return {
           icon: CheckCircleIcon,
-          xsIcon: CheckIcon,
+          xsIcon: CheckCircleIcon,
           iconColor: 'text-success',
           badgeColor: 'bg-success',
           disclosureColor: 'success'
         }
       case AutomateRunStatus.Failed:
         return {
-          icon: XCircleIcon,
-          xsIcon: XMarkIcon,
+          icon: ExclamationCircleIcon,
+          xsIcon: ExclamationCircleIcon,
           iconColor: 'text-danger',
           badgeColor: 'bg-danger',
           disclosureColor: 'danger'
         }
       case AutomateRunStatus.Running:
         return {
-          icon: ArrowRightCircleIcon,
-          xsIcon: ArrowRightIcon,
-          iconColor: 'text-warning animate-pulse',
-          badgeColor: 'bg-warning',
+          icon: ArrowPathIcon,
+          xsIcon: ArrowPathIcon,
+          iconColor: 'text-primary animate-spin',
+          badgeColor: 'bg-primary',
           disclosureColor: 'default'
         }
       case AutomateRunStatus.Initializing:
         return {
           icon: EllipsisHorizontalCircleIcon,
           xsIcon: EllipsisHorizontalIcon,
-          iconColor: 'text-warning animate-pulse',
+          iconColor: 'text-warning',
           badgeColor: 'bg-warning',
           disclosureColor: 'warning'
         }

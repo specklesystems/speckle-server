@@ -15,7 +15,7 @@
           :class="['h-4 w-4 outline-none', statusMetaData.iconColor]"
         />
       </div>
-      <AutomateFunctionLogo :logo="functionRun.function.logo" size="sm" />
+      <AutomateFunctionLogo :logo="functionRun.function.logo" size="xs" />
       <div class="font-bold text-xs truncate">
         {{ automationName ? automationName + ' / ' : ''
         }}{{ functionRun.function.name }}
