@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-import { LockClosedIcon, UserGroupIcon, LinkIcon } from '@heroicons/vue/24/outline'
+import { LockClosedIcon, LinkIcon, GlobeAltIcon } from '@heroicons/vue/24/outline'
 import { FormRadioGroup } from '@speckle/ui-components'
 import { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
 
@@ -34,7 +34,7 @@ const radioOptions = [
     value: ProjectVisibility.Public,
     title: 'Public',
     introduction: 'Anyone can view and access your project',
-    icon: UserGroupIcon
+    icon: GlobeAltIcon
   },
   {
     value: ProjectVisibility.Unlisted,

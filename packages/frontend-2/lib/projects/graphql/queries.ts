@@ -233,6 +233,12 @@ export const projectSettingsQuery = graphql(`
           role
         }
       }
+      models {
+        totalCount
+      }
+      commentThreads {
+        totalCount
+      }
     }
   }
 `)

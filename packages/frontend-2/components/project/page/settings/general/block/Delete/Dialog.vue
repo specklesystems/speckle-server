@@ -2,12 +2,20 @@
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
     <template #header>Delete Project</template>
     <div class="space-y-4">
-      <p class="font-bold">Deleting a project is an irreversible action.</p>
       <p>
-        If you are sure you want to proceed, type in the project name
-        <strong>{{ project.name }}</strong>
-        in the input field below and press "Delete".
+        Are you sure you want to permanently
+        <strong>delete “{{ project.name }}”</strong>
+        and all its contents, including
+        <strong>({{ project.models.totalCount }}) {{ modelText }}</strong>
+        <span v-if="project.commentThreads.totalCount">
+          and
+          <strong>
+            ({{ project.commentThreads.totalCount }}) {{ discussionText }}
+          </strong>
+        </span>
+        ?
       </p>
+      <p>To confirm deletion, type the project name below and press Delete.</p>
       <FormTextInput
         v-model="projectNameInput"
         name="projectNameConfirm"
@@ -45,6 +53,13 @@ const { isOwner } = useTeamInternals(projectData)
 
 const deleteProject = useDeleteProject()
 const mp = useMixpanel()
+
+const modelText = computed(() =>
+  props.project.models.totalCount === 1 ? 'model' : 'models'
+)
+const discussionText = computed(() =>
+  props.project.commentThreads.totalCount === 1 ? 'discussion' : 'discussions'
+)
 
 const dialogButtons = computed(() => [
   {
