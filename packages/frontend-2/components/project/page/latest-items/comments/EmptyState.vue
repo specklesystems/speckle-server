@@ -2,7 +2,7 @@
   <ProjectEmptyState
     :small="small"
     title="No discussions, yet."
-    text="Open a model and start the collaboration today!"
+    :text="small ? undefined : 'Open a model and start the collaboration today!'"
   >
     <template #image>
       <svg
@@ -35,10 +35,7 @@
       </svg>
     </template>
     <template #cta>
-      <div v-if="!small" class="text-xs text-foreground-2">
-        Head over to a model and start coordinating right away!
-      </div>
-      <div v-else class="mt-3">
+      <div v-if="small" class="mt-3">
         <FormButton
           size="sm"
           :icon-left="PlusIcon"
