@@ -1,71 +1,73 @@
 <template>
-  <ProjectPageSettingsBlock title="Collaborators" :icon="UsersIcon">
-    <template #introduction>
-      <p>Invite new members or edit roles for existing ones.</p>
-    </template>
-    <template #topButtons>
-      <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
-        Invite
-      </FormButton>
-    </template>
+  <div class="mr-4 sm:mr-8 xl:mr-0">
+    <ProjectPageSettingsBlock title="Collaborators" :icon="UsersIcon">
+      <template #introduction>
+        <p>Invite new members or edit roles for existing ones.</p>
+      </template>
+      <template #topButtons>
+        <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
+          Invite
+        </FormButton>
+      </template>
 
-    <div
-      class="w-full bg-foundation flex justify-between px-3 pt-3 pb-1.5 rounded-t-md border-b border-outline-3 text-sm font-bold"
-    >
-      <div>Name</div>
-    </div>
-
-    <div class="flex flex-col bg-foundation">
       <div
-        v-for="collaborator in collaboratorListItems"
-        :key="collaborator.id"
-        class="flex items-center gap-2 py-1.5 px-2 border-b border-outline-3 last:border-0"
+        class="w-full bg-foundation flex justify-between px-3 pt-3 pb-1.5 rounded-t-md border-b border-outline-3 text-sm font-bold"
       >
-        <UserAvatar :user="collaborator.user" size="sm" />
-        <span class="grow truncate text-xs">{{ collaborator.title }}</span>
+        <div>Name</div>
+      </div>
 
-        <template v-if="!collaborator.inviteId">
-          <ProjectPageTeamPermissionSelect
-            v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
-            class="shrink-0"
-            :model-value="collaborator.role"
-            :disabled="loading"
-            :hide-owner="collaborator.serverRole === Roles.Server.Guest"
-            @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
-            @delete="onCollaboratorRoleChange(collaborator, null)"
-          />
-          <span v-else class="shrink-0 text-xs">
-            {{ roleSelectItems[collaborator.role].title }}
-          </span>
-        </template>
-        <template v-else-if="canEdit">
-          <div
-            class="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 mb-0.5 sm:mb-0"
-          >
-            <span class="shrink-0 text-foreground-2 text-xs">
+      <div class="flex flex-col bg-foundation">
+        <div
+          v-for="collaborator in collaboratorListItems"
+          :key="collaborator.id"
+          class="flex items-center gap-2 py-1.5 px-2 border-b border-outline-3 last:border-0"
+        >
+          <UserAvatar :user="collaborator.user" size="sm" />
+          <span class="grow truncate text-xs">{{ collaborator.title }}</span>
+
+          <template v-if="!collaborator.inviteId">
+            <ProjectPageTeamPermissionSelect
+              v-if="canEdit && activeUser && collaborator.id !== activeUser.id"
+              class="shrink-0"
+              :model-value="collaborator.role"
+              :disabled="loading"
+              :hide-owner="collaborator.serverRole === Roles.Server.Guest"
+              @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
+              @delete="onCollaboratorRoleChange(collaborator, null)"
+            />
+            <span v-else class="shrink-0 text-xs">
               {{ roleSelectItems[collaborator.role].title }}
             </span>
-            <FormButton
-              class="shrink-0"
-              color="danger"
-              size="xs"
-              :disabled="loading"
-              @click="
-                cancelInvite({
-                  projectId: projectId,
-                  inviteId: collaborator.inviteId || ''
-                })
-              "
+          </template>
+          <template v-else-if="canEdit">
+            <div
+              class="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 mb-0.5 sm:mb-0"
             >
-              Cancel Invite
-            </FormButton>
-          </div>
-        </template>
+              <span class="shrink-0 text-foreground-2 text-xs">
+                {{ roleSelectItems[collaborator.role].title }}
+              </span>
+              <FormButton
+                class="shrink-0"
+                color="danger"
+                size="xs"
+                :disabled="loading"
+                @click="
+                  cancelInvite({
+                    projectId: projectId,
+                    inviteId: collaborator.inviteId || ''
+                  })
+                "
+              >
+                Cancel Invite
+              </FormButton>
+            </div>
+          </template>
+        </div>
       </div>
-    </div>
 
-    <ProjectPageInviteDialog v-model:open="showInviteDialog" />
-  </ProjectPageSettingsBlock>
+      <ProjectPageInviteDialog v-model:open="showInviteDialog" />
+    </ProjectPageSettingsBlock>
+  </div>
 </template>
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'

@@ -7,9 +7,7 @@
         : ''
     "
   >
-    <div
-      class="flex items-center gap-4 border-b border-outline-3 pb-3 justify-between mr-6 xl:mr-0"
-    >
+    <div class="flex items-center gap-4 border-b border-outline-3 pb-3 justify-between">
       <div class="flex items-center gap-2">
         <component :is="icon" v-if="icon" class="h-5 w-5"></component>
         <h3 class="text-xl font-bold">{{ title }}</h3>

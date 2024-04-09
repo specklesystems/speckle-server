@@ -10,6 +10,8 @@
         help="Search by username or email"
         input-classes="pr-[85px] text-sm"
         color="foundation"
+        label="Add people by email or username"
+        show-label
       >
         <template #input-right>
           <div class="absolute inset-y-0 right-0 flex items-center pr-2">
