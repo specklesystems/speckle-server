@@ -2,20 +2,20 @@
   <div
     class="relative z-10 flex gap-4"
     :class="
-      vertical ? 'md:gap-8 flex-col md:flex-row' : 'md:gap-10 flex-col overflow-hidden'
+      vertical ? 'lg:gap-8 flex-col lg:flex-row' : 'md:gap-10 flex-col overflow-hidden'
     "
   >
     <div
       class="relative flex md:justify-between overflow-x-auto"
       :class="
         vertical
-          ? 'items-center md:items-start md:flex-col md:w-2/12 shrink-0 gap-6 pr-4 md:pr-0'
-          : 'border-b border-outline-3 lg:border-none gap-8 w-full pr-4 xl:pr-0'
+          ? 'items-center md:items-start lg:flex-col lg:w-2/12 shrink-0 gap-6 pr-4 md:pr-0'
+          : 'gap-8 w-full'
       "
     >
       <template v-if="!vertical">
         <div
-          class="hidden lg:block absolute bottom-0 left-0 h-px w-full bg-outline-3"
+          class="absolute bottom-0 right-4 xl:right-0 h-px w-full bg-outline-3"
         ></div>
         <div
           :style="borderStyle"
@@ -73,7 +73,7 @@
         </button>
       </div>
     </div>
-    <div :class="vertical ? 'md:w-10/12' : ''">
+    <div :class="vertical ? 'lg:w-10/12' : ''">
       <slot :active-item="activeItem" />
     </div>
   </div>

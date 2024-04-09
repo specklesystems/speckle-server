@@ -1,7 +1,7 @@
 <template>
   <ProjectPageSettingsBlock title="Webhooks" :icon="IconWebhooks">
     <template #introduction>
-      <p>
+      <p class="pr-8">
         Webhooks allow you to subscribe to a stream's events and get notified of them in
         real time. You can then use this to trigger ci apps, automation workflows, and
         more.
@@ -17,7 +17,11 @@
       >
         Open Docs
       </FormButton>
-      <FormButton :icon-left="PlusIcon" @click="openCreateWebhookDialog">
+      <FormButton
+        :icon-left="PlusIcon"
+        class="lg:mr-4 xl:mr-0"
+        @click="openCreateWebhookDialog"
+      >
         Create
       </FormButton>
     </template>
