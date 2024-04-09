@@ -17,20 +17,24 @@ export type TriggerDefinitionsSchema = {
   }>
 }
 
+export type ObjectResultLevel = 'INFO' | 'WARNING' | 'ERROR'
+
 export type ResultsSchema = {
   version: number
   values: {
-    objectResults: Record<
-      string,
-      {
-        category: string
-        level: 'INFO' | 'WARNING' | 'ERROR'
-        objectIds: string[]
-        message: Nullable<string>
-        metadata: Nullable<Record<string, unknown>>
-        visualoverrides: Nullable<Record<string, unknown>>
-      }[]
-    >
+    objectResults: Array<{
+      category: string
+      level: ObjectResultLevel
+      objectIds: string[]
+      message: Nullable<string>
+      metadata: Nullable<
+        Record<string, unknown> & {
+          gradient?: boolean
+          gradientValues?: Record<string, { gradientValue: number }>
+        }
+      >
+      visualoverrides: Nullable<Record<string, unknown>>
+    }>
     blobIds?: string[]
   }
 }
@@ -86,7 +90,7 @@ export const isResultsSchema = (val: unknown): val is ResultsSchema => {
   const valKeys = Object.keys(val as Record<string, unknown>)
   if (intersection(valKeys, keys).length !== keys.length) return false
 
-  if (!isObjectLike(get(val, 'values.objectResults'))) return false
+  if (!isArray(get(val, 'values.objectResults'))) return false
   if (get(val, 'values.blobIds') && !isArray(get(val, 'values.blobIds'))) return false
 
   return true
@@ -109,40 +113,25 @@ export const formatResultsSchema = (state: UnformattedResultsSchema): ResultsSch
   return {
     version: state.version || throwInvalidError('version'),
     values: {
-      objectResults: Object.entries(values.objectResults || {}).reduce(
-        (acc, [key, value]) => {
-          if (!isArray(value)) {
-            throw new UnformattableResultsSchemaError(
-              `Invalid objectResults entry for key: ${key}. It should be an array.`
-            )
-          }
+      objectResults: (values.objectResults || []).map((value, i) => {
+        if (!isObjectLike(value)) {
+          throw new UnformattableResultsSchemaError(
+            `Invalid objectResults entry for index: ${i}. It should be a record.`
+          )
+        }
 
-          const objectResults = value.map((r) => {
-            if (!isObjectLike(r)) {
-              throw new UnformattableResultsSchemaError(
-                `Invalid objectResults entry for key: ${key}`
-              )
-            }
-
-            return {
-              category:
-                r.category || throwInvalidError('values.objectResults.category'),
-              level: r.level || throwInvalidError('values.objectResults.level'),
-              objectIds:
-                r.objectIds || throwInvalidError('values.objectResults.objectIds'),
-              message: r.message || null,
-              metadata: r.metadata || null,
-              visualoverrides: r.visualoverrides || null
-            }
-          })
-
-          return {
-            ...acc,
-            [key]: objectResults
-          }
-        },
-        {}
-      ),
+        return {
+          category:
+            value.category || throwInvalidError(`values.[${i}].objectResults.category`),
+          level: value.level || throwInvalidError(`values.[${i}].objectResults.level`),
+          objectIds:
+            value.objectIds ||
+            throwInvalidError(`values.[${i}].objectResults.objectIds`),
+          message: value.message || null,
+          metadata: value.metadata || null,
+          visualoverrides: value.visualoverrides || null
+        }
+      }),
       blobIds: values.blobIds || undefined
     }
   }

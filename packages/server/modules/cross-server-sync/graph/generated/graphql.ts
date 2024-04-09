@@ -245,17 +245,17 @@ export type AutomateFunctionRun = {
   /**
    * NOTE: this is the schema for the results field below!
    * Current schema: {
-   *   version: "1.0.0",
+   *   version: '1.0.0'
    *   values: {
-   *     objectResults: Record<str, {
+   *     objectResults: {
    *       category: string
    *       level: ObjectResultLevel
    *       objectIds: string[]
-   *       message: str | null
-   *       metadata: Records<str, unknown> | null
-   *       visualoverrides: Records<str, unknown> | null
-   *     }[]>
-   *     blobIds?: string[]
+   *       message: string
+   *       metadata: Record<string, unknown> | null
+   *       visualOverrides: Record<string, unknown> | null
+   *     }[]
+   *     blobIds?: string[] | undefined
    *   }
    * }
    */
@@ -270,17 +270,17 @@ export type AutomateFunctionRunStatusReportInput = {
   /**
    * NOTE: this is the schema for the results field below!
    * Current schema: {
-   *   version: "1.0.0",
+   *   version: '1.0.0'
    *   values: {
-   *     objectResults: Record<str, {
+   *     objectResults: {
    *       category: string
    *       level: ObjectResultLevel
    *       objectIds: string[]
-   *       message: str | null
-   *       metadata: Records<str, unknown> | null
-   *       visualoverrides: Records<str, unknown> | null
-   *     }[]>
-   *     blobIds?: string[]
+   *       message: string
+   *       metadata: Record<string, unknown> | null
+   *       visualOverrides: Record<string, unknown> | null
+   *     }[]
+   *     blobIds?: string[] | undefined
    *   }
    * }
    */

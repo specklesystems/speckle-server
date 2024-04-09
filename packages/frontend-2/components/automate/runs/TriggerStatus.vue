@@ -1,5 +1,5 @@
 <template>
-  <div v-if="summary && status" @click.stop.prevent>
+  <div v-if="status" @click.stop.prevent>
     <button
       v-tippy="summary.longSummary"
       class="h-6 w-6 bg-foundation rounded-full flex items-center justify-center"
@@ -20,7 +20,7 @@
 </template>
 <script setup lang="ts">
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { useRunsSummary } from '~/lib/automate/composables/runStatus'
+import { useAutomationsStatusRunsSummary } from '~/lib/automate/composables/runStatus'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateRunsTriggerStatus_TriggeredAutomationsStatusFragment } from '~/lib/common/generated/gql/graphql'
 
@@ -42,7 +42,7 @@ const props = defineProps<{
   versionId?: string
 }>()
 
-const { summary } = useRunsSummary({
+const { summary } = useAutomationsStatusRunsSummary({
   status: computed(() => props.status)
 })
 

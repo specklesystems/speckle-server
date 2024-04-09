@@ -3,6 +3,7 @@ import type { PropAnyComponent } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   AutomateRunStatus,
+  type FunctionRunStatusForSummaryFragment,
   type TriggeredAutomationsStatusSummaryFragment
 } from '~/lib/common/generated/gql/graphql'
 import {
@@ -19,13 +20,20 @@ import {
 // TODO: Clean up lib - multiple automate folders
 
 graphql(`
+  fragment FunctionRunStatusForSummary on AutomateFunctionRun {
+    id
+    status
+  }
+`)
+
+graphql(`
   fragment TriggeredAutomationsStatusSummary on TriggeredAutomationsStatus {
     id
     automationRuns {
       id
       functionRuns {
         id
-        status
+        ...FunctionRunStatusForSummary
       }
     }
   }
@@ -41,34 +49,24 @@ export type RunsStatusSummary = {
   longSummary: string
 }
 
-export const useRunsSummary = (params: {
-  status: MaybeRef<MaybeNullOrUndefined<TriggeredAutomationsStatusSummaryFragment>>
+export const useFunctionRunsStatusSummary = (params: {
+  runs: MaybeRef<FunctionRunStatusForSummaryFragment[]>
 }) => {
-  const { status } = params
+  const { runs } = params
 
-  const allFunctionRuns = computed(() => {
-    const currentStatus = unref(status)
-    if (!currentStatus) return []
-
-    return currentStatus.automationRuns.flatMap((run) => run.functionRuns)
-  })
-
-  const summary = computed((): MaybeNullOrUndefined<RunsStatusSummary> => {
-    const currentStatus = unref(status)
-    if (!currentStatus) return currentStatus
-    if (!allFunctionRuns.value.length) return null
-
+  const summary = computed((): RunsStatusSummary => {
+    const allFunctionRuns = unref(runs)
     const result: RunsStatusSummary = {
       failed: 0,
       passed: 0,
       inProgress: 0,
-      total: allFunctionRuns.value.length,
+      total: allFunctionRuns.length,
       title: 'All runs passed.',
       titleColor: 'text-success',
       longSummary: ''
     }
 
-    for (const run of allFunctionRuns.value) {
+    for (const run of allFunctionRuns) {
       switch (run.status) {
         case AutomateRunStatus.Succeeded:
           result.passed++
@@ -106,6 +104,21 @@ export const useRunsSummary = (params: {
   })
 
   return { summary }
+}
+
+export const useAutomationsStatusRunsSummary = (params: {
+  status: MaybeRef<MaybeNullOrUndefined<TriggeredAutomationsStatusSummaryFragment>>
+}) => {
+  const { status } = params
+
+  const allFunctionRuns = computed(() => {
+    const currentStatus = unref(status)
+    if (!currentStatus) return []
+
+    return currentStatus.automationRuns.flatMap((run) => run.functionRuns)
+  })
+
+  return useFunctionRunsStatusSummary({ runs: allFunctionRuns })
 }
 
 export type AutomateRunStatusMetadata = {
