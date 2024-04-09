@@ -241,7 +241,7 @@ export async function buildMocksConfig(): Promise<{
           return {
             version: Automate.AutomateTypes.RESULTS_SCHEMA_VERSION,
             values: {
-              objectResults: {},
+              objectResults: [],
               blobIds: [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(
                 () => faker.datatype.uuid()
               )
