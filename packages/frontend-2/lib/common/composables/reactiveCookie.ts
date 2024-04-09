@@ -21,5 +21,11 @@ export const useSynchronizedCookie = <CookieValue = string>(
 
     // something's off with nuxt's types here, have to use any
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
-    return useCookie<CookieValue>(name, finalOpts as any)
+    const cookie = useCookie<CookieValue>(name, finalOpts as any)
+    if (finalOpts.default) {
+      // there's a bug where default doesn't trigger a write for some reason
+      cookie.value = unref(finalOpts.default())
+    }
+
+    return cookie
   })
