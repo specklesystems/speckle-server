@@ -9,7 +9,7 @@ RUN apt-get update && \
 COPY utils/test-deployment/requirements.txt /requirements.txt
 RUN /venv/bin/pip install --disable-pip-version-check --requirement /requirements.txt
 
-FROM gcr.io/distroless/python3-debian12:nonroot@sha256:95f5fa82f7cc7da0e133a8a895900447337ef0830870ad8387eb4c696be17057 as production-stage
+FROM gcr.io/distroless/python3-debian12:nonroot@sha256:538f54b8d704c29137d337aeac1bfc874afd7db813b163b585366d57ec113e13 as production-stage
 ARG SPECKLE_SERVER
 ARG SPECKLE_VERSION
 ENV SPECKLE_SERVER=${SPECKLE_SERVER} \
