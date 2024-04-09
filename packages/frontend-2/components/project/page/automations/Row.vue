@@ -21,7 +21,7 @@
         </CommonTextLink>
       </div>
     </div>
-    <AutomationsRunsTable
+    <AutomateRunsTable
       :runs="automation.runs.items"
       :project-id="projectId"
       :automation-id="automation.id"

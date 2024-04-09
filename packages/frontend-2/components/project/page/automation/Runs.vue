@@ -4,7 +4,7 @@
       <h2 class="h6 font-bold">Runs</h2>
       <FormButton :icon-left="ArrowPathIcon">Trigger Automation</FormButton>
     </div>
-    <AutomationsRunsTable
+    <AutomateRunsTable
       class="mt-3"
       :runs="automation.runs.items"
       :project-id="projectId"

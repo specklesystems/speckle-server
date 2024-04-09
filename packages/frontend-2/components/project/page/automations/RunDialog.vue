@@ -31,7 +31,7 @@
         <div class="font-bold">Run:</div>
         <div>{{ run.id }}</div>
         <div class="font-bold">Status:</div>
-        <AutomationsRunsStatusBadge :run="run" />
+        <AutomateRunsStatusBadge :run="run" />
         <div class="font-bold">Time started:</div>
         <div>{{ runDate(run) }}</div>
         <div class="font-bold">Duration:</div>
