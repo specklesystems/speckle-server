@@ -62,7 +62,9 @@ export function useMixpanel() {
       }
       const hashedEmail =
         '@' + md5(lastEmail.value.toLowerCase() as string).toUpperCase()
-      const hashedServer = md5(lastServer.value.toLowerCase() as string).toUpperCase()
+      const hashedServer = md5(
+        new URL(lastServer.value).hostname.toLowerCase() as string
+      ).toUpperCase()
 
       // Get os info from userAgent text
       // taken from original mixpanel implementation
