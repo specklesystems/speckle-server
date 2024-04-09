@@ -12,6 +12,7 @@
         {{ text }}
       </span>
     </div>
+    <slot name="cta"></slot>
   </div>
 </template>
 <script setup lang="ts">

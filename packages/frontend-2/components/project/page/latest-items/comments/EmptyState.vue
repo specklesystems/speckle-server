@@ -34,9 +34,29 @@
         />
       </svg>
     </template>
+    <template #cta>
+      <div v-if="!small" class="text-xs text-foreground-2">
+        Head over to a model and start coordinating right away!
+      </div>
+      <div v-else class="mt-3">
+        <FormButton
+          size="sm"
+          :icon-left="PlusIcon"
+          @click="() => $emit('new-discussion')"
+        >
+          New discussion
+        </FormButton>
+      </div>
+    </template>
   </ProjectEmptyState>
 </template>
 <script setup lang="ts">
+import { PlusIcon } from '@heroicons/vue/24/solid'
+
+defineEmits<{
+  (e: 'new-discussion'): void
+}>()
+
 defineProps<{
   small?: boolean
 }>()
