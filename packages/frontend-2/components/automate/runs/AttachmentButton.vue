@@ -11,7 +11,6 @@ import { PaperClipIcon } from '@heroicons/vue/20/solid'
 import { useQuery } from '@vue/apollo-composable'
 import { projectBlobInfoQuery } from '~~/lib/projects/graphql/queries'
 import { useFileDownload } from '~~/lib/core/composables/fileUpload'
-import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { ensureError } from '@speckle/shared'
 
 const { download } = useFileDownload()
@@ -21,7 +20,7 @@ const props = withDefaults(
   defineProps<{
     blobId: string
     projectId: string
-    restrictWidth: boolean
+    restrictWidth?: boolean
   }>(),
   {
     restrictWidth: true

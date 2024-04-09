@@ -237,6 +237,34 @@ export type AutomateFunctionReleasesFilter = {
   search?: InputMaybe<Scalars['String']>;
 };
 
+export type AutomateFunctionRun = {
+  __typename?: 'AutomateFunctionRun';
+  contextView?: Maybe<Scalars['String']>;
+  elapsed: Scalars['Float'];
+  function: AutomateFunction;
+  id: Scalars['ID'];
+  /**
+   * NOTE: this is the schema for the results field below!
+   * Current schema: {
+   *   version: "1.0.0",
+   *   values: {
+   *     objectResults: Record<str, {
+   *       category: string
+   *       level: ObjectResultLevel
+   *       objectIds: string[]
+   *       message: str | null
+   *       metadata: Records<str, unknown> | null
+   *       visualoverrides: Records<str, unknown> | null
+   *     }[]>
+   *     blobIds?: string[]
+   *   }
+   * }
+   */
+  results?: Maybe<Scalars['JSONObject']>;
+  status: AutomateRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+};
+
 export type AutomateFunctionRunStatusReportInput = {
   contextView?: InputMaybe<Scalars['String']>;
   functionRunId: Scalars['String'];
@@ -268,7 +296,9 @@ export type AutomateFunctionsFilter = {
 
 export type AutomateRun = {
   __typename?: 'AutomateRun';
+  automation: Automation;
   createdAt: Scalars['DateTime'];
+  functionRuns: Array<AutomateFunctionRun>;
   id: Scalars['ID'];
   reason?: Maybe<Scalars['String']>;
   status: AutomateRunStatus;
@@ -968,6 +998,7 @@ export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
   automationStatus?: Maybe<AutomationsStatus>;
+  automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
   /** All comment threads in this model */
@@ -1585,6 +1616,9 @@ export type Project = {
   allowPublicComments: Scalars['Boolean'];
   automation?: Maybe<Automation>;
   automations: AutomationCollection;
+  blob?: Maybe<BlobMetadata>;
+  /** Get the metadata collection of blobs stored for this stream. */
+  blobs?: Maybe<BlobMetadataCollection>;
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime'];
@@ -1632,6 +1666,18 @@ export type ProjectAutomationsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<Scalars['String']>;
   limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type ProjectBlobArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectBlobsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+  query?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -2826,6 +2872,14 @@ export enum TokenResourceIdentifierType {
   Project = 'project'
 }
 
+export type TriggeredAutomationsStatus = {
+  __typename?: 'TriggeredAutomationsStatus';
+  automationRuns: Array<AutomateRun>;
+  id: Scalars['ID'];
+  status: AutomateRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+};
+
 export type UpdateModelInput = {
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -3024,6 +3078,7 @@ export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
   automationStatus?: Maybe<AutomationsStatus>;
+  automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];

@@ -50,7 +50,7 @@
 import {
   useAutomationRunDetailsFns,
   useAutomationRunLogs
-} from '~/lib/automations/composables/runs'
+} from '~/lib/automate/composables/runs'
 import type { AutomationRunDetailsFragment } from '~/lib/common/generated/gql/graphql'
 import { useViewerRouteBuilder } from '~/lib/projects/composables/models'
 

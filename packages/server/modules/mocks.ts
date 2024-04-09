@@ -5,7 +5,7 @@ import {
   Resolvers
 } from '@/modules/core/graph/generated/graphql'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { Roles } from '@speckle/shared'
+import { Automate, Roles } from '@speckle/shared'
 import { times } from 'lodash'
 import { IMockStore, IMocks } from '@graphql-tools/mock'
 import dayjs from 'dayjs'
@@ -82,6 +82,21 @@ export async function buildMocksConfig(): Promise<{
             totalCount: count,
             items: times(count, () => store.get('Automation'))
           } as any
+        },
+        blob: () => {
+          return store.get('BlobMetadata') as any
+        }
+      },
+      Model: {
+        automationsStatus: async () => {
+          const random = faker.datatype.boolean()
+          return (random ? store.get('TriggeredAutomationsStatus') : null) as any
+        }
+      },
+      Version: {
+        automationsStatus: async () => {
+          const random = faker.datatype.boolean()
+          return (random ? store.get('TriggeredAutomationsStatus') : null) as any
         }
       },
       Automation: {
@@ -135,6 +150,14 @@ export async function buildMocksConfig(): Promise<{
       }
     }),
     mocks: {
+      BlobMetadata: () => ({
+        fileName: () => faker.system.fileName(),
+        fileType: () => faker.system.mimeType(),
+        fileSize: () => faker.datatype.number({ min: 1, max: 1000 })
+      }),
+      TriggeredAutomationsStatus: () => ({
+        automationRuns: () => [...new Array(faker.datatype.number({ min: 1, max: 5 }))]
+      }),
       AutomationRevision: () => ({
         functions: () => [undefined] // array of 1 always,
       }),
@@ -145,7 +168,6 @@ export async function buildMocksConfig(): Promise<{
       AutomateFunction: () => ({
         name: () => faker.commerce.productName(),
         isFeatured: () => faker.datatype.boolean(),
-
         logo: () => {
           const random = faker.datatype.boolean()
           return random
@@ -207,7 +229,25 @@ export async function buildMocksConfig(): Promise<{
           faker.date
             .recent(undefined, dayjs().subtract(1, 'day').toDate())
             .toISOString(),
-        updatedAt: () => faker.date.recent().toISOString()
+        updatedAt: () => faker.date.recent().toISOString(),
+        functionRuns: () => [...new Array(faker.datatype.number({ min: 1, max: 5 }))],
+        statusMessage: () => faker.lorem.sentence()
+      }),
+      AutomateFunctionRun: () => ({
+        contextView: () => `/`,
+        elapsed: () => faker.datatype.number({ min: 0, max: 600 }),
+        statusMessage: () => faker.lorem.sentence(),
+        results: (): Automate.AutomateTypes.ResultsSchema => {
+          return {
+            version: Automate.AutomateTypes.RESULTS_SCHEMA_VERSION,
+            values: {
+              objectResults: {},
+              blobIds: [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(
+                () => faker.datatype.uuid()
+              )
+            }
+          }
+        }
       }),
       LimitedUser: () =>
         ({

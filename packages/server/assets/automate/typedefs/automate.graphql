@@ -38,6 +38,21 @@ type VersionCreatedTrigger {
 
 union AutomationRunTrigger = VersionCreatedTrigger
 
+type TriggeredAutomationsStatus {
+  id: ID!
+  status: AutomateRunStatus!
+  statusMessage: String
+  automationRuns: [AutomateRun!]!
+}
+
+extend type Model {
+  automationsStatus: TriggeredAutomationsStatus
+}
+
+extend type Version {
+  automationsStatus: TriggeredAutomationsStatus
+}
+
 type Automation {
   id: ID!
   name: String!
@@ -48,6 +63,33 @@ type Automation {
   updatedAt: DateTime!
 }
 
+type AutomateFunctionRun {
+  id: ID!
+  status: AutomateRunStatus!
+  statusMessage: String
+  contextView: String
+  function: AutomateFunction!
+  elapsed: Float!
+  """
+  NOTE: this is the schema for the results field below!
+  Current schema: {
+    version: "1.0.0",
+    values: {
+      objectResults: Record<str, {
+        category: string
+        level: ObjectResultLevel
+        objectIds: string[]
+        message: str | null
+        metadata: Records<str, unknown> | null
+        visualoverrides: Records<str, unknown> | null
+      }[]>
+      blobIds?: string[]
+    }
+  }
+  """
+  results: JSONObject
+}
+
 type AutomateRun {
   id: ID!
   trigger: AutomationRunTrigger!
@@ -55,6 +97,8 @@ type AutomateRun {
   reason: String
   createdAt: DateTime!
   updatedAt: DateTime!
+  automation: Automation!
+  functionRuns: [AutomateFunctionRun!]!
 }
 
 type AutomateRunCollection {

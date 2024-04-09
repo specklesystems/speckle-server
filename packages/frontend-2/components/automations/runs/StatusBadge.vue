@@ -7,7 +7,7 @@
   </CommonBadge>
 </template>
 <script setup lang="ts">
-import { useAutomationRunDetailsFns } from '~/lib/automations/composables/runs'
+import { useAutomationRunDetailsFns } from '~/lib/automate/composables/runs'
 import type { AutomationRunDetailsFragment } from '~/lib/common/generated/gql/graphql'
 
 defineProps<{

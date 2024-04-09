@@ -100,15 +100,12 @@
         <span>{{ model.commentThreadCount.totalCount }}</span>
       </div>
       <div
-        v-if="!isPendingModelFragment(model) && model.automationStatus"
+        v-if="!isPendingModelFragment(model) && model.automationsStatus"
         class="absolute top-0 left-0 p-2"
       >
-        <ProjectPageModelsCardAutomationStatusRefactor
+        <AutomateRunsTriggerStatus
           :project-id="projectId"
-          :model-or-version="{
-            ...model,
-            automationStatus: model.automationStatus
-          }"
+          :status="model.automationsStatus"
           :model-id="model.id"
         />
       </div>

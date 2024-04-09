@@ -8,7 +8,7 @@
 </template>
 <script setup lang="ts">
 import type { MaybeNullOrUndefined } from '@speckle/shared'
-import { cleanFunctionLogo } from '~/lib/automations/helpers/functions'
+import { cleanFunctionLogo } from '~/lib/automate/helpers/functions'
 
 const props = defineProps<{
   logo?: MaybeNullOrUndefined<string>

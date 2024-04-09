@@ -1,4 +1,4 @@
-import type { Optional } from '@speckle/shared'
+import { Automate, type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
 import { useIntervalFn } from '@vueuse/core'
 import dayjs from 'dayjs'
 import {
@@ -153,4 +153,22 @@ export const useAutomationRunLogs = (params: {
     isDataLoaded: computed(() => isDataLoaded.value),
     loading: computed(() => loading.value)
   }
+}
+
+export const useAutomationFunctionRunResults = (params: {
+  results: MaybeRef<MaybeNullOrUndefined<Record<string, unknown>>>
+}) => {
+  const { results } = params
+
+  const ret = computed(
+    (): MaybeNullOrUndefined<Automate.AutomateTypes.ResultsSchema> => {
+      const res = unref(results)
+      if (!res) return res
+
+      if (!Automate.AutomateTypes.isResultsSchema(res)) return null
+      return Automate.AutomateTypes.formatResultsSchema(res)
+    }
+  )
+
+  return ret
 }
