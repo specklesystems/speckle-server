@@ -1,11 +1,8 @@
 <template>
   <div v-if="automation && project" class="flex flex-col gap-8 items-start">
-    <ProjectPageAutomationHeader
-      :automation="automation"
-      :project="project"
-      :project-id="projectId"
-    />
-    <ProjectPageAutomationFunctions :automation="automation" />
+    <ProjectPageAutomationHeader :automation="automation" :project="project" />
+    <ProjectPageAutomationFunctions :automation="automation" :project-id="projectId" />
+    <ProjectPageAutomationRuns :project-id="projectId" :automation="automation" />
   </div>
   <CommonLoadingBar v-else-if="loading" loading />
   <div v-else />
@@ -22,6 +19,7 @@ graphql(`
     id
     ...ProjectPageAutomationHeader_Automation
     ...ProjectPageAutomationFunctions_Automation
+    ...ProjectPageAutomationRuns_Automation
   }
 `)
 
@@ -31,6 +29,10 @@ graphql(`
     ...ProjectPageAutomationHeader_Project
   }
 `)
+
+definePageMeta({
+  middleware: ['require-valid-automation']
+})
 
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)

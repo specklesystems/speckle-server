@@ -7,6 +7,7 @@ import express, { Express } from 'express'
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
 import 'express-async-errors'
 import compression from 'compression'
+import cookieParser from 'cookie-parser'
 
 import { createTerminus } from '@godaddy/terminus'
 import * as Sentry from '@sentry/node'
@@ -321,6 +322,7 @@ export async function init() {
   // Should perhaps be done manually?
   await knex.migrate.latest()
 
+  app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
   app.use(determineClientIpAddressMiddleware)
   app.use(LoggingExpressMiddleware)

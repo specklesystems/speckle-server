@@ -25,9 +25,8 @@ workflows:
       - test-frontend-2:
           filters: *filters-allow-all
 
-      ## TODO: Re-enable when dui3 gets further into development
-      # - test-dui-3:
-      #     filters: *filters-allow-all
+      - test-viewer:
+          filters: *filters-allow-all
 
       - test-ui-components:
           filters: *filters-allow-all
@@ -58,6 +57,7 @@ workflows:
             - pre-commit
             - deployment-testing-approval
             - test-frontend-2
+            - test-viewer
             - test-server
             - docker-build-server
             - docker-build-frontend
@@ -76,6 +76,7 @@ workflows:
             - pre-commit
             - deployment-testing-approval
             - test-frontend-2
+            - test-viewer
             - test-server
             - docker-build-server
             - docker-build-frontend
@@ -167,6 +168,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-frontend:
@@ -178,6 +180,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-frontend-2:
@@ -189,6 +192,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-webhooks:
@@ -200,6 +204,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-file-imports:
@@ -211,6 +216,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-previews:
@@ -222,6 +228,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-test-container:
@@ -233,6 +240,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-monitor-container:
@@ -244,6 +252,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-docker-compose-ingress:
@@ -294,6 +303,7 @@ workflows:
             - test-server
             - test-ui-components
             - test-frontend-2
+            - test-viewer
 
 jobs:
   get-version:
@@ -500,10 +510,10 @@ jobs:
           command: yarn lint
           working_directory: 'packages/frontend-2'
 
-  test-dui-3:
-    docker: &docker-node-image
-      - image: cimg/node:18.19.0
-    resource_class: medium+
+  test-viewer:
+    docker: &docker-node-browsers-image
+      - image: cimg/node:18.19.0-browsers
+    resource_class: large
     steps:
       - checkout
       - restore_cache:
@@ -526,9 +536,18 @@ jobs:
             - .yarn/unplugged
 
       - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
           name: Lint everything
           command: yarn lint
-          working_directory: 'packages/dui3'
+          working_directory: 'packages/viewer'
+
+      - run:
+          name: Run tests
+          command: yarn test
+          working_directory: 'packages/viewer'
 
   test-ui-components:
     docker: *docker-node-browsers-image
@@ -584,7 +603,8 @@ jobs:
 
   ui-components-chromatic:
     resource_class: medium+
-    docker: *docker-node-image
+    docker: &docker-node-image
+      - image: cimg/node:18.19.0
     steps:
       - checkout
       - restore_cache:

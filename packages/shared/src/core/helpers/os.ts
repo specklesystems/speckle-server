@@ -73,3 +73,15 @@ export function getClientOperatingSystem() {
   const userAgentPlatform = resolveOsFromUserAgent()
   return userAgentPlatform || OperatingSystem.Other
 }
+
+/**
+ * Check if user is in Safari browser
+ */
+export function isSafari() {
+  if (!globalThis || !globalThis.navigator || !('userAgent' in globalThis.navigator)) {
+    return false
+  }
+
+  const userAgent = globalThis.navigator.userAgent
+  return /^((?!chrome|android).)*safari/i.test(userAgent)
+}

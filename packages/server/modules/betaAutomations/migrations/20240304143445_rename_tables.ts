@@ -32,6 +32,9 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
+  // TODO: Remove, this is a temporary shortcut to avoid messing up the db schema which makes it difficult to jump to different branches
+  if (process.env.SKIP_AUTOMATE_MIGRATION_DEV) return
+
   await knex.schema.renameTable(AUTOMATIONS_TABLE_NAME_NEW, AUTOMATIONS_TABLE_NAME_OLD)
   await knex.schema.renameTable(
     AUTOMATION_RUNS_TABLE_NAME_NEW,

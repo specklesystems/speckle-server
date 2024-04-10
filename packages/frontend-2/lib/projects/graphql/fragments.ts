@@ -69,7 +69,9 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     ...ProjectPageModelsCardRenameDialog
     ...ProjectPageModelsCardDeleteDialog
     ...ProjectPageModelsActions
-    ...ModelCardAutomationStatus_Model
+    automationsStatus {
+      ...AutomateRunsTriggerStatus_TriggeredAutomationsStatus
+    }
   }
 `)
 

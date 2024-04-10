@@ -5,6 +5,8 @@ import {
 } from '~/lib/auth/composables/auth'
 import { useCreateErrorLoggingTransport } from '~/lib/core/composables/error'
 import type { Plugin } from 'nuxt/dist/app/nuxt'
+import { isH3Error } from '~/lib/common/helpers/error'
+import { useRequestId, useServerRequestId } from '~/lib/core/composables/server'
 
 type PluginNuxtApp = Parameters<Plugin>[0]
 
@@ -13,6 +15,7 @@ async function initRumClient(app: PluginNuxtApp) {
   const router = useRouter()
   const onAuthStateChange = useOnAuthStateChange()
   const registerErrorTransport = useCreateErrorLoggingTransport()
+  const reqId = useRequestId()
 
   // RayGun
   const rg4js = window.rg4js
@@ -78,29 +81,71 @@ async function initRumClient(app: PluginNuxtApp) {
   // Datadog
   const datadog = window.DD_RUM
   if (keys.datadog && datadog) {
-    await onAuthStateChange(
-      (user, { resolveDistinctId }) => {
-        const distinctId = resolveDistinctId(user)
-        // setUser might not be there, if blocked by adblock
-        if (!datadog || !('setUser' in datadog)) return
+    datadog.onReady(async () => {
+      if ('setGlobalContextProperty' in datadog && reqId?.length) {
+        datadog.setGlobalContextProperty('requestId', reqId)
+      }
 
-        if (distinctId && user) {
-          datadog.setUser({
-            id: distinctId
+      await onAuthStateChange(
+        (user, { resolveDistinctId }) => {
+          const distinctId = resolveDistinctId(user)
+          // setUser might not be there, if blocked by adblock
+          if (!datadog || !('setUser' in datadog)) return
+
+          if (distinctId && user) {
+            datadog.setUser({
+              id: distinctId
+            })
+          } else {
+            datadog.clearUser()
+          }
+        },
+        { immediate: true }
+      )
+
+      router.beforeEach((to) => {
+        const pathDefinition = getRouteDefinition(to)
+        const routeName = (to.meta.datadogName || pathDefinition) as string
+        const realPath = to.path
+
+        window.DD_RUM_START_VIEW?.(realPath, routeName)
+      })
+
+      const resolveH3Data = (error: unknown) =>
+        error && isH3Error(error)
+          ? {
+              statusCode: error.statusCode,
+              fatal: error.fatal,
+              statusMessage: error.statusMessage,
+              h3Data: error.data
+            }
+          : {}
+
+      registerErrorTransport({
+        onError: ({ args, firstError, firstString, otherData, nonObjectOtherData }) => {
+          if (!datadog || !('addError' in datadog)) return
+
+          const error = firstError || firstString || args[0]
+          datadog.addError(error, {
+            ...otherData,
+            ...resolveH3Data(firstError),
+            extraData: nonObjectOtherData,
+            mainErrorMessage: firstString,
+            isProperlySentError: true
           })
-        } else {
-          datadog.clearUser()
+        },
+        onUnhandledError: ({ isUnhandledRejection, error, message }) => {
+          if (!datadog || !('addError' in datadog)) return
+
+          datadog.addError(error || message, {
+            ...resolveH3Data(error),
+            isUnhandledRejection,
+            message,
+            mainErrorMessage: message,
+            isProperlySentError: true
+          })
         }
-      },
-      { immediate: true }
-    )
-
-    router.beforeEach((to) => {
-      const pathDefinition = to.matched[to.matched.length - 1].path
-      const routeName = to.meta.datadogName || pathDefinition
-      const realPath = to.path
-
-      window.DD_RUM_START_VIEW?.(realPath, routeName)
+      })
     })
   }
 }
@@ -203,8 +248,9 @@ async function initRumServer(app: PluginNuxtApp) {
     const { distinctId } = await initUser()
 
     app.hook('app:rendered', (context) => {
+      const serverReqId = useServerRequestId()
       const route = app._route
-      const pathDefinition = route.matched[route.matched.length - 1].path
+      const pathDefinition = getRouteDefinition(route)
       const pathReal = route.path
       const routeName = route.meta.datadogName || pathDefinition
 
@@ -223,6 +269,13 @@ async function initRumServer(app: PluginNuxtApp) {
               (distinctId ? `window.DD_RUM.setUser({ id: '${distinctId}' });` : '') +
               `
                 window.DD_RUM.setGlobalContextProperty('serverBaseUrl', '${baseUrl}');
+
+                ` +
+              (serverReqId.value
+                ? `window.DD_RUM.setGlobalContextProperty('serverRequestId', '${serverReqId.value}');`
+                : '') +
+              `
+
                 window.DD_RUM.init({
                   clientToken: '${datadogClientToken}',
                   applicationId: '${datadogAppId}',
@@ -236,7 +289,14 @@ async function initRumServer(app: PluginNuxtApp) {
                   trackResources: true,
                   trackLongTasks: true,
                   defaultPrivacyLevel: 'mask-user-input',
-                  trackViewsManually: true
+                  trackViewsManually: true,
+                  beforeSend: (event) => {
+                    if (event?.type === 'error') {
+                      if (!event.context?.isProperlySentError) return false
+                      delete event.context.isProperlySentError
+                    }
+                    return true 
+                  }
                 });
 
                 window.DD_RUM_START_VIEW = (path, name) => {

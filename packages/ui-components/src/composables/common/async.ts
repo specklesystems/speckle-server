@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { MaybeAsync } from '@speckle/shared'
+import { type MaybeAsync, buildManualPromise } from '@speckle/shared'
 import { computedAsync } from '@vueuse/core'
 import type { AsyncComputedOptions } from '@vueuse/core'
 import { computed } from 'vue'
@@ -66,19 +66,4 @@ export function writableAsyncComputed<T>(
   return getter
 }
 
-/**
- * Build promise that can be resolved/rejected manually outside of the promise's execution scope
- */
-export const buildManualPromise = <T>() => {
-  let resolve: (value: T) => void
-  let reject: (reason?: any) => void
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res
-    reject = rej
-  })
-
-  const resolveWrapper: typeof resolve = (...args) => resolve(...args)
-  const rejectWrapper: typeof reject = (...args) => reject(...args)
-
-  return { promise, resolve: resolveWrapper, reject: rejectWrapper }
-}
+export { buildManualPromise }

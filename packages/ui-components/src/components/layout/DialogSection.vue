@@ -24,8 +24,12 @@
         class="text-sm sm:text-base font-bold flex items-center gap-1 sm:gap-2 select-none"
         :class="titleClasses"
       >
-        <div class="h-4 sm:h-5 w-4 sm:w-5 empty:h-0 empty:w-0">
-          <slot name="icon"></slot>
+        <div
+          v-if="$slots.icon || icon"
+          class="h-4 sm:h-5 w-4 sm:w-5 empty:h-0 empty:w-0"
+        >
+          <slot v-if="$slots.icon" name="icon" />
+          <Component :is="icon" v-if="icon" class="w-full h-full" />
         </div>
         <span>{{ title }}</span>
       </div>
@@ -84,7 +88,7 @@
 
 <script setup lang="ts">
 import { ref, unref, computed, nextTick } from 'vue'
-import type { Ref } from 'vue'
+import type { PropType, Ref } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
 import { keyboardClick } from '~~/src/helpers/global/accessibility'
@@ -125,6 +129,10 @@ const props = defineProps({
   lazyLoad: {
     type: Boolean,
     default: false
+  },
+  icon: {
+    type: Object as PropType<PropAnyComponent>,
+    default: undefined
   }
 })
 

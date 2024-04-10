@@ -10,7 +10,12 @@
           Speckle Automate empowers you to continuously monitor your published models,
           automatically ensuring project data standards, identifying potential design
           faults, and effortlessly creating delivery artifacts.
-          <CommonTextLink :icon-right="ArrowTopRightOnSquareIcon">
+          <CommonTextLink
+            :icon-right="ArrowTopRightOnSquareIcon"
+            target="_blank"
+            external
+            to="https://speckle.systems/blog/automate-with-speckle/"
+          >
             Learn more
           </CommonTextLink>
         </div>
@@ -42,9 +47,9 @@
           Explore All Functions
         </FormButton>
       </div>
-      <AutomationsFunctionsCardView>
-        <AutomationsFunctionsCard v-for="fn in functions" :key="fn.id" :fn="fn" />
-      </AutomationsFunctionsCardView>
+      <AutomateFunctionCardView>
+        <AutomateFunctionCard v-for="fn in functions" :key="fn.id" :fn="fn" />
+      </AutomateFunctionCardView>
     </div>
   </div>
 </template>

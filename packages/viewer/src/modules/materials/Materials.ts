@@ -6,13 +6,20 @@ import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
 import SpecklePointMaterial from './SpecklePointMaterial'
 import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial'
-import defaultGradient from '../../assets/gradient.png'
+import defaultGradientTexture from '../../assets/gradient.png'
 import { Assets } from '../Assets'
 import { getConversionFactor } from '../converter/Units'
 import SpeckleGhostMaterial from './SpeckleGhostMaterial'
 import SpeckleTextMaterial from './SpeckleTextMaterial'
 import { SpeckleMaterial } from './SpeckleMaterial'
 import SpecklePointColouredMaterial from './SpecklePointColouredMaterial'
+import { Asset, AssetType, MaterialOptions } from '../../IViewer'
+
+const defaultGradient: Asset = {
+  id: 'defaultGradient',
+  src: defaultGradientTexture,
+  type: AssetType.TEXTURE_8BPP
+}
 
 export interface RenderMaterial {
   id: string
@@ -28,18 +35,6 @@ export interface DisplayStyle {
   color: number
   lineWeight: number
   opacity?: number
-}
-
-export interface MaterialOptions {
-  stencilOutlines?: StencilOutlineType
-  pointSize?: number
-  depthWrite?: number
-}
-
-export enum StencilOutlineType {
-  NONE,
-  OVERLAY,
-  OUTLINE_ONLY
 }
 
 export enum FilterMaterialType {

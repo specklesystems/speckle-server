@@ -5,20 +5,45 @@
       Note: functions do not automatically update to their latest release. To do so,
       please select it manually via the edit dialog.
     </div>
-    <AutomationsFunctionsCardView class="mt-2">
-      <AutomationsFunctionsCard v-for="fn in functions" :key="fn.id" :fn="fn" />
-    </AutomationsFunctionsCardView>
+    <AutomateFunctionCardView class="mt-2">
+      <AutomateFunctionCard
+        v-for="fn in functions"
+        :key="fn.id"
+        :fn="fn"
+        show-edit
+        @edit="onEdit(fn)"
+      />
+    </AutomateFunctionCardView>
+    <ProjectPageAutomationFunctionSettingsDialog
+      v-model:open="dialogOpen"
+      :project-id="projectId"
+      :automation-id="automation.id"
+      :revision-fn="dialogFunction"
+      :revision="automation.currentRevision"
+    />
   </div>
 </template>
 <script setup lang="ts">
+import type { Optional } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
-import type { ProjectPageAutomationFunctions_AutomationFragment } from '~/lib/common/generated/gql/graphql'
+import type {
+  AutomationsFunctionsCard_AutomateFunctionFragment,
+  ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment,
+  ProjectPageAutomationFunctions_AutomationFragment
+} from '~/lib/common/generated/gql/graphql'
+
+// TODO: Edit details dialog
+
+type EditableFunction = AutomationsFunctionsCard_AutomateFunctionFragment
+type EditableFunctionRevision =
+  ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment
 
 graphql(`
   fragment ProjectPageAutomationFunctions_Automation on Automation {
     id
     currentRevision {
       id
+      ...ProjectPageAutomationFunctionSettingsDialog_AutomationRevision
       functions {
         release {
           id
@@ -27,16 +52,34 @@ graphql(`
             ...AutomationsFunctionsCard_AutomateFunction
           }
         }
+        ...ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunction
       }
     }
   }
 `)
 
 const props = defineProps<{
+  projectId: string
   automation: ProjectPageAutomationFunctions_AutomationFragment
 }>()
 
-const functions = computed(
-  () => props.automation.currentRevision?.functions.map((f) => f.release.function) || []
+const dialogOpen = ref(false)
+const dialogFunction = ref<Optional<EditableFunctionRevision>>()
+
+const functionRevisions = computed(
+  () => props.automation.currentRevision?.functions || []
 )
+const functions = computed(
+  () => functionRevisions.value.map((f) => f.release.function) || []
+)
+
+const onEdit = (fn: EditableFunction) => {
+  const fid = fn.id
+  const revision = functionRevisions.value.find((f) => f.release.function.id === fid)
+
+  if (revision) {
+    dialogOpen.value = true
+    dialogFunction.value = revision
+  }
+}
 </script>

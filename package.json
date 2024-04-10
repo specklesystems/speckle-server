@@ -68,6 +68,7 @@
     "core-js-compat/semver": "^7.5.4",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
+    "express": ">=4.19.2",
     "fast-xml-parser": ">=4.2.5",
     "graphql": "^15.3.0",
     "levelup/bl": ">=1.2.3",

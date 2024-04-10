@@ -161,7 +161,7 @@ type FormInputChangeEvent = { event?: Event; value: string }
  *
  * Very useful for search inputs and other kind of auto-submitting inputs!
  */
-export function useDebouncedTextInput(params: {
+export function useDebouncedTextInput(params?: {
   /**
    * For how long should basic input events be debounced.
    * Default: 1000 (ms)
@@ -194,14 +194,14 @@ export function useDebouncedTextInput(params: {
    */
   debug?: boolean | ((...logArgs: unknown[]) => void)
 }) {
-  const { debouncedBy = 1000, isBasicHtmlInput = false, submitOnEnter } = params
-  const log = params.debug
+  const { debouncedBy = 1000, isBasicHtmlInput = false, submitOnEnter } = params || {}
+  const log = params?.debug
     ? isBoolean(params.debug)
       ? console.debug
       : params.debug
     : noop
 
-  const value = params.model || ref('')
+  const value = params?.model || ref('')
   const model = ref(value.value)
 
   const getValue = (val: string | InputEvent | Event | FormInputChangeEvent) => {

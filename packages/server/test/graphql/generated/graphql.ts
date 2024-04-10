@@ -191,12 +191,22 @@ export type AuthStrategy = {
 
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
+  automationCount: Scalars['Int'];
   creator: LimitedUser;
   description: Scalars['String'];
   id: Scalars['ID'];
   isFeatured: Scalars['Boolean'];
   logo?: Maybe<Scalars['String']>;
   name: Scalars['String'];
+  releases: AutomateFunctionReleaseCollection;
+  repoUrl: Scalars['String'];
+};
+
+
+export type AutomateFunctionReleasesArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<AutomateFunctionReleasesFilter>;
+  limit?: InputMaybe<Scalars['Int']>;
 };
 
 export type AutomateFunctionCollection = {
@@ -208,19 +218,92 @@ export type AutomateFunctionCollection = {
 
 export type AutomateFunctionRelease = {
   __typename?: 'AutomateFunctionRelease';
+  commitId: Scalars['String'];
+  createdAt: Scalars['DateTime'];
   function: AutomateFunction;
   id: Scalars['ID'];
+  inputSchema?: Maybe<Scalars['JSONObject']>;
+  versionTag: Scalars['String'];
+};
+
+export type AutomateFunctionReleaseCollection = {
+  __typename?: 'AutomateFunctionReleaseCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<AutomateFunctionRelease>;
+  totalCount: Scalars['Int'];
+};
+
+export type AutomateFunctionReleasesFilter = {
+  search?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomateFunctionRun = {
+  __typename?: 'AutomateFunctionRun';
+  contextView?: Maybe<Scalars['String']>;
+  elapsed: Scalars['Float'];
+  function: AutomateFunction;
+  id: Scalars['ID'];
+  /**
+   * NOTE: this is the schema for the results field below!
+   * Current schema: {
+   *   version: '1.0.0'
+   *   values: {
+   *     objectResults: {
+   *       category: string
+   *       level: ObjectResultLevel
+   *       objectIds: string[]
+   *       message: string
+   *       metadata: Record<string, unknown> | null
+   *       visualOverrides: Record<string, unknown> | null
+   *     }[]
+   *     blobIds?: string[] | undefined
+   *   }
+   * }
+   */
+  results?: Maybe<Scalars['JSONObject']>;
+  status: AutomateRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+};
+
+export type AutomateFunctionRunStatusReportInput = {
+  contextView?: InputMaybe<Scalars['String']>;
+  functionRunId: Scalars['String'];
+  /**
+   * NOTE: this is the schema for the results field below!
+   * Current schema: {
+   *   version: '1.0.0'
+   *   values: {
+   *     objectResults: {
+   *       category: string
+   *       level: ObjectResultLevel
+   *       objectIds: string[]
+   *       message: string
+   *       metadata: Record<string, unknown> | null
+   *       visualOverrides: Record<string, unknown> | null
+   *     }[]
+   *     blobIds?: string[] | undefined
+   *   }
+   * }
+   */
+  results?: InputMaybe<Scalars['JSONObject']>;
+  status: AutomationRunStatus;
+  statusMessage?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomateFunctionsFilter = {
+  search?: InputMaybe<Scalars['String']>;
 };
 
 export type AutomateRun = {
   __typename?: 'AutomateRun';
+  automation: Automation;
   createdAt: Scalars['DateTime'];
+  functionRuns: Array<AutomateFunctionRun>;
   id: Scalars['ID'];
   reason?: Maybe<Scalars['String']>;
   status: AutomateRunStatus;
+  trigger: AutomationRunTrigger;
   updatedAt: Scalars['DateTime'];
-  /** TODO: Can there be more versions in the future? Can there be 0? (automation on comment) */
-  version: Version;
 };
 
 export type AutomateRunCollection = {
@@ -237,14 +320,16 @@ export enum AutomateRunStatus {
   Succeeded = 'SUCCEEDED'
 }
 
+export enum AutomateRunTriggerType {
+  VersionCreated = 'VERSION_CREATED'
+}
+
 export type Automation = {
   __typename?: 'Automation';
   createdAt: Scalars['DateTime'];
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
-  /** TODO: Can there be more models in the future? Can there be 0? (automation on comment) */
-  model: Model;
   name: Scalars['String'];
   runs: AutomateRunCollection;
   updatedAt: Scalars['DateTime'];
@@ -323,6 +408,14 @@ export type AutomationRevision = {
   __typename?: 'AutomationRevision';
   functions: Array<AutomationRevisionFunction>;
   id: Scalars['ID'];
+  triggerDefinitions: Array<AutomationRevisionTriggerDefinition>;
+};
+
+export type AutomationRevisionCreateFunctionInput = {
+  functionId: Scalars['String'];
+  /** Should be encrypted from the client side */
+  parameters?: InputMaybe<Scalars['String']>;
+  releaseId: Scalars['String'];
 };
 
 export type AutomationRevisionFunction = {
@@ -331,6 +424,8 @@ export type AutomationRevisionFunction = {
   parameters?: Maybe<Scalars['JSONObject']>;
   release: AutomateFunctionRelease;
 };
+
+export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition;
 
 export type AutomationRun = {
   __typename?: 'AutomationRun';
@@ -359,6 +454,8 @@ export type AutomationRunStatusUpdateInput = {
   functionRuns: Array<FunctionRunStatusInput>;
   versionId: Scalars['String'];
 };
+
+export type AutomationRunTrigger = VersionCreatedTrigger;
 
 export type AutomationsStatus = {
   __typename?: 'AutomationsStatus';
@@ -703,6 +800,15 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String'];
 };
 
+/**
+ * Can be used instead of a full item collection, when the implementation doesn't call for it yet. Because
+ * of the structure, it can be swapped out to a full item collection in the future
+ */
+export type CountOnlyCollection = {
+  __typename?: 'CountOnlyCollection';
+  totalCount: Scalars['Int'];
+};
+
 export type CreateCommentInput = {
   content: CommentContentInput;
   projectId: Scalars['String'];
@@ -892,6 +998,7 @@ export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
   automationStatus?: Maybe<AutomationsStatus>;
+  automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
   /** All comment threads in this model */
@@ -1021,6 +1128,7 @@ export type Mutation = {
   appTokenCreate: Scalars['String'];
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
+  automateFunctionRunStatusReport: Scalars['Boolean'];
   automationMutations: AutomationMutations;
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
@@ -1166,6 +1274,11 @@ export type MutationAppTokenCreateArgs = {
 
 export type MutationAppUpdateArgs = {
   app: AppUpdateInput;
+};
+
+
+export type MutationAutomateFunctionRunStatusReportArgs = {
+  input: AutomateFunctionRunStatusReportInput;
 };
 
 
@@ -1503,6 +1616,9 @@ export type Project = {
   allowPublicComments: Scalars['Boolean'];
   automation?: Maybe<Automation>;
   automations: AutomationCollection;
+  blob?: Maybe<BlobMetadata>;
+  /** Get the metadata collection of blobs stored for this stream. */
+  blobs?: Maybe<BlobMetadataCollection>;
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime'];
@@ -1550,6 +1666,18 @@ export type ProjectAutomationsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<Scalars['String']>;
   limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type ProjectBlobArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectBlobsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+  query?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -1612,12 +1740,34 @@ export type ProjectWebhooksArgs = {
 
 export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
+  createRevision?: Maybe<AutomationRevision>;
   update?: Maybe<Automation>;
+};
+
+
+export type ProjectAutomationMutationsCreateRevisionArgs = {
+  input: ProjectAutomationRevisionCreateInput;
 };
 
 
 export type ProjectAutomationMutationsUpdateArgs = {
   input: ProjectAutomationUpdateInput;
+};
+
+export type ProjectAutomationRevisionCreateInput = {
+  automationId: Scalars['ID'];
+  functions: Array<AutomationRevisionCreateFunctionInput>;
+  /**
+   * Trigger definition schema:
+   * {
+   *   version: 1.0.0,
+   *   definitions: Array<{
+   *     type: AutomateRunTriggerType.VERSION_CREATED,
+   *     modelId: string,
+   *   }>
+   * }
+   */
+  triggerDefinitions: Scalars['JSONObject'];
 };
 
 export type ProjectAutomationUpdateInput = {
@@ -1959,6 +2109,7 @@ export type Query = {
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   /** If user is authenticated using an app token, this will describe the app */
   authenticatedAsApp?: Maybe<ServerAppListItem>;
+  automateFunction?: Maybe<AutomateFunction>;
   automateFunctions: AutomateFunctionCollection;
   comment?: Maybe<Comment>;
   /**
@@ -2042,9 +2193,14 @@ export type QueryAppArgs = {
 };
 
 
+export type QueryAutomateFunctionArgs = {
+  id: Scalars['ID'];
+};
+
+
 export type QueryAutomateFunctionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
-  filter?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<AutomateFunctionsFilter>;
   limit?: InputMaybe<Scalars['Int']>;
 };
 
@@ -2716,6 +2872,14 @@ export enum TokenResourceIdentifierType {
   Project = 'project'
 }
 
+export type TriggeredAutomationsStatus = {
+  __typename?: 'TriggeredAutomationsStatus';
+  automationRuns: Array<AutomateRun>;
+  id: Scalars['ID'];
+  status: AutomateRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+};
+
 export type UpdateModelInput = {
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -2781,6 +2945,13 @@ export type User = {
   /** Total amount of favorites attached to streams owned by the user */
   totalOwnedStreamsFavorites: Scalars['Int'];
   verified?: Maybe<Scalars['Boolean']>;
+  /**
+   * Get (count of) user's versions. By default gets all versions of all projects the user has access to.
+   * Set authoredOnly=true to only retrieve versions authored by the user.
+   *
+   * Note: Only count resolution is currently implemented
+   */
+  versions: CountOnlyCollection;
 };
 
 
@@ -2849,6 +3020,16 @@ export type UserTimelineArgs = {
   limit?: Scalars['Int'];
 };
 
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserVersionsArgs = {
+  authoredOnly?: Scalars['Boolean'];
+  limit?: Scalars['Int'];
+};
+
 export type UserDeleteInput = {
   email: Scalars['String'];
 };
@@ -2897,6 +3078,7 @@ export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
   automationStatus?: Maybe<AutomationsStatus>;
+  automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
@@ -2921,6 +3103,19 @@ export type VersionCollection = {
   cursor?: Maybe<Scalars['String']>;
   items: Array<Version>;
   totalCount: Scalars['Int'];
+};
+
+export type VersionCreatedTrigger = {
+  __typename?: 'VersionCreatedTrigger';
+  model: Model;
+  type: AutomateRunTriggerType;
+  version: Version;
+};
+
+export type VersionCreatedTriggerDefinition = {
+  __typename?: 'VersionCreatedTriggerDefinition';
+  model: Model;
+  type: AutomateRunTriggerType;
 };
 
 export type VersionMutations = {

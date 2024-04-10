@@ -185,6 +185,15 @@ export = {
   },
   User: {
     async projects(_parent, args, ctx) {
+      // If limit=0 & no filter, short-cut full execution and use data loader
+      if (!args.filter && args.limit === 0) {
+        return {
+          totalCount: await ctx.loaders.users.getOwnStreamCount.load(ctx.userId!),
+          items: [],
+          cursor: null
+        }
+      }
+
       const totalCount = await getUserStreamsCount({
         userId: ctx.userId!,
         forOtherUser: false,

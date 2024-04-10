@@ -170,7 +170,22 @@ export const updateAutomationMutation = graphql(`
       automationMutations(projectId: $projectId) {
         update(input: $input) {
           id
-          ...ProjectPageAutomationPage_Automation
+          name
+        }
+      }
+    }
+  }
+`)
+
+export const createAutomationRevisionMutation = graphql(`
+  mutation CreateAutomationRevision(
+    $projectId: ID!
+    $input: ProjectAutomationRevisionCreateInput!
+  ) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        createRevision(input: $input) {
+          id
         }
       }
     }

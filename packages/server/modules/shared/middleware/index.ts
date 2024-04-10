@@ -51,8 +51,17 @@ export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   return middleware
 }
 
-export const getTokenFromRequest = (req: Request | null | undefined): string | null =>
-  req?.headers?.authorization ?? null
+export const getTokenFromRequest = (req: Request | null | undefined): string | null => {
+  const removeBearerPrefix = (token: string) => token.replace('Bearer ', '')
+
+  const fromHeader = req?.headers?.authorization || null
+  if (fromHeader?.length) return removeBearerPrefix(fromHeader)
+
+  const fromCookie = (req?.cookies?.authn as Nullable<string>) || null
+  if (fromCookie?.length) return removeBearerPrefix(fromCookie)
+
+  return null
+}
 
 /**
  * Create an AuthContext from a raw token value

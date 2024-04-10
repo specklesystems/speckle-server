@@ -13,7 +13,8 @@ import {
   UniformsUtils
 } from 'three'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
-import { MaterialOptions, StencilOutlineType } from './Materials'
+import { StencilOutlineType } from '../../IViewer'
+import { MaterialOptions } from './MaterialOptions'
 
 class SpeckleUserData {
   toJSON() {

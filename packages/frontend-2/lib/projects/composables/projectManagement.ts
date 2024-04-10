@@ -1,5 +1,5 @@
 import { ApolloCache } from '@apollo/client/core'
-import { useApolloClient, useSubscription } from '@vue/apollo-composable'
+import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
 import { isArray } from 'lodash-es'
 import type { Get } from 'type-fest'
@@ -15,7 +15,8 @@ import type {
   ProjectUpdateInput,
   ProjectUpdateRoleInput,
   UpdateProjectMetadataMutation,
-  AdminPanelProjectsListQuery
+  AdminPanelProjectsListQuery,
+  CreateAutomationRevisionMutationVariables
 } from '~~/lib/common/generated/gql/graphql'
 import {
   ROOT_QUERY,
@@ -27,6 +28,7 @@ import {
 import { useNavigateToHome } from '~~/lib/common/helpers/route'
 import {
   cancelProjectInviteMutation,
+  createAutomationRevisionMutation,
   createProjectMutation,
   deleteProjectMutation,
   inviteProjectUserMutation,
@@ -425,6 +427,31 @@ export function useLeaveProject() {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: "Couldn't leave project",
+        description: errMsg
+      })
+    }
+  }
+}
+
+export function useCreateAutomationRevision() {
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+  const { mutate } = useMutation(createAutomationRevisionMutation)
+
+  return async (input: CreateAutomationRevisionMutationVariables) => {
+    if (!activeUser.value) return
+
+    const res = await mutate(input).catch(convertThrowIntoFetchResult)
+    if (res?.data?.projectMutations?.automationMutations?.createRevision?.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Changes have been saved'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to save changes',
         description: errMsg
       })
     }

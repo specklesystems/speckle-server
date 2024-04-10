@@ -58,15 +58,12 @@
         </NuxtLink>
         <div class="hidden sm:flex grow" />
         <div class="flex items-center">
-          <div
+          <ProjectPageModelsCardUpdatedTime
+            :updated-at="updatedAt"
             :class="`text-xs w-full text-foreground-2 sm:mr-1 truncate transition ${
               hovered ? 'sm:w-auto' : 'sm:w-0'
             }`"
-          >
-            updated
-            <b>{{ updatedAt }}</b>
-          </div>
-
+          />
           <FormButton
             v-if="finalShowVersions"
             v-tippy="'View Version Gallery'"
@@ -103,15 +100,12 @@
         <span>{{ model.commentThreadCount.totalCount }}</span>
       </div>
       <div
-        v-if="!isPendingModelFragment(model) && model.automationStatus"
+        v-if="!isPendingModelFragment(model) && model.automationsStatus"
         class="absolute top-0 left-0 p-2"
       >
-        <ProjectPageModelsCardAutomationStatusRefactor
+        <AutomateRunsTriggerStatus
           :project-id="projectId"
-          :model-or-version="{
-            ...model,
-            automationStatus: model.automationStatus
-          }"
+          :status="model.automationsStatus"
           :model-id="model.id"
         />
       </div>

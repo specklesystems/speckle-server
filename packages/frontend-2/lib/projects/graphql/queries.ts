@@ -235,6 +235,17 @@ export const projectAutomationPageQuery = graphql(`
   }
 `)
 
+export const projectAutomationAccessCheckQuery = graphql(`
+  query ProjectAutomationAccessCheck($projectId: String!, $automationId: String!) {
+    project(id: $projectId) {
+      id
+      automation(id: $automationId) {
+        id
+      }
+    }
+  }
+`)
+
 export const projectWebhooksQuery = graphql(`
   query ProjectWebhooks($projectId: String!) {
     project(id: $projectId) {
@@ -261,10 +272,10 @@ export const projectWebhooksQuery = graphql(`
   }
 `)
 
-// // TODO: uses deprecated endpoint, needs migration BE & here
-export const blobInfoQuery = graphql(`
-  query Blob($blobId: String!, $streamId: String!) {
-    stream(id: $streamId) {
+export const projectBlobInfoQuery = graphql(`
+  query ProjectBlobInfo($blobId: String!, $projectId: String!) {
+    project(id: $projectId) {
+      id
       blob(id: $blobId) {
         id
         fileName

@@ -5,6 +5,10 @@ enum AutomateRunStatus {
   FAILED
 }
 
+enum AutomateRunTriggerType {
+  VERSION_CREATED
+}
+
 type AutomationRevisionFunction {
   """
   The secrets in parameters are redacted
@@ -13,35 +17,88 @@ type AutomationRevisionFunction {
   release: AutomateFunctionRelease!
 }
 
+type VersionCreatedTriggerDefinition {
+  type: AutomateRunTriggerType!
+  model: Model!
+}
+
+union AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition
+
 type AutomationRevision {
   id: ID!
+  triggerDefinitions: [AutomationRevisionTriggerDefinition!]!
   functions: [AutomationRevisionFunction!]!
+}
+
+type VersionCreatedTrigger {
+  type: AutomateRunTriggerType!
+  version: Version!
+  model: Model!
+}
+
+union AutomationRunTrigger = VersionCreatedTrigger
+
+type TriggeredAutomationsStatus {
+  id: ID!
+  status: AutomateRunStatus!
+  statusMessage: String
+  automationRuns: [AutomateRun!]!
+}
+
+extend type Model {
+  automationsStatus: TriggeredAutomationsStatus
+}
+
+extend type Version {
+  automationsStatus: TriggeredAutomationsStatus
 }
 
 type Automation {
   id: ID!
   name: String!
   enabled: Boolean!
-  """
-  TODO: Can there be more models in the future? Can there be 0? (automation on comment)
-  """
-  model: Model!
   runs(cursor: String, limit: Int): AutomateRunCollection!
   currentRevision: AutomationRevision
   createdAt: DateTime!
   updatedAt: DateTime!
 }
 
-type AutomateRun {
+type AutomateFunctionRun {
   id: ID!
   status: AutomateRunStatus!
+  statusMessage: String
+  contextView: String
+  function: AutomateFunction!
+  elapsed: Float!
+  """
+  NOTE: this is the schema for the results field below!
+  Current schema: {
+    version: '1.0.0'
+    values: {
+      objectResults: {
+        category: string
+        level: ObjectResultLevel
+        objectIds: string[]
+        message: string
+        metadata: Record<string, unknown> | null
+        visualOverrides: Record<string, unknown> | null
+      }[]
+      blobIds?: string[] | undefined
+    }
+  }
+  """
+  results: JSONObject
+}
+
+type AutomateRun {
+  id: ID!
+  trigger: AutomationRunTrigger!
+  status: AutomateRunStatus!
   reason: String
-  """
-  TODO: Can there be more versions in the future? Can there be 0? (automation on comment)
-  """
-  version: Version!
   createdAt: DateTime!
   updatedAt: DateTime!
+  automation: Automation!
+  functionRuns: [AutomateFunctionRun!]!
 }
 
 type AutomateRunCollection {
@@ -56,18 +113,39 @@ type AutomationCollection {
   cursor: String
 }
 
+input AutomateFunctionReleasesFilter {
+  search: String
+}
+
 type AutomateFunction {
   id: ID!
   name: String!
+  repoUrl: String!
   creator: LimitedUser!
   isFeatured: Boolean!
   description: String!
   logo: String
+  releases(
+    cursor: String
+    limit: Int
+    filter: AutomateFunctionReleasesFilter
+  ): AutomateFunctionReleaseCollection!
+  automationCount: Int!
 }
 
 type AutomateFunctionRelease {
   id: ID!
   function: AutomateFunction!
+  versionTag: String!
+  createdAt: DateTime!
+  inputSchema: JSONObject
+  commitId: String!
+}
+
+type AutomateFunctionReleaseCollection {
+  items: [AutomateFunctionRelease!]!
+  totalCount: Int!
+  cursor: String
 }
 
 type AutomateFunctionCollection {
@@ -86,18 +164,80 @@ input ProjectAutomationUpdateInput {
   name: String
 }
 
+input AutomationRevisionCreateFunctionInput {
+  functionId: String!
+  releaseId: String!
+  """
+  Should be encrypted from the client side
+  """
+  parameters: String
+}
+
+input ProjectAutomationRevisionCreateInput {
+  automationId: ID!
+  """
+  Trigger definition schema:
+  {
+    version: 1.0.0,
+    definitions: Array<{
+      type: AutomateRunTriggerType.VERSION_CREATED,
+      modelId: string,
+    }>
+  }
+  """
+  triggerDefinitions: JSONObject!
+  functions: [AutomationRevisionCreateFunctionInput!]!
+}
+
 type ProjectAutomationMutations {
   update(input: ProjectAutomationUpdateInput!): Automation
+  createRevision(input: ProjectAutomationRevisionCreateInput!): AutomationRevision
 }
 
 extend type ProjectMutations {
   automationMutations(projectId: ID!): ProjectAutomationMutations!
 }
 
+input AutomateFunctionsFilter {
+  search: String
+}
+
 extend type Query {
   automateFunctions(
-    filter: String
+    filter: AutomateFunctionsFilter
     cursor: String
     limit: Int
   ): AutomateFunctionCollection!
+  automateFunction(id: ID!): AutomateFunction
+}
+
+input AutomateFunctionRunStatusReportInput {
+  functionRunId: String!
+  status: AutomationRunStatus!
+  statusMessage: String
+  contextView: String
+  """
+  NOTE: this is the schema for the results field below!
+  Current schema: {
+    version: '1.0.0'
+    values: {
+      objectResults: {
+        category: string
+        level: ObjectResultLevel
+        objectIds: string[]
+        message: string
+        metadata: Record<string, unknown> | null
+        visualOverrides: Record<string, unknown> | null
+      }[]
+      blobIds?: string[] | undefined
+    }
+  }
+  """
+  results: JSONObject
+}
+
+extend type Mutation {
+  automateFunctionRunStatusReport(
+    input: AutomateFunctionRunStatusReportInput!
+  ): Boolean!
 }

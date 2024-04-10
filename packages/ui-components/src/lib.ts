@@ -10,7 +10,8 @@ import CommonBadge from '~~/src/components/common/Badge.vue'
 import type {
   BulletStepType,
   NumberStepType,
-  HorizontalOrVertical
+  HorizontalOrVertical,
+  PropAnyComponent
 } from '~~/src/helpers/common/components'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
@@ -85,6 +86,8 @@ export * from '~~/src/helpers/common/error'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
 import type { AvatarUser, AvatarUserWithId } from '~~/src/composables/user/avatar'
 import { useDebouncedTextInput } from '~~/src/composables/form/textInput'
+
+export { vKeyboardClickable } from '~~/src/directives/accessibility'
 
 export {
   CommonLoadingIcon,
@@ -164,5 +167,6 @@ export type {
   FileTypeSpecifier,
   AvatarUser,
   AvatarUserWithId,
-  LayoutPageTabItem
+  LayoutPageTabItem,
+  PropAnyComponent
 }

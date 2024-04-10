@@ -19,7 +19,7 @@ exports.init = async (app) => {
   require('./rest/diffUpload')(app)
   require('./rest/diffDownload')(app)
 
-  // Register core-based scopes
+  // Register core-based scoeps
   const scopes = require('./scopes.js')
   for (const scope of scopes) {
     await registerOrUpdateScope(scope)
