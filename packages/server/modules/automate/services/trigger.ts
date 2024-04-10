@@ -1,5 +1,6 @@
 import {
   getAutomationRevision,
+  getAutomationToken,
   upsertAutomationRun
 } from '@/modules/automate/repositories'
 import {
@@ -8,7 +9,9 @@ import {
   AutomationTrigger,
   AutomationTriggerModelVersion,
   AutomationWithRevision,
-  AutomationRevisionTrigger
+  AutomationRevisionTrigger,
+  AutomationToken,
+  AutomationFunctionRun
 } from '@/modules/automate/types'
 import { CommitRecord } from '@/modules/core/helpers/types'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
@@ -40,7 +43,6 @@ export const onModelVersionCreate =
     // get revisions where it matches any of the triggers and the revision is published
     await Promise.all(
       triggers.map(async (tr) => {
-        console.log('in trigger loop', tr)
         try {
           await triggerFunction({
             revisionId: tr.automationRevisionId,
@@ -72,10 +74,11 @@ export const triggerAutomationRevisionRun =
   }: {
     revisionId: string
     trigger: AutomationTriggerModelVersion
-  }) => {
-    const { automationWithRevision, userId } = await ensureRunConditions(
+  }): Promise<{ automationRunId: string }> => {
+    const { automationWithRevision, userId, automateToken } = await ensureRunConditions(
       getAutomationRevision,
-      getCommit
+      getCommit,
+      getAutomationToken
     )({
       revisionId,
       trigger
@@ -107,23 +110,33 @@ export const triggerAutomationRevisionRun =
     try {
       const { automationRunId } = await automateRunTrigger({
         projectId: automationWithRevision.projectId,
-        automationId: automationWithRevision.automationId,
-        automationRun,
-        speckleToken: projectScopedToken
+        automationId: automationWithRevision.executionEngineAutomationId,
+        triggers,
+        functionRuns: automationRun.functionRuns,
+        speckleToken: projectScopedToken,
+        automationToken: automateToken
       })
 
       automationRun.executionEngineRunId = automationRunId
       await upsertAutomationRun(automationRun)
     } catch (error) {
+      const statusMessage = error instanceof Error ? error.message : `${error}`
       automationRun.status = 'error'
+      automationRun.functionRuns = automationRun.functionRuns.map((fr) => ({
+        ...fr,
+        status: 'error',
+        statusMessage
+      }))
       await upsertAutomationRun(automationRun)
     }
+    return { automationRunId: automationRun.id }
   }
 
 export const ensureRunConditions =
   (
     revisionGetter: (revisionId: string) => Promise<AutomationWithRevision | null>,
-    versionGetter: (versionId: string) => Promise<Optional<CommitRecord>>
+    versionGetter: (versionId: string) => Promise<Optional<CommitRecord>>,
+    automationTokenGetter: (automationId: string) => Promise<AutomationToken | null>
   ) =>
   async ({
     revisionId,
@@ -131,7 +144,12 @@ export const ensureRunConditions =
   }: {
     revisionId: string
     trigger: AutomationTriggerModelVersion
-  }): Promise<{ automationWithRevision: AutomationWithRevision; userId: string }> => {
+  }): Promise<{
+    automationWithRevision: AutomationWithRevision
+    userId: string
+    automateToken: string
+    automateRefreshToken: string
+  }> => {
     const automationWithRevision = await revisionGetter(revisionId)
     if (!automationWithRevision)
       throw new Error("Cannot trigger the given revision, it doesn't exist")
@@ -162,7 +180,15 @@ export const ensureRunConditions =
         "The user, that created the triggering version doesn't exist any more"
       )
 
-    return { automationWithRevision, userId }
+    const token = await automationTokenGetter(automationWithRevision.automationId)
+    if (!token) throw new Error('Cannot find a token for the automation')
+
+    return {
+      automationWithRevision,
+      userId,
+      automateToken: token.automateToken,
+      automateRefreshToken: token.automateRefreshToken
+    }
   }
 
 async function composeTriggerData({
@@ -212,7 +238,10 @@ function createAutomationRunData({
   const runId = cryptoRandomString({ length: 15 })
   const automationRun = {
     id: runId,
-    triggers,
+    triggers: triggers.map((t) => ({
+      triggeringId: t.versionId,
+      triggerType: t.triggerType
+    })),
     executionEngineRunId: null,
     status: 'pending' as const,
     automationRevisionId: automationWithRevision.id,
@@ -238,22 +267,26 @@ function createAutomationRunData({
 type AutomateRunTriggerArgs = {
   projectId: string
   automationId: string
-  automationRun: AutomationRun
+  functionRuns: AutomationFunctionRun[]
+  triggers: AutomationRunTrigger[]
   speckleToken: string
+  automationToken: string
 }
 
 export async function sendRunTriggerToAutomate({
   projectId,
-  automationRun,
+  functionRuns,
+  triggers,
   automationId,
-  speckleToken
+  speckleToken,
+  automationToken
 }: AutomateRunTriggerArgs): Promise<AutomationRunResponseBody> {
   const automateUrl = speckleAutomateUrl()
   if (!automateUrl)
     throw new Error('Cannot trigger automation run, Automate URL is not configured')
   const url = `${automateUrl}/api/v2/automations/${automationId}/runs`
 
-  const functionDefinitions = automationRun.functionRuns.map((functionRun) => {
+  const functionDefinitions = functionRuns.map((functionRun) => {
     return {
       functionId: functionRun.functionId,
       functionReleaseId: functionRun.functionReleaseId,
@@ -265,24 +298,32 @@ export async function sendRunTriggerToAutomate({
   const payload: AutomationRunPostBody = {
     projectId,
     functionDefinitions,
-    triggers: automationRun.triggers,
+    triggers: triggers.map((t) => ({
+      triggerType: t.triggerType,
+      payload: { modelId: t.modelId, versionId: t.versionId }
+    })),
     speckleToken
   }
   const response = await fetch(url, {
     method: 'post',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${automationToken}`
     },
     body: JSON.stringify(payload)
   })
   const result = (await response.json()) as AutomationRunResponseBody
+  //TODO handle 401
   return result
 }
 
 type AutomationRunPostBody = {
   projectId: string
   speckleToken: string
-  triggers: { modelId: string; versionId: string; triggerType: 'versionCreation' }[]
+  triggers: {
+    payload: { modelId: string; versionId: string }
+    triggerType: 'versionCreation'
+  }[]
   functionDefinitions: {
     functionInputs: Record<string, unknown> | null
     functionId: string

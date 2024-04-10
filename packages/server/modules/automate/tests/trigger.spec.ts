@@ -12,8 +12,21 @@ import { expect } from 'chai'
 import { createTestUser } from '@/test/authHelper'
 import { createTestStream } from '@/test/speckle-helpers/streamHelper'
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
+import {
+  getAutomationRun,
+  storeAutomation,
+  storeAutomationRevision
+} from '../repositories'
 
 describe('Automate triggers @automate', () => {
+  const testUser = {
+    id: cryptoRandomString({ length: 10 }),
+    name: 'The Automaton',
+    email: 'the@automaton.com'
+  }
+  before(async () => {
+    await createTestUser(testUser)
+  })
   describe('On model version create', () => {
     it('No trigger no run', async () => {
       const triggered: Record<string, AutomationTriggerModelVersion> = {}
@@ -113,18 +126,12 @@ describe('Automate triggers @automate', () => {
       }
     })
     it('Saves run with an error if automate run trigger fails', async () => {
-      // create user, project, model, version
-      const testUser = {
-        id: cryptoRandomString({ length: 10 }),
-        name: 'The Automaton',
-        email: 'the@automaton.com'
-      }
-      await createTestUser(testUser)
+      const userId = testUser.id
 
       const project = {
         name: cryptoRandomString({ length: 10 }),
         id: cryptoRandomString({ length: 10 }),
-        ownerId: testUser.id,
+        ownerId: userId,
         isPublic: true
       }
 
@@ -133,31 +140,159 @@ describe('Automate triggers @automate', () => {
         id: cryptoRandomString({ length: 10 }),
         streamId: project.id,
         objectId: null,
-        authorId: testUser.id
+        authorId: userId
       }
       // @ts-expect-error force setting the objectId to null
       await createTestCommit(version)
       // create automation,
+      const automation = {
+        id: cryptoRandomString({ length: 10 }),
+        createdAt: new Date(),
+        name: cryptoRandomString({ length: 15 }),
+        enabled: true,
+        projectId: project.id,
+        executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+        userId
+      }
+      const automationToken = {
+        automationId: automation.id,
+        automateToken: cryptoRandomString({ length: 10 }),
+        automateRefreshToken: cryptoRandomString({ length: 10 })
+      }
+      await storeAutomation(automation, automationToken)
+
+      const automationRevisionId = cryptoRandomString({ length: 10 })
+      const trigger = {
+        triggerType: 'versionCreation' as const,
+        triggeringId: cryptoRandomString({ length: 10 })
+      }
       // create revision,
-      await triggerAutomationRevisionRun(async () => {
-        throw new Error('trigger failed')
+      await storeAutomationRevision({
+        id: automationRevisionId,
+        createdAt: new Date(),
+        automationId: automation.id,
+        active: true,
+        triggers: [trigger],
+        userId,
+        functions: [
+          {
+            functionId: cryptoRandomString({ length: 10 }),
+            functionInputs: null,
+            functionReleaseId: cryptoRandomString({ length: 10 })
+          }
+        ]
+      })
+      const thrownError = 'trigger failed'
+      const { automationRunId } = await triggerAutomationRevisionRun(async () => {
+        throw new Error(thrownError)
       })({
-        revisionId: cryptoRandomString({ length: 10 }),
+        revisionId: automationRevisionId,
         trigger: {
-          versionId: cryptoRandomString({ length: 10 }),
-          triggerType: 'versionCreation',
-          triggeringId: cryptoRandomString({ length: 10 })
+          versionId: version.id,
+          ...trigger
         }
       })
+
+      const storedRun = await getAutomationRun(automationRunId)
+      if (!storedRun) throw 'cant fint the stored run'
+
+      const expectedStatus = 'error'
+
+      expect(storedRun.status).to.equal(expectedStatus)
+      for (const run of storedRun.functionRuns) {
+        expect(run.status).to.equal(expectedStatus)
+        expect(run.statusMessage).to.equal(thrownError)
+      }
     })
-    it('Saves run with the execution engine run id if trigger is successful')
+    it('Saves run with the execution engine run id if trigger is successful', async () => {
+      // create user, project, model, version
+
+      const userId = testUser.id
+
+      const project = {
+        name: cryptoRandomString({ length: 10 }),
+        id: cryptoRandomString({ length: 10 }),
+        ownerId: userId,
+        isPublic: true
+      }
+
+      await createTestStream(project, testUser)
+      const version = {
+        id: cryptoRandomString({ length: 10 }),
+        streamId: project.id,
+        objectId: null,
+        authorId: userId
+      }
+      // @ts-expect-error force setting the objectId to null
+      await createTestCommit(version)
+      // create automation,
+      const automation = {
+        id: cryptoRandomString({ length: 10 }),
+        createdAt: new Date(),
+        name: cryptoRandomString({ length: 15 }),
+        enabled: true,
+        projectId: project.id,
+        executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+        userId
+      }
+      const automationToken = {
+        automationId: automation.id,
+        automateToken: cryptoRandomString({ length: 10 }),
+        automateRefreshToken: cryptoRandomString({ length: 10 })
+      }
+      await storeAutomation(automation, automationToken)
+
+      const automationRevisionId = cryptoRandomString({ length: 10 })
+      const trigger = {
+        triggerType: 'versionCreation' as const,
+        triggeringId: cryptoRandomString({ length: 10 })
+      }
+      // create revision,
+      await storeAutomationRevision({
+        id: automationRevisionId,
+        createdAt: new Date(),
+        automationId: automation.id,
+        active: true,
+        triggers: [trigger],
+        userId,
+        functions: [
+          {
+            functionId: cryptoRandomString({ length: 10 }),
+            functionInputs: null,
+            functionReleaseId: cryptoRandomString({ length: 10 })
+          }
+        ]
+      })
+      const executionEngineRunId = cryptoRandomString({ length: 10 })
+      const { automationRunId } = await triggerAutomationRevisionRun(async () => ({
+        automationRunId: executionEngineRunId
+      }))({
+        revisionId: automationRevisionId,
+        trigger: {
+          versionId: version.id,
+          ...trigger
+        }
+      })
+
+      const storedRun = await getAutomationRun(automationRunId)
+      if (!storedRun) throw 'cant fint the stored run'
+
+      const expectedStatus = 'pending'
+
+      expect(storedRun.status).to.equal(expectedStatus)
+      expect(storedRun.executionEngineRunId).to.equal(executionEngineRunId)
+      for (const run of storedRun.functionRuns) {
+        expect(run.status).to.equal(expectedStatus)
+      }
+    })
   })
   describe('Run conditions are NOT met if', () => {
     it("the referenced revision doesn't exist", async () => {
       try {
         await ensureRunConditions(
           async () => null,
-          async () => undefined
+          async () => undefined,
+          async () => null
         )({
           revisionId: cryptoRandomString({ length: 10 }),
           trigger: {
@@ -186,9 +321,13 @@ describe('Automate triggers @automate', () => {
             createdAt: new Date(),
             functions: [],
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 })
+            automationId: cryptoRandomString({ length: 10 }),
+            executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+            automationToken: cryptoRandomString({ length: 15 }),
+            userId: cryptoRandomString({ length: 10 })
           }),
-          async () => undefined
+          async () => undefined,
+          async () => null
         )({
           revisionId: cryptoRandomString({ length: 10 }),
           trigger: {
@@ -217,9 +356,13 @@ describe('Automate triggers @automate', () => {
             createdAt: new Date(),
             functions: [],
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 })
+            automationId: cryptoRandomString({ length: 10 }),
+            executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+            automationToken: cryptoRandomString({ length: 15 }),
+            userId: cryptoRandomString({ length: 10 })
           }),
-          async () => undefined
+          async () => undefined,
+          async () => null
         )({
           revisionId: cryptoRandomString({ length: 10 }),
           trigger: {
@@ -248,9 +391,13 @@ describe('Automate triggers @automate', () => {
             createdAt: new Date(),
             functions: [],
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 })
+            automationId: cryptoRandomString({ length: 10 }),
+            executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+            automationToken: cryptoRandomString({ length: 15 }),
+            userId: cryptoRandomString({ length: 10 })
           }),
-          async () => undefined
+          async () => undefined,
+          async () => null
         )({
           revisionId: cryptoRandomString({ length: 10 }),
           trigger: {
@@ -288,6 +435,7 @@ describe('Automate triggers @automate', () => {
             projectId: cryptoRandomString({ length: 10 }),
             automationId: cryptoRandomString({ length: 10 })
           }),
+          async () => null,
           async () => undefined
         )({
           revisionId: cryptoRandomString({ length: 10 }),
@@ -318,9 +466,13 @@ describe('Automate triggers @automate', () => {
             createdAt: new Date(),
             functions: [],
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 })
+            automationId: cryptoRandomString({ length: 10 }),
+            executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+            automationToken: cryptoRandomString({ length: 15 }),
+            userId: cryptoRandomString({ length: 10 })
           }),
-          async () => undefined
+          async () => undefined,
+          async () => null
         )({
           revisionId: cryptoRandomString({ length: 10 }),
           trigger
@@ -349,7 +501,10 @@ describe('Automate triggers @automate', () => {
             createdAt: new Date(),
             functions: [],
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 })
+            automationId: cryptoRandomString({ length: 10 }),
+            executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+            automationToken: cryptoRandomString({ length: 15 }),
+            userId: cryptoRandomString({ length: 10 })
           }),
           async () => ({
             author: null,
@@ -360,7 +515,8 @@ describe('Automate triggers @automate', () => {
             referencedObject: cryptoRandomString({ length: 10 }),
             totalChildrenCount: null,
             sourceApplication: 'test suite'
-          })
+          }),
+          async () => null
         )({
           revisionId: cryptoRandomString({ length: 10 }),
           trigger
@@ -371,6 +527,49 @@ describe('Automate triggers @automate', () => {
         expect(error.message).contains(
           "The user, that created the triggering version doesn't exist any more"
         )
+      }
+    })
+    it("the automation doesn't have a token available", async () => {
+      const trigger = {
+        triggerType: 'versionCreation' as const,
+        triggeringId: cryptoRandomString({ length: 10 }),
+        versionId: cryptoRandomString({ length: 10 })
+      }
+      try {
+        await ensureRunConditions(
+          async () => ({
+            active: true,
+            enabled: true,
+            triggers: [trigger],
+            id: cryptoRandomString({ length: 10 }),
+            name: cryptoRandomString({ length: 10 }),
+            createdAt: new Date(),
+            functions: [],
+            projectId: cryptoRandomString({ length: 10 }),
+            automationId: cryptoRandomString({ length: 10 }),
+            executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+            automationToken: cryptoRandomString({ length: 15 }),
+            userId: cryptoRandomString({ length: 10 })
+          }),
+          async () => ({
+            author: cryptoRandomString({ length: 10 }),
+            id: cryptoRandomString({ length: 10 }),
+            createdAt: new Date(),
+            message: 'foobar',
+            parents: [],
+            referencedObject: cryptoRandomString({ length: 10 }),
+            totalChildrenCount: null,
+            sourceApplication: 'test suite'
+          }),
+          async () => null
+        )({
+          revisionId: cryptoRandomString({ length: 10 }),
+          trigger
+        })
+        throw 'this should have thrown'
+      } catch (error) {
+        if (!(error instanceof Error)) throw error
+        expect(error.message).contains('Cannot find a token for the automation')
       }
     })
   })

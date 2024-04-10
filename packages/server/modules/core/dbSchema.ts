@@ -559,7 +559,15 @@ export const AutomationRevisionFunctions = buildTableHelper(
 export const AutomationRevisions = buildTableHelper('automation_revisions', [
   'id',
   'automationId',
-  'createdAt'
+  'active',
+  'createdAt',
+  'userId'
+])
+
+export const AutomationTokens = buildTableHelper('automation_tokens', [
+  'automationId',
+  'automationToken',
+  'automationRefreshToken'
 ])
 
 export const AutomationRuns = buildTableHelper('automation_runs', [
@@ -567,13 +575,17 @@ export const AutomationRuns = buildTableHelper('automation_runs', [
   'automationRevisionId',
   'createdAt',
   'updatedAt',
-  'triggers',
   'status',
-  'functionRuns',
   'executionEngineRunId'
 ])
 
 export const AutomationTriggers = buildTableHelper('automation_triggers', [
+  'automationRevisionId',
+  'triggerType',
+  'triggeringId'
+])
+
+export const AutomationRunTriggers = buildTableHelper('automation_run_triggers', [
   'automationRevisionId',
   'triggerType',
   'triggeringId'
@@ -584,7 +596,8 @@ export const Automations = buildTableHelper('automations', [
   'name',
   'projectId',
   'enabled',
-  'createdAt'
+  'createdAt',
+  'userId'
 ])
 
 export { knex }

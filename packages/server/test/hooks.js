@@ -37,6 +37,8 @@ exports.truncateTables = async (tableNames) => {
     ).map((table) => table.tablename)
   }
 
+  if (!tableNames.length) return
+
   await knex.raw(`truncate table ${tableNames.join(',')} cascade`)
 }
 
@@ -81,6 +83,7 @@ exports.mochaHooks = {
   beforeAll: async () => {
     logger.info('running before all')
     await unlock()
+    await exports.truncateTables()
     await knex.migrate.rollback()
     await knex.migrate.latest()
     await init()

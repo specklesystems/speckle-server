@@ -7,7 +7,7 @@ import {
   sendRunTriggerToAutomate
 } from '@/modules/automate/services/trigger'
 import { Environment } from '@speckle/shared'
-import { queryActiveTriggersByTriggeringId } from './repositories'
+import { queryActiveTriggersByTriggeringId } from '@/modules/automate/repositories/index'
 
 let quitListeners: Optional<() => void> = undefined
 

@@ -17,8 +17,10 @@ export type Automation = {
   id: string
   name: string
   projectId: string
+  userId: string | null
   enabled: boolean
   createdAt: Date
+  executionEngineAutomationId: string
 }
 
 export type AutomateFunction = {
@@ -34,9 +36,16 @@ export type AutomationRevision = {
   functions: AutomateFunction[]
   active: boolean
   createdAt: Date
+  userId: string | null
 }
 
 export type AutomationWithRevision = Automation & AutomationRevision
+
+export type AutomationToken = {
+  automationId: string
+  automateToken: string
+  automateRefreshToken: string
+}
 
 export type AutomationRunTrigger = {
   modelId: string
@@ -58,7 +67,7 @@ export type AutomationRun = {
   updatedAt: Date
   status: AutomationRunStatus
   functionRuns: AutomationFunctionRun[]
-  triggers: AutomationRunTrigger[]
+  triggers: AutomationTrigger[]
   executionEngineRunId: string | null
 }
 
