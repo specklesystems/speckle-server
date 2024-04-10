@@ -115,6 +115,7 @@ import {
   ArrowLongRightIcon,
   ArrowLongLeftIcon
 } from '@heroicons/vue/24/outline'
+import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
@@ -122,8 +123,8 @@ const props = defineProps<{
   title?: string
 }>()
 
-const activeItem = ref<LayoutPageTabItem | null>(null)
-const buttonContainer = ref<HTMLElement | null>(null)
+const activeItem = defineModel<LayoutPageTabItem>('activeItem', { required: true })
+const buttonContainer = ref(null as Nullable<HTMLDivElement>)
 const scrollContainer = ref<HTMLElement | null>(null)
 const showLeftArrow = ref(false)
 const showRightArrow = ref(false)
@@ -163,7 +164,7 @@ const buttonClass = computed(() => {
       else baseClasses.push('text-foreground')
     }
 
-    return baseClasses.join(' ')
+    return baseClasses
   }
 })
 
