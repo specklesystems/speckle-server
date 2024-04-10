@@ -11,11 +11,11 @@
       class="absolute h-6 sm:h-16 bg-gradient-to-r pr-5 pl-1 from-foundation-page to-transparent left-0 -top-1 z-20"
       @click="scrollLeft"
     >
-      <ArrowLongLeftIcon class="h-5 w-5" />
+      <ArrowLongLeftIcon class="h-4 w-4" />
     </button>
     <div
       ref="scrollContainer"
-      class="relative flex md:justify-between overflow-x-auto"
+      class="relative flex overflow-x-auto"
       :class="
         vertical
           ? 'items-center md:items-start lg:flex-col lg:w-2/12 shrink-0 gap-4 sm:gap-6'
@@ -24,9 +24,7 @@
       @scroll="handleScroll"
     >
       <template v-if="!vertical">
-        <div
-          class="absolute bottom-0 right-4 xl:right-0 h-px w-full bg-outline-3"
-        ></div>
+        <div class="hidden sm:block absolute bottom-0 h-px w-full bg-outline-3"></div>
         <div
           :style="borderStyle"
           class="h-[2px] absolute bottom-0 z-20 bg-primary transition-all duration-300"
@@ -35,8 +33,12 @@
 
       <div
         ref="buttonContainer"
-        class="flex"
-        :class="vertical ? 'flex-col gap-1 w-full' : 'gap-4 sm:gap-6'"
+        class="flex w-full"
+        :class="
+          vertical
+            ? 'flex-col gap-1'
+            : 'gap-6 border-b-[2px] border-outline sm:border-b-0'
+        "
       >
         <h1
           v-if="title"
@@ -94,7 +96,7 @@
       class="absolute -right-px -top-1 z-20 pl-5 pr-1 h-6 sm:h-16 bg-gradient-to-l from-foundation-page to-transparent"
       @click="scrollRight"
     >
-      <ArrowLongRightIcon class="h-5 w-5" />
+      <ArrowLongRightIcon class="h-4 w-4" />
     </button>
 
     <div :class="vertical ? 'lg:w-10/12' : ''">
@@ -150,12 +152,12 @@ const buttonClass = computed(() => {
       baseClasses.push(
         'text-sm sm:text-base',
         'gap-1.5',
-        'hover:border-outline-2',
+        'hover:sm:border-outline-2',
         'pb-2',
         'border-b-[2px]',
         'border-transparent',
         'max-w-max',
-        'last:mr-8'
+        'last:mr-6'
       )
       if (isActive) baseClasses.push('text-primary', 'hover:text-primary')
       else baseClasses.push('text-foreground')
@@ -195,9 +197,10 @@ const checkArrowsVisibility = () => {
   const scrollWidth = container.scrollWidth
   const clientWidth = container.clientWidth
   const scrollLeft = container.scrollLeft
+  const buffer = 1
 
-  showLeftArrow.value = scrollLeft > 0
-  showRightArrow.value = scrollLeft < scrollWidth - clientWidth
+  showLeftArrow.value = scrollLeft > buffer
+  showRightArrow.value = scrollLeft < scrollWidth - clientWidth - buffer
 }
 
 const scrollLeft = () => {
