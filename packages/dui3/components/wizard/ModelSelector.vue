@@ -1,13 +1,16 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="space-y-2">
+    <div class="flex items-center justify-between mb-2">
+      <div class="h5 font-bold">Select Model</div>
+    </div>
     <div class="space-y-2">
       <div
         class="flex items-center space-x-2 justify-between items-center items-centre"
       >
         <FormTextInput
           v-model="modelName"
-          placeholder="search"
+          :placeholder="totalCount === 0 ? 'new model name' : 'search'"
           name="search"
           :show-clear="!!modelName"
           full-width
@@ -49,48 +52,64 @@
           </div>
         </div>
         <div class="caption text-center mt-2">{{ totalCount }} model(s) found.</div>
+        <div v-if="showNewModel && totalCount === 0 && modelName">
+          <FormButton
+            full-width
+            class="block truncate max-w-full overflow-hidden"
+            @click="createNewModel(modelName)"
+          >
+            Create "{{ modelName }}"
+          </FormButton>
+        </div>
       </div>
     </div>
     <button
-      v-if="showNewModel"
+      v-if="showNewModel && totalCount !== 0"
       v-tippy="'Create A New Model'"
       class="fixed bottom-2 flex items-center justify-center right-2 z-100 w-12 h-12 rounded-full bg-primary text-foreground-on-primary"
       @click="showNewModelDialog = true"
     >
       <PlusIcon class="w-6 h-6" />
     </button>
-    <LayoutDialog v-model:open="showNewModelDialog" hide-closer>
-      <div class="-mx-6 -my-5 space-y-2">
-        <form @submit="onSubmit">
-          <FormTextInput
-            v-model="newModelName"
-            :rules="rules"
-            placeholder="new model name"
-            name="new model name"
-            :show-clear="!!newModelName"
-            full-width
-          />
-          <div class="mt-2 flex">
-            <FormButton text @click="showNewModelDialog = false">Cancel</FormButton>
-            <FormButton class="flex-grow" submit>Create</FormButton>
-          </div>
-        </form>
-      </div>
+    <LayoutDialog
+      v-model:open="showNewModelDialog"
+      hide-closer
+      title="Create new model"
+    >
+      <form @submit="onSubmit">
+        <FormTextInput
+          v-model="newModelName"
+          :rules="rules"
+          placeholder="new model name"
+          name="name"
+          :show-clear="!!newModelName"
+          full-width
+        />
+        <div class="mt-2 flex">
+          <FormButton text @click="showNewModelDialog = false">Cancel</FormButton>
+          <FormButton class="flex-grow" submit>Create</FormButton>
+        </div>
+      </form>
     </LayoutDialog>
   </div>
 </template>
 <script setup lang="ts">
 import { CubeTransparentIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import { useQuery } from '@vue/apollo-composable'
+import { provideApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
 import {
   ProjectListProjectItemFragment,
   ModelListModelItemFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useModelNameValidationRules } from '~/lib/validation'
-import { projectModelsQuery } from '~/lib/graphql/mutationsAndQueries'
+import {
+  createModelMutation,
+  projectModelsQuery
+} from '~/lib/graphql/mutationsAndQueries'
 import { useForm } from 'vee-validate'
+import { DUIAccount, useAccountStore } from '~/store/accounts'
+import { watchOnce } from '@vueuse/core'
 
-defineEmits<{
+const emit = defineEmits<{
   (e: 'next', model: ModelListModelItemFragment): void
 }>()
 
@@ -103,6 +122,8 @@ const props = withDefaults(
   { showNewModel: true }
 )
 
+const accountStore = useAccountStore()
+
 const showNewModelDialog = ref(false)
 
 const modelName = ref<string>()
@@ -111,11 +132,26 @@ const newModelName = ref<string>()
 const rules = useModelNameValidationRules()
 
 const { handleSubmit } = useForm<{ name: string }>()
-const onSubmit = handleSubmit(async ({ name }) => {
-  // await createModel({ name, projectId: props.projectId })
-  // mp.track('Branch Action', { type: 'action', name: 'create', mode: 'dialog' })
-  // openState.value = false
+const onSubmit = handleSubmit((args) => {
+  void createNewModel(args.name)
 })
+
+const createNewModel = async (name: string) => {
+  const account = accountStore.accounts.find(
+    (acc) => acc.accountInfo.id === props.accountId
+  ) as DUIAccount
+
+  const { mutate } = provideApolloClient(account.client)(() =>
+    useMutation(createModelMutation)
+  )
+  const res = await mutate({ input: { projectId: props.project.id, name } })
+
+  if (res?.data?.modelMutations.create) {
+    emit('next', res?.data?.modelMutations.create)
+  } else {
+    // TODO: Error out
+  }
+}
 
 const { result: projectModelsResult, loading } = useQuery(
   projectModelsQuery,
@@ -126,9 +162,16 @@ const { result: projectModelsResult, loading } = useQuery(
       search: (modelName.value || '').trim() || null
     }
   }),
-  () => ({ clientId: props.accountId, debounce: 500 })
+  () => ({ clientId: props.accountId, debounce: 500, fetchPolicy: 'cache-and-network' })
 )
 
 const models = computed(() => projectModelsResult.value?.project.models.items)
 const totalCount = computed(() => projectModelsResult.value?.project.models.totalCount)
+const initialCount = ref(-1)
+
+watchOnce(projectModelsResult, (newObj) => {
+  console.log(newObj?.project.models.totalCount)
+  if (newObj?.project.models.totalCount)
+    initialCount.value = newObj.project.models.totalCount
+})
 </script>

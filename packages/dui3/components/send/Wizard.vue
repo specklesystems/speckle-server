@@ -1,6 +1,19 @@
 <template>
   <div>
-    <div class="-mt-4 mb-4 flex items-center justify-left space-x-2">
+    <!-- PROJECT NAME > MODEL NAME title -->
+    <div v-if="step === 2 || step === 3" class="-mt-6 mb-4">
+      <div v-if="step === 2 && selectedProject && selectedAccountId">
+        <div class="h9 font-bold italic">{{ selectedProject.name }}</div>
+      </div>
+      <div v-if="step === 3">
+        <div class="h9 font-bold italic">
+          {{ `${selectedProject.name} > ${selectedModel.name}` }}
+        </div>
+      </div>
+      <hr class="mt-1" />
+    </div>
+    <!-- Stepper -->
+    <div class="mb-3 flex items-center justify-left space-x-2">
       <CloudArrowUpIcon class="w-6 text-primary" />
       <div
         v-for="index in 3"
@@ -17,16 +30,15 @@
         <XMarkIcon class="w-4" />
       </button>
     </div>
+    <!-- Project selector wizard -->
     <div v-if="step === 1">
       <div>
         <div class="h5 font-bold">Select Project</div>
       </div>
       <WizardProjectSelector @next="selectProject" />
     </div>
+    <!-- Model selector wizard -->
     <div v-if="step === 2 && selectedProject && selectedAccountId">
-      <div class="flex items-center justify-between mb-2">
-        <div class="h5 font-bold">Select Model</div>
-      </div>
       <div>
         <WizardModelSelector
           :project="selectedProject"
@@ -35,6 +47,7 @@
         />
       </div>
     </div>
+    <!-- Version selector wizard -->
     <div v-if="step === 3">
       <div class="flex items-center justify-between mb-2">
         <div class="h5 font-bold">Send Filter</div>
@@ -88,8 +101,8 @@ const addModel = async () => {
   model.sendFilter = filter.value as ISendFilter
   model.expired = false
 
+  emit('close')
   await hostAppStore.addModel(model)
   void hostAppStore.sendModel(model.modelCardId)
-  emit('close')
 }
 </script>
