@@ -31,7 +31,7 @@
         <div
           :style="borderStyle"
           class="h-[1.5px] absolute bottom-0 z-20 transition-[left,width] duration-300"
-          :class="isInitialSetup ? 'bg-primary sm:bg-transparent' : 'bg-primary'"
+          :class="isInitialSetup ? 'bg-transparent' : 'bg-primary'"
         ></div>
       </template>
 
@@ -53,7 +53,7 @@
           :data-tab-id="item.id"
           :class="[
             buttonClass(item),
-            { 'sm:!border-primary': !vertical && isActiveItem(item) && isInitialSetup }
+            { '!border-primary': !vertical && isActiveItem(item) && isInitialSetup }
           ]"
           class="tab-button"
           :disabled="item.disabled"
