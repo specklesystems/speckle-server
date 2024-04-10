@@ -15,7 +15,7 @@
     </button>
     <div
       v-if="!vertical"
-      class="absolute left-0 z-10 w-full h-[1.5px] bg-outline-3 top-7 sm:top-8"
+      class="absolute left-0 z-10 w-full h-[1.5px] bg-outline-3 top-8"
     ></div>
     <div
       ref="scrollContainer"
@@ -155,7 +155,7 @@ const buttonClass = computed(() => {
       else baseClasses.push('text-foreground border-transparent')
     } else {
       baseClasses.push(
-        'text-sm sm:text-base',
+        'text-base',
         'gap-1.5',
         'hover:sm:border-outline-2',
         'pb-2',
