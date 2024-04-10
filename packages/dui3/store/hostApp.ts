@@ -91,6 +91,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     documentModelStore.value.models = documentModelStore.value.models.filter(
       (item) => item.modelCardId !== model.modelCardId
     )
+    trackEvent('DUI3 Action', { name: 'Remove Model Card' }, model.accountId)
   }
 
   /**
@@ -133,6 +134,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as ISenderModelCard
+    if (model.expired) {
+      // user sends via "Update" button
+      trackEvent('DUI3 Action', { name: 'Update Send' }, model.accountId)
+    }
     model.latestCreatedVersionId = undefined
     model.error = undefined
     model.progress = { status: 'Starting to send...' }
@@ -152,6 +157,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await app.$sendBinding.cancelSend(modelCardId)
     model.progress = undefined
     model.error = undefined
+    trackEvent('DUI3 Action', { name: 'Cancel Send' }, model.accountId)
     model.latestCreatedVersionId = undefined
   }
 
@@ -196,6 +202,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (m) => m.modelCardId === modelCardId
     ) as IReceiverModelCard
     await app.$receiveBinding.cancelReceive(modelCardId)
+    trackEvent('DUI3 Action', { name: 'Cancel Receive' }, model.accountId)
     model.progress = undefined
   }
 

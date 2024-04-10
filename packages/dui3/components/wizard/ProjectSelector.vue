@@ -16,7 +16,7 @@
         <div class="mt-1">
           <AccountsMenu
             :current-selected-account-id="accountId"
-            @select="(e) => (selectedAccountId = e.accountInfo.id)"
+            @select="(e) => selectAccount(e)"
           />
         </div>
       </div>
@@ -67,11 +67,12 @@
 </template>
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/20/solid'
-import { useAccountStore } from '~/store/accounts'
+import { useAccountStore, DUIAccount } from '~/store/accounts'
 import { projectsListQuery } from '~/lib/graphql/mutationsAndQueries'
 import { useQuery } from '@vue/apollo-composable'
 import { ProjectListProjectItemFragment } from 'lib/common/generated/gql/graphql'
 import { useForm } from 'vee-validate'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 defineEmits<{
   (e: 'next', accountId: string, project: ProjectListProjectItemFragment): void
@@ -94,6 +95,12 @@ const accountId = computed(
   () => selectedAccountId.value || (defaultAccount.value?.accountInfo.id as string)
 )
 const selectedAccountId = ref<string>()
+
+const selectAccount = (account: DUIAccount) => {
+  selectedAccountId.value = account.accountInfo.id
+  const { trackEvent } = useMixpanel()
+  trackEvent('DUI3 Action', { name: 'Account Select' }, account.accountInfo.id)
+}
 
 const { handleSubmit } = useForm<{ name: string }>()
 const onSubmitCreateNewProject = handleSubmit(async ({ name }) => {
