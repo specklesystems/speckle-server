@@ -54,7 +54,7 @@ const settingsTabItems = computed((): LayoutPageTabItem[] => [
     id: 'webhooks',
     icon: IconWebhooks,
     disabled: !isOwner.value,
-    disabledMessage: !isOwner.value ? 'Sorry this is disabled' : undefined
+    disabledMessage: !isOwner.value ? 'You must be the project owner' : undefined
   }
 ])
 

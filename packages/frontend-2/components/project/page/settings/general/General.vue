@@ -115,7 +115,7 @@ const canLeaveProject = computed(() => {
 
 const isOwner = computed(() => project.value?.role === Roles.Stream.Owner)
 
-const isDisabled = computed(() => !isOwner || isGuest.value)
+const isDisabled = computed(() => !isOwner.value || isGuest.value)
 
 const handleUpdate = (
   updates: Partial<ProjectUpdateInput>,
