@@ -47,7 +47,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
   const labelClasses = computed(() => {
     const classParts = [
-      'block label mb-1.5',
+      'flex label mb-1.5',
       unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2'
     ]
     if (!unref(props.showLabel)) {
@@ -111,7 +111,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     hasHelpTip.value ? `${unref(props.name)}-${internalHelpTipId.value}` : undefined
   )
   const helpTipClasses = computed((): string => {
-    const classParts = ['mt-2 text-xs sm:text-sm']
+    const classParts = ['mt-2 text-xs']
     classParts.push(error.value ? 'text-danger' : 'text-foreground-2')
     return classParts.join(' ')
   })

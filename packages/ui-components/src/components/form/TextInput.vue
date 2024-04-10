@@ -2,6 +2,7 @@
   <div :class="[fullWidth ? 'w-full' : '', wrapperClasses]">
     <label :for="name" :class="labelClasses">
       <span>{{ title }}</span>
+      <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
     </label>
     <div class="relative">
       <div
@@ -64,7 +65,7 @@
           <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
         </div>
         <div
-          v-if="showRequired && !errorMessage"
+          v-if="!showLabel && showRequired && !errorMessage"
           class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center text-danger opacity-50"
           :class="[showClear ? 'pr-8' : 'pr-2']"
         >
@@ -92,7 +93,7 @@ import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
-type InputSize = 'sm' | 'base' | 'lg' | 'xl'
+type InputSize = 'sm' | 'md' | 'base' | 'lg' | 'xl'
 type InputColor = 'page' | 'foundation' | 'transparent'
 
 defineOptions({
@@ -305,6 +306,8 @@ const sizeClasses = computed((): string => {
   switch (props.size) {
     case 'sm':
       return 'h-6 text-sm'
+    case 'md':
+      return 'h-8 text-sm'
     case 'lg':
       return 'h-10'
     case 'xl':

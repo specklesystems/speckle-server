@@ -9,7 +9,7 @@
       {{ props.webhook ? 'Edit Webhook' : 'Create Webhook' }}
     </template>
     <form @submit="onSubmit">
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-4">
         <FormTextInput
           v-model="url"
           label="URL"

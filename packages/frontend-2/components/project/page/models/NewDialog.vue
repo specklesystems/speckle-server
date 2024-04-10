@@ -7,9 +7,10 @@
   >
     <template #header>Create New Model</template>
     <form @submit="onSubmit">
-      <div class="flex flex-col space-y-4">
+      <div class="flex flex-col space-y-6 mb-4">
         <FormTextInput
           v-model="newModelName"
+          color="foundation"
           name="name"
           label="Model Name"
           show-label
@@ -21,6 +22,7 @@
         />
         <FormTextArea
           v-model="newDescription"
+          color="foundation"
           name="description"
           show-label
           label="Model Description"
