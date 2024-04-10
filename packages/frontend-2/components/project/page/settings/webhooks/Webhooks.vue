@@ -21,7 +21,7 @@
         Create
       </FormButton>
     </template>
-    <template v-if="webhooks.length">
+    <template v-if="webhooks.length !== 0">
       <LayoutTable
         :columns="[
           { id: 'enabled', header: 'State', classes: 'col-span-1' },
