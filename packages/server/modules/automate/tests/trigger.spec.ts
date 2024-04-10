@@ -17,6 +17,7 @@ import {
   storeAutomation,
   storeAutomationRevision
 } from '../repositories'
+import { beforeEachContext } from '@/test/hooks'
 
 describe('Automate triggers @automate', () => {
   const testUser = {
@@ -25,6 +26,7 @@ describe('Automate triggers @automate', () => {
     email: 'the@automaton.com'
   }
   before(async () => {
+    await beforeEachContext()
     await createTestUser(testUser)
   })
   describe('On model version create', () => {
@@ -34,6 +36,7 @@ describe('Automate triggers @automate', () => {
         async () => [],
         async ({ trigger, revisionId }) => {
           triggered[revisionId] = trigger
+          return { automationRunId: cryptoRandomString({ length: 10 }) }
         }
       )({
         modelId: cryptoRandomString({ length: 10 }),
@@ -60,6 +63,7 @@ describe('Automate triggers @automate', () => {
         async () => storedTriggers,
         async ({ revisionId, trigger }) => {
           triggered[revisionId] = trigger
+          return { automationRunId: cryptoRandomString({ length: 10 }) }
         }
       )({
         modelId: cryptoRandomString({ length: 10 }),
@@ -96,6 +100,7 @@ describe('Automate triggers @automate', () => {
           if (revisionId === storedTriggers[0].automationRevisionId)
             throw new Error('first one is borked')
           triggered[revisionId] = trigger
+          return { automationRunId: cryptoRandomString({ length: 10 }) }
         }
       )({
         modelId: cryptoRandomString({ length: 10 }),

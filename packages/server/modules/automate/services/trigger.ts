@@ -31,7 +31,7 @@ export const onModelVersionCreate =
     triggerFunction: (args: {
       revisionId: string
       trigger: AutomationTriggerModelVersion
-    }) => Promise<void>
+    }) => Promise<{ automationRunId: string }>
   ) =>
   async ({ modelId, versionId }: { modelId: string; versionId: string }) => {
     const triggers = await triggerQuery({
