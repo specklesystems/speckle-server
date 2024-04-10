@@ -15,7 +15,7 @@
     </button>
     <div
       ref="scrollContainer"
-      class="relative flex overflow-x-auto"
+      class="relative flex overflow-x-auto hide-scrollbar"
       :class="
         vertical
           ? 'items-center md:items-start lg:flex-col lg:w-2/12 shrink-0 gap-4 sm:gap-6'
@@ -24,11 +24,13 @@
       @scroll="handleScroll"
     >
       <template v-if="!vertical">
-        <div class="hidden sm:block absolute bottom-0 h-px w-full bg-outline-3"></div>
+        <div
+          class="hidden sm:block absolute bottom-0 h-[1.5px] w-full bg-outline-3"
+        ></div>
         <div
           :style="borderStyle"
-          class="h-[2px] absolute bottom-0 z-20 transition-[left,width] duration-300"
-          :class="isInitialSetup ? 'bg-transparent' : 'bg-primary'"
+          class="h-[1.5px] absolute bottom-0 z-20 transition-[left,width] duration-300"
+          :class="isInitialSetup ? 'bg-primary sm:bg-transparent' : 'bg-primary'"
         ></div>
       </template>
 
@@ -38,7 +40,7 @@
         :class="
           vertical
             ? 'flex-col gap-1'
-            : 'gap-6 border-b-[2px] border-outline sm:border-b-0'
+            : 'gap-6 border-b-[1.5px] border-outline sm:border-b-0'
         "
       >
         <h1
@@ -54,7 +56,7 @@
           :data-tab-id="item.id"
           :class="[
             buttonClass(item),
-            { '!border-primary': !vertical && isActiveItem(item) && isInitialSetup }
+            { 'sm:!border-primary': !vertical && isActiveItem(item) && isInitialSetup }
           ]"
           class="tab-button"
           :disabled="item.disabled"
@@ -160,7 +162,7 @@ const buttonClass = computed(() => {
         'gap-1.5',
         'hover:sm:border-outline-2',
         'pb-2',
-        'border-b-[2px]',
+        'border-b-[1.5px]',
         'border-transparent',
         'max-w-max',
         'last:mr-6'
@@ -247,3 +249,15 @@ watch(
   }
 )
 </script>
+<style>
+/* Hide scrollbar for Chrome, Safari and Opera */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+</style>
