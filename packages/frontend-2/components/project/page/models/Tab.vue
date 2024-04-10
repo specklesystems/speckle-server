@@ -1,5 +1,5 @@
 <template>
-  <div class="mr-4 sm:mr-8 xl:mr-0">
+  <div>
     <div v-if="project">
       <ProjectPageModelsHeader
         v-model:selected-apps="selectedApps"

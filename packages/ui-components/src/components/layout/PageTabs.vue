@@ -5,13 +5,23 @@
       vertical ? 'lg:gap-8 flex-col lg:flex-row' : 'md:gap-10 flex-col overflow-hidden'
     "
   >
+    <!-- Left Arrow Button -->
+    <button
+      v-if="showLeftArrow"
+      class="absolute h-6 sm:h-16 bg-gradient-to-r pr-5 pl-1 from-foundation-page to-transparent left-0 -top-1 z-20"
+      @click="scrollLeft"
+    >
+      <ArrowLongLeftIcon class="h-5 w-5" />
+    </button>
     <div
+      ref="scrollContainer"
       class="relative flex md:justify-between overflow-x-auto"
       :class="
         vertical
-          ? 'items-center md:items-start lg:flex-col lg:w-2/12 shrink-0 gap-6 pr-4 md:pr-0'
+          ? 'items-center md:items-start lg:flex-col lg:w-2/12 shrink-0 gap-4 sm:gap-6'
           : 'gap-8 w-full'
       "
+      @scroll="handleScroll"
     >
       <template v-if="!vertical">
         <div
@@ -26,7 +36,7 @@
       <div
         ref="buttonContainer"
         class="flex"
-        :class="vertical ? 'flex-col gap-1 w-full' : 'gap-6'"
+        :class="vertical ? 'flex-col gap-1 w-full' : 'gap-4 sm:gap-6'"
       >
         <h1
           v-if="title"
@@ -44,8 +54,12 @@
           :disabled="item.disabled"
           @click="setActiveItem(item)"
         >
-          <div class="flex gap-1.5 items-center">
-            <component :is="item.icon" v-if="item.icon" class="h-5 w-5"></component>
+          <div class="flex gap-1 sm:gap-1.5 items-center">
+            <component
+              :is="item.icon"
+              v-if="item.icon"
+              class="h-4 w-4 sm:h-5 sm:w-5"
+            ></component>
             <span class="min-w-6">{{ item.title }}</span>
             <div
               v-if="item.count"
@@ -73,17 +87,32 @@
         </button>
       </div>
     </div>
+
+    <!-- Right Arrow Button -->
+    <button
+      v-if="showRightArrow"
+      class="absolute -right-px -top-1 z-20 pl-5 pr-1 h-6 sm:h-16 bg-gradient-to-l from-foundation-page to-transparent"
+      @click="scrollRight"
+    >
+      <ArrowLongRightIcon class="h-5 w-5" />
+    </button>
+
     <div :class="vertical ? 'lg:w-10/12' : ''">
       <slot :active-item="activeItem" />
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
-import { computed, ref, type CSSProperties, onMounted, watch } from 'vue'
+import { computed, ref, onMounted, watch } from 'vue'
+import type { CSSProperties } from 'vue'
 import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
-import type { Nullable } from '@speckle/shared'
 import { isClient } from '@vueuse/core'
-import { InformationCircleIcon } from '@heroicons/vue/24/outline'
+import {
+  InformationCircleIcon,
+  ArrowLongRightIcon,
+  ArrowLongLeftIcon
+} from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
@@ -91,8 +120,11 @@ const props = defineProps<{
   title?: string
 }>()
 
-const activeItem = defineModel<LayoutPageTabItem>('activeItem', { required: true })
-const buttonContainer = ref(null as Nullable<HTMLDivElement>)
+const activeItem = ref<LayoutPageTabItem | null>(null)
+const buttonContainer = ref<HTMLElement | null>(null)
+const scrollContainer = ref<HTMLElement | null>(null)
+const showLeftArrow = ref(false)
+const showRightArrow = ref(false)
 
 const buttonClass = computed(() => {
   return (item: LayoutPageTabItem) => {
@@ -122,13 +154,14 @@ const buttonClass = computed(() => {
         'pb-2',
         'border-b-[2px]',
         'border-transparent',
-        'max-w-max'
+        'max-w-max',
+        'last:mr-8'
       )
       if (isActive) baseClasses.push('text-primary', 'hover:text-primary')
       else baseClasses.push('text-foreground')
     }
 
-    return baseClasses
+    return baseClasses.join(' ')
   }
 })
 
@@ -139,38 +172,64 @@ const activeItemRef = computed(() => {
   const parent = buttonContainer.value
   if (!parent) return null
 
-  const btns = [...parent.getElementsByClassName('tab-button')] as HTMLButtonElement[]
+  const btns = [...parent.getElementsByClassName('tab-button')] as HTMLElement[]
   return btns.find((b) => b.dataset['tabId'] === id) || null
 })
 
-const borderStyle = computed(() => {
+const borderStyle = computed<CSSProperties>(() => {
   const element = activeItemRef.value
-  const style: CSSProperties = {
+  return {
     left: `${element?.offsetLeft || 0}px`,
     width: `${element?.clientWidth || 0}px`
   }
-  return style
 })
 
 const setActiveItem = (item: LayoutPageTabItem) => {
   activeItem.value = item
 }
 
-if (isClient) {
-  // Doing onMounted & watch separately to avoid hydration mismatch
-  onMounted(() => {
+const checkArrowsVisibility = () => {
+  const container = scrollContainer.value
+  if (!container) return
+
+  const scrollWidth = container.scrollWidth
+  const clientWidth = container.clientWidth
+  const scrollLeft = container.scrollLeft
+
+  showLeftArrow.value = scrollLeft > 0
+  showRightArrow.value = scrollLeft < scrollWidth - clientWidth
+}
+
+const scrollLeft = () => {
+  scrollContainer.value?.scrollBy({ left: -100, behavior: 'smooth' }) // Adjust the scroll amount as needed
+  checkArrowsVisibility()
+}
+
+const scrollRight = () => {
+  scrollContainer.value?.scrollBy({ left: 100, behavior: 'smooth' }) // Adjust the scroll amount as needed
+  checkArrowsVisibility()
+}
+
+const handleScroll = () => {
+  checkArrowsVisibility()
+}
+
+onMounted(() => {
+  if (isClient) {
     if (props.items.length && !activeItem.value) {
       setActiveItem(props.items[0])
     }
-  })
+    checkArrowsVisibility()
+  }
+})
 
-  watch(
-    () => [props.items, activeItem.value] as const,
-    ([newItems, activeItem]) => {
-      if (newItems.length && !activeItem) {
-        setActiveItem(newItems[0])
-      }
+watch(
+  () => [props.items, activeItem.value] as const,
+  ([newItems]) => {
+    if (Array.isArray(newItems) && newItems.length && !activeItem.value) {
+      setActiveItem(newItems[0] as LayoutPageTabItem)
     }
-  )
-}
+    checkArrowsVisibility()
+  }
+)
 </script>
