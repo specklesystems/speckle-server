@@ -8,11 +8,15 @@
     <!-- Left Arrow Button -->
     <button
       v-if="showLeftArrow"
-      class="absolute h-6 sm:h-16 bg-gradient-to-r pr-5 pl-1 from-foundation-page to-transparent left-0 -top-1 z-20"
+      class="absolute h-6 sm:h-16 bg-gradient-to-r pr-5 pl-1 from-foundation-page to-transparent -left-px -top-1 z-20"
       @click="scrollLeft"
     >
       <ArrowLongLeftIcon class="h-4 w-4" />
     </button>
+    <div
+      v-if="!vertical"
+      class="absolute left-0 z-10 w-full h-[1.5px] bg-outline-3 top-7 sm:top-8"
+    ></div>
     <div
       ref="scrollContainer"
       class="relative flex overflow-x-auto hide-scrollbar"
@@ -25,9 +29,6 @@
     >
       <template v-if="!vertical">
         <div
-          class="hidden sm:block absolute bottom-0 h-[1.5px] w-full bg-outline-3"
-        ></div>
-        <div
           :style="borderStyle"
           class="h-[1.5px] absolute bottom-0 z-20 transition-[left,width] duration-300"
           :class="isInitialSetup ? 'bg-primary sm:bg-transparent' : 'bg-primary'"
@@ -37,11 +38,7 @@
       <div
         ref="buttonContainer"
         class="flex w-full"
-        :class="
-          vertical
-            ? 'flex-col gap-1'
-            : 'gap-6 border-b-[1.5px] border-outline sm:border-b-0'
-        "
+        :class="vertical ? 'flex-col gap-1' : 'gap-6'"
       >
         <h1
           v-if="title"
