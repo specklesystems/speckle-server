@@ -27,7 +27,8 @@
         <div class="hidden sm:block absolute bottom-0 h-px w-full bg-outline-3"></div>
         <div
           :style="borderStyle"
-          class="h-[2px] absolute bottom-0 z-20 bg-primary transition-all duration-300"
+          class="h-[2px] absolute bottom-0 z-20 transition-[left,width] duration-300"
+          :class="isInitialSetup ? 'bg-transparent' : 'bg-primary'"
         ></div>
       </template>
 
@@ -51,7 +52,10 @@
           v-for="item in items"
           :key="item.id"
           :data-tab-id="item.id"
-          :class="buttonClass(item)"
+          :class="[
+            buttonClass(item),
+            { '!border-primary': !vertical && isActiveItem(item) && isInitialSetup }
+          ]"
           class="tab-button"
           :disabled="item.disabled"
           @click="setActiveItem(item)"
@@ -128,6 +132,7 @@ const buttonContainer = ref(null as Nullable<HTMLDivElement>)
 const scrollContainer = ref<HTMLElement | null>(null)
 const showLeftArrow = ref(false)
 const showRightArrow = ref(false)
+const isInitialSetup = ref(true)
 
 const buttonClass = computed(() => {
   return (item: LayoutPageTabItem) => {
@@ -189,6 +194,11 @@ const borderStyle = computed<CSSProperties>(() => {
 
 const setActiveItem = (item: LayoutPageTabItem) => {
   activeItem.value = item
+  isInitialSetup.value = false
+}
+
+const isActiveItem = (item: LayoutPageTabItem) => {
+  return activeItem.value?.id === item.id
 }
 
 const checkArrowsVisibility = () => {
