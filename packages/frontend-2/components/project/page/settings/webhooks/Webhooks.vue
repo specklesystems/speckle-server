@@ -21,91 +21,98 @@
         Create
       </FormButton>
     </template>
-    <LayoutTable
-      :columns="[
-        { id: 'enabled', header: 'State', classes: 'col-span-1' },
-        { id: 'data', header: 'Data', classes: 'col-span-5' },
-        {
-          id: 'triggers',
-          header: 'Trigger Events',
-          classes: 'col-span-6 whitespace-break-spaces text-xs'
-        }
-      ]"
-      :items="webhooks"
-      :buttons="[
-        {
-          icon: PencilIcon,
-          label: 'Edit',
-          action: openEditWebhookDialog,
-          class: 'text-primary'
-        },
-        {
-          icon: TrashIcon,
-          label: 'Delete',
-          action: openDeleteWebhookDialog,
-          class: 'text-red-500'
-        }
-      ]"
-    >
-      <template #enabled="{ item }">
-        <FormSwitch
-          :model-value="!!item.enabled"
-          icons
-          class="scale-90"
-          @update:model-value="(newValue) => onEnabledChange(item, newValue)"
-        />
-      </template>
-      <template #data="{ item }">
-        <div class="flex flex-col">
-          <h3
-            class="font-bold text-sm truncate"
-            :class="{ 'opacity-60': !item.enabled }"
-          >
-            {{ item.description }}
-          </h3>
+    <template v-if="webhooks.length">
+      <LayoutTable
+        :columns="[
+          { id: 'enabled', header: 'State', classes: 'col-span-1' },
+          { id: 'data', header: 'Data', classes: 'col-span-5' },
+          {
+            id: 'triggers',
+            header: 'Trigger Events',
+            classes: 'col-span-6 whitespace-break-spaces text-xs'
+          }
+        ]"
+        :items="webhooks"
+        :buttons="[
+          {
+            icon: PencilIcon,
+            label: 'Edit',
+            action: openEditWebhookDialog,
+            class: 'text-primary'
+          },
+          {
+            icon: TrashIcon,
+            label: 'Delete',
+            action: openDeleteWebhookDialog,
+            class: 'text-red-500'
+          }
+        ]"
+      >
+        <template #enabled="{ item }">
+          <FormSwitch
+            :model-value="!!item.enabled"
+            icons
+            class="scale-90"
+            @update:model-value="(newValue) => onEnabledChange(item, newValue)"
+          />
+        </template>
+        <template #data="{ item }">
+          <div class="flex flex-col">
+            <h3
+              class="font-bold text-sm truncate"
+              :class="{ 'opacity-60': !item.enabled }"
+            >
+              {{ item.description }}
+            </h3>
 
-          <div class="flex gap-1 items-center">
-            <div class="h-4 w-4" :class="{ grayscale: !item.enabled }">
-              <InformationCircleIcon
-                v-if="getHistoryStatus(item) === HistoryStatus.NoEvents"
-                class="opacity-40"
-              />
-              <CheckCircleIcon
-                v-if="getHistoryStatus(item) === HistoryStatus.Called"
-                class="text-success"
-              />
-              <XCircleIcon
-                v-if="
-                  [HistoryStatus.Alert, HistoryStatus.Error].includes(
-                    getHistoryStatus(item)
-                  )
-                "
-                class="text-danger"
-              />
+            <div class="flex gap-1 items-center">
+              <div class="h-4 w-4" :class="{ grayscale: !item.enabled }">
+                <InformationCircleIcon
+                  v-if="getHistoryStatus(item) === HistoryStatus.NoEvents"
+                  class="opacity-40"
+                />
+                <CheckCircleIcon
+                  v-if="getHistoryStatus(item) === HistoryStatus.Called"
+                  class="text-success"
+                />
+                <XCircleIcon
+                  v-if="
+                    [HistoryStatus.Alert, HistoryStatus.Error].includes(
+                      getHistoryStatus(item)
+                    )
+                  "
+                  class="text-danger"
+                />
+              </div>
+              <span class="text-foreground opacity-50 text-xs truncate">
+                {{ getHistoryStatusInfo(item) }}
+              </span>
             </div>
             <span class="text-foreground opacity-50 text-xs truncate">
-              {{ getHistoryStatusInfo(item) }}
+              {{ item.url }}
             </span>
           </div>
-          <span class="text-foreground opacity-50 text-xs truncate">
-            {{ item.url }}
-          </span>
-        </div>
-      </template>
+        </template>
 
-      <template #triggers="{ item }">
-        <div :class="{ 'opacity-60': !item.enabled }">
-          {{
-            item.triggers
-              .map(
-                (event, index, array) =>
-                  `"${event}"${index < array.length - 1 ? ',' : ''}`
-              )
-              .join(' ')
-          }}
-        </div>
-      </template>
-    </LayoutTable>
+        <template #triggers="{ item }">
+          <div :class="{ 'opacity-60': !item.enabled }">
+            {{
+              item.triggers
+                .map(
+                  (event, index, array) =>
+                    `"${event}"${index < array.length - 1 ? ',' : ''}`
+                )
+                .join(' ')
+            }}
+          </div>
+        </template>
+      </LayoutTable>
+    </template>
+    <template v-else>
+      <div class="pt-6">
+        <ProjectPageSettingsWebhooksEmptyState />
+      </div>
+    </template>
     <ProjectPageSettingsWebhooksDeleteDialog
       v-model:open="showDeleteWebhookDialog"
       :webhook="webhookToModify"
