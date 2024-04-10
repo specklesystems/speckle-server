@@ -26,6 +26,7 @@ const unlock = async () => {
 exports.truncateTables = async (tableNames) => {
   if (!tableNames?.length) {
     //why is server config only created once!????
+    // because its done in a migration, to not override existing configs
     const protectedTables = ['server_config']
     // const protectedTables = [ 'server_config', 'user_roles', 'scopes', 'server_acl' ]
     tableNames = (
