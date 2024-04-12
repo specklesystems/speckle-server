@@ -7,9 +7,9 @@
         name="search"
         size="lg"
         placeholder="Search"
-        :disabled="!isOwner"
+        :disabled="disabled"
         :help="
-          !isOwner
+          disabled && disabledMessage
             ? 'You must be the project owner to invite users'
             : 'Search by username or email'
         "
@@ -71,10 +71,11 @@ type InvitableUser = UserSearchItem | string
 
 const props = defineProps<{
   project?: ProjectPageSettingsCollaboratorsQuery
+  disabled?: boolean
+  disabledMessage?: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
-const isOwner = computed(() => props.project?.project.role === Roles.Stream.Owner)
 
 const route = useRoute()
 

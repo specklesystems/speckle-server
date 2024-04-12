@@ -24,13 +24,19 @@
       </div>
     </template>
     <template #default>
-      <ProjectPageInviteDialog v-model:open="dialogOpen" />
+      <ProjectPageInviteDialog
+        v-model:open="dialogOpen"
+        :disabled="!isOwner"
+        :disabled-message="
+          !isOwner ? 'Sorry, you must be a project owner to invite users' : undefined
+        "
+      />
     </template>
   </ProjectPageStatsBlock>
 </template>
 <script setup lang="ts">
 import { UsersIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
-import type { Optional } from '@speckle/shared'
+import { Roles, type Optional } from '@speckle/shared'
 import { OpenSectionType } from '~/lib/projects/helpers/components'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -55,6 +61,8 @@ const props = defineProps<{
 }>()
 
 const { activeUser } = useActiveUser()
+
+const isOwner = computed(() => props.project?.role === Roles.Stream.Owner)
 
 const dialogOpen = ref(false)
 const openSection = ref<OpenSectionType | undefined>()

@@ -68,6 +68,10 @@
       v-if="project"
       v-model:open="showInviteDialog"
       :project="project"
+      :disabled="!isOwner"
+      :disabled-message="
+        !isOwner ? 'Sorry, you must be a project owner to invite users' : undefined
+      "
     />
   </ProjectPageSettingsBlock>
 </template>
