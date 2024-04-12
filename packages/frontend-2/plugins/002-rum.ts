@@ -105,7 +105,7 @@ async function initRumClient(app: PluginNuxtApp) {
 
       router.beforeEach((to) => {
         const pathDefinition = getRouteDefinition(to)
-        const routeName = to.meta.datadogName || pathDefinition
+        const routeName = (to.meta.datadogName || pathDefinition) as string
         const realPath = to.path
 
         window.DD_RUM_START_VIEW?.(realPath, routeName)
@@ -169,7 +169,7 @@ async function initRumServer(app: PluginNuxtApp) {
                 onLCP,
                 onINP,
                 onTTFB
-              } from 'https://unpkg.com/web-vitals@3/dist/web-vitals.attribution.js?module';
+              } from 'https://cdn.jsdelivr.net/npm/web-vitals@3/dist/web-vitals.attribution.js?module';
 
               onCLS(console.log);
               onFID(console.log);
