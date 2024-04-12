@@ -1,13 +1,15 @@
 <template>
   <div
-    class="flex flex-col gap-3 w-full"
+    class="flex flex-col w-full"
     :class="
       background
-        ? 'bg-foundation border border-primary-muted py-4 px-6 rounded-lg '
+        ? 'bg-foundation border border-primary-muted rounded-lg overflow-hidden '
         : ''
     "
   >
-    <div class="flex items-center gap-4 border-b border-outline-3 pb-3 justify-between">
+    <div
+      class="flex items-center gap-4 border-b border-outline-3 px-6 py-4 justify-between transition"
+    >
       <div class="flex items-center gap-2">
         <component :is="icon" v-if="icon" class="h-5 w-5"></component>
         <h3 class="text-xl font-bold">{{ title }}</h3>
@@ -16,26 +18,43 @@
         <slot name="topButtons" />
       </div>
     </div>
-    <div v-if="$slots.topButtons" class="flex sm:hidden gap-2 pr-4 md:pr-0">
+    <div v-if="$slots.topButtons" class="flex sm:hidden gap-2">
       <slot name="topButtons" />
     </div>
-    <div v-if="$slots.introduction" class="text-sm text-foreground mr-6 xl:mr-0">
+    <div v-if="$slots.introduction" class="text-sm text-foreground px-6 mt-4">
       <slot name="introduction" />
     </div>
-    <div class="flex flex-col">
+    <div class="flex flex-col p-6 pt-4">
       <slot />
     </div>
-    <div v-if="$slots.bottomButtons" class="flex gap-2 justify-end w-full mb-1 mt-2">
-      <slot name="bottomButtons" />
+    <div
+      v-if="disabledMessage || $slots.bottomButtons"
+      class="flex flex-col sm:flex-row gap-2 justify-between items-end sm:items-center bg-gray-50 dark:bg-foundation px-6 py-3 border-t border-primary-muted dark:border-outline-3"
+    >
+      <div v-if="disabledMessage" class="text-xs flex gap-1 sm:items-center w-full">
+        <ExclamationCircleIcon
+          v-tippy="disabledMessage"
+          class="h-5 w-5 text-foreground-2"
+        />
+        <span class="text-foreground-2">
+          You must be a project owner to edit project details
+        </span>
+      </div>
+      <div v-else class="hidden"></div>
+      <div v-if="$slots.bottomButtons" class="flex gap-2">
+        <slot name="bottomButtons" />
+      </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import type { PropAnyComponent } from '@speckle/ui-components'
+import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 
 defineProps<{
   title: string
   icon: PropAnyComponent
   background?: boolean
+  disabledMessage?: string
 }>()
 </script>

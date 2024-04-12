@@ -3,6 +3,9 @@
     background
     title="Discussions"
     :icon="ChatBubbleLeftRightIcon"
+    :disabled-message="
+      disabled && disabled - message ? 'You must be a project owner' : undefined
+    "
   >
     <template #introduction>
       <p>Control who can leave comments on your projects:</p>

@@ -1,5 +1,12 @@
 <template>
-  <ProjectPageSettingsBlock background title="Access" :icon="LockClosedIcon">
+  <ProjectPageSettingsBlock
+    background
+    title="Access"
+    :icon="LockClosedIcon"
+    :disabled-message="
+      disabled && disabled - message ? 'You must be a project owner' : undefined
+    "
+  >
     <template #introduction>
       <p>
         Choose how you want to share your projects with others. Select the option that

@@ -1,6 +1,13 @@
 <template>
   <div class="flex flex-col gap-4">
-    <ProjectPageSettingsBlock background title="Project Info" :icon="Cog6ToothIcon">
+    <ProjectPageSettingsBlock
+      background
+      title="Project Info"
+      :disabled-message="
+        disabled && disabledMessage ? 'You must be a project owner' : undefined
+      "
+      :icon="Cog6ToothIcon"
+    >
       <FormTextInput
         v-model="localProjectName"
         name="projectName"
