@@ -169,7 +169,7 @@ async function initRumServer(app: PluginNuxtApp) {
                 onLCP,
                 onINP,
                 onTTFB
-              } from 'https://unpkg.com/web-vitals@3/dist/web-vitals.attribution.js?module';
+              } from 'https://cdn.jsdelivr.net/npm/web-vitals@3/dist/web-vitals.attribution.js?module';
 
               onCLS(console.log);
               onFID(console.log);
