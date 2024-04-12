@@ -7,7 +7,12 @@
         name="search"
         size="lg"
         placeholder="Search"
-        help="Search by username or email"
+        :disabled="!isOwner"
+        :help="
+          !isOwner
+            ? 'You must be the project owner to invite users'
+            : 'Search by username or email'
+        "
         input-classes="pr-[85px] text-sm"
         color="foundation"
         label="Add people by email or username"
@@ -69,6 +74,7 @@ const props = defineProps<{
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
+const isOwner = computed(() => props.project?.project.role === Roles.Stream.Owner)
 
 const route = useRoute()
 

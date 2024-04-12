@@ -73,6 +73,7 @@ graphql(`
 const props = defineProps<{
   project: ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragment
   disabled?: boolean
+  disabledMessage?: string
 }>()
 
 const emit = defineEmits(['update-project'])

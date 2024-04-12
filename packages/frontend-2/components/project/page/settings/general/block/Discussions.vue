@@ -4,7 +4,7 @@
     title="Discussions"
     :icon="ChatBubbleLeftRightIcon"
     :disabled-message="
-      disabled && disabled - message ? 'You must be a project owner' : undefined
+      disabled && disabledMessage ? 'You must be a project owner' : undefined
     "
   >
     <template #introduction>
@@ -41,6 +41,7 @@ graphql(`
 const props = defineProps<{
   project: ProjectPageSettingsGeneralBlockDiscussions_ProjectFragment
   disabled?: boolean
+  disabledMessage?: string
 }>()
 
 const emit = defineEmits(['update-comments-permission'])

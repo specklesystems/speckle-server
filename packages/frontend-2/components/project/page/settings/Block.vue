@@ -8,7 +8,8 @@
     "
   >
     <div
-      class="flex items-center gap-4 border-b border-outline-3 px-6 py-4 justify-between transition"
+      class="flex items-center gap-4 border-b border-outline-3 justify-between transition py-4"
+      :class="background ? 'px-6' : ''"
     >
       <div class="flex items-center gap-2">
         <component :is="icon" v-if="icon" class="h-5 w-5"></component>
@@ -21,10 +22,14 @@
     <div v-if="$slots.topButtons" class="flex sm:hidden gap-2">
       <slot name="topButtons" />
     </div>
-    <div v-if="$slots.introduction" class="text-sm text-foreground px-6 mt-4">
+    <div
+      v-if="$slots.introduction"
+      class="text-sm text-foreground mt-4"
+      :class="background ? 'px-6' : ''"
+    >
       <slot name="introduction" />
     </div>
-    <div class="flex flex-col p-6 pt-4">
+    <div class="flex flex-col pt-4" :class="background ? 'p-6' : ''">
       <slot />
     </div>
     <div
