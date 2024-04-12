@@ -59,6 +59,13 @@
           :disabled="item.disabled"
           @click="setActiveItem(item)"
         >
+          <!-- We can't use v-tippy on a disabled button. Instead, it's added to this absolutely positioned div -->
+          <div
+            v-tippy="
+              item.disabled && item.disabledMessage ? item.disabledMessage : undefined
+            "
+            class="absolute inset-0"
+          ></div>
           <div class="flex gap-1 sm:gap-1.5 items-center">
             <component
               :is="item.icon"
@@ -84,11 +91,6 @@
               {{ item.tag }}
             </div>
           </div>
-          <InformationCircleIcon
-            v-if="item.disabled && item.disabledMessage"
-            v-tippy="item.disabledMessage"
-            class="w-4 h-4 ml-auto opacity-60 hover:opacity-100"
-          />
         </button>
       </div>
     </div>
@@ -113,11 +115,7 @@ import { computed, ref, onMounted, watch } from 'vue'
 import type { CSSProperties } from 'vue'
 import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 import { isClient } from '@vueuse/core'
-import {
-  InformationCircleIcon,
-  ArrowLongRightIcon,
-  ArrowLongLeftIcon
-} from '@heroicons/vue/24/outline'
+import { ArrowLongRightIcon, ArrowLongLeftIcon } from '@heroicons/vue/24/outline'
 import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
@@ -141,7 +139,7 @@ const buttonClass = computed(() => {
       'z-10',
       'flex',
       'items-center',
-      'disabled:opacity-60 disabled:hover:border-outline'
+      'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent'
     ]
 
     if (props.vertical) {
