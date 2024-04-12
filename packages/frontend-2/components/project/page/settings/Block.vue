@@ -45,7 +45,7 @@
           You must be a project owner to edit project details
         </span>
       </div>
-      <div v-else class="hidden"></div>
+      <div v-else></div>
       <div v-if="$slots.bottomButtons" class="flex gap-2">
         <slot name="bottomButtons" />
       </div>
