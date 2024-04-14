@@ -248,7 +248,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/f92e060177/commits/038a587267'
     // 'https://latest.speckle.dev/streams/3f895e614f/commits/8a3e424997'
     // 'https://latest.speckle.dev/streams/f92e060177/commits/f51ee777d5'
-    'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
+    // 'https://latest.speckle.dev/streams/f92e060177/commits/bbd821e3a1'
     // Big curves
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/49dad07ae2'
     // 'https://speckle.xyz/streams/7ce9010d71/commits/afda4ffdf8'
@@ -294,7 +294,7 @@ const getStream = () => {
     // Big ass mafa'
     // 'https://speckle.xyz/streams/88307505eb/objects/a232d760059046b81ff97e6c4530c985'
     // Airport
-    // 'https://latest.speckle.dev/streams/92b620fb17/commits/dfb9ca025d'
+    'https://latest.speckle.dev/streams/92b620fb17/commits/dfb9ca025d'
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/cf8838025d9963b342b09da8de0f8b6b'
     // 'Blocks with elements
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/00e165cc1c'
@@ -384,6 +384,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/a64b432b34/commits/99d809460a'
     // Bunch a doors
     // 'https://latest.speckle.dev/streams/a64b432b34/commits/c184ba7d88'
+    // 'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
   )
 }
 

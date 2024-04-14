@@ -40,7 +40,6 @@ export class SectionOutlines extends Extension {
     return [SectionTool]
   }
   private static readonly INITIAL_BUFFER_SIZE = 60000 // Must be a multiple of 6
-  private static readonly Z_OFFSET = -0.001
 
   private tmpVec: Vector3 = new Vector3()
   private tmpVec2: Vector3 = new Vector3()
@@ -117,7 +116,11 @@ export class SectionOutlines extends Extension {
     }
   }
 
-  private updatePlaneOutline(batches: MeshBatch[], _plane: Plane) {
+  private updatePlaneOutline(
+    batches: MeshBatch[],
+    _plane: Plane,
+    outlineOffset: number
+  ) {
     const tempVector = new Vector3()
     const tempVector1 = new Vector3()
     const tempVector2 = new Vector3()
@@ -170,7 +173,7 @@ export class SectionOutlines extends Extension {
           tempLine.end.copy(tri.b)
           if (localPlane.intersectLine(tempLine, tempVector)) {
             tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionOutlines.Z_OFFSET)
+              tempVector4.copy(plane.normal).multiplyScalar(-outlineOffset)
             )
             scratchBuffer[index * 3] = tempVector.x
             scratchBuffer[index * 3 + 1] = tempVector.y
@@ -182,7 +185,7 @@ export class SectionOutlines extends Extension {
           tempLine.end.copy(tri.c)
           if (localPlane.intersectLine(tempLine, tempVector)) {
             tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionOutlines.Z_OFFSET)
+              tempVector4.copy(plane.normal).multiplyScalar(-outlineOffset)
             )
             scratchBuffer[index * 3] = tempVector.x
             scratchBuffer[index * 3 + 1] = tempVector.y
@@ -194,7 +197,7 @@ export class SectionOutlines extends Extension {
           tempLine.end.copy(tri.a)
           if (localPlane.intersectLine(tempLine, tempVector)) {
             tempVector.add(
-              tempVector4.copy(plane.normal).multiplyScalar(SectionOutlines.Z_OFFSET)
+              tempVector4.copy(plane.normal).multiplyScalar(-outlineOffset)
             )
             scratchBuffer[index * 3] = tempVector.x
             scratchBuffer[index * 3 + 1] = tempVector.y
@@ -228,7 +231,7 @@ export class SectionOutlines extends Extension {
               // Set the penultimate point as a distinct point and delete the last point
               tempVector3.set(tempVector.x, tempVector.y, tempVector.z)
               tempVector3.add(
-                tempVector4.copy(plane.normal).multiplyScalar(SectionOutlines.Z_OFFSET)
+                tempVector4.copy(plane.normal).multiplyScalar(-outlineOffset)
               )
               scratchBuffer[(index - 2) * 3] = tempVector3.x
               scratchBuffer[(index - 2) * 3 + 1] = tempVector3.y
@@ -340,12 +343,14 @@ export class SectionOutlines extends Extension {
 
   private updateOutlines(planes: Plane[]) {
     const start = performance.now()
+    const outlineOffset = this.sectionProvider.relativeOffset
     for (let k = 0; k < planes.length; k++) {
       this.updatePlaneOutline(
         this.viewer
           .getRenderer()
           .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
-        planes[k]
+        planes[k],
+        outlineOffset
       )
     }
     this.enabled = this.sectionProvider.enabled
