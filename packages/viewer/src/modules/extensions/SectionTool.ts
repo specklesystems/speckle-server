@@ -15,7 +15,7 @@ import {
   DoubleSide,
   SphereGeometry
 } from 'three'
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { IViewer, ObjectLayers } from '../../IViewer'
 import { Extension } from './Extension'
 import { CameraEvent } from '../objects/SpeckleCamera'
