@@ -41,7 +41,7 @@ const props = defineProps<{
 
 const emit = defineEmits(['update-visibility'])
 
-const selectedOption = ref(props.project.visibility ?? ProjectVisibility.Private)
+const selectedOption = ref(props.project.visibility || ProjectVisibility.Private)
 
 const radioOptions = [
   {

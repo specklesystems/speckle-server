@@ -35,10 +35,10 @@ graphql(`
     id
     name
     role
-    models {
+    models(limit: 0) {
       totalCount
     }
-    commentThreads {
+    commentThreads(limit: 0) {
       totalCount
     }
   }
