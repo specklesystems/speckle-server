@@ -3,9 +3,7 @@
     background
     title="Access"
     :icon="LockClosedIcon"
-    :disabled-message="
-      disabled && disabledMessage ? 'You must be a project owner' : undefined
-    "
+    :disabled-message="disabled ? 'You must be a project owner' : undefined"
   >
     <template #introduction>
       <p>
@@ -39,7 +37,6 @@ graphql(`
 const props = defineProps<{
   project: ProjectPageSettingsGeneralBlockAccess_ProjectFragment
   disabled?: boolean
-  disabledMessage?: string
 }>()
 
 const emit = defineEmits(['update-visibility'])

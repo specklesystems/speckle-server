@@ -3,9 +3,7 @@
     <ProjectPageSettingsBlock
       background
       title="Project Info"
-      :disabled-message="
-        disabled && disabledMessage ? 'You must be a project owner' : undefined
-      "
+      :disabled-message="disabled ? 'You must be a project owner' : undefined"
       :icon="Cog6ToothIcon"
     >
       <FormTextInput
@@ -73,7 +71,6 @@ graphql(`
 const props = defineProps<{
   project: ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragment
   disabled?: boolean
-  disabledMessage?: string
 }>()
 
 const emit = defineEmits(['update-project'])
