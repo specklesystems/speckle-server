@@ -14,9 +14,9 @@ import { Geometry } from '../converter/Geometry'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
   AllBatchUpdateRange,
-  Batch,
-  BatchUpdateRange,
-  DrawGroup,
+  type Batch,
+  type BatchUpdateRange,
+  type DrawGroup,
   GeometryType,
   INSTANCE_TRANSFORM_BUFFER_STRIDE,
   NoneBatchUpdateRange
@@ -37,20 +37,20 @@ export class InstancedMeshBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  private geometry: BufferGeometry
-  public batchMaterial: Material
-  public mesh: SpeckleInstancedMesh
+  private geometry!: BufferGeometry
+  public batchMaterial!: Material
+  public mesh!: SpeckleInstancedMesh
   private drawRanges: DrawRanges = new DrawRanges()
 
-  private instanceTransformBuffer0: Float32Array = null
-  private instanceTransformBuffer1: Float32Array = null
+  private instanceTransformBuffer0!: Float32Array
+  private instanceTransformBuffer1!: Float32Array
   private transformBufferIndex: number = 0
-  private instanceGradientBuffer: Float32Array = null
+  private instanceGradientBuffer!: Float32Array
 
   private needsShuffle = false
 
   public get bounds(): Box3 {
-    return this.mesh.TAS.getBoundingBox(new Box3())
+    return this.mesh.TAS!.getBoundingBox(new Box3())
   }
 
   public get drawCalls(): number {
@@ -67,7 +67,7 @@ export class InstancedMeshBatch implements Batch {
   }
 
   public get triCount(): number {
-    return (this.geometry.index.count / 3) * this.renderViews.length
+    return (this.geometry.index!.count / 3) * this.renderViews.length
   }
 
   public get vertCount(): number {
@@ -139,14 +139,15 @@ export class InstancedMeshBatch implements Batch {
 
     this.mesh.children.forEach((instance) => (instance.visible = false))
     ranges.forEach((range) => {
-      const instanceIndex = this.groups.indexOf(
-        this.groups.find(
-          (group: DrawGroup) =>
-            range.offset === group.start &&
-            range.offset + range.count === group.start + group.count
-        )
+      const foundInstance = this.groups.find(
+        (group: DrawGroup) =>
+          range.offset === group.start &&
+          range.offset + range.count === group.start + group.count
       )
-      if (instanceIndex !== -1) this.mesh.children[instanceIndex].visible = true
+      if (foundInstance) {
+        const instanceIndex = this.groups.indexOf(foundInstance)
+        if (instanceIndex !== -1) this.mesh.children[instanceIndex].visible = true
+      }
     })
   }
 
@@ -166,6 +167,7 @@ export class InstancedMeshBatch implements Batch {
   public getOpaque(): BatchUpdateRange {
     /** If there is any transparent or hidden group return the update range up to it's offset */
     const transparentOrHiddenGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
       return (
         Materials.isTransparent(this.materials[value.materialIndex]) ||
         this.materials[value.materialIndex].visible === false
@@ -185,6 +187,7 @@ export class InstancedMeshBatch implements Batch {
   public getDepth(): BatchUpdateRange {
     /** If there is any transparent or hidden group return the update range up to it's offset */
     const transparentOrHiddenGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
       return (
         Materials.isTransparent(this.materials[value.materialIndex]) ||
         this.materials[value.materialIndex].visible === false ||
@@ -205,10 +208,12 @@ export class InstancedMeshBatch implements Batch {
   public getTransparent(): BatchUpdateRange {
     /** Look for a transparent group */
     const transparentGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
       return Materials.isTransparent(this.materials[value.materialIndex])
     })
     /** Look for a hidden group */
     const hiddenGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
       return this.materials[value.materialIndex].visible === false
     })
     /** If there is a transparent group return it's range */
@@ -234,6 +239,7 @@ export class InstancedMeshBatch implements Batch {
       if (this.materials[0].stencilWrite === true) return AllBatchUpdateRange
     }
     const stencilGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
       return this.materials[value.materialIndex].stencilWrite === true
     })
     if (stencilGroup) {
@@ -249,7 +255,10 @@ export class InstancedMeshBatch implements Batch {
   public setBatchBuffers(range: BatchUpdateRange[]): void {
     for (let k = 0; k < range.length; k++) {
       if (range[k].materialOptions) {
-        if (range[k].materialOptions.rampIndex !== undefined) {
+        if (
+          range[k].materialOptions!.rampIndex !== undefined &&
+          range[k].materialOptions!.rampWidth !== undefined
+        ) {
           const start = range[k].offset
           /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
            *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
@@ -257,17 +266,17 @@ export class InstancedMeshBatch implements Batch {
            *  sampling can occur.
            */
           const shiftedIndex =
-            range[k].materialOptions.rampIndex +
-            0.5 / range[k].materialOptions.rampWidth
+            range[k].materialOptions!.rampIndex! +
+            0.5 / range[k].materialOptions!.rampWidth!
           this.updateGradientIndexBufferData(start / 16, shiftedIndex)
         }
         /** We need to update the texture here, because each batch uses it's own clone for any material we use on it
          *  because otherwise three.js won't properly update our custom uniforms
          */
-        if (range[k].materialOptions.rampTexture !== undefined) {
+        if (range[k].materialOptions!.rampTexture !== undefined) {
           if (range[k].material instanceof SpeckleStandardColoredMaterial) {
             ;(range[k].material as SpeckleStandardColoredMaterial).setGradientTexture(
-              range[k].materialOptions.rampTexture
+              range[k].materialOptions!.rampTexture!
             )
           }
         }
@@ -282,8 +291,8 @@ export class InstancedMeshBatch implements Batch {
       }
     })
 
-    const materials = ranges.map((val) => {
-      return val.material
+    const materials: Array<Material> = ranges.map((val: BatchUpdateRange) => {
+      return val.material as Material
     })
     const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
 
@@ -318,7 +327,7 @@ export class InstancedMeshBatch implements Batch {
   private cleanMaterials() {
     const materialsInUse = [
       ...Array.from(
-        new Set(this.groups.map((value) => this.materials[value.materialIndex]))
+        new Set(this.groups.map((value) => this.materials[value.materialIndex!]))
       )
     ]
     let k = 0
@@ -326,7 +335,7 @@ export class InstancedMeshBatch implements Batch {
       if (!materialsInUse.includes(this.materials[k])) {
         this.materials.splice(k, 1)
         this.groups.forEach((value: DrawGroup) => {
-          if (value.materialIndex > k) value.materialIndex--
+          if (value.materialIndex! > k) value.materialIndex!--
         })
         k = 0
         continue
@@ -343,8 +352,8 @@ export class InstancedMeshBatch implements Batch {
       .slice()
 
     this.groups.sort((a, b) => {
-      const materialA: Material = this.materials[a.materialIndex]
-      const materialB: Material = this.materials[b.materialIndex]
+      const materialA: Material = this.materials[a.materialIndex!]
+      const materialB: Material = this.materials[b.materialIndex!]
       const visibleOrder =
         +materialB.visible +
         +materialB.colorWrite -
@@ -354,10 +363,12 @@ export class InstancedMeshBatch implements Batch {
       return transparentOrder
     })
 
-    const materialOrder = []
+    const materialOrder: Array<number> = []
     groups.reduce((previousValue, currentValue) => {
-      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
-        previousValue.push(currentValue.materialIndex)
+      if (currentValue.materialIndex !== undefined) {
+        if (previousValue.indexOf(currentValue.materialIndex) === -1) {
+          previousValue.push(currentValue.materialIndex)
+        }
       }
       return previousValue
     }, materialOrder)
@@ -438,6 +449,7 @@ export class InstancedMeshBatch implements Batch {
 
     /** Solve hidden groups */
     const hiddenGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
       return this.materials[value.materialIndex].visible === false
     })
     if (hiddenGroup) {
@@ -494,7 +506,7 @@ export class InstancedMeshBatch implements Batch {
     const targetInstanceTransformBuffer = this.getCurrentTransformBuffer()
 
     for (let k = 0; k < this.renderViews.length; k++) {
-      this.renderViews[k].renderData.geometry.transform.toArray(
+      this.renderViews[k].renderData.geometry.transform!.toArray(
         targetInstanceTransformBuffer,
         k * INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
@@ -511,8 +523,10 @@ export class InstancedMeshBatch implements Batch {
           batchObject.localOrigin.z
         )
         transform.invert()
-        const indices = this.renderViews[k].renderData.geometry.attributes.INDEX
-        const position = this.renderViews[k].renderData.geometry.attributes.POSITION
+        const indices = this.renderViews[k].renderData.geometry.attributes
+          .INDEX as number[]
+        const position = this.renderViews[k].renderData.geometry.attributes
+          .POSITION as number[]
         instanceBVH = AccelerationStructure.buildBVH(
           indices,
           new Float32Array(position),
@@ -527,14 +541,14 @@ export class InstancedMeshBatch implements Batch {
     }
 
     const indices = new Uint32Array(
-      this.renderViews[0].renderData.geometry.attributes.INDEX
+      this.renderViews[0].renderData.geometry.attributes.INDEX!
     )
     const positions = new Float64Array(
       this.renderViews[0].renderData.geometry.attributes.POSITION
     )
-    const colors = new Float32Array(
-      this.renderViews[0].renderData.geometry.attributes.COLOR
-    )
+    const colors = this.renderViews[0].renderData.geometry.attributes.COLOR
+      ? new Float32Array(this.renderViews[0].renderData.geometry.attributes.COLOR)
+      : undefined
 
     this.makeInstancedMeshGeometry(indices, positions, colors)
     this.mesh = new SpeckleInstancedMesh(this.geometry)
@@ -542,7 +556,7 @@ export class InstancedMeshBatch implements Batch {
     this.mesh.setBatchMaterial(this.batchMaterial)
     this.mesh.buildTAS()
 
-    this.geometry.boundingBox = this.mesh.TAS.getBoundingBox(new Box3())
+    this.geometry.boundingBox = this.mesh.TAS!.getBoundingBox(new Box3())
     this.geometry.boundingSphere = this.geometry.boundingBox.getBoundingSphere(
       new Sphere()
     )
@@ -562,19 +576,19 @@ export class InstancedMeshBatch implements Batch {
     )
   }
 
-  public getRenderView(index: number): NodeRenderView {
+  public getRenderView(index: number): NodeRenderView | null {
     index
     Logger.warn('Deprecated! Use InstancedBatchObject')
     return null
   }
 
-  public getMaterialAtIndex(index: number): Material {
+  public getMaterialAtIndex(index: number): Material | null {
     index
     Logger.warn('Deprecated! Use InstancedBatchObject')
     return null
   }
 
-  public getMaterial(rv: NodeRenderView): Material {
+  public getMaterial(rv: NodeRenderView): Material | null {
     const group = this.groups.find((value) => {
       return (
         rv.batchStart >= value.start &&
@@ -585,7 +599,7 @@ export class InstancedMeshBatch implements Batch {
       Logger.warn(`Could not get material for ${rv.renderData.id}`)
       return null
     }
-    return this.materials[group.materialIndex]
+    return this.materials[group.materialIndex!]
   }
 
   private makeInstancedMeshGeometry(
@@ -631,6 +645,5 @@ export class InstancedMeshBatch implements Batch {
     this.renderViews.length = 0
     this.geometry.dispose()
     this.batchMaterial.dispose()
-    this.mesh = null
   }
 }

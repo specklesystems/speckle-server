@@ -1,4 +1,5 @@
 import {
+  Box3,
   Color,
   DynamicDrawUsage,
   InstancedInterleavedBuffer,
@@ -16,9 +17,9 @@ import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
   AllBatchUpdateRange,
-  Batch,
-  BatchUpdateRange,
-  DrawGroup,
+  type Batch,
+  type BatchUpdateRange,
+  type DrawGroup,
   GeometryType,
   NoneBatchUpdateRange
 } from './Batch'
@@ -29,15 +30,15 @@ export default class LineBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  private geometry: LineSegmentsGeometry
-  public batchMaterial: SpeckleLineMaterial
-  private mesh: LineSegments2 | Line
-  public colorBuffer: InstancedInterleavedBuffer
+  private geometry!: LineSegmentsGeometry
+  public batchMaterial!: SpeckleLineMaterial
+  private mesh!: LineSegments2 | Line
+  public colorBuffer!: InstancedInterleavedBuffer
   private static readonly vector4Buffer: Vector4 = new Vector4()
 
-  public get bounds() {
+  public get bounds(): Box3 {
     if (!this.geometry.boundingBox) this.geometry.computeBoundingBox()
-    return this.geometry.boundingBox
+    return this.geometry.boundingBox ? this.geometry.boundingBox : new Box3()
   }
 
   public get drawCalls(): number {
@@ -65,7 +66,9 @@ export default class LineBatch implements Batch {
     return 0
   }
   public get lineCount(): number {
-    return (this.geometry.index.count / 3) * this.geometry['_maxInstanceCount']
+    return (
+      (this.geometry.index!.count / 3) * (this.geometry as never)['_maxInstanceCount']
+    )
   }
 
   public get renderObject(): Object3D {
@@ -222,7 +225,7 @@ export default class LineBatch implements Batch {
     let offset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
-      let points = null
+      let points: Array<number>
       /** We need to make sure the line geometry has a layout of :
        *  start(x,y,z), end(x,y,z), start(x,y,z), end(x,y,z)... etc
        *  Some geometries have that inherent form, some don't
@@ -241,7 +244,7 @@ export default class LineBatch implements Batch {
           points[2 * i + 5] = geometry.attributes.POSITION[i + 5]
         }
       } else {
-        points = geometry.attributes.POSITION
+        points = geometry.attributes.POSITION as number[]
       }
 
       position.set(points, offset)
@@ -261,7 +264,7 @@ export default class LineBatch implements Batch {
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_LINE)
   }
 
-  public getRenderView(index: number): NodeRenderView {
+  public getRenderView(index: number): NodeRenderView | null {
     for (let k = 0; k < this.renderViews.length; k++) {
       if (
         index >= this.renderViews[k].batchStart &&
@@ -272,6 +275,7 @@ export default class LineBatch implements Batch {
         return this.renderViews[k]
       }
     }
+    return null
   }
 
   public getMaterialAtIndex(index: number): Material {
@@ -338,7 +342,6 @@ export default class LineBatch implements Batch {
     this.renderViews.length = 0
     this.geometry.dispose()
     this.batchMaterial.dispose()
-    this.mesh = null
     this.colorBuffer.length = 0
   }
 }

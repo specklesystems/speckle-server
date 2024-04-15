@@ -4,9 +4,9 @@ import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
   AllBatchUpdateRange,
-  Batch,
-  BatchUpdateRange,
-  DrawGroup,
+  type Batch,
+  type BatchUpdateRange,
+  type DrawGroup,
   GeometryType,
   NoneBatchUpdateRange
 } from './Batch'
@@ -19,8 +19,8 @@ export default class TextBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  public batchMaterial: Material
-  public mesh: SpeckleText
+  public batchMaterial!: Material
+  public mesh!: SpeckleText
 
   public get bounds(): Box3 {
     return new Box3().setFromObject(this.mesh)
@@ -68,7 +68,7 @@ export default class TextBatch implements Batch {
   public getCount(): number {
     return (
       this.mesh.textMesh.geometry.index.count +
-      this.mesh.backgroundMesh?.geometry.index.count
+      this.mesh.backgroundMesh?.geometry.index!.count
     )
   }
 
@@ -93,6 +93,7 @@ export default class TextBatch implements Batch {
   }
 
   public setVisibleRange(ranges: BatchUpdateRange[]) {
+    ranges
     // TO DO
   }
 
@@ -117,6 +118,7 @@ export default class TextBatch implements Batch {
   }
 
   public setBatchBuffers(range: BatchUpdateRange[]): void {
+    range
     throw new Error('Method not implemented.')
   }
 
@@ -130,8 +132,6 @@ export default class TextBatch implements Batch {
   public resetDrawRanges() {
     this.mesh.textMesh.material = this.batchMaterial
     this.mesh.textMesh.visible = true
-    // this.geometry.clearGroups()
-    // this.geometry.setDrawRange(0, Infinity)
   }
 
   public async buildBatch() {
@@ -139,10 +139,11 @@ export default class TextBatch implements Batch {
     this.mesh.matrixAutoUpdate = false
     await this.mesh.update(
       SpeckleText.SpeckleTextParamsFromMetadata(
-        this.renderViews[0].renderData.geometry.metaData
+        this.renderViews[0].renderData.geometry.metaData!
       )
     )
-    this.mesh.matrix.copy(this.renderViews[0].renderData.geometry.bakeTransform)
+    if (this.renderViews[0].renderData.geometry.bakeTransform)
+      this.mesh.matrix.copy(this.renderViews[0].renderData.geometry.bakeTransform)
     this.renderViews[0].setBatchData(
       this.id,
       0,
@@ -152,14 +153,17 @@ export default class TextBatch implements Batch {
   }
 
   public getRenderView(index: number): NodeRenderView {
+    index
     return this.renderViews[0]
   }
 
   public getMaterialAtIndex(index: number): Material {
+    index
     return this.batchMaterial
   }
 
   public getMaterial(rv: NodeRenderView): Material {
+    rv
     return this.batchMaterial
   }
 
@@ -167,6 +171,5 @@ export default class TextBatch implements Batch {
     this.renderViews.length = 0
     this.batchMaterial.dispose()
     this.mesh.geometry.dispose()
-    this.mesh = null
   }
 }

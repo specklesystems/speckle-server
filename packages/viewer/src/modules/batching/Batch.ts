@@ -1,5 +1,5 @@
 import { Box3, Material, Object3D, WebGLRenderer } from 'three'
-import { FilterMaterialOptions } from '../materials/Materials'
+import { type FilterMaterialOptions } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 
 export enum GeometryType {
@@ -40,19 +40,19 @@ export interface Batch {
   setBatchBuffers(range: BatchUpdateRange[]): void
   setVisibleRange(range: BatchUpdateRange[]): void
   getVisibleRange(): BatchUpdateRange
-  setDrawRanges(ranges: BatchUpdateRange[])
+  setDrawRanges(ranges: BatchUpdateRange[]): void
   resetDrawRanges(): void
   buildBatch(): void
-  getRenderView(index: number): NodeRenderView
-  getMaterialAtIndex(index: number): Material
-  getMaterial(rv: NodeRenderView): Material
+  getRenderView(index: number): NodeRenderView | null
+  getMaterialAtIndex(index: number): Material | null
+  getMaterial(rv: NodeRenderView): Material | null
   getOpaque(): BatchUpdateRange
   getTransparent(): BatchUpdateRange
   getStencil(): BatchUpdateRange
   getDepth(): BatchUpdateRange
-  onUpdate(deltaTime: number)
-  onRender?(renderer: WebGLRenderer)
-  purge()
+  onUpdate(deltaTime?: number): void
+  onRender?(renderer: WebGLRenderer): void
+  purge(): void
 }
 
 export interface BatchUpdateRange {

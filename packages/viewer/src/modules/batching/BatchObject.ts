@@ -12,17 +12,19 @@ export type VectorLike =
   | { x: number; y: number; z?: number; w?: number }
   | undefined
   | null
+export type Vector3Like = VectorLike & { z: number }
+export type Vector4Like = Vector3Like & { w: number }
 
 export class BatchObject {
   protected _renderView: NodeRenderView
-  protected _accelerationStructure: AccelerationStructure
+  protected _accelerationStructure!: AccelerationStructure
   protected _batchIndex: number
   protected _localOrigin: Vector3
   public transform: Matrix4
   public transformInv: Matrix4
 
-  public tasVertIndexStart: number
-  public tasVertIndexEnd: number
+  public tasVertIndexStart!: number
+  public tasVertIndexEnd!: number
 
   public quaternion: Quaternion = new Quaternion()
   public eulerValue: Euler = new Euler()
@@ -54,9 +56,12 @@ export class BatchObject {
   }
 
   public get aabb(): Box3 {
-    const box = new Box3().copy(this.renderView.aabb)
-    box.applyMatrix4(this.transform)
-    return box
+    if (this.renderView.aabb) {
+      const box = new Box3().copy(this.renderView.aabb)
+      box.applyMatrix4(this.transform)
+      return box
+    }
+    return new Box3()
   }
 
   public get localOrigin(): Vector3 {
@@ -96,7 +101,7 @@ export class BatchObject {
     this.transform = new Matrix4().identity()
     this.transformInv = new Matrix4().identity()
 
-    this._localOrigin = this._renderView.aabb.getCenter(new Vector3())
+    this._localOrigin = this._renderView.aabb!.getCenter(new Vector3())
     Geometry.DoubleToHighLowVector(
       new Vector3(this._localOrigin.x, this._localOrigin.y, this._localOrigin.z),
       this.pivot_Low,
@@ -113,8 +118,9 @@ export class BatchObject {
     transform.invert()
 
     if (!bvh) {
-      const indices = this._renderView.renderData.geometry.attributes.INDEX
-      const position = this._renderView.renderData.geometry.attributes.POSITION
+      const indices = this._renderView.renderData.geometry.attributes.INDEX as number[]
+      const position = this._renderView.renderData.geometry.attributes
+        .POSITION as number[]
       bvh = AccelerationStructure.buildBVH(
         indices,
         new Float32Array(position),
@@ -133,10 +139,10 @@ export class BatchObject {
   }
 
   public transformTRS(
-    translation: VectorLike,
-    euler?: VectorLike,
-    scale?: VectorLike,
-    pivot?: VectorLike
+    translation: Vector3Like,
+    euler?: Vector3Like,
+    scale?: Vector3Like,
+    pivot?: Vector3Like
   ) {
     let T: Matrix4 = BatchObject.matBuff0.identity()
     let R: Matrix4 = BatchObject.matBuff1.identity()

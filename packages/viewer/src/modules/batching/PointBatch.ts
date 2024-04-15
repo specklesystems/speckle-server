@@ -11,14 +11,14 @@ import {
 } from 'three'
 import { Geometry } from '../converter/Geometry'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { BatchUpdateRange, DrawGroup, GeometryType } from './Batch'
+import { type BatchUpdateRange, type DrawGroup, GeometryType } from './Batch'
 import { PrimitiveBatch } from './PrimitiveBatch'
 import { DrawRanges } from './DrawRanges'
 import Logger from 'js-logger'
 import { ObjectLayers } from '../../IViewer'
 
 export class PointBatch extends PrimitiveBatch {
-  protected primitive: Points
+  protected primitive!: Points
   protected drawRanges: DrawRanges = new DrawRanges()
 
   public get geometryType(): GeometryType {
@@ -28,6 +28,8 @@ export class PointBatch extends PrimitiveBatch {
     if (!this.primitive.geometry.boundingBox)
       this.primitive.geometry.computeBoundingBox()
     return this.primitive.geometry.boundingBox
+      ? this.primitive.geometry.boundingBox
+      : new Box3()
   }
 
   public get minDrawCalls(): number {
@@ -54,8 +56,8 @@ export class PointBatch extends PrimitiveBatch {
   }
 
   public setDrawRanges(ranges: BatchUpdateRange[]) {
-    const materials = ranges.map((val) => {
-      return val.material
+    const materials: Array<Material> = ranges.map((val: BatchUpdateRange) => {
+      return val.material as Material
     })
     const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
 
@@ -83,8 +85,8 @@ export class PointBatch extends PrimitiveBatch {
     } else {
       const transparentOrHiddenGroup = this.groups.find(
         (value) =>
-          this.materials[value.materialIndex].transparent === true ||
-          this.materials[value.materialIndex].visible === false
+          this.materials[value.materialIndex!].transparent === true ||
+          this.materials[value.materialIndex!].visible === false
       )
       if (transparentOrHiddenGroup) {
         for (
@@ -92,7 +94,7 @@ export class PointBatch extends PrimitiveBatch {
           k < this.groups.length;
           k++
         ) {
-          const material = this.materials[this.groups[k].materialIndex]
+          const material = this.materials[this.groups[k].materialIndex!]
           if (material.transparent !== true && material.visible !== false) {
             this.needsShuffle = true
             break
@@ -107,19 +109,19 @@ export class PointBatch extends PrimitiveBatch {
   }
 
   protected getCurrentIndexBuffer(): BufferAttribute {
-    return this.primitive.geometry.index
+    return this.primitive.geometry.index!
   }
 
   protected getNextIndexBuffer(): BufferAttribute {
     return new BufferAttribute(
-      (this.primitive.geometry.index.array as Uint16Array | Uint32Array).slice(),
-      this.primitive.geometry.index.itemSize
+      (this.primitive.geometry.index!.array as Uint16Array | Uint32Array).slice(),
+      this.primitive.geometry.index!.itemSize
     )
   }
 
   protected shuffleMaterialOrder(a: DrawGroup, b: DrawGroup): number {
-    const materialA: Material = this.materials[a.materialIndex]
-    const materialB: Material = this.materials[b.materialIndex]
+    const materialA: Material = this.materials[a.materialIndex!]
+    const materialB: Material = this.materials[b.materialIndex!]
     const visibleOrder = +materialB.visible - +materialA.visible
     const transparentOrder = +materialA.transparent - +materialB.transparent
     if (visibleOrder !== 0) return visibleOrder
@@ -162,7 +164,7 @@ export class PointBatch extends PrimitiveBatch {
       if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
       index.set(
         new Int32Array(geometry.attributes.POSITION.length / 3).map(
-          (value, index) => index + indexOffset
+          (_value, index) => index + indexOffset
         ),
         indexOffset
       )
@@ -217,7 +219,7 @@ export class PointBatch extends PrimitiveBatch {
     return geometry
   }
 
-  public getRenderView(index: number): NodeRenderView {
+  public getRenderView(index: number): NodeRenderView | null {
     for (let k = 0; k < this.renderViews.length; k++) {
       if (
         index >= this.renderViews[k].batchStart &&
@@ -226,8 +228,9 @@ export class PointBatch extends PrimitiveBatch {
         return this.renderViews[k]
       }
     }
+    return null
   }
-  public getMaterialAtIndex(index: number): Material {
+  public getMaterialAtIndex(index: number): Material | null {
     for (let k = 0; k < this.renderViews.length; k++) {
       if (
         index >= this.renderViews[k].batchStart &&
@@ -244,8 +247,9 @@ export class PointBatch extends PrimitiveBatch {
           Logger.warn(`Malformed material index!`)
           return null
         }
-        return this.materials[group.materialIndex]
+        return this.materials[group.materialIndex!]
       }
     }
+    return null
   }
 }

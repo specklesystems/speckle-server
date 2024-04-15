@@ -14,17 +14,17 @@ import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
 import Logger from 'js-logger'
 import { DrawRanges } from './DrawRanges'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { BatchUpdateRange, DrawGroup, GeometryType } from './Batch'
+import { type BatchUpdateRange, type DrawGroup, GeometryType } from './Batch'
 import { BatchObject } from './BatchObject'
 import { Geometry } from '../converter/Geometry'
 import { ObjectLayers } from '../../IViewer'
 
 export class MeshBatch extends PrimitiveBatch {
-  protected primitive: SpeckleMesh
+  protected primitive!: SpeckleMesh
   protected transformStorage: TransformStorage
 
-  private indexBuffer0: BufferAttribute
-  private indexBuffer1: BufferAttribute
+  private indexBuffer0!: BufferAttribute
+  private indexBuffer1!: BufferAttribute
   private indexBufferIndex = 0
 
   private drawRanges: DrawRanges = new DrawRanges()
@@ -83,8 +83,8 @@ export class MeshBatch extends PrimitiveBatch {
   }
 
   protected shuffleMaterialOrder(a: DrawGroup, b: DrawGroup): number {
-    const materialA: Material = this.materials[a.materialIndex]
-    const materialB: Material = this.materials[b.materialIndex]
+    const materialA: Material = this.materials[a.materialIndex!]
+    const materialB: Material = this.materials[b.materialIndex!]
     const visibleOrder =
       +materialB.visible +
       +materialB.colorWrite -
@@ -99,7 +99,7 @@ export class MeshBatch extends PrimitiveBatch {
     end: number,
     value: number
   ): { minIndex: number; maxIndex: number } {
-    const index = this.primitive.geometry.index.array as number[]
+    const index = this.primitive.geometry.index!.array as number[]
     const data = this.gradientIndexBuffer.array as number[]
     let minVertexIndex = Infinity
     let maxVertexIndex = 0
@@ -129,10 +129,12 @@ export class MeshBatch extends PrimitiveBatch {
         value.material = this.primitive.getCachedMaterial(value.material)
       }
     })
-    const materials = ranges.map((val) => {
-      return val.material
+    const materials: Array<Material> = ranges.map((val: BatchUpdateRange) => {
+      return val.material as Material
     })
-    const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
+    const uniqueMaterials: Array<Material> = [
+      ...Array.from(new Set(materials.map((value: Material) => value)))
+    ]
 
     for (let k = 0; k < uniqueMaterials.length; k++) {
       if (!this.materials.includes(uniqueMaterials[k]))
@@ -165,9 +167,9 @@ export class MeshBatch extends PrimitiveBatch {
     } else {
       const transparentOrHiddenGroup = this.groups.find(
         (value) =>
-          this.materials[value.materialIndex].transparent === true ||
-          this.materials[value.materialIndex].visible === false ||
-          this.materials[value.materialIndex].colorWrite === false
+          this.materials[value.materialIndex!].transparent === true ||
+          this.materials[value.materialIndex!].visible === false ||
+          this.materials[value.materialIndex!].colorWrite === false
       )
 
       if (transparentOrHiddenGroup) {
@@ -176,7 +178,7 @@ export class MeshBatch extends PrimitiveBatch {
           k < this.groups.length;
           k++
         ) {
-          const material = this.materials[this.groups[k].materialIndex]
+          const material = this.materials[this.groups[k].materialIndex!]
           if (material.transparent !== true && material.visible !== false) {
             this.needsShuffle = true
             break
@@ -195,7 +197,7 @@ export class MeshBatch extends PrimitiveBatch {
     let indicesCount = 0
     let attributeCount = 0
     for (let k = 0; k < this.renderViews.length; k++) {
-      indicesCount += this.renderViews[k].renderData.geometry.attributes.INDEX.length
+      indicesCount += this.renderViews[k].renderData.geometry.attributes.INDEX!.length
       attributeCount +=
         this.renderViews[k].renderData.geometry.attributes.POSITION.length
     }
@@ -215,7 +217,7 @@ export class MeshBatch extends PrimitiveBatch {
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
       indices.set(
-        geometry.attributes.INDEX.map((val) => val + offset / 3),
+        geometry.attributes.INDEX!.map((val) => val + offset / 3),
         arrayOffset
       )
       position.set(geometry.attributes.POSITION, offset)
@@ -228,7 +230,7 @@ export class MeshBatch extends PrimitiveBatch {
       this.renderViews[k].setBatchData(
         this.id,
         arrayOffset,
-        geometry.attributes.INDEX.length,
+        geometry.attributes.INDEX!.length,
         offset / 3,
         offset / 3 + geometry.attributes.POSITION.length / 3
       )
@@ -238,14 +240,14 @@ export class MeshBatch extends PrimitiveBatch {
       batchObjects.push(batchObject)
 
       offset += geometry.attributes.POSITION.length
-      arrayOffset += geometry.attributes.INDEX.length
+      arrayOffset += geometry.attributes.INDEX!.length
     }
 
     const geometry = this.makeMeshGeometry(
       indices,
       position,
       batchIndices,
-      hasVertexColors ? color : null
+      hasVertexColors ? color : undefined
     )
 
     this.primitive = new SpeckleMesh(geometry)
@@ -309,12 +311,12 @@ export class MeshBatch extends PrimitiveBatch {
     return geometry
   }
 
-  public getRenderView(index: number): NodeRenderView {
+  public getRenderView(index: number): NodeRenderView | null {
     index
     Logger.warn('Deprecated! Use BatchObject')
     return null
   }
-  public getMaterialAtIndex(index: number): Material {
+  public getMaterialAtIndex(index: number): Material | null {
     index
     Logger.warn('Deprecated! Use BatchObject')
     return null
