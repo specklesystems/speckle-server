@@ -30,10 +30,7 @@
           )
       "
     />
-    <ProjectPageSettingsGeneralBlockLeave
-      v-if="canLeaveProject && project"
-      :project="project"
-    />
+    <ProjectPageSettingsGeneralBlockLeave v-if="project" :project="project" />
 
     <ProjectPageSettingsGeneralBlockDelete
       v-if="project && isOwner && !isGuest"
@@ -59,13 +56,7 @@ const projectPageSettingsGeneralQuery = graphql(`
   query ProjectPageSettingsGeneral($projectId: String!) {
     project(id: $projectId) {
       id
-      team {
-        role
-        user {
-          ...LimitedUserAvatar
-          role
-        }
-      }
+      role
       ...ProjectPageSettingsGeneralBlockProjectInfo_Project
       ...ProjectPageSettingsGeneralBlockAccess_Project
       ...ProjectPageSettingsGeneralBlockDiscussions_Project
@@ -99,19 +90,7 @@ const { result: pageResult } = useQuery(
 
 const project = computed(() => pageResult.value?.project)
 
-const { activeUser, isGuest } = useActiveUser()
-
-const canLeaveProject = computed(() => {
-  if (!activeUser.value || !pageResult.value?.project.role) {
-    return false
-  }
-
-  const userId = activeUser.value.id
-  const owners = pageResult.value.project.team.filter(
-    (t) => t.role === Roles.Stream.Owner
-  )
-  return owners.length !== 1 || owners[0].user.id !== userId
-})
+const { isGuest } = useActiveUser()
 
 const isOwner = computed(() => project.value?.role === Roles.Stream.Owner)
 
