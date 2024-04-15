@@ -1,6 +1,14 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-empty-function */
-import { Box3, Camera, Object3D, Plane, Vector2, Vector3, Vector4 } from 'three'
+import {
+  Box3,
+  Camera,
+  Object3D,
+  Plane,
+  Raycaster,
+  Vector2,
+  Vector3,
+  Vector4,
+  type Intersection
+} from 'three'
 
 export enum MeasurementState {
   HIDDEN,
@@ -14,8 +22,8 @@ export abstract class Measurement extends Object3D {
   public endPoint: Vector3 = new Vector3()
   public startNormal: Vector3 = new Vector3()
   public endNormal: Vector3 = new Vector3()
-  public startLineLength: number
-  public endLineLength: number
+  public startLineLength!: number
+  public endLineLength!: number
   public value = 0
   public units = 'm'
   public precision = 2
@@ -31,7 +39,7 @@ export abstract class Measurement extends Object3D {
   protected static vec2Buff0: Vector2 = new Vector2()
 
   protected _state: MeasurementState = MeasurementState.HIDDEN
-  protected renderingCamera: Camera
+  protected renderingCamera!: Camera
   protected renderingSize: Vector2 = new Vector2()
 
   public set state(value: MeasurementState) {
@@ -42,18 +50,19 @@ export abstract class Measurement extends Object3D {
     return this._state
   }
 
-  public set isVisible(value: boolean) {}
+  public abstract set isVisible(value: boolean)
 
   public get bounds(): Box3 {
     return new Box3().expandByPoint(this.startPoint).expandByPoint(this.endPoint)
   }
-  public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  public frameUpdate(camera: Camera, size: Vector2, _bounds: Box3) {
     this.renderingCamera = camera
     this.renderingSize.copy(size)
   }
 
-  public update() {}
-  public raycast(raycaster, intersects) {}
-  public highlight(value: boolean) {}
-  public updateClippingPlanes(planes: Plane[]) {}
+  public abstract update(): void
+  public abstract raycast(_raycaster: Raycaster, _intersects: Array<Intersection>): void
+  public abstract highlight(_value: boolean): void
+  public abstract updateClippingPlanes(_planes: Plane[]): void
 }

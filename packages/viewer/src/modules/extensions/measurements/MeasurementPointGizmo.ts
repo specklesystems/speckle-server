@@ -14,8 +14,10 @@ import {
   PerspectiveCamera,
   Plane,
   Quaternion,
+  Raycaster,
   Vector2,
-  Vector3
+  Vector3,
+  type Intersection
 } from 'three'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
@@ -90,7 +92,10 @@ export class MeasurementPointGizmo extends Group {
     material.polygonOffset = true
     material.polygonOffsetFactor = -5
     material.polygonOffsetUnits = 5
-    material.opacity = this._style.discOpacity
+    material.opacity =
+      this._style.discOpacity !== undefined
+        ? this._style.discOpacity
+        : DefaultMeasurementPointGizmoStyle.discOpacity
     material.transparent = material.opacity < 1
     return material
   }
@@ -117,8 +122,11 @@ export class MeasurementPointGizmo extends Group {
     }
     lineMaterial.linewidth = 2
     lineMaterial.worldUnits = false
-    lineMaterial.resolution = new Vector2(1513, 1306)
-    lineMaterial.opacity = this._style.lineOpacity
+    lineMaterial.resolution = new Vector2(256, 256)
+    lineMaterial.opacity =
+      this._style.lineOpacity !== undefined
+        ? this._style.lineOpacity
+        : DefaultMeasurementPointGizmoStyle.lineOpacity
     lineMaterial.transparent = lineMaterial.opacity < 1
     lineMaterial.depthTest = false
     return lineMaterial
@@ -129,13 +137,18 @@ export class MeasurementPointGizmo extends Group {
       { color: color ? color : this._style.pointColor },
       ['BILLBOARD_FIXED']
     )
-    material.opacity = this._style.pointOpacity
+    material.opacity =
+      this._style.pointOpacity !== undefined
+        ? this._style.pointOpacity
+        : DefaultMeasurementPointGizmoStyle.pointOpacity
     material.transparent = material.opacity < 1
     material.color.convertSRGBToLinear()
     material.toneMapped = false
     material.depthTest = false
     material.billboardPixelHeight =
-      this._style.pointPixelHeight * window.devicePixelRatio
+      (this._style.pointPixelHeight !== undefined
+        ? this._style.pointPixelHeight
+        : DefaultMeasurementPointGizmoStyle.pointPixelHeight) * window.devicePixelRatio
     material.userData.billboardPos.value.copy(this.point.position)
     return material
   }
@@ -151,11 +164,16 @@ export class MeasurementPointGizmo extends Group {
     )
     material.toneMapped = false
     material.color.convertSRGBToLinear()
-    material.opacity = this._style.textOpacity
+    material.opacity =
+      this._style.textOpacity !== undefined
+        ? this._style.textOpacity
+        : DefaultMeasurementPointGizmoStyle.textOpacity
     material.transparent = material.opacity < 1
     material.depthTest = false
     material.billboardPixelHeight =
-      this._style.textPixelHeight * window.devicePixelRatio
+      (this._style.textPixelHeight !== undefined
+        ? this._style.textPixelHeight
+        : DefaultMeasurementPointGizmoStyle.textPixelHeight) * window.devicePixelRatio
     material.userData.billboardPos.value.copy(this.text.position)
 
     return material.getDerivedMaterial()
@@ -169,7 +187,7 @@ export class MeasurementPointGizmo extends Group {
     const doublePositions = new Float64Array(geometry.attributes.position.array)
     Geometry.updateRTEGeometry(geometry, doublePositions)
 
-    this.disc = new Mesh(geometry, null)
+    this.disc = new Mesh(geometry, undefined)
     this.disc.layers.set(ObjectLayers.MEASUREMENTS)
 
     const buffer = new Float64Array(18)
@@ -181,7 +199,7 @@ export class MeasurementPointGizmo extends Group {
 
     Geometry.updateRTEGeometry(lineGeometry, buffer)
 
-    this.line = new LineSegments2(lineGeometry, null)
+    this.line = new LineSegments2(lineGeometry, undefined)
     this.line.computeLineDistances()
     this.line.name = `test-mesurements-line`
     this.line.frustumCulled = false
@@ -190,7 +208,7 @@ export class MeasurementPointGizmo extends Group {
 
     const sphereGeometry = new CircleGeometry(1, 16)
 
-    this.point = new Mesh(sphereGeometry, null)
+    this.point = new Mesh(sphereGeometry, undefined)
     this.point.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.visible = false
     this.point.renderOrder = 1
@@ -198,7 +216,10 @@ export class MeasurementPointGizmo extends Group {
     const point2 = new Mesh(sphereGeometry, this.getPointMaterial(0xffffff))
     point2.renderOrder = 2
     point2.material.billboardPixelHeight =
-      this._style.pointPixelHeight * window.devicePixelRatio -
+      (this._style.pointPixelHeight !== undefined
+        ? this._style.pointPixelHeight
+        : DefaultMeasurementPointGizmoStyle.pointPixelHeight) *
+        window.devicePixelRatio -
       2 * window.devicePixelRatio
     point2.layers.set(ObjectLayers.MEASUREMENTS)
     this.point.add(point2)
@@ -211,7 +232,7 @@ export class MeasurementPointGizmo extends Group {
     this.add(this.line)
     this.add(this.text)
 
-    this.style = style
+    this.style = style ? style : DefaultMeasurementPointGizmoStyle
   }
 
   public enable(disc: boolean, line: boolean, point: boolean, text: boolean) {
@@ -224,7 +245,12 @@ export class MeasurementPointGizmo extends Group {
   }
 
   public frameUpdate(camera: Camera, bounds: Box3) {
-    if (camera.type === 'PerspectiveCamera' && +this._style.fixedSize > 0) {
+    if (
+      camera.type === 'PerspectiveCamera' &&
+      +(this._style.fixedSize !== undefined
+        ? this._style.fixedSize
+        : DefaultMeasurementPointGizmoStyle.fixedSize) > 0
+    ) {
       const cam = camera as PerspectiveCamera
       const cameraObjectDistance = cam.position.distanceTo(this.disc.position)
       const worldSize = Math.abs(2 * Math.tan(cam.fov / 2.0) * cameraObjectDistance)
@@ -233,7 +259,12 @@ export class MeasurementPointGizmo extends Group {
       this.disc.scale.set(size, size, size)
       this.disc.matrixWorldNeedsUpdate = true
     }
-    if (camera.type === 'OrthographicCamera' && +this._style.fixedSize > 0) {
+    if (
+      camera.type === 'OrthographicCamera' &&
+      +(this._style.fixedSize !== undefined
+        ? this._style.fixedSize
+        : DefaultMeasurementPointGizmoStyle.fixedSize) > 0
+    ) {
       const cam = camera as OrthographicCamera
       const orthoSize = cam.top - cam.bottom
       const size = (orthoSize / cam.zoom) * 0.0075
@@ -321,7 +352,7 @@ export class MeasurementPointGizmo extends Group {
     this.text.textMesh.material = this.getTextMaterial()
   }
 
-  public raycast(raycaster, intersects) {
+  public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
     // this.disc.raycast(raycaster, intersects)
     this.line.raycast(raycaster, intersects)
     // this.point.raycast(raycaster, intersects)

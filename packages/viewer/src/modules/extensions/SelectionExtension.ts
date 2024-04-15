@@ -1,20 +1,23 @@
-import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
+import { type ExtendedIntersection } from '../objects/SpeckleRaycaster'
 import { Extension } from './Extension'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Material } from 'three'
+import { Material, Vector2 } from 'three'
 import { InputEvent } from '../input/Input'
 import { MathUtils } from 'three'
 import {
-  IViewer,
+  type IViewer,
   ObjectLayers,
-  SelectionEvent,
+  type SelectionEvent,
   UpdateFlags,
   ViewerEvent
 } from '../../IViewer'
-import Materials, { DisplayStyle, RenderMaterial } from '../materials/Materials'
+import Materials, {
+  type DisplayStyle,
+  type RenderMaterial
+} from '../materials/Materials'
 import { StencilOutlineType } from '../../IViewer'
-import { MaterialOptions } from '../materials/MaterialOptions'
-import { TreeNode } from '../tree/WorldTree'
+import { type MaterialOptions } from '../materials/MaterialOptions'
+import { type TreeNode } from '../tree/WorldTree'
 import { CameraController } from './CameraController'
 
 export interface SelectionExtensionOptions {
@@ -55,19 +58,21 @@ export class SelectionExtension extends Extension {
   protected selectedNodes: Array<TreeNode> = []
   protected selectionRvs: { [id: string]: NodeRenderView } = {}
   protected selectionMaterials: { [id: string]: Material } = {}
-  protected hoverRv: NodeRenderView
-  protected hoverMaterial: Material
-  protected selectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
-  protected hoverMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
-  protected transparentSelectionMaterialData: RenderMaterial &
+  protected hoverRv!: NodeRenderView | null
+  protected hoverMaterial!: Material | null
+  protected selectionMaterialData!: RenderMaterial & DisplayStyle & MaterialOptions
+  protected hoverMaterialData!: RenderMaterial & DisplayStyle & MaterialOptions
+  protected transparentSelectionMaterialData!: RenderMaterial &
     DisplayStyle &
     MaterialOptions
-  protected transparentHoverMaterialData: RenderMaterial &
+  protected transparentHoverMaterialData!: RenderMaterial &
     DisplayStyle &
     MaterialOptions
-  protected hiddenSelectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
+  protected hiddenSelectionMaterialData!: RenderMaterial &
+    DisplayStyle &
+    MaterialOptions
   protected _enabled = true
-  protected _options: SelectionExtensionOptions
+  protected _options!: SelectionExtensionOptions
 
   public get enabled(): boolean {
     return this._enabled
@@ -132,19 +137,21 @@ export class SelectionExtension extends Extension {
     }
 
     for (let k = 0; k < ids.length; k++) {
-      this.selectedNodes.push(...this.viewer.getWorldTree().findId(ids[k]))
+      const foundNodes = this.viewer.getWorldTree().findId(ids[k])
+      if (foundNodes) this.selectedNodes.push(...foundNodes)
     }
 
     this.applySelection()
   }
 
   /**TO DO: This is redundant */
-  public unselectObjects(ids?: Array<string>): void {
+  public unselectObjects(ids: Array<string>): void {
     if (!this._enabled) return
 
     const nodes = []
     for (let k = 0; k < ids.length; k++) {
-      nodes.push(...this.viewer.getWorldTree().findId(ids[k]))
+      const foundNodes = this.viewer.getWorldTree().findId(ids[k])
+      if (foundNodes) nodes.push(...foundNodes)
     }
     this.clearSelection(nodes)
   }
@@ -156,10 +163,10 @@ export class SelectionExtension extends Extension {
       return
     }
 
-    const rvs = []
+    const rvs: Array<NodeRenderView> = []
     nodes.forEach((node: TreeNode) => {
       rvs.push(
-        ...this.viewer.getWorldTree().getRenderTree().getRenderViewsForNode(node)
+        ...this.viewer.getWorldTree().getRenderTree()!.getRenderViewsForNode(node)
       )
     })
     this.removeSelection(rvs)
@@ -169,7 +176,8 @@ export class SelectionExtension extends Extension {
     )
   }
 
-  protected onObjectClicked(selection: SelectionEvent) {
+  protected onObjectClicked(_selection: unknown) {
+    const selection: SelectionEvent = _selection as SelectionEvent
     if (!this._enabled) return
 
     if (!selection) {
@@ -184,7 +192,8 @@ export class SelectionExtension extends Extension {
     this.applySelection()
   }
 
-  protected onObjectDoubleClick(selectionInfo: SelectionEvent) {
+  protected onObjectDoubleClick(_selectionInfo: unknown) {
+    const selectionInfo: SelectionEvent = _selectionInfo as SelectionEvent
     if (!this._enabled) return
 
     if (!selectionInfo) {
@@ -197,7 +206,8 @@ export class SelectionExtension extends Extension {
     )
   }
 
-  protected onPointerMove(e) {
+  protected onPointerMove(_e: unknown) {
+    const e: Vector2 = _e as Vector2
     if (!this._enabled) return
 
     if (!this.options.hoverMaterialData) return
@@ -234,7 +244,7 @@ export class SelectionExtension extends Extension {
     for (let k = 0; k < this.selectedNodes.length; k++) {
       const rvs = this.viewer
         .getWorldTree()
-        .getRenderTree()
+        .getRenderTree()!
         .getRenderViewsForNode(this.selectedNodes[k])
       rvs.forEach((rv: NodeRenderView) => {
         if (!this.selectionRvs[rv.guid]) this.selectionRvs[rv.guid] = rv
@@ -275,7 +285,7 @@ export class SelectionExtension extends Extension {
   protected removeSelection(rvs?: Array<NodeRenderView>) {
     this.removeHover()
 
-    const materialMap = {}
+    const materialMap: Record<string, { rvs: NodeRenderView[]; matName: string }> = {}
     rvs = rvs ? rvs : Object.values(this.selectionRvs)
     rvs.forEach((rv: NodeRenderView) => {
       const material = this.selectionMaterials[rv.guid]
@@ -300,7 +310,7 @@ export class SelectionExtension extends Extension {
     }
   }
 
-  protected applyHover(renderView: NodeRenderView) {
+  protected applyHover(renderView: NodeRenderView | null) {
     this.removeHover()
 
     if (!renderView) return
@@ -324,7 +334,7 @@ export class SelectionExtension extends Extension {
   }
 
   protected removeHover() {
-    if (this.hoverRv)
+    if (this.hoverRv && this.hoverMaterial)
       this.viewer.getRenderer().setMaterial([this.hoverRv], this.hoverMaterial)
     this.hoverRv = null
     this.hoverMaterial = null

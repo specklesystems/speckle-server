@@ -15,7 +15,7 @@ import { Geometry } from '../converter/Geometry'
 import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { Extension } from './Extension'
-import { IViewer } from '../..'
+import { type IViewer } from '../..'
 import { SectionTool, SectionToolEvent } from './SectionTool'
 import { GeometryType } from '../batching/Batch'
 import { ObjectLayers } from '../../IViewer'
@@ -43,7 +43,6 @@ export class SectionOutlines extends Extension {
   private static readonly Z_OFFSET = -0.001
 
   private tmpVec: Vector3 = new Vector3()
-  private tmpVec2: Vector3 = new Vector3()
   private up: Vector3 = new Vector3(0, 1, 0)
   private down: Vector3 = new Vector3(0, -1, 0)
   private left: Vector3 = new Vector3(-1, 0, 0)
@@ -117,7 +116,7 @@ export class SectionOutlines extends Extension {
     }
   }
 
-  private updatePlaneOutline(batches: MeshBatch[], _plane: Plane) {
+  private updatePlaneOutline(batches: MeshBatch[], _plane: Plane): void {
     const tempVector = new Vector3()
     const tempVector1 = new Vector3()
     const tempVector2 = new Vector3()
@@ -125,6 +124,10 @@ export class SectionOutlines extends Extension {
     const tempVector4 = new Vector3()
     const tempLine = new Line3()
     const planeId = this.getPlaneId(_plane)
+    if (!planeId) {
+      Logger.error(`Invalid plane! Aborting section outline update`)
+      return
+    }
     const clipOutline = this.planeOutlines[planeId].renderable
     let index = 0
     let posAttr = (
@@ -156,7 +159,7 @@ export class SectionOutlines extends Extension {
           depth
           // check each triangle edge to see if it intersects with the plane. If so then
           // add it to the list of segments.
-          const material = batches[b].mesh.getBatchObjectMaterial(batchObject)
+          const material = batches[b].mesh.getBatchObjectMaterial(batchObject!)
           if (
             material instanceof SpeckleGhostMaterial ||
             material.visible === false ||
@@ -366,7 +369,7 @@ export class SectionOutlines extends Extension {
     Geometry.updateRTEGeometry(outline.renderable.geometry, buffer)
   }
 
-  private getPlaneId(plane: Plane) {
+  private getPlaneId(plane: Plane): PlaneId | undefined {
     this.tmpVec.set(
       Math.round(plane.normal.x),
       Math.round(plane.normal.y),
@@ -378,5 +381,7 @@ export class SectionOutlines extends Extension {
     if (this.tmpVec.equals(this.down)) return PlaneId.NEGATIVE_Y
     if (this.tmpVec.equals(this.back)) return PlaneId.NEGATIVE_Z
     if (this.tmpVec.equals(this.forward)) return PlaneId.POSITIVE_Z
+
+    return undefined
   }
 }

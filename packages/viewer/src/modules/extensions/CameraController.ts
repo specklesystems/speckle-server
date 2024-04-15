@@ -5,9 +5,9 @@ import { SpeckleCameraControls } from '../objects/SpeckleCameraControls'
 import { Box3, OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three'
 import { KeyboardKeyHold, HOLD_EVENT_TYPE } from 'hold-event'
 import { CameraProjection } from '../objects/SpeckleCamera'
-import { CameraEvent, SpeckleCamera } from '../objects/SpeckleCamera'
+import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera'
 import Logger from 'js-logger'
-import { IViewer, SpeckleView } from '../../IViewer'
+import type { IViewer, SpeckleView } from '../../IViewer'
 
 export type CanonicalView =
   | 'front'
@@ -33,10 +33,10 @@ export type PolarView = {
 }
 
 export class CameraController extends Extension implements SpeckleCamera {
-  protected _renderingCamera: PerspectiveCamera | OrthographicCamera = null
-  protected perspectiveCamera: PerspectiveCamera = null
-  protected orthographicCamera: OrthographicCamera = null
-  protected _controls: SpeckleCameraControls = null
+  protected _renderingCamera!: PerspectiveCamera | OrthographicCamera
+  protected perspectiveCamera: PerspectiveCamera
+  protected orthographicCamera: OrthographicCamera
+  protected _controls: SpeckleCameraControls
 
   get renderingCamera(): PerspectiveCamera | OrthographicCamera {
     return this._renderingCamera
@@ -67,7 +67,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     return this.perspectiveCamera.aspect
   }
 
-  public get controls() {
+  public get controls(): SpeckleCameraControls {
     return this._controls
   }
 
@@ -270,7 +270,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     const dKey = new KeyboardKeyHold(KEYCODE.D, 16.666)
     const isTruckingGroup = new Array(4)
 
-    const setTrucking = (index, value) => {
+    const setTrucking = (index: number, value: boolean) => {
       isTruckingGroup[index] = value
       if (isTruckingGroup.every((element) => element === false)) {
         this._controls.isTrucking = false
@@ -278,21 +278,14 @@ export class CameraController extends Extension implements SpeckleCamera {
       } else this._controls.isTrucking = true
     }
 
-    aKey.addEventListener(
-      HOLD_EVENT_TYPE.HOLD_START,
-      function () {
-        this.controls.dispatchEvent({ type: 'controlstart' })
-      }.bind(this)
-    )
-    aKey.addEventListener(
-      'holding',
-      function (event) {
-        if (this.viewer.mouseOverRenderer === false) return
-        setTrucking(0, true)
-        this.controls.truck(-0.01 * event.deltaTime, 0, false)
-        return
-      }.bind(this)
-    )
+    aKey.addEventListener(HOLD_EVENT_TYPE.HOLD_START, () => {
+      this.controls['dispatchEvent']({ type: 'controlstart' })
+    })
+    aKey.addEventListener('holding', (event) => {
+      setTrucking(0, true)
+      this.controls.truck(-0.01 * event!.deltaTime, 0, false)
+      return
+    })
     aKey.addEventListener(
       HOLD_EVENT_TYPE.HOLD_END,
       function () {
@@ -300,21 +293,14 @@ export class CameraController extends Extension implements SpeckleCamera {
       }.bind(this)
     )
 
-    dKey.addEventListener(
-      HOLD_EVENT_TYPE.HOLD_START,
-      function () {
-        this.controls.dispatchEvent({ type: 'controlstart' })
-      }.bind(this)
-    )
-    dKey.addEventListener(
-      'holding',
-      function (event) {
-        if (this.viewer.mouseOverRenderer === false) return
-        setTrucking(1, true)
-        this.controls.truck(0.01 * event.deltaTime, 0, false)
-        return
-      }.bind(this)
-    )
+    dKey.addEventListener(HOLD_EVENT_TYPE.HOLD_START, () => {
+      this.controls['dispatchEvent']({ type: 'controlstart' })
+    })
+    dKey.addEventListener('holding', (event) => {
+      setTrucking(1, true)
+      this.controls.truck(0.01 * event!.deltaTime, 0, false)
+      return
+    })
     dKey.addEventListener(
       HOLD_EVENT_TYPE.HOLD_END,
       function () {
@@ -322,21 +308,14 @@ export class CameraController extends Extension implements SpeckleCamera {
       }.bind(this)
     )
 
-    wKey.addEventListener(
-      HOLD_EVENT_TYPE.HOLD_START,
-      function () {
-        this.controls.dispatchEvent({ type: 'controlstart' })
-      }.bind(this)
-    )
-    wKey.addEventListener(
-      'holding',
-      function (event) {
-        if (this.viewer.mouseOverRenderer === false) return
-        setTrucking(2, true)
-        this.controls.forward(0.01 * event.deltaTime, false)
-        return
-      }.bind(this)
-    )
+    wKey.addEventListener(HOLD_EVENT_TYPE.HOLD_START, () => {
+      this.controls['dispatchEvent']({ type: 'controlstart' })
+    })
+    wKey.addEventListener('holding', (event) => {
+      setTrucking(2, true)
+      this.controls.forward(0.01 * event!.deltaTime, false)
+      return
+    })
     wKey.addEventListener(
       HOLD_EVENT_TYPE.HOLD_END,
       function () {
@@ -344,21 +323,14 @@ export class CameraController extends Extension implements SpeckleCamera {
       }.bind(this)
     )
 
-    sKey.addEventListener(
-      HOLD_EVENT_TYPE.HOLD_START,
-      function () {
-        this.controls.dispatchEvent({ type: 'controlstart' })
-      }.bind(this)
-    )
-    sKey.addEventListener(
-      'holding',
-      function (event) {
-        if (this.viewer.mouseOverRenderer === false) return
-        setTrucking(3, true)
-        this.controls.forward(-0.01 * event.deltaTime, false)
-        return
-      }.bind(this)
-    )
+    sKey.addEventListener(HOLD_EVENT_TYPE.HOLD_START, () => {
+      this.controls['dispatchEvent']({ type: 'controlstart' })
+    })
+    sKey.addEventListener('holding', (event) => {
+      setTrucking(3, true)
+      this.controls.forward(-0.01 * event!.deltaTime, false)
+      return
+    })
     sKey.addEventListener(
       HOLD_EVENT_TYPE.HOLD_END,
       function () {
@@ -419,7 +391,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     // this.viewer.controls.setBoundary( box )
   }
 
-  private zoomToBox(box, fit = 1.2, transition = true) {
+  private zoomToBox(box: Box3, fit = 1.2, transition = true) {
     if (box.max.x === Infinity || box.max.x === -Infinity) {
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
@@ -473,8 +445,10 @@ export class CameraController extends Extension implements SpeckleCamera {
     )
   }
 
-  private isBox3(view: unknown): view is Box3 {
-    return view['isBox3']
+  private isBox3(
+    view: CanonicalView | SpeckleView | InlineView | PolarView | Box3
+  ): view is Box3 {
+    return view instanceof Box3
   }
 
   protected setView(
@@ -497,12 +471,12 @@ export class CameraController extends Extension implements SpeckleCamera {
 
   private setViewSpeckle(view: SpeckleView, transition = true) {
     this._controls.setLookAt(
-      view.view.origin['x'],
-      view.view.origin['y'],
-      view.view.origin['z'],
-      view.view.target['x'],
-      view.view.target['y'],
-      view.view.target['z'],
+      view.view.origin.x,
+      view.view.origin.y,
+      view.view.origin.z,
+      view.view.target.x,
+      view.view.target.y,
+      view.view.target.z,
       transition
     )
     this.enableRotations()

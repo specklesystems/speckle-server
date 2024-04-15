@@ -13,10 +13,11 @@ import {
   BufferAttribute,
   Raycaster,
   DoubleSide,
-  SphereGeometry
+  SphereGeometry,
+  type Intersection
 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
-import { IViewer, ObjectLayers } from '../../IViewer'
+import { type IViewer, ObjectLayers } from '../../IViewer'
 import { Extension } from './Extension'
 import { CameraEvent } from '../objects/SpeckleCamera'
 import { InputEvent } from '../input/Input'
@@ -39,20 +40,20 @@ export class SectionTool extends Extension {
   protected boxMaterial: MeshStandardMaterial
   protected boxMesh: Mesh
   protected boxMeshHelper: Box3Helper
-  protected boxMeshHelperMaterial: LineBasicMaterial
+  protected boxMeshHelperMaterial!: LineBasicMaterial
   protected plane: PlaneGeometry
   protected hoverPlane: Mesh
   protected sphere: Mesh
 
   protected sidesSimple: { [id: string]: { verts: number[]; axis: string } }
-  protected currentRange: number[]
-  protected planes: Plane[]
+  protected currentRange: number[] | null
+  protected planes!: Plane[]
 
-  protected prevPosition: Vector3
+  protected prevPosition: Vector3 | null
   protected attachedToBox: boolean
 
-  protected controls: TransformControls
-  protected allowSelection: boolean
+  protected controls!: TransformControls
+  protected allowSelection!: boolean
 
   protected raycaster: Raycaster
 
@@ -102,7 +103,7 @@ export class SectionTool extends Extension {
 
     this.display.add(this.boxMesh)
 
-    this.boxMeshHelper = new Box3Helper(this.boxGeometry.boundingBox)
+    this.boxMeshHelper = new Box3Helper(this.boxGeometry.boundingBox || new Box3())
     this.boxMeshHelper.material = new LineBasicMaterial({
       color: 0x0a66ff,
       opacity: 0.4
@@ -211,7 +212,7 @@ export class SectionTool extends Extension {
   private _draggingChangeHandler() {
     if (!this.display.visible) return
     this.boxGeometry.computeBoundingBox()
-    this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox)
+    this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox || new Box3())
 
     // Dragging a side / plane
     if (this.dragging && this.currentRange) {
@@ -260,11 +261,11 @@ export class SectionTool extends Extension {
     this.viewer.requestRender()
   }
 
-  private _clickHandler(args) {
+  private _clickHandler(args: { x: number; y: number }) {
     if (!this.allowSelection || this.dragging) return
 
     this.raycaster.setFromCamera(args, this.cameraProvider.renderingCamera)
-    let intersectedObjects = []
+    let intersectedObjects: Array<Intersection> = []
     if (this.display.visible) {
       intersectedObjects = this.raycaster.intersectObject(this.boxMesh)
     }
@@ -280,7 +281,9 @@ export class SectionTool extends Extension {
     this.hoverPlane.visible = true
     const side =
       this.sidesSimple[
-        `${intersectedObjects[0].face.a}${intersectedObjects[0].face.b}${intersectedObjects[0].face.c}`
+        `${intersectedObjects[0].face!.a}${intersectedObjects[0].face!.b}${
+          intersectedObjects[0].face!.c
+        }`
       ]
     this.controls.showX = side.axis === 'x'
     this.controls.showY = side.axis === 'y'
@@ -423,7 +426,7 @@ export class SectionTool extends Extension {
 
   public getBox(): Box3 {
     if (!this.display.visible) return new Box3()
-    return this.boxGeometry.boundingBox
+    return this.boxGeometry.boundingBox || new Box3()
   }
 
   public setBox(targetBox: Box3, offset = 0): void {
@@ -483,7 +486,7 @@ export class SectionTool extends Extension {
     this.boxGeometry.computeBoundingSphere()
     this._generateOrUpdatePlanes()
     this._attachControlsToBox()
-    this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox)
+    this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox || new Box3())
     this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.getRenderer().clippingPlanes = this.planes
     this.viewer.getRenderer().clippingVolume = this.getBox()
