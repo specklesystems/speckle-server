@@ -1,13 +1,13 @@
 import { Matrix4 } from 'three'
-import { TreeNode, WorldTree } from './WorldTree'
+import { type TreeNode, WorldTree } from './WorldTree'
 import Materials from '../materials/Materials'
-import { NodeRenderData, NodeRenderView } from './NodeRenderView'
+import { type NodeRenderData, NodeRenderView } from './NodeRenderView'
 import Logger from 'js-logger'
 import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter'
 import { Geometry } from '../converter/Geometry'
 
 export class RenderTree {
-  private tree: WorldTree
+  private tree: WorldTree | null
   private root: TreeNode
   private cancel = false
 
@@ -21,7 +21,7 @@ export class RenderTree {
   }
 
   public buildRenderTree(geometryConverter: GeometryConverter): Promise<boolean> {
-    const p = this.tree.walkAsync((node: TreeNode): boolean => {
+    const p = this.tree!.walkAsync((node: TreeNode): boolean => {
       const rendeNode = this.buildRenderNode(node, geometryConverter)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       this.applyTransforms(node)
@@ -59,8 +59,8 @@ export class RenderTree {
   private buildRenderNode(
     node: TreeNode,
     geometryConverter: GeometryConverter
-  ): NodeRenderData {
-    let ret: NodeRenderData = null
+  ): NodeRenderData | null {
+    let ret: NodeRenderData | null = null
     const geometryData = geometryConverter.convertNodeToGeometryData(node.model)
     if (geometryData) {
       const renderMaterialNode = this.getRenderMaterialNode(node)
@@ -83,28 +83,30 @@ export class RenderTree {
     return ret
   }
 
-  private getRenderMaterialNode(node: TreeNode): TreeNode {
+  private getRenderMaterialNode(node: TreeNode): TreeNode | null {
     if (node.model.raw.renderMaterial) {
       return node
     }
-    const ancestors = this.tree.getAncestors(node)
+    const ancestors = this.tree!.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.raw.renderMaterial) {
         return ancestors[k]
       }
     }
+    return null
   }
 
-  private getDisplayStyleNode(node: TreeNode): TreeNode {
+  private getDisplayStyleNode(node: TreeNode): TreeNode | null {
     if (node.model.raw.displayStyle) {
       return node
     }
-    const ancestors = this.tree.getAncestors(node)
+    const ancestors = this.tree!.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.raw.displayStyle) {
         return ancestors[k]
       }
     }
+    return null
   }
 
   public computeTransform(node: TreeNode): Matrix4 {
@@ -113,12 +115,12 @@ export class RenderTree {
       return node.model.renderView.renderData.transform
 
     const transform = new Matrix4()
-    const ancestors = this.tree.getAncestors(node)
+    const ancestors = this.tree!.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.renderView) {
         const renderNode: NodeRenderData = ancestors[k].model.renderView.renderData
         if (renderNode.speckleType === SpeckleType.Transform) {
-          transform.premultiply(renderNode.geometry.transform)
+          transform.premultiply(renderNode.geometry.transform!)
         }
       }
     }
@@ -126,7 +128,7 @@ export class RenderTree {
   }
 
   public getInstances() {
-    return this.tree.getInstances(this.root.model.subtreeId)
+    return this.tree!.getInstances(this.root.model.subtreeId)
   }
 
   public getRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {
@@ -172,13 +174,13 @@ export class RenderTree {
     })
   }
 
-  public getRenderViewsForNodeId(id: string): NodeRenderView[] {
-    const nodes = this.tree.findId(id)
+  public getRenderViewsForNodeId(id: string): NodeRenderView[] | null {
+    const nodes = this.tree!.findId(id)
     if (!nodes) {
       Logger.warn(`Id ${id} does not exist`)
       return null
     }
-    const ret = []
+    const ret: Array<NodeRenderView> = []
     nodes.forEach((node: TreeNode) => {
       ret.push(...this.getRenderViewsForNode(node))
     })
@@ -189,7 +191,8 @@ export class RenderTree {
     if (node.model.atomic) {
       return node
     }
-    return this.tree.getAncestors(node).find((node) => node.model.atomic)
+    /** There will always the root of the tree as the atomic parent for all nodes */
+    return this.tree!.getAncestors(node).find((node) => node.model.atomic) as TreeNode
   }
 
   public purge() {
@@ -199,7 +202,7 @@ export class RenderTree {
   /** TO DO: Need to purge only if currently building */
   public cancelBuild(): void {
     this.cancel = true
-    this.tree.purge(this.id)
+    this.tree!.purge(this.id)
     this.purge()
   }
 }

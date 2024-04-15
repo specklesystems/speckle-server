@@ -1,4 +1,4 @@
-import TreeModel from 'tree-model'
+import TreeModel, { type Model } from 'tree-model'
 import { NodeRenderView } from './NodeRenderView'
 import { RenderTree } from './RenderTree'
 import Logger from 'js-logger'
@@ -16,7 +16,7 @@ export interface NodeData {
   atomic: boolean
   nestedNodes?: TreeNode[]
   subtreeId?: number
-  renderView?: NodeRenderView
+  renderView?: NodeRenderView | null
   instanced?: boolean
 }
 
@@ -38,7 +38,7 @@ export class WorldTree {
     })
   }
 
-  public getRenderTree(subtreeId?: string): RenderTree {
+  public getRenderTree(subtreeId?: string): RenderTree | null {
     if (!this._root) {
       console.error(`WorldTree not initialised`)
       return null
@@ -81,7 +81,7 @@ export class WorldTree {
     return node.parent === this._root
   }
 
-  public parse(model): TreeNode {
+  public parse(model: Model<NodeData>): TreeNode {
     return this.tree.parse(model)
   }
 
@@ -116,7 +116,7 @@ export class WorldTree {
     return (node ? node : this.root).all(predicate)
   }
 
-  public findId(id: string, subtreeId?: number): TreeNode[] {
+  public findId(id: string, subtreeId?: number): TreeNode[] | null {
     let idNode = null
     if (subtreeId) {
       idNode = this.nodeMaps[subtreeId].getNodeById(id)
@@ -164,7 +164,10 @@ export class WorldTree {
     const pause = new AsyncPause()
 
     let success = true
-    async function depthFirstPreOrderAsync(callback, context) {
+    async function depthFirstPreOrderAsync(
+      callback: SearchPredicate,
+      context: TreeNode
+    ) {
       let i, childCount
       pause.tick(100)
       if (pause.needsWait) {
@@ -185,10 +188,12 @@ export class WorldTree {
   public purge(subtreeId?: string) {
     if (subtreeId) {
       delete this.renderTreeInstances[subtreeId]
-      const subtreeNode = this.findId(subtreeId)[0]
-      this.nodeMaps[subtreeNode.model.subtreeId].purge()
-      delete this.nodeMaps[subtreeNode.model.subtreeId]
-      this.removeNode(subtreeNode)
+      const subtreeNode = this.findId(subtreeId)
+      if (subtreeNode) {
+        this.nodeMaps[subtreeNode[0].model.subtreeId].purge()
+        delete this.nodeMaps[subtreeNode[0].model.subtreeId]
+        this.removeNode(subtreeNode[0])
+      }
       return
     }
 

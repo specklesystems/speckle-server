@@ -1,7 +1,10 @@
 import { Box3 } from 'three'
 import { GeometryType } from '../batching/Batch'
-import { GeometryData } from '../converter/Geometry'
-import Materials, { DisplayStyle, RenderMaterial } from '../materials/Materials'
+import { GeometryAttributes, type GeometryData } from '../converter/Geometry'
+import Materials, {
+  type DisplayStyle,
+  type RenderMaterial
+} from '../materials/Materials'
 import { SpeckleType } from '../loaders/GeometryConverter'
 
 export interface NodeRenderData {
@@ -9,8 +12,8 @@ export interface NodeRenderData {
   subtreeId: number
   speckleType: SpeckleType
   geometry: GeometryData
-  renderMaterial: RenderMaterial
-  displayStyle: DisplayStyle
+  renderMaterial: RenderMaterial | null
+  displayStyle: DisplayStyle | null
 }
 
 export class NodeRenderView {
@@ -23,9 +26,9 @@ export class NodeRenderView {
   private readonly _renderData: NodeRenderData
   private _materialHash: number
   private _geometryType: GeometryType
-  private _guid: string = null
+  private _guid: string | null = null
 
-  private _aabb: Box3 = null
+  private _aabb: Box3 | null = null
 
   /** TO DO: Not sure if we should store it */
   public get guid(): string {
@@ -75,13 +78,13 @@ export class NodeRenderView {
     return this._batchId
   }
 
-  public get aabb(): Box3 {
+  public get aabb(): Box3 | null {
     return this._aabb
   }
 
   public get transparent(): boolean {
     return (
-      this._renderData.renderMaterial && this._renderData.renderMaterial.opacity < 1
+      this._renderData.renderMaterial! && this._renderData.renderMaterial!.opacity < 1
     )
   }
 
@@ -106,13 +109,14 @@ export class NodeRenderView {
 
   public get validGeometry(): boolean {
     return (
-      this._renderData.geometry.attributes &&
-      this._renderData.geometry.attributes.POSITION &&
-      this._renderData.geometry.attributes.POSITION.length > 0 &&
-      (this._geometryType === GeometryType.MESH
-        ? this._renderData.geometry.attributes.INDEX &&
-          this._renderData.geometry.attributes.INDEX.length > 0
-        : true)
+      (this._renderData.geometry.attributes &&
+        this._renderData.geometry.attributes.POSITION &&
+        this._renderData.geometry.attributes.POSITION.length > 0 &&
+        (this._geometryType === GeometryType.MESH
+          ? this._renderData.geometry.attributes.INDEX &&
+            this._renderData.geometry.attributes.INDEX.length > 0
+          : true)) ||
+      false
     )
   }
 
@@ -121,11 +125,11 @@ export class NodeRenderView {
     this._geometryType = this.getGeometryType()
     this._materialHash = Materials.getMaterialHash(this)
 
-    this._batchId
-    this._batchIndexCount
-    this._batchIndexStart
-    this._batchVertexStart
-    this._batchVertexEnd
+    this._batchId = ''
+    this._batchIndexCount = 0
+    this._batchIndexStart = -1
+    this._batchVertexStart = -1
+    this._batchVertexEnd = -1
   }
 
   public setBatchData(
@@ -166,7 +170,7 @@ export class NodeRenderView {
 
   public disposeGeometry() {
     for (const attr in this._renderData.geometry.attributes) {
-      this._renderData.geometry.attributes[attr] = []
+      this._renderData.geometry.attributes[attr as GeometryAttributes] = []
     }
   }
 }
