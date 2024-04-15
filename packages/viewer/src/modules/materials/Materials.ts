@@ -1,6 +1,6 @@
 import { Color, DoubleSide, FrontSide, Material, Texture, Vector2 } from 'three'
 import { GeometryType } from '../batching/Batch'
-import { TreeNode } from '../tree/WorldTree'
+import { type TreeNode } from '../tree/WorldTree'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import SpeckleLineMaterial from './SpeckleLineMaterial'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
@@ -13,7 +13,7 @@ import SpeckleGhostMaterial from './SpeckleGhostMaterial'
 import SpeckleTextMaterial from './SpeckleTextMaterial'
 import { SpeckleMaterial } from './SpeckleMaterial'
 import SpecklePointColouredMaterial from './SpecklePointColouredMaterial'
-import { Asset, AssetType, MaterialOptions } from '../../IViewer'
+import { type Asset, AssetType, type MaterialOptions } from '../../IViewer'
 
 const defaultGradient: Asset = {
   id: 'defaultGradient',
@@ -62,26 +62,26 @@ export interface FilterMaterialOptions {
 export default class Materials {
   public static readonly UNIFORM_VECTORS_USED = 33
   private readonly materialMap: { [hash: number]: Material } = {}
-  private meshGhostMaterial: Material = null
-  private meshGradientMaterial: Material = null
-  private meshTransparentGradientMaterial: Material = null
-  private meshColoredMaterial: Material = null
-  private meshTransparentColoredMaterial: Material = null
-  private meshHiddenMaterial: Material = null
+  private meshGhostMaterial: Material | null = null
+  private meshGradientMaterial: Material | null = null
+  private meshTransparentGradientMaterial: Material | null = null
+  private meshColoredMaterial: Material | null = null
+  private meshTransparentColoredMaterial: Material | null = null
+  private meshHiddenMaterial: Material | null = null
 
-  private lineGhostMaterial: Material = null
-  private lineColoredMaterial: Material = null
-  private lineHiddenMaterial: Material = null
+  private lineGhostMaterial: Material | null = null
+  private lineColoredMaterial: Material | null = null
+  private lineHiddenMaterial: Material | null = null
 
-  private pointGhostMaterial: Material = null
-  private pointCloudColouredMaterial: Material = null
-  private pointCloudGradientMaterial: Material = null
+  private pointGhostMaterial: Material | null = null
+  private pointCloudColouredMaterial: Material | null = null
+  private pointCloudGradientMaterial: Material | null = null
 
-  private textGhostMaterial: Material = null
-  private textColoredMaterial: Material = null
-  private textHiddenMaterial: Material = null
+  private textGhostMaterial: Material | null = null
+  private textColoredMaterial: Material | null = null
+  private textHiddenMaterial: Material | null = null
 
-  private defaultGradientTextureData: ImageData = null
+  private defaultGradientTextureData!: ImageData
 
   private static readonly NullRenderMaterialHash = this.hashCode(
     GeometryType.MESH.toString()
@@ -112,11 +112,11 @@ export default class Materials {
   )
 
   public static renderMaterialFromNode(
-    materialNode: TreeNode,
-    geometryNode: TreeNode
-  ): RenderMaterial {
+    materialNode: TreeNode | null,
+    geometryNode: TreeNode | null
+  ): RenderMaterial | null {
     if (!materialNode) return null
-    let renderMaterial: RenderMaterial = null
+    let renderMaterial: RenderMaterial | null = null
     if (materialNode.model.raw.renderMaterial) {
       renderMaterial = {
         id: materialNode.model.raw.renderMaterial.id,
@@ -128,15 +128,17 @@ export default class Materials {
         roughness: materialNode.model.raw.renderMaterial.roughness,
         metalness: materialNode.model.raw.renderMaterial.metalness,
         vertexColors:
-          geometryNode.model.raw.colors && geometryNode.model.raw.colors.length > 0
+          geometryNode &&
+          geometryNode.model.raw.colors &&
+          geometryNode.model.raw.colors.length > 0
       }
     }
     return renderMaterial
   }
 
-  public static displayStyleFromNode(node: TreeNode): DisplayStyle {
+  public static displayStyleFromNode(node: TreeNode | null): DisplayStyle | null {
     if (!node) return null
-    let displayStyle: DisplayStyle = null
+    let displayStyle: DisplayStyle | null = null
     if (node.model.raw.displayStyle) {
       /** If there are no units specified, we ignore the line width value */
       let lineWeight = node.model.raw.displayStyle.lineweight || 0
@@ -189,21 +191,32 @@ export default class Materials {
     return plm
   }
 
-  private static hashCode(s: string) {
-    let h
+  private static hashCode(s: string): number {
+    let h = 0
     for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0
     return h
   }
 
-  public static isMaterialInstance(material): material is Material {
+  public static isMaterialInstance(
+    material: Material | FilterMaterial | RenderMaterial | DisplayStyle
+  ): material is Material {
     return material instanceof Material
   }
 
-  public static isFilterMaterial(material): material is FilterMaterial {
+  public static isFilterMaterial(
+    material: Material | FilterMaterial | RenderMaterial | DisplayStyle
+  ): material is FilterMaterial {
     return 'filterType' in material
   }
 
-  public static isRendeMaterial(materialData): materialData is RenderMaterial {
+  public static isRendeMaterial(
+    materialData:
+      | Material
+      | FilterMaterial
+      | RenderMaterial
+      | DisplayStyle
+      | MaterialOptions
+  ): materialData is RenderMaterial {
     return (
       'color' in materialData &&
       'opacity' in materialData &&
@@ -213,14 +226,21 @@ export default class Materials {
     )
   }
 
-  public static isDisplayStyle(materialData): materialData is DisplayStyle {
+  public static isDisplayStyle(
+    materialData:
+      | Material
+      | FilterMaterial
+      | RenderMaterial
+      | DisplayStyle
+      | MaterialOptions
+  ): materialData is DisplayStyle {
     return 'color' in materialData && 'lineWeight' in materialData
   }
 
   public static getMaterialHash(
     renderView: NodeRenderView,
-    materialData?: RenderMaterial | DisplayStyle | MaterialOptions
-  ) {
+    materialData?: RenderMaterial | DisplayStyle | MaterialOptions | null
+  ): number {
     if (!materialData) {
       materialData =
         renderView.renderData.renderMaterial || renderView.renderData.displayStyle
@@ -732,7 +752,7 @@ export default class Materials {
 
   public getMaterial(
     hash: number,
-    material: RenderMaterial | DisplayStyle,
+    material: RenderMaterial | DisplayStyle | null,
     type: GeometryType
   ): Material {
     let mat
@@ -741,7 +761,7 @@ export default class Materials {
         mat = this.getMeshMaterial(hash, material as RenderMaterial)
         break
       case GeometryType.LINE:
-        mat = this.getLineMaterial(hash, material)
+        mat = this.getLineMaterial(hash, material as DisplayStyle)
         break
       case GeometryType.POINT:
         mat = this.getPointMaterial(hash, material as RenderMaterial)
@@ -750,7 +770,7 @@ export default class Materials {
         mat = this.getPointCloudMaterial(hash, material as RenderMaterial)
         break
       case GeometryType.TEXT:
-        mat = this.getTextMaterial(hash, material)
+        mat = this.getTextMaterial(hash, material as DisplayStyle)
         break
     }
     // }
@@ -800,7 +820,7 @@ export default class Materials {
   public getGhostMaterial(
     renderView: NodeRenderView,
     filterMaterial?: FilterMaterial
-  ): Material {
+  ): Material | null {
     filterMaterial
     switch (renderView.geometryType) {
       case GeometryType.MESH:
@@ -819,7 +839,7 @@ export default class Materials {
   public getGradientMaterial(
     renderView: NodeRenderView,
     filterMaterial?: FilterMaterial
-  ): Material {
+  ): Material | null {
     switch (renderView.geometryType) {
       case GeometryType.MESH: {
         const material = renderView.transparent
@@ -857,7 +877,7 @@ export default class Materials {
   public getColoredMaterial(
     renderView: NodeRenderView,
     filterMaterial?: FilterMaterial
-  ): Material {
+  ): Material | null {
     switch (renderView.geometryType) {
       case GeometryType.MESH: {
         const material = renderView.transparent
@@ -895,7 +915,7 @@ export default class Materials {
   public getHiddenMaterial(
     renderView: NodeRenderView,
     filterMaterial?: FilterMaterial
-  ): Material {
+  ): Material | null {
     filterMaterial
     switch (renderView.geometryType) {
       case GeometryType.MESH:
@@ -914,8 +934,8 @@ export default class Materials {
   public getFilterMaterial(
     renderView: NodeRenderView,
     filterMaterial: FilterMaterial
-  ): Material {
-    let retMaterial: Material
+  ): Material | null {
+    let retMaterial: Material | null = null
     switch (filterMaterial.filterType) {
       case FilterMaterialType.GHOST:
         retMaterial = this.getGhostMaterial(renderView, filterMaterial)
@@ -933,7 +953,7 @@ export default class Materials {
     /** There's a bug in three.js where it checks for the length of the planes without checking if they exist first
      *  It's been allegedly fixed in a later version but until we update we'll just assing an empty array
      */
-    retMaterial.clippingPlanes = []
+    if (retMaterial) retMaterial.clippingPlanes = []
     return retMaterial
   }
 
@@ -947,7 +967,7 @@ export default class Materials {
 
   public getFilterMaterialOptions(
     filterMaterial: FilterMaterial
-  ): FilterMaterialOptions {
+  ): FilterMaterialOptions | null {
     switch (filterMaterial.filterType) {
       case FilterMaterialType.COLORED:
         return {
@@ -976,13 +996,13 @@ export default class Materials {
                   .setRGB(
                     this.defaultGradientTextureData.data[
                       Math.floor(
-                        filterMaterial.rampIndex *
+                        filterMaterial.rampIndex! *
                           (this.defaultGradientTextureData.width - 1)
                       ) * 4
                     ] / 255,
                     this.defaultGradientTextureData.data[
                       Math.floor(
-                        filterMaterial.rampIndex *
+                        filterMaterial.rampIndex! *
                           (this.defaultGradientTextureData.width - 1)
                       ) *
                         4 +
@@ -990,7 +1010,7 @@ export default class Materials {
                     ] / 255,
                     this.defaultGradientTextureData.data[
                       Math.floor(
-                        filterMaterial.rampIndex *
+                        filterMaterial.rampIndex! *
                           (this.defaultGradientTextureData.width - 1)
                       ) *
                         4 +
@@ -1000,11 +1020,13 @@ export default class Materials {
                   .convertSRGBToLinear(),
           rampTexture: filterMaterial.rampTexture
             ? filterMaterial.rampTexture
-            : this.meshGradientMaterial.userData.gradientRamp.value,
+            : this.meshGradientMaterial!.userData.gradientRamp.value,
           rampWidth: filterMaterial.rampTexture
             ? filterMaterial.rampTexture.image.width
-            : this.meshGradientMaterial.userData.gradientRamp.value.image.width
+            : this.meshGradientMaterial!.userData.gradientRamp.value.image.width
         }
+      default:
+        return null
     }
   }
 

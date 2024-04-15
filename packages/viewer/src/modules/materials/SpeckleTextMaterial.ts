@@ -2,17 +2,29 @@
 /* eslint-disable camelcase */
 import { speckleTextVert } from './shaders/speckle-text-vert'
 import { speckleTextFrag } from './shaders/speckle-text-frag'
-import { ShaderLib, Vector3, IUniform, Vector2, Material } from 'three'
+import {
+  ShaderLib,
+  Vector3,
+  type IUniform,
+  Vector2,
+  Material,
+  type MeshBasicMaterialParameters,
+  Scene,
+  Camera,
+  BufferGeometry,
+  Object3D
+} from 'three'
 import { Matrix4 } from 'three'
 
-import { ExtendedMeshBasicMaterial, Uniforms } from './SpeckleMaterial'
+import { ExtendedMeshBasicMaterial, type Uniforms } from './SpeckleMaterial'
 import { createTextDerivedMaterial } from 'troika-three-text'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
 class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
   protected static readonly vecBuff: Vector2 = new Vector2()
 
-  private _billboardPixelHeight: number
+  private _billboardPixelHeight!: number
 
   protected get vertexProgram(): string {
     return speckleTextVert
@@ -47,7 +59,7 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
     return this._billboardPixelHeight
   }
 
-  constructor(parameters, defines = []) {
+  constructor(parameters: MeshBasicMaterialParameters, defines: Array<string> = []) {
     super(parameters)
     this.init(defines)
   }
@@ -57,7 +69,7 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
     return this.constructor.name
   }
 
-  public copy(source) {
+  public copy(source: Material) {
     super.copy(source)
     this.copyFrom(source)
     return this
@@ -83,8 +95,14 @@ class SpeckleTextMaterial extends ExtendedMeshBasicMaterial {
   }
 
   /** Called by three.js render loop */
-  public onBeforeRender(_this, scene, camera, geometry, object, group) {
-    if (this.defines['BILLBOARD_FIXED']) {
+  public onBeforeRender(
+    _this: SpeckleWebGLRenderer,
+    _scene: Scene,
+    camera: Camera,
+    _geometry: BufferGeometry,
+    _object: Object3D
+  ) {
+    if (this.defines && this.defines['BILLBOARD_FIXED']) {
       const resolution = _this.getDrawingBufferSize(SpeckleTextMaterial.vecBuff)
       SpeckleTextMaterial.vecBuff.set(
         (this._billboardPixelHeight / resolution.x) * 2,

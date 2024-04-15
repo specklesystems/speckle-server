@@ -1,10 +1,19 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable camelcase */
 import { speckleStandardVert } from './shaders/speckle-standard-vert'
 import { speckleStandardFrag } from './shaders/speckle-standard-frag'
-import { ShaderLib, Vector3, Material, IUniform } from 'three'
+import {
+  ShaderLib,
+  Vector3,
+  Material,
+  type IUniform,
+  type MeshStandardMaterialParameters,
+  Scene,
+  Camera,
+  BufferGeometry,
+  Object3D
+} from 'three'
 import { Matrix4 } from 'three'
-import { ExtendedMeshStandardMaterial, Uniforms } from './SpeckleMaterial'
+import { ExtendedMeshStandardMaterial, type Uniforms } from './SpeckleMaterial'
 import { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
 class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
@@ -33,7 +42,7 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     }
   }
 
-  constructor(parameters, defines = ['USE_RTE']) {
+  constructor(parameters: MeshStandardMaterialParameters, defines = ['USE_RTE']) {
     super(parameters)
     this.init(defines)
   }
@@ -43,7 +52,7 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     return this.constructor.name
   }
 
-  public copy(source) {
+  public copy(source: Material) {
     super.copy(source)
     this.copyFrom(source)
     return this
@@ -83,7 +92,13 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
   }
 
   /** Called by three.js render loop */
-  public onBeforeRender(_this: SpeckleWebGLRenderer, scene, camera, geometry, object) {
+  public onBeforeRender(
+    _this: SpeckleWebGLRenderer,
+    _scene: Scene,
+    _camera: Camera,
+    _geometry: BufferGeometry,
+    object: Object3D
+  ) {
     if (this.defines['USE_RTE']) {
       object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
       this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
