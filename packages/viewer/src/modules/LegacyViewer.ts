@@ -1,39 +1,46 @@
-import { Box3, MathUtils } from 'three'
-import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
+import { Box3, MathUtils, Vector2 } from 'three'
 import {
-  InlineView,
-  PolarView,
-  CanonicalView,
+  FilteringExtension,
+  type FilteringState
+} from './extensions/FilteringExtension'
+import {
+  type InlineView,
+  type PolarView,
+  type CanonicalView,
   CameraController
 } from './extensions/CameraController'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Queries } from './queries/Queries'
-import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
-import { DataTree, DataTreeBuilder } from './deprecated/DataTree'
+import type { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
+import { type DataTree, DataTreeBuilder } from './deprecated/DataTree'
 import {
   SelectionExtension,
-  SelectionExtensionOptions
+  type SelectionExtensionOptions
 } from './extensions/SelectionExtension'
 import {
   DefaultViewerParams,
-  IViewer,
-  SelectionEvent,
-  SpeckleView,
-  SunLightConfiguration,
-  ViewerParams,
+  type IViewer,
+  type SelectionEvent,
+  type SpeckleView,
+  type SunLightConfiguration,
+  type ViewerParams,
   StencilOutlineType
 } from '../IViewer'
 import { Viewer } from './Viewer'
 import { SectionTool } from './extensions/SectionTool'
 import { SectionOutlines } from './extensions/SectionOutlines'
-import { TreeNode, WorldTree } from './tree/WorldTree'
+import { type TreeNode, WorldTree } from './tree/WorldTree'
 import {
-  MeasurementOptions,
+  type MeasurementOptions,
   MeasurementsExtension
 } from './extensions/measurements/MeasurementsExtension'
 import { ExplodeExtension } from './extensions/ExplodeExtension'
-import { DiffExtension, DiffResult, VisualDiffMode } from './extensions/DiffExtension'
-import { PropertyInfo } from './filtering/PropertyManager'
+import {
+  DiffExtension,
+  type DiffResult,
+  VisualDiffMode
+} from './extensions/DiffExtension'
+import { type PropertyInfo } from './filtering/PropertyManager'
 import { BatchObject } from './batching/BatchObject'
 import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
 
@@ -72,7 +79,8 @@ class HighlightExtension extends SelectionExtension {
 
     const nodes = []
     for (let k = 0; k < ids.length; k++) {
-      nodes.push(...this.viewer.getWorldTree().findId(ids[k]))
+      const foundNodes = this.viewer.getWorldTree().findId(ids[k])
+      if (foundNodes) nodes.push(...foundNodes)
     }
     this.clearSelection(
       nodes.filter((node: TreeNode) => {
@@ -90,21 +98,20 @@ class HighlightExtension extends SelectionExtension {
     selection
   }
 
-  protected onPointerMove(e) {
+  protected onPointerMove(e: Vector2) {
     e
   }
 }
 
 export class LegacyViewer extends Viewer {
-  private cameraController: CameraController = null
-  private selection: SelectionExtension = null
-  private sections: SectionTool = null
-  private sectionOutlines: SectionOutlines = null
-  private measurements: MeasurementsExtension = null
-  private filtering: FilteringExtension = null
-  private explodeExtension: ExplodeExtension = null
-  private diffExtension: DiffExtension = null
-  private highlightExtension: HighlightExtension = null
+  private cameraController: CameraController
+  private selection: SelectionExtension
+  private sections: SectionTool
+  private measurements: MeasurementsExtension
+  private filtering: FilteringExtension
+  private explodeExtension: ExplodeExtension
+  private diffExtension: DiffExtension
+  private highlightExtension: HighlightExtension
 
   public constructor(
     container: HTMLElement,
@@ -114,7 +121,7 @@ export class LegacyViewer extends Viewer {
     this.cameraController = this.createExtension(CameraController)
     this.selection = this.createExtension(LegacySelectionExtension)
     this.sections = this.createExtension(SectionTool)
-    this.sectionOutlines = this.createExtension(SectionOutlines)
+    this.createExtension(SectionOutlines)
     this.measurements = this.createExtension(MeasurementsExtension)
     this.filtering = this.createExtension(FilteringExtension)
     this.explodeExtension = this.createExtension(ExplodeExtension)
@@ -194,7 +201,7 @@ export class LegacyViewer extends Viewer {
 
   public hideObjects(
     objectIds: string[],
-    stateKey: string = null,
+    stateKey: string | undefined = undefined,
     includeDescendants = false,
     ghost = false
   ): Promise<FilteringState> {
@@ -213,7 +220,7 @@ export class LegacyViewer extends Viewer {
 
   public showObjects(
     objectIds: string[],
-    stateKey: string = null,
+    stateKey: string | undefined = undefined,
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
@@ -226,7 +233,7 @@ export class LegacyViewer extends Viewer {
 
   public isolateObjects(
     objectIds: string[],
-    stateKey: string = null,
+    stateKey: string | undefined = undefined,
     includeDescendants = false,
     ghost = true
   ): Promise<FilteringState> {
@@ -245,7 +252,7 @@ export class LegacyViewer extends Viewer {
 
   public unIsolateObjects(
     objectIds: string[],
-    stateKey: string = null,
+    stateKey: string | undefined = undefined,
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
@@ -296,7 +303,7 @@ export class LegacyViewer extends Viewer {
     })
   }
 
-  public resetFilters(): Promise<FilteringState> {
+  public resetFilters(): Promise<FilteringState | null> {
     return new Promise<FilteringState>((resolve) => {
       const filteringState = this.preserveSelectionFilter(() => {
         return this.filtering.resetFilters()
@@ -305,17 +312,21 @@ export class LegacyViewer extends Viewer {
     })
   }
 
-  private preserveSelectionFilter(filterFn: () => FilteringState): FilteringState {
+  private preserveSelectionFilter(
+    filterFn: () => FilteringState | null
+  ): FilteringState {
     const selectedObjects = this.selection
       .getSelectedObjects()
       .map((obj) => obj.id) as string[]
     if (selectedObjects.length) this.selection.clearSelection()
     const filteringState = filterFn()
-    if (!filteringState.selectedObjects)
-      filteringState.selectedObjects = selectedObjects
+    if (filteringState) {
+      if (!filteringState.selectedObjects)
+        filteringState.selectedObjects = selectedObjects
 
-    this.selection.selectObjects(filteringState.selectedObjects)
-    return filteringState
+      this.selection.selectObjects(filteringState.selectedObjects)
+    }
+    return filteringState || this.filtering.filteringState
   }
 
   /** TREE */
@@ -337,9 +348,10 @@ export class LegacyViewer extends Viewer {
       Queries.DefaultIntersectionQuerySolver.setContext(this.speckleRenderer)
       return Queries.DefaultIntersectionQuerySolver.solve(query)
     }
+    return null
   }
 
-  public queryAsync(query: Query): Promise<QueryResult> {
+  public queryAsync(query: Query): Promise<QueryResult> | null {
     //TO DO
     query
     return null
@@ -411,11 +423,13 @@ export class LegacyViewer extends Viewer {
 
   public getObjects(id: string): BatchObject[] {
     const nodes = this.tree.findId(id)
-    const objects = []
-    nodes.forEach((node: TreeNode) => {
-      if (node.model.renderView)
-        objects.push(this.speckleRenderer.getObject(node.model.renderView))
-    })
+    const objects: BatchObject[] = []
+    if (nodes) {
+      nodes.forEach((node: TreeNode) => {
+        if (node.model.renderView)
+          objects.push(this.speckleRenderer.getObject(node.model.renderView))
+      })
+    }
     return objects
   }
 
@@ -425,7 +439,7 @@ export class LegacyViewer extends Viewer {
 
   public async loadObjectAsync(
     url: string,
-    token: string = null,
+    token: string | undefined = undefined,
     enableCaching = true,
     zoomToObject = true
   ) {
@@ -446,11 +460,11 @@ export class LegacyViewer extends Viewer {
     return this.diffExtension.undiff()
   }
 
-  public setDiffTime(diffResult: DiffResult, time: number) {
+  public setDiffTime(_diffResult: DiffResult, time: number) {
     this.diffExtension.updateVisualDiff(time)
   }
 
-  public setVisualDiffMode(diffResult: DiffResult, mode: VisualDiffMode) {
+  public setVisualDiffMode(_diffResult: DiffResult, mode: VisualDiffMode) {
     this.diffExtension.updateVisualDiff(undefined, mode)
   }
 

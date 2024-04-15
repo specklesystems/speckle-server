@@ -1,14 +1,15 @@
 import { Vector3 } from 'three'
 import sampleHdri from './assets/sample-hdri.png'
-import { PropertyInfo } from './modules/filtering/PropertyManager'
-import { Query, QueryArgsResultMap } from './modules/queries/Query'
-import { TreeNode, WorldTree } from './modules/tree/WorldTree'
-import { Utils } from './modules/Utils'
+import { type PropertyInfo } from './modules/filtering/PropertyManager'
+import type { Query, QueryArgsResultMap } from './modules/queries/Query'
+import { type TreeNode, WorldTree } from './modules/tree/WorldTree'
+import { type Utils } from './modules/Utils'
 import { World } from './modules/World'
 import SpeckleRenderer from './modules/SpeckleRenderer'
 import { Extension } from './modules/extensions/Extension'
 import { Loader } from './modules/loaders/Loader'
 import { type Constructor } from 'type-fest'
+import type { Vector3Like } from './modules/batching/BatchObject'
 
 export type SpeckleObject = Record<string, unknown>
 
@@ -56,9 +57,7 @@ export enum ViewerEvent {
   ObjectDoubleClicked = 'object-doubleclicked',
   DownloadComplete = 'download-complete',
   LoadComplete = 'load-complete',
-  LoadProgress = 'load-progress',
   UnloadComplete = 'unload-complete',
-  LoadCancelled = 'load-cancelled',
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
   FilteringStateSet = 'filtering-state-set',
@@ -68,7 +67,7 @@ export enum ViewerEvent {
 export type SpeckleView = {
   name: string
   id: string
-  view: Record<string, unknown>
+  view: { origin: Vector3Like; target: Vector3Like }
 }
 
 export type SelectionEvent = {
@@ -145,7 +144,7 @@ export interface IViewer {
 
   init(): Promise<void>
   resize(): void
-  on(eventType: ViewerEvent, handler: (arg) => void)
+  on(eventType: ViewerEvent, handler: (arg: unknown) => void): void
   requestRender(flags?: UpdateFlags): void
 
   setLightConfiguration(config: LightConfiguration): void
@@ -166,13 +165,13 @@ export interface IViewer {
 
   /** Data ops */
   getWorldTree(): WorldTree
-  query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
+  query<T extends Query>(query: T): QueryArgsResultMap[T['operation']] | null
 
   getRenderer(): SpeckleRenderer
   getContainer(): HTMLElement
 
-  createExtension<T extends Extension>(type: Constructor<T>): T
-  getExtension<T extends Extension>(type: Constructor<T>): T
+  createExtension<T extends Extension>(type: Constructor<T>): T | null
+  getExtension<T extends Extension>(type: Constructor<T>): T | null
 
   dispose(): void
 }
