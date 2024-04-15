@@ -96,14 +96,7 @@
 
         <template #triggers="{ item }">
           <div :class="{ 'opacity-60': !item.enabled }">
-            {{
-              item.triggers
-                .map(
-                  (event, index, array) =>
-                    `"${event}"${index < array.length - 1 ? ',' : ''}`
-                )
-                .join(' ')
-            }}
+            {{ formatTriggers(item) }}
           </div>
         </template>
       </LayoutTable>
@@ -186,6 +179,12 @@ const getHistoryStatus = (item: WebhookItem) => {
 const getHistoryStatusInfo = (item: WebhookItem) => {
   const recentHistory = item.history?.items?.[0]
   return recentHistory ? recentHistory.statusInfo : 'No events yet'
+}
+
+const formatTriggers = (item: WebhookItem): string => {
+  return item.triggers
+    .map((event, index, array) => `"${event}"${index < array.length - 1 ? ',' : ''}`)
+    .join(' ')
 }
 
 const openDeleteWebhookDialog = (item: WebhookItem) => {
