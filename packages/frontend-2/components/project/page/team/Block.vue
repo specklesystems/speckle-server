@@ -24,13 +24,7 @@
       </div>
     </template>
     <template #default>
-      <ProjectPageInviteDialog
-        v-model:open="dialogOpen"
-        :disabled="!isOwner"
-        :disabled-message="
-          !isOwner ? 'Sorry, you must be a project owner to invite users' : undefined
-        "
-      />
+      <ProjectPageInviteDialog v-model:open="dialogOpen" :disabled="!isOwner" />
     </template>
   </ProjectPageStatsBlock>
 </template>

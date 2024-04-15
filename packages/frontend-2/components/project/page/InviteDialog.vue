@@ -9,7 +9,7 @@
         placeholder="Search"
         :disabled="disabled"
         :help="
-          disabled && disabledMessage
+          disabled
             ? 'You must be the project owner to invite users'
             : 'Search by username or email'
         "
@@ -75,7 +75,6 @@ type InvitableUser = UserSearchItem | string
 const props = defineProps<{
   project?: ProjectPageSettingsCollaboratorsQuery
   disabled?: boolean
-  disabledMessage?: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
