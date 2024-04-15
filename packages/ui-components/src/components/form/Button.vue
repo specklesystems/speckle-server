@@ -390,8 +390,6 @@ const sizeClasses = computed(() => {
       return 'h-5 text-xs font-medium xxx-tracking-wide'
     case 'sm':
       return 'h-6 text-sm font-medium xxx-tracking-wide'
-    case 'md':
-      return 'h-8 text-sm font-medium xxx-tracking-wide'
     case 'lg':
       return 'h-10 text-lg font-semibold xxx-tracking-wide'
     case 'xl':

@@ -69,17 +69,16 @@ const activeSettingsPageTab = computed({
   },
   set: (val: LayoutPageTabItem) => {
     switch (val.id) {
-      case 'general':
-        router.push(projectSettingsRoute(projectId.value))
-        break
       case 'collaborators':
         router.push(projectCollaboratorsRoute(projectId.value))
         break
       case 'webhooks':
         router.push(projectWebhooksRoute(projectId.value))
         break
+      case 'general':
       default:
         router.push(projectSettingsRoute(projectId.value))
+        break
     }
   }
 })
