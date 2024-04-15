@@ -31,6 +31,10 @@ export default {
     'update:modelValue': {
       type: 'function',
       action: 'v-model'
+    },
+    size: {
+      control: { type: 'select' },
+      options: ['sm', 'md', 'lg', 'base', 'xl']
     }
   }
 } as Meta
