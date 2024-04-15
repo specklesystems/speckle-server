@@ -74,7 +74,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
 import { CheckIcon, InformationCircleIcon } from '@heroicons/vue/24/outline'
 import type { ConcreteComponent } from 'vue'
 
@@ -86,25 +85,14 @@ type OptionType = {
   help?: string
 }
 
-const props = defineProps<{
+defineProps<{
   options: OptionType[]
-  modelValue: string
   disabled?: boolean
 }>()
 
-const selected = ref(props.modelValue)
-
-watch(
-  () => props.modelValue,
-  (newValue) => {
-    selected.value = newValue
-  }
-)
+const selected = defineModel<string>()
 
 const selectItem = (value: string) => {
   selected.value = value
-  emit('update:modelValue', value)
 }
-
-const emit = defineEmits(['update:modelValue'])
 </script>
