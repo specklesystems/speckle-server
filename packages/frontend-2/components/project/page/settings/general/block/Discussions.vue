@@ -41,18 +41,29 @@ const props = defineProps<{
   disabled?: boolean
 }>()
 
-const emit = defineEmits(['update-comments-permission'])
+const emit = defineEmits<{
+  (event: 'update-comments-permission', value: boolean): void
+}>()
 
-const selectedOption = ref(props.project.allowPublicComments ? 'anyone' : 'teamMembers')
+enum CommentPermission {
+  Anyone = 'anyone',
+  TeamMembers = 'teamMembers'
+}
+
+const selectedOption = ref(
+  props.project.allowPublicComments
+    ? CommentPermission.Anyone
+    : CommentPermission.TeamMembers
+)
 
 const isDisabled = computed(
   () => props.project.visibility === ProjectVisibility.Private || props.disabled
 )
 
 const radioOptions = computed(() => [
-  { value: 'anyone', title: 'Anyone', icon: UserGroupIcon },
+  { value: CommentPermission.Anyone, title: 'Anyone', icon: UserGroupIcon },
   {
-    value: 'teamMembers',
+    value: CommentPermission.TeamMembers,
     title: 'Team Members Only',
     icon: UserCircleIcon,
     help:
@@ -66,13 +77,13 @@ watch(
   () => props.project.visibility,
   (newVisibility) => {
     if (newVisibility === ProjectVisibility.Private) {
-      selectedOption.value = 'teamMembers'
+      selectedOption.value = CommentPermission.TeamMembers
     }
   },
   { immediate: true }
 )
 
-const emitUpdate = (value: string) => {
-  emit('update-comments-permission', value === 'anyone')
+const emitUpdate = (value: CommentPermission) => {
+  emit('update-comments-permission', value === CommentPermission.Anyone)
 }
 </script>
