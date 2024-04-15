@@ -42,10 +42,14 @@ graphql(`
   fragment ProjectPageProject on Project {
     id
     createdAt
+    modelCount: models(limit: 0) {
+      totalCount
+    }
+    commentThreadCount: commentThreads(limit: 0) {
+      totalCount
+    }
     ...ProjectPageProjectHeader
     ...ProjectPageTeamDialog
-    ...ProjectPageLatestItemsModels
-    ...ProjectPageLatestItemsComments
   }
 `)
 
