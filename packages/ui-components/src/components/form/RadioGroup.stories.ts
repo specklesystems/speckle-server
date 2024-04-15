@@ -2,6 +2,7 @@ import type { Meta, StoryObj } from '@storybook/vue3'
 import RadioGroup from './RadioGroup.vue'
 import { ChartBarIcon, WrenchIcon, WalletIcon } from '@heroicons/vue/24/outline'
 import type { ConcreteComponent } from 'vue'
+import { useStorybookVmodel } from '~~/src/composables/testing' // Adjust this path to match your project structure
 
 type RadioGroupStoryType = StoryObj<{
   'update:modelValue'?: (val: string) => void
@@ -16,6 +17,7 @@ type RadioGroupStoryType = StoryObj<{
 }>
 
 export default {
+  title: 'Components/Form/RadioGroup',
   component: RadioGroup,
   argTypes: {
     'update:modelValue': {
@@ -34,14 +36,16 @@ export default {
 } as Meta
 
 export const Default: RadioGroupStoryType = {
-  render: (args) => ({
+  render: (args, { ...ctx }) => ({
     components: { RadioGroup },
     setup() {
-      return { args }
+      // Use the custom composable to create a two-way binding and log actions
+      const { model } = useStorybookVmodel({ args, prop: 'modelValue', ctx })
+      return { args, model }
     },
     template: `
       <div>
-        <RadioGroup v-bind="args" @update:modelValue="args['update:modelValue']" />
+        <RadioGroup v-bind="args" v-model:modelValue="model" />
       </div>
     `
   }),
