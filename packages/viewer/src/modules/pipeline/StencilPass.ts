@@ -8,23 +8,25 @@ import {
   ReplaceStencilOp,
   Scene,
   Texture,
-  Vector2
+  Vector2,
+  WebGLRenderTarget,
+  WebGLRenderer
 } from 'three'
 import SpeckleDisplaceMaterial from '../materials/SpeckleDisplaceMaterial'
-import { BaseSpecklePass, SpecklePass } from './SpecklePass'
+import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
 
 export class StencilPass extends BaseSpecklePass implements SpecklePass {
-  private camera: Camera
-  private scene: Scene
-  private overrideMaterial: Material = null
+  private camera!: Camera
+  private scene!: Scene
+  private overrideMaterial: Material
   private _oldClearColor: Color = new Color()
-  private clearColor: Color = null
+  private clearColor!: Color
   private clearAlpha = 0
   private clearDepth = true
   private drawBufferSize: Vector2 = new Vector2()
 
-  public onBeforeRender: () => void = null
-  public onAfterRender: () => void = null
+  public onBeforeRender: (() => void) | undefined = undefined
+  public onAfterRender: (() => void) | undefined = undefined
 
   public constructor() {
     super()
@@ -46,7 +48,7 @@ export class StencilPass extends BaseSpecklePass implements SpecklePass {
   public get displayName(): string {
     return 'STENCIL'
   }
-  public get outputTexture(): Texture {
+  public get outputTexture(): Texture | null {
     return null
   }
 
@@ -63,7 +65,11 @@ export class StencilPass extends BaseSpecklePass implements SpecklePass {
     this.overrideMaterial.clippingPlanes = planes
   }
 
-  render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */) {
+  render(
+    renderer: WebGLRenderer,
+    _writeBuffer: WebGLRenderTarget,
+    readBuffer: WebGLRenderTarget
+  ) {
     if (this.onBeforeRender) this.onBeforeRender()
     const oldAutoClear = renderer.autoClear
     renderer.autoClear = false
@@ -111,7 +117,7 @@ export class StencilPass extends BaseSpecklePass implements SpecklePass {
     }
 
     if (this.overrideMaterial !== undefined) {
-      this.scene.overrideMaterial = oldOverrideMaterial
+      this.scene.overrideMaterial = oldOverrideMaterial!
     }
     renderer.autoClear = oldAutoClear
     if (this.onAfterRender) this.onAfterRender()

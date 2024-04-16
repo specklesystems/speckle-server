@@ -29,7 +29,7 @@ import { speckleStaticAoGenerateFrag } from '../materials/shaders/speckle-static
 import { speckleStaticAoAccumulateVert } from '../materials/shaders/speckle-static-ao-accumulate-vert'
 import { speckleStaticAoAccumulateFrag } from '../materials/shaders/speckle-static-ao-accumulate-frag'
 import { SimplexNoise } from 'three/examples/jsm//math/SimplexNoise.js'
-import {
+import type {
   InputDepthTextureUniform,
   InputNormalsTextureUniform,
   SpeckleProgressivePass
@@ -57,8 +57,8 @@ export const DefaultStaticAoPassParams = {
 }
 
 export class StaticAOPass extends Pass implements SpeckleProgressivePass {
-  public aoMaterial: ShaderMaterial = null
-  private accumulateMaterial: ShaderMaterial = null
+  public aoMaterial: ShaderMaterial
+  private accumulateMaterial: ShaderMaterial
   private _generationBuffer: WebGLRenderTarget
   private _accumulationBuffer: WebGLRenderTarget
   private params: StaticAoPassParams = DefaultStaticAoPassParams
@@ -164,7 +164,7 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
     this.accumulationFrames = frames
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(_scene: Scene, camera: Camera) {
     /** DEFINES */
     this.aoMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
       .isPerspectiveCamera
@@ -209,9 +209,7 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
     this.accumulateMaterial.needsUpdate = true
   }
 
-  public render(renderer, writeBuffer, readBuffer) {
-    writeBuffer
-    readBuffer
+  public render(renderer: WebGLRenderer) {
     // save original state
     const originalClearColor = new Color()
     renderer.getClearColor(originalClearColor)
@@ -254,7 +252,7 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
   }
 
   private generateSampleKernel(frameIndex: number) {
-    const kernelSize = this.params.kernelSize
+    const kernelSize = this.params.kernelSize || 0
     this.kernels[frameIndex] = []
 
     for (let i = 0; i < kernelSize; i++) {

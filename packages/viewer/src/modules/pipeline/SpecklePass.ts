@@ -17,23 +17,23 @@ export interface SpecklePass {
   onAferRender?: () => void
 
   get displayName(): string
-  get outputTexture(): Texture
+  get outputTexture(): Texture | null
 
-  update?(scene: Scene, camera: Camera)
-  setTexture?(uName: string, texture: Texture)
-  setParams?(params: unknown)
-  setClippingPlanes?(planes: Plane[])
-  setLayers?(layers: ObjectLayers[])
+  update?(scene: Scene, camera: Camera): void
+  setTexture?(uName: string, texture: Texture): void
+  setParams?(params: unknown): void
+  setClippingPlanes?(planes: Plane[]): void
+  setLayers?(layers: ObjectLayers[]): void
 }
 
 export interface SpeckleProgressivePass extends SpecklePass {
-  setFrameIndex(index: number)
-  setAccumulationFrames(frames: number)
-  setRenderType?(type: RenderType)
+  setFrameIndex(index: number): void
+  setAccumulationFrames(frames: number): void
+  setRenderType?(type: RenderType): void
 }
 
 export abstract class BaseSpecklePass extends Pass implements SpecklePass {
-  protected layers: ObjectLayers[] = null
+  protected layers: ObjectLayers[] | null = null
   protected _enabledLayers: ObjectLayers[] = []
 
   public get enabledLayers(): ObjectLayers[] {
@@ -47,7 +47,7 @@ export abstract class BaseSpecklePass extends Pass implements SpecklePass {
   get displayName(): string {
     return 'BASE'
   }
-  get outputTexture(): Texture {
+  get outputTexture(): Texture | null {
     return null
   }
 

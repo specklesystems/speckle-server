@@ -8,15 +8,16 @@ import {
   Scene,
   ShaderMaterial,
   Texture,
+  WebGLRenderer,
   ZeroFactor
 } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { speckleApplyAoFrag } from '../materials/shaders/speckle-apply-ao-frag'
 import { speckleApplyAoVert } from '../materials/shaders/speckle-apply-ao-vert'
 import {
-  InputColorTextureUniform,
-  InputColorInterpolateTextureUniform,
-  SpeckleProgressivePass,
+  type InputColorTextureUniform,
+  type InputColorInterpolateTextureUniform,
+  type SpeckleProgressivePass,
   RenderType
 } from './SpecklePass'
 
@@ -68,7 +69,7 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
     return 'APPLYSAO'
   }
 
-  get outputTexture(): Texture {
+  get outputTexture(): Texture | null {
     return null
   }
 
@@ -102,9 +103,7 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
     this.materialCopy.needsUpdate = true
   }
 
-  render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive*/) {
-    writeBuffer
-    readBuffer
+  render(renderer: WebGLRenderer) {
     renderer.setRenderTarget(null)
     const rendereAutoClear = renderer.autoClear
     renderer.autoClear = false
