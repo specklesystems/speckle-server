@@ -13,10 +13,10 @@ export enum InputEvent {
 //TO DO: Define proper interface for InputEvent data
 export default class Input extends EventEmitter {
   private static readonly MAX_DOUBLE_CLICK_TIMING = 500
-  private tapTimeout
+  private tapTimeout: NodeJS.Timeout | undefined
   private lastTap = 0
   private lastClick = 0
-  private touchLocation: Touch
+  private touchLocation: Touch | undefined
   private container
 
   constructor(container: HTMLElement) {
@@ -24,7 +24,7 @@ export default class Input extends EventEmitter {
     this.container = container
 
     // Handle mouseclicks
-    let mdTime
+    let mdTime: number
     this.container.addEventListener('pointerdown', (e) => {
       e.preventDefault()
       const loc = this._getNormalisedClickPosition(e)
@@ -67,7 +67,7 @@ export default class Input extends EventEmitter {
         const loc = this._getNormalisedClickPosition(this.touchLocation)
         this.emit(InputEvent.DoubleClick, loc)
       } else {
-        this.tapTimeout = setTimeout(function () {
+        this.tapTimeout = setTimeout(() => {
           clearTimeout(this.tapTimeout)
         }, 500)
       }
@@ -104,14 +104,14 @@ export default class Input extends EventEmitter {
     // })
   }
 
-  _getNormalisedClickPosition(e) {
+  _getNormalisedClickPosition(e: MouseEvent | Touch | undefined) {
     // Reference: https://threejsfundamentals.org/threejs/lessons/threejs-picking.html
-    const canvas = this.container
+    const canvas = this.container as HTMLCanvasElement
     const rect = this.container.getBoundingClientRect()
 
     const pos = {
-      x: ((e.clientX - rect.left) * canvas.width) / rect.width,
-      y: ((e.clientY - rect.top) * canvas.height) / rect.height
+      x: ((e!.clientX - rect.left) * canvas.width) / rect.width,
+      y: ((e!.clientY - rect.top) * canvas.height) / rect.height
     }
     const v = new Vector2(
       (pos.x / canvas.width) * 2 - 1,

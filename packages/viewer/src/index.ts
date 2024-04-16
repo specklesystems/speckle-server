@@ -17,7 +17,6 @@ import type {
   NumericPropertyInfo
 } from './modules/filtering/PropertyManager'
 import { type SunLightConfiguration } from './IViewer'
-import type { DataTree, ObjectPredicate } from './modules/deprecated/DataTree'
 import { World } from './modules/World'
 import { type NodeData, type TreeNode, WorldTree } from './modules/tree/WorldTree'
 import type {
@@ -118,8 +117,6 @@ export type {
   StringPropertyInfo,
   NumericPropertyInfo,
   SunLightConfiguration,
-  DataTree,
-  ObjectPredicate,
   SpeckleObject,
   SpeckleView,
   CanonicalView,

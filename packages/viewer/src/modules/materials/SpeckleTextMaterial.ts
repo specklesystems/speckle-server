@@ -17,6 +17,8 @@ import {
 import { Matrix4 } from 'three'
 
 import { ExtendedMeshBasicMaterial, type Uniforms } from './SpeckleMaterial'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
 import { createTextDerivedMaterial } from 'troika-three-text'
 import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 

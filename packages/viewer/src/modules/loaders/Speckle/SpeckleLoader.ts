@@ -10,7 +10,6 @@ export class SpeckleLoader extends Loader {
   private loader: ObjectLoader
   private converter: SpeckleConverter
   private tree: WorldTree
-  private priority: number = 1
   private isCancelled = false
   private isFinished = false
 
@@ -27,12 +26,10 @@ export class SpeckleLoader extends Loader {
     resource: string,
     authToken?: string,
     enableCaching?: boolean,
-    resourceData?: string | ArrayBuffer,
-    priority: number = 1
+    resourceData?: string | ArrayBuffer
   ) {
     super(resource, resourceData)
     this.tree = targetTree
-    this.priority = priority
     let token = undefined
     try {
       token = authToken || (localStorage.getItem('AuthToken') as string | undefined)

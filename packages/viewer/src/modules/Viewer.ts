@@ -28,7 +28,6 @@ import { CameraController } from './extensions/CameraController'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Loader } from './loaders/Loader'
 import { type Constructor } from 'type-fest'
-import type { DataTree } from './deprecated/DataTree'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -237,9 +236,8 @@ export class Viewer extends EventEmitter implements IViewer {
     return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
   }
 
-  public getDataTree(): DataTree | null {
+  public getDataTree(): void {
     Logger.error('DataTree has been deprecated! Please use WorldTree')
-    return null
   }
 
   public getWorldTree(): WorldTree {

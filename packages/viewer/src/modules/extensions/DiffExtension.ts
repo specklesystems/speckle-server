@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Color, DoubleSide, FrontSide } from 'three'
+import { Color, DoubleSide, FrontSide, Material } from 'three'
 import { type TreeNode, WorldTree } from '../tree/WorldTree'
 import Logger from 'js-logger'
 import _ from 'underscore'
@@ -254,12 +254,6 @@ export class DiffExtension extends Extension {
     await Promise.all(unloadPromises)
   }
 
-  private intersection(o1: object, o2: object) {
-    const [k1, k2] = [Object.keys(o1), Object.keys(o2)]
-    const [first, next] = k1.length > k2.length ? [k2, o1] : [k1, o2]
-    return first.filter((k) => k in next)
-  }
-
   private buildIdMaps(
     rvs: Array<TreeNode>,
     idMap: { [id: string]: { node: TreeNode; applicationId: string } },
@@ -286,103 +280,6 @@ export class DiffExtension extends Extension {
   private async getDiff(urlA: string, urlB: string): Promise<DiffResult> {
     const diffResult = await this.diffIterative(urlA, urlB)
     this._visualDiff = this.getVisualDiffResult(diffResult)
-    return Promise.resolve(diffResult)
-  }
-
-  private diffBoolean(urlA: string, urlB: string): Promise<DiffResult> {
-    const diffResult: DiffResult = {
-      unchanged: [],
-      added: [],
-      removed: [],
-      modified: []
-    }
-
-    const renderTreeA = this.tree!.getRenderTree(urlA)
-    const renderTreeB = this.tree!.getRenderTree(urlB)
-    if (!renderTreeA) {
-      return Promise.reject(
-        `Could not make diff. Resource ${urlA} could not be fetched`
-      )
-    }
-    if (!renderTreeB) {
-      return Promise.reject(
-        `Could not make diff. Resource ${urlB} could not be fetched`
-      )
-    }
-    let rvsA: TreeNode[] = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
-    let rvsB: TreeNode[] = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
-
-    rvsA = rvsA.map((value: TreeNode) => {
-      return renderTreeA.getAtomicParent(value)
-    })
-
-    rvsB = rvsB.map((value) => {
-      return renderTreeB.getAtomicParent(value)
-    })
-
-    rvsA = [...Array.from(new Set(rvsA))]
-    rvsB = [...Array.from(new Set(rvsB))]
-
-    const idMapA: { [id: string]: { node: TreeNode; applicationId: string } } = {}
-    const appIdMapA: { [id: string]: TreeNode } = {}
-    this.buildIdMaps(rvsA, idMapA, appIdMapA)
-
-    const idMapB: { [id: string]: { node: TreeNode; applicationId: string } } = {}
-    const appIdMapB: { [id: string]: TreeNode } = {}
-    this.buildIdMaps(rvsB, idMapB, appIdMapB)
-
-    /** Get the ids which are common between the two maps. This will be objects
-     *  which have not changed
-     */
-    const unchanged: Array<string> = this.intersection(idMapA, idMapB)
-    /** We remove the unchanged objects from B and end up with changed + added */
-    const addedModified = _.omit(idMapB, unchanged)
-    /** We remove the unchanged objects from A and end up with changed + removed */
-    const removedModified = _.omit(idMapA, unchanged)
-    /** We remove the changed objects from B. An object from B is changed if
-     *  it's application ID exists in A
-     */
-    const added = _.omit(addedModified, function (value: { applicationId: string }) {
-      return value.applicationId && appIdMapA[value.applicationId] !== undefined
-    })
-    /** We remove the changed objects from A. An object from A is changed if
-     *  it's application ID exists in B
-     */
-    const removed = _.omit(
-      removedModified,
-      function (value: { applicationId: string }) {
-        return value.applicationId && appIdMapB[value.applicationId] !== undefined
-      }
-    )
-    /** We remove the removed objects from A, leaving us only changed objects */
-    const modifiedRemoved = _.omit(removedModified, Object.keys(removed))
-    /** We remove the removed objects from B, leaving us only changed objects */
-    const modifiedAdded = _.omit(addedModified, Object.keys(added))
-
-    /** We fill the arrays from here on out */
-    const modifiedOld = (Object.values(modifiedRemoved) as { node: TreeNode }[]).map(
-      (value: { node: TreeNode }) => value.node
-    )
-    const modifiedNew = (Object.values(modifiedAdded) as { node: TreeNode }[]).map(
-      (value: { node: TreeNode }) => value.node
-    )
-    diffResult.unchanged.push(...unchanged.map((value) => idMapA[value].node))
-    diffResult.unchanged.push(...unchanged.map((value) => idMapB[value].node))
-    diffResult.removed.push(
-      ...(Object.values(removed) as { node: TreeNode }[]).map(
-        (value: { node: TreeNode }) => value.node
-      )
-    )
-    diffResult.added.push(
-      ...(Object.values(added) as { node: TreeNode }[]).map(
-        (value: { node: TreeNode }) => value.node
-      )
-    )
-
-    modifiedOld.forEach((value, index) => {
-      value
-      diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
-    })
     return Promise.resolve(diffResult)
   }
 
@@ -717,10 +614,9 @@ export class DiffExtension extends Extension {
       material: SpeckleMaterialType
     }[] = []
     for (const k in groupBatches) {
-      const matClone: SpeckleMaterialType = this.viewer
-        .getRenderer()
-        .getBatchMaterial(groupBatches[k][0])
-        .clone() as SpeckleMaterialType
+      const matClone: SpeckleMaterialType = (
+        this.viewer.getRenderer().getBatchMaterial(groupBatches[k][0]) as Material
+      ).clone() as SpeckleMaterialType
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ;(matClone as any)['clampOpacity'] = matClone.opacity
@@ -734,4 +630,114 @@ export class DiffExtension extends Extension {
 
     return materialGroup
   }
+
+  /** Keeping this for reference */
+  // private intersection(o1: object, o2: object) {
+  //   const [k1, k2] = [Object.keys(o1), Object.keys(o2)]
+  //   const [first, next] = k1.length > k2.length ? [k2, o1] : [k1, o2]
+  //   return first.filter((k) => k in next)
+  // }
+
+  // private diffBoolean(urlA: string, urlB: string): Promise<DiffResult> {
+  //   const diffResult: DiffResult = {
+  //     unchanged: [],
+  //     added: [],
+  //     removed: [],
+  //     modified: []
+  //   }
+
+  //   const renderTreeA = this.tree!.getRenderTree(urlA)
+  //   const renderTreeB = this.tree!.getRenderTree(urlB)
+  //   if (!renderTreeA) {
+  //     return Promise.reject(
+  //       `Could not make diff. Resource ${urlA} could not be fetched`
+  //     )
+  //   }
+  //   if (!renderTreeB) {
+  //     return Promise.reject(
+  //       `Could not make diff. Resource ${urlB} could not be fetched`
+  //     )
+  //   }
+  //   let rvsA: TreeNode[] = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
+  //   let rvsB: TreeNode[] = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
+
+  //   rvsA = rvsA.map((value: TreeNode) => {
+  //     return renderTreeA.getAtomicParent(value)
+  //   })
+
+  //   rvsB = rvsB.map((value) => {
+  //     return renderTreeB.getAtomicParent(value)
+  //   })
+
+  //   rvsA = [...Array.from(new Set(rvsA))]
+  //   rvsB = [...Array.from(new Set(rvsB))]
+
+  //   const idMapA: { [id: string]: { node: TreeNode; applicationId: string } } = {}
+  //   const appIdMapA: { [id: string]: TreeNode } = {}
+  //   this.buildIdMaps(rvsA, idMapA, appIdMapA)
+
+  //   const idMapB: { [id: string]: { node: TreeNode; applicationId: string } } = {}
+  //   const appIdMapB: { [id: string]: TreeNode } = {}
+  //   this.buildIdMaps(rvsB, idMapB, appIdMapB)
+
+  //   /** Get the ids which are common between the two maps. This will be objects
+  //    *  which have not changed
+  //    */
+  //   const unchanged: Array<string> = this.intersection(idMapA, idMapB)
+  //   /** We remove the unchanged objects from B and end up with changed + added */
+  //   const addedModified = _.omit(idMapB, unchanged)
+  //   /** We remove the unchanged objects from A and end up with changed + removed */
+  //   const removedModified = _.omit(idMapA, unchanged)
+  //   /** We remove the changed objects from B. An object from B is changed if
+  //    *  it's application ID exists in A
+  //    */
+  //   const added = _.omit(addedModified, function (value: { applicationId: string }) {
+  //     return (
+  //       value.applicationId !== undefined &&
+  //       appIdMapA[value.applicationId] !== undefined
+  //     )
+  //   })
+  //   /** We remove the changed objects from A. An object from A is changed if
+  //    *  it's application ID exists in B
+  //    */
+  //   const removed = _.omit(
+  //     removedModified,
+  //     function (value: { applicationId: string }) {
+  //       return (
+  //         value.applicationId !== undefined &&
+  //         appIdMapB[value.applicationId] !== undefined
+  //       )
+  //     }
+  //   )
+  //   /** We remove the removed objects from A, leaving us only changed objects */
+  //   const modifiedRemoved = _.omit(removedModified, Object.keys(removed))
+  //   /** We remove the removed objects from B, leaving us only changed objects */
+  //   const modifiedAdded = _.omit(addedModified, Object.keys(added))
+
+  //   /** We fill the arrays from here on out */
+  //   const modifiedOld = (Object.values(modifiedRemoved) as { node: TreeNode }[]).map(
+  //     (value: { node: TreeNode }) => value.node
+  //   )
+  //   const modifiedNew = (Object.values(modifiedAdded) as { node: TreeNode }[]).map(
+  //     (value: { node: TreeNode }) => value.node
+  //   )
+  //   diffResult.unchanged.push(...unchanged.map((value) => idMapA[value].node))
+  //   diffResult.unchanged.push(...unchanged.map((value) => idMapB[value].node))
+  //   diffResult.removed.push(
+  //     ...(Object.values(removed) as { node: TreeNode }[]).map(
+  //       (value: { node: TreeNode }) => value.node
+  //     )
+  //   )
+  //   diffResult.added.push(
+  //     ...(Object.values(added) as { node: TreeNode }[]).map(
+  //       (value: { node: TreeNode }) => value.node
+  //     )
+  //   )
+
+  //   modifiedOld.forEach((value, index) => {
+  //     value
+  //     diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
+  //   })
+  //   return Promise.resolve(diffResult)
+  // }
 }

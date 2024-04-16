@@ -117,13 +117,13 @@ export class MeasurementsExtension extends Extension {
 
     if (this._activeMeasurement)
       this._activeMeasurement.frameUpdate(
-        this.renderer.renderingCamera,
+        this.renderer.renderingCamera!,
         this.screenBuff0,
         this.renderer.sceneBox
       )
     this.measurements.forEach((value: Measurement) => {
       value.frameUpdate(
-        this.renderer.renderingCamera,
+        this.renderer.renderingCamera!,
         this.screenBuff0,
         this.renderer.sceneBox
       )
@@ -144,7 +144,7 @@ export class MeasurementsExtension extends Extension {
     let result: ExtendedIntersection[] =
       (this.renderer.intersections.intersect(
         this.renderer.scene,
-        this.renderer.renderingCamera,
+        this.renderer.renderingCamera!,
         data,
         true,
         this.renderer.clippingVolume,
@@ -233,7 +233,7 @@ export class MeasurementsExtension extends Extension {
     let result: ExtendedIntersection[] =
       (this.renderer.intersections.intersect(
         this.renderer.scene,
-        this.renderer.renderingCamera,
+        this.renderer.renderingCamera!,
         data,
         true,
         this.renderer.clippingVolume,
@@ -258,7 +258,7 @@ export class MeasurementsExtension extends Extension {
     let perpResult: ExtendedIntersection[] =
       (this.renderer.intersections.intersectRay(
         this.renderer.scene,
-        this.renderer.renderingCamera,
+        this.renderer.renderingCamera!,
         new Ray(offsetPoint, startNormal),
         true,
         this.renderer.clippingVolume,
@@ -294,7 +294,7 @@ export class MeasurementsExtension extends Extension {
 
     this._activeMeasurement!.state = MeasurementState.DANGLING_START
     this._activeMeasurement!.frameUpdate(
-      this.renderer.renderingCamera,
+      this.renderer.renderingCamera!,
       this.screenBuff0,
       this.renderer.sceneBox
     )
@@ -360,7 +360,7 @@ export class MeasurementsExtension extends Extension {
     this.measurements.forEach((value) => {
       value.highlight(false)
     })
-    this.raycaster.setFromCamera(data, this.renderer.renderingCamera)
+    this.raycaster.setFromCamera(data, this.renderer.renderingCamera!)
     const res = this.raycaster.intersectObjects(this.measurements, false)
     return res[0]?.object as Measurement
   }
@@ -378,16 +378,16 @@ export class MeasurementsExtension extends Extension {
   ) {
     const v0 = intersection
       .batchObject!.accelerationStructure.getVertexAtIndex(intersection.face!.a)
-      .project(this.renderer.renderingCamera)
+      .project(this.renderer.renderingCamera!)
     const v1 = intersection
       .batchObject!.accelerationStructure.getVertexAtIndex(intersection.face!.b)
-      .project(this.renderer.renderingCamera)
+      .project(this.renderer.renderingCamera!)
     const v2 = intersection
       .batchObject!.accelerationStructure.getVertexAtIndex(intersection.face!.c)
-      .project(this.renderer.renderingCamera)
+      .project(this.renderer.renderingCamera!)
 
     const projectedIntersection = intersection.point.project(
-      this.renderer.renderingCamera
+      this.renderer.renderingCamera!
     )
     const tri = [v0, v1, v2]
     tri.sort((a, b) => {
@@ -400,7 +400,7 @@ export class MeasurementsExtension extends Extension {
     )
     this.screenBuff0.set(closestScreen.x, closestScreen.y)
     this.screenBuff1.set(intersectionScreen.x, intersectionScreen.y)
-    const unprojectedPoint = tri[0].unproject(this.renderer.renderingCamera)
+    const unprojectedPoint = tri[0].unproject(this.renderer.renderingCamera!)
     if (this.screenBuff0.distanceTo(this.screenBuff1) < 10 * window.devicePixelRatio) {
       outPoint.copy(unprojectedPoint)
       outNormal.copy(intersection.face!.normal)

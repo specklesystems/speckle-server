@@ -14,6 +14,8 @@ import {
   Vector4,
   type Intersection
 } from 'three'
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
 import { Text } from 'troika-three-text'
 import SpeckleBasicMaterial from '../materials/SpeckleBasicMaterial'
 import { ObjectLayers, type SpeckleObject } from '../../IViewer'

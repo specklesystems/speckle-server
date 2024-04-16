@@ -179,7 +179,7 @@ export class SectionTool extends Extension {
     this.controls?.dispose()
     this.controls?.detach()
     this.controls = new TransformControls(
-      this.viewer.getRenderer().renderingCamera,
+      this.viewer.getRenderer().renderingCamera!,
       this.viewer.getRenderer().renderer.domElement
     )
     for (let k = 0; k < this.controls?.children.length; k++) {

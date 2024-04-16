@@ -12,7 +12,6 @@ import {
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Queries } from './queries/Queries'
 import type { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
-import { type DataTree, DataTreeBuilder } from './deprecated/DataTree'
 import {
   SelectionExtension,
   type SelectionExtensionOptions
@@ -43,6 +42,7 @@ import {
 import { type PropertyInfo } from './filtering/PropertyManager'
 import { BatchObject } from './batching/BatchObject'
 import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
+import Logger from 'js-logger'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -330,8 +330,8 @@ export class LegacyViewer extends Viewer {
   }
 
   /** TREE */
-  public getDataTree(): DataTree {
-    return DataTreeBuilder.build(this.tree)
+  public getDataTree(): void {
+    Logger.error('DataTree is obsolete, please use WorldTree instead')
   }
 
   public getWorldTree(): WorldTree {

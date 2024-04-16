@@ -216,7 +216,7 @@ export class SelectionExtension extends Extension {
         .getRenderer()
         .intersections.intersect(
           this.viewer.getRenderer().scene,
-          this.viewer.getRenderer().renderingCamera,
+          this.viewer.getRenderer().renderingCamera!,
           e,
           true,
           this.viewer.getRenderer().clippingVolume,
@@ -249,7 +249,9 @@ export class SelectionExtension extends Extension {
       rvs.forEach((rv: NodeRenderView) => {
         if (!this.selectionRvs[rv.guid]) this.selectionRvs[rv.guid] = rv
         if (!this.selectionMaterials[rv.guid])
-          this.selectionMaterials[rv.guid] = this.viewer.getRenderer().getMaterial(rv)
+          this.selectionMaterials[rv.guid] = this.viewer
+            .getRenderer()
+            .getMaterial(rv) as Material
       })
     }
 
@@ -320,7 +322,7 @@ export class SelectionExtension extends Extension {
     this.removeHover()
 
     this.hoverRv = renderView
-    this.hoverMaterial = this.viewer.getRenderer().getMaterial(this.hoverRv)
+    this.hoverMaterial = this.viewer.getRenderer().getMaterial(this.hoverRv) as Material
     this.viewer
       .getRenderer()
       .setMaterial(
