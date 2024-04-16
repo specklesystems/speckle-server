@@ -1,7 +1,6 @@
 import EventEmitter from '../EventEmitter'
 
 export enum LoaderEvent {
-  LoadComplete = 'load-complete',
   LoadProgress = 'load-progress',
   LoadCancelled = 'load-cancelled',
   LoadWarning = 'load-warning'
@@ -9,18 +8,21 @@ export enum LoaderEvent {
 
 export abstract class Loader extends EventEmitter {
   protected _resource: string
-  protected _resourceData: string | ArrayBuffer
+  protected _resourceData: string | ArrayBuffer | undefined
 
   public abstract get resource(): string
   public abstract get finished(): boolean
 
-  protected constructor(resource: string, resourceData: string | ArrayBuffer) {
+  protected constructor(
+    resource: string,
+    resourceData?: string | ArrayBuffer | undefined
+  ) {
     super()
     this._resource = resource
     this._resourceData = resourceData
   }
 
   public abstract load(): Promise<boolean>
-  public abstract cancel()
-  public abstract dispose()
+  public abstract cancel(): void
+  public abstract dispose(): void
 }
