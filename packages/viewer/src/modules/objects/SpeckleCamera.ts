@@ -12,8 +12,8 @@ export interface SpeckleCamera {
   get fieldOfView(): number
   set fieldOfView(value: number)
   get aspect(): number
-  on(type: CameraEvent, handler: (...args) => void)
-  setCameraPlanes(targetVolume: Box3, offsetScale?: number)
+  on(type: CameraEvent, handler: (...args: unknown[]) => void): void
+  setCameraPlanes(targetVolume: Box3, offsetScale?: number): void
 }
 export enum CameraProjection {
   PERSPECTIVE,

@@ -1,4 +1,4 @@
-import { Box3, Intersection, Material, Object3D, Raycaster } from 'three'
+import { Box3, type Intersection, Material, Object3D, Raycaster, Vector3 } from 'three'
 import { ExtendedTriangle, ShapecastIntersection } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import { ObjectLayers } from '../../IViewer'
@@ -49,9 +49,9 @@ export interface ExtendedIntersection extends Intersection {
 }
 
 export class SpeckleRaycaster extends Raycaster {
-  public onObjectIntersectionTest: (object: Object3D) => void = null
+  public onObjectIntersectionTest: ((object: Object3D) => void) | null = null
 
-  constructor(origin?, direction?, near = 0, far = Infinity) {
+  constructor(origin?: Vector3, direction?: Vector3, near = 0, far = Infinity) {
     super(origin, direction, near, far)
     this.layers.disableAll()
     this.layers.enable(ObjectLayers.STREAM_CONTENT)
@@ -63,7 +63,7 @@ export class SpeckleRaycaster extends Raycaster {
     this.layers.enable(ObjectLayers.STREAM_CONTENT_POINT)
   }
 
-  public intersectObjects(objects, recursive = true, intersects = []) {
+  public intersectObjects(objects: Array<Object3D>, recursive = true, intersects = []) {
     for (let i = 0, l = objects.length; i < l; i++) {
       intersectObject(objects[i], this, intersects, recursive)
     }
@@ -74,11 +74,16 @@ export class SpeckleRaycaster extends Raycaster {
   }
 }
 
-function ascSort(a, b) {
+function ascSort(a: Intersection, b: Intersection) {
   return a.distance - b.distance
 }
 
-function intersectObject(object, raycaster, intersects, recursive) {
+function intersectObject(
+  object: Object3D,
+  raycaster: SpeckleRaycaster,
+  intersects: Array<Intersection>,
+  recursive: boolean
+) {
   if (object.layers.test(raycaster.layers)) {
     if (raycaster.onObjectIntersectionTest) {
       raycaster.onObjectIntersectionTest(object)
@@ -87,7 +92,9 @@ function intersectObject(object, raycaster, intersects, recursive) {
   }
   recursive &&=
     // eslint-disable-next-line eqeqeq
-    object.userData.raycastChildren != undefined ? object.raycastChildren : true
+    object.userData.raycastChildren != undefined
+      ? object.userData.raycastChildren
+      : true
   if (recursive === true) {
     const children = object.children
 

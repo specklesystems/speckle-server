@@ -3,7 +3,7 @@ import {
   BufferGeometry,
   Float32BufferAttribute,
   FrontSide,
-  Intersection,
+  type Intersection,
   Material,
   Matrix4,
   Object3D,
@@ -12,7 +12,7 @@ import {
   Uint16BufferAttribute,
   Uint32BufferAttribute,
   Vector3,
-  Event
+  type Event
 } from 'three'
 import {
   CENTER,
@@ -31,7 +31,7 @@ export interface BVHOptions {
   verbose: boolean
   useSharedArrayBuffer: boolean
   setBoundingBox: boolean
-  onProgress: () => void
+  onProgress?: () => void
   [SKIP_GENERATION]: boolean
 }
 
@@ -42,7 +42,6 @@ export const DefaultBVHOptions = {
   verbose: true,
   useSharedArrayBuffer: false,
   setBoundingBox: false,
-  onProgress: null,
   [SKIP_GENERATION]: false
 }
 
@@ -71,10 +70,10 @@ to get the correct values for Vectors, Rays, Boxes, etc
 export class AccelerationStructure {
   private static readonly MatBuff: Matrix4 = new Matrix4()
   private _bvh: MeshBVH
-  public inputTransform: Matrix4
-  public outputTransform: Matrix4
-  public inputOriginTransform: Matrix4
-  public outputOriginTransfom: Matrix4
+  public inputTransform!: Matrix4
+  public outputTransform!: Matrix4
+  public inputOriginTransform!: Matrix4
+  public outputOriginTransfom!: Matrix4
 
   public get geometry() {
     return this._bvh.geometry

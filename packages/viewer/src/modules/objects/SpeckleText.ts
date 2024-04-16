@@ -8,13 +8,15 @@ import {
   MeshBasicMaterial,
   PlaneGeometry,
   Quaternion,
+  Raycaster,
   Vector2,
   Vector3,
-  Vector4
+  Vector4,
+  type Intersection
 } from 'three'
 import { Text } from 'troika-three-text'
 import SpeckleBasicMaterial from '../materials/SpeckleBasicMaterial'
-import { ObjectLayers, SpeckleObject } from '../../IViewer'
+import { ObjectLayers, type SpeckleObject } from '../../IViewer'
 
 export interface SpeckleTextParams {
   textValue?: string
@@ -25,7 +27,7 @@ export interface SpeckleTextParams {
 }
 
 export interface SpeckleTextStyle {
-  backgroundColor?: Color
+  backgroundColor?: Color | null
   backgroundCornerRadius?: number
   backgroundPixelHeight?: number
   textColor?: Color
@@ -43,7 +45,7 @@ const DefaultSpeckleTextStyle: SpeckleTextStyle = {
 export class SpeckleText extends Mesh {
   private _layer: ObjectLayers = ObjectLayers.NONE
   private _text: Text = null
-  private _background: Mesh = null
+  private _background: Mesh | null = null
   private _backgroundSize: Vector3 = new Vector3()
   private _style: SpeckleTextStyle = Object.assign({}, DefaultSpeckleTextStyle)
   private _resolution: Vector2 = new Vector2()
@@ -135,9 +137,11 @@ export class SpeckleText extends Mesh {
     if (position) {
       if (this._style.billboard) {
         this.textMesh.material.userData.billboardPos.value.copy(position)
-        ;(
-          this._background.material as SpeckleBasicMaterial
-        ).userData.billboardPos.value.copy(position)
+        if (this._background) {
+          ;(
+            this._background.material as SpeckleBasicMaterial
+          ).userData.billboardPos.value.copy(position)
+        }
       }
       this.position.copy(position)
     }
@@ -145,7 +149,7 @@ export class SpeckleText extends Mesh {
     if (scale) this.scale.copy(scale)
   }
 
-  public raycast(raycaster, intersects) {
+  public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
     const { textRenderInfo, curveRadius } = this.textMesh
     if (textRenderInfo) {
       const bounds = textRenderInfo.blockBounds
@@ -205,7 +209,7 @@ export class SpeckleText extends Mesh {
         raycastMesh.matrixWorld = this.textMesh.matrixWorld
       }
       raycastMesh.material.side = this.textMesh.material.side
-      const tempArray = []
+      const tempArray: Array<Intersection> = []
       raycastMesh.raycast(raycaster, tempArray)
       for (let i = 0; i < tempArray.length; i++) {
         tempArray[i].object = this
@@ -220,7 +224,7 @@ export class SpeckleText extends Mesh {
 
   private updateBackground() {
     if (!this._style.backgroundColor) {
-      this.remove(this._background)
+      if (this._background) this.remove(this._background)
       this._background = null
       return
     }
@@ -250,7 +254,9 @@ export class SpeckleText extends Mesh {
     const color = new Color(this._style.backgroundColor).convertSRGBToLinear()
     ;(this._background.material as SpeckleBasicMaterial).color = color
     ;(this._background.material as SpeckleBasicMaterial).billboardPixelHeight =
-      this._style.backgroundPixelHeight * window.devicePixelRatio
+      (this._style.backgroundPixelHeight !== undefined
+        ? this._style.backgroundPixelHeight
+        : DefaultSpeckleTextStyle.backgroundPixelHeight!) * window.devicePixelRatio
   }
 
   /** From https://discourse.threejs.org/t/roundedrectangle-squircle/28645  */
@@ -281,7 +287,7 @@ export class SpeckleText extends Mesh {
 
     return geometry
 
-    function contour(j) {
+    function contour(j: number) {
       qu = Math.trunc((4 * j) / n) + 1 // quadrant  qu: 1..4
       sgx = qu === 1 || qu === 4 ? 1 : -1 // signum left/right
       sgy = qu < 3 ? 1 : -1 // signum  top / bottom
