@@ -71,21 +71,7 @@ type AutomateFunctionRun {
   function: AutomateFunction!
   elapsed: Float!
   """
-  NOTE: this is the schema for the results field below!
-  Current schema: {
-    version: '1.0.0'
-    values: {
-      objectResults: {
-        category: string
-        level: ObjectResultLevel
-        objectIds: string[]
-        message: string
-        metadata: Record<string, unknown> | null
-        visualOverrides: Record<string, unknown> | null
-      }[]
-      blobIds?: string[] | undefined
-    }
-  }
+  AutomateTypes.ResultsSchema type from @speckle/shared
   """
   results: JSONObject
 }
@@ -176,14 +162,7 @@ input AutomationRevisionCreateFunctionInput {
 input ProjectAutomationRevisionCreateInput {
   automationId: ID!
   """
-  Trigger definition schema:
-  {
-    version: 1.0.0,
-    definitions: Array<{
-      type: AutomateRunTriggerType.VERSION_CREATED,
-      modelId: string,
-    }>
-  }
+  AutomateTypes.TriggerDefinitionsSchema type from @speckle/shared
   """
   triggerDefinitions: JSONObject!
   functions: [AutomationRevisionCreateFunctionInput!]!
@@ -217,27 +196,70 @@ input AutomateFunctionRunStatusReportInput {
   statusMessage: String
   contextView: String
   """
-  NOTE: this is the schema for the results field below!
-  Current schema: {
-    version: '1.0.0'
-    values: {
-      objectResults: {
-        category: string
-        level: ObjectResultLevel
-        objectIds: string[]
-        message: string
-        metadata: Record<string, unknown> | null
-        visualOverrides: Record<string, unknown> | null
-      }[]
-      blobIds?: string[] | undefined
-    }
-  }
+  AutomateTypes.ResultsSchema type from @speckle/shared
   """
   results: JSONObject
+}
+
+input CreateAutomateFunctionInput {
+  name: String!
+  template: AutomateFunctionTemplateLanguage!
+  description: String!
+  """
+  SourceAppNames values from @speckle/shared
+  """
+  supportedSourceApps: [String!]!
+  tags: [String!]!
+  """
+  Base64 encoded image data string
+  """
+  logo: String
+  """
+  GitHub organization to create the repository in
+  """
+  org: String
+}
+
+type AutomateMutations {
+  createFunction(input: CreateAutomateFunctionInput!): AutomateFunction!
+    @hasScope(scope: "automate-functions:write")
 }
 
 extend type Mutation {
   automateFunctionRunStatusReport(
     input: AutomateFunctionRunStatusReportInput!
   ): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "automate:report-results")
+  automateMutations: AutomateMutations! @hasServerRole(role: SERVER_GUEST)
+}
+
+type UserAutomateInfo {
+  hasAutomateGithubApp: Boolean!
+  availableGithubOrgs: [String!]!
+}
+
+extend type User {
+  automateInfo: UserAutomateInfo! @isOwner
+}
+
+enum AutomateFunctionTemplateLanguage {
+  TYPESCRIPT
+  PYTHON
+  DOT_NET
+}
+
+type AutomateFunctionTemplate {
+  id: AutomateFunctionTemplateLanguage!
+  title: String!
+  logo: String!
+  url: String!
+}
+
+type ServerAutomateInfo {
+  availableFunctionTemplates: [AutomateFunctionTemplate!]!
+}
+
+extend type ServerInfo {
+  automate: ServerAutomateInfo!
 }

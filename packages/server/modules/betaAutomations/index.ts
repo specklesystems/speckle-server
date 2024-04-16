@@ -20,7 +20,7 @@ async function initScopes() {
 
 const automationModule: SpeckleModule = {
   async init() {
-    moduleLogger.info('🤖 Init automations module')
+    moduleLogger.info('🤖 Init BETA automate module')
     await initScopes()
   }
 }

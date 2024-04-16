@@ -1,6 +1,11 @@
 <template>
   <div>
-    <AutomateFunctionsPageHeader v-model:search="search" class="mb-8" />
+    <AutomateFunctionsPageHeader
+      v-model:search="search"
+      :active-user="result?.activeUser"
+      :server-info="result?.serverInfo"
+      class="mb-8"
+    />
     <CommonLoadingBar :loading="loading" />
     <AutomateFunctionsPageItems v-if="!loading" :functions="result" />
   </div>
@@ -15,6 +20,7 @@ import { graphql } from '~/lib/common/generated/gql'
 const pageQuery = graphql(`
   query AutomateFunctionsPage($search: String) {
     ...AutomateFunctionsPageItems_Query
+    ...AutomateFunctionsPageHeader_Query
   }
 `)
 

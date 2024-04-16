@@ -242,23 +242,7 @@ export type AutomateFunctionRun = {
   elapsed: Scalars['Float'];
   function: AutomateFunction;
   id: Scalars['ID'];
-  /**
-   * NOTE: this is the schema for the results field below!
-   * Current schema: {
-   *   version: '1.0.0'
-   *   values: {
-   *     objectResults: {
-   *       category: string
-   *       level: ObjectResultLevel
-   *       objectIds: string[]
-   *       message: string
-   *       metadata: Record<string, unknown> | null
-   *       visualOverrides: Record<string, unknown> | null
-   *     }[]
-   *     blobIds?: string[] | undefined
-   *   }
-   * }
-   */
+  /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: Maybe<Scalars['JSONObject']>;
   status: AutomateRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
@@ -267,30 +251,38 @@ export type AutomateFunctionRun = {
 export type AutomateFunctionRunStatusReportInput = {
   contextView?: InputMaybe<Scalars['String']>;
   functionRunId: Scalars['String'];
-  /**
-   * NOTE: this is the schema for the results field below!
-   * Current schema: {
-   *   version: '1.0.0'
-   *   values: {
-   *     objectResults: {
-   *       category: string
-   *       level: ObjectResultLevel
-   *       objectIds: string[]
-   *       message: string
-   *       metadata: Record<string, unknown> | null
-   *       visualOverrides: Record<string, unknown> | null
-   *     }[]
-   *     blobIds?: string[] | undefined
-   *   }
-   * }
-   */
+  /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: InputMaybe<Scalars['JSONObject']>;
   status: AutomationRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
 
+export type AutomateFunctionTemplate = {
+  __typename?: 'AutomateFunctionTemplate';
+  id: AutomateFunctionTemplateLanguage;
+  logo: Scalars['String'];
+  title: Scalars['String'];
+  url: Scalars['String'];
+};
+
+export enum AutomateFunctionTemplateLanguage {
+  DotNet = 'DOT_NET',
+  Python = 'PYTHON',
+  Typescript = 'TYPESCRIPT'
+}
+
 export type AutomateFunctionsFilter = {
   search?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomateMutations = {
+  __typename?: 'AutomateMutations';
+  createFunction: AutomateFunction;
+};
+
+
+export type AutomateMutationsCreateFunctionArgs = {
+  input: CreateAutomateFunctionInput;
 };
 
 export type AutomateRun = {
@@ -808,6 +800,19 @@ export type CountOnlyCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type CreateAutomateFunctionInput = {
+  description: Scalars['String'];
+  /** Base64 encoded image data string */
+  logo?: InputMaybe<Scalars['String']>;
+  name: Scalars['String'];
+  /** GitHub organization to create the repository in */
+  org?: InputMaybe<Scalars['String']>;
+  /** SourceAppNames values from @speckle/shared */
+  supportedSourceApps: Array<Scalars['String']>;
+  tags: Array<Scalars['String']>;
+  template: AutomateFunctionTemplateLanguage;
+};
+
 export type CreateCommentInput = {
   content: CommentContentInput;
   projectId: Scalars['String'];
@@ -1128,6 +1133,7 @@ export type Mutation = {
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
   automateFunctionRunStatusReport: Scalars['Boolean'];
+  automateMutations: AutomateMutations;
   automationMutations: AutomationMutations;
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
@@ -1756,16 +1762,7 @@ export type ProjectAutomationMutationsUpdateArgs = {
 export type ProjectAutomationRevisionCreateInput = {
   automationId: Scalars['ID'];
   functions: Array<AutomationRevisionCreateFunctionInput>;
-  /**
-   * Trigger definition schema:
-   * {
-   *   version: 1.0.0,
-   *   definitions: Array<{
-   *     type: AutomateRunTriggerType.VERSION_CREATED,
-   *     modelId: string,
-   *   }>
-   * }
-   */
+  /** AutomateTypes.TriggerDefinitionsSchema type from @speckle/shared */
   triggerDefinitions: Scalars['JSONObject'];
 };
 
@@ -2359,12 +2356,18 @@ export type ServerAppListItem = {
   trustByDefault?: Maybe<Scalars['Boolean']>;
 };
 
+export type ServerAutomateInfo = {
+  __typename?: 'ServerAutomateInfo';
+  availableFunctionTemplates: Array<AutomateFunctionTemplate>;
+};
+
 /** Information about this server. */
 export type ServerInfo = {
   __typename?: 'ServerInfo';
   adminContact?: Maybe<Scalars['String']>;
   /** The authentication strategies available on this server. */
   authStrategies: Array<AuthStrategy>;
+  automate: ServerAutomateInfo;
   /** Base URL of Speckle Automate, if set */
   automateUrl?: Maybe<Scalars['String']>;
   blobSizeLimitBytes: Scalars['Int'];
@@ -2904,6 +2907,7 @@ export type User = {
   apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
   authorizedApps?: Maybe<Array<ServerAppListItem>>;
+  automateInfo: UserAutomateInfo;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
   /**
@@ -3027,6 +3031,12 @@ export type UserTimelineArgs = {
 export type UserVersionsArgs = {
   authoredOnly?: Scalars['Boolean'];
   limit?: Scalars['Int'];
+};
+
+export type UserAutomateInfo = {
+  __typename?: 'UserAutomateInfo';
+  availableGithubOrgs: Array<Scalars['String']>;
+  hasAutomateGithubApp: Scalars['Boolean'];
 };
 
 export type UserDeleteInput = {

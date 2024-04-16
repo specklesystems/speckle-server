@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
+  AutomateFunctionTemplateLanguage,
   AutomateRunTriggerType,
   LimitedUser,
   Resolvers
@@ -147,6 +148,17 @@ export async function buildMocksConfig(): Promise<{
             ...(name?.length ? { name } : {})
           }
         }
+      },
+      UserAutomateInfo: {
+        hasAutomateGithubApp: () => {
+          return faker.datatype.boolean()
+        },
+        availableGithubOrgs: () => {
+          // Random string array
+          return [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(() =>
+            faker.company.companyName()
+          )
+        }
       }
     }),
     mocks: {
@@ -269,6 +281,22 @@ export async function buildMocksConfig(): Promise<{
       }),
       Version: () => ({
         id: () => faker.random.alphaNumeric(10)
+      }),
+      ServerAutomateInfo: () => ({
+        availableFunctionTemplates: () => [
+          {
+            id: AutomateFunctionTemplateLanguage.Python,
+            title: 'Python',
+            url: 'https://github.com/specklesystems/speckle_automate_python_example',
+            logo: '/images/functions/python.svg'
+          },
+          {
+            id: AutomateFunctionTemplateLanguage.DotNet,
+            title: '.NET / C#',
+            url: 'https://github.com/specklesystems/SpeckleAutomateDotnetExample',
+            logo: '/images/functions/dotnet.svg'
+          }
+        ]
       })
     },
     mockEntireSchema: false

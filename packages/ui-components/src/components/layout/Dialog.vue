@@ -33,7 +33,7 @@
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
-              @submit.prevent="onSubmit || noop"
+              @submit.prevent="onFormSubmit"
             >
               <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
                 <div
@@ -65,15 +65,18 @@
               <div
                 v-if="hasButtons"
                 class="relative z-50 flex px-4 py-2 sm:py-4 sm:px-6 gap-2 shrink-0 bg-foundation"
-                :class="!scrolledToBottom && 'shadow-t'"
+                :class="{
+                  'shadow-t': !scrolledToBottom,
+                  [buttonsWrapperClasses || '']: true
+                }"
               >
                 <template v-if="buttons">
                   <FormButton
                     v-for="(button, index) in buttons"
                     :key="index"
-                    v-bind="button.props"
-                    :disabled="button.disabled"
-                    :type="button.submit && 'submit'"
+                    v-bind="button.props || {}"
+                    :disabled="button.props?.disabled || button.disabled"
+                    :submit="button.props?.submit || button.submit"
                     @click="button.onClick"
                   >
                     {{ button.text }}
@@ -92,7 +95,7 @@
 </template>
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { FormButton } from '~~/src/lib'
+import { FormButton, type LayoutDialogButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
 import { throttle, noop } from 'lodash'
@@ -113,13 +116,11 @@ const props = defineProps<{
    */
   preventCloseOnClickOutside?: boolean
   title?: string
-  buttons?: Array<{
-    text: string
-    props: Record<string, unknown>
-    onClick?: () => void
-    disabled?: boolean
-    submit?: boolean
-  }>
+  buttons?: Array<LayoutDialogButton>
+  /**
+   * Extra classes to apply to the button container.
+   */
+  buttonsWrapperClasses?: string
   /**
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
    */
@@ -177,6 +178,10 @@ const widthClasses = computed(() => {
 const onClose = () => {
   if (props.preventCloseOnClickOutside) return
   open.value = false
+}
+
+const onFormSubmit = (e: SubmitEvent) => {
+  ;(props.onSubmit || noop)(e)
 }
 
 const onScroll = throttle((e: Event) => {

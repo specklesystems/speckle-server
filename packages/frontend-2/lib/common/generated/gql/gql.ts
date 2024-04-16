@@ -20,9 +20,12 @@ const documents = {
     "\n  mutation RequestVerification {\n    requestVerification\n  }\n": types.RequestVerificationDocument,
     "\n  fragment AuthStategiesServerInfoFragment on ServerInfo {\n    authStrategies {\n      id\n      name\n      url\n    }\n  }\n": types.AuthStategiesServerInfoFragmentFragmentDoc,
     "\n  fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {\n    id\n    name\n    isFeatured\n    description\n    logo\n    creator {\n      id\n      name\n    }\n  }\n": types.AutomationsFunctionsCard_AutomateFunctionFragmentDoc,
+    "\n  fragment AutomateFunctionCreateDialogDoneStep_AutomateFunction on AutomateFunction {\n    id\n    repoUrl\n    ...AutomationsFunctionsCard_AutomateFunction\n  }\n": types.AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragmentDoc,
+    "\n  fragment AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplate on AutomateFunctionTemplate {\n    id\n    title\n    logo\n    url\n  }\n": types.AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplateFragmentDoc,
     "\n  fragment AutomateFunctionPageHeader_Function on AutomateFunction {\n    id\n    name\n    logo\n  }\n": types.AutomateFunctionPageHeader_FunctionFragmentDoc,
     "\n  fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {\n    id\n    repoUrl\n    automationCount\n    description\n    releases(limit: 1) {\n      items {\n        id\n        inputSchema\n        createdAt\n        commitId\n        ...AutomateFunctionPageParametersDialog_AutomateFunctionRelease\n      }\n    }\n  }\n": types.AutomateFunctionPageInfo_AutomateFunctionFragmentDoc,
     "\n  fragment AutomateFunctionPageParametersDialog_AutomateFunctionRelease on AutomateFunctionRelease {\n    id\n    inputSchema\n  }\n": types.AutomateFunctionPageParametersDialog_AutomateFunctionReleaseFragmentDoc,
+    "\n  fragment AutomateFunctionsPageHeader_Query on Query {\n    activeUser {\n      id\n      automateInfo {\n        hasAutomateGithubApp\n        availableGithubOrgs\n      }\n    }\n    serverInfo {\n      automate {\n        availableFunctionTemplates {\n          ...AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplate\n        }\n      }\n    }\n  }\n": types.AutomateFunctionsPageHeader_QueryFragmentDoc,
     "\n  fragment AutomateFunctionsPageItems_Query on Query {\n    automateFunctions(limit: 21, filter: { search: $search }) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n": types.AutomateFunctionsPageItems_QueryFragmentDoc,
     "\n  fragment AutomateRunsTriggerStatus_TriggeredAutomationsStatus on TriggeredAutomationsStatus {\n    id\n    ...TriggeredAutomationsStatusSummary\n    ...AutomateRunsTriggerStatusDialog_TriggeredAutomationsStatus\n  }\n": types.AutomateRunsTriggerStatus_TriggeredAutomationsStatusFragmentDoc,
     "\n  fragment AutomateRunsTriggerStatusDialog_TriggeredAutomationsStatus on TriggeredAutomationsStatus {\n    id\n    automationRuns {\n      id\n      ...AutomateRunsTriggerStatusDialogAutomationRun_AutomateRun\n    }\n  }\n": types.AutomateRunsTriggerStatusDialog_TriggeredAutomationsStatusFragmentDoc,
@@ -93,6 +96,7 @@ const documents = {
     "\n  fragment TriggeredAutomationsStatusSummary on TriggeredAutomationsStatus {\n    id\n    automationRuns {\n      id\n      functionRuns {\n        id\n        ...FunctionRunStatusForSummary\n      }\n    }\n  }\n": types.TriggeredAutomationsStatusSummaryFragmentDoc,
     "\n  fragment AutomationRunDetails on AutomateRun {\n    id\n    status\n    reason\n    trigger {\n      ... on VersionCreatedTrigger {\n        version {\n          id\n        }\n        model {\n          id\n        }\n      }\n    }\n    createdAt\n    updatedAt\n  }\n": types.AutomationRunDetailsFragmentDoc,
     "\n  fragment SearchAutomateFunctionReleaseItem on AutomateFunctionRelease {\n    id\n    versionTag\n    createdAt\n    inputSchema\n  }\n": types.SearchAutomateFunctionReleaseItemFragmentDoc,
+    "\n  mutation CreateAutomateFunction($input: CreateAutomateFunctionInput!) {\n    automateMutations {\n      createFunction(input: $input) {\n        id\n        ...AutomationsFunctionsCard_AutomateFunction\n        ...AutomateFunctionCreateDialogDoneStep_AutomateFunction\n      }\n    }\n  }\n": types.CreateAutomateFunctionDocument,
     "\n  query SearchAutomateFunctionReleases(\n    $functionId: ID!\n    $cursor: String\n    $limit: Int\n    $filter: AutomateFunctionReleasesFilter\n  ) {\n    automateFunction(id: $functionId) {\n      id\n      releases(cursor: $cursor, limit: $limit, filter: $filter) {\n        cursor\n        totalCount\n        items {\n          ...SearchAutomateFunctionReleaseItem\n        }\n      }\n    }\n  }\n": types.SearchAutomateFunctionReleasesDocument,
     "\n  query FunctionAccessCheck($id: ID!) {\n    automateFunction(id: $id) {\n      id\n    }\n  }\n": types.FunctionAccessCheckDocument,
     "\n  query MentionsUserSearch($query: String!, $emailOnly: Boolean = false) {\n    userSearch(\n      query: $query\n      limit: 5\n      cursor: null\n      archived: false\n      emailOnly: $emailOnly\n    ) {\n      items {\n        id\n        name\n        company\n      }\n    }\n  }\n": types.MentionsUserSearchDocument,
@@ -200,7 +204,7 @@ const documents = {
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    stream(id: $streamId) {\n      commit(id: $commitId) {\n        id\n        branch {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
     "\n  query ResolveCommentLink($commentId: String!, $projectId: String!) {\n    comment(id: $commentId, streamId: $projectId) {\n      ...LinkableComment\n    }\n  }\n": types.ResolveCommentLinkDocument,
     "\n  query AutomateFunctionPage($functionId: ID!) {\n    automateFunction(id: $functionId) {\n      ...AutomateFunctionPageHeader_Function\n      ...AutomateFunctionPageInfo_AutomateFunction\n    }\n  }\n": types.AutomateFunctionPageDocument,
-    "\n  query AutomateFunctionsPage($search: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n": types.AutomateFunctionsPageDocument,
+    "\n  query AutomateFunctionsPage($search: String) {\n    ...AutomateFunctionsPageItems_Query\n    ...AutomateFunctionsPageHeader_Query\n  }\n": types.AutomateFunctionsPageDocument,
     "\n  fragment ProjectPageProject on Project {\n    id\n    createdAt\n    ...ProjectPageProjectHeader\n    ...ProjectPageStatsBlockTeam\n    ...ProjectPageTeamDialog\n    ...ProjectPageStatsBlockModels\n    ...ProjectPageStatsBlockComments\n  }\n": types.ProjectPageProjectFragmentDoc,
     "\n  fragment ProjectPageAutomationPage_Automation on Automation {\n    id\n    ...ProjectPageAutomationHeader_Automation\n    ...ProjectPageAutomationFunctions_Automation\n    ...ProjectPageAutomationRuns_Automation\n  }\n": types.ProjectPageAutomationPage_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationPage_Project on Project {\n    id\n    ...ProjectPageAutomationHeader_Project\n  }\n": types.ProjectPageAutomationPage_ProjectFragmentDoc,
@@ -251,6 +255,14 @@ export function graphql(source: "\n  fragment AutomationsFunctionsCard_AutomateF
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  fragment AutomateFunctionCreateDialogDoneStep_AutomateFunction on AutomateFunction {\n    id\n    repoUrl\n    ...AutomationsFunctionsCard_AutomateFunction\n  }\n"): (typeof documents)["\n  fragment AutomateFunctionCreateDialogDoneStep_AutomateFunction on AutomateFunction {\n    id\n    repoUrl\n    ...AutomationsFunctionsCard_AutomateFunction\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplate on AutomateFunctionTemplate {\n    id\n    title\n    logo\n    url\n  }\n"): (typeof documents)["\n  fragment AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplate on AutomateFunctionTemplate {\n    id\n    title\n    logo\n    url\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment AutomateFunctionPageHeader_Function on AutomateFunction {\n    id\n    name\n    logo\n  }\n"): (typeof documents)["\n  fragment AutomateFunctionPageHeader_Function on AutomateFunction {\n    id\n    name\n    logo\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -260,6 +272,10 @@ export function graphql(source: "\n  fragment AutomateFunctionPageInfo_AutomateF
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment AutomateFunctionPageParametersDialog_AutomateFunctionRelease on AutomateFunctionRelease {\n    id\n    inputSchema\n  }\n"): (typeof documents)["\n  fragment AutomateFunctionPageParametersDialog_AutomateFunctionRelease on AutomateFunctionRelease {\n    id\n    inputSchema\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AutomateFunctionsPageHeader_Query on Query {\n    activeUser {\n      id\n      automateInfo {\n        hasAutomateGithubApp\n        availableGithubOrgs\n      }\n    }\n    serverInfo {\n      automate {\n        availableFunctionTemplates {\n          ...AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplate\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AutomateFunctionsPageHeader_Query on Query {\n    activeUser {\n      id\n      automateInfo {\n        hasAutomateGithubApp\n        availableGithubOrgs\n      }\n    }\n    serverInfo {\n      automate {\n        availableFunctionTemplates {\n          ...AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplate\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -540,6 +556,10 @@ export function graphql(source: "\n  fragment AutomationRunDetails on AutomateRu
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment SearchAutomateFunctionReleaseItem on AutomateFunctionRelease {\n    id\n    versionTag\n    createdAt\n    inputSchema\n  }\n"): (typeof documents)["\n  fragment SearchAutomateFunctionReleaseItem on AutomateFunctionRelease {\n    id\n    versionTag\n    createdAt\n    inputSchema\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateAutomateFunction($input: CreateAutomateFunctionInput!) {\n    automateMutations {\n      createFunction(input: $input) {\n        id\n        ...AutomationsFunctionsCard_AutomateFunction\n        ...AutomateFunctionCreateDialogDoneStep_AutomateFunction\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateAutomateFunction($input: CreateAutomateFunctionInput!) {\n    automateMutations {\n      createFunction(input: $input) {\n        id\n        ...AutomationsFunctionsCard_AutomateFunction\n        ...AutomateFunctionCreateDialogDoneStep_AutomateFunction\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -971,7 +991,7 @@ export function graphql(source: "\n  query AutomateFunctionPage($functionId: ID!
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query AutomateFunctionsPage($search: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n"): (typeof documents)["\n  query AutomateFunctionsPage($search: String) {\n    ...AutomateFunctionsPageItems_Query\n  }\n"];
+export function graphql(source: "\n  query AutomateFunctionsPage($search: String) {\n    ...AutomateFunctionsPageItems_Query\n    ...AutomateFunctionsPageHeader_Query\n  }\n"): (typeof documents)["\n  query AutomateFunctionsPage($search: String) {\n    ...AutomateFunctionsPageItems_Query\n    ...AutomateFunctionsPageHeader_Query\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

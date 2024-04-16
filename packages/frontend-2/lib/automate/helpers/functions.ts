@@ -1,4 +1,8 @@
 import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import type { AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplateFragment } from '~/lib/common/generated/gql/graphql'
+
+export type CreatableFunctionTemplate =
+  AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplateFragment
 
 export const cleanFunctionLogo = (
   logo: MaybeNullOrUndefined<string>
