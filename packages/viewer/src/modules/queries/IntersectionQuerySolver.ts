@@ -28,21 +28,22 @@ export class IntersectionQuerySolver {
 
   private solveOcclusion(query: IntersectionQuery): IntersectionQueryResult {
     const target = this.vecBuff0.set(query.point.x, query.point.y, query.point.z!)
-    const dir = this.vecBuff1.copy(target).sub(this.renderer.renderingCamera.position)
+    const dir = this.vecBuff1.copy(target).sub(this.renderer.renderingCamera!.position)
     dir.normalize()
-    const ray = new Ray(this.renderer.renderingCamera.position, dir)
-    const results: Array<Intersection> = this.renderer.intersections.intersectRay(
-      this.renderer.scene,
-      this.renderer.renderingCamera,
-      ray,
-      true,
-      this.renderer.clippingVolume,
-      [ObjectLayers.STREAM_CONTENT_MESH]
-    )
+    const ray = new Ray(this.renderer.renderingCamera!.position, dir)
+    const results: Array<Intersection> | null =
+      this.renderer.intersections.intersectRay(
+        this.renderer.scene,
+        this.renderer.renderingCamera!,
+        ray,
+        true,
+        this.renderer.clippingVolume,
+        [ObjectLayers.STREAM_CONTENT_MESH]
+      )
     if (!results || results.length === 0) return { objects: null }
     const hits = this.renderer.queryHitIds(results)
     if (!hits) return { objects: null }
-    let targetDistance = this.renderer.renderingCamera.position.distanceTo(target)
+    let targetDistance = this.renderer.renderingCamera!.position.distanceTo(target)
     targetDistance -= query.tolerance!
 
     if (targetDistance < results[0].distance) {
@@ -60,15 +61,16 @@ export class IntersectionQuerySolver {
   }
 
   private solvePick(query: IntersectionQuery): IntersectionQueryResult | null {
-    const results: Array<Intersection> = this.renderer.intersections.intersect(
+    const results: Array<Intersection> | null = this.renderer.intersections.intersect(
       this.renderer.scene,
-      this.renderer.renderingCamera,
+      this.renderer.renderingCamera!,
       new Vector2(query.point.x, query.point.y),
       true,
       this.renderer.clippingVolume
     )
     if (!results) return null
     const hits = this.renderer.queryHits(results)
+    if (!hits) return null
     return {
       objects: hits.map((value) => {
         return {

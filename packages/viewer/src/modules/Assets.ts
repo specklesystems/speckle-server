@@ -4,18 +4,22 @@ import {
   WebGLRenderer,
   TextureLoader,
   Color,
-  DataTexture
+  DataTexture,
+  DataTextureLoader
 } from 'three'
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js'
-import { Asset, AssetType } from '../IViewer'
+import { type Asset, AssetType } from '../IViewer'
 import Logger from 'js-logger'
 
 export class Assets {
   private static _cache: { [name: string]: Texture | Font } = {}
 
-  private static getLoader(src: string, assetType: AssetType): TextureLoader {
+  private static getLoader(
+    src: string,
+    assetType: AssetType
+  ): TextureLoader | DataTextureLoader | null {
     if (assetType === undefined) assetType = src.split('.').pop() as AssetType
     if (!Object.values(AssetType).includes(assetType)) {
       Logger.warn(`Asset ${src} could not be loaded. Unknown type`)
@@ -28,6 +32,8 @@ export class Assets {
         return new RGBELoader()
       case AssetType.TEXTURE_8BPP:
         return new TextureLoader()
+      default:
+        return null
     }
   }
 
@@ -110,7 +116,7 @@ export class Assets {
   }
 
   public static getFont(asset: Asset | string): Promise<Font> {
-    let srcUrl: string = null
+    let srcUrl: string | null = null
     if ((<Asset>asset).src) {
       srcUrl = (asset as Asset).src
     } else {
@@ -143,9 +149,9 @@ export class Assets {
     canvas.height = texture.image.height
 
     const context = canvas.getContext('2d')
-    context.drawImage(texture.image, 0, 0)
+    context!.drawImage(texture.image, 0, 0)
 
-    const data = context.getImageData(0, 0, canvas.width, canvas.height)
+    const data = context!.getImageData(0, 0, canvas.width, canvas.height)
     return Promise.resolve(data)
   }
 

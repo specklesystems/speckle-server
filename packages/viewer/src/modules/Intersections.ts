@@ -1,7 +1,7 @@
 import {
   Box3,
   Camera,
-  Intersection,
+  type Intersection,
   Object3D,
   Plane,
   Ray,
@@ -26,8 +26,8 @@ export class Intersections {
     this.raycaster = new SpeckleRaycaster()
     this.raycaster.params.Line = { threshold: 0.01 }
     this.raycaster.params.Points = { threshold: 0.01 }
-    ;(this.raycaster.params as { Line2? }).Line2 = {}
-    ;(this.raycaster.params as { Line2? }).Line2.threshold = 1
+    ;(this.raycaster.params as { Line2?: object }).Line2 = {}
+    ;(this.raycaster.params as { Line2?: { threshold: number } }).Line2!.threshold = 1
     this.raycaster.onObjectIntersectionTest = this.onObjectIntersection.bind(this)
   }
 
@@ -63,15 +63,23 @@ export class Intersections {
        */
       if (!worldSpace) {
         if (ssDistance < 1) {
-          ;(this.raycaster.params as { Line2? }).Line2.threshold = lineWidth * 8
+          ;(
+            this.raycaster.params as { Line2?: { threshold: number } }
+          ).Line2!.threshold = lineWidth * 8
         } else {
-          ;(this.raycaster.params as { Line2? }).Line2.threshold = lineWidth * 5
+          ;(
+            this.raycaster.params as { Line2?: { threshold: number } }
+          ).Line2!.threshold = lineWidth * 5
         }
       } else {
         if (ssDistance < 1) {
-          ;(this.raycaster.params as { Line2? }).Line2.threshold = lineWidth * 2
+          ;(
+            this.raycaster.params as { Line2?: { threshold: number } }
+          ).Line2!.threshold = lineWidth * 2
         } else {
-          ;(this.raycaster.params as { Line2? }).Line2.threshold = lineWidth
+          ;(
+            this.raycaster.params as { Line2?: { threshold: number } }
+          ).Line2!.threshold = lineWidth
         }
       }
     }
@@ -82,10 +90,10 @@ export class Intersections {
     camera: Camera,
     point: Vector2,
     nearest = true,
-    bounds: Box3 = null,
-    castLayers: Array<ObjectLayers> = undefined,
+    bounds: Box3 | null = null,
+    castLayers: Array<ObjectLayers> | undefined = undefined,
     firstOnly = false
-  ): Array<Intersection> {
+  ): Array<Intersection> | null {
     this.raycaster.setFromCamera(point, camera)
     this.raycaster.firstHitOnly = firstOnly
     return this.intersectInternal(scene, nearest, bounds, castLayers)
@@ -96,10 +104,10 @@ export class Intersections {
     camera: Camera,
     ray: Ray,
     nearest = true,
-    bounds: Box3 = null,
-    castLayers: Array<ObjectLayers> = undefined,
+    bounds: Box3 | null = null,
+    castLayers: Array<ObjectLayers> | undefined = undefined,
     firstOnly = false
-  ): Array<Intersection> {
+  ): Array<Intersection> | null {
     this.raycaster.camera = camera
     this.raycaster.set(ray.origin, ray.direction)
     this.raycaster.firstHitOnly = firstOnly
@@ -109,9 +117,9 @@ export class Intersections {
   private intersectInternal(
     scene: Scene,
     nearest: boolean,
-    bounds: Box3,
-    castLayers: Array<ObjectLayers>
-  ) {
+    bounds: Box3 | null,
+    castLayers: Array<ObjectLayers> | undefined
+  ): Array<Intersection> | null {
     const preserveMask = this.raycaster.layers.mask
 
     if (castLayers !== undefined) {
@@ -122,7 +130,7 @@ export class Intersections {
     }
     const target = scene.getObjectByName('ContentGroup')
 
-    let results = []
+    let results: Array<Intersection & { pointOnLine: Vector3 }> = []
     if (target) {
       // const start = performance.now()
       results = this.raycaster.intersectObjects(target.children)

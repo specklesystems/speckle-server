@@ -427,7 +427,9 @@ export class LegacyViewer extends Viewer {
     if (nodes) {
       nodes.forEach((node: TreeNode) => {
         if (node.model.renderView)
-          objects.push(this.speckleRenderer.getObject(node.model.renderView))
+          objects.push(
+            this.speckleRenderer.getObject(node.model.renderView) as BatchObject
+          )
       })
     }
     return objects
