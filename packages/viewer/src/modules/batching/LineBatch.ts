@@ -79,7 +79,7 @@ export default class LineBatch implements Batch {
   }
 
   public get materials(): Material[] {
-    return this.mesh.material as Material[]
+    return this.mesh.material as unknown as Material[]
   }
 
   public get groups(): DrawGroup[] {
