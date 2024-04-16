@@ -148,6 +148,7 @@ export class SpeckleLoader extends Loader {
   }
 
   dispose() {
+    super.dispose()
     this.loader.dispose()
   }
 }

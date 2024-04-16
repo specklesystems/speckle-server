@@ -10,6 +10,7 @@ import { Extension } from './modules/extensions/Extension'
 import { Loader } from './modules/loaders/Loader'
 import { type Constructor } from 'type-fest'
 import type { Vector3Like } from './modules/batching/BatchObject'
+import type { FilteringState } from './modules/extensions/FilteringExtension'
 
 export type SpeckleObject = {
   [k: string]: unknown
@@ -61,13 +62,23 @@ export const DefaultViewerParams: ViewerParams = {
 export enum ViewerEvent {
   ObjectClicked = 'object-clicked',
   ObjectDoubleClicked = 'object-doubleclicked',
-  DownloadComplete = 'download-complete',
   LoadComplete = 'load-complete',
   UnloadComplete = 'unload-complete',
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
   FilteringStateSet = 'filtering-state-set',
   LightConfigUpdated = 'light-config-updated'
+}
+
+export interface ViewerEventPayload {
+  [ViewerEvent.ObjectClicked]: SelectionEvent | null
+  [ViewerEvent.ObjectDoubleClicked]: SelectionEvent | null
+  [ViewerEvent.LoadComplete]: string
+  [ViewerEvent.UnloadComplete]: string
+  [ViewerEvent.UnloadAllComplete]: void
+  [ViewerEvent.Busy]: boolean
+  [ViewerEvent.FilteringStateSet]: FilteringState
+  [ViewerEvent.LightConfigUpdated]: LightConfiguration
 }
 
 export type SpeckleView = {
@@ -150,7 +161,10 @@ export interface IViewer {
 
   init(): Promise<void>
   resize(): void
-  on(eventType: ViewerEvent, handler: (arg: unknown) => void): void
+  on<T extends ViewerEvent>(
+    eventType: T,
+    handler: (arg: ViewerEventPayload[T]) => void
+  ): void
   requestRender(flags?: UpdateFlags): void
 
   setLightConfiguration(config: LightConfiguration): void

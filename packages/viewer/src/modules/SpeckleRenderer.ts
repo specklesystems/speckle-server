@@ -232,8 +232,8 @@ export default class SpeckleRenderer {
       this._needsRender = true
       this.pipeline.onStationaryBegin()
     })
-    this._speckleCamera.on(CameraEvent.FrameUpdate, (needsUpdate: unknown) => {
-      this.needsRender = needsUpdate as boolean
+    this._speckleCamera.on(CameraEvent.FrameUpdate, (needsUpdate: boolean) => {
+      this.needsRender = needsUpdate
       if (this.pipeline.needsAccumulation && needsUpdate) {
         this.pipeline.reset()
       }
@@ -1072,7 +1072,7 @@ export default class SpeckleRenderer {
     return rv
   }
 
-  private onClick(e: Vector2 & { multiSelect: boolean; event: Event }) {
+  private onClick(e: Vector2 & { multiSelect: boolean; event: PointerEvent }) {
     const results: Array<Intersection> | null = this._intersections.intersect(
       this._scene,
       this.renderingCamera!,
@@ -1110,7 +1110,7 @@ export default class SpeckleRenderer {
     this.viewer.emit(ViewerEvent.ObjectClicked, selectionInfo)
   }
 
-  private onDoubleClick(e: Vector2 & { multiSelect: boolean; event: Event }) {
+  private onDoubleClick(e: Vector2 & { multiSelect: boolean; event: PointerEvent }) {
     const results: Array<Intersection> | null = this._intersections.intersect(
       this._scene,
       this.renderingCamera!,

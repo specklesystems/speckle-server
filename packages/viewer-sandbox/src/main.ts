@@ -69,8 +69,7 @@ const createViewer = async (containerName: string, stream: string) => {
     viewer.resize()
   })
 
-  viewer.on(ViewerEvent.ObjectClicked, (_event: unknown) => {
-    const event = _event as SelectionEvent
+  viewer.on(ViewerEvent.ObjectClicked, (event: SelectionEvent | null) => {
     if (event) console.log(event.hits[0].node.model.id)
   })
 

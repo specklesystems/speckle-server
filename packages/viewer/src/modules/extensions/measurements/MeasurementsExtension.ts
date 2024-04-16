@@ -134,7 +134,7 @@ export class MeasurementsExtension extends Extension {
     this.renderer.renderer.getDrawingBufferSize(this.screenBuff0)
   }
 
-  protected onPointerMove(data: Vector2) {
+  protected onPointerMove(data: Vector2 & { event: Event }) {
     if (!this._enabled || this._paused) return
 
     if (this._frameLock) {
@@ -189,7 +189,9 @@ export class MeasurementsExtension extends Extension {
     // console.log('Time -> ', performance.now() - start)
   }
 
-  protected onPointerClick(data: { event: { button: number } } & Vector2) {
+  protected onPointerClick(
+    data: { event: PointerEvent; multiSelect: boolean } & Vector2
+  ) {
     if (!this._enabled) return
 
     const measurement = this.pickMeasurement(data)
@@ -214,7 +216,9 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  protected onPointerDoubleClick(data: Vector2) {
+  protected onPointerDoubleClick(
+    data: Vector2 & { event: PointerEvent; multiSelect: boolean }
+  ) {
     const measurement = this.pickMeasurement(data)
     if (measurement) {
       this.cameraProvider.setCameraView(measurement.bounds, true)

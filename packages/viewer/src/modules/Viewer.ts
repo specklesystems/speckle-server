@@ -12,7 +12,8 @@ import {
   type SunLightConfiguration,
   UpdateFlags,
   ViewerEvent,
-  type ViewerParams
+  type ViewerParams,
+  type ViewerEventPayload
 } from '../IViewer'
 import { World } from './World'
 import { type TreeNode, WorldTree } from './tree/WorldTree'
@@ -225,7 +226,10 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  public on(eventType: ViewerEvent, listener: (arg: unknown) => void): void {
+  on<T extends ViewerEvent>(
+    eventType: T,
+    listener: (arg: ViewerEventPayload[T]) => void
+  ): void {
     super.on(eventType, listener)
   }
 
@@ -294,8 +298,7 @@ export class Viewer extends EventEmitter implements IViewer {
    */
 
   public async loadObject(loader: Loader, zoomToObject = true) {
-    if (++this.inProgressOperations === 1)
-      (this as EventEmitter).emit(ViewerEvent.Busy, true)
+    if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
 
     this.loaders[loader.resource] = loader
     const treeBuilt = await loader.load()
@@ -320,8 +323,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     if (this.loaders[loader.resource]) this.loaders[loader.resource].dispose()
     delete this.loaders[loader.resource]
-    if (--this.inProgressOperations === 0)
-      (this as EventEmitter).emit(ViewerEvent.Busy, false)
+    if (--this.inProgressOperations === 0) this.emit(ViewerEvent.Busy, false)
   }
 
   public async cancelLoad(resource: string, unload = false) {
@@ -331,15 +333,13 @@ export class Viewer extends EventEmitter implements IViewer {
     if (unload) {
       await this.unloadObject(resource)
     } else {
-      if (--this.inProgressOperations === 0)
-        (this as EventEmitter).emit(ViewerEvent.Busy, false)
+      if (--this.inProgressOperations === 0) this.emit(ViewerEvent.Busy, false)
     }
   }
 
   public async unloadObject(resource: string) {
     try {
-      if (++this.inProgressOperations === 1)
-        (this as EventEmitter).emit(ViewerEvent.Busy, true)
+      if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
       if (this.tree.findSubtree(resource)) {
         if (this.loaders[resource]) {
           await this.cancelLoad(resource, true)
@@ -353,17 +353,16 @@ export class Viewer extends EventEmitter implements IViewer {
       }
     } finally {
       if (--this.inProgressOperations === 0) {
-        ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
+        this.emit(ViewerEvent.Busy, false)
         Logger.warn(`Removed subtree ${resource}`)
-        ;(this as EventEmitter).emit(ViewerEvent.UnloadComplete, resource)
+        this.emit(ViewerEvent.UnloadComplete, resource)
       }
     }
   }
 
   public async unloadAll() {
     try {
-      if (++this.inProgressOperations === 1)
-        (this as EventEmitter).emit(ViewerEvent.Busy, true)
+      if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
       for (const key of Object.keys(this.loaders)) {
         if (this.loaders[key]) await this.cancelLoad(key, false)
         delete this.loaders[key]
@@ -376,9 +375,9 @@ export class Viewer extends EventEmitter implements IViewer {
       this.tree.purge()
     } finally {
       if (--this.inProgressOperations === 0) {
-        ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
+        this.emit(ViewerEvent.Busy, false)
         Logger.warn(`Removed all subtrees`)
-        ;(this as EventEmitter).emit(ViewerEvent.UnloadAllComplete)
+        this.emit(ViewerEvent.UnloadAllComplete)
       }
     }
   }

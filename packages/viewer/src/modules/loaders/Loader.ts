@@ -6,6 +6,12 @@ export enum LoaderEvent {
   LoadWarning = 'load-warning'
 }
 
+export interface LoaderEventPayload {
+  [LoaderEvent.LoadProgress]: { progress: number; id: string }
+  [LoaderEvent.LoadCancelled]: string
+  [LoaderEvent.LoadWarning]: { message: string }
+}
+
 export abstract class Loader extends EventEmitter {
   protected _resource: string
   protected _resourceData: string | ArrayBuffer | undefined
@@ -22,7 +28,16 @@ export abstract class Loader extends EventEmitter {
     this._resourceData = resourceData
   }
 
+  public on<T extends LoaderEvent>(
+    eventType: T,
+    listener: (arg: LoaderEventPayload[T]) => void
+  ): void {
+    super.on(eventType, listener)
+  }
+
   public abstract load(): Promise<boolean>
   public abstract cancel(): void
-  public abstract dispose(): void
+  public dispose(): void {
+    super.dispose()
+  }
 }

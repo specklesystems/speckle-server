@@ -176,8 +176,7 @@ export class SelectionExtension extends Extension {
     )
   }
 
-  protected onObjectClicked(_selection: unknown) {
-    const selection: SelectionEvent = _selection as SelectionEvent
+  protected onObjectClicked(selection: SelectionEvent | null) {
     if (!this._enabled) return
 
     if (!selection) {
@@ -192,8 +191,7 @@ export class SelectionExtension extends Extension {
     this.applySelection()
   }
 
-  protected onObjectDoubleClick(_selectionInfo: unknown) {
-    const selectionInfo: SelectionEvent = _selectionInfo as SelectionEvent
+  protected onObjectDoubleClick(selectionInfo: SelectionEvent | null) {
     if (!this._enabled) return
 
     if (!selectionInfo) {
@@ -206,8 +204,7 @@ export class SelectionExtension extends Extension {
     )
   }
 
-  protected onPointerMove(_e: unknown) {
-    const e: Vector2 = _e as Vector2
+  protected onPointerMove(e: Vector2 & { event: Event }) {
     if (!this._enabled) return
 
     if (!this.options.hoverMaterialData) return

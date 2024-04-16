@@ -27,6 +27,7 @@ import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
 
 import { Euler, Vector3 } from 'three'
+import { LoaderEvent } from '@speckle/viewer/dist/modules/loaders/Loader'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -143,8 +144,8 @@ export default class Sandbox {
     })
     this.properties = []
 
-    viewer.on(ViewerEvent.LoadComplete, async (url: unknown) => {
-      this.addStreamControls(url as string)
+    viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
+      this.addStreamControls(url)
       this.addViewControls()
       this.addBatches()
       this.properties = await this.viewer.getObjectProperties()
@@ -156,15 +157,12 @@ export default class Sandbox {
       this.addViewControls()
       this.properties = await this.viewer.getObjectProperties()
     })
-    viewer.on(ViewerEvent.UnloadAllComplete, async (url: unknown) => {
+    viewer.on(ViewerEvent.UnloadAllComplete, async () => {
       this.removeViewControls()
       this.addViewControls()
       this.properties = await this.viewer.getObjectProperties()
-      // viewer.World.resetWorld()
-      url
     })
-    viewer.on(ViewerEvent.ObjectClicked, (_selectionEvent: unknown) => {
-      const selectionEvent = _selectionEvent as SelectionEvent
+    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent | null) => {
       if (selectionEvent && selectionEvent.hits) {
         const firstHitNode = selectionEvent.hits[0].node
         if (firstHitNode) {
@@ -1224,6 +1222,16 @@ export default class Sandbox {
         true,
         undefined
       )
+      loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
+        console.warn(arg)
+      })
+      loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
+        console.warn(`Resource ${resource} loading was canceled`)
+      })
+      loader.on(LoaderEvent.LoadWarning, (arg: { message: string }) => {
+        console.error(`Loader warning: ${arg.message}`)
+      })
+
       await this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)

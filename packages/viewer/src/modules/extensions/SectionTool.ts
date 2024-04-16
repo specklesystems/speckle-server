@@ -14,7 +14,8 @@ import {
   Raycaster,
   DoubleSide,
   SphereGeometry,
-  type Intersection
+  type Intersection,
+  Vector2
 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
 import { type IViewer, ObjectLayers } from '../../IViewer'
@@ -27,6 +28,12 @@ export enum SectionToolEvent {
   DragStart = 'section-box-drag-start',
   DragEnd = 'section-box-drag-end',
   Updated = 'section-box-changed'
+}
+
+export interface SectionToolEventPayload {
+  [SectionToolEvent.DragStart]: void
+  [SectionToolEvent.DragEnd]: void
+  [SectionToolEvent.Updated]: Plane[]
 }
 
 export class SectionTool extends Extension {
@@ -171,8 +178,15 @@ export class SectionTool extends Extension {
     this.cameraProvider.on(CameraEvent.FrameUpdate, (data: boolean) => {
       this.allowSelection = !data
     })
-    this.viewer.getRenderer().input.on(InputEvent.Click, this._clickHandler.bind(this))
+    this.viewer.getRenderer().input.on(InputEvent.Click, this.clickHandler.bind(this))
     this.enabled = false
+  }
+
+  public on<T extends SectionToolEvent>(
+    eventType: T,
+    listener: (arg: SectionToolEventPayload[T]) => void
+  ): void {
+    super.on(eventType, listener)
   }
 
   private _setupControls() {
@@ -261,7 +275,7 @@ export class SectionTool extends Extension {
     this.viewer.requestRender()
   }
 
-  private _clickHandler(args: { x: number; y: number }) {
+  private clickHandler(args: Vector2 & { event: PointerEvent; multiSelect: boolean }) {
     if (!this.allowSelection || this.dragging) return
 
     this.raycaster.setFromCamera(args, this.cameraProvider.renderingCamera)

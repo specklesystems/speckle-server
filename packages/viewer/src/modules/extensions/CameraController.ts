@@ -4,7 +4,7 @@ import { Extension } from './Extension'
 import { SpeckleCameraControls } from '../objects/SpeckleCameraControls'
 import { Box3, OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three'
 import { KeyboardKeyHold, HOLD_EVENT_TYPE } from 'hold-event'
-import { CameraProjection } from '../objects/SpeckleCamera'
+import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera'
 import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera'
 import Logger from 'js-logger'
 import type { IViewer, SpeckleView } from '../../IViewer'
@@ -129,6 +129,13 @@ export class CameraController extends Extension implements SpeckleCamera {
     })
 
     this.viewer.getRenderer().speckleCamera = this
+  }
+
+  public on<T extends CameraEvent>(
+    eventType: T,
+    listener: (arg: CameraEventPayload[T]) => void
+  ): void {
+    super.on(eventType, listener)
   }
 
   setCameraView(

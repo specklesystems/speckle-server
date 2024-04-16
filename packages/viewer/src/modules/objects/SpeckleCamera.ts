@@ -1,10 +1,17 @@
 import { Box3, OrthographicCamera, PerspectiveCamera } from 'three'
 
 export enum CameraEvent {
-  Stationary,
-  Dynamic,
-  FrameUpdate,
-  ProjectionChanged
+  Stationary = 'stationary',
+  Dynamic = 'dynamic',
+  FrameUpdate = 'frame-update',
+  ProjectionChanged = 'projection-changed'
+}
+
+export interface CameraEventPayload {
+  [CameraEvent.Stationary]: void
+  [CameraEvent.Dynamic]: void
+  [CameraEvent.FrameUpdate]: boolean
+  [CameraEvent.ProjectionChanged]: CameraProjection
 }
 
 export interface SpeckleCamera {
@@ -12,7 +19,10 @@ export interface SpeckleCamera {
   get fieldOfView(): number
   set fieldOfView(value: number)
   get aspect(): number
-  on(type: CameraEvent, handler: (...args: unknown[]) => void): void
+  on<T extends CameraEvent>(
+    eventType: T,
+    listener: (arg: CameraEventPayload[T]) => void
+  ): void
   setCameraPlanes(targetVolume: Box3, offsetScale?: number): void
 }
 export enum CameraProjection {

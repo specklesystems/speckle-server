@@ -2,12 +2,21 @@ import { Vector2 } from 'three'
 import EventEmitter from '../EventEmitter'
 
 export enum InputEvent {
-  PointerDown,
-  PointerUp,
-  PointerMove,
-  Click,
-  DoubleClick,
-  KeyUp
+  PointerDown = 'pointer-down',
+  PointerUp = 'pointer-up',
+  PointerMove = 'pointer-move',
+  Click = 'click',
+  DoubleClick = 'double-click',
+  KeyUp = 'key-up'
+}
+
+export interface InputEventPayload {
+  [InputEvent.PointerDown]: Vector2 & { event: PointerEvent }
+  [InputEvent.PointerUp]: Vector2 & { event: PointerEvent }
+  [InputEvent.PointerMove]: Vector2 & { event: PointerEvent }
+  [InputEvent.Click]: Vector2 & { event: PointerEvent; multiSelect: boolean }
+  [InputEvent.DoubleClick]: Vector2 & { event: PointerEvent; multiSelect: boolean }
+  [InputEvent.KeyUp]: KeyboardEvent
 }
 
 //TO DO: Define proper interface for InputEvent data
@@ -79,18 +88,17 @@ export default class Input extends EventEmitter {
     this.container.addEventListener('dblclick', (e) => {
       const data = this._getNormalisedClickPosition(e)
       ;(data as unknown as Record<string, unknown>).event = e
+      if (e.shiftKey) (data as unknown as Record<string, unknown>).multiSelect = true
       this.emit(InputEvent.DoubleClick, data)
     })
 
     this.container.addEventListener('pointermove', (e) => {
       const data = this._getNormalisedClickPosition(e)
       ;(data as unknown as Record<string, unknown>).event = e
-      this.emit('pointer-move', data)
       this.emit(InputEvent.PointerMove, data)
     })
 
     document.addEventListener('keyup', (e) => {
-      this.emit('key-up', e)
       this.emit(InputEvent.KeyUp, e)
     })
 
@@ -104,6 +112,13 @@ export default class Input extends EventEmitter {
     //   if (e.isComposing || e.keyCode === 229) return
     //   if (e.key === 'Shift') this.multiSelect = false
     // })
+  }
+
+  public on<T extends InputEvent>(
+    eventType: T,
+    listener: (arg: InputEventPayload[T]) => void
+  ): void {
+    super.on(eventType, listener)
   }
 
   _getNormalisedClickPosition(e: MouseEvent | Touch | undefined) {
