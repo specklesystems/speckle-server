@@ -13,7 +13,7 @@ export enum InputEvent {
 //TO DO: Define proper interface for InputEvent data
 export default class Input extends EventEmitter {
   private static readonly MAX_DOUBLE_CLICK_TIMING = 500
-  private tapTimeout: NodeJS.Timeout | undefined
+  private tapTimeout: number = 0
   private lastTap = 0
   private lastClick = 0
   private touchLocation: Touch | undefined
@@ -67,6 +67,8 @@ export default class Input extends EventEmitter {
         const loc = this._getNormalisedClickPosition(this.touchLocation)
         this.emit(InputEvent.DoubleClick, loc)
       } else {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
         this.tapTimeout = setTimeout(() => {
           clearTimeout(this.tapTimeout)
         }, 500)
