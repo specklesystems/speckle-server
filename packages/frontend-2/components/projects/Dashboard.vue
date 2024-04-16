@@ -93,7 +93,6 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
-import dayjs from 'dayjs'
 
 const onUserProjectsUpdateSubscription = graphql(`
   subscription OnUserProjectsUpdate {
@@ -265,15 +264,10 @@ watch(search, (newVal) => {
 
 watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 
-function getFutureDateByDays(daysToAdd: number) {
-  return dayjs().add(daysToAdd, 'day').toDate()
-}
-
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   {
-    default: () => false,
-    expires: getFutureDateByDays(999)
+    default: () => false
   }
 )
 
@@ -285,8 +279,7 @@ const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(
 const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
   `hasDismissedChecklistForever`,
   {
-    default: () => false,
-    expires: getFutureDateByDays(999)
+    default: () => false
   }
 )
 
@@ -299,7 +292,7 @@ const hasDismissedChecklistTimeAgo = computed(() => {
 
 const hasDismissedNewSpeckleBanner = useSynchronizedCookie<boolean | undefined>(
   `hasDismissedNewSpeckleBanner`,
-  { default: () => false, expires: getFutureDateByDays(999) }
+  { default: () => false }
 )
 
 const showChecklist = computed(() => {
