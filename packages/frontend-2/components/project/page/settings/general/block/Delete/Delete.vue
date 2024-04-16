@@ -1,21 +1,15 @@
 <template>
   <div>
     <ProjectPageSettingsBlock background title="Delete Project" :icon="TrashIcon">
-      <template #introduction>
-        <p class="font-bold mb-1 text-sm">
-          Deleting a project is an irreversible action.
-        </p>
-        <p>
-          If you are sure you want to proceed, click the button below to begin deletion.
-        </p>
+      <p>
+        Permanently delete this project and all of its content from the Speckle
+        platform. This action is not reversible.
+      </p>
+      <template #bottomButtons>
+        <FormButton color="danger" @click="showDeleteDialog = true">
+          Delete Project
+        </FormButton>
       </template>
-      <div class="flex justify-end w-full">
-        <div class="max-w-max">
-          <FormButton color="danger" outlined @click="showDeleteDialog = true">
-            Delete Project
-          </FormButton>
-        </div>
-      </div>
     </ProjectPageSettingsBlock>
     <ProjectPageSettingsGeneralBlockDeleteDialog
       v-if="project"

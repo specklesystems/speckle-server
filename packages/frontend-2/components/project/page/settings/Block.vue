@@ -3,38 +3,35 @@
     class="flex flex-col w-full"
     :class="
       background
-        ? 'bg-foundation border border-primary-muted rounded-lg overflow-hidden '
+        ? 'bg-foundation border border-outline-4 dark:border-outline-3 rounded-lg overflow-hidden '
         : ''
     "
   >
     <div
-      class="flex items-center gap-4 border-b border-outline-3 justify-between transition py-4"
-      :class="background ? 'px-6' : ''"
+      class="flex items-center gap-4 justify-between transition"
+      :class="background ? 'pt-4 px-4 sm:pt-6 sm:px-6' : ''"
     >
       <div class="flex items-center gap-2">
         <component :is="icon" v-if="icon" class="h-5 w-5"></component>
         <h3 class="text-xl font-bold">{{ title }}</h3>
       </div>
-      <div v-if="$slots.topButtons" class="hidden sm:flex gap-2">
+      <div v-if="$slots.topButtons" class="flex gap-4">
         <slot name="topButtons" />
       </div>
     </div>
-    <div v-if="$slots.topButtons" class="flex sm:hidden gap-2">
-      <slot name="topButtons" />
-    </div>
     <div
       v-if="$slots.introduction"
-      class="text-sm text-foreground mt-4"
-      :class="background ? 'px-6' : ''"
+      class="text-foreground"
+      :class="background ? 'px-4 sm:px-6 pt-4' : 'pt-6'"
     >
       <slot name="introduction" />
     </div>
-    <div class="flex flex-col pt-4" :class="background ? 'p-6' : ''">
+    <div class="flex flex-col" :class="background ? 'p-4 sm:p-6' : ''">
       <slot />
     </div>
     <div
       v-if="disabledMessage || $slots.bottomButtons"
-      class="flex flex-col sm:flex-row gap-2 justify-between items-end sm:items-center bg-gray-50 dark:bg-foundation px-6 py-3 border-t border-primary-muted dark:border-outline-3"
+      class="flex flex-col sm:flex-row gap-2 justify-between items-end sm:items-center bg-gray-50 dark:bg-foundation px-4 sm:px-6 py-4 border-t border-primary-muted dark:border-outline-3"
     >
       <div v-if="disabledMessage" class="text-xs flex gap-1 sm:items-center w-full">
         <ExclamationCircleIcon

@@ -4,8 +4,7 @@
       <div class="flex items-center">
         <div class="flex items-center justify-between w-full">
           <div class="flex items-center gap-1 flex-grow select-none">
-            <UsersIcon class="h-5 w-5" />
-            <span class="text-sm font-bold">Team</span>
+            <span class="text-foreground text-sm font-semibold">Collaborators</span>
           </div>
           <div class="flex items-center text-sm">
             {{ project.role?.split(':').reverse()[0] }}
@@ -29,7 +28,7 @@
   </ProjectPageStatsBlock>
 </template>
 <script setup lang="ts">
-import { UsersIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
+import { UserPlusIcon } from '@heroicons/vue/24/outline'
 import { Roles, type Optional } from '@speckle/shared'
 import { OpenSectionType } from '~/lib/projects/helpers/components'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'

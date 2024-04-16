@@ -1,7 +1,7 @@
 <template>
-  <ProjectPageSettingsBlock title="Collaborators" :icon="UsersIcon">
+  <ProjectPageSettingsBlock title="Collaborators">
     <template #introduction>
-      <p>Invite new members or edit roles for existing ones.</p>
+      <p>Invite new collaborators and set permissions.</p>
     </template>
     <template #topButtons>
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
@@ -9,20 +9,14 @@
       </FormButton>
     </template>
 
-    <div
-      class="w-full bg-foundation flex justify-between px-3 pt-3 pb-1.5 rounded-t-md border-b border-outline-3 text-sm font-bold"
-    >
-      <div>Name</div>
-    </div>
-
-    <div class="flex flex-col bg-foundation">
+    <div class="flex flex-col mt-6">
       <div
         v-for="collaborator in collaboratorListItems"
         :key="collaborator.id"
-        class="flex items-center gap-2 py-1.5 px-2 border-b border-outline-3 last:border-0"
+        class="bg-foundation flex items-center gap-2 py-2 pl-3 pr-4 border-t border-x last:border-b border-outline-4 dark:border-outline-3 first:rounded-t-md last:rounded-b-md"
       >
-        <UserAvatar :user="collaborator.user" size="sm" />
-        <span class="grow truncate text-xs">{{ collaborator.title }}</span>
+        <UserAvatar :user="collaborator.user" size="md" />
+        <span class="grow truncate text-sm">{{ collaborator.title }}</span>
 
         <template v-if="!collaborator.inviteId">
           <ProjectPageTeamPermissionSelect
@@ -34,15 +28,13 @@
             @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
             @delete="onCollaboratorRoleChange(collaborator, null)"
           />
-          <span v-else class="shrink-0 text-xs">
+          <span v-else class="shrink-0 text-sm">
             {{ roleSelectItems[collaborator.role].title }}
           </span>
         </template>
         <template v-else-if="canEdit">
-          <div
-            class="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2 mb-0.5 sm:mb-0"
-          >
-            <span class="shrink-0 text-foreground-2 text-xs">
+          <div class="flex items-end sm:items-center shrink-0 gap-3">
+            <span class="shrink-0 text-foreground-2 text-sm">
               {{ roleSelectItems[collaborator.role].title }}
             </span>
             <FormButton
@@ -90,7 +82,7 @@ import {
 import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/components'
-import { UsersIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
+import { UserPlusIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
 

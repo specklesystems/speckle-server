@@ -4,7 +4,7 @@
       background
       title="Project Info"
       :disabled-message="disabled ? 'You must be a project owner' : undefined"
-      :icon="Cog6ToothIcon"
+      :icon="PencilIcon"
     >
       <FormTextInput
         v-model="localProjectName"
@@ -48,7 +48,7 @@
 
 <script setup lang="ts">
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
-import { Cog6ToothIcon } from '@heroicons/vue/24/outline'
+import { PencilIcon } from '@heroicons/vue/24/outline'
 import {
   FormTextInput,
   FormTextArea,

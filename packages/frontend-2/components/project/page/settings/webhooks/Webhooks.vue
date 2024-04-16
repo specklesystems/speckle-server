@@ -1,10 +1,9 @@
 <template>
-  <ProjectPageSettingsBlock title="Webhooks" :icon="IconWebhooks">
+  <ProjectPageSettingsBlock title="Webhooks">
     <template #introduction>
       <p class="pr-4">
-        Webhooks allow you to subscribe to a stream's events and get notified of them in
-        real time. You can then use this to trigger ci apps, automation workflows, and
-        more.
+        Subscribe to events and get notified in real time. Use to trigger CI apps,
+        automation workflows, and more.
       </p>
     </template>
     <template #topButtons>
@@ -15,7 +14,7 @@
         external
         target="_blank"
       >
-        Open Docs
+        Docs
       </FormButton>
       <FormButton :icon-left="PlusIcon" @click="openCreateWebhookDialog">
         Create
@@ -140,7 +139,6 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import type { Optional } from '@speckle/shared'
-import IconWebhooks from '~~/components/global/icon/Webhooks.vue'
 
 const projectId = computed(() => route.params.id as string)
 const route = useRoute()

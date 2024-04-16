@@ -6,7 +6,7 @@
     :disabled-message="disabled ? 'You must be a project owner' : undefined"
   >
     <template #introduction>
-      <p>Control who can leave comments on your projects:</p>
+      <p>Control who can leave comments on this project.</p>
     </template>
     <FormRadioGroup
       v-model="selectedOption"

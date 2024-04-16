@@ -6,10 +6,7 @@
     :disabled-message="disabled ? 'You must be a project owner' : undefined"
   >
     <template #introduction>
-      <p>
-        Choose how you want to share your projects with others. Select the option that
-        best suits your needs:
-      </p>
+      <p>Choose how you want to share this project with others.</p>
     </template>
     <FormRadioGroup
       v-model="selectedOption"
