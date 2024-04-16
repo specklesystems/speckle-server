@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutDialog } from '@speckle/ui-components'
+import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import type { ApplicationItem } from '~~/lib/developer-settings/helpers/types'
 
@@ -65,10 +65,10 @@ const authUrl = computed(() => {
   return null
 })
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'default', fullWidth: true },
     onClick: () => (isOpen.value = false)
   }
 ])

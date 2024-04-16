@@ -109,6 +109,7 @@ import {
 import { useClipboard } from '~~/composables/browser'
 import { SpeckleViewer } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 
 graphql(`
   fragment ProjectsModelPageEmbed_Project on Project {
@@ -191,7 +192,7 @@ const iframeCode = computed(() => {
   return `<iframe title="Speckle" src="${updatedUrl.value}" width="600" height="400" frameborder="0"></iframe>`
 })
 
-const discoverableButtons = computed(() => [
+const discoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'invert', fullWidth: true, outline: true },
@@ -201,14 +202,14 @@ const discoverableButtons = computed(() => [
   },
   {
     text: 'Copy Embed Code',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'default', fullWidth: true },
     onClick: () => {
       handleEmbedCodeCopy(iframeCode.value)
     }
   }
 ])
 
-const nonDiscoverableButtons = computed(() => [
+const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
     props: { color: 'invert', fullWidth: true, outline: true },
