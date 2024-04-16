@@ -4,7 +4,6 @@ import {
   DynamicDrawUsage,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
-  Line,
   Material,
   Object3D,
   Vector4,
@@ -32,7 +31,7 @@ export default class LineBatch implements Batch {
   public renderViews: NodeRenderView[]
   private geometry!: LineSegmentsGeometry
   public batchMaterial!: SpeckleLineMaterial
-  private mesh!: LineSegments2 | Line
+  private mesh!: LineSegments2
   public colorBuffer!: InstancedInterleavedBuffer
   private static readonly vector4Buffer: Vector4 = new Vector4()
 

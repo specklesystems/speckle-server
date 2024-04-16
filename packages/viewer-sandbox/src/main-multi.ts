@@ -61,15 +61,6 @@ const createViewer = async (containerName: string, stream: string) => {
     viewer.resize()
   })
 
-  viewer.on(
-    ViewerEvent.LoadProgress,
-    (a: { progress: number; id: string; url: string }) => {
-      if (a.progress >= 1) {
-        viewer.resize()
-      }
-    }
-  )
-
   viewer.on(ViewerEvent.LoadComplete, () => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)
     Object.assign(sandbox.sceneParams.worldOrigin, viewer.World.worldOrigin)

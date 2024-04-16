@@ -121,8 +121,8 @@ export class BoxSelection extends Extension {
     /** Compute the clip matrix */
     const clipMatrix = new Matrix4()
     clipMatrix.multiplyMatrices(
-      this.viewer.getRenderer().renderingCamera.projectionMatrix,
-      this.viewer.getRenderer().renderingCamera.matrixWorldInverse
+      this.viewer.getRenderer().renderingCamera!.projectionMatrix,
+      this.viewer.getRenderer().renderingCamera!.matrixWorldInverse
     )
 
     /** We're using three-mesh-bvh library for out BVH
@@ -130,7 +130,7 @@ export class BoxSelection extends Extension {
      **/
     const selectionRvs: Array<NodeRenderView> = []
     for (let b = 0; b < batches.length; b++) {
-      batches[b].mesh.TAS.shapecast({
+      batches[b].mesh.TAS!.shapecast({
         /** This is the callback from the TAS's bounds internal nodes */
         intersectsTAS: (box: Box3) => {
           /** We continue traversion only if the selection box intersects an internal node */

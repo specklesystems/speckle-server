@@ -69,21 +69,10 @@ const createViewer = async (containerName: string, stream: string) => {
     viewer.resize()
   })
 
-  viewer.on(
-    ViewerEvent.ObjectClicked,
-    (event: { hits: { node: { model: { id: string } } }[] }) => {
-      if (event) console.log(event.hits[0].node.model.id)
-    }
-  )
-
-  viewer.on(
-    ViewerEvent.LoadProgress,
-    (a: { progress: number; id: string; url: string }) => {
-      if (a.progress >= 1) {
-        viewer.resize()
-      }
-    }
-  )
+  viewer.on(ViewerEvent.ObjectClicked, (_event: unknown) => {
+    const event = _event as SelectionEvent
+    if (event) console.log(event.hits[0].node.model.id)
+  })
 
   viewer.on(ViewerEvent.LoadComplete, async () => {
     console.warn(viewer.getRenderer().renderingStats)

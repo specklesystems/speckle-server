@@ -20,9 +20,7 @@ export class CameraPlanes extends Extension {
 
   public constructor(viewer: IViewer) {
     super(viewer)
-    this.camerController = viewer.getExtension(
-      CameraController as new () => CameraController
-    )
+    this.camerController = viewer.getExtension(CameraController) as CameraController
   }
 
   public onEarlyUpdate(): void {
@@ -42,7 +40,7 @@ export class CameraPlanes extends Extension {
         1 +
           Math.pow(Math.tan(((fov / 180) * Math.PI) / 2), 2) * (Math.pow(aspect, 2) + 1)
       )
-    this.viewer.getRenderer().renderingCamera.near = nearPlane
+    this.viewer.getRenderer().renderingCamera!.near = nearPlane
     console.log(minDist, nearPlane)
   }
 
@@ -59,15 +57,15 @@ export class CameraPlanes extends Extension {
     let minDist = Number.POSITIVE_INFINITY
     const minPoint = new Vector3()
     for (let b = 0; b < batches.length; b++) {
-      const result = batches[b].mesh.TAS.closestPointToPoint(cameraPosition)
+      const result = batches[b].mesh.TAS!.closestPointToPoint(cameraPosition)
       const planarity = cameraDir.dot(
-        new Vector3().subVectors(result.point, cameraPosition).normalize()
+        new Vector3().subVectors(result!.point, cameraPosition).normalize()
       )
       if (planarity > 0) {
-        const dist = cameraPosition.distanceTo(result.point)
+        const dist = cameraPosition.distanceTo(result!.point)
         if (dist < minDist) {
           minDist = dist
-          minPoint.copy(result.point)
+          minPoint.copy(result!.point)
         }
       }
     }

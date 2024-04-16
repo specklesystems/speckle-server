@@ -20,7 +20,9 @@ import {
   Texture,
   Vector3,
   VSMShadowMap,
-  Vector2
+  Vector2,
+  PerspectiveCamera,
+  OrthographicCamera
 } from 'three'
 import { type Batch, type BatchUpdateRange, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
@@ -238,7 +240,7 @@ export default class SpeckleRenderer {
     })
   }
 
-  public get renderingCamera() {
+  public get renderingCamera(): PerspectiveCamera | OrthographicCamera | null {
     if (!this._speckleCamera) return null
     return this._speckleCamera.renderingCamera
   }

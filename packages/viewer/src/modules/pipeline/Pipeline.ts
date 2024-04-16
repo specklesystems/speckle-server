@@ -1,8 +1,5 @@
 import { DoubleSide, Plane, Side, Vector2, WebGLRenderer } from 'three'
-import {
-  EffectComposer,
-  Pass
-} from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import Batcher from '../batching/Batcher'
 import SpeckleRenderer from '../SpeckleRenderer'
 import { ApplySAOPass } from './ApplyAOPass'
@@ -21,7 +18,7 @@ import {
   StaticAOPass,
   type StaticAoPassParams
 } from './StaticAOPass'
-import { RenderType, type SpecklePass } from './SpecklePass'
+import { BaseSpecklePass, RenderType, type SpecklePass } from './SpecklePass'
 import { ColorPass } from './ColorPass'
 import { StencilPass } from './StencilPass'
 import { StencilMaskPass } from './StencilMaskPass'
@@ -393,7 +390,7 @@ export class Pipeline {
 
   private setPipeline(pipeline: Array<SpecklePass>) {
     for (let k = 0; k < pipeline.length; k++) {
-      this._composer.addPass(pipeline[k] as unknown as Pass)
+      this._composer.addPass(pipeline[k] as BaseSpecklePass)
     }
   }
 
