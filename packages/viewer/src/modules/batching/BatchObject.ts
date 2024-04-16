@@ -118,8 +118,8 @@ export class BatchObject {
     transform.invert()
 
     if (!bvh) {
-      const indices = this._renderView.renderData.geometry.attributes.INDEX as number[]
-      const position = this._renderView.renderData.geometry.attributes
+      const indices = this._renderView.renderData.geometry.attributes!.INDEX as number[]
+      const position = this._renderView.renderData.geometry.attributes!
         .POSITION as number[]
       bvh = AccelerationStructure.buildBVH(
         indices,

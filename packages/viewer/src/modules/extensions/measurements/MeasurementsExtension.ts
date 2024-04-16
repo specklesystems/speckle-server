@@ -2,7 +2,7 @@ import SpeckleRenderer from '../../SpeckleRenderer'
 
 import { type IViewer, ObjectLayers } from '../../../IViewer'
 import { PerpendicularMeasurement } from './PerpendicularMeasurement'
-import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
+import { Material, Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
 import { PointToPointMeasurement } from './PointToPointMeasurement'
 import { Measurement, MeasurementState } from './Measurement'
 import { type ExtendedIntersection } from '../../objects/SpeckleRaycaster'
@@ -154,7 +154,7 @@ export class MeasurementsExtension extends Extension {
     result = result.filter((value: ExtendedIntersection) => {
       const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
         value.batchObject as BatchObject
-      )
+      ) as Material
       return !(material instanceof SpeckleGhostMaterial) && material.visible
     })
 
@@ -243,7 +243,7 @@ export class MeasurementsExtension extends Extension {
     result = result.filter((value) => {
       const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
         value.batchObject as BatchObject
-      )
+      ) as Material
       return !(material instanceof SpeckleGhostMaterial) && material.visible
     })
 
@@ -268,7 +268,7 @@ export class MeasurementsExtension extends Extension {
     perpResult = perpResult.filter((value) => {
       const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
         value.batchObject as BatchObject
-      )
+      ) as Material
       return !(material instanceof SpeckleGhostMaterial) && material.visible
     })
 

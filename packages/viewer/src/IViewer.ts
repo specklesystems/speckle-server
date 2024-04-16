@@ -11,7 +11,13 @@ import { Loader } from './modules/loaders/Loader'
 import { type Constructor } from 'type-fest'
 import type { Vector3Like } from './modules/batching/BatchObject'
 
-export type SpeckleObject = Record<string, unknown>
+export type SpeckleObject = {
+  [k: string]: unknown
+  speckle_type: string
+  id: string
+  referencedId?: string
+  units?: string
+}
 
 export interface ViewerParams {
   showStats: boolean

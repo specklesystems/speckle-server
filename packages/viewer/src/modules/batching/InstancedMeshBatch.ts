@@ -523,9 +523,9 @@ export class InstancedMeshBatch implements Batch {
           batchObject.localOrigin.z
         )
         transform.invert()
-        const indices = this.renderViews[k].renderData.geometry.attributes
+        const indices = this.renderViews[k].renderData.geometry.attributes!
           .INDEX as number[]
-        const position = this.renderViews[k].renderData.geometry.attributes
+        const position = this.renderViews[k].renderData.geometry.attributes!
           .POSITION as number[]
         instanceBVH = AccelerationStructure.buildBVH(
           indices,
@@ -541,13 +541,13 @@ export class InstancedMeshBatch implements Batch {
     }
 
     const indices = new Uint32Array(
-      this.renderViews[0].renderData.geometry.attributes.INDEX!
+      this.renderViews[0].renderData.geometry.attributes!.INDEX!
     )
     const positions = new Float64Array(
-      this.renderViews[0].renderData.geometry.attributes.POSITION
+      this.renderViews[0].renderData.geometry.attributes!.POSITION
     )
-    const colors = this.renderViews[0].renderData.geometry.attributes.COLOR
-      ? new Float32Array(this.renderViews[0].renderData.geometry.attributes.COLOR)
+    const colors = this.renderViews[0].renderData.geometry.attributes!.COLOR
+      ? new Float32Array(this.renderViews[0].renderData.geometry.attributes!.COLOR)
       : undefined
 
     this.makeInstancedMeshGeometry(indices, positions, colors)

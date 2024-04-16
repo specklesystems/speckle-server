@@ -131,15 +131,26 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.viewer.getRenderer().speckleCamera = this
   }
 
-  setCameraView(objectIds: string[], transition: boolean, fit?: number): void
   setCameraView(
-    view: CanonicalView | SpeckleView | InlineView | PolarView,
-    transition: boolean,
+    objectIds: string[] | undefined,
+    transition: boolean | undefined,
     fit?: number
   ): void
-  setCameraView(bounds: Box3, transition: boolean, fit?: number): void
   setCameraView(
-    arg0: string[] | CanonicalView | SpeckleView | InlineView | PolarView | Box3,
+    view: CanonicalView | SpeckleView | InlineView | PolarView,
+    transition: boolean | undefined,
+    fit?: number
+  ): void
+  setCameraView(bounds: Box3, transition: boolean | undefined, fit?: number): void
+  setCameraView(
+    arg0:
+      | string[]
+      | CanonicalView
+      | SpeckleView
+      | InlineView
+      | PolarView
+      | Box3
+      | undefined,
     arg1 = true,
     arg2 = 1.2
   ): void {

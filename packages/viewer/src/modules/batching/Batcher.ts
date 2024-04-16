@@ -222,11 +222,11 @@ export default class Batcher {
       vSplit.push([])
       for (let k = 0; k < renderViews.length; k++) {
         vSplit[index].push(renderViews[k])
-        count += renderViews[k].renderData.geometry.attributes.POSITION.length / 3
+        count += renderViews[k].renderData.geometry.attributes!.POSITION.length / 3
         const nexCount =
           count +
           (renderViews[k + 1]
-            ? renderViews[k + 1].renderData.geometry.attributes.POSITION.length / 3
+            ? renderViews[k + 1].renderData.geometry.attributes!.POSITION.length / 3
             : 0)
         if (nexCount >= this.maxBatchVertices && renderViews[k + 1]) {
           vSplit.push([])

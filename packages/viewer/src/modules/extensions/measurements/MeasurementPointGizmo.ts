@@ -340,7 +340,7 @@ export class MeasurementPointGizmo extends Group {
           backgroundPixelHeight: 20
         }
         this.text.setTransform(position, quaternion, scale)
-        this.text.backgroundMesh.renderOrder = 3
+        if (this.text.backgroundMesh) this.text.backgroundMesh.renderOrder = 3
         this.text.textMesh.renderOrder = 4
       })
   }

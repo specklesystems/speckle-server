@@ -8,7 +8,7 @@ import {
   Matrix4,
   Vector3
 } from 'three'
-import { SpeckleObject } from '../../IViewer'
+import { type SpeckleObject } from '../../IViewer'
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
@@ -20,9 +20,12 @@ export enum GeometryAttributes {
 }
 
 export interface GeometryData {
-  attributes: Partial<Record<GeometryAttributes, number[]>>
-  bakeTransform: Matrix4
-  transform: Matrix4
+  attributes:
+    | (Record<GeometryAttributes.POSITION, number[]> &
+        Partial<Record<GeometryAttributes, number[]>>)
+    | null
+  bakeTransform: Matrix4 | null
+  transform: Matrix4 | null
   metaData?: SpeckleObject
   instanced?: boolean
 }
@@ -113,46 +116,49 @@ export class Geometry {
     } as GeometryData
 
     for (let i = 0; i < geometries.length; i++) {
-      if (geometries[i].bakeTransform)
+      if (geometries[i].bakeTransform !== null)
         Geometry.transformGeometryData(geometries[i], geometries[i].bakeTransform)
     }
 
-    if (sampleAttributes[GeometryAttributes.INDEX]) {
+    if (sampleAttributes![GeometryAttributes.INDEX]) {
       const indexAttributes = geometries.map(
-        (item) => item.attributes[GeometryAttributes.INDEX]
+        (item) => item.attributes![GeometryAttributes.INDEX] as number[]
       )
       const positionAttributes = geometries.map(
-        (item) => item.attributes[GeometryAttributes.POSITION]
+        (item) => item.attributes![GeometryAttributes.POSITION]
       )
-      mergedGeometry.attributes[GeometryAttributes.INDEX] =
+      mergedGeometry.attributes![GeometryAttributes.INDEX] =
         Geometry.mergeIndexAttribute(indexAttributes, positionAttributes)
     }
 
     for (const k in sampleAttributes) {
       if (k !== GeometryAttributes.INDEX) {
-        const attributes = geometries.map((item) => {
-          return item.attributes[k]
+        const attributes: number[][] = geometries.map((item) => {
+          return item.attributes![k as GeometryAttributes] as number[]
         })
-        mergedGeometry.attributes[k] = Geometry.mergeGeometryAttribute(
-          attributes,
-          k === GeometryAttributes.POSITION
-            ? new Float64Array(attributes.reduce((prev, cur) => prev + cur.length, 0))
-            : new Float32Array(attributes.reduce((prev, cur) => prev + cur.length, 0))
-        )
+        mergedGeometry.attributes![k as GeometryAttributes] =
+          Geometry.mergeGeometryAttribute(
+            attributes,
+            k === GeometryAttributes.POSITION
+              ? new Float64Array(attributes.reduce((prev, cur) => prev + cur.length, 0))
+              : new Float32Array(attributes.reduce((prev, cur) => prev + cur.length, 0))
+          ) as number[]
       }
     }
 
     geometries.forEach((geometry) => {
       for (const k in geometry.attributes) {
-        delete geometry.attributes[k]
+        delete geometry.attributes[k as GeometryAttributes]
       }
     })
 
     return mergedGeometry
   }
 
-  public static transformGeometryData(geometryData: GeometryData, m: Matrix4) {
+  public static transformGeometryData(geometryData: GeometryData, m: Matrix4 | null) {
+    if (!geometryData.attributes) return
     if (!geometryData.attributes.POSITION) return
+    if (!m) return
 
     const e = m.elements
 

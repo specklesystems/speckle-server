@@ -151,7 +151,7 @@ export class PointBatch extends PrimitiveBatch {
     let attributeCount = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       attributeCount +=
-        this.renderViews[k].renderData.geometry.attributes.POSITION.length
+        this.renderViews[k].renderData.geometry.attributes!.POSITION.length
     }
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(attributeCount).fill(1)
@@ -160,10 +160,10 @@ export class PointBatch extends PrimitiveBatch {
     let indexOffset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
-      position.set(geometry.attributes.POSITION, offset)
-      if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
+      position.set(geometry.attributes!.POSITION, offset)
+      if (geometry.attributes!.COLOR) color.set(geometry.attributes!.COLOR, offset)
       index.set(
-        new Int32Array(geometry.attributes.POSITION.length / 3).map(
+        new Int32Array(geometry.attributes!.POSITION.length / 3).map(
           (_value, index) => index + indexOffset
         ),
         indexOffset
@@ -171,11 +171,11 @@ export class PointBatch extends PrimitiveBatch {
       this.renderViews[k].setBatchData(
         this.id,
         offset / 3,
-        geometry.attributes.POSITION.length / 3
+        geometry.attributes!.POSITION.length / 3
       )
 
-      offset += geometry.attributes.POSITION.length
-      indexOffset += geometry.attributes.POSITION.length / 3
+      offset += geometry.attributes!.POSITION.length
+      indexOffset += geometry.attributes!.POSITION.length / 3
 
       this.renderViews[k].disposeGeometry()
     }

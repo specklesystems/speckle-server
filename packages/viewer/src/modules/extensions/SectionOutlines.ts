@@ -5,6 +5,7 @@ import {
   Group,
   InterleavedBufferAttribute,
   Line3,
+  Material,
   Plane,
   Vector2,
   Vector3
@@ -137,7 +138,7 @@ export class SectionOutlines extends Extension {
     const scratchBuffer = new Array<number>()
     for (let b = 0; b < batches.length; b++) {
       const plane = new Plane().copy(_plane)
-      batches[b].mesh.TAS.shapecast({
+      batches[b].mesh.TAS!.shapecast({
         intersectsTAS: (
           box: Box3
           // isLeaf: boolean,
@@ -159,7 +160,9 @@ export class SectionOutlines extends Extension {
           depth
           // check each triangle edge to see if it intersects with the plane. If so then
           // add it to the list of segments.
-          const material = batches[b].mesh.getBatchObjectMaterial(batchObject!)
+          const material = batches[b].mesh.getBatchObjectMaterial(
+            batchObject!
+          ) as Material
           if (
             material instanceof SpeckleGhostMaterial ||
             material.visible === false ||

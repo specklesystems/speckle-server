@@ -218,8 +218,8 @@ export default class LineBatch implements Batch {
     this.renderViews.forEach(
       (val: NodeRenderView) =>
         (attributeCount += val.needsSegmentConversion
-          ? (val.renderData.geometry.attributes.POSITION.length - 3) * 2
-          : val.renderData.geometry.attributes.POSITION.length)
+          ? (val.renderData.geometry.attributes!.POSITION.length - 3) * 2
+          : val.renderData.geometry.attributes!.POSITION.length)
     )
     const position = new Float64Array(attributeCount)
     let offset = 0
@@ -231,20 +231,20 @@ export default class LineBatch implements Batch {
        *  Some geometries have that inherent form, some don't
        */
       if (this.renderViews[k].needsSegmentConversion) {
-        const length = geometry.attributes.POSITION.length - 3
+        const length = geometry.attributes!.POSITION.length - 3
         points = new Array(2 * length)
 
         for (let i = 0; i < length; i += 3) {
-          points[2 * i] = geometry.attributes.POSITION[i]
-          points[2 * i + 1] = geometry.attributes.POSITION[i + 1]
-          points[2 * i + 2] = geometry.attributes.POSITION[i + 2]
+          points[2 * i] = geometry.attributes!.POSITION[i]
+          points[2 * i + 1] = geometry.attributes!.POSITION[i + 1]
+          points[2 * i + 2] = geometry.attributes!.POSITION[i + 2]
 
-          points[2 * i + 3] = geometry.attributes.POSITION[i + 3]
-          points[2 * i + 4] = geometry.attributes.POSITION[i + 4]
-          points[2 * i + 5] = geometry.attributes.POSITION[i + 5]
+          points[2 * i + 3] = geometry.attributes!.POSITION[i + 3]
+          points[2 * i + 4] = geometry.attributes!.POSITION[i + 4]
+          points[2 * i + 5] = geometry.attributes!.POSITION[i + 5]
         }
       } else {
-        points = geometry.attributes.POSITION as number[]
+        points = geometry.attributes!.POSITION as number[]
       }
 
       position.set(points, offset)
