@@ -25,7 +25,14 @@ import { FilteringExtension } from '@speckle/viewer'
 import { MeasurementsExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
-import { Viewer } from '@speckle/viewer'
+import { Viewer, AssetType, Assets } from '@speckle/viewer'
+import hdri0 from '../assets/sample-hdri.png'
+import hdri1 from '../assets/1.png'
+import hdri2 from '../assets/2.png'
+import hdri3 from '../assets/3.png'
+import hdri4 from '../assets/4.png'
+import hdri5 from '../assets/5.png'
+import hdri6 from '../assets/6.png'
 
 import { Euler, Vector3 } from 'three'
 
@@ -839,6 +846,33 @@ export default class Sandbox {
       title: 'Indirect',
       expanded: true
     })
+    const hdriParams = {
+      id: 1
+    }
+    indirectLightsFolder
+      .addInput(hdriParams, 'id', {
+        label: 'HDRI',
+        options: {
+          0: hdri0,
+          1: hdri1,
+          2: hdri2,
+          3: hdri3,
+          4: hdri4,
+          5: hdri5,
+          6: hdri6
+        }
+      })
+      .on('change', async (value) => {
+        this.viewer.getRenderer().indirectIBL = await Assets.getEnvironment(
+          {
+            id: hdriParams.id,
+            src: value.value,
+            type: AssetType.TEXTURE_EXR
+          },
+          this.viewer.getRenderer().renderer
+        )
+        this.viewer.requestRender()
+      })
 
     indirectLightsFolder
       .addInput(this.lightParams, 'indirectLightIntensity', {

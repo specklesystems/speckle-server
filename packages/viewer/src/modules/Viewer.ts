@@ -41,7 +41,7 @@ export class Viewer extends EventEmitter implements IViewer {
   /** Viewer components */
   protected tree: WorldTree = new WorldTree()
   protected world: World = new World()
-  public static Assets: Assets
+  public static readonly theAssets: Assets = new Assets()
   public speckleRenderer: SpeckleRenderer
   protected propertyManager: PropertyManager
 
@@ -143,7 +143,6 @@ export class Viewer extends EventEmitter implements IViewer {
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
 
-    new Assets()
     this.propertyManager = new PropertyManager()
 
     this.frame()

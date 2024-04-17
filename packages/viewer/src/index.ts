@@ -1,5 +1,6 @@
 import { Viewer } from './modules/Viewer'
 import {
+  AssetType,
   DefaultLightConfiguration,
   DefaultViewerParams,
   IViewer,
@@ -66,6 +67,7 @@ import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial
 import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial'
 import { SpeckleText } from './modules/objects/SpeckleText'
 import { NodeRenderView } from './modules/tree/NodeRenderView'
+import { Assets } from './modules/Assets'
 
 export {
   Viewer,
@@ -105,7 +107,9 @@ export {
   SpeckleStandardMaterial,
   SpeckleTextMaterial,
   SpeckleText,
-  NodeRenderView
+  NodeRenderView,
+  Assets,
+  AssetType
 }
 
 export type {
