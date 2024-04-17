@@ -10,11 +10,6 @@ const isValidTempCookieValue = (cookie: unknown): cookie is TempCookieValue => {
 
 export default defineEventHandler((event) => {
   const cookies = parseCookies(event)
-  const {
-    public: { baseUrl }
-  } = useRuntimeConfig()
-  const domain = new URL(baseUrl).hostname
-
   for (const [key, val] of Object.entries(cookies)) {
     if (key.startsWith('tmp-')) {
       // Try reading in cookie settings
@@ -45,8 +40,7 @@ export default defineEventHandler((event) => {
       // Create new cookie with the correct settings
       setCookie(event, cookieName, cookieValue, {
         maxAge: tempCookieVal.maxAge,
-        expires: tempCookieVal.expires ? new Date(tempCookieVal.expires) : undefined,
-        domain
+        expires: tempCookieVal.expires ? new Date(tempCookieVal.expires) : undefined
       })
       deleteCookie(event, key)
     }
