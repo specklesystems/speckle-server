@@ -52,30 +52,26 @@ export const useSynchronizedCookie = <CookieValue = string>(
     if (process.client && isBraveOrSafari()) {
       const tmpCookie = useCookie(`tmp-${name}`, finalOpts as any)
 
-      watch(
-        cookie,
-        (newVal) => {
-          if (newVal) {
-            tmpCookie.value = JSON.stringify({
-              expires: finalOpts.expires?.toISOString(),
-              maxAge: finalOpts.maxAge
-            })
-          } else {
-            tmpCookie.value = undefined
-          }
-
-          // Fetch w/ abort of previous call, if any
-          const controller = abortControllerManager.getAndAbortOld()
-          void fetch('/api/cookie-fix', {
-            signal: controller?.signal
-          }).catch((e) => {
-            if (get(e, 'name') !== 'AbortError') {
-              throw e
-            }
+      watch(cookie, (newVal) => {
+        if (newVal) {
+          tmpCookie.value = JSON.stringify({
+            expires: finalOpts.expires?.toISOString(),
+            maxAge: finalOpts.maxAge
           })
-        },
-        { immediate: true }
-      )
+        } else {
+          tmpCookie.value = undefined
+        }
+
+        // Fetch w/ abort of previous call, if any
+        const controller = abortControllerManager.getAndAbortOld()
+        void fetch('/web-api/cookie-fix', {
+          signal: controller?.signal
+        }).catch((e) => {
+          if (get(e, 'name') !== 'AbortError') {
+            throw e
+          }
+        })
+      })
     }
 
     // there's a bug in nuxt where a default value doesn't get set if useCookie is only invoked in CSR
