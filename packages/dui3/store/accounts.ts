@@ -61,6 +61,8 @@ export const useAccountStore = defineStore('accountStore', () => {
   }
 
   const refreshAccounts = async () => {
+    console.log('account refresh called')
+
     isLoading.value = true
     const accs = await $accountBinding.getAccounts()
     const newAccs: DUIAccount[] = []
@@ -97,7 +99,7 @@ export const useAccountStore = defineStore('accountStore', () => {
     void testAccounts()
   })
 
-  void refreshAccounts()
+  // void refreshAccounts()
 
   app.vueApp.provide(ApolloClients, apolloClients)
   return {
