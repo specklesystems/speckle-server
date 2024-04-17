@@ -11,7 +11,7 @@ import { TimeoutError, timeoutAt } from '@speckle/shared'
 import type { MaybeAsync, Nullable } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
-import { CameraController } from '@speckle/viewer'
+import { CameraController, type ViewerEventPayload } from '@speckle/viewer'
 import type { TreeNode } from '@speckle/viewer'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 
@@ -78,9 +78,9 @@ function getFirstVisibleSelectionHit(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useViewerEventListener<A = any>(
-  name: ViewerEvent | ViewerEvent[],
-  listener: (...args: A[]) => MaybeAsync<void>,
+export function useViewerEventListener<K extends ViewerEvent>(
+  name: K | K[],
+  listener: (args: ViewerEventPayload[K]) => MaybeAsync<void>,
   options?: Partial<{
     state: InitialStateWithRequestAndResponse
   }>
@@ -135,25 +135,31 @@ export function useViewerCameraTracker(
     }
 
     // Only invoke callback if position/target changed in a meaningful way
-    const controls = instance.getExtension(CameraController).controls
-    const viewerPos = new Vector3()
-    const viewerTarget = new Vector3()
+    const extension: CameraController | null = instance.getExtension(CameraController)
+    if (extension) {
+      const controls = extension.controls
+      const viewerPos = new Vector3()
+      const viewerTarget = new Vector3()
 
-    controls.getPosition(viewerPos)
-    controls.getTarget(viewerTarget)
+      controls.getPosition(viewerPos)
+      controls.getTarget(viewerTarget)
 
-    let meaningfulChangeFound = false
-    if (!lastPos.value || !areVectorsLooselyEqual(lastPos.value, viewerPos)) {
-      meaningfulChangeFound = true
-    }
-    if (!lastTarget.value || !areVectorsLooselyEqual(lastTarget.value, viewerTarget)) {
-      meaningfulChangeFound = true
-    }
+      let meaningfulChangeFound = false
+      if (!lastPos.value || !areVectorsLooselyEqual(lastPos.value, viewerPos)) {
+        meaningfulChangeFound = true
+      }
+      if (
+        !lastTarget.value ||
+        !areVectorsLooselyEqual(lastTarget.value, viewerTarget)
+      ) {
+        meaningfulChangeFound = true
+      }
 
-    if (meaningfulChangeFound) {
-      lastPos.value = viewerPos.clone()
-      lastTarget.value = viewerTarget.clone()
-      callback()
+      if (meaningfulChangeFound) {
+        lastPos.value = viewerPos.clone()
+        lastTarget.value = viewerTarget.clone()
+        callback()
+      }
     }
   }
 
@@ -165,14 +171,13 @@ export function useViewerCameraTracker(
 
   onMounted(() => {
     const extension = instance.getExtension(CameraController)
-
-    extension.controls.addEventListener('update', finalCallback)
+    extension?.controls.addEventListener('update', finalCallback)
   })
 
   onBeforeUnmount(() => {
     instance
       .getExtension(CameraController)
-      .controls.removeEventListener('update', finalCallback)
+      ?.controls.removeEventListener('update', finalCallback)
   })
 }
 
@@ -184,12 +189,12 @@ export function useViewerCameraControlStartTracker(callback: () => void) {
   const removeListener = () =>
     instance
       .getExtension(CameraController)
-      .controls.removeEventListener('controlstart', callback)
+      ?.controls.removeEventListener('controlstart', callback)
 
   onMounted(() => {
     instance
       .getExtension(CameraController)
-      .controls.addEventListener('controlstart', callback)
+      ?.controls.addEventListener('controlstart', callback)
   })
 
   onBeforeUnmount(() => {
@@ -213,13 +218,13 @@ export function useViewerCameraRestTracker(
   const removeListener = () => {
     const extension = instance.getExtension(CameraController)
 
-    extension.controls.removeEventListener('rest', finalCallback)
+    extension?.controls.removeEventListener('rest', finalCallback)
   }
 
   onMounted(() => {
     instance
       .getExtension(CameraController)
-      .controls.addEventListener('rest', finalCallback)
+      ?.controls.addEventListener('rest', finalCallback)
   })
 
   onBeforeUnmount(() => {
@@ -237,10 +242,10 @@ export function useViewerCameraControlEndTracker(callback: () => void) {
   const removeListener = () =>
     instance
       .getExtension(CameraController)
-      .controls.removeEventListener('rest', callback)
+      ?.controls.removeEventListener('rest', callback)
 
   onMounted(() => {
-    instance.getExtension(CameraController).controls.addEventListener('rest', callback)
+    instance.getExtension(CameraController)?.controls.addEventListener('rest', callback)
   })
 
   onBeforeUnmount(() => {

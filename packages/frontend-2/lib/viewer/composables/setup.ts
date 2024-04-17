@@ -358,14 +358,14 @@ function setupViewerMetadata(params: {
     viewer.on(ViewerEvent.Busy, refreshWorldTreeAndFilters)
     viewer
       .getExtension(FilteringExtension)
-      .on(ViewerEvent.FilteringStateSet, updateFilteringState)
+      ?.on(ViewerEvent.FilteringStateSet, updateFilteringState)
   })
 
   onBeforeUnmount(() => {
     viewer.removeListener(ViewerEvent.Busy, refreshWorldTreeAndFilters)
     viewer
       .getExtension(FilteringExtension)
-      .removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
+      ?.removeListener(ViewerEvent.FilteringStateSet, updateFilteringState)
   })
 
   return {

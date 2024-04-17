@@ -305,21 +305,23 @@ function useViewerCameraIntegration() {
   const hasInitialLoadFired = ref(false)
 
   const loadCameraDataFromViewer = () => {
-    const controls = instance.getExtension(CameraController).controls
-    const viewerPos = new Vector3()
-    const viewerTarget = new Vector3()
-
-    controls.getPosition(viewerPos)
-    controls.getTarget(viewerTarget)
-
+    const controls = instance.getExtension(CameraController)?.controls
     let cameraManuallyChanged = false
-    if (!areVectorsLooselyEqual(position.value, viewerPos)) {
-      if (hasInitialLoadFired.value) position.value = viewerPos.clone()
-      cameraManuallyChanged = true
-    }
-    if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
-      if (hasInitialLoadFired.value) target.value = viewerTarget.clone()
-      cameraManuallyChanged = true
+    if (controls) {
+      const viewerPos = new Vector3()
+      const viewerTarget = new Vector3()
+
+      controls.getPosition(viewerPos)
+      controls.getTarget(viewerTarget)
+
+      if (!areVectorsLooselyEqual(position.value, viewerPos)) {
+        if (hasInitialLoadFired.value) position.value = viewerPos.clone()
+        cameraManuallyChanged = true
+      }
+      if (!areVectorsLooselyEqual(target.value, viewerTarget)) {
+        if (hasInitialLoadFired.value) target.value = viewerTarget.clone()
+        cameraManuallyChanged = true
+      }
     }
 
     return cameraManuallyChanged
@@ -773,10 +775,12 @@ function useDisableZoomOnEmbed() {
     () => embedOptions.noScroll.value,
     (newNoScrollValue) => {
       const cameraController = viewer.instance.getExtension(CameraController)
-      if (newNoScrollValue) {
-        cameraController.controls.mouseButtons.wheel = 0
-      } else {
-        cameraController.controls.mouseButtons.wheel = 4
+      if (cameraController) {
+        if (newNoScrollValue) {
+          cameraController.controls.mouseButtons.wheel = 0
+        } else {
+          cameraController.controls.mouseButtons.wheel = 4
+        }
       }
     },
     { immediate: true }

@@ -9,7 +9,9 @@ import {
   type SpeckleView,
   UpdateFlags,
   ViewerEvent,
-  type ViewerParams
+  type ViewerParams,
+  LightConfiguration,
+  ViewerEventPayload
 } from './IViewer'
 import type {
   PropertyInfo,
@@ -39,8 +41,8 @@ import { SelectionExtension } from './modules/extensions/SelectionExtension'
 import { CameraController } from './modules/extensions/CameraController'
 import { type InlineView } from './modules/extensions/CameraController'
 import { type CanonicalView } from './modules/extensions/CameraController'
-import { CameraEvent } from './modules/objects/SpeckleCamera'
-import { SectionTool } from './modules/extensions/SectionTool'
+import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera'
+import { SectionTool, SectionToolEventPayload } from './modules/extensions/SectionTool'
 import { SectionOutlines } from './modules/extensions/SectionOutlines'
 import {
   FilteringExtension,
@@ -58,7 +60,7 @@ import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader'
 import { ObjLoader } from './modules/loaders/OBJ/ObjLoader'
 import { LegacyViewer } from './modules/LegacyViewer'
 import { SpeckleType } from './modules/loaders/GeometryConverter'
-import Input, { InputEvent } from './modules/input/Input'
+import Input, { InputEvent, InputEventPayload } from './modules/input/Input'
 import { GeometryType } from './modules/batching/Batch'
 import { MeshBatch } from './modules/batching/MeshBatch'
 import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial'
@@ -117,6 +119,7 @@ export type {
   PropertyInfo,
   StringPropertyInfo,
   NumericPropertyInfo,
+  LightConfiguration,
   SunLightConfiguration,
   SpeckleObject,
   SpeckleView,
@@ -133,5 +136,9 @@ export type {
   DiffResult,
   MeasurementOptions,
   FilteringState,
-  ExtendedIntersection
+  ExtendedIntersection,
+  ViewerEventPayload,
+  InputEventPayload,
+  SectionToolEventPayload,
+  CameraEventPayload
 }
