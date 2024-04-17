@@ -13,7 +13,7 @@ export enum GeometryType {
 export interface DrawGroup {
   start: number
   count: number
-  materialIndex?: number
+  materialIndex: number
 }
 
 /** TO DO: Unify point and mesh batch implementations */

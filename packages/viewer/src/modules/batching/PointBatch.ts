@@ -85,8 +85,8 @@ export class PointBatch extends PrimitiveBatch {
     } else {
       const transparentOrHiddenGroup = this.groups.find(
         (value) =>
-          this.materials[value.materialIndex!].transparent === true ||
-          this.materials[value.materialIndex!].visible === false
+          this.materials[value.materialIndex].transparent === true ||
+          this.materials[value.materialIndex].visible === false
       )
       if (transparentOrHiddenGroup) {
         for (
@@ -94,7 +94,7 @@ export class PointBatch extends PrimitiveBatch {
           k < this.groups.length;
           k++
         ) {
-          const material = this.materials[this.groups[k].materialIndex!]
+          const material = this.materials[this.groups[k].materialIndex]
           if (material.transparent !== true && material.visible !== false) {
             this.needsShuffle = true
             break
@@ -109,19 +109,31 @@ export class PointBatch extends PrimitiveBatch {
   }
 
   protected getCurrentIndexBuffer(): BufferAttribute {
-    return this.primitive.geometry.index!
+    /** Catering to typescript
+     * There is no unniverse where the geometry is non-indexed. We're **explicitly** setting the index at creation time
+     */
+    if (!this.primitive.geometry.index) {
+      throw new Error(`Invalid index buffer for batch ${this.id}`)
+    }
+    return this.primitive.geometry.index
   }
 
   protected getNextIndexBuffer(): BufferAttribute {
+    /** Catering to typescript
+     * There is no unniverse where the geometry is non-indexed. We're **explicitly** setting the index at creation time
+     */
+    if (!this.primitive.geometry.index) {
+      throw new Error(`Invalid index buffer for batch ${this.id}`)
+    }
     return new BufferAttribute(
-      (this.primitive.geometry.index!.array as Uint16Array | Uint32Array).slice(),
-      this.primitive.geometry.index!.itemSize
+      (this.primitive.geometry.index.array as Uint16Array | Uint32Array).slice(),
+      this.primitive.geometry.index.itemSize
     )
   }
 
   protected shuffleMaterialOrder(a: DrawGroup, b: DrawGroup): number {
-    const materialA: Material = this.materials[a.materialIndex!]
-    const materialB: Material = this.materials[b.materialIndex!]
+    const materialA: Material = this.materials[a.materialIndex]
+    const materialB: Material = this.materials[b.materialIndex]
     const visibleOrder = +materialB.visible - +materialA.visible
     const transparentOrder = +materialA.transparent - +materialB.transparent
     if (visibleOrder !== 0) return visibleOrder
@@ -150,8 +162,14 @@ export class PointBatch extends PrimitiveBatch {
   public buildBatch(): void {
     let attributeCount = 0
     for (let k = 0; k < this.renderViews.length; k++) {
-      attributeCount +=
-        this.renderViews[k].renderData.geometry.attributes!.POSITION.length
+      const ervee = this.renderViews[k]
+      /** Catering to typescript
+       *  There is no unniverse where indices or positions are undefined at this point
+       */
+      if (!ervee.renderData.geometry.attributes) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
+      }
+      attributeCount += ervee.renderData.geometry.attributes.POSITION.length
     }
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(attributeCount).fill(1)
@@ -160,10 +178,13 @@ export class PointBatch extends PrimitiveBatch {
     let indexOffset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
-      position.set(geometry.attributes!.POSITION, offset)
-      if (geometry.attributes!.COLOR) color.set(geometry.attributes!.COLOR, offset)
+      if (!geometry.attributes) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
+      }
+      position.set(geometry.attributes.POSITION, offset)
+      if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
       index.set(
-        new Int32Array(geometry.attributes!.POSITION.length / 3).map(
+        new Int32Array(geometry.attributes.POSITION.length / 3).map(
           (_value, index) => index + indexOffset
         ),
         indexOffset
@@ -171,11 +192,11 @@ export class PointBatch extends PrimitiveBatch {
       this.renderViews[k].setBatchData(
         this.id,
         offset / 3,
-        geometry.attributes!.POSITION.length / 3
+        geometry.attributes.POSITION.length / 3
       )
 
-      offset += geometry.attributes!.POSITION.length
-      indexOffset += geometry.attributes!.POSITION.length / 3
+      offset += geometry.attributes.POSITION.length
+      indexOffset += geometry.attributes.POSITION.length / 3
 
       this.renderViews[k].disposeGeometry()
     }
@@ -247,7 +268,7 @@ export class PointBatch extends PrimitiveBatch {
           Logger.warn(`Malformed material index!`)
           return null
         }
-        return this.materials[group.materialIndex!]
+        return this.materials[group.materialIndex]
       }
     }
     return null

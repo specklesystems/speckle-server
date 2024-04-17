@@ -149,9 +149,17 @@ export class Assets {
     canvas.height = texture.image.height
 
     const context = canvas.getContext('2d')
-    context!.drawImage(texture.image, 0, 0)
+    /** As you can see here https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext#return_value
+     *  The only valid cases where `getContext` returns null are:
+     *  - "contextType doesn't match a possible drawing context" Definetely not the case as we're providing '2d'!
+     *  - "differs from the first contextType requested". It can't since **we're only requesting a context once**!
+     *  - If it returns null outside of these two casese, you have bigger problems than us throwing an exception here
+     */
+    if (!context) throw new Error('Fatal! 2d context could not be retrieved.')
 
-    const data = context!.getImageData(0, 0, canvas.width, canvas.height)
+    context.drawImage(texture.image, 0, 0)
+
+    const data = context.getImageData(0, 0, canvas.width, canvas.height)
     return Promise.resolve(data)
   }
 

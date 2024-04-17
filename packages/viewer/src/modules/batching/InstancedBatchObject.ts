@@ -9,7 +9,8 @@ export class InstancedBatchObject extends BatchObject {
 
   public constructor(renderView: NodeRenderView, batchIndex: number) {
     super(renderView, batchIndex)
-    this.instanceTransform.copy(renderView.renderData.geometry.transform!)
+    if (renderView.renderData.geometry.transform)
+      this.instanceTransform.copy(renderView.renderData.geometry.transform)
     this.transform.copy(this.instanceTransform)
     this.transformInv.copy(new Matrix4().copy(this.instanceTransform).invert())
     this.transformDirty = false

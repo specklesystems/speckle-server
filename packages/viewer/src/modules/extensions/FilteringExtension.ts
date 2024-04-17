@@ -170,7 +170,7 @@ export class FilteringExtension extends Extension {
       const rvMap: Record<string, NodeRenderView> = {}
       this.WTI.walk((node: TreeNode) => {
         if (!node.model.atomic || this.WTI.isRoot(node)) return true
-        const rvNodes = this.WTI.getRenderTree()!.getRenderViewNodesForNode(node)
+        const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node)
         if (!this.VisibilityState.ids[node.model.raw.id]) {
           rvNodes.forEach((rvNode: TreeNode) => {
             rvMap[rvNode.model.id] = rvNode.model.renderView
@@ -191,7 +191,7 @@ export class FilteringExtension extends Extension {
   private visibilityWalk(node: TreeNode): boolean {
     if (this.VisibilityState.ids[node.model.id]) {
       this.VisibilityState.rvs.push(
-        ...this.WTI.getRenderTree()!.getRenderViewsForNode(node)
+        ...this.WTI.getRenderTree().getRenderViewsForNode(node)
       )
     }
     return true
@@ -259,7 +259,7 @@ export class FilteringExtension extends Extension {
       if (!node.model.atomic || this.WTI.isRoot(node) || this.WTI.isSubtreeRoot(node))
         return true
 
-      const rvs = this.WTI.getRenderTree()!.getRenderViewsForNode(node)
+      const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node)
       const idx = matchingIds[node.model.raw.id]
       if (!idx) {
         nonMatchingRvs.push(...rvs)
@@ -315,9 +315,9 @@ export class FilteringExtension extends Extension {
       }
 
       const vg = valueGroupColors.find((v: ValueGroupColorItemStringProps) => {
-        return v.idMap![node.model.raw.id]
+        return v.idMap[node.model.raw.id]
       })
-      const rvNodes = this.WTI.getRenderTree()!.getRenderViewNodesForNode(node)
+      const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node)
       if (!vg) {
         rvNodes.forEach(
           (rvNode) =>
@@ -330,7 +330,7 @@ export class FilteringExtension extends Extension {
       const rvs: Array<NodeRenderView> = []
 
       rvNodes.forEach((value: TreeNode) => {
-        if (this.WTI.getRenderTree()!.getAtomicParent(value) === node) {
+        if (this.WTI.getRenderTree().getAtomicParent(value) === node) {
           rvs.push(value.model.renderView)
           /** In some cases, the same rv gets put in both non-matching and matching lists because of its hierarchy */
           delete nonMatchingMap[value.model.renderView.renderData.id]
@@ -344,6 +344,9 @@ export class FilteringExtension extends Extension {
     const nonMatchingRvs: NodeRenderView[] = Object.values(nonMatchingMap)
     /** Deleting this since we're not going to use it further */
     for (const vg of valueGroupColors) {
+      /** Adamant on this one */
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
       delete vg.idMap
     }
     this.ColorStringFilterState.colorGroups = valueGroupColors
@@ -385,7 +388,7 @@ export class FilteringExtension extends Extension {
         if (nodes) {
           group.nodes.push(...nodes)
           nodes.forEach((node: TreeNode) => {
-            const rvsNodes = this.WTI.getRenderTree()!
+            const rvsNodes = this.WTI.getRenderTree()
               .getRenderViewNodesForNode(node)
               .map((rvNode) => rvNode.model.renderView)
             if (rvsNodes) group.rvs.push(...rvsNodes)
@@ -439,8 +442,9 @@ export class FilteringExtension extends Extension {
           color: group.color.getHexString(),
           ids: group.ids
         })
-        this.CurrentFilteringState.activePropFilterKey =
-          this.ColorStringFilterState.currentProp!.key
+        if (this.ColorStringFilterState.currentProp)
+          this.CurrentFilteringState.activePropFilterKey =
+            this.ColorStringFilterState.currentProp.key
       }
     }
     // Number based colors
@@ -548,7 +552,9 @@ export class FilteringExtension extends Extension {
     if (this.idCache[key] && this.idCache[key].length) return this.idCache[key]
 
     for (let k = 0; k < objectIds.length; k++) {
-      const node = this.WTI.findId(objectIds[k])![0]
+      const nodes = this.WTI.findId(objectIds[k])
+      if (!nodes) continue
+      const node = nodes[0]
       const subtree = node.all((node) => {
         return node.model.raw !== undefined
       })
@@ -595,10 +601,10 @@ class VisibilityState {
 }
 
 class ColorStringFilterState {
-  public currentProp!: StringPropertyInfo | null
-  public colorGroups!: ValueGroupColorItemStringProps[]
-  public nonMatchingRvs!: NodeRenderView[]
-  public rampTexture!: Texture | undefined
+  public currentProp: StringPropertyInfo | null
+  public colorGroups: ValueGroupColorItemStringProps[]
+  public nonMatchingRvs: NodeRenderView[]
+  public rampTexture: Texture | undefined
   public ghost = true
   public reset() {
     this.currentProp = null
@@ -613,7 +619,7 @@ type ValueGroupColorItemStringProps = {
   ids: string[]
   color: Color
   rvs: NodeRenderView[]
-  idMap?: Record<string, number>
+  idMap: Record<string, number>
 }
 
 class ColorNumericFilterState {

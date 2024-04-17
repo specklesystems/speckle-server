@@ -1,6 +1,7 @@
 import Logger from 'js-logger'
 import {
   BackSide,
+  Box3,
   Box3Helper,
   BufferAttribute,
   BufferGeometry,
@@ -61,8 +62,8 @@ export enum TransformStorage {
 export default class SpeckleMesh extends Mesh {
   public static MeshBatchNumber = 0
 
-  private tas: TopLevelAccelerationStructure | null = null
-  private batchMaterial: Material | null = null
+  private tas: TopLevelAccelerationStructure
+  private batchMaterial: Material
   private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Material | Material[]> = []
   private materialCacheLUT: { [id: string]: number } = {}
@@ -71,13 +72,13 @@ export default class SpeckleMesh extends Mesh {
   private transformsBuffer: Float32Array | undefined = undefined
   private transformStorage!: TransformStorage
 
-  public transformsTextureUniform: DataTexture | null = null
+  public transformsTextureUniform: DataTexture
   public transformsArrayUniforms: Matrix4[] | null = null
 
   private debugBatchBox = false
   private boxHelper!: Box3Helper
 
-  public get TAS() {
+  public get TAS(): TopLevelAccelerationStructure {
     return this.tas
   }
 
@@ -205,7 +206,7 @@ export default class SpeckleMesh extends Mesh {
 
         batchObject.transformDirty = false
       }
-      this.transformsTextureUniform!.needsUpdate = needsUpdate
+      this.transformsTextureUniform.needsUpdate = needsUpdate
     } else {
       if (!this.transformsArrayUniforms) return
       for (let k = 0; k < this._batchObjects.length; k++) {
@@ -235,12 +236,17 @@ export default class SpeckleMesh extends Mesh {
     if (this.tas && needsUpdate) {
       this.tas.refit()
       this.tas.getBoundingBox(this.tas.bounds)
-      this.geometry.boundingBox!.copy(this.tas.bounds)
-      this.geometry.boundingBox!.getBoundingSphere(this.geometry.boundingSphere!)
+      /** Caterint to typescript
+       *  There is no unniverse where the geomery bounding box/sphere is null at this point
+       */
+      if (!this.geometry.boundingBox) this.geometry.boundingBox = new Box3()
+      this.geometry.boundingBox.copy(this.tas.bounds)
+      if (!this.geometry.boundingSphere) this.geometry.boundingSphere = new Sphere()
+      this.geometry.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
       if (!this.boxHelper && this.debugBatchBox) {
         this.boxHelper = new Box3Helper(this.tas.bounds, new Color(0xff0000))
         this.boxHelper.layers.set(ObjectLayers.PROPS)
-        this.parent!.add(this.boxHelper)
+        if (this.parent) this.parent.add(this.boxHelper)
       }
     }
   }
@@ -305,7 +311,7 @@ export default class SpeckleMesh extends Mesh {
 
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
-          this.tas.raycastFirst(ray, this.batchMaterial!),
+          this.tas.raycastFirst(ray, this.batchMaterial),
           this,
           raycaster
         )
@@ -313,7 +319,7 @@ export default class SpeckleMesh extends Mesh {
           intersects.push(hit)
         }
       } else {
-        const hits = this.tas.raycast(ray, this.batchMaterial!)
+        const hits = this.tas.raycast(ray, this.batchMaterial)
         for (let i = 0, l = hits.length; i < l; i++) {
           const hit = this.convertRaycastIntersect(hits[i], this, raycaster)
           if (hit) {
@@ -332,7 +338,7 @@ export default class SpeckleMesh extends Mesh {
 
       if (geometry.boundingSphere === null) geometry.computeBoundingSphere()
 
-      _sphere.copy(geometry.boundingSphere!)
+      _sphere.copy(geometry.boundingSphere || new Sphere())
       _sphere.applyMatrix4(matrixWorld)
 
       if (raycaster.ray.intersectsSphere(_sphere) === false) return
@@ -368,7 +374,11 @@ export default class SpeckleMesh extends Mesh {
         if (Array.isArray(material)) {
           for (let i = 0, il = groups.length; i < il; i++) {
             const group = groups[i]
-            const groupMaterial = material[group.materialIndex!]
+            if (!group.materialIndex) {
+              Logger.error(`Group with no material, skipping!`)
+              continue
+            }
+            const groupMaterial = material[group.materialIndex]
 
             const start = Math.max(group.start, drawRange.start)
             const end = Math.min(

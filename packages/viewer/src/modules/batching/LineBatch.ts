@@ -65,9 +65,11 @@ export default class LineBatch implements Batch {
     return 0
   }
   public get lineCount(): number {
-    return (
-      (this.geometry.index!.count / 3) * (this.geometry as never)['_maxInstanceCount']
-    )
+    /** Catering to typescript
+     * There is no unniverse where the geometry is non-indexed. LineSegments2 are **explicitly** indexed
+     */
+    const indexCount = this.geometry.index ? this.geometry.index.count : 0
+    return (indexCount / 3) * (this.geometry as never)['_maxInstanceCount']
   }
 
   public get renderObject(): Object3D {
@@ -214,36 +216,41 @@ export default class LineBatch implements Batch {
 
   public buildBatch() {
     let attributeCount = 0
-    this.renderViews.forEach(
-      (val: NodeRenderView) =>
-        (attributeCount += val.needsSegmentConversion
-          ? (val.renderData.geometry.attributes!.POSITION.length - 3) * 2
-          : val.renderData.geometry.attributes!.POSITION.length)
-    )
+    this.renderViews.forEach((val: NodeRenderView) => {
+      if (!val.renderData.geometry.attributes) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry`)
+      }
+      attributeCount += val.needsSegmentConversion
+        ? (val.renderData.geometry.attributes.POSITION.length - 3) * 2
+        : val.renderData.geometry.attributes.POSITION.length
+    })
     const position = new Float64Array(attributeCount)
     let offset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
+      if (!geometry.attributes) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry`)
+      }
       let points: Array<number>
       /** We need to make sure the line geometry has a layout of :
        *  start(x,y,z), end(x,y,z), start(x,y,z), end(x,y,z)... etc
        *  Some geometries have that inherent form, some don't
        */
       if (this.renderViews[k].needsSegmentConversion) {
-        const length = geometry.attributes!.POSITION.length - 3
+        const length = geometry.attributes.POSITION.length - 3
         points = new Array(2 * length)
 
         for (let i = 0; i < length; i += 3) {
-          points[2 * i] = geometry.attributes!.POSITION[i]
-          points[2 * i + 1] = geometry.attributes!.POSITION[i + 1]
-          points[2 * i + 2] = geometry.attributes!.POSITION[i + 2]
+          points[2 * i] = geometry.attributes.POSITION[i]
+          points[2 * i + 1] = geometry.attributes.POSITION[i + 1]
+          points[2 * i + 2] = geometry.attributes.POSITION[i + 2]
 
-          points[2 * i + 3] = geometry.attributes!.POSITION[i + 3]
-          points[2 * i + 4] = geometry.attributes!.POSITION[i + 4]
-          points[2 * i + 5] = geometry.attributes!.POSITION[i + 5]
+          points[2 * i + 3] = geometry.attributes.POSITION[i + 3]
+          points[2 * i + 4] = geometry.attributes.POSITION[i + 4]
+          points[2 * i + 5] = geometry.attributes.POSITION[i + 5]
         }
       } else {
-        points = geometry.attributes!.POSITION as number[]
+        points = geometry.attributes.POSITION as number[]
       }
 
       position.set(points, offset)

@@ -1,4 +1,12 @@
-import { Box3, type Intersection, Material, Object3D, Raycaster, Vector3 } from 'three'
+import {
+  Box3,
+  type Intersection,
+  Material,
+  Object3D,
+  Raycaster,
+  Vector3,
+  RaycasterParameters
+} from 'three'
 import { ExtendedTriangle, ShapecastIntersection } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import { ObjectLayers } from '../../IViewer'
@@ -48,8 +56,13 @@ export interface ExtendedIntersection extends Intersection {
   material?: Material
 }
 
+export interface ExtendedRaycasterParameters extends RaycasterParameters {
+  Line2: { threshold: number }
+}
+
 export class SpeckleRaycaster extends Raycaster {
   public onObjectIntersectionTest: ((object: Object3D) => void) | null = null
+  public params: ExtendedRaycasterParameters
 
   constructor(origin?: Vector3, direction?: Vector3, near = 0, far = Infinity) {
     super(origin, direction, near, far)
@@ -61,6 +74,7 @@ export class SpeckleRaycaster extends Raycaster {
     this.layers.enable(ObjectLayers.STREAM_CONTENT_POINT_CLOUD)
     // OFF by default
     this.layers.enable(ObjectLayers.STREAM_CONTENT_POINT)
+    this.params = { Line2: { threshold: 0 } }
   }
 
   public intersectObjects(objects: Array<Object3D>, recursive = true, intersects = []) {

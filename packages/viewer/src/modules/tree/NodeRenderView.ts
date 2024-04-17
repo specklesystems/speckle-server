@@ -28,7 +28,7 @@ export class NodeRenderView {
   private _geometryType: GeometryType
   private _guid: string | null = null
 
-  private _aabb: Box3 | null = null
+  private _aabb: Box3
 
   /** TO DO: Not sure if we should store it */
   public get guid(): string {
@@ -78,13 +78,15 @@ export class NodeRenderView {
     return this._batchId
   }
 
-  public get aabb(): Box3 | null {
+  public get aabb(): Box3 {
     return this._aabb
   }
 
   public get transparent(): boolean {
     return (
-      this._renderData.renderMaterial! && this._renderData.renderMaterial!.opacity < 1
+      (this._renderData.renderMaterial &&
+        this._renderData.renderMaterial.opacity < 1) ||
+      false
     )
   }
 
@@ -147,7 +149,9 @@ export class NodeRenderView {
   }
 
   public computeAABB() {
-    this._aabb = new Box3().setFromArray(this._renderData.geometry.attributes!.POSITION)
+    this._aabb = new Box3()
+    if (this._renderData.geometry.attributes)
+      this._aabb.setFromArray(this._renderData.geometry.attributes.POSITION)
   }
 
   private getGeometryType(): GeometryType {

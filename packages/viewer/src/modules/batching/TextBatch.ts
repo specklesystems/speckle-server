@@ -68,7 +68,7 @@ export default class TextBatch implements Batch {
   public getCount(): number {
     return (
       this.mesh.textMesh.geometry.index.count +
-      this.mesh.backgroundMesh?.geometry.index!.count
+      this.mesh.backgroundMesh?.geometry.index?.count
     )
   }
 
@@ -135,11 +135,17 @@ export default class TextBatch implements Batch {
   }
 
   public async buildBatch() {
+    /** Catering to typescript
+     *  There is no unniverse where there is no metadata
+     */
+    if (!this.renderViews[0].renderData.geometry.metaData) {
+      throw new Error(`Cannot build batch ${this.id}. Metadata`)
+    }
     this.mesh = new SpeckleText(this.id, ObjectLayers.STREAM_CONTENT_TEXT)
     this.mesh.matrixAutoUpdate = false
     await this.mesh.update(
       SpeckleText.SpeckleTextParamsFromMetadata(
-        this.renderViews[0].renderData.geometry.metaData!
+        this.renderViews[0].renderData.geometry.metaData
       )
     )
     if (this.renderViews[0].renderData.geometry.bakeTransform)

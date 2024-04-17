@@ -10,7 +10,6 @@ import {
 import { type DrawGroup } from './Batch'
 import Materials from '../materials/Materials'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
-import Logger from 'js-logger'
 
 export abstract class Primitive<
   TGeometry extends BufferGeometry = BufferGeometry,
@@ -202,42 +201,44 @@ export abstract class PrimitiveBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
-  public setBatchBuffers(range: BatchUpdateRange[]): void {
+  public setBatchBuffers(ranges: BatchUpdateRange[]): void {
     let minGradientIndex = Infinity
     let maxGradientIndex = 0
-    for (let k = 0; k < range.length; k++) {
-      if (range[k].materialOptions) {
+    for (let k = 0; k < ranges.length; k++) {
+      const range = ranges[k]
+      if (range.materialOptions) {
         if (
-          range[k].materialOptions!.rampIndex !== undefined &&
-          range[k].materialOptions!.rampWidth !== undefined
+          range.materialOptions.rampIndex !== undefined &&
+          range.materialOptions.rampWidth !== undefined
         ) {
-          const start = range[k].offset
-          const len = range[k].offset + range[k].count
+          const start = ranges[k].offset
+          const len = ranges[k].offset + ranges[k].count
           /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
            *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
            *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
            *  sampling can occur.
            */
-          const shiftedIndex =
-            range[k].materialOptions!.rampIndex! +
-            0.5 / range[k].materialOptions!.rampWidth!
-          const minMaxIndices = this.updateGradientIndexBufferData(
-            start,
-            range[k].count === Infinity
-              ? this.primitive.geometry.attributes['gradientIndex'].array.length
-              : len,
-            shiftedIndex
-          )
-          minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
-          maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
+          if (range.materialOptions.rampIndex && range.materialOptions.rampWidth) {
+            const shiftedIndex =
+              range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
+            const minMaxIndices = this.updateGradientIndexBufferData(
+              start,
+              range.count === Infinity
+                ? this.primitive.geometry.attributes['gradientIndex'].array.length
+                : len,
+              shiftedIndex
+            )
+            minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
+            maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
+          }
         }
         /** We need to update the texture here, because each batch uses it's own clone for any material we use on it
          *  because otherwise three.js won't properly update our custom uniforms
          */
-        if (range[k].materialOptions!.rampTexture !== undefined) {
-          if (range[k].material instanceof SpeckleStandardColoredMaterial) {
-            ;(range[k].material as SpeckleStandardColoredMaterial).setGradientTexture(
-              range[k].materialOptions!.rampTexture!
+        if (range.materialOptions.rampTexture !== undefined) {
+          if (range.material instanceof SpeckleStandardColoredMaterial) {
+            ;(range.material as SpeckleStandardColoredMaterial).setGradientTexture(
+              range.materialOptions.rampTexture
             )
           }
         }
@@ -358,7 +359,10 @@ export abstract class PrimitiveBatch implements Batch {
     }
 
     this.primitive.geometry.setIndex(targetIBO)
-    this.primitive.geometry.index!.needsUpdate = true
+    /** Catering to typescript
+     *  The line above literally makes sure the index is set. Absurd
+     */
+    if (this.primitive.geometry.index) this.primitive.geometry.index.needsUpdate = true
 
     const hiddenGroup = this.primitive.geometry.groups.find((value) => {
       if (value.materialIndex === undefined) return false
@@ -405,17 +409,10 @@ export abstract class PrimitiveBatch implements Batch {
   public abstract getMaterialAtIndex(index: number): Material | null
   public getMaterial(rv: NodeRenderView): Material | null {
     for (let k = 0; k < this.primitive.geometry.groups.length; k++) {
-      try {
-        if (
-          rv.batchStart >= this.primitive.geometry.groups[k].start &&
-          rv.batchEnd <=
-            this.primitive.geometry.groups[k].start +
-              this.primitive.geometry.groups[k].count
-        ) {
-          return this.materials[this.primitive.geometry.groups[k].materialIndex!]
-        }
-      } catch (e) {
-        Logger.error('Failed to get material')
+      const group = this.primitive.geometry.groups[k]
+      if (rv.batchStart >= group.start && rv.batchEnd <= group.start + group.count) {
+        if (!group.materialIndex) return null
+        return this.materials[group.materialIndex]
       }
     }
     return null

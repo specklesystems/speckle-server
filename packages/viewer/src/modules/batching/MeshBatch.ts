@@ -30,7 +30,7 @@ export class MeshBatch extends PrimitiveBatch {
   private drawRanges: DrawRanges = new DrawRanges()
 
   get bounds(): Box3 {
-    return this.primitive.TAS!.getBoundingBox(new Box3())
+    return this.primitive.TAS.getBoundingBox(new Box3())
   }
 
   get minDrawCalls(): number {
@@ -83,8 +83,8 @@ export class MeshBatch extends PrimitiveBatch {
   }
 
   protected shuffleMaterialOrder(a: DrawGroup, b: DrawGroup): number {
-    const materialA: Material = this.materials[a.materialIndex!]
-    const materialB: Material = this.materials[b.materialIndex!]
+    const materialA: Material = this.materials[a.materialIndex]
+    const materialB: Material = this.materials[b.materialIndex]
     const visibleOrder =
       +materialB.visible +
       +materialB.colorWrite -
@@ -99,7 +99,10 @@ export class MeshBatch extends PrimitiveBatch {
     end: number,
     value: number
   ): { minIndex: number; maxIndex: number } {
-    const index = this.primitive.geometry.index!.array as number[]
+    if (!this.primitive.geometry.index) {
+      throw new Error(`Invalid geometry on batch ${this.id}`)
+    }
+    const index = this.primitive.geometry.index.array as number[]
     const data = this.gradientIndexBuffer.array as number[]
     let minVertexIndex = Infinity
     let maxVertexIndex = 0
@@ -167,9 +170,9 @@ export class MeshBatch extends PrimitiveBatch {
     } else {
       const transparentOrHiddenGroup = this.groups.find(
         (value) =>
-          this.materials[value.materialIndex!].transparent === true ||
-          this.materials[value.materialIndex!].visible === false ||
-          this.materials[value.materialIndex!].colorWrite === false
+          this.materials[value.materialIndex].transparent === true ||
+          this.materials[value.materialIndex].visible === false ||
+          this.materials[value.materialIndex].colorWrite === false
       )
 
       if (transparentOrHiddenGroup) {
@@ -178,7 +181,7 @@ export class MeshBatch extends PrimitiveBatch {
           k < this.groups.length;
           k++
         ) {
-          const material = this.materials[this.groups[k].materialIndex!]
+          const material = this.materials[this.groups[k].materialIndex]
           if (material.transparent !== true && material.visible !== false) {
             this.needsShuffle = true
             break
@@ -197,13 +200,22 @@ export class MeshBatch extends PrimitiveBatch {
     let indicesCount = 0
     let attributeCount = 0
     for (let k = 0; k < this.renderViews.length; k++) {
-      indicesCount += this.renderViews[k].renderData.geometry.attributes!.INDEX!.length
-      attributeCount +=
-        this.renderViews[k].renderData.geometry.attributes!.POSITION.length
+      const ervee = this.renderViews[k]
+      /** Catering to typescript
+       *  There is no unniverse where indices or positions are undefined at this point
+       */
+      if (
+        !ervee.renderData.geometry.attributes ||
+        !ervee.renderData.geometry.attributes.INDEX
+      ) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
+      }
+      indicesCount += ervee.renderData.geometry.attributes.INDEX.length
+      attributeCount += ervee.renderData.geometry.attributes.POSITION.length
     }
 
     const hasVertexColors =
-      this.renderViews[0].renderData.geometry.attributes!.COLOR !== undefined
+      this.renderViews[0].renderData.geometry.attributes?.COLOR !== undefined
     const indices = new Uint32Array(indicesCount)
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(hasVertexColors ? attributeCount : 0)
@@ -216,31 +228,37 @@ export class MeshBatch extends PrimitiveBatch {
 
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
+      /** Catering to typescript
+       *  There is no unniverse where indices or positions are undefined at this point
+       */
+      if (!geometry.attributes || !geometry.attributes.INDEX) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
+      }
       indices.set(
-        geometry.attributes!.INDEX!.map((val) => val + offset / 3),
+        geometry.attributes.INDEX.map((val) => val + offset / 3),
         arrayOffset
       )
-      position.set(geometry.attributes!.POSITION, offset)
-      if (geometry.attributes!.COLOR) color.set(geometry.attributes!.COLOR, offset)
+      position.set(geometry.attributes.POSITION, offset)
+      if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
       batchIndices.fill(
         k,
         offset / 3,
-        offset / 3 + geometry.attributes!.POSITION.length / 3
+        offset / 3 + geometry.attributes.POSITION.length / 3
       )
       this.renderViews[k].setBatchData(
         this.id,
         arrayOffset,
-        geometry.attributes!.INDEX!.length,
+        geometry.attributes.INDEX.length,
         offset / 3,
-        offset / 3 + geometry.attributes!.POSITION.length / 3
+        offset / 3 + geometry.attributes.POSITION.length / 3
       )
 
       const batchObject = new BatchObject(this.renderViews[k], k)
       batchObject.buildAccelerationStructure()
       batchObjects.push(batchObject)
 
-      offset += geometry.attributes!.POSITION.length
-      arrayOffset += geometry.attributes!.INDEX!.length
+      offset += geometry.attributes.POSITION.length
+      arrayOffset += geometry.attributes.INDEX.length
     }
 
     const geometry = this.makeMeshGeometry(
@@ -254,7 +272,7 @@ export class MeshBatch extends PrimitiveBatch {
     this.primitive.setBatchObjects(batchObjects, this.transformStorage)
     this.primitive.setBatchMaterial(this.batchMaterial)
     this.primitive.buildTAS()
-    this.primitive.geometry.boundingBox = this.primitive.TAS!.getBoundingBox(new Box3())
+    this.primitive.geometry.boundingBox = this.primitive.TAS.getBoundingBox(new Box3())
     this.primitive.geometry.boundingSphere =
       this.primitive.geometry.boundingBox.getBoundingSphere(new Sphere())
 

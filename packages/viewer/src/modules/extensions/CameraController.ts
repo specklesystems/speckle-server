@@ -300,8 +300,9 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.controls['dispatchEvent']({ type: 'controlstart' })
     })
     aKey.addEventListener('holding', (event) => {
+      if (!event) return
       setTrucking(0, true)
-      this.controls.truck(-0.01 * event!.deltaTime, 0, false)
+      this.controls.truck(-0.01 * event.deltaTime, 0, false)
       return
     })
     aKey.addEventListener(
@@ -315,8 +316,9 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.controls['dispatchEvent']({ type: 'controlstart' })
     })
     dKey.addEventListener('holding', (event) => {
+      if (!event) return
       setTrucking(1, true)
-      this.controls.truck(0.01 * event!.deltaTime, 0, false)
+      this.controls.truck(0.01 * event.deltaTime, 0, false)
       return
     })
     dKey.addEventListener(
@@ -330,8 +332,9 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.controls['dispatchEvent']({ type: 'controlstart' })
     })
     wKey.addEventListener('holding', (event) => {
+      if (!event) return
       setTrucking(2, true)
-      this.controls.forward(0.01 * event!.deltaTime, false)
+      this.controls.forward(0.01 * event.deltaTime, false)
       return
     })
     wKey.addEventListener(
@@ -345,8 +348,9 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.controls['dispatchEvent']({ type: 'controlstart' })
     })
     sKey.addEventListener('holding', (event) => {
+      if (!event) return
       setTrucking(3, true)
-      this.controls.forward(-0.01 * event!.deltaTime, false)
+      this.controls.forward(-0.01 * event.deltaTime, false)
       return
     })
     sKey.addEventListener(

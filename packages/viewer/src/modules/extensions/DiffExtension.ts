@@ -47,7 +47,7 @@ export class DiffExtension extends Extension {
     this._enabled = value
   }
 
-  protected tree: WorldTree | null = null
+  protected tree: WorldTree
   private addedMaterialMesh: SpeckleStandardMaterial
   private changedNewMaterialMesh: SpeckleStandardMaterial
   private changedOldMaterialMesh: SpeckleStandardMaterial
@@ -63,12 +63,13 @@ export class DiffExtension extends Extension {
   private changedNewMaterials: Array<SpeckleMaterialType> = []
   private removedMaterials: Array<SpeckleMaterialType> = []
 
-  private _materialGroups!:
+  private _materialGroups:
     | {
         rvs: NodeRenderView[]
         material: SpeckleMaterialType
       }[]
     | null
+
   private _visualDiff!: VisualDiffResult
   private _diffTime = -1
   private _diffMode: VisualDiffMode = VisualDiffMode.COLORED
@@ -208,7 +209,7 @@ export class DiffExtension extends Extension {
     const loadPromises = []
     this.dynamicallyLoadedDiffResources = []
 
-    if (!this.tree!.findId(urlA)) {
+    if (!this.tree.findId(urlA)) {
       loadPromises.push(
         this.viewer.loadObject(
           new SpeckleLoader(this.viewer.getWorldTree(), urlA, authToken)
@@ -216,7 +217,7 @@ export class DiffExtension extends Extension {
       )
       this.dynamicallyLoadedDiffResources.push(urlA)
     }
-    if (!this.tree!.findId(urlB)) {
+    if (!this.tree.findId(urlB)) {
       loadPromises.push(
         this.viewer.loadObject(
           new SpeckleLoader(this.viewer.getWorldTree(), urlB, authToken)
@@ -263,9 +264,9 @@ export class DiffExtension extends Extension {
       const atomicRv = rvs[k]
       const applicationId = atomicRv.model.raw.applicationId
         ? atomicRv.model.raw.applicationId
-        : this.tree!.getAncestors(atomicRv).find(
-            (value) => value.model.raw.applicationId
-          )?.model.raw.applicationId
+        : this.tree
+            .getAncestors(atomicRv)
+            .find((value) => value.model.raw.applicationId)?.model.raw.applicationId
 
       idMap[atomicRv.model.raw.id] = {
         node: atomicRv,
@@ -291,8 +292,8 @@ export class DiffExtension extends Extension {
       modified: []
     }
 
-    const renderTreeA = this.tree!.getRenderTree(urlA)
-    const renderTreeB = this.tree!.getRenderTree(urlB)
+    const renderTreeA = this.tree.getRenderTree(urlA)
+    const renderTreeB = this.tree.getRenderTree(urlB)
     if (!renderTreeA) {
       return Promise.reject(
         `Could not make diff. Resource ${urlA} could not be fetched`
@@ -371,22 +372,23 @@ export class DiffExtension extends Extension {
   }
 
   public updateVisualDiff(time?: number, mode?: VisualDiffMode): void {
-    if (
-      (mode !== undefined && mode !== this._diffMode) ||
-      this._materialGroups === null
-    ) {
+    if ((mode && mode !== this._diffMode) || this._materialGroups === null) {
       this.resetMaterialGroups()
-      this.buildMaterialGroups(mode!)
-      this._diffMode = mode!
+      /** Catering to typescript */
+      if (mode) {
+        this.buildMaterialGroups(mode)
+        this._diffMode = mode
+      }
     }
     if (time !== undefined && time !== this._diffTime) {
       this.setDiffTime(time)
       this._diffTime = time
     }
 
-    this._materialGroups!.forEach((value) => {
-      this.viewer.getRenderer().setMaterial(value.rvs, value.material)
-    })
+    if (this._materialGroups)
+      this._materialGroups.forEach((value) => {
+        this.viewer.getRenderer().setMaterial(value.rvs, value.material)
+      })
     this.viewer.requestRender()
   }
 
@@ -457,28 +459,28 @@ export class DiffExtension extends Extension {
   }
 
   private getVisualDiffResult(diffResult: DiffResult): VisualDiffResult {
-    const renderTree = this.tree!.getRenderTree()
+    const renderTree = this.tree.getRenderTree()
 
     const addedRvs = diffResult.added.flatMap((value) => {
-      return renderTree!.getRenderViewsForNode(value as TreeNode)
+      return renderTree.getRenderViewsForNode(value as TreeNode)
     })
     const removedRvs = diffResult.removed.flatMap((value) => {
-      return renderTree!.getRenderViewsForNode(value as TreeNode)
+      return renderTree.getRenderViewsForNode(value as TreeNode)
     })
     const unchangedRvs = diffResult.unchanged.flatMap((value) => {
-      return renderTree!.getRenderViewsForNode(value as TreeNode)
+      return renderTree.getRenderViewsForNode(value as TreeNode)
     })
 
     const modifiedOldRvs = diffResult.modified
       .flatMap((value) => {
-        return renderTree!.getRenderViewsForNode(value[0] as TreeNode)
+        return renderTree.getRenderViewsForNode(value[0] as TreeNode)
       })
       .filter((value) => {
         return !unchangedRvs.includes(value) && !removedRvs.includes(value)
       })
     const modifiedNewRvs = diffResult.modified
       .flatMap((value) => {
-        return renderTree!.getRenderViewsForNode(value[1] as TreeNode)
+        return renderTree.getRenderViewsForNode(value[1] as TreeNode)
       })
       .filter((value) => {
         return !unchangedRvs.includes(value) && !addedRvs.includes(value)

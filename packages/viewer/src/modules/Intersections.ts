@@ -26,8 +26,7 @@ export class Intersections {
     this.raycaster = new SpeckleRaycaster()
     this.raycaster.params.Line = { threshold: 0.01 }
     this.raycaster.params.Points = { threshold: 0.01 }
-    ;(this.raycaster.params as { Line2?: object }).Line2 = {}
-    ;(this.raycaster.params as { Line2?: { threshold: number } }).Line2!.threshold = 1
+    this.raycaster.params.Line2 = { threshold: 1 }
     this.raycaster.onObjectIntersectionTest = this.onObjectIntersection.bind(this)
   }
 
@@ -62,25 +61,11 @@ export class Intersections {
        *  original line width and how zoomed in the camer is on the line(batch)
        */
       if (!worldSpace) {
-        if (ssDistance < 1) {
-          ;(
-            this.raycaster.params as { Line2?: { threshold: number } }
-          ).Line2!.threshold = lineWidth * 8
-        } else {
-          ;(
-            this.raycaster.params as { Line2?: { threshold: number } }
-          ).Line2!.threshold = lineWidth * 5
-        }
+        this.raycaster.params.Line2.threshold =
+          ssDistance < 1 ? lineWidth * 8 : lineWidth * 5
       } else {
-        if (ssDistance < 1) {
-          ;(
-            this.raycaster.params as { Line2?: { threshold: number } }
-          ).Line2!.threshold = lineWidth * 2
-        } else {
-          ;(
-            this.raycaster.params as { Line2?: { threshold: number } }
-          ).Line2!.threshold = lineWidth
-        }
+        this.raycaster.params.Line2.threshold =
+          ssDistance < 1 ? lineWidth * 2 : lineWidth
       }
     }
   }

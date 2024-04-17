@@ -38,6 +38,9 @@ export class WorldTree {
     })
   }
 
+  /** The root render tree will always be non-null because it will always contain the root */
+  public getRenderTree(): RenderTree
+  public getRenderTree(subtreeId: string): RenderTree | null
   public getRenderTree(subtreeId?: string): RenderTree | null {
     if (!this._root) {
       console.error(`WorldTree not initialised`)

@@ -58,7 +58,7 @@ const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 export default class SpeckleInstancedMesh extends Group {
   public static MeshBatchNumber = 0
 
-  private tas: TopLevelAccelerationStructure | null = null
+  private tas: TopLevelAccelerationStructure
   private batchMaterial: Material | null = null
   private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Array<Material | Material[]>> = []
@@ -71,7 +71,7 @@ export default class SpeckleInstancedMesh extends Group {
   private instanceGeometry: BufferGeometry | undefined = undefined
   private instances: InstancedMesh[] = []
 
-  public get TAS() {
+  public get TAS(): TopLevelAccelerationStructure {
     return this.tas
   }
 
@@ -186,8 +186,8 @@ export default class SpeckleInstancedMesh extends Group {
       this.instances.push(group)
       this.add(group)
     }
-    this.tas!.refit()
-    this.tas!.getBoundingBox(this.tas!.bounds)
+    this.tas.refit()
+    this.tas.getBoundingBox(this.tas.bounds)
   }
 
   public updateTransformsUniform() {
@@ -235,7 +235,7 @@ export default class SpeckleInstancedMesh extends Group {
       Logger.warn(`Could not get material for ${batchObject.renderView.renderData.id}`)
       return null
     }
-    return this.materials[group.materialIndex!]
+    return this.materials[group.materialIndex]
   }
 
   // converts the given BVH raycast intersection to align with the three.js raycast
@@ -262,14 +262,14 @@ export default class SpeckleInstancedMesh extends Group {
 
   raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
     if (this.tas) {
-      if (this.batchMaterial === undefined) return
+      if (!this.batchMaterial) return
 
       tmpInverseMatrix.copy(this.matrixWorld).invert()
       ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
 
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
-          this.tas.raycastFirst(ray, this.batchMaterial!),
+          this.tas.raycastFirst(ray, this.batchMaterial),
           this,
           raycaster
         )
@@ -277,7 +277,7 @@ export default class SpeckleInstancedMesh extends Group {
           intersects.push(hit)
         }
       } else {
-        const hits = this.tas.raycast(ray, this.batchMaterial!)
+        const hits = this.tas.raycast(ray, this.batchMaterial)
         for (let i = 0, l = hits.length; i < l; i++) {
           const hit = this.convertRaycastIntersect(hits[i], this, raycaster)
           if (hit) {
@@ -297,7 +297,7 @@ export default class SpeckleInstancedMesh extends Group {
 
       if (geometry.boundingSphere === null) geometry.computeBoundingSphere()
 
-      _sphere.copy(geometry.boundingSphere!)
+      _sphere.copy(geometry.boundingSphere || new Sphere())
       _sphere.applyMatrix4(matrixWorld)
 
       if (raycaster.ray.intersectsSphere(_sphere) === false) return
@@ -333,7 +333,11 @@ export default class SpeckleInstancedMesh extends Group {
         if (Array.isArray(material)) {
           for (let i = 0, il = groups.length; i < il; i++) {
             const group = groups[i]
-            const groupMaterial = material[group.materialIndex!]
+            if (!group.materialIndex) {
+              Logger.error(`Group with no material, skipping!`)
+              continue
+            }
+            const groupMaterial = material[group.materialIndex]
 
             const start = Math.max(group.start, drawRange.start)
             const end = Math.min(
@@ -407,7 +411,11 @@ export default class SpeckleInstancedMesh extends Group {
         if (Array.isArray(material)) {
           for (let i = 0, il = groups.length; i < il; i++) {
             const group = groups[i]
-            const groupMaterial = material[group.materialIndex!]
+            if (!group.materialIndex) {
+              Logger.error(`Group with no material, skipping!`)
+              continue
+            }
+            const groupMaterial = material[group.materialIndex]
 
             const start = Math.max(group.start, drawRange.start)
             const end = Math.min(

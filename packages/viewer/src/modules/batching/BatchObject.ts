@@ -17,7 +17,7 @@ export type Vector4Like = Vector3Like & { w: number }
 
 export class BatchObject {
   protected _renderView: NodeRenderView
-  protected _accelerationStructure!: AccelerationStructure
+  protected _accelerationStructure: AccelerationStructure
   protected _batchIndex: number
   protected _localOrigin: Vector3
   public transform: Matrix4
@@ -101,7 +101,7 @@ export class BatchObject {
     this.transform = new Matrix4().identity()
     this.transformInv = new Matrix4().identity()
 
-    this._localOrigin = this._renderView.aabb!.getCenter(new Vector3())
+    this._localOrigin = this._renderView.aabb.getCenter(new Vector3())
     Geometry.DoubleToHighLowVector(
       new Vector3(this._localOrigin.x, this._localOrigin.y, this._localOrigin.z),
       this.pivot_Low,
@@ -118,12 +118,13 @@ export class BatchObject {
     transform.invert()
 
     if (!bvh) {
-      const indices = this._renderView.renderData.geometry.attributes!.INDEX as number[]
-      const position = this._renderView.renderData.geometry.attributes!
-        .POSITION as number[]
+      const indices: number[] | undefined =
+        this._renderView.renderData.geometry.attributes?.INDEX
+      const position: number[] | undefined =
+        this._renderView.renderData.geometry.attributes?.POSITION
       bvh = AccelerationStructure.buildBVH(
         indices,
-        new Float32Array(position),
+        position,
         DefaultBVHOptions,
         transform
       )

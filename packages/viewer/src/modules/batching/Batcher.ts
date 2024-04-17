@@ -221,12 +221,22 @@ export default class Batcher {
       let index = 0
       vSplit.push([])
       for (let k = 0; k < renderViews.length; k++) {
+        /** Catering to typescript.
+         *  RenderViews are prefiltered based on valid geometry before reaching this point
+         */
+        const ervee = renderViews[k]
+        const nextErvee = renderViews[k + 1]
+        if (!ervee.renderData.geometry.attributes) {
+          throw new Error(
+            `Invalid geometry on render view ${renderViews[k].renderData.id}`
+          )
+        }
         vSplit[index].push(renderViews[k])
-        count += renderViews[k].renderData.geometry.attributes!.POSITION.length / 3
+        count += ervee.renderData.geometry.attributes.POSITION.length / 3
         const nexCount =
           count +
-          (renderViews[k + 1]
-            ? renderViews[k + 1].renderData.geometry.attributes!.POSITION.length / 3
+          (nextErvee && nextErvee.renderData.geometry.attributes
+            ? nextErvee.renderData.geometry.attributes.POSITION.length / 3
             : 0)
         if (nexCount >= this.maxBatchVertices && renderViews[k + 1]) {
           vSplit.push([])
@@ -363,7 +373,8 @@ export default class Batcher {
 
   public render(renderer: WebGLRenderer) {
     for (const batchId in this.batches) {
-      if (this.batches[batchId].onRender) this.batches[batchId].onRender!(renderer)
+      const batch = this.batches[batchId]
+      if (batch.onRender) batch.onRender(renderer)
     }
   }
 
