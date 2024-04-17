@@ -35,9 +35,10 @@ const automateModule: SpeckleModule = {
     if (!ENABLE_AUTOMATE_MODULE) return
     moduleLogger.info('⚙️  Init automate module')
 
+    await initScopes()
+
     if (isInitial) {
       authRestSetup(app)
-      await initScopes()
     }
   }
 }
