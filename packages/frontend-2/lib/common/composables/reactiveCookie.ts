@@ -8,6 +8,9 @@ import { isUndefined } from 'lodash-es'
  * will also update other references elsewhere.
  *
  * Defaults to an expiration date of 1 year
+ *
+ * IMPORTANT NOTE: Both Safari & Brave limit client-side cookie max-age to 7 days. If your cookie is important, evaluate how to
+ * ensure that the cookie is written to from the server-side (either SSR render or API route)
  */
 export const useSynchronizedCookie = <CookieValue = string>(
   name: string,
