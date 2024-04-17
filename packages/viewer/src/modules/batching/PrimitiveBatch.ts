@@ -361,7 +361,7 @@ export abstract class PrimitiveBatch implements Batch {
     this.primitive.geometry.index!.needsUpdate = true
 
     const hiddenGroup = this.primitive.geometry.groups.find((value) => {
-      if (value.materialIndex === undefined) return
+      if (value.materialIndex === undefined) return false
       return this.materials[value.materialIndex].visible === false
     })
     if (hiddenGroup) {

@@ -53,7 +53,7 @@ import {
   type DiffResult,
   VisualDiffMode
 } from './modules/extensions/DiffExtension'
-import { Loader } from './modules/loaders/Loader'
+import { Loader, LoaderEvent } from './modules/loaders/Loader'
 import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader'
 import { ObjLoader } from './modules/loaders/OBJ/ObjLoader'
 import { LegacyViewer } from './modules/LegacyViewer'
@@ -95,6 +95,7 @@ export {
   Loader,
   SpeckleLoader,
   ObjLoader,
+  LoaderEvent,
   UpdateFlags,
   SpeckleType,
   Input,

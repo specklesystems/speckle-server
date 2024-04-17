@@ -27,7 +27,7 @@ import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
 
 import { Euler, Vector3 } from 'three'
-import { LoaderEvent } from '@speckle/viewer/dist/modules/loaders/Loader'
+import { LoaderEvent } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: Viewer
