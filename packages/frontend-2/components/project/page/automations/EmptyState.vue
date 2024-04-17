@@ -43,6 +43,7 @@
           :icon-left="ArrowTopRightOnSquareIcon"
           color="secondary"
           class="shrink-0"
+          :to="automationFunctionsRoute"
         >
           Explore All Functions
         </FormButton>
@@ -57,6 +58,7 @@
 import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationsEmptyState_QueryFragment } from '~/lib/common/generated/gql/graphql'
+import { automationFunctionsRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectPageAutomationsEmptyState_Query on Query {

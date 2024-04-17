@@ -71,7 +71,7 @@ export default defineNuxtConfig({
       datadogEnv: '',
       enableDirectPreviews: true,
       enableAutomateModule: true,
-      automateGhClientId: ''
+      automateGhClientId: 'Iv1.79a1df48749f11b4'
     }
   },
 

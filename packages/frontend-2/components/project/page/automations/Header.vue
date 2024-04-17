@@ -17,6 +17,7 @@
         :icon-left="ArrowTopRightOnSquareIcon"
         color="secondary"
         class="shrink-0"
+        :to="automationFunctionsRoute"
       >
         Explore Functions
       </FormButton>
@@ -27,6 +28,7 @@
 <script setup lang="ts">
 import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { useDebouncedTextInput } from '@speckle/ui-components'
+import { automationFunctionsRoute } from '~/lib/common/helpers/route'
 
 defineProps<{
   hasAutomations?: boolean
