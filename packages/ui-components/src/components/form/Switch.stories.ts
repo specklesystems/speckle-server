@@ -49,6 +49,15 @@ export const Default: SwitchStoryType = {
   args: {
     modelValue: false,
     name: 'switch',
-    label: 'Example switch'
+    label: 'Example switch',
+    disabled: false
+  }
+}
+
+export const Disabled: SwitchStoryType = {
+  ...Default,
+  args: {
+    ...Default.args,
+    disabled: true
   }
 }

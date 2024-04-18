@@ -10,6 +10,7 @@
           <ChevronRightIcon class="w-5 h-5" />
           <CommonEditableTitle
             v-model="name"
+            :disabled="loading"
             :custom-classes="{
               input: 'h4 font-bold',
               pencil: 'ml-2 mt-2 w-4 h-4'
@@ -18,7 +19,12 @@
           />
         </div>
       </div>
-      <FormSwitch v-model="enabled" name="enabled" label="Enabled" />
+      <FormSwitch
+        v-model="enabled"
+        name="enabled"
+        label="Enabled"
+        :disabled="loading"
+      />
     </div>
     <ProjectModelsBasicCardView
       :items="triggerModels"
@@ -32,6 +38,7 @@
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
 import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { FormSwitch } from '@speckle/ui-components'
+import { useMutationLoading } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   ProjectPageAutomationHeader_AutomationFragment,
@@ -70,6 +77,7 @@ const props = defineProps<{
   automation: ProjectPageAutomationHeader_AutomationFragment
 }>()
 
+const loading = useMutationLoading()
 const updateAutomation = useUpdateAutomation()
 
 const automationsLink = computed(() => projectRoute(props.project.id, 'automations'))

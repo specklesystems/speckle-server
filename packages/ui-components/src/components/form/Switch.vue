@@ -2,9 +2,9 @@
   <div class="flex items-center gap-2">
     <HeadlessSwitch
       v-model="enabled"
-      class="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-      :class="{ 'bg-primary': enabled, 'bg-primary-muted': !enabled }"
+      :class="switchClasses"
       :name="name"
+      :disabled="disabled"
     >
       <div class="absolute inset-0 flex items-center gap-2 px-1 text-white">
         <CheckIcon
@@ -16,10 +16,7 @@
           :class="icons ? 'opacity-100' : 'opacity-0'"
         />
       </div>
-      <span
-        class="scale-95 pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200"
-        :class="{ 'translate-x-5': enabled, 'translate-x-0': !enabled }"
-      ></span>
+      <span :class="sliderClasses"></span>
     </HeadlessSwitch>
     <label :for="name" :class="labelClasses">
       <span>{{ title }}</span>
@@ -38,6 +35,7 @@ const props = withDefaults(
     showLabel?: boolean
     name: string
     label?: string
+    disabled?: boolean
   }>(),
   {
     showLabel: true
@@ -53,6 +51,43 @@ const labelClasses = computed(() => {
 
   if (!props.showLabel) {
     classParts.push('sr-only')
+  }
+
+  return classParts.join(' ')
+})
+
+const switchClasses = computed(() => {
+  const classParts = [
+    'relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full',
+    'transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary',
+    'cursor-pointer disabled:cursor-not-allowed disabled:bg-foundation-disabled'
+  ]
+
+  if (enabled.value) {
+    classParts.push('bg-primary')
+  } else {
+    classParts.push('bg-primary-muted')
+  }
+
+  return classParts.join(' ')
+})
+
+const sliderClasses = computed(() => {
+  const classParts = [
+    'scale-95 pointer-events-none inline-block h-5 w-5 rounded-full',
+    'shadow transform ring-0 transition ease-in-out duration-200'
+  ]
+
+  if (props.disabled) {
+    classParts.push('bg-foreground-disabled')
+  } else {
+    classParts.push('bg-white')
+  }
+
+  if (enabled.value) {
+    classParts.push('translate-x-5')
+  } else {
+    classParts.push('translate-x-0')
   }
 
   return classParts.join(' ')

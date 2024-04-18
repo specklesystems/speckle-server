@@ -85,20 +85,28 @@ export function useCreateAutomationRevision() {
   const { triggerNotification } = useGlobalToast()
   const { mutate } = useMutation(createAutomationRevisionMutation)
 
-  return async (input: CreateAutomationRevisionMutationVariables) => {
+  return async (
+    input: CreateAutomationRevisionMutationVariables,
+    options?: Partial<{
+      hideSuccessToast: boolean
+    }>
+  ) => {
+    const { hideSuccessToast } = options || {}
     if (!activeUser.value) return
 
     const res = await mutate(input).catch(convertThrowIntoFetchResult)
     if (res?.data?.projectMutations?.automationMutations?.createRevision?.id) {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: 'Changes have been saved'
-      })
+      if (!hideSuccessToast) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: 'Automation revision created'
+        })
+      }
     } else {
       const errMsg = getFirstErrorMessage(res?.errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
-        title: 'Failed to save changes',
+        title: 'Failed to create automation revision',
         description: errMsg
       })
     }

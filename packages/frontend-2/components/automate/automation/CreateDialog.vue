@@ -280,28 +280,31 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
           })
         )
       : null
-    const revisionRes = await createRevision({
-      projectId: project.id,
-      input: {
-        automationId: aId,
-        functions: [
-          {
-            functionId: fn.id,
-            releaseId: fnRelease.id,
-            parameters: parametersString
-          }
-        ],
-        triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
-          version: Automate.AutomateTypes.TRIGGER_DEFINITIONS_SCHEMA_VERSION,
-          definitions: [
+    const revisionRes = await createRevision(
+      {
+        projectId: project.id,
+        input: {
+          automationId: aId,
+          functions: [
             {
-              type: AutomateRunTriggerType.VersionCreated,
-              modelId: model.id
+              functionId: fn.id,
+              releaseId: fnRelease.id,
+              parameters: parametersString
             }
-          ]
+          ],
+          triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+            version: Automate.AutomateTypes.TRIGGER_DEFINITIONS_SCHEMA_VERSION,
+            definitions: [
+              {
+                type: AutomateRunTriggerType.VersionCreated,
+                modelId: model.id
+              }
+            ]
+          }
         }
-      }
-    })
+      },
+      { hideSuccessToast: true }
+    )
     if (revisionRes?.id) {
       step.value++
     }
