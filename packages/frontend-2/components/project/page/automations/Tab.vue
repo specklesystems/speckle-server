@@ -29,7 +29,7 @@
     </template>
     <AutomateAutomationCreateDialog
       v-model:open="showNewAutomationDialog"
-      :project-id="projectId"
+      :preselected-project="project"
       :preselected-function="newAutomationTargetFn"
     />
   </div>
@@ -60,6 +60,7 @@ const { result, loading } = useQuery(
 const showNewAutomationDialog = ref(false)
 const newAutomationTargetFn = ref<CreateAutomationSelectableFunction>()
 
+const project = computed(() => result.value?.project)
 const hasAutomations = computed(
   () => (result.value?.project?.automations.totalCount ?? 1) > 0
 )

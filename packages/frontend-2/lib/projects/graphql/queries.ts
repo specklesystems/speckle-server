@@ -217,6 +217,7 @@ export const projectAutomationsTabQuery = graphql(`
           ...ProjectPageAutomationsRow_Automation
         }
       }
+      ...FormSelectProjects_Project
     }
     ...ProjectPageAutomationsEmptyState_Query
   }

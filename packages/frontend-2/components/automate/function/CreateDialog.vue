@@ -6,6 +6,7 @@
     max-width="md"
     :buttons-wrapper-classes="buttonsWrapperClasses"
     :on-submit="onDialogSubmit"
+    prevent-close-on-click-outside
   >
     <div class="flex flex-col gap-11">
       <CommonStepsNumber

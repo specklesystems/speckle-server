@@ -37,6 +37,7 @@ const documents = {
     "\n  fragment AutomateViewerPanel_AutomateRun on AutomateRun {\n    id\n    automation {\n      id\n      name\n    }\n    functionRuns {\n      id\n      ...AutomateViewerPanelFunctionRunRow_AutomateFunctionRun\n    }\n  }\n": types.AutomateViewerPanel_AutomateRunFragmentDoc,
     "\n  fragment AutomateViewerPanelFunctionRunRow_AutomateFunctionRun on AutomateFunctionRun {\n    id\n    results\n    status\n    statusMessage\n    contextView\n    function {\n      id\n      logo\n      name\n    }\n  }\n": types.AutomateViewerPanelFunctionRunRow_AutomateFunctionRunFragmentDoc,
     "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n": types.CommonModelSelectorModelFragmentDoc,
+    "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n": types.FormSelectModels_ModelFragmentDoc,
     "\n  fragment FormSelectProjects_Project on Project {\n    id\n    name\n  }\n": types.FormSelectProjects_ProjectFragmentDoc,
     "\n  fragment FormUsersSelectItem on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.FormUsersSelectItemFragmentDoc,
     "\n  fragment HeaderNavShare_Project on Project {\n    id\n    visibility\n    ...ProjectsModelPageEmbed_Project\n  }\n": types.HeaderNavShare_ProjectFragmentDoc,
@@ -118,6 +119,7 @@ const documents = {
     "\n  query DeveloperSettingsApplications {\n    activeUser {\n      createdApps {\n        id\n        secret\n        name\n        description\n        redirectUrl\n        scopes {\n          name\n          description\n        }\n      }\n      id\n    }\n  }\n": types.DeveloperSettingsApplicationsDocument,
     "\n  query DeveloperSettingsAuthorizedApps {\n    activeUser {\n      id\n      authorizedApps {\n        id\n        description\n        name\n        author {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n": types.DeveloperSettingsAuthorizedAppsDocument,
     "\n  query SearchProjects($search: String, $onlyWithRoles: [String!] = null) {\n    activeUser {\n      projects(limit: 10, filter: { search: $search, onlyWithRoles: $onlyWithRoles }) {\n        totalCount\n        items {\n          ...FormSelectProjects_Project\n        }\n      }\n    }\n  }\n": types.SearchProjectsDocument,
+    "\n  query SearchProjectModels($search: String, $projectId: String!) {\n    project(id: $projectId) {\n      id\n      models(limit: 10, filter: { search: $search }) {\n        totalCount\n        items {\n          ...FormSelectModels_Model\n        }\n      }\n    }\n  }\n": types.SearchProjectModelsDocument,
     "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n": types.ProjectDashboardItemNoModelsFragmentDoc,
     "\n  fragment ProjectDashboardItem on Project {\n    id\n    ...ProjectDashboardItemNoModels\n    models(limit: 4, filter: { onlyWithVersions: true }) {\n      totalCount\n      items {\n        ...ProjectPageLatestItemsModelItem\n      }\n    }\n    pendingImportedModels(limit: 4) {\n      ...PendingFileUpload\n    }\n  }\n": types.ProjectDashboardItemFragmentDoc,
     "\n  fragment PendingFileUpload on FileUpload {\n    id\n    projectId\n    modelName\n    convertedStatus\n    convertedMessage\n    uploadDate\n    convertedLastUpdate\n    fileType\n    fileName\n  }\n": types.PendingFileUploadFragmentDoc,
@@ -157,7 +159,7 @@ const documents = {
     "\n  query ProjectModelVersions(\n    $projectId: String!\n    $modelId: String!\n    $versionsCursor: String\n  ) {\n    project(id: $projectId) {\n      id\n      ...ProjectModelPageVersionsPagination\n    }\n  }\n": types.ProjectModelVersionsDocument,
     "\n  query ProjectModelsPage($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectModelsPageHeader_Project\n      ...ProjectModelsPageResults_Project\n    }\n  }\n": types.ProjectModelsPageDocument,
     "\n  query ProjectDiscussionsPage($projectId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectDiscussionsPageHeader_Project\n      ...ProjectDiscussionsPageResults_Project\n    }\n  }\n": types.ProjectDiscussionsPageDocument,
-    "\n  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {\n    project(id: $projectId) {\n      id\n      automations(filter: $search, cursor: $cursor, limit: 5) {\n        totalCount\n        items {\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n": types.ProjectAutomationsTabDocument,
+    "\n  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {\n    project(id: $projectId) {\n      id\n      automations(filter: $search, cursor: $cursor, limit: 5) {\n        totalCount\n        items {\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n      ...FormSelectProjects_Project\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n": types.ProjectAutomationsTabDocument,
     "\n  query ProjectAutomationPage($projectId: String!, $automationId: String!) {\n    project(id: $projectId) {\n      id\n      ...ProjectPageAutomationPage_Project\n      automation(id: $automationId) {\n        id\n        ...ProjectPageAutomationPage_Automation\n      }\n    }\n  }\n": types.ProjectAutomationPageDocument,
     "\n  query ProjectAutomationAccessCheck($projectId: String!, $automationId: String!) {\n    project(id: $projectId) {\n      id\n      automation(id: $automationId) {\n        id\n      }\n    }\n  }\n": types.ProjectAutomationAccessCheckDocument,
     "\n  query ProjectWebhooks($projectId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      webhooks {\n        items {\n          streamId\n          triggers\n          enabled\n          url\n          id\n          description\n          history(limit: 5) {\n            items {\n              status\n              statusInfo\n            }\n          }\n        }\n        totalCount\n      }\n    }\n  }\n": types.ProjectWebhooksDocument,
@@ -323,6 +325,10 @@ export function graphql(source: "\n  fragment AutomateViewerPanelFunctionRunRow_
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment CommonModelSelectorModel on Model {\n    id\n    name\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n"): (typeof documents)["\n  fragment FormSelectModels_Model on Model {\n    id\n    name\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -650,6 +656,10 @@ export function graphql(source: "\n  query SearchProjects($search: String, $only
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
+export function graphql(source: "\n  query SearchProjectModels($search: String, $projectId: String!) {\n    project(id: $projectId) {\n      id\n      models(limit: 10, filter: { search: $search }) {\n        totalCount\n        items {\n          ...FormSelectModels_Model\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SearchProjectModels($search: String, $projectId: String!) {\n    project(id: $projectId) {\n      id\n      models(limit: 10, filter: { search: $search }) {\n        totalCount\n        items {\n          ...FormSelectModels_Model\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
 export function graphql(source: "\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n"): (typeof documents)["\n  fragment ProjectDashboardItemNoModels on Project {\n    id\n    name\n    createdAt\n    updatedAt\n    role\n    team {\n      id\n      user {\n        id\n        name\n        avatar\n      }\n    }\n    ...ProjectPageModelsCardProject\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
@@ -806,7 +816,7 @@ export function graphql(source: "\n  query ProjectDiscussionsPage($projectId: St
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {\n    project(id: $projectId) {\n      id\n      automations(filter: $search, cursor: $cursor, limit: 5) {\n        totalCount\n        items {\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n"): (typeof documents)["\n  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {\n    project(id: $projectId) {\n      id\n      automations(filter: $search, cursor: $cursor, limit: 5) {\n        totalCount\n        items {\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n"];
+export function graphql(source: "\n  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {\n    project(id: $projectId) {\n      id\n      automations(filter: $search, cursor: $cursor, limit: 5) {\n        totalCount\n        items {\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n      ...FormSelectProjects_Project\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n"): (typeof documents)["\n  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {\n    project(id: $projectId) {\n      id\n      automations(filter: $search, cursor: $cursor, limit: 5) {\n        totalCount\n        items {\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n      ...FormSelectProjects_Project\n    }\n    ...ProjectPageAutomationsEmptyState_Query\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

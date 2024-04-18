@@ -1,7 +1,7 @@
 <template>
   <div>
     <AutomateFunctionCardView>
-      <AutomateFunctionCard v-for="fn in fns" :key="fn.id" :fn="fn" no-buttons />
+      <AutomateFunctionCard v-for="fn in fns" :key="fn.id" :fn="fn" />
     </AutomateFunctionCardView>
   </div>
 </template>

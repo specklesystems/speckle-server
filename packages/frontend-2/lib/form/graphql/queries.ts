@@ -12,3 +12,17 @@ export const searchProjectsQuery = graphql(`
     }
   }
 `)
+
+export const searchModelsQuery = graphql(`
+  query SearchProjectModels($search: String, $projectId: String!) {
+    project(id: $projectId) {
+      id
+      models(limit: 10, filter: { search: $search }) {
+        totalCount
+        items {
+          ...FormSelectModels_Model
+        }
+      }
+    }
+  }
+`)

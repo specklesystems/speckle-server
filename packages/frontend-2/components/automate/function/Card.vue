@@ -54,7 +54,7 @@
     <div class="absolute top-0 right-0">
       <div
         v-if="hasLabel"
-        class="rounded-bl-lg text-xs px-2 py-1 text-foreground"
+        class="rounded-bl-lg rounded-tr-lg text-xs px-2 py-1 text-foreground"
         :class="{ 'bg-foundation-focus': fn.isFeatured }"
       >
         <template v-if="fn.isFeatured">featured</template>

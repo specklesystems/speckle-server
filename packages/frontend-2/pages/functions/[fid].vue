@@ -1,14 +1,14 @@
 <template>
   <div class="mx-auto max-w-[864px]">
     <CommonLoadingBar :loading="loading" />
-    <template v-if="!loading">
+    <template v-if="!loading && fn">
       <AutomateFunctionPageHeader :fn="fn" class="mb-12" />
       <AutomateFunctionPageInfo :fn="fn" />
     </template>
   </div>
 </template>
 <script setup lang="ts">
-import { CommonLoadingBar, LogicError } from '@speckle/ui-components'
+import { CommonLoadingBar } from '@speckle/ui-components'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 
@@ -34,8 +34,5 @@ const { result } = useQuery(pageQuery, () => ({
   functionId: functionId.value
 }))
 
-const fn = computed(() => {
-  if (result.value?.automateFunction) return result.value.automateFunction
-  throw new LogicError('Unexpectedly function not found!')
-})
+const fn = computed(() => result.value?.automateFunction)
 </script>

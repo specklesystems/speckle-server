@@ -63,7 +63,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  activeUser: AutomateFunctionsPageHeader_QueryFragment['activeUser']
+  activeUser: Optional<AutomateFunctionsPageHeader_QueryFragment['activeUser']>
   serverInfo: Optional<AutomateFunctionsPageHeader_QueryFragment['serverInfo']>
 }>()
 const {

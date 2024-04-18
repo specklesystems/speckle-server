@@ -47,6 +47,13 @@
                 </div>
               </div>
 
+              <!--
+                Due to how forms work, if there's no other submit button, on form submission the first button
+                will be clicked. This is a workaround to prevent the close button from being that first button.
+                https://stackoverflow.com/a/4763911/3194577
+              -->
+              <button class="hidden" />
+
               <button
                 v-if="!hideCloser"
                 class="absolute z-20 bg-foundation rounded-full p-1"
@@ -56,6 +63,7 @@
                 <XMarkIcon class="h-5 sm:h-6 w-5 sm:w-6" />
               </button>
               <div
+                ref="slotContainer"
                 class="flex-1 simple-scrollbar overflow-y-auto"
                 :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-6 pt-10 sm:p-10'"
                 @scroll="onScroll"
@@ -99,6 +107,7 @@ import { FormButton, type LayoutDialogButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
 import { throttle, noop } from 'lodash'
+import { useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -131,6 +140,16 @@ const slots = useSlots()
 
 const scrolledFromTop = ref(false)
 const scrolledToBottom = ref(true)
+const slotContainer = ref<HTMLElement | null>(null)
+
+useResizeObserver(
+  slotContainer,
+  throttle<ResizeObserverCallback>(() => {
+    // Triggering onScroll on size change too so that we don't get stuck with shadows
+    // even tho the new content is not scrollable
+    onScroll({ target: slotContainer.value })
+  }, 60)
+)
 
 const isForm = computed(() => !!props.onSubmit)
 const hasButtons = computed(() => props.buttons || slots.buttons)
@@ -184,7 +203,9 @@ const onFormSubmit = (e: SubmitEvent) => {
   ;(props.onSubmit || noop)(e)
 }
 
-const onScroll = throttle((e: Event) => {
+const onScroll = throttle((e: { target: EventTarget | null }) => {
+  if (!e.target) return
+
   const target = e.target as HTMLElement
   const { scrollTop, offsetHeight, scrollHeight } = target
   scrolledFromTop.value = scrollTop > 0
