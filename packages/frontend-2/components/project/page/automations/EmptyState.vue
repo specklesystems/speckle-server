@@ -21,7 +21,12 @@
         </div>
       </div>
       <div>
-        <FormButton v-if="isAutomateEnabled" :icon-left="PlusIcon" size="lg">
+        <FormButton
+          v-if="isAutomateEnabled"
+          :icon-left="PlusIcon"
+          size="lg"
+          @click="$emit('new-automation')"
+        >
           New Automation
         </FormButton>
         <FormButton
@@ -49,7 +54,12 @@
         </FormButton>
       </div>
       <AutomateFunctionCardView>
-        <AutomateFunctionCard v-for="fn in functions" :key="fn.id" :fn="fn" />
+        <AutomateFunctionCard
+          v-for="fn in functions"
+          :key="fn.id"
+          :fn="fn"
+          @use="() => $emit('new-automation', fn.id)"
+        />
       </AutomateFunctionCardView>
     </div>
   </div>
@@ -69,6 +79,10 @@ graphql(`
     }
   }
 `)
+
+defineEmits<{
+  'new-automation': [fnId?: string]
+}>()
 
 const props = defineProps<{
   functions?: ProjectPageAutomationsEmptyState_QueryFragment

@@ -9,6 +9,8 @@
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateFunctionsPageItems_QueryFragment } from '~/lib/common/generated/gql/graphql'
 
+// TODO: Pagination
+
 graphql(`
   fragment AutomateFunctionsPageItems_Query on Query {
     automateFunctions(limit: 21, filter: { search: $search }) {

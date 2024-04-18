@@ -3,6 +3,7 @@
     <ProjectPageAutomationsHeader
       v-model:search="search"
       :has-automations="hasAutomations && isAutomateEnabled"
+      @new-automation="onNewAutomation"
     />
     <template v-if="loading">
       <CommonLoadingBar loading />
@@ -12,6 +13,7 @@
         v-if="!hasAutomations || !isAutomateEnabled"
         :functions="result"
         :is-automate-enabled="isAutomateEnabled"
+        @new-automation="onNewAutomation"
       />
       <template v-else>
         <template v-if="!automations.length">TODO: Search empty state</template>
@@ -25,6 +27,11 @@
         </template>
       </template>
     </template>
+    <AutomateAutomationCreateDialog
+      v-model:open="showNewAutomationDialog"
+      :project-id="projectId"
+      :selected-function-id="newAutomationTargetFnId"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -49,8 +56,16 @@ const { result, loading } = useQuery(
   })
 )
 
+const showNewAutomationDialog = ref(false)
+const newAutomationTargetFnId = ref<string>()
+
 const hasAutomations = computed(
   () => (result.value?.project?.automations.totalCount ?? 1) > 0
 )
 const automations = computed(() => result.value?.project?.automations.items || [])
+
+const onNewAutomation = (fnId?: string) => {
+  newAutomationTargetFnId.value = fnId
+  showNewAutomationDialog.value = true
+}
 </script>

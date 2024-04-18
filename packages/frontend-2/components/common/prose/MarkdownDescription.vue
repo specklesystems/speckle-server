@@ -9,10 +9,7 @@ const props = defineProps<{
   markdown: string | null | undefined
 }>()
 
-const { html: cleanReadmeHtml } = useMarkdown(
-  computed(() => props.markdown || ''),
-  { key: 'CommonProseMarkdownDescription' }
-)
+const { html: cleanReadmeHtml } = useMarkdown(computed(() => props.markdown || ''))
 
 // Scaling these down, cause these should appear smaller than the main site headings
 const proseClasses = ref([

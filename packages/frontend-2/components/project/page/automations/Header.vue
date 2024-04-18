@@ -21,7 +21,13 @@
       >
         Explore Functions
       </FormButton>
-      <FormButton :icon-left="PlusIcon" class="shrink-0">New Automation</FormButton>
+      <FormButton
+        :icon-left="PlusIcon"
+        class="shrink-0"
+        @click="$emit('new-automation')"
+      >
+        New Automation
+      </FormButton>
     </div>
   </div>
 </template>
@@ -29,6 +35,10 @@
 import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { automationFunctionsRoute } from '~/lib/common/helpers/route'
+
+defineEmits<{
+  'new-automation': []
+}>()
 
 defineProps<{
   hasAutomations?: boolean

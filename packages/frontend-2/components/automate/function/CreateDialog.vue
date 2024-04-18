@@ -39,14 +39,10 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
-import {
-  CommonStepsNumber,
-  type LayoutDialogButton,
-  type NumberStepType
-} from '@speckle/ui-components'
+import { CommonStepsNumber, type LayoutDialogButton } from '@speckle/ui-components'
 import type { CreatableFunctionTemplate } from '~/lib/automate/helpers/functions'
 import { automateGithubAppAuthorizationCallback } from '~/lib/common/helpers/route'
-import { useEnumSteps } from '~/lib/form/composables/steps'
+import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { useForm } from 'vee-validate'
 import { type Nullable, type SourceAppDefinition } from '@speckle/shared'
 import { useCreateAutomateFunction } from '~/lib/automate/composables/management'
@@ -140,28 +136,11 @@ const {
 } = useRuntimeConfig()
 const apiBaseUrl = useApiOrigin()
 const { enumStep, step } = useEnumSteps({ order: stepsOrder })
-
-const stepsWidgetSteps = computed((): NumberStepType[] =>
-  stepsWidgetData.value.map((step) => ({
-    name: step.title
-  }))
-)
-const stepsWidgetModel = computed({
-  get: () => {
-    // Translate stepsOrder idx to stepsWidgetData idx
-    const idx = stepsWidgetData.value.findIndex((step) => step.step === enumStep.value)
-    return idx === -1 ? 0 : idx
-  },
-  set: (newVal) => {
-    const stepsWidgetStep = stepsWidgetData.value[newVal]
-    if (stepsWidgetStep) {
-      enumStep.value = stepsWidgetStep.step
-    }
-  }
-})
-const shouldShowStepsWidget = computed(
-  () => !!stepsWidgetData.value.find((s) => s.step === enumStep.value)
-)
+const {
+  items: stepsWidgetSteps,
+  model: stepsWidgetModel,
+  shouldShowWidget: shouldShowStepsWidget
+} = useEnumStepsWidgetSetup({ enumStep, widgetStepsMap: stepsWidgetData })
 
 const title = computed(() => {
   switch (enumStep.value) {
