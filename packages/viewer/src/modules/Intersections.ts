@@ -1,7 +1,6 @@
 import {
   Box3,
   Camera,
-  type Intersection,
   Object3D,
   Plane,
   Ray,
@@ -12,7 +11,11 @@ import {
 } from 'three'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
-import { SpeckleRaycaster } from './objects/SpeckleRaycaster'
+import {
+  ExtendedIntersection,
+  ExtendedMeshIntersection,
+  SpeckleRaycaster
+} from './objects/SpeckleRaycaster'
 import { ObjectLayers } from '../IViewer'
 
 export class Intersections {
@@ -74,54 +77,86 @@ export class Intersections {
     scene: Scene,
     camera: Camera,
     point: Vector2,
-    nearest = true,
-    bounds: Box3 | null = null,
-    castLayers: Array<ObjectLayers> | undefined = undefined,
-    firstOnly = false
-  ): Array<Intersection> | null {
-    this.raycaster.setFromCamera(point, camera)
-    this.raycaster.firstHitOnly = firstOnly
-    return this.intersectInternal(scene, nearest, bounds, castLayers)
-  }
-
-  public intersectRay(
+    castLayers: ObjectLayers.STREAM_CONTENT_MESH,
+    nearest?: boolean,
+    bounds?: Box3,
+    firstOnly?: boolean
+  ): Array<ExtendedMeshIntersection>
+  public intersect(
     scene: Scene,
     camera: Camera,
-    ray: Ray,
+    point: Vector2,
+    castLayers?: Array<ObjectLayers>,
+    nearest?: boolean,
+    bounds?: Box3,
+    firstOnly?: boolean
+  ): Array<ExtendedIntersection> | null
+
+  public intersect(
+    scene: Scene,
+    camera: Camera,
+    point: Vector2,
+    castLayers: Array<ObjectLayers> | ObjectLayers | undefined = undefined,
     nearest = true,
-    bounds: Box3 | null = null,
-    castLayers: Array<ObjectLayers> | undefined = undefined,
+    bounds?: Box3,
     firstOnly = false
-  ): Array<Intersection> | null {
-    this.raycaster.camera = camera
-    this.raycaster.set(ray.origin, ray.direction)
+  ): Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null {
+    this.raycaster.setFromCamera(point, camera)
     this.raycaster.firstHitOnly = firstOnly
-    return this.intersectInternal(scene, nearest, bounds, castLayers)
+    const preserveMask = this.setRaycasterLayers(castLayers)
+    let result: Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null
+    if (castLayers === ObjectLayers.STREAM_CONTENT_MESH) {
+      result = this.intersectInternal<ExtendedMeshIntersection>(scene, nearest, bounds)
+    } else result = this.intersectInternal<ExtendedIntersection>(scene, nearest, bounds)
+    this.raycaster.layers.mask = preserveMask
+    return result
   }
 
-  private intersectInternal(
-    scene: Scene,
-    nearest: boolean,
-    bounds: Box3 | null,
-    castLayers: Array<ObjectLayers> | undefined
-  ): Array<Intersection> | null {
-    const preserveMask = this.raycaster.layers.mask
+  // public intersectRay(
+  //   scene: Scene,
+  //   camera: Camera,
+  //   ray: Ray,
+  //   nearest = true,
+  //   bounds: Box3 | null = null,
+  //   castLayers: Array<ObjectLayers> | undefined = undefined,
+  //   firstOnly = false
+  // ): Array<Intersection> | null {
+  //   this.raycaster.camera = camera
+  //   this.raycaster.set(ray.origin, ray.direction)
+  //   this.raycaster.firstHitOnly = firstOnly
+  //   return this.intersectInternal(scene, nearest, bounds, castLayers)
+  // }
 
+  private setRaycasterLayers(
+    castLayers: Array<ObjectLayers> | ObjectLayers | undefined
+  ): number {
+    const preserveMask = this.raycaster.layers.mask
     if (castLayers !== undefined) {
       this.raycaster.layers.disableAll()
-      castLayers.forEach((layer) => {
-        this.raycaster.layers.enable(layer)
-      })
+      if (Array.isArray(castLayers))
+        castLayers.forEach((layer) => {
+          this.raycaster.layers.enable(layer)
+        })
+      else {
+        this.raycaster.layers.enable(castLayers)
+      }
     }
+    return preserveMask
+  }
+
+  private intersectInternal<T extends ExtendedIntersection>(
+    scene: Scene,
+    nearest?: boolean,
+    bounds?: Box3
+  ): T[] | null {
+    let results: T[] | null = []
     const target = scene.getObjectByName('ContentGroup')
 
-    let results: Array<Intersection & { pointOnLine: Vector3 }> = []
     if (target) {
       // const start = performance.now()
       results = this.raycaster.intersectObjects(target.children)
       // Logger.warn('Interesct time -> ', performance.now() - start)
     }
-    this.raycaster.layers.mask = preserveMask
 
     if (results.length === 0) return null
     if (nearest)

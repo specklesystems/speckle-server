@@ -138,7 +138,7 @@ export class SectionOutlines extends Extension {
     const scratchBuffer = new Array<number>()
     for (let b = 0; b < batches.length; b++) {
       const plane = new Plane().copy(_plane)
-      batches[b].mesh.TAS!.shapecast({
+      batches[b].mesh.TAS.shapecast({
         intersectsTAS: (
           box: Box3
           // isLeaf: boolean,
@@ -154,14 +154,16 @@ export class SectionOutlines extends Extension {
           const localPlane = plane
           return localPlane.intersectsBox(box)
         },
-        intersectsTriangle(tri, i, contained, depth, batchObject) {
-          i
-          contained
-          depth
+        intersectsTriangle(tri, _i, _contained, _depth, batchObject) {
+          /** Catering to typescript */
+          /** We're intersecting the AS for meshes. There will always be a batchObject */
+          if (!batchObject) {
+            throw new Error('Null batch object in AS intersection!')
+          }
           // check each triangle edge to see if it intersects with the plane. If so then
           // add it to the list of segments.
           const material = batches[b].mesh.getBatchObjectMaterial(
-            batchObject!
+            batchObject
           ) as Material
           if (
             material instanceof SpeckleGhostMaterial ||

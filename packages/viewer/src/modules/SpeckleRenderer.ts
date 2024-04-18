@@ -131,7 +131,7 @@ export default class SpeckleRenderer {
   protected _renderOverride: (() => void) | null = null
 
   public viewer: Viewer // TEMPORARY
-  public pipeline!: Pipeline
+  public pipeline: Pipeline
   public input: Input
 
   /********************************

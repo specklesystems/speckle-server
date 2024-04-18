@@ -29,6 +29,7 @@ import { CameraController } from './extensions/CameraController'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Loader } from './loaders/Loader'
 import { type Constructor } from 'type-fest'
+import { RenderTree } from './tree/RenderTree'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -143,7 +144,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.clock = new Clock()
     this.inProgressOperations = 0
 
-    this.speckleRenderer = new SpeckleRenderer(this)
+    this.speckleRenderer = new SpeckleRenderer(this.tree, this)
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
 
@@ -303,8 +304,15 @@ export class Viewer extends EventEmitter implements IViewer {
     this.loaders[loader.resource] = loader
     const treeBuilt = await loader.load()
     if (treeBuilt) {
+      const renderTree: RenderTree | null = this.tree.getRenderTree(loader.resource)
+      /** Catering to typescript
+       *  The render tree can't be null, we've just built it
+       */
+      if (!renderTree) {
+        throw new Error(`Could not get render tree ${loader.resource}`)
+      }
       const t0 = performance.now()
-      for await (const step of this.speckleRenderer.addRenderTree(loader.resource)) {
+      for await (const step of this.speckleRenderer.addRenderTree(renderTree)) {
         step
         if (zoomToObject) {
           const extension = this.getExtension(CameraController)

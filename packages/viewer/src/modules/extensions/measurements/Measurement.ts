@@ -56,7 +56,7 @@ export abstract class Measurement extends Object3D {
     return new Box3().expandByPoint(this.startPoint).expandByPoint(this.endPoint)
   }
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public frameUpdate(camera: Camera, size: Vector2, _bounds: Box3) {
+  public frameUpdate(camera: Camera | null, size: Vector2, _bounds: Box3) {
     this.renderingCamera = camera
     this.renderingSize.copy(size)
   }

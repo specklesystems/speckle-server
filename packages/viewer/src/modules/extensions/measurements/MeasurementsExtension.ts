@@ -5,7 +5,10 @@ import { PerpendicularMeasurement } from './PerpendicularMeasurement'
 import { Material, Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
 import { PointToPointMeasurement } from './PointToPointMeasurement'
 import { Measurement, MeasurementState } from './Measurement'
-import { type ExtendedIntersection } from '../../objects/SpeckleRaycaster'
+import {
+  ExtendedMeshIntersection,
+  type ExtendedIntersection
+} from '../../objects/SpeckleRaycaster'
 import Logger from 'js-logger'
 import SpeckleMesh from '../../objects/SpeckleMesh'
 import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial'
@@ -108,25 +111,22 @@ export class MeasurementsExtension extends Extension {
     this.renderer.input.on(InputEvent.DoubleClick, this.onPointerDoubleClick.bind(this))
   }
 
-  public onLateUpdate(deltaTime: number) {
-    deltaTime
+  public onLateUpdate() {
     if (!this._enabled) return
+    const camera = this.renderer.renderingCamera
+    if (!camera) return
 
     this._frameLock = false
     this.renderer.renderer.getDrawingBufferSize(this.screenBuff0)
 
     if (this._activeMeasurement)
       this._activeMeasurement.frameUpdate(
-        this.renderer.renderingCamera!,
+        camera,
         this.screenBuff0,
         this.renderer.sceneBox
       )
     this.measurements.forEach((value: Measurement) => {
-      value.frameUpdate(
-        this.renderer.renderingCamera!,
-        this.screenBuff0,
-        this.renderer.sceneBox
-      )
+      value.frameUpdate(camera, this.screenBuff0, this.renderer.sceneBox)
     })
   }
 
@@ -137,6 +137,9 @@ export class MeasurementsExtension extends Extension {
   protected onPointerMove(data: Vector2 & { event: Event }) {
     if (!this._enabled || this._paused) return
 
+    const camera = this.renderer.renderingCamera
+    if (!camera) return
+
     if (this._frameLock) {
       return
     }
@@ -144,7 +147,7 @@ export class MeasurementsExtension extends Extension {
     let result: ExtendedIntersection[] =
       (this.renderer.intersections.intersect(
         this.renderer.scene,
-        this.renderer.renderingCamera!,
+        camera,
         data,
         true,
         this.renderer.clippingVolume,
@@ -163,24 +166,31 @@ export class MeasurementsExtension extends Extension {
       return
     }
 
-    if (!this._activeMeasurement) {
-      this.startMeasurement()
+    /** Catering to typescript
+     *  There will always be an intersected face. We're casting against indexed meshes only
+     */
+    if (result[0].face) {
+      this.pointBuff.copy(result[0].point)
+      this.normalBuff.copy(result[0].face.normal)
     }
-    this._activeMeasurement!.isVisible = true
 
-    this.pointBuff.copy(result[0].point)
-    this.normalBuff.copy(result[0].face!.normal)
     if (this._options.vertexSnap) {
       this.snap(result[0], this.pointBuff, this.normalBuff)
     }
-    if (this._activeMeasurement!.state === MeasurementState.DANGLING_START) {
-      this._activeMeasurement!.startPoint.copy(this.pointBuff)
-      this._activeMeasurement!.startNormal.copy(this.normalBuff)
-    } else if (this._activeMeasurement!.state === MeasurementState.DANGLING_END) {
-      this._activeMeasurement!.endPoint.copy(this.pointBuff)
-      this._activeMeasurement!.endNormal.copy(this.normalBuff)
+
+    if (!this._activeMeasurement) {
+      this._activeMeasurement = this.startMeasurement()
+      this._activeMeasurement.isVisible = true
     }
-    this._activeMeasurement!.update()
+
+    if (this._activeMeasurement.state === MeasurementState.DANGLING_START) {
+      this._activeMeasurement.startPoint.copy(this.pointBuff)
+      this._activeMeasurement.startNormal.copy(this.normalBuff)
+    } else if (this._activeMeasurement.state === MeasurementState.DANGLING_END) {
+      this._activeMeasurement.endPoint.copy(this.pointBuff)
+      this._activeMeasurement.endNormal.copy(this.normalBuff)
+    }
+    this._activeMeasurement.update()
 
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
@@ -232,21 +242,21 @@ export class MeasurementsExtension extends Extension {
 
   protected autoLazerMeasure(data: Vector2) {
     if (!this._activeMeasurement) return
+    if (!this.renderer.renderingCamera) return
 
     this._activeMeasurement.state = MeasurementState.DANGLING_START
-    let result: ExtendedIntersection[] =
-      (this.renderer.intersections.intersect(
-        this.renderer.scene,
-        this.renderer.renderingCamera!,
-        data,
-        true,
-        this.renderer.clippingVolume,
-        [ObjectLayers.STREAM_CONTENT_MESH]
-      ) as ExtendedIntersection[]) || []
+    let result: ExtendedMeshIntersection[] = this.renderer.intersections.intersect(
+      this.renderer.scene,
+      this.renderer.renderingCamera,
+      data,
+      ObjectLayers.STREAM_CONTENT_MESH,
+      true,
+      this.renderer.clippingVolume
+    )
 
     result = result.filter((value) => {
-      const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
-        value.batchObject as BatchObject
+      const material = value.object.getBatchObjectMaterial(
+        value.batchObject
       ) as Material
       return !(material instanceof SpeckleGhostMaterial) && material.visible
     })
@@ -254,7 +264,7 @@ export class MeasurementsExtension extends Extension {
     if (!result.length) return
 
     const startPoint = new Vector3().copy(result[0].point)
-    const startNormal = new Vector3().copy(result[0].face!.normal)
+    const startNormal = new Vector3().copy(result[0].face.normal)
 
     const offsetPoint = new Vector3()
       .copy(startPoint)
@@ -262,7 +272,7 @@ export class MeasurementsExtension extends Extension {
     let perpResult: ExtendedIntersection[] =
       (this.renderer.intersections.intersectRay(
         this.renderer.scene,
-        this.renderer.renderingCamera!,
+        this.renderer.renderingCamera,
         new Ray(offsetPoint, startNormal),
         true,
         this.renderer.clippingVolume,
@@ -284,25 +294,28 @@ export class MeasurementsExtension extends Extension {
     this._activeMeasurement.startPoint.copy(startPoint)
     this._activeMeasurement.startNormal.copy(startNormal)
     this._activeMeasurement.endPoint.copy(perpResult[0].point)
-    this._activeMeasurement.endNormal.copy(perpResult[0].face!.normal)
+    this._activeMeasurement.endNormal.copy(perpResult[0].face.normal)
     this._activeMeasurement.state = MeasurementState.DANGLING_END
     this._activeMeasurement.update()
     this.finishMeasurement()
   }
 
-  protected startMeasurement(): void {
+  protected startMeasurement(): Measurement {
+    let measurement: Measurement
     if (this._options.type === MeasurementType.PERPENDICULAR)
-      this._activeMeasurement = new PerpendicularMeasurement()
+      measurement = new PerpendicularMeasurement()
     else if (this._options.type === MeasurementType.POINTTOPOINT)
-      this._activeMeasurement = new PointToPointMeasurement()
+      measurement = new PointToPointMeasurement()
+    else throw new Error('Unsupported measurement type!')
 
-    this._activeMeasurement!.state = MeasurementState.DANGLING_START
-    this._activeMeasurement!.frameUpdate(
-      this.renderer.renderingCamera!,
+    measurement.state = MeasurementState.DANGLING_START
+    measurement.frameUpdate(
+      this.renderer.renderingCamera,
       this.screenBuff0,
       this.renderer.sceneBox
     )
-    this.renderer.scene.add(this._activeMeasurement!)
+    this.renderer.scene.add(measurement)
+    return measurement
   }
 
   protected cancelMeasurement() {
@@ -313,12 +326,12 @@ export class MeasurementsExtension extends Extension {
   }
 
   protected finishMeasurement() {
-    this._activeMeasurement!.state = MeasurementState.COMPLETE
-    this._activeMeasurement!.update()
-    if (this._activeMeasurement!.value > 0) {
-      this.measurements.push(this._activeMeasurement!)
+    this._activeMeasurement.state = MeasurementState.COMPLETE
+    this._activeMeasurement.update()
+    if (this._activeMeasurement.value > 0) {
+      this.measurements.push(this._activeMeasurement)
     } else {
-      this.renderer.scene.remove(this._activeMeasurement!)
+      this.renderer.scene.remove(this._activeMeasurement)
       Logger.error('Ignoring zero value measurement!')
     }
     this._activeMeasurement = null
@@ -364,7 +377,7 @@ export class MeasurementsExtension extends Extension {
     this.measurements.forEach((value) => {
       value.highlight(false)
     })
-    this.raycaster.setFromCamera(data, this.renderer.renderingCamera!)
+    this.raycaster.setFromCamera(data, this.renderer.renderingCamera)
     const res = this.raycaster.intersectObjects(this.measurements, false)
     return res[0]?.object as Measurement
   }
@@ -380,18 +393,18 @@ export class MeasurementsExtension extends Extension {
     outPoint: Vector3,
     outNormal: Vector3
   ) {
-    const v0 = intersection
-      .batchObject!.accelerationStructure.getVertexAtIndex(intersection.face!.a)
-      .project(this.renderer.renderingCamera!)
-    const v1 = intersection
-      .batchObject!.accelerationStructure.getVertexAtIndex(intersection.face!.b)
-      .project(this.renderer.renderingCamera!)
-    const v2 = intersection
-      .batchObject!.accelerationStructure.getVertexAtIndex(intersection.face!.c)
-      .project(this.renderer.renderingCamera!)
+    const v0 = intersection.batchObject.accelerationStructure
+      .getVertexAtIndex(intersection.face.a)
+      .project(this.renderer.renderingCamera)
+    const v1 = intersection.batchObject.accelerationStructure
+      .getVertexAtIndex(intersection.face.b)
+      .project(this.renderer.renderingCamera)
+    const v2 = intersection.batchObject.accelerationStructure
+      .getVertexAtIndex(intersection.face.c)
+      .project(this.renderer.renderingCamera)
 
     const projectedIntersection = intersection.point.project(
-      this.renderer.renderingCamera!
+      this.renderer.renderingCamera
     )
     const tri = [v0, v1, v2]
     tri.sort((a, b) => {
@@ -404,10 +417,10 @@ export class MeasurementsExtension extends Extension {
     )
     this.screenBuff0.set(closestScreen.x, closestScreen.y)
     this.screenBuff1.set(intersectionScreen.x, intersectionScreen.y)
-    const unprojectedPoint = tri[0].unproject(this.renderer.renderingCamera!)
+    const unprojectedPoint = tri[0].unproject(this.renderer.renderingCamera)
     if (this.screenBuff0.distanceTo(this.screenBuff1) < 10 * window.devicePixelRatio) {
       outPoint.copy(unprojectedPoint)
-      outNormal.copy(intersection.face!.normal)
+      outNormal.copy(intersection.face.normal)
     }
   }
 

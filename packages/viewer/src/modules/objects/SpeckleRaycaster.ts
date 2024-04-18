@@ -1,15 +1,17 @@
 import {
   Box3,
   type Intersection,
-  Material,
   Object3D,
   Raycaster,
   Vector3,
-  RaycasterParameters
+  RaycasterParameters,
+  Face
 } from 'three'
 import { ExtendedTriangle, ShapecastIntersection } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import { ObjectLayers } from '../../IViewer'
+import SpeckleMesh from './SpeckleMesh'
+import SpeckleInstancedMesh from './SpeckleInstancedMesh'
 
 export type ExtendedShapeCastCallbacks = {
   intersectsTAS?: (
@@ -53,7 +55,14 @@ export type ExtendedShapeCastCallbacks = {
 
 export interface ExtendedIntersection extends Intersection {
   batchObject?: BatchObject
-  material?: Material
+  pointOnLine?: Vector3
+  // material?: Material
+}
+
+export interface ExtendedMeshIntersection extends ExtendedIntersection {
+  batchObject: BatchObject
+  face: Face
+  object: SpeckleMesh | SpeckleInstancedMesh
 }
 
 export interface ExtendedRaycasterParameters extends RaycasterParameters {

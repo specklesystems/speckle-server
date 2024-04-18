@@ -166,7 +166,7 @@ export class SelectionExtension extends Extension {
     const rvs: Array<NodeRenderView> = []
     nodes.forEach((node: TreeNode) => {
       rvs.push(
-        ...this.viewer.getWorldTree().getRenderTree()!.getRenderViewsForNode(node)
+        ...this.viewer.getWorldTree().getRenderTree().getRenderViewsForNode(node)
       )
     })
     this.removeSelection(rvs)
@@ -206,6 +206,8 @@ export class SelectionExtension extends Extension {
 
   protected onPointerMove(e: Vector2 & { event: Event }) {
     if (!this._enabled) return
+    const camera = this.viewer.getRenderer().renderingCamera
+    if (!camera) return
 
     if (!this.options.hoverMaterialData) return
     const result =
@@ -213,7 +215,7 @@ export class SelectionExtension extends Extension {
         .getRenderer()
         .intersections.intersect(
           this.viewer.getRenderer().scene,
-          this.viewer.getRenderer().renderingCamera!,
+          camera,
           e,
           true,
           this.viewer.getRenderer().clippingVolume,
@@ -241,7 +243,7 @@ export class SelectionExtension extends Extension {
     for (let k = 0; k < this.selectedNodes.length; k++) {
       const rvs = this.viewer
         .getWorldTree()
-        .getRenderTree()!
+        .getRenderTree()
         .getRenderViewsForNode(this.selectedNodes[k])
       rvs.forEach((rv: NodeRenderView) => {
         if (!this.selectionRvs[rv.guid]) this.selectionRvs[rv.guid] = rv

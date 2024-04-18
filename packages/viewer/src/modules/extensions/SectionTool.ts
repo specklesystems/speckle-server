@@ -190,10 +190,15 @@ export class SectionTool extends Extension {
   }
 
   private _setupControls() {
+    const camera = this.viewer.getRenderer().renderingCamera
+    if (!camera) {
+      throw new Error('Cannot create SectionTool extension. No rendering camera found')
+    }
+
     this.controls?.dispose()
     this.controls?.detach()
     this.controls = new TransformControls(
-      this.viewer.getRenderer().renderingCamera!,
+      camera,
       this.viewer.getRenderer().renderer.domElement
     )
     for (let k = 0; k < this.controls?.children.length; k++) {
@@ -295,10 +300,14 @@ export class SectionTool extends Extension {
     this.hoverPlane.visible = true
     const side =
       this.sidesSimple[
-        `${intersectedObjects[0].face!.a}${intersectedObjects[0].face!.b}${
-          intersectedObjects[0].face!.c
-        }`
+        `${intersectedObjects[0].face?.a}${intersectedObjects[0].face?.b}${intersectedObjects[0].face?.c}`
       ]
+    /** Catering to typescript
+     *  We're intersection an indexed mesh. There will always be an intersected face
+     */
+    if (!side) {
+      throw new Error('Cannot determine section side')
+    }
     this.controls.showX = side.axis === 'x'
     this.controls.showY = side.axis === 'y'
     this.controls.showZ = side.axis === 'z'
