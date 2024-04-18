@@ -97,8 +97,6 @@ export const useAccountStore = defineStore('accountStore', () => {
     void testAccounts()
   })
 
-  void refreshAccounts()
-
   app.vueApp.provide(ApolloClients, apolloClients)
   return {
     isLoading,
