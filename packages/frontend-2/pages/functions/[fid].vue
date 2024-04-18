@@ -2,8 +2,16 @@
   <div class="mx-auto max-w-[864px]">
     <CommonLoadingBar :loading="loading" />
     <template v-if="!loading && fn">
-      <AutomateFunctionPageHeader :fn="fn" class="mb-12" />
+      <AutomateFunctionPageHeader
+        :fn="fn"
+        class="mb-12"
+        @create-automation="showNewAutomationDialog = true"
+      />
       <AutomateFunctionPageInfo :fn="fn" />
+      <AutomateAutomationCreateDialog
+        v-model:open="showNewAutomationDialog"
+        :preselected-function="fn"
+      />
     </template>
   </div>
 </template>
@@ -19,6 +27,7 @@ const pageQuery = graphql(`
     automateFunction(id: $functionId) {
       ...AutomateFunctionPageHeader_Function
       ...AutomateFunctionPageInfo_AutomateFunction
+      ...AutomateAutomationCreateDialog_AutomateFunction
     }
   }
 `)
@@ -33,6 +42,8 @@ const loading = useQueryLoading()
 const { result } = useQuery(pageQuery, () => ({
   functionId: functionId.value
 }))
+
+const showNewAutomationDialog = ref(false)
 
 const fn = computed(() => result.value?.automateFunction)
 </script>

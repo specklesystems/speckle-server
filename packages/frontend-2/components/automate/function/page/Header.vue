@@ -16,7 +16,9 @@
       <h1 class="h3 font-bold">{{ fn.name }}</h1>
     </div>
     <div class="flex gap-2">
-      <FormButton :icon-left="BoltIcon">Create Automation</FormButton>
+      <FormButton :icon-left="BoltIcon" @click="$emit('createAutomation')">
+        Create Automation
+      </FormButton>
     </div>
   </div>
 </template>
@@ -28,7 +30,10 @@ import {
   automationFunctionRoute,
   automationFunctionsRoute
 } from '~/lib/common/helpers/route'
-// TODO: Create automation dialog
+
+defineEmits<{
+  createAutomation: []
+}>()
 
 graphql(`
   fragment AutomateFunctionPageHeader_Function on AutomateFunction {
