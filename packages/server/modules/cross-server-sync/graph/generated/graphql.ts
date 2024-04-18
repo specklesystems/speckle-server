@@ -1752,6 +1752,7 @@ export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
   create: Automation;
   createRevision: AutomationRevision;
+  trigger: Scalars['Boolean'];
   update: Automation;
 };
 
@@ -1763,6 +1764,11 @@ export type ProjectAutomationMutationsCreateArgs = {
 
 export type ProjectAutomationMutationsCreateRevisionArgs = {
   input: ProjectAutomationRevisionCreateInput;
+};
+
+
+export type ProjectAutomationMutationsTriggerArgs = {
+  automationId: Scalars['ID'];
 };
 
 

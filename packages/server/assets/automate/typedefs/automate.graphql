@@ -178,6 +178,7 @@ type ProjectAutomationMutations {
   create(input: ProjectAutomationCreateInput!): Automation!
   update(input: ProjectAutomationUpdateInput!): Automation!
   createRevision(input: ProjectAutomationRevisionCreateInput!): AutomationRevision!
+  trigger(automationId: ID!): Boolean!
 }
 
 extend type ProjectMutations {

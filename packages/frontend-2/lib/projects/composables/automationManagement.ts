@@ -12,6 +12,7 @@ import {
 import {
   createAutomationMutation,
   createAutomationRevisionMutation,
+  triggerAutomationMutation,
   updateAutomationMutation
 } from '~/lib/projects/graphql/mutations'
 
@@ -103,5 +104,36 @@ export function useCreateAutomationRevision() {
     }
 
     return res?.data?.projectMutations?.automationMutations?.createRevision
+  }
+}
+
+export const useTriggerAutomation = () => {
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+  const { mutate } = useMutation(triggerAutomationMutation)
+
+  return async (projectId: string, automationId: string) => {
+    if (!activeUser.value) return
+
+    const res = await mutate({
+      projectId,
+      automationId
+    }).catch(convertThrowIntoFetchResult)
+
+    if (res?.data?.projectMutations?.automationMutations?.trigger) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Automation triggered'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to trigger automation',
+        description: errMsg
+      })
+    }
+
+    return !!res?.data?.projectMutations?.automationMutations?.trigger
   }
 }

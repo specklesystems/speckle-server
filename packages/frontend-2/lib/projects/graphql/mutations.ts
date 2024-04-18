@@ -204,3 +204,13 @@ export const createAutomationRevisionMutation = graphql(`
     }
   }
 `)
+
+export const triggerAutomationMutation = graphql(`
+  mutation TriggerAutomation($projectId: ID!, $automationId: ID!) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        trigger(automationId: $automationId)
+      }
+    }
+  }
+`)

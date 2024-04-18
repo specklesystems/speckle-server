@@ -147,7 +147,8 @@ export async function buildMocksConfig(): Promise<{
             id,
             ...(name?.length ? { name } : {})
           }
-        }
+        },
+        trigger: () => true
       },
       UserAutomateInfo: {
         hasAutomateGithubApp: () => {

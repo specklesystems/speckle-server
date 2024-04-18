@@ -1762,6 +1762,7 @@ export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
   create: Automation;
   createRevision: AutomationRevision;
+  trigger: Scalars['Boolean'];
   update: Automation;
 };
 
@@ -1773,6 +1774,11 @@ export type ProjectAutomationMutationsCreateArgs = {
 
 export type ProjectAutomationMutationsCreateRevisionArgs = {
   input: ProjectAutomationRevisionCreateInput;
+};
+
+
+export type ProjectAutomationMutationsTriggerArgs = {
+  automationId: Scalars['ID'];
 };
 
 
@@ -4448,6 +4454,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
 export type ProjectAutomationMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectAutomationMutations'] = ResolversParentTypes['ProjectAutomationMutations']> = {
   create?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateArgs, 'input'>>;
   createRevision?: Resolver<ResolversTypes['AutomationRevision'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateRevisionArgs, 'input'>>;
+  trigger?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsTriggerArgs, 'automationId'>>;
   update?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
