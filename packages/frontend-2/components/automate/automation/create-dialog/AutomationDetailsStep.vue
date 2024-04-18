@@ -11,6 +11,7 @@
       mount-menu-on-body
       :rules="projectRules"
       :allow-unset="false"
+      validate-on-value-update
     />
     <FormSelectModels
       v-if="project?.id"
@@ -24,6 +25,7 @@
       mount-menu-on-body
       :rules="modelRules"
       :allow-unset="false"
+      validate-on-value-update
     />
     <FormTextInput
       v-model="automationName"
@@ -34,6 +36,7 @@
       placeholder="Automation Name"
       :rules="nameRules"
       show-required
+      validate-on-value-update
     />
   </div>
 </template>

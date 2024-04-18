@@ -19,6 +19,7 @@
           show-label
           show-required
           :rules="nameRules"
+          validate-on-value-update
         />
       </div>
     </div>
@@ -28,6 +29,7 @@
       show-label
       show-required
       :rules="descriptionRules"
+      validate-on-value-update
     />
     <FormSelectSourceApps
       name="allowedSourceApps"
@@ -37,6 +39,7 @@
       help="Versions submitted from these apps will support this function. If left empty, all apps will be supported."
       clearable
       button-style="tinted"
+      validate-on-value-update
     />
     <FormTags
       name="tags"
@@ -44,6 +47,7 @@
       show-label
       show-clear
       help="Appropriate tags will help other people find your function."
+      validate-on-value-update
     />
     <FormSelectBase
       v-if="githubOrgs.length"
@@ -57,6 +61,7 @@
       help="Choose an organization to publish your Git repository to. If left empty, it will be published to your personal account."
       :items="githubOrgs"
       mount-menu-on-body
+      validate-on-value-update
     >
       <template #something-selected="{ value }">
         <div class="label label--light">
