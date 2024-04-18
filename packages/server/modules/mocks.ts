@@ -6,7 +6,7 @@ import {
   Resolvers
 } from '@/modules/core/graph/generated/graphql'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { Automate, Roles } from '@speckle/shared'
+import { Automate, Roles, isNullOrUndefined } from '@speckle/shared'
 import { times } from 'lodash'
 import { IMockStore, IMocks } from '@graphql-tools/mock'
 import dayjs from 'dayjs'
@@ -139,13 +139,14 @@ export async function buildMocksConfig(): Promise<{
       ProjectAutomationMutations: {
         update: (_parent, args) => {
           const {
-            input: { id, name }
+            input: { id, name, enabled }
           } = args
           const automation = store.get('Automation') as any
           return {
             ...automation,
             id,
-            ...(name?.length ? { name } : {})
+            ...(name?.length ? { name } : {}),
+            ...(isNullOrUndefined(enabled) ? {} : { enabled })
           }
         },
         trigger: () => true

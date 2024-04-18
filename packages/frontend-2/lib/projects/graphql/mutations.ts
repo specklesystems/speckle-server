@@ -184,6 +184,7 @@ export const updateAutomationMutation = graphql(`
         update(input: $input) {
           id
           name
+          enabled
         }
       }
     }

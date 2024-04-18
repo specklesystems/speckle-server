@@ -47,6 +47,8 @@ export const Default: SwitchStoryType = {
     }
   }),
   args: {
-    modelValue: false
+    modelValue: false,
+    name: 'switch',
+    label: 'Example switch'
   }
 }
