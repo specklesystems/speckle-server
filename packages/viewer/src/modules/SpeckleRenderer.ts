@@ -197,7 +197,6 @@ export default class SpeckleRenderer {
 
   public set indirectIBL(texture: Texture) {
     this._scene.environment = texture
-    this._scene.background = texture
   }
 
   public set indirectIBLIntensity(value: number) {

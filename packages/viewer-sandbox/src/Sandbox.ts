@@ -35,6 +35,8 @@ import hdri5 from '../assets/5.png'
 import hdri6 from '../assets/6.png'
 
 import { Euler, Vector3 } from 'three'
+import { GeometryType } from '@speckle/viewer'
+import { MeshBatch } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -847,7 +849,8 @@ export default class Sandbox {
       expanded: true
     })
     const hdriParams = {
-      id: 1
+      id: 1,
+      minRoughness: 0
     }
     indirectLightsFolder
       .addInput(hdriParams, 'id', {
@@ -874,6 +877,25 @@ export default class Sandbox {
         this.viewer.requestRender()
       })
 
+    indirectLightsFolder
+      .addInput(hdriParams, 'minRoughness', {
+        label: 'Min Roughness',
+        min: 0,
+        max: 1,
+        step: 0.05
+      })
+      .on('change', (value) => {
+        const batches = this.viewer
+          .getRenderer()
+          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+        batches.forEach((batch: MeshBatch) => {
+          const material = batch.batchMaterial
+          material.roughness = value.value
+          material.needsCopy = true
+          this.viewer.getRenderer().setMaterial(batch.renderViews, material)
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+      })
     indirectLightsFolder
       .addInput(this.lightParams, 'indirectLightIntensity', {
         label: 'Probe Intensity',
