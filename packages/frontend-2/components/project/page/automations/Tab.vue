@@ -30,13 +30,14 @@
     <AutomateAutomationCreateDialog
       v-model:open="showNewAutomationDialog"
       :project-id="projectId"
-      :selected-function-id="newAutomationTargetFnId"
+      :preselected-function="newAutomationTargetFn"
     />
   </div>
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import { projectAutomationsTabQuery } from '~/lib/projects/graphql/queries'
+import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
@@ -57,15 +58,15 @@ const { result, loading } = useQuery(
 )
 
 const showNewAutomationDialog = ref(false)
-const newAutomationTargetFnId = ref<string>()
+const newAutomationTargetFn = ref<CreateAutomationSelectableFunction>()
 
 const hasAutomations = computed(
   () => (result.value?.project?.automations.totalCount ?? 1) > 0
 )
 const automations = computed(() => result.value?.project?.automations.items || [])
 
-const onNewAutomation = (fnId?: string) => {
-  newAutomationTargetFnId.value = fnId
+const onNewAutomation = (fn?: CreateAutomationSelectableFunction) => {
+  newAutomationTargetFn.value = fn
   showNewAutomationDialog.value = true
 }
 </script>

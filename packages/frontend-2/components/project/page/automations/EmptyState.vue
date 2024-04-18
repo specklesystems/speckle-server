@@ -58,7 +58,7 @@
           v-for="fn in functions"
           :key="fn.id"
           :fn="fn"
-          @use="() => $emit('new-automation', fn.id)"
+          @use="() => $emit('new-automation', fn)"
         />
       </AutomateFunctionCardView>
     </div>
@@ -69,19 +69,21 @@ import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationsEmptyState_QueryFragment } from '~/lib/common/generated/gql/graphql'
 import { automationFunctionsRoute } from '~/lib/common/helpers/route'
+import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 
 graphql(`
   fragment ProjectPageAutomationsEmptyState_Query on Query {
     automateFunctions(limit: 9) {
       items {
         ...AutomationsFunctionsCard_AutomateFunction
+        ...AutomateAutomationCreateDialog_AutomateFunction
       }
     }
   }
 `)
 
 defineEmits<{
-  'new-automation': [fnId?: string]
+  'new-automation': [fn?: CreateAutomationSelectableFunction]
 }>()
 
 const props = defineProps<{

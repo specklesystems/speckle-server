@@ -19,7 +19,9 @@ const documents = {
     "\n  query EmailVerificationBannerState {\n    activeUser {\n      id\n      email\n      verified\n      hasPendingVerification\n    }\n  }\n": types.EmailVerificationBannerStateDocument,
     "\n  mutation RequestVerification {\n    requestVerification\n  }\n": types.RequestVerificationDocument,
     "\n  fragment AuthStategiesServerInfoFragment on ServerInfo {\n    authStrategies {\n      id\n      name\n      url\n    }\n  }\n": types.AuthStategiesServerInfoFragmentFragmentDoc,
-    "\n  query AutomationCreateDialogFunctionsSearch($search: String) {\n    automateFunctions(limit: 21, filter: { search: $search }) {\n      items {\n        id\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n": types.AutomationCreateDialogFunctionsSearchDocument,
+    "\n  fragment AutomateAutomationCreateDialog_AutomateFunction on AutomateFunction {\n    id\n    ...AutomationsFunctionsCard_AutomateFunction\n    ...AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction\n  }\n": types.AutomateAutomationCreateDialog_AutomateFunctionFragmentDoc,
+    "\n  fragment AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction on AutomateFunction {\n    id\n    releases(limit: 1) {\n      items {\n        id\n        inputSchema\n      }\n    }\n  }\n": types.AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunctionFragmentDoc,
+    "\n  query AutomationCreateDialogFunctionsSearch($search: String) {\n    automateFunctions(limit: 21, filter: { search: $search }) {\n      items {\n        id\n        ...AutomateAutomationCreateDialog_AutomateFunction\n      }\n    }\n  }\n": types.AutomationCreateDialogFunctionsSearchDocument,
     "\n  fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {\n    id\n    name\n    isFeatured\n    description\n    logo\n    creator {\n      id\n      name\n    }\n  }\n": types.AutomationsFunctionsCard_AutomateFunctionFragmentDoc,
     "\n  fragment AutomateFunctionCreateDialogDoneStep_AutomateFunction on AutomateFunction {\n    id\n    repoUrl\n    ...AutomationsFunctionsCard_AutomateFunction\n  }\n": types.AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragmentDoc,
     "\n  fragment AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplate on AutomateFunctionTemplate {\n    id\n    title\n    logo\n    url\n  }\n": types.AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplateFragmentDoc,
@@ -53,7 +55,7 @@ const documents = {
     "\n  fragment ProjectPageAutomationHeader_Automation on Automation {\n    id\n    name\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            ...ProjectPageLatestItemsModelItem\n          }\n        }\n      }\n    }\n  }\n": types.ProjectPageAutomationHeader_AutomationFragmentDoc,
     "\n  fragment ProjectPageAutomationHeader_Project on Project {\n    id\n    ...ProjectPageModelsCardProject\n  }\n": types.ProjectPageAutomationHeader_ProjectFragmentDoc,
     "\n  fragment ProjectPageAutomationRuns_Automation on Automation {\n    id\n    runs {\n      items {\n        ...AutomationRunDetails\n      }\n    }\n  }\n": types.ProjectPageAutomationRuns_AutomationFragmentDoc,
-    "\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions(limit: 9) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n": types.ProjectPageAutomationsEmptyState_QueryFragmentDoc,
+    "\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions(limit: 9) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n        ...AutomateAutomationCreateDialog_AutomateFunction\n      }\n    }\n  }\n": types.ProjectPageAutomationsEmptyState_QueryFragmentDoc,
     "\n  fragment ProjectPageAutomationsRow_Automation on Automation {\n    id\n    name\n    enabled\n    currentRevision {\n      id\n      triggerDefinitions {\n        ... on VersionCreatedTriggerDefinition {\n          model {\n            id\n            name\n          }\n        }\n      }\n    }\n    runs(limit: 5) {\n      totalCount\n      items {\n        ...AutomationRunDetails\n      }\n    }\n  }\n": types.ProjectPageAutomationsRow_AutomationFragmentDoc,
     "\n  fragment ProjectDiscussionsPageHeader_Project on Project {\n    id\n    name\n  }\n": types.ProjectDiscussionsPageHeader_ProjectFragmentDoc,
     "\n  fragment ProjectDiscussionsPageResults_Project on Project {\n    id\n  }\n": types.ProjectDiscussionsPageResults_ProjectFragmentDoc,
@@ -252,7 +254,15 @@ export function graphql(source: "\n  fragment AuthStategiesServerInfoFragment on
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query AutomationCreateDialogFunctionsSearch($search: String) {\n    automateFunctions(limit: 21, filter: { search: $search }) {\n      items {\n        id\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n"): (typeof documents)["\n  query AutomationCreateDialogFunctionsSearch($search: String) {\n    automateFunctions(limit: 21, filter: { search: $search }) {\n      items {\n        id\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment AutomateAutomationCreateDialog_AutomateFunction on AutomateFunction {\n    id\n    ...AutomationsFunctionsCard_AutomateFunction\n    ...AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction\n  }\n"): (typeof documents)["\n  fragment AutomateAutomationCreateDialog_AutomateFunction on AutomateFunction {\n    id\n    ...AutomationsFunctionsCard_AutomateFunction\n    ...AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  fragment AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction on AutomateFunction {\n    id\n    releases(limit: 1) {\n      items {\n        id\n        inputSchema\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction on AutomateFunction {\n    id\n    releases(limit: 1) {\n      items {\n        id\n        inputSchema\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query AutomationCreateDialogFunctionsSearch($search: String) {\n    automateFunctions(limit: 21, filter: { search: $search }) {\n      items {\n        id\n        ...AutomateAutomationCreateDialog_AutomateFunction\n      }\n    }\n  }\n"): (typeof documents)["\n  query AutomationCreateDialogFunctionsSearch($search: String) {\n    automateFunctions(limit: 21, filter: { search: $search }) {\n      items {\n        id\n        ...AutomateAutomationCreateDialog_AutomateFunction\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
@@ -388,7 +398,7 @@ export function graphql(source: "\n  fragment ProjectPageAutomationRuns_Automati
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions(limit: 9) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions(limit: 9) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions(limit: 9) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n        ...AutomateAutomationCreateDialog_AutomateFunction\n      }\n    }\n  }\n"): (typeof documents)["\n  fragment ProjectPageAutomationsEmptyState_Query on Query {\n    automateFunctions(limit: 9) {\n      items {\n        ...AutomationsFunctionsCard_AutomateFunction\n        ...AutomateAutomationCreateDialog_AutomateFunction\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

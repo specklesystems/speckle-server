@@ -10,14 +10,14 @@
     />
     <div class="mt-2">
       <CommonLoadingBar :loading="loading" />
-      <AutomateFunctionCardView small-view>
+      <AutomateFunctionCardView v-if="!!queryItems" small-view>
         <AutomateFunctionCard
           v-for="fn in items"
           :key="fn.id"
           :fn="fn"
           external-more-info
-          :selected="selectedFunctionId === fn.id"
-          @use="() => (selectedFunctionId = fn.id)"
+          :selected="selectedFunction && selectedFunction?.id === fn.id"
+          @use="() => (selectedFunction = fn)"
         />
       </AutomateFunctionCardView>
     </div>
@@ -27,6 +27,8 @@
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { useQueryLoading, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
+import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
+import type { Optional } from '@speckle/shared'
 
 // TODO: Pagination
 
@@ -35,20 +37,46 @@ const searchQuery = graphql(`
     automateFunctions(limit: 21, filter: { search: $search }) {
       items {
         id
-        ...AutomationsFunctionsCard_AutomateFunction
+        ...AutomateAutomationCreateDialog_AutomateFunction
       }
     }
   }
 `)
 
-const selectedFunctionId = defineModel<string | undefined>('selectedFunctionId', {
-  required: true
-})
+const props = defineProps<{
+  preselectedFunction: Optional<CreateAutomationSelectableFunction>
+}>()
+const selectedFunction = defineModel<Optional<CreateAutomationSelectableFunction>>(
+  'selectedFunction',
+  {
+    required: true
+  }
+)
 const { on, bind, value: search } = useDebouncedTextInput()
 const loading = useQueryLoading()
 const { result } = useQuery(searchQuery, () => ({
   search: search.value?.length ? search.value : null
 }))
 
-const items = computed(() => result.value?.automateFunctions.items || [])
+const queryItems = computed(() => result.value?.automateFunctions.items)
+const items = computed(() => {
+  const baseItems = (queryItems.value || []).slice()
+  const preselectedFn = props.preselectedFunction
+
+  if (!preselectedFn || baseItems.find((fn) => fn.id === preselectedFn.id)) {
+    return baseItems
+  }
+
+  return [preselectedFn, ...baseItems]
+})
+
+watch(
+  () => props.preselectedFunction,
+  (newVal) => {
+    if (newVal && !selectedFunction.value) {
+      selectedFunction.value = newVal
+    }
+  },
+  { immediate: true }
+)
 </script>
