@@ -142,6 +142,7 @@ const documents = {
     "\n  mutation deleteWebhook($webhook: WebhookDeleteInput!) {\n    webhookDelete(webhook: $webhook)\n  }\n": types.DeleteWebhookDocument,
     "\n  mutation createWebhook($webhook: WebhookCreateInput!) {\n    webhookCreate(webhook: $webhook)\n  }\n": types.CreateWebhookDocument,
     "\n  mutation updateWebhook($webhook: WebhookUpdateInput!) {\n    webhookUpdate(webhook: $webhook)\n  }\n": types.UpdateWebhookDocument,
+    "\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n  }\n": types.CreateAutomationDocument,
     "\n  mutation UpdateAutomation($projectId: ID!, $input: ProjectAutomationUpdateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        update(input: $input) {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.UpdateAutomationDocument,
     "\n  mutation CreateAutomationRevision(\n    $projectId: ID!\n    $input: ProjectAutomationRevisionCreateInput!\n  ) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        createRevision(input: $input) {\n          id\n        }\n      }\n    }\n  }\n": types.CreateAutomationRevisionDocument,
     "\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n    }\n  }\n": types.ProjectAccessCheckDocument,
@@ -745,6 +746,10 @@ export function graphql(source: "\n  mutation createWebhook($webhook: WebhookCre
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation updateWebhook($webhook: WebhookUpdateInput!) {\n    webhookUpdate(webhook: $webhook)\n  }\n"): (typeof documents)["\n  mutation updateWebhook($webhook: WebhookUpdateInput!) {\n    webhookUpdate(webhook: $webhook)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        create(input: $input) {\n          id\n          ...ProjectPageAutomationsRow_Automation\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

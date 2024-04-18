@@ -35,21 +35,39 @@
         v-model:automation-name="automationName"
         :preselected-project="preselectedProject"
       />
+      <AutomateAutomationCreateDialogDoneStep
+        v-else-if="
+          enumStep === AutomationCreateSteps.Done && automationId && selectedFunction
+        "
+        :automation-id="automationId"
+        :function-name="selectedFunction.name"
+      />
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { CommonStepsNumber, type LayoutDialogButton } from '@speckle/ui-components'
-import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
+import {
+  ArrowRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
+} from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
-import type { Optional } from '@speckle/shared'
+import { Automate, type Optional } from '@speckle/shared'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
-import type {
-  FormSelectModels_ModelFragment,
-  FormSelectProjects_ProjectFragment
+import {
+  AutomateRunTriggerType,
+  type FormSelectModels_ModelFragment,
+  type FormSelectProjects_ProjectFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useForm } from 'vee-validate'
+import {
+  useCreateAutomation,
+  useCreateAutomationRevision
+} from '~/lib/projects/composables/automationManagement'
+import { formatJsonFormSchemaInputs } from '~/lib/automate/helpers/jsonSchema'
+import { projectAutomationRoute } from '~/lib/common/helpers/route'
 
 enum AutomationCreateSteps {
   SelectFunction,
@@ -102,6 +120,8 @@ const stepsWidgetData = computed(() => [
 ])
 
 const logger = useLogger()
+const createAutomation = useCreateAutomation()
+const createRevision = useCreateAutomationRevision()
 const { enumStep, step } = useEnumSteps({ order: stepsOrder })
 const {
   items: stepsWidgetSteps,
@@ -109,6 +129,8 @@ const {
   shouldShowWidget: shouldShowStepsWidget
 } = useEnumStepsWidgetSetup({ enumStep, widgetStepsMap: stepsWidgetData })
 
+const creationLoading = ref(false)
+const automationId = ref<string>()
 const automationName = ref<string>()
 const selectedProject = ref<FormSelectProjects_ProjectFragment>()
 const selectedModel = ref<FormSelectModels_ModelFragment>()
@@ -164,7 +186,30 @@ const buttons = computed((): LayoutDialogButton[] => {
         },
         {
           text: 'Create',
-          submit: true
+          submit: true,
+          disabled: creationLoading.value
+        }
+      ]
+    case AutomationCreateSteps.Done:
+      return [
+        {
+          text: 'Close',
+          props: {
+            color: 'secondary',
+            fullWidth: true
+          },
+          onClick: () => (open.value = false)
+        },
+        {
+          text: 'Go to Automation',
+          props: {
+            iconRight: ArrowRightIcon,
+            fullWidth: true,
+            to:
+              selectedProject.value && automationId.value
+                ? projectAutomationRoute(selectedProject.value.id, automationId.value)
+                : undefined
+          }
         }
       ]
     default:
@@ -189,10 +234,80 @@ const reset = () => {
   selectedProject.value = undefined
   selectedModel.value = undefined
   automationName.value = undefined
+  automationId.value = undefined
 }
 
+// TODO: Filter fns that have releases
 const onDetailsSubmit = handleDetailsSubmit(async () => {
-  // TODO: Submit
+  const fn = selectedFunction.value
+  const fnRelease = selectedFunction.value?.releases.items[0]
+  const project = selectedProject.value
+  const model = selectedModel.value
+  const parameters = functionParameters.value
+  const name = automationName.value
+
+  if (!fn || !project || !model || !name?.length || !fnRelease) {
+    logger.error('Missing required data', {
+      fn,
+      project,
+      model,
+      parameters,
+      name,
+      fnRelease
+    })
+    return
+  }
+
+  creationLoading.value = true
+  try {
+    const createRes = await createAutomation({
+      projectId: project.id,
+      input: {
+        name,
+        enabled: false
+      }
+    })
+    const aId = (automationId.value = createRes?.id)
+    if (!aId) {
+      logger.error('Failed to create automation', { createRes })
+      return
+    }
+
+    const parametersString = parameters
+      ? JSON.stringify(
+          formatJsonFormSchemaInputs(parameters, fnRelease.inputSchema, {
+            clone: true
+          })
+        )
+      : null
+    const revisionRes = await createRevision({
+      projectId: project.id,
+      input: {
+        automationId: aId,
+        functions: [
+          {
+            functionId: fn.id,
+            releaseId: fnRelease.id,
+            parameters: parametersString
+          }
+        ],
+        triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+          version: Automate.AutomateTypes.TRIGGER_DEFINITIONS_SCHEMA_VERSION,
+          definitions: [
+            {
+              type: AutomateRunTriggerType.VersionCreated,
+              modelId: model.id
+            }
+          ]
+        }
+      }
+    })
+    if (revisionRes?.id) {
+      step.value++
+    }
+  } finally {
+    creationLoading.value = false
+  }
 })
 
 const onDialogSubmit = (e: SubmitEvent) => {

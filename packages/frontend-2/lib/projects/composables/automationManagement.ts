@@ -1,5 +1,7 @@
 import { useMutation } from '@vue/apollo-composable'
 import type {
+  CreateAutomationMutationVariables,
+  CreateAutomationRevisionMutationVariables,
   UpdateAutomationMutation,
   UpdateAutomationMutationVariables
 } from '~/lib/common/generated/gql/graphql'
@@ -7,7 +9,40 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~/lib/common/helpers/graphql'
-import { updateAutomationMutation } from '~/lib/projects/graphql/mutations'
+import {
+  createAutomationMutation,
+  createAutomationRevisionMutation,
+  updateAutomationMutation
+} from '~/lib/projects/graphql/mutations'
+
+// TODO: Cache updates
+
+export function useCreateAutomation() {
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+  const { mutate: createAutomation } = useMutation(createAutomationMutation)
+
+  return async (input: CreateAutomationMutationVariables) => {
+    if (!activeUser.value) return
+
+    const res = await createAutomation(input).catch(convertThrowIntoFetchResult)
+    if (res?.data?.projectMutations?.automationMutations?.create?.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Automation created'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to create automation',
+        description: errMsg
+      })
+    }
+
+    return res?.data?.projectMutations.automationMutations.create
+  }
+}
 
 export function useUpdateAutomation() {
   const { activeUser } = useActiveUser()
@@ -41,5 +76,32 @@ export function useUpdateAutomation() {
     }
 
     return result?.data?.projectMutations.automationMutations.update
+  }
+}
+
+export function useCreateAutomationRevision() {
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+  const { mutate } = useMutation(createAutomationRevisionMutation)
+
+  return async (input: CreateAutomationRevisionMutationVariables) => {
+    if (!activeUser.value) return
+
+    const res = await mutate(input).catch(convertThrowIntoFetchResult)
+    if (res?.data?.projectMutations?.automationMutations?.createRevision?.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Changes have been saved'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to save changes',
+        description: errMsg
+      })
+    }
+
+    return res?.data?.projectMutations?.automationMutations?.createRevision
   }
 }

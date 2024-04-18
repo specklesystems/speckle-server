@@ -87,8 +87,8 @@ import {
   type ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment,
   type SearchAutomateFunctionReleaseItemFragment
 } from '~/lib/common/generated/gql/graphql'
-import { useCreateAutomationRevision } from '~/lib/projects/composables/projectManagement'
 import { Automate } from '@speckle/shared'
+import { useCreateAutomationRevision } from '~/lib/projects/composables/automationManagement'
 
 // TODO: Encryption
 

@@ -1740,10 +1740,21 @@ export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']>;
 };
 
+export type ProjectAutomationCreateInput = {
+  enabled: Scalars['Boolean'];
+  name: Scalars['String'];
+};
+
 export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
-  createRevision?: Maybe<AutomationRevision>;
-  update?: Maybe<Automation>;
+  create: Automation;
+  createRevision: AutomationRevision;
+  update: Automation;
+};
+
+
+export type ProjectAutomationMutationsCreateArgs = {
+  input: ProjectAutomationCreateInput;
 };
 
 
@@ -1764,6 +1775,7 @@ export type ProjectAutomationRevisionCreateInput = {
 };
 
 export type ProjectAutomationUpdateInput = {
+  enabled?: InputMaybe<Scalars['Boolean']>;
   id: Scalars['ID'];
   name?: InputMaybe<Scalars['String']>;
 };
@@ -3752,13 +3764,21 @@ export type UpdateWebhookMutationVariables = Exact<{
 
 export type UpdateWebhookMutation = { __typename?: 'Mutation', webhookUpdate: string };
 
+export type CreateAutomationMutationVariables = Exact<{
+  projectId: Scalars['ID'];
+  input: ProjectAutomationCreateInput;
+}>;
+
+
+export type CreateAutomationMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', automationMutations: { __typename?: 'ProjectAutomationMutations', create: { __typename?: 'Automation', id: string, name: string, enabled: boolean, currentRevision?: { __typename?: 'AutomationRevision', id: string, triggerDefinitions: Array<{ __typename?: 'VersionCreatedTriggerDefinition', model: { __typename?: 'Model', id: string, name: string } }> } | null, runs: { __typename?: 'AutomateRunCollection', totalCount: number, items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, reason?: string | null, createdAt: string, updatedAt: string, trigger: { __typename?: 'VersionCreatedTrigger', version: { __typename?: 'Version', id: string }, model: { __typename?: 'Model', id: string } } }> } } } } };
+
 export type UpdateAutomationMutationVariables = Exact<{
   projectId: Scalars['ID'];
   input: ProjectAutomationUpdateInput;
 }>;
 
 
-export type UpdateAutomationMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', automationMutations: { __typename?: 'ProjectAutomationMutations', update?: { __typename?: 'Automation', id: string, name: string } | null } } };
+export type UpdateAutomationMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', automationMutations: { __typename?: 'ProjectAutomationMutations', update: { __typename?: 'Automation', id: string, name: string } } } };
 
 export type CreateAutomationRevisionMutationVariables = Exact<{
   projectId: Scalars['ID'];
@@ -3766,7 +3786,7 @@ export type CreateAutomationRevisionMutationVariables = Exact<{
 }>;
 
 
-export type CreateAutomationRevisionMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', automationMutations: { __typename?: 'ProjectAutomationMutations', createRevision?: { __typename?: 'AutomationRevision', id: string } | null } } };
+export type CreateAutomationRevisionMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', automationMutations: { __typename?: 'ProjectAutomationMutations', createRevision: { __typename?: 'AutomationRevision', id: string } } } };
 
 export type ProjectAccessCheckQueryVariables = Exact<{
   id: Scalars['String'];
@@ -4382,6 +4402,7 @@ export const UpdateVersionDocument = {"kind":"Document","definitions":[{"kind":"
 export const DeleteWebhookDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"deleteWebhook"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"webhook"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"WebhookDeleteInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"webhookDelete"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"webhook"},"value":{"kind":"Variable","name":{"kind":"Name","value":"webhook"}}}]}]}}]} as unknown as DocumentNode<DeleteWebhookMutation, DeleteWebhookMutationVariables>;
 export const CreateWebhookDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"createWebhook"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"webhook"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"WebhookCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"webhookCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"webhook"},"value":{"kind":"Variable","name":{"kind":"Name","value":"webhook"}}}]}]}}]} as unknown as DocumentNode<CreateWebhookMutation, CreateWebhookMutationVariables>;
 export const UpdateWebhookDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"updateWebhook"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"webhook"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"WebhookUpdateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"webhookUpdate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"webhook"},"value":{"kind":"Variable","name":{"kind":"Name","value":"webhook"}}}]}]}}]} as unknown as DocumentNode<UpdateWebhookMutation, UpdateWebhookMutationVariables>;
+export const CreateAutomationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateAutomation"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectAutomationCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automationMutations"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectPageAutomationsRow_Automation"}}]}}]}}]}}]}},...ProjectPageAutomationsRow_AutomationFragmentDoc.definitions,...AutomationRunDetailsFragmentDoc.definitions]} as unknown as DocumentNode<CreateAutomationMutation, CreateAutomationMutationVariables>;
 export const UpdateAutomationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"UpdateAutomation"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectAutomationUpdateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automationMutations"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"update"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]}}]}}]} as unknown as DocumentNode<UpdateAutomationMutation, UpdateAutomationMutationVariables>;
 export const CreateAutomationRevisionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateAutomationRevision"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectAutomationRevisionCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automationMutations"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"projectId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"createRevision"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]} as unknown as DocumentNode<CreateAutomationRevisionMutation, CreateAutomationRevisionMutationVariables>;
 export const ProjectAccessCheckDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectAccessCheck"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<ProjectAccessCheckQuery, ProjectAccessCheckQueryVariables>;

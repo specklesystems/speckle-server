@@ -148,6 +148,7 @@ extend type Project {
 input ProjectAutomationUpdateInput {
   id: ID!
   name: String
+  enabled: Boolean
 }
 
 input AutomationRevisionCreateFunctionInput {
@@ -168,9 +169,15 @@ input ProjectAutomationRevisionCreateInput {
   functions: [AutomationRevisionCreateFunctionInput!]!
 }
 
+input ProjectAutomationCreateInput {
+  name: String!
+  enabled: Boolean!
+}
+
 type ProjectAutomationMutations {
-  update(input: ProjectAutomationUpdateInput!): Automation
-  createRevision(input: ProjectAutomationRevisionCreateInput!): AutomationRevision
+  create(input: ProjectAutomationCreateInput!): Automation!
+  update(input: ProjectAutomationUpdateInput!): Automation!
+  createRevision(input: ProjectAutomationRevisionCreateInput!): AutomationRevision!
 }
 
 extend type ProjectMutations {

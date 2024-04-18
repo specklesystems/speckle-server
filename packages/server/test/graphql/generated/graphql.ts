@@ -1744,10 +1744,21 @@ export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']>;
 };
 
+export type ProjectAutomationCreateInput = {
+  enabled: Scalars['Boolean'];
+  name: Scalars['String'];
+};
+
 export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
-  createRevision?: Maybe<AutomationRevision>;
-  update?: Maybe<Automation>;
+  create: Automation;
+  createRevision: AutomationRevision;
+  update: Automation;
+};
+
+
+export type ProjectAutomationMutationsCreateArgs = {
+  input: ProjectAutomationCreateInput;
 };
 
 
@@ -1768,6 +1779,7 @@ export type ProjectAutomationRevisionCreateInput = {
 };
 
 export type ProjectAutomationUpdateInput = {
+  enabled?: InputMaybe<Scalars['Boolean']>;
   id: Scalars['ID'];
   name?: InputMaybe<Scalars['String']>;
 };

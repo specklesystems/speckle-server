@@ -1753,10 +1753,21 @@ export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']>;
 };
 
+export type ProjectAutomationCreateInput = {
+  enabled: Scalars['Boolean'];
+  name: Scalars['String'];
+};
+
 export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
-  createRevision?: Maybe<AutomationRevision>;
-  update?: Maybe<Automation>;
+  create: Automation;
+  createRevision: AutomationRevision;
+  update: Automation;
+};
+
+
+export type ProjectAutomationMutationsCreateArgs = {
+  input: ProjectAutomationCreateInput;
 };
 
 
@@ -1777,6 +1788,7 @@ export type ProjectAutomationRevisionCreateInput = {
 };
 
 export type ProjectAutomationUpdateInput = {
+  enabled?: InputMaybe<Scalars['Boolean']>;
   id: Scalars['ID'];
   name?: InputMaybe<Scalars['String']>;
 };
@@ -3458,7 +3470,8 @@ export type ResolversTypes = {
   PasswordStrengthCheckResults: ResolverTypeWrapper<PasswordStrengthCheckResults>;
   PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaboratorGraphQLReturn>;
   Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
-  ProjectAutomationMutations: ResolverTypeWrapper<Omit<ProjectAutomationMutations, 'createRevision' | 'update'> & { createRevision?: Maybe<ResolversTypes['AutomationRevision']>, update?: Maybe<ResolversTypes['Automation']> }>;
+  ProjectAutomationCreateInput: ProjectAutomationCreateInput;
+  ProjectAutomationMutations: ResolverTypeWrapper<Omit<ProjectAutomationMutations, 'create' | 'createRevision' | 'update'> & { create: ResolversTypes['Automation'], createRevision: ResolversTypes['AutomationRevision'], update: ResolversTypes['Automation'] }>;
   ProjectAutomationRevisionCreateInput: ProjectAutomationRevisionCreateInput;
   ProjectAutomationUpdateInput: ProjectAutomationUpdateInput;
   ProjectAutomationsStatusUpdatedMessage: ResolverTypeWrapper<Omit<ProjectAutomationsStatusUpdatedMessage, 'model' | 'project' | 'status' | 'version'> & { model: ResolversTypes['Model'], project: ResolversTypes['Project'], status: ResolversTypes['AutomationsStatus'], version: ResolversTypes['Version'] }>;
@@ -3664,7 +3677,8 @@ export type ResolversParentTypes = {
   PasswordStrengthCheckResults: PasswordStrengthCheckResults;
   PendingStreamCollaborator: PendingStreamCollaboratorGraphQLReturn;
   Project: ProjectGraphQLReturn;
-  ProjectAutomationMutations: Omit<ProjectAutomationMutations, 'createRevision' | 'update'> & { createRevision?: Maybe<ResolversParentTypes['AutomationRevision']>, update?: Maybe<ResolversParentTypes['Automation']> };
+  ProjectAutomationCreateInput: ProjectAutomationCreateInput;
+  ProjectAutomationMutations: Omit<ProjectAutomationMutations, 'create' | 'createRevision' | 'update'> & { create: ResolversParentTypes['Automation'], createRevision: ResolversParentTypes['AutomationRevision'], update: ResolversParentTypes['Automation'] };
   ProjectAutomationRevisionCreateInput: ProjectAutomationRevisionCreateInput;
   ProjectAutomationUpdateInput: ProjectAutomationUpdateInput;
   ProjectAutomationsStatusUpdatedMessage: Omit<ProjectAutomationsStatusUpdatedMessage, 'model' | 'project' | 'status' | 'version'> & { model: ResolversParentTypes['Model'], project: ResolversParentTypes['Project'], status: ResolversParentTypes['AutomationsStatus'], version: ResolversParentTypes['Version'] };
@@ -4432,8 +4446,9 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
 };
 
 export type ProjectAutomationMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectAutomationMutations'] = ResolversParentTypes['ProjectAutomationMutations']> = {
-  createRevision?: Resolver<Maybe<ResolversTypes['AutomationRevision']>, ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateRevisionArgs, 'input'>>;
-  update?: Resolver<Maybe<ResolversTypes['Automation']>, ParentType, ContextType, RequireFields<ProjectAutomationMutationsUpdateArgs, 'input'>>;
+  create?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateArgs, 'input'>>;
+  createRevision?: Resolver<ResolversTypes['AutomationRevision'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateRevisionArgs, 'input'>>;
+  update?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
