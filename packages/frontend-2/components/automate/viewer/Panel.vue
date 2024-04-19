@@ -4,8 +4,8 @@
       <template #title>Automate</template>
 
       <div class="flex items-center space-x-2 w-full pl-3 mt-2">
-        <div class="h-6 w-6 mt-[6px]">
-          <AutomateRunsTriggerStatusIcon :summary="summary" />
+        <div class="mt-[6px]">
+          <AutomateRunsTriggerStatusIcon :summary="summary" class="h-6 w-6" />
         </div>
         <div class="min-w-0">
           <h4 :class="`text-sm font-bold ${summary.titleColor}`">

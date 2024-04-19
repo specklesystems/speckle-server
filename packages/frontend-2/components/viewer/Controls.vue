@@ -55,7 +55,7 @@
       >
         <!-- <PlayCircleIcon class="h-5 w-5" /> -->
         <!-- {{allAutomationRuns.length}} -->
-        <AutomateRunsTriggerStatusIcon :summary="summary" />
+        <AutomateRunsTriggerStatusIcon :summary="summary" class="w-6 h-6" />
       </ViewerControlsButtonToggle>
 
       <!-- TODO: direct add comment -->

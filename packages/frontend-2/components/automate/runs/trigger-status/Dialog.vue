@@ -3,8 +3,11 @@
     <template #header>
       <div class="flex flex-col">
         <div class="flex items-center space-x-2 max-w-full w-full">
-          <div class="h-6 w-6 sm:h-10 sm:w-10 mt-[6px] shrink-0">
-            <AutomateRunsTriggerStatusIcon :summary="summary" />
+          <div class="mt-[6px] shrink-0">
+            <AutomateRunsTriggerStatusIcon
+              :summary="summary"
+              class="h-6 w-6 sm:h-10 sm:w-10"
+            />
           </div>
           <div class="flex min-w-0 flex-col gap-1">
             <h4 :class="[`h6 sm:h5 font-bold whitespace-normal`, summary.titleColor]">
