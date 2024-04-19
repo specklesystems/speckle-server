@@ -440,9 +440,13 @@ export class SpeckleGeometryConverter extends GeometryConverter {
    * POLYCURVE
    */
   private PolycurveToGeometryData(node: NodeData): GeometryData | null {
+    if (!node.nestedNodes || node.nestedNodes.length === 0) {
+      return null
+    }
     const buffers = []
-    for (let i = 0; i < node.nestedNodes!.length; i++) {
-      const element = node.nestedNodes![i].model
+
+    for (let i = 0; i < node.nestedNodes.length; i++) {
+      const element = node.nestedNodes[i].model
       const conv = this.convertNodeToGeometryData(element)
       buffers.push(conv)
     }
@@ -453,16 +457,17 @@ export class SpeckleGeometryConverter extends GeometryConverter {
    * CURVE
    */
   private CurveToGeometryData(node: NodeData): GeometryData | null {
-    if (node.nestedNodes!.length === 0) {
+    if (!node.nestedNodes || node.nestedNodes.length === 0) {
       return null
     }
 
-    const polylineGeometry = this.PolylineToGeometryData(node.nestedNodes![0].model)
+    const polylineGeometry = this.PolylineToGeometryData(node.nestedNodes[0].model)
+    if (!polylineGeometry || !polylineGeometry.attributes) return null
     return {
       attributes: {
-        POSITION: polylineGeometry!.attributes!.POSITION
+        POSITION: polylineGeometry.attributes.POSITION
       },
-      bakeTransform: polylineGeometry!.bakeTransform,
+      bakeTransform: polylineGeometry.bakeTransform,
       transform: null
     } as GeometryData
   }

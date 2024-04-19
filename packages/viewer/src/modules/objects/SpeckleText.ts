@@ -258,7 +258,7 @@ export class SpeckleText extends Mesh {
     ;(this._background.material as SpeckleBasicMaterial).billboardPixelHeight =
       (this._style.backgroundPixelHeight !== undefined
         ? this._style.backgroundPixelHeight
-        : DefaultSpeckleTextStyle.backgroundPixelHeight!) * window.devicePixelRatio
+        : DefaultSpeckleTextStyle.backgroundPixelHeight || 0) * window.devicePixelRatio
   }
 
   /** From https://discourse.threejs.org/t/roundedrectangle-squircle/28645  */

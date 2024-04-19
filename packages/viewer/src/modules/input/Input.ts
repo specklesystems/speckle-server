@@ -73,8 +73,10 @@ export default class Input extends EventEmitter {
       const tapLength = currentTime - this.lastTap
       clearTimeout(this.tapTimeout)
       if (tapLength < 500 && tapLength > 0) {
-        const loc = this._getNormalisedClickPosition(this.touchLocation)
-        this.emit(InputEvent.DoubleClick, loc)
+        if (this.touchLocation) {
+          const loc = this._getNormalisedClickPosition(this.touchLocation)
+          this.emit(InputEvent.DoubleClick, loc)
+        }
       } else {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         //@ts-ignore
@@ -121,14 +123,14 @@ export default class Input extends EventEmitter {
     super.on(eventType, listener)
   }
 
-  _getNormalisedClickPosition(e: MouseEvent | Touch | undefined) {
+  _getNormalisedClickPosition(e: MouseEvent | Touch) {
     // Reference: https://threejsfundamentals.org/threejs/lessons/threejs-picking.html
     const canvas = this.container as HTMLCanvasElement
     const rect = this.container.getBoundingClientRect()
 
     const pos = {
-      x: ((e!.clientX - rect.left) * canvas.width) / rect.width,
-      y: ((e!.clientY - rect.top) * canvas.height) / rect.height
+      x: ((e.clientX - rect.left) * canvas.width) / rect.width,
+      y: ((e.clientY - rect.top) * canvas.height) / rect.height
     }
     const v = new Vector2(
       (pos.x / canvas.width) * 2 - 1,

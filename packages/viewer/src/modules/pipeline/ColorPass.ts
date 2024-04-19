@@ -2,6 +2,8 @@ import {
   Camera,
   Color,
   Material,
+  OrthographicCamera,
+  PerspectiveCamera,
   Scene,
   Texture,
   WebGLRenderTarget,
@@ -12,9 +14,9 @@ import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
 export class ColorPass extends BaseSpecklePass implements SpecklePass {
   private camera: Camera | null = null
   private scene: Scene | null = null
-  private overrideMaterial: Material | null = null
+  private overrideMaterial: Material
   private _oldClearColor: Color = new Color()
-  private clearColor: Color | null = null
+  private clearColor: Color
   private clearAlpha = 0
   private clearDepth = true
 
@@ -33,7 +35,7 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
     return null
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.camera = camera
     this.scene = scene
   }
@@ -43,15 +45,17 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
     _writeBuffer: WebGLRenderTarget,
     readBuffer: WebGLRenderTarget
   ) {
+    if (!this.camera || !this.scene) return
+
     const oldAutoClear = renderer.autoClear
     renderer.autoClear = false
 
     let oldClearAlpha, oldOverrideMaterial!: Material | null
 
     if (this.overrideMaterial !== undefined) {
-      oldOverrideMaterial = this.scene!.overrideMaterial
+      oldOverrideMaterial = this.scene.overrideMaterial
 
-      this.scene!.overrideMaterial = this.overrideMaterial
+      this.scene.overrideMaterial = this.overrideMaterial
     }
 
     if (this.clearColor) {
@@ -65,7 +69,7 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
       renderer.clearDepth()
     }
 
-    this.applyLayers(this.camera!)
+    this.applyLayers(this.camera)
 
     renderer.setRenderTarget(this.renderToScreen ? null : readBuffer)
 
@@ -77,10 +81,10 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
         renderer.autoClearStencil
       )
     if (this.onBeforeRenderOpauqe) this.onBeforeRenderOpauqe()
-    renderer.render(this.scene!, this.camera!)
+    renderer.render(this.scene, this.camera)
     if (this.onAfterRenderOpaque) this.onAfterRenderOpaque()
     if (this.onBeforeRenderTransparent) this.onBeforeRenderTransparent()
-    renderer.render(this.scene!, this.camera!)
+    renderer.render(this.scene, this.camera)
     if (this.onAfterRenderTransparent) this.onAfterRenderTransparent()
 
     if (this.clearColor) {
@@ -88,7 +92,7 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
     }
 
     if (this.overrideMaterial !== undefined) {
-      this.scene!.overrideMaterial = oldOverrideMaterial
+      this.scene.overrideMaterial = oldOverrideMaterial
     }
     // if (shadowcatcher) shadowcatcher.visible = true
     renderer.autoClear = oldAutoClear

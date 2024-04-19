@@ -1,10 +1,11 @@
 import {
   AddEquation,
-  Camera,
   CustomBlending,
   DstAlphaFactor,
   DstColorFactor,
   NoBlending,
+  OrthographicCamera,
+  PerspectiveCamera,
   Scene,
   ShaderMaterial,
   Texture,
@@ -95,7 +96,7 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
     this.materialCopy.needsUpdate = true
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     scene
     camera
     this.materialCopy.defines['NUM_FRAMES'] = this.accumulatioFrames

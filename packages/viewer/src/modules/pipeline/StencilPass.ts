@@ -4,6 +4,8 @@ import {
   Color,
   DoubleSide,
   Material,
+  OrthographicCamera,
+  PerspectiveCamera,
   Plane,
   ReplaceStencilOp,
   Scene,
@@ -16,11 +18,11 @@ import SpeckleDisplaceMaterial from '../materials/SpeckleDisplaceMaterial'
 import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
 
 export class StencilPass extends BaseSpecklePass implements SpecklePass {
-  private camera!: Camera
-  private scene!: Scene
+  private camera: Camera
+  private scene: Scene
   private overrideMaterial: Material
   private _oldClearColor: Color = new Color()
-  private clearColor!: Color
+  private clearColor: Color
   private clearAlpha = 0
   private clearDepth = true
   private drawBufferSize: Vector2 = new Vector2()
@@ -56,7 +58,7 @@ export class StencilPass extends BaseSpecklePass implements SpecklePass {
     return this.overrideMaterial
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.camera = camera
     this.scene = scene
   }
@@ -74,7 +76,8 @@ export class StencilPass extends BaseSpecklePass implements SpecklePass {
     const oldAutoClear = renderer.autoClear
     renderer.autoClear = false
 
-    let oldClearAlpha, oldOverrideMaterial
+    let oldClearAlpha,
+      oldOverrideMaterial = null
 
     if (this.overrideMaterial !== undefined) {
       oldOverrideMaterial = this.scene.overrideMaterial
@@ -117,7 +120,7 @@ export class StencilPass extends BaseSpecklePass implements SpecklePass {
     }
 
     if (this.overrideMaterial !== undefined) {
-      this.scene.overrideMaterial = oldOverrideMaterial!
+      this.scene.overrideMaterial = oldOverrideMaterial
     }
     renderer.autoClear = oldAutoClear
     if (this.onAfterRender) this.onAfterRender()

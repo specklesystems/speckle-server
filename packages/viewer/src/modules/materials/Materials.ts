@@ -62,24 +62,24 @@ export interface FilterMaterialOptions {
 export default class Materials {
   public static readonly UNIFORM_VECTORS_USED = 33
   private readonly materialMap: { [hash: number]: Material } = {}
-  private meshGhostMaterial: Material | null = null
-  private meshGradientMaterial: Material | null = null
-  private meshTransparentGradientMaterial: Material | null = null
-  private meshColoredMaterial: Material | null = null
-  private meshTransparentColoredMaterial: Material | null = null
-  private meshHiddenMaterial: Material | null = null
+  private meshGhostMaterial: Material
+  private meshGradientMaterial: Material
+  private meshTransparentGradientMaterial: Material
+  private meshColoredMaterial: Material
+  private meshTransparentColoredMaterial: Material
+  private meshHiddenMaterial: Material
 
-  private lineGhostMaterial: Material | null = null
-  private lineColoredMaterial: Material | null = null
-  private lineHiddenMaterial: Material | null = null
+  private lineGhostMaterial: Material
+  private lineColoredMaterial: Material
+  private lineHiddenMaterial: Material
 
-  private pointGhostMaterial: Material | null = null
-  private pointCloudColouredMaterial: Material | null = null
-  private pointCloudGradientMaterial: Material | null = null
+  private pointGhostMaterial: Material
+  private pointCloudColouredMaterial: Material
+  private pointCloudGradientMaterial: Material
 
-  private textGhostMaterial: Material | null = null
-  private textColoredMaterial: Material | null = null
-  private textHiddenMaterial: Material | null = null
+  private textGhostMaterial: Material
+  private textColoredMaterial: Material
+  private textHiddenMaterial: Material
 
   private defaultGradientTextureData!: ImageData
 
@@ -992,17 +992,18 @@ export default class Materials {
           rampIndexColor:
             filterMaterial.rampIndexColor !== undefined
               ? filterMaterial.rampIndexColor
-              : new Color()
+              : filterMaterial.rampIndex
+              ? new Color()
                   .setRGB(
                     this.defaultGradientTextureData.data[
                       Math.floor(
-                        filterMaterial.rampIndex! *
+                        filterMaterial.rampIndex *
                           (this.defaultGradientTextureData.width - 1)
                       ) * 4
                     ] / 255,
                     this.defaultGradientTextureData.data[
                       Math.floor(
-                        filterMaterial.rampIndex! *
+                        filterMaterial.rampIndex *
                           (this.defaultGradientTextureData.width - 1)
                       ) *
                         4 +
@@ -1010,20 +1011,21 @@ export default class Materials {
                     ] / 255,
                     this.defaultGradientTextureData.data[
                       Math.floor(
-                        filterMaterial.rampIndex! *
+                        filterMaterial.rampIndex *
                           (this.defaultGradientTextureData.width - 1)
                       ) *
                         4 +
                         2
                     ] / 255
                   )
-                  .convertSRGBToLinear(),
+                  .convertSRGBToLinear()
+              : undefined,
           rampTexture: filterMaterial.rampTexture
             ? filterMaterial.rampTexture
-            : this.meshGradientMaterial!.userData.gradientRamp.value,
+            : this.meshGradientMaterial.userData.gradientRamp.value,
           rampWidth: filterMaterial.rampTexture
             ? filterMaterial.rampTexture.image.width
-            : this.meshGradientMaterial!.userData.gradientRamp.value.image.width
+            : this.meshGradientMaterial.userData.gradientRamp.value.image.width
         }
       default:
         return null

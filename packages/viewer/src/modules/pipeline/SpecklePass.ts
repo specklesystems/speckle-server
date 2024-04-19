@@ -1,4 +1,11 @@
-import { Camera, Plane, Scene, Texture } from 'three'
+import {
+  Camera,
+  OrthographicCamera,
+  PerspectiveCamera,
+  Plane,
+  Scene,
+  Texture
+} from 'three'
 import { Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { ObjectLayers } from '../../IViewer'
 
@@ -19,7 +26,10 @@ export interface SpecklePass {
   get displayName(): string
   get outputTexture(): Texture | null
 
-  update?(scene: Scene, camera: Camera): void
+  update?(
+    scene: Scene | null,
+    camera: PerspectiveCamera | OrthographicCamera | null
+  ): void
   setTexture?(uName: string, texture: Texture): void
   setParams?(params: unknown): void
   setClippingPlanes?(planes: Plane[]): void

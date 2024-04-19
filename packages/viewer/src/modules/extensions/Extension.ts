@@ -8,7 +8,7 @@ export class Extension extends EventEmitter {
   }
 
   protected viewer: IViewer
-  protected _enabled: boolean = true
+  protected _enabled: boolean = false
 
   public get enabled(): boolean {
     return this._enabled

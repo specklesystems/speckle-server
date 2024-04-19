@@ -66,16 +66,16 @@ export class Pipeline {
   private _resetFrame = false
   private _composer: EffectComposer
 
-  private depthPass!: DepthPass
-  private normalsPass!: NormalsPass
-  private stencilPass!: StencilPass
-  private renderPass!: ColorPass
-  private stencilMaskPass!: StencilMaskPass
-  private dynamicAoPass!: DynamicSAOPass
-  private applySaoPass!: ApplySAOPass
-  private copyOutputPass!: CopyOutputPass
-  private staticAoPass!: StaticAOPass
-  private overlayPass!: OverlayPass
+  private depthPass: DepthPass
+  private normalsPass: NormalsPass
+  private stencilPass: StencilPass
+  private renderPass: ColorPass
+  private stencilMaskPass: StencilMaskPass
+  private dynamicAoPass: DynamicSAOPass
+  private applySaoPass: ApplySAOPass
+  private copyOutputPass: CopyOutputPass
+  private staticAoPass: StaticAOPass
+  private overlayPass: OverlayPass
 
   private drawingSize: Vector2 = new Vector2()
   private _renderType: RenderType = RenderType.NORMAL
@@ -109,10 +109,7 @@ export class Pipeline {
         pipeline = this.getDefaultPipeline()
         this.depthPass.depthSize = DepthSize.FULL
         this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
-        this.applySaoPass.setTexture(
-          'tDiffuseInterp',
-          this.dynamicAoPass.outputTexture!
-        )
+        this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
         this.needsProgressive = true
         break
 
@@ -155,7 +152,7 @@ export class Pipeline {
         this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
         this.depthPass.depthSize = DepthSize.HALF
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.RECONSTRUCTED_NORMALS)
-        this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture!)
+        this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.GEOMETRY_NORMALS)
         this.needsProgressive = false
         break
@@ -171,7 +168,7 @@ export class Pipeline {
             : false
         this.dynamicAoPass.enabled = true
         this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
-        this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture!)
+        this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO)
         this.needsProgressive = false
@@ -189,7 +186,7 @@ export class Pipeline {
         this.dynamicAoPass.enabled = true
         this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
         this.depthPass.depthSize = DepthSize.HALF
-        this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture!)
+        this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO_BLURRED)
         this.needsProgressive = false
@@ -362,8 +359,8 @@ export class Pipeline {
 
     this.dynamicAoPass.setTexture('tDepth', this.depthPass.outputTextureHalf)
     this.dynamicAoPass.setTexture('tNormal', this.normalsPass.outputTexture)
-    this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture!)
-    this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture!)
+    this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
+    this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
     this.staticAoPass.setTexture('tDepth', this.depthPass.outputTexture)
     this.staticAoPass.setTexture('tNormal', this.normalsPass.outputTexture)
 
@@ -406,15 +403,17 @@ export class Pipeline {
   }
 
   public update(renderer: SpeckleRenderer) {
-    this.stencilPass.update(renderer.scene, renderer.renderingCamera!)
-    this.renderPass.update(renderer.scene, renderer.renderingCamera!)
-    this.stencilMaskPass.update(renderer.scene, renderer.renderingCamera!)
-    this.depthPass.update(renderer.scene, renderer.renderingCamera!)
-    this.dynamicAoPass.update(renderer.scene, renderer.renderingCamera!)
-    this.normalsPass.update(renderer.scene, renderer.renderingCamera!)
-    this.staticAoPass.update(renderer.scene, renderer.renderingCamera!)
-    this.applySaoPass.update(renderer.scene, renderer.renderingCamera!)
-    this.overlayPass.update(renderer.scene, renderer.renderingCamera!)
+    if (!renderer.scene || !renderer.renderingCamera) return
+
+    this.stencilPass.update(renderer.scene, renderer.renderingCamera)
+    this.renderPass.update(renderer.scene, renderer.renderingCamera)
+    this.stencilMaskPass.update(renderer.scene, renderer.renderingCamera)
+    this.depthPass.update(renderer.scene, renderer.renderingCamera)
+    this.dynamicAoPass.update(renderer.scene, renderer.renderingCamera)
+    this.normalsPass.update(renderer.scene, renderer.renderingCamera)
+    this.staticAoPass.update(renderer.scene, renderer.renderingCamera)
+    this.applySaoPass.update(renderer.scene, renderer.renderingCamera)
+    this.overlayPass.update(renderer.scene, renderer.renderingCamera)
 
     this.staticAoPass.setFrameIndex(this.accumulationFrame)
     this.applySaoPass.setFrameIndex(this.accumulationFrame)
@@ -470,7 +469,7 @@ export class Pipeline {
     this.applySaoPass.enabled = true
     this.staticAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
-    this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture!)
+    this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
   }
 
@@ -484,7 +483,7 @@ export class Pipeline {
     this.staticAoPass.enabled = false
     this.applySaoPass.enabled = true
     this.dynamicAoPass.enabled = true
-    this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture!)
+    this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
   }
 }

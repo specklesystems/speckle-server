@@ -1,4 +1,12 @@
-import { Camera, Scene, Texture, WebGLRenderTarget, WebGLRenderer } from 'three'
+import {
+  Camera,
+  OrthographicCamera,
+  PerspectiveCamera,
+  Scene,
+  Texture,
+  WebGLRenderTarget,
+  WebGLRenderer
+} from 'three'
 import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
 
 export class OverlayPass extends BaseSpecklePass implements SpecklePass {
@@ -18,7 +26,7 @@ export class OverlayPass extends BaseSpecklePass implements SpecklePass {
     return null
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.camera = camera
     this.scene = scene
   }

@@ -1,5 +1,4 @@
 import {
-  Camera,
   Color,
   NoBlending,
   OrthographicCamera,
@@ -79,7 +78,7 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
     return 'SAO'
   }
 
-  public get outputTexture(): Texture | null {
+  public get outputTexture(): Texture {
     return this.saoRenderTarget.texture
   }
 
@@ -164,7 +163,7 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
     this.hBlurMaterial.needsUpdate = true
   }
 
-  public update(_scene: Scene, camera: Camera) {
+  public update(_scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     if (this._outputType === DynamicAOOutputType.RECONSTRUCTED_NORMALS) {
       this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS'] = ''
     } else {

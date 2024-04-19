@@ -4,6 +4,8 @@ import {
   DoubleSide,
   EqualStencilFunc,
   Material,
+  OrthographicCamera,
+  PerspectiveCamera,
   Plane,
   Scene,
   Texture,
@@ -51,7 +53,7 @@ export class StencilMaskPass extends BaseSpecklePass implements SpecklePass {
     return this.overrideMaterial
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.camera = camera
     this.scene = scene
   }
@@ -69,7 +71,8 @@ export class StencilMaskPass extends BaseSpecklePass implements SpecklePass {
     const oldAutoClear = renderer.autoClear
     renderer.autoClear = false
 
-    let oldClearAlpha, oldOverrideMaterial
+    let oldClearAlpha,
+      oldOverrideMaterial = null
 
     if (this.overrideMaterial !== undefined) {
       oldOverrideMaterial = this.scene.overrideMaterial
@@ -111,7 +114,7 @@ export class StencilMaskPass extends BaseSpecklePass implements SpecklePass {
     }
 
     if (this.overrideMaterial !== undefined) {
-      this.scene.overrideMaterial = oldOverrideMaterial!
+      this.scene.overrideMaterial = oldOverrideMaterial
     }
     renderer.autoClear = oldAutoClear
     if (this.onAfterRender) this.onAfterRender()

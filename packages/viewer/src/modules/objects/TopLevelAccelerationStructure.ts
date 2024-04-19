@@ -1,6 +1,7 @@
 import {
   Box3,
   Box3Helper,
+  BufferAttribute,
   Color,
   FrontSide,
   Material,
@@ -12,7 +13,6 @@ import {
 import { ExtendedTriangle } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import type {
-  ExtendedIntersection,
   ExtendedMeshIntersection,
   ExtendedShapeCastCallbacks,
   MeshIntersection
@@ -164,9 +164,11 @@ export class TopLevelAccelerationStructure {
     )
     if (!tasResults.length) return res
 
+    /** The index buffer for the bvh's geometry will *never* be undefined as it uses indexed geometry */
+    const indexBufferAttribute: BufferAttribute = this.accelerationStructure.geometry
+      .index as BufferAttribute
     tasResults.forEach((tasRes: MeshIntersection) => {
-      const vertIndex =
-        this.accelerationStructure.geometry.index.array[tasRes.faceIndex * 3]
+      const vertIndex = indexBufferAttribute.array[tasRes.faceIndex * 3]
       const batchObjectIndex = Math.trunc(
         vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
       )
@@ -176,9 +178,13 @@ export class TopLevelAccelerationStructure {
         materialOrSide
       )
       hits.forEach((hit) => {
-        ;(hit as ExtendedIntersection).batchObject = this.batchObjects[batchObjectIndex]
+        /** We're promoting the MeshIntersection to ExtendedMeshIntersection because
+         *  now we know it's corresponding batch object
+         */
+        const extendedHit: ExtendedMeshIntersection = hit as ExtendedMeshIntersection
+        extendedHit.batchObject = this.batchObjects[batchObjectIndex]
+        res.push(extendedHit)
       })
-      res.push(...hits)
     })
 
     return res
@@ -187,7 +193,7 @@ export class TopLevelAccelerationStructure {
   public raycastFirst(
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
-  ): ExtendedIntersection | null {
+  ): ExtendedMeshIntersection | null {
     const rayBuff = new Ray()
     rayBuff.copy(ray)
     const tasRes: MeshIntersection = this.accelerationStructure.raycastFirst(
@@ -196,18 +202,24 @@ export class TopLevelAccelerationStructure {
     )
     if (!tasRes) return null
 
-    const vertIndex =
-      this.accelerationStructure.geometry.index.array[tasRes.faceIndex * 3]
+    /** The index buffer for the bvh's geometry will *never* be undefined as it uses indexed geometry */
+    const indexBufferAttribute: BufferAttribute = this.accelerationStructure.geometry
+      .index as BufferAttribute
+    const vertIndex = indexBufferAttribute.array[tasRes.faceIndex * 3]
     const batchObjectIndex = Math.trunc(
       vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
     )
     rayBuff.copy(ray)
-    const hit: ExtendedIntersection = this.batchObjects[
+    const hit: MeshIntersection = this.batchObjects[
       batchObjectIndex
     ].accelerationStructure.raycastFirst(rayBuff, materialOrSide)
-    hit.batchObject = this.batchObjects[batchObjectIndex]
+    /** We're promoting the MeshIntersection to ExtendedMeshIntersection because
+     *  now we know it's corresponding batch object
+     */
+    const extendedHit: ExtendedMeshIntersection = hit as ExtendedMeshIntersection
+    extendedHit.batchObject = this.batchObjects[batchObjectIndex]
 
-    return hit
+    return extendedHit
   }
 
   public shapecast(callbacks: ExtendedShapeCastCallbacks): boolean {
@@ -252,12 +264,15 @@ export class TopLevelAccelerationStructure {
     let ret = false
     this.accelerationStructure.shapecast({
       intersectsBounds: (box, isLeaf, score, depth, nodeIndex) => {
-        const res = callbacks.intersectsTAS(box, isLeaf, score, depth, nodeIndex)
-        return res
+        if (callbacks.intersectsTAS)
+          return callbacks.intersectsTAS(box, isLeaf, score, depth, nodeIndex)
+        return false
       },
       intersectsRange: (triangleOffset: number) => {
-        const vertIndex =
-          this.accelerationStructure.geometry.index.array[triangleOffset * 3]
+        /** The index buffer for the bvh's geometry will *never* be undefined as it uses indexed geometry */
+        const indexBufferAttribute: BufferAttribute = this.accelerationStructure
+          .geometry.index as BufferAttribute
+        const vertIndex = indexBufferAttribute.array[triangleOffset * 3]
         const batchObjectIndex = Math.trunc(
           vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
         )

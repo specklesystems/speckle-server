@@ -4,6 +4,8 @@ import {
   DoubleSide,
   Material,
   NoBlending,
+  OrthographicCamera,
+  PerspectiveCamera,
   Plane,
   Scene,
   Texture,
@@ -16,8 +18,8 @@ import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
 export class NormalsPass extends BaseSpecklePass implements SpecklePass {
   private renderTarget: WebGLRenderTarget
   private normalsMaterial: SpeckleNormalMaterial
-  private scene!: Scene
-  private camera!: Camera
+  private scene: Scene
+  private camera: Camera
 
   private colorBuffer: Color = new Color()
 
@@ -56,7 +58,7 @@ export class NormalsPass extends BaseSpecklePass implements SpecklePass {
     this.normalsMaterial.clippingPlanes = planes
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.camera = camera
     this.scene = scene
   }

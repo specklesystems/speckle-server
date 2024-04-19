@@ -1,6 +1,5 @@
 import {
   AddEquation,
-  Camera,
   Color,
   CustomBlending,
   DataTexture,
@@ -81,7 +80,7 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
     this.aoMaterial.needsUpdate = true
   }
 
-  public get outputTexture() {
+  public get outputTexture(): Texture {
     return this._accumulationBuffer.texture
   }
 
@@ -164,7 +163,7 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
     this.accumulationFrames = frames
   }
 
-  public update(_scene: Scene, camera: Camera) {
+  public update(_scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     /** DEFINES */
     this.aoMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
       .isPerspectiveCamera
