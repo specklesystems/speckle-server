@@ -306,11 +306,7 @@ workflows:
             - test-viewer
 
       - publish-cloudflare-pages:
-          filters:
-            tags:
-              only: *filters-tag
-            branches:
-              ignore: /.*/
+          filters: *filters-publish
           context:
             - cloudflare-pages-edit
           requires:
