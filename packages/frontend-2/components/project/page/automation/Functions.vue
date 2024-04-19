@@ -15,7 +15,10 @@
           @edit="onEdit(fn)"
         />
       </AutomateFunctionCardView>
-      <CommonGenericEmptyState v-else />
+      <CommonGenericEmptyState
+        v-else
+        message="No valid functions are associated with this automation"
+      />
     </div>
     <ProjectPageAutomationFunctionSettingsDialog
       v-model:open="dialogOpen"
