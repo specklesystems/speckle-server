@@ -310,7 +310,6 @@ workflows:
           context:
             - cloudflare-pages-edit
           requires:
-            - test-ui-components
             - test-viewer
 
 jobs:
