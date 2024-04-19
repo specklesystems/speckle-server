@@ -1025,4 +1025,4 @@ jobs:
           command: ./.circleci/publish_cloudflare_pages.sh
           environment:
             CLOUDFLARE_PAGES_PROJECT_NAME: viewer
-            VIEWER_SANDBOX_DIR_PATH: ./packages/viewer-sandbox
+            VIEWER_SANDBOX_DIR_PATH: packages/viewer-sandbox
