@@ -3,14 +3,14 @@
     <template #header>
       <div class="flex flex-col">
         <div class="flex items-center space-x-2 max-w-full w-full">
-          <div class="h-10 w-10 mt-[6px]">
+          <div class="h-6 w-6 sm:h-10 sm:w-10 mt-[6px] shrink-0">
             <AutomateRunsTriggerStatusIcon :summary="summary" />
           </div>
-          <div class="min-w-0">
-            <h4 :class="`text-xl font-bold ${summary.titleColor}`">
+          <div class="flex min-w-0 flex-col gap-1">
+            <h4 :class="[`h6 sm:h5 font-bold whitespace-normal`, summary.titleColor]">
               {{ summary.title }}
             </h4>
-            <div class="text-xs text-foreground-2 truncate">
+            <div class="caption text-foreground-2 whitespace-normal">
               {{ summary.longSummary }}
             </div>
           </div>
@@ -29,17 +29,22 @@
     </div>
 
     <template #buttons>
-      <div class="flex w-full justify-between items-center pl-2">
+      <div
+        class="flex flex-col gap-2 items-start sm:gap-0 sm:flex-row sm:items-center sm:justify-between w-full pl-2"
+      >
         <FormButton
           text
           size="xs"
           target="_blank"
           external
           to="https://speckle.systems/blog/automate-with-speckle/"
+          class="order-2 sm:order-1"
         >
           Learn more about Automate here!
         </FormButton>
-        <div class="space-x-1">
+        <div
+          class="flex w-full justify-between order-1 sm:order-2 sm:justify-normal sm:w-auto sm:space-x-1"
+        >
           <FormButton color="secondary" @click="showDialog = false">Close</FormButton>
           <FormButton :to="viewUrl">
             Open {{ versionId ? 'Version' : 'Model' }}
