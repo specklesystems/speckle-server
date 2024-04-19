@@ -18,9 +18,11 @@ def docker_load(name, filename=None, existing_ref=None, deps=None):
                         docker tag "{EXISTING_REF}" "$EXPECTED_REF"'.format(DOCKER_FILE_NAME=filename, EXISTING_REF=existing_ref),
                         deps=deps)
 
-def speckle_image(package):
+def speckle_image(package,original_package_name=None):
     if not package:
         fail('package must be specified')
+    if not original_package_name:
+        original_package_name = package
 
     image_version_tag = os.getenv('IMAGE_VERSION_TAG')
     if not image_version_tag:
@@ -31,7 +33,8 @@ def speckle_image(package):
     workspace='/tmp/ci/workspace'
 
     docker_image_tag = 'speckle/speckle-{}'.format(package)
-    existing_ref = '{}:{}'.format(docker_image_tag, image_version_tag)
+    original_docker_image_tag = 'speckle/speckle-{}'.format(original_package_name)
+    existing_ref = '{}:{}'.format(original_docker_image_tag, image_version_tag)
     docker_file_name = "".join([ c if c.isalnum() or c=='-' or c=='_' or c=='.' else "_" for c in existing_ref.elems() ])
     return docker_load(docker_image_tag,
                         filename=docker_file_name,

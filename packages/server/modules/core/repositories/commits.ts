@@ -3,7 +3,9 @@ import {
   Branches,
   Commits,
   knex,
-  StreamCommits
+  StreamAcl,
+  StreamCommits,
+  Streams
 } from '@/modules/core/dbSchema'
 import {
   BranchCommitRecord,
@@ -11,7 +13,7 @@ import {
   CommitRecord,
   StreamCommitRecord
 } from '@/modules/core/helpers/types'
-import { clamp, uniq, uniqBy, reduce } from 'lodash'
+import { clamp, uniq, uniqBy, reduce, keyBy, mapValues } from 'lodash'
 
 const CommitWithStreamBranchMetadataFields = [
   ...Commits.cols,
@@ -433,4 +435,64 @@ export async function getAllBranchCommits(params: {
     },
     {} as Record<string, CommitRecord[]>
   )
+}
+
+export async function getUserStreamCommitCounts(params: {
+  userIds: string[]
+  /**
+   * Only include commits from public/discoverable streams
+   */
+  publicOnly?: boolean
+}) {
+  const { userIds, publicOnly } = params
+  if (!userIds?.length) return {}
+
+  const q = StreamAcl.knex()
+    .select<{ userId: string; count: string }[]>([
+      StreamAcl.col.userId,
+      knex.raw('COUNT(*)')
+    ])
+    .join(StreamCommits.name, StreamCommits.col.streamId, StreamAcl.col.resourceId)
+    .whereIn(StreamAcl.col.userId, userIds)
+    .groupBy(StreamAcl.col.userId)
+
+  if (publicOnly) {
+    q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId)
+    q.andWhere((q1) => {
+      q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+    })
+  }
+
+  const res = await q
+  return mapValues(keyBy(res, 'userId'), (r) => parseInt(r.count))
+}
+
+export async function getUserAuthoredCommitCounts(params: {
+  userIds: string[]
+  /**
+   * Only include commits from public/discoverable streams
+   */
+  publicOnly?: boolean
+}) {
+  const { userIds, publicOnly } = params
+  if (!userIds?.length) return {}
+
+  const q = Commits.knex()
+    .select<{ authorId: string; count: string }[]>([
+      Commits.col.author,
+      knex.raw('COUNT(*)')
+    ])
+    .whereIn(Commits.col.author, userIds)
+    .groupBy(Commits.col.author)
+
+  if (publicOnly) {
+    q.join(StreamCommits.name, StreamCommits.col.commitId, Commits.col.id)
+    q.join(Streams.name, Streams.col.id, StreamCommits.col.streamId)
+    q.andWhere((q1) => {
+      q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+    })
+  }
+
+  const res = await q
+  return mapValues(keyBy(res, 'author'), (r) => parseInt(r.count))
 }

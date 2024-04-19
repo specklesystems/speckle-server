@@ -1,26 +1,46 @@
-import type { Plugin } from 'nuxt/dist/app/nuxt'
-import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
+import { trimStart } from 'lodash-es'
+import {
+  useGetInitialAuthState,
+  useOnAuthStateChange
+} from '~/lib/auth/composables/auth'
 import { useCreateErrorLoggingTransport } from '~/lib/core/composables/error'
+import type { Plugin } from 'nuxt/dist/app/nuxt'
+import { isH3Error } from '~/lib/common/helpers/error'
+import { useRequestId, useServerRequestId } from '~/lib/core/composables/server'
+import { isBrave, isSafari } from '@speckle/shared'
 
 type PluginNuxtApp = Parameters<Plugin>[0]
 
 async function initRumClient(app: PluginNuxtApp) {
-  const { enabled, keys, speckleServerVersion, baseUrl } = resolveInitParams()
-  const logger = useLogger()
-  const onAuthStateChange = useOnAuthStateChange()
+  const { keys, baseUrl, speckleServerVersion } = resolveInitParams(app)
   const router = useRouter()
+  const onAuthStateChange = useOnAuthStateChange()
   const registerErrorTransport = useCreateErrorLoggingTransport()
-  if (!enabled) return
+  const reqId = useRequestId()
 
   // RayGun
-  if (keys.raygun) {
-    const rg4js = (await import('raygun4js')).default
-    rg4js('apiKey', keys.raygun)
-    rg4js('enableCrashReporting', true)
-    rg4js('enablePulse', true)
-    rg4js('boot')
-    rg4js('enableRum', true)
-    rg4js('withTags', [`baseUrl:${baseUrl}`, `version:${speckleServerVersion}`])
+  const rg4js = window.rg4js
+  if (keys.raygun && rg4js) {
+    const setupTags = (extraTags: string[]) => {
+      rg4js('withTags', [
+        `baseUrl:${baseUrl}`,
+        `version:${speckleServerVersion}`,
+        ...extraTags
+      ])
+    }
+
+    router.beforeEach((to, from) => {
+      // Update with tags
+      const newTags = (to.meta.raygunTags || []) as string[]
+      setupTags(newTags)
+
+      if (!from?.path || from.path === to.path) return
+
+      rg4js('trackEvent', {
+        type: 'pageView',
+        path: '/' + trimStart(to.path, '/')
+      })
+    })
 
     await onAuthStateChange(
       (user, { resolveDistinctId }) => {
@@ -59,68 +79,119 @@ async function initRumClient(app: PluginNuxtApp) {
     })
   }
 
-  // LogRocket
-  if (keys.logrocket) {
-    const logrocket = (await import('logrocket')).default
-    logrocket.init(keys.logrocket, {
-      release: speckleServerVersion,
-      console: {
-        isEnabled: false // Log manually, prevent console shim
-      }
-    })
+  // Datadog
+  const datadog = window.DD_RUM
+  if (keys.datadog && datadog) {
+    datadog.onReady(async () => {
+      if ('setGlobalContextProperty' in datadog && reqId?.length) {
+        datadog.setGlobalContextProperty('requestId', reqId)
 
-    await onAuthStateChange(
-      (user, { resolveDistinctId }) => {
-        const distinctId = resolveDistinctId(user)
-        logrocket.identify(distinctId || '')
-      },
-      { immediate: true }
-    )
-
-    registerErrorTransport({
-      onError: ({ firstError, firstString, otherData, nonObjectOtherData }) => {
-        const error = firstError || firstString || 'Unknown error'
-        logrocket.error(error, {
-          ...otherData,
-          extraData: nonObjectOtherData,
-          mainErrorMessage: firstString
-        })
-      }
-      // Unhandleds auto-tracked by LogRocket
-      // onUnhandledError
-    })
-  }
-
-  // Speedcurve
-  if (keys.speedcurve) {
-    // On page transition init, call LUX.init()
-    let pendingRouting = false
-    router.beforeEach((to, from) => {
-      if (to.fullPath !== from.fullPath) {
-        pendingRouting = true
-        window.LUX.init()
-        if (process.dev) logger.debug('RUM: LUX.init()')
-      }
-    })
-
-    app.hook('page:finish', () => {
-      // Unfortunately there's no accurate hook for handling the moment when the new page has fully mounted, title updated etc.
-      // So setTimeout it is, here we go ;(
-      setTimeout(() => {
-        if (pendingRouting) {
-          pendingRouting = false
-          window.LUX.send()
-          if (process.dev) logger.debug('RUM: LUX.send()')
+        if (isSafari()) {
+          datadog.setGlobalContextProperty('isSafari', 'true')
         }
-      }, 50)
+
+        if (isBrave()) {
+          datadog.setGlobalContextProperty('isBrave', 'true')
+        }
+      }
+
+      await onAuthStateChange(
+        (user, { resolveDistinctId }) => {
+          const distinctId = resolveDistinctId(user)
+          // setUser might not be there, if blocked by adblock
+          if (!datadog || !('setUser' in datadog)) return
+
+          if (distinctId && user) {
+            datadog.setUser({
+              id: distinctId
+            })
+          } else {
+            datadog.clearUser()
+          }
+        },
+        { immediate: true }
+      )
+
+      router.beforeEach((to) => {
+        const pathDefinition = getRouteDefinition(to)
+        const routeName = (to.meta.datadogName || pathDefinition) as string
+        const realPath = to.path
+
+        window.DD_RUM_START_VIEW?.(realPath, routeName)
+      })
+
+      const resolveH3Data = (error: unknown) =>
+        error && isH3Error(error)
+          ? {
+              statusCode: error.statusCode,
+              fatal: error.fatal,
+              statusMessage: error.statusMessage,
+              h3Data: error.data
+            }
+          : {}
+
+      registerErrorTransport({
+        onError: ({ args, firstError, firstString, otherData, nonObjectOtherData }) => {
+          if (!datadog || !('addError' in datadog)) return
+
+          const error = firstError || firstString || args[0]
+          datadog.addError(error, {
+            ...otherData,
+            ...resolveH3Data(firstError),
+            extraData: nonObjectOtherData,
+            mainErrorMessage: firstString,
+            isProperlySentError: true
+          })
+        },
+        onUnhandledError: ({ isUnhandledRejection, error, message }) => {
+          if (!datadog || !('addError' in datadog)) return
+
+          datadog.addError(error || message, {
+            ...resolveH3Data(error),
+            isUnhandledRejection,
+            message,
+            mainErrorMessage: message,
+            isProperlySentError: true
+          })
+        }
+      })
     })
   }
 }
 
 async function initRumServer(app: PluginNuxtApp) {
   const registerErrorTransport = useCreateErrorLoggingTransport()
-  const { enabled, keys } = resolveInitParams()
-  if (!enabled) return
+  const { keys, baseUrl, speckleServerVersion, debug, debugCoreWebVitals } =
+    resolveInitParams(app)
+  const initUser = useGetInitialAuthState()
+
+  // CWV
+  if (debugCoreWebVitals) {
+    app.hook('app:rendered', (context) => {
+      context.ssrContext!.head.push({
+        script: [
+          {
+            innerHTML: `
+              import {
+                onCLS,
+                onFID,
+                onLCP,
+                onINP,
+                onTTFB
+              } from 'https://cdn.jsdelivr.net/npm/web-vitals@3/dist/web-vitals.attribution.js?module';
+
+              onCLS(console.log);
+              onFID(console.log);
+              onLCP(console.log);
+              onINP(console.log);
+              onTTFB(console.log);
+              `,
+            type: 'module'
+          }
+        ]
+      })
+    })
+  }
 
   // RayGun
   if (keys.raygun) {
@@ -141,36 +212,114 @@ async function initRumServer(app: PluginNuxtApp) {
         })
       }
     })
-  }
 
-  // Speedcurve - attach JS
-  if (keys.speedcurve) {
+    // Add client-side snippet
     app.hook('app:rendered', (context) => {
+      const initRaygunTags = app._route?.meta.raygunTags || []
+
       context.ssrContext!.head.push({
         script: [
           {
-            innerHTML: `LUX=function(){function n(){return Date.now?Date.now():+new Date}var r,e=n(),t=window.performance||{},a=t.timing||{navigationStart:(null===(r=window.LUX)||void 0===r?void 0:r.ns)||e};function o(){return t.now?(r=t.now(),Math.floor(r)):n()-a.navigationStart;var r}(LUX=window.LUX||{}).ac=[],LUX.addData=function(n,r){return LUX.cmd(["addData",n,r])},LUX.cmd=function(n){return LUX.ac.push(n)},LUX.getDebug=function(){return[[e,0,[]]]},LUX.init=function(){return LUX.cmd(["init"])},LUX.mark=function(){for(var n=[],r=0;r<arguments.length;r++)n[r]=arguments[r];if(t.mark)return t.mark.apply(t,n);var e=n[0],a=n[1]||{};void 0===a.startTime&&(a.startTime=o());LUX.cmd(["mark",e,a])},LUX.markLoadTime=function(){return LUX.cmd(["markLoadTime",o()])},LUX.measure=function(){for(var n=[],r=0;r<arguments.length;r++)n[r]=arguments[r];if(t.measure)return t.measure.apply(t,n);var e,a=n[0],i=n[1],u=n[2];e="object"==typeof i?n[1]:{start:i,end:u};e.duration||e.end||(e.end=o());LUX.cmd(["measure",a,e])},LUX.send=function(){return LUX.cmd(["send"])},LUX.ns=e;var i=LUX;if(window.LUX_ae=[],window.addEventListener("error",(function(n){window.LUX_ae.push(n)})),window.LUX_al=[],"function"==typeof PerformanceObserver&&"function"==typeof PerformanceLongTaskTiming){var u=new PerformanceObserver((function(n){for(var r=n.getEntries(),e=0;e<r.length;e++)window.LUX_al.push(r[e])}));try{u.observe({type:"longtask"})}catch(n){}}return i}();`
+            innerHTML: `!function(a,b,c,d,e,f,g,h){a.RaygunObject=e,a[e]=a[e]||function(){
+  (a[e].o=a[e].o||[]).push(arguments)},f=b.createElement(c),g=b.getElementsByTagName(c)[0],
+  f.async=1,f.src=d,g.parentNode.insertBefore(f,g),h=a.onerror,a.onerror=function(b,c,d,f,g){
+  h&&h(b,c,d,f,g),g||(g=new Error(b)),a[e].q=a[e].q||[],a[e].q.push({
+  e:g})}}(window,document,"script","//cdn.raygun.io/raygun4js/raygun.min.js","rg4js");`
           },
           {
-            src: `https://cdn.speedcurve.com/js/lux.js?id=${keys.speedcurve?.toString()}`,
-            async: true,
-            defer: true,
-            crossorigin: 'anonymous',
-            ...(process.dev ? { onload: 'LUX.forceSample()' } : {})
+            innerHTML: `
+                rg4js('apiKey', '${keys.raygun}')
+                rg4js('enableCrashReporting', true)
+                rg4js('enablePulse', true)
+                rg4js('withTags', ['baseUrl:${baseUrl}', 'version:${speckleServerVersion}', ...${JSON.stringify(
+              initRaygunTags
+            )}])
+                rg4js('options', {
+                  debugMode: ${!!debug},
+                })
+            `
           }
         ]
       })
     })
   }
 
-  // DebugBear - attach JS
-  if (keys.debugbear) {
+  // Datadog
+  if (keys.datadog) {
+    const {
+      datadogAppId,
+      datadogClientToken,
+      datadogSite,
+      datadogService,
+      datadogEnv
+    } = keys.datadog
+
+    const { distinctId } = await initUser()
+
     app.hook('app:rendered', (context) => {
+      const serverReqId = useServerRequestId()
+      const route = app._route
+      const pathDefinition = getRouteDefinition(route)
+      const pathReal = route.path
+      const routeName = route.meta.datadogName || pathDefinition
+
       context.ssrContext!.head.push({
         script: [
           {
-            src: `https://cdn.debugbear.com/${keys.debugbear || ''}.js`,
-            async: true
+            innerHTML:
+              `
+              (function(h,o,u,n,d) {
+                h=h[d]=h[d]||{q:[],onReady:function(c){h.q.push(c)}}
+                d=o.createElement(u);d.async=1;d.src=n
+                n=o.getElementsByTagName(u)[0];n.parentNode.insertBefore(d,n)
+              })(window,document,'script','https://www.datadoghq-browser-agent.com/eu1/v5/datadog-rum.js','DD_RUM')
+              window.DD_RUM.onReady(function() {
+                ` +
+              (distinctId ? `window.DD_RUM.setUser({ id: '${distinctId}' });` : '') +
+              `
+                window.DD_RUM.setGlobalContextProperty('serverBaseUrl', '${baseUrl}');
+
+                ` +
+              (serverReqId.value
+                ? `window.DD_RUM.setGlobalContextProperty('serverRequestId', '${serverReqId.value}');`
+                : '') +
+              `
+
+                window.DD_RUM.init({
+                  clientToken: '${datadogClientToken}',
+                  applicationId: '${datadogAppId}',
+                  site: '${datadogSite}',
+                  service: '${datadogService}',
+                  env: '${datadogEnv || 'unknown'}',
+                  version: '${speckleServerVersion}', 
+                  sessionSampleRate: 100,
+                  sessionReplaySampleRate: 0,
+                  trackUserInteractions: true,
+                  trackResources: true,
+                  trackLongTasks: true,
+                  defaultPrivacyLevel: 'mask-user-input',
+                  trackViewsManually: true,
+                  beforeSend: (event) => {
+                    if (event?.type === 'error') {
+                      if (!event.context?.isProperlySentError) return false
+                      delete event.context.isProperlySentError
+                    }
+                    return true 
+                  }
+                });
+
+                window.DD_RUM_START_VIEW = (path, name) => {
+                  if (window.DD_RUM_REGISTERED_PATH === path) return
+
+                  window.DD_RUM_REGISTERED_PATH = path
+                  window.DD_RUM.startView({
+                    name
+                  })
+                  console.debug('DDR Started view: ' + name)
+                }
+                window.DD_RUM_START_VIEW('${pathReal}', '${routeName}')
+              })
+          `
           }
         ]
       })
@@ -178,40 +327,51 @@ async function initRumServer(app: PluginNuxtApp) {
   }
 }
 
-function resolveInitParams() {
+function resolveInitParams(app: PluginNuxtApp) {
   const {
     public: {
       raygunKey,
-      logrocketAppId,
       speckleServerVersion,
-      speedcurveId,
-      debugbearId,
-      baseUrl
+      logCsrEmitProps,
+      baseUrl,
+      debugCoreWebVitals,
+      datadogClientToken,
+      datadogAppId,
+      datadogSite,
+      datadogService,
+      datadogEnv
     }
   } = useRuntimeConfig()
+  const logger = useLogger()
   const raygun = raygunKey?.length ? raygunKey : null
-  const logrocket = logrocketAppId?.length ? logrocketAppId : null
-  const speedcurve = speedcurveId ? speedcurveId : null
-  const debugbear = debugbearId?.length ? debugbearId : null
-  const enabled = !!(raygun || logrocket || speedcurve || debugbear)
+  const datadog =
+    datadogClientToken?.length &&
+    datadogAppId?.length &&
+    datadogSite?.length &&
+    datadogService?.length &&
+    datadogEnv?.length
+      ? { datadogClientToken, datadogAppId, datadogSite, datadogService, datadogEnv }
+      : null
+
+  const shouldDebugCoreWebVitals = debugCoreWebVitals || app._route?.query.cwv === '1'
 
   return {
-    enabled,
     keys: {
       raygun,
-      logrocket,
-      speedcurve,
-      debugbear
+      datadog
     },
     speckleServerVersion,
-    baseUrl
+    baseUrl,
+    debug: logCsrEmitProps && process.dev,
+    debugCoreWebVitals: shouldDebugCoreWebVitals,
+    logger
   }
 }
 
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin(async (app) => {
   if (process.server) {
-    await initRumServer(nuxtApp)
+    await initRumServer(app)
   } else {
-    await initRumClient(nuxtApp)
+    await initRumClient(app)
   }
 })

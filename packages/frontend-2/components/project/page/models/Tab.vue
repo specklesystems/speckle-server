@@ -1,7 +1,7 @@
 <template>
   <div>
     <div v-if="project">
-      <ProjectModelsPageHeader
+      <ProjectPageModelsHeader
         v-model:selected-apps="selectedApps"
         v-model:selected-members="selectedMembers"
         v-model:grid-or-list="gridOrList"
@@ -10,14 +10,14 @@
         :disabled="loading"
         class="z-[1] relative"
       />
-      <ProjectModelsPageResults
+      <ProjectPageModelsResults
         v-model:grid-or-list="gridOrList"
         v-model:search="search"
         v-model:loading="loading"
         :source-apps="selectedApps"
         :contributors="selectedMembers"
         :project="project"
-        class="z-[0] relative"
+        class="z-[0] relative mt-8"
         @clear-search="clearSearch"
       />
     </div>
@@ -28,14 +28,7 @@ import { useQuery } from '@vue/apollo-composable'
 import type { SourceAppDefinition } from '@speckle/shared'
 import type { FormUsersSelectItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectModelsPageQuery } from '~~/lib/projects/graphql/queries'
-import {
-  useGeneralProjectPageUpdateTracking,
-  useProjectPageItemViewType
-} from '~~/lib/projects/composables/projectPages'
-
-definePageMeta({
-  middleware: ['require-valid-project']
-})
+import { useProjectPageItemViewType } from '~~/lib/projects/composables/projectPages'
 
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
@@ -51,19 +44,10 @@ const { result } = useQuery(projectModelsPageQuery, () => ({
 }))
 
 const project = computed(() => result.value?.project)
-useGeneralProjectPageUpdateTracking({ projectId })
 
 const clearSearch = () => {
   search.value = ''
   selectedMembers.value = []
   selectedApps.value = []
 }
-
-const title = computed(() =>
-  project.value?.name.length ? `Models - ${project.value.name}` : ''
-)
-
-useHead({
-  title
-})
 </script>

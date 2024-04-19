@@ -1,6 +1,5 @@
 import { ExtendedIntersection } from '../objects/SpeckleRaycaster'
-import { Extension } from './core-extensions/Extension'
-import { ICameraProvider } from './core-extensions/Providers'
+import { Extension } from './Extension'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Material } from 'three'
 import { InputEvent } from '../input/Input'
@@ -12,12 +11,11 @@ import {
   UpdateFlags,
   ViewerEvent
 } from '../../IViewer'
-import Materials, {
-  DisplayStyle,
-  MaterialOptions,
-  RenderMaterial
-} from '../materials/Materials'
+import Materials, { DisplayStyle, RenderMaterial } from '../materials/Materials'
+import { StencilOutlineType } from '../../IViewer'
+import { MaterialOptions } from '../materials/MaterialOptions'
 import { TreeNode } from '../tree/WorldTree'
+import { CameraController } from './CameraController'
 
 export interface SelectionExtensionOptions {
   selectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
@@ -33,7 +31,7 @@ const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
     metalness: 0,
     vertexColors: false,
     lineWeight: 1,
-    stencilOutlines: true,
+    stencilOutlines: StencilOutlineType.OVERLAY,
     pointSize: 4
   }
   // hoverMaterialData: {
@@ -44,14 +42,14 @@ const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
   //   metalness: 0,
   //   vertexColors: false,
   //   lineWeight: 1,
-  //   stencilOutlines: true,
+  //   stencilOutlines: StencilOutlineType.OVERLAY,
   //   pointSize: 4
   // }
 }
 
 export class SelectionExtension extends Extension {
   public get inject() {
-    return [ICameraProvider.Symbol]
+    return [CameraController]
   }
 
   protected selectedNodes: Array<TreeNode> = []
@@ -68,6 +66,7 @@ export class SelectionExtension extends Extension {
   protected transparentHoverMaterialData: RenderMaterial &
     DisplayStyle &
     MaterialOptions
+  protected hiddenSelectionMaterialData: RenderMaterial & DisplayStyle & MaterialOptions
   protected _enabled = true
 
   public get enabled() {
@@ -78,7 +77,7 @@ export class SelectionExtension extends Extension {
     this._enabled = value
   }
 
-  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer)
     this.viewer.on(ViewerEvent.ObjectClicked, this.onObjectClicked.bind(this))
     this.viewer.on(ViewerEvent.ObjectDoubleClicked, this.onObjectDoubleClick.bind(this))
@@ -90,13 +89,24 @@ export class SelectionExtension extends Extension {
 
   public setOptions(options: SelectionExtensionOptions) {
     this.options = options
+    /** Opaque selection */
     this.selectionMaterialData = Object.assign({}, this.options.selectionMaterialData)
-    this.hoverMaterialData = Object.assign({}, this.options.hoverMaterialData)
+    /** Transparent selection */
     this.transparentSelectionMaterialData = Object.assign(
       {},
       this.options.selectionMaterialData
     )
     this.transparentSelectionMaterialData.opacity = 0.5
+    /** Hidden selection */
+    this.hiddenSelectionMaterialData = Object.assign(
+      {},
+      this.options.selectionMaterialData
+    )
+    this.hiddenSelectionMaterialData.stencilOutlines = StencilOutlineType.OUTLINE_ONLY
+
+    /** Opaque hover */
+    this.hoverMaterialData = Object.assign({}, this.options.hoverMaterialData)
+    /** Transparent hover */
     this.transparentHoverMaterialData = Object.assign(
       {},
       this.options.hoverMaterialData
@@ -229,6 +239,7 @@ export class SelectionExtension extends Extension {
     const rvs = Object.values(this.selectionRvs)
     const opaqueRvs = rvs.filter(
       (value) =>
+        this.selectionMaterials[value.guid].visible &&
         this.selectionMaterials[value.guid] &&
         !(
           this.selectionMaterials[value.guid].transparent &&
@@ -237,15 +248,20 @@ export class SelectionExtension extends Extension {
     )
     const transparentRvs = rvs.filter(
       (value) =>
+        this.selectionMaterials[value.guid].visible &&
         this.selectionMaterials[value.guid] &&
         this.selectionMaterials[value.guid].transparent &&
         this.selectionMaterials[value.guid].opacity < 1
+    )
+    const hiddenRvs = rvs.filter(
+      (value) => this.selectionMaterials[value.guid].visible === false
     )
 
     this.viewer.getRenderer().setMaterial(opaqueRvs, this.selectionMaterialData)
     this.viewer
       .getRenderer()
       .setMaterial(transparentRvs, this.transparentSelectionMaterialData)
+    this.viewer.getRenderer().setMaterial(hiddenRvs, this.hiddenSelectionMaterialData)
     this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.CLIPPING_PLANES)
   }
 

@@ -8,6 +8,8 @@
     :multiple="multiple"
     :disabled="!items.length"
     :allow-unset="allowUnset"
+    :label-id="labelId"
+    :button-id="buttonId"
     by="id"
   >
     <template #nothing-selected>
@@ -113,6 +115,8 @@ const { result, onResult, fetchMore } = useQuery(
   })
 )
 
+const buttonId = useId()
+const labelId = useId()
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
 const itemContainer = ref(null as Nullable<HTMLElement>)
 

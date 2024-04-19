@@ -1,4 +1,4 @@
-import { Box3, Camera, PerspectiveCamera, Plane, Vector2, Vector3 } from 'three'
+import { Box3, Camera, Plane, Vector2, Vector3 } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { getConversionFactor } from '../../converter/Units'
 import { Measurement, MeasurementState } from './Measurement'
@@ -8,7 +8,7 @@ export class PerpendicularMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo = null
   private endGizmo: MeasurementPointGizmo = null
   private midPoint: Vector3 = new Vector3()
-  private normalIndicatorPixelSize = 15
+  private normalIndicatorPixelSize = 15 * window.devicePixelRatio
 
   public set isVisible(value: boolean) {
     this.startGizmo.enable(value, value, value, value)
@@ -71,19 +71,18 @@ export class PerpendicularMeasurement extends Measurement {
         .applyMatrix4(this.renderingCamera.matrixWorldInverse)
         .applyMatrix4(this.renderingCamera.projectionMatrix)
         .normalize()
+      /** If we apply perspective division, the result is off **/
       // Move to NDC
-      const normalpDiv = normalNDC.w === 0 ? 1 : normalNDC.w
-      normalNDC.multiplyScalar(1 / normalpDiv).normalize()
-      if (this.renderingCamera instanceof PerspectiveCamera) {
-        normalNDC.negate()
-      }
+      // const normalpDiv = normalNDC.w === 0 ? 1 : normalNDC.w
+      // normalNDC.multiplyScalar(1 / normalpDiv).normalize()
+
       const pixelScale = Measurement.vec2Buff0.set(
         (this.normalIndicatorPixelSize / this.renderingSize.x) * 2,
         (this.normalIndicatorPixelSize / this.renderingSize.y) * 2
       )
 
       // Add the scaled NDC normal to the NDC start point, we get the end point in NDC
-      const endNDC = Measurement.vec4Buff0
+      const endNDC = Measurement.vec4Buff2
         .set(startNDC.x, startNDC.y, startNDC.z, 1)
         .add(
           Measurement.vec4Buff1.set(
@@ -103,6 +102,7 @@ export class PerpendicularMeasurement extends Measurement {
         startLine0,
         Measurement.vec3Buff1.set(endNDC.x, endNDC.y, endNDC.z)
       ])
+
       this.endGizmo.enable(false, false, false, false)
     }
 

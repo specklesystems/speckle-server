@@ -14,7 +14,7 @@ extend type Mutation {
     @hasScope(scope: "users:invite")
 
   serverInviteBatchCreate(input: [ServerInviteCreateInput!]!): Boolean!
-    @hasServerRole(role: SERVER_ADMIN)
+    @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "users:invite")
 
   streamInviteBatchCreate(input: [StreamInviteCreateInput!]!): Boolean!

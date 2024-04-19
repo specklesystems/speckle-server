@@ -19,6 +19,10 @@
       </CommonTextLink> -->
     </div>
   </div>
+  <div v-else-if="noticeLoading">
+    <CommonLoadingIcon size="sm" class="my-2 mx-auto" />
+  </div>
+  <div v-else />
 </template>
 <script setup lang="ts">
 import { graphql } from '~~/lib/common/generated/gql'
@@ -49,7 +53,7 @@ const requestVerificationMutation = graphql(`
 const apollo = useApolloClient().client
 const { triggerNotification } = useGlobalToast()
 
-const { result } = useQuery(reminderStateQuery)
+const { result, loading: noticeLoading } = useQuery(reminderStateQuery)
 const user = computed(() => result.value?.activeUser || null)
 
 const dismissed = ref(false)

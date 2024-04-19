@@ -5,7 +5,7 @@ import { Assets } from '../Assets'
 import SpeckleRenderer from '../SpeckleRenderer'
 import { FilterMaterialType } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { Extension } from './core-extensions/Extension'
+import { Extension } from './Extension'
 import { TreeNode, WorldTree } from '../tree/WorldTree'
 import { IViewer, UpdateFlags, ViewerEvent } from '../../IViewer'
 import {
@@ -38,6 +38,13 @@ export class FilteringExtension extends Extension {
 
   public get filteringState(): FilteringState {
     return this.CurrentFilteringState
+  }
+
+  public get enabled(): boolean {
+    return this._enabled
+  }
+  public set enabled(value: boolean) {
+    this._enabled = value
   }
 
   public constructor(viewer: IViewer) {
@@ -174,8 +181,8 @@ export class FilteringExtension extends Extension {
   }
 
   private visibilityWalk(node: TreeNode): boolean {
-    if (!node.model.atomic) return true
-    if (this.VisibilityState.ids[node.model.raw.id]) {
+    // if (!node.model.atomic) return true
+    if (this.VisibilityState.ids[node.model.id]) {
       this.VisibilityState.rvs.push(
         ...this.WTI.getRenderTree().getRenderViewsForNode(node, node)
       )
@@ -298,34 +305,47 @@ export class FilteringExtension extends Extension {
     const rampTexture = Assets.generateDiscreetRampTexture(
       valueGroupColors.map((v) => v.color.getHex())
     )
-    const nonMatchingRvs: NodeRenderView[] = []
+
     // TODO: note that this does not handle well nested element categories. For example,
     // windows (family instances) inside walls get the same color as the walls, even though
     // they are identified as a different category.
     // 07.05.2023: Attempt on fixing the issue described above. This fixes #1525, but it does
     // add a bit of overhead. Not 100% sure if it breaks anything else tho'
+    const nonMatchingMap = {}
     this.WTI.walk((node: TreeNode) => {
       if (!node.model.atomic || this.WTI.isRoot(node) || this.WTI.isSubtreeRoot(node)) {
         return true
       }
+
       const vg = valueGroupColors.find((v) => {
         return v['idMap'][node.model.raw.id]
       })
       const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node, node)
+
       if (!vg) {
-        nonMatchingRvs.push(...rvNodes.map((rvNode) => rvNode.model.renderView))
+        rvNodes.forEach(
+          (rvNode) =>
+            (nonMatchingMap[rvNode.model.renderView.renderData.id] =
+              rvNode.model.renderView)
+        )
+
         return true
       }
       const rvs = []
 
       rvNodes.forEach((value: TreeNode) => {
-        if (this.WTI.getRenderTree().getAtomicParent(value) === node)
+        if (this.WTI.getRenderTree().getAtomicParent(value) === node) {
           rvs.push(value.model.renderView)
+          /** In some cases, the same rv gets put in both non-matching and matching lists because of its hierarchy */
+          delete nonMatchingMap[value.model.renderView.renderData.id]
+        }
       })
 
       vg.rvs.push(...rvs)
       return true
     })
+
+    const nonMatchingRvs: NodeRenderView[] = Object.values(nonMatchingMap)
     /** Deleting this since we're not going to use it further */
     for (const vg of valueGroupColors) {
       delete vg['idMap']
@@ -343,6 +363,7 @@ export class FilteringExtension extends Extension {
       this.ColorNumericFilterState = null
       return this.setFilters()
     }
+    return this.filteringState
   }
 
   public setUserObjectColors(groups: { objectIds: string[]; color: string }[]) {
@@ -433,13 +454,13 @@ export class FilteringExtension extends Extension {
         })
       }
 
-      const ghostNonMatching = this.ColorNumericFilterState.nonMatchingRvs
-
-      if (ghostNonMatching.length) {
-        this.Renderer.setMaterial(ghostNonMatching, {
-          filterType: FilterMaterialType.GHOST
-        })
-      }
+      /** This doesn't seem to be required as it's called further down */
+      // const ghostNonMatching = this.ColorNumericFilterState.nonMatchingRvs
+      // if (ghostNonMatching.length) {
+      //   this.Renderer.setMaterial(ghostNonMatching, {
+      //     filterType: FilterMaterialType.GHOST
+      //   })
+      // }
 
       this.CurrentFilteringState.activePropFilterKey =
         this.ColorNumericFilterState.currentProp.key
