@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AutomateFunctionCardView>
+    <AutomateFunctionCardView v-if="fns.length">
       <AutomateFunctionCard
         v-for="fn in fns"
         :key="fn.id"
@@ -8,6 +8,11 @@
         @use="() => $emit('createAutomationFrom', fn)"
       />
     </AutomateFunctionCardView>
+    <CommonGenericEmptyState
+      v-else
+      :search="!!search"
+      @clear-search="$emit('clearSearch')"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -19,6 +24,7 @@ import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/
 
 defineEmits<{
   createAutomationFrom: [fn: CreateAutomationSelectableFunction]
+  clearSearch: []
 }>()
 
 graphql(`
@@ -34,6 +40,7 @@ graphql(`
 
 const props = defineProps<{
   functions?: AutomateFunctionsPageItems_QueryFragment
+  search?: boolean
 }>()
 
 const fns = computed(() => props.functions?.automateFunctions.items || [])

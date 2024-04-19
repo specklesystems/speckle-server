@@ -53,7 +53,7 @@
           Explore All Functions
         </FormButton>
       </div>
-      <AutomateFunctionCardView>
+      <AutomateFunctionCardView v-if="functions.length">
         <AutomateFunctionCard
           v-for="fn in functions"
           :key="fn.id"
@@ -61,6 +61,7 @@
           @use="() => $emit('new-automation', fn)"
         />
       </AutomateFunctionCardView>
+      <CommonGenericEmptyState v-else />
     </div>
   </div>
 </template>
@@ -73,7 +74,7 @@ import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/
 
 graphql(`
   fragment ProjectPageAutomationsEmptyState_Query on Query {
-    automateFunctions(limit: 9) {
+    automateFunctions(limit: 9, filter: { featuredFunctionsOnly: true }) {
       items {
         ...AutomationsFunctionsCard_AutomateFunction
         ...AutomateAutomationCreateDialog_AutomateFunction

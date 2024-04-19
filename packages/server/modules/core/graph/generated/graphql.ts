@@ -285,6 +285,9 @@ export enum AutomateFunctionTemplateLanguage {
 }
 
 export type AutomateFunctionsFilter = {
+  featuredFunctionsOnly?: InputMaybe<Scalars['Boolean']>;
+  /** By default we skip functions without versions. Set this to true to include them. */
+  functionsWithoutVersions?: InputMaybe<Scalars['Boolean']>;
   search?: InputMaybe<Scalars['String']>;
 };
 
@@ -1638,7 +1641,8 @@ export type PendingStreamCollaborator = {
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean'];
-  automation?: Maybe<Automation>;
+  /** Get a single automation by id. Error will be thrown if automation is not found or inaccessible. */
+  automation: Automation;
   automations: AutomationCollection;
   blob?: Maybe<BlobMetadata>;
   /** Get the metadata collection of blobs stored for this stream. */
@@ -2142,7 +2146,8 @@ export type Query = {
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   /** If user is authenticated using an app token, this will describe the app */
   authenticatedAsApp?: Maybe<ServerAppListItem>;
-  automateFunction?: Maybe<AutomateFunction>;
+  /** Get a single automate function by id. Error will be thrown if function is not found or inaccessible. */
+  automateFunction: AutomateFunction;
   automateFunctions: AutomateFunctionCollection;
   comment?: Maybe<Comment>;
   /**
@@ -4449,7 +4454,7 @@ export type PendingStreamCollaboratorResolvers<ContextType = GraphQLContext, Par
 
 export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Project'] = ResolversParentTypes['Project']> = {
   allowPublicComments?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  automation?: Resolver<Maybe<ResolversTypes['Automation']>, ParentType, ContextType, RequireFields<ProjectAutomationArgs, 'id'>>;
+  automation?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationArgs, 'id'>>;
   automations?: Resolver<ResolversTypes['AutomationCollection'], ParentType, ContextType, Partial<ProjectAutomationsArgs>>;
   blob?: Resolver<Maybe<ResolversTypes['BlobMetadata']>, ParentType, ContextType, RequireFields<ProjectBlobArgs, 'id'>>;
   blobs?: Resolver<Maybe<ResolversTypes['BlobMetadataCollection']>, ParentType, ContextType, RequireFields<ProjectBlobsArgs, 'cursor' | 'limit' | 'query'>>;
@@ -4600,7 +4605,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   app?: Resolver<Maybe<ResolversTypes['ServerApp']>, ParentType, ContextType, RequireFields<QueryAppArgs, 'id'>>;
   apps?: Resolver<Maybe<Array<Maybe<ResolversTypes['ServerAppListItem']>>>, ParentType, ContextType>;
   authenticatedAsApp?: Resolver<Maybe<ResolversTypes['ServerAppListItem']>, ParentType, ContextType>;
-  automateFunction?: Resolver<Maybe<ResolversTypes['AutomateFunction']>, ParentType, ContextType, RequireFields<QueryAutomateFunctionArgs, 'id'>>;
+  automateFunction?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType, RequireFields<QueryAutomateFunctionArgs, 'id'>>;
   automateFunctions?: Resolver<ResolversTypes['AutomateFunctionCollection'], ParentType, ContextType, Partial<QueryAutomateFunctionsArgs>>;
   comment?: Resolver<Maybe<ResolversTypes['Comment']>, ParentType, ContextType, RequireFields<QueryCommentArgs, 'id' | 'streamId'>>;
   comments?: Resolver<Maybe<ResolversTypes['CommentCollection']>, ParentType, ContextType, RequireFields<QueryCommentsArgs, 'archived' | 'limit' | 'streamId'>>;

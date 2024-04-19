@@ -11,6 +11,10 @@ import { times } from 'lodash'
 import { IMockStore, IMocks } from '@graphql-tools/mock'
 import dayjs from 'dayjs'
 import { BranchCommits, Branches, Commits } from '@/modules/core/dbSchema'
+import {
+  AutomationNotFoundError,
+  FunctionNotFoundError
+} from '@/modules/automate/errors/management'
 
 const getRandomModelVersion = async (offset?: number) => {
   const versionQ = Commits.knex()
@@ -51,8 +55,9 @@ export async function buildMocksConfig(): Promise<{
   return {
     resolvers: (store) => ({
       Query: {
-        automateFunctions: (_parent, args) => {
-          const count = args.limit || faker.datatype.number({ min: 4, max: 20 })
+        automateFunctions: () => {
+          const forceZero = false
+          const count = forceZero ? 0 : faker.datatype.number({ min: 0, max: 20 })
 
           return {
             cursor: null,
@@ -62,15 +67,19 @@ export async function buildMocksConfig(): Promise<{
         },
         automateFunction: (_parent, args) => {
           const id = args.id
+          if (id === '404') {
+            throw new FunctionNotFoundError()
+          }
+
           return store.get('AutomateFunction', { id }) as any
         }
       },
       Project: {
-        automations: (_parent, args) => {
+        automations: () => {
           const forceAutomations = false
           const forceNoAutomations = false
 
-          const limit = args.limit || faker.datatype.number({ min: 4, max: 20 })
+          const limit = faker.datatype.number({ min: 0, max: 20 })
           let count
           if (forceNoAutomations) {
             count = 0
@@ -83,6 +92,13 @@ export async function buildMocksConfig(): Promise<{
             totalCount: count,
             items: times(count, () => store.get('Automation'))
           } as any
+        },
+        automation: (_parent, args) => {
+          if (args.id === '404') {
+            throw new AutomationNotFoundError()
+          }
+
+          return store.get('Automation', { id: args.id }) as any
         },
         blob: () => {
           return store.get('BlobMetadata') as any
@@ -101,8 +117,9 @@ export async function buildMocksConfig(): Promise<{
         }
       },
       Automation: {
-        runs: (_parent, args) => {
-          const count = args.limit || faker.datatype.number({ min: 4, max: 20 })
+        runs: () => {
+          const forceZero = false
+          const count = forceZero ? 0 : faker.datatype.number({ min: 0, max: 20 })
 
           return {
             cursor: null,
@@ -180,7 +197,7 @@ export async function buildMocksConfig(): Promise<{
         fileSize: () => faker.datatype.number({ min: 1, max: 1000 })
       }),
       TriggeredAutomationsStatus: () => ({
-        automationRuns: () => [...new Array(faker.datatype.number({ min: 1, max: 5 }))]
+        automationRuns: () => [...new Array(faker.datatype.number({ min: 0, max: 5 }))]
       }),
       AutomationRevision: () => ({
         functions: () => [undefined] // array of 1 always,

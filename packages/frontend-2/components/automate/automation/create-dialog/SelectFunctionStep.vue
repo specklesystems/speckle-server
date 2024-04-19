@@ -10,16 +10,23 @@
     />
     <div class="mt-2">
       <CommonLoadingBar :loading="loading" />
-      <AutomateFunctionCardView v-if="!!queryItems" small-view>
-        <AutomateFunctionCard
-          v-for="fn in items"
-          :key="fn.id"
-          :fn="fn"
-          external-more-info
-          :selected="selectedFunction && selectedFunction?.id === fn.id"
-          @use="() => (selectedFunction = fn)"
+      <template v-if="!loading">
+        <AutomateFunctionCardView v-if="queryItems?.length" small-view>
+          <AutomateFunctionCard
+            v-for="fn in items"
+            :key="fn.id"
+            :fn="fn"
+            external-more-info
+            :selected="selectedFunction && selectedFunction?.id === fn.id"
+            @use="() => (selectedFunction = fn)"
+          />
+        </AutomateFunctionCardView>
+        <CommonGenericEmptyState
+          v-else
+          :search="!!search"
+          @clear-search="search = ''"
         />
-      </AutomateFunctionCardView>
+      </template>
     </div>
   </div>
 </template>

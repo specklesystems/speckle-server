@@ -12,8 +12,6 @@ import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import { projectAutomationPageQuery } from '~/lib/projects/graphql/queries'
 
-// TODO: 404 middleware
-
 graphql(`
   fragment ProjectPageAutomationPage_Automation on Automation {
     id

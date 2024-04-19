@@ -147,7 +147,10 @@ type AutomateFunctionCollection {
 
 extend type Project {
   automations(filter: String, cursor: String, limit: Int): AutomationCollection!
-  automation(id: String!): Automation
+  """
+  Get a single automation by id. Error will be thrown if automation is not found or inaccessible.
+  """
+  automation(id: String!): Automation!
 }
 
 input ProjectAutomationUpdateInput {
@@ -192,6 +195,11 @@ extend type ProjectMutations {
 
 input AutomateFunctionsFilter {
   search: String
+  """
+  By default we skip functions without versions. Set this to true to include them.
+  """
+  functionsWithoutVersions: Boolean
+  featuredFunctionsOnly: Boolean
 }
 
 extend type Query {
@@ -200,7 +208,10 @@ extend type Query {
     cursor: String
     limit: Int
   ): AutomateFunctionCollection!
-  automateFunction(id: ID!): AutomateFunction
+  """
+  Get a single automate function by id. Error will be thrown if function is not found or inaccessible.
+  """
+  automateFunction(id: ID!): AutomateFunction!
 }
 
 input AutomateFunctionRunStatusReportInput {

@@ -275,6 +275,9 @@ export enum AutomateFunctionTemplateLanguage {
 }
 
 export type AutomateFunctionsFilter = {
+  featuredFunctionsOnly?: InputMaybe<Scalars['Boolean']>;
+  /** By default we skip functions without versions. Set this to true to include them. */
+  functionsWithoutVersions?: InputMaybe<Scalars['Boolean']>;
   search?: InputMaybe<Scalars['String']>;
 };
 
@@ -1628,7 +1631,8 @@ export type PendingStreamCollaborator = {
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean'];
-  automation?: Maybe<Automation>;
+  /** Get a single automation by id. Error will be thrown if automation is not found or inaccessible. */
+  automation: Automation;
   automations: AutomationCollection;
   blob?: Maybe<BlobMetadata>;
   /** Get the metadata collection of blobs stored for this stream. */
@@ -2132,7 +2136,8 @@ export type Query = {
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   /** If user is authenticated using an app token, this will describe the app */
   authenticatedAsApp?: Maybe<ServerAppListItem>;
-  automateFunction?: Maybe<AutomateFunction>;
+  /** Get a single automate function by id. Error will be thrown if function is not found or inaccessible. */
+  automateFunction: AutomateFunction;
   automateFunctions: AutomateFunctionCollection;
   comment?: Maybe<Comment>;
   /**

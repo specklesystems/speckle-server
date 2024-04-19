@@ -10,7 +10,9 @@
     <AutomateFunctionsPageItems
       v-if="!loading"
       :functions="result"
+      :search="!!search"
       @create-automation-from="openCreateNewAutomation"
+      @clear-search="search = ''"
     />
     <AutomateAutomationCreateDialog
       v-model:open="showNewAutomationDialog"

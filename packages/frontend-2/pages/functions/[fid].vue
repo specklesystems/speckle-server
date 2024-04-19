@@ -33,8 +33,6 @@ import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import type { FunctionDetailsFormValues } from '~/lib/automate/helpers/functions'
 import { graphql } from '~/lib/common/generated/gql'
 
-// TODO: 404 page
-
 graphql(`
   fragment AutomateFunctionPage_AutomateFunction on AutomateFunction {
     id
