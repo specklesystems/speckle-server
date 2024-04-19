@@ -16,15 +16,12 @@
         @new-automation="onNewAutomation"
       />
       <template v-else>
-        <template v-if="!automations.length">TODO: Search empty state</template>
-        <template v-else>
-          <ProjectPageAutomationsRow
-            v-for="a in automations"
-            :key="a.id"
-            :automation="a"
-            :project-id="projectId"
-          />
-        </template>
+        <ProjectPageAutomationsRow
+          v-for="a in automations"
+          :key="a.id"
+          :automation="a"
+          :project-id="projectId"
+        />
       </template>
     </template>
     <AutomateAutomationCreateDialog

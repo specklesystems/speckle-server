@@ -147,7 +147,7 @@ const title = computed(() => {
     case FunctionCreateSteps.Done:
       return 'Create function'
     default:
-      return 'TODO'
+      return ''
   }
 })
 

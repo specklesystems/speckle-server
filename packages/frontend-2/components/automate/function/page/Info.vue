@@ -113,7 +113,6 @@ import type { AutomateFunctionPageInfo_AutomateFunctionFragment } from '~/lib/co
 import IconNotes from '~~/components/global/icon/Notes.vue'
 
 // TODO: Responsivity everywhere
-// TODO: Create automation
 
 graphql(`
   fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {

@@ -18,7 +18,7 @@
       <AutomateAutomationCreateDialogSelectFunctionStep
         v-if="enumStep === AutomationCreateSteps.SelectFunction"
         v-model:selected-function="selectedFunction"
-        :preselected-function="preselectedFunction"
+        :preselected-function="validatedPreselectedFunction"
       />
       <AutomateAutomationCreateDialogFunctionParametersStep
         v-else-if="
@@ -226,6 +226,14 @@ const buttonsWrapperClasses = computed(() => {
   }
 })
 
+const validatedPreselectedFunction = computed(() => {
+  if (!(props.preselectedFunction?.releases.items || []).length) {
+    return undefined
+  }
+
+  return props.preselectedFunction
+})
+
 const reset = () => {
   step.value = 0
   selectedFunction.value = undefined
@@ -237,7 +245,6 @@ const reset = () => {
   automationId.value = undefined
 }
 
-// TODO: Filter fns that have releases
 const onDetailsSubmit = handleDetailsSubmit(async () => {
   const fn = selectedFunction.value
   const fnRelease = selectedFunction.value?.releases.items[0]
@@ -324,8 +331,8 @@ watch(
     if (newVal && !oldVal) {
       reset()
 
-      if (props.preselectedFunction) {
-        selectedFunction.value = props.preselectedFunction
+      if (validatedPreselectedFunction.value) {
+        selectedFunction.value = validatedPreselectedFunction.value
         enumStep.value = AutomationCreateSteps.FunctionParameters
       }
 

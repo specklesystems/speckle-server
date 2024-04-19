@@ -25,7 +25,6 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateRunsTriggerStatus_TriggeredAutomationsStatusFragment } from '~/lib/common/generated/gql/graphql'
 
 // TODO: Subscriptions?
-// TODO: Delete old components
 
 graphql(`
   fragment AutomateRunsTriggerStatus_TriggeredAutomationsStatus on TriggeredAutomationsStatus {
