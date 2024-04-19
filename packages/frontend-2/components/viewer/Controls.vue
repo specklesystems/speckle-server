@@ -50,12 +50,14 @@
         v-if="allAutomationRuns.length !== 0"
         v-tippy="isSmallerOrEqualSm ? undefined : summary.longSummary"
         :active="activeControl === 'automate'"
-        class="p-2"
         @click="toggleActiveControl('automate')"
       >
         <!-- <PlayCircleIcon class="h-5 w-5" /> -->
         <!-- {{allAutomationRuns.length}} -->
-        <AutomateRunsTriggerStatusIcon :summary="summary" class="w-6 h-6" />
+        <AutomateRunsTriggerStatusIcon
+          :summary="summary"
+          class="h-5 w-5 md:h-6 md:w-6"
+        />
       </ViewerControlsButtonToggle>
 
       <!-- TODO: direct add comment -->

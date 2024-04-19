@@ -4,14 +4,14 @@
       <template #title>Automate</template>
 
       <div class="flex items-center space-x-2 w-full pl-3 mt-2">
-        <div class="mt-[6px]">
+        <div class="mt-[6px] shrink-0">
           <AutomateRunsTriggerStatusIcon :summary="summary" class="h-6 w-6" />
         </div>
-        <div class="min-w-0">
-          <h4 :class="`text-sm font-bold ${summary.titleColor}`">
+        <div class="flex min-w-0 flex-col gap-1">
+          <h4 :class="[`label font-bold whitespace-normal`, summary.titleColor]">
             {{ summary.title }}
           </h4>
-          <div class="text-xs text-foreground-2 truncate">
+          <div class="caption text-foreground-2 whitespace-normal">
             {{ summary.longSummary }}
           </div>
         </div>
