@@ -34,11 +34,8 @@ export class MeshBatch extends PrimitiveBatch {
   }
 
   get minDrawCalls(): number {
-    return [
-      ...Array.from(
-        new Set(this.primitive.geometry.groups.map((value) => value.materialIndex))
-      )
-    ].length
+    return [...Array.from(new Set(this.groups.map((value) => value.materialIndex)))]
+      .length
   }
 
   get triCount(): number {
@@ -144,14 +141,10 @@ export class MeshBatch extends PrimitiveBatch {
         this.materials.push(uniqueMaterials[k])
     }
 
-    this.primitive.geometry.groups = this.drawRanges.integrateRanges(
-      this.groups,
-      this.materials,
-      ranges
-    )
+    this.groups = this.drawRanges.integrateRanges(this.groups, this.materials, ranges)
 
     let count = 0
-    this.primitive.geometry.groups.forEach((value) => (count += value.count))
+    this.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {
       // Logger.error('Current -> ', current)
       // Logger.error('Incoming -> ', incoming)

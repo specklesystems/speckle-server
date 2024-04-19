@@ -217,14 +217,14 @@ export class SelectionExtension extends Extension {
           this.viewer.getRenderer().scene,
           camera,
           e,
-          true,
-          this.viewer.getRenderer().clippingVolume,
           [
             ObjectLayers.STREAM_CONTENT_MESH,
             ObjectLayers.STREAM_CONTENT_POINT,
             ObjectLayers.STREAM_CONTENT_LINE,
             ObjectLayers.STREAM_CONTENT_TEXT
-          ]
+          ],
+          true,
+          this.viewer.getRenderer().clippingVolume
         ) as ExtendedIntersection[]) || []
 
     /* TEMPORARY */

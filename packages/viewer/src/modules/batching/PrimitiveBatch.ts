@@ -42,7 +42,17 @@ export abstract class PrimitiveBatch implements Batch {
   }
 
   public get groups(): DrawGroup[] {
-    return this.primitive.geometry.groups
+    /** We always write to geomtry.groups via the set accessor
+     *  which takes a DrawGroup[], so geometry.groups will always
+     *  be an array of DrawGroup.
+     *  Not to mention that **all our draw groupd are DrawGroup because
+     *  they always have a materialIndex defined** by design and convention!!!
+     */
+    return this.primitive.geometry.groups as DrawGroup[]
+  }
+
+  public set groups(value: DrawGroup[]) {
+    this.primitive.geometry.groups = value
   }
 
   public get renderObject(): Object3D {
@@ -105,8 +115,7 @@ export abstract class PrimitiveBatch implements Batch {
 
   public getVisibleRange(): BatchUpdateRange {
     /** Entire batch is visible */
-    if (this.primitive.geometry.groups.length === 1 && this.primitive.visible)
-      return AllBatchUpdateRange
+    if (this.groups.length === 1 && this.primitive.visible) return AllBatchUpdateRange
     /** Entire batch is hidden */
     if (!this.primitive.visible) return NoneBatchUpdateRange
     /** Parts of the batch are visible */
@@ -279,7 +288,7 @@ export abstract class PrimitiveBatch implements Batch {
   protected abstract shuffleMaterialOrder(a: DrawGroup, b: DrawGroup): number
 
   private shuffleDrawGroups() {
-    const groups = this.primitive.geometry.groups.slice()
+    const groups = this.groups.slice()
     groups.sort(this.shuffleMaterialOrder.bind(this))
 
     const materialOrder: Array<number> = []
@@ -349,7 +358,7 @@ export abstract class PrimitiveBatch implements Batch {
         materialIndex: materialGroup[0].materialIndex
       })
     }
-    this.primitive.geometry.groups = []
+    this.groups = []
     for (let i = 0; i < newGroups.length; i++) {
       this.primitive.geometry.addGroup(
         newGroups[i].offset,
@@ -364,7 +373,7 @@ export abstract class PrimitiveBatch implements Batch {
      */
     if (this.primitive.geometry.index) this.primitive.geometry.index.needsUpdate = true
 
-    const hiddenGroup = this.primitive.geometry.groups.find((value) => {
+    const hiddenGroup = this.groups.find((value) => {
       if (value.materialIndex === undefined) return false
       return this.materials[value.materialIndex].visible === false
     })
@@ -408,10 +417,9 @@ export abstract class PrimitiveBatch implements Batch {
   public abstract getRenderView(index: number): NodeRenderView | null
   public abstract getMaterialAtIndex(index: number): Material | null
   public getMaterial(rv: NodeRenderView): Material | null {
-    for (let k = 0; k < this.primitive.geometry.groups.length; k++) {
-      const group = this.primitive.geometry.groups[k]
+    for (let k = 0; k < this.groups.length; k++) {
+      const group = this.groups[k]
       if (rv.batchStart >= group.start && rv.batchEnd <= group.start + group.count) {
-        if (!group.materialIndex) return null
         return this.materials[group.materialIndex]
       }
     }

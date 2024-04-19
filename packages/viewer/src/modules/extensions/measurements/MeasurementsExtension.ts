@@ -2,20 +2,15 @@ import SpeckleRenderer from '../../SpeckleRenderer'
 
 import { type IViewer, ObjectLayers } from '../../../IViewer'
 import { PerpendicularMeasurement } from './PerpendicularMeasurement'
-import { Material, Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
+import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
 import { PointToPointMeasurement } from './PointToPointMeasurement'
 import { Measurement, MeasurementState } from './Measurement'
-import {
-  ExtendedMeshIntersection,
-  type ExtendedIntersection
-} from '../../objects/SpeckleRaycaster'
+import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster'
 import Logger from 'js-logger'
-import SpeckleMesh from '../../objects/SpeckleMesh'
 import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial'
 import { Extension } from '../Extension'
 import { InputEvent } from '../../input/Input'
 import { CameraController } from '../CameraController'
-import type { BatchObject } from '../../batching/BatchObject'
 
 export enum MeasurementType {
   PERPENDICULAR,
@@ -144,21 +139,19 @@ export class MeasurementsExtension extends Extension {
       return
     }
 
-    let result: ExtendedIntersection[] =
-      (this.renderer.intersections.intersect(
+    let result: ExtendedMeshIntersection[] =
+      this.renderer.intersections.intersect(
         this.renderer.scene,
         camera,
         data,
+        ObjectLayers.STREAM_CONTENT_MESH,
         true,
-        this.renderer.clippingVolume,
-        [ObjectLayers.STREAM_CONTENT_MESH]
-      ) as ExtendedIntersection[]) || []
+        this.renderer.clippingVolume
+      ) || []
 
-    result = result.filter((value: ExtendedIntersection) => {
-      const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
-        value.batchObject as BatchObject
-      ) as Material
-      return !(material instanceof SpeckleGhostMaterial) && material.visible
+    result = result.filter((value: ExtendedMeshIntersection) => {
+      const material = value.object.getBatchObjectMaterial(value.batchObject)
+      return material && !(material instanceof SpeckleGhostMaterial) && material.visible
     })
 
     if (!result.length) {
@@ -169,10 +162,8 @@ export class MeasurementsExtension extends Extension {
     /** Catering to typescript
      *  There will always be an intersected face. We're casting against indexed meshes only
      */
-    if (result[0].face) {
-      this.pointBuff.copy(result[0].point)
-      this.normalBuff.copy(result[0].face.normal)
-    }
+    this.pointBuff.copy(result[0].point)
+    this.normalBuff.copy(result[0].face.normal)
 
     if (this._options.vertexSnap) {
       this.snap(result[0], this.pointBuff, this.normalBuff)
@@ -245,20 +236,19 @@ export class MeasurementsExtension extends Extension {
     if (!this.renderer.renderingCamera) return
 
     this._activeMeasurement.state = MeasurementState.DANGLING_START
-    let result: ExtendedMeshIntersection[] = this.renderer.intersections.intersect(
-      this.renderer.scene,
-      this.renderer.renderingCamera,
-      data,
-      ObjectLayers.STREAM_CONTENT_MESH,
-      true,
-      this.renderer.clippingVolume
-    )
+    let result: ExtendedMeshIntersection[] =
+      this.renderer.intersections.intersect(
+        this.renderer.scene,
+        this.renderer.renderingCamera,
+        data,
+        ObjectLayers.STREAM_CONTENT_MESH,
+        true,
+        this.renderer.clippingVolume
+      ) || []
 
     result = result.filter((value) => {
-      const material = value.object.getBatchObjectMaterial(
-        value.batchObject
-      ) as Material
-      return !(material instanceof SpeckleGhostMaterial) && material.visible
+      const material = value.object.getBatchObjectMaterial(value.batchObject)
+      return material && !(material instanceof SpeckleGhostMaterial) && material.visible
     })
 
     if (!result.length) return
@@ -269,21 +259,19 @@ export class MeasurementsExtension extends Extension {
     const offsetPoint = new Vector3()
       .copy(startPoint)
       .add(new Vector3().copy(startNormal).multiplyScalar(0.000001))
-    let perpResult: ExtendedIntersection[] =
-      (this.renderer.intersections.intersectRay(
+    let perpResult: ExtendedMeshIntersection[] =
+      this.renderer.intersections.intersectRay(
         this.renderer.scene,
         this.renderer.renderingCamera,
         new Ray(offsetPoint, startNormal),
+        ObjectLayers.STREAM_CONTENT_MESH,
         true,
-        this.renderer.clippingVolume,
-        [ObjectLayers.STREAM_CONTENT_MESH]
-      ) as ExtendedIntersection[]) || []
+        this.renderer.clippingVolume
+      ) || []
 
-    perpResult = perpResult.filter((value) => {
-      const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
-        value.batchObject as BatchObject
-      ) as Material
-      return !(material instanceof SpeckleGhostMaterial) && material.visible
+    perpResult = perpResult.filter((value: ExtendedMeshIntersection) => {
+      const material = value.object.getBatchObjectMaterial(value.batchObject)
+      return material && !(material instanceof SpeckleGhostMaterial) && material.visible
     })
 
     if (!perpResult.length) {
@@ -326,6 +314,8 @@ export class MeasurementsExtension extends Extension {
   }
 
   protected finishMeasurement() {
+    if (!this._activeMeasurement) return
+
     this._activeMeasurement.state = MeasurementState.COMPLETE
     this._activeMeasurement.update()
     if (this._activeMeasurement.value > 0) {
@@ -373,7 +363,9 @@ export class MeasurementsExtension extends Extension {
     }, 100)
   }
 
-  protected pickMeasurement(data: Vector2): Measurement {
+  protected pickMeasurement(data: Vector2): Measurement | null {
+    if (!this.renderer.renderingCamera) return null
+
     this.measurements.forEach((value) => {
       value.highlight(false)
     })
@@ -389,10 +381,12 @@ export class MeasurementsExtension extends Extension {
   }
 
   protected snap(
-    intersection: ExtendedIntersection,
+    intersection: ExtendedMeshIntersection,
     outPoint: Vector3,
     outNormal: Vector3
   ) {
+    if (!this.renderer.renderingCamera) return
+
     const v0 = intersection.batchObject.accelerationStructure
       .getVertexAtIndex(intersection.face.a)
       .project(this.renderer.renderingCamera)

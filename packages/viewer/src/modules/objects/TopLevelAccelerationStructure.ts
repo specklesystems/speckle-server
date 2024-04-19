@@ -3,10 +3,8 @@ import {
   Box3Helper,
   Color,
   FrontSide,
-  type Intersection,
   Material,
   Matrix4,
-  Object3D,
   Ray,
   Side,
   Vector3
@@ -15,7 +13,9 @@ import { ExtendedTriangle } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import type {
   ExtendedIntersection,
-  ExtendedShapeCastCallbacks
+  ExtendedMeshIntersection,
+  ExtendedShapeCastCallbacks,
+  MeshIntersection
 } from './SpeckleRaycaster'
 import { ObjectLayers } from '../../IViewer'
 import { AccelerationStructure } from './AccelerationStructure'
@@ -58,7 +58,7 @@ export class TopLevelAccelerationStructure {
   public bounds: Box3 = new Box3(new Vector3(0, 0, 0), new Vector3(0, 0, 0))
 
   public boxHelpers: Box3Helper[] = []
-  public accelerationStructure: AccelerationStructure | null = null
+  public accelerationStructure: AccelerationStructure
 
   public constructor(batchObjects: BatchObject[]) {
     this.batchObjects = batchObjects
@@ -68,7 +68,7 @@ export class TopLevelAccelerationStructure {
 
   private buildBVH() {
     const indices = []
-    const vertices = new Float32Array(
+    const vertices: number[] = new Array<number>(
       TopLevelAccelerationStructure.CUBE_VERTS * 3 * this.batchObjects.length
     )
     let vertOffset = 0
@@ -101,7 +101,7 @@ export class TopLevelAccelerationStructure {
     this.accelerationStructure.outputOriginTransfom = new Matrix4()
   }
 
-  private updateVertArray(box: Box3, offset: number, outPositions: Float32Array) {
+  private updateVertArray(box: Box3, offset: number, outPositions: number[]) {
     outPositions[offset] = box.min.x
     outPositions[offset + 1] = box.min.y
     outPositions[offset + 2] = box.max.z
@@ -136,36 +136,37 @@ export class TopLevelAccelerationStructure {
   }
 
   public refit() {
-    const positions = this.accelerationStructure!.geometry.attributes.position.array
+    const positions = this.accelerationStructure.geometry.attributes.position
+      .array as number[]
     const boxBuffer: Box3 = new Box3()
     for (let k = 0; k < this.batchObjects.length; k++) {
       const start = this.batchObjects[k].tasVertIndexStart
       const basBox =
         this.batchObjects[k].accelerationStructure.getBoundingBox(boxBuffer)
-      this.updateVertArray(basBox, start * 3, positions as Float32Array)
+      this.updateVertArray(basBox, start * 3, positions)
 
       if (TopLevelAccelerationStructure.debugBoxes) this.boxHelpers[k].box.copy(basBox)
     }
-    this.accelerationStructure!.bvh.refit()
+    this.accelerationStructure.bvh.refit()
   }
 
   /* Core Cast Functions */
   public raycast(
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
-  ): ExtendedIntersection[] {
-    const res: ExtendedIntersection[] = []
+  ): ExtendedMeshIntersection[] {
+    const res: ExtendedMeshIntersection[] = []
     const rayBuff = new Ray()
     rayBuff.copy(ray)
-    const tasResults: Intersection<Object3D>[] = this.accelerationStructure!.raycast(
+    const tasResults: MeshIntersection[] = this.accelerationStructure.raycast(
       rayBuff,
       materialOrSide
     )
     if (!tasResults.length) return res
 
-    tasResults.forEach((tasRes: Intersection<Object3D>) => {
+    tasResults.forEach((tasRes: MeshIntersection) => {
       const vertIndex =
-        this.accelerationStructure!.geometry.index!.array[tasRes.faceIndex! * 3]
+        this.accelerationStructure.geometry.index.array[tasRes.faceIndex * 3]
       const batchObjectIndex = Math.trunc(
         vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
       )
@@ -189,14 +190,14 @@ export class TopLevelAccelerationStructure {
   ): ExtendedIntersection | null {
     const rayBuff = new Ray()
     rayBuff.copy(ray)
-    const tasRes: Intersection<Object3D> = this.accelerationStructure!.raycastFirst(
+    const tasRes: MeshIntersection = this.accelerationStructure.raycastFirst(
       rayBuff,
       materialOrSide
     )
     if (!tasRes) return null
 
     const vertIndex =
-      this.accelerationStructure!.geometry.index!.array[tasRes.faceIndex! * 3]
+      this.accelerationStructure.geometry.index.array[tasRes.faceIndex * 3]
     const batchObjectIndex = Math.trunc(
       vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
     )
@@ -249,14 +250,14 @@ export class TopLevelAccelerationStructure {
     }
 
     let ret = false
-    this.accelerationStructure!.shapecast({
+    this.accelerationStructure.shapecast({
       intersectsBounds: (box, isLeaf, score, depth, nodeIndex) => {
-        const res = callbacks.intersectsTAS!(box, isLeaf, score, depth, nodeIndex)
+        const res = callbacks.intersectsTAS(box, isLeaf, score, depth, nodeIndex)
         return res
       },
       intersectsRange: (triangleOffset: number) => {
         const vertIndex =
-          this.accelerationStructure!.geometry.index!.array[triangleOffset * 3]
+          this.accelerationStructure.geometry.index.array[triangleOffset * 3]
         const batchObjectIndex = Math.trunc(
           vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
         )
@@ -276,11 +277,11 @@ export class TopLevelAccelerationStructure {
   }
 
   public closestPointToPoint(point: Vector3) {
-    return this.accelerationStructure!.bvh.closestPointToPoint(point)
+    return this.accelerationStructure.bvh.closestPointToPoint(point)
   }
 
   public getBoundingBox(target: Box3): Box3 {
-    this.accelerationStructure!.getBoundingBox(target)
+    this.accelerationStructure.getBoundingBox(target)
     return target
   }
 }

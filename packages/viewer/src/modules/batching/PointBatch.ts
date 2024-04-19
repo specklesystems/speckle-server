@@ -66,11 +66,7 @@ export class PointBatch extends PrimitiveBatch {
         this.materials.push(uniqueMaterials[k])
     }
 
-    this.primitive.geometry.groups = this.drawRanges.integrateRanges(
-      this.groups,
-      this.materials,
-      ranges
-    )
+    this.groups = this.drawRanges.integrateRanges(this.groups, this.materials, ranges)
 
     let count = 0
     this.groups.forEach((value) => (count += value.count))

@@ -27,24 +27,26 @@ export class IntersectionQuerySolver {
   }
 
   private solveOcclusion(query: IntersectionQuery): IntersectionQueryResult {
-    const target = this.vecBuff0.set(query.point.x, query.point.y, query.point.z!)
-    const dir = this.vecBuff1.copy(target).sub(this.renderer.renderingCamera!.position)
+    if (!this.renderer.renderingCamera) return { objects: null }
+
+    const target = this.vecBuff0.set(query.point.x, query.point.y, query.point.z || 0)
+    const dir = this.vecBuff1.copy(target).sub(this.renderer.renderingCamera.position)
     dir.normalize()
-    const ray = new Ray(this.renderer.renderingCamera!.position, dir)
+    const ray = new Ray(this.renderer.renderingCamera.position, dir)
     const results: Array<Intersection> | null =
       this.renderer.intersections.intersectRay(
         this.renderer.scene,
-        this.renderer.renderingCamera!,
+        this.renderer.renderingCamera,
         ray,
+        ObjectLayers.STREAM_CONTENT_MESH,
         true,
-        this.renderer.clippingVolume,
-        [ObjectLayers.STREAM_CONTENT_MESH]
+        this.renderer.clippingVolume
       )
     if (!results || results.length === 0) return { objects: null }
     const hits = this.renderer.queryHitIds(results)
     if (!hits) return { objects: null }
-    let targetDistance = this.renderer.renderingCamera!.position.distanceTo(target)
-    targetDistance -= query.tolerance!
+    let targetDistance = this.renderer.renderingCamera.position.distanceTo(target)
+    targetDistance -= query.tolerance !== undefined ? query.tolerance : 0
 
     if (targetDistance < results[0].distance) {
       return { objects: null }
@@ -61,10 +63,13 @@ export class IntersectionQuerySolver {
   }
 
   private solvePick(query: IntersectionQuery): IntersectionQueryResult | null {
+    if (!this.renderer.renderingCamera) return null
+
     const results: Array<Intersection> | null = this.renderer.intersections.intersect(
       this.renderer.scene,
-      this.renderer.renderingCamera!,
+      this.renderer.renderingCamera,
       new Vector2(query.point.x, query.point.y),
+      undefined,
       true,
       this.renderer.clippingVolume
     )

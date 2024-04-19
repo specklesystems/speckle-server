@@ -56,6 +56,7 @@ export class PerpendicularMeasurement extends Measurement {
 
   public update() {
     if (isNaN(this.startPoint.length())) return
+    if (!this.renderingCamera) return
 
     this.startGizmo?.updateDisc(this.startPoint, this.startNormal)
     this.startGizmo?.updatePoint(this.startPoint)

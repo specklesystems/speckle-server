@@ -117,7 +117,7 @@ export default class SpeckleRenderer {
 
   protected container: HTMLElement
   protected rootGroup: Group
-  protected batcher: Batcher
+  public batcher: Batcher
   protected sun: DirectionalLight
   protected sunConfiguration: SunLightConfiguration = DefaultLightConfiguration
   protected sunTarget: Object3D
@@ -1089,6 +1089,7 @@ export default class SpeckleRenderer {
       this._scene,
       this.renderingCamera,
       e,
+      undefined,
       true,
       this.clippingVolume
     )
@@ -1129,6 +1130,7 @@ export default class SpeckleRenderer {
       this._scene,
       this.renderingCamera,
       e,
+      undefined,
       true,
       this.clippingVolume
     )

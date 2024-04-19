@@ -59,9 +59,13 @@ export interface ExtendedIntersection extends Intersection {
   // material?: Material
 }
 
-export interface ExtendedMeshIntersection extends ExtendedIntersection {
-  batchObject: BatchObject
+export interface MeshIntersection extends Intersection {
   face: Face
+  faceIndex: number
+}
+
+export interface ExtendedMeshIntersection extends MeshIntersection {
+  batchObject: BatchObject
   object: SpeckleMesh | SpeckleInstancedMesh
 }
 

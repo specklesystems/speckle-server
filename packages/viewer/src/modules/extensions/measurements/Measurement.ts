@@ -39,7 +39,7 @@ export abstract class Measurement extends Object3D {
   protected static vec2Buff0: Vector2 = new Vector2()
 
   protected _state: MeasurementState = MeasurementState.HIDDEN
-  protected renderingCamera!: Camera
+  protected renderingCamera: Camera | null
   protected renderingSize: Vector2 = new Vector2()
 
   public set state(value: MeasurementState) {

@@ -3,16 +3,13 @@ import {
   BufferGeometry,
   Float32BufferAttribute,
   FrontSide,
-  type Intersection,
   Material,
   Matrix4,
-  Object3D,
   Ray,
   Side,
   Uint16BufferAttribute,
   Uint32BufferAttribute,
-  Vector3,
-  type Event
+  Vector3
 } from 'three'
 import {
   CENTER,
@@ -21,6 +18,7 @@ import {
   ShapecastIntersection,
   SplitStrategy
 } from 'three-mesh-bvh'
+import { MeshIntersection } from './SpeckleRaycaster'
 
 const SKIP_GENERATION = Symbol('skip tree generation')
 
@@ -133,21 +131,23 @@ export class AccelerationStructure {
   public raycast(
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
-  ): Intersection<Object3D<Event>>[] {
+  ): MeshIntersection[] {
     const res = this._bvh.raycast(this.transformInput<Ray>(ray), materialOrSide)
     res.forEach((value) => {
       value.point = this.transformOutput(value.point)
     })
-    return res
+    /** The intersection results from raycasting a bvh will always overlap with MeshIntersection because the bvh uses indexed geometry */
+    return res as MeshIntersection[]
   }
 
   public raycastFirst(
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
-  ): Intersection<Object3D<Event>> {
+  ): MeshIntersection {
     const res = this._bvh.raycastFirst(this.transformInput<Ray>(ray), materialOrSide)
     res.point = this.transformOutput(res.point)
-    return res
+    /** The intersection results from raycasting a bvh will always overlap with MeshIntersection because the bvh uses indexed geometry */
+    return res as MeshIntersection
   }
 
   public shapecast(

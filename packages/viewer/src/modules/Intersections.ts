@@ -81,7 +81,7 @@ export class Intersections {
     nearest?: boolean,
     bounds?: Box3,
     firstOnly?: boolean
-  ): Array<ExtendedMeshIntersection>
+  ): Array<ExtendedMeshIntersection> | null
   public intersect(
     scene: Scene,
     camera: Camera,
@@ -112,20 +112,45 @@ export class Intersections {
     return result
   }
 
-  // public intersectRay(
-  //   scene: Scene,
-  //   camera: Camera,
-  //   ray: Ray,
-  //   nearest = true,
-  //   bounds: Box3 | null = null,
-  //   castLayers: Array<ObjectLayers> | undefined = undefined,
-  //   firstOnly = false
-  // ): Array<Intersection> | null {
-  //   this.raycaster.camera = camera
-  //   this.raycaster.set(ray.origin, ray.direction)
-  //   this.raycaster.firstHitOnly = firstOnly
-  //   return this.intersectInternal(scene, nearest, bounds, castLayers)
-  // }
+  public intersectRay(
+    scene: Scene,
+    camera: Camera,
+    ray: Ray,
+    castLayers: ObjectLayers.STREAM_CONTENT_MESH,
+    nearest?: boolean,
+    bounds?: Box3,
+    firstOnly?: boolean
+  ): Array<ExtendedMeshIntersection> | null
+  public intersectRay(
+    scene: Scene,
+    camera: Camera,
+    ray: Ray,
+    castLayers?: Array<ObjectLayers>,
+    nearest?: boolean,
+    bounds?: Box3,
+    firstOnly?: boolean
+  ): Array<ExtendedIntersection> | null
+
+  public intersectRay(
+    scene: Scene,
+    camera: Camera,
+    ray: Ray,
+    castLayers: Array<ObjectLayers> | ObjectLayers | undefined = undefined,
+    nearest = true,
+    bounds?: Box3,
+    firstOnly = false
+  ): Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null {
+    this.raycaster.camera = camera
+    this.raycaster.set(ray.origin, ray.direction)
+    this.raycaster.firstHitOnly = firstOnly
+    const preserveMask = this.setRaycasterLayers(castLayers)
+    let result: Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null
+    if (castLayers === ObjectLayers.STREAM_CONTENT_MESH) {
+      result = this.intersectInternal<ExtendedMeshIntersection>(scene, nearest, bounds)
+    } else result = this.intersectInternal<ExtendedIntersection>(scene, nearest, bounds)
+    this.raycaster.layers.mask = preserveMask
+    return result
+  }
 
   private setRaycasterLayers(
     castLayers: Array<ObjectLayers> | ObjectLayers | undefined
