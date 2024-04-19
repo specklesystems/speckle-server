@@ -130,10 +130,10 @@ export async function buildMocksConfig(): Promise<{
       },
       AutomationRevision: {
         triggerDefinitions: async () => {
-          const res = await Promise.all([
-            getRandomModelVersion(),
-            getRandomModelVersion(1)
-          ])
+          const rand = faker.datatype.number({ min: 0, max: 2 })
+          const res = (
+            await Promise.all([getRandomModelVersion(), getRandomModelVersion(1)])
+          ).slice(0, rand)
 
           return res.map((i) => ({
             type: AutomateRunTriggerType.VersionCreated,

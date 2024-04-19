@@ -26,12 +26,18 @@
         :disabled="loading"
       />
     </div>
-    <ProjectModelsBasicCardView
-      :items="triggerModels"
-      :project="project"
-      :project-id="project.id"
-      class="mt-6 w-full"
-    />
+    <div class="mt-6 w-full">
+      <ProjectModelsBasicCardView
+        v-if="triggerModels.length"
+        :items="triggerModels"
+        :project="project"
+        :project-id="project.id"
+      />
+      <CommonGenericEmptyState
+        v-else
+        message="No valid models found for this automation. They may have been deleted."
+      />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
