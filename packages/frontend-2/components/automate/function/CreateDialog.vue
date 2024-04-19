@@ -41,11 +41,13 @@ import {
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
 import { CommonStepsNumber, type LayoutDialogButton } from '@speckle/ui-components'
-import type { CreatableFunctionTemplate } from '~/lib/automate/helpers/functions'
+import type {
+  CreatableFunctionTemplate,
+  FunctionDetailsFormValues
+} from '~/lib/automate/helpers/functions'
 import { automateGithubAppAuthorizationCallback } from '~/lib/common/helpers/route'
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { useForm } from 'vee-validate'
-import { type Nullable, type SourceAppDefinition } from '@speckle/shared'
 import { useCreateAutomateFunction } from '~/lib/automate/composables/management'
 import { useMutationLoading } from '@vue/apollo-composable'
 import type { AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment } from '~~/lib/common/generated/gql/graphql'
@@ -58,14 +60,7 @@ enum FunctionCreateSteps {
   Done
 }
 
-type DetailsFormValues = {
-  image?: Nullable<string>
-  name: string
-  description: string
-  allowedSourceApps?: SourceAppDefinition[]
-  tags?: string[]
-  org?: string
-}
+type DetailsFormValues = FunctionDetailsFormValues
 
 const props = defineProps<{
   isAuthorized: boolean

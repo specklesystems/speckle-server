@@ -54,8 +54,10 @@ export function useUpdateAutomation() {
     update: UpdateAutomationMutationVariables,
     options?: Partial<{
       optimisticResponse: UpdateAutomationMutation
+      messages?: Partial<{ success: string; failure: string }>
     }>
   ) => {
+    const { messages } = options || {}
     if (!activeUser.value) return
 
     const result = await updateAutomation(update, {
@@ -65,13 +67,13 @@ export function useUpdateAutomation() {
     if (result?.data?.projectMutations.automationMutations.update?.id) {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'Automation updated'
+        title: messages?.success || 'Automation updated'
       })
     } else {
       const errMsg = getFirstErrorMessage(result?.errors)
       triggerNotification({
         type: ToastNotificationType.Danger,
-        title: 'Automation update failed',
+        title: messages?.failure || 'Automation update failed',
         description: errMsg
       })
     }

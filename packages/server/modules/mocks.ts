@@ -6,7 +6,7 @@ import {
   Resolvers
 } from '@/modules/core/graph/generated/graphql'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { Automate, Roles, isNullOrUndefined } from '@speckle/shared'
+import { Automate, Roles, SourceAppNames, isNullOrUndefined } from '@speckle/shared'
 import { times } from 'lodash'
 import { IMockStore, IMocks } from '@graphql-tools/mock'
 import dayjs from 'dayjs'
@@ -161,6 +161,16 @@ export async function buildMocksConfig(): Promise<{
             faker.company.companyName()
           )
         }
+      },
+      AutomateFunction: {
+        creator: async (_parent, args, ctx) => {
+          const rand = faker.datatype.boolean()
+          const activeUser = ctx.userId
+            ? await ctx.loaders.users.getUser.load(ctx.userId)
+            : null
+
+          return rand ? (store.get('LimitedUser') as any) : activeUser
+        }
       }
     }),
     mocks: {
@@ -197,6 +207,18 @@ export async function buildMocksConfig(): Promise<{
             1,
             '\n\n'
           )}\n## Features \n- ${faker.lorem.sentence()}\n - ${faker.lorem.sentence()}\n - ${faker.lorem.sentence()}`
+        },
+        supportedSourceApps: () => {
+          const base = SourceAppNames
+
+          // Random assortment from base
+          return base.filter(faker.datatype.boolean)
+        },
+        tags: () => {
+          // Random string array
+          return [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(() =>
+            faker.lorem.word()
+          )
         }
       }),
       AutomateFunctionRelease: () => ({

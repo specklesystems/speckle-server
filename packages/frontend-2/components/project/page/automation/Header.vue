@@ -132,6 +132,10 @@ const enabled = computed({
             }
           }
         }
+      },
+      messages: {
+        success: `Automation ${args.input.enabled ? 'enabled' : 'disabled'}`,
+        failure: `Failed to ${args.input.enabled ? 'enable' : 'disable'} automation`
       }
     })
   }

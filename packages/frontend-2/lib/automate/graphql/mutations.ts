@@ -11,3 +11,14 @@ export const createAutomateFunctionMutation = graphql(`
     }
   }
 `)
+
+export const updateAutomateFunctionMutation = graphql(`
+  mutation UpdateAutomateFunction($input: UpdateAutomateFunctionInput!) {
+    automateMutations {
+      updateFunction(input: $input) {
+        id
+        ...AutomateFunctionPage_AutomateFunction
+      }
+    }
+  }
+`)

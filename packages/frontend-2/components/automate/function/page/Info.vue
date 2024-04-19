@@ -83,7 +83,9 @@
           Use this function to create an automation on your project.
         </div>
       </div>
-      <FormButton :icon-left="BoltIcon">Create Automation</FormButton>
+      <FormButton :icon-left="BoltIcon" @click="$emit('createAutomation')">
+        Create Automation
+      </FormButton>
     </div>
     <AutomateFunctionPageParametersDialog
       v-if="latestRelease"
@@ -130,6 +132,10 @@ graphql(`
     }
   }
 `)
+
+defineEmits<{
+  createAutomation: []
+}>()
 
 const props = defineProps<{
   fn: AutomateFunctionPageInfo_AutomateFunctionFragment

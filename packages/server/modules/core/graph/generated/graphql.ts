@@ -201,7 +201,7 @@ export type AuthStrategy = {
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
   automationCount: Scalars['Int'];
-  creator: LimitedUser;
+  creator?: Maybe<LimitedUser>;
   description: Scalars['String'];
   id: Scalars['ID'];
   isFeatured: Scalars['Boolean'];
@@ -209,6 +209,9 @@ export type AutomateFunction = {
   name: Scalars['String'];
   releases: AutomateFunctionReleaseCollection;
   repoUrl: Scalars['String'];
+  /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
+  supportedSourceApps: Array<Scalars['String']>;
+  tags: Array<Scalars['String']>;
 };
 
 
@@ -288,11 +291,17 @@ export type AutomateFunctionsFilter = {
 export type AutomateMutations = {
   __typename?: 'AutomateMutations';
   createFunction: AutomateFunction;
+  updateFunction: AutomateFunction;
 };
 
 
 export type AutomateMutationsCreateFunctionArgs = {
   input: CreateAutomateFunctionInput;
+};
+
+
+export type AutomateMutationsUpdateFunctionArgs = {
+  input: UpdateAutomateFunctionInput;
 };
 
 export type AutomateRun = {
@@ -2910,6 +2919,17 @@ export type TriggeredAutomationsStatus = {
   statusMessage?: Maybe<Scalars['String']>;
 };
 
+/** Any null values will be ignored */
+export type UpdateAutomateFunctionInput = {
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['ID'];
+  logo?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  /** SourceAppNames values from @speckle/shared */
+  supportedSourceApps?: InputMaybe<Array<Scalars['String']>>;
+  tags?: InputMaybe<Array<Scalars['String']>>;
+};
+
 export type UpdateModelInput = {
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -3384,7 +3404,7 @@ export type ResolversTypes = {
   AppTokenCreateInput: AppTokenCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: ResolverTypeWrapper<AuthStrategy>;
-  AutomateFunction: ResolverTypeWrapper<Omit<AutomateFunction, 'creator' | 'releases'> & { creator: ResolversTypes['LimitedUser'], releases: ResolversTypes['AutomateFunctionReleaseCollection'] }>;
+  AutomateFunction: ResolverTypeWrapper<Omit<AutomateFunction, 'creator' | 'releases'> & { creator?: Maybe<ResolversTypes['LimitedUser']>, releases: ResolversTypes['AutomateFunctionReleaseCollection'] }>;
   AutomateFunctionCollection: ResolverTypeWrapper<Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversTypes['AutomateFunction']> }>;
   AutomateFunctionRelease: ResolverTypeWrapper<Omit<AutomateFunctionRelease, 'function'> & { function: ResolversTypes['AutomateFunction'] }>;
   AutomateFunctionReleaseCollection: ResolverTypeWrapper<Omit<AutomateFunctionReleaseCollection, 'items'> & { items: Array<ResolversTypes['AutomateFunctionRelease']> }>;
@@ -3394,7 +3414,7 @@ export type ResolversTypes = {
   AutomateFunctionTemplate: ResolverTypeWrapper<AutomateFunctionTemplate>;
   AutomateFunctionTemplateLanguage: AutomateFunctionTemplateLanguage;
   AutomateFunctionsFilter: AutomateFunctionsFilter;
-  AutomateMutations: ResolverTypeWrapper<Omit<AutomateMutations, 'createFunction'> & { createFunction: ResolversTypes['AutomateFunction'] }>;
+  AutomateMutations: ResolverTypeWrapper<Omit<AutomateMutations, 'createFunction' | 'updateFunction'> & { createFunction: ResolversTypes['AutomateFunction'], updateFunction: ResolversTypes['AutomateFunction'] }>;
   AutomateRun: ResolverTypeWrapper<Omit<AutomateRun, 'automation' | 'functionRuns' | 'trigger'> & { automation: ResolversTypes['Automation'], functionRuns: Array<ResolversTypes['AutomateFunctionRun']>, trigger: ResolversTypes['AutomationRunTrigger'] }>;
   AutomateRunCollection: ResolverTypeWrapper<Omit<AutomateRunCollection, 'items'> & { items: Array<ResolversTypes['AutomateRun']> }>;
   AutomateRunStatus: AutomateRunStatus;
@@ -3547,6 +3567,7 @@ export type ResolversTypes = {
   TokenResourceIdentifierInput: TokenResourceIdentifierInput;
   TokenResourceIdentifierType: TokenResourceIdentifierType;
   TriggeredAutomationsStatus: ResolverTypeWrapper<Omit<TriggeredAutomationsStatus, 'automationRuns'> & { automationRuns: Array<ResolversTypes['AutomateRun']> }>;
+  UpdateAutomateFunctionInput: UpdateAutomateFunctionInput;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
   User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projectInvites: Array<ResolversTypes['PendingStreamCollaborator']>, projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
@@ -3596,7 +3617,7 @@ export type ResolversParentTypes = {
   AppTokenCreateInput: AppTokenCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: AuthStrategy;
-  AutomateFunction: Omit<AutomateFunction, 'creator' | 'releases'> & { creator: ResolversParentTypes['LimitedUser'], releases: ResolversParentTypes['AutomateFunctionReleaseCollection'] };
+  AutomateFunction: Omit<AutomateFunction, 'creator' | 'releases'> & { creator?: Maybe<ResolversParentTypes['LimitedUser']>, releases: ResolversParentTypes['AutomateFunctionReleaseCollection'] };
   AutomateFunctionCollection: Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateFunction']> };
   AutomateFunctionRelease: Omit<AutomateFunctionRelease, 'function'> & { function: ResolversParentTypes['AutomateFunction'] };
   AutomateFunctionReleaseCollection: Omit<AutomateFunctionReleaseCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateFunctionRelease']> };
@@ -3605,7 +3626,7 @@ export type ResolversParentTypes = {
   AutomateFunctionRunStatusReportInput: AutomateFunctionRunStatusReportInput;
   AutomateFunctionTemplate: AutomateFunctionTemplate;
   AutomateFunctionsFilter: AutomateFunctionsFilter;
-  AutomateMutations: Omit<AutomateMutations, 'createFunction'> & { createFunction: ResolversParentTypes['AutomateFunction'] };
+  AutomateMutations: Omit<AutomateMutations, 'createFunction' | 'updateFunction'> & { createFunction: ResolversParentTypes['AutomateFunction'], updateFunction: ResolversParentTypes['AutomateFunction'] };
   AutomateRun: Omit<AutomateRun, 'automation' | 'functionRuns' | 'trigger'> & { automation: ResolversParentTypes['Automation'], functionRuns: Array<ResolversParentTypes['AutomateFunctionRun']>, trigger: ResolversParentTypes['AutomationRunTrigger'] };
   AutomateRunCollection: Omit<AutomateRunCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateRun']> };
   Automation: Omit<Automation, 'currentRevision' | 'runs'> & { currentRevision?: Maybe<ResolversParentTypes['AutomationRevision']>, runs: ResolversParentTypes['AutomateRunCollection'] };
@@ -3741,6 +3762,7 @@ export type ResolversParentTypes = {
   TokenResourceIdentifier: TokenResourceIdentifier;
   TokenResourceIdentifierInput: TokenResourceIdentifierInput;
   TriggeredAutomationsStatus: Omit<TriggeredAutomationsStatus, 'automationRuns'> & { automationRuns: Array<ResolversParentTypes['AutomateRun']> };
+  UpdateAutomateFunctionInput: UpdateAutomateFunctionInput;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
   User: Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projectInvites: Array<ResolversParentTypes['PendingStreamCollaborator']>, projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
@@ -3899,7 +3921,7 @@ export type AuthStrategyResolvers<ContextType = GraphQLContext, ParentType exten
 
 export type AutomateFunctionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomateFunction'] = ResolversParentTypes['AutomateFunction']> = {
   automationCount?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  creator?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  creator?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   isFeatured?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
@@ -3907,6 +3929,8 @@ export type AutomateFunctionResolvers<ContextType = GraphQLContext, ParentType e
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   releases?: Resolver<ResolversTypes['AutomateFunctionReleaseCollection'], ParentType, ContextType, Partial<AutomateFunctionReleasesArgs>>;
   repoUrl?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  supportedSourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
+  tags?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -3955,6 +3979,7 @@ export type AutomateFunctionTemplateResolvers<ContextType = GraphQLContext, Pare
 
 export type AutomateMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomateMutations'] = ResolversParentTypes['AutomateMutations']> = {
   createFunction?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType, RequireFields<AutomateMutationsCreateFunctionArgs, 'input'>>;
+  updateFunction?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType, RequireFields<AutomateMutationsUpdateFunctionArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

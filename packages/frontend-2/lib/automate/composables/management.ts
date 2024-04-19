@@ -1,11 +1,15 @@
 import { useMutation } from '@vue/apollo-composable'
 import { isNumber, uniqBy } from 'lodash-es'
-import { createAutomateFunctionMutation } from '~/lib/automate/graphql/mutations'
+import {
+  createAutomateFunctionMutation,
+  updateAutomateFunctionMutation
+} from '~/lib/automate/graphql/mutations'
 import type {
   AutomateFunctionCollection,
   CreateAutomateFunctionMutationVariables,
   QueryAutomateFunctionArgs,
-  QueryAutomateFunctionsArgs
+  QueryAutomateFunctionsArgs,
+  UpdateAutomateFunctionMutationVariables
 } from '~/lib/common/generated/gql/graphql'
 import {
   ROOT_QUERY,
@@ -13,6 +17,8 @@ import {
   getFirstErrorMessage,
   modifyObjectFields
 } from '~/lib/common/helpers/graphql'
+
+// TODO: Cache updates
 
 export const useCreateAutomateFunction = () => {
   const { mutate } = useMutation(createAutomateFunctionMutation)
@@ -83,5 +89,32 @@ export const useCreateAutomateFunction = () => {
     }
 
     return res?.data?.automateMutations.createFunction
+  }
+}
+
+export const useUpdateAutomateFunction = () => {
+  const { mutate } = useMutation(updateAutomateFunctionMutation)
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+
+  return async (input: UpdateAutomateFunctionMutationVariables) => {
+    if (!activeUser.value) return
+
+    const res = await mutate(input).catch(convertThrowIntoFetchResult)
+    if (res?.data?.automateMutations.updateFunction.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Function successfully updated'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to update function',
+        description: errMsg
+      })
+    }
+
+    return res?.data?.automateMutations.updateFunction
   }
 }

@@ -107,7 +107,7 @@ type AutomateFunction {
   id: ID!
   name: String!
   repoUrl: String!
-  creator: LimitedUser!
+  creator: LimitedUser
   isFeatured: Boolean!
   description: String!
   logo: String
@@ -117,6 +117,11 @@ type AutomateFunction {
     filter: AutomateFunctionReleasesFilter
   ): AutomateFunctionReleaseCollection!
   automationCount: Int!
+  """
+  SourceAppNames values from @speckle/shared. Empty array means - all of them
+  """
+  supportedSourceApps: [String!]!
+  tags: [String!]!
 }
 
 type AutomateFunctionRelease {
@@ -228,8 +233,25 @@ input CreateAutomateFunctionInput {
   org: String
 }
 
+"""
+Any null values will be ignored
+"""
+input UpdateAutomateFunctionInput {
+  id: ID!
+  name: String
+  description: String
+  """
+  SourceAppNames values from @speckle/shared
+  """
+  supportedSourceApps: [String!]
+  tags: [String!]
+  logo: String
+}
+
 type AutomateMutations {
   createFunction(input: CreateAutomateFunctionInput!): AutomateFunction!
+    @hasScope(scope: "automate-functions:write")
+  updateFunction(input: UpdateAutomateFunctionInput!): AutomateFunction!
     @hasScope(scope: "automate-functions:write")
 }
 

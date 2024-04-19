@@ -191,7 +191,7 @@ export type AuthStrategy = {
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
   automationCount: Scalars['Int'];
-  creator: LimitedUser;
+  creator?: Maybe<LimitedUser>;
   description: Scalars['String'];
   id: Scalars['ID'];
   isFeatured: Scalars['Boolean'];
@@ -199,6 +199,9 @@ export type AutomateFunction = {
   name: Scalars['String'];
   releases: AutomateFunctionReleaseCollection;
   repoUrl: Scalars['String'];
+  /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
+  supportedSourceApps: Array<Scalars['String']>;
+  tags: Array<Scalars['String']>;
 };
 
 
@@ -278,11 +281,17 @@ export type AutomateFunctionsFilter = {
 export type AutomateMutations = {
   __typename?: 'AutomateMutations';
   createFunction: AutomateFunction;
+  updateFunction: AutomateFunction;
 };
 
 
 export type AutomateMutationsCreateFunctionArgs = {
   input: CreateAutomateFunctionInput;
+};
+
+
+export type AutomateMutationsUpdateFunctionArgs = {
+  input: UpdateAutomateFunctionInput;
 };
 
 export type AutomateRun = {
@@ -2898,6 +2907,17 @@ export type TriggeredAutomationsStatus = {
   id: Scalars['ID'];
   status: AutomateRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
+};
+
+/** Any null values will be ignored */
+export type UpdateAutomateFunctionInput = {
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['ID'];
+  logo?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  /** SourceAppNames values from @speckle/shared */
+  supportedSourceApps?: InputMaybe<Array<Scalars['String']>>;
+  tags?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export type UpdateModelInput = {

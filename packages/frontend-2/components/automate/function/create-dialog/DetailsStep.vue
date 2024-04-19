@@ -50,7 +50,7 @@
       validate-on-value-update
     />
     <FormSelectBase
-      v-if="githubOrgs.length"
+      v-if="githubOrgs?.length"
       name="org"
       label="Organization"
       show-label
@@ -83,7 +83,7 @@ import { ValidationHelpers } from '@speckle/ui-components'
 import { isArray } from 'lodash-es'
 
 defineProps<{
-  githubOrgs: string[]
+  githubOrgs?: string[]
 }>()
 
 const avatarEditMode = ref(false)

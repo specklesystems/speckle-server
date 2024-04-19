@@ -11,7 +11,7 @@
         <AutomateFunctionLogo :logo="fn.logo" />
         <div class="flex flex-col truncate">
           <div class="normal font-semibold text-foreground truncate">{{ fn.name }}</div>
-          <div class="label-light">by {{ fn.creator.name }}</div>
+          <div class="label-light">by {{ fn.creator?.name || 'Deleted User' }}</div>
         </div>
       </div>
       <div class="label-light text-foreground-2 line-clamp-3 h-16">
