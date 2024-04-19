@@ -1001,7 +1001,7 @@ jobs:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
           name: Install Cloudflare Pages CLI
-          command: npm install -g wrangler && wrangler --version
+          command: npm install wrangler && wrangler --version
 
       - run:
           name: Install Dependencies
