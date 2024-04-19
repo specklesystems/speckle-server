@@ -305,7 +305,7 @@ workflows:
             - test-frontend-2
             - test-viewer
 
-      - publish-cloudflare-pages:
+      - publish-viewer-sandbox-cloudflare-pages:
           filters: *filters-publish
           context:
             - cloudflare-pages-edit
@@ -990,7 +990,7 @@ jobs:
           name: Update Helm Documentation
           command: ./.circleci/update_helm_documentation.sh
 
-  publish-cloudflare-pages:
+  publish-viewer-sandbox-cloudflare-pages:
     docker: *docker-node-image
     working_directory: *work-dir
     steps:
@@ -1021,8 +1021,8 @@ jobs:
           working_directory: 'packages/viewer-sandbox'
 
       - run:
-          name: Publish to Cloudflare Pages
+          name: Publish Viewer Sandbox to Cloudflare Pages
           command: ./.circleci/publish_cloudflare_pages.sh
           environment:
             CLOUDFLARE_PAGES_PROJECT_NAME: viewer
-            CLOUDFLARE_PAGES_DIST_DIR: ./packages/viewer-sandbox/dist
+            VIEWER_SANDBOX_DIR_PATH: ./packages/viewer-sandbox
