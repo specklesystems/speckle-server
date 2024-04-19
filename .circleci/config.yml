@@ -1000,16 +1000,11 @@ jobs:
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
-          name: Install Cloudflare Pages CLI
-          command: yarn add --dev wrangler && wrangler --version
-
-      - run:
           name: Install Dependencies
           command: yarn
       - run:
           name: Install Dependencies v2 (.node files missing bug)
           command: yarn
-
       - save_cache:
           name: Save Yarn Package Cache
           key: yarn-packages-server-{{ checksum "yarn.lock" }}
