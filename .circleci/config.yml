@@ -305,6 +305,18 @@ workflows:
             - test-frontend-2
             - test-viewer
 
+      - publish-cloudflare-pages:
+          filters:
+            tags:
+              only: *filters-tag
+            branches:
+              ignore: /.*/
+          context:
+            - cloudflare-pages-edit
+          requires:
+            - test-ui-components
+            - test-viewer
+
 jobs:
   get-version:
     docker: &docker-base-image
@@ -982,3 +994,45 @@ jobs:
       - run:
           name: Update Helm Documentation
           command: ./.circleci/update_helm_documentation.sh
+
+  publish-cloudflare-pages:
+    docker: *docker-node-image
+    working_directory: *work-dir
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Cloudflare Pages CLI
+          command: npm install -g wrangler && wrangler --version
+
+      - run:
+          name: Install Dependencies
+          command: yarn
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build public packages
+          command: yarn build:public
+      - run:
+          name: Lint everything
+          command: yarn lint
+          working_directory: 'packages/viewer-sandbox'
+
+      - run:
+          name: Publish to Cloudflare Pages
+          command: ./.circleci/publish_cloudflare_pages.sh
+          environment:
+            CLOUDFLARE_PAGES_PROJECT_NAME: viewer
+            CLOUDFLARE_PAGES_DIST_DIR: ./packages/viewer-sandbox/dist
