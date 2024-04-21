@@ -17,20 +17,29 @@
           <CubeTransparentIcon class="w-5 h-5 text-foreground-2" />
         </div>
       </div>
-      <div class="min-w-0">
+      <div class="min-w-0 w-full">
         <div class="caption text-foreground-2">
           {{ folderPath }}
         </div>
-        <div class="font-bold">{{ model.displayName }}</div>
-        <div class="caption text-foreground-2 truncate">
-          {{ new Date(model.updatedAt).toLocaleString() }}
-          | {{ model.versions.totalCount }} versions
+
+        <div class="flex items-center justify-around space-x-2">
+          <div class="font-bold grow truncate text-ellipsis">
+            {{ model.displayName }}
+          </div>
+          <div class="bg-neutral-500/10 rounded-full px-1 text-xs truncate shrink">
+            {{ model.versions.totalCount }} versions
+          </div>
+        </div>
+
+        <div class="caption text-foreground-2 truncate flex space-x-2">
+          <div>updated {{ updatedAgo }}</div>
         </div>
       </div>
     </div>
   </button>
 </template>
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import { CubeTransparentIcon } from '@heroicons/vue/20/solid'
 import { ModelListModelItemFragment } from '~/lib/common/generated/gql/graphql'
 
@@ -43,5 +52,9 @@ const folderPath = computed(() => {
   if (splitName.length === 1) return ' '
   const withoutLast = splitName.slice(0, -1)
   return withoutLast.join('/')
+})
+
+const updatedAgo = computed(() => {
+  return dayjs(props.model.updatedAt).from(dayjs())
 })
 </script>

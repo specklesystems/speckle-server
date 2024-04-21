@@ -10,6 +10,7 @@
             totalCount === 0 ? 'New model name' : 'Search models in ' + project.name
           "
           name="search"
+          autocomplete="off"
           :show-clear="!!modelName"
           full-width
           size="lg"
@@ -43,22 +44,22 @@
     >
       <PlusIcon class="w-6 h-6" />
     </button>
-    <LayoutDialog
-      v-model:open="showNewModelDialog"
-      hide-closer
-      title="Create new model"
-    >
+    <LayoutDialog v-model:open="showNewModelDialog" title="Create new model">
       <form @submit="onSubmit">
         <FormTextInput
           v-model="newModelName"
           :rules="rules"
-          placeholder="new model name"
+          placeholder="West facade, Level 1 layout..."
           name="name"
           :show-clear="!!newModelName"
           full-width
+          autocomplete="off"
+          size="lg"
         />
-        <div class="mt-2 flex">
-          <FormButton text @click="showNewModelDialog = false">Cancel</FormButton>
+        <div class="mt-4 flex">
+          <FormButton class="flex-grow" text @click="showNewModelDialog = false">
+            Cancel
+          </FormButton>
           <FormButton class="flex-grow" submit>Create</FormButton>
         </div>
       </form>

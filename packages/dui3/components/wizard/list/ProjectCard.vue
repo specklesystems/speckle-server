@@ -4,14 +4,17 @@
   >
     <div class="font-bold text-ellipsis truncate">{{ project.name }}</div>
     <div class="caption text-foreground-2">{{ project.role?.split(':')[1] }}</div>
-    <div class="caption text-foreground-2">
-      {{ new Date(project.updatedAt).toLocaleString() }}
-    </div>
+    <div class="caption text-foreground-2">updated {{ updatedAgo }}</div>
   </div>
 </template>
 <script setup lang="ts">
+import dayjs from 'dayjs'
 import { ProjectListProjectItemFragment } from '~/lib/common/generated/gql/graphql'
-defineProps<{
+const props = defineProps<{
   project: ProjectListProjectItemFragment
 }>()
+
+const updatedAgo = computed(() => {
+  return dayjs(props.project.updatedAt).from(dayjs())
+})
 </script>

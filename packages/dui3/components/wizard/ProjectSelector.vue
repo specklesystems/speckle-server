@@ -9,6 +9,7 @@
           v-model="searchText"
           placeholder="Search your projects"
           name="search"
+          autocomplete="off"
           :show-clear="!!searchText"
           full-width
           size="lg"
@@ -51,16 +52,12 @@
     >
       <PlusIcon class="w-6 h-6" />
     </button>
-    <LayoutDialog
-      v-model:open="showNewProjectDialog"
-      hide-closer
-      title="Create new project"
-    >
-      <!-- TODO -->
+    <LayoutDialog v-model:open="showNewProjectDialog" title="Create new project">
       <form @submit="onSubmitCreateNewProject">
         <FormTextInput
           v-model="newProjectName"
-          placeholder="new project name"
+          placeholder="A Beautiful Home, A Small Bridge..."
+          autocomplete="off"
           name="name"
           :show-clear="!!newProjectName"
           :rules="[
@@ -68,9 +65,12 @@
             ValidationHelpers.isStringOfLength({ minLength: 3 })
           ]"
           full-width
+          size="lg"
         />
-        <div class="mt-2 flex">
-          <FormButton text @click="showNewProjectDialog = false">Cancel</FormButton>
+        <div class="mt-4 flex">
+          <FormButton class="flex-grow" text @click="showNewProjectDialog = false">
+            Cancel
+          </FormButton>
           <FormButton class="flex-grow" submit>Create</FormButton>
         </div>
       </form>
