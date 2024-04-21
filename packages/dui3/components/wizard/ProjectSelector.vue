@@ -1,17 +1,17 @@
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="space-y-2">
     <div class="flex items-center space-x-2"></div>
-    <div class="space-y-2">
+    <div class="space-y-2 relative">
       <div
-        class="flex items-center space-x-2 justify-between items-center items-centre"
+        class="flex items-center space-x-2 justify-between sticky -top-4 bg-foundation z-10 py-4 border-b"
       >
         <FormTextInput
           v-model="searchText"
-          placeholder="search"
+          placeholder="Search your projects"
           name="search"
           :show-clear="!!searchText"
           full-width
+          size="lg"
         />
         <div class="mt-1">
           <AccountsMenu
@@ -20,20 +20,15 @@
           />
         </div>
       </div>
-      <div class="grid grid-cols-1 gap-2">
+      <div class="grid grid-cols-1 gap-2 relative z-0">
         <CommonLoadingBar v-if="loading" loading />
-        <div
+        <WizardListProjectCard
           v-for="project in projects"
           :key="project.id"
-          class="group relative bg-foundation-2 rounded p-2 hover:text-primary hover:bg-primary-muted transition cursor-pointer hover:shadow-md"
+          :project="project"
           @click="$emit('next', accountId, project)"
-        >
-          <div class="font-bold">{{ project.name }}</div>
-          <div class="caption text-foreground-2">{{ project.role?.split(':')[1] }}</div>
-          <div class="caption text-foreground-2">
-            {{ new Date(project.updatedAt).toLocaleString() }}
-          </div>
-        </div>
+        />
+
         <div v-if="showNewProject && totalCount === 0 && searchText">
           <form @submit="createNewProject(searchText)">
             <FormButton
@@ -61,7 +56,6 @@
       hide-closer
       title="Create new project"
     >
-      <!-- <div class="-mx-6 -my-5 space-y-2"> -->
       <!-- TODO -->
       <form @submit="onSubmitCreateNewProject">
         <FormTextInput
@@ -80,7 +74,6 @@
           <FormButton class="flex-grow" submit>Create</FormButton>
         </div>
       </form>
-      <!-- </div> -->
     </LayoutDialog>
   </div>
 </template>
@@ -111,11 +104,9 @@ const searchText = ref<string>()
 const newProjectName = ref<string>()
 const showNewProjectDialog = ref(false)
 const accountStore = useAccountStore()
-const { defaultAccount } = storeToRefs(accountStore)
+const { activeAccount } = storeToRefs(accountStore)
 
-const accountId = computed(
-  () => selectedAccountId.value || (defaultAccount.value?.accountInfo.id as string)
-)
+const accountId = computed(() => activeAccount.value.accountInfo.id)
 const selectedAccountId = ref<string>()
 
 const { handleSubmit } = useForm<{ name: string }>()

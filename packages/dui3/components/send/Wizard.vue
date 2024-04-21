@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="showSendDialog" @fully-closed="step = 1">
     <template #header>
-      <div class="flex items-center space-x-2 mb-2">
+      <div class="flex items-center space-x-2 mb-0">
         <div
           class="text-xs mt-[3px] font-normal bg-primary-muted text-foreground-2 rounded-full justify-center items-center flex px-2"
         >
@@ -11,9 +11,10 @@
         <div v-if="step === 2" class="h5 font-bold">Select model</div>
         <div v-if="step === 3" class="h5 font-bold">Select objects</div>
       </div>
+      <!-- Step progress indicator: shows selected project and model -->
       <div
         v-if="selectedProject"
-        class="absolute rounded-b-md shadow bg-foundation-2 h-6 w-full -ml-4 text-xs text-foreground-2 font-normal px-4 flex items-center min-w-0"
+        class="mt-1 absolute rounded-b-md shadow bg-foundation-2 h-8 w-full -ml-4 text-xs text-foreground-2 font-normal px-4 flex items-center min-w-0"
       >
         <button
           v-tippy="'Change project'"
@@ -24,7 +25,7 @@
         >
           {{ selectedProject ? selectedProject.name : 'No project' }}
         </button>
-        <ChevronRightIcon v-if="selectedModel" class="w-4" />
+        <ChevronRightIcon v-if="selectedModel" class="w-3" />
         <button
           v-if="selectedModel"
           v-tippy="'Change model'"
@@ -37,27 +38,24 @@
         </button>
       </div>
     </template>
-    <div>
-      <!-- Project selector wizard -->
-      <div v-if="step === 1">
-        <WizardProjectSelector @next="selectProject" />
-      </div>
-      <!-- Model selector wizard -->
-      <div v-if="step === 2 && selectedProject && selectedAccountId" class="mt-4">
-        <div>
-          <WizardModelSelector
-            :project="selectedProject"
-            :account-id="selectedAccountId"
-            @next="selectModel"
-          />
-        </div>
-      </div>
-      <!-- Version selector wizard -->
-      <div v-if="step === 3" class="mt-4">
-        <SendFiltersAndSettings v-model="filter" @update:filter="(f) => (filter = f)" />
-        <div class="mt-2">
-          <FormButton full-width @click="addModel">Publish</FormButton>
-        </div>
+
+    <!-- Project selector wizard -->
+    <div v-if="step === 1">
+      <WizardProjectSelector @next="selectProject" />
+    </div>
+    <!-- Model selector wizard -->
+    <div v-if="step === 2 && selectedProject && selectedAccountId" class="mt-6">
+      <WizardModelSelector
+        :project="selectedProject"
+        :account-id="selectedAccountId"
+        @next="selectModel"
+      />
+    </div>
+    <!-- Version selector wizard -->
+    <div v-if="step === 3" class="mt-6">
+      <SendFiltersAndSettings v-model="filter" @update:filter="(f) => (filter = f)" />
+      <div class="mt-2">
+        <FormButton full-width @click="addModel">Publish</FormButton>
       </div>
     </div>
   </LayoutDialog>
@@ -70,7 +68,7 @@ import {
 import { ISendFilter, SenderModelCard } from '~/lib/models/card/send'
 import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
-import { CloudArrowUpIcon, XMarkIcon, ChevronRightIcon } from '@heroicons/vue/24/solid'
+import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 
 const showSendDialog = defineModel({ default: false })
 
@@ -96,8 +94,9 @@ const selectModel = (model: ModelListModelItemFragment) => {
   selectedModel.value = model
 }
 
+// Clears data if going backwards in the wizard
 watch(step, (newVal, oldVal) => {
-  if (newVal > oldVal) return
+  if (newVal > oldVal) return // exit fast on forward
   if (newVal === 1) {
     selectedProject.value = undefined
     selectedModel.value = undefined

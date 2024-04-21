@@ -4,7 +4,7 @@
     class="p-2 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
   >
     <button
-      class="flex w-full items-center text-foreground-2 flex items-center justify-between hover:bg-blue-500/10 rounded-md transition group"
+      class="flex w-full items-center text-foreground-2 justify-between hover:bg-blue-500/10 rounded-md transition group"
       @click="showModels = !showModels"
     >
       <div class="flex items-center transition group-hover:text-primary h-10 min-w-0">
