@@ -142,7 +142,7 @@ const createNewProject = async (name: string) => {
 const { result: projectsResult, loading } = useQuery(
   projectsListQuery,
   () => ({
-    limit: 5,
+    limit: 15,
     filter: {
       search: (searchText.value || '').trim() || null
     }

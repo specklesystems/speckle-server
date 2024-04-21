@@ -1,16 +1,10 @@
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="space-y-2">
-    <div class="flex items-center justify-between mb-2">
-      <div class="h5 font-bold">Select Model</div>
-    </div>
     <div class="space-y-2">
-      <div
-        class="flex items-center space-x-2 justify-between items-center items-centre"
-      >
+      <div class="flex items-center space-x-2 justify-between">
         <FormTextInput
           v-model="modelName"
-          :placeholder="totalCount === 0 ? 'new model name' : 'search'"
+          :placeholder="totalCount === 0 ? 'new model name' : 'search models'"
           name="search"
           :show-clear="!!modelName"
           full-width

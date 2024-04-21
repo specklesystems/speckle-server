@@ -76,11 +76,8 @@
         </FormButton>
       </div>
     </div>
-    <LayoutDialog v-model:open="showSendDialog" hide-closer>
-      <div class="-mx-4 -my-4 pt-4">
-        <SendWizard @close="showSendDialog = false" />
-      </div>
-    </LayoutDialog>
+
+    <SendWizard v-model:open="showSendDialog" @close="showSendDialog = false" />
     <LayoutDialog v-model:open="showReceiveDialog" hide-closer>
       <div class="-mx-4 -my-4 pt-4">
         <ReceiveWizard @close="showReceiveDialog = false" />
