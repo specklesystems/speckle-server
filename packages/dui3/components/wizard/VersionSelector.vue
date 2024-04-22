@@ -15,6 +15,7 @@
           :index="index"
           :latest-version-id="latestVersion.id"
           :selected-version-id="selectedVersionId"
+          @click="$emit('next', version, latestVersion)"
         />
       </div>
       <CommonLoadingBar v-if="loading" loading />
@@ -27,7 +28,6 @@
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import { modelVersionsQuery } from '~/lib/graphql/mutationsAndQueries'
-import { SourceApps, SourceAppName } from '@speckle/shared'
 import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 
 defineEmits<{
