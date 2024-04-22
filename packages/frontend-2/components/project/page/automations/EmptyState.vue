@@ -42,7 +42,7 @@
       </div>
     </div>
     <div v-if="isAutomateEnabled" class="flex flex-col gap-9">
-      <div class="flex justify-between items-center">
+      <div class="flex gap-2 flex-col sm:flex-row sm:justify-between sm:items-center">
         <h2 class="h5 font-bold">Featured Functions</h2>
         <FormButton
           :icon-left="ArrowTopRightOnSquareIcon"

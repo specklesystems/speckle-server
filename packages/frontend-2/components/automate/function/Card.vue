@@ -17,7 +17,7 @@
       <div class="label-light text-foreground-2 line-clamp-3 h-16">
         {{ plaintextDescription }}
       </div>
-      <div v-if="!noButtons" class="flex gap-2">
+      <div v-if="!noButtons" class="flex flex-col sm:flex-row gap-2">
         <FormButton
           color="secondary"
           class="grow"
