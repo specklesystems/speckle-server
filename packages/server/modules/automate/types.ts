@@ -1,3 +1,5 @@
+// TODO: Move this to helpers, add Record suffix to DB types & fix up results schema type
+
 export type AutomationTrigger = {
   triggeringId: string
   triggerType: 'versionCreation'

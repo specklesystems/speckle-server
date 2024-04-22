@@ -21,6 +21,8 @@ import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import { Optional, Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 
+// TODO: Extract dependency types so that they're not duplicated
+
 /**This should hook into the model version create event */
 export const onModelVersionCreate =
   (

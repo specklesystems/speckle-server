@@ -27,6 +27,7 @@ export async function queryActiveTriggersByTriggeringId({
   return []
 }
 
+// TODO: Fix up any return + magic string column names
 export async function getAutomationRevision(
   revisionId: string
 ): Promise<AutomationWithRevision | null> {

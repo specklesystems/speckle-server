@@ -61,6 +61,10 @@ To enable the specific feature, please add an environment variable to the `.env`
 
 With the use of `znv` we are directly parsing all environment variables into feature flags. So in general, all feature flags are just environment variables. We need to supply them to the application runtimes where they are needed.
 
+### Locally
+
+You'll need to add these env vars manually in the `.env` files of all relevant packages. Note that in `frontend-2` and other Nuxt based packages, you'll need to prefix the env var with `NUXT_PUBLIC_`
+
 ### Docker compose
 
 This is less relevant nowadays, but practically it is a copy pasta exercise, each container definition declares env vars.
