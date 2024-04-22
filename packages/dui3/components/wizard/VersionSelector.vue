@@ -65,7 +65,7 @@
         </button>
       </div>
       <CommonLoadingBar v-if="loading" loading />
-      <FormButton size="xs" full-width :disabled="hasReachedEnd" @click="loadMore">
+      <FormButton color="invert" full-width :disabled="hasReachedEnd" @click="loadMore">
         {{ hasReachedEnd ? 'No older versions' : 'Show older versions' }}
       </FormButton>
     </div>

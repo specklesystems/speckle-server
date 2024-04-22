@@ -26,6 +26,7 @@
           <CursorArrowRaysIcon class="w-4" />
         </button>
         <ModelActionsDialog
+          :model-name="modelData.displayName"
           @view="viewModel"
           @view-versions="viewModelVersions"
           @remove="removeModel"

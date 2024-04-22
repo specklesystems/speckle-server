@@ -6,8 +6,11 @@
     >
       <Cog6ToothIcon class="w-4" />
     </button>
-    <LayoutDialog v-model:open="openModelCardActionsDialog" hide-closer>
-      <div class="-mx-6 -my-6">
+    <LayoutDialog
+      v-model:open="openModelCardActionsDialog"
+      :title="`${modelName} actions`"
+    >
+      <div class="-mx-1">
         <button
           v-for="item in items"
           :key="item.name"
@@ -35,6 +38,10 @@ import {
 const openModelCardActionsDialog = ref(false)
 const emit = defineEmits(['view', 'view-versions', 'copy-model-link', 'remove'])
 
+defineProps<{
+  modelName: string
+}>()
+
 const items = [
   {
     name: 'View 3D model in browser',
@@ -49,14 +56,6 @@ const items = [
     icon: ClockIcon,
     action: () => {
       emit('view-versions')
-      openModelCardActionsDialog.value = false
-    }
-  },
-  {
-    name: 'Copy model link',
-    icon: LinkIcon,
-    action: () => {
-      emit('copy-model-link')
       openModelCardActionsDialog.value = false
     }
   },

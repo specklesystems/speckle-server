@@ -72,7 +72,7 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
-import { XMarkIcon, CloudArrowDownIcon } from '@heroicons/vue/24/solid'
+import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { ReceiverModelCard } from '~/lib/models/card/receiver'
 
 const showReceiveDialog = defineModel({ default: false })
