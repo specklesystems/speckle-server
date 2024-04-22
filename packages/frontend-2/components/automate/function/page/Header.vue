@@ -1,5 +1,5 @@
 <template>
-  <div class="pt-4 flex items-center justify-between">
+  <div class="pt-4 flex gap-4 flex-col sm:flex-row sm:items-center sm:justify-between">
     <Portal to="navigation">
       <HeaderNavLink
         :to="automationFunctionsRoute"
@@ -17,8 +17,13 @@
         Edit
       </FormButton>
     </div>
-    <div class="flex gap-2">
-      <FormButton :icon-left="BoltIcon" @click="$emit('createAutomation')">
+    <div class="flex gap-2 shrink-0">
+      <FormButton
+        :icon-left="BoltIcon"
+        class="shrink-0"
+        full-width
+        @click="$emit('createAutomation')"
+      >
         Create Automation
       </FormButton>
     </div>
