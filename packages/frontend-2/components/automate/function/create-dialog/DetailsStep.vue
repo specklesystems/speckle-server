@@ -1,15 +1,15 @@
 <template>
   <div class="flex flex-col gap-6 mb-4">
-    <div class="flex w-full">
+    <div class="flex flex-col gap-2 sm:gap-0 sm:flex-row w-full">
       <UserAvatarEditable
         v-model:edit-mode="avatarEditMode"
         name="image"
         placeholder="F N"
         size="xxl"
-        class="w-5/12"
+        class="sm:w-5/12"
         @update:model-value="avatarEditMode = false"
       />
-      <div class="w-7/12">
+      <div class="sm:w-7/12">
         <FormTextInput
           size="lg"
           name="name"

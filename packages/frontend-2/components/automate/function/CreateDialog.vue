@@ -13,6 +13,7 @@
         v-if="shouldShowStepsWidget"
         v-model="stepsWidgetModel"
         :steps="stepsWidgetSteps"
+        :go-vertical-below="TailwindBreakpoints.sm"
         non-interactive
       />
       <AutomateFunctionCreateDialogAuthorizeStep
@@ -40,7 +41,11 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon
 } from '@heroicons/vue/24/outline'
-import { CommonStepsNumber, type LayoutDialogButton } from '@speckle/ui-components'
+import {
+  CommonStepsNumber,
+  type LayoutDialogButton,
+  TailwindBreakpoints
+} from '@speckle/ui-components'
 import type {
   CreatableFunctionTemplate,
   FunctionDetailsFormValues
@@ -240,6 +245,9 @@ const buttons = computed((): LayoutDialogButton[] => {
 
 const buttonsWrapperClasses = computed(() => {
   switch (enumStep.value) {
+    case FunctionCreateSteps.Authorize:
+    case FunctionCreateSteps.Done:
+      return 'flex-col sm:flex-row'
     case FunctionCreateSteps.Template:
       return 'justify-end'
     case FunctionCreateSteps.Details:
