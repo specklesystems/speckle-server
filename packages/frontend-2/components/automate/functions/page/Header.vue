@@ -1,6 +1,8 @@
 <template>
   <div>
-    <div class="pt-4 flex items-center justify-between">
+    <div
+      class="pt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+    >
       <Portal to="navigation">
         <HeaderNavLink
           :to="automationFunctionsRoute"
@@ -9,7 +11,7 @@
       </Portal>
 
       <h1 class="h3 font-bold">Functions</h1>
-      <div class="flex gap-2">
+      <div class="flex flex-col sm:flex-row gap-2">
         <FormTextInput
           name="search"
           placeholder="Search Functions"

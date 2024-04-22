@@ -1,13 +1,15 @@
 <template>
   <div class="flex flex-col items-start w-full">
-    <div class="flex justify-between w-full">
+    <div class="flex gap-2 flex-col sm:flex-row sm:justify-between w-full">
       <div class="flex flex-col items-start">
         <CommonTextLink :icon-left="ArrowLeftIcon" size="xs" :to="automationsLink">
           Go Back to Automations
         </CommonTextLink>
-        <div class="flex gap-1 items-center relative">
-          <h1 class="block h4 font-bold">Automations</h1>
-          <ChevronRightIcon class="w-5 h-5" />
+        <div class="flex sm:gap-1 flex-col sm:flex-row sm:items-center sm:relative">
+          <div class="flex gap-1 items-center">
+            <h1 class="block h5 sm:h4 font-bold">Automations</h1>
+            <ChevronRightIcon class="w-5 h-5" />
+          </div>
           <CommonEditableTitle
             v-model="name"
             :disabled="loading"
