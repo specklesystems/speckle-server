@@ -4,6 +4,7 @@
       v-if="invite"
       :invite="invite"
       :show-stream-name="false"
+      :auto-accept="shouldAutoAcceptInvite"
       @processed="onProcessed"
     />
   </NuxtErrorBoundary>
@@ -20,6 +21,7 @@ const logger = useLogger()
 
 const token = computed(() => route.query.token as Optional<string>)
 const projectId = computed(() => route.params.id as Optional<string>)
+const shouldAutoAcceptInvite = computed(() => route.query.accept === 'true')
 
 const { result } = useQuery(
   projectInviteQuery,

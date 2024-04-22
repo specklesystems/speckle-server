@@ -12,7 +12,7 @@ const command: CommandModule<
     commentAuthorId?: string
   }
 > = {
-  command: 'commit <commitUrl> <targetStreamId> [branchName] [token] [commentAuthorId]',
+  command: 'commit <commitUrl> <targetStreamId> [branchName] [commentAuthorId]',
   describe: 'Download a commit from an external Speckle server instance',
   builder: {
     commitUrl: {
@@ -31,8 +31,7 @@ const command: CommandModule<
     },
     token: {
       describe: 'Target server auth token, in case the stream is private',
-      type: 'string',
-      default: ''
+      type: 'string'
     },
     commentAuthorId: {
       describe:

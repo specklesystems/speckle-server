@@ -1,61 +1,68 @@
 <template>
-  <div>
-    <!-- PROJECT NAME > MODEL NAME title -->
-    <div v-if="step === 2 || step === 3" class="-mt-6 mb-4">
-      <div v-if="step === 2 && selectedProject && selectedAccountId">
-        <div class="h9 font-bold italic">{{ selectedProject.name }}</div>
+  <LayoutDialog v-model:open="showReceiveDialog" @fully-closed="step = 1">
+    <template #header>
+      <div class="flex items-center space-x-2 mb-0">
+        <div
+          class="text-xs mt-[3px] font-normal bg-primary-muted text-foreground-2 rounded-full justify-center items-center flex px-2"
+        >
+          {{ step }}/3
+        </div>
+        <div v-if="step === 1" class="h5 font-bold">Select project</div>
+        <div v-if="step === 2" class="h5 font-bold">Select model</div>
+        <div v-if="step === 3" class="h5 font-bold">Select objects</div>
       </div>
-      <div v-if="step === 3">
-        <div class="h9 font-bold italic">
-          {{ `${selectedProject.name} > ${selectedModel.name}` }}
+      <!-- Step progress indicator: shows selected project and model -->
+      <div
+        v-if="selectedProject"
+        class="mt-1 absolute rounded-b-md shadow bg-foundation-2 h-10 w-full -ml-4 text-foreground-2 text-sm font-normal px-4 flex items-center min-w-0"
+      >
+        <button
+          v-tippy="'Change project'"
+          :class="`hover:text-primary transition truncate text-ellipsis max-w-32 min-w-0 ${
+            step === 1 ? 'text-primary font-bold' : ''
+          }`"
+          @click="step = 1"
+        >
+          {{ selectedProject ? selectedProject.name : 'No project' }}
+        </button>
+        <ChevronRightIcon v-if="selectedModel" class="w-4 mt-[2px]" />
+        <button
+          v-if="selectedModel"
+          v-tippy="'Change model'"
+          :class="`hover:text-primary transition truncate text-ellipsis max-w-32 min-w-0 ${
+            step === 2 ? 'text-primary font-bold' : ''
+          }`"
+          @click="step = 2"
+        >
+          {{ selectedModel ? selectedModel.name : 'No model' }}
+        </button>
+      </div>
+    </template>
+    <div>
+      <div v-if="step === 1">
+        <WizardProjectSelector :show-new-project="false" @next="selectProject" />
+      </div>
+      <div v-if="step === 2 && selectedProject && selectedAccountId" class="mt-10">
+        <div>
+          <WizardModelSelector
+            :project="selectedProject"
+            :account-id="selectedAccountId"
+            :show-new-model="false"
+            @next="selectModel"
+          />
         </div>
       </div>
-      <hr class="mt-1" />
-    </div>
-    <!-- Stepper -->
-    <div class="mb-3 flex items-center justify-left space-x-2">
-      <CloudArrowDownIcon class="w-6 text-primary" />
-      <div
-        v-for="index in 3"
-        :key="index"
-        :class="`rounded-full h-2 w-2 ${
-          index === step ? 'bg-primary' : 'bg-foreground-2'
-        }`"
-      ></div>
-      <FormButton v-if="step > 1" size="xs" class="-ml-1" text @click="step--">
-        Back
-      </FormButton>
-      <div class="grow"></div>
-      <button class="hover:text-primary transition" @click="emit('close')">
-        <XMarkIcon class="w-4" />
-      </button>
-    </div>
-    <div v-if="step === 1">
-      <div>
-        <div class="h5 font-bold">Select Project</div>
-      </div>
-      <WizardProjectSelector :show-new-project="false" @next="selectProject" />
-    </div>
-    <div v-if="step === 2 && selectedProject && selectedAccountId">
-      <div>
-        <WizardModelSelector
-          :project="selectedProject"
+      <div v-if="step === 3" class="mt-10">
+        <WizardVersionSelector
+          v-if="selectedProject && selectedModel"
           :account-id="selectedAccountId"
-          :show-new-model="false"
-          @next="selectModel"
+          :project-id="selectedProject.id"
+          :model-id="selectedModel.id"
+          @next="selectVersionAndAddModel"
         />
       </div>
     </div>
-    <div v-if="step === 3">
-      <WizardVersionSelector
-        v-if="selectedProject && selectedModel"
-        :account-id="selectedAccountId"
-        :project-id="selectedProject.id"
-        :model-id="selectedModel.id"
-        @next="selectVersionAndAddModel"
-      />
-    </div>
-  </div>
+  </LayoutDialog>
 </template>
 <script setup lang="ts">
 import {
@@ -65,12 +72,25 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
-import { XMarkIcon, CloudArrowDownIcon } from '@heroicons/vue/24/solid'
+import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { ReceiverModelCard } from '~/lib/models/card/receiver'
+
+const showReceiveDialog = defineModel({ default: false })
 
 const emit = defineEmits(['close'])
 
 const step = ref(1)
+
+// Clears data if going backwards in the wizard
+watch(step, (newVal, oldVal) => {
+  if (newVal > oldVal) return // exit fast on forward
+  if (newVal === 1) {
+    selectedProject.value = undefined
+    selectedModel.value = undefined
+  }
+  if (newVal === 2) selectedModel.value = undefined
+})
+
 const accountStore = useAccountStore()
 const { defaultAccount } = storeToRefs(accountStore)
 

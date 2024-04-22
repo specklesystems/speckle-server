@@ -162,7 +162,7 @@ describe('Stream access requests', () => {
       expect(sendEmailCall.args?.[0]?.[0]).to.be.ok
       const emailParams = sendEmailCall.args[0][0]
 
-      expect(emailParams.subject).to.contain('A user requested access to your stream')
+      expect(emailParams.subject).to.contain('A user requested access to your project')
       expect(emailParams.html).to.be.ok
       expect(emailParams.text).to.be.ok
       expect(emailParams.to).to.eq(otherGuy.email)

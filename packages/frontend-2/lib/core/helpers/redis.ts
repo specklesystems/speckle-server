@@ -15,7 +15,7 @@ export const createRedis = async (params: { logger: pino.Logger }) => {
   })
 
   redis.on('end', () => {
-    logger.info('Redis disconnected from server')
+    logger.debug('Redis disconnected from server')
   })
 
   // Try to ping the server

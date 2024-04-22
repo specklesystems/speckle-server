@@ -17,6 +17,10 @@ export const mainServerInfoFieldsFragment = gql`
     inviteOnly
     version
     guestModeEnabled
+    enableNewWebUiMessaging
+    migration {
+      movedTo
+    }
   }
 `
 

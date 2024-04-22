@@ -1,8 +1,9 @@
 <template>
   <ViewerLayoutPanel class="mt-2" hide-close>
+    <template #title>Filtering</template>
     <template #actions>
       <div class="flex justify-between items-center w-full">
-        <div>
+        <div class="-mt-1">
           <FormButton
             v-tippy="'Change Filter'"
             text
@@ -13,38 +14,40 @@
           >
             {{ title.split('.').reverse()[0] || title || 'No Title' }}
           </FormButton>
+        </div>
+        <div class="flex gap-1 divide-x divide-outline-3">
           <FormButton
             v-if="title !== 'Object Type'"
             text
             size="xs"
+            class="flex gap-1"
             @click="
               ;(showAllFilters = false),
                 removePropertyFilter(),
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
           >
+            <ArrowPathIcon class="h-4 w-4" />
             Reset
           </FormButton>
-        </div>
-        <div>
           <FormButton
             v-tippy="'Toggle coloring'"
             size="xs"
             text
             @click="toggleColors()"
           >
-            <IconColouringOutline v-if="!colors" class="w-3 h-3 text-primary" />
-            <IconColouring v-else class="w-3 h-3 text-primary" />
+            <IconColouringOutline v-if="!colors" class="w-4 h-4 text-primary" />
+            <IconColouring v-else class="w-4 h-4 text-primary" />
           </FormButton>
         </div>
       </div>
     </template>
     <div
-      :class="`relative flex flex-col space-y-2 px-2 simple-scrollbar overflow-y-scroll overflow-x-hidden shadow-inner ${
-        showAllFilters ? 'h-44 visible py-2' : 'h-0 invisible py-1'
+      :class="`relative flex flex-col gap-0.5 simple-scrollbar overflow-y-scroll overflow-x-hidden shadow-inner ${
+        showAllFilters ? 'h-44 visible pb-2' : 'h-0 invisible py-1'
       } transition-[height] border-b-2 border-primary-muted`"
     >
-      <div class="sticky top-0">
+      <div class="sticky top-0 bg-foundation p-2 pb-1">
         <FormTextInput
           v-model="searchString"
           name="filter search"
@@ -53,26 +56,28 @@
           :show-clear="!!searchString"
         />
       </div>
-      <div
-        v-for="(filter, index) in relevantFiltersLimited"
-        :key="index"
-        class="text-xs px-1"
-      >
-        <button
-          class="block w-full text-left hover:bg-primary-muted transition truncate rounded-md py-[1px]"
-          @click="
-            ;(showAllFilters = false),
-              setPropertyFilter(filter),
-              refreshColorsIfSetOrActiveFilterIsNumeric()
-          "
+      <div>
+        <div
+          v-for="(filter, index) in relevantFiltersLimited"
+          :key="index"
+          class="text-xs"
         >
-          {{ filter.key }}
-        </button>
-      </div>
-      <div v-if="itemCount < relevantFiltersSearched.length" class="mb-2">
-        <FormButton size="xs" text full-width @click="itemCount += 30">
-          View More ({{ relevantFiltersSearched.length - itemCount }})
-        </FormButton>
+          <button
+            class="block w-full text-left hover:bg-primary-muted transition truncate rounded-md py-1 px-2 mx-2"
+            @click="
+              ;(showAllFilters = false),
+                setPropertyFilter(filter),
+                refreshColorsIfSetOrActiveFilterIsNumeric()
+            "
+          >
+            {{ filter.key }}
+          </button>
+        </div>
+        <div v-if="itemCount < relevantFiltersSearched.length" class="mb-2">
+          <FormButton size="xs" text full-width @click="itemCount += 30">
+            View More ({{ relevantFiltersSearched.length - itemCount }})
+          </FormButton>
+        </div>
       </div>
     </div>
     <div v-if="activeFilter">
@@ -89,6 +94,7 @@
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
+import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 import type {
   PropertyInfo,
   StringPropertyInfo,

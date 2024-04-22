@@ -28,7 +28,7 @@ What is Speckle? Check our [![YouTube Video Views](https://img.shields.io/youtub
 - **Version control:** Speckle is the Git & Hub for geometry and BIM data
 - **Collaboration:** share your designs collaborate with others
 - **3D Viewer:** see your CAD and BIM models online, share and embed them anywhere
-- **Interoperability:** get your CAD and BIM models into other software without exporting or importing
+- **Connectivity:** get your CAD and BIM models into other software without exporting or importing
 - **Real time:** get real time updates and notifications and changes
 - **GraphQL API:** get what you need anywhere you want it
 - **Webhooks:** the base for a automation and next-gen pipelines
@@ -39,7 +39,7 @@ What is Speckle? Check our [![YouTube Video Views](https://img.shields.io/youtub
 
 Give Speckle a try in no time by:
 
-- [![speckle XYZ](https://img.shields.io/badge/https://-speckle.xyz-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://speckle.xyz) ⇒ creating an account at
+- [![speckle](https://img.shields.io/badge/https://-app.speckle.systems-0069ff?style=flat-square&logo=hackthebox&logoColor=white)](https://app.speckle.systems) ⇒ creating an account
 - [![create a droplet](https://img.shields.io/badge/Create%20a%20Droplet-0069ff?style=flat-square&logo=digitalocean&logoColor=white)](https://marketplace.digitalocean.com/apps/speckle-server?refcode=947a2b5d7dc1) ⇒ deploying an instance in 1 click
 
 ## Resources

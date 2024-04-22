@@ -7,13 +7,14 @@ import { TreeNode, WorldTree } from './modules/tree/WorldTree'
 import { Utils } from './modules/Utils'
 import { World } from './modules/World'
 import SpeckleRenderer from './modules/SpeckleRenderer'
-import { Extension } from './modules/extensions/core-extensions/Extension'
+import { Extension } from './modules/extensions/Extension'
 import Input from './modules/input/Input'
 import { Loader } from './modules/loaders/Loader'
+import { type Constructor } from 'type-fest'
 
 export interface ViewerParams {
   showStats: boolean
-  environmentSrc: Asset | string
+  environmentSrc: Asset
   verbose: boolean
 }
 export enum AssetType {
@@ -24,6 +25,7 @@ export enum AssetType {
 }
 
 export interface Asset {
+  id: string
   src: string
   type: AssetType
 }
@@ -43,6 +45,7 @@ export const DefaultViewerParams: ViewerParams = {
   showStats: false,
   verbose: false,
   environmentSrc: {
+    id: 'defaultHDRI',
     src: sampleHdri,
     type: AssetType.TEXTURE_EXR
   }
@@ -125,6 +128,17 @@ export enum UpdateFlags {
   CLIPPING_PLANES = 0b100
 }
 
+export interface MaterialOptions {
+  stencilOutlines?: StencilOutlineType
+  pointSize?: number
+  depthWrite?: number
+}
+export enum StencilOutlineType {
+  NONE,
+  OVERLAY,
+  OUTLINE_ONLY
+}
+
 export interface IViewer {
   get input(): Input
   get Utils(): Utils
@@ -160,8 +174,8 @@ export interface IViewer {
   getRenderer(): SpeckleRenderer
   getContainer(): HTMLElement
 
-  createExtension<T extends Extension>(type: new () => T): T
-  getExtension<T extends Extension>(type: new () => T): T
+  createExtension<T extends Extension>(type: Constructor<T>): T
+  getExtension<T extends Extension>(type: Constructor<T>): T
 
   dispose(): void
 }

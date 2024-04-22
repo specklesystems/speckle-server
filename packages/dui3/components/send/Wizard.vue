@@ -1,63 +1,64 @@
 <template>
-  <div>
-    <!-- PROJECT NAME > MODEL NAME title -->
-    <div v-if="step === 2 || step === 3" class="-mt-6 mb-4">
-      <div v-if="step === 2 && selectedProject && selectedAccountId">
-        <div class="h9 font-bold italic">{{ selectedProject.name }}</div>
-      </div>
-      <div v-if="step === 3">
-        <div class="h9 font-bold italic">
-          {{ `${selectedProject.name} > ${selectedModel.name}` }}
+  <LayoutDialog v-model:open="showSendDialog" @fully-closed="step = 1">
+    <template #header>
+      <div class="flex items-center space-x-2 mb-0">
+        <div
+          class="text-xs mt-[3px] font-normal bg-primary-muted text-foreground-2 rounded-full justify-center items-center flex px-2"
+        >
+          {{ step }}/3
         </div>
+        <div v-if="step === 1" class="h5 font-bold">Select project</div>
+        <div v-if="step === 2" class="h5 font-bold">Select model</div>
+        <div v-if="step === 3" class="h5 font-bold">Select objects</div>
       </div>
-      <hr class="mt-1" />
-    </div>
-    <!-- Stepper -->
-    <div class="mb-3 flex items-center justify-left space-x-2">
-      <CloudArrowUpIcon class="w-6 text-primary" />
+      <!-- Step progress indicator: shows selected project and model -->
       <div
-        v-for="index in 3"
-        :key="index"
-        :class="`rounded-full h-2 w-2 ${
-          index === step ? 'bg-primary' : 'bg-foreground-2'
-        }`"
-      ></div>
-      <FormButton v-if="step > 1" size="xs" class="-ml-1" text @click="step--">
-        Back
-      </FormButton>
-      <div class="grow"></div>
-      <button class="hover:text-primary transition" @click="emit('close')">
-        <XMarkIcon class="w-4" />
-      </button>
-    </div>
+        v-if="selectedProject"
+        class="mt-1 absolute rounded-b-md shadow bg-foundation-2 h-10 w-full -ml-4 text-foreground-2 text-sm font-normal px-4 flex items-center min-w-0"
+      >
+        <button
+          v-tippy="'Change project'"
+          :class="`hover:text-primary transition truncate text-ellipsis max-w-32 min-w-0 ${
+            step === 1 ? 'text-primary font-bold' : ''
+          }`"
+          @click="step = 1"
+        >
+          {{ selectedProject ? selectedProject.name : 'No project' }}
+        </button>
+        <ChevronRightIcon v-if="selectedModel" class="w-4 mt-[2px]" />
+        <button
+          v-if="selectedModel"
+          v-tippy="'Change model'"
+          :class="`hover:text-primary transition truncate text-ellipsis max-w-32 min-w-0 ${
+            step === 2 ? 'text-primary font-bold' : ''
+          }`"
+          @click="step = 2"
+        >
+          {{ selectedModel ? selectedModel.name : 'No model' }}
+        </button>
+      </div>
+    </template>
+
     <!-- Project selector wizard -->
     <div v-if="step === 1">
-      <div>
-        <div class="h5 font-bold">Select Project</div>
-      </div>
       <WizardProjectSelector @next="selectProject" />
     </div>
     <!-- Model selector wizard -->
-    <div v-if="step === 2 && selectedProject && selectedAccountId">
-      <div>
-        <WizardModelSelector
-          :project="selectedProject"
-          :account-id="selectedAccountId"
-          @next="selectModel"
-        />
-      </div>
+    <div v-if="step === 2 && selectedProject && selectedAccountId" class="mt-10">
+      <WizardModelSelector
+        :project="selectedProject"
+        :account-id="selectedAccountId"
+        @next="selectModel"
+      />
     </div>
     <!-- Version selector wizard -->
-    <div v-if="step === 3">
-      <div class="flex items-center justify-between mb-2">
-        <div class="h5 font-bold">Send Filter</div>
-      </div>
+    <div v-if="step === 3" class="mt-10">
       <SendFiltersAndSettings v-model="filter" @update:filter="(f) => (filter = f)" />
       <div class="mt-2">
         <FormButton full-width @click="addModel">Publish</FormButton>
       </div>
     </div>
-  </div>
+  </LayoutDialog>
 </template>
 <script setup lang="ts">
 import {
@@ -67,7 +68,9 @@ import {
 import { ISendFilter, SenderModelCard } from '~/lib/models/card/send'
 import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
-import { CloudArrowUpIcon, XMarkIcon } from '@heroicons/vue/24/solid'
+import { ChevronRightIcon } from '@heroicons/vue/24/solid'
+
+const showSendDialog = defineModel({ default: false })
 
 const emit = defineEmits(['close'])
 
@@ -90,6 +93,16 @@ const selectModel = (model: ModelListModelItemFragment) => {
   step.value++
   selectedModel.value = model
 }
+
+// Clears data if going backwards in the wizard
+watch(step, (newVal, oldVal) => {
+  if (newVal > oldVal) return // exit fast on forward
+  if (newVal === 1) {
+    selectedProject.value = undefined
+    selectedModel.value = undefined
+  }
+  if (newVal === 2) selectedModel.value = undefined
+})
 
 const hostAppStore = useHostAppStore()
 

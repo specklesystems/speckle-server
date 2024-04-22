@@ -29,11 +29,11 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90dvh]',
+                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
-              @submit.prevent="onSubmit"
+              @submit.prevent="onFormSubmit"
             >
               <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
                 <div
@@ -57,7 +57,7 @@
               </button>
               <div
                 class="flex-1 simple-scrollbar overflow-y-auto"
-                :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-10'"
+                :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-6 pt-10 sm:p-10'"
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
@@ -95,7 +95,7 @@ import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessu
 import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
-import { throttle } from 'lodash'
+import { throttle, noop } from 'lodash'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -177,6 +177,10 @@ const widthClasses = computed(() => {
 const onClose = () => {
   if (props.preventCloseOnClickOutside) return
   open.value = false
+}
+
+const onFormSubmit = (e: SubmitEvent) => {
+  ;(props.onSubmit || noop)(e)
 }
 
 const onScroll = throttle((e: Event) => {

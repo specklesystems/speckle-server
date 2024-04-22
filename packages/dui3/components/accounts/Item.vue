@@ -22,17 +22,6 @@
             {{ account.accountInfo.serverInfo.url.split('//')[1] }}
           </span>
         </div>
-        <!-- <div class="truncate text-xs text-foreground-2"> -->
-        <!-- {{ account.accountInfo.userInfo.email }} -->
-        <!-- {{ account.accountInfo.id }} -->
-        <!-- </div> -->
-      </div>
-      <div class="transition opacity-0 group-hover:opacity-100">
-        <div
-          class="caption opacity-0 transition group-hover:opacity-100 rounded-md bg-primary text-foreground-on-primary p-1"
-        >
-          select
-        </div>
       </div>
     </div>
   </button>

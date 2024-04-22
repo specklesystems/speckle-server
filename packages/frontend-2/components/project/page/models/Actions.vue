@@ -3,6 +3,7 @@
   <div>
     <LayoutMenu
       v-model:open="showActionsMenu"
+      :menu-id="menuId"
       :items="actionsItems"
       @click.stop.prevent
       @chosen="onActionChosen"
@@ -89,6 +90,7 @@ const props = defineProps<{
 
 const copyModelLink = useCopyModelLink()
 const { copy } = useClipboard()
+const menuId = useId()
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)

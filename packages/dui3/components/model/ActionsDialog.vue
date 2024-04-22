@@ -6,8 +6,11 @@
     >
       <Cog6ToothIcon class="w-4" />
     </button>
-    <LayoutDialog v-model:open="openModelCardActionsDialog" hide-closer>
-      <div class="-mx-6 -my-6">
+    <LayoutDialog
+      v-model:open="openModelCardActionsDialog"
+      :title="`${modelName} actions`"
+    >
+      <div class="-mx-1">
         <button
           v-for="item in items"
           :key="item.name"
@@ -26,15 +29,17 @@
 <script setup lang="ts">
 import {
   Cog6ToothIcon,
-  LinkIcon,
   ArrowTopRightOnSquareIcon,
   ClockIcon,
-  TrashIcon,
   ArchiveBoxXMarkIcon
 } from '@heroicons/vue/24/outline'
 
 const openModelCardActionsDialog = ref(false)
 const emit = defineEmits(['view', 'view-versions', 'copy-model-link', 'remove'])
+
+defineProps<{
+  modelName: string
+}>()
 
 const items = [
   {
@@ -54,14 +59,6 @@ const items = [
     }
   },
   {
-    name: 'Copy model link',
-    icon: LinkIcon,
-    action: () => {
-      emit('copy-model-link')
-      openModelCardActionsDialog.value = false
-    }
-  },
-  {
     name: 'Remove from file',
     danger: true,
     icon: ArchiveBoxXMarkIcon,
@@ -69,21 +66,12 @@ const items = [
       emit('remove')
       openModelCardActionsDialog.value = false
     }
-  },
-  {
-    name: 'Delete from file and project',
-    danger: true,
-    icon: TrashIcon,
-    action: () => {
-      emit('delete-full')
-      openModelCardActionsDialog.value = false
-    }
   }
 ]
 </script>
 <style scoped lang="postcss">
 .action {
-  @apply flex items-center justify-between w-full rounded-lg text-left items-center space-x-2 transition p-2 select-none hover:cursor-pointer min-w-0;
+  @apply flex items-center justify-between w-full rounded-lg text-left space-x-2 transition p-2 select-none hover:cursor-pointer min-w-0;
 }
 
 .action-normal {

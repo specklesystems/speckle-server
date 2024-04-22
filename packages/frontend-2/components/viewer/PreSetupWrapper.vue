@@ -23,7 +23,7 @@
           </div>
           <!-- Viewer host -->
           <div
-            class="special-gradient absolute z-10 overflow-hidden w-screen"
+            class="viewer special-gradient absolute z-10 overflow-hidden w-screen"
             :class="
               isEmbedEnabled
                 ? isTransparent

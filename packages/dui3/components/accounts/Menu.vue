@@ -6,20 +6,15 @@
         <XMarkIcon class="w-6 h-6" />
       </UserAvatar>
     </button>
-    <LayoutDialog v-model:open="showAccountsDialog" hide-closer>
-      <div class="-mx-6 -my-5">
+    <LayoutDialog v-model:open="showAccountsDialog" title="Select account">
+      <div class="">
         <AccountsItem
           v-for="acc in accounts"
           :key="acc.accountInfo.id"
           :current-selected-account-id="currentSelectedAccountId"
           :account="(acc as DUIAccount)"
-          class="rounded-lg"
-          @select="
-            (e) => {
-              $emit('select', e)
-              showAccountsDialog = false
-            }
-          "
+          class="rounded-lg mb-2"
+          @select="selectAccount(acc as DUIAccount)"
         />
       </div>
     </LayoutDialog>
@@ -40,7 +35,12 @@ defineEmits<{
 const showAccountsDialog = ref(false)
 
 const accountStore = useAccountStore()
-const { accounts, defaultAccount } = storeToRefs(accountStore)
+const { accounts, defaultAccount, userSelectedAccount } = storeToRefs(accountStore)
+
+const selectAccount = (acc: DUIAccount) => {
+  userSelectedAccount.value = acc
+  showAccountsDialog.value = false
+}
 
 const user = computed(() => {
   if (!defaultAccount.value) return undefined

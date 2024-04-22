@@ -3,7 +3,7 @@
     as="div"
     class="flex items-center relative sm:border-r border-outline-1 sm:pr-4"
   >
-    <MenuButton as="div">
+    <MenuButton :id="menuButtonId" as="div">
       <FormButton
         class="hidden sm:flex"
         size="sm"
@@ -101,6 +101,7 @@ const props = defineProps<{
 
 const { copy } = useClipboard()
 const copyModelLink = useCopyModelLink()
+const menuButtonId = useId()
 
 const embedDialogOpen = ref(false)
 

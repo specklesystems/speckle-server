@@ -1,4 +1,3 @@
-<!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div>
     <div
@@ -76,16 +75,12 @@
         </FormButton>
       </div>
     </div>
-    <LayoutDialog v-model:open="showSendDialog" hide-closer>
-      <div class="-mx-4 -my-4 pt-4">
-        <SendWizard @close="showSendDialog = false" />
-      </div>
-    </LayoutDialog>
-    <LayoutDialog v-model:open="showReceiveDialog" hide-closer>
-      <div class="-mx-4 -my-4 pt-4">
-        <ReceiveWizard @close="showReceiveDialog = false" />
-      </div>
-    </LayoutDialog>
+
+    <SendWizard v-model:open="showSendDialog" @close="showSendDialog = false" />
+    <ReceiveWizard
+      v-model:open="showReceiveDialog"
+      @close="showReceiveDialog = false"
+    />
   </div>
 </template>
 <script setup lang="ts">

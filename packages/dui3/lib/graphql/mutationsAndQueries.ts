@@ -53,6 +53,7 @@ export const projectListFragment = graphql(`
 export const projectsListQuery = graphql(`
   query ProjectListQuery($limit: Int!, $filter: UserProjectsFilter, $cursor: String) {
     activeUser {
+      id
       projects(limit: $limit, filter: $filter, cursor: $cursor) {
         totalCount
         cursor
@@ -88,6 +89,7 @@ export const projectModelsQuery = graphql(`
       id
       models(cursor: $cursor, limit: $limit, filter: $filter) {
         totalCount
+        cursor
         items {
           ...ModelListModelItem
         }

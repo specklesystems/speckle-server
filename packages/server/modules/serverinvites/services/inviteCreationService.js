@@ -130,7 +130,7 @@ async function validateResource(params, resource, targetUser) {
       ))
       if (isStreamCollaborator) {
         throw new InviteCreateValidationError(
-          'The target user is already a collaborator of the specified stream'
+          'The target user is already a collaborator of the specified project'
         )
       }
     }
@@ -199,7 +199,7 @@ function buildEmailSubject(invite, inviter, resourceName) {
   }
 
   if (resourceTarget === 'streams') {
-    return `${inviter.name} wants to share the stream "${resourceName}" on Speckle with you`
+    return `${inviter.name} wants to share the project "${resourceName}" on Speckle with you`
   } else {
     throw new InviteCreateValidationError('Unexpected resource target type')
   }
@@ -236,7 +236,7 @@ function buildMjmlPreamble(invite, inviter, serverInfo, resourceName) {
 
   const dynamicText = forServer
     ? `join the <b>${serverInfo.name}</b> Speckle Server`
-    : `become a collaborator on the <b>${resourceName}</b> stream`
+    : `become a collaborator on the <b>${resourceName}</b> project`
 
   const bodyStart = `
   <mj-text>
@@ -261,7 +261,7 @@ function buildTextPreamble(invite, inviter, serverInfo, resourceName) {
 
   const dynamicText = forServer
     ? `join the ${serverInfo.name} Speckle Server`
-    : `become a collaborator on the "${resourceName}" stream`
+    : `become a collaborator on the "${resourceName}" project`
 
   const bodyStart = `Hello!
 
@@ -385,7 +385,7 @@ async function createAndSendInvite(params, inviterResourceAccessLimits) {
   }
   if (targetUser && targetUser.role === Roles.Server.Guest) {
     if (role === Roles.Stream.Owner) {
-      throw new InviteCreateValidationError('Guest users cannot be owners of streams')
+      throw new InviteCreateValidationError('Guest users cannot be owners of projects')
     }
   }
 
