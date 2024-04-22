@@ -29,7 +29,6 @@
 <script setup lang="ts">
 import {
   Cog6ToothIcon,
-  LinkIcon,
   ArrowTopRightOnSquareIcon,
   ClockIcon,
   ArchiveBoxXMarkIcon
