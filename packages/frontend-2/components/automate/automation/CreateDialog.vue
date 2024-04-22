@@ -13,6 +13,7 @@
         v-if="shouldShowStepsWidget"
         v-model="stepsWidgetModel"
         :steps="stepsWidgetSteps"
+        :go-vertical-below="TailwindBreakpoints.sm"
         non-interactive
       />
       <AutomateAutomationCreateDialogSelectFunctionStep
@@ -47,7 +48,11 @@
 </template>
 <script setup lang="ts">
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
-import { CommonStepsNumber, type LayoutDialogButton } from '@speckle/ui-components'
+import {
+  CommonStepsNumber,
+  TailwindBreakpoints,
+  type LayoutDialogButton
+} from '@speckle/ui-components'
 import {
   ArrowRightIcon,
   ChevronLeftIcon,
@@ -221,6 +226,8 @@ const buttonsWrapperClasses = computed(() => {
   switch (enumStep.value) {
     case AutomationCreateSteps.SelectFunction:
       return 'justify-end'
+    case AutomationCreateSteps.Done:
+      return 'flex-col sm:flex-row sm:justify-between'
     default:
       return 'justify-between'
   }
