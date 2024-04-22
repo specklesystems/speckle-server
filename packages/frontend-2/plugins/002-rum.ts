@@ -7,6 +7,7 @@ import { useCreateErrorLoggingTransport } from '~/lib/core/composables/error'
 import type { Plugin } from 'nuxt/dist/app/nuxt'
 import { isH3Error } from '~/lib/common/helpers/error'
 import { useRequestId, useServerRequestId } from '~/lib/core/composables/server'
+import { isBrave, isSafari } from '@speckle/shared'
 
 type PluginNuxtApp = Parameters<Plugin>[0]
 
@@ -84,6 +85,14 @@ async function initRumClient(app: PluginNuxtApp) {
     datadog.onReady(async () => {
       if ('setGlobalContextProperty' in datadog && reqId?.length) {
         datadog.setGlobalContextProperty('requestId', reqId)
+
+        if (isSafari()) {
+          datadog.setGlobalContextProperty('isSafari', 'true')
+        }
+
+        if (isBrave()) {
+          datadog.setGlobalContextProperty('isBrave', 'true')
+        }
       }
 
       await onAuthStateChange(
@@ -169,7 +178,7 @@ async function initRumServer(app: PluginNuxtApp) {
                 onLCP,
                 onINP,
                 onTTFB
-              } from 'https://unpkg.com/web-vitals@3/dist/web-vitals.attribution.js?module';
+              } from 'https://cdn.jsdelivr.net/npm/web-vitals@3/dist/web-vitals.attribution.js?module';
 
               onCLS(console.log);
               onFID(console.log);

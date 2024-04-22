@@ -1,15 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
+  AutomateFunctionTemplateLanguage,
   AutomateRunTriggerType,
   LimitedUser,
   Resolvers
 } from '@/modules/core/graph/generated/graphql'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
-import { Automate, Roles } from '@speckle/shared'
+import { Automate, Roles, SourceAppNames, isNullOrUndefined } from '@speckle/shared'
 import { times } from 'lodash'
 import { IMockStore, IMocks } from '@graphql-tools/mock'
 import dayjs from 'dayjs'
 import { BranchCommits, Branches, Commits } from '@/modules/core/dbSchema'
+import {
+  AutomationNotFoundError,
+  FunctionNotFoundError
+} from '@/modules/automate/errors/management'
 
 const getRandomModelVersion = async (offset?: number) => {
   const versionQ = Commits.knex()
@@ -50,8 +55,9 @@ export async function buildMocksConfig(): Promise<{
   return {
     resolvers: (store) => ({
       Query: {
-        automateFunctions: (_parent, args) => {
-          const count = args.limit || faker.datatype.number({ min: 4, max: 20 })
+        automateFunctions: () => {
+          const forceZero = false
+          const count = forceZero ? 0 : faker.datatype.number({ min: 0, max: 20 })
 
           return {
             cursor: null,
@@ -61,15 +67,19 @@ export async function buildMocksConfig(): Promise<{
         },
         automateFunction: (_parent, args) => {
           const id = args.id
+          if (id === '404') {
+            throw new FunctionNotFoundError()
+          }
+
           return store.get('AutomateFunction', { id }) as any
         }
       },
       Project: {
-        automations: (_parent, args) => {
+        automations: () => {
           const forceAutomations = false
           const forceNoAutomations = false
 
-          const limit = args.limit || faker.datatype.number({ min: 4, max: 20 })
+          const limit = faker.datatype.number({ min: 0, max: 20 })
           let count
           if (forceNoAutomations) {
             count = 0
@@ -82,6 +92,13 @@ export async function buildMocksConfig(): Promise<{
             totalCount: count,
             items: times(count, () => store.get('Automation'))
           } as any
+        },
+        automation: (_parent, args) => {
+          if (args.id === '404') {
+            throw new AutomationNotFoundError()
+          }
+
+          return store.get('Automation', { id: args.id }) as any
         },
         blob: () => {
           return store.get('BlobMetadata') as any
@@ -100,8 +117,9 @@ export async function buildMocksConfig(): Promise<{
         }
       },
       Automation: {
-        runs: (_parent, args) => {
-          const count = args.limit || faker.datatype.number({ min: 4, max: 20 })
+        runs: () => {
+          const forceZero = false
+          const count = forceZero ? 0 : faker.datatype.number({ min: 0, max: 20 })
 
           return {
             cursor: null,
@@ -112,10 +130,10 @@ export async function buildMocksConfig(): Promise<{
       },
       AutomationRevision: {
         triggerDefinitions: async () => {
-          const res = await Promise.all([
-            getRandomModelVersion(),
-            getRandomModelVersion(1)
-          ])
+          const rand = faker.datatype.number({ min: 0, max: 2 })
+          const res = (
+            await Promise.all([getRandomModelVersion(), getRandomModelVersion(1)])
+          ).slice(0, rand)
 
           return res.map((i) => ({
             type: AutomateRunTriggerType.VersionCreated,
@@ -138,14 +156,37 @@ export async function buildMocksConfig(): Promise<{
       ProjectAutomationMutations: {
         update: (_parent, args) => {
           const {
-            input: { id, name }
+            input: { id, name, enabled }
           } = args
           const automation = store.get('Automation') as any
           return {
             ...automation,
             id,
-            ...(name?.length ? { name } : {})
+            ...(name?.length ? { name } : {}),
+            ...(isNullOrUndefined(enabled) ? {} : { enabled })
           }
+        },
+        trigger: () => true
+      },
+      UserAutomateInfo: {
+        hasAutomateGithubApp: () => {
+          return faker.datatype.boolean()
+        },
+        availableGithubOrgs: () => {
+          // Random string array
+          return [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(() =>
+            faker.company.companyName()
+          )
+        }
+      },
+      AutomateFunction: {
+        creator: async (_parent, args, ctx) => {
+          const rand = faker.datatype.boolean()
+          const activeUser = ctx.userId
+            ? await ctx.loaders.users.getUser.load(ctx.userId)
+            : null
+
+          return rand ? (store.get('LimitedUser') as any) : activeUser
         }
       }
     }),
@@ -156,7 +197,7 @@ export async function buildMocksConfig(): Promise<{
         fileSize: () => faker.datatype.number({ min: 1, max: 1000 })
       }),
       TriggeredAutomationsStatus: () => ({
-        automationRuns: () => [...new Array(faker.datatype.number({ min: 1, max: 5 }))]
+        automationRuns: () => [...new Array(faker.datatype.number({ min: 0, max: 5 }))]
       }),
       AutomationRevision: () => ({
         functions: () => [undefined] // array of 1 always,
@@ -183,6 +224,18 @@ export async function buildMocksConfig(): Promise<{
             1,
             '\n\n'
           )}\n## Features \n- ${faker.lorem.sentence()}\n - ${faker.lorem.sentence()}\n - ${faker.lorem.sentence()}`
+        },
+        supportedSourceApps: () => {
+          const base = SourceAppNames
+
+          // Random assortment from base
+          return base.filter(faker.datatype.boolean)
+        },
+        tags: () => {
+          // Random string array
+          return [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(() =>
+            faker.lorem.word()
+          )
         }
       }),
       AutomateFunctionRelease: () => ({
@@ -269,6 +322,22 @@ export async function buildMocksConfig(): Promise<{
       }),
       Version: () => ({
         id: () => faker.random.alphaNumeric(10)
+      }),
+      ServerAutomateInfo: () => ({
+        availableFunctionTemplates: () => [
+          {
+            id: AutomateFunctionTemplateLanguage.Python,
+            title: 'Python',
+            url: 'https://github.com/specklesystems/speckle_automate_python_example',
+            logo: '/images/functions/python.svg'
+          },
+          {
+            id: AutomateFunctionTemplateLanguage.DotNet,
+            title: '.NET / C#',
+            url: 'https://github.com/specklesystems/SpeckleAutomateDotnetExample',
+            logo: '/images/functions/dotnet.svg'
+          }
+        ]
       })
     },
     mockEntireSchema: false

@@ -1,5 +1,5 @@
 <template>
-  <div class="pt-4 flex items-center justify-between">
+  <div class="pt-4 flex gap-4 flex-col sm:flex-row sm:items-center sm:justify-between">
     <Portal to="navigation">
       <HeaderNavLink
         :to="automationFunctionsRoute"
@@ -12,11 +12,20 @@
     </Portal>
     <div class="flex items-center gap-4">
       <AutomateFunctionLogo :logo="fn.logo" />
-
       <h1 class="h3 font-bold">{{ fn.name }}</h1>
+      <FormButton v-if="isOwner" size="sm" text class="mt-1" @click="$emit('edit')">
+        Edit
+      </FormButton>
     </div>
-    <div class="flex gap-2">
-      <FormButton :icon-left="BoltIcon">Create Automation</FormButton>
+    <div class="flex gap-2 shrink-0">
+      <FormButton
+        :icon-left="BoltIcon"
+        class="shrink-0"
+        full-width
+        @click="$emit('createAutomation')"
+      >
+        Create Automation
+      </FormButton>
     </div>
   </div>
 </template>
@@ -28,17 +37,25 @@ import {
   automationFunctionRoute,
   automationFunctionsRoute
 } from '~/lib/common/helpers/route'
-// TODO: Create automation dialog
+
+defineEmits<{
+  createAutomation: []
+  edit: []
+}>()
 
 graphql(`
   fragment AutomateFunctionPageHeader_Function on AutomateFunction {
     id
     name
     logo
+    creator {
+      id
+    }
   }
 `)
 
 defineProps<{
   fn: AutomateFunctionPageHeader_FunctionFragment
+  isOwner: boolean
 }>()
 </script>

@@ -79,8 +79,7 @@ function useInitMainSurvey() {
   const onboardingOrFeedbackDateString = useSynchronizedCookie<string | undefined>(
     'onboardingOrFeedbackDate',
     {
-      default: () => dayjs().startOf('day').format('YYYY-MM-DD'),
-      expires: dayjs().add(999, 'day').toDate()
+      default: () => dayjs().startOf('day').format('YYYY-MM-DD')
     }
   )
   const { projectVersionCount } = useActiveUser()

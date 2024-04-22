@@ -21,7 +21,12 @@
         </div>
       </div>
       <div>
-        <FormButton v-if="isAutomateEnabled" :icon-left="PlusIcon" size="lg">
+        <FormButton
+          v-if="isAutomateEnabled"
+          :icon-left="PlusIcon"
+          size="lg"
+          @click="$emit('new-automation')"
+        >
           New Automation
         </FormButton>
         <FormButton
@@ -37,19 +42,26 @@
       </div>
     </div>
     <div v-if="isAutomateEnabled" class="flex flex-col gap-9">
-      <div class="flex justify-between items-center">
+      <div class="flex gap-2 flex-col sm:flex-row sm:justify-between sm:items-center">
         <h2 class="h5 font-bold">Featured Functions</h2>
         <FormButton
           :icon-left="ArrowTopRightOnSquareIcon"
           color="secondary"
           class="shrink-0"
+          :to="automationFunctionsRoute"
         >
           Explore All Functions
         </FormButton>
       </div>
-      <AutomateFunctionCardView>
-        <AutomateFunctionCard v-for="fn in functions" :key="fn.id" :fn="fn" />
+      <AutomateFunctionCardView v-if="functions.length">
+        <AutomateFunctionCard
+          v-for="fn in functions"
+          :key="fn.id"
+          :fn="fn"
+          @use="() => $emit('new-automation', fn)"
+        />
       </AutomateFunctionCardView>
+      <CommonGenericEmptyState v-else />
     </div>
   </div>
 </template>
@@ -57,16 +69,23 @@
 import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationsEmptyState_QueryFragment } from '~/lib/common/generated/gql/graphql'
+import { automationFunctionsRoute } from '~/lib/common/helpers/route'
+import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 
 graphql(`
   fragment ProjectPageAutomationsEmptyState_Query on Query {
-    automateFunctions(limit: 9) {
+    automateFunctions(limit: 9, filter: { featuredFunctionsOnly: true }) {
       items {
         ...AutomationsFunctionsCard_AutomateFunction
+        ...AutomateAutomationCreateDialog_AutomateFunction
       }
     }
   }
 `)
+
+defineEmits<{
+  'new-automation': [fn?: CreateAutomationSelectableFunction]
+}>()
 
 const props = defineProps<{
   functions?: ProjectPageAutomationsEmptyState_QueryFragment

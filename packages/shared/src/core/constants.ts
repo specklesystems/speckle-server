@@ -80,6 +80,10 @@ export const Scopes = Object.freeze(<const>{
   },
   Automate: {
     ReportResults: 'automate:report-results'
+  },
+  AutomateFunctions: {
+    Read: 'automate-functions:read',
+    Write: 'automate-functions:write'
   }
 })
 
@@ -87,6 +91,8 @@ export const Scopes = Object.freeze(<const>{
  * All scopes
  */
 export const AllScopes = flatMap(Scopes, (v) => Object.values(v))
+
+export type ServerScope = (typeof AllScopes)[number]
 
 export const SourceAppNames = [
   'Dynamo',

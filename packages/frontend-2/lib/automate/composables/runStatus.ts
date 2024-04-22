@@ -14,8 +14,6 @@ import {
   ArrowPathIcon
 } from '@heroicons/vue/24/outline'
 
-// TODO: Clean up lib - multiple automate folders
-
 graphql(`
   fragment FunctionRunStatusForSummary on AutomateFunctionRun {
     id

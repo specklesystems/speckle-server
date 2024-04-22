@@ -164,6 +164,19 @@ export const updateWebhookMutation = graphql(`
   }
 `)
 
+export const createAutomationMutation = graphql(`
+  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        create(input: $input) {
+          id
+          ...ProjectPageAutomationsRow_Automation
+        }
+      }
+    }
+  }
+`)
+
 export const updateAutomationMutation = graphql(`
   mutation UpdateAutomation($projectId: ID!, $input: ProjectAutomationUpdateInput!) {
     projectMutations {
@@ -171,6 +184,7 @@ export const updateAutomationMutation = graphql(`
         update(input: $input) {
           id
           name
+          enabled
         }
       }
     }
@@ -187,6 +201,16 @@ export const createAutomationRevisionMutation = graphql(`
         createRevision(input: $input) {
           id
         }
+      }
+    }
+  }
+`)
+
+export const triggerAutomationMutation = graphql(`
+  mutation TriggerAutomation($projectId: ID!, $automationId: ID!) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        trigger(automationId: $automationId)
       }
     }
   }

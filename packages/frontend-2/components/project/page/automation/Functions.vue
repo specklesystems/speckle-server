@@ -5,15 +5,21 @@
       Note: functions do not automatically update to their latest release. To do so,
       please select it manually via the edit dialog.
     </div>
-    <AutomateFunctionCardView class="mt-2">
-      <AutomateFunctionCard
-        v-for="fn in functions"
-        :key="fn.id"
-        :fn="fn"
-        show-edit
-        @edit="onEdit(fn)"
+    <div class="mt-2">
+      <AutomateFunctionCardView v-if="functions.length">
+        <AutomateFunctionCard
+          v-for="fn in functions"
+          :key="fn.id"
+          :fn="fn"
+          show-edit
+          @edit="onEdit(fn)"
+        />
+      </AutomateFunctionCardView>
+      <CommonGenericEmptyState
+        v-else
+        message="No valid functions are associated with this automation"
       />
-    </AutomateFunctionCardView>
+    </div>
     <ProjectPageAutomationFunctionSettingsDialog
       v-model:open="dialogOpen"
       :project-id="projectId"
@@ -31,8 +37,6 @@ import type {
   ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment,
   ProjectPageAutomationFunctions_AutomationFragment
 } from '~/lib/common/generated/gql/graphql'
-
-// TODO: Edit details dialog
 
 type EditableFunction = AutomationsFunctionsCard_AutomateFunctionFragment
 type EditableFunctionRevision =

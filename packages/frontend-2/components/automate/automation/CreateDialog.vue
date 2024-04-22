@@ -1,0 +1,360 @@
+<template>
+  <LayoutDialog
+    v-model:open="open"
+    max-width="lg"
+    title="Create Automation"
+    :buttons-wrapper-classes="buttonsWrapperClasses"
+    :buttons="buttons"
+    :on-submit="onDialogSubmit"
+    prevent-close-on-click-outside
+  >
+    <div class="flex flex-col gap-11">
+      <CommonStepsNumber
+        v-if="shouldShowStepsWidget"
+        v-model="stepsWidgetModel"
+        :steps="stepsWidgetSteps"
+        :go-vertical-below="TailwindBreakpoints.sm"
+        non-interactive
+      />
+      <AutomateAutomationCreateDialogSelectFunctionStep
+        v-if="enumStep === AutomationCreateSteps.SelectFunction"
+        v-model:selected-function="selectedFunction"
+        :preselected-function="validatedPreselectedFunction"
+      />
+      <AutomateAutomationCreateDialogFunctionParametersStep
+        v-else-if="
+          enumStep === AutomationCreateSteps.FunctionParameters && selectedFunction
+        "
+        v-model:parameters="functionParameters"
+        v-model:has-errors="hasParameterErrors"
+        :fn="selectedFunction"
+      />
+      <AutomateAutomationCreateDialogAutomationDetailsStep
+        v-else-if="enumStep === AutomationCreateSteps.AutomationDetails"
+        v-model:project="selectedProject"
+        v-model:model="selectedModel"
+        v-model:automation-name="automationName"
+        :preselected-project="preselectedProject"
+      />
+      <AutomateAutomationCreateDialogDoneStep
+        v-else-if="
+          enumStep === AutomationCreateSteps.Done && automationId && selectedFunction
+        "
+        :automation-id="automationId"
+        :function-name="selectedFunction.name"
+      />
+    </div>
+  </LayoutDialog>
+</template>
+<script setup lang="ts">
+import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
+import {
+  CommonStepsNumber,
+  TailwindBreakpoints,
+  type LayoutDialogButton
+} from '@speckle/ui-components'
+import {
+  ArrowRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon
+} from '@heroicons/vue/24/outline'
+import { graphql } from '~/lib/common/generated/gql'
+import { Automate, type Optional } from '@speckle/shared'
+import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
+import {
+  AutomateRunTriggerType,
+  type FormSelectModels_ModelFragment,
+  type FormSelectProjects_ProjectFragment
+} from '~/lib/common/generated/gql/graphql'
+import { useForm } from 'vee-validate'
+import {
+  useCreateAutomation,
+  useCreateAutomationRevision
+} from '~/lib/projects/composables/automationManagement'
+import { formatJsonFormSchemaInputs } from '~/lib/automate/helpers/jsonSchema'
+import { projectAutomationRoute } from '~/lib/common/helpers/route'
+
+enum AutomationCreateSteps {
+  SelectFunction,
+  FunctionParameters,
+  AutomationDetails,
+  Done
+}
+
+type DetailsFormValues = {
+  project: FormSelectProjects_ProjectFragment
+  model: FormSelectModels_ModelFragment
+  automationName: string
+}
+
+graphql(`
+  fragment AutomateAutomationCreateDialog_AutomateFunction on AutomateFunction {
+    id
+    ...AutomationsFunctionsCard_AutomateFunction
+    ...AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction
+  }
+`)
+
+const props = defineProps<{
+  preselectedFunction?: Optional<CreateAutomationSelectableFunction>
+  preselectedProject?: Optional<FormSelectProjects_ProjectFragment>
+}>()
+const open = defineModel<boolean>('open', { required: true })
+const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
+
+const stepsOrder = computed(() => [
+  AutomationCreateSteps.SelectFunction,
+  AutomationCreateSteps.FunctionParameters,
+  AutomationCreateSteps.AutomationDetails,
+  AutomationCreateSteps.Done
+])
+
+const stepsWidgetData = computed(() => [
+  {
+    step: AutomationCreateSteps.SelectFunction,
+    title: 'Select Function'
+  },
+  {
+    step: AutomationCreateSteps.FunctionParameters,
+    title: 'Set Parameters'
+  },
+  {
+    step: AutomationCreateSteps.AutomationDetails,
+    title: 'Add Details'
+  }
+])
+
+const logger = useLogger()
+const createAutomation = useCreateAutomation()
+const createRevision = useCreateAutomationRevision()
+const { enumStep, step } = useEnumSteps({ order: stepsOrder })
+const {
+  items: stepsWidgetSteps,
+  model: stepsWidgetModel,
+  shouldShowWidget: shouldShowStepsWidget
+} = useEnumStepsWidgetSetup({ enumStep, widgetStepsMap: stepsWidgetData })
+
+const creationLoading = ref(false)
+const automationId = ref<string>()
+const automationName = ref<string>()
+const selectedProject = ref<FormSelectProjects_ProjectFragment>()
+const selectedModel = ref<FormSelectModels_ModelFragment>()
+const selectedFunction = ref<Optional<CreateAutomationSelectableFunction>>()
+const functionParameters = ref<Record<string, unknown>>()
+const hasParameterErrors = ref(false)
+
+const buttons = computed((): LayoutDialogButton[] => {
+  switch (enumStep.value) {
+    case AutomationCreateSteps.SelectFunction:
+      return [
+        {
+          text: 'Next',
+          props: {
+            iconRight: ChevronRightIcon,
+            disabled: !selectedFunction.value
+          },
+          onClick: () => {
+            step.value++
+          }
+        }
+      ]
+    case AutomationCreateSteps.FunctionParameters:
+      return [
+        {
+          text: 'Previous',
+          props: {
+            color: 'secondary',
+            iconLeft: ChevronLeftIcon,
+            textColor: 'primary'
+          },
+          onClick: () => step.value--
+        },
+        {
+          text: 'Next',
+          props: {
+            iconRight: ChevronRightIcon,
+            disabled: hasParameterErrors.value
+          },
+          onClick: () => step.value++
+        }
+      ]
+    case AutomationCreateSteps.AutomationDetails:
+      return [
+        {
+          text: 'Previous',
+          props: {
+            color: 'secondary',
+            iconLeft: ChevronLeftIcon,
+            textColor: 'primary'
+          },
+          onClick: () => step.value--
+        },
+        {
+          text: 'Create',
+          submit: true,
+          disabled: creationLoading.value
+        }
+      ]
+    case AutomationCreateSteps.Done:
+      return [
+        {
+          text: 'Close',
+          props: {
+            color: 'secondary',
+            fullWidth: true
+          },
+          onClick: () => (open.value = false)
+        },
+        {
+          text: 'Go to Automation',
+          props: {
+            iconRight: ArrowRightIcon,
+            fullWidth: true,
+            to:
+              selectedProject.value && automationId.value
+                ? projectAutomationRoute(selectedProject.value.id, automationId.value)
+                : undefined
+          }
+        }
+      ]
+    default:
+      return []
+  }
+})
+
+const buttonsWrapperClasses = computed(() => {
+  switch (enumStep.value) {
+    case AutomationCreateSteps.SelectFunction:
+      return 'justify-end'
+    case AutomationCreateSteps.Done:
+      return 'flex-col sm:flex-row sm:justify-between'
+    default:
+      return 'justify-between'
+  }
+})
+
+const validatedPreselectedFunction = computed(() => {
+  if (!(props.preselectedFunction?.releases.items || []).length) {
+    return undefined
+  }
+
+  return props.preselectedFunction
+})
+
+const reset = () => {
+  step.value = 0
+  selectedFunction.value = undefined
+  functionParameters.value = undefined
+  hasParameterErrors.value = false
+  selectedProject.value = undefined
+  selectedModel.value = undefined
+  automationName.value = undefined
+  automationId.value = undefined
+}
+
+const onDetailsSubmit = handleDetailsSubmit(async () => {
+  const fn = selectedFunction.value
+  const fnRelease = selectedFunction.value?.releases.items[0]
+  const project = selectedProject.value
+  const model = selectedModel.value
+  const parameters = functionParameters.value
+  const name = automationName.value
+
+  if (!fn || !project || !model || !name?.length || !fnRelease) {
+    logger.error('Missing required data', {
+      fn,
+      project,
+      model,
+      parameters,
+      name,
+      fnRelease
+    })
+    return
+  }
+
+  creationLoading.value = true
+  try {
+    const createRes = await createAutomation({
+      projectId: project.id,
+      input: {
+        name,
+        enabled: false
+      }
+    })
+    const aId = (automationId.value = createRes?.id)
+    if (!aId) {
+      logger.error('Failed to create automation', { createRes })
+      return
+    }
+
+    const parametersString = parameters
+      ? JSON.stringify(
+          formatJsonFormSchemaInputs(parameters, fnRelease.inputSchema, {
+            clone: true
+          })
+        )
+      : null
+    const revisionRes = await createRevision(
+      {
+        projectId: project.id,
+        input: {
+          automationId: aId,
+          functions: [
+            {
+              functionId: fn.id,
+              releaseId: fnRelease.id,
+              parameters: parametersString
+            }
+          ],
+          triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+            version: Automate.AutomateTypes.TRIGGER_DEFINITIONS_SCHEMA_VERSION,
+            definitions: [
+              {
+                type: AutomateRunTriggerType.VersionCreated,
+                modelId: model.id
+              }
+            ]
+          }
+        }
+      },
+      { hideSuccessToast: true }
+    )
+    if (revisionRes?.id) {
+      step.value++
+    }
+  } finally {
+    creationLoading.value = false
+  }
+})
+
+const onDialogSubmit = (e: SubmitEvent) => {
+  if (enumStep.value !== AutomationCreateSteps.AutomationDetails) return
+  onDetailsSubmit(e)
+}
+
+watch(
+  open,
+  (newVal, oldVal) => {
+    if (newVal && !oldVal) {
+      reset()
+
+      if (validatedPreselectedFunction.value) {
+        selectedFunction.value = validatedPreselectedFunction.value
+        enumStep.value = AutomationCreateSteps.FunctionParameters
+      }
+
+      if (props.preselectedProject) {
+        selectedProject.value = props.preselectedProject
+      }
+    }
+  },
+  { flush: 'sync' }
+)
+
+watch(selectedFunction, (newVal, oldVal) => {
+  if (newVal?.id !== oldVal?.id) {
+    // Reset params
+    functionParameters.value = undefined
+  }
+})
+</script>

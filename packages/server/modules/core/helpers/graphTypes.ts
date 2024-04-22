@@ -2,7 +2,6 @@ import {
   LimitedUser,
   Stream,
   StreamRole,
-  Project,
   ServerRole,
   ModelsTreeItem,
   Commit
@@ -49,34 +48,13 @@ export type CommitGraphQLReturn = Commit & {
   author: Nullable<string>
 }
 
-export type ProjectGraphQLReturn = StreamRecord &
-  Omit<
-    Project,
-    | 'role'
-    | 'team'
-    | 'commentThreadCount'
-    | 'sourceApps'
-    | 'commentThreads'
-    | 'models'
-    | 'versions'
-    | 'structuredModels'
-    | 'modelsTree'
-    | 'model'
-    | 'modelChildrenTree'
-    | 'viewerResources'
-    | 'visibility'
-    | 'allowPublicComments'
-    | 'pendingImportedModels'
-    | 'webhooks'
-    | 'version'
-    | 'automations'
-  > & {
-    /**
-     * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll
-     * be resolved by the Project.role resolver in an efficient manner.
-     */
-    role?: string | null
-  }
+export type ProjectGraphQLReturn = StreamRecord & {
+  /**
+   * Some queries resolve the role, some don't. If role isn't returned, no worries, it'll
+   * be resolved by the Project.role resolver in an efficient manner.
+   */
+  role?: string | null
+}
 
 export type ModelGraphQLReturn = BranchRecord
 

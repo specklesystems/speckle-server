@@ -8,27 +8,37 @@ import {
 } from '@/modules/automate/services/trigger'
 import { Environment } from '@speckle/shared'
 import { queryActiveTriggersByTriggeringId } from '@/modules/automate/repositories/index'
-
-let quitListeners: Optional<() => void> = undefined
+import authRestSetup from '@/modules/automate/rest/auth'
+import { ScopeRecord } from '@/modules/auth/helpers/types'
+import { Scopes } from '@speckle/shared'
+import { registerOrUpdateScope } from '@/modules/shared'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+let quitListeners: Optional<() => void> = undefined
 
-const automateModule: SpeckleModule = {
-  async init(_, isInitial) {
-    if (!FF_AUTOMATE_MODULE_ENABLED) return
-    moduleLogger.info('⚙️  Init automate module')
-
-    if (isInitial) {
-      quitListeners = initializeEventListeners()
+async function initScopes() {
+  const scopes: ScopeRecord[] = [
+    {
+      name: Scopes.Automate.ReportResults,
+      description: 'Report automation results to the server.',
+      public: true
+    },
+    {
+      name: Scopes.AutomateFunctions.Read,
+      description: 'See available Speckle Automate functions.',
+      public: true
+    },
+    {
+      name: Scopes.AutomateFunctions.Write,
+      description: 'Create and manage Speckle Automate functions.',
+      public: true
     }
-  },
-  shutdown() {
-    if (!FF_AUTOMATE_MODULE_ENABLED) return
-    quitListeners?.()
+  ]
+
+  for (const scope of scopes) {
+    await registerOrUpdateScope(scope)
   }
 }
-
-export = automateModule
 
 const initializeEventListeners = () => {
   const triggerFn = triggerAutomationRevisionRun(sendRunTriggerToAutomate)
@@ -43,3 +53,23 @@ const initializeEventListeners = () => {
   )
   return quit
 }
+
+const automateModule: SpeckleModule = {
+  async init(app, isInitial) {
+    if (!FF_AUTOMATE_MODULE_ENABLED) return
+    moduleLogger.info('⚙️  Init automate module')
+
+    await initScopes()
+
+    if (isInitial) {
+      authRestSetup(app)
+      quitListeners = initializeEventListeners()
+    }
+  },
+  shutdown() {
+    if (!FF_AUTOMATE_MODULE_ENABLED) return
+    quitListeners?.()
+  }
+}
+
+export = automateModule

@@ -17,9 +17,10 @@
           textColor: 'primary'
         }
       ]"
+      empty-message="Automation does not have any runs"
     >
       <template #status="{ item }">
-        <AutomationsRunsStatusBadge :run="item" />
+        <AutomateRunsStatusBadge :run="item" />
       </template>
       <template #runId="{ item }">
         <span class="text-foreground label-light">{{ item.id }}</span>

@@ -15,10 +15,19 @@
       <div class="label-light">{{ enabledText }}</div>
     </div>
     <div class="flex flex-col">
-      <div v-for="model in triggerModels" :key="model.id" class="truncate">
-        <CommonTextLink :icon-left="CubeIcon" :to="finalModelUrl(model.id)">
-          {{ model.name }}
-        </CommonTextLink>
+      <template v-if="triggerModels.length">
+        <div v-for="model in triggerModels" :key="model.id" class="truncate">
+          <CommonTextLink :icon-left="CubeIcon" :to="finalModelUrl(model.id)">
+            {{ model.name }}
+          </CommonTextLink>
+        </div>
+      </template>
+      <div
+        v-else
+        class="flex items-center gap-1 truncate text-foreground-2 label-light"
+      >
+        <ExclamationTriangleIcon class="w-5 h-5" />
+        <span>No valid models attached to this automation</span>
       </div>
     </div>
     <AutomateRunsTable
@@ -33,7 +42,8 @@ import {
   PlayIcon,
   PauseIcon,
   ChevronRightIcon,
-  CubeIcon
+  CubeIcon,
+  ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import { type ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'

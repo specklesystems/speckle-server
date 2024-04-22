@@ -1,11 +1,10 @@
 <template>
-  <div v-if="status" @click.stop.prevent>
+  <div v-if="status" v-tippy="summary.longSummary" @click.stop.prevent @mousemove.stop>
     <button
-      v-tippy="summary.longSummary"
-      class="h-6 w-6 bg-foundation rounded-full flex items-center justify-center"
-      @click="showDialog = true"
+      class="rounded-full flex items-center justify-center outline-none"
+      @click="onClick"
     >
-      <AutomateRunsTriggerStatusIcon :summary="summary" />
+      <AutomateRunsTriggerStatusIcon :summary="summary" class="h-6 w-6 m-3" />
     </button>
     <AutomateRunsTriggerStatusDialog
       v-model:open="showDialog"
@@ -25,7 +24,6 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateRunsTriggerStatus_TriggeredAutomationsStatusFragment } from '~/lib/common/generated/gql/graphql'
 
 // TODO: Subscriptions?
-// TODO: Delete old components
 
 graphql(`
   fragment AutomateRunsTriggerStatus_TriggeredAutomationsStatus on TriggeredAutomationsStatus {
@@ -47,4 +45,8 @@ const { summary } = useAutomationsStatusRunsSummary({
 })
 
 const showDialog = ref(false)
+
+const onClick = () => {
+  showDialog.value = true
+}
 </script>

@@ -28,7 +28,7 @@
   >
     <div v-if="run && projectId && automationId" class="flex flex-col gap-2">
       <div class="grid gap-2 grid-cols-[auto,1fr] items-center">
-        <div class="font-bold">Run:</div>
+        <div class="font-bold">Run ID:</div>
         <div>{{ run.id }}</div>
         <div class="font-bold">Status:</div>
         <AutomateRunsStatusBadge :run="run" />

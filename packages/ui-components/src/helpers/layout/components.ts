@@ -1,4 +1,7 @@
 import type { ConcreteComponent } from 'vue'
+import type { FormButton } from '~~/src/lib'
+
+type FormButtonProps = InstanceType<typeof FormButton>['$props']
 
 export enum GridListToggleValue {
   Grid = 'grid',
@@ -25,4 +28,12 @@ export type LayoutMenuItem<I extends string = string> = {
   disabled?: boolean
   disabledTooltip?: string
   color?: 'danger' | 'info'
+}
+
+export type LayoutDialogButton = {
+  text: string
+  props?: Record<string, unknown> & FormButtonProps
+  onClick?: () => void
+  disabled?: boolean
+  submit?: boolean
 }

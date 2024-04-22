@@ -2,7 +2,7 @@
   <LayoutDialog v-model:open="open" max-width="md" title="Function Parameters">
     <div class="flex flex-col space-y-4">
       <template v-if="finalParams">
-        <FormJsonForm :schema="finalParams" readonly />
+        <FormJsonForm :schema="finalParams" />
         <LayoutDialogSection
           title="Parameter Schema"
           :icon="BeakerIcon"

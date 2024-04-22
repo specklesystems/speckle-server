@@ -59,6 +59,7 @@
 import { EnvelopeIcon } from '@heroicons/vue/24/solid'
 import { Roles } from '@speckle/shared'
 import type { Optional, ServerRoles } from '@speckle/shared'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -121,7 +122,7 @@ const onSubmit = handleSubmit(async (values) => {
   }
 })
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true },
@@ -132,7 +133,7 @@ const dialogButtons = computed(() => [
   {
     text: 'Send',
     props: {
-      color: 'primary',
+      color: 'default',
       fullWidth: true,
       outline: true,
       submit: true,

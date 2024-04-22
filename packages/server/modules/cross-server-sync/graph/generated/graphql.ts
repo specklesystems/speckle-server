@@ -191,7 +191,7 @@ export type AuthStrategy = {
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
   automationCount: Scalars['Int'];
-  creator: LimitedUser;
+  creator?: Maybe<LimitedUser>;
   description: Scalars['String'];
   id: Scalars['ID'];
   isFeatured: Scalars['Boolean'];
@@ -199,6 +199,9 @@ export type AutomateFunction = {
   name: Scalars['String'];
   releases: AutomateFunctionReleaseCollection;
   repoUrl: Scalars['String'];
+  /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
+  supportedSourceApps: Array<Scalars['String']>;
+  tags: Array<Scalars['String']>;
 };
 
 
@@ -242,23 +245,7 @@ export type AutomateFunctionRun = {
   elapsed: Scalars['Float'];
   function: AutomateFunction;
   id: Scalars['ID'];
-  /**
-   * NOTE: this is the schema for the results field below!
-   * Current schema: {
-   *   version: '1.0.0'
-   *   values: {
-   *     objectResults: {
-   *       category: string
-   *       level: ObjectResultLevel
-   *       objectIds: string[]
-   *       message: string
-   *       metadata: Record<string, unknown> | null
-   *       visualOverrides: Record<string, unknown> | null
-   *     }[]
-   *     blobIds?: string[] | undefined
-   *   }
-   * }
-   */
+  /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: Maybe<Scalars['JSONObject']>;
   status: AutomateRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
@@ -267,30 +254,47 @@ export type AutomateFunctionRun = {
 export type AutomateFunctionRunStatusReportInput = {
   contextView?: InputMaybe<Scalars['String']>;
   functionRunId: Scalars['String'];
-  /**
-   * NOTE: this is the schema for the results field below!
-   * Current schema: {
-   *   version: '1.0.0'
-   *   values: {
-   *     objectResults: {
-   *       category: string
-   *       level: ObjectResultLevel
-   *       objectIds: string[]
-   *       message: string
-   *       metadata: Record<string, unknown> | null
-   *       visualOverrides: Record<string, unknown> | null
-   *     }[]
-   *     blobIds?: string[] | undefined
-   *   }
-   * }
-   */
+  /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: InputMaybe<Scalars['JSONObject']>;
   status: AutomationRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
 
+export type AutomateFunctionTemplate = {
+  __typename?: 'AutomateFunctionTemplate';
+  id: AutomateFunctionTemplateLanguage;
+  logo: Scalars['String'];
+  title: Scalars['String'];
+  url: Scalars['String'];
+};
+
+export enum AutomateFunctionTemplateLanguage {
+  DotNet = 'DOT_NET',
+  Python = 'PYTHON',
+  Typescript = 'TYPESCRIPT'
+}
+
 export type AutomateFunctionsFilter = {
+  featuredFunctionsOnly?: InputMaybe<Scalars['Boolean']>;
+  /** By default we skip functions without versions. Set this to true to include them. */
+  functionsWithoutVersions?: InputMaybe<Scalars['Boolean']>;
   search?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomateMutations = {
+  __typename?: 'AutomateMutations';
+  createFunction: AutomateFunction;
+  updateFunction: AutomateFunction;
+};
+
+
+export type AutomateMutationsCreateFunctionArgs = {
+  input: CreateAutomateFunctionInput;
+};
+
+
+export type AutomateMutationsUpdateFunctionArgs = {
+  input: UpdateAutomateFunctionInput;
 };
 
 export type AutomateRun = {
@@ -808,6 +812,19 @@ export type CountOnlyCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type CreateAutomateFunctionInput = {
+  description: Scalars['String'];
+  /** Base64 encoded image data string */
+  logo?: InputMaybe<Scalars['String']>;
+  name: Scalars['String'];
+  /** GitHub organization to create the repository in */
+  org?: InputMaybe<Scalars['String']>;
+  /** SourceAppNames values from @speckle/shared */
+  supportedSourceApps: Array<Scalars['String']>;
+  tags: Array<Scalars['String']>;
+  template: AutomateFunctionTemplateLanguage;
+};
+
 export type CreateCommentInput = {
   content: CommentContentInput;
   projectId: Scalars['String'];
@@ -1128,6 +1145,7 @@ export type Mutation = {
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
   automateFunctionRunStatusReport: Scalars['Boolean'];
+  automateMutations: AutomateMutations;
   automationMutations: AutomationMutations;
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
@@ -1613,7 +1631,8 @@ export type PendingStreamCollaborator = {
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean'];
-  automation?: Maybe<Automation>;
+  /** Get a single automation by id. Error will be thrown if automation is not found or inaccessible. */
+  automation: Automation;
   automations: AutomationCollection;
   blob?: Maybe<BlobMetadata>;
   /** Get the metadata collection of blobs stored for this stream. */
@@ -1737,15 +1756,32 @@ export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']>;
 };
 
+export type ProjectAutomationCreateInput = {
+  enabled: Scalars['Boolean'];
+  name: Scalars['String'];
+};
+
 export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
-  createRevision?: Maybe<AutomationRevision>;
-  update?: Maybe<Automation>;
+  create: Automation;
+  createRevision: AutomationRevision;
+  trigger: Scalars['Boolean'];
+  update: Automation;
+};
+
+
+export type ProjectAutomationMutationsCreateArgs = {
+  input: ProjectAutomationCreateInput;
 };
 
 
 export type ProjectAutomationMutationsCreateRevisionArgs = {
   input: ProjectAutomationRevisionCreateInput;
+};
+
+
+export type ProjectAutomationMutationsTriggerArgs = {
+  automationId: Scalars['ID'];
 };
 
 
@@ -1756,20 +1792,12 @@ export type ProjectAutomationMutationsUpdateArgs = {
 export type ProjectAutomationRevisionCreateInput = {
   automationId: Scalars['ID'];
   functions: Array<AutomationRevisionCreateFunctionInput>;
-  /**
-   * Trigger definition schema:
-   * {
-   *   version: 1.0.0,
-   *   definitions: Array<{
-   *     type: AutomateRunTriggerType.VERSION_CREATED,
-   *     modelId: string,
-   *   }>
-   * }
-   */
+  /** AutomateTypes.TriggerDefinitionsSchema type from @speckle/shared */
   triggerDefinitions: Scalars['JSONObject'];
 };
 
 export type ProjectAutomationUpdateInput = {
+  enabled?: InputMaybe<Scalars['Boolean']>;
   id: Scalars['ID'];
   name?: InputMaybe<Scalars['String']>;
 };
@@ -2108,7 +2136,8 @@ export type Query = {
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   /** If user is authenticated using an app token, this will describe the app */
   authenticatedAsApp?: Maybe<ServerAppListItem>;
-  automateFunction?: Maybe<AutomateFunction>;
+  /** Get a single automate function by id. Error will be thrown if function is not found or inaccessible. */
+  automateFunction: AutomateFunction;
   automateFunctions: AutomateFunctionCollection;
   comment?: Maybe<Comment>;
   /**
@@ -2359,12 +2388,18 @@ export type ServerAppListItem = {
   trustByDefault?: Maybe<Scalars['Boolean']>;
 };
 
+export type ServerAutomateInfo = {
+  __typename?: 'ServerAutomateInfo';
+  availableFunctionTemplates: Array<AutomateFunctionTemplate>;
+};
+
 /** Information about this server. */
 export type ServerInfo = {
   __typename?: 'ServerInfo';
   adminContact?: Maybe<Scalars['String']>;
   /** The authentication strategies available on this server. */
   authStrategies: Array<AuthStrategy>;
+  automate: ServerAutomateInfo;
   /** Base URL of Speckle Automate, if set */
   automateUrl?: Maybe<Scalars['String']>;
   blobSizeLimitBytes: Scalars['Int'];
@@ -2879,6 +2914,17 @@ export type TriggeredAutomationsStatus = {
   statusMessage?: Maybe<Scalars['String']>;
 };
 
+/** Any null values will be ignored */
+export type UpdateAutomateFunctionInput = {
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['ID'];
+  logo?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  /** SourceAppNames values from @speckle/shared */
+  supportedSourceApps?: InputMaybe<Array<Scalars['String']>>;
+  tags?: InputMaybe<Array<Scalars['String']>>;
+};
+
 export type UpdateModelInput = {
   description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -2904,6 +2950,7 @@ export type User = {
   apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
   authorizedApps?: Maybe<Array<ServerAppListItem>>;
+  automateInfo: UserAutomateInfo;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
   /**
@@ -3027,6 +3074,12 @@ export type UserTimelineArgs = {
 export type UserVersionsArgs = {
   authoredOnly?: Scalars['Boolean'];
   limit?: Scalars['Int'];
+};
+
+export type UserAutomateInfo = {
+  __typename?: 'UserAutomateInfo';
+  availableGithubOrgs: Array<Scalars['String']>;
+  hasAutomateGithubApp: Scalars['Boolean'];
 };
 
 export type UserDeleteInput = {
