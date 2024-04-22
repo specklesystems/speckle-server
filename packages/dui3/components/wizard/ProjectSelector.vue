@@ -37,20 +37,20 @@
           @click="$emit('next', accountId, project)"
         />
         <FormButton
-          v-if="!searchText"
+          v-if="searchText && hasReachedEnd && showNewProject"
+          full-width
+          @click="createNewProject(searchText)"
+        >
+          Create "{{ searchText }}"
+        </FormButton>
+        <FormButton
+          v-else
           color="invert"
           full-width
           :disabled="hasReachedEnd"
           @click="loadMore"
         >
           {{ hasReachedEnd ? 'No more projects found' : 'Load older projects' }}
-        </FormButton>
-        <FormButton
-          v-if="searchText && hasReachedEnd"
-          full-width
-          @click="createNewProject(searchText)"
-        >
-          Create "{{ searchText }}"
         </FormButton>
       </div>
     </div>

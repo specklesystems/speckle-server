@@ -31,21 +31,22 @@
           :model="model"
           @click="$emit('next', model)"
         />
+
         <FormButton
-          v-if="!searchText"
+          v-if="searchText && hasReachedEnd && showNewModel"
+          full-width
+          @click="createNewModel(searchText)"
+        >
+          Create "{{ searchText }}"
+        </FormButton>
+        <FormButton
+          v-else
           color="invert"
           full-width
           :disabled="hasReachedEnd"
           @click="loadMore"
         >
           {{ hasReachedEnd ? 'No more models found' : 'Load older models' }}
-        </FormButton>
-        <FormButton
-          v-if="searchText && hasReachedEnd"
-          full-width
-          @click="createNewModel(searchText)"
-        >
-          Create "{{ searchText }}"
         </FormButton>
       </div>
     </div>

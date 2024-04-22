@@ -77,13 +77,10 @@
     </div>
 
     <SendWizard v-model:open="showSendDialog" @close="showSendDialog = false" />
-
-    <!-- TODO: Move to the same layout/model as the send wizard -->
-    <LayoutDialog v-model:open="showReceiveDialog" hide-closer>
-      <div class="-mx-4 -my-4 pt-4">
-        <ReceiveWizard @close="showReceiveDialog = false" />
-      </div>
-    </LayoutDialog>
+    <ReceiveWizard
+      v-model:open="showReceiveDialog"
+      @close="showReceiveDialog = false"
+    />
   </div>
 </template>
 <script setup lang="ts">

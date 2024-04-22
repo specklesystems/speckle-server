@@ -161,7 +161,6 @@ const loadMore = () => {
 }
 
 onMounted(() => {
-  console.log('mounted')
   refetch()
 })
 </script>
