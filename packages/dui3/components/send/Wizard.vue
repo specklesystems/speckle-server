@@ -14,7 +14,7 @@
       <!-- Step progress indicator: shows selected project and model -->
       <div
         v-if="selectedProject"
-        class="mt-1 absolute rounded-b-md shadow bg-foundation-2 h-8 w-full -ml-4 text-xs text-foreground-2 font-normal px-4 flex items-center min-w-0"
+        class="mt-1 absolute rounded-b-md shadow bg-foundation-2 h-10 w-full -ml-4 text-foreground-2 text-sm font-normal px-4 flex items-center min-w-0"
       >
         <button
           v-tippy="'Change project'"
@@ -25,7 +25,7 @@
         >
           {{ selectedProject ? selectedProject.name : 'No project' }}
         </button>
-        <ChevronRightIcon v-if="selectedModel" class="w-3" />
+        <ChevronRightIcon v-if="selectedModel" class="w-4 mt-[2px]" />
         <button
           v-if="selectedModel"
           v-tippy="'Change model'"
@@ -44,7 +44,7 @@
       <WizardProjectSelector @next="selectProject" />
     </div>
     <!-- Model selector wizard -->
-    <div v-if="step === 2 && selectedProject && selectedAccountId" class="mt-6">
+    <div v-if="step === 2 && selectedProject && selectedAccountId" class="mt-10">
       <WizardModelSelector
         :project="selectedProject"
         :account-id="selectedAccountId"
@@ -52,7 +52,7 @@
       />
     </div>
     <!-- Version selector wizard -->
-    <div v-if="step === 3" class="mt-6">
+    <div v-if="step === 3" class="mt-10">
       <SendFiltersAndSettings v-model="filter" @update:filter="(f) => (filter = f)" />
       <div class="mt-2">
         <FormButton full-width @click="addModel">Publish</FormButton>

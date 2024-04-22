@@ -2,56 +2,58 @@
   <div class="space-y-2">
     <div class="flex items-center space-x-2"></div>
     <div class="space-y-2 relative">
-      <div
-        class="flex items-center space-x-2 justify-between sticky -top-4 bg-foundation z-10 py-4 border-b"
-      >
-        <FormTextInput
-          v-model="searchText"
-          placeholder="Search your projects"
-          name="search"
-          autocomplete="off"
-          :show-clear="!!searchText"
-          full-width
-          size="lg"
-        />
-        <div class="mt-1">
-          <AccountsMenu
-            :current-selected-account-id="accountId"
-            @select="(e) => (selectedAccountId = e.accountInfo.id)"
+      <div class="sticky -top-4 bg-foundation z-10 py-4 border-b space-y-2">
+        <div class="flex items-center space-x-2 justify-between">
+          <FormTextInput
+            v-model="searchText"
+            placeholder="Search your projects"
+            name="search"
+            autocomplete="off"
+            :show-clear="!!searchText"
+            full-width
+            size="lg"
           />
+          <FormButton
+            v-if="showNewProject"
+            v-tippy="'New project'"
+            @click="showNewProjectDialog = true"
+          >
+            <PlusIcon class="w-4" />
+          </FormButton>
+          <div class="mt-1">
+            <AccountsMenu
+              :current-selected-account-id="accountId"
+              @select="(e) => (selectedAccountId = e.accountInfo.id)"
+            />
+          </div>
         </div>
+        <CommonLoadingBar v-if="loading" loading />
       </div>
       <div class="grid grid-cols-1 gap-2 relative z-0">
-        <CommonLoadingBar v-if="loading" loading />
         <WizardListProjectCard
           v-for="project in projects"
           :key="project.id"
           :project="project"
           @click="$emit('next', accountId, project)"
         />
-
-        <div v-if="showNewProject && totalCount === 0 && searchText">
-          <form @submit="createNewProject(searchText)">
-            <FormButton
-              full-width
-              class="block truncate max-w-full overflow-hidden"
-              @click="createNewProject(searchText)"
-            >
-              Create "{{ searchText }}"
-            </FormButton>
-          </form>
-        </div>
-        <div class="caption text-center mt-2">{{ totalCount }} projects found.</div>
+        <FormButton
+          v-if="!searchText"
+          color="invert"
+          full-width
+          :disabled="hasReachedEnd"
+          @click="loadMore"
+        >
+          {{ hasReachedEnd ? 'No more projects found' : 'Load older projects' }}
+        </FormButton>
+        <FormButton
+          v-if="searchText && hasReachedEnd"
+          full-width
+          @click="createNewProject(searchText)"
+        >
+          Create "{{ searchText }}"
+        </FormButton>
       </div>
     </div>
-    <button
-      v-if="showNewProject && totalCount !== 0"
-      v-tippy="'create new project'"
-      class="fixed bottom-2 flex items-center justify-center right-2 z-100 w-12 h-12 rounded-full bg-primary text-foreground-on-primary"
-      @click="showNewProjectDialog = true"
-    >
-      <PlusIcon class="w-6 h-6" />
-    </button>
     <LayoutDialog v-model:open="showNewProjectDialog" title="Create new project">
       <form @submit="onSubmitCreateNewProject">
         <FormTextInput
@@ -102,6 +104,9 @@ withDefaults(
 
 const searchText = ref<string>()
 const newProjectName = ref<string>()
+
+watch(searchText, () => (newProjectName.value = searchText.value))
+
 const showNewProjectDialog = ref(false)
 const accountStore = useAccountStore()
 const { activeAccount } = storeToRefs(accountStore)
@@ -130,17 +135,67 @@ const createNewProject = async (name: string) => {
   }
 }
 
-const { result: projectsResult, loading } = useQuery(
+const {
+  result: projectsResult,
+  loading,
+  fetchMore
+} = useQuery(
   projectsListQuery,
   () => ({
-    limit: 15,
+    limit: 5,
     filter: {
       search: (searchText.value || '').trim() || null
     }
   }),
-  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'cache-and-network' })
+  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
 )
 
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
-const totalCount = computed(() => projectsResult.value?.activeUser?.projects.totalCount)
+const hasReachedEnd = ref(false)
+
+watch(searchText, () => {
+  hasReachedEnd.value = false
+})
+
+watch(projectsResult, (newVal) => {
+  if (
+    newVal &&
+    newVal?.activeUser?.projects.items.length >= newVal?.activeUser?.projects.totalCount
+  ) {
+    hasReachedEnd.value = true
+  } else {
+    hasReachedEnd.value = false
+  }
+})
+
+const loadMore = () => {
+  fetchMore({
+    variables: { cursor: projectsResult.value?.activeUser?.projects.cursor },
+    updateQuery: (previousResult, { fetchMoreResult }) => {
+      if (!fetchMoreResult || fetchMoreResult.activeUser?.projects.items.length === 0) {
+        hasReachedEnd.value = true
+        return previousResult
+      }
+
+      if (!previousResult.activeUser || !fetchMoreResult.activeUser)
+        return previousResult
+
+      return {
+        activeUser: {
+          id: previousResult.activeUser?.id,
+          __typename: previousResult.activeUser?.__typename,
+          projects: {
+            __typename: previousResult.activeUser?.projects.__typename,
+            cursor: fetchMoreResult?.activeUser?.projects.cursor,
+            totalCount: fetchMoreResult?.activeUser?.projects.totalCount,
+            items: [
+              ...previousResult.activeUser.projects.items,
+              ...fetchMoreResult.activeUser.projects.items
+            ]
+          }
+        }
+      }
+    }
+  })
+}
 </script>
