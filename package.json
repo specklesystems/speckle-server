@@ -45,6 +45,7 @@
     "@types/eslint": "^8.4.1",
     "@types/lockfile": "^1.0.2",
     "commitizen": "^4.2.5",
+    "cross-env": "^7.0.3",
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^8.11.0",
     "eslint-config-prettier": "^8.5.0",
