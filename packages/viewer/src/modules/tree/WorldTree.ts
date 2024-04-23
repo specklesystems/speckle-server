@@ -99,7 +99,7 @@ export class WorldTree {
     this._root.addChild(node)
   }
 
-  public addNode(node: TreeNode, parent: TreeNode) {
+  public addNode(node: TreeNode, parent: TreeNode | null) {
     if (parent === null || parent.model.subtreeId === undefined) {
       Logger.error(`Invalid parent node!`)
       return

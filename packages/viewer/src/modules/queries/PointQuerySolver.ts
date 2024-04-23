@@ -25,7 +25,8 @@ export class PointQuerySolver {
   private solveProjection(query: PointQuery): PointQueryResult {
     // WORLD
     const projected = new Vector3(query.point.x, query.point.y, query.point.z)
-    projected.project(this.renderer.renderingCamera)
+    if (this.renderer.renderingCamera) projected.project(this.renderer.renderingCamera)
+    else Logger.error('Could not run query. Camera is null')
 
     return {
       // NDC
@@ -38,8 +39,9 @@ export class PointQuerySolver {
   private solveUnprojection(query: PointQuery): PointQueryResult {
     // NDC
     const unprojected = new Vector3(query.point.x, query.point.y, query.point.z)
-    unprojected.unproject(this.renderer.renderingCamera)
-
+    if (this.renderer.renderingCamera)
+      unprojected.unproject(this.renderer.renderingCamera)
+    else Logger.error('Could not run query. Camera is null')
     return {
       // WORLD
       x: unprojected.x,

@@ -2,7 +2,7 @@
 import { Color, DoubleSide, FrontSide, Material } from 'three'
 import { type TreeNode, WorldTree } from '../tree/WorldTree'
 import Logger from 'js-logger'
-import _ from 'underscore'
+import { groupBy } from 'lodash-es'
 import { GeometryType } from '../batching/Batch'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import SpecklePointMaterial from '../materials/SpecklePointMaterial'
@@ -372,10 +372,10 @@ export class DiffExtension extends Extension {
   }
 
   public updateVisualDiff(time?: number, mode?: VisualDiffMode): void {
-    if ((mode && mode !== this._diffMode) || this._materialGroups === null) {
+    if ((mode !== undefined && mode !== this._diffMode) || !this._materialGroups) {
       this.resetMaterialGroups()
       /** Catering to typescript */
-      if (mode) {
+      if (mode !== undefined) {
         this.buildMaterialGroups(mode)
         this._diffMode = mode
       }
@@ -609,7 +609,7 @@ export class DiffExtension extends Extension {
     rvs: NodeRenderView[]
     material: SpeckleMaterialType
   }[] {
-    const groupBatches = _.groupBy(subgroup, 'batchId')
+    const groupBatches = groupBy(subgroup, 'batchId')
 
     const materialGroup: {
       rvs: NodeRenderView[]

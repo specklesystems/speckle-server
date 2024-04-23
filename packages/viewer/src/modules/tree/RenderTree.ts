@@ -7,7 +7,7 @@ import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter'
 import { Geometry } from '../converter/Geometry'
 
 export class RenderTree {
-  private tree: WorldTree | null
+  private tree: WorldTree
   private root: TreeNode
   private cancel = false
 
@@ -21,7 +21,7 @@ export class RenderTree {
   }
 
   public buildRenderTree(geometryConverter: GeometryConverter): Promise<boolean> {
-    const p = this.tree!.walkAsync((node: TreeNode): boolean => {
+    const p = this.tree.walkAsync((node: TreeNode): boolean => {
       const rendeNode = this.buildRenderNode(node, geometryConverter)
       node.model.renderView = rendeNode ? new NodeRenderView(rendeNode) : null
       this.applyTransforms(node)
@@ -87,7 +87,7 @@ export class RenderTree {
     if (node.model.raw.renderMaterial) {
       return node
     }
-    const ancestors = this.tree!.getAncestors(node)
+    const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.raw.renderMaterial) {
         return ancestors[k]
@@ -100,7 +100,7 @@ export class RenderTree {
     if (node.model.raw.displayStyle) {
       return node
     }
-    const ancestors = this.tree!.getAncestors(node)
+    const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.raw.displayStyle) {
         return ancestors[k]
@@ -115,12 +115,15 @@ export class RenderTree {
       return node.model.renderView.renderData.transform
 
     const transform = new Matrix4()
-    const ancestors = this.tree!.getAncestors(node)
+    const ancestors = this.tree.getAncestors(node)
     for (let k = 0; k < ancestors.length; k++) {
       if (ancestors[k].model.renderView) {
         const renderNode: NodeRenderData = ancestors[k].model.renderView.renderData
-        if (renderNode.speckleType === SpeckleType.Transform) {
-          transform.premultiply(renderNode.geometry.transform!)
+        if (
+          renderNode.speckleType === SpeckleType.Transform &&
+          renderNode.geometry.transform
+        ) {
+          transform.premultiply(renderNode.geometry.transform)
         }
       }
     }
@@ -128,7 +131,7 @@ export class RenderTree {
   }
 
   public getInstances() {
-    return this.tree!.getInstances(this.root.model.subtreeId)
+    return this.tree.getInstances(this.root.model.subtreeId)
   }
 
   public getRenderableRenderViews(...types: SpeckleType[]): NodeRenderView[] {
@@ -175,7 +178,7 @@ export class RenderTree {
   }
 
   public getRenderViewsForNodeId(id: string): NodeRenderView[] | null {
-    const nodes = this.tree!.findId(id)
+    const nodes = this.tree.findId(id)
     if (!nodes) {
       Logger.warn(`Id ${id} does not exist`)
       return null
@@ -192,17 +195,15 @@ export class RenderTree {
       return node
     }
     /** There will always the root of the tree as the atomic parent for all nodes */
-    return this.tree!.getAncestors(node).find((node) => node.model.atomic) as TreeNode
+    return this.tree.getAncestors(node).find((node) => node.model.atomic) as TreeNode
   }
 
-  public purge() {
-    this.tree = null
-  }
+  public purge() {}
 
   /** TO DO: Need to purge only if currently building */
   public cancelBuild(): void {
     this.cancel = true
-    this.tree!.purge(this.id)
+    this.tree.purge(this.id)
     this.purge()
   }
 }
