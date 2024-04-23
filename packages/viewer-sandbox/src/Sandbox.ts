@@ -132,7 +132,7 @@ export default class Sandbox {
   }
 
   public hdriParams = {
-    id: '/assets/2.png',
+    id: hdri2,
     minRoughness: 0.5
   }
 
@@ -517,7 +517,7 @@ export default class Sandbox {
         options: {
           Default: hdri0,
           Mild: hdri1,
-          Mild2: '/assets/2.png',
+          Mild2: hdri2,
           Sharp: hdri4,
           Bright: hdri6
         }
