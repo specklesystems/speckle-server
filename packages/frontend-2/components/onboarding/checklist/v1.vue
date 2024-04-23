@@ -7,19 +7,6 @@
       } ${allCompleted ? 'max-w-lg mx-auto' : ''}`"
     >
       <div>
-        <div class="sm:hidden px-4 pt-2 pb-1">
-          <div
-            class="bg-foundation p-2 rounded-md text-sm flex flex-col text-center gap-2"
-          >
-            <p>
-              There's more to Speckle - be sure to visit on a computer. Since you're on
-              a mobile device, feel free to keep exploring the web app!
-            </p>
-            <FormButton text size="sm" @click="dismissChecklistForever()">
-              Don't show again
-            </FormButton>
-          </div>
-        </div>
         <div
           v-if="!allCompleted"
           :class="`hidden sm:grid gap-2 ${
