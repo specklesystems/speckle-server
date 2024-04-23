@@ -121,7 +121,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
     // 'https://speckle.xyz/streams/e6f9156405/commits/0694d53bb5'
@@ -296,7 +296,7 @@ const getStream = () => {
     // Big ass mafa'
     // 'https://speckle.xyz/streams/88307505eb/objects/a232d760059046b81ff97e6c4530c985'
     // Airport
-    'https://latest.speckle.dev/streams/92b620fb17/commits/dfb9ca025d'
+    // 'https://latest.speckle.dev/streams/92b620fb17/commits/dfb9ca025d'
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/cf8838025d9963b342b09da8de0f8b6b'
     // 'Blocks with elements
     // 'https://latest.speckle.dev/streams/e258b0e8db/commits/00e165cc1c'
@@ -387,6 +387,8 @@ const getStream = () => {
     // Bunch a doors
     // 'https://latest.speckle.dev/streams/a64b432b34/commits/c184ba7d88'
     // 'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
+    // Tiny cube
+    'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
   )
 }
 

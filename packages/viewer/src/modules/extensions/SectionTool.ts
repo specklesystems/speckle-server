@@ -68,13 +68,6 @@ export class SectionTool extends Extension {
     this.viewer.requestRender()
   }
 
-  public get relativeOffset(): number {
-    const offsetMultiplier = 0.001
-    const sceneBox = this.viewer.getRenderer().sceneBox
-    const dist = new Vector3().copy(sceneBox.max).sub(sceneBox.min).length() * 0.5
-    return dist * offsetMultiplier
-  }
-
   constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer)
     this.viewer = viewer
@@ -438,7 +431,7 @@ export class SectionTool extends Extension {
     }
 
     if (offset === 0) {
-      offset = this.relativeOffset
+      offset = this.viewer.World.getRelativeOffset()
     }
 
     const x1 = box.min.x - (box.max.x - box.min.x) * offset

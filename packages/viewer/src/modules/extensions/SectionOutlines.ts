@@ -39,6 +39,7 @@ export class SectionOutlines extends Extension {
   public get inject() {
     return [SectionTool]
   }
+  private static readonly OUTLINE_Z_OFFSET = 0.0001
   private static readonly INITIAL_BUFFER_SIZE = 60000 // Must be a multiple of 6
 
   private tmpVec: Vector3 = new Vector3()
@@ -343,7 +344,9 @@ export class SectionOutlines extends Extension {
 
   private updateOutlines(planes: Plane[]) {
     const start = performance.now()
-    const outlineOffset = this.sectionProvider.relativeOffset
+    const outlineOffset = this.viewer.World.getRelativeOffset(
+      SectionOutlines.OUTLINE_Z_OFFSET
+    )
     for (let k = 0; k < planes.length; k++) {
       this.updatePlaneOutline(
         this.viewer
