@@ -1,7 +1,9 @@
+import { validateStoredAuthCode } from '@/modules/automate/services/createAutomation'
 import {
   Resolvers,
   AutomateRunTriggerType
 } from '@/modules/core/graph/generated/graphql'
+import { getGenericRedis } from '@/modules/core/index'
 
 export = {
   AutomationRevisionTriggerDefinition: {
@@ -21,8 +23,11 @@ export = {
     }
   },
   Query: {
-    automateValidateAuthCode() {
-      return true
+    async automateValidateAuthCode(_parent, { code }) {
+      const validate = validateStoredAuthCode({
+        redis: getGenericRedis()
+      })
+      return await validate(code)
     }
   }
 } as Resolvers

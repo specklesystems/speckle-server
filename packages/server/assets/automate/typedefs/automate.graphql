@@ -213,7 +213,7 @@ extend type Query {
   """
   automateFunction(id: ID!): AutomateFunction!
   """
-  Part of the automation creation handshake mechanism
+  Part of the automation/function creation handshake mechanism
   """
   automateValidateAuthCode(code: String!): Boolean!
 }

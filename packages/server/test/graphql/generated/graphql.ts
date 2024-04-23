@@ -2140,7 +2140,7 @@ export type Query = {
   /** Get a single automate function by id. Error will be thrown if function is not found or inaccessible. */
   automateFunction: AutomateFunction;
   automateFunctions: AutomateFunctionCollection;
-  /** Part of the automation creation handshake mechanism */
+  /** Part of the automation/function creation handshake mechanism */
   automateValidateAuthCode: Scalars['Boolean'];
   comment?: Maybe<Comment>;
   /**
