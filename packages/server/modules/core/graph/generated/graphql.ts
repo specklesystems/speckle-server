@@ -1305,7 +1305,7 @@ export type MutationAppUpdateArgs = {
 
 
 export type MutationAutomateFunctionRunStatusReportArgs = {
-  input: AutomateFunctionRunStatusReportInput;
+  input: Array<AutomateFunctionRunStatusReportInput>;
 };
 
 

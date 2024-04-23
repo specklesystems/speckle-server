@@ -272,7 +272,7 @@ type AutomateMutations {
 
 extend type Mutation {
   automateFunctionRunStatusReport(
-    input: AutomateFunctionRunStatusReportInput!
+    input: [AutomateFunctionRunStatusReportInput!]!
   ): Boolean!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "automate:report-results")
