@@ -23,7 +23,9 @@ export class AsyncPause {
 export class World {
   private readonly boxes: Array<Box3> = new Array<Box3>()
   public readonly worldBox: Box3 = new Box3()
-  private readonly BoxBuff: Box3 = new Box3()
+  private readonly VecBuff: Vector3 = new Vector3()
+  private readonly BoxBuff0: Box3 = new Box3()
+  private readonly BoxBuff1: Box3 = new Box3()
   private readonly MatBuff: Matrix4 = new Matrix4()
 
   private _worldOrigin: Vector3 = new Vector3()
@@ -66,8 +68,18 @@ export class World {
   public getRelativeOffset(offsetAmount: number = 0.001): number {
     this.MatBuff.identity()
     this.MatBuff.makeScale(1 + offsetAmount, 1 + offsetAmount, 1 + offsetAmount)
-    const offsetBox = this.BoxBuff.copy(this.worldBox).applyMatrix4(this.MatBuff)
-    const dist = offsetBox.max.distanceTo(this.worldBox.max)
+    const worldSize = this.VecBuff.set(
+      this.worldSize.x * 0.5,
+      this.worldSize.y * 0.5,
+      this.worldSize.z * 0.5
+    )
+    this.BoxBuff0.min.set(0, 0, 0)
+    this.BoxBuff0.max.set(0, 0, 0)
+    this.BoxBuff1.min.set(0, 0, 0)
+    this.BoxBuff1.max.set(0, 0, 0)
+    const sizeBox = this.BoxBuff0.expandByVector(worldSize)
+    const offsetBox = this.BoxBuff1.copy(sizeBox).applyMatrix4(this.MatBuff)
+    const dist = offsetBox.max.distanceTo(sizeBox.max)
     return dist
   }
 }

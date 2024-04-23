@@ -141,7 +141,7 @@ const getStream = () => {
     // AutoCAD NEW
     // 'https://latest.speckle.dev/streams/3ed8357f29/commits/46905429f6'
     //Blizzard world
-    // 'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
+    'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
     //Car
     // 'https://latest.speckle.dev/streams/17d2e25a97/commits/6b6cf3d43e'
     // Jonathon's
@@ -388,7 +388,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/a64b432b34/commits/c184ba7d88'
     // 'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
     // Tiny cube
-    'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
+    // 'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
   )
 }
 
