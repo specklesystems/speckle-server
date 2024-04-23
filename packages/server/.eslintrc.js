@@ -1,3 +1,5 @@
+const path = require('node:path')
+
 /**
  * Extends repo root config, only put changes here that are scoped to this specific package
  * (if you already are - evaluate whether you really need package scoped linting rules)
@@ -19,7 +21,7 @@ const config = {
       plugins: ['@typescript-eslint'],
       parserOptions: {
         sourceType: 'module',
-        project: ['./tsconfig.json']
+        project: [path.resolve(__dirname, './tsconfig.json')]
       },
       extends: [
         'eslint:recommended',
