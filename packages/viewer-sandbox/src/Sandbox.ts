@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { Box3, SectionTool, TreeNode } from '@speckle/viewer'
+import { Box3, SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
 import {
   CanonicalView,
   DebugViewer,
@@ -25,9 +25,18 @@ import { FilteringExtension } from '@speckle/viewer'
 import { MeasurementsExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
-import { Viewer } from '@speckle/viewer'
+import { Viewer, AssetType, Assets } from '@speckle/viewer'
+import hdri0 from '../assets/sample-hdri.png'
+import hdri1 from '../assets/1.png'
+import hdri2 from '../assets/2.png'
+import hdri3 from '../assets/3.png'
+import hdri4 from '../assets/4.png'
+import hdri5 from '../assets/5.png'
+import hdri6 from '../assets/6.png'
 
 import { Euler, Vector3 } from 'three'
+import { GeometryType } from '@speckle/viewer'
+import { MeshBatch } from '@speckle/viewer'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -50,7 +59,9 @@ export default class Sandbox {
     worldOrigin: { x: 0, y: 0, z: 0 },
     pixelThreshold: 0.5,
     exposure: 0.5,
-    tonemapping: 4 //'ACESFilmicToneMapping'
+    tonemapping: 4, //'ACESFilmicToneMapping',
+    contrast: 1,
+    saturation: 1
   }
 
   public pipelineParams = {
@@ -120,6 +131,11 @@ export default class Sandbox {
     precision: 2
   }
 
+  public hdriParams = {
+    id: '/assets/2.png',
+    minRoughness: 0.5
+  }
+
   public constructor(
     container: HTMLElement,
     viewer: DebugViewer,
@@ -145,8 +161,8 @@ export default class Sandbox {
     this.properties = []
 
     viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
-      this.addStreamControls(url)
-      this.addViewControls()
+      // this.addStreamControls(url)
+      // this.addViewControls()
       this.addBatches()
       this.properties = await this.viewer.getObjectProperties()
       this.batchesParams.totalBvhSize = this.getBVHSize()
@@ -456,15 +472,6 @@ export default class Sandbox {
     })
     screenshot.on('click', async () => {
       console.warn(await this.viewer.screenshot())
-      // const start = performance.now()
-      // const nodes = this.viewer.getWorldTree().root.all(
-      //   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      //   (node: any) => node.model.raw.id === 'c35234a1e8584b159f7e8be59323cd64'
-      // )
-      // console.log(nodes)
-      // this.viewer.cancelLoad(
-      //   'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
-      // )
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -486,7 +493,7 @@ export default class Sandbox {
 
     const canonicalViewsFolder = this.tabs.pages[0].addFolder({
       title: 'Canonical Views',
-      expanded: true
+      expanded: false
     })
     const sides = ['front', 'back', 'top', 'bottom', 'right', 'left', '3d']
     for (let k = 0; k < sides.length; k++) {
@@ -500,6 +507,130 @@ export default class Sandbox {
             .setCameraView(sides[k] as CanonicalView, true)
         })
     }
+
+    const hdriFolder = this.tabs.pages[0].addFolder({ title: 'HDRI', expanded: true })
+
+    hdriFolder
+      .addInput(this.hdriParams, 'id', {
+        label: 'HDRI',
+        options: {
+          Default: hdri0,
+          Mild: hdri1,
+          Mild2: hdri2,
+          Sharp: hdri4,
+          Bright: hdri6
+        }
+      })
+      .on('change', async (value) => {
+        this.viewer.getRenderer().indirectIBL = await Assets.getEnvironment(
+          {
+            id: this.hdriParams.id,
+            src: value.value,
+            type: AssetType.TEXTURE_EXR
+          },
+          this.viewer.getRenderer().renderer
+        )
+        this.viewer.requestRender()
+      })
+
+    hdriFolder
+      .addInput(this.sceneParams, 'exposure', {
+        min: 0,
+        max: 1
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().renderer.toneMappingExposure =
+          this.sceneParams.exposure
+        this.viewer.requestRender()
+      })
+    hdriFolder
+      .addInput(this.sceneParams, 'contrast', {
+        min: 0,
+        max: 2
+      })
+      .on('change', () => {
+        const batches = this.viewer
+          .getRenderer()
+          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+        batches.forEach((batch: MeshBatch) => {
+          const materials = batch.materials as SpeckleStandardMaterial[]
+          materials.forEach((material: SpeckleStandardMaterial) => {
+            material.userData.contrast.value = this.sceneParams.contrast
+            material.needsCopy = true
+          })
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+      })
+    hdriFolder
+      .addInput(this.sceneParams, 'saturation', {
+        min: 0,
+        max: 2
+      })
+      .on('change', () => {
+        const batches = this.viewer
+          .getRenderer()
+          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+        batches.forEach((batch: MeshBatch) => {
+          const materials = batch.materials as SpeckleStandardMaterial[]
+          materials.forEach((material: SpeckleStandardMaterial) => {
+            material.userData.saturation.value = this.sceneParams.saturation
+            material.needsCopy = true
+          })
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+      })
+    hdriFolder
+      .addInput(this.hdriParams, 'minRoughness', {
+        label: 'Shininess',
+        min: 0,
+        max: 1,
+        step: 0.05
+      })
+      .on('change', (value) => {
+        const batches = this.viewer
+          .getRenderer()
+          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+        batches.forEach((batch: MeshBatch) => {
+          const materials = batch.materials
+          materials.forEach((material: SpeckleStandardMaterial) => {
+            material.roughness = Math.min(
+              material.userData.originalRoughness,
+              1 - this.hdriParams.minRoughness
+            )
+            material.needsCopy = true
+          })
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+      })
+  }
+
+  public async applyParams() {
+    this.viewer.getRenderer().indirectIBL = await Assets.getEnvironment(
+      {
+        id: 'Mild2',
+        src: hdri2,
+        type: AssetType.TEXTURE_EXR
+      },
+      this.viewer.getRenderer().renderer
+    )
+    this.viewer.getRenderer().renderer.toneMappingExposure = this.sceneParams.exposure
+    const batches = this.viewer
+      .getRenderer()
+      .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+    batches.forEach((batch: MeshBatch) => {
+      const materials = batch.materials as SpeckleStandardMaterial[]
+      materials.forEach((material: SpeckleStandardMaterial) => {
+        material.userData.contrast.value = this.sceneParams.contrast
+        material.userData.saturation.value = this.sceneParams.saturation
+        material.userData.originalRoughness = material.roughness
+        material.roughness = Math.min(
+          material.userData.originalRoughness,
+          1 - this.hdriParams.minRoughness
+        )
+        material.needsCopy = true
+      })
+      this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+    })
   }
 
   makeSceneUI() {
@@ -542,16 +673,16 @@ export default class Sandbox {
       expanded: true
     })
 
-    postFolder
-      .addInput(this.sceneParams, 'exposure', {
-        min: 0,
-        max: 1
-      })
-      .on('change', () => {
-        this.viewer.getRenderer().renderer.toneMappingExposure =
-          this.sceneParams.exposure
-        this.viewer.requestRender()
-      })
+    // postFolder
+    //   .addInput(this.sceneParams, 'exposure', {
+    //     min: 0,
+    //     max: 1
+    //   })
+    //   .on('change', () => {
+    //     this.viewer.getRenderer().renderer.toneMappingExposure =
+    //       this.sceneParams.exposure
+    //     this.viewer.requestRender()
+    //   })
 
     postFolder
       .addInput(this.sceneParams, 'tonemapping', {
