@@ -19,5 +19,10 @@ export = {
       }
       return null
     }
+  },
+  Query: {
+    automateValidateAuthCode() {
+      return true
+    }
   }
 } as Resolvers

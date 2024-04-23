@@ -8,21 +8,22 @@ import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/en
 import cryptoRandomString from 'crypto-random-string'
 import { Redis } from 'ioredis'
 
-export type AutomationCreationArgs = {
-  name: string
-  projectId: string
-  enabled: boolean
-  userId: string
+export type CreateAutomationDeps = {
+  createAuthCode: () => Promise<string>
+  automateCreateAutomation: (
+    args: AutomateCreateArgs
+  ) => Promise<AutomateCreateResponse>
 }
 
 export const createAutomation =
-  (deps: {
-    createAuthCode: () => Promise<string>
-    automateCreateAutomation: (
-      args: AutomateCreateArgs
-    ) => Promise<AutomateCreateResponse>
-  }) =>
-  async ({ name, projectId, enabled, userId }: AutomationCreationArgs) => {
+  (deps: CreateAutomationDeps) =>
+  async (params: {
+    name: string
+    projectId: string
+    enabled: boolean
+    userId: string
+  }) => {
+    const { name, projectId, enabled, userId } = params
     const { createAuthCode, automateCreateAutomation } = deps
 
     // TODO: acl is not checked here
@@ -104,3 +105,15 @@ export const createStoredAuthCodeIn = (deps: { redis: Redis }) => async () => {
   await redis.set(codeId, authCode, 'EX', 120)
   return `${codeId}${authCode}`
 }
+
+export const validateStoredAuthCode =
+  (deps: { redis: Redis }) => async (code: string) => {
+    const { redis } = deps
+    const codeId = code.slice(0, 10)
+    const authCode = code.slice(10)
+    const storedAuthCode = await redis.get(codeId)
+    if (authCode !== storedAuthCode) {
+      throw new Error('Invalid auth code')
+    }
+    return true
+  }

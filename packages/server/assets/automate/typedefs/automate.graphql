@@ -212,6 +212,10 @@ extend type Query {
   Get a single automate function by id. Error will be thrown if function is not found or inaccessible.
   """
   automateFunction(id: ID!): AutomateFunction!
+  """
+  Part of the automation creation handshake mechanism
+  """
+  automateValidateAuthCode(code: String!): Boolean!
 }
 
 input AutomateFunctionRunStatusReportInput {
