@@ -18,14 +18,19 @@ const config = {
       files: '*.ts',
       plugins: ['@typescript-eslint'],
       parserOptions: {
-        sourceType: 'module'
+        sourceType: 'module',
+        project: ['./tsconfig.json']
       },
       extends: [
         'eslint:recommended',
         'plugin:@typescript-eslint/recommended',
         'prettier'
       ],
-      parser: '@typescript-eslint/parser'
+      parser: '@typescript-eslint/parser',
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'error',
+        '@typescript-eslint/no-unsafe-return': 'error'
+      }
     },
     {
       files: '*.d.ts',

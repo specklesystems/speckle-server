@@ -7,7 +7,7 @@ import {
   sendRunTriggerToAutomate
 } from '@/modules/automate/services/trigger'
 import { Environment } from '@speckle/shared'
-import { queryActiveTriggersByTriggeringId } from '@/modules/automate/repositories/index'
+import { getActiveTriggerDefinitions } from '@/modules/automate/repositories/index'
 import authRestSetup from '@/modules/automate/rest/auth'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
@@ -41,14 +41,16 @@ async function initScopes() {
 }
 
 const initializeEventListeners = () => {
-  const triggerFn = triggerAutomationRevisionRun(sendRunTriggerToAutomate)
+  const triggerFn = triggerAutomationRevisionRun({
+    automateRunTrigger: sendRunTriggerToAutomate
+  })
   const quit = VersionsEmitter.listen(
     VersionEvents.Created,
     async ({ modelId, version }) => {
-      await onModelVersionCreate(
-        queryActiveTriggersByTriggeringId,
-        triggerFn
-      )({ modelId, versionId: version.id })
+      await onModelVersionCreate({
+        getTriggers: getActiveTriggerDefinitions,
+        triggerFunction: triggerFn
+      })({ modelId, versionId: version.id })
     }
   )
   return quit

@@ -1,3 +1,4 @@
+import { BlobStorageRecord } from '@/modules/blobstorage/helpers/types'
 import {
   getBlobMetadata,
   getBlobMetadataCollection,
@@ -16,12 +17,10 @@ import {
   StreamGraphQLReturn
 } from '@/modules/core/helpers/graphTypes'
 import { NotFoundError, ResourceMismatch } from '@/modules/shared/errors'
+import { Nullable } from '@speckle/shared'
 import { UserInputError } from 'apollo-server-errors'
 
-const streamBlobResolvers: Pick<
-  NonNullable<Resolvers['Stream'] | Resolvers['Project']>,
-  'blobs' | 'blob'
-> = {
+const streamBlobResolvers = {
   async blobs(
     parent: StreamGraphQLReturn | ProjectGraphQLReturn,
     args: StreamBlobsArgs | ProjectBlobsArgs
@@ -51,7 +50,10 @@ const streamBlobResolvers: Pick<
     args: StreamBlobArgs | ProjectBlobArgs
   ) {
     try {
-      return await getBlobMetadata({ streamId: parent.id, blobId: args.id })
+      return (await getBlobMetadata({
+        streamId: parent.id,
+        blobId: args.id
+      })) as Nullable<BlobStorageRecord>
     } catch (err: unknown) {
       if (err instanceof NotFoundError) return null
       if (err instanceof ResourceMismatch) throw new UserInputError(err.message)

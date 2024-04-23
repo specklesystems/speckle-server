@@ -1,56 +1,59 @@
 import {
+  InsertableAutomationRun,
+  getActiveTriggerDefinitions,
   getAutomationRevision,
   getAutomationToken,
   upsertAutomationRun
 } from '@/modules/automate/repositories'
 import {
-  AutomationRun,
-  AutomationRunTrigger,
-  AutomationTrigger,
-  AutomationTriggerModelVersion,
   AutomationWithRevision,
-  AutomationRevisionTrigger,
-  AutomationToken,
-  AutomationFunctionRun
-} from '@/modules/automate/types'
-import { CommitRecord } from '@/modules/core/helpers/types'
+  AutomationTriggerDefinitionRecord,
+  AutomationFunctionRunRecord,
+  AutomationRevisionWithTriggersFunctions,
+  VersionCreatedTriggerManifest,
+  VersionCreationTriggerType,
+  BaseTriggerManifest,
+  isVersionCreatedTriggerManifest
+} from '@/modules/automate/helpers/types'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { getCommit } from '@/modules/core/repositories/commits'
 import { createAppToken } from '@/modules/core/services/tokens'
 import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
-import { Optional, Scopes } from '@speckle/shared'
+import { Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
+import { DefaultAppIds } from '@/modules/auth/defaultApps'
+import { Merge } from 'type-fest'
 
 // TODO: Extract dependency types so that they're not duplicated
+// TODO: Move to deps object to allow for different param order
 
-/**This should hook into the model version create event */
+/**
+ * This should hook into the model version create event
+ */
 export const onModelVersionCreate =
-  (
-    triggerQuery: (args: {
-      triggeringId: string
-      triggerType: 'versionCreation'
-    }) => Promise<AutomationRevisionTrigger[]>,
-    triggerFunction: (args: {
-      revisionId: string
-      trigger: AutomationTriggerModelVersion
-    }) => Promise<{ automationRunId: string }>
-  ) =>
-  async ({ modelId, versionId }: { modelId: string; versionId: string }) => {
-    const triggers = await triggerQuery({
-      triggeringId: modelId,
-      triggerType: 'versionCreation'
-    })
+  (deps: {
+    getTriggers: typeof getActiveTriggerDefinitions
+    triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
+  }) =>
+  async (params: { modelId: string; versionId: string }) => {
+    const { modelId, versionId } = params
+    const { getTriggers, triggerFunction } = deps
 
     // get triggers where modelId matches
+    const triggerDefinitions = await getTriggers({
+      triggeringId: modelId,
+      triggerType: VersionCreationTriggerType
+    })
+
     // get revisions where it matches any of the triggers and the revision is published
     await Promise.all(
-      triggers.map(async (tr) => {
+      triggerDefinitions.map(async (tr) => {
         try {
-          await triggerFunction({
+          await triggerFunction<VersionCreatedTriggerManifest>({
             revisionId: tr.automationRevisionId,
-            trigger: {
+            manifest: {
               versionId,
-              triggeringId: tr.triggeringId,
+              modelId: tr.triggeringId,
               triggerType: tr.triggerType
             }
           })
@@ -63,38 +66,42 @@ export const onModelVersionCreate =
     )
   }
 
-/**This triggers a run for a specific automation revision */
+/**
+ * This triggers a run for a specific automation revision
+ */
 export const triggerAutomationRevisionRun =
-  (
-    automateRunTrigger: (
-      args: AutomateRunTriggerArgs
-    ) => Promise<AutomationRunResponseBody>
-  ) =>
-  async ({
-    revisionId,
-    trigger
-  }: {
+  (deps: { automateRunTrigger: typeof sendRunTriggerToAutomate }) =>
+  async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
-    trigger: AutomationTriggerModelVersion
+    manifest: M
   }): Promise<{ automationRunId: string }> => {
+    const { automateRunTrigger } = deps
+    const { revisionId, manifest } = params
+
+    if (!isVersionCreatedTriggerManifest(manifest)) {
+      throw new Error('Only model version triggers are currently supported')
+    }
+
     const { automationWithRevision, userId, automateToken } = await ensureRunConditions(
-      getAutomationRevision,
-      getCommit,
-      getAutomationToken
+      {
+        revisionGetter: getAutomationRevision,
+        versionGetter: getCommit,
+        automationTokenGetter: getAutomationToken
+      }
     )({
       revisionId,
-      trigger
+      manifest
     })
 
-    const triggers = await composeTriggerData({
-      trigger,
+    const triggerManifests = await composeTriggerData({
+      manifest,
       projectId: automationWithRevision.projectId,
-      automationTriggers: automationWithRevision.triggers
+      triggerDefinitions: automationWithRevision.revision.triggers
     })
 
     const projectScopedToken = await createAppToken({
-      appId: 'spklautoma',
-      name: `at-${automationWithRevision.automationId}@${trigger.versionId}`,
+      appId: DefaultAppIds.Automate,
+      name: `at-${automationWithRevision.id}@${manifest.versionId}`,
       userId,
       // for now this is a baked in constant
       // should rely on the function definitions requesting the needed scopes
@@ -106,14 +113,17 @@ export const triggerAutomationRevisionRun =
       ]
     })
 
-    const automationRun = createAutomationRunData({ triggers, automationWithRevision })
+    const automationRun = createAutomationRunData({
+      manifests: triggerManifests,
+      automationWithRevision
+    })
     await upsertAutomationRun(automationRun)
 
     try {
       const { automationRunId } = await automateRunTrigger({
         projectId: automationWithRevision.projectId,
         automationId: automationWithRevision.executionEngineAutomationId,
-        triggers,
+        manifests: triggerManifests,
         functionRuns: automationRun.functionRuns,
         speckleToken: projectScopedToken,
         automationToken: automateToken
@@ -135,45 +145,52 @@ export const triggerAutomationRevisionRun =
   }
 
 export const ensureRunConditions =
-  (
-    revisionGetter: (revisionId: string) => Promise<AutomationWithRevision | null>,
-    versionGetter: (versionId: string) => Promise<Optional<CommitRecord>>,
-    automationTokenGetter: (automationId: string) => Promise<AutomationToken | null>
-  ) =>
-  async ({
-    revisionId,
-    trigger
-  }: {
+  (deps: {
+    revisionGetter: typeof getAutomationRevision
+    versionGetter: typeof getCommit
+    automationTokenGetter: typeof getAutomationToken
+  }) =>
+  async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
-    trigger: AutomationTriggerModelVersion
+    manifest: M
   }): Promise<{
-    automationWithRevision: AutomationWithRevision
+    automationWithRevision: AutomationWithRevision<AutomationRevisionWithTriggersFunctions>
     userId: string
     automateToken: string
     automateRefreshToken: string
   }> => {
+    const { revisionGetter, versionGetter, automationTokenGetter } = deps
+    const { revisionId, manifest } = params
     const automationWithRevision = await revisionGetter(revisionId)
     if (!automationWithRevision)
       throw new Error("Cannot trigger the given revision, it doesn't exist")
 
-    // if the revision is not active, do not trigger
+    // if the automation is not active, do not trigger
     if (!automationWithRevision.enabled)
       throw new Error('The automation is not enabled, cannot trigger it')
 
-    if (!automationWithRevision.active)
+    if (!automationWithRevision.revision.active)
       throw new Error('The automation revision is not active, cannot trigger it')
-    const revisionTrigger = automationWithRevision.triggers.find(
-      (t) =>
-        t.triggeringId === trigger.triggeringId && t.triggerType === trigger.triggerType
-    )
-    if (!revisionTrigger)
+
+    if (!isVersionCreatedTriggerManifest(manifest))
+      throw new Error('Only model version triggers are supported')
+
+    const triggerDefinition = automationWithRevision.revision.triggers.find((t) => {
+      if (t.triggerType !== manifest.triggerType) return false
+
+      if (isVersionCreatedTriggerManifest(manifest)) {
+        return t.triggeringId === manifest.modelId
+      }
+
+      return false
+    })
+
+    if (!triggerDefinition)
       throw new Error(
         "The given revision doesn't have a trigger registered matching the input trigger"
       )
-    if (revisionTrigger.triggerType !== 'versionCreation')
-      throw new Error('Only model version triggers are supported')
 
-    const triggeringVersion = await versionGetter(trigger.versionId)
+    const triggeringVersion = await versionGetter(manifest.versionId)
     if (!triggeringVersion) throw new Error('The triggering version is not found')
 
     const userId = triggeringVersion.author
@@ -182,7 +199,7 @@ export const ensureRunConditions =
         "The user, that created the triggering version doesn't exist any more"
       )
 
-    const token = await automationTokenGetter(automationWithRevision.automationId)
+    const token = await automationTokenGetter(automationWithRevision.id)
     if (!token) throw new Error('Cannot find a token for the automation')
 
     return {
@@ -193,63 +210,79 @@ export const ensureRunConditions =
     }
   }
 
-async function composeTriggerData({
-  projectId,
-  trigger,
-  automationTriggers
-}: {
+async function composeTriggerData(params: {
   projectId: string
-  trigger: AutomationTriggerModelVersion
-  automationTriggers: AutomationTrigger[]
-}): Promise<AutomationRunTrigger[]> {
-  const triggers = [
-    {
-      modelId: trigger.triggeringId,
-      versionId: trigger.versionId,
-      triggerType: 'versionCreation' as const
+  manifest: BaseTriggerManifest
+  triggerDefinitions: AutomationTriggerDefinitionRecord[]
+}): Promise<BaseTriggerManifest[]> {
+  const { projectId, manifest, triggerDefinitions } = params
+
+  const manifests: BaseTriggerManifest[] = [{ ...manifest }]
+
+  if (triggerDefinitions.length > 1) {
+    const associatedTriggers = triggerDefinitions.filter((t) => {
+      if (t.triggerType !== manifest.triggerType) return false
+
+      if (isVersionCreatedTriggerManifest(manifest)) {
+        return t.triggeringId === manifest.modelId
+      }
+
+      return false
+    })
+
+    // Version creation triggers
+    if (manifest.triggerType === VersionCreationTriggerType) {
+      const latestVersions = await getBranchLatestCommits(
+        associatedTriggers.map((t) => t.triggeringId),
+        projectId
+      )
+      manifests.push(
+        ...latestVersions.map(
+          (version): VersionCreatedTriggerManifest => ({
+            modelId: version.branchId,
+            versionId: version.id,
+            triggerType: VersionCreationTriggerType
+          })
+        )
+      )
     }
-  ]
-
-  if (automationTriggers.length > 1) {
-    const associatedTriggers = automationTriggers.filter(
-      (t) => t.triggeringId !== trigger.triggeringId
-    )
-
-    const latestVersions = await getBranchLatestCommits(
-      associatedTriggers.map((t) => t.triggeringId),
-      projectId
-    )
-    triggers.push(
-      ...latestVersions.map((version) => ({
-        modelId: version.branchId,
-        versionId: version.id,
-        triggerType: 'versionCreation' as const
-      }))
-    )
   }
-  return triggers
+
+  return manifests
 }
 
-function createAutomationRunData({
-  triggers,
-  automationWithRevision
-}: {
-  triggers: AutomationRunTrigger[]
-  automationWithRevision: AutomationWithRevision
-}): AutomationRun {
+type InsertableAutomationRunWithExtendedFunctionRuns = Merge<
+  InsertableAutomationRun,
+  {
+    functionRuns: TriggeredAutomationFunctionRun[]
+  }
+>
+
+function createAutomationRunData(params: {
+  manifests: BaseTriggerManifest[]
+  automationWithRevision: AutomationWithRevision<AutomationRevisionWithTriggersFunctions>
+}): InsertableAutomationRunWithExtendedFunctionRuns {
+  const { manifests, automationWithRevision } = params
   const runId = cryptoRandomString({ length: 15 })
-  const automationRun = {
+  const versionCreatedManifests = manifests.filter(isVersionCreatedTriggerManifest)
+  if (!versionCreatedManifests.length) {
+    throw new Error('Only version creation triggers currently supported')
+  }
+
+  const automationRun: InsertableAutomationRunWithExtendedFunctionRuns = {
     id: runId,
-    triggers: triggers.map((t) => ({
-      triggeringId: t.versionId,
-      triggerType: t.triggerType
-    })),
+    triggers: [
+      ...versionCreatedManifests.map((m) => ({
+        triggeringId: m.versionId,
+        triggerType: m.triggerType
+      }))
+    ],
     executionEngineRunId: null,
     status: 'pending' as const,
-    automationRevisionId: automationWithRevision.id,
+    automationRevisionId: automationWithRevision.revision.id,
     createdAt: new Date(),
     updatedAt: new Date(),
-    functionRuns: automationWithRevision.functions.map((f) => ({
+    functionRuns: automationWithRevision.revision.functions.map((f) => ({
       functionId: f.functionId,
       runId,
       id: cryptoRandomString({ length: 15 }),
@@ -266,11 +299,16 @@ function createAutomationRunData({
   return automationRun
 }
 
-type AutomateRunTriggerArgs = {
+export type TriggeredAutomationFunctionRun = AutomationFunctionRunRecord & {
+  resultVersions: string[]
+  functionInputs: Record<string, unknown> | null
+}
+
+export type AutomateRunTriggerArgs = {
   projectId: string
   automationId: string
-  functionRuns: AutomationFunctionRun[]
-  triggers: AutomationRunTrigger[]
+  functionRuns: TriggeredAutomationFunctionRun[]
+  manifests: BaseTriggerManifest[]
   speckleToken: string
   automationToken: string
 }
@@ -278,7 +316,7 @@ type AutomateRunTriggerArgs = {
 export async function sendRunTriggerToAutomate({
   projectId,
   functionRuns,
-  triggers,
+  manifests,
   automationId,
   speckleToken,
   automationToken
@@ -297,10 +335,15 @@ export async function sendRunTriggerToAutomate({
     }
   })
 
+  const versionCreationManifests = manifests.filter(isVersionCreatedTriggerManifest)
+  if (!versionCreationManifests.length) {
+    throw new Error('Only version creation triggers currently supported')
+  }
+
   const payload: AutomationRunPostBody = {
     projectId,
     functionDefinitions,
-    triggers: triggers.map((t) => ({
+    triggers: versionCreationManifests.map((t) => ({
       triggerType: t.triggerType,
       payload: { modelId: t.modelId, versionId: t.versionId }
     })),
@@ -322,10 +365,10 @@ export async function sendRunTriggerToAutomate({
 type AutomationRunPostBody = {
   projectId: string
   speckleToken: string
-  triggers: {
+  triggers: Array<{
     payload: { modelId: string; versionId: string }
-    triggerType: 'versionCreation'
-  }[]
+    triggerType: typeof VersionCreationTriggerType
+  }>
   functionDefinitions: {
     functionInputs: Record<string, unknown> | null
     functionId: string

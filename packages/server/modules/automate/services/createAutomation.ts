@@ -16,13 +16,15 @@ export type AutomationCreationArgs = {
 }
 
 export const createAutomation =
-  (
-    createAuthCode: () => Promise<string>,
+  (deps: {
+    createAuthCode: () => Promise<string>
     automateCreateAutomation: (
       args: AutomateCreateArgs
     ) => Promise<AutomateCreateResponse>
-  ) =>
+  }) =>
   async ({ name, projectId, enabled, userId }: AutomationCreationArgs) => {
+    const { createAuthCode, automateCreateAutomation } = deps
+
     // TODO: acl is not checked here
     // in order to create an automation, we need to reach out to automate
     // automate also needs to register the automation and gives us an automation token
@@ -71,28 +73,31 @@ type AutomateCreateResponse = {
   refreshToken: string
 }
 
-export const triggerAutomationCreation = async ({
-  speckleServerUrl,
-  authCode
-}: AutomateCreateArgs): Promise<AutomateCreateResponse> => {
-  const automateUrl = speckleAutomateUrl()
-  if (!automateUrl)
-    throw new Error('Cannot create automation, Automate URL is not configured')
-  const url = `${automateUrl}/api/v2/automations`
+export const triggerAutomationCreation =
+  () =>
+  async ({
+    speckleServerUrl,
+    authCode
+  }: AutomateCreateArgs): Promise<AutomateCreateResponse> => {
+    const automateUrl = speckleAutomateUrl()
+    if (!automateUrl)
+      throw new Error('Cannot create automation, Automate URL is not configured')
+    const url = `${automateUrl}/api/v2/automations`
 
-  const response = await fetch(url, {
-    method: 'post',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ speckleServerUrl, authCode })
-  })
+    const response = await fetch(url, {
+      method: 'post',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ speckleServerUrl, authCode })
+    })
 
-  const result = (await response.json()) as AutomateCreateResponse
-  return result
-}
+    const result = (await response.json()) as AutomateCreateResponse
+    return result
+  }
 
-export const createStoredAuthCodeIn = (redis: Redis) => async () => {
+export const createStoredAuthCodeIn = (deps: { redis: Redis }) => async () => {
+  const { redis } = deps
   const codeId = cryptoRandomString({ length: 10 })
   const authCode = cryptoRandomString({ length: 20 })
   // prob hashing and salting it would be better, but they expire in 2 mins...

@@ -63,6 +63,9 @@ const uploadFileStream = async (
   return { blobId, fileName, fileHash }
 }
 
+/**
+ * @returns {import('@/modules/blobstorage/helpers/types').BlobStorageRecord | null}
+ */
 const getBlobMetadata = async ({ streamId, blobId }, blobRepo = blobLookup) => {
   if (!streamId) throw new BadRequestError('No steamId provided')
   const obj = (await blobRepo({ blobId, streamId }).first()) || null

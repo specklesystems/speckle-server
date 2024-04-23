@@ -13,7 +13,7 @@ import {
   Commits
 } from '@/modules/core/dbSchema'
 import { CommitRecord } from '@/modules/core/helpers/types'
-import { Nullable } from '@speckle/shared'
+import { Optional } from '@speckle/shared'
 import { isArray, pick } from 'lodash'
 import { SetOptional } from 'type-fest'
 
@@ -21,7 +21,7 @@ export const upsertAutomation = async (
   automation: SetOptional<AutomationRecord, 'createdAt' | 'updatedAt'>
 ) =>
   await BetaAutomations.knex()
-    .insert(automation)
+    .insert(pick(automation, BetaAutomations.withoutTablePrefix.cols))
     .onConflict([
       BetaAutomations.withoutTablePrefix.col.automationId,
       BetaAutomations.withoutTablePrefix.col.automationRevisionId
@@ -34,8 +34,8 @@ export const upsertAutomation = async (
 
 export const getAutomation = async (
   automationId: string
-): Promise<AutomationRecord> => {
-  return await BetaAutomations.knex()
+): Promise<Optional<AutomationRecord>> => {
+  return await BetaAutomations.knex<AutomationRecord>()
     .where({ [BetaAutomations.col.automationId]: automationId })
     .first()
 }
@@ -114,8 +114,8 @@ export const deleteResultVersionsForRuns = async (
 
 export const getAutomationRun = async (
   automationRunId: string
-): Promise<Nullable<AutomationRunRecord>> => {
-  return await BetaAutomationRuns.knex()
+): Promise<Optional<AutomationRunRecord>> => {
+  return await BetaAutomationRuns.knex<AutomationRunRecord>()
     .where({ [BetaAutomationRuns.col.automationRunId]: automationRunId })
     .first()
 }
@@ -134,7 +134,7 @@ export const getLatestAutomationRunsFor = async (
   const { limit = 20 } = options || {}
 
   const runs = await BetaAutomationRuns.knex()
-    .select([
+    .select<AutomationRunRecord[]>([
       ...BetaAutomationRuns.cols,
       `${BetaAutomations.name}.${BetaAutomations.withoutTablePrefix.col.automationName}`
     ])

@@ -4,9 +4,13 @@ import {
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
 import {
-  AutomationRevisionTrigger,
-  AutomationTriggerModelVersion
-} from '@/modules/automate/types'
+  AutomationTriggerDefinitionRecord,
+  AutomationTriggerType,
+  BaseTriggerManifest,
+  VersionCreatedTriggerManifest,
+  VersionCreationTriggerType,
+  isVersionCreatedTriggerManifest
+} from '@/modules/automate/helpers/types'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { createTestUser } from '@/test/authHelper'
@@ -16,7 +20,7 @@ import {
   getAutomationRun,
   storeAutomation,
   storeAutomationRevision
-} from '../repositories'
+} from '@/modules/automate/repositories/index'
 import { beforeEachContext } from '@/test/hooks'
 
 describe('Automate triggers @automate', () => {
@@ -31,78 +35,90 @@ describe('Automate triggers @automate', () => {
   })
   describe('On model version create', () => {
     it('No trigger no run', async () => {
-      const triggered: Record<string, AutomationTriggerModelVersion> = {}
-      await onModelVersionCreate(
-        async () => [],
-        async ({ trigger, revisionId }) => {
-          triggered[revisionId] = trigger
+      const triggered: Record<string, BaseTriggerManifest> = {}
+      await onModelVersionCreate({
+        getTriggers: async () => [],
+        triggerFunction: async ({ manifest, revisionId }) => {
+          triggered[revisionId] = manifest
           return { automationRunId: cryptoRandomString({ length: 10 }) }
         }
-      )({
+      })({
         modelId: cryptoRandomString({ length: 10 }),
         versionId: cryptoRandomString({ length: 10 })
       })
       expect(Object.keys(triggered)).length(0)
     })
     it('Triggers all automation runs associated with the model', async () => {
-      const storedTriggers: AutomationRevisionTrigger[] = [
+      const storedTriggers: AutomationTriggerDefinitionRecord[] = [
         {
-          triggerType: 'versionCreation',
+          triggerType: VersionCreationTriggerType,
           triggeringId: cryptoRandomString({ length: 10 }),
           automationRevisionId: cryptoRandomString({ length: 10 })
         },
         {
-          triggerType: 'versionCreation',
+          triggerType: VersionCreationTriggerType,
           triggeringId: cryptoRandomString({ length: 10 }),
           automationRevisionId: cryptoRandomString({ length: 10 })
         }
       ]
-      const triggered: Record<string, AutomationTriggerModelVersion> = {}
+      const triggered: Record<string, VersionCreatedTriggerManifest> = {}
       const versionId = cryptoRandomString({ length: 10 })
-      await onModelVersionCreate(
-        async () => storedTriggers,
-        async ({ revisionId, trigger }) => {
-          triggered[revisionId] = trigger
+      await onModelVersionCreate({
+        getTriggers: async <
+          T extends AutomationTriggerType = AutomationTriggerType
+        >() => storedTriggers as AutomationTriggerDefinitionRecord<T>[],
+        triggerFunction: async ({ revisionId, manifest }) => {
+          if (!isVersionCreatedTriggerManifest(manifest)) {
+            throw new Error('unexpected trigger type')
+          }
+
+          triggered[revisionId] = manifest
           return { automationRunId: cryptoRandomString({ length: 10 }) }
         }
-      )({
+      })({
         modelId: cryptoRandomString({ length: 10 }),
         versionId
       })
       expect(Object.keys(triggered)).length(storedTriggers.length)
       storedTriggers.forEach((st) => {
-        const expectedTrigger = {
+        const expectedTrigger: VersionCreatedTriggerManifest = {
           versionId,
-          triggeringId: st.triggeringId,
+          modelId: st.triggeringId,
           triggerType: st.triggerType
         }
         expect(triggered[st.automationRevisionId]).deep.equal(expectedTrigger)
       })
     })
     it('Failing automation runs do NOT break other runs.', async () => {
-      const storedTriggers: AutomationRevisionTrigger[] = [
+      const storedTriggers: AutomationTriggerDefinitionRecord[] = [
         {
-          triggerType: 'versionCreation',
+          triggerType: VersionCreationTriggerType,
           triggeringId: cryptoRandomString({ length: 10 }),
           automationRevisionId: cryptoRandomString({ length: 10 })
         },
         {
-          triggerType: 'versionCreation',
+          triggerType: VersionCreationTriggerType,
           triggeringId: cryptoRandomString({ length: 10 }),
           automationRevisionId: cryptoRandomString({ length: 10 })
         }
       ]
-      const triggered: Record<string, AutomationTriggerModelVersion> = {}
+      const triggered: Record<string, VersionCreatedTriggerManifest> = {}
       const versionId = cryptoRandomString({ length: 10 })
-      await onModelVersionCreate(
-        async () => storedTriggers,
-        async ({ revisionId, trigger }) => {
+      await onModelVersionCreate({
+        getTriggers: async <
+          T extends AutomationTriggerType = AutomationTriggerType
+        >() => storedTriggers as AutomationTriggerDefinitionRecord<T>[],
+        triggerFunction: async ({ revisionId, manifest }) => {
+          if (!isVersionCreatedTriggerManifest(manifest)) {
+            throw new Error('unexpected trigger type')
+          }
           if (revisionId === storedTriggers[0].automationRevisionId)
             throw new Error('first one is borked')
-          triggered[revisionId] = trigger
+
+          triggered[revisionId] = manifest
           return { automationRunId: cryptoRandomString({ length: 10 }) }
         }
-      )({
+      })({
         modelId: cryptoRandomString({ length: 10 }),
         versionId
       })
@@ -112,14 +128,16 @@ describe('Automate triggers @automate', () => {
   describe('Triggering an automation revision run', () => {
     it('Throws if run conditions are not met', async () => {
       try {
-        await triggerAutomationRevisionRun(async () => ({
-          automationRunId: cryptoRandomString({ length: 10 })
-        }))({
+        await triggerAutomationRevisionRun({
+          automateRunTrigger: async () => ({
+            automationRunId: cryptoRandomString({ length: 10 })
+          })
+        })({
           revisionId: cryptoRandomString({ length: 10 }),
-          trigger: {
+          manifest: <VersionCreatedTriggerManifest>{
             versionId: cryptoRandomString({ length: 10 }),
-            triggerType: 'versionCreation',
-            triggeringId: cryptoRandomString({ length: 10 })
+            triggerType: VersionCreationTriggerType,
+            modelId: cryptoRandomString({ length: 10 })
           }
         })
         throw 'this should have thrown'
@@ -168,7 +186,7 @@ describe('Automate triggers @automate', () => {
 
       const automationRevisionId = cryptoRandomString({ length: 10 })
       const trigger = {
-        triggerType: 'versionCreation' as const,
+        triggerType: VersionCreationTriggerType,
         triggeringId: cryptoRandomString({ length: 10 })
       }
       // create revision,
@@ -188,13 +206,16 @@ describe('Automate triggers @automate', () => {
         ]
       })
       const thrownError = 'trigger failed'
-      const { automationRunId } = await triggerAutomationRevisionRun(async () => {
-        throw new Error(thrownError)
+      const { automationRunId } = await triggerAutomationRevisionRun({
+        automateRunTrigger: async () => {
+          throw new Error(thrownError)
+        }
       })({
         revisionId: automationRevisionId,
-        trigger: {
+        manifest: <VersionCreatedTriggerManifest>{
           versionId: version.id,
-          ...trigger
+          modelId: trigger.triggeringId,
+          triggerType: trigger.triggerType
         }
       })
 
@@ -249,7 +270,7 @@ describe('Automate triggers @automate', () => {
 
       const automationRevisionId = cryptoRandomString({ length: 10 })
       const trigger = {
-        triggerType: 'versionCreation' as const,
+        triggerType: VersionCreationTriggerType,
         triggeringId: cryptoRandomString({ length: 10 })
       }
       // create revision,
@@ -269,13 +290,16 @@ describe('Automate triggers @automate', () => {
         ]
       })
       const executionEngineRunId = cryptoRandomString({ length: 10 })
-      const { automationRunId } = await triggerAutomationRevisionRun(async () => ({
-        automationRunId: executionEngineRunId
-      }))({
+      const { automationRunId } = await triggerAutomationRevisionRun({
+        automateRunTrigger: async () => ({
+          automationRunId: executionEngineRunId
+        })
+      })({
         revisionId: automationRevisionId,
-        trigger: {
+        manifest: <VersionCreatedTriggerManifest>{
           versionId: version.id,
-          ...trigger
+          modelId: trigger.triggeringId,
+          triggerType: trigger.triggerType
         }
       })
 
@@ -294,15 +318,15 @@ describe('Automate triggers @automate', () => {
   describe('Run conditions are NOT met if', () => {
     it("the referenced revision doesn't exist", async () => {
       try {
-        await ensureRunConditions(
-          async () => null,
-          async () => undefined,
-          async () => null
-        )({
+        await ensureRunConditions({
+          revisionGetter: async () => null,
+          versionGetter: async () => undefined,
+          automationTokenGetter: async () => null
+        })({
           revisionId: cryptoRandomString({ length: 10 }),
-          trigger: {
-            triggerType: 'versionCreation',
-            triggeringId: cryptoRandomString({ length: 10 }),
+          manifest: <VersionCreatedTriggerManifest>{
+            triggerType: VersionCreationTriggerType,
+            modelId: cryptoRandomString({ length: 10 }),
             versionId: cryptoRandomString({ length: 10 })
           }
         })
@@ -316,28 +340,33 @@ describe('Automate triggers @automate', () => {
     })
     it('the automation is not enabled', async () => {
       try {
-        await ensureRunConditions(
-          async () => ({
-            active: false,
-            enabled: false,
-            triggers: [],
+        await ensureRunConditions({
+          revisionGetter: async () => ({
             id: cryptoRandomString({ length: 10 }),
             name: cryptoRandomString({ length: 10 }),
-            createdAt: new Date(),
-            functions: [],
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 }),
+            enabled: false,
+            createdAt: new Date(),
             executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-            automationToken: cryptoRandomString({ length: 15 }),
-            userId: cryptoRandomString({ length: 10 })
+            userId: cryptoRandomString({ length: 10 }),
+            revision: {
+              id: cryptoRandomString({ length: 10 }),
+              createdAt: new Date(),
+              userId: cryptoRandomString({ length: 10 }),
+              active: false,
+              triggers: [],
+              functions: [],
+              automationId: cryptoRandomString({ length: 10 }),
+              automationToken: cryptoRandomString({ length: 15 })
+            }
           }),
-          async () => undefined,
-          async () => null
-        )({
+          versionGetter: async () => undefined,
+          automationTokenGetter: async () => null
+        })({
           revisionId: cryptoRandomString({ length: 10 }),
-          trigger: {
-            triggerType: 'versionCreation',
-            triggeringId: cryptoRandomString({ length: 10 }),
+          manifest: <VersionCreatedTriggerManifest>{
+            triggerType: VersionCreationTriggerType,
+            modelId: cryptoRandomString({ length: 10 }),
             versionId: cryptoRandomString({ length: 10 })
           }
         })
@@ -351,28 +380,33 @@ describe('Automate triggers @automate', () => {
     })
     it('the revision is not active', async () => {
       try {
-        await ensureRunConditions(
-          async () => ({
-            active: false,
-            enabled: true,
-            triggers: [],
+        await ensureRunConditions({
+          revisionGetter: async () => ({
             id: cryptoRandomString({ length: 10 }),
             name: cryptoRandomString({ length: 10 }),
-            createdAt: new Date(),
-            functions: [],
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 }),
+            enabled: true,
+            createdAt: new Date(),
             executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-            automationToken: cryptoRandomString({ length: 15 }),
-            userId: cryptoRandomString({ length: 10 })
+            userId: cryptoRandomString({ length: 10 }),
+            revision: {
+              active: false,
+              triggers: [],
+              functions: [],
+              automationId: cryptoRandomString({ length: 10 }),
+              automationToken: cryptoRandomString({ length: 15 }),
+              id: cryptoRandomString({ length: 10 }),
+              createdAt: new Date(),
+              userId: cryptoRandomString({ length: 10 })
+            }
           }),
-          async () => undefined,
-          async () => null
-        )({
+          versionGetter: async () => undefined,
+          automationTokenGetter: async () => null
+        })({
           revisionId: cryptoRandomString({ length: 10 }),
-          trigger: {
-            triggerType: 'versionCreation',
-            triggeringId: cryptoRandomString({ length: 10 }),
+          manifest: <VersionCreatedTriggerManifest>{
+            triggerType: VersionCreationTriggerType,
+            modelId: cryptoRandomString({ length: 10 }),
             versionId: cryptoRandomString({ length: 10 })
           }
         })
@@ -386,28 +420,33 @@ describe('Automate triggers @automate', () => {
     })
     it("the revision doesn't have the referenced trigger", async () => {
       try {
-        await ensureRunConditions(
-          async () => ({
-            active: true,
-            enabled: true,
-            triggers: [],
+        await ensureRunConditions({
+          revisionGetter: async () => ({
             id: cryptoRandomString({ length: 10 }),
-            name: cryptoRandomString({ length: 10 }),
             createdAt: new Date(),
-            functions: [],
+            userId: cryptoRandomString({ length: 10 }),
+            name: cryptoRandomString({ length: 10 }),
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 }),
+            enabled: true,
             executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-            automationToken: cryptoRandomString({ length: 15 }),
-            userId: cryptoRandomString({ length: 10 })
+            revision: {
+              id: cryptoRandomString({ length: 10 }),
+              createdAt: new Date(),
+              userId: cryptoRandomString({ length: 10 }),
+              active: true,
+              triggers: [],
+              functions: [],
+              automationId: cryptoRandomString({ length: 10 }),
+              automationToken: cryptoRandomString({ length: 15 })
+            }
           }),
-          async () => undefined,
-          async () => null
-        )({
+          versionGetter: async () => undefined,
+          automationTokenGetter: async () => null
+        })({
           revisionId: cryptoRandomString({ length: 10 }),
-          trigger: {
-            triggerType: 'versionCreation',
-            triggeringId: cryptoRandomString({ length: 10 }),
+          manifest: <VersionCreatedTriggerManifest>{
+            triggerType: VersionCreationTriggerType,
+            modelId: cryptoRandomString({ length: 10 }),
             versionId: cryptoRandomString({ length: 10 })
           }
         })
@@ -420,32 +459,44 @@ describe('Automate triggers @automate', () => {
       }
     })
     it('the trigger is not a versionCreation type', async () => {
-      const trigger = {
+      const manifest: VersionCreatedTriggerManifest = {
+        // @ts-expect-error: intentionally using invalid type here
         triggerType: 'bogusTrigger' as const,
-        triggeringId: cryptoRandomString({ length: 10 }),
+        modelId: cryptoRandomString({ length: 10 }),
         versionId: cryptoRandomString({ length: 10 })
       }
 
       try {
-        await ensureRunConditions(
-          // @ts-expect-error: the bad trigger type needs to be checked
-          async () => ({
-            active: true,
-            enabled: true,
-            triggers: [trigger],
+        await ensureRunConditions({
+          revisionGetter: async () => ({
             id: cryptoRandomString({ length: 10 }),
             name: cryptoRandomString({ length: 10 }),
-            createdAt: new Date(),
-            functions: [],
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 })
+            enabled: true,
+            createdAt: new Date(),
+            executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+            userId: cryptoRandomString({ length: 10 }),
+            revision: {
+              id: cryptoRandomString({ length: 10 }),
+              createdAt: new Date(),
+              userId: cryptoRandomString({ length: 10 }),
+              active: true,
+              triggers: [
+                {
+                  triggeringId: manifest.modelId,
+                  triggerType: manifest.triggerType,
+                  automationRevisionId: cryptoRandomString({ length: 10 })
+                }
+              ],
+              functions: [],
+              automationId: cryptoRandomString({ length: 10 })
+            }
           }),
-          async () => null,
-          async () => undefined
-        )({
+          versionGetter: async () => undefined,
+          automationTokenGetter: async () => null
+        })({
           revisionId: cryptoRandomString({ length: 10 }),
-          // @ts-expect-error: the bad trigger type needs to be checked
-          trigger
+          manifest
         })
         throw 'this should have thrown'
       } catch (error) {
@@ -454,33 +505,44 @@ describe('Automate triggers @automate', () => {
       }
     })
     it("the version that is referenced on the trigger, doesn't exist", async () => {
-      const trigger = {
-        triggerType: 'versionCreation' as const,
-        triggeringId: cryptoRandomString({ length: 10 }),
+      const manifest: VersionCreatedTriggerManifest = {
+        triggerType: VersionCreationTriggerType,
+        modelId: cryptoRandomString({ length: 10 }),
         versionId: cryptoRandomString({ length: 10 })
       }
 
       try {
-        await ensureRunConditions(
-          async () => ({
-            active: true,
-            enabled: true,
-            triggers: [trigger],
+        await ensureRunConditions({
+          revisionGetter: async () => ({
             id: cryptoRandomString({ length: 10 }),
             name: cryptoRandomString({ length: 10 }),
-            createdAt: new Date(),
-            functions: [],
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 }),
+            enabled: true,
+            createdAt: new Date(),
             executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-            automationToken: cryptoRandomString({ length: 15 }),
-            userId: cryptoRandomString({ length: 10 })
+            userId: cryptoRandomString({ length: 10 }),
+            revision: {
+              id: cryptoRandomString({ length: 10 }),
+              createdAt: new Date(),
+              userId: cryptoRandomString({ length: 10 }),
+              active: true,
+              triggers: [
+                {
+                  triggerType: manifest.triggerType,
+                  triggeringId: manifest.modelId,
+                  automationRevisionId: cryptoRandomString({ length: 10 })
+                }
+              ],
+              functions: [],
+              automationId: cryptoRandomString({ length: 10 }),
+              automationToken: cryptoRandomString({ length: 15 })
+            }
           }),
-          async () => undefined,
-          async () => null
-        )({
+          versionGetter: async () => undefined,
+          automationTokenGetter: async () => null
+        })({
           revisionId: cryptoRandomString({ length: 10 }),
-          trigger
+          manifest
         })
         throw 'this should have thrown'
       } catch (error) {
@@ -489,29 +551,40 @@ describe('Automate triggers @automate', () => {
       }
     })
     it("the author, that created the triggering version doesn't exist", async () => {
-      const trigger = {
-        triggerType: 'versionCreation' as const,
-        triggeringId: cryptoRandomString({ length: 10 }),
+      const manifest: VersionCreatedTriggerManifest = {
+        triggerType: VersionCreationTriggerType,
+        modelId: cryptoRandomString({ length: 10 }),
         versionId: cryptoRandomString({ length: 10 })
       }
 
       try {
-        await ensureRunConditions(
-          async () => ({
-            active: true,
-            enabled: true,
-            triggers: [trigger],
+        await ensureRunConditions({
+          revisionGetter: async () => ({
             id: cryptoRandomString({ length: 10 }),
             name: cryptoRandomString({ length: 10 }),
-            createdAt: new Date(),
-            functions: [],
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 }),
+            createdAt: new Date(),
+            enabled: true,
             executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-            automationToken: cryptoRandomString({ length: 15 }),
-            userId: cryptoRandomString({ length: 10 })
+            userId: cryptoRandomString({ length: 10 }),
+            revision: {
+              id: cryptoRandomString({ length: 10 }),
+              userId: cryptoRandomString({ length: 10 }),
+              active: true,
+              triggers: [
+                {
+                  triggeringId: manifest.modelId,
+                  triggerType: manifest.triggerType,
+                  automationRevisionId: cryptoRandomString({ length: 10 })
+                }
+              ],
+              createdAt: new Date(),
+              functions: [],
+              automationId: cryptoRandomString({ length: 10 }),
+              automationToken: cryptoRandomString({ length: 15 })
+            }
           }),
-          async () => ({
+          versionGetter: async () => ({
             author: null,
             id: cryptoRandomString({ length: 10 }),
             createdAt: new Date(),
@@ -519,12 +592,15 @@ describe('Automate triggers @automate', () => {
             parents: [],
             referencedObject: cryptoRandomString({ length: 10 }),
             totalChildrenCount: null,
-            sourceApplication: 'test suite'
+            sourceApplication: 'test suite',
+            streamId: cryptoRandomString({ length: 10 }),
+            branchId: cryptoRandomString({ length: 10 }),
+            branchName: cryptoRandomString({ length: 10 })
           }),
-          async () => null
-        )({
+          automationTokenGetter: async () => null
+        })({
           revisionId: cryptoRandomString({ length: 10 }),
-          trigger
+          manifest
         })
         throw 'this should have thrown'
       } catch (error) {
@@ -535,28 +611,39 @@ describe('Automate triggers @automate', () => {
       }
     })
     it("the automation doesn't have a token available", async () => {
-      const trigger = {
-        triggerType: 'versionCreation' as const,
-        triggeringId: cryptoRandomString({ length: 10 }),
+      const manifest: VersionCreatedTriggerManifest = {
+        triggerType: VersionCreationTriggerType,
+        modelId: cryptoRandomString({ length: 10 }),
         versionId: cryptoRandomString({ length: 10 })
       }
       try {
-        await ensureRunConditions(
-          async () => ({
-            active: true,
-            enabled: true,
-            triggers: [trigger],
+        await ensureRunConditions({
+          revisionGetter: async () => ({
             id: cryptoRandomString({ length: 10 }),
             name: cryptoRandomString({ length: 10 }),
-            createdAt: new Date(),
-            functions: [],
             projectId: cryptoRandomString({ length: 10 }),
-            automationId: cryptoRandomString({ length: 10 }),
+            enabled: true,
+            createdAt: new Date(),
             executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-            automationToken: cryptoRandomString({ length: 15 }),
-            userId: cryptoRandomString({ length: 10 })
+            userId: cryptoRandomString({ length: 10 }),
+            revision: {
+              id: cryptoRandomString({ length: 10 }),
+              userId: cryptoRandomString({ length: 10 }),
+              createdAt: new Date(),
+              active: true,
+              triggers: [
+                {
+                  triggeringId: manifest.modelId,
+                  triggerType: manifest.triggerType,
+                  automationRevisionId: cryptoRandomString({ length: 10 })
+                }
+              ],
+              functions: [],
+              automationId: cryptoRandomString({ length: 10 }),
+              automationToken: cryptoRandomString({ length: 15 })
+            }
           }),
-          async () => ({
+          versionGetter: async () => ({
             author: cryptoRandomString({ length: 10 }),
             id: cryptoRandomString({ length: 10 }),
             createdAt: new Date(),
@@ -564,12 +651,15 @@ describe('Automate triggers @automate', () => {
             parents: [],
             referencedObject: cryptoRandomString({ length: 10 }),
             totalChildrenCount: null,
-            sourceApplication: 'test suite'
+            sourceApplication: 'test suite',
+            streamId: cryptoRandomString({ length: 10 }),
+            branchId: cryptoRandomString({ length: 10 }),
+            branchName: cryptoRandomString({ length: 10 })
           }),
-          async () => null
-        )({
+          automationTokenGetter: async () => null
+        })({
           revisionId: cryptoRandomString({ length: 10 }),
-          trigger
+          manifest
         })
         throw 'this should have thrown'
       } catch (error) {
