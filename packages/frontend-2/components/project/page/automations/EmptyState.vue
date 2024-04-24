@@ -1,8 +1,6 @@
 <template>
   <div class="flex flex-col gap-12">
-    <div
-      class="p-4 bg-foundation shadow-sm flex flex-col gap-6 rounded-lg max-w-2xl mx-auto items-center"
-    >
+    <div class="p-4 flex flex-col gap-6 rounded-lg max-w-2xl mx-auto items-center">
       <ProjectPageAutomationsScaleImpactImage />
       <div class="gap-2 flex flex-col text-center">
         <div class="h3 leading-10 text-fancy-gradient">Scale your digital impact</div>
