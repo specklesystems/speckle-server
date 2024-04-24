@@ -48,6 +48,62 @@ uniform float opacity;
 #endif
 
 varying vec3 vViewPosition;
+#define CUSTOM_TONEMAPPING 
+
+#ifdef CUSTOM_TONEMAPPING
+
+	uniform float contrast;
+	uniform float saturation;
+	uniform float whitescale;
+	vec3 EvalLogContrastFunc(vec3 col, float eps, float logMidpoint, float contrastFactor)
+	{
+		vec3 x = max(vec3(0.), col);
+		vec3 logX = log2(x+vec3(eps));
+		vec3 adjX = vec3(logMidpoint) + (logX - vec3(logMidpoint)) * contrastFactor;
+		vec3 ret = max(vec3(0.0), exp2(adjX) - vec3(eps));
+		return ret;
+	}
+
+	vec3 evalSaturation(vec3 rgbVal, float saturationFactor){
+		vec3 lumaWeights = vec3(.25,.50,.25);
+		vec3 grey = vec3(dot(lumaWeights,rgbVal));
+		return grey + saturationFactor*(rgbVal-grey);
+	}
+
+	vec3 evalExposure(vec3 rgbVal, float exposureFactor){
+		return rgbVal * exp2(exposureFactor);
+	}
+
+	vec3 filmicTonemap(vec3 x) {
+		float A = 0.15;
+		float B = 0.50;
+		float C = 0.10;
+		float D = 0.20;
+		float E = 0.02;
+		float F = 0.30;
+		float W = 11.2;
+		return ((x*(A*x+C*B)+D*E) / (x*(A*x+B)+D*F))- E / F;
+	}
+
+
+	vec3 applyFilmicToneMap( vec3 color) 
+	{
+		color = 2.0 * filmicTonemap( color);
+		vec3 whiteScale = 1.0 / filmicTonemap(vec3(11.2));
+		color *= whiteScale;
+		return color;
+	}
+
+	vec3 postProcess(in vec3 _color, float exposureFactor, float contrastFactor, float saturationFactor){
+		vec3 color = _color;
+
+		// color.rgb *= exposureFactor;
+		color.rgb = evalSaturation(color.rgb, saturationFactor);
+		color = EvalLogContrastFunc(color, 0.0001, 0.18, contrastFactor);
+		color.rgb = ACESFilmicToneMapping( color );//applyFilmicToneMap(color.rgb);
+		return color;
+	}
+#endif
 
 #include <common>
 #include <packing>
@@ -137,7 +193,14 @@ void main() {
     #endif
 
     #include <output_fragment>
-    #include <tonemapping_fragment>
+    // #include <tonemapping_fragment> // COMMENTED OUT
+    #ifdef TONE_MAPPING
+		#ifdef CUSTOM_TONEMAPPING
+			gl_FragColor.rgb = postProcess(gl_FragColor.rgb, toneMappingExposure, contrast, saturation);
+		#else
+			gl_FragColor.rgb = toneMapping( gl_FragColor.rgb );
+		#endif
+	#endif
     #include <encodings_fragment>
     #include <fog_fragment>
     #include <premultiplied_alpha_fragment>

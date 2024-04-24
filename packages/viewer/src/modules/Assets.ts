@@ -1,17 +1,19 @@
 import {
   Texture,
-  PMREMGenerator,
   WebGLRenderer,
   TextureLoader,
   Color,
   DataTexture,
-  DataTextureLoader
+  DataTextureLoader,
+  Matrix4,
+  Euler
 } from 'three'
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js'
 import { type Asset, AssetType } from '../IViewer'
 import Logger from 'js-logger'
+import { RotatablePMREMGenerator } from './objects/RotatablePMREMGenerator'
 
 export class Assets {
   private static _cache: { [name: string]: Texture | Font } = {}
@@ -38,8 +40,11 @@ export class Assets {
   }
 
   private static hdriToPMREM(renderer: WebGLRenderer, hdriTex: Texture): Texture {
-    const generator = new PMREMGenerator(renderer)
-    generator.compileEquirectangularShader()
+    const generator = new RotatablePMREMGenerator(renderer)
+    const mat = new Matrix4().makeRotationFromEuler(
+      new Euler(-Math.PI * 0.5, 0, -Math.PI * 0.5)
+    )
+    generator.compileProperEquirectShader(mat)
     const pmremRT = generator.fromEquirectangular(hdriTex)
     generator.dispose()
     return pmremRT.texture

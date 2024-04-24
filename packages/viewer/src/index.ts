@@ -1,5 +1,6 @@
 import { Viewer } from './modules/Viewer'
 import {
+  AssetType,
   DefaultLightConfiguration,
   DefaultViewerParams,
   type IViewer,
@@ -69,6 +70,7 @@ import { SpeckleText } from './modules/objects/SpeckleText'
 import { NodeRenderView } from './modules/tree/NodeRenderView'
 import { type ExtendedIntersection } from './modules/objects/SpeckleRaycaster'
 import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter'
+import { Assets } from './modules/Assets'
 
 export {
   Viewer,
@@ -109,7 +111,9 @@ export {
   SpeckleTextMaterial,
   SpeckleText,
   NodeRenderView,
-  SpeckleGeometryConverter
+  SpeckleGeometryConverter,
+  Assets,
+  AssetType
 }
 
 export type {

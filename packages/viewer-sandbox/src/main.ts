@@ -99,6 +99,8 @@ const createViewer = async (containerName: string, stream: string) => {
   sandbox.makeMeasurementsUI()
 
   await sandbox.loadUrl(stream)
+
+  await sandbox.applyParams()
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
