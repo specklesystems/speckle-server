@@ -131,6 +131,7 @@ const createNewProject = async (name: string) => {
   )
   const res = await mutate({ input: { name } })
   if (res?.data?.projectMutations.create) {
+    refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
     emit('next', accountId.value, res?.data?.projectMutations.create)
   } else {
     // TODO: Error out
@@ -140,7 +141,8 @@ const createNewProject = async (name: string) => {
 const {
   result: projectsResult,
   loading,
-  fetchMore
+  fetchMore,
+  refetch
 } = useQuery(
   projectsListQuery,
   () => ({
