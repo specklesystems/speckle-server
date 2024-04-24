@@ -127,7 +127,7 @@ const createNewModel = async (name: string) => {
     useMutation(createModelMutation)
   )
   const res = await mutate({ input: { projectId: props.project.id, name } })
-
+  refetch()
   if (res?.data?.modelMutations.create) {
     emit('next', res?.data?.modelMutations.create)
   } else {
@@ -138,7 +138,8 @@ const createNewModel = async (name: string) => {
 const {
   result: projectModelsResult,
   loading,
-  fetchMore
+  fetchMore,
+  refetch
 } = useQuery(
   projectModelsQuery,
   () => ({

@@ -130,6 +130,7 @@ const createNewProject = async (name: string) => {
     useMutation(createProjectMutation)
   )
   const res = await mutate({ input: { name } })
+  refetch()
   if (res?.data?.projectMutations.create) {
     emit('next', accountId.value, res?.data?.projectMutations.create)
   } else {
@@ -140,7 +141,8 @@ const createNewProject = async (name: string) => {
 const {
   result: projectsResult,
   loading,
-  fetchMore
+  fetchMore,
+  refetch
 } = useQuery(
   projectsListQuery,
   () => ({
