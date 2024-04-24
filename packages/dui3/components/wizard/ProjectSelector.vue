@@ -115,8 +115,8 @@ const accountId = computed(() => activeAccount.value.accountInfo.id)
 const selectedAccountId = ref<string>()
 
 const { handleSubmit } = useForm<{ name: string }>()
-const onSubmitCreateNewProject = handleSubmit((args) => {
-  void createNewProject(args.name)
+const onSubmitCreateNewProject = handleSubmit(() => {
+  void createNewProject(newProjectName.value as string)
 })
 
 const createNewProject = async (name: string) => {

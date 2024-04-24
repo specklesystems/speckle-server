@@ -112,8 +112,8 @@ watch(searchText, () => (newModelName.value = searchText.value))
 const rules = useModelNameValidationRules()
 
 const { handleSubmit } = useForm<{ name: string }>()
-const onSubmit = handleSubmit((args) => {
-  void createNewModel(args.name)
+const onSubmit = handleSubmit(() => {
+  void createNewModel(newModelName.value as string)
 })
 
 const createNewModel = async (name: string) => {
