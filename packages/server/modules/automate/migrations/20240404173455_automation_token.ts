@@ -15,7 +15,6 @@ export async function up(knex: Knex): Promise<void> {
       .inTable('automations')
       .onDelete('cascade')
     table.text('automateToken').notNullable()
-    table.text('automateRefreshToken').notNullable()
   })
   await knex.schema.alterTable('automation_runs', (table) => {
     table.dropColumns('functionRuns', 'triggers')
