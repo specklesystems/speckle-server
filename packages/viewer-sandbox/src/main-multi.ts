@@ -13,16 +13,6 @@ import {
 import './style.css'
 import Sandbox from './Sandbox'
 
-// const container0 = document.querySelector<HTMLElement>('#renderer0')
-// if (!container0) {
-//   throw new Error("Couldn't find #app container!")
-// }
-
-// const container1 = document.querySelector<HTMLElement>('#renderer1')
-// if (!container1) {
-//   throw new Error("Couldn't find #app container!")
-// }
-
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
   const controlsContainer = document.querySelector<HTMLElement>(

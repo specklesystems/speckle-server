@@ -86,8 +86,8 @@ export class ObjLoader extends Loader {
 
   public cancel() {
     this.isFinished = false
-    throw new Error('Method not implemented.')
   }
+
   public dispose() {
     super.dispose()
   }
