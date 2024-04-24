@@ -128,7 +128,7 @@ const createNewModel = async (name: string) => {
   )
   const res = await mutate({ input: { projectId: props.project.id, name } })
   if (res?.data?.modelMutations.create) {
-    refetch()
+    refetch() // Sorts the list with newly created model otherwise it will put the model at the bottom.
     emit('next', res?.data?.modelMutations.create)
   } else {
     // TODO: Error out
