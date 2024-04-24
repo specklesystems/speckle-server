@@ -113,6 +113,8 @@ const rules = useModelNameValidationRules()
 
 const { handleSubmit } = useForm<{ name: string }>()
 const onSubmit = handleSubmit(() => {
+  // TODO: Chat with Fabians
+  // This works, but if we use handleSubmit(args) > args.name -> it is undefined in Production on netlify, but works fine on local dev
   void createNewModel(newModelName.value as string)
 })
 
