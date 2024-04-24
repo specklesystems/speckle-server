@@ -4,11 +4,10 @@ import {
   getAutomationRevision,
   getAutomationToken,
   upsertAutomationRun
-} from '@/modules/automate/repositories'
+} from '@/modules/automate/repositories/automations'
 import {
   AutomationWithRevision,
   AutomationTriggerDefinitionRecord,
-  AutomationFunctionRunRecord,
   AutomationRevisionWithTriggersFunctions,
   VersionCreatedTriggerManifest,
   VersionCreationTriggerType,
@@ -18,14 +17,16 @@ import {
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { getCommit } from '@/modules/core/repositories/commits'
 import { createAppToken } from '@/modules/core/services/tokens'
-import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import { Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { Merge } from 'type-fest'
 import { getLogger } from '@/modules/automate/index'
 import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
-import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
+import {
+  triggerAutomationRun,
+  type TriggeredAutomationFunctionRun
+} from '@/modules/automate/clients/executionEngine'
 
 /**
  * This should hook into the model version create event
@@ -314,89 +315,7 @@ function createAutomationRunData(params: {
   return automationRun
 }
 
-export type TriggeredAutomationFunctionRun = AutomationFunctionRunRecord & {
-  resultVersions: string[]
-  functionInputs: Record<string, unknown> | null
-}
-
-export type AutomateRunTriggerArgs = {
-  projectId: string
-  automationId: string
-  functionRuns: TriggeredAutomationFunctionRun[]
-  manifests: BaseTriggerManifest[]
-  speckleToken: string
-  automationToken: string
-}
-
-export async function sendRunTriggerToAutomate({
-  projectId,
-  functionRuns,
-  manifests,
-  automationId,
-  speckleToken,
-  automationToken
-}: AutomateRunTriggerArgs): Promise<AutomationRunResponseBody> {
-  const automateUrl = speckleAutomateUrl()
-  if (!automateUrl)
-    throw new MisconfiguredEnvironmentError(
-      'Cannot trigger automation run, Automate URL is not configured'
-    )
-
-  const url = `${automateUrl}/api/v2/automations/${automationId}/runs`
-
-  const functionDefinitions = functionRuns.map((functionRun) => {
-    return {
-      functionId: functionRun.functionId,
-      functionReleaseId: functionRun.functionReleaseId,
-      functionInputs: functionRun.functionInputs,
-      functionRunId: functionRun.runId
-    }
-  })
-
-  const versionCreationManifests = manifests.filter(isVersionCreatedTriggerManifest)
-  if (!versionCreationManifests.length) {
-    throw new AutomateInvalidTriggerError(
-      'Only version creation triggers currently supported'
-    )
-  }
-
-  const payload: AutomationRunPostBody = {
-    projectId,
-    functionDefinitions,
-    triggers: versionCreationManifests.map((t) => ({
-      triggerType: t.triggerType,
-      payload: { modelId: t.modelId, versionId: t.versionId }
-    })),
-    speckleToken
-  }
-  const response = await fetch(url, {
-    method: 'post',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${automationToken}`
-    },
-    body: JSON.stringify(payload)
-  })
-  const result = (await response.json()) as AutomationRunResponseBody
-  // TODO: handle 401
-  return result
-}
-
-type AutomationRunPostBody = {
-  projectId: string
-  speckleToken: string
-  triggers: Array<{
-    payload: { modelId: string; versionId: string }
-    triggerType: typeof VersionCreationTriggerType
-  }>
-  functionDefinitions: {
-    functionInputs: Record<string, unknown> | null
-    functionId: string
-    functionReleaseId: string
-    functionRunId: string
-  }[]
-}
-
-type AutomationRunResponseBody = {
-  automationRunId: string
-}
+// TODO: Remove
+export type { TriggeredAutomationFunctionRun }
+export type AutomateRunTriggerArgs = Parameters<typeof triggerAutomationRun>
+export const sendRunTriggerToAutomate = triggerAutomationRun

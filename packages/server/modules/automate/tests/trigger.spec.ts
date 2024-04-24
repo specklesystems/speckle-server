@@ -20,7 +20,7 @@ import {
   getAutomationRun,
   storeAutomation,
   storeAutomationRevision
-} from '@/modules/automate/repositories/index'
+} from '@/modules/automate/repositories/automations'
 import { beforeEachContext } from '@/test/hooks'
 import { Environment } from '@speckle/shared'
 

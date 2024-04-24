@@ -24,13 +24,17 @@ export async function up(knex: Knex): Promise<void> {
       .timestamp('createdAt', { precision: 3, useTz: true })
       .defaultTo(knex.fn.now())
       .notNullable()
+    table
+      .timestamp('updatedAt', { precision: 3, useTz: true })
+      .defaultTo(knex.fn.now())
+      .notNullable()
     table.text('description').notNullable()
     table
       .specificType('tags', 'text[]')
       .defaultTo(knex.raw('ARRAY []::text[]'))
       .notNullable()
     table
-      .specificType('supportedHostApps', 'text[]')
+      .specificType('supportedSourceApps', 'text[]')
       .defaultTo(knex.raw('ARRAY []::text[]'))
       .notNullable()
     table.boolean('isFeatured').defaultTo(false).notNullable()
@@ -38,7 +42,7 @@ export async function up(knex: Knex): Promise<void> {
     table.text('executionEngineFunctionId').nullable().defaultTo(null)
 
     table.index('tags')
-    table.index('supportedHostApps')
+    table.index('supportedSourceApps')
   })
 
   // Function releases table

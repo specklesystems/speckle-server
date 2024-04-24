@@ -25,6 +25,7 @@ generates:
         ModelMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         VersionMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         CommentMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
+        AutomateMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         AdminQueries: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         ServerStatistics: '@/modules/core/helpers/graphTypes#GraphQLEmptyReturn'
         CommentReplyAuthorCollection: '@/modules/comments/helpers/graphTypes#CommentReplyAuthorCollectionGraphQLReturn'
@@ -33,6 +34,7 @@ generates:
         FileUpload: '@/modules/fileuploads/helpers/types#FileUploadGraphQLReturn'
         AutomationMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         AutomationFunctionRun: '@/modules/betaAutomations/helpers/graphTypes#AutomationFunctionRunGraphQLReturn'
+        AutomateFunction: '@/modules/automate/helpers/graphTypes#AutomateFunctionGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

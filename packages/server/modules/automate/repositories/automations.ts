@@ -21,8 +21,13 @@ import {
   AutomationRuns,
   AutomationTokens,
   AutomationTriggers,
-  Automations
+  Automations,
+  Users
 } from '@/modules/core/dbSchema'
+import { metaHelpers } from '@/modules/core/helpers/meta'
+import { UsersMetaRecord } from '@/modules/core/helpers/types'
+import { OAuthAppAuthentication } from '@octokit/auth-oauth-user'
+import { Nullable } from '@speckle/shared'
 import _, { pick } from 'lodash'
 
 export async function getActiveTriggerDefinitions<
@@ -167,4 +172,25 @@ export async function getAutomationToken(
     .where(AutomationTokens.col.automationId, automationId)
     .first()
   return token || null
+}
+
+export async function setUserGithubAuthData(params: {
+  userId: string
+  authData: Nullable<OAuthAppAuthentication>
+}) {
+  const { userId, authData } = params
+  const meta = metaHelpers<UsersMetaRecord, typeof Users>(Users)
+  if (authData) {
+    await meta.delete(userId, Users.meta.metaKey.automateGithubAuthData)
+  } else {
+    await meta.set(userId, Users.meta.metaKey.automateGithubAuthData, authData)
+  }
+}
+
+export async function getUserGithubAuthData(
+  userId: string
+): Promise<Nullable<OAuthAppAuthentication>> {
+  const meta = metaHelpers<UsersMetaRecord, typeof Users>(Users)
+  const record = await meta.get(userId, Users.meta.metaKey.automateGithubAuthData)
+  return record ? (record.value as OAuthAppAuthentication) : null
 }

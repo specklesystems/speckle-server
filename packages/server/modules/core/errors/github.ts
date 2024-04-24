@@ -46,3 +46,8 @@ export class SecretEncryptionFailedError extends BaseError {
   static defaultMessage = 'Failed to encrypt secret'
   static code = 'SECRET_ENCRYPTION_FAILED'
 }
+
+export class AccessTokenTestError extends BaseError {
+  static defaultMessage = 'Failed to test GitHub access token'
+  static code = 'ACCESS_TOKEN_TEST_FAILED'
+}

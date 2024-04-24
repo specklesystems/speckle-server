@@ -255,7 +255,13 @@ export const StreamFavorites = buildTableHelper('stream_favorites', [
 export const UsersMeta = buildMetaTableHelper(
   'users_meta',
   ['userId', 'key', 'value', 'createdAt', 'updatedAt'],
-  ['isOnboardingFinished', 'foo', 'bar', 'onboardingStreamId'],
+  [
+    'isOnboardingFinished',
+    'foo',
+    'bar',
+    'onboardingStreamId',
+    'automateGithubAuthData'
+  ],
   'userId'
 )
 
@@ -599,6 +605,31 @@ export const Automations = buildTableHelper('automations', [
   'createdAt',
   'userId',
   'executionEngineAutomationId'
+])
+
+export const AutomateFunctions = buildTableHelper('automate_functions', [
+  'functionId',
+  'userId',
+  'repoUrl',
+  'name',
+  'createdAt',
+  'updatedAt',
+  'description',
+  'tags',
+  'supportedSourceApps',
+  'isFeatured',
+  'logo',
+  'executionEngineFunctionId'
+])
+
+export const AutomateFunctionReleases = buildTableHelper('automate_function_releases', [
+  'functionId',
+  'functionReleaseId',
+  'versionTag',
+  'inputSchema',
+  'command',
+  'createdAt',
+  'gitCommitId'
 ])
 
 export { knex }

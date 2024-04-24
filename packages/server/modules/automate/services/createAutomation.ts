@@ -3,18 +3,18 @@
 // ENCRYPTION!!!
 // automate authorization codes
 
-import { AutomateAuthCodeHandshakeError } from '@/modules/automate/errors/management'
-import { storeAutomation } from '@/modules/automate/repositories'
-import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
+import { storeAutomation } from '@/modules/automate/repositories/automations'
+import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { Redis } from 'ioredis'
+import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
+import {
+  createStoredAuthCode as createExecEngineAuthCode,
+  validateStoredAuthCode as validateExecEngineAuthCode
+} from '@/modules/automate/services/executionEngine'
 
 export type CreateAutomationDeps = {
   createAuthCode: () => Promise<string>
-  automateCreateAutomation: (
-    args: AutomateCreateArgs
-  ) => Promise<AutomateCreateResponse>
+  automateCreateAutomation: typeof clientCreateAutomation
 }
 
 export const createAutomation =
@@ -65,62 +65,7 @@ export const createAutomation =
     )
   }
 
-type AutomateCreateArgs = {
-  speckleServerUrl: string
-  authCode: string
-}
-
-type AutomateCreateResponse = {
-  automationId: string
-  automationToken: string
-  refreshToken: string
-}
-
-export const triggerAutomationCreation =
-  () =>
-  async ({
-    speckleServerUrl,
-    authCode
-  }: AutomateCreateArgs): Promise<AutomateCreateResponse> => {
-    const automateUrl = speckleAutomateUrl()
-    if (!automateUrl)
-      throw new MisconfiguredEnvironmentError(
-        'Cannot create automation, Automate URL is not configured'
-      )
-
-    const url = `${automateUrl}/api/v2/automations`
-
-    const response = await fetch(url, {
-      method: 'post',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ speckleServerUrl, authCode })
-    })
-
-    const result = (await response.json()) as AutomateCreateResponse
-    return result
-  }
-
-export const createStoredAuthCodeIn = (deps: { redis: Redis }) => async () => {
-  const { redis } = deps
-  const codeId = cryptoRandomString({ length: 10 })
-  const authCode = cryptoRandomString({ length: 20 })
-  // prob hashing and salting it would be better, but they expire in 2 mins...
-  await redis.set(codeId, authCode, 'EX', 120)
-  return `${codeId}${authCode}`
-}
-
-export const validateStoredAuthCode =
-  (deps: { redis: Redis }) => async (code: string) => {
-    const { redis } = deps
-    const codeId = code.slice(0, 10)
-    const authCode = code.slice(10)
-    const storedAuthCode = await redis.get(codeId)
-
-    if (!storedAuthCode || authCode !== storedAuthCode) {
-      throw new AutomateAuthCodeHandshakeError('Invalid automate auth code')
-    }
-
-    return true
-  }
+// TODO: Remove
+export const triggerAutomationCreation = () => clientCreateAutomation
+export const createStoredAuthCodeIn = createExecEngineAuthCode
+export const validateStoredAuthCode = validateExecEngineAuthCode

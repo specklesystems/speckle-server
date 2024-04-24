@@ -7,7 +7,7 @@ import {
   sendRunTriggerToAutomate
 } from '@/modules/automate/services/trigger'
 import { Environment } from '@speckle/shared'
-import { getActiveTriggerDefinitions } from '@/modules/automate/repositories/index'
+import { getActiveTriggerDefinitions } from '@/modules/automate/repositories/automations'
 import authRestSetup from '@/modules/automate/rest/auth'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'

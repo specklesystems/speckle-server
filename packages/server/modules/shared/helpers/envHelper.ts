@@ -279,3 +279,16 @@ export function delayGraphqlResponsesBy() {
 export function skipAutomateMigrations() {
   return getBooleanFromEnv('SKIP_AUTOMATE_MIGRATION_DEV')
 }
+
+export function getAutomateGithubClientInfo() {
+  const id = process.env.AUTOMATE_GH_CLIENT_ID
+  const secret = process.env.AUTOMATE_GH_CLIENT_SECRET
+
+  if (!id?.length || !secret?.length) {
+    throw new MisconfiguredEnvironmentError(
+      'Automate Github client id/secret is not configured'
+    )
+  }
+
+  return { id, secret }
+}

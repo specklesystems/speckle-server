@@ -5,6 +5,7 @@ import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from 
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes';
+import { AutomateFunctionGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -3416,7 +3417,7 @@ export type ResolversTypes = {
   AppTokenCreateInput: AppTokenCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: ResolverTypeWrapper<AuthStrategy>;
-  AutomateFunction: ResolverTypeWrapper<Omit<AutomateFunction, 'creator' | 'releases'> & { creator?: Maybe<ResolversTypes['LimitedUser']>, releases: ResolversTypes['AutomateFunctionReleaseCollection'] }>;
+  AutomateFunction: ResolverTypeWrapper<AutomateFunctionGraphQLReturn>;
   AutomateFunctionCollection: ResolverTypeWrapper<Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversTypes['AutomateFunction']> }>;
   AutomateFunctionRelease: ResolverTypeWrapper<Omit<AutomateFunctionRelease, 'function'> & { function: ResolversTypes['AutomateFunction'] }>;
   AutomateFunctionReleaseCollection: ResolverTypeWrapper<Omit<AutomateFunctionReleaseCollection, 'items'> & { items: Array<ResolversTypes['AutomateFunctionRelease']> }>;
@@ -3426,7 +3427,7 @@ export type ResolversTypes = {
   AutomateFunctionTemplate: ResolverTypeWrapper<AutomateFunctionTemplate>;
   AutomateFunctionTemplateLanguage: AutomateFunctionTemplateLanguage;
   AutomateFunctionsFilter: AutomateFunctionsFilter;
-  AutomateMutations: ResolverTypeWrapper<Omit<AutomateMutations, 'createFunction' | 'updateFunction'> & { createFunction: ResolversTypes['AutomateFunction'], updateFunction: ResolversTypes['AutomateFunction'] }>;
+  AutomateMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   AutomateRun: ResolverTypeWrapper<Omit<AutomateRun, 'automation' | 'functionRuns' | 'trigger'> & { automation: ResolversTypes['Automation'], functionRuns: Array<ResolversTypes['AutomateFunctionRun']>, trigger: ResolversTypes['AutomationRunTrigger'] }>;
   AutomateRunCollection: ResolverTypeWrapper<Omit<AutomateRunCollection, 'items'> & { items: Array<ResolversTypes['AutomateRun']> }>;
   AutomateRunStatus: AutomateRunStatus;
@@ -3629,7 +3630,7 @@ export type ResolversParentTypes = {
   AppTokenCreateInput: AppTokenCreateInput;
   AppUpdateInput: AppUpdateInput;
   AuthStrategy: AuthStrategy;
-  AutomateFunction: Omit<AutomateFunction, 'creator' | 'releases'> & { creator?: Maybe<ResolversParentTypes['LimitedUser']>, releases: ResolversParentTypes['AutomateFunctionReleaseCollection'] };
+  AutomateFunction: AutomateFunctionGraphQLReturn;
   AutomateFunctionCollection: Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateFunction']> };
   AutomateFunctionRelease: Omit<AutomateFunctionRelease, 'function'> & { function: ResolversParentTypes['AutomateFunction'] };
   AutomateFunctionReleaseCollection: Omit<AutomateFunctionReleaseCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateFunctionRelease']> };
@@ -3638,7 +3639,7 @@ export type ResolversParentTypes = {
   AutomateFunctionRunStatusReportInput: AutomateFunctionRunStatusReportInput;
   AutomateFunctionTemplate: AutomateFunctionTemplate;
   AutomateFunctionsFilter: AutomateFunctionsFilter;
-  AutomateMutations: Omit<AutomateMutations, 'createFunction' | 'updateFunction'> & { createFunction: ResolversParentTypes['AutomateFunction'], updateFunction: ResolversParentTypes['AutomateFunction'] };
+  AutomateMutations: MutationsObjectGraphQLReturn;
   AutomateRun: Omit<AutomateRun, 'automation' | 'functionRuns' | 'trigger'> & { automation: ResolversParentTypes['Automation'], functionRuns: Array<ResolversParentTypes['AutomateFunctionRun']>, trigger: ResolversParentTypes['AutomationRunTrigger'] };
   AutomateRunCollection: Omit<AutomateRunCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateRun']> };
   Automation: Omit<Automation, 'currentRevision' | 'runs'> & { currentRevision?: Maybe<ResolversParentTypes['AutomationRevision']>, runs: ResolversParentTypes['AutomateRunCollection'] };

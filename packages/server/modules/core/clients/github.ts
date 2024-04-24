@@ -21,38 +21,41 @@ type GithubRepositorySchema = {
   message: string
 }
 
-export const getRepoDetails =
-  (opts: { token?: string }) =>
-  async (url: string): Promise<string> => {
-    let repoName: string
-    try {
-      const parsedUrl = new URL(url)
-      if (parsedUrl.host !== 'github.com') throw new UnsupportedProviderError()
-      repoName = parsedUrl.pathname
-    } catch (e) {
-      throw new InvalidRepoUrlError(undefined, { cause: ensureError(e) })
-    }
+export const getRepoDetails = async (params: {
+  url: string
+  token?: string
+}): Promise<string> => {
+  const { url, token } = params
 
-    if (repoName.endsWith('/')) repoName = repoName.slice(0, -1)
-
-    const headers: Record<string, string> = {
-      'X-GitHub-Api-Version': '2022-11-28',
-      Accept: 'application/vnd.github+json'
-    }
-    if (opts.token) headers['Authorization'] = `Bearer ${opts.token}`
-
-    const response = await fetch(`https://api.github.com/repos${repoName}`, {
-      headers
-    })
-
-    const data = (await response.json()) as GithubRepositorySchema
-    if (data.message === 'Not Found') throw new NotFoundOrPrivateRepoError()
-    if (!response.ok)
-      throw Error(
-        `Failed to get github repository: ${response.status} -> ${data.message}`
-      )
-    return data.full_name
+  let repoName: string
+  try {
+    const parsedUrl = new URL(url)
+    if (parsedUrl.host !== 'github.com') throw new UnsupportedProviderError()
+    repoName = parsedUrl.pathname
+  } catch (e) {
+    throw new InvalidRepoUrlError(undefined, { cause: ensureError(e) })
   }
+
+  if (repoName.endsWith('/')) repoName = repoName.slice(0, -1)
+
+  const headers: Record<string, string> = {
+    'X-GitHub-Api-Version': '2022-11-28',
+    Accept: 'application/vnd.github+json'
+  }
+  if (token?.length) headers['Authorization'] = `Bearer ${token}`
+
+  const response = await fetch(`https://api.github.com/repos${repoName}`, {
+    headers
+  })
+
+  const data = (await response.json()) as GithubRepositorySchema
+  if (data.message === 'Not Found') throw new NotFoundOrPrivateRepoError()
+  if (!response.ok)
+    throw Error(
+      `Failed to get github repository: ${response.status} -> ${data.message}`
+    )
+  return data.full_name
+}
 
 export type GithubUserOrganization = Awaited<
   ReturnType<InstanceType<typeof Octokit>['rest']['orgs']['listForAuthenticatedUser']>

@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  AutomateFunctionTemplateLanguage,
   AutomateRunTriggerType,
   LimitedUser,
   Resolvers
@@ -16,6 +15,7 @@ import {
   AutomationNotFoundError,
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
+import { functionTemplateRepos } from '@/modules/automate/services/github'
 
 const getRandomModelVersion = async (offset?: number) => {
   const versionQ = Commits.knex()
@@ -325,20 +325,7 @@ export async function buildMocksConfig(): Promise<{
         id: () => faker.random.alphaNumeric(10)
       }),
       ServerAutomateInfo: () => ({
-        availableFunctionTemplates: () => [
-          {
-            id: AutomateFunctionTemplateLanguage.Python,
-            title: 'Python',
-            url: 'https://github.com/specklesystems/speckle_automate_python_example',
-            logo: '/images/functions/python.svg'
-          },
-          {
-            id: AutomateFunctionTemplateLanguage.DotNet,
-            title: '.NET / C#',
-            url: 'https://github.com/specklesystems/SpeckleAutomateDotnetExample',
-            logo: '/images/functions/dotnet.svg'
-          }
-        ]
+        availableFunctionTemplates: () => functionTemplateRepos
       })
     },
     mockEntireSchema: false
