@@ -130,8 +130,8 @@ const createNewProject = async (name: string) => {
     useMutation(createProjectMutation)
   )
   const res = await mutate({ input: { name } })
-  refetch()
   if (res?.data?.projectMutations.create) {
+    refetch()
     emit('next', accountId.value, res?.data?.projectMutations.create)
   } else {
     // TODO: Error out
