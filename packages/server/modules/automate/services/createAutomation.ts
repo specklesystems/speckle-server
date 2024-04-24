@@ -1,9 +1,11 @@
-//TODO do the Harlem hand shake with automate
+// TODO: do the Harlem hand shake with automate
 // store the automate token with the automation in the DB
 // ENCRYPTION!!!
 // automate authorization codes
 
+import { AutomateAuthCodeHandshakeError } from '@/modules/automate/errors/management'
 import { storeAutomation } from '@/modules/automate/repositories'
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { Redis } from 'ioredis'
@@ -82,7 +84,10 @@ export const triggerAutomationCreation =
   }: AutomateCreateArgs): Promise<AutomateCreateResponse> => {
     const automateUrl = speckleAutomateUrl()
     if (!automateUrl)
-      throw new Error('Cannot create automation, Automate URL is not configured')
+      throw new MisconfiguredEnvironmentError(
+        'Cannot create automation, Automate URL is not configured'
+      )
+
     const url = `${automateUrl}/api/v2/automations`
 
     const response = await fetch(url, {
@@ -112,8 +117,10 @@ export const validateStoredAuthCode =
     const codeId = code.slice(0, 10)
     const authCode = code.slice(10)
     const storedAuthCode = await redis.get(codeId)
-    if (authCode !== storedAuthCode) {
-      throw new Error('Invalid auth code')
+
+    if (!storedAuthCode || authCode !== storedAuthCode) {
+      throw new AutomateAuthCodeHandshakeError('Invalid automate auth code')
     }
+
     return true
   }

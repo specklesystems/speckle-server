@@ -1,4 +1,4 @@
-import { moduleLogger } from '@/logging/logging'
+import { moduleLogger, logger, extendLoggerComponent } from '@/logging/logging'
 import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { VersionEvents, VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
@@ -12,9 +12,11 @@ import authRestSetup from '@/modules/automate/rest/auth'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScope } from '@/modules/shared'
+import pino from 'pino'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
+let customLogger: Optional<typeof logger> = undefined
 
 async function initScopes() {
   const scopes: ScopeRecord[] = [
@@ -56,7 +58,12 @@ const initializeEventListeners = () => {
   return quit
 }
 
-const automateModule: SpeckleModule = {
+const automateModule: SpeckleModule<{
+  /**
+   * Get Automate module logger
+   */
+  getLogger: () => pino.Logger
+}> = {
   async init(app, isInitial) {
     if (!FF_AUTOMATE_MODULE_ENABLED) return
     moduleLogger.info('⚙️  Init automate module')
@@ -71,6 +78,13 @@ const automateModule: SpeckleModule = {
   shutdown() {
     if (!FF_AUTOMATE_MODULE_ENABLED) return
     quitListeners?.()
+  },
+  getLogger() {
+    if (!customLogger) {
+      customLogger = extendLoggerComponent(logger, 'automate')
+    }
+
+    return customLogger
   }
 }
 

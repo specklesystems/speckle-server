@@ -23,9 +23,9 @@ import { Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { Merge } from 'type-fest'
-
-// TODO: Extract dependency types so that they're not duplicated
-// TODO: Move to deps object to allow for different param order
+import { getLogger } from '@/modules/automate/index'
+import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
+import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 
 /**
  * This should hook into the model version create event
@@ -58,9 +58,12 @@ export const onModelVersionCreate =
             }
           })
         } catch (error) {
-          console.log(error)
-          //log the error
-          //but also this error should be persisted for automation status display somehow
+          // TODO: this error should be persisted for automation status display somehow
+          getLogger().error(
+            'Failure while triggering run onModelVersionCreate',
+            error,
+            params
+          )
         }
       })
     )
@@ -79,7 +82,9 @@ export const triggerAutomationRevisionRun =
     const { revisionId, manifest } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
-      throw new Error('Only model version triggers are currently supported')
+      throw new AutomateInvalidTriggerError(
+        'Only model version triggers are currently supported'
+      )
     }
 
     const { automationWithRevision, userId, automateToken } = await ensureRunConditions(
@@ -163,17 +168,23 @@ export const ensureRunConditions =
     const { revisionId, manifest } = params
     const automationWithRevision = await revisionGetter(revisionId)
     if (!automationWithRevision)
-      throw new Error("Cannot trigger the given revision, it doesn't exist")
+      throw new AutomateInvalidTriggerError(
+        "Cannot trigger the given revision, it doesn't exist"
+      )
 
     // if the automation is not active, do not trigger
     if (!automationWithRevision.enabled)
-      throw new Error('The automation is not enabled, cannot trigger it')
+      throw new AutomateInvalidTriggerError(
+        'The automation is not enabled, cannot trigger it'
+      )
 
     if (!automationWithRevision.revision.active)
-      throw new Error('The automation revision is not active, cannot trigger it')
+      throw new AutomateInvalidTriggerError(
+        'The automation revision is not active, cannot trigger it'
+      )
 
     if (!isVersionCreatedTriggerManifest(manifest))
-      throw new Error('Only model version triggers are supported')
+      throw new AutomateInvalidTriggerError('Only model version triggers are supported')
 
     const triggerDefinition = automationWithRevision.revision.triggers.find((t) => {
       if (t.triggerType !== manifest.triggerType) return false
@@ -186,21 +197,23 @@ export const ensureRunConditions =
     })
 
     if (!triggerDefinition)
-      throw new Error(
+      throw new AutomateInvalidTriggerError(
         "The given revision doesn't have a trigger registered matching the input trigger"
       )
 
     const triggeringVersion = await versionGetter(manifest.versionId)
-    if (!triggeringVersion) throw new Error('The triggering version is not found')
+    if (!triggeringVersion)
+      throw new AutomateInvalidTriggerError('The triggering version is not found')
 
     const userId = triggeringVersion.author
     if (!userId)
-      throw new Error(
+      throw new AutomateInvalidTriggerError(
         "The user, that created the triggering version doesn't exist any more"
       )
 
     const token = await automationTokenGetter(automationWithRevision.id)
-    if (!token) throw new Error('Cannot find a token for the automation')
+    if (!token)
+      throw new AutomateInvalidTriggerError('Cannot find a token for the automation')
 
     return {
       automationWithRevision,
@@ -266,7 +279,9 @@ function createAutomationRunData(params: {
   const runId = cryptoRandomString({ length: 15 })
   const versionCreatedManifests = manifests.filter(isVersionCreatedTriggerManifest)
   if (!versionCreatedManifests.length) {
-    throw new Error('Only version creation triggers currently supported')
+    throw new AutomateInvalidTriggerError(
+      'Only version creation triggers currently supported'
+    )
   }
 
   const automationRun: InsertableAutomationRunWithExtendedFunctionRuns = {
@@ -323,7 +338,10 @@ export async function sendRunTriggerToAutomate({
 }: AutomateRunTriggerArgs): Promise<AutomationRunResponseBody> {
   const automateUrl = speckleAutomateUrl()
   if (!automateUrl)
-    throw new Error('Cannot trigger automation run, Automate URL is not configured')
+    throw new MisconfiguredEnvironmentError(
+      'Cannot trigger automation run, Automate URL is not configured'
+    )
+
   const url = `${automateUrl}/api/v2/automations/${automationId}/runs`
 
   const functionDefinitions = functionRuns.map((functionRun) => {
@@ -337,7 +355,9 @@ export async function sendRunTriggerToAutomate({
 
   const versionCreationManifests = manifests.filter(isVersionCreatedTriggerManifest)
   if (!versionCreationManifests.length) {
-    throw new Error('Only version creation triggers currently supported')
+    throw new AutomateInvalidTriggerError(
+      'Only version creation triggers currently supported'
+    )
   }
 
   const payload: AutomationRunPostBody = {
@@ -358,7 +378,7 @@ export async function sendRunTriggerToAutomate({
     body: JSON.stringify(payload)
   })
   const result = (await response.json()) as AutomationRunResponseBody
-  //TODO handle 401
+  // TODO: handle 401
   return result
 }
 
