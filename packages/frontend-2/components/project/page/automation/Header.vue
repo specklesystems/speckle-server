@@ -3,7 +3,7 @@
     <div class="flex gap-2 flex-col sm:flex-row sm:justify-between w-full">
       <div class="flex flex-col items-start">
         <CommonTextLink :icon-left="ArrowLeftIcon" size="xs" :to="automationsLink">
-          Go Back to Automations
+          Back to Automations
         </CommonTextLink>
         <div class="flex sm:gap-1 flex-col sm:flex-row sm:items-center sm:relative">
           <div class="flex gap-1 items-center">

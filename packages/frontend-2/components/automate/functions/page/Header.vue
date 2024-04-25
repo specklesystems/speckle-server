@@ -10,7 +10,7 @@
         ></HeaderNavLink>
       </Portal>
 
-      <h1 class="h3 font-bold">Functions</h1>
+      <h1 class="h3 font-bold">Automate Functions</h1>
       <div class="flex flex-col sm:flex-row gap-2">
         <FormTextInput
           name="search"
