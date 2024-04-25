@@ -406,19 +406,23 @@ function getModelTreeItemsBaseQuery(
   projectId: string,
   options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
 ) {
-  const cleanInput = (input: string | null | undefined) => {
-    const clean = (input || '').toLowerCase()
-    const trimmed = trim(trim(clean), '/')
-    return trimmed
+  const cleanInput = (
+    input: string | null | undefined,
+    options?: Partial<{ escapeRegexp: boolean }>
+  ) => {
+    let clean = (input || '').toLowerCase()
+    clean = trim(trim(clean), '/')
+    clean = options?.escapeRegexp ? clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : clean
+    return clean
   }
 
   const { filterOutEmptyMain = true, parentModelName } = options || {}
-  const cleanModelName = cleanInput(parentModelName)
+  const cleanModelName = cleanInput(parentModelName, { escapeRegexp: true })
   const branchPartPattern = `[^/]+` // regexp for each branch part between slashes
 
   const regExp = cleanModelName.length
     ? // only direct children of parentModelName
-      `^${cleanModelName.replace('/', '\\/')}\\/(${branchPartPattern})`
+      `^${cleanModelName}\\/(${branchPartPattern})`
     : // only first branch part (top level item)
       `^${branchPartPattern}`
 
@@ -470,7 +474,7 @@ function getModelTreeItemsBaseQuery(
 
   return {
     query: finalQuery,
-    parentModelName: cleanModelName
+    parentModelName: cleanInput(parentModelName)
   }
 }
 
