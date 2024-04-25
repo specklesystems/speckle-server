@@ -24,3 +24,8 @@ export class AutomateInvalidTriggerError extends BaseError {
   static defaultMessage = 'Invalid automation trigger'
   static code = 'AUTOMATE_INVALID_TRIGGER'
 }
+
+export class AutomateFunctionCreationError extends BaseError {
+  static defaultMessage = 'Error creating function'
+  static code = 'AUTOMATE_FUNCTION_CREATION_ERROR'
+}

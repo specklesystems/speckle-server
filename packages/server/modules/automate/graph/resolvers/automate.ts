@@ -21,6 +21,7 @@ import {
   AutomateRunTriggerType
 } from '@/modules/core/graph/generated/graphql'
 import { getGenericRedis } from '@/modules/core/index'
+import { getUser } from '@/modules/core/repositories/users'
 import { getValidatedUserAuthMetadata } from '@/modules/core/services/githubApp'
 import { getAutomateGithubClientInfo } from '@/modules/shared/helpers/envHelper'
 
@@ -67,7 +68,8 @@ export = {
         getGithubRepoPublicKey: getRepoPublicKey,
         encryptGithubSecret: encryptSecret,
         upsertGithubSecret: upsertSecret,
-        insertGithubEnvVar: insertEnvVar
+        insertGithubEnvVar: insertEnvVar,
+        getUser
       })
 
       return (await create({ input: args.input, userId: ctx.userId! })).fn

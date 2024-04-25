@@ -4,6 +4,7 @@ import {
   MissingAutomateGithubAuthError,
   RepoSecretsCouldNotBeUpdatedError
 } from '@/modules/automate/errors/github'
+import { AutomateFunctionCreationError } from '@/modules/automate/errors/management'
 import { upsertFunction } from '@/modules/automate/repositories/functions'
 import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
 import {
@@ -17,6 +18,7 @@ import {
   upsertSecret
 } from '@/modules/core/clients/github'
 import { OrgAuthAccessRestrictionsError } from '@/modules/core/errors/github'
+import { getUser } from '@/modules/core/repositories/users'
 import { getValidatedUserAuthMetadata } from '@/modules/core/services/githubApp'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { CreateAutomateFunctionInput } from '@/test/graphql/generated/graphql'
@@ -111,6 +113,7 @@ export type CreateFunctionDeps = {
   upsertFn: typeof upsertFunction
   createExecutionEngineFn: typeof createFunction
   generateAuthCode: ReturnType<typeof createStoredAuthCode>
+  getUser: typeof getUser
 } & SetupFunctionRepoSecretsDeps
 
 export const createFunctionFromTemplate =
@@ -120,9 +123,20 @@ export const createFunctionFromTemplate =
       input: { template, name, org, description, logo, supportedSourceApps, tags },
       userId
     } = params
-    const { createGithubRepo, upsertFn, createExecutionEngineFn, generateAuthCode } =
-      deps
+    const {
+      createGithubRepo,
+      upsertFn,
+      createExecutionEngineFn,
+      generateAuthCode,
+      getUser
+    } = deps
     const invokeSetupFunctionRepoSecrets = setupFunctionRepoSecrets(deps)
+
+    // Validate user
+    const user = await getUser(userId)
+    if (!user) {
+      throw new AutomateFunctionCreationError('Speckle user not found')
+    }
 
     // Attempt to create repo
     let newRepo: Awaited<ReturnType<typeof createGithubRepo>>
