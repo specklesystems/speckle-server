@@ -1,4 +1,4 @@
-import { Box3, Vector3 } from 'three'
+import { Box3, Vector3, Matrix4 } from 'three'
 
 export class AsyncPause {
   private lastPauseTime: number = 0
@@ -23,6 +23,10 @@ export class AsyncPause {
 export class World {
   private readonly boxes: Array<Box3> = new Array<Box3>()
   public readonly worldBox: Box3 = new Box3()
+  private readonly VecBuff: Vector3 = new Vector3()
+  private readonly BoxBuff0: Box3 = new Box3()
+  private readonly BoxBuff1: Box3 = new Box3()
+  private readonly MatBuff: Matrix4 = new Matrix4()
 
   private _worldOrigin: Vector3 = new Vector3()
   public get worldSize() {
@@ -59,5 +63,23 @@ export class World {
   public resetWorld() {
     this.worldBox.makeEmpty()
     this.boxes.length = 0
+  }
+
+  public getRelativeOffset(offsetAmount: number = 0.001): number {
+    this.MatBuff.identity()
+    this.MatBuff.makeScale(1 + offsetAmount, 1 + offsetAmount, 1 + offsetAmount)
+    const worldSize = this.VecBuff.set(
+      this.worldSize.x * 0.5,
+      this.worldSize.y * 0.5,
+      this.worldSize.z * 0.5
+    )
+    this.BoxBuff0.min.set(0, 0, 0)
+    this.BoxBuff0.max.set(0, 0, 0)
+    this.BoxBuff1.min.set(0, 0, 0)
+    this.BoxBuff1.max.set(0, 0, 0)
+    const sizeBox = this.BoxBuff0.expandByVector(worldSize)
+    const offsetBox = this.BoxBuff1.copy(sizeBox).applyMatrix4(this.MatBuff)
+    const dist = offsetBox.max.distanceTo(sizeBox.max)
+    return dist
   }
 }
