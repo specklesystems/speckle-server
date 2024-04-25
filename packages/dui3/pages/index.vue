@@ -13,7 +13,8 @@
         >
           Hello!
         </h1>
-        <div v-if="!!store.documentInfo">
+        <!-- Returning null from host app is blocked by CI for now, hence host app send here empty documentInfo, we check it's id whether null or not. -->
+        <div v-if="!!store.documentInfo?.id">
           <div class="text-foreground-2">
             There are no Speckle models being published or loaded in this file yet.
           </div>
