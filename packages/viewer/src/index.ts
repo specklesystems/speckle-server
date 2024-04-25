@@ -68,7 +68,6 @@ import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial'
 import { SpeckleText } from './modules/objects/SpeckleText'
 import { NodeRenderView } from './modules/tree/NodeRenderView'
 import { Assets } from './modules/Assets'
-import UrlHelper from './modules/UrlHelper'
 
 export {
   Viewer,
@@ -110,8 +109,7 @@ export {
   SpeckleText,
   NodeRenderView,
   Assets,
-  AssetType,
-  UrlHelper
+  AssetType
 }
 
 export type {
@@ -140,3 +138,5 @@ export type {
   MeasurementOptions,
   FilteringState
 }
+
+export * as UrlHelper from './modules/UrlHelper'
