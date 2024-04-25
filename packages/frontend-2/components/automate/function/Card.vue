@@ -103,7 +103,7 @@ const { html: plaintextDescription } = useMarkdown(
 )
 
 const classes = computed(() => {
-  const classParts = ['']
+  const classParts = ['rounded-lg']
 
   if (props.selected) {
     classParts.push('ring-2 ring-primary')
