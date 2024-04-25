@@ -113,24 +113,29 @@ export class BoxSelection extends Extension {
 
   /** Gets the object ids that fall withing the provided selection box */
   private getSelectionIds(selectionBox: Box3) {
+    /** Get the renderer */
+    const renderer = this.viewer.getRenderer()
     /** Get the mesh batches */
-    const batches = this.viewer
-      .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+    const batches = renderer.batcher.getBatches(
+      undefined,
+      GeometryType.MESH
+    ) as MeshBatch[]
 
     /** Compute the clip matrix */
     const clipMatrix = new Matrix4()
-    clipMatrix.multiplyMatrices(
-      this.viewer.getRenderer().renderingCamera!.projectionMatrix,
-      this.viewer.getRenderer().renderingCamera!.matrixWorldInverse
-    )
+    if (renderer.renderingCamera) {
+      clipMatrix.multiplyMatrices(
+        renderer.renderingCamera.projectionMatrix,
+        renderer.renderingCamera.matrixWorldInverse
+      )
+    }
 
     /** We're using three-mesh-bvh library for out BVH
      *  Go over each batch and test it against the TAS only.
      **/
     const selectionRvs: Array<NodeRenderView> = []
     for (let b = 0; b < batches.length; b++) {
-      batches[b].mesh.TAS!.shapecast({
+      batches[b].mesh.TAS.shapecast({
         /** This is the callback from the TAS's bounds internal nodes */
         intersectsTAS: (box: Box3) => {
           /** We continue traversion only if the selection box intersects an internal node */

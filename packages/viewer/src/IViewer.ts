@@ -190,8 +190,8 @@ export interface IViewer {
   getRenderer(): SpeckleRenderer
   getContainer(): HTMLElement
 
-  createExtension<T extends Extension>(type: Constructor<T>): T | null
-  getExtension<T extends Extension>(type: Constructor<T>): T | null
-
+  createExtension<T extends Extension>(type: Constructor<T>): T
+  getExtension<T extends Extension>(type: Constructor<T>): T
+  hasExtension<T extends Extension>(type: Constructor<T>): boolean
   dispose(): void
 }

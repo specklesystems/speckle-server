@@ -112,7 +112,19 @@ export class Viewer extends EventEmitter implements IViewer {
     return extension as T
   }
 
-  public getExtension<T extends Extension>(type: Constructor<T>): T | null {
+  public getExtension<T extends Extension>(type: Constructor<T>): T {
+    let extension
+    if ((extension = this.getExtensionInternal(type)) !== null) return extension
+
+    throw new Error(`Could not get Extension of type ${type.name}. Is it created?`)
+  }
+
+  public hasExtension<T extends Extension>(type: Constructor<T>): boolean {
+    const extension = this.getExtensionInternal(type)
+    return extension ? true : false
+  }
+
+  private getExtensionInternal<T extends Extension>(type: Constructor<T>): T | null {
     if (this.extensions[type.name]) return this.extensions[type.name] as T
     else {
       for (const k in this.extensions) {
