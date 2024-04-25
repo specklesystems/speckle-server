@@ -1,25 +1,19 @@
 <template>
   <div class="flex flex-col items-start w-full">
     <div class="flex gap-2 flex-col sm:flex-row sm:justify-between w-full">
-      <div class="flex flex-col items-start">
+      <div class="flex flex-col items-start gap-1">
         <CommonTextLink :icon-left="ArrowLeftIcon" size="xs" :to="automationsLink">
           Back to Automations
         </CommonTextLink>
-        <div class="flex sm:gap-1 flex-col sm:flex-row sm:items-center sm:relative">
-          <div class="flex gap-1 items-center">
-            <h1 class="block h5 sm:h4 font-bold">Automations</h1>
-            <ChevronRightIcon class="w-5 h-5" />
-          </div>
-          <CommonEditableTitle
-            v-model="name"
-            :disabled="loading"
-            :custom-classes="{
-              input: 'h4 font-bold',
-              pencil: 'ml-2 mt-2 w-4 h-4'
-            }"
-            class="relative top-1.5"
-          />
-        </div>
+        <CommonEditableTitle
+          v-model="name"
+          :disabled="loading"
+          :custom-classes="{
+            input: 'h4 font-bold',
+            pencil: 'ml-2 mt-2 w-4 h-4'
+          }"
+          class="relative top-1.5"
+        />
       </div>
       <FormSwitch
         v-model="enabled"
@@ -28,23 +22,10 @@
         :disabled="loading"
       />
     </div>
-    <div class="mt-6 w-full">
-      <ProjectModelsBasicCardView
-        v-if="triggerModels.length"
-        :items="triggerModels"
-        :project="project"
-        :project-id="project.id"
-      />
-      <CommonGenericEmptyState
-        v-else
-        message="No valid models found for this automation. They may have been deleted."
-      />
-    </div>
   </div>
 </template>
 <script setup lang="ts">
 import { ArrowLeftIcon } from '@heroicons/vue/24/outline'
-import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { FormSwitch } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
@@ -148,8 +129,4 @@ const enabled = computed({
     })
   }
 })
-
-const triggerModels = computed(
-  () => props.automation.currentRevision?.triggerDefinitions.map((t) => t.model) || []
-)
 </script>

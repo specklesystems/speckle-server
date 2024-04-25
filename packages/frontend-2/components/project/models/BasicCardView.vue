@@ -1,11 +1,10 @@
 <template>
   <div
     class="relative z-10 grid gap-3"
-    :class="
-      smallView
-        ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4'
-        : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4'
-    "
+    :class="[
+      smallView ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4' : '',
+      !vertical ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : ''
+    ]"
   >
     <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
     <ProjectPageModelsCard
@@ -41,6 +40,7 @@ withDefaults(
     items: Array<ProjectPageLatestItemsModelItemFragment | PendingFileUploadFragment>
     projectId: string
     smallView?: boolean
+    vertical?: boolean
     showActions?: boolean
     showVersions?: boolean
     disableDefaultLinks?: boolean
