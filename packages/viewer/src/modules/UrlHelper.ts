@@ -101,7 +101,6 @@ async function getCommitReferencedObjectUrl(
 }
 
 async function getNewResourceUrls(url: string, authToken?: string): Promise<string[]> {
-  const objsUrls: string[] | PromiseLike<string[]> = []
   const parsed = new URL(decodeURI(url))
   const params = parsed.href.match(/[^/]+$/)
   if (!params) {
@@ -127,19 +126,20 @@ async function getNewResourceUrls(url: string, authToken?: string): Promise<stri
     decodeURIComponent(params[0])
   )
 
+  const promises = []
   for (let k = 0; k < resources.length; k++) {
     const resource: SpeckleViewer.ViewerRoute.ViewerResource = resources[k]
 
     if (SpeckleViewer.ViewerRoute.isObjectResource(resource)) {
-      objsUrls.push(await objectResourceToUrl(ref, resource))
+      promises.push(objectResourceToUrl(ref, resource))
     } else if (SpeckleViewer.ViewerRoute.isModelResource(resource)) {
-      objsUrls.push(await modelResourceToUrl(headers, ref, resource))
+      promises.push(modelResourceToUrl(headers, ref, resource))
     } else if (SpeckleViewer.ViewerRoute.isAllModelsResource(resource)) {
-      objsUrls.push(...(await modelAllResourceToUrl(headers, ref)))
+      promises.push(modelAllResourceToUrl(headers, ref))
     }
   }
 
-  return objsUrls
+  return (await Promise.all(promises)).flat()
 }
 
 async function objectResourceToUrl(
