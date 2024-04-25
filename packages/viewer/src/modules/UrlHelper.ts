@@ -99,13 +99,13 @@ export default class UrlHelper {
 
   static async getNewResourceUrls(url: string, authToken?: string): Promise<string[]> {
     const objsUrls: string[] | PromiseLike<string[]> = []
-    const params = url.match(/[^/]+$/)
+    const parsed = new URL(decodeURI(url))
+    const params = parsed.href.match(/[^/]+$/)
     if (!params) {
       return Promise.reject('No model or object ids specified')
     }
 
-    const parsed = new URL(url)
-    const projectId = url.split('/projects/')[1].substring(0, 10)
+    const projectId = parsed.href.split('/projects/')[1].substring(0, 10)
     const headers: { 'Content-Type': string; Authorization: string } = {
       'Content-Type': 'application/json',
       Authorization: ''
@@ -120,7 +120,9 @@ export default class UrlHelper {
       projectId
     }
 
-    const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(params[0])
+    const resources = SpeckleViewer.ViewerRoute.parseUrlParameters(
+      decodeURIComponent(params[0])
+    )
 
     for (let k = 0; k < resources.length; k++) {
       const resource: SpeckleViewer.ViewerRoute.ViewerResource = resources[k]
