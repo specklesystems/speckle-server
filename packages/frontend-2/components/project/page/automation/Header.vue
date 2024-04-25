@@ -23,8 +23,8 @@
       </div>
       <FormSwitch
         v-model="enabled"
-        name="enabled"
-        label="Enabled"
+        name="enable"
+        :label="enabled ? 'Enabled' : 'Disabled'"
         :disabled="loading"
       />
     </div>
