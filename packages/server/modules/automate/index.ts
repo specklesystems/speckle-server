@@ -3,8 +3,7 @@ import { Optional, SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { VersionEvents, VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   onModelVersionCreate,
-  triggerAutomationRevisionRun,
-  sendRunTriggerToAutomate
+  triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
 import { Environment } from '@speckle/shared'
 import { getActiveTriggerDefinitions } from '@/modules/automate/repositories/automations'
@@ -14,6 +13,7 @@ import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScope } from '@/modules/shared'
 import pino from 'pino'
+import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -45,7 +45,7 @@ async function initScopes() {
 
 const initializeEventListeners = () => {
   const triggerFn = triggerAutomationRevisionRun({
-    automateRunTrigger: sendRunTriggerToAutomate
+    automateRunTrigger: triggerAutomationRun
   })
   const quit = VersionsEmitter.listen(
     VersionEvents.Created,

@@ -10,8 +10,10 @@ import {
   updateFunction as updateDbFunction,
   upsertFunctionToken
 } from '@/modules/automate/repositories/functions'
-import { validateStoredAuthCode } from '@/modules/automate/services/createAutomation'
-import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
+import {
+  createStoredAuthCode,
+  validateStoredAuthCode
+} from '@/modules/automate/services/executionEngine'
 import {
   createFunctionFromTemplate,
   updateFunction

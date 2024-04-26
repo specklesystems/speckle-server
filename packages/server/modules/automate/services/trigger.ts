@@ -74,7 +74,7 @@ export const onModelVersionCreate =
  * This triggers a run for a specific automation revision
  */
 export const triggerAutomationRevisionRun =
-  (deps: { automateRunTrigger: typeof sendRunTriggerToAutomate }) =>
+  (deps: { automateRunTrigger: typeof triggerAutomationRun }) =>
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
@@ -314,8 +314,3 @@ function createAutomationRunData(params: {
   }
   return automationRun
 }
-
-// TODO: Remove
-export type { TriggeredAutomationFunctionRun }
-export type AutomateRunTriggerArgs = Parameters<typeof triggerAutomationRun>
-export const sendRunTriggerToAutomate = triggerAutomationRun

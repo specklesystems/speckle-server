@@ -7,10 +7,6 @@ import { storeAutomation } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
-import {
-  createStoredAuthCode as createExecEngineAuthCode,
-  validateStoredAuthCode as validateExecEngineAuthCode
-} from '@/modules/automate/services/executionEngine'
 
 export type CreateAutomationDeps = {
   createAuthCode: () => Promise<string>
@@ -64,8 +60,3 @@ export const createAutomation =
       }
     )
   }
-
-// TODO: Remove
-export const triggerAutomationCreation = () => clientCreateAutomation
-export const createStoredAuthCodeIn = createExecEngineAuthCode
-export const validateStoredAuthCode = validateExecEngineAuthCode
