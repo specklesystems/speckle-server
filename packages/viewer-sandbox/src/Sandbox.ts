@@ -13,10 +13,10 @@ import {
   ExplodeExtension,
   DiffExtension,
   SpeckleLoader,
-  ObjLoader
+  ObjLoader,
+  UrlHelper
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
-import UrlHelper from './UrlHelper'
 import { DiffResult } from '@speckle/viewer'
 import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
