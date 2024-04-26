@@ -29,3 +29,8 @@ export class AutomateFunctionCreationError extends BaseError {
   static defaultMessage = 'Error creating function'
   static code = 'AUTOMATE_FUNCTION_CREATION_ERROR'
 }
+
+export class AutomateFunctionUpdateError extends BaseError {
+  static defaultMessage = 'Error updating function'
+  static code = 'AUTOMATE_FUNCTION_UPDATE_ERROR'
+}

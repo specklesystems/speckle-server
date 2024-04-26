@@ -3,10 +3,18 @@ import {
   getUserGithubAuthData,
   setUserGithubAuthData
 } from '@/modules/automate/repositories/automations'
-import { upsertFunction } from '@/modules/automate/repositories/functions'
+import {
+  generateFunctionId,
+  getFunction,
+  upsertFunction,
+  updateFunction as updateDbFunction
+} from '@/modules/automate/repositories/functions'
 import { validateStoredAuthCode } from '@/modules/automate/services/createAutomation'
 import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
-import { createFunctionFromTemplate } from '@/modules/automate/services/functionManagement'
+import {
+  createFunctionFromTemplate,
+  updateFunction
+} from '@/modules/automate/services/functionManagement'
 import { createAutomateRepoFromTemplate } from '@/modules/automate/services/github'
 import {
   createRepoFromTemplate,
@@ -69,10 +77,18 @@ export = {
         encryptGithubSecret: encryptSecret,
         upsertGithubSecret: upsertSecret,
         insertGithubEnvVar: insertEnvVar,
-        getUser
+        getUser,
+        generateFunctionId
       })
 
       return (await create({ input: args.input, userId: ctx.userId! })).fn
+    },
+    async updateFunction(_parent, args, ctx) {
+      const update = updateFunction({
+        updateFunction: updateDbFunction,
+        getFunction
+      })
+      return await update({ input: args.input, userId: ctx.userId! })
     }
   },
   Query: {

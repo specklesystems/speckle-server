@@ -21,3 +21,10 @@ type NullableKeys<T> = {
  */
 export type NullableKeysToOptional<T> = Omit<T, NullableKeys<T>> &
   Partial<Pick<T, NullableKeys<T>>>
+
+/**
+ * Removes null as a possibility from all of the property types
+ */
+export type NonNullableProperties<T> = {
+  [K in keyof T]: NonNullable<T[K]>
+}

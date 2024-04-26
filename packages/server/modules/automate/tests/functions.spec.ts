@@ -4,8 +4,16 @@ import {
   MisconfiguredTemplateOrgError,
   MissingAutomateGithubAuthError
 } from '@/modules/automate/errors/github'
-import { upsertFunction } from '@/modules/automate/repositories/functions'
-import { createFunctionFromTemplate } from '@/modules/automate/services/functionManagement'
+import {
+  generateFunctionId,
+  upsertFunction,
+  updateFunction as updateDbFunction,
+  getFunction
+} from '@/modules/automate/repositories/functions'
+import {
+  createFunctionFromTemplate,
+  updateFunction
+} from '@/modules/automate/services/functionManagement'
 import { createAutomateRepoFromTemplate } from '@/modules/automate/services/github'
 import {
   GithubCreateRepoFromTemplateData,
@@ -15,9 +23,10 @@ import {
 } from '@/modules/core/clients/github'
 import {
   AutomateFunctionTemplateLanguage,
-  CreateAutomateFunctionInput
+  CreateAutomateFunctionInput,
+  UpdateAutomateFunctionInput
 } from '@/modules/core/graph/generated/graphql'
-import { BasicTestUser, createTestUser } from '@/test/authHelper'
+import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { Environment, Roles, SourceAppNames } from '@speckle/shared'
 import { expect } from 'chai'
@@ -25,9 +34,90 @@ import { getValidatedUserAuthMetadata } from '@/modules/core/services/githubApp'
 import { OrgAuthAccessRestrictionsError } from '@/modules/core/errors/github'
 import { createFunction } from '@/modules/automate/clients/executionEngine'
 import { getUser } from '@/modules/core/repositories/users'
-import { AutomateFunctionCreationError } from '@/modules/automate/errors/management'
+import {
+  AutomateFunctionCreationError,
+  AutomateFunctionUpdateError
+} from '@/modules/automate/errors/management'
+import { omit } from 'lodash'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+
+const exampleCreationInput = (): CreateAutomateFunctionInput => ({
+  template: AutomateFunctionTemplateLanguage.Python,
+  name: 'test-fn',
+  description: 'test description',
+  logo: 'https://example.com/logo.png',
+  supportedSourceApps: [SourceAppNames[0]],
+  tags: ['tag1', 'tag2']
+})
+
+/**
+ * Everything's the real implementation except the GH & Execution Engine API calls
+ */
+const buildCreateFn = (
+  overrides?: Partial<{
+    getValidatedGithubAuthMetadata: ReturnType<typeof getValidatedUserAuthMetadata>
+    createRepoFromTemplate: typeof createRepoFromTemplate
+    createExecutionEngineFn: typeof createFunction
+  }>
+) => {
+  const getValidatedGithubAuthMetadata =
+    overrides?.getValidatedGithubAuthMetadata ||
+    (async (): Promise<OAuthAppAuthentication> => ({
+      token: 'a',
+      scopes: ['b', 'c'],
+      clientType: 'oauth-app',
+      clientId: 'd',
+      clientSecret: 'e',
+      tokenType: 'oauth',
+      type: 'token'
+    }))
+
+  const create = createFunctionFromTemplate({
+    createGithubRepo: createAutomateRepoFromTemplate({
+      getValidatedGithubAuthMetadata,
+      createRepoFromTemplate:
+        overrides?.createRepoFromTemplate ||
+        (async () =>
+          ({
+            id: '123',
+            name: 'speckle-server',
+            full_name: 'specklesystems/speckle-server',
+            html_url: 'https://github.com/specklesystems/speckle-server',
+            ssh_url: 'git@github.com:specklesystems/speckle-server.git'
+          } as unknown as GithubCreateRepoFromTemplateData))
+    }),
+    upsertFn: upsertFunction,
+    createExecutionEngineFn:
+      overrides?.createExecutionEngineFn ||
+      (async () => ({
+        functionId: '456',
+        token: 'aaaaa'
+      })),
+    generateAuthCode: async () => 'test-auth-code',
+    getValidatedGithubAuthMetadata,
+    getGithubRepoPublicKey: async () => ({
+      key_id: '3380204578043523366',
+      key: 'enDLkz8Llm+QHwTL3CwMdzhxoUpAZj3S5mJKWmyBi1A='
+    }),
+    encryptGithubSecret: encryptSecret,
+    upsertGithubSecret: async () => true,
+    insertGithubEnvVar: async () => true,
+    getUser,
+    generateFunctionId
+  })
+
+  return create
+}
+
+const buildUpdateFn = () => {
+  const update = updateFunction({
+    updateFunction: updateDbFunction,
+    getFunction
+  })
+
+  return update
+}
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate Functions @automate',
@@ -39,81 +129,19 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       role: Roles.Server.User
     }
 
+    const otherGuy: BasicTestUser = {
+      id: '',
+      name: 'Other dude',
+      email: 'otherguy@automate.com',
+      role: Roles.Server.User
+    }
+
     before(async () => {
       await beforeEachContext()
-      await createTestUser(me)
+      await createTestUsers([me, otherGuy])
     })
 
     describe('creation', () => {
-      const exampleCreationInput = (): CreateAutomateFunctionInput => ({
-        template: AutomateFunctionTemplateLanguage.Python,
-        name: 'test-fn',
-        description: 'test description',
-        logo: 'https://example.com/logo.png',
-        supportedSourceApps: [SourceAppNames[0]],
-        tags: ['tag1', 'tag2']
-      })
-
-      /**
-       * Everything's the real implementation except the GH & Execution Engine API calls
-       */
-      const buildCreateFn = (
-        overrides?: Partial<{
-          getValidatedGithubAuthMetadata: ReturnType<
-            typeof getValidatedUserAuthMetadata
-          >
-          createRepoFromTemplate: typeof createRepoFromTemplate
-          createExecutionEngineFn: typeof createFunction
-        }>
-      ) => {
-        const getValidatedGithubAuthMetadata =
-          overrides?.getValidatedGithubAuthMetadata ||
-          (async (): Promise<OAuthAppAuthentication> => ({
-            token: 'a',
-            scopes: ['b', 'c'],
-            clientType: 'oauth-app',
-            clientId: 'd',
-            clientSecret: 'e',
-            tokenType: 'oauth',
-            type: 'token'
-          }))
-
-        const create = createFunctionFromTemplate({
-          createGithubRepo: createAutomateRepoFromTemplate({
-            getValidatedGithubAuthMetadata,
-            createRepoFromTemplate:
-              overrides?.createRepoFromTemplate ||
-              (async () =>
-                ({
-                  id: '123',
-                  name: 'speckle-server',
-                  full_name: 'specklesystems/speckle-server',
-                  html_url: 'https://github.com/specklesystems/speckle-server',
-                  ssh_url: 'git@github.com:specklesystems/speckle-server.git'
-                } as unknown as GithubCreateRepoFromTemplateData))
-          }),
-          upsertFn: upsertFunction,
-          createExecutionEngineFn:
-            overrides?.createExecutionEngineFn ||
-            (async () => ({
-              functionId: '456',
-              token: 'aaaaa'
-            })),
-          generateAuthCode: async () => 'test-auth-code',
-          getValidatedGithubAuthMetadata,
-          getGithubRepoPublicKey: async () => ({
-            key_id: '3380204578043523366',
-            key: 'enDLkz8Llm+QHwTL3CwMdzhxoUpAZj3S5mJKWmyBi1A='
-          }),
-          encryptGithubSecret: encryptSecret,
-          upsertGithubSecret: async () => true,
-          insertGithubEnvVar: async () => true,
-          getUser
-        })
-
-        return create
-      }
-
       it('fails with invalid template id', async () => {
         const createFn = buildCreateFn()
         try {
@@ -198,6 +226,113 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         })
 
         expect(fn.fn.logo).to.be.null
+      })
+    })
+
+    describe('updating', () => {
+      let updatableFn: Awaited<
+        ReturnType<ReturnType<typeof createFunctionFromTemplate>>
+      >
+
+      before(async () => {
+        const createFn = buildCreateFn()
+        updatableFn = await createFn({
+          input: exampleCreationInput(),
+          userId: me.id
+        })
+      })
+
+      it('fails when trying to update non-existent function', async () => {
+        const updateFn = buildUpdateFn()
+        try {
+          await updateFn({
+            userId: me.id,
+            input: {
+              name: 'new-name',
+              id: 'babababa'
+            }
+          })
+        } catch (e) {
+          expect(e).to.have.property('name', AutomateFunctionUpdateError.name)
+          expect(e).to.have.property('message', 'Function not found')
+        }
+      })
+
+      it('fails when trying to update function of another user', async () => {
+        const updateFn = buildUpdateFn()
+        try {
+          await updateFn({
+            userId: otherGuy.id,
+            input: {
+              name: 'new-name',
+              id: updatableFn.fn.functionId
+            }
+          })
+        } catch (e) {
+          expect(e).to.have.property('name', AutomateFunctionUpdateError.name)
+          expect(e).to.have.property(
+            'message',
+            'User does not have the rights to update this function'
+          )
+        }
+      })
+
+      it('only updates set & non-null values', async () => {
+        const newName = 'new-name'
+
+        const updateFn = buildUpdateFn()
+        const updatedFn = await updateFn({
+          userId: me.id,
+          input: {
+            name: newName,
+            id: updatableFn.fn.functionId,
+            description: null,
+            logo: null,
+            supportedSourceApps: null,
+            tags: null
+          }
+        })
+
+        expect(updatedFn).to.be.ok
+        expect(updatedFn.name).to.equal(newName)
+        expect(updatedFn.description).to.equal(updatableFn.fn.description)
+        expect(updatedFn.logo).to.equal(updatableFn.fn.logo)
+        expect(updatedFn.supportedSourceApps).to.deep.equal(
+          updatableFn.fn.supportedSourceApps
+        )
+        expect(updatedFn.tags).to.deep.equal(updatableFn.fn.tags)
+      })
+
+      it('filters out invalid logo', async () => {
+        const updateFn = buildUpdateFn()
+        const updatedFn = await updateFn({
+          userId: me.id,
+          input: {
+            name: 'new-name',
+            id: updatableFn.fn.functionId,
+            logo: 'invalid-url'
+          }
+        })
+
+        expect(updatedFn.logo).to.eq(updatableFn.fn.logo)
+      })
+
+      it('updates all available properties', async () => {
+        const input: UpdateAutomateFunctionInput = {
+          name: 'new-name',
+          id: updatableFn.fn.functionId,
+          description: 'new-desc',
+          logo: 'https://example.com/new-logo.png',
+          supportedSourceApps: [SourceAppNames[1]],
+          tags: ['new-tag1', 'new-tag2']
+        }
+        const updateFn = buildUpdateFn()
+        const updatedFn = await updateFn({
+          userId: me.id,
+          input
+        })
+
+        expect(updatedFn).to.deep.include(omit(input, 'id'))
       })
     })
   }

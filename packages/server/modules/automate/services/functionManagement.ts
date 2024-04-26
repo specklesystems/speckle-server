@@ -4,8 +4,16 @@ import {
   MissingAutomateGithubAuthError,
   RepoSecretsCouldNotBeUpdatedError
 } from '@/modules/automate/errors/github'
-import { AutomateFunctionCreationError } from '@/modules/automate/errors/management'
-import { upsertFunction } from '@/modules/automate/repositories/functions'
+import {
+  AutomateFunctionCreationError,
+  AutomateFunctionUpdateError
+} from '@/modules/automate/errors/management'
+import {
+  generateFunctionId,
+  getFunction,
+  upsertFunction,
+  updateFunction as updateDbFunction
+} from '@/modules/automate/repositories/functions'
 import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
 import {
   createAutomateRepoFromTemplate,
@@ -18,11 +26,17 @@ import {
   upsertSecret
 } from '@/modules/core/clients/github'
 import { OrgAuthAccessRestrictionsError } from '@/modules/core/errors/github'
+import { UpdateAutomateFunctionInput } from '@/modules/core/graph/generated/graphql'
 import { getUser } from '@/modules/core/repositories/users'
 import { getValidatedUserAuthMetadata } from '@/modules/core/services/githubApp'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { CreateAutomateFunctionInput } from '@/test/graphql/generated/graphql'
-import { MaybeNullOrUndefined, Nullable, ensureError } from '@speckle/shared'
+import {
+  MaybeNullOrUndefined,
+  Nullable,
+  ensureError,
+  removeNullOrUndefinedKeys
+} from '@speckle/shared'
 
 const cleanFunctionLogo = (logo: MaybeNullOrUndefined<string>): Nullable<string> => {
   if (!logo?.length) return null
@@ -114,6 +128,7 @@ export type CreateFunctionDeps = {
   createExecutionEngineFn: typeof createFunction
   generateAuthCode: ReturnType<typeof createStoredAuthCode>
   getUser: typeof getUser
+  generateFunctionId: typeof generateFunctionId
 } & SetupFunctionRepoSecretsDeps
 
 export const createFunctionFromTemplate =
@@ -128,7 +143,8 @@ export const createFunctionFromTemplate =
       upsertFn,
       createExecutionEngineFn,
       generateAuthCode,
-      getUser
+      getUser,
+      generateFunctionId
     } = deps
     const invokeSetupFunctionRepoSecrets = setupFunctionRepoSecrets(deps)
 
@@ -186,11 +202,44 @@ export const createFunctionFromTemplate =
       tags,
       supportedSourceApps,
       executionEngineFunctionId: execEngineFn.functionId,
-      logo: cleanFunctionLogo(logo)
+      logo: cleanFunctionLogo(logo),
+      functionId: generateFunctionId()
     })
 
     return {
       fn: createdFunction,
       repo: newRepo
     }
+  }
+
+export type UpdateFunctionDeps = {
+  updateFunction: typeof updateDbFunction
+  getFunction: typeof getFunction
+}
+
+export const updateFunction =
+  (deps: UpdateFunctionDeps) =>
+  async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
+    const { updateFunction, getFunction } = deps
+    const { input, userId } = params
+
+    const existingFn = await getFunction(input.id)
+    if (!existingFn) {
+      throw new AutomateFunctionUpdateError('Function not found')
+    }
+
+    if (existingFn.userId !== userId) {
+      throw new AutomateFunctionUpdateError(
+        'User does not have the rights to update this function'
+      )
+    }
+
+    // Fix up logo, if any
+    if (input.logo) {
+      input.logo = cleanFunctionLogo(input.logo)
+    }
+
+    // Filter out empty (null) values from input
+    const updates = removeNullOrUndefinedKeys(input)
+    return await updateFunction(updates.id, updates)
   }
