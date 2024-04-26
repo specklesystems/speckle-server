@@ -9,6 +9,7 @@ import {
 import { Environment } from '@speckle/shared'
 import { getActiveTriggerDefinitions } from '@/modules/automate/repositories/automations'
 import authRestSetup from '@/modules/automate/rest/auth'
+import createFunctionReleaseRestSetup from '@/modules/automate/rest/createFunctionRelease'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScope } from '@/modules/shared'
@@ -70,8 +71,10 @@ const automateModule: SpeckleModule<{
 
     await initScopes()
 
+    authRestSetup(app)
+    createFunctionReleaseRestSetup(app)
+
     if (isInitial) {
-      authRestSetup(app)
       quitListeners = initializeEventListeners()
     }
   },

@@ -6,13 +6,18 @@ import {
 } from '@/modules/automate/errors/github'
 import {
   AutomateFunctionCreationError,
+  AutomateFunctionReleaseCreateError,
   AutomateFunctionUpdateError
 } from '@/modules/automate/errors/management'
 import {
   generateFunctionId,
   getFunction,
   upsertFunction,
-  updateFunction as updateDbFunction
+  updateFunction as updateDbFunction,
+  upsertFunctionToken,
+  getFunctionByExecEngineId,
+  getFunctionToken,
+  insertFunctionRelease
 } from '@/modules/automate/repositories/functions'
 import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
 import {
@@ -29,14 +34,21 @@ import { OrgAuthAccessRestrictionsError } from '@/modules/core/errors/github'
 import { UpdateAutomateFunctionInput } from '@/modules/core/graph/generated/graphql'
 import { getUser } from '@/modules/core/repositories/users'
 import { getValidatedUserAuthMetadata } from '@/modules/core/services/githubApp'
+import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import { CreateAutomateFunctionInput } from '@/test/graphql/generated/graphql'
 import {
   MaybeNullOrUndefined,
   Nullable,
   ensureError,
+  isArrayOf,
   removeNullOrUndefinedKeys
 } from '@speckle/shared'
+import { Request } from 'express'
+import { clamp, isInteger, isObjectLike, isString, trim } from 'lodash'
+import Ajv2020 from 'ajv/dist/2020.js'
+
+const versionTagRegexp = new RegExp('^[a-zA-Z0-9_][a-zA-Z0-9._-]{0,127}$')
 
 const cleanFunctionLogo = (logo: MaybeNullOrUndefined<string>): Nullable<string> => {
   if (!logo?.length) return null
@@ -129,6 +141,7 @@ export type CreateFunctionDeps = {
   generateAuthCode: ReturnType<typeof createStoredAuthCode>
   getUser: typeof getUser
   generateFunctionId: typeof generateFunctionId
+  upsertFunctionToken: typeof upsertFunctionToken
 } & SetupFunctionRepoSecretsDeps
 
 export const createFunctionFromTemplate =
@@ -144,7 +157,8 @@ export const createFunctionFromTemplate =
       createExecutionEngineFn,
       generateAuthCode,
       getUser,
-      generateFunctionId
+      generateFunctionId,
+      upsertFunctionToken
     } = deps
     const invokeSetupFunctionRepoSecrets = setupFunctionRepoSecrets(deps)
 
@@ -206,9 +220,16 @@ export const createFunctionFromTemplate =
       functionId: generateFunctionId()
     })
 
+    // Save token in DB
+    const createdToken = await upsertFunctionToken({
+      functionId: createdFunction.functionId,
+      token: execEngineFn.token
+    })
+
     return {
       fn: createdFunction,
-      repo: newRepo
+      repo: newRepo,
+      token: createdToken
     }
   }
 
@@ -242,4 +263,145 @@ export const updateFunction =
     // Filter out empty (null) values from input
     const updates = removeNullOrUndefinedKeys(input)
     return await updateFunction(updates.id, updates)
+  }
+
+export type FunctionReleaseCreateBody = {
+  commitId: string
+  versionTag: string
+  inputSchema: Nullable<Record<string, unknown>>
+  command: string[]
+  recommendedCPUm: number
+  recommendedMemoryMi: number
+}
+
+const getFunctionReleaseInputFromBody = (req: Request): FunctionReleaseCreateBody => {
+  if (!isObjectLike(req.body)) {
+    throw new AutomateFunctionReleaseCreateError('Request body is not a JSON object')
+  }
+
+  const throwValidationError = (msg: string): never => {
+    throw new AutomateFunctionReleaseCreateError(msg)
+  }
+
+  const body = req.body
+  const commitId =
+    isString(body.commitId) && trim(body.commitId).length >= 6
+      ? (body.commitId as string).substring(0, 10)
+      : throwValidationError('commitId must be a string of at least 6 characters')
+  const versionTag =
+    isString(body.versionTag) && versionTagRegexp.test(body.versionTag)
+      ? (body.versionTag as string)
+      : throwValidationError(
+          'versionTag must be a string with a max length of 128 characters. The first character must be alphanumeric (of lower or upper case) or an underscore, the subsequent characters may be alphanumeric (or lower or upper case), underscore, hyphen, or period.'
+        )
+
+  let inputSchema: Nullable<Record<string, unknown>>
+  try {
+    if (!body.inputSchema) {
+      inputSchema = null
+    } else {
+      if (!isObjectLike(body.inputSchema))
+        throw new AutomateFunctionReleaseCreateError('inputSchema must be an object')
+
+      const validator = new Ajv2020({ validateFormats: false })
+      validator.compile(body.inputSchema)
+
+      inputSchema = body.inputSchema as Record<string, unknown>
+    }
+  } catch (e) {
+    if (e instanceof AutomateFunctionReleaseCreateError) {
+      throw e
+    }
+
+    const error = e instanceof Error ? e : null
+    throw new AutomateFunctionReleaseCreateError(
+      `inputSchema must be a valid JSON schema${error ? `: ${error.message}` : ''}`,
+      {
+        cause: error || undefined
+      }
+    )
+  }
+
+  const command =
+    isArrayOf(body.command, isString) && (body.command as string[]).length > 0
+      ? (body.command as string[])
+      : throwValidationError('command must be a non-empty array of strings')
+
+  let recommendedCPUm = 1000
+  if (body.recommendedCPUm) {
+    recommendedCPUm =
+      isInteger(body.recommendedCPUm) &&
+      clamp(body.recommendedCPUm, 100, 16000) === body.recommendedCPUm
+        ? (body.recommendedCPUm as number)
+        : throwValidationError(
+            'recommendedCPUm must be an integer between 100 and 16000'
+          )
+  }
+
+  let recommendedMemoryMi = 1000
+  if (body.recommendedMemoryMi) {
+    recommendedMemoryMi =
+      isInteger(body.recommendedMemoryMi) &&
+      clamp(body.recommendedMemoryMi, 1, 8000) === body.recommendedMemoryMi
+        ? (body.recommendedMemoryMi as number)
+        : throwValidationError(
+            'recommendedMemoryMi must be an integer between 1 and 8000'
+          )
+  }
+
+  return {
+    commitId,
+    versionTag,
+    inputSchema,
+    command,
+    recommendedCPUm,
+    recommendedMemoryMi
+  }
+}
+
+export type CreateFunctionReleaseDeps = {
+  resolveFunctionParams: (req: Request) => {
+    functionId?: MaybeNullOrUndefined<string>
+    token?: MaybeNullOrUndefined<string>
+  }
+  getFunctionByExecEngineId: typeof getFunctionByExecEngineId
+  getFunctionToken: typeof getFunctionToken
+  insertFunctionRelease: typeof insertFunctionRelease
+}
+
+export const createFunctionRelease =
+  (deps: CreateFunctionReleaseDeps) => async (params: { req: Request }) => {
+    const {
+      resolveFunctionParams,
+      getFunctionByExecEngineId,
+      getFunctionToken,
+      insertFunctionRelease
+    } = deps
+    const { req } = params
+
+    const { functionId, token } = resolveFunctionParams(req)
+    if (!functionId?.length) {
+      throw new AutomateFunctionReleaseCreateError(
+        'Could not resolve function ID from request'
+      )
+    }
+    if (!token?.length) {
+      throw new UnauthorizedError('Missing function token')
+    }
+
+    const fn = await getFunctionByExecEngineId(functionId)
+    if (!fn) {
+      throw new AutomateFunctionReleaseCreateError('Function not found')
+    }
+    const tokenRecord = await getFunctionToken({ fnId: fn.functionId, token })
+    if (!tokenRecord) {
+      throw new ForbiddenError('You do not have access to this function')
+    }
+
+    const input = getFunctionReleaseInputFromBody(req)
+    return await insertFunctionRelease({
+      ...input,
+      functionId: fn.functionId,
+      gitCommitId: input.commitId
+    })
   }

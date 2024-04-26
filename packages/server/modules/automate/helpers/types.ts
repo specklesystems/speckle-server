@@ -143,4 +143,13 @@ export type AutomateFunctionReleaseRecord = {
   command: string[]
   createdAt: Date
   gitCommitId: string
+  recommendedCPUm: number
+  recommendedMemoryMi: number
+}
+
+export type AutomateFunctionTokenRecord = {
+  functionId: string
+  token: string
+  createdAt: Date
+  updatedAt: Date
 }

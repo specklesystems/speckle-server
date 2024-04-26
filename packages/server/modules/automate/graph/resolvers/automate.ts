@@ -7,7 +7,8 @@ import {
   generateFunctionId,
   getFunction,
   upsertFunction,
-  updateFunction as updateDbFunction
+  updateFunction as updateDbFunction,
+  upsertFunctionToken
 } from '@/modules/automate/repositories/functions'
 import { validateStoredAuthCode } from '@/modules/automate/services/createAutomation'
 import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
@@ -78,7 +79,8 @@ export = {
         upsertGithubSecret: upsertSecret,
         insertGithubEnvVar: insertEnvVar,
         getUser,
-        generateFunctionId
+        generateFunctionId,
+        upsertFunctionToken
       })
 
       return (await create({ input: args.input, userId: ctx.userId! })).fn

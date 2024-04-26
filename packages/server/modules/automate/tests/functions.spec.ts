@@ -8,10 +8,17 @@ import {
   generateFunctionId,
   upsertFunction,
   updateFunction as updateDbFunction,
-  getFunction
+  getFunction,
+  upsertFunctionToken,
+  getFunctionByExecEngineId,
+  getFunctionToken,
+  insertFunctionRelease
 } from '@/modules/automate/repositories/functions'
 import {
+  CreateFunctionReleaseDeps,
+  FunctionReleaseCreateBody,
   createFunctionFromTemplate,
+  createFunctionRelease,
   updateFunction
 } from '@/modules/automate/services/functionManagement'
 import { createAutomateRepoFromTemplate } from '@/modules/automate/services/github'
@@ -36,9 +43,13 @@ import { createFunction } from '@/modules/automate/clients/executionEngine'
 import { getUser } from '@/modules/core/repositories/users'
 import {
   AutomateFunctionCreationError,
+  AutomateFunctionReleaseCreateError,
   AutomateFunctionUpdateError
 } from '@/modules/automate/errors/management'
-import { omit } from 'lodash'
+import { isString, omit } from 'lodash'
+import { Request } from 'express'
+import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
+import { AutomateFunctionReleases } from '@/modules/core/dbSchema'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
@@ -91,7 +102,7 @@ const buildCreateFn = (
     createExecutionEngineFn:
       overrides?.createExecutionEngineFn ||
       (async () => ({
-        functionId: '456',
+        functionId: generateFunctionId(),
         token: 'aaaaa'
       })),
     generateAuthCode: async () => 'test-auth-code',
@@ -104,7 +115,8 @@ const buildCreateFn = (
     upsertGithubSecret: async () => true,
     insertGithubEnvVar: async () => true,
     getUser,
-    generateFunctionId
+    generateFunctionId,
+    upsertFunctionToken
   })
 
   return create
@@ -118,6 +130,27 @@ const buildUpdateFn = () => {
 
   return update
 }
+
+const buildCreateFunctionReleaseFn = (
+  resolveFunctionParams: CreateFunctionReleaseDeps['resolveFunctionParams']
+) => {
+  const create = createFunctionRelease({
+    resolveFunctionParams,
+    getFunctionByExecEngineId,
+    getFunctionToken,
+    insertFunctionRelease
+  })
+
+  return create
+}
+
+const buildFakeReq = (): Request =>
+  ({
+    params: {},
+    body: {},
+    headers: {},
+    cookies: {}
+  } as Request)
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate Functions @automate',
@@ -201,7 +234,13 @@ const buildUpdateFn = () => {
       })
 
       it('works with valid metadata', async () => {
-        const createFn = buildCreateFn()
+        const execEngineFn = {
+          functionId: '456',
+          token: 'some-token'
+        }
+        const createFn = buildCreateFn({
+          createExecutionEngineFn: async () => execEngineFn
+        })
         const fn = await createFn({
           input: exampleCreationInput(),
           userId: me.id
@@ -210,9 +249,10 @@ const buildUpdateFn = () => {
         expect(fn).to.be.ok
         expect(fn.fn).to.be.ok
         expect(fn.fn.functionId).to.be.ok
-        expect(fn.fn.executionEngineFunctionId).to.be.ok
+        expect(fn.fn.executionEngineFunctionId).to.eq(execEngineFn.functionId)
         expect(fn.repo).to.be.ok
         expect(fn.repo.id).to.be.ok
+        expect(fn.token.token).to.eq(execEngineFn.token)
       })
 
       it('removes invalid logo', async () => {
@@ -333,6 +373,330 @@ const buildUpdateFn = () => {
         })
 
         expect(updatedFn).to.deep.include(omit(input, 'id'))
+      })
+
+      describe('with new function release', () => {
+        const validResolveFunctionParams: CreateFunctionReleaseDeps['resolveFunctionParams'] =
+          () => ({
+            functionId: updatableFn.fn.executionEngineFunctionId,
+            token: updatableFn.token.token
+          })
+
+        const validBody = (): FunctionReleaseCreateBody => ({
+          commitId: '62f55086bd',
+          versionTag: '123.45.67',
+          inputSchema: {
+            $schema: 'https://json-schema.org/draft/2020-12/schema',
+            $id: 'https://example.com/product.schema.json',
+            title: 'Product',
+            description: "A product from Acme's catalog",
+            type: 'object',
+            properties: {
+              productId: {
+                description: 'The unique identifier for a product',
+                type: 'integer'
+              }
+            },
+            required: ['productId']
+          },
+          command: ['python', 'main.py'],
+          recommendedCPUm: 1000,
+          recommendedMemoryMi: 1000
+        })
+
+        const releaseKeys = AutomateFunctionReleases.withoutTablePrefix.col
+
+        it('fails if unable to resolve function ID from req', async () => {
+          const createFnRelease = buildCreateFunctionReleaseFn(() => ({}))
+          const req = buildFakeReq()
+
+          try {
+            await createFnRelease({ req })
+          } catch (e) {
+            expect(e).to.have.property('name', AutomateFunctionReleaseCreateError.name)
+            expect(e).to.have.property(
+              'message',
+              'Could not resolve function ID from request'
+            )
+          }
+        })
+
+        it('throws 401 if missing token', async () => {
+          const createFnRelease = buildCreateFunctionReleaseFn(() => ({
+            functionId: updatableFn.fn.executionEngineFunctionId
+          }))
+          const req = buildFakeReq()
+
+          try {
+            await createFnRelease({ req })
+          } catch (e) {
+            expect(e).to.have.property('name', UnauthorizedError.name)
+          }
+        })
+
+        it('fails if invalid function id', async () => {
+          const createFnRelease = buildCreateFunctionReleaseFn(() => ({
+            functionId: 'invalid-id',
+            token: 'valid-token'
+          }))
+          const req = buildFakeReq()
+
+          try {
+            await createFnRelease({ req })
+          } catch (e) {
+            expect(e).to.have.property('name', AutomateFunctionReleaseCreateError.name)
+            expect(e).to.have.property('message', 'Function not found')
+          }
+        })
+
+        it('throws 403 if invalid token', async () => {
+          const createFnRelease = buildCreateFunctionReleaseFn(() => ({
+            functionId: updatableFn.fn.executionEngineFunctionId,
+            token: 'invalid-token'
+          }))
+          const req = buildFakeReq()
+
+          try {
+            await createFnRelease({ req })
+          } catch (e) {
+            expect(e).to.have.property('name', ForbiddenError.name)
+          }
+        })
+
+        describe('and invalid body', () => {
+          it('fails if body is not a JSON object', async () => {
+            const createFnRelease = buildCreateFunctionReleaseFn(
+              validResolveFunctionParams
+            )
+            const req = buildFakeReq()
+            req.body = 'invalid-body'
+
+            try {
+              await createFnRelease({ req })
+            } catch (e) {
+              expect(e).to.have.property(
+                'name',
+                AutomateFunctionReleaseCreateError.name
+              )
+              expect(e).to.have.property('message', 'Request body is not a JSON object')
+            }
+          })
+
+          type InvalidBodyPropTestRun = {
+            value: unknown
+            description: string
+            errorMsg?: string
+          }
+
+          type InvalidBodyPropTestRunGroup = {
+            key: keyof FunctionReleaseCreateBody
+            errorMsg: string | RegExp
+            runs: InvalidBodyPropTestRun[]
+          }
+
+          const invalidBodyPropTestGroups: InvalidBodyPropTestRunGroup[] = [
+            {
+              key: 'commitId',
+              errorMsg: 'commitId must be a string of at least 6 characters',
+              runs: [
+                {
+                  value: undefined,
+                  description: 'missing commitId'
+                },
+                {
+                  value: 123,
+                  description: 'invalid commitId type'
+                },
+                {
+                  value: '123',
+                  description: 'commitId too short'
+                }
+              ]
+            },
+            {
+              key: 'versionTag',
+              errorMsg:
+                'versionTag must be a string with a max length of 128 characters. The first character must be alphanumeric (of lower or upper case) or an underscore, the subsequent characters may be alphanumeric (or lower or upper case), underscore, hyphen, or period.',
+              runs: [
+                {
+                  value: undefined,
+                  description: 'missing versionTag'
+                },
+                {
+                  value: 123,
+                  description: 'invalid versionTag type'
+                },
+                {
+                  value: '1'.repeat(129),
+                  description: 'versionTag too long'
+                },
+                {
+                  value: '1invalid',
+                  description: 'versionTag starts with invalid character'
+                }
+              ]
+            },
+            {
+              key: 'inputSchema',
+              errorMsg: /^inputSchema must be a valid JSON schema/,
+              runs: [
+                {
+                  value: undefined,
+                  description: 'missing inputSchema',
+                  errorMsg: 'inputSchema must be an object'
+                },
+                {
+                  value: 123,
+                  description: 'invalid inputSchema type',
+                  errorMsg: 'inputSchema must be an object'
+                },
+                {
+                  value: { $schema: 'invalid' },
+                  description: 'invalid $schema'
+                },
+                {
+                  value: { $id: 'invalid' },
+                  description: 'invalid $id'
+                },
+                {
+                  value: { type: 'invalid' },
+                  description: 'invalid type'
+                },
+                {
+                  value: { properties: { productId: { type: 'invalid' } } },
+                  description: 'invalid property type'
+                },
+                {
+                  value: { properties: { productId: { type: 'integer' } } },
+                  description: 'missing required'
+                }
+              ]
+            },
+            {
+              key: 'command',
+              errorMsg: 'command must be a non-empty array of strings',
+              runs: [
+                {
+                  value: undefined,
+                  description: 'missing command'
+                },
+                {
+                  value: 123,
+                  description: 'invalid command type'
+                },
+                {
+                  value: [],
+                  description: 'empty command'
+                },
+                {
+                  value: ['python', 123],
+                  description: 'invalid command element'
+                }
+              ]
+            },
+            {
+              key: 'recommendedCPUm',
+              errorMsg: 'recommendedCPUm must be an integer between 100 and 16000',
+              runs: [
+                {
+                  value: undefined,
+                  description: 'missing recommendedCPUm'
+                },
+                {
+                  value: 3.14,
+                  description: 'recommendedCPUm not an integer'
+                },
+                {
+                  value: 99,
+                  description: 'recommendedCPUm too low'
+                },
+                {
+                  value: 16001,
+                  description: 'recommendedCPUm too high'
+                }
+              ]
+            },
+            {
+              key: 'recommendedMemoryMi',
+              errorMsg: 'recommendedMemoryMi must be an integer between 1 and 8000',
+              runs: [
+                {
+                  value: undefined,
+                  description: 'missing recommendedMemoryMi'
+                },
+                {
+                  value: 3.14,
+                  description: 'recommendedMemoryMi not an integer'
+                },
+                {
+                  value: 0,
+                  description: 'recommendedMemoryMi too low'
+                },
+                {
+                  value: 8001,
+                  description: 'recommendedMemoryMi too high'
+                }
+              ]
+            }
+          ]
+
+          invalidBodyPropTestGroups.forEach(({ key, errorMsg, runs }) => {
+            runs.forEach(({ value, description, errorMsg: errorMsgOverride }) => {
+              it(`fails if ${description}`, async () => {
+                const createFnRelease = buildCreateFunctionReleaseFn(
+                  validResolveFunctionParams
+                )
+                const req = buildFakeReq()
+                req.body = { ...validBody(), [key]: value }
+
+                try {
+                  await createFnRelease({ req })
+                } catch (e) {
+                  expect(e).to.have.property(
+                    'name',
+                    AutomateFunctionReleaseCreateError.name
+                  )
+
+                  const msgTest = errorMsgOverride || errorMsg
+                  if (isString(msgTest)) {
+                    expect(e).to.have.property('message', msgTest)
+                  } else {
+                    expect(e).to.have.property('message').match(msgTest)
+                  }
+                }
+              })
+            })
+          })
+        })
+
+        it('successfully creates valid function release', async () => {
+          const createFnRelease = buildCreateFunctionReleaseFn(
+            validResolveFunctionParams
+          )
+          const req = buildFakeReq()
+          const body = validBody()
+          req.body = body
+
+          const fnRelease = await createFnRelease({ req })
+
+          expect(fnRelease).to.be.ok
+          expect(fnRelease).to.have.property(
+            releaseKeys.functionId,
+            updatableFn.fn.functionId
+          )
+          expect(fnRelease).to.have.property(releaseKeys.gitCommitId, body.commitId)
+          expect(fnRelease).to.have.property(releaseKeys.versionTag, body.versionTag)
+          expect(fnRelease).to.have.property(
+            releaseKeys.recommendedCPUm,
+            body.recommendedCPUm
+          )
+          expect(fnRelease).to.have.property(
+            releaseKeys.recommendedMemoryMi,
+            body.recommendedMemoryMi
+          )
+          expect(fnRelease.inputSchema).to.deep.equalInAnyOrder(body.inputSchema)
+          expect(fnRelease.command).to.deep.equal(body.command)
+        })
       })
     })
   }

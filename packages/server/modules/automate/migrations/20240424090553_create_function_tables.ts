@@ -39,10 +39,11 @@ export async function up(knex: Knex): Promise<void> {
       .notNullable()
     table.boolean('isFeatured').defaultTo(false).notNullable()
     table.text('logo')
-    table.text('executionEngineFunctionId').nullable().defaultTo(null)
+    table.string('executionEngineFunctionId').nullable().defaultTo(null)
 
     table.index('tags')
     table.index('supportedSourceApps')
+    table.index('executionEngineFunctionId')
   })
 
   // Function releases table

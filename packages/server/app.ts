@@ -62,6 +62,7 @@ import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
 import { addMocksToSchema } from '@graphql-tools/mock'
 import { buildMocksConfig } from '@/modules/mocks'
+import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 
 let graphqlServer: ApolloServer
 
@@ -370,6 +371,9 @@ export async function init() {
   // Init HTTP server & subscription server
   const server = http.createServer(app)
   subscriptionServer = buildApolloSubscriptionServer(graphqlServer, server)
+
+  // At the very end adding default error handler middleware
+  app.use(defaultErrorHandler)
 
   return { app, graphqlServer, server, subscriptionServer }
 }

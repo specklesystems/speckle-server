@@ -34,3 +34,8 @@ export class AutomateFunctionUpdateError extends BaseError {
   static defaultMessage = 'Error updating function'
   static code = 'AUTOMATE_FUNCTION_UPDATE_ERROR'
 }
+
+export class AutomateFunctionReleaseCreateError extends BaseError {
+  static defaultMessage = 'Error creating function release'
+  static code = 'AUTOMATE_FUNCTION_RELEASE_CREATE_ERROR'
+}

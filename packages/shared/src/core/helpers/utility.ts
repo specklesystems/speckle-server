@@ -129,3 +129,6 @@ export const removeNullOrUndefinedKeys = <T extends Record<string, unknown>>(
   }
   return ret as NonNullableProperties<NullableKeysToOptional<T>>
 }
+
+export const isArrayOf = <T>(arr: unknown, guard: (v: unknown) => v is T): arr is T[] =>
+  Array.isArray(arr) && arr.every(guard)

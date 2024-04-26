@@ -629,7 +629,16 @@ export const AutomateFunctionReleases = buildTableHelper('automate_function_rele
   'inputSchema',
   'command',
   'createdAt',
-  'gitCommitId'
+  'gitCommitId',
+  'recommendedCPUm',
+  'recommendedMemoryMi'
+])
+
+export const AutomateFunctionTokens = buildTableHelper('automate_function_tokens', [
+  'functionId',
+  'token',
+  'createdAt',
+  'updatedAt'
 ])
 
 export { knex }

@@ -14325,6 +14325,7 @@ __metadata:
     "@types/zxcvbn": ^4.4.1
     "@typescript-eslint/eslint-plugin": ^5.39.0
     "@typescript-eslint/parser": ^5.39.0
+    ajv: ^8.12.0
     apollo-server-express: ^3.10.2
     axios: ^1.6.0
     bcrypt: ^5.0.0
@@ -20366,7 +20367,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ajv@npm:^8.6.1":
+"ajv@npm:^8.12.0, ajv@npm:^8.6.1":
   version: 8.12.0
   resolution: "ajv@npm:8.12.0"
   dependencies:
