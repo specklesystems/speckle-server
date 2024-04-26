@@ -1338,12 +1338,12 @@ export default class Sandbox {
   }
 
   public async loadUrl(url: string) {
-    const objUrls = await UrlHelper.getResourceUrls(url)
+    const authToken = localStorage.getItem(
+      url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
+    ) as string
+    const objUrls = await UrlHelper.getResourceUrls(url, authToken)
     for (const url of objUrls) {
       console.log(`Loading ${url}`)
-      const authToken = localStorage.getItem(
-        url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
-      ) as string
       const loader = new SpeckleLoader(
         this.viewer.getWorldTree(),
         url,
