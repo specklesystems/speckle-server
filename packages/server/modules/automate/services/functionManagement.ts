@@ -42,6 +42,7 @@ import {
   Nullable,
   ensureError,
   isArrayOf,
+  isNullOrUndefined,
   removeNullOrUndefinedKeys
 } from '@speckle/shared'
 import { Request } from 'express'
@@ -328,7 +329,7 @@ const getFunctionReleaseInputFromBody = (req: Request): FunctionReleaseCreateBod
       : throwValidationError('command must be a non-empty array of strings')
 
   let recommendedCPUm = 1000
-  if (body.recommendedCPUm) {
+  if (!isNullOrUndefined(body.recommendedCPUm)) {
     recommendedCPUm =
       isInteger(body.recommendedCPUm) &&
       clamp(body.recommendedCPUm, 100, 16000) === body.recommendedCPUm
@@ -339,7 +340,7 @@ const getFunctionReleaseInputFromBody = (req: Request): FunctionReleaseCreateBod
   }
 
   let recommendedMemoryMi = 1000
-  if (body.recommendedMemoryMi) {
+  if (!isNullOrUndefined(body.recommendedMemoryMi)) {
     recommendedMemoryMi =
       isInteger(body.recommendedMemoryMi) &&
       clamp(body.recommendedMemoryMi, 1, 8000) === body.recommendedMemoryMi

@@ -531,7 +531,7 @@ const buildFakeReq = (): Request =>
                   description: 'versionTag too long'
                 },
                 {
-                  value: '1invalid',
+                  value: '$invalid',
                   description: 'versionTag starts with invalid character'
                 }
               ]
@@ -540,11 +540,6 @@ const buildFakeReq = (): Request =>
               key: 'inputSchema',
               errorMsg: /^inputSchema must be a valid JSON schema/,
               runs: [
-                {
-                  value: undefined,
-                  description: 'missing inputSchema',
-                  errorMsg: 'inputSchema must be an object'
-                },
                 {
                   value: 123,
                   description: 'invalid inputSchema type',
@@ -555,7 +550,7 @@ const buildFakeReq = (): Request =>
                   description: 'invalid $schema'
                 },
                 {
-                  value: { $id: 'invalid' },
+                  value: { $id: 444 },
                   description: 'invalid $id'
                 },
                 {
@@ -565,10 +560,6 @@ const buildFakeReq = (): Request =>
                 {
                   value: { properties: { productId: { type: 'invalid' } } },
                   description: 'invalid property type'
-                },
-                {
-                  value: { properties: { productId: { type: 'integer' } } },
-                  description: 'missing required'
                 }
               ]
             },
@@ -599,10 +590,6 @@ const buildFakeReq = (): Request =>
               errorMsg: 'recommendedCPUm must be an integer between 100 and 16000',
               runs: [
                 {
-                  value: undefined,
-                  description: 'missing recommendedCPUm'
-                },
-                {
                   value: 3.14,
                   description: 'recommendedCPUm not an integer'
                 },
@@ -620,10 +607,6 @@ const buildFakeReq = (): Request =>
               key: 'recommendedMemoryMi',
               errorMsg: 'recommendedMemoryMi must be an integer between 1 and 8000',
               runs: [
-                {
-                  value: undefined,
-                  description: 'missing recommendedMemoryMi'
-                },
                 {
                   value: 3.14,
                   description: 'recommendedMemoryMi not an integer'
@@ -643,6 +626,7 @@ const buildFakeReq = (): Request =>
           invalidBodyPropTestGroups.forEach(({ key, errorMsg, runs }) => {
             runs.forEach(({ value, description, errorMsg: errorMsgOverride }) => {
               it(`fails if ${description}`, async () => {
+                let didThrow = false
                 const createFnRelease = buildCreateFunctionReleaseFn(
                   validResolveFunctionParams
                 )
@@ -652,6 +636,7 @@ const buildFakeReq = (): Request =>
                 try {
                   await createFnRelease({ req })
                 } catch (e) {
+                  didThrow = true
                   expect(e).to.have.property(
                     'name',
                     AutomateFunctionReleaseCreateError.name
@@ -664,6 +649,8 @@ const buildFakeReq = (): Request =>
                     expect(e).to.have.property('message').match(msgTest)
                   }
                 }
+
+                expect(didThrow).to.be.true
               })
             })
           })
