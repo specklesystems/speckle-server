@@ -30,6 +30,7 @@
         <LayoutDialog
           v-model:open="openFilterDialog"
           :title="`Change filter for ${cardBase?.modelData?.displayName}`"
+          chromium65-compatibility
         >
           <FilterListSelect
             :filter="modelCard.sendFilter"

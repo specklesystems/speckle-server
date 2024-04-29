@@ -9,6 +9,7 @@
     <LayoutDialog
       v-model:open="openModelCardActionsDialog"
       :title="`${modelName} actions`"
+      chromium65-compatibility
     >
       <div class="-mx-1">
         <button

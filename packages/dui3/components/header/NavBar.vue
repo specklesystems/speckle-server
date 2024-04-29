@@ -22,7 +22,7 @@
               :icon-left="Cog6ToothIcon"
               @click="openConfigDialog = true"
             ></FormButton>
-            <LayoutDialog v-model:open="openConfigDialog">
+            <LayoutDialog v-model:open="openConfigDialog" chromium65-compatibility>
               <ConfigDialog @close="openConfigDialog = false" />
             </LayoutDialog>
           </div>

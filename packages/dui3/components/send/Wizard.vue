@@ -1,5 +1,9 @@
 <template>
-  <LayoutDialog v-model:open="showSendDialog" @fully-closed="step = 1">
+  <LayoutDialog
+    v-model:open="showSendDialog"
+    chromium65-compatibility
+    @fully-closed="step = 1"
+  >
     <template #header>
       <div class="flex items-center space-x-2 mb-0">
         <div

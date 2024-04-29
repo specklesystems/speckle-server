@@ -30,7 +30,7 @@
         >
           {{ modelCard.selectedVersionId }}
         </FormButton>
-        <LayoutDialog v-model:open="openVersionsDialog">
+        <LayoutDialog v-model:open="openVersionsDialog" chromium65-compatibility>
           <div class="-mx-6 -my-6 space-y-2">
             <WizardVersionSelector
               :account-id="modelCard.accountId"
