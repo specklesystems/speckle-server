@@ -106,6 +106,38 @@ export async function upsertAutomationRun(automationRun: InsertableAutomationRun
   return
 }
 
+export async function getFunctionRuns(params: { functionRunIds: string[] }) {
+  const { functionRunIds } = params
+  if (!functionRunIds.length) return []
+
+  const q = AutomationFunctionRuns.knex()
+    .select<
+      Array<
+        AutomationFunctionRunRecord & {
+          automationId: string
+          automationRevisionId: string
+        }
+      >
+    >([
+      ...AutomationFunctionRuns.cols,
+      AutomationRuns.col.automationRevisionId,
+      AutomationRevisions.col.automationId
+    ])
+    .whereIn(AutomationFunctionRuns.col.id, functionRunIds)
+    .innerJoin(
+      AutomationRuns.name,
+      AutomationRuns.col.id,
+      AutomationFunctionRuns.col.runId
+    )
+    .innerJoin(
+      AutomationRevisions.name,
+      AutomationRevisions.col.id,
+      AutomationRuns.col.automationRevisionId
+    )
+
+  return await q
+}
+
 export async function getAutomationRun(
   automationRunId: string
 ): Promise<AutomationRunWithTriggersFunctionRuns | null> {

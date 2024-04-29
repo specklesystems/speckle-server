@@ -220,7 +220,7 @@ extend type Query {
 
 input AutomateFunctionRunStatusReportInput {
   functionRunId: String!
-  status: AutomationRunStatus!
+  status: AutomateRunStatus!
   statusMessage: String
   contextView: String
   """

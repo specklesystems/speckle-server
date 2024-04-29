@@ -267,7 +267,7 @@ export type AutomateFunctionRunStatusReportInput = {
   functionRunId: Scalars['String'];
   /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: InputMaybe<Scalars['JSONObject']>;
-  status: AutomationRunStatus;
+  status: AutomateRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
 

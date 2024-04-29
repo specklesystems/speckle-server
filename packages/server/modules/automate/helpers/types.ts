@@ -25,6 +25,14 @@ export type AutomationRunStatus =
   | 'failure'
   | 'error'
 
+export const AutomationRunStatuses: Record<AutomationRunStatus, AutomationRunStatus> = {
+  pending: 'pending',
+  running: 'running',
+  success: 'success',
+  failure: 'failure',
+  error: 'error'
+}
+
 export type AutomationRunRecord = {
   id: string
   automationRevisionId: string

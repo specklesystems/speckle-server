@@ -70,6 +70,56 @@ export const onModelVersionCreate =
     )
   }
 
+type InsertableAutomationRunWithExtendedFunctionRuns = Merge<
+  InsertableAutomationRun,
+  {
+    functionRuns: TriggeredAutomationFunctionRun[]
+  }
+>
+
+function createAutomationRunData(params: {
+  manifests: BaseTriggerManifest[]
+  automationWithRevision: AutomationWithRevision<AutomationRevisionWithTriggersFunctions>
+}): InsertableAutomationRunWithExtendedFunctionRuns {
+  const { manifests, automationWithRevision } = params
+  const runId = cryptoRandomString({ length: 15 })
+  const versionCreatedManifests = manifests.filter(isVersionCreatedTriggerManifest)
+  if (!versionCreatedManifests.length) {
+    throw new AutomateInvalidTriggerError(
+      'Only version creation triggers currently supported'
+    )
+  }
+
+  const automationRun: InsertableAutomationRunWithExtendedFunctionRuns = {
+    id: runId,
+    triggers: [
+      ...versionCreatedManifests.map((m) => ({
+        triggeringId: m.versionId,
+        triggerType: m.triggerType
+      }))
+    ],
+    executionEngineRunId: null,
+    status: 'pending' as const,
+    automationRevisionId: automationWithRevision.revision.id,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    functionRuns: automationWithRevision.revision.functions.map((f) => ({
+      functionId: f.functionId,
+      runId,
+      id: cryptoRandomString({ length: 15 }),
+      status: 'pending' as const,
+      elapsed: 0,
+      results: null,
+      contextView: null,
+      statusMessage: null,
+      resultVersions: [],
+      functionReleaseId: f.functionReleaseId,
+      functionInputs: f.functionInputs
+    }))
+  }
+  return automationRun
+}
+
 /**
  * This triggers a run for a specific automation revision
  */
@@ -263,54 +313,4 @@ async function composeTriggerData(params: {
   }
 
   return manifests
-}
-
-type InsertableAutomationRunWithExtendedFunctionRuns = Merge<
-  InsertableAutomationRun,
-  {
-    functionRuns: TriggeredAutomationFunctionRun[]
-  }
->
-
-function createAutomationRunData(params: {
-  manifests: BaseTriggerManifest[]
-  automationWithRevision: AutomationWithRevision<AutomationRevisionWithTriggersFunctions>
-}): InsertableAutomationRunWithExtendedFunctionRuns {
-  const { manifests, automationWithRevision } = params
-  const runId = cryptoRandomString({ length: 15 })
-  const versionCreatedManifests = manifests.filter(isVersionCreatedTriggerManifest)
-  if (!versionCreatedManifests.length) {
-    throw new AutomateInvalidTriggerError(
-      'Only version creation triggers currently supported'
-    )
-  }
-
-  const automationRun: InsertableAutomationRunWithExtendedFunctionRuns = {
-    id: runId,
-    triggers: [
-      ...versionCreatedManifests.map((m) => ({
-        triggeringId: m.versionId,
-        triggerType: m.triggerType
-      }))
-    ],
-    executionEngineRunId: null,
-    status: 'pending' as const,
-    automationRevisionId: automationWithRevision.revision.id,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    functionRuns: automationWithRevision.revision.functions.map((f) => ({
-      functionId: f.functionId,
-      runId,
-      id: cryptoRandomString({ length: 15 }),
-      status: 'pending' as const,
-      elapsed: 0,
-      results: null,
-      contextView: null,
-      statusMessage: null,
-      resultVersions: [],
-      functionReleaseId: f.functionReleaseId,
-      functionInputs: f.functionInputs
-    }))
-  }
-  return automationRun
 }
