@@ -36,6 +36,15 @@
       </div>
     </div>
     <div class="px-2">
+      <p class="h5 mb-4">Chromium 65 Scrollable Dialogs Test</p>
+      <FormButton @click="showBigDialog = !showBigDialog">Show Big Dialog</FormButton>
+      <LayoutDialog v-model:open="showBigDialog" title="hello" chromium65-compatibility>
+        <div class="bg-purple-500" style="height: 2000px;">
+          This is a test for chromium 65. If this is not scrollable, something is wrong!
+        </div>
+      </LayoutDialog>
+    </div>
+    <div class="px-2">
       <p class="h5">Selection info</p>
       <p class="text-sm text-foreground-2 py-2">
         Selection info. This should change in real time based on user selection, but
@@ -107,6 +116,7 @@ import { CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import { useHostAppStore } from '~/store/hostApp'
 import { useSelectionStore } from '~/store/selection'
 
+const showBigDialog = ref(false)
 
 const { $testBindings } = useNuxtApp()
 

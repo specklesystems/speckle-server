@@ -50,7 +50,11 @@
         </FormButton>
       </div>
     </div>
-    <LayoutDialog v-model:open="showNewModelDialog" title="Create new model">
+    <LayoutDialog
+      v-model:open="showNewModelDialog"
+      title="Create new model"
+      chromium65-compatibility
+    >
       <form @submit="onSubmit">
         <FormTextInput
           v-model="newModelName"

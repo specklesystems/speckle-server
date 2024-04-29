@@ -6,7 +6,11 @@
         <XMarkIcon class="w-6 h-6" />
       </UserAvatar>
     </button>
-    <LayoutDialog v-model:open="showAccountsDialog" title="Select account">
+    <LayoutDialog
+      v-model:open="showAccountsDialog"
+      title="Select account"
+      chromium65-compatibility
+    >
       <div class="">
         <AccountsItem
           v-for="acc in accounts"

@@ -54,7 +54,11 @@
         </FormButton>
       </div>
     </div>
-    <LayoutDialog v-model:open="showNewProjectDialog" title="Create new project">
+    <LayoutDialog
+      v-model:open="showNewProjectDialog"
+      title="Create new project"
+      chromium65-compatibility
+    >
       <form @submit="onSubmitCreateNewProject">
         <FormTextInput
           v-model="newProjectName"
