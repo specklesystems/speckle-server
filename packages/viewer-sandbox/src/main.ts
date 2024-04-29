@@ -377,6 +377,9 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/a64b432b34/commits/99d809460a'
     // Bunch a doors
     // 'https://latest.speckle.dev/streams/a64b432b34/commits/c184ba7d88'
+    // 'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
+    // Tiny cube
+    // 'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
   )
 }
 

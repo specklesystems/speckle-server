@@ -13,10 +13,10 @@ import {
   ExplodeExtension,
   DiffExtension,
   SpeckleLoader,
-  ObjLoader
+  ObjLoader,
+  UrlHelper
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
-import UrlHelper from './UrlHelper'
 import { DiffResult } from '@speckle/viewer'
 import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
@@ -1329,12 +1329,12 @@ export default class Sandbox {
   }
 
   public async loadUrl(url: string) {
-    const objUrls = await UrlHelper.getResourceUrls(url)
+    const authToken = localStorage.getItem(
+      url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
+    ) as string
+    const objUrls = await UrlHelper.getResourceUrls(url, authToken)
     for (const url of objUrls) {
       console.log(`Loading ${url}`)
-      const authToken = localStorage.getItem(
-        url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
-      ) as string
       const loader = new SpeckleLoader(
         this.viewer.getWorldTree(),
         url,
