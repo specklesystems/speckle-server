@@ -150,7 +150,7 @@ const open = computed({
  * DUI3/Chromium 65 compatibility mode.
  */
 const insetClass = computed(() => {
-  return props.chromium65Compatibility ? 'inset-0' : 'top-0 bottom-0 right-0 left-0'
+  return props.chromium65Compatibility ? 'top-0 bottom-0 right-0 left-0' : 'inset-0'
 })
 
 /**
