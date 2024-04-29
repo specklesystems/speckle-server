@@ -15,6 +15,11 @@ export class AutomationCreationError extends BaseError {
   static code = 'AUTOMATION_CREATION_ERROR'
 }
 
+export class AutomationRevisionCreationError extends BaseError {
+  static defaultMessage = 'Error creating automation revision'
+  static code = 'AUTOMATION_REVISION_CREATION_ERROR'
+}
+
 export class AutomationUpdateError extends BaseError {
   static defaultMessage = 'Error updating automation'
   static code = 'AUTOMATION_UPDATE_ERROR'

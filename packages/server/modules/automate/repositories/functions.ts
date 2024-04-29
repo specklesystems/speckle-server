@@ -67,6 +67,15 @@ export const getFunctions = async (fnIds: string[]) => {
   )
 }
 
+export const getFunctionReleases = async (fnReleaseIds: string[]) => {
+  if (!fnReleaseIds.length) return []
+
+  return await AutomateFunctionReleases.knex<AutomateFunctionReleaseRecord[]>().whereIn(
+    AutomateFunctionReleases.col.functionReleaseId,
+    fnReleaseIds
+  )
+}
+
 export const getFunction = async (
   fnId: string
 ): Promise<Nullable<AutomateFunctionRecord>> => {

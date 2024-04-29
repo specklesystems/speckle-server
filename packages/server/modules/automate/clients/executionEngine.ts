@@ -1,6 +1,6 @@
 import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
 import {
-  AutomationFunctionRunRecord,
+  AutomationFunctionRunWithFunctionMetadata,
   BaseTriggerManifest,
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
@@ -64,10 +64,11 @@ export type AutomationRunResponseBody = {
   automationRunId: string
 }
 
-export type TriggeredAutomationFunctionRun = AutomationFunctionRunRecord & {
-  resultVersions: string[]
-  functionInputs: Record<string, unknown> | null
-}
+export type TriggeredAutomationFunctionRun =
+  AutomationFunctionRunWithFunctionMetadata & {
+    resultVersions: string[]
+    functionInputs: Record<string, unknown> | null
+  }
 
 export const triggerAutomationRun = async (params: {
   projectId: string

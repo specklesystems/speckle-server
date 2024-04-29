@@ -11,9 +11,11 @@ import {
   AutomationRunTriggerRecord,
   AutomationFunctionRunRecord,
   AutomationRevisionWithTriggersFunctions,
-  AutomationTriggerType
+  AutomationTriggerType,
+  AutomateRevisionFunctionWithFunctionMetadata
 } from '@/modules/automate/helpers/types'
 import {
+  AutomateFunctionReleases,
   AutomationFunctionRuns,
   AutomationRevisionFunctions,
   AutomationRevisions,
@@ -28,17 +30,22 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UsersMetaRecord } from '@/modules/core/helpers/types'
 import { OAuthAppAuthentication } from '@octokit/auth-oauth-user'
 import { Nullable } from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
 import _, { pick } from 'lodash'
-import { SetRequired } from 'type-fest'
+import { SetOptional, SetRequired } from 'type-fest'
+
+export const generateRevisionId = () => cryptoRandomString({ length: 10 })
 
 export async function getActiveTriggerDefinitions<
   T extends AutomationTriggerType = AutomationTriggerType
->(
-  params: AutomationTriggerRecordBase<T>
-): Promise<AutomationTriggerDefinitionRecord<T>[]> {
+>(params: AutomationTriggerRecordBase<T>) {
   const { triggeringId, triggerType } = params
-  console.log(triggeringId, triggerType)
-  return []
+
+  const q = AutomationTriggers.knex<AutomationTriggerDefinitionRecord<T>[]>()
+    .where(AutomationTriggers.col.triggeringId, triggeringId)
+    .andWhere(AutomationTriggers.col.triggerType, triggerType)
+
+  return await q
 }
 
 export async function getAutomationRevision(
@@ -52,10 +59,18 @@ export async function getAutomationRevision(
   if (!automationRevision) return null
 
   const [functions, triggers, automation] = await Promise.all([
-    AutomationRevisionFunctions.knex()
-      .select()
-      .where(AutomationRevisionFunctions.col.automationRevisionId, revisionId),
-    AutomationTriggers.knex()
+    AutomationRevisionFunctions.knex<AutomateRevisionFunctionWithFunctionMetadata[]>()
+      .select([
+        ...AutomationRevisionFunctions.cols,
+        AutomateFunctionReleases.col.functionId
+      ])
+      .where(AutomationRevisionFunctions.col.automationRevisionId, revisionId)
+      .innerJoin(
+        AutomateFunctionReleases.name,
+        AutomateFunctionReleases.col.functionReleaseId,
+        AutomationRevisionFunctions.col.functionReleaseId
+      ),
+    AutomationTriggers.knex<AutomationTriggerDefinitionRecord[]>()
       .select()
       .where(AutomationTriggers.col.automationRevisionId, revisionId),
     Automations.knex<AutomationRecord>()
@@ -174,32 +189,70 @@ export async function storeAutomation(
   return { automation: newAutomation, token: newToken }
 }
 
-export type InsertableAutomationRevision = AutomationRevisionRecord & {
-  functions: Omit<AutomateRevisionFunctionRecord, 'automationRevisionId'>[]
-  triggers: Omit<AutomationTriggerDefinitionRecord, 'automationRevisionId'>[]
+export type InsertableAutomationRevisionFunction = Omit<
+  AutomateRevisionFunctionRecord,
+  'automationRevisionId'
+>
+
+export type InsertableAutomationRevisionTrigger = Omit<
+  AutomationTriggerDefinitionRecord,
+  'automationRevisionId'
+>
+
+export type InsertableAutomationRevision = SetOptional<
+  AutomationRevisionRecord,
+  'createdAt' | 'id'
+> & {
+  functions: InsertableAutomationRevisionFunction[]
+  triggers: InsertableAutomationRevisionTrigger[]
 }
 
 export async function storeAutomationRevision(revision: InsertableAutomationRevision) {
+  const id = revision.id || generateRevisionId()
   const rev = _.pick(revision, AutomationRevisions.withoutTablePrefix.cols)
-  await AutomationRevisions.knex().insert(rev)
-  await Promise.all([
-    AutomationRevisionFunctions.knex().insert(
-      revision.functions.map(
-        (f): AutomateRevisionFunctionRecord => ({
-          ...f,
-          automationRevisionId: revision.id
-        })
+  const [newRev] = await AutomationRevisions.knex()
+    .insert({
+      ...rev,
+      id
+    })
+    .returning<AutomationRevisionRecord[]>('*')
+  const [functions, triggers] = await Promise.all([
+    AutomationRevisionFunctions.knex()
+      .insert(
+        revision.functions.map(
+          (f): AutomateRevisionFunctionRecord => ({
+            ...f,
+            automationRevisionId: id
+          })
+        )
       )
-    ),
-    AutomationTriggers.knex().insert(
-      revision.triggers.map(
-        (t): AutomationTriggerDefinitionRecord => ({
-          ...t,
-          automationRevisionId: revision.id
-        })
+      .returning<AutomateRevisionFunctionRecord[]>('*'),
+    AutomationTriggers.knex()
+      .insert(
+        revision.triggers.map(
+          (t): AutomationTriggerDefinitionRecord => ({
+            ...t,
+            automationRevisionId: id
+          })
+        )
       )
-    )
+      .returning<AutomationTriggerDefinitionRecord[]>('*'),
+    // Unset 'active in revision' for all other revisions
+    ...(revision.active
+      ? [
+          AutomationRevisions.knex()
+            .where(AutomationRevisions.col.automationId, newRev.automationId)
+            .andWhereNot(AutomationRevisions.col.id, newRev.id)
+            .update(AutomationRevisions.withoutTablePrefix.col.active, false)
+        ]
+      : [])
   ])
+
+  return {
+    ...newRev,
+    functions,
+    triggers
+  }
 }
 
 export async function getAutomationToken(
@@ -232,21 +285,32 @@ export async function getUserGithubAuthData(
   return record ? (record.value as OAuthAppAuthentication) : null
 }
 
-export async function getAutomations(params: { automationIds: string[] }) {
-  const { automationIds } = params
+export async function getAutomations(params: {
+  automationIds: string[]
+  projectId?: string
+}) {
+  const { automationIds, projectId } = params
   if (!automationIds.length) return []
 
   const q = Automations.knex<AutomationRecord[]>()
     .select()
     .whereIn(Automations.col.id, automationIds)
 
+  if (projectId?.length) {
+    q.andWhere(Automations.col.projectId, projectId)
+  }
+
   return await q
 }
 
 export async function getAutomation(params: {
   automationId: string
+  projectId?: string
 }): Promise<Nullable<AutomationRecord>> {
-  return (await getAutomations({ automationIds: [params.automationId] }))?.[0] || null
+  const { automationId, projectId } = params
+  return (
+    (await getAutomations({ automationIds: [automationId], projectId }))?.[0] || null
+  )
 }
 
 export async function updateAutomation(
@@ -258,4 +322,45 @@ export async function updateAutomation(
     .returning<AutomationRecord[]>('*')
 
   return ret
+}
+
+export async function getAutomationTriggerDefinitions<
+  T extends AutomationTriggerType = AutomationTriggerType
+>(params: { automationId: string; projectId?: string; triggerType?: T }) {
+  const { automationId, projectId, triggerType } = params
+
+  const revisionQuery = AutomationRevisions.knex()
+    .select([AutomationRevisions.col.id])
+    .where(AutomationRevisions.col.automationId, automationId)
+    .andWhere(AutomationRevisions.col.active, true)
+    .innerJoin(
+      AutomationTriggers.name,
+      AutomationTriggers.col.automationRevisionId,
+      AutomationRevisions.col.id
+    )
+    .limit(1)
+
+  if (projectId) {
+    revisionQuery
+      .innerJoin(
+        Automations.name,
+        Automations.col.id,
+        AutomationRevisions.col.automationId
+      )
+      .andWhere(Automations.col.projectId, projectId)
+  }
+
+  const mainQ = AutomationTriggers.knex<AutomationTriggerDefinitionRecord<T>[]>().where(
+    AutomationTriggers.col.automationRevisionId,
+    revisionQuery
+  )
+
+  if (triggerType) {
+    mainQ.andWhere(AutomationTriggers.col.triggerType, triggerType)
+  }
+
+  return (await mainQ).map((r) => ({
+    ...r,
+    automationId
+  }))
 }

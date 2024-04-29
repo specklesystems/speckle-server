@@ -152,8 +152,7 @@ input ProjectAutomationUpdateInput {
 }
 
 input AutomationRevisionCreateFunctionInput {
-  functionId: String!
-  releaseId: String!
+  functionReleaseId: String!
   """
   Should be encrypted from the client side
   """
@@ -262,6 +261,10 @@ type ProjectAutomationMutations {
   create(input: ProjectAutomationCreateInput!): Automation!
   update(input: ProjectAutomationUpdateInput!): Automation!
   createRevision(input: ProjectAutomationRevisionCreateInput!): AutomationRevision!
+  """
+  Trigger an automation with a fake "version created" trigger. The "version created" will
+  just refer to the last version of the model.
+  """
   trigger(automationId: ID!): Boolean!
 }
 

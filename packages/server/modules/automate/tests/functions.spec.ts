@@ -5,152 +5,37 @@ import {
   MissingAutomateGithubAuthError
 } from '@/modules/automate/errors/github'
 import {
-  generateFunctionId,
-  upsertFunction,
-  updateFunction as updateDbFunction,
-  getFunction,
-  upsertFunctionToken,
-  getFunctionByExecEngineId,
-  getFunctionToken,
-  insertFunctionRelease
-} from '@/modules/automate/repositories/functions'
-import {
   CreateFunctionReleaseDeps,
   FunctionReleaseCreateBody,
-  createFunctionFromTemplate,
-  createFunctionRelease,
-  updateFunction
+  createFunctionFromTemplate
 } from '@/modules/automate/services/functionManagement'
-import { createAutomateRepoFromTemplate } from '@/modules/automate/services/github'
-import {
-  GithubCreateRepoFromTemplateData,
-  OAuthAppAuthentication,
-  createRepoFromTemplate,
-  encryptSecret
-} from '@/modules/core/clients/github'
 import {
   AutomateFunctionTemplateLanguage,
-  CreateAutomateFunctionInput,
   UpdateAutomateFunctionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { Environment, Roles, SourceAppNames } from '@speckle/shared'
 import { expect } from 'chai'
-import { getValidatedUserAuthMetadata } from '@/modules/core/services/githubApp'
 import { OrgAuthAccessRestrictionsError } from '@/modules/core/errors/github'
-import { createFunction } from '@/modules/automate/clients/executionEngine'
-import { getUser } from '@/modules/core/repositories/users'
 import {
   AutomateFunctionCreationError,
   AutomateFunctionReleaseCreateError,
   AutomateFunctionUpdateError
 } from '@/modules/automate/errors/management'
 import { isString, omit } from 'lodash'
-import { Request } from 'express'
 import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
 import { AutomateFunctionReleases } from '@/modules/core/dbSchema'
+import {
+  buildCreateFn,
+  buildCreateFunctionReleaseFn,
+  buildUpdateFn,
+  exampleCreationInput,
+  exampleFunctionReleaseCreateBody
+} from '@/test/speckle-helpers/automationHelper'
+import { expectToThrow } from '@/test/assertionHelper'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
-
-const exampleCreationInput = (): CreateAutomateFunctionInput => ({
-  template: AutomateFunctionTemplateLanguage.Python,
-  name: 'test-fn',
-  description: 'test description',
-  logo: 'https://example.com/logo.png',
-  supportedSourceApps: [SourceAppNames[0]],
-  tags: ['tag1', 'tag2']
-})
-
-/**
- * Everything's the real implementation except the GH & Execution Engine API calls
- */
-const buildCreateFn = (
-  overrides?: Partial<{
-    getValidatedGithubAuthMetadata: ReturnType<typeof getValidatedUserAuthMetadata>
-    createRepoFromTemplate: typeof createRepoFromTemplate
-    createExecutionEngineFn: typeof createFunction
-  }>
-) => {
-  const getValidatedGithubAuthMetadata =
-    overrides?.getValidatedGithubAuthMetadata ||
-    (async (): Promise<OAuthAppAuthentication> => ({
-      token: 'a',
-      scopes: ['b', 'c'],
-      clientType: 'oauth-app',
-      clientId: 'd',
-      clientSecret: 'e',
-      tokenType: 'oauth',
-      type: 'token'
-    }))
-
-  const create = createFunctionFromTemplate({
-    createGithubRepo: createAutomateRepoFromTemplate({
-      getValidatedGithubAuthMetadata,
-      createRepoFromTemplate:
-        overrides?.createRepoFromTemplate ||
-        (async () =>
-          ({
-            id: '123',
-            name: 'speckle-server',
-            full_name: 'specklesystems/speckle-server',
-            html_url: 'https://github.com/specklesystems/speckle-server',
-            ssh_url: 'git@github.com:specklesystems/speckle-server.git'
-          } as unknown as GithubCreateRepoFromTemplateData))
-    }),
-    upsertFn: upsertFunction,
-    createExecutionEngineFn:
-      overrides?.createExecutionEngineFn ||
-      (async () => ({
-        functionId: generateFunctionId(),
-        token: 'aaaaa'
-      })),
-    generateAuthCode: async () => 'test-auth-code',
-    getValidatedGithubAuthMetadata,
-    getGithubRepoPublicKey: async () => ({
-      key_id: '3380204578043523366',
-      key: 'enDLkz8Llm+QHwTL3CwMdzhxoUpAZj3S5mJKWmyBi1A='
-    }),
-    encryptGithubSecret: encryptSecret,
-    upsertGithubSecret: async () => true,
-    insertGithubEnvVar: async () => true,
-    getUser,
-    generateFunctionId,
-    upsertFunctionToken
-  })
-
-  return create
-}
-
-const buildUpdateFn = () => {
-  const update = updateFunction({
-    updateFunction: updateDbFunction,
-    getFunction
-  })
-
-  return update
-}
-
-const buildCreateFunctionReleaseFn = (
-  resolveFunctionParams: CreateFunctionReleaseDeps['resolveFunctionParams']
-) => {
-  const create = createFunctionRelease({
-    resolveFunctionParams,
-    getFunctionByExecEngineId,
-    getFunctionToken,
-    insertFunctionRelease
-  })
-
-  return create
-}
-
-const buildFakeReq = (): Request =>
-  ({
-    params: {},
-    body: {},
-    headers: {},
-    cookies: {}
-  } as Request)
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate Functions @automate',
@@ -177,31 +62,33 @@ const buildFakeReq = (): Request =>
     describe('creation', () => {
       it('fails with invalid template id', async () => {
         const createFn = buildCreateFn()
-        try {
-          await createFn({
-            input: {
-              ...exampleCreationInput(),
-              template: 'invalid-template-id' as AutomateFunctionTemplateLanguage
-            },
-            userId: me.id
-          })
-        } catch (e) {
-          expect(e).to.have.property('name', InvalidFunctionTemplateError.name)
-        }
+
+        const e = await expectToThrow(
+          async () =>
+            await createFn({
+              input: {
+                ...exampleCreationInput(),
+                template: 'invalid-template-id' as AutomateFunctionTemplateLanguage
+              },
+              userId: me.id
+            })
+        )
+        expect(e).to.have.property('name', InvalidFunctionTemplateError.name)
       })
 
       it('fails without valid github auth', async () => {
         const createFn = buildCreateFn({
           getValidatedGithubAuthMetadata: async () => null
         })
-        try {
-          await createFn({
-            input: exampleCreationInput(),
-            userId: me.id
-          })
-        } catch (e) {
-          expect(e).to.have.property('name', MissingAutomateGithubAuthError.name)
-        }
+
+        const e = await expectToThrow(
+          async () =>
+            await createFn({
+              input: exampleCreationInput(),
+              userId: me.id
+            })
+        )
+        expect(e).to.have.property('name', MissingAutomateGithubAuthError.name)
       })
 
       it('fails if GH app is not configured w/ specklesystems templates properly', async () => {
@@ -210,27 +97,29 @@ const buildFakeReq = (): Request =>
             throw new OrgAuthAccessRestrictionsError()
           }
         })
-        try {
-          await createFn({
-            input: exampleCreationInput(),
-            userId: me.id
-          })
-        } catch (e) {
-          expect(e).to.have.property('name', MisconfiguredTemplateOrgError.name)
-        }
+
+        const e = await expectToThrow(
+          async () =>
+            await createFn({
+              input: exampleCreationInput(),
+              userId: me.id
+            })
+        )
+        expect(e).to.have.property('name', MisconfiguredTemplateOrgError.name)
       })
 
       it('fails with invalid user', async () => {
         const createFn = buildCreateFn()
-        try {
-          await createFn({
-            input: exampleCreationInput(),
-            userId: 'invalid-user-id'
-          })
-        } catch (e) {
-          expect(e).to.have.property('name', AutomateFunctionCreationError.name)
-          expect(e).to.have.property('message', 'Speckle user not found')
-        }
+
+        const e = await expectToThrow(
+          async () =>
+            await createFn({
+              input: exampleCreationInput(),
+              userId: 'invalid-user-id'
+            })
+        )
+        expect(e).to.have.property('name', AutomateFunctionCreationError.name)
+        expect(e).to.have.property('message', 'Speckle user not found')
       })
 
       it('works with valid metadata', async () => {
@@ -284,37 +173,39 @@ const buildFakeReq = (): Request =>
 
       it('fails when trying to update non-existent function', async () => {
         const updateFn = buildUpdateFn()
-        try {
-          await updateFn({
-            userId: me.id,
-            input: {
-              name: 'new-name',
-              id: 'babababa'
-            }
-          })
-        } catch (e) {
-          expect(e).to.have.property('name', AutomateFunctionUpdateError.name)
-          expect(e).to.have.property('message', 'Function not found')
-        }
+
+        const e = await expectToThrow(
+          async () =>
+            await updateFn({
+              userId: me.id,
+              input: {
+                name: 'new-name',
+                id: 'babababa'
+              }
+            })
+        )
+        expect(e).to.have.property('name', AutomateFunctionUpdateError.name)
+        expect(e).to.have.property('message', 'Function not found')
       })
 
       it('fails when trying to update function of another user', async () => {
         const updateFn = buildUpdateFn()
-        try {
-          await updateFn({
-            userId: otherGuy.id,
-            input: {
-              name: 'new-name',
-              id: updatableFn.fn.functionId
-            }
-          })
-        } catch (e) {
-          expect(e).to.have.property('name', AutomateFunctionUpdateError.name)
-          expect(e).to.have.property(
-            'message',
-            'User does not have the rights to update this function'
-          )
-        }
+
+        const e = await expectToThrow(
+          async () =>
+            await updateFn({
+              userId: otherGuy.id,
+              input: {
+                name: 'new-name',
+                id: updatableFn.fn.functionId
+              }
+            })
+        )
+        expect(e).to.have.property('name', AutomateFunctionUpdateError.name)
+        expect(e).to.have.property(
+          'message',
+          'User does not have the rights to update this function'
+        )
       })
 
       it('only updates set & non-null values', async () => {
@@ -382,56 +273,28 @@ const buildFakeReq = (): Request =>
             token: updatableFn.token.token
           })
 
-        const validBody = (): FunctionReleaseCreateBody => ({
-          commitId: '62f55086bd',
-          versionTag: '123.45.67',
-          inputSchema: {
-            $schema: 'https://json-schema.org/draft/2020-12/schema',
-            $id: 'https://example.com/product.schema.json',
-            title: 'Product',
-            description: "A product from Acme's catalog",
-            type: 'object',
-            properties: {
-              productId: {
-                description: 'The unique identifier for a product',
-                type: 'integer'
-              }
-            },
-            required: ['productId']
-          },
-          command: ['python', 'main.py'],
-          recommendedCPUm: 1000,
-          recommendedMemoryMi: 1000
-        })
+        const validBody = exampleFunctionReleaseCreateBody
 
         const releaseKeys = AutomateFunctionReleases.withoutTablePrefix.col
 
         it('fails if unable to resolve function ID from req', async () => {
           const createFnRelease = buildCreateFunctionReleaseFn(() => ({}))
-          const req = buildFakeReq()
 
-          try {
-            await createFnRelease({ req })
-          } catch (e) {
-            expect(e).to.have.property('name', AutomateFunctionReleaseCreateError.name)
-            expect(e).to.have.property(
-              'message',
-              'Could not resolve function ID from request'
-            )
-          }
+          const e = await expectToThrow(async () => await createFnRelease())
+          expect(e).to.have.property('name', AutomateFunctionReleaseCreateError.name)
+          expect(e).to.have.property(
+            'message',
+            'Could not resolve function ID from request'
+          )
         })
 
         it('throws 401 if missing token', async () => {
           const createFnRelease = buildCreateFunctionReleaseFn(() => ({
             functionId: updatableFn.fn.executionEngineFunctionId
           }))
-          const req = buildFakeReq()
 
-          try {
-            await createFnRelease({ req })
-          } catch (e) {
-            expect(e).to.have.property('name', UnauthorizedError.name)
-          }
+          const e = await expectToThrow(async () => await createFnRelease())
+          expect(e).to.have.property('name', UnauthorizedError.name)
         })
 
         it('fails if invalid function id', async () => {
@@ -439,14 +302,10 @@ const buildFakeReq = (): Request =>
             functionId: 'invalid-id',
             token: 'valid-token'
           }))
-          const req = buildFakeReq()
 
-          try {
-            await createFnRelease({ req })
-          } catch (e) {
-            expect(e).to.have.property('name', AutomateFunctionReleaseCreateError.name)
-            expect(e).to.have.property('message', 'Function not found')
-          }
+          const e = await expectToThrow(async () => await createFnRelease())
+          expect(e).to.have.property('name', AutomateFunctionReleaseCreateError.name)
+          expect(e).to.have.property('message', 'Function not found')
         })
 
         it('throws 403 if invalid token', async () => {
@@ -454,13 +313,9 @@ const buildFakeReq = (): Request =>
             functionId: updatableFn.fn.executionEngineFunctionId,
             token: 'invalid-token'
           }))
-          const req = buildFakeReq()
 
-          try {
-            await createFnRelease({ req })
-          } catch (e) {
-            expect(e).to.have.property('name', ForbiddenError.name)
-          }
+          const e = await expectToThrow(async () => await createFnRelease())
+          expect(e).to.have.property('name', ForbiddenError.name)
         })
 
         describe('and invalid body', () => {
@@ -468,18 +323,18 @@ const buildFakeReq = (): Request =>
             const createFnRelease = buildCreateFunctionReleaseFn(
               validResolveFunctionParams
             )
-            const req = buildFakeReq()
-            req.body = 'invalid-body'
 
-            try {
-              await createFnRelease({ req })
-            } catch (e) {
-              expect(e).to.have.property(
-                'name',
-                AutomateFunctionReleaseCreateError.name
-              )
-              expect(e).to.have.property('message', 'Request body is not a JSON object')
-            }
+            const e = await expectToThrow(
+              async () =>
+                await createFnRelease({
+                  req: (req) => {
+                    req.body = 'invalid-body'
+                    return req
+                  }
+                })
+            )
+            expect(e).to.have.property('name', AutomateFunctionReleaseCreateError.name)
+            expect(e).to.have.property('message', 'Request body is not a JSON object')
           })
 
           type InvalidBodyPropTestRun = {
@@ -626,31 +481,30 @@ const buildFakeReq = (): Request =>
           invalidBodyPropTestGroups.forEach(({ key, errorMsg, runs }) => {
             runs.forEach(({ value, description, errorMsg: errorMsgOverride }) => {
               it(`fails if ${description}`, async () => {
-                let didThrow = false
                 const createFnRelease = buildCreateFunctionReleaseFn(
                   validResolveFunctionParams
                 )
-                const req = buildFakeReq()
-                req.body = { ...validBody(), [key]: value }
 
-                try {
-                  await createFnRelease({ req })
-                } catch (e) {
-                  didThrow = true
-                  expect(e).to.have.property(
-                    'name',
-                    AutomateFunctionReleaseCreateError.name
-                  )
+                const e = await expectToThrow(
+                  async () =>
+                    await createFnRelease({
+                      req: (req) => {
+                        req.body = { ...validBody(), [key]: value }
+                        return req
+                      }
+                    })
+                )
+                expect(e).to.have.property(
+                  'name',
+                  AutomateFunctionReleaseCreateError.name
+                )
 
-                  const msgTest = errorMsgOverride || errorMsg
-                  if (isString(msgTest)) {
-                    expect(e).to.have.property('message', msgTest)
-                  } else {
-                    expect(e).to.have.property('message').match(msgTest)
-                  }
+                const msgTest = errorMsgOverride || errorMsg
+                if (isString(msgTest)) {
+                  expect(e).to.have.property('message', msgTest)
+                } else {
+                  expect(e).to.have.property('message').match(msgTest)
                 }
-
-                expect(didThrow).to.be.true
               })
             })
           })
@@ -660,11 +514,14 @@ const buildFakeReq = (): Request =>
           const createFnRelease = buildCreateFunctionReleaseFn(
             validResolveFunctionParams
           )
-          const req = buildFakeReq()
           const body = validBody()
-          req.body = body
 
-          const fnRelease = await createFnRelease({ req })
+          const fnRelease = await createFnRelease({
+            req: (req) => {
+              req.body = body
+              return req
+            }
+          })
 
           expect(fnRelease).to.be.ok
           expect(fnRelease).to.have.property(

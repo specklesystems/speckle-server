@@ -43,11 +43,15 @@ export type AutomationRunRecord = {
 }
 
 export type AutomateRevisionFunctionRecord = {
-  functionId: string
   functionReleaseId: string
   functionInputs: Record<string, unknown> | null
   automationRevisionId: string
 }
+
+export type AutomateRevisionFunctionWithFunctionMetadata =
+  AutomateRevisionFunctionRecord & {
+    functionId: string
+  }
 
 export const VersionCreationTriggerType = <const>'versionCreation'
 export type AutomationTriggerType = typeof VersionCreationTriggerType
@@ -81,7 +85,7 @@ export type AutomationTokenRecord = {
 }
 
 export type AutomationRevisionWithTriggersFunctions = AutomationRevisionRecord & {
-  functions: AutomateRevisionFunctionRecord[]
+  functions: AutomateRevisionFunctionWithFunctionMetadata[]
   triggers: AutomationTriggerDefinitionRecord[]
 }
 
@@ -101,13 +105,16 @@ export type ObjectResultLevel = 'info' | 'warning' | 'error'
 export type AutomationFunctionRunRecord = {
   id: string
   runId: string
-  functionId: string
   functionReleaseId: string
   elapsed: number
   status: AutomationRunStatus
   contextView: string | null
   statusMessage: string | null
   results: Nullable<Automate.AutomateTypes.ResultsSchema>
+}
+
+export type AutomationFunctionRunWithFunctionMetadata = AutomationFunctionRunRecord & {
+  functionId: string
 }
 
 export type BaseTriggerManifest<

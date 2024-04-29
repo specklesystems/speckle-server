@@ -4,6 +4,7 @@ import {
   getUserGithubAuthData,
   setUserGithubAuthData,
   storeAutomation,
+  storeAutomationRevision,
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import {
@@ -11,10 +12,12 @@ import {
   getFunction,
   upsertFunction,
   updateFunction as updateDbFunction,
-  upsertFunctionToken
+  upsertFunctionToken,
+  getFunctionReleases
 } from '@/modules/automate/repositories/functions'
 import {
   createAutomation,
+  createAutomationRevision,
   updateAutomation
 } from '@/modules/automate/services/automationManagement'
 import {
@@ -45,6 +48,7 @@ import { getAutomateGithubClientInfo } from '@/modules/shared/helpers/envHelper'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Roles } from '@speckle/shared'
+import { getBranchesByIds } from '@/modules/core/repositories/branches'
 
 export = {
   AutomationRevisionTriggerDefinition: {
@@ -132,6 +136,21 @@ export = {
         input,
         userId: ctx.userId!,
         projectId: parent.projectId,
+        userResourceAccessRules: ctx.resourceAccessRules
+      })
+    },
+    async createRevision(parent, { input }, ctx) {
+      const create = createAutomationRevision({
+        getAutomation,
+        storeAutomationRevision,
+        getBranchesByIds,
+        getFunctionReleases
+      })
+
+      return await create({
+        input,
+        projectId: parent.projectId,
+        userId: ctx.userId!,
         userResourceAccessRules: ctx.resourceAccessRules
       })
     }

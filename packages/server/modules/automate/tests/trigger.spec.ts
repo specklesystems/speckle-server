@@ -1,5 +1,6 @@
 import {
   ensureRunConditions,
+  manuallyTriggerAutomation,
   onModelVersionCreate,
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
@@ -14,15 +15,23 @@ import {
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { createTestUser } from '@/test/authHelper'
-import { createTestStream } from '@/test/speckle-helpers/streamHelper'
+import {
+  BasicTestStream,
+  createTestStream,
+  createTestStreams
+} from '@/test/speckle-helpers/streamHelper'
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
+  getAutomation,
   getAutomationRun,
+  getAutomationTriggerDefinitions,
   storeAutomation,
   storeAutomationRevision
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext } from '@/test/hooks'
 import { Environment } from '@speckle/shared'
+import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
+import { buildAutomationCreate } from '@/test/speckle-helpers/automationHelper'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
@@ -204,7 +213,6 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           userId,
           functions: [
             {
-              functionId: cryptoRandomString({ length: 10 }),
               functionInputs: null,
               functionReleaseId: cryptoRandomString({ length: 10 })
             }
@@ -288,7 +296,6 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           userId,
           functions: [
             {
-              functionId: cryptoRandomString({ length: 10 }),
               functionInputs: null,
               functionReleaseId: cryptoRandomString({ length: 10 })
             }
@@ -671,6 +678,48 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           if (!(error instanceof Error)) throw error
           expect(error.message).contains('Cannot find a token for the automation')
         }
+      })
+    })
+
+    describe('triggered manually', () => {
+      const buildManuallyTriggerAutomation = () => {
+        const trigger = manuallyTriggerAutomation({
+          getAutomationTriggerDefinitions,
+          getAutomation,
+          getBranchLatestCommits,
+          triggerFunction: async () => {
+            return { automationRunId: cryptoRandomString({ length: 10 }) }
+          }
+        })
+        return trigger
+      }
+
+      const testUserStream: BasicTestStream = {
+        id: '',
+        name: 'First stream',
+        isPublic: true,
+        ownerId: ''
+      }
+
+      let createdAutomation: Awaited<
+        ReturnType<ReturnType<typeof buildAutomationCreate>>
+      >
+
+      before(async () => {
+        const create = buildAutomationCreate()
+        await createTestStreams([[testUserStream, testUser]])
+        createdAutomation = await create({
+          userId: testUser.id,
+          projectId: testUserStream.id,
+          input: {
+            name: 'Manually Triggerable Automation',
+            enabled: true
+          }
+        })
+
+        console.log(createdAutomation, buildManuallyTriggerAutomation)
+
+        // TODO: Create triggers too
       })
     })
   }

@@ -5,7 +5,7 @@ import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from 
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes';
-import { AutomateFunctionGraphQLReturn, AutomationGraphQLReturn, ProjectAutomationMutationsGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
+import { AutomateFunctionGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, ProjectAutomationMutationsGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -426,10 +426,9 @@ export type AutomationRevision = {
 };
 
 export type AutomationRevisionCreateFunctionInput = {
-  functionId: Scalars['String'];
+  functionReleaseId: Scalars['String'];
   /** Should be encrypted from the client side */
   parameters?: InputMaybe<Scalars['String']>;
-  releaseId: Scalars['String'];
 };
 
 export type AutomationRevisionFunction = {
@@ -1776,6 +1775,10 @@ export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
   create: Automation;
   createRevision: AutomationRevision;
+  /**
+   * Trigger an automation with a fake "version created" trigger. The "version created" will
+   * just refer to the last version of the model.
+   */
   trigger: Scalars['Boolean'];
   update: Automation;
 };
@@ -3437,7 +3440,7 @@ export type ResolversTypes = {
   AutomationCreateInput: AutomationCreateInput;
   AutomationFunctionRun: ResolverTypeWrapper<AutomationFunctionRunGraphQLReturn>;
   AutomationMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
-  AutomationRevision: ResolverTypeWrapper<Omit<AutomationRevision, 'functions' | 'triggerDefinitions'> & { functions: Array<ResolversTypes['AutomationRevisionFunction']>, triggerDefinitions: Array<ResolversTypes['AutomationRevisionTriggerDefinition']> }>;
+  AutomationRevision: ResolverTypeWrapper<AutomationRevisionGraphQLReturn>;
   AutomationRevisionCreateFunctionInput: AutomationRevisionCreateFunctionInput;
   AutomationRevisionFunction: ResolverTypeWrapper<Omit<AutomationRevisionFunction, 'release'> & { release: ResolversTypes['AutomateFunctionRelease'] }>;
   AutomationRevisionTriggerDefinition: ResolversTypes['VersionCreatedTriggerDefinition'];
@@ -3647,7 +3650,7 @@ export type ResolversParentTypes = {
   AutomationCreateInput: AutomationCreateInput;
   AutomationFunctionRun: AutomationFunctionRunGraphQLReturn;
   AutomationMutations: MutationsObjectGraphQLReturn;
-  AutomationRevision: Omit<AutomationRevision, 'functions' | 'triggerDefinitions'> & { functions: Array<ResolversParentTypes['AutomationRevisionFunction']>, triggerDefinitions: Array<ResolversParentTypes['AutomationRevisionTriggerDefinition']> };
+  AutomationRevision: AutomationRevisionGraphQLReturn;
   AutomationRevisionCreateFunctionInput: AutomationRevisionCreateFunctionInput;
   AutomationRevisionFunction: Omit<AutomationRevisionFunction, 'release'> & { release: ResolversParentTypes['AutomateFunctionRelease'] };
   AutomationRevisionTriggerDefinition: ResolversParentTypes['VersionCreatedTriggerDefinition'];

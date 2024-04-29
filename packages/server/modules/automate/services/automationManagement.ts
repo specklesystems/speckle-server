@@ -1,23 +1,39 @@
 import {
+  InsertableAutomationRevision,
+  InsertableAutomationRevisionFunction,
+  InsertableAutomationRevisionTrigger,
   getAutomation,
   storeAutomation,
+  storeAutomationRevision,
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
-import { Roles, removeNullOrUndefinedKeys } from '@speckle/shared'
+import {
+  Automate,
+  Nullable,
+  Roles,
+  ensureError,
+  removeNullOrUndefinedKeys
+} from '@speckle/shared'
 import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
 import {
   ProjectAutomationCreateInput,
+  ProjectAutomationRevisionCreateInput,
   ProjectAutomationUpdateInput
 } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import {
   AutomationCreationError,
+  AutomationRevisionCreationError,
   AutomationUpdateError
 } from '@/modules/automate/errors/management'
+import { VersionCreationTriggerType } from '@/modules/automate/helpers/types'
+import { getBranchesByIds } from '@/modules/core/repositories/branches'
+import { keyBy, uniq } from 'lodash'
+import { getFunctionReleases } from '@/modules/automate/repositories/functions'
 
 export type CreateAutomationDeps = {
   createAuthCode: ReturnType<typeof createStoredAuthCode>
@@ -92,25 +108,30 @@ export const updateAutomation =
   (deps: UpdateAutomationDeps) =>
   async (params: {
     input: ProjectAutomationUpdateInput
-    projectId: string
     userId: string
     userResourceAccessRules?: ContextResourceAccessRules
+    /**
+     * If set, will validate that the automation belongs to that user
+     */
+    projectId?: string
   }) => {
     const { getAutomation, updateAutomation } = deps
-    const { input, userId, projectId, userResourceAccessRules } = params
+    const { input, userId, userResourceAccessRules, projectId } = params
 
-    const [, existingAutomation] = await Promise.all([
-      validateStreamAccess(
-        userId,
-        projectId,
-        Roles.Stream.Owner,
-        userResourceAccessRules
-      ),
-      getAutomation({ automationId: input.id })
-    ])
+    const existingAutomation = await getAutomation({
+      automationId: input.id,
+      projectId
+    })
     if (!existingAutomation) {
       throw new AutomationUpdateError('Automation not found')
     }
+
+    await validateStreamAccess(
+      userId,
+      existingAutomation.projectId,
+      Roles.Stream.Owner,
+      userResourceAccessRules
+    )
 
     // Filter out empty (null) values from input
     const updates = removeNullOrUndefinedKeys(input)
@@ -124,4 +145,165 @@ export const updateAutomation =
       ...updates,
       id: input.id
     })
+  }
+
+type ValidateNewTriggerDefinitionsDeps = {
+  getBranchesByIds: typeof getBranchesByIds
+}
+
+const validateNewTriggerDefinitions =
+  (deps: ValidateNewTriggerDefinitionsDeps) =>
+  async (params: {
+    triggerDefinitions: InsertableAutomationRevisionTrigger[]
+    projectId: string
+  }) => {
+    const { triggerDefinitions, projectId } = params
+    const { getBranchesByIds } = deps
+
+    if (!triggerDefinitions.length) {
+      throw new AutomationRevisionCreationError(
+        'At least one trigger definition is required'
+      )
+    }
+
+    const invalidTriggers = triggerDefinitions.filter(
+      (t) => t.triggerType !== VersionCreationTriggerType
+    )
+    if (invalidTriggers.length) {
+      throw new AutomationRevisionCreationError(
+        'Only version creation triggers are currently supported'
+      )
+    }
+
+    // Validate version creation triggers
+    const versionCreationTriggerDefinitions = triggerDefinitions
+    const modelIds = uniq(versionCreationTriggerDefinitions.map((t) => t.triggeringId))
+    const models = keyBy(
+      await getBranchesByIds(modelIds, { streamId: projectId }),
+      'id'
+    )
+
+    for (const modelId of modelIds) {
+      const model = models[modelId]
+      if (!model) {
+        throw new AutomationRevisionCreationError(
+          `Model with ID ${modelId} not found in project`
+        )
+      }
+    }
+  }
+
+type ValidateNewRevisionFunctionsDeps = {
+  getFunctionReleases: typeof getFunctionReleases
+}
+
+const validateNewRevisionFunctions =
+  (deps: ValidateNewRevisionFunctionsDeps) =>
+  async (params: { functions: InsertableAutomationRevisionFunction[] }) => {
+    const { functions } = params
+    const { getFunctionReleases } = deps
+
+    // Validate functions exist
+    const releaseIds = uniq(functions.map((f) => f.functionReleaseId))
+    const releases = keyBy(
+      await getFunctionReleases(releaseIds),
+      (r) => r.functionReleaseId
+    )
+    for (const releaseId of releaseIds) {
+      if (!releases[releaseId]) {
+        throw new AutomationRevisionCreationError(
+          `Function release with ID ${releaseId} not found`
+        )
+      }
+    }
+  }
+
+type CreateAutomationRevisionDeps = {
+  getAutomation: typeof getAutomation
+  storeAutomationRevision: typeof storeAutomationRevision
+} & ValidateNewTriggerDefinitionsDeps &
+  ValidateNewRevisionFunctionsDeps
+
+export const createAutomationRevision =
+  (deps: CreateAutomationRevisionDeps) =>
+  async (params: {
+    input: ProjectAutomationRevisionCreateInput
+    userId: string
+    userResourceAccessRules?: ContextResourceAccessRules
+    projectId?: string
+  }) => {
+    const { input, userId, userResourceAccessRules, projectId } = params
+    const { storeAutomationRevision, getAutomation } = deps
+
+    const existingAutomation = await getAutomation({
+      automationId: input.automationId,
+      projectId
+    })
+    if (!existingAutomation) {
+      throw new AutomationUpdateError('Automation not found')
+    }
+
+    await validateStreamAccess(
+      userId,
+      existingAutomation.projectId,
+      Roles.Stream.Owner,
+      userResourceAccessRules
+    )
+
+    const triggers = Automate.AutomateTypes.formatTriggerDefinitionSchema(
+      input.triggerDefinitions
+    )
+    const triggerDefinitions = triggers.definitions.map((d) => {
+      if (Automate.AutomateTypes.isVersionCreatedTriggerDefinition(d)) {
+        const triggerDef: InsertableAutomationRevisionTrigger = {
+          triggerType: VersionCreationTriggerType,
+          triggeringId: d.modelId
+        }
+
+        return triggerDef
+      }
+
+      throw new AutomationRevisionCreationError('Unexpected trigger type')
+    })
+    await validateNewTriggerDefinitions(deps)({
+      triggerDefinitions,
+      projectId: projectId || existingAutomation.projectId
+    })
+
+    const functions = input.functions.map((f) => {
+      // TODO: Encryption?
+      let inputs: Nullable<Record<string, unknown>> = null
+      try {
+        if (f.parameters?.length) {
+          inputs = JSON.parse(f.parameters)
+        }
+      } catch (e) {
+        throw new AutomationRevisionCreationError(
+          "Couldn't parse function parameters",
+          {
+            cause: ensureError(e),
+            info: {
+              parameters: f.parameters
+            }
+          }
+        )
+      }
+
+      const fn: InsertableAutomationRevisionFunction = {
+        functionReleaseId: f.functionReleaseId,
+        functionInputs: inputs
+      }
+
+      return fn
+    })
+    await validateNewRevisionFunctions(deps)({ functions })
+
+    const revisionInput: InsertableAutomationRevision = {
+      functions,
+      triggers: triggerDefinitions,
+      automationId: input.automationId,
+      userId,
+      active: true
+    }
+    return await storeAutomationRevision(revisionInput)
   }

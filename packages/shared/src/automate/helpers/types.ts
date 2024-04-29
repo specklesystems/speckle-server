@@ -1,4 +1,4 @@
-import { get, intersection, isArray, isObjectLike } from 'lodash'
+import { get, has, intersection, isArray, isObjectLike } from 'lodash'
 import type { PartialDeep } from 'type-fest'
 import {
   UnformattableResultsSchemaError,
@@ -9,12 +9,14 @@ import type { Nullable } from '../../core'
 export const TRIGGER_DEFINITIONS_SCHEMA_VERSION = 1.0
 export const RESULTS_SCHEMA_VERSION = 1.0
 
+export type VersionCreatedTriggerDefinition = {
+  type: 'VERSION_CREATED'
+  modelId: string
+}
+
 export type TriggerDefinitionsSchema = {
   version: number
-  definitions: Array<{
-    type: 'VERSION_CREATED'
-    modelId: string
-  }>
+  definitions: Array<VersionCreatedTriggerDefinition>
 }
 
 export type ObjectResultLevel = 'INFO' | 'WARNING' | 'ERROR'
@@ -41,6 +43,14 @@ export type ResultsSchema = {
 
 type UnformattedTriggerDefinitionSchema = PartialDeep<TriggerDefinitionsSchema>
 type UnformattedResultsSchema = PartialDeep<ResultsSchema>
+
+export const isVersionCreatedTriggerDefinition = (
+  val: unknown
+): val is VersionCreatedTriggerDefinition => {
+  if (!val) return false
+  if (!isObjectLike(val)) return false
+  return get(val, 'type') === 'VERSION_CREATED' && has(val, 'modelId')
+}
 
 export const isTriggerDefinitionSchema = (
   val: unknown

@@ -1,8 +1,10 @@
 import {
   InsertableAutomationRun,
   getActiveTriggerDefinitions,
+  getAutomation,
   getAutomationRevision,
   getAutomationToken,
+  getAutomationTriggerDefinitions,
   upsertAutomationRun
 } from '@/modules/automate/repositories/automations'
 import {
@@ -17,7 +19,7 @@ import {
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { getCommit } from '@/modules/core/repositories/commits'
 import { createAppToken } from '@/modules/core/services/tokens'
-import { Scopes } from '@speckle/shared'
+import { Roles, Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { Merge } from 'type-fest'
@@ -27,15 +29,21 @@ import {
   triggerAutomationRun,
   type TriggeredAutomationFunctionRun
 } from '@/modules/automate/clients/executionEngine'
+import { TriggerAutomationError } from '@/modules/automate/errors/runs'
+import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
+import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
+
+export type OnModelVersionCreateDeps = {
+  getTriggers: typeof getActiveTriggerDefinitions
+  triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
+}
 
 /**
  * This should hook into the model version create event
  */
 export const onModelVersionCreate =
-  (deps: {
-    getTriggers: typeof getActiveTriggerDefinitions
-    triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
-  }) =>
+  (deps: OnModelVersionCreateDeps) =>
   async (params: { modelId: string; versionId: string }) => {
     const { modelId, versionId } = params
     const { getTriggers, triggerFunction } = deps
@@ -155,6 +163,7 @@ export const triggerAutomationRevisionRun =
       triggerDefinitions: automationWithRevision.revision.triggers
     })
 
+    // TODO: Q Gergo: Should this really be project scoped?
     const projectScopedToken = await createAppToken({
       appId: DefaultAppIds.Automate,
       name: `at-${automationWithRevision.id}@${manifest.versionId}`,
@@ -166,6 +175,12 @@ export const triggerAutomationRevisionRun =
         Scopes.Streams.Read,
         Scopes.Streams.Write,
         Scopes.Automate.ReportResults
+      ],
+      limitResources: [
+        {
+          id: automationWithRevision.projectId,
+          type: TokenResourceIdentifierType.Project
+        }
       ]
     })
 
@@ -213,7 +228,6 @@ export const ensureRunConditions =
     automationWithRevision: AutomationWithRevision<AutomationRevisionWithTriggersFunctions>
     userId: string
     automateToken: string
-    automateRefreshToken: string
   }> => {
     const { revisionGetter, versionGetter, automationTokenGetter } = deps
     const { revisionId, manifest } = params
@@ -269,14 +283,14 @@ export const ensureRunConditions =
     return {
       automationWithRevision,
       userId,
-      automateToken: token.automateToken,
-      automateRefreshToken: token.automateRefreshToken
+      automateToken: token.automateToken
     }
   }
 
 async function composeTriggerData(params: {
   projectId: string
   manifest: BaseTriggerManifest
+  // TODO: Q Gergo: What's going on here? Why do we pass in extra unrelated triggers?
   triggerDefinitions: AutomationTriggerDefinitionRecord[]
 }): Promise<BaseTriggerManifest[]> {
   const { projectId, manifest, triggerDefinitions } = params
@@ -314,3 +328,73 @@ async function composeTriggerData(params: {
 
   return manifests
 }
+
+export type ManuallyTriggerAutomationDeps = {
+  getAutomationTriggerDefinitions: typeof getAutomationTriggerDefinitions
+  getAutomation: typeof getAutomation
+  getBranchLatestCommits: typeof getBranchLatestCommits
+  triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
+}
+
+export const manuallyTriggerAutomation =
+  (deps: ManuallyTriggerAutomationDeps) =>
+  async (params: {
+    automationId: string
+    userId: string
+    projectId?: string
+    userResourceAccessRules?: ContextResourceAccessRules
+  }) => {
+    const { automationId, userId, projectId, userResourceAccessRules } = params
+    const {
+      getAutomationTriggerDefinitions,
+      getAutomation,
+      getBranchLatestCommits,
+      triggerFunction
+    } = deps
+
+    const [automation, triggerDefs] = await Promise.all([
+      getAutomation({ automationId, projectId }),
+      getAutomationTriggerDefinitions({
+        automationId,
+        projectId,
+        triggerType: VersionCreationTriggerType
+      })
+    ])
+    if (!automation) {
+      throw new TriggerAutomationError('Automation not found')
+    }
+    if (!triggerDefs.length) {
+      throw new TriggerAutomationError(
+        'No model version creation triggers found for the automation'
+      )
+    }
+
+    await validateStreamAccess(
+      userId,
+      automation.projectId,
+      Roles.Stream.Owner,
+      userResourceAccessRules
+    )
+
+    const validModelIds = triggerDefs.map((t) => t.triggeringId)
+    const [latestCommit] = await getBranchLatestCommits(
+      validModelIds,
+      automation.projectId,
+      { limit: 1 }
+    )
+    if (!latestCommit) {
+      throw new TriggerAutomationError(
+        'No version to trigger on found for the available triggers'
+      )
+    }
+
+    // Trigger "model version created"
+    return await triggerFunction({
+      revisionId: triggerDefs[0].automationRevisionId,
+      manifest: <VersionCreatedTriggerManifest>{
+        modelId: latestCommit.branchId,
+        versionId: latestCommit.id,
+        triggerType: VersionCreationTriggerType
+      }
+    })
+  }

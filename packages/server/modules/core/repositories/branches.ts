@@ -13,7 +13,7 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import crs from 'crypto-random-string'
 import { Knex } from 'knex'
-import { clamp, last, trim } from 'lodash'
+import { clamp, isUndefined, last, trim } from 'lodash'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 
 export const generateBranchId = () => crs({ length: 10 })
@@ -139,8 +139,15 @@ export async function getBranchCommitCount(branchId: string) {
   return res?.count || 0
 }
 
-export async function getBranchLatestCommits(branchIds?: string[], streamId?: string) {
+export async function getBranchLatestCommits(
+  branchIds?: string[],
+  streamId?: string,
+  options?: Partial<{
+    limit: number
+  }>
+) {
   if (!branchIds?.length && !streamId) return []
+  const { limit } = options || {}
 
   const q = Branches.knex()
     .select<Array<CommitRecord & { branchId: string }>>([
@@ -161,6 +168,10 @@ export async function getBranchLatestCommits(branchIds?: string[], streamId?: st
 
   if (streamId?.length) {
     q.where(Branches.col.streamId, streamId)
+  }
+
+  if (!isUndefined(limit)) {
+    q.limit(limit)
   }
 
   return await q

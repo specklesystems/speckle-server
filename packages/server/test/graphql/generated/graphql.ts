@@ -416,10 +416,9 @@ export type AutomationRevision = {
 };
 
 export type AutomationRevisionCreateFunctionInput = {
-  functionId: Scalars['String'];
+  functionReleaseId: Scalars['String'];
   /** Should be encrypted from the client side */
   parameters?: InputMaybe<Scalars['String']>;
-  releaseId: Scalars['String'];
 };
 
 export type AutomationRevisionFunction = {
@@ -1766,6 +1765,10 @@ export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
   create: Automation;
   createRevision: AutomationRevision;
+  /**
+   * Trigger an automation with a fake "version created" trigger. The "version created" will
+   * just refer to the last version of the model.
+   */
   trigger: Scalars['Boolean'];
   update: Automation;
 };

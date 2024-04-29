@@ -5,3 +5,8 @@ export class FunctionRunReportStatusesError extends BaseError {
     'An error occurred while updating function run report statuses'
   static code = 'FUNCTION_RUN_REPORT_STATUSES_ERROR'
 }
+
+export class TriggerAutomationError extends BaseError {
+  static defaultMessage = 'Error triggering automation'
+  static code = 'TRIGGER_AUTOMATION_ERROR'
+}

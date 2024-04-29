@@ -47,6 +47,7 @@ const initializeEventListeners = () => {
   const triggerFn = triggerAutomationRevisionRun({
     automateRunTrigger: triggerAutomationRun
   })
+
   const quit = VersionsEmitter.listen(
     VersionEvents.Created,
     async ({ modelId, version }) => {
@@ -56,6 +57,7 @@ const initializeEventListeners = () => {
       })({ modelId, versionId: version.id })
     }
   )
+
   return quit
 }
 

@@ -548,7 +548,6 @@ export const TokenResourceAccess = buildTableHelper('token_resource_access', [
 export const AutomationFunctionRuns = buildTableHelper('automation_function_runs', [
   'id',
   'runId',
-  'functionId',
   'functionReleaseId',
   'elapsed',
   'status',
@@ -559,7 +558,7 @@ export const AutomationFunctionRuns = buildTableHelper('automation_function_runs
 
 export const AutomationRevisionFunctions = buildTableHelper(
   'automation_revision_functions',
-  ['automationRevisionId', 'functionId', 'functionReleaseId', 'functionInputs']
+  ['automationRevisionId', 'functionReleaseId', 'functionInputs']
 )
 
 export const AutomationRevisions = buildTableHelper('automation_revisions', [

@@ -36,6 +36,7 @@ generates:
         AutomationFunctionRun: '@/modules/betaAutomations/helpers/graphTypes#AutomationFunctionRunGraphQLReturn'
         AutomateFunction: '@/modules/automate/helpers/graphTypes#AutomateFunctionGraphQLReturn'
         Automation: '@/modules/automate/helpers/graphTypes#AutomationGraphQLReturn'
+        AutomationRevision: '@/modules/automate/helpers/graphTypes#AutomationRevisionGraphQLReturn'
         ProjectAutomationMutations: '@/modules/automate/helpers/graphTypes#ProjectAutomationMutationsGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
