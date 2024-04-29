@@ -13,6 +13,8 @@ export enum InputEvent {
   PointerDown,
   PointerUp,
   PointerMove,
+  PointerCancel,
+  Wheel,
   Click,
   DoubleClick,
   KeyUp
@@ -100,16 +102,17 @@ export default class Input extends EventEmitter {
       this.emit(InputEvent.KeyUp, e)
     })
 
-    // Handle multiple object selection
-    // document.addEventListener('keydown', (e) => {
-    //   if (e.isComposing || e.keyCode === 229) return
-    //   if (e.key === 'Shift') this.multiSelect = true
-    // })
+    document.addEventListener('wheel', (e) => {
+      this.emit(InputEvent.Wheel, e)
+    })
 
-    // document.addEventListener('keyup', (e) => {
-    //   if (e.isComposing || e.keyCode === 229) return
-    //   if (e.key === 'Shift') this.multiSelect = false
-    // })
+    document.addEventListener('pointercancel', (e) => {
+      const loc = this._getNormalisedClickPosition(e)
+      ;(loc as unknown as Record<string, unknown>).event = e
+
+      this.emit(InputEvent.PointerUp, loc)
+      this.emit(InputEvent.PointerCancel, loc)
+    })
   }
 
   _getNormalisedClickPosition(e) {
