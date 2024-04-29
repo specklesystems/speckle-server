@@ -27,7 +27,7 @@ export class MeshBatch extends PrimitiveBatch {
   private indexBuffer1!: BufferAttribute
   private indexBufferIndex = 0
 
-  private drawRanges: DrawRanges = new DrawRanges()
+  protected drawRanges: DrawRanges = new DrawRanges()
 
   get bounds(): Box3 {
     return this.primitive.TAS.getBoundingBox(new Box3())

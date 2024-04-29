@@ -3,7 +3,6 @@ import {
   Extension,
   GeometryType,
   IViewer,
-  MeshBatch,
   Vector3
 } from '@speckle/viewer'
 import { PerspectiveCamera } from 'three'
@@ -56,7 +55,7 @@ export class CameraPlanes extends Extension {
 
     const batches = this.viewer
       .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+      .batcher.getBatches(undefined, GeometryType.MESH)
     let minDist = Number.POSITIVE_INFINITY
     const minPoint = new Vector3()
     for (let b = 0; b < batches.length; b++) {

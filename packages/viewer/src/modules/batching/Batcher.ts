@@ -25,6 +25,14 @@ import { Geometry } from '../converter/Geometry'
 import { MeshBatch } from './MeshBatch'
 import { PointBatch } from './PointBatch'
 
+type BatchTypeMap = {
+  [GeometryType.MESH]: MeshBatch
+  [GeometryType.LINE]: LineBatch
+  [GeometryType.POINT]: PointBatch
+  [GeometryType.POINT_CLOUD]: PointBatch
+  [GeometryType.TEXT]: TextBatch
+}
+
 export default class Batcher {
   private maxHardwareUniformCount = 0
   private floatTextures = false
@@ -459,13 +467,38 @@ export default class Batcher {
     }
   }
 
-  public getBatches(subtreeId?: string, geometryType?: GeometryType) {
-    return Object.values(this.batches).filter((value: Batch) => {
+  public getBatches<K extends GeometryType>(
+    subtreeId?: string,
+    geometryType?: K
+  ): BatchTypeMap[K][] {
+    const batches: Batch[] = Object.values(this.batches)
+    return batches.filter((value: Batch) => {
       const subtree = subtreeId !== undefined ? value.subtreeId === subtreeId : true
       const type =
-        geometryType !== undefined ? value.geometryType === geometryType : true
+        geometryType !== undefined ? this.isBatchType(value, geometryType) : true
       return subtree && type
-    })
+    }) as BatchTypeMap[K][]
+  }
+
+  private isBatchType<K extends GeometryType>(
+    batch: Batch,
+    geometryType?: K
+  ): batch is BatchTypeMap[K] {
+    if (geometryType === undefined) return true
+    switch (geometryType) {
+      case GeometryType.MESH:
+        return batch instanceof MeshBatch
+      case GeometryType.LINE:
+        return batch instanceof LineBatch
+      case GeometryType.POINT:
+        return batch instanceof PointBatch
+      case GeometryType.POINT_CLOUD:
+        return batch instanceof PointBatch
+      case GeometryType.TEXT:
+        return batch instanceof TextBatch
+      default:
+        return false
+    }
   }
 
   public getBatch(rv: NodeRenderView) {

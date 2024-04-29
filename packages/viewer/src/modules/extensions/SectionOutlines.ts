@@ -357,9 +357,7 @@ export class SectionOutlines extends Extension {
     )
     for (let k = 0; k < planes.length; k++) {
       this.updatePlaneOutline(
-        this.viewer
-          .getRenderer()
-          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
+        this.viewer.getRenderer().batcher.getBatches(undefined, GeometryType.MESH),
         planes[k],
         outlineOffset
       )

@@ -37,10 +37,10 @@ export class InstancedMeshBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  private geometry!: BufferGeometry
-  public batchMaterial!: Material
-  public mesh!: SpeckleInstancedMesh
-  private drawRanges: DrawRanges = new DrawRanges()
+  private geometry: BufferGeometry
+  public batchMaterial: Material
+  public mesh: SpeckleInstancedMesh
+  protected drawRanges: DrawRanges = new DrawRanges()
 
   private instanceTransformBuffer0!: Float32Array
   private instanceTransformBuffer1!: Float32Array

@@ -471,13 +471,12 @@ export default class SpeckleRenderer {
   private updateRTEShadows() {
     if (!this.updateRTEShadowBuffers()) return
 
-    const meshBatches = this.batcher.getBatches(
+    const meshBatches: MeshBatch[] = this.batcher.getBatches(
       undefined,
       GeometryType.MESH
-    ) as MeshBatch[]
+    )
     for (let k = 0; k < meshBatches.length; k++) {
-      const speckleMesh: SpeckleMesh | SpeckleInstancedMesh = meshBatches[k]
-        .renderObject as SpeckleMesh | SpeckleInstancedMesh
+      const speckleMesh: SpeckleMesh | SpeckleInstancedMesh = meshBatches[k].mesh
 
       /** Shadowmap depth material does not go thorugh the normal flow.
        * It's onBeforeRender is not getting called That's why we're updating
@@ -503,10 +502,12 @@ export default class SpeckleRenderer {
   }
 
   private updateTransforms() {
-    const meshBatches = this.batcher.getBatches(undefined, GeometryType.MESH)
+    const meshBatches: MeshBatch[] = this.batcher.getBatches(
+      undefined,
+      GeometryType.MESH
+    )
     for (let k = 0; k < meshBatches.length; k++) {
-      const meshBatch: SpeckleMesh | SpeckleInstancedMesh = meshBatches[k]
-        .renderObject as SpeckleMesh | SpeckleInstancedMesh
+      const meshBatch: SpeckleMesh | SpeckleInstancedMesh = meshBatches[k].mesh
       meshBatch.updateTransformsUniform()
       meshBatch.traverse((obj: Object3D) => {
         const depthMaterial: SpeckleDepthMaterial =
@@ -1262,7 +1263,7 @@ export default class SpeckleRenderer {
   }
 
   public getObjects(): BatchObject[] {
-    const batches = this.batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+    const batches = this.batcher.getBatches(undefined, GeometryType.MESH)
     const meshes = batches.map((batch: MeshBatch) => batch.mesh)
     const objects = meshes.flatMap((mesh) => mesh.batchObjects)
     return objects

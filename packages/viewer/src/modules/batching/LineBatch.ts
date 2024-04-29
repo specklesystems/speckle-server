@@ -29,9 +29,9 @@ export default class LineBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  private geometry!: LineSegmentsGeometry
-  public batchMaterial!: SpeckleLineMaterial
-  private mesh!: LineSegments2
+  protected geometry: LineSegmentsGeometry
+  public batchMaterial: SpeckleLineMaterial
+  protected mesh: LineSegments2
   public colorBuffer!: InstancedInterleavedBuffer
   private static readonly vector4Buffer: Vector4 = new Vector4()
 
@@ -77,7 +77,7 @@ export default class LineBatch implements Batch {
   }
 
   public get geometryType(): GeometryType {
-    return this.renderViews[0].geometryType
+    return GeometryType.LINE
   }
 
   public get materials(): Material[] {

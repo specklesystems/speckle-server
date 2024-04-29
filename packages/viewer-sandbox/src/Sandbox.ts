@@ -548,7 +548,7 @@ export default class Sandbox {
       .on('change', () => {
         const batches = this.viewer
           .getRenderer()
-          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+          .batcher.getBatches(undefined, GeometryType.MESH)
         batches.forEach((batch: MeshBatch) => {
           const materials = batch.materials as SpeckleStandardMaterial[]
           materials.forEach((material: SpeckleStandardMaterial) => {
@@ -566,7 +566,7 @@ export default class Sandbox {
       .on('change', () => {
         const batches = this.viewer
           .getRenderer()
-          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+          .batcher.getBatches(undefined, GeometryType.MESH)
         batches.forEach((batch: MeshBatch) => {
           const materials = batch.materials as SpeckleStandardMaterial[]
           materials.forEach((material: SpeckleStandardMaterial) => {
@@ -586,7 +586,7 @@ export default class Sandbox {
       .on('change', () => {
         const batches = this.viewer
           .getRenderer()
-          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+          .batcher.getBatches(undefined, GeometryType.MESH)
         batches.forEach((batch: MeshBatch) => {
           const materials = batch.materials as SpeckleStandardMaterial[]
           materials.forEach((material: SpeckleStandardMaterial) => {
@@ -613,7 +613,7 @@ export default class Sandbox {
     this.viewer.getRenderer().renderer.toneMappingExposure = this.sceneParams.exposure
     const batches = this.viewer
       .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+      .batcher.getBatches(undefined, GeometryType.MESH)
     batches.forEach((batch: MeshBatch) => {
       const materials = batch.materials as SpeckleStandardMaterial[]
       materials.forEach((material: SpeckleStandardMaterial) => {
