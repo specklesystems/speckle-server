@@ -53,6 +53,7 @@
   ],
   "dependencies": {
     "@speckle/objectloader": "workspace:^",
+    "@speckle/shared": "workspace:^",
     "@types/flat": "^5.0.2",
     "camera-controls": "^1.33.1",
     "flat": "^5.0.2",
