@@ -263,6 +263,12 @@ export const updateFunction =
 
     // Filter out empty (null) values from input
     const updates = removeNullOrUndefinedKeys(input)
+
+    // Skip if there's nothing left
+    if (Object.keys(updates).length === 0) {
+      return existingFn
+    }
+
     return await updateFunction(updates.id, updates)
   }
 

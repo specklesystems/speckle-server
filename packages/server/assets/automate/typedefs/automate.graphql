@@ -145,14 +145,6 @@ type AutomateFunctionCollection {
   cursor: String
 }
 
-extend type Project {
-  automations(filter: String, cursor: String, limit: Int): AutomationCollection!
-  """
-  Get a single automation by id. Error will be thrown if automation is not found or inaccessible.
-  """
-  automation(id: String!): Automation!
-}
-
 input ProjectAutomationUpdateInput {
   id: ID!
   name: String
@@ -182,17 +174,6 @@ input ProjectAutomationCreateInput {
   enabled: Boolean!
 }
 
-type ProjectAutomationMutations {
-  create(input: ProjectAutomationCreateInput!): Automation!
-  update(input: ProjectAutomationUpdateInput!): Automation!
-  createRevision(input: ProjectAutomationRevisionCreateInput!): AutomationRevision!
-  trigger(automationId: ID!): Boolean!
-}
-
-extend type ProjectMutations {
-  automationMutations(projectId: ID!): ProjectAutomationMutations!
-}
-
 input AutomateFunctionsFilter {
   search: String
   """
@@ -200,22 +181,6 @@ input AutomateFunctionsFilter {
   """
   functionsWithoutVersions: Boolean
   featuredFunctionsOnly: Boolean
-}
-
-extend type Query {
-  automateFunctions(
-    filter: AutomateFunctionsFilter
-    cursor: String
-    limit: Int
-  ): AutomateFunctionCollection!
-  """
-  Get a single automate function by id. Error will be thrown if function is not found or inaccessible.
-  """
-  automateFunction(id: ID!): AutomateFunction!
-  """
-  Part of the automation/function creation handshake mechanism
-  """
-  automateValidateAuthCode(code: String!): Boolean!
 }
 
 input AutomateFunctionRunStatusReportInput {
@@ -263,22 +228,6 @@ input UpdateAutomateFunctionInput {
   logo: String
 }
 
-type AutomateMutations {
-  createFunction(input: CreateAutomateFunctionInput!): AutomateFunction!
-    @hasScope(scope: "automate-functions:write")
-  updateFunction(input: UpdateAutomateFunctionInput!): AutomateFunction!
-    @hasScope(scope: "automate-functions:write")
-}
-
-extend type Mutation {
-  automateFunctionRunStatusReport(
-    input: [AutomateFunctionRunStatusReportInput!]!
-  ): Boolean!
-    @hasServerRole(role: SERVER_GUEST)
-    @hasScope(scope: "automate:report-results")
-  automateMutations: AutomateMutations! @hasServerRole(role: SERVER_GUEST)
-}
-
 type UserAutomateInfo {
   hasAutomateGithubApp: Boolean!
   availableGithubOrgs: [String!]!
@@ -307,4 +256,57 @@ type ServerAutomateInfo {
 
 extend type ServerInfo {
   automate: ServerAutomateInfo!
+}
+
+type ProjectAutomationMutations {
+  create(input: ProjectAutomationCreateInput!): Automation!
+  update(input: ProjectAutomationUpdateInput!): Automation!
+  createRevision(input: ProjectAutomationRevisionCreateInput!): AutomationRevision!
+  trigger(automationId: ID!): Boolean!
+}
+
+extend type ProjectMutations {
+  automationMutations(projectId: ID!): ProjectAutomationMutations!
+}
+
+type AutomateMutations {
+  createFunction(input: CreateAutomateFunctionInput!): AutomateFunction!
+    @hasScope(scope: "automate-functions:write")
+  updateFunction(input: UpdateAutomateFunctionInput!): AutomateFunction!
+    @hasScope(scope: "automate-functions:write")
+}
+
+extend type Project {
+  automations(filter: String, cursor: String, limit: Int): AutomationCollection!
+    @hasStreamRole(role: STREAM_OWNER)
+  """
+  Get a single automation by id. Error will be thrown if automation is not found or inaccessible.
+  """
+  automation(id: String!): Automation! @hasStreamRole(role: STREAM_OWNER)
+}
+
+extend type Query {
+  automateFunctions(
+    filter: AutomateFunctionsFilter
+    cursor: String
+    limit: Int
+  ): AutomateFunctionCollection! @hasScope(scope: "automate-functions:read")
+  """
+  Get a single automate function by id. Error will be thrown if function is not found or inaccessible.
+  """
+  automateFunction(id: ID!): AutomateFunction!
+    @hasScope(scope: "automate-functions:read")
+  """
+  Part of the automation/function creation handshake mechanism
+  """
+  automateValidateAuthCode(code: String!): Boolean!
+}
+
+extend type Mutation {
+  automateFunctionRunStatusReport(
+    input: [AutomateFunctionRunStatusReportInput!]!
+  ): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "automate:report-results")
+  automateMutations: AutomateMutations! @hasServerRole(role: SERVER_GUEST)
 }

@@ -87,4 +87,10 @@ export const reportFunctionRunStatuses =
     // Group by automation run
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const groupedRuns = groupBy(runDataItems, (r) => r.run.runId)
+
+    /**
+     * Notes:
+     * - Keep processing, if one of them fails (report data & errors)
+     * - Skip the entire update if status fails
+     */
   }

@@ -11,7 +11,6 @@ import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 export type AutomationCreateResponse = {
   automationId: string
   automationToken: string
-  refreshToken: string
 }
 
 const getApiUrl = (path?: string) => {

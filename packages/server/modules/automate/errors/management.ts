@@ -10,9 +10,14 @@ export class AutomationNotFoundError extends BaseError {
   static code = 'AUTOMATION_NOT_FOUND'
 }
 
-export class AutomateCreationError extends BaseError {
+export class AutomationCreationError extends BaseError {
   static defaultMessage = 'Error creating automation'
-  static code = 'AUTOMATE_CREATION_ERROR'
+  static code = 'AUTOMATION_CREATION_ERROR'
+}
+
+export class AutomationUpdateError extends BaseError {
+  static defaultMessage = 'Error updating automation'
+  static code = 'AUTOMATION_UPDATE_ERROR'
 }
 
 export class AutomateAuthCodeHandshakeError extends BaseError {

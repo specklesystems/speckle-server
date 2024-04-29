@@ -78,7 +78,6 @@ export type AutomationRunTriggerRecord = {
 export type AutomationTokenRecord = {
   automationId: string
   automateToken: string
-  automateRefreshToken: string
 }
 
 export type AutomationRevisionWithTriggersFunctions = AutomationRevisionRecord & {

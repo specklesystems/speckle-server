@@ -29,6 +29,7 @@ import { UsersMetaRecord } from '@/modules/core/helpers/types'
 import { OAuthAppAuthentication } from '@octokit/auth-oauth-user'
 import { Nullable } from '@speckle/shared'
 import _, { pick } from 'lodash'
+import { SetRequired } from 'type-fest'
 
 export async function getActiveTriggerDefinitions<
   T extends AutomationTriggerType = AutomationTriggerType
@@ -163,10 +164,14 @@ export async function storeAutomation(
   automation: AutomationRecord,
   automationToken: AutomationTokenRecord
 ) {
-  await Automations.knex().insert(pick(automation, Automations.withoutTablePrefix.cols))
-  await AutomationTokens.knex().insert(
-    pick(automationToken, AutomationTokens.withoutTablePrefix.cols)
-  )
+  const [newAutomation] = await Automations.knex()
+    .insert(pick(automation, Automations.withoutTablePrefix.cols))
+    .returning<AutomationRecord[]>('*')
+  const [newToken] = await AutomationTokens.knex()
+    .insert(pick(automationToken, AutomationTokens.withoutTablePrefix.cols))
+    .returning<AutomationTokenRecord[]>('*')
+
+  return { automation: newAutomation, token: newToken }
 }
 
 export type InsertableAutomationRevision = AutomationRevisionRecord & {
@@ -225,4 +230,32 @@ export async function getUserGithubAuthData(
   const meta = metaHelpers<UsersMetaRecord, typeof Users>(Users)
   const record = await meta.get(userId, Users.meta.metaKey.automateGithubAuthData)
   return record ? (record.value as OAuthAppAuthentication) : null
+}
+
+export async function getAutomations(params: { automationIds: string[] }) {
+  const { automationIds } = params
+  if (!automationIds.length) return []
+
+  const q = Automations.knex<AutomationRecord[]>()
+    .select()
+    .whereIn(Automations.col.id, automationIds)
+
+  return await q
+}
+
+export async function getAutomation(params: {
+  automationId: string
+}): Promise<Nullable<AutomationRecord>> {
+  return (await getAutomations({ automationIds: [params.automationId] }))?.[0] || null
+}
+
+export async function updateAutomation(
+  automation: SetRequired<Partial<AutomationRecord>, 'id'>
+) {
+  const [ret] = await Automations.knex()
+    .where(Automations.col.id, automation.id)
+    .update(pick(automation, Automations.withoutTablePrefix.cols))
+    .returning<AutomationRecord[]>('*')
+
+  return ret
 }

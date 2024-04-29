@@ -1,7 +1,10 @@
 import { createFunction } from '@/modules/automate/clients/executionEngine'
 import {
+  getAutomation,
   getUserGithubAuthData,
-  setUserGithubAuthData
+  setUserGithubAuthData,
+  storeAutomation,
+  updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import {
   generateFunctionId,
@@ -10,6 +13,10 @@ import {
   updateFunction as updateDbFunction,
   upsertFunctionToken
 } from '@/modules/automate/repositories/functions'
+import {
+  createAutomation,
+  updateAutomation
+} from '@/modules/automate/services/automationManagement'
 import {
   createStoredAuthCode,
   validateStoredAuthCode
@@ -35,6 +42,9 @@ import { getGenericRedis } from '@/modules/core/index'
 import { getUser } from '@/modules/core/repositories/users'
 import { getValidatedUserAuthMetadata } from '@/modules/core/services/githubApp'
 import { getAutomateGithubClientInfo } from '@/modules/shared/helpers/envHelper'
+import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
+import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
+import { Roles } from '@speckle/shared'
 
 export = {
   AutomationRevisionTriggerDefinition: {
@@ -95,12 +105,54 @@ export = {
       return await update({ input: args.input, userId: ctx.userId! })
     }
   },
+  ProjectAutomationMutations: {
+    async create(parent, { input }, ctx) {
+      const create = createAutomation({
+        createAuthCode: createStoredAuthCode({ redis: getGenericRedis() }),
+        automateCreateAutomation: clientCreateAutomation,
+        storeAutomation
+      })
+
+      return (
+        await create({
+          input,
+          userId: ctx.userId!,
+          projectId: parent.projectId,
+          userResourceAccessRules: ctx.resourceAccessRules
+        })
+      ).automation
+    },
+    async update(parent, { input }, ctx) {
+      const update = updateAutomation({
+        getAutomation,
+        updateAutomation: updateDbAutomation
+      })
+
+      return await update({
+        input,
+        userId: ctx.userId!,
+        projectId: parent.projectId,
+        userResourceAccessRules: ctx.resourceAccessRules
+      })
+    }
+  },
   Query: {
     async automateValidateAuthCode(_parent, { code }) {
       const validate = validateStoredAuthCode({
         redis: getGenericRedis()
       })
       return await validate(code)
+    }
+  },
+  ProjectMutations: {
+    async automationMutations(_parent, { projectId }, ctx) {
+      await validateStreamAccess(
+        ctx.userId!,
+        projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
+      return { projectId }
     }
   },
   Mutation: {

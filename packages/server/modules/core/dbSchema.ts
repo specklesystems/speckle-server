@@ -572,8 +572,7 @@ export const AutomationRevisions = buildTableHelper('automation_revisions', [
 
 export const AutomationTokens = buildTableHelper('automation_tokens', [
   'automationId',
-  'automateToken',
-  'automateRefreshToken'
+  'automateToken'
 ])
 
 export const AutomationRuns = buildTableHelper('automation_runs', [
