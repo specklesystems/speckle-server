@@ -100,12 +100,12 @@ const showReceiveDialog = ref(false)
 
 const handleSendClick = () => {
   showSendDialog.value = !showSendDialog.value
-  trackEvent('DUI3 Action', { name: 'Publish Click' })
+  trackEvent('DUI3 Action', { name: 'Publish Wizard', step: 'start' })
 }
 
 const handleReceiveClick = () => {
   showReceiveDialog.value = !showReceiveDialog.value
-  trackEvent('DUI3 Action', { name: 'Load Click' })
+  trackEvent('DUI3 Action', { name: 'Load Wizard', step: 'start' })
 }
 
 const hasNoModelCards = computed(() => store.projectModelGroups.length === 0)

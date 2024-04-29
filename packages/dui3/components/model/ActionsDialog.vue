@@ -34,6 +34,9 @@ import {
   ClockIcon,
   ArchiveBoxXMarkIcon
 } from '@heroicons/vue/24/outline'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
+
+const { trackEvent } = useMixpanel()
 
 const openModelCardActionsDialog = ref(false)
 const emit = defineEmits(['view', 'view-versions', 'copy-model-link', 'remove'])
@@ -47,6 +50,10 @@ const items = [
     name: 'View 3D model in browser',
     icon: ArrowTopRightOnSquareIcon,
     action: () => {
+      void trackEvent('DUI3 Action', {
+        name: 'Version View',
+        source: 'model actions dialog'
+      })
       emit('view')
       openModelCardActionsDialog.value = false
     }
@@ -55,6 +62,10 @@ const items = [
     name: 'View model versions',
     icon: ClockIcon,
     action: () => {
+      void trackEvent('DUI3 Action', {
+        name: 'Model History View',
+        source: 'model actions dialog'
+      })
       emit('view-versions')
       openModelCardActionsDialog.value = false
     }
@@ -64,6 +75,7 @@ const items = [
     danger: true,
     icon: ArchiveBoxXMarkIcon,
     action: () => {
+      // NOTE: Mixpanel event tracking is in host app store
       emit('remove')
       openModelCardActionsDialog.value = false
     }

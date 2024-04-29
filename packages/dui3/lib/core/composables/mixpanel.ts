@@ -3,7 +3,7 @@ import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
 
 interface CustomProperties {
-  [key: string]: object | string
+  [key: string]: object | string | boolean | number | undefined | null
 }
 
 // Cached email and server
@@ -36,7 +36,7 @@ export function useMixpanel() {
     accountId?: string,
     isAction: boolean = true
   ) {
-    const { selectedAccount, accounts } = useAccountStore()
+    const { activeAccount, accounts } = useAccountStore()
 
     if (accountId) {
       const account = accounts.find((a) => a.accountInfo.id === accountId)
@@ -45,8 +45,8 @@ export function useMixpanel() {
     } else {
       // do not set if they cached already
       if (lastEmail.value === undefined || lastServer.value === undefined) {
-        lastEmail.value = selectedAccount?.accountInfo.userInfo.email
-        lastServer.value = selectedAccount?.accountInfo.serverInfo.url
+        lastEmail.value = activeAccount.accountInfo.userInfo.email
+        lastServer.value = activeAccount.accountInfo.serverInfo.url
       }
     }
 
@@ -87,7 +87,7 @@ export function useMixpanel() {
         token: mixpanelTokenId as string,
         type: isAction ? 'action' : undefined,
         hostApp: hostApp.hostAppName,
-        hostAppVersion: hostApp.hostAppVersion,
+        hostAppVersion: hostApp.hostAppVersion as string,
         ui: 'dui3', // Not sure about this but we need to put something to distiguish some events, like "Send", "Receive", alternatively we can have "SendDUI3" not sure!
         // eslint-disable-next-line camelcase
         core_version: hostApp.connectorVersion,
@@ -100,7 +100,7 @@ export function useMixpanel() {
       }
 
       if (process.dev) {
-        console.log('MIXPANEL TRACK', eventData)
+        console.info('Mixpanel event', eventData)
       }
 
       const response = await fetch(

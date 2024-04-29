@@ -73,6 +73,9 @@ import { ISendFilter, SenderModelCard } from '~/lib/models/card/send'
 import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
 import { ChevronRightIcon } from '@heroicons/vue/24/solid'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
+
+const { trackEvent } = useMixpanel()
 
 const showSendDialog = defineModel({ default: false })
 
@@ -91,16 +94,20 @@ const selectProject = (accountId: string, project: ProjectListProjectItemFragmen
   step.value++
   selectedAccountId.value = accountId
   selectedProject.value = project
+  void trackEvent('DUI3 Action', { name: 'Publish Wizard', step: 'project selected' })
 }
 
 const selectModel = (model: ModelListModelItemFragment) => {
   step.value++
   selectedModel.value = model
+  void trackEvent('DUI3 Action', { name: 'Publish Wizard', step: 'model selected' })
 }
 
 // Clears data if going backwards in the wizard
 watch(step, (newVal, oldVal) => {
-  if (newVal > oldVal) return // exit fast on forward
+  if (newVal > oldVal) {
+    return // exit fast on forward
+  }
   if (newVal === 1) {
     selectedProject.value = undefined
     selectedModel.value = undefined
@@ -117,6 +124,12 @@ const addModel = async () => {
   model.modelId = selectedModel.value?.id as string
   model.sendFilter = filter.value as ISendFilter
   model.expired = false
+
+  void trackEvent('DUI3 Action', {
+    name: 'Publish Wizard',
+    step: 'objects selected',
+    filter: filter.value?.typeDiscriminator
+  })
 
   emit('close')
   await hostAppStore.addModel(model)

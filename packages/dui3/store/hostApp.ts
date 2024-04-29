@@ -91,7 +91,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     documentModelStore.value.models = documentModelStore.value.models.filter(
       (item) => item.modelCardId !== model.modelCardId
     )
-    trackEvent('DUI3 Action', { name: 'Remove Model Card' }, model.accountId)
+
+    void trackEvent(
+      'DUI3 Action',
+      { name: 'Remove Model Card', type: model.typeDiscriminator },
+      model.accountId
+    )
   }
 
   /**
@@ -136,13 +141,15 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     ) as ISenderModelCard
     if (model.expired) {
       // user sends via "Update" button
-      trackEvent('DUI3 Action', { name: 'Update Send' }, model.accountId)
+      void trackEvent('DUI3 Action', { name: 'Send', expired: true }, model.accountId)
+    } else {
+      void trackEvent('DUI3 Action', { name: 'Send', expired: false }, model.accountId)
     }
     model.latestCreatedVersionId = undefined
     model.error = undefined
     model.progress = { status: 'Starting to send...' }
     model.expired = false
-    trackEvent('DUI3 Action', { name: 'Send' }, model.accountId)
+
     void app.$sendBinding.send(modelCardId)
   }
 
@@ -157,7 +164,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await app.$sendBinding.cancelSend(modelCardId)
     model.progress = undefined
     model.error = undefined
-    trackEvent('DUI3 Action', { name: 'Cancel Send' }, model.accountId)
+    void trackEvent('DUI3 Action', { name: 'Send Cancel' }, model.accountId)
     model.latestCreatedVersionId = undefined
   }
 
@@ -189,11 +196,17 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as IReceiverModelCard
+
+    void trackEvent(
+      'DUI3 Action',
+      { name: 'Receive', expired: model.expired },
+      model.accountId
+    )
+
     model.receiveResult = undefined
     model.error = undefined
     model.hasDismissedUpdateWarning = true
     model.progress = { status: 'Starting to receive...' }
-    trackEvent('DUI3 Action', { name: 'Receive' }, model.accountId)
     await app.$receiveBinding.receive(modelCardId)
   }
 
@@ -202,7 +215,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (m) => m.modelCardId === modelCardId
     ) as IReceiverModelCard
     await app.$receiveBinding.cancelReceive(modelCardId)
-    trackEvent('DUI3 Action', { name: 'Cancel Receive' }, model.accountId)
+    void trackEvent('DUI3 Action', { name: 'Receive Cancel' }, model.accountId)
     model.progress = undefined
   }
 
@@ -288,6 +301,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     'documentChanged',
     () =>
       setTimeout(() => {
+        void trackEvent('DUI3 Action', { name: 'Document changed' })
         void refreshDocumentInfo()
         void refreshDocumentModelStore()
         void refreshSendFilters()
