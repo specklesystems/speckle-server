@@ -102,7 +102,7 @@ const updateFilter = (filter: ISendFilter) => {
 
 const saveFilter = async () => {
   void trackEvent('DUI3 Action', {
-    name: 'Publish Filter Change',
+    name: 'Publish Card Filter Change',
     filter: newFilter.typeDiscriminator
   })
   await store.patchModel(props.modelCard.modelCardId, {

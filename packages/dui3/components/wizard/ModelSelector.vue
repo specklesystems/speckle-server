@@ -90,6 +90,9 @@ import {
 } from '~/lib/graphql/mutationsAndQueries'
 import { useForm } from 'vee-validate'
 import { DUIAccount, useAccountStore } from '~/store/accounts'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
+
+const { trackEvent } = useMixpanel()
 
 const emit = defineEmits<{
   (e: 'next', model: ModelListModelItemFragment): void
@@ -126,6 +129,8 @@ const createNewModel = async (name: string) => {
   const account = accountStore.accounts.find(
     (acc) => acc.accountInfo.id === props.accountId
   ) as DUIAccount
+
+  void trackEvent('DUI3 Action', { name: 'Model Create' }, account.accountInfo.id)
 
   const { mutate } = provideApolloClient(account.client)(() =>
     useMutation(createModelMutation)

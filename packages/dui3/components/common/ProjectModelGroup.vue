@@ -16,7 +16,13 @@
 
       <div class="rounded-md px-2 flex items-center space-x-2 justify-end">
         <button v-tippy="'Open project in browser'" class="hover:text-primary">
-          <ArrowTopRightOnSquareIcon class="w-4" @click.stop="$openUrl(projectUrl)" />
+          <ArrowTopRightOnSquareIcon
+            class="w-4"
+            @click.stop="
+              $openUrl(projectUrl),
+                trackEvent('DUI3 Action', { name: 'Project View' }, project.accountId)
+            "
+          />
         </button>
       </div>
     </button>
@@ -46,6 +52,9 @@ import {
   projectDetailsQuery,
   versionCreatedSubscription
 } from '~~/lib/graphql/mutationsAndQueries'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
+
+const { trackEvent } = useMixpanel()
 const accountStore = useAccountStore()
 const hostAppStore = useHostAppStore()
 const { $openUrl } = useNuxtApp()

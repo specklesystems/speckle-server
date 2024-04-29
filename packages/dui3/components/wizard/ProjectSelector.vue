@@ -96,6 +96,7 @@ import { ProjectListProjectItemFragment } from 'lib/common/generated/gql/graphql
 import { useForm } from 'vee-validate'
 import { ValidationHelpers } from '@speckle/ui-components'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+const { trackEvent } = useMixpanel()
 
 const emit = defineEmits<{
   (e: 'next', accountId: string, project: ProjectListProjectItemFragment): void
@@ -122,8 +123,8 @@ const selectedAccountId = ref<string>()
 
 const selectAccount = (account: DUIAccount) => {
   selectedAccountId.value = account.accountInfo.id
-  const { trackEvent } = useMixpanel()
-  trackEvent('DUI3 Action', { name: 'Account Select' }, account.accountInfo.id)
+
+  void trackEvent('DUI3 Action', { name: 'Account Select' }, account.accountInfo.id)
 }
 
 const { handleSubmit } = useForm<{ name: string }>()
@@ -137,6 +138,8 @@ const createNewProject = async (name: string) => {
   const account = accountStore.accounts.find(
     (acc) => acc.accountInfo.id === accountId.value
   ) as DUIAccount
+
+  void trackEvent('DUI3 Action', { name: 'Project Create' }, account.accountInfo.id)
 
   const { mutate } = provideApolloClient(account.client)(() =>
     useMutation(createProjectMutation)

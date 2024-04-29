@@ -80,6 +80,9 @@ import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { versionDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { watchOnce } from '@vueuse/core'
 import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
+
+const { trackEvent } = useMixpanel()
 
 const app = useNuxtApp()
 
@@ -107,6 +110,10 @@ const handleVersionSelection = async (
   latestVersion: VersionListItemFragment
 ) => {
   openVersionsDialog.value = false
+  void trackEvent('DUI3 Action', {
+    name: 'Load Card Version Change',
+    isLatestVersion: selectedVersion === latestVersion
+  })
   await store.patchModel(props.modelCard.modelCardId, {
     selectedVersionId: selectedVersion.id,
     latestVersionId: latestVersion.id, // patch this dude as well, to make sure
