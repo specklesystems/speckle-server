@@ -13,7 +13,7 @@
         </div>
         <div v-if="step === 1" class="h5 font-bold">Select project</div>
         <div v-if="step === 2" class="h5 font-bold">Select model</div>
-        <div v-if="step === 3" class="h5 font-bold">Select objects</div>
+        <div v-if="step === 3" class="h5 font-bold">Select version</div>
       </div>
       <!-- Step progress indicator: shows selected project and model -->
       <div

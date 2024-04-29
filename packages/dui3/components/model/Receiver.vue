@@ -30,16 +30,18 @@
         >
           {{ modelCard.selectedVersionId }}
         </FormButton>
-        <LayoutDialog v-model:open="openVersionsDialog" chromium65-compatibility>
-          <div class="-mx-6 -my-6 space-y-2">
-            <WizardVersionSelector
-              :account-id="modelCard.accountId"
-              :project-id="modelCard.projectId"
-              :model-id="modelCard.modelId"
-              :selected-version-id="modelCard.selectedVersionId"
-              @next="handleVersionSelection"
-            />
-          </div>
+        <LayoutDialog
+          v-model:open="openVersionsDialog"
+          chromium65-compatibility
+          title="Change loaded version"
+        >
+          <WizardVersionSelector
+            :account-id="modelCard.accountId"
+            :project-id="modelCard.projectId"
+            :model-id="modelCard.modelId"
+            :selected-version-id="modelCard.selectedVersionId"
+            @next="handleVersionSelection"
+          />
         </LayoutDialog>
       </div>
     </div>

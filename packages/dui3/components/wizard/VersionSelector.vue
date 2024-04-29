@@ -1,9 +1,6 @@
 <template>
   <div>
     <div class="space-y-4">
-      <div class="mb-2">
-        <div class="h5 font-bold">Select a version</div>
-      </div>
       <div
         v-if="latestVersion"
         class="grid grid-cols-2 gap-3 max-[475px]:grid-cols-1 mb-4"
