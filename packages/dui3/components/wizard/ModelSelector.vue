@@ -1,92 +1,75 @@
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="space-y-2">
-    <div class="flex items-center justify-between mb-2">
-      <div class="h5 font-bold">Select Model</div>
-    </div>
     <div class="space-y-2">
       <div
-        class="flex items-center space-x-2 justify-between items-center items-centre"
+        class="flex items-center space-x-2 justify-between sticky top-4 bg-foundation z-10 py-4 border-b"
       >
         <FormTextInput
-          v-model="modelName"
-          :placeholder="totalCount === 0 ? 'new model name' : 'search'"
+          v-model="searchText"
+          :placeholder="
+            totalCount === 0 ? 'New model name' : 'Search models in ' + project.name
+          "
           name="search"
-          :show-clear="!!modelName"
+          autocomplete="off"
+          :show-clear="!!searchText"
           full-width
+          size="lg"
         />
+        <FormButton
+          v-if="showNewModel"
+          v-tippy="'New model'"
+          @click="showNewModelDialog = true"
+        >
+          <PlusIcon class="w-4" />
+        </FormButton>
       </div>
       <div class="relative grid grid-cols-1 gap-2">
         <CommonLoadingBar v-if="loading" loading />
-        <div
+        <WizardListModelCard
           v-for="model in models"
           :key="model.id"
-          class="group relative bg-foundation-2 rounded p-2 hover:text-primary hover:bg-primary-muted transition cursor-pointer hover:shadow-md"
+          :model="model"
           @click="$emit('next', model)"
+        />
+
+        <FormButton
+          v-if="searchText && hasReachedEnd && showNewModel"
+          full-width
+          @click="createNewModel(searchText)"
         >
-          <div class="flex items-center space-x-4">
-            <div>
-              <img
-                v-if="model.previewUrl"
-                :src="model.previewUrl"
-                alt="preview image for model"
-                class="h-12 w-12 object-cover"
-              />
-              <div
-                v-else
-                class="h-12 w-12 bg-blue-500/10 rounded flex items-center justify-center"
-              >
-                <CubeTransparentIcon class="w-5 h-5 text-foreground-2" />
-              </div>
-            </div>
-            <div class="min-w-0">
-              <div class="caption text-foreground-2">
-                {{ model.name }}
-              </div>
-              <div class="font-bold">{{ model.displayName }}</div>
-              <div class="caption text-foreground-2 truncate">
-                {{ new Date(model.updatedAt).toLocaleString() }}
-                | {{ model.versions.totalCount }} versions
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="caption text-center mt-2">{{ totalCount }} model(s) found.</div>
-        <div v-if="showNewModel && totalCount === 0 && modelName">
-          <FormButton
-            full-width
-            class="block truncate max-w-full overflow-hidden"
-            @click="createNewModel(modelName)"
-          >
-            Create "{{ modelName }}"
-          </FormButton>
-        </div>
+          Create "{{ searchText }}"
+        </FormButton>
+        <FormButton
+          v-else
+          color="invert"
+          full-width
+          :disabled="hasReachedEnd"
+          @click="loadMore"
+        >
+          {{ hasReachedEnd ? 'No more models found' : 'Load older models' }}
+        </FormButton>
       </div>
     </div>
-    <button
-      v-if="showNewModel && totalCount !== 0"
-      v-tippy="'Create A New Model'"
-      class="fixed bottom-2 flex items-center justify-center right-2 z-100 w-12 h-12 rounded-full bg-primary text-foreground-on-primary"
-      @click="showNewModelDialog = true"
-    >
-      <PlusIcon class="w-6 h-6" />
-    </button>
     <LayoutDialog
       v-model:open="showNewModelDialog"
-      hide-closer
       title="Create new model"
+      chromium65-compatibility
     >
       <form @submit="onSubmit">
         <FormTextInput
           v-model="newModelName"
           :rules="rules"
-          placeholder="new model name"
+          placeholder="West facade, Level 1 layout..."
           name="name"
           :show-clear="!!newModelName"
           full-width
+          autocomplete="off"
+          size="lg"
         />
-        <div class="mt-2 flex">
-          <FormButton text @click="showNewModelDialog = false">Cancel</FormButton>
+        <div class="mt-4 flex">
+          <FormButton class="flex-grow" text @click="showNewModelDialog = false">
+            Cancel
+          </FormButton>
           <FormButton class="flex-grow" submit>Create</FormButton>
         </div>
       </form>
@@ -94,7 +77,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { CubeTransparentIcon, PlusIcon } from '@heroicons/vue/20/solid'
+import { PlusIcon } from '@heroicons/vue/20/solid'
 import { provideApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
 import {
   ProjectListProjectItemFragment,
@@ -107,7 +90,6 @@ import {
 } from '~/lib/graphql/mutationsAndQueries'
 import { useForm } from 'vee-validate'
 import { DUIAccount, useAccountStore } from '~/store/accounts'
-import { watchOnce } from '@vueuse/core'
 
 const emit = defineEmits<{
   (e: 'next', model: ModelListModelItemFragment): void
@@ -126,14 +108,18 @@ const accountStore = useAccountStore()
 
 const showNewModelDialog = ref(false)
 
-const modelName = ref<string>()
+const searchText = ref<string>()
 const newModelName = ref<string>()
+
+watch(searchText, () => (newModelName.value = searchText.value))
 
 const rules = useModelNameValidationRules()
 
 const { handleSubmit } = useForm<{ name: string }>()
-const onSubmit = handleSubmit((args) => {
-  void createNewModel(args.name)
+const onSubmit = handleSubmit(() => {
+  // TODO: Chat with Fabians
+  // This works, but if we use handleSubmit(args) > args.name -> it is undefined in Production on netlify, but works fine on local dev
+  void createNewModel(newModelName.value as string)
 })
 
 const createNewModel = async (name: string) => {
@@ -145,21 +131,26 @@ const createNewModel = async (name: string) => {
     useMutation(createModelMutation)
   )
   const res = await mutate({ input: { projectId: props.project.id, name } })
-
   if (res?.data?.modelMutations.create) {
+    refetch() // Sorts the list with newly created model otherwise it will put the model at the bottom.
     emit('next', res?.data?.modelMutations.create)
   } else {
     // TODO: Error out
   }
 }
 
-const { result: projectModelsResult, loading } = useQuery(
+const {
+  result: projectModelsResult,
+  loading,
+  fetchMore,
+  refetch
+} = useQuery(
   projectModelsQuery,
   () => ({
     projectId: props.project.id,
-    limit: 5,
+    limit: 10,
     filter: {
-      search: (modelName.value || '').trim() || null
+      search: (searchText.value || '').trim() || null
     }
   }),
   () => ({ clientId: props.accountId, debounce: 500, fetchPolicy: 'cache-and-network' })
@@ -167,11 +158,52 @@ const { result: projectModelsResult, loading } = useQuery(
 
 const models = computed(() => projectModelsResult.value?.project.models.items)
 const totalCount = computed(() => projectModelsResult.value?.project.models.totalCount)
-const initialCount = ref(-1)
+const hasReachedEnd = ref(false)
 
-watchOnce(projectModelsResult, (newObj) => {
-  console.log(newObj?.project.models.totalCount)
-  if (newObj?.project.models.totalCount)
-    initialCount.value = newObj.project.models.totalCount
+watch(projectModelsResult, (newVal) => {
+  if (
+    newVal &&
+    newVal?.project.models.items.length >= newVal?.project.models.totalCount
+  ) {
+    hasReachedEnd.value = true
+  } else {
+    hasReachedEnd.value = false
+  }
 })
+
+const loadMore = () => {
+  fetchMore({
+    variables: { cursor: projectModelsResult.value?.project.models.cursor },
+    updateQuery: (previousResult, { fetchMoreResult }) => {
+      if (!fetchMoreResult || fetchMoreResult.project.models.items.length === 0) {
+        hasReachedEnd.value = true
+        return previousResult
+      }
+
+      if (
+        previousResult.project.models.items.length +
+          fetchMoreResult.project.models.items.length >=
+        fetchMoreResult.project.models.totalCount
+      ) {
+        hasReachedEnd.value = true
+      }
+
+      return {
+        project: {
+          id: previousResult.project.id,
+          __typename: previousResult.project.__typename,
+          models: {
+            __typename: previousResult.project.models.__typename,
+            totalCount: previousResult.project.models.totalCount,
+            cursor: fetchMoreResult.project.models.cursor,
+            items: [
+              ...previousResult.project.models.items,
+              ...fetchMoreResult.project.models.items
+            ]
+          }
+        }
+      }
+    }
+  })
+}
 </script>

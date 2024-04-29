@@ -1,4 +1,3 @@
-<!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div>
     <div
@@ -14,7 +13,8 @@
         >
           Hello!
         </h1>
-        <div v-if="!!store.documentInfo">
+        <!-- Returning null from host app is blocked by CI for now, hence host app send here empty documentInfo, we check it's id whether null or not. -->
+        <div v-if="!!store.documentInfo?.id">
           <div class="text-foreground-2">
             There are no Speckle models being published or loaded in this file yet.
           </div>
@@ -72,16 +72,12 @@
         </FormButton>
       </div>
     </div>
-    <LayoutDialog v-model:open="showSendDialog" hide-closer>
-      <div class="-mx-4 -my-4 pt-4">
-        <SendWizard @close="showSendDialog = false" />
-      </div>
-    </LayoutDialog>
-    <LayoutDialog v-model:open="showReceiveDialog" hide-closer>
-      <div class="-mx-4 -my-4 pt-4">
-        <ReceiveWizard @close="showReceiveDialog = false" />
-      </div>
-    </LayoutDialog>
+
+    <SendWizard v-model:open="showSendDialog" @close="showSendDialog = false" />
+    <ReceiveWizard
+      v-model:open="showReceiveDialog"
+      @close="showReceiveDialog = false"
+    />
   </div>
 </template>
 <script setup lang="ts">

@@ -16,6 +16,7 @@ import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
 import CommonStepsBullet from '~~/src/components/common/steps/Bullet.vue'
 import CommonAnimationInstructional from '~~/src/components/common/animation/Instructional.vue'
+import CommonVimeoEmbed from '~~/src/components/common/VimeoEmbed.vue'
 import FormCardButton from '~~/src/components/form/CardButton.vue'
 import FormCheckbox from '~~/src/components/form/Checkbox.vue'
 import FormRadio from '~~/src/components/form/Radio.vue'
@@ -42,6 +43,7 @@ import LayoutDialog from '~~/src/components/layout/Dialog.vue'
 import LayoutDialogSection from '~~/src/components/layout/DialogSection.vue'
 import LayoutDisclosure from '~~/src/components/layout/Disclosure.vue'
 import LayoutGridListToggle from '~~/src/components/layout/GridListToggle.vue'
+import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 import { GridListToggleValue } from '~~/src/helpers/layout/components'
 import {
   ThrottleOrDebounce,
@@ -53,12 +55,16 @@ import {
 import LayoutMenu from '~~/src/components/layout/Menu.vue'
 import type { LayoutMenuItem, LayoutTabItem } from '~~/src/helpers/layout/components'
 import LayoutTabs from '~~/src/components/layout/Tabs.vue'
+import LayoutPageTabs from '~~/src/components/layout/PageTabs.vue'
 import LayoutTable from '~~/src/components/layout/Table.vue'
 import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
 import LayoutPanel from '~~/src/components/layout/Panel.vue'
 import CommonAlert from '~~/src/components/common/Alert.vue'
-import { writableAsyncComputed } from '~~/src/composables/common/async'
+import {
+  writableAsyncComputed,
+  buildManualPromise
+} from '~~/src/composables/common/async'
 import type {
   AsyncWritableComputedOptions,
   AsyncWritableComputedRef
@@ -98,6 +104,7 @@ export {
   CommonStepsBullet,
   CommonStepsNumber,
   CommonAnimationInstructional,
+  CommonVimeoEmbed,
   FormCardButton,
   FormCheckbox,
   FormRadio,
@@ -130,6 +137,7 @@ export {
   useResponsiveHorizontalDirectionCalculation,
   LayoutMenu,
   LayoutTabs,
+  LayoutPageTabs,
   LayoutTable,
   InfiniteLoading,
   LayoutPanel,
@@ -137,7 +145,8 @@ export {
   writableAsyncComputed,
   useFormCheckboxModel,
   FormTags,
-  keyboardClick
+  keyboardClick,
+  buildManualPromise
 }
 export type {
   ToastNotification,
@@ -154,5 +163,6 @@ export type {
   BlobPostResultItem,
   FileTypeSpecifier,
   AvatarUser,
-  AvatarUserWithId
+  AvatarUserWithId,
+  LayoutPageTabItem
 }

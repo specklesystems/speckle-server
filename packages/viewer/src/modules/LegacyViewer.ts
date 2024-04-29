@@ -1,39 +1,39 @@
 import { MathUtils } from 'three'
-import {
-  Viewer,
-  BatchObject,
-  PropertyInfo,
-  DataTree,
-  WorldTree,
-  QueryResult,
-  SunLightConfiguration,
-  SpeckleView,
-  CanonicalView,
-  InlineView,
-  VisualDiffMode,
-  DiffResult,
-  MeasurementOptions,
-  CameraController,
-  DiffExtension,
-  ExplodeExtension,
-  MeasurementsExtension,
-  SectionOutlines,
-  SectionTool,
-  SelectionExtension,
-  TreeNode,
-  SpeckleLoader,
-  DefaultViewerParams,
-  ViewerParams,
-  SelectionEvent,
-  IViewer
-} from '..'
 import { FilteringExtension, FilteringState } from './extensions/FilteringExtension'
-import { ICameraProvider, PolarView } from './extensions/core-extensions/Providers'
+import { PolarView } from './extensions/CameraController'
+import { InlineView } from './extensions/CameraController'
+import { CanonicalView } from './extensions/CameraController'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Queries } from './queries/Queries'
-import { Query, QueryArgsResultMap } from './queries/Query'
-import { DataTreeBuilder } from './tree/DataTree'
-import { SelectionExtensionOptions } from './extensions/SelectionExtension'
+import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
+import { DataTree, DataTreeBuilder } from './tree/DataTree'
+import {
+  SelectionExtension,
+  SelectionExtensionOptions
+} from './extensions/SelectionExtension'
+import { StencilOutlineType } from '../IViewer'
+import {
+  DefaultViewerParams,
+  IViewer,
+  SelectionEvent,
+  SpeckleView,
+  SunLightConfiguration,
+  ViewerParams
+} from '../IViewer'
+import { TreeNode, WorldTree } from './tree/WorldTree'
+import { Viewer } from './Viewer'
+import { CameraController } from './extensions/CameraController'
+import { SectionTool } from './extensions/SectionTool'
+import { SectionOutlines } from './extensions/SectionOutlines'
+import {
+  MeasurementOptions,
+  MeasurementsExtension
+} from './extensions/measurements/MeasurementsExtension'
+import { ExplodeExtension } from './extensions/ExplodeExtension'
+import { DiffExtension, DiffResult, VisualDiffMode } from './extensions/DiffExtension'
+import { PropertyInfo } from './filtering/PropertyManager'
+import { BatchObject } from './batching/BatchObject'
+import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -46,7 +46,7 @@ class LegacySelectionExtension extends SelectionExtension {
 }
 
 class HighlightExtension extends SelectionExtension {
-  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer, cameraProvider)
     const highlightMaterialData: SelectionExtensionOptions = {
       selectionMaterialData: {
@@ -57,7 +57,7 @@ class HighlightExtension extends SelectionExtension {
         metalness: 0,
         vertexColors: false,
         lineWeight: 1,
-        stencilOutlines: false,
+        stencilOutlines: StencilOutlineType.NONE,
         pointSize: 4
       }
     }
@@ -197,17 +197,14 @@ export class LegacyViewer extends Viewer {
     ghost = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      this.selection.unselectObjects(objectIds)
-      const filteringState = this.filtering.hideObjects(
-        objectIds,
-        stateKey,
-        includeDescendants,
-        ghost
-      )
-      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
-      filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
-      )
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.hideObjects(
+          objectIds,
+          stateKey,
+          includeDescendants,
+          ghost
+        )
+      })
       resolve(filteringState)
     })
   }
@@ -218,15 +215,9 @@ export class LegacyViewer extends Viewer {
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.filtering.showObjects(
-        objectIds,
-        stateKey,
-        includeDescendants
-      )
-      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
-      filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
-      )
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.showObjects(objectIds, stateKey, includeDescendants)
+      })
       resolve(filteringState)
     })
   }
@@ -238,16 +229,14 @@ export class LegacyViewer extends Viewer {
     ghost = true
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.filtering.isolateObjects(
-        objectIds,
-        stateKey,
-        includeDescendants,
-        ghost
-      )
-      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
-      filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
-      )
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.isolateObjects(
+          objectIds,
+          stateKey,
+          includeDescendants,
+          ghost
+        )
+      })
       resolve(filteringState)
     })
   }
@@ -258,15 +247,9 @@ export class LegacyViewer extends Viewer {
     includeDescendants = false
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      const filteringState = this.filtering.unIsolateObjects(
-        objectIds,
-        stateKey,
-        includeDescendants
-      )
-      if (!filteringState.selectedObjects) filteringState.selectedObjects = []
-      filteringState.selectedObjects.push(
-        ...this.selection.getSelectedObjects().map((obj) => obj.id)
-      )
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.unIsolateObjects(objectIds, stateKey, includeDescendants)
+      })
       resolve(filteringState)
     })
   }
@@ -284,13 +267,19 @@ export class LegacyViewer extends Viewer {
 
   public setColorFilter(property: PropertyInfo, ghost = true): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filtering.setColorFilter(property, ghost))
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.setColorFilter(property, ghost)
+      })
+      resolve(filteringState)
     })
   }
 
   public removeColorFilter(): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filtering.removeColorFilter())
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.removeColorFilter()
+      })
+      resolve(filteringState)
     })
   }
 
@@ -298,14 +287,31 @@ export class LegacyViewer extends Viewer {
     groups: { objectIds: string[]; color: string }[]
   ): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filtering.setUserObjectColors(groups))
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.setUserObjectColors(groups)
+      })
+      resolve(filteringState)
     })
   }
 
   public resetFilters(): Promise<FilteringState> {
     return new Promise<FilteringState>((resolve) => {
-      resolve(this.filtering.resetFilters())
+      const filteringState = this.preserveSelectionFilter(() => {
+        return this.filtering.resetFilters()
+      })
+      resolve(filteringState)
     })
+  }
+
+  private preserveSelectionFilter(filterFn: () => FilteringState): FilteringState {
+    const selectedObjects = this.selection.getSelectedObjects().map((obj) => obj.id)
+    if (selectedObjects.length) this.selection.clearSelection()
+    const filteringState = filterFn()
+    if (!filteringState.selectedObjects)
+      filteringState.selectedObjects = selectedObjects
+
+    this.selection.selectObjects(filteringState.selectedObjects)
+    return filteringState
   }
 
   /** TREE */

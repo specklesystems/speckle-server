@@ -103,7 +103,7 @@ export function useViewerEventListener<A = any>(
   })
 
   onBeforeUnmount(() => {
-    unmount
+    unmount()
   })
 
   return unmount

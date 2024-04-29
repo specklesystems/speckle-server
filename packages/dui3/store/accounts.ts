@@ -31,12 +31,17 @@ export const useAccountStore = defineStore('accountStore', () => {
   const accounts = ref<DUIAccount[]>([])
   const isLoading = ref(false)
 
-  const defaultAccount = computed(() =>
-    accounts.value.find((acc) => acc.accountInfo.isDefault)
+  const defaultAccount = computed(
+    () => accounts.value.find((acc) => acc.accountInfo.isDefault) as DUIAccount
   )
 
-  const selectedAccount = computed(() => {
-    return defaultAccount.value
+  const userSelectedAccount = ref<DUIAccount>()
+
+  /**
+   * Returns either the default account or the last account the user has selected.
+   */
+  const activeAccount = computed(() => {
+    return userSelectedAccount.value || defaultAccount.value
   })
 
   const testAccounts = async () => {
@@ -97,14 +102,13 @@ export const useAccountStore = defineStore('accountStore', () => {
     void testAccounts()
   })
 
-  void refreshAccounts()
-
   app.vueApp.provide(ApolloClients, apolloClients)
   return {
     isLoading,
     accounts,
     defaultAccount,
-    selectedAccount,
+    activeAccount,
+    userSelectedAccount,
     refreshAccounts,
     provideClients
   }

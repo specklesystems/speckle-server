@@ -25,9 +25,8 @@ workflows:
       - test-frontend-2:
           filters: *filters-allow-all
 
-      ## TODO: Re-enable when dui3 gets further into development
-      # - test-dui-3:
-      #     filters: *filters-allow-all
+      - test-viewer:
+          filters: *filters-allow-all
 
       - test-ui-components:
           filters: *filters-allow-all
@@ -41,9 +40,10 @@ workflows:
           type: approval
           filters: &filters-ignore-main-branch-or-all-tags
             branches:
-              ignore:
+              ignore: &branches-special
                 - main
-                - testing
+                - /^hotfix.*$/
+                - /^testing\d*$/
             tags:
               ignore: /.*/
 
@@ -57,6 +57,7 @@ workflows:
             - pre-commit
             - deployment-testing-approval
             - test-frontend-2
+            - test-viewer
             - test-server
             - docker-build-server
             - docker-build-frontend
@@ -75,6 +76,7 @@ workflows:
             - pre-commit
             - deployment-testing-approval
             - test-frontend-2
+            - test-viewer
             - test-server
             - docker-build-server
             - docker-build-frontend
@@ -91,10 +93,6 @@ workflows:
       - pre-commit:
           filters: *filters-allow-all
 
-      - build-image-approval:
-          type: approval
-          filters: *filters-ignore-main-branch-or-all-tags
-
       - docker-build-server:
           context: &build-context
             - github-readonly-public-repos
@@ -103,63 +101,54 @@ workflows:
               only: /.*/
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-frontend:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-frontend-2:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-webhooks:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-file-imports:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-previews:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-test-container:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-monitor-container:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - docker-build-docker-compose-ingress:
           context: *build-context
           filters: *filters-build
           requires:
             - get-version
-            - build-image-approval
 
       - publish-approval:
           type: approval
@@ -179,6 +168,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-frontend:
@@ -190,6 +180,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-frontend-2:
@@ -201,6 +192,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-webhooks:
@@ -212,6 +204,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-file-imports:
@@ -223,6 +216,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-previews:
@@ -234,6 +228,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-test-container:
@@ -245,6 +240,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-monitor-container:
@@ -256,6 +252,7 @@ workflows:
             - pre-commit
             - publish-approval
             - test-frontend-2
+            - test-viewer
             - test-server
 
       - docker-publish-docker-compose-ingress:
@@ -270,10 +267,7 @@ workflows:
       - publish-helm-chart:
           filters: &filters-publish
             branches:
-              only:
-                - main
-                - hotfix*
-                - testing
+              only: *branches-special
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
@@ -309,11 +303,12 @@ workflows:
             - test-server
             - test-ui-components
             - test-frontend-2
+            - test-viewer
 
 jobs:
   get-version:
-    docker:
-      - image: cimg/python:3.12.1
+    docker: &docker-base-image
+      - image: cimg/base:2024.02
     working_directory: &work-dir /tmp/ci
     steps:
       - checkout
@@ -351,8 +346,10 @@ jobs:
     steps:
       - checkout
       - restore_cache:
+          name: Restore pre-commit & Yarn Package cache
           keys:
             - cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
+            - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
           name: Install pre-commit hooks
           command: pre-commit install-hooks --config <<parameters.config_file>>
@@ -360,10 +357,6 @@ jobs:
           key: cache-pre-commit-<<parameters.cache_prefix>>-{{ checksum "<<parameters.config_file>>" }}
           paths:
             - ~/.cache/pre-commit
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-{{ checksum "yarn.lock" }}
       - run:
           name: Install Dependencies
           command: yarn
@@ -484,7 +477,7 @@ jobs:
       # destination: package/server/coverage
 
   test-frontend-2:
-    docker:
+    docker: &docker-node-browsers-image
       - image: cimg/node:18.19.0-browsers
     resource_class: xlarge
     steps:
@@ -517,10 +510,10 @@ jobs:
           command: yarn lint
           working_directory: 'packages/frontend-2'
 
-  test-dui-3:
-    docker:
-      - image: cimg/node:18.19.0
-    resource_class: medium+
+  test-viewer:
+    docker: &docker-node-browsers-image
+      - image: cimg/node:18.19.0-browsers
+    resource_class: large
     steps:
       - checkout
       - restore_cache:
@@ -543,13 +536,21 @@ jobs:
             - .yarn/unplugged
 
       - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
           name: Lint everything
           command: yarn lint
-          working_directory: 'packages/dui3'
+          working_directory: 'packages/viewer'
+
+      - run:
+          name: Run tests
+          command: yarn test
+          working_directory: 'packages/viewer'
 
   test-ui-components:
-    docker:
-      - image: cimg/node:18.19.0-browsers
+    docker: *docker-node-browsers-image
     resource_class: xlarge
     steps:
       - checkout
@@ -602,7 +603,7 @@ jobs:
 
   ui-components-chromatic:
     resource_class: medium+
-    docker:
+    docker: &docker-node-image
       - image: cimg/node:18.19.0
     steps:
       - checkout
@@ -640,14 +641,13 @@ jobs:
     # but it is not possible to scan npm/yarn package.json
     # because it requires node_modules
     # therefore this scanning has to be triggered via the cli
-    docker: &docker-image
-      - image: cimg/python:3.12.1-node
+    docker: *docker-node-image
     resource_class: small
     working_directory: *work-dir
     steps:
       - checkout
       - restore_cache:
-          name: Restore Yarn Package Cache
+          name: Restore Yarn Package cache
           keys:
             - yarn-packages-server-{{ checksum "yarn.lock" }}
       - run:
@@ -681,6 +681,7 @@ jobs:
           sudo mkdir /nix
           sudo chmod 777 /nix
       - restore_cache:
+          name: Restore nix cache
           keys:
             - nix-{{ checksum "./.circleci/deployment/docker-compose-shell.nix" }}
       - run:
@@ -714,6 +715,7 @@ jobs:
           sudo mkdir /nix
           sudo chmod 777 /nix
       - restore_cache:
+          name: Restore nix cache
           keys:
             - nix-{{ checksum "./.circleci/deployment/helm-chart-shell.nix" }}
       - run:
@@ -774,8 +776,7 @@ jobs:
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
-    docker: &docker-image
-      - image: cimg/python:3.12.1-node
+    docker: *docker-base-image
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -843,8 +844,7 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   docker-publish: &publish-job
-    docker:
-      - image: cimg/python:3.12.1-node
+    docker: *docker-base-image
     resource_class: medium
     working_directory: *work-dir
     steps:
@@ -908,14 +908,13 @@ jobs:
       SPECKLE_SERVER_PACKAGE: docker-compose-ingress
 
   publish-npm:
-    docker: *docker-image
+    docker: *docker-node-image
     working_directory: *work-dir
     steps:
       - checkout
       - attach_workspace:
           at: /tmp/ci/workspace
       - run: cat workspace/env-vars >> $BASH_ENV
-
       - restore_cache:
           name: Restore Yarn Package Cache
           keys:
@@ -932,7 +931,6 @@ jobs:
           paths:
             - .yarn/cache
             - .yarn/unplugged
-
       - run:
           name: auth to npm as Speckle
           command: |
@@ -955,7 +953,8 @@ jobs:
           command: 'yarn workspaces foreach -pv --no-private npm publish --access public'
 
   publish-helm-chart:
-    docker: *docker-image
+    docker:
+      - image: cimg/python:3.12.1
     working_directory: *work-dir
     steps:
       - checkout
@@ -970,7 +969,7 @@ jobs:
           command: ./.circleci/publish_helm_chart.sh
 
   update-helm-documentation:
-    docker: *docker-image
+    docker: *docker-node-image
     working_directory: *work-dir
     steps:
       - checkout

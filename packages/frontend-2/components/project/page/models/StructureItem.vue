@@ -106,9 +106,10 @@
               v-if="!isPendingFileUpload(item) && item.model"
               rounded
               size="xs"
-              :icon-left="ArrowPathRoundedSquareIcon"
               :to="modelVersionsRoute(project.id, item.model.id)"
+              class="gap-0.5"
             >
+              <IconVersions class="h-4 w-4" />
               {{ model?.versionCount.totalCount }}
             </FormButton>
           </div>
@@ -231,7 +232,6 @@ import {
   CubeIcon,
   CubeTransparentIcon,
   PlusIcon,
-  ArrowPathRoundedSquareIcon,
   ChatBubbleLeftRightIcon,
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'

@@ -167,6 +167,7 @@ export const projectModelPageQuery = graphql(`
     $versionsCursor: String
   ) {
     project(id: $projectId) {
+      id
       ...ProjectModelPageHeaderProject
       ...ProjectModelPageVersionsProject
     }
@@ -180,6 +181,7 @@ export const projectModelVersionsQuery = graphql(`
     $versionsCursor: String
   ) {
     project(id: $projectId) {
+      id
       ...ProjectModelPageVersionsPagination
     }
   }
@@ -188,6 +190,7 @@ export const projectModelVersionsQuery = graphql(`
 export const projectModelsPageQuery = graphql(`
   query ProjectModelsPage($projectId: String!) {
     project(id: $projectId) {
+      id
       ...ProjectModelsPageHeader_Project
       ...ProjectModelsPageResults_Project
     }
@@ -197,6 +200,7 @@ export const projectModelsPageQuery = graphql(`
 export const projectDiscussionsPageQuery = graphql(`
   query ProjectDiscussionsPage($projectId: String!) {
     project(id: $projectId) {
+      id
       ...ProjectDiscussionsPageHeader_Project
       ...ProjectDiscussionsPageResults_Project
     }

@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden outline outline-blue-500/10  ${cardBgColor}`"
+    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor}`"
   >
     <div v-if="modelData" class="px-2 py-2">
       <div class="flex items-center space-x-2 min-w-0">
@@ -26,6 +26,7 @@
           <CursorArrowRaysIcon class="w-4" />
         </button>
         <ModelActionsDialog
+          :model-name="modelData.displayName"
           @view="viewModel"
           @view-versions="viewModelVersions"
           @remove="removeModel"

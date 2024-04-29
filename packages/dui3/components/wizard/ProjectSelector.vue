@@ -1,72 +1,69 @@
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="space-y-2">
     <div class="flex items-center space-x-2"></div>
-    <div class="space-y-2">
-      <div
-        class="flex items-center space-x-2 justify-between items-center items-centre"
-      >
-        <FormTextInput
-          v-model="searchText"
-          placeholder="search"
-          name="search"
-          :show-clear="!!searchText"
-          full-width
-        />
-        <div class="mt-1">
-          <AccountsMenu
-            :current-selected-account-id="accountId"
-            @select="(e) => selectAccount(e)"
+    <div class="space-y-2 relative">
+      <div class="sticky -top-4 bg-foundation z-10 py-4 border-b space-y-2">
+        <div class="flex items-center space-x-2 justify-between">
+          <FormTextInput
+            v-model="searchText"
+            placeholder="Search your projects"
+            name="search"
+            autocomplete="off"
+            :show-clear="!!searchText"
+            full-width
+            size="lg"
           />
-        </div>
-      </div>
-      <div class="grid grid-cols-1 gap-2">
-        <CommonLoadingBar v-if="loading" loading />
-        <div
-          v-for="project in projects"
-          :key="project.id"
-          class="group relative bg-foundation-2 rounded p-2 hover:text-primary hover:bg-primary-muted transition cursor-pointer hover:shadow-md"
-          @click="$emit('next', accountId, project)"
-        >
-          <div class="font-bold">{{ project.name }}</div>
-          <div class="caption text-foreground-2">{{ project.role?.split(':')[1] }}</div>
-          <div class="caption text-foreground-2">
-            {{ new Date(project.updatedAt).toLocaleString() }}
+          <FormButton
+            v-if="showNewProject"
+            v-tippy="'New project'"
+            @click="showNewProjectDialog = true"
+          >
+            <PlusIcon class="w-4" />
+          </FormButton>
+          <div class="mt-1">
+            <AccountsMenu
+              :current-selected-account-id="accountId"
+              @select="(e) => selectAccount(e)"
+            />
           </div>
         </div>
-        <div v-if="showNewProject && totalCount === 0 && searchText">
-          <form @submit="createNewProject(searchText)">
-            <FormButton
-              full-width
-              class="block truncate max-w-full overflow-hidden"
-              @click="createNewProject(searchText)"
-            >
-              Create "{{ searchText }}"
-            </FormButton>
-          </form>
-        </div>
-        <div class="caption text-center mt-2">{{ totalCount }} projects found.</div>
+        <CommonLoadingBar v-if="loading" loading />
+      </div>
+      <div class="grid grid-cols-1 gap-2 relative z-0">
+        <WizardListProjectCard
+          v-for="project in projects"
+          :key="project.id"
+          :project="project"
+          @click="$emit('next', accountId, project)"
+        />
+        <FormButton
+          v-if="searchText && hasReachedEnd && showNewProject"
+          full-width
+          @click="createNewProject(searchText)"
+        >
+          Create "{{ searchText }}"
+        </FormButton>
+        <FormButton
+          v-else
+          color="invert"
+          full-width
+          :disabled="hasReachedEnd"
+          @click="loadMore"
+        >
+          {{ hasReachedEnd ? 'No more projects found' : 'Load older projects' }}
+        </FormButton>
       </div>
     </div>
-    <button
-      v-if="showNewProject && totalCount !== 0"
-      v-tippy="'create new project'"
-      class="fixed bottom-2 flex items-center justify-center right-2 z-100 w-12 h-12 rounded-full bg-primary text-foreground-on-primary"
-      @click="showNewProjectDialog = true"
-    >
-      <PlusIcon class="w-6 h-6" />
-    </button>
     <LayoutDialog
       v-model:open="showNewProjectDialog"
-      hide-closer
       title="Create new project"
+      chromium65-compatibility
     >
-      <!-- <div class="-mx-6 -my-5 space-y-2"> -->
-      <!-- TODO -->
       <form @submit="onSubmitCreateNewProject">
         <FormTextInput
           v-model="newProjectName"
-          placeholder="new project name"
+          placeholder="A Beautiful Home, A Small Bridge..."
+          autocomplete="off"
           name="name"
           :show-clear="!!newProjectName"
           :rules="[
@@ -74,13 +71,15 @@
             ValidationHelpers.isStringOfLength({ minLength: 3 })
           ]"
           full-width
+          size="lg"
         />
-        <div class="mt-2 flex">
-          <FormButton text @click="showNewProjectDialog = false">Cancel</FormButton>
+        <div class="mt-4 flex">
+          <FormButton class="flex-grow" text @click="showNewProjectDialog = false">
+            Cancel
+          </FormButton>
           <FormButton class="flex-grow" submit>Create</FormButton>
         </div>
       </form>
-      <!-- </div> -->
     </LayoutDialog>
   </div>
 </template>
@@ -111,13 +110,14 @@ withDefaults(
 
 const searchText = ref<string>()
 const newProjectName = ref<string>()
+
+watch(searchText, () => (newProjectName.value = searchText.value))
+
 const showNewProjectDialog = ref(false)
 const accountStore = useAccountStore()
-const { defaultAccount } = storeToRefs(accountStore)
+const { activeAccount } = storeToRefs(accountStore)
 
-const accountId = computed(
-  () => selectedAccountId.value || (defaultAccount.value?.accountInfo.id as string)
-)
+const accountId = computed(() => activeAccount.value.accountInfo.id)
 const selectedAccountId = ref<string>()
 
 const selectAccount = (account: DUIAccount) => {
@@ -127,8 +127,10 @@ const selectAccount = (account: DUIAccount) => {
 }
 
 const { handleSubmit } = useForm<{ name: string }>()
-const onSubmitCreateNewProject = handleSubmit((args) => {
-  void createNewProject(args.name)
+const onSubmitCreateNewProject = handleSubmit(() => {
+  // TODO: Chat with Fabians
+  // This works, but if we use handleSubmit(args) > args.name -> it is undefined in Production on netlify, but works fine on local dev
+  void createNewProject(newProjectName.value as string)
 })
 
 const createNewProject = async (name: string) => {
@@ -141,13 +143,19 @@ const createNewProject = async (name: string) => {
   )
   const res = await mutate({ input: { name } })
   if (res?.data?.projectMutations.create) {
+    refetch() // Sorts the list with newly created project otherwise it will put the project at the bottom.
     emit('next', accountId.value, res?.data?.projectMutations.create)
   } else {
     // TODO: Error out
   }
 }
 
-const { result: projectsResult, loading } = useQuery(
+const {
+  result: projectsResult,
+  loading,
+  fetchMore,
+  refetch
+} = useQuery(
   projectsListQuery,
   () => ({
     limit: 5,
@@ -155,9 +163,55 @@ const { result: projectsResult, loading } = useQuery(
       search: (searchText.value || '').trim() || null
     }
   }),
-  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'cache-and-network' })
+  () => ({ clientId: accountId.value, debounce: 500, fetchPolicy: 'network-only' })
 )
 
 const projects = computed(() => projectsResult.value?.activeUser?.projects.items)
-const totalCount = computed(() => projectsResult.value?.activeUser?.projects.totalCount)
+const hasReachedEnd = ref(false)
+
+watch(searchText, () => {
+  hasReachedEnd.value = false
+})
+
+watch(projectsResult, (newVal) => {
+  if (
+    newVal &&
+    newVal?.activeUser?.projects.items.length >= newVal?.activeUser?.projects.totalCount
+  ) {
+    hasReachedEnd.value = true
+  } else {
+    hasReachedEnd.value = false
+  }
+})
+
+const loadMore = () => {
+  fetchMore({
+    variables: { cursor: projectsResult.value?.activeUser?.projects.cursor },
+    updateQuery: (previousResult, { fetchMoreResult }) => {
+      if (!fetchMoreResult || fetchMoreResult.activeUser?.projects.items.length === 0) {
+        hasReachedEnd.value = true
+        return previousResult
+      }
+
+      if (!previousResult.activeUser || !fetchMoreResult.activeUser)
+        return previousResult
+
+      return {
+        activeUser: {
+          id: previousResult.activeUser?.id,
+          __typename: previousResult.activeUser?.__typename,
+          projects: {
+            __typename: previousResult.activeUser?.projects.__typename,
+            cursor: fetchMoreResult?.activeUser?.projects.cursor,
+            totalCount: fetchMoreResult?.activeUser?.projects.totalCount,
+            items: [
+              ...previousResult.activeUser.projects.items,
+              ...fetchMoreResult.activeUser.projects.items
+            ]
+          }
+        }
+      }
+    }
+  })
+}
 </script>

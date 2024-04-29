@@ -25,6 +25,23 @@ server:
   disable_tracking: true
   disable_tracing: true
 
+objects:
+  replicas: 1
+  # session_secret: secret -> `session_secret`
+  auth:
+    local:
+      enabled: true
+  logLevel: debug
+
+  email:
+    enabled: false
+
+  monitoring:
+    mp:
+      enabled: false
+  disable_tracking: true
+  disable_tracing: true
+
 frontend_2:
   enabled: true
 

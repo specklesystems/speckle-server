@@ -11,11 +11,11 @@
         leave-to="opacity-0"
       >
         <div
-          class="fixed inset-0 bg-neutral-100/70 dark:bg-neutral-900/70 transition-opacity backdrop-blur-xs"
+          :class="`fixed ${insetClass} bg-neutral-100/70 dark:bg-neutral-900/70 transition-opacity backdrop-blur-xs`"
         />
       </TransitionChild>
 
-      <div class="fixed inset-0 z-10 h-[100dvh] w-screen">
+      <div :class="`fixed ${insetClass} z-10 ${mainHeightClass} w-screen`">
         <div class="flex justify-center items-center h-full w-full p-4 sm:p-0">
           <TransitionChild
             as="template"
@@ -29,11 +29,11 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90dvh]',
+                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
-              @submit.prevent="onSubmit"
+              @submit.prevent="onFormSubmit"
             >
               <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
                 <div
@@ -57,7 +57,7 @@
               </button>
               <div
                 class="flex-1 simple-scrollbar overflow-y-auto"
-                :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-10'"
+                :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-6 pt-10 sm:p-10'"
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
@@ -95,7 +95,7 @@ import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessu
 import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
-import { throttle } from 'lodash'
+import { throttle, noop } from 'lodash'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -124,6 +124,12 @@ const props = defineProps<{
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
    */
   onSubmit?: (e: SubmitEvent) => void
+  /**
+   * If set, it will replace inset-0 with top-0, bottom-0, etc. and it will not use dvh units.
+   * This is required as we're using this in DUI3, which needs to work in chromium 65, which does
+   * not support the above. Life is pain.
+   */
+  chromium65Compatibility?: boolean
 }>()
 
 const slots = useSlots()
@@ -138,6 +144,20 @@ const hasTitle = computed(() => props.title || slots.header)
 const open = computed({
   get: () => props.open,
   set: (newVal) => emit('update:open', newVal)
+})
+
+/**
+ * DUI3/Chromium 65 compatibility mode.
+ */
+const insetClass = computed(() => {
+  return props.chromium65Compatibility ? 'top-0 bottom-0 right-0 left-0' : 'inset-0'
+})
+
+/**
+ * DUI3/Chromium 65 compatibility mode.
+ */
+const mainHeightClass = computed(() => {
+  return props.chromium65Compatibility ? 'h-[100vh]' : 'h-[100dvh]'
 })
 
 const maxWidthWeight = computed(() => {
@@ -177,6 +197,10 @@ const widthClasses = computed(() => {
 const onClose = () => {
   if (props.preventCloseOnClickOutside) return
   open.value = false
+}
+
+const onFormSubmit = (e: SubmitEvent) => {
+  ;(props.onSubmit || noop)(e)
 }
 
 const onScroll = throttle((e: Event) => {

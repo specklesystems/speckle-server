@@ -21,5 +21,5 @@ exports.init = async (app) => {
 exports.finalize = async () => {
   // Note: we're registering the default apps last as we want to ensure that all
   // scopes have been registered by any other modules.
-  await require('./defaultApps')()
+  await require('./manageDefaultApps')()
 }

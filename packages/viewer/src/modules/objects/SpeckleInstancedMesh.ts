@@ -17,7 +17,11 @@ import {
 import { BatchObject } from '../batching/BatchObject'
 import Materials from '../materials/Materials'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
-import InstancedMeshBatch, { DrawGroup } from '../batching/InstancedMeshBatch'
+import {
+  DrawGroup,
+  INSTANCE_GRADIENT_BUFFER_STRIDE,
+  INSTANCE_TRANSFORM_BUFFER_STRIDE
+} from '../batching/Batch'
 import { ObjectLayers } from '../../IViewer'
 import Logger from 'js-logger'
 
@@ -54,6 +58,7 @@ export default class SpeckleInstancedMesh extends Group {
   private batchMaterial: Material = null
   private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Material | Material[]> = []
+  private materialCacheLUT: { [id: string]: number } = {}
 
   private _batchObjects: BatchObject[]
 
@@ -98,13 +103,25 @@ export default class SpeckleInstancedMesh extends Group {
     this.instances.forEach((value) => (value.material = overrideMaterial))
   }
 
-  public getCachedMaterial(material: Material, copy = false) {
-    if (!this.materialCache[material.id]) {
-      this.materialCache[material.id] = material.clone()
-    } else if (copy || material['needsCopy']) {
-      Materials.fastCopy(material, this.materialCache[material.id])
+  private lookupMaterial(material: Material) {
+    return (
+      this.materialCache[material.id] ||
+      this.materialCache[this.materialCacheLUT[material.id]]
+    )
+  }
+
+  public getCachedMaterial(material: Material, copy = false): Material {
+    let cachedMaterial = this.lookupMaterial(material)
+    if (!cachedMaterial) {
+      const clone = material.clone()
+      this.materialCache[material.id] = clone
+      this.materialCacheLUT[clone.id] = material.id
+      cachedMaterial = clone
+      this.updateMaterialTransformsUniform(this.materialCache[material.id])
+    } else if (copy || material['needsCopy'] || cachedMaterial['needsCopy']) {
+      Materials.fastCopy(material, cachedMaterial)
     }
-    return this.materialCache[material.id]
+    return cachedMaterial
   }
 
   public restoreMaterial() {
@@ -139,21 +156,20 @@ export default class SpeckleInstancedMesh extends Group {
           this.groups[k].start,
           this.groups[k].start + this.groups[k].count
         ),
-        InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+        INSTANCE_TRANSFORM_BUFFER_STRIDE
       )
       group.geometry.setAttribute(
         'gradientIndex',
         new InstancedBufferAttribute(
           gradientBuffer.subarray(
-            this.groups[k].start / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+            this.groups[k].start / INSTANCE_TRANSFORM_BUFFER_STRIDE,
             (this.groups[k].start + this.groups[k].count) /
-              InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+              INSTANCE_TRANSFORM_BUFFER_STRIDE
           ),
-          InstancedMeshBatch.INSTANCE_GRADIENT_BUFFER_STRIDE
+          INSTANCE_GRADIENT_BUFFER_STRIDE
         )
       )
-      group.count =
-        this.groups[k].count / InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE
+      group.count = this.groups[k].count / INSTANCE_TRANSFORM_BUFFER_STRIDE
       group.instanceMatrix.needsUpdate = true
       group.layers.set(ObjectLayers.STREAM_CONTENT_MESH)
       group.frustumCulled = false
@@ -180,8 +196,7 @@ export default class SpeckleInstancedMesh extends Group {
       if (group) {
         const instance: InstancedMesh = this.instances[this.groups.indexOf(group)]
         instance.setMatrixAt(
-          (rv.batchStart - group.start) /
-            InstancedMeshBatch.INSTANCE_TRANSFORM_BUFFER_STRIDE,
+          (rv.batchStart - group.start) / INSTANCE_TRANSFORM_BUFFER_STRIDE,
           batchObject.transform
         )
 

@@ -27,31 +27,26 @@
         >
           <span class="truncate">{{ modelCard.sendFilter?.name }}</span>
         </FormButton>
-        <LayoutDialog v-model:open="openFilterDialog">
-          <div class="-mx-6 -my-6 space-y-2">
-            <div>
-              <div class="font-bold">Change filter</div>
-            </div>
-            <FilterListSelect
-              :filter="modelCard.sendFilter"
-              @update:filter="updateFilter"
-            />
-            <div class="mt-2 flex">
-              <FormButton
-                size="sm"
-                text
-                @click=";(openFilterDialog = false), saveFilter()"
-              >
-                Save
-              </FormButton>
-              <FormButton
-                size="sm"
-                full-width
-                @click=";(openFilterDialog = false), saveFilterAndSend()"
-              >
-                Save & Publish
-              </FormButton>
-            </div>
+        <LayoutDialog
+          v-model:open="openFilterDialog"
+          :title="`Change filter for ${cardBase?.modelData?.displayName}`"
+          chromium65-compatibility
+        >
+          <FilterListSelect
+            :filter="modelCard.sendFilter"
+            @update:filter="updateFilter"
+          />
+          <div class="mt-2 flex">
+            <!-- TODO: Ux wise, users might want to just save the selection and publish it later. -->
+            <!-- <FormButton text @click=";(openFilterDialog = false), saveFilter()">
+              Save
+            </FormButton> -->
+            <FormButton
+              full-width
+              @click=";(openFilterDialog = false), saveFilterAndSend()"
+            >
+              Save & Publish
+            </FormButton>
           </div>
         </LayoutDialog>
       </div>
