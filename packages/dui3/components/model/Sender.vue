@@ -78,6 +78,9 @@ import { CubeIcon } from '@heroicons/vue/24/outline'
 import { ModelCardNotification } from '~/lib/models/card/notification'
 import { ISendFilter, ISenderModelCard } from '~/lib/models/card/send'
 import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
+
+const { trackEvent } = useMixpanel()
 
 const cardBase = ref<InstanceType<typeof ModelCardBase>>()
 const props = defineProps<{
@@ -98,6 +101,10 @@ const updateFilter = (filter: ISendFilter) => {
 }
 
 const saveFilter = async () => {
+  void trackEvent('DUI3 Action', {
+    name: 'Publish Card Filter Change',
+    filter: newFilter.typeDiscriminator
+  })
   await store.patchModel(props.modelCard.modelCardId, {
     sendFilter: newFilter,
     expired: true

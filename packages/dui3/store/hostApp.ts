@@ -3,6 +3,7 @@ import {
   DocumentModelStore
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import { IModelCard, ModelCardProgress } from 'lib/models/card'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { IReceiverModelCard } from 'lib/models/card/receiver'
 import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
 
@@ -16,8 +17,11 @@ export type ProjectModelGroup = {
 // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
+  const { trackEvent } = useMixpanel()
 
   const hostAppName = ref<string>()
+  const hostAppVersion = ref<string>()
+  const connectorVersion = ref<string>()
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
 
@@ -87,6 +91,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     documentModelStore.value.models = documentModelStore.value.models.filter(
       (item) => item.modelCardId !== model.modelCardId
     )
+
+    void trackEvent(
+      'DUI3 Action',
+      { name: 'Remove Model Card', type: model.typeDiscriminator },
+      model.accountId
+    )
   }
 
   /**
@@ -129,10 +139,17 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as ISenderModelCard
+    if (model.expired) {
+      // user sends via "Update" button
+      void trackEvent('DUI3 Action', { name: 'Send', expired: true }, model.accountId)
+    } else {
+      void trackEvent('DUI3 Action', { name: 'Send', expired: false }, model.accountId)
+    }
     model.latestCreatedVersionId = undefined
     model.error = undefined
     model.progress = { status: 'Starting to send...' }
     model.expired = false
+
     void app.$sendBinding.send(modelCardId)
   }
 
@@ -147,6 +164,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     await app.$sendBinding.cancelSend(modelCardId)
     model.progress = undefined
     model.error = undefined
+    void trackEvent('DUI3 Action', { name: 'Send Cancel' }, model.accountId)
     model.latestCreatedVersionId = undefined
   }
 
@@ -178,6 +196,13 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === modelCardId
     ) as IReceiverModelCard
+
+    void trackEvent(
+      'DUI3 Action',
+      { name: 'Receive', expired: model.expired },
+      model.accountId
+    )
+
     model.receiveResult = undefined
     model.error = undefined
     model.hasDismissedUpdateWarning = true
@@ -190,6 +215,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (m) => m.modelCardId === modelCardId
     ) as IReceiverModelCard
     await app.$receiveBinding.cancelReceive(modelCardId)
+    void trackEvent('DUI3 Action', { name: 'Receive Cancel' }, model.accountId)
     model.progress = undefined
   }
 
@@ -247,6 +273,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const getHostAppName = async () =>
     (hostAppName.value = await app.$baseBinding.getSourceApplicationName())
 
+  const getHostAppVersion = async () =>
+    (hostAppVersion.value = await app.$baseBinding.getSourceApplicationVersion())
+
+  const getConnectorVersion = async () =>
+    (connectorVersion.value = await app.$baseBinding.getConnectorVersion())
+
   /**
    * Used internally in this store store only for initialisation. Refreshed the document info from the host app. Should be called on document changed events.
    */
@@ -269,6 +301,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     'documentChanged',
     () =>
       setTimeout(() => {
+        void trackEvent('DUI3 Action', { name: 'Document changed' })
         void refreshDocumentInfo()
         void refreshDocumentModelStore()
         void refreshSendFilters()
@@ -280,9 +313,13 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   void refreshDocumentModelStore()
   void refreshSendFilters()
   void getHostAppName()
+  void getHostAppVersion()
+  void getConnectorVersion()
 
   return {
     hostAppName,
+    hostAppVersion,
+    connectorVersion,
     documentInfo,
     projectModelGroups,
     sendFilters,

@@ -27,6 +27,9 @@
 <script setup lang="ts">
 import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { useAccountStore, DUIAccount } from '~/store/accounts'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
+
+const { trackEvent } = useMixpanel()
 
 const props = defineProps<{
   currentSelectedAccountId?: string
@@ -38,12 +41,17 @@ defineEmits<{
 
 const showAccountsDialog = ref(false)
 
+watch(showAccountsDialog, (newVal) => {
+  if (newVal) void trackEvent('DUI3 Action', { name: 'Account menu open' })
+})
+
 const accountStore = useAccountStore()
 const { accounts, defaultAccount, userSelectedAccount } = storeToRefs(accountStore)
 
 const selectAccount = (acc: DUIAccount) => {
   userSelectedAccount.value = acc
   showAccountsDialog.value = false
+  void trackEvent('DUI3 Action', { name: 'Account change' })
 }
 
 const user = computed(() => {

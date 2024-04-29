@@ -13,7 +13,7 @@
         </div>
         <div v-if="step === 1" class="h5 font-bold">Select project</div>
         <div v-if="step === 2" class="h5 font-bold">Select model</div>
-        <div v-if="step === 3" class="h5 font-bold">Select objects</div>
+        <div v-if="step === 3" class="h5 font-bold">Select version</div>
       </div>
       <!-- Step progress indicator: shows selected project and model -->
       <div
@@ -78,6 +78,9 @@ import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
 import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { ReceiverModelCard } from '~/lib/models/card/receiver'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
+
+const { trackEvent } = useMixpanel()
 
 const showReceiveDialog = defineModel({ default: false })
 
@@ -106,11 +109,14 @@ const selectProject = (accountId: string, project: ProjectListProjectItemFragmen
   step.value++
   selectedAccountId.value = accountId
   selectedProject.value = project
+
+  void trackEvent('DUI3 Action', { name: 'Load Wizard', step: 'project selected' })
 }
 
 const selectModel = (model: ModelListModelItemFragment) => {
   step.value++
   selectedModel.value = model
+  void trackEvent('DUI3 Action', { name: 'Load Wizard', step: 'model selected' })
 }
 
 const selectVersionAndAddModel = async (
@@ -130,6 +136,12 @@ const selectVersionAndAddModel = async (
 
   modelCard.hasDismissedUpdateWarning = true
   modelCard.hasSelectedOldVersion = version.id !== latestVersion.id
+
+  void trackEvent('DUI3 Action', {
+    name: 'Load Wizard',
+    step: 'version selected',
+    hasSelectedLatestVersion: version.id === latestVersion.id
+  })
 
   emit('close')
   await hostAppStore.addModel(modelCard)

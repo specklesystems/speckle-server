@@ -21,7 +21,7 @@
         <button
           v-tippy="'Highlight objects in app'"
           class="transition hover:text-primary -mt-1"
-          @click="app.$baseBinding.highlightModel(modelCard.modelCardId)"
+          @click="highlightModel()"
         >
           <CursorArrowRaysIcon class="w-4" />
         </button>
@@ -82,8 +82,10 @@ import { IModelCard } from '~~/lib/models/card'
 import { useAccountStore } from '~/store/accounts'
 import { ISenderModelCard } from 'lib/models/card/send'
 import { IReceiverModelCard } from '~/lib/models/card/receiver'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const app = useNuxtApp()
+const { trackEvent } = useMixpanel()
 
 const props = defineProps<{
   modelCard: IModelCard
@@ -113,7 +115,14 @@ const isSender = computed(() => {
   return props.modelCard.typeDiscriminator === 'SenderModelCard'
 })
 
+const highlightModel = () => {
+  trackEvent('DUI3 Action', { name: 'Highlight Model' }, props.modelCard.accountId)
+  app.$baseBinding.highlightModel(props.modelCard.modelCardId)
+}
+
 const viewModel = () => {
+  // previously with DUI2, it was Stream View but actually it is "Version View" now. Also having conflict with old/new terminology.
+  trackEvent('DUI3 Action', { name: 'Version View' }, props.modelCard.accountId)
   app.$baseBinding.openUrl(
     `${acc?.accountInfo.serverInfo.url}/projects/${props.modelCard?.projectId}/models/${props.modelCard.modelId}`
   )

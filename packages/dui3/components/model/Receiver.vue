@@ -30,16 +30,18 @@
         >
           {{ modelCard.selectedVersionId }}
         </FormButton>
-        <LayoutDialog v-model:open="openVersionsDialog" chromium65-compatibility>
-          <div class="-mx-6 -my-6 space-y-2">
-            <WizardVersionSelector
-              :account-id="modelCard.accountId"
-              :project-id="modelCard.projectId"
-              :model-id="modelCard.modelId"
-              :selected-version-id="modelCard.selectedVersionId"
-              @next="handleVersionSelection"
-            />
-          </div>
+        <LayoutDialog
+          v-model:open="openVersionsDialog"
+          chromium65-compatibility
+          title="Change loaded version"
+        >
+          <WizardVersionSelector
+            :account-id="modelCard.accountId"
+            :project-id="modelCard.projectId"
+            :model-id="modelCard.modelId"
+            :selected-version-id="modelCard.selectedVersionId"
+            @next="handleVersionSelection"
+          />
         </LayoutDialog>
       </div>
     </div>
@@ -80,6 +82,9 @@ import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { versionDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { watchOnce } from '@vueuse/core'
 import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~/lib/core/composables/mixpanel'
+
+const { trackEvent } = useMixpanel()
 
 const app = useNuxtApp()
 
@@ -107,6 +112,10 @@ const handleVersionSelection = async (
   latestVersion: VersionListItemFragment
 ) => {
   openVersionsDialog.value = false
+  void trackEvent('DUI3 Action', {
+    name: 'Load Card Version Change',
+    isLatestVersion: selectedVersion === latestVersion
+  })
   await store.patchModel(props.modelCard.modelCardId, {
     selectedVersionId: selectedVersion.id,
     latestVersionId: latestVersion.id, // patch this dude as well, to make sure
