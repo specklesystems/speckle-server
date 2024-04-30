@@ -21,7 +21,10 @@ import {
   Vector3,
   Object3D,
   WebGLRenderer,
-  Matrix4
+  Matrix4,
+  PerspectiveCamera,
+  Box3,
+  Sphere
 } from 'three'
 
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
@@ -74,20 +77,20 @@ export interface SmoothControlsOptions {
 }
 
 export const DEFAULT_OPTIONS = Object.freeze<SmoothControlsOptions>({
-  minimumRadius: 0,
-  maximumRadius: 1000,
+  minimumRadius: 1,
+  maximumRadius: Infinity,
   minimumPolarAngle: Math.PI / 8,
   maximumPolarAngle: Math.PI - Math.PI / 8,
   minimumAzimuthalAngle: -Infinity,
   maximumAzimuthalAngle: Infinity,
-  minimumFieldOfView: 10,
-  maximumFieldOfView: 45,
+  minimumFieldOfView: 30,
+  maximumFieldOfView: 60,
   touchAction: 'none'
 })
 
 // Constants
 const KEYBOARD_ORBIT_INCREMENT = Math.PI / 8
-const ZOOM_SENSITIVITY = 0.04
+const ZOOM_SENSITIVITY = 0.08
 
 // The move size on pan key event
 const PAN_KEY_INCREMENT = 10
@@ -145,7 +148,7 @@ export interface PointerChangeEvent extends ThreeEvent {
  */
 export class SmoothOrbitControls extends EventEmitter {
   public orbitSensitivity = 1
-  public zoomSensitivity = 5
+  public zoomSensitivity = 1
   public panSensitivity = 1
   public inputSensitivity = 1
   public changeSource = ChangeSource.NONE
@@ -201,7 +204,8 @@ export class SmoothOrbitControls extends EventEmitter {
     this._options = Object.assign({}, DEFAULT_OPTIONS)
 
     this.setOrbit(0, Math.PI / 2, 1)
-    this.setFieldOfView(100)
+    // this.setRadius(100)
+    this.setFieldOfView(30)
     this.jumpToGoal()
   }
 
@@ -377,6 +381,9 @@ export class SmoothOrbitControls extends EventEmitter {
     this.phiDamper.setDecayTime(decayMilliseconds)
     this.radiusDamper.setDecayTime(decayMilliseconds)
     this.fovDamper.setDecayTime(decayMilliseconds)
+    this.targetDamperX.setDecayTime(decayMilliseconds)
+    this.targetDamperY.setDecayTime(decayMilliseconds)
+    this.targetDamperZ.setDecayTime(decayMilliseconds)
   }
 
   /**
@@ -402,30 +409,33 @@ export class SmoothOrbitControls extends EventEmitter {
    */
   adjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {
     const { theta, phi, radius } = this.goalSpherical
-    // const { minimumRadius, maximumRadius, minimumFieldOfView, maximumFieldOfView } =
-    //   this._options
+    const { minimumRadius, maximumRadius, minimumFieldOfView, maximumFieldOfView } =
+      this._options
 
     const dTheta = this.spherical.theta - theta
     const dThetaLimit = Math.PI - 0.001
     const goalTheta =
       theta - clamp(deltaTheta, -dThetaLimit - dTheta, dThetaLimit - dTheta)
     const goalPhi = phi - deltaPhi
-
-    // const deltaRatio =
-    //   deltaZoom === 0
-    //     ? 0
-    //     : ((deltaZoom > 0 ? maximumRadius! : minimumRadius!) - radius) /
-    //       (Math.log(deltaZoom > 0 ? maximumFieldOfView! : minimumFieldOfView!) -
-    //         this.goalLogFov)
-
-    const goalRadius = radius + deltaZoom
-    //   * (isFinite(deltaRatio) ? deltaRatio : (maximumRadius! - minimumRadius!) * 2)
+    const a = (deltaZoom > 0 ? maximumRadius! : minimumRadius!) - radius
+    const b =
+      Math.log(deltaZoom > 0 ? maximumFieldOfView! : minimumFieldOfView!) -
+      this.goalLogFov
+    const deltaRatio = deltaZoom === 0 ? 0 : a / b
+    const size = this._renderer.getSize(new Vector2())
+    const zoomPerPixel = (ZOOM_SENSITIVITY * this.zoomSensitivity) / size.y
+    const metersPerPixel = this.spherical.radius * Math.exp(this.logFov) * zoomPerPixel
+    const goalRadius =
+      radius +
+      deltaZoom *
+        (isFinite(deltaRatio) ? deltaRatio : (maximumRadius! - minimumRadius!) * 2) *
+        metersPerPixel
     this.setOrbit(goalTheta, goalPhi, goalRadius)
 
-    // if (deltaZoom !== 0) {
-    //   const goalLogFov = this.goalLogFov + deltaZoom
-    //   this.setFieldOfView(Math.exp(goalLogFov))
-    // }
+    if (deltaZoom !== 0) {
+      const goalLogFov = this.goalLogFov + deltaZoom
+      this.setFieldOfView(Math.exp(goalLogFov))
+    }
   }
 
   /**
@@ -443,7 +453,7 @@ export class SmoothOrbitControls extends EventEmitter {
    *
    * Time and delta are measured in milliseconds.
    */
-  update(delta?: number): boolean {
+  update(delta?: number, worldBox?: Box3): boolean {
     const now = performance.now()
     delta = delta !== undefined ? delta : now - this._lastTick
     this._lastTick = now
@@ -451,6 +461,12 @@ export class SmoothOrbitControls extends EventEmitter {
     if (this.isStationary()) {
       return false
     }
+    if (worldBox) {
+      this.applyOptions({
+        maximumRadius: worldBox.max.distanceTo(worldBox.min) * 2
+      })
+    }
+
     const { maximumPolarAngle, maximumRadius } = this._options
 
     const dTheta = this.spherical.theta - this.goalSpherical.theta
@@ -483,12 +499,29 @@ export class SmoothOrbitControls extends EventEmitter {
       maximumRadius!
     )
 
-    this.logFov = this.fovDamper.update(this.logFov, this.goalLogFov, delta, 1)
-
-    //   const normalization = this.boundingSphere.radius / 10
-    const x = this.targetDamperX.update(this.origin.x, this.goalOrigin.x, delta, 1)
-    const y = this.targetDamperY.update(this.origin.y, this.goalOrigin.y, delta, 1)
-    const z = this.targetDamperZ.update(this.origin.z, this.goalOrigin.z, delta, 1)
+    this.logFov = this.fovDamper.update(this.logFov, this.goalLogFov, delta, 10)
+    let normalization = 1
+    if (worldBox) {
+      normalization = worldBox.getBoundingSphere(new Sphere()).radius / 10
+    }
+    const x = this.targetDamperX.update(
+      this.origin.x,
+      this.goalOrigin.x,
+      delta,
+      normalization
+    )
+    const y = this.targetDamperY.update(
+      this.origin.y,
+      this.goalOrigin.y,
+      delta,
+      normalization
+    )
+    const z = this.targetDamperZ.update(
+      this.origin.z,
+      this.goalOrigin.z,
+      delta,
+      normalization
+    )
     this.origin.set(x, y, z)
 
     this.moveCamera()
@@ -508,7 +541,7 @@ export class SmoothOrbitControls extends EventEmitter {
 
   private moveCamera() {
     // Derive the new camera position from the updated spherical:
-    console.warn(this.spherical)
+    // console.warn(this.spherical)
     this.spherical.makeSafe()
     this._controlTarget.position.setFromSpherical(this.spherical).add(this.origin)
     this._controlTarget.setRotationFromEuler(
@@ -517,13 +550,19 @@ export class SmoothOrbitControls extends EventEmitter {
     this._controlTarget.applyMatrix4(
       new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5))
     )
+
+    if (this._controlTarget instanceof PerspectiveCamera)
+      if (this._controlTarget.fov !== Math.exp(this.logFov)) {
+        this._controlTarget.fov = Math.exp(this.logFov)
+        this._controlTarget.updateProjectionMatrix()
+      }
   }
 
   private userAdjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {
     this.adjustOrbit(
       deltaTheta * this.orbitSensitivity * this.inputSensitivity,
       deltaPhi * this.orbitSensitivity * this.inputSensitivity,
-      deltaZoom * this.inputSensitivity
+      deltaZoom * this.zoomSensitivity * this.inputSensitivity
     )
   }
 
@@ -632,7 +671,6 @@ export class SmoothOrbitControls extends EventEmitter {
   }
 
   private movePan(dx: number, dy: number) {
-    // const { scene } = this
     const dxy = vector3.set(dx, dy, 0).multiplyScalar(this.inputSensitivity)
     const metersPerPixel =
       this.spherical.radius * Math.exp(this.logFov) * this.panPerPixel
@@ -640,7 +678,6 @@ export class SmoothOrbitControls extends EventEmitter {
 
     const target = this.getTarget()
     target.add(dxy.applyMatrix3(this.panProjection))
-    // scene.boundingSphere.clampPoint(target, target)
     this.setTarget(target.x, target.y, target.z)
   }
 
@@ -721,11 +758,11 @@ export class SmoothOrbitControls extends EventEmitter {
       this.startTime = performance.now()
     }
 
-    try {
-      this._container.setPointerCapture(event.pointerId)
-    } catch (e) {
-      e
-    }
+    // try {
+    //   this._container.setPointerCapture(event.pointerId)
+    // } catch (e) {
+    //   e
+    // }
     this.pointers.push({
       clientX: event.clientX,
       clientY: event.clientY,
@@ -869,7 +906,6 @@ export class SmoothOrbitControls extends EventEmitter {
         this.zoomSensitivity) /
       30
     this.userAdjustOrbit(0, 0, deltaZoom)
-
     event.preventDefault()
     // TO DO
     // this.dispatchEvent({ type: 'user-interaction' })
