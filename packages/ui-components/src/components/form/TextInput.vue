@@ -306,15 +306,13 @@ const sizeClasses = computed((): string => {
   switch (props.size) {
     case 'sm':
       return 'h-6 text-sm'
-    case 'md':
-      return 'h-8 text-sm'
     case 'lg':
       return 'h-10'
     case 'xl':
       return 'h-14'
     case 'base':
     default:
-      return 'h-9 text-sm'
+      return 'h-8 text-sm'
   }
 })
 
