@@ -1,6 +1,6 @@
 <template>
   <div
-    v-if="projectDetails"
+    v-if="projectDetails && !projectError"
     class="p-2 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
   >
     <button
@@ -42,6 +42,27 @@
       />
     </div>
   </div>
+  <div
+    v-if="projectError"
+    class="px-2 py-4 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
+  >
+    <CommonAlert color="info" with-dismiss @dismiss="projectError = undefined">
+      <template #title>
+        Whoops - project
+        <code>{{ project.projectId }}</code>
+        is inaccessible.
+      </template>
+      <template #description>
+        Apollo error:
+        <code>{{ projectError }}</code>
+
+        <div v-if="!hasAccountMatch" class="my-4">
+          This might have happened because you do not have a valid account that can
+          access it.
+        </div>
+      </template>
+    </CommonAlert>
+  </div>
 </template>
 <script setup lang="ts">
 import { useQuery, useSubscription } from '@vue/apollo-composable'
@@ -53,6 +74,7 @@ import {
   versionCreatedSubscription
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { ApolloError } from '@apollo/client/errors'
 
 const { trackEvent } = useMixpanel()
 const accountStore = useAccountStore()
@@ -63,12 +85,23 @@ const props = defineProps<{
   project: ProjectModelGroup
 }>()
 
-const { result: projectDetailsResult } = useQuery(
+const hasAccountMatch = !!accountStore.accounts.find(
+  (acc) => acc.accountInfo.id === props.project.accountId
+)
+const { result: projectDetailsResult, onError } = useQuery(
   projectDetailsQuery,
   () => ({ projectId: props.project.projectId }),
-  () => ({ clientId: props.project.accountId })
+  () => ({
+    clientId: hasAccountMatch
+      ? props.project.accountId
+      : accountStore.activeAccount.accountInfo.id
+  })
 )
 
+const projectError = ref<string>()
+onError((err: ApolloError) => {
+  projectError.value = err.message
+})
 const projectDetails = computed(() => projectDetailsResult.value?.project)
 
 const showModels = ref(true)
@@ -86,7 +119,11 @@ const projectUrl = computed(() => {
 const { onResult } = useSubscription(
   versionCreatedSubscription,
   () => ({ projectId: props.project.projectId }),
-  () => ({ clientId: props.project.accountId })
+  () => ({
+    clientId: hasAccountMatch
+      ? props.project.accountId
+      : accountStore.activeAccount.accountInfo.id
+  })
 )
 
 onResult((res) => {

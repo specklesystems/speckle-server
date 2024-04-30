@@ -11,16 +11,18 @@
       title="Select account"
       chromium65-compatibility
     >
-      <div class="">
-        <AccountsItem
-          v-for="acc in accounts"
-          :key="acc.accountInfo.id"
-          :current-selected-account-id="currentSelectedAccountId"
-          :account="(acc as DUIAccount)"
-          class="rounded-lg mb-2"
-          @select="selectAccount(acc as DUIAccount)"
-        />
-      </div>
+      <CommonLoadingBar :loading="isLoading" class="my-0" />
+      <AccountsItem
+        v-for="acc in accounts"
+        :key="acc.accountInfo.id"
+        :current-selected-account-id="currentSelectedAccountId"
+        :account="(acc as DUIAccount)"
+        class="rounded-lg mb-2"
+        @select="selectAccount(acc as DUIAccount)"
+      />
+      <FormButton text size="xs" @click="accountStore.refreshAccounts()">
+        Refresh accounts
+      </FormButton>
     </LayoutDialog>
   </div>
 </template>
@@ -42,11 +44,15 @@ defineEmits<{
 const showAccountsDialog = ref(false)
 
 watch(showAccountsDialog, (newVal) => {
-  if (newVal) void trackEvent('DUI3 Action', { name: 'Account menu open' })
+  if (newVal) {
+    void accountStore.refreshAccounts()
+    void trackEvent('DUI3 Action', { name: 'Account menu open' })
+  }
 })
 
 const accountStore = useAccountStore()
-const { accounts, defaultAccount, userSelectedAccount } = storeToRefs(accountStore)
+const { accounts, defaultAccount, userSelectedAccount, isLoading } =
+  storeToRefs(accountStore)
 
 const selectAccount = (acc: DUIAccount) => {
   userSelectedAccount.value = acc

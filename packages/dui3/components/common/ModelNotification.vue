@@ -1,10 +1,10 @@
 <template>
   <div
-    :class="`${containerClassColor} flex justify-between items-center py-2 px-2 space-x-2 max-[275px]:flex-col max-[275px]:space-y-2`"
+    :class="`${containerClassColor} flex justify-between items-center py-2 px-2 space-x-2 max-[275px]:flex-col max-[275px]:space-y-2 min-w-0`"
   >
-    <div class="grow">
+    <div class="grow min-w-0">
       <div
-        :class="`${textClassColor} text-xs font-medium transition max-[275px]:text-center`"
+        :class="`${textClassColor} text-xs font-medium transition max-[275px]:text-center line-clamp-4 text-ellipsis break-words`"
       >
         {{ notification.text }}
       </div>

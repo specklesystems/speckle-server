@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="accounts.length !== 0">
     <div
       v-if="hasNoModelCards"
       class="fixed top-0 h-screen w-screen flex items-center pointer-events-none"
@@ -9,7 +9,7 @@
         class="mr-4 ml-2 scale-95 hover:scale-100 transition pointer-events-auto"
       >
         <h1
-          class="h4 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+          class="h4 font-bold w-full bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
         >
           Hello!
         </h1>
@@ -48,7 +48,7 @@
         </div>
       </LayoutPanel>
     </div>
-    <div class="space-y-4 mt-4 max-w-2/3">
+    <div v-if="accounts.length !== 0" class="space-y-4 mt-4 max-w-2/3">
       <div v-for="project in store.projectModelGroups" :key="project.projectId">
         <CommonProjectModelGroup :project="project" />
       </div>
@@ -79,6 +79,35 @@
       @close="showReceiveDialog = false"
     />
   </div>
+  <div v-else>
+    <div class="fixed top-0 h-screen w-screen flex items-center pointer-events-none">
+      <LayoutPanel
+        fancy-glow
+        class="mr-4 ml-2 scale-95 hover:scale-100 transition pointer-events-auto w-full"
+      >
+        <h1
+          class="h4 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+        >
+          Hello!
+        </h1>
+
+        <div class="text-foreground-2 mt-2 mb-4">
+          You don't have a Speckle account just yet. Please open Speckle Manager and
+          sign in!
+        </div>
+        <FormButton text link small @click="accountStore.refreshAccounts()">
+          Refresh accounts
+        </FormButton>
+        <CommonLoadingBar :loading="isLoading" />
+        <!-- 
+          TODO: Either
+          - make an open manager button, or
+          - enable auth flow from here
+         -->
+        <!-- <FormButton full-width >Open Manager</FormButton> -->
+      </LayoutPanel>
+    </div>
+  </div>
 </template>
 <script setup lang="ts">
 import { CloudArrowDownIcon, CloudArrowUpIcon } from '@heroicons/vue/24/solid'
@@ -91,6 +120,8 @@ const app = useNuxtApp()
 // TODO: guard against this later, incase we will have more top level entry pages
 const accountStore = useAccountStore()
 await accountStore.refreshAccounts()
+
+const { accounts, isLoading } = storeToRefs(accountStore)
 
 const store = useHostAppStore()
 const { trackEvent } = useMixpanel()
