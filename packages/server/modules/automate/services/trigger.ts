@@ -81,7 +81,7 @@ export const onModelVersionCreate =
 type InsertableAutomationRunWithExtendedFunctionRuns = Merge<
   InsertableAutomationRun,
   {
-    functionRuns: TriggeredAutomationFunctionRun[]
+    functionRuns: Omit<TriggeredAutomationFunctionRun, 'runId'>[]
   }
 >
 
@@ -113,7 +113,6 @@ function createAutomationRunData(params: {
     updatedAt: new Date(),
     functionRuns: automationWithRevision.revision.functions.map((f) => ({
       functionId: f.functionId,
-      runId,
       id: cryptoRandomString({ length: 15 }),
       status: 'pending' as const,
       elapsed: 0,
@@ -195,7 +194,10 @@ export const triggerAutomationRevisionRun =
         projectId: automationWithRevision.projectId,
         automationId: automationWithRevision.executionEngineAutomationId,
         manifests: triggerManifests,
-        functionRuns: automationRun.functionRuns,
+        functionRuns: automationRun.functionRuns.map((r) => ({
+          ...r,
+          runId: automationRun.id
+        })),
         speckleToken: projectScopedToken,
         automationToken: automateToken
       })

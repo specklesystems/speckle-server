@@ -6,6 +6,7 @@ import {
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
 import {
+  AutomationRunStatuses,
   AutomationTriggerDefinitionRecord,
   AutomationTriggerType,
   BaseTriggerManifest,
@@ -23,13 +24,19 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
+  InsertableAutomationRun,
   getAutomation,
   getAutomationRun,
   getAutomationTriggerDefinitions,
+  getFunctionRuns,
+  getFunctionRunsForAutomationRunIds,
   storeAutomation,
   storeAutomationRevision,
   updateAutomation,
-  updateAutomationRevision
+  updateAutomationRevision,
+  updateAutomationRun,
+  updateFunctionRun,
+  upsertAutomationRun
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate, Environment } from '@speckle/shared'
@@ -44,6 +51,9 @@ import {
 } from '@/test/speckle-helpers/automationHelper'
 import { expectToThrow } from '@/test/assertionHelper'
 import { Commits } from '@/modules/core/dbSchema'
+import { BranchRecord } from '@/modules/core/helpers/types'
+import { reportFunctionRunStatuses } from '@/modules/automate/services/runsManagement'
+import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
@@ -62,9 +72,77 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       email: 'theother@automaton.com'
     }
 
+    const testUserStream: BasicTestStream = {
+      id: '',
+      name: 'First stream',
+      isPublic: true,
+      ownerId: ''
+    }
+
+    const otherUserStream: BasicTestStream = {
+      id: '',
+      name: 'Other stream',
+      isPublic: true,
+      ownerId: ''
+    }
+
+    let testUserStreamModel: BranchRecord
+    let createdAutomation: Awaited<ReturnType<ReturnType<typeof buildAutomationCreate>>>
+    let createdFunction: Awaited<ReturnType<typeof createTestFunction>>
+    let createdRevision: Awaited<
+      ReturnType<ReturnType<typeof buildAutomationRevisionCreate>>
+    >
+
     before(async () => {
       await beforeEachContext()
       await createTestUsers([testUser, otherUser])
+
+      const createAutomation = buildAutomationCreate()
+      const createRevision = buildAutomationRevisionCreate()
+      const createFunction = createTestFunction
+
+      const [, createdFn] = await Promise.all([
+        createTestStreams([
+          [testUserStream, testUser],
+          [otherUserStream, otherUser]
+        ]),
+        createFunction({ userId: testUser.id })
+      ])
+      createdFunction = createdFn
+
+      const [projectModel, newAutomation] = await Promise.all([
+        getLatestStreamBranch(testUserStream.id),
+        createAutomation({
+          userId: testUser.id,
+          projectId: testUserStream.id,
+          input: {
+            name: 'Manually Triggerable Automation',
+            enabled: true
+          }
+        })
+      ])
+      testUserStreamModel = projectModel
+      createdAutomation = newAutomation
+
+      createdRevision = await createRevision({
+        userId: testUser.id,
+        input: {
+          automationId: createdAutomation.automation.id,
+          triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+            version: 1.0,
+            definitions: [{ type: 'VERSION_CREATED', modelId: testUserStreamModel.id }]
+          },
+          functions: [
+            {
+              functionReleaseId: createdFunction.release.functionReleaseId,
+              parameters: null
+            }
+          ]
+        },
+        projectId: testUserStream.id
+      })
+
+      expect(createdRevision).to.be.ok
     })
     describe('On model version create', () => {
       it('No trigger no run', async () => {
@@ -700,7 +778,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       })
     })
 
-    describe('triggered manually', () => {
+    describe('Run triggered manually', () => {
       const buildManuallyTriggerAutomation = (
         overrides?: Partial<ManuallyTriggerAutomationDeps>
       ) => {
@@ -717,76 +795,6 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         })
         return trigger
       }
-
-      const testUserStream: BasicTestStream = {
-        id: '',
-        name: 'First stream',
-        isPublic: true,
-        ownerId: ''
-      }
-
-      const otherUserStream: BasicTestStream = {
-        id: '',
-        name: 'Other stream',
-        isPublic: true,
-        ownerId: ''
-      }
-
-      let createdAutomation: Awaited<
-        ReturnType<ReturnType<typeof buildAutomationCreate>>
-      >
-      let createdFunction: Awaited<ReturnType<typeof createTestFunction>>
-      let createdRevision: Awaited<
-        ReturnType<ReturnType<typeof buildAutomationRevisionCreate>>
-      >
-
-      before(async () => {
-        const createAutomation = buildAutomationCreate()
-        const createRevision = buildAutomationRevisionCreate()
-        const createFunction = createTestFunction
-
-        const [, createdFn] = await Promise.all([
-          createTestStreams([
-            [testUserStream, testUser],
-            [otherUserStream, otherUser]
-          ]),
-          createFunction({ userId: testUser.id })
-        ])
-        createdFunction = createdFn
-
-        const [projectModel, newAutomation] = await Promise.all([
-          getLatestStreamBranch(testUserStream.id),
-          createAutomation({
-            userId: testUser.id,
-            projectId: testUserStream.id,
-            input: {
-              name: 'Manually Triggerable Automation',
-              enabled: true
-            }
-          })
-        ])
-        createdAutomation = newAutomation
-
-        createdRevision = await createRevision({
-          userId: testUser.id,
-          input: {
-            automationId: createdAutomation.automation.id,
-            triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
-              version: 1.0,
-              definitions: [{ type: 'VERSION_CREATED', modelId: projectModel.id }]
-            },
-            functions: [
-              {
-                functionReleaseId: createdFunction.release.functionReleaseId,
-                parameters: null
-              }
-            ]
-          },
-          projectId: testUserStream.id
-        })
-
-        expect(createdRevision).to.be.ok
-      })
 
       it('fails if referring to nonexistent automation', async () => {
         const trigger = buildManuallyTriggerAutomation()
@@ -946,6 +954,70 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             expect(run.status).to.equal(expectedStatus)
           }
         })
+      })
+    })
+
+    describe('Existing automation run', () => {
+      let automationRun: InsertableAutomationRun
+
+      const buildReportFunctionRunStatuses = () => {
+        const report = reportFunctionRunStatuses({
+          getFunctionRuns,
+          updateFunctionRun,
+          updateAutomationRun,
+          getFunctionRunsForAutomationRunIds
+        })
+
+        return report
+      }
+
+      before(async () => {
+        // Insert automation run directly to DB
+        automationRun = {
+          id: cryptoRandomString({ length: 10 }),
+          automationRevisionId: createdRevision.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          status: AutomationRunStatuses.pending,
+          executionEngineRunId: cryptoRandomString({ length: 10 }),
+          triggers: [
+            {
+              triggeringId: testUserStreamModel.id,
+              triggerType: VersionCreationTriggerType
+            }
+          ],
+          functionRuns: [
+            {
+              functionReleaseId: createdFunction.release.functionReleaseId,
+              id: cryptoRandomString({ length: 15 }),
+              status: AutomationRunStatuses.pending,
+              elapsed: 0,
+              results: null,
+              contextView: null,
+              statusMessage: null
+            }
+          ]
+        }
+
+        await upsertAutomationRun(automationRun)
+      })
+
+      it("doesn't throw with invalid inputs", async () => {
+        const report = buildReportFunctionRunStatuses()
+
+        const functionRunId = 'nonexistent'
+        const res = await report({
+          inputs: [
+            {
+              functionRunId,
+              status: AutomateRunStatus.Running
+            }
+          ]
+        })
+
+        expect(res).to.be.ok
+        expect(res.successfullyUpdatedFunctionRunIds).to.have.length(0)
+        expect(res.errorsByFunctionRunId).to.have.keys(functionRunId)
       })
     })
   }

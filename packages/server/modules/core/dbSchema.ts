@@ -24,6 +24,11 @@ type BaseInnerSchemaConfig<T extends string, C extends string> = {
   }
 
   /**
+   * Build a "col AS alias" definition that can be used in .select() calls and .where() clauses
+   */
+  colAs<A extends string>(colName: C, alias: A): Knex.Raw
+
+  /**
    * All of the column names in an array
    */
   cols: string[]
@@ -110,10 +115,13 @@ const createBaseInnerSchemaConfigBuilder =
     const aliasedTableName = params.withCustomTablePrefix
       ? `${tableName} as ${params.withCustomTablePrefix}`
       : tableName
-    const colName = (col: string) => {
-      if (params.withoutTablePrefix) return col
+
+    const colName = (col: string, options?: Partial<{ addQuotes: boolean }>) => {
+      const { addQuotes } = options || {}
+
+      if (params.withoutTablePrefix) return addQuotes ? `"${col}"` : col
       const prefix = params.withCustomTablePrefix || tableName
-      return `${prefix}.${col}`
+      return addQuotes ? `"${prefix}"."${col}"` : `${prefix}.${col}`
     }
 
     return {
@@ -127,7 +135,9 @@ const createBaseInnerSchemaConfigBuilder =
         },
         {} as Record<C, string>
       ),
-      cols: columns.map(colName)
+      colAs: (col, alias) =>
+        knex.raw(`${colName(col, { addQuotes: true })} AS "${alias}"`),
+      cols: columns.map((c) => colName(c))
     }
   }
 

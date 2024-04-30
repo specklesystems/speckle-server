@@ -12,7 +12,8 @@ import {
   AutomationFunctionRunRecord,
   AutomationRevisionWithTriggersFunctions,
   AutomationTriggerType,
-  AutomateRevisionFunctionWithFunctionMetadata
+  AutomateRevisionFunctionWithFunctionMetadata,
+  AutomationRunStatus
 } from '@/modules/automate/helpers/types'
 import {
   AutomateFunctionReleases,
@@ -28,10 +29,11 @@ import {
 } from '@/modules/core/dbSchema'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UsersMetaRecord } from '@/modules/core/helpers/types'
+import { LogicError } from '@/modules/shared/errors'
 import { OAuthAppAuthentication } from '@octokit/auth-oauth-user'
 import { Nullable } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import _, { pick } from 'lodash'
+import _, { keyBy, pick } from 'lodash'
 import { SetOptional, SetRequired } from 'type-fest'
 
 export const generateRevisionId = () => cryptoRandomString({ length: 10 })
@@ -91,7 +93,7 @@ export async function getAutomationRevision(
 
 export type InsertableAutomationRun = AutomationRunRecord & {
   triggers: Omit<AutomationRunTriggerRecord, 'automationRunId'>[]
-  functionRuns: AutomationFunctionRunRecord[]
+  functionRuns: Omit<AutomationFunctionRunRecord, 'runId'>[]
 }
 
 export async function upsertAutomationRun(automationRun: InsertableAutomationRun) {
@@ -106,15 +108,19 @@ export async function upsertAutomationRun(automationRun: InsertableAutomationRun
   await Promise.all([
     AutomationRunTriggers.knex()
       .insert(
-        automationRun.triggers.map((t) => ({ automationRunId: automationRun.id, ...t }))
+        automationRun.triggers.map((t) => ({
+          automationRunId: automationRun.id,
+          ..._.pick(t, AutomationRunTriggers.withoutTablePrefix.cols)
+        }))
       )
       .onConflict()
       .ignore(),
     AutomationFunctionRuns.knex()
       .insert(
-        automationRun.functionRuns.map((f) =>
-          _.pick(f, AutomationFunctionRuns.withoutTablePrefix.cols)
-        )
+        automationRun.functionRuns.map((f) => ({
+          ..._.pick(f, AutomationFunctionRuns.withoutTablePrefix.cols),
+          runId: automationRun.id
+        }))
       )
       .onConflict(AutomationFunctionRuns.withoutTablePrefix.col.id)
       .merge(AutomationFunctionRuns.withoutTablePrefix.cols)
@@ -152,6 +158,47 @@ export async function getFunctionRuns(params: { functionRunIds: string[] }) {
     )
 
   return await q
+}
+
+export async function getFunctionRunsForAutomationRunIds(params: {
+  automationRunIds?: string[]
+  functionRunIds?: string[]
+}) {
+  const { automationRunIds, functionRunIds } = params
+  if (!automationRunIds && !functionRunIds) {
+    throw new LogicError('Either automationRunIds or functionRunIds must be set')
+  }
+
+  if (!automationRunIds?.length && !functionRunIds?.length) return {}
+
+  const q = AutomationFunctionRuns.knex()
+    .select<
+      Array<
+        AutomationFunctionRunRecord & {
+          automationRunStatus: AutomationRunStatus
+          automationRunExecutionEngineId: string | null
+        }
+      >
+    >([
+      ...AutomationFunctionRuns.cols,
+      AutomationRuns.colAs('status', 'automationRunStatus'),
+      AutomationRuns.colAs('executionEngineRunId', 'automationRunExecutionEngineId')
+    ])
+    .innerJoin(
+      AutomationRuns.name,
+      AutomationRuns.col.id,
+      AutomationFunctionRuns.col.runId
+    )
+
+  if (automationRunIds?.length) {
+    q.whereIn(AutomationFunctionRuns.col.runId, automationRunIds)
+  }
+
+  if (functionRunIds?.length) {
+    q.whereIn(AutomationFunctionRuns.col.id, functionRunIds)
+  }
+
+  return keyBy(await q, (r) => r.runId)
 }
 
 export async function getAutomationRun(
