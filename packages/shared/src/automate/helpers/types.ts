@@ -1,4 +1,4 @@
-import { get, has, intersection, isArray, isObjectLike } from 'lodash'
+import { get, has, intersection, isArray, isNumber, isObjectLike } from 'lodash'
 import type { PartialDeep } from 'type-fest'
 import {
   UnformattableResultsSchemaError,
@@ -74,9 +74,21 @@ export const formatTriggerDefinitionSchema = (
     )
   }
 
+  if (!isTriggerDefinitionSchema(state)) {
+    throw new UnformattableTriggerDefinitionSchemaError(
+      'Invalid trigger definition schema'
+    )
+  }
+
+  const version = isNumber(state.version) ? state.version : throwInvalidError('version')
   return {
-    version: state.version || throwInvalidError('version'),
+    version,
     definitions: (state.definitions || throwInvalidError('definitions')).map((d) => {
+      if (!isObjectLike(d))
+        throw new UnformattableTriggerDefinitionSchemaError(
+          'Invalid non-object trigger definition'
+        )
+
       switch (d.type || '') {
         case 'VERSION_CREATED':
           return {
@@ -113,6 +125,10 @@ export const formatResultsSchema = (state: UnformattedResultsSchema): ResultsSch
     )
   }
 
+  if (!isResultsSchema(state)) {
+    throw new UnformattableResultsSchemaError('Invalid results schema')
+  }
+
   const values = state.values || throwInvalidError('values')
   if (!isObjectLike(values.objectResults)) {
     throw new UnformattableResultsSchemaError(
@@ -120,8 +136,9 @@ export const formatResultsSchema = (state: UnformattedResultsSchema): ResultsSch
     )
   }
 
+  const version = isNumber(state.version) ? state.version : throwInvalidError('version')
   return {
-    version: state.version || throwInvalidError('version'),
+    version,
     values: {
       objectResults: (values.objectResults || []).map((value, i) => {
         if (!isObjectLike(value)) {

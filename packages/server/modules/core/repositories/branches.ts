@@ -611,3 +611,12 @@ export async function markCommitBranchUpdated(commitId: string) {
   const [branch] = (await q) as BranchRecord[]
   return branch
 }
+
+export async function getLatestStreamBranch(streamId: string) {
+  const q = Branches.knex<BranchRecord[]>()
+    .where(Branches.col.streamId, streamId)
+    .orderBy(Branches.col.updatedAt, 'desc')
+    .limit(1)
+  const [branch] = await q
+  return branch
+}

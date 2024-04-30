@@ -245,7 +245,7 @@ export function buildRequestLoaders(
         }
       })(),
       /**
-       * Get a specific branch of a specific stream. Each stream ID technically has its own loader &
+       * Get a specific pending model (upload) of a specific stream. Each stream ID technically has its own loader &
        * thus its own query.
        */
       getStreamPendingBranchByName: (() => {

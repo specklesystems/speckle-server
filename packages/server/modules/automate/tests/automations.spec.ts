@@ -7,6 +7,9 @@ import {
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import { updateAutomation } from '@/modules/automate/services/automationManagement'
+import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
+import { BranchRecord } from '@/modules/core/helpers/types'
+import { getLatestStreamBranch } from '@/modules/core/repositories/branches'
 import { expectToThrow } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { beforeEachContext } from '@/test/hooks'
@@ -242,6 +245,27 @@ const buildAutomationUpdate = () => {
         ReturnType<ReturnType<typeof buildAutomationCreate>>
       >
       let createdFunction: Awaited<ReturnType<typeof createTestFunction>>
+      let projectModel: BranchRecord
+
+      const validAutomationRevisionCreateInput =
+        (): ProjectAutomationRevisionCreateInput => ({
+          automationId: createdAutomation.automation.id,
+          functions: [
+            {
+              functionReleaseId: createdFunction.release.functionReleaseId,
+              parameters: null
+            }
+          ],
+          triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+            version: 1.0,
+            definitions: [
+              {
+                type: 'VERSION_CREATED',
+                modelId: projectModel.id
+              }
+            ]
+          }
+        })
 
       before(async () => {
         const createAutomation = buildAutomationCreate()
@@ -255,6 +279,7 @@ const buildAutomationUpdate = () => {
         createdFunction = await createFunction({
           userId: me.id
         })
+        projectModel = await getLatestStreamBranch(myStream.id)
       })
 
       it('works successfully', async () => {
@@ -262,24 +287,8 @@ const buildAutomationUpdate = () => {
 
         const ret = await create({
           userId: me.id,
-          input: {
-            automationId: createdAutomation.automation.id,
-            functions: [
-              {
-                functionReleaseId: createdFunction.release.functionReleaseId,
-                parameters: null
-              }
-            ],
-            triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
-              version: 1.0,
-              definitions: [
-                {
-                  type: 'VERSION_CREATED',
-                  modelId: '123'
-                }
-              ]
-            }
-          }
+          input: validAutomationRevisionCreateInput(),
+          projectId: myStream.id
         })
         expect(ret).to.be.ok
         expect(ret.id).to.be.ok
@@ -287,6 +296,157 @@ const buildAutomationUpdate = () => {
         expect(ret.automationId).to.equal(createdAutomation.automation.id)
         expect(ret.triggers.length).to.be.ok
         expect(ret.functions.length).to.be.ok
+      })
+
+      it('fails if automation does not exist', async () => {
+        const create = buildAutomationRevisionCreate()
+
+        const e = await expectToThrow(
+          async () =>
+            await create({
+              userId: me.id,
+              input: {
+                ...validAutomationRevisionCreateInput(),
+                automationId: 'non-existent'
+              },
+              projectId: myStream.id
+            })
+        )
+        expect(e).to.have.property('name', AutomationUpdateError.name)
+        expect(e).to.have.property('message', 'Automation not found')
+      })
+
+      it('fails if user does not have access to the project', async () => {
+        const create = buildAutomationRevisionCreate()
+
+        const e = await expectToThrow(
+          async () =>
+            await create({
+              userId: otherGuy.id,
+              input: validAutomationRevisionCreateInput(),
+              projectId: myStream.id
+            })
+        )
+        expect(e)
+          .to.have.property('message')
+          .match(/^User does not have required access to stream/)
+      })
+
+      it('fails if automation is mismatched with specified project id', async () => {
+        const create = buildAutomationRevisionCreate()
+
+        const e = await expectToThrow(
+          async () =>
+            await create({
+              userId: me.id,
+              input: validAutomationRevisionCreateInput(),
+              projectId: 'non-existent'
+            })
+        )
+        expect(e).to.have.property('message', 'Automation not found')
+      })
+      ;[
+        { val: null, error: 'null object' },
+        { val: {}, error: 'empty object' },
+        { val: { version: 1.0 }, error: 'missing definitions' },
+        { val: { version: '1.0', error: 'non-numeric version' } },
+        { val: { version: 1.0, definitions: null }, error: 'null definitions' },
+        {
+          val: { version: 1.0, definitions: [null] },
+          error: 'null definition'
+        },
+        {
+          val: { version: 1.0, definitions: [{}] },
+          error: 'empty definition'
+        },
+        {
+          val: { version: 1.0, definitions: [{ type: 'VERSION_CREATED' }] },
+          error: 'missing modelId'
+        },
+        {
+          val: { version: 1.0, definitions: [{ type: 'aaaa', modelId: '123' }] },
+          error: 'invalid trigger'
+        }
+      ].forEach(({ val, error }) => {
+        it('fails with invalid trigger definitions: ' + error, async () => {
+          const create = buildAutomationRevisionCreate()
+
+          const e = await expectToThrow(
+            async () =>
+              await create({
+                userId: me.id,
+                input: {
+                  ...validAutomationRevisionCreateInput(),
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  triggerDefinitions: val as any
+                },
+                projectId: myStream.id
+              })
+          )
+
+          expect(
+            e instanceof Automate.UnformattableTriggerDefinitionSchemaError,
+            e.toString()
+          ).to.be.true
+        })
+      })
+
+      it('fails if empty trigger definitions', async () => {
+        const create = buildAutomationRevisionCreate()
+
+        const e = await expectToThrow(
+          async () =>
+            await create({
+              userId: me.id,
+              input: {
+                ...validAutomationRevisionCreateInput(),
+                triggerDefinitions: { version: 1.0, definitions: [] }
+              },
+              projectId: myStream.id
+            })
+        )
+
+        expect(e.message).to.eq('At least one trigger definition is required')
+      })
+
+      it('fails with invalid function parameters', async () => {
+        const create = buildAutomationRevisionCreate()
+
+        const input = validAutomationRevisionCreateInput()
+        input.functions.forEach((fn) => {
+          fn.parameters = '{invalid'
+        })
+
+        const e = await expectToThrow(
+          async () =>
+            await create({
+              userId: me.id,
+              input,
+              projectId: myStream.id
+            })
+        )
+
+        expect(e.message).to.match(/^Couldn't parse function parameters/i)
+      })
+
+      it('fails when refering to nonexistent function releases', async () => {
+        const create = buildAutomationRevisionCreate()
+
+        const input = validAutomationRevisionCreateInput()
+        input.functions.forEach((fn) => {
+          fn.functionReleaseId = 'non-existent'
+        })
+
+        const e = await expectToThrow(
+          async () =>
+            await create({
+              userId: me.id,
+              input,
+              projectId: myStream.id
+            })
+        )
+
+        expect(e.message).to.match(/^Function release with ID .*? not found/)
       })
     })
   }
