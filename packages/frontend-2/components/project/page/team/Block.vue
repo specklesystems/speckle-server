@@ -23,7 +23,11 @@
       </div>
     </template>
     <template #default>
-      <ProjectPageInviteDialog v-model:open="dialogOpen" :disabled="!isOwner" />
+      <ProjectPageInviteDialog
+        v-model:open="dialogOpen"
+        :project-id="project.id"
+        :disabled="!isOwner"
+      />
     </template>
   </ProjectPageStatsBlock>
 </template>

@@ -73,13 +73,12 @@ import { useServerInfo } from '~~/lib/core/composables/server'
 type InvitableUser = UserSearchItem | string
 
 const props = defineProps<{
+  projectId: string
   project?: ProjectPageSettingsCollaboratorsQuery
   disabled?: boolean
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
-
-const route = useRoute()
 
 const loading = ref(false)
 const search = ref('')
@@ -94,7 +93,7 @@ const { userSearch, searchVariables } = useUserSearch({
   }))
 })
 
-const projectId = computed(() => route.params.id as string)
+const projectId = computed(() => props.projectId as string)
 
 const projectData = computed(() => props.project)
 

@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock title="Collaborators">
+  <ProjectPageSettingsBlock :icon="UsersIcon" title="Collaborators">
     <template #introduction>
       <p>Invite new collaborators and set permissions.</p>
     </template>
@@ -15,7 +15,7 @@
         :key="collaborator.id"
         class="bg-foundation flex items-center gap-2 py-2 pl-3 pr-4 border-t border-x last:border-b border-outline-4 dark:border-outline-3 first:rounded-t-md last:rounded-b-md"
       >
-        <UserAvatar :user="collaborator.user" size="md" />
+        <UserAvatar :user="collaborator.user" size="sm" />
         <span class="grow truncate text-sm">{{ collaborator.title }}</span>
 
         <template v-if="!collaborator.inviteId">
@@ -60,6 +60,7 @@
       v-if="project"
       v-model:open="showInviteDialog"
       :project="project"
+      :project-id="projectId"
       :disabled="!isOwner"
     />
   </ProjectPageSettingsBlock>
@@ -85,6 +86,7 @@ import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/compon
 import { UserPlusIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
+import { UsersIcon } from '@heroicons/vue/24/solid'
 
 const projectPageSettingsCollaboratorsQuery = graphql(`
   query ProjectPageSettingsCollaborators($projectId: String!) {
