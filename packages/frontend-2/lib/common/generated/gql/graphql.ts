@@ -258,7 +258,7 @@ export type AutomateFunctionRunStatusReportInput = {
   functionRunId: Scalars['String'];
   /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: InputMaybe<Scalars['JSONObject']>;
-  status: AutomationRunStatus;
+  status: AutomateRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
 
@@ -417,10 +417,9 @@ export type AutomationRevision = {
 };
 
 export type AutomationRevisionCreateFunctionInput = {
-  functionId: Scalars['String'];
+  functionReleaseId: Scalars['String'];
   /** Should be encrypted from the client side */
   parameters?: InputMaybe<Scalars['String']>;
-  releaseId: Scalars['String'];
 };
 
 export type AutomationRevisionFunction = {
@@ -1292,7 +1291,7 @@ export type MutationAppUpdateArgs = {
 
 
 export type MutationAutomateFunctionRunStatusReportArgs = {
-  input: AutomateFunctionRunStatusReportInput;
+  input: Array<AutomateFunctionRunStatusReportInput>;
 };
 
 
@@ -1762,6 +1761,10 @@ export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
   create: Automation;
   createRevision: AutomationRevision;
+  /**
+   * Trigger an automation with a fake "version created" trigger. The "version created" will
+   * just refer to the last version of the model.
+   */
   trigger: Scalars['Boolean'];
   update: Automation;
 };
@@ -2136,6 +2139,8 @@ export type Query = {
   /** Get a single automate function by id. Error will be thrown if function is not found or inaccessible. */
   automateFunction: AutomateFunction;
   automateFunctions: AutomateFunctionCollection;
+  /** Part of the automation/function creation handshake mechanism */
+  automateValidateAuthCode: Scalars['Boolean'];
   comment?: Maybe<Comment>;
   /**
    * This query can be used in the following ways:
@@ -2227,6 +2232,11 @@ export type QueryAutomateFunctionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<AutomateFunctionsFilter>;
   limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type QueryAutomateValidateAuthCodeArgs = {
+  code: Scalars['String'];
 };
 
 

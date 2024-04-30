@@ -214,8 +214,7 @@ const onSave = async () => {
         automationId: props.automationId,
         functions: [
           {
-            functionId: fId,
-            releaseId: rId,
+            functionReleaseId: rId,
             parameters
           }
         ],

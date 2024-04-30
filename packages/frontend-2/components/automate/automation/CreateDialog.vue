@@ -301,8 +301,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
           automationId: aId,
           functions: [
             {
-              functionId: fn.id,
-              releaseId: fnRelease.id,
+              functionReleaseId: fnRelease.id,
               parameters: parametersString
             }
           ],
