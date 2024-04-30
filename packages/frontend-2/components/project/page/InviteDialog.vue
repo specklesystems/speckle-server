@@ -60,7 +60,7 @@ import { useUserSearch } from '~~/lib/common/composables/users'
 import type { UserSearchItem } from '~~/lib/common/composables/users'
 import type {
   ProjectInviteCreateInput,
-  ProjectPageSettingsCollaboratorsQuery
+  ProjectPageInviteDialog_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import type { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { isEmail } from '~~/lib/common/helpers/validation'
@@ -69,12 +69,20 @@ import { useInviteUserToProject } from '~~/lib/projects/composables/projectManag
 import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useServerInfo } from '~~/lib/core/composables/server'
+import { graphql } from '~/lib/common/generated/gql/gql'
+
+graphql(`
+  fragment ProjectPageInviteDialog_Project on Project {
+    id
+    ...ProjectPageTeamInternals_Project
+  }
+`)
 
 type InvitableUser = UserSearchItem | string
 
 const props = defineProps<{
   projectId: string
-  project?: ProjectPageSettingsCollaboratorsQuery
+  project?: ProjectPageInviteDialog_ProjectFragment
   disabled?: boolean
 }>()
 

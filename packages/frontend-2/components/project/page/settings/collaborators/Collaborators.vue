@@ -92,24 +92,7 @@ const projectPageSettingsCollaboratorsQuery = graphql(`
   query ProjectPageSettingsCollaborators($projectId: String!) {
     project(id: $projectId) {
       id
-      role
-      team {
-        role
-        user {
-          ...LimitedUserAvatar
-          role
-        }
-      }
-      invitedTeam {
-        id
-        title
-        inviteId
-        role
-        user {
-          ...LimitedUserAvatar
-          role
-        }
-      }
+      ...ProjectPageTeamInternals_Project
     }
   }
 `)
@@ -132,7 +115,7 @@ const { result: pageResult } = useQuery(projectPageSettingsCollaboratorsQuery, (
   projectId: projectId.value
 }))
 
-const project = computed(() => pageResult.value)
+const project = computed(() => pageResult.value?.project)
 
 const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(project)
 
