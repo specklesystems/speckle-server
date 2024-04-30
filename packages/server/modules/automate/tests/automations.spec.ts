@@ -7,11 +7,15 @@ import {
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import { updateAutomation } from '@/modules/automate/services/automationManagement'
+import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
+import { getGenericRedis } from '@/modules/core'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
 import { getLatestStreamBranch } from '@/modules/core/repositories/branches'
 import { expectToThrow } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import { AutomateValidateAuthCodeDocument } from '@/test/graphql/generated/graphql'
+import { TestApolloServer, testApolloServer } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import {
   buildAutomationCreate,
@@ -21,8 +25,6 @@ import {
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { Automate, Environment, Roles } from '@speckle/shared'
 import { expect } from 'chai'
-
-// TODO: Automation create/update
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
@@ -447,6 +449,37 @@ const buildAutomationUpdate = () => {
         )
 
         expect(e.message).to.match(/^Function release with ID .*? not found/)
+      })
+    })
+
+    describe('auth code handshake', () => {
+      let apollo: TestApolloServer
+
+      before(async () => {
+        apollo = await testApolloServer() // unauthenticated
+      })
+
+      it('fails if code is invalid', async () => {
+        const res = await apollo.execute(AutomateValidateAuthCodeDocument, {
+          code: 'invalid'
+        })
+
+        expect(res).to.haveGraphQLErrors('Invalid automate auth code')
+        expect(res.data?.automateValidateAuthCode).to.not.be.ok
+      })
+
+      it('succeeds with valid code', async () => {
+        const storeCode = createStoredAuthCode({
+          redis: getGenericRedis()
+        })
+        const code = await storeCode()
+
+        const res = await apollo.execute(AutomateValidateAuthCodeDocument, {
+          code
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.automateValidateAuthCode).to.be.true
       })
     })
   }
