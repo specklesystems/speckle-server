@@ -9,7 +9,7 @@
       <p>
         Remove yourself from this project. To join again you will need to get invited.
       </p>
-      <template #bottomButtons>
+      <template #bottom-buttons>
         <FormButton color="danger" @click="showLeaveDialog = true">
           Leave Project
         </FormButton>

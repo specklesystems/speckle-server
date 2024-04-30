@@ -25,7 +25,7 @@
         color="foundation"
         :disabled="disabled"
       />
-      <template #bottomButtons>
+      <template #bottom-buttons>
         <FormButton text :disabled="!hasChanges" @click="resetLocalState">
           Cancel
         </FormButton>

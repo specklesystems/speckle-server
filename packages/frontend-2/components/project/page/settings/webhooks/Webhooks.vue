@@ -1,12 +1,12 @@
 <template>
-  <ProjectPageSettingsBlock title="Webhooks">
+  <ProjectPageSettingsBlock title="Webhooks" :icon="IconWebhooks">
     <template #introduction>
       <p class="pr-4">
         Subscribe to events and get notified in real time. Use to trigger CI apps,
         automation workflows, and more.
       </p>
     </template>
-    <template #topButtons>
+    <template #top-buttons>
       <FormButton
         color="invert"
         :icon-left="BookOpenIcon"
@@ -133,6 +133,7 @@ import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
 import type { WebhookItem } from '~~/lib/projects/helpers/types'
+import IconWebhooks from '~~/components/global/icon/Webhooks.vue'
 import {
   convertThrowIntoFetchResult,
   getCacheId,

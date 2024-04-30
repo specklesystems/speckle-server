@@ -3,7 +3,7 @@
     <template #introduction>
       <p>Invite new collaborators and set permissions.</p>
     </template>
-    <template #topButtons>
+    <template #top-buttons>
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
         Invite
       </FormButton>

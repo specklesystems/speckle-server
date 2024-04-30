@@ -5,7 +5,7 @@
         Permanently delete this project and all of its content from the Speckle
         platform. This action is not reversible.
       </p>
-      <template #bottomButtons>
+      <template #bottom-buttons>
         <FormButton color="danger" @click="showDeleteDialog = true">
           Delete Project
         </FormButton>
