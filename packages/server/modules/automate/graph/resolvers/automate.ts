@@ -1,6 +1,10 @@
-import { createFunction } from '@/modules/automate/clients/executionEngine'
+import {
+  createFunction,
+  triggerAutomationRun
+} from '@/modules/automate/clients/executionEngine'
 import {
   getAutomation,
+  getAutomationTriggerDefinitions,
   getUserGithubAuthData,
   setUserGithubAuthData,
   storeAutomation,
@@ -48,7 +52,14 @@ import { getAutomateGithubClientInfo } from '@/modules/shared/helpers/envHelper'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Roles } from '@speckle/shared'
-import { getBranchesByIds } from '@/modules/core/repositories/branches'
+import {
+  getBranchLatestCommits,
+  getBranchesByIds
+} from '@/modules/core/repositories/branches'
+import {
+  manuallyTriggerAutomation,
+  triggerAutomationRevisionRun
+} from '@/modules/automate/services/trigger'
 
 export = {
   AutomationRevisionTriggerDefinition: {
@@ -153,6 +164,25 @@ export = {
         userId: ctx.userId!,
         userResourceAccessRules: ctx.resourceAccessRules
       })
+    },
+    async trigger(parent, { automationId }, ctx) {
+      const trigger = manuallyTriggerAutomation({
+        getAutomationTriggerDefinitions,
+        getAutomation,
+        getBranchLatestCommits,
+        triggerFunction: triggerAutomationRevisionRun({
+          automateRunTrigger: triggerAutomationRun
+        })
+      })
+
+      await trigger({
+        automationId,
+        userId: ctx.userId!,
+        userResourceAccessRules: ctx.resourceAccessRules,
+        projectId: parent.projectId
+      })
+
+      return true
     }
   },
   Query: {

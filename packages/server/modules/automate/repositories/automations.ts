@@ -375,3 +375,25 @@ export async function getAutomationTriggerDefinitions<
     automationId
   }))
 }
+
+export async function updateFunctionRun(
+  run: SetRequired<Partial<AutomationFunctionRunRecord>, 'id'>
+) {
+  const [ret] = await AutomationFunctionRuns.knex()
+    .where(AutomationFunctionRuns.col.id, run.id)
+    .update(pick(run, AutomationFunctionRuns.withoutTablePrefix.cols))
+    .returning<AutomationFunctionRunRecord[]>('*')
+
+  return ret
+}
+
+export async function updateAutomationRun(
+  run: SetRequired<Partial<AutomationRunRecord>, 'id'>
+) {
+  const [ret] = await AutomationRuns.knex()
+    .where(AutomationRuns.col.id, run.id)
+    .update(pick(run, AutomationRuns.withoutTablePrefix.cols))
+    .returning<AutomationRunRecord[]>('*')
+
+  return ret
+}
