@@ -46,11 +46,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Roles } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import type { ProjectUpdateInput } from '~~/lib/common/generated/gql/graphql'
 import { useUpdateProject } from '~~/lib/projects/composables/projectManagement'
 import { graphql } from '~~/lib/common/generated/gql'
+import { useTeamInternals } from '~/lib/projects/composables/team'
 
 const projectPageSettingsGeneralQuery = graphql(`
   query ProjectPageSettingsGeneral($projectId: String!) {
@@ -62,6 +62,7 @@ const projectPageSettingsGeneralQuery = graphql(`
       ...ProjectPageSettingsGeneralBlockDiscussions_Project
       ...ProjectPageSettingsGeneralBlockLeave_Project
       ...ProjectPageSettingsGeneralBlockDelete_Project
+      ...ProjectPageTeamInternals_Project
     }
   }
 `)
@@ -92,7 +93,7 @@ const project = computed(() => pageResult.value?.project)
 
 const { isGuest } = useActiveUser()
 
-const isOwner = computed(() => project.value?.role === Roles.Stream.Owner)
+const { isOwner } = useTeamInternals(project)
 
 const isDisabled = computed(() => !isOwner.value || isGuest.value)
 

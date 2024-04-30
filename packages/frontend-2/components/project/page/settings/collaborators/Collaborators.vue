@@ -109,8 +109,6 @@ const loading = ref(false)
 
 const projectId = computed(() => route.params.id as string)
 
-const canEdit = computed(() => isOwner.value && !isServerGuest.value)
-
 const { result: pageResult } = useQuery(projectPageSettingsCollaboratorsQuery, () => ({
   projectId: projectId.value
 }))
@@ -118,6 +116,8 @@ const { result: pageResult } = useQuery(projectPageSettingsCollaboratorsQuery, (
 const project = computed(() => pageResult.value?.project)
 
 const { collaboratorListItems, isOwner, isServerGuest } = useTeamInternals(project)
+
+const canEdit = computed(() => isOwner.value && !isServerGuest.value)
 
 const onCollaboratorRoleChange = async (
   collaborator: ProjectCollaboratorListItem,
