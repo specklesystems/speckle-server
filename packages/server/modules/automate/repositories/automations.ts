@@ -207,6 +207,17 @@ export type InsertableAutomationRevision = SetOptional<
   triggers: InsertableAutomationRevisionTrigger[]
 }
 
+export async function updateAutomationRevision(
+  revision: SetRequired<Partial<AutomationRevisionRecord>, 'id'>
+) {
+  const [ret] = await AutomationRevisions.knex()
+    .where(AutomationRevisions.col.id, revision.id)
+    .update(pick(revision, AutomationRevisions.withoutTablePrefix.cols))
+    .returning<AutomationRevisionRecord[]>('*')
+
+  return ret
+}
+
 export async function storeAutomationRevision(revision: InsertableAutomationRevision) {
   const id = revision.id || generateRevisionId()
   const rev = _.pick(revision, AutomationRevisions.withoutTablePrefix.cols)

@@ -1,4 +1,5 @@
 import {
+  ManuallyTriggerAutomationDeps,
   ensureRunConditions,
   manuallyTriggerAutomation,
   onModelVersionCreate,
@@ -14,7 +15,7 @@ import {
 } from '@/modules/automate/helpers/types'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
-import { createTestUser } from '@/test/authHelper'
+import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
   BasicTestStream,
   createTestStream,
@@ -26,26 +27,44 @@ import {
   getAutomationRun,
   getAutomationTriggerDefinitions,
   storeAutomation,
-  storeAutomationRevision
+  storeAutomationRevision,
+  updateAutomation,
+  updateAutomationRevision
 } from '@/modules/automate/repositories/automations'
-import { beforeEachContext } from '@/test/hooks'
-import { Environment } from '@speckle/shared'
-import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
-import { buildAutomationCreate } from '@/test/speckle-helpers/automationHelper'
+import { beforeEachContext, truncateTables } from '@/test/hooks'
+import { Automate, Environment } from '@speckle/shared'
+import {
+  getBranchLatestCommits,
+  getLatestStreamBranch
+} from '@/modules/core/repositories/branches'
+import {
+  buildAutomationCreate,
+  buildAutomationRevisionCreate,
+  createTestFunction
+} from '@/test/speckle-helpers/automationHelper'
+import { expectToThrow } from '@/test/assertionHelper'
+import { Commits } from '@/modules/core/dbSchema'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
   () => {
-    const testUser = {
+    const testUser: BasicTestUser = {
       id: cryptoRandomString({ length: 10 }),
       name: 'The Automaton',
       email: 'the@automaton.com'
     }
+
+    const otherUser: BasicTestUser = {
+      id: cryptoRandomString({ length: 10 }),
+      name: 'The Automaton Other',
+      email: 'theother@automaton.com'
+    }
+
     before(async () => {
       await beforeEachContext()
-      await createTestUser(testUser)
+      await createTestUsers([testUser, otherUser])
     })
     describe('On model version create', () => {
       it('No trigger no run', async () => {
@@ -682,14 +701,19 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
     })
 
     describe('triggered manually', () => {
-      const buildManuallyTriggerAutomation = () => {
+      const buildManuallyTriggerAutomation = (
+        overrides?: Partial<ManuallyTriggerAutomationDeps>
+      ) => {
         const trigger = manuallyTriggerAutomation({
           getAutomationTriggerDefinitions,
           getAutomation,
           getBranchLatestCommits,
-          triggerFunction: async () => {
-            return { automationRunId: cryptoRandomString({ length: 10 }) }
-          }
+          triggerFunction: triggerAutomationRevisionRun({
+            automateRunTrigger: async () => ({
+              automationRunId: cryptoRandomString({ length: 10 })
+            })
+          }),
+          ...(overrides || {})
         })
         return trigger
       }
@@ -701,25 +725,227 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         ownerId: ''
       }
 
+      const otherUserStream: BasicTestStream = {
+        id: '',
+        name: 'Other stream',
+        isPublic: true,
+        ownerId: ''
+      }
+
       let createdAutomation: Awaited<
         ReturnType<ReturnType<typeof buildAutomationCreate>>
       >
+      let createdFunction: Awaited<ReturnType<typeof createTestFunction>>
+      let createdRevision: Awaited<
+        ReturnType<ReturnType<typeof buildAutomationRevisionCreate>>
+      >
 
       before(async () => {
-        const create = buildAutomationCreate()
-        await createTestStreams([[testUserStream, testUser]])
-        createdAutomation = await create({
+        const createAutomation = buildAutomationCreate()
+        const createRevision = buildAutomationRevisionCreate()
+        const createFunction = createTestFunction
+
+        const [, createdFn] = await Promise.all([
+          createTestStreams([
+            [testUserStream, testUser],
+            [otherUserStream, otherUser]
+          ]),
+          createFunction({ userId: testUser.id })
+        ])
+        createdFunction = createdFn
+
+        const [projectModel, newAutomation] = await Promise.all([
+          getLatestStreamBranch(testUserStream.id),
+          createAutomation({
+            userId: testUser.id,
+            projectId: testUserStream.id,
+            input: {
+              name: 'Manually Triggerable Automation',
+              enabled: true
+            }
+          })
+        ])
+        createdAutomation = newAutomation
+
+        createdRevision = await createRevision({
           userId: testUser.id,
-          projectId: testUserStream.id,
           input: {
-            name: 'Manually Triggerable Automation',
-            enabled: true
-          }
+            automationId: createdAutomation.automation.id,
+            triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+              version: 1.0,
+              definitions: [{ type: 'VERSION_CREATED', modelId: projectModel.id }]
+            },
+            functions: [
+              {
+                functionReleaseId: createdFunction.release.functionReleaseId,
+                parameters: null
+              }
+            ]
+          },
+          projectId: testUserStream.id
         })
 
-        console.log(createdAutomation, buildManuallyTriggerAutomation)
+        expect(createdRevision).to.be.ok
+      })
 
-        // TODO: Create triggers too
+      it('fails if referring to nonexistent automation', async () => {
+        const trigger = buildManuallyTriggerAutomation()
+
+        const e = await expectToThrow(
+          async () =>
+            await trigger({
+              automationId: cryptoRandomString({ length: 10 }),
+              userId: testUser.id,
+              projectId: testUserStream.id
+            })
+        )
+        expect(e.message).to.eq('Automation not found')
+      })
+
+      it('fails if project id is mismatched from automation id', async () => {
+        const trigger = buildManuallyTriggerAutomation()
+
+        const e = await expectToThrow(
+          async () =>
+            await trigger({
+              automationId: createdAutomation.automation.id,
+              userId: testUser.id,
+              projectId: otherUserStream.id
+            })
+        )
+        expect(e.message).to.eq('Automation not found')
+      })
+
+      it('fails if revision has no version creation triggers', async () => {
+        const trigger = buildManuallyTriggerAutomation({
+          getAutomationTriggerDefinitions: async () => []
+        })
+
+        const e = await expectToThrow(
+          async () =>
+            await trigger({
+              automationId: createdAutomation.automation.id,
+              userId: testUser.id,
+              projectId: testUserStream.id
+            })
+        )
+        expect(e.message).to.eq(
+          'No model version creation triggers found for the automation'
+        )
+      })
+
+      it('fails if user does not have access to automation', async () => {
+        const trigger = buildManuallyTriggerAutomation()
+
+        const e = await expectToThrow(
+          async () =>
+            await trigger({
+              automationId: createdAutomation.automation.id,
+              userId: otherUser.id,
+              projectId: testUserStream.id
+            })
+        )
+        expect(e.message).to.eq('User does not have required access to stream')
+      })
+
+      it('fails if no versions found for any triggers', async () => {
+        const trigger = buildManuallyTriggerAutomation()
+
+        const e = await expectToThrow(
+          async () =>
+            await trigger({
+              automationId: createdAutomation.automation.id,
+              userId: testUser.id,
+              projectId: testUserStream.id
+            })
+        )
+        expect(e.message).to.eq(
+          'No version to trigger on found for the available triggers'
+        )
+      })
+
+      describe('with valid versions available', () => {
+        beforeEach(async () => {
+          await createTestCommit({
+            id: '',
+            objectId: '',
+            streamId: testUserStream.id,
+            authorId: testUser.id
+          })
+        })
+
+        afterEach(async () => {
+          await truncateTables([Commits.name])
+          await Promise.all([
+            updateAutomation({
+              id: createdAutomation.automation.id,
+              enabled: true
+            }),
+            updateAutomationRevision({
+              id: createdRevision.id,
+              active: true
+            })
+          ])
+        })
+
+        it('fails if automation is disabled', async () => {
+          await updateAutomation({
+            id: createdAutomation.automation.id,
+            enabled: false
+          })
+
+          const trigger = buildManuallyTriggerAutomation()
+
+          const e = await expectToThrow(
+            async () =>
+              await trigger({
+                automationId: createdAutomation.automation.id,
+                userId: testUser.id,
+                projectId: testUserStream.id
+              })
+          )
+          expect(e.message).to.eq('The automation is not enabled, cannot trigger it')
+        })
+
+        it('fails if automation revision is disabled', async () => {
+          await updateAutomationRevision({
+            id: createdRevision.id,
+            active: false
+          })
+
+          const trigger = buildManuallyTriggerAutomation()
+
+          const e = await expectToThrow(
+            async () =>
+              await trigger({
+                automationId: createdAutomation.automation.id,
+                userId: testUser.id,
+                projectId: testUserStream.id
+              })
+          )
+          expect(e.message).to.eq(
+            'No model version creation triggers found for the automation'
+          )
+        })
+
+        it('succeeds', async () => {
+          const trigger = buildManuallyTriggerAutomation()
+
+          const { automationRunId } = await trigger({
+            automationId: createdAutomation.automation.id,
+            userId: testUser.id,
+            projectId: testUserStream.id
+          })
+
+          const storedRun = await getAutomationRun(automationRunId)
+          expect(storedRun).to.be.ok
+
+          const expectedStatus = 'pending'
+          expect(storedRun!.status).to.equal(expectedStatus)
+          for (const run of storedRun!.functionRuns) {
+            expect(run.status).to.equal(expectedStatus)
+          }
+        })
       })
     })
   }
