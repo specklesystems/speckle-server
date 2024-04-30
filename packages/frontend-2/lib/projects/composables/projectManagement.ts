@@ -268,13 +268,14 @@ export function useUpdateProject() {
 
   return async (
     update: ProjectUpdateInput,
-    customSuccessMessage?: string,
-    options?: Partial<{ optimisticResponse: UpdateProjectMetadataMutation }>
+    options?: Partial<{
+      customSuccessMessage?: string
+      optimisticResponse: UpdateProjectMetadataMutation
+    }>
   ) => {
     if (!activeUser.value) return
 
-    const defaultSuccessMessage = 'Project updated'
-    const successMessage = customSuccessMessage || defaultSuccessMessage
+    const successMessage = options?.customSuccessMessage || 'Project updated'
 
     const result = await apollo
       .mutate({

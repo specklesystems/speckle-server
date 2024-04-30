@@ -109,6 +109,8 @@ const handleUpdate = (
     ...updates
   }
 
-  updateProject(updatePayload, customSuccessMessage)
+  const options = customSuccessMessage ? { customSuccessMessage } : {}
+
+  updateProject(updatePayload, options)
 }
 </script>
