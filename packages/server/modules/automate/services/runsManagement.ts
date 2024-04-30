@@ -60,6 +60,27 @@ const validateStatusChange = (
   }
 }
 
+const validateContextView = (contextView: string) => {
+  if (!contextView.length) {
+    throw new FunctionRunReportStatusesError(
+      'Context view must be a valid relative URL'
+    )
+  }
+
+  if (!contextView.startsWith('/')) {
+    throw new FunctionRunReportStatusesError(
+      'Context view must start with a forward slash'
+    )
+  }
+
+  // Try parsing URL
+  try {
+    new URL(contextView, 'https://unimportant.com')
+  } catch (e) {
+    throw new FunctionRunReportStatusesError('Invalid relative URL')
+  }
+}
+
 type ValidatedRunStatusUpdateItem = {
   update: AutomateFunctionRunStatusReportInput
   run: Awaited<ReturnType<typeof getFunctionRuns>>[0]
@@ -145,6 +166,19 @@ export const reportFunctionRunStatuses =
         } catch (e) {
           if (e instanceof Automate.UnformattableResultsSchemaError) {
             errorsByRunId[input.functionRunId] = `Invalid results schema: ${e.message}`
+            continue
+          } else {
+            throw e
+          }
+        }
+      }
+
+      if (input.contextView) {
+        try {
+          validateContextView(input.contextView)
+        } catch (e) {
+          if (e instanceof FunctionRunReportStatusesError) {
+            errorsByRunId[input.functionRunId] = `Invalid contextView: ${e.message}`
             continue
           } else {
             throw e

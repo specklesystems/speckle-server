@@ -160,6 +160,11 @@ export async function getFunctionRuns(params: { functionRunIds: string[] }) {
   return await q
 }
 
+export async function getFunctionRun(functionRunId: string) {
+  const runs = await getFunctionRuns({ functionRunIds: [functionRunId] })
+  return (runs[0] || null) as (typeof runs)[0] | null
+}
+
 export async function getFunctionRunsForAutomationRunIds(params: {
   automationRunIds?: string[]
   functionRunIds?: string[]

@@ -28,6 +28,7 @@ import {
   getAutomation,
   getAutomationRun,
   getAutomationTriggerDefinitions,
+  getFunctionRun,
   getFunctionRuns,
   getFunctionRunsForAutomationRunIds,
   storeAutomation,
@@ -960,17 +961,6 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
     describe('Existing automation run', () => {
       let automationRun: InsertableAutomationRun
 
-      const buildReportFunctionRunStatuses = () => {
-        const report = reportFunctionRunStatuses({
-          getFunctionRuns,
-          updateFunctionRun,
-          updateAutomationRun,
-          getFunctionRunsForAutomationRunIds
-        })
-
-        return report
-      }
-
       before(async () => {
         // Insert automation run directly to DB
         automationRun = {
@@ -978,7 +968,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           automationRevisionId: createdRevision.id,
           createdAt: new Date(),
           updatedAt: new Date(),
-          status: AutomationRunStatuses.pending,
+          status: AutomationRunStatuses.running,
           executionEngineRunId: cryptoRandomString({ length: 10 }),
           triggers: [
             {
@@ -990,7 +980,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             {
               functionReleaseId: createdFunction.release.functionReleaseId,
               id: cryptoRandomString({ length: 15 }),
-              status: AutomationRunStatuses.pending,
+              status: AutomationRunStatuses.running,
               elapsed: 0,
               results: null,
               contextView: null,
@@ -1002,22 +992,152 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         await upsertAutomationRun(automationRun)
       })
 
-      it("doesn't throw with invalid inputs", async () => {
-        const report = buildReportFunctionRunStatuses()
+      describe('status update report', () => {
+        const buildReportFunctionRunStatuses = () => {
+          const report = reportFunctionRunStatuses({
+            getFunctionRuns,
+            updateFunctionRun,
+            updateAutomationRun,
+            getFunctionRunsForAutomationRunIds
+          })
 
-        const functionRunId = 'nonexistent'
-        const res = await report({
-          inputs: [
-            {
-              functionRunId,
-              status: AutomateRunStatus.Running
-            }
-          ]
+          return report
+        }
+
+        it('fails fn with invalid functionRunId', async () => {
+          const report = buildReportFunctionRunStatuses()
+
+          const functionRunId = 'nonexistent'
+          const res = await report({
+            inputs: [
+              {
+                functionRunId,
+                status: AutomateRunStatus.Succeeded
+              }
+            ]
+          })
+
+          expect(res).to.be.ok
+          expect(res.successfullyUpdatedFunctionRunIds).to.have.length(0)
+          expect(res.errorsByFunctionRunId[functionRunId]).to.match(
+            /^Function run not found/
+          )
         })
 
-        expect(res).to.be.ok
-        expect(res.successfullyUpdatedFunctionRunIds).to.have.length(0)
-        expect(res.errorsByFunctionRunId).to.have.keys(functionRunId)
+        it('fails fn with invalid status', async () => {
+          const report = buildReportFunctionRunStatuses()
+
+          const functionRunId = automationRun.functionRuns[0].id
+          const res = await report({
+            inputs: [
+              {
+                functionRunId,
+                status: AutomateRunStatus.Initializing
+              }
+            ]
+          })
+
+          expect(res).to.be.ok
+          expect(res.successfullyUpdatedFunctionRunIds).to.have.length(0)
+          expect(res.errorsByFunctionRunId[functionRunId]).to.match(
+            /^Invalid status change/
+          )
+        })
+        ;[
+          { val: 1, error: 'invalid type' },
+          {
+            val: {
+              version: '1.0',
+              values: { objectResults: [] },
+              error: 'invalid version'
+            }
+          },
+          {
+            val: {
+              version: 1.0,
+              values: {}
+            },
+            error: 'invalid values object'
+          },
+          {
+            val: { version: 1.0, values: { objectResults: [1] } },
+            error: 'invalid objectResults item type'
+          },
+          {
+            val: { version: 1.0, values: { objectResults: [{}] } },
+            error: 'invalid objectResults item keys'
+          }
+        ].forEach(({ val, error }) => {
+          it('fails fn with invalid results: ' + error, async () => {
+            const report = buildReportFunctionRunStatuses()
+
+            const functionRunId = automationRun.functionRuns[0].id
+            const res = await report({
+              inputs: [
+                {
+                  functionRunId,
+                  status: AutomateRunStatus.Succeeded,
+                  results: val as unknown as Automate.AutomateTypes.ResultsSchema
+                }
+              ]
+            })
+
+            expect(res).to.be.ok
+            expect(res.successfullyUpdatedFunctionRunIds).to.have.length(0)
+            expect(res.errorsByFunctionRunId[functionRunId]).to.match(
+              /^Invalid results schema/
+            )
+          })
+        })
+
+        it('fails fn with invalid contextView url', async () => {
+          const report = buildReportFunctionRunStatuses()
+
+          const functionRunId = automationRun.functionRuns[0].id
+          const res = await report({
+            inputs: [
+              {
+                functionRunId,
+                status: AutomateRunStatus.Succeeded,
+                contextView: 'invalid-url'
+              }
+            ]
+          })
+
+          expect(res).to.be.ok
+          expect(res.successfullyUpdatedFunctionRunIds).to.have.length(0)
+          expect(res.errorsByFunctionRunId[functionRunId]).to.match(
+            /^Invalid contextView/
+          )
+        })
+
+        it('succeeds', async () => {
+          const report = buildReportFunctionRunStatuses()
+
+          const functionRunId = automationRun.functionRuns[0].id
+          const contextView = '/a/b/c'
+          const res = await report({
+            inputs: [
+              {
+                functionRunId,
+                status: AutomateRunStatus.Succeeded,
+                contextView
+              }
+            ]
+          })
+
+          expect(res).to.be.ok
+          expect(res.successfullyUpdatedFunctionRunIds).to.have.length(1)
+          expect(Object.values(res.errorsByFunctionRunId)).to.be.empty
+
+          const [updatedRun, updatedFnRun] = await Promise.all([
+            getAutomationRun(automationRun.id),
+            getFunctionRun(functionRunId)
+          ])
+          expect(updatedRun?.status).to.equal(AutomationRunStatuses.success)
+          expect(updatedFnRun?.status).to.equal(AutomationRunStatuses.success)
+          expect(updatedFnRun?.contextView).to.equal(contextView)
+        })
       })
     })
   }
