@@ -50,6 +50,7 @@ import {
 import { SourceAppNames } from '@speckle/shared'
 import { Request } from 'express'
 import { isFunction } from 'lodash'
+import { AutomateFunctionReleaseRecord } from '@/modules/automate/helpers/types'
 
 export const buildAutomationCreate = (
   overrides?: Partial<{
@@ -208,8 +209,8 @@ export const exampleFunctionReleaseCreateBody = (): FunctionReleaseCreateBody =>
 
 export const createTestFunction = async (params: {
   userId: string
-  fn?: Partial<CreateAutomateFunctionInput>
-  fnRelease?: Partial<FunctionReleaseCreateBody>
+  fn?: Partial<CreateAutomateFunctionInput & Partial<{ isFeatured: boolean }>>
+  fnRelease?: Partial<FunctionReleaseCreateBody> | null
 }) => {
   const { userId, fn, fnRelease } = params
 
@@ -220,19 +221,28 @@ export const createTestFunction = async (params: {
   }
   const newFn = await createFn({ input: fnInput, userId })
 
-  const createRelease = buildCreateFunctionReleaseFn(() => ({
-    functionId: newFn.fn.executionEngineFunctionId,
-    token: newFn.token.token
-  }))
-  const release = await createRelease({
-    req: (req) => {
-      req.body = {
-        ...exampleFunctionReleaseCreateBody(),
-        ...(fnRelease || {})
+  if (fn?.isFeatured) {
+    await updateDbFunction(newFn.fn.functionId, {
+      isFeatured: true
+    })
+  }
+
+  let release: AutomateFunctionReleaseRecord | null = null
+  if (fnRelease !== null) {
+    const createRelease = buildCreateFunctionReleaseFn(() => ({
+      functionId: newFn.fn.executionEngineFunctionId,
+      token: newFn.token.token
+    }))
+    release = await createRelease({
+      req: (req) => {
+        req.body = {
+          ...exampleFunctionReleaseCreateBody(),
+          ...(fnRelease || {})
+        }
+        return req
       }
-      return req
-    }
-  })
+    })
+  }
 
   return {
     function: newFn,

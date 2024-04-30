@@ -135,7 +135,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           },
           functions: [
             {
-              functionReleaseId: createdFunction.release.functionReleaseId,
+              functionReleaseId: createdFunction.release!.functionReleaseId,
               parameters: null
             }
           ]
@@ -978,7 +978,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           ],
           functionRuns: [
             {
-              functionReleaseId: createdFunction.release.functionReleaseId,
+              functionReleaseId: createdFunction.release!.functionReleaseId,
               id: cryptoRandomString({ length: 15 }),
               status: AutomationRunStatuses.running,
               elapsed: 0,

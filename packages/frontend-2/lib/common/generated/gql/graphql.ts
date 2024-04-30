@@ -278,8 +278,8 @@ export enum AutomateFunctionTemplateLanguage {
 
 export type AutomateFunctionsFilter = {
   featuredFunctionsOnly?: InputMaybe<Scalars['Boolean']>;
-  /** By default we skip functions without versions. Set this to true to include them. */
-  functionsWithoutVersions?: InputMaybe<Scalars['Boolean']>;
+  /** By default we skip functions without releases. Set this to true to include them. */
+  functionsWithoutReleases?: InputMaybe<Scalars['Boolean']>;
   search?: InputMaybe<Scalars['String']>;
 };
 

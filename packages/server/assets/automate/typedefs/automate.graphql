@@ -176,9 +176,9 @@ input ProjectAutomationCreateInput {
 input AutomateFunctionsFilter {
   search: String
   """
-  By default we skip functions without versions. Set this to true to include them.
+  By default we skip functions without releases. Set this to true to include them.
   """
-  functionsWithoutVersions: Boolean
+  functionsWithoutReleases: Boolean
   featuredFunctionsOnly: Boolean
 }
 

@@ -254,7 +254,7 @@ const buildAutomationUpdate = () => {
           automationId: createdAutomation.automation.id,
           functions: [
             {
-              functionReleaseId: createdFunction.release.functionReleaseId,
+              functionReleaseId: createdFunction.release!.functionReleaseId,
               parameters: null
             }
           ],

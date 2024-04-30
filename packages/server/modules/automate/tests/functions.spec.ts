@@ -14,7 +14,7 @@ import {
   UpdateAutomateFunctionInput
 } from '@/modules/core/graph/generated/graphql'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import { beforeEachContext } from '@/test/hooks'
+import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Environment, Roles, SourceAppNames } from '@speckle/shared'
 import { expect } from 'chai'
 import { OrgAuthAccessRestrictionsError } from '@/modules/core/errors/github'
@@ -23,17 +23,31 @@ import {
   AutomateFunctionReleaseCreateError,
   AutomateFunctionUpdateError
 } from '@/modules/automate/errors/management'
-import { isString, omit } from 'lodash'
+import { isString, omit, times } from 'lodash'
 import { ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
-import { AutomateFunctionReleases } from '@/modules/core/dbSchema'
+import {
+  AutomateFunctionReleases,
+  AutomateFunctionTokens,
+  AutomateFunctions,
+  AutomationFunctionRuns,
+  AutomationRevisionFunctions
+} from '@/modules/core/dbSchema'
 import {
   buildCreateFn,
   buildCreateFunctionReleaseFn,
   buildUpdateFn,
+  createTestFunction,
   exampleCreationInput,
   exampleFunctionReleaseCreateBody
 } from '@/test/speckle-helpers/automationHelper'
 import { expectToThrow } from '@/test/assertionHelper'
+import { faker } from '@faker-js/faker'
+import {
+  TestApolloServer,
+  createTestContext,
+  testApolloServer
+} from '@/test/graphqlHelper'
+import { AllScopes } from '@/modules/core/helpers/mainConstants'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
@@ -541,6 +555,73 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           expect(fnRelease.inputSchema).to.deep.equalInAnyOrder(body.inputSchema)
           expect(fnRelease.command).to.deep.equal(body.command)
         })
+      })
+    })
+
+    describe('retrieval', () => {
+      // TODO: limit, search, search releases, no auth scopes
+
+      let apollo: TestApolloServer
+
+      before(async () => {
+        await truncateTables([
+          AutomationRevisionFunctions.name,
+          AutomationFunctionRuns.name,
+          AutomateFunctionTokens.name,
+          AutomateFunctionReleases.name,
+          AutomateFunctions.name
+        ])
+
+        apollo = testApolloServer({
+          context: createTestContext({
+            userId: me.id,
+            auth: true,
+            role: Roles.Server.User,
+            scopes: AllScopes
+          })
+        })
+      })
+
+      const TOTAL_FUNCTION_COUNT = 20
+      const SEARCH_STRING = 'bababooey'
+      const FUNCTIONS_LIMIT = Math.floor(TOTAL_FUNCTION_COUNT / 3) // ~3 pages
+      const FUNCTIONS_WO_RELEASES = Math.floor(TOTAL_FUNCTION_COUNT / 6)
+      const FEATURED_FUNCTIONS = Math.floor(TOTAL_FUNCTION_COUNT / 5)
+      const FUNCTIONS_W_SEARCH_STRING = Math.floor(TOTAL_FUNCTION_COUNT / 4)
+
+      before(async () => {
+        let remainingFeatured = FEATURED_FUNCTIONS
+        let remainingWoReleases = FUNCTIONS_WO_RELEASES
+        let remainingWSearchString = FUNCTIONS_W_SEARCH_STRING
+
+        // Create many test functions to test retrieval
+        await Promise.all(
+          times(TOTAL_FUNCTION_COUNT, (i) => {
+            const shouldBeFeatured = remainingFeatured-- > 0
+            const shouldNotHaveReleases = remainingWoReleases-- > 0
+            const shouldHaveSearchString = remainingWSearchString-- > 0
+
+            return createTestFunction({
+              userId: me.id,
+              fnRelease: shouldNotHaveReleases
+                ? null
+                : {
+                    versionTag: `1.0.${i}`,
+                    commitId: faker.git.shortSha()
+                  },
+              fn: {
+                isFeatured: shouldBeFeatured,
+                name:
+                  `Function #${i}` +
+                  (shouldHaveSearchString ? ` -= ${SEARCH_STRING} =-` : '')
+              }
+            })
+          })
+        )
+      })
+
+      it('retrieves all functions w/ proper pagination', async () => {
+        // TODO
       })
     })
   }
