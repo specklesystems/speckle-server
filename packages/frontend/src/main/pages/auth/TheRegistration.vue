@@ -179,6 +179,9 @@
         </v-form>
       </v-card-text>
     </div>
+    <new-speckle-register-page-dialog
+      v-if="showNewSpeckleRegisterDialog && fe2MessagingEnabled"
+    />
     <v-card-title
       :class="`justify-center caption ${serverInfo.inviteOnly && !token ? 'pt-0' : ''}`"
     >
@@ -201,10 +204,16 @@ import {
 } from '@/main/lib/auth/services/authService'
 import { AppLocalStorage } from '@/utils/localStorage'
 import { useValidatablePasswordEntry } from '@/main/lib/auth/composables/useValidatablePasswordEntry'
+import { useFE2Messaging } from '@/main/lib/core/composables/server'
+import { ref } from 'vue'
 
 export default {
   name: 'TheRegistration',
-  components: { AuthStrategies },
+  components: {
+    AuthStrategies,
+    NewSpeckleRegisterPageDialog: () =>
+      import('@/main/dialogs/NewSpeckleRegisterPage.vue')
+  },
   apollo: {
     serverInfo: {
       query: gql`
@@ -233,10 +242,16 @@ export default {
   },
   setup() {
     const validatablePasswordEntry = useValidatablePasswordEntry()
+    const { fe2MessagingEnabled } = useFE2Messaging()
+    const showNewSpeckleRegisterDialog = ref(fe2MessagingEnabled)
+
     return {
+      fe2MessagingEnabled,
+      showNewSpeckleRegisterDialog,
       ...validatablePasswordEntry
     }
   },
+
   data() {
     return {
       serverInfo: { authStrategies: [] },
