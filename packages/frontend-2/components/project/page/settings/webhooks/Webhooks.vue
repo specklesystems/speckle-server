@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock title="Webhooks" :icon="IconWebhooks">
+  <ProjectPageSettingsBlock title="Webhooks">
     <template #introduction>
       <p class="pr-4">
         Subscribe to events and get notified in real time. Use to trigger CI apps,
@@ -133,7 +133,6 @@ import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import { useGlobalToast } from '~~/lib/common/composables/toast'
 import type { WebhookItem } from '~~/lib/projects/helpers/types'
-import IconWebhooks from '~~/components/global/icon/Webhooks.vue'
 import {
   convertThrowIntoFetchResult,
   getCacheId,

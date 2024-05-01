@@ -1,5 +1,5 @@
 <template>
-  <ProjectPageSettingsBlock :icon="UsersIcon" title="Collaborators">
+  <ProjectPageSettingsBlock title="Collaborators">
     <template #introduction>
       <p>Invite new collaborators and set permissions.</p>
     </template>
@@ -86,7 +86,6 @@ import type { ProjectCollaboratorListItem } from '~~/lib/projects/helpers/compon
 import { UserPlusIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { graphql } from '~~/lib/common/generated/gql'
-import { UsersIcon } from '@heroicons/vue/24/solid'
 
 const projectPageSettingsCollaboratorsQuery = graphql(`
   query ProjectPageSettingsCollaborators($projectId: String!) {
