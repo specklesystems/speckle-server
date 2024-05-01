@@ -80,7 +80,6 @@ import { ModelCardNotification } from '~/lib/models/card/notification'
 import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
 import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { versionDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
-import { watchOnce } from '@vueuse/core'
 import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
@@ -127,7 +126,7 @@ const handleVersionSelection = async (
 const expiredNotification = computed(() => {
   if (!props.modelCard.latestVersionId || props.modelCard.hasDismissedUpdateWarning)
     return
-
+  if (props.modelCard.latestVersionId === props.modelCard.selectedVersionId) return
   const notification = {} as ModelCardNotification
   notification.dismissible = true
   notification.level = 'warning'
@@ -173,7 +172,7 @@ const errorNotification = computed(() => {
   return notification
 })
 
-const { result: versionDetailsResult } = useQuery(
+const { result: versionDetailsResult, refetch } = useQuery(
   versionDetailsQuery,
   () => ({
     projectId: props.modelCard.projectId,
@@ -185,9 +184,14 @@ const { result: versionDetailsResult } = useQuery(
   })
 )
 
+onMounted(() => {
+  refetch()
+})
+
 // On initialisation, we check whether there was a never version created while we were offline. If so, flagging this dude as expired.
-watchOnce(versionDetailsResult, async (newVal) => {
+watch(versionDetailsResult, async (newVal) => {
   let patchObject = {}
+
   if (
     newVal?.project.model.versions.items &&
     newVal?.project.model.versions.items.length !== 0 &&
