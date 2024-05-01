@@ -17,7 +17,7 @@
     </v-card-title>
     <v-card-title class="justify-center pt-5 pb-2">
       <span class="hidden-md-and-up mr-2 primary--text">Speckle:</span>
-      Interoperability in seconds
+      Connectivity in seconds
     </v-card-title>
     <auth-strategies :strategies="strategies" :app-id="appId" :challenge="challenge" />
     <div v-if="hasLocalStrategy">

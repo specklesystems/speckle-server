@@ -430,6 +430,10 @@ export class SectionTool extends Extension {
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
 
+    if (offset === 0) {
+      offset = this.viewer.World.getRelativeOffset()
+    }
+
     const x1 = box.min.x - (box.max.x - box.min.x) * offset
     const y1 = box.min.y - (box.max.y - box.min.y) * offset
     const z1 = box.min.z - (box.max.z - box.min.z) * offset

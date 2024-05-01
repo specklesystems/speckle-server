@@ -17,6 +17,9 @@
         <template v-else-if="pendingModel">
           <ArrowUpOnSquareIcon class="w-4 h-4 text-foreground-2 mx-2" />
         </template>
+        <template v-else>
+          <div class="w-4 h-4 mx-2" />
+        </template>
 
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
@@ -200,25 +203,32 @@
         v-if="hasChildren && expanded && !isPendingFileUpload(item)"
         class="pl-8 mt-4 space-y-4"
       >
-        <div v-for="child in children" :key="child.fullName" class="flex">
-          <div class="h-20 absolute -ml-8 flex items-center mt-0 mr-1 pl-1">
-            <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />
-          </div>
+        <div v-if="childrenLoading" class="mr-8">
+          <CommonLoadingBar loading />
+        </div>
 
-          <ProjectPageModelsStructureItem
-            :item="child"
-            :project="project"
-            :can-contribute="canContribute"
-            class="flex-grow"
-            @model-updated="onModelUpdated"
-            @create-submodel="emit('create-submodel', $event)"
+        <template v-else>
+          <div v-for="child in children" :key="child.fullName" class="flex">
+            <div class="h-20 absolute -ml-8 flex items-center mt-0 mr-1 pl-1">
+              <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />
+            </div>
+
+            <ProjectPageModelsStructureItem
+              :item="child"
+              :project="project"
+              :can-contribute="canContribute"
+              class="flex-grow"
+              @model-updated="onModelUpdated"
+              @create-submodel="emit('create-submodel', $event)"
+            />
+          </div>
+        </template>
+        <div v-if="canContribute" class="mr-8">
+          <ProjectPageModelsNewModelStructureItem
+            :project-id="project.id"
+            :parent-model-name="item.fullName"
           />
         </div>
-        <ProjectPageModelsNewModelStructureItem
-          v-if="canContribute"
-          :project-id="project.id"
-          :parent-model-name="item.fullName"
-        />
       </div>
     </div>
   </div>
@@ -396,7 +406,11 @@ const viewAllUrl = computed(() => {
   return modelRoute(props.project.id, `$${props.item.fullName}`)
 })
 
-const { result: childrenResult, refetch: refetchChildren } = useQuery(
+const {
+  result: childrenResult,
+  refetch: refetchChildren,
+  loading: childrenLoading
+} = useQuery(
   projectModelChildrenTreeQuery,
   () => ({
     projectId: props.project.id,

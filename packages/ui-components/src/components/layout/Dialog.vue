@@ -33,7 +33,7 @@
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
-              @submit.prevent="onSubmit || noop"
+              @submit.prevent="onFormSubmit"
             >
               <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
                 <div
@@ -177,6 +177,10 @@ const widthClasses = computed(() => {
 const onClose = () => {
   if (props.preventCloseOnClickOutside) return
   open.value = false
+}
+
+const onFormSubmit = (e: SubmitEvent) => {
+  ;(props.onSubmit || noop)(e)
 }
 
 const onScroll = throttle((e: Event) => {
