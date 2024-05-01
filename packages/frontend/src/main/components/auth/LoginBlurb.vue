@@ -24,7 +24,7 @@
         </span>
       </v-card-text>
     </div>
-    <div class="px-4">
+    <div v-if="fe2MessagingEnabled" class="px-4">
       <v-divider></v-divider>
       <v-row align="center" justify="center" class="pt-4 pb-5">
         <v-col cols="12" class="pb-0">
@@ -83,7 +83,15 @@
   </v-card>
 </template>
 <script>
+import { useFE2Messaging } from '@/main/lib/core/composables/server'
+
 export default {
-  name: 'LoginBlurb'
+  name: 'LoginBlurb',
+  setup() {
+    const { fe2MessagingEnabled } = useFE2Messaging()
+    return {
+      fe2MessagingEnabled
+    }
+  }
 }
 </script>
