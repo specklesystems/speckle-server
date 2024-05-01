@@ -82,9 +82,23 @@
       <v-card-title class="justify-center caption">
         <div class="mx-4 align-self-center">Don't have an account?</div>
         <div class="mx-4 align-self-center">
-          <v-btn color="primary" text :to="registerRoute">Register</v-btn>
+          <v-btn
+            color="primary"
+            text
+            :to="!fe2MessagingEnabled ? registerRoute : undefined"
+            @click="
+              fe2MessagingEnabled
+                ? (showNewSpeckleAccountCreationDialog = true)
+                : undefined
+            "
+          >
+            Register
+          </v-btn>
         </div>
       </v-card-title>
+      <new-speckle-account-creation-dialog
+        v-if="showNewSpeckleAccountCreationDialog && fe2MessagingEnabled"
+      />
       <div class="justify-center caption text-center pb-5">
         <div class="mx-4 align-self-center">
           <a href="/authn/resetpassword" class="text-decoration-none">
@@ -146,10 +160,15 @@ import {
   processSuccessfulAuth
 } from '@/main/lib/auth/services/authService'
 import { AppLocalStorage } from '@/utils/localStorage'
+import { useFE2Messaging } from '@/main/lib/core/composables/server'
 
 export default {
   name: 'TheLogin',
-  components: { AuthStrategies },
+  components: {
+    AuthStrategies,
+    NewSpeckleAccountCreationDialog: () =>
+      import('@/main/dialogs/NewSpeckleAccountCreation.vue')
+  },
   apollo: {
     serverInfo: {
       query: gql`
@@ -176,6 +195,12 @@ export default {
       `
     }
   },
+  setup() {
+    const { fe2MessagingEnabled } = useFE2Messaging()
+    return {
+      fe2MessagingEnabled
+    }
+  },
   data: () => ({
     serverInfo: { authStrategies: [] },
     form: { email: null, password: null },
@@ -191,7 +216,8 @@ export default {
     serverApp: null,
     appId: null,
     challenge: null,
-    loading: false
+    loading: false,
+    showNewSpeckleAccountCreationDialog: false
   }),
   computed: {
     strategies() {
