@@ -86,19 +86,12 @@
             color="primary"
             text
             :to="!fe2MessagingEnabled ? registerRoute : undefined"
-            @click="
-              fe2MessagingEnabled
-                ? (showNewSpeckleAccountCreationDialog = true)
-                : undefined
-            "
+            :href="fe2MessagingEnabled ? registerRoute : undefined"
           >
             Register
           </v-btn>
         </div>
       </v-card-title>
-      <new-speckle-account-creation-dialog
-        v-if="showNewSpeckleAccountCreationDialog && fe2MessagingEnabled"
-      />
       <div class="justify-center caption text-center pb-5">
         <div class="mx-4 align-self-center">
           <a href="/authn/resetpassword" class="text-decoration-none">
@@ -165,9 +158,7 @@ import { useFE2Messaging } from '@/main/lib/core/composables/server'
 export default {
   name: 'TheLogin',
   components: {
-    AuthStrategies,
-    NewSpeckleAccountCreationDialog: () =>
-      import('@/main/dialogs/NewSpeckleAccountCreation.vue')
+    AuthStrategies
   },
   apollo: {
     serverInfo: {
@@ -196,9 +187,11 @@ export default {
     }
   },
   setup() {
-    const { fe2MessagingEnabled } = useFE2Messaging()
+    const { fe2MessagingEnabled, migrationMovedTo } = useFE2Messaging()
+
     return {
-      fe2MessagingEnabled
+      fe2MessagingEnabled,
+      migrationMovedTo
     }
   },
   data: () => ({
@@ -230,12 +223,22 @@ export default {
       return getInviteTokenFromRoute(this.$route)
     },
     registerRoute() {
-      return {
-        name: 'Register',
-        query: {
-          appId: this.$route.query.appId,
-          challenge: this.$route.query.challenge,
-          token: this.token
+      if (this.fe2MessagingEnabled) {
+        // If fe2MessagingEnabled is true, return the migration URL
+        const migrationUrl = new URL('/authn/register', this.migrationMovedTo)
+        if (this.token) {
+          migrationUrl.searchParams.set('token', this.token)
+        }
+        return migrationUrl.href
+      } else {
+        // If fe2MessagingEnabled is false, return the Vue Router route object
+        return {
+          name: 'Register',
+          query: {
+            appId: this.$route.query.appId,
+            challenge: this.$route.query.challenge,
+            token: this.token
+          }
         }
       }
     }

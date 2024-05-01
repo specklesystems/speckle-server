@@ -14,7 +14,7 @@
         >, empowering your design and construction data.</span
       >
     </v-card-text>
-    <div>
+    <div v-if="!fe2MessagingEnabled">
       <v-card-text class="text-h6 font-weight-regular">
         Speckle helps leading AEC companies freely exchange data between software silos
         and automate design and delivery processes:
@@ -66,7 +66,7 @@
             </v-col>
             <v-col cols="12" lg="8" class="d-flex justify-end py-0">
               <v-btn
-                href="https://app.speckle.systems/"
+                :href="migrationMovedTo"
                 color="primary"
                 block
                 class="align-self-center outlined ml-4"
@@ -88,9 +88,8 @@ import { useFE2Messaging } from '@/main/lib/core/composables/server'
 export default {
   name: 'LoginBlurb',
   setup() {
-    const { fe2MessagingEnabled } = useFE2Messaging()
     return {
-      fe2MessagingEnabled
+      ...useFE2Messaging()
     }
   }
 }

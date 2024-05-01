@@ -179,9 +179,6 @@
         </v-form>
       </v-card-text>
     </div>
-    <new-speckle-register-page-dialog
-      v-if="showNewSpeckleRegisterDialog && fe2MessagingEnabled"
-    />
     <v-card-title
       :class="`justify-center caption ${serverInfo.inviteOnly && !token ? 'pt-0' : ''}`"
     >
@@ -205,14 +202,12 @@ import {
 import { AppLocalStorage } from '@/utils/localStorage'
 import { useValidatablePasswordEntry } from '@/main/lib/auth/composables/useValidatablePasswordEntry'
 import { useFE2Messaging } from '@/main/lib/core/composables/server'
-import { ref } from 'vue'
+import { watch } from 'vue'
 
 export default {
   name: 'TheRegistration',
   components: {
-    AuthStrategies,
-    NewSpeckleRegisterPageDialog: () =>
-      import('@/main/dialogs/NewSpeckleRegisterPage.vue')
+    AuthStrategies
   },
   apollo: {
     serverInfo: {
@@ -242,12 +237,22 @@ export default {
   },
   setup() {
     const validatablePasswordEntry = useValidatablePasswordEntry()
-    const { fe2MessagingEnabled } = useFE2Messaging()
-    const showNewSpeckleRegisterDialog = ref(fe2MessagingEnabled)
+    const { fe2MessagingEnabled, migrationMovedTo } = useFE2Messaging()
+
+    watch(
+      [fe2MessagingEnabled, migrationMovedTo],
+      ([enabled, url]) => {
+        if (enabled && url) {
+          const fullUrl = new URL('/authn/register', url)
+          window.location.href = fullUrl.href
+        }
+      },
+      { immediate: true }
+    )
 
     return {
       fe2MessagingEnabled,
-      showNewSpeckleRegisterDialog,
+      migrationMovedTo,
       ...validatablePasswordEntry
     }
   },
