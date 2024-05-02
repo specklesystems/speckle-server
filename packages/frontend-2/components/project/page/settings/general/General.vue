@@ -1,16 +1,15 @@
 <template>
-  <div class="flex flex-col gap-4">
+  <div v-if="project" class="flex flex-col gap-4">
     <ProjectPageSettingsGeneralBlockProjectInfo
-      v-if="project"
       :project="project"
       :disabled="isDisabled"
       @update-project="
-        ({ name, description }) =>
-          handleUpdate({ name, description }, 'Project info updated')
+        ({ name, description, onComplete }) =>
+          handleUpdate({ name, description }, 'Project info updated', onComplete)
       "
     />
+
     <ProjectPageSettingsGeneralBlockAccess
-      v-if="project"
       :project="project"
       :disabled="isDisabled"
       @update-visibility="
@@ -19,7 +18,6 @@
       "
     />
     <ProjectPageSettingsGeneralBlockDiscussions
-      v-if="project"
       :project="project"
       :disabled="isDisabled"
       @update-comments-permission="
@@ -30,10 +28,10 @@
           )
       "
     />
-    <ProjectPageSettingsGeneralBlockLeave v-if="project" :project="project" />
+    <ProjectPageSettingsGeneralBlockLeave :project="project" />
 
     <ProjectPageSettingsGeneralBlockDelete
-      v-if="project && isOwner && !isGuest"
+      v-if="isOwner && !isGuest"
       :project="project"
       @update-comments-permission="
         (newCommentsPermission) =>
@@ -44,6 +42,7 @@
       "
     />
   </div>
+  <div v-else></div>
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
@@ -99,7 +98,8 @@ const isDisabled = computed(() => !isOwner.value || isGuest.value)
 
 const handleUpdate = (
   updates: Partial<ProjectUpdateInput>,
-  customSuccessMessage?: string
+  customSuccessMessage?: string,
+  onComplete?: () => void
 ) => {
   if (!project.value) {
     return
@@ -112,6 +112,10 @@ const handleUpdate = (
 
   const options = customSuccessMessage ? { customSuccessMessage } : {}
 
-  updateProject(updatePayload, options)
+  updateProject(updatePayload, options).then(() => {
+    if (onComplete) {
+      onComplete()
+    }
+  })
 }
 </script>

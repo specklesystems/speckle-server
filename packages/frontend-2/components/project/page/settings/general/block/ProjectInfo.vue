@@ -91,8 +91,12 @@ const hasChanges = computed(() => {
 const emitUpdate = () => {
   emit('update-project', {
     name: localProjectName.value,
-    description: localProjectDescription.value
+    description: localProjectDescription.value,
+    onComplete: handleRedirection
   })
+}
+
+const handleRedirection = () => {
   if (targetRoute.value) {
     router.push(targetRoute.value)
   }

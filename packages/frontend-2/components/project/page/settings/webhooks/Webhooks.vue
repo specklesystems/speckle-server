@@ -37,13 +37,13 @@
             icon: PencilIcon,
             label: 'Edit',
             action: openEditWebhookDialog,
-            class: 'text-primary'
+            class: '!text-primary'
           },
           {
             icon: TrashIcon,
             label: 'Delete',
             action: openDeleteWebhookDialog,
-            class: 'text-red-500'
+            class: '!text-danger'
           }
         ]"
       >

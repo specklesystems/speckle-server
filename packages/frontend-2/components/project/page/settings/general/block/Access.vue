@@ -36,11 +36,13 @@ const props = defineProps<{
   disabled?: boolean
 }>()
 
-const emit = defineEmits(['update-visibility'])
+const emit = defineEmits<{
+  (e: 'update-visibility', v: ProjectVisibility): void
+}>()
 
 const selectedOption = ref(props.project.visibility || ProjectVisibility.Private)
 
-const radioOptions = [
+const radioOptions = computed(() => [
   {
     value: ProjectVisibility.Public,
     title: 'Public',
@@ -59,7 +61,7 @@ const radioOptions = [
     introduction: 'Only team members will have access',
     icon: LockClosedIcon
   }
-]
+])
 
 watch(
   () => props.project.visibility,

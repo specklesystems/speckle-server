@@ -44,7 +44,7 @@
               :disabled="loading"
               @click="
                 cancelInvite({
-                  projectId: projectId,
+                  projectId,
                   inviteId: collaborator.inviteId || ''
                 })
               "
@@ -92,6 +92,7 @@ const projectPageSettingsCollaboratorsQuery = graphql(`
     project(id: $projectId) {
       id
       ...ProjectPageTeamInternals_Project
+      ...ProjectPageInviteDialog_Project
     }
   }
 `)

@@ -32,7 +32,7 @@ import type { Nullable, Optional } from '@speckle/shared'
 import { ArrowPathIcon } from '@heroicons/vue/24/solid'
 import type { FormButtonColor, FormButtonTextColor } from '~~/src/helpers/form/button'
 
-type FormButtonSize = 'xs' | 'md' | 'sm' | 'base' | 'lg' | 'xl'
+type FormButtonSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
 
 const emit = defineEmits<{
   /**

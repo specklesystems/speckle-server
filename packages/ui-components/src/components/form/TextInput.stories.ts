@@ -34,7 +34,7 @@ export default {
     },
     size: {
       control: { type: 'select' },
-      options: ['sm', 'md', 'lg', 'base', 'xl']
+      options: ['sm', 'lg', 'base', 'xl']
     }
   }
 } as Meta
