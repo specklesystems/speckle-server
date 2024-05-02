@@ -17,37 +17,14 @@
       />
     </div>
 
-    <div
-      class="p-6 lg:p-8 bg-[#27272a] text-white rounded-xl w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-6 mb-2 select-none"
-    >
-      <div class="flex gap-2 lg:gap-6 flex-col lg:flex-row items-start lg:items-center">
-        <img
-          src="~~/assets/images/banners/speckleverse.svg"
-          alt="Join our online hackathon!"
-          class="h-10 lg:h-auto"
-        />
-        <div class="flex flex-col sm:flex-row sm:gap-1">
-          <span class="font-semibold">Join our online hackathon!</span>
-          <span>June 7 - 9, 2024</span>
-        </div>
-      </div>
-
-      <div class="flex gap-2">
-        <a href="https://speckle.systems/blog/hackathon/" target="_blank">
-          <button
-            class="bg-white/90 hover:bg-white border border-transparent rounded py-1 px-2.5 text-[#27272a] font-semibold text-sm sm:text-base"
-          >
-            Learn more
-          </button>
-        </a>
-
-        <button
-          class="bg-transparent hover:bg-white/10 border border-white rounded py-1 px-2.5 text-white text-sm sm:text-base"
-        >
-          Close
-        </button>
-      </div>
-    </div>
+    <CommonBanner
+      id="speckleverse"
+      primary-text="Join our online hackathon!"
+      secondary-text="June 7 - 9, 2024"
+      image="speckleverse.svg"
+      url="https://speckle.systems/blog/hackathon/"
+      @banner-dismissed="handleBannerDismissed"
+    />
 
     <div
       v-if="!showEmptyState"
@@ -346,6 +323,16 @@ const showNewSpeckleBanner = computed(() => {
 
   return true
 })
+
+const handleBannerDismissed = (id: string) => {
+  setDismissedBannerCookie(id)
+}
+
+const setDismissedBannerCookie = (bannerId: string) => {
+  useSynchronizedCookie(`dismissed_banner_${bannerId}`, {
+    default: () => true
+  })
+}
 
 const clearSearch = () => {
   search.value = ''
