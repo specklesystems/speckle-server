@@ -1,5 +1,5 @@
 import { Vector3 } from 'three'
-import sampleHdri from './assets/sample-hdri.png'
+import defaultHdri from './assets/hdri/Mild.png'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
@@ -46,7 +46,7 @@ export const DefaultViewerParams: ViewerParams = {
   verbose: false,
   environmentSrc: {
     id: 'defaultHDRI',
-    src: sampleHdri,
+    src: defaultHdri,
     type: AssetType.TEXTURE_EXR
   }
 }
