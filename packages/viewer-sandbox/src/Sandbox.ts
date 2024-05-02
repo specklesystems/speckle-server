@@ -13,10 +13,10 @@ import {
   ExplodeExtension,
   DiffExtension,
   SpeckleLoader,
-  ObjLoader
+  ObjLoader,
+  UrlHelper
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
-import UrlHelper from './UrlHelper'
 import { DiffResult } from '@speckle/viewer'
 import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
@@ -29,9 +29,9 @@ import { Viewer, AssetType, Assets } from '@speckle/viewer'
 import hdri0 from '../assets/sample-hdri.png'
 import hdri1 from '../assets/1.png'
 import hdri2 from '../assets/2.png'
-import hdri3 from '../assets/3.png'
+// import hdri3 from '../assets/3.png'
 import hdri4 from '../assets/4.png'
-import hdri5 from '../assets/5.png'
+// import hdri5 from '../assets/5.png'
 import hdri6 from '../assets/6.png'
 
 import { Euler, Vector3 } from 'three'
@@ -43,7 +43,7 @@ export default class Sandbox {
   private pane: Pane
   private tabs
   private viewsFolder!: FolderApi
-  private streams: { [url: string]: Array<unknown> } = {}
+  // private streams: { [url: string]: Array<unknown> } = {}
   private properties: PropertyInfo[]
   private selectionList: SelectionEvent[]
   private objectControls: FolderApi | null = null
@@ -132,7 +132,7 @@ export default class Sandbox {
   }
 
   public hdriParams = {
-    id: '/assets/2.png',
+    id: hdri2,
     minRoughness: 0.5
   }
 
@@ -161,6 +161,7 @@ export default class Sandbox {
     this.properties = []
 
     viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
+      url
       // this.addStreamControls(url)
       // this.addViewControls()
       this.addBatches()
@@ -211,45 +212,45 @@ export default class Sandbox {
     }
   }
 
-  private addStreamControls(url: string) {
-    const folder = this.tabs.pages[0].addFolder({
-      title: `Object: ${url.split('/').reverse()[0]}`
-    })
+  // private addStreamControls(url: string) {
+  //   const folder = this.tabs.pages[0].addFolder({
+  //     title: `Object: ${url.split('/').reverse()[0]}`
+  //   })
 
-    folder.addInput({ url }, 'url', {
-      title: 'URL',
-      disabled: true
-    })
-    const position = { value: { x: 0, y: 0, z: 0 } }
-    folder.addInput(position, 'value', { label: 'Position' }).on('change', () => {
-      const rvs = this.viewer
-        .getWorldTree()
-        .getRenderTree(url)
-        .getRenderViewsForNodeId(url)
-      for (let k = 0; k < rvs.length; k++) {
-        const object = this.viewer.getRenderer().getObject(rvs[k])
-        object.transformTRS(position.value, undefined, undefined, undefined)
-      }
-      this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
-      this.viewer.getRenderer().updateShadowCatcher()
-    })
+  //   folder.addInput({ url }, 'url', {
+  //     title: 'URL',
+  //     disabled: true
+  //   })
+  //   const position = { value: { x: 0, y: 0, z: 0 } }
+  //   folder.addInput(position, 'value', { label: 'Position' }).on('change', () => {
+  //     const rvs = this.viewer
+  //       .getWorldTree()
+  //       .getRenderTree(url)
+  //       .getRenderViewsForNodeId(url)
+  //     for (let k = 0; k < rvs.length; k++) {
+  //       const object = this.viewer.getRenderer().getObject(rvs[k])
+  //       object.transformTRS(position.value, undefined, undefined, undefined)
+  //     }
+  //     this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+  //     this.viewer.getRenderer().updateShadowCatcher()
+  //   })
 
-    folder
-      .addButton({
-        title: 'Unload'
-      })
-      .on('click', () => {
-        this.removeStreamControls(url)
-      })
-    this.streams[url] = []
-    this.streams[url].push(folder)
-  }
+  //   folder
+  //     .addButton({
+  //       title: 'Unload'
+  //     })
+  //     .on('click', () => {
+  //       this.removeStreamControls(url)
+  //     })
+  //   this.streams[url] = []
+  //   this.streams[url].push(folder)
+  // }
 
-  private removeStreamControls(url: string) {
-    this.viewer.unloadObject(url)
-    ;(this.streams[url][0] as { dispose: () => void }).dispose()
-    delete this.streams[url]
-  }
+  // private removeStreamControls(url: string) {
+  //   this.viewer.unloadObject(url)
+  //   ;(this.streams[url][0] as { dispose: () => void }).dispose()
+  //   delete this.streams[url]
+  // }
 
   private addViewControls() {
     const views = this.viewer.getViews()
@@ -586,12 +587,12 @@ export default class Sandbox {
         max: 1,
         step: 0.05
       })
-      .on('change', (value) => {
+      .on('change', () => {
         const batches = this.viewer
           .getRenderer()
           .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
         batches.forEach((batch: MeshBatch) => {
-          const materials = batch.materials
+          const materials = batch.materials as SpeckleStandardMaterial[]
           materials.forEach((material: SpeckleStandardMaterial) => {
             material.roughness = Math.min(
               material.userData.originalRoughness,
@@ -1337,12 +1338,12 @@ export default class Sandbox {
   }
 
   public async loadUrl(url: string) {
-    const objUrls = await UrlHelper.getResourceUrls(url)
+    const authToken = localStorage.getItem(
+      url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
+    ) as string
+    const objUrls = await UrlHelper.getResourceUrls(url, authToken)
     for (const url of objUrls) {
       console.log(`Loading ${url}`)
-      const authToken = localStorage.getItem(
-        url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
-      ) as string
       const loader = new SpeckleLoader(
         this.viewer.getWorldTree(),
         url,
