@@ -3,7 +3,7 @@
     <template #header>Get your colleagues in!</template>
     <form @submit="onSubmit">
       <div class="flex flex-col space-y-4 text-foreground">
-        <p class="text-sm mb-3">
+        <p class="text-sm mb-1">
           Speckle will send a server invite link to the email(-s) below. You can also
           add a personal message if you want to. To add multiple e-mails, seperate them
           with commas.
@@ -13,6 +13,7 @@
             <FormTextInput
               :custom-icon="EnvelopeIcon"
               name="emailsString"
+              color="foundation"
               label="E-mail"
               show-label
               placeholder="example@example.com, example2@example.com"
@@ -38,6 +39,7 @@
           name="message"
           show-label
           label="Message"
+          color="foundation"
           :disabled="anyMutationsLoading"
           :rules="[isStringOfLength({ maxLength: 1024 })]"
           placeholder="Write an optional invitation message!"

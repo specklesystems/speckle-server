@@ -13,12 +13,18 @@
     </Portal>
 
     <CommonEditableTitleDescription
+      v-if="canEdit"
       :title="titleState"
       :description="descriptionState"
       :can-edit="canEdit"
       :is-disabled="anyMutationsLoading"
       @update:title="handleUpdateTitle"
       @update:description="handleUpdateDescription"
+    />
+    <CommonTitleDescription
+      v-else
+      :title="titleState"
+      :description="descriptionState"
     />
   </div>
 </template>
