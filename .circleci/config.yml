@@ -784,7 +784,7 @@ jobs:
 
   docker-build: &build-job
     docker: *docker-base-image
-    resource_class: medium
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
