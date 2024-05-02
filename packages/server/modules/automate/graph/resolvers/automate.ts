@@ -78,6 +78,11 @@ export = {
       return null
     }
   },
+  Project: {
+    async automation(parent, args, ctx) {
+      return ctx.loaders.streams.getAutomation.forStream(parent.id).load(args.id)
+    }
+  },
   AutomateMutations: {
     async createFunction(_parent, args, ctx) {
       const { id, secret } = getAutomateGithubClientInfo()

@@ -7,6 +7,7 @@ export type AutomationRecord = {
   userId: string | null
   enabled: boolean
   createdAt: Date
+  updatedAt: Date
   executionEngineAutomationId: string
 }
 
@@ -44,6 +45,7 @@ export type AutomationRunRecord = {
 
 export type AutomateRevisionFunctionRecord = {
   functionReleaseId: string
+  functionId: string
   functionInputs: Record<string, unknown> | null
   automationRevisionId: string
 }
@@ -106,6 +108,7 @@ export type AutomationFunctionRunRecord = {
   id: string
   runId: string
   functionReleaseId: string
+  functionId: string
   elapsed: number
   status: AutomationRunStatus
   contextView: string | null

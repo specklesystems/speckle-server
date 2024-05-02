@@ -12,19 +12,32 @@ import { getGenericRedis } from '@/modules/core'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
 import { getLatestStreamBranch } from '@/modules/core/repositories/branches'
+import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { expectToThrow } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import { AutomateValidateAuthCodeDocument } from '@/test/graphql/generated/graphql'
-import { TestApolloServer, testApolloServer } from '@/test/graphqlHelper'
+import {
+  AutomateValidateAuthCodeDocument,
+  GetProjectAutomationDocument
+} from '@/test/graphql/generated/graphql'
+import {
+  TestApolloServer,
+  createTestContext,
+  testApolloServer
+} from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import {
+  TestAutomationWithRevision,
+  TestFunctionWithRelease,
   buildAutomationCreate,
   buildAutomationRevisionCreate,
-  createTestFunction
+  createTestAutomation,
+  createTestFunction,
+  truncateAutomations
 } from '@/test/speckle-helpers/automationHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
 import { Automate, Environment, Roles } from '@speckle/shared'
 import { expect } from 'chai'
+import { times } from 'lodash'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
@@ -255,6 +268,7 @@ const buildAutomationUpdate = () => {
           functions: [
             {
               functionReleaseId: createdFunction.release!.functionReleaseId,
+              functionId: createdFunction.function.fn.functionId,
               parameters: null
             }
           ],
@@ -480,6 +494,77 @@ const buildAutomationUpdate = () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.automateValidateAuthCode).to.be.true
+      })
+    })
+
+    describe('retrieval', () => {
+      let apollo: TestApolloServer
+
+      const someCollaborator: BasicTestUser = {
+        id: '',
+        name: 'Collaborator dude',
+        email: 'otherguy2@automate.com',
+        role: Roles.Server.User
+      }
+
+      const TOTAL_AUTOMATION_COUNT = 20
+      // const SEARCH_STRING = 'bababooey'
+      // const PAGINATION_LIMIT = Math.floor(TOTAL_AUTOMATION_COUNT / 3) // ~3 pages
+      // const ITEMS_W_SEARCH_STRING = Math.floor(TOTAL_AUTOMATION_COUNT / 4)
+
+      let testFunction: TestFunctionWithRelease
+      let testAutomations: TestAutomationWithRevision[]
+
+      before(async () => {
+        await truncateAutomations()
+
+        await createTestUsers([someCollaborator])
+        await addOrUpdateStreamCollaborator(
+          myStream.id,
+          someCollaborator.id,
+          Roles.Stream.Contributor,
+          me.id
+        )
+
+        apollo = await testApolloServer({
+          context: createTestContext({
+            userId: me.id,
+            token: 'abc',
+            role: Roles.Server.User
+          })
+        })
+
+        testFunction = await createTestFunction({
+          userId: me.id
+        })
+        testAutomations = await Promise.all(
+          times(TOTAL_AUTOMATION_COUNT, async (i) =>
+            createTestAutomation({
+              userId: me.id,
+              projectId: myStream.id,
+              automation: {
+                name: `Retrieval Test Automation #${i}`
+              },
+              revision: {
+                functionId: testFunction.function.fn.functionId,
+                functionReleaseId: testFunction.release!.functionReleaseId
+              }
+            })
+          )
+        )
+      })
+
+      describe('when retrieving single automation', () => {
+        it('fails if user is not the owner of the project', async () => {
+          const res = await apollo.execute(GetProjectAutomationDocument, {
+            projectId: myStream.id,
+            automationId: testAutomations[0].automation.automation.id
+          })
+
+          expect(res).to.haveGraphQLErrors('Not allowed')
+          expect(res.data?.project).to.be.ok
+          expect(res.data?.project?.automation).to.not.be.ok
+        })
       })
     })
   }

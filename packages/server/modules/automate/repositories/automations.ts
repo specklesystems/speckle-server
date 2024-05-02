@@ -381,7 +381,10 @@ export async function updateAutomation(
 ) {
   const [ret] = await Automations.knex()
     .where(Automations.col.id, automation.id)
-    .update(pick(automation, Automations.withoutTablePrefix.cols))
+    .update({
+      ...pick(automation, Automations.withoutTablePrefix.cols),
+      [Automations.withoutTablePrefix.col.updatedAt]: new Date()
+    })
     .returning<AutomationRecord[]>('*')
 
   return ret

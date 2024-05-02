@@ -152,6 +152,7 @@ input ProjectAutomationUpdateInput {
 }
 
 input AutomationRevisionCreateFunctionInput {
+  functionId: String!
   functionReleaseId: String!
   """
   Should be encrypted from the client side

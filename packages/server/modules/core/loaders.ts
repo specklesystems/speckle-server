@@ -58,6 +58,8 @@ import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileU
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { getAutomationFunctionRunResultVersions } from '@/modules/betaAutomations/repositories/automations'
 import { getAppScopes } from '@/modules/auth/repositories'
+import { AutomationRecord } from '@/modules/automate/helpers/types'
+import { getAutomations } from '@/modules/automate/repositories/automations'
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -107,6 +109,31 @@ export function buildRequestLoaders(
 
   const loaders = {
     streams: {
+      getAutomation: (() => {
+        type AutomationDataLoader = DataLoader<string, Nullable<AutomationRecord>>
+        const streamAutomationLoaders = new Map<string, AutomationDataLoader>()
+        return {
+          clearAll: () => streamAutomationLoaders.clear(),
+          forStream(streamId: string): AutomationDataLoader {
+            let loader = streamAutomationLoaders.get(streamId)
+            if (!loader) {
+              loader = createLoader<string, Nullable<AutomationRecord>>(
+                async (automationIds) => {
+                  const results = keyBy(
+                    await getAutomations({ automationIds: automationIds.slice() }),
+                    (a) => a.id
+                  )
+                  return automationIds.map((i) => results[i] || null)
+                }
+              )
+              streamAutomationLoaders.set(streamId, loader)
+            }
+
+            return loader
+          }
+        }
+      })(),
+
       /**
        * Get a specific commit of a specific stream. Each stream ID technically has its own loader &
        * thus its own query.
@@ -487,6 +514,15 @@ export function buildRequestLoaders(
         },
         { cacheKeyFn: (key) => `${key[0]}:${key[1]}` }
       )
+    },
+    automations: {
+      getAutomation: createLoader<string, Nullable<AutomationRecord>>(async (ids) => {
+        const results = keyBy(
+          await getAutomations({ automationIds: ids.slice() }),
+          (a) => a.id
+        )
+        return ids.map((i) => results[i] || null)
+      })
     }
   }
 

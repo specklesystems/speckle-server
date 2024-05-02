@@ -15,7 +15,10 @@ import {
   createAutomation as clientCreateAutomation,
   createFunction
 } from '@/modules/automate/clients/executionEngine'
-import { getBranchesByIds } from '@/modules/core/repositories/branches'
+import {
+  getBranchesByIds,
+  getLatestStreamBranch
+} from '@/modules/core/repositories/branches'
 import {
   generateFunctionId,
   getFunctionReleases,
@@ -45,12 +48,28 @@ import { createAutomateRepoFromTemplate } from '@/modules/automate/services/gith
 import { getUser } from '@/modules/core/repositories/users'
 import {
   AutomateFunctionTemplateLanguage,
-  CreateAutomateFunctionInput
+  CreateAutomateFunctionInput,
+  ProjectAutomationCreateInput,
+  ProjectAutomationRevisionCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import { SourceAppNames } from '@speckle/shared'
+import { Automate, SourceAppNames } from '@speckle/shared'
 import { Request } from 'express'
 import { isFunction } from 'lodash'
 import { AutomateFunctionReleaseRecord } from '@/modules/automate/helpers/types'
+import { truncateTables } from '@/test/hooks'
+import {
+  AutomateFunctionReleases,
+  AutomateFunctionTokens,
+  AutomateFunctions,
+  AutomationFunctionRuns,
+  AutomationRevisionFunctions,
+  AutomationRevisions,
+  AutomationRunTriggers,
+  AutomationRuns,
+  AutomationTokens,
+  AutomationTriggers,
+  Automations
+} from '@/modules/core/dbSchema'
 
 export const buildAutomationCreate = (
   overrides?: Partial<{
@@ -207,6 +226,9 @@ export const exampleFunctionReleaseCreateBody = (): FunctionReleaseCreateBody =>
   recommendedMemoryMi: 1000
 })
 
+/**
+ * Quick way to create a function and one release
+ */
 export const createTestFunction = async (params: {
   userId: string
   fn?: Partial<CreateAutomateFunctionInput & Partial<{ isFeatured: boolean }>>
@@ -217,6 +239,7 @@ export const createTestFunction = async (params: {
   const createFn = buildCreateFn()
   const fnInput: CreateAutomateFunctionInput = {
     ...exampleCreationInput(),
+    name: `Test Function #${cryptoRandomString({ length: 5 })}`,
     ...(fn || {})
   }
   const newFn = await createFn({ input: fnInput, userId })
@@ -248,4 +271,105 @@ export const createTestFunction = async (params: {
     function: newFn,
     release
   }
+}
+
+export type TestFunctionWithRelease = Awaited<ReturnType<typeof createTestFunction>>
+
+/**
+ * Quick way to create an automation and optionally one revision
+ */
+export const createTestAutomation = async (params: {
+  userId: string
+  projectId: string
+  automation?: Partial<ProjectAutomationCreateInput>
+  revision?: {
+    input?: Partial<ProjectAutomationRevisionCreateInput>
+    functionReleaseId: string
+    functionId: string
+  }
+}) => {
+  const {
+    userId,
+    projectId,
+    automation,
+    revision: { input: revisionInput, functionReleaseId, functionId } = {}
+  } = params
+
+  const createAutomation = buildAutomationCreate()
+  const createRevision = buildAutomationRevisionCreate()
+
+  const automationRet = await createAutomation({
+    input: {
+      name: `Test Automation #${cryptoRandomString({ length: 5 })}`,
+      enabled: true,
+      ...automation
+    },
+    projectId,
+    userId
+  })
+
+  let revisionRet: Awaited<ReturnType<typeof createRevision>> | null = null
+  if (functionReleaseId?.length && functionId?.length) {
+    const firstModel = await getLatestStreamBranch(projectId)
+
+    if (!firstModel)
+      throw new Error(
+        'Project does not have any models for automation revision triggers'
+      )
+
+    revisionRet = await createRevision({
+      input: {
+        automationId: automationRet.automation.id,
+        functions: [
+          {
+            functionId,
+            functionReleaseId,
+            parameters: null
+          }
+        ],
+        triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
+          version: 1.0,
+          definitions: [
+            {
+              type: 'VERSION_CREATED',
+              modelId: firstModel.id
+            }
+          ]
+        },
+        ...revisionInput
+      },
+      projectId,
+      userId
+    })
+  }
+
+  return {
+    automation: automationRet,
+    revision: revisionRet
+  }
+}
+
+export type TestAutomationWithRevision = Awaited<
+  ReturnType<typeof createTestAutomation>
+>
+
+export const truncateFunctions = async () => {
+  await truncateTables([
+    AutomationRevisionFunctions.name,
+    AutomationFunctionRuns.name,
+    AutomateFunctionTokens.name,
+    AutomateFunctionReleases.name,
+    AutomateFunctions.name
+  ])
+}
+
+export const truncateAutomations = async () => {
+  await truncateTables([
+    AutomationRunTriggers.name,
+    AutomationRuns.name,
+    AutomationTriggers.name,
+    AutomationTokens.name,
+    AutomationRevisions.name,
+    Automations.name
+  ])
 }

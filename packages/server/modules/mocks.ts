@@ -44,6 +44,8 @@ export async function buildMocksConfig(): Promise<{
   mockEntireSchema: boolean
   resolvers?: Resolvers | ((store: IMockStore) => Resolvers)
 }> {
+  return { mocks: false, mockEntireSchema: false }
+
   // TODO: Disable before merging!
   if (isTestEnv()) return { mocks: false, mockEntireSchema: false }
 

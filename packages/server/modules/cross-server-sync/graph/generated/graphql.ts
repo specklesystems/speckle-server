@@ -415,6 +415,7 @@ export type AutomationRevision = {
 };
 
 export type AutomationRevisionCreateFunctionInput = {
+  functionId: Scalars['String'];
   functionReleaseId: Scalars['String'];
   /** Should be encrypted from the client side */
   parameters?: InputMaybe<Scalars['String']>;

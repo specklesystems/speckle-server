@@ -27,6 +27,83 @@ export const automateFunctionFragment = gql`
   }
 `
 
+export const automationFragment = gql`
+  fragment TestAutomation on Automation {
+    id
+    name
+    enabled
+    createdAt
+    updatedAt
+    runs {
+      totalCount
+      items {
+        id
+        trigger {
+          ... on VersionCreatedTrigger {
+            version {
+              id
+            }
+            model {
+              id
+            }
+          }
+        }
+        status
+        reason
+        createdAt
+        updatedAt
+        functionRuns {
+          id
+          status
+          statusMessage
+          contextView
+          function {
+            id
+          }
+          elapsed
+          results
+        }
+      }
+    }
+    currentRevision {
+      id
+      triggerDefinitions {
+        ... on VersionCreatedTriggerDefinition {
+          type
+          model {
+            id
+          }
+        }
+      }
+      functions {
+        parameters
+        release {
+          id
+          function {
+            id
+          }
+          versionTag
+          createdAt
+          inputSchema
+          commitId
+        }
+      }
+    }
+  }
+`
+
+export const getProjectAutomationQuery = gql`
+  query GetProjectAutomation($projectId: String!, $automationId: String!) {
+    project(id: $projectId) {
+      id
+      automation(id: $automationId) {
+        ...TestAutomation
+      }
+    }
+  }
+  ${automationFragment}
+`
+
 export const getAutomateFunctionsQuery = gql`
   query GetAutomateFunctions(
     $cursor: String

@@ -136,6 +136,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           functions: [
             {
               functionReleaseId: createdFunction.release!.functionReleaseId,
+              functionId: createdFunction.function.fn.functionId,
               parameters: null
             }
           ]
@@ -283,6 +284,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const automation = {
           id: cryptoRandomString({ length: 10 }),
           createdAt: new Date(),
+          updatedAt: new Date(),
           name: cryptoRandomString({ length: 15 }),
           enabled: true,
           projectId: project.id,
@@ -312,7 +314,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           functions: [
             {
               functionInputs: null,
-              functionReleaseId: cryptoRandomString({ length: 10 })
+              functionReleaseId: cryptoRandomString({ length: 10 }),
+              functionId: cryptoRandomString({ length: 10 })
             }
           ]
         })
@@ -366,6 +369,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const automation = {
           id: cryptoRandomString({ length: 10 }),
           createdAt: new Date(),
+          updatedAt: new Date(),
           name: cryptoRandomString({ length: 15 }),
           enabled: true,
           projectId: project.id,
@@ -395,7 +399,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           functions: [
             {
               functionInputs: null,
-              functionReleaseId: cryptoRandomString({ length: 10 })
+              functionReleaseId: cryptoRandomString({ length: 10 }),
+              functionId: cryptoRandomString({ length: 10 })
             }
           ]
         })
@@ -457,6 +462,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               projectId: cryptoRandomString({ length: 10 }),
               enabled: false,
               createdAt: new Date(),
+              updatedAt: new Date(),
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               revision: {
@@ -497,6 +503,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               projectId: cryptoRandomString({ length: 10 }),
               enabled: true,
               createdAt: new Date(),
+              updatedAt: new Date(),
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               revision: {
@@ -534,6 +541,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             revisionGetter: async () => ({
               id: cryptoRandomString({ length: 10 }),
               createdAt: new Date(),
+              updatedAt: new Date(),
               userId: cryptoRandomString({ length: 10 }),
               name: cryptoRandomString({ length: 10 }),
               projectId: cryptoRandomString({ length: 10 }),
@@ -584,6 +592,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               projectId: cryptoRandomString({ length: 10 }),
               enabled: true,
               createdAt: new Date(),
+              updatedAt: new Date(),
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               revision: {
@@ -629,6 +638,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               projectId: cryptoRandomString({ length: 10 }),
               enabled: true,
               createdAt: new Date(),
+              updatedAt: new Date(),
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               revision: {
@@ -674,6 +684,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               name: cryptoRandomString({ length: 10 }),
               projectId: cryptoRandomString({ length: 10 }),
               createdAt: new Date(),
+              updatedAt: new Date(),
               enabled: true,
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
@@ -734,6 +745,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               projectId: cryptoRandomString({ length: 10 }),
               enabled: true,
               createdAt: new Date(),
+              updatedAt: new Date(),
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               revision: {
@@ -978,6 +990,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           ],
           functionRuns: [
             {
+              functionId: createdFunction.function.fn.functionId,
               functionReleaseId: createdFunction.release!.functionReleaseId,
               id: cryptoRandomString({ length: 15 }),
               status: AutomationRunStatuses.running,

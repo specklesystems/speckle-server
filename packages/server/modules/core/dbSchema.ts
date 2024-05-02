@@ -559,6 +559,7 @@ export const AutomationFunctionRuns = buildTableHelper('automation_function_runs
   'id',
   'runId',
   'functionReleaseId',
+  'functionId',
   'elapsed',
   'status',
   'contextView',
@@ -568,7 +569,7 @@ export const AutomationFunctionRuns = buildTableHelper('automation_function_runs
 
 export const AutomationRevisionFunctions = buildTableHelper(
   'automation_revision_functions',
-  ['automationRevisionId', 'functionReleaseId', 'functionInputs']
+  ['automationRevisionId', 'functionReleaseId', 'functionInputs', 'functionId']
 )
 
 export const AutomationRevisions = buildTableHelper('automation_revisions', [
@@ -611,6 +612,7 @@ export const Automations = buildTableHelper('automations', [
   'projectId',
   'enabled',
   'createdAt',
+  'updatedAt',
   'userId',
   'executionEngineAutomationId'
 ])

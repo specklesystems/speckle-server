@@ -88,6 +88,7 @@ export const createAutomation =
         name,
         userId,
         createdAt: new Date(),
+        updatedAt: new Date(),
         enabled,
         projectId,
         executionEngineAutomationId
@@ -291,6 +292,7 @@ export const createAutomationRevision =
 
       const fn: InsertableAutomationRevisionFunction = {
         functionReleaseId: f.functionReleaseId,
+        functionId: f.functionId,
         functionInputs: inputs
       }
 

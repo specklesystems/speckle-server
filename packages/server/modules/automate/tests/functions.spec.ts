@@ -572,7 +572,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           AutomateFunctions.name
         ])
 
-        apollo = testApolloServer({
+        apollo = await testApolloServer({
           context: createTestContext({
             userId: me.id,
             auth: true,
@@ -584,7 +584,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
       const TOTAL_FUNCTION_COUNT = 20
       const SEARCH_STRING = 'bababooey'
-      const FUNCTIONS_LIMIT = Math.floor(TOTAL_FUNCTION_COUNT / 3) // ~3 pages
+      // const FUNCTIONS_LIMIT = Math.floor(TOTAL_FUNCTION_COUNT / 3) // ~3 pages
       const FUNCTIONS_WO_RELEASES = Math.floor(TOTAL_FUNCTION_COUNT / 6)
       const FEATURED_FUNCTIONS = Math.floor(TOTAL_FUNCTION_COUNT / 5)
       const FUNCTIONS_W_SEARCH_STRING = Math.floor(TOTAL_FUNCTION_COUNT / 4)
@@ -620,8 +620,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         )
       })
 
-      it('retrieves all functions w/ proper pagination', async () => {
-        // TODO
+      it.skip('retrieves all functions w/ proper pagination', async () => {
+        await apollo
       })
     })
   }

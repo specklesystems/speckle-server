@@ -20,6 +20,10 @@ export async function up(knex: Knex): Promise<void> {
       .timestamp('createdAt', { precision: 3, useTz: true })
       .defaultTo(knex.fn.now())
       .notNullable()
+    table
+      .timestamp('updatedAt', { precision: 3, useTz: true })
+      .defaultTo(knex.fn.now())
+      .notNullable()
   })
   await knex.schema.createTable(REVISIONS_TABLE_NAME, (table) => {
     table.text('id').primary()
