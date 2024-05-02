@@ -32,18 +32,16 @@ graphql(`
   }
 `)
 
-export function useTeamManagePermissionsInternals(params: {
-  props: {
-    project: Ref<ProjectsPageTeamDialogManagePermissions_ProjectFragment>
-  }
-}) {
-  const {
-    props: { project }
-  } = params
-
+export function useTeamManagePermissionsInternals(
+  project: Ref<
+    | ProjectsPageTeamDialogManagePermissions_ProjectFragment
+    | ProjectPageTeamInternals_ProjectFragment
+    | undefined
+  >
+) {
   const { isGuest: isServerGuest, activeUser } = useActiveUser()
 
-  const isOwner = computed(() => project.value.role === Roles.Stream.Owner)
+  const isOwner = computed(() => project.value?.role === Roles.Stream.Owner)
 
   return {
     activeUser,
@@ -55,9 +53,8 @@ export function useTeamManagePermissionsInternals(params: {
 export function useTeamInternals(
   projectData: ComputedRef<ProjectPageTeamInternals_ProjectFragment | undefined>
 ) {
-  const { isGuest: isServerGuest, activeUser } = useActiveUser()
-
-  const isOwner = computed(() => projectData.value?.role === Roles.Stream.Owner)
+  const { isOwner, activeUser, isServerGuest } =
+    useTeamManagePermissionsInternals(projectData)
 
   const collaboratorListItems = computed((): ProjectCollaboratorListItem[] => {
     const results: ProjectCollaboratorListItem[] = []

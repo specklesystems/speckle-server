@@ -25,6 +25,7 @@
     <template #default>
       <ProjectPageInviteDialog
         v-model:open="dialogOpen"
+        :project="project"
         :project-id="project.id"
         :disabled="!isOwner"
       />
@@ -33,77 +34,25 @@
 </template>
 <script setup lang="ts">
 import { UserPlusIcon } from '@heroicons/vue/24/outline'
-import { Roles, type Optional } from '@speckle/shared'
-import { OpenSectionType } from '~/lib/projects/helpers/components'
+import { useTeamInternals } from '~/lib/projects/composables/team'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import { graphql } from '~~/lib/common/generated/gql'
-import type { ProjectPageStatsBlockTeamFragment } from '~~/lib/common/generated/gql/graphql'
-
-graphql(`
-  fragment ProjectPageStatsBlockTeam on Project {
-    id
-    role
-    team {
-      role
-      user {
-        ...LimitedUserAvatar
-      }
-    }
-    ...ProjectPageTeamDialog
-  }
-`)
+import type { ProjectPageTeamInternals_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
-  project: ProjectPageStatsBlockTeamFragment
+  project: ProjectPageTeamInternals_ProjectFragment
 }>()
 
 const { activeUser } = useActiveUser()
 
-const isOwner = computed(() => props.project?.role === Roles.Stream.Owner)
+const projectData = computed(() => props.project)
+
+const { isOwner } = useTeamInternals(projectData)
 
 const dialogOpen = ref(false)
-const openSection = ref<OpenSectionType | undefined>()
-
-const route = useRoute()
-const router = useRouter()
 
 const teamUsers = computed(() => props.project.team.map((t) => t.user))
 
-const readDialogStateFromQuery = async () => {
-  const newSettings = route.query.settings as Optional<string | true>
-  let shouldShow = false
-
-  if (!newSettings) {
-    shouldShow = false
-  } else if (newSettings === 'invite') {
-    shouldShow = true
-    openSection.value = OpenSectionType.Invite
-  } else if (newSettings === 'access') {
-    shouldShow = true
-    openSection.value = OpenSectionType.Access
-  } else {
-    shouldShow = true
-    openSection.value = OpenSectionType.Team
-  }
-
-  if (shouldShow) {
-    dialogOpen.value = true
-    await router.replace({ query: { ...route.query, settings: undefined } })
-  }
-}
-
 const onButtonClick = () => {
-  openSection.value = OpenSectionType.Team
   dialogOpen.value = true
 }
-
-watch(
-  () => route.query.settings,
-  (newSettings, oldSettings) => {
-    if (newSettings !== oldSettings) {
-      readDialogStateFromQuery()
-    }
-  },
-  { immediate: true }
-)
 </script>

@@ -32,7 +32,6 @@
           v-model="localSearch"
           name="modelsearch"
           :show-label="false"
-          size="md"
           placeholder="Search"
           color="foundation"
           wrapper-classes="grow lg:grow-0 lg:ml-2 lg:w-40 xl:w-60"
