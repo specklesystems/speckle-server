@@ -505,35 +505,6 @@ export default class Sandbox {
     }
   }
 
-  // public async applyParams() {
-  //   this.viewer.getRenderer().indirectIBL = await Assets.getEnvironment(
-  //     {
-  //       id: 'Mild2',
-  //       src: hdri2,
-  //       type: AssetType.TEXTURE_EXR
-  //     },
-  //     this.viewer.getRenderer().renderer
-  //   )
-  //   this.viewer.getRenderer().renderer.toneMappingExposure = this.sceneParams.exposure
-  //   const batches = this.viewer
-  //     .getRenderer()
-  //     .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
-  //   batches.forEach((batch: MeshBatch) => {
-  //     const materials = batch.materials as SpeckleStandardMaterial[]
-  //     materials.forEach((material: SpeckleStandardMaterial) => {
-  //       material.userData.contrast.value = this.sceneParams.contrast
-  //       material.userData.saturation.value = this.sceneParams.saturation
-  //       material.userData.originalRoughness = material.roughness
-  //       material.roughness = Math.min(
-  //         material.userData.originalRoughness,
-  //         1 - this.sceneParams.minRoughness
-  //       )
-  //       material.needsCopy = true
-  //     })
-  //     this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
-  //   })
-  // }
-
   makeSceneUI() {
     const worldFolder = this.tabs.pages[1].addFolder({
       title: 'World',
@@ -596,6 +567,8 @@ export default class Sandbox {
           this.sceneParams.exposure
         this.viewer.requestRender()
       })
+
+    /** Disabled color grading for now 
     postFolder
       .addInput(this.sceneParams, 'contrast', {
         min: 0,
@@ -632,6 +605,7 @@ export default class Sandbox {
         })
         this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
       })
+      */
 
     postFolder
       .addInput(this.sceneParams, 'minRoughness', {
@@ -647,11 +621,7 @@ export default class Sandbox {
         batches.forEach((batch: MeshBatch) => {
           const materials = batch.materials as SpeckleStandardMaterial[]
           materials.forEach((material: SpeckleStandardMaterial) => {
-            material.roughness = Math.min(
-              material.userData.originalRoughness,
-              1 - this.sceneParams.minRoughness
-            )
-            material.needsCopy = true
+            material.updateArtificialRoughness(1 - this.sceneParams.minRoughness)
           })
         })
         this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)

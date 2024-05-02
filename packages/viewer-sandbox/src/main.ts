@@ -112,8 +112,6 @@ const createViewer = async (containerName: string, stream: string) => {
   sandbox.makeMeasurementsUI()
 
   await sandbox.loadUrl(stream)
-
-  await sandbox.applyParams()
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -391,6 +389,8 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
     // Tiny cube
     // 'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
+    // Shiny
+    // 'https://latest.speckle.systems/projects/e8b81c24f5/models/759186b9ec'
   )
 }
 
