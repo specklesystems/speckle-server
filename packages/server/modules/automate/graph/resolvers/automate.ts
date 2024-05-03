@@ -1,24 +1,17 @@
 import {
   createFunction,
-  triggerAutomationRun
+  triggerAutomationRun,
+  updateFunction as execEngineUpdateFunction,
+  getFunction,
+  getFunctionRelease
 } from '@/modules/automate/clients/executionEngine'
 import {
   getAutomation,
   getAutomationTriggerDefinitions,
-  getUserGithubAuthData,
-  setUserGithubAuthData,
   storeAutomation,
   storeAutomationRevision,
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
-import {
-  generateFunctionId,
-  getFunction,
-  upsertFunction,
-  updateFunction as updateDbFunction,
-  upsertFunctionToken,
-  getFunctionReleases
-} from '@/modules/automate/repositories/functions'
 import {
   createAutomation,
   createAutomationRevision,
@@ -32,23 +25,12 @@ import {
   createFunctionFromTemplate,
   updateFunction
 } from '@/modules/automate/services/functionManagement'
-import { createAutomateRepoFromTemplate } from '@/modules/automate/services/github'
-import {
-  createRepoFromTemplate,
-  encryptSecret,
-  getRepoPublicKey,
-  insertEnvVar,
-  testAccessToken,
-  upsertSecret
-} from '@/modules/core/clients/github'
 import {
   Resolvers,
   AutomateRunTriggerType
 } from '@/modules/core/graph/generated/graphql'
 import { getGenericRedis } from '@/modules/core/index'
 import { getUser } from '@/modules/core/repositories/users'
-import { getValidatedUserAuthMetadata } from '@/modules/core/services/githubApp'
-import { getAutomateGithubClientInfo } from '@/modules/shared/helpers/envHelper'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Roles } from '@speckle/shared'
@@ -83,43 +65,23 @@ export = {
       return ctx.loaders.streams.getAutomation.forStream(parent.id).load(args.id)
     }
   },
+  Automation: {
+    async currentRevision(parent, _args, ctx) {
+      return ctx.loaders.automations.getLatestAutomationRevision.load(parent.id)
+    }
+  },
   AutomateMutations: {
     async createFunction(_parent, args, ctx) {
-      const { id, secret } = getAutomateGithubClientInfo()
-
-      const getValidatedGithubAuthMetadata = getValidatedUserAuthMetadata({
-        setUserGithubAuth: setUserGithubAuthData,
-        getUserGithubAuth: getUserGithubAuthData,
-        testGithubAccessToken: testAccessToken,
-        env: {
-          clientId: id,
-          clientSecret: secret
-        }
-      })
-
       const create = createFunctionFromTemplate({
-        createGithubRepo: createAutomateRepoFromTemplate({
-          getValidatedGithubAuthMetadata,
-          createRepoFromTemplate
-        }),
-        upsertFn: upsertFunction,
         createExecutionEngineFn: createFunction,
-        generateAuthCode: createStoredAuthCode({ redis: getGenericRedis() }),
-        getValidatedGithubAuthMetadata,
-        getGithubRepoPublicKey: getRepoPublicKey,
-        encryptGithubSecret: encryptSecret,
-        upsertGithubSecret: upsertSecret,
-        insertGithubEnvVar: insertEnvVar,
-        getUser,
-        generateFunctionId,
-        upsertFunctionToken
+        getUser
       })
 
-      return (await create({ input: args.input, userId: ctx.userId! })).fn
+      return (await create({ input: args.input, userId: ctx.userId! })).graphqlReturn
     },
     async updateFunction(_parent, args, ctx) {
       const update = updateFunction({
-        updateFunction: updateDbFunction,
+        updateFunction: execEngineUpdateFunction,
         getFunction
       })
       return await update({ input: args.input, userId: ctx.userId! })
@@ -160,7 +122,7 @@ export = {
         getAutomation,
         storeAutomationRevision,
         getBranchesByIds,
-        getFunctionReleases
+        getFunctionRelease
       })
 
       return await create({

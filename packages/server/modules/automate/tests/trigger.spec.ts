@@ -48,7 +48,8 @@ import {
 import {
   buildAutomationCreate,
   buildAutomationRevisionCreate,
-  createTestFunction
+  generateFunctionId,
+  generateFunctionReleaseId
 } from '@/test/speckle-helpers/automationHelper'
 import { expectToThrow } from '@/test/assertionHelper'
 import { Commits } from '@/modules/core/dbSchema'
@@ -89,7 +90,6 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
     let testUserStreamModel: BranchRecord
     let createdAutomation: Awaited<ReturnType<ReturnType<typeof buildAutomationCreate>>>
-    let createdFunction: Awaited<ReturnType<typeof createTestFunction>>
     let createdRevision: Awaited<
       ReturnType<ReturnType<typeof buildAutomationRevisionCreate>>
     >
@@ -100,16 +100,11 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
       const createAutomation = buildAutomationCreate()
       const createRevision = buildAutomationRevisionCreate()
-      const createFunction = createTestFunction
 
-      const [, createdFn] = await Promise.all([
-        createTestStreams([
-          [testUserStream, testUser],
-          [otherUserStream, otherUser]
-        ]),
-        createFunction({ userId: testUser.id })
+      await createTestStreams([
+        [testUserStream, testUser],
+        [otherUserStream, otherUser]
       ])
-      createdFunction = createdFn
 
       const [projectModel, newAutomation] = await Promise.all([
         getLatestStreamBranch(testUserStream.id),
@@ -135,8 +130,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           },
           functions: [
             {
-              functionReleaseId: createdFunction.release!.functionReleaseId,
-              functionId: createdFunction.function.fn.functionId,
+              functionReleaseId: generateFunctionReleaseId(),
+              functionId: generateFunctionId(),
               parameters: null
             }
           ]
@@ -990,8 +985,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           ],
           functionRuns: [
             {
-              functionId: createdFunction.function.fn.functionId,
-              functionReleaseId: createdFunction.release!.functionReleaseId,
+              functionId: generateFunctionId(),
+              functionReleaseId: generateFunctionReleaseId(),
               id: cryptoRandomString({ length: 15 }),
               status: AutomationRunStatuses.running,
               elapsed: 0,

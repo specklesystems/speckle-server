@@ -1,19 +1,63 @@
 import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
 import {
-  AutomationFunctionRunWithFunctionMetadata,
+  AutomationFunctionRunRecord,
   BaseTriggerManifest,
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
+import { AutomateFunctionTemplateLanguage } from '@/modules/core/graph/generated/graphql'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
+import { Nullable, SourceAppName, isNullOrUndefined } from '@speckle/shared'
+
+// TODO: These should be managed in a shared package maybe?
+type FunctionSchemaType = {
+  functionId: string
+  repoUrl: string
+  functionName: string
+  description: string
+  tags: string[]
+  supportedSourceApps: SourceAppName[]
+  createdAt: string
+  isFeatured: boolean
+  logo: Nullable<string>
+}
+
+type FunctionReleaseSchemaType = {
+  functionVersionId: string
+  versionTag: string
+  inputSchema: Nullable<Record<string, unknown>>
+  createdAt: string
+  commitId: string
+}
+
+// TODO: Retrieve from API
+export const functionTemplateRepos = <const>[
+  {
+    id: AutomateFunctionTemplateLanguage.Python,
+    title: 'Python',
+    url: 'https://github.com/specklesystems/speckle_automate_python_example',
+    logo: '/images/functions/python.svg'
+  },
+  {
+    id: AutomateFunctionTemplateLanguage.DotNet,
+    title: '.NET / C#',
+    url: 'https://github.com/specklesystems/SpeckleAutomateDotnetExample',
+    logo: '/images/functions/dotnet.svg'
+  }
+]
 
 export type AutomationCreateResponse = {
   automationId: string
   automationToken: string
 }
 
-const getApiUrl = (path?: string) => {
+const getApiUrl = (
+  path?: string,
+  options?: Partial<{
+    query: Record<string, string | number | boolean | undefined>
+  }>
+) => {
   const automateUrl = speckleAutomateUrl()
   if (!automateUrl)
     throw new MisconfiguredEnvironmentError(
@@ -23,6 +67,13 @@ const getApiUrl = (path?: string) => {
   if (!path?.length) return automateUrl
 
   const url = new URL(automateUrl, path)
+  if (options?.query) {
+    Object.entries(options.query).forEach(([key, val]) => {
+      if (isNullOrUndefined(val)) return
+      url.searchParams.append(key, val.toString())
+    })
+  }
+
   return url.toString()
 }
 
@@ -64,11 +115,10 @@ export type AutomationRunResponseBody = {
   automationRunId: string
 }
 
-export type TriggeredAutomationFunctionRun =
-  AutomationFunctionRunWithFunctionMetadata & {
-    resultVersions: string[]
-    functionInputs: Record<string, unknown> | null
-  }
+export type TriggeredAutomationFunctionRun = AutomationFunctionRunRecord & {
+  resultVersions: string[]
+  functionInputs: Record<string, unknown> | null
+}
 
 export const triggerAutomationRun = async (params: {
   projectId: string
@@ -127,27 +177,102 @@ export const triggerAutomationRun = async (params: {
   return result
 }
 
-type CreateFunctionRequestBody = {
-  speckleServerDomain: string
-  speckleServerAuthenticationCode: string
+export enum ExecutionEngineFunctionTemplateId {
+  Python = 'python',
+  DotNet = '.net',
+  TypeScript = 'typescript'
 }
 
-export type CreateFunctionResponseBody = {
+export type CreateFunctionBody = {
+  template: ExecutionEngineFunctionTemplateId
+  functionname: string
+  description: string
+  supportedSourceApps: SourceAppName[]
+  tags: string[]
+  logo: Nullable<string>
+  org: Nullable<string>
+}
+
+export type CreateFunctionResponse = {
   functionId: string
-  token: string
+  functionToken: string
+  repo: {
+    htmlUrl: string
+    gitUrl: string
+    sshUrl: string
+    owner: string
+    name: string
+    defaultBranch: string
+  }
 }
 
-export const createFunction = async (params: CreateFunctionRequestBody) => {
-  const url = getApiUrl(`/api/v2/functions`)
+export const createFunction = async (params: {
+  body: CreateFunctionBody
+}): Promise<CreateFunctionResponse> => {
+  throw new Error('Not implemented! Needs re-thinking by Gergo & Iain')
+  console.log(params.body)
+}
 
-  const response = await fetch(url, {
-    method: 'post',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(params)
+export type UpdateFunctionBody = {
+  functionName?: string
+  description?: string
+  supportedSourceApps?: SourceAppName[]
+  tags?: string[]
+  logo?: string
+}
+
+export type UpdateFunctionResponse = FunctionSchemaType
+
+export const updateFunction = async (params: {
+  functionId: string
+  body: UpdateFunctionBody
+}): Promise<UpdateFunctionResponse> => {
+  throw new Error('Not implemented! Needs re-thinking by Gergo & Iain')
+  console.log(params)
+}
+
+export type GetFunctionResponse = FunctionSchemaType & {
+  functionVersions: FunctionReleaseSchemaType[]
+  versionCount: number
+  versionCursor: Nullable<string>
+}
+
+export const getFunction = async (params: {
+  functionId: string
+  token?: string
+  releases?: { cursor?: string; limit?: number }
+}) => {
+  const { functionId, token } = params
+  const url = getApiUrl(`/api/v1/functions/${functionId}`, {
+    query: params.releases?.cursor || params.releases?.limit ? params.releases : {}
   })
 
-  const result = (await response.json()) as CreateFunctionResponseBody
-  return result
+  const response = await fetch(url, {
+    method: 'get',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
+    }
+  })
+  return (await response.json()) as GetFunctionResponse
+}
+
+export type GetFunctionReleaseResponse = FunctionReleaseSchemaType
+
+export const getFunctionRelease = async (params: {
+  functionId: string
+  functionReleaseId: string
+  token?: string
+}) => {
+  const { functionId, functionReleaseId, token } = params
+  const url = getApiUrl(`/api/v1/functions/${functionId}/releases/${functionReleaseId}`)
+
+  const response = await fetch(url, {
+    method: 'get',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
+    }
+  })
+  return (await response.json()) as GetFunctionReleaseResponse
 }

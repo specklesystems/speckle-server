@@ -2,7 +2,7 @@ import {
   InsertableAutomationRun,
   getActiveTriggerDefinitions,
   getAutomation,
-  getAutomationRevision,
+  getFullAutomationRevisionMetadata,
   getAutomationToken,
   getAutomationTriggerDefinitions,
   upsertAutomationRun
@@ -147,7 +147,7 @@ export const triggerAutomationRevisionRun =
 
     const { automationWithRevision, userId, automateToken } = await ensureRunConditions(
       {
-        revisionGetter: getAutomationRevision,
+        revisionGetter: getFullAutomationRevisionMetadata,
         versionGetter: getCommit,
         automationTokenGetter: getAutomationToken
       }
@@ -219,7 +219,7 @@ export const triggerAutomationRevisionRun =
 
 export const ensureRunConditions =
   (deps: {
-    revisionGetter: typeof getAutomationRevision
+    revisionGetter: typeof getFullAutomationRevisionMetadata
     versionGetter: typeof getCommit
     automationTokenGetter: typeof getAutomationToken
   }) =>

@@ -15,7 +15,7 @@ import {
   AutomationNotFoundError,
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
-import { functionTemplateRepos } from '@/modules/automate/services/github'
+import { functionTemplateRepos } from '@/modules/automate/clients/executionEngine'
 
 const getRandomModelVersion = async (offset?: number) => {
   const versionQ = Commits.knex()
@@ -181,17 +181,17 @@ export async function buildMocksConfig(): Promise<{
             faker.company.companyName()
           )
         }
-      },
-      AutomateFunction: {
-        creator: async (_parent, args, ctx) => {
-          const rand = faker.datatype.boolean()
-          const activeUser = ctx.userId
-            ? await ctx.loaders.users.getUser.load(ctx.userId)
-            : null
-
-          return rand ? (store.get('LimitedUser') as any) : activeUser
-        }
       }
+      // AutomateFunction: {
+      //   creator: async (_parent, args, ctx) => {
+      //     const rand = faker.datatype.boolean()
+      //     const activeUser = ctx.userId
+      //       ? await ctx.loaders.users.getUser.load(ctx.userId)
+      //       : null
+
+      //     return rand ? (store.get('LimitedUser') as any) : activeUser
+      //   }
+      // }
     }),
     mocks: {
       BlobMetadata: () => ({

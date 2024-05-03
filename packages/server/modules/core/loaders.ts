@@ -58,8 +58,17 @@ import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileU
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { getAutomationFunctionRunResultVersions } from '@/modules/betaAutomations/repositories/automations'
 import { getAppScopes } from '@/modules/auth/repositories'
-import { AutomationRecord } from '@/modules/automate/helpers/types'
-import { getAutomations } from '@/modules/automate/repositories/automations'
+import {
+  AutomationRecord,
+  AutomationRevisionRecord,
+  AutomationTriggerDefinitionRecord
+} from '@/modules/automate/helpers/types'
+import {
+  getAutomationRevisions,
+  getAutomations,
+  getLatestAutomationRevisions,
+  getRevisionsTriggerDefinitions
+} from '@/modules/automate/repositories/automations'
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -522,6 +531,34 @@ export function buildRequestLoaders(
           (a) => a.id
         )
         return ids.map((i) => results[i] || null)
+      }),
+      getAutomationRevision: createLoader<string, Nullable<AutomationRevisionRecord>>(
+        async (ids) => {
+          const results = keyBy(
+            await getAutomationRevisions({ automationRevisionIds: ids.slice() }),
+            (a) => a.id
+          )
+          return ids.map((i) => results[i] || null)
+        }
+      ),
+      getLatestAutomationRevision: createLoader<
+        string,
+        Nullable<AutomationRevisionRecord>
+      >(async (ids) => {
+        const results = keyBy(
+          await getLatestAutomationRevisions({ automationIds: ids.slice() }),
+          (a) => a.id
+        )
+        return ids.map((i) => results[i] || null)
+      }),
+      getRevisionTriggerDefinitions: createLoader<
+        string,
+        AutomationTriggerDefinitionRecord[]
+      >(async (ids) => {
+        const results = await getRevisionsTriggerDefinitions({
+          automationRevisionIds: ids.slice()
+        })
+        return ids.map((i) => results[i] || [])
       })
     }
   }

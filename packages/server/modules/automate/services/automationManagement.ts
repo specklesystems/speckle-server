@@ -9,7 +9,10 @@ import {
 } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
-import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
+import {
+  createAutomation as clientCreateAutomation,
+  getFunctionRelease
+} from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import {
   Automate,
@@ -33,7 +36,6 @@ import {
 import { VersionCreationTriggerType } from '@/modules/automate/helpers/types'
 import { getBranchesByIds } from '@/modules/core/repositories/branches'
 import { keyBy, uniq } from 'lodash'
-import { getFunctionReleases } from '@/modules/automate/repositories/functions'
 
 export type CreateAutomationDeps = {
   createAuthCode: ReturnType<typeof createStoredAuthCode>
@@ -195,25 +197,38 @@ const validateNewTriggerDefinitions =
   }
 
 type ValidateNewRevisionFunctionsDeps = {
-  getFunctionReleases: typeof getFunctionReleases
+  getFunctionRelease: typeof getFunctionRelease
 }
 
 const validateNewRevisionFunctions =
   (deps: ValidateNewRevisionFunctionsDeps) =>
   async (params: { functions: InsertableAutomationRevisionFunction[] }) => {
     const { functions } = params
-    const { getFunctionReleases } = deps
+    const { getFunctionRelease } = deps
+
+    const updateId = (params: { functionId: string; functionReleaseId: string }) =>
+      `${params.functionId}-${params.functionReleaseId}`
 
     // Validate functions exist
-    const releaseIds = uniq(functions.map((f) => f.functionReleaseId))
+    const uniqueUpdates = keyBy(functions, updateId)
     const releases = keyBy(
-      await getFunctionReleases(releaseIds),
-      (r) => r.functionReleaseId
+      await Promise.all(
+        Object.values(uniqueUpdates).map(async (fn) => ({
+          ...(await getFunctionRelease(fn)),
+          functionId: fn.functionId
+        }))
+      ),
+      (r) =>
+        updateId({
+          functionReleaseId: r.functionVersionId,
+          functionId: r.functionId
+        })
     )
-    for (const releaseId of releaseIds) {
-      if (!releases[releaseId]) {
+
+    for (const [key, uniqueUpdate] of Object.entries(uniqueUpdates)) {
+      if (!releases[key]) {
         throw new AutomationRevisionCreationError(
-          `Function release with ID ${releaseId} not found`
+          `Function release for function ID ${uniqueUpdate.functionId} and function release id ${uniqueUpdate.functionReleaseId} not found`
         )
       }
     }

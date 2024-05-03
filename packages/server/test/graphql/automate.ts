@@ -4,9 +4,10 @@ export const automateFunctionFragment = gql`
   fragment TestAutomateFunction on AutomateFunction {
     id
     name
-    repoUrl
-    creator {
+    repo {
       id
+      owner
+      name
     }
     isFeatured
     description

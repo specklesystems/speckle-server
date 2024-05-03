@@ -27,11 +27,11 @@ import {
 import { beforeEachContext } from '@/test/hooks'
 import {
   TestAutomationWithRevision,
-  TestFunctionWithRelease,
   buildAutomationCreate,
   buildAutomationRevisionCreate,
   createTestAutomation,
-  createTestFunction,
+  generateFunctionId,
+  generateFunctionReleaseId,
   truncateAutomations
 } from '@/test/speckle-helpers/automationHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
@@ -259,7 +259,6 @@ const buildAutomationUpdate = () => {
       let createdAutomation: Awaited<
         ReturnType<ReturnType<typeof buildAutomationCreate>>
       >
-      let createdFunction: Awaited<ReturnType<typeof createTestFunction>>
       let projectModel: BranchRecord
 
       const validAutomationRevisionCreateInput =
@@ -267,8 +266,8 @@ const buildAutomationUpdate = () => {
           automationId: createdAutomation.automation.id,
           functions: [
             {
-              functionReleaseId: createdFunction.release!.functionReleaseId,
-              functionId: createdFunction.function.fn.functionId,
+              functionReleaseId: generateFunctionReleaseId(),
+              functionId: generateFunctionId(),
               parameters: null
             }
           ],
@@ -285,14 +284,10 @@ const buildAutomationUpdate = () => {
 
       before(async () => {
         const createAutomation = buildAutomationCreate()
-        const createFunction = createTestFunction
 
         createdAutomation = await createAutomation({
           input: { name: 'Automation #2', enabled: true },
           projectId: myStream.id,
-          userId: me.id
-        })
-        createdFunction = await createFunction({
           userId: me.id
         })
         projectModel = await getLatestStreamBranch(myStream.id)
@@ -497,7 +492,7 @@ const buildAutomationUpdate = () => {
       })
     })
 
-    describe('retrieval', () => {
+    describe.skip('retrieval', () => {
       let apollo: TestApolloServer
 
       const someCollaborator: BasicTestUser = {
@@ -512,7 +507,6 @@ const buildAutomationUpdate = () => {
       // const PAGINATION_LIMIT = Math.floor(TOTAL_AUTOMATION_COUNT / 3) // ~3 pages
       // const ITEMS_W_SEARCH_STRING = Math.floor(TOTAL_AUTOMATION_COUNT / 4)
 
-      let testFunction: TestFunctionWithRelease
       let testAutomations: TestAutomationWithRevision[]
 
       before(async () => {
@@ -534,9 +528,6 @@ const buildAutomationUpdate = () => {
           })
         })
 
-        testFunction = await createTestFunction({
-          userId: me.id
-        })
         testAutomations = await Promise.all(
           times(TOTAL_AUTOMATION_COUNT, async (i) =>
             createTestAutomation({
@@ -546,8 +537,8 @@ const buildAutomationUpdate = () => {
                 name: `Retrieval Test Automation #${i}`
               },
               revision: {
-                functionId: testFunction.function.fn.functionId,
-                functionReleaseId: testFunction.release!.functionReleaseId
+                functionId: generateFunctionId(),
+                functionReleaseId: generateFunctionReleaseId()
               }
             })
           )

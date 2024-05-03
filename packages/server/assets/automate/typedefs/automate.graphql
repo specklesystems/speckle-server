@@ -103,11 +103,17 @@ input AutomateFunctionReleasesFilter {
   search: String
 }
 
+type BasicGitRepositoryMetadata {
+  id: ID!
+  owner: String!
+  name: String!
+  url: String!
+}
+
 type AutomateFunction {
   id: ID!
   name: String!
-  repoUrl: String!
-  creator: LimitedUser
+  repo: BasicGitRepositoryMetadata!
   isFeatured: Boolean!
   description: String!
   logo: String

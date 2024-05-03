@@ -50,11 +50,6 @@ export type AutomateRevisionFunctionRecord = {
   automationRevisionId: string
 }
 
-export type AutomateRevisionFunctionWithFunctionMetadata =
-  AutomateRevisionFunctionRecord & {
-    functionId: string
-  }
-
 export const VersionCreationTriggerType = <const>'versionCreation'
 export type AutomationTriggerType = typeof VersionCreationTriggerType
 
@@ -87,7 +82,7 @@ export type AutomationTokenRecord = {
 }
 
 export type AutomationRevisionWithTriggersFunctions = AutomationRevisionRecord & {
-  functions: AutomateRevisionFunctionWithFunctionMetadata[]
+  functions: AutomateRevisionFunctionRecord[]
   triggers: AutomationTriggerDefinitionRecord[]
 }
 
@@ -116,10 +111,6 @@ export type AutomationFunctionRunRecord = {
   results: Nullable<Automate.AutomateTypes.ResultsSchema>
 }
 
-export type AutomationFunctionRunWithFunctionMetadata = AutomationFunctionRunRecord & {
-  functionId: string
-}
-
 export type BaseTriggerManifest<
   T extends AutomationTriggerType = AutomationTriggerType
 > = {
@@ -136,37 +127,3 @@ export type VersionCreatedTriggerManifest = BaseTriggerManifest<
 export const isVersionCreatedTriggerManifest = (
   t: BaseTriggerManifest
 ): t is VersionCreatedTriggerManifest => t.triggerType === VersionCreationTriggerType
-
-export type AutomateFunctionRecord = {
-  functionId: string
-  userId: string | null
-  repoUrl: string
-  name: string
-  createdAt: Date
-  description: string
-  tags: string[]
-  supportedSourceApps: string[]
-  isFeatured: boolean
-  logo: string | null
-  executionEngineFunctionId: string | null
-  updatedAt: Date
-}
-
-export type AutomateFunctionReleaseRecord = {
-  functionId: string
-  functionReleaseId: string
-  versionTag: string
-  inputSchema: Record<string, unknown> | null
-  command: string[]
-  createdAt: Date
-  gitCommitId: string
-  recommendedCPUm: number
-  recommendedMemoryMi: number
-}
-
-export type AutomateFunctionTokenRecord = {
-  functionId: string
-  token: string
-  createdAt: Date
-  updatedAt: Date
-}
