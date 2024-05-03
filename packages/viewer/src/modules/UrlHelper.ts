@@ -29,7 +29,7 @@ async function getOldResourceUrls(url: string, authToken?: string): Promise<stri
   // supports commit based urls
   if (url.includes('commits')) {
     const commitId = url.split('/commits/')[1].substring(0, 10)
-    const objUrl = await this.getCommitReferencedObjectUrl({
+    const objUrl = await getCommitReferencedObjectUrl({
       origin: parsed.origin,
       streamId,
       commitId
