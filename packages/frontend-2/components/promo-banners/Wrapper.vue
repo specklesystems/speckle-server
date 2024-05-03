@@ -13,7 +13,7 @@
         <img
           :src="activeBanner.imageSrc"
           class="h-10 sm:h-11"
-          alt="banner.primaryText"
+          :alt="activeBanner.primaryText"
         />
       </template>
     </PromoBannersBanner>
@@ -23,61 +23,46 @@
 <script setup lang="ts">
 import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import dayjs from 'dayjs'
+import type { PromoBanner } from '~/lib/promo-banners/types'
 
-type Banner = {
-  id: string
-  primaryText: string
-  secondaryText?: string
-  url: string
-  imageSrc: string
-  priority: number
-}
+const props = defineProps<{
+  banners: PromoBanner[]
+}>()
 
-const banners = ref<Banner[]>([
-  {
-    id: 'speckleverse',
-    primaryText: 'Join our online hackathon!',
-    secondaryText: 'June 7 - 9, 2024',
-    url: 'https://speckle.systems/blog/hackathon/',
-    imageSrc: 'http://localhost:8081/_nuxt/assets/images/speckle_logo_big.png',
-    priority: 1
-  },
-  {
-    id: 'speckleverse1',
-    primaryText: 'Join our online new hackathon!',
-    secondaryText: 'June 7 sdssds- 9, 2024',
-    url: 'https://speckle.systems/blog/hackathon/',
-    imageSrc: 'http://localhost:8081/_nuxt/assets/images/speckle_logo_big.png',
-    priority: 2
-  }
-])
-
-// Don't show other promo banners until 1 day has passed since dismissing the last
 const hideAllPromoBanners = useSynchronizedCookie('hide-all-promo-banners', {
   default: () => false,
   expires: dayjs().add(1, 'day').toDate()
 })
 
-const activeBanner = computed(() => {
-  const sortedBanners = banners.value.sort((a, b) => a.priority - b.priority)
-  for (const banner of sortedBanners) {
-    const cookie = useSynchronizedCookie(`banner-dismissed-${banner.id}`, {
-      default: () => false
-    })
-    if (!cookie.value && !hideAllPromoBanners.value) {
-      return banner
-    }
+const activeBannerId = ref<string | null>(null)
+
+const sortedBanners = computed(() =>
+  [...props.banners].sort((a, b) => a.priority - b.priority)
+)
+
+// Set active banner initially based on cookies
+sortedBanners.value.forEach((banner) => {
+  const cookie = useSynchronizedCookie(`banner-dismissed-${banner.id}`, {
+    default: () => false
+  })
+  if (!cookie.value && !hideAllPromoBanners.value && activeBannerId.value === null) {
+    activeBannerId.value = banner.id // Set active banner if not dismissed and no other active banner
   }
-  return null
 })
+
+const activeBanner = computed(() =>
+  activeBannerId.value
+    ? props.banners.find((banner) => banner.id === activeBannerId.value)
+    : null
+)
 
 function handleDismissed(id: string) {
   hideAllPromoBanners.value = true
 
-  const index = banners.value.findIndex((banner) => banner.id === id)
-  if (index !== -1) {
-    banners.value.splice(index, 1) // Remove banner from active list
-  }
+  // Hide the dismissed banner
+  activeBannerId.value = null
+
+  // Set dismissed cookie
   const dismissedCookie = useSynchronizedCookie<boolean>(`banner-dismissed-${id}`)
   dismissedCookie.value = true
 }
