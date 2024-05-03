@@ -309,9 +309,8 @@ export type AutomateRun = {
   createdAt: Scalars['DateTime'];
   functionRuns: Array<AutomateFunctionRun>;
   id: Scalars['ID'];
-  reason?: Maybe<Scalars['String']>;
   status: AutomateRunStatus;
-  trigger: AutomationRunTrigger;
+  statusMessage?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
 };
 
@@ -323,8 +322,10 @@ export type AutomateRunCollection = {
 };
 
 export enum AutomateRunStatus {
+  Error = 'ERROR',
   Failed = 'FAILED',
   Initializing = 'INITIALIZING',
+  Pending = 'PENDING',
   Running = 'RUNNING',
   Succeeded = 'SUCCEEDED'
 }
@@ -341,7 +342,6 @@ export type Automation = {
   id: Scalars['ID'];
   name: Scalars['String'];
   runs: AutomateRunCollection;
-  updatedAt: Scalars['DateTime'];
 };
 
 
@@ -2884,9 +2884,7 @@ export enum TokenResourceIdentifierType {
 export type TriggeredAutomationsStatus = {
   __typename?: 'TriggeredAutomationsStatus';
   automationRuns: Array<AutomateRun>;
-  id: Scalars['ID'];
   status: AutomateRunStatus;
-  statusMessage?: Maybe<Scalars['String']>;
 };
 
 export type UpdateModelInput = {
@@ -3364,7 +3362,7 @@ export type ResolversTypes = {
   AutomateFunctionRun: ResolverTypeWrapper<Omit<AutomateFunctionRun, 'function'> & { function: ResolversTypes['AutomateFunction'] }>;
   AutomateFunctionRunStatusReportInput: AutomateFunctionRunStatusReportInput;
   AutomateFunctionsFilter: AutomateFunctionsFilter;
-  AutomateRun: ResolverTypeWrapper<Omit<AutomateRun, 'automation' | 'functionRuns' | 'trigger'> & { automation: ResolversTypes['Automation'], functionRuns: Array<ResolversTypes['AutomateFunctionRun']>, trigger: ResolversTypes['AutomationRunTrigger'] }>;
+  AutomateRun: ResolverTypeWrapper<Omit<AutomateRun, 'automation' | 'functionRuns'> & { automation: ResolversTypes['Automation'], functionRuns: Array<ResolversTypes['AutomateFunctionRun']> }>;
   AutomateRunCollection: ResolverTypeWrapper<Omit<AutomateRunCollection, 'items'> & { items: Array<ResolversTypes['AutomateRun']> }>;
   AutomateRunStatus: AutomateRunStatus;
   AutomateRunTriggerType: AutomateRunTriggerType;
@@ -3569,7 +3567,7 @@ export type ResolversParentTypes = {
   AutomateFunctionRun: Omit<AutomateFunctionRun, 'function'> & { function: ResolversParentTypes['AutomateFunction'] };
   AutomateFunctionRunStatusReportInput: AutomateFunctionRunStatusReportInput;
   AutomateFunctionsFilter: AutomateFunctionsFilter;
-  AutomateRun: Omit<AutomateRun, 'automation' | 'functionRuns' | 'trigger'> & { automation: ResolversParentTypes['Automation'], functionRuns: Array<ResolversParentTypes['AutomateFunctionRun']>, trigger: ResolversParentTypes['AutomationRunTrigger'] };
+  AutomateRun: Omit<AutomateRun, 'automation' | 'functionRuns'> & { automation: ResolversParentTypes['Automation'], functionRuns: Array<ResolversParentTypes['AutomateFunctionRun']> };
   AutomateRunCollection: Omit<AutomateRunCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateRun']> };
   Automation: Omit<Automation, 'currentRevision' | 'runs'> & { currentRevision?: Maybe<ResolversParentTypes['AutomationRevision']>, runs: ResolversParentTypes['AutomateRunCollection'] };
   AutomationCollection: Omit<AutomationCollection, 'items'> & { items: Array<ResolversParentTypes['Automation']> };
@@ -3909,9 +3907,8 @@ export type AutomateRunResolvers<ContextType = GraphQLContext, ParentType extend
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   functionRuns?: Resolver<Array<ResolversTypes['AutomateFunctionRun']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  reason?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AutomateRunStatus'], ParentType, ContextType>;
-  trigger?: Resolver<ResolversTypes['AutomationRunTrigger'], ParentType, ContextType>;
+  statusMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -3930,7 +3927,6 @@ export type AutomationResolvers<ContextType = GraphQLContext, ParentType extends
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   runs?: Resolver<ResolversTypes['AutomateRunCollection'], ParentType, ContextType, Partial<AutomationRunsArgs>>;
-  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -4747,9 +4743,7 @@ export type TokenResourceIdentifierResolvers<ContextType = GraphQLContext, Paren
 
 export type TriggeredAutomationsStatusResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TriggeredAutomationsStatus'] = ResolversParentTypes['TriggeredAutomationsStatus']> = {
   automationRuns?: Resolver<Array<ResolversTypes['AutomateRun']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AutomateRunStatus'], ParentType, ContextType>;
-  statusMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 

@@ -55,6 +55,7 @@ export type AutomationRunTrigger = {
 
 export type AutomationRunStatus =
   | 'pending'
+  | 'initializing'
   | 'running'
   | 'success'
   | 'failure'

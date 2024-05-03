@@ -125,15 +125,14 @@ export async function buildMocksConfig(): Promise<{
         }
       },
       AutomateRun: {
-        trigger: async () => {
-          const { model, version } = await getRandomModelVersion()
-
-          return {
-            type: AutomateRunTriggerType.VersionCreated,
-            version,
-            model
-          }
-        }
+        // trigger: async () => {
+        //   const { model, version } = await getRandomModelVersion()
+        //   return {
+        //     type: AutomateRunTriggerType.VersionCreated,
+        //     version,
+        //     model
+        //   }
+        // }
       },
       ProjectAutomationMutations: {
         update: (_parent, args) => {

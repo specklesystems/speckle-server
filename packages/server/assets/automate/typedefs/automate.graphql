@@ -1,8 +1,10 @@
 enum AutomateRunStatus {
+  PENDING
   INITIALIZING
   RUNNING
   SUCCEEDED
   FAILED
+  ERROR
 }
 
 enum AutomateRunTriggerType {
@@ -39,9 +41,7 @@ type VersionCreatedTrigger {
 union AutomationRunTrigger = VersionCreatedTrigger
 
 type TriggeredAutomationsStatus {
-  id: ID!
   status: AutomateRunStatus!
-  statusMessage: String
   automationRuns: [AutomateRun!]!
 }
 
@@ -60,7 +60,7 @@ type Automation {
   runs(cursor: String, limit: Int): AutomateRunCollection!
   currentRevision: AutomationRevision
   createdAt: DateTime!
-  updatedAt: DateTime!
+  # updatedAt: DateTime!
 }
 
 type AutomateFunctionRun {
@@ -92,9 +92,9 @@ type AutomateFunctionRun {
 
 type AutomateRun {
   id: ID!
-  trigger: AutomationRunTrigger!
+  # trigger: AutomationRunTrigger!
   status: AutomateRunStatus!
-  reason: String
+  statusMessage: String
   createdAt: DateTime!
   updatedAt: DateTime!
   automation: Automation!

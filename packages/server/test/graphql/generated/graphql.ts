@@ -300,9 +300,8 @@ export type AutomateRun = {
   createdAt: Scalars['DateTime'];
   functionRuns: Array<AutomateFunctionRun>;
   id: Scalars['ID'];
-  reason?: Maybe<Scalars['String']>;
   status: AutomateRunStatus;
-  trigger: AutomationRunTrigger;
+  statusMessage?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
 };
 
@@ -314,8 +313,10 @@ export type AutomateRunCollection = {
 };
 
 export enum AutomateRunStatus {
+  Error = 'ERROR',
   Failed = 'FAILED',
   Initializing = 'INITIALIZING',
+  Pending = 'PENDING',
   Running = 'RUNNING',
   Succeeded = 'SUCCEEDED'
 }
@@ -332,7 +333,6 @@ export type Automation = {
   id: Scalars['ID'];
   name: Scalars['String'];
   runs: AutomateRunCollection;
-  updatedAt: Scalars['DateTime'];
 };
 
 
@@ -2875,9 +2875,7 @@ export enum TokenResourceIdentifierType {
 export type TriggeredAutomationsStatus = {
   __typename?: 'TriggeredAutomationsStatus';
   automationRuns: Array<AutomateRun>;
-  id: Scalars['ID'];
   status: AutomateRunStatus;
-  statusMessage?: Maybe<Scalars['String']>;
 };
 
 export type UpdateModelInput = {
