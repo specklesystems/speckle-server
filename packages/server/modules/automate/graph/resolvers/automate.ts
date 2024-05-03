@@ -8,6 +8,8 @@ import {
 } from '@/modules/automate/clients/executionEngine'
 import {
   getAutomation,
+  getAutomationRunsItems,
+  getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
   storeAutomation,
   storeAutomationRevision,
@@ -23,6 +25,7 @@ import {
   validateStoredAuthCode
 } from '@/modules/automate/services/executionEngine'
 import {
+  convertFunctionReleaseToGraphQLReturn,
   convertFunctionToGraphQLReturn,
   createFunctionFromTemplate,
   updateFunction
@@ -35,7 +38,7 @@ import { getGenericRedis } from '@/modules/core/index'
 import { getUser } from '@/modules/core/repositories/users'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
-import { Roles, isNullOrUndefined } from '@speckle/shared'
+import { Automate, Roles, isNullOrUndefined } from '@speckle/shared'
 import {
   getBranchLatestCommits,
   getBranchesByIds
@@ -44,12 +47,27 @@ import {
   manuallyTriggerAutomation,
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
-import { AutomateFunctionReleaseGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
+import {
+  AutomateFunctionReleaseNotFoundError,
+  FunctionNotFoundError
+} from '@/modules/automate/errors/management'
+import { dbToGraphqlTriggerTypeMap } from '@/modules/automate/helpers/executionEngine'
+
+/**
+ * TODO:
+ * - automateStatus (version/model)
+ * - User.automateInfo
+ * - Server.automate
+ * - automations plural
+ */
 
 export = {
   AutomationRevisionTriggerDefinition: {
     __resolveType(parent) {
-      if (parent.type === AutomateRunTriggerType.VersionCreated) {
+      if (
+        dbToGraphqlTriggerTypeMap[parent.triggerType] ===
+        AutomateRunTriggerType.VersionCreated
+      ) {
         return 'VersionCreatedTriggerDefinition'
       }
       return null
@@ -57,10 +75,28 @@ export = {
   },
   AutomationRunTrigger: {
     __resolveType(parent) {
-      if (parent.type === AutomateRunTriggerType.VersionCreated) {
+      if (
+        dbToGraphqlTriggerTypeMap[parent.triggerType] ===
+        AutomateRunTriggerType.VersionCreated
+      ) {
         return 'VersionCreatedTrigger'
       }
       return null
+    }
+  },
+  VersionCreatedTriggerDefinition: {
+    type: () => AutomateRunTriggerType.VersionCreated,
+    async model(parent, _args, ctx) {
+      return ctx.loaders.branches.getById.load(parent.triggeringId)
+    }
+  },
+  VersionCreatedTrigger: {
+    type: () => AutomateRunTriggerType.VersionCreated,
+    async version(parent, _args, ctx) {
+      return ctx.loaders.commits.getById.load(parent.triggeringId)
+    },
+    async model(parent, _args, ctx) {
+      return ctx.loaders.commits.getCommitBranch.load(parent.triggeringId)
     }
   },
   Project: {
@@ -71,6 +107,97 @@ export = {
   Automation: {
     async currentRevision(parent, _args, ctx) {
       return ctx.loaders.automations.getLatestAutomationRevision.load(parent.id)
+    },
+    async runs(parent, args) {
+      const retrievalArgs = {
+        automationId: parent.id,
+        ...args
+      }
+
+      const [{ items, cursor }, totalCount] = await Promise.all([
+        getAutomationRunsItems({
+          args: retrievalArgs
+        }),
+        getAutomationRunsTotalCount({
+          args: retrievalArgs
+        })
+      ])
+
+      return {
+        items,
+        totalCount,
+        cursor
+      }
+    }
+  },
+  AutomateRun: {
+    async trigger(parent) {
+      const trigger = parent.triggers[0]
+      return trigger
+    },
+    async functionRuns(parent) {
+      return parent.functionRuns
+    },
+    async automation(parent, _args, ctx) {
+      return ctx.loaders.automations.getAutomation.load(parent.automationId)
+    }
+  },
+  AutomateFunctionRun: {
+    async function(parent, _args, ctx) {
+      const fn = await ctx.loaders.automationsApi.getFunction.load(parent.functionId)
+      if (!fn) {
+        throw new FunctionNotFoundError('Function not found', {
+          info: { id: parent.functionId }
+        })
+      }
+
+      return convertFunctionToGraphQLReturn(fn)
+    },
+    results(parent, _args, ctx) {
+      try {
+        return parent.results
+          ? Automate.AutomateTypes.formatResultsSchema(parent.results)
+          : null
+      } catch (e) {
+        ctx.log.warn('Error formatting results schema', e)
+      }
+    }
+  },
+  AutomationRevision: {
+    async triggerDefinitions(parent, _args, ctx) {
+      const triggers = await ctx.loaders.automations.getRevisionTriggerDefinitions.load(
+        parent.id
+      )
+
+      return triggers
+    },
+    async functions(parent, _args, ctx) {
+      return ctx.loaders.automations.getRevisionFunctions.load(parent.id)
+    }
+  },
+  AutomationRevisionFunction: {
+    // TODO: Encryption & redacting?
+    async parameters(parent) {
+      return parent.functionInputs
+    },
+    async release(parent, _args, ctx) {
+      const ret = await ctx.loaders.automationsApi.getFunctionRelease.load([
+        parent.functionId,
+        parent.functionReleaseId
+      ])
+      if (!ret) {
+        throw new AutomateFunctionReleaseNotFoundError('Function release not found', {
+          info: {
+            functionId: parent.functionId,
+            functionReleaseId: parent.functionReleaseId
+          }
+        })
+      }
+
+      return convertFunctionReleaseToGraphQLReturn({
+        ...ret,
+        functionId: parent.functionId
+      })
     }
   },
   AutomateFunction: {
@@ -94,15 +221,8 @@ export = {
       return {
         cursor: fn.versionCursor,
         totalCount: fn.versionCount,
-        items: fn.functionVersions.map(
-          (r): AutomateFunctionReleaseGraphQLReturn => ({
-            id: r.functionVersionId,
-            versionTag: r.versionTag,
-            createdAt: new Date(r.createdAt),
-            inputSchema: r.inputSchema,
-            commitId: r.commitId,
-            functionId: parent.id
-          })
+        items: fn.functionVersions.map((r) =>
+          convertFunctionReleaseToGraphQLReturn({ ...r, functionId: parent.id })
         )
       }
     }
@@ -110,6 +230,12 @@ export = {
   AutomateFunctionRelease: {
     async function(parent, _args, ctx) {
       const fn = await ctx.loaders.automationsApi.getFunction.load(parent.functionId)
+      if (!fn) {
+        throw new FunctionNotFoundError('Function not found', {
+          info: { id: parent.functionId }
+        })
+      }
+
       return convertFunctionToGraphQLReturn(fn)
     }
   },
@@ -204,6 +330,12 @@ export = {
     },
     async automateFunction(_parent, { id }, ctx) {
       const fn = await ctx.loaders.automationsApi.getFunction.load(id)
+      if (!fn) {
+        throw new FunctionNotFoundError('Function not found', {
+          info: { id }
+        })
+      }
+
       return convertFunctionToGraphQLReturn(fn)
     },
     async automateFunctions(_parent, args) {

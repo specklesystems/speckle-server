@@ -44,3 +44,8 @@ export class AutomateFunctionUpdateError extends BaseError {
   static defaultMessage = 'Error updating function'
   static code = 'AUTOMATE_FUNCTION_UPDATE_ERROR'
 }
+
+export class AutomateFunctionReleaseNotFoundError extends BaseError {
+  static defaultMessage = 'Function release not found'
+  static code = 'AUTOMATE_FUNCTION_RELEASE_NOT_FOUND'
+}

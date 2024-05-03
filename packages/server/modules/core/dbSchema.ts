@@ -29,6 +29,14 @@ type BaseInnerSchemaConfig<T extends string, C extends string> = {
   colAs<A extends string>(colName: C, alias: A): Knex.Raw
 
   /**
+   * Use in .select() calls when selecting joined tables to ensure all table's rows get collected into a single
+   * array and held in a key identified by name.
+   *
+   * Make sure the rows of this table are grouped, otherwise this aggregation won't work
+   */
+  groupArray(name: string): Knex.Raw
+
+  /**
    * All of the column names in an array
    */
   cols: string[]
@@ -116,12 +124,16 @@ const createBaseInnerSchemaConfigBuilder =
       ? `${tableName} as ${params.withCustomTablePrefix}`
       : tableName
 
+    const prefix = params.withoutTablePrefix
+      ? null
+      : params.withCustomTablePrefix || tableName
+
     const colName = (col: string, options?: Partial<{ addQuotes: boolean }>) => {
       const { addQuotes } = options || {}
 
-      if (params.withoutTablePrefix) return addQuotes ? `"${col}"` : col
-      const prefix = params.withCustomTablePrefix || tableName
-      return addQuotes ? `"${prefix}"."${col}"` : `${prefix}.${col}`
+      return addQuotes
+        ? (prefix?.length ? `"${prefix}".` : '') + `"${col}"`
+        : (prefix?.length ? `${prefix}.` : '') + `${col}`
     }
 
     return {
@@ -137,6 +149,12 @@ const createBaseInnerSchemaConfigBuilder =
       ),
       colAs: (col, alias) =>
         knex.raw(`${colName(col, { addQuotes: true })} AS "${alias}"`),
+      groupArray: (name) =>
+        knex.raw(
+          `array_agg(row_to_json(${
+            (prefix?.length ? prefix + '.' : '') + '*'
+          })) as "${name}"`
+        ),
       cols: columns.map((c) => colName(c))
     }
   }

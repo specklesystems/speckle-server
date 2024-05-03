@@ -1,6 +1,11 @@
 import {
+  AutomateRevisionFunctionRecord,
+  AutomationFunctionRunRecord,
   AutomationRecord,
-  AutomationRevisionRecord
+  AutomationRevisionRecord,
+  AutomationRunTriggerRecord,
+  AutomationRunWithTriggersFunctionRuns,
+  AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
 import {
   AutomateFunction,
@@ -29,3 +34,13 @@ export type AutomationGraphQLReturn = AutomationRecord
 export type AutomationRevisionGraphQLReturn = AutomationRevisionRecord
 
 export type ProjectAutomationMutationsGraphQLReturn = { projectId: string }
+
+export type AutomationRevisionTriggerDefinitionGraphQLReturn =
+  AutomationTriggerDefinitionRecord
+export type AutomationRunTriggerGraphQLReturn = AutomationRunTriggerRecord
+
+export type AutomationRevisionFunctionGraphQLReturn = AutomateRevisionFunctionRecord
+
+export type AutomateRunGraphQLReturn = AutomationRunWithTriggersFunctionRuns
+
+export type AutomateFunctionRunGraphQLReturn = AutomationFunctionRunRecord

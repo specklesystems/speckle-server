@@ -51,7 +51,10 @@ export type AutomateRevisionFunctionRecord = {
 }
 
 export const VersionCreationTriggerType = <const>'versionCreation'
-export type AutomationTriggerType = typeof VersionCreationTriggerType
+export const TestTriggerType = <const>'testtttt'
+export type AutomationTriggerType =
+  | typeof VersionCreationTriggerType
+  | typeof TestTriggerType
 
 export type AutomationTriggerRecordBase<
   T extends AutomationTriggerType = AutomationTriggerType
@@ -69,12 +72,20 @@ export type AutomationTriggerDefinitionRecord<
   automationRevisionId: string
 } & AutomationTriggerRecordBase<T>
 
+export const isVersionCreatedTrigger = (
+  val: AutomationTriggerRecordBase
+): val is AutomationTriggerRecordBase<typeof VersionCreationTriggerType> => {
+  return val.triggerType === VersionCreationTriggerType
+}
+
 /**
  * If type === 'versionCreation', triggeringId refers to version id
  */
-export type AutomationRunTriggerRecord = {
+export type AutomationRunTriggerRecord<
+  T extends AutomationTriggerType = AutomationTriggerType
+> = {
   automationRunId: string
-} & AutomationTriggerRecordBase
+} & AutomationTriggerRecordBase<T>
 
 export type AutomationTokenRecord = {
   automationId: string
@@ -93,6 +104,7 @@ export type AutomationWithRevision<
 }
 
 export type AutomationRunWithTriggersFunctionRuns = AutomationRunRecord & {
+  automationId: string
   triggers: AutomationRunTriggerRecord[]
   functionRuns: AutomationFunctionRunRecord[]
 }

@@ -47,6 +47,8 @@ export async function up(knex: Knex): Promise<void> {
     table.text('contextView')
     table.text('statusMessage')
     table.jsonb('results').nullable()
+
+    table.index('runId')
   })
 }
 

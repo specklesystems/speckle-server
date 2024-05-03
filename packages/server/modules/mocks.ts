@@ -15,7 +15,7 @@ import {
   AutomationNotFoundError,
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
-import { functionTemplateRepos } from '@/modules/automate/clients/executionEngine'
+import { functionTemplateRepos } from '@/modules/automate/helpers/executionEngine'
 
 const getRandomModelVersion = async (offset?: number) => {
   const versionQ = Commits.knex()

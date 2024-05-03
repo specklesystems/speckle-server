@@ -1,6 +1,5 @@
 import {
   CreateFunctionBody,
-  FunctionSchemaType,
   createFunction,
   getFunction,
   updateFunction as updateExecEngineFunction
@@ -23,7 +22,14 @@ import {
   SourceAppName,
   removeNullOrUndefinedKeys
 } from '@speckle/shared'
-import { AutomateFunctionGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
+import {
+  AutomateFunctionGraphQLReturn,
+  AutomateFunctionReleaseGraphQLReturn
+} from '@/modules/automate/helpers/graphTypes'
+import {
+  FunctionReleaseSchemaType,
+  FunctionSchemaType
+} from '@/modules/automate/helpers/executionEngine'
 
 const repoUrlToBasicGitRepositoryMetadata = (
   url: string
@@ -58,6 +64,21 @@ export const convertFunctionToGraphQLReturn = (
     logo: cleanFunctionLogo(fn.logo),
     tags: fn.tags,
     supportedSourceApps: fn.supportedSourceApps
+  }
+
+  return ret
+}
+
+export const convertFunctionReleaseToGraphQLReturn = (
+  fnRelease: FunctionReleaseSchemaType & { functionId: string }
+): AutomateFunctionReleaseGraphQLReturn => {
+  const ret: AutomateFunctionReleaseGraphQLReturn = {
+    id: fnRelease.functionVersionId,
+    versionTag: fnRelease.versionTag,
+    createdAt: new Date(fnRelease.createdAt),
+    inputSchema: fnRelease.inputSchema,
+    commitId: fnRelease.commitId,
+    functionId: fnRelease.functionId
   }
 
   return ret

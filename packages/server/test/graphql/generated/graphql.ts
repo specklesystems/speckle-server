@@ -325,6 +325,7 @@ export enum AutomateRunStatus {
 }
 
 export enum AutomateRunTriggerType {
+  TestType = 'TEST_TYPE',
   VersionCreated = 'VERSION_CREATED'
 }
 

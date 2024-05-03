@@ -7,6 +7,7 @@ enum AutomateRunStatus {
 
 enum AutomateRunTriggerType {
   VERSION_CREATED
+  TEST_TYPE
 }
 
 type AutomationRevisionFunction {
@@ -68,6 +69,8 @@ type AutomateFunctionRun {
   status: AutomateRunStatus!
   statusMessage: String
   contextView: String
+  functionId: String
+  functionReleaseId: String
   function: AutomateFunction!
   elapsed: Float!
   """
@@ -80,7 +83,6 @@ type AutomateRun {
   id: ID!
   trigger: AutomationRunTrigger!
   status: AutomateRunStatus!
-  reason: String
   createdAt: DateTime!
   updatedAt: DateTime!
   automation: Automation!

@@ -38,6 +38,13 @@ generates:
         AutomateFunctionRelease: '@/modules/automate/helpers/graphTypes#AutomateFunctionReleaseGraphQLReturn'
         Automation: '@/modules/automate/helpers/graphTypes#AutomationGraphQLReturn'
         AutomationRevision: '@/modules/automate/helpers/graphTypes#AutomationRevisionGraphQLReturn'
+        AutomationRevisionFunction: '@/modules/automate/helpers/graphTypes#AutomationRevisionFunctionGraphQLReturn'
+        AutomateRun: '@/modules/automate/helpers/graphTypes#AutomateRunGraphQLReturn'
+        AutomationRunTrigger: '@/modules/automate/helpers/graphTypes#AutomationRunTriggerGraphQLReturn'
+        VersionCreatedTrigger: '@/modules/automate/helpers/graphTypes#AutomationRunTriggerGraphQLReturn'
+        AutomationRevisionTriggerDefinition: '@/modules/automate/helpers/graphTypes#AutomationRevisionTriggerDefinitionGraphQLReturn'
+        VersionCreatedTriggerDefinition: '@/modules/automate/helpers/graphTypes#AutomationRevisionTriggerDefinitionGraphQLReturn'
+        AutomateFunctionRun: '@/modules/automate/helpers/graphTypes#AutomateFunctionRunGraphQLReturn'
         ProjectAutomationMutations: '@/modules/automate/helpers/graphTypes#ProjectAutomationMutationsGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:

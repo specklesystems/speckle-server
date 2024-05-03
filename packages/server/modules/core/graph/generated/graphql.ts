@@ -5,7 +5,7 @@ import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from 
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes';
-import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, ProjectAutomationMutationsGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
+import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, ProjectAutomationMutationsGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -335,6 +335,7 @@ export enum AutomateRunStatus {
 }
 
 export enum AutomateRunTriggerType {
+  TestType = 'TEST_TYPE',
   VersionCreated = 'VERSION_CREATED'
 }
 
@@ -3434,13 +3435,13 @@ export type ResolversTypes = {
   AutomateFunctionRelease: ResolverTypeWrapper<AutomateFunctionReleaseGraphQLReturn>;
   AutomateFunctionReleaseCollection: ResolverTypeWrapper<Omit<AutomateFunctionReleaseCollection, 'items'> & { items: Array<ResolversTypes['AutomateFunctionRelease']> }>;
   AutomateFunctionReleasesFilter: AutomateFunctionReleasesFilter;
-  AutomateFunctionRun: ResolverTypeWrapper<Omit<AutomateFunctionRun, 'function'> & { function: ResolversTypes['AutomateFunction'] }>;
+  AutomateFunctionRun: ResolverTypeWrapper<AutomateFunctionRunGraphQLReturn>;
   AutomateFunctionRunStatusReportInput: AutomateFunctionRunStatusReportInput;
   AutomateFunctionTemplate: ResolverTypeWrapper<AutomateFunctionTemplate>;
   AutomateFunctionTemplateLanguage: AutomateFunctionTemplateLanguage;
   AutomateFunctionsFilter: AutomateFunctionsFilter;
   AutomateMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
-  AutomateRun: ResolverTypeWrapper<Omit<AutomateRun, 'automation' | 'functionRuns' | 'trigger'> & { automation: ResolversTypes['Automation'], functionRuns: Array<ResolversTypes['AutomateFunctionRun']>, trigger: ResolversTypes['AutomationRunTrigger'] }>;
+  AutomateRun: ResolverTypeWrapper<AutomateRunGraphQLReturn>;
   AutomateRunCollection: ResolverTypeWrapper<Omit<AutomateRunCollection, 'items'> & { items: Array<ResolversTypes['AutomateRun']> }>;
   AutomateRunStatus: AutomateRunStatus;
   AutomateRunTriggerType: AutomateRunTriggerType;
@@ -3451,12 +3452,12 @@ export type ResolversTypes = {
   AutomationMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   AutomationRevision: ResolverTypeWrapper<AutomationRevisionGraphQLReturn>;
   AutomationRevisionCreateFunctionInput: AutomationRevisionCreateFunctionInput;
-  AutomationRevisionFunction: ResolverTypeWrapper<Omit<AutomationRevisionFunction, 'release'> & { release: ResolversTypes['AutomateFunctionRelease'] }>;
-  AutomationRevisionTriggerDefinition: ResolversTypes['VersionCreatedTriggerDefinition'];
+  AutomationRevisionFunction: ResolverTypeWrapper<AutomationRevisionFunctionGraphQLReturn>;
+  AutomationRevisionTriggerDefinition: ResolverTypeWrapper<AutomationRevisionTriggerDefinitionGraphQLReturn>;
   AutomationRun: ResolverTypeWrapper<Omit<AutomationRun, 'functionRuns'> & { functionRuns: Array<ResolversTypes['AutomationFunctionRun']> }>;
   AutomationRunStatus: AutomationRunStatus;
   AutomationRunStatusUpdateInput: AutomationRunStatusUpdateInput;
-  AutomationRunTrigger: ResolversTypes['VersionCreatedTrigger'];
+  AutomationRunTrigger: ResolverTypeWrapper<AutomationRunTriggerGraphQLReturn>;
   AutomationsStatus: ResolverTypeWrapper<Omit<AutomationsStatus, 'automationRuns'> & { automationRuns: Array<ResolversTypes['AutomationRun']> }>;
   BasicGitRepositoryMetadata: ResolverTypeWrapper<BasicGitRepositoryMetadata>;
   BigInt: ResolverTypeWrapper<Scalars['BigInt']>;
@@ -3607,8 +3608,8 @@ export type ResolversTypes = {
   UserUpdateInput: UserUpdateInput;
   Version: ResolverTypeWrapper<VersionGraphQLReturn>;
   VersionCollection: ResolverTypeWrapper<Omit<VersionCollection, 'items'> & { items: Array<ResolversTypes['Version']> }>;
-  VersionCreatedTrigger: ResolverTypeWrapper<Omit<VersionCreatedTrigger, 'model' | 'version'> & { model: ResolversTypes['Model'], version: ResolversTypes['Version'] }>;
-  VersionCreatedTriggerDefinition: ResolverTypeWrapper<Omit<VersionCreatedTriggerDefinition, 'model'> & { model: ResolversTypes['Model'] }>;
+  VersionCreatedTrigger: ResolverTypeWrapper<AutomationRunTriggerGraphQLReturn>;
+  VersionCreatedTriggerDefinition: ResolverTypeWrapper<AutomationRevisionTriggerDefinitionGraphQLReturn>;
   VersionMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ViewerResourceGroup: ResolverTypeWrapper<ViewerResourceGroup>;
   ViewerResourceItem: ResolverTypeWrapper<ViewerResourceItem>;
@@ -3648,12 +3649,12 @@ export type ResolversParentTypes = {
   AutomateFunctionRelease: AutomateFunctionReleaseGraphQLReturn;
   AutomateFunctionReleaseCollection: Omit<AutomateFunctionReleaseCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateFunctionRelease']> };
   AutomateFunctionReleasesFilter: AutomateFunctionReleasesFilter;
-  AutomateFunctionRun: Omit<AutomateFunctionRun, 'function'> & { function: ResolversParentTypes['AutomateFunction'] };
+  AutomateFunctionRun: AutomateFunctionRunGraphQLReturn;
   AutomateFunctionRunStatusReportInput: AutomateFunctionRunStatusReportInput;
   AutomateFunctionTemplate: AutomateFunctionTemplate;
   AutomateFunctionsFilter: AutomateFunctionsFilter;
   AutomateMutations: MutationsObjectGraphQLReturn;
-  AutomateRun: Omit<AutomateRun, 'automation' | 'functionRuns' | 'trigger'> & { automation: ResolversParentTypes['Automation'], functionRuns: Array<ResolversParentTypes['AutomateFunctionRun']>, trigger: ResolversParentTypes['AutomationRunTrigger'] };
+  AutomateRun: AutomateRunGraphQLReturn;
   AutomateRunCollection: Omit<AutomateRunCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateRun']> };
   Automation: AutomationGraphQLReturn;
   AutomationCollection: Omit<AutomationCollection, 'items'> & { items: Array<ResolversParentTypes['Automation']> };
@@ -3662,11 +3663,11 @@ export type ResolversParentTypes = {
   AutomationMutations: MutationsObjectGraphQLReturn;
   AutomationRevision: AutomationRevisionGraphQLReturn;
   AutomationRevisionCreateFunctionInput: AutomationRevisionCreateFunctionInput;
-  AutomationRevisionFunction: Omit<AutomationRevisionFunction, 'release'> & { release: ResolversParentTypes['AutomateFunctionRelease'] };
-  AutomationRevisionTriggerDefinition: ResolversParentTypes['VersionCreatedTriggerDefinition'];
+  AutomationRevisionFunction: AutomationRevisionFunctionGraphQLReturn;
+  AutomationRevisionTriggerDefinition: AutomationRevisionTriggerDefinitionGraphQLReturn;
   AutomationRun: Omit<AutomationRun, 'functionRuns'> & { functionRuns: Array<ResolversParentTypes['AutomationFunctionRun']> };
   AutomationRunStatusUpdateInput: AutomationRunStatusUpdateInput;
-  AutomationRunTrigger: ResolversParentTypes['VersionCreatedTrigger'];
+  AutomationRunTrigger: AutomationRunTriggerGraphQLReturn;
   AutomationsStatus: Omit<AutomationsStatus, 'automationRuns'> & { automationRuns: Array<ResolversParentTypes['AutomationRun']> };
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadata;
   BigInt: Scalars['BigInt'];
@@ -3802,8 +3803,8 @@ export type ResolversParentTypes = {
   UserUpdateInput: UserUpdateInput;
   Version: VersionGraphQLReturn;
   VersionCollection: Omit<VersionCollection, 'items'> & { items: Array<ResolversParentTypes['Version']> };
-  VersionCreatedTrigger: Omit<VersionCreatedTrigger, 'model' | 'version'> & { model: ResolversParentTypes['Model'], version: ResolversParentTypes['Version'] };
-  VersionCreatedTriggerDefinition: Omit<VersionCreatedTriggerDefinition, 'model'> & { model: ResolversParentTypes['Model'] };
+  VersionCreatedTrigger: AutomationRunTriggerGraphQLReturn;
+  VersionCreatedTriggerDefinition: AutomationRevisionTriggerDefinitionGraphQLReturn;
   VersionMutations: MutationsObjectGraphQLReturn;
   ViewerResourceGroup: ViewerResourceGroup;
   ViewerResourceItem: ViewerResourceItem;

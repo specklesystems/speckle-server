@@ -26,7 +26,7 @@ import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
   InsertableAutomationRun,
   getAutomation,
-  getAutomationRun,
+  getFullAutomationRunById,
   getAutomationTriggerDefinitions,
   getFunctionRun,
   getFunctionRuns,
@@ -157,7 +157,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         expect(Object.keys(triggered)).length(0)
       })
       it('Triggers all automation runs associated with the model', async () => {
-        const storedTriggers: AutomationTriggerDefinitionRecord[] = [
+        const storedTriggers: AutomationTriggerDefinitionRecord<
+          typeof VersionCreationTriggerType
+        >[] = [
           {
             triggerType: VersionCreationTriggerType,
             triggeringId: cryptoRandomString({ length: 10 }),
@@ -328,7 +330,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           }
         })
 
-        const storedRun = await getAutomationRun(automationRunId)
+        const storedRun = await getFullAutomationRunById(automationRunId)
         if (!storedRun) throw 'cant fint the stored run'
 
         const expectedStatus = 'error'
@@ -413,7 +415,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           }
         })
 
-        const storedRun = await getAutomationRun(automationRunId)
+        const storedRun = await getFullAutomationRunById(automationRunId)
         if (!storedRun) throw 'cant fint the stored run'
 
         const expectedStatus = 'pending'
@@ -953,7 +955,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             projectId: testUserStream.id
           })
 
-          const storedRun = await getAutomationRun(automationRunId)
+          const storedRun = await getFullAutomationRunById(automationRunId)
           expect(storedRun).to.be.ok
 
           const expectedStatus = 'pending'
@@ -1139,7 +1141,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           expect(Object.values(res.errorsByFunctionRunId)).to.be.empty
 
           const [updatedRun, updatedFnRun] = await Promise.all([
-            getAutomationRun(automationRun.id),
+            getFullAutomationRunById(automationRun.id),
             getFunctionRun(functionRunId)
           ])
           expect(updatedRun?.status).to.equal(AutomationRunStatuses.success)

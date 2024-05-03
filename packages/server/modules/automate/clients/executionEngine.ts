@@ -1,57 +1,20 @@
 import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
 import {
+  FunctionReleaseSchemaType,
+  FunctionSchemaType,
+  FunctionWithVersionsSchemaType
+} from '@/modules/automate/helpers/executionEngine'
+import {
   AutomationFunctionRunRecord,
   BaseTriggerManifest,
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
-import { AutomateFunctionTemplateLanguage } from '@/modules/core/graph/generated/graphql'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import { Nullable, SourceAppName, isNullOrUndefined } from '@speckle/shared'
 
 // TODO: Handle error/404 scenarios properly
-
-// TODO: These should be managed in a shared package maybe?
-export type FunctionSchemaType = {
-  functionId: string
-  repoUrl: string
-  functionName: string
-  description: string
-  tags: string[]
-  supportedSourceApps: SourceAppName[]
-  createdAt: string
-  isFeatured: boolean
-  logo: Nullable<string>
-}
-
-export type FunctionReleaseSchemaType = {
-  functionVersionId: string
-  versionTag: string
-  inputSchema: Nullable<Record<string, unknown>>
-  createdAt: string
-  commitId: string
-}
-
-export type FunctionWithVersionsSchemaType = FunctionSchemaType & {
-  functionVersions: FunctionReleaseSchemaType[]
-}
-
-// TODO: Retrieve from API
-export const functionTemplateRepos = <const>[
-  {
-    id: AutomateFunctionTemplateLanguage.Python,
-    title: 'Python',
-    url: 'https://github.com/specklesystems/speckle_automate_python_example',
-    logo: '/images/functions/python.svg'
-  },
-  {
-    id: AutomateFunctionTemplateLanguage.DotNet,
-    title: '.NET / C#',
-    url: 'https://github.com/specklesystems/SpeckleAutomateDotnetExample',
-    logo: '/images/functions/dotnet.svg'
-  }
-]
 
 export type AutomationCreateResponse = {
   automationId: string

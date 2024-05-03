@@ -25,11 +25,13 @@ import {
   Automations,
   knex
 } from '@/modules/core/dbSchema'
+import { AutomationRunsArgs } from '@/modules/core/graph/generated/graphql'
 
 import { LogicError } from '@/modules/shared/errors'
-import { Nullable } from '@speckle/shared'
+import { decodeCursor } from '@/modules/shared/helpers/graphqlHelper'
+import { Nullable, isNullOrUndefined } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import _, { groupBy, keyBy, pick, reduce } from 'lodash'
+import _, { clamp, groupBy, keyBy, pick, reduce } from 'lodash'
 import { SetOptional, SetRequired } from 'type-fest'
 
 export const generateRevisionId = () => cryptoRandomString({ length: 10 })
@@ -194,25 +196,36 @@ export async function getFunctionRunsForAutomationRunIds(params: {
   return keyBy(await q, (r) => r.runId)
 }
 
-export async function getAutomationRun(
+export async function getFullAutomationRunById(
   automationRunId: string
 ): Promise<AutomationRunWithTriggersFunctionRuns | null> {
-  const run = await AutomationRuns.knex<AutomationRunRecord>()
-    .select()
-    .where({ id: automationRunId })
+  const run = await AutomationRuns.knex()
+    .select<AutomationRunWithTriggersFunctionRuns[]>([
+      ...AutomationRuns.cols,
+      AutomationRunTriggers.groupArray('triggers'),
+      AutomationFunctionRuns.groupArray('functionRuns'),
+      AutomationRevisions.col.automationId
+    ])
+    .where(AutomationRuns.col.id, automationRunId)
+    .innerJoin(
+      AutomationRevisions.name,
+      AutomationRevisions.col.id,
+      AutomationRuns.col.automationRevisionId
+    )
+    .innerJoin(
+      AutomationRunTriggers.name,
+      AutomationRunTriggers.col.automationRunId,
+      AutomationRuns.col.id
+    )
+    .innerJoin(
+      AutomationFunctionRuns.name,
+      AutomationFunctionRuns.col.runId,
+      AutomationRuns.col.id
+    )
+    .groupBy(AutomationRuns.col.id)
     .first()
-  if (!run) return null
 
-  const [triggers, functionRuns] = await Promise.all([
-    AutomationRunTriggers.knex()
-      .select<AutomationRunTriggerRecord[]>()
-      .where(AutomationRunTriggers.col.automationRunId, automationRunId),
-    AutomationFunctionRuns.knex()
-      .select<AutomationFunctionRunRecord[]>()
-      .where(AutomationFunctionRuns.col.runId, automationRunId)
-  ])
-
-  return { ...run, triggers, functionRuns }
+  return run || null
 }
 
 export async function storeAutomation(
@@ -461,6 +474,22 @@ export async function getRevisionsTriggerDefinitions(params: {
   return groupBy(await q, (r) => r.automationRevisionId)
 }
 
+export async function getRevisionsFunctions(params: {
+  automationRevisionIds: string[]
+}) {
+  const { automationRevisionIds } = params
+  if (!automationRevisionIds.length) return {}
+
+  const q = AutomationRevisionFunctions.knex<
+    AutomateRevisionFunctionRecord[]
+  >().whereIn(
+    AutomationRevisionFunctions.col.automationRevisionId,
+    automationRevisionIds
+  )
+
+  return groupBy(await q, (r) => r.automationRevisionId)
+}
+
 export async function getFunctionAutomationCounts(params: { functionIds: string[] }) {
   const { functionIds } = params
   if (!functionIds.length) return {}
@@ -486,4 +515,84 @@ export async function getFunctionAutomationCounts(params: { functionIds: string[
     },
     {} as Record<string, number>
   )
+}
+
+type GetAutomationRunsArgs = AutomationRunsArgs & {
+  automationId: string
+  revisionId?: string
+}
+
+const getAutomationRunsTotalCountBaseQuery = <Q>(params: {
+  args: Pick<GetAutomationRunsArgs, 'automationId' | 'revisionId'>
+}) => {
+  const { args } = params
+  const q = AutomationRuns.knex<Q>()
+    .innerJoin(
+      AutomationRevisions.name,
+      AutomationRevisions.col.id,
+      AutomationRuns.col.automationRevisionId
+    )
+    .where(AutomationRevisions.col.automationId, args.automationId)
+
+  if (args.revisionId?.length) {
+    q.andWhere(AutomationRuns.col.automationRevisionId, args.revisionId)
+  }
+
+  return q
+}
+
+export async function getAutomationRunsTotalCount(params: {
+  args: GetAutomationRunsArgs
+}) {
+  const q = getAutomationRunsTotalCountBaseQuery(params).count<[{ count: string }]>(
+    AutomationRuns.col.id
+  )
+
+  const [ret] = await q
+
+  return parseInt(ret.count)
+}
+
+export async function getAutomationRunsItems(params: { args: GetAutomationRunsArgs }) {
+  const { args } = params
+  if (args.limit === 0) return { items: [], cursor: null }
+
+  const q =
+    getAutomationRunsTotalCountBaseQuery<AutomationRunWithTriggersFunctionRuns[]>(
+      params
+    )
+
+  const limit = clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25)
+
+  // Attach trigger & function runs
+  q.select([
+    ...AutomationRuns.cols,
+    AutomationRevisions.col.automationId,
+    AutomationRunTriggers.groupArray('triggers'),
+    AutomationFunctionRuns.groupArray('functionRuns')
+  ])
+    .innerJoin(
+      AutomationRunTriggers.name,
+      AutomationRunTriggers.col.automationRunId,
+      AutomationRuns.col.id
+    )
+    .innerJoin(
+      AutomationFunctionRuns.name,
+      AutomationFunctionRuns.col.runId,
+      AutomationRuns.col.id
+    )
+
+    .groupBy(AutomationRuns.col.id)
+    .orderBy(AutomationRuns.col.createdAt, 'desc')
+    .limit(limit)
+
+  if (args.cursor?.length) {
+    q.andWhere(AutomationRuns.col.createdAt, '<', decodeCursor(args.cursor))
+  }
+
+  const res = await q
+  return {
+    items: res,
+    cursor: res.length ? res[res.length - 1].createdAt.toISOString() : null
+  }
 }

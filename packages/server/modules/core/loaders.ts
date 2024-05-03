@@ -59,6 +59,7 @@ import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
 import { getAutomationFunctionRunResultVersions } from '@/modules/betaAutomations/repositories/automations'
 import { getAppScopes } from '@/modules/auth/repositories'
 import {
+  AutomateRevisionFunctionRecord,
   AutomationRecord,
   AutomationRevisionRecord,
   AutomationTriggerDefinitionRecord
@@ -68,12 +69,17 @@ import {
   getAutomations,
   getFunctionAutomationCounts,
   getLatestAutomationRevisions,
+  getRevisionsFunctions,
   getRevisionsTriggerDefinitions
 } from '@/modules/automate/repositories/automations'
 import {
-  FunctionSchemaType,
-  getFunction
+  getFunction,
+  getFunctionRelease
 } from '@/modules/automate/clients/executionEngine'
+import {
+  FunctionReleaseSchemaType,
+  FunctionSchemaType
+} from '@/modules/automate/helpers/executionEngine'
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -384,6 +390,10 @@ export function buildRequestLoaders(
           'commitId'
         )
         return commitIds.map((i) => results[i]?.count || 0)
+      }),
+      getById: createLoader<string, Nullable<CommitRecord>>(async (commitIds) => {
+        const results = keyBy(await getCommits(commitIds.slice()), (c) => c.id)
+        return commitIds.map((i) => results[i] || null)
       })
     },
     comments: {
@@ -570,16 +580,40 @@ export function buildRequestLoaders(
           automationRevisionIds: ids.slice()
         })
         return ids.map((i) => results[i] || [])
-      })
+      }),
+      getRevisionFunctions: createLoader<string, AutomateRevisionFunctionRecord[]>(
+        async (ids) => {
+          const results = await getRevisionsFunctions({
+            automationRevisionIds: ids.slice()
+          })
+          return ids.map((i) => results[i] || [])
+        }
+      )
     },
     automationsApi: {
-      getFunction: createLoader<string, FunctionSchemaType>(async (fnIds) => {
+      getFunction: createLoader<string, Nullable<FunctionSchemaType>>(async (fnIds) => {
         const results = await Promise.all(
           fnIds.map((fnId) => getFunction({ functionId: fnId }))
         )
 
         return results
-      })
+      }),
+      getFunctionRelease: createLoader<
+        [fnId: string, fnReleaseId: string],
+        Nullable<FunctionReleaseSchemaType>,
+        string
+      >(
+        async (keys) => {
+          const results = await Promise.all(
+            keys.map(([fnId, fnReleaseId]) =>
+              getFunctionRelease({ functionId: fnId, functionReleaseId: fnReleaseId })
+            )
+          )
+
+          return results
+        },
+        { cacheKeyFn: (key) => `${key[0]}:${key[1]}` }
+      )
     }
   }
 
