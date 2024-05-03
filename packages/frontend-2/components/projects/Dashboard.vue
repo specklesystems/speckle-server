@@ -127,14 +127,6 @@ const promoBanners = ref([
     url: 'https://speckle.systems/blog/hackathon/',
     imageSrc: 'http://localhost:8081/_nuxt/assets/images/speckle_logo_big.png',
     priority: 1
-  },
-  {
-    id: 'speckleverse1',
-    primaryText: 'Join our online new hackathon!',
-    secondaryText: 'June 7 sdssds- 9, 2024',
-    url: 'https://speckle.systems/blog/hackathon/',
-    imageSrc: 'http://localhost:8081/_nuxt/assets/images/speckle_logo_big.png',
-    priority: 2
   }
 ])
 
