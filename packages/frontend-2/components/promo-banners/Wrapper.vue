@@ -8,15 +8,7 @@
       :url="activeBanner.url"
       :image-src="activeBanner.imageSrc"
       @banner-dismissed="activeBanner && handleDismissed(activeBanner.id)"
-    >
-      <template #image>
-        <img
-          :src="activeBanner.imageSrc"
-          class="h-10 sm:h-11"
-          :alt="activeBanner.primaryText"
-        />
-      </template>
-    </PromoBannersBanner>
+    ></PromoBannersBanner>
   </div>
 </template>
 

@@ -7,7 +7,12 @@
     class="p-6 lg:p-8 bg-[#27272a] text-white rounded-xl w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-6 mb-2 select-none"
   >
     <div class="flex flex-col lg:flex-row gap-2 lg:gap-6 items-start lg:items-center">
-      <slot name="image"></slot>
+      <!-- Hardcoded image to image for first banner - Need CMS setup to handle this for future banners -->
+      <img
+        src="~~/assets/images/banners/speckleverse.svg"
+        class="h-10 sm:h-11"
+        :alt="primaryText"
+      />
       <div class="flex flex-col sm:flex-row sm:gap-1">
         <span class="font-semibold">{{ primaryText }}</span>
         <span v-if="secondaryText">{{ secondaryText }}</span>
