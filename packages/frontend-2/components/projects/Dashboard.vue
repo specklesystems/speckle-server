@@ -17,7 +17,7 @@
       />
     </div>
 
-    <PromoBannersWrapper :banners="promoBanners" />
+    <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
 
     <div
       v-if="!showEmptyState"
