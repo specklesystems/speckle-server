@@ -51,13 +51,14 @@ import {
   AutomateFunctionReleaseNotFoundError,
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
-import { dbToGraphqlTriggerTypeMap } from '@/modules/automate/helpers/executionEngine'
+import {
+  dbToGraphqlTriggerTypeMap,
+  functionTemplateRepos
+} from '@/modules/automate/helpers/executionEngine'
 
 /**
  * TODO:
  * - automateStatus (version/model)
- * - User.automateInfo
- * - Server.automate
  * - automations plural
  */
 
@@ -355,6 +356,19 @@ export = {
         items: res.items.map(convertFunctionToGraphQLReturn)
       }
     }
+  },
+  User: {
+    // TODO: Needs proper integration w/ Execution engine
+    automateInfo: () => ({
+      hasAutomateGithubApp: false,
+      availableGithubOrgs: []
+    })
+  },
+  ServerInfo: {
+    // TODO: Needs proper integration w/ Execution engine
+    automate: () => ({
+      availableFunctionTemplates: functionTemplateRepos.slice()
+    })
   },
   ProjectMutations: {
     async automationMutations(_parent, { projectId }, ctx) {
