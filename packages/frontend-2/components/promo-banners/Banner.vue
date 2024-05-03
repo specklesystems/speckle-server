@@ -7,7 +7,7 @@
     class="p-6 lg:p-8 bg-[#27272a] text-white rounded-xl w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-6 mb-2 select-none"
   >
     <div class="flex flex-col lg:flex-row gap-2 lg:gap-6 items-start lg:items-center">
-      <img :src="imagePath" :alt="primaryText" class="h-10 lg:h-auto" />
+      <slot name="image"></slot>
       <div class="flex flex-col sm:flex-row sm:gap-1">
         <span class="font-semibold">{{ primaryText }}</span>
         <span v-if="secondaryText">{{ secondaryText }}</span>
@@ -33,21 +33,17 @@
   </div>
 </template>
 <script setup lang="ts">
-import type { Optional } from '@speckle/shared'
-
 const props = defineProps<{
   id: string
   primaryText: string
-  secondaryText?: Optional<string>
-  imageFilename: string
+  secondaryText?: string
   url: string
+  imageSrc: string
 }>()
 
 const emit = defineEmits<{
   (e: 'banner-dismissed', id: string): void
 }>()
-
-const imagePath = computed(() => `~~/assets/images/banners/${props.imageFilename}`)
 
 function dismissBanner() {
   emit('banner-dismissed', props.id)

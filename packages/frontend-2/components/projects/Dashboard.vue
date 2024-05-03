@@ -17,14 +17,7 @@
       />
     </div>
 
-    <CommonBanner
-      id="speckleverse"
-      primary-text="Join our online hackathon!"
-      secondary-text="June 7 - 9, 2024"
-      image="speckleverse.svg"
-      url="https://speckle.systems/blog/hackathon/"
-      @banner-dismissed="handleBannerDismissed"
-    />
+    <PromoBannersWrapper :banners="promoBanners" />
 
     <div
       v-if="!showEmptyState"
@@ -125,6 +118,25 @@ const search = ref('')
 const debouncedSearch = ref('')
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
+
+const promoBanners = ref([
+  {
+    id: 'speckleverse',
+    primaryText: 'Join our online hackathon!',
+    secondaryText: 'June 7 - 9, 2024',
+    url: 'https://speckle.systems/blog/hackathon/',
+    imageSrc: 'http://localhost:8081/_nuxt/assets/images/speckle_logo_big.png',
+    priority: 1
+  },
+  {
+    id: 'speckleverse1',
+    primaryText: 'Join our online new hackathon!',
+    secondaryText: 'June 7 sdssds- 9, 2024',
+    url: 'https://speckle.systems/blog/hackathon/',
+    imageSrc: 'http://localhost:8081/_nuxt/assets/images/speckle_logo_big.png',
+    priority: 2
+  }
+])
 
 const { activeUser, isGuest } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
@@ -323,16 +335,6 @@ const showNewSpeckleBanner = computed(() => {
 
   return true
 })
-
-const handleBannerDismissed = (id: string) => {
-  setDismissedBannerCookie(id)
-}
-
-const setDismissedBannerCookie = (bannerId: string) => {
-  useSynchronizedCookie(`dismissed_banner_${bannerId}`, {
-    default: () => true
-  })
-}
 
 const clearSearch = () => {
   search.value = ''
