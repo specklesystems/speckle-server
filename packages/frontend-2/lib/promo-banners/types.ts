@@ -3,6 +3,5 @@ export type PromoBanner = {
   primaryText: string
   secondaryText?: string
   url: string
-  imageSrc: string
   priority: number
 }

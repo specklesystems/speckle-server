@@ -125,8 +125,7 @@ const promoBanners = ref<PromoBanner[]>([
     id: 'speckleverse',
     primaryText: 'Join our online hackathon!',
     secondaryText: 'June 7 - 9, 2024',
-    url: 'https://speckle.systems/blog/hackathon/',
-    imageSrc: '~~/assets/images/banners/speckleverse.svg',
+    url: 'https://beyond-the-speckleverse.devpost.com/',
     priority: 1
   }
 ])

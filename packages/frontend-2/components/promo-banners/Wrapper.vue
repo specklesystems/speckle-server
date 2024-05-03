@@ -6,7 +6,6 @@
       :primary-text="activeBanner.primaryText"
       :secondary-text="activeBanner.secondaryText"
       :url="activeBanner.url"
-      :image-src="activeBanner.imageSrc"
       @banner-dismissed="activeBanner && handleDismissed(activeBanner.id)"
     ></PromoBannersBanner>
   </div>
@@ -21,9 +20,19 @@ const props = defineProps<{
   banners: PromoBanner[]
 }>()
 
-const hideAllPromoBanners = useSynchronizedCookie('hide-all-promo-banners', {
-  default: () => false,
+const hideAllPromoBanners = useSynchronizedCookie<boolean>('hide-all-promo-banners', {
   expires: dayjs().add(1, 'day').toDate()
+})
+
+// Initialize a map to hold cookie references
+const bannerCookies = ref<Map<string, Ref<boolean>>>(new Map())
+
+// Prepare the cookies for each banner
+props.banners.forEach((banner) => {
+  bannerCookies.value.set(
+    banner.id,
+    useSynchronizedCookie<boolean>(`banner-dismissed-${banner.id}`)
+  )
 })
 
 const activeBannerId = ref<string | null>(null)
@@ -32,13 +41,11 @@ const sortedBanners = computed(() =>
   [...props.banners].sort((a, b) => a.priority - b.priority)
 )
 
-// Set active banner initially based on cookies
+// Determine the active banner based on the sorted list and cookie status
 sortedBanners.value.forEach((banner) => {
-  const cookie = useSynchronizedCookie(`banner-dismissed-${banner.id}`, {
-    default: () => false
-  })
-  if (!cookie.value && !hideAllPromoBanners.value && activeBannerId.value === null) {
-    activeBannerId.value = banner.id // Set active banner if not dismissed and no other active banner
+  const cookie = bannerCookies.value.get(banner.id)
+  if (cookie && !cookie.value && !hideAllPromoBanners.value && !activeBannerId.value) {
+    activeBannerId.value = banner.id
   }
 })
 
@@ -50,12 +57,11 @@ const activeBanner = computed(() =>
 
 function handleDismissed(id: string) {
   hideAllPromoBanners.value = true
-
-  // Hide the dismissed banner
   activeBannerId.value = null
 
-  // Set dismissed cookie
-  const dismissedCookie = useSynchronizedCookie<boolean>(`banner-dismissed-${id}`)
-  dismissedCookie.value = true
+  const dismissedCookie = bannerCookies.value.get(id)
+  if (dismissedCookie) {
+    dismissedCookie.value = true
+  }
 }
 </script>

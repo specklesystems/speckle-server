@@ -43,7 +43,6 @@ const props = defineProps<{
   primaryText: string
   secondaryText?: string
   url: string
-  imageSrc: string
 }>()
 
 const emit = defineEmits<{
