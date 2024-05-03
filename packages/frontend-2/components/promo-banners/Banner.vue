@@ -1,7 +1,7 @@
 <template>
   <!--
     Banner Component has been built for the hackathon, but as new events
-    are added and the banners desiged, this can be modified to allow new styles
+    are added and the banners designed, this can be modified to allow new styles
   -->
   <div
     class="p-6 lg:p-8 bg-[#27272a] text-white rounded-xl w-full flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 sm:gap-6 mb-2 select-none"

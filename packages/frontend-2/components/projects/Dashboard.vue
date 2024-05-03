@@ -96,6 +96,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
+import type { PromoBanner } from '~/lib/promo-banners/types'
 
 const onUserProjectsUpdateSubscription = graphql(`
   subscription OnUserProjectsUpdate {
@@ -119,7 +120,7 @@ const debouncedSearch = ref('')
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
 
-const promoBanners = ref([
+const promoBanners = ref<PromoBanner[]>([
   {
     id: 'speckleverse',
     primaryText: 'Join our online hackathon!',
