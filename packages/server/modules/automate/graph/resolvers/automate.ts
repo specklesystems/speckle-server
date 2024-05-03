@@ -3,7 +3,8 @@ import {
   triggerAutomationRun,
   updateFunction as execEngineUpdateFunction,
   getFunction,
-  getFunctionRelease
+  getFunctionRelease,
+  getFunctions
 } from '@/modules/automate/clients/executionEngine'
 import {
   getAutomation,
@@ -22,6 +23,7 @@ import {
   validateStoredAuthCode
 } from '@/modules/automate/services/executionEngine'
 import {
+  convertFunctionToGraphQLReturn,
   createFunctionFromTemplate,
   updateFunction
 } from '@/modules/automate/services/functionManagement'
@@ -33,7 +35,7 @@ import { getGenericRedis } from '@/modules/core/index'
 import { getUser } from '@/modules/core/repositories/users'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
-import { Roles } from '@speckle/shared'
+import { Roles, isNullOrUndefined } from '@speckle/shared'
 import {
   getBranchLatestCommits,
   getBranchesByIds
@@ -42,6 +44,7 @@ import {
   manuallyTriggerAutomation,
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
+import { AutomateFunctionReleaseGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
 
 export = {
   AutomationRevisionTriggerDefinition: {
@@ -68,6 +71,46 @@ export = {
   Automation: {
     async currentRevision(parent, _args, ctx) {
       return ctx.loaders.automations.getLatestAutomationRevision.load(parent.id)
+    }
+  },
+  AutomateFunction: {
+    async automationCount(parent, _args, ctx) {
+      return ctx.loaders.automations.getFunctionAutomationCount.load(parent.id)
+    },
+    async releases(parent, args) {
+      // TODO: Replace w/ dataloader batch call, when/if possible
+      const fn = await getFunction({
+        functionId: parent.id,
+        releases:
+          args?.cursor || args?.filter?.search || args?.limit
+            ? {
+                cursor: args.cursor || undefined,
+                search: args.filter?.search || undefined,
+                limit: args.limit || undefined
+              }
+            : {}
+      })
+
+      return {
+        cursor: fn.versionCursor,
+        totalCount: fn.versionCount,
+        items: fn.functionVersions.map(
+          (r): AutomateFunctionReleaseGraphQLReturn => ({
+            id: r.functionVersionId,
+            versionTag: r.versionTag,
+            createdAt: new Date(r.createdAt),
+            inputSchema: r.inputSchema,
+            commitId: r.commitId,
+            functionId: parent.id
+          })
+        )
+      }
+    }
+  },
+  AutomateFunctionRelease: {
+    async function(parent, _args, ctx) {
+      const fn = await ctx.loaders.automationsApi.getFunction.load(parent.functionId)
+      return convertFunctionToGraphQLReturn(fn)
     }
   },
   AutomateMutations: {
@@ -158,6 +201,27 @@ export = {
         redis: getGenericRedis()
       })
       return await validate(code)
+    },
+    async automateFunction(_parent, { id }, ctx) {
+      const fn = await ctx.loaders.automationsApi.getFunction.load(id)
+      return convertFunctionToGraphQLReturn(fn)
+    },
+    async automateFunctions(_parent, args) {
+      const res = await getFunctions({
+        query: {
+          query: args.filter?.search || undefined,
+          cursor: args.cursor || undefined,
+          limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
+          functionsWithoutVersions: args.filter?.functionsWithoutReleases || undefined,
+          featuredFunctionsOnly: args.filter?.featuredFunctionsOnly || undefined
+        }
+      })
+
+      return {
+        cursor: res.cursor,
+        totalCount: res.totalCount,
+        items: res.items.map(convertFunctionToGraphQLReturn)
+      }
     }
   },
   ProjectMutations: {

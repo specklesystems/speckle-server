@@ -35,6 +35,7 @@ generates:
         AutomationMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
         AutomationFunctionRun: '@/modules/betaAutomations/helpers/graphTypes#AutomationFunctionRunGraphQLReturn'
         AutomateFunction: '@/modules/automate/helpers/graphTypes#AutomateFunctionGraphQLReturn'
+        AutomateFunctionRelease: '@/modules/automate/helpers/graphTypes#AutomateFunctionReleaseGraphQLReturn'
         Automation: '@/modules/automate/helpers/graphTypes#AutomationGraphQLReturn'
         AutomationRevision: '@/modules/automate/helpers/graphTypes#AutomationRevisionGraphQLReturn'
         ProjectAutomationMutations: '@/modules/automate/helpers/graphTypes#ProjectAutomationMutationsGraphQLReturn'

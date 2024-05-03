@@ -5,7 +5,7 @@ import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from 
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes';
-import { AutomateFunctionGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, ProjectAutomationMutationsGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
+import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, ProjectAutomationMutationsGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -233,6 +233,7 @@ export type AutomateFunctionRelease = {
   commitId: Scalars['String'];
   createdAt: Scalars['DateTime'];
   function: AutomateFunction;
+  functionId: Scalars['String'];
   id: Scalars['ID'];
   inputSchema?: Maybe<Scalars['JSONObject']>;
   versionTag: Scalars['String'];
@@ -3430,7 +3431,7 @@ export type ResolversTypes = {
   AuthStrategy: ResolverTypeWrapper<AuthStrategy>;
   AutomateFunction: ResolverTypeWrapper<AutomateFunctionGraphQLReturn>;
   AutomateFunctionCollection: ResolverTypeWrapper<Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversTypes['AutomateFunction']> }>;
-  AutomateFunctionRelease: ResolverTypeWrapper<Omit<AutomateFunctionRelease, 'function'> & { function: ResolversTypes['AutomateFunction'] }>;
+  AutomateFunctionRelease: ResolverTypeWrapper<AutomateFunctionReleaseGraphQLReturn>;
   AutomateFunctionReleaseCollection: ResolverTypeWrapper<Omit<AutomateFunctionReleaseCollection, 'items'> & { items: Array<ResolversTypes['AutomateFunctionRelease']> }>;
   AutomateFunctionReleasesFilter: AutomateFunctionReleasesFilter;
   AutomateFunctionRun: ResolverTypeWrapper<Omit<AutomateFunctionRun, 'function'> & { function: ResolversTypes['AutomateFunction'] }>;
@@ -3644,7 +3645,7 @@ export type ResolversParentTypes = {
   AuthStrategy: AuthStrategy;
   AutomateFunction: AutomateFunctionGraphQLReturn;
   AutomateFunctionCollection: Omit<AutomateFunctionCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateFunction']> };
-  AutomateFunctionRelease: Omit<AutomateFunctionRelease, 'function'> & { function: ResolversParentTypes['AutomateFunction'] };
+  AutomateFunctionRelease: AutomateFunctionReleaseGraphQLReturn;
   AutomateFunctionReleaseCollection: Omit<AutomateFunctionReleaseCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateFunctionRelease']> };
   AutomateFunctionReleasesFilter: AutomateFunctionReleasesFilter;
   AutomateFunctionRun: Omit<AutomateFunctionRun, 'function'> & { function: ResolversParentTypes['AutomateFunction'] };
@@ -3970,6 +3971,7 @@ export type AutomateFunctionReleaseResolvers<ContextType = GraphQLContext, Paren
   commitId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   function?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType>;
+  functionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   inputSchema?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   versionTag?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

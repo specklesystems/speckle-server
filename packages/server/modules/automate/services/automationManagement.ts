@@ -214,6 +214,7 @@ const validateNewRevisionFunctions =
     const releases = keyBy(
       await Promise.all(
         Object.values(uniqueUpdates).map(async (fn) => ({
+          // TODO: Replace w/ batch call, when/if possible
           ...(await getFunctionRelease(fn)),
           functionId: fn.functionId
         }))

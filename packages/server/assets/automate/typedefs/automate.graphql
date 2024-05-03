@@ -132,6 +132,7 @@ type AutomateFunction {
 
 type AutomateFunctionRelease {
   id: ID!
+  functionId: String!
   function: AutomateFunction!
   versionTag: String!
   createdAt: DateTime!

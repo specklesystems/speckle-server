@@ -66,9 +66,14 @@ import {
 import {
   getAutomationRevisions,
   getAutomations,
+  getFunctionAutomationCounts,
   getLatestAutomationRevisions,
   getRevisionsTriggerDefinitions
 } from '@/modules/automate/repositories/automations'
+import {
+  FunctionSchemaType,
+  getFunction
+} from '@/modules/automate/clients/executionEngine'
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -525,6 +530,12 @@ export function buildRequestLoaders(
       )
     },
     automations: {
+      getFunctionAutomationCount: createLoader<string, number>(async (functionIds) => {
+        const results = await getFunctionAutomationCounts({
+          functionIds: functionIds.slice()
+        })
+        return functionIds.map((i) => results[i] || 0)
+      }),
       getAutomation: createLoader<string, Nullable<AutomationRecord>>(async (ids) => {
         const results = keyBy(
           await getAutomations({ automationIds: ids.slice() }),
@@ -559,6 +570,15 @@ export function buildRequestLoaders(
           automationRevisionIds: ids.slice()
         })
         return ids.map((i) => results[i] || [])
+      })
+    },
+    automationsApi: {
+      getFunction: createLoader<string, FunctionSchemaType>(async (fnIds) => {
+        const results = await Promise.all(
+          fnIds.map((fnId) => getFunction({ functionId: fnId }))
+        )
+
+        return results
       })
     }
   }

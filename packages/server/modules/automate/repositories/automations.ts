@@ -22,13 +22,14 @@ import {
   AutomationRuns,
   AutomationTokens,
   AutomationTriggers,
-  Automations
+  Automations,
+  knex
 } from '@/modules/core/dbSchema'
 
 import { LogicError } from '@/modules/shared/errors'
 import { Nullable } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
-import _, { groupBy, keyBy, pick } from 'lodash'
+import _, { groupBy, keyBy, pick, reduce } from 'lodash'
 import { SetOptional, SetRequired } from 'type-fest'
 
 export const generateRevisionId = () => cryptoRandomString({ length: 10 })
@@ -458,4 +459,31 @@ export async function getRevisionsTriggerDefinitions(params: {
     .groupBy(AutomationTriggers.col.automationRevisionId)
 
   return groupBy(await q, (r) => r.automationRevisionId)
+}
+
+export async function getFunctionAutomationCounts(params: { functionIds: string[] }) {
+  const { functionIds } = params
+  if (!functionIds.length) return {}
+
+  const q = AutomationRevisionFunctions.knex()
+    .select<Array<{ functionId: string; count: string }>>([
+      AutomationRevisionFunctions.col.functionId,
+      knex.raw('count(distinct ' + AutomationRevisions.col.automationId + ') as count')
+    ])
+    .innerJoin(
+      AutomationRevisions.name,
+      AutomationRevisions.col.id,
+      AutomationRevisionFunctions.col.automationRevisionId
+    )
+    .whereIn(AutomationRevisionFunctions.col.functionId, functionIds)
+    .groupBy(AutomationRevisionFunctions.col.functionId)
+
+  return reduce(
+    await q,
+    (acc, r) => {
+      acc[r.functionId] = parseInt(r.count)
+      return acc
+    },
+    {} as Record<string, number>
+  )
 }

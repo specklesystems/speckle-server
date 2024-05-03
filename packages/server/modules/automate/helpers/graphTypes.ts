@@ -2,7 +2,10 @@ import {
   AutomationRecord,
   AutomationRevisionRecord
 } from '@/modules/automate/helpers/types'
-import { AutomateFunction } from '@/modules/core/graph/generated/graphql'
+import {
+  AutomateFunction,
+  AutomateFunctionRelease
+} from '@/modules/core/graph/generated/graphql'
 
 export type AutomateFunctionGraphQLReturn = Pick<
   AutomateFunction,
@@ -14,6 +17,11 @@ export type AutomateFunctionGraphQLReturn = Pick<
   | 'logo'
   | 'tags'
   | 'supportedSourceApps'
+>
+
+export type AutomateFunctionReleaseGraphQLReturn = Pick<
+  AutomateFunctionRelease,
+  'id' | 'versionTag' | 'createdAt' | 'inputSchema' | 'commitId' | 'functionId'
 >
 
 export type AutomationGraphQLReturn = AutomationRecord

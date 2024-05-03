@@ -10,8 +10,10 @@ import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import { Nullable, SourceAppName, isNullOrUndefined } from '@speckle/shared'
 
+// TODO: Handle error/404 scenarios properly
+
 // TODO: These should be managed in a shared package maybe?
-type FunctionSchemaType = {
+export type FunctionSchemaType = {
   functionId: string
   repoUrl: string
   functionName: string
@@ -23,12 +25,16 @@ type FunctionSchemaType = {
   logo: Nullable<string>
 }
 
-type FunctionReleaseSchemaType = {
+export type FunctionReleaseSchemaType = {
   functionVersionId: string
   versionTag: string
   inputSchema: Nullable<Record<string, unknown>>
   createdAt: string
   commitId: string
+}
+
+export type FunctionWithVersionsSchemaType = FunctionSchemaType & {
+  functionVersions: FunctionReleaseSchemaType[]
 }
 
 // TODO: Retrieve from API
@@ -231,8 +237,7 @@ export const updateFunction = async (params: {
   console.log(params)
 }
 
-export type GetFunctionResponse = FunctionSchemaType & {
-  functionVersions: FunctionReleaseSchemaType[]
+export type GetFunctionResponse = FunctionWithVersionsSchemaType & {
   versionCount: number
   versionCursor: Nullable<string>
 }
@@ -240,7 +245,7 @@ export type GetFunctionResponse = FunctionSchemaType & {
 export const getFunction = async (params: {
   functionId: string
   token?: string
-  releases?: { cursor?: string; limit?: number }
+  releases?: { cursor?: string; limit?: number; search?: string }
 }) => {
   const { functionId, token } = params
   const url = getApiUrl(`/api/v1/functions/${functionId}`, {
@@ -275,4 +280,34 @@ export const getFunctionRelease = async (params: {
     }
   })
   return (await response.json()) as GetFunctionReleaseResponse
+}
+
+export type GetFunctionsResponse = {
+  totalCount: number
+  cursor: Nullable<string>
+  items: FunctionWithVersionsSchemaType[]
+}
+
+export const getFunctions = async (params: {
+  query?: {
+    query?: string
+    cursor?: string
+    limit?: number
+    functionsWithoutVersions?: boolean
+    featuredFunctionsOnly?: boolean
+  }
+  token?: string
+}) => {
+  const { query, token } = params
+  const url = getApiUrl(`/api/v1/functions`, { query })
+
+  const response = await fetch(url, {
+    method: 'get',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
+    }
+  })
+
+  return (await response.json()) as GetFunctionsResponse
 }

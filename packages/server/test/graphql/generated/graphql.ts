@@ -223,6 +223,7 @@ export type AutomateFunctionRelease = {
   commitId: Scalars['String'];
   createdAt: Scalars['DateTime'];
   function: AutomateFunction;
+  functionId: Scalars['String'];
   id: Scalars['ID'];
   inputSchema?: Maybe<Scalars['JSONObject']>;
   versionTag: Scalars['String'];

@@ -1,5 +1,6 @@
 import {
   CreateFunctionBody,
+  FunctionSchemaType,
   createFunction,
   getFunction,
   updateFunction as updateExecEngineFunction
@@ -43,6 +44,23 @@ const cleanFunctionLogo = (logo: MaybeNullOrUndefined<string>): Nullable<string>
   if (logo.startsWith('http:')) return logo
   if (logo.startsWith('https:')) return logo
   return null
+}
+
+export const convertFunctionToGraphQLReturn = (
+  fn: FunctionSchemaType
+): AutomateFunctionGraphQLReturn => {
+  const ret: AutomateFunctionGraphQLReturn = {
+    id: fn.functionId,
+    name: fn.functionName,
+    repo: repoUrlToBasicGitRepositoryMetadata(fn.repoUrl),
+    isFeatured: fn.isFeatured,
+    description: fn.description,
+    logo: cleanFunctionLogo(fn.logo),
+    tags: fn.tags,
+    supportedSourceApps: fn.supportedSourceApps
+  }
+
+  return ret
 }
 
 export type CreateFunctionDeps = {
@@ -126,16 +144,5 @@ export const updateFunction =
       }
     })
 
-    const ret: AutomateFunctionGraphQLReturn = {
-      id: apiResult.functionId,
-      name: apiResult.functionName,
-      repo: repoUrlToBasicGitRepositoryMetadata(apiResult.repoUrl),
-      isFeatured: apiResult.isFeatured,
-      description: apiResult.description,
-      logo: cleanFunctionLogo(apiResult.logo),
-      tags: apiResult.tags,
-      supportedSourceApps: apiResult.supportedSourceApps
-    }
-
-    return ret
+    return convertFunctionToGraphQLReturn(apiResult)
   }
