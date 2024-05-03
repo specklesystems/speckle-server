@@ -33,10 +33,12 @@
   </div>
 </template>
 <script setup lang="ts">
+import type { Optional } from '@speckle/shared'
+
 const props = defineProps<{
   id: string
   primaryText: string
-  secondaryText?: string
+  secondaryText?: Optional<string>
   imageFilename: string
   url: string
 }>()
@@ -48,6 +50,6 @@ const emit = defineEmits<{
 const imagePath = computed(() => `~~/assets/images/banners/${props.imageFilename}`)
 
 function dismissBanner() {
-  emit('banner-dismissed', props.id as string)
+  emit('banner-dismissed', props.id)
 }
 </script>
