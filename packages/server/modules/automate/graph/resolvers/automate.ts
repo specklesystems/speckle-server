@@ -7,10 +7,13 @@ import {
   getFunctions
 } from '@/modules/automate/clients/executionEngine'
 import {
+  GetProjectAutomationsParams,
   getAutomation,
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
+  getProjectAutomationsItems,
+  getProjectAutomationsTotalCount,
   storeAutomation,
   storeAutomationRevision,
   updateAutomation as updateDbAutomation
@@ -59,7 +62,6 @@ import {
 /**
  * TODO:
  * - automateStatus (version/model)
- * - automations plural
  */
 
 export = {
@@ -103,6 +105,23 @@ export = {
   Project: {
     async automation(parent, args, ctx) {
       return ctx.loaders.streams.getAutomation.forStream(parent.id).load(args.id)
+    },
+    async automations(parent, args) {
+      const retrievalArgs: GetProjectAutomationsParams = {
+        projectId: parent.id,
+        args
+      }
+
+      const [{ items, cursor }, totalCount] = await Promise.all([
+        getProjectAutomationsItems(retrievalArgs),
+        getProjectAutomationsTotalCount(retrievalArgs)
+      ])
+
+      return {
+        items,
+        totalCount,
+        cursor
+      }
     }
   },
   Automation: {
