@@ -60,6 +60,16 @@ import {
 } from '@/modules/automate/helpers/executionEngine'
 import { mapDbStatusToGqlStatus } from '@/modules/automate/services/runsManagement'
 
+/**
+ * TODO:
+ * - Encryption
+ * - Log streaming
+ * - Real testing
+ * - FE:
+ *  - Disable function create/update
+ *  - Fix up pagination & all remaining TODOs
+ */
+
 export = {
   AutomationRevisionTriggerDefinition: {
     __resolveType(parent) {

@@ -1,6 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { LimitedUser, Resolvers } from '@/modules/core/graph/generated/graphql'
+import {
+  AutomateRunStatus,
+  LimitedUser,
+  Resolvers
+} from '@/modules/core/graph/generated/graphql'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { Automate, Roles, SourceAppNames, isNullOrUndefined } from '@speckle/shared'
 import { times } from 'lodash'
@@ -45,7 +49,7 @@ export async function buildMocksConfig(): Promise<{
   mockEntireSchema: boolean
   resolvers?: Resolvers | ((store: IMockStore) => Resolvers)
 }> {
-  return { mocks: false, mockEntireSchema: false }
+  // return { mocks: false, mockEntireSchema: false }
 
   // TODO: Disable before merging!
   if (isTestEnv()) return { mocks: false, mockEntireSchema: false }
@@ -58,6 +62,19 @@ export async function buildMocksConfig(): Promise<{
 
   return {
     resolvers: (store) => ({
+      AutomationRevisionTriggerDefinition: {
+        __resolveType: () => 'VersionCreatedTriggerDefinition'
+      },
+      AutomationRunTrigger: {
+        __resolveType: () => 'VersionCreatedTrigger'
+      },
+      VersionCreatedTriggerDefinition: {
+        model: store.get('Model') as any
+      },
+      VersionCreatedTrigger: {
+        model: store.get('Model') as any,
+        version: store.get('Version') as any
+      },
       Query: {
         automateFunctions: () => {
           const forceZero = false
@@ -130,7 +147,8 @@ export async function buildMocksConfig(): Promise<{
             totalCount: count,
             items: times(count, () => store.get('AutomateRun'))
           } as any
-        }
+        },
+        currentRevision: () => store.get('AutomationRevision') as any
       },
       AutomationRevision: {
         triggerDefinitions: async (parent) => {
@@ -146,7 +164,12 @@ export async function buildMocksConfig(): Promise<{
               automationRevisionId: parent.id
             })
           )
-        }
+        },
+        functions: () => [store.get('AutomateFunction') as any]
+      },
+      AutomationRevisionFunction: {
+        parameters: () => ({}),
+        release: () => store.get('AutomateFunctionRelease') as any
       },
       AutomateRun: {
         trigger: async (parent) => {
@@ -157,9 +180,26 @@ export async function buildMocksConfig(): Promise<{
             triggeringId: version.id,
             automationRunId: parent.id
           }
-        }
+        },
+        automation: () => store.get('Automation') as any,
+        status: () => faker.helpers.arrayElement(Object.values(AutomateRunStatus))
+      },
+      AutomateFunctionRun: {
+        function: () => store.get('AutomateFunction') as any,
+        status: () => faker.helpers.arrayElement(Object.values(AutomateRunStatus))
       },
       ProjectAutomationMutations: {
+        create: (_parent, args) => {
+          const {
+            input: { name, enabled }
+          } = args
+          const automation = store.get('Automation') as any
+          return {
+            ...automation,
+            name,
+            enabled
+          }
+        },
         update: (_parent, args) => {
           const {
             input: { id, name, enabled }
@@ -172,7 +212,8 @@ export async function buildMocksConfig(): Promise<{
             ...(isNullOrUndefined(enabled) ? {} : { enabled })
           }
         },
-        trigger: () => true
+        trigger: () => true,
+        createRevision: () => store.get('AutomationRevision') as any
       },
       UserAutomateInfo: {
         hasAutomateGithubApp: () => {
@@ -184,17 +225,42 @@ export async function buildMocksConfig(): Promise<{
             faker.company.companyName()
           )
         }
-      }
-      // AutomateFunction: {
-      //   creator: async (_parent, args, ctx) => {
-      //     const rand = faker.datatype.boolean()
-      //     const activeUser = ctx.userId
-      //       ? await ctx.loaders.users.getUser.load(ctx.userId)
-      //       : null
+      },
+      AutomateFunction: {
+        // creator: async (_parent, args, ctx) => {
+        //   const rand = faker.datatype.boolean()
+        //   const activeUser = ctx.userId
+        //     ? await ctx.loaders.users.getUser.load(ctx.userId)
+        //     : null
 
-      //     return rand ? (store.get('LimitedUser') as any) : activeUser
-      //   }
-      // }
+        //   return rand ? (store.get('LimitedUser') as any) : activeUser
+        // }
+        releases: () => store.get('AutomateFunctionReleaseCollection') as any,
+        automationCount: () => faker.datatype.number({ min: 0, max: 99 })
+      },
+      AutomateFunctionRelease: {
+        function: () => store.get('AutomateFunction') as any
+      },
+      TriggeredAutomationsStatus: {
+        status: () => faker.helpers.arrayElement(Object.values(AutomateRunStatus))
+      },
+      AutomateMutations: {
+        createFunction: () => store.get('AutomateFunction') as any,
+        updateFunction: (_parent, args) => {
+          const {
+            input: { id, name, description, supportedSourceApps, tags }
+          } = args
+          const func = store.get('AutomateFunction', { id }) as any
+          return {
+            ...func,
+            id,
+            ...(name?.length ? { name } : {}),
+            ...(description?.length ? { description } : {}),
+            ...(supportedSourceApps?.length ? { supportedSourceApps } : {}),
+            ...(tags?.length ? { tags } : {})
+          }
+        }
+      }
     }),
     mocks: {
       BlobMetadata: () => ({
@@ -203,7 +269,7 @@ export async function buildMocksConfig(): Promise<{
         fileSize: () => faker.datatype.number({ min: 1, max: 1000 })
       }),
       TriggeredAutomationsStatus: () => ({
-        automationRuns: () => [...new Array(faker.datatype.number({ min: 0, max: 5 }))]
+        automationRuns: () => [...new Array(faker.datatype.number({ min: 1, max: 5 }))]
       }),
       AutomationRevision: () => ({
         functions: () => [undefined] // array of 1 always,
