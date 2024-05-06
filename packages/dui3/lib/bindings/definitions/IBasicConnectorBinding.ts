@@ -35,6 +35,7 @@ export type DocumentInfo = {
   location: string
   name: string
   id: string
+  message?: string
 }
 
 export type ToastInfo = {
