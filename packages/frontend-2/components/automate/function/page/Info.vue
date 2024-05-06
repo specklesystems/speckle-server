@@ -54,33 +54,24 @@
         </div>
       </AutomateFunctionPageInfoBlock>
     </div>
-    <div>
-      <AutomateFunctionPageInfoBlock
-        title="Description"
-        :rounded-bottom="false"
-        horizontal-padding="px-4"
-        :icon="IconNotes"
-      >
-        <CommonProseMarkdownDescription :markdown="description" />
-      </AutomateFunctionPageInfoBlock>
-      <AutomateFunctionPageInfoBlock
-        title="Readme"
-        :icon="BookOpenIcon"
-        horizontal-padding="px-4"
-        :rounded-top="false"
-      >
-        <CommonProseGithubReadme
-          :readme-markdown="rawReadme || ''"
-          :repo="repo || ''"
-          :commit-id="selectedReleaseCommitId"
-        />
-      </AutomateFunctionPageInfoBlock>
-    </div>
+    <AutomateFunctionPageInfoBlock
+      title="Description"
+      :icon="ChatBubbleBottomCenterTextIcon"
+    >
+      <CommonProseMarkdownDescription :markdown="description" />
+    </AutomateFunctionPageInfoBlock>
+    <AutomateFunctionPageInfoBlock title="Readme" :icon="BookOpenIcon">
+      <CommonProseGithubReadme
+        :readme-markdown="rawReadme || ''"
+        :repo="repo || ''"
+        :commit-id="selectedReleaseCommitId"
+      />
+    </AutomateFunctionPageInfoBlock>
     <div
-      class="mt-9 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center"
+      class="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center"
     >
       <div>
-        <div class="font-bold">Ready to go?</div>
+        <div class="font-bold mb-2">Ready to go?</div>
         <div class="label-light text-foreground-2">
           Use this function to create an automation on your project.
         </div>
@@ -90,7 +81,7 @@
         class="shrink-0"
         @click="$emit('createAutomation')"
       >
-        Create Automation
+        Use in Automation
       </FormButton>
     </div>
     <AutomateFunctionPageParametersDialog
@@ -106,7 +97,8 @@ import {
   InformationCircleIcon,
   ArrowTopRightOnSquareIcon,
   BookOpenIcon,
-  BoltIcon
+  BoltIcon,
+  ChatBubbleBottomCenterTextIcon
 } from '@heroicons/vue/24/outline'
 import dayjs from 'dayjs'
 import {
@@ -116,7 +108,6 @@ import {
 } from '~/lib/automate/composables/github'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateFunctionPageInfo_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
-import IconNotes from '~~/components/global/icon/Notes.vue'
 
 // TODO: Responsivity everywhere
 

@@ -12,7 +12,6 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { difference, differenceBy } from 'lodash-es'
@@ -31,16 +30,15 @@ const updateFunction = useUpdateAutomateFunction()
 
 const buttons = computed((): LayoutDialogButton[] => [
   {
-    text: 'Close',
+    text: 'Cancel',
     props: {
       color: 'secondary',
-      iconLeft: ChevronLeftIcon,
       textColor: 'primary'
     },
     onClick: () => (open.value = false)
   },
   {
-    text: 'Create',
+    text: 'Save',
     submit: true,
     disabled: mutationLoading.value
   }

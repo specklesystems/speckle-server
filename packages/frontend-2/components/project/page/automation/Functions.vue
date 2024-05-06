@@ -1,25 +1,19 @@
 <template>
   <div class="flex flex-col">
-    <h2 class="h6 font-bold">Function</h2>
-    <div class="text-foreground-2">
-      Note: functions do not automatically update to their latest release. To do so,
-      please select it manually via the edit dialog.
-    </div>
-    <div class="mt-2">
-      <AutomateFunctionCardView v-if="functions.length">
-        <AutomateFunctionCard
-          v-for="fn in functions"
-          :key="fn.id"
-          :fn="fn"
-          show-edit
-          @edit="onEdit(fn)"
-        />
-      </AutomateFunctionCardView>
-      <CommonGenericEmptyState
-        v-else
-        message="No valid functions are associated with this automation"
+    <h2 class="h6 font-bold mb-6">Function</h2>
+    <AutomateFunctionCardView v-if="functions.length" vertical>
+      <AutomateFunctionCard
+        v-for="fn in functions"
+        :key="fn.id"
+        :fn="fn"
+        show-edit
+        @edit="onEdit(fn)"
       />
-    </div>
+    </AutomateFunctionCardView>
+    <CommonGenericEmptyState
+      v-else
+      message="No valid functions are associated with this automation"
+    />
     <ProjectPageAutomationFunctionSettingsDialog
       v-model:open="dialogOpen"
       :project-id="projectId"
