@@ -151,12 +151,6 @@ export class SketchupBridge extends BaseBridge {
 
     // CONVERSION WILL START AFTER THAT
     await this.runMethod('afterGetObjects', args as unknown as unknown[])
-
-    // TODO: SketchUp doesn't return yet baked object ids
-    hostAppStore.setModelReceiveResult({
-      modelCardId: eventPayload.modelCardId,
-      receiveResult: { bakedObjectIds: [], display: false }
-    })
   }
 
   /**
