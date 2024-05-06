@@ -8,7 +8,7 @@
         >
           {{ automation.name }}
         </RouterLink>
-        <template v-if="!isEnabled.value">
+        <template v-if="!isEnabled">
           <div>
             <CommonBadge size="lg" color-classes="bg-danger-lighter text-danger-darker">
               Disabled
@@ -18,7 +18,6 @@
       </div>
 
       <CommonTextLink
-        size=""
         class="font-bold"
         :to="projectAutomationRoute(projectId, automation.id)"
       >
