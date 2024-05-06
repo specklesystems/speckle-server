@@ -48,7 +48,8 @@ uniform float opacity;
 #endif
 
 varying vec3 vViewPosition;
-#define CUSTOM_TONEMAPPING 
+/** We're disabling color grading for now until we want to properly offer it to the users */
+//#define CUSTOM_TONEMAPPING 
 
 #ifdef CUSTOM_TONEMAPPING
 

@@ -138,3 +138,5 @@ export type {
   MeasurementOptions,
   FilteringState
 }
+
+export * as UrlHelper from './modules/UrlHelper'
