@@ -124,7 +124,7 @@ const pageTabItems = computed((): LayoutPageTabItem[] => [
           title: 'Automations',
           id: 'automations',
           icon: BoltIcon,
-          tag: 'New'
+          tag: 'Beta'
         }
       ]
     : [])

@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col w-full">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between mb-2">
       <h2 class="h6 font-bold">Runs</h2>
       <FormButton :icon-left="ArrowPathIcon" @click="onTrigger">
         Trigger Automation

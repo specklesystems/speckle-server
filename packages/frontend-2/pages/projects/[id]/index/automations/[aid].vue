@@ -1,8 +1,23 @@
 <template>
   <div v-if="automation && project" class="flex flex-col gap-8 items-start">
     <ProjectPageAutomationHeader :automation="automation" :project="project" />
-    <ProjectPageAutomationFunctions :automation="automation" :project-id="projectId" />
-    <ProjectPageAutomationRuns :project-id="projectId" :automation="automation" />
+
+    <div class="lg:grid xl:grid-cols-4 gap-6 w-full">
+      <div
+        class="grid gap-6 mb-6 md:grid-cols-2 lg:grid-cols-3 xl:flex xl:flex-col xl:col-span-1"
+      >
+        <ProjectPageAutomationFunctions
+          :automation="automation"
+          :project-id="projectId"
+        />
+        <ProjectPageAutomationModels :automation="automation" :project="project" />
+      </div>
+      <ProjectPageAutomationRuns
+        class="xl:col-span-3"
+        :project-id="projectId"
+        :automation="automation"
+      />
+    </div>
   </div>
   <CommonLoadingBar v-else-if="loading" loading />
   <div v-else />

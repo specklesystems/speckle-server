@@ -1,25 +1,40 @@
 <template>
-  <div class="flex flex-col gap-4">
-    <div class="flex items-center py-2 border-b border-outline-3">
+  <div class="bg-foundation border border-outline-3 rounded-lg pt-5 px-6 pb-6">
+    <div class="flex w-full justify-between items-center mb-2">
+      <div class="flex flex-col md:flex-row gap-4">
+        <RouterLink
+          class="h5 font-bold text-foreground hover:underline"
+          :to="projectAutomationRoute(projectId, automation.id)"
+        >
+          {{ automation.name }}
+        </RouterLink>
+        <template v-if="!isEnabled.value">
+          <div>
+            <CommonBadge size="lg" color-classes="bg-danger-lighter text-danger-darker">
+              Disabled
+            </CommonBadge>
+          </div>
+        </template>
+      </div>
+
       <CommonTextLink
-        :icon-right="ChevronRightIcon"
-        size="lg"
-        class="!font-bold"
+        size=""
+        class="font-bold"
         :to="projectAutomationRoute(projectId, automation.id)"
       >
-        {{ automation.name }}
+        View Details
+        <ChevronRightIcon class="ml-2 w-4 h-4" />
       </CommonTextLink>
     </div>
-    <div class="flex gap-1 items-center">
-      <Component :is="enabledIcon" class="w-5 h-5" />
-      <div class="label-light">{{ enabledText }}</div>
-    </div>
-    <div class="flex flex-col">
+    <div class="flex flex-col mb-6">
       <template v-if="triggerModels.length">
-        <div v-for="model in triggerModels" :key="model.id" class="truncate">
-          <CommonTextLink :icon-left="CubeIcon" :to="finalModelUrl(model.id)">
-            {{ model.name }}
-          </CommonTextLink>
+        <div class="flex gap-2">
+          <div class="mt-1">Triggered by</div>
+          <div v-for="model in triggerModels" :key="model.id" class="truncate">
+            <CommonTextLink :icon-left="CubeIcon" :to="finalModelUrl(model.id)">
+              {{ model.name }}
+            </CommonTextLink>
+          </div>
         </div>
       </template>
       <div
@@ -39,8 +54,6 @@
 </template>
 <script setup lang="ts">
 import {
-  PlayIcon,
-  PauseIcon,
   ChevronRightIcon,
   CubeIcon,
   ExclamationTriangleIcon
@@ -83,8 +96,6 @@ const props = defineProps<{
 const { modelUrl } = useViewerRouteBuilder()
 
 const isEnabled = computed(() => props.automation.enabled)
-const enabledIcon = computed(() => (isEnabled.value ? PauseIcon : PlayIcon))
-const enabledText = computed(() => (isEnabled.value ? 'Enabled' : 'Paused'))
 
 const triggerModels = computed(
   () =>
