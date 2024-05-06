@@ -1,6 +1,7 @@
 <template>
   <div class="flex items-center gap-2">
     <HeadlessSwitch
+      :id="id || name"
       v-model="enabled"
       :class="switchClasses"
       :name="name"
@@ -18,7 +19,7 @@
       </div>
       <span :class="sliderClasses"></span>
     </HeadlessSwitch>
-    <label :for="name" :class="labelClasses">
+    <label :for="id || name" :class="labelClasses">
       <span>{{ title }}</span>
     </label>
   </div>
@@ -36,6 +37,7 @@ const props = withDefaults(
     name: string
     label?: string
     disabled?: boolean
+    id?: string
   }>(),
   {
     showLabel: true
