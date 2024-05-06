@@ -16,6 +16,9 @@ if (env === 'build') {
   outputFile = filename + '.js'
 }
 
+/**
+ * @type {import('webpack').Configuration}
+ */
 const config = {
   mode,
   entry: path.resolve(__dirname + '/render_page/src/app.js'),
@@ -54,7 +57,10 @@ const config = {
       path.resolve('./node_modules'),
       path.resolve('.render_page/src')
     ],
-    extensions: ['.json', '.js']
+    extensions: ['.json', '.js'],
+    fallback: {
+      tty: false
+    }
   },
   devServer: {
     contentBase: path.join(__dirname, 'example'),
