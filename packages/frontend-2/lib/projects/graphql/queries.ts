@@ -237,11 +237,11 @@ export const projectAutomationPageQuery = graphql(`
 `)
 
 export const projectAutomationAccessCheckQuery = graphql(`
-  query ProjectAutomationAccessCheck($projectId: String!, $automationId: String!) {
+  query ProjectAutomationAccessCheck($projectId: String!) {
     project(id: $projectId) {
       id
-      automation(id: $automationId) {
-        id
+      automations(limit: 0) {
+        totalCount
       }
     }
   }

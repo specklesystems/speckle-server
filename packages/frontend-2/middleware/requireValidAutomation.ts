@@ -1,42 +1,44 @@
 import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  errorFailedAtPathSegment,
+  getFirstErrorMessage,
+  resolveGenericStatusCode
 } from '~/lib/common/helpers/graphql'
 import { projectAutomationAccessCheckQuery } from '~/lib/projects/graphql/queries'
 
 export default defineNuxtRouteMiddleware(async (to) => {
   const projectId = to.params.id as string
-  const automationId = to.params.aid as string
+  // const automationId = to.params.aid as string
 
   const client = useApolloClientFromNuxt()
 
   const { data, errors } = await client
     .query({
       query: projectAutomationAccessCheckQuery,
-      variables: { projectId, automationId },
+      variables: { projectId },
       context: {
         skipLoggingErrors: true
       }
     })
     .catch(convertThrowIntoFetchResult)
 
-  if (data?.project?.automation?.id) return
+  if (data?.project?.automations) return
 
-  const isForbiddenProject = (errors || []).find(
-    (e) => e.extensions['code'] === 'FORBIDDEN'
-  )
+  const isForbidden = (errors || []).find((e) => e.extensions['code'] === 'FORBIDDEN')
   const isNotFoundProject = (errors || []).find(
     (e) => e.extensions['code'] === 'STREAM_NOT_FOUND'
   )
   const isNotFoundAutomation = (errors || []).find(
     (e) => e.extensions['code'] === 'AUTOMATION_NOT_FOUND'
   )
-  if (isForbiddenProject) {
+  if (isForbidden) {
     return abortNavigation(
       createError({
         statusCode: 403,
-        message: 'You do not have access to this project'
+        message: errorFailedAtPathSegment(isForbidden, 'project')
+          ? 'You do not have access to this project'
+          : 'Only project owners can access project automations'
       })
     )
   }
@@ -57,7 +59,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const errMsg = getFirstErrorMessage(errors)
     return abortNavigation(
       createError({
-        statusCode: 500,
+        statusCode: resolveGenericStatusCode(errors),
         message: errMsg
       })
     )

@@ -24,7 +24,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import type { Optional } from '@speckle/shared'
+import { Roles, type Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
@@ -103,6 +103,8 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
   }
 }
 
+const isOwner = computed(() => project.value?.role === Roles.Stream.Owner)
+
 const pageTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'Models',
@@ -116,12 +118,16 @@ const pageTabItems = computed((): LayoutPageTabItem[] => [
     icon: ChatBubbleLeftRightIcon,
     count: commentCount.value
   },
-  {
-    title: 'Automations',
-    id: 'automations',
-    icon: BoltIcon,
-    tag: 'New'
-  }
+  ...(isOwner.value
+    ? [
+        {
+          title: 'Automations',
+          id: 'automations',
+          icon: BoltIcon,
+          tag: 'New'
+        }
+      ]
+    : [])
 ])
 
 const activePageTab = computed({

@@ -402,3 +402,5 @@ export async function buildMocksConfig(): Promise<{
     mockEntireSchema: false
   }
 }
+
+export type AppMocksConfig = Awaited<ReturnType<typeof buildMocksConfig>>

@@ -60,7 +60,6 @@ import {
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
-import { addMocksToSchema } from '@graphql-tools/mock'
 import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 
@@ -249,18 +248,7 @@ export async function buildApolloServer(
   subscriptionServerResolver?: () => SubscriptionServer
 ): Promise<ApolloServer> {
   const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
-  let schema = ModulesSetup.graphSchema()
-  const { mockEntireSchema, mocks, resolvers } = await buildMocksConfig()
-
-  // Apply mocks manually
-  if (mocks || mockEntireSchema) {
-    schema = addMocksToSchema({
-      schema,
-      mocks: !mocks || mocks === true ? {} : mocks,
-      preserveResolvers: !mockEntireSchema,
-      resolvers
-    })
-  }
+  const schema = ModulesSetup.graphSchema(await buildMocksConfig())
 
   const server = new ApolloServer({
     schema,
