@@ -16,7 +16,6 @@ graphql(`
   fragment AutomationRunDetails on AutomateRun {
     id
     status
-    reason
     trigger {
       ... on VersionCreatedTrigger {
         version {

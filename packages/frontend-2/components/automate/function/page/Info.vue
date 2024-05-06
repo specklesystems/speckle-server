@@ -123,7 +123,12 @@ import IconNotes from '~~/components/global/icon/Notes.vue'
 graphql(`
   fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {
     id
-    repoUrl
+    repo {
+      id
+      url
+      owner
+      name
+    }
     automationCount
     description
     releases(limit: 1) {
@@ -146,7 +151,7 @@ const props = defineProps<{
   fn: AutomateFunctionPageInfo_AutomateFunctionFragment
 }>()
 
-const repoUrl = computed(() => props.fn.repoUrl)
+const repoUrl = computed(() => props.fn.repo.url)
 const latestRelease = computed(() =>
   props.fn.releases.items.length ? props.fn.releases.items[0] : undefined
 )

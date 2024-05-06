@@ -11,7 +11,7 @@
         <AutomateFunctionLogo :logo="fn.logo" />
         <div class="flex flex-col truncate">
           <div class="normal font-semibold text-foreground truncate">{{ fn.name }}</div>
-          <div class="label-light">by {{ fn.creator?.name || 'Deleted User' }}</div>
+          <div class="label-light">by {{ fn.repo.owner + '/' + fn.repo.name }}</div>
         </div>
       </div>
       <div class="label-light text-foreground-2 line-clamp-3 h-16">
@@ -80,8 +80,10 @@ graphql(`
     isFeatured
     description
     logo
-    creator {
+    repo {
       id
+      url
+      owner
       name
     }
   }

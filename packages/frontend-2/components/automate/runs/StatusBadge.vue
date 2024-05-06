@@ -1,8 +1,5 @@
 <template>
-  <CommonBadge
-    v-tippy="run.reason"
-    :color-classes="[runStatusClasses(run), 'shrink-0 grow-0'].join(' ')"
-  >
+  <CommonBadge :color-classes="[runStatusClasses(run), 'shrink-0 grow-0'].join(' ')">
     {{ run.status.toUpperCase() }}
   </CommonBadge>
 </template>

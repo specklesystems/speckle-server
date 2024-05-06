@@ -215,6 +215,7 @@ const onSave = async () => {
         functions: [
           {
             functionReleaseId: rId,
+            functionId: fId,
             parameters
           }
         ],

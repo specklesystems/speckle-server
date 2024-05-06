@@ -59,7 +59,7 @@ definePageMeta({
   middleware: ['require-valid-function']
 })
 
-const { activeUser } = useActiveUser()
+// const { activeUser } = useActiveUser()
 const route = useRoute()
 const functionId = computed(() => route.params.fid as string)
 const loading = useQueryLoading()
@@ -72,12 +72,12 @@ const showNewAutomationDialog = ref(false)
 
 const fn = computed(() => result.value?.automateFunction)
 const isOwner = computed(
-  () =>
-    !!(
-      activeUser.value?.id &&
-      fn.value?.creator &&
-      activeUser.value.id === fn.value.creator.id
-    )
+  () => false // TODO: Gergo rethinking function auth logic
+  // !!(
+  //   activeUser.value?.id &&
+  //   fn.value?.creator &&
+  //   activeUser.value.id === fn.value.creator.id
+  // )
 )
 
 const editModel = computed((): Optional<FunctionDetailsFormValues> => {

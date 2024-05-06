@@ -302,6 +302,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
           functions: [
             {
               functionReleaseId: fnRelease.id,
+              functionId: fn.id,
               parameters: parametersString
             }
           ],
