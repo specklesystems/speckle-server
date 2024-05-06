@@ -241,7 +241,7 @@ const validateNewRevisionFunctions =
     }
   }
 
-type CreateAutomationRevisionDeps = {
+export type CreateAutomationRevisionDeps = {
   getAutomation: typeof getAutomation
   storeAutomationRevision: typeof storeAutomationRevision
 } & ValidateNewTriggerDefinitionsDeps &

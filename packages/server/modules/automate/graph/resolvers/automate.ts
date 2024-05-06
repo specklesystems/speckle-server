@@ -64,6 +64,7 @@ import { mapDbStatusToGqlStatus } from '@/modules/automate/services/runsManageme
  * TODO:
  * - Encryption
  * - Log streaming
+ * - Proper error handliong exec engine client
  * - Real testing
  * - FE:
  *  - Disable function create/update

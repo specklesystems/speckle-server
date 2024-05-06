@@ -441,7 +441,12 @@ const buildAutomationUpdate = () => {
       })
 
       it('fails when refering to nonexistent function releases', async () => {
-        const create = buildAutomationRevisionCreate()
+        const create = buildAutomationRevisionCreate({
+          getFunctionRelease: async () => {
+            // TODO: Update once we know how exec engine should respond
+            throw new Error('Function release with ID XXX not found')
+          }
+        })
 
         const input = validAutomationRevisionCreateInput()
         input.functions.forEach((fn) => {

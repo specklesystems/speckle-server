@@ -23,7 +23,6 @@ import { Roles, Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { Merge } from 'type-fest'
-import { getLogger } from '@/modules/automate/index'
 import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
 import {
   triggerAutomationRun,
@@ -33,6 +32,7 @@ import { TriggerAutomationError } from '@/modules/automate/errors/runs'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
+import { automateLogger } from '@/logging/logging'
 
 export type OnModelVersionCreateDeps = {
   getTriggers: typeof getActiveTriggerDefinitions
@@ -68,7 +68,7 @@ export const onModelVersionCreate =
           })
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
-          getLogger().error(
+          automateLogger.error(
             'Failure while triggering run onModelVersionCreate',
             error,
             params

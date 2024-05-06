@@ -209,7 +209,9 @@ export async function getFullAutomationRunById(
       ...AutomationRuns.cols,
       AutomationRunTriggers.groupArray('triggers'),
       AutomationFunctionRuns.groupArray('functionRuns'),
-      AutomationRevisions.col.automationId
+      knex.raw(`(array_agg(??))[0] as automationId`, [
+        AutomationRevisions.col.automationId
+      ])
     ])
     .where(AutomationRuns.col.id, automationRunId)
     .innerJoin(
@@ -572,7 +574,9 @@ export async function getAutomationRunsItems(params: { args: GetAutomationRunsAr
   // Attach trigger & function runs
   q.select([
     ...AutomationRuns.cols,
-    AutomationRevisions.col.automationId,
+    knex.raw(`(array_agg(??))[0] as automationId`, [
+      AutomationRevisions.col.automationId
+    ]),
     AutomationRunTriggers.groupArray('triggers'),
     AutomationFunctionRuns.groupArray('functionRuns')
   ])

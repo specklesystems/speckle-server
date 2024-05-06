@@ -1,4 +1,4 @@
-import { getLogger } from '@/modules/automate'
+import { automateLogger } from '@/logging/logging'
 import { FunctionRunReportStatusesError } from '@/modules/automate/errors/runs'
 import {
   AutomationRunStatus,
@@ -254,7 +254,7 @@ export const reportFunctionRunStatuses =
           updatedAt: new Date()
         })
       } catch (e) {
-        getLogger().error('Automation run status update failed', e, {
+        automateLogger.error('Automation run status update failed', e, {
           runId,
           updates
         })

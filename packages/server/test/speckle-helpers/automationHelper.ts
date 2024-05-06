@@ -5,6 +5,7 @@ import {
   storeAutomationRevision
 } from '@/modules/automate/repositories/automations'
 import {
+  CreateAutomationRevisionDeps,
   createAutomation,
   createAutomationRevision
 } from '@/modules/automate/services/automationManagement'
@@ -55,7 +56,9 @@ export const buildAutomationCreate = (
   return create
 }
 
-export const buildAutomationRevisionCreate = () => {
+export const buildAutomationRevisionCreate = (
+  overrides?: Partial<CreateAutomationRevisionDeps>
+) => {
   const create = createAutomationRevision({
     getAutomation,
     storeAutomationRevision,
@@ -66,7 +69,8 @@ export const buildAutomationRevisionCreate = () => {
       inputSchema: null,
       createdAt: new Date().toISOString(),
       commitId: faker.git.shortSha()
-    })
+    }),
+    ...overrides
   })
 
   return create
