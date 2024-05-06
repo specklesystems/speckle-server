@@ -12,7 +12,8 @@ import {
   AutomationFunctionRunRecord,
   AutomationRevisionWithTriggersFunctions,
   AutomationTriggerType,
-  AutomationRunStatus
+  AutomationRunStatus,
+  VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
 import {
   AutomationFunctionRuns,
@@ -23,6 +24,7 @@ import {
   AutomationTokens,
   AutomationTriggers,
   Automations,
+  BranchCommits,
   knex
 } from '@/modules/core/dbSchema'
 import {
@@ -649,4 +651,69 @@ export const getProjectAutomationsItems = async (
     items: await q,
     cursor: null
   }
+}
+
+export const getLatestVersionAutomationRuns = async (
+  params: {
+    projectId: string
+    modelId: string
+    versionId: string
+  },
+  options?: Partial<{ limit: number }>
+) => {
+  const { projectId, modelId, versionId } = params
+  const { limit = 20 } = options || {}
+
+  const runsQ = AutomationRuns.knex()
+    .select<Array<AutomationRunRecord & { automationId: string }>>([
+      ...AutomationRuns.cols,
+      AutomationRevisions.col.automationId
+    ])
+    .innerJoin(
+      AutomationRevisions.name,
+      AutomationRevisions.col.id,
+      AutomationRuns.col.automationRevisionId
+    )
+    .innerJoin(
+      Automations.name,
+      Automations.col.id,
+      AutomationRevisions.col.automationId
+    )
+    .innerJoin(
+      AutomationRunTriggers.name,
+      AutomationRunTriggers.col.automationRunId,
+      AutomationRuns.col.id
+    )
+    .innerJoin(
+      BranchCommits.name,
+      BranchCommits.col.commitId,
+      AutomationRunTriggers.col.triggeringId
+    )
+    .where(AutomationRunTriggers.col.triggerType, VersionCreationTriggerType)
+    .andWhere(AutomationRunTriggers.col.triggeringId, versionId)
+    .andWhere(Automations.col.projectId, projectId)
+    .andWhere(BranchCommits.col.branchId, modelId)
+    .distinctOn(AutomationRevisions.col.automationId)
+    .orderBy([
+      { column: AutomationRevisions.col.automationId },
+      { column: AutomationRuns.col.createdAt, order: 'desc' }
+    ])
+    .limit(limit)
+
+  const mainQ = knex()
+    .select<Array<AutomationRunWithTriggersFunctionRuns>>([
+      knex.raw('rq.*'),
+      AutomationFunctionRuns.groupArray('functionRuns'),
+      AutomationRunTriggers.groupArray('triggers')
+    ])
+    .from(runsQ.as('rq'))
+    .innerJoin(AutomationFunctionRuns.name, AutomationFunctionRuns.col.runId, 'rq.id')
+    .innerJoin(
+      AutomationRunTriggers.name,
+      AutomationRunTriggers.col.automationRunId,
+      'rq.id'
+    )
+    .groupBy('rq.id')
+
+  return await mainQ
 }

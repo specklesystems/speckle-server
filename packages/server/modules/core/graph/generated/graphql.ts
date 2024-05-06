@@ -5,7 +5,7 @@ import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from 
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes';
-import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, ProjectAutomationMutationsGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
+import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -255,6 +255,8 @@ export type AutomateFunctionRun = {
   contextView?: Maybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   function: AutomateFunction;
+  functionId?: Maybe<Scalars['String']>;
+  functionReleaseId?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: Maybe<Scalars['JSONObject']>;
@@ -314,7 +316,6 @@ export type AutomateRun = {
   createdAt: Scalars['DateTime'];
   functionRuns: Array<AutomateFunctionRun>;
   id: Scalars['ID'];
-  reason?: Maybe<Scalars['String']>;
   status: AutomateRunStatus;
   trigger: AutomationRunTrigger;
   updatedAt: Scalars['DateTime'];
@@ -3593,7 +3594,7 @@ export type ResolversTypes = {
   TokenResourceIdentifier: ResolverTypeWrapper<TokenResourceIdentifier>;
   TokenResourceIdentifierInput: TokenResourceIdentifierInput;
   TokenResourceIdentifierType: TokenResourceIdentifierType;
-  TriggeredAutomationsStatus: ResolverTypeWrapper<Omit<TriggeredAutomationsStatus, 'automationRuns'> & { automationRuns: Array<ResolversTypes['AutomateRun']> }>;
+  TriggeredAutomationsStatus: ResolverTypeWrapper<TriggeredAutomationsStatusGraphQLReturn>;
   UpdateAutomateFunctionInput: UpdateAutomateFunctionInput;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
@@ -3789,7 +3790,7 @@ export type ResolversParentTypes = {
   Subscription: {};
   TokenResourceIdentifier: TokenResourceIdentifier;
   TokenResourceIdentifierInput: TokenResourceIdentifierInput;
-  TriggeredAutomationsStatus: Omit<TriggeredAutomationsStatus, 'automationRuns'> & { automationRuns: Array<ResolversParentTypes['AutomateRun']> };
+  TriggeredAutomationsStatus: TriggeredAutomationsStatusGraphQLReturn;
   UpdateAutomateFunctionInput: UpdateAutomateFunctionInput;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
@@ -3990,6 +3991,8 @@ export type AutomateFunctionRunResolvers<ContextType = GraphQLContext, ParentTyp
   contextView?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   elapsed?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   function?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType>;
+  functionId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  functionReleaseId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   results?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AutomateRunStatus'], ParentType, ContextType>;
@@ -4016,7 +4019,6 @@ export type AutomateRunResolvers<ContextType = GraphQLContext, ParentType extend
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   functionRuns?: Resolver<Array<ResolversTypes['AutomateFunctionRun']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  reason?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['AutomateRunStatus'], ParentType, ContextType>;
   trigger?: Resolver<ResolversTypes['AutomationRunTrigger'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;

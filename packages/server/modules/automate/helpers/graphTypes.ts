@@ -3,14 +3,17 @@ import {
   AutomationFunctionRunRecord,
   AutomationRecord,
   AutomationRevisionRecord,
+  AutomationRunStatus,
   AutomationRunTriggerRecord,
   AutomationRunWithTriggersFunctionRuns,
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
 import {
   AutomateFunction,
-  AutomateFunctionRelease
+  AutomateFunctionRelease,
+  TriggeredAutomationsStatus
 } from '@/modules/core/graph/generated/graphql'
+import { Merge } from 'type-fest'
 
 export type AutomateFunctionGraphQLReturn = Pick<
   AutomateFunction,
@@ -44,3 +47,8 @@ export type AutomationRevisionFunctionGraphQLReturn = AutomateRevisionFunctionRe
 export type AutomateRunGraphQLReturn = AutomationRunWithTriggersFunctionRuns
 
 export type AutomateFunctionRunGraphQLReturn = AutomationFunctionRunRecord
+
+export type TriggeredAutomationsStatusGraphQLReturn = Merge<
+  TriggeredAutomationsStatus,
+  { status: AutomationRunStatus; automationRuns: AutomateRunGraphQLReturn[] }
+>

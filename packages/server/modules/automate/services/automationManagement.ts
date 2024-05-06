@@ -3,6 +3,7 @@ import {
   InsertableAutomationRevisionFunction,
   InsertableAutomationRevisionTrigger,
   getAutomation,
+  getLatestVersionAutomationRuns,
   storeAutomation,
   storeAutomationRevision,
   updateAutomation as updateDbAutomation
@@ -33,9 +34,14 @@ import {
   AutomationRevisionCreationError,
   AutomationUpdateError
 } from '@/modules/automate/errors/management'
-import { VersionCreationTriggerType } from '@/modules/automate/helpers/types'
+import {
+  AutomationRunStatuses,
+  VersionCreationTriggerType
+} from '@/modules/automate/helpers/types'
 import { getBranchesByIds } from '@/modules/core/repositories/branches'
 import { keyBy, uniq } from 'lodash'
+import { resolveStatusFromFunctionRunStatuses } from '@/modules/automate/services/runsManagement'
+import { TriggeredAutomationsStatusGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
 
 export type CreateAutomationDeps = {
   createAuthCode: ReturnType<typeof createStoredAuthCode>
@@ -324,4 +330,78 @@ export const createAutomationRevision =
       active: true
     }
     return await storeAutomationRevision(revisionInput)
+  }
+
+export type GetAutomationsStatusDeps = {
+  getLatestVersionAutomationRuns: typeof getLatestVersionAutomationRuns
+}
+
+export const getAutomationsStatus =
+  (deps: GetAutomationsStatusDeps) =>
+  async (params: {
+    projectId: string
+    modelId: string
+    versionId: string
+  }): Promise<TriggeredAutomationsStatusGraphQLReturn | null> => {
+    const { projectId, modelId, versionId } = params
+    const { getLatestVersionAutomationRuns } = deps
+
+    const runs = await getLatestVersionAutomationRuns({
+      projectId,
+      modelId,
+      versionId
+    })
+    if (!runs.length) return null
+
+    // automation run has its own status field that should be up to date, but
+    // lets calculate it again to be sure
+    const runsWithUpdatedStatus = runs.map((r) => ({
+      ...r,
+      status: resolveStatusFromFunctionRunStatuses(
+        r.functionRuns.map((fr) => fr.status)
+      )
+    }))
+
+    const failedAutomations = runsWithUpdatedStatus.filter(
+      (a) =>
+        a.status === AutomationRunStatuses.failure ||
+        a.status === AutomationRunStatuses.error
+    )
+
+    const runningAutomations = runsWithUpdatedStatus.filter(
+      (a) => a.status === AutomationRunStatuses.running
+    )
+    const initializingAutomations = runsWithUpdatedStatus.filter(
+      (a) => a.status === AutomationRunStatuses.pending
+    )
+
+    let status = AutomationRunStatuses.success
+    let statusMessage = 'All automations have succeeded'
+
+    if (failedAutomations.length) {
+      status = AutomationRunStatuses.failure
+      statusMessage = 'Some automations have failed:'
+      for (const fa of failedAutomations) {
+        for (const functionRunStatus of fa.functionRuns) {
+          if (
+            functionRunStatus.status === AutomationRunStatuses.failure ||
+            functionRunStatus.status === AutomationRunStatuses.error
+          )
+            statusMessage += `\n${functionRunStatus.statusMessage}`
+        }
+      }
+    } else if (runningAutomations.length) {
+      status = AutomationRunStatuses.running
+      statusMessage = 'Some automations are running'
+    } else if (initializingAutomations.length) {
+      status = AutomationRunStatuses.pending
+      statusMessage = 'Some automations are initializing'
+    }
+
+    return {
+      id: versionId,
+      status,
+      statusMessage,
+      automationRuns: runsWithUpdatedStatus
+    }
   }

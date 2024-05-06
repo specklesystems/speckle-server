@@ -1,10 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import {
-  AutomateRunTriggerType,
-  LimitedUser,
-  Resolvers
-} from '@/modules/core/graph/generated/graphql'
+import { LimitedUser, Resolvers } from '@/modules/core/graph/generated/graphql'
 import { isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { Automate, Roles, SourceAppNames, isNullOrUndefined } from '@speckle/shared'
 import { times } from 'lodash'
@@ -16,6 +12,11 @@ import {
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
 import { functionTemplateRepos } from '@/modules/automate/helpers/executionEngine'
+import {
+  AutomationRevisionTriggerDefinitionGraphQLReturn,
+  AutomationRunTriggerGraphQLReturn
+} from '@/modules/automate/helpers/graphTypes'
+import { VersionCreationTriggerType } from '@/modules/automate/helpers/types'
 
 const getRandomModelVersion = async (offset?: number) => {
   const versionQ = Commits.knex()
@@ -132,27 +133,29 @@ export async function buildMocksConfig(): Promise<{
         }
       },
       AutomationRevision: {
-        triggerDefinitions: async () => {
+        triggerDefinitions: async (parent) => {
           const rand = faker.datatype.number({ min: 0, max: 2 })
           const res = (
             await Promise.all([getRandomModelVersion(), getRandomModelVersion(1)])
           ).slice(0, rand)
 
-          return res.map((i) => ({
-            type: AutomateRunTriggerType.VersionCreated,
-            model: i.model,
-            version: i.version
-          }))
+          return res.map(
+            (i): AutomationRevisionTriggerDefinitionGraphQLReturn => ({
+              triggerType: VersionCreationTriggerType,
+              triggeringId: i.model.id,
+              automationRevisionId: parent.id
+            })
+          )
         }
       },
       AutomateRun: {
-        trigger: async () => {
-          const { model, version } = await getRandomModelVersion()
+        trigger: async (parent) => {
+          const { version } = await getRandomModelVersion()
 
-          return {
-            type: AutomateRunTriggerType.VersionCreated,
-            version,
-            model
+          return <AutomationRunTriggerGraphQLReturn>{
+            triggerType: VersionCreationTriggerType,
+            triggeringId: version.id,
+            automationRunId: parent.id
           }
         }
       },

@@ -58,11 +58,7 @@ import {
   dbToGraphqlTriggerTypeMap,
   functionTemplateRepos
 } from '@/modules/automate/helpers/executionEngine'
-
-/**
- * TODO:
- * - automateStatus (version/model)
- */
+import { mapDbStatusToGqlStatus } from '@/modules/automate/services/runsManagement'
 
 export = {
   AutomationRevisionTriggerDefinition: {
@@ -160,7 +156,11 @@ export = {
     },
     async automation(parent, _args, ctx) {
       return ctx.loaders.automations.getAutomation.load(parent.automationId)
-    }
+    },
+    status: (parent) => mapDbStatusToGqlStatus(parent.status)
+  },
+  TriggeredAutomationsStatus: {
+    status: (parent) => mapDbStatusToGqlStatus(parent.status)
   },
   AutomateFunctionRun: {
     async function(parent, _args, ctx) {
@@ -181,7 +181,8 @@ export = {
       } catch (e) {
         ctx.log.warn('Error formatting results schema', e)
       }
-    }
+    },
+    status: (parent) => mapDbStatusToGqlStatus(parent.status)
   },
   AutomationRevision: {
     async triggerDefinitions(parent, _args, ctx) {

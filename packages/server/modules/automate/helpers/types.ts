@@ -103,10 +103,13 @@ export type AutomationWithRevision<
   revision: R
 }
 
-export type AutomationRunWithTriggersFunctionRuns = AutomationRunRecord & {
+export type AutomationRunWithFunctionRuns = AutomationRunRecord & {
   automationId: string
-  triggers: AutomationRunTriggerRecord[]
   functionRuns: AutomationFunctionRunRecord[]
+}
+
+export type AutomationRunWithTriggersFunctionRuns = AutomationRunWithFunctionRuns & {
+  triggers: AutomationRunTriggerRecord[]
 }
 
 export type ObjectResultLevel = 'info' | 'warning' | 'error'

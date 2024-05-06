@@ -244,6 +244,8 @@ export type AutomateFunctionRun = {
   contextView?: Maybe<Scalars['String']>;
   elapsed: Scalars['Float'];
   function: AutomateFunction;
+  functionId?: Maybe<Scalars['String']>;
+  functionReleaseId?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: Maybe<Scalars['JSONObject']>;
@@ -303,7 +305,6 @@ export type AutomateRun = {
   createdAt: Scalars['DateTime'];
   functionRuns: Array<AutomateFunctionRun>;
   id: Scalars['ID'];
-  reason?: Maybe<Scalars['String']>;
   status: AutomateRunStatus;
   trigger: AutomationRunTrigger;
   updatedAt: Scalars['DateTime'];

@@ -50,7 +50,6 @@ export const automationFragment = gql`
           }
         }
         status
-        reason
         createdAt
         updatedAt
         functionRuns {

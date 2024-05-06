@@ -45,6 +45,7 @@ generates:
         AutomationRevisionTriggerDefinition: '@/modules/automate/helpers/graphTypes#AutomationRevisionTriggerDefinitionGraphQLReturn'
         VersionCreatedTriggerDefinition: '@/modules/automate/helpers/graphTypes#AutomationRevisionTriggerDefinitionGraphQLReturn'
         AutomateFunctionRun: '@/modules/automate/helpers/graphTypes#AutomateFunctionRunGraphQLReturn'
+        TriggeredAutomationsStatus: '@/modules/automate/helpers/graphTypes#TriggeredAutomationsStatusGraphQLReturn'
         ProjectAutomationMutations: '@/modules/automate/helpers/graphTypes#ProjectAutomationMutationsGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:

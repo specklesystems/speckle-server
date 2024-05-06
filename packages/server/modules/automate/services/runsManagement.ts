@@ -27,7 +27,7 @@ const AutomationRunStatusOrder: Array<AutomationRunStatus | AutomationRunStatus[
   ]
 ]
 
-const mapGqlStatusToDbStatus = (status: AutomateRunStatus) => {
+export const mapGqlStatusToDbStatus = (status: AutomateRunStatus) => {
   switch (status) {
     case AutomateRunStatus.Initializing:
       return AutomationRunStatuses.pending
@@ -37,6 +37,20 @@ const mapGqlStatusToDbStatus = (status: AutomateRunStatus) => {
       return AutomationRunStatuses.success
     case AutomateRunStatus.Failed:
       return AutomationRunStatuses.failure
+  }
+}
+
+export const mapDbStatusToGqlStatus = (status: AutomationRunStatus) => {
+  switch (status) {
+    case AutomationRunStatuses.pending:
+      return AutomateRunStatus.Initializing
+    case AutomationRunStatuses.running:
+      return AutomateRunStatus.Running
+    case AutomationRunStatuses.success:
+      return AutomateRunStatus.Succeeded
+    case AutomationRunStatuses.failure:
+    case AutomationRunStatuses.error:
+      return AutomateRunStatus.Failed
   }
 }
 
@@ -87,7 +101,9 @@ type ValidatedRunStatusUpdateItem = {
   newStatus: AutomationRunStatus
 }
 
-const resolveNewAutomationStatus = (functionRunStatuses: AutomationRunStatus[]) => {
+export const resolveStatusFromFunctionRunStatuses = (
+  functionRunStatuses: AutomationRunStatus[]
+) => {
   const anyPending = functionRunStatuses.includes(AutomationRunStatuses.pending)
   if (anyPending) return AutomationRunStatuses.pending
 
@@ -208,7 +224,7 @@ export const reportFunctionRunStatuses =
           )
         }
 
-        const newAutomationStatus = resolveNewAutomationStatus(
+        const newAutomationStatus = resolveStatusFromFunctionRunStatuses(
           Object.values(finalFunctionRunStatuses)
         )
 
