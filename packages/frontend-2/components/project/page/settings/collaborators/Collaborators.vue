@@ -13,7 +13,7 @@
       <div
         v-for="collaborator in collaboratorListItems"
         :key="collaborator.id"
-        class="bg-foundation flex items-center gap-2 py-2 pl-3 pr-4 border-t border-x last:border-b border-outline-4 dark:border-outline-3 first:rounded-t-md last:rounded-b-md"
+        class="bg-foundation flex items-center gap-2 py-3 px-4 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
       >
         <UserAvatar :user="collaborator.user" size="sm" />
         <span class="grow truncate text-sm">{{ collaborator.title }}</span>
