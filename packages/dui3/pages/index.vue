@@ -42,7 +42,10 @@
           </div>
         </div>
         <div v-else>
-          <div class="text-foreground-2">
+          <div v-if="store.documentInfo?.message" class="text-foreground-2">
+            {{ store.documentInfo?.message }}
+          </div>
+          <div v-else class="text-foreground-2">
             Welcome to Speckle! Please open a file to use this plugin.
           </div>
         </div>
