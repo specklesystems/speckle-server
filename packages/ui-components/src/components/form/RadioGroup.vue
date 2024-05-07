@@ -1,35 +1,27 @@
 <template>
   <div>
     <div class="flex flex-col sm:flex-row items-stretch gap-3 w-full">
-      <div
-        v-for="option in options"
-        :key="option.value"
-        class="w-full flex flex-col sm:border rounded-md"
-        :class="[
-          disabled ? 'opacity-40' : '',
-          selected === option.value
-            ? 'sm:bg-primary-muted border-outline-1'
-            : 'bg-foundation border-primary-muted'
-        ]"
-      >
+      <div v-for="option in options" :key="option.value" class="w-full flex flex-col">
         <button
-          class="border relative w-full h-full select-none rounded-md shadow"
+          class="relative w-full h-full select-none rounded-md shadow border"
           :class="[
-            selected === option.value ? 'border-outline-1' : 'border-foundation',
-            disabled ? 'cursor-not-allowed' : ''
+            selected === option.value
+              ? 'bg-foundation-page border-outline-1 hover:!border-primary'
+              : 'bg-foundation border-foundation',
+            disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-outline-3'
           ]"
           :disabled="disabled"
           @click="selectItem(option.value)"
         >
-          <div class="absolute top-4 right-3 h-4 w-4 border rounded-full">
+          <div class="absolute top-4 right-3 h-6 w-6 border rounded-full">
             <div
               v-if="selected === option.value"
               class="h-full w-full rounded-full bg-primary flex items-center justify-center"
             >
-              <CheckIcon class="h-2 w-2 text-white" />
+              <CheckIcon class="w-4 h-4 text-white" />
             </div>
           </div>
-          <div class="rounded-md px-3 py-4 flex flex-col gap-3 h-full">
+          <div class="px-3 py-4 flex flex-col gap-3 h-full">
             <component
               :is="option.icon"
               class="text-foreground h-8 w-8 -mt-1 stroke-[1px]"
