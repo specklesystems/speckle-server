@@ -20,7 +20,7 @@
     >
       <div
         :style="borderStyle"
-        class="h-[1.5px] absolute bottom-0 z-20 transition-[left,width] duration-300"
+        class="h-[2px] absolute bottom-0 z-20 transition-[left,width] duration-300"
         :class="isInitialSetup ? 'bg-transparent' : 'bg-primary'"
       ></div>
 
@@ -91,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch } from 'vue'
+import { computed, ref, onMounted, watch, nextTick } from 'vue'
 import type { CSSProperties } from 'vue'
 import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 import { isClient } from '@vueuse/core'
@@ -191,12 +191,26 @@ const handleScroll = () => {
   checkArrowsVisibility()
 }
 
+const ensureActiveItemVisible = () => {
+  const activeButton = activeItemRef.value
+  if (activeButton && scrollContainer.value) {
+    activeButton.scrollIntoView({
+      behavior: 'smooth',
+      block: 'nearest',
+      inline: 'center'
+    })
+  }
+}
+
 onMounted(() => {
   if (isClient) {
     if (props.items.length && !activeItem.value) {
       setActiveItem(props.items[0])
     }
     checkArrowsVisibility()
+    nextTick(() => {
+      ensureActiveItemVisible()
+    })
   }
 })
 
