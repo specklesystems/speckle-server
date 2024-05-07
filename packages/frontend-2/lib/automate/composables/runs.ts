@@ -1,5 +1,4 @@
 import { Automate, type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
-import { useIntervalFn } from '@vueuse/core'
 import dayjs from 'dayjs'
 import { orderBy } from 'lodash-es'
 import {
@@ -12,6 +11,7 @@ import {
   type AutomationRunDetailsFragment,
   type AutomationsStatusOrderedRuns_AutomationRunFragment
 } from '~/lib/common/generated/gql/graphql'
+import { abortControllerManager, isAbortError } from '~/lib/common/utils/requests'
 import { useViewerRouteBuilder } from '~/lib/projects/composables/models'
 
 graphql(`
@@ -106,52 +106,93 @@ export const useAutomationRunLogs = (params: {
   automationId: MaybeRef<Optional<string>>
   runId: MaybeRef<Optional<string>>
 }) => {
-  // TODO: Faked for now, should be a REST endpoint later on
   const { automationId, runId } = params
+  const apiOrigin = useApiOrigin()
 
-  const data = ref('')
-  const isDataLoaded = ref(false)
+  const { triggerNotification } = useGlobalToast()
   const loading = ref(false)
-  let counter = 0
+  const results = ref('')
+  const isStreamFinished = ref(false)
 
-  const interval = useIntervalFn(
-    () => {
-      data.value =
-        data.value +
-        `#${counter} Log line - ${unref(automationId)} - ${unref(
-          runId
-        )} ${Math.random()}\n`
-      counter++
-
-      if (counter >= 10) {
-        interval.pause()
-        isDataLoaded.value = true
-        loading.value = false
-      }
-    },
-    1000,
-    { immediate: false }
+  const url = computed(
+    () => `/api/automate/automations/${unref(automationId)}/runs/${unref(runId)}/logs`
   )
+  const key = computed(() => {
+    if (!unref(automationId) || !unref(runId)) return null
+    return `automation-run-logs-${unref(automationId)}-${unref(runId)}`
+  })
+
+  const aborts = abortControllerManager()
+  const load = async () => {
+    results.value = ''
+    isStreamFinished.value = false
+
+    const res = await fetch(new URL(url.value, apiOrigin), {
+      signal: aborts.pop().signal
+    })
+
+    if (res.status !== 200) {
+      // Something bad happened
+      const json = (await res.json()) as { error?: { message: string } }
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "Couldn't load logs",
+        description:
+          json.error?.message || 'Something went wrong while loading the logs.'
+      })
+      isStreamFinished.value = true
+
+      return false
+    }
+
+    const stream = res.body
+
+    // Read stream into results ref
+    if (stream) {
+      const reader = stream.getReader()
+      const decoder = new TextDecoder()
+      const pump = async () => {
+        return reader.read().then(({ done, value }): Promise<void> => {
+          if (done) {
+            isStreamFinished.value = true
+            return Promise.resolve()
+          }
+          results.value += decoder.decode(value)
+          return pump()
+        })
+      }
+
+      // Intentionally not awaiting this so that we can return the ref
+      void pump().catch((e) => {
+        if (!isAbortError(e)) {
+          throw e
+        }
+      })
+    }
+
+    return true
+  }
+
+  const loadAndMarkLoading = async () => {
+    loading.value = true
+    await load().finally(() => {
+      loading.value = false
+    })
+  }
 
   watch(
-    () => <const>[unref(automationId), unref(runId)],
-    ([newAId, newRId]) => {
-      data.value = ''
-      loading.value = false
-      isDataLoaded.value = false
-      counter = 0
-
-      if (newAId?.length && newRId?.length) {
-        loading.value = true
-        interval.resume()
+    key,
+    (newKey, oldKey) => {
+      if (newKey && newKey !== oldKey) {
+        void loadAndMarkLoading()
       }
     },
     { immediate: true }
   )
 
   return {
-    data: computed(() => data.value),
-    isDataLoaded: computed(() => isDataLoaded.value),
+    data: computed(() => results.value),
+    isDataLoaded: computed(() => isStreamFinished.value),
     loading: computed(() => loading.value)
   }
 }

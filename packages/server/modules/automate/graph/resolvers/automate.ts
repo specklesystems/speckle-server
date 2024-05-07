@@ -67,7 +67,6 @@ import { mapDbStatusToGqlStatus } from '@/modules/automate/services/runsManageme
  * - Proper error handliong exec engine client
  * - Real testing
  * - FE:
- *  - Disable function create/update
  *  - Fix up pagination & all remaining TODOs
  *  - Subscriptions
  */

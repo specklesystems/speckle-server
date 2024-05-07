@@ -11,6 +11,7 @@ import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScope } from '@/modules/shared'
 import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
+import logStreamRest from '@/modules/automate/rest/logStream'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -63,6 +64,7 @@ const automateModule: SpeckleModule = {
     moduleLogger.info('⚙️  Init automate module')
 
     await initScopes()
+    logStreamRest(app)
 
     if (isInitial) {
       quitListeners = initializeEventListeners()
