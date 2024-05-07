@@ -61,14 +61,20 @@ const isDisabled = computed(
 )
 
 const radioOptions = computed(() => [
-  { value: CommentPermission.Anyone, title: 'Anyone', icon: UserGroupIcon },
+  {
+    value: CommentPermission.Anyone,
+    title: 'Anyone',
+    introduction: 'Anyone can comment',
+    icon: UserGroupIcon
+  },
   {
     value: CommentPermission.TeamMembers,
-    title: 'Team Members Only',
+    title: 'Collaborators',
+    introduction: 'Only invited collaborators can comment',
     icon: UserCircleIcon,
     help:
       props.project.visibility === ProjectVisibility.Private
-        ? 'When the Project Access is “Private” only team members can comment.'
+        ? 'Only collaborators can comment on private projects'
         : undefined
   }
 ])
