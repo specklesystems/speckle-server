@@ -1,9 +1,9 @@
 import { Vector3 } from 'three'
-import sampleHdri from './assets/sample-hdri.png'
 import { type PropertyInfo } from './modules/filtering/PropertyManager'
 import type { Query, QueryArgsResultMap } from './modules/queries/Query'
 import { type TreeNode, WorldTree } from './modules/tree/WorldTree'
 import { type Utils } from './modules/Utils'
+import defaultHdri from './assets/hdri/Mild-dwab.png'
 import { World } from './modules/World'
 import SpeckleRenderer from './modules/SpeckleRenderer'
 import { Extension } from './modules/extensions/Extension'
@@ -54,7 +54,7 @@ export const DefaultViewerParams: ViewerParams = {
   verbose: false,
   environmentSrc: {
     id: 'defaultHDRI',
-    src: sampleHdri,
+    src: defaultHdri,
     type: AssetType.TEXTURE_EXR
   }
 }

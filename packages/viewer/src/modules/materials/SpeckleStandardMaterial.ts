@@ -17,6 +17,9 @@ import { ExtendedMeshStandardMaterial, type Uniforms } from './SpeckleMaterial'
 import { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
 class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
+  protected originalRoughness: number | undefined
+  protected artificialRoughness: number | undefined
+
   protected get vertexProgram(): string {
     return speckleStandardVert
   }
@@ -38,9 +41,7 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
       uShadowViewer_low: new Vector3(),
       uTransforms: [new Matrix4()],
       tTransforms: null,
-      objCount: 1,
-      contrast: 1,
-      saturation: 1
+      objCount: 1
     }
   }
 
@@ -57,6 +58,10 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
   public copy(source: Material) {
     super.copy(source)
     this.copyFrom(source)
+    if (source instanceof SpeckleStandardMaterial) {
+      this.originalRoughness = source.originalRoughness
+      this.artificialRoughness = source.artificialRoughness
+    }
     return this
   }
 
@@ -72,6 +77,8 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     toStandard.envMap = fromStandard.envMap
     toStandard.envMapIntensity = fromStandard.envMapIntensity
     toStandard.refractionRatio = fromStandard.refractionRatio
+    toStandard.originalRoughness = fromStandard.originalRoughness
+    toStandard.artificialRoughness = fromStandard.artificialRoughness
 
     /** Leaving textures out for now */
     // toStandard.map = fromStandard.map
@@ -91,6 +98,23 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     // toStandard.roughnessMap = fromStandard.roughnessMap
     // toStandard.metalnessMap = fromStandard.metalnessMap
     // toStandard.alphaMap = fromStandard.alphaMap
+  }
+
+  public updateArtificialRoughness(artificialRougness?: number) {
+    if (artificialRougness) {
+      if (this.originalRoughness === undefined) this.originalRoughness = this.roughness
+      this.artificialRoughness = artificialRougness
+    }
+    if (this.originalRoughness === undefined || this.artificialRoughness === undefined)
+      return
+
+    const applyRoughness =
+      artificialRougness !== undefined
+        ? Math.min(this.originalRoughness, this.artificialRoughness)
+        : this.originalRoughness
+
+    this.roughness = applyRoughness
+    this.needsCopy = true
   }
 
   /** Called by three.js render loop */

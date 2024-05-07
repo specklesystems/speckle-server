@@ -61,6 +61,7 @@ export interface FilterMaterialOptions {
 
 export default class Materials {
   public static readonly UNIFORM_VECTORS_USED = 33
+  public static readonly DEFAULT_ARTIFICIAL_ROUGHNESS = 0.6 /** The inverse of "shininess" */
   private readonly materialMap: { [hash: number]: Material } = {}
   private meshGhostMaterial: Material
   private meshGradientMaterial: Material
@@ -660,7 +661,7 @@ export default class Materials {
   }
 
   private makeMeshMaterial(materialData: RenderMaterial): Material {
-    const mat = new SpeckleStandardMaterial(
+    const mat: SpeckleStandardMaterial = new SpeckleStandardMaterial(
       {
         color: materialData.color,
         emissive: 0x0,
@@ -676,6 +677,7 @@ export default class Materials {
     mat.depthWrite = mat.transparent ? false : true
     mat.clipShadows = true
     mat.color.convertSRGBToLinear()
+    mat.updateArtificialRoughness(Materials.DEFAULT_ARTIFICIAL_ROUGHNESS)
     return mat
   }
 
