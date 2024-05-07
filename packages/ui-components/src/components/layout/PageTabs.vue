@@ -15,7 +15,7 @@
     </button>
     <div
       v-if="!vertical"
-      class="absolute left-0 z-10 w-full h-[1.5px] bg-outline-3 top-8"
+      class="absolute left-0 z-10 w-full h-[2px] bg-outline-3 top-8"
     ></div>
     <div
       ref="scrollContainer"
@@ -66,11 +66,11 @@
             "
             class="absolute inset-0"
           ></div>
-          <div class="flex gap-1 sm:gap-1.5 items-center">
+          <div class="flex gap-1 sm:gap-1.5 items-center px-2">
             <component
               :is="item.icon"
               v-if="item.icon"
-              class="h-4 w-4 sm:h-5 sm:w-5"
+              class="shrink-0 h-4 w-4 stroke-[2px]"
             ></component>
             <span class="min-w-6">{{ item.title }}</span>
             <div
@@ -157,7 +157,7 @@ const buttonClass = computed(() => {
         'gap-1.5',
         'hover:sm:border-outline-2',
         'pb-2',
-        'border-b-[1.5px]',
+        'border-b-[2px]',
         'border-transparent',
         'max-w-max',
         'last:mr-6'
