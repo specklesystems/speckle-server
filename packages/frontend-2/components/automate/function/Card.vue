@@ -52,10 +52,14 @@
       <div class="absolute top-0 right-0">
         <div
           v-if="hasLabel"
-          class="rounded-bl-lg rounded-tr-[7px] text-xs px-2 py-1 text-foreground"
-          :class="{ 'bg-foundation-focus': fn.isFeatured }"
+          class="rounded-bl-lg rounded-tr-[7px] text-xs px-2 py-1"
+          :class="{
+            'bg-foundation-focus text-foreground': fn.isFeatured,
+            'bg-warning text-foreground-on-primary': isOutdated
+          }"
         >
-          <template v-if="fn.isFeatured">Featured</template>
+          <template v-if="isOutdated">Outdated</template>
+          <template v-else-if="fn.isFeatured">Featured</template>
         </div>
       </div>
     </div>
@@ -95,10 +99,11 @@ const props = defineProps<{
   noButtons?: boolean
   externalMoreInfo?: boolean
   selected?: boolean
+  isOutdated?: boolean
 }>()
 
 const NuxtLink = resolveComponent('NuxtLink')
-const hasLabel = computed(() => props.fn.isFeatured)
+const hasLabel = computed(() => props.fn.isFeatured || props.isOutdated)
 const { html: plaintextDescription } = useMarkdown(
   computed(() => props.fn.description || ''),
   { plaintext: true }

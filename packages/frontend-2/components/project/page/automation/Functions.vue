@@ -4,10 +4,11 @@
     <AutomateFunctionCardView v-if="functions.length" vertical>
       <AutomateFunctionCard
         v-for="fn in functions"
-        :key="fn.id"
-        :fn="fn"
+        :key="fn.fn.id"
+        :fn="fn.fn"
+        :is-outdated="isOutdated(fn)"
         show-edit
-        @edit="onEdit(fn)"
+        @edit="onEdit(fn.fn)"
       />
     </AutomateFunctionCardView>
     <CommonGenericEmptyState
@@ -48,6 +49,11 @@ graphql(`
           function {
             id
             ...AutomationsFunctionsCard_AutomateFunction
+            releases(limit: 1) {
+              items {
+                id
+              }
+            }
           }
         }
         ...ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunction
@@ -68,7 +74,11 @@ const functionRevisions = computed(
   () => props.automation.currentRevision?.functions || []
 )
 const functions = computed(
-  () => functionRevisions.value.map((f) => f.release.function) || []
+  () =>
+    functionRevisions.value.map((f) => ({
+      fn: f.release.function,
+      fnReleaseId: f.release.id
+    })) || []
 )
 
 const onEdit = (fn: EditableFunction) => {
@@ -79,5 +89,10 @@ const onEdit = (fn: EditableFunction) => {
     dialogOpen.value = true
     dialogFunction.value = revision
   }
+}
+
+const isOutdated = (fn: (typeof functions.value)[0]) => {
+  const latestRelease = fn.fn.releases.items[0]
+  return latestRelease.id !== fn.fnReleaseId
 }
 </script>
