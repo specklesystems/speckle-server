@@ -1,13 +1,17 @@
 <template>
   <div class="relative z-10 flex gap-4 md:gap-6 flex-col">
     <!-- Left Arrow Button -->
-    <button
-      v-if="showLeftArrow"
-      class="absolute h-6 sm:h-16 bg-gradient-to-r pr-5 pl-1 from-foundation-page to-transparent -left-px -top-1 z-20"
-      @click="scrollLeft"
+    <div
+      class="absolute left-[-2px] top-[-2px] z-20 pr-8 bg-gradient-to-r from-foundation-page to-transparent"
     >
-      <ArrowLongLeftIcon class="h-4 w-4" />
-    </button>
+      <button
+        v-if="showLeftArrow"
+        class="bg-foundation p-1 rounded-full border border-outline-4 shadow"
+        @click="scrollLeft"
+      >
+        <ArrowLongLeftIcon class="h-4 w-4" />
+      </button>
+    </div>
     <div class="absolute left-0 z-10 w-full h-[2px] bg-outline-3 top-8"></div>
     <div
       ref="scrollContainer"
@@ -20,7 +24,7 @@
         :class="isInitialSetup ? 'bg-transparent' : 'bg-primary'"
       ></div>
 
-      <div ref="buttonContainer" class="flex w-full gap-6">
+      <div ref="buttonContainer" class="flex w-full gap-2 sm:gap-3">
         <button
           v-for="item in items"
           :key="item.id"
@@ -39,7 +43,7 @@
             "
             class="absolute inset-0"
           ></div>
-          <div class="flex gap-1 sm:gap-1.5 items-center px-2">
+          <div class="flex gap-2 items-center px-2">
             <component
               :is="item.icon"
               v-if="item.icon"
@@ -69,14 +73,17 @@
     </div>
 
     <!-- Right Arrow Button -->
-    <button
-      v-if="showRightArrow"
-      class="absolute -right-px -top-1 z-20 pl-5 pr-1 h-6 sm:h-16 bg-gradient-to-l from-foundation-page to-transparent"
-      @click="scrollRight"
+    <div
+      class="absolute right-[-2px] top-[-2px] z-20 pl-8 bg-gradient-to-l from-foundation-page to-transparent"
     >
-      <ArrowLongRightIcon class="h-4 w-4" />
-    </button>
-
+      <button
+        v-if="showRightArrow"
+        class="bg-foundation p-1 rounded-full border border-outline-3 shadow"
+        @click="scrollRight"
+      >
+        <ArrowLongRightIcon class="h-4 w-4" />
+      </button>
+    </div>
     <div>
       <slot :active-item="activeItem" />
     </div>
@@ -118,7 +125,8 @@ const buttonClass = computed(() => {
       'border-b-[2px]',
       'border-transparent',
       'max-w-max',
-      'last:mr-6'
+      'last:mr-6',
+      'whitespace-nowrap'
     ]
 
     if (isActive) baseClasses.push('text-primary', 'hover:text-primary')
