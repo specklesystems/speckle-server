@@ -13,7 +13,10 @@
           :disabled="disabled"
           @click="selectItem(option.value)"
         >
-          <div class="absolute top-4 right-3 h-6 w-6 border rounded-full">
+          <div
+            class="absolute top-4 right-3 h-6 w-6 rounded-full"
+            :class="[selected === option.value ? '' : 'border border-outline-3']"
+          >
             <div
               v-if="selected === option.value"
               class="h-full w-full rounded-full bg-primary flex items-center justify-center"
