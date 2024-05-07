@@ -35,7 +35,7 @@
       </svg>
     </template>
     <template #cta>
-      <div v-if="small" class="mt-3">
+      <div v-if="small && canPostComment" class="mt-3">
         <FormButton
           size="sm"
           :icon-left="PlusIcon"
@@ -49,6 +49,7 @@
 </template>
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/24/solid'
+import { useCheckViewerCommentingAccess } from '~/lib/viewer/composables/commentManagement'
 
 defineEmits<{
   (e: 'new-discussion'): void
@@ -57,4 +58,6 @@ defineEmits<{
 defineProps<{
   small?: boolean
 }>()
+
+const canPostComment = useCheckViewerCommentingAccess()
 </script>

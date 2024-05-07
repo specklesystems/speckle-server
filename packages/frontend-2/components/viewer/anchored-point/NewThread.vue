@@ -120,12 +120,21 @@ const { isLoggedIn } = useActiveUser()
 
 const onThreadClick = () => {
   const newIsExpanded = !props.modelValue.isExpanded
+  // eslint-disable-next-line no-console
+  console.log('logged in:', isLoggedIn.value)
+  // eslint-disable-next-line no-console
+  console.log('canpostcomment:', props.canPostComment)
+
+  if (!isLoggedIn.value) {
+    // eslint-disable-next-line no-console
+    console.log('emit login')
+    emit('login')
+    return
+  }
 
   if (!props.canPostComment) {
-    if (!isLoggedIn.value) {
-      emit('login')
-      return
-    }
+    // eslint-disable-next-line no-console
+    console.log('canpostcomment false')
   }
 
   if (!newIsExpanded) {
