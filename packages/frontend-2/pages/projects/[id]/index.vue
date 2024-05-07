@@ -13,9 +13,9 @@
         <ProjectPageHeader :project="project" />
         <ProjectPageTeamBlock :project="project" class="w-full md:w-72 shrink-0" />
       </div>
-      <LayoutPageTabs v-model:active-item="activePageTab" :items="pageTabItems">
+      <LayoutTabsHoriztonal v-model:active-item="activePageTab" :items="pageTabItems">
         <NuxtPage :project="project" />
-      </LayoutPageTabs>
+      </LayoutTabsHoriztonal>
     </div>
   </div>
 </template>
@@ -29,7 +29,7 @@ import {
   projectPageQuery
 } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
-import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
+import { LayoutTabsHoriztonal, type LayoutPageTabItem } from '@speckle/ui-components'
 import {
   CubeIcon,
   ChatBubbleLeftRightIcon,

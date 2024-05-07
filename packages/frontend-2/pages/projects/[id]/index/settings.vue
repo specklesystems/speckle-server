@@ -1,17 +1,16 @@
 <template>
   <div>
     <h1 class="block h4 font-bold mb-4 sm:mb-8">Settings</h1>
-    <LayoutPageTabs
+    <LayoutTabsVertical
       v-model:active-item="activeSettingsPageTab"
-      vertical
       :items="settingsTabItems"
     >
       <NuxtPage />
-    </LayoutPageTabs>
+    </LayoutTabsVertical>
   </div>
 </template>
 <script setup lang="ts">
-import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
+import { LayoutTabsVertical, type LayoutPageTabItem } from '@speckle/ui-components'
 import { UsersIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
 import IconWebhooks from '~~/components/global/icon/Webhooks.vue'
 import {

@@ -1,10 +1,5 @@
 <template>
-  <div
-    class="relative z-10 flex gap-4"
-    :class="
-      vertical ? 'lg:gap-8 flex-col lg:flex-row' : 'md:gap-10 flex-col overflow-hidden'
-    "
-  >
+  <div class="relative z-10 flex gap-4 md:gap-6 flex-col">
     <!-- Left Arrow Button -->
     <button
       v-if="showLeftArrow"
@@ -13,53 +8,31 @@
     >
       <ArrowLongLeftIcon class="h-4 w-4" />
     </button>
-    <div
-      v-if="!vertical"
-      class="absolute left-0 z-10 w-full h-[2px] bg-outline-3 top-8"
-    ></div>
+    <div class="absolute left-0 z-10 w-full h-[2px] bg-outline-3 top-8"></div>
     <div
       ref="scrollContainer"
-      class="relative flex overflow-x-auto hide-scrollbar"
-      :class="
-        vertical
-          ? 'items-center md:items-start lg:flex-col lg:w-2/12 shrink-0 gap-4 sm:gap-6'
-          : 'gap-8 w-full'
-      "
+      class="relative flex overflow-x-auto hide-scrollbar gap-8 w-full"
       @scroll="handleScroll"
     >
-      <template v-if="!vertical">
-        <div
-          :style="borderStyle"
-          class="h-[1.5px] absolute bottom-0 z-20 transition-[left,width] duration-300"
-          :class="isInitialSetup ? 'bg-transparent' : 'bg-primary'"
-        ></div>
-      </template>
-
       <div
-        ref="buttonContainer"
-        class="flex w-full"
-        :class="vertical ? 'flex-col gap-1' : 'gap-6'"
-      >
-        <h1
-          v-if="title"
-          class="font-bold h4"
-          :class="vertical ? 'w-full md:w-auto mb-4' : 'mb-2'"
-        >
-          {{ title }}
-        </h1>
+        :style="borderStyle"
+        class="h-[1.5px] absolute bottom-0 z-20 transition-[left,width] duration-300"
+        :class="isInitialSetup ? 'bg-transparent' : 'bg-primary'"
+      ></div>
+
+      <div ref="buttonContainer" class="flex w-full gap-6">
         <button
           v-for="item in items"
           :key="item.id"
           :data-tab-id="item.id"
           :class="[
             buttonClass(item),
-            { '!border-primary': !vertical && isActiveItem(item) && isInitialSetup }
+            { '!border-primary': isActiveItem(item) && isInitialSetup }
           ]"
           class="tab-button"
           :disabled="item.disabled"
           @click="setActiveItem(item)"
         >
-          <!-- We can't use v-tippy on a disabled button. Instead, it's added to this absolutely positioned div -->
           <div
             v-tippy="
               item.disabled && item.disabledMessage ? item.disabledMessage : undefined
@@ -104,7 +77,7 @@
       <ArrowLongRightIcon class="h-4 w-4" />
     </button>
 
-    <div :class="vertical ? 'lg:w-10/12' : ''">
+    <div>
       <slot :active-item="activeItem" />
     </div>
   </div>
@@ -120,8 +93,6 @@ import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
-  vertical?: boolean
-  title?: string
 }>()
 
 const activeItem = defineModel<LayoutPageTabItem>('activeItem', { required: true })
@@ -139,32 +110,19 @@ const buttonClass = computed(() => {
       'z-10',
       'flex',
       'items-center',
-      'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent'
+      'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent',
+      'text-base',
+      'gap-1.5',
+      'hover:sm:border-outline-2',
+      'pb-2',
+      'border-b-[2px]',
+      'border-transparent',
+      'max-w-max',
+      'last:mr-6'
     ]
 
-    if (props.vertical) {
-      baseClasses.push(
-        'text-sm gap-2 border-l-[4px] pl-1.5 py-1.5 hover:bg-primary-muted'
-      )
-      if (isActive)
-        baseClasses.push(
-          'font-bold bg-primary-muted border-primary hover:border-outline'
-        )
-      else baseClasses.push('text-foreground border-transparent')
-    } else {
-      baseClasses.push(
-        'text-base',
-        'gap-1.5',
-        'hover:sm:border-outline-2',
-        'pb-2',
-        'border-b-[2px]',
-        'border-transparent',
-        'max-w-max',
-        'last:mr-6'
-      )
-      if (isActive) baseClasses.push('text-primary', 'hover:text-primary')
-      else baseClasses.push('text-foreground')
-    }
+    if (isActive) baseClasses.push('text-primary', 'hover:text-primary')
+    else baseClasses.push('text-foreground')
 
     return baseClasses
   }

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/vue3'
-import LayoutPageTabs from '~~/src/components/layout/PageTabs.vue'
+import LayoutTabsVertical from '~~/src/components/layout/tabs/Vertical.vue'
 import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 import { useStorybookVmodel } from '~~/src/composables/testing'
 
@@ -17,23 +17,21 @@ const items: LayoutPageTabItem[] = [
 ]
 
 export default {
-  component: LayoutPageTabs,
+  component: LayoutTabsVertical,
   parameters: {
     docs: {
       description: {
-        component: 'Page tabs component'
+        component:
+          'This component displays a set of vertical tabs, allowing user interaction and selection.'
       }
     }
   },
   argTypes: {
     items: {
-      description: 'Array of items to display in the tab'
+      description: 'Array of items to display in the tabs'
     },
     title: {
-      description: 'Title of the tab'
-    },
-    vertical: {
-      description: 'Whether to display the tabs vertically'
+      description: 'Title of the tabs, displayed above the tabs if provided'
     },
     activeItem: {
       description: 'The active item model. Not required.'
@@ -48,61 +46,22 @@ export default {
 
 export const Default: StoryObj = {
   render: (args, ctx) => ({
-    components: { LayoutPageTabs },
+    components: { LayoutTabsVertical },
     setup() {
       const { model } = useStorybookVmodel({ args, prop: 'activeItem', ctx })
       return { args, model }
     },
     template: `
     <div>
-      <LayoutPageTabs v-slot="{ activeItem }" v-bind="args" v-model:activeItem="model">
+      <LayoutTabsVertical v-slot="{ activeItem }" v-bind="args" v-model:activeItem="model">
         <div>Title: {{ activeItem?.title }}</div>
         <div>ID: {{ activeItem?.id }}</div>
-      </LayoutPageTabs>
+      </LayoutTabsVertical>
     </div>`
   }),
   args: {
     items,
-    title: 'Settings',
-    activeItem: items[0]
-  }
-}
-
-export const Vertical: StoryObj = {
-  ...Default,
-  args: {
-    ...Default.args,
-    vertical: true
-  }
-}
-
-export const WithActiveItemModel: StoryObj = {
-  ...Default,
-  args: {
-    ...Default.args,
+    title: 'Tab Example',
     activeItem: items[2]
   }
-}
-
-export const WithActiveItemModelBlocked: StoryObj = {
-  ...WithActiveItemModel,
-  render: (args, ctx) => ({
-    components: { LayoutPageTabs },
-    setup() {
-      const { model } = useStorybookVmodel({
-        args,
-        prop: 'activeItem',
-        ctx,
-        blockChanges: true
-      })
-      return { args, model }
-    },
-    template: `
-    <div>
-      <LayoutPageTabs v-slot="{ activeItem }" v-bind="args" v-model:activeItem="model">
-        <div>Title: {{ activeItem?.title }}</div>
-        <div>ID: {{ activeItem?.id }}</div>
-      </LayoutPageTabs>
-    </div>`
-  })
 }

@@ -54,8 +54,8 @@ import {
 } from '~~/src/composables/common/window'
 import LayoutMenu from '~~/src/components/layout/Menu.vue'
 import type { LayoutMenuItem, LayoutTabItem } from '~~/src/helpers/layout/components'
-import LayoutTabs from '~~/src/components/layout/Tabs.vue'
-import LayoutPageTabs from '~~/src/components/layout/PageTabs.vue'
+import LayoutTabsHoriztonal from '~~/src/components/layout/tabs/Horizontal.vue'
+import LayoutTabsVertical from '~~/src/components/layout/tabs/Vertical.vue'
 import LayoutTable from '~~/src/components/layout/Table.vue'
 import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
@@ -137,8 +137,8 @@ export {
   useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation,
   LayoutMenu,
-  LayoutTabs,
-  LayoutPageTabs,
+  LayoutTabsHoriztonal,
+  LayoutTabsVertical,
   LayoutTable,
   InfiniteLoading,
   LayoutPanel,

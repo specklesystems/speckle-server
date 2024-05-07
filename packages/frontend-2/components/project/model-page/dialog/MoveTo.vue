@@ -8,32 +8,38 @@
       Move {{ versions.length }} version{{ versions.length > 1 ? 's' : '' }}
     </template>
     <div class="flex flex-col space-y-4">
-      <LayoutTabs v-slot="{ activeItem }" :items="tabItems">
-        <ProjectModelPageDialogMoveToExistingTab
-          v-if="activeItem.id === 'existing-model'"
-          :versions="versions"
-          :project-id="projectId"
-          :disabled="loading"
-          :model-id="modelId"
-          @model-selected="onMove"
-        />
-        <ProjectModelPageDialogMoveToNewTab
-          v-else
-          :project-id="projectId"
-          :versions="versions"
-          :disabled="loading"
-          @model-selected="onMove($event, true)"
-        />
-      </LayoutTabs>
+      <LayoutTabsHoriztonal v-model:active-item="activeTab" :items="tabItems">
+        <template #default="{ activeItem }">
+          <div class="min-h-40">
+            <ProjectModelPageDialogMoveToExistingTab
+              v-if="activeItem.id === 'existing-model'"
+              :versions="versions"
+              :project-id="projectId"
+              :disabled="loading"
+              :model-id="modelId"
+              @model-selected="onMove"
+            />
+            <ProjectModelPageDialogMoveToNewTab
+              v-else-if="activeItem.id === 'new-model'"
+              :project-id="projectId"
+              :versions="versions"
+              :disabled="loading"
+              @model-selected="onMove($event, true)"
+            />
+          </div>
+        </template>
+      </LayoutTabsHoriztonal>
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
+import { ref, computed } from 'vue'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useMoveVersions } from '~~/lib/projects/composables/versionManagement'
+import { LayoutTabsHoriztonal } from '@speckle/ui-components'
+import type { LayoutPageTabItem } from '@speckle/ui-components'
 
 graphql(`
   fragment ProjectModelPageDialogMoveToVersion on Version {
@@ -55,19 +61,22 @@ const props = defineProps<{
 }>()
 
 const moveVersions = useMoveVersions()
-
+const mp = useMixpanel()
 const loading = ref(false)
-const tabItems = ref<LayoutTabItem[]>([
+
+// Define tab items
+const tabItems = ref<LayoutPageTabItem[]>([
   { title: 'Existing model', id: 'existing-model' },
   { title: 'New model', id: 'new-model' }
 ])
 
+// Manage active tab state
+const activeTab = ref(tabItems.value[0])
+
 const isOpen = computed({
   get: () => props.open,
-  set: (newVal) => emit('update:open', newVal)
+  set: (value) => emit('update:open', value)
 })
-
-const mp = useMixpanel()
 
 const onMove = async (targetModelName: string, newModelCreated?: boolean) => {
   loading.value = true
@@ -76,7 +85,11 @@ const onMove = async (targetModelName: string, newModelCreated?: boolean) => {
       versionIds: props.versions.map((v) => v.id),
       targetModelName
     },
-    { previousModelId: props.modelId, newModelCreated, projectId: props.projectId }
+    {
+      previousModelId: props.modelId,
+      newModelCreated,
+      projectId: props.projectId
+    }
   )
   loading.value = false
   mp.track('Commit Action', {
