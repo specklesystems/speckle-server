@@ -76,14 +76,16 @@ export async function buildMocksConfig(): Promise<{
         version: store.get('Version') as any
       },
       Query: {
-        automateFunctions: () => {
+        automateFunctions: (_parent, args) => {
           const forceZero = false
           const count = forceZero ? 0 : faker.datatype.number({ min: 0, max: 20 })
+
+          const isFeatured = args.filter?.featuredFunctionsOnly
 
           return {
             cursor: null,
             totalCount: count,
-            items: times(count, () => store.get('AutomateFunction'))
+            items: times(count, () => store.get('AutomateFunction', { isFeatured }))
           } as any
         },
         automateFunction: (_parent, args) => {
