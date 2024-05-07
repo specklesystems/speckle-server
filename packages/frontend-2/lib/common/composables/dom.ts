@@ -1,3 +1,5 @@
+import { timeoutAt } from '@speckle/shared'
+import { until } from '@vueuse/core'
 import DOMPurify from 'dompurify'
 
 const purify = async (source: string) => {
@@ -16,21 +18,40 @@ const purify = async (source: string) => {
 
 export function usePurifiedHtml(
   html: MaybeRef<string>,
-  options?: Partial<{ key: string }>
+  options?: Partial<{
+    key: string
+    debugKey?: string
+    /**
+     * If set, composable will wait for this to be true before returning. Useful in SSR
+     * when the markdown source is dependant on a query result
+     */
+    waitFor?: Ref<boolean>
+  }>
 ) {
-  const { key: keySuffix } = options || {}
-  const key = computed(() => `usePurifiedHtml-${unref(html)}-${keySuffix}`)
+  const htmlRef = computed(() => unref(html) || '')
+  const { key: keySuffix, waitFor } = options || {}
+  const key = computed(() => `usePurifiedHtml-${htmlRef.value}-${keySuffix}`)
 
-  const { data } = useAsyncData(
+  const asyncData = useAsyncData(
     key.value,
     async () => {
-      if (!unref(html)) return
-      return purify(unref(html))
+      if (!htmlRef.value?.length) return
+      return purify(htmlRef.value)
     },
     { watch: [key] }
   )
 
+  onServerPrefetch(async () => {
+    if (!waitFor) return
+
+    await Promise.race([
+      until(waitFor).toBe(true),
+      timeoutAt(10000, 'Waiting for HTML purification trigger timed out')
+    ])
+    await asyncData.refresh()
+  })
+
   return {
-    purifiedHtml: computed(() => data.value || '')
+    purifiedHtml: computed(() => asyncData.data.value || '')
   }
 }

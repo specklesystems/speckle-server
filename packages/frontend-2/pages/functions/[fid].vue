@@ -31,6 +31,8 @@ import { SourceApps, type Optional } from '@speckle/shared'
 import { CommonLoadingBar } from '@speckle/ui-components'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
 import type { FunctionDetailsFormValues } from '~/lib/automate/helpers/functions'
+import { useQueryLoaded } from '~/lib/common/composables/graphql'
+import { useMarkdown } from '~/lib/common/composables/markdown'
 import { graphql } from '~/lib/common/generated/gql'
 
 graphql(`
@@ -63,10 +65,11 @@ definePageMeta({
 const route = useRoute()
 const functionId = computed(() => route.params.fid as string)
 const loading = useQueryLoading()
-const { result } = useQuery(pageQuery, () => ({
+const { result, onResult } = useQuery(pageQuery, () => ({
   functionId: functionId.value
 }))
 
+const queryLoadedOnce = useQueryLoaded({ onResult })
 const showEditDialog = ref(false)
 const showNewAutomationDialog = ref(false)
 
@@ -78,6 +81,11 @@ const isOwner = computed(
   //   fn.value?.creator &&
   //   activeUser.value.id === fn.value.creator.id
   // )
+)
+
+const { html: plaintextDescription } = useMarkdown(
+  computed(() => fn.value?.description || ''),
+  { plaintext: true, waitFor: queryLoadedOnce }
 )
 
 const editModel = computed((): Optional<FunctionDetailsFormValues> => {
@@ -93,5 +101,10 @@ const editModel = computed((): Optional<FunctionDetailsFormValues> => {
     ),
     tags: func.tags
   }
+})
+
+useSeoMeta({
+  title: computed(() => fn.value?.name || 'Function'),
+  description: plaintextDescription
 })
 </script>
