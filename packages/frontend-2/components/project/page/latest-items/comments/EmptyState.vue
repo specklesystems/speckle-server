@@ -35,7 +35,7 @@
       </svg>
     </template>
     <template #cta>
-      <div v-if="small && canPostComment" class="mt-3">
+      <div v-if="small && canPostComment && isLoggedIn" class="mt-3">
         <FormButton
           size="sm"
           :icon-left="PlusIcon"
@@ -60,4 +60,5 @@ defineProps<{
 }>()
 
 const canPostComment = useCheckViewerCommentingAccess()
+const { isLoggedIn } = useActiveUser()
 </script>
