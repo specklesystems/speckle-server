@@ -77,6 +77,8 @@ type AutomateFunctionRun {
   AutomateTypes.ResultsSchema type from @speckle/shared
   """
   results: JSONObject
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 type AutomateRun {

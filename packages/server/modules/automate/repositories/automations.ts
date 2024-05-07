@@ -423,7 +423,10 @@ export async function updateFunctionRun(
 ) {
   const [ret] = await AutomationFunctionRuns.knex()
     .where(AutomationFunctionRuns.col.id, run.id)
-    .update(pick(run, AutomationFunctionRuns.withoutTablePrefix.cols))
+    .update({
+      ...pick(run, AutomationFunctionRuns.withoutTablePrefix.cols),
+      [AutomationFunctionRuns.withoutTablePrefix.col.updatedAt]: new Date()
+    })
     .returning<AutomationFunctionRunRecord[]>('*')
 
   return ret
@@ -434,7 +437,10 @@ export async function updateAutomationRun(
 ) {
   const [ret] = await AutomationRuns.knex()
     .where(AutomationRuns.col.id, run.id)
-    .update(pick(run, AutomationRuns.withoutTablePrefix.cols))
+    .update({
+      ...pick(run, AutomationRuns.withoutTablePrefix.cols),
+      [AutomationRuns.withoutTablePrefix.col.updatedAt]: new Date()
+    })
     .returning<AutomationRunRecord[]>('*')
 
   return ret
@@ -592,17 +598,20 @@ export async function getAutomationRunsItems(params: { args: GetAutomationRunsAr
     )
 
     .groupBy(AutomationRuns.col.id)
-    .orderBy(AutomationRuns.col.createdAt, 'desc')
+    .orderBy([
+      { column: AutomationRuns.col.updatedAt, order: 'desc' },
+      { column: AutomationRuns.col.updatedAt, order: 'desc' }
+    ])
     .limit(limit)
 
   if (args.cursor?.length) {
-    q.andWhere(AutomationRuns.col.createdAt, '<', decodeCursor(args.cursor))
+    q.andWhere(AutomationRuns.col.updatedAt, '<', decodeCursor(args.cursor))
   }
 
   const res = await q
   return {
     items: res,
-    cursor: res.length ? res[res.length - 1].createdAt.toISOString() : null
+    cursor: res.length ? res[res.length - 1].updatedAt.toISOString() : null
   }
 }
 
@@ -717,6 +726,10 @@ export const getLatestVersionAutomationRuns = async (
       AutomationRunTriggers.col.automationRunId,
       'rq.id'
     )
+    .orderBy([
+      { column: 'rq.updatedAt', order: 'desc' },
+      { column: AutomationFunctionRuns.col.updatedAt, order: 'desc' }
+    ])
     .groupBy('rq.id')
 
   return await mainQ

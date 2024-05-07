@@ -243,6 +243,7 @@ export type AutomateFunctionReleasesFilter = {
 export type AutomateFunctionRun = {
   __typename?: 'AutomateFunctionRun';
   contextView?: Maybe<Scalars['String']>;
+  createdAt: Scalars['DateTime'];
   elapsed: Scalars['Float'];
   function: AutomateFunction;
   functionId?: Maybe<Scalars['String']>;
@@ -252,6 +253,7 @@ export type AutomateFunctionRun = {
   results?: Maybe<Scalars['JSONObject']>;
   status: AutomateRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
+  updatedAt: Scalars['DateTime'];
 };
 
 export type AutomateFunctionRunStatusReportInput = {

@@ -994,7 +994,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               elapsed: 0,
               results: null,
               contextView: null,
-              statusMessage: null
+              statusMessage: null,
+              createdAt: new Date(),
+              updatedAt: new Date()
             }
           ]
         }

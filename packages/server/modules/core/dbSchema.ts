@@ -576,7 +576,9 @@ export const AutomationFunctionRuns = buildTableHelper('automation_function_runs
   'status',
   'contextView',
   'statusMessage',
-  'results'
+  'results',
+  'createdAt',
+  'updatedAt'
 ])
 
 export const AutomationRevisionFunctions = buildTableHelper(

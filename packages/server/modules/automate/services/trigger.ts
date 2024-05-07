@@ -121,7 +121,9 @@ function createAutomationRunData(params: {
       statusMessage: null,
       resultVersions: [],
       functionReleaseId: f.functionReleaseId,
-      functionInputs: f.functionInputs
+      functionInputs: f.functionInputs,
+      createdAt: new Date(),
+      updatedAt: new Date()
     }))
   }
   return automationRun

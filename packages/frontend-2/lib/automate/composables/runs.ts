@@ -1,6 +1,7 @@
 import { Automate, type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
 import { useIntervalFn } from '@vueuse/core'
 import dayjs from 'dayjs'
+import { orderBy } from 'lodash-es'
 import {
   useFormatDuration,
   useReactiveNowDate
@@ -8,7 +9,8 @@ import {
 import { graphql } from '~/lib/common/generated/gql'
 import {
   AutomateRunStatus,
-  type AutomationRunDetailsFragment
+  type AutomationRunDetailsFragment,
+  type AutomationsStatusOrderedRuns_AutomationRunFragment
 } from '~/lib/common/generated/gql/graphql'
 import { useViewerRouteBuilder } from '~/lib/projects/composables/models'
 
@@ -170,4 +172,44 @@ export const useAutomationFunctionRunResults = (params: {
   )
 
   return ret
+}
+
+graphql(`
+  fragment AutomationsStatusOrderedRuns_AutomationRun on AutomateRun {
+    id
+    automation {
+      id
+      name
+    }
+    functionRuns {
+      id
+      updatedAt
+    }
+  }
+`)
+
+export const useAutomationsStatusOrderedRuns = <
+  R extends AutomationsStatusOrderedRuns_AutomationRunFragment = AutomationsStatusOrderedRuns_AutomationRunFragment
+>(params: {
+  automationRuns: MaybeRef<R[]>
+}) => {
+  const { automationRuns } = params
+
+  const runs = computed(() => {
+    const ret: Array<
+      R['functionRuns'][0] & {
+        automationName: string
+      }
+    > = []
+
+    for (const automationRun of unref(automationRuns)) {
+      for (const run of automationRun.functionRuns) {
+        ret.push({ ...run, automationName: automationRun.automation.name })
+      }
+    }
+
+    return orderBy(ret, (r) => new Date(r.updatedAt).getTime(), 'desc')
+  })
+
+  return { runs }
 }

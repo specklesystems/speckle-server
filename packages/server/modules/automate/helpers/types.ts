@@ -121,6 +121,8 @@ export type AutomationFunctionRunRecord = {
   functionId: string
   elapsed: number
   status: AutomationRunStatus
+  createdAt: Date
+  updatedAt: Date
   contextView: string | null
   statusMessage: string | null
   results: Nullable<Automate.AutomateTypes.ResultsSchema>

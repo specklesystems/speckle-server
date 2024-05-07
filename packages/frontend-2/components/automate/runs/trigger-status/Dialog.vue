@@ -21,16 +21,13 @@
       </div>
     </template>
     <div>
-      <div v-for="run in status.automationRuns" :key="run.id">
-        <AutomateRunsTriggerStatusDialogAutomationRun
-          :run="run"
-          :project-id="projectId"
-          :model-id="modelId"
-          :version-id="versionId"
-        />
-      </div>
+      <AutomateRunsTriggerStatusDialogRunsRows
+        :runs="status.automationRuns"
+        :project-id="projectId"
+        :model-id="modelId"
+        :version-id="versionId"
+      />
     </div>
-
     <template #buttons>
       <div
         class="flex flex-col gap-2 items-start sm:gap-0 sm:flex-row sm:items-center sm:justify-between w-full pl-2"
@@ -69,7 +66,7 @@ graphql(`
     id
     automationRuns {
       id
-      ...AutomateRunsTriggerStatusDialogAutomationRun_AutomateRun
+      ...AutomateRunsTriggerStatusDialogRunsRows_AutomateRun
     }
   }
 `)
