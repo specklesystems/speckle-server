@@ -5,11 +5,17 @@
         <FormButton
           size="sm"
           full-width
-          color="card"
-          class="flex items-center justify-center"
+          :color="'card'"
+          class="flex items-center justify-center border"
           @click="sendOrCancel"
         >
-          {{ modelCard.progress ? 'Cancel' : 'Publish' }}
+          {{
+            modelCard.progress
+              ? 'Cancel'
+              : modelCard.sendFilter?.expired
+              ? 'Update Filter'
+              : 'Publish'
+          }}
         </FormButton>
       </div>
       <div
@@ -18,9 +24,9 @@
         <FormButton
           v-tippy="'Edit what gets published'"
           :icon-left="CubeIcon"
-          link
+          full-width
           size="sm"
-          color="card"
+          :color="modelCard.sendFilter?.expired ? 'warning' : 'card'"
           class="flex min-w-0 transition hover:text-primary py-1"
           :disabled="!!modelCard.progress"
           @click="openFilterDialog = true"

@@ -5,7 +5,11 @@ import {
 import { IModelCard, ModelCardProgress } from 'lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { IReceiverModelCard } from 'lib/models/card/receiver'
-import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
+import {
+  IDirectSelectionSendFilter,
+  ISendFilter,
+  ISenderModelCard
+} from 'lib/models/card/send'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -296,6 +300,33 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
    */
   const refreshSendFilters = async () =>
     (sendFilters.value = await app.$sendBinding?.getSendFilters())
+
+  app.$selectionBinding?.on('setSelection', (selInfo) => {
+    const senders = documentModelStore.value.models.filter((model) =>
+      model.typeDiscriminator.toLowerCase().includes('sender')
+    ) as ISenderModelCard[]
+    const sendersWithSelectionFilter = senders.filter(
+      (model) => model.sendFilter?.name === 'Selection'
+    )
+    sendersWithSelectionFilter.forEach((model) => {
+      const filter = model.sendFilter as IDirectSelectionSendFilter
+      if (selInfo.selectedObjectIds.length === 0) {
+        // make not expired always if selection empty
+        filter.expired = false
+        patchModel(model.modelCardId, { sendFilter: filter })
+        return
+      }
+      const sameSelection = filter.selectedObjectIds
+        .slice()
+        .sort()
+        .every(
+          (value, index) =>
+            value === (selInfo.selectedObjectIds as string[]).slice().sort()[index]
+        )
+      filter.expired = !sameSelection
+      patchModel(model.modelCardId, { sendFilter: filter })
+    })
+  })
 
   app.$baseBinding.on(
     'documentChanged',
