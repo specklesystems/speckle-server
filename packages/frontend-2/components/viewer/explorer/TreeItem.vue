@@ -181,7 +181,7 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
-const rawSpeckleData = props.treeItem?.raw as Record<string, unknown>
+const rawSpeckleData = props.treeItem?.raw as SpeckleObject
 
 const headerAndSubheader = computed(() => {
   return getHeaderAndSubheaderForSpeckleObject(rawSpeckleData)

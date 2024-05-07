@@ -1,18 +1,28 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable camelcase */
 import { speckleBasicVert } from './shaders/speckle-basic-vert'
 import { speckleBasicFrag } from './shaders/speckle-basic-frag'
-import { ShaderLib, Vector3, Material, IUniform, Vector2 } from 'three'
+import {
+  ShaderLib,
+  Vector3,
+  Material,
+  type IUniform,
+  Vector2,
+  type MeshBasicMaterialParameters,
+  Scene,
+  Camera,
+  BufferGeometry,
+  Object3D
+} from 'three'
 import { Matrix4 } from 'three'
-import { Geometry } from '../converter/Geometry'
 
-import { ExtendedMeshBasicMaterial, Uniforms } from './SpeckleMaterial'
+import { ExtendedMeshBasicMaterial, type Uniforms } from './SpeckleMaterial'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
 class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
   protected static readonly vecBuff: Vector2 = new Vector2()
 
-  private _billboardPixelHeight: number
+  private _billboardPixelHeight!: number
 
   protected get vertexProgram(): string {
     return speckleBasicVert
@@ -43,7 +53,7 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
     this._billboardPixelHeight = value
   }
 
-  constructor(parameters, defines = []) {
+  constructor(parameters: MeshBasicMaterialParameters, defines: string[] = []) {
     super(parameters)
     this.init(defines)
   }
@@ -53,7 +63,7 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
     return this.constructor.name
   }
 
-  public copy(source) {
+  public copy(source: Material) {
     super.copy(source)
     this.copyFrom(source)
     return this
@@ -69,8 +79,14 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
   }
 
   /** Called by three.js render loop */
-  public onBeforeRender(_this, scene, camera, geometry, object, group) {
-    if (this.defines['BILLBOARD_FIXED']) {
+  public onBeforeRender(
+    _this: SpeckleWebGLRenderer,
+    _scene: Scene,
+    camera: Camera,
+    _geometry: BufferGeometry,
+    object: Object3D
+  ) {
+    if (this.defines && this.defines['BILLBOARD_FIXED']) {
       const resolution = _this.getDrawingBufferSize(SpeckleBasicMaterial.vecBuff)
       SpeckleBasicMaterial.vecBuff.set(
         (this._billboardPixelHeight / resolution.x) * 2,
@@ -81,7 +97,7 @@ class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
       this.userData.invProjection.value.copy(SpeckleBasicMaterial.matBuff)
     }
 
-    if (this.defines['USE_RTE']) {
+    if (this.defines && this.defines['USE_RTE']) {
       object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
       this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
       this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)

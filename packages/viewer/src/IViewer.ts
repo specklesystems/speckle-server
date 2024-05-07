@@ -1,16 +1,31 @@
 import { Vector3 } from 'three'
+import { type PropertyInfo } from './modules/filtering/PropertyManager'
+import type { Query, QueryArgsResultMap } from './modules/queries/Query'
+import { type TreeNode, WorldTree } from './modules/tree/WorldTree'
+import { type Utils } from './modules/Utils'
 import defaultHdri from './assets/hdri/Mild-dwab.png'
-import { PropertyInfo } from './modules/filtering/PropertyManager'
-import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
-import { DataTree } from './modules/tree/DataTree'
-import { TreeNode, WorldTree } from './modules/tree/WorldTree'
-import { Utils } from './modules/Utils'
 import { World } from './modules/World'
 import SpeckleRenderer from './modules/SpeckleRenderer'
 import { Extension } from './modules/extensions/Extension'
-import Input from './modules/input/Input'
 import { Loader } from './modules/loaders/Loader'
 import { type Constructor } from 'type-fest'
+import type { Vector3Like } from './modules/batching/BatchObject'
+import type { FilteringState } from './modules/extensions/FilteringExtension'
+
+export type SpeckleReference = {
+  referencedId: string
+}
+
+export type SpeckleObject = {
+  [k: string]: unknown
+  speckle_type: string
+  id: string
+  elements?: SpeckleReference[]
+  children?: SpeckleObject[] | SpeckleReference[]
+  name?: string
+  referencedId?: string
+  units?: string
+}
 
 export interface ViewerParams {
   showStats: boolean
@@ -54,21 +69,29 @@ export const DefaultViewerParams: ViewerParams = {
 export enum ViewerEvent {
   ObjectClicked = 'object-clicked',
   ObjectDoubleClicked = 'object-doubleclicked',
-  DownloadComplete = 'download-complete',
   LoadComplete = 'load-complete',
-  LoadProgress = 'load-progress',
   UnloadComplete = 'unload-complete',
-  LoadCancelled = 'load-cancelled',
   UnloadAllComplete = 'unload-all-complete',
   Busy = 'busy',
   FilteringStateSet = 'filtering-state-set',
   LightConfigUpdated = 'light-config-updated'
 }
 
+export interface ViewerEventPayload {
+  [ViewerEvent.ObjectClicked]: SelectionEvent | null
+  [ViewerEvent.ObjectDoubleClicked]: SelectionEvent | null
+  [ViewerEvent.LoadComplete]: string
+  [ViewerEvent.UnloadComplete]: string
+  [ViewerEvent.UnloadAllComplete]: void
+  [ViewerEvent.Busy]: boolean
+  [ViewerEvent.FilteringStateSet]: FilteringState
+  [ViewerEvent.LightConfigUpdated]: LightConfiguration
+}
+
 export type SpeckleView = {
   name: string
   id: string
-  view: Record<string, unknown>
+  view: { origin: Vector3Like; target: Vector3Like }
 }
 
 export type SelectionEvent = {
@@ -140,14 +163,16 @@ export enum StencilOutlineType {
 }
 
 export interface IViewer {
-  get input(): Input
   get Utils(): Utils
   get World(): World
 
   init(): Promise<void>
   resize(): void
-  on(eventType: ViewerEvent, handler: (arg) => void)
-  requestRender(flags?: number): void
+  on<T extends ViewerEvent>(
+    eventType: T,
+    handler: (arg: ViewerEventPayload[T]) => void
+  ): void
+  requestRender(flags?: UpdateFlags): void
 
   setLightConfiguration(config: LightConfiguration): void
 
@@ -166,16 +191,14 @@ export interface IViewer {
   ): Promise<PropertyInfo[]>
 
   /** Data ops */
-  getDataTree(): DataTree
   getWorldTree(): WorldTree
-  query<T extends Query>(query: T): QueryArgsResultMap[T['operation']]
-  queryAsync(query: Query): Promise<QueryResult>
+  query<T extends Query>(query: T): QueryArgsResultMap[T['operation']] | null
 
   getRenderer(): SpeckleRenderer
   getContainer(): HTMLElement
 
   createExtension<T extends Extension>(type: Constructor<T>): T
   getExtension<T extends Extension>(type: Constructor<T>): T
-
+  hasExtension<T extends Extension>(type: Constructor<T>): boolean
   dispose(): void
 }

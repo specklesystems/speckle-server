@@ -77,7 +77,7 @@
         class="pl-2"
       >
         <ViewerSelectionObject
-          :object="(kvp.value as Record<string,unknown>) || {}"
+          :object="(kvp.value as SpeckleObject) || {}"
           :title="(kvp.key as string)"
           :unfold="false"
         />

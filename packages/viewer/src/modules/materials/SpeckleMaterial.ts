@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
-/* eslint-disable camelcase */
 import {
   AlwaysStencilFunc,
-  IUniform,
+  type IUniform,
   Material,
   MeshBasicMaterial,
   MeshDepthMaterial,
@@ -10,24 +9,43 @@ import {
   MeshStandardMaterial,
   PointsMaterial,
   ReplaceStencilOp,
-  UniformsUtils
+  UniformsUtils,
+  type Shader
 } from 'three'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
 import { StencilOutlineType } from '../../IViewer'
-import { MaterialOptions } from './MaterialOptions'
+import { type MaterialOptions } from './MaterialOptions'
 
 class SpeckleUserData {
+  [k: string]: unknown
   toJSON() {
     return {}
   }
 }
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Uniforms = Record<string, any>
 
 export class SpeckleMaterial {
-  protected _internalUniforms
-  protected _stencilOutline
-  public needsCopy: boolean
+  protected _internalUniforms!: Shader
+  protected _stencilOutline: StencilOutlineType = StencilOutlineType.NONE
+  public needsCopy: boolean = false
+
+  protected get speckleUserData(): SpeckleUserData {
+    return (this as unknown as Material).userData
+  }
+
+  protected set speckleUserData(value: SpeckleUserData) {
+    ;(this as unknown as Material).userData = value
+  }
+
+  protected get speckleDefines(): Record<string, unknown> | undefined {
+    return (this as unknown as Material).defines
+  }
+
+  protected set speckleDefines(value: Record<string, unknown> | undefined) {
+    ;(this as unknown as Material).defines = value
+  }
 
   protected get vertexProgram(): string {
     return ''
@@ -50,55 +68,62 @@ export class SpeckleMaterial {
   }
 
   protected set stencilOutline(value: StencilOutlineType) {
-    this['stencilWrite'] = value === StencilOutlineType.NONE ? false : true
-    if (this['stencilWrite']) {
-      this['stencilWriteMask'] = 0xff
-      this['stencilRef'] = 0x00
-      this['stencilFunc'] = AlwaysStencilFunc
-      this['stencilZFail'] = ReplaceStencilOp
-      this['stencilZPass'] = ReplaceStencilOp
-      this['stencilFail'] = ReplaceStencilOp
+    this._stencilOutline = value
+    const thisAsMaterial: Material = this as unknown as Material
+    thisAsMaterial.stencilWrite = value === StencilOutlineType.NONE ? false : true
+    if (thisAsMaterial.stencilWrite) {
+      thisAsMaterial.stencilWriteMask = 0xff
+      thisAsMaterial.stencilRef = 0x00
+      thisAsMaterial.stencilFunc = AlwaysStencilFunc
+      thisAsMaterial.stencilZFail = ReplaceStencilOp
+      thisAsMaterial.stencilZPass = ReplaceStencilOp
+      thisAsMaterial.stencilFail = ReplaceStencilOp
       if (value === StencilOutlineType.OUTLINE_ONLY) {
-        this['colorWrite'] = false
-        this['depthWrite'] = false
-        this['stencilWrite'] = true
+        thisAsMaterial.colorWrite = false
+        thisAsMaterial.depthWrite = false
+        thisAsMaterial.stencilWrite = true
       }
     }
   }
 
   protected set pointSize(value: number) {
-    this['size'] = value
+    ;(this as unknown as PointsMaterial).size = value
   }
 
-  protected init(defines = []) {
-    this['userData'] = new SpeckleUserData()
+  protected init(defines: Array<string> = []) {
+    this.speckleUserData = new SpeckleUserData()
     this.setUniforms(this.uniformsDef)
     this.setDefines(defines)
-    this['onBeforeCompile'] = this.onCompile
+    ;(this as unknown as Material)['onBeforeCompile'] = this.onCompile
   }
 
   protected setUniforms(def: Uniforms) {
     for (const k in def) {
-      this['userData'][k] = {
+      this.speckleUserData[k] = {
         value: def[k]
       }
     }
-    this['uniforms'] = UniformsUtils.merge([this.baseUniforms, this['userData']])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(this as any)['uniforms'] = UniformsUtils.merge([
+      this.baseUniforms,
+      this.speckleUserData
+    ])
   }
 
-  protected setDefines(defines = []) {
+  protected setDefines(defines: Array<string> = []) {
     if (defines) {
-      this['defines'] = {}
+      this.speckleDefines = {}
       for (let k = 0; k < defines.length; k++) {
-        this['defines'][defines[k]] = ' '
+        this.speckleDefines[defines[k]] = ' '
       }
     }
   }
 
   protected copyUniforms(material: Material) {
     for (const k in material.userData) {
-      if (this['userData'][k] !== undefined)
-        this['userData'][k].value = material.userData[k].value
+      if (this.speckleUserData[k] !== undefined)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (this.speckleUserData[k] as any).value = material.userData[k].value
     }
   }
 
@@ -106,21 +131,23 @@ export class SpeckleMaterial {
     if (!this._internalUniforms) return
 
     for (const k in this.uniformsDef) {
-      this._internalUniforms.uniforms[k] = this['userData'][k]
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      this._internalUniforms.uniforms[k] = this.speckleUserData[k] as IUniform
     }
   }
 
-  protected copyFrom(source) {
-    this['userData'] = new SpeckleUserData()
+  protected copyFrom(source: Material) {
+    this.speckleUserData = new SpeckleUserData()
     this.setUniforms(this.uniformsDef)
     this.copyUniforms(source)
     this.bindUniforms()
-    Object.assign(this['defines'], source.defines)
-    if (source.needsCopy) this.needsCopy = source.needsCopy
+    Object.assign(this.speckleDefines as object, source.defines)
+    if ((source as unknown as SpeckleMaterial).needsCopy)
+      this.needsCopy = (source as unknown as SpeckleMaterial).needsCopy
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  protected onCompile(shader, renderer) {
+  protected onCompile(shader: Shader) {
     this._internalUniforms = shader
     this.bindUniforms()
     shader.vertexShader = this.vertexProgram
@@ -141,7 +168,7 @@ export class SpeckleMaterial {
     to.clippingPlanes = from.clippingPlanes
     to.clipShadows = from.clipShadows
     to.colorWrite = from.colorWrite
-    Object.assign(to.defines, from.defines)
+    Object.assign(to.defines as object, from.defines)
     to.depthFunc = from.depthFunc
     to.depthTest = from.depthTest
     to.depthWrite = from.depthWrite
@@ -182,7 +209,6 @@ export class ExtendedMeshNormalMaterial extends MeshNormalMaterial {}
 export class ExtendedLineMaterial extends LineMaterial {}
 export class ExtendedPointsMaterial extends PointsMaterial {}
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ExtendedMeshStandardMaterial extends SpeckleMaterial {}
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ExtendedMeshBasicMaterial extends SpeckleMaterial {}

@@ -1,7 +1,7 @@
 import { Camera, Matrix4, Vector3, WebGLRenderer } from 'three'
 import { Geometry } from '../converter/Geometry'
 export class RTEBuffers {
-  private _cache: RTEBuffers = null
+  private _cache: RTEBuffers | undefined
 
   viewer: Vector3 = new Vector3()
   viewerLow: Vector3 = new Vector3()

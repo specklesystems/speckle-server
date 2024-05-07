@@ -1,5 +1,6 @@
 import {
   BackSide,
+  BufferAttribute,
   BufferGeometry,
   DoubleSide,
   Group,
@@ -7,23 +8,26 @@ import {
   InstancedMesh,
   Material,
   Matrix4,
+  Object3D,
   Ray,
   Raycaster,
+  SkinnedMesh,
   Sphere,
   Triangle,
   Vector2,
-  Vector3
+  Vector3,
+  type Intersection
 } from 'three'
 import { BatchObject } from '../batching/BatchObject'
 import Materials from '../materials/Materials'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
+import { ObjectLayers } from '../../IViewer'
+import Logger from 'js-logger'
 import {
-  DrawGroup,
+  type DrawGroup,
   INSTANCE_GRADIENT_BUFFER_STRIDE,
   INSTANCE_TRANSFORM_BUFFER_STRIDE
 } from '../batching/Batch'
-import { ObjectLayers } from '../../IViewer'
-import Logger from 'js-logger'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -54,20 +58,20 @@ const tmpInverseMatrix = /* @__PURE__ */ new Matrix4()
 export default class SpeckleInstancedMesh extends Group {
   public static MeshBatchNumber = 0
 
-  private tas: TopLevelAccelerationStructure = null
-  private batchMaterial: Material = null
+  private tas: TopLevelAccelerationStructure
+  private batchMaterial: Material | null = null
   private materialCache: { [id: string]: Material } = {}
-  private materialStack: Array<Material | Material[]> = []
+  private materialStack: Array<Array<Material | Material[]>> = []
   private materialCacheLUT: { [id: string]: number } = {}
 
-  private _batchObjects: BatchObject[]
+  private _batchObjects!: BatchObject[]
 
   public groups: Array<DrawGroup> = []
   public materials: Material[] = []
-  private instanceGeometry: BufferGeometry = null
+  private instanceGeometry: BufferGeometry | undefined = undefined
   private instances: InstancedMesh[] = []
 
-  public get TAS() {
+  public get TAS(): TopLevelAccelerationStructure {
     return this.tas
   }
 
@@ -92,8 +96,7 @@ export default class SpeckleInstancedMesh extends Group {
   }
 
   public setOverrideMaterial(material: Material) {
-    material
-    const saveMaterials = []
+    const saveMaterials: Array<Material[] | Material> = []
     for (let k = 0; k < this.instances.length; k++) {
       saveMaterials.push(this.instances[k].material)
     }
@@ -118,7 +121,11 @@ export default class SpeckleInstancedMesh extends Group {
       this.materialCacheLUT[clone.id] = material.id
       cachedMaterial = clone
       this.updateMaterialTransformsUniform(this.materialCache[material.id])
-    } else if (copy || material['needsCopy'] || cachedMaterial['needsCopy']) {
+    } else if (
+      copy ||
+      (material as never)['needsCopy'] ||
+      (cachedMaterial as never)['needsCopy']
+    ) {
       Materials.fastCopy(material, cachedMaterial)
     }
     return cachedMaterial
@@ -149,7 +156,8 @@ export default class SpeckleInstancedMesh extends Group {
     this.instances.length = 0
 
     for (let k = 0; k < this.groups.length; k++) {
-      const material = this.materials[this.groups[k].materialIndex]
+      const materialIndex = this.groups[k].materialIndex
+      const material = this.materials[materialIndex]
       const group = new InstancedMesh(this.instanceGeometry, material, 0)
       group.instanceMatrix = new InstancedBufferAttribute(
         transformBuffer.subarray(
@@ -231,7 +239,11 @@ export default class SpeckleInstancedMesh extends Group {
 
   // converts the given BVH raycast intersection to align with the three.js raycast
   // structure (include object, world space distance and point).
-  private convertRaycastIntersect(hit, object, raycaster) {
+  private convertRaycastIntersect(
+    hit: Intersection | null,
+    object: Object3D,
+    raycaster: Raycaster
+  ) {
     if (hit === null) {
       return null
     }
@@ -247,9 +259,9 @@ export default class SpeckleInstancedMesh extends Group {
     }
   }
 
-  raycast(raycaster: Raycaster, intersects) {
+  raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
     if (this.tas) {
-      if (this.batchMaterial === undefined) return
+      if (!this.batchMaterial) return
 
       tmpInverseMatrix.copy(this.matrixWorld).invert()
       ray.copy(raycaster.ray).applyMatrix4(tmpInverseMatrix)
@@ -278,12 +290,13 @@ export default class SpeckleInstancedMesh extends Group {
       const matrixWorld = this.matrixWorld
 
       if (material === undefined) return
+      if (geometry === undefined) return
 
       // Checking boundingSphere distance to ray
 
       if (geometry.boundingSphere === null) geometry.computeBoundingSphere()
 
-      _sphere.copy(geometry.boundingSphere)
+      _sphere.copy(geometry.boundingSphere || new Sphere())
       _sphere.applyMatrix4(matrixWorld)
 
       if (raycaster.ray.intersectsSphere(_sphere) === false) return
@@ -303,13 +316,13 @@ export default class SpeckleInstancedMesh extends Group {
 
       const index = geometry.index
       /** Stored high component if RTE is being used. Regular positions otherwise */
-      const position = geometry.attributes.position
+      const position = geometry.attributes.position as BufferAttribute
       /** Stored low component if RTE is being used. undefined otherwise */
-      const positionLow = geometry.attributes['position_low']
-      const morphPosition = geometry.morphAttributes.position
+      const positionLow = geometry.attributes['position_low'] as BufferAttribute
+      const morphPosition = geometry.morphAttributes.position as Array<BufferAttribute>
       const morphTargetsRelative = geometry.morphTargetsRelative
-      const uv = geometry.attributes.uv
-      const uv2 = geometry.attributes.uv2
+      const uv = geometry.attributes.uv as BufferAttribute
+      const uv2 = geometry.attributes.uv2 as BufferAttribute
       const groups = geometry.groups
       const drawRange = geometry.drawRange
 
@@ -319,6 +332,10 @@ export default class SpeckleInstancedMesh extends Group {
         if (Array.isArray(material)) {
           for (let i = 0, il = groups.length; i < il; i++) {
             const group = groups[i]
+            if (!group.materialIndex) {
+              Logger.error(`Group with no material, skipping!`)
+              continue
+            }
             const groupMaterial = material[group.materialIndex]
 
             const start = Math.max(group.start, drawRange.start)
@@ -350,7 +367,8 @@ export default class SpeckleInstancedMesh extends Group {
 
               if (intersection) {
                 intersection.faceIndex = Math.floor(j / 3) // triangle number in indexed buffer semantics
-                intersection.face.materialIndex = group.materialIndex
+                if (intersection.face)
+                  intersection.face.materialIndex = group.materialIndex as number
                 intersects.push(intersection)
               }
             }
@@ -392,6 +410,10 @@ export default class SpeckleInstancedMesh extends Group {
         if (Array.isArray(material)) {
           for (let i = 0, il = groups.length; i < il; i++) {
             const group = groups[i]
+            if (!group.materialIndex) {
+              Logger.error(`Group with no material, skipping!`)
+              continue
+            }
             const groupMaterial = material[group.materialIndex]
 
             const start = Math.max(group.start, drawRange.start)
@@ -423,7 +445,8 @@ export default class SpeckleInstancedMesh extends Group {
 
               if (intersection) {
                 intersection.faceIndex = Math.floor(j / 3) // triangle number in non-indexed buffer semantics
-                intersection.face.materialIndex = group.materialIndex
+                if (intersection.face)
+                  intersection.face.materialIndex = group.materialIndex as number
                 intersects.push(intersection)
               }
             }
@@ -464,7 +487,16 @@ export default class SpeckleInstancedMesh extends Group {
   }
 }
 
-function checkIntersection(object, material, raycaster, ray, pA, pB, pC, point) {
+function checkIntersection(
+  object: Object3D,
+  material: Material,
+  raycaster: Raycaster,
+  ray: Ray,
+  pA: Vector3,
+  pB: Vector3,
+  pC: Vector3,
+  point: Vector3
+): (Intersection & { uv2: Vector2 | undefined }) | null {
   let intersect
 
   if (material.side === BackSide) {
@@ -488,7 +520,8 @@ function checkIntersection(object, material, raycaster, ray, pA, pB, pC, point) 
     object,
     uv: undefined,
     uv2: undefined,
-    face: undefined
+    face: undefined,
+    faceIndex: undefined
   }
 }
 
@@ -496,19 +529,19 @@ function checkIntersection(object, material, raycaster, ray, pA, pB, pC, point) 
  *  hold the default `position` attribute values
  */
 function checkBufferGeometryIntersection(
-  object,
-  material,
-  raycaster,
-  ray,
-  positionLow,
-  positionHigh,
-  morphPosition,
-  morphTargetsRelative,
-  uv,
-  uv2,
-  a,
-  b,
-  c
+  object: Object3D,
+  material: Material,
+  raycaster: Raycaster,
+  ray: Ray,
+  positionLow: BufferAttribute,
+  positionHigh: BufferAttribute,
+  morphPosition: Array<BufferAttribute>,
+  morphTargetsRelative: boolean,
+  uv: BufferAttribute,
+  uv2: BufferAttribute,
+  a: number,
+  b: number,
+  c: number
 ) {
   _vA.fromBufferAttribute(positionHigh, a)
   _vB.fromBufferAttribute(positionHigh, b)
@@ -519,7 +552,7 @@ function checkBufferGeometryIntersection(
     _vC.add(_vTemp.fromBufferAttribute(positionLow, c))
   }
 
-  const morphInfluences = object.morphTargetInfluences
+  const morphInfluences = (object as SkinnedMesh).morphTargetInfluences
 
   if (morphPosition && morphInfluences) {
     _morphA.set(0, 0, 0)
@@ -552,10 +585,10 @@ function checkBufferGeometryIntersection(
     _vC.add(_morphC)
   }
 
-  if (object.isSkinnedMesh) {
-    object.boneTransform(a, _vA)
-    object.boneTransform(b, _vB)
-    object.boneTransform(c, _vC)
+  if ((object as SkinnedMesh).isSkinnedMesh) {
+    ;(object as SkinnedMesh).boneTransform(a, _vA)
+    ;(object as SkinnedMesh).boneTransform(b, _vB)
+    ;(object as SkinnedMesh).boneTransform(c, _vC)
   }
 
   const intersection = checkIntersection(

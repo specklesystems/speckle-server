@@ -1,6 +1,7 @@
 import { speckleGhostVert } from './shaders/speckle-ghost-vert'
 import { speckleGhostFrag } from './shaders/speckle-ghost-frag'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
+import type { MeshBasicMaterialParameters } from 'three'
 
 class SpeckleGhostMaterial extends SpeckleBasicMaterial {
   protected get vertexProgram(): string {
@@ -11,7 +12,10 @@ class SpeckleGhostMaterial extends SpeckleBasicMaterial {
     return speckleGhostFrag
   }
 
-  constructor(parameters, defines = ['USE_RTE']) {
+  constructor(
+    parameters: MeshBasicMaterialParameters,
+    defines: string[] = ['USE_RTE']
+  ) {
     super(parameters, defines)
   }
 }
