@@ -16,7 +16,7 @@
             "
             class="absolute inset-0"
           ></div>
-          <div class="flex gap-1 sm:gap-1.5 items-center px-2">
+          <div class="flex gap-2 items-center px-2">
             <component
               :is="item.icon"
               v-if="item.icon"
