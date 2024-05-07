@@ -168,10 +168,12 @@ export class SketchupBridge extends BaseBridge {
       sendObject,
       message
     } = eventPayload
-    this.emit('senderProgress', {
-      id: modelCardId,
-      status: 'Uploading',
-      progress: 0
+    this.emit('setModelProgress', {
+      modelCardId,
+      progress: {
+        status: 'Uploading',
+        progress: 0
+      }
     } as unknown as string)
     // TODO: More of a question: why are we not sending multiple batches at once?
     // What's in a batch? etc. To look at optmizing this and not blocking the
