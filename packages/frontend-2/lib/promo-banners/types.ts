@@ -4,4 +4,5 @@ export type PromoBanner = {
   secondaryText?: string
   url: string
   priority: number
+  expiryDate: string // ISO date string, e.g. "YYYY-MM-DD"
 }

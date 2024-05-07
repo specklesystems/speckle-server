@@ -126,7 +126,8 @@ const promoBanners = ref<PromoBanner[]>([
     primaryText: 'Join our online hackathon!',
     secondaryText: 'June 7 - 9, 2024',
     url: 'https://beyond-the-speckleverse.devpost.com/',
-    priority: 1
+    priority: 1,
+    expiryDate: '2024-06-10'
   }
 ])
 

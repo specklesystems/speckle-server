@@ -24,10 +24,9 @@ const hideAllPromoBanners = useSynchronizedCookie<boolean>('hide-all-promo-banne
   expires: dayjs().add(1, 'day').toDate()
 })
 
-// Initialize a map to hold cookie references
 const bannerCookies = ref<Map<string, Ref<boolean>>>(new Map())
+const activeBannerId = ref<string | null>(null)
 
-// Prepare the cookies for each banner
 props.banners.forEach((banner) => {
   bannerCookies.value.set(
     banner.id,
@@ -35,13 +34,16 @@ props.banners.forEach((banner) => {
   )
 })
 
-const activeBannerId = ref<string | null>(null)
+const sortedBanners = computed(() => {
+  return props.banners
+    .filter((banner) => {
+      const expiryDate = dayjs(banner.expiryDate, 'YYYY-MM-DD')
+      return dayjs().isBefore(expiryDate)
+    })
+    .sort((a, b) => a.priority - b.priority)
+})
 
-const sortedBanners = computed(() =>
-  [...props.banners].sort((a, b) => a.priority - b.priority)
-)
-
-// Determine the active banner based on the sorted list and cookie status
+// Determine the active banner based on the sorted list, expiry date and cookie status
 sortedBanners.value.forEach((banner) => {
   const cookie = bannerCookies.value.get(banner.id)
   if (cookie && !cookie.value && !hideAllPromoBanners.value && !activeBannerId.value) {
