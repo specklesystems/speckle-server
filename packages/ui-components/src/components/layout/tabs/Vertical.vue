@@ -1,5 +1,5 @@
 <template>
-  <div class="flex gap-4 lg:gap-8 flex-col lg:flex-row">
+  <div class="flex gap-8 flex-col lg:flex-row">
     <div class="lg:w-2/12">
       <div class="flex w-full flex-col gap-1">
         <button
