@@ -222,10 +222,7 @@ export function useCheckViewerCommentingAccess() {
       response: { project }
     }
   } = useInjectedViewerState()
-  const { activeUser } = useActiveUser()
   return computed(() => {
-    if (!activeUser.value) return false
-
     const hasRole = !!project.value?.role
     const allowPublicComments = !!project.value?.allowPublicComments
 
