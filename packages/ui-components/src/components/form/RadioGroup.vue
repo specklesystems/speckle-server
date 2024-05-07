@@ -6,9 +6,9 @@
           class="relative w-full h-full select-none rounded-md shadow border"
           :class="[
             selected === option.value
-              ? 'bg-foundation-page border-outline-1 hover:!border-primary'
-              : 'bg-foundation border-foundation',
-            disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-outline-3'
+              ? 'bg-foundation-page border-outline-1'
+              : 'bg-foundation border-outline-3',
+            disabled ? 'opacity-60 cursor-not-allowed' : 'hover:border-outline-1'
           ]"
           :disabled="disabled"
           @click="selectItem(option.value)"
