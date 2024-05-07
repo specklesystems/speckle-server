@@ -172,6 +172,7 @@ const buttons = computed((): LayoutDialogButton[] => {
     case FunctionCreateSteps.Authorize:
       return [
         {
+          id: 'authorizeClose',
           text: 'Close',
           props: {
             color: 'secondary',
@@ -180,6 +181,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           onClick: () => (open.value = false)
         },
         {
+          id: 'authorizeAuthorize',
           text: 'Authorize',
           props: {
             fullWidth: true,
@@ -192,6 +194,7 @@ const buttons = computed((): LayoutDialogButton[] => {
     case FunctionCreateSteps.Template:
       return [
         {
+          id: 'templateNext',
           text: 'Next',
           props: {
             iconRight: ChevronRightIcon,
@@ -203,6 +206,7 @@ const buttons = computed((): LayoutDialogButton[] => {
     case FunctionCreateSteps.Details:
       return [
         {
+          id: 'detailsPrevious',
           text: 'Previous',
           props: {
             color: 'secondary',
@@ -212,6 +216,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           onClick: () => step.value--
         },
         {
+          id: 'detailsCreate',
           text: 'Create',
           submit: true,
           disabled: mutationLoading.value
@@ -220,6 +225,7 @@ const buttons = computed((): LayoutDialogButton[] => {
     case FunctionCreateSteps.Done:
       return [
         {
+          id: 'doneClose',
           text: 'Close',
           props: {
             color: 'secondary',
@@ -228,6 +234,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           onClick: () => (open.value = false)
         },
         {
+          id: 'doneGoToFunction',
           text: 'Go to Function',
           props: {
             iconRight: ArrowRightIcon,

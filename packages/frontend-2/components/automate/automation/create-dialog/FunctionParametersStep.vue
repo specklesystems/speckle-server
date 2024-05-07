@@ -2,9 +2,11 @@
   <div>
     <template v-if="finalParams">
       <FormJsonForm
+        ref="jsonForm"
         v-model:data="parameters"
         :schema="finalParams"
         class="space-y-4"
+        :validate-on-mount="false"
         @change="handler"
       />
     </template>
@@ -16,6 +18,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import type { JsonFormsChangeEvent } from '@jsonforms/vue'
 import type { Optional } from '@speckle/shared'
 import { useJsonFormsChangeHandler } from '~/lib/automate/composables/jsonSchema'
 import { formatVersionParams } from '~/lib/automate/helpers/jsonSchema'
@@ -38,6 +41,8 @@ const props = defineProps<{
   fn: AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunctionFragment
 }>()
 
+const jsonForm = ref<{ triggerChange: () => Promise<Optional<JsonFormsChangeEvent>> }>()
+
 const finalParams = computed(() => formatVersionParams(release.value?.inputSchema))
 const { handler, hasErrors: hasJsonFormErrors } = useJsonFormsChangeHandler({
   schema: finalParams
@@ -51,6 +56,10 @@ const hasErrors = defineModel<boolean>('hasErrors', { required: true })
 const release = computed(() =>
   props.fn.releases.items.length ? props.fn.releases.items[0] : undefined
 )
+
+const submit = async () => {
+  await jsonForm.value?.triggerChange()
+}
 
 // watch(
 //   release,
@@ -69,4 +78,6 @@ watch(
   },
   { immediate: true }
 )
+
+defineExpose({ submit })
 </script>

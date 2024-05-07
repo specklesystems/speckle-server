@@ -25,6 +25,7 @@
         v-else-if="
           enumStep === AutomationCreateSteps.FunctionParameters && selectedFunction
         "
+        ref="parametersStep"
         v-model:parameters="functionParameters"
         v-model:has-errors="hasParameterErrors"
         :fn="selectedFunction"
@@ -134,6 +135,8 @@ const {
   shouldShowWidget: shouldShowStepsWidget
 } = useEnumStepsWidgetSetup({ enumStep, widgetStepsMap: stepsWidgetData })
 
+const parametersStep = ref<{ submit: () => Promise<void> }>()
+
 const creationLoading = ref(false)
 const automationId = ref<string>()
 const automationName = ref<string>()
@@ -148,6 +151,7 @@ const buttons = computed((): LayoutDialogButton[] => {
     case AutomationCreateSteps.SelectFunction:
       return [
         {
+          id: 'selectFnNext',
           text: 'Next',
           props: {
             iconRight: ChevronRightIcon,
@@ -161,6 +165,7 @@ const buttons = computed((): LayoutDialogButton[] => {
     case AutomationCreateSteps.FunctionParameters:
       return [
         {
+          id: 'fnParamsPrev',
           text: 'Previous',
           props: {
             color: 'secondary',
@@ -170,17 +175,19 @@ const buttons = computed((): LayoutDialogButton[] => {
           onClick: () => step.value--
         },
         {
+          id: 'fnParamsNext',
           text: 'Next',
           props: {
             iconRight: ChevronRightIcon,
             disabled: hasParameterErrors.value
           },
-          onClick: () => step.value++
+          submit: true
         }
       ]
     case AutomationCreateSteps.AutomationDetails:
       return [
         {
+          id: 'detailsPrev',
           text: 'Previous',
           props: {
             color: 'secondary',
@@ -190,6 +197,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           onClick: () => step.value--
         },
         {
+          id: 'detailsCreate',
           text: 'Create',
           submit: true,
           disabled: creationLoading.value
@@ -198,6 +206,7 @@ const buttons = computed((): LayoutDialogButton[] => {
     case AutomationCreateSteps.Done:
       return [
         {
+          id: 'doneClose',
           text: 'Close',
           props: {
             color: 'secondary',
@@ -206,6 +215,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           onClick: () => (open.value = false)
         },
         {
+          id: 'doneGoToAutomation',
           text: 'Go to Automation',
           props: {
             iconRight: ArrowRightIcon,
@@ -327,9 +337,15 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
   }
 })
 
-const onDialogSubmit = (e: SubmitEvent) => {
-  if (enumStep.value !== AutomationCreateSteps.AutomationDetails) return
-  onDetailsSubmit(e)
+const onDialogSubmit = async (e: SubmitEvent) => {
+  if (enumStep.value === AutomationCreateSteps.AutomationDetails) {
+    await onDetailsSubmit(e)
+  } else if (enumStep.value === AutomationCreateSteps.FunctionParameters) {
+    await parametersStep.value?.submit()
+    if (!hasParameterErrors.value) {
+      step.value++
+    }
+  }
 }
 
 watch(

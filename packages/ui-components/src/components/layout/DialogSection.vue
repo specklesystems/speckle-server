@@ -55,7 +55,7 @@
       </div>
     </div>
     <div
-      class="transition-all duration-700 overflow-hidden"
+      class="transition-all duration-300 overflow-hidden"
       :class="[
         allowOverflow && isExpanded ? '!overflow-visible' : '',
         isExpanded ? 'mb-3 mt-1' : '',
@@ -131,7 +131,7 @@ const props = defineProps({
     default: false
   },
   icon: {
-    type: Object as PropType<PropAnyComponent>,
+    type: [Function, Object] as PropType<PropAnyComponent>,
     default: undefined
   }
 })

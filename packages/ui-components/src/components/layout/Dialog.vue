@@ -52,10 +52,11 @@
                 will be clicked. This is a workaround to prevent the close button from being that first button.
                 https://stackoverflow.com/a/4763911/3194577
               -->
-              <button class="hidden" />
+              <button class="hidden" type="button" />
 
               <button
                 v-if="!hideCloser"
+                type="button"
                 class="absolute z-20 bg-foundation rounded-full p-1"
                 :class="hasTitle ? 'top-2 right-3 sm:top-4' : 'right-4 top-3'"
                 @click="open = false"
@@ -81,11 +82,11 @@
                 <template v-if="buttons">
                   <FormButton
                     v-for="(button, index) in buttons"
-                    :key="index"
+                    :key="button.id || index"
                     v-bind="button.props || {}"
                     :disabled="button.props?.disabled || button.disabled"
                     :submit="button.props?.submit || button.submit"
-                    @click="button.onClick"
+                    @click="($event) => button.onClick?.($event)"
                   >
                     {{ button.text }}
                   </FormButton>
@@ -106,7 +107,7 @@ import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessu
 import { FormButton, type LayoutDialogButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots } from 'vue'
-import { throttle, noop } from 'lodash'
+import { throttle } from 'lodash'
 import { useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
@@ -200,7 +201,7 @@ const onClose = () => {
 }
 
 const onFormSubmit = (e: SubmitEvent) => {
-  ;(props.onSubmit || noop)(e)
+  props.onSubmit?.(e)
 }
 
 const onScroll = throttle((e: { target: EventTarget | null }) => {
