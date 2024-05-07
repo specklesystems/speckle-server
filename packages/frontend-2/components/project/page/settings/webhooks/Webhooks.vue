@@ -1,10 +1,8 @@
 <template>
   <ProjectPageSettingsBlock title="Webhooks">
     <template #introduction>
-      <p class="pr-4">
-        Subscribe to events and get notified in real time. Use to trigger CI apps,
-        automation workflows, and more.
-      </p>
+      Subscribe to events and get notified in real time. Use to trigger CI apps,
+      automation workflows, and more.
     </template>
     <template #top-buttons>
       <FormButton
@@ -22,6 +20,7 @@
     </template>
     <template v-if="webhooks.length !== 0">
       <LayoutTable
+        class="mt-6"
         :columns="[
           { id: 'enabled', header: 'State', classes: 'col-span-1' },
           { id: 'data', header: 'Data', classes: 'col-span-5' },
@@ -101,7 +100,7 @@
       </LayoutTable>
     </template>
     <template v-else>
-      <div class="pt-6">
+      <div class="mt-6">
         <ProjectPageSettingsWebhooksEmptyState />
       </div>
     </template>
