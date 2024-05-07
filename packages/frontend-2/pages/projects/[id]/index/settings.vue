@@ -11,8 +11,6 @@
 </template>
 <script setup lang="ts">
 import { LayoutTabsVertical, type LayoutPageTabItem } from '@speckle/ui-components'
-import { UsersIcon, Cog6ToothIcon } from '@heroicons/vue/24/outline'
-import IconWebhooks from '~~/components/global/icon/Webhooks.vue'
 import {
   projectCollaboratorsRoute,
   projectSettingsRoute,
@@ -40,18 +38,15 @@ const isOwner = computed(() => attrs.project.role === Roles.Stream.Owner)
 const settingsTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'General',
-    id: 'general',
-    icon: Cog6ToothIcon
+    id: 'general'
   },
   {
     title: 'Collaborators',
-    id: 'collaborators',
-    icon: UsersIcon
+    id: 'collaborators'
   },
   {
     title: 'Webhooks',
     id: 'webhooks',
-    icon: IconWebhooks,
     disabled: !isOwner.value,
     disabledMessage: !isOwner.value ? 'You must be the project owner' : undefined
   }
