@@ -82,7 +82,7 @@ export const createAutomation =
     const authCode = await createAuthCode()
 
     // trigger automation creation on automate
-    const { automationId: executionEngineAutomationId, automationToken } =
+    const { automationId: executionEngineAutomationId, token } =
       await automateCreateAutomation({
         speckleServerUrl: getServerOrigin(),
         authCode
@@ -103,7 +103,7 @@ export const createAutomation =
       },
       {
         automationId,
-        automateToken: automationToken
+        automateToken: token
       }
     )
   }

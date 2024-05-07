@@ -290,8 +290,11 @@ export = {
   },
   ProjectAutomationMutations: {
     async create(parent, { input }, ctx) {
+      const testAutomateAuthCode = process.env['TEST_AUTOMATE_AUTHENTICATION_CODE']
       const create = createAutomation({
-        createAuthCode: createStoredAuthCode({ redis: getGenericRedis() }),
+        createAuthCode: testAutomateAuthCode
+          ? async () => testAutomateAuthCode
+          : createStoredAuthCode({ redis: getGenericRedis() }),
         automateCreateAutomation: clientCreateAutomation,
         storeAutomation
       })
@@ -381,10 +384,12 @@ export = {
         }
       })
 
+      const items = res.items.map(convertFunctionToGraphQLReturn)
+
       return {
         cursor: res.cursor,
         totalCount: res.totalCount,
-        items: res.items.map(convertFunctionToGraphQLReturn)
+        items
       }
     }
   },
