@@ -62,6 +62,10 @@ type Automation {
   currentRevision: AutomationRevision
   createdAt: DateTime!
   updatedAt: DateTime!
+  """
+  Only accessible to automation owners
+  """
+  creationPublicKeys: [String!]!
 }
 
 type AutomateFunctionRun {

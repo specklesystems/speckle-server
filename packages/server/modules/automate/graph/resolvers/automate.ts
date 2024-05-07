@@ -4,7 +4,8 @@ import {
   updateFunction as execEngineUpdateFunction,
   getFunction,
   getFunctionRelease,
-  getFunctions
+  getFunctions,
+  getAutomationPublicKeys
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
@@ -59,16 +60,17 @@ import {
   functionTemplateRepos
 } from '@/modules/automate/helpers/executionEngine'
 import { mapDbStatusToGqlStatus } from '@/modules/automate/services/runsManagement'
+import { authorizeResolver } from '@/modules/shared'
 
 /**
  * TODO:
  * - Encryption
- * - Log streaming
+ * - Log streaming REST implementation logStream.ts
  * - Proper error handliong exec engine client
  * - Real testing
  * - FE:
  *  - Fix up pagination & all remaining TODOs
- *  - Subscriptions
+ *  - Subscriptions & cache updates
  */
 
 export = {
@@ -155,6 +157,16 @@ export = {
         totalCount,
         cursor
       }
+    },
+    async creationPublicKeys(parent, _args, ctx) {
+      await authorizeResolver(
+        ctx.userId!,
+        parent.projectId,
+        Roles.Stream.Owner,
+        ctx.resourceAccessRules
+      )
+
+      return await getAutomationPublicKeys({ automationId: parent.id })
     }
   },
   AutomateRun: {

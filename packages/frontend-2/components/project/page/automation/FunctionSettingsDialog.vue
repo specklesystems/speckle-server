@@ -72,7 +72,7 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import type { MaybeNullOrUndefined } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { automationFunctionRoute } from '~/lib/common/helpers/route'
 import { useJsonFormsChangeHandler } from '~/lib/automate/composables/jsonSchema'
 import {
@@ -89,8 +89,10 @@ import {
 } from '~/lib/common/generated/gql/graphql'
 import { Automate } from '@speckle/shared'
 import { useCreateAutomationRevision } from '~/lib/projects/composables/automationManagement'
-
-// TODO: Encryption
+import {
+  useAutomationInputEncryptor,
+  type AutomationInputEncryptor
+} from '~/lib/automate/composables/automations'
 
 type AutomationRevisionFunction =
   ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment
@@ -140,8 +142,7 @@ const props = defineProps<{
 
 const open = defineModel<boolean>('open', { required: true })
 const createNewAutomationRevision = useCreateAutomationRevision()
-// const { triggerNotification } = useGlobalToast()
-// const logger = useLogger()
+const inputEncryption = useAutomationInputEncryptor({ ensureWhen: open })
 
 const selectedModel = ref<CommonModelSelectorModelFragment>()
 const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment>()
@@ -200,12 +201,20 @@ const onSave = async () => {
   if (hasErrors.value || !fId || !rId || !hasRequiredData.value || !model) return
 
   loading.value = true
+  let automationEncrypt: Optional<AutomationInputEncryptor> = undefined
   try {
-    const parameters = JSON.stringify(
+    automationEncrypt = await inputEncryption.forAutomation({
+      automationId: props.automationId,
+      projectId: props.projectId
+    })
+
+    const cleanParameters =
       formatJsonFormSchemaInputs(selectedVersionInputs.value, inputSchema.value, {
         clone: true
-      })
-    )
+      }) || null
+    const parameters = await automationEncrypt.encryptInputs({
+      inputs: cleanParameters
+    })
 
     // TODO: Apollo cache mutation afterwards
     await createNewAutomationRevision({
@@ -231,6 +240,7 @@ const onSave = async () => {
       }
     })
   } finally {
+    automationEncrypt?.dispose()
     loading.value = false
   }
 

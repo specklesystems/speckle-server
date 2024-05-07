@@ -29,10 +29,20 @@ const getRandomModelVersion = async (offset?: number) => {
   if (offset) versionQ.offset(offset)
   const version = await versionQ
 
+  if (!version) {
+    throw new Error("Couldn't find even one commit in the DB, please create some")
+  }
+
   const model = await Branches.knex()
     .join(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
     .where(BranchCommits.col.commitId, version.id)
     .first()
+
+  if (!model) {
+    throw new Error(
+      `Couldn't find branch for first commit #${version.id}, please create one `
+    )
+  }
 
   return {
     model,
@@ -140,6 +150,12 @@ export async function buildMocksConfig(): Promise<{
         }
       },
       Automation: {
+        creationPublicKeys: () => {
+          // Random sized array of string keys
+          return [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(() =>
+            faker.datatype.uuid()
+          )
+        },
         runs: () => {
           const forceZero = false
           const count = forceZero ? 0 : faker.datatype.number({ min: 0, max: 20 })

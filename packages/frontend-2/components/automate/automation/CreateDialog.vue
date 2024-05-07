@@ -74,6 +74,10 @@ import {
 } from '~/lib/projects/composables/automationManagement'
 import { formatJsonFormSchemaInputs } from '~/lib/automate/helpers/jsonSchema'
 import { projectAutomationRoute } from '~/lib/common/helpers/route'
+import {
+  useAutomationInputEncryptor,
+  type AutomationInputEncryptor
+} from '~/lib/automate/composables/automations'
 
 enum AutomationCreateSteps {
   SelectFunction,
@@ -125,6 +129,7 @@ const stepsWidgetData = computed(() => [
   }
 ])
 
+const inputEncryption = useAutomationInputEncryptor({ ensureWhen: open })
 const logger = useLogger()
 const createAutomation = useCreateAutomation()
 const createRevision = useCreateAutomationRevision()
@@ -283,6 +288,8 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
   }
 
   creationLoading.value = true
+  let aId: Optional<string> = undefined
+  let automationEncrypt: Optional<AutomationInputEncryptor> = undefined
   try {
     const createRes = await createAutomation({
       projectId: project.id,
@@ -291,19 +298,25 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
         enabled: false
       }
     })
-    const aId = (automationId.value = createRes?.id)
+    aId = automationId.value = createRes?.id
     if (!aId) {
       logger.error('Failed to create automation', { createRes })
       return
     }
 
-    const parametersString = parameters
-      ? JSON.stringify(
-          formatJsonFormSchemaInputs(parameters, fnRelease.inputSchema, {
-            clone: true
-          })
-        )
-      : null
+    automationEncrypt = await inputEncryption.forAutomation({
+      automationId: aId,
+      projectId: project.id
+    })
+
+    const cleanParams =
+      formatJsonFormSchemaInputs(parameters, fnRelease.inputSchema, {
+        clone: true
+      }) || null
+    const encryptedParams = await automationEncrypt.encryptInputs({
+      inputs: cleanParams
+    })
+
     const revisionRes = await createRevision(
       {
         projectId: project.id,
@@ -313,7 +326,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
             {
               functionReleaseId: fnRelease.id,
               functionId: fn.id,
-              parameters: parametersString
+              parameters: encryptedParams
             }
           ],
           triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
@@ -334,6 +347,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
     }
   } finally {
     creationLoading.value = false
+    automationEncrypt?.dispose()
   }
 })
 

@@ -345,6 +345,8 @@ export enum AutomateRunTriggerType {
 export type Automation = {
   __typename?: 'Automation';
   createdAt: Scalars['DateTime'];
+  /** Only accessible to automation owners */
+  creationPublicKeys: Array<Scalars['String']>;
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
@@ -4038,6 +4040,7 @@ export type AutomateRunCollectionResolvers<ContextType = GraphQLContext, ParentT
 
 export type AutomationResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Automation'] = ResolversParentTypes['Automation']> = {
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  creationPublicKeys?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
   currentRevision?: Resolver<Maybe<ResolversTypes['AutomationRevision']>, ParentType, ContextType>;
   enabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;

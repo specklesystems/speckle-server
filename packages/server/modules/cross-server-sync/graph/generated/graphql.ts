@@ -334,6 +334,8 @@ export enum AutomateRunTriggerType {
 export type Automation = {
   __typename?: 'Automation';
   createdAt: Scalars['DateTime'];
+  /** Only accessible to automation owners */
+  creationPublicKeys: Array<Scalars['String']>;
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
