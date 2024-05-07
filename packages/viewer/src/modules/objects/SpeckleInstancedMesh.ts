@@ -157,7 +157,6 @@ export default class SpeckleInstancedMesh extends Group {
 
     for (let k = 0; k < this.groups.length; k++) {
       const materialIndex = this.groups[k].materialIndex
-      if (!materialIndex) continue
       const material = this.materials[materialIndex]
       const group = new InstancedMesh(this.instanceGeometry, material, 0)
       group.instanceMatrix = new InstancedBufferAttribute(

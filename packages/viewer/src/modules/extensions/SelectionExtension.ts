@@ -247,16 +247,18 @@ export class SelectionExtension extends Extension {
         .getRenderViewsForNode(this.selectedNodes[k])
       rvs.forEach((rv: NodeRenderView) => {
         if (!this.selectionRvs[rv.guid]) this.selectionRvs[rv.guid] = rv
-        if (!this.selectionMaterials[rv.guid])
+        if (!this.selectionMaterials[rv.guid]) {
           this.selectionMaterials[rv.guid] = this.viewer
             .getRenderer()
             .getMaterial(rv) as Material
+        }
       })
     }
 
     const rvs = Object.values(this.selectionRvs)
     const opaqueRvs = rvs.filter(
       (value) =>
+        this.selectionMaterials[value.guid] &&
         this.selectionMaterials[value.guid].visible &&
         this.selectionMaterials[value.guid] &&
         !(
@@ -266,13 +268,16 @@ export class SelectionExtension extends Extension {
     )
     const transparentRvs = rvs.filter(
       (value) =>
+        this.selectionMaterials[value.guid] &&
         this.selectionMaterials[value.guid].visible &&
         this.selectionMaterials[value.guid] &&
         this.selectionMaterials[value.guid].transparent &&
         this.selectionMaterials[value.guid].opacity < 1
     )
     const hiddenRvs = rvs.filter(
-      (value) => this.selectionMaterials[value.guid].visible === false
+      (value) =>
+        this.selectionMaterials[value.guid] &&
+        this.selectionMaterials[value.guid].visible === false
     )
 
     this.viewer.getRenderer().setMaterial(opaqueRvs, this.selectionMaterialData)
