@@ -1,5 +1,5 @@
 import { Vector3 } from 'three'
-import defaultHdri from './assets/hdri/Mild.png'
+import defaultHdri from './assets/hdri/Mild-dwab.png'
 import { PropertyInfo } from './modules/filtering/PropertyManager'
 import { Query, QueryArgsResultMap, QueryResult } from './modules/queries/Query'
 import { DataTree } from './modules/tree/DataTree'
