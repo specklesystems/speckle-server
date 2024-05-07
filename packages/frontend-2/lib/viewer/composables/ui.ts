@@ -376,7 +376,7 @@ export function useMeasurementUtilities() {
   }
 
   const clearMeasurements = () => {
-    state.viewer.instance.getExtension(MeasurementsExtension)?.clearMeasurements()
+    state.viewer.instance.getExtension(MeasurementsExtension).clearMeasurements()
   }
 
   return {

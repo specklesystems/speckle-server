@@ -12,10 +12,17 @@ import { type Constructor } from 'type-fest'
 import type { Vector3Like } from './modules/batching/BatchObject'
 import type { FilteringState } from './modules/extensions/FilteringExtension'
 
+export type SpeckleReference = {
+  referencedId: string
+}
+
 export type SpeckleObject = {
   [k: string]: unknown
   speckle_type: string
   id: string
+  elements?: SpeckleReference[]
+  children?: SpeckleObject[] | SpeckleReference[]
+  name?: string
   referencedId?: string
   units?: string
 }

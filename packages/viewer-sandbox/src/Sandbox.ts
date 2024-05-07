@@ -175,7 +175,7 @@ export default class Sandbox {
       this.addViewControls()
       this.properties = await this.viewer.getObjectProperties()
     })
-    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent | null) => {
+    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent) => {
       if (selectionEvent && selectionEvent.hits) {
         const firstHitNode = selectionEvent.hits[0].node
         if (firstHitNode) {
