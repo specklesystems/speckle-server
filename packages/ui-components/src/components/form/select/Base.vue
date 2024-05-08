@@ -65,6 +65,8 @@
               />
             </div>
           </div>
+          <!-- Sync isOpen with dropdown open state -->
+          <template v-if="(isOpen = open)"></template>
         </ListboxButton>
         <!-- </div> -->
         <!-- Clear Button -->
@@ -417,6 +419,7 @@ const currentItems = ref([]) as Ref<SingleItem[]>
 const isAsyncLoading = ref(false)
 const forceUpdateKey = ref(1)
 const internalHelpTipId = ref(nanoid())
+const isOpen = ref(false)
 
 const listboxButtonBounding = useElementBounding(
   computed(() => listboxButton.value?.el),
@@ -462,8 +465,12 @@ const buttonsWrapperClasses = computed(() => {
       classParts.push('outline outline-2 outline-danger')
     }
   } else if (props.buttonStyle !== 'simple') {
-    classParts.push('hover:shadow rounded-md')
-    classParts.push('outline outline-2 outline-primary-muted')
+    classParts.push('rounded-md border')
+    if (isOpen.value) {
+      classParts.push('border-outline-1')
+    } else {
+      classParts.push('border-outline-3')
+    }
   }
 
   if (props.fixedHeight) {

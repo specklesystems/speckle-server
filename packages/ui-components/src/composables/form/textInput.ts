@@ -61,7 +61,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     const classParts: string[] = [
       'focus:outline-none disabled:cursor-not-allowed disabled:bg-foundation-disabled',
       'disabled:text-disabled-muted placeholder:text-foreground-2',
-      'rounded'
+      'rounded-md'
     ]
 
     return classParts.join(' ')
@@ -83,7 +83,9 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
     const color = unref(props.color)
     if (color === 'foundation') {
-      classParts.push('bg-foundation outline outline-2 outline-primary-muted')
+      classParts.push(
+        'bg-foundation !border border-outline-3 focus:border-outline-1 focus:!outline-0 focus:!ring-0'
+      )
     } else if (color === 'transparent') {
       classParts.push('bg-transparent')
     } else {
