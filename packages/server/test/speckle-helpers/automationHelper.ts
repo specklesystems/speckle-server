@@ -64,17 +64,24 @@ export const buildAutomationCreate = (
 export const buildAutomationRevisionCreate = (
   overrides?: Partial<CreateAutomationRevisionDeps>
 ) => {
+  const fakeGetRelease = (params: {
+    functionReleaseId: string
+    functionId: string
+  }) => ({
+    functionVersionId: params.functionReleaseId,
+    versionTag: faker.system.semver(),
+    inputSchema: null,
+    createdAt: new Date().toISOString(),
+    commitId: faker.git.shortSha(),
+    functionId: params.functionId
+  })
+
   const create = createAutomationRevision({
     getAutomation,
     storeAutomationRevision,
     getBranchesByIds,
-    getFunctionRelease: async (params) => ({
-      functionVersionId: params.functionReleaseId,
-      versionTag: faker.system.semver(),
-      inputSchema: null,
-      createdAt: new Date().toISOString(),
-      commitId: faker.git.shortSha()
-    }),
+    getFunctionRelease: async (params) => fakeGetRelease(params),
+    getFunctionReleases: async (params) => params.ids.map(fakeGetRelease),
     getEncryptionKeyPair,
     getFunctionInputDecryptor: getFunctionInputDecryptor({
       buildDecryptor

@@ -231,6 +231,21 @@ export const getFunction = async (params: {
 
 export type GetFunctionReleaseResponse = FunctionReleaseSchemaType
 
+/**
+ * TODO: Build optimized exec engine endpoint for this
+ */
+export const getFunctionReleases = async (params: {
+  ids: Array<{ functionId: string; functionReleaseId: string }>
+  token?: string
+}) => {
+  const { ids, token } = params
+  return await Promise.all(
+    ids.map(async ({ functionId, functionReleaseId }) =>
+      getFunctionRelease({ functionId, functionReleaseId, token })
+    )
+  )
+}
+
 export const getFunctionRelease = async (params: {
   functionId: string
   functionReleaseId: string
@@ -246,7 +261,11 @@ export const getFunctionRelease = async (params: {
       ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
     }
   })
-  return (await response.json()) as GetFunctionReleaseResponse
+  const body = (await response.json()) as GetFunctionReleaseResponse
+  return {
+    ...body,
+    functionId
+  }
 }
 
 export type GetFunctionsResponse = {

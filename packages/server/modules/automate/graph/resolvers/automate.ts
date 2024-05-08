@@ -4,7 +4,8 @@ import {
   updateFunction as execEngineUpdateFunction,
   getFunction,
   getFunctionRelease,
-  getFunctions
+  getFunctions,
+  getFunctionReleases
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
@@ -372,7 +373,8 @@ export = {
         getBranchesByIds,
         getFunctionRelease,
         getEncryptionKeyPair,
-        getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor })
+        getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+        getFunctionReleases
       })
 
       return await create({

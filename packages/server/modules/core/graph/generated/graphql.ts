@@ -440,7 +440,7 @@ export type AutomationRevisionCreateFunctionInput = {
 
 export type AutomationRevisionFunction = {
   __typename?: 'AutomationRevisionFunction';
-  /** The secrets in parameters are redacted */
+  /** The secrets in parameters are redacted with six asterisks - ****** */
   parameters?: Maybe<Scalars['JSONObject']>;
   release: AutomateFunctionRelease;
 };

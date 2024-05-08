@@ -39,6 +39,12 @@ import { Automate, Environment, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import { times } from 'lodash'
 
+/**
+ * TODO: Extra test ideas
+ * - Function input validation & matching against an existing function release on exec engine
+ * - All of the Automation/Function/Run GQL resolvers
+ */
+
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
 const buildAutomationUpdate = () => {

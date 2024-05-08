@@ -74,12 +74,14 @@ import {
 } from '@/modules/automate/repositories/automations'
 import {
   getFunction,
-  getFunctionRelease
+  getFunctionReleases
 } from '@/modules/automate/clients/executionEngine'
 import {
   FunctionReleaseSchemaType,
   FunctionSchemaType
 } from '@/modules/automate/helpers/executionEngine'
+
+const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -604,15 +606,19 @@ export function buildRequestLoaders(
         string
       >(
         async (keys) => {
-          const results = await Promise.all(
-            keys.map(([fnId, fnReleaseId]) =>
-              getFunctionRelease({ functionId: fnId, functionReleaseId: fnReleaseId })
-            )
+          const results = keyBy(
+            await getFunctionReleases({
+              ids: keys.map(([fnId, fnReleaseId]) => ({
+                functionId: fnId,
+                functionReleaseId: fnReleaseId
+              }))
+            }),
+            (r) => simpleTupleCacheKey([r.functionId, r.functionVersionId])
           )
 
-          return results
+          return keys.map((k) => results[simpleTupleCacheKey(k)] || null)
         },
-        { cacheKeyFn: (key) => `${key[0]}:${key[1]}` }
+        { cacheKeyFn: simpleTupleCacheKey }
       )
     }
   }

@@ -12,7 +12,8 @@ import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import {
   createAutomation as clientCreateAutomation,
-  getFunctionRelease
+  getFunctionRelease,
+  getFunctionReleases
 } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Automate, Roles, removeNullOrUndefinedKeys } from '@speckle/shared'
@@ -27,7 +28,8 @@ import {
   AutomationCreationError,
   AutomationFunctionInputEncryptionError,
   AutomationRevisionCreationError,
-  AutomationUpdateError
+  AutomationUpdateError,
+  JsonSchemaInputValidationError
 } from '@/modules/automate/errors/management'
 import {
   AutomationRunStatuses,
@@ -42,6 +44,7 @@ import {
   getFunctionInputDecryptor
 } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
+import { validateInputAgainstFunctionSchema } from '@/modules/automate/utils/inputSchemaValidator'
 
 export type CreateAutomationDeps = {
   createAuthCode: ReturnType<typeof createStoredAuthCode>
@@ -246,6 +249,7 @@ export type CreateAutomationRevisionDeps = {
   storeAutomationRevision: typeof storeAutomationRevision
   getEncryptionKeyPair: typeof getEncryptionKeyPair
   getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>
+  getFunctionReleases: typeof getFunctionReleases
 } & ValidateNewTriggerDefinitionsDeps &
   ValidateNewRevisionFunctionsDeps
 
@@ -262,7 +266,8 @@ export const createAutomationRevision =
       storeAutomationRevision,
       getAutomation,
       getEncryptionKeyPair,
-      getFunctionInputDecryptor
+      getFunctionInputDecryptor,
+      getFunctionReleases
     } = deps
 
     const existingAutomation = await getAutomation({
@@ -304,10 +309,36 @@ export const createAutomationRevision =
     const decryptor = await getFunctionInputDecryptor({ keyPair: encryptionKeys })
     let functions: InsertableAutomationRevisionFunction[] = []
     try {
+      const releases = await getFunctionReleases({
+        ids: input.functions.map((f) => ({
+          functionReleaseId: f.functionReleaseId,
+          functionId: f.functionId
+        }))
+      })
+
       functions = await Promise.all(
         input.functions.map(async (f) => {
+          const release = releases.find(
+            (r) =>
+              r.functionVersionId === f.functionReleaseId &&
+              r.functionId === f.functionId
+          )
+          if (!release) {
+            throw new AutomationRevisionCreationError(
+              `Function release for function ID ${f.functionId} and function release ID ${f.functionReleaseId} not found`
+            )
+          }
+          const schema = release.inputSchema
+
           // Validate parameters
-          await decryptor.decryptInputs(f.parameters || null)
+          const decryptedParams = await decryptor.decryptInputs(f.parameters || null)
+          if (decryptedParams && !schema) {
+            throw new AutomationRevisionCreationError(
+              'Function inputs provided for a function that does not have an input schema'
+            )
+          }
+
+          validateInputAgainstFunctionSchema(schema, decryptedParams)
 
           // Didn't throw, let's continue
           const fn: InsertableAutomationRevisionFunction = {
@@ -330,6 +361,13 @@ export const createAutomationRevision =
       if (e instanceof LibsodiumEncryptionError) {
         throw new AutomationRevisionCreationError(
           'Failed to decrypt one or more function inputs. Please ensure they have been properly encrypted',
+          { cause: e }
+        )
+      }
+
+      if (e instanceof JsonSchemaInputValidationError) {
+        throw new AutomationRevisionCreationError(
+          "One or more function inputs do not match their function's schema",
           { cause: e }
         )
       }

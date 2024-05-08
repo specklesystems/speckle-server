@@ -2,7 +2,7 @@ import type { Code, CodeKeywordDefinition, KeywordCxt } from 'ajv/dist/2020.js'
 import { _, getProperty } from 'ajv/dist/compile/codegen/index.js'
 import type { Plugin } from 'ajv/dist/2020.js'
 import Ajv2020 from 'ajv/dist/2020.js'
-import { MaybeNullOrUndefined } from '@speckle/shared'
+import { Automate, MaybeNullOrUndefined } from '@speckle/shared'
 import { JsonSchemaInputValidationError } from '@/modules/automate/errors/management'
 
 type RedactionType = 'redactString' | 'redactNumber'
@@ -11,7 +11,7 @@ type Secret = (s: unknown) => unknown
 
 const redaction: { [key in RedactionType]: Secret } = {
   redactString: (s: unknown) => {
-    if (typeof s === 'string') return '******'
+    if (typeof s === 'string') return Automate.AutomateTypes.REDACTED_VALUE
     return s
   },
   redactNumber: (s: unknown) => {
