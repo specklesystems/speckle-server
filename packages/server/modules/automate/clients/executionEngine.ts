@@ -18,7 +18,7 @@ import { Nullable, SourceAppName, isNullOrUndefined } from '@speckle/shared'
 
 export type AutomationCreateResponse = {
   automationId: string
-  automationToken: string
+  token: string
 }
 
 const getApiUrl = (
@@ -35,7 +35,7 @@ const getApiUrl = (
 
   if (!path?.length) return automateUrl
 
-  const url = new URL(automateUrl, path)
+  const url = new URL(path, automateUrl)
   if (options?.query) {
     Object.entries(options.query).forEach(([key, val]) => {
       if (isNullOrUndefined(val)) return
@@ -53,12 +53,16 @@ export const createAutomation = async (params: {
   const { speckleServerUrl, authCode } = params
 
   const url = getApiUrl(`/api/v2/automations`)
+  const speckleServerDomain = new URL(speckleServerUrl).hostname
   const response = await fetch(url, {
     method: 'post',
     headers: {
       'Content-Type': 'application/json'
     },
-    body: JSON.stringify({ speckleServerUrl, authCode })
+    body: JSON.stringify({
+      speckleServerDomain,
+      speckleServerAuthenticationCode: authCode
+    })
   })
 
   const result = (await response.json()) as AutomationCreateResponse
@@ -271,6 +275,7 @@ export const getFunctions = async (params: {
       ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
     }
   })
+  const responseBody = await response.json()
 
-  return (await response.json()) as GetFunctionsResponse
+  return responseBody as GetFunctionsResponse
 }
