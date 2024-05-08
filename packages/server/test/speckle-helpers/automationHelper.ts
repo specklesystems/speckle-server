@@ -53,7 +53,7 @@ export const buildAutomationCreate = (
       overrides?.createDbAutomation ||
       (async () => ({
         automationId: cryptoRandomString({ length: 10 }),
-        automationToken: cryptoRandomString({ length: 10 })
+        token: cryptoRandomString({ length: 10 })
       })),
     storeAutomation
   })

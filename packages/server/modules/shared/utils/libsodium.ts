@@ -51,12 +51,16 @@ export const buildDecryptor = async (keyPair: KeyPair) => {
   )
 
   const decrypt = async (data: string): Promise<string> => {
+    if (!data?.length) {
+      throw new LibsodiumEncryptionError('Empty data provided for decryption')
+    }
+
     await sodium.ready
 
-    // Convert the Base64 string to a Uint8Array
-    const encBytes = sodium.from_base64(data, sodium.base64_variants.ORIGINAL)
-
     try {
+      // Convert the Base64 string to a Uint8Array
+      const encBytes = sodium.from_base64(data, sodium.base64_variants.ORIGINAL)
+
       // Decrypt the secret using libsodium
       const decrypted = sodium.crypto_box_seal_open(
         encBytes,
@@ -67,13 +71,19 @@ export const buildDecryptor = async (keyPair: KeyPair) => {
       return sodium.to_string(decrypted)
     } catch (err) {
       sodium.memzero(binPrivateKey)
-      if (
-        err instanceof Error &&
-        err.message === 'incorrect key pair for the given ciphertext'
-      )
-        throw new LibsodiumEncryptionError('Invalid Key pair for decryption.', {
-          cause: err
-        })
+      if (err instanceof Error) {
+        if (err.message === 'incorrect key pair for the given ciphertext') {
+          throw new LibsodiumEncryptionError('Invalid Key pair for decryption.', {
+            cause: err
+          })
+        }
+
+        if (err.message === 'incomplete input') {
+          throw new LibsodiumEncryptionError('Invalid encryption input', {
+            cause: err
+          })
+        }
+      }
 
       throw new LibsodiumEncryptionError(
         'Encountered a problem while decrypting data.',

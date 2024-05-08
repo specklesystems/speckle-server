@@ -437,7 +437,7 @@ const buildAutomationUpdate = () => {
             })
         )
 
-        expect(e.message).to.match(/^Couldn't parse function parameters/i)
+        expect(e.message).to.match(/^Failed to decrypt one or more function/i)
       })
 
       it('fails when refering to nonexistent function releases', async () => {
