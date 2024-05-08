@@ -274,21 +274,3 @@ export const getFunctions = async (params: {
 
   return (await response.json()) as GetFunctionsResponse
 }
-
-export const getAutomationPublicKeys = async (params: {
-  automationId: string
-  token?: string
-}) => {
-  const { automationId, token } = params
-  const url = getApiUrl(`/api/v1/automations/${automationId}/keys`)
-
-  const response = await fetch(url, {
-    method: 'get',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
-    }
-  })
-
-  return (await response.json()) as string[]
-}

@@ -8,6 +8,7 @@ import type { Nullable } from '../../core'
 
 export const TRIGGER_DEFINITIONS_SCHEMA_VERSION = 1.0
 export const RESULTS_SCHEMA_VERSION = 1.0
+export const REDACTED_VALUE = '******'
 
 export type VersionCreatedTriggerDefinition = {
   type: 'VERSION_CREATED'

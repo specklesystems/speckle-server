@@ -4,8 +4,7 @@ import {
   updateFunction as execEngineUpdateFunction,
   getFunction,
   getFunctionRelease,
-  getFunctions,
-  getAutomationPublicKeys
+  getFunctions
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
@@ -56,11 +55,23 @@ import {
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
 import {
+  FunctionReleaseSchemaType,
   dbToGraphqlTriggerTypeMap,
   functionTemplateRepos
 } from '@/modules/automate/helpers/executionEngine'
 import { mapDbStatusToGqlStatus } from '@/modules/automate/services/runsManagement'
 import { authorizeResolver } from '@/modules/shared'
+import {
+  AutomationRevisionFunctionForInputRedaction,
+  getEncryptionKeyPair,
+  getEncryptionKeyPairFor,
+  getEncryptionPublicKey,
+  getFunctionInputDecryptor,
+  getFunctionInputsForFrontend
+} from '@/modules/automate/services/encryption'
+import { buildDecryptor } from '@/modules/shared/utils/libsodium'
+import { keyBy } from 'lodash'
+import { redactWriteOnlyInputData } from '@/modules/automate/utils/jsonSchemaRedactor'
 
 /**
  * TODO:
@@ -166,7 +177,8 @@ export = {
         ctx.resourceAccessRules
       )
 
-      return await getAutomationPublicKeys({ automationId: parent.id })
+      const publicKey = await getEncryptionPublicKey()
+      return [publicKey]
     }
   },
   AutomateRun: {
@@ -216,32 +228,52 @@ export = {
       return triggers
     },
     async functions(parent, _args, ctx) {
-      return ctx.loaders.automations.getRevisionFunctions.load(parent.id)
+      const prepareInputs = getFunctionInputsForFrontend({
+        getEncryptionKeyPairFor,
+        buildDecryptor,
+        redactWriteOnlyInputData
+      })
+
+      const fns = await ctx.loaders.automations.getRevisionFunctions.load(parent.id)
+      const fnsReleases = keyBy(
+        (
+          await ctx.loaders.automationsApi.getFunctionRelease.loadMany(
+            fns.map((fn) => [fn.functionId, fn.functionReleaseId])
+          )
+        ).filter(
+          (r): r is FunctionReleaseSchemaType => r !== null && !(r instanceof Error)
+        ),
+        (r) => r.functionVersionId
+      )
+
+      const fnsForRedaction: AutomationRevisionFunctionForInputRedaction[] = fns.map(
+        (fn) => {
+          const release = fnsReleases[fn.functionReleaseId]
+          if (!release) {
+            throw new AutomateFunctionReleaseNotFoundError(
+              `Could not find function release #${fn.functionReleaseId} for function #${fn.functionId}`,
+              {
+                info: {
+                  functionId: fn.functionId,
+                  functionReleaseId: fn.functionReleaseId
+                }
+              }
+            )
+          }
+
+          return {
+            ...fn,
+            release
+          }
+        }
+      )
+
+      return prepareInputs({ fns: fnsForRedaction, publicKey: parent.publicKey })
     }
   },
   AutomationRevisionFunction: {
-    // TODO: Encryption & redacting?
     async parameters(parent) {
       return parent.functionInputs
-    },
-    async release(parent, _args, ctx) {
-      const ret = await ctx.loaders.automationsApi.getFunctionRelease.load([
-        parent.functionId,
-        parent.functionReleaseId
-      ])
-      if (!ret) {
-        throw new AutomateFunctionReleaseNotFoundError('Function release not found', {
-          info: {
-            functionId: parent.functionId,
-            functionReleaseId: parent.functionReleaseId
-          }
-        })
-      }
-
-      return convertFunctionReleaseToGraphQLReturn({
-        ...ret,
-        functionId: parent.functionId
-      })
     }
   },
   AutomateFunction: {
@@ -335,7 +367,9 @@ export = {
         getAutomation,
         storeAutomationRevision,
         getBranchesByIds,
-        getFunctionRelease
+        getFunctionRelease,
+        getEncryptionKeyPair,
+        getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor })
       })
 
       return await create({
@@ -351,7 +385,9 @@ export = {
         getAutomation,
         getBranchLatestCommits,
         triggerFunction: triggerAutomationRevisionRun({
-          automateRunTrigger: triggerAutomationRun
+          automateRunTrigger: triggerAutomationRun,
+          getEncryptionKeyPairFor,
+          getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor })
         })
       })
 

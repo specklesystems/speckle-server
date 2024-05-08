@@ -17,6 +17,7 @@ export type AutomationRevisionRecord = {
   active: boolean
   createdAt: Date
   userId: string | null
+  publicKey: string
 }
 
 export type AutomationRunStatus =
@@ -46,7 +47,7 @@ export type AutomationRunRecord = {
 export type AutomateRevisionFunctionRecord = {
   functionReleaseId: string
   functionId: string
-  functionInputs: Record<string, unknown> | null
+  functionInputs: string | null
   automationRevisionId: string
 }
 

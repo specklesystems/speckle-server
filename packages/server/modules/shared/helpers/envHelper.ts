@@ -279,3 +279,13 @@ export function delayGraphqlResponsesBy() {
 export function skipAutomateMigrations() {
   return getBooleanFromEnv('SKIP_AUTOMATE_MIGRATION_DEV')
 }
+
+export function getAutomateEncryptionKeysPath() {
+  if (!process.env.AUTOMATE_ENCRYPTION_KEYS_PATH) {
+    throw new MisconfiguredEnvironmentError(
+      'Automate encryption keys path environment variable (AUTOMATE_ENCRYPTION_KEYS_PATH) is not configured'
+    )
+  }
+
+  return process.env.AUTOMATE_ENCRYPTION_KEYS_PATH
+}

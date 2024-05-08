@@ -591,7 +591,8 @@ export const AutomationRevisions = buildTableHelper('automation_revisions', [
   'automationId',
   'active',
   'createdAt',
-  'userId'
+  'userId',
+  'publicKey'
 ])
 
 export const AutomationTokens = buildTableHelper('automation_tokens', [

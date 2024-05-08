@@ -33,6 +33,11 @@ import {
   Automations
 } from '@/modules/core/dbSchema'
 import { faker } from '@faker-js/faker'
+import {
+  getEncryptionKeyPair,
+  getFunctionInputDecryptor
+} from '@/modules/automate/services/encryption'
+import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 
 export const generateFunctionId = () => cryptoRandomString({ length: 10 })
 export const generateFunctionReleaseId = () => cryptoRandomString({ length: 10 })
@@ -69,6 +74,10 @@ export const buildAutomationRevisionCreate = (
       inputSchema: null,
       createdAt: new Date().toISOString(),
       commitId: faker.git.shortSha()
+    }),
+    getEncryptionKeyPair,
+    getFunctionInputDecryptor: getFunctionInputDecryptor({
+      buildDecryptor
     }),
     ...overrides
   })

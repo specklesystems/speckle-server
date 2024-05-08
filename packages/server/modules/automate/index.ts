@@ -12,6 +12,11 @@ import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScope } from '@/modules/shared'
 import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
 import logStreamRest from '@/modules/automate/rest/logStream'
+import {
+  getEncryptionKeyPairFor,
+  getFunctionInputDecryptor
+} from '@/modules/automate/services/encryption'
+import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -42,7 +47,11 @@ async function initScopes() {
 
 const initializeEventListeners = () => {
   const triggerFn = triggerAutomationRevisionRun({
-    automateRunTrigger: triggerAutomationRun
+    automateRunTrigger: triggerAutomationRun,
+    getEncryptionKeyPairFor,
+    getFunctionInputDecryptor: getFunctionInputDecryptor({
+      buildDecryptor
+    })
   })
 
   const quit = VersionsEmitter.listen(

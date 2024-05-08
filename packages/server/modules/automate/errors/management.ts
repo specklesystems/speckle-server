@@ -49,3 +49,18 @@ export class AutomateFunctionReleaseNotFoundError extends BaseError {
   static defaultMessage = 'Function release not found'
   static code = 'AUTOMATE_FUNCTION_RELEASE_NOT_FOUND'
 }
+
+export class AutomationRevisionPublicKeyError extends BaseError {
+  static defaultMessage = 'Error occurred when managing automation revision public key'
+  static code = 'AUTOMATION_REVISION_PUBLIC_KEY_ERROR'
+}
+
+export class AutomationFunctionInputEncryptionError extends BaseError {
+  static defaultMessage = 'Error encrypting automation function input'
+  static code = 'AUTOMATION_FUNCTION_INPUT_ENCRYPTION_ERROR'
+}
+
+export class JsonSchemaInputValidationError extends BaseError {
+  static defaultMessage = 'Error validating input data'
+  static code = 'JSON_SCHEMA_INPUT_VALIDATION_ERROR'
+}

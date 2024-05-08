@@ -23,7 +23,10 @@ import { Roles, Scopes } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { Merge } from 'type-fest'
-import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
+import {
+  AutomateInvalidTriggerError,
+  AutomationFunctionInputEncryptionError
+} from '@/modules/automate/errors/management'
 import {
   triggerAutomationRun,
   type TriggeredAutomationFunctionRun
@@ -33,6 +36,11 @@ import { validateStreamAccess } from '@/modules/core/services/streams/streamAcce
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { automateLogger } from '@/logging/logging'
+import {
+  getEncryptionKeyPairFor,
+  getFunctionInputDecryptor
+} from '@/modules/automate/services/encryption'
+import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 
 export type OnModelVersionCreateDeps = {
   getTriggers: typeof getActiveTriggerDefinitions
@@ -85,55 +93,97 @@ type InsertableAutomationRunWithExtendedFunctionRuns = Merge<
   }
 >
 
-function createAutomationRunData(params: {
-  manifests: BaseTriggerManifest[]
-  automationWithRevision: AutomationWithRevision<AutomationRevisionWithTriggersFunctions>
-}): InsertableAutomationRunWithExtendedFunctionRuns {
-  const { manifests, automationWithRevision } = params
-  const runId = cryptoRandomString({ length: 15 })
-  const versionCreatedManifests = manifests.filter(isVersionCreatedTriggerManifest)
-  if (!versionCreatedManifests.length) {
-    throw new AutomateInvalidTriggerError(
-      'Only version creation triggers currently supported'
+type CreateAutomationRunDataDeps = {
+  getEncryptionKeyPairFor: typeof getEncryptionKeyPairFor
+  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>
+}
+
+const createAutomationRunData =
+  (deps: CreateAutomationRunDataDeps) =>
+  async (params: {
+    manifests: BaseTriggerManifest[]
+    automationWithRevision: AutomationWithRevision<AutomationRevisionWithTriggersFunctions>
+  }): Promise<InsertableAutomationRunWithExtendedFunctionRuns> => {
+    const { getEncryptionKeyPairFor, getFunctionInputDecryptor } = deps
+    const { manifests, automationWithRevision } = params
+    const runId = cryptoRandomString({ length: 15 })
+    const versionCreatedManifests = manifests.filter(isVersionCreatedTriggerManifest)
+    if (!versionCreatedManifests.length) {
+      throw new AutomateInvalidTriggerError(
+        'Only version creation triggers currently supported'
+      )
+    }
+
+    const keyPair = await getEncryptionKeyPairFor(
+      automationWithRevision.revision.publicKey
     )
+    const functionInputDecryptor = await getFunctionInputDecryptor({ keyPair })
+    let automationRun: InsertableAutomationRunWithExtendedFunctionRuns
+    try {
+      automationRun = {
+        id: runId,
+        triggers: [
+          ...versionCreatedManifests.map((m) => ({
+            triggeringId: m.versionId,
+            triggerType: m.triggerType
+          }))
+        ],
+        executionEngineRunId: null,
+        status: 'pending' as const,
+        automationRevisionId: automationWithRevision.revision.id,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        functionRuns: await Promise.all(
+          automationWithRevision.revision.functions.map(async (f) => ({
+            functionId: f.functionId,
+            id: cryptoRandomString({ length: 15 }),
+            status: 'pending' as const,
+            elapsed: 0,
+            results: null,
+            contextView: null,
+            statusMessage: null,
+            resultVersions: [],
+            functionReleaseId: f.functionReleaseId,
+            functionInputs: await functionInputDecryptor.decryptInputs(
+              f.functionInputs
+            ),
+            createdAt: new Date(),
+            updatedAt: new Date()
+          }))
+        )
+      }
+    } catch (e) {
+      if (e instanceof AutomationFunctionInputEncryptionError) {
+        throw new AutomateInvalidTriggerError(
+          'One or more function inputs are not proper input objects',
+          { cause: e }
+        )
+      }
+
+      if (e instanceof LibsodiumEncryptionError) {
+        throw new AutomateInvalidTriggerError(
+          'Failed to decrypt one or more function inputs, they might not have been properly encrypted',
+          { cause: e }
+        )
+      }
+
+      throw e
+    } finally {
+      functionInputDecryptor.dispose()
+    }
+
+    return automationRun
   }
 
-  const automationRun: InsertableAutomationRunWithExtendedFunctionRuns = {
-    id: runId,
-    triggers: [
-      ...versionCreatedManifests.map((m) => ({
-        triggeringId: m.versionId,
-        triggerType: m.triggerType
-      }))
-    ],
-    executionEngineRunId: null,
-    status: 'pending' as const,
-    automationRevisionId: automationWithRevision.revision.id,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    functionRuns: automationWithRevision.revision.functions.map((f) => ({
-      functionId: f.functionId,
-      id: cryptoRandomString({ length: 15 }),
-      status: 'pending' as const,
-      elapsed: 0,
-      results: null,
-      contextView: null,
-      statusMessage: null,
-      resultVersions: [],
-      functionReleaseId: f.functionReleaseId,
-      functionInputs: f.functionInputs,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }))
-  }
-  return automationRun
-}
+export type TriggerAutomationRevisionRunDeps = {
+  automateRunTrigger: typeof triggerAutomationRun
+} & CreateAutomationRunDataDeps
 
 /**
  * This triggers a run for a specific automation revision
  */
 export const triggerAutomationRevisionRun =
-  (deps: { automateRunTrigger: typeof triggerAutomationRun }) =>
+  (deps: TriggerAutomationRevisionRunDeps) =>
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
@@ -185,7 +235,7 @@ export const triggerAutomationRevisionRun =
       ]
     })
 
-    const automationRun = createAutomationRunData({
+    const automationRun = await createAutomationRunData(deps)({
       manifests: triggerManifests,
       automationWithRevision
     })

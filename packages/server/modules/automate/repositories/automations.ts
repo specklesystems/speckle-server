@@ -459,6 +459,15 @@ export async function getAutomationRevisions(params: {
   return await q
 }
 
+export async function getAutomationRevision(params: { automationRevisionId: string }) {
+  const { automationRevisionId } = params
+  const revisions = await getAutomationRevisions({
+    automationRevisionIds: [automationRevisionId]
+  })
+
+  return (revisions[0] || null) as Nullable<(typeof revisions)[0]>
+}
+
 export async function getLatestAutomationRevisions(params: {
   automationIds: string[]
 }) {

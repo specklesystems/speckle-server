@@ -56,6 +56,12 @@ import { Commits } from '@/modules/core/dbSchema'
 import { BranchRecord } from '@/modules/core/helpers/types'
 import { reportFunctionRunStatuses } from '@/modules/automate/services/runsManagement'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
+import {
+  getEncryptionKeyPairFor,
+  getEncryptionPublicKey,
+  getFunctionInputDecryptor
+} from '@/modules/automate/services/encryption'
+import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
@@ -93,10 +99,12 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
     let createdRevision: Awaited<
       ReturnType<ReturnType<typeof buildAutomationRevisionCreate>>
     >
+    let publicKey: string
 
     before(async () => {
       await beforeEachContext()
       await createTestUsers([testUser, otherUser])
+      publicKey = await getEncryptionPublicKey()
 
       const createAutomation = buildAutomationCreate()
       const createRevision = buildAutomationRevisionCreate()
@@ -241,7 +249,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           await triggerAutomationRevisionRun({
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
-            })
+            }),
+            getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+            getEncryptionKeyPairFor
           })({
             revisionId: cryptoRandomString({ length: 10 }),
             manifest: <VersionCreatedTriggerManifest>{
@@ -308,6 +318,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           active: true,
           triggers: [trigger],
           userId,
+          publicKey,
           functions: [
             {
               functionInputs: null,
@@ -320,7 +331,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const { automationRunId } = await triggerAutomationRevisionRun({
           automateRunTrigger: async () => {
             throw new Error(thrownError)
-          }
+          },
+          getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+          getEncryptionKeyPairFor
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -393,6 +406,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           active: true,
           triggers: [trigger],
           userId,
+          publicKey,
           functions: [
             {
               functionInputs: null,
@@ -405,7 +419,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const { automationRunId } = await triggerAutomationRevisionRun({
           automateRunTrigger: async () => ({
             automationRunId: executionEngineRunId
-          })
+          }),
+          getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+          getEncryptionKeyPairFor
         })({
           revisionId: automationRevisionId,
           manifest: <VersionCreatedTriggerManifest>{
@@ -465,6 +481,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
+                publicKey,
                 userId: cryptoRandomString({ length: 10 }),
                 active: false,
                 triggers: [],
@@ -504,6 +521,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               revision: {
+                publicKey,
                 active: false,
                 triggers: [],
                 functions: [],
@@ -545,6 +563,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               enabled: true,
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               revision: {
+                publicKey,
                 id: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
                 userId: cryptoRandomString({ length: 10 }),
@@ -593,6 +612,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
               revision: {
+                publicKey,
                 id: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
                 userId: cryptoRandomString({ length: 10 }),
@@ -643,6 +663,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
                 createdAt: new Date(),
                 userId: cryptoRandomString({ length: 10 }),
                 active: true,
+                publicKey,
                 triggers: [
                   {
                     triggerType: manifest.triggerType,
@@ -689,6 +710,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
                 id: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
                 active: true,
+                publicKey,
                 triggers: [
                   {
                     triggeringId: manifest.modelId,
@@ -750,6 +772,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
                 userId: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
                 active: true,
+                publicKey,
                 triggers: [
                   {
                     triggeringId: manifest.modelId,
@@ -799,7 +822,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           triggerFunction: triggerAutomationRevisionRun({
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
-            })
+            }),
+            getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
+            getEncryptionKeyPairFor
           }),
           ...(overrides || {})
         })

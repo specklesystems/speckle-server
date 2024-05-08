@@ -13,6 +13,7 @@ import {
   AutomateFunctionRelease,
   TriggeredAutomationsStatus
 } from '@/modules/core/graph/generated/graphql'
+import { Nullable } from '@speckle/shared'
 import { Merge } from 'type-fest'
 
 export type AutomateFunctionGraphQLReturn = Pick<
@@ -42,7 +43,13 @@ export type AutomationRevisionTriggerDefinitionGraphQLReturn =
   AutomationTriggerDefinitionRecord
 export type AutomationRunTriggerGraphQLReturn = AutomationRunTriggerRecord
 
-export type AutomationRevisionFunctionGraphQLReturn = AutomateRevisionFunctionRecord
+export type AutomationRevisionFunctionGraphQLReturn = Merge<
+  AutomateRevisionFunctionRecord,
+  {
+    functionInputs: Nullable<Record<string, unknown>>
+    release: AutomateFunctionReleaseGraphQLReturn
+  }
+>
 
 export type AutomateRunGraphQLReturn = AutomationRunWithTriggersFunctionRuns
 

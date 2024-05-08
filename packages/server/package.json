@@ -48,6 +48,7 @@
     "@types/mailchimp__mailchimp_marketing": "^3.0.9",
     "@types/pino-http": "^5.8.4",
     "@types/uuid": "^9.0.0",
+    "ajv": "^8.12.0",
     "apollo-server-express": "^3.10.2",
     "bcrypt": "^5.0.0",
     "bull": "^4.8.5",

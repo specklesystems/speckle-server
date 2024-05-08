@@ -12,7 +12,7 @@ enum AutomateRunTriggerType {
 
 type AutomationRevisionFunction {
   """
-  The secrets in parameters are redacted
+  The secrets in parameters are redacted with six asterisks - ******
   """
   parameters: JSONObject
   release: AutomateFunctionRelease!

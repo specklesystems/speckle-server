@@ -15,13 +15,7 @@ import {
   getFunctionRelease
 } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
-import {
-  Automate,
-  Nullable,
-  Roles,
-  ensureError,
-  removeNullOrUndefinedKeys
-} from '@speckle/shared'
+import { Automate, Roles, removeNullOrUndefinedKeys } from '@speckle/shared'
 import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
 import {
   ProjectAutomationCreateInput,
@@ -31,6 +25,7 @@ import {
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import {
   AutomationCreationError,
+  AutomationFunctionInputEncryptionError,
   AutomationRevisionCreationError,
   AutomationUpdateError
 } from '@/modules/automate/errors/management'
@@ -42,6 +37,11 @@ import { getBranchesByIds } from '@/modules/core/repositories/branches'
 import { keyBy, uniq } from 'lodash'
 import { resolveStatusFromFunctionRunStatuses } from '@/modules/automate/services/runsManagement'
 import { TriggeredAutomationsStatusGraphQLReturn } from '@/modules/automate/helpers/graphTypes'
+import {
+  getEncryptionKeyPair,
+  getFunctionInputDecryptor
+} from '@/modules/automate/services/encryption'
+import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 
 export type CreateAutomationDeps = {
   createAuthCode: ReturnType<typeof createStoredAuthCode>
@@ -244,6 +244,8 @@ const validateNewRevisionFunctions =
 export type CreateAutomationRevisionDeps = {
   getAutomation: typeof getAutomation
   storeAutomationRevision: typeof storeAutomationRevision
+  getEncryptionKeyPair: typeof getEncryptionKeyPair
+  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>
 } & ValidateNewTriggerDefinitionsDeps &
   ValidateNewRevisionFunctionsDeps
 
@@ -256,7 +258,12 @@ export const createAutomationRevision =
     projectId?: string
   }) => {
     const { input, userId, userResourceAccessRules, projectId } = params
-    const { storeAutomationRevision, getAutomation } = deps
+    const {
+      storeAutomationRevision,
+      getAutomation,
+      getEncryptionKeyPair,
+      getFunctionInputDecryptor
+    } = deps
 
     const existingAutomation = await getAutomation({
       automationId: input.automationId,
@@ -293,33 +300,45 @@ export const createAutomationRevision =
       projectId: projectId || existingAutomation.projectId
     })
 
-    const functions = input.functions.map((f) => {
-      // TODO: Encryption?
-      let inputs: Nullable<Record<string, unknown>> = null
-      try {
-        if (f.parameters?.length) {
-          inputs = JSON.parse(f.parameters)
-        }
-      } catch (e) {
-        throw new AutomationRevisionCreationError(
-          "Couldn't parse function parameters",
-          {
-            cause: ensureError(e),
-            info: {
-              parameters: f.parameters
-            }
+    const encryptionKeys = await getEncryptionKeyPair()
+    const decryptor = await getFunctionInputDecryptor({ keyPair: encryptionKeys })
+    let functions: InsertableAutomationRevisionFunction[] = []
+    try {
+      functions = await Promise.all(
+        input.functions.map(async (f) => {
+          // Validate parameters
+          await decryptor.decryptInputs(f.parameters || null)
+
+          // Didn't throw, let's continue
+          const fn: InsertableAutomationRevisionFunction = {
+            functionReleaseId: f.functionReleaseId,
+            functionId: f.functionId,
+            functionInputs: f.parameters || null
           }
+
+          return fn
+        })
+      )
+    } catch (e) {
+      if (e instanceof AutomationFunctionInputEncryptionError) {
+        throw new AutomationRevisionCreationError(
+          'One or more function inputs are not proper input objects',
+          { cause: e }
         )
       }
 
-      const fn: InsertableAutomationRevisionFunction = {
-        functionReleaseId: f.functionReleaseId,
-        functionId: f.functionId,
-        functionInputs: inputs
+      if (e instanceof LibsodiumEncryptionError) {
+        throw new AutomationRevisionCreationError(
+          'Failed to decrypt one or more function inputs. Please ensure they have been properly encrypted',
+          { cause: e }
+        )
       }
 
-      return fn
-    })
+      throw e
+    } finally {
+      decryptor.dispose()
+    }
+
     await validateNewRevisionFunctions(deps)({ functions })
 
     const revisionInput: InsertableAutomationRevision = {
@@ -327,7 +346,8 @@ export const createAutomationRevision =
       triggers: triggerDefinitions,
       automationId: input.automationId,
       userId,
-      active: true
+      active: true,
+      publicKey: encryptionKeys.publicKey
     }
     return await storeAutomationRevision(revisionInput)
   }
