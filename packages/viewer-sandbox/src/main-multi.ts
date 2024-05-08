@@ -2,13 +2,7 @@ import {
   DefaultViewerParams,
   SelectionEvent,
   ViewerEvent,
-  DebugViewer,
-  Viewer
-} from '@speckle/viewer'
-
-import './style.css'
-import Sandbox from './Sandbox'
-import {
+  Viewer,
   CameraController,
   SelectionExtension,
   SectionTool,
@@ -16,15 +10,8 @@ import {
   MeasurementsExtension
 } from '@speckle/viewer'
 
-// const container0 = document.querySelector<HTMLElement>('#renderer0')
-// if (!container0) {
-//   throw new Error("Couldn't find #app container!")
-// }
-
-// const container1 = document.querySelector<HTMLElement>('#renderer1')
-// if (!container1) {
-//   throw new Error("Couldn't find #app container!")
-// }
+import './style.css'
+import Sandbox from './Sandbox'
 
 const createViewer = async (containerName: string, stream: string) => {
   const container = document.querySelector<HTMLElement>(containerName)
@@ -44,7 +31,7 @@ const createViewer = async (containerName: string, stream: string) => {
   params.verbose = true
 
   const multiSelectList: SelectionEvent[] = []
-  const viewer: Viewer = new DebugViewer(container, params)
+  const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
   const cameraController = viewer.createExtension(CameraController)
@@ -58,20 +45,11 @@ const createViewer = async (containerName: string, stream: string) => {
   sectionOutlines // use it
   measurements // use it
 
-  const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
+  const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
   window.addEventListener('load', () => {
     viewer.resize()
   })
-
-  viewer.on(
-    ViewerEvent.LoadProgress,
-    (a: { progress: number; id: string; url: string }) => {
-      if (a.progress >= 1) {
-        viewer.resize()
-      }
-    }
-  )
 
   viewer.on(ViewerEvent.LoadComplete, () => {
     Object.assign(sandbox.sceneParams.worldSize, viewer.World.worldSize)

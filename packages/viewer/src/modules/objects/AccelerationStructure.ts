@@ -3,16 +3,13 @@ import {
   BufferGeometry,
   Float32BufferAttribute,
   FrontSide,
-  Intersection,
   Material,
   Matrix4,
-  Object3D,
   Ray,
   Side,
   Uint16BufferAttribute,
   Uint32BufferAttribute,
-  Vector3,
-  Event
+  Vector3
 } from 'three'
 import {
   CENTER,
@@ -21,6 +18,7 @@ import {
   ShapecastIntersection,
   SplitStrategy
 } from 'three-mesh-bvh'
+import { MeshIntersection } from './SpeckleRaycaster'
 
 const SKIP_GENERATION = Symbol('skip tree generation')
 
@@ -31,7 +29,7 @@ export interface BVHOptions {
   verbose: boolean
   useSharedArrayBuffer: boolean
   setBoundingBox: boolean
-  onProgress: () => void
+  onProgress?: () => void
   [SKIP_GENERATION]: boolean
 }
 
@@ -42,7 +40,6 @@ export const DefaultBVHOptions = {
   verbose: true,
   useSharedArrayBuffer: false,
   setBoundingBox: false,
-  onProgress: null,
   [SKIP_GENERATION]: false
 }
 
@@ -71,10 +68,10 @@ to get the correct values for Vectors, Rays, Boxes, etc
 export class AccelerationStructure {
   private static readonly MatBuff: Matrix4 = new Matrix4()
   private _bvh: MeshBVH
-  public inputTransform: Matrix4
-  public outputTransform: Matrix4
-  public inputOriginTransform: Matrix4
-  public outputOriginTransfom: Matrix4
+  public inputTransform!: Matrix4
+  public outputTransform!: Matrix4
+  public inputOriginTransform!: Matrix4
+  public outputOriginTransfom!: Matrix4
 
   public get geometry() {
     return this._bvh.geometry
@@ -85,12 +82,17 @@ export class AccelerationStructure {
   }
 
   public static buildBVH(
-    indices: number[],
-    position: Float32Array,
+    indices: number[] | undefined,
+    position: number[] | undefined,
     options: BVHOptions = DefaultBVHOptions,
     transform?: Matrix4
   ): MeshBVH {
-    let bvhPositions = position
+    /** There is no unniverse where you can build a BVH without proper indices or positions */
+    if (!indices || !position) {
+      throw new Error('Cannot build BVH with undefined indices or position!')
+    }
+
+    let bvhPositions = new Float32Array(position)
     if (transform) {
       bvhPositions = new Float32Array(position.length)
       const vecBuff = new Vector3()
@@ -129,21 +131,23 @@ export class AccelerationStructure {
   public raycast(
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
-  ): Intersection<Object3D<Event>>[] {
+  ): MeshIntersection[] {
     const res = this._bvh.raycast(this.transformInput<Ray>(ray), materialOrSide)
     res.forEach((value) => {
       value.point = this.transformOutput(value.point)
     })
-    return res
+    /** The intersection results from raycasting a bvh will always overlap with MeshIntersection because the bvh uses indexed geometry */
+    return res as MeshIntersection[]
   }
 
   public raycastFirst(
     ray: Ray,
     materialOrSide: Side | Material | Material[] = FrontSide
-  ): Intersection<Object3D<Event>> {
+  ): MeshIntersection {
     const res = this._bvh.raycastFirst(this.transformInput<Ray>(ray), materialOrSide)
     res.point = this.transformOutput(res.point)
-    return res
+    /** The intersection results from raycasting a bvh will always overlap with MeshIntersection because the bvh uses indexed geometry */
+    return res as MeshIntersection
   }
 
   public shapecast(
@@ -274,9 +278,10 @@ export class AccelerationStructure {
     return output.applyMatrix4(AccelerationStructure.MatBuff) as T
   }
 
-  public getBoundingBox(target) {
-    this._bvh.getBoundingBox(target)
-    return this.transformOutput(target)
+  public getBoundingBox(target?: Box3): Box3 {
+    const _target: Box3 = target ? target : new Box3()
+    this._bvh.getBoundingBox(_target)
+    return this.transformOutput(_target)
   }
 
   public getVertexAtIndex(index: number): Vector3 {

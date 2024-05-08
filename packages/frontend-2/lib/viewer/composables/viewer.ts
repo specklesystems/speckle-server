@@ -11,7 +11,7 @@ import { TimeoutError, timeoutAt } from '@speckle/shared'
 import type { MaybeAsync, Nullable } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
-import { CameraController } from '@speckle/viewer'
+import { CameraController, type ViewerEventPayload } from '@speckle/viewer'
 import type { TreeNode } from '@speckle/viewer'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 
@@ -78,9 +78,9 @@ function getFirstVisibleSelectionHit(
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useViewerEventListener<A = any>(
-  name: ViewerEvent | ViewerEvent[],
-  listener: (...args: A[]) => MaybeAsync<void>,
+export function useViewerEventListener<K extends ViewerEvent>(
+  name: K | K[],
+  listener: (args: ViewerEventPayload[K]) => MaybeAsync<void>,
   options?: Partial<{
     state: InitialStateWithRequestAndResponse
   }>
@@ -135,7 +135,8 @@ export function useViewerCameraTracker(
     }
 
     // Only invoke callback if position/target changed in a meaningful way
-    const controls = instance.getExtension(CameraController).controls
+    const extension = instance.getExtension(CameraController)
+    const controls = extension.controls
     const viewerPos = new Vector3()
     const viewerTarget = new Vector3()
 
@@ -165,7 +166,6 @@ export function useViewerCameraTracker(
 
   onMounted(() => {
     const extension = instance.getExtension(CameraController)
-
     extension.controls.addEventListener('update', finalCallback)
   })
 

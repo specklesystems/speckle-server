@@ -18,7 +18,8 @@ const config = {
     }
   },
   rules: {
-    'no-console': ['warn', { allow: ['warn', 'error'] }]
+    'no-console': ['warn', { allow: ['warn', 'error'] }],
+    '@typescript-eslint/no-non-null-assertion': 'error'
   },
   ignorePatterns: ['dist2', 'example/speckleviewer.web.js'],
   overrides: [
