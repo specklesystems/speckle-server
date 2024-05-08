@@ -32,6 +32,7 @@ import { useAccountStore, DUIAccount } from '~/store/accounts'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
+const app = useNuxtApp()
 
 const props = defineProps<{
   currentSelectedAccountId?: string
@@ -42,6 +43,10 @@ defineEmits<{
 }>()
 
 const showAccountsDialog = ref(false)
+
+app.$baseBinding.on('documentChanged', () => {
+  showAccountsDialog.value = false
+})
 
 watch(showAccountsDialog, (newVal) => {
   if (newVal) {

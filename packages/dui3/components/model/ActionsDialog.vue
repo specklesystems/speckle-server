@@ -45,6 +45,11 @@ defineProps<{
   modelName: string
 }>()
 
+const app = useNuxtApp()
+app.$baseBinding.on('documentChanged', () => {
+  openModelCardActionsDialog.value = false
+})
+
 const items = [
   {
     name: 'View 3D model in browser',
