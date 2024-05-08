@@ -34,7 +34,7 @@
           :show-label="false"
           placeholder="Search"
           color="foundation"
-          wrapper-classes="grow md:grow-0 md:w-60 hover:shadow"
+          wrapper-classes="grow md:grow-0 md:w-60"
           :show-clear="!!search"
           @change="updateSearchImmediately"
           @update:model-value="updateDebouncedSearch"
