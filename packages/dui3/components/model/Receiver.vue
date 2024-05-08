@@ -84,7 +84,6 @@ import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
-
 const app = useNuxtApp()
 
 const props = defineProps<{
@@ -95,6 +94,10 @@ const props = defineProps<{
 const store = useHostAppStore()
 
 const openVersionsDialog = ref(false)
+
+app.$baseBinding.on('documentChanged', () => {
+  openVersionsDialog.value = false
+})
 
 const receiveOrCancel = async () => {
   if (props.modelCard.progress)

@@ -81,6 +81,7 @@ import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
+const app = useNuxtApp()
 
 const cardBase = ref<InstanceType<typeof ModelCardBase>>()
 const props = defineProps<{
@@ -90,6 +91,10 @@ const props = defineProps<{
 
 const store = useHostAppStore()
 const openFilterDialog = ref(false)
+app.$baseBinding.on('documentChanged', () => {
+  openFilterDialog.value = false
+})
+
 const sendOrCancel = () => {
   if (props.modelCard.progress) store.sendModelCancel(props.modelCard.modelCardId)
   else store.sendModel(props.modelCard.modelCardId)

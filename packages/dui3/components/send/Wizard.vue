@@ -76,8 +76,13 @@ import { ChevronRightIcon } from '@heroicons/vue/24/solid'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
+const app = useNuxtApp()
 
 const showSendDialog = defineModel({ default: false })
+
+app.$baseBinding.on('documentChanged', () => {
+  showSendDialog.value = false
+})
 
 const emit = defineEmits(['close'])
 

@@ -81,8 +81,13 @@ import { ReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
+const app = useNuxtApp()
 
 const showReceiveDialog = defineModel({ default: false })
+
+app.$baseBinding.on('documentChanged', () => {
+  showReceiveDialog.value = false
+})
 
 const emit = defineEmits(['close'])
 

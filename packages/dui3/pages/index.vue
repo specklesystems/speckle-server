@@ -132,6 +132,11 @@ const { trackEvent } = useMixpanel()
 const showSendDialog = ref(false)
 const showReceiveDialog = ref(false)
 
+app.$baseBinding.on('documentChanged', () => {
+  showSendDialog.value = false
+  showReceiveDialog.value = false
+})
+
 const handleSendClick = () => {
   showSendDialog.value = !showSendDialog.value
   trackEvent('DUI3 Action', { name: 'Publish Wizard', step: 'start' })
