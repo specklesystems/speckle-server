@@ -50,7 +50,7 @@ export const commentPermissionsSelectItems: Record<
   },
   [CommentPermissions.TeamMembersOnly]: {
     id: CommentPermissions.TeamMembersOnly,
-    title: 'Only invited collaborators can access'
+    title: 'Only invited collaborators can comment'
   }
 }
 
