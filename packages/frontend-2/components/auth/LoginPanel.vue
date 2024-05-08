@@ -1,6 +1,7 @@
 <template>
   <Component
     :is="concreteComponent"
+    v-if="!isLoggedIn"
     fancy-glow
     no-shadow
     class="max-w-lg mx-auto w-full"
@@ -43,6 +44,7 @@
       </div>
     </div>
   </Component>
+  <div v-else />
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
@@ -67,6 +69,7 @@ const props = withDefaults(
   }
 )
 
+const { isLoggedIn } = useActiveUser()
 const { inviteToken } = useAuthManager()
 const router = useRouter()
 

@@ -1,13 +1,25 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable camelcase */
 import { speckleStandardVert } from './shaders/speckle-standard-vert'
 import { speckleStandardFrag } from './shaders/speckle-standard-frag'
-import { ShaderLib, Vector3, Material, IUniform } from 'three'
+import {
+  ShaderLib,
+  Vector3,
+  Material,
+  type IUniform,
+  type MeshStandardMaterialParameters,
+  Scene,
+  Camera,
+  BufferGeometry,
+  Object3D
+} from 'three'
 import { Matrix4 } from 'three'
-import { ExtendedMeshStandardMaterial, Uniforms } from './SpeckleMaterial'
+import { ExtendedMeshStandardMaterial, type Uniforms } from './SpeckleMaterial'
 import { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
 class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
+  protected originalRoughness: number | undefined
+  protected artificialRoughness: number | undefined
+
   protected get vertexProgram(): string {
     return speckleStandardVert
   }
@@ -29,13 +41,11 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
       uShadowViewer_low: new Vector3(),
       uTransforms: [new Matrix4()],
       tTransforms: null,
-      objCount: 1,
-      contrast: 1,
-      saturation: 1
+      objCount: 1
     }
   }
 
-  constructor(parameters, defines = ['USE_RTE']) {
+  constructor(parameters: MeshStandardMaterialParameters, defines = ['USE_RTE']) {
     super(parameters)
     this.init(defines)
   }
@@ -45,9 +55,13 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     return this.constructor.name
   }
 
-  public copy(source) {
+  public copy(source: Material) {
     super.copy(source)
     this.copyFrom(source)
+    if (source instanceof SpeckleStandardMaterial) {
+      this.originalRoughness = source.originalRoughness
+      this.artificialRoughness = source.artificialRoughness
+    }
     return this
   }
 
@@ -63,6 +77,8 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     toStandard.envMap = fromStandard.envMap
     toStandard.envMapIntensity = fromStandard.envMapIntensity
     toStandard.refractionRatio = fromStandard.refractionRatio
+    toStandard.originalRoughness = fromStandard.originalRoughness
+    toStandard.artificialRoughness = fromStandard.artificialRoughness
 
     /** Leaving textures out for now */
     // toStandard.map = fromStandard.map
@@ -84,8 +100,31 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     // toStandard.alphaMap = fromStandard.alphaMap
   }
 
+  public updateArtificialRoughness(artificialRougness?: number) {
+    if (artificialRougness) {
+      if (this.originalRoughness === undefined) this.originalRoughness = this.roughness
+      this.artificialRoughness = artificialRougness
+    }
+    if (this.originalRoughness === undefined || this.artificialRoughness === undefined)
+      return
+
+    const applyRoughness =
+      artificialRougness !== undefined
+        ? Math.min(this.originalRoughness, this.artificialRoughness)
+        : this.originalRoughness
+
+    this.roughness = applyRoughness
+    this.needsCopy = true
+  }
+
   /** Called by three.js render loop */
-  public onBeforeRender(_this: SpeckleWebGLRenderer, scene, camera, geometry, object) {
+  public onBeforeRender(
+    _this: SpeckleWebGLRenderer,
+    _scene: Scene,
+    _camera: Camera,
+    _geometry: BufferGeometry,
+    object: Object3D
+  ) {
     if (this.defines['USE_RTE']) {
       object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
       this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)

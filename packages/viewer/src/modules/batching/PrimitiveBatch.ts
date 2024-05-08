@@ -2,33 +2,32 @@ import { Material, Object3D, BufferGeometry, BufferAttribute, Box3 } from 'three
 import { NodeRenderView } from '../..'
 import {
   AllBatchUpdateRange,
-  Batch,
-  BatchUpdateRange,
+  type Batch,
+  type BatchUpdateRange,
   GeometryType,
   NoneBatchUpdateRange
 } from './Batch'
-import { DrawGroup } from './Batch'
+import { type DrawGroup } from './Batch'
 import Materials from '../materials/Materials'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
-import Logger from 'js-logger'
 
 export abstract class Primitive<
   TGeometry extends BufferGeometry = BufferGeometry,
   TMaterial extends Material | Material[] = Material | Material[]
 > extends Object3D {
-  geometry: TGeometry
-  material: TMaterial
-  visible: boolean
+  geometry!: TGeometry
+  material!: TMaterial
+  visible!: boolean
 }
 
 export abstract class PrimitiveBatch implements Batch {
-  public id: string
-  public subtreeId: string
-  public renderViews: NodeRenderView[]
-  public batchMaterial: Material
+  public id!: string
+  public subtreeId!: string
+  public renderViews!: NodeRenderView[]
+  public batchMaterial!: Material
 
   protected abstract primitive: Primitive
-  protected gradientIndexBuffer: BufferAttribute
+  protected gradientIndexBuffer!: BufferAttribute
   protected needsShuffle: boolean = false
 
   abstract get geometryType(): GeometryType
@@ -43,7 +42,17 @@ export abstract class PrimitiveBatch implements Batch {
   }
 
   public get groups(): DrawGroup[] {
-    return this.primitive.geometry.groups
+    /** We always write to geomtry.groups via the set accessor
+     *  which takes a DrawGroup[], so geometry.groups will always
+     *  be an array of DrawGroup.
+     *  Not to mention that **all our draw groupd are DrawGroup because
+     *  they always have a materialIndex defined** by design and convention!!!
+     */
+    return this.primitive.geometry.groups as DrawGroup[]
+  }
+
+  public set groups(value: DrawGroup[]) {
+    this.primitive.geometry.groups = value
   }
 
   public get renderObject(): Object3D {
@@ -59,22 +68,21 @@ export abstract class PrimitiveBatch implements Batch {
   }
 
   public getCount(): number {
-    return this.primitive.geometry.index.count
+    return this.primitive.geometry.index?.count || 0
   }
 
   public setBatchMaterial(material: Material): void {
     this.batchMaterial = material
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  public onUpdate(deltaTime: number) {
+  public onUpdate() {
     if (this.needsShuffle) {
       this.shuffleDrawGroups()
       this.needsShuffle = false
     }
   }
 
-  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+  public setVisibleRange(ranges: BatchUpdateRange[]) {
     /** Entire batch needs to NOT be drawn */
     if (ranges.length === 1 && ranges[0] === NoneBatchUpdateRange) {
       this.primitive.geometry.setDrawRange(0, 0)
@@ -97,17 +105,17 @@ export abstract class PrimitiveBatch implements Batch {
       maxOffset = Math.max(maxOffset, range.offset)
     })
 
+    const offset = ranges.find((val) => val.offset === maxOffset)
     this.primitive.geometry.setDrawRange(
       minOffset,
-      maxOffset - minOffset + ranges.find((val) => val.offset === maxOffset).count
+      maxOffset - minOffset + (offset ? offset.count : 0)
     )
     this.primitive.visible = true
   }
 
   public getVisibleRange(): BatchUpdateRange {
     /** Entire batch is visible */
-    if (this.primitive.geometry.groups.length === 1 && this.primitive.visible)
-      return AllBatchUpdateRange
+    if (this.groups.length === 1 && this.primitive.visible) return AllBatchUpdateRange
     /** Entire batch is hidden */
     if (!this.primitive.visible) return NoneBatchUpdateRange
     /** Parts of the batch are visible */
@@ -120,6 +128,7 @@ export abstract class PrimitiveBatch implements Batch {
   public getOpaque(): BatchUpdateRange {
     /** If there is any transparent or hidden group return the update range up to it's offset */
     const transparentOrHiddenGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
       return (
         Materials.isTransparent(this.materials[value.materialIndex]) ||
         this.materials[value.materialIndex].visible === false
@@ -139,6 +148,7 @@ export abstract class PrimitiveBatch implements Batch {
   public getDepth(): BatchUpdateRange {
     /** If there is any transparent or hidden group return the update range up to it's offset */
     const transparentOrHiddenGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
       return (
         Materials.isTransparent(this.materials[value.materialIndex]) ||
         this.materials[value.materialIndex].visible === false ||
@@ -159,10 +169,12 @@ export abstract class PrimitiveBatch implements Batch {
   public getTransparent(): BatchUpdateRange {
     /** Look for a transparent group */
     const transparentGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
       return Materials.isTransparent(this.materials[value.materialIndex])
     })
     /** Look for a hidden group */
     const hiddenGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
       return this.materials[value.materialIndex].visible === false
     })
     /** If there is a transparent group return it's range */
@@ -185,6 +197,7 @@ export abstract class PrimitiveBatch implements Batch {
       if (this.materials[0].stencilWrite === true) return AllBatchUpdateRange
     }
     const stencilGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
       return this.materials[value.materialIndex].stencilWrite === true
     })
     if (stencilGroup) {
@@ -197,39 +210,44 @@ export abstract class PrimitiveBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
-  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+  public setBatchBuffers(ranges: BatchUpdateRange[]): void {
     let minGradientIndex = Infinity
     let maxGradientIndex = 0
-    for (let k = 0; k < range.length; k++) {
-      if (range[k].materialOptions) {
-        if (range[k].materialOptions.rampIndex !== undefined) {
-          const start = range[k].offset
-          const len = range[k].offset + range[k].count
+    for (let k = 0; k < ranges.length; k++) {
+      const range = ranges[k]
+      if (range.materialOptions) {
+        if (
+          range.materialOptions.rampIndex !== undefined &&
+          range.materialOptions.rampWidth !== undefined
+        ) {
+          const start = ranges[k].offset
+          const len = ranges[k].offset + ranges[k].count
           /** The ramp indices specify the *begining* of each ramp color. When sampling with Nearest filter (since we don't want filtering)
            *  we'll always be sampling right at the edge between texels. Most GPUs will sample consistently, but some won't and we end up with
            *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
            *  sampling can occur.
            */
-          const shiftedIndex =
-            range[k].materialOptions.rampIndex +
-            0.5 / range[k].materialOptions.rampWidth
-          const minMaxIndices = this.updateGradientIndexBufferData(
-            start,
-            range[k].count === Infinity
-              ? this.primitive.geometry.attributes['gradientIndex'].array.length
-              : len,
-            shiftedIndex
-          )
-          minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
-          maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
+          if (range.materialOptions.rampIndex && range.materialOptions.rampWidth) {
+            const shiftedIndex =
+              range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
+            const minMaxIndices = this.updateGradientIndexBufferData(
+              start,
+              range.count === Infinity
+                ? this.primitive.geometry.attributes['gradientIndex'].array.length
+                : len,
+              shiftedIndex
+            )
+            minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
+            maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
+          }
         }
         /** We need to update the texture here, because each batch uses it's own clone for any material we use on it
          *  because otherwise three.js won't properly update our custom uniforms
          */
-        if (range[k].materialOptions.rampTexture !== undefined) {
-          if (range[k].material instanceof SpeckleStandardColoredMaterial) {
-            ;(range[k].material as SpeckleStandardColoredMaterial).setGradientTexture(
-              range[k].materialOptions.rampTexture
+        if (range.materialOptions.rampTexture !== undefined) {
+          if (range.material instanceof SpeckleStandardColoredMaterial) {
+            ;(range.material as SpeckleStandardColoredMaterial).setGradientTexture(
+              range.materialOptions.rampTexture
             )
           }
         }
@@ -242,7 +260,12 @@ export abstract class PrimitiveBatch implements Batch {
   protected cleanMaterials() {
     const materialsInUse = [
       ...Array.from(
-        new Set(this.groups.map((value) => this.materials[value.materialIndex]))
+        new Set(
+          this.groups.map((value) => {
+            if (value.materialIndex === undefined) return undefined
+            return this.materials[value.materialIndex]
+          })
+        )
       )
     ]
     let k = 0
@@ -250,6 +273,7 @@ export abstract class PrimitiveBatch implements Batch {
       if (!materialsInUse.includes(this.materials[k])) {
         this.materials.splice(k, 1)
         this.groups.forEach((value: DrawGroup) => {
+          if (value.materialIndex === undefined) return
           if (value.materialIndex > k) value.materialIndex--
         })
         k = 0
@@ -264,13 +288,15 @@ export abstract class PrimitiveBatch implements Batch {
   protected abstract shuffleMaterialOrder(a: DrawGroup, b: DrawGroup): number
 
   private shuffleDrawGroups() {
-    const groups = this.primitive.geometry.groups.slice()
+    const groups = this.groups.slice()
     groups.sort(this.shuffleMaterialOrder.bind(this))
 
-    const materialOrder = []
+    const materialOrder: Array<number> = []
     groups.reduce((previousValue, currentValue) => {
-      if (previousValue.indexOf(currentValue.materialIndex) === -1) {
-        previousValue.push(currentValue.materialIndex)
+      if (currentValue.materialIndex !== undefined) {
+        if (previousValue.indexOf(currentValue.materialIndex) === -1) {
+          previousValue.push(currentValue.materialIndex)
+        }
       }
       return previousValue
     }, materialOrder)
@@ -332,7 +358,7 @@ export abstract class PrimitiveBatch implements Batch {
         materialIndex: materialGroup[0].materialIndex
       })
     }
-    this.primitive.geometry.groups = []
+    this.groups = []
     for (let i = 0; i < newGroups.length; i++) {
       this.primitive.geometry.addGroup(
         newGroups[i].offset,
@@ -342,16 +368,22 @@ export abstract class PrimitiveBatch implements Batch {
     }
 
     this.primitive.geometry.setIndex(targetIBO)
-    this.primitive.geometry.index.needsUpdate = true
+    /** Catering to typescript
+     *  The line above literally makes sure the index is set. Absurd
+     */
+    if (this.primitive.geometry.index) this.primitive.geometry.index.needsUpdate = true
 
-    const hiddenGroup = this.primitive.geometry.groups.find((value) => {
-      return this.primitive.material[value.materialIndex].visible === false
+    const hiddenGroup = this.groups.find((value) => {
+      if (value.materialIndex === undefined) return false
+      return this.materials[value.materialIndex].visible === false
     })
     if (hiddenGroup) {
-      this.setVisibleRange({
-        offset: 0,
-        count: hiddenGroup.start
-      })
+      this.setVisibleRange([
+        {
+          offset: 0,
+          count: hiddenGroup.start
+        }
+      ])
     }
     // console.log('Final -> ', this.id, this.groups.slice())
   }
@@ -372,7 +404,7 @@ export abstract class PrimitiveBatch implements Batch {
     this.primitive.geometry.attributes['gradientIndex'].needsUpdate = true
   }
 
-  public abstract setDrawRanges(...ranges: BatchUpdateRange[])
+  public abstract setDrawRanges(ranges: BatchUpdateRange[]): void
 
   public resetDrawRanges(): void {
     this.primitive.visible = true
@@ -382,29 +414,21 @@ export abstract class PrimitiveBatch implements Batch {
   }
 
   public abstract buildBatch(): void
-  public abstract getRenderView(index: number): NodeRenderView
-  public abstract getMaterialAtIndex(index: number): Material
-  public getMaterial(rv: NodeRenderView): Material {
-    for (let k = 0; k < this.primitive.geometry.groups.length; k++) {
-      try {
-        if (
-          rv.batchStart >= this.primitive.geometry.groups[k].start &&
-          rv.batchEnd <=
-            this.primitive.geometry.groups[k].start +
-              this.primitive.geometry.groups[k].count
-        ) {
-          return this.materials[this.primitive.geometry.groups[k].materialIndex]
-        }
-      } catch (e) {
-        Logger.error('Failed to get material')
+  public abstract getRenderView(index: number): NodeRenderView | null
+  public abstract getMaterialAtIndex(index: number): Material | null
+  public getMaterial(rv: NodeRenderView): Material | null {
+    for (let k = 0; k < this.groups.length; k++) {
+      const group = this.groups[k]
+      if (rv.batchStart >= group.start && rv.batchEnd <= group.start + group.count) {
+        return this.materials[group.materialIndex]
       }
     }
+    return null
   }
 
   public purge(): void {
     this.renderViews.length = 0
     this.primitive.geometry.dispose()
     this.batchMaterial.dispose()
-    this.primitive = null
   }
 }

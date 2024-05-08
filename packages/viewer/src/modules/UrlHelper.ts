@@ -29,7 +29,7 @@ async function getOldResourceUrls(url: string, authToken?: string): Promise<stri
   // supports commit based urls
   if (url.includes('commits')) {
     const commitId = url.split('/commits/')[1].substring(0, 10)
-    const objUrl = await this.getCommitReferencedObjectUrl({
+    const objUrl = await getCommitReferencedObjectUrl({
       origin: parsed.origin,
       streamId,
       commitId
@@ -207,7 +207,9 @@ async function runModelLastVersionQuery(
     return `${ref.origin}/streams/${ref.projectId}/objects/${data.project.model.versions.items[0].referencedObject}`
   } catch (e) {
     Logger.error(
-      `Could not get object URLs for project ${ref.projectId} and model ${resource.modelId}. Error: ${e.message}`
+      `Could not get object URLs for project ${ref.projectId} and model ${
+        resource.modelId
+      }. Error: ${e instanceof Error ? e.message : e}`
     )
   }
   return ''
@@ -245,7 +247,9 @@ async function runModelVersionQuery(
     return `${ref.origin}/streams/${ref.projectId}/objects/${data.project.model.version.referencedObject}`
   } catch (e) {
     Logger.error(
-      `Could not get object URLs for project ${ref.projectId} and model ${resource.modelId}. Error: ${e.message}`
+      `Could not get object URLs for project ${ref.projectId} and model ${
+        resource.modelId
+      }. Error: ${e instanceof Error ? e.message : e}`
     )
   }
   return ''
@@ -292,7 +296,9 @@ async function runAllModelsQuery(
     return urls
   } catch (e) {
     Logger.error(
-      `Could not get object URLs for project ${ref.projectId}. Error: ${e.message}`
+      `Could not get object URLs for project ${ref.projectId}. Error: ${
+        e instanceof Error ? e.message : e
+      }`
     )
   }
   return ['']

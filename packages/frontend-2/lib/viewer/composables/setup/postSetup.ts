@@ -305,14 +305,12 @@ function useViewerCameraIntegration() {
   const hasInitialLoadFired = ref(false)
 
   const loadCameraDataFromViewer = () => {
-    const controls = instance.getExtension(CameraController).controls
-    const viewerPos = new Vector3()
-    const viewerTarget = new Vector3()
-
-    controls.getPosition(viewerPos)
-    controls.getTarget(viewerTarget)
-
+    const extension = instance.getExtension(CameraController)
     let cameraManuallyChanged = false
+
+    const viewerPos = new Vector3().copy(extension.renderingCamera.position)
+    const viewerTarget = new Vector3().copy(extension.controls.getTarget())
+
     if (!areVectorsLooselyEqual(position.value, viewerPos)) {
       if (hasInitialLoadFired.value) position.value = viewerPos.clone()
       cameraManuallyChanged = true
@@ -772,12 +770,16 @@ function useDisableZoomOnEmbed() {
   watch(
     () => embedOptions.noScroll.value,
     (newNoScrollValue) => {
-      const cameraController = viewer.instance.getExtension(CameraController)
-      if (newNoScrollValue) {
-        cameraController.controls.mouseButtons.wheel = 0
-      } else {
-        cameraController.controls.mouseButtons.wheel = 4
-      }
+      newNoScrollValue
+      viewer
+      /** Don't know what's this supposed to do */
+      // const cameraController = viewer.instance.getExtension(CameraController)
+
+      // if (newNoScrollValue) {
+      //   cameraController.controls.mouseButtons.wheel = 0
+      // } else {
+      //   cameraController.controls.mouseButtons.wheel = 4
+      // }
     },
     { immediate: true }
   )

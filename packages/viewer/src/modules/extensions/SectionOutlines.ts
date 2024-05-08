@@ -5,6 +5,7 @@ import {
   Group,
   InterleavedBufferAttribute,
   Line3,
+  Material,
   Plane,
   Vector2,
   Vector3
@@ -15,7 +16,7 @@ import { Geometry } from '../converter/Geometry'
 import SpeckleGhostMaterial from '../materials/SpeckleGhostMaterial'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { Extension } from './Extension'
-import { IViewer } from '../..'
+import { type IViewer } from '../..'
 import { SectionTool, SectionToolEvent } from './SectionTool'
 import { GeometryType } from '../batching/Batch'
 import { ObjectLayers } from '../../IViewer'
@@ -43,7 +44,6 @@ export class SectionOutlines extends Extension {
   private static readonly INITIAL_BUFFER_SIZE = 60000 // Must be a multiple of 6
 
   private tmpVec: Vector3 = new Vector3()
-  private tmpVec2: Vector3 = new Vector3()
   private up: Vector3 = new Vector3(0, 1, 0)
   private down: Vector3 = new Vector3(0, -1, 0)
   private left: Vector3 = new Vector3(-1, 0, 0)
@@ -94,7 +94,7 @@ export class SectionOutlines extends Extension {
     this.sectionProvider.on(SectionToolEvent.Updated, this.sectionUpdated.bind(this))
   }
 
-  public getPlaneOutline(planeId: PlaneId) {
+  private getPlaneOutline(planeId: PlaneId) {
     return this.planeOutlines[planeId]
   }
 
@@ -129,6 +129,10 @@ export class SectionOutlines extends Extension {
     const tempVector4 = new Vector3()
     const tempLine = new Line3()
     const planeId = this.getPlaneId(_plane)
+    if (!planeId) {
+      Logger.error(`Invalid plane! Aborting section outline update`)
+      return
+    }
     const clipOutline = this.planeOutlines[planeId].renderable
     let index = 0
     let posAttr = (
@@ -154,13 +158,17 @@ export class SectionOutlines extends Extension {
           const localPlane = plane
           return localPlane.intersectsBox(box)
         },
-        intersectsTriangle(tri, i, contained, depth, batchObject) {
-          i
-          contained
-          depth
+        intersectsTriangle(tri, _i, _contained, _depth, batchObject) {
+          /** Catering to typescript */
+          /** We're intersecting the AS for meshes. There will always be a batchObject */
+          if (!batchObject) {
+            throw new Error('Null batch object in AS intersection!')
+          }
           // check each triangle edge to see if it intersects with the plane. If so then
           // add it to the list of segments.
-          const material = batches[b].mesh.getBatchObjectMaterial(batchObject)
+          const material = batches[b].mesh.getBatchObjectMaterial(
+            batchObject
+          ) as Material
           if (
             material instanceof SpeckleGhostMaterial ||
             material.visible === false ||
@@ -349,9 +357,7 @@ export class SectionOutlines extends Extension {
     )
     for (let k = 0; k < planes.length; k++) {
       this.updatePlaneOutline(
-        this.viewer
-          .getRenderer()
-          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[],
+        this.viewer.getRenderer().batcher.getBatches(undefined, GeometryType.MESH),
         planes[k],
         outlineOffset
       )
@@ -374,7 +380,7 @@ export class SectionOutlines extends Extension {
     Geometry.updateRTEGeometry(outline.renderable.geometry, buffer)
   }
 
-  private getPlaneId(plane: Plane) {
+  private getPlaneId(plane: Plane): PlaneId | undefined {
     this.tmpVec.set(
       Math.round(plane.normal.x),
       Math.round(plane.normal.y),
@@ -386,5 +392,7 @@ export class SectionOutlines extends Extension {
     if (this.tmpVec.equals(this.down)) return PlaneId.NEGATIVE_Y
     if (this.tmpVec.equals(this.back)) return PlaneId.NEGATIVE_Z
     if (this.tmpVec.equals(this.forward)) return PlaneId.POSITIVE_Z
+
+    return undefined
   }
 }

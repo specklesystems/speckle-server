@@ -1,9 +1,9 @@
 import {
+  Box3,
   Color,
   DynamicDrawUsage,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
-  Line,
   Material,
   Object3D,
   Vector4,
@@ -16,28 +16,28 @@ import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
   AllBatchUpdateRange,
-  Batch,
-  BatchUpdateRange,
+  type Batch,
+  type BatchUpdateRange,
+  type DrawGroup,
   GeometryType,
   NoneBatchUpdateRange
 } from './Batch'
 import { ObjectLayers } from '../../IViewer'
-import { DrawGroup } from './Batch'
 import Materials from '../materials/Materials'
 
 export default class LineBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  private geometry: LineSegmentsGeometry
+  protected geometry: LineSegmentsGeometry
   public batchMaterial: SpeckleLineMaterial
-  private mesh: LineSegments2 | Line
-  public colorBuffer: InstancedInterleavedBuffer
+  protected mesh: LineSegments2
+  public colorBuffer!: InstancedInterleavedBuffer
   private static readonly vector4Buffer: Vector4 = new Vector4()
 
-  public get bounds() {
+  public get bounds(): Box3 {
     if (!this.geometry.boundingBox) this.geometry.computeBoundingBox()
-    return this.geometry.boundingBox
+    return this.geometry.boundingBox ? this.geometry.boundingBox : new Box3()
   }
 
   public get drawCalls(): number {
@@ -65,7 +65,11 @@ export default class LineBatch implements Batch {
     return 0
   }
   public get lineCount(): number {
-    return (this.geometry.index.count / 3) * this.geometry['_maxInstanceCount']
+    /** Catering to typescript
+     * There is no unniverse where the geometry is non-indexed. LineSegments2 are **explicitly** indexed
+     */
+    const indexCount = this.geometry.index ? this.geometry.index.count : 0
+    return (indexCount / 3) * (this.geometry as never)['_maxInstanceCount']
   }
 
   public get renderObject(): Object3D {
@@ -73,11 +77,11 @@ export default class LineBatch implements Batch {
   }
 
   public get geometryType(): GeometryType {
-    return this.renderViews[0].geometryType
+    return GeometryType.LINE
   }
 
   public get materials(): Material[] {
-    return this.mesh.material as Material[]
+    return this.mesh.material as unknown as Material[]
   }
 
   public get groups(): DrawGroup[] {
@@ -100,7 +104,7 @@ export default class LineBatch implements Batch {
     renderer.getDrawingBufferSize(this.batchMaterial.resolution)
   }
 
-  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+  public setVisibleRange(ranges: BatchUpdateRange[]) {
     if (
       ranges.length === 1 &&
       ranges[0].offset === NoneBatchUpdateRange.offset &&
@@ -163,7 +167,7 @@ export default class LineBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
-  public setBatchBuffers(...ranges: BatchUpdateRange[]): void {
+  public setBatchBuffers(ranges: BatchUpdateRange[]): void {
     const data = this.colorBuffer.array as number[]
 
     for (let i = 0; i < ranges.length; i++) {
@@ -193,16 +197,18 @@ export default class LineBatch implements Batch {
     this.geometry.attributes['instanceColorEnd'].needsUpdate = true
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    this.setBatchBuffers(...ranges)
+  public setDrawRanges(ranges: BatchUpdateRange[]) {
+    this.setBatchBuffers(ranges)
   }
 
   public resetDrawRanges() {
-    this.setDrawRanges({
-      offset: 0,
-      count: Infinity,
-      material: this.batchMaterial
-    })
+    this.setDrawRanges([
+      {
+        offset: 0,
+        count: Infinity,
+        material: this.batchMaterial
+      }
+    ])
     this.mesh.material = this.batchMaterial
     this.mesh.visible = true
     this.batchMaterial.transparent = false
@@ -210,17 +216,22 @@ export default class LineBatch implements Batch {
 
   public buildBatch() {
     let attributeCount = 0
-    this.renderViews.forEach(
-      (val: NodeRenderView) =>
-        (attributeCount += val.needsSegmentConversion
-          ? (val.renderData.geometry.attributes.POSITION.length - 3) * 2
-          : val.renderData.geometry.attributes.POSITION.length)
-    )
+    this.renderViews.forEach((val: NodeRenderView) => {
+      if (!val.renderData.geometry.attributes) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry`)
+      }
+      attributeCount += val.needsSegmentConversion
+        ? (val.renderData.geometry.attributes.POSITION.length - 3) * 2
+        : val.renderData.geometry.attributes.POSITION.length
+    })
     const position = new Float64Array(attributeCount)
     let offset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
-      let points = null
+      if (!geometry.attributes) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry`)
+      }
+      let points: Array<number>
       /** We need to make sure the line geometry has a layout of :
        *  start(x,y,z), end(x,y,z), start(x,y,z), end(x,y,z)... etc
        *  Some geometries have that inherent form, some don't
@@ -239,7 +250,7 @@ export default class LineBatch implements Batch {
           points[2 * i + 5] = geometry.attributes.POSITION[i + 5]
         }
       } else {
-        points = geometry.attributes.POSITION
+        points = geometry.attributes.POSITION as number[]
       }
 
       position.set(points, offset)
@@ -259,7 +270,7 @@ export default class LineBatch implements Batch {
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_LINE)
   }
 
-  public getRenderView(index: number): NodeRenderView {
+  public getRenderView(index: number): NodeRenderView | null {
     for (let k = 0; k < this.renderViews.length; k++) {
       if (
         index >= this.renderViews[k].batchStart &&
@@ -270,6 +281,7 @@ export default class LineBatch implements Batch {
         return this.renderViews[k]
       }
     }
+    return null
   }
 
   public getMaterialAtIndex(index: number): Material {
@@ -336,7 +348,6 @@ export default class LineBatch implements Batch {
     this.renderViews.length = 0
     this.geometry.dispose()
     this.batchMaterial.dispose()
-    this.mesh = null
     this.colorBuffer.length = 0
   }
 }

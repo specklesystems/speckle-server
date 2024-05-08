@@ -6,19 +6,24 @@ import SpeckleRenderer from '../SpeckleRenderer'
 import { FilterMaterialType } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import { Extension } from './Extension'
-import { TreeNode, WorldTree } from '../tree/WorldTree'
-import { IViewer, UpdateFlags, ViewerEvent } from '../../IViewer'
-import {
+import { type TreeNode, WorldTree } from '../tree/WorldTree'
+import { type IViewer, UpdateFlags, ViewerEvent } from '../../IViewer'
+import type {
   NumericPropertyInfo,
   PropertyInfo,
   StringPropertyInfo
 } from '../filtering/PropertyManager'
 
+/** TO DO: Should remove selectedObjects entirely*/
 export type FilteringState = {
   selectedObjects?: string[]
   hiddenObjects?: string[]
   isolatedObjects?: string[]
-  colorGroups?: Record<string, string>[]
+  colorGroups?: {
+    value: string
+    color: string
+    ids: string[]
+  }[]
   userColorGroups?: { ids: string[]; color: string }[]
   activePropFilterKey?: string
   passMin?: number | null
@@ -28,12 +33,12 @@ export type FilteringState = {
 export class FilteringExtension extends Extension {
   public WTI: WorldTree
   private Renderer: SpeckleRenderer
-  private StateKey: string = null
+  private StateKey: string | undefined = undefined
 
   private VisibilityState = new VisibilityState()
-  private ColorStringFilterState = null
-  private ColorNumericFilterState = null
-  private UserspaceColorState = new UserspaceColorState()
+  private ColorStringFilterState: ColorStringFilterState | null = null
+  private ColorNumericFilterState: ColorNumericFilterState | null = null
+  private UserspaceColorState: UserspaceColorState | null = new UserspaceColorState()
   private CurrentFilteringState: FilteringState = {} as FilteringState
 
   public get filteringState(): FilteringState {
@@ -55,7 +60,7 @@ export class FilteringExtension extends Extension {
 
   public hideObjects(
     objectIds: string[],
-    stateKey: string = null,
+    stateKey: string | undefined = undefined,
     includeDescendants = false,
     ghost = false
   ): FilteringState {
@@ -70,7 +75,7 @@ export class FilteringExtension extends Extension {
 
   public showObjects(
     objectIds: string[],
-    stateKey: string = null,
+    stateKey: string | undefined = undefined,
     includeDescendants = false
   ): FilteringState {
     return this.setVisibilityState(
@@ -83,7 +88,7 @@ export class FilteringExtension extends Extension {
 
   public isolateObjects(
     objectIds: string[],
-    stateKey: string = null,
+    stateKey: string | undefined = undefined,
     includeDescendants = true,
     ghost = true
   ): FilteringState {
@@ -98,7 +103,7 @@ export class FilteringExtension extends Extension {
 
   public unIsolateObjects(
     objectIds: string[],
-    stateKey: string = null,
+    stateKey: string | undefined = undefined,
     includeDescendants = true,
     ghost = true
   ): FilteringState {
@@ -113,7 +118,7 @@ export class FilteringExtension extends Extension {
 
   private setVisibilityState(
     objectIds: string[],
-    stateKey: string = null,
+    stateKey: string | undefined = undefined,
     command: Command,
     includeDescendants = false,
     ghost = false
@@ -143,7 +148,10 @@ export class FilteringExtension extends Extension {
     }
 
     if (command === Command.HIDE || command === Command.ISOLATE) {
-      const res = objectIds.reduce((acc, curr) => ((acc[curr] = 1), acc), {})
+      const res = objectIds.reduce(
+        (acc: Record<string, unknown>, curr: string) => ((acc[curr] = 1), acc),
+        {}
+      )
       Object.assign(this.VisibilityState.ids, res)
     }
 
@@ -159,10 +167,10 @@ export class FilteringExtension extends Extension {
       this.WTI.walk(this.visibilityWalk.bind(this))
     if (command === Command.ISOLATE || command === Command.UNISOLATE) {
       // this.WTI.walk(this.isolationWalk.bind(this))
-      const rvMap = {}
+      const rvMap: Record<string, NodeRenderView> = {}
       this.WTI.walk((node: TreeNode) => {
         if (!node.model.atomic || this.WTI.isRoot(node)) return true
-        const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node, node)
+        const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node)
         if (!this.VisibilityState.ids[node.model.raw.id]) {
           rvNodes.forEach((rvNode: TreeNode) => {
             rvMap[rvNode.model.id] = rvNode.model.renderView
@@ -181,42 +189,28 @@ export class FilteringExtension extends Extension {
   }
 
   private visibilityWalk(node: TreeNode): boolean {
-    // if (!node.model.atomic) return true
     if (this.VisibilityState.ids[node.model.id]) {
       this.VisibilityState.rvs.push(
-        ...this.WTI.getRenderTree().getRenderViewsForNode(node, node)
+        ...this.WTI.getRenderTree().getRenderViewsForNode(node)
       )
     }
     return true
   }
 
-  private isolationWalk(node: TreeNode): boolean {
-    if (!node.model.atomic || this.WTI.isRoot(node)) return true
-    const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node, node)
-    if (!this.VisibilityState.ids[node.model.raw.id]) {
-      this.VisibilityState.rvs.push(...rvs)
-    } else {
-      this.VisibilityState.rvs = this.VisibilityState.rvs.filter(
-        (rv) => !rvs.includes(rv)
-      )
-    }
-    return true
-  }
-
-  public setColorFilter(prop: PropertyInfo, ghost = true) {
+  public setColorFilter(prop: PropertyInfo, ghost = true): FilteringState {
     if (prop.type === 'number') {
       this.ColorStringFilterState = null
-      this.ColorNumericFilterState = new ColorNumericFilterState()
       return this.setNumericColorFilter(prop as NumericPropertyInfo, ghost)
     }
     if (prop.type === 'string') {
       this.ColorNumericFilterState = null
-      this.ColorStringFilterState = new ColorStringFilterState()
       return this.setStringColorFilter(prop as StringPropertyInfo, ghost)
     }
+    return this.filteringState
   }
 
-  private setNumericColorFilter(numProp: NumericPropertyInfo, ghost) {
+  private setNumericColorFilter(numProp: NumericPropertyInfo, ghost: boolean) {
+    this.ColorNumericFilterState = new ColorNumericFilterState()
     this.ColorNumericFilterState.currentProp = numProp
 
     const passMin = numProp.passMin || numProp.min
@@ -246,7 +240,7 @@ export class FilteringExtension extends Extension {
      *  as in, if there is an id clash (which will happen for instances), the old implementation's indexOf
      *  would return the first value. Here we choose to do the same
      */
-    const matchingIds = {}
+    const matchingIds: Record<string, number> = {}
     for (let k = 0; k < numProp.valueGroups.length; k++) {
       if (matchingIds[numProp.valueGroups[k].id]) {
         continue
@@ -265,7 +259,7 @@ export class FilteringExtension extends Extension {
       if (!node.model.atomic || this.WTI.isRoot(node) || this.WTI.isSubtreeRoot(node))
         return true
 
-      const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node, node)
+      const rvs = this.WTI.getRenderTree().getRenderViewsForNode(node)
       const idx = matchingIds[node.model.raw.id]
       if (!idx) {
         nonMatchingRvs.push(...rvs)
@@ -275,6 +269,7 @@ export class FilteringExtension extends Extension {
           value: (idx - passMin) / (passMax - passMin)
         })
       }
+      return true
     })
 
     this.ColorNumericFilterState.colorGroups = colorGroups
@@ -284,21 +279,23 @@ export class FilteringExtension extends Extension {
     return this.setFilters()
   }
 
-  private setStringColorFilter(stringProp: StringPropertyInfo, ghost) {
+  private setStringColorFilter(stringProp: StringPropertyInfo, ghost: boolean) {
+    this.ColorStringFilterState = new ColorStringFilterState()
     this.ColorStringFilterState.currentProp = stringProp
 
     const valueGroupColors: ValueGroupColorItemStringProps[] = []
     for (const vg of stringProp.valueGroups) {
       const col = stc(vg.value) // TODO: smarter way needed.
-      const entry = {
+      const entry: ValueGroupColorItemStringProps = {
         ...vg,
         color: new Color(col),
-        rvs: []
+        rvs: [],
+        idMap: {}
       }
       /** This is to avoid indexOf inside the walk callback which is ridiculously slow */
-      entry['idMap'] = {}
+      entry.idMap = {}
       for (let k = 0; k < vg.ids.length; k++) {
-        entry['idMap'][vg.ids[k]] = 1
+        entry.idMap[vg.ids[k]] = 1
       }
       valueGroupColors.push(entry)
     }
@@ -311,17 +308,16 @@ export class FilteringExtension extends Extension {
     // they are identified as a different category.
     // 07.05.2023: Attempt on fixing the issue described above. This fixes #1525, but it does
     // add a bit of overhead. Not 100% sure if it breaks anything else tho'
-    const nonMatchingMap = {}
+    const nonMatchingMap: Record<string, NodeRenderView> = {}
     this.WTI.walk((node: TreeNode) => {
       if (!node.model.atomic || this.WTI.isRoot(node) || this.WTI.isSubtreeRoot(node)) {
         return true
       }
 
-      const vg = valueGroupColors.find((v) => {
-        return v['idMap'][node.model.raw.id]
+      const vg = valueGroupColors.find((v: ValueGroupColorItemStringProps) => {
+        return v.idMap[node.model.raw.id]
       })
-      const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node, node)
-
+      const rvNodes = this.WTI.getRenderTree().getRenderViewNodesForNode(node)
       if (!vg) {
         rvNodes.forEach(
           (rvNode) =>
@@ -331,7 +327,7 @@ export class FilteringExtension extends Extension {
 
         return true
       }
-      const rvs = []
+      const rvs: Array<NodeRenderView> = []
 
       rvNodes.forEach((value: TreeNode) => {
         if (this.WTI.getRenderTree().getAtomicParent(value) === node) {
@@ -348,7 +344,10 @@ export class FilteringExtension extends Extension {
     const nonMatchingRvs: NodeRenderView[] = Object.values(nonMatchingMap)
     /** Deleting this since we're not going to use it further */
     for (const vg of valueGroupColors) {
-      delete vg['idMap']
+      /** Adamant on this one */
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      delete vg.idMap
     }
     this.ColorStringFilterState.colorGroups = valueGroupColors
     this.ColorStringFilterState.rampTexture = rampTexture
@@ -366,7 +365,9 @@ export class FilteringExtension extends Extension {
     return this.filteringState
   }
 
-  public setUserObjectColors(groups: { objectIds: string[]; color: string }[]) {
+  public setUserObjectColors(
+    groups: { objectIds: string[]; color: string }[]
+  ): FilteringState {
     this.UserspaceColorState = new UserspaceColorState()
     // Resetting any other filtering color ops as they're not compatible
     this.ColorNumericFilterState = null
@@ -388,7 +389,7 @@ export class FilteringExtension extends Extension {
           group.nodes.push(...nodes)
           nodes.forEach((node: TreeNode) => {
             const rvsNodes = this.WTI.getRenderTree()
-              .getRenderViewNodesForNode(node, node)
+              .getRenderViewNodesForNode(node)
               .map((rvNode) => rvNode.model.renderView)
             if (rvsNodes) group.rvs.push(...rvsNodes)
           })
@@ -404,17 +405,17 @@ export class FilteringExtension extends Extension {
     return this.setFilters()
   }
 
-  public removeUserObjectColors() {
+  public removeUserObjectColors(): FilteringState {
     this.UserspaceColorState = null
     return this.setFilters()
   }
 
-  public resetFilters(): FilteringState {
+  public resetFilters(): FilteringState | null {
     this.VisibilityState = new VisibilityState()
     this.ColorStringFilterState = null
     this.ColorNumericFilterState = null
     this.UserspaceColorState = null
-    this.StateKey = null
+    this.StateKey = undefined
     this.Renderer.resetMaterials()
     this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
     return null
@@ -441,8 +442,9 @@ export class FilteringExtension extends Extension {
           color: group.color.getHexString(),
           ids: group.ids
         })
-        this.CurrentFilteringState.activePropFilterKey =
-          this.ColorStringFilterState.currentProp.key
+        if (this.ColorStringFilterState.currentProp)
+          this.CurrentFilteringState.activePropFilterKey =
+            this.ColorStringFilterState.currentProp.key
       }
     }
     // Number based colors
@@ -550,7 +552,9 @@ export class FilteringExtension extends Extension {
     if (this.idCache[key] && this.idCache[key].length) return this.idCache[key]
 
     for (let k = 0; k < objectIds.length; k++) {
-      const node = this.WTI.findId(objectIds[k])[0]
+      const nodes = this.WTI.findId(objectIds[k])
+      if (!nodes) continue
+      const node = nodes[0]
       const subtree = node.all((node) => {
         return node.model.raw !== undefined
       })
@@ -597,16 +601,16 @@ class VisibilityState {
 }
 
 class ColorStringFilterState {
-  public currentProp: StringPropertyInfo
+  public currentProp: StringPropertyInfo | null
   public colorGroups: ValueGroupColorItemStringProps[]
   public nonMatchingRvs: NodeRenderView[]
-  public rampTexture: Texture
+  public rampTexture: Texture | undefined
   public ghost = true
   public reset() {
     this.currentProp = null
     this.colorGroups = []
     this.nonMatchingRvs = []
-    this.rampTexture = null
+    this.rampTexture = undefined
   }
 }
 
@@ -615,14 +619,15 @@ type ValueGroupColorItemStringProps = {
   ids: string[]
   color: Color
   rvs: NodeRenderView[]
+  idMap: Record<string, number>
 }
 
 class ColorNumericFilterState {
-  public currentProp: NumericPropertyInfo
-  public nonMatchingRvs: NodeRenderView[]
-  public colorGroups: ValueGroupColorItemNumericProps[]
+  public currentProp!: NumericPropertyInfo
+  public nonMatchingRvs!: NodeRenderView[]
+  public colorGroups!: ValueGroupColorItemNumericProps[]
   public ghost = true
-  public matchingIds: string[]
+  public matchingIds!: Record<string, unknown>
 }
 
 type ValueGroupColorItemNumericProps = {
@@ -637,7 +642,7 @@ class UserspaceColorState {
     nodes: TreeNode[]
     rvs: NodeRenderView[]
   }[] = []
-  public rampTexture: Texture
+  public rampTexture!: Texture
   public reset() {
     this.groups = []
   }

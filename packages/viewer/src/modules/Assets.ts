@@ -4,20 +4,24 @@ import {
   TextureLoader,
   Color,
   DataTexture,
+  DataTextureLoader,
   Matrix4,
   Euler
 } from 'three'
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js'
-import { Asset, AssetType } from '../IViewer'
+import { type Asset, AssetType } from '../IViewer'
 import Logger from 'js-logger'
 import { RotatablePMREMGenerator } from './objects/RotatablePMREMGenerator'
 
 export class Assets {
   private static _cache: { [name: string]: Texture | Font } = {}
 
-  private static getLoader(src: string, assetType: AssetType): TextureLoader {
+  private static getLoader(
+    src: string,
+    assetType: AssetType
+  ): TextureLoader | DataTextureLoader | null {
     if (assetType === undefined) assetType = src.split('.').pop() as AssetType
     if (!Object.values(AssetType).includes(assetType)) {
       Logger.warn(`Asset ${src} could not be loaded. Unknown type`)
@@ -30,6 +34,8 @@ export class Assets {
         return new RGBELoader()
       case AssetType.TEXTURE_8BPP:
         return new TextureLoader()
+      default:
+        return null
     }
   }
 
@@ -115,7 +121,7 @@ export class Assets {
   }
 
   public static getFont(asset: Asset | string): Promise<Font> {
-    let srcUrl: string = null
+    let srcUrl: string | null = null
     if ((<Asset>asset).src) {
       srcUrl = (asset as Asset).src
     } else {
@@ -128,7 +134,7 @@ export class Assets {
 
     return new Promise<Font>((resolve, reject) => {
       new FontLoader().load(
-        srcUrl,
+        srcUrl as string,
         (font: Font) => {
           resolve(font)
         },
@@ -148,6 +154,14 @@ export class Assets {
     canvas.height = texture.image.height
 
     const context = canvas.getContext('2d')
+    /** As you can see here https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext#return_value
+     *  The only valid cases where `getContext` returns null are:
+     *  - "contextType doesn't match a possible drawing context" Definetely not the case as we're providing '2d'!
+     *  - "differs from the first contextType requested". It can't since **we're only requesting a context once**!
+     *  - If it returns null outside of these two casese, you have bigger problems than us throwing an exception here
+     */
+    if (!context) throw new Error('Fatal! 2d context could not be retrieved.')
+
     context.drawImage(texture.image, 0, 0)
 
     const data = context.getImageData(0, 0, canvas.width, canvas.height)

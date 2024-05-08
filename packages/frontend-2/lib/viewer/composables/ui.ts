@@ -1,6 +1,6 @@
-import { SpeckleViewer, timeoutAt, type Optional } from '@speckle/shared'
+import { SpeckleViewer, timeoutAt } from '@speckle/shared'
 import type { TreeNode } from '@speckle/viewer'
-import { CameraController, MeasurementsExtension } from '@speckle/viewer'
+import { MeasurementsExtension } from '@speckle/viewer'
 import type { MeasurementOptions, PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
@@ -64,15 +64,17 @@ export function useCameraUtilities() {
     instance.setView(...args)
   }
 
-  let cameraController: Optional<CameraController> = undefined
-  const truck = (
-    ...args: Parameters<NonNullable<typeof cameraController>['controls']['truck']>
-  ) => {
-    if (!cameraController) {
-      cameraController = instance.getExtension(CameraController)
-    }
-    cameraController.controls.truck(...args)
-  }
+  // let cameraController: CameraController | null = null
+  const truck = () => {}
+  /** How and why is this used? */
+  // (
+  //   ...args: Parameters<NonNullable<typeof cameraController>['controls']['truck']>
+  // ) => {
+  //   if (!cameraController) {
+  //     cameraController = instance.getExtension(CameraController)
+  //   }
+  //   cameraController?.controls.truck(...args)
+  // }
 
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)

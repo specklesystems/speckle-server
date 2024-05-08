@@ -1,10 +1,10 @@
 import { Extension } from './Extension'
 import { Box3, OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three'
-import { CameraProjection } from '../objects/SpeckleCamera'
-import { CameraEvent, SpeckleCamera } from '../objects/SpeckleCamera'
-import Logger from 'js-logger'
-import { IViewer, SpeckleView } from '../../IViewer'
 import { SmoothOrbitControls } from './controls/SmoothOrbitControls'
+import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera'
+import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera'
+import Logger from 'js-logger'
+import type { IViewer, SpeckleView } from '../../IViewer'
 
 export type CanonicalView =
   | 'front'
@@ -30,10 +30,10 @@ export type PolarView = {
 }
 
 export class CameraController extends Extension implements SpeckleCamera {
-  protected _renderingCamera: PerspectiveCamera | OrthographicCamera = null
-  protected perspectiveCamera: PerspectiveCamera = null
-  protected orthographicCamera: OrthographicCamera = null
-  protected _controls: SmoothOrbitControls = null
+  protected _controls: SmoothOrbitControls
+  protected _renderingCamera!: PerspectiveCamera | OrthographicCamera
+  protected perspectiveCamera: PerspectiveCamera
+  protected orthographicCamera: OrthographicCamera
 
   get renderingCamera(): PerspectiveCamera | OrthographicCamera {
     return this._renderingCamera
@@ -52,7 +52,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     else this._controls.disableInteraction()
   }
 
-  public get fieldOfView() {
+  public get fieldOfView(): number {
     return this.perspectiveCamera.fov
   }
 
@@ -61,11 +61,11 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.perspectiveCamera.updateProjectionMatrix()
   }
 
-  public get aspect() {
+  public get aspect(): number {
     return this.perspectiveCamera.aspect
   }
 
-  public get controls() {
+  public get controls(): SmoothOrbitControls {
     return this._controls
   }
 
@@ -127,14 +127,33 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.viewer.getRenderer().speckleCamera = this
   }
 
-  setCameraView(objectIds: string[], transition: boolean, fit?: number): void
+  public on<T extends CameraEvent>(
+    eventType: T,
+    listener: (arg: CameraEventPayload[T]) => void
+  ): void {
+    super.on(eventType, listener)
+  }
+
+  setCameraView(
+    objectIds: string[] | undefined,
+    transition: boolean | undefined,
+    fit?: number
+  ): void
   setCameraView(
     view: CanonicalView | SpeckleView | InlineView | PolarView,
-    transition: boolean
+    transition: boolean | undefined,
+    fit?: number
   ): void
-  setCameraView(bounds: Box3, transition: boolean): void
+  setCameraView(bounds: Box3, transition: boolean | undefined, fit?: number): void
   setCameraView(
-    arg0: string[] | CanonicalView | SpeckleView | InlineView | PolarView | Box3,
+    arg0:
+      | string[]
+      | CanonicalView
+      | SpeckleView
+      | InlineView
+      | PolarView
+      | Box3
+      | undefined,
     arg1 = true,
     arg2 = 1.2
   ): void {
@@ -191,14 +210,14 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.viewer.requestRender()
   }
 
-  public setOrthoCameraOn() {
+  public setOrthoCameraOn(): void {
     if (this._renderingCamera === this.orthographicCamera) return
     this.renderingCamera = this.orthographicCamera
     // this.setupOrthoCamera()
     this.viewer.requestRender()
   }
 
-  public toggleCameras() {
+  public toggleCameras(): void {
     if (this._renderingCamera === this.perspectiveCamera) this.setOrthoCameraOn()
     else this.setPerspectiveCameraOn()
   }
@@ -309,8 +328,8 @@ export class CameraController extends Extension implements SpeckleCamera {
     // this.viewer.controls.setBoundary( box )
   }
 
-  private zoomToBox(box, fit = 1.2, transition = true) {
-    transition
+  private zoomToBox(box: Box3, fit = 1.2, _transition = true) {
+    _transition
     if (box.max.x === Infinity || box.max.x === -Infinity) {
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
@@ -366,8 +385,10 @@ export class CameraController extends Extension implements SpeckleCamera {
     )
   }
 
-  private isBox3(view: unknown): view is Box3 {
-    return view['isBox3']
+  private isBox3(
+    view: CanonicalView | SpeckleView | InlineView | PolarView | Box3
+  ): view is Box3 {
+    return view instanceof Box3
   }
 
   protected setView(
@@ -388,7 +409,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     }
   }
 
-  private setViewSpeckle(view: SpeckleView, transition = true) {
+  private setViewSpeckle(_view: SpeckleView, transition = true) {
     transition
     // TO DO
     // this._controls.setLookAt(
@@ -479,7 +500,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     }
   }
 
-  private setViewInline(view: InlineView, transition = true) {
+  private setViewInline(_view: InlineView, transition = true) {
     transition
     // TO DO
     // this._controls.setLookAt(
@@ -494,7 +515,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.enableRotations()
   }
 
-  private setViewPolar(view: PolarView, transition = true) {
+  private setViewPolar(_view: PolarView, transition = true) {
     transition
     // TO DO
     // this._controls.rotate(view.azimuth, view.polar, transition)

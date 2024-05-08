@@ -1,18 +1,26 @@
-import { Box3, Camera, Plane, Vector2, Vector3 } from 'three'
+import {
+  Box3,
+  Camera,
+  Plane,
+  Raycaster,
+  Vector2,
+  Vector3,
+  type Intersection
+} from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { getConversionFactor } from '../../converter/Units'
 import { Measurement, MeasurementState } from './Measurement'
 import { ObjectLayers } from '../../../IViewer'
 
 export class PerpendicularMeasurement extends Measurement {
-  private startGizmo: MeasurementPointGizmo = null
-  private endGizmo: MeasurementPointGizmo = null
+  private startGizmo: MeasurementPointGizmo | null = null
+  private endGizmo: MeasurementPointGizmo | null = null
   private midPoint: Vector3 = new Vector3()
   private normalIndicatorPixelSize = 15 * window.devicePixelRatio
 
   public set isVisible(value: boolean) {
-    this.startGizmo.enable(value, value, value, value)
-    this.endGizmo.enable(value, value, value, value)
+    this.startGizmo?.enable(value, value, value, value)
+    this.endGizmo?.enable(value, value, value, value)
   }
 
   public get bounds(): Box3 {
@@ -35,8 +43,8 @@ export class PerpendicularMeasurement extends Measurement {
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
     super.frameUpdate(camera, size, bounds)
-    this.startGizmo.frameUpdate(camera, bounds)
-    this.endGizmo.frameUpdate(camera, bounds)
+    this.startGizmo?.frameUpdate(camera, bounds)
+    this.endGizmo?.frameUpdate(camera, bounds)
     /** Not a fan of this but the camera library fails to tell us when zooming happens
      *  so we need to update the screen space normal indicator each frame, otherwise it
      *  won't look correct while zooming
@@ -48,10 +56,11 @@ export class PerpendicularMeasurement extends Measurement {
 
   public update() {
     if (isNaN(this.startPoint.length())) return
+    if (!this.renderingCamera) return
 
-    this.startGizmo.updateDisc(this.startPoint, this.startNormal)
-    this.startGizmo.updatePoint(this.startPoint)
-    this.endGizmo.updateDisc(this.endPoint, this.endNormal)
+    this.startGizmo?.updateDisc(this.startPoint, this.startNormal)
+    this.startGizmo?.updatePoint(this.startPoint)
+    this.endGizmo?.updateDisc(this.endPoint, this.endNormal)
 
     if (this._state === MeasurementState.DANGLING_START) {
       const startLine0 = Measurement.vec3Buff0.copy(this.startPoint)
@@ -98,12 +107,12 @@ export class PerpendicularMeasurement extends Measurement {
       endNDC
         .applyMatrix4(this.renderingCamera.projectionMatrixInverse)
         .applyMatrix4(this.renderingCamera.matrixWorld)
-      this.startGizmo.updateLine([
+      this.startGizmo?.updateLine([
         startLine0,
         Measurement.vec3Buff1.set(endNDC.x, endNDC.y, endNDC.z)
       ])
 
-      this.endGizmo.enable(false, false, false, false)
+      this.endGizmo?.enable(false, false, false, false)
     }
 
     if (this._state === MeasurementState.DANGLING_END) {
@@ -148,11 +157,11 @@ export class PerpendicularMeasurement extends Measurement {
             .copy(this.startNormal)
             .multiplyScalar(this.startLineLength)
         )
-      this.startGizmo.updateLine([startLine0, startLine1])
+      this.startGizmo?.updateLine([startLine0, startLine1])
 
       const endLine0 = Measurement.vec3Buff3.copy(this.endPoint)
 
-      this.endGizmo.updateLine([
+      this.endGizmo?.updateLine([
         endLine0,
         endLine3,
         endLine3,
@@ -160,7 +169,7 @@ export class PerpendicularMeasurement extends Measurement {
         this.midPoint,
         endLine0
       ])
-      this.endGizmo.updatePoint(this.midPoint)
+      this.endGizmo?.updatePoint(this.midPoint)
 
       const textPos = Measurement.vec3Buff0
         .copy(this.startPoint)
@@ -171,29 +180,29 @@ export class PerpendicularMeasurement extends Measurement {
         )
 
       this.value = this.midPoint.distanceTo(this.startPoint)
-      this.startGizmo.updateText(
+      this.startGizmo?.updateText(
         `${(this.value * getConversionFactor('m', this.units)).toFixed(
           this.precision
         )} ${this.units}`,
         textPos
       )
-      this.endGizmo.enable(true, true, true, true)
+      this.endGizmo?.enable(true, true, true, true)
     }
     if (this._state === MeasurementState.COMPLETE) {
-      this.startGizmo.updateText(
+      this.startGizmo?.updateText(
         `${(this.value * getConversionFactor('m', this.units)).toFixed(
           this.precision
         )} ${this.units}`
       )
-      this.startGizmo.enable(false, true, true, true)
-      this.endGizmo.enable(false, false, true, false)
+      this.startGizmo?.enable(false, true, true, true)
+      this.endGizmo?.enable(false, false, true, false)
     }
   }
 
-  public raycast(raycaster, intersects) {
-    const results = []
-    this.startGizmo.raycast(raycaster, results)
-    this.endGizmo.raycast(raycaster, results)
+  public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
+    const results: Array<Intersection> = []
+    this.startGizmo?.raycast(raycaster, results)
+    this.endGizmo?.raycast(raycaster, results)
     if (results.length) {
       intersects.push({
         distance: results[0].distance,
@@ -207,12 +216,12 @@ export class PerpendicularMeasurement extends Measurement {
   }
 
   public highlight(value: boolean) {
-    this.startGizmo.highlight = value
-    this.endGizmo.highlight = value
+    if (this.startGizmo) this.startGizmo.highlight = value
+    if (this.endGizmo) this.endGizmo.highlight = value
   }
 
   public updateClippingPlanes(planes: Plane[]) {
-    this.startGizmo.updateClippingPlanes(planes)
-    this.endGizmo.updateClippingPlanes(planes)
+    if (this.startGizmo) this.startGizmo.updateClippingPlanes(planes)
+    if (this.endGizmo) this.endGizmo.updateClippingPlanes(planes)
   }
 }

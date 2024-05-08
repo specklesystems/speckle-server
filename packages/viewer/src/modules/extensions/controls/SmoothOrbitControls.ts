@@ -76,7 +76,7 @@ export interface SmoothControlsOptions {
   touchAction?: TouchAction
 }
 
-export const DEFAULT_OPTIONS = Object.freeze<SmoothControlsOptions>({
+export const DEFAULT_OPTIONS = Object.freeze<Required<SmoothControlsOptions>>({
   minimumRadius: 1,
   maximumRadius: Infinity,
   minimumPolarAngle: Math.PI / 8,
@@ -154,7 +154,7 @@ export class SmoothOrbitControls extends EventEmitter {
   public changeSource = ChangeSource.NONE
 
   private _interactionEnabled: boolean = false
-  private _options: SmoothControlsOptions
+  private _options: Required<SmoothControlsOptions>
   private _disableZoom = false
   private isUserPointing = false
 
@@ -175,14 +175,13 @@ export class SmoothOrbitControls extends EventEmitter {
   private thetaDamper = new Damper()
   private phiDamper = new Damper()
   private radiusDamper = new Damper()
-  private logFov = Math.log(DEFAULT_OPTIONS.maximumFieldOfView!)
+  private logFov = Math.log(DEFAULT_OPTIONS.maximumFieldOfView)
   private goalLogFov = this.logFov
   private fovDamper = new Damper()
 
   // Pointer state
   private touchMode: TouchMode = null
   private pointers: Pointer[] = []
-  private startTime = 0
   private startPointerPosition = { clientX: 0, clientY: 0 }
   private lastSeparation = 0
   private touchDecided = false
@@ -201,7 +200,10 @@ export class SmoothOrbitControls extends EventEmitter {
     this._controlTarget = controlTarget
     this._container = container
     this._renderer = renderer
-    this._options = Object.assign({}, DEFAULT_OPTIONS)
+    this._options = Object.assign(
+      {},
+      DEFAULT_OPTIONS
+    ) as Required<SmoothControlsOptions>
 
     this.setOrbit(0, Math.PI / 2, 1)
     // this.setRadius(100)
@@ -331,14 +333,14 @@ export class SmoothOrbitControls extends EventEmitter {
 
     const { theta, phi, radius } = this.goalSpherical
 
-    const nextTheta = clamp(goalTheta, minimumAzimuthalAngle!, maximumAzimuthalAngle!)
-    if (!isFinite(minimumAzimuthalAngle!) && !isFinite(maximumAzimuthalAngle!)) {
+    const nextTheta = clamp(goalTheta, minimumAzimuthalAngle, maximumAzimuthalAngle)
+    if (!isFinite(minimumAzimuthalAngle) && !isFinite(maximumAzimuthalAngle)) {
       this.spherical.theta =
         this.wrapAngle(this.spherical.theta - nextTheta) + nextTheta
     }
 
-    const nextPhi = clamp(goalPhi, minimumPolarAngle!, maximumPolarAngle!)
-    const nextRadius = clamp(goalRadius, minimumRadius!, maximumRadius!)
+    const nextPhi = clamp(goalPhi, minimumPolarAngle, maximumPolarAngle)
+    const nextRadius = clamp(goalRadius, minimumRadius, maximumRadius)
 
     if (nextTheta === theta && nextPhi === phi && nextRadius === radius) {
       return false
@@ -369,7 +371,7 @@ export class SmoothOrbitControls extends EventEmitter {
    */
   setFieldOfView(fov: number) {
     const { minimumFieldOfView, maximumFieldOfView } = this._options
-    fov = clamp(fov, minimumFieldOfView!, maximumFieldOfView!)
+    fov = clamp(fov, minimumFieldOfView, maximumFieldOfView)
     this.goalLogFov = Math.log(fov)
   }
 
@@ -417,9 +419,9 @@ export class SmoothOrbitControls extends EventEmitter {
     const goalTheta =
       theta - clamp(deltaTheta, -dThetaLimit - dTheta, dThetaLimit - dTheta)
     const goalPhi = phi - deltaPhi
-    const a = (deltaZoom > 0 ? maximumRadius! : minimumRadius!) - radius
+    const a = (deltaZoom > 0 ? maximumRadius : minimumRadius) - radius
     const b =
-      Math.log(deltaZoom > 0 ? maximumFieldOfView! : minimumFieldOfView!) -
+      Math.log(deltaZoom > 0 ? maximumFieldOfView : minimumFieldOfView) -
       this.goalLogFov
     const deltaRatio = deltaZoom === 0 ? 0 : a / b
     const size = this._renderer.getSize(new Vector2())
@@ -428,7 +430,7 @@ export class SmoothOrbitControls extends EventEmitter {
     const goalRadius =
       radius +
       deltaZoom *
-        (isFinite(deltaRatio) ? deltaRatio : (maximumRadius! - minimumRadius!) * 2) *
+        (isFinite(deltaRatio) ? deltaRatio : (maximumRadius - minimumRadius) * 2) *
         metersPerPixel
     this.setOrbit(goalTheta, goalPhi, goalRadius)
 
@@ -472,8 +474,8 @@ export class SmoothOrbitControls extends EventEmitter {
     const dTheta = this.spherical.theta - this.goalSpherical.theta
     if (
       Math.abs(dTheta) > Math.PI &&
-      !isFinite(this._options.minimumAzimuthalAngle!) &&
-      !isFinite(this._options.maximumAzimuthalAngle!)
+      !isFinite(this._options.minimumAzimuthalAngle) &&
+      !isFinite(this._options.maximumAzimuthalAngle)
     ) {
       this.spherical.theta -= Math.sign(dTheta) * 2 * Math.PI
     }
@@ -489,14 +491,14 @@ export class SmoothOrbitControls extends EventEmitter {
       this.spherical.phi,
       this.goalSpherical.phi,
       delta,
-      maximumPolarAngle!
+      maximumPolarAngle
     )
 
     this.spherical.radius = this.radiusDamper.update(
       this.spherical.radius,
       this.goalSpherical.radius,
       delta,
-      maximumRadius!
+      maximumRadius
     )
 
     this.logFov = this.fovDamper.update(this.logFov, this.goalLogFov, delta, 10)
@@ -755,7 +757,6 @@ export class SmoothOrbitControls extends EventEmitter {
       this.touchDecided = false
       this.startPointerPosition.clientX = event.clientX
       this.startPointerPosition.clientY = event.clientY
-      this.startTime = performance.now()
     }
 
     // try {
@@ -789,7 +790,7 @@ export class SmoothOrbitControls extends EventEmitter {
 
   private onPointerMove = (event: PointerEvent) => {
     const pointer = this.pointers.find((pointer) => pointer.id === event.pointerId)
-    if (pointer === null) {
+    if (!pointer) {
       return
     }
 

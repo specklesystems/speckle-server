@@ -116,12 +116,15 @@ const isPostingNewThread = ref(false)
 //   width: 320
 // })
 const createThread = useSubmitComment()
+const { isLoggedIn } = useActiveUser()
 
 const onThreadClick = () => {
   const newIsExpanded = !props.modelValue.isExpanded
 
-  if (!props.canPostComment) {
-    emit('login')
+  if (!isLoggedIn.value || !props.canPostComment) {
+    if (!isLoggedIn.value) {
+      emit('login')
+    }
     return
   }
 
