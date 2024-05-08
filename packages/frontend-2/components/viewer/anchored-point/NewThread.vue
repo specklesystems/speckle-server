@@ -121,8 +121,10 @@ const { isLoggedIn } = useActiveUser()
 const onThreadClick = () => {
   const newIsExpanded = !props.modelValue.isExpanded
 
-  if (!isLoggedIn.value) {
-    emit('login')
+  if (!isLoggedIn.value || !props.canPostComment) {
+    if (!isLoggedIn.value) {
+      emit('login')
+    }
     return
   }
 
