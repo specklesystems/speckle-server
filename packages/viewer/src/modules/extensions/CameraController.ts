@@ -1,7 +1,9 @@
 import { Extension } from './Extension'
 import {
   Box3,
+  Camera,
   Euler,
+  MathUtils,
   Matrix4,
   OrthographicCamera,
   PerspectiveCamera,
@@ -35,6 +37,14 @@ export type PolarView = {
   polar: number
   radius?: number
   origin?: Vector3
+}
+
+export function isPerspectiveCamera(camera: Camera): camera is PerspectiveCamera {
+  return (camera as PerspectiveCamera).isPerspectiveCamera
+}
+
+export function isOrthographicCamera(camera: Camera): camera is OrthographicCamera {
+  return (camera as OrthographicCamera).isOrthographicCamera
 }
 
 export class CameraController extends Extension implements SpeckleCamera {
@@ -350,12 +360,26 @@ export class CameraController extends Extension implements SpeckleCamera {
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
     }
 
-    const target = new Sphere()
-    box.getBoundingSphere(target)
-    target.radius = target.radius * fit
-    // TO DO
-    // this._controls.fitToSphere(target, transition)
-    this._controls.fitToSphere(target)
+    const targetSphere = new Sphere()
+    box.getBoundingSphere(targetSphere)
+    let radius = targetSphere.radius
+
+    if (isPerspectiveCamera(this._renderingCamera)) {
+      // https://stackoverflow.com/a/44849975
+      const vFOV = this._renderingCamera.getEffectiveFOV() * MathUtils.DEG2RAD
+      const hFOV = Math.atan(Math.tan(vFOV * 0.5) * this._renderingCamera.aspect) * 2
+      const fov = 1 < this._renderingCamera.aspect ? vFOV : hFOV
+      radius = radius / Math.sin(fov * 0.5)
+    } else if (isOrthographicCamera(this._renderingCamera)) {
+      // TO DO
+      //   const width = this._camera.right - this._camera.left
+      //   const height = this._camera.top - this._camera.bottom
+      //   const diameter = 2 * boundingSphere.radius
+      //   const zoom = Math.min(width / diameter, height / diameter)
+      //   promises.push(this.zoomTo(zoom, enableTransition))
+    }
+    targetSphere.radius = radius * fit
+    this._controls.fitToSphere(targetSphere)
 
     this.setCameraPlanes(box, fit)
   }

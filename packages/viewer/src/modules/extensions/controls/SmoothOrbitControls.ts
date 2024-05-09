@@ -74,6 +74,8 @@ export interface SmoothControlsOptions {
   maximumFieldOfView?: number
   // Controls scrolling behavior
   touchAction?: TouchAction
+  // Infinite zoom
+  infiniteZoom?: boolean
 }
 
 export const DEFAULT_OPTIONS = Object.freeze<Required<SmoothControlsOptions>>({
@@ -83,9 +85,10 @@ export const DEFAULT_OPTIONS = Object.freeze<Required<SmoothControlsOptions>>({
   maximumPolarAngle: Math.PI - Math.PI / 8,
   minimumAzimuthalAngle: -Infinity,
   maximumAzimuthalAngle: Infinity,
-  minimumFieldOfView: 30,
+  minimumFieldOfView: 45,
   maximumFieldOfView: 60,
-  touchAction: 'none'
+  touchAction: 'none',
+  infiniteZoom: true
 })
 
 // Constants
@@ -208,8 +211,6 @@ export class SmoothOrbitControls extends EventEmitter {
     ) as Required<SmoothControlsOptions>
 
     this.setOrbit(0, Math.PI / 2, 1)
-    // this.setRadius(100)
-    this.setFieldOfView(30)
     this.jumpToGoal()
   }
 
@@ -405,7 +406,6 @@ export class SmoothOrbitControls extends EventEmitter {
    */
   setTarget(x: number, y: number, z: number) {
     this.goalOrigin.set(x, y, z)
-    this.goalOrigin.applyMatrix4(this._basisTransformInv)
   }
 
   /**
@@ -440,11 +440,25 @@ export class SmoothOrbitControls extends EventEmitter {
     const size = this._renderer.getSize(new Vector2())
     const zoomPerPixel = (ZOOM_SENSITIVITY * this.zoomSensitivity) / size.y
     const metersPerPixel = this.spherical.radius * Math.exp(this.logFov) * zoomPerPixel
-    const goalRadius =
-      radius +
+    const zoomAmount =
       deltaZoom *
-        (isFinite(deltaRatio) ? deltaRatio : (maximumRadius - minimumRadius) * 2) *
-        metersPerPixel
+      (isFinite(deltaRatio) ? deltaRatio : (maximumRadius - minimumRadius) * 2) *
+      metersPerPixel
+
+    const goalRadius = radius + zoomAmount
+    if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
+      const dir = new Vector3().setFromSpherical(this.spherical).normalize()
+      const dollyAmount = new Vector3()
+        .copy(dir)
+        .multiplyScalar(deltaZoom * Math.exp(this.logFov))
+
+      this.setTarget(
+        this.origin.x + dollyAmount.x,
+        this.origin.y + dollyAmount.y,
+        this.origin.z + dollyAmount.z
+      )
+    }
+
     this.setOrbit(goalTheta, goalPhi, goalRadius)
 
     if (deltaZoom !== 0) {
@@ -556,7 +570,6 @@ export class SmoothOrbitControls extends EventEmitter {
 
   private moveCamera() {
     // Derive the new camera position from the updated spherical:
-    // console.warn(this.spherical)
     this.spherical.makeSafe()
     this._controlTarget.position.setFromSpherical(this.spherical).add(this.origin)
     this._controlTarget.setRotationFromEuler(
@@ -695,7 +708,12 @@ export class SmoothOrbitControls extends EventEmitter {
   }
 
   public fitToSphere(sphere: Sphere) {
-    this.setTarget(sphere.center.x, sphere.center.y, sphere.center.z)
+    /** The three.js Sphere has it's origin in a CS where Y is up (proper way) */
+    const nativeOrigin = new Vector3()
+      .copy(sphere.center)
+      .applyMatrix4(this._basisTransformInv)
+    this.setTarget(nativeOrigin.x, nativeOrigin.y, nativeOrigin.z)
+
     this.setRadius(sphere.radius)
   }
 
