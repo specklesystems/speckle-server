@@ -70,7 +70,8 @@ import {
 import { useForm } from 'vee-validate'
 import {
   useCreateAutomation,
-  useCreateAutomationRevision
+  useCreateAutomationRevision,
+  useUpdateAutomation
 } from '~/lib/projects/composables/automationManagement'
 import { formatJsonFormSchemaInputs } from '~/lib/automate/helpers/jsonSchema'
 import { projectAutomationRoute } from '~/lib/common/helpers/route'
@@ -131,6 +132,7 @@ const stepsWidgetData = computed(() => [
 
 const inputEncryption = useAutomationInputEncryptor({ ensureWhen: open })
 const logger = useLogger()
+const updateAutomation = useUpdateAutomation()
 const createAutomation = useCreateAutomation()
 const createRevision = useCreateAutomationRevision()
 const { enumStep, step } = useEnumSteps({ order: stepsOrder })
@@ -342,9 +344,22 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       },
       { hideSuccessToast: true }
     )
-    if (revisionRes?.id) {
-      step.value++
+
+    if (!revisionRes?.id) {
+      logger.error('Failed to create revision', { revisionRes })
+      return
     }
+
+    // Enable
+    await updateAutomation({
+      projectId: project.id,
+      input: {
+        id: aId,
+        enabled: true
+      }
+    })
+
+    step.value++
   } finally {
     creationLoading.value = false
     automationEncrypt?.dispose()

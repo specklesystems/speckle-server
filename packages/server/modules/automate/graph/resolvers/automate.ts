@@ -13,6 +13,7 @@ import {
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
+  getLatestVersionAutomationRuns,
   getProjectAutomationsItems,
   getProjectAutomationsTotalCount,
   storeAutomation,
@@ -22,6 +23,7 @@ import {
 import {
   createAutomation,
   createAutomationRevision,
+  getAutomationsStatus,
   updateAutomation
 } from '@/modules/automate/services/automationManagement'
 import {
@@ -143,6 +145,45 @@ export = {
         totalCount,
         cursor
       }
+    }
+  },
+  Model: {
+    async automationsStatus(parent, _args, ctx) {
+      const getStatus = getAutomationsStatus({
+        getLatestVersionAutomationRuns
+      })
+
+      const modelId = parent.id
+      const projectId = parent.streamId
+      const latestCommit = await ctx.loaders.branches.getLatestCommit.load(parent.id)
+
+      // if the model has no versions, no automations could have run
+      if (!latestCommit) return null
+
+      return await getStatus({
+        projectId,
+        modelId,
+        versionId: latestCommit.id
+      })
+    }
+  },
+  Version: {
+    async automationsStatus(parent, _args, ctx) {
+      const getStatus = getAutomationsStatus({
+        getLatestVersionAutomationRuns
+      })
+
+      const versionId = parent.id
+      const branch = await ctx.loaders.commits.getCommitBranch.load(versionId)
+      if (!branch) throw Error('Invalid version Id')
+
+      const projectId = branch.streamId
+      const modelId = branch.id
+      return await getStatus({
+        projectId,
+        modelId,
+        versionId
+      })
     }
   },
   Automation: {

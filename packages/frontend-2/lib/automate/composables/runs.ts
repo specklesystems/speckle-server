@@ -1,6 +1,7 @@
 import { Automate, type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
 import dayjs from 'dayjs'
 import { orderBy } from 'lodash-es'
+import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import {
   useFormatDuration,
   useReactiveNowDate
@@ -11,6 +12,7 @@ import {
   type AutomationRunDetailsFragment,
   type AutomationsStatusOrderedRuns_AutomationRunFragment
 } from '~/lib/common/generated/gql/graphql'
+import type { SetFullyRequired } from '~/lib/common/helpers/type'
 import { abortControllerManager, isAbortError } from '~/lib/common/utils/requests'
 import { useViewerRouteBuilder } from '~/lib/projects/composables/models'
 
@@ -18,6 +20,10 @@ graphql(`
   fragment AutomationRunDetails on AutomateRun {
     id
     status
+    functionRuns {
+      ...FunctionRunStatusForSummary
+      statusMessage
+    }
     trigger {
       ... on VersionCreatedTrigger {
         version {
@@ -32,6 +38,36 @@ graphql(`
     updatedAt
   }
 `)
+
+export const useAutomationRunSummary = (params: {
+  run: MaybeRef<MaybeNullOrUndefined<AutomationRunDetailsFragment>>
+}) => {
+  const { run } = params
+
+  const fnRuns = computed(() => unref(run)?.functionRuns || [])
+
+  const { summary: coreSummary } = useFunctionRunsStatusSummary({
+    runs: fnRuns
+  })
+
+  const summary = computed(() => {
+    const errorMessages =
+      unref(run)
+        ?.functionRuns.filter(
+          (r): r is SetFullyRequired<typeof r, 'statusMessage'> =>
+            !!(r.status === AutomateRunStatus.Failed && r.statusMessage?.length)
+        )
+        .map((r) => r.statusMessage) || []
+    const errorMessage = errorMessages.length ? errorMessages.join(', ') : undefined
+
+    return {
+      ...coreSummary.value,
+      errorMessage
+    }
+  })
+
+  return { summary }
+}
 
 export const useAutomationRunDetailsFns = () => {
   const formatDuration = useFormatDuration()

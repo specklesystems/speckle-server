@@ -209,7 +209,7 @@ export async function getFullAutomationRunById(
       ...AutomationRuns.cols,
       AutomationRunTriggers.groupArray('triggers'),
       AutomationFunctionRuns.groupArray('functionRuns'),
-      knex.raw(`(array_agg(??))[0] as automationId`, [
+      knex.raw(`(array_agg(??))[1] as automationId`, [
         AutomationRevisions.col.automationId
       ])
     ])
@@ -602,7 +602,7 @@ export async function getAutomationRunsItems(params: { args: GetAutomationRunsAr
   // Attach trigger & function runs
   q.select([
     ...AutomationRuns.cols,
-    knex.raw(`(array_agg(??))[0] as automationId`, [
+    knex.raw(`(array_agg(??))[1] as automationId`, [
       AutomationRevisions.col.automationId
     ]),
     AutomationRunTriggers.groupArray('triggers'),
@@ -736,8 +736,16 @@ export const getLatestVersionAutomationRuns = async (
     .limit(limit)
 
   const mainQ = knex()
-    .select<Array<AutomationRunWithTriggersFunctionRuns>>([
-      knex.raw('rq.*'),
+    .select<
+      Array<{
+        runs: Array<AutomationRunRecord & { automationId: string }>
+        functionRuns: AutomationFunctionRunRecord[]
+        triggers: AutomationRunTriggerRecord[]
+      }>
+    >([
+      // We will only have 1 run here, but we have to use an aggregation because of the grouping,
+      // so we just take the 1st array item later on
+      AutomationRuns.with({ withCustomTablePrefix: 'rq' }).groupArray('runs'),
       AutomationFunctionRuns.groupArray('functionRuns'),
       AutomationRunTriggers.groupArray('triggers')
     ])
@@ -748,11 +756,16 @@ export const getLatestVersionAutomationRuns = async (
       AutomationRunTriggers.col.automationRunId,
       'rq.id'
     )
-    .orderBy([
-      { column: 'rq.updatedAt', order: 'desc' },
-      { column: AutomationFunctionRuns.col.updatedAt, order: 'desc' }
-    ])
-    .groupBy('rq.id')
+    .orderBy([{ column: 'rq.updatedAt', order: 'desc' }])
+    .groupBy('rq.id', 'rq.updatedAt')
 
-  return await mainQ
+  const res = await mainQ
+  const formattedItems: AutomationRunWithTriggersFunctionRuns[] = res.map(
+    (r): AutomationRunWithTriggersFunctionRuns => ({
+      ...r.runs[0],
+      triggers: r.triggers,
+      functionRuns: r.functionRuns
+    })
+  )
+  return formattedItems
 }
