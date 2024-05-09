@@ -1,4 +1,5 @@
 import {
+  ExecutionEngineBadResponseBodyError,
   ExecutionEngineErrorResponse,
   ExecutionEngineFailedResponseError
 } from '@/modules/automate/errors/executionEngine'
@@ -52,7 +53,21 @@ const getApiUrl = (
   return url.toString()
 }
 
-const invokeRequest = async <R = Record<string, unknown>>(params: {
+const invokeJsonRequest = async <R = Record<string, unknown>>(
+  ...args: Parameters<typeof invokeRequest>
+) => {
+  const [{ url, method = 'get', body }] = args
+  const response = await invokeRequest(...args)
+
+  const result = (await response.json()) as R
+  if (isErrorResponse(result)) {
+    throw new ExecutionEngineFailedResponseError(result, { method, url, body })
+  }
+
+  return result
+}
+
+const invokeRequest = async (params: {
   url: string
   method?: RequestInit['method']
   body?: Record<string, unknown>
@@ -69,12 +84,21 @@ const invokeRequest = async <R = Record<string, unknown>>(params: {
     body: body && isObjectLike(body) ? JSON.stringify(body) : undefined
   })
 
-  const result = (await response.json()) as R
-  if (isErrorResponse(result)) {
-    throw new ExecutionEngineFailedResponseError(result, { method, url, body })
+  if (response.status >= 400) {
+    const errorReq = {
+      method,
+      url,
+      body
+    }
+    const errorResponse = await response.json()
+    if (!isErrorResponse(errorResponse)) {
+      throw new ExecutionEngineBadResponseBodyError(errorReq)
+    }
+
+    throw new ExecutionEngineFailedResponseError(errorResponse, errorReq)
   }
 
-  return result
+  return response
 }
 
 export const createAutomation = async (params: {
@@ -86,7 +110,7 @@ export const createAutomation = async (params: {
   const url = getApiUrl(`/api/v2/automations`)
   const speckleServerDomain = new URL(speckleServerUrl).hostname
 
-  const result = await invokeRequest<AutomationCreateResponse>({
+  const result = await invokeJsonRequest<AutomationCreateResponse>({
     url,
     method: 'post',
     body: {
@@ -166,7 +190,7 @@ export const triggerAutomationRun = async (params: {
     speckleToken
   }
 
-  const result = await invokeRequest<AutomationRunResponseBody>({
+  const result = await invokeJsonRequest<AutomationRunResponseBody>({
     url,
     method: 'post',
     body: payload,
@@ -245,7 +269,7 @@ export const getFunction = async (params: {
     query: params.releases?.cursor || params.releases?.limit ? params.releases : {}
   })
 
-  const result = await invokeRequest<GetFunctionResponse>({
+  const result = await invokeJsonRequest<GetFunctionResponse>({
     url,
     method: 'get',
     token
@@ -277,7 +301,7 @@ export const getFunctionRelease = async (params: {
   const { functionId, functionReleaseId } = params
   const url = getApiUrl(`/api/v1/functions/${functionId}/versions/${functionReleaseId}`)
 
-  const result = await invokeRequest<GetFunctionReleaseResponse>({
+  const result = await invokeJsonRequest<GetFunctionReleaseResponse>({
     url,
     method: 'get'
   })
@@ -306,10 +330,45 @@ export const getFunctions = async (params: {
   const { query } = params
   const url = getApiUrl(`/api/v1/functions`, { query })
 
-  const result = await invokeRequest<GetFunctionsResponse>({
+  const result = await invokeJsonRequest<GetFunctionsResponse>({
     url,
     method: 'get'
   })
 
   return result
+}
+
+export async function* getAutomationRunLogs(params: {
+  automationId: string
+  automationRunId: string
+  automationToken: string
+}) {
+  const { automationId, automationRunId, automationToken } = params
+  const url = getApiUrl(
+    `/api/v2/automations/${automationId}/runs/${automationRunId}/logs`
+  )
+
+  const response = await invokeRequest({ url, token: automationToken })
+
+  const reader = response.body?.getReader()
+  if (!reader) return
+
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) break
+
+    buffer += decoder.decode(value, { stream: true })
+
+    const lines = buffer.split('\n')
+    buffer = lines.pop() || ''
+
+    for (const line of lines) {
+      yield line
+    }
+  }
+
+  if (buffer) yield buffer
 }

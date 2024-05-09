@@ -15,12 +15,13 @@ import {
   BadRequestError
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
-import { Nullable } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
+import { getAutomationProject } from '@/modules/automate/repositories/automations'
 
 interface AuthResult {
   authorized: boolean
@@ -59,6 +60,7 @@ export interface AuthContext {
 
 export interface AuthParams {
   streamId?: string
+  automationId?: string
 }
 
 interface AuthData {
@@ -221,19 +223,27 @@ export const validateScope =
     return authSuccess(context)
   }
 
-type StreamGetter = (params: { streamId: string; userId?: string }) => Promise<Stream>
+type StreamGetter = (params: {
+  streamId: string
+  userId?: string
+}) => Promise<MaybeNullOrUndefined<Stream>>
 
 // this doesn't do any checks  on the scopes, its sole responsibility is to add the
 // stream object to the pipeline context
 export const contextRequiresStream =
-  (streamGetter: StreamGetter): AuthPipelineFunction =>
+  (deps: {
+    getStream: StreamGetter
+    getAutomationProject: typeof getAutomationProject
+  }): AuthPipelineFunction =>
   // stream getter is an async func over { streamId, userId } returning a stream object
   // IoC baby...
   async ({ context, authResult, params }) => {
-    if (!params?.streamId)
+    const { getStream, getAutomationProject } = deps
+
+    if (!params?.streamId && !params?.automationId)
       return authFailed(
         context,
-        new ContextError("The context doesn't have a streamId")
+        new ContextError("The context doesn't have a streamId or automationId")
       )
     // because we're assigning to the context, it would raise if it would be null
     // its probably?? safer than returning a new context
@@ -243,10 +253,16 @@ export const contextRequiresStream =
     // cause stream getter could throw, its not a safe function if we want to
     // keep the pipeline rolling
     try {
-      const stream = await streamGetter({
-        streamId: params.streamId,
-        userId: context?.userId
-      })
+      const stream = params.streamId
+        ? await getStream({
+            streamId: params.streamId,
+            userId: context?.userId
+          })
+        : await getAutomationProject({
+            automationId: params.automationId!,
+            userId: context?.userId
+          })
+
       if (!stream)
         return authFailed(
           context,
@@ -308,14 +324,14 @@ export const authPipelineCreator = (
 export const streamWritePermissions: AuthPipelineFunction[] = [
   validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Write }),
-  contextRequiresStream(getStream as StreamGetter),
+  contextRequiresStream({ getStream, getAutomationProject }),
   validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
   validateResourceAccess
 ]
 export const streamReadPermissions: AuthPipelineFunction[] = [
   validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Read }),
-  contextRequiresStream(getStream as StreamGetter),
+  contextRequiresStream({ getStream, getAutomationProject }),
   validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
   validateResourceAccess
 ]

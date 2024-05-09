@@ -31,9 +31,21 @@ export class ExecutionEngineFailedResponseError extends BaseError {
   ) {
     super(
       'Automate API Failed: ' + response.statusMessage ||
-        ExecutionEngineFailedResponseError.code
+        ExecutionEngineFailedResponseError.defaultMessage
     )
     this.response = response
+    this.request = request
+  }
+}
+
+export class ExecutionEngineBadResponseBodyError extends BaseError {
+  static code = 'EXECUTION_ENGINE_BAD_RESPONSE_BODY_ERROR'
+  static defaultMessage = 'Automate API returned an unexpected response'
+
+  public request: ExecutionEngineErrorRequest
+
+  constructor(request: ExecutionEngineErrorRequest) {
+    super(ExecutionEngineBadResponseBodyError.defaultMessage)
     this.request = request
   }
 }

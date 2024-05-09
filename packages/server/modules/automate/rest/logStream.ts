@@ -1,22 +1,74 @@
-import { wait } from '@speckle/shared'
+import { getAutomationRunLogs } from '@/modules/automate/clients/executionEngine'
+import { ExecutionEngineFailedResponseError } from '@/modules/automate/errors/executionEngine'
+import {
+  getAutomationProject,
+  getAutomationRunWithToken
+} from '@/modules/automate/repositories/automations'
+import { corsMiddleware } from '@/modules/core/configs/cors'
+import { getStream } from '@/modules/core/repositories/streams'
+import {
+  contextRequiresStream,
+  validateResourceAccess,
+  validateScope,
+  validateServerRole,
+  validateStreamRole
+} from '@/modules/shared/authz'
+import { authMiddlewareCreator } from '@/modules/shared/middleware'
+import { Roles, Scopes } from '@speckle/shared'
 import { Application } from 'express'
 
 export default (app: Application) => {
   app.get(
     '/api/automate/automations/:automationId/runs/:runId/logs',
-    async (_req, res) => {
-      // TODO: Gergo implement this plz
+    corsMiddleware(),
+    authMiddlewareCreator([
+      validateServerRole({ requiredRole: Roles.Server.Guest }),
+      validateScope({ requiredScope: Scopes.Streams.Read }),
+      contextRequiresStream({ getStream, getAutomationProject }),
+      validateStreamRole({ requiredRole: Roles.Stream.Owner }),
+      validateResourceAccess
+    ]),
+    async (req, res) => {
+      const automationId = req.params.automationId
+      const runId = req.params.runId
 
-      // As a test stream out a string every second for 10 seconds
-      res.setHeader('Content-Type', 'text/plain; charset=utf-8')
-      // res.setHeader('Transfer-Encoding', 'chunked')
-      // res.setHeader('Cache-Control', 'no-cache')
-      // res.setHeader('Connection', 'keep-alive')
-      // res.flushHeaders()
+      const run = await getAutomationRunWithToken({
+        automationId,
+        automationRunId: runId
+      })
+      if (!run) {
+        throw new Error("Couldn't find automation or its run")
+      }
+      if (!run.executionEngineRunId) {
+        throw new Error('No associated run found on the execution engine')
+      }
 
-      for (let i = 0; i < 10; i++) {
-        res.write(`Log line ${i}\n - Some fake text here haaaaa\n`)
-        await wait(1000)
+      try {
+        let firstLine = true
+        const logGenerator = getAutomationRunLogs({
+          automationId: run.executionEngineAutomationId,
+          automationRunId: run.executionEngineRunId,
+          automationToken: run.token
+        })
+        for await (const line of logGenerator) {
+          if (firstLine) {
+            // Only do this now, so that if log retrieval failed defaultErrorHandler correctly returns JSON response
+            res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+            res.setHeader('Cache-Control', 'no-cache')
+            firstLine = false
+          }
+          res.write(line)
+        }
+      } catch (e) {
+        if (e instanceof ExecutionEngineFailedResponseError) {
+          if (e.response.statusMessage === 'LOG_MISSING_OR_NOT_READY') {
+            res.write('')
+            res.end()
+            return
+          }
+        }
+
+        throw e
       }
 
       res.end()

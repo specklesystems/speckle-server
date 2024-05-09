@@ -1,6 +1,12 @@
-import { Automate, type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
+import {
+  Automate,
+  ensureError,
+  type MaybeNullOrUndefined,
+  type Optional
+} from '@speckle/shared'
 import dayjs from 'dayjs'
 import { orderBy } from 'lodash-es'
+import { useAuthCookie } from '~/lib/auth/composables/auth'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import {
   useFormatDuration,
@@ -145,6 +151,7 @@ export const useAutomationRunLogs = (params: {
   const { automationId, runId } = params
   const apiOrigin = useApiOrigin()
 
+  const authToken = useAuthCookie()
   const { triggerNotification } = useGlobalToast()
   const loading = ref(false)
   const results = ref('')
@@ -163,8 +170,29 @@ export const useAutomationRunLogs = (params: {
     results.value = ''
     isStreamFinished.value = false
 
+    if (!authToken.value) {
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Log retrieval failed',
+        description: 'You need to be logged in to load the logs.'
+      })
+      isStreamFinished.value = true
+      return
+    }
+
     const res = await fetch(new URL(url.value, apiOrigin), {
-      signal: aborts.pop().signal
+      signal: aborts.pop().signal,
+      headers: {
+        Authorization: `Bearer ${authToken.value}`
+      }
+    }).catch((e) => {
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Log retrieval failed',
+        description: ensureError(e).message
+      })
+
+      throw e
     })
 
     if (res.status !== 200) {
