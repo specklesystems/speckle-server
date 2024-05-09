@@ -1,5 +1,13 @@
 import { Extension } from './Extension'
-import { Box3, OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three'
+import {
+  Box3,
+  Euler,
+  Matrix4,
+  OrthographicCamera,
+  PerspectiveCamera,
+  Sphere,
+  Vector3
+} from 'three'
 import { SmoothOrbitControls } from './controls/SmoothOrbitControls'
 import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera'
 import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera'
@@ -34,6 +42,7 @@ export class CameraController extends Extension implements SpeckleCamera {
   protected _renderingCamera!: PerspectiveCamera | OrthographicCamera
   protected perspectiveCamera: PerspectiveCamera
   protected orthographicCamera: OrthographicCamera
+  private _lastCameraChanged: boolean = false
 
   get renderingCamera(): PerspectiveCamera | OrthographicCamera {
     return this._renderingCamera
@@ -124,6 +133,9 @@ export class CameraController extends Extension implements SpeckleCamera {
     )
     this._controls.enableInteraction()
     this._controls.setDamperDecayTime(100)
+    this._controls.basisTransform = new Matrix4().makeRotationFromEuler(
+      new Euler(Math.PI * 0.5)
+    )
     this.viewer.getRenderer().speckleCamera = this
   }
 
@@ -171,7 +183,11 @@ export class CameraController extends Extension implements SpeckleCamera {
 
   public onEarlyUpdate() {
     const changed = this._controls.update(undefined, this.viewer.World.worldBox)
+    if (changed !== this._lastCameraChanged) {
+      this.emit(changed ? CameraEvent.Dynamic : CameraEvent.Stationary)
+    }
     this.emit(CameraEvent.FrameUpdate, changed)
+    this._lastCameraChanged = changed
   }
 
   public onResize() {
@@ -339,20 +355,9 @@ export class CameraController extends Extension implements SpeckleCamera {
     target.radius = target.radius * fit
     // TO DO
     // this._controls.fitToSphere(target, transition)
+    this._controls.fitToSphere(target)
 
     this.setCameraPlanes(box, fit)
-
-    if (this._renderingCamera === this.orthographicCamera) {
-      // fit the camera inside, so we don't have clipping plane issues.
-      // WIP implementation
-      const camPos = this._renderingCamera.position
-      let dist = target.distanceToPoint(camPos)
-      if (dist < 0) {
-        dist *= -1
-        // TO DO
-        // this._controls.setPosition(camPos.x + dist, camPos.y + dist, camPos.z + dist)
-      }
-    }
   }
 
   private isSpeckleView(

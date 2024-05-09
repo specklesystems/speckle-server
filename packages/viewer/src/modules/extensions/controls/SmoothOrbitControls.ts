@@ -21,10 +21,10 @@ import {
   Vector3,
   Object3D,
   WebGLRenderer,
-  Matrix4,
   PerspectiveCamera,
   Box3,
-  Sphere
+  Sphere,
+  Matrix4
 } from 'three'
 
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
@@ -190,6 +190,8 @@ export class SmoothOrbitControls extends EventEmitter {
   private _container: HTMLElement
   private _renderer: WebGLRenderer
   private _lastTick: number = 0
+  private _basisTransform: Matrix4 = new Matrix4()
+  private _basisTransformInv: Matrix4 = new Matrix4()
 
   constructor(
     controlTarget: Object3D,
@@ -209,6 +211,16 @@ export class SmoothOrbitControls extends EventEmitter {
     // this.setRadius(100)
     this.setFieldOfView(30)
     this.jumpToGoal()
+  }
+
+  set basisTransform(value: Matrix4) {
+    this._basisTransform.copy(value)
+    this._basisTransformInv.copy(value)
+    this._basisTransformInv.invert()
+  }
+
+  get basisTrasform() {
+    return this._basisTransform
   }
 
   get interactionEnabled(): boolean {
@@ -393,6 +405,7 @@ export class SmoothOrbitControls extends EventEmitter {
    */
   setTarget(x: number, y: number, z: number) {
     this.goalOrigin.set(x, y, z)
+    this.goalOrigin.applyMatrix4(this._basisTransformInv)
   }
 
   /**
@@ -537,7 +550,7 @@ export class SmoothOrbitControls extends EventEmitter {
       this.goalSpherical.phi === this.spherical.phi &&
       this.goalSpherical.radius === this.spherical.radius &&
       this.goalLogFov === this.logFov &&
-      this.goalOrigin.equals(this._controlTarget.position)
+      this.goalOrigin.equals(this.origin)
     )
   }
 
@@ -549,9 +562,7 @@ export class SmoothOrbitControls extends EventEmitter {
     this._controlTarget.setRotationFromEuler(
       new Euler(this.spherical.phi - Math.PI / 2, this.spherical.theta, 0, 'YXZ')
     )
-    this._controlTarget.applyMatrix4(
-      new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5))
-    )
+    this._controlTarget.applyMatrix4(this._basisTransform)
 
     if (this._controlTarget instanceof PerspectiveCamera)
       if (this._controlTarget.fov !== Math.exp(this.logFov)) {
@@ -681,6 +692,11 @@ export class SmoothOrbitControls extends EventEmitter {
     const target = this.getTarget()
     target.add(dxy.applyMatrix3(this.panProjection))
     this.setTarget(target.x, target.y, target.z)
+  }
+
+  public fitToSphere(sphere: Sphere) {
+    this.setTarget(sphere.center.x, sphere.center.y, sphere.center.z)
+    this.setRadius(sphere.radius)
   }
 
   // TO DO
