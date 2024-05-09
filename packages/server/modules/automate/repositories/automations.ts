@@ -33,6 +33,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 
 import { LogicError } from '@/modules/shared/errors'
+import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 import { decodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import { Nullable, isNullOrUndefined } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
@@ -205,11 +206,18 @@ export async function getFullAutomationRunById(
   automationRunId: string
 ): Promise<AutomationRunWithTriggersFunctionRuns | null> {
   const run = await AutomationRuns.knex()
-    .select<AutomationRunWithTriggersFunctionRuns[]>([
-      ...AutomationRuns.cols,
+    .select<
+      Array<{
+        runs: AutomationRunRecord[]
+        triggers: AutomationRunTriggerRecord[]
+        functionRuns: AutomationFunctionRunRecord[]
+        automationId: string
+      }>
+    >([
+      AutomationRuns.groupArray('runs'),
       AutomationRunTriggers.groupArray('triggers'),
       AutomationFunctionRuns.groupArray('functionRuns'),
-      knex.raw(`(array_agg(??))[1] as automationId`, [
+      knex.raw(`(array_agg(??))[1] as "automationId"`, [
         AutomationRevisions.col.automationId
       ])
     ])
@@ -232,7 +240,14 @@ export async function getFullAutomationRunById(
     .groupBy(AutomationRuns.col.id)
     .first()
 
-  return run || null
+  return run
+    ? {
+        ...formatJsonArrayRecords(run.runs)[0],
+        triggers: formatJsonArrayRecords(run.triggers),
+        functionRuns: formatJsonArrayRecords(run.functionRuns),
+        automationId: run.automationId
+      }
+    : null
 }
 
 export async function storeAutomation(
@@ -532,7 +547,7 @@ export async function getFunctionAutomationCounts(params: { functionIds: string[
   const q = AutomationRevisionFunctions.knex()
     .select<Array<{ functionId: string; count: string }>>([
       AutomationRevisionFunctions.col.functionId,
-      knex.raw('count(distinct ??) as count', [AutomationRevisions.col.automationId])
+      knex.raw('count(distinct ??) as "count"', [AutomationRevisions.col.automationId])
     ])
     .innerJoin(
       AutomationRevisions.name,
@@ -592,21 +607,25 @@ export async function getAutomationRunsItems(params: { args: GetAutomationRunsAr
   const { args } = params
   if (args.limit === 0) return { items: [], cursor: null }
 
-  const q =
-    getAutomationRunsTotalCountBaseQuery<AutomationRunWithTriggersFunctionRuns[]>(
-      params
-    )
+  const q = getAutomationRunsTotalCountBaseQuery<
+    Array<{
+      runs: AutomationRunRecord[]
+      triggers: AutomationRunTriggerRecord[]
+      functionRuns: AutomationFunctionRunRecord[]
+      automationId: string
+    }>
+  >(params)
 
   const limit = clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25)
 
   // Attach trigger & function runs
   q.select([
-    ...AutomationRuns.cols,
-    knex.raw(`(array_agg(??))[1] as automationId`, [
-      AutomationRevisions.col.automationId
-    ]),
+    AutomationRuns.groupArray('runs'),
     AutomationRunTriggers.groupArray('triggers'),
-    AutomationFunctionRuns.groupArray('functionRuns')
+    AutomationFunctionRuns.groupArray('functionRuns'),
+    knex.raw(`(array_agg(??))[1] as "automationId"`, [
+      AutomationRevisions.col.automationId
+    ])
   ])
     .innerJoin(
       AutomationRunTriggers.name,
@@ -631,9 +650,18 @@ export async function getAutomationRunsItems(params: { args: GetAutomationRunsAr
   }
 
   const res = await q
+  const items = res.map(
+    (r): AutomationRunWithTriggersFunctionRuns => ({
+      ...formatJsonArrayRecords(r.runs)[0],
+      triggers: formatJsonArrayRecords(r.triggers),
+      functionRuns: formatJsonArrayRecords(r.functionRuns),
+      automationId: r.automationId
+    })
+  )
+
   return {
-    items: res,
-    cursor: res.length ? res[res.length - 1].updatedAt.toISOString() : null
+    items,
+    cursor: items.length ? items[items.length - 1].updatedAt.toISOString() : null
   }
 }
 
@@ -762,9 +790,9 @@ export const getLatestVersionAutomationRuns = async (
   const res = await mainQ
   const formattedItems: AutomationRunWithTriggersFunctionRuns[] = res.map(
     (r): AutomationRunWithTriggersFunctionRuns => ({
-      ...r.runs[0],
-      triggers: r.triggers,
-      functionRuns: r.functionRuns
+      ...formatJsonArrayRecords(r.runs)[0],
+      triggers: formatJsonArrayRecords(r.triggers),
+      functionRuns: formatJsonArrayRecords(r.functionRuns)
     })
   )
   return formattedItems
