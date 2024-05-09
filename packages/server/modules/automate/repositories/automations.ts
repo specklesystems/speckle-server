@@ -472,15 +472,27 @@ export async function getLatestAutomationRevisions(params: {
   automationIds: string[]
 }) {
   const { automationIds } = params
-  if (!automationIds.length) return []
+  if (!automationIds.length) return {}
 
-  const q = AutomationRevisions.knex<AutomationRevisionRecord[]>()
+  const innerQ = AutomationRevisions.knex()
+    .select([
+      AutomationRevisions.col.automationId,
+      knex.raw('max(??) as ??', [AutomationRevisions.col.createdAt, 'maxCreatedAt'])
+    ])
     .whereIn(AutomationRevisions.col.automationId, automationIds)
     .andWhere(AutomationRevisions.col.active, true)
-    .orderBy(AutomationRevisions.col.createdAt, 'desc')
     .groupBy(AutomationRevisions.col.automationId)
 
-  return await q
+  const outerQ = AutomationRevisions.knex<AutomationRevisionRecord[]>().innerJoin(
+    innerQ.as('q1'),
+    function () {
+      this.on(AutomationRevisions.col.automationId, '=', 'q1.automationId')
+      this.andOn(AutomationRevisions.col.createdAt, '=', 'q1.maxCreatedAt')
+    }
+  )
+
+  const res = await outerQ
+  return keyBy(res, (r) => r.automationId)
 }
 
 export async function getRevisionsTriggerDefinitions(params: {
@@ -489,9 +501,10 @@ export async function getRevisionsTriggerDefinitions(params: {
   const { automationRevisionIds } = params
   if (!automationRevisionIds.length) return {}
 
-  const q = AutomationTriggers.knex<AutomationTriggerDefinitionRecord[]>()
-    .whereIn(AutomationTriggers.col.automationRevisionId, automationRevisionIds)
-    .groupBy(AutomationTriggers.col.automationRevisionId)
+  const q = AutomationTriggers.knex<AutomationTriggerDefinitionRecord[]>().whereIn(
+    AutomationTriggers.col.automationRevisionId,
+    automationRevisionIds
+  )
 
   return groupBy(await q, (r) => r.automationRevisionId)
 }
@@ -519,7 +532,7 @@ export async function getFunctionAutomationCounts(params: { functionIds: string[
   const q = AutomationRevisionFunctions.knex()
     .select<Array<{ functionId: string; count: string }>>([
       AutomationRevisionFunctions.col.functionId,
-      knex.raw('count(distinct ' + AutomationRevisions.col.automationId + ') as count')
+      knex.raw('count(distinct ??) as count', [AutomationRevisions.col.automationId])
     ])
     .innerJoin(
       AutomationRevisions.name,

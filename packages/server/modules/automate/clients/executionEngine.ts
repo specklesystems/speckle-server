@@ -1,3 +1,7 @@
+import {
+  ExecutionEngineErrorResponse,
+  ExecutionEngineFailedResponseError
+} from '@/modules/automate/errors/executionEngine'
 import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
 import {
   FunctionReleaseSchemaType,
@@ -13,8 +17,12 @@ import {
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import { Nullable, SourceAppName, isNullOrUndefined } from '@speckle/shared'
+import { has, isObjectLike } from 'lodash'
 
 // TODO: Handle error/404 scenarios properly
+
+const isErrorResponse = (e: unknown): e is ExecutionEngineErrorResponse =>
+  isObjectLike(e) && has(e, 'statusCode') && has(e, 'statusMessage')
 
 export type AutomationCreateResponse = {
   automationId: string
@@ -46,6 +54,31 @@ const getApiUrl = (
   return url.toString()
 }
 
+const invokeRequest = async <R = Record<string, unknown>>(params: {
+  url: string
+  method?: RequestInit['method']
+  body?: Record<string, unknown>
+  token?: string
+}) => {
+  const { url, method = 'get', body, token } = params
+
+  const response = await fetch(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
+    },
+    body: body && isObjectLike(body) ? JSON.stringify(body) : undefined
+  })
+
+  const result = (await response.json()) as R
+  if (isErrorResponse(result)) {
+    throw new ExecutionEngineFailedResponseError(result, { method, url, body })
+  }
+
+  return result
+}
+
 export const createAutomation = async (params: {
   speckleServerUrl: string
   authCode: string
@@ -54,18 +87,16 @@ export const createAutomation = async (params: {
 
   const url = getApiUrl(`/api/v2/automations`)
   const speckleServerDomain = new URL(speckleServerUrl).hostname
-  const response = await fetch(url, {
+
+  const result = await invokeRequest<AutomationCreateResponse>({
+    url,
     method: 'post',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
+    body: {
       speckleServerDomain,
       speckleServerAuthenticationCode: authCode
-    })
+    }
   })
 
-  const result = (await response.json()) as AutomationCreateResponse
   return result
 }
 
@@ -101,14 +132,7 @@ export const triggerAutomationRun = async (params: {
   speckleToken: string
   automationToken: string
 }) => {
-  const {
-    projectId,
-    automationId,
-    functionRuns,
-    manifests,
-    speckleToken,
-    automationToken
-  } = params
+  const { projectId, automationId, functionRuns, manifests, speckleToken } = params
 
   const url = getApiUrl(`/api/v2/automations/${automationId}/runs`)
   const functionDefinitions = functionRuns.map((functionRun) => {
@@ -136,15 +160,12 @@ export const triggerAutomationRun = async (params: {
     })),
     speckleToken
   }
-  const response = await fetch(url, {
+
+  const result = await invokeRequest<AutomationRunResponseBody>({
+    url,
     method: 'post',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${automationToken}`
-    },
-    body: JSON.stringify(payload)
+    body: payload
   })
-  const result = (await response.json()) as AutomationRunResponseBody
 
   // TODO: handle 401
   return result
@@ -219,14 +240,13 @@ export const getFunction = async (params: {
     query: params.releases?.cursor || params.releases?.limit ? params.releases : {}
   })
 
-  const response = await fetch(url, {
+  const result = await invokeRequest<GetFunctionResponse>({
+    url,
     method: 'get',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
-    }
+    token
   })
-  return (await response.json()) as GetFunctionResponse
+
+  return result
 }
 
 export type GetFunctionReleaseResponse = FunctionReleaseSchemaType
@@ -236,12 +256,11 @@ export type GetFunctionReleaseResponse = FunctionReleaseSchemaType
  */
 export const getFunctionReleases = async (params: {
   ids: Array<{ functionId: string; functionReleaseId: string }>
-  token?: string
 }) => {
-  const { ids, token } = params
+  const { ids } = params
   return await Promise.all(
     ids.map(async ({ functionId, functionReleaseId }) =>
-      getFunctionRelease({ functionId, functionReleaseId, token })
+      getFunctionRelease({ functionId, functionReleaseId })
     )
   )
 }
@@ -249,21 +268,17 @@ export const getFunctionReleases = async (params: {
 export const getFunctionRelease = async (params: {
   functionId: string
   functionReleaseId: string
-  token?: string
 }) => {
-  const { functionId, functionReleaseId, token } = params
-  const url = getApiUrl(`/api/v1/functions/${functionId}/releases/${functionReleaseId}`)
+  const { functionId, functionReleaseId } = params
+  const url = getApiUrl(`/api/v1/functions/${functionId}/versions/${functionReleaseId}`)
 
-  const response = await fetch(url, {
-    method: 'get',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
-    }
+  const result = await invokeRequest<GetFunctionReleaseResponse>({
+    url,
+    method: 'get'
   })
-  const body = (await response.json()) as GetFunctionReleaseResponse
+
   return {
-    ...body,
+    ...result,
     functionId
   }
 }
@@ -282,19 +297,14 @@ export const getFunctions = async (params: {
     functionsWithoutVersions?: boolean
     featuredFunctionsOnly?: boolean
   }
-  token?: string
 }) => {
-  const { query, token } = params
+  const { query } = params
   const url = getApiUrl(`/api/v1/functions`, { query })
 
-  const response = await fetch(url, {
-    method: 'get',
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
-    }
+  const result = await invokeRequest<GetFunctionsResponse>({
+    url,
+    method: 'get'
   })
-  const responseBody = await response.json()
 
-  return responseBody as GetFunctionsResponse
+  return result
 }

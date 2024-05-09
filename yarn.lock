@@ -13810,6 +13810,8 @@ __metadata:
     stylelint-config-standard: ^26.0.0
     subscriptions-transport-ws: ^0.11.0
     tailwindcss: ^3.4.1
+    tweetnacl-sealedbox-js: ^1.2.0
+    tweetnacl-util: ^0.15.1
     type-fest: ^3.5.1
     typescript: ^4.8.3
     vee-validate: ^4.7.0
@@ -21461,6 +21463,13 @@ __metadata:
   version: 2.1.5
   resolution: "blake3-wasm@npm:2.1.5"
   checksum: 5088e929c722b52b9c28701c1760ab850a963692056a417b894c943030e3267f12138ae6409e79069b8d7d0401a411426147e8d812b65a49e303fa432af18871
+  languageName: node
+  linkType: hard
+
+"blakejs@npm:^1.1.0":
+  version: 1.2.1
+  resolution: "blakejs@npm:1.2.1"
+  checksum: d699ba116cfa21d0b01d12014a03e484dd76d483133e6dc9eb415aa70a119f08beb3bcefb8c71840106a00b542cba77383f8be60cd1f0d4589cb8afb922eefbe
   languageName: node
   linkType: hard
 
@@ -45374,10 +45383,34 @@ __metadata:
   languageName: node
   linkType: hard
 
+"tweetnacl-sealedbox-js@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "tweetnacl-sealedbox-js@npm:1.2.0"
+  dependencies:
+    blakejs: ^1.1.0
+    tweetnacl: ^1.0.1
+  checksum: ada2e3827bd0b49a23d576813fb76aa0815ccafa07c8c3dc1a86c56bc56f4f0ec605f255a2f7e4ce0be83f94906bbbb151eeb2edeb12e95420c60c0b34d89d50
+  languageName: node
+  linkType: hard
+
+"tweetnacl-util@npm:^0.15.1":
+  version: 0.15.1
+  resolution: "tweetnacl-util@npm:0.15.1"
+  checksum: ae6aa8a52cdd21a95103a4cc10657d6a2040b36c7a6da7b9d3ab811c6750a2d5db77e8c36969e75fdee11f511aa2b91c552496c6e8e989b6e490e54aca2864fc
+  languageName: node
+  linkType: hard
+
 "tweetnacl@npm:^0.14.3, tweetnacl@npm:~0.14.0":
   version: 0.14.5
   resolution: "tweetnacl@npm:0.14.5"
   checksum: 6061daba1724f59473d99a7bb82e13f211cdf6e31315510ae9656fefd4779851cb927adad90f3b488c8ed77c106adc0421ea8055f6f976ff21b27c5c4e918487
+  languageName: node
+  linkType: hard
+
+"tweetnacl@npm:^1.0.1":
+  version: 1.0.3
+  resolution: "tweetnacl@npm:1.0.3"
+  checksum: e4a57cac188f0c53f24c7a33279e223618a2bfb5fea426231991652a13247bea06b081fd745d71291fcae0f4428d29beba1b984b1f1ce6f66b06a6d1ab90645c
   languageName: node
   linkType: hard
 

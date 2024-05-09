@@ -20,7 +20,12 @@
               {{ fn.name }}
             </RouterLink>
           </div>
-          <div class="label-light">by {{ fn.repo.owner + '/' + fn.repo.name }}</div>
+          <div class="label-light flex items-center space-x-1">
+            <span>by</span>
+            <CommonTextLink external :to="fn.repo.url" size="sm">
+              {{ fn.repo.owner }}
+            </CommonTextLink>
+          </div>
         </div>
       </div>
       <div class="label-light text-foreground-2 line-clamp-3 h-16">

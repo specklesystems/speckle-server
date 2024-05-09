@@ -1,6 +1,6 @@
 import { type Optional } from '@speckle/shared'
 
-type EncryptionUtilsModule = typeof import('~/lib/common/utils/libsodium')
+type EncryptionUtilsModule = typeof import('~/lib/common/utils/tweetnacl')
 type EncryptionUtilsModulePromise = Promise<EncryptionUtilsModule>
 
 let encryptionUtils: Optional<EncryptionUtilsModule> = undefined
@@ -19,7 +19,7 @@ export const useEncryptionUtils = () => {
     if (!encryptionUtils) {
       try {
         encryptionUtilsPromise =
-          encryptionUtilsPromise || import('~/lib/common/utils/libsodium')
+          encryptionUtilsPromise || import('~/lib/common/utils/tweetnacl')
         encryptionUtils = await encryptionUtilsPromise
         utils.value = encryptionUtils
       } catch (e) {

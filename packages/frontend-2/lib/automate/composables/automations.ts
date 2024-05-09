@@ -2,7 +2,7 @@ import type { Nullable, Optional } from '@speckle/shared'
 import { useApolloClient } from '@vue/apollo-composable'
 import { AutomationPublicKeysRetrievalError } from '~/lib/automate/errors/automations'
 import { projectAutomationCreationPublicKeysQuery } from '~/lib/automate/graphql/queries'
-import { useEncryptionUtils } from '~/lib/common/composables/libsodium'
+import { useEncryptionUtils } from '~/lib/common/composables/crypto'
 import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 
 export const useAutomationPublicKey = () => {

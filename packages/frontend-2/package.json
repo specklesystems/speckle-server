@@ -72,6 +72,8 @@
     "raygun": "^0.13.2",
     "seq-logging": "^2.1.1",
     "subscriptions-transport-ws": "^0.11.0",
+    "tweetnacl-sealedbox-js": "^1.2.0",
+    "tweetnacl-util": "^0.15.1",
     "vee-validate": "^4.7.0",
     "vue-advanced-cropper": "^2.8.8",
     "vue-tippy": "^6.0.0",

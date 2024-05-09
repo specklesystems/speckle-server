@@ -1,6 +1,10 @@
 import sodium from 'libsodium-wrappers'
 
 /**
+ * TODO: Delete?
+ */
+
+/**
  * DO NOT IMPORT THIS DIRECTLY/SYNCHRONOUSLY ON THE CLIENT SIDE, THESE DEPS ARE QUITE HEAVY
  * USE THE useEncryptionUtils COMPOSABLE INSTEAD
  */

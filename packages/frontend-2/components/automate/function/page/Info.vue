@@ -28,7 +28,7 @@
               <img
                 :src="githubDetails.owner.avatar_url"
                 alt="Github account icon"
-                class="ml-1 w-6 h-6"
+                class="ml-1 w-6 h-6 rounded-full"
               />
             </CommonTextLink>
           </div>

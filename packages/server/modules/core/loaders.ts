@@ -568,10 +568,9 @@ export function buildRequestLoaders(
         string,
         Nullable<AutomationRevisionRecord>
       >(async (ids) => {
-        const results = keyBy(
-          await getLatestAutomationRevisions({ automationIds: ids.slice() }),
-          (a) => a.id
-        )
+        const results = await getLatestAutomationRevisions({
+          automationIds: ids.slice()
+        })
         return ids.map((i) => results[i] || null)
       }),
       getRevisionTriggerDefinitions: createLoader<
