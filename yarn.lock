@@ -13752,7 +13752,6 @@ __metadata:
     "@types/eslint": ^8.4.5
     "@types/js-cookie": ^3.0.2
     "@types/jsdom": ^21.1.1
-    "@types/libsodium-wrappers": ^0.7.14
     "@types/lodash-es": ^4.17.6
     "@types/marked": ^5.0.0
     "@types/mixpanel-browser": ^2.38.0
@@ -13782,7 +13781,6 @@ __metadata:
     jest: 27
     js-cookie: ^3.0.1
     jsdom: ^22.1.0
-    libsodium-wrappers: ^0.7.13
     lodash-es: ^4.17.21
     marked: ^5.1.0
     marked-plaintext: ^0.0.2
@@ -16743,7 +16741,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/libsodium-wrappers@npm:^0, @types/libsodium-wrappers@npm:^0.7.14":
+"@types/libsodium-wrappers@npm:^0":
   version: 0.7.14
   resolution: "@types/libsodium-wrappers@npm:0.7.14"
   checksum: 565d178cd12aa5f7abc03149e50a962450d797e995935368ca1abe1cb5a5b96d81f3115a91f6b6f7dcff210d25f104003708b4bfc5a34751f23460efeb169fa4

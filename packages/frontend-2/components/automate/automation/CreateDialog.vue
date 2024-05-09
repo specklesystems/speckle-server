@@ -315,7 +315,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       formatJsonFormSchemaInputs(parameters, fnRelease.inputSchema, {
         clone: true
       }) || null
-    const encryptedParams = await automationEncrypt.encryptInputs({
+    const encryptedParams = automationEncrypt.encryptInputs({
       inputs: cleanParams
     })
 

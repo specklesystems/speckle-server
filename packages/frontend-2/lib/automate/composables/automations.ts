@@ -49,12 +49,11 @@ export const useAutomationInputEncryptor = (
   const forAutomation = async (params: { automationId: string; projectId: string }) => {
     const utils = await ensureUtils()
     const key = await getPublicKey(params)
-    const encryptor = await utils.buildEncryptor(key)
+    const encryptor = utils.buildEncryptor(key)
 
     return {
-      encryptInputs: async (params: { inputs: Nullable<Record<string, unknown>> }) => {
-        return await encryptor.encrypt(JSON.stringify(params.inputs))
-      },
+      encryptInputs: (params: { inputs: Nullable<Record<string, unknown>> }) =>
+        encryptor.encrypt(JSON.stringify(params.inputs)),
       dispose: () => encryptor.dispose()
     }
   }

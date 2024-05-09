@@ -19,8 +19,6 @@ import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import { Nullable, SourceAppName, isNullOrUndefined } from '@speckle/shared'
 import { has, isObjectLike } from 'lodash'
 
-// TODO: Handle error/404 scenarios properly
-
 const isErrorResponse = (e: unknown): e is ExecutionEngineErrorResponse =>
   isObjectLike(e) && has(e, 'statusCode') && has(e, 'statusMessage')
 
@@ -108,9 +106,9 @@ type AutomationRunPostBody = {
     triggerType: typeof VersionCreationTriggerType
   }>
   functionDefinitions: {
-    functionInputs: Record<string, unknown> | null
     functionId: string
     functionReleaseId: string
+    functionInputs: Record<string, unknown> | null
     functionRunId: string
   }[]
 }
@@ -132,7 +130,14 @@ export const triggerAutomationRun = async (params: {
   speckleToken: string
   automationToken: string
 }) => {
-  const { projectId, automationId, functionRuns, manifests, speckleToken } = params
+  const {
+    projectId,
+    automationId,
+    functionRuns,
+    manifests,
+    speckleToken,
+    automationToken
+  } = params
 
   const url = getApiUrl(`/api/v2/automations/${automationId}/runs`)
   const functionDefinitions = functionRuns.map((functionRun) => {
@@ -164,10 +169,10 @@ export const triggerAutomationRun = async (params: {
   const result = await invokeRequest<AutomationRunResponseBody>({
     url,
     method: 'post',
-    body: payload
+    body: payload,
+    token: automationToken
   })
 
-  // TODO: handle 401
   return result
 }
 

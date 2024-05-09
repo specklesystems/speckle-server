@@ -212,7 +212,7 @@ const onSave = async () => {
       formatJsonFormSchemaInputs(selectedVersionInputs.value, inputSchema.value, {
         clone: true
       }) || null
-    const parameters = await automationEncrypt.encryptInputs({
+    const parameters = automationEncrypt.encryptInputs({
       inputs: cleanParameters
     })
 
