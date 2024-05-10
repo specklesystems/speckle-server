@@ -53,6 +53,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     return projectModelGroups
   })
 
+  const models = computed(() => {
+    return documentModelStore.value.models
+  })
+
   /**
    * Adds a new model and persists it to the host app file.
    * @param model
@@ -322,6 +326,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     connectorVersion,
     documentInfo,
     projectModelGroups,
+    models,
     sendFilters,
     selectionFilter,
     everythingFilter,

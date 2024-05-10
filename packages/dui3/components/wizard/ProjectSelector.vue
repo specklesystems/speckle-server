@@ -41,7 +41,8 @@
           full-width
           @click="createNewProject(searchText)"
         >
-          Create "{{ searchText }}"
+          Create&nbsp;
+          <div class="truncate">"{{ searchText }}"</div>
         </FormButton>
         <FormButton
           v-else
