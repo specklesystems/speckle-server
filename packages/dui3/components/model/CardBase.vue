@@ -15,7 +15,10 @@
             <CloudArrowUpIcon v-else class="w-4" />
           </CommonBadge>
         </div>
-        <div class="truncate font-bold text-foreground grow select-none -mt-[2px]">
+        <div
+          class="truncate font-bold text-foreground grow select-none -mt-[2px]"
+          :title="modelData.name"
+        >
           {{ modelData.displayName }}
         </div>
         <button

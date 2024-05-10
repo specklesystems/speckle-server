@@ -164,6 +164,7 @@ export const modelDetailsQuery = graphql(`
       model(id: $modelId) {
         id
         displayName
+        name
         versions {
           totalCount
         }
