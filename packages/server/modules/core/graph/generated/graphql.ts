@@ -5,7 +5,7 @@ import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from 
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes';
-import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
+import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -1839,6 +1839,21 @@ export type ProjectAutomationsStatusUpdatedMessage = {
   version: Version;
 };
 
+export type ProjectAutomationsUpdatedMessage = {
+  __typename?: 'ProjectAutomationsUpdatedMessage';
+  automation?: Maybe<Automation>;
+  automationId: Scalars['String'];
+  /** Only set if type === CREATED_REVISION */
+  revision?: Maybe<AutomationRevision>;
+  type: ProjectAutomationsUpdatedMessageType;
+};
+
+export enum ProjectAutomationsUpdatedMessageType {
+  Created = 'CREATED',
+  CreatedRevision = 'CREATED_REVISION',
+  Updated = 'UPDATED'
+}
+
 export type ProjectCollaborator = {
   __typename?: 'ProjectCollaborator';
   id: Scalars['ID'];
@@ -2079,6 +2094,14 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
 }
+
+export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
+  __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
+  model: Model;
+  project: Project;
+  status: TriggeredAutomationsStatus;
+  version: Version;
+};
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
@@ -2771,6 +2794,8 @@ export type Subscription = {
   /** Subscribe to commit updated event. */
   commitUpdated?: Maybe<Scalars['JSONObject']>;
   projectAutomationsStatusUpdated: ProjectAutomationsStatusUpdatedMessage;
+  /** Subscribe to updates to automations in the project */
+  projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
    * Subscribe to updates to resource comments/threads. Optionally specify resource ID string to only receive
    * updates regarding comments for those resources.
@@ -2784,6 +2809,8 @@ export type Subscription = {
   projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending versions */
   projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
+  /** Subscribe to updates to any triggered automations statuses in the project */
+  projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
   /** Subscribe to when a project's versions get their preview image fully generated. */
@@ -2865,6 +2892,11 @@ export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectAutomationsUpdatedArgs = {
+  projectId: Scalars['String'];
+};
+
+
 export type SubscriptionProjectCommentsUpdatedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
@@ -2888,6 +2920,11 @@ export type SubscriptionProjectPendingModelsUpdatedArgs = {
 
 export type SubscriptionProjectPendingVersionsUpdatedArgs = {
   id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs = {
+  projectId: Scalars['String'];
 };
 
 
@@ -3532,7 +3569,9 @@ export type ResolversTypes = {
   ProjectAutomationMutations: ResolverTypeWrapper<ProjectAutomationMutationsGraphQLReturn>;
   ProjectAutomationRevisionCreateInput: ProjectAutomationRevisionCreateInput;
   ProjectAutomationUpdateInput: ProjectAutomationUpdateInput;
-  ProjectAutomationsStatusUpdatedMessage: ResolverTypeWrapper<Omit<ProjectAutomationsStatusUpdatedMessage, 'model' | 'project' | 'status' | 'version'> & { model: ResolversTypes['Model'], project: ResolversTypes['Project'], status: ResolversTypes['AutomationsStatus'], version: ResolversTypes['Version'] }>;
+  ProjectAutomationsStatusUpdatedMessage: ResolverTypeWrapper<ProjectAutomationsStatusUpdatedMessageGraphQLReturn>;
+  ProjectAutomationsUpdatedMessage: ResolverTypeWrapper<ProjectAutomationsUpdatedMessageGraphQLReturn>;
+  ProjectAutomationsUpdatedMessageType: ProjectAutomationsUpdatedMessageType;
   ProjectCollaborator: ResolverTypeWrapper<Omit<ProjectCollaborator, 'user'> & { user: ResolversTypes['LimitedUser'] }>;
   ProjectCollection: ResolverTypeWrapper<Omit<ProjectCollection, 'items'> & { items: Array<ResolversTypes['Project']> }>;
   ProjectCommentCollection: ResolverTypeWrapper<Omit<ProjectCommentCollection, 'items'> & { items: Array<ResolversTypes['Comment']> }>;
@@ -3554,6 +3593,7 @@ export type ResolversTypes = {
   ProjectPendingModelsUpdatedMessageType: ProjectPendingModelsUpdatedMessageType;
   ProjectPendingVersionsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversTypes['FileUpload'] }>;
   ProjectPendingVersionsUpdatedMessageType: ProjectPendingVersionsUpdatedMessageType;
+  ProjectTriggeredAutomationsStatusUpdatedMessage: ResolverTypeWrapper<Omit<ProjectTriggeredAutomationsStatusUpdatedMessage, 'model' | 'project' | 'status' | 'version'> & { model: ResolversTypes['Model'], project: ResolversTypes['Project'], status: ResolversTypes['TriggeredAutomationsStatus'], version: ResolversTypes['Version'] }>;
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: ResolverTypeWrapper<Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
@@ -3741,7 +3781,8 @@ export type ResolversParentTypes = {
   ProjectAutomationMutations: ProjectAutomationMutationsGraphQLReturn;
   ProjectAutomationRevisionCreateInput: ProjectAutomationRevisionCreateInput;
   ProjectAutomationUpdateInput: ProjectAutomationUpdateInput;
-  ProjectAutomationsStatusUpdatedMessage: Omit<ProjectAutomationsStatusUpdatedMessage, 'model' | 'project' | 'status' | 'version'> & { model: ResolversParentTypes['Model'], project: ResolversParentTypes['Project'], status: ResolversParentTypes['AutomationsStatus'], version: ResolversParentTypes['Version'] };
+  ProjectAutomationsStatusUpdatedMessage: ProjectAutomationsStatusUpdatedMessageGraphQLReturn;
+  ProjectAutomationsUpdatedMessage: ProjectAutomationsUpdatedMessageGraphQLReturn;
   ProjectCollaborator: Omit<ProjectCollaborator, 'user'> & { user: ResolversParentTypes['LimitedUser'] };
   ProjectCollection: Omit<ProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
   ProjectCommentCollection: Omit<ProjectCommentCollection, 'items'> & { items: Array<ResolversParentTypes['Comment']> };
@@ -3758,6 +3799,7 @@ export type ResolversParentTypes = {
   ProjectMutations: MutationsObjectGraphQLReturn;
   ProjectPendingModelsUpdatedMessage: Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversParentTypes['FileUpload'] };
   ProjectPendingVersionsUpdatedMessage: Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversParentTypes['FileUpload'] };
+  ProjectTriggeredAutomationsStatusUpdatedMessage: Omit<ProjectTriggeredAutomationsStatusUpdatedMessage, 'model' | 'project' | 'status' | 'version'> & { model: ResolversParentTypes['Model'], project: ResolversParentTypes['Project'], status: ResolversParentTypes['TriggeredAutomationsStatus'], version: ResolversParentTypes['Version'] };
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
@@ -4537,6 +4579,14 @@ export type ProjectAutomationsStatusUpdatedMessageResolvers<ContextType = GraphQ
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type ProjectAutomationsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectAutomationsUpdatedMessage'] = ResolversParentTypes['ProjectAutomationsUpdatedMessage']> = {
+  automation?: Resolver<Maybe<ResolversTypes['Automation']>, ParentType, ContextType>;
+  automationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  revision?: Resolver<Maybe<ResolversTypes['AutomationRevision']>, ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['ProjectAutomationsUpdatedMessageType'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type ProjectCollaboratorResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectCollaborator'] = ResolversParentTypes['ProjectCollaborator']> = {
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   role?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -4611,6 +4661,14 @@ export type ProjectPendingVersionsUpdatedMessageResolvers<ContextType = GraphQLC
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['ProjectPendingVersionsUpdatedMessageType'], ParentType, ContextType>;
   version?: Resolver<ResolversTypes['FileUpload'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectTriggeredAutomationsStatusUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectTriggeredAutomationsStatusUpdatedMessage'] = ResolversParentTypes['ProjectTriggeredAutomationsStatusUpdatedMessage']> = {
+  model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes['TriggeredAutomationsStatus'], ParentType, ContextType>;
+  version?: Resolver<ResolversTypes['Version'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -4856,11 +4914,13 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   commitDeleted?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitDeleted", ParentType, ContextType, RequireFields<SubscriptionCommitDeletedArgs, 'streamId'>>;
   commitUpdated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitUpdated", ParentType, ContextType, RequireFields<SubscriptionCommitUpdatedArgs, 'streamId'>>;
   projectAutomationsStatusUpdated?: SubscriptionResolver<ResolversTypes['ProjectAutomationsStatusUpdatedMessage'], "projectAutomationsStatusUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectAutomationsStatusUpdatedArgs, 'projectId'>>;
+  projectAutomationsUpdated?: SubscriptionResolver<ResolversTypes['ProjectAutomationsUpdatedMessage'], "projectAutomationsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectAutomationsUpdatedArgs, 'projectId'>>;
   projectCommentsUpdated?: SubscriptionResolver<ResolversTypes['ProjectCommentsUpdatedMessage'], "projectCommentsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectCommentsUpdatedArgs, 'target'>>;
   projectFileImportUpdated?: SubscriptionResolver<ResolversTypes['ProjectFileImportUpdatedMessage'], "projectFileImportUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectFileImportUpdatedArgs, 'id'>>;
   projectModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectModelsUpdatedMessage'], "projectModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectModelsUpdatedArgs, 'id'>>;
   projectPendingModelsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingModelsUpdatedMessage'], "projectPendingModelsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingModelsUpdatedArgs, 'id'>>;
   projectPendingVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectPendingVersionsUpdatedMessage'], "projectPendingVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectPendingVersionsUpdatedArgs, 'id'>>;
+  projectTriggeredAutomationsStatusUpdated?: SubscriptionResolver<ResolversTypes['ProjectTriggeredAutomationsStatusUpdatedMessage'], "projectTriggeredAutomationsStatusUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs, 'projectId'>>;
   projectUpdated?: SubscriptionResolver<ResolversTypes['ProjectUpdatedMessage'], "projectUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectUpdatedArgs, 'id'>>;
   projectVersionsPreviewGenerated?: SubscriptionResolver<ResolversTypes['ProjectVersionsPreviewGeneratedMessage'], "projectVersionsPreviewGenerated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionsPreviewGeneratedArgs, 'id'>>;
   projectVersionsUpdated?: SubscriptionResolver<ResolversTypes['ProjectVersionsUpdatedMessage'], "projectVersionsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectVersionsUpdatedArgs, 'id'>>;
@@ -5107,6 +5167,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   Project?: ProjectResolvers<ContextType>;
   ProjectAutomationMutations?: ProjectAutomationMutationsResolvers<ContextType>;
   ProjectAutomationsStatusUpdatedMessage?: ProjectAutomationsStatusUpdatedMessageResolvers<ContextType>;
+  ProjectAutomationsUpdatedMessage?: ProjectAutomationsUpdatedMessageResolvers<ContextType>;
   ProjectCollaborator?: ProjectCollaboratorResolvers<ContextType>;
   ProjectCollection?: ProjectCollectionResolvers<ContextType>;
   ProjectCommentCollection?: ProjectCommentCollectionResolvers<ContextType>;
@@ -5117,6 +5178,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   ProjectMutations?: ProjectMutationsResolvers<ContextType>;
   ProjectPendingModelsUpdatedMessage?: ProjectPendingModelsUpdatedMessageResolvers<ContextType>;
   ProjectPendingVersionsUpdatedMessage?: ProjectPendingVersionsUpdatedMessageResolvers<ContextType>;
+  ProjectTriggeredAutomationsStatusUpdatedMessage?: ProjectTriggeredAutomationsStatusUpdatedMessageResolvers<ContextType>;
   ProjectUpdatedMessage?: ProjectUpdatedMessageResolvers<ContextType>;
   ProjectVersionsPreviewGeneratedMessage?: ProjectVersionsPreviewGeneratedMessageResolvers<ContextType>;
   ProjectVersionsUpdatedMessage?: ProjectVersionsUpdatedMessageResolvers<ContextType>;

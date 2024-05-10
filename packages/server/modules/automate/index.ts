@@ -6,7 +6,11 @@ import {
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
 import { Environment } from '@speckle/shared'
-import { getActiveTriggerDefinitions } from '@/modules/automate/repositories/automations'
+import {
+  getActiveTriggerDefinitions,
+  getAutomationRunFullTriggers,
+  getLatestVersionAutomationRuns
+} from '@/modules/automate/repositories/automations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScope } from '@/modules/shared'
@@ -17,6 +21,11 @@ import {
   getFunctionInputDecryptor
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
+import {
+  setupAutomationUpdateSubscriptions,
+  setupStatusUpdateSubscriptions
+} from '@/modules/automate/services/subscriptions'
+import { getAutomationsStatus } from '@/modules/automate/services/automationManagement'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -53,18 +62,31 @@ const initializeEventListeners = () => {
       buildDecryptor
     })
   })
+  const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptions({
+    getAutomationsStatus: getAutomationsStatus({
+      getLatestVersionAutomationRuns
+    }),
+    getAutomationRunFullTriggers
+  })
+  const setupAutomationUpdateSubscriptionsInvoke = setupAutomationUpdateSubscriptions()
 
-  const quit = VersionsEmitter.listen(
-    VersionEvents.Created,
-    async ({ modelId, version }) => {
-      await onModelVersionCreate({
-        getTriggers: getActiveTriggerDefinitions,
-        triggerFunction: triggerFn
-      })({ modelId, versionId: version.id })
-    }
-  )
+  const quitters = [
+    VersionsEmitter.listen(
+      VersionEvents.Created,
+      async ({ modelId, version, projectId }) => {
+        await onModelVersionCreate({
+          getTriggers: getActiveTriggerDefinitions,
+          triggerFunction: triggerFn
+        })({ modelId, versionId: version.id, projectId })
+      }
+    ),
+    setupStatusUpdateSubscriptionsInvoke(),
+    setupAutomationUpdateSubscriptionsInvoke()
+  ]
 
-  return quit
+  return () => {
+    quitters.forEach((quit) => quit())
+  }
 }
 
 const automateModule: SpeckleModule = {

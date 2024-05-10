@@ -45,6 +45,7 @@ import {
 } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { validateInputAgainstFunctionSchema } from '@/modules/automate/utils/inputSchemaValidator'
+import { AutomationsEmitter } from '@/modules/automate/events/automations'
 
 export type CreateAutomationDeps = {
   createAuthCode: ReturnType<typeof createStoredAuthCode>
@@ -93,7 +94,7 @@ export const createAutomation =
 
     const automationId = cryptoRandomString({ length: 10 })
 
-    return await storeAutomation(
+    const res = await storeAutomation(
       {
         id: automationId,
         name,
@@ -109,6 +110,12 @@ export const createAutomation =
         automateToken: token
       }
     )
+
+    await AutomationsEmitter.emit(AutomationsEmitter.events.Created, {
+      automation: res.automation
+    })
+
+    return res
   }
 
 export type UpdateAutomationDeps = {
@@ -153,10 +160,16 @@ export const updateAutomation =
       return existingAutomation
     }
 
-    return await updateAutomation({
+    const res = await updateAutomation({
       ...updates,
       id: input.id
     })
+
+    await AutomationsEmitter.emit(AutomationsEmitter.events.Updated, {
+      automation: res
+    })
+
+    return res
   }
 
 type ValidateNewTriggerDefinitionsDeps = {
@@ -387,7 +400,14 @@ export const createAutomationRevision =
       active: true,
       publicKey: encryptionKeys.publicKey
     }
-    return await storeAutomationRevision(revisionInput)
+    const res = await storeAutomationRevision(revisionInput)
+
+    await AutomationsEmitter.emit(AutomationsEmitter.events.CreatedRevision, {
+      automation: existingAutomation,
+      revision: res
+    })
+
+    return res
   }
 
 export type GetAutomationsStatusDeps = {

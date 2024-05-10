@@ -121,6 +121,17 @@ export = {
       return ctx.loaders.commits.getCommitBranch.load(parent.triggeringId)
     }
   },
+  ProjectAutomationsStatusUpdatedMessage: {
+    async project(parent, _args, ctx) {
+      return ctx.loaders.streams.getStream.load(parent.projectId)
+    },
+    async model(parent, _args, ctx) {
+      return ctx.loaders.branches.getById.load(parent.modelId)
+    },
+    async version(parent, _args, ctx) {
+      return ctx.loaders.commits.getById.load(parent.versionId)
+    }
+  },
   Project: {
     async automation(parent, args, ctx) {
       return ctx.loaders.streams.getAutomation.forStream(parent.id).load(args.id)

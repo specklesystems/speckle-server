@@ -1,10 +1,12 @@
 import { automateLogger } from '@/logging/logging'
 import { FunctionRunReportStatusesError } from '@/modules/automate/errors/runs'
+import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import {
   AutomationRunStatus,
   AutomationRunStatuses
 } from '@/modules/automate/helpers/types'
 import {
+  GetFunctionRunsForAutomationRunIdsItem,
   getFunctionRuns,
   getFunctionRunsForAutomationRunIds,
   updateAutomationRun,
@@ -15,7 +17,7 @@ import {
   AutomateRunStatus
 } from '@/modules/core/graph/generated/graphql'
 import { Automate } from '@speckle/shared'
-import { difference, groupBy, keyBy, reduce, uniqBy } from 'lodash'
+import { difference, groupBy, keyBy, mapValues, reduce, uniqBy } from 'lodash'
 
 const AutomationRunStatusOrder: Array<AutomationRunStatus | AutomationRunStatus[]> = [
   AutomationRunStatuses.pending,
@@ -140,16 +142,16 @@ export const reportFunctionRunStatuses =
       }),
       (r) => r.id
     )
-    const allAutomationRunStatuses = reduce(
+    const allAutomationRunFunctionRuns = reduce(
       await getFunctionRunsForAutomationRunIds({
         functionRunIds: updatableFunctionRunIds
       }),
       (acc, r) => {
         acc[r.runId] = acc[r.runId] || {}
-        acc[r.runId][r.id] = r.status
+        acc[r.runId][r.id] = r
         return acc
       },
-      {} as Record<string, Record<string, AutomationRunStatus>>
+      {} as Record<string, Record<string, GetFunctionRunsForAutomationRunIdsItem>>
     )
 
     const errorsByRunId: Record<string, string> = {}
@@ -211,16 +213,16 @@ export const reportFunctionRunStatuses =
       try {
         // Taking all function run statuses into account when calculating new automation status,
         // even function run statuses that were not updated in this call
-        const preexistingFunctionRunStatuses = allAutomationRunStatuses[runId] || {}
+        const preexistingFunctionRuns = allAutomationRunFunctionRuns[runId] || {}
         const finalFunctionRunStatuses = {
-          ...preexistingFunctionRunStatuses,
+          ...mapValues(preexistingFunctionRuns, (r) => r.status),
           ...reduce(
             updates,
             (acc, u) => {
               acc[u.update.functionRunId] = u.newStatus
               return acc
             },
-            {} as typeof preexistingFunctionRunStatuses
+            {} as Record<string, AutomationRunStatus>
           )
         }
 
@@ -229,7 +231,7 @@ export const reportFunctionRunStatuses =
         )
 
         // Update function runs
-        await Promise.all(
+        const updatedFnRuns = await Promise.all(
           updates.map((u) =>
             updateFunctionRun({
               id: u.update.functionRunId,
@@ -248,10 +250,24 @@ export const reportFunctionRunStatuses =
         )
 
         // Update automation run
-        await updateAutomationRun({
+        const updatedRun = await updateAutomationRun({
           id: runId,
           status: newAutomationStatus,
           updatedAt: new Date()
+        })
+
+        // Collect all function runs together in one array
+        const updatedRunIds = updatedFnRuns.map((r) => r.id)
+        const allFnRuns: typeof updatedFnRuns = [
+          ...updatedFnRuns,
+          ...Object.values(preexistingFunctionRuns).filter(
+            (r) => !updatedRunIds.includes(r.id)
+          )
+        ]
+
+        await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.StatusUpdated, {
+          run: updatedRun,
+          functionRuns: allFnRuns
         })
       } catch (e) {
         automateLogger.error('Automation run status update failed', e, {

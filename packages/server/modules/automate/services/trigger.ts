@@ -41,6 +41,7 @@ import {
   getFunctionInputDecryptor
 } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
+import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 
 export type OnModelVersionCreateDeps = {
   getTriggers: typeof getActiveTriggerDefinitions
@@ -52,8 +53,8 @@ export type OnModelVersionCreateDeps = {
  */
 export const onModelVersionCreate =
   (deps: OnModelVersionCreateDeps) =>
-  async (params: { modelId: string; versionId: string }) => {
-    const { modelId, versionId } = params
+  async (params: { modelId: string; versionId: string; projectId: string }) => {
+    const { modelId, versionId, projectId } = params
     const { getTriggers, triggerFunction } = deps
 
     // get triggers where modelId matches
@@ -70,6 +71,7 @@ export const onModelVersionCreate =
             revisionId: tr.automationRevisionId,
             manifest: {
               versionId,
+              projectId,
               modelId: tr.triggeringId,
               triggerType: tr.triggerType
             }
@@ -266,6 +268,12 @@ export const triggerAutomationRevisionRun =
       }))
       await upsertAutomationRun(automationRun)
     }
+
+    await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.Created, {
+      run: automationRun,
+      manifests: triggerManifests
+    })
+
     return { automationRunId: automationRun.id }
   }
 
@@ -372,6 +380,7 @@ async function composeTriggerData(params: {
         ...latestVersions.map(
           (version): VersionCreatedTriggerManifest => ({
             modelId: version.branchId,
+            projectId,
             versionId: version.id,
             triggerType: VersionCreationTriggerType
           })
@@ -446,6 +455,7 @@ export const manuallyTriggerAutomation =
     return await triggerFunction({
       revisionId: triggerDefs[0].automationRevisionId,
       manifest: <VersionCreatedTriggerManifest>{
+        projectId,
         modelId: latestCommit.branchId,
         versionId: latestCommit.id,
         triggerType: VersionCreationTriggerType

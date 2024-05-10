@@ -17,11 +17,13 @@ import {
   ProjectVersionsPreviewGeneratedMessage,
   ProjectVersionsUpdatedMessage,
   SubscriptionProjectAutomationsStatusUpdatedArgs,
+  SubscriptionProjectAutomationsUpdatedArgs,
   SubscriptionProjectCommentsUpdatedArgs,
   SubscriptionProjectFileImportUpdatedArgs,
   SubscriptionProjectModelsUpdatedArgs,
   SubscriptionProjectPendingModelsUpdatedArgs,
   SubscriptionProjectPendingVersionsUpdatedArgs,
+  SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs,
   SubscriptionProjectUpdatedArgs,
   SubscriptionProjectVersionsPreviewGeneratedArgs,
   SubscriptionProjectVersionsUpdatedArgs,
@@ -40,6 +42,10 @@ import {
 import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
 import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes'
+import {
+  ProjectAutomationsStatusUpdatedMessageGraphQLReturn,
+  ProjectAutomationsUpdatedMessageGraphQLReturn
+} from '@/modules/automate/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -90,7 +96,10 @@ export enum ProjectSubscriptions {
   ProjectVersionsUpdated = 'PROJECT_VERSIONS_UPDATED',
   ProjectVersionsPreviewGenerated = 'PROJECT_VERSIONS_PREVIEW_GENERATED',
   ProjectCommentsUpdated = 'PROJECT_COMMENTS_UPDATED',
-  ProjectAutomationStatusUpdated = 'PROJECT_AUTOMATION_STATUS_UPDATED'
+  // old beta subscription:
+  ProjectAutomationStatusUpdated = 'PROJECT_AUTOMATION_STATUS_UPDATED',
+  ProjectTriggeredAutomationsStatusUpdated = 'PROJECT_TRIGGERED_AUTOMATION_STATUS_UPDATED',
+  ProjectAutomationsUpdated = 'PROJECT_AUTOMATIONS_UPDATED'
 }
 
 export enum ViewerSubscriptions {
@@ -227,6 +236,20 @@ type SubscriptionTypeMap = {
       projectId: string
     }
     variables: SubscriptionProjectAutomationsStatusUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectTriggeredAutomationsStatusUpdated]: {
+    payload: {
+      projectTriggeredAutomationsStatusUpdated: ProjectAutomationsStatusUpdatedMessageGraphQLReturn
+      projectId: string
+    }
+    variables: SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectAutomationsUpdated]: {
+    payload: {
+      projectAutomationsUpdated: ProjectAutomationsUpdatedMessageGraphQLReturn
+      projectId: string
+    }
+    variables: SubscriptionProjectAutomationsUpdatedArgs
   }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 

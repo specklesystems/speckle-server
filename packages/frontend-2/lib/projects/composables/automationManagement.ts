@@ -1,13 +1,19 @@
 import { useMutation } from '@vue/apollo-composable'
-import type {
-  CreateAutomationMutationVariables,
-  CreateAutomationRevisionMutationVariables,
-  UpdateAutomationMutation,
-  UpdateAutomationMutationVariables
+import {
+  ProjectAutomationsArgs,
+  type CreateAutomationMutationVariables,
+  type CreateAutomationRevisionMutationVariables,
+  type Project,
+  type ProjectAutomationArgs,
+  type UpdateAutomationMutation,
+  type UpdateAutomationMutationVariables
 } from '~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  evictObjectFields,
+  getCacheId,
+  getFirstErrorMessage,
+  modifyObjectFields
 } from '~/lib/common/helpers/graphql'
 import {
   createAutomationMutation,
@@ -26,7 +32,37 @@ export function useCreateAutomation() {
   return async (input: CreateAutomationMutationVariables) => {
     if (!activeUser.value) return
 
-    const res = await createAutomation(input).catch(convertThrowIntoFetchResult)
+    const res = await createAutomation(input, {
+      update: (cache, { data }) => {
+        const newAutomation = data?.projectMutations?.automationMutations?.create
+        if (!newAutomation) return
+
+        const projectCacheId = getCacheId('Project', input.projectId)
+
+        // Evict Project.automation, if somehow it was queried for already (very unlikely)
+        evictObjectFields<ProjectAutomationArgs>(
+          cache,
+          projectCacheId,
+          (fieldName, vars) => {
+            if (fieldName !== 'automation') return false
+            if (vars.id !== newAutomation.id) return false
+            return true
+          }
+        )
+
+        // Update Project.automations list
+        modifyObjectFields<ProjectAutomationsArgs, Project['automations']>(
+          cache,
+          projectCacheId,
+          (_fieldName, vars, data) => {
+            if (vars['limit'] === 0) return
+            if (vars['filter']?.length) return
+            if (data) return
+          },
+          { fieldNameWhitelist: ['automations'] }
+        )
+      }
+    }).catch(convertThrowIntoFetchResult)
     if (res?.data?.projectMutations?.automationMutations?.create?.id) {
       triggerNotification({
         type: ToastNotificationType.Success,

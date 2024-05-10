@@ -329,3 +329,40 @@ extend type Mutation {
     @hasScope(scope: "automate:report-results")
   automateMutations: AutomateMutations! @hasServerRole(role: SERVER_GUEST)
 }
+
+type ProjectTriggeredAutomationsStatusUpdatedMessage {
+  status: TriggeredAutomationsStatus!
+  version: Version!
+  model: Model!
+  project: Project!
+}
+
+enum ProjectAutomationsUpdatedMessageType {
+  CREATED
+  UPDATED
+  CREATED_REVISION
+}
+
+type ProjectAutomationsUpdatedMessage {
+  type: ProjectAutomationsUpdatedMessageType!
+  automationId: String!
+  automation: Automation
+  """
+  Only set if type === CREATED_REVISION
+  """
+  revision: AutomationRevision
+}
+
+extend type Subscription {
+  """
+  Subscribe to updates to any triggered automations statuses in the project
+  """
+  projectTriggeredAutomationsStatusUpdated(
+    projectId: String!
+  ): ProjectTriggeredAutomationsStatusUpdatedMessage!
+
+  """
+  Subscribe to updates to automations in the project
+  """
+  projectAutomationsUpdated(projectId: String!): ProjectAutomationsUpdatedMessage!
+}

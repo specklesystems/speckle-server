@@ -140,6 +140,7 @@ export type VersionCreatedTriggerManifest = BaseTriggerManifest<
 > & {
   modelId: string
   versionId: string
+  projectId: string
 }
 
 export const isVersionCreatedTriggerManifest = (

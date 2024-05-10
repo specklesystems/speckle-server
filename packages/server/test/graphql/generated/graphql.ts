@@ -1829,6 +1829,21 @@ export type ProjectAutomationsStatusUpdatedMessage = {
   version: Version;
 };
 
+export type ProjectAutomationsUpdatedMessage = {
+  __typename?: 'ProjectAutomationsUpdatedMessage';
+  automation?: Maybe<Automation>;
+  automationId: Scalars['String'];
+  /** Only set if type === CREATED_REVISION */
+  revision?: Maybe<AutomationRevision>;
+  type: ProjectAutomationsUpdatedMessageType;
+};
+
+export enum ProjectAutomationsUpdatedMessageType {
+  Created = 'CREATED',
+  CreatedRevision = 'CREATED_REVISION',
+  Updated = 'UPDATED'
+}
+
 export type ProjectCollaborator = {
   __typename?: 'ProjectCollaborator';
   id: Scalars['ID'];
@@ -2069,6 +2084,14 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
 }
+
+export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
+  __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
+  model: Model;
+  project: Project;
+  status: TriggeredAutomationsStatus;
+  version: Version;
+};
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
@@ -2761,6 +2784,8 @@ export type Subscription = {
   /** Subscribe to commit updated event. */
   commitUpdated?: Maybe<Scalars['JSONObject']>;
   projectAutomationsStatusUpdated: ProjectAutomationsStatusUpdatedMessage;
+  /** Subscribe to updates to automations in the project */
+  projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
    * Subscribe to updates to resource comments/threads. Optionally specify resource ID string to only receive
    * updates regarding comments for those resources.
@@ -2774,6 +2799,8 @@ export type Subscription = {
   projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending versions */
   projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
+  /** Subscribe to updates to any triggered automations statuses in the project */
+  projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
   /** Subscribe to when a project's versions get their preview image fully generated. */
@@ -2855,6 +2882,11 @@ export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectAutomationsUpdatedArgs = {
+  projectId: Scalars['String'];
+};
+
+
 export type SubscriptionProjectCommentsUpdatedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
@@ -2878,6 +2910,11 @@ export type SubscriptionProjectPendingModelsUpdatedArgs = {
 
 export type SubscriptionProjectPendingVersionsUpdatedArgs = {
   id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs = {
+  projectId: Scalars['String'];
 };
 
 

@@ -11,6 +11,7 @@ import {
 import {
   AutomateFunction,
   AutomateFunctionRelease,
+  ProjectAutomationsUpdatedMessage,
   TriggeredAutomationsStatus
 } from '@/modules/core/graph/generated/graphql'
 import { Nullable } from '@speckle/shared'
@@ -58,4 +59,19 @@ export type AutomateFunctionRunGraphQLReturn = AutomationFunctionRunRecord
 export type TriggeredAutomationsStatusGraphQLReturn = Merge<
   TriggeredAutomationsStatus,
   { status: AutomationRunStatus; automationRuns: AutomateRunGraphQLReturn[] }
+>
+
+export type ProjectAutomationsStatusUpdatedMessageGraphQLReturn = {
+  projectId: string
+  modelId: string
+  versionId: string
+  status: TriggeredAutomationsStatusGraphQLReturn
+}
+
+export type ProjectAutomationsUpdatedMessageGraphQLReturn = Merge<
+  ProjectAutomationsUpdatedMessage,
+  {
+    automation: AutomationGraphQLReturn | null
+    revision: AutomationRevisionGraphQLReturn | null
+  }
 >

@@ -160,7 +160,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           }
         })({
           modelId: cryptoRandomString({ length: 10 }),
-          versionId: cryptoRandomString({ length: 10 })
+          versionId: cryptoRandomString({ length: 10 }),
+          projectId: cryptoRandomString({ length: 10 })
         })
         expect(Object.keys(triggered)).length(0)
       })
@@ -181,6 +182,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         ]
         const triggered: Record<string, VersionCreatedTriggerManifest> = {}
         const versionId = cryptoRandomString({ length: 10 })
+        const projectId = cryptoRandomString({ length: 10 })
+
         await onModelVersionCreate({
           getTriggers: async <
             T extends AutomationTriggerType = AutomationTriggerType
@@ -195,14 +198,16 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           }
         })({
           modelId: cryptoRandomString({ length: 10 }),
-          versionId
+          versionId,
+          projectId
         })
         expect(Object.keys(triggered)).length(storedTriggers.length)
         storedTriggers.forEach((st) => {
           const expectedTrigger: VersionCreatedTriggerManifest = {
             versionId,
             modelId: st.triggeringId,
-            triggerType: st.triggerType
+            triggerType: st.triggerType,
+            projectId
           }
           expect(triggered[st.automationRevisionId]).deep.equal(expectedTrigger)
         })
@@ -238,7 +243,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           }
         })({
           modelId: cryptoRandomString({ length: 10 }),
-          versionId
+          versionId,
+          projectId: cryptoRandomString({ length: 10 })
         })
         expect(Object.keys(triggered)).length(storedTriggers.length - 1)
       })
@@ -644,7 +650,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const manifest: VersionCreatedTriggerManifest = {
           triggerType: VersionCreationTriggerType,
           modelId: cryptoRandomString({ length: 10 }),
-          versionId: cryptoRandomString({ length: 10 })
+          versionId: cryptoRandomString({ length: 10 }),
+          projectId: cryptoRandomString({ length: 10 })
         }
 
         try {
@@ -692,7 +699,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const manifest: VersionCreatedTriggerManifest = {
           triggerType: VersionCreationTriggerType,
           modelId: cryptoRandomString({ length: 10 }),
-          versionId: cryptoRandomString({ length: 10 })
+          versionId: cryptoRandomString({ length: 10 }),
+          projectId: cryptoRandomString({ length: 10 })
         }
 
         try {
@@ -754,7 +762,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const manifest: VersionCreatedTriggerManifest = {
           triggerType: VersionCreationTriggerType,
           modelId: cryptoRandomString({ length: 10 }),
-          versionId: cryptoRandomString({ length: 10 })
+          versionId: cryptoRandomString({ length: 10 }),
+          projectId: cryptoRandomString({ length: 10 })
         }
         try {
           await ensureRunConditions({
