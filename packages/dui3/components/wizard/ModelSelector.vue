@@ -34,23 +34,30 @@
         />
 
         <LayoutDialog
-          v-model:open="showModelHasVersionsWarningDialog"
+          v-model:open="showSelectionHasProblemsDialog"
           title="Warning"
           chromium65-compatibility
         >
-          <p class="mb-2 text-sm">
-            The model you selected contains versions coming from other files/apps.
-            <b>This may result in a broken version history.</b>
-            <br />
-            <br />
-            Are you sure you want to proceed?
-          </p>
+          <div class="mx-1">
+            <p v-if="hasNonZeroVersionsProblem" class="mb-2 text-sm">
+              <ExclamationTriangleIcon class="w-4 in inline text-orange-500" />
+              The model you selected contains versions coming from
+              <b>other files/apps</b>
+              .
+            </p>
+            <p v-if="existingModelProblem" class="mb-2 text-sm">
+              <ExclamationTriangleIcon class="w-4 in inline text-orange-500" />
+              The model you selected
+              <b>already exists in the file.</b>
+            </p>
+            <p class="mb-2 text-sm">Are you sure you want to proceed?</p>
+          </div>
           <template #buttons>
             <FormButton
               full-width
               size="sm"
               text
-              @click="showModelHasVersionsWarningDialog = false"
+              @click="showSelectionHasProblemsDialog = false"
             >
               Cancel
             </FormButton>
@@ -59,6 +66,7 @@
             </FormButton>
           </template>
         </LayoutDialog>
+
         <FormButton
           v-if="searchText && hasReachedEnd && showNewModel"
           full-width
@@ -105,7 +113,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { PlusIcon } from '@heroicons/vue/20/solid'
+import { PlusIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 import { provideApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
 import {
   ProjectListProjectItemFragment,
@@ -118,9 +126,11 @@ import {
 } from '~/lib/graphql/mutationsAndQueries'
 import { useForm } from 'vee-validate'
 import { DUIAccount, useAccountStore } from '~/store/accounts'
+import { useHostAppStore } from '~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
+const hostAppStore = useHostAppStore()
 
 const emit = defineEmits<{
   (e: 'next', model: ModelListModelItemFragment): void
@@ -138,7 +148,7 @@ const props = withDefaults(
 const accountStore = useAccountStore()
 
 const showNewModelDialog = ref(false)
-const showModelHasVersionsWarningDialog = ref(false)
+const showSelectionHasProblemsDialog = ref(false)
 
 const searchText = ref<string>()
 const newModelName = ref<string>()
@@ -146,16 +156,23 @@ const newModelName = ref<string>()
 watch(searchText, () => (newModelName.value = searchText.value))
 
 let selectedModel: ModelListModelItemFragment | undefined = undefined
+const existingModelProblem = ref(false)
+const hasNonZeroVersionsProblem = ref(false)
 const handleModelSelect = (model: ModelListModelItemFragment) => {
-  // NOTE: we're using the showNewModel prop as a giveaway of whether we're in the send wizard - we do not need this extra check in the receive wizard
-  if (model.versions.totalCount === 0 || !props.showNewModel) {
+  existingModelProblem.value = !!hostAppStore.models.find((m) => m.modelId === model.id)
+  hasNonZeroVersionsProblem.value =
+    model.versions.totalCount !== 0 && props.showNewModel // NOTE: we're using the showNewModel prop as a giveaway of whether we're in the send wizard - we do not need this extra check in the receive wizard
+
+  if (!existingModelProblem.value && !hasNonZeroVersionsProblem.value) {
     return emit('next', model)
   }
   selectedModel = model
-  showModelHasVersionsWarningDialog.value = true
+  showSelectionHasProblemsDialog.value = true
 }
 
 const confirmModelSelection = () => {
+  existingModelProblem.value = false
+  hasNonZeroVersionsProblem.value = false
   emit('next', selectedModel as ModelListModelItemFragment)
 }
 
