@@ -64,7 +64,8 @@
           full-width
           @click="createNewModel(searchText)"
         >
-          Create "{{ searchText }}"
+          Create&nbsp;
+          <div class="truncate">"{{ searchText }}"</div>
         </FormButton>
         <FormButton
           v-else
