@@ -214,6 +214,7 @@ export const projectAutomationsTabQuery = graphql(`
       automations(filter: $search, cursor: $cursor, limit: 5) {
         totalCount
         items {
+          id
           ...ProjectPageAutomationsRow_Automation
         }
       }

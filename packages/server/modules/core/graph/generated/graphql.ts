@@ -2099,7 +2099,6 @@ export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
   __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
   model: Model;
   project: Project;
-  status: TriggeredAutomationsStatus;
   version: Version;
 };
 
@@ -3593,7 +3592,7 @@ export type ResolversTypes = {
   ProjectPendingModelsUpdatedMessageType: ProjectPendingModelsUpdatedMessageType;
   ProjectPendingVersionsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversTypes['FileUpload'] }>;
   ProjectPendingVersionsUpdatedMessageType: ProjectPendingVersionsUpdatedMessageType;
-  ProjectTriggeredAutomationsStatusUpdatedMessage: ResolverTypeWrapper<Omit<ProjectTriggeredAutomationsStatusUpdatedMessage, 'model' | 'project' | 'status' | 'version'> & { model: ResolversTypes['Model'], project: ResolversTypes['Project'], status: ResolversTypes['TriggeredAutomationsStatus'], version: ResolversTypes['Version'] }>;
+  ProjectTriggeredAutomationsStatusUpdatedMessage: ResolverTypeWrapper<Omit<ProjectTriggeredAutomationsStatusUpdatedMessage, 'model' | 'project' | 'version'> & { model: ResolversTypes['Model'], project: ResolversTypes['Project'], version: ResolversTypes['Version'] }>;
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: ResolverTypeWrapper<Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
@@ -3799,7 +3798,7 @@ export type ResolversParentTypes = {
   ProjectMutations: MutationsObjectGraphQLReturn;
   ProjectPendingModelsUpdatedMessage: Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversParentTypes['FileUpload'] };
   ProjectPendingVersionsUpdatedMessage: Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversParentTypes['FileUpload'] };
-  ProjectTriggeredAutomationsStatusUpdatedMessage: Omit<ProjectTriggeredAutomationsStatusUpdatedMessage, 'model' | 'project' | 'status' | 'version'> & { model: ResolversParentTypes['Model'], project: ResolversParentTypes['Project'], status: ResolversParentTypes['TriggeredAutomationsStatus'], version: ResolversParentTypes['Version'] };
+  ProjectTriggeredAutomationsStatusUpdatedMessage: Omit<ProjectTriggeredAutomationsStatusUpdatedMessage, 'model' | 'project' | 'version'> & { model: ResolversParentTypes['Model'], project: ResolversParentTypes['Project'], version: ResolversParentTypes['Version'] };
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdateRoleInput: ProjectUpdateRoleInput;
   ProjectUpdatedMessage: Omit<ProjectUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
@@ -4667,7 +4666,6 @@ export type ProjectPendingVersionsUpdatedMessageResolvers<ContextType = GraphQLC
 export type ProjectTriggeredAutomationsStatusUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectTriggeredAutomationsStatusUpdatedMessage'] = ResolversParentTypes['ProjectTriggeredAutomationsStatusUpdatedMessage']> = {
   model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
   project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['TriggeredAutomationsStatus'], ParentType, ContextType>;
   version?: Resolver<ResolversTypes['Version'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

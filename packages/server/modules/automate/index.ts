@@ -8,8 +8,7 @@ import {
 import { Environment } from '@speckle/shared'
 import {
   getActiveTriggerDefinitions,
-  getAutomationRunFullTriggers,
-  getLatestVersionAutomationRuns
+  getAutomationRunFullTriggers
 } from '@/modules/automate/repositories/automations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
@@ -25,7 +24,6 @@ import {
   setupAutomationUpdateSubscriptions,
   setupStatusUpdateSubscriptions
 } from '@/modules/automate/services/subscriptions'
-import { getAutomationsStatus } from '@/modules/automate/services/automationManagement'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -63,9 +61,6 @@ const initializeEventListeners = () => {
     })
   })
   const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptions({
-    getAutomationsStatus: getAutomationsStatus({
-      getLatestVersionAutomationRuns
-    }),
     getAutomationRunFullTriggers
   })
   const setupAutomationUpdateSubscriptionsInvoke = setupAutomationUpdateSubscriptions()

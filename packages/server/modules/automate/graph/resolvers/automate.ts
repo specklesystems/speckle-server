@@ -75,6 +75,10 @@ import {
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { keyBy } from 'lodash'
 import { redactWriteOnlyInputData } from '@/modules/automate/utils/jsonSchemaRedactor'
+import {
+  ProjectSubscriptions,
+  filteredSubscribe
+} from '@/modules/shared/utils/subscriptions'
 
 /**
  * TODO:
@@ -517,5 +521,39 @@ export = {
   },
   Mutation: {
     automateMutations: () => ({})
+  },
+  Subscription: {
+    projectTriggeredAutomationsStatusUpdated: {
+      subscribe: filteredSubscribe(
+        ProjectSubscriptions.ProjectAutomationStatusUpdated,
+        async (payload, args, ctx) => {
+          if (payload.projectId !== args.projectId) return false
+
+          await authorizeResolver(
+            ctx.userId,
+            payload.projectId,
+            Roles.Stream.Owner,
+            ctx.resourceAccessRules
+          )
+          return true
+        }
+      )
+    },
+    projectAutomationsUpdated: {
+      subscribe: filteredSubscribe(
+        ProjectSubscriptions.ProjectAutomationsUpdated,
+        async (payload, args, ctx) => {
+          if (payload.projectId !== args.projectId) return false
+
+          await authorizeResolver(
+            ctx.userId,
+            payload.projectId,
+            Roles.Stream.Owner,
+            ctx.resourceAccessRules
+          )
+          return true
+        }
+      )
+    }
   }
 } as Resolvers

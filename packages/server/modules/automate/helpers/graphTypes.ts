@@ -65,7 +65,6 @@ export type ProjectAutomationsStatusUpdatedMessageGraphQLReturn = {
   projectId: string
   modelId: string
   versionId: string
-  status: TriggeredAutomationsStatusGraphQLReturn
 }
 
 export type ProjectAutomationsUpdatedMessageGraphQLReturn = Merge<

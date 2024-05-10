@@ -2089,7 +2089,6 @@ export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
   __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
   model: Model;
   project: Project;
-  status: TriggeredAutomationsStatus;
   version: Version;
 };
 

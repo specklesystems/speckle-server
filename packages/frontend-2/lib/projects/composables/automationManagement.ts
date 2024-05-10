@@ -1,8 +1,13 @@
-import { useMutation } from '@vue/apollo-composable'
+import type { ApolloCache } from '@apollo/client/core'
+import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
+import type { Get } from 'type-fest'
+import { useLock } from '~/lib/common/composables/singleton'
 import {
-  ProjectAutomationsArgs,
+  type ProjectAutomationsArgs,
   type CreateAutomationMutationVariables,
   type CreateAutomationRevisionMutationVariables,
+  type OnProjectAutomationsUpdatedSubscription,
+  type OnProjectTriggeredAutomationsStatusUpdatedSubscription,
   type Project,
   type ProjectAutomationArgs,
   type UpdateAutomationMutation,
@@ -21,6 +26,10 @@ import {
   triggerAutomationMutation,
   updateAutomationMutation
 } from '~/lib/projects/graphql/mutations'
+import {
+  onProjectAutomationsUpdatedSubscription,
+  onProjectTriggeredAutomationsStatusUpdatedSubscription
+} from '~/lib/projects/graphql/subscriptions'
 
 // TODO: Cache updates
 
@@ -185,4 +194,89 @@ export const useTriggerAutomation = () => {
 
     return !!res?.data?.projectMutations?.automationMutations?.trigger
   }
+}
+
+export const useProjectTriggeredAutomationsStatusUpdateTracking = (params: {
+  projectId: MaybeRef<string>
+  handler?: (
+    data: NonNullable<
+      Get<
+        OnProjectTriggeredAutomationsStatusUpdatedSubscription,
+        'projectTriggeredAutomationsStatusUpdated'
+      >
+    >,
+    cache: ApolloCache<unknown>
+  ) => void
+}) => {
+  const { projectId, handler } = params
+
+  const apollo = useApolloClient().client
+  const { hasLock } = useLock(
+    computed(
+      () => `useProjectTriggeredAutomationsStatusUpdateTracking-${unref(projectId)}`
+    )
+  )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
+
+  const { onResult } = useSubscription(
+    onProjectTriggeredAutomationsStatusUpdatedSubscription,
+    () => ({
+      id: unref(projectId)
+    }),
+    { enabled: isEnabled }
+  )
+
+  onResult((res) => {
+    const event = res.data?.projectTriggeredAutomationsStatusUpdated
+    if (!event || !hasLock.value) return
+
+    // Update model to reflect the new automations status
+    apollo.cache.modify({
+      id: getCacheId('Model', event.model.id),
+      fields: {
+        automationsStatus: () => event.version.automationsStatus || null
+      }
+    })
+  })
+
+  onResult((res) => {
+    const event = res.data?.projectTriggeredAutomationsStatusUpdated
+    if (!event) return
+
+    handler?.(event, apollo.cache)
+  })
+}
+
+export const useProjectAutomationsUpdateTracking = (params: {
+  projectId: MaybeRef<string>
+
+  handler?: (
+    data: NonNullable<
+      Get<OnProjectAutomationsUpdatedSubscription, 'projectAutomationsUpdated'>
+    >,
+    cache: ApolloCache<unknown>
+  ) => void
+}) => {
+  const { projectId, handler } = params
+
+  const apollo = useApolloClient().client
+  const { hasLock } = useLock(
+    computed(() => `useProjectAutomationsUpdateTracking-${unref(projectId)}`)
+  )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
+
+  const { onResult } = useSubscription(
+    onProjectAutomationsUpdatedSubscription,
+    () => ({
+      id: unref(projectId)
+    }),
+    { enabled: isEnabled }
+  )
+
+  onResult((res) => {
+    const event = res.data?.projectAutomationsUpdated
+    if (!event) return
+
+    handler?.(event, apollo.cache)
+  })
 }

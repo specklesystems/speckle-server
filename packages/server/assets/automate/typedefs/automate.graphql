@@ -331,7 +331,6 @@ extend type Mutation {
 }
 
 type ProjectTriggeredAutomationsStatusUpdatedMessage {
-  status: TriggeredAutomationsStatus!
   version: Version!
   model: Model!
   project: Project!

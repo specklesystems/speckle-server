@@ -6,7 +6,6 @@ import {
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
 import { getAutomationRunFullTriggers } from '@/modules/automate/repositories/automations'
-import { getAutomationsStatus } from '@/modules/automate/services/automationManagement'
 import { ProjectAutomationsUpdatedMessageType } from '@/modules/core/graph/generated/graphql'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { isNonNullable } from '@speckle/shared'
@@ -61,58 +60,38 @@ export const setupAutomationUpdateSubscriptions = () => () => {
 }
 
 export type SetupStatusUpdateSubscriptionsDeps = {
-  getAutomationsStatus: ReturnType<typeof getAutomationsStatus>
   getAutomationRunFullTriggers: typeof getAutomationRunFullTriggers
 }
 
 export const setupStatusUpdateSubscriptions =
   (deps: SetupStatusUpdateSubscriptionsDeps) => () => {
-    const { getAutomationsStatus } = deps
+    const { getAutomationRunFullTriggers } = deps
 
     const quitters = [
       AutomateRunsEmitter.listen(
         AutomateRunsEmitter.events.Created,
         async ({ manifests }) => {
-          const newStatuses = (
-            await Promise.all(
-              manifests.map(async (manifest) => {
-                if (isVersionCreatedTriggerManifest(manifest)) {
-                  const status = await getAutomationsStatus(manifest)
-                  if (!status) {
-                    automateLogger.error(
-                      'Failed to get automations status from just created automation',
-                      {
-                        manifest
-                      }
-                    )
-                    return null
-                  }
+          const validatedManifests = manifests
+            .map((manifest) => {
+              if (isVersionCreatedTriggerManifest(manifest)) {
+                return manifest
+              } else {
+                automateLogger.error('Unexpected run trigger manifest type', {
+                  manifest
+                })
+              }
 
-                  return {
-                    status,
-                    manifest
-                  }
-                } else {
-                  automateLogger.error('Unexpected run trigger manifest type', {
-                    manifest
-                  })
-                }
-
-                return null
-              })
-            )
-          ).filter(isNonNullable)
+              return null
+            })
+            .filter(isNonNullable)
 
           await Promise.all(
-            newStatuses.map(async (newStatusData) => {
-              const { status, manifest } = newStatusData
-
+            validatedManifests.map(async (manifest) => {
               await publish(
                 ProjectSubscriptions.ProjectTriggeredAutomationsStatusUpdated,
                 {
                   projectId: manifest.projectId,
                   projectTriggeredAutomationsStatusUpdated: {
-                    status,
                     ...manifest
                   }
                 }
@@ -131,43 +110,14 @@ export const setupStatusUpdateSubscriptions =
 
           if (triggers[VersionCreationTriggerType].length) {
             const versionCreation = triggers[VersionCreationTriggerType]
-            const newStatuses = (
-              await Promise.all(
-                versionCreation.map(async (trigger) => {
-                  const status = await getAutomationsStatus({
-                    modelId: trigger.model.id,
-                    projectId: trigger.model.streamId,
-                    versionId: trigger.version.id
-                  })
-
-                  if (!status) {
-                    automateLogger.error(
-                      'Failed to get automations status from just updated automation',
-                      {
-                        trigger
-                      }
-                    )
-                    return null
-                  }
-
-                  return {
-                    status,
-                    trigger
-                  }
-                })
-              )
-            ).filter(isNonNullable)
 
             await Promise.all(
-              newStatuses.map(async (newStatusData) => {
-                const { status, trigger } = newStatusData
-
+              versionCreation.map(async (trigger) => {
                 await publish(
                   ProjectSubscriptions.ProjectTriggeredAutomationsStatusUpdated,
                   {
                     projectId: trigger.model.streamId,
                     projectTriggeredAutomationsStatusUpdated: {
-                      status,
                       projectId: trigger.model.streamId,
                       modelId: trigger.model.id,
                       versionId: trigger.version.id

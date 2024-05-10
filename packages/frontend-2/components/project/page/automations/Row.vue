@@ -45,7 +45,7 @@
       </div>
     </div>
     <AutomateRunsTable
-      :runs="automation.runs.items"
+      :runs="automation.runs.items.slice(0, 5)"
       :project-id="projectId"
       :automation-id="automation.id"
     />
@@ -78,7 +78,7 @@ graphql(`
         }
       }
     }
-    runs(limit: 5) {
+    runs {
       totalCount
       items {
         ...AutomationRunDetails

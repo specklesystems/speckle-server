@@ -90,3 +90,37 @@ export const onProjectPendingVersionsUpdatedSubscription = graphql(`
     }
   }
 `)
+
+export const onProjectTriggeredAutomationsStatusUpdatedSubscription = graphql(`
+  subscription OnProjectTriggeredAutomationsStatusUpdated($id: String!) {
+    projectTriggeredAutomationsStatusUpdated(projectId: $id) {
+      version {
+        id
+        automationsStatus {
+          automationRuns {
+            ...AutomateViewerPanel_AutomateRun
+          }
+          ...TriggeredAutomationsStatusSummary
+          ...AutomateRunsTriggerStatusDialog_TriggeredAutomationsStatus
+        }
+      }
+      model {
+        id
+      }
+    }
+  }
+`)
+
+export const onProjectAutomationsUpdatedSubscription = graphql(`
+  subscription OnProjectAutomationsUpdated($id: String!) {
+    projectAutomationsUpdated(projectId: $id) {
+      type
+      automationId
+      automation {
+        id
+        ...ProjectPageAutomationPage_Automation
+        ...ProjectPageAutomationsRow_Automation
+      }
+    }
+  }
+`)
