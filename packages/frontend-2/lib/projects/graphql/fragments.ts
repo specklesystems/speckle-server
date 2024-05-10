@@ -81,3 +81,47 @@ export const projectUpdatableMetadataFragment = graphql(`
     allowPublicComments
   }
 `)
+
+export const projectPageLatestItemsModelsFragment = graphql(`
+  fragment ProjectPageLatestItemsModels on Project {
+    id
+    role
+    visibility
+    modelCount: models(limit: 0) {
+      totalCount
+    }
+    ...ProjectPageModelsStructureItem_Project
+  }
+`)
+
+export const projectPageLatestItemsCommentsFragment = graphql(`
+  fragment ProjectPageLatestItemsComments on Project {
+    id
+    commentThreadCount: commentThreads(limit: 0) {
+      totalCount
+    }
+  }
+`)
+
+export const projectPageLatestItemsCommentItemFragment = graphql(`
+  fragment ProjectPageLatestItemsCommentItem on Comment {
+    id
+    author {
+      ...FormUsersSelectItem
+    }
+    screenshot
+    rawText
+    createdAt
+    updatedAt
+    archived
+    repliesCount: replies(limit: 0) {
+      totalCount
+    }
+    replyAuthors(limit: 4) {
+      totalCount
+      items {
+        ...FormUsersSelectItem
+      }
+    }
+  }
+`)

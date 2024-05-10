@@ -66,7 +66,7 @@ const items = ref<
   },
   [ProjectVisibility.Private]: {
     id: ProjectVisibility.Private,
-    description: 'Only team members will have access',
+    description: 'Only collaborators can access',
     title: 'Private'
   }
 })

@@ -11,7 +11,7 @@
       :title="titleState"
       :description="descriptionState"
       :can-edit="canEdit"
-      :is-disabled="anyMutationsLoading"
+      :is-disabled="!canEdit || anyMutationsLoading"
       @update:title="handleUpdateTitle"
       @update:description="handleUpdateDescription"
     />

@@ -11,14 +11,11 @@
         class="flex flex-col md:flex-row md:justify-between md:items-start gap-8 sm:gap-4 my-8"
       >
         <ProjectPageHeader :project="project" />
-        <ProjectPageStatsBlockSettings
-          :project="project"
-          class="w-full md:w-72 shrink-0"
-        />
+        <ProjectPageTeamBlock :project="project" class="w-full md:w-72 shrink-0" />
       </div>
-      <LayoutPageTabs v-model:active-item="activePageTab" :items="pageTabItems">
-        <NuxtPage />
-      </LayoutPageTabs>
+      <LayoutTabsHoriztonal v-model:active-item="activePageTab" :items="pageTabItems">
+        <NuxtPage :project="project" />
+      </LayoutTabsHoriztonal>
     </div>
   </div>
 </template>
@@ -32,23 +29,27 @@ import {
   projectPageQuery
 } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
-import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
-import { CubeIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
-import { projectRoute } from '~/lib/common/helpers/route'
+import { LayoutTabsHoriztonal, type LayoutPageTabItem } from '@speckle/ui-components'
+import {
+  CubeIcon,
+  ChatBubbleLeftRightIcon,
+  Cog6ToothIcon
+} from '@heroicons/vue/24/outline'
+import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
 import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 
 graphql(`
   fragment ProjectPageProject on Project {
     id
     createdAt
+    modelCount: models(limit: 0) {
+      totalCount
+    }
+    commentThreadCount: commentThreads(limit: 0) {
+      totalCount
+    }
     ...ProjectPageProjectHeader
-    ...ProjectPageStatsBlockTeam
     ...ProjectPageTeamDialog
-    ...ProjectPageStatsBlockVersions
-    ...ProjectPageStatsBlockModels
-    ...ProjectPageStatsBlockComments
-    ...ProjectPageLatestItemsModels
-    ...ProjectPageLatestItemsComments
   }
 `)
 
@@ -61,9 +62,14 @@ definePageMeta({
       if (/\/models\/?$/i.test(to.path)) {
         return navigateTo(projectRoute(projectId))
       }
+
+      // Redirect from /projects/:id/webhooks to /projects/:id/settings/webhooks
+      if (/\/projects\/\w*?\/webhooks/i.test(to.path)) {
+        return navigateTo(projectWebhooksRoute(projectId))
+      }
     }
   ],
-  alias: '/projects/:id/models'
+  alias: ['/projects/:id/models', '/projects/:id/webhooks']
 })
 
 const route = useRoute()
@@ -115,28 +121,34 @@ const pageTabItems = computed((): LayoutPageTabItem[] => [
   {
     title: 'Models',
     id: 'models',
-    icon: CubeIcon,
-    count: modelCount.value
+    count: modelCount.value,
+    icon: CubeIcon
   },
   {
     title: 'Discussions',
     id: 'discussions',
-    icon: ChatBubbleLeftRightIcon,
-    count: commentCount.value
-  }
-  // {
+    count: commentCount.value,
+    icon: ChatBubbleLeftRightIcon
+  },
+  //   {
   //   title: 'Automations',
   //   id: 'automations',
-  //   icon: BoltIcon,
-  //   tag: 'New'
-  // }
+  //   tag: 'New',
+  //   icon: BoltIcon
+  //   },
+  {
+    title: 'Settings',
+    id: 'settings',
+    icon: Cog6ToothIcon
+  }
 ])
 
 const activePageTab = computed({
   get: () => {
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return pageTabItems.value[1]
-    if (/\/automations\/?$/i.test(path)) return pageTabItems.value[2]
+    // if (/\/automations\/?$/i.test(path)) return pageTabItems.value[2]
+    if (/\/settings\/?/i.test(path)) return pageTabItems.value[2]
     return pageTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
@@ -149,6 +161,9 @@ const activePageTab = computed({
         break
       case 'automations':
         router.push({ path: projectRoute(projectId.value, 'automations') })
+        break
+      case 'settings':
+        router.push({ path: projectRoute(projectId.value, 'settings') })
         break
     }
   }

@@ -13,7 +13,7 @@ export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
 export const projectRoute = (
   id: string,
-  tab?: 'models' | 'discussions' | 'automations'
+  tab?: 'models' | 'discussions' | 'automations' | 'settings'
 ) => {
   let res = `/projects/${id}`
   if (tab && tab !== 'models') {
@@ -39,8 +39,14 @@ export const allProjectModelsRoute = (projectId: string) => `/projects/${project
 // Temp change to projectDiscussionsRoute until tab routing is implemented
 export const projectDiscussionsRoute = (projectId: string) => `/projects/${projectId}`
 
+export const projectSettingsRoute = (projectId: string) =>
+  `/projects/${projectId}/settings`
+
+export const projectCollaboratorsRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/collaborators`
+
 export const projectWebhooksRoute = (projectId: string) =>
-  `/projects/${projectId}/webhooks`
+  `/projects/${projectId}/settings/webhooks`
 
 export const automationDataPageRoute = (baseUrl: string, automationId: string) =>
   new URL(`/automations/${automationId}`, baseUrl).toString()

@@ -27,7 +27,7 @@
         </div>
       </label>
       <PencilIcon
-        v-if="canEdit"
+        v-if="canEdit && !isDisabled"
         class="shrink-0 ml-2 mt-3 w-4 h-4 opacity-0 group-hover:opacity-100 transition text-foreground-2"
       />
     </div>
@@ -65,7 +65,7 @@
       </label>
       <div class="shrink-0 ml-2 mt-1 text-foreground-2">
         <PencilIcon
-          v-if="canEdit"
+          v-if="canEdit && !isDisabled"
           class="w-4 h-4 opacity-0 group-hover:opacity-100 transition text-foreground-2"
         />
       </div>

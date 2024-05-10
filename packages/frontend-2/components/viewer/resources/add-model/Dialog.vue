@@ -2,18 +2,24 @@
   <LayoutDialog v-model:open="open" max-width="lg">
     <template #header>Add Model</template>
     <div class="flex flex-col gap-y-4">
-      <LayoutTabs v-slot="{ activeItem }" :items="tabItems">
-        <ViewerResourcesAddModelDialogModelTab
-          v-if="activeItem.id === 'model'"
-          @chosen="onModelChosen"
-        />
-        <ViewerResourcesAddModelDialogObjectTab v-else @chosen="onObjectsChosen" />
-      </LayoutTabs>
+      <LayoutTabsHoriztonal v-model:active-item="activeTab" :items="tabItems">
+        <template #default="{ activeItem }">
+          <ViewerResourcesAddModelDialogModelTab
+            v-if="activeItem.id === 'model'"
+            @chosen="onModelChosen"
+          />
+          <ViewerResourcesAddModelDialogObjectTab
+            v-else-if="activeItem.id === 'object'"
+            @chosen="onObjectsChosen"
+          />
+        </template>
+      </LayoutTabsHoriztonal>
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
 import { SpeckleViewer } from '@speckle/shared'
+import { LayoutTabsHoriztonal } from '@speckle/ui-components'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useInjectedViewerRequestedResources } from '~~/lib/viewer/composables/setup'
@@ -32,6 +38,8 @@ const tabItems = ref<LayoutTabItem[]>([
   { title: 'By model', id: 'model' },
   { title: 'By object URL', id: 'object' }
 ])
+
+const activeTab = ref(tabItems.value[0])
 
 const open = computed({
   get: () => props.open,
