@@ -107,14 +107,14 @@ const deleteConfirmed = async () => {
 
 const dialogButtons = [
   {
-    text: 'Delete',
-    props: { color: 'danger', fullWidth: true },
-    onClick: deleteConfirmed
-  },
-  {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
     onClick: () => (isOpen.value = false)
+  },
+  {
+    text: 'Delete',
+    props: { color: 'danger', fullWidth: true },
+    onClick: deleteConfirmed
   }
 ]
 </script>

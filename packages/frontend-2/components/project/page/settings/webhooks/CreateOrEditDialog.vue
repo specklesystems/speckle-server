@@ -9,7 +9,7 @@
       {{ props.webhook ? 'Edit Webhook' : 'Create Webhook' }}
     </template>
     <form @submit="onSubmit">
-      <div class="flex flex-col gap-6">
+      <div class="flex flex-col gap-4">
         <FormTextInput
           v-model="url"
           label="URL"
@@ -19,6 +19,7 @@
           show-required
           :rules="[isRequired, isUrl]"
           type="text"
+          color="foundation"
         />
         <FormTextInput
           v-model="description"
@@ -27,6 +28,7 @@
           name="hookName"
           show-label
           type="text"
+          color="foundation"
         />
         <FormTextInput
           v-if="!props.webhook"
@@ -36,6 +38,7 @@
           name="hookSecret"
           show-label
           type="text"
+          color="foundation"
         />
         <FormSelectBadges
           v-model="triggers"

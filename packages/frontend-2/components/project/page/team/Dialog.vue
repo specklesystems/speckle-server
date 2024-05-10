@@ -1,32 +1,12 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="sm">
     <template #header>Manage Project</template>
-    <div class="flex flex-col text-foreground">
-      <ProjectPageTeamDialogManageUsers
-        :always-open="openSection === OpenSectionType.Team"
-        :project="project"
-      />
-      <ProjectPageTeamDialogInviteUser
-        v-if="isOwner && !isServerGuest"
-        :project="project"
-        :default-open="openSection === OpenSectionType.Invite"
-      />
-      <ProjectPageTeamDialogManagePermissions
-        :project="project"
-        :default-open="openSection === OpenSectionType.Access"
-      />
-      <ProjectPageTeamDialogWebhooks v-if="isOwner" :project="project" />
-      <ProjectPageTeamDialogDangerZones
-        v-if="isOwner || canLeaveProject"
-        :project="project"
-      />
-    </div>
+    <div class="flex flex-col text-foreground"></div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
 import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
-import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
 import { OpenSectionType } from '~~/lib/projects/helpers/components'
 
 graphql(`
@@ -66,10 +46,6 @@ const props = defineProps<{
   project: ProjectPageTeamDialogFragment
   openSection?: OpenSectionType
 }>()
-
-const { isOwner, isServerGuest, canLeaveProject } = useTeamDialogInternals({
-  props: toRefs(props)
-})
 
 const isOpen = computed({
   get: () => props.open,
