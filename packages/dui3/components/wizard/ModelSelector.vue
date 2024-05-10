@@ -25,13 +25,40 @@
       </div>
       <div class="relative grid grid-cols-1 gap-2">
         <CommonLoadingBar v-if="loading" loading />
+
         <WizardListModelCard
           v-for="model in models"
           :key="model.id"
           :model="model"
-          @click="$emit('next', model)"
+          @click="handleModelSelect(model)"
         />
 
+        <LayoutDialog
+          v-model:open="showModelHasVersionsWarningDialog"
+          title="Warning"
+          chromium65-compatibility
+        >
+          <p class="mb-2 text-sm">
+            The model you selected contains versions coming from other files/apps.
+            <b>This may result in a broken version history.</b>
+            <br />
+            <br />
+            Are you sure you want to proceed?
+          </p>
+          <template #buttons>
+            <FormButton
+              full-width
+              size="sm"
+              outlined
+              @click="showModelHasVersionsWarningDialog = false"
+            >
+              Cancel
+            </FormButton>
+            <FormButton full-width size="sm" @click="confirmModelSelection()">
+              Yes
+            </FormButton>
+          </template>
+        </LayoutDialog>
         <FormButton
           v-if="searchText && hasReachedEnd && showNewModel"
           full-width
@@ -110,14 +137,27 @@ const props = withDefaults(
 const accountStore = useAccountStore()
 
 const showNewModelDialog = ref(false)
+const showModelHasVersionsWarningDialog = ref(false)
 
 const searchText = ref<string>()
 const newModelName = ref<string>()
 
 watch(searchText, () => (newModelName.value = searchText.value))
 
-const rules = useModelNameValidationRules()
+let selectedModel: ModelListModelItemFragment | undefined = undefined
+const handleModelSelect = (model: ModelListModelItemFragment) => {
+  if (model.versions.totalCount === 0) {
+    return emit('next', model)
+  }
+  selectedModel = model
+  showModelHasVersionsWarningDialog.value = true
+}
 
+const confirmModelSelection = () => {
+  emit('next', selectedModel as ModelListModelItemFragment)
+}
+
+const rules = useModelNameValidationRules()
 const { handleSubmit } = useForm<{ name: string }>()
 const onSubmit = handleSubmit(() => {
   // TODO: Chat with Fabians
