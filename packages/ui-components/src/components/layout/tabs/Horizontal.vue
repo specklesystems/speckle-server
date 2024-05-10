@@ -91,12 +91,13 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted, watch, nextTick } from 'vue'
+import { computed, ref, onMounted, watch, onBeforeUnmount } from 'vue'
 import type { CSSProperties } from 'vue'
 import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 import { isClient } from '@vueuse/core'
 import { ArrowLongRightIcon, ArrowLongLeftIcon } from '@heroicons/vue/24/outline'
 import type { Nullable } from '@speckle/shared'
+import { throttle } from 'lodash-es'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
@@ -187,9 +188,9 @@ const scrollRight = () => {
   checkArrowsVisibility()
 }
 
-const handleScroll = () => {
+const handleScroll = throttle(() => {
   checkArrowsVisibility()
-}
+}, 250)
 
 const ensureActiveItemVisible = () => {
   const activeButton = activeItemRef.value
@@ -208,9 +209,7 @@ onMounted(() => {
       setActiveItem(props.items[0])
     }
     checkArrowsVisibility()
-    nextTick(() => {
-      ensureActiveItemVisible()
-    })
+    ensureActiveItemVisible()
   }
 })
 
@@ -223,6 +222,10 @@ watch(
     checkArrowsVisibility()
   }
 )
+
+onBeforeUnmount(() => {
+  handleScroll.cancel()
+})
 </script>
 <style>
 /* Hide scrollbar for Chrome, Safari and Opera */
