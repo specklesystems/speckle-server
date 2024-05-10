@@ -43,7 +43,7 @@ import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
 import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes'
 import {
-  ProjectAutomationsStatusUpdatedMessageGraphQLReturn,
+  ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn,
   ProjectAutomationsUpdatedMessageGraphQLReturn
 } from '@/modules/automate/helpers/graphTypes'
 
@@ -239,7 +239,7 @@ type SubscriptionTypeMap = {
   }
   [ProjectSubscriptions.ProjectTriggeredAutomationsStatusUpdated]: {
     payload: {
-      projectTriggeredAutomationsStatusUpdated: ProjectAutomationsStatusUpdatedMessageGraphQLReturn
+      projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn
       projectId: string
     }
     variables: SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs

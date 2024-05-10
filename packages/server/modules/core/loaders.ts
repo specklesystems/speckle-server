@@ -62,10 +62,12 @@ import {
   AutomateRevisionFunctionRecord,
   AutomationRecord,
   AutomationRevisionRecord,
+  AutomationRunTriggerRecord,
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
 import {
   getAutomationRevisions,
+  getAutomationRunsTriggers,
   getAutomations,
   getFunctionAutomationCounts,
   getLatestAutomationRevisions,
@@ -586,6 +588,14 @@ export function buildRequestLoaders(
         async (ids) => {
           const results = await getRevisionsFunctions({
             automationRevisionIds: ids.slice()
+          })
+          return ids.map((i) => results[i] || [])
+        }
+      ),
+      getRunTriggers: createLoader<string, AutomationRunTriggerRecord[]>(
+        async (ids) => {
+          const results = await getAutomationRunsTriggers({
+            automationRunIds: ids.slice()
           })
           return ids.map((i) => results[i] || [])
         }

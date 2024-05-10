@@ -38,13 +38,17 @@ export const ROOT_SUBSCRIPTION = 'ROOT_SUBSCRIPTION'
 export type ModifyFnCacheData<Data> = Data extends
   | Record<string, unknown>
   | Record<string, unknown>[]
-  ? PartialDeep<{
-      [key in keyof Data]: Data[key] extends { id: string }
-        ? CacheObjectReference
-        : Data[key] extends { id: string }[]
-        ? CacheObjectReference[]
-        : ModifyFnCacheData<Data[key]>
-    }>
+  ? Data extends { id: string }
+    ? CacheObjectReference
+    : Data extends { id: string }[]
+    ? CacheObjectReference[]
+    : PartialDeep<{
+        [key in keyof Data]: Data[key] extends { id: string }
+          ? CacheObjectReference
+          : Data[key] extends { id: string }[]
+          ? CacheObjectReference[]
+          : ModifyFnCacheData<Data[key]>
+      }>
   : Data
 
 /**
@@ -362,7 +366,7 @@ export function modifyObjectFields<
       log('invoking updater', { fieldName, variables, fieldValue })
       const res = updater(
         fieldName,
-        variables as V,
+        (variables || {}) as V,
         fieldValue as ModifyFnCacheData<D>,
         {
           ...details,

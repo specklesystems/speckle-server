@@ -271,7 +271,8 @@ export const triggerAutomationRevisionRun =
 
     await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.Created, {
       run: automationRun,
-      manifests: triggerManifests
+      manifests: triggerManifests,
+      automation: automationWithRevision
     })
 
     return { automationRunId: automationRun.id }

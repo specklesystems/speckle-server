@@ -94,6 +94,7 @@ export const onProjectPendingVersionsUpdatedSubscription = graphql(`
 export const onProjectTriggeredAutomationsStatusUpdatedSubscription = graphql(`
   subscription OnProjectTriggeredAutomationsStatusUpdated($id: String!) {
     projectTriggeredAutomationsStatusUpdated(projectId: $id) {
+      type
       version {
         id
         automationsStatus {
@@ -106,6 +107,11 @@ export const onProjectTriggeredAutomationsStatusUpdatedSubscription = graphql(`
       }
       model {
         id
+      }
+      run {
+        id
+        automationId
+        ...AutomationRunDetails
       }
     }
   }

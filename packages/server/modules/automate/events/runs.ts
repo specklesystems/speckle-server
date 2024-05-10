@@ -1,6 +1,7 @@
 import {
   AutomationFunctionRunRecord,
   AutomationRunRecord,
+  AutomationWithRevision,
   BaseTriggerManifest
 } from '@/modules/automate/helpers/types'
 import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
@@ -13,12 +14,14 @@ export enum AutomateRunsEvents {
 
 export type AutomateEventsPayloads = {
   [AutomateRunsEvents.Created]: {
+    automation: AutomationWithRevision
     run: InsertableAutomationRun
     manifests: BaseTriggerManifest[]
   }
   [AutomateRunsEvents.StatusUpdated]: {
     run: AutomationRunRecord
     functionRuns: AutomationFunctionRunRecord[]
+    automationId: string
   }
 }
 

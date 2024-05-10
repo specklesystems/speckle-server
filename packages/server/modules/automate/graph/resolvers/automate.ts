@@ -125,7 +125,7 @@ export = {
       return ctx.loaders.commits.getCommitBranch.load(parent.triggeringId)
     }
   },
-  ProjectAutomationsStatusUpdatedMessage: {
+  ProjectTriggeredAutomationsStatusUpdatedMessage: {
     async project(parent, _args, ctx) {
       return ctx.loaders.streams.getStream.load(parent.projectId)
     },
@@ -235,8 +235,12 @@ export = {
     }
   },
   AutomateRun: {
-    async trigger(parent) {
-      const trigger = parent.triggers[0]
+    async trigger(parent, _args, ctx) {
+      const triggers =
+        parent.triggers ||
+        (await ctx.loaders.automations.getRunTriggers.load(parent.id))
+
+      const trigger = triggers[0]
       return trigger
     },
     async functionRuns(parent) {
@@ -525,7 +529,7 @@ export = {
   Subscription: {
     projectTriggeredAutomationsStatusUpdated: {
       subscribe: filteredSubscribe(
-        ProjectSubscriptions.ProjectAutomationStatusUpdated,
+        ProjectSubscriptions.ProjectTriggeredAutomationsStatusUpdated,
         async (payload, args, ctx) => {
           if (payload.projectId !== args.projectId) return false
 

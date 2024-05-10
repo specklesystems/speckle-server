@@ -1,4 +1,5 @@
 import type { ApolloCache } from '@apollo/client/core'
+import { isNullOrUndefined } from '@speckle/shared'
 import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
 import type { Get } from 'type-fest'
 import { useLock } from '~/lib/common/composables/singleton'
@@ -11,11 +12,14 @@ import {
   type Project,
   type ProjectAutomationArgs,
   type UpdateAutomationMutation,
-  type UpdateAutomationMutationVariables
+  type UpdateAutomationMutationVariables,
+  ProjectAutomationsUpdatedMessageType,
+  ProjectTriggeredAutomationsStatusUpdatedMessageType,
+  type AutomationRunsArgs,
+  type Automation
 } from '~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
-  evictObjectFields,
   getCacheId,
   getFirstErrorMessage,
   modifyObjectFields
@@ -41,37 +45,7 @@ export function useCreateAutomation() {
   return async (input: CreateAutomationMutationVariables) => {
     if (!activeUser.value) return
 
-    const res = await createAutomation(input, {
-      update: (cache, { data }) => {
-        const newAutomation = data?.projectMutations?.automationMutations?.create
-        if (!newAutomation) return
-
-        const projectCacheId = getCacheId('Project', input.projectId)
-
-        // Evict Project.automation, if somehow it was queried for already (very unlikely)
-        evictObjectFields<ProjectAutomationArgs>(
-          cache,
-          projectCacheId,
-          (fieldName, vars) => {
-            if (fieldName !== 'automation') return false
-            if (vars.id !== newAutomation.id) return false
-            return true
-          }
-        )
-
-        // Update Project.automations list
-        modifyObjectFields<ProjectAutomationsArgs, Project['automations']>(
-          cache,
-          projectCacheId,
-          (_fieldName, vars, data) => {
-            if (vars['limit'] === 0) return
-            if (vars['filter']?.length) return
-            if (data) return
-          },
-          { fieldNameWhitelist: ['automations'] }
-        )
-      }
-    }).catch(convertThrowIntoFetchResult)
+    const res = await createAutomation(input).catch(convertThrowIntoFetchResult)
     if (res?.data?.projectMutations?.automationMutations?.create?.id) {
       triggerNotification({
         type: ToastNotificationType.Success,
@@ -237,6 +211,45 @@ export const useProjectTriggeredAutomationsStatusUpdateTracking = (params: {
         automationsStatus: () => event.version.automationsStatus || null
       }
     })
+
+    // Add run to automation, if new run
+    const run = event?.run
+    if (
+      run &&
+      event.type === ProjectTriggeredAutomationsStatusUpdatedMessageType.RunCreated
+    ) {
+      const automationid = run.automationId
+      const automationCacheId = getCacheId('Automation', automationid)
+
+      modifyObjectFields<AutomationRunsArgs, Automation['runs']>(
+        apollo.cache,
+        automationCacheId,
+        (_fieldName, vars, data, { ref }) => {
+          if (vars['limit'] === 0) return
+
+          const limit = vars['limit']
+          let newItems = data['items']
+          if (newItems) {
+            newItems = [ref('AutomateRun', run.id), ...newItems]
+            if (limit && newItems.length > limit) {
+              newItems = newItems.slice(0, limit)
+            }
+          }
+
+          let totalCount = data['totalCount']
+          if (!isNullOrUndefined(totalCount)) {
+            totalCount++
+          }
+
+          return {
+            ...data,
+            items: newItems,
+            totalCount
+          }
+        },
+        { fieldNameWhitelist: ['runs'] }
+      )
+    }
   })
 
   onResult((res) => {
@@ -272,6 +285,64 @@ export const useProjectAutomationsUpdateTracking = (params: {
     }),
     { enabled: isEnabled }
   )
+
+  onResult((res) => {
+    const event = res.data?.projectAutomationsUpdated
+    if (!event || !hasLock.value) return
+
+    const projectCacheId = getCacheId('Project', unref(projectId))
+
+    // If created, update local cache
+    if (
+      event.type === ProjectAutomationsUpdatedMessageType.Created &&
+      event.automation
+    ) {
+      const newAutomation = event.automation
+
+      // Update Project.automation, if somehow it was queried for already (very unlikely, had to have visited a 404 page)
+      modifyObjectFields<ProjectAutomationArgs, Project['automation']>(
+        apollo.cache,
+        projectCacheId,
+        (fieldName, vars, _data, { ref }) => {
+          if (fieldName !== 'automation') return
+          if (vars.id !== newAutomation.id) return
+
+          return ref('Automation', newAutomation.id)
+        }
+      )
+
+      // Update Project.automations list
+      modifyObjectFields<ProjectAutomationsArgs, Project['automations']>(
+        apollo.cache,
+        projectCacheId,
+        (_fieldName, vars, data, { ref }) => {
+          if (vars['limit'] === 0) return
+          if (vars['filter']?.length) return
+
+          const limit = vars['limit']
+          let newItems = data['items']
+          if (newItems) {
+            newItems = [ref('Automation', newAutomation.id), ...newItems]
+            if (limit && newItems.length > limit) {
+              newItems = newItems.slice(0, limit)
+            }
+          }
+
+          let totalCount = data['totalCount']
+          if (!isNullOrUndefined(totalCount)) {
+            totalCount++
+          }
+
+          return {
+            ...data,
+            items: newItems,
+            totalCount
+          }
+        },
+        { fieldNameWhitelist: ['automations'] }
+      )
+    }
+  })
 
   onResult((res) => {
     const event = res.data?.projectAutomationsUpdated

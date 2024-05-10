@@ -6,9 +6,14 @@ import {
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
 import { getAutomationRunFullTriggers } from '@/modules/automate/repositories/automations'
-import { ProjectAutomationsUpdatedMessageType } from '@/modules/core/graph/generated/graphql'
+import {
+  ProjectAutomationsUpdatedMessageType,
+  ProjectTriggeredAutomationsStatusUpdatedMessageType
+} from '@/modules/core/graph/generated/graphql'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { isNonNullable } from '@speckle/shared'
+
+// TODO: Update AutomateRuns subscription
 
 export const setupAutomationUpdateSubscriptions = () => () => {
   const quitters = [
@@ -70,7 +75,7 @@ export const setupStatusUpdateSubscriptions =
     const quitters = [
       AutomateRunsEmitter.listen(
         AutomateRunsEmitter.events.Created,
-        async ({ manifests }) => {
+        async ({ manifests, run, automation }) => {
           const validatedManifests = manifests
             .map((manifest) => {
               if (isVersionCreatedTriggerManifest(manifest)) {
@@ -92,7 +97,20 @@ export const setupStatusUpdateSubscriptions =
                 {
                   projectId: manifest.projectId,
                   projectTriggeredAutomationsStatusUpdated: {
-                    ...manifest
+                    ...manifest,
+                    run: {
+                      ...run,
+                      automationId: automation.id,
+                      functionRuns: run.functionRuns.map((functionRun) => ({
+                        ...functionRun,
+                        runId: run.id
+                      })),
+                      triggers: run.triggers.map((trigger) => ({
+                        ...trigger,
+                        automationRunId: run.id
+                      }))
+                    },
+                    type: ProjectTriggeredAutomationsStatusUpdatedMessageType.RunCreated
                   }
                 }
               )
@@ -103,7 +121,7 @@ export const setupStatusUpdateSubscriptions =
 
       AutomateRunsEmitter.listen(
         AutomateRunsEmitter.events.StatusUpdated,
-        async ({ run }) => {
+        async ({ run, functionRuns, automationId }) => {
           const triggers = await getAutomationRunFullTriggers({
             automationRunId: run.id
           })
@@ -120,7 +138,14 @@ export const setupStatusUpdateSubscriptions =
                     projectTriggeredAutomationsStatusUpdated: {
                       projectId: trigger.model.streamId,
                       modelId: trigger.model.id,
-                      versionId: trigger.version.id
+                      versionId: trigger.version.id,
+                      run: {
+                        ...run,
+                        functionRuns,
+                        automationId,
+                        triggers: undefined
+                      },
+                      type: ProjectTriggeredAutomationsStatusUpdatedMessageType.RunUpdated
                     }
                   }
                 )

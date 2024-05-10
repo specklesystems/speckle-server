@@ -904,6 +904,20 @@ type AutomationRunFullTrigger<T extends AutomationTriggerType = AutomationTrigge
     models: BranchRecord[]
   }
 
+export async function getAutomationRunsTriggers(params: {
+  automationRunIds: string[]
+}) {
+  const { automationRunIds } = params
+  if (!automationRunIds.length) return {}
+
+  const q = AutomationRunTriggers.knex<AutomationRunTriggerRecord[]>().whereIn(
+    AutomationRunTriggers.col.automationRunId,
+    automationRunIds
+  )
+  const items = await q
+  return groupBy(items, (i) => i.automationRunId)
+}
+
 export async function getAutomationRunFullTriggers(params: {
   automationRunId: string
 }) {

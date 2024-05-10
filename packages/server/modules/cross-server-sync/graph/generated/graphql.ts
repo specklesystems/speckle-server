@@ -304,6 +304,7 @@ export type AutomateMutationsUpdateFunctionArgs = {
 export type AutomateRun = {
   __typename?: 'AutomateRun';
   automation: Automation;
+  automationId: Scalars['String'];
   createdAt: Scalars['DateTime'];
   functionRuns: Array<AutomateFunctionRun>;
   id: Scalars['ID'];
@@ -2088,8 +2089,15 @@ export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
   __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
   model: Model;
   project: Project;
+  run: AutomateRun;
+  type: ProjectTriggeredAutomationsStatusUpdatedMessageType;
   version: Version;
 };
+
+export enum ProjectTriggeredAutomationsStatusUpdatedMessageType {
+  RunCreated = 'RUN_CREATED',
+  RunUpdated = 'RUN_UPDATED'
+}
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {

@@ -210,6 +210,8 @@ export const reportFunctionRunStatuses =
     // Group by automation run
     const groupedRuns = groupBy(validatedUpdates, (r) => r.run.runId)
     for (const [runId, updates] of Object.entries(groupedRuns)) {
+      if (!updates.length) continue
+
       try {
         // Taking all function run statuses into account when calculating new automation status,
         // even function run statuses that were not updated in this call
@@ -267,7 +269,8 @@ export const reportFunctionRunStatuses =
 
         await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.StatusUpdated, {
           run: updatedRun,
-          functionRuns: allFnRuns
+          functionRuns: allFnRuns,
+          automationId: updates[0].run.automationId
         })
       } catch (e) {
         automateLogger.error('Automation run status update failed', e, {

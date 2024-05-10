@@ -92,6 +92,7 @@ type AutomateRun {
   createdAt: DateTime!
   updatedAt: DateTime!
   automation: Automation!
+  automationId: String!
   functionRuns: [AutomateFunctionRun!]!
 }
 
@@ -330,10 +331,17 @@ extend type Mutation {
   automateMutations: AutomateMutations! @hasServerRole(role: SERVER_GUEST)
 }
 
+enum ProjectTriggeredAutomationsStatusUpdatedMessageType {
+  RUN_CREATED
+  RUN_UPDATED
+}
+
 type ProjectTriggeredAutomationsStatusUpdatedMessage {
+  type: ProjectTriggeredAutomationsStatusUpdatedMessageType!
   version: Version!
   model: Model!
   project: Project!
+  run: AutomateRun!
 }
 
 enum ProjectAutomationsUpdatedMessageType {
