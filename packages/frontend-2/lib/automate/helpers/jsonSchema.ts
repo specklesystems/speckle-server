@@ -27,15 +27,27 @@ export const formattedJsonFormSchema = (
 export const formatJsonFormSchemaInputs = (
   inputs: MaybeNullOrUndefined<Record<string, unknown>>,
   schema: MaybeNullOrUndefined<JsonSchema>,
-  options?: Partial<{ clone: boolean }>
+  options?: Partial<{ cleanRedacted: boolean }>
 ) => {
-  const { clone } = options || {}
+  const { cleanRedacted } = options || {}
 
   if (!inputs || !isObjectLike(inputs) || !Object.keys(inputs).length) {
     return schema?.type === 'object' ? {} : undefined
   }
 
-  return clone ? cloneDeep(inputs) : inputs
+  const finalInputs = cloneDeep(inputs)
+  if (cleanRedacted && schema?.properties) {
+    Object.keys(inputs).forEach((key) => {
+      const def = schema.properties?.[key]
+      const isWriteOnly = !!get(def, 'writeOnly', false)
+
+      if (isWriteOnly) {
+        delete finalInputs[key]
+      }
+    })
+  }
+
+  return finalInputs
 }
 
 export function formatVersionParams(

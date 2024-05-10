@@ -143,6 +143,8 @@ const props = defineProps<{
 const open = defineModel<boolean>('open', { required: true })
 const createNewAutomationRevision = useCreateAutomationRevision()
 const inputEncryption = useAutomationInputEncryptor({ ensureWhen: open })
+const { triggerNotification } = useGlobalToast()
+const logger = useLogger()
 
 const selectedModel = ref<CommonModelSelectorModelFragment>()
 const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment>()
@@ -161,7 +163,7 @@ const loading = ref(false)
 const parentSelectedModel = computed(() => props.revision?.triggerDefinitions[0]?.model)
 const hasRequiredData = computed(() => !!props.revisionFn && !!props.revision)
 const functionId = computed(() => props.revisionFn?.release.function.id)
-// const currentReleaseId = computed(() => props.revisionFn?.release.id)
+const currentReleaseId = computed(() => props.revisionFn?.release.id)
 const selectedReleaseId = computed(() => selectedRelease.value?.id)
 
 const hasErrors = computed(() => {
@@ -171,26 +173,24 @@ const hasErrors = computed(() => {
 })
 
 const resolveFirstModelValue = (items: SearchAutomateFunctionReleaseItemFragment[]) => {
-  // TODO: Fix once we have real data
-  return items[0]
+  const modelValue = currentReleaseId.value
+    ? items.find((i) => i.id === currentReleaseId.value)
+    : undefined
 
-  // const modelValue = currentReleaseId.value
-  //   ? items.find((i) => i.id === currentReleaseId.value)
-  //   : undefined
-  // if (!modelValue) {
-  //   // This def shouldn't happen, something's wrong
-  //   triggerNotification({
-  //     type: ToastNotificationType.Danger,
-  //     title: 'Could not find the selected function version',
-  //     description: 'Please try again or contact support'
-  //   })
-  //   logger.error('Could not find the selected function version', {
-  //     functionId: functionId.value,
-  //     functionVersionId: currentReleaseId.value
-  //   })
-  // }
+  if (!modelValue) {
+    // This def shouldn't happen, something's wrong
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Could not find the selected function version',
+      description: 'Please try again or contact support'
+    })
+    logger.error('Could not find the selected function version', {
+      functionId: functionId.value,
+      functionVersionId: currentReleaseId.value
+    })
+  }
 
-  // return modelValue
+  return modelValue
 }
 
 const onSave = async () => {
@@ -209,9 +209,7 @@ const onSave = async () => {
     })
 
     const cleanParameters =
-      formatJsonFormSchemaInputs(selectedVersionInputs.value, inputSchema.value, {
-        clone: true
-      }) || null
+      formatJsonFormSchemaInputs(selectedVersionInputs.value, inputSchema.value) || null
     const parameters = automationEncrypt.encryptInputs({
       inputs: cleanParameters
     })
@@ -277,9 +275,7 @@ watch(selectedRelease, (newSelectedVersion, oldSelectedVersion) => {
   const existingValues = formatJsonFormSchemaInputs(
     props.revisionFn.parameters,
     inputSchema.value,
-    {
-      clone: true
-    }
+    { cleanRedacted: true }
   )
   selectedVersionInputs.value = existingValues
   resetJsonFormsState()

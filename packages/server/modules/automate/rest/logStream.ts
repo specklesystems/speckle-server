@@ -43,6 +43,11 @@ export default (app: Application) => {
         throw new Error('No associated run found on the execution engine')
       }
 
+      const setPlaintextHeaders = () => {
+        res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+        res.setHeader('Cache-Control', 'no-cache')
+      }
+
       try {
         let firstLine = true
         const logGenerator = getAutomationRunLogs({
@@ -53,8 +58,7 @@ export default (app: Application) => {
         for await (const line of logGenerator) {
           if (firstLine) {
             // Only do this now, so that if log retrieval failed defaultErrorHandler correctly returns JSON response
-            res.setHeader('Content-Type', 'text/plain; charset=utf-8')
-            res.setHeader('Cache-Control', 'no-cache')
+            setPlaintextHeaders()
             firstLine = false
           }
           res.write(line)
@@ -62,6 +66,7 @@ export default (app: Application) => {
       } catch (e) {
         if (e instanceof ExecutionEngineFailedResponseError) {
           if (e.response.statusMessage === 'LOG_MISSING_OR_NOT_READY') {
+            setPlaintextHeaders()
             res.write('')
             res.end()
             return

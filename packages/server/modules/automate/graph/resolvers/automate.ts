@@ -78,7 +78,6 @@ import { redactWriteOnlyInputData } from '@/modules/automate/utils/jsonSchemaRed
 
 /**
  * TODO:
- * - Log streaming REST implementation logStream.ts
  * - FE:
  *  - Fix up pagination & all remaining TODOs
  *  - Subscriptions & cache updates
