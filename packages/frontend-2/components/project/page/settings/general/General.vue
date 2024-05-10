@@ -92,6 +92,8 @@ const project = computed(() => pageResult.value?.project)
 
 const { isGuest } = useActiveUser()
 
+const logger = useLogger()
+
 const { isOwner } = useTeamInternals(project)
 
 const isDisabled = computed(() => !isOwner.value || isGuest.value)
@@ -112,10 +114,14 @@ const handleUpdate = (
 
   const options = customSuccessMessage ? { customSuccessMessage } : {}
 
-  updateProject(updatePayload, options).then(() => {
-    if (onComplete) {
-      onComplete()
-    }
-  })
+  updateProject(updatePayload, options)
+    .then(() => {
+      if (onComplete) {
+        onComplete()
+      }
+    })
+    .catch((error) => {
+      logger.error(error)
+    })
 }
 </script>

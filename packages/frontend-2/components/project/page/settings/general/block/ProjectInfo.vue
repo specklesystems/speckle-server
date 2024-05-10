@@ -99,6 +99,7 @@ const emitUpdate = () => {
 const handleRedirection = () => {
   if (targetRoute.value) {
     router.push(targetRoute.value)
+    targetRoute.value = undefined
   }
 }
 

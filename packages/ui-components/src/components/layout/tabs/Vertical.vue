@@ -97,10 +97,10 @@ onMounted(() => {
 })
 
 watch(
-  () => [props.items, activeItem.value] as const,
+  () => [props.items, activeItem.value],
   ([newItems]) => {
     if (Array.isArray(newItems) && newItems.length && !activeItem.value) {
-      setActiveItem(newItems[0] as LayoutPageTabItem)
+      setActiveItem(newItems[0])
     }
   }
 )
