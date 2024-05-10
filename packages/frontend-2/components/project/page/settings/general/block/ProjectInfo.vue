@@ -97,6 +97,8 @@ const emitUpdate = () => {
 }
 
 const handleRedirection = () => {
+  showConfirmDialog.value = false
+  resetLocalState()
   if (targetRoute.value) {
     router.push(targetRoute.value)
     targetRoute.value = undefined
@@ -113,13 +115,7 @@ const dialogButtons = computed(() => [
   {
     text: 'Discard Changes',
     props: { color: 'secondary', fullWidth: true, outline: true },
-    onClick: () => {
-      showConfirmDialog.value = false
-      resetLocalState()
-      if (targetRoute.value) {
-        router.push(targetRoute.value)
-      }
-    }
+    onClick: handleRedirection
   },
   {
     text: 'Save Changes',

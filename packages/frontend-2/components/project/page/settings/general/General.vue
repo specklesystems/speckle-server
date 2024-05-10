@@ -98,7 +98,7 @@ const { isOwner } = useTeamInternals(project)
 
 const isDisabled = computed(() => !isOwner.value || isGuest.value)
 
-const handleUpdate = (
+const handleUpdate = async (
   updates: Partial<ProjectUpdateInput>,
   customSuccessMessage?: string,
   onComplete?: () => void
@@ -114,14 +114,15 @@ const handleUpdate = (
 
   const options = customSuccessMessage ? { customSuccessMessage } : {}
 
-  updateProject(updatePayload, options)
-    .then(() => {
+  try {
+    const result = await updateProject(updatePayload, options)
+    if (result && result.id) {
       if (onComplete) {
         onComplete()
       }
-    })
-    .catch((error) => {
-      logger.error(error)
-    })
+    }
+  } catch (error) {
+    logger.error('Failed to update project:', error)
+  }
 }
 </script>
