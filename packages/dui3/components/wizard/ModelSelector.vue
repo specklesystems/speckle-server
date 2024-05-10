@@ -49,7 +49,7 @@
             <FormButton
               full-width
               size="sm"
-              outlined
+              text
               @click="showModelHasVersionsWarningDialog = false"
             >
               Cancel
@@ -146,7 +146,8 @@ watch(searchText, () => (newModelName.value = searchText.value))
 
 let selectedModel: ModelListModelItemFragment | undefined = undefined
 const handleModelSelect = (model: ModelListModelItemFragment) => {
-  if (model.versions.totalCount === 0) {
+  // NOTE: we're using the showNewModel prop as a giveaway of whether we're in the send wizard - we do not need this extra check in the receive wizard
+  if (model.versions.totalCount === 0 || !props.showNewModel) {
     return emit('next', model)
   }
   selectedModel = model
