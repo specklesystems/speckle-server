@@ -58,7 +58,7 @@ const radioOptions = computed(() => [
   {
     value: ProjectVisibility.Private,
     title: 'Private',
-    introduction: 'Only invited collaborators can access',
+    introduction: 'Only collaborators can access',
     icon: LockClosedIcon
   }
 ])

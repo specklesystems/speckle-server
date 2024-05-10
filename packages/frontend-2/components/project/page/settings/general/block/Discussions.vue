@@ -70,7 +70,7 @@ const radioOptions = computed(() => [
   {
     value: CommentPermission.TeamMembers,
     title: 'Collaborators',
-    introduction: 'Only invited collaborators can comment',
+    introduction: 'Only collaborators can comment',
     icon: UserCircleIcon,
     help:
       props.project.visibility === ProjectVisibility.Private
