@@ -211,11 +211,11 @@ onUnmounted(() => {
 })
 </script>
 
-<style lang="scss">
+<style>
 html.dialog-open {
   overflow: visible !important;
-  body {
-    overflow: hidden !important;
-  }
+}
+html.dialog-open body {
+  overflow: hidden !important;
 }
 </style>
