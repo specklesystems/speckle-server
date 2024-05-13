@@ -95,6 +95,7 @@ import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
 import { throttle, noop } from 'lodash'
+import { isClient } from '@vueuse/core'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -192,17 +193,21 @@ const onScroll = throttle((e: Event) => {
 // Toggle 'dialog-open' class on <html> to prevent scroll jumping and disable background scroll.
 // This maintains user scroll position when Headless UI dialogs are activated.
 watch(open, (newValue) => {
-  const html = document.documentElement
-  if (newValue) {
-    html.classList.add('dialog-open')
-  } else {
-    html.classList.remove('dialog-open')
+  if (isClient) {
+    const html = document.documentElement
+    if (newValue) {
+      html.classList.add('dialog-open')
+    } else {
+      html.classList.remove('dialog-open')
+    }
   }
 })
 
 // Clean up when the component unmounts
 onUnmounted(() => {
-  document.documentElement.classList.remove('dialog-open')
+  if (isClient) {
+    document.documentElement.classList.remove('dialog-open')
+  }
 })
 </script>
 
