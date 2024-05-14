@@ -83,6 +83,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       ...documentModelStore.value.models[modelIndex],
       ...properties
     }
+
     await app.$baseBinding.updateModel(documentModelStore.value.models[modelIndex])
   }
 
@@ -234,7 +235,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       (m) => m.modelCardId === args.modelCardId
     ) as IReceiverModelCard
 
-    console.log(args)
+    args.receiveResult.display = true
     model.progress = undefined
     await patchModel(model.modelCardId, { receiveResult: args.receiveResult }) // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
   }

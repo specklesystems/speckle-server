@@ -82,6 +82,7 @@ import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { versionDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { watchOnce } from '@vueuse/core'
 
 const { trackEvent } = useMixpanel()
 const app = useNuxtApp()
@@ -192,7 +193,8 @@ onMounted(() => {
 })
 
 // On initialisation, we check whether there was a never version created while we were offline. If so, flagging this dude as expired.
-watch(versionDetailsResult, async (newVal) => {
+watchOnce(versionDetailsResult, async (newVal) => {
+  if (!newVal) return
   let patchObject = {}
 
   if (
@@ -205,6 +207,7 @@ watch(versionDetailsResult, async (newVal) => {
       hasDismissedUpdateWarning: props.modelCard.hasSelectedOldVersion ? true : false
     }
   }
+
   // Always update the card's project name and model name, if needed. Note, this is not needed for senders (senders do not need to create layers).
   await store.patchModel(props.modelCard.modelCardId, {
     ...patchObject,
