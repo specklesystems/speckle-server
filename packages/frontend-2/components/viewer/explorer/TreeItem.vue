@@ -183,17 +183,8 @@ const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
 const rawSpeckleData = props.treeItem?.raw as SpeckleObject
 
-function getNestedModelHeader(name: string): string {
-  const parts = name.split('/')
-  return parts.length > 1 ? (parts.pop() as string) : name
-}
-
 const headerAndSubheader = computed(() => {
-  const { header, subheader } = getHeaderAndSubheaderForSpeckleObject(rawSpeckleData)
-  return {
-    header: getNestedModelHeader(header),
-    subheader
-  }
+  return getHeaderAndSubheaderForSpeckleObject(rawSpeckleData)
 })
 
 const childrenLength = computed(() => {
