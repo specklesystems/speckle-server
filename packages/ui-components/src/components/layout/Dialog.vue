@@ -11,11 +11,10 @@
         leave-to="opacity-0"
       >
         <div
-          class="fixed inset-0 bg-neutral-100/70 dark:bg-neutral-900/70 transition-opacity backdrop-blur-xs"
+          class="fixed top-0 left-0 w-full h-full bg-neutral-100/70 dark:bg-neutral-900/70 transition-opacity backdrop-blur-xs"
         />
       </TransitionChild>
-
-      <div class="fixed inset-0 z-10 h-[100dvh] w-screen">
+      <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
         <div class="flex justify-center items-center h-full w-full p-4 sm:p-0">
           <TransitionChild
             as="template"
@@ -94,8 +93,9 @@
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { FormButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
-import { computed, ref, useSlots } from 'vue'
+import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
 import { throttle, noop } from 'lodash'
+import { isClient } from '@vueuse/core'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -189,4 +189,33 @@ const onScroll = throttle((e: Event) => {
   scrolledFromTop.value = scrollTop > 0
   scrolledToBottom.value = scrollTop + offsetHeight >= scrollHeight
 }, 60)
+
+// Toggle 'dialog-open' class on <html> to prevent scroll jumping and disable background scroll.
+// This maintains user scroll position when Headless UI dialogs are activated.
+watch(open, (newValue) => {
+  if (isClient) {
+    const html = document.documentElement
+    if (newValue) {
+      html.classList.add('dialog-open')
+    } else {
+      html.classList.remove('dialog-open')
+    }
+  }
+})
+
+// Clean up when the component unmounts
+onUnmounted(() => {
+  if (isClient) {
+    document.documentElement.classList.remove('dialog-open')
+  }
+})
 </script>
+
+<style>
+html.dialog-open {
+  overflow: visible !important;
+}
+html.dialog-open body {
+  overflow: hidden !important;
+}
+</style>
