@@ -77,6 +77,7 @@ const router = useRouter()
 const projectId = computed(() => route.params.id as string)
 const shouldAutoAcceptInvite = computed(() => route.query.accept === 'true')
 const token = computed(() => route.query.token as Optional<string>)
+const { isLoggedIn } = useActiveUser()
 
 useGeneralProjectPageUpdateTracking({ projectId }, { notifyOnProjectUpdate: true })
 const { result: projectPageResult } = useQuery(
@@ -117,31 +118,38 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
   }
 }
 
-const pageTabItems = computed((): LayoutPageTabItem[] => [
-  {
-    title: 'Models',
-    id: 'models',
-    count: modelCount.value,
-    icon: CubeIcon
-  },
-  {
-    title: 'Discussions',
-    id: 'discussions',
-    count: commentCount.value,
-    icon: ChatBubbleLeftRightIcon
-  },
-  //   {
-  //   title: 'Automations',
-  //   id: 'automations',
-  //   tag: 'New',
-  //   icon: BoltIcon
-  //   },
-  {
-    title: 'Settings',
-    id: 'settings',
-    icon: Cog6ToothIcon
+const pageTabItems = computed((): LayoutPageTabItem[] => {
+  const items: LayoutPageTabItem[] = [
+    {
+      title: 'Models',
+      id: 'models',
+      count: modelCount.value,
+      icon: CubeIcon
+    },
+    {
+      title: 'Discussions',
+      id: 'discussions',
+      count: commentCount.value,
+      icon: ChatBubbleLeftRightIcon
+    }
+    //   {
+    //   title: 'Automations',
+    //   id: 'automations',
+    //   tag: 'New',
+    //   icon: BoltIcon
+    //   },
+  ]
+
+  if (isLoggedIn.value) {
+    items.push({
+      title: 'Settings',
+      id: 'settings',
+      icon: Cog6ToothIcon
+    })
   }
-])
+
+  return items
+})
 
 const activePageTab = computed({
   get: () => {
