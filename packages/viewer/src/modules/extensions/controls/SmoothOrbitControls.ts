@@ -29,7 +29,8 @@ import {
   Scene,
   Mesh,
   SphereGeometry,
-  MeshBasicMaterial
+  MeshBasicMaterial,
+  OrthographicCamera
 } from 'three'
 
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
@@ -97,7 +98,7 @@ export const DEFAULT_OPTIONS = Object.freeze<Required<SmoothControlsOptions>>({
   maximumFieldOfView: 60,
   touchAction: 'none',
   infiniteZoom: true,
-  zoomToCursor: true
+  zoomToCursor: false
 })
 
 // Constants
@@ -251,6 +252,15 @@ export class SmoothOrbitControls extends EventEmitter {
 
   get interactionEnabled(): boolean {
     return this._interactionEnabled
+  }
+
+  set controlTarget(value: Object3D) {
+    this._controlTarget = value
+    this.moveCamera()
+  }
+
+  get originV(): Vector3 {
+    return this.origin
   }
 
   enableInteraction() {
@@ -484,6 +494,7 @@ export class SmoothOrbitControls extends EventEmitter {
         0,
         (this._options.maximumRadius - this._options.minimumRadius) * 0.5
       )
+
     const goalRadius = radius + zoomAmount
     this.setOrbit(goalTheta, goalPhi, goalRadius)
 
@@ -502,35 +513,37 @@ export class SmoothOrbitControls extends EventEmitter {
     }
 
     if (this._options.zoomToCursor) {
-      const cameraDirection = new Vector3()
-        .setFromSpherical(this.spherical)
-        .normalize()
-        .negate()
-      const planeX = new Vector3()
-        .copy(cameraDirection)
-        .cross(new Vector3(0, 1, 0))
-        .normalize()
-      if (planeX.lengthSq() === 0) planeX.x = 1.0
-      const planeY = new Vector3().crossVectors(planeX, cameraDirection)
-      const worldToScreen =
-        this.goalSpherical.radius *
-        Math.tan(Math.exp(this.logFov) * MathUtils.DEG2RAD * 0.5)
-      const cursor = new Vector3()
-        .copy(this.goalOrigin)
-        .add(
-          planeX.multiplyScalar(
-            this.zoomControlCoord.x *
-              worldToScreen *
-              (this._controlTarget as PerspectiveCamera).aspect
+      if (this._controlTarget instanceof PerspectiveCamera) {
+        const cameraDirection = new Vector3()
+          .setFromSpherical(this.spherical)
+          .normalize()
+          .negate()
+        const planeX = new Vector3()
+          .copy(cameraDirection)
+          .cross(new Vector3(0, 1, 0))
+          .normalize()
+        if (planeX.lengthSq() === 0) planeX.x = 1.0
+        const planeY = new Vector3().crossVectors(planeX, cameraDirection)
+        const worldToScreen =
+          this.goalSpherical.radius *
+          Math.tan(Math.exp(this.logFov) * MathUtils.DEG2RAD * 0.5)
+        const cursor = new Vector3()
+          .copy(this.goalOrigin)
+          .add(
+            planeX.multiplyScalar(
+              this.zoomControlCoord.x *
+                worldToScreen *
+                (this._controlTarget as PerspectiveCamera).aspect
+            )
           )
+          .add(planeY.multiplyScalar(this.zoomControlCoord.y * worldToScreen))
+        const lerpRatio = this._radiusDelta / this.goalSpherical.radius
+        const newTargetEnd = new Vector3().copy(this.goalOrigin).lerp(cursor, lerpRatio)
+        this.cursorSphere.position.copy(
+          new Vector3().copy(cursor).applyMatrix4(this._basisTransform)
         )
-        .add(planeY.multiplyScalar(this.zoomControlCoord.y * worldToScreen))
-      const lerpRatio = this._radiusDelta / this.goalSpherical.radius
-      const newTargetEnd = new Vector3().copy(this.goalOrigin).lerp(cursor, lerpRatio)
-      this.cursorSphere.position.copy(
-        new Vector3().copy(cursor).applyMatrix4(this._basisTransform)
-      )
-      this.setTarget(newTargetEnd.x, newTargetEnd.y, newTargetEnd.z)
+        this.setTarget(newTargetEnd.x, newTargetEnd.y, newTargetEnd.z)
+      }
     }
     /** We're not varying fov based on zoom level for now */
     // if (deltaZoom !== 0) {
@@ -656,7 +669,6 @@ export class SmoothOrbitControls extends EventEmitter {
       new Euler(this.spherical.phi - Math.PI / 2, this.spherical.theta, 0, 'YXZ')
     )
     this._controlTarget.applyMatrix4(this._basisTransform)
-
     const originSphereT = new Vector3()
       .copy(this.origin)
       .applyMatrix4(this._basisTransform)
@@ -666,6 +678,26 @@ export class SmoothOrbitControls extends EventEmitter {
         this._controlTarget.fov = Math.exp(this.logFov)
         this._controlTarget.updateProjectionMatrix()
       }
+    if (this._controlTarget instanceof OrthographicCamera) {
+      const depth = this.spherical.radius
+      const dims = {
+        x: this._container.offsetWidth,
+        y: this._container.offsetHeight
+      }
+      const aspect = dims.x / dims.y
+      const fov = Math.exp(this.logFov)
+      const dephtS = Math.tan(MathUtils.DEG2RAD * (fov / 2)) * 2.0
+      const Z = depth
+      const width = dephtS * Z * aspect
+      const height = dephtS * Z
+
+      this._controlTarget.zoom = 1
+      this._controlTarget.left = width / -2
+      this._controlTarget.right = width / 2
+      this._controlTarget.top = height / 2
+      this._controlTarget.bottom = height / -2
+      this._controlTarget.updateProjectionMatrix()
+    }
   }
 
   private userAdjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {

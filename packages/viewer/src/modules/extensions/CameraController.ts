@@ -49,7 +49,7 @@ export function isOrthographicCamera(camera: Camera): camera is OrthographicCame
 
 export class CameraController extends Extension implements SpeckleCamera {
   protected _controls: SmoothOrbitControls
-  protected _renderingCamera!: PerspectiveCamera | OrthographicCamera
+  protected _renderingCamera: PerspectiveCamera | OrthographicCamera
   protected perspectiveCamera: PerspectiveCamera
   protected orthographicCamera: OrthographicCamera
   private _lastCameraChanged: boolean = false
@@ -99,19 +99,19 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.perspectiveCamera.position.set(1, 1, 1)
     this.perspectiveCamera.updateProjectionMatrix()
 
-    // const aspect =
-    //   this.viewer.getContainer().offsetWidth / this.viewer.getContainer().offsetHeight
+    const aspect =
+      this.viewer.getContainer().offsetWidth / this.viewer.getContainer().offsetHeight
 
     /** Create the defaultorthographic camera */
-    // const fustrumSize = 50
-    // this.orthographicCamera = new OrthographicCamera(
-    //   (-fustrumSize * aspect) / 2,
-    //   (fustrumSize * aspect) / 2,
-    //   fustrumSize / 2,
-    //   -fustrumSize / 2,
-    //   0.001,
-    //   10000
-    // )
+    const fustrumSize = 50
+    this.orthographicCamera = new OrthographicCamera(
+      (-fustrumSize * aspect) / 2,
+      (fustrumSize * aspect) / 2,
+      fustrumSize / 2,
+      -fustrumSize / 2,
+      0.001,
+      10000
+    )
     // this.orthographicCamera.up.set(0, 0, 1)
     // this.orthographicCamera.position.set(100, 100, 100)
     // this.orthographicCamera.updateProjectionMatrix()
@@ -240,7 +240,7 @@ export class CameraController extends Extension implements SpeckleCamera {
   public setOrthoCameraOn(): void {
     if (this._renderingCamera === this.orthographicCamera) return
     this.renderingCamera = this.orthographicCamera
-    // this.setupOrthoCamera()
+    this.setupOrthoCamera()
     this.viewer.requestRender()
   }
 
@@ -249,46 +249,15 @@ export class CameraController extends Extension implements SpeckleCamera {
     else this.setPerspectiveCameraOn()
   }
 
-  // protected setupOrthoCamera() {
-  //   this._controls.mouseButtons.wheel = CameraControls.ACTION.ZOOM
-
-  //   const lineOfSight = new Vector3()
-  //   this.perspectiveCamera.getWorldDirection(lineOfSight)
-  //   const target = new Vector3().copy(this.viewer.World.worldOrigin)
-  //   const distance = target.clone().sub(this.perspectiveCamera.position)
-  //   const depth = distance.length()
-  //   const dims = {
-  //     x: this.viewer.getContainer().offsetWidth,
-  //     y: this.viewer.getContainer().offsetHeight
-  //   }
-  //   const aspect = dims.x / dims.y
-  //   const fov = this.perspectiveCamera.fov
-  //   const height = depth * 2 * Math.atan((fov * (Math.PI / 180)) / 2)
-  //   const width = height * aspect
-
-  //   this.orthographicCamera.zoom = 1
-  //   this.orthographicCamera.left = width / -2
-  //   this.orthographicCamera.right = width / 2
-  //   this.orthographicCamera.top = height / 2
-  //   this.orthographicCamera.bottom = height / -2
-  //   this.orthographicCamera.far = this.perspectiveCamera.far
-  //   this.orthographicCamera.near = 0.0001
-  //   this.orthographicCamera.updateProjectionMatrix()
-  //   this.orthographicCamera.position.copy(this.perspectiveCamera.position)
-  //   this.orthographicCamera.quaternion.copy(this.perspectiveCamera.quaternion)
-  //   this.orthographicCamera.updateProjectionMatrix()
-
-  //   this._controls.camera = this.orthographicCamera
-  //   this.setCameraPlanes(this.viewer.getRenderer().sceneBox)
-  //   this.emit(CameraEvent.ProjectionChanged, CameraProjection.ORTHOGRAPHIC)
-  // }
+  protected setupOrthoCamera() {
+    this.controls.controlTarget = this.orthographicCamera
+    this.enableRotations()
+    this.setCameraPlanes(this.viewer.getRenderer().sceneBox)
+    this.emit(CameraEvent.ProjectionChanged, CameraProjection.ORTHOGRAPHIC)
+  }
 
   protected setupPerspectiveCamera() {
-    this.perspectiveCamera.position.copy(this.perspectiveCamera.position)
-    this.perspectiveCamera.quaternion.copy(this.perspectiveCamera.quaternion)
-    this.perspectiveCamera.updateProjectionMatrix()
-    // TO DO
-    // this._controls.zoomTo(1)
+    this.controls.controlTarget = this.perspectiveCamera
     this.enableRotations()
     this.setCameraPlanes(this.viewer.getRenderer().sceneBox)
     this.emit(CameraEvent.ProjectionChanged, CameraProjection.PERSPECTIVE)
@@ -322,8 +291,9 @@ export class CameraController extends Extension implements SpeckleCamera {
     // this._controls.minDistance = distance / 100
     // this._controls.maxDistance = distance * 100
 
-    this._renderingCamera.near = distance / 100
-    this._renderingCamera.far = distance * 100
+    this._renderingCamera.near =
+      this._renderingCamera === this.perspectiveCamera ? distance / 100 : 0.001
+    this._renderingCamera.far = 100 //distance * 100
     this._renderingCamera.updateProjectionMatrix()
   }
 
