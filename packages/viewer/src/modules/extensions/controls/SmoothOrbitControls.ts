@@ -225,7 +225,7 @@ export class SmoothOrbitControls extends EventEmitter {
       DEFAULT_OPTIONS
     ) as Required<SmoothControlsOptions>
 
-    const geometry = new SphereGeometry(1, 32, 16)
+    const geometry = new SphereGeometry(0.1, 32, 16)
     const material = new MeshBasicMaterial({ color: 0xffff00 })
     this.originSphere = new Mesh(geometry, material)
     this.originSphere.layers.set(ObjectLayers.OVERLAY)
@@ -456,6 +456,7 @@ export class SmoothOrbitControls extends EventEmitter {
       theta - clamp(deltaTheta, -dThetaLimit - dTheta, dThetaLimit - dTheta)
     const goalPhi = phi - deltaPhi
 
+    /** Original approach to zoom amount varying which works quite bad */
     // const { minimumRadius, maximumRadius, minimumFieldOfView, maximumFieldOfView } =
     // this._options
     // const a = (deltaZoom > 0 ? maximumRadius : minimumRadius) - radius
@@ -470,7 +471,8 @@ export class SmoothOrbitControls extends EventEmitter {
     //   deltaZoom *
     //   (isFinite(deltaRatio) ? deltaRatio : (maximumRadius - minimumRadius) * 2) *
     //   metersPerPixel
-    // console.log(deltaRatio)
+
+    /** Simpler approach to zoom amount varying */
     const offset = new Vector3().copy(this._controlTarget.position).sub(this.origin)
     // half of the fov is center to top of screen
     const fov = Math.exp(this.logFov) * MathUtils.DEG2RAD
@@ -483,53 +485,54 @@ export class SmoothOrbitControls extends EventEmitter {
         (this._options.maximumRadius - this._options.minimumRadius) * 0.5
       )
     const goalRadius = radius + zoomAmount
-    this._radiusDelta = -zoomAmount
-    // if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
-    //   const dir = new Vector3().setFromSpherical(this.spherical).normalize()
-    //   const dollyAmount = new Vector3().copy(dir).multiplyScalar(zoomAmount)
-
-    //   this.setTarget(
-    //     this.origin.x + dollyAmount.x,
-    //     this.origin.y + dollyAmount.y,
-    //     this.origin.z + dollyAmount.z
-    //   )
-    // }
-
-    const cameraDirection = new Vector3()
-      .setFromSpherical(this.spherical)
-      .normalize()
-      .negate()
-    const planeX = new Vector3()
-      .copy(cameraDirection)
-      .cross(new Vector3(0, 1, 0))
-      .normalize()
-    if (planeX.lengthSq() === 0) planeX.x = 1.0
-    const planeY = new Vector3().crossVectors(planeX, cameraDirection)
-    const worldToScreen =
-      this.goalSpherical.radius *
-      Math.tan(Math.exp(this.logFov) * MathUtils.DEG2RAD * 0.5)
-    const cursor = new Vector3()
-      .copy(this.goalOrigin)
-      .add(
-        planeX.multiplyScalar(
-          this.zoomControlCoord.x *
-            worldToScreen *
-            (this._controlTarget as PerspectiveCamera).aspect
-        )
-      )
-      .add(planeY.multiplyScalar(this.zoomControlCoord.y * worldToScreen))
-    const lerpRatio = this._radiusDelta / this.goalSpherical.radius
-    const newTargetEnd = new Vector3().copy(this.goalOrigin).lerp(cursor, lerpRatio)
-    const plm = new Vector3().copy(cursor).applyMatrix4(this._basisTransform)
-    if (this._radiusDelta !== 0) this.cursorSphere.position.copy(plm)
-    this.goalOrigin.copy(newTargetEnd)
-    // this.origin.copy(newTargetEnd)
-    // this.setTarget(newTargetEnd.x, newTargetEnd.y, newTargetEnd.z)
-    this.zoomControlCoord.set(0, 0)
-    this._radiusDelta = 0
-
     this.setOrbit(goalTheta, goalPhi, goalRadius)
 
+    this._radiusDelta = radius - this.goalSpherical.radius
+
+    if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
+      const dir = new Vector3().setFromSpherical(this.spherical).normalize()
+      const dollyAmount = new Vector3().copy(dir).multiplyScalar(zoomAmount)
+
+      this.setTarget(
+        this.origin.x + dollyAmount.x,
+        this.origin.y + dollyAmount.y,
+        this.origin.z + dollyAmount.z
+      )
+      if (this._options.zoomToCursor) this._radiusDelta = -zoomAmount
+    }
+
+    if (this._options.zoomToCursor) {
+      const cameraDirection = new Vector3()
+        .setFromSpherical(this.spherical)
+        .normalize()
+        .negate()
+      const planeX = new Vector3()
+        .copy(cameraDirection)
+        .cross(new Vector3(0, 1, 0))
+        .normalize()
+      if (planeX.lengthSq() === 0) planeX.x = 1.0
+      const planeY = new Vector3().crossVectors(planeX, cameraDirection)
+      const worldToScreen =
+        this.goalSpherical.radius *
+        Math.tan(Math.exp(this.logFov) * MathUtils.DEG2RAD * 0.5)
+      const cursor = new Vector3()
+        .copy(this.goalOrigin)
+        .add(
+          planeX.multiplyScalar(
+            this.zoomControlCoord.x *
+              worldToScreen *
+              (this._controlTarget as PerspectiveCamera).aspect
+          )
+        )
+        .add(planeY.multiplyScalar(this.zoomControlCoord.y * worldToScreen))
+      const lerpRatio = this._radiusDelta / this.goalSpherical.radius
+      const newTargetEnd = new Vector3().copy(this.goalOrigin).lerp(cursor, lerpRatio)
+      this.cursorSphere.position.copy(
+        new Vector3().copy(cursor).applyMatrix4(this._basisTransform)
+      )
+      this.setTarget(newTargetEnd.x, newTargetEnd.y, newTargetEnd.z)
+    }
+    /** We're not varying fov based on zoom level for now */
     // if (deltaZoom !== 0) {
     //   const goalLogFov = this.goalLogFov + deltaZoom
     //   this.setFieldOfView(Math.exp(goalLogFov))
