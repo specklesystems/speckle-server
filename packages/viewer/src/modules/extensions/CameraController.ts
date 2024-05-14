@@ -139,7 +139,8 @@ export class CameraController extends Extension implements SpeckleCamera {
     this._controls = new SmoothOrbitControls(
       this.perspectiveCamera,
       this.viewer.getContainer(),
-      this.viewer.getRenderer().renderer
+      this.viewer.getRenderer().renderer,
+      this.viewer.getRenderer().scene
     )
     this._controls.enableInteraction()
     this._controls.setDamperDecayTime(100)

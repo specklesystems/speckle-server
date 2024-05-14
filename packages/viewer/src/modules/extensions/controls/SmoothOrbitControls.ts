@@ -24,12 +24,18 @@ import {
   PerspectiveCamera,
   Box3,
   Sphere,
-  Matrix4
+  Matrix4,
+  MathUtils,
+  Scene,
+  Mesh,
+  SphereGeometry,
+  MeshBasicMaterial
 } from 'three'
 
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
 
 import EventEmitter from '../../EventEmitter.js'
+import { ObjectLayers } from '../../../index.js'
 
 /**
  * @param {Number} value
@@ -76,6 +82,8 @@ export interface SmoothControlsOptions {
   touchAction?: TouchAction
   // Infinite zoom
   infiniteZoom?: boolean
+  // Zoom to cursor
+  zoomToCursor?: boolean
 }
 
 export const DEFAULT_OPTIONS = Object.freeze<Required<SmoothControlsOptions>>({
@@ -85,10 +93,11 @@ export const DEFAULT_OPTIONS = Object.freeze<Required<SmoothControlsOptions>>({
   maximumPolarAngle: Math.PI - Math.PI / 8,
   minimumAzimuthalAngle: -Infinity,
   maximumAzimuthalAngle: Infinity,
-  minimumFieldOfView: 45,
+  minimumFieldOfView: 40,
   maximumFieldOfView: 60,
   touchAction: 'none',
-  infiniteZoom: true
+  infiniteZoom: true,
+  zoomToCursor: true
 })
 
 // Constants
@@ -188,6 +197,7 @@ export class SmoothOrbitControls extends EventEmitter {
   private startPointerPosition = { clientX: 0, clientY: 0 }
   private lastSeparation = 0
   private touchDecided = false
+  private zoomControlCoord: Vector2 = new Vector2()
 
   private _controlTarget: Object3D
   private _container: HTMLElement
@@ -195,11 +205,16 @@ export class SmoothOrbitControls extends EventEmitter {
   private _lastTick: number = 0
   private _basisTransform: Matrix4 = new Matrix4()
   private _basisTransformInv: Matrix4 = new Matrix4()
+  private _radiusDelta: number = 0
+
+  private originSphere: Mesh
+  private cursorSphere: Mesh
 
   constructor(
     controlTarget: Object3D,
     container: HTMLElement,
-    renderer: WebGLRenderer
+    renderer: WebGLRenderer,
+    scene: Scene
   ) {
     super()
     this._controlTarget = controlTarget
@@ -209,6 +224,16 @@ export class SmoothOrbitControls extends EventEmitter {
       {},
       DEFAULT_OPTIONS
     ) as Required<SmoothControlsOptions>
+
+    const geometry = new SphereGeometry(1, 32, 16)
+    const material = new MeshBasicMaterial({ color: 0xffff00 })
+    this.originSphere = new Mesh(geometry, material)
+    this.originSphere.layers.set(ObjectLayers.OVERLAY)
+    const material2 = new MeshBasicMaterial({ color: 0xff0000 })
+    this.cursorSphere = new Mesh(geometry, material2)
+    this.cursorSphere.layers.set(ObjectLayers.OVERLAY)
+    scene.add(this.originSphere)
+    scene.add(this.cursorSphere)
 
     this.setOrbit(0, Math.PI / 2, 1)
     this.jumpToGoal()
@@ -424,47 +449,91 @@ export class SmoothOrbitControls extends EventEmitter {
    */
   adjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {
     const { theta, phi, radius } = this.goalSpherical
-    const { minimumRadius, maximumRadius, minimumFieldOfView, maximumFieldOfView } =
-      this._options
 
     const dTheta = this.spherical.theta - theta
     const dThetaLimit = Math.PI - 0.001
     const goalTheta =
       theta - clamp(deltaTheta, -dThetaLimit - dTheta, dThetaLimit - dTheta)
     const goalPhi = phi - deltaPhi
-    const a = (deltaZoom > 0 ? maximumRadius : minimumRadius) - radius
-    const b =
-      Math.log(deltaZoom > 0 ? maximumFieldOfView : minimumFieldOfView) -
-      this.goalLogFov
-    const deltaRatio = deltaZoom === 0 ? 0 : a / b
-    const size = this._renderer.getSize(new Vector2())
-    const zoomPerPixel = (ZOOM_SENSITIVITY * this.zoomSensitivity) / size.y
-    const metersPerPixel = this.spherical.radius * Math.exp(this.logFov) * zoomPerPixel
-    const zoomAmount =
-      deltaZoom *
-      (isFinite(deltaRatio) ? deltaRatio : (maximumRadius - minimumRadius) * 2) *
-      metersPerPixel
 
-    const goalRadius = radius + zoomAmount
-    if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
-      const dir = new Vector3().setFromSpherical(this.spherical).normalize()
-      const dollyAmount = new Vector3()
-        .copy(dir)
-        .multiplyScalar(deltaZoom * Math.exp(this.logFov))
-
-      this.setTarget(
-        this.origin.x + dollyAmount.x,
-        this.origin.y + dollyAmount.y,
-        this.origin.z + dollyAmount.z
+    // const { minimumRadius, maximumRadius, minimumFieldOfView, maximumFieldOfView } =
+    // this._options
+    // const a = (deltaZoom > 0 ? maximumRadius : minimumRadius) - radius
+    // const b =
+    //   Math.log(deltaZoom > 0 ? maximumFieldOfView : minimumFieldOfView) -
+    //   this.goalLogFov
+    // const deltaRatio = deltaZoom === 0 ? 0 : a / b
+    // const size = this._renderer.getSize(new Vector2())
+    // const zoomPerPixel = (ZOOM_SENSITIVITY * this.zoomSensitivity) / size.y
+    // const metersPerPixel = this.spherical.radius * Math.exp(this.logFov) * zoomPerPixel
+    // const zoomAmount =
+    //   deltaZoom *
+    //   (isFinite(deltaRatio) ? deltaRatio : (maximumRadius - minimumRadius) * 2) *
+    //   metersPerPixel
+    // console.log(deltaRatio)
+    const offset = new Vector3().copy(this._controlTarget.position).sub(this.origin)
+    // half of the fov is center to top of screen
+    const fov = Math.exp(this.logFov) * MathUtils.DEG2RAD
+    let zoomAmount = deltaZoom * offset.length() * Math.tan(fov * 0.5)
+    zoomAmount =
+      Math.sign(zoomAmount) *
+      clamp(
+        Math.abs(zoomAmount),
+        0,
+        (this._options.maximumRadius - this._options.minimumRadius) * 0.5
       )
-    }
+    const goalRadius = radius + zoomAmount
+    this._radiusDelta = -zoomAmount
+    // if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
+    //   const dir = new Vector3().setFromSpherical(this.spherical).normalize()
+    //   const dollyAmount = new Vector3().copy(dir).multiplyScalar(zoomAmount)
+
+    //   this.setTarget(
+    //     this.origin.x + dollyAmount.x,
+    //     this.origin.y + dollyAmount.y,
+    //     this.origin.z + dollyAmount.z
+    //   )
+    // }
+
+    const cameraDirection = new Vector3()
+      .setFromSpherical(this.spherical)
+      .normalize()
+      .negate()
+    const planeX = new Vector3()
+      .copy(cameraDirection)
+      .cross(new Vector3(0, 1, 0))
+      .normalize()
+    if (planeX.lengthSq() === 0) planeX.x = 1.0
+    const planeY = new Vector3().crossVectors(planeX, cameraDirection)
+    const worldToScreen =
+      this.goalSpherical.radius *
+      Math.tan(Math.exp(this.logFov) * MathUtils.DEG2RAD * 0.5)
+    const cursor = new Vector3()
+      .copy(this.goalOrigin)
+      .add(
+        planeX.multiplyScalar(
+          this.zoomControlCoord.x *
+            worldToScreen *
+            (this._controlTarget as PerspectiveCamera).aspect
+        )
+      )
+      .add(planeY.multiplyScalar(this.zoomControlCoord.y * worldToScreen))
+    const lerpRatio = this._radiusDelta / this.goalSpherical.radius
+    const newTargetEnd = new Vector3().copy(this.goalOrigin).lerp(cursor, lerpRatio)
+    const plm = new Vector3().copy(cursor).applyMatrix4(this._basisTransform)
+    if (this._radiusDelta !== 0) this.cursorSphere.position.copy(plm)
+    this.goalOrigin.copy(newTargetEnd)
+    // this.origin.copy(newTargetEnd)
+    // this.setTarget(newTargetEnd.x, newTargetEnd.y, newTargetEnd.z)
+    this.zoomControlCoord.set(0, 0)
+    this._radiusDelta = 0
 
     this.setOrbit(goalTheta, goalPhi, goalRadius)
 
-    if (deltaZoom !== 0) {
-      const goalLogFov = this.goalLogFov + deltaZoom
-      this.setFieldOfView(Math.exp(goalLogFov))
-    }
+    // if (deltaZoom !== 0) {
+    //   const goalLogFov = this.goalLogFov + deltaZoom
+    //   this.setFieldOfView(Math.exp(goalLogFov))
+    // }
   }
 
   /**
@@ -496,7 +565,7 @@ export class SmoothOrbitControls extends EventEmitter {
       })
     }
 
-    const { maximumPolarAngle, maximumRadius } = this._options
+    const { maximumPolarAngle } = this._options
 
     const dTheta = this.spherical.theta - this.goalSpherical.theta
     if (
@@ -525,10 +594,18 @@ export class SmoothOrbitControls extends EventEmitter {
       this.spherical.radius,
       this.goalSpherical.radius,
       delta,
-      maximumRadius
+      this._options.maximumRadius
     )
 
-    this.logFov = this.fovDamper.update(this.logFov, this.goalLogFov, delta, 10)
+    this.logFov = this.goalLogFov
+    /** We're not easing the fov for now */
+    // this.fovDamper.update(
+    //   this.logFov,
+    //   this.goalLogFov,
+    //   delta,
+    //   10
+    // )
+
     let normalization = 1
     if (worldBox) {
       normalization = worldBox.getBoundingSphere(new Sphere()).radius / 10
@@ -577,6 +654,10 @@ export class SmoothOrbitControls extends EventEmitter {
     )
     this._controlTarget.applyMatrix4(this._basisTransform)
 
+    const originSphereT = new Vector3()
+      .copy(this.origin)
+      .applyMatrix4(this._basisTransform)
+    this.originSphere.position.copy(originSphereT)
     if (this._controlTarget instanceof PerspectiveCamera)
       if (this._controlTarget.fov !== Math.exp(this.logFov)) {
         this._controlTarget.fov = Math.exp(this.logFov)
@@ -931,8 +1012,17 @@ export class SmoothOrbitControls extends EventEmitter {
     // this.element.style.cursor = 'grabbing'
   }
 
-  private onWheel = (event: Event) => {
+  private onWheel = (event: WheelEvent) => {
     this.changeSource = ChangeSource.USER_INTERACTION
+    const x =
+      ((event.clientX - this._container.clientLeft) / this._container.clientWidth) * 2 -
+      1
+
+    const y =
+      ((event.clientY - this._container.clientTop) / this._container.clientHeight) *
+        -2 +
+      1
+    this.zoomControlCoord.set(x, y)
 
     const deltaZoom =
       ((event as WheelEvent).deltaY *
