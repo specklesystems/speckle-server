@@ -72,8 +72,12 @@ export const modelListFragment = graphql(`
     id
     previewUrl
     updatedAt
-    versions {
+    versions(limit: 1) {
       totalCount
+      items {
+        id
+        sourceApplication
+      }
     }
   }
 `)
