@@ -615,7 +615,7 @@ function setupResponseResourceItems(
       const objectId = item.objectId
 
       // In case we want to go back to 1 resource per model:
-      // if (modelId && encounteredModels.has(modelId)) continue
+      if (modelId && encounteredModels.has(modelId)) continue
       if (encounteredObjects.has(objectId)) continue
 
       finalItems.push(item)
