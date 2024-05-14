@@ -4,12 +4,13 @@
   >
     <div class="flex items-center space-x-4">
       <div>
-        <img
-          v-if="model.previewUrl"
-          :src="model.previewUrl"
-          alt="preview image for model"
-          class="h-12 w-12 object-cover"
-        />
+        <div v-if="model.previewUrl" class="h-12 w-12">
+          <img
+            :src="model.previewUrl"
+            alt="preview image for model"
+            class="h-12 w-12 object-cover"
+          />
+        </div>
         <div
           v-else
           class="h-12 w-12 bg-blue-500/10 rounded flex items-center justify-center"
@@ -26,13 +27,18 @@
           <div class="font-bold grow truncate text-ellipsis">
             {{ model.displayName }}
           </div>
-          <div class="bg-neutral-500/10 rounded-full px-1 text-xs truncate shrink">
-            {{ model.versions.totalCount }} versions
-          </div>
         </div>
 
         <div class="caption text-foreground-2 truncate flex space-x-2">
           <div>updated {{ updatedAgo }}</div>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <div class="bg-neutral-500/10 rounded-full px-1 text-xs truncate shrink">
+          {{ model.versions.totalCount }} versions
+        </div>
+        <div class="text-right">
+          <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
         </div>
       </div>
     </div>
@@ -41,6 +47,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { CubeTransparentIcon } from '@heroicons/vue/20/solid'
+import { SourceApps, SourceAppName } from '@speckle/shared'
 import { ModelListModelItemFragment } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
@@ -56,5 +63,21 @@ const folderPath = computed(() => {
 
 const updatedAgo = computed(() => {
   return dayjs(props.model.updatedAt).from(dayjs())
+})
+
+const sourceApp = computed(() => {
+  if (props.model.versions.items.length === 0) return
+  const version = props.model.versions.items[0]
+
+  return (
+    SourceApps.find((sapp) =>
+      version.sourceApplication?.toLowerCase()?.includes(sapp.searchKey.toLowerCase())
+    ) || {
+      searchKey: '',
+      name: version.sourceApplication as SourceAppName,
+      short: version.sourceApplication?.substring(0, 3) as string,
+      bgColor: '#000'
+    }
+  )
 })
 </script>
