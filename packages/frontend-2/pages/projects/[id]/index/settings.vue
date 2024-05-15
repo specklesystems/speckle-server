@@ -21,7 +21,7 @@ import type { ProjectPageProjectFragment } from '~~/lib/common/generated/gql/gra
 import { Roles } from '@speckle/shared'
 
 definePageMeta({
-  middleware: ['auth']
+  middleware: ['can-view-settings']
 })
 
 graphql(`
