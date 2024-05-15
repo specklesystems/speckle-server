@@ -1,11 +1,12 @@
+import { Roles } from '@speckle/shared'
 import { activeUserQuery } from '~~/lib/auth/composables/activeUser'
 import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { projectWebhooksRoute } from '~~/lib/common/helpers/route'
+import { projectRoute } from '~~/lib/common/helpers/route'
 
 /**
- * Apply this to a page to prevent unauthenticated access to settings
+ * Apply this to a page to prevent unauthenticated access to webhooks and ensure the user is the owner
  */
 export default defineNuxtRouteMiddleware(async (to) => {
   const nuxt = useNuxtApp()
@@ -27,7 +28,15 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
     const projectId = to.params.id as string
     postAuthRedirect.set(to.fullPath)
-    return navigateTo(projectWebhooksRoute(projectId))
+    return navigateTo(projectRoute(projectId))
+  }
+
+  // Check if user is the owner of the project
+  const isOwner = data.activeUser.role === Roles.Stream.Owner
+
+  const projectId = to.params.id as string
+  if (!isOwner) {
+    return navigateTo(projectRoute(projectId))
   }
 
   return undefined
