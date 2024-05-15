@@ -15,7 +15,7 @@
     <template #bottom>
       <div class="flex items-center justify-between mt-1">
         <UserAvatarGroup :users="teamUsers" class="max-w-[104px]" />
-        <div v-if="activeUser">
+        <div v-if="canEdit">
           <FormButton class="ml-2" :to="projectCollaboratorsRoute(project.id)">
             Manage
           </FormButton>
@@ -25,7 +25,7 @@
   </ProjectPageStatsBlock>
 </template>
 <script setup lang="ts">
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { canEditProject } from '~~/lib/projects/helpers/permissions'
 import type { ProjectPageTeamInternals_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectCollaboratorsRoute } from '~~/lib/common/helpers/route'
 
@@ -33,7 +33,7 @@ const props = defineProps<{
   project: ProjectPageTeamInternals_ProjectFragment
 }>()
 
-const { activeUser } = useActiveUser()
+const canEdit = computed(() => canEditProject(props.project))
 
 const teamUsers = computed(() => props.project.team.map((t) => t.user))
 </script>
