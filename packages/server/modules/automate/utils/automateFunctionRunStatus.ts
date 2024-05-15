@@ -5,15 +5,16 @@ import {
 import { FunctionRunReportStatusesError } from '@/modules/automate/errors/runs'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
 
-const AutomationRunStatusOrder: Array<AutomationRunStatus | AutomationRunStatus[]> = [
-  AutomationRunStatuses.pending,
-  AutomationRunStatuses.running,
-  [
-    AutomationRunStatuses.exception,
-    AutomationRunStatuses.failed,
-    AutomationRunStatuses.succeeded
-  ]
-]
+const AutomationRunStatusOrder: { [key in AutomationRunStatus]: number } = {
+  pending: 0,
+  initializing: 1,
+  running: 2,
+  succeeded: 3,
+  failed: 4,
+  exception: 5,
+  timeout: 6,
+  canceled: 7
+}
 
 /**
  * Given a previous and new status, verify that the new status is a valid move.
@@ -26,14 +27,10 @@ export const validateStatusChange = (
 ): void => {
   if (previousStatus === newStatus) return
 
-  const previousStatusIndex = AutomationRunStatusOrder.findIndex((s) =>
-    Array.isArray(s) ? s.includes(previousStatus) : s === previousStatus
-  )
-  const newStatusIndex = AutomationRunStatusOrder.findIndex((s) =>
-    Array.isArray(s) ? s.includes(newStatus) : s === newStatus
-  )
+  const previousStatusRank = AutomationRunStatusOrder[previousStatus]
+  const newStatusRank = AutomationRunStatusOrder[newStatus]
 
-  if (newStatusIndex <= previousStatusIndex) {
+  if (newStatusRank <= previousStatusRank) {
     throw new FunctionRunReportStatusesError(
       `Invalid status change. Attempting to move from '${previousStatus}' to '${newStatus}'.`
     )

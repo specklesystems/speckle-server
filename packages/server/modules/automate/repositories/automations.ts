@@ -93,9 +93,9 @@ export async function getFullAutomationRevisionMetadata(
   }
 }
 
-export type InsertableAutomationFunctionRun = Omit<
+export type InsertableAutomationFunctionRun = Pick<
   AutomationFunctionRunRecord,
-  'id' | 'runId'
+  'id' | 'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
 >
 
 export async function upsertAutomationFunctionRun(

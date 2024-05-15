@@ -28,7 +28,8 @@ import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { Merge } from 'type-fest'
 import {
   AutomateInvalidTriggerError,
-  AutomationFunctionInputEncryptionError
+  AutomationFunctionInputEncryptionError,
+  FunctionNotFoundError
 } from '@/modules/automate/errors/management'
 import {
   triggerAutomationRun,
@@ -200,7 +201,7 @@ export const setFunctionRunStatusReport =
     const currentFunctionRunRecord = await getAutomationFunctionRunRecord(runId)
 
     if (!currentFunctionRunRecord) {
-      return false
+      throw new FunctionNotFoundError()
     }
 
     const currentStatus = currentFunctionRunRecord.status
