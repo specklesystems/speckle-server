@@ -74,10 +74,10 @@ definePageMeta({
 
 const route = useRoute()
 const router = useRouter()
+const { isLoggedIn } = useActiveUser()
 const projectId = computed(() => route.params.id as string)
 const shouldAutoAcceptInvite = computed(() => route.query.accept === 'true')
 const token = computed(() => route.query.token as Optional<string>)
-const { isLoggedIn } = useActiveUser()
 
 useGeneralProjectPageUpdateTracking({ projectId }, { notifyOnProjectUpdate: true })
 const { result: projectPageResult } = useQuery(
@@ -156,7 +156,7 @@ const activePageTab = computed({
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return pageTabItems.value[1]
     // if (/\/automations\/?$/i.test(path)) return pageTabItems.value[2]
-    if (/\/settings\/?/i.test(path)) return pageTabItems.value[2]
+    if (/\/settings\/?/i.test(path) && isLoggedIn.value) return pageTabItems.value[2]
     return pageTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
@@ -171,7 +171,9 @@ const activePageTab = computed({
         router.push({ path: projectRoute(projectId.value, 'automations') })
         break
       case 'settings':
-        router.push({ path: projectRoute(projectId.value, 'settings') })
+        if (isLoggedIn.value) {
+          router.push({ path: projectRoute(projectId.value, 'settings') })
+        }
         break
     }
   }
