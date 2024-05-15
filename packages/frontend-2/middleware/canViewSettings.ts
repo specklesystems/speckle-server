@@ -23,9 +23,9 @@ export default defineNuxtRouteMiddleware(async (to) => {
   }
 
   // Check if the user is the owner of the project
-  const hasRole = data.project.role
+  const hasRole = computed(() => data.project.role)
 
-  if (!hasRole) {
+  if (!hasRole.value) {
     return navigateTo(projectRoute(projectId))
   }
 

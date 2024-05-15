@@ -1,7 +1,7 @@
 import { Roles } from '@speckle/shared'
 import { useApolloClientFromNuxt } from '~~/lib/common/composables/graphql'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import { projectRoute } from '~~/lib/common/helpers/route'
+import { projectSettingsRoute } from '~~/lib/common/helpers/route'
 import { projectRoleCheckQuery } from '~~/lib/projects/graphql/queries'
 
 /**
@@ -19,15 +19,11 @@ export default defineNuxtRouteMiddleware(async (to) => {
     })
     .catch(convertThrowIntoFetchResult)
 
-  if (!data?.project) {
-    return navigateTo(projectRoute(projectId))
-  }
-
   // Check if the user is the owner of the project
-  const isOwner = data.project.role === Roles.Stream.Owner
+  const isOwner = data?.project.role === Roles.Stream.Owner
 
   if (!isOwner) {
-    return navigateTo(projectRoute(projectId))
+    return navigateTo(projectSettingsRoute(projectId))
   }
 
   return undefined
