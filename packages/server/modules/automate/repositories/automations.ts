@@ -12,7 +12,7 @@ import {
   AutomationFunctionRunRecord,
   AutomationRevisionWithTriggersFunctions,
   AutomationTriggerType,
-  AutomateRunStatus,
+  AutomationRunStatus,
   VersionCreationTriggerType,
   isVersionCreatedTrigger
 } from '@/modules/automate/helpers/types'
@@ -183,7 +183,7 @@ export async function getFunctionRun(functionRunId: string) {
 }
 
 export type GetFunctionRunsForAutomationRunIdsItem = AutomationFunctionRunRecord & {
-  AutomateRunStatus: AutomateRunStatus
+  automationRunStatus: AutomationRunStatus
   automationRunExecutionEngineId: string | null
 }
 
@@ -201,7 +201,7 @@ export async function getFunctionRunsForAutomationRunIds(params: {
   const q = AutomationFunctionRuns.knex()
     .select<Array<GetFunctionRunsForAutomationRunIdsItem>>([
       ...AutomationFunctionRuns.cols,
-      AutomationRuns.colAs('status', 'AutomateRunStatus'),
+      AutomationRuns.colAs('status', 'automationRunStatus'),
       AutomationRuns.colAs('executionEngineRunId', 'automationRunExecutionEngineId')
     ])
     .innerJoin(

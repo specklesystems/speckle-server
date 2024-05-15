@@ -17,8 +17,7 @@ import {
   VersionCreationTriggerType,
   BaseTriggerManifest,
   isVersionCreatedTriggerManifest,
-  AutomationFunctionRunRecord,
-  AutomateRunStatus
+  AutomationFunctionRunRecord
 } from '@/modules/automate/helpers/types'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { getCommit } from '@/modules/core/repositories/commits'
@@ -46,6 +45,7 @@ import {
 } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import { validateStatusChange } from '@/modules/automate/utils/automateFunctionRunStatus'
 
 export type OnModelVersionCreateDeps = {
   getTriggers: typeof getActiveTriggerDefinitions
@@ -181,26 +181,6 @@ const createAutomationRunData =
       return automationRun
     }
 
-const isValidNextStatus = (currentStatus: AutomateRunStatus, nextStatus: AutomateRunStatus): boolean => {
-  const statusRankMap: { [key in AutomateRunStatus]: number } = {
-    'pending': 0,
-    'initializing': 1,
-    'running': 2,
-    'succeeded': 3,
-    'failed': 4,
-    'exception': 5,
-    'timeout': 6,
-    'canceled': 7
-  }
-
-  return statusRankMap[nextStatus] > statusRankMap[currentStatus]
-}
-
-const getElapsed = (from: Date): number => {
-  const now = new Date()
-  return now.getTime() - from.getTime()
-}
-
 export type SetFunctionRunStatusReportDeps = {
   getAutomationFunctionRunRecord: typeof getFunctionRun,
   upsertAutomationFunctionRunRecord: typeof upsertAutomationFunctionRun
@@ -221,14 +201,14 @@ export const setFunctionRunStatusReport =
       const currentStatus = currentFunctionRunRecord.status
       const nextStatus = statusReportData.status
 
-      if (!isValidNextStatus(currentStatus, nextStatus)) {
-        return false
-      }
+      validateStatusChange(currentStatus, nextStatus)
+
+      const elapsed = new Date().getTime() - currentFunctionRunRecord.createdAt.getTime()
 
       const nextFunctionRunRecord: AutomationFunctionRunRecord = {
         ...currentFunctionRunRecord,
         ...statusReportData,
-        elapsed: getElapsed(currentFunctionRunRecord.createdAt)
+        elapsed
       }
 
       await upsertAutomationFunctionRunRecord(nextFunctionRunRecord)

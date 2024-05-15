@@ -13,68 +13,12 @@ import {
   updateFunctionRun
 } from '@/modules/automate/repositories/automations'
 import {
-  AutomateFunctionRunStatusReportInput,
-  AutomateRunStatus
-} from '@/modules/core/graph/generated/graphql'
+  mapGqlStatusToDbStatus,
+  validateStatusChange
+} from '@/modules/automate/utils/automateFunctionRunStatus'
+import { AutomateFunctionRunStatusReportInput } from '@/modules/core/graph/generated/graphql'
 import { Automate } from '@speckle/shared'
 import { difference, groupBy, keyBy, mapValues, reduce, uniqBy } from 'lodash'
-
-const AutomationRunStatusOrder: Array<AutomationRunStatus | AutomationRunStatus[]> = [
-  AutomationRunStatuses.pending,
-  AutomationRunStatuses.running,
-  [
-    AutomationRunStatuses.error,
-    AutomationRunStatuses.failure,
-    AutomationRunStatuses.success
-  ]
-]
-
-export const mapGqlStatusToDbStatus = (status: AutomateRunStatus) => {
-  switch (status) {
-    case AutomateRunStatus.Initializing:
-      return AutomationRunStatuses.pending
-    case AutomateRunStatus.Running:
-      return AutomationRunStatuses.running
-    case AutomateRunStatus.Succeeded:
-      return AutomationRunStatuses.success
-    case AutomateRunStatus.Failed:
-      return AutomationRunStatuses.failure
-  }
-}
-
-export const mapDbStatusToGqlStatus = (status: AutomationRunStatus) => {
-  switch (status) {
-    case AutomationRunStatuses.pending:
-      return AutomateRunStatus.Initializing
-    case AutomationRunStatuses.running:
-      return AutomateRunStatus.Running
-    case AutomationRunStatuses.success:
-      return AutomateRunStatus.Succeeded
-    case AutomationRunStatuses.failure:
-    case AutomationRunStatuses.error:
-      return AutomateRunStatus.Failed
-  }
-}
-
-const validateStatusChange = (
-  previousStatus: AutomationRunStatus,
-  newStatus: AutomationRunStatus
-) => {
-  if (previousStatus === newStatus) return
-
-  const previousStatusIndex = AutomationRunStatusOrder.findIndex((s) =>
-    Array.isArray(s) ? s.includes(previousStatus) : s === previousStatus
-  )
-  const newStatusIndex = AutomationRunStatusOrder.findIndex((s) =>
-    Array.isArray(s) ? s.includes(newStatus) : s === newStatus
-  )
-
-  if (newStatusIndex <= previousStatusIndex) {
-    throw new FunctionRunReportStatusesError(
-      `Invalid status change. Attempting to move from '${previousStatus}' to '${newStatus}'.`
-    )
-  }
-}
 
 const validateContextView = (contextView: string) => {
   if (!contextView.length) {
@@ -112,13 +56,13 @@ export const resolveStatusFromFunctionRunStatuses = (
   const anyRunning = functionRunStatuses.includes(AutomationRunStatuses.running)
   if (anyRunning) return AutomationRunStatuses.running
 
-  const anyError = functionRunStatuses.includes(AutomationRunStatuses.error)
-  if (anyError) return AutomationRunStatuses.error
+  const anyError = functionRunStatuses.includes(AutomationRunStatuses.exception)
+  if (anyError) return AutomationRunStatuses.exception
 
-  const anyFailure = functionRunStatuses.includes(AutomationRunStatuses.failure)
-  if (anyFailure) return AutomationRunStatuses.failure
+  const anyFailure = functionRunStatuses.includes(AutomationRunStatuses.failed)
+  if (anyFailure) return AutomationRunStatuses.failed
 
-  return AutomationRunStatuses.success
+  return AutomationRunStatuses.succeeded
 }
 
 export type ReportFunctionRunStatusesDeps = {

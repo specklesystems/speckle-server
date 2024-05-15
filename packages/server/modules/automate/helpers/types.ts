@@ -20,7 +20,7 @@ export type AutomationRevisionRecord = {
   publicKey: string
 }
 
-export type AutomateRunStatus =
+export type AutomationRunStatus =
   | 'pending'
   | 'initializing'
   | 'running'
@@ -30,7 +30,7 @@ export type AutomateRunStatus =
   | 'timeout'
   | 'canceled'
 
-export const AutomateRunStatuses: Record<AutomateRunStatus, AutomateRunStatus> = {
+export const AutomationRunStatuses: Record<AutomationRunStatus, AutomationRunStatus> = {
   pending: 'pending',
   initializing: 'initializing',
   running: 'running',
@@ -46,7 +46,7 @@ export type AutomationRunRecord = {
   automationRevisionId: string
   createdAt: Date
   updatedAt: Date
-  status: AutomateRunStatus
+  status: AutomationRunStatus
   executionEngineRunId: string | null
 }
 
@@ -127,7 +127,7 @@ export type AutomationFunctionRunRecord = {
   functionReleaseId: string
   functionId: string
   elapsed: number
-  status: AutomateRunStatus
+  status: AutomationRunStatus
   createdAt: Date
   updatedAt: Date
   contextView: string | null
