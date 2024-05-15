@@ -6,7 +6,7 @@ import {
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
 import {
-  AutomationRunStatuses,
+  AutomateRunStatuses,
   AutomationTriggerDefinitionRecord,
   AutomationTriggerType,
   BaseTriggerManifest,
@@ -1011,7 +1011,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           automationRevisionId: createdRevision.id,
           createdAt: new Date(),
           updatedAt: new Date(),
-          status: AutomationRunStatuses.running,
+          status: AutomateRunStatuses.running,
           executionEngineRunId: cryptoRandomString({ length: 10 }),
           triggers: [
             {
@@ -1024,7 +1024,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               functionId: generateFunctionId(),
               functionReleaseId: generateFunctionReleaseId(),
               id: cryptoRandomString({ length: 15 }),
-              status: AutomationRunStatuses.running,
+              status: AutomateRunStatuses.running,
               elapsed: 0,
               results: null,
               contextView: null,
@@ -1180,8 +1180,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             getFullAutomationRunById(automationRun.id),
             getFunctionRun(functionRunId)
           ])
-          expect(updatedRun?.status).to.equal(AutomationRunStatuses.success)
-          expect(updatedFnRun?.status).to.equal(AutomationRunStatuses.success)
+          expect(updatedRun?.status).to.equal(AutomateRunStatuses.success)
+          expect(updatedFnRun?.status).to.equal(AutomateRunStatuses.success)
           expect(updatedFnRun?.contextView).to.equal(contextView)
         })
       })

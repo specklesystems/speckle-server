@@ -12,7 +12,7 @@ import {
   AutomationFunctionRunRecord,
   AutomationRevisionWithTriggersFunctions,
   AutomationTriggerType,
-  AutomationRunStatus,
+  AutomateRunStatus,
   VersionCreationTriggerType,
   isVersionCreatedTrigger
 } from '@/modules/automate/helpers/types'
@@ -93,6 +93,21 @@ export async function getFullAutomationRevisionMetadata(
   }
 }
 
+export type InsertableAutomationFunctionRun = Omit<AutomationFunctionRunRecord, 'id' | 'runId'>
+
+export async function upsertAutomationFunctionRun(automationFunctionRun: InsertableAutomationFunctionRun) {
+  await AutomationFunctionRuns.knex()
+    .insert(_.pick(automationFunctionRun, AutomationFunctionRuns.withoutTablePrefix.cols))
+    .onConflict(AutomationFunctionRuns.withoutTablePrefix.col.id)
+    .merge([
+      AutomationFunctionRuns.withoutTablePrefix.col.contextView,
+      AutomationFunctionRuns.withoutTablePrefix.col.elapsed,
+      AutomationFunctionRuns.withoutTablePrefix.col.results,
+      AutomationFunctionRuns.withoutTablePrefix.col.status,
+      AutomationFunctionRuns.withoutTablePrefix.col.statusMessage
+    ])
+}
+
 export type InsertableAutomationRun = AutomationRunRecord & {
   triggers: Omit<AutomationRunTriggerRecord, 'automationRunId'>[]
   functionRuns: Omit<AutomationFunctionRunRecord, 'runId'>[]
@@ -168,7 +183,7 @@ export async function getFunctionRun(functionRunId: string) {
 }
 
 export type GetFunctionRunsForAutomationRunIdsItem = AutomationFunctionRunRecord & {
-  automationRunStatus: AutomationRunStatus
+  AutomateRunStatus: AutomateRunStatus
   automationRunExecutionEngineId: string | null
 }
 
@@ -186,7 +201,7 @@ export async function getFunctionRunsForAutomationRunIds(params: {
   const q = AutomationFunctionRuns.knex()
     .select<Array<GetFunctionRunsForAutomationRunIdsItem>>([
       ...AutomationFunctionRuns.cols,
-      AutomationRuns.colAs('status', 'automationRunStatus'),
+      AutomationRuns.colAs('status', 'AutomateRunStatus'),
       AutomationRuns.colAs('executionEngineRunId', 'automationRunExecutionEngineId')
     ])
     .innerJoin(
@@ -248,11 +263,11 @@ export async function getFullAutomationRunById(
 
   return run
     ? {
-        ...formatJsonArrayRecords(run.runs)[0],
-        triggers: formatJsonArrayRecords(run.triggers),
-        functionRuns: formatJsonArrayRecords(run.functionRuns),
-        automationId: run.automationId
-      }
+      ...formatJsonArrayRecords(run.runs)[0],
+      triggers: formatJsonArrayRecords(run.triggers),
+      functionRuns: formatJsonArrayRecords(run.functionRuns),
+      automationId: run.automationId
+    }
     : null
 }
 
@@ -336,11 +351,11 @@ export async function storeAutomationRevision(revision: InsertableAutomationRevi
     // Unset 'active in revision' for all other revisions
     ...(revision.active
       ? [
-          AutomationRevisions.knex()
-            .where(AutomationRevisions.col.automationId, newRev.automationId)
-            .andWhereNot(AutomationRevisions.col.id, newRev.id)
-            .update(AutomationRevisions.withoutTablePrefix.col.active, false)
-        ]
+        AutomationRevisions.knex()
+          .where(AutomationRevisions.col.automationId, newRev.automationId)
+          .andWhereNot(AutomationRevisions.col.id, newRev.id)
+          .update(AutomationRevisions.withoutTablePrefix.col.active, false)
+      ]
       : [])
   ])
 
@@ -821,9 +836,9 @@ export const getAutomationProjects = async (params: {
       Automations.colAs('id', 'automationId'),
       ...(userId
         ? [
-            // Getting first role from grouped results
-            knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
-          ]
+          // Getting first role from grouped results
+          knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
+        ]
         : [])
     ])
     .whereIn(Automations.col.id, automationIds)

@@ -1,8 +1,12 @@
 enum AutomateRunStatus {
+  PENDING
   INITIALIZING
   RUNNING
   SUCCEEDED
   FAILED
+  EXCEPTION
+  TIMEOUT
+  CANCELED
 }
 
 enum AutomateRunTriggerType {
@@ -324,7 +328,7 @@ extend type Query {
 
 extend type Mutation {
   automateFunctionRunStatusReport(
-    input: [AutomateFunctionRunStatusReportInput!]!
+    input: AutomateFunctionRunStatusReportInput!
   ): Boolean!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "automate:report-results")

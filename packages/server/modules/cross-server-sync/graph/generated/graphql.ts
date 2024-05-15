@@ -257,9 +257,9 @@ export type AutomateFunctionRun = {
 
 export type AutomateFunctionRunStatusReportInput = {
   contextView?: InputMaybe<Scalars['String']>;
-  functionRunId: Scalars['String'];
   /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: InputMaybe<Scalars['JSONObject']>;
+  runId: Scalars['String'];
   status: AutomateRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
@@ -321,10 +321,14 @@ export type AutomateRunCollection = {
 };
 
 export enum AutomateRunStatus {
+  Canceled = 'CANCELED',
+  Exception = 'EXCEPTION',
   Failed = 'FAILED',
   Initializing = 'INITIALIZING',
+  Pending = 'PENDING',
   Running = 'RUNNING',
-  Succeeded = 'SUCCEEDED'
+  Succeeded = 'SUCCEEDED',
+  Timeout = 'TIMEOUT'
 }
 
 export enum AutomateRunTriggerType {
@@ -1310,7 +1314,7 @@ export type MutationAppUpdateArgs = {
 
 
 export type MutationAutomateFunctionRunStatusReportArgs = {
-  input: Array<AutomateFunctionRunStatusReportInput>;
+  input: AutomateFunctionRunStatusReportInput;
 };
 
 

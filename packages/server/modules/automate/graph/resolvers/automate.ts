@@ -13,12 +13,14 @@ import {
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
+  getFunctionRun,
   getLatestVersionAutomationRuns,
   getProjectAutomationsItems,
   getProjectAutomationsTotalCount,
   storeAutomation,
   storeAutomationRevision,
-  updateAutomation as updateDbAutomation
+  updateAutomation as updateDbAutomation,
+  upsertAutomationFunctionRun
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomation,
@@ -50,8 +52,10 @@ import {
   getBranchesByIds
 } from '@/modules/core/repositories/branches'
 import {
+  setFunctionRunStatusReport,
   manuallyTriggerAutomation,
-  triggerAutomationRevisionRun
+  triggerAutomationRevisionRun,
+  SetFunctionRunStatusReportDeps
 } from '@/modules/automate/services/trigger'
 import {
   AutomateFunctionReleaseNotFoundError,
@@ -344,10 +348,10 @@ export = {
         releases:
           args?.cursor || args?.filter?.search || args?.limit
             ? {
-                cursor: args.cursor || undefined,
-                search: args.filter?.search || undefined,
-                limit: args.limit || undefined
-              }
+              cursor: args.cursor || undefined,
+              search: args.filter?.search || undefined,
+              limit: args.limit || undefined
+            }
             : {}
       })
 
@@ -524,6 +528,16 @@ export = {
     }
   },
   Mutation: {
+    async automateFunctionRunStatusReport(_parent, { input }) {
+      const deps: SetFunctionRunStatusReportDeps = {
+        getAutomationFunctionRunRecord: getFunctionRun,
+        upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun
+      }
+
+      const result = await setFunctionRunStatusReport(deps)(input)
+
+      return result
+    },
     automateMutations: () => ({})
   },
   Subscription: {
