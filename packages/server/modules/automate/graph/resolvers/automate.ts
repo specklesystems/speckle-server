@@ -53,11 +53,13 @@ import {
   getBranchesByIds
 } from '@/modules/core/repositories/branches'
 import {
-  setFunctionRunStatusReport,
   manuallyTriggerAutomation,
-  triggerAutomationRevisionRun,
-  SetFunctionRunStatusReportDeps
+  triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
+import {
+  reportFunctionRunStatus,
+  ReportFunctionRunStatusDeps
+} from '@/modules/automate/services/runsManagement'
 import {
   AutomateFunctionReleaseNotFoundError,
   FunctionNotFoundError
@@ -533,7 +535,7 @@ export = {
   },
   Mutation: {
     async automateFunctionRunStatusReport(_parent, { input }) {
-      const deps: SetFunctionRunStatusReportDeps = {
+      const deps: ReportFunctionRunStatusDeps = {
         getAutomationFunctionRunRecord: getFunctionRun,
         upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
         automationRunUpdater: updateAutomationRun
@@ -548,7 +550,7 @@ export = {
         statusMessage: input.statusMessage ?? null
       }
 
-      const result = await setFunctionRunStatusReport(deps)(payload)
+      const result = await reportFunctionRunStatus(deps)(payload)
 
       return result
     },

@@ -14009,6 +14009,7 @@ __metadata:
     "@tiptap/core": ^2.0.0-beta.176
     "@types/bcrypt": ^5.0.0
     "@types/bull": ^3.15.9
+    "@types/chai-as-promised": ^7.1.8
     "@types/compression": ^1.7.2
     "@types/cookie-parser": ^1.4.7
     "@types/debug": ^4.1.7
@@ -14043,6 +14044,7 @@ __metadata:
     bull: ^4.8.5
     busboy: ^1.4.0
     chai: ^4.2.0
+    chai-as-promised: ^7.1.2
     chai-http: ^4.3.0
     compression: ^1.7.4
     concurrently: ^7.0.0
@@ -16260,6 +16262,22 @@ __metadata:
     "@types/node": "*"
     "@types/responselike": ^1.0.0
   checksum: d9b26403fe65ce6b0cb3720b7030104c352bcb37e4fac2a7089a25a97de59c355fa08940658751f2f347a8512aa9d18fdb66ab3ade835975b2f454f2d5befbd9
+  languageName: node
+  linkType: hard
+
+"@types/chai-as-promised@npm:^7.1.8":
+  version: 7.1.8
+  resolution: "@types/chai-as-promised@npm:7.1.8"
+  dependencies:
+    "@types/chai": "*"
+  checksum: f0e5eab451b91bc1e289ed89519faf6591932e8a28d2ec9bbe95826eb73d28fe43713633e0c18706f3baa560a7d97e7c7c20dc53ce639e5d75bac46b2a50bf21
+  languageName: node
+  linkType: hard
+
+"@types/chai@npm:*":
+  version: 4.3.16
+  resolution: "@types/chai@npm:4.3.16"
+  checksum: bb5f52d1b70534ed8b4bf74bd248add003ffe1156303802ea367331607c06b494da885ffbc2b674a66b4f90c9ee88759790a5f243879f6759f124f22328f5e95
   languageName: node
   linkType: hard
 
@@ -22345,6 +22363,17 @@ __metadata:
   version: 0.12.0
   resolution: "caseless@npm:0.12.0"
   checksum: b43bd4c440aa1e8ee6baefee8063b4850fd0d7b378f6aabc796c9ec8cb26d27fb30b46885350777d9bd079c5256c0e1329ad0dc7c2817e0bb466810ebb353751
+  languageName: node
+  linkType: hard
+
+"chai-as-promised@npm:^7.1.2":
+  version: 7.1.2
+  resolution: "chai-as-promised@npm:7.1.2"
+  dependencies:
+    check-error: ^1.0.2
+  peerDependencies:
+    chai: ">= 2.1.2 < 6"
+  checksum: 671ee980054eb23a523875c1d22929a2ac05d89b5428e1fd12800f54fc69baf41014667b87e2368e2355ee2a3140d3e3d7d5a1f8638b07cfefd7fe38a149e3f6
   languageName: node
   linkType: hard
 

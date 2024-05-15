@@ -5,10 +5,7 @@ import {
   getFullAutomationRevisionMetadata,
   getAutomationToken,
   getAutomationTriggerDefinitions,
-  upsertAutomationRun,
-  upsertAutomationFunctionRun,
-  getFunctionRun,
-  updateAutomationRun
+  upsertAutomationRun
 } from '@/modules/automate/repositories/automations'
 import {
   AutomationWithRevision,
@@ -17,8 +14,7 @@ import {
   VersionCreatedTriggerManifest,
   VersionCreationTriggerType,
   BaseTriggerManifest,
-  isVersionCreatedTriggerManifest,
-  AutomationFunctionRunRecord
+  isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { getCommit } from '@/modules/core/repositories/commits'
@@ -29,8 +25,7 @@ import { DefaultAppIds } from '@/modules/auth/defaultApps'
 import { Merge } from 'type-fest'
 import {
   AutomateInvalidTriggerError,
-  AutomationFunctionInputEncryptionError,
-  FunctionNotFoundError
+  AutomationFunctionInputEncryptionError
 } from '@/modules/automate/errors/management'
 import {
   triggerAutomationRun,
@@ -47,9 +42,6 @@ import {
 } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
-import { validateStatusChange } from '@/modules/automate/utils/automateFunctionRunStatus'
-import { Automate } from '@speckle/shared'
-import { validateContextView } from '@/modules/automate/services/runsManagement'
 
 export type OnModelVersionCreateDeps = {
   getTriggers: typeof getActiveTriggerDefinitions
@@ -183,74 +175,6 @@ const createAutomationRunData =
     }
 
     return automationRun
-  }
-
-export type SetFunctionRunStatusReportDeps = {
-  getAutomationFunctionRunRecord: typeof getFunctionRun
-  upsertAutomationFunctionRunRecord: typeof upsertAutomationFunctionRun
-  automationRunUpdater: typeof updateAutomationRun
-}
-
-//TODO: lets move this to runsManagement.ts
-export const setFunctionRunStatusReport =
-  (deps: SetFunctionRunStatusReportDeps) =>
-  async (
-    params: Pick<
-      AutomationFunctionRunRecord,
-      'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
-    >
-  ): Promise<boolean> => {
-    const {
-      getAutomationFunctionRunRecord,
-      upsertAutomationFunctionRunRecord,
-      automationRunUpdater
-    } = deps
-    const { runId, ...statusReportData } = params
-
-    const currentFunctionRunRecord = await getAutomationFunctionRunRecord(runId)
-
-    if (!currentFunctionRunRecord) {
-      throw new FunctionNotFoundError()
-    }
-
-    if (statusReportData.results) {
-      console.log(statusReportData.results)
-      Automate.AutomateTypes.formatResultsSchema(statusReportData.results)
-    }
-
-    if (statusReportData.contextView) validateContextView(statusReportData.contextView)
-
-    const currentStatus = currentFunctionRunRecord.status
-    const nextStatus = statusReportData.status
-
-    validateStatusChange(currentStatus, nextStatus)
-
-    const elapsed = new Date().getTime() - currentFunctionRunRecord.createdAt.getTime()
-
-    const nextFunctionRunRecord: AutomationFunctionRunRecord = {
-      ...currentFunctionRunRecord,
-      ...statusReportData,
-      elapsed
-    }
-
-    await upsertAutomationFunctionRunRecord(nextFunctionRunRecord)
-
-    // TODO: this needs to change when we add support for multiple functions in a run
-    // we need to calculate the final status
-    const newAutomationStatus = statusReportData.status
-
-    const updatedRun = await automationRunUpdater({
-      id: runId,
-      status: newAutomationStatus,
-      updatedAt: new Date()
-    })
-
-    await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.StatusUpdated, {
-      run: updatedRun,
-      functionRuns: [nextFunctionRunRecord],
-      automationId: currentFunctionRunRecord.automationId
-    })
-    return true
   }
 
 export type TriggerAutomationRevisionRunDeps = {

@@ -2,40 +2,7 @@ import {
   AutomationRunStatus,
   AutomationRunStatuses
 } from '@/modules/automate/helpers/types'
-import { FunctionRunReportStatusesError } from '@/modules/automate/errors/runs'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
-
-const AutomationRunStatusOrder: { [key in AutomationRunStatus]: number } = {
-  pending: 0,
-  initializing: 1,
-  running: 2,
-  succeeded: 3,
-  failed: 4,
-  exception: 5,
-  timeout: 6,
-  canceled: 7
-}
-
-/**
- * Given a previous and new status, verify that the new status is a valid move.
- * @remarks This is to protect against race conditions that may report "backwards" motion
- * in function statuses. (i.e. `FAILED` => `RUNNING`)
- */
-export const validateStatusChange = (
-  previousStatus: AutomationRunStatus,
-  newStatus: AutomationRunStatus
-): void => {
-  if (previousStatus === newStatus) return
-
-  const previousStatusRank = AutomationRunStatusOrder[previousStatus]
-  const newStatusRank = AutomationRunStatusOrder[newStatus]
-
-  if (newStatusRank <= previousStatusRank) {
-    throw new FunctionRunReportStatusesError(
-      `Invalid status change. Attempting to move from '${previousStatus}' to '${newStatus}'.`
-    )
-  }
-}
 
 export const mapGqlStatusToDbStatus = (status: AutomateRunStatus) => {
   switch (status) {

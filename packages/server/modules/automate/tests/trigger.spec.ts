@@ -29,15 +29,13 @@ import {
   getFullAutomationRunById,
   getAutomationTriggerDefinitions,
   getFunctionRun,
-  getFunctionRuns,
-  getFunctionRunsForAutomationRunIds,
   storeAutomation,
   storeAutomationRevision,
   updateAutomation,
   updateAutomationRevision,
   updateAutomationRun,
-  updateFunctionRun,
-  upsertAutomationRun
+  upsertAutomationRun,
+  upsertAutomationFunctionRun
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate, Environment } from '@speckle/shared'
@@ -54,7 +52,7 @@ import {
 import { expectToThrow } from '@/test/assertionHelper'
 import { Commits } from '@/modules/core/dbSchema'
 import { BranchRecord } from '@/modules/core/helpers/types'
-import { reportFunctionRunStatuses } from '@/modules/automate/services/runsManagement'
+import { reportFunctionRunStatus } from '@/modules/automate/services/runsManagement'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
 import {
   getEncryptionKeyPairFor,
@@ -62,6 +60,7 @@ import {
   getFunctionInputDecryptor
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
+import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
@@ -1039,55 +1038,44 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       })
 
       describe('status update report', () => {
-        const buildReportFunctionRunStatuses = () => {
-          const report = reportFunctionRunStatuses({
-            getFunctionRuns,
-            updateFunctionRun,
-            updateAutomationRun,
-            getFunctionRunsForAutomationRunIds
+        const buildReportFunctionRunStatus = () => {
+          const report = reportFunctionRunStatus({
+            getAutomationFunctionRunRecord: getFunctionRun,
+            upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
+            automationRunUpdater: updateAutomationRun
           })
 
           return report
         }
 
         it('fails fn with invalid functionRunId', async () => {
-          const report = buildReportFunctionRunStatuses()
+          const report = buildReportFunctionRunStatus()
 
           const functionRunId = 'nonexistent'
-          const res = await report({
-            inputs: [
-              {
-                functionRunId,
-                status: AutomateRunStatus.Succeeded
-              }
-            ]
-          })
+          const params: Parameters<typeof report>[0] = {
+            runId: functionRunId,
+            status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
+            statusMessage: null,
+            results: null,
+            contextView: null
+          }
 
-          expect(res).to.be.ok
-          expect(res.successfullyUpdatedFunctionRunIds).to.have.length(0)
-          expect(res.errorsByFunctionRunId[functionRunId]).to.match(
-            /^Function run not found/
-          )
+          expect(report(params)).to.eventually.be.rejectedWith('Function not found')
         })
 
         it('fails fn with invalid status', async () => {
-          const report = buildReportFunctionRunStatuses()
+          const report = buildReportFunctionRunStatus()
 
           const functionRunId = automationRun.functionRuns[0].id
-          const res = await report({
-            inputs: [
-              {
-                functionRunId,
-                status: AutomateRunStatus.Initializing
-              }
-            ]
-          })
+          const params: Parameters<typeof report>[0] = {
+            runId: functionRunId,
+            status: mapGqlStatusToDbStatus(AutomateRunStatus.Pending),
+            statusMessage: null,
+            results: null,
+            contextView: null
+          }
 
-          expect(res).to.be.ok
-          expect(res.successfullyUpdatedFunctionRunIds).to.have.length(0)
-          expect(res.errorsByFunctionRunId[functionRunId]).to.match(
-            /^Invalid status change/
-          )
+          expect(report(params)).to.eventually.be.rejectedWith('Invalid status change')
         })
         ;[
           { val: 1, error: 'invalid type' },
@@ -1115,73 +1103,60 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           }
         ].forEach(({ val, error }) => {
           it('fails fn with invalid results: ' + error, async () => {
-            const report = buildReportFunctionRunStatuses()
+            const report = buildReportFunctionRunStatus()
 
             const functionRunId = automationRun.functionRuns[0].id
-            const res = await report({
-              inputs: [
-                {
-                  functionRunId,
-                  status: AutomateRunStatus.Succeeded,
-                  results: val as unknown as Automate.AutomateTypes.ResultsSchema
-                }
-              ]
-            })
+            const params: Parameters<typeof report>[0] = {
+              runId: functionRunId,
+              status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
+              statusMessage: null,
+              results: val as unknown as Automate.AutomateTypes.ResultsSchema,
+              contextView: null
+            }
 
-            expect(res).to.be.ok
-            expect(res.successfullyUpdatedFunctionRunIds).to.have.length(0)
-            expect(res.errorsByFunctionRunId[functionRunId]).to.match(
-              /^Invalid results schema/
+            expect(report(params)).to.eventually.be.rejectedWith(
+              'Invalid results schema'
             )
           })
         })
 
         it('fails fn with invalid contextView url', async () => {
-          const report = buildReportFunctionRunStatuses()
+          const report = buildReportFunctionRunStatus()
 
           const functionRunId = automationRun.functionRuns[0].id
-          const res = await report({
-            inputs: [
-              {
-                functionRunId,
-                status: AutomateRunStatus.Succeeded,
-                contextView: 'invalid-url'
-              }
-            ]
-          })
+          const params: Parameters<typeof report>[0] = {
+            runId: functionRunId,
+            status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
+            statusMessage: null,
+            results: null,
+            contextView: 'invalid-url'
+          }
 
-          expect(res).to.be.ok
-          expect(res.successfullyUpdatedFunctionRunIds).to.have.length(0)
-          expect(res.errorsByFunctionRunId[functionRunId]).to.match(
-            /^Invalid contextView/
-          )
+          expect(report(params)).to.eventually.be.rejectedWith('Invalid contextView')
         })
 
         it('succeeds', async () => {
-          const report = buildReportFunctionRunStatuses()
+          const report = buildReportFunctionRunStatus()
 
           const functionRunId = automationRun.functionRuns[0].id
           const contextView = '/a/b/c'
-          const res = await report({
-            inputs: [
-              {
-                functionRunId,
-                status: AutomateRunStatus.Succeeded,
-                contextView
-              }
-            ]
-          })
+          const params: Parameters<typeof report>[0] = {
+            runId: functionRunId,
+            status: mapGqlStatusToDbStatus(AutomateRunStatus.Succeeded),
+            statusMessage: null,
+            results: null,
+            contextView
+          }
 
-          expect(res).to.be.ok
-          expect(res.successfullyUpdatedFunctionRunIds).to.have.length(1)
-          expect(Object.values(res.errorsByFunctionRunId)).to.be.empty
+          expect(report(params)).to.eventually.be.true
 
           const [updatedRun, updatedFnRun] = await Promise.all([
             getFullAutomationRunById(automationRun.id),
             getFunctionRun(functionRunId)
           ])
-          expect(updatedRun?.status).to.equal(AutomationRunStatuses.success)
-          expect(updatedFnRun?.status).to.equal(AutomationRunStatuses.success)
+
+          expect(updatedRun?.status).to.equal(AutomationRunStatuses.succeeded)
+          expect(updatedFnRun?.status).to.equal(AutomationRunStatuses.succeeded)
           expect(updatedFnRun?.contextView).to.equal(contextView)
         })
       })

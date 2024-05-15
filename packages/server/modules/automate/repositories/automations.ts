@@ -152,10 +152,7 @@ export async function upsertAutomationRun(automationRun: InsertableAutomationRun
   return
 }
 
-export async function getFunctionRuns(params: { functionRunIds: string[] }) {
-  const { functionRunIds } = params
-  if (!functionRunIds.length) return []
-
+export async function getFunctionRun(functionRunId: string) {
   const q = AutomationFunctionRuns.knex()
     .select<
       Array<
@@ -169,7 +166,7 @@ export async function getFunctionRuns(params: { functionRunIds: string[] }) {
       AutomationRuns.col.automationRevisionId,
       AutomationRevisions.col.automationId
     ])
-    .whereIn(AutomationFunctionRuns.col.runId, functionRunIds)
+    .where(AutomationFunctionRuns.col.runId, functionRunId)
     .innerJoin(
       AutomationRuns.name,
       AutomationRuns.col.id,
@@ -181,14 +178,9 @@ export async function getFunctionRuns(params: { functionRunIds: string[] }) {
       AutomationRuns.col.automationRevisionId
     )
 
-  return await q
-}
+  const runs = await q
 
-export async function getFunctionRun(functionRunId: string) {
-  // TODO, make sure we're also doing the same joins as above
-  // const run = AutomationFunctionRuns.knex().select()
-  const runs = await getFunctionRuns({ functionRunIds: [functionRunId] })
-  return (runs[0] || null) as (typeof runs)[0] | null
+  return (runs[0] ?? null) as (typeof runs)[0] | null
 }
 
 export type GetFunctionRunsForAutomationRunIdsItem = AutomationFunctionRunRecord & {
