@@ -8,7 +8,7 @@
         @processed="onInviteAccepted"
       />
       <div
-        class="flex flex-col md:flex-row md:justify-between md:items-start gap-8 sm:gap-4 my-8"
+        class="flex flex-col md:flex-row md:justify-between md:items-start gap-8 my-8"
       >
         <ProjectPageHeader :project="project" />
         <ProjectPageTeamBlock :project="project" class="w-full md:w-72 shrink-0" />
