@@ -1,13 +1,12 @@
 FROM postgres:14.5-alpine as builder
 
-RUN apk update \
-    && apk add git \
-    build-base \
-    clang \
-    llvm
+RUN apk add --no-cache git=2.36.6-r0 \
+    build-base=0.5-r3 \
+    clang=13.0.1-r1 \
+    llvm13=13.0.1-r2
 
 RUN git clone --branch 1.1.9 https://github.com/aiven/aiven-extras.git aiven-extras \
-  && cd aiven-extras \
+  && cd $WORKDIR/aiven-extras \
   && make \
   && make install
 
