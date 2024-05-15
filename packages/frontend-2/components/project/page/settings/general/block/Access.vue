@@ -45,14 +45,14 @@ const selectedOption = ref(props.project.visibility || ProjectVisibility.Private
 const radioOptions = computed(() => [
   {
     value: ProjectVisibility.Public,
-    title: 'Public',
-    introduction: 'Anyone can view and access your project',
+    title: 'Discoverable',
+    introduction: 'Project is visible to everyone',
     icon: GlobeAltIcon
   },
   {
     value: ProjectVisibility.Unlisted,
-    title: 'Unlisted',
-    introduction: 'Anyone with the link can access',
+    title: 'Link Shareable',
+    introduction: 'Anyone with the link can view',
     icon: LinkIcon
   },
   {
