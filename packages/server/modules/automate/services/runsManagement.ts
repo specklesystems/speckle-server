@@ -20,7 +20,7 @@ import { AutomateFunctionRunStatusReportInput } from '@/modules/core/graph/gener
 import { Automate } from '@speckle/shared'
 import { difference, groupBy, keyBy, mapValues, reduce, uniqBy } from 'lodash'
 
-const validateContextView = (contextView: string) => {
+export const validateContextView = (contextView: string) => {
   if (!contextView.length) {
     throw new FunctionRunReportStatusesError(
       'Context view must be a valid relative URL'
@@ -124,6 +124,7 @@ export const reportFunctionRunStatuses =
 
       if (input.results) {
         try {
+          // TODO: take this, its validating, that the input matches any know schema
           Automate.AutomateTypes.formatResultsSchema(input.results)
         } catch (e) {
           if (e instanceof Automate.UnformattableResultsSchemaError) {
@@ -137,6 +138,7 @@ export const reportFunctionRunStatuses =
 
       if (input.contextView) {
         try {
+          // TODO: take this, its validating the context view to be a correct url
           validateContextView(input.contextView)
         } catch (e) {
           if (e instanceof FunctionRunReportStatusesError) {
@@ -196,6 +198,7 @@ export const reportFunctionRunStatuses =
         )
 
         // Update automation run
+        // TODO: take this update, and do calc
         const updatedRun = await updateAutomationRun({
           id: runId,
           status: newAutomationStatus,
@@ -211,6 +214,7 @@ export const reportFunctionRunStatuses =
           )
         ]
 
+        // TODO: take the even emitter
         await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.StatusUpdated, {
           run: updatedRun,
           functionRuns: allFnRuns,

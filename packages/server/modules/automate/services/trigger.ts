@@ -7,7 +7,8 @@ import {
   getAutomationTriggerDefinitions,
   upsertAutomationRun,
   upsertAutomationFunctionRun,
-  getFunctionRun
+  getFunctionRun,
+  updateAutomationRun
 } from '@/modules/automate/repositories/automations'
 import {
   AutomationWithRevision,
@@ -47,6 +48,8 @@ import {
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 import { validateStatusChange } from '@/modules/automate/utils/automateFunctionRunStatus'
+import { Automate } from '@speckle/shared'
+import { validateContextView } from '@/modules/automate/services/runsManagement'
 
 export type OnModelVersionCreateDeps = {
   getTriggers: typeof getActiveTriggerDefinitions
@@ -185,8 +188,10 @@ const createAutomationRunData =
 export type SetFunctionRunStatusReportDeps = {
   getAutomationFunctionRunRecord: typeof getFunctionRun
   upsertAutomationFunctionRunRecord: typeof upsertAutomationFunctionRun
+  automationRunUpdater: typeof updateAutomationRun
 }
 
+//TODO: lets move this to runsManagement.ts
 export const setFunctionRunStatusReport =
   (deps: SetFunctionRunStatusReportDeps) =>
   async (
@@ -195,7 +200,11 @@ export const setFunctionRunStatusReport =
       'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
     >
   ): Promise<boolean> => {
-    const { getAutomationFunctionRunRecord, upsertAutomationFunctionRunRecord } = deps
+    const {
+      getAutomationFunctionRunRecord,
+      upsertAutomationFunctionRunRecord,
+      automationRunUpdater
+    } = deps
     const { runId, ...statusReportData } = params
 
     const currentFunctionRunRecord = await getAutomationFunctionRunRecord(runId)
@@ -203,6 +212,13 @@ export const setFunctionRunStatusReport =
     if (!currentFunctionRunRecord) {
       throw new FunctionNotFoundError()
     }
+
+    if (statusReportData.results) {
+      console.log(statusReportData.results)
+      Automate.AutomateTypes.formatResultsSchema(statusReportData.results)
+    }
+
+    if (statusReportData.contextView) validateContextView(statusReportData.contextView)
 
     const currentStatus = currentFunctionRunRecord.status
     const nextStatus = statusReportData.status
@@ -219,6 +235,21 @@ export const setFunctionRunStatusReport =
 
     await upsertAutomationFunctionRunRecord(nextFunctionRunRecord)
 
+    // TODO: this needs to change when we add support for multiple functions in a run
+    // we need to calculate the final status
+    const newAutomationStatus = statusReportData.status
+
+    const updatedRun = await automationRunUpdater({
+      id: runId,
+      status: newAutomationStatus,
+      updatedAt: new Date()
+    })
+
+    await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.StatusUpdated, {
+      run: updatedRun,
+      functionRuns: [nextFunctionRunRecord],
+      automationId: currentFunctionRunRecord.automationId
+    })
     return true
   }
 

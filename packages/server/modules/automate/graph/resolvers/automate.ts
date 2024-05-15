@@ -19,6 +19,7 @@ import {
   getProjectAutomationsTotalCount,
   storeAutomation,
   storeAutomationRevision,
+  updateAutomationRun,
   updateAutomation as updateDbAutomation,
   upsertAutomationFunctionRun
 } from '@/modules/automate/repositories/automations'
@@ -534,7 +535,8 @@ export = {
     async automateFunctionRunStatusReport(_parent, { input }) {
       const deps: SetFunctionRunStatusReportDeps = {
         getAutomationFunctionRunRecord: getFunctionRun,
-        upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun
+        upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
+        automationRunUpdater: updateAutomationRun
       }
 
       const payload = {

@@ -169,7 +169,7 @@ export async function getFunctionRuns(params: { functionRunIds: string[] }) {
       AutomationRuns.col.automationRevisionId,
       AutomationRevisions.col.automationId
     ])
-    .whereIn(AutomationFunctionRuns.col.id, functionRunIds)
+    .whereIn(AutomationFunctionRuns.col.runId, functionRunIds)
     .innerJoin(
       AutomationRuns.name,
       AutomationRuns.col.id,
@@ -185,6 +185,8 @@ export async function getFunctionRuns(params: { functionRunIds: string[] }) {
 }
 
 export async function getFunctionRun(functionRunId: string) {
+  // TODO, make sure we're also doing the same joins as above
+  // const run = AutomationFunctionRuns.knex().select()
   const runs = await getFunctionRuns({ functionRunIds: [functionRunId] })
   return (runs[0] || null) as (typeof runs)[0] | null
 }
