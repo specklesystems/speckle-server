@@ -1,4 +1,7 @@
-import { AutomationRunStatus, AutomationRunStatuses } from "@/modules/automate/helpers/types"
+import {
+  AutomationRunStatus,
+  AutomationRunStatuses
+} from '@/modules/automate/helpers/types'
 import { FunctionRunReportStatusesError } from '@/modules/automate/errors/runs'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
 

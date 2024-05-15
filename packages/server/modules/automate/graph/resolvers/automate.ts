@@ -82,11 +82,10 @@ import {
   ProjectSubscriptions,
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
-import { 
+import {
   mapDbStatusToGqlStatus,
   mapGqlStatusToDbStatus
 } from '@/modules/automate/utils/automateFunctionRunStatus'
-
 
 /**
  * TODO:
@@ -352,10 +351,10 @@ export = {
         releases:
           args?.cursor || args?.filter?.search || args?.limit
             ? {
-              cursor: args.cursor || undefined,
-              search: args.filter?.search || undefined,
-              limit: args.limit || undefined
-            }
+                cursor: args.cursor || undefined,
+                search: args.filter?.search || undefined,
+                limit: args.limit || undefined
+              }
             : {}
       })
 
@@ -541,7 +540,7 @@ export = {
       const payload = {
         ...input,
         contextView: input.contextView ?? null,
-        results: input.results as Automate.AutomateTypes.ResultsSchema ?? null,
+        results: (input.results as Automate.AutomateTypes.ResultsSchema) ?? null,
         runId: input.functionRunId,
         status: mapGqlStatusToDbStatus(input.status),
         statusMessage: input.statusMessage ?? null
