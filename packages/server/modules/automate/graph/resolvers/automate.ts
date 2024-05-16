@@ -13,12 +13,15 @@ import {
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
+  getFunctionRun,
   getLatestVersionAutomationRuns,
   getProjectAutomationsItems,
   getProjectAutomationsTotalCount,
   storeAutomation,
   storeAutomationRevision,
-  updateAutomation as updateDbAutomation
+  updateAutomationRun,
+  updateAutomation as updateDbAutomation,
+  upsertAutomationFunctionRun
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomation,
@@ -54,6 +57,10 @@ import {
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
 import {
+  reportFunctionRunStatus,
+  ReportFunctionRunStatusDeps
+} from '@/modules/automate/services/runsManagement'
+import {
   AutomateFunctionReleaseNotFoundError,
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
@@ -62,7 +69,6 @@ import {
   dbToGraphqlTriggerTypeMap,
   functionTemplateRepos
 } from '@/modules/automate/helpers/executionEngine'
-import { mapDbStatusToGqlStatus } from '@/modules/automate/services/runsManagement'
 import { authorizeResolver } from '@/modules/shared'
 import {
   AutomationRevisionFunctionForInputRedaction,
@@ -79,6 +85,10 @@ import {
   ProjectSubscriptions,
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
+import {
+  mapDbStatusToGqlStatus,
+  mapGqlStatusToDbStatus
+} from '@/modules/automate/utils/automateFunctionRunStatus'
 
 /**
  * TODO:
@@ -524,6 +534,26 @@ export = {
     }
   },
   Mutation: {
+    async automateFunctionRunStatusReport(_parent, { input }) {
+      const deps: ReportFunctionRunStatusDeps = {
+        getAutomationFunctionRunRecord: getFunctionRun,
+        upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
+        automationRunUpdater: updateAutomationRun
+      }
+
+      const payload = {
+        ...input,
+        contextView: input.contextView ?? null,
+        results: (input.results as Automate.AutomateTypes.ResultsSchema) ?? null,
+        runId: input.functionRunId,
+        status: mapGqlStatusToDbStatus(input.status),
+        statusMessage: input.statusMessage ?? null
+      }
+
+      const result = await reportFunctionRunStatus(deps)(payload)
+
+      return result
+    },
     automateMutations: () => ({})
   },
   Subscription: {

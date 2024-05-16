@@ -442,8 +442,8 @@ export const getAutomationsStatus =
 
     const failedAutomations = runsWithUpdatedStatus.filter(
       (a) =>
-        a.status === AutomationRunStatuses.failure ||
-        a.status === AutomationRunStatuses.error
+        a.status === AutomationRunStatuses.failed ||
+        a.status === AutomationRunStatuses.exception
     )
 
     const runningAutomations = runsWithUpdatedStatus.filter(
@@ -453,17 +453,17 @@ export const getAutomationsStatus =
       (a) => a.status === AutomationRunStatuses.pending
     )
 
-    let status = AutomationRunStatuses.success
+    let status = AutomationRunStatuses.succeeded
     let statusMessage = 'All automations have succeeded'
 
     if (failedAutomations.length) {
-      status = AutomationRunStatuses.failure
+      status = AutomationRunStatuses.failed
       statusMessage = 'Some automations have failed:'
       for (const fa of failedAutomations) {
         for (const functionRunStatus of fa.functionRuns) {
           if (
-            functionRunStatus.status === AutomationRunStatuses.failure ||
-            functionRunStatus.status === AutomationRunStatuses.error
+            functionRunStatus.status === AutomationRunStatuses.failed ||
+            functionRunStatus.status === AutomationRunStatuses.exception
           )
             statusMessage += `\n${functionRunStatus.statusMessage}`
         }

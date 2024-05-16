@@ -4,6 +4,7 @@ require('../bootstrap')
 require('@/test/mocks/global')
 
 const chai = require('chai')
+const chaiAsPromised = require('chai-as-promised')
 const chaiHttp = require('chai-http')
 const deepEqualInAnyOrder = require('deep-equal-in-any-order')
 const knex = require(`@/db/knex`)
@@ -12,6 +13,7 @@ const { default: graphqlChaiPlugin } = require('@/test/plugins/graphql')
 const { logger } = require('@/logging/logging')
 
 // Register chai plugins
+chai.use(chaiAsPromised)
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 chai.use(graphqlChaiPlugin)

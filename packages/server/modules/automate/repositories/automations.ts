@@ -93,6 +93,28 @@ export async function getFullAutomationRevisionMetadata(
   }
 }
 
+export type InsertableAutomationFunctionRun = Pick<
+  AutomationFunctionRunRecord,
+  'id' | 'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
+>
+
+export async function upsertAutomationFunctionRun(
+  automationFunctionRun: InsertableAutomationFunctionRun
+) {
+  await AutomationFunctionRuns.knex()
+    .insert(
+      _.pick(automationFunctionRun, AutomationFunctionRuns.withoutTablePrefix.cols)
+    )
+    .onConflict(AutomationFunctionRuns.withoutTablePrefix.col.id)
+    .merge([
+      AutomationFunctionRuns.withoutTablePrefix.col.contextView,
+      AutomationFunctionRuns.withoutTablePrefix.col.elapsed,
+      AutomationFunctionRuns.withoutTablePrefix.col.results,
+      AutomationFunctionRuns.withoutTablePrefix.col.status,
+      AutomationFunctionRuns.withoutTablePrefix.col.statusMessage
+    ])
+}
+
 export type InsertableAutomationRun = AutomationRunRecord & {
   triggers: Omit<AutomationRunTriggerRecord, 'automationRunId'>[]
   functionRuns: Omit<AutomationFunctionRunRecord, 'runId'>[]
@@ -130,10 +152,7 @@ export async function upsertAutomationRun(automationRun: InsertableAutomationRun
   return
 }
 
-export async function getFunctionRuns(params: { functionRunIds: string[] }) {
-  const { functionRunIds } = params
-  if (!functionRunIds.length) return []
-
+export async function getFunctionRun(functionRunId: string) {
   const q = AutomationFunctionRuns.knex()
     .select<
       Array<
@@ -147,7 +166,7 @@ export async function getFunctionRuns(params: { functionRunIds: string[] }) {
       AutomationRuns.col.automationRevisionId,
       AutomationRevisions.col.automationId
     ])
-    .whereIn(AutomationFunctionRuns.col.id, functionRunIds)
+    .where(AutomationFunctionRuns.col.id, functionRunId)
     .innerJoin(
       AutomationRuns.name,
       AutomationRuns.col.id,
@@ -159,12 +178,9 @@ export async function getFunctionRuns(params: { functionRunIds: string[] }) {
       AutomationRuns.col.automationRevisionId
     )
 
-  return await q
-}
+  const runs = await q
 
-export async function getFunctionRun(functionRunId: string) {
-  const runs = await getFunctionRuns({ functionRunIds: [functionRunId] })
-  return (runs[0] || null) as (typeof runs)[0] | null
+  return (runs[0] ?? null) as (typeof runs)[0] | null
 }
 
 export type GetFunctionRunsForAutomationRunIdsItem = AutomationFunctionRunRecord & {

@@ -169,7 +169,7 @@ export const triggerAutomationRun = async (params: {
       functionId: functionRun.functionId,
       functionReleaseId: functionRun.functionReleaseId,
       functionInputs: functionRun.functionInputs,
-      functionRunId: functionRun.runId
+      functionRunId: functionRun.id
     }
   })
 

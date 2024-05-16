@@ -260,10 +260,10 @@ export const triggerAutomationRevisionRun =
       await upsertAutomationRun(automationRun)
     } catch (error) {
       const statusMessage = error instanceof Error ? error.message : `${error}`
-      automationRun.status = 'error'
+      automationRun.status = 'exception'
       automationRun.functionRuns = automationRun.functionRuns.map((fr) => ({
         ...fr,
-        status: 'error',
+        status: 'exception',
         statusMessage
       }))
       await upsertAutomationRun(automationRun)

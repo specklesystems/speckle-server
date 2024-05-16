@@ -22,17 +22,23 @@ export type AutomationRevisionRecord = {
 
 export type AutomationRunStatus =
   | 'pending'
+  | 'initializing'
   | 'running'
-  | 'success'
-  | 'failure'
-  | 'error'
+  | 'succeeded'
+  | 'failed'
+  | 'exception'
+  | 'timeout'
+  | 'canceled'
 
 export const AutomationRunStatuses: Record<AutomationRunStatus, AutomationRunStatus> = {
   pending: 'pending',
+  initializing: 'initializing',
   running: 'running',
-  success: 'success',
-  failure: 'failure',
-  error: 'error'
+  succeeded: 'succeeded',
+  failed: 'failed',
+  exception: 'exception',
+  timeout: 'timeout',
+  canceled: 'canceled'
 }
 
 export type AutomationRunRecord = {
