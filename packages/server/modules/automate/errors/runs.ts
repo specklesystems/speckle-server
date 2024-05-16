@@ -5,7 +5,7 @@ export class FunctionRunNotFoundError extends BaseError {
   static code = 'FUNCTION_RUN_NOT_FOUND'
 }
 
-export class FunctionRunReportStatusesError extends BaseError {
+export class FunctionRunReportStatusError extends BaseError {
   static defaultMessage =
     'An error occurred while updating function run report statuses'
   static code = 'FUNCTION_RUN_REPORT_STATUSES_ERROR'
