@@ -2,7 +2,7 @@
   <ViewerLayoutPanel class="mt-2" hide-close>
     <template #title>Filtering</template>
     <template #actions>
-      <div class="flex justify-between items-center w-full gap-2">
+      <div class="flex justify-between items-center w-full">
         <FormButton
           v-tippy="'Change Filter'"
           text
