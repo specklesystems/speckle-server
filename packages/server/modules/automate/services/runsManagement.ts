@@ -51,9 +51,7 @@ export const validateStatusChange = (
 
 export const validateContextView = (contextView: string) => {
   if (!contextView.length) {
-    throw new FunctionRunReportStatusError(
-      'Context view must be a valid relative URL'
-    )
+    throw new FunctionRunReportStatusError('Context view must be a valid relative URL')
   }
 
   if (!contextView.startsWith('/')) {
@@ -98,59 +96,59 @@ export type ReportFunctionRunStatusDeps = {
 
 export const reportFunctionRunStatus =
   (deps: ReportFunctionRunStatusDeps) =>
-    async (
-      params: Pick<
-        AutomationFunctionRunRecord,
-        'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
-      >
-    ): Promise<boolean> => {
-      const {
-        getAutomationFunctionRunRecord,
-        upsertAutomationFunctionRunRecord,
-        automationRunUpdater
-      } = deps
-      const { runId, ...statusReportData } = params
+  async (
+    params: Pick<
+      AutomationFunctionRunRecord,
+      'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
+    >
+  ): Promise<boolean> => {
+    const {
+      getAutomationFunctionRunRecord,
+      upsertAutomationFunctionRunRecord,
+      automationRunUpdater
+    } = deps
+    const { runId, ...statusReportData } = params
 
-      const currentFunctionRunRecordResult = await getAutomationFunctionRunRecord(runId)
+    const currentFunctionRunRecordResult = await getAutomationFunctionRunRecord(runId)
 
-      if (!currentFunctionRunRecordResult) {
-        throw new FunctionRunNotFoundError()
-      }
-
-      const { automationId, ...currentFunctionRunRecord } = currentFunctionRunRecordResult
-
-      if (statusReportData.results) {
-        Automate.AutomateTypes.formatResultsSchema(statusReportData.results)
-      }
-
-      if (statusReportData.contextView) validateContextView(statusReportData.contextView)
-
-      const currentStatus = currentFunctionRunRecord.status
-      const nextStatus = statusReportData.status
-
-      validateStatusChange(currentStatus, nextStatus)
-
-      const elapsed = new Date().getTime() - currentFunctionRunRecord.createdAt.getTime()
-
-      const nextFunctionRunRecord = {
-        ...currentFunctionRunRecord,
-        ...statusReportData,
-        elapsed
-      }
-
-      await upsertAutomationFunctionRunRecord(nextFunctionRunRecord)
-
-      const updatedRun = await automationRunUpdater({
-        id: runId,
-        status: resolveStatusFromFunctionRunStatuses([nextStatus]),
-        updatedAt: new Date()
-      })
-
-      await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.StatusUpdated, {
-        run: updatedRun,
-        functionRuns: [nextFunctionRunRecord],
-        automationId
-      })
-
-      return true
+    if (!currentFunctionRunRecordResult) {
+      throw new FunctionRunNotFoundError()
     }
+
+    const { automationId, ...currentFunctionRunRecord } = currentFunctionRunRecordResult
+
+    if (statusReportData.results) {
+      Automate.AutomateTypes.formatResultsSchema(statusReportData.results)
+    }
+
+    if (statusReportData.contextView) validateContextView(statusReportData.contextView)
+
+    const currentStatus = currentFunctionRunRecord.status
+    const nextStatus = statusReportData.status
+
+    validateStatusChange(currentStatus, nextStatus)
+
+    const elapsed = new Date().getTime() - currentFunctionRunRecord.createdAt.getTime()
+
+    const nextFunctionRunRecord = {
+      ...currentFunctionRunRecord,
+      ...statusReportData,
+      elapsed
+    }
+
+    await upsertAutomationFunctionRunRecord(nextFunctionRunRecord)
+
+    const updatedRun = await automationRunUpdater({
+      id: currentFunctionRunRecord.runId,
+      status: resolveStatusFromFunctionRunStatuses([nextStatus]),
+      updatedAt: new Date()
+    })
+
+    await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.StatusUpdated, {
+      run: updatedRun,
+      functionRuns: [nextFunctionRunRecord],
+      automationId
+    })
+
+    return true
+  }
