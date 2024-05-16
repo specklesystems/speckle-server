@@ -2,6 +2,7 @@ import type { ConcreteComponent } from 'vue'
 import type { FormButton } from '~~/src/lib'
 
 type FormButtonProps = InstanceType<typeof FormButton>['$props']
+import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
 export enum GridListToggleValue {
   Grid = 'grid',
@@ -16,9 +17,11 @@ export type LayoutTabItem<I extends string = string> = {
 export type LayoutPageTabItem<I extends string = string> = {
   title: string
   id: I
-  icon?: ConcreteComponent
   count?: number
   tag?: string
+  icon?: PropAnyComponent
+  disabled?: boolean
+  disabledMessage?: string
 }
 
 export type LayoutMenuItem<I extends string = string> = {

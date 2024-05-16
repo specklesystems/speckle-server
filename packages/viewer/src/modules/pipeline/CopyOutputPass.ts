@@ -1,10 +1,16 @@
-import { NoBlending, ShaderMaterial, Texture, UniformsUtils } from 'three'
+import {
+  NoBlending,
+  ShaderMaterial,
+  Texture,
+  UniformsUtils,
+  WebGLRenderer
+} from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
 import { speckleCopyOutputFrag } from '../materials/shaders/speckle-copy-output-frag'
 import { speckleCopyOutputVert } from '../materials/shaders/speckle-copy-output-vert'
 import { PipelineOutputType } from './Pipeline'
-import { InputColorTextureUniform, SpecklePass } from './SpecklePass'
+import type { InputColorTextureUniform, SpecklePass } from './SpecklePass'
 
 export class CopyOutputPass extends Pass implements SpecklePass {
   private fsQuad: FullScreenQuad
@@ -40,13 +46,11 @@ export class CopyOutputPass extends Pass implements SpecklePass {
     return 'COPY-OUTPUT'
   }
 
-  get outputTexture(): Texture {
+  get outputTexture(): Texture | null {
     return null
   }
 
-  render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive*/) {
-    writeBuffer
-    readBuffer
+  render(renderer: WebGLRenderer) {
     renderer.setRenderTarget(null)
     const rendereAutoClear = renderer.autoClear
     renderer.autoClear = false

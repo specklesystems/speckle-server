@@ -46,7 +46,10 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   })
 
   const labelClasses = computed(() => {
-    const classParts = ['block label text-foreground-2 mb-2']
+    const classParts = [
+      'flex label mb-1.5',
+      unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2'
+    ]
     if (!unref(props.showLabel)) {
       classParts.push('sr-only')
     }
@@ -58,7 +61,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     const classParts: string[] = [
       'focus:outline-none disabled:cursor-not-allowed disabled:bg-foundation-disabled',
       'disabled:text-disabled-muted placeholder:text-foreground-2',
-      'rounded'
+      'rounded-md'
     ]
 
     return classParts.join(' ')
@@ -80,7 +83,9 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
     const color = unref(props.color)
     if (color === 'foundation') {
-      classParts.push('bg-foundation shadow-sm hover:shadow')
+      classParts.push(
+        'bg-foundation !border border-outline-3 focus:border-outline-1 focus:!outline-0 focus:!ring-0'
+      )
     } else if (color === 'transparent') {
       classParts.push('bg-transparent')
     } else {
@@ -108,7 +113,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     hasHelpTip.value ? `${unref(props.name)}-${internalHelpTipId.value}` : undefined
   )
   const helpTipClasses = computed((): string => {
-    const classParts = ['mt-2 text-xs sm:text-sm']
+    const classParts = ['mt-2 text-xs']
     classParts.push(error.value ? 'text-danger' : 'text-foreground-2')
     return classParts.join(' ')
   })

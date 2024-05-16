@@ -4,13 +4,7 @@ import { ObjectLayers } from '@speckle/viewer'
 import { NodeRenderView } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { BatchObject } from '@speckle/viewer'
-import {
-  Extension,
-  IViewer,
-  GeometryType,
-  MeshBatch,
-  CameraController
-} from '@speckle/viewer'
+import { Extension, IViewer, GeometryType, CameraController } from '@speckle/viewer'
 import {
   Matrix4,
   ShaderMaterial,
@@ -113,17 +107,18 @@ export class BoxSelection extends Extension {
 
   /** Gets the object ids that fall withing the provided selection box */
   private getSelectionIds(selectionBox: Box3) {
+    /** Get the renderer */
+    const renderer = this.viewer.getRenderer()
     /** Get the mesh batches */
-    const batches = this.viewer
-      .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
-
+    const batches = renderer.batcher.getBatches(undefined, GeometryType.MESH)
     /** Compute the clip matrix */
     const clipMatrix = new Matrix4()
-    clipMatrix.multiplyMatrices(
-      this.viewer.getRenderer().renderingCamera.projectionMatrix,
-      this.viewer.getRenderer().renderingCamera.matrixWorldInverse
-    )
+    if (renderer.renderingCamera) {
+      clipMatrix.multiplyMatrices(
+        renderer.renderingCamera.projectionMatrix,
+        renderer.renderingCamera.matrixWorldInverse
+      )
+    }
 
     /** We're using three-mesh-bvh library for out BVH
      *  Go over each batch and test it against the TAS only.

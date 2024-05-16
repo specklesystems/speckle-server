@@ -34,10 +34,14 @@ export class ExtendedSelection extends SelectionExtension {
   }
 
   private initGizmo() {
+    const rendeder = this.viewer.getRenderer()
+    if (!rendeder.renderingCamera)
+      throw new Error('Cannot use ExtendedSelection without a rendering camera')
+
     /** Create a new TransformControls gizmo */
     this.transformControls = new TransformControls(
-      this.viewer.getRenderer().renderingCamera,
-      this.viewer.getRenderer().renderer.domElement
+      rendeder.renderingCamera,
+      rendeder.renderer.domElement
     )
     /** The gizmo creates an entire hierarchy of children internally,
      *  and three.js objects do not inherit parent layer values, so

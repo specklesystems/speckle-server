@@ -8,6 +8,15 @@ export const projectAccessCheckQuery = graphql(`
   }
 `)
 
+export const projectRoleCheckQuery = graphql(`
+  query ProjectRoleCheck($id: String!) {
+    project(id: $id) {
+      id
+      role
+    }
+  }
+`)
+
 export const projectsDashboardQuery = graphql(`
   query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {
     activeUser {

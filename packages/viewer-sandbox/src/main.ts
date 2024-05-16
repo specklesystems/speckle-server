@@ -4,7 +4,6 @@ import {
   DefaultViewerParams,
   SelectionEvent,
   ViewerEvent,
-  DebugViewer,
   Viewer
 } from '@speckle/viewer'
 
@@ -40,7 +39,7 @@ const createViewer = async (containerName: string, stream: string) => {
   params.verbose = true
 
   const multiSelectList: SelectionEvent[] = []
-  const viewer: Viewer = new DebugViewer(container, params)
+  const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
   const cameraController = viewer.createExtension(CameraController)
@@ -64,27 +63,15 @@ const createViewer = async (containerName: string, stream: string) => {
   // rotateCamera // use it
   // boxSelect // use it
 
-  const sandbox = new Sandbox(controlsContainer, viewer as DebugViewer, multiSelectList)
+  const sandbox = new Sandbox(controlsContainer, viewer, multiSelectList)
 
   window.addEventListener('load', () => {
     viewer.resize()
   })
 
-  viewer.on(
-    ViewerEvent.ObjectClicked,
-    (event: { hits: { node: { model: { id: string } } }[] }) => {
-      if (event) console.log(event.hits[0].node.model.id)
-    }
-  )
-
-  viewer.on(
-    ViewerEvent.LoadProgress,
-    (a: { progress: number; id: string; url: string }) => {
-      if (a.progress >= 1) {
-        viewer.resize()
-      }
-    }
-  )
+  viewer.on(ViewerEvent.ObjectClicked, (event: SelectionEvent | null) => {
+    if (event) console.log(event.hits[0].node.model.id)
+  })
 
   viewer.on(ViewerEvent.LoadComplete, async () => {
     console.warn(viewer.getRenderer().renderingStats)
@@ -121,6 +108,7 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
     'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://latest.speckle.dev/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
     // 'Super' heavy revit shit
@@ -347,6 +335,7 @@ const getStream = () => {
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/576310a6d5'
     // 'https://latest.speckle.dev/streams/ee5346d3e1/commits/489d42ca8c'
     // 'https://latest.speckle.dev/streams/97750296c2/objects/11a7752e40b4ef0620affc55ce9fdf5a'
+    // 'https://speckle.xyz/streams/0ed2cdc8eb/commits/350c4e1a4d'
 
     // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec'
 

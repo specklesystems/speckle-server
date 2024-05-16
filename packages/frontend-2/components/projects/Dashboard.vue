@@ -16,6 +16,9 @@
         @dismissed="onDismissNewSpeckleBanner"
       />
     </div>
+
+    <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
+
     <div
       v-if="!showEmptyState"
       class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
@@ -31,7 +34,7 @@
           :show-label="false"
           placeholder="Search"
           color="foundation"
-          wrapper-classes="grow md:grow-0 md:w-60 hover:shadow rounded-md outline outline-2 outline-primary-muted"
+          wrapper-classes="grow md:grow-0 md:w-60"
           :show-clear="!!search"
           @change="updateSearchImmediately"
           @update:model-value="updateDebouncedSearch"
@@ -93,6 +96,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
+import type { PromoBanner } from '~/lib/promo-banners/types'
 
 const onUserProjectsUpdateSubscription = graphql(`
   subscription OnUserProjectsUpdate {
@@ -115,6 +119,17 @@ const search = ref('')
 const debouncedSearch = ref('')
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
+
+const promoBanners = ref<PromoBanner[]>([
+  {
+    id: 'speckleverse',
+    primaryText: 'Join our online hackathon!',
+    secondaryText: 'June 7 - 9, 2024',
+    url: 'https://beyond-the-speckleverse.devpost.com/',
+    priority: 1,
+    expiryDate: '2024-06-10'
+  }
+])
 
 const { activeUser, isGuest } = useActiveUser()
 const { triggerNotification } = useGlobalToast()

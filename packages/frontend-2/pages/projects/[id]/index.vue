@@ -8,17 +8,14 @@
         @processed="onInviteAccepted"
       />
       <div
-        class="flex flex-col md:flex-row md:justify-between md:items-start gap-8 sm:gap-4 my-8"
+        class="flex flex-col md:flex-row md:justify-between md:items-start gap-8 my-8"
       >
         <ProjectPageHeader :project="project" />
-        <ProjectPageStatsBlockSettings
-          :project="project"
-          class="w-full md:w-72 shrink-0"
-        />
+        <ProjectPageTeamBlock :project="project" class="w-full md:w-72 shrink-0" />
       </div>
-      <LayoutPageTabs v-model:active-item="activePageTab" :items="pageTabItems">
-        <NuxtPage />
-      </LayoutPageTabs>
+      <LayoutTabsHoriztonal v-model:active-item="activePageTab" :items="pageTabItems">
+        <NuxtPage :project="project" />
+      </LayoutTabsHoriztonal>
     </div>
   </div>
 </template>
@@ -28,19 +25,27 @@ import { Roles, type Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
-import { LayoutPageTabs, type LayoutPageTabItem } from '@speckle/ui-components'
-import { CubeIcon, ChatBubbleLeftRightIcon, BoltIcon } from '@heroicons/vue/24/outline'
-import { projectRoute } from '~/lib/common/helpers/route'
+import { LayoutTabsHoriztonal, type LayoutPageTabItem } from '@speckle/ui-components'
+import {
+  CubeIcon,
+  ChatBubbleLeftRightIcon,
+  BoltIcon,
+  Cog6ToothIcon
+} from '@heroicons/vue/24/outline'
+import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectPageProject on Project {
     id
     createdAt
+    modelCount: models(limit: 0) {
+      totalCount
+    }
+    commentThreadCount: commentThreads(limit: 0) {
+      totalCount
+    }
     ...ProjectPageProjectHeader
-    ...ProjectPageStatsBlockTeam
     ...ProjectPageTeamDialog
-    ...ProjectPageStatsBlockModels
-    ...ProjectPageStatsBlockComments
   }
 `)
 
@@ -53,9 +58,14 @@ definePageMeta({
       if (/\/models\/?$/i.test(to.path)) {
         return navigateTo(projectRoute(projectId))
       }
+
+      // Redirect from /projects/:id/webhooks to /projects/:id/settings/webhooks
+      if (/\/projects\/\w*?\/webhooks/i.test(to.path)) {
+        return navigateTo(projectWebhooksRoute(projectId))
+      }
     }
   ],
-  alias: '/projects/:id/models'
+  alias: ['/projects/:id/models', '/projects/:id/webhooks']
 })
 
 const route = useRoute()
@@ -90,6 +100,7 @@ const projectName = computed(() =>
 )
 const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
+const hasRole = computed(() => project.value?.role)
 
 useHead({
   title: projectName
@@ -104,37 +115,49 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
 }
 
 const isOwner = computed(() => project.value?.role === Roles.Stream.Owner)
+const pageTabItems = computed((): LayoutPageTabItem[] => {
+  const items: LayoutPageTabItem[] = [
+    {
+      title: 'Models',
+      id: 'models',
+      count: modelCount.value,
+      icon: CubeIcon
+    },
+    {
+      title: 'Discussions',
+      id: 'discussions',
+      count: commentCount.value,
+      icon: ChatBubbleLeftRightIcon
+    }
+  ]
 
-const pageTabItems = computed((): LayoutPageTabItem[] => [
-  {
-    title: 'Models',
-    id: 'models',
-    icon: CubeIcon,
-    count: modelCount.value
-  },
-  {
-    title: 'Discussions',
-    id: 'discussions',
-    icon: ChatBubbleLeftRightIcon,
-    count: commentCount.value
-  },
-  ...(isOwner.value
-    ? [
-        {
-          title: 'Automations',
-          id: 'automations',
-          icon: BoltIcon,
-          tag: 'Beta'
-        }
-      ]
-    : [])
-])
+  if (isOwner.value) {
+    items.push({
+      title: 'Automations',
+      id: 'automations',
+      icon: BoltIcon,
+      tag: 'Beta'
+    })
+  }
+
+  if (hasRole.value) {
+    items.push({
+      title: 'Settings',
+      id: 'settings',
+      icon: Cog6ToothIcon
+    })
+  }
+
+  return items
+})
 
 const activePageTab = computed({
   get: () => {
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return pageTabItems.value[1]
     if (/\/automations\/?.*$/i.test(path)) return pageTabItems.value[2]
+    // TODO: @andrew this needs fixing with dynamic index calc
+    if (/\/settings\/?/i.test(path) && hasRole.value) return pageTabItems.value[3]
     return pageTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
@@ -147,6 +170,11 @@ const activePageTab = computed({
         break
       case 'automations':
         router.push({ path: projectRoute(projectId.value, 'automations') })
+        break
+      case 'settings':
+        if (hasRole.value) {
+          router.push({ path: projectRoute(projectId.value, 'settings') })
+        }
         break
     }
   }

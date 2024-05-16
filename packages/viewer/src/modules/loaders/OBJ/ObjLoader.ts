@@ -10,7 +10,7 @@ export class ObjLoader extends Loader {
   private baseLoader: OBJLoader
   private converter: ObjConverter
   private tree: WorldTree
-  private isFinished: boolean
+  private isFinished: boolean = false
 
   public get resource(): string {
     return this._resource
@@ -66,12 +66,16 @@ export class ObjLoader extends Loader {
 
       pload.then(async () => {
         const t0 = performance.now()
-        const res = await this.tree
-          .getRenderTree(this._resource)
-          .buildRenderTree(new ObjGeometryConverter())
-        Logger.log('Tree build time -> ', performance.now() - t0)
-        this.isFinished = true
-        resolve(res)
+        const renderTree = this.tree.getRenderTree(this._resource)
+        if (renderTree) {
+          const res = await renderTree.buildRenderTree(new ObjGeometryConverter())
+          Logger.log('Tree build time -> ', performance.now() - t0)
+          this.isFinished = true
+          resolve(res)
+        } else {
+          Logger.error(`Could not get render tree for ${this._resource}`)
+          reject()
+        }
       })
       pload.catch(() => {
         Logger.error(`Could not load ${this._resource}`)
@@ -82,9 +86,9 @@ export class ObjLoader extends Loader {
 
   public cancel() {
     this.isFinished = false
-    throw new Error('Method not implemented.')
   }
+
   public dispose() {
-    this.baseLoader = null
+    super.dispose()
   }
 }

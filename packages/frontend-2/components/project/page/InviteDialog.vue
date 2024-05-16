@@ -1,25 +1,28 @@
 <template>
-  <LayoutDialogSection
-    allow-overflow
-    border-b
-    border-t
-    title="Invite"
-    :always-open="defaultOpen"
-  >
-    <template #icon>
-      <UserPlusIcon class="h-full w-full" />
-    </template>
+  <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
+    <template #header>Invite to Project</template>
     <div class="flex flex-col mt-2">
       <FormTextInput
         v-model="search"
         name="search"
         size="lg"
         placeholder="Search"
-        help="Search by username or email"
+        :disabled="disabled"
+        :help="
+          disabled
+            ? 'You must be the project owner to invite users'
+            : 'Search by username or email'
+        "
         input-classes="pr-[85px] text-sm"
+        color="foundation"
+        label="Add people by email or username"
+        show-label
       >
         <template #input-right>
-          <div class="absolute inset-y-0 right-0 flex items-center pr-2">
+          <div
+            class="absolute inset-y-0 right-0 flex items-center pr-2"
+            :class="disabled ? 'pointer-events-none' : ''"
+          >
             <ProjectPageTeamPermissionSelect v-model="role" hide-remove />
           </div>
         </template>
@@ -48,33 +51,42 @@
         />
       </div>
     </div>
-  </LayoutDialogSection>
+  </LayoutDialog>
 </template>
 <script setup lang="ts">
 import { Roles } from '@speckle/shared'
 import type { ServerRoles, StreamRoles } from '@speckle/shared'
-import { LayoutDialogSection } from '@speckle/ui-components'
 import { useUserSearch } from '~~/lib/common/composables/users'
 import type { UserSearchItem } from '~~/lib/common/composables/users'
 import type {
   ProjectInviteCreateInput,
-  ProjectPageTeamDialogFragment
+  ProjectPageInviteDialog_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import type { SetFullyRequired } from '~~/lib/common/helpers/type'
 import { isEmail } from '~~/lib/common/helpers/validation'
 import { isArray, isString } from 'lodash-es'
 import { useInviteUserToProject } from '~~/lib/projects/composables/projectManagement'
-import { useTeamDialogInternals } from '~~/lib/projects/composables/team'
-import { UserPlusIcon } from '@heroicons/vue/24/outline'
+import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useServerInfo } from '~~/lib/core/composables/server'
+import { graphql } from '~/lib/common/generated/gql/gql'
+
+graphql(`
+  fragment ProjectPageInviteDialog_Project on Project {
+    id
+    ...ProjectPageTeamInternals_Project
+  }
+`)
 
 type InvitableUser = UserSearchItem | string
 
 const props = defineProps<{
-  project: ProjectPageTeamDialogFragment
-  defaultOpen: boolean
+  projectId: string
+  project?: ProjectPageInviteDialog_ProjectFragment
+  disabled?: boolean
 }>()
+
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const loading = ref(false)
 const search = ref('')
@@ -88,9 +100,22 @@ const { userSearch, searchVariables } = useUserSearch({
     limit: 5
   }))
 })
-const { collaboratorListItems } = useTeamDialogInternals({
-  props: toRefs(props)
-})
+
+const projectId = computed(() => props.projectId as string)
+
+const projectData = computed(() => props.project)
+
+const { collaboratorListItems } = useTeamInternals(projectData)
+
+const dialogButtons = computed(() => [
+  {
+    text: 'Cancel',
+    props: { color: 'secondary', fullWidth: true },
+    onClick: () => {
+      isOpen.value = false
+    }
+  }
+])
 
 const selectedEmails = computed(() => {
   const query = searchVariables.value?.query || ''
@@ -150,7 +175,7 @@ const onInviteUser = async (
 
   // Invite email
   loading.value = true
-  await createInvite(props.project.id, inputs)
+  await createInvite(projectId.value, inputs)
 
   mp.track('Invite Action', {
     type: 'project invite',

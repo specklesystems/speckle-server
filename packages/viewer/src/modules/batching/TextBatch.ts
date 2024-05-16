@@ -4,23 +4,23 @@ import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 import { NodeRenderView } from '../tree/NodeRenderView'
 import {
   AllBatchUpdateRange,
-  Batch,
-  BatchUpdateRange,
+  type Batch,
+  type BatchUpdateRange,
+  type DrawGroup,
   GeometryType,
   NoneBatchUpdateRange
 } from './Batch'
 
 import { SpeckleText } from '../objects/SpeckleText'
 import { ObjectLayers } from '../../IViewer'
-import { DrawGroup } from './Batch'
 import Materials from '../materials/Materials'
 
 export default class TextBatch implements Batch {
   public id: string
   public subtreeId: string
   public renderViews: NodeRenderView[]
-  public batchMaterial: Material
-  public mesh: SpeckleText
+  public batchMaterial!: Material
+  public mesh!: SpeckleText
 
   public get bounds(): Box3 {
     return new Box3().setFromObject(this.mesh)
@@ -68,7 +68,7 @@ export default class TextBatch implements Batch {
   public getCount(): number {
     return (
       this.mesh.textMesh.geometry.index.count +
-      this.mesh.backgroundMesh?.geometry.index.count
+      this.mesh.backgroundMesh?.geometry.index?.count
     )
   }
 
@@ -92,7 +92,8 @@ export default class TextBatch implements Batch {
     renderer
   }
 
-  public setVisibleRange(...ranges: BatchUpdateRange[]) {
+  public setVisibleRange(ranges: BatchUpdateRange[]) {
+    ranges
     // TO DO
   }
 
@@ -116,11 +117,12 @@ export default class TextBatch implements Batch {
     return NoneBatchUpdateRange
   }
 
-  public setBatchBuffers(...range: BatchUpdateRange[]): void {
+  public setBatchBuffers(range: BatchUpdateRange[]): void {
+    range
     throw new Error('Method not implemented.')
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(ranges: BatchUpdateRange[]) {
     this.mesh.textMesh.material = ranges[0].material
     if (ranges[0].materialOptions && ranges[0].materialOptions.rampIndexColor) {
       this.mesh.textMesh.material.color.copy(ranges[0].materialOptions.rampIndexColor)
@@ -130,11 +132,15 @@ export default class TextBatch implements Batch {
   public resetDrawRanges() {
     this.mesh.textMesh.material = this.batchMaterial
     this.mesh.textMesh.visible = true
-    // this.geometry.clearGroups()
-    // this.geometry.setDrawRange(0, Infinity)
   }
 
   public async buildBatch() {
+    /** Catering to typescript
+     *  There is no unniverse where there is no metadata
+     */
+    if (!this.renderViews[0].renderData.geometry.metaData) {
+      throw new Error(`Cannot build batch ${this.id}. Metadata`)
+    }
     this.mesh = new SpeckleText(this.id, ObjectLayers.STREAM_CONTENT_TEXT)
     this.mesh.matrixAutoUpdate = false
     await this.mesh.update(
@@ -142,7 +148,8 @@ export default class TextBatch implements Batch {
         this.renderViews[0].renderData.geometry.metaData
       )
     )
-    this.mesh.matrix.copy(this.renderViews[0].renderData.geometry.bakeTransform)
+    if (this.renderViews[0].renderData.geometry.bakeTransform)
+      this.mesh.matrix.copy(this.renderViews[0].renderData.geometry.bakeTransform)
     this.renderViews[0].setBatchData(
       this.id,
       0,
@@ -152,14 +159,17 @@ export default class TextBatch implements Batch {
   }
 
   public getRenderView(index: number): NodeRenderView {
+    index
     return this.renderViews[0]
   }
 
   public getMaterialAtIndex(index: number): Material {
+    index
     return this.batchMaterial
   }
 
   public getMaterial(rv: NodeRenderView): Material {
+    rv
     return this.batchMaterial
   }
 
@@ -167,6 +177,5 @@ export default class TextBatch implements Batch {
     this.renderViews.length = 0
     this.batchMaterial.dispose()
     this.mesh.geometry.dispose()
-    this.mesh = null
   }
 }

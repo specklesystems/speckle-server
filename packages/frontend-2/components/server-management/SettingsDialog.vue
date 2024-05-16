@@ -7,6 +7,7 @@
           v-model="name"
           label="This server's public name"
           name="serverName"
+          color="foundation"
           placeholder="Server name"
           show-label
           :show-required="true"
@@ -15,6 +16,7 @@
         />
         <FormTextArea
           v-model="description"
+          color="foundation"
           label="Description"
           name="description"
           placeholder="Description"
@@ -22,6 +24,7 @@
         />
         <FormTextInput
           v-model="company"
+          color="foundation"
           label="Owner"
           name="owner"
           placeholder="Owner"
@@ -29,6 +32,7 @@
         />
         <FormTextInput
           v-model="adminContact"
+          color="foundation"
           label="Admin Email"
           name="adminEmail"
           placeholder="Admin Email"
@@ -37,13 +41,12 @@
         />
         <FormTextInput
           v-model="termsOfService"
+          color="foundation"
           label="Url pointing to the terms of service page"
           name="terms"
           show-label
         />
-        <div
-          class="rounded-lg px-3 py-2 sm:p-4 bg-primary-muted opacity-70 text-sm flex flex-col gap-2 mt-2"
-        >
+        <div class="text-sm flex flex-col gap-2 mt-2">
           <FormCheckbox
             v-model="inviteOnly"
             label="Invite only mode - Only users with an invitation will be able to join"

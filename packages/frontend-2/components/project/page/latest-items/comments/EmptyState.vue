@@ -35,7 +35,7 @@
       </svg>
     </template>
     <template #cta>
-      <div v-if="small" class="mt-3">
+      <div v-if="showButton" class="mt-3">
         <FormButton
           size="sm"
           :icon-left="PlusIcon"
@@ -56,5 +56,6 @@ defineEmits<{
 
 defineProps<{
   small?: boolean
+  showButton?: boolean
 }>()
 </script>

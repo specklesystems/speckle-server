@@ -1,8 +1,8 @@
 import { speckleShadowcatcherVert } from './shaders/speckle-shadowcatcher-vert'
 import { speckleShadowcatcherFrag } from './shaders/speckle-shadowcatche-frag'
 import SpeckleBasicMaterial from './SpeckleBasicMaterial'
-import { Vector4 } from 'three'
-import { Uniforms } from './SpeckleMaterial'
+import { Vector4, type MeshBasicMaterialParameters } from 'three'
+import { type Uniforms } from './SpeckleMaterial'
 
 class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
   protected get vertexProgram(): string {
@@ -26,7 +26,7 @@ class SpeckleShadowcatcherMaterial extends SpeckleBasicMaterial {
     }
   }
 
-  constructor(parameters, defines = []) {
+  constructor(parameters: MeshBasicMaterialParameters, defines = []) {
     super(parameters, defines)
   }
 }

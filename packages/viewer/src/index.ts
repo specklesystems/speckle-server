@@ -3,75 +3,78 @@ import {
   AssetType,
   DefaultLightConfiguration,
   DefaultViewerParams,
-  IViewer,
+  type IViewer,
   ObjectLayers,
-  SelectionEvent,
-  SpeckleView,
+  type SelectionEvent,
+  type SpeckleObject,
+  type SpeckleReference,
+  type SpeckleView,
   UpdateFlags,
   ViewerEvent,
-  ViewerParams
+  type ViewerParams,
+  LightConfiguration,
+  ViewerEventPayload
 } from './IViewer'
-import {
+import type {
   PropertyInfo,
   StringPropertyInfo,
   NumericPropertyInfo
 } from './modules/filtering/PropertyManager'
-import { SunLightConfiguration } from './IViewer'
-import { DataTree, ObjectPredicate, SpeckleObject } from './modules/tree/DataTree'
+import { type SunLightConfiguration } from './IViewer'
 import { World } from './modules/World'
-import { DebugViewer } from './modules/DebugViewer'
-import { NodeData, TreeNode, WorldTree } from './modules/tree/WorldTree'
-import {
+import { type NodeData, type TreeNode, WorldTree } from './modules/tree/WorldTree'
+import type {
   PointQuery,
   QueryResult,
   IntersectionQuery,
   PointQueryResult,
   IntersectionQueryResult
 } from './modules/queries/Query'
-import { Utils } from './modules/Utils'
+import { type Utils } from './modules/Utils'
 import { BatchObject } from './modules/batching/BatchObject'
 import { Box3, Vector3 } from 'three'
 import {
-  MeasurementOptions,
+  type MeasurementOptions,
   MeasurementType,
   MeasurementsExtension
 } from './modules/extensions/measurements/MeasurementsExtension'
 import { Units } from './modules/converter/Units'
 import { SelectionExtension } from './modules/extensions/SelectionExtension'
 import { CameraController } from './modules/extensions/CameraController'
-import { InlineView } from './modules/extensions/CameraController'
-import { CanonicalView } from './modules/extensions/CameraController'
-import { CameraEvent } from './modules/objects/SpeckleCamera'
-import { SectionTool } from './modules/extensions/SectionTool'
+import { type InlineView } from './modules/extensions/CameraController'
+import { type CanonicalView } from './modules/extensions/CameraController'
+import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera'
+import { SectionTool, SectionToolEventPayload } from './modules/extensions/SectionTool'
 import { SectionOutlines } from './modules/extensions/SectionOutlines'
 import {
   FilteringExtension,
-  FilteringState
+  type FilteringState
 } from './modules/extensions/FilteringExtension'
 import { Extension } from './modules/extensions/Extension'
 import { ExplodeExtension } from './modules/extensions/ExplodeExtension'
 import {
   DiffExtension,
-  DiffResult,
+  type DiffResult,
   VisualDiffMode
 } from './modules/extensions/DiffExtension'
-import { Loader } from './modules/loaders/Loader'
+import { Loader, LoaderEvent } from './modules/loaders/Loader'
 import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader'
 import { ObjLoader } from './modules/loaders/OBJ/ObjLoader'
 import { LegacyViewer } from './modules/LegacyViewer'
 import { SpeckleType } from './modules/loaders/GeometryConverter'
-import Input, { InputEvent } from './modules/input/Input'
+import Input, { InputEvent, InputEventPayload } from './modules/input/Input'
 import { GeometryType } from './modules/batching/Batch'
 import { MeshBatch } from './modules/batching/MeshBatch'
 import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial'
 import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial'
 import { SpeckleText } from './modules/objects/SpeckleText'
 import { NodeRenderView } from './modules/tree/NodeRenderView'
+import { type ExtendedIntersection } from './modules/objects/SpeckleRaycaster'
+import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter'
 import { Assets } from './modules/Assets'
 
 export {
   Viewer,
-  DebugViewer,
   LegacyViewer,
   DefaultViewerParams,
   ViewerEvent,
@@ -97,6 +100,7 @@ export {
   Loader,
   SpeckleLoader,
   ObjLoader,
+  LoaderEvent,
   UpdateFlags,
   SpeckleType,
   Input,
@@ -108,6 +112,7 @@ export {
   SpeckleTextMaterial,
   SpeckleText,
   NodeRenderView,
+  SpeckleGeometryConverter,
   Assets,
   AssetType
 }
@@ -119,10 +124,10 @@ export type {
   PropertyInfo,
   StringPropertyInfo,
   NumericPropertyInfo,
+  LightConfiguration,
   SunLightConfiguration,
-  DataTree,
-  ObjectPredicate,
   SpeckleObject,
+  SpeckleReference,
   SpeckleView,
   CanonicalView,
   InlineView,
@@ -136,7 +141,12 @@ export type {
   Utils,
   DiffResult,
   MeasurementOptions,
-  FilteringState
+  FilteringState,
+  ExtendedIntersection,
+  ViewerEventPayload,
+  InputEventPayload,
+  SectionToolEventPayload,
+  CameraEventPayload
 }
 
 export * as UrlHelper from './modules/UrlHelper'
