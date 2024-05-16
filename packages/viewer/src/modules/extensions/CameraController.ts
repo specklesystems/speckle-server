@@ -95,9 +95,9 @@ export class CameraController extends Extension implements SpeckleCamera {
       55,
       window.innerWidth / window.innerHeight
     )
-    this.perspectiveCamera.up.set(0, 0, 1)
-    this.perspectiveCamera.position.set(1, 1, 1)
-    this.perspectiveCamera.updateProjectionMatrix()
+    // this.perspectiveCamera.up.set(0, 0, 1)
+    // this.perspectiveCamera.position.set(1, 1, 1)
+    // this.perspectiveCamera.updateProjectionMatrix()
 
     const aspect =
       this.viewer.getContainer().offsetWidth / this.viewer.getContainer().offsetHeight

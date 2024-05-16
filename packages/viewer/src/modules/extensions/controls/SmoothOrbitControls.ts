@@ -240,7 +240,7 @@ export class SmoothOrbitControls extends EventEmitter {
     scene.add(this.originSphere)
     scene.add(this.cursorSphere)
 
-    this.setOrbit(0, Math.PI / 2, 1)
+    this.setOrbit(2.356, 0.955, 1)
     this.jumpToGoal()
   }
 
@@ -572,8 +572,18 @@ export class SmoothOrbitControls extends EventEmitter {
    * Move the camera instantly instead of accelerating toward the goal
    * parameters.
    */
-  jumpToGoal() {
+  public jumpToGoal() {
     this.update(SETTLING_TIME)
+  }
+
+  public fitToSphere(sphere: Sphere) {
+    /** The three.js Sphere has it's origin in a CS where Y is up (proper way) */
+    const nativeOrigin = new Vector3()
+      .copy(sphere.center)
+      .applyMatrix4(this._basisTransformInv)
+    this.setTarget(nativeOrigin.x, nativeOrigin.y, nativeOrigin.z)
+
+    this.setRadius(sphere.radius)
   }
 
   /**
@@ -706,6 +716,7 @@ export class SmoothOrbitControls extends EventEmitter {
       .copy(this.origin)
       .applyMatrix4(this._basisTransform)
     this.originSphere.position.copy(originSphereT)
+
     if (this._controlTarget instanceof PerspectiveCamera)
       if (this._controlTarget.fov !== Math.exp(this.logFov)) {
         this._controlTarget.fov = Math.exp(this.logFov)
@@ -864,78 +875,6 @@ export class SmoothOrbitControls extends EventEmitter {
     this.setTarget(target.x, target.y, target.z)
   }
 
-  public fitToSphere(sphere: Sphere) {
-    /** The three.js Sphere has it's origin in a CS where Y is up (proper way) */
-    const nativeOrigin = new Vector3()
-      .copy(sphere.center)
-      .applyMatrix4(this._basisTransformInv)
-    this.setTarget(nativeOrigin.x, nativeOrigin.y, nativeOrigin.z)
-
-    this.setRadius(sphere.radius)
-  }
-
-  // TO DO
-  /*
-  private recenter(pointer: PointerEvent) {
-    if (
-      performance.now() > this.startTime + TAP_MS ||
-      Math.abs(pointer.clientX - this.startPointerPosition.clientX) > TAP_DISTANCE ||
-      Math.abs(pointer.clientY - this.startPointerPosition.clientY) > TAP_DISTANCE
-    ) {
-      return
-    }
-    const { scene } = this
-
-    const hit = scene.positionAndNormalFromPoint(
-      scene.getNDC(pointer.clientX, pointer.clientY)
-    )
-
-    if (hit == null) {
-      const { cameraTarget } = scene.element
-      scene.element.cameraTarget = ''
-      scene.element.cameraTarget = cameraTarget
-      // Zoom all the way out.
-      this.userAdjustOrbit(0, 0, 1)
-    } else {
-      scene.target.worldToLocal(hit.position)
-      scene.setTarget(hit.position.x, hit.position.y, hit.position.z)
-    }
-  }
-  */
-
-  // TO DO
-  /*
-  private resetRadius() {
-    const { scene } = this
-
-    const hit = scene.positionAndNormalFromPoint(vector2.set(0, 0))
-    if (hit == null) {
-      return
-    }
-
-    scene.target.worldToLocal(hit.position)
-    const goalTarget = scene.getTarget()
-    const { theta, phi } = this.spherical
-
-    // Set target to surface hit point, except the target is still settling,
-    // so offset the goal accordingly so the transition is smooth even though
-    // this will drift the target slightly away from the hit point.
-    const psi = theta - scene.yaw
-    const n = vector3.set(
-      Math.sin(phi) * Math.sin(psi),
-      Math.cos(phi),
-      Math.sin(phi) * Math.cos(psi)
-    )
-    const dr = n.dot(hit.position.sub(goalTarget))
-    goalTarget.add(n.multiplyScalar(dr))
-
-    scene.setTarget(goalTarget.x, goalTarget.y, goalTarget.z)
-    // Change the camera radius to match the change in target so that the
-    // camera itself does not move, unless it hits a radius bound.
-    this.setOrbit(undefined, undefined, this.goalSpherical.radius - dr)
-  }
-  */
-
   private onPointerDown = (event: PointerEvent) => {
     if (this.pointers.length > 2) {
       return
@@ -1001,7 +940,7 @@ export class SmoothOrbitControls extends EventEmitter {
     pointer.clientY = event.clientY
 
     if (event.pointerType === 'touch') {
-      this.changeSource = event.altKey // set by interact() in controls.ts
+      this.changeSource = event.altKey
         ? ChangeSource.AUTOMATIC
         : ChangeSource.USER_INTERACTION
       if (this.touchMode !== null) {
