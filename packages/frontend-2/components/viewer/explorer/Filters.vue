@@ -3,18 +3,18 @@
     <template #title>Filtering</template>
     <template #actions>
       <div class="flex justify-between items-center w-full">
-        <div class="-mt-1">
-          <FormButton
-            v-tippy="'Change Filter'"
-            text
-            size="xs"
-            :icon-right="showAllFilters ? ChevronUpIcon : ChevronDownIcon"
-            class="capitalize"
-            @click="showAllFilters = !showAllFilters"
-          >
+        <FormButton
+          v-tippy="'Change Filter'"
+          text
+          size="xs"
+          :icon-right="showAllFilters ? ChevronUpIcon : ChevronDownIcon"
+          class="capitalize"
+          @click="showAllFilters = !showAllFilters"
+        >
+          <span class="max-w-20 md:max-w-36 truncate">
             {{ title.split('.').reverse()[0] || title || 'No Title' }}
-          </FormButton>
-        </div>
+          </span>
+        </FormButton>
         <div class="flex gap-1 divide-x divide-outline-3">
           <FormButton
             v-if="title !== 'Object Type'"
