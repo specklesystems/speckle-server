@@ -30,6 +30,7 @@ import type { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/
 import { useModelNameValidationRules } from '~~/lib/projects/composables/modelManagement'
 import { CubeIcon } from '@heroicons/vue/24/solid'
 import { useForm } from 'vee-validate'
+import { sanitizeModelName } from '~~/lib/projects/helpers/models'
 
 const emit = defineEmits<{
   (e: 'model-selected', val: string): void
@@ -45,6 +46,6 @@ const rules = useModelNameValidationRules()
 const { handleSubmit } = useForm<{ name: string }>()
 
 const onSubmit = handleSubmit((values) => {
-  emit('model-selected', values.name)
+  emit('model-selected', sanitizeModelName(values.name))
 })
 </script>
