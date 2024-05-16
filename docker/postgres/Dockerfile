@@ -6,11 +6,12 @@ RUN apk add --no-cache 'git=~2.36' \
     'llvm13=~13.0'
 
 WORKDIR /
-
 RUN git clone --branch 1.1.9 https://github.com/aiven/aiven-extras.git aiven-extras
 
 WORKDIR /aiven-extras
-RUN make \
+RUN git checkout 36598ab \
+  && git clean -df \
+  && make \
   && make install
 
 FROM postgres:14.5-alpine
