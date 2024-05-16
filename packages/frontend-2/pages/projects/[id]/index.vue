@@ -104,6 +104,7 @@ const projectName = computed(() =>
 )
 const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
+const hasRole = computed(() => project.value?.role)
 
 useHead({
   title: projectName
@@ -117,38 +118,45 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
   }
 }
 
-const pageTabItems = computed((): LayoutPageTabItem[] => [
-  {
-    title: 'Models',
-    id: 'models',
-    count: modelCount.value,
-    icon: CubeIcon
-  },
-  {
-    title: 'Discussions',
-    id: 'discussions',
-    count: commentCount.value,
-    icon: ChatBubbleLeftRightIcon
-  },
-  //   {
-  //   title: 'Automations',
-  //   id: 'automations',
-  //   tag: 'New',
-  //   icon: BoltIcon
-  //   },
-  {
-    title: 'Settings',
-    id: 'settings',
-    icon: Cog6ToothIcon
+const pageTabItems = computed((): LayoutPageTabItem[] => {
+  const items: LayoutPageTabItem[] = [
+    {
+      title: 'Models',
+      id: 'models',
+      count: modelCount.value,
+      icon: CubeIcon
+    },
+    {
+      title: 'Discussions',
+      id: 'discussions',
+      count: commentCount.value,
+      icon: ChatBubbleLeftRightIcon
+    }
+    //   {
+    //   title: 'Automations',
+    //   id: 'automations',
+    //   tag: 'New',
+    //   icon: BoltIcon
+    //   },
+  ]
+
+  if (hasRole.value) {
+    items.push({
+      title: 'Settings',
+      id: 'settings',
+      icon: Cog6ToothIcon
+    })
   }
-])
+
+  return items
+})
 
 const activePageTab = computed({
   get: () => {
     const path = router.currentRoute.value.path
     if (/\/discussions\/?$/i.test(path)) return pageTabItems.value[1]
     // if (/\/automations\/?$/i.test(path)) return pageTabItems.value[2]
-    if (/\/settings\/?/i.test(path)) return pageTabItems.value[2]
+    if (/\/settings\/?/i.test(path) && hasRole.value) return pageTabItems.value[2]
     return pageTabItems.value[0]
   },
   set: (val: LayoutPageTabItem) => {
@@ -163,7 +171,9 @@ const activePageTab = computed({
         router.push({ path: projectRoute(projectId.value, 'automations') })
         break
       case 'settings':
-        router.push({ path: projectRoute(projectId.value, 'settings') })
+        if (hasRole.value) {
+          router.push({ path: projectRoute(projectId.value, 'settings') })
+        }
         break
     }
   }
