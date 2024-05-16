@@ -36,7 +36,8 @@ import {
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
 
 import EventEmitter from '../../EventEmitter.js'
-import { ObjectLayers } from '../../../index.js'
+import { ObjectLayers } from '../../../IViewer.js'
+import { World } from '../../World.js'
 
 /**
  * @param {Number} value
@@ -98,7 +99,7 @@ export const DEFAULT_OPTIONS = Object.freeze<Required<SmoothControlsOptions>>({
   maximumFieldOfView: 60,
   touchAction: 'none',
   infiniteZoom: true,
-  zoomToCursor: false
+  zoomToCursor: true
 })
 
 // Constants
@@ -210,23 +211,26 @@ export class SmoothOrbitControls extends EventEmitter {
 
   private originSphere: Mesh
   private cursorSphere: Mesh
+  private world: World
 
   constructor(
     controlTarget: Object3D,
     container: HTMLElement,
     renderer: WebGLRenderer,
-    scene: Scene
+    scene: Scene,
+    world: World
   ) {
     super()
     this._controlTarget = controlTarget
     this._container = container
     this._renderer = renderer
+    this.world = world
     this._options = Object.assign(
       {},
       DEFAULT_OPTIONS
     ) as Required<SmoothControlsOptions>
 
-    const geometry = new SphereGeometry(0.1, 32, 16)
+    const geometry = new SphereGeometry(0.01, 32, 16)
     const material = new MeshBasicMaterial({ color: 0xffff00 })
     this.originSphere = new Mesh(geometry, material)
     this.originSphere.layers.set(ObjectLayers.OVERLAY)
@@ -483,10 +487,9 @@ export class SmoothOrbitControls extends EventEmitter {
     //   metersPerPixel
 
     /** Simpler approach to zoom amount varying */
-    const offset = new Vector3().copy(this._controlTarget.position).sub(this.origin)
     // half of the fov is center to top of screen
     const fov = Math.exp(this.logFov) * MathUtils.DEG2RAD
-    let zoomAmount = deltaZoom * offset.length() * Math.tan(fov * 0.5)
+    let zoomAmount = deltaZoom * this.spherical.radius * Math.tan(fov * 0.5)
     zoomAmount =
       Math.sign(zoomAmount) *
       clamp(
@@ -501,49 +504,50 @@ export class SmoothOrbitControls extends EventEmitter {
     this._radiusDelta = radius - this.goalSpherical.radius
 
     if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
-      const dir = new Vector3().setFromSpherical(this.spherical).normalize()
-      const dollyAmount = new Vector3().copy(dir).multiplyScalar(zoomAmount)
+      if (this._controlTarget instanceof PerspectiveCamera) {
+        const dir = new Vector3().setFromSpherical(this.spherical).normalize()
+        const dollyAmount = new Vector3()
+          .copy(dir)
+          .multiplyScalar(zoomAmount * this.world.getRelativeOffset(0.1))
 
-      this.setTarget(
-        this.origin.x + dollyAmount.x,
-        this.origin.y + dollyAmount.y,
-        this.origin.z + dollyAmount.z
-      )
-      if (this._options.zoomToCursor) this._radiusDelta = -zoomAmount
+        this.setTarget(
+          this.origin.x + dollyAmount.x,
+          this.origin.y + dollyAmount.y,
+          this.origin.z + dollyAmount.z
+        )
+        if (this._options.zoomToCursor) this._radiusDelta = -zoomAmount
+      }
     }
 
     if (this._options.zoomToCursor) {
-      if (this._controlTarget instanceof PerspectiveCamera) {
-        const cameraDirection = new Vector3()
-          .setFromSpherical(this.spherical)
-          .normalize()
-          .negate()
-        const planeX = new Vector3()
-          .copy(cameraDirection)
-          .cross(new Vector3(0, 1, 0))
-          .normalize()
-        if (planeX.lengthSq() === 0) planeX.x = 1.0
-        const planeY = new Vector3().crossVectors(planeX, cameraDirection)
-        const worldToScreen =
-          this.goalSpherical.radius *
-          Math.tan(Math.exp(this.logFov) * MathUtils.DEG2RAD * 0.5)
-        const cursor = new Vector3()
-          .copy(this.goalOrigin)
-          .add(
-            planeX.multiplyScalar(
-              this.zoomControlCoord.x *
-                worldToScreen *
-                (this._controlTarget as PerspectiveCamera).aspect
-            )
-          )
-          .add(planeY.multiplyScalar(this.zoomControlCoord.y * worldToScreen))
-        const lerpRatio = this._radiusDelta / this.goalSpherical.radius
-        const newTargetEnd = new Vector3().copy(this.goalOrigin).lerp(cursor, lerpRatio)
-        this.cursorSphere.position.copy(
-          new Vector3().copy(cursor).applyMatrix4(this._basisTransform)
-        )
-        this.setTarget(newTargetEnd.x, newTargetEnd.y, newTargetEnd.z)
+      const cameraDirection = new Vector3()
+        .setFromSpherical(this.spherical)
+        .normalize()
+        .negate()
+      const planeX = new Vector3()
+        .copy(cameraDirection)
+        .cross(new Vector3(0, 1, 0))
+        .normalize()
+      if (planeX.lengthSq() === 0) planeX.x = 1.0
+      const planeY = new Vector3().crossVectors(planeX, cameraDirection)
+      const dims = {
+        x: this._container.offsetWidth,
+        y: this._container.offsetHeight
       }
+      const aspect = dims.x / dims.y
+      const worldToScreen =
+        this.goalSpherical.radius *
+        Math.tan(Math.exp(this.logFov) * MathUtils.DEG2RAD * 0.5)
+      const cursor = new Vector3()
+        .copy(this.goalOrigin)
+        .add(planeX.multiplyScalar(this.zoomControlCoord.x * worldToScreen * aspect))
+        .add(planeY.multiplyScalar(this.zoomControlCoord.y * worldToScreen))
+      const lerpRatio = this._radiusDelta / this.goalSpherical.radius
+      const newTargetEnd = new Vector3().copy(this.goalOrigin).lerp(cursor, lerpRatio)
+      this.cursorSphere.position.copy(
+        new Vector3().copy(cursor).applyMatrix4(this._basisTransform)
+      )
+      this.setTarget(newTargetEnd.x, newTargetEnd.y, newTargetEnd.z)
     }
     /** We're not varying fov based on zoom level for now */
     // if (deltaZoom !== 0) {
@@ -552,6 +556,18 @@ export class SmoothOrbitControls extends EventEmitter {
     // }
   }
 
+  private orthographicHeightToDistance(height: number) {
+    if (!(this._controlTarget instanceof OrthographicCamera))
+      return this.spherical.radius
+
+    return height / (Math.tan(MathUtils.DEG2RAD * Math.exp(this.logFov) * 0.5) * 2)
+  }
+
+  private distanceToOrthogrtaphicHeight(distance: number) {
+    const fov = Math.exp(this.logFov)
+    const dephtS = Math.tan(MathUtils.DEG2RAD * (fov / 2)) * 2.0
+    return dephtS * distance
+  }
   /**
    * Move the camera instantly instead of accelerating toward the goal
    * parameters.
@@ -664,7 +680,24 @@ export class SmoothOrbitControls extends EventEmitter {
   private moveCamera() {
     // Derive the new camera position from the updated spherical:
     this.spherical.makeSafe()
-    this._controlTarget.position.setFromSpherical(this.spherical).add(this.origin)
+    if (this._controlTarget instanceof PerspectiveCamera) {
+      this._controlTarget.position.setFromSpherical(this.spherical).add(this.origin)
+    }
+    if (this._controlTarget instanceof OrthographicCamera) {
+      this._controlTarget.position.setFromSpherical(this.spherical).add(this.origin)
+      const cameraDirection = new Vector3()
+        .setFromSpherical(this.spherical)
+        .normalize()
+        .negate()
+      this._controlTarget.position.add(
+        cameraDirection.multiplyScalar(
+          (this._options.maximumRadius -
+            this.options.minimumRadius -
+            this.spherical.radius) *
+            -1
+        )
+      )
+    }
     this._controlTarget.setRotationFromEuler(
       new Euler(this.spherical.phi - Math.PI / 2, this.spherical.theta, 0, 'YXZ')
     )
@@ -690,7 +723,6 @@ export class SmoothOrbitControls extends EventEmitter {
       const Z = depth
       const width = dephtS * Z * aspect
       const height = dephtS * Z
-
       this._controlTarget.zoom = 1
       this._controlTarget.left = width / -2
       this._controlTarget.right = width / 2
@@ -698,6 +730,15 @@ export class SmoothOrbitControls extends EventEmitter {
       this._controlTarget.bottom = height / -2
       this._controlTarget.updateProjectionMatrix()
     }
+
+    const plm = new Vector3()
+      .copy(this._controlTarget.position)
+      .applyMatrix4(this._basisTransformInv)
+    const offset = new Vector3().copy(plm).sub(this.origin)
+    const ortho = this.distanceToOrthogrtaphicHeight(offset.length())
+    const dist = this.orthographicHeightToDistance(ortho)
+    dist
+    // console.log(this.spherical.radius, offset.length(), ortho, dist)
   }
 
   private userAdjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {

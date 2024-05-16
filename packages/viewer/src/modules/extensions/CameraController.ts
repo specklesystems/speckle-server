@@ -140,7 +140,8 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.perspectiveCamera,
       this.viewer.getContainer(),
       this.viewer.getRenderer().renderer,
-      this.viewer.getRenderer().scene
+      this.viewer.getRenderer().scene,
+      this.viewer.World
     )
     this._controls.enableInteraction()
     this._controls.setDamperDecayTime(100)
