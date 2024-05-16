@@ -144,7 +144,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.viewer.World
     )
     this._controls.enableInteraction()
-    this._controls.setDamperDecayTime(100)
+    this._controls.setDamperDecayTime(60)
     this._controls.basisTransform = new Matrix4().makeRotationFromEuler(
       new Euler(Math.PI * 0.5)
     )
