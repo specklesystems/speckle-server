@@ -151,16 +151,19 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
   return items
 })
 
+const findTabById = (id: string) =>
+  pageTabItems.value.find((tab) => tab.id === id) || pageTabItems.value[0]
+
 const activePageTab = computed({
   get: () => {
     const path = router.currentRoute.value.path
-    if (/\/discussions\/?$/i.test(path)) return pageTabItems.value[1]
-    if (/\/automations\/?.*$/i.test(path)) return pageTabItems.value[2]
-    // TODO: @andrew this needs fixing with dynamic index calc
-    if (/\/settings\/?/i.test(path) && hasRole.value) return pageTabItems.value[3]
-    return pageTabItems.value[0]
+    if (/\/discussions\/?$/i.test(path)) return findTabById('discussions')
+    if (/\/automations\/?.*$/i.test(path)) return findTabById('automations')
+    if (/\/settings\/?/i.test(path) && hasRole.value) return findTabById('settings')
+    return findTabById('models')
   },
   set: (val: LayoutPageTabItem) => {
+    if (!val) return
     switch (val.id) {
       case 'models':
         router.push({ path: projectRoute(projectId.value, 'models') })
