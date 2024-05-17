@@ -137,10 +137,9 @@ export function useViewerCameraTracker(
     }
 
     // Only invoke callback if position/target changed in a meaningful way
-    const extension = instance.getExtension(CameraController)
-    const controls = extension.controls
+    const extension: CameraController = instance.getExtension(CameraController)
     const viewerPos = new Vector3().copy(extension.renderingCamera.position)
-    const viewerTarget = new Vector3().copy(controls.getTarget())
+    const viewerTarget = new Vector3().copy(extension.getOrigin())
 
     let meaningfulChangeFound = false
     if (!lastPos.value || !areVectorsLooselyEqual(lastPos.value, viewerPos)) {

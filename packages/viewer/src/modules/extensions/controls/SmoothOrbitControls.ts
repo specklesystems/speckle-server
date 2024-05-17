@@ -64,6 +64,20 @@ export interface Pointer {
 }
 
 export interface SmoothControlsOptions {
+  // Sensitivity of rotating.
+  enableOrbit?: boolean
+  // Sensitivity of zooming.
+  enableZoom?: boolean
+  // Sensitivity of panning.
+  enablePan?: boolean
+  // Sensitivity of rotating.
+  orbitSensitivity?: number
+  // Sensitivity of zooming.
+  zoomSensitivity?: number
+  // Sensitivity of panning.
+  panSensitivity?: number
+  // General Sensitivity.
+  inputSensitivity?: number
   // The closest the camera can be to the target
   minimumRadius?: number
   // The farthest the camera can be from the target
@@ -87,20 +101,6 @@ export interface SmoothControlsOptions {
   // Zoom to cursor
   zoomToCursor?: boolean
 }
-
-export const DEFAULT_OPTIONS = Object.freeze<Required<SmoothControlsOptions>>({
-  minimumRadius: 1,
-  maximumRadius: Infinity,
-  minimumPolarAngle: Math.PI / 8,
-  maximumPolarAngle: Math.PI - Math.PI / 8,
-  minimumAzimuthalAngle: -Infinity,
-  maximumAzimuthalAngle: Infinity,
-  minimumFieldOfView: 40,
-  maximumFieldOfView: 60,
-  touchAction: 'none',
-  infiniteZoom: true,
-  zoomToCursor: true
-})
 
 // Constants
 const KEYBOARD_ORBIT_INCREMENT = Math.PI / 8
@@ -161,15 +161,10 @@ export interface PointerChangeEvent extends ThreeEvent {
  * ensure that the camera's matrixWorld is in sync before using SmoothControls.
  */
 export class SmoothOrbitControls extends EventEmitter {
-  public orbitSensitivity = 1
-  public zoomSensitivity = 1
-  public panSensitivity = 1
-  public inputSensitivity = 1
   public changeSource = ChangeSource.NONE
 
   private _interactionEnabled: boolean = false
   private _options: Required<SmoothControlsOptions>
-  private _disableZoom = false
   private isUserPointing = false
 
   // Pan state
@@ -189,7 +184,7 @@ export class SmoothOrbitControls extends EventEmitter {
   private thetaDamper = new Damper()
   private phiDamper = new Damper()
   private radiusDamper = new Damper()
-  private logFov = Math.log(DEFAULT_OPTIONS.maximumFieldOfView)
+  private logFov = Math.log(55)
   private goalLogFov = this.logFov
   private fovDamper = new Damper()
 
@@ -218,18 +213,15 @@ export class SmoothOrbitControls extends EventEmitter {
     container: HTMLElement,
     renderer: WebGLRenderer,
     scene: Scene,
-    world: World
+    world: World,
+    options: Required<SmoothControlsOptions>
   ) {
     super()
     this._controlTarget = controlTarget
     this._container = container
     this._renderer = renderer
     this.world = world
-    this._options = Object.assign(
-      {},
-      DEFAULT_OPTIONS
-    ) as Required<SmoothControlsOptions>
-
+    this._options = Object.assign({}, options) as Required<SmoothControlsOptions>
     const geometry = new SphereGeometry(0.01, 32, 16)
     const material = new MeshBasicMaterial({ color: 0xffff00 })
     this.originSphere = new Mesh(geometry, material)
@@ -242,6 +234,17 @@ export class SmoothOrbitControls extends EventEmitter {
 
     this.setOrbit(2.356, 0.955, 1)
     this.jumpToGoal()
+  }
+
+  /**
+   * The options that are currently configured for the controls instance.
+   */
+  get options(): Required<SmoothControlsOptions> {
+    return this._options
+  }
+
+  set options(value: SmoothControlsOptions) {
+    Object.assign(this._options, value)
   }
 
   set basisTransform(value: Matrix4) {
@@ -263,8 +266,12 @@ export class SmoothOrbitControls extends EventEmitter {
     this.moveCamera()
   }
 
-  get originV(): Vector3 {
+  get originValue(): Vector3 {
     return this.origin
+  }
+
+  get sphericalValue(): Spherical {
+    return this.spherical
   }
 
   enableInteraction() {
@@ -272,9 +279,7 @@ export class SmoothOrbitControls extends EventEmitter {
       this._container.addEventListener('pointerdown', this.onPointerDown)
       this._container.addEventListener('pointercancel', this.onPointerUp)
 
-      if (!this._disableZoom) {
-        this._container.addEventListener('wheel', this.onWheel)
-      }
+      this._container.addEventListener('wheel', this.onWheel)
       this._container.addEventListener('keydown', this.onKeyDown)
       // This little beauty is to work around a WebKit bug that otherwise makes
       // touch events randomly not cancelable.
@@ -302,13 +307,6 @@ export class SmoothOrbitControls extends EventEmitter {
     }
   }
 
-  /**
-   * The options that are currently configured for the controls instance.
-   */
-  get options() {
-    return this._options
-  }
-
   onContext = (event: MouseEvent) => {
     if (this.enablePan) {
       event.preventDefault()
@@ -322,17 +320,6 @@ export class SmoothOrbitControls extends EventEmitter {
             pointerId: pointer.id
           })
         )
-      }
-    }
-  }
-
-  set disableZoom(disable: boolean) {
-    if (this._disableZoom !== disable) {
-      this._disableZoom = disable
-      if (disable === true) {
-        this._container.removeEventListener('wheel', this.onWheel)
-      } else {
-        this._container.addEventListener('wheel', this.onWheel)
       }
     }
   }
@@ -754,9 +741,18 @@ export class SmoothOrbitControls extends EventEmitter {
 
   private userAdjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {
     this.adjustOrbit(
-      deltaTheta * this.orbitSensitivity * this.inputSensitivity,
-      deltaPhi * this.orbitSensitivity * this.inputSensitivity,
-      deltaZoom * this.zoomSensitivity * this.inputSensitivity
+      deltaTheta *
+        this._options.orbitSensitivity *
+        +this._options.enableOrbit *
+        this._options.inputSensitivity,
+      deltaPhi *
+        this._options.orbitSensitivity *
+        +this._options.enableOrbit *
+        this._options.inputSensitivity,
+      deltaZoom *
+        this._options.zoomSensitivity *
+        +this._options.enableZoom *
+        this._options.inputSensitivity
     )
   }
 
@@ -782,19 +778,18 @@ export class SmoothOrbitControls extends EventEmitter {
   }
 
   private touchModeZoom: TouchMode = (dx: number, dy: number) => {
-    if (!this._disableZoom) {
-      const size = this._renderer.getSize(new Vector2())
-      const touchDistance = this.twoTouchDistance(this.pointers[0], this.pointers[1])
-      const deltaZoom =
-        (ZOOM_SENSITIVITY *
-          this.zoomSensitivity *
-          (this.lastSeparation - touchDistance) *
-          50) /
-        size.y
-      this.lastSeparation = touchDistance
+    const size = this._renderer.getSize(new Vector2())
+    const touchDistance = this.twoTouchDistance(this.pointers[0], this.pointers[1])
+    const deltaZoom =
+      (ZOOM_SENSITIVITY *
+        this._options.zoomSensitivity *
+        +this._options.enableZoom *
+        (this.lastSeparation - touchDistance) *
+        50) /
+      size.y
+    this.lastSeparation = touchDistance
 
-      this.userAdjustOrbit(0, 0, deltaZoom)
-    }
+    this.userAdjustOrbit(0, 0, deltaZoom)
 
     if (this.panPerPixel > 0) {
       this.movePan(dx, dy)
@@ -850,7 +845,9 @@ export class SmoothOrbitControls extends EventEmitter {
     const size = this._renderer.getSize(new Vector2())
     const { theta, phi } = this.spherical
     const psi = theta //- this.scene.yaw
-    this.panPerPixel = (PAN_SENSITIVITY * this.panSensitivity) / size.y
+    this.panPerPixel =
+      (PAN_SENSITIVITY * this._options.panSensitivity * +this._options.enablePan) /
+      size.y
     this.panProjection.set(
       -Math.cos(psi),
       -Math.cos(phi) * Math.sin(psi),
@@ -865,7 +862,7 @@ export class SmoothOrbitControls extends EventEmitter {
   }
 
   private movePan(dx: number, dy: number) {
-    const dxy = vector3.set(dx, dy, 0).multiplyScalar(this.inputSensitivity)
+    const dxy = vector3.set(dx, dy, 0).multiplyScalar(this._options.inputSensitivity)
     const metersPerPixel =
       this.spherical.radius * Math.exp(this.logFov) * this.panPerPixel
     dxy.multiplyScalar(metersPerPixel)
@@ -992,7 +989,7 @@ export class SmoothOrbitControls extends EventEmitter {
     if (this.pointers.length === 1) {
       this.touchMode = this.touchModeRotate
     } else {
-      if (this._disableZoom) {
+      if (!this._options.enableZoom) {
         this.touchMode = null
         this._container.removeEventListener('touchmove', this.disableScroll)
         return
@@ -1043,7 +1040,8 @@ export class SmoothOrbitControls extends EventEmitter {
       ((event as WheelEvent).deltaY *
         ((event as WheelEvent).deltaMode === 1 ? 18 : 1) *
         ZOOM_SENSITIVITY *
-        this.zoomSensitivity) /
+        this._options.zoomSensitivity *
+        +this._options.enableZoom) /
       30
     this.userAdjustOrbit(0, 0, deltaZoom)
     event.preventDefault()
@@ -1082,10 +1080,21 @@ export class SmoothOrbitControls extends EventEmitter {
     let relevantKey = true
     switch (event.key) {
       case 'PageUp':
-        this.userAdjustOrbit(0, 0, ZOOM_SENSITIVITY * this.zoomSensitivity)
+        this.userAdjustOrbit(
+          0,
+          0,
+          ZOOM_SENSITIVITY * this._options.zoomSensitivity * +this._options.enableZoom
+        )
         break
       case 'PageDown':
-        this.userAdjustOrbit(0, 0, -1 * ZOOM_SENSITIVITY * this.zoomSensitivity)
+        this.userAdjustOrbit(
+          0,
+          0,
+          -1 *
+            ZOOM_SENSITIVITY *
+            this._options.zoomSensitivity *
+            +this._options.enableZoom
+        )
         break
       case 'ArrowUp':
         this.userAdjustOrbit(0, -KEYBOARD_ORBIT_INCREMENT, 0)

@@ -64,18 +64,6 @@ export function useCameraUtilities() {
     instance.setView(...args)
   }
 
-  // let cameraController: CameraController | null = null
-  const truck = () => {}
-  /** How and why is this used? */
-  // (
-  //   ...args: Parameters<NonNullable<typeof cameraController>['controls']['truck']>
-  // ) => {
-  //   if (!cameraController) {
-  //     cameraController = instance.getExtension(CameraController)
-  //   }
-  //   cameraController?.controls.truck(...args)
-  // }
-
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
 
@@ -105,7 +93,6 @@ export function useCameraUtilities() {
     zoomExtentsOrSelection,
     toggleProjection,
     camera,
-    truck,
     setView,
     zoom,
     forceViewToViewerSync

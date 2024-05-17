@@ -8,9 +8,13 @@ import {
   OrthographicCamera,
   PerspectiveCamera,
   Sphere,
+  Spherical,
   Vector3
 } from 'three'
-import { SmoothOrbitControls } from './controls/SmoothOrbitControls'
+import {
+  SmoothControlsOptions,
+  SmoothOrbitControls
+} from './controls/SmoothOrbitControls'
 import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera'
 import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera'
 import Logger from 'js-logger'
@@ -39,6 +43,8 @@ export type PolarView = {
   origin?: Vector3
 }
 
+export type CameraControllerOptions = SmoothControlsOptions
+
 export function isPerspectiveCamera(camera: Camera): camera is PerspectiveCamera {
   return (camera as PerspectiveCamera).isPerspectiveCamera
 }
@@ -47,12 +53,36 @@ export function isOrthographicCamera(camera: Camera): camera is OrthographicCame
   return (camera as OrthographicCamera).isOrthographicCamera
 }
 
+export const DefaultControllerOptions = Object.freeze<
+  Required<CameraControllerOptions>
+>({
+  enableOrbit: true,
+  enableZoom: true,
+  enablePan: true,
+  orbitSensitivity: 1,
+  zoomSensitivity: 1,
+  panSensitivity: 1,
+  inputSensitivity: 1,
+  minimumRadius: 1,
+  maximumRadius: Infinity,
+  minimumPolarAngle: Math.PI / 8,
+  maximumPolarAngle: Math.PI - Math.PI / 8,
+  minimumAzimuthalAngle: -Infinity,
+  maximumAzimuthalAngle: Infinity,
+  minimumFieldOfView: 40,
+  maximumFieldOfView: 60,
+  touchAction: 'none',
+  infiniteZoom: true,
+  zoomToCursor: true
+})
+
 export class CameraController extends Extension implements SpeckleCamera {
   protected _controls: SmoothOrbitControls
   protected _renderingCamera: PerspectiveCamera | OrthographicCamera
   protected perspectiveCamera: PerspectiveCamera
   protected orthographicCamera: OrthographicCamera
-  private _lastCameraChanged: boolean = false
+  protected _lastCameraChanged: boolean = false
+  protected _options: Required<CameraControllerOptions> = DefaultControllerOptions
 
   get renderingCamera(): PerspectiveCamera | OrthographicCamera {
     return this._renderingCamera
@@ -86,6 +116,14 @@ export class CameraController extends Extension implements SpeckleCamera {
 
   public get controls(): SmoothOrbitControls {
     return this._controls
+  }
+
+  public get options(): Required<CameraControllerOptions> {
+    return this._options
+  }
+
+  public set options(value: CameraControllerOptions) {
+    this._controls.options = value
   }
 
   public constructor(viewer: IViewer) {
@@ -141,7 +179,8 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.viewer.getContainer(),
       this.viewer.getRenderer().renderer,
       this.viewer.getRenderer().scene,
-      this.viewer.World
+      this.viewer.World,
+      this._options
     )
     this._controls.enableInteraction()
     this._controls.setDamperDecayTime(60)
@@ -156,6 +195,14 @@ export class CameraController extends Extension implements SpeckleCamera {
     listener: (arg: CameraEventPayload[T]) => void
   ): void {
     super.on(eventType, listener)
+  }
+
+  public getSpherical(): Spherical {
+    return this._controls.sphericalValue.clone()
+  }
+
+  public getOrigin(): Vector3 {
+    return this._controls.originValue.clone()
   }
 
   setCameraView(
@@ -503,6 +550,12 @@ export class CameraController extends Extension implements SpeckleCamera {
 
   private setViewInline(_view: InlineView, transition = true) {
     transition
+    // const spherical = new Spherical()
+    // spherical.setFromCartesianCoords(view.position.x, view.position.y, view.position.z)
+    // spherical.radius = view.position.distanceTo(view.target)
+
+    // this._controls.setOrbit(spherical.theta, spherical.phi, spherical.radius)
+    // this._controls.setTarget(view.target.x, view.target.y, view.target.z)
     // TO DO
     // this._controls.setLookAt(
     //   view.position.x,
