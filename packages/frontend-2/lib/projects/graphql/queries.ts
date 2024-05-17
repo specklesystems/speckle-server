@@ -216,6 +216,47 @@ export const projectDiscussionsPageQuery = graphql(`
   }
 `)
 
+export const projectAutomationsTabQuery = graphql(`
+  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {
+    project(id: $projectId) {
+      id
+      automations(filter: $search, cursor: $cursor, limit: 5) {
+        totalCount
+        items {
+          id
+          ...ProjectPageAutomationsRow_Automation
+        }
+      }
+      ...FormSelectProjects_Project
+    }
+    ...ProjectPageAutomationsEmptyState_Query
+  }
+`)
+
+export const projectAutomationPageQuery = graphql(`
+  query ProjectAutomationPage($projectId: String!, $automationId: String!) {
+    project(id: $projectId) {
+      id
+      ...ProjectPageAutomationPage_Project
+      automation(id: $automationId) {
+        id
+        ...ProjectPageAutomationPage_Automation
+      }
+    }
+  }
+`)
+
+export const projectAutomationAccessCheckQuery = graphql(`
+  query ProjectAutomationAccessCheck($projectId: String!) {
+    project(id: $projectId) {
+      id
+      automations(limit: 0) {
+        totalCount
+      }
+    }
+  }
+`)
+
 export const projectWebhooksQuery = graphql(`
   query ProjectWebhooks($projectId: String!) {
     project(id: $projectId) {
@@ -242,10 +283,10 @@ export const projectWebhooksQuery = graphql(`
   }
 `)
 
-// // TODO: uses deprecated endpoint, needs migration BE & here
-export const blobInfoQuery = graphql(`
-  query Blob($blobId: String!, $streamId: String!) {
-    stream(id: $streamId) {
+export const projectBlobInfoQuery = graphql(`
+  query ProjectBlobInfo($blobId: String!, $projectId: String!) {
+    project(id: $projectId) {
+      id
       blob(id: $blobId) {
         id
         fileName

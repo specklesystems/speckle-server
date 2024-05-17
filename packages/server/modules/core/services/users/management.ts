@@ -2,8 +2,9 @@ import { addUserUpdatedActivity } from '@/modules/activitystream/services/userAc
 import { UserUpdateError, UserValidationError } from '@/modules/core/errors/user'
 import { PasswordTooShortError } from '@/modules/core/errors/userinput'
 import { UserUpdateInput } from '@/modules/core/graph/generated/graphql'
-import { UserRecord } from '@/modules/core/helpers/userHelper'
+import type { UserRecord } from '@/modules/core/helpers/userHelper'
 import { getUser, updateUser } from '@/modules/core/repositories/users'
+import { sanitizeImageUrl } from '@/modules/shared/helpers/sanitization'
 import { isNullOrUndefined } from '@speckle/shared'
 import bcrypt from 'bcrypt'
 
@@ -18,7 +19,11 @@ export async function updateUserAndNotify(userId: string, update: UserUpdateInpu
   const filteredUpdate: Partial<UserRecord> = {}
   for (const entry of Object.entries(update)) {
     const key = entry[0] as keyof typeof update
-    const val = entry[1]
+    let val = entry[1]
+
+    if (key === 'avatar') {
+      val = sanitizeImageUrl(val)
+    }
 
     if (!isNullOrUndefined(val)) {
       filteredUpdate[key] = val

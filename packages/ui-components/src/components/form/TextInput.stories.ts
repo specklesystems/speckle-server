@@ -1,10 +1,8 @@
-import { userEvent, within } from '@storybook/testing-library'
 import FormTextInput from '~~/src/components/form/TextInput.vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import type { StoryObj, Meta } from '@storybook/vue3'
-import { wait } from '@speckle/shared'
-import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
 import { mergeStories } from '~~/src/stories/helpers/storybook'
+import { nanoid } from 'nanoid'
 
 export default {
   component: FormTextInput,
@@ -32,6 +30,26 @@ export default {
       type: 'function',
       action: 'v-model'
     },
+    change: {
+      type: 'function',
+      action: 'change'
+    },
+    input: {
+      type: 'function',
+      action: 'input'
+    },
+    clear: {
+      type: 'function',
+      action: 'clear'
+    },
+    focus: {
+      type: 'function',
+      action: 'focus'
+    },
+    blur: {
+      type: 'function',
+      action: 'blur'
+    },
     size: {
       control: { type: 'select' },
       options: ['sm', 'lg', 'base', 'xl']
@@ -39,20 +57,7 @@ export default {
   }
 } as Meta
 
-const generateRandomName = (prefix: string) => `${prefix}-${Math.random() * 100000}`
-
-const buildTextWriterPlayFunction =
-  (text: string): VuePlayFunction =>
-  async (params) => {
-    const { canvasElement, viewMode } = params
-    const canvas = within(canvasElement)
-    const input = canvas.getByRole('textbox')
-
-    // https://github.com/storybookjs/storybook/pull/19659
-    await userEvent.type(input, text, { delay: viewMode === 'story' ? 100 : 0 })
-
-    userEvent.tab()
-  }
+const generateRandomName = (prefix: string) => `${prefix}-${nanoid()}`
 
 export const Default: StoryObj = {
   render: (args) => ({
@@ -61,12 +66,17 @@ export const Default: StoryObj = {
       return { args }
     },
     template: `<div class="bg-foundation p-5">
-    <form-text-input v-bind="args" @update:modelValue="args['update:modelValue']"/>
+    <form-text-input v-bind="args"
+      @update:modelValue="args['update:modelValue']"
+      @change="args['change']"
+      @input="args['input']"
+      @clear="args['clear']"
+      @focus="args['focus']"
+    />
     </div>`
   }),
-  play: buildTextWriterPlayFunction('Hello world!'),
   args: {
-    modelValue: '',
+    modelValue: 'Hello world',
     type: 'text',
     name: generateRandomName('default'),
     help: 'Some help text',
@@ -89,7 +99,6 @@ export const Default: StoryObj = {
 }
 
 export const Email: StoryObj = mergeStories(Default, {
-  play: buildTextWriterPlayFunction('admin@example.com'),
   args: {
     type: 'email',
     name: generateRandomName('email'),
@@ -98,7 +107,6 @@ export const Email: StoryObj = mergeStories(Default, {
 })
 
 export const Password = mergeStories(Default, {
-  play: buildTextWriterPlayFunction('qwerty'),
   args: {
     type: 'password',
     name: generateRandomName('password'),
@@ -107,21 +115,6 @@ export const Password = mergeStories(Default, {
 })
 
 export const Required = mergeStories(Default, {
-  play: async (params) => {
-    const { canvasElement } = params
-    await buildTextWriterPlayFunction('some text')(params)
-
-    await wait(1000)
-
-    const canvas = within(canvasElement)
-    const input = canvas.getByRole('textbox')
-
-    userEvent.clear(input)
-
-    await wait(1000)
-
-    userEvent.tab()
-  },
   args: {
     name: generateRandomName('required'),
     label: 'This one is required!',
@@ -133,7 +126,6 @@ export const Required = mergeStories(Default, {
 })
 
 export const Disabled = mergeStories(Default, {
-  play: buildTextWriterPlayFunction('12345'),
   args: {
     name: generateRandomName('disabled'),
     label: 'Disabled input',
@@ -142,7 +134,6 @@ export const Disabled = mergeStories(Default, {
 })
 
 export const WithClear = mergeStories(Default, {
-  play: buildTextWriterPlayFunction('12345'),
   args: {
     name: generateRandomName('withclear'),
     label: 'Click on cross to clear',
@@ -166,7 +157,6 @@ export const WithCustomRightSlot = mergeStories(Default, {
       </form-text-input>
     </div>`
   }),
-  play: buildTextWriterPlayFunction('12345'),
   args: {
     name: generateRandomName('withcustomrightslot'),
     label: 'Right side is customized with a button!',

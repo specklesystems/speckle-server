@@ -19,7 +19,11 @@
         >
           <div class="p-2 border-b border-outline flex gap-2 items-center">
             <div class="scale-90">
-              <FormSwitch v-model="sunlightShadows" />
+              <FormSwitch
+                v-model="sunlightShadows"
+                name="sunShadows"
+                :show-label="false"
+              />
             </div>
             <span class="text-foreground text-sm">Sun Shadows</span>
           </div>

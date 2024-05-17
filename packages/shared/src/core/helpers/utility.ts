@@ -1,5 +1,9 @@
 import { isNull, isUndefined } from 'lodash'
-import type { MaybeAsync } from './utilityTypes'
+import type {
+  MaybeAsync,
+  NonNullableProperties,
+  NullableKeysToOptional
+} from './utilityTypes'
 import { ensureError } from './error'
 
 export class TimeoutError extends Error {}
@@ -113,3 +117,18 @@ export const profileSync = <V = unknown>(
   )
   return res
 }
+
+export const removeNullOrUndefinedKeys = <T extends Record<string, unknown>>(
+  obj: T
+) => {
+  const ret = {} as T
+  for (const key in obj) {
+    if (!isNullOrUndefined(obj[key])) {
+      ret[key] = obj[key]
+    }
+  }
+  return ret as NonNullableProperties<NullableKeysToOptional<T>>
+}
+
+export const isArrayOf = <T>(arr: unknown, guard: (v: unknown) => v is T): arr is T[] =>
+  Array.isArray(arr) && arr.every(guard)

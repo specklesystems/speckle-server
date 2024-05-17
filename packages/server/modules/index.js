@@ -7,6 +7,7 @@ const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
 const { scalarResolvers } = require('./core/graph/scalars')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
 const { moduleLogger } = require('@/logging/logging')
+const { addMocksToSchema } = require('@graphql-tools/mock')
 
 /**
  * Cached speckle module requires
@@ -58,7 +59,8 @@ async function getSpeckleModules() {
     './accessrequests',
     './webhooks',
     './cross-server-sync',
-    './automations'
+    './betaAutomations',
+    './automate'
   ]
 
   for (const dir of moduleDirs) {
@@ -145,7 +147,12 @@ const graphComponents = () => {
   return { resolvers, typeDefs, directiveBuilders }
 }
 
-exports.graphSchema = () => {
+/**
+ *
+ * @param {import('@/modules/mocks').AppMocksConfig | undefined} [mocksConfig]
+ * @returns
+ */
+exports.graphSchema = (mocksConfig) => {
   const { resolvers, typeDefs, directiveBuilders } = graphComponents()
 
   /** @type {string[]} */
@@ -163,6 +170,19 @@ exports.graphSchema = () => {
     resolvers,
     typeDefs: [...directiveTypedefs, ...typeDefs]
   })
+
+  // Add mocks before directives intentionally (we still want auth checks to work for real)
+  if (mocksConfig) {
+    const { mockEntireSchema, mocks, resolvers } = mocksConfig
+    if (mocks || mockEntireSchema) {
+      schema = addMocksToSchema({
+        schema,
+        mocks: !mocks || mocks === true ? {} : mocks,
+        preserveResolvers: !mockEntireSchema,
+        resolvers
+      })
+    }
+  }
 
   // Apply directives
   for (const schemaTransformer of directiveSchemaTransformers) {

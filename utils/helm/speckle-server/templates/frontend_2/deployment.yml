@@ -125,6 +125,8 @@ spec:
           - name: NUXT_PUBLIC_DATADOG_ENV
             value: {{ .Values.analytics.datadog_env | quote }}
           {{- end }}
+          - name: FF_AUTOMATE_MODULE_ENABLED
+            value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
           {{- if .Values.analytics.survicate_workspace_key }}
           - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
             value: {{ .Values.analytics.survicate_workspace_key | quote }}

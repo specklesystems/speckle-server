@@ -22,6 +22,10 @@ export const projectRoute = (
 
   return res
 }
+export const projectAutomationRoute = (projectId: string, automationId: string) => {
+  return `${projectRoute(projectId, 'automations')}/${automationId}`
+}
+
 export const modelRoute = (
   projectId: string,
   resourceIdString: string,
@@ -48,11 +52,15 @@ export const projectCollaboratorsRoute = (projectId: string) =>
 export const projectWebhooksRoute = (projectId: string) =>
   `/projects/${projectId}/settings/webhooks`
 
-export const automationDataPageRoute = (baseUrl: string, automationId: string) =>
-  new URL(`/automations/${automationId}`, baseUrl).toString()
-
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`
+
+export const automateGithubAppAuthorizationCallback = '/api/auth/automate-github-app'
+
+export const automationFunctionsRoute = '/functions'
+
+export const automationFunctionRoute = (functionId: string) =>
+  `${automationFunctionsRoute}/${functionId}`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()
