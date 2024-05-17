@@ -148,7 +148,10 @@ const onCollaboratorRoleChange = async (
         if (fieldName !== 'team') return
         return value.filter(
           (t) =>
+            // @ts-expect-error: for some reason the type is just a Reference, doesn't know about the user
             !t.user ||
+            // @ts-expect-error: for some reason the type is just a Reference, doesn't know about the user
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
             t.user.__ref !== getObjectReference('LimitedUser', collaborator.id).__ref
         )
       }

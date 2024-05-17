@@ -5,7 +5,7 @@
         v-if="gridOrList === GridListToggleValue.List"
         :search="finalSearch"
         :project="project"
-        :project-id="project.id"
+        :project-id="projectId"
         :source-apps="sourceApps"
         :contributors="contributors"
         @update:loading="finalLoading = $event"
@@ -15,7 +15,7 @@
         v-if="gridOrList === GridListToggleValue.Grid"
         :search="finalSearch"
         :project="project"
-        :project-id="project.id"
+        :project-id="projectId"
         :source-apps="sourceApps"
         :contributors="contributors"
         @update:loading="finalLoading = $event"
@@ -46,7 +46,8 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  project: ProjectModelsPageResults_ProjectFragment
+  projectId: string
+  project?: ProjectModelsPageResults_ProjectFragment
   search: string
   gridOrList: GridListToggleValue
   loading: boolean

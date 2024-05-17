@@ -74,7 +74,8 @@ import {
   LayoutDialog,
   FormTextInput,
   FormTextArea,
-  useFormCheckboxModel
+  useFormCheckboxModel,
+  type LayoutDialogButton
 } from '@speckle/ui-components'
 import { useLogger } from '~~/composables/logging'
 import {
@@ -116,7 +117,7 @@ const { model: guestModeEnabled, isChecked: isGuestModeChecked } =
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
@@ -124,7 +125,7 @@ const dialogButtons = computed(() => [
   },
   {
     text: 'Save',
-    props: { color: 'primary', fullWidth: true, outline: false },
+    props: { color: 'default', fullWidth: true, outline: false },
     onClick: onSubmit
   }
 ])

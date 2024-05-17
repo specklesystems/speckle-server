@@ -20,6 +20,11 @@ export class BaseError<I extends Info = Info> extends VError {
    */
   static defaultMessage = 'Unexpected error occurred!'
 
+  /**
+   * Status code to use if error is thrown in a REST API
+   */
+  static statusCode = 500
+
   constructor(
     message?: string | null | undefined,
     options: ExtendedOptions<I> | Error | undefined = undefined
@@ -34,7 +39,8 @@ export class BaseError<I extends Info = Info> extends VError {
 
     const info = {
       ...(options.info || {}),
-      code: new.target.code
+      code: new.target.code,
+      statusCode: new.target.statusCode
     }
 
     options.info = info as unknown as I

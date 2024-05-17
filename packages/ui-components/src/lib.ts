@@ -10,7 +10,8 @@ import CommonBadge from '~~/src/components/common/Badge.vue'
 import type {
   BulletStepType,
   NumberStepType,
-  HorizontalOrVertical
+  HorizontalOrVertical,
+  PropAnyComponent
 } from '~~/src/helpers/common/components'
 import { TailwindBreakpoints } from '~~/src/helpers/tailwind'
 import CommonStepsNumber from '~~/src/components/common/steps/Number.vue'
@@ -43,7 +44,10 @@ import LayoutDialog from '~~/src/components/layout/Dialog.vue'
 import LayoutDialogSection from '~~/src/components/layout/DialogSection.vue'
 import LayoutDisclosure from '~~/src/components/layout/Disclosure.vue'
 import LayoutGridListToggle from '~~/src/components/layout/GridListToggle.vue'
-import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
+import type {
+  LayoutPageTabItem,
+  LayoutDialogButton
+} from '~~/src/helpers/layout/components'
 import { GridListToggleValue } from '~~/src/helpers/layout/components'
 import {
   ThrottleOrDebounce,
@@ -82,10 +86,12 @@ import type {
 } from '~~/src/composables/form/fileUpload'
 import { UniqueFileTypeSpecifier, prettyFileSize } from '~~/src/helpers/form/file'
 import type { FileTypeSpecifier } from '~~/src/helpers/form/file'
-import type { PropAnyComponent } from '~~/src/helpers/common/components'
 export * from '~~/src/helpers/common/error'
 import CommonLoadingIcon from '~~/src/components/common/loading/Icon.vue'
 import type { AvatarUser, AvatarUserWithId } from '~~/src/composables/user/avatar'
+import { useDebouncedTextInput } from '~~/src/composables/form/textInput'
+
+export { vKeyboardClickable } from '~~/src/directives/accessibility'
 
 export {
   CommonLoadingIcon,
@@ -147,9 +153,11 @@ export {
   useFormCheckboxModel,
   FormTags,
   keyboardClick,
+  useDebouncedTextInput,
   buildManualPromise
 }
 export type {
+  LayoutDialogButton,
   ToastNotification,
   BulletStepType,
   NumberStepType,

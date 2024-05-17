@@ -16,16 +16,23 @@ const config = {
   overrides: [
     {
       files: '*.ts',
+      parser: '@typescript-eslint/parser',
       plugins: ['@typescript-eslint'],
       parserOptions: {
-        sourceType: 'module'
+        sourceType: 'module',
+        project: ['./tsconfig.json'],
+        tsconfigRootDir: __dirname,
+        parser: '@typescript-eslint/parser'
       },
       extends: [
         'eslint:recommended',
         'plugin:@typescript-eslint/recommended',
         'prettier'
       ],
-      parser: '@typescript-eslint/parser'
+      rules: {
+        '@typescript-eslint/no-explicit-any': 'error',
+        '@typescript-eslint/no-unsafe-return': 'error'
+      }
     },
     {
       files: '*.d.ts',

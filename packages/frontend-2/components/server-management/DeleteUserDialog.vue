@@ -22,7 +22,7 @@
 
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
-import { LayoutDialog } from '@speckle/ui-components'
+import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import type { UserItem } from '~~/lib/server-management/helpers/types'
 import { adminDeleteUserMutation } from '~~/lib/server-management/graphql/mutations'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
@@ -141,7 +141,7 @@ const deleteConfirmed = async () => {
   }
 }
 
-const dialogButtons = [
+const dialogButtons: LayoutDialogButton[] = [
   {
     text: 'Delete',
     props: { color: 'danger', fullWidth: true },

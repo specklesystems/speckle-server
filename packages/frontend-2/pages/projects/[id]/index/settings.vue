@@ -20,6 +20,10 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectPageProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { Roles } from '@speckle/shared'
 
+definePageMeta({
+  middleware: ['can-view-settings']
+})
+
 graphql(`
   fragment ProjectPageSettingsTab_Project on Project {
     id
