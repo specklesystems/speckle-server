@@ -1,11 +1,20 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable camelcase */
 import { speckleNormalVert } from './shaders/speckle-normal-vert'
 import { speckleNormalFrag } from './shaders/speckle-normal-frag'
-import { ShaderLib, Vector3, IUniform } from 'three'
+import {
+  BufferGeometry,
+  Camera,
+  Material,
+  Object3D,
+  Scene,
+  ShaderLib,
+  Vector3,
+  type IUniform,
+  type MeshNormalMaterialParameters
+} from 'three'
 import { Matrix4 } from 'three'
-import { Geometry } from '../converter/Geometry'
-import { ExtendedMeshNormalMaterial, Uniforms } from './SpeckleMaterial'
+import { ExtendedMeshNormalMaterial, type Uniforms } from './SpeckleMaterial'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
 class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
   protected get vertexProgram(): string {
@@ -29,7 +38,7 @@ class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
     }
   }
 
-  constructor(parameters, defines = ['USE_RTE']) {
+  constructor(parameters: MeshNormalMaterialParameters, defines = ['USE_RTE']) {
     super(parameters)
     this.init(defines)
   }
@@ -39,14 +48,20 @@ class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
     return this.constructor.name
   }
 
-  public copy(source) {
+  public copy(source: Material) {
     super.copy(source)
     this.copyFrom(source)
     return this
   }
 
   /** Called by three.js render loop */
-  public onBeforeRender(_this, scene, camera, geometry, object, group) {
+  public onBeforeRender(
+    _this: SpeckleWebGLRenderer,
+    _scene: Scene,
+    _camera: Camera,
+    _geometry: BufferGeometry,
+    object: Object3D
+  ) {
     object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
     this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
     this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)

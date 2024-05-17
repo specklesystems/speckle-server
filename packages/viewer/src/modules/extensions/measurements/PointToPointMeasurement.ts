@@ -1,16 +1,16 @@
-import { Box3, Camera, Plane, Vector2 } from 'three'
+import { Box3, Camera, Plane, Raycaster, Vector2, type Intersection } from 'three'
 import { MeasurementPointGizmo } from './MeasurementPointGizmo'
 import { getConversionFactor } from '../../converter/Units'
 import { Measurement, MeasurementState } from './Measurement'
 import { ObjectLayers } from '../../../IViewer'
 
 export class PointToPointMeasurement extends Measurement {
-  private startGizmo: MeasurementPointGizmo = null
-  private endGizmo: MeasurementPointGizmo = null
+  private startGizmo: MeasurementPointGizmo | null = null
+  private endGizmo: MeasurementPointGizmo | null = null
 
   public set isVisible(value: boolean) {
-    this.startGizmo.enable(value, value, value, value)
-    this.endGizmo.enable(value, value, value, value)
+    this.startGizmo?.enable(value, value, value, value)
+    this.endGizmo?.enable(value, value, value, value)
   }
 
   public constructor() {
@@ -26,14 +26,14 @@ export class PointToPointMeasurement extends Measurement {
 
   public frameUpdate(camera: Camera, size: Vector2, bounds: Box3) {
     super.frameUpdate(camera, size, bounds)
-    this.startGizmo.frameUpdate(camera, bounds)
-    this.endGizmo.frameUpdate(camera, bounds)
+    this.startGizmo?.frameUpdate(camera, bounds)
+    this.endGizmo?.frameUpdate(camera, bounds)
   }
 
   public update() {
-    this.startGizmo.updateDisc(this.startPoint, this.startNormal)
-    this.startGizmo.updatePoint(this.startPoint)
-    this.endGizmo.updateDisc(this.endPoint, this.endNormal)
+    this.startGizmo?.updateDisc(this.startPoint, this.startNormal)
+    this.startGizmo?.updatePoint(this.startPoint)
+    this.endGizmo?.updateDisc(this.endPoint, this.endNormal)
 
     if (this._state === MeasurementState.DANGLING_START) {
       const startLine0 = Measurement.vec3Buff0.copy(this.startPoint)
@@ -44,8 +44,8 @@ export class PointToPointMeasurement extends Measurement {
             .copy(this.startNormal)
             .multiplyScalar(this.startLineLength)
         )
-      this.startGizmo.updateLine([startLine0, startLine1])
-      this.endGizmo.enable(false, false, false, false)
+      this.startGizmo?.updateLine([startLine0, startLine1])
+      this.endGizmo?.enable(false, false, false, false)
     }
     if (this._state === MeasurementState.DANGLING_END) {
       this.startLineLength = this.startPoint.distanceTo(this.endPoint)
@@ -69,20 +69,20 @@ export class PointToPointMeasurement extends Measurement {
             .multiplyScalar(this.startLineLength * 0.5)
         )
 
-      this.startGizmo.updateLine([this.startPoint, lineEndPoint])
-      this.endGizmo.updatePoint(lineEndPoint)
-      this.startGizmo.updateText(
+      this.startGizmo?.updateLine([this.startPoint, lineEndPoint])
+      this.endGizmo?.updatePoint(lineEndPoint)
+      this.startGizmo?.updateText(
         `${(this.value * getConversionFactor('m', this.units)).toFixed(
           this.precision
         )} ${this.units}`,
         textPos
       )
-      this.endGizmo.enable(true, true, true, true)
+      this.endGizmo?.enable(true, true, true, true)
     }
     if (this._state === MeasurementState.COMPLETE) {
-      this.startGizmo.enable(false, true, true, true)
-      this.endGizmo.enable(false, false, true, false)
-      this.startGizmo.updateText(
+      this.startGizmo?.enable(false, true, true, true)
+      this.endGizmo?.enable(false, false, true, false)
+      this.startGizmo?.updateText(
         `${(this.value * getConversionFactor('m', this.units)).toFixed(
           this.precision
         )} ${this.units}`
@@ -90,10 +90,10 @@ export class PointToPointMeasurement extends Measurement {
     }
   }
 
-  public raycast(raycaster, intersects) {
-    const results = []
-    this.startGizmo.raycast(raycaster, results)
-    this.endGizmo.raycast(raycaster, results)
+  public raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
+    const results: Array<Intersection> = []
+    this.startGizmo?.raycast(raycaster, results)
+    this.endGizmo?.raycast(raycaster, results)
     if (results.length) {
       intersects.push({
         distance: results[0].distance,
@@ -107,12 +107,12 @@ export class PointToPointMeasurement extends Measurement {
   }
 
   public highlight(value: boolean) {
-    this.startGizmo.highlight = value
-    this.endGizmo.highlight = value
+    if (this.startGizmo) this.startGizmo.highlight = value
+    if (this.endGizmo) this.endGizmo.highlight = value
   }
 
   public updateClippingPlanes(planes: Plane[]) {
-    this.startGizmo.updateClippingPlanes(planes)
-    this.endGizmo.updateClippingPlanes(planes)
+    if (this.startGizmo) this.startGizmo.updateClippingPlanes(planes)
+    if (this.endGizmo) this.endGizmo.updateClippingPlanes(planes)
   }
 }

@@ -63,9 +63,9 @@ const props = defineProps<{
   defaultOpen: boolean
 }>()
 
-const { isOwner, isServerGuest } = useTeamManagePermissionsInternals({
-  props: toRefs(props)
-})
+const projectRef = toRef(props, 'project')
+const { isOwner, isServerGuest } = useTeamManagePermissionsInternals(projectRef)
+
 const updateProject = useUpdateProject()
 
 const loading = ref(false)

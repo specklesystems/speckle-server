@@ -2,7 +2,7 @@
 import { Box3, SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
 import {
   CanonicalView,
-  DebugViewer,
+  Viewer,
   PropertyInfo,
   SelectionEvent,
   SunLightConfiguration,
@@ -14,7 +14,8 @@ import {
   DiffExtension,
   SpeckleLoader,
   ObjLoader,
-  UrlHelper
+  UrlHelper,
+  LoaderEvent
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import { DiffResult } from '@speckle/viewer'
@@ -25,7 +26,7 @@ import { FilteringExtension } from '@speckle/viewer'
 import { MeasurementsExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
-import { Viewer, AssetType, Assets } from '@speckle/viewer'
+import { AssetType, Assets } from '@speckle/viewer'
 import Neutral from '../assets/hdri/Neutral.png'
 import Mild from '../assets/hdri/Mild.png'
 import Mild2 from '../assets/hdri/Mild2.png'
@@ -133,7 +134,7 @@ export default class Sandbox {
 
   public constructor(
     container: HTMLElement,
-    viewer: DebugViewer,
+    viewer: Viewer,
     selectionList: SelectionEvent[]
   ) {
     this.viewer = viewer
@@ -164,20 +165,17 @@ export default class Sandbox {
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })
-    viewer.on(ViewerEvent.UnloadComplete, async (url: string) => {
-      url
+    viewer.on(ViewerEvent.UnloadComplete, async () => {
       this.removeViewControls()
       this.addViewControls()
       this.properties = await this.viewer.getObjectProperties()
     })
-    viewer.on(ViewerEvent.UnloadAllComplete, async (url: string) => {
+    viewer.on(ViewerEvent.UnloadAllComplete, async () => {
       this.removeViewControls()
       this.addViewControls()
       this.properties = await this.viewer.getObjectProperties()
-      // viewer.World.resetWorld()
-      url
     })
-    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent) => {
+    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent) => {
       if (selectionEvent && selectionEvent.hits) {
         const firstHitNode = selectionEvent.hits[0].node
         if (firstHitNode) {
@@ -218,13 +216,14 @@ export default class Sandbox {
     })
     const position = { value: { x: 0, y: 0, z: 0 } }
     folder.addInput(position, 'value', { label: 'Position' }).on('change', () => {
-      const rvs = this.viewer
-        .getWorldTree()
-        .getRenderTree(url)
-        .getRenderViewsForNodeId(url)
-      for (let k = 0; k < rvs.length; k++) {
-        const object = this.viewer.getRenderer().getObject(rvs[k])
-        object.transformTRS(position.value, undefined, undefined, undefined)
+      const tree = this.viewer.getWorldTree()
+      const rvs = tree.getRenderTree(url)?.getRenderViewsForNodeId(url)
+      if (rvs) {
+        for (let k = 0; k < rvs.length; k++) {
+          const object = this.viewer.getRenderer().getObject(rvs[k])
+          if (object)
+            object.transformTRS(position.value, undefined, undefined, undefined)
+        }
       }
       this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
       this.viewer.getRenderer().updateShadowCatcher()
@@ -276,10 +275,7 @@ export default class Sandbox {
       title: `Object: ${node.model.id}`
     })
 
-    const rvs = this.viewer
-      .getWorldTree()
-      .getRenderTree()
-      .getRenderViewsForNode(node, node)
+    const rvs = this.viewer.getWorldTree().getRenderTree().getRenderViewsForNode(node)
     const objects: BatchObject[] = []
     for (let k = 0; k < rvs.length; k++) {
       const batchObject = this.viewer.getRenderer().getObject(rvs[k])
@@ -344,7 +340,7 @@ export default class Sandbox {
       .on('change', () => {
         const unionBox: Box3 = new Box3()
         objects.forEach((obj: BatchObject) => {
-          unionBox.union(obj.renderView.aabb)
+          unionBox.union(obj.renderView.aabb || new Box3())
         })
         const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
@@ -577,7 +573,7 @@ export default class Sandbox {
       .on('change', () => {
         const batches = this.viewer
           .getRenderer()
-          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+          .batcher.getBatches(undefined, GeometryType.MESH)
         batches.forEach((batch: MeshBatch) => {
           const materials = batch.materials as SpeckleStandardMaterial[]
           materials.forEach((material: SpeckleStandardMaterial) => {
@@ -595,7 +591,7 @@ export default class Sandbox {
       .on('change', () => {
         const batches = this.viewer
           .getRenderer()
-          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+          .batcher.getBatches(undefined, GeometryType.MESH)
         batches.forEach((batch: MeshBatch) => {
           const materials = batch.materials as SpeckleStandardMaterial[]
           materials.forEach((material: SpeckleStandardMaterial) => {
@@ -617,7 +613,7 @@ export default class Sandbox {
       .on('change', () => {
         const batches = this.viewer
           .getRenderer()
-          .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+          .batcher.getBatches(undefined, GeometryType.MESH)
         batches.forEach((batch: MeshBatch) => {
           const materials = batch.materials as SpeckleStandardMaterial[]
           materials.forEach((material: SpeckleStandardMaterial) => {
@@ -947,6 +943,13 @@ export default class Sandbox {
         this.viewer.setLightConfiguration(this.lightParams)
       })
 
+    const updateShadowcatcher = () => {
+      const shadowCatcher = this.viewer.getRenderer().shadowcatcher
+      if (shadowCatcher) {
+        shadowCatcher.configuration = this.shadowCatcherParams
+        this.viewer.getRenderer().updateShadowCatcher()
+      }
+    }
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'textureSize', {
         label: 'Texture Size',
@@ -954,10 +957,8 @@ export default class Sandbox {
         max: 1024,
         step: 1
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'weights', {
@@ -967,10 +968,8 @@ export default class Sandbox {
         z: { min: -100, max: 100 },
         w: { min: -100, max: 100 }
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'blurRadius', {
@@ -979,10 +978,8 @@ export default class Sandbox {
         max: 128,
         step: 1
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'stdDeviation', {
@@ -991,10 +988,8 @@ export default class Sandbox {
         max: 128,
         step: 1
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'sigmoidRange', {
@@ -1003,10 +998,8 @@ export default class Sandbox {
         max: 10,
         step: 0.1
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'sigmoidStrength', {
@@ -1015,10 +1008,8 @@ export default class Sandbox {
         max: 10,
         step: 0.1
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
   }
 
@@ -1301,9 +1292,19 @@ export default class Sandbox {
         url,
         authToken,
         true,
-        undefined,
-        1
+        undefined
       )
+      /** Too spammy */
+      // loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
+      //   console.warn(arg)
+      // })
+      loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
+        console.warn(`Resource ${resource} loading was canceled`)
+      })
+      loader.on(LoaderEvent.LoadWarning, (arg: { message: string }) => {
+        console.error(`Loader warning: ${arg.message}`)
+      })
+
       await this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)

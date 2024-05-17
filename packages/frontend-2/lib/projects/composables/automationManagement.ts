@@ -1,13 +1,28 @@
-import { useMutation } from '@vue/apollo-composable'
-import type {
-  CreateAutomationMutationVariables,
-  CreateAutomationRevisionMutationVariables,
-  UpdateAutomationMutation,
-  UpdateAutomationMutationVariables
+import type { ApolloCache } from '@apollo/client/core'
+import { isNullOrUndefined } from '@speckle/shared'
+import { useApolloClient, useMutation, useSubscription } from '@vue/apollo-composable'
+import type { Get } from 'type-fest'
+import { useLock } from '~/lib/common/composables/singleton'
+import {
+  type ProjectAutomationsArgs,
+  type CreateAutomationMutationVariables,
+  type CreateAutomationRevisionMutationVariables,
+  type OnProjectAutomationsUpdatedSubscription,
+  type OnProjectTriggeredAutomationsStatusUpdatedSubscription,
+  type Project,
+  type ProjectAutomationArgs,
+  type UpdateAutomationMutation,
+  type UpdateAutomationMutationVariables,
+  ProjectAutomationsUpdatedMessageType,
+  ProjectTriggeredAutomationsStatusUpdatedMessageType,
+  type AutomationRunsArgs,
+  type Automation
 } from '~/lib/common/generated/gql/graphql'
 import {
   convertThrowIntoFetchResult,
-  getFirstErrorMessage
+  getCacheId,
+  getFirstErrorMessage,
+  modifyObjectFields
 } from '~/lib/common/helpers/graphql'
 import {
   createAutomationMutation,
@@ -15,6 +30,10 @@ import {
   triggerAutomationMutation,
   updateAutomationMutation
 } from '~/lib/projects/graphql/mutations'
+import {
+  onProjectAutomationsUpdatedSubscription,
+  onProjectTriggeredAutomationsStatusUpdatedSubscription
+} from '~/lib/projects/graphql/subscriptions'
 
 // TODO: Cache updates
 
@@ -55,9 +74,10 @@ export function useUpdateAutomation() {
     options?: Partial<{
       optimisticResponse: UpdateAutomationMutation
       messages?: Partial<{ success: string; failure: string }>
+      hideSuccessToast: boolean
     }>
   ) => {
-    const { messages } = options || {}
+    const { messages, hideSuccessToast } = options || {}
     if (!activeUser.value) return
 
     const result = await updateAutomation(update, {
@@ -65,10 +85,12 @@ export function useUpdateAutomation() {
     }).catch(convertThrowIntoFetchResult)
 
     if (result?.data?.projectMutations.automationMutations.update?.id) {
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: messages?.success || 'Automation updated'
-      })
+      if (!hideSuccessToast) {
+        triggerNotification({
+          type: ToastNotificationType.Success,
+          title: messages?.success || 'Automation updated'
+        })
+      }
     } else {
       const errMsg = getFirstErrorMessage(result?.errors)
       triggerNotification({
@@ -146,4 +168,186 @@ export const useTriggerAutomation = () => {
 
     return !!res?.data?.projectMutations?.automationMutations?.trigger
   }
+}
+
+export const useProjectTriggeredAutomationsStatusUpdateTracking = (params: {
+  projectId: MaybeRef<string>
+  handler?: (
+    data: NonNullable<
+      Get<
+        OnProjectTriggeredAutomationsStatusUpdatedSubscription,
+        'projectTriggeredAutomationsStatusUpdated'
+      >
+    >,
+    cache: ApolloCache<unknown>
+  ) => void
+}) => {
+  const { projectId, handler } = params
+
+  const apollo = useApolloClient().client
+  const { hasLock } = useLock(
+    computed(
+      () => `useProjectTriggeredAutomationsStatusUpdateTracking-${unref(projectId)}`
+    )
+  )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
+
+  const { onResult } = useSubscription(
+    onProjectTriggeredAutomationsStatusUpdatedSubscription,
+    () => ({
+      id: unref(projectId)
+    }),
+    { enabled: isEnabled }
+  )
+
+  onResult((res) => {
+    const event = res.data?.projectTriggeredAutomationsStatusUpdated
+    if (!event || !hasLock.value) return
+
+    // Update model to reflect the new automations status
+    apollo.cache.modify({
+      id: getCacheId('Model', event.model.id),
+      fields: {
+        automationsStatus: () => event.version.automationsStatus || null
+      }
+    })
+
+    // Add run to automation, if new run
+    const run = event?.run
+    if (
+      run &&
+      event.type === ProjectTriggeredAutomationsStatusUpdatedMessageType.RunCreated
+    ) {
+      const automationid = run.automationId
+      const automationCacheId = getCacheId('Automation', automationid)
+
+      modifyObjectFields<AutomationRunsArgs, Automation['runs']>(
+        apollo.cache,
+        automationCacheId,
+        (_fieldName, vars, data, { ref }) => {
+          if (vars['limit'] === 0) return
+
+          const limit = vars['limit']
+          let newItems = data['items']
+          if (newItems) {
+            newItems = [ref('AutomateRun', run.id), ...newItems]
+            if (limit && newItems.length > limit) {
+              newItems = newItems.slice(0, limit)
+            }
+          }
+
+          let totalCount = data['totalCount']
+          if (!isNullOrUndefined(totalCount)) {
+            totalCount++
+          }
+
+          return {
+            ...data,
+            items: newItems,
+            totalCount
+          }
+        },
+        { fieldNameWhitelist: ['runs'] }
+      )
+    }
+  })
+
+  onResult((res) => {
+    const event = res.data?.projectTriggeredAutomationsStatusUpdated
+    if (!event) return
+
+    handler?.(event, apollo.cache)
+  })
+}
+
+export const useProjectAutomationsUpdateTracking = (params: {
+  projectId: MaybeRef<string>
+
+  handler?: (
+    data: NonNullable<
+      Get<OnProjectAutomationsUpdatedSubscription, 'projectAutomationsUpdated'>
+    >,
+    cache: ApolloCache<unknown>
+  ) => void
+}) => {
+  const { projectId, handler } = params
+
+  const apollo = useApolloClient().client
+  const { hasLock } = useLock(
+    computed(() => `useProjectAutomationsUpdateTracking-${unref(projectId)}`)
+  )
+  const isEnabled = computed(() => !!(hasLock.value || handler))
+
+  const { onResult } = useSubscription(
+    onProjectAutomationsUpdatedSubscription,
+    () => ({
+      id: unref(projectId)
+    }),
+    { enabled: isEnabled }
+  )
+
+  onResult((res) => {
+    const event = res.data?.projectAutomationsUpdated
+    if (!event || !hasLock.value) return
+
+    const projectCacheId = getCacheId('Project', unref(projectId))
+
+    // If created, update local cache
+    if (
+      event.type === ProjectAutomationsUpdatedMessageType.Created &&
+      event.automation
+    ) {
+      const newAutomation = event.automation
+
+      // Update Project.automation, if somehow it was queried for already (very unlikely, had to have visited a 404 page)
+      modifyObjectFields<ProjectAutomationArgs, Project['automation']>(
+        apollo.cache,
+        projectCacheId,
+        (fieldName, vars, _data, { ref }) => {
+          if (fieldName !== 'automation') return
+          if (vars.id !== newAutomation.id) return
+
+          return ref('Automation', newAutomation.id)
+        }
+      )
+
+      // Update Project.automations list
+      modifyObjectFields<ProjectAutomationsArgs, Project['automations']>(
+        apollo.cache,
+        projectCacheId,
+        (_fieldName, vars, data, { ref }) => {
+          if (vars['limit'] === 0) return
+          if (vars['filter']?.length) return
+
+          const limit = vars['limit']
+          let newItems = data['items']
+          if (newItems) {
+            newItems = [ref('Automation', newAutomation.id), ...newItems]
+            if (limit && newItems.length > limit) {
+              newItems = newItems.slice(0, limit)
+            }
+          }
+
+          let totalCount = data['totalCount']
+          if (!isNullOrUndefined(totalCount)) {
+            totalCount++
+          }
+
+          return {
+            ...data,
+            items: newItems,
+            totalCount
+          }
+        },
+        { fieldNameWhitelist: ['automations'] }
+      )
+    }
+  })
+
+  onResult((res) => {
+    const event = res.data?.projectAutomationsUpdated
+    if (!event) return
+
+    handler?.(event, apollo.cache)
+  })
 }

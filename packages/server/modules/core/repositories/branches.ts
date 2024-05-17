@@ -13,7 +13,7 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import crs from 'crypto-random-string'
 import { Knex } from 'knex'
-import { clamp, last, trim } from 'lodash'
+import { clamp, isUndefined, last, trim } from 'lodash'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 
 export const generateBranchId = () => crs({ length: 10 })
@@ -139,8 +139,15 @@ export async function getBranchCommitCount(branchId: string) {
   return res?.count || 0
 }
 
-export async function getBranchLatestCommits(branchIds?: string[], streamId?: string) {
+export async function getBranchLatestCommits(
+  branchIds?: string[],
+  streamId?: string,
+  options?: Partial<{
+    limit: number
+  }>
+) {
   if (!branchIds?.length && !streamId) return []
+  const { limit } = options || {}
 
   const q = Branches.knex()
     .select<Array<CommitRecord & { branchId: string }>>([
@@ -161,6 +168,10 @@ export async function getBranchLatestCommits(branchIds?: string[], streamId?: st
 
   if (streamId?.length) {
     q.where(Branches.col.streamId, streamId)
+  }
+
+  if (!isUndefined(limit)) {
+    q.limit(limit)
   }
 
   return await q
@@ -602,5 +613,14 @@ export async function markCommitBranchUpdated(commitId: string) {
     })
     .update(Branches.withoutTablePrefix.col.updatedAt, new Date(), '*')
   const [branch] = (await q) as BranchRecord[]
+  return branch
+}
+
+export async function getLatestStreamBranch(streamId: string) {
+  const q = Branches.knex<BranchRecord[]>()
+    .where(Branches.col.streamId, streamId)
+    .orderBy(Branches.col.updatedAt, 'desc')
+    .limit(1)
+  const [branch] = await q
   return branch
 }

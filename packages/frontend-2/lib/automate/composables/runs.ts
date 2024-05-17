@@ -1,6 +1,13 @@
-import { Automate, type MaybeNullOrUndefined, type Optional } from '@speckle/shared'
-import { useIntervalFn } from '@vueuse/core'
+import {
+  Automate,
+  ensureError,
+  type MaybeNullOrUndefined,
+  type Optional
+} from '@speckle/shared'
 import dayjs from 'dayjs'
+import { orderBy } from 'lodash-es'
+import { useAuthCookie } from '~/lib/auth/composables/auth'
+import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 import {
   useFormatDuration,
   useReactiveNowDate
@@ -8,15 +15,21 @@ import {
 import { graphql } from '~/lib/common/generated/gql'
 import {
   AutomateRunStatus,
-  type AutomationRunDetailsFragment
+  type AutomationRunDetailsFragment,
+  type AutomationsStatusOrderedRuns_AutomationRunFragment
 } from '~/lib/common/generated/gql/graphql'
+import type { SetFullyRequired } from '~/lib/common/helpers/type'
+import { abortControllerManager, isAbortError } from '~/lib/common/utils/requests'
 import { useViewerRouteBuilder } from '~/lib/projects/composables/models'
 
 graphql(`
   fragment AutomationRunDetails on AutomateRun {
     id
     status
-    reason
+    functionRuns {
+      ...FunctionRunStatusForSummary
+      statusMessage
+    }
     trigger {
       ... on VersionCreatedTrigger {
         version {
@@ -31,6 +44,36 @@ graphql(`
     updatedAt
   }
 `)
+
+export const useAutomationRunSummary = (params: {
+  run: MaybeRef<MaybeNullOrUndefined<AutomationRunDetailsFragment>>
+}) => {
+  const { run } = params
+
+  const fnRuns = computed(() => unref(run)?.functionRuns || [])
+
+  const { summary: coreSummary } = useFunctionRunsStatusSummary({
+    runs: fnRuns
+  })
+
+  const summary = computed(() => {
+    const errorMessages =
+      unref(run)
+        ?.functionRuns.filter(
+          (r): r is SetFullyRequired<typeof r, 'statusMessage'> =>
+            !!(r.status === AutomateRunStatus.Failed && r.statusMessage?.length)
+        )
+        .map((r) => r.statusMessage) || []
+    const errorMessage = errorMessages.length ? errorMessages.join(', ') : undefined
+
+    return {
+      ...coreSummary.value,
+      errorMessage
+    }
+  })
+
+  return { summary }
+}
 
 export const useAutomationRunDetailsFns = () => {
   const formatDuration = useFormatDuration()
@@ -105,52 +148,115 @@ export const useAutomationRunLogs = (params: {
   automationId: MaybeRef<Optional<string>>
   runId: MaybeRef<Optional<string>>
 }) => {
-  // TODO: Faked for now, should be a REST endpoint later on
   const { automationId, runId } = params
+  const apiOrigin = useApiOrigin()
 
-  const data = ref('')
-  const isDataLoaded = ref(false)
+  const authToken = useAuthCookie()
+  const { triggerNotification } = useGlobalToast()
   const loading = ref(false)
-  let counter = 0
+  const results = ref('')
+  const isStreamFinished = ref(false)
 
-  const interval = useIntervalFn(
-    () => {
-      data.value =
-        data.value +
-        `#${counter} Log line - ${unref(automationId)} - ${unref(
-          runId
-        )} ${Math.random()}\n`
-      counter++
-
-      if (counter >= 10) {
-        interval.pause()
-        isDataLoaded.value = true
-        loading.value = false
-      }
-    },
-    1000,
-    { immediate: false }
+  const url = computed(
+    () => `/api/automate/automations/${unref(automationId)}/runs/${unref(runId)}/logs`
   )
+  const key = computed(() => {
+    if (!unref(automationId) || !unref(runId)) return null
+    return `automation-run-logs-${unref(automationId)}-${unref(runId)}`
+  })
+
+  const aborts = abortControllerManager()
+  const load = async () => {
+    results.value = ''
+    isStreamFinished.value = false
+
+    if (!authToken.value) {
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Log retrieval failed',
+        description: 'You need to be logged in to load the logs.'
+      })
+      isStreamFinished.value = true
+      return
+    }
+
+    const res = await fetch(new URL(url.value, apiOrigin), {
+      signal: aborts.pop().signal,
+      headers: {
+        Authorization: `Bearer ${authToken.value}`
+      }
+    }).catch((e) => {
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Log retrieval failed',
+        description: ensureError(e).message
+      })
+
+      throw e
+    })
+
+    if (res.status !== 200) {
+      // Something bad happened
+      const json = (await res.json()) as { error?: { message: string } }
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "Couldn't load logs",
+        description:
+          json.error?.message || 'Something went wrong while loading the logs.'
+      })
+      isStreamFinished.value = true
+
+      return false
+    }
+
+    const stream = res.body
+
+    // Read stream into results ref
+    if (stream) {
+      const reader = stream.getReader()
+      const decoder = new TextDecoder()
+      const pump = async () => {
+        return reader.read().then(({ done, value }): Promise<void> => {
+          if (done) {
+            isStreamFinished.value = true
+            return Promise.resolve()
+          }
+          results.value += decoder.decode(value)
+          return pump()
+        })
+      }
+
+      // Intentionally not awaiting this so that we can return the ref
+      void pump().catch((e) => {
+        if (!isAbortError(e)) {
+          throw e
+        }
+      })
+    }
+
+    return true
+  }
+
+  const loadAndMarkLoading = async () => {
+    loading.value = true
+    await load().finally(() => {
+      loading.value = false
+    })
+  }
 
   watch(
-    () => <const>[unref(automationId), unref(runId)],
-    ([newAId, newRId]) => {
-      data.value = ''
-      loading.value = false
-      isDataLoaded.value = false
-      counter = 0
-
-      if (newAId?.length && newRId?.length) {
-        loading.value = true
-        interval.resume()
+    key,
+    (newKey, oldKey) => {
+      if (newKey && newKey !== oldKey) {
+        void loadAndMarkLoading()
       }
     },
     { immediate: true }
   )
 
   return {
-    data: computed(() => data.value),
-    isDataLoaded: computed(() => isDataLoaded.value),
+    data: computed(() => results.value),
+    isDataLoaded: computed(() => isStreamFinished.value),
     loading: computed(() => loading.value)
   }
 }
@@ -171,4 +277,44 @@ export const useAutomationFunctionRunResults = (params: {
   )
 
   return ret
+}
+
+graphql(`
+  fragment AutomationsStatusOrderedRuns_AutomationRun on AutomateRun {
+    id
+    automation {
+      id
+      name
+    }
+    functionRuns {
+      id
+      updatedAt
+    }
+  }
+`)
+
+export const useAutomationsStatusOrderedRuns = <
+  R extends AutomationsStatusOrderedRuns_AutomationRunFragment = AutomationsStatusOrderedRuns_AutomationRunFragment
+>(params: {
+  automationRuns: MaybeRef<R[]>
+}) => {
+  const { automationRuns } = params
+
+  const runs = computed(() => {
+    const ret: Array<
+      R['functionRuns'][0] & {
+        automationName: string
+      }
+    > = []
+
+    for (const automationRun of unref(automationRuns)) {
+      for (const run of automationRun.functionRuns) {
+        ret.push({ ...run, automationName: automationRun.automation.name })
+      }
+    }
+
+    return orderBy(ret, (r) => new Date(r.updatedAt).getTime(), 'desc')
+  })
+
+  return { runs }
 }

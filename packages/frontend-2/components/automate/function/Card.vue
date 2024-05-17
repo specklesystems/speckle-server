@@ -20,7 +20,12 @@
               {{ fn.name }}
             </RouterLink>
           </div>
-          <div class="label-light">by {{ fn.creator?.name || 'Deleted User' }}</div>
+          <div class="label-light flex items-center space-x-1">
+            <span>by</span>
+            <CommonTextLink external :to="fn.repo.url" size="sm">
+              {{ fn.repo.owner }}
+            </CommonTextLink>
+          </div>
         </div>
       </div>
       <div class="label-light text-foreground-2 line-clamp-3 h-16">
@@ -52,10 +57,14 @@
       <div class="absolute top-0 right-0">
         <div
           v-if="hasLabel"
-          class="rounded-bl-lg rounded-tr-[7px] text-xs px-2 py-1 text-foreground"
-          :class="{ 'bg-foundation-focus': fn.isFeatured }"
+          class="rounded-bl-lg rounded-tr-[7px] text-xs px-2 py-1"
+          :class="{
+            'bg-foundation-focus text-foreground': fn.isFeatured,
+            'bg-warning text-foreground-on-primary': isOutdated
+          }"
         >
-          <template v-if="fn.isFeatured">Featured</template>
+          <template v-if="isOutdated">Outdated</template>
+          <template v-else-if="fn.isFeatured">Featured</template>
         </div>
       </div>
     </div>
@@ -75,8 +84,10 @@ graphql(`
     isFeatured
     description
     logo
-    creator {
+    repo {
       id
+      url
+      owner
       name
     }
   }
@@ -93,10 +104,11 @@ const props = defineProps<{
   noButtons?: boolean
   externalMoreInfo?: boolean
   selected?: boolean
+  isOutdated?: boolean
 }>()
 
 const NuxtLink = resolveComponent('NuxtLink')
-const hasLabel = computed(() => props.fn.isFeatured)
+const hasLabel = computed(() => props.fn.isFeatured || props.isOutdated)
 const { html: plaintextDescription } = useMarkdown(
   computed(() => props.fn.description || ''),
   { plaintext: true }

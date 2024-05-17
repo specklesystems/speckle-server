@@ -223,6 +223,7 @@ export function useCheckViewerCommentingAccess() {
     }
   } = useInjectedViewerState()
   const { activeUser } = useActiveUser()
+
   return computed(() => {
     if (!activeUser.value) return false
 

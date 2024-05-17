@@ -49,6 +49,10 @@ export default {
     blur: {
       type: 'function',
       action: 'blur'
+    },
+    size: {
+      control: { type: 'select' },
+      options: ['sm', 'lg', 'base', 'xl']
     }
   }
 } as Meta

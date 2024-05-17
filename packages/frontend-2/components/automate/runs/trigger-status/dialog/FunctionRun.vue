@@ -111,6 +111,8 @@ graphql(`
       logo
       name
     }
+    createdAt
+    updatedAt
   }
 `)
 

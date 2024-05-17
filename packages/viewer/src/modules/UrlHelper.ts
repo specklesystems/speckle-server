@@ -207,7 +207,9 @@ async function runModelLastVersionQuery(
     return `${ref.origin}/streams/${ref.projectId}/objects/${data.project.model.versions.items[0].referencedObject}`
   } catch (e) {
     Logger.error(
-      `Could not get object URLs for project ${ref.projectId} and model ${resource.modelId}. Error: ${e.message}`
+      `Could not get object URLs for project ${ref.projectId} and model ${
+        resource.modelId
+      }. Error: ${e instanceof Error ? e.message : e}`
     )
   }
   return ''
@@ -245,7 +247,9 @@ async function runModelVersionQuery(
     return `${ref.origin}/streams/${ref.projectId}/objects/${data.project.model.version.referencedObject}`
   } catch (e) {
     Logger.error(
-      `Could not get object URLs for project ${ref.projectId} and model ${resource.modelId}. Error: ${e.message}`
+      `Could not get object URLs for project ${ref.projectId} and model ${
+        resource.modelId
+      }. Error: ${e instanceof Error ? e.message : e}`
     )
   }
   return ''
@@ -292,7 +296,9 @@ async function runAllModelsQuery(
     return urls
   } catch (e) {
     Logger.error(
-      `Could not get object URLs for project ${ref.projectId}. Error: ${e.message}`
+      `Could not get object URLs for project ${ref.projectId}. Error: ${
+        e instanceof Error ? e.message : e
+      }`
     )
   }
   return ['']

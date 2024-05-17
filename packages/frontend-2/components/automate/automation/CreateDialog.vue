@@ -25,6 +25,7 @@
         v-else-if="
           enumStep === AutomationCreateSteps.FunctionParameters && selectedFunction
         "
+        ref="parametersStep"
         v-model:parameters="functionParameters"
         v-model:has-errors="hasParameterErrors"
         :fn="selectedFunction"
@@ -69,10 +70,15 @@ import {
 import { useForm } from 'vee-validate'
 import {
   useCreateAutomation,
-  useCreateAutomationRevision
+  useCreateAutomationRevision,
+  useUpdateAutomation
 } from '~/lib/projects/composables/automationManagement'
 import { formatJsonFormSchemaInputs } from '~/lib/automate/helpers/jsonSchema'
 import { projectAutomationRoute } from '~/lib/common/helpers/route'
+import {
+  useAutomationInputEncryptor,
+  type AutomationInputEncryptor
+} from '~/lib/automate/composables/automations'
 
 enum AutomationCreateSteps {
   SelectFunction,
@@ -124,7 +130,9 @@ const stepsWidgetData = computed(() => [
   }
 ])
 
+const inputEncryption = useAutomationInputEncryptor({ ensureWhen: open })
 const logger = useLogger()
+const updateAutomation = useUpdateAutomation()
 const createAutomation = useCreateAutomation()
 const createRevision = useCreateAutomationRevision()
 const { enumStep, step } = useEnumSteps({ order: stepsOrder })
@@ -133,6 +141,8 @@ const {
   model: stepsWidgetModel,
   shouldShowWidget: shouldShowStepsWidget
 } = useEnumStepsWidgetSetup({ enumStep, widgetStepsMap: stepsWidgetData })
+
+const parametersStep = ref<{ submit: () => Promise<void> }>()
 
 const creationLoading = ref(false)
 const automationId = ref<string>()
@@ -148,6 +158,7 @@ const buttons = computed((): LayoutDialogButton[] => {
     case AutomationCreateSteps.SelectFunction:
       return [
         {
+          id: 'selectFnNext',
           text: 'Next',
           props: {
             iconRight: ChevronRightIcon,
@@ -161,6 +172,7 @@ const buttons = computed((): LayoutDialogButton[] => {
     case AutomationCreateSteps.FunctionParameters:
       return [
         {
+          id: 'fnParamsPrev',
           text: 'Previous',
           props: {
             color: 'secondary',
@@ -170,17 +182,19 @@ const buttons = computed((): LayoutDialogButton[] => {
           onClick: () => step.value--
         },
         {
+          id: 'fnParamsNext',
           text: 'Next',
           props: {
             iconRight: ChevronRightIcon,
             disabled: hasParameterErrors.value
           },
-          onClick: () => step.value++
+          submit: true
         }
       ]
     case AutomationCreateSteps.AutomationDetails:
       return [
         {
+          id: 'detailsPrev',
           text: 'Previous',
           props: {
             color: 'secondary',
@@ -190,6 +204,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           onClick: () => step.value--
         },
         {
+          id: 'detailsCreate',
           text: 'Create',
           submit: true,
           disabled: creationLoading.value
@@ -198,6 +213,7 @@ const buttons = computed((): LayoutDialogButton[] => {
     case AutomationCreateSteps.Done:
       return [
         {
+          id: 'doneClose',
           text: 'Close',
           props: {
             color: 'secondary',
@@ -206,6 +222,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           onClick: () => (open.value = false)
         },
         {
+          id: 'doneGoToAutomation',
           text: 'Go to Automation',
           props: {
             iconRight: ArrowRightIcon,
@@ -273,6 +290,8 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
   }
 
   creationLoading.value = true
+  let aId: Optional<string> = undefined
+  let automationEncrypt: Optional<AutomationInputEncryptor> = undefined
   try {
     const createRes = await createAutomation({
       projectId: project.id,
@@ -281,19 +300,23 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
         enabled: false
       }
     })
-    const aId = (automationId.value = createRes?.id)
+    aId = automationId.value = createRes?.id
     if (!aId) {
       logger.error('Failed to create automation', { createRes })
       return
     }
 
-    const parametersString = parameters
-      ? JSON.stringify(
-          formatJsonFormSchemaInputs(parameters, fnRelease.inputSchema, {
-            clone: true
-          })
-        )
-      : null
+    automationEncrypt = await inputEncryption.forAutomation({
+      automationId: aId,
+      projectId: project.id
+    })
+
+    const cleanParams =
+      formatJsonFormSchemaInputs(parameters, fnRelease.inputSchema) || null
+    const encryptedParams = automationEncrypt.encryptInputs({
+      inputs: cleanParams
+    })
+
     const revisionRes = await createRevision(
       {
         projectId: project.id,
@@ -301,9 +324,9 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
           automationId: aId,
           functions: [
             {
+              functionReleaseId: fnRelease.id,
               functionId: fn.id,
-              releaseId: fnRelease.id,
-              parameters: parametersString
+              parameters: encryptedParams
             }
           ],
           triggerDefinitions: <Automate.AutomateTypes.TriggerDefinitionsSchema>{
@@ -319,17 +342,37 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       },
       { hideSuccessToast: true }
     )
-    if (revisionRes?.id) {
-      step.value++
+
+    if (!revisionRes?.id) {
+      logger.error('Failed to create revision', { revisionRes })
+      return
     }
+
+    // Enable
+    await updateAutomation({
+      projectId: project.id,
+      input: {
+        id: aId,
+        enabled: true
+      }
+    })
+
+    step.value++
   } finally {
     creationLoading.value = false
+    automationEncrypt?.dispose()
   }
 })
 
-const onDialogSubmit = (e: SubmitEvent) => {
-  if (enumStep.value !== AutomationCreateSteps.AutomationDetails) return
-  onDetailsSubmit(e)
+const onDialogSubmit = async (e: SubmitEvent) => {
+  if (enumStep.value === AutomationCreateSteps.AutomationDetails) {
+    await onDetailsSubmit(e)
+  } else if (enumStep.value === AutomationCreateSteps.FunctionParameters) {
+    await parametersStep.value?.submit()
+    if (!hasParameterErrors.value) {
+      step.value++
+    }
+  }
 }
 
 watch(

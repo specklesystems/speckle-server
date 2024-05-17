@@ -8,6 +8,15 @@ export const projectAccessCheckQuery = graphql(`
   }
 `)
 
+export const projectRoleCheckQuery = graphql(`
+  query ProjectRoleCheck($id: String!) {
+    project(id: $id) {
+      id
+      role
+    }
+  }
+`)
+
 export const projectsDashboardQuery = graphql(`
   query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {
     activeUser {
@@ -214,6 +223,7 @@ export const projectAutomationsTabQuery = graphql(`
       automations(filter: $search, cursor: $cursor, limit: 5) {
         totalCount
         items {
+          id
           ...ProjectPageAutomationsRow_Automation
         }
       }
@@ -237,11 +247,11 @@ export const projectAutomationPageQuery = graphql(`
 `)
 
 export const projectAutomationAccessCheckQuery = graphql(`
-  query ProjectAutomationAccessCheck($projectId: String!, $automationId: String!) {
+  query ProjectAutomationAccessCheck($projectId: String!) {
     project(id: $projectId) {
       id
-      automation(id: $automationId) {
-        id
+      automations(limit: 0) {
+        totalCount
       }
     }
   }

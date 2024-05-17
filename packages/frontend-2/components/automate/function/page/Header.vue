@@ -48,8 +48,11 @@ graphql(`
     id
     name
     logo
-    creator {
+    repo {
       id
+      url
+      owner
+      name
     }
   }
 `)

@@ -1,7 +1,13 @@
-import { Matrix4, NoBlending, PMREMGenerator, ShaderMaterial } from 'three'
+import {
+  Matrix4,
+  NoBlending,
+  PMREMGenerator,
+  ShaderMaterial,
+  WebGLRenderer
+} from 'three'
 
 export class RotatablePMREMGenerator extends PMREMGenerator {
-  constructor(renderer) {
+  constructor(renderer: WebGLRenderer) {
     super(renderer)
   }
 

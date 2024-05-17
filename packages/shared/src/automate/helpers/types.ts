@@ -1,4 +1,4 @@
-import { get, intersection, isArray, isObjectLike } from 'lodash'
+import { get, has, intersection, isArray, isNumber, isObjectLike } from 'lodash'
 import type { PartialDeep } from 'type-fest'
 import {
   UnformattableResultsSchemaError,
@@ -8,13 +8,16 @@ import type { Nullable } from '../../core'
 
 export const TRIGGER_DEFINITIONS_SCHEMA_VERSION = 1.0
 export const RESULTS_SCHEMA_VERSION = 1.0
+export const REDACTED_VALUE = '******'
+
+export type VersionCreatedTriggerDefinition = {
+  type: 'VERSION_CREATED'
+  modelId: string
+}
 
 export type TriggerDefinitionsSchema = {
   version: number
-  definitions: Array<{
-    type: 'VERSION_CREATED'
-    modelId: string
-  }>
+  definitions: Array<VersionCreatedTriggerDefinition>
 }
 
 export type ObjectResultLevel = 'INFO' | 'WARNING' | 'ERROR'
@@ -42,6 +45,14 @@ export type ResultsSchema = {
 type UnformattedTriggerDefinitionSchema = PartialDeep<TriggerDefinitionsSchema>
 type UnformattedResultsSchema = PartialDeep<ResultsSchema>
 
+export const isVersionCreatedTriggerDefinition = (
+  val: unknown
+): val is VersionCreatedTriggerDefinition => {
+  if (!val) return false
+  if (!isObjectLike(val)) return false
+  return get(val, 'type') === 'VERSION_CREATED' && has(val, 'modelId')
+}
+
 export const isTriggerDefinitionSchema = (
   val: unknown
 ): val is TriggerDefinitionsSchema => {
@@ -64,9 +75,21 @@ export const formatTriggerDefinitionSchema = (
     )
   }
 
+  if (!isTriggerDefinitionSchema(state)) {
+    throw new UnformattableTriggerDefinitionSchemaError(
+      'Invalid trigger definition schema'
+    )
+  }
+
+  const version = isNumber(state.version) ? state.version : throwInvalidError('version')
   return {
-    version: state.version || throwInvalidError('version'),
+    version,
     definitions: (state.definitions || throwInvalidError('definitions')).map((d) => {
+      if (!isObjectLike(d))
+        throw new UnformattableTriggerDefinitionSchemaError(
+          'Invalid non-object trigger definition'
+        )
+
       switch (d.type || '') {
         case 'VERSION_CREATED':
           return {
@@ -103,6 +126,10 @@ export const formatResultsSchema = (state: UnformattedResultsSchema): ResultsSch
     )
   }
 
+  if (!isResultsSchema(state)) {
+    throw new UnformattableResultsSchemaError('Invalid results schema')
+  }
+
   const values = state.values || throwInvalidError('values')
   if (!isObjectLike(values.objectResults)) {
     throw new UnformattableResultsSchemaError(
@@ -110,8 +137,9 @@ export const formatResultsSchema = (state: UnformattedResultsSchema): ResultsSch
     )
   }
 
+  const version = isNumber(state.version) ? state.version : throwInvalidError('version')
   return {
-    version: state.version || throwInvalidError('version'),
+    version,
     values: {
       objectResults: (values.objectResults || []).map((value, i) => {
         if (!isObjectLike(value)) {

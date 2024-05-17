@@ -1,4 +1,8 @@
 import type { MaybeRef } from '@vueuse/core'
+import {
+  useProjectAutomationsUpdateTracking,
+  useProjectTriggeredAutomationsStatusUpdateTracking
+} from '~/lib/projects/composables/automationManagement'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import {
@@ -62,6 +66,6 @@ export function useGeneralProjectPageUpdateTracking(
   useProjectPendingModelUpdateTracking(projectId)
 
   // AUTOMATIONS:
-  // TODO: AutomationsStatus update
-  // useModelVersionCardAutomationsStatusUpdateTracking(projectId)
+  useProjectTriggeredAutomationsStatusUpdateTracking({ projectId })
+  useProjectAutomationsUpdateTracking({ projectId })
 }

@@ -191,14 +191,13 @@ export type AuthStrategy = {
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
   automationCount: Scalars['Int'];
-  creator?: Maybe<LimitedUser>;
   description: Scalars['String'];
   id: Scalars['ID'];
   isFeatured: Scalars['Boolean'];
   logo?: Maybe<Scalars['String']>;
   name: Scalars['String'];
   releases: AutomateFunctionReleaseCollection;
-  repoUrl: Scalars['String'];
+  repo: BasicGitRepositoryMetadata;
   /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
   supportedSourceApps: Array<Scalars['String']>;
   tags: Array<Scalars['String']>;
@@ -223,6 +222,7 @@ export type AutomateFunctionRelease = {
   commitId: Scalars['String'];
   createdAt: Scalars['DateTime'];
   function: AutomateFunction;
+  functionId: Scalars['String'];
   id: Scalars['ID'];
   inputSchema?: Maybe<Scalars['JSONObject']>;
   versionTag: Scalars['String'];
@@ -242,13 +242,17 @@ export type AutomateFunctionReleasesFilter = {
 export type AutomateFunctionRun = {
   __typename?: 'AutomateFunctionRun';
   contextView?: Maybe<Scalars['String']>;
+  createdAt: Scalars['DateTime'];
   elapsed: Scalars['Float'];
   function: AutomateFunction;
+  functionId?: Maybe<Scalars['String']>;
+  functionReleaseId?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: Maybe<Scalars['JSONObject']>;
   status: AutomateRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
+  updatedAt: Scalars['DateTime'];
 };
 
 export type AutomateFunctionRunStatusReportInput = {
@@ -256,7 +260,7 @@ export type AutomateFunctionRunStatusReportInput = {
   functionRunId: Scalars['String'];
   /** AutomateTypes.ResultsSchema type from @speckle/shared */
   results?: InputMaybe<Scalars['JSONObject']>;
-  status: AutomationRunStatus;
+  status: AutomateRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
 };
 
@@ -276,8 +280,8 @@ export enum AutomateFunctionTemplateLanguage {
 
 export type AutomateFunctionsFilter = {
   featuredFunctionsOnly?: InputMaybe<Scalars['Boolean']>;
-  /** By default we skip functions without versions. Set this to true to include them. */
-  functionsWithoutVersions?: InputMaybe<Scalars['Boolean']>;
+  /** By default we skip functions without releases. Set this to true to include them. */
+  functionsWithoutReleases?: InputMaybe<Scalars['Boolean']>;
   search?: InputMaybe<Scalars['String']>;
 };
 
@@ -300,10 +304,10 @@ export type AutomateMutationsUpdateFunctionArgs = {
 export type AutomateRun = {
   __typename?: 'AutomateRun';
   automation: Automation;
+  automationId: Scalars['String'];
   createdAt: Scalars['DateTime'];
   functionRuns: Array<AutomateFunctionRun>;
   id: Scalars['ID'];
-  reason?: Maybe<Scalars['String']>;
   status: AutomateRunStatus;
   trigger: AutomationRunTrigger;
   updatedAt: Scalars['DateTime'];
@@ -317,19 +321,26 @@ export type AutomateRunCollection = {
 };
 
 export enum AutomateRunStatus {
+  Canceled = 'CANCELED',
+  Exception = 'EXCEPTION',
   Failed = 'FAILED',
   Initializing = 'INITIALIZING',
+  Pending = 'PENDING',
   Running = 'RUNNING',
-  Succeeded = 'SUCCEEDED'
+  Succeeded = 'SUCCEEDED',
+  Timeout = 'TIMEOUT'
 }
 
 export enum AutomateRunTriggerType {
+  TestType = 'TEST_TYPE',
   VersionCreated = 'VERSION_CREATED'
 }
 
 export type Automation = {
   __typename?: 'Automation';
   createdAt: Scalars['DateTime'];
+  /** Only accessible to automation owners */
+  creationPublicKeys: Array<Scalars['String']>;
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
@@ -416,14 +427,14 @@ export type AutomationRevision = {
 
 export type AutomationRevisionCreateFunctionInput = {
   functionId: Scalars['String'];
+  functionReleaseId: Scalars['String'];
   /** Should be encrypted from the client side */
   parameters?: InputMaybe<Scalars['String']>;
-  releaseId: Scalars['String'];
 };
 
 export type AutomationRevisionFunction = {
   __typename?: 'AutomationRevisionFunction';
-  /** The secrets in parameters are redacted */
+  /** The secrets in parameters are redacted with six asterisks - ****** */
   parameters?: Maybe<Scalars['JSONObject']>;
   release: AutomateFunctionRelease;
 };
@@ -466,6 +477,14 @@ export type AutomationsStatus = {
   id: Scalars['ID'];
   status: AutomationRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
+};
+
+export type BasicGitRepositoryMetadata = {
+  __typename?: 'BasicGitRepositoryMetadata';
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  owner: Scalars['String'];
+  url: Scalars['String'];
 };
 
 export type BlobMetadata = {
@@ -1765,6 +1784,10 @@ export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
   create: Automation;
   createRevision: AutomationRevision;
+  /**
+   * Trigger an automation with a fake "version created" trigger. The "version created" will
+   * just refer to the last version of the model.
+   */
   trigger: Scalars['Boolean'];
   update: Automation;
 };
@@ -1809,6 +1832,21 @@ export type ProjectAutomationsStatusUpdatedMessage = {
   status: AutomationsStatus;
   version: Version;
 };
+
+export type ProjectAutomationsUpdatedMessage = {
+  __typename?: 'ProjectAutomationsUpdatedMessage';
+  automation?: Maybe<Automation>;
+  automationId: Scalars['String'];
+  /** Only set if type === CREATED_REVISION */
+  revision?: Maybe<AutomationRevision>;
+  type: ProjectAutomationsUpdatedMessageType;
+};
+
+export enum ProjectAutomationsUpdatedMessageType {
+  Created = 'CREATED',
+  CreatedRevision = 'CREATED_REVISION',
+  Updated = 'UPDATED'
+}
 
 export type ProjectCollaborator = {
   __typename?: 'ProjectCollaborator';
@@ -2051,6 +2089,20 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Updated = 'UPDATED'
 }
 
+export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
+  __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
+  model: Model;
+  project: Project;
+  run: AutomateRun;
+  type: ProjectTriggeredAutomationsStatusUpdatedMessageType;
+  version: Version;
+};
+
+export enum ProjectTriggeredAutomationsStatusUpdatedMessageType {
+  RunCreated = 'RUN_CREATED',
+  RunUpdated = 'RUN_UPDATED'
+}
+
 /** Any values left null will be ignored, so only set the properties that you want updated */
 export type ProjectUpdateInput = {
   allowPublicComments?: InputMaybe<Scalars['Boolean']>;
@@ -2139,6 +2191,8 @@ export type Query = {
   /** Get a single automate function by id. Error will be thrown if function is not found or inaccessible. */
   automateFunction: AutomateFunction;
   automateFunctions: AutomateFunctionCollection;
+  /** Part of the automation/function creation handshake mechanism */
+  automateValidateAuthCode: Scalars['Boolean'];
   comment?: Maybe<Comment>;
   /**
    * This query can be used in the following ways:
@@ -2230,6 +2284,11 @@ export type QueryAutomateFunctionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   filter?: InputMaybe<AutomateFunctionsFilter>;
   limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type QueryAutomateValidateAuthCodeArgs = {
+  code: Scalars['String'];
 };
 
 
@@ -2735,6 +2794,8 @@ export type Subscription = {
   /** Subscribe to commit updated event. */
   commitUpdated?: Maybe<Scalars['JSONObject']>;
   projectAutomationsStatusUpdated: ProjectAutomationsStatusUpdatedMessage;
+  /** Subscribe to updates to automations in the project */
+  projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
    * Subscribe to updates to resource comments/threads. Optionally specify resource ID string to only receive
    * updates regarding comments for those resources.
@@ -2748,6 +2809,8 @@ export type Subscription = {
   projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending versions */
   projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
+  /** Subscribe to updates to any triggered automations statuses in the project */
+  projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
   /** Subscribe to when a project's versions get their preview image fully generated. */
@@ -2829,6 +2892,11 @@ export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectAutomationsUpdatedArgs = {
+  projectId: Scalars['String'];
+};
+
+
 export type SubscriptionProjectCommentsUpdatedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
@@ -2852,6 +2920,11 @@ export type SubscriptionProjectPendingModelsUpdatedArgs = {
 
 export type SubscriptionProjectPendingVersionsUpdatedArgs = {
   id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs = {
+  projectId: Scalars['String'];
 };
 
 

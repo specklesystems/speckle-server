@@ -17,20 +17,19 @@
         </div>
       </div>
       <div class="relative flex flex-col space-y-2 p-2">
-        <template v-for="automationRun in automationRuns" :key="automationRun.id">
-          <template v-for="run in automationRun.functionRuns" :key="run.id">
-            <AutomateViewerPanelFunctionRunRow
-              :function-run="run"
-              :automation-name="automationRun.automation.name"
-            />
-          </template>
-        </template>
+        <AutomateViewerPanelFunctionRunRow
+          v-for="run in runs"
+          :key="run.id"
+          :function-run="run"
+          :automation-name="run.automationName"
+        />
       </div>
     </ViewerLayoutPanel>
   </div>
 </template>
 <script setup lang="ts">
 import { type RunsStatusSummary } from '~/lib/automate/composables/runStatus'
+import { useAutomationsStatusOrderedRuns } from '~/lib/automate/composables/runs'
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateViewerPanel_AutomateRunFragment } from '~~/lib/common/generated/gql/graphql'
 
@@ -39,21 +38,22 @@ import type { AutomateViewerPanel_AutomateRunFragment } from '~~/lib/common/gene
 graphql(`
   fragment AutomateViewerPanel_AutomateRun on AutomateRun {
     id
-    automation {
-      id
-      name
-    }
     functionRuns {
       id
       ...AutomateViewerPanelFunctionRunRow_AutomateFunctionRun
     }
+    ...AutomationsStatusOrderedRuns_AutomationRun
   }
 `)
 
 defineEmits(['close'])
 
-defineProps<{
+const props = defineProps<{
   automationRuns: AutomateViewerPanel_AutomateRunFragment[]
   summary: RunsStatusSummary
 }>()
+
+const { runs } = useAutomationsStatusOrderedRuns({
+  automationRuns: computed(() => props.automationRuns)
+})
 </script>

@@ -21,6 +21,7 @@ import CommonVimeoEmbed from '~~/src/components/common/VimeoEmbed.vue'
 import FormCardButton from '~~/src/components/form/CardButton.vue'
 import FormCheckbox from '~~/src/components/form/Checkbox.vue'
 import FormRadio from '~~/src/components/form/Radio.vue'
+import FormRadioGroup from '~~/src/components/form/RadioGroup.vue'
 import FormTextArea from '~~/src/components/form/TextArea.vue'
 import FormTextInput from '~~/src/components/form/TextInput.vue'
 import * as ValidationHelpers from '~~/src/helpers/common/validation'
@@ -57,8 +58,8 @@ import {
 } from '~~/src/composables/common/window'
 import LayoutMenu from '~~/src/components/layout/Menu.vue'
 import type { LayoutMenuItem, LayoutTabItem } from '~~/src/helpers/layout/components'
-import LayoutTabs from '~~/src/components/layout/Tabs.vue'
-import LayoutPageTabs from '~~/src/components/layout/PageTabs.vue'
+import LayoutTabsHoriztonal from '~~/src/components/layout/tabs/Horizontal.vue'
+import LayoutTabsVertical from '~~/src/components/layout/tabs/Vertical.vue'
 import LayoutTable from '~~/src/components/layout/Table.vue'
 import InfiniteLoading from '~~/src/components/InfiniteLoading.vue'
 import type { InfiniteLoaderState } from '~~/src/helpers/global/components'
@@ -114,6 +115,7 @@ export {
   FormCardButton,
   FormCheckbox,
   FormRadio,
+  FormRadioGroup,
   FormTextArea,
   FormTextInput,
   FormSwitch,
@@ -141,8 +143,8 @@ export {
   useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation,
   LayoutMenu,
-  LayoutTabs,
-  LayoutPageTabs,
+  LayoutTabsHoriztonal,
+  LayoutTabsVertical,
   LayoutTable,
   InfiniteLoading,
   LayoutPanel,

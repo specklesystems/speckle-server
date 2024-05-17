@@ -54,7 +54,7 @@ export type StreamWithOptionalRole = StreamRecord & {
   /**
    * Available, if query joined this data StreamAcl
    */
-  role?: string
+  role?: StreamRoles
 }
 
 /**

@@ -20,6 +20,12 @@ export async function up(knex: Knex): Promise<void> {
       .timestamp('createdAt', { precision: 3, useTz: true })
       .defaultTo(knex.fn.now())
       .notNullable()
+    table
+      .timestamp('updatedAt', { precision: 3, useTz: true })
+      .defaultTo(knex.fn.now())
+      .notNullable()
+
+    table.index('projectId')
   })
   await knex.schema.createTable(REVISIONS_TABLE_NAME, (table) => {
     table.text('id').primary()
@@ -35,12 +41,16 @@ export async function up(knex: Knex): Promise<void> {
       .timestamp('createdAt', { precision: 3, useTz: true })
       .defaultTo(knex.fn.now())
       .notNullable()
+
+    table.index('automationId')
   })
   await knex.schema.createTable(REVISION_FUNCTIONS_TABLE_NAME, (table) => {
     table.text('automationRevisionId').references('id').inTable(REVISIONS_TABLE_NAME)
     table.text('functionId').notNullable()
     table.text('functionReleaseId').notNullable()
     table.jsonb('functionInputs').nullable()
+
+    table.primary(['automationRevisionId', 'functionId', 'functionReleaseId'])
   })
 
   await knex.schema.createTable(AUTOMATION_RUNS_TABLE_NAME, (table) => {
@@ -76,6 +86,8 @@ export async function up(knex: Knex): Promise<void> {
     table.jsonb('functionRuns').notNullable() // schema defined in code
     table.jsonb('triggers').notNullable() // { "triggers": [{ "modelId": "asdf", "versionId": "asdf", "triggerType": "versionCreation"}...]}
     // table.jsonb('rawInputPayload').notNullable() // TODO: do we need this for easy reruns?
+
+    table.index(['automationId', 'automationRevisionId'])
   })
 }
 

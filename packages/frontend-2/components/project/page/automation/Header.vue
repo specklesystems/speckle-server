@@ -16,6 +16,7 @@
         />
       </div>
       <FormSwitch
+        :id="switchId"
         v-model="enabled"
         name="enable"
         :label="enabled ? 'Enabled' : 'Disabled'"
@@ -66,6 +67,7 @@ const props = defineProps<{
   automation: ProjectPageAutomationHeader_AutomationFragment
 }>()
 
+const switchId = useId()
 const loading = useMutationLoading()
 const updateAutomation = useUpdateAutomation()
 

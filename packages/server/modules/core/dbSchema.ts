@@ -24,6 +24,19 @@ type BaseInnerSchemaConfig<T extends string, C extends string> = {
   }
 
   /**
+   * Build a "col AS alias" definition that can be used in .select() calls and .where() clauses
+   */
+  colAs<A extends string>(colName: C, alias: A): Knex.Raw
+
+  /**
+   * Use in .select() calls when selecting joined tables to ensure all table's rows get collected into a single
+   * array and held in a key identified by name.
+   *
+   * Make sure the rows of this table are grouped, otherwise this aggregation won't work
+   */
+  groupArray(name: string): Knex.Raw
+
+  /**
    * All of the column names in an array
    */
   cols: string[]
@@ -110,10 +123,17 @@ const createBaseInnerSchemaConfigBuilder =
     const aliasedTableName = params.withCustomTablePrefix
       ? `${tableName} as ${params.withCustomTablePrefix}`
       : tableName
-    const colName = (col: string) => {
-      if (params.withoutTablePrefix) return col
-      const prefix = params.withCustomTablePrefix || tableName
-      return `${prefix}.${col}`
+
+    const prefix = params.withoutTablePrefix
+      ? null
+      : params.withCustomTablePrefix || tableName
+
+    const colName = (col: string, options?: Partial<{ addQuotes: boolean }>) => {
+      const { addQuotes } = options || {}
+
+      return addQuotes
+        ? (prefix?.length ? `"${prefix}".` : '') + `"${col}"`
+        : (prefix?.length ? `${prefix}.` : '') + `${col}`
     }
 
     return {
@@ -127,7 +147,15 @@ const createBaseInnerSchemaConfigBuilder =
         },
         {} as Record<C, string>
       ),
-      cols: columns.map(colName)
+      colAs: (col, alias) =>
+        knex.raw(`${colName(col, { addQuotes: true })} AS "${alias}"`),
+      groupArray: (name) =>
+        knex.raw(
+          `array_agg(row_to_json(${
+            (prefix?.length ? prefix + '.' : '') + '*'
+          })) as "${name}"`
+        ),
+      cols: columns.map((c) => colName(c))
     }
   }
 
@@ -462,7 +490,7 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'convertedCommitId'
 ])
 
-export const Automations = buildTableHelper(
+export const BetaAutomations = buildTableHelper(
   skipAutomateMigrations() ? 'automations' : 'beta_automations',
   [
     'automationId',
@@ -476,7 +504,7 @@ export const Automations = buildTableHelper(
   ]
 )
 
-export const AutomationRuns = buildTableHelper(
+export const BetaAutomationRuns = buildTableHelper(
   skipAutomateMigrations() ? 'automation_runs' : 'beta_automation_runs',
   [
     'automationId',
@@ -488,7 +516,7 @@ export const AutomationRuns = buildTableHelper(
   ]
 )
 
-export const AutomationFunctionRuns = buildTableHelper(
+export const BetaAutomationFunctionRuns = buildTableHelper(
   skipAutomateMigrations()
     ? 'automation_function_runs'
     : 'beta_automation_function_runs',
@@ -505,7 +533,7 @@ export const AutomationFunctionRuns = buildTableHelper(
   ]
 )
 
-export const AutomationFunctionRunsResultVersions = buildTableHelper(
+export const BetaAutomationFunctionRunsResultVersions = buildTableHelper(
   skipAutomateMigrations()
     ? 'automation_function_runs_result_version'
     : 'beta_automation_function_runs_result_versions',
@@ -537,6 +565,71 @@ export const TokenResourceAccess = buildTableHelper('token_resource_access', [
   'tokenId',
   'resourceType',
   'resourceId'
+])
+
+export const AutomationFunctionRuns = buildTableHelper('automation_function_runs', [
+  'id',
+  'runId',
+  'functionReleaseId',
+  'functionId',
+  'elapsed',
+  'status',
+  'contextView',
+  'statusMessage',
+  'results',
+  'createdAt',
+  'updatedAt'
+])
+
+export const AutomationRevisionFunctions = buildTableHelper(
+  'automation_revision_functions',
+  ['automationRevisionId', 'functionReleaseId', 'functionInputs', 'functionId']
+)
+
+export const AutomationRevisions = buildTableHelper('automation_revisions', [
+  'id',
+  'automationId',
+  'active',
+  'createdAt',
+  'userId',
+  'publicKey'
+])
+
+export const AutomationTokens = buildTableHelper('automation_tokens', [
+  'automationId',
+  'automateToken'
+])
+
+export const AutomationRuns = buildTableHelper('automation_runs', [
+  'id',
+  'automationRevisionId',
+  'createdAt',
+  'updatedAt',
+  'status',
+  'executionEngineRunId'
+])
+
+export const AutomationTriggers = buildTableHelper('automation_triggers', [
+  'automationRevisionId',
+  'triggerType',
+  'triggeringId'
+])
+
+export const AutomationRunTriggers = buildTableHelper('automation_run_triggers', [
+  'automationRunId',
+  'triggerType',
+  'triggeringId'
+])
+
+export const Automations = buildTableHelper('automations', [
+  'id',
+  'name',
+  'projectId',
+  'enabled',
+  'createdAt',
+  'updatedAt',
+  'userId',
+  'executionEngineAutomationId'
 ])
 
 export { knex }

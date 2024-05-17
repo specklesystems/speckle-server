@@ -1,7 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  AutomateFunctionTemplateLanguage,
-  AutomateRunTriggerType,
+  AutomateRunStatus,
   LimitedUser,
   Resolvers
 } from '@/modules/core/graph/generated/graphql'
@@ -15,6 +15,12 @@ import {
   AutomationNotFoundError,
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
+import { functionTemplateRepos } from '@/modules/automate/helpers/executionEngine'
+import {
+  AutomationRevisionTriggerDefinitionGraphQLReturn,
+  AutomationRunTriggerGraphQLReturn
+} from '@/modules/automate/helpers/graphTypes'
+import { VersionCreationTriggerType } from '@/modules/automate/helpers/types'
 
 const getRandomModelVersion = async (offset?: number) => {
   const versionQ = Commits.knex()
@@ -23,10 +29,20 @@ const getRandomModelVersion = async (offset?: number) => {
   if (offset) versionQ.offset(offset)
   const version = await versionQ
 
+  if (!version) {
+    throw new Error("Couldn't find even one commit in the DB, please create some")
+  }
+
   const model = await Branches.knex()
     .join(BranchCommits.name, BranchCommits.col.branchId, Branches.col.id)
     .where(BranchCommits.col.commitId, version.id)
     .first()
+
+  if (!model) {
+    throw new Error(
+      `Couldn't find branch for first commit #${version.id}, please create one `
+    )
+  }
 
   return {
     model,
@@ -43,6 +59,8 @@ export async function buildMocksConfig(): Promise<{
   mockEntireSchema: boolean
   resolvers?: Resolvers | ((store: IMockStore) => Resolvers)
 }> {
+  return { mocks: false, mockEntireSchema: false }
+
   // TODO: Disable before merging!
   if (isTestEnv()) return { mocks: false, mockEntireSchema: false }
 
@@ -54,15 +72,30 @@ export async function buildMocksConfig(): Promise<{
 
   return {
     resolvers: (store) => ({
+      AutomationRevisionTriggerDefinition: {
+        __resolveType: () => 'VersionCreatedTriggerDefinition'
+      },
+      AutomationRunTrigger: {
+        __resolveType: () => 'VersionCreatedTrigger'
+      },
+      VersionCreatedTriggerDefinition: {
+        model: store.get('Model') as any
+      },
+      VersionCreatedTrigger: {
+        model: store.get('Model') as any,
+        version: store.get('Version') as any
+      },
       Query: {
-        automateFunctions: () => {
+        automateFunctions: (_parent, args) => {
           const forceZero = false
           const count = forceZero ? 0 : faker.datatype.number({ min: 0, max: 20 })
+
+          const isFeatured = args.filter?.featuredFunctionsOnly
 
           return {
             cursor: null,
             totalCount: count,
-            items: times(count, () => store.get('AutomateFunction'))
+            items: times(count, () => store.get('AutomateFunction', { isFeatured }))
           } as any
         },
         automateFunction: (_parent, args) => {
@@ -117,6 +150,12 @@ export async function buildMocksConfig(): Promise<{
         }
       },
       Automation: {
+        creationPublicKeys: () => {
+          // Random sized array of string keys
+          return [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(() =>
+            faker.datatype.uuid()
+          )
+        },
         runs: () => {
           const forceZero = false
           const count = forceZero ? 0 : faker.datatype.number({ min: 0, max: 20 })
@@ -126,34 +165,59 @@ export async function buildMocksConfig(): Promise<{
             totalCount: count,
             items: times(count, () => store.get('AutomateRun'))
           } as any
-        }
+        },
+        currentRevision: () => store.get('AutomationRevision') as any
       },
       AutomationRevision: {
-        triggerDefinitions: async () => {
+        triggerDefinitions: async (parent) => {
           const rand = faker.datatype.number({ min: 0, max: 2 })
           const res = (
             await Promise.all([getRandomModelVersion(), getRandomModelVersion(1)])
           ).slice(0, rand)
 
-          return res.map((i) => ({
-            type: AutomateRunTriggerType.VersionCreated,
-            model: i.model,
-            version: i.version
-          }))
-        }
+          return res.map(
+            (i): AutomationRevisionTriggerDefinitionGraphQLReturn => ({
+              triggerType: VersionCreationTriggerType,
+              triggeringId: i.model.id,
+              automationRevisionId: parent.id
+            })
+          )
+        },
+        functions: () => [store.get('AutomateFunction') as any]
+      },
+      AutomationRevisionFunction: {
+        parameters: () => ({}),
+        release: () => store.get('AutomateFunctionRelease') as any
       },
       AutomateRun: {
-        trigger: async () => {
-          const { model, version } = await getRandomModelVersion()
+        trigger: async (parent) => {
+          const { version } = await getRandomModelVersion()
 
-          return {
-            type: AutomateRunTriggerType.VersionCreated,
-            version,
-            model
+          return <AutomationRunTriggerGraphQLReturn>{
+            triggerType: VersionCreationTriggerType,
+            triggeringId: version.id,
+            automationRunId: parent.id
           }
-        }
+        },
+        automation: () => store.get('Automation') as any,
+        status: () => faker.helpers.arrayElement(Object.values(AutomateRunStatus))
+      },
+      AutomateFunctionRun: {
+        function: () => store.get('AutomateFunction') as any,
+        status: () => faker.helpers.arrayElement(Object.values(AutomateRunStatus))
       },
       ProjectAutomationMutations: {
+        create: (_parent, args) => {
+          const {
+            input: { name, enabled }
+          } = args
+          const automation = store.get('Automation') as any
+          return {
+            ...automation,
+            name,
+            enabled
+          }
+        },
         update: (_parent, args) => {
           const {
             input: { id, name, enabled }
@@ -166,7 +230,8 @@ export async function buildMocksConfig(): Promise<{
             ...(isNullOrUndefined(enabled) ? {} : { enabled })
           }
         },
-        trigger: () => true
+        trigger: () => true,
+        createRevision: () => store.get('AutomationRevision') as any
       },
       UserAutomateInfo: {
         hasAutomateGithubApp: () => {
@@ -180,13 +245,38 @@ export async function buildMocksConfig(): Promise<{
         }
       },
       AutomateFunction: {
-        creator: async (_parent, args, ctx) => {
-          const rand = faker.datatype.boolean()
-          const activeUser = ctx.userId
-            ? await ctx.loaders.users.getUser.load(ctx.userId)
-            : null
+        // creator: async (_parent, args, ctx) => {
+        //   const rand = faker.datatype.boolean()
+        //   const activeUser = ctx.userId
+        //     ? await ctx.loaders.users.getUser.load(ctx.userId)
+        //     : null
 
-          return rand ? (store.get('LimitedUser') as any) : activeUser
+        //   return rand ? (store.get('LimitedUser') as any) : activeUser
+        // }
+        releases: () => store.get('AutomateFunctionReleaseCollection') as any,
+        automationCount: () => faker.datatype.number({ min: 0, max: 99 })
+      },
+      AutomateFunctionRelease: {
+        function: () => store.get('AutomateFunction') as any
+      },
+      TriggeredAutomationsStatus: {
+        status: () => faker.helpers.arrayElement(Object.values(AutomateRunStatus))
+      },
+      AutomateMutations: {
+        createFunction: () => store.get('AutomateFunction') as any,
+        updateFunction: (_parent, args) => {
+          const {
+            input: { id, name, description, supportedSourceApps, tags }
+          } = args
+          const func = store.get('AutomateFunction', { id }) as any
+          return {
+            ...func,
+            id,
+            ...(name?.length ? { name } : {}),
+            ...(description?.length ? { description } : {}),
+            ...(supportedSourceApps?.length ? { supportedSourceApps } : {}),
+            ...(tags?.length ? { tags } : {})
+          }
         }
       }
     }),
@@ -197,7 +287,7 @@ export async function buildMocksConfig(): Promise<{
         fileSize: () => faker.datatype.number({ min: 1, max: 1000 })
       }),
       TriggeredAutomationsStatus: () => ({
-        automationRuns: () => [...new Array(faker.datatype.number({ min: 0, max: 5 }))]
+        automationRuns: () => [...new Array(faker.datatype.number({ min: 1, max: 5 }))]
       }),
       AutomationRevision: () => ({
         functions: () => [undefined] // array of 1 always,
@@ -324,22 +414,11 @@ export async function buildMocksConfig(): Promise<{
         id: () => faker.random.alphaNumeric(10)
       }),
       ServerAutomateInfo: () => ({
-        availableFunctionTemplates: () => [
-          {
-            id: AutomateFunctionTemplateLanguage.Python,
-            title: 'Python',
-            url: 'https://github.com/specklesystems/speckle_automate_python_example',
-            logo: '/images/functions/python.svg'
-          },
-          {
-            id: AutomateFunctionTemplateLanguage.DotNet,
-            title: '.NET / C#',
-            url: 'https://github.com/specklesystems/SpeckleAutomateDotnetExample',
-            logo: '/images/functions/dotnet.svg'
-          }
-        ]
+        availableFunctionTemplates: () => functionTemplateRepos
       })
     },
     mockEntireSchema: false
   }
 }
+
+export type AppMocksConfig = Awaited<ReturnType<typeof buildMocksConfig>>

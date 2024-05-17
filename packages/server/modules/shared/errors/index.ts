@@ -1,8 +1,12 @@
 import { BaseError, Info } from '@/modules/shared/errors/base'
 
+/**
+ * Use this to throw when the request has auth credentials, but they are not sufficient
+ */
 export class ForbiddenError extends BaseError {
   static code = 'FORBIDDEN'
   static defaultMessage = 'Access to the resource is forbidden'
+  static statusCode = 403
 }
 
 /**
@@ -15,11 +19,12 @@ export class LogicError extends BaseError {
 }
 
 /**
- * Use this to throw when user tries to access data that he shouldn't have access to
+ * Use this to throw when the request lacks valid authentication credentials
  */
 export class UnauthorizedError extends BaseError {
   static code = 'UNAUTHORIZED_ACCESS_ERROR'
   static defaultMessage = 'Attempted unauthorized access to data'
+  static statusCode = 401
 }
 
 export class NotFoundError extends BaseError {

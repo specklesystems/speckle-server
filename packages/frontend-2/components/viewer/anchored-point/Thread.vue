@@ -162,7 +162,7 @@
               </FormButton>
             </div>
             <div
-              v-if="!canReply && !isEmbedEnabled"
+              v-if="!canReply && !isEmbedEnabled && !isLoggedIn"
               class="p-3 flex flex-col items-center justify-center bg-foundation-2"
             >
               <FormButton full-width @click="$emit('login')">Reply</FormButton>
@@ -229,7 +229,7 @@ const { isEmbedEnabled } = useEmbed()
 
 const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()
-const { activeUser } = useActiveUser()
+const { activeUser, isLoggedIn } = useActiveUser()
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const archiveComment = useArchiveComment()

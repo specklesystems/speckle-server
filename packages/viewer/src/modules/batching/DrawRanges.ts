@@ -1,6 +1,6 @@
 import { Material } from 'three'
-import { BatchUpdateRange } from './Batch'
-import { DrawGroup } from './Batch'
+import { type BatchUpdateRange } from './Batch'
+import { type DrawGroup } from './Batch'
 
 export class DrawRanges {
   public integrateRanges(
@@ -12,14 +12,14 @@ export class DrawRanges {
     groups.sort((a, b) => a.start - b.start)
     ranges.sort((a, b) => a.offset - b.offset)
 
-    const edgesForward = {}
-    const edgesBackwards = {}
+    const edgesForward: { [key: number]: number } = {}
+    const edgesBackwards: { [key: number]: number } = {}
     for (let k = 0, l = groups.length - 1; k < groups.length; k++, l--) {
       const groupForward = groups[k]
       const groupBackwards = groups[l]
-      edgesForward[groupForward.start] = groupForward.materialIndex
+      edgesForward[groupForward.start] = groupForward.materialIndex as number
       edgesBackwards[groupBackwards.start + groupBackwards.count] =
-        groupBackwards.materialIndex
+        groupBackwards.materialIndex as number
     }
 
     _flatRanges = groups.map((group: DrawGroup) => {
@@ -43,7 +43,7 @@ export class DrawRanges {
       })
       _flatRanges = [...new Set(_flatRanges)]
 
-      const materialIndex = materials.indexOf(range.material)
+      const materialIndex = materials.indexOf(range.material as Material)
       edgesForward[r0] = materialIndex
       edgesForward[r1] = r1 >= next ? edgesForward[next] : edgesBackwards[next]
     }

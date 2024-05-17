@@ -27,3 +27,18 @@ export const functionAccessCheckQuery = graphql(`
     }
   }
 `)
+
+export const projectAutomationCreationPublicKeysQuery = graphql(`
+  query ProjectAutomationCreationPublicKeys(
+    $projectId: String!
+    $automationId: String!
+  ) {
+    project(id: $projectId) {
+      id
+      automation(id: $automationId) {
+        id
+        creationPublicKeys
+      }
+    }
+  }
+`)

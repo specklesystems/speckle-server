@@ -37,14 +37,18 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import {
   buildGithubRepoHttpCloneUrl,
-  buildGithubRepoSshUrl,
-  parseGithubRepoUrl
+  buildGithubRepoSshUrl
 } from '~/lib/common/helpers/github'
 
 graphql(`
   fragment AutomateFunctionCreateDialogDoneStep_AutomateFunction on AutomateFunction {
     id
-    repoUrl
+    repo {
+      id
+      url
+      owner
+      name
+    }
     ...AutomationsFunctionsCard_AutomateFunction
   }
 `)
@@ -53,21 +57,18 @@ const props = defineProps<{
   createdFunction: AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment
 }>()
 
-const repoDetails = computed(() => parseGithubRepoUrl(props.createdFunction.repoUrl))
-
 const repoCodespaceLink = computed(() => {
-  if (!repoDetails.value) return undefined
-
-  return `https://codespaces.new/${repoDetails.value.owner}/${repoDetails.value.name}`
+  const { owner, name } = props.createdFunction.repo
+  return `https://codespaces.new/${owner}/${name}`
 })
 
-const repoLink = computed(() => props.createdFunction.repoUrl)
+const repoLink = computed(() => props.createdFunction.repo.url)
 
 const cloneInstructions = computed(() => {
-  if (!repoDetails.value) return ''
+  const repo = props.createdFunction.repo
 
-  const htmlUrl = buildGithubRepoHttpCloneUrl(repoDetails.value)
-  const sshUrl = buildGithubRepoSshUrl(repoDetails.value)
+  const htmlUrl = buildGithubRepoHttpCloneUrl(repo)
+  const sshUrl = buildGithubRepoSshUrl(repo)
 
   return `# Clone the repository using SSH (recommended)
 git clone ${sshUrl}

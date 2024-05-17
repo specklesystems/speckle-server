@@ -86,7 +86,7 @@ module.exports = {
 
     user = skipPropertyValidation
       ? user
-      : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company'])
+      : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company', 'verified'])
 
     const newId = crs({ length: 10 })
     user.id = newId

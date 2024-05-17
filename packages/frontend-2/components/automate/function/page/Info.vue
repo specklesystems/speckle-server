@@ -28,7 +28,7 @@
               <img
                 :src="githubDetails.owner.avatar_url"
                 alt="Github account icon"
-                class="ml-1 w-6 h-6"
+                class="ml-1 w-6 h-6 rounded-full"
               />
             </CommonTextLink>
           </div>
@@ -114,7 +114,12 @@ import type { AutomateFunctionPageInfo_AutomateFunctionFragment } from '~/lib/co
 graphql(`
   fragment AutomateFunctionPageInfo_AutomateFunction on AutomateFunction {
     id
-    repoUrl
+    repo {
+      id
+      url
+      owner
+      name
+    }
     automationCount
     description
     releases(limit: 1) {
@@ -137,7 +142,7 @@ const props = defineProps<{
   fn: AutomateFunctionPageInfo_AutomateFunctionFragment
 }>()
 
-const repoUrl = computed(() => props.fn.repoUrl)
+const repoUrl = computed(() => props.fn.repo.url)
 const latestRelease = computed(() =>
   props.fn.releases.items.length ? props.fn.releases.items[0] : undefined
 )

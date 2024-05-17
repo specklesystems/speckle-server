@@ -1,7 +1,5 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
-import { parseEnv } from 'znv'
-import { z } from 'zod'
 
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
@@ -282,6 +280,12 @@ export function skipAutomateMigrations() {
   return getBooleanFromEnv('SKIP_AUTOMATE_MIGRATION_DEV')
 }
 
-export const { ENABLE_AUTOMATE_MODULE } = parseEnv(process.env, {
-  ENABLE_AUTOMATE_MODULE: z.boolean().default(true)
-})
+export function getAutomateEncryptionKeysPath() {
+  if (!process.env.AUTOMATE_ENCRYPTION_KEYS_PATH) {
+    throw new MisconfiguredEnvironmentError(
+      'Automate encryption keys path environment variable (AUTOMATE_ENCRYPTION_KEYS_PATH) is not configured'
+    )
+  }
+
+  return process.env.AUTOMATE_ENCRYPTION_KEYS_PATH
+}

@@ -48,4 +48,9 @@ const openCreateNewAutomation = (fn: CreateAutomationSelectableFunction) => {
   newAutomationTargetFn.value = fn
   showNewAutomationDialog.value = true
 }
+
+useSeoMeta({
+  title: 'All Functions',
+  description: 'Select a function get started with Speckle Automate'
+})
 </script>

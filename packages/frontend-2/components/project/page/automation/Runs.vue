@@ -2,7 +2,11 @@
   <div class="flex flex-col w-full">
     <div class="flex items-center justify-between mb-2">
       <h2 class="h6 font-bold">Runs</h2>
-      <FormButton :icon-left="ArrowPathIcon" @click="onTrigger">
+      <FormButton
+        :icon-left="ArrowPathIcon"
+        :disabled="!automation.enabled"
+        @click="onTrigger"
+      >
         Trigger Automation
       </FormButton>
     </div>
@@ -26,6 +30,7 @@ import { useTriggerAutomation } from '~/lib/projects/composables/automationManag
 graphql(`
   fragment ProjectPageAutomationRuns_Automation on Automation {
     id
+    enabled
     runs {
       items {
         ...AutomationRunDetails

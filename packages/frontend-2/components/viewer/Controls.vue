@@ -177,10 +177,6 @@
         class="pointer-events-auto"
         @close="activeControl = 'none'"
       />
-      <ViewerFilters
-        v-if="resourceItems.length !== 0 && activeControl === 'filters'"
-        class="pointer-events-auto"
-      />
       <div v-show="resourceItems.length !== 0 && activeControl === 'automate'">
         <AutomateViewerPanel
           :automation-runs="allAutomationRuns"

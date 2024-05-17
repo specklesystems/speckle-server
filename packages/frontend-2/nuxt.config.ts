@@ -2,6 +2,7 @@ import { join } from 'path'
 import { withoutLeadingSlash } from 'ufo'
 import { sanitizeFilePath } from 'mlly'
 import { filename } from 'pathe/utils'
+import { Environment } from '@speckle/shared'
 
 // Copied out from nuxt vite-builder source to correctly build output chunk/entry/asset/etc file names
 const buildOutputFileName = (chunkName: string) =>
@@ -14,6 +15,8 @@ const {
   NUXT_PUBLIC_LOG_LEVEL = 'info',
   NUXT_PUBLIC_LOG_PRETTY = false
 } = process.env
+
+const featureFlags = Environment.getFeatureFlags()
 
 const isLogPretty = ['1', 'true', true, 1].includes(NUXT_PUBLIC_LOG_PRETTY)
 
@@ -45,6 +48,7 @@ export default defineNuxtConfig({
     redisUrl: '',
     automateGhClientSecret: '',
     public: {
+      ...featureFlags,
       apiOrigin: 'UNDEFINED',
       backendApiOrigin: '',
       baseUrl: '',
@@ -70,7 +74,6 @@ export default defineNuxtConfig({
       datadogService: '',
       datadogEnv: '',
       enableDirectPreviews: true,
-      enableAutomateModule: true,
       automateGhClientId: 'Iv1.79a1df48749f11b4'
     }
   },

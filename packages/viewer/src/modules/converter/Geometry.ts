@@ -8,7 +8,7 @@ import {
   Matrix4,
   Vector3
 } from 'three'
-import { SpeckleObject } from '../tree/DataTree'
+import { type SpeckleObject } from '../../IViewer'
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
@@ -20,9 +20,12 @@ export enum GeometryAttributes {
 }
 
 export interface GeometryData {
-  attributes: Partial<Record<GeometryAttributes, number[]>>
-  bakeTransform: Matrix4
-  transform: Matrix4
+  attributes:
+    | (Record<GeometryAttributes.POSITION, number[]> &
+        Partial<Record<GeometryAttributes, number[]>>)
+    | null
+  bakeTransform: Matrix4 | null
+  transform: Matrix4 | null
   metaData?: SpeckleObject
   instanced?: boolean
 }
@@ -74,26 +77,33 @@ export class Geometry {
   }
 
   static mergeGeometryAttribute(
-    attributes: number[][],
+    attributes: (number[] | undefined)[],
     target: Float32Array | Float64Array
   ): ArrayLike<number> {
     let offset = 0
     for (let k = 0; k < attributes.length; k++) {
-      target.set(attributes[k], offset)
-      offset += attributes[k].length
+      const attribute = attributes[k]
+      if (!attribute || !target) {
+        throw new Error('Cannot merge geometries. Indices or positions are undefined')
+      }
+      target.set(attribute, offset)
+      offset += attribute.length
     }
     return target
   }
 
   static mergeIndexAttribute(
-    indexAttributes: number[][],
-    positionAttributes: number[][]
+    indexAttributes: (number[] | undefined)[],
+    positionAttributes: (number[] | undefined)[]
   ): number[] {
     let indexOffset = 0
     const mergedIndex = []
 
     for (let i = 0; i < indexAttributes.length; ++i) {
       const index = indexAttributes[i]
+      if (!index || !positionAttributes) {
+        throw new Error('Cannot merge geometries. Indices or positions are undefined')
+      }
 
       for (let j = 0; j < index.length; ++j) {
         mergedIndex.push(index[j] + indexOffset)
@@ -113,46 +123,74 @@ export class Geometry {
     } as GeometryData
 
     for (let i = 0; i < geometries.length; i++) {
-      if (geometries[i].bakeTransform)
+      /** Catering to typescript */
+      if (geometries[i].bakeTransform !== null)
         Geometry.transformGeometryData(geometries[i], geometries[i].bakeTransform)
     }
 
-    if (sampleAttributes[GeometryAttributes.INDEX]) {
-      const indexAttributes = geometries.map(
-        (item) => item.attributes[GeometryAttributes.INDEX]
+    if (sampleAttributes && sampleAttributes[GeometryAttributes.INDEX]) {
+      const indexAttributes: (number[] | undefined)[] = geometries.map(
+        (item: GeometryData) => {
+          /** Catering to typescript */
+          if (!item.attributes) return
+          return item.attributes[GeometryAttributes.INDEX]
+        }
       )
-      const positionAttributes = geometries.map(
-        (item) => item.attributes[GeometryAttributes.POSITION]
-      )
-      mergedGeometry.attributes[GeometryAttributes.INDEX] =
-        Geometry.mergeIndexAttribute(indexAttributes, positionAttributes)
+      const positionAttributes: (number[] | undefined)[] = geometries.map((item) => {
+        /** Catering to typescript */
+        if (!item.attributes) return
+        return item.attributes[GeometryAttributes.POSITION]
+      })
+      /** o_0 Catering to typescript*/
+      if (mergedGeometry.attributes)
+        mergedGeometry.attributes[GeometryAttributes.INDEX] =
+          Geometry.mergeIndexAttribute(indexAttributes, positionAttributes)
     }
 
     for (const k in sampleAttributes) {
       if (k !== GeometryAttributes.INDEX) {
-        const attributes = geometries.map((item) => {
-          return item.attributes[k]
+        const attributes: (number[] | undefined)[] = geometries.map((item) => {
+          /** Catering to typescript */
+          if (!item.attributes) return
+          return item.attributes[k as GeometryAttributes] as number[]
         })
-        mergedGeometry.attributes[k] = Geometry.mergeGeometryAttribute(
-          attributes,
-          k === GeometryAttributes.POSITION
-            ? new Float64Array(attributes.reduce((prev, cur) => prev + cur.length, 0))
-            : new Float32Array(attributes.reduce((prev, cur) => prev + cur.length, 0))
-        )
+        /** Catering to typescript */
+        if (mergedGeometry.attributes)
+          mergedGeometry.attributes[k as GeometryAttributes] =
+            Geometry.mergeGeometryAttribute(
+              attributes,
+              k === GeometryAttributes.POSITION
+                ? new Float64Array(
+                    attributes.reduce((prev, cur) => {
+                      /** Catering to typescript */
+                      if (!cur) return 0
+                      return prev + cur.length
+                    }, 0)
+                  )
+                : new Float32Array(
+                    attributes.reduce((prev, cur) => {
+                      /** Catering to typescript */
+                      if (!cur) return 0
+                      return prev + cur.length
+                    }, 0)
+                  )
+            ) as number[]
       }
     }
 
     geometries.forEach((geometry) => {
       for (const k in geometry.attributes) {
-        delete geometry.attributes[k]
+        delete geometry.attributes[k as GeometryAttributes]
       }
     })
 
     return mergedGeometry
   }
 
-  public static transformGeometryData(geometryData: GeometryData, m: Matrix4) {
+  public static transformGeometryData(geometryData: GeometryData, m: Matrix4 | null) {
+    if (!geometryData.attributes) return
     if (!geometryData.attributes.POSITION) return
+    if (!m) return
 
     const e = m.elements
 

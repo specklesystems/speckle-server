@@ -10,6 +10,7 @@
     :fully-control-value="fullyControlValue"
     :label-id="labelId"
     :button-id="buttonId"
+    mount-menu-on-body
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}

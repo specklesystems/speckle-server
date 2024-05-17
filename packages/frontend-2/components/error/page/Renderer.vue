@@ -3,7 +3,7 @@
   <div class="flex flex-col items-center space-y-8">
     <ErrorPageProjectInviteBanner />
     <h1 class="h1 font-bold">Error {{ finalError.statusCode || 500 }}</h1>
-    <h2 class="h3 text-foreground-2 mx-4 break-words">
+    <h2 class="h3 text-foreground-2 mx-4 break-words max-w-full">
       {{ finalError.message }}
     </h2>
     <div v-if="isDev && finalError.stack" class="max-w-xl" v-html="finalError.stack" />

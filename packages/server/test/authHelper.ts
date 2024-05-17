@@ -1,4 +1,4 @@
-import { AllScopes } from '@/modules/core/helpers/mainConstants'
+import { AllScopes, ServerRoles } from '@/modules/core/helpers/mainConstants'
 import { UserRecord } from '@/modules/core/helpers/types'
 import { createPersonalAccessToken } from '@/modules/core/services/tokens'
 import { createUser } from '@/modules/core/services/users'
@@ -13,6 +13,7 @@ export type BasicTestUser = {
    * so that you don't have to check if its empty cause of TS
    */
   id: string
+  role?: ServerRoles
 } & Partial<UserRecord>
 
 /**
