@@ -11,7 +11,9 @@ import {
   EllipsisHorizontalCircleIcon,
   EllipsisHorizontalIcon,
   ExclamationCircleIcon,
-  ArrowPathIcon
+  ArrowPathIcon,
+  ClockIcon,
+  XCircleIcon
 } from '@heroicons/vue/24/outline'
 
 graphql(`
@@ -131,13 +133,21 @@ export const useRunStatusMetadata = (params: {
 
   const metadata = computed((): AutomateRunStatusMetadata => {
     switch (unref(status)) {
-      case AutomateRunStatus.Succeeded:
+      case AutomateRunStatus.Canceled:
         return {
-          icon: CheckCircleIcon,
-          xsIcon: CheckCircleIcon,
-          iconColor: 'text-success',
-          badgeColor: 'bg-success',
-          disclosureColor: 'success'
+          icon: XCircleIcon,
+          xsIcon: XCircleIcon,
+          iconColor: 'text-warning',
+          badgeColor: 'bg-warning',
+          disclosureColor: 'warning'
+        }
+      case AutomateRunStatus.Exception:
+        return {
+          icon: ExclamationCircleIcon,
+          xsIcon: ExclamationCircleIcon,
+          iconColor: 'text-danger',
+          badgeColor: 'bg-danger',
+          disclosureColor: 'danger'
         }
       case AutomateRunStatus.Failed:
         return {
@@ -147,6 +157,22 @@ export const useRunStatusMetadata = (params: {
           badgeColor: 'bg-danger',
           disclosureColor: 'danger'
         }
+      case AutomateRunStatus.Initializing:
+        return {
+          icon: EllipsisHorizontalCircleIcon,
+          xsIcon: EllipsisHorizontalIcon,
+          iconColor: 'text-warning',
+          badgeColor: 'bg-warning',
+          disclosureColor: 'warning'
+        }
+      case AutomateRunStatus.Pending:
+        return {
+          icon: EllipsisHorizontalCircleIcon,
+          xsIcon: EllipsisHorizontalIcon,
+          iconColor: 'text-primary',
+          badgeColor: 'bg-primary',
+          disclosureColor: 'default'
+        }
       case AutomateRunStatus.Running:
         return {
           icon: ArrowPathIcon,
@@ -155,13 +181,21 @@ export const useRunStatusMetadata = (params: {
           badgeColor: 'bg-primary',
           disclosureColor: 'default'
         }
-      case AutomateRunStatus.Initializing:
+      case AutomateRunStatus.Succeeded:
         return {
-          icon: EllipsisHorizontalCircleIcon,
-          xsIcon: EllipsisHorizontalIcon,
-          iconColor: 'text-warning',
-          badgeColor: 'bg-warning',
-          disclosureColor: 'warning'
+          icon: CheckCircleIcon,
+          xsIcon: CheckCircleIcon,
+          iconColor: 'text-success',
+          badgeColor: 'bg-success',
+          disclosureColor: 'success'
+        }
+      case AutomateRunStatus.Timeout:
+        return {
+          icon: ClockIcon,
+          xsIcon: ClockIcon,
+          iconColor: 'text-danger',
+          badgeColor: 'bg-danger',
+          disclosureColor: 'danger'
         }
     }
   })
