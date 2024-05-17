@@ -140,6 +140,8 @@ export const useRunStatusMetadata = (params: {
           disclosureColor: 'success'
         }
       case AutomateRunStatus.Failed:
+      case AutomateRunStatus.Exception:
+      case AutomateRunStatus.Timeout:
         return {
           icon: ExclamationCircleIcon,
           xsIcon: ExclamationCircleIcon,
@@ -156,6 +158,8 @@ export const useRunStatusMetadata = (params: {
           disclosureColor: 'default'
         }
       case AutomateRunStatus.Initializing:
+      case AutomateRunStatus.Canceled:
+      case AutomateRunStatus.Pending:
         return {
           icon: EllipsisHorizontalCircleIcon,
           xsIcon: EllipsisHorizontalIcon,
