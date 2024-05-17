@@ -70,6 +70,7 @@ import { useTeamInternals } from '~~/lib/projects/composables/team'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useServerInfo } from '~~/lib/core/composables/server'
 import { graphql } from '~/lib/common/generated/gql/gql'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 
 graphql(`
   fragment ProjectPageInviteDialog_Project on Project {
@@ -107,7 +108,7 @@ const projectData = computed(() => props.project)
 
 const { collaboratorListItems } = useTeamInternals(projectData)
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true },

@@ -53,7 +53,8 @@ import {
   FormTextInput,
   FormTextArea,
   FormButton,
-  LayoutDialog
+  LayoutDialog,
+  type LayoutDialogButton
 } from '@speckle/ui-components'
 import type { ProjectPageSettingsGeneralBlockProjectInfo_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import type { RouteLocationRaw } from 'vue-router'
@@ -111,7 +112,7 @@ const resetLocalState = () => {
   showConfirmDialog.value = false
 }
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Discard Changes',
     props: { color: 'secondary', fullWidth: true, outline: true },
