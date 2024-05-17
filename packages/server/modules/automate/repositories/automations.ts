@@ -60,6 +60,13 @@ export async function getActiveTriggerDefinitions<
   return await q
 }
 
+interface AutomationDB {
+  AutomationRevisions: typeof AutomationRevisions.knex
+  AutomationRevisionFunctions: typeof AutomationRevisionFunctions.knex
+  AutomationTriggers: typeof AutomationTriggers.knex
+  Automations: typeof Automations.knex
+}
+
 export async function getFullAutomationRevisionMetadata(
   revisionId: string
 ): Promise<AutomationWithRevision<AutomationRevisionWithTriggersFunctions> | null> {
@@ -114,6 +121,56 @@ export async function upsertAutomationFunctionRun(
       AutomationFunctionRuns.withoutTablePrefix.col.statusMessage
     ])
 }
+const findFullAutomationRevisionMetadata = ({
+  db
+}: {
+  db: Pick<
+    AutomationDB,
+    | 'AutomationRevisions'
+    | 'AutomationTriggers'
+    | 'AutomationRevisionFunctions'
+    | 'Automations'
+  >
+}) =>
+  async function (
+    revisionId: string
+  ): Promise<AutomationWithRevision<AutomationRevisionWithTriggersFunctions> | null> {
+    const automationRevision = await db
+      .AutomationRevisions<AutomationRevisionRecord>()
+      .where(AutomationRevisions.col.id, revisionId)
+      .first()
+
+    if (!automationRevision) return null
+
+    const [functions, triggers, automation] = await Promise.all([
+      db
+        .AutomationRevisionFunctions<AutomateRevisionFunctionRecord[]>()
+        .select(AutomationRevisionFunctions.cols)
+        .where(AutomationRevisionFunctions.col.automationRevisionId, revisionId),
+      db
+        .AutomationTriggers<AutomationTriggerDefinitionRecord[]>()
+        .select()
+        .where(AutomationTriggers.col.automationRevisionId, revisionId),
+      db
+        .Automations<AutomationRecord>()
+        .where(Automations.col.id, automationRevision.automationId)
+        .first()
+    ])
+    if (!automation) return null
+
+    return {
+      ...automation,
+      revision: {
+        ...automationRevision,
+        functions,
+        triggers
+      }
+    }
+  }
+
+export const createAutomationRepository = ({ db }: { db: AutomationDB }) => ({
+  findFullAutomationRevisionMetadata: findFullAutomationRevisionMetadata({ db })
+})
 
 export type InsertableAutomationRun = AutomationRunRecord & {
   triggers: Omit<AutomationRunTriggerRecord, 'automationRunId'>[]

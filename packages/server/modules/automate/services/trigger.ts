@@ -37,11 +37,12 @@ import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { automateLogger } from '@/logging/logging'
 import {
-  getEncryptionKeyPairFor,
-  getFunctionInputDecryptor
+  getEncryptionKeyPairFor as getEncryptionKeyPairForFn,
+  getFunctionInputDecryptor as getFunctionInputDecryptorFn
 } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
+import { AutomationRepository } from '../domain'
 
 export type OnModelVersionCreateDeps = {
   getTriggers: typeof getActiveTriggerDefinitions
@@ -96,8 +97,8 @@ type InsertableAutomationRunWithExtendedFunctionRuns = Merge<
 >
 
 type CreateAutomationRunDataDeps = {
-  getEncryptionKeyPairFor: typeof getEncryptionKeyPairFor
-  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>
+  getEncryptionKeyPairFor: typeof getEncryptionKeyPairForFn
+  getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptorFn>
 }
 
 const createAutomationRunData =
@@ -177,20 +178,28 @@ const createAutomationRunData =
     return automationRun
   }
 
-export type TriggerAutomationRevisionRunDeps = {
-  automateRunTrigger: typeof triggerAutomationRun
-} & CreateAutomationRunDataDeps
-
 /**
  * This triggers a run for a specific automation revision
  */
 export const triggerAutomationRevisionRun =
-  (deps: TriggerAutomationRevisionRunDeps) =>
+  ({
+    automationRepository,
+    automateRunTrigger,
+    getEncryptionKeyPairFor,
+    getFunctionInputDecryptor
+  }: {
+    automationRepository: Pick<
+      AutomationRepository,
+      'findFullAutomationRevisionMetadata'
+    >
+    automateRunTrigger: typeof triggerAutomationRun
+    getEncryptionKeyPairFor: typeof getEncryptionKeyPairForFn
+    getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptorFn>
+  }) =>
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
   }): Promise<{ automationRunId: string }> => {
-    const { automateRunTrigger } = deps
     const { revisionId, manifest } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
@@ -201,7 +210,7 @@ export const triggerAutomationRevisionRun =
 
     const { automationWithRevision, userId, automateToken } = await ensureRunConditions(
       {
-        revisionGetter: getFullAutomationRevisionMetadata,
+        revisionGetter: automationRepository.findFullAutomationRevisionMetadata,
         versionGetter: getCommit,
         automationTokenGetter: getAutomationToken
       }
@@ -237,7 +246,10 @@ export const triggerAutomationRevisionRun =
       ]
     })
 
-    const automationRun = await createAutomationRunData(deps)({
+    const automationRun = await createAutomationRunData({
+      getEncryptionKeyPairFor,
+      getFunctionInputDecryptor
+    })({
       manifests: triggerManifests,
       automationWithRevision
     })

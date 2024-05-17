@@ -7,6 +7,7 @@ import {
 } from '@/modules/automate/services/trigger'
 import { Environment } from '@speckle/shared'
 import {
+  createAutomationRepository,
   getActiveTriggerDefinitions,
   getAutomationRunFullTriggers
 } from '@/modules/automate/repositories/automations'
@@ -24,6 +25,12 @@ import {
   setupAutomationUpdateSubscriptions,
   setupStatusUpdateSubscriptions
 } from '@/modules/automate/services/subscriptions'
+import {
+  AutomationRevisionFunctions,
+  AutomationRevisions,
+  AutomationTriggers,
+  Automations
+} from '../core/dbSchema'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -53,7 +60,16 @@ async function initScopes() {
 }
 
 const initializeEventListeners = () => {
+  const automationRepository = createAutomationRepository({
+    db: {
+      Automations: Automations.knex,
+      AutomationRevisionFunctions: AutomationRevisionFunctions.knex,
+      AutomationRevisions: AutomationRevisions.knex,
+      AutomationTriggers: AutomationTriggers.knex
+    }
+  })
   const triggerFn = triggerAutomationRevisionRun({
+    automationRepository,
     automateRunTrigger: triggerAutomationRun,
     getEncryptionKeyPairFor,
     getFunctionInputDecryptor: getFunctionInputDecryptor({

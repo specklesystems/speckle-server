@@ -9,6 +9,7 @@ import {
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
+  createAutomationRepository,
   getAutomation,
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
@@ -451,11 +452,20 @@ export = {
       })
     },
     async trigger(parent, { automationId }, ctx) {
+      const automationRepository = createAutomationRepository({
+        db: {
+          AutomationTriggers: AutomationTriggers.knex,
+          AutomationRevisions: AutomationRevisions.knex,
+          AutomationRevisionFunctions: AutomationRevisionFunctions.knex,
+          Automations: Automations.knex
+        }
+      })
       const trigger = manuallyTriggerAutomation({
         getAutomationTriggerDefinitions,
         getAutomation,
         getBranchLatestCommits,
         triggerFunction: triggerAutomationRevisionRun({
+          automationRepository,
           automateRunTrigger: triggerAutomationRun,
           getEncryptionKeyPairFor,
           getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor })
