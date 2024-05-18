@@ -59,7 +59,7 @@ const getEnabledModuleNames = () => {
     'previews',
     'pwdreset',
     'serverinvites',
-    // 'stats',
+    'stats',
     'webhooks'
   ]
 
