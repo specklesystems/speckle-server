@@ -4,6 +4,7 @@ export enum CameraEvent {
   Stationary = 'stationary',
   Dynamic = 'dynamic',
   FrameUpdate = 'frame-update',
+  LateFrameUpdate = 'late-frame-update',
   ProjectionChanged = 'projection-changed'
 }
 
@@ -11,6 +12,7 @@ export interface CameraEventPayload {
   [CameraEvent.Stationary]: void
   [CameraEvent.Dynamic]: void
   [CameraEvent.FrameUpdate]: boolean
+  [CameraEvent.LateFrameUpdate]: boolean
   [CameraEvent.ProjectionChanged]: CameraProjection
 }
 

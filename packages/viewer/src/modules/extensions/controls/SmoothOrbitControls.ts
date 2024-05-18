@@ -174,7 +174,7 @@ export class SmoothOrbitControls extends EventEmitter {
   private panPerPixel = 0
 
   // Internal orbital position state
-  private spherical = new Spherical()
+  public spherical = new Spherical()
   private goalSpherical = new Spherical()
   private origin = new Vector3()
   private goalOrigin = new Vector3()
@@ -196,7 +196,7 @@ export class SmoothOrbitControls extends EventEmitter {
   private touchDecided = false
   private zoomControlCoord: Vector2 = new Vector2()
 
-  private _controlTarget: Object3D
+  public _controlTarget: Object3D
   private _container: HTMLElement
   private _renderer: WebGLRenderer
   private _lastTick: number = 0

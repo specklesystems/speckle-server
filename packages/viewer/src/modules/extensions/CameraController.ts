@@ -249,6 +249,10 @@ export class CameraController extends Extension implements SpeckleCamera {
     this._lastCameraChanged = changed
   }
 
+  public onLateUpdate(): void {
+    this.emit(CameraEvent.LateFrameUpdate, this._lastCameraChanged)
+  }
+
   public onResize() {
     this.perspectiveCamera.aspect =
       this.viewer.getContainer().offsetWidth / this.viewer.getContainer().offsetHeight
@@ -548,31 +552,37 @@ export class CameraController extends Extension implements SpeckleCamera {
     }
   }
 
-  private setViewInline(_view: InlineView, transition = true) {
+  private setViewInline(view: InlineView, transition = true) {
     transition
-    // const spherical = new Spherical()
-    // spherical.setFromCartesianCoords(view.position.x, view.position.y, view.position.z)
-    // spherical.radius = view.position.distanceTo(view.target)
+    view
+    if (
+      view.position.equals(this._controls._controlTarget.position) &&
+      view.target.equals(this._controls.originValue)
+    )
+      return
 
-    // this._controls.setOrbit(spherical.theta, spherical.phi, spherical.radius)
-    // this._controls.setTarget(view.target.x, view.target.y, view.target.z)
-    // TO DO
-    // this._controls.setLookAt(
-    //   view.position.x,
-    //   view.position.y,
-    //   view.position.z,
-    //   view.target.x,
-    //   view.target.y,
-    //   view.target.z,
-    //   transition
-    // )
+    const v0 = new Vector3()
+      .copy(view.position)
+      .applyMatrix4(
+        new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5)).invert()
+      )
+    v0.sub(view.target)
+    const spherical = new Spherical()
+    spherical.setFromCartesianCoords(v0.x, v0.y, v0.z)
+    this._controls.setOrbit(spherical.theta, spherical.phi, spherical.radius)
+    this._controls.setTarget(view.target.x, view.target.y, view.target.z)
+    if (!transition) this._controls.jumpToGoal()
+
     this.enableRotations()
   }
 
   private setViewPolar(_view: PolarView, transition = true) {
     transition
     // TO DO
-    // this._controls.rotate(view.azimuth, view.polar, transition)
+    this._controls.setOrbit(_view.azimuth, _view.polar, _view.radius)
+    if (_view.origin)
+      this._controls.setTarget(_view.origin.x, _view.origin.y, _view.origin.z)
+    if (!transition) this._controls.jumpToGoal()
     this.enableRotations()
   }
 }
