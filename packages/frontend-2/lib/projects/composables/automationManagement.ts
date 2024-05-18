@@ -190,7 +190,12 @@ export const useProjectTriggeredAutomationsStatusUpdateTracking = (params: {
       () => `useProjectTriggeredAutomationsStatusUpdateTracking-${unref(projectId)}`
     )
   )
-  const isEnabled = computed(() => !!(hasLock.value || handler))
+  // const isEnabled = computed(() => !!(hasLock.value || handler))
+
+  const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
+  const isEnabled = computed(
+    () => isAutomateModuleEnabled.value && !!(hasLock.value || handler)
+  )
 
   const { onResult } = useSubscription(
     onProjectTriggeredAutomationsStatusUpdatedSubscription,
@@ -276,7 +281,12 @@ export const useProjectAutomationsUpdateTracking = (params: {
   const { hasLock } = useLock(
     computed(() => `useProjectAutomationsUpdateTracking-${unref(projectId)}`)
   )
-  const isEnabled = computed(() => !!(hasLock.value || handler))
+  // const isEnabled = computed(() => !!(hasLock.value || handler))
+
+  const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
+  const isEnabled = computed(
+    () => isAutomateModuleEnabled.value && !!(hasLock.value || handler)
+  )
 
   const { onResult } = useSubscription(
     onProjectAutomationsUpdatedSubscription,
