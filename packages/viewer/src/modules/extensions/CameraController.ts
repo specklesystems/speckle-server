@@ -205,6 +205,14 @@ export class CameraController extends Extension implements SpeckleCamera {
     return this._controls.originValue.clone()
   }
 
+  public getTargetPosition(): Vector3 {
+    return this._controls.getTargetPosition()
+  }
+
+  public getPosition(): Vector3 {
+    return this._controls.getPosition()
+  }
+
   setCameraView(
     objectIds: string[] | undefined,
     transition: boolean | undefined,
@@ -553,10 +561,12 @@ export class CameraController extends Extension implements SpeckleCamera {
   }
 
   private setViewInline(view: InlineView, transition = true) {
-    transition
-    view
+    /** This check is targeted exclusevely towards the frontend which calls this method pointlessly each frame
+     *  We don't want to make pointless calculations more than we already are
+     */
+    const targetPosition = this._controls.getTargetPosition()
     if (
-      view.position.equals(this._controls._controlTarget.position) &&
+      view.position.equals(targetPosition) &&
       view.target.equals(this._controls.originValue)
     )
       return

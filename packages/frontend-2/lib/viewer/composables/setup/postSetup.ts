@@ -308,7 +308,7 @@ function useViewerCameraIntegration() {
     const extension: CameraController = instance.getExtension(CameraController)
     let cameraManuallyChanged = false
 
-    const viewerPos = new Vector3().copy(extension.renderingCamera.position)
+    const viewerPos = new Vector3().copy(extension.getTargetPosition())
     const viewerTarget = new Vector3().copy(extension.getOrigin())
 
     if (!areVectorsLooselyEqual(position.value, viewerPos)) {

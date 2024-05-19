@@ -13,7 +13,6 @@
  */
 
 import {
-  Euler,
   Event as ThreeEvent,
   Matrix3,
   Spherical,
@@ -30,7 +29,9 @@ import {
   Mesh,
   SphereGeometry,
   MeshBasicMaterial,
-  OrthographicCamera
+  OrthographicCamera,
+  Quaternion,
+  Euler
 } from 'three'
 
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
@@ -674,19 +675,47 @@ export class SmoothOrbitControls extends EventEmitter {
     )
   }
 
+  private positionFromSpherical(spherical: Spherical, origin?: Vector3) {
+    const position: Vector3 = new Vector3()
+    position.setFromSpherical(spherical)
+    if (origin) position.add(origin)
+
+    position.applyQuaternion(
+      new Quaternion().setFromRotationMatrix(this._basisTransform)
+    )
+    return position
+  }
+
+  private quaternionFromSpherical(spherical: Spherical) {
+    const quaternion: Quaternion = new Quaternion()
+    quaternion.setFromEuler(
+      new Euler(spherical.phi - Math.PI / 2, spherical.theta, 0, 'YXZ')
+    )
+    quaternion.premultiply(new Quaternion().setFromRotationMatrix(this._basisTransform))
+    return quaternion
+  }
+
+  public getTargetPosition(): Vector3 {
+    return this.positionFromSpherical(this.goalSpherical, this.origin)
+  }
+
+  public getPosition(): Vector3 {
+    return this.positionFromSpherical(this.spherical, this.origin)
+  }
+
   private moveCamera() {
     // Derive the new camera position from the updated spherical:
     this.spherical.makeSafe()
-    if (this._controlTarget instanceof PerspectiveCamera) {
-      this._controlTarget.position.setFromSpherical(this.spherical).add(this.origin)
-    }
+    const position = this.positionFromSpherical(this.spherical, this.origin)
+    const quaternion = this.quaternionFromSpherical(this.spherical)
+
     if (this._controlTarget instanceof OrthographicCamera) {
-      this._controlTarget.position.setFromSpherical(this.spherical).add(this.origin)
       const cameraDirection = new Vector3()
         .setFromSpherical(this.spherical)
+        .applyQuaternion(new Quaternion().setFromRotationMatrix(this._basisTransform))
         .normalize()
         .negate()
-      this._controlTarget.position.add(
+      position.add(
         cameraDirection.multiplyScalar(
           (this._options.maximumRadius -
             this.options.minimumRadius -
@@ -695,10 +724,9 @@ export class SmoothOrbitControls extends EventEmitter {
         )
       )
     }
-    this._controlTarget.setRotationFromEuler(
-      new Euler(this.spherical.phi - Math.PI / 2, this.spherical.theta, 0, 'YXZ')
-    )
-    this._controlTarget.applyMatrix4(this._basisTransform)
+    this._controlTarget.position.copy(position)
+    this._controlTarget.quaternion.copy(quaternion)
+
     const originSphereT = new Vector3()
       .copy(this.origin)
       .applyMatrix4(this._basisTransform)
