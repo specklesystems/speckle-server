@@ -13,7 +13,6 @@
  */
 
 import {
-  Event as ThreeEvent,
   Matrix3,
   Spherical,
   Vector2,
@@ -119,28 +118,9 @@ export const KeyCode = {
   DOWN: 40
 }
 
-export type ChangeSource = 'user-interaction' | 'none' | 'automatic'
-
-export const ChangeSource: { [index: string]: ChangeSource } = {
-  USER_INTERACTION: 'user-interaction',
-  NONE: 'none',
-  AUTOMATIC: 'automatic'
-}
-
-/**
- * ChangEvents are dispatched whenever the camera position or orientation has
- * changed
- */
-export interface ChangeEvent extends ThreeEvent {
-  /**
-   * determines what was the originating reason for the change event eg user or
-   * none
-   */
-  source: ChangeSource
-}
-
-export interface PointerChangeEvent extends ThreeEvent {
-  type: 'pointer-change-start' | 'pointer-change-end'
+export enum PointerChangeEvent {
+  PointerChangeStart = 'pointer-change-start',
+  PointerChangeEnd = 'pointer-change-end'
 }
 
 /**
@@ -162,8 +142,6 @@ export interface PointerChangeEvent extends ThreeEvent {
  * ensure that the camera's matrixWorld is in sync before using SmoothControls.
  */
 export class SmoothOrbitControls extends EventEmitter {
-  public changeSource = ChangeSource.NONE
-
   private _interactionEnabled: boolean = false
   private _options: Required<SmoothControlsOptions>
   private isUserPointing = false
@@ -841,9 +819,8 @@ export class SmoothOrbitControls extends EventEmitter {
       const dyMag = Math.abs(dy)
       // If motion is mostly vertical, assume scrolling is the intent.
       if (
-        this.changeSource === ChangeSource.USER_INTERACTION &&
-        ((touchAction === 'pan-y' && dyMag > dxMag) ||
-          (touchAction === 'pan-x' && dxMag > dyMag))
+        (touchAction === 'pan-y' && dyMag > dxMag) ||
+        (touchAction === 'pan-x' && dxMag > dyMag)
       ) {
         this.touchMode = null
         return
@@ -862,8 +839,7 @@ export class SmoothOrbitControls extends EventEmitter {
 
     if (this.isUserPointing === false) {
       this.isUserPointing = true
-      // TO DO
-      //   this.dispatchEvent({ type: 'pointer-change-start' })
+      this.emit(PointerChangeEvent.PointerChangeStart)
     }
 
     this.userAdjustOrbit(deltaTheta, deltaPhi, 0)
@@ -928,19 +904,13 @@ export class SmoothOrbitControls extends EventEmitter {
     this.isUserPointing = false
 
     if (event.pointerType === 'touch') {
-      this.changeSource = event.altKey // set by interact() in controls.ts
-        ? ChangeSource.AUTOMATIC
-        : ChangeSource.USER_INTERACTION
       this.onTouchChange(event)
     } else {
-      this.changeSource = ChangeSource.USER_INTERACTION
       this.onMouseDown(event)
     }
 
-    if (this.changeSource === ChangeSource.USER_INTERACTION) {
-      // TO DO
-      //   this.dispatchEvent({ type: 'user-interaction' })
-    }
+    // TO DO
+    //   this.dispatchEvent({ type: 'user-interaction' })
   }
 
   private onPointerMove = (event: PointerEvent) => {
@@ -965,14 +935,10 @@ export class SmoothOrbitControls extends EventEmitter {
     pointer.clientY = event.clientY
 
     if (event.pointerType === 'touch') {
-      this.changeSource = event.altKey
-        ? ChangeSource.AUTOMATIC
-        : ChangeSource.USER_INTERACTION
       if (this.touchMode !== null) {
         this.touchMode(dx, dy)
       }
     } else {
-      this.changeSource = ChangeSource.USER_INTERACTION
       if (this.panPerPixel > 0) {
         this.movePan(dx, dy)
       } else {
@@ -1008,8 +974,7 @@ export class SmoothOrbitControls extends EventEmitter {
     this.panPerPixel = 0
 
     if (this.isUserPointing) {
-      // TO DO
-      //   this.dispatchEvent({ type: 'pointer-change-end' })
+      this.emit(PointerChangeEvent.PointerChangeEnd)
     }
   }
 
@@ -1053,7 +1018,6 @@ export class SmoothOrbitControls extends EventEmitter {
   }
 
   private onWheel = (event: WheelEvent) => {
-    this.changeSource = ChangeSource.USER_INTERACTION
     const x =
       ((event.clientX - this._container.clientLeft) / this._container.clientWidth) * 2 -
       1
@@ -1081,8 +1045,6 @@ export class SmoothOrbitControls extends EventEmitter {
     // We track if the key is actually one we respond to, so as not to
     // accidentally clobber unrelated key inputs when the <model-viewer> has
     // focus.
-    const { changeSource } = this
-    this.changeSource = ChangeSource.USER_INTERACTION
 
     const relevantKey =
       event.shiftKey && this.enablePan
@@ -1093,8 +1055,6 @@ export class SmoothOrbitControls extends EventEmitter {
       event.preventDefault()
       // TO DO
       //   this.dispatchEvent({ type: 'user-interaction' })
-    } else {
-      this.changeSource = changeSource
     }
   }
 

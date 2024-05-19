@@ -12,6 +12,7 @@ import {
   Vector3
 } from 'three'
 import {
+  PointerChangeEvent,
   SmoothControlsOptions,
   SmoothOrbitControls
 } from './controls/SmoothOrbitControls'
@@ -187,6 +188,13 @@ export class CameraController extends Extension implements SpeckleCamera {
     this._controls.basisTransform = new Matrix4().makeRotationFromEuler(
       new Euler(Math.PI * 0.5)
     )
+    this._controls.on(PointerChangeEvent.PointerChangeStart, () => {
+      this.emit(CameraEvent.InteractionStarted)
+    })
+    this._controls.on(PointerChangeEvent.PointerChangeEnd, () => {
+      this.emit(CameraEvent.InteractionEnded)
+    })
+
     this.viewer.getRenderer().speckleCamera = this
   }
 

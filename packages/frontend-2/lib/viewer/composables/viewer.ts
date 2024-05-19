@@ -182,10 +182,10 @@ export function useViewerCameraControlStartTracker(callback: () => void) {
   const removeListener = () =>
     instance
       .getExtension(CameraController)
-      .removeListener(CameraEvent.Dynamic, callback)
+      .removeListener(CameraEvent.InteractionStarted, callback)
 
   onMounted(() => {
-    instance.getExtension(CameraController).on(CameraEvent.Dynamic, callback)
+    instance.getExtension(CameraController).on(CameraEvent.InteractionStarted, callback)
   })
 
   onBeforeUnmount(() => {

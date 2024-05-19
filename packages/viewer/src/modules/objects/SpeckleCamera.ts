@@ -5,7 +5,9 @@ export enum CameraEvent {
   Dynamic = 'dynamic',
   FrameUpdate = 'frame-update',
   LateFrameUpdate = 'late-frame-update',
-  ProjectionChanged = 'projection-changed'
+  ProjectionChanged = 'projection-changed',
+  InteractionStarted = 'interaction-started',
+  InteractionEnded = 'interaction-ended'
 }
 
 export interface CameraEventPayload {
@@ -14,6 +16,8 @@ export interface CameraEventPayload {
   [CameraEvent.FrameUpdate]: boolean
   [CameraEvent.LateFrameUpdate]: boolean
   [CameraEvent.ProjectionChanged]: CameraProjection
+  [CameraEvent.InteractionStarted]: void
+  [CameraEvent.InteractionEnded]: void
 }
 
 export interface SpeckleCamera {
