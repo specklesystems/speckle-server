@@ -101,9 +101,11 @@ app.$baseBinding.on('documentChanged', () => {
 })
 
 const receiveOrCancel = async () => {
-  if (props.modelCard.progress)
+  if (props.modelCard.progress) {
     await store.receiveModelCancel(props.modelCard.modelCardId)
-  await store.receiveModel(props.modelCard.modelCardId)
+  } else {
+    await store.receiveModel(props.modelCard.modelCardId)
+  }
 }
 
 const isExpired = computed(() => {
