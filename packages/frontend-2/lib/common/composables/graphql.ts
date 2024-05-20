@@ -28,3 +28,20 @@ export const usePreloadApolloQueries = () => {
     return await Promise.all(promises)
   }
 }
+
+/**
+ * Useful in SSR to track when a useQuery call has loaded. Just pass in the useQuery call's
+ * onResult callback
+ */
+export const useQueryLoaded = (params: {
+  onResult: (loadedCb: () => unknown) => unknown
+}) => {
+  const { onResult } = params
+
+  const loaded = ref(false)
+  onResult(() => {
+    loaded.value = true
+  })
+
+  return loaded
+}

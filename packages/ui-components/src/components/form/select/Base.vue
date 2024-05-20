@@ -11,11 +11,12 @@
     >
       <ListboxLabel
         :id="labelId"
-        class="block label text-foreground-2 mb-2"
+        class="flex label text-foreground mb-1.5"
         :class="{ 'sr-only': !showLabel }"
         :for="buttonId"
       >
         {{ label }}
+        <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
       </ListboxLabel>
       <div :class="buttonsWrapperClasses">
         <!-- <div class="relative flex"> -->
@@ -47,7 +48,7 @@
                 aria-hidden="true"
               />
               <div
-                v-else-if="showRequired"
+                v-else-if="!showLabel && showRequired"
                 class="text-4xl text-danger opacity-50 h-4 w-4 leading-6"
               >
                 *
@@ -64,6 +65,8 @@
               />
             </div>
           </div>
+          <!-- Sync isOpen with dropdown open state -->
+          <template v-if="(isOpen = open)"></template>
         </ListboxButton>
         <!-- </div> -->
         <!-- Clear Button -->
@@ -171,12 +174,7 @@
         </Transition>
       </div>
     </Listbox>
-    <p
-      v-if="helpTipId"
-      :id="helpTipId"
-      class="mt-2 text-xs sm:text-sm"
-      :class="helpTipClasses"
-    >
+    <p v-if="helpTipId" :id="helpTipId" class="mt-2 text-xs" :class="helpTipClasses">
       {{ helpTip }}
     </p>
   </div>
@@ -421,6 +419,7 @@ const currentItems = ref([]) as Ref<SingleItem[]>
 const isAsyncLoading = ref(false)
 const forceUpdateKey = ref(1)
 const internalHelpTipId = ref(nanoid())
+const isOpen = ref(false)
 
 const listboxButtonBounding = useElementBounding(
   computed(() => listboxButton.value?.el),
@@ -466,8 +465,12 @@ const buttonsWrapperClasses = computed(() => {
       classParts.push('outline outline-2 outline-danger')
     }
   } else if (props.buttonStyle !== 'simple') {
-    classParts.push('hover:shadow rounded-md')
-    classParts.push('outline outline-2 outline-primary-muted')
+    classParts.push('rounded-md border')
+    if (isOpen.value) {
+      classParts.push('border-outline-1')
+    } else {
+      classParts.push('border-outline-3')
+    }
   }
 
   if (props.fixedHeight) {

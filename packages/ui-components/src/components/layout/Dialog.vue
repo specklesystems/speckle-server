@@ -11,11 +11,10 @@
         leave-to="opacity-0"
       >
         <div
-          class="fixed inset-0 bg-neutral-100/70 dark:bg-neutral-900/70 transition-opacity backdrop-blur-xs"
+          class="fixed top-0 left-0 w-full h-full bg-neutral-100/70 dark:bg-neutral-900/70 transition-opacity backdrop-blur-xs"
         />
       </TransitionChild>
-
-      <div class="fixed inset-0 z-10 h-[100dvh] w-screen">
+      <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
         <div class="flex justify-center items-center h-full w-full p-4 sm:p-0">
           <TransitionChild
             as="template"
@@ -47,8 +46,16 @@
                 </div>
               </div>
 
+              <!--
+                Due to how forms work, if there's no other submit button, on form submission the first button
+                will be clicked. This is a workaround to prevent the close button from being that first button.
+                https://stackoverflow.com/a/4763911/3194577
+              -->
+              <button class="hidden" type="button" />
+
               <button
                 v-if="!hideCloser"
+                type="button"
                 class="absolute z-20 bg-foundation rounded-full p-1"
                 :class="hasTitle ? 'top-2 right-3 sm:top-4' : 'right-4 top-3'"
                 @click="open = false"
@@ -56,7 +63,8 @@
                 <XMarkIcon class="h-5 sm:h-6 w-5 sm:w-6" />
               </button>
               <div
-                class="flex-1 simple-scrollbar overflow-y-auto"
+                ref="slotContainer"
+                class="flex-1 simple-scrollbar overflow-y-auto text-sm sm:text-base"
                 :class="hasTitle ? 'p-3 sm:py-6 sm:px-8' : 'p-6 pt-10 sm:p-10'"
                 @scroll="onScroll"
               >
@@ -65,16 +73,19 @@
               <div
                 v-if="hasButtons"
                 class="relative z-50 flex px-4 py-2 sm:py-4 sm:px-6 gap-2 shrink-0 bg-foundation"
-                :class="!scrolledToBottom && 'shadow-t'"
+                :class="{
+                  'shadow-t': !scrolledToBottom,
+                  [buttonsWrapperClasses || '']: true
+                }"
               >
                 <template v-if="buttons">
                   <FormButton
                     v-for="(button, index) in buttons"
-                    :key="index"
-                    v-bind="button.props"
-                    :disabled="button.disabled"
-                    :type="button.submit && 'submit'"
-                    @click="button.onClick"
+                    :key="button.id || index"
+                    v-bind="button.props || {}"
+                    :disabled="button.props?.disabled || button.disabled"
+                    :submit="button.props?.submit || button.submit"
+                    @click="($event) => button.onClick?.($event)"
                   >
                     {{ button.text }}
                   </FormButton>
@@ -92,10 +103,12 @@
 </template>
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
-import { FormButton } from '~~/src/lib'
+import { FormButton, type LayoutDialogButton } from '~~/src/lib'
 import { XMarkIcon } from '@heroicons/vue/24/outline'
-import { computed, ref, useSlots } from 'vue'
-import { throttle, noop } from 'lodash'
+import { useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
+import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
+import { throttle } from 'lodash'
+import { isClient } from '@vueuse/core'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
@@ -113,13 +126,11 @@ const props = defineProps<{
    */
   preventCloseOnClickOutside?: boolean
   title?: string
-  buttons?: Array<{
-    text: string
-    props: Record<string, unknown>
-    onClick?: () => void
-    disabled?: boolean
-    submit?: boolean
-  }>
+  buttons?: Array<LayoutDialogButton>
+  /**
+   * Extra classes to apply to the button container.
+   */
+  buttonsWrapperClasses?: string
   /**
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
    */
@@ -130,6 +141,16 @@ const slots = useSlots()
 
 const scrolledFromTop = ref(false)
 const scrolledToBottom = ref(true)
+const slotContainer = ref<HTMLElement | null>(null)
+
+useResizeObserver(
+  slotContainer,
+  throttle<ResizeObserverCallback>(() => {
+    // Triggering onScroll on size change too so that we don't get stuck with shadows
+    // even tho the new content is not scrollable
+    onScroll({ target: slotContainer.value })
+  }, 60)
+)
 
 const isForm = computed(() => !!props.onSubmit)
 const hasButtons = computed(() => props.buttons || slots.buttons)
@@ -180,13 +201,44 @@ const onClose = () => {
 }
 
 const onFormSubmit = (e: SubmitEvent) => {
-  ;(props.onSubmit || noop)(e)
+  props.onSubmit?.(e)
 }
 
-const onScroll = throttle((e: Event) => {
+const onScroll = throttle((e: { target: EventTarget | null }) => {
+  if (!e.target) return
+
   const target = e.target as HTMLElement
   const { scrollTop, offsetHeight, scrollHeight } = target
   scrolledFromTop.value = scrollTop > 0
   scrolledToBottom.value = scrollTop + offsetHeight >= scrollHeight
 }, 60)
+
+// Toggle 'dialog-open' class on <html> to prevent scroll jumping and disable background scroll.
+// This maintains user scroll position when Headless UI dialogs are activated.
+watch(open, (newValue) => {
+  if (isClient) {
+    const html = document.documentElement
+    if (newValue) {
+      html.classList.add('dialog-open')
+    } else {
+      html.classList.remove('dialog-open')
+    }
+  }
+})
+
+// Clean up when the component unmounts
+onUnmounted(() => {
+  if (isClient) {
+    document.documentElement.classList.remove('dialog-open')
+  }
+})
 </script>
+
+<style>
+html.dialog-open {
+  overflow: visible !important;
+}
+html.dialog-open body {
+  overflow: hidden !important;
+}
+</style>

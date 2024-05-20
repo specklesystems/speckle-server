@@ -13,7 +13,7 @@ export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
 export const projectRoute = (
   id: string,
-  tab?: 'models' | 'discussions' | 'automations'
+  tab?: 'models' | 'discussions' | 'automations' | 'settings'
 ) => {
   let res = `/projects/${id}`
   if (tab && tab !== 'models') {
@@ -22,6 +22,10 @@ export const projectRoute = (
 
   return res
 }
+export const projectAutomationRoute = (projectId: string, automationId: string) => {
+  return `${projectRoute(projectId, 'automations')}/${automationId}`
+}
+
 export const modelRoute = (
   projectId: string,
   resourceIdString: string,
@@ -39,14 +43,24 @@ export const allProjectModelsRoute = (projectId: string) => `/projects/${project
 // Temp change to projectDiscussionsRoute until tab routing is implemented
 export const projectDiscussionsRoute = (projectId: string) => `/projects/${projectId}`
 
-export const projectWebhooksRoute = (projectId: string) =>
-  `/projects/${projectId}/webhooks`
+export const projectSettingsRoute = (projectId: string) =>
+  `/projects/${projectId}/settings`
 
-export const automationDataPageRoute = (baseUrl: string, automationId: string) =>
-  new URL(`/automations/${automationId}`, baseUrl).toString()
+export const projectCollaboratorsRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/collaborators`
+
+export const projectWebhooksRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/webhooks`
 
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`
+
+export const automateGithubAppAuthorizationCallback = '/api/auth/automate-github-app'
+
+export const automationFunctionsRoute = '/functions'
+
+export const automationFunctionRoute = (functionId: string) =>
+  `${automationFunctionsRoute}/${functionId}`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()

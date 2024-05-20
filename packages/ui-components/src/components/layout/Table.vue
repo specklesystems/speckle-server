@@ -1,15 +1,17 @@
 <template>
   <div class="text-foreground">
-    <div class="w-full text-sm overflow-x-auto overflow-y-visible simple-scrollbar">
+    <div
+      class="w-full text-sm overflow-x-auto overflow-y-visible simple-scrollbar border border-outline-3 rounded-lg"
+    >
       <div
         v-if="items.length > 0"
-        class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[900px]"
+        class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[900px]"
         :style="{ paddingRight: paddingRightStyle }"
       >
         <div
-          v-for="column in columns"
+          v-for="(column, colIndex) in columns"
           :key="column.id"
-          :class="getHeaderClasses(column.id)"
+          :class="getHeaderClasses(column.id, colIndex)"
           class="capitalize"
         >
           {{ column.header }}
@@ -19,35 +21,51 @@
         class="divide-y divide-outline-3 h-full overflow-visible"
         :class="{ 'pb-32': overflowCells }"
       >
+        <template v-if="items.length">
+          <div
+            v-for="item in items"
+            :key="item.id"
+            :style="{ paddingRight: paddingRightStyle }"
+            :class="rowsWrapperClasses"
+            tabindex="0"
+            @click="handleRowClick(item)"
+            @keypress="handleRowClick(item)"
+          >
+            <template v-for="(column, colIndex) in columns" :key="column.id">
+              <div :class="getClasses(column.id, colIndex)" tabindex="0">
+                <slot :name="column.id" :item="item">
+                  <div class="text-gray-900 font-medium order-1">Placeholder</div>
+                </slot>
+              </div>
+            </template>
+            <div class="absolute right-1.5 gap-1 flex items-center p-0 h-full">
+              <div v-for="button in buttons" :key="button.label">
+                <FormButton
+                  :icon-left="button.icon"
+                  size="sm"
+                  color="secondary"
+                  hide-text
+                  :class="button.class"
+                  :text-color="button.textColor"
+                  :to="isString(button.action) ? button.action : undefined"
+                  @click.stop="!isString(button.action) ? button.action(item) : noop"
+                />
+              </div>
+            </div>
+          </div>
+        </template>
         <div
-          v-for="item in items"
-          :key="item.id"
+          v-else
+          tabindex="0"
           :style="{ paddingRight: paddingRightStyle }"
           :class="rowsWrapperClasses"
-          tabindex="0"
-          @click="handleRowClick(item)"
-          @keypress="handleRowClick(item)"
         >
-          <template v-for="(column, colIndex) in columns" :key="column.id">
-            <div :class="getClasses(column.id, colIndex)" tabindex="0">
-              <slot :name="column.id" :item="item">
-                <div class="text-gray-900 font-medium order-1">Placeholder</div>
-              </slot>
-            </div>
-          </template>
-          <div class="absolute right-1.5 gap-1 flex items-center p-0 h-full">
-            <div v-for="button in buttons" :key="button.label">
-              <FormButton
-                :icon-left="button.icon"
-                size="sm"
-                color="secondary"
-                hide-text
-                :class="button.class"
-                :text-color="button.textColor"
-                :to="isString(button.action) ? button.action : undefined"
-                @click.stop="!isString(button.action) ? button.action(item) : noop"
-              />
-            </div>
+          <div :class="getClasses(undefined, 0)" tabindex="0">
+            <slot name="empty">
+              <div class="w-full text-center label-light text-foreground-2 italic">
+                {{ emptyMessage }}
+              </div>
+            </slot>
           </div>
         </div>
       </div>
@@ -84,8 +102,9 @@ const props = withDefaults(
     overflowCells?: boolean
     onRowClick?: (item: T) => void
     rowItemsAlign?: 'center' | 'stretch'
+    emptyMessage?: string
   }>(),
-  { rowItemsAlign: 'center' }
+  { rowItemsAlign: 'center', emptyMessage: 'No data found' }
 )
 
 const paddingRightStyle = computed(() => {
@@ -102,7 +121,7 @@ const rowsWrapperClasses = computed(() => {
     'relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[900px] bg-foundation'
   ]
 
-  if (props.onRowClick) {
+  if (props.onRowClick && props.items.length) {
     classParts.push('cursor-pointer hover:bg-primary-muted')
   }
 
@@ -118,17 +137,30 @@ const rowsWrapperClasses = computed(() => {
   return classParts.join(' ')
 })
 
-const getHeaderClasses = (column: C): string => {
-  return props.columns.find((c) => c.id === column)?.classes || ''
-}
-
-const getClasses = (column: C, colIndex: number): string => {
-  const columnClass = getHeaderClasses(column)
+const getHeaderClasses = (column: C | undefined, colIndex: number): string => {
+  const classParts = [
+    column ? props.columns.find((c) => c.id === column)?.classes : '' || ''
+  ]
 
   if (colIndex === 0) {
-    return `bg-transparent py-3 pr-5 px-1 ${columnClass}`
+    classParts.push('px-1')
+  } else {
+    classParts.push('lg:p-0 px-1')
   }
-  return `lg:p-0 px-1 my-2 ${columnClass}`
+
+  return classParts.join(' ')
+}
+
+const getClasses = (column: C | undefined, colIndex: number): string => {
+  const classParts = [getHeaderClasses(column, colIndex)]
+
+  if (colIndex === 0) {
+    classParts.push(`bg-transparent py-3 ${column ? 'pr-5' : 'col-span-full'}`)
+  } else {
+    classParts.push(`my-2`)
+  }
+
+  return classParts.join(' ')
 }
 
 const handleRowClick = (item: T) => {

@@ -94,13 +94,10 @@
             <span>{{ model?.commentThreadCount.totalCount }}</span>
             <ChatBubbleLeftRightIcon class="w-4 h-4" />
           </div>
-          <div v-if="model && model.automationStatus" class="text-xs text-foreground-2">
-            <ProjectPageModelsCardAutomationStatusRefactor
+          <div v-if="model?.automationsStatus">
+            <AutomateRunsTriggerStatus
               :project-id="project.id"
-              :model-or-version="{
-                ...model,
-                automationStatus: model.automationStatus
-              }"
+              :status="model.automationsStatus"
               :model-id="model.id"
             />
           </div>

@@ -267,3 +267,25 @@ export function getEmailFromAddress() {
 export function getMaximumProjectModelsPerPage() {
   return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
 }
+
+export function delayGraphqlResponsesBy() {
+  if (!isDevEnv()) return 0
+  return getIntFromEnv('DELAY_GQL_RESPONSES_BY', '0')
+}
+
+/**
+ * TODO: Remove, this is a temporary shortcut to avoid messing up the db schema which makes it difficult to jump to different branches
+ */
+export function skipAutomateMigrations() {
+  return getBooleanFromEnv('SKIP_AUTOMATE_MIGRATION_DEV')
+}
+
+export function getAutomateEncryptionKeysPath() {
+  if (!process.env.AUTOMATE_ENCRYPTION_KEYS_PATH) {
+    throw new MisconfiguredEnvironmentError(
+      'Automate encryption keys path environment variable (AUTOMATE_ENCRYPTION_KEYS_PATH) is not configured'
+    )
+  }
+
+  return process.env.AUTOMATE_ENCRYPTION_KEYS_PATH
+}

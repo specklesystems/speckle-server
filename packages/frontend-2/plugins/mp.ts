@@ -25,7 +25,7 @@ export default defineNuxtPlugin(async () => {
   mixpanel.init(mixpanelTokenId, {
     // eslint-disable-next-line camelcase
     api_host: mixpanelApiHost,
-    debug: logCsrEmitProps && !!process.dev
+    debug: !!process.dev && logCsrEmitProps
   })
 
   return {

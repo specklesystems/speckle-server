@@ -2,6 +2,7 @@
   <div :class="[fullWidth ? 'w-full' : '', wrapperClasses]">
     <label :for="name" :class="labelClasses">
       <span>{{ title }}</span>
+      <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
     </label>
     <div class="relative">
       <div
@@ -45,7 +46,7 @@
       />
       <slot name="input-right">
         <a
-          v-if="showClear"
+          v-if="shouldShowClear"
           title="Clear input"
           class="absolute inset-y-0 right-0 flex items-center pr-2 cursor-pointer"
           @click="clear"
@@ -58,15 +59,15 @@
           v-if="errorMessage"
           :class="[
             'pointer-events-none absolute inset-y-0 right-0 flex items-center',
-            showClear ? 'pr-8' : 'pr-2'
+            shouldShowClear ? 'pr-8' : 'pr-2'
           ]"
         >
           <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
         </div>
         <div
-          v-if="showRequired && !errorMessage"
+          v-if="!showLabel && showRequired && !errorMessage"
           class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center text-danger opacity-50"
-          :class="[showClear ? 'pr-8' : 'pr-2']"
+          :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
         >
           *
         </div>
@@ -256,7 +257,8 @@ const {
   errorMessage,
   clear,
   focus,
-  labelClasses
+  labelClasses,
+  shouldShowClear
 } = useTextInputCore({
   props: toRefs(props),
   emit,
@@ -289,8 +291,8 @@ const iconClasses = computed((): string => {
   }
 
   if (!slots['input-right']) {
-    if (errorMessage.value || props.showClear) {
-      if (errorMessage.value && props.showClear) {
+    if (errorMessage.value || shouldShowClear.value) {
+      if (errorMessage.value && shouldShowClear.value) {
         classParts.push('pr-12')
       } else {
         classParts.push('pr-8')

@@ -61,6 +61,7 @@
       <div v-if="commentThreads.length === 0" class="pb-4">
         <ProjectPageLatestItemsCommentsEmptyState
           small
+          :show-button="canPostComment"
           @new-discussion="onNewDiscussion"
         />
       </div>
@@ -85,6 +86,7 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useCheckViewerCommentingAccess } from '~~/lib/viewer/composables/commentManagement'
 
 defineEmits(['close'])
 
@@ -126,6 +128,7 @@ const {
     openThread: { newThreadEditor }
   }
 } = useInjectedViewerInterfaceState()
+const canPostComment = useCheckViewerCommentingAccess()
 
 const showVisibilityOptions = ref(false)
 

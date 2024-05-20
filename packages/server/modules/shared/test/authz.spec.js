@@ -306,18 +306,24 @@ describe('AuthZ @shared', () => {
       expect(authResult.error.name).to.equal(expectedError.name)
     }
     it('Without streamId in the params it raises context error', async () => {
-      const step = contextRequiresStream(async () => ({ ur: 'bamboozled' }))
+      const step = contextRequiresStream({
+        getStream: async () => ({ ur: 'bamboozled' }),
+        getAutomationProject: async () => null
+      })
       const { authResult } = await step({ params: {} })
       expectAuthError(
-        new ContextError("The context doesn't have a streamId"),
+        new ContextError("The context doesn't have a streamId or automationId"),
         authResult
       )
     })
     it('If params is not defined it raises context error', async () => {
-      const step = contextRequiresStream(async () => ({ ur: 'bamboozled' }))
+      const step = contextRequiresStream({
+        getStream: async () => ({ ur: 'bamboozled' }),
+        getAutomationProject: async () => null
+      })
       const { authResult } = await step({})
       expectAuthError(
-        new ContextError("The context doesn't have a streamId"),
+        new ContextError("The context doesn't have a streamId or automationId"),
         authResult
       )
     })
@@ -326,7 +332,10 @@ describe('AuthZ @shared', () => {
         id: 'foo',
         name: 'bar'
       }
-      const step = contextRequiresStream(async () => demoStream)
+      const step = contextRequiresStream({
+        getStream: async () => demoStream,
+        getAutomationProject: async () => null
+      })
       const { context } = await step({
         context: {},
         params: { streamId: 'this is fake and its fine' }
@@ -334,15 +343,21 @@ describe('AuthZ @shared', () => {
       expect(context.stream).to.deep.equal(demoStream)
     })
     it('If context is not defined return auth failure', async () => {
-      const step = contextRequiresStream(async () => {})
+      const step = contextRequiresStream({
+        getStream: async () => {},
+        getAutomationProject: async () => null
+      })
       const { authResult } = await step({ params: { streamId: 'the need for stream' } })
 
       expectAuthError(new ContextError('The context is not defined'), authResult)
     })
     it('If stream getter raises, the error is handled', async () => {
       const errorMessage = 'oh dangit'
-      const step = contextRequiresStream(async () => {
-        throw new Error(errorMessage)
+      const step = contextRequiresStream({
+        getStream: async () => {
+          throw new Error(errorMessage)
+        },
+        getAutomationProject: async () => null
       })
       const { authResult } = await step({
         context: {},
@@ -352,7 +367,10 @@ describe('AuthZ @shared', () => {
       expectAuthError(new ContextError(errorMessage), authResult)
     })
     it("If stream getter doesn't find a stream it returns fatal auth failure", async () => {
-      const step = contextRequiresStream(async () => {})
+      const step = contextRequiresStream({
+        getStream: async () => {},
+        getAutomationProject: async () => null
+      })
       const { authResult } = await step({
         params: { streamId: 'the need for stream' },
         context: {}
