@@ -12,7 +12,6 @@ import {
   Vector3
 } from 'three'
 import {
-  PointerChangeEvent,
   SmoothControlsOptions,
   SmoothOrbitControls
 } from './controls/SmoothOrbitControls'
@@ -20,6 +19,7 @@ import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCam
 import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera'
 import Logger from 'js-logger'
 import type { IViewer, SpeckleView } from '../../IViewer'
+import { FlyControls } from './controls/FlyControls'
 
 export type CanonicalView =
   | 'front'
@@ -84,6 +84,7 @@ export class CameraController extends Extension implements SpeckleCamera {
   protected orthographicCamera: OrthographicCamera
   protected _lastCameraChanged: boolean = false
   protected _options: Required<CameraControllerOptions> = DefaultControllerOptions
+  protected _fly: FlyControls
 
   get renderingCamera(): PerspectiveCamera | OrthographicCamera {
     return this._renderingCamera
@@ -175,25 +176,27 @@ export class CameraController extends Extension implements SpeckleCamera {
     // this._controls.addEventListener('control', () => {
     //   this.emit(CameraEvent.Dynamic)
     // })
-    this._controls = new SmoothOrbitControls(
-      this.perspectiveCamera,
-      this.viewer.getContainer(),
-      this.viewer.getRenderer().renderer,
-      this.viewer.getRenderer().scene,
-      this.viewer.World,
-      this._options
-    )
-    this._controls.enableInteraction()
-    this._controls.setDamperDecayTime(60)
-    this._controls.basisTransform = new Matrix4().makeRotationFromEuler(
-      new Euler(Math.PI * 0.5)
-    )
-    this._controls.on(PointerChangeEvent.PointerChangeStart, () => {
-      this.emit(CameraEvent.InteractionStarted)
-    })
-    this._controls.on(PointerChangeEvent.PointerChangeEnd, () => {
-      this.emit(CameraEvent.InteractionEnded)
-    })
+    // this._controls = new SmoothOrbitControls(
+    //   this.perspectiveCamera,
+    //   this.viewer.getContainer(),
+    //   this.viewer.getRenderer().renderer,
+    //   this.viewer.getRenderer().scene,
+    //   this.viewer.World,
+    //   this._options
+    // )
+    // this._controls.enableInteraction()
+    // this._controls.setDamperDecayTime(60)
+    // this._controls.basisTransform = new Matrix4().makeRotationFromEuler(
+    //   new Euler(Math.PI * 0.5)
+    // )
+    // this._controls.on(PointerChangeEvent.PointerChangeStart, () => {
+    //   this.emit(CameraEvent.InteractionStarted)
+    // })
+    // this._controls.on(PointerChangeEvent.PointerChangeEnd, () => {
+    //   this.emit(CameraEvent.InteractionEnded)
+    // })
+
+    this._fly = new FlyControls(this._renderingCamera, this.viewer.getContainer())
 
     this.viewer.getRenderer().speckleCamera = this
   }
@@ -256,13 +259,14 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.emit(CameraEvent.Dynamic)
   }
 
-  public onEarlyUpdate() {
-    const changed = this._controls.update(undefined, this.viewer.World.worldBox)
+  public onEarlyUpdate(delta: number) {
+    const changed = true //this._controls.update(undefined, this.viewer.World.worldBox)
     if (changed !== this._lastCameraChanged) {
       this.emit(changed ? CameraEvent.Dynamic : CameraEvent.Stationary)
     }
     this.emit(CameraEvent.FrameUpdate, changed)
-    this._lastCameraChanged = changed
+    // this._lastCameraChanged = changed
+    this._fly.update(delta)
   }
 
   public onLateUpdate(): void {
@@ -418,7 +422,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       //   promises.push(this.zoomTo(zoom, enableTransition))
     }
     targetSphere.radius = radius * fit
-    this._controls.fitToSphere(targetSphere)
+    // this._controls.fitToSphere(targetSphere)
 
     this.setCameraPlanes(box, fit)
   }

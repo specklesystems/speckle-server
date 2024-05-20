@@ -103,11 +103,11 @@ export interface SmoothControlsOptions {
 }
 
 // Constants
-const KEYBOARD_ORBIT_INCREMENT = Math.PI / 8
+// const KEYBOARD_ORBIT_INCREMENT = Math.PI / 8
 const ZOOM_SENSITIVITY = 0.08
 
 // The move size on pan key event
-const PAN_KEY_INCREMENT = 10
+// const PAN_KEY_INCREMENT = 10
 
 export const KeyCode = {
   PAGE_UP: 33,
@@ -260,13 +260,13 @@ export class SmoothOrbitControls extends EventEmitter {
       this._container.addEventListener('pointercancel', this.onPointerUp)
 
       this._container.addEventListener('wheel', this.onWheel)
-      this._container.addEventListener('keydown', this.onKeyDown)
+      document.addEventListener('keydown', this.onKeyDown)
       // This little beauty is to work around a WebKit bug that otherwise makes
       // touch events randomly not cancelable.
       this._container.addEventListener('touchmove', () => {}, { passive: false })
       this._container.addEventListener('contextmenu', this.onContext)
 
-      //   this.element.style.cursor = 'grab'
+      // this.element.style.cursor = 'grab'
       this._interactionEnabled = true
     }
   }
@@ -278,7 +278,7 @@ export class SmoothOrbitControls extends EventEmitter {
       this._container.removeEventListener('pointerup', this.onPointerUp)
       this._container.removeEventListener('pointercancel', this.onPointerUp)
       this._container.removeEventListener('wheel', this.onWheel)
-      this._container.removeEventListener('keydown', this.onKeyDown)
+      document.removeEventListener('keydown', this.onKeyDown)
       this._container.removeEventListener('contextmenu', this.onContext)
 
       //   element.style.cursor = ''
@@ -1043,20 +1043,20 @@ export class SmoothOrbitControls extends EventEmitter {
   }
 
   private onKeyDown = (event: KeyboardEvent) => {
+    event
     // We track if the key is actually one we respond to, so as not to
     // accidentally clobber unrelated key inputs when the <model-viewer> has
     // focus.
-
-    const relevantKey =
-      event.shiftKey && this.enablePan
-        ? this.panKeyCodeHandler(event)
-        : this.orbitZoomKeyCodeHandler(event)
-
-    if (relevantKey) {
-      event.preventDefault()
-      // TO DO
-      //   this.dispatchEvent({ type: 'user-interaction' })
-    }
+    // const relevantKey =
+    //   event.shiftKey && this.enablePan
+    //     ? this.panKeyCodeHandler(event)
+    //     : this.orbitZoomKeyCodeHandler(event)
+    // this.orbitZoomKeyCodeHandler(event)
+    // if (relevantKey) {
+    //   event.preventDefault()
+    // TO DO
+    //   this.dispatchEvent({ type: 'user-interaction' })
+    // }
   }
 
   /**
@@ -1065,44 +1065,46 @@ export class SmoothOrbitControls extends EventEmitter {
    * @param event The keyboard event for the .key value
    * @returns boolean to indicate if the key event has been handled
    */
-  private orbitZoomKeyCodeHandler(event: KeyboardEvent) {
-    let relevantKey = true
-    switch (event.key) {
-      case 'PageUp':
-        this.userAdjustOrbit(
-          0,
-          0,
-          ZOOM_SENSITIVITY * this._options.zoomSensitivity * +this._options.enableZoom
-        )
-        break
-      case 'PageDown':
-        this.userAdjustOrbit(
-          0,
-          0,
-          -1 *
-            ZOOM_SENSITIVITY *
-            this._options.zoomSensitivity *
-            +this._options.enableZoom
-        )
-        break
-      case 'ArrowUp':
-        this.userAdjustOrbit(0, -KEYBOARD_ORBIT_INCREMENT, 0)
-        break
-      case 'ArrowDown':
-        this.userAdjustOrbit(0, KEYBOARD_ORBIT_INCREMENT, 0)
-        break
-      case 'ArrowLeft':
-        this.userAdjustOrbit(-KEYBOARD_ORBIT_INCREMENT, 0, 0)
-        break
-      case 'ArrowRight':
-        this.userAdjustOrbit(KEYBOARD_ORBIT_INCREMENT, 0, 0)
-        break
-      default:
-        relevantKey = false
-        break
-    }
-    return relevantKey
-  }
+  // private orbitZoomKeyCodeHandler(event: KeyboardEvent) {
+  //   let relevantKey = true
+  //   this.initializePan()
+  //   console.log(event.key)
+  //   switch (event.key) {
+  //     case 'w':
+  //       this.userAdjustOrbit(
+  //         0,
+  //         0,
+  //         -1 *
+  //           ZOOM_SENSITIVITY *
+  //           this._options.zoomSensitivity *
+  //           +this._options.enableZoom
+  //       )
+  //       break
+  //     case 's':
+  //       this.userAdjustOrbit(
+  //         0,
+  //         0,
+  //         ZOOM_SENSITIVITY * this._options.zoomSensitivity * +this._options.enableZoom
+  //       )
+  //       break
+  //     case 'a':
+  //       this.movePan(PAN_KEY_INCREMENT, 0)
+  //       break
+  //     case 'd':
+  //       this.movePan(-1 * PAN_KEY_INCREMENT, 0)
+  //       break
+  //     case 'q':
+  //       this.userAdjustOrbit(-KEYBOARD_ORBIT_INCREMENT, 0, 0)
+  //       break
+  //     case 'e':
+  //       this.userAdjustOrbit(KEYBOARD_ORBIT_INCREMENT, 0, 0)
+  //       break
+  //     default:
+  //       relevantKey = false
+  //       break
+  //   }
+  //   return relevantKey
+  // }
 
   /**
    * Handles the Pan key presses
@@ -1110,28 +1112,28 @@ export class SmoothOrbitControls extends EventEmitter {
    * @param event The keyboard event for the .key value
    * @returns boolean to indicate if the key event has been handled
    */
-  private panKeyCodeHandler(event: KeyboardEvent) {
-    this.initializePan()
-    let relevantKey = true
-    switch (event.key) {
-      case 'ArrowUp':
-        this.movePan(0, -1 * PAN_KEY_INCREMENT) // This is the negative one so that the
-        // model appears to move as the arrow
-        // direction rather than the view moving
-        break
-      case 'ArrowDown':
-        this.movePan(0, PAN_KEY_INCREMENT)
-        break
-      case 'ArrowLeft':
-        this.movePan(-1 * PAN_KEY_INCREMENT, 0)
-        break
-      case 'ArrowRight':
-        this.movePan(PAN_KEY_INCREMENT, 0)
-        break
-      default:
-        relevantKey = false
-        break
-    }
-    return relevantKey
-  }
+  // private panKeyCodeHandler(event: KeyboardEvent) {
+  //   this.initializePan()
+  //   let relevantKey = true
+  //   switch (event.key) {
+  //     case 'ArrowUp':
+  //       this.movePan(0, -1 * PAN_KEY_INCREMENT) // This is the negative one so that the
+  //       // model appears to move as the arrow
+  //       // direction rather than the view moving
+  //       break
+  //     case 'ArrowDown':
+  //       this.movePan(0, PAN_KEY_INCREMENT)
+  //       break
+  //     case 'ArrowLeft':
+  //       this.movePan(-1 * PAN_KEY_INCREMENT, 0)
+  //       break
+  //     case 'ArrowRight':
+  //       this.movePan(PAN_KEY_INCREMENT, 0)
+  //       break
+  //     default:
+  //       relevantKey = false
+  //       break
+  //   }
+  //   return relevantKey
+  // }
 }
