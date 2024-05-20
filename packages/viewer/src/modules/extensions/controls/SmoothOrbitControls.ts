@@ -195,6 +195,7 @@ export class SmoothOrbitControls extends EventEmitter {
     world: World,
     options: Required<SmoothControlsOptions>
   ) {
+    scene
     super()
     this._controlTarget = controlTarget
     this._container = container
@@ -208,8 +209,8 @@ export class SmoothOrbitControls extends EventEmitter {
     const material2 = new MeshBasicMaterial({ color: 0xff0000 })
     this.cursorSphere = new Mesh(geometry, material2)
     this.cursorSphere.layers.set(ObjectLayers.OVERLAY)
-    scene.add(this.originSphere)
-    scene.add(this.cursorSphere)
+    // scene.add(this.originSphere)
+    // scene.add(this.cursorSphere)
 
     this.setOrbit(2.356, 0.955, 1)
     this.jumpToGoal()
