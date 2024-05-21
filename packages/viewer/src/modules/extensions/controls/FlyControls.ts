@@ -111,12 +111,13 @@ class FlyControls extends EventDispatcher {
     // assumes camera.up is y-up
 
     const camera = this.camera
+    const dir = camera.getWorldDirection(new Vector3())
+    camera.position.addScaledVector(dir, distance)
+    // _vector.setFromMatrixColumn(camera.matrix, 0)
 
-    _vector.setFromMatrixColumn(camera.matrix, 0)
+    // _vector.crossVectors(new Vector3(0, 0, 1), _vector)
 
-    _vector.crossVectors(camera.up, _vector)
-
-    camera.position.addScaledVector(_vector, distance)
+    // camera.position.addScaledVector(_vector, distance)
   }
 
   moveRightF(distance: number) {
