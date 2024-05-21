@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
   <div
-    v-if="modelValue.isVisible"
+    v-if="shouldShowThreadBubble"
     class="absolute pointer-events-auto"
     :style="{
       ...modelValue.style,
@@ -72,6 +72,7 @@
       </ViewerCommentsPortalOrDiv>
     </div>
   </div>
+  <div v-else></div>
 </template>
 <script setup lang="ts">
 import { PlusIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
@@ -88,6 +89,7 @@ import {
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
 
@@ -117,6 +119,7 @@ const isPostingNewThread = ref(false)
 // })
 const createThread = useSubmitComment()
 const { isLoggedIn } = useActiveUser()
+const { objects } = useSelectionUtilities()
 
 const onThreadClick = () => {
   const newIsExpanded = !props.modelValue.isExpanded
@@ -177,6 +180,10 @@ const trackAttachAndOpenFilePicker = () => {
   editor.value?.openFilePicker()
   mp.track('Comment Action', { type: 'action', name: 'attach' })
 }
+
+const shouldShowThreadBubble = computed(() => {
+  return props.modelValue.isVisible && objects.value.length > 0
+})
 
 onKeyDown('Escape', () => {
   if (props.modelValue.isExpanded) {

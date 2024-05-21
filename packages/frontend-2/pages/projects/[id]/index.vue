@@ -115,6 +115,8 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
 }
 
 const isOwner = computed(() => project.value?.role === Roles.Stream.Owner)
+const isAutomateEnabled = useIsAutomateModuleEnabled()
+
 const pageTabItems = computed((): LayoutPageTabItem[] => {
   const items: LayoutPageTabItem[] = [
     {
@@ -131,7 +133,7 @@ const pageTabItems = computed((): LayoutPageTabItem[] => {
     }
   ]
 
-  if (isOwner.value) {
+  if (isOwner.value && isAutomateEnabled.value) {
     items.push({
       title: 'Automations',
       id: 'automations',
