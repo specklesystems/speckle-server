@@ -55,7 +55,8 @@ export default defineNuxtPlugin(async () => {
           (user, { resolveDistinctId }) => {
             const distinctId = resolveDistinctId(user)
             if (distinctId && survicateInstance) {
-              survicateInstance.setVisitorTraits({ distinctId })
+              // eslint-disable-next-line camelcase
+              survicateInstance.setVisitorTraits({ user_id: distinctId })
             }
           },
           { immediate: true }
