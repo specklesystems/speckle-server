@@ -20,6 +20,8 @@ class FlyControls extends EventDispatcher {
   protected moveBackward = false
   protected moveLeft = false
   protected moveRight = false
+  protected moveUp = false
+  protected moveDown = false
   protected velocity = new Vector3()
   protected direction = new Vector3()
 
@@ -44,24 +46,23 @@ class FlyControls extends EventDispatcher {
   update(delta: number) {
     this.velocity.x -= this.velocity.x * 10.0 * delta
     this.velocity.z -= this.velocity.z * 10.0 * delta
-
-    this.velocity.y -= 9.8 * 100.0 * delta // 100.0 = mass
+    this.velocity.y -= this.velocity.y * 10.0 * delta
 
     this.direction.z = Number(this.moveForward) - Number(this.moveBackward)
     this.direction.x = Number(this.moveRight) - Number(this.moveLeft)
+    this.direction.y = Number(this.moveUp) - Number(this.moveDown)
     this.direction.normalize() // this ensures consistent movements in all directions
 
     if (this.moveForward || this.moveBackward)
       this.velocity.z -= this.direction.z * 400.0 * delta
     if (this.moveLeft || this.moveRight)
       this.velocity.x -= this.direction.x * 400.0 * delta
+    if (this.moveUp || this.moveDown)
+      this.velocity.y -= this.direction.y * 400.0 * delta
 
-    // const t = new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5))
-    // const tInv = new Matrix4().copy(t).invert()
-    // this.camera.position.applyMatrix4(tInv)
     this.moveRightF(-this.velocity.x * delta)
     this.moveForwardF(-this.velocity.z * delta)
-    // this.camera.position.applyMatrix4(t)
+    this.moveUpF(-this.velocity.y * delta)
   }
 
   connect() {
@@ -96,16 +97,6 @@ class FlyControls extends EventDispatcher {
     this.disconnect()
   }
 
-  getObject() {
-    // retaining this method for backward compatibility
-
-    return this.camera
-  }
-
-  getDirection(v: Vector3) {
-    return v.set(0, 0, -1).applyQuaternion(this.camera.quaternion)
-  }
-
   moveForwardF(distance: number) {
     // move forward parallel to the xz-plane
     // assumes camera.up is y-up
@@ -118,6 +109,15 @@ class FlyControls extends EventDispatcher {
     // _vector.crossVectors(new Vector3(0, 0, 1), _vector)
 
     // camera.position.addScaledVector(_vector, distance)
+  }
+
+  moveUpF(distance: number) {
+    const camera = this.camera
+    _vector.setFromMatrixColumn(camera.matrix, 1)
+
+    // _vector.crossVectors(new Vector3(0, 0, 1), _vector)
+
+    camera.position.addScaledVector(_vector, distance)
   }
 
   moveRightF(distance: number) {
@@ -203,6 +203,16 @@ class FlyControls extends EventDispatcher {
       case 'KeyD':
         this.moveRight = true
         break
+
+      case 'PageUp':
+      case 'KeyQ':
+        this.moveDown = true
+        break
+
+      case 'PageDown':
+      case 'KeyE':
+        this.moveUp = true
+        break
     }
   }
 
@@ -226,6 +236,16 @@ class FlyControls extends EventDispatcher {
       case 'ArrowRight':
       case 'KeyD':
         this.moveRight = false
+        break
+
+      case 'PageUp':
+      case 'KeyQ':
+        this.moveDown = false
+        break
+
+      case 'PageDown':
+      case 'KeyE':
+        this.moveUp = false
         break
     }
   }
