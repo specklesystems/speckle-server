@@ -11,7 +11,7 @@
         <FormTextInput
           v-model="newModelName"
           color="foundation"
-          name="name"
+          name="modelName"
           label="Model Name"
           show-label
           placeholder="model/name/here"

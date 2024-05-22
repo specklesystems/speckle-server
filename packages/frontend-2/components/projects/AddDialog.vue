@@ -4,7 +4,7 @@
     <form class="flex flex-col text-foreground" @submit="onSubmit">
       <div class="flex flex-col space-y-3 mb-6">
         <FormTextInput
-          name="name"
+          name="projectName"
           label="Project name"
           placeholder="Project name"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
