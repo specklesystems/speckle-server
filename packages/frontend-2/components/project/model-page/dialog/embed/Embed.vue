@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    :max-width="project.visibility == ProjectVisibility.Private ? 'sm' : 'md'"
+    :max-width="isPrivate ? 'sm' : 'md'"
     :buttons="isPrivate ? nonDiscoverableButtons : discoverableButtons"
   >
     <template v-if="isPrivate" #header>Change Access Permissions</template>
