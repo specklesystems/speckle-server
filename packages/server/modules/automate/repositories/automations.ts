@@ -147,9 +147,9 @@ const upsertAutomationRun = ({ db }: { db: Knex }) =>
 const findFunctionRun = ({ db }: { db: Knex }) =>
   async function (functionRunId: string): Promise<
     | (AutomationFunctionRunRecord & {
-      automationId: string
-      automationRevisionId: string
-    })
+        automationId: string
+        automationRevisionId: string
+      })
     | null
   > {
     const q = db<AutomationFunctionRunRecord>(AutomationFunctionRuns.name)
@@ -182,108 +182,20 @@ const findFunctionRun = ({ db }: { db: Knex }) =>
     return (runs[0] ?? null) as (typeof runs)[0] | null
   }
 
-export type GetFunctionRunsForAutomationRunIdsItem = AutomationFunctionRunRecord & {
-  automationRunStatus: AutomationRunStatus
-  automationRunExecutionEngineId: string | null
-}
+const insertAutomation = ({ db }: { db: Knex }) =>
+  async function (
+    automation: AutomationRecord,
+    automationToken: AutomationTokenRecord
+  ): Promise<{ automation: AutomationRecord; token: AutomationTokenRecord }> {
+    const [newAutomation] = await db(Automations.name)
+      .insert(pick(automation, Automations.withoutTablePrefix.cols))
+      .returning<AutomationRecord[]>('*')
+    const [newToken] = await db(AutomationTokens.name)
+      .insert(pick(automationToken, AutomationTokens.withoutTablePrefix.cols))
+      .returning<AutomationTokenRecord[]>('*')
 
-export async function getFunctionRunsForAutomationRunIds(params: {
-  automationRunIds?: string[]
-  functionRunIds?: string[]
-}) {
-  const { automationRunIds, functionRunIds } = params
-  if (!automationRunIds && !functionRunIds) {
-    throw new LogicError('Either automationRunIds or functionRunIds must be set')
+    return { automation: newAutomation, token: newToken }
   }
-
-  if (!automationRunIds?.length && !functionRunIds?.length) return {}
-
-  const q = AutomationFunctionRuns.knex()
-    .select<Array<GetFunctionRunsForAutomationRunIdsItem>>([
-      ...AutomationFunctionRuns.cols,
-      AutomationRuns.colAs('status', 'automationRunStatus'),
-      AutomationRuns.colAs('executionEngineRunId', 'automationRunExecutionEngineId')
-    ])
-    .innerJoin(
-      AutomationRuns.name,
-      AutomationRuns.col.id,
-      AutomationFunctionRuns.col.runId
-    )
-
-  if (automationRunIds?.length) {
-    q.whereIn(AutomationFunctionRuns.col.runId, automationRunIds)
-  }
-
-  if (functionRunIds?.length) {
-    q.whereIn(AutomationFunctionRuns.col.id, functionRunIds)
-  }
-
-  const res = await q
-
-  return keyBy(res, (r) => r.runId)
-}
-
-export async function getFullAutomationRunById(
-  automationRunId: string
-): Promise<AutomationRunWithTriggersFunctionRuns | null> {
-  const run = await AutomationRuns.knex()
-    .select<
-      Array<{
-        runs: AutomationRunRecord[]
-        triggers: AutomationRunTriggerRecord[]
-        functionRuns: AutomationFunctionRunRecord[]
-        automationId: string
-      }>
-    >([
-      AutomationRuns.groupArray('runs'),
-      AutomationRunTriggers.groupArray('triggers'),
-      AutomationFunctionRuns.groupArray('functionRuns'),
-      knex.raw(`(array_agg(??))[1] as "automationId"`, [
-        AutomationRevisions.col.automationId
-      ])
-    ])
-    .where(AutomationRuns.col.id, automationRunId)
-    .innerJoin(
-      AutomationRevisions.name,
-      AutomationRevisions.col.id,
-      AutomationRuns.col.automationRevisionId
-    )
-    .innerJoin(
-      AutomationRunTriggers.name,
-      AutomationRunTriggers.col.automationRunId,
-      AutomationRuns.col.id
-    )
-    .innerJoin(
-      AutomationFunctionRuns.name,
-      AutomationFunctionRuns.col.runId,
-      AutomationRuns.col.id
-    )
-    .groupBy(AutomationRuns.col.id)
-    .first()
-
-  return run
-    ? {
-      ...formatJsonArrayRecords(run.runs)[0],
-      triggers: formatJsonArrayRecords(run.triggers),
-      functionRuns: formatJsonArrayRecords(run.functionRuns),
-      automationId: run.automationId
-    }
-    : null
-}
-
-export async function storeAutomation(
-  automation: AutomationRecord,
-  automationToken: AutomationTokenRecord
-) {
-  const [newAutomation] = await Automations.knex()
-    .insert(pick(automation, Automations.withoutTablePrefix.cols))
-    .returning<AutomationRecord[]>('*')
-  const [newToken] = await AutomationTokens.knex()
-    .insert(pick(automationToken, AutomationTokens.withoutTablePrefix.cols))
-    .returning<AutomationTokenRecord[]>('*')
-
-  return { automation: newAutomation, token: newToken }
-}
 
 export type InsertableAutomationRevisionFunction = Omit<
   AutomateRevisionFunctionRecord,
@@ -303,22 +215,21 @@ export type InsertableAutomationRevision = SetOptional<
   triggers: InsertableAutomationRevisionTrigger[]
 }
 
-export async function updateAutomationRevision(
-  revision: SetRequired<Partial<AutomationRevisionRecord>, 'id'>
-) {
-  const [ret] = await AutomationRevisions.knex()
-    .where(AutomationRevisions.col.id, revision.id)
-    .update(pick(revision, AutomationRevisions.withoutTablePrefix.cols))
-    .returning<AutomationRevisionRecord[]>('*')
+const updateAutomationRevision = ({ db }: { db: Knex }) =>
+  async function (revision: SetRequired<Partial<AutomationRevisionRecord>, 'id'>) {
+    const [ret] = await db<AutomationRevisionRecord>(AutomationRevisions.name)
+      .where(AutomationRevisions.col.id, revision.id)
+      .update(pick(revision, AutomationRevisions.withoutTablePrefix.cols))
+      .returning('*')
 
-  return ret
-}
+    return ret
+  }
 
 export type StoredInsertableAutomationRevision = Awaited<
   ReturnType<typeof storeAutomationRevision>
 >
 
-export async function storeAutomationRevision(revision: InsertableAutomationRevision) {
+const storeAutomationRevision = (revision: InsertableAutomationRevision) {
   const id = revision.id || generateRevisionId()
   const rev = _.pick(revision, AutomationRevisions.withoutTablePrefix.cols)
   const [newRev] = await AutomationRevisions.knex()
@@ -351,11 +262,11 @@ export async function storeAutomationRevision(revision: InsertableAutomationRevi
     // Unset 'active in revision' for all other revisions
     ...(revision.active
       ? [
-        AutomationRevisions.knex()
-          .where(AutomationRevisions.col.automationId, newRev.automationId)
-          .andWhereNot(AutomationRevisions.col.id, newRev.id)
-          .update(AutomationRevisions.withoutTablePrefix.col.active, false)
-      ]
+          AutomationRevisions.knex()
+            .where(AutomationRevisions.col.automationId, newRev.automationId)
+            .andWhereNot(AutomationRevisions.col.id, newRev.id)
+            .update(AutomationRevisions.withoutTablePrefix.col.active, false)
+        ]
       : [])
   ])
 
@@ -836,9 +747,9 @@ export const getAutomationProjects = async (params: {
       Automations.colAs('id', 'automationId'),
       ...(userId
         ? [
-          // Getting first role from grouped results
-          knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
-        ]
+            // Getting first role from grouped results
+            knex.raw(`(array_agg("stream_acl"."role"))[1] as role`)
+          ]
         : [])
     ])
     .whereIn(Automations.col.id, automationIds)
@@ -989,5 +900,7 @@ export const createAutomationRepository = ({ db }: { db: Knex }) => ({
   upsertAutomationFunctionRun: upsertAutomationFunctionRun({ db }),
   queryActiveTriggerDefinitions: queryActiveTriggerDefinitions({ db }),
   upsertAutomationRun: upsertAutomationRun({ db }),
-  findFunctionRun: findFunctionRun({ db })
+  findFunctionRun: findFunctionRun({ db }),
+  insertAutomation: insertAutomation({ db }),
+  updateAutomationRevision: updateAutomationRevision({ db })
 })
