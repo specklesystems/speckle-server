@@ -10,7 +10,7 @@
     <div v-if="isPrivate">
       <CommonAlert color="info">
         <template #title>
-          Model embedding only works if the project is “Discoverable”.
+          Model embedding does not work when the project is "Private".
         </template>
         <template #description>
           <p>
