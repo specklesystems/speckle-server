@@ -54,6 +54,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { markRaw } from 'vue'
 import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
+import { SpeckleViewer } from '@speckle/shared'
 
 defineEmits(['close'])
 
@@ -89,7 +90,14 @@ const rootNodes = computed(() => {
 
   if (!worldTree.value) return []
   expandLevel.value = -1
-  const nodes = []
+
+  // Arrays to hold categorized nodes
+  const versionNodes = []
+  const modelNodes = []
+  const folderNodes = []
+  const allModelNodes = []
+  const objectNodes = []
+
   const rootNodes = worldTree.value._root.children as ExplorerNode[]
   for (const node of rootNodes) {
     const objectId = ((node.model as Record<string, unknown>).id as string)
@@ -104,13 +112,36 @@ const rootNodes = computed(() => {
       )?.model
       raw.name = model?.name
       raw.type = model?.id
-    } else {
-      raw.name = 'Object'
-      raw.type = 'Single Object'
+
+      if (resourceItem.versionId) {
+        versionNodes.push(node.model as ExplorerNode)
+      } else {
+        modelNodes.push(node.model as ExplorerNode)
+      }
+    } else if (resourceItem) {
+      const resource = SpeckleViewer.ViewerRoute.parseUrlParameters(
+        resourceItem.objectId
+      )[0]
+
+      if (SpeckleViewer.ViewerRoute.isModelFolderResource(resource)) {
+        folderNodes.push(node.model as ExplorerNode)
+      } else if (SpeckleViewer.ViewerRoute.isAllModelsResource(resource)) {
+        allModelNodes.push(node.model as ExplorerNode)
+      } else if (SpeckleViewer.ViewerRoute.isObjectResource(resource)) {
+        raw.name = 'Object'
+        raw.type = 'Single Object'
+        objectNodes.push(node.model as ExplorerNode)
+      }
     }
-    nodes.push(node.model as ExplorerNode)
   }
 
-  return nodes
+  // Combine the categorized nodes in the same order as ViewerLayoutPanel
+  return [
+    ...versionNodes,
+    ...modelNodes,
+    ...folderNodes,
+    ...allModelNodes,
+    ...objectNodes
+  ]
 })
 </script>
