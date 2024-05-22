@@ -11,7 +11,7 @@
         will be moved to.
       </div>
       <FormTextInput
-        name="name"
+        name="modelName"
         label="Model Name"
         placeholder="model/name/here"
         help="Use forward slashes in the model name to nest it below other models."

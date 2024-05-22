@@ -24,7 +24,7 @@
       <div class="flex flex-col gap-6 mb-6">
         <FormTextInput
           v-model="newName"
-          name="name"
+          name="modelName"
           show-label
           label="Model Name"
           placeholder="model/name/here"

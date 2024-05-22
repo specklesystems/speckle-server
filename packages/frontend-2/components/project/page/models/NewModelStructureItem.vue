@@ -19,7 +19,7 @@
         <div class="flex-grow">
           <FormTextInput
             v-model="name"
-            name="name"
+            name="modelName"
             label="Model name"
             placeholder="name"
             auto-focus

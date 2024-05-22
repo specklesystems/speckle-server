@@ -12,7 +12,7 @@
       <div class="sm:w-7/12">
         <FormTextInput
           size="lg"
-          name="name"
+          name="functionName"
           label="Name"
           placeholder="Function Name"
           help="This will be used as the function's display name and also as the name of the Git repository."
