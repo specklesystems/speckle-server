@@ -8,6 +8,7 @@ import {
   CommitDeleteError,
   CommitUpdateError
 } from '@/modules/core/errors/commit'
+import { VersionEvents, VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
   CommitUpdateInput,
   UpdateVersionInput
@@ -40,16 +41,19 @@ import { has } from 'lodash'
 /**
  * Note: Doesn't notify subscriptions or save activityStream due to missing branchName
  */
-export async function createCommitByBranchId(params: {
-  streamId: string
-  branchId: string
-  objectId: string
-  authorId: string
-  message: Nullable<string>
-  sourceApplication: Nullable<string>
-  totalChildrenCount?: MaybeNullOrUndefined<number>
-  parents: Nullable<string[]>
-}) {
+export async function createCommitByBranchId(
+  params: {
+    streamId: string
+    branchId: string
+    objectId: string
+    authorId: string
+    message: Nullable<string>
+    sourceApplication: Nullable<string>
+    totalChildrenCount?: MaybeNullOrUndefined<number>
+    parents: Nullable<string[]>
+  },
+  options?: Partial<{ notify: boolean }>
+) {
   const {
     streamId,
     branchId,
@@ -59,6 +63,7 @@ export async function createCommitByBranchId(params: {
     sourceApplication,
     parents
   } = params
+  const { notify = true } = options || {}
 
   // If no total children count is passed in, get it from the original object
   // that this commit references.
@@ -69,6 +74,13 @@ export async function createCommitByBranchId(params: {
       throw new CommitCreateError("Couldn't find commit object", { info: params })
 
     totalChildrenCount = obj.totalChildrenCount || 1
+  }
+
+  const branch = await getBranchById(branchId, { streamId })
+  if (!branch) {
+    throw new CommitCreateError(`Failed to find branch with id ${branchId}.`, {
+      info: params
+    })
   }
 
   // Create main table entry
@@ -88,7 +100,33 @@ export async function createCommitByBranchId(params: {
     insertStreamCommits([{ streamId, commitId: id }])
   ])
 
-  await Promise.all([markCommitStreamUpdated(id), markCommitBranchUpdated(id)])
+  await Promise.all([
+    markCommitStreamUpdated(id),
+    markCommitBranchUpdated(id),
+    VersionsEmitter.emit(VersionEvents.Created, {
+      projectId: streamId,
+      modelId: branchId,
+      version: commit
+    }),
+    ...(notify
+      ? [
+          addCommitCreatedActivity({
+            commitId: commit.id,
+            streamId,
+            userId: authorId,
+            branchName: branch.name,
+            input: {
+              ...commit,
+              branchName: branch.name,
+              objectId,
+              streamId
+            },
+            modelId: branch.id,
+            commit
+          })
+        ]
+      : [])
+  ])
 
   return commit
 }
@@ -132,34 +170,19 @@ export async function createCommitByBranchName(
     )
   }
 
-  const commit = await createCommitByBranchId({
-    streamId,
-    branchId: myBranch.id,
-    objectId,
-    authorId,
-    message,
-    sourceApplication,
-    totalChildrenCount,
-    parents
-  })
-
-  if (notify && commit.id) {
-    await addCommitCreatedActivity({
-      commitId: commit.id,
+  const commit = await createCommitByBranchId(
+    {
       streamId,
-      userId: authorId,
-      branchName,
-      input: {
-        ...commit,
-        branchName,
-        objectId,
-        streamId
-      },
-      // the new FE2 term for a branchId
-      modelId: myBranch.id,
-      commit
-    })
-  }
+      branchId: myBranch.id,
+      objectId,
+      authorId,
+      message,
+      sourceApplication,
+      totalChildrenCount,
+      parents
+    },
+    { notify }
+  )
 
   return commit
 }

@@ -19,6 +19,7 @@
           :rules="rules"
           :disabled="anyMutationsLoading"
           help="Use forward slashes in the model name to nest it below other models."
+          autocomplete="off"
         />
         <FormTextArea
           v-model="newDescription"
@@ -36,6 +37,7 @@
 </template>
 <script setup lang="ts">
 import { CubeIcon } from '@heroicons/vue/24/solid'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -94,7 +96,7 @@ watch(
   }
 )
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
@@ -104,7 +106,7 @@ const dialogButtons = computed(() => [
   },
   {
     text: 'Create',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'default', fullWidth: true },
     onClick: () => {
       onSubmit()
     },

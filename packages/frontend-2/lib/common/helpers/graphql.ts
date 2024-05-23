@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { isUndefinedOrVoid } from '@speckle/shared'
@@ -15,7 +16,7 @@ import type { DocumentNode } from 'graphql'
 import { flatten, isUndefined, has, isFunction, isString } from 'lodash-es'
 import type { Modifier, Reference } from '@apollo/client/cache'
 import type { PartialDeep } from 'type-fest'
-import type { NetworkError } from '@apollo/client/errors'
+import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
 
@@ -37,13 +38,17 @@ export const ROOT_SUBSCRIPTION = 'ROOT_SUBSCRIPTION'
 export type ModifyFnCacheData<Data> = Data extends
   | Record<string, unknown>
   | Record<string, unknown>[]
-  ? PartialDeep<{
-      [key in keyof Data]: Data[key] extends { id: string }
-        ? CacheObjectReference
-        : Data[key] extends { id: string }[]
-        ? CacheObjectReference[]
-        : ModifyFnCacheData<Data[key]>
-    }>
+  ? Data extends { id: string }
+    ? CacheObjectReference
+    : Data extends { id: string }[]
+    ? CacheObjectReference[]
+    : PartialDeep<{
+        [key in keyof Data]: Data[key] extends { id: string }
+          ? CacheObjectReference
+          : Data[key] extends { id: string }[]
+          ? CacheObjectReference[]
+          : ModifyFnCacheData<Data[key]>
+      }>
   : Data
 
 /**
@@ -361,7 +366,7 @@ export function modifyObjectFields<
       log('invoking updater', { fieldName, variables, fieldValue })
       const res = updater(
         fieldName,
-        variables as V,
+        (variables || {}) as V,
         fieldValue as ModifyFnCacheData<D>,
         {
           ...details,
@@ -422,4 +427,31 @@ export function evictObjectFields<
     },
     { debug: false }
   )
+}
+
+export const resolveGenericStatusCode = (errors: GraphQLErrors) => {
+  if (errors.some((e) => e.extensions?.code === 'FORBIDDEN')) return 403
+  if (
+    errors.some((e) =>
+      ['UNAUTHENTICATED', 'UNAUTHORIZED_ACCESS_ERROR'].includes(
+        e.extensions?.code || ''
+      )
+    )
+  )
+    return 401
+  if (
+    errors.some((e) =>
+      ['NOT_FOUND_ERROR', 'STREAM_NOT_FOUND', 'AUTOMATION_NOT_FOUND'].includes(
+        e.extensions?.code || ''
+      )
+    )
+  )
+    return 404
+
+  return 500
+}
+
+export const errorFailedAtPathSegment = (error: GraphQLError, segment: string) => {
+  const path = error.path || []
+  return path[path.length - 1] === segment
 }

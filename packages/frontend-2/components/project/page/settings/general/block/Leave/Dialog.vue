@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutDialog } from '@speckle/ui-components'
+import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import { useLeaveProject } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { ProjectPageSettingsGeneralBlockLeave_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
@@ -26,7 +26,7 @@ const props = defineProps<{
 const leaveProject = useLeaveProject()
 const mp = useMixpanel()
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },

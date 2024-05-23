@@ -12,7 +12,7 @@
       },
       {
         text: 'Save',
-        props: { color: 'primary', fullWidth: true },
+        props: { color: 'default', fullWidth: true },
         onClick: () => {
           onSubmit()
         }
@@ -34,6 +34,7 @@
           auto-focus
           :disabled="loading"
           help="Use forward slashes in the model name to nest it below other models."
+          autocomplete="off"
         />
         <FormTextArea
           v-model="newDescription"

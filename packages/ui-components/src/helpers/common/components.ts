@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { ConcreteComponent, FunctionalComponent } from 'vue'
+import type { ConcreteComponent, FunctionalComponent, DefineComponent } from 'vue'
 
 export type PropAnyComponent =
   | ConcreteComponent<any, any, any, any, any>
   | FunctionalComponent<any, any, any>
+  | DefineComponent
+  | string
 
 export type HorizontalOrVertical = 'horizontal' | 'vertical'
 

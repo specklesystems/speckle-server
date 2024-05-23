@@ -4,6 +4,7 @@ require('../bootstrap')
 require('@/test/mocks/global')
 
 const chai = require('chai')
+const chaiAsPromised = require('chai-as-promised')
 const chaiHttp = require('chai-http')
 const deepEqualInAnyOrder = require('deep-equal-in-any-order')
 const knex = require(`@/db/knex`)
@@ -12,6 +13,7 @@ const { default: graphqlChaiPlugin } = require('@/test/plugins/graphql')
 const { logger } = require('@/logging/logging')
 
 // Register chai plugins
+chai.use(chaiAsPromised)
 chai.use(chaiHttp)
 chai.use(deepEqualInAnyOrder)
 chai.use(graphqlChaiPlugin)
@@ -26,6 +28,7 @@ const unlock = async () => {
 exports.truncateTables = async (tableNames) => {
   if (!tableNames?.length) {
     //why is server config only created once!????
+    // because its done in a migration, to not override existing configs
     const protectedTables = ['server_config']
     // const protectedTables = [ 'server_config', 'user_roles', 'scopes', 'server_acl' ]
     tableNames = (
@@ -36,6 +39,8 @@ exports.truncateTables = async (tableNames) => {
         .whereNotIn('tablename', protectedTables)
     ).map((table) => table.tablename)
   }
+
+  if (!tableNames.length) return
 
   await knex.raw(`truncate table ${tableNames.join(',')} cascade`)
 }
@@ -81,6 +86,7 @@ exports.mochaHooks = {
   beforeAll: async () => {
     logger.info('running before all')
     await unlock()
+    await exports.truncateTables()
     await knex.migrate.rollback()
     await knex.migrate.latest()
     await init()

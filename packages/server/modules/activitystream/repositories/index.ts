@@ -9,7 +9,7 @@ export const getActivity = async (
   end: Date,
   filteredUser: string | null = null
 ): Promise<StreamScopeActivity[]> => {
-  let query = StreamActivity.knex()
+  let query = StreamActivity.knex<StreamScopeActivity[]>()
     .where(StreamActivity.col.streamId, '=', streamId)
     .whereBetween(StreamActivity.col.time, [start, end])
   if (filteredUser) query = query.andWhereNot(StreamActivity.col.userId, filteredUser)
@@ -38,7 +38,7 @@ export const getActiveUserStreams = async (
     // make sure archived users do not counted for activity
     .join('server_acl', 'server_acl.userId', '=', StreamActivity.col.userId)
     .whereNot('server_acl.role', '=', Roles.Server.ArchivedUser)
-  return await query
+  return (await query) as UserStreams[]
 }
 
 export type UserStreams = {

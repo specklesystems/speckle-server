@@ -7,7 +7,7 @@ import type { GenReqId } from 'pino-http'
 import { randomUUID } from 'crypto'
 import type { IncomingHttpHeaders } from 'http'
 import { REQUEST_ID_HEADER } from '~~/server/lib/core/helpers/constants'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 import {
   serializeRequest,
   getRequestPath

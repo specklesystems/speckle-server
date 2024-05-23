@@ -1,0 +1,379 @@
+enum AutomateRunStatus {
+  PENDING
+  INITIALIZING
+  RUNNING
+  SUCCEEDED
+  FAILED
+  EXCEPTION
+  TIMEOUT
+  CANCELED
+}
+
+enum AutomateRunTriggerType {
+  VERSION_CREATED
+  TEST_TYPE
+}
+
+type AutomationRevisionFunction {
+  """
+  The secrets in parameters are redacted with six asterisks - ******
+  """
+  parameters: JSONObject
+  release: AutomateFunctionRelease!
+}
+
+type VersionCreatedTriggerDefinition {
+  type: AutomateRunTriggerType!
+  model: Model!
+}
+
+union AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition
+
+type AutomationRevision {
+  id: ID!
+  triggerDefinitions: [AutomationRevisionTriggerDefinition!]!
+  functions: [AutomationRevisionFunction!]!
+}
+
+type VersionCreatedTrigger {
+  type: AutomateRunTriggerType!
+  version: Version!
+  model: Model!
+}
+
+union AutomationRunTrigger = VersionCreatedTrigger
+
+type TriggeredAutomationsStatus {
+  id: ID!
+  status: AutomateRunStatus!
+  statusMessage: String
+  automationRuns: [AutomateRun!]!
+}
+
+extend type Model {
+  automationsStatus: TriggeredAutomationsStatus
+}
+
+extend type Version {
+  automationsStatus: TriggeredAutomationsStatus
+}
+
+type Automation {
+  id: ID!
+  name: String!
+  enabled: Boolean!
+  runs(cursor: String, limit: Int): AutomateRunCollection!
+  currentRevision: AutomationRevision
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  """
+  Only accessible to automation owners
+  """
+  creationPublicKeys: [String!]!
+}
+
+type AutomateFunctionRun {
+  id: ID!
+  status: AutomateRunStatus!
+  statusMessage: String
+  contextView: String
+  functionId: String
+  functionReleaseId: String
+  function: AutomateFunction!
+  elapsed: Float!
+  """
+  AutomateTypes.ResultsSchema type from @speckle/shared
+  """
+  results: JSONObject
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type AutomateRun {
+  id: ID!
+  trigger: AutomationRunTrigger!
+  status: AutomateRunStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  automation: Automation!
+  automationId: String!
+  functionRuns: [AutomateFunctionRun!]!
+}
+
+type AutomateRunCollection {
+  items: [AutomateRun!]!
+  totalCount: Int!
+  cursor: String
+}
+
+type AutomationCollection {
+  items: [Automation!]!
+  totalCount: Int!
+  cursor: String
+}
+
+input AutomateFunctionReleasesFilter {
+  search: String
+}
+
+type BasicGitRepositoryMetadata {
+  id: ID!
+  owner: String!
+  name: String!
+  url: String!
+}
+
+type AutomateFunction {
+  id: ID!
+  name: String!
+  repo: BasicGitRepositoryMetadata!
+  isFeatured: Boolean!
+  description: String!
+  logo: String
+  releases(
+    cursor: String
+    limit: Int
+    filter: AutomateFunctionReleasesFilter
+  ): AutomateFunctionReleaseCollection!
+  automationCount: Int!
+  """
+  SourceAppNames values from @speckle/shared. Empty array means - all of them
+  """
+  supportedSourceApps: [String!]!
+  tags: [String!]!
+}
+
+type AutomateFunctionRelease {
+  id: ID!
+  functionId: String!
+  function: AutomateFunction!
+  versionTag: String!
+  createdAt: DateTime!
+  inputSchema: JSONObject
+  commitId: String!
+}
+
+type AutomateFunctionReleaseCollection {
+  items: [AutomateFunctionRelease!]!
+  totalCount: Int!
+  cursor: String
+}
+
+type AutomateFunctionCollection {
+  items: [AutomateFunction!]!
+  totalCount: Int!
+  cursor: String
+}
+
+input ProjectAutomationUpdateInput {
+  id: ID!
+  name: String
+  enabled: Boolean
+}
+
+input AutomationRevisionCreateFunctionInput {
+  functionId: String!
+  functionReleaseId: String!
+  """
+  Should be encrypted from the client side
+  """
+  parameters: String
+}
+
+input ProjectAutomationRevisionCreateInput {
+  automationId: ID!
+  """
+  AutomateTypes.TriggerDefinitionsSchema type from @speckle/shared
+  """
+  triggerDefinitions: JSONObject!
+  functions: [AutomationRevisionCreateFunctionInput!]!
+}
+
+input ProjectAutomationCreateInput {
+  name: String!
+  enabled: Boolean!
+}
+
+input AutomateFunctionsFilter {
+  search: String
+  """
+  By default we skip functions without releases. Set this to true to include them.
+  """
+  functionsWithoutReleases: Boolean
+  featuredFunctionsOnly: Boolean
+}
+
+input AutomateFunctionRunStatusReportInput {
+  functionRunId: String!
+  status: AutomateRunStatus!
+  statusMessage: String
+  contextView: String
+  """
+  AutomateTypes.ResultsSchema type from @speckle/shared
+  """
+  results: JSONObject
+}
+
+input CreateAutomateFunctionInput {
+  name: String!
+  template: AutomateFunctionTemplateLanguage!
+  description: String!
+  """
+  SourceAppNames values from @speckle/shared
+  """
+  supportedSourceApps: [String!]!
+  tags: [String!]!
+  """
+  Base64 encoded image data string
+  """
+  logo: String
+  """
+  GitHub organization to create the repository in
+  """
+  org: String
+}
+
+"""
+Any null values will be ignored
+"""
+input UpdateAutomateFunctionInput {
+  id: ID!
+  name: String
+  description: String
+  """
+  SourceAppNames values from @speckle/shared
+  """
+  supportedSourceApps: [String!]
+  tags: [String!]
+  logo: String
+}
+
+type UserAutomateInfo {
+  hasAutomateGithubApp: Boolean!
+  availableGithubOrgs: [String!]!
+}
+
+extend type User {
+  automateInfo: UserAutomateInfo! @isOwner
+}
+
+enum AutomateFunctionTemplateLanguage {
+  TYPESCRIPT
+  PYTHON
+  DOT_NET
+}
+
+type AutomateFunctionTemplate {
+  id: AutomateFunctionTemplateLanguage!
+  title: String!
+  logo: String!
+  url: String!
+}
+
+type ServerAutomateInfo {
+  availableFunctionTemplates: [AutomateFunctionTemplate!]!
+}
+
+extend type ServerInfo {
+  automate: ServerAutomateInfo!
+}
+
+type ProjectAutomationMutations {
+  create(input: ProjectAutomationCreateInput!): Automation!
+  update(input: ProjectAutomationUpdateInput!): Automation!
+  createRevision(input: ProjectAutomationRevisionCreateInput!): AutomationRevision!
+  """
+  Trigger an automation with a fake "version created" trigger. The "version created" will
+  just refer to the last version of the model.
+  """
+  trigger(automationId: ID!): Boolean!
+}
+
+extend type ProjectMutations {
+  automationMutations(projectId: ID!): ProjectAutomationMutations!
+}
+
+type AutomateMutations {
+  createFunction(input: CreateAutomateFunctionInput!): AutomateFunction!
+    @hasScope(scope: "automate-functions:write")
+  updateFunction(input: UpdateAutomateFunctionInput!): AutomateFunction!
+    @hasScope(scope: "automate-functions:write")
+}
+
+extend type Project {
+  automations(filter: String, cursor: String, limit: Int): AutomationCollection!
+    @hasStreamRole(role: STREAM_OWNER)
+  """
+  Get a single automation by id. Error will be thrown if automation is not found or inaccessible.
+  """
+  automation(id: String!): Automation! @hasStreamRole(role: STREAM_OWNER)
+}
+
+extend type Query {
+  automateFunctions(
+    filter: AutomateFunctionsFilter
+    cursor: String
+    limit: Int
+  ): AutomateFunctionCollection! @hasScope(scope: "automate-functions:read")
+  """
+  Get a single automate function by id. Error will be thrown if function is not found or inaccessible.
+  """
+  automateFunction(id: ID!): AutomateFunction!
+    @hasScope(scope: "automate-functions:read")
+  """
+  Part of the automation/function creation handshake mechanism
+  """
+  automateValidateAuthCode(code: String!): Boolean!
+}
+
+extend type Mutation {
+  automateFunctionRunStatusReport(
+    input: AutomateFunctionRunStatusReportInput!
+  ): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "automate:report-results")
+  automateMutations: AutomateMutations! @hasServerRole(role: SERVER_GUEST)
+}
+
+enum ProjectTriggeredAutomationsStatusUpdatedMessageType {
+  RUN_CREATED
+  RUN_UPDATED
+}
+
+type ProjectTriggeredAutomationsStatusUpdatedMessage {
+  type: ProjectTriggeredAutomationsStatusUpdatedMessageType!
+  version: Version!
+  model: Model!
+  project: Project!
+  run: AutomateRun!
+}
+
+enum ProjectAutomationsUpdatedMessageType {
+  CREATED
+  UPDATED
+  CREATED_REVISION
+}
+
+type ProjectAutomationsUpdatedMessage {
+  type: ProjectAutomationsUpdatedMessageType!
+  automationId: String!
+  automation: Automation
+  """
+  Only set if type === CREATED_REVISION
+  """
+  revision: AutomationRevision
+}
+
+extend type Subscription {
+  """
+  Subscribe to updates to any triggered automations statuses in the project
+  """
+  projectTriggeredAutomationsStatusUpdated(
+    projectId: String!
+  ): ProjectTriggeredAutomationsStatusUpdatedMessage!
+
+  """
+  Subscribe to updates to automations in the project
+  """
+  projectAutomationsUpdated(projectId: String!): ProjectAutomationsUpdatedMessage!
+}

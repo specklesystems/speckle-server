@@ -57,6 +57,11 @@ spec:
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
+        {{- if .Values.featureFlags.automateModuleEnabled }}
+          - name: encryption-keys
+            readOnly: true
+            mountPath: /encryption-keys
+        {{- end }}
 
         # Allow for k8s to remove the pod from the service endpoints to stop receive traffic
         lifecycle:
@@ -110,6 +115,14 @@ spec:
 
           - name: ENABLE_FE2_MESSAGING
             value: {{ .Values.server.enableFe2Messaging | quote }}
+
+          - name: FF_AUTOMATE_MODULE_ENABLED
+            value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
+          
+            {{- if .Values.featureFlags.automateModuleEnabled }}
+          - name: AUTOMATE_ENCRYPTION_KEYS_PATH
+            value: /encryption-keys/keys.json
+            {{- end }}
 
           - name: ONBOARDING_STREAM_URL
             value: {{ .Values.server.onboarding.stream_url }}
@@ -487,4 +500,9 @@ spec:
         - name: postgres-certificate
           configMap:
             name: postgres-certificate
+      {{- end }}
+      {{- if .Values.featureFlags.automateModuleEnabled }}
+        - name: encryption-keys
+          secret:
+            secretName: encryption-keys
       {{- end }}

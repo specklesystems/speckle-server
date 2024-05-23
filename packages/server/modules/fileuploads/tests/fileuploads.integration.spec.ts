@@ -117,8 +117,9 @@ describe('FileUploads @fileuploads', () => {
         JSON.stringify(gqlResponse.body.data)
       ).to.have.lengthOf(2)
       expect(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        gqlResponse.body.data.stream.fileUploads.map((file: any) => file.fileName)
+        gqlResponse.body.data.stream.fileUploads.map(
+          (file: { fileName: string }) => file.fileName
+        )
       ).to.have.members(['test1.ifc', 'test2.ifc'])
     })
 

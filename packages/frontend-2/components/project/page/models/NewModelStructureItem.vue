@@ -25,6 +25,7 @@
             auto-focus
             :rules="rules"
             :disabled="anyMutationsLoading"
+            autocomplete="off"
           />
         </div>
         <div class="flex flex-wrap gap-1 sm:gap-2">

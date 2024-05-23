@@ -31,7 +31,11 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutDialog, FormTextInput } from '@speckle/ui-components'
+import {
+  LayoutDialog,
+  FormTextInput,
+  type LayoutDialogButton
+} from '@speckle/ui-components'
 import { useDeleteProject } from '~~/lib/projects/composables/projectManagement'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { ProjectPageSettingsGeneralBlockDelete_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
@@ -55,7 +59,7 @@ const discussionText = computed(() =>
   props.project.commentThreads.totalCount === 1 ? 'discussion' : 'discussions'
 )
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true },

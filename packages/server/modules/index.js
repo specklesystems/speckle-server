@@ -7,6 +7,8 @@ const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
 const { scalarResolvers } = require('./core/graph/scalars')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
 const { moduleLogger } = require('@/logging/logging')
+const { addMocksToSchema } = require('@graphql-tools/mock')
+const { Environment } = require('@speckle/shared')
 
 /**
  * Cached speckle module requires
@@ -39,30 +41,39 @@ function autoloadFromDirectory(dirPath) {
   return results
 }
 
+const getEnabledModuleNames = () => {
+  const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+  const moduleNames = [
+    'accessrequests',
+    'activitystream',
+    'apiexplorer',
+    'auth',
+    'betaAutomations',
+    'blobstorage',
+    'comments',
+    'core',
+    'cross-server-sync',
+    'emails',
+    'fileuploads',
+    'notifications',
+    'previews',
+    'pwdreset',
+    'serverinvites',
+    'stats',
+    'webhooks'
+  ]
+
+  if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
+  return moduleNames
+}
+
 async function getSpeckleModules() {
   if (loadedModules.length) return loadedModules
 
-  const moduleDirs = [
-    './core',
-    './auth',
-    './apiexplorer',
-    './emails',
-    './pwdreset',
-    './serverinvites',
-    './previews',
-    './fileuploads',
-    './comments',
-    './blobstorage',
-    './notifications',
-    './activitystream',
-    './accessrequests',
-    './webhooks',
-    './cross-server-sync',
-    './automations'
-  ]
+  const moduleNames = getEnabledModuleNames()
 
-  for (const dir of moduleDirs) {
-    loadedModules.push(require(dir))
+  for (const dir of moduleNames) {
+    loadedModules.push(require(`./${dir}`))
   }
 
   return loadedModules
@@ -105,9 +116,13 @@ const graphComponents = () => {
   let resolverObjs = []
   let directiveBuilders = {}
 
+  const enabledModules = getEnabledModuleNames()
+
   // load typedefs from /assets
   const assetModuleDirs = fs.readdirSync(`${packageRoot}/assets`)
   assetModuleDirs.forEach((dir) => {
+    // if module is not in the enabled modules list, skip loading the gql schema
+    // if (!enabledModules.includes(dir)) return
     const typeDefDirPath = path.join(`${packageRoot}/assets`, dir, 'typedefs')
     if (fs.existsSync(typeDefDirPath)) {
       const moduleSchemas = fs.readdirSync(typeDefDirPath)
@@ -120,6 +135,8 @@ const graphComponents = () => {
   // load code modules from /modules
   const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
   codeModuleDirs.forEach((file) => {
+    // if module is not in the enabled modules list, skip loading the gql resolvers
+    if (!enabledModules.includes(file)) return
     const fullPath = path.join(`${appRoot}/modules`, file)
 
     // first pass load of resolvers
@@ -145,7 +162,12 @@ const graphComponents = () => {
   return { resolvers, typeDefs, directiveBuilders }
 }
 
-exports.graphSchema = () => {
+/**
+ *
+ * @param {import('@/modules/mocks').AppMocksConfig | undefined} [mocksConfig]
+ * @returns
+ */
+exports.graphSchema = (mocksConfig) => {
   const { resolvers, typeDefs, directiveBuilders } = graphComponents()
 
   /** @type {string[]} */
@@ -163,6 +185,19 @@ exports.graphSchema = () => {
     resolvers,
     typeDefs: [...directiveTypedefs, ...typeDefs]
   })
+
+  // Add mocks before directives intentionally (we still want auth checks to work for real)
+  if (mocksConfig) {
+    const { mockEntireSchema, mocks, resolvers } = mocksConfig
+    if (mocks || mockEntireSchema) {
+      schema = addMocksToSchema({
+        schema,
+        mocks: !mocks || mocks === true ? {} : mocks,
+        preserveResolvers: !mockEntireSchema,
+        resolvers
+      })
+    }
+  }
 
   // Apply directives
   for (const schemaTransformer of directiveSchemaTransformers) {

@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-types */
 import { Knex } from 'knex'
+import { isString } from 'lodash'
 
 export type BatchedSelectOptions = {
   /**
@@ -43,3 +44,31 @@ export async function* executeBatchedSelect<
     yield results
   }
 }
+
+const iso8601TimestampRegex = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}\+\d{2}:\d{2}/
+
+/**
+ * When rows are grouped and returned as an array through array_agg(row_to_json(...)), the fields don't get formatted as they would
+ * if the rows were returned directly. For example, date strings don't get converted to Date objects.
+ *
+ * This function will handle that.
+ */
+export const formatJsonArrayRecords = <V extends Record<string, unknown>>(
+  records: V[]
+) =>
+  records.map((r) => {
+    const res: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(r)) {
+      // Check if value is an ISO date string or matches common date keys
+      if (
+        isString(value) &&
+        (key.endsWith('At') || iso8601TimestampRegex.test(value))
+      ) {
+        res[key] = new Date(value)
+      } else {
+        res[key] = value
+      }
+    }
+
+    return res as V
+  })

@@ -61,7 +61,11 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { AllScopes } from '@speckle/shared'
-import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
+import {
+  LayoutDialog,
+  FormSelectBadges,
+  type LayoutDialogButton
+} from '@speckle/ui-components'
 import type {
   ApplicationFormValues,
   ApplicationItem
@@ -190,7 +194,7 @@ const onSubmit = handleSubmit(async (applicationFormValues) => {
   }
 })
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
@@ -200,7 +204,7 @@ const dialogButtons = computed(() => [
   },
   {
     text: props.application ? 'Save' : 'Create',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'default', fullWidth: true },
     onClick: onSubmit
   }
 ])
