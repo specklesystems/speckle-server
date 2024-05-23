@@ -18,6 +18,7 @@
         :custom-icon="CubeIcon"
         :rules="rules"
         :disabled="disabled"
+        autocomplete="off"
       />
       <div class="flex justify-end">
         <FormButton submit :disabled="disabled">Move</FormButton>

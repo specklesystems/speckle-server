@@ -19,6 +19,7 @@
           :rules="rules"
           :disabled="anyMutationsLoading"
           help="Use forward slashes in the model name to nest it below other models."
+          autocomplete="off"
         />
         <FormTextArea
           v-model="newDescription"
