@@ -8,7 +8,7 @@
       <div class="space-y-2 flex flex-col">
         <FormTextArea name="prompt" label="" placeholder="Your prompt" />
         <div class="text-right">
-          <FormButton>Render</FormButton>
+          <FormButton @click="enqueMagic()">Render</FormButton>
         </div>
       </div>
       <div class="p-2 text-xs text-foreground-2">
@@ -33,7 +33,32 @@
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
+import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+
+const {
+  viewer: { instance: viewerInstance }
+} = useInjectedViewerState()
+
 defineEmits<{
   (e: 'close'): void
 }>()
+
+const enqueMagic = () => {
+  viewerInstance.getRenderer().pipelineOptions = {
+    ...viewerInstance.getRenderer().pipelineOptions,
+    pipelineOutput: 1
+  } // depth only
+  viewerInstance.requestRender()
+  setTimeout(async () => {
+    const screenshot = await viewerInstance.screenshot()
+
+    viewerInstance.getRenderer().pipelineOptions = {
+      ...viewerInstance.getRenderer().pipelineOptions,
+      pipelineOutput: 8
+    }
+    viewerInstance.requestRender()
+  }, 50)
+
+  //reset viewer back to normal
+}
 </script>

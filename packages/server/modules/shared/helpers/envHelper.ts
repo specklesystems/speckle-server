@@ -293,3 +293,7 @@ export function getAutomateEncryptionKeysPath() {
 export function getGendoAIKey() {
   return process.env.GENDOAI_KEY
 }
+
+export function getGendoAIAPIEndpoint() {
+  return process.env.GENDOAI_API_ENDPOINT
+}
