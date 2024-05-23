@@ -81,6 +81,22 @@
       v-model:open="showReceiveDialog"
       @close="showReceiveDialog = false"
     />
+    <LayoutDialog
+      v-model:open="showErrorDialog"
+      chromium65-compatibility
+      @close="showErrorDialog = false"
+    >
+      <template #header>
+        <div class="h5 font-bold">Host App Error</div>
+      </template>
+      <div class="mt-1 text-foreground-2 text-sm font-normal mx-2">
+        <div class="text-s font-bold">{{ hostAppError.innerError }}</div>
+        <div class="text-s mb-3">{{ hostAppError.innerStackTrace }}</div>
+        <div class="text-s font-bold">Stack Trace</div>
+        <div class="text-xs">{{ hostAppError.error }}</div>
+        <div class="text-xs">{{ hostAppError.stackTrace }}</div>
+      </div>
+    </LayoutDialog>
   </div>
   <div v-else>
     <div class="fixed top-0 h-screen w-screen flex items-center pointer-events-none">
@@ -129,12 +145,30 @@ const { accounts, isLoading } = storeToRefs(accountStore)
 const store = useHostAppStore()
 const { trackEvent } = useMixpanel()
 
+type HostAppError = {
+  error: string
+  stackTrace: string
+  innerError: string
+  innerStackTrace: string
+}
+
 const showSendDialog = ref(false)
 const showReceiveDialog = ref(false)
+const showErrorDialog = ref(false)
+const hostAppError = ref({} as unknown as HostAppError)
 
 app.$baseBinding.on('documentChanged', () => {
   showSendDialog.value = false
   showReceiveDialog.value = false
+})
+
+app.$sendBinding?.on('errorOnResponse', (data: string) => {
+  console.log(data)
+  const parsedData = JSON.parse(data) as Record<string, unknown> as HostAppError
+  hostAppError.value = parsedData
+  console.log(parsedData)
+
+  showErrorDialog.value = true
 })
 
 const handleSendClick = () => {

@@ -82,6 +82,7 @@ export class GenericBridge extends BaseBridge {
       // eslint-disable-next-line no-prototype-builtins
       if (parsedData && parsedData.hasOwnProperty('error')) {
         console.error(data)
+        this.emitter.emit('errorOnResponse', data)
         throw new Error(
           `Failed to run ${requestId}. The host app error is logged above.`
         )
