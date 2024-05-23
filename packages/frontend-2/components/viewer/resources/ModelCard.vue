@@ -155,9 +155,11 @@ graphql(`
 const modelId = computed(() => props.model.id)
 
 const versions = computed(() => {
-  return [...props.model.loadedVersion.items, ...props.model.versions.items].sort(
-    (a, b) => dayjs(b.createdAt).diff(dayjs(a.createdAt))
-  )
+  const allVersions = [
+    ...props.model.loadedVersion.items,
+    ...props.model.versions.items
+  ]
+  return allVersions.sort((a, b) => dayjs(b.createdAt).diff(dayjs(a.createdAt)))
 })
 
 const showLoadMore = computed(() => {
@@ -211,10 +213,6 @@ async function handleVersionChange(versionId: string) {
 
 const onLoadMore = async () => {
   await loadMoreVersions(props.model.id)
-  versions.value = [
-    ...props.model.loadedVersion.items,
-    ...props.model.versions.items
-  ].sort((a, b) => dayjs(b.createdAt).diff(dayjs(a.createdAt)))
 }
 
 async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
