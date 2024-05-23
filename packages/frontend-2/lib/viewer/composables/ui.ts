@@ -379,11 +379,23 @@ export function useMeasurementUtilities() {
     state.viewer.instance.getExtension(MeasurementsExtension).clearMeasurements()
   }
 
+  const activeMeasurement = computed(() => {
+    const measurementsExtension =
+      state.viewer.instance.getExtension(MeasurementsExtension)
+    const activeMeasurement = measurementsExtension?.activeMeasurement
+
+    if (activeMeasurement && activeMeasurement.state === 2) {
+      return true
+    }
+    return false
+  })
+
   return {
     enableMeasurements,
     setMeasurementOptions,
     removeMeasurement,
-    clearMeasurements
+    clearMeasurements,
+    activeMeasurement
   }
 }
 
