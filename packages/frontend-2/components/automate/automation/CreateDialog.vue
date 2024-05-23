@@ -49,6 +49,10 @@
         :automation-id="automationId"
         :function-name="selectedFunction.name"
       />
+      <AutomateAutomationCreateDialogTestAutomationDetailsStep
+        v-else-if="enumStep === AutomationCreateSteps.TestAutomationDetails"
+        v-model:automation-name="automationName"
+      />
     </div>
   </LayoutDialog>
 </template>
@@ -90,7 +94,8 @@ enum AutomationCreateSteps {
   SelectFunction,
   FunctionParameters,
   AutomationDetails,
-  Done
+  Done,
+  TestAutomationDetails
 }
 
 type DetailsFormValues = {
@@ -124,7 +129,8 @@ const stepsOrder = computed(() => [
   AutomationCreateSteps.SelectFunction,
   AutomationCreateSteps.FunctionParameters,
   AutomationCreateSteps.AutomationDetails,
-  AutomationCreateSteps.Done
+  AutomationCreateSteps.Done,
+  AutomationCreateSteps.TestAutomationDetails
 ])
 
 const stepsWidgetData = computed(() => [
@@ -193,12 +199,13 @@ const buttons = computed((): LayoutDialogButton[] => {
         id: 'createTestAutomation',
         text: 'Create test automation',
         props: {
+          color: 'secondary',
           iconLeft: CodeBracketIcon,
-          outlined: true
+          textColor: 'primary'
         },
         onClick: () => {
           isTestAutomation.value = true
-          step.value = 2
+          step.value = 4
         }
       }
 
@@ -273,6 +280,17 @@ const buttons = computed((): LayoutDialogButton[] => {
           }
         }
       ]
+    case AutomationCreateSteps.TestAutomationDetails:
+      return [
+        {
+          id: 'submitTestAutomation',
+          text: 'Create',
+          disabled: !automationName.value,
+          onClick: () => {
+            // TODO: Make request
+          }
+        }
+      ]
     default:
       return []
   }
@@ -284,6 +302,8 @@ const buttonsWrapperClasses = computed(() => {
       return enableCreateTestAutomation.value ? 'justify-between' : 'justify-end'
     case AutomationCreateSteps.Done:
       return 'flex-col sm:flex-row sm:justify-between'
+    case AutomationCreateSteps.TestAutomationDetails:
+      return 'justify-end'
     default:
       return 'justify-between'
   }
