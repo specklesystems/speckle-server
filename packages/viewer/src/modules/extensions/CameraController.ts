@@ -64,7 +64,7 @@ export const DefaultControllerOptions = Object.freeze<
   zoomSensitivity: 1,
   panSensitivity: 1,
   inputSensitivity: 1,
-  minimumRadius: 1,
+  minimumRadius: 0,
   maximumRadius: Infinity,
   minimumPolarAngle: Math.PI / 8,
   maximumPolarAngle: Math.PI - Math.PI / 8,

@@ -201,6 +201,7 @@ export class SmoothOrbitControls extends EventEmitter {
     this._container = container
     this._renderer = renderer
     this.world = world
+    this.world
     this._options = Object.assign({}, options) as Required<SmoothControlsOptions>
     const geometry = new SphereGeometry(0.01, 32, 16)
     const material = new MeshBasicMaterial({ color: 0xffff00 })
@@ -212,7 +213,7 @@ export class SmoothOrbitControls extends EventEmitter {
     // scene.add(this.originSphere)
     // scene.add(this.cursorSphere)
 
-    this.setOrbit(2.356, 0.955, 1)
+    this.setOrbit(2.356, 0.955, 0)
     this.jumpToGoal()
   }
 
@@ -568,10 +569,15 @@ export class SmoothOrbitControls extends EventEmitter {
     if (this.isStationary()) {
       return false
     }
+
     if (worldBox) {
+      const maxDistance = this.world.getRelativeOffset(5)
+      const minDistance = this.world.getRelativeOffset(0.01)
       this.applyOptions({
-        maximumRadius: worldBox.max.distanceTo(worldBox.min) * 2
+        maximumRadius: maxDistance,
+        minimumRadius: minDistance
       })
+      // radiusNormalisationRange = this.world.worldBox.getSize(new Vector3()).length()
     }
 
     const { maximumPolarAngle } = this._options
@@ -599,11 +605,13 @@ export class SmoothOrbitControls extends EventEmitter {
       maximumPolarAngle
     )
 
+    const minMaxRange = this._options.maximumRadius - this._options.minimumRadius
+    const radiusNormalisationRange = minMaxRange < 1 ? minMaxRange : 1
     this.spherical.radius = this.radiusDamper.update(
       this.spherical.radius,
       this.goalSpherical.radius,
       delta,
-      this._options.maximumRadius
+      radiusNormalisationRange
     )
 
     this.logFov = this.goalLogFov
