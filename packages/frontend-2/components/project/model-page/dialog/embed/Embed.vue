@@ -9,9 +9,6 @@
 
     <div v-if="isPrivate">
       <CommonAlert color="info">
-        <template #title>
-          Model embedding does not work when the project is "Private".
-        </template>
         <template #description>
           <p>
             To change this setting you must be logged in as a user with the
