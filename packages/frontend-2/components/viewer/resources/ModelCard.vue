@@ -211,6 +211,10 @@ async function handleVersionChange(versionId: string) {
 
 const onLoadMore = async () => {
   await loadMoreVersions(props.model.id)
+  versions.value = [
+    ...props.model.loadedVersion.items,
+    ...props.model.versions.items
+  ].sort((a, b) => dayjs(b.createdAt).diff(dayjs(a.createdAt)))
 }
 
 async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
