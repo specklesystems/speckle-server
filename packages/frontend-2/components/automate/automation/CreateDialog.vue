@@ -2,12 +2,17 @@
   <LayoutDialog
     v-model:open="open"
     max-width="lg"
-    title="Create Automation"
+    :title="title"
     :buttons-wrapper-classes="buttonsWrapperClasses"
     :buttons="buttons"
     :on-submit="onDialogSubmit"
     prevent-close-on-click-outside
   >
+    <template v-if="isTestAutomation" #header>
+      Create
+      <span class="font-extrabold text-fancy-gradient">Test</span>
+      Automation
+    </template>
     <div class="flex flex-col gap-11">
       <CommonStepsNumber
         v-if="shouldShowStepsWidget"
@@ -146,7 +151,7 @@ const { enumStep, step } = useEnumSteps({ order: stepsOrder })
 const {
   items: stepsWidgetSteps,
   model: stepsWidgetModel,
-  shouldShowWidget: shouldShowStepsWidget
+  shouldShowWidget
 } = useEnumStepsWidgetSetup({ enumStep, widgetStepsMap: stepsWidgetData })
 
 const parametersStep = ref<{ submit: () => Promise<void> }>()
@@ -159,6 +164,15 @@ const selectedModel = ref<FormSelectModels_ModelFragment>()
 const selectedFunction = ref<Optional<CreateAutomationSelectableFunction>>()
 const functionParameters = ref<Record<string, unknown>>()
 const hasParameterErrors = ref(false)
+const isTestAutomation = ref(false)
+
+const shouldShowStepsWidget = computed(() => {
+  return !!shouldShowWidget.value && !isTestAutomation.value
+})
+
+const title = computed(() => {
+  return isTestAutomation.value ? null : 'Create Automation'
+})
 
 const buttons = computed((): LayoutDialogButton[] => {
   switch (enumStep.value) {
@@ -183,7 +197,8 @@ const buttons = computed((): LayoutDialogButton[] => {
           outlined: true
         },
         onClick: () => {
-          // TODO: Start create flow
+          isTestAutomation.value = true
+          step.value = 2
         }
       }
 
@@ -266,7 +281,7 @@ const buttons = computed((): LayoutDialogButton[] => {
 const buttonsWrapperClasses = computed(() => {
   switch (enumStep.value) {
     case AutomationCreateSteps.SelectFunction:
-      return 'justify-end'
+      return enableCreateTestAutomation.value ? 'justify-between' : 'justify-end'
     case AutomationCreateSteps.Done:
       return 'flex-col sm:flex-row sm:justify-between'
     default:
@@ -291,6 +306,7 @@ const reset = () => {
   selectedModel.value = undefined
   automationName.value = undefined
   automationId.value = undefined
+  isTestAutomation.value = false
 }
 
 const onDetailsSubmit = handleDetailsSubmit(async () => {
