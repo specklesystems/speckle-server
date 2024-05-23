@@ -5,11 +5,7 @@
         <Component :is="icon" :class="iconClasses" aria-hidden="true" />
       </div>
       <div :class="mainContentContainerClasses">
-        <h3
-          v-if="hastitle"
-          class="text-sm mb-1 sm:mb-2"
-          :class="[hasDescription ? 'font-medium' : '']"
-        >
+        <h3 class="text-sm" :class="[hasDescription ? 'font-medium' : '']">
           <slot name="title">Title</slot>
         </h3>
         <div v-if="hasDescription" :class="descriptionWrapperClasses">
@@ -89,7 +85,6 @@ const props = withDefaults(
 
 const slots = useSlots()
 const hasDescription = computed(() => !!slots['description'])
-const hastitle = computed(() => !!slots['title'])
 
 const icon = computed(() => {
   if (props.customIcon) return props.customIcon
@@ -190,7 +185,7 @@ const descriptionWrapperClasses = computed(() => {
       break
     case 'default':
     default:
-      classParts.push('text-xs sm:text-sm')
+      classParts.push('mt-1 sm:mt-2 text-xs sm:text-sm')
       break
   }
 
