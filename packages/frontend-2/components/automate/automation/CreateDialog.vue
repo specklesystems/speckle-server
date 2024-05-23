@@ -177,7 +177,7 @@ const shouldShowStepsWidget = computed(() => {
 })
 
 const title = computed(() => {
-  return isTestAutomation.value ? null : 'Create Automation'
+  return isTestAutomation.value ? undefined : 'Create Automation'
 })
 
 const buttons = computed((): LayoutDialogButton[] => {
