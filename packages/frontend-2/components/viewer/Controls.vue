@@ -137,13 +137,28 @@
             <!-- Settings -->
             <ViewerSettingsMenu />
           </ViewerControlsButtonGroup>
+
+          <!-- Gendo -->
+          <ViewerControlsButtonToggle
+            v-show="isGendoEnabled"
+            v-tippy="'Real time AI rendering powered by Gendo'"
+            :active="activeControl === 'gendo'"
+            class="hover:hue-rotate-30 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-200 via-violet-600 to-sky-900"
+            @click="toggleActiveControl('gendo')"
+          >
+            <img
+              src="~/assets/images/gendo/logo.svg"
+              alt="gendo Logo"
+              class="h-6 w-6 md:h-8 md:w-8 -ml-1 -mt-1"
+            />
+          </ViewerControlsButtonToggle>
         </div>
         <!-- Standard viewer controls -->
       </div>
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] w-56 md:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] w-56 md:w-72 overflow-y-auto px-[2px] py-[2px] transition resize-x ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
@@ -183,6 +198,13 @@
           :summary="summary"
           @close="activeControl = 'none'"
         />
+      </div>
+      <div
+        v-show="
+          resourceItems.length !== 0 && activeControl === 'gendo' && isGendoEnabled
+        "
+      >
+        <ViewerGendoPanel @close="activeControl = 'none'" />
       </div>
 
       <!-- Empty state -->
@@ -237,6 +259,9 @@ import { useViewerTour } from '~/lib/viewer/composables/tour'
 import { onKeyStroke } from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 
+// const isGendoEnabled = useIsAutomateModuleEnabled() // Not working for some reason, always false
+const isGendoEnabled = ref(true)
+
 type ActiveControl =
   | 'none'
   | 'models'
@@ -246,6 +271,7 @@ type ActiveControl =
   | 'automate'
   | 'measurements'
   | 'mobileOverflow'
+  | 'gendo'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()

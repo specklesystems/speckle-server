@@ -289,3 +289,7 @@ export function getAutomateEncryptionKeysPath() {
 
   return process.env.AUTOMATE_ENCRYPTION_KEYS_PATH
 }
+
+export function getGendoAIKey() {
+  return process.env.GENDOAI_KEY
+}

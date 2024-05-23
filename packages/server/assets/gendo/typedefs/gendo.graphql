@@ -1,0 +1,36 @@
+extend type Version {
+  gendoAIRenders: GendoAIRenderCollection
+}
+
+type GendoAIRenderCollection {
+  totalCount: Int!
+  items: [GendoAIRender!]!
+}
+
+type GendoAIRender {
+  id: ID!
+  createdAt: String!
+  updatedAt: String!
+  gendoGenerationId: String
+  status: String!
+  prompt: String!
+  cameraLocation: JSONObject
+}
+
+extend type VersionMutations {
+  requestGendoAIRender(input: GendoAIRenderInput): Boolean!
+}
+
+input GendoAIRenderInput {
+  projectId: ID!
+  modelId: ID!
+  versionId: ID!
+  """
+  The generation prompt.
+  """
+  prompt: String!
+  """
+  Base64 encoded image of the depthmap, resized to 1024 on the longest size.
+  """
+  baseImage: String!
+}

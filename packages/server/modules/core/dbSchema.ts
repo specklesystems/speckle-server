@@ -632,4 +632,18 @@ export const Automations = buildTableHelper('automations', [
   'executionEngineAutomationId'
 ])
 
+export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [
+  'id',
+  'userId',
+  'versionId',
+  'createdAt',
+  'updatedAt',
+  'gendoGenerationId',
+  'status',
+  'prompt',
+  'cameraLocation',
+  'baseImage',
+  'responseImage'
+])
+
 export { knex }
