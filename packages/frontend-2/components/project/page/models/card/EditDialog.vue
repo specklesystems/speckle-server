@@ -62,6 +62,7 @@ import {
   useModelNameValidationRules,
   useUpdateModel
 } from '~~/lib/projects/composables/modelManagement'
+import { sanitizeModelName } from '~~/lib/projects/helpers/models'
 
 graphql(`
   fragment ProjectPageModelsCardRenameDialog on Model {
@@ -99,7 +100,7 @@ const onSubmit = handleSubmit(async (vals) => {
   loading.value = true
   const updatedModel = await updateModel({
     id: props.model.id,
-    name: vals.name,
+    name: sanitizeModelName(vals.name),
     description: vals.description,
     projectId: props.projectId
   }).finally(() => (loading.value = false))

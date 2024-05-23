@@ -52,6 +52,7 @@ import {
 } from '~~/lib/projects/composables/modelManagement'
 import { trim } from 'lodash-es'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { sanitizeModelName } from '~/lib/projects/helpers/models'
 
 const props = defineProps<{
   projectId: string
@@ -84,7 +85,7 @@ const showNewModelCard = ref(false)
 const name = ref('')
 
 const createFinalName = (name: string) => {
-  const userEnteredName = trim(name, '/')
+  const userEnteredName = sanitizeModelName(trim(name, '/'))
   const prefix = trim(props.parentModelName || '', '/')
   return (prefix ? `${prefix}/` : '') + userEnteredName
 }
