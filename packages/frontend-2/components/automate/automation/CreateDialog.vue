@@ -183,7 +183,7 @@ const title = computed(() => {
 const buttons = computed((): LayoutDialogButton[] => {
   switch (enumStep.value) {
     case AutomationCreateSteps.SelectFunction: {
-      const selectFnNextButton: LayoutDialongButton = {
+      const selectFnNextButton: LayoutDialogButton = {
         id: 'selectFnNext',
         text: 'Next',
         props: {
@@ -213,7 +213,7 @@ const buttons = computed((): LayoutDialogButton[] => {
         ? [createTestAutomationButton, selectFnNextButton]
         : [selectFnNextButton]
 
-      return stepButtons as LayoutDialogButton[]
+      return stepButtons
     }
     case AutomationCreateSteps.FunctionParameters:
       return [
