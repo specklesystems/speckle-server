@@ -57,7 +57,8 @@ import {
 import {
   ArrowRightIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  CodeBracketIcon
 } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import { Automate, type Optional } from '@speckle/shared'
@@ -106,6 +107,12 @@ const props = defineProps<{
   preselectedProject?: Optional<FormSelectProjects_ProjectFragment>
 }>()
 const open = defineModel<boolean>('open', { required: true })
+
+const config = useRuntimeConfig()
+const enableCreateTestAutomation = computed(() => {
+  return config.public.FF_TEST_AUTOMATIONS_ENABLED
+})
+
 const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
 
 const stepsOrder = computed(() => [
@@ -155,20 +162,37 @@ const hasParameterErrors = ref(false)
 
 const buttons = computed((): LayoutDialogButton[] => {
   switch (enumStep.value) {
-    case AutomationCreateSteps.SelectFunction:
-      return [
-        {
-          id: 'selectFnNext',
-          text: 'Next',
-          props: {
-            iconRight: ChevronRightIcon,
-            disabled: !selectedFunction.value
-          },
-          onClick: () => {
-            step.value++
-          }
+    case AutomationCreateSteps.SelectFunction: {
+      const selectFnNextButton: LayoutDialongButton = {
+        id: 'selectFnNext',
+        text: 'Next',
+        props: {
+          iconRight: ChevronRightIcon,
+          disabled: !selectedFunction.value
+        },
+        onClick: () => {
+          step.value++
         }
-      ]
+      }
+
+      const createTestAutomationButton: LayoutDialogButton = {
+        id: 'createTestAutomation',
+        text: 'Create test automation',
+        props: {
+          iconLeft: CodeBracketIcon,
+          outlined: true
+        },
+        onClick: () => {
+          // TODO: Start create flow
+        }
+      }
+
+      const stepButtons = enableCreateTestAutomation.value
+        ? [createTestAutomationButton, selectFnNextButton]
+        : [selectFnNextButton]
+
+      return stepButtons as LayoutDialogButton[]
+    }
     case AutomationCreateSteps.FunctionParameters:
       return [
         {
