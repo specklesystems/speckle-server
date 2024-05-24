@@ -1,8 +1,7 @@
 /* eslint-disable camelcase */
 import {
-  getAutomation,
-  storeAutomation,
-  storeAutomationRevision
+  createAutomationRepository,
+  getAutomation
 } from '@/modules/automate/repositories/automations'
 import {
   CreateAutomationRevisionDeps,
@@ -38,6 +37,7 @@ import {
   getFunctionInputDecryptor
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
+import knexInstance from '@/db/knex'
 
 export const generateFunctionId = () => cryptoRandomString({ length: 10 })
 export const generateFunctionReleaseId = () => cryptoRandomString({ length: 10 })
@@ -47,6 +47,7 @@ export const buildAutomationCreate = (
     createDbAutomation: typeof clientCreateAutomation
   }>
 ) => {
+  const automationRepository = createAutomationRepository({ db: knexInstance })
   const create = createAutomation({
     createAuthCode: createStoredAuthCode({ redis: createInmemoryRedisClient() }),
     automateCreateAutomation:
@@ -55,7 +56,7 @@ export const buildAutomationCreate = (
         automationId: cryptoRandomString({ length: 10 }),
         token: cryptoRandomString({ length: 10 })
       })),
-    storeAutomation
+    automationRepository
   })
 
   return create
@@ -76,9 +77,11 @@ export const buildAutomationRevisionCreate = (
     functionId: params.functionId
   })
 
+  const automationRepository = createAutomationRepository({ db: knexInstance })
+
   const create = createAutomationRevision({
     getAutomation,
-    storeAutomationRevision,
+    automationRepository,
     getBranchesByIds,
     getFunctionRelease: async (params) => fakeGetRelease(params),
     getFunctionReleases: async (params) => params.ids.map(fakeGetRelease),

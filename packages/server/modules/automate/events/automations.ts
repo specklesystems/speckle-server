@@ -1,5 +1,7 @@
-import { AutomationRecord } from '@/modules/automate/helpers/types'
-import { StoredInsertableAutomationRevision } from '@/modules/automate/repositories/automations'
+import {
+  AutomationRecord,
+  AutomationRevisionWithTriggersFunctions
+} from '@/modules/automate/helpers/types'
 import { initializeModuleEventEmitter } from '@/modules/shared/services/moduleEventEmitterSetup'
 
 export enum AutomationsEvents {
@@ -17,7 +19,7 @@ export type AutomationsEventsPayloads = {
   }
   [AutomationsEvents.CreatedRevision]: {
     automation: AutomationRecord
-    revision: StoredInsertableAutomationRevision
+    revision: AutomationRevisionWithTriggersFunctions
   }
 }
 

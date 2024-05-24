@@ -1,11 +1,7 @@
 import {
-  InsertableAutomationRun,
-  getActiveTriggerDefinitions,
   getAutomation,
-  getFullAutomationRevisionMetadata,
   getAutomationToken,
-  getAutomationTriggerDefinitions,
-  upsertAutomationRun
+  getAutomationTriggerDefinitions
 } from '@/modules/automate/repositories/automations'
 import {
   AutomationWithRevision,
@@ -42,27 +38,32 @@ import {
 } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
-import { AutomationRepository } from '../domain'
-
-export type OnModelVersionCreateDeps = {
-  getTriggers: typeof getActiveTriggerDefinitions
-  triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
-}
+import {
+  AutomationRepository,
+  InsertableAutomationRun
+} from '@/modules/automate/domain'
 
 /**
  * This should hook into the model version create event
  */
 export const onModelVersionCreate =
-  (deps: OnModelVersionCreateDeps) =>
+  ({
+    automationRepository,
+    triggerFunction
+  }: {
+    automationRepository: Pick<AutomationRepository, 'queryActiveTriggerDefinitions'>
+    triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
+  }) =>
   async (params: { modelId: string; versionId: string; projectId: string }) => {
     const { modelId, versionId, projectId } = params
-    const { getTriggers, triggerFunction } = deps
 
     // get triggers where modelId matches
-    const triggerDefinitions = await getTriggers({
-      triggeringId: modelId,
-      triggerType: VersionCreationTriggerType
-    })
+    const triggerDefinitions = await automationRepository.queryActiveTriggerDefinitions(
+      {
+        triggeringId: modelId,
+        triggerType: VersionCreationTriggerType
+      }
+    )
 
     // get revisions where it matches any of the triggers and the revision is published
     await Promise.all(
@@ -190,7 +191,9 @@ export const triggerAutomationRevisionRun =
   }: {
     automationRepository: Pick<
       AutomationRepository,
-      'findFullAutomationRevisionMetadata'
+      | 'findFullAutomationRevisionMetadata'
+      | 'upsertAutomationRun'
+      | 'queryActiveTriggerDefinitions'
     >
     automateRunTrigger: typeof triggerAutomationRun
     getEncryptionKeyPairFor: typeof getEncryptionKeyPairForFn
@@ -210,7 +213,7 @@ export const triggerAutomationRevisionRun =
 
     const { automationWithRevision, userId, automateToken } = await ensureRunConditions(
       {
-        revisionGetter: automationRepository.findFullAutomationRevisionMetadata,
+        automationRepository,
         versionGetter: getCommit,
         automationTokenGetter: getAutomationToken
       }
@@ -253,7 +256,7 @@ export const triggerAutomationRevisionRun =
       manifests: triggerManifests,
       automationWithRevision
     })
-    await upsertAutomationRun(automationRun)
+    await automationRepository.upsertAutomationRun(automationRun)
 
     try {
       const { automationRunId } = await automateRunTrigger({
@@ -269,7 +272,7 @@ export const triggerAutomationRevisionRun =
       })
 
       automationRun.executionEngineRunId = automationRunId
-      await upsertAutomationRun(automationRun)
+      await automationRepository.upsertAutomationRun(automationRun)
     } catch (error) {
       const statusMessage = error instanceof Error ? error.message : `${error}`
       automationRun.status = 'exception'
@@ -278,7 +281,7 @@ export const triggerAutomationRevisionRun =
         status: 'exception',
         statusMessage
       }))
-      await upsertAutomationRun(automationRun)
+      await automationRepository.upsertAutomationRun(automationRun)
     }
 
     await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.Created, {
@@ -292,7 +295,10 @@ export const triggerAutomationRevisionRun =
 
 export const ensureRunConditions =
   (deps: {
-    revisionGetter: typeof getFullAutomationRevisionMetadata
+    automationRepository: Pick<
+      AutomationRepository,
+      'findFullAutomationRevisionMetadata'
+    >
     versionGetter: typeof getCommit
     automationTokenGetter: typeof getAutomationToken
   }) =>
@@ -304,9 +310,10 @@ export const ensureRunConditions =
     userId: string
     automateToken: string
   }> => {
-    const { revisionGetter, versionGetter, automationTokenGetter } = deps
+    const { automationRepository, versionGetter, automationTokenGetter } = deps
     const { revisionId, manifest } = params
-    const automationWithRevision = await revisionGetter(revisionId)
+    const automationWithRevision =
+      await automationRepository.findFullAutomationRevisionMetadata(revisionId)
     if (!automationWithRevision)
       throw new AutomateInvalidTriggerError(
         "Cannot trigger the given revision, it doesn't exist"

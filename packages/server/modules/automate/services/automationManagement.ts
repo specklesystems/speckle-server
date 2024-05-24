@@ -1,11 +1,5 @@
 import {
-  InsertableAutomationRevision,
-  InsertableAutomationRevisionFunction,
-  InsertableAutomationRevisionTrigger,
   getAutomation,
-  getLatestVersionAutomationRuns,
-  storeAutomation,
-  storeAutomationRevision,
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
@@ -33,6 +27,8 @@ import {
 } from '@/modules/automate/errors/management'
 import {
   AutomationRunStatuses,
+  InsertableAutomationRevisionFunction,
+  InsertableAutomationRevisionTrigger,
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
 import { getBranchesByIds } from '@/modules/core/repositories/branches'
@@ -46,11 +42,12 @@ import {
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { validateInputAgainstFunctionSchema } from '@/modules/automate/utils/inputSchemaValidator'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import { AutomationRepository } from '../domain'
 
 export type CreateAutomationDeps = {
   createAuthCode: ReturnType<typeof createStoredAuthCode>
   automateCreateAutomation: typeof clientCreateAutomation
-  storeAutomation: typeof storeAutomation
+  automationRepository: Pick<AutomationRepository, 'insertAutomation'>
 }
 
 export const createAutomation =
@@ -67,7 +64,7 @@ export const createAutomation =
       userId,
       userResourceAccessRules
     } = params
-    const { createAuthCode, automateCreateAutomation, storeAutomation } = deps
+    const { createAuthCode, automateCreateAutomation, automationRepository } = deps
 
     const nameLength = name?.length || 0
     if (nameLength < 1 || nameLength > 255) {
@@ -94,7 +91,7 @@ export const createAutomation =
 
     const automationId = cryptoRandomString({ length: 10 })
 
-    const res = await storeAutomation(
+    const res = await automationRepository.insertAutomation(
       {
         id: automationId,
         name,
@@ -258,8 +255,8 @@ const validateNewRevisionFunctions =
   }
 
 export type CreateAutomationRevisionDeps = {
+  automationRepository: Pick<AutomationRepository, 'insertAutomationRevision'>
   getAutomation: typeof getAutomation
-  storeAutomationRevision: typeof storeAutomationRevision
   getEncryptionKeyPair: typeof getEncryptionKeyPair
   getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>
   getFunctionReleases: typeof getFunctionReleases
@@ -276,7 +273,7 @@ export const createAutomationRevision =
   }) => {
     const { input, userId, userResourceAccessRules, projectId } = params
     const {
-      storeAutomationRevision,
+      automationRepository,
       getAutomation,
       getEncryptionKeyPair,
       getFunctionInputDecryptor,
@@ -392,7 +389,8 @@ export const createAutomationRevision =
 
     await validateNewRevisionFunctions(deps)({ functions })
 
-    const revisionInput: InsertableAutomationRevision = {
+    const revisionInput = {
+      id: cryptoRandomString({ length: 10 }),
       functions,
       triggers: triggerDefinitions,
       automationId: input.automationId,
@@ -400,7 +398,7 @@ export const createAutomationRevision =
       active: true,
       publicKey: encryptionKeys.publicKey
     }
-    const res = await storeAutomationRevision(revisionInput)
+    const res = await automationRepository.insertAutomationRevision(revisionInput)
 
     await AutomationsEmitter.emit(AutomationsEmitter.events.CreatedRevision, {
       automation: existingAutomation,
@@ -411,7 +409,7 @@ export const createAutomationRevision =
   }
 
 export type GetAutomationsStatusDeps = {
-  getLatestVersionAutomationRuns: typeof getLatestVersionAutomationRuns
+  automationRepository: Pick<AutomationRepository, 'getAutomationRunsForVersion'>
 }
 
 export const getAutomationsStatus =
@@ -422,9 +420,9 @@ export const getAutomationsStatus =
     versionId: string
   }): Promise<TriggeredAutomationsStatusGraphQLReturn | null> => {
     const { projectId, modelId, versionId } = params
-    const { getLatestVersionAutomationRuns } = deps
+    const { automationRepository } = deps
 
-    const runs = await getLatestVersionAutomationRuns({
+    const runs = await automationRepository.getAutomationRunsForVersion({
       projectId,
       modelId,
       versionId

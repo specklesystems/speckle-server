@@ -4,8 +4,8 @@ import {
   AutomationWithRevision,
   BaseTriggerManifest
 } from '@/modules/automate/helpers/types'
-import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import { initializeModuleEventEmitter } from '@/modules/shared/services/moduleEventEmitterSetup'
+import { InsertableAutomationRun } from '../domain'
 
 export enum AutomateRunsEvents {
   Created = 'created',

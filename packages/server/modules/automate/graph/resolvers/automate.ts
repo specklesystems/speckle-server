@@ -8,21 +8,13 @@ import {
   getFunctionReleases
 } from '@/modules/automate/clients/executionEngine'
 import {
-  GetProjectAutomationsParams,
   createAutomationRepository,
   getAutomation,
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
-  getFunctionRun,
-  getLatestVersionAutomationRuns,
-  getProjectAutomationsItems,
-  getProjectAutomationsTotalCount,
-  storeAutomation,
-  storeAutomationRevision,
   updateAutomationRun,
-  updateAutomation as updateDbAutomation,
-  upsertAutomationFunctionRun
+  updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import {
   createAutomation,
@@ -90,6 +82,7 @@ import {
   mapDbStatusToGqlStatus,
   mapGqlStatusToDbStatus
 } from '@/modules/automate/utils/automateFunctionRunStatus'
+import knexInstance from '@/db/knex'
 
 /**
  * TODO:
@@ -152,14 +145,16 @@ export = {
       return ctx.loaders.streams.getAutomation.forStream(parent.id).load(args.id)
     },
     async automations(parent, args) {
-      const retrievalArgs: GetProjectAutomationsParams = {
+      const retrievalArgs = {
         projectId: parent.id,
         args
       }
 
+      const automationRepository = createAutomationRepository({ db: knexInstance })
+
       const [{ items, cursor }, totalCount] = await Promise.all([
-        getProjectAutomationsItems(retrievalArgs),
-        getProjectAutomationsTotalCount(retrievalArgs)
+        automationRepository.queryProjectAutomations(retrievalArgs),
+        automationRepository.countProjectAutomations(retrievalArgs)
       ])
 
       return {
@@ -171,8 +166,9 @@ export = {
   },
   Model: {
     async automationsStatus(parent, _args, ctx) {
+      const automationRepository = createAutomationRepository({ db: knexInstance })
       const getStatus = getAutomationsStatus({
-        getLatestVersionAutomationRuns
+        automationRepository
       })
 
       const modelId = parent.id
@@ -191,8 +187,9 @@ export = {
   },
   Version: {
     async automationsStatus(parent, _args, ctx) {
+      const automationRepository = createAutomationRepository({ db: knexInstance })
       const getStatus = getAutomationsStatus({
-        getLatestVersionAutomationRuns
+        automationRepository
       })
 
       const versionId = parent.id
@@ -403,12 +400,13 @@ export = {
   ProjectAutomationMutations: {
     async create(parent, { input }, ctx) {
       const testAutomateAuthCode = process.env['TEST_AUTOMATE_AUTHENTICATION_CODE']
+      const automationRepository = createAutomationRepository({ db: knexInstance })
       const create = createAutomation({
         createAuthCode: testAutomateAuthCode
           ? async () => testAutomateAuthCode
           : createStoredAuthCode({ redis: getGenericRedis() }),
         automateCreateAutomation: clientCreateAutomation,
-        storeAutomation
+        automationRepository
       })
 
       return (
@@ -434,17 +432,18 @@ export = {
       })
     },
     async createRevision(parent, { input }, ctx) {
+      const automationRepository = createAutomationRepository({ db: knexInstance })
       const create = createAutomationRevision({
         getAutomation,
-        storeAutomationRevision,
         getBranchesByIds,
         getFunctionRelease,
         getEncryptionKeyPair,
         getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
-        getFunctionReleases
+        getFunctionReleases,
+        automationRepository
       })
 
-      return await create({
+      return create({
         input,
         projectId: parent.projectId,
         userId: ctx.userId!,
@@ -453,12 +452,7 @@ export = {
     },
     async trigger(parent, { automationId }, ctx) {
       const automationRepository = createAutomationRepository({
-        db: {
-          AutomationTriggers: AutomationTriggers.knex,
-          AutomationRevisions: AutomationRevisions.knex,
-          AutomationRevisionFunctions: AutomationRevisionFunctions.knex,
-          Automations: Automations.knex
-        }
+        db: knexInstance
       })
       const trigger = manuallyTriggerAutomation({
         getAutomationTriggerDefinitions,
@@ -545,9 +539,9 @@ export = {
   },
   Mutation: {
     async automateFunctionRunStatusReport(_parent, { input }) {
+      const automationRepository = createAutomationRepository({ db: knexInstance })
       const deps: ReportFunctionRunStatusDeps = {
-        getAutomationFunctionRunRecord: getFunctionRun,
-        upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
+        automationRepository,
         automationRunUpdater: updateAutomationRun
       }
 

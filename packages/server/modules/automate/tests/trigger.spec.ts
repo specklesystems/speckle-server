@@ -28,18 +28,11 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import { createTestCommit } from '@/test/speckle-helpers/commitHelper'
 import {
-  InsertableAutomationRun,
   getAutomation,
-  getFullAutomationRunById,
   getAutomationTriggerDefinitions,
-  getFunctionRun,
-  storeAutomation,
-  storeAutomationRevision,
   updateAutomation,
-  updateAutomationRevision,
   updateAutomationRun,
-  upsertAutomationRun,
-  upsertAutomationFunctionRun
+  createAutomationRepository
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate, Environment } from '@speckle/shared'
@@ -65,6 +58,9 @@ import {
 } from '@/modules/automate/services/encryption'
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
+import knexInstance from '@/db/knex'
+import { findFullAutomationRunById } from '../helpers/findFullAutomationRunById'
+import { InsertableAutomationRun } from '../domain'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
@@ -156,7 +152,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       it('No trigger no run', async () => {
         const triggered: Record<string, BaseTriggerManifest> = {}
         await onModelVersionCreate({
-          getTriggers: async () => [],
+          automationRepository: { queryActiveTriggerDefinitions: async () => [] },
           triggerFunction: async ({ manifest, revisionId }) => {
             triggered[revisionId] = manifest
             return { automationRunId: cryptoRandomString({ length: 10 }) }
@@ -188,9 +184,11 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const projectId = cryptoRandomString({ length: 10 })
 
         await onModelVersionCreate({
-          getTriggers: async <
-            T extends AutomationTriggerType = AutomationTriggerType
-          >() => storedTriggers as AutomationTriggerDefinitionRecord<T>[],
+          automationRepository: {
+            queryActiveTriggerDefinitions: async <
+              T extends AutomationTriggerType = AutomationTriggerType
+            >() => storedTriggers as AutomationTriggerDefinitionRecord<T>[]
+          },
           triggerFunction: async ({ revisionId, manifest }) => {
             if (!isVersionCreatedTriggerManifest(manifest)) {
               throw new Error('unexpected trigger type')
@@ -231,9 +229,11 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const triggered: Record<string, VersionCreatedTriggerManifest> = {}
         const versionId = cryptoRandomString({ length: 10 })
         await onModelVersionCreate({
-          getTriggers: async <
-            T extends AutomationTriggerType = AutomationTriggerType
-          >() => storedTriggers as AutomationTriggerDefinitionRecord<T>[],
+          automationRepository: {
+            queryActiveTriggerDefinitions: async <
+              T extends AutomationTriggerType = AutomationTriggerType
+            >() => storedTriggers as AutomationTriggerDefinitionRecord<T>[]
+          },
           triggerFunction: async ({ revisionId, manifest }) => {
             if (!isVersionCreatedTriggerManifest(manifest)) {
               throw new Error('unexpected trigger type')
@@ -255,7 +255,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
     describe('Triggering an automation revision run', () => {
       it('Throws if run conditions are not met', async () => {
         try {
+          const automationRepository = createAutomationRepository({ db: knexInstance })
           await triggerAutomationRevisionRun({
+            automationRepository,
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
             }),
@@ -279,6 +281,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       })
       it('Saves run with an error if automate run trigger fails', async () => {
         const userId = testUser.id
+        const automationRepository = createAutomationRepository({ db: knexInstance })
 
         const project = {
           name: cryptoRandomString({ length: 10 }),
@@ -312,7 +315,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           automateToken: cryptoRandomString({ length: 10 }),
           automateRefreshToken: cryptoRandomString({ length: 10 })
         }
-        await storeAutomation(automation, automationToken)
+        await automationRepository.insertAutomation(automation, automationToken)
 
         const automationRevisionId = cryptoRandomString({ length: 10 })
         const trigger = {
@@ -320,7 +323,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           triggeringId: cryptoRandomString({ length: 10 })
         }
         // create revision,
-        await storeAutomationRevision({
+        await automationRepository.insertAutomationRevision({
           id: automationRevisionId,
           createdAt: new Date(),
           automationId: automation.id,
@@ -338,6 +341,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         })
         const thrownError = 'trigger failed'
         const { automationRunId } = await triggerAutomationRevisionRun({
+          automationRepository,
           automateRunTrigger: async () => {
             throw new Error(thrownError)
           },
@@ -352,7 +356,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           }
         })
 
-        const storedRun = await getFullAutomationRunById(automationRunId)
+        const storedRun = await findFullAutomationRunById({ db: knexInstance })(
+          automationRunId
+        )
         if (!storedRun) throw 'cant fint the stored run'
 
         const expectedStatus = 'exception'
@@ -367,6 +373,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         // create user, project, model, version
 
         const userId = testUser.id
+        const automationRepository = createAutomationRepository({ db: knexInstance })
 
         const project = {
           name: cryptoRandomString({ length: 10 }),
@@ -400,7 +407,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           automateToken: cryptoRandomString({ length: 10 }),
           automateRefreshToken: cryptoRandomString({ length: 10 })
         }
-        await storeAutomation(automation, automationToken)
+        await automationRepository.insertAutomation(automation, automationToken)
 
         const automationRevisionId = cryptoRandomString({ length: 10 })
         const trigger = {
@@ -408,7 +415,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           triggeringId: cryptoRandomString({ length: 10 })
         }
         // create revision,
-        await storeAutomationRevision({
+        await automationRepository.insertAutomationRevision({
           id: automationRevisionId,
           createdAt: new Date(),
           automationId: automation.id,
@@ -426,6 +433,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         })
         const executionEngineRunId = cryptoRandomString({ length: 10 })
         const { automationRunId } = await triggerAutomationRevisionRun({
+          automationRepository,
           automateRunTrigger: async () => ({
             automationRunId: executionEngineRunId
           }),
@@ -440,7 +448,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           }
         })
 
-        const storedRun = await getFullAutomationRunById(automationRunId)
+        const storedRun = await findFullAutomationRunById({ db: knexInstance })(
+          automationRunId
+        )
         if (!storedRun) throw 'cant fint the stored run'
 
         const expectedStatus = 'pending'
@@ -456,7 +466,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       it("the referenced revision doesn't exist", async () => {
         try {
           await ensureRunConditions({
-            revisionGetter: async () => null,
+            automationRepository: {
+              findFullAutomationRevisionMetadata: async () => null
+            },
             versionGetter: async () => undefined,
             automationTokenGetter: async () => null
           })({
@@ -478,27 +490,29 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       it('the automation is not enabled', async () => {
         try {
           await ensureRunConditions({
-            revisionGetter: async () => ({
-              id: cryptoRandomString({ length: 10 }),
-              name: cryptoRandomString({ length: 10 }),
-              projectId: cryptoRandomString({ length: 10 }),
-              enabled: false,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-              userId: cryptoRandomString({ length: 10 }),
-              revision: {
+            automationRepository: {
+              findFullAutomationRevisionMetadata: async () => ({
                 id: cryptoRandomString({ length: 10 }),
+                name: cryptoRandomString({ length: 10 }),
+                projectId: cryptoRandomString({ length: 10 }),
+                enabled: false,
                 createdAt: new Date(),
-                publicKey,
+                updatedAt: new Date(),
+                executionEngineAutomationId: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
-                active: false,
-                triggers: [],
-                functions: [],
-                automationId: cryptoRandomString({ length: 10 }),
-                automationToken: cryptoRandomString({ length: 15 })
-              }
-            }),
+                revision: {
+                  id: cryptoRandomString({ length: 10 }),
+                  createdAt: new Date(),
+                  publicKey,
+                  userId: cryptoRandomString({ length: 10 }),
+                  active: false,
+                  triggers: [],
+                  functions: [],
+                  automationId: cryptoRandomString({ length: 10 }),
+                  automationToken: cryptoRandomString({ length: 15 })
+                }
+              })
+            },
             versionGetter: async () => undefined,
             automationTokenGetter: async () => null
           })({
@@ -520,27 +534,29 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       it('the revision is not active', async () => {
         try {
           await ensureRunConditions({
-            revisionGetter: async () => ({
-              id: cryptoRandomString({ length: 10 }),
-              name: cryptoRandomString({ length: 10 }),
-              projectId: cryptoRandomString({ length: 10 }),
-              enabled: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-              userId: cryptoRandomString({ length: 10 }),
-              revision: {
-                publicKey,
-                active: false,
-                triggers: [],
-                functions: [],
-                automationId: cryptoRandomString({ length: 10 }),
-                automationToken: cryptoRandomString({ length: 15 }),
+            automationRepository: {
+              findFullAutomationRevisionMetadata: async () => ({
                 id: cryptoRandomString({ length: 10 }),
+                name: cryptoRandomString({ length: 10 }),
+                projectId: cryptoRandomString({ length: 10 }),
+                enabled: true,
                 createdAt: new Date(),
-                userId: cryptoRandomString({ length: 10 })
-              }
-            }),
+                updatedAt: new Date(),
+                executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+                userId: cryptoRandomString({ length: 10 }),
+                revision: {
+                  publicKey,
+                  active: false,
+                  triggers: [],
+                  functions: [],
+                  automationId: cryptoRandomString({ length: 10 }),
+                  automationToken: cryptoRandomString({ length: 15 }),
+                  id: cryptoRandomString({ length: 10 }),
+                  createdAt: new Date(),
+                  userId: cryptoRandomString({ length: 10 })
+                }
+              })
+            },
             versionGetter: async () => undefined,
             automationTokenGetter: async () => null
           })({
@@ -562,27 +578,29 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       it("the revision doesn't have the referenced trigger", async () => {
         try {
           await ensureRunConditions({
-            revisionGetter: async () => ({
-              id: cryptoRandomString({ length: 10 }),
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              userId: cryptoRandomString({ length: 10 }),
-              name: cryptoRandomString({ length: 10 }),
-              projectId: cryptoRandomString({ length: 10 }),
-              enabled: true,
-              executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-              revision: {
-                publicKey,
+            automationRepository: {
+              findFullAutomationRevisionMetadata: async () => ({
                 id: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
+                updatedAt: new Date(),
                 userId: cryptoRandomString({ length: 10 }),
-                active: true,
-                triggers: [],
-                functions: [],
-                automationId: cryptoRandomString({ length: 10 }),
-                automationToken: cryptoRandomString({ length: 15 })
-              }
-            }),
+                name: cryptoRandomString({ length: 10 }),
+                projectId: cryptoRandomString({ length: 10 }),
+                enabled: true,
+                executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+                revision: {
+                  publicKey,
+                  id: cryptoRandomString({ length: 10 }),
+                  createdAt: new Date(),
+                  userId: cryptoRandomString({ length: 10 }),
+                  active: true,
+                  triggers: [],
+                  functions: [],
+                  automationId: cryptoRandomString({ length: 10 }),
+                  automationToken: cryptoRandomString({ length: 15 })
+                }
+              })
+            },
             versionGetter: async () => undefined,
             automationTokenGetter: async () => null
           })({
@@ -611,32 +629,34 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
         try {
           await ensureRunConditions({
-            revisionGetter: async () => ({
-              id: cryptoRandomString({ length: 10 }),
-              name: cryptoRandomString({ length: 10 }),
-              projectId: cryptoRandomString({ length: 10 }),
-              enabled: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-              userId: cryptoRandomString({ length: 10 }),
-              revision: {
-                publicKey,
+            automationRepository: {
+              findFullAutomationRevisionMetadata: async () => ({
                 id: cryptoRandomString({ length: 10 }),
+                name: cryptoRandomString({ length: 10 }),
+                projectId: cryptoRandomString({ length: 10 }),
+                enabled: true,
                 createdAt: new Date(),
+                updatedAt: new Date(),
+                executionEngineAutomationId: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
-                active: true,
-                triggers: [
-                  {
-                    triggeringId: manifest.modelId,
-                    triggerType: manifest.triggerType,
-                    automationRevisionId: cryptoRandomString({ length: 10 })
-                  }
-                ],
-                functions: [],
-                automationId: cryptoRandomString({ length: 10 })
-              }
-            }),
+                revision: {
+                  publicKey,
+                  id: cryptoRandomString({ length: 10 }),
+                  createdAt: new Date(),
+                  userId: cryptoRandomString({ length: 10 }),
+                  active: true,
+                  triggers: [
+                    {
+                      triggeringId: manifest.modelId,
+                      triggerType: manifest.triggerType,
+                      automationRevisionId: cryptoRandomString({ length: 10 })
+                    }
+                  ],
+                  functions: [],
+                  automationId: cryptoRandomString({ length: 10 })
+                }
+              })
+            },
             versionGetter: async () => undefined,
             automationTokenGetter: async () => null
           })({
@@ -659,33 +679,35 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
         try {
           await ensureRunConditions({
-            revisionGetter: async () => ({
-              id: cryptoRandomString({ length: 10 }),
-              name: cryptoRandomString({ length: 10 }),
-              projectId: cryptoRandomString({ length: 10 }),
-              enabled: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-              userId: cryptoRandomString({ length: 10 }),
-              revision: {
+            automationRepository: {
+              findFullAutomationRevisionMetadata: async () => ({
                 id: cryptoRandomString({ length: 10 }),
+                name: cryptoRandomString({ length: 10 }),
+                projectId: cryptoRandomString({ length: 10 }),
+                enabled: true,
                 createdAt: new Date(),
+                updatedAt: new Date(),
+                executionEngineAutomationId: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
-                active: true,
-                publicKey,
-                triggers: [
-                  {
-                    triggerType: manifest.triggerType,
-                    triggeringId: manifest.modelId,
-                    automationRevisionId: cryptoRandomString({ length: 10 })
-                  }
-                ],
-                functions: [],
-                automationId: cryptoRandomString({ length: 10 }),
-                automationToken: cryptoRandomString({ length: 15 })
-              }
-            }),
+                revision: {
+                  id: cryptoRandomString({ length: 10 }),
+                  createdAt: new Date(),
+                  userId: cryptoRandomString({ length: 10 }),
+                  active: true,
+                  publicKey,
+                  triggers: [
+                    {
+                      triggerType: manifest.triggerType,
+                      triggeringId: manifest.modelId,
+                      automationRevisionId: cryptoRandomString({ length: 10 })
+                    }
+                  ],
+                  functions: [],
+                  automationId: cryptoRandomString({ length: 10 }),
+                  automationToken: cryptoRandomString({ length: 15 })
+                }
+              })
+            },
             versionGetter: async () => undefined,
             automationTokenGetter: async () => null
           })({
@@ -708,33 +730,35 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
         try {
           await ensureRunConditions({
-            revisionGetter: async () => ({
-              id: cryptoRandomString({ length: 10 }),
-              name: cryptoRandomString({ length: 10 }),
-              projectId: cryptoRandomString({ length: 10 }),
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              enabled: true,
-              executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-              userId: cryptoRandomString({ length: 10 }),
-              revision: {
+            automationRepository: {
+              findFullAutomationRevisionMetadata: async () => ({
                 id: cryptoRandomString({ length: 10 }),
-                userId: cryptoRandomString({ length: 10 }),
-                active: true,
-                publicKey,
-                triggers: [
-                  {
-                    triggeringId: manifest.modelId,
-                    triggerType: manifest.triggerType,
-                    automationRevisionId: cryptoRandomString({ length: 10 })
-                  }
-                ],
+                name: cryptoRandomString({ length: 10 }),
+                projectId: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
-                functions: [],
-                automationId: cryptoRandomString({ length: 10 }),
-                automationToken: cryptoRandomString({ length: 15 })
-              }
-            }),
+                updatedAt: new Date(),
+                enabled: true,
+                executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+                userId: cryptoRandomString({ length: 10 }),
+                revision: {
+                  id: cryptoRandomString({ length: 10 }),
+                  userId: cryptoRandomString({ length: 10 }),
+                  active: true,
+                  publicKey,
+                  triggers: [
+                    {
+                      triggeringId: manifest.modelId,
+                      triggerType: manifest.triggerType,
+                      automationRevisionId: cryptoRandomString({ length: 10 })
+                    }
+                  ],
+                  createdAt: new Date(),
+                  functions: [],
+                  automationId: cryptoRandomString({ length: 10 }),
+                  automationToken: cryptoRandomString({ length: 15 })
+                }
+              })
+            },
             versionGetter: async () => ({
               author: null,
               id: cryptoRandomString({ length: 10 }),
@@ -770,33 +794,35 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         }
         try {
           await ensureRunConditions({
-            revisionGetter: async () => ({
-              id: cryptoRandomString({ length: 10 }),
-              name: cryptoRandomString({ length: 10 }),
-              projectId: cryptoRandomString({ length: 10 }),
-              enabled: true,
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              executionEngineAutomationId: cryptoRandomString({ length: 10 }),
-              userId: cryptoRandomString({ length: 10 }),
-              revision: {
+            automationRepository: {
+              findFullAutomationRevisionMetadata: async () => ({
                 id: cryptoRandomString({ length: 10 }),
-                userId: cryptoRandomString({ length: 10 }),
+                name: cryptoRandomString({ length: 10 }),
+                projectId: cryptoRandomString({ length: 10 }),
+                enabled: true,
                 createdAt: new Date(),
-                active: true,
-                publicKey,
-                triggers: [
-                  {
-                    triggeringId: manifest.modelId,
-                    triggerType: manifest.triggerType,
-                    automationRevisionId: cryptoRandomString({ length: 10 })
-                  }
-                ],
-                functions: [],
-                automationId: cryptoRandomString({ length: 10 }),
-                automationToken: cryptoRandomString({ length: 15 })
-              }
-            }),
+                updatedAt: new Date(),
+                executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+                userId: cryptoRandomString({ length: 10 }),
+                revision: {
+                  id: cryptoRandomString({ length: 10 }),
+                  userId: cryptoRandomString({ length: 10 }),
+                  createdAt: new Date(),
+                  active: true,
+                  publicKey,
+                  triggers: [
+                    {
+                      triggeringId: manifest.modelId,
+                      triggerType: manifest.triggerType,
+                      automationRevisionId: cryptoRandomString({ length: 10 })
+                    }
+                  ],
+                  functions: [],
+                  automationId: cryptoRandomString({ length: 10 }),
+                  automationToken: cryptoRandomString({ length: 15 })
+                }
+              })
+            },
             versionGetter: async () => ({
               author: cryptoRandomString({ length: 10 }),
               id: cryptoRandomString({ length: 10 }),
@@ -827,11 +853,13 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       const buildManuallyTriggerAutomation = (
         overrides?: Partial<ManuallyTriggerAutomationDeps>
       ) => {
+        const automationRepository = createAutomationRepository({ db: knexInstance })
         const trigger = manuallyTriggerAutomation({
           getAutomationTriggerDefinitions,
           getAutomation,
           getBranchLatestCommits,
           triggerFunction: triggerAutomationRevisionRun({
+            automationRepository,
             automateRunTrigger: async () => ({
               automationRunId: cryptoRandomString({ length: 10 })
             }),
@@ -930,13 +958,14 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         })
 
         afterEach(async () => {
+          const automationRepository = createAutomationRepository({ db: knexInstance })
           await truncateTables([Commits.name])
           await Promise.all([
             updateAutomation({
               id: createdAutomation.automation.id,
               enabled: true
             }),
-            updateAutomationRevision({
+            automationRepository.updateAutomationRevision({
               id: createdRevision.id,
               active: true
             })
@@ -963,7 +992,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         })
 
         it('fails if automation revision is disabled', async () => {
-          await updateAutomationRevision({
+          const automationRepository = createAutomationRepository({ db: knexInstance })
+          await automationRepository.updateAutomationRevision({
             id: createdRevision.id,
             active: false
           })
@@ -992,7 +1022,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             projectId: testUserStream.id
           })
 
-          const storedRun = await getFullAutomationRunById(automationRunId)
+          const storedRun = await findFullAutomationRunById({ db: knexInstance })(
+            automationRunId
+          )
           expect(storedRun).to.be.ok
 
           const expectedStatus = 'pending'
@@ -1038,14 +1070,15 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           ]
         }
 
-        await upsertAutomationRun(automationRun)
+        const automationRepository = createAutomationRepository({ db: knexInstance })
+        await automationRepository.upsertAutomationRun(automationRun)
       })
 
       describe('status update report', () => {
         const buildReportFunctionRunStatus = () => {
+          const automationRepository = createAutomationRepository({ db: knexInstance })
           const report = reportFunctionRunStatus({
-            getAutomationFunctionRunRecord: getFunctionRun,
-            upsertAutomationFunctionRunRecord: upsertAutomationFunctionRun,
+            automationRepository,
             automationRunUpdater: updateAutomationRun
           })
 
@@ -1162,9 +1195,10 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
           await expect(report(params)).to.eventually.be.true
 
+          const automationRepository = createAutomationRepository({ db: knexInstance })
           const [updatedRun, updatedFnRun] = await Promise.all([
-            getFullAutomationRunById(automationRun.id),
-            getFunctionRun(functionRunId)
+            findFullAutomationRunById({ db: knexInstance })(automationRun.id),
+            automationRepository.findFunctionRun(functionRunId)
           ])
 
           expect(updatedRun?.status).to.equal(AutomationRunStatuses.succeeded)

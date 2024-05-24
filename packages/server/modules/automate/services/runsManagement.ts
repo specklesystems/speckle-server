@@ -8,12 +8,9 @@ import {
   AutomationRunStatus,
   AutomationRunStatuses
 } from '@/modules/automate/helpers/types'
-import {
-  getFunctionRun,
-  updateAutomationRun,
-  upsertAutomationFunctionRun
-} from '@/modules/automate/repositories/automations'
+import { updateAutomationRun } from '@/modules/automate/repositories/automations'
 import { Automate } from '@speckle/shared'
+import { AutomationRepository } from '../domain'
 
 const AutomationRunStatusOrder: { [key in AutomationRunStatus]: number } = {
   pending: 0,
@@ -89,8 +86,10 @@ export const resolveStatusFromFunctionRunStatuses = (
 }
 
 export type ReportFunctionRunStatusDeps = {
-  getAutomationFunctionRunRecord: typeof getFunctionRun
-  upsertAutomationFunctionRunRecord: typeof upsertAutomationFunctionRun
+  automationRepository: Pick<
+    AutomationRepository,
+    'findFunctionRun' | 'upsertAutomationFunctionRun'
+  >
   automationRunUpdater: typeof updateAutomationRun
 }
 
@@ -102,14 +101,12 @@ export const reportFunctionRunStatus =
       'runId' | 'status' | 'statusMessage' | 'contextView' | 'results'
     >
   ): Promise<boolean> => {
-    const {
-      getAutomationFunctionRunRecord,
-      upsertAutomationFunctionRunRecord,
-      automationRunUpdater
-    } = deps
+    const { automationRepository, automationRunUpdater } = deps
     const { runId, ...statusReportData } = params
 
-    const currentFunctionRunRecordResult = await getAutomationFunctionRunRecord(runId)
+    const currentFunctionRunRecordResult = await automationRepository.findFunctionRun(
+      runId
+    )
 
     if (!currentFunctionRunRecordResult) {
       throw new FunctionRunNotFoundError()
@@ -136,7 +133,7 @@ export const reportFunctionRunStatus =
       elapsed
     }
 
-    await upsertAutomationFunctionRunRecord(nextFunctionRunRecord)
+    await automationRepository.upsertAutomationFunctionRun(nextFunctionRunRecord)
 
     const updatedRun = await automationRunUpdater({
       id: currentFunctionRunRecord.runId,

@@ -8,7 +8,6 @@ import {
 import { Environment } from '@speckle/shared'
 import {
   createAutomationRepository,
-  getActiveTriggerDefinitions,
   getAutomationRunFullTriggers
 } from '@/modules/automate/repositories/automations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
@@ -25,12 +24,7 @@ import {
   setupAutomationUpdateSubscriptions,
   setupStatusUpdateSubscriptions
 } from '@/modules/automate/services/subscriptions'
-import {
-  AutomationRevisionFunctions,
-  AutomationRevisions,
-  AutomationTriggers,
-  Automations
-} from '../core/dbSchema'
+import knexInstance from '@/db/knex'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -61,12 +55,7 @@ async function initScopes() {
 
 const initializeEventListeners = () => {
   const automationRepository = createAutomationRepository({
-    db: {
-      Automations: Automations.knex,
-      AutomationRevisionFunctions: AutomationRevisionFunctions.knex,
-      AutomationRevisions: AutomationRevisions.knex,
-      AutomationTriggers: AutomationTriggers.knex
-    }
+    db: knexInstance
   })
   const triggerFn = triggerAutomationRevisionRun({
     automationRepository,
@@ -86,7 +75,7 @@ const initializeEventListeners = () => {
       VersionEvents.Created,
       async ({ modelId, version, projectId }) => {
         await onModelVersionCreate({
-          getTriggers: getActiveTriggerDefinitions,
+          automationRepository,
           triggerFunction: triggerFn
         })({ modelId, versionId: version.id, projectId })
       }

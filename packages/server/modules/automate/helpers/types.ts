@@ -1,4 +1,5 @@
 import { Automate, Nullable } from '@speckle/shared'
+import { SetOptional } from 'type-fest'
 
 export type AutomationRecord = {
   id: string
@@ -117,6 +118,29 @@ export type AutomationRunWithFunctionRuns = AutomationRunRecord & {
 
 export type AutomationRunWithTriggersFunctionRuns = AutomationRunWithFunctionRuns & {
   triggers: AutomationRunTriggerRecord[]
+}
+
+export type InsertableAutomationRun = AutomationRunRecord & {
+  triggers: Omit<AutomationRunTriggerRecord, 'automationRunId'>[]
+  functionRuns: Omit<AutomationFunctionRunRecord, 'runId'>[]
+}
+
+export type InsertableAutomationRevisionFunction = Omit<
+  AutomateRevisionFunctionRecord,
+  'automationRevisionId'
+>
+
+export type InsertableAutomationRevisionTrigger = Omit<
+  AutomationTriggerDefinitionRecord,
+  'automationRevisionId'
+>
+
+export type InsertableAutomationRevision = SetOptional<
+  AutomationRevisionRecord,
+  'createdAt'
+> & {
+  functions: InsertableAutomationRevisionFunction[]
+  triggers: InsertableAutomationRevisionTrigger[]
 }
 
 export type ObjectResultLevel = 'info' | 'warning' | 'error'
