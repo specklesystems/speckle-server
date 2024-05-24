@@ -105,7 +105,9 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
+/* eslint-disable no-console */
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { XMarkIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
@@ -153,48 +155,83 @@ graphql(`
 `)
 
 const modelId = computed(() => props.model.id)
-const versions = computed(() => [
-  ...props.model.loadedVersion.items,
-  ...props.model.versions.items
-])
+const versions = computed(() => {
+  const allVersions = [
+    ...props.model.loadedVersion.items,
+    ...props.model.versions.items
+  ]
+  console.log('All versions before sorting:', allVersions)
+  const sortedVersions = allVersions.sort((a, b) =>
+    dayjs(b.createdAt).isBefore(dayjs(a.createdAt)) ? -1 : 1
+  )
+  console.log('Computed and sorted versions:', sortedVersions)
+  return sortedVersions
+})
+
 const showLoadMore = computed(() => {
   const totalCount = props.model.versions.totalCount
   const currentCount = versions.value.length
+  console.log(
+    'Show Load More:',
+    currentCount < totalCount,
+    'Current count:',
+    currentCount,
+    'Total count:',
+    totalCount
+  )
   return currentCount < totalCount
 })
 
-const loadedVersion = computed(() =>
-  versions.value.find((v) => v.id === props.versionId)
-)
+const loadedVersion = computed(() => {
+  const version = versions.value.find((v) => v.id === props.versionId)
+  console.log('Loaded version:', version)
+  return version
+})
 
 const latestVersion = computed(() => {
-  return versions.value
-    .slice()
-    .sort((a, b) => (dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1))[0]
+  const latest = versions.value.sort((a, b) =>
+    dayjs(a.createdAt).isBefore(dayjs(b.createdAt)) ? 1 : -1
+  )[0]
+  console.log('Latest version:', latest)
+  return latest
 })
 
-const isLatest = computed(() => loadedVersion.value?.id === latestVersion.value.id)
+const isLatest = computed(() => {
+  const isLatestVersion = loadedVersion.value?.id === latestVersion.value.id
+  console.log('Is latest:', isLatestVersion)
+  return isLatestVersion
+})
 
-const timeAgoCreatedAt = computed(() =>
-  dayjs(loadedVersion.value?.createdAt).from(dayjs())
-)
+const timeAgoCreatedAt = computed(() => {
+  const timeAgo = dayjs(loadedVersion.value?.createdAt).from(dayjs())
+  console.log('Time ago created at:', timeAgo)
+  return timeAgo
+})
 
 const createdAt = computed(() => {
-  return dayjs(loadedVersion.value?.createdAt).format('LLL')
+  const created = dayjs(loadedVersion.value?.createdAt).format('LLL')
+  console.log('Created at:', created)
+  return created
 })
 
-const latestVersionId = computed(() => latestVersion.value.id)
+const latestVersionId = computed(() => {
+  const id = latestVersion.value.id
+  console.log('Latest version ID:', id)
+  return id
+})
 
 const modelName = computed(() => {
   const parts = props.model.name.split('/')
   if (parts.length > 1) {
     const name = parts[parts.length - 1]
     parts.pop()
+    console.log('Model name header:', name, 'subheader:', parts.join('/'))
     return {
       subheader: parts.join('/'),
       header: name
     }
   } else {
+    console.log('Model name header:', props.model.name, 'subheader:', null)
     return {
       subheader: null,
       header: props.model.name
@@ -203,15 +240,20 @@ const modelName = computed(() => {
 })
 
 async function handleVersionChange(versionId: string) {
+  console.log('Handle version change to:', versionId)
   await switchModelToVersion(props.model.id, versionId)
+  console.log('Version changed to:', versionId)
 }
 
 const onLoadMore = async () => {
+  console.log('Loading more versions for model ID:', props.model.id)
   await loadMoreVersions(props.model.id)
+  console.log('Loaded more versions:', props.model.versions.items)
 }
 
 async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
   if (!loadedVersion.value?.id) return
+  console.log('Handling view changes for version:', version)
   await diffModelVersions(modelId.value, loadedVersion.value.id, version.id)
 }
 </script>

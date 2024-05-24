@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions */
+/* eslint-disable no-console */
 import {
   Viewer,
   DefaultViewerParams,
@@ -568,6 +569,7 @@ function setupResponseResourceItems(
   /**
    * Validated & de-duplicated resources that should be loaded in the viewer
    */
+
   const resourceItems = computed(() => {
     /**
      * Flatten results into an array of items that are properly ordered according to resource identifier priority.
@@ -580,6 +582,7 @@ function setupResponseResourceItems(
     const allModelItems: ViewerResourceItem[] = []
     for (const group of resolvedResourceGroups.value) {
       const [resource] = SpeckleViewer.ViewerRoute.parseUrlParameters(group.identifier)
+      console.log('Parsing resource:', resource, 'with items:', group.items)
 
       for (const item of group.items) {
         if (SpeckleViewer.ViewerRoute.isModelResource(resource)) {
@@ -605,6 +608,7 @@ function setupResponseResourceItems(
       ...allModelItems,
       ...objectItems
     ]
+    console.log('Ordered items before deduplication:', orderedItems)
 
     // Get rid of duplicates - only 1 resource per objectId
     const encounteredModels = new Set<string>()
@@ -622,6 +626,8 @@ function setupResponseResourceItems(
       if (modelId) encounteredModels.add(modelId)
       encounteredObjects.add(objectId)
     }
+
+    console.log('Final deduplicated items:', finalItems)
 
     return finalItems
   })
@@ -725,14 +731,18 @@ function setupResponseResourceData(
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
 
-  const modelsAndVersionIds = computed(() =>
-    nonObjectResourceItems.value
+  const modelsAndVersionIds = computed(() => {
+    const items = nonObjectResourceItems.value
       .map((r) => ({
         versionId: r.versionId,
         model: models.value.find((m) => m.id === r.modelId)
       }))
       .filter((o): o is SetNonNullable<typeof o, 'model'> => !!(o.versionId && o.model))
-  )
+
+    console.log('Models and their version IDs:', items)
+
+    return items
+  })
 
   const availableModelsAndVersions = computed(() => {
     const modelItems = models.value
@@ -743,6 +753,7 @@ function setupResponseResourceData(
           model: entry,
           versions: [...entry.loadedVersion.items, ...entry.versions.items]
         })
+        console.log('reduce', res)
         return res
       },
       [] as Array<{
@@ -777,8 +788,13 @@ function setupResponseResourceData(
   })
 
   const loadMoreVersions = async (modelId: string) => {
+    console.log('Loading more versions for model ID:', modelId)
     const cursor = versionCursors.value[modelId]
+    console.log('Current cursor for model:', cursor)
+
     const baseVariables = viewerLoadedResourcesVariablesFunc()
+    console.log('Base variables for query:', baseVariables)
+
     const { data, errors } = await apollo
       .query({
         query: viewerModelVersionsQuery,
@@ -791,17 +807,22 @@ function setupResponseResourceData(
       })
       .catch(convertThrowIntoFetchResult)
 
+    console.log('Query result data:', data)
+    console.log('Query errors:', errors)
+
     if (!data?.project?.model?.versions) {
       triggerNotification({
         type: ToastNotificationType.Danger,
         title: "Can't load more versions",
         description: getFirstErrorMessage(errors)
       })
+      console.error('Failed to load more versions:', errors)
       return
     }
 
     if (data.project.model.versions.cursor) {
       versionCursors.value[modelId] = data.project.model.versions.cursor
+      console.log('Updated cursor for model:', versionCursors.value[modelId])
     }
   }
 
