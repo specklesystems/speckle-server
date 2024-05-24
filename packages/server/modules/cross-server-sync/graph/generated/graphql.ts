@@ -962,6 +962,7 @@ export type GendoAiRenderCollection = {
 export type GendoAiRenderInput = {
   /** Base64 encoded image of the depthmap, resized to 1024 on the longest size. */
   baseImage: Scalars['String'];
+  camera: Scalars['JSONObject'];
   modelId: Scalars['ID'];
   projectId: Scalars['ID'];
   /** The generation prompt. */
@@ -3291,7 +3292,7 @@ export type VersionMutationsMoveToModelArgs = {
 
 
 export type VersionMutationsRequestGendoAiRenderArgs = {
-  input?: InputMaybe<GendoAiRenderInput>;
+  input: GendoAiRenderInput;
 };
 
 

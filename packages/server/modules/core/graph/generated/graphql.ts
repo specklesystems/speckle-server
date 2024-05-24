@@ -973,6 +973,7 @@ export type GendoAiRenderCollection = {
 export type GendoAiRenderInput = {
   /** Base64 encoded image of the depthmap, resized to 1024 on the longest size. */
   baseImage: Scalars['String'];
+  camera: Scalars['JSONObject'];
   modelId: Scalars['ID'];
   projectId: Scalars['ID'];
   /** The generation prompt. */
@@ -3302,7 +3303,7 @@ export type VersionMutationsMoveToModelArgs = {
 
 
 export type VersionMutationsRequestGendoAiRenderArgs = {
-  input?: InputMaybe<GendoAiRenderInput>;
+  input: GendoAiRenderInput;
 };
 
 
@@ -5108,7 +5109,7 @@ export type VersionCreatedTriggerDefinitionResolvers<ContextType = GraphQLContex
 export type VersionMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionMutations'] = ResolversParentTypes['VersionMutations']> = {
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsDeleteArgs, 'input'>>;
   moveToModel?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<VersionMutationsMoveToModelArgs, 'input'>>;
-  requestGendoAIRender?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, Partial<VersionMutationsRequestGendoAiRenderArgs>>;
+  requestGendoAIRender?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsRequestGendoAiRenderArgs, 'input'>>;
   update?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<VersionMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

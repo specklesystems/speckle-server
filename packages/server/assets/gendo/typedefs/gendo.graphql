@@ -18,13 +18,14 @@ type GendoAIRender {
 }
 
 extend type VersionMutations {
-  requestGendoAIRender(input: GendoAIRenderInput): Boolean!
+  requestGendoAIRender(input: GendoAIRenderInput!): Boolean!
 }
 
 input GendoAIRenderInput {
   projectId: ID!
   modelId: ID!
   versionId: ID!
+  camera: JSONObject!
   """
   The generation prompt.
   """
