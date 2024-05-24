@@ -10,7 +10,8 @@ import {
   VersionCreatedTriggerManifest,
   VersionCreationTriggerType,
   BaseTriggerManifest,
-  isVersionCreatedTriggerManifest
+  isVersionCreatedTriggerManifest,
+  InsertableAutomationRun
 } from '@/modules/automate/helpers/types'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { getCommit } from '@/modules/core/repositories/commits'
@@ -38,10 +39,7 @@ import {
 } from '@/modules/automate/services/encryption'
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
-import {
-  AutomationRepository,
-  InsertableAutomationRun
-} from '@/modules/automate/domain'
+import { AutomationRepository } from '@/modules/automate/domain'
 
 /**
  * This should hook into the model version create event

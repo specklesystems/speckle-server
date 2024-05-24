@@ -2,10 +2,10 @@ import {
   AutomationFunctionRunRecord,
   AutomationRunRecord,
   AutomationWithRevision,
-  BaseTriggerManifest
+  BaseTriggerManifest,
+  InsertableAutomationRun
 } from '@/modules/automate/helpers/types'
 import { initializeModuleEventEmitter } from '@/modules/shared/services/moduleEventEmitterSetup'
-import { InsertableAutomationRun } from '../domain'
 
 export enum AutomateRunsEvents {
   Created = 'created',
