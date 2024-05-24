@@ -31,7 +31,10 @@ import {
   SubscriptionViewerUserActivityBroadcastedArgs,
   UserProjectsUpdatedMessage,
   ViewerResourceItem,
-  ViewerUserActivityMessage
+  ViewerUserActivityMessage,
+  GendoAiRender,
+  SubscriptionProjectVersionGendoAiRenderUpdatedArgs,
+  SubscriptionProjectVersionGendoAiRenderCreatedArgs
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -99,7 +102,9 @@ export enum ProjectSubscriptions {
   // old beta subscription:
   ProjectAutomationStatusUpdated = 'PROJECT_AUTOMATION_STATUS_UPDATED',
   ProjectTriggeredAutomationsStatusUpdated = 'PROJECT_TRIGGERED_AUTOMATION_STATUS_UPDATED',
-  ProjectAutomationsUpdated = 'PROJECT_AUTOMATIONS_UPDATED'
+  ProjectAutomationsUpdated = 'PROJECT_AUTOMATIONS_UPDATED',
+  ProjectVersionGendoAIRenderUpdated = 'PROJECT_VERSION_GENDO_AI_RENDER_UPDATED',
+  ProjectVersionGendoAIRenderCreated = 'PROJECT_VERSION_GENDO_AI_RENDER_CREATED'
 }
 
 export enum ViewerSubscriptions {
@@ -134,6 +139,18 @@ type SubscriptionTypeMap = {
       >
     }
     variables: SubscriptionProjectUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated]: {
+    payload: {
+      projectVersionGendoAIRenderUpdated: GendoAiRender
+    }
+    variables: SubscriptionProjectVersionGendoAiRenderUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectVersionGendoAIRenderCreated]: {
+    payload: {
+      projectVersionGendoAIRenderCreated: GendoAiRender
+    }
+    variables: SubscriptionProjectVersionGendoAiRenderCreatedArgs
   }
   [ProjectSubscriptions.ProjectModelsUpdated]: {
     payload: {

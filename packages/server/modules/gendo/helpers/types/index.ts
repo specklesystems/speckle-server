@@ -1,6 +1,8 @@
 export type GendoAIRenderRecord = {
   id: string
   userId: string
+  projectId: string
+  modelId: string
   versionId: string
   createdAt: string
   updatedAt: string

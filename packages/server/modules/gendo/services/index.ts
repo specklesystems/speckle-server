@@ -1,6 +1,11 @@
 import { GendoAIRenders, knex } from '@/modules/core/dbSchema'
 import { GendoAiRenderInput } from '@/modules/core/graph/generated/graphql'
 import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
+import {
+  ProjectSubscriptions,
+  publish,
+  pubsub
+} from '@/modules/shared/utils/subscriptions'
 
 export async function createGendoAIRenderRequest(
   input: GendoAiRenderInput & {
@@ -11,8 +16,13 @@ export async function createGendoAIRenderRequest(
   }
 ) {
   const [newRecord] = await GendoAIRenders.knex().insert(input, '*')
+  // TODO Notify? Publish? PubSub? All of'em?
+
+  publish(ProjectSubscriptions.ProjectVersionGendoAIRenderCreated, {
+    projectVersionGendoAIRenderCreated: newRecord
+  })
+
   return newRecord as GendoAIRenderRecord
-  // TODO Notify
 }
 
 export async function updateGendoAIRenderRequest(
@@ -20,15 +30,29 @@ export async function updateGendoAIRenderRequest(
     gendoGenerationId: string
   }
 ) {
-  await GendoAIRenders.knex()
+  const [record] = (await GendoAIRenders.knex()
     .where('gendoGenerationId', input.gendoGenerationId)
-    .update<GendoAIRenderRecord>({ ...input, updatedAt: knex.fn.now() })
-  // TODO Notify
+    .update({ ...input, updatedAt: knex.fn.now() }, '*')) as GendoAIRenderRecord[]
+
+  publish(ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated, {
+    projectVersionGendoAIRenderUpdated: record
+  })
+
+  return record
 }
 
 export async function getGendoAIRenderRequests(versionId: string) {
   return await GendoAIRenders.knex()
-    .select<GendoAIRenderRecord>()
+    .select<GendoAIRenderRecord[]>()
     .where('versionId', versionId)
     .orderBy('createdAt', 'desc')
+}
+
+export async function getGendoAIRenderRequest(versionId: string, requestId: string) {
+  const [record] = await GendoAIRenders.knex()
+    .select<GendoAIRenderRecord[]>()
+    .where('id', requestId)
+    .andWhere('versionId', versionId)
+    .orderBy('createdAt', 'desc')
+  return record
 }

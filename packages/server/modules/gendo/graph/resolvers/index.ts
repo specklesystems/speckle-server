@@ -5,17 +5,29 @@ import {
   getGendoAIAPIEndpoint,
   getGendoAIKey
 } from '@/modules/shared/helpers/envHelper'
-import { createGendoAIRenderRequest } from '@/modules/gendo/services'
+import {
+  createGendoAIRenderRequest,
+  getGendoAIRenderRequest,
+  getGendoAIRenderRequests
+} from '@/modules/gendo/services'
 import crs from 'crypto-random-string'
+import {
+  ProjectSubscriptions,
+  filteredSubscribe
+} from '@/modules/shared/utils/subscriptions'
 
 export = {
   Version: {
-    async gendoAIRenders() {
-      // TODO
+    async gendoAIRenders(parent, __args, __cxt) {
+      const items = await getGendoAIRenderRequests(parent.id)
       return {
-        totalCount: 0,
-        items: []
+        totalCount: items.length,
+        items
       }
+    },
+    async gendoAIRender(parent, args) {
+      const item = await getGendoAIRenderRequest(parent.id, args.id)
+      return item
     }
   },
   VersionMutations: {
@@ -29,8 +41,6 @@ export = {
 
       const endpoint = getGendoAIAPIEndpoint() as string
       const bearer = getGendoAIKey() as string
-      // const webhookUrl = 'https://webhook.site/f03dd784-ec32-4bb2-8e60-07284281d36b'
-      // const webhookUrl = 'https://directly-hardy-warthog.ngrok-free.app/api/thirdparty/gendo'
       const webhookUrl = `${process.env.CANONICAL_URL}/api/thirdparty/gendo`
 
       // TODO Fire off request to gendo api & get generationId, create record in db. Note: use gendo api key from env
@@ -54,7 +64,7 @@ export = {
 
       if (status === 200) {
         const body = (await response.json()) as { status: string; generationId: string }
-        const res = await createGendoAIRenderRequest({
+        await createGendoAIRenderRequest({
           ...args.input,
           userId: ctx.userId as string,
           status: body.status,
@@ -62,12 +72,60 @@ export = {
           id: crs({ length: 10 })
         })
       } else {
-        // TODO
-        console.log(await response.json())
+        const body = await response.json()
+        await createGendoAIRenderRequest({
+          ...args.input,
+          userId: ctx.userId as string,
+          status: 'ERROR',
+          baseImage: body,
+          id: crs({ length: 10 })
+        })
       }
-
-      // TODO Notify this happened
       return true
+    }
+  },
+  Subscription: {
+    projectVersionGendoAIRenderCreated: {
+      subscribe: filteredSubscribe(
+        ProjectSubscriptions.ProjectVersionGendoAIRenderCreated,
+        async (payload, args, ctx) => {
+          if (
+            args.id !== payload.projectVersionGendoAIRenderCreated.projectId ||
+            args.versionId !== payload.projectVersionGendoAIRenderCreated.versionId
+          )
+            return false
+
+          await authorizeResolver(
+            ctx.userId,
+            args.id,
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
+          )
+
+          return true
+        }
+      )
+    },
+    projectVersionGendoAIRenderUpdated: {
+      subscribe: filteredSubscribe(
+        ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated,
+        async (payload, args, ctx) => {
+          if (
+            args.id !== payload.projectVersionGendoAIRenderUpdated.projectId ||
+            args.versionId !== payload.projectVersionGendoAIRenderUpdated.versionId
+          )
+            return false
+
+          await authorizeResolver(
+            ctx.userId,
+            args.id,
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
+          )
+
+          return true
+        }
+      )
     }
   }
 } as Resolvers

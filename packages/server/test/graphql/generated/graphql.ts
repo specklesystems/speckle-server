@@ -949,14 +949,18 @@ export type GendoAiRender = {
   createdAt: Scalars['String'];
   gendoGenerationId?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
+  modelId: Scalars['String'];
+  projectId: Scalars['String'];
   prompt: Scalars['String'];
+  responseImage: Scalars['String'];
   status: Scalars['String'];
   updatedAt: Scalars['String'];
+  versionId: Scalars['String'];
 };
 
 export type GendoAiRenderCollection = {
   __typename?: 'GendoAIRenderCollection';
-  items: Array<GendoAiRender>;
+  items: Array<Maybe<GendoAiRender>>;
   totalCount: Scalars['Int'];
 };
 
@@ -2842,6 +2846,8 @@ export type Subscription = {
   projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
+  projectVersionGendoAIRenderCreated: GendoAiRender;
+  projectVersionGendoAIRenderUpdated: GendoAiRender;
   /** Subscribe to when a project's versions get their preview image fully generated. */
   projectVersionsPreviewGenerated: ProjectVersionsPreviewGeneratedMessage;
   /** Subscribe to changes to a project's versions. */
@@ -2959,6 +2965,18 @@ export type SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs = {
 
 export type SubscriptionProjectUpdatedArgs = {
   id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectVersionGendoAiRenderCreatedArgs = {
+  id: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+
+export type SubscriptionProjectVersionGendoAiRenderUpdatedArgs = {
+  id: Scalars['String'];
+  versionId: Scalars['String'];
 };
 
 
@@ -3236,6 +3254,7 @@ export type Version = {
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
+  gendoAIRender?: Maybe<GendoAiRender>;
   gendoAIRenders?: Maybe<GendoAiRenderCollection>;
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
@@ -3251,6 +3270,11 @@ export type Version = {
 export type VersionCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type VersionGendoAiRenderArgs = {
+  id: Scalars['String'];
 };
 
 export type VersionCollection = {

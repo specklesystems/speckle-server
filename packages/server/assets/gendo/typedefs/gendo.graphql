@@ -1,20 +1,25 @@
 extend type Version {
   gendoAIRenders: GendoAIRenderCollection
+  gendoAIRender(id: String!): GendoAIRender
 }
 
 type GendoAIRenderCollection {
   totalCount: Int!
-  items: [GendoAIRender!]!
+  items: [GendoAIRender]!
 }
 
 type GendoAIRender {
   id: ID!
+  projectId: String!
+  modelId: String!
+  versionId: String!
   createdAt: String!
   updatedAt: String!
   gendoGenerationId: String
   status: String!
   prompt: String!
   cameraLocation: JSONObject
+  responseImage: String!
 }
 
 extend type VersionMutations {
@@ -34,4 +39,9 @@ input GendoAIRenderInput {
   Base64 encoded image of the depthmap, resized to 1024 on the longest size.
   """
   baseImage: String!
+}
+
+extend type Subscription {
+  projectVersionGendoAIRenderCreated(id: String!, versionId: String!): GendoAIRender!
+  projectVersionGendoAIRenderUpdated(id: String!, versionId: String!): GendoAIRender!
 }

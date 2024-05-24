@@ -13,11 +13,14 @@
           placeholder="Your prompt"
         />
         <div class="text-right">
-          <FormButton :disabled="!prompt" @click="enqueMagic()">Render</FormButton>
+          <FormButton :disabled="!prompt || isLoading" @click="enqueMagic()">
+            Render
+          </FormButton>
         </div>
       </div>
+      <ViewerGendoList />
       <div class="p-2 text-xs text-foreground-2">
-        TODO Empty state explaining WTF this does
+        TODO Empty state explaining this does
       </div>
     </div>
     <template #actions>
@@ -57,8 +60,10 @@ defineEmits<{
 }>()
 
 const prompt = ref<string>()
+const isLoading = ref(false)
 
 const enqueMagic = () => {
+  isLoading.value = true
   viewerInstance.getRenderer().pipelineOptions = {
     ...viewerInstance.getRenderer().pipelineOptions,
     pipelineOutput: 1
@@ -117,7 +122,6 @@ const lodgeRequest = async (screenshot: string) => {
       title: 'Render successfully enqued'
     })
   }
-
-  console.log(res)
+  isLoading.value = false
 }
 </script>
