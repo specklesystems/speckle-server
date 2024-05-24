@@ -129,8 +129,7 @@ const stepsOrder = computed(() => [
   AutomationCreateSteps.SelectFunction,
   AutomationCreateSteps.FunctionParameters,
   AutomationCreateSteps.AutomationDetails,
-  AutomationCreateSteps.Done,
-  AutomationCreateSteps.TestAutomationDetails
+  AutomationCreateSteps.Done
 ])
 
 const stepsWidgetData = computed(() => [
@@ -205,7 +204,7 @@ const buttons = computed((): LayoutDialogButton[] => {
         },
         onClick: () => {
           isTestAutomation.value = true
-          step.value = 4
+          step.value = 2
         }
       }
 
@@ -237,8 +236,8 @@ const buttons = computed((): LayoutDialogButton[] => {
           submit: true
         }
       ]
-    case AutomationCreateSteps.AutomationDetails:
-      return [
+    case AutomationCreateSteps.AutomationDetails: {
+      const automationButtons: LayoutDialogButton[] = [
         {
           id: 'detailsPrev',
           text: 'Previous',
@@ -256,6 +255,30 @@ const buttons = computed((): LayoutDialogButton[] => {
           disabled: creationLoading.value
         }
       ]
+
+      const testAutomationButtons: LayoutDialogButton[] = [
+        {
+          id: 'detailsPrev',
+          text: 'Back',
+          props: {
+            color: 'secondary',
+            iconLeft: ChevronLeftIcon,
+            textColor: 'primary'
+          },
+          onClick: reset
+        },
+        {
+          id: 'submitTestAutomation',
+          text: 'Create',
+          disabled: !automationName.value,
+          onClick: () => {
+            // TODO: Make request
+          }
+        }
+      ]
+
+      return isTestAutomation.value ? testAutomationButtons : automationButtons
+    }
     case AutomationCreateSteps.Done:
       return [
         {
