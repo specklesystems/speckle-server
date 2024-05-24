@@ -72,6 +72,7 @@ import { NodeRenderView } from './modules/tree/NodeRenderView'
 import { type ExtendedIntersection } from './modules/objects/SpeckleRaycaster'
 import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter'
 import { Assets } from './modules/Assets'
+import { InstancedBatchObject } from './modules/batching/InstancedBatchObject'
 
 export {
   Viewer,
@@ -81,6 +82,7 @@ export {
   DefaultLightConfiguration,
   World,
   BatchObject,
+  InstancedBatchObject,
   Box3,
   Vector3,
   WorldTree,
