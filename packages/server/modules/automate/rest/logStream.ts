@@ -1,10 +1,7 @@
 import knexInstance from '@/db/knex'
 import { getAutomationRunLogs } from '@/modules/automate/clients/executionEngine'
 import { ExecutionEngineFailedResponseError } from '@/modules/automate/errors/executionEngine'
-import {
-  createAutomationRepository,
-  getAutomationRunWithToken
-} from '@/modules/automate/repositories/automations'
+import { createAutomationRepository } from '@/modules/automate/repositories/automations'
 import { corsMiddleware } from '@/modules/core/configs/cors'
 import { getStream } from '@/modules/core/repositories/streams'
 import {
@@ -37,7 +34,7 @@ export default (app: Application) => {
       const automationId = req.params.automationId
       const runId = req.params.runId
 
-      const run = await getAutomationRunWithToken({
+      const run = await automationRepository.findAutomationRunWithToken({
         automationId,
         automationRunId: runId
       })

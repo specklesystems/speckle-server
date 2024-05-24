@@ -66,8 +66,8 @@ import {
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
 import {
+  createAutomationRepository,
   getAutomationRevisions,
-  getAutomationRunsTriggers,
   getAutomations,
   getFunctionAutomationCounts,
   getLatestAutomationRevisions,
@@ -82,6 +82,7 @@ import {
   FunctionReleaseSchemaType,
   FunctionSchemaType
 } from '@/modules/automate/helpers/executionEngine'
+import knexInstance from '@/db/knex'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -594,7 +595,10 @@ export function buildRequestLoaders(
       ),
       getRunTriggers: createLoader<string, AutomationRunTriggerRecord[]>(
         async (ids) => {
-          const results = await getAutomationRunsTriggers({
+          // TODO: here db should be injected
+          const results = await createAutomationRepository({
+            db: knexInstance
+          }).queryAutomationRunsTriggers({
             automationRunIds: ids.slice()
           })
           return ids.map((i) => results[i] || [])
