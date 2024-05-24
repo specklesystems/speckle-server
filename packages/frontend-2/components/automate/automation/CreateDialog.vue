@@ -49,10 +49,6 @@
         :automation-id="automationId"
         :function-name="selectedFunction.name"
       />
-      <AutomateAutomationCreateDialogTestAutomationDetailsStep
-        v-else-if="enumStep === AutomationCreateSteps.TestAutomationDetails"
-        v-model:automation-name="automationName"
-      />
     </div>
   </LayoutDialog>
 </template>
@@ -94,8 +90,7 @@ enum AutomationCreateSteps {
   SelectFunction,
   FunctionParameters,
   AutomationDetails,
-  Done,
-  TestAutomationDetails
+  Done
 }
 
 type DetailsFormValues = {
@@ -303,17 +298,6 @@ const buttons = computed((): LayoutDialogButton[] => {
           }
         }
       ]
-    case AutomationCreateSteps.TestAutomationDetails:
-      return [
-        {
-          id: 'submitTestAutomation',
-          text: 'Create',
-          disabled: !automationName.value,
-          onClick: () => {
-            // TODO: Make request
-          }
-        }
-      ]
     default:
       return []
   }
@@ -325,8 +309,6 @@ const buttonsWrapperClasses = computed(() => {
       return enableCreateTestAutomation.value ? 'justify-between' : 'justify-end'
     case AutomationCreateSteps.Done:
       return 'flex-col sm:flex-row sm:justify-between'
-    case AutomationCreateSteps.TestAutomationDetails:
-      return 'justify-end'
     default:
       return 'justify-between'
   }
