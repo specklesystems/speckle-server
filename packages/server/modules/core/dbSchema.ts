@@ -629,7 +629,8 @@ export const Automations = buildTableHelper('automations', [
   'createdAt',
   'updatedAt',
   'userId',
-  'executionEngineAutomationId'
+  'executionEngineAutomationId',
+  'isTestAutomation'
 ])
 
 export { knex }
