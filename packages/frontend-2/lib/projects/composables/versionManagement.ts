@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
@@ -80,10 +81,13 @@ export function useProjectVersionUpdateTracking(
 
   // Cache updates that should only be invoked once
   onProjectVersionsUpdate((res) => {
+    console.log('Project versions update subscription result:', res)
     if (!res.data?.projectVersionsUpdated || !hasLock.value) return
 
     const event = res.data.projectVersionsUpdated
     const version = event.version
+    console.log('Project versions update event:', event)
+
     if (
       [
         ProjectVersionsUpdatedMessageType.Created,
@@ -91,6 +95,13 @@ export function useProjectVersionUpdateTracking(
       ].includes(event.type) &&
       version
     ) {
+      console.log(
+        'Handling project version update event:',
+        event.type,
+        'for version:',
+        version
+      )
+
       // Added new model w/ versions OR updated model that now has versions (it might not have had them previously)
       // So - add it to the list, if its not already there
       modifyObjectFields<ProjectModelsArgs, Project['models']>(
@@ -111,6 +122,8 @@ export function useProjectVersionUpdateTracking(
             newItems.unshift(newModelRef)
             itemAdded = true
           }
+
+          console.log('Updated models list:', newItems)
 
           return {
             ...(value || {}),
@@ -170,6 +183,7 @@ export function useProjectVersionUpdateTracking(
             if (pendingWithFittingMessageIdx !== -1) {
               newVersions.splice(pendingWithFittingMessageIdx, 1)
             }
+            console.log('Updated pending versions:', newVersions)
             return newVersions
           },
           { fieldNameWhitelist: ['pendingImportedVersions'] }
@@ -194,10 +208,13 @@ export function useProjectVersionUpdateTracking(
             }
 
             const newItems = (value?.items || []).slice()
+            console.log('Existing model versions before update:', newItems)
 
             if (isUndefined(limit) || newItems.length < limit) {
               newItems.unshift(ref('Version', version.id))
             }
+
+            console.log('Updated model versions after adding new version:', newItems)
 
             return {
               ...(value || {}),
@@ -217,12 +234,16 @@ export function useProjectVersionUpdateTracking(
             const limit = variables.limit
 
             const newItems = (value?.items || []).slice()
+            console.log('Existing project versions before update:', newItems)
+
             if (
               !newItems.find((i) => i.__ref === newVersionRef.__ref) &&
               (isUndefined(limit) || newItems.length < limit)
             ) {
               newItems.unshift(newVersionRef)
             }
+
+            console.log('Updated project versions after adding new version:', newItems)
 
             return {
               ...(value || {}),
@@ -636,11 +657,14 @@ export function useProjectPendingVersionUpdateTracking(
   const { triggerNotification } = useGlobalToast()
 
   onProjectPendingVersionsUpdate((res) => {
+    console.log('Project pending versions update subscription result:', res)
     if (!res.data?.projectPendingVersionsUpdated.id || !hasLock.value) return
 
     const event = res.data.projectPendingVersionsUpdated
     const modelId = event.version.model?.id
     if (!modelId) return
+
+    console.log('Project pending versions update event:', event)
 
     if (event.type === ProjectPendingVersionsUpdatedMessageType.Created) {
       // Insert into model.pendingVersions
@@ -653,6 +677,7 @@ export function useProjectPendingVersionUpdateTracking(
         (_fieldName, _variables, value, { ref }) => {
           const currentVersions = (value || []).slice()
           currentVersions.push(ref('FileUpload', event.id))
+          console.log('Updated pending imported versions:', currentVersions)
           return uniqBy(currentVersions, (v) => v.__ref)
         },
         { fieldNameWhitelist: ['pendingImportedVersions'] }
@@ -674,6 +699,10 @@ export function useProjectPendingVersionUpdateTracking(
             if (!value?.length) return
             const currentVersions = (value || []).filter(
               (i) => i.__ref !== ref('FileUpload', event.id).__ref
+            )
+            console.log(
+              'Updated pending imported versions after success:',
+              currentVersions
             )
             return currentVersions
           },
