@@ -254,42 +254,45 @@ const insertAutomationRevision =
     }
   }
 
-export async function getAutomationToken(
-  automationId: string
-): Promise<AutomationTokenRecord | null> {
-  const token = await AutomationTokens.knex<AutomationTokenRecord>()
-    .where(AutomationTokens.col.automationId, automationId)
-    .first()
-  return token || null
-}
-
-export async function getAutomations(params: {
-  automationIds: string[]
-  projectId?: string
-}) {
-  const { automationIds, projectId } = params
-  if (!automationIds.length) return []
-
-  const q = Automations.knex<AutomationRecord[]>()
-    .select()
-    .whereIn(Automations.col.id, automationIds)
-
-  if (projectId?.length) {
-    q.andWhere(Automations.col.projectId, projectId)
+const findAutomationToken = ({ db }: { db: Knex }) =>
+  async function (automationId: string): Promise<AutomationTokenRecord | null> {
+    const token = await db<AutomationTokenRecord>(AutomationTokens.name)
+      .where(AutomationTokens.col.automationId, automationId)
+      .first()
+    return token || null
   }
 
-  return await q
-}
+const queryAutomations = ({ db }: { db: Knex }) =>
+  async function (params: {
+    automationIds: string[]
+    projectId?: string
+  }): Promise<AutomationRecord[]> {
+    const { automationIds, projectId } = params
+    if (!automationIds.length) return []
 
-export async function getAutomation(params: {
-  automationId: string
-  projectId?: string
-}): Promise<Nullable<AutomationRecord>> {
-  const { automationId, projectId } = params
-  return (
-    (await getAutomations({ automationIds: [automationId], projectId }))?.[0] || null
-  )
-}
+    const q = db<AutomationRecord>(Automations.name)
+      .select()
+      .whereIn(Automations.col.id, automationIds)
+
+    if (projectId?.length) {
+      q.andWhere(Automations.col.projectId, projectId)
+    }
+
+    return q
+  }
+
+const findAutomation = ({ db }: { db: Knex }) =>
+  async function (params: {
+    automationId: string
+    projectId?: string
+  }): Promise<Nullable<AutomationRecord>> {
+    const { automationId, projectId } = params
+    return (
+      (
+        await queryAutomations({ db })({ automationIds: [automationId], projectId })
+      )?.[0] || null
+    )
+  }
 
 export async function updateAutomation(
   automation: SetRequired<Partial<AutomationRecord>, 'id'>
@@ -895,5 +898,8 @@ export const createAutomationRepository = ({ db }: { db: Knex }) => ({
   queryAutomationProjects: queryAutomationProjects({ db }),
   findAutomationRunWithToken: findAutomationRunWithToken({ db }),
   queryAutomationRunsTriggers: queryAutomationRunsTriggers({ db }),
-  queryAutomationRunFullTriggers: queryAutomationRunFullTriggers({ db })
+  queryAutomationRunFullTriggers: queryAutomationRunFullTriggers({ db }),
+  findAutomationToken: findAutomationToken({ db }),
+  queryAutomations: queryAutomations({ db }),
+  findAutomation: findAutomation({ db })
 })

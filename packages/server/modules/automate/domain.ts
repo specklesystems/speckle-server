@@ -80,4 +80,9 @@ export interface AutomationRepository {
       version: CommitRecord
     }[]
   }>
+  findAutomation: (params: {
+    automationId: string
+    projectId?: string
+  }) => Promise<AutomationRecord | null>
+  findAutomationToken: (automationId: string) => Promise<AutomationTokenRecord | null>
 }
