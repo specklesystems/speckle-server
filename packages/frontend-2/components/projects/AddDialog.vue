@@ -10,6 +10,7 @@
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           show-required
           auto-focus
+          autocomplete="off"
         />
         <FormTextArea
           name="description"

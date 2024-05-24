@@ -19,6 +19,7 @@
           :rules="rules"
           :disabled="anyMutationsLoading"
           help="Use forward slashes in the model name to nest it below other models."
+          autocomplete="off"
         />
         <FormTextArea
           v-model="newDescription"
@@ -44,6 +45,7 @@ import {
   useCreateNewModel,
   useModelNameValidationRules
 } from '~~/lib/projects/composables/modelManagement'
+import { sanitizeModelName } from '~~/lib/projects/helpers/models'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -75,7 +77,11 @@ const openState = computed({
 })
 
 const onSubmit = handleSubmit(async ({ name, description }) => {
-  await createModel({ name, description, projectId: props.projectId })
+  await createModel({
+    name: sanitizeModelName(name),
+    description,
+    projectId: props.projectId
+  })
   mp.track('Branch Action', { type: 'action', name: 'create', mode: 'dialog' })
   openState.value = false
 })
