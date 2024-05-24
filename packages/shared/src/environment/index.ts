@@ -4,7 +4,8 @@ import { z } from 'zod'
 //INFO
 // As a convention all feature flags should be prefixed with a FF_
 const featureFlagSchema = z.object({
-  FF_AUTOMATE_MODULE_ENABLED: z.boolean().default(false)
+  FF_AUTOMATE_MODULE_ENABLED: z.boolean().default(false),
+  FF_TEST_AUTOMATIONS_ENABLED: z.boolean().default(false)
 })
 
 function parseFeatureFlags() {

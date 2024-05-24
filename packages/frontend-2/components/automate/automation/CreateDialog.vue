@@ -2,12 +2,17 @@
   <LayoutDialog
     v-model:open="open"
     max-width="lg"
-    title="Create Automation"
+    :title="title"
     :buttons-wrapper-classes="buttonsWrapperClasses"
     :buttons="buttons"
     :on-submit="onDialogSubmit"
     prevent-close-on-click-outside
   >
+    <template v-if="isTestAutomation" #header>
+      Create
+      <span class="font-extrabold text-fancy-gradient">Test</span>
+      Automation
+    </template>
     <div class="flex flex-col gap-11">
       <CommonStepsNumber
         v-if="shouldShowStepsWidget"
@@ -57,7 +62,8 @@ import {
 import {
   ArrowRightIcon,
   ChevronLeftIcon,
-  ChevronRightIcon
+  ChevronRightIcon,
+  CodeBracketIcon
 } from '@heroicons/vue/24/outline'
 import { graphql } from '~/lib/common/generated/gql'
 import { Automate, type Optional } from '@speckle/shared'
@@ -106,6 +112,12 @@ const props = defineProps<{
   preselectedProject?: Optional<FormSelectProjects_ProjectFragment>
 }>()
 const open = defineModel<boolean>('open', { required: true })
+
+const config = useRuntimeConfig()
+const enableCreateTestAutomation = computed(() => {
+  return config.public.FF_TEST_AUTOMATIONS_ENABLED
+})
+
 const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
 
 const stepsOrder = computed(() => [
@@ -139,7 +151,7 @@ const { enumStep, step } = useEnumSteps({ order: stepsOrder })
 const {
   items: stepsWidgetSteps,
   model: stepsWidgetModel,
-  shouldShowWidget: shouldShowStepsWidget
+  shouldShowWidget
 } = useEnumStepsWidgetSetup({ enumStep, widgetStepsMap: stepsWidgetData })
 
 const parametersStep = ref<{ submit: () => Promise<void> }>()
@@ -152,23 +164,51 @@ const selectedModel = ref<FormSelectModels_ModelFragment>()
 const selectedFunction = ref<Optional<CreateAutomationSelectableFunction>>()
 const functionParameters = ref<Record<string, unknown>>()
 const hasParameterErrors = ref(false)
+const isTestAutomation = ref(false)
+
+const shouldShowStepsWidget = computed(() => {
+  return !!shouldShowWidget.value && !isTestAutomation.value
+})
+
+const title = computed(() => {
+  return isTestAutomation.value ? undefined : 'Create Automation'
+})
 
 const buttons = computed((): LayoutDialogButton[] => {
   switch (enumStep.value) {
-    case AutomationCreateSteps.SelectFunction:
-      return [
-        {
-          id: 'selectFnNext',
-          text: 'Next',
-          props: {
-            iconRight: ChevronRightIcon,
-            disabled: !selectedFunction.value
-          },
-          onClick: () => {
-            step.value++
-          }
+    case AutomationCreateSteps.SelectFunction: {
+      const selectFnNextButton: LayoutDialogButton = {
+        id: 'selectFnNext',
+        text: 'Next',
+        props: {
+          iconRight: ChevronRightIcon,
+          disabled: !selectedFunction.value
+        },
+        onClick: () => {
+          step.value++
         }
-      ]
+      }
+
+      const createTestAutomationButton: LayoutDialogButton = {
+        id: 'createTestAutomation',
+        text: 'Create test automation',
+        props: {
+          color: 'secondary',
+          iconLeft: CodeBracketIcon,
+          textColor: 'primary'
+        },
+        onClick: () => {
+          isTestAutomation.value = true
+          step.value = 2
+        }
+      }
+
+      const stepButtons = enableCreateTestAutomation.value
+        ? [createTestAutomationButton, selectFnNextButton]
+        : [selectFnNextButton]
+
+      return stepButtons
+    }
     case AutomationCreateSteps.FunctionParameters:
       return [
         {
@@ -191,8 +231,8 @@ const buttons = computed((): LayoutDialogButton[] => {
           submit: true
         }
       ]
-    case AutomationCreateSteps.AutomationDetails:
-      return [
+    case AutomationCreateSteps.AutomationDetails: {
+      const automationButtons: LayoutDialogButton[] = [
         {
           id: 'detailsPrev',
           text: 'Previous',
@@ -210,6 +250,30 @@ const buttons = computed((): LayoutDialogButton[] => {
           disabled: creationLoading.value
         }
       ]
+
+      const testAutomationButtons: LayoutDialogButton[] = [
+        {
+          id: 'detailsPrev',
+          text: 'Back',
+          props: {
+            color: 'secondary',
+            iconLeft: ChevronLeftIcon,
+            textColor: 'primary'
+          },
+          onClick: reset
+        },
+        {
+          id: 'submitTestAutomation',
+          text: 'Create',
+          disabled: !automationName.value,
+          onClick: () => {
+            // TODO: Make request
+          }
+        }
+      ]
+
+      return isTestAutomation.value ? testAutomationButtons : automationButtons
+    }
     case AutomationCreateSteps.Done:
       return [
         {
@@ -242,7 +306,7 @@ const buttons = computed((): LayoutDialogButton[] => {
 const buttonsWrapperClasses = computed(() => {
   switch (enumStep.value) {
     case AutomationCreateSteps.SelectFunction:
-      return 'justify-end'
+      return enableCreateTestAutomation.value ? 'justify-between' : 'justify-end'
     case AutomationCreateSteps.Done:
       return 'flex-col sm:flex-row sm:justify-between'
     default:
@@ -267,6 +331,7 @@ const reset = () => {
   selectedModel.value = undefined
   automationName.value = undefined
   automationId.value = undefined
+  isTestAutomation.value = false
 }
 
 const onDetailsSubmit = handleDetailsSubmit(async () => {
