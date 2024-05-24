@@ -5,7 +5,7 @@
       <span class="text-foreground-2">(Beta)</span>
     </template>
     <div class="p-1">
-      <div class="space-y-2 flex flex-col">
+      <div class="space-y-2 flex flex-col mt-2">
         <FormTextArea
           v-model="prompt"
           name="prompt"
@@ -13,7 +13,7 @@
           placeholder="Your prompt"
         />
         <div class="text-right">
-          <FormButton @click="enqueMagic()">Render</FormButton>
+          <FormButton :disabled="!prompt" @click="enqueMagic()">Render</FormButton>
         </div>
       </div>
       <div class="p-2 text-xs text-foreground-2">
@@ -28,7 +28,7 @@
           link
           size="sm"
           class="ml-1"
-          to="https://gendo.ai"
+          to="https://gendo.ai?utm=speckle"
           target="_blank"
         >
           Gendo
@@ -38,7 +38,7 @@
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
-import { useMutation, useApolloClient } from '@vue/apollo-composable'
+import { useApolloClient } from '@vue/apollo-composable'
 import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { requestGendoAIRender } from '~~/lib/gendo/graphql/queriesAndMutations'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
@@ -76,6 +76,7 @@ const enqueMagic = () => {
     viewerInstance.requestRender()
   }, 100)
 }
+
 const apollo = useApolloClient().client
 const { triggerNotification } = useGlobalToast()
 
@@ -91,7 +92,11 @@ const lodgeRequest = async (screenshot: string) => {
           projectId: projectId.value,
           modelId,
           versionId,
-          camera,
+          camera: {
+            position: camera.position.value,
+            target: camera.target.value,
+            isOrthoProjection: camera.isOrthoProjection.value
+          },
           prompt: prompt.value || 'no prompt',
           baseImage: screenshot
         }
@@ -103,13 +108,13 @@ const lodgeRequest = async (screenshot: string) => {
     const err = getFirstErrorMessage(res.errors)
     triggerNotification({
       type: ToastNotificationType.Danger,
-      title: 'Project creation failed',
+      title: 'Failed to enque Gendo render',
       description: err
     })
   } else {
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Project successfully created'
+      title: 'Render successfully enqued'
     })
   }
 

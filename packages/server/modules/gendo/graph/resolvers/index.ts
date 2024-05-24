@@ -27,24 +27,45 @@ export = {
         ctx.resourceAccessRules
       )
 
-      const endpoint = getGendoAIAPIEndpoint()
-      const bearer = getGendoAIKey()
-
-      const log = { ...args.input, endpoint, bearer }
-      delete log.baseImage
-      console.log(log)
+      const endpoint = getGendoAIAPIEndpoint() as string
+      const bearer = getGendoAIKey() as string
+      // const webhookUrl = 'https://webhook.site/f03dd784-ec32-4bb2-8e60-07284281d36b'
+      // const webhookUrl = 'https://directly-hardy-warthog.ngrok-free.app/api/thirdparty/gendo'
+      const webhookUrl = `${process.env.CANONICAL_URL}/api/thirdparty/gendo`
 
       // TODO Fire off request to gendo api & get generationId, create record in db. Note: use gendo api key from env
+      const gendoRequestBody = {
+        userId: ctx.userId,
+        depthMap: args.input.baseImage,
+        prompt: args.input.prompt,
+        webhookUrl
+      }
 
-      const res = await createGendoAIRenderRequest({
-        ...args.input,
-        userId: ctx.userId as string,
-        status: 'TEST',
-        gendoGenerationId: '42',
-        id: crs({ length: 10 })
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${bearer}`
+        },
+        body: JSON.stringify(gendoRequestBody)
       })
 
-      console.log(res, 'gendo')
+      const status = response.status
+
+      if (status === 200) {
+        const body = (await response.json()) as { status: string; generationId: string }
+        const res = await createGendoAIRenderRequest({
+          ...args.input,
+          userId: ctx.userId as string,
+          status: body.status,
+          gendoGenerationId: body.generationId,
+          id: crs({ length: 10 })
+        })
+      } else {
+        // TODO
+        console.log(await response.json())
+      }
+
       // TODO Notify this happened
       return true
     }
