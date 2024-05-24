@@ -1,7 +1,8 @@
+import knexInstance from '@/db/knex'
 import { getAutomationRunLogs } from '@/modules/automate/clients/executionEngine'
 import { ExecutionEngineFailedResponseError } from '@/modules/automate/errors/executionEngine'
 import {
-  getAutomationProject,
+  createAutomationRepository,
   getAutomationRunWithToken
 } from '@/modules/automate/repositories/automations'
 import { corsMiddleware } from '@/modules/core/configs/cors'
@@ -18,13 +19,17 @@ import { Roles, Scopes } from '@speckle/shared'
 import { Application } from 'express'
 
 export default (app: Application) => {
+  const automationRepository = createAutomationRepository({ db: knexInstance })
   app.get(
     '/api/automate/automations/:automationId/runs/:runId/logs',
     corsMiddleware(),
     authMiddlewareCreator([
       validateServerRole({ requiredRole: Roles.Server.Guest }),
       validateScope({ requiredScope: Scopes.Streams.Read }),
-      contextRequiresStream({ getStream, getAutomationProject }),
+      contextRequiresStream({
+        getStream,
+        getAutomationProject: automationRepository.findAutomationProject
+      }),
       validateStreamRole({ requiredRole: Roles.Stream.Owner }),
       validateResourceAccess
     ]),

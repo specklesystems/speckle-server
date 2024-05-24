@@ -37,6 +37,7 @@ const {
   BadRequestError
 } = require('@/modules/shared/errors')
 const { moduleLogger, logger } = require('@/logging/logging')
+const knexInstance = require('@/db/knex')
 
 const ensureConditions = async () => {
   if (process.env.DISABLE_FILE_UPLOADS) {
@@ -75,7 +76,7 @@ exports.init = async (app) => {
   app.post(
     '/api/stream/:streamId/blob',
     authMiddlewareCreator([
-      ...streamWritePermissions,
+      ...streamWritePermissions({ db: knexInstance }),
       // todo should we add public comments upload escape hatch?
       allowForAllRegisteredUsersOnPublicStreamsWithPublicComments
     ]),
@@ -173,7 +174,7 @@ exports.init = async (app) => {
   app.post(
     '/api/stream/:streamId/blob/diff',
     authMiddlewareCreator([
-      ...streamReadPermissions,
+      ...streamReadPermissions({ db: knexInstance }),
       allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
       allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
       allowAnonymousUsersOnPublicStreams
@@ -196,7 +197,7 @@ exports.init = async (app) => {
   app.get(
     '/api/stream/:streamId/blob/:blobId',
     authMiddlewareCreator([
-      ...streamReadPermissions,
+      ...streamReadPermissions({ db: knexInstance }),
       allowForAllRegisteredUsersOnPublicStreamsWithPublicComments,
       allowForRegisteredUsersOnPublicStreamsEvenWithoutRole,
       allowAnonymousUsersOnPublicStreams
@@ -223,7 +224,7 @@ exports.init = async (app) => {
 
   app.delete(
     '/api/stream/:streamId/blob/:blobId',
-    authMiddlewareCreator(streamWritePermissions),
+    authMiddlewareCreator(streamWritePermissions({ db: knexInstance })),
     async (req, res) => {
       errorHandler(req, res, async (req, res) => {
         await deleteBlob({
@@ -238,7 +239,7 @@ exports.init = async (app) => {
 
   app.get(
     '/api/stream/:streamId/blobs',
-    authMiddlewareCreator(streamWritePermissions),
+    authMiddlewareCreator(streamWritePermissions({ db: knexInstance })),
     async (req, res) => {
       const fileName = req.query.fileName
 

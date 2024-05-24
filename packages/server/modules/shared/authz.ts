@@ -21,7 +21,10 @@ import {
   TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
-import { getAutomationProject } from '@/modules/automate/repositories/automations'
+import { StreamRecord } from '../core/helpers/types'
+import { Knex } from 'knex'
+import { createAutomationRepository } from '../automate/repositories/automations'
+import knexInstance from '@/db/knex'
 
 interface AuthResult {
   authorized: boolean
@@ -233,7 +236,13 @@ type StreamGetter = (params: {
 export const contextRequiresStream =
   (deps: {
     getStream: StreamGetter
-    getAutomationProject: typeof getAutomationProject
+    getAutomationProject: ({
+      automationId,
+      userId
+    }: {
+      automationId: string
+      userId?: string
+    }) => Promise<(StreamRecord & { automationId: string; role?: StreamRoles }) | null>
   }): AuthPipelineFunction =>
   // stream getter is an async func over { streamId, userId } returning a stream object
   // IoC baby...
@@ -321,22 +330,37 @@ export const authPipelineCreator = (
   return pipeline
 }
 
-export const streamWritePermissions: AuthPipelineFunction[] = [
+export const streamWritePermissions: ({
+  db
+}: {
+  db: Knex
+}) => AuthPipelineFunction[] = ({ db }: { db: Knex }) => [
   validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Write }),
-  contextRequiresStream({ getStream, getAutomationProject }),
+  contextRequiresStream({
+    getStream,
+    getAutomationProject: createAutomationRepository({ db }).findAutomationProject
+  }),
   validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
   validateResourceAccess
 ]
-export const streamReadPermissions: AuthPipelineFunction[] = [
+export const streamReadPermissions: ({
+  db
+}: {
+  db: Knex
+}) => AuthPipelineFunction[] = ({ db }: { db: Knex }) => [
   validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Read }),
-  contextRequiresStream({ getStream, getAutomationProject }),
+  contextRequiresStream({
+    getStream,
+    getAutomationProject: createAutomationRepository({ db }).findAutomationProject
+  }),
   validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
   validateResourceAccess
 ]
 
-if (adminOverrideEnabled()) streamReadPermissions.push(allowForServerAdmins)
+if (adminOverrideEnabled())
+  streamReadPermissions({ db: knexInstance }).push(allowForServerAdmins)
 
 export const throwForNotHavingServerRole = async (
   context: AuthContext,

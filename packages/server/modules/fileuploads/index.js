@@ -9,6 +9,7 @@ const { moduleLogger } = require('@/logging/logging')
 const {
   listenForImportUpdates
 } = require('@/modules/fileuploads/services/resultListener')
+const knexInstance = require('@/db/knex')
 
 const saveFileUploads = async ({ userId, streamId, branchName, uploadResults }) => {
   await Promise.all(
@@ -36,7 +37,7 @@ exports.init = async (app, isInitial) => {
 
   app.post(
     '/api/file/:fileType/:streamId/:branchName?',
-    authMiddlewareCreator(streamWritePermissions),
+    authMiddlewareCreator(streamWritePermissions({ db: knexInstance })),
     async (req, res) => {
       const branchName = req.params.branchName || 'main'
       req.log = req.log.child({
