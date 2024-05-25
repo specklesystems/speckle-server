@@ -955,14 +955,14 @@ export type FunctionRunStatusInput = {
 
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
-  cameraLocation?: Maybe<Scalars['JSONObject']>;
+  camera?: Maybe<Scalars['JSONObject']>;
   createdAt: Scalars['String'];
   gendoGenerationId?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   modelId: Scalars['String'];
   projectId: Scalars['String'];
   prompt: Scalars['String'];
-  responseImage: Scalars['String'];
+  responseImage?: Maybe<Scalars['String']>;
   status: Scalars['String'];
   updatedAt: Scalars['String'];
   versionId: Scalars['String'];
@@ -3264,8 +3264,8 @@ export type Version = {
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
-  gendoAIRender?: Maybe<GendoAiRender>;
-  gendoAIRenders?: Maybe<GendoAiRenderCollection>;
+  gendoAIRender: GendoAiRender;
+  gendoAIRenders: GendoAiRenderCollection;
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;
@@ -4421,14 +4421,14 @@ export type FileUploadResolvers<ContextType = GraphQLContext, ParentType extends
 };
 
 export type GendoAiRenderResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['GendoAIRender'] = ResolversParentTypes['GendoAIRender']> = {
-  cameraLocation?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  camera?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   gendoGenerationId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   modelId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   prompt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  responseImage?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  responseImage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   versionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -5104,8 +5104,8 @@ export type VersionResolvers<ContextType = GraphQLContext, ParentType extends Re
   automationsStatus?: Resolver<Maybe<ResolversTypes['TriggeredAutomationsStatus']>, ParentType, ContextType>;
   commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<VersionCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  gendoAIRender?: Resolver<Maybe<ResolversTypes['GendoAIRender']>, ParentType, ContextType, RequireFields<VersionGendoAiRenderArgs, 'id'>>;
-  gendoAIRenders?: Resolver<Maybe<ResolversTypes['GendoAIRenderCollection']>, ParentType, ContextType>;
+  gendoAIRender?: Resolver<ResolversTypes['GendoAIRender'], ParentType, ContextType, RequireFields<VersionGendoAiRenderArgs, 'id'>>;
+  gendoAIRenders?: Resolver<ResolversTypes['GendoAIRenderCollection'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   message?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;

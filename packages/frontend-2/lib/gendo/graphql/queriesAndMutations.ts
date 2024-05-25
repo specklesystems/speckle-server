@@ -7,3 +7,92 @@ export const requestGendoAIRender = graphql(`
     }
   }
 `)
+
+/**
+ * Get an individual gendo ai render
+ */
+export const getGendoAIRender = graphql(`
+  query GendoAIRender(
+    $gendoAiRenderId: String!
+    $versionId: String!
+    $projectId: String!
+  ) {
+    project(id: $projectId) {
+      id
+      version(id: $versionId) {
+        id
+        gendoAIRender(id: $gendoAiRenderId) {
+          id
+          projectId
+          modelId
+          versionId
+          createdAt
+          updatedAt
+          gendoGenerationId
+          status
+          prompt
+          camera
+          responseImage
+        }
+      }
+    }
+  }
+`)
+
+/**
+ * Get the version's list of gendo ai renders
+ */
+export const getGendoAIRenders = graphql(`
+  query GendoAIRenders($versionId: String!, $projectId: String!) {
+    project(id: $projectId) {
+      id
+      version(id: $versionId) {
+        id
+        gendoAIRenders {
+          totalCount
+          items {
+            id
+            createdAt
+            updatedAt
+            status
+            gendoGenerationId
+            prompt
+            camera
+          }
+        }
+      }
+    }
+  }
+`)
+
+export const onGendoAiRenderCreated = graphql(`
+  subscription ProjectVersionGendoAIRenderCreated($id: String!, $versionId: String!) {
+    projectVersionGendoAIRenderCreated(id: $id, versionId: $versionId) {
+      id
+      createdAt
+      updatedAt
+      status
+      gendoGenerationId
+      prompt
+      camera
+    }
+  }
+`)
+
+export const onGendoAiRenderUpdated = graphql(`
+  subscription ProjectVersionGendoAIRenderUpdated($id: String!, $versionId: String!) {
+    projectVersionGendoAIRenderUpdated(id: $id, versionId: $versionId) {
+      id
+      projectId
+      modelId
+      versionId
+      createdAt
+      updatedAt
+      gendoGenerationId
+      status
+      prompt
+      camera
+      responseImage
+    }
+  }
+`)

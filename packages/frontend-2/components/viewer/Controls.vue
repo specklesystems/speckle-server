@@ -200,9 +200,7 @@
         />
       </div>
       <div
-        v-show="
-          resourceItems.length !== 0 && activeControl === 'gendo' && isGendoEnabled
-        "
+        v-if="resourceItems.length !== 0 && activeControl === 'gendo' && isGendoEnabled"
       >
         <ViewerGendoPanel @close="activeControl = 'none'" />
       </div>

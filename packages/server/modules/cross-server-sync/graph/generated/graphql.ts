@@ -944,14 +944,14 @@ export type FunctionRunStatusInput = {
 
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
-  cameraLocation?: Maybe<Scalars['JSONObject']>;
+  camera?: Maybe<Scalars['JSONObject']>;
   createdAt: Scalars['String'];
   gendoGenerationId?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
   modelId: Scalars['String'];
   projectId: Scalars['String'];
   prompt: Scalars['String'];
-  responseImage: Scalars['String'];
+  responseImage?: Maybe<Scalars['String']>;
   status: Scalars['String'];
   updatedAt: Scalars['String'];
   versionId: Scalars['String'];
@@ -3253,8 +3253,8 @@ export type Version = {
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
-  gendoAIRender?: Maybe<GendoAiRender>;
-  gendoAIRenders?: Maybe<GendoAiRenderCollection>;
+  gendoAIRender: GendoAiRender;
+  gendoAIRenders: GendoAiRenderCollection;
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;

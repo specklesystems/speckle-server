@@ -1,6 +1,6 @@
 extend type Version {
-  gendoAIRenders: GendoAIRenderCollection
-  gendoAIRender(id: String!): GendoAIRender
+  gendoAIRenders: GendoAIRenderCollection!
+  gendoAIRender(id: String!): GendoAIRender!
 }
 
 type GendoAIRenderCollection {
@@ -18,8 +18,8 @@ type GendoAIRender {
   gendoGenerationId: String
   status: String!
   prompt: String!
-  cameraLocation: JSONObject
-  responseImage: String!
+  camera: JSONObject
+  responseImage: String
 }
 
 extend type VersionMutations {

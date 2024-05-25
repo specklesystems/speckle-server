@@ -4,7 +4,7 @@
       AI Render by Gendo
       <span class="text-foreground-2">(Beta)</span>
     </template>
-    <div class="p-1">
+    <div class="p-2">
       <div class="space-y-2 flex flex-col mt-2">
         <FormTextArea
           v-model="prompt"
@@ -12,13 +12,14 @@
           label=""
           placeholder="Your prompt"
         />
-        <div class="text-right">
+        <div class="flex justify-between">
+          <FormButton text @click="showHistory = !showHistory">Hide history</FormButton>
           <FormButton :disabled="!prompt || isLoading" @click="enqueMagic()">
             Render
           </FormButton>
         </div>
       </div>
-      <ViewerGendoList />
+      <ViewerGendoList v-show="showHistory" />
       <div class="p-2 text-xs text-foreground-2">
         TODO Empty state explaining this does
       </div>
@@ -61,6 +62,7 @@ defineEmits<{
 
 const prompt = ref<string>()
 const isLoading = ref(false)
+const showHistory = ref(true)
 
 const enqueMagic = () => {
   isLoading.value = true
