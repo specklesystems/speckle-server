@@ -90,11 +90,9 @@
         <div class="h5 font-bold">Host App Error</div>
       </template>
       <div class="mt-1 text-foreground-2 text-sm font-normal mx-2">
-        <div class="text-s font-bold">{{ hostAppError.innerError }}</div>
-        <div class="text-s mb-3">{{ hostAppError.innerStackTrace }}</div>
+        <div class="text-s font-bold">{{ hostAppError.message }}</div>
         <div class="text-s font-bold">Stack Trace</div>
         <div class="text-xs">{{ hostAppError.error }}</div>
-        <div class="text-xs">{{ hostAppError.stackTrace }}</div>
       </div>
     </LayoutDialog>
   </div>
@@ -133,6 +131,7 @@ import { CloudArrowDownIcon, CloudArrowUpIcon } from '@heroicons/vue/24/solid'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
+import { ToastNotification, ToastNotificationType } from '@speckle/ui-components'
 const app = useNuxtApp()
 // IMPORTANT: the account store needs to be awaited here, and in any other top level page to prevent
 // race conditions on initialisation (model cards get loaded, but accounts are not there yet)
@@ -146,10 +145,8 @@ const store = useHostAppStore()
 const { trackEvent } = useMixpanel()
 
 type HostAppError = {
+  message: string
   error: string
-  stackTrace: string
-  innerError: string
-  innerStackTrace: string
 }
 
 const showSendDialog = ref(false)
@@ -167,8 +164,16 @@ app.$sendBinding?.on('errorOnResponse', (data: string) => {
   const parsedData = JSON.parse(data) as Record<string, unknown> as HostAppError
   hostAppError.value = parsedData
   console.log(parsedData)
-
-  showErrorDialog.value = true
+  const notification: ToastNotification = {
+    type: ToastNotificationType.Danger,
+    title: 'Host App Error',
+    description: parsedData.message,
+    cta: {
+      title: 'Show details',
+      onClick: () => (showErrorDialog.value = true)
+    }
+  }
+  store.setNotification(notification)
 })
 
 const handleSendClick = () => {

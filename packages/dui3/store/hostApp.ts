@@ -6,6 +6,8 @@ import { IModelCard, ModelCardProgress } from 'lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { IReceiverModelCard } from 'lib/models/card/receiver'
 import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
+import { ToastNotification } from '@speckle/ui-components'
+import { Nullable } from '@speckle/shared'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -19,11 +21,20 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
   const { trackEvent } = useMixpanel()
 
+  const currentNotification = ref<Nullable<ToastNotification>>(null)
   const hostAppName = ref<string>()
   const hostAppVersion = ref<string>()
   const connectorVersion = ref<string>()
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
+
+  const dismissNotification = () => {
+    currentNotification.value = null
+  }
+
+  const setNotification = (notification: Nullable<ToastNotification>) => {
+    currentNotification.value = notification
+  }
 
   /**
    * Model Card Operations
@@ -331,6 +342,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendFilters,
     selectionFilter,
     everythingFilter,
+    currentNotification,
+    setNotification,
+    dismissNotification,
     addModel,
     patchModel,
     removeModel,
