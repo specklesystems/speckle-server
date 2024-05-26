@@ -11,10 +11,6 @@
         v-if="detailedRender.status !== 'COMPLETED'"
         class="relative w-full h-32 rounded-lg flex items-center justify-center"
       >
-        <!-- <EllipsisHorizontalIcon
-          v-if="detailedRender.status === 'IN_QUEUE'"
-          class="w-6 text-primary animate-ping"
-        /> -->
         <div
           :class="`absolute rounded-lg w-full h-full top-0 ${
             detailedRender.status === 'IN_QUEUE' ? 'bg-blue-500/10' : 'bg-red-500/10'
@@ -29,6 +25,7 @@
         <div
           class="bg-foundation p-2 flex items-center space-x-2 min-w-0 max-w-full rounded-md"
         >
+          <UserAvatar :user="detailedRender.user" size="sm" />
           <button
             v-if="detailedRender.camera"
             v-tippy="'Set view'"
@@ -52,11 +49,7 @@ import {
   onGendoAiRenderUpdated
 } from '~/lib/gendo/graphql/queriesAndMutations'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
-import {
-  VideoCameraIcon,
-  ExclamationCircleIcon,
-  EllipsisHorizontalIcon
-} from '@heroicons/vue/24/outline'
+import { VideoCameraIcon, ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 
 const props = defineProps<{

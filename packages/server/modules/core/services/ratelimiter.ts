@@ -96,6 +96,16 @@ export const LIMITS = <const>{
       duration: 1 * TIME.minute
     }
   },
+  GENDO_AI_RENDER_REQUEST: {
+    regularOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_GENDO_AI_RENDER_REQUEST', '1'),
+      duration: 10 * TIME.second
+    },
+    burstOptions: {
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GENDO_AI_RENDER_REQUEST', '100'),
+      duration: 1 * TIME.minute
+    }
+  },
   'POST /api/getobjects/:streamId': {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_POST_GETOBJECTS_STREAMID', '3'),

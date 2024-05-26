@@ -15,6 +15,7 @@ import {
   ProjectSubscriptions,
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
+import { GendoAiRender } from '@/test/graphql/generated/graphql'
 
 export = {
   Version: {
@@ -27,7 +28,11 @@ export = {
     },
     async gendoAIRender(parent, args) {
       const item = await getGendoAIRenderRequest(parent.id, args.id)
-      return item
+      const response = {
+        ...item,
+        user: { name: item.userName, avatar: item.userAvatar, id: item.userId }
+      }
+      return response as GendoAiRender
     }
   },
   VersionMutations: {

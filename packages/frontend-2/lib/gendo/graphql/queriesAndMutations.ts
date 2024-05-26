@@ -33,6 +33,11 @@ export const getGendoAIRender = graphql(`
           prompt
           camera
           responseImage
+          user {
+            name
+            avatar
+            id
+          }
         }
       }
     }

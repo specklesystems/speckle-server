@@ -635,13 +635,15 @@ export const Automations = buildTableHelper('automations', [
 export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [
   'id',
   'userId',
+  'projectId',
+  'modelId',
   'versionId',
   'createdAt',
   'updatedAt',
   'gendoGenerationId',
   'status',
   'prompt',
-  'cameraLocation',
+  'camera',
   'baseImage',
   'responseImage'
 ])

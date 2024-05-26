@@ -490,6 +490,13 @@ export type AutomationsStatus = {
   statusMessage?: Maybe<Scalars['String']>;
 };
 
+export type AvatarUser = {
+  __typename?: 'AvatarUser';
+  avatar?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  name: Scalars['String'];
+};
+
 export type BasicGitRepositoryMetadata = {
   __typename?: 'BasicGitRepositoryMetadata';
   id: Scalars['ID'];
@@ -965,6 +972,8 @@ export type GendoAiRender = {
   responseImage?: Maybe<Scalars['String']>;
   status: Scalars['String'];
   updatedAt: Scalars['String'];
+  user?: Maybe<AvatarUser>;
+  userId: Scalars['String'];
   versionId: Scalars['String'];
 };
 
@@ -3571,6 +3580,7 @@ export type ResolversTypes = {
   AutomationRunStatusUpdateInput: AutomationRunStatusUpdateInput;
   AutomationRunTrigger: ResolverTypeWrapper<AutomationRunTriggerGraphQLReturn>;
   AutomationsStatus: ResolverTypeWrapper<Omit<AutomationsStatus, 'automationRuns'> & { automationRuns: Array<ResolversTypes['AutomationRun']> }>;
+  AvatarUser: ResolverTypeWrapper<AvatarUser>;
   BasicGitRepositoryMetadata: ResolverTypeWrapper<BasicGitRepositoryMetadata>;
   BigInt: ResolverTypeWrapper<Scalars['BigInt']>;
   BlobMetadata: ResolverTypeWrapper<BlobMetadata>;
@@ -3788,6 +3798,7 @@ export type ResolversParentTypes = {
   AutomationRunStatusUpdateInput: AutomationRunStatusUpdateInput;
   AutomationRunTrigger: AutomationRunTriggerGraphQLReturn;
   AutomationsStatus: Omit<AutomationsStatus, 'automationRuns'> & { automationRuns: Array<ResolversParentTypes['AutomationRun']> };
+  AvatarUser: AvatarUser;
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadata;
   BigInt: Scalars['BigInt'];
   BlobMetadata: BlobMetadata;
@@ -4238,6 +4249,13 @@ export type AutomationsStatusResolvers<ContextType = GraphQLContext, ParentType 
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type AvatarUserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AvatarUser'] = ResolversParentTypes['AvatarUser']> = {
+  avatar?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type BasicGitRepositoryMetadataResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['BasicGitRepositoryMetadata'] = ResolversParentTypes['BasicGitRepositoryMetadata']> = {
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -4431,6 +4449,8 @@ export type GendoAiRenderResolvers<ContextType = GraphQLContext, ParentType exte
   responseImage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   updatedAt?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  user?: Resolver<Maybe<ResolversTypes['AvatarUser']>, ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   versionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -5236,6 +5256,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   AutomationRun?: AutomationRunResolvers<ContextType>;
   AutomationRunTrigger?: AutomationRunTriggerResolvers<ContextType>;
   AutomationsStatus?: AutomationsStatusResolvers<ContextType>;
+  AvatarUser?: AvatarUserResolvers<ContextType>;
   BasicGitRepositoryMetadata?: BasicGitRepositoryMetadataResolvers<ContextType>;
   BigInt?: GraphQLScalarType;
   BlobMetadata?: BlobMetadataResolvers<ContextType>;

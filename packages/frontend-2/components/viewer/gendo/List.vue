@@ -9,6 +9,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery, useSubscription } from '@vue/apollo-composable'
+import type { GendoAiRender } from '~/lib/common/generated/gql/graphql'
 import {
   getGendoAIRenders,
   onGendoAiRenderCreated
@@ -18,8 +19,7 @@ const {
   projectId,
   resources: {
     response: { resourceItems }
-  },
-  viewer: { instance: viewerInstance }
+  }
 } = useInjectedViewerState()
 
 const versionId = computed(() => {
@@ -46,13 +46,14 @@ subscribeToMore(() => ({
     id: projectId.value,
     versionId: versionId.value
   },
-  updateQuery: (previousResult, { subscriptionData }) => {
+  updateQuery: (previousResult) => {
     refetch()
     return previousResult
   }
 }))
 
 const renders = computed(() => {
-  return result.value?.project?.version?.gendoAIRenders?.items || []
+  return (result.value?.project?.version?.gendoAIRenders?.items ||
+    []) as GendoAiRender[]
 })
 </script>

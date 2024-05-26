@@ -1,11 +1,9 @@
-import { GendoAIRenders, knex } from '@/modules/core/dbSchema'
+import { GendoAIRenders, Users, knex } from '@/modules/core/dbSchema'
 import { GendoAiRenderInput } from '@/modules/core/graph/generated/graphql'
+import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
-import {
-  ProjectSubscriptions,
-  publish,
-  pubsub
-} from '@/modules/shared/utils/subscriptions'
+import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
+import { Merge } from 'type-fest'
 
 export async function createGendoAIRenderRequest(
   input: GendoAiRenderInput & {
@@ -16,11 +14,12 @@ export async function createGendoAIRenderRequest(
   }
 ) {
   const [newRecord] = await GendoAIRenders.knex().insert(input, '*')
-  // TODO Notify? Publish? PubSub? All of'em?
 
   publish(ProjectSubscriptions.ProjectVersionGendoAIRenderCreated, {
     projectVersionGendoAIRenderCreated: newRecord
   })
+
+  // TODO: Schedule a timeout fail after x minutes
 
   return newRecord as GendoAIRenderRecord
 }
@@ -50,9 +49,20 @@ export async function getGendoAIRenderRequests(versionId: string) {
 
 export async function getGendoAIRenderRequest(versionId: string, requestId: string) {
   const [record] = await GendoAIRenders.knex()
-    .select<GendoAIRenderRecord[]>()
-    .where('id', requestId)
+    .select<
+      Merge<
+        GendoAIRenderRecord,
+        { userName: string; userId: string; userAvatar: string }
+      >[]
+    >(
+      ...GendoAIRenders.cols,
+      'users.name as userName',
+      'users.id as userId',
+      'users.avatar as userAvatar'
+    )
+    .where('gendo_ai_renders.id', requestId)
     .andWhere('versionId', versionId)
+    .join('users', 'users.id', '=', 'gendo_ai_renders.userId')
     .orderBy('createdAt', 'desc')
   return record
 }

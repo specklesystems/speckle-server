@@ -9,7 +9,7 @@ export type GendoAIRenderRecord = {
   gendoGenerationId: string
   status: string
   prompt: string
-  cameraLocation: Record<string, unknown>
+  camera: Record<string, unknown>
   baseImage: string
   responseImage: string
 }

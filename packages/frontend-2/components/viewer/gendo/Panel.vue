@@ -1,8 +1,18 @@
 <template>
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
     <template #title>
-      AI Render by Gendo
-      <span class="text-foreground-2">(Beta)</span>
+      <span class="text-foreground">AI Render by</span>
+      <CommonTextLink
+        text
+        link
+        size="sm"
+        class="ml-1"
+        to="https://gendo.ai?utm=speckle"
+        target="_blank"
+      >
+        Gendo
+      </CommonTextLink>
+      <span class="text-foreground-2">&nbsp;(Beta)</span>
     </template>
     <div class="p-2">
       <div class="space-y-2 flex flex-col mt-2">
@@ -10,19 +20,19 @@
           v-model="prompt"
           name="prompt"
           label=""
+          size="lg"
           placeholder="Your prompt"
         />
-        <div class="flex justify-between">
-          <FormButton text @click="showHistory = !showHistory">Hide history</FormButton>
-          <FormButton :disabled="!prompt || isLoading" @click="enqueMagic()">
+        <div class="flex justify-end">
+          <FormButton
+            :disabled="!prompt || isLoading || timeOutWait"
+            @click="enqueMagic()"
+          >
             Render
           </FormButton>
         </div>
       </div>
-      <ViewerGendoList v-show="showHistory" />
-      <div class="p-2 text-xs text-foreground-2">
-        TODO Empty state explaining this does
-      </div>
+      <ViewerGendoList />
     </div>
     <template #actions>
       <div class="text-right grow">
@@ -62,7 +72,7 @@ defineEmits<{
 
 const prompt = ref<string>()
 const isLoading = ref(false)
-const showHistory = ref(true)
+const timeOutWait = ref(false)
 
 const enqueMagic = () => {
   isLoading.value = true
@@ -82,6 +92,12 @@ const enqueMagic = () => {
     }
     viewerInstance.requestRender()
   }, 100)
+
+  timeoutWait.value = true
+
+  setTimeout(() => {
+    timeOutWait.value = false
+  }, 2000)
 }
 
 const apollo = useApolloClient().client
@@ -104,7 +120,7 @@ const lodgeRequest = async (screenshot: string) => {
             target: camera.target.value,
             isOrthoProjection: camera.isOrthoProjection.value
           },
-          prompt: prompt.value || 'no prompt',
+          prompt: prompt.value?.toLowerCase() || 'no prompt',
           baseImage: screenshot
         }
       }

@@ -480,6 +480,13 @@ export type AutomationsStatus = {
   statusMessage?: Maybe<Scalars['String']>;
 };
 
+export type AvatarUser = {
+  __typename?: 'AvatarUser';
+  avatar?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  name: Scalars['String'];
+};
+
 export type BasicGitRepositoryMetadata = {
   __typename?: 'BasicGitRepositoryMetadata';
   id: Scalars['ID'];
@@ -955,6 +962,8 @@ export type GendoAiRender = {
   responseImage?: Maybe<Scalars['String']>;
   status: Scalars['String'];
   updatedAt: Scalars['String'];
+  user?: Maybe<AvatarUser>;
+  userId: Scalars['String'];
   versionId: Scalars['String'];
 };
 
