@@ -14,7 +14,8 @@ import {
   VersionCreatedTriggerManifest,
   VersionCreationTriggerType,
   BaseTriggerManifest,
-  isVersionCreatedTriggerManifest
+  isVersionCreatedTriggerManifest,
+  LiveAutomation
 } from '@/modules/automate/helpers/types'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { getCommit } from '@/modules/core/repositories/commits'
@@ -288,7 +289,9 @@ export const ensureRunConditions =
     revisionId: string
     manifest: M
   }): Promise<{
-    automationWithRevision: AutomationWithRevision<AutomationRevisionWithTriggersFunctions>
+    automationWithRevision: LiveAutomation<
+      AutomationWithRevision<AutomationRevisionWithTriggersFunctions>
+    >
     userId: string
     automateToken: string
   }> => {
@@ -299,6 +302,13 @@ export const ensureRunConditions =
       throw new AutomateInvalidTriggerError(
         "Cannot trigger the given revision, it doesn't exist"
       )
+
+    // if the automation is a test automation, do not trigger
+    if (automationWithRevision.isTestAutomation) {
+      throw new AutomateInvalidTriggerError(
+        'This is a test automation and cannot be triggered outside of local testing'
+      )
+    }
 
     // if the automation is not active, do not trigger
     if (!automationWithRevision.enabled)

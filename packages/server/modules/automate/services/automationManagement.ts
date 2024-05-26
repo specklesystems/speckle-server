@@ -103,7 +103,8 @@ export const createAutomation =
         updatedAt: new Date(),
         enabled,
         projectId,
-        executionEngineAutomationId
+        executionEngineAutomationId,
+        isTestAutomation: false
       },
       {
         automationId,
