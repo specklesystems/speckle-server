@@ -3,9 +3,9 @@ import { Emitter } from 'nanoevents'
 import { useHostAppStore } from '~/store/hostApp'
 
 export type HostAppError = {
-  message?: string
-  error?: string
-  stackTrace?: string
+  message: string
+  error: string
+  stackTrace: string
 }
 
 export class BaseBridgeErrorHandler {

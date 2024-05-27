@@ -15,7 +15,6 @@ export interface ISendBinding extends IBinding<ISendBindingEvents> {
 
 export interface ISendBindingEvents extends IModelCardSharedEvents {
   refreshSendFilters: () => void
-  errorOnResponse: (data: string) => void
   setModelsExpired: (modelCardIds: string[]) => void
   setModelCreatedVersionId: (args: { modelCardId: string; versionId: string }) => void
 }
