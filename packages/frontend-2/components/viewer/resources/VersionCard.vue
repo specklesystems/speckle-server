@@ -29,14 +29,14 @@
     >
       <ChevronDownIcon class="h-3 w-3" />
     </div>
-    <div class="flex items-center space-x-2 pl-1">
+    <div class="flex items-center gap-1 pl-1">
       <div class="z-20 -ml-2">
         <UserAvatar :user="author" />
       </div>
       <div
         v-show="showTimeline"
         v-tippy="`${createdAt}`"
-        class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold"
+        class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold shrink-0"
       >
         <span>{{ isLatest ? 'Latest' : timeAgoCreatedAt }}</span>
       </div>

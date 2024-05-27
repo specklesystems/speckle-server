@@ -56,10 +56,13 @@ export async function down(knex: Knex): Promise<void> {
   // TODO: Remove, this is a temporary shortcut to avoid messing up the db schema which makes it difficult to jump to different branches
   if (process.env.SKIP_AUTOMATE_MIGRATION_DEV) return
 
+  // delete invalid data
+  await knex.delete().from(AUTOMATION_RUNS_TABLE_NAME)
+
   await knex.schema.alterTable(REVISIONS_TABLE_NAME, (table) => {
     // old schema
-    table.jsonb('triggers').notNullable() // { "triggers": [{ "modelId": "asdf", "type": "commit"}...]}
-    table.boolean('published').notNullable()
+    table.jsonb('triggers').notNullable().defaultTo('[]')
+    table.boolean('published').notNullable().defaultTo(false)
   })
   await knex.schema.alterTable(AUTOMATION_RUNS_TABLE_NAME, (table) => {
     table
