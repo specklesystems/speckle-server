@@ -50,8 +50,8 @@ export async function down(knex: Knex): Promise<void> {
   })
 
   await knex.schema.alterTable('automation_runs', (table) => {
-    table.jsonb('functionRuns').notNullable() // schema defined in code
-    table.jsonb('triggers').notNullable()
+    table.jsonb('functionRuns').notNullable().defaultTo('{}')
+    table.jsonb('triggers').notNullable().defaultTo('{}')
   })
 
   await knex.schema.alterTable('automation_revisions', (table) => {
