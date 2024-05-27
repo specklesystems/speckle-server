@@ -186,6 +186,7 @@ export class SmoothOrbitControls extends EventEmitter {
   private originSphere: Mesh
   private cursorSphere: Mesh
   private world: World
+  private lastTarget: Vector3 = new Vector3()
 
   constructor(
     controlTarget: Object3D,
@@ -430,6 +431,8 @@ export class SmoothOrbitControls extends EventEmitter {
    * such that they progress across their allowed ranges in sync.
    */
   adjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {
+    deltaZoom
+    this._radiusDelta
     const { theta, phi, radius } = this.goalSpherical
 
     const dTheta = this.spherical.theta - theta
@@ -456,8 +459,8 @@ export class SmoothOrbitControls extends EventEmitter {
 
     /** Simpler approach to zoom amount varying */
     // half of the fov is center to top of screen
-    const fov = Math.exp(this.logFov) * MathUtils.DEG2RAD
-    let zoomAmount = deltaZoom * this.spherical.radius * Math.tan(fov * 0.5)
+    // const fov = Math.exp(this.logFov) * MathUtils.DEG2RAD
+    let zoomAmount = 1 * Math.sign(deltaZoom) //deltaZoom * this.spherical.radius * Math.tan(fov * 0.5)
     zoomAmount =
       Math.sign(zoomAmount) *
       clamp(
@@ -465,7 +468,6 @@ export class SmoothOrbitControls extends EventEmitter {
         0,
         (this._options.maximumRadius - this._options.minimumRadius) * 0.5
       )
-
     const goalRadius = radius + zoomAmount
     this.setOrbit(goalTheta, goalPhi, goalRadius)
 
@@ -491,9 +493,7 @@ export class SmoothOrbitControls extends EventEmitter {
       if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
         if (this._controlTarget instanceof PerspectiveCamera) {
           const dir = new Vector3().setFromSpherical(this.spherical).normalize()
-          dollyAmount
-            .copy(dir)
-            .multiplyScalar(zoomAmount * this.world.getRelativeOffset(0.1))
+          dollyAmount.copy(dir).multiplyScalar(zoomAmount)
           this._radiusDelta = -zoomAmount
         }
       }
@@ -513,14 +513,15 @@ export class SmoothOrbitControls extends EventEmitter {
       }
       const aspect = dims.x / dims.y
       const worldToScreen =
-        this.goalSpherical.radius *
+        clamp(this.goalSpherical.radius, 1, Number.MAX_SAFE_INTEGER) *
         Math.tan(Math.exp(this.logFov) * MathUtils.DEG2RAD * 0.5)
       const cursor = new Vector3()
         .copy(this.goalOrigin)
         .add(planeX.multiplyScalar(this.zoomControlCoord.x * worldToScreen * aspect))
         .add(planeY.multiplyScalar(this.zoomControlCoord.y * worldToScreen))
         .add(dollyAmount)
-      const lerpRatio = this._radiusDelta / this.goalSpherical.radius
+      const lerpRatio = clamp(this._radiusDelta / this.goalSpherical.radius, -1, 1)
+      // console.log('Delta -> ', this._radiusDelta, this.goalSpherical.radius, lerpRatio)
       const newTargetEnd = new Vector3().copy(this.goalOrigin).lerp(cursor, lerpRatio)
       this.cursorSphere.position.copy(
         new Vector3().copy(cursor).applyMatrix4(this._basisTransform)
@@ -723,6 +724,9 @@ export class SmoothOrbitControls extends EventEmitter {
     }
     this._controlTarget.position.copy(position)
     this._controlTarget.quaternion.copy(quaternion)
+    // console.log(this._controlTarget.position.distanceTo(this.lastTarget))
+    // console.log(this.spherical.radius)
+    this.lastTarget.copy(this._controlTarget.position)
 
     const originSphereT = new Vector3()
       .copy(this.origin)
