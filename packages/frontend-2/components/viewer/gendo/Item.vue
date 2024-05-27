@@ -1,12 +1,17 @@
 <template>
   <div v-if="detailedRender">
     <div class="relative">
-      <img
-        v-if="detailedRender.status === 'COMPLETED'"
-        :src="`data:image/png;base64,${detailedRender.responseImage}`"
-        alt="render"
-        class="rounded-lg shadow"
-      />
+      <div v-if="detailedRender.status === 'COMPLETED' && renderUrl" class="group">
+        <img :src="renderUrl" alt="render" class="rounded-lg shadow" />
+        <div
+          class="absolute top-2 left-2 bg-foundation p-1 rounded opacity-0 group-hover:opacity-100 transition"
+        >
+          <!-- eslint-disable-next-line vuejs-accessibility/anchor-has-content -->
+          <a :href="renderUrl" target="_blank" title="download image">
+            <ArrowDownTrayIcon class="w-4" />
+          </a>
+        </div>
+      </div>
       <div
         v-if="detailedRender.status !== 'COMPLETED'"
         class="relative w-full h-32 rounded-lg flex items-center justify-center"
@@ -42,14 +47,17 @@
 </template>
 <script setup lang="ts">
 import { useQuery, useSubscription } from '@vue/apollo-composable'
-import dayjs from 'dayjs'
 import type { GendoAiRender } from '~/lib/common/generated/gql/graphql'
 import {
   getGendoAIRender,
   onGendoAiRenderUpdated
 } from '~/lib/gendo/graphql/queriesAndMutations'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
-import { VideoCameraIcon, ExclamationCircleIcon } from '@heroicons/vue/24/outline'
+import {
+  VideoCameraIcon,
+  ExclamationCircleIcon,
+  ArrowDownTrayIcon
+} from '@heroicons/vue/24/outline'
 import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 
 const props = defineProps<{
@@ -60,8 +68,7 @@ const {
   projectId,
   resources: {
     response: { resourceItems }
-  },
-  viewer: { instance: viewerInstance }
+  }
 } = useInjectedViewerState()
 
 const versionId = computed(() => {
@@ -85,15 +92,17 @@ onRenderUpdated(() => {
 
 const detailedRender = computed(() => result.value?.project?.version?.gendoAIRender)
 
-const dateDiff = computed(() => {
-  if (!detailedRender.value) return undefined
-  const d1 = dayjs(detailedRender.value?.createdAt)
-  const d2 = dayjs(detailedRender.value?.updatedAt)
-  const diff = d2.from(d1, true)
-  return diff
-})
-
 const { setView: setViewInternal } = useCameraUtilities()
+
+const apiOrigin = useApiOrigin()
+const renderUrl = computed(() => {
+  if (detailedRender.value?.status !== 'COMPLETED') return null
+  const url = new URL(
+    `/api/stream/${projectId.value}/blob/${detailedRender.value?.responseImage}`,
+    apiOrigin
+  )
+  return url.toString()
+})
 
 const setView = () => {
   setViewInternal(

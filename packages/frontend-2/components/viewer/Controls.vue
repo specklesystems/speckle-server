@@ -159,8 +159,8 @@
     <div
       v-if="activeControl !== 'none'"
       ref="resizeHandle"
-      class="absolute z-10 ml-12 md:ml-14 max-h-[calc(100dvh-4.5rem)] w-7 mt-[4.2rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize"
-      :style="`left:${width + 4}px; height:${height}px`"
+      class="absolute z-10 ml-12 md:ml-14 max-h-[calc(100dvh-4.5rem)] w-7 mt-[4.2rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
+      :style="`left:${width - 4}px; height:${height}px`"
       @mousedown="startResizing"
     >
       <div
@@ -176,7 +176,7 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition  ${
+      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition z-20 ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'

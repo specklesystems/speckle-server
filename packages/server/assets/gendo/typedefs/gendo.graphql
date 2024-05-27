@@ -21,6 +21,9 @@ type GendoAIRender {
   status: String!
   prompt: String!
   camera: JSONObject
+  """
+  This is a reference to a blob's id.
+  """
   responseImage: String
 }
 

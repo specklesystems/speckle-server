@@ -10,10 +10,11 @@ export = {
   async init(app) {
     moduleLogger.info('🪞 Init Gendo AI render module')
 
+    // Gendo api calls back in here with the result.
     app.options('/api/thirdparty/gendo', corsMiddleware())
     app.post('/api/thirdparty/gendo', corsMiddleware(), async (req, res) => {
       if (req.headers['x-gendo-authorization'] !== responseToken) {
-        return res.status(401).send('Speckle says you are not authorized.')
+        return res.status(401).send('Speckle says you are not authorized 😠')
       }
 
       const responseImage = req.body.generated_image
@@ -26,7 +27,7 @@ export = {
         responseImage
       })
 
-      res.status(200).send('Speckle says thank you')
+      res.status(200).send('Speckle says thank you 💖')
     })
   },
   async shutdown() {}

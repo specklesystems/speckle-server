@@ -958,6 +958,7 @@ export type GendoAiRender = {
   modelId: Scalars['String'];
   projectId: Scalars['String'];
   prompt: Scalars['String'];
+  /** This is a reference to a blob's id. */
   responseImage?: Maybe<Scalars['String']>;
   status: Scalars['String'];
   updatedAt: Scalars['String'];

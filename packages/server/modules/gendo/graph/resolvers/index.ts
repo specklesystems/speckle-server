@@ -77,12 +77,10 @@ export = {
           id: crs({ length: 10 })
         })
       } else {
-        const body = await response.json()
         await createGendoAIRenderRequest({
           ...args.input,
           userId: ctx.userId as string,
           status: 'ERROR',
-          baseImage: body,
           id: crs({ length: 10 })
         })
       }

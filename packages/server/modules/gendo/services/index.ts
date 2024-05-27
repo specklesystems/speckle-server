@@ -1,9 +1,11 @@
-import { GendoAIRenders, Users, knex } from '@/modules/core/dbSchema'
+import crs from 'crypto-random-string'
+import { GendoAIRenders, knex } from '@/modules/core/dbSchema'
 import { GendoAiRenderInput } from '@/modules/core/graph/generated/graphql'
-import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { GendoAIRenderRecord } from '@/modules/gendo/helpers/types'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { Merge } from 'type-fest'
+import { storeFileStream } from '@/modules/blobstorage/objectStorage'
+import { uploadFileStream } from '@/modules/blobstorage/services'
 
 export async function createGendoAIRenderRequest(
   input: GendoAiRenderInput & {
@@ -13,6 +15,25 @@ export async function createGendoAIRenderRequest(
     gendoGenerationId?: string
   }
 ) {
+  const baseImageBuffer = Buffer.from(
+    input.baseImage.replace(/^data:image\/\w+;base64,/, ''),
+    'base64'
+  )
+
+  const blobId = crs({ length: 10 })
+  await uploadFileStream(
+    storeFileStream,
+    { streamId: input.projectId, userId: input.userId },
+    {
+      blobId,
+      fileName: `gendo_base_image_${blobId}.png`,
+      fileType: 'png',
+      fileStream: baseImageBuffer
+    }
+  )
+
+  input.baseImage = blobId
+
   const [newRecord] = await GendoAIRenders.knex().insert(input, '*')
 
   publish(ProjectSubscriptions.ProjectVersionGendoAIRenderCreated, {
@@ -29,6 +50,30 @@ export async function updateGendoAIRenderRequest(
     gendoGenerationId: string
   }
 ) {
+  if (input.responseImage) {
+    const [baseRequest] = await GendoAIRenders.knex()
+      .select<GendoAIRenderRecord[]>()
+      .where('gendoGenerationId', input.gendoGenerationId)
+    const responseImageBuffer = Buffer.from(
+      input.responseImage.replace(/^data:image\/\w+;base64,/, ''),
+      'base64'
+    )
+
+    const blobId = crs({ length: 10 })
+    await uploadFileStream(
+      storeFileStream,
+      { streamId: baseRequest.projectId, userId: baseRequest.userId },
+      {
+        blobId,
+        fileName: `gendo_speckle_render_${blobId}.png`,
+        fileType: 'png',
+        fileStream: responseImageBuffer
+      }
+    )
+
+    input.responseImage = blobId
+  }
+
   const [record] = (await GendoAIRenders.knex()
     .where('gendoGenerationId', input.gendoGenerationId)
     .update({ ...input, updatedAt: knex.fn.now() }, '*')) as GendoAIRenderRecord[]

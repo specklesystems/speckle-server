@@ -93,7 +93,7 @@ const enqueMagic = () => {
     viewerInstance.requestRender()
   }, 100)
 
-  timeoutWait.value = true
+  timeOutWait.value = true
 
   setTimeout(() => {
     timeOutWait.value = false
