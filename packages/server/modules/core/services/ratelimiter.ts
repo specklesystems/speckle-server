@@ -99,10 +99,10 @@ export const LIMITS = <const>{
   GENDO_AI_RENDER_REQUEST: {
     regularOptions: {
       limitCount: getIntFromEnv('RATELIMIT_GENDO_AI_RENDER_REQUEST', '1'),
-      duration: 10 * TIME.second
+      duration: 20 * TIME.second
     },
     burstOptions: {
-      limitCount: getIntFromEnv('RATELIMIT_BURST_GENDO_AI_RENDER_REQUEST', '100'),
+      limitCount: getIntFromEnv('RATELIMIT_BURST_GENDO_AI_RENDER_REQUEST', '3'),
       duration: 1 * TIME.minute
     }
   },

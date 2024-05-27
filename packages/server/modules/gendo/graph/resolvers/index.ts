@@ -16,10 +16,16 @@ import {
   filteredSubscribe
 } from '@/modules/shared/utils/subscriptions'
 import { GendoAiRender } from '@/test/graphql/generated/graphql'
+import {
+  getRateLimitResult,
+  isRateLimitBreached
+} from '@/modules/core/services/ratelimiter'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
+import { ApolloError } from 'apollo-server-express'
 
 export = {
   Version: {
-    async gendoAIRenders(parent, __args, __cxt) {
+    async gendoAIRenders(parent) {
       const items = await getGendoAIRenderRequests(parent.id)
       return {
         totalCount: items.length,
@@ -43,6 +49,14 @@ export = {
         Roles.Stream.Reviewer,
         ctx.resourceAccessRules
       )
+
+      const rateLimitResult = await getRateLimitResult(
+        'GENDO_AI_RENDER_REQUEST',
+        ctx.userId as string
+      )
+      if (isRateLimitBreached(rateLimitResult)) {
+        throw new RateLimitError(rateLimitResult)
+      }
 
       const endpoint = getGendoAIAPIEndpoint() as string
       const bearer = getGendoAIKey() as string
@@ -77,12 +91,8 @@ export = {
           id: crs({ length: 10 })
         })
       } else {
-        await createGendoAIRenderRequest({
-          ...args.input,
-          userId: ctx.userId as string,
-          status: 'ERROR',
-          id: crs({ length: 10 })
-        })
+        const body = await response.json()
+        throw new ApolloError('Failed to enque gendo render. ' + body)
       }
       return true
     }

@@ -23,7 +23,7 @@
           size="lg"
           placeholder="Your prompt"
         />
-        <div class="flex justify-end">
+        <div class="flex justify-end space-x-2 items-center">
           <FormButton
             :disabled="!prompt || isLoading || timeOutWait"
             @click="enqueMagic()"
@@ -53,6 +53,7 @@
 </template>
 <script setup lang="ts">
 import { useApolloClient } from '@vue/apollo-composable'
+import { useTimeoutFn } from '@vueuse/core'
 import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
 import { requestGendoAIRender } from '~~/lib/gendo/graphql/queriesAndMutations'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
@@ -95,9 +96,9 @@ const enqueMagic = () => {
 
   timeOutWait.value = true
 
-  setTimeout(() => {
+  useTimeoutFn(() => {
     timeOutWait.value = false
-  }, 2000)
+  }, 5000)
 }
 
 const apollo = useApolloClient().client
