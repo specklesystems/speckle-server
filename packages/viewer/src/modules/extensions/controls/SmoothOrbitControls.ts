@@ -210,8 +210,8 @@ export class SmoothOrbitControls extends EventEmitter {
     const material2 = new MeshBasicMaterial({ color: 0xff0000 })
     this.cursorSphere = new Mesh(geometry, material2)
     this.cursorSphere.layers.set(ObjectLayers.OVERLAY)
-    // scene.add(this.originSphere)
-    // scene.add(this.cursorSphere)
+    scene.add(this.originSphere)
+    scene.add(this.cursorSphere)
 
     this.setOrbit(2.356, 0.955, 0)
     this.jumpToGoal()
@@ -471,23 +471,32 @@ export class SmoothOrbitControls extends EventEmitter {
 
     this._radiusDelta = radius - this.goalSpherical.radius
 
-    if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
-      if (this._controlTarget instanceof PerspectiveCamera) {
-        const dir = new Vector3().setFromSpherical(this.spherical).normalize()
-        const dollyAmount = new Vector3()
-          .copy(dir)
-          .multiplyScalar(zoomAmount * this.world.getRelativeOffset(0.1))
-
-        this.setTarget(
-          this.origin.x + dollyAmount.x,
-          this.origin.y + dollyAmount.y,
-          this.origin.z + dollyAmount.z
-        )
-        if (this._options.zoomToCursor) this._radiusDelta = -zoomAmount
-      }
-    }
+    // if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
+    //   if (this._controlTarget instanceof PerspectiveCamera) {
+    //     const dir = new Vector3().setFromSpherical(this.spherical).normalize()
+    //     const dollyAmount = new Vector3()
+    //       .copy(dir)
+    //       .multiplyScalar(zoomAmount * this.world.getRelativeOffset(0.1))
+    //     this.setTarget(
+    //       this.origin.x + dollyAmount.x,
+    //       this.origin.y + dollyAmount.y,
+    //       this.origin.z + dollyAmount.z
+    //     )
+    //     if (this._options.zoomToCursor) this._radiusDelta = -zoomAmount
+    //   }
+    // }
 
     if (this._options.zoomToCursor) {
+      const dollyAmount = new Vector3()
+      if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
+        if (this._controlTarget instanceof PerspectiveCamera) {
+          const dir = new Vector3().setFromSpherical(this.spherical).normalize()
+          dollyAmount
+            .copy(dir)
+            .multiplyScalar(zoomAmount * this.world.getRelativeOffset(0.1))
+          this._radiusDelta = -zoomAmount
+        }
+      }
       const cameraDirection = new Vector3()
         .setFromSpherical(this.spherical)
         .normalize()
@@ -510,6 +519,7 @@ export class SmoothOrbitControls extends EventEmitter {
         .copy(this.goalOrigin)
         .add(planeX.multiplyScalar(this.zoomControlCoord.x * worldToScreen * aspect))
         .add(planeY.multiplyScalar(this.zoomControlCoord.y * worldToScreen))
+        .add(dollyAmount)
       const lerpRatio = this._radiusDelta / this.goalSpherical.radius
       const newTargetEnd = new Vector3().copy(this.goalOrigin).lerp(cursor, lerpRatio)
       this.cursorSphere.position.copy(
