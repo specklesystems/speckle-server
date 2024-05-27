@@ -541,10 +541,15 @@
           "description": "The url of the Speckle Automate instance",
           "default": "https://automate.speckle.systems"
         },
-        "encryptionKeysPath": {
-          "type": "string",
-          "description": "The path where the encryption keys should be loaded from",
-          "default": "/encryption-keys/keys.json"
+        "encryptionKeys": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The path where the encryption keys should be loaded from",
+              "default": "/encryption-keys/keys.json"
+            }
+          }
         },
         "sessionSecret": {
           "type": "object",

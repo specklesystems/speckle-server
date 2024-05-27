@@ -418,8 +418,9 @@ server:
   max_project_models_per_page: 500
   ## @param server.speckleAutomateUrl The url of the Speckle Automate instance
   speckleAutomateUrl: 'https://automate.speckle.systems'
-  ## @param server.encryptionKeysPath The path where the encryption keys should be loaded from
-  encryptionKeysPath: '/encryption-keys/keys.json'
+  ## @param server.encryptionKeys.path The path where the encryption keys should be loaded from
+  encryptionKeys:
+    path: '/encryption-keys/keys.json'
 
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
