@@ -32,6 +32,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
 
+  const dismissNotification = () => {
+    currentNotification.value = null
+  }
+
   const setNotification = (notification: Nullable<ToastNotification>) => {
     currentNotification.value = notification
   }
@@ -350,6 +354,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     showErrorDialog,
     hostAppError,
     setNotification,
+    dismissNotification,
     setHostAppError,
     addModel,
     patchModel,
