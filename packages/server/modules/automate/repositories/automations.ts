@@ -40,7 +40,7 @@ import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 import { decodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import { Nullable, StreamRoles, isNullOrUndefined } from '@speckle/shared'
-import _, { clamp, groupBy, keyBy, pick, reduce } from 'lodash'
+import _, { clamp, groupBy, keyBy, omit, pick, reduce, zip } from 'lodash'
 import { SetRequired } from 'type-fest'
 import {
   GetAutomationRunsForVersionParams,
@@ -638,6 +638,103 @@ const getAutomationRunsForVersion =
     const { projectId, modelId, versionId } = params
     const { limit = 20 } = options || {}
 
+    // yes, this is a long raw sql query, but its more expressive
+    // the massive builder object becomes hard to read at this size,
+    // and debugging the query is a PITA
+    const rawSql = `
+select distinct on (rev."automationId") rev."automationId", 
+  run_triggers.items as triggers, 
+  "functionRuns".items as "functionRuns",
+  a.name, 
+  run.id, 
+  run."automationRevisionId", 
+  run."createdAt", 
+  run."updatedAt", 
+  run."status", 
+  run."executionEngineRunId", 
+  rev."automationId" from automation_runs run
+inner join automation_revisions rev on run."automationRevisionId" = rev.id
+inner join automations a on rev."automationId" = a.id
+inner join automation_run_triggers run_tr on run.id = run_tr."automationRunId"
+left join lateral(
+	select coalesce(
+		json_agg(
+			json_build_array(
+        ${AutomationRunTriggers.withoutTablePrefix.cols
+          .map((col) => `${AutomationRunTriggers.name}."${col}"`)
+          .join(',\n')}
+      )
+		), '[]'::json
+	)
+	as items from automation_run_triggers
+	where automation_run_triggers."automationRunId" = run.id
+) run_triggers on true
+left join lateral (
+	select coalesce(json_agg(
+		json_build_array(
+      afr.id, 
+      afr."runId", 
+      afr."functionId", 
+      afr."functionReleaseId", 
+      afr.elapsed, 
+      afr.status, 
+      afr."contextView", 
+      afr."statusMessage", 
+      afr.results, 
+      afr."createdAt", 
+      afr."updatedAt"
+    )
+	), '[]'::json)
+	as items from automation_function_runs afr
+	where afr."runId" = run.id
+) "functionRuns" on true
+where run_tr."triggeringId"= ?
+and run_tr."triggerType"= ?
+order by rev."automationId", run."createdAt" desc
+    `
+    const items: {
+      rows: Array<
+        AutomationRunRecord & {
+          automationId: string
+          triggers: Array<Array<string | number>>
+          functionRuns: Array<Array<string | number>>
+        }
+      >
+    } = await db.raw(rawSql, [versionId, 'versionCreation'])
+
+    const parsed = items.rows.map((i) => {
+      const triggers = i.triggers.map((t) => {
+        const trigger: AutomationRunTriggerRecord = Object.fromEntries(
+          zip(AutomationRunTriggers.withoutTablePrefix.cols, t)
+        )
+        return trigger
+      })
+      const functionRuns = i.functionRuns.map((fr) => {
+        const functionRun: AutomationFunctionRunRecord = Object.fromEntries(
+          zip(AutomationFunctionRuns.withoutTablePrefix.cols, fr).map(
+            ([key, value]) => {
+              if (key === undefined || value === undefined)
+                throw new Error(
+                  `Object zip mismatch, key/value ${key}/${value} undefined`
+                )
+
+              if (key?.endsWith('atedAt')) return [key, new Date(value)]
+              // might need to parse objectResults
+              return [key, value]
+            }
+          )
+        )
+        return functionRun
+      })
+      const record = omit(i, 'triggers', 'functionRuns')
+      return {
+        ...record,
+        triggers,
+        functionRuns
+      }
+    })
+    return parsed
+
     const runsQ = db(AutomationRuns.name)
       .select<Array<AutomationRunRecord & { automationId: string }>>([
         ...AutomationRuns.cols,
@@ -686,7 +783,9 @@ const getAutomationRunsForVersion =
         // so we just take the 1st array item later on
         AutomationRuns.with({ withCustomTablePrefix: 'rq' }).groupArray('runs'),
         AutomationFunctionRuns.groupArray('functionRuns'),
-        AutomationRunTriggers.groupArray('triggers')
+        AutomationRunTriggers.groupArray(
+          '                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  '
+        )
       ])
       .from(runsQ.as('rq'))
       .innerJoin(AutomationFunctionRuns.name, AutomationFunctionRuns.col.runId, 'rq.id')
