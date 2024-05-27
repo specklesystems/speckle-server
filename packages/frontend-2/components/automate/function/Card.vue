@@ -28,7 +28,7 @@
           </div>
         </div>
       </div>
-      <div class="label-light text-foreground-2 line-clamp-3 h-16">
+      <div class="label-light text-foreground-2 line-clamp-3 h-16 whitespace-normal">
         {{ plaintextDescription }}
       </div>
       <div v-if="!noButtons" class="flex flex-col sm:flex-row sm:self-end gap-2">
@@ -115,7 +115,7 @@ const { html: plaintextDescription } = useMarkdown(
 )
 
 const classes = computed(() => {
-  const classParts = ['rounded-lg']
+  const classParts = ['rounded-lg truncate']
 
   if (props.selected) {
     classParts.push('ring-2 ring-primary')
