@@ -5,6 +5,7 @@ import { useHostAppStore } from '~/store/hostApp'
 export type HostAppError = {
   message?: string
   error?: string
+  stackTrace?: string
 }
 
 export class BaseBridgeErrorHandler {
@@ -15,8 +16,6 @@ export class BaseBridgeErrorHandler {
   }
 
   private handleError(data: string) {
-    console.log('error handling on BaseBridgeErrorHandler')
-
     const store = useHostAppStore()
     const parsedData = JSON.parse(data) as Record<string, unknown> as HostAppError
     store.setHostAppError(parsedData)
