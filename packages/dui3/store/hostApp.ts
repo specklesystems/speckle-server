@@ -8,6 +8,7 @@ import { IReceiverModelCard } from 'lib/models/card/receiver'
 import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
 import { ToastNotification } from '@speckle/ui-components'
 import { Nullable } from '@speckle/shared'
+import { HostAppError } from '~/lib/bridge/errorHandler'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -22,6 +23,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const { trackEvent } = useMixpanel()
 
   const currentNotification = ref<Nullable<ToastNotification>>(null)
+  const showErrorDialog = ref<boolean>(false)
+  const hostAppError = ref<HostAppError>()
+
   const hostAppName = ref<string>()
   const hostAppVersion = ref<string>()
   const connectorVersion = ref<string>()
@@ -34,6 +38,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   const setNotification = (notification: Nullable<ToastNotification>) => {
     currentNotification.value = notification
+  }
+
+  const setHostAppError = (error: HostAppError) => {
+    hostAppError.value = error
   }
 
   /**
@@ -343,8 +351,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     selectionFilter,
     everythingFilter,
     currentNotification,
+    showErrorDialog,
+    hostAppError,
     setNotification,
     dismissNotification,
+    setHostAppError,
     addModel,
     patchModel,
     removeModel,

@@ -81,20 +81,12 @@
       v-model:open="showReceiveDialog"
       @close="showReceiveDialog = false"
     />
-    <LayoutDialog
-      v-model:open="showErrorDialog"
+    <!-- Triggered by "Show Details" button on Toast Notification -->
+    <ErrorDialog
+      v-model:open="store.showErrorDialog"
       chromium65-compatibility
-      @close="showErrorDialog = false"
-    >
-      <template #header>
-        <div class="h5 font-bold">Host App Error</div>
-      </template>
-      <div class="mt-1 text-foreground-2 text-sm font-normal mx-2">
-        <div class="text-s font-bold">{{ hostAppError.message }}</div>
-        <div class="text-s font-bold">Stack Trace</div>
-        <div class="text-xs">{{ hostAppError.error }}</div>
-      </div>
-    </LayoutDialog>
+      @close="store.showErrorDialog = false"
+    />
   </div>
   <div v-else>
     <div class="fixed top-0 h-screen w-screen flex items-center pointer-events-none">
@@ -131,7 +123,6 @@ import { CloudArrowDownIcon, CloudArrowUpIcon } from '@heroicons/vue/24/solid'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
-import { ToastNotification, ToastNotificationType } from '@speckle/ui-components'
 const app = useNuxtApp()
 // IMPORTANT: the account store needs to be awaited here, and in any other top level page to prevent
 // race conditions on initialisation (model cards get loaded, but accounts are not there yet)
@@ -144,36 +135,12 @@ const { accounts, isLoading } = storeToRefs(accountStore)
 const store = useHostAppStore()
 const { trackEvent } = useMixpanel()
 
-type HostAppError = {
-  message: string
-  error: string
-}
-
 const showSendDialog = ref(false)
 const showReceiveDialog = ref(false)
-const showErrorDialog = ref(false)
-const hostAppError = ref({} as unknown as HostAppError)
 
 app.$baseBinding.on('documentChanged', () => {
   showSendDialog.value = false
   showReceiveDialog.value = false
-})
-
-app.$sendBinding?.on('errorOnResponse', (data: string) => {
-  console.log(data)
-  const parsedData = JSON.parse(data) as Record<string, unknown> as HostAppError
-  hostAppError.value = parsedData
-  console.log(parsedData)
-  const notification: ToastNotification = {
-    type: ToastNotificationType.Danger,
-    title: 'Host App Error',
-    description: parsedData.message,
-    cta: {
-      title: 'Show details',
-      onClick: () => (showErrorDialog.value = true)
-    }
-  }
-  store.setNotification(notification)
 })
 
 const handleSendClick = () => {
