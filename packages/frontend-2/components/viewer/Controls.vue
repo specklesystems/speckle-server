@@ -277,8 +277,7 @@ import { useViewerTour } from '~/lib/viewer/composables/tour'
 import { onKeyStroke, useEventListener, useResizeObserver } from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 
-// const isGendoEnabled = useIsAutomateModuleEnabled() // Not working for some reason, always false
-const isGendoEnabled = ref(true)
+const isGendoEnabled = useIsGendoModuleEnabled()
 
 const width = ref(360)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
