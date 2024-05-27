@@ -24,7 +24,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   const currentNotification = ref<Nullable<ToastNotification>>(null)
   const showErrorDialog = ref<boolean>(false)
-  const hostAppError = ref<HostAppError>()
+  const hostAppError = ref<Nullable<HostAppError>>(null)
 
   const hostAppName = ref<string>()
   const hostAppVersion = ref<string>()
@@ -32,15 +32,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
 
-  const dismissNotification = () => {
-    currentNotification.value = null
-  }
-
   const setNotification = (notification: Nullable<ToastNotification>) => {
     currentNotification.value = notification
   }
 
-  const setHostAppError = (error: HostAppError) => {
+  const setHostAppError = (error: Nullable<HostAppError>) => {
     hostAppError.value = error
   }
 
@@ -354,7 +350,6 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     showErrorDialog,
     hostAppError,
     setNotification,
-    dismissNotification,
     setHostAppError,
     addModel,
     patchModel,

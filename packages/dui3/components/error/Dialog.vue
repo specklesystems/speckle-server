@@ -3,7 +3,7 @@
     v-model:open="store.showErrorDialog"
     chromium65-compatibility
     @close="store.showErrorDialog = false"
-    @fully-closed="handleFullyClosed"
+    @fully-closed="store.setHostAppError(null)"
   >
     <template #header>
       <div class="h5 font-bold">Host App Error</div>
@@ -29,10 +29,5 @@ const store = useHostAppStore()
 const showStackTrace = ref(false)
 const toggleStackTrace = () => {
   showStackTrace.value = !showStackTrace.value
-}
-
-const handleFullyClosed = () => {
-  store.dismissNotification()
-  store.setNotification(null)
 }
 </script>
