@@ -1795,6 +1795,7 @@ export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
   create: Automation;
   createRevision: AutomationRevision;
+  createTestAutomation: Automation;
   /**
    * Trigger an automation with a fake "version created" trigger. The "version created" will
    * just refer to the last version of the model.
@@ -1811,6 +1812,11 @@ export type ProjectAutomationMutationsCreateArgs = {
 
 export type ProjectAutomationMutationsCreateRevisionArgs = {
   input: ProjectAutomationRevisionCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationArgs = {
+  input: ProjectTestAutomationCreateInput;
 };
 
 
@@ -2099,6 +2105,12 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
 }
+
+export type ProjectTestAutomationCreateInput = {
+  functionId: Scalars['String'];
+  modelId: Scalars['String'];
+  name: Scalars['String'];
+};
 
 export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
   __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
@@ -3604,6 +3616,7 @@ export type ResolversTypes = {
   ProjectPendingModelsUpdatedMessageType: ProjectPendingModelsUpdatedMessageType;
   ProjectPendingVersionsUpdatedMessage: ResolverTypeWrapper<Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversTypes['FileUpload'] }>;
   ProjectPendingVersionsUpdatedMessageType: ProjectPendingVersionsUpdatedMessageType;
+  ProjectTestAutomationCreateInput: ProjectTestAutomationCreateInput;
   ProjectTriggeredAutomationsStatusUpdatedMessage: ResolverTypeWrapper<ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn>;
   ProjectTriggeredAutomationsStatusUpdatedMessageType: ProjectTriggeredAutomationsStatusUpdatedMessageType;
   ProjectUpdateInput: ProjectUpdateInput;
@@ -3811,6 +3824,7 @@ export type ResolversParentTypes = {
   ProjectMutations: MutationsObjectGraphQLReturn;
   ProjectPendingModelsUpdatedMessage: Omit<ProjectPendingModelsUpdatedMessage, 'model'> & { model: ResolversParentTypes['FileUpload'] };
   ProjectPendingVersionsUpdatedMessage: Omit<ProjectPendingVersionsUpdatedMessage, 'version'> & { version: ResolversParentTypes['FileUpload'] };
+  ProjectTestAutomationCreateInput: ProjectTestAutomationCreateInput;
   ProjectTriggeredAutomationsStatusUpdatedMessage: ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn;
   ProjectUpdateInput: ProjectUpdateInput;
   ProjectUpdateRoleInput: ProjectUpdateRoleInput;
@@ -4579,6 +4593,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
 export type ProjectAutomationMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectAutomationMutations'] = ResolversParentTypes['ProjectAutomationMutations']> = {
   create?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateArgs, 'input'>>;
   createRevision?: Resolver<ResolversTypes['AutomationRevision'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateRevisionArgs, 'input'>>;
+  createTestAutomation?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateTestAutomationArgs, 'input'>>;
   trigger?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsTriggerArgs, 'automationId'>>;
   update?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;

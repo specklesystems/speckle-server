@@ -27,6 +27,7 @@ import {
 import {
   createAutomation,
   createAutomationRevision,
+  createTestAutomation,
   getAutomationsStatus,
   updateAutomation
 } from '@/modules/automate/services/automationManagement'
@@ -472,6 +473,20 @@ export = {
       })
 
       return true
+    },
+    async createTestAutomation(parent, { input }, ctx) {
+      const create = createTestAutomation({
+        getFunction,
+        storeAutomation,
+        storeAutomationRevision
+      })
+
+      return await create({
+        input,
+        projectId: parent.projectId,
+        userId: ctx.userId!,
+        userResourceAccessRules: ctx.resourceAccessRules
+      })
     }
   },
   Query: {

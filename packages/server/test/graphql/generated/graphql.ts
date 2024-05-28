@@ -1785,6 +1785,7 @@ export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
   create: Automation;
   createRevision: AutomationRevision;
+  createTestAutomation: Automation;
   /**
    * Trigger an automation with a fake "version created" trigger. The "version created" will
    * just refer to the last version of the model.
@@ -1801,6 +1802,11 @@ export type ProjectAutomationMutationsCreateArgs = {
 
 export type ProjectAutomationMutationsCreateRevisionArgs = {
   input: ProjectAutomationRevisionCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationArgs = {
+  input: ProjectTestAutomationCreateInput;
 };
 
 
@@ -2089,6 +2095,12 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
 }
+
+export type ProjectTestAutomationCreateInput = {
+  functionId: Scalars['String'];
+  modelId: Scalars['String'];
+  name: Scalars['String'];
+};
 
 export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
   __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
