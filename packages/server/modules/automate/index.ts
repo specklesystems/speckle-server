@@ -6,10 +6,7 @@ import {
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
 import { Environment } from '@speckle/shared'
-import {
-  createAutomationRepository,
-  getAutomationRunFullTriggers
-} from '@/modules/automate/repositories/automations'
+import { createAutomationRepository } from '@/modules/automate/repositories/automations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
 import { registerOrUpdateScope } from '@/modules/shared'
@@ -66,7 +63,7 @@ const initializeEventListeners = () => {
     })
   })
   const setupStatusUpdateSubscriptionsInvoke = setupStatusUpdateSubscriptions({
-    getAutomationRunFullTriggers
+    automationRepository
   })
   const setupAutomationUpdateSubscriptionsInvoke = setupAutomationUpdateSubscriptions()
 

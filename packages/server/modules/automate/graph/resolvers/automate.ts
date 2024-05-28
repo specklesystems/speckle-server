@@ -9,7 +9,6 @@ import {
 } from '@/modules/automate/clients/executionEngine'
 import {
   createAutomationRepository,
-  getAutomation,
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
@@ -419,12 +418,13 @@ export = {
       ).automation
     },
     async update(parent, { input }, ctx) {
+      const automationRepository = createAutomationRepository({ db: knexInstance })
       const update = updateAutomation({
-        getAutomation,
+        automationRepository,
         updateAutomation: updateDbAutomation
       })
 
-      return await update({
+      return update({
         input,
         userId: ctx.userId!,
         projectId: parent.projectId,
@@ -434,13 +434,12 @@ export = {
     async createRevision(parent, { input }, ctx) {
       const automationRepository = createAutomationRepository({ db: knexInstance })
       const create = createAutomationRevision({
-        getAutomation,
+        automationRepository,
         getBranchesByIds,
         getFunctionRelease,
         getEncryptionKeyPair,
         getFunctionInputDecryptor: getFunctionInputDecryptor({ buildDecryptor }),
-        getFunctionReleases,
-        automationRepository
+        getFunctionReleases
       })
 
       return create({
@@ -456,7 +455,7 @@ export = {
       })
       const trigger = manuallyTriggerAutomation({
         getAutomationTriggerDefinitions,
-        getAutomation,
+        automationRepository,
         getBranchLatestCommits,
         triggerFunction: triggerAutomationRevisionRun({
           automationRepository,

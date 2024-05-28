@@ -254,42 +254,45 @@ const insertAutomationRevision =
     }
   }
 
-export async function getAutomationToken(
-  automationId: string
-): Promise<AutomationTokenRecord | null> {
-  const token = await AutomationTokens.knex<AutomationTokenRecord>()
-    .where(AutomationTokens.col.automationId, automationId)
-    .first()
-  return token || null
-}
-
-export async function getAutomations(params: {
-  automationIds: string[]
-  projectId?: string
-}) {
-  const { automationIds, projectId } = params
-  if (!automationIds.length) return []
-
-  const q = Automations.knex<AutomationRecord[]>()
-    .select()
-    .whereIn(Automations.col.id, automationIds)
-
-  if (projectId?.length) {
-    q.andWhere(Automations.col.projectId, projectId)
+const findAutomationToken = ({ db }: { db: Knex }) =>
+  async function (automationId: string): Promise<AutomationTokenRecord | null> {
+    const token = await db<AutomationTokenRecord>(AutomationTokens.name)
+      .where(AutomationTokens.col.automationId, automationId)
+      .first()
+    return token || null
   }
 
-  return await q
-}
+const queryAutomations = ({ db }: { db: Knex }) =>
+  async function (params: {
+    automationIds: string[]
+    projectId?: string
+  }): Promise<AutomationRecord[]> {
+    const { automationIds, projectId } = params
+    if (!automationIds.length) return []
 
-export async function getAutomation(params: {
-  automationId: string
-  projectId?: string
-}): Promise<Nullable<AutomationRecord>> {
-  const { automationId, projectId } = params
-  return (
-    (await getAutomations({ automationIds: [automationId], projectId }))?.[0] || null
-  )
-}
+    const q = db<AutomationRecord>(Automations.name)
+      .select()
+      .whereIn(Automations.col.id, automationIds)
+
+    if (projectId?.length) {
+      q.andWhere(Automations.col.projectId, projectId)
+    }
+
+    return q
+  }
+
+const findAutomation = ({ db }: { db: Knex }) =>
+  async function (params: {
+    automationId: string
+    projectId?: string
+  }): Promise<Nullable<AutomationRecord>> {
+    const { automationId, projectId } = params
+    return (
+      (
+        await queryAutomations({ db })({ automationIds: [automationId], projectId })
+      )?.[0] || null
+    )
+  }
 
 export async function updateAutomation(
   automation: SetRequired<Partial<AutomationRecord>, 'id'>
@@ -863,47 +866,44 @@ const findAutomationProject =
     return projects[automationId] || null
   }
 
-export const getAutomationRunWithToken = async (params: {
-  automationRunId: string
-  automationId: string
-}) => {
-  const { automationRunId, automationId } = params
-  const q = AutomationRuns.knex()
-    .select<
-      Array<
-        AutomationRunRecord & {
-          automationId: string
-          token: string
-          executionEngineAutomationId: string
-        }
-      >
-    >([
-      ...AutomationRuns.cols,
-      Automations.colAs('id', 'automationId'),
-      Automations.col.executionEngineAutomationId,
-      AutomationTokens.colAs('automateToken', 'token')
-    ])
-    .where(AutomationRuns.col.id, automationRunId)
-    .andWhere(Automations.col.id, automationId)
-    .innerJoin(
-      AutomationRevisions.name,
-      AutomationRevisions.col.id,
-      AutomationRuns.col.automationRevisionId
-    )
-    .innerJoin(
-      Automations.name,
-      Automations.col.id,
-      AutomationRevisions.col.automationId
-    )
-    .innerJoin(
-      AutomationTokens.name,
-      AutomationTokens.col.automationId,
-      Automations.col.id
-    )
-    .first()
-
-  return await q
-}
+const findAutomationRunWithToken =
+  ({ db }: { db: Knex }) =>
+  async (params: { automationRunId: string; automationId: string }) => {
+    const { automationRunId, automationId } = params
+    return db(AutomationRuns.name)
+      .select<
+        Array<
+          AutomationRunRecord & {
+            automationId: string
+            token: string
+            executionEngineAutomationId: string
+          }
+        >
+      >([
+        ...AutomationRuns.cols,
+        Automations.colAs('id', 'automationId'),
+        Automations.col.executionEngineAutomationId,
+        AutomationTokens.colAs('automateToken', 'token')
+      ])
+      .where(AutomationRuns.col.id, automationRunId)
+      .andWhere(Automations.col.id, automationId)
+      .innerJoin(
+        AutomationRevisions.name,
+        AutomationRevisions.col.id,
+        AutomationRuns.col.automationRevisionId
+      )
+      .innerJoin(
+        Automations.name,
+        Automations.col.id,
+        AutomationRevisions.col.automationId
+      )
+      .innerJoin(
+        AutomationTokens.name,
+        AutomationTokens.col.automationId,
+        Automations.col.id
+      )
+      .first()
+  }
 
 type AutomationRunFullTrigger<T extends AutomationTriggerType = AutomationTriggerType> =
   AutomationRunTriggerRecord<T> & {
@@ -911,70 +911,75 @@ type AutomationRunFullTrigger<T extends AutomationTriggerType = AutomationTrigge
     models: BranchRecord[]
   }
 
-export async function getAutomationRunsTriggers(params: {
-  automationRunIds: string[]
-}) {
-  const { automationRunIds } = params
-  if (!automationRunIds.length) return {}
+const queryAutomationRunsTriggers = ({ db }: { db: Knex }) =>
+  async function (params: {
+    automationRunIds: string[]
+  }): Promise<Record<string, AutomationRunTriggerRecord[]>> {
+    const { automationRunIds } = params
+    if (!automationRunIds.length) return {}
 
-  const q = AutomationRunTriggers.knex<AutomationRunTriggerRecord[]>().whereIn(
-    AutomationRunTriggers.col.automationRunId,
-    automationRunIds
-  )
-  const items = await q
-  return groupBy(items, (i) => i.automationRunId)
-}
+    const items = await db<AutomationRunTriggerRecord>(
+      AutomationRunTriggers.name
+    ).whereIn(AutomationRunTriggers.col.automationRunId, automationRunIds)
 
-export async function getAutomationRunFullTriggers(params: {
-  automationRunId: string
-}) {
-  const { automationRunId } = params
-
-  const q = AutomationRunTriggers.knex()
-    .where(AutomationRunTriggers.col.automationRunId, automationRunId)
-
-    // Join on relevant entities
-    .leftJoin(Commits.name, function () {
-      this.on(Commits.col.id, AutomationRunTriggers.col.triggeringId).andOnVal(
-        AutomationRunTriggers.col.triggerType,
-        VersionCreationTriggerType
-      )
-    })
-    .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
-    .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
-
-    .groupBy(
-      AutomationRunTriggers.col.automationRunId,
-      AutomationRunTriggers.col.triggerType,
-      AutomationRunTriggers.col.triggeringId
-    )
-
-    .select<AutomationRunFullTrigger[]>([
-      ...AutomationRunTriggers.cols,
-      Commits.groupArray('versions'),
-      Branches.groupArray('models')
-    ])
-
-  const res = await q
-  const formattedRes = res.map((r) => ({
-    ...r,
-    versions: formatJsonArrayRecords(r.versions),
-    models: formatJsonArrayRecords(r.models)
-  }))
-
-  return {
-    [VersionCreationTriggerType]: formattedRes
-      .filter((r): r is AutomationRunFullTrigger<typeof VersionCreationTriggerType> =>
-        isVersionCreatedTrigger(r)
-      )
-      .map((r) => ({
-        triggerType: r.triggerType,
-        triggeringId: r.triggeringId,
-        version: r.versions[0],
-        model: r.models[0]
-      }))
+    return groupBy(items, (i) => i.automationRunId)
   }
-}
+
+const queryAutomationRunFullTriggers = ({ db }: { db: Knex }) =>
+  async function (params: { automationRunId: string }): Promise<{
+    [VersionCreationTriggerType]: {
+      triggerType: typeof VersionCreationTriggerType
+      triggeringId: string
+      model: BranchRecord
+      version: CommitRecord
+    }[]
+  }> {
+    const { automationRunId } = params
+
+    const res = await db<AutomationRunTriggerRecord>(AutomationRunTriggers.name)
+      .where(AutomationRunTriggers.col.automationRunId, automationRunId)
+
+      // Join on relevant entities
+      .leftJoin(Commits.name, function () {
+        this.on(Commits.col.id, AutomationRunTriggers.col.triggeringId).andOnVal(
+          AutomationRunTriggers.col.triggerType,
+          VersionCreationTriggerType
+        )
+      })
+      .innerJoin(BranchCommits.name, BranchCommits.col.commitId, Commits.col.id)
+      .innerJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+
+      .groupBy(
+        AutomationRunTriggers.col.automationRunId,
+        AutomationRunTriggers.col.triggerType,
+        AutomationRunTriggers.col.triggeringId
+      )
+
+      .select<AutomationRunFullTrigger[]>([
+        ...AutomationRunTriggers.cols,
+        Commits.groupArray('versions'),
+        Branches.groupArray('models')
+      ])
+
+    const formattedRes = res.map((r) => ({
+      ...r,
+      versions: formatJsonArrayRecords(r.versions),
+      models: formatJsonArrayRecords(r.models)
+    }))
+
+    return {
+      [VersionCreationTriggerType]: formattedRes
+        .filter((r): r is AutomationRunFullTrigger<typeof VersionCreationTriggerType> =>
+          isVersionCreatedTrigger(r)
+        )
+        .map((r) => ({
+          triggerType: r.triggerType,
+          triggeringId: r.triggeringId,
+          version: r.versions[0],
+          model: r.models[0]
+        }))
+    }
+  }
 
 export const createAutomationRepository = ({ db }: { db: Knex }) => ({
   findFullAutomationRevisionMetadata: findFullAutomationRevisionMetadata({ db }),
@@ -989,5 +994,11 @@ export const createAutomationRepository = ({ db }: { db: Knex }) => ({
   queryProjectAutomations: queryProjectAutomations({ db }),
   getAutomationRunsForVersion: getAutomationRunsForVersion({ db }),
   findAutomationProject: findAutomationProject({ db }),
-  queryAutomationProjects: queryAutomationProjects({ db })
+  queryAutomationProjects: queryAutomationProjects({ db }),
+  findAutomationRunWithToken: findAutomationRunWithToken({ db }),
+  queryAutomationRunsTriggers: queryAutomationRunsTriggers({ db }),
+  queryAutomationRunFullTriggers: queryAutomationRunFullTriggers({ db }),
+  findAutomationToken: findAutomationToken({ db }),
+  queryAutomations: queryAutomations({ db }),
+  findAutomation: findAutomation({ db })
 })

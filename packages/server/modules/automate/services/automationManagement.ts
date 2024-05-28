@@ -1,7 +1,4 @@
-import {
-  getAutomation,
-  updateAutomation as updateDbAutomation
-} from '@/modules/automate/repositories/automations'
+import { updateAutomation as updateDbAutomation } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import {
@@ -115,13 +112,11 @@ export const createAutomation =
     return res
   }
 
-export type UpdateAutomationDeps = {
-  getAutomation: typeof getAutomation
-  updateAutomation: typeof updateDbAutomation
-}
-
 export const updateAutomation =
-  (deps: UpdateAutomationDeps) =>
+  (deps: {
+    automationRepository: Pick<AutomationRepository, 'findAutomation'>
+    updateAutomation: typeof updateDbAutomation
+  }) =>
   async (params: {
     input: ProjectAutomationUpdateInput
     userId: string
@@ -131,10 +126,10 @@ export const updateAutomation =
      */
     projectId?: string
   }) => {
-    const { getAutomation, updateAutomation } = deps
+    const { automationRepository, updateAutomation } = deps
     const { input, userId, userResourceAccessRules, projectId } = params
 
-    const existingAutomation = await getAutomation({
+    const existingAutomation = await automationRepository.findAutomation({
       automationId: input.id,
       projectId
     })
@@ -255,8 +250,10 @@ const validateNewRevisionFunctions =
   }
 
 export type CreateAutomationRevisionDeps = {
-  automationRepository: Pick<AutomationRepository, 'insertAutomationRevision'>
-  getAutomation: typeof getAutomation
+  automationRepository: Pick<
+    AutomationRepository,
+    'insertAutomationRevision' | 'findAutomation'
+  >
   getEncryptionKeyPair: typeof getEncryptionKeyPair
   getFunctionInputDecryptor: ReturnType<typeof getFunctionInputDecryptor>
   getFunctionReleases: typeof getFunctionReleases
@@ -274,13 +271,12 @@ export const createAutomationRevision =
     const { input, userId, userResourceAccessRules, projectId } = params
     const {
       automationRepository,
-      getAutomation,
       getEncryptionKeyPair,
       getFunctionInputDecryptor,
       getFunctionReleases
     } = deps
 
-    const existingAutomation = await getAutomation({
+    const existingAutomation = await automationRepository.findAutomation({
       automationId: input.automationId,
       projectId
     })

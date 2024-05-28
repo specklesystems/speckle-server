@@ -66,9 +66,8 @@ import {
   AutomationTriggerDefinitionRecord
 } from '@/modules/automate/helpers/types'
 import {
+  createAutomationRepository,
   getAutomationRevisions,
-  getAutomationRunsTriggers,
-  getAutomations,
   getFunctionAutomationCounts,
   getLatestAutomationRevisions,
   getRevisionsFunctions,
@@ -82,6 +81,7 @@ import {
   FunctionReleaseSchemaType,
   FunctionSchemaType
 } from '@/modules/automate/helpers/executionEngine'
+import knexInstance from '@/db/knex'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -136,6 +136,7 @@ export function buildRequestLoaders(
       getAutomation: (() => {
         type AutomationDataLoader = DataLoader<string, Nullable<AutomationRecord>>
         const streamAutomationLoaders = new Map<string, AutomationDataLoader>()
+        const automationRepository = createAutomationRepository({ db: knexInstance })
         return {
           clearAll: () => streamAutomationLoaders.clear(),
           forStream(streamId: string): AutomationDataLoader {
@@ -144,7 +145,9 @@ export function buildRequestLoaders(
               loader = createLoader<string, Nullable<AutomationRecord>>(
                 async (automationIds) => {
                   const results = keyBy(
-                    await getAutomations({ automationIds: automationIds.slice() }),
+                    await automationRepository.queryAutomations({
+                      automationIds: automationIds.slice()
+                    }),
                     (a) => a.id
                   )
                   return automationIds.map((i) => results[i] || null)
@@ -551,8 +554,10 @@ export function buildRequestLoaders(
         return functionIds.map((i) => results[i] || 0)
       }),
       getAutomation: createLoader<string, Nullable<AutomationRecord>>(async (ids) => {
+        // TODO: this is not ideal, we should inject it in the dataloader
+        const automationRepository = createAutomationRepository({ db: knexInstance })
         const results = keyBy(
-          await getAutomations({ automationIds: ids.slice() }),
+          await automationRepository.queryAutomations({ automationIds: ids.slice() }),
           (a) => a.id
         )
         return ids.map((i) => results[i] || null)
@@ -594,7 +599,10 @@ export function buildRequestLoaders(
       ),
       getRunTriggers: createLoader<string, AutomationRunTriggerRecord[]>(
         async (ids) => {
-          const results = await getAutomationRunsTriggers({
+          // TODO: here db should be injected
+          const results = await createAutomationRepository({
+            db: knexInstance
+          }).queryAutomationRunsTriggers({
             automationRunIds: ids.slice()
           })
           return ids.map((i) => results[i] || [])

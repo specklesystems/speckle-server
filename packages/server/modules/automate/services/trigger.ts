@@ -1,8 +1,4 @@
-import {
-  getAutomation,
-  getAutomationToken,
-  getAutomationTriggerDefinitions
-} from '@/modules/automate/repositories/automations'
+import { getAutomationTriggerDefinitions } from '@/modules/automate/repositories/automations'
 import {
   AutomationWithRevision,
   AutomationTriggerDefinitionRecord,
@@ -192,6 +188,7 @@ export const triggerAutomationRevisionRun =
       | 'findFullAutomationRevisionMetadata'
       | 'upsertAutomationRun'
       | 'queryActiveTriggerDefinitions'
+      | 'findAutomationToken'
     >
     automateRunTrigger: typeof triggerAutomationRun
     getEncryptionKeyPairFor: typeof getEncryptionKeyPairForFn
@@ -212,8 +209,7 @@ export const triggerAutomationRevisionRun =
     const { automationWithRevision, userId, automateToken } = await ensureRunConditions(
       {
         automationRepository,
-        versionGetter: getCommit,
-        automationTokenGetter: getAutomationToken
+        versionGetter: getCommit
       }
     )({
       revisionId,
@@ -295,10 +291,9 @@ export const ensureRunConditions =
   (deps: {
     automationRepository: Pick<
       AutomationRepository,
-      'findFullAutomationRevisionMetadata'
+      'findFullAutomationRevisionMetadata' | 'findAutomationToken'
     >
     versionGetter: typeof getCommit
-    automationTokenGetter: typeof getAutomationToken
   }) =>
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
@@ -308,7 +303,7 @@ export const ensureRunConditions =
     userId: string
     automateToken: string
   }> => {
-    const { automationRepository, versionGetter, automationTokenGetter } = deps
+    const { automationRepository, versionGetter } = deps
     const { revisionId, manifest } = params
     const automationWithRevision =
       await automationRepository.findFullAutomationRevisionMetadata(revisionId)
@@ -356,7 +351,9 @@ export const ensureRunConditions =
         "The user, that created the triggering version doesn't exist any more"
       )
 
-    const token = await automationTokenGetter(automationWithRevision.id)
+    const token = await automationRepository.findAutomationToken(
+      automationWithRevision.id
+    )
     if (!token)
       throw new AutomateInvalidTriggerError('Cannot find a token for the automation')
 
@@ -411,8 +408,8 @@ async function composeTriggerData(params: {
 }
 
 export type ManuallyTriggerAutomationDeps = {
+  automationRepository: Pick<AutomationRepository, 'findAutomation'>
   getAutomationTriggerDefinitions: typeof getAutomationTriggerDefinitions
-  getAutomation: typeof getAutomation
   getBranchLatestCommits: typeof getBranchLatestCommits
   triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
 }
@@ -428,13 +425,13 @@ export const manuallyTriggerAutomation =
     const { automationId, userId, projectId, userResourceAccessRules } = params
     const {
       getAutomationTriggerDefinitions,
-      getAutomation,
+      automationRepository,
       getBranchLatestCommits,
       triggerFunction
     } = deps
 
     const [automation, triggerDefs] = await Promise.all([
-      getAutomation({ automationId, projectId }),
+      automationRepository.findAutomation({ automationId, projectId }),
       getAutomationTriggerDefinitions({
         automationId,
         projectId,

@@ -9,8 +9,10 @@ import {
   AutomationTriggerType,
   AutomationWithRevision,
   InsertableAutomationRevision,
-  InsertableAutomationRun
+  InsertableAutomationRun,
+  VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
+import { BranchRecord, CommitRecord } from '../core/helpers/types'
 
 type ProjectAutomationsArgs = {
   cursor?: string | null
@@ -70,4 +72,17 @@ export interface AutomationRepository {
     params: GetAutomationRunsForVersionParams,
     options?: Partial<{ limit: number }>
   ) => Promise<AutomationRunWithTriggersFunctionRuns[]>
+  queryAutomationRunFullTriggers: (params: { automationRunId: string }) => Promise<{
+    [VersionCreationTriggerType]: {
+      triggerType: typeof VersionCreationTriggerType
+      triggeringId: string
+      model: BranchRecord
+      version: CommitRecord
+    }[]
+  }>
+  findAutomation: (params: {
+    automationId: string
+    projectId?: string
+  }) => Promise<AutomationRecord | null>
+  findAutomationToken: (automationId: string) => Promise<AutomationTokenRecord | null>
 }

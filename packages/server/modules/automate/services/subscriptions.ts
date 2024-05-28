@@ -5,13 +5,13 @@ import {
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
-import { getAutomationRunFullTriggers } from '@/modules/automate/repositories/automations'
 import {
   ProjectAutomationsUpdatedMessageType,
   ProjectTriggeredAutomationsStatusUpdatedMessageType
 } from '@/modules/core/graph/generated/graphql'
 import { ProjectSubscriptions, publish } from '@/modules/shared/utils/subscriptions'
 import { isNonNullable } from '@speckle/shared'
+import { AutomationRepository } from '../domain'
 
 // TODO: Update AutomateRuns subscription
 
@@ -64,14 +64,13 @@ export const setupAutomationUpdateSubscriptions = () => () => {
   return () => quitters.forEach((quitter) => quitter())
 }
 
-export type SetupStatusUpdateSubscriptionsDeps = {
-  getAutomationRunFullTriggers: typeof getAutomationRunFullTriggers
-}
-
 export const setupStatusUpdateSubscriptions =
-  (deps: SetupStatusUpdateSubscriptionsDeps) => () => {
-    const { getAutomationRunFullTriggers } = deps
-
+  ({
+    automationRepository
+  }: {
+    automationRepository: Pick<AutomationRepository, 'queryAutomationRunFullTriggers'>
+  }) =>
+  () => {
     const quitters = [
       AutomateRunsEmitter.listen(
         AutomateRunsEmitter.events.Created,
@@ -122,7 +121,7 @@ export const setupStatusUpdateSubscriptions =
       AutomateRunsEmitter.listen(
         AutomateRunsEmitter.events.StatusUpdated,
         async ({ run, functionRuns, automationId }) => {
-          const triggers = await getAutomationRunFullTriggers({
+          const triggers = await automationRepository.queryAutomationRunFullTriggers({
             automationRunId: run.id
           })
 
