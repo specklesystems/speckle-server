@@ -463,8 +463,12 @@ export class SmoothOrbitControls extends EventEmitter {
     const normalizedRadius =
       this.spherical.radius / this.world.worldBox.getSize(new Vector3()).length()
     // console.log(normalizedRadius)
-    const worldSizeOffset = this.world.getRelativeOffset(0.1) * normalizedRadius
-
+    let worldSizeOffset = this.world.getRelativeOffset(0.1) * normalizedRadius
+    worldSizeOffset = clamp(
+      worldSizeOffset,
+      this.world.getRelativeOffset(0.01),
+      this.world.getRelativeOffset(0.2)
+    )
     let zoomAmount = worldSizeOffset * Math.sign(deltaZoom) //deltaZoom * this.spherical.radius * Math.tan(fov * 0.5)
     zoomAmount =
       Math.sign(zoomAmount) *
