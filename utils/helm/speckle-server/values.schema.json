@@ -552,7 +552,7 @@
             "apiUrl": {
               "type": "string",
               "description": "The url of the Gendo AI application, including protocol.",
-              "default": "https://www.gendo.ai"
+              "default": "https://api.gendo.ai/external/generate"
             },
             "key": {
               "type": "object",

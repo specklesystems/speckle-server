@@ -423,7 +423,7 @@ server:
 
   gendoAI:
     ## @param server.gendoAI.apiUrl The url of the Gendo AI application, including protocol.
-    apiUrl: 'https://www.gendo.ai'
+    apiUrl: 'https://api.gendo.ai/external/generate'
     key:
       ## @param server.gendoAI.key.secretName The name of the Kubernetes Secret containing the Gendo AI key. If left blank, will default to the `secretName` parameter.
       secretName: ''
