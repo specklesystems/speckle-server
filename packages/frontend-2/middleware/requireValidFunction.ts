@@ -8,6 +8,16 @@ import {
 export default defineNuxtRouteMiddleware(async (to) => {
   const functionId = to.params.fid as string
 
+  const isAutomateEnabled = useIsAutomateModuleEnabled()
+  if (!isAutomateEnabled.value) {
+    return abortNavigation(
+      createError({
+        statusCode: 404,
+        message: 'Page not found'
+      })
+    )
+  }
+
   const client = useApolloClientFromNuxt()
 
   const { data, errors } = await client
