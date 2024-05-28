@@ -583,6 +583,31 @@
                   "default": "gendoai_key_response"
                 }
               }
+            },
+            "ratelimiting": {
+              "type": "object",
+              "properties": {
+                "renderRequest": {
+                  "type": "number",
+                  "description": "The number of render requests allowed per period",
+                  "default": 1
+                },
+                "renderRequestPeriodSeconds": {
+                  "type": "number",
+                  "description": "The period in seconds for the render request limit",
+                  "default": 20
+                },
+                "burstRenderRequest": {
+                  "type": "number",
+                  "description": "The number of render requests allowed in 'burst' mode when the other limit is reached.",
+                  "default": 3
+                },
+                "burstRenderRequestPeriodSeconds": {
+                  "type": "number",
+                  "description": "The period in seconds for the burst render request limit.",
+                  "default": 60
+                }
+              }
             }
           }
         },

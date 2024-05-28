@@ -162,7 +162,7 @@ spec:
           - name: FF_GENDOAI_MODULE_ENABLED
             value: {{ .Values.featureFlags.gendoAIModuleEnabled }}
 
-            {{- if .Values.featureFlags.gendoAIModuleEnabled }}
+          {{- if .Values.featureFlags.gendoAIModuleEnabled }}
           - name: GENDOAI_KEY
             valueFrom:
               secretKeyRef:
@@ -177,7 +177,19 @@ spec:
 
           - name: GENDOAI_API_ENDPOINT
             value: {{ .Values.server.gendoAI.apiUrl }}
-            {{- end }}
+
+          - name: RATELIMIT_GENDO_AI_RENDER_REQUEST
+            value: {{ .Values.server.gendoai.ratelimiting.renderRequest | quote }}
+
+          - name: RATELIMIT_GENDO_AI_RENDER_REQUEST_PERIOD_SECONDS
+            value: {{ .Values.server.gendoai.ratelimiting.renderRequestPeriodSeconds | quote }}
+
+          - name: RATELIMIT_BURST_GENDO_AI_RENDER_REQUEST
+            value: {{ .Values.server.gendoai.ratelimiting.burstRenderRequest | quote }}
+
+          - name: RATELIMIT_GENDO_AI_RENDER_REQUEST_BURST_PERIOD_SECONDS
+            value: {{ .Values.server.gendoai.ratelimiting.burstRenderRequestPeriodSeconds | quote }}
+          {{- end }}
 
           # *** Redis ***
           - name: REDIS_URL
