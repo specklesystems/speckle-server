@@ -204,7 +204,7 @@ export class SmoothOrbitControls extends EventEmitter {
     this.world = world
     this.world
     this._options = Object.assign({}, options) as Required<SmoothControlsOptions>
-    const geometry = new SphereGeometry(0.01, 32, 16)
+    const geometry = new SphereGeometry(0.1, 32, 16)
     const material = new MeshBasicMaterial({ color: 0xffff00 })
     this.originSphere = new Mesh(geometry, material)
     this.originSphere.layers.set(ObjectLayers.OVERLAY)
@@ -460,7 +460,12 @@ export class SmoothOrbitControls extends EventEmitter {
     /** Simpler approach to zoom amount varying */
     // half of the fov is center to top of screen
     // const fov = Math.exp(this.logFov) * MathUtils.DEG2RAD
-    let zoomAmount = 1 * Math.sign(deltaZoom) //deltaZoom * this.spherical.radius * Math.tan(fov * 0.5)
+    const normalizedRadius =
+      this.spherical.radius / this.world.worldBox.getSize(new Vector3()).length()
+    // console.log(normalizedRadius)
+    const worldSizeOffset = this.world.getRelativeOffset(0.1) * normalizedRadius
+
+    let zoomAmount = worldSizeOffset * Math.sign(deltaZoom) //deltaZoom * this.spherical.radius * Math.tan(fov * 0.5)
     zoomAmount =
       Math.sign(zoomAmount) *
       clamp(
@@ -472,21 +477,6 @@ export class SmoothOrbitControls extends EventEmitter {
     this.setOrbit(goalTheta, goalPhi, goalRadius)
 
     this._radiusDelta = radius - this.goalSpherical.radius
-
-    // if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
-    //   if (this._controlTarget instanceof PerspectiveCamera) {
-    //     const dir = new Vector3().setFromSpherical(this.spherical).normalize()
-    //     const dollyAmount = new Vector3()
-    //       .copy(dir)
-    //       .multiplyScalar(zoomAmount * this.world.getRelativeOffset(0.1))
-    //     this.setTarget(
-    //       this.origin.x + dollyAmount.x,
-    //       this.origin.y + dollyAmount.y,
-    //       this.origin.z + dollyAmount.z
-    //     )
-    //     if (this._options.zoomToCursor) this._radiusDelta = -zoomAmount
-    //   }
-    // }
 
     if (this._options.zoomToCursor) {
       const dollyAmount = new Vector3()
@@ -513,7 +503,7 @@ export class SmoothOrbitControls extends EventEmitter {
       }
       const aspect = dims.x / dims.y
       const worldToScreen =
-        clamp(this.goalSpherical.radius, 1, Number.MAX_SAFE_INTEGER) *
+        clamp(this.goalSpherical.radius, Math.abs(zoomAmount), Number.MAX_VALUE) *
         Math.tan(Math.exp(this.logFov) * MathUtils.DEG2RAD * 0.5)
       const cursor = new Vector3()
         .copy(this.goalOrigin)
