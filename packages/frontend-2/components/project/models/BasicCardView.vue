@@ -1,11 +1,5 @@
 <template>
-  <div
-    class="relative z-10 grid gap-3"
-    :class="[
-      smallView ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4' : '',
-      !vertical ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-4' : ''
-    ]"
-  >
+  <div :class="classes">
     <!-- Decrementing z-index necessary for the actions menu to render correctly. Each card has its own stacking context because of the scale property -->
     <ProjectPageModelsCard
       v-for="(item, i) in items"
@@ -34,7 +28,7 @@ defineEmits<{
   (e: 'model-clicked', v: { id: string; e: MouseEvent | KeyboardEvent }): void
 }>()
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     project: Optional<ProjectPageModelsCardProjectFragment>
     items: Array<ProjectPageLatestItemsModelItemFragment | PendingFileUploadFragment>
@@ -50,4 +44,18 @@ withDefaults(
     showVersions: true
   }
 )
+
+const classes = computed(() => {
+  const classParts = ['relative z-10 grid gap-3']
+
+  if (props.vertical) {
+    classParts.push('grid-cols-1')
+  } else if (props.smallView) {
+    classParts.push('grid-cols-1 sm:grid-cols-2 lg:grid-cols-3')
+  } else {
+    classParts.push('grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4')
+  }
+
+  return classParts.join(' ')
+})
 </script>
