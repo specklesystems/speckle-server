@@ -29,6 +29,7 @@ const highlightObject = (
     app.$baseBinding.highlightObject(resultId)
     return
   }
+  // This is a POC implementation. Later we will highlight object(s) within the model. Currently it is done by 'Isolate' filter on viewer but there is no direct URL to achieve this.
   const url = `${acc?.accountInfo.serverInfo.url}/projects/${props.modelCard?.projectId}/models/${targetId}`
   app.$openUrl(url)
 }
