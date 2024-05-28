@@ -484,7 +484,7 @@ export default class Sandbox {
     })
 
     this.tabs.pages[0]
-      .addInput({ dampening: 60 }, 'dampening', {
+      .addInput({ dampening: 30 }, 'dampening', {
         label: 'Dampening',
         min: 0,
         max: 300,
