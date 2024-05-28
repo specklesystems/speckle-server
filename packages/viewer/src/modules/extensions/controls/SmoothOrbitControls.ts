@@ -38,6 +38,7 @@ import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
 import EventEmitter from '../../EventEmitter.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { World } from '../../World.js'
+import { lerp } from 'three/src/math/MathUtils.js'
 
 /**
  * @param {Number} value
@@ -462,21 +463,20 @@ export class SmoothOrbitControls extends EventEmitter {
     // const fov = Math.exp(this.logFov) * MathUtils.DEG2RAD
     const normalizedRadius =
       this.spherical.radius / this.world.worldBox.getSize(new Vector3()).length()
-    // console.log(normalizedRadius)
-    let worldSizeOffset = this.world.getRelativeOffset(0.1) * normalizedRadius
+
+    let worldSizeOffset = lerp(
+      this.world.getRelativeOffset(0.08) * Math.abs(deltaZoom),
+      this.world.getRelativeOffset(0.32) * Math.abs(deltaZoom),
+      normalizedRadius >= 0.5 ? Math.exp(normalizedRadius) : normalizedRadius
+    )
+
     worldSizeOffset = clamp(
       worldSizeOffset,
       this.world.getRelativeOffset(0.01),
       this.world.getRelativeOffset(0.2)
     )
-    let zoomAmount = worldSizeOffset * Math.sign(deltaZoom) //deltaZoom * this.spherical.radius * Math.tan(fov * 0.5)
-    zoomAmount =
-      Math.sign(zoomAmount) *
-      clamp(
-        Math.abs(zoomAmount),
-        0,
-        (this._options.maximumRadius - this._options.minimumRadius) * 0.5
-      )
+    const zoomAmount = worldSizeOffset * Math.sign(deltaZoom) //deltaZoom * this.spherical.radius * Math.tan(fov * 0.5)
+
     const goalRadius = radius + zoomAmount
     this.setOrbit(goalTheta, goalPhi, goalRadius)
 
@@ -885,7 +885,13 @@ export class SmoothOrbitControls extends EventEmitter {
   private movePan(dx: number, dy: number) {
     const dxy = vector3.set(dx, dy, 0).multiplyScalar(this._options.inputSensitivity)
     const metersPerPixel =
-      this.spherical.radius * Math.exp(this.logFov) * this.panPerPixel
+      clamp(
+        this.spherical.radius,
+        this.world.getRelativeOffset(0.025),
+        Number.MAX_VALUE
+      ) *
+      Math.exp(this.logFov) *
+      this.panPerPixel
     dxy.multiplyScalar(metersPerPixel)
 
     const target = this.getTarget()
@@ -1051,7 +1057,7 @@ export class SmoothOrbitControls extends EventEmitter {
         ZOOM_SENSITIVITY *
         this._options.zoomSensitivity *
         +this._options.enableZoom) /
-      30
+      60
     this.userAdjustOrbit(0, 0, deltaZoom)
     event.preventDefault()
     // TO DO
