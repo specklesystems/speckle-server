@@ -41,7 +41,8 @@ import {
   updateAutomationRevision,
   updateAutomationRun,
   upsertAutomationRun,
-  upsertAutomationFunctionRun
+  upsertAutomationFunctionRun,
+  storeAutomationToken
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate, Environment } from '@speckle/shared'
@@ -315,7 +316,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           automateToken: cryptoRandomString({ length: 10 }),
           automateRefreshToken: cryptoRandomString({ length: 10 })
         }
-        await storeAutomation(automation, automationToken)
+        await storeAutomation(automation)
+        await storeAutomationToken(automationToken)
 
         const automationRevisionId = cryptoRandomString({ length: 10 })
         const trigger = {
@@ -404,7 +406,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           automateToken: cryptoRandomString({ length: 10 }),
           automateRefreshToken: cryptoRandomString({ length: 10 })
         }
-        await storeAutomation(automation, automationToken)
+        await storeAutomation(automation)
+        await storeAutomationToken(automationToken)
 
         const automationRevisionId = cryptoRandomString({ length: 10 })
         const trigger = {
