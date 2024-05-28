@@ -22,10 +22,35 @@
         >
           {{ modelData.displayName }}
         </div>
+        <!-- TBD: Report -->
+        <button
+          v-if="isSender ? (modelCard as ISenderModelCard).report : (modelCard as IReceiverModelCard).receiveResult?.receiveConversionResults"
+          v-tippy="`Show ${isSender ? 'publish' : 'load'} report`"
+          class="transition hover:text-primary -mt-1"
+          @click="showReportDialog = true"
+        >
+          <DocumentArrowUpIcon v-if="isSender" class="w-4" />
+          <DocumentArrowDownIcon v-else class="w-4" />
+        </button>
+        <LayoutDialog
+          v-model:open="showReportDialog"
+          :title="'Publish Report'"
+          chromium65-compatibility
+        >
+          <SendReport
+            v-if="isSender"
+            :reports="(modelCard as ISenderModelCard).report"
+          ></SendReport>
+          <ReceiveReport
+            v-else
+            :model-card="(modelCard as IReceiverModelCard)"
+          ></ReceiveReport>
+        </LayoutDialog>
+
         <button
           v-tippy="'Highlight objects in app'"
           class="transition hover:text-primary -mt-1"
-          @click="highlightModel()"
+          @click="highlightModel"
         >
           <CursorArrowRaysIcon class="w-4" />
         </button>
@@ -79,7 +104,11 @@ import { useQuery } from '@vue/apollo-composable'
 
 import { modelDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { CommonLoadingProgressBar } from '@speckle/ui-components'
-import { CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
+import {
+  CursorArrowRaysIcon,
+  DocumentArrowDownIcon,
+  DocumentArrowUpIcon
+} from '@heroicons/vue/24/outline'
 import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
 import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
 import { IModelCard } from '~~/lib/models/card'
@@ -95,6 +124,8 @@ const props = defineProps<{
   modelCard: IModelCard
   project: ProjectModelGroup
 }>()
+
+const showReportDialog = ref(false)
 
 const { result: modelResult, loading } = useQuery(
   modelDetailsQuery,

@@ -4,11 +4,13 @@ import {
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import { IModelCard, ModelCardProgress } from 'lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
-import { IReceiverModelCard } from 'lib/models/card/receiver'
+import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
 import { ToastNotification } from '@speckle/ui-components'
 import { Nullable } from '@speckle/shared'
 import { HostAppError } from '~/lib/bridge/errorHandler'
+import { ReceiveConversionResult } from '~/lib/conversions/receiveConversionResult'
+import { SendConversionResult } from '~/lib/conversions/sendConversionResult'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -205,11 +207,13 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const setModelCreatedVersionId = (args: {
     modelCardId: string
     versionId: string
+    sendConversionResults: SendConversionResult[]
   }) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as ISenderModelCard
     model.latestCreatedVersionId = args.versionId
+    model.report = args.sendConversionResults
     model.progress = undefined
   }
 
@@ -246,7 +250,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const setModelReceiveResult = async (args: {
     modelCardId: string
     receiveResult: {
-      bakedObjectIds: string[]
+      receiveConversionResults: ReceiveConversionResult[]
       display: boolean
     }
   }) => {
@@ -256,7 +260,11 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
     args.receiveResult.display = true
     model.progress = undefined
-    await patchModel(model.modelCardId, { receiveResult: args.receiveResult }) // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
+    model.receiveResult = args.receiveResult
+
+    await patchModel(model.modelCardId, {
+      receiveResult: args.receiveResult
+    }) // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
   }
 
   app.$receiveBinding?.on('setModelReceiveResult', setModelReceiveResult)
