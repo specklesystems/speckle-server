@@ -47,7 +47,7 @@ import { getGenericRedis } from '@/modules/core/index'
 import { getUser } from '@/modules/core/repositories/users'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
-import { Automate, Roles, isNullOrUndefined } from '@speckle/shared'
+import { Automate, Roles, isNonNullable, isNullOrUndefined } from '@speckle/shared'
 import {
   getBranchLatestCommits,
   getBranchesByIds
@@ -60,10 +60,7 @@ import {
   reportFunctionRunStatus,
   ReportFunctionRunStatusDeps
 } from '@/modules/automate/services/runsManagement'
-import {
-  AutomateFunctionReleaseNotFoundError,
-  FunctionNotFoundError
-} from '@/modules/automate/errors/management'
+import { FunctionNotFoundError } from '@/modules/automate/errors/management'
 import {
   FunctionReleaseSchemaType,
   dbToGraphqlTriggerTypeMap,
@@ -89,6 +86,8 @@ import {
   mapDbStatusToGqlStatus,
   mapGqlStatusToDbStatus
 } from '@/modules/automate/utils/automateFunctionRunStatus'
+import { ExecutionEngineNetworkError } from '@/modules/automate/errors/executionEngine'
+import { automateLogger } from '@/logging/logging'
 
 /**
  * TODO:
@@ -268,9 +267,11 @@ export = {
     async function(parent, _args, ctx) {
       const fn = await ctx.loaders.automationsApi.getFunction.load(parent.functionId)
       if (!fn) {
-        throw new FunctionNotFoundError('Function not found', {
-          info: { id: parent.functionId }
-        })
+        automateLogger.warn(
+          { id: parent.functionId, fnRunId: parent.id, runid: parent.runId },
+          'AutomateFunctionRun function unexpectedly not found'
+        )
+        return null
       }
 
       return convertFunctionToGraphQLReturn(fn)
@@ -313,29 +314,23 @@ export = {
         (r) => r.functionVersionId
       )
 
-      const fnsForRedaction: AutomationRevisionFunctionForInputRedaction[] = fns.map(
-        (fn) => {
+      const fnsForRedaction: Array<AutomationRevisionFunctionForInputRedaction | null> =
+        fns.map((fn) => {
           const release = fnsReleases[fn.functionReleaseId]
           if (!release) {
-            throw new AutomateFunctionReleaseNotFoundError(
-              `Could not find function release #${fn.functionReleaseId} for function #${fn.functionId}`,
-              {
-                info: {
-                  functionId: fn.functionId,
-                  functionReleaseId: fn.functionReleaseId
-                }
-              }
-            )
+            return null
           }
 
           return {
             ...fn,
             release
           }
-        }
-      )
+        })
 
-      return prepareInputs({ fns: fnsForRedaction, publicKey: parent.publicKey })
+      return prepareInputs({
+        fns: fnsForRedaction.filter(isNonNullable),
+        publicKey: parent.publicKey
+      })
     }
   },
   AutomationRevisionFunction: {
@@ -348,25 +343,37 @@ export = {
       return ctx.loaders.automations.getFunctionAutomationCount.load(parent.id)
     },
     async releases(parent, args) {
-      // TODO: Replace w/ dataloader batch call, when/if possible
-      const fn = await getFunction({
-        functionId: parent.id,
-        releases:
-          args?.cursor || args?.filter?.search || args?.limit
-            ? {
-                cursor: args.cursor || undefined,
-                search: args.filter?.search || undefined,
-                limit: args.limit || undefined
-              }
-            : {}
-      })
+      try {
+        // TODO: Replace w/ dataloader batch call, when/if possible
+        const fn = await getFunction({
+          functionId: parent.id,
+          releases:
+            args?.cursor || args?.filter?.search || args?.limit
+              ? {
+                  cursor: args.cursor || undefined,
+                  search: args.filter?.search || undefined,
+                  limit: args.limit || undefined
+                }
+              : {}
+        })
 
-      return {
-        cursor: fn.versionCursor,
-        totalCount: fn.versionCount,
-        items: fn.functionVersions.map((r) =>
-          convertFunctionReleaseToGraphQLReturn({ ...r, functionId: parent.id })
-        )
+        return {
+          cursor: fn.versionCursor,
+          totalCount: fn.versionCount,
+          items: fn.functionVersions.map((r) =>
+            convertFunctionReleaseToGraphQLReturn({ ...r, functionId: parent.id })
+          )
+        }
+      } catch (e) {
+        if (e instanceof ExecutionEngineNetworkError) {
+          return {
+            cursor: null,
+            totalCount: 0,
+            items: []
+          }
+        }
+
+        throw e
       }
     }
   },
@@ -490,22 +497,34 @@ export = {
       return convertFunctionToGraphQLReturn(fn)
     },
     async automateFunctions(_parent, args) {
-      const res = await getFunctions({
-        query: {
-          query: args.filter?.search || undefined,
-          cursor: args.cursor || undefined,
-          limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
-          functionsWithoutVersions: args.filter?.functionsWithoutReleases || undefined,
-          featuredFunctionsOnly: args.filter?.featuredFunctionsOnly || undefined
+      try {
+        const res = await getFunctions({
+          query: {
+            query: args.filter?.search || undefined,
+            cursor: args.cursor || undefined,
+            limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
+            functionsWithoutVersions:
+              args.filter?.functionsWithoutReleases || undefined,
+            featuredFunctionsOnly: args.filter?.featuredFunctionsOnly || undefined
+          }
+        })
+
+        const items = res.items.map(convertFunctionToGraphQLReturn)
+
+        return {
+          cursor: res.cursor,
+          totalCount: res.totalCount,
+          items
         }
-      })
-
-      const items = res.items.map(convertFunctionToGraphQLReturn)
-
-      return {
-        cursor: res.cursor,
-        totalCount: res.totalCount,
-        items
+      } catch (e) {
+        if (e instanceof ExecutionEngineNetworkError) {
+          return {
+            cursor: null,
+            totalCount: 0,
+            items: []
+          }
+        }
+        throw e
       }
     }
   },

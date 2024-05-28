@@ -1,4 +1,4 @@
-import { isNull, isUndefined } from 'lodash'
+import { isNull, isNumber, isUndefined } from 'lodash'
 import type {
   MaybeAsync,
   NonNullableProperties,
@@ -69,7 +69,11 @@ export const timeoutAt = (ms: number, optionalMessage?: string) =>
 /**
  * Invoke and return fn(), but retry it up to n times if it throws
  */
-export const retry = async <V = unknown>(fn: () => MaybeAsync<V>, n: number) => {
+export const retry = async <V = unknown>(
+  fn: () => MaybeAsync<V>,
+  n: number,
+  delayMs?: number | ((attempt: number, error: Error) => number)
+) => {
   let lastError: Error | undefined
   for (let i = 0; i < n; i++) {
     try {
@@ -77,6 +81,14 @@ export const retry = async <V = unknown>(fn: () => MaybeAsync<V>, n: number) => 
       return res
     } catch (error) {
       lastError = ensureError(error)
+
+      if (delayMs && i + 1 < n) {
+        if (isNumber(delayMs)) {
+          await wait(delayMs)
+        } else {
+          await wait(delayMs(i + 1, lastError))
+        }
+      }
     }
   }
   throw lastError

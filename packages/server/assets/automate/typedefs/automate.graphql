@@ -79,7 +79,10 @@ type AutomateFunctionRun {
   contextView: String
   functionId: String
   functionReleaseId: String
-  function: AutomateFunction!
+  """
+  Nullable, in case the function is not retrievable due to poor network conditions
+  """
+  function: AutomateFunction
   elapsed: Float!
   """
   AutomateTypes.ResultsSchema type from @speckle/shared

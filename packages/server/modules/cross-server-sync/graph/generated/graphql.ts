@@ -244,7 +244,8 @@ export type AutomateFunctionRun = {
   contextView?: Maybe<Scalars['String']>;
   createdAt: Scalars['DateTime'];
   elapsed: Scalars['Float'];
-  function: AutomateFunction;
+  /** Nullable, in case the function is not retrievable due to poor network conditions */
+  function?: Maybe<AutomateFunction>;
   functionId?: Maybe<Scalars['String']>;
   functionReleaseId?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
