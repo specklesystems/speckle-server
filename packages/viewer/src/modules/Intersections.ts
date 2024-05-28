@@ -80,7 +80,8 @@ export class Intersections {
     castLayers: ObjectLayers.STREAM_CONTENT_MESH,
     nearest?: boolean,
     bounds?: Box3,
-    firstOnly?: boolean
+    firstOnly?: boolean,
+    tasOnly?: boolean
   ): Array<ExtendedMeshIntersection> | null
   public intersect(
     scene: Scene,
@@ -89,7 +90,8 @@ export class Intersections {
     castLayers?: Array<ObjectLayers>,
     nearest?: boolean,
     bounds?: Box3,
-    firstOnly?: boolean
+    firstOnly?: boolean,
+    tasOnly?: boolean
   ): Array<ExtendedIntersection> | null
 
   public intersect(
@@ -99,10 +101,12 @@ export class Intersections {
     castLayers: Array<ObjectLayers> | ObjectLayers | undefined = undefined,
     nearest = true,
     bounds?: Box3,
-    firstOnly = false
+    firstOnly = false,
+    tasOnly = false
   ): Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null {
     this.raycaster.setFromCamera(point, camera)
     this.raycaster.firstHitOnly = firstOnly
+    this.raycaster.intersectTASOnly = tasOnly
     const preserveMask = this.setRaycasterLayers(castLayers)
     let result: Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null
     if (castLayers === ObjectLayers.STREAM_CONTENT_MESH) {
@@ -119,7 +123,8 @@ export class Intersections {
     castLayers: ObjectLayers.STREAM_CONTENT_MESH,
     nearest?: boolean,
     bounds?: Box3,
-    firstOnly?: boolean
+    firstOnly?: boolean,
+    tasOnly?: boolean
   ): Array<ExtendedMeshIntersection> | null
   public intersectRay(
     scene: Scene,
@@ -128,7 +133,8 @@ export class Intersections {
     castLayers?: Array<ObjectLayers>,
     nearest?: boolean,
     bounds?: Box3,
-    firstOnly?: boolean
+    firstOnly?: boolean,
+    tasOnly?: boolean
   ): Array<ExtendedIntersection> | null
 
   public intersectRay(
@@ -138,11 +144,13 @@ export class Intersections {
     castLayers: Array<ObjectLayers> | ObjectLayers | undefined = undefined,
     nearest = true,
     bounds?: Box3,
-    firstOnly = false
+    firstOnly = false,
+    tasOnly = false
   ): Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null {
     this.raycaster.camera = camera
     this.raycaster.set(ray.origin, ray.direction)
     this.raycaster.firstHitOnly = firstOnly
+    this.raycaster.intersectTASOnly = tasOnly
     const preserveMask = this.setRaycasterLayers(castLayers)
     let result: Array<ExtendedMeshIntersection> | Array<ExtendedIntersection> | null
     if (castLayers === ObjectLayers.STREAM_CONTENT_MESH) {

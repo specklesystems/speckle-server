@@ -39,6 +39,7 @@ import EventEmitter from '../../EventEmitter.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { World } from '../../World.js'
 import { lerp } from 'three/src/math/MathUtils.js'
+import { Intersections } from '../../Intersections.js'
 
 /**
  * @param {Number} value
@@ -188,6 +189,8 @@ export class SmoothOrbitControls extends EventEmitter {
   private cursorSphere: Mesh
   private world: World
   private lastTarget: Vector3 = new Vector3()
+  private intersections: Intersections
+  private scene: Scene
 
   constructor(
     controlTarget: Object3D,
@@ -195,6 +198,7 @@ export class SmoothOrbitControls extends EventEmitter {
     renderer: WebGLRenderer,
     scene: Scene,
     world: World,
+    intersections: Intersections,
     options: Required<SmoothControlsOptions>
   ) {
     scene
@@ -203,7 +207,10 @@ export class SmoothOrbitControls extends EventEmitter {
     this._container = container
     this._renderer = renderer
     this.world = world
+    this.intersections = intersections
+    this.scene = scene
     this.world
+    this.intersections
     this._options = Object.assign({}, options) as Required<SmoothControlsOptions>
     const geometry = new SphereGeometry(0.1, 32, 16)
     const material = new MeshBasicMaterial({ color: 0xffff00 })
@@ -442,6 +449,18 @@ export class SmoothOrbitControls extends EventEmitter {
       theta - clamp(deltaTheta, -dThetaLimit - dTheta, dThetaLimit - dTheta)
     const goalPhi = phi - deltaPhi
 
+    // const start = performance.now()
+    const tasIntersect = this.intersections.intersect(
+      this.scene,
+      this._controlTarget as PerspectiveCamera,
+      this.zoomControlCoord,
+      ObjectLayers.STREAM_CONTENT_MESH,
+      false,
+      this.world.worldBox,
+      true,
+      false
+    )
+    // console.log(performance.now() - start)
     /** Original approach to zoom amount varying which works quite bad */
     // const { minimumRadius, maximumRadius, minimumFieldOfView, maximumFieldOfView } =
     // this._options
@@ -482,7 +501,7 @@ export class SmoothOrbitControls extends EventEmitter {
 
     this._radiusDelta = radius - this.goalSpherical.radius
 
-    if (this._options.zoomToCursor) {
+    if (this._options.zoomToCursor && tasIntersect) {
       const dollyAmount = new Vector3()
       if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
         if (this._controlTarget instanceof PerspectiveCamera) {

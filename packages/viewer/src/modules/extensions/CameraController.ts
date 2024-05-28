@@ -181,6 +181,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.viewer.getRenderer().renderer,
       this.viewer.getRenderer().scene,
       this.viewer.World,
+      this.viewer.getRenderer().intersections,
       this._options
     )
     this._controls.enableInteraction()
