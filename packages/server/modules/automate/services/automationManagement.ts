@@ -6,6 +6,7 @@ import {
   getLatestVersionAutomationRuns,
   storeAutomation,
   storeAutomationRevision,
+  storeAutomationToken,
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
@@ -51,6 +52,7 @@ export type CreateAutomationDeps = {
   createAuthCode: ReturnType<typeof createStoredAuthCode>
   automateCreateAutomation: typeof clientCreateAutomation
   storeAutomation: typeof storeAutomation
+  storeAutomationToken: typeof storeAutomationToken
 }
 
 export const createAutomation =
@@ -67,7 +69,12 @@ export const createAutomation =
       userId,
       userResourceAccessRules
     } = params
-    const { createAuthCode, automateCreateAutomation, storeAutomation } = deps
+    const {
+      createAuthCode,
+      automateCreateAutomation,
+      storeAutomation,
+      storeAutomationToken
+    } = deps
 
     const nameLength = name?.length || 0
     if (nameLength < 1 || nameLength > 255) {
@@ -94,29 +101,28 @@ export const createAutomation =
 
     const automationId = cryptoRandomString({ length: 10 })
 
-    const res = await storeAutomation(
-      {
-        id: automationId,
-        name,
-        userId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        enabled,
-        projectId,
-        executionEngineAutomationId,
-        isTestAutomation: false
-      },
-      {
-        automationId,
-        automateToken: token
-      }
-    )
-
-    await AutomationsEmitter.emit(AutomationsEmitter.events.Created, {
-      automation: res.automation
+    const automationRecord = await storeAutomation({
+      id: automationId,
+      name,
+      userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      enabled,
+      projectId,
+      executionEngineAutomationId,
+      isTestAutomation: false
     })
 
-    return res
+    const automationTokenRecord = await storeAutomationToken({
+      automationId,
+      automateToken: token
+    })
+
+    await AutomationsEmitter.emit(AutomationsEmitter.events.Created, {
+      automation: automationRecord
+    })
+
+    return { automation: automationRecord, token: automationTokenRecord }
   }
 
 export type UpdateAutomationDeps = {

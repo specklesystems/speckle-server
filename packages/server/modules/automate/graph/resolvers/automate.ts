@@ -19,6 +19,7 @@ import {
   getProjectAutomationsTotalCount,
   storeAutomation,
   storeAutomationRevision,
+  storeAutomationToken,
   updateAutomationRun,
   updateAutomation as updateDbAutomation,
   upsertAutomationFunctionRun
@@ -407,7 +408,8 @@ export = {
           ? async () => testAutomateAuthCode
           : createStoredAuthCode({ redis: getGenericRedis() }),
         automateCreateAutomation: clientCreateAutomation,
-        storeAutomation
+        storeAutomation,
+        storeAutomationToken
       })
 
       return (

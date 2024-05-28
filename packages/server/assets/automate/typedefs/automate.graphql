@@ -287,6 +287,8 @@ type ProjectAutomationMutations {
   just refer to the last version of the model.
   """
   trigger(automationId: ID!): Boolean!
+  createTestAutomation(input: ProjectAutomationCreateInput!): Automation!
+  createTestAutomationRun(automationId: ID!): string!
 }
 
 extend type ProjectMutations {
