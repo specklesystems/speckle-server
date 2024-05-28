@@ -39,6 +39,11 @@
           "type": "boolean",
           "description": "High level flag fully toggles the integrated automate module",
           "default": false
+        },
+        "gendoModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag that toggles the gendo ai render module",
+          "default": false
         }
       }
     },
@@ -540,6 +545,21 @@
           "type": "string",
           "description": "The url of the Speckle Automate instance",
           "default": "https://automate.speckle.systems"
+        },
+        "gendoKey": {
+          "type": "string",
+          "description": "The gendo api key",
+          "default": ""
+        },
+        "gendoKeyResponse": {
+          "type": "string",
+          "description": "The gendo api response secret to validate against",
+          "default": ""
+        },
+        "gendoApiEndpoint": {
+          "type": "string",
+          "description": "The gendo api endpoint",
+          "default": ""
         },
         "sessionSecret": {
           "type": "object",

@@ -158,6 +158,21 @@ spec:
             value: {{ .Values.server.migration.movedTo }}
             {{- end }}
 
+          # *** Gendo render module ***
+          - name: FF_GENDOAI_MODULE_ENABLED
+            value: {{ .Values.featureFlags.gendoModuleEnabled }}
+            
+            {{- if .Values.featureFlags.gendoModuleEnabled }}
+          - name: GENDOAI_KEY
+            value: {{ .Values.server.gendoKey }}
+          
+          - name: GENDOAI_KEY_RESPONSE
+            value: {{ .Values.server.gendoKeyResponse }}
+
+          - name: GENDOAI_API_ENDPOINT
+            value: {{ .Values.server.gendoApiEndpoint }}
+            {{- end }}
+          
           # *** Redis ***
           - name: REDIS_URL
             valueFrom:
