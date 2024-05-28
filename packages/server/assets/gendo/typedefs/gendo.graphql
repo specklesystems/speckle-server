@@ -22,7 +22,7 @@ type GendoAIRender {
   prompt: String!
   camera: JSONObject
   """
-  This is a reference to a blob's id.
+  This is a blob id.
   """
   responseImage: String
 }
@@ -41,7 +41,7 @@ input GendoAIRenderInput {
   """
   prompt: String!
   """
-  Base64 encoded image of the depthmap, resized to 1024 on the longest size.
+  Base64 encoded image of the depthmap.
   """
   baseImage: String!
 }

@@ -969,7 +969,7 @@ export type GendoAiRender = {
   modelId: Scalars['String'];
   projectId: Scalars['String'];
   prompt: Scalars['String'];
-  /** This is a reference to a blob's id. */
+  /** This is a blob id. */
   responseImage?: Maybe<Scalars['String']>;
   status: Scalars['String'];
   updatedAt: Scalars['String'];
@@ -985,7 +985,7 @@ export type GendoAiRenderCollection = {
 };
 
 export type GendoAiRenderInput = {
-  /** Base64 encoded image of the depthmap, resized to 1024 on the longest size. */
+  /** Base64 encoded image of the depthmap. */
   baseImage: Scalars['String'];
   camera: Scalars['JSONObject'];
   modelId: Scalars['ID'];

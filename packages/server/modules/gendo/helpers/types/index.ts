@@ -10,6 +10,8 @@ export type GendoAIRenderRecord = {
   status: string
   prompt: string
   camera: Record<string, unknown>
+  /** References a blobId, weakly */
   baseImage: string
+  /** References a blobId, weakly */
   responseImage: string
 }
