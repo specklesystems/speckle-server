@@ -444,6 +444,10 @@ server:
       ## @param server.gendoAI.ratelimiting.burstRenderRequestPeriodSeconds The period in seconds for the burst render request limit.
       burstRenderRequestPeriodSeconds: 60
 
+  ## @param server.encryptionKeys.path The path where the encryption keys should be loaded from
+  encryptionKeys:
+    path: '/encryption-keys/keys.json'
+
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
     ##

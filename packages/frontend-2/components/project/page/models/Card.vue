@@ -173,7 +173,7 @@ const hovered = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-md bg-foundation shadow transition border-2 border-transparent truncate'
+    'group rounded-md bg-foundation shadow transition border-2 border-transparent'
   ]
 
   if (!isPendingModelFragment(props.model)) {
