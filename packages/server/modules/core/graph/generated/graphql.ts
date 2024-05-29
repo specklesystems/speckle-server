@@ -255,7 +255,8 @@ export type AutomateFunctionRun = {
   contextView?: Maybe<Scalars['String']>;
   createdAt: Scalars['DateTime'];
   elapsed: Scalars['Float'];
-  function: AutomateFunction;
+  /** Nullable, in case the function is not retrievable due to poor network conditions */
+  function?: Maybe<AutomateFunction>;
   functionId?: Maybe<Scalars['String']>;
   functionReleaseId?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -4126,7 +4127,7 @@ export type AutomateFunctionRunResolvers<ContextType = GraphQLContext, ParentTyp
   contextView?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   elapsed?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  function?: Resolver<ResolversTypes['AutomateFunction'], ParentType, ContextType>;
+  function?: Resolver<Maybe<ResolversTypes['AutomateFunction']>, ParentType, ContextType>;
   functionId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   functionReleaseId?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;

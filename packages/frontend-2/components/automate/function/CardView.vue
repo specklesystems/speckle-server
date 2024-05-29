@@ -12,12 +12,12 @@ const props = defineProps<{
 const classes = computed(() => {
   const classParts = ['grid gap-4 lg:gap-6']
 
-  if (!props.vertical) {
-    classParts.push('sm:grid-cols-2')
-
-    if (!props.smallView) {
-      classParts.push('lg:grid-cols-3')
-    }
+  if (props.vertical) {
+    classParts.push('grid-cols-1')
+  } else if (props.smallView) {
+    classParts.push('grid-cols-1 sm:grid-cols-2')
+  } else {
+    classParts.push('grid-cols-1 sm:grid-cols-2 lg:grid-cols-3')
   }
 
   return classParts.join(' ')

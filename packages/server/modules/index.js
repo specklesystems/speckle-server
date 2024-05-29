@@ -109,6 +109,8 @@ exports.shutdown = async () => {
 }
 
 /**
+ * GQL components will be loaded even from disabled modules to avoid schema complexity, so ensure
+ * that resolvers return valid values even if the module is disabled
  * @returns {Pick<import('apollo-server-express').Config, 'resolvers' | 'typeDefs'> & { directiveBuilders: Record<string, import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder>}}
  */
 const graphComponents = () => {
@@ -118,13 +120,9 @@ const graphComponents = () => {
   let resolverObjs = []
   let directiveBuilders = {}
 
-  const enabledModules = getEnabledModuleNames()
-
   // load typedefs from /assets
   const assetModuleDirs = fs.readdirSync(`${packageRoot}/assets`)
   assetModuleDirs.forEach((dir) => {
-    // if module is not in the enabled modules list, skip loading the gql schema
-    // if (!enabledModules.includes(dir)) return
     const typeDefDirPath = path.join(`${packageRoot}/assets`, dir, 'typedefs')
     if (fs.existsSync(typeDefDirPath)) {
       const moduleSchemas = fs.readdirSync(typeDefDirPath)
@@ -137,8 +135,6 @@ const graphComponents = () => {
   // load code modules from /modules
   const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
   codeModuleDirs.forEach((file) => {
-    // if module is not in the enabled modules list, skip loading the gql resolvers
-    if (!enabledModules.includes(file)) return
     const fullPath = path.join(`${appRoot}/modules`, file)
 
     // first pass load of resolvers
