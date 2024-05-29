@@ -219,8 +219,8 @@ export class SmoothOrbitControls extends EventEmitter {
     const material2 = new MeshBasicMaterial({ color: 0xff0000 })
     this.cursorSphere = new Mesh(geometry, material2)
     this.cursorSphere.layers.set(ObjectLayers.OVERLAY)
-    scene.add(this.originSphere)
-    scene.add(this.cursorSphere)
+    // scene.add(this.originSphere)
+    // scene.add(this.cursorSphere)
 
     this.setOrbit(2.356, 0.955, 0)
     this.jumpToGoal()
@@ -448,6 +448,10 @@ export class SmoothOrbitControls extends EventEmitter {
     const goalTheta =
       theta - clamp(deltaTheta, -dThetaLimit - dTheta, dThetaLimit - dTheta)
     const goalPhi = phi - deltaPhi
+
+    this.setOrbit(goalTheta, goalPhi)
+
+    if (deltaZoom === 0) return
 
     // const start = performance.now()
     const tasIntersect = this.intersections.intersect(
