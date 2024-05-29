@@ -93,7 +93,10 @@ import {
   mapGqlStatusToDbStatus
 } from '@/modules/automate/utils/automateFunctionRunStatus'
 import { AutomateApiDisabledError } from '@/modules/automate/errors/core'
-import { ExecutionEngineNetworkError } from '@/modules/automate/errors/executionEngine'
+import {
+  ExecutionEngineFailedResponseError,
+  ExecutionEngineNetworkError
+} from '@/modules/automate/errors/executionEngine'
 import { automateLogger } from '@/logging/logging'
 
 /**
@@ -381,7 +384,10 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               )
             }
           } catch (e) {
-            if (e instanceof ExecutionEngineNetworkError) {
+            const isNotFound =
+              e instanceof ExecutionEngineFailedResponseError &&
+              e.response.statusMessage === 'FunctionNotFound'
+            if (e instanceof ExecutionEngineNetworkError || isNotFound) {
               return {
                 cursor: null,
                 totalCount: 0,
@@ -536,13 +542,17 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               items
             }
           } catch (e) {
-            if (e instanceof ExecutionEngineNetworkError) {
+            const isNotFound =
+              e instanceof ExecutionEngineFailedResponseError &&
+              e.response.statusMessage === 'FunctionNotFound'
+            if (e instanceof ExecutionEngineNetworkError || isNotFound) {
               return {
                 cursor: null,
                 totalCount: 0,
                 items: []
               }
             }
+
             throw e
           }
         }

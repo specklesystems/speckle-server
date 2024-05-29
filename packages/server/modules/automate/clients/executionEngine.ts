@@ -323,6 +323,12 @@ export const getFunctionReleases = async (params: {
         if (e instanceof ExecutionEngineNetworkError) {
           return null
         }
+        if (
+          e instanceof ExecutionEngineFailedResponseError &&
+          e.response.statusMessage === 'FunctionNotFound'
+        ) {
+          return null
+        }
 
         throw e
       }
