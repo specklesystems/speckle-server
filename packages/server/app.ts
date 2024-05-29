@@ -62,6 +62,7 @@ import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
 import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
+import { migrateDbToLatest } from '@/db/migrations'
 
 let graphqlServer: ApolloServer
 
@@ -309,7 +310,7 @@ export async function init() {
 
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
-  await knex.migrate.latest()
+  await migrateDbToLatest(knex)()
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)

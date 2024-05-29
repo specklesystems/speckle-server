@@ -21,7 +21,7 @@
           v-on="on"
         />
         <FormButton
-          v-if="canCreateFunction"
+          v-if="canCreateFunction && false"
           :icon-left="PlusIcon"
           @click="() => (createDialogOpen = true)"
         >

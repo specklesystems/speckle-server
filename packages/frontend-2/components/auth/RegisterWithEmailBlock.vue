@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
-  <form @submit="onSubmit">
+  <form method="post" @submit="onSubmit">
     <div class="flex flex-col space-y-2">
       <FormTextInput
         type="text"

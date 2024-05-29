@@ -121,7 +121,7 @@ spec:
           
             {{- if .Values.featureFlags.automateModuleEnabled }}
           - name: AUTOMATE_ENCRYPTION_KEYS_PATH
-            value: /encryption-keys/keys.json
+            value: {{ .Values.server.encryptionKeys.path }}
             {{- end }}
 
           - name: ONBOARDING_STREAM_URL
