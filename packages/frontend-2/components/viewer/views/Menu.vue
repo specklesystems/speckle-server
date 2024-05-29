@@ -53,7 +53,11 @@
             @click="setView(view)"
           >
             <!-- TODO: For some reason using the `truncate` class creates weird behaviour in the layout -->
-            {{ view.name.length > 12 ? view.name.substring(0, 12) + '...' : view.name }}
+            {{
+              view.view.name.length > 12
+                ? view.view.name.substring(0, 12) + '...'
+                : view.view.name
+            }}
           </button>
         </MenuItem>
       </MenuItems>
