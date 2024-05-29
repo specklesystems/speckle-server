@@ -38,14 +38,6 @@
         <CodeBracketIcon class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle> -->
 
-      <!-- TODO -->
-      <!-- <ViewerControlsButtonToggle
-        :active="activeControl === 'filters'"
-        @click="toggleActiveControl('filters')"
-      >
-        <FunnelIcon class="w-5 h-5" />
-      </ViewerControlsButtonToggle> -->
-
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
         v-tippy="isSmallerOrEqualSm ? undefined : discussionsShortcut"
