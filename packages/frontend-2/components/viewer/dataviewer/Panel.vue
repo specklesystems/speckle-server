@@ -1,8 +1,9 @@
 <template>
-  <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
+  <ViewerLayoutPanel @close="$emit('close')">
     <template #title>
       <span class="text-foreground">Raw Data Viewer</span>
     </template>
+
     <div class="px-1 divide-y divide-dashed divide-primary-muted">
       <div v-for="obj in rootObjs" :key="obj.referencedId" class="py-2">
         <div class="font-bold text-xs pl-1 mb-2 text-foreground-2">
@@ -19,21 +20,20 @@ import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setu
 
 const { modelsAndVersionIds, objects } = useInjectedViewerLoadedResources()
 
-const { objects: selectedObjects, clearSelection } = useSelectionUtilities()
+const { objects: selectedObjects } = useSelectionUtilities()
 
 defineEmits<{
   (e: 'close'): void
 }>()
 
 const rootObjs = computed(() => {
-  // if (selectedObjects.value.length !== 0) {
   const selection = selectedObjects.value.map((o) => ({
     referencedId: o.id,
     name: 'Selected object ' + o.id,
     // eslint-disable-next-line camelcase
     speckle_type: 'reference'
   }))
-  // }
+
   const models = modelsAndVersionIds.value.map((m) => ({
     referencedId: m.model.loadedVersion.items[0].referencedObject,
     name: 'Model ' + m.model.name,

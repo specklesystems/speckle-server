@@ -1,26 +1,38 @@
 <template>
   <div>
-    <ViewerLayoutPanel @close="$emit('close')">
+    <ViewerLayoutPanel v-if="!showRaw" @close="$emit('close')">
       <template #title>Scene Explorer</template>
 
       <template #actions>
-        <FormButton
-          size="xs"
-          text
-          :icon-left="BarsArrowDownIcon"
-          @click="expandLevel++"
-        >
-          Unfold
-        </FormButton>
-        <FormButton
-          size="xs"
-          text
-          :icon-left="BarsArrowUpIcon"
-          :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
-          @click="collapse()"
-        >
-          Collapse
-        </FormButton>
+        <div class="flex items-center w-full">
+          <FormButton
+            size="xs"
+            text
+            :icon-left="BarsArrowDownIcon"
+            @click="expandLevel++"
+          >
+            Unfold
+          </FormButton>
+          <FormButton
+            size="xs"
+            text
+            :icon-left="BarsArrowUpIcon"
+            :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
+            @click="collapse()"
+          >
+            Collapse
+          </FormButton>
+          <div class="text-right w-full grow">
+            <FormButton
+              v-tippy="'Switch to the raw data viewer'"
+              size="xs"
+              text
+              @click="showRaw = true"
+            >
+              <CodeBracketIcon class="w-3" />
+            </FormButton>
+          </div>
+        </div>
       </template>
       <div v-if="rootNodes.length !== 0" class="relative flex flex-col space-y-2 py-2">
         <div
@@ -40,11 +52,23 @@
         </div>
       </div>
     </ViewerLayoutPanel>
+    <ViewerDataviewerPanel
+      v-if="showRaw"
+      class="pointer-events-auto"
+      @close="$emit('close')"
+    />
+    <FormButton full-width size="xs" class="my-2" @click="showRaw = !showRaw">
+      {{ showRaw ? 'Classic explorer' : 'Raw data viewer' }}
+    </FormButton>
     <ViewerExplorerFilters :filters="allFilters || []" />
   </div>
 </template>
 <script setup lang="ts">
-import { BarsArrowUpIcon, BarsArrowDownIcon } from '@heroicons/vue/24/solid'
+import {
+  BarsArrowUpIcon,
+  BarsArrowDownIcon,
+  CodeBracketIcon
+} from '@heroicons/vue/24/solid'
 import { ViewerEvent } from '@speckle/viewer'
 import type { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
 import {
@@ -74,6 +98,8 @@ const collapse = () => {
   if (expandLevel.value > -1) expandLevel.value--
   if (manualExpandLevel.value > -1) manualExpandLevel.value--
 }
+
+const showRaw = ref(false)
 
 // TODO: worldTree being set in postSetup.ts (viewer) does not seem to create a reactive effect
 // in here (as i was expecting it to?). Therefore, refHack++ to trigger the computed prop rootNodes.

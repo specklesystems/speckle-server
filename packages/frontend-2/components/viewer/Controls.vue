@@ -29,13 +29,14 @@
       </ViewerControlsButtonToggle>
 
       <!-- JSON Viewer -->
-      <ViewerControlsButtonToggle
+      <!-- NOTE: It's embedded in the scene explorer as a different mode! -->
+      <!-- <ViewerControlsButtonToggle
         v-tippy="'Raw data viewer'"
         :active="activeControl === 'jsonViewer'"
         @click="toggleActiveControl('jsonViewer')"
       >
         <CodeBracketIcon class="h-4 w-4 md:h-5 md:w-5" />
-      </ViewerControlsButtonToggle>
+      </ViewerControlsButtonToggle> -->
 
       <!-- TODO -->
       <!-- <ViewerControlsButtonToggle
