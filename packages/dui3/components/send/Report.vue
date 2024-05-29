@@ -15,6 +15,6 @@ const props = defineProps<{
 }>()
 
 const highlightObject = (targetId: string) => {
-  app.$baseBinding.highlightObject(targetId)
+  app.$baseBinding.highlightObjects([targetId])
 }
 </script>

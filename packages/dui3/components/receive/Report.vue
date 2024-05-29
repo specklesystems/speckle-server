@@ -26,7 +26,7 @@ const highlightObject = (
   isSuccessful: boolean
 ) => {
   if (isSuccessful && resultId) {
-    app.$baseBinding.highlightObject(resultId)
+    app.$baseBinding.highlightObjects([resultId])
     return
   }
   // This is a POC implementation. Later we will highlight object(s) within the model. Currently it is done by 'Isolate' filter on viewer but there is no direct URL to achieve this.

@@ -34,7 +34,7 @@
         </button>
         <LayoutDialog
           v-model:open="showReportDialog"
-          :title="'Publish Report'"
+          :title="`${isSender ? 'Publish' : 'Load'} Report`"
           chromium65-compatibility
         >
           <SendReport
