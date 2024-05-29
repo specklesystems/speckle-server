@@ -28,6 +28,15 @@
         <IconFileExplorer class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
+      <!-- JSON Viewer -->
+      <ViewerControlsButtonToggle
+        v-tippy="'Raw data viewer'"
+        :active="activeControl === 'jsonViewer'"
+        @click="toggleActiveControl('jsonViewer')"
+      >
+        <CodeBracketIcon class="h-4 w-4 md:h-5 md:w-5" />
+      </ViewerControlsButtonToggle>
+
       <!-- TODO -->
       <!-- <ViewerControlsButtonToggle
         :active="activeControl === 'filters'"
@@ -201,16 +210,28 @@
           </div>
         </KeepAlive>
       </div>
+
       <div v-show="resourceItems.length !== 0 && activeControl === 'explorer'">
         <KeepAlive>
           <ViewerExplorer class="pointer-events-auto" @close="activeControl = 'none'" />
         </KeepAlive>
       </div>
+
+      <div v-show="resourceItems.length !== 0 && activeControl === 'jsonViewer'">
+        <!-- <KeepAlive> -->
+        <ViewerDataviewerPanel
+          class="pointer-events-auto"
+          @close="activeControl = 'none'"
+        />
+        <!-- </KeepAlive> -->
+      </div>
+
       <ViewerComments
         v-if="resourceItems.length !== 0 && activeControl === 'discussions'"
         class="pointer-events-auto"
         @close="activeControl = 'none'"
       />
+
       <div v-show="resourceItems.length !== 0 && activeControl === 'automate'">
         <AutomateViewerPanel
           :automation-runs="allAutomationRuns"
@@ -251,6 +272,7 @@ import {
   ArrowsPointingOutIcon,
   ScissorsIcon,
   PlusIcon,
+  CodeBracketIcon,
   ChevronDoubleRightIcon,
   ArrowsRightLeftIcon
 } from '@heroicons/vue/24/outline'
@@ -324,6 +346,7 @@ type ActiveControl =
   | 'none'
   | 'models'
   | 'explorer'
+  | 'jsonViewer'
   | 'filters'
   | 'discussions'
   | 'automate'

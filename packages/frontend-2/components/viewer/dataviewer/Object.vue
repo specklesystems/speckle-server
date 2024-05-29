@@ -1,0 +1,60 @@
+<template>
+  <div class="text-xs">
+    <CommonLoadingBar :loading="loading" />
+    <div class="space-y-1">
+      <div
+        v-for="kvp in limitedKvps"
+        :key="kvp.key"
+        class="hover:bg-blue-500/5 transition"
+      >
+        <ViewerDataviewerRow :prop="kvp" />
+      </div>
+    </div>
+  </div>
+</template>
+<script setup lang="ts">
+import { CommonLoadingBar } from '@speckle/ui-components'
+import { useLazyQuery } from '@vue/apollo-composable'
+import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
+import { viewerRawObjectQuery } from '~/lib/viewer/graphql/queries'
+
+const { projectId } = useInjectedViewerState()
+
+const props = defineProps<{
+  object: Record<string, unknown>
+}>()
+
+const { result, loading, load } = useLazyQuery(viewerRawObjectQuery, () => ({
+  streamId: projectId.value,
+  objectId: props.object['referencedId'] as string
+}))
+
+if (props.object['referencedId']) {
+  load()
+}
+
+const kvps = computed(() => {
+  // note: no clue why this shit is needed
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+  const obj = (result.value?.stream?.object?.data || props.object) as Record<
+    string,
+    unknown
+  >
+  const keys = Object.keys(obj)
+  const localKvps = []
+  for (const key of keys) {
+    if (!obj[key]) continue // TODO: deal with null/undef
+    localKvps.push({
+      key,
+      value: obj[key],
+      type: Array.isArray(obj[key]) ? 'array' : typeof obj[key]
+    })
+  }
+  return localKvps
+})
+
+const limit = ref(10)
+const limitedKvps = computed(() => {
+  return kvps.value.slice(0, limit.value)
+})
+</script>
