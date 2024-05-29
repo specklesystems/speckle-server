@@ -47,7 +47,7 @@ const kvps = computed(() => {
     if (!obj[key]) continue // TODO: deal with null/undef
     localKvps.push({
       key,
-      value: obj[key],
+      value: obj[key] || 'null',
       type: Array.isArray(obj[key]) ? 'array' : typeof obj[key]
     })
   }

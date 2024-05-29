@@ -53,5 +53,8 @@ const expandable = computed(() => {
 const handleExpand = () => {
   if (!expandable.value) return
   expanded.value = !expanded.value
+  if (expanded.value) {
+    window.__currentObject = props.prop.value
+  }
 }
 </script>
