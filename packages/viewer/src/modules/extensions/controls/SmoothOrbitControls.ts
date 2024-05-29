@@ -462,7 +462,7 @@ export class SmoothOrbitControls extends EventEmitter {
         ObjectLayers.STREAM_CONTENT_MESH,
         false,
         this.world.worldBox,
-        true,
+        false,
         false
       ) !== null
     // console.log(performance.now() - start)
