@@ -72,7 +72,7 @@ const initializeEventListeners = () => {
         await onModelVersionCreate({
           getTriggers: getActiveTriggerDefinitions,
           triggerFunction: triggerFn
-        })({ modelId, versionId: version.id, projectId })
+        })({ modelId, versionId: version.id, projectId, createdBy: version.author })
       }
     ),
     setupStatusUpdateSubscriptionsInvoke(),

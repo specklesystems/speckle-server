@@ -53,8 +53,13 @@ export type OnModelVersionCreateDeps = {
  */
 export const onModelVersionCreate =
   (deps: OnModelVersionCreateDeps) =>
-  async (params: { modelId: string; versionId: string; projectId: string }) => {
-    const { modelId, versionId, projectId } = params
+  async (params: {
+    modelId: string
+    versionId: string
+    projectId: string
+    createdBy: string | null
+  }) => {
+    const { modelId, versionId, projectId, createdBy } = params
     const { getTriggers, triggerFunction } = deps
 
     // get triggers where modelId matches
@@ -74,7 +79,8 @@ export const onModelVersionCreate =
               projectId,
               modelId: tr.triggeringId,
               triggerType: tr.triggerType
-            }
+            },
+            triggeredBy: createdBy
           })
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
@@ -105,9 +111,10 @@ const createAutomationRunData =
   async (params: {
     manifests: BaseTriggerManifest[]
     automationWithRevision: AutomationWithRevision<AutomationRevisionWithTriggersFunctions>
+    triggeredBy: string | null
   }): Promise<InsertableAutomationRunWithExtendedFunctionRuns> => {
     const { getEncryptionKeyPairFor, getFunctionInputDecryptor } = deps
-    const { manifests, automationWithRevision } = params
+    const { manifests, automationWithRevision, triggeredBy } = params
     const runId = cryptoRandomString({ length: 15 })
     const versionCreatedManifests = manifests.filter(isVersionCreatedTriggerManifest)
     if (!versionCreatedManifests.length) {
@@ -123,6 +130,7 @@ const createAutomationRunData =
     let automationRun: InsertableAutomationRunWithExtendedFunctionRuns
     try {
       automationRun = {
+        triggeredByUserId: triggeredBy,
         id: runId,
         triggers: [
           ...versionCreatedManifests.map((m) => ({
@@ -189,9 +197,10 @@ export const triggerAutomationRevisionRun =
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
+    triggeredBy: string | null
   }): Promise<{ automationRunId: string }> => {
     const { automateRunTrigger } = deps
-    const { revisionId, manifest } = params
+    const { revisionId, manifest, triggeredBy } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
       throw new AutomateInvalidTriggerError(
@@ -239,7 +248,8 @@ export const triggerAutomationRevisionRun =
 
     const automationRun = await createAutomationRunData(deps)({
       manifests: triggerManifests,
-      automationWithRevision
+      automationWithRevision,
+      triggeredBy
     })
     await upsertAutomationRun(automationRun)
 
@@ -353,12 +363,17 @@ export const ensureRunConditions =
 async function composeTriggerData(params: {
   projectId: string
   manifest: BaseTriggerManifest
-  // TODO: Q Gergo: What's going on here? Why do we pass in extra unrelated triggers?
   triggerDefinitions: AutomationTriggerDefinitionRecord[]
 }): Promise<BaseTriggerManifest[]> {
   const { projectId, manifest, triggerDefinitions } = params
 
   const manifests: BaseTriggerManifest[] = [{ ...manifest }]
+
+  /**
+   * The reason why we collect multiple triggers, even tho there's only one:
+   * - We want to collect the current context (all active versions of all triggers) at the time when the run is triggered,
+   * cause once the function already runs, there may be new versions already
+   */
 
   if (triggerDefinitions.length > 1) {
     const associatedTriggers = triggerDefinitions.filter((t) => {
@@ -460,6 +475,7 @@ export const manuallyTriggerAutomation =
         modelId: latestCommit.branchId,
         versionId: latestCommit.id,
         triggerType: VersionCreationTriggerType
-      }
+      },
+      triggeredBy: userId
     })
   }

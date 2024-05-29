@@ -51,11 +51,10 @@ const mixpanel = useMixpanel()
 const onTrigger = async () => {
   const res = await triggerAutomation(props.projectId, props.automation.id)
   if (res) {
-    mixpanel.track('Automation Run Triggered', {
+    mixpanel.track('Automation Run Triggered Manually', {
       automationId: props.automation.id,
       automationName: props.automation.name,
-      projectId: props.projectId,
-      manual: true
+      projectId: props.projectId
     })
   }
 }

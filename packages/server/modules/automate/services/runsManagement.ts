@@ -16,14 +16,14 @@ import {
 import { Automate } from '@speckle/shared'
 
 const AutomationRunStatusOrder: { [key in AutomationRunStatus]: number } = {
-  pending: 0,
-  initializing: 1,
-  running: 2,
-  succeeded: 3,
-  failed: 4,
-  exception: 5,
-  timeout: 6,
-  canceled: 7
+  [AutomationRunStatuses.pending]: 0,
+  [AutomationRunStatuses.initializing]: 1,
+  [AutomationRunStatuses.running]: 2,
+  [AutomationRunStatuses.succeeded]: 3,
+  [AutomationRunStatuses.failed]: 4,
+  [AutomationRunStatuses.exception]: 5,
+  [AutomationRunStatuses.timeout]: 6,
+  [AutomationRunStatuses.canceled]: 7
 }
 
 /**
@@ -118,7 +118,9 @@ export const reportFunctionRunStatus =
     const { automationId, ...currentFunctionRunRecord } = currentFunctionRunRecordResult
 
     if (statusReportData.results) {
-      Automate.AutomateTypes.formatResultsSchema(statusReportData.results)
+      statusReportData.results = Automate.AutomateTypes.formatResultsSchema(
+        statusReportData.results
+      )
     }
 
     if (statusReportData.contextView) validateContextView(statusReportData.contextView)

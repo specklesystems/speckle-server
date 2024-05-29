@@ -164,7 +164,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         })({
           modelId: cryptoRandomString({ length: 10 }),
           versionId: cryptoRandomString({ length: 10 }),
-          projectId: cryptoRandomString({ length: 10 })
+          projectId: cryptoRandomString({ length: 10 }),
+          createdBy: null
         })
         expect(Object.keys(triggered)).length(0)
       })
@@ -202,7 +203,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         })({
           modelId: cryptoRandomString({ length: 10 }),
           versionId,
-          projectId
+          projectId,
+          createdBy: null
         })
         expect(Object.keys(triggered)).length(storedTriggers.length)
         storedTriggers.forEach((st) => {
@@ -247,7 +249,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         })({
           modelId: cryptoRandomString({ length: 10 }),
           versionId,
-          projectId: cryptoRandomString({ length: 10 })
+          projectId: cryptoRandomString({ length: 10 }),
+          createdBy: null
         })
         expect(Object.keys(triggered)).length(storedTriggers.length - 1)
       })
@@ -267,7 +270,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               versionId: cryptoRandomString({ length: 10 }),
               triggerType: VersionCreationTriggerType,
               modelId: cryptoRandomString({ length: 10 })
-            }
+            },
+            triggeredBy: '12345'
           })
           throw 'this should have thrown'
         } catch (error) {
@@ -349,7 +353,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             versionId: version.id,
             modelId: trigger.triggeringId,
             triggerType: trigger.triggerType
-          }
+          },
+          triggeredBy: '12345'
         })
 
         const storedRun = await getFullAutomationRunById(automationRunId)
@@ -437,7 +442,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             versionId: version.id,
             modelId: trigger.triggeringId,
             triggerType: trigger.triggerType
-          }
+          },
+          triggeredBy: '12345'
         })
 
         const storedRun = await getFullAutomationRunById(automationRunId)
@@ -1010,6 +1016,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       before(async () => {
         // Insert automation run directly to DB
         automationRun = {
+          triggeredByUserId: '1234',
           id: cryptoRandomString({ length: 10 }),
           automationRevisionId: createdRevision.id,
           createdAt: new Date(),
