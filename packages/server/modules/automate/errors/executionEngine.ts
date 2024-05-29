@@ -49,3 +49,17 @@ export class ExecutionEngineBadResponseBodyError extends BaseError {
     this.request = request
   }
 }
+
+export class ExecutionEngineNetworkError extends BaseError {
+  static code = 'EXECUTION_ENGINE_NETWORK_ERROR'
+  static defaultMessage = 'Network error while communicating with Automate API'
+
+  public request: ExecutionEngineErrorRequest
+  public networkError: Error
+
+  constructor(request: ExecutionEngineErrorRequest, networkError: Error) {
+    super(networkError.message, { cause: networkError })
+    this.request = request
+    this.networkError = networkError
+  }
+}

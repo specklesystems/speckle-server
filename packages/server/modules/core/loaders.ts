@@ -82,6 +82,7 @@ import {
   FunctionReleaseSchemaType,
   FunctionSchemaType
 } from '@/modules/automate/helpers/executionEngine'
+import { ExecutionEngineNetworkError } from '@/modules/automate/errors/executionEngine'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -604,7 +605,17 @@ export function buildRequestLoaders(
     automationsApi: {
       getFunction: createLoader<string, Nullable<FunctionSchemaType>>(async (fnIds) => {
         const results = await Promise.all(
-          fnIds.map((fnId) => getFunction({ functionId: fnId }))
+          fnIds.map(async (fnId) => {
+            try {
+              return await getFunction({ functionId: fnId })
+            } catch (e) {
+              if (e instanceof ExecutionEngineNetworkError) {
+                return null
+              }
+
+              throw e
+            }
+          })
         )
 
         return results

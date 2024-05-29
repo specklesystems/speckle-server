@@ -61,7 +61,14 @@ export const useAutomationRunSummary = (params: {
       unref(run)
         ?.functionRuns.filter(
           (r): r is SetFullyRequired<typeof r, 'statusMessage'> =>
-            !!(r.status === AutomateRunStatus.Failed && r.statusMessage?.length)
+            !!(
+              [
+                AutomateRunStatus.Failed,
+                AutomateRunStatus.Canceled,
+                AutomateRunStatus.Exception,
+                AutomateRunStatus.Timeout
+              ].includes(r.status) && r.statusMessage?.length
+            )
         )
         .map((r) => r.statusMessage) || []
     const errorMessage = errorMessages.length ? errorMessages.join(', ') : undefined
@@ -85,6 +92,7 @@ export const useAutomationRunDetailsFns = () => {
     const status = run.status
 
     switch (status) {
+      case AutomateRunStatus.Pending:
       case AutomateRunStatus.Initializing:
         classParts.push('bg-warning-lighter text-warning-darker')
         break
@@ -92,6 +100,9 @@ export const useAutomationRunDetailsFns = () => {
         classParts.push('bg-info-lighter text-info-darker')
         break
       case AutomateRunStatus.Failed:
+      case AutomateRunStatus.Exception:
+      case AutomateRunStatus.Canceled:
+      case AutomateRunStatus.Timeout:
         classParts.push('bg-danger-lighter text-danger-darker')
         break
       case AutomateRunStatus.Succeeded:
@@ -123,7 +134,9 @@ export const useAutomationRunDetailsFns = () => {
     const end =
       run.status === AutomateRunStatus.Running
         ? now.value
-        : [AutomateRunStatus.Initializing].includes(run.status)
+        : [AutomateRunStatus.Initializing, AutomateRunStatus.Pending].includes(
+            run.status
+          )
         ? undefined
         : run.updatedAt
     if (!end) return undefined
