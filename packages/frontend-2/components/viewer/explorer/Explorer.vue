@@ -54,6 +54,7 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { markRaw } from 'vue'
 import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
+import { SpeckleViewer } from '@speckle/shared'
 
 defineEmits(['close'])
 
@@ -90,39 +91,57 @@ const rootNodes = computed(() => {
   if (!worldTree.value) return []
   expandLevel.value = -1
 
-  const rootNodes = worldTree.value._root.children as ExplorerNode[]
+  // Arrays to hold categorized nodes
+  const versionNodes = []
+  const modelNodes = []
+  const folderNodes = []
+  const allModelNodes = []
+  const objectNodes = []
 
-  // Create a mapping of objectId to corresponding node for quick lookup
-  const nodesById = rootNodes.reduce((acc, node) => {
+  const rootNodes = worldTree.value._root.children as ExplorerNode[]
+  for (const node of rootNodes) {
     const objectId = ((node.model as Record<string, unknown>).id as string)
       .split('/')
       .reverse()[0] as string
-    acc[objectId] = node
-    return acc
-  }, {} as Record<string, ExplorerNode>)
+    const resourceItem = resourceItems.value.find((res) => res.objectId === objectId)
+    const raw = node.model?.raw as Record<string, unknown>
+    if (resourceItem?.modelId) {
+      // Model resource
+      const model = modelsAndVersionIds.value.find(
+        (item) => item.model.id === resourceItem.modelId
+      )?.model
+      raw.name = model?.name
+      raw.type = model?.id
 
-  // Order the nodes based on the order of resourceItems
-  const orderedNodes = resourceItems.value
-    .map((resourceItem) => {
-      const node = nodesById[resourceItem.objectId]
-      if (node) {
-        const raw = node.model?.raw as Record<string, unknown>
-        if (resourceItem.modelId) {
-          const model = modelsAndVersionIds.value.find(
-            (item) => item.model.id === resourceItem.modelId
-          )?.model
-          raw.name = model?.name
-          raw.type = model?.id
-        } else {
-          raw.name = 'Object'
-          raw.type = 'Single Object'
-        }
-        return node.model as ExplorerNode
+      if (resourceItem.versionId) {
+        versionNodes.push(node.model as ExplorerNode)
+      } else {
+        modelNodes.push(node.model as ExplorerNode)
       }
-      return null
-    })
-    .filter((node): node is ExplorerNode => node !== null)
+    } else if (resourceItem) {
+      const resource = SpeckleViewer.ViewerRoute.parseUrlParameters(
+        resourceItem.objectId
+      )[0]
 
-  return orderedNodes
+      if (SpeckleViewer.ViewerRoute.isModelFolderResource(resource)) {
+        folderNodes.push(node.model as ExplorerNode)
+      } else if (SpeckleViewer.ViewerRoute.isAllModelsResource(resource)) {
+        allModelNodes.push(node.model as ExplorerNode)
+      } else if (SpeckleViewer.ViewerRoute.isObjectResource(resource)) {
+        raw.name = 'Object'
+        raw.type = 'Single Object'
+        objectNodes.push(node.model as ExplorerNode)
+      }
+    }
+  }
+
+  // Combine the categorized nodes in the same order as ViewerLayoutPanel
+  return [
+    ...versionNodes,
+    ...modelNodes,
+    ...folderNodes,
+    ...allModelNodes,
+    ...objectNodes
+  ]
 })
 </script>
