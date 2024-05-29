@@ -18,19 +18,20 @@
           v-if="expandable"
           :class="`w-3 ${expanded ? 'rotate-90' : ''} transition `"
         />
-        <span>{{ prop.key }}</span>
+        <span class="select-all">{{ prop.key }}</span>
       </div>
-      <div v-if="!expandable" class="col-span-2 truncate">{{ prop.value }}</div>
+      <div v-if="!expandable" class="col-span-2 truncate select-all">
+        {{ prop.value }}
+      </div>
       <div v-if="expandable" class="col-span-2 truncate">
         {{ prop.type }}
         <span v-if="prop.type === 'array'" class="text-foreground-2 text-xs">
-          ({{ prop.value.length }})
+          ({{ arrayLen }})
         </span>
       </div>
     </div>
     <div v-if="expandable && expanded" class="w-full pl-1 pt-2">
-      <!-- <ViewerDataviewerObject :object="prop.value" /> -->
-      <ViewerDataviewerObject :object="prop.value" />
+      <ViewerDataviewerObject :object="castProp" />
     </div>
   </div>
 </template>
@@ -50,11 +51,18 @@ const expandable = computed(() => {
   return props.prop.type === 'array' || props.prop.type === 'object'
 })
 
+const arrayLen = computed(() => {
+  if (props.prop.type !== 'array') return
+  const arr = props.prop.value as unknown[]
+  return arr.length
+})
+
+const castProp = computed(() => {
+  return props.prop.value as Record<string, unknown>
+})
+
 const handleExpand = () => {
   if (!expandable.value) return
   expanded.value = !expanded.value
-  if (expanded.value) {
-    window.__currentObject = props.prop.value
-  }
 }
 </script>

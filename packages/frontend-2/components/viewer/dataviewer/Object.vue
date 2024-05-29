@@ -35,7 +35,6 @@ if (props.object['referencedId']) {
 }
 
 const kvps = computed(() => {
-  // note: no clue why this shit is needed
   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const obj = (result.value?.stream?.object?.data || props.object) as Record<
     string,
@@ -44,7 +43,7 @@ const kvps = computed(() => {
   const keys = Object.keys(obj)
   const localKvps = []
   for (const key of keys) {
-    if (!obj[key]) continue // TODO: deal with null/undef
+    // if (!obj[key]) continue // TODO: deal with null/undef
     localKvps.push({
       key,
       value: obj[key] || 'null',
