@@ -1,13 +1,14 @@
 <template>
-  <div class="text-xs">
-    <CommonLoadingBar :loading="loading" />
+  <div>
+    <CommonLoadingBar v-show="loading" :loading="loading" />
     <div class="space-y-1">
-      <div
-        v-for="kvp in limitedKvps"
-        :key="kvp.key"
-        class="hover:bg-blue-500/5 transition"
-      >
+      <div v-for="kvp in limitedKvps" :key="kvp.key">
         <ViewerDataviewerRow :prop="kvp" />
+      </div>
+      <div v-if="limit < kvps.length">
+        <FormButton text full-width size="xs" @click="limit += 20">
+          show more
+        </FormButton>
       </div>
     </div>
   </div>
@@ -53,7 +54,7 @@ const kvps = computed(() => {
   return localKvps
 })
 
-const limit = ref(10)
+const limit = ref(20)
 const limitedKvps = computed(() => {
   return kvps.value.slice(0, limit.value)
 })

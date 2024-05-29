@@ -3,8 +3,11 @@
     <template #title>
       <span class="text-foreground">Raw Data Viewer</span>
     </template>
-    <div class="px-1">
-      <div v-for="obj in rootObjs" :key="obj.referencedId" class="border-b pb-2">
+    <div class="px-1 divide-y divide-dashed">
+      <div v-for="obj in rootObjs" :key="obj.referencedId" class="py-2">
+        <div class="font-bold text-xs pl-1 mb-2 text-foreground-2">
+          Model: {{ obj.name }}
+        </div>
         <ViewerDataviewerObject :object="obj" />
       </div>
     </div>
