@@ -13,7 +13,7 @@
     >
       <div
         v-if="open"
-        class="absolute translate-x-0 w-24 sm:w-32 left-10 sm:left-12 -top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col"
+        class="absolute translate-x-0 w-32 left-10 sm:left-12 -top-0 sm:-top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col"
       >
         <!-- Canonical views first -->
         <div v-for="view in canonicalViews" :key="view.name">
