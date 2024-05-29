@@ -265,7 +265,6 @@ import {
   ArrowsPointingOutIcon,
   ScissorsIcon,
   PlusIcon,
-  CodeBracketIcon,
   ChevronDoubleRightIcon,
   ArrowsRightLeftIcon
 } from '@heroicons/vue/24/outline'
