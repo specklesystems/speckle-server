@@ -15,10 +15,10 @@
           :class="['h-4 w-4 outline-none', statusMetaData.iconColor]"
         />
       </div>
-      <AutomateFunctionLogo :logo="functionRun.function.logo" size="xs" />
+      <AutomateFunctionLogo :logo="functionRun.function?.logo" size="xs" />
       <div class="font-bold text-xs truncate">
         {{ automationName ? automationName + ' / ' : ''
-        }}{{ functionRun.function.name }}
+        }}{{ functionRun.function?.name || 'Unknown function' }}
       </div>
 
       <div class="h-full grow flex justify-end">
@@ -37,8 +37,11 @@
         <div class="text-xs font-bold text-foreground-2">Status</div>
         <div
           v-if="
-            functionRun.status === AutomateRunStatus.Initializing ||
-            functionRun.status === AutomateRunStatus.Running
+            [
+              AutomateRunStatus.Initializing,
+              AutomateRunStatus.Running,
+              AutomateRunStatus.Pending
+            ].includes(functionRun.status)
           "
           class="text-xs text-foreground-2 italic"
         >
@@ -96,7 +99,7 @@
               pageRunLimit
             )"
             :key="index"
-            :function-id="functionRun.function.id"
+            :function-id="functionRun.function?.id"
             :result="result"
           />
           <FormButton
