@@ -1,0 +1,52 @@
+extend type Version {
+  gendoAIRenders: GendoAIRenderCollection!
+  gendoAIRender(id: String!): GendoAIRender!
+}
+
+type GendoAIRenderCollection {
+  totalCount: Int!
+  items: [GendoAIRender]!
+}
+
+type GendoAIRender {
+  id: ID!
+  projectId: String!
+  modelId: String!
+  versionId: String!
+  userId: String!
+  user: AvatarUser
+  createdAt: String!
+  updatedAt: String!
+  gendoGenerationId: String
+  status: String!
+  prompt: String!
+  camera: JSONObject
+  """
+  This is a blob id.
+  """
+  responseImage: String
+}
+
+extend type VersionMutations {
+  requestGendoAIRender(input: GendoAIRenderInput!): Boolean!
+}
+
+input GendoAIRenderInput {
+  projectId: ID!
+  modelId: ID!
+  versionId: ID!
+  camera: JSONObject!
+  """
+  The generation prompt.
+  """
+  prompt: String!
+  """
+  Base64 encoded image of the depthmap.
+  """
+  baseImage: String!
+}
+
+extend type Subscription {
+  projectVersionGendoAIRenderCreated(id: String!, versionId: String!): GendoAIRender!
+  projectVersionGendoAIRenderUpdated(id: String!, versionId: String!): GendoAIRender!
+}
