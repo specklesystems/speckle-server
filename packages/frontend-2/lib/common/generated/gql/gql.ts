@@ -154,6 +154,7 @@ const documents = {
     "\n  mutation UpdateAutomation($projectId: ID!, $input: ProjectAutomationUpdateInput!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        update(input: $input) {\n          id\n          name\n          enabled\n        }\n      }\n    }\n  }\n": types.UpdateAutomationDocument,
     "\n  mutation CreateAutomationRevision(\n    $projectId: ID!\n    $input: ProjectAutomationRevisionCreateInput!\n  ) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        createRevision(input: $input) {\n          id\n        }\n      }\n    }\n  }\n": types.CreateAutomationRevisionDocument,
     "\n  mutation TriggerAutomation($projectId: ID!, $automationId: ID!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        trigger(automationId: $automationId)\n      }\n    }\n  }\n": types.TriggerAutomationDocument,
+    "\n  mutation CreateTestAutomation(\n    $projectId: ID!,\n    $input: ProjectTestAutomationCreateInput!\n  ) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        createTestAutomation(input: $input) {\n          id\n        }\n      }\n    }\n  }\n": types.CreateTestAutomationDocument,
     "\n  query ProjectAccessCheck($id: String!) {\n    project(id: $id) {\n      id\n    }\n  }\n": types.ProjectAccessCheckDocument,
     "\n  query ProjectRoleCheck($id: String!) {\n    project(id: $id) {\n      id\n      role\n    }\n  }\n": types.ProjectRoleCheckDocument,
     "\n  query ProjectsDashboardQuery($filter: UserProjectsFilter, $cursor: String) {\n    activeUser {\n      id\n      projects(filter: $filter, limit: 6, cursor: $cursor) {\n        cursor\n        totalCount\n        items {\n          ...ProjectDashboardItem\n        }\n      }\n      ...ProjectsInviteBanners\n    }\n  }\n": types.ProjectsDashboardQueryDocument,
@@ -808,6 +809,10 @@ export function graphql(source: "\n  mutation CreateAutomationRevision(\n    $pr
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation TriggerAutomation($projectId: ID!, $automationId: ID!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        trigger(automationId: $automationId)\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation TriggerAutomation($projectId: ID!, $automationId: ID!) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        trigger(automationId: $automationId)\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  mutation CreateTestAutomation(\n    $projectId: ID!,\n    $input: ProjectTestAutomationCreateInput!\n  ) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        createTestAutomation(input: $input) {\n          id\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  mutation CreateTestAutomation(\n    $projectId: ID!,\n    $input: ProjectTestAutomationCreateInput!\n  ) {\n    projectMutations {\n      automationMutations(projectId: $projectId) {\n        createTestAutomation(input: $input) {\n          id\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

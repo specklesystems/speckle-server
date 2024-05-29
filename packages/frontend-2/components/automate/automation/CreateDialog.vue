@@ -77,6 +77,7 @@ import { useForm } from 'vee-validate'
 import {
   useCreateAutomation,
   useCreateAutomationRevision,
+  useCreateTestAutomation,
   useUpdateAutomation
 } from '~/lib/projects/composables/automationManagement'
 import { formatJsonFormSchemaInputs } from '~/lib/automate/helpers/jsonSchema'
@@ -147,6 +148,8 @@ const logger = useLogger()
 const updateAutomation = useUpdateAutomation()
 const createAutomation = useCreateAutomation()
 const createRevision = useCreateAutomationRevision()
+const createTestAutomation = useCreateTestAutomation()
+
 const { enumStep, step } = useEnumSteps({ order: stepsOrder })
 const {
   items: stepsWidgetSteps,
@@ -168,6 +171,14 @@ const isTestAutomation = ref(false)
 
 const shouldShowStepsWidget = computed(() => {
   return !!shouldShowWidget.value && !isTestAutomation.value
+})
+
+const enableSubmitTestAutomation = computed(() => {
+  const isValidInput =
+    !!automationName.value && !!selectedModel.value && !!selectedFunction.value
+  const isLoading = creationLoading.value
+
+  return isValidInput && !isLoading
 })
 
 const title = computed(() => {
@@ -265,10 +276,8 @@ const buttons = computed((): LayoutDialogButton[] => {
         {
           id: 'submitTestAutomation',
           text: 'Create',
-          disabled: !automationName.value,
-          onClick: () => {
-            // TODO: Make request
-          }
+          disabled: !enableSubmitTestAutomation.value,
+          submit: true
         }
       ]
 
@@ -355,9 +364,31 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
   }
 
   creationLoading.value = true
+
   let aId: Optional<string> = undefined
   let automationEncrypt: Optional<AutomationInputEncryptor> = undefined
   try {
+    if (isTestAutomation.value) {
+      // Use simplified pathway
+      const testAutomationId = await createTestAutomation({
+        projectId: project.id,
+        input: {
+          name,
+          functionId: fn.id,
+          modelId: model.id
+        }
+      })
+
+      if (!testAutomationId) {
+        logger.error('Failed to create test automation')
+        return
+      }
+
+      automationId.value = testAutomationId
+      step.value++
+      return
+    }
+
     const createRes = await createAutomation({
       projectId: project.id,
       input: {
