@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col">
+  <div class="col-span-1">
     <h2 class="h6 font-bold mb-6">Function</h2>
     <AutomateFunctionCardView v-if="functions.length" vertical>
       <AutomateFunctionCard
