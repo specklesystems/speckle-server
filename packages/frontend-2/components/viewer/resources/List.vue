@@ -69,7 +69,6 @@ const open = ref(false)
 
 const mp = useMixpanel()
 const removeModel = async (modelId: string) => {
-  console.log(modelId)
   // Convert requested resource string to references to specific models
   // to ensure remove works even when we have "all" or "$folder" in the URL
   const builder = SpeckleViewer.ViewerRoute.resourceBuilder()

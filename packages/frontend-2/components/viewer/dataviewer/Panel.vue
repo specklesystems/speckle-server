@@ -14,31 +14,26 @@
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
-import { ViewerEvent } from '@speckle/viewer'
-import { useViewerEventListener } from '~/lib/viewer/composables/viewer'
+import { useSelectionUtilities } from '~/lib/viewer/composables/ui'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 
-const { resourceItems, modelsAndVersionIds, objects } =
-  useInjectedViewerLoadedResources()
+const { modelsAndVersionIds, objects } = useInjectedViewerLoadedResources()
+
+const { objects: selectedObjects, clearSelection } = useSelectionUtilities()
 
 defineEmits<{
   (e: 'close'): void
 }>()
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-if (process.client) {
-  window.t = modelsAndVersionIds.value // TODO: remove
-  watch(modelsAndVersionIds, () => (window.t = modelsAndVersionIds.value))
-}
-
-const refhack = ref(1)
-
-useViewerEventListener(ViewerEvent.Busy, (isBusy: boolean) => {
-  if (isBusy) return
-  refhack.value++
-})
-
 const rootObjs = computed(() => {
+  // if (selectedObjects.value.length !== 0) {
+  const selection = selectedObjects.value.map((o) => ({
+    referencedId: o.id,
+    name: 'Selected object ' + o.id,
+    // eslint-disable-next-line camelcase
+    speckle_type: 'reference'
+  }))
+  // }
   const models = modelsAndVersionIds.value.map((m) => ({
     referencedId: m.model.loadedVersion.items[0].referencedObject,
     name: 'Model ' + m.model.name,
@@ -53,6 +48,6 @@ const rootObjs = computed(() => {
     speckle_type: 'reference'
   }))
 
-  return [...models, ...objs]
+  return [...selection, ...models, ...objs]
 })
 </script>
