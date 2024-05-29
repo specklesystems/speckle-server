@@ -454,16 +454,17 @@ export class SmoothOrbitControls extends EventEmitter {
     if (deltaZoom === 0) return
 
     // const start = performance.now()
-    const tasIntersect = this.intersections.intersect(
-      this.scene,
-      this._controlTarget as PerspectiveCamera,
-      this.zoomControlCoord,
-      ObjectLayers.STREAM_CONTENT_MESH,
-      false,
-      this.world.worldBox,
-      true,
-      false
-    )
+    const tasIntersect =
+      this.intersections.intersect(
+        this.scene,
+        this._controlTarget as PerspectiveCamera,
+        this.zoomControlCoord,
+        ObjectLayers.STREAM_CONTENT_MESH,
+        false,
+        this.world.worldBox,
+        true,
+        false
+      ) !== null
     // console.log(performance.now() - start)
     /** Original approach to zoom amount varying which works quite bad */
     // const { minimumRadius, maximumRadius, minimumFieldOfView, maximumFieldOfView } =
@@ -505,7 +506,7 @@ export class SmoothOrbitControls extends EventEmitter {
 
     this._radiusDelta = radius - this.goalSpherical.radius
 
-    if (this._options.zoomToCursor && tasIntersect) {
+    if (this._options.zoomToCursor) {
       const dollyAmount = new Vector3()
       if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
         if (this._controlTarget instanceof PerspectiveCamera) {
@@ -534,8 +535,14 @@ export class SmoothOrbitControls extends EventEmitter {
         Math.tan(Math.exp(this.logFov) * MathUtils.DEG2RAD * 0.5)
       const cursor = new Vector3()
         .copy(this.goalOrigin)
-        .add(planeX.multiplyScalar(this.zoomControlCoord.x * worldToScreen * aspect))
-        .add(planeY.multiplyScalar(this.zoomControlCoord.y * worldToScreen))
+        .add(
+          planeX.multiplyScalar(
+            this.zoomControlCoord.x * worldToScreen * aspect * +tasIntersect
+          )
+        )
+        .add(
+          planeY.multiplyScalar(this.zoomControlCoord.y * worldToScreen * +tasIntersect)
+        )
         .add(dollyAmount)
       const lerpRatio = clamp(this._radiusDelta / this.goalSpherical.radius, -1, 1)
       // console.log('Delta -> ', this._radiusDelta, this.goalSpherical.radius, lerpRatio)
