@@ -176,7 +176,7 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition z-20 ${
+      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
