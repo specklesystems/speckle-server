@@ -5,7 +5,8 @@ import {
   getFullAutomationRevisionMetadata,
   getAutomationToken,
   getAutomationTriggerDefinitions,
-  upsertAutomationRun
+  upsertAutomationRun,
+  getAutomationRevision
 } from '@/modules/automate/repositories/automations'
 import {
   AutomationWithRevision,
@@ -45,6 +46,8 @@ import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { AutomateRunsEmitter } from '@/modules/automate/events/runs'
 
 export type OnModelVersionCreateDeps = {
+  getAutomation: typeof getAutomation
+  getAutomationRevision: typeof getAutomationRevision
   getTriggers: typeof getActiveTriggerDefinitions
   triggerFunction: ReturnType<typeof triggerAutomationRevisionRun>
 }
@@ -56,7 +59,7 @@ export const onModelVersionCreate =
   (deps: OnModelVersionCreateDeps) =>
   async (params: { modelId: string; versionId: string; projectId: string }) => {
     const { modelId, versionId, projectId } = params
-    const { getTriggers, triggerFunction } = deps
+    const { getAutomation, getAutomationRevision, getTriggers, triggerFunction } = deps
 
     // get triggers where modelId matches
     const triggerDefinitions = await getTriggers({
@@ -68,13 +71,38 @@ export const onModelVersionCreate =
     await Promise.all(
       triggerDefinitions.map(async (tr) => {
         try {
+          const { automationRevisionId, triggeringId, triggerType } = tr
+
+          const automationRevisionRecord = await getAutomationRevision({
+            automationRevisionId
+          })
+
+          if (!automationRevisionRecord) {
+            throw new AutomateInvalidTriggerError(
+              'Specified automation revision does not exist'
+            )
+          }
+
+          const automationRecord = await getAutomation({
+            automationId: automationRevisionRecord.automationId
+          })
+
+          if (!automationRecord) {
+            throw new AutomateInvalidTriggerError('Specified automation does not exist')
+          }
+
+          if (automationRecord.isTestAutomation) {
+            // Do not trigger functions on test automations
+            return
+          }
+
           await triggerFunction<VersionCreatedTriggerManifest>({
             revisionId: tr.automationRevisionId,
             manifest: {
               versionId,
               projectId,
-              modelId: tr.triggeringId,
-              triggerType: tr.triggerType
+              modelId: triggeringId,
+              triggerType
             }
           })
         } catch (error) {
