@@ -8,7 +8,8 @@ import {
 import { Environment } from '@speckle/shared'
 import {
   getActiveTriggerDefinitions,
-  getAutomationRunFullTriggers
+  getAutomationRunFullTriggers,
+  getFullAutomationRevisionMetadata
 } from '@/modules/automate/repositories/automations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
@@ -24,6 +25,8 @@ import {
   setupAutomationUpdateSubscriptions,
   setupStatusUpdateSubscriptions
 } from '@/modules/automate/services/subscriptions'
+import { setupRunFinishedTracking } from '@/modules/automate/services/tracking'
+import { getUser } from '@/modules/core/repositories/users'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -64,6 +67,10 @@ const initializeEventListeners = () => {
     getAutomationRunFullTriggers
   })
   const setupAutomationUpdateSubscriptionsInvoke = setupAutomationUpdateSubscriptions()
+  const setupRunFinishedTrackingInvoke = setupRunFinishedTracking({
+    getUser,
+    getFullAutomationRevisionMetadata
+  })
 
   const quitters = [
     VersionsEmitter.listen(
@@ -76,7 +83,8 @@ const initializeEventListeners = () => {
       }
     ),
     setupStatusUpdateSubscriptionsInvoke(),
-    setupAutomationUpdateSubscriptionsInvoke()
+    setupAutomationUpdateSubscriptionsInvoke(),
+    setupRunFinishedTrackingInvoke()
   ]
 
   return () => {
