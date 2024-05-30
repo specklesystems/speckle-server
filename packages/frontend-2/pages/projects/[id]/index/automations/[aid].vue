@@ -2,9 +2,9 @@
   <div v-if="automation && project" class="flex flex-col gap-8 items-start">
     <ProjectPageAutomationHeader :automation="automation" :project="project" />
 
-    <div class="lg:grid xl:grid-cols-4 gap-6 w-full">
+    <div class="grid grid-cols-1 xl:grid-cols-4 gap-6 w-full">
       <div
-        class="grid gap-6 mb-6 md:grid-cols-2 lg:grid-cols-3 xl:flex xl:flex-col xl:col-span-1"
+        class="col-span-1 grid gap-6 mb-6 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-1"
       >
         <ProjectPageAutomationFunctions
           :automation="automation"
@@ -13,7 +13,7 @@
         <ProjectPageAutomationModels :automation="automation" :project="project" />
       </div>
       <ProjectPageAutomationRuns
-        class="xl:col-span-3"
+        class="col-span-1 xl:col-span-3"
         :project-id="projectId"
         :automation="automation"
       />

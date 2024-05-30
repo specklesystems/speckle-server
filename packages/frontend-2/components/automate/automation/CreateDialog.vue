@@ -120,7 +120,7 @@ const props = defineProps<{
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
-const enableCreateTestAutomation = useEnableTestAutomation()
+const enableCreateTestAutomation = useisTestAutomationsEnabled()
 
 const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
 

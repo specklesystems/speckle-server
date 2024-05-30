@@ -69,6 +69,9 @@ export const useFunctionRunsStatusSummary = (params: {
           result.passed++
           break
         case AutomateRunStatus.Failed:
+        case AutomateRunStatus.Exception:
+        case AutomateRunStatus.Timeout:
+        case AutomateRunStatus.Canceled:
           result.title = 'Some runs failed.'
           result.titleColor = 'text-danger'
           result.failed++

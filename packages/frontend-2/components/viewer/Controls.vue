@@ -137,17 +137,51 @@
             <!-- Settings -->
             <ViewerSettingsMenu />
           </ViewerControlsButtonGroup>
+
+          <!-- Gendo -->
+          <ViewerControlsButtonToggle
+            v-show="isGendoEnabled"
+            v-tippy="'Real time AI rendering powered by Gendo'"
+            :active="activeControl === 'gendo'"
+            class="hover:hue-rotate-30 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-200 via-violet-600 to-sky-900"
+            @click="toggleActiveControl('gendo')"
+          >
+            <img
+              src="~/assets/images/gendo/logo.svg"
+              alt="gendo Logo"
+              class="h-6 w-6 md:h-8 md:w-8 -ml-1 -mt-1"
+            />
+          </ViewerControlsButtonToggle>
         </div>
         <!-- Standard viewer controls -->
       </div>
     </div>
     <div
+      v-if="activeControl !== 'none'"
+      ref="resizeHandle"
+      class="absolute z-10 ml-12 md:ml-14 max-h-[calc(100dvh-4.5rem)] w-7 mt-[4.2rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
+      :style="`left:${width - 4}px; height:${height}px`"
+      @mousedown="startResizing"
+    >
+      <div
+        class="relative z-30 w-3 ml-1 h-full pt-[4.2rem] bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition rounded-r"
+      ></div>
+      <div
+        class="w-7 h-8 mr-1 bg-foundation group-hover:bg-outline-2 rounded-r -translate-x-10 group-hover:translate-x-0 transition cursor-ew-resize flex items-center justify-center group-hover:shadow-xl"
+      >
+        <ArrowsRightLeftIcon
+          class="h-3 w-3 transition opacity-0 group-hover:opacity-80 text-outline-1 -ml-[2px]"
+        />
+      </div>
+    </div>
+    <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] w-56 md:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
       } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
+      :style="`width:${width + 4}px;`"
     >
       <div v-if="activeControl.length !== 0 && activeControl === 'measurements'">
         <KeepAlive>
@@ -184,6 +218,11 @@
           @close="activeControl = 'none'"
         />
       </div>
+      <div
+        v-if="resourceItems.length !== 0 && activeControl === 'gendo' && isGendoEnabled"
+      >
+        <ViewerGendoPanel @close="activeControl = 'none'" />
+      </div>
 
       <!-- Empty state -->
       <div v-if="resourceItems.length === 0">
@@ -212,7 +251,8 @@ import {
   ArrowsPointingOutIcon,
   ScissorsIcon,
   PlusIcon,
-  ChevronDoubleRightIcon
+  ChevronDoubleRightIcon,
+  ArrowsRightLeftIcon
 } from '@heroicons/vue/24/outline'
 import { isNonNullable, type Nullable } from '@speckle/shared'
 import {
@@ -234,8 +274,51 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
-import { onKeyStroke } from '@vueuse/core'
+import { onKeyStroke, useEventListener, useResizeObserver } from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
+
+const isGendoEnabled = useIsGendoModuleEnabled()
+
+const width = ref(360)
+const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
+
+const height = ref(scrollableControlsContainer.value?.clientHeight) //computed(() => scrollableControlsContainer.value?.clientHeight)
+const isResizing = ref(false)
+const resizeHandle = ref(null)
+let startWidth = 0
+let startX = 0
+
+const startResizing = (event: MouseEvent) => {
+  event.preventDefault()
+  isResizing.value = true
+  startX = event.clientX
+  startWidth = width.value
+}
+
+if (process.client) {
+  useResizeObserver(scrollableControlsContainer, (entries) => {
+    // const entry = entries[0]
+    const { height: newHeight } = entries[0].contentRect
+    height.value = newHeight
+  })
+  useEventListener(resizeHandle, 'mousedown', startResizing)
+
+  useEventListener(document, 'mousemove', (event) => {
+    if (isResizing.value) {
+      const diffX = event.clientX - startX
+      width.value = Math.max(
+        300,
+        Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
+      )
+    }
+  })
+
+  useEventListener(document, 'mouseup', () => {
+    if (isResizing.value) {
+      isResizing.value = false
+    }
+  })
+}
 
 type ActiveControl =
   | 'none'
@@ -246,6 +329,7 @@ type ActiveControl =
   | 'automate'
   | 'measurements'
   | 'mobileOverflow'
+  | 'gendo'
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
@@ -279,7 +363,6 @@ const openAddModel = ref(false)
 
 const activeControl = ref<ActiveControl>('models')
 
-const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const {
   diff: { enabled }
 } = useInjectedViewerInterfaceState()
