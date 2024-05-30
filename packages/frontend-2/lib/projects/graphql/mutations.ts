@@ -218,7 +218,7 @@ export const triggerAutomationMutation = graphql(`
 
 export const createTestAutomationMutation = graphql(`
   mutation CreateTestAutomation(
-    $projectId: ID!,
+    $projectId: ID!
     $input: ProjectTestAutomationCreateInput!
   ) {
     projectMutations {

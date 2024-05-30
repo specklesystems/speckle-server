@@ -11,6 +11,7 @@ import {
 } from '@/modules/automate/services/trigger'
 import {
   AutomationRecord,
+  AutomationRevisionRecord,
   AutomationRunStatuses,
   AutomationTriggerDefinitionRecord,
   AutomationTriggerType,
@@ -159,6 +160,25 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       it('No trigger no run', async () => {
         const triggered: Record<string, BaseTriggerManifest> = {}
         await onModelVersionCreate({
+          getAutomation: async () => ({} as AutomationRecord),
+          getAutomationRevision: async () => ({} as AutomationRevisionRecord),
+          getTriggers: async () => [],
+          triggerFunction: async ({ manifest, revisionId }) => {
+            triggered[revisionId] = manifest
+            return { automationRunId: cryptoRandomString({ length: 10 }) }
+          }
+        })({
+          modelId: cryptoRandomString({ length: 10 }),
+          versionId: cryptoRandomString({ length: 10 }),
+          projectId: cryptoRandomString({ length: 10 })
+        })
+        expect(Object.keys(triggered)).length(0)
+      })
+      it('Does not trigger test automations', async () => {
+        const triggered: Record<string, BaseTriggerManifest> = {}
+        await onModelVersionCreate({
+          getAutomation: async () => ({ isTestAutomation: true } as AutomationRecord),
+          getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async () => [],
           triggerFunction: async ({ manifest, revisionId }) => {
             triggered[revisionId] = manifest
@@ -191,6 +211,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const projectId = cryptoRandomString({ length: 10 })
 
         await onModelVersionCreate({
+          getAutomation: async () => ({} as AutomationRecord),
+          getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async <
             T extends AutomationTriggerType = AutomationTriggerType
           >() => storedTriggers as AutomationTriggerDefinitionRecord<T>[],
@@ -234,6 +256,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const triggered: Record<string, VersionCreatedTriggerManifest> = {}
         const versionId = cryptoRandomString({ length: 10 })
         await onModelVersionCreate({
+          getAutomation: async () => ({} as AutomationRecord),
+          getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async <
             T extends AutomationTriggerType = AutomationTriggerType
           >() => storedTriggers as AutomationTriggerDefinitionRecord<T>[],
