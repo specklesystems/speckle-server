@@ -134,13 +134,14 @@ export const createAutomation = async (params: {
   const { speckleServerUrl, authCode } = params
 
   const url = getApiUrl(`/api/v2/automations`)
-  const speckleServerDomain = new URL(speckleServerUrl).hostname
+
+  const speckleServerOrigin = new URL(speckleServerUrl).origin
 
   const result = await invokeJsonRequest<AutomationCreateResponse>({
     url,
     method: 'post',
     body: {
-      speckleServerDomain,
+      speckleServerOrigin,
       speckleServerAuthenticationCode: authCode
     },
     retry: false
@@ -321,6 +322,12 @@ export const getFunctionReleases = async (params: {
         return await getFunctionRelease({ functionId, functionReleaseId })
       } catch (e) {
         if (e instanceof ExecutionEngineNetworkError) {
+          return null
+        }
+        if (
+          e instanceof ExecutionEngineFailedResponseError &&
+          e.response.statusMessage === 'FunctionNotFound'
+        ) {
           return null
         }
 

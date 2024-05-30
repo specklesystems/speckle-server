@@ -82,7 +82,10 @@ import {
   FunctionReleaseSchemaType,
   FunctionSchemaType
 } from '@/modules/automate/helpers/executionEngine'
-import { ExecutionEngineNetworkError } from '@/modules/automate/errors/executionEngine'
+import {
+  ExecutionEngineFailedResponseError,
+  ExecutionEngineNetworkError
+} from '@/modules/automate/errors/executionEngine'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -609,7 +612,10 @@ export function buildRequestLoaders(
             try {
               return await getFunction({ functionId: fnId })
             } catch (e) {
-              if (e instanceof ExecutionEngineNetworkError) {
+              const isNotFound =
+                e instanceof ExecutionEngineFailedResponseError &&
+                e.response.statusMessage === 'FunctionNotFound'
+              if (e instanceof ExecutionEngineNetworkError || isNotFound) {
                 return null
               }
 
