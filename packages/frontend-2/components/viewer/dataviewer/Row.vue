@@ -10,13 +10,13 @@
       @click="handleExpand"
     >
       <div
-        class="col-span-1 truncate mr-1 flex items-center text-foreground-2 font-semibold"
+        class="col-span-1 mr-1 flex items-center text-foreground-2 font-semibold"
       >
         <ChevronRightIcon
           v-if="expandable"
           :class="`w-3 ${expanded ? 'rotate-90' : ''} transition `"
         />
-        <span class="select-all">{{ prop.key }}</span>
+        <span class="select-all truncate">{{ prop.key }}</span>
       </div>
       <div v-if="!expandable" class="col-span-2 truncate select-all">
         {{ prop.value }}

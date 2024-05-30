@@ -19,7 +19,7 @@
     <Transition>
       <div
         v-if="showRemove"
-        class="to-foundation group absolute inset-0 z-[21] flex h-full w-full items-center justify-end space-x-2 rounded bg-gradient-to-r from-blue-500/0 p-4"
+        class="group absolute inset-0 z-[21] flex h-full w-full items-center justify-end space-x-2 rounded bg-gradient-to-r from-transparent to-foundation p-4"
       >
         <FormButton
           color="danger"
