@@ -40,7 +40,7 @@ import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
 import { decodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import { Nullable, StreamRoles, isNullOrUndefined } from '@speckle/shared'
-import _, { clamp, groupBy, keyBy, omit, pick, reduce, zip } from 'lodash'
+import _, { clamp, groupBy, isString, keyBy, omit, pick, reduce } from 'lodash'
 import { SetRequired } from 'type-fest'
 import {
   GetAutomationRunsForVersionParams,
@@ -519,67 +519,79 @@ export async function getAutomationRunsTotalCount(params: {
   return parseInt(ret.count)
 }
 
-export async function getAutomationRunsItems(params: { args: GetAutomationRunsArgs }) {
-  const { args } = params
-  if (args.limit === 0) return { items: [], cursor: null }
-
-  const q = getAutomationRunsTotalCountBaseQuery<
-    Array<{
+const getAutomationRunsItems =
+  ({ db }: { db: Knex }) =>
+  async (params: {
+    args: GetAutomationRunsArgs
+  }): Promise<{
+    items: {
       runs: AutomationRunRecord[]
       triggers: AutomationRunTriggerRecord[]
       functionRuns: AutomationFunctionRunRecord[]
       automationId: string
-    }>
-  >(params)
+    }
+    cursor: string | null
+  }> => {
+    const { args } = params
+    if (args.limit === 0) return { items: [], cursor: null }
 
-  const limit = clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25)
+    const q = getAutomationRunsTotalCountBaseQuery<
+      Array<{
+        runs: AutomationRunRecord[]
+        triggers: AutomationRunTriggerRecord[]
+        functionRuns: AutomationFunctionRunRecord[]
+        automationId: string
+      }>
+    >(params)
 
-  // Attach trigger & function runs
-  q.select([
-    AutomationRuns.groupArray('runs'),
-    AutomationRunTriggers.groupArray('triggers'),
-    AutomationFunctionRuns.groupArray('functionRuns'),
-    knex.raw(`(array_agg(??))[1] as "automationId"`, [
-      AutomationRevisions.col.automationId
+    const limit = clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25)
+
+    // Attach trigger & function runs
+    q.select([
+      AutomationRuns.groupArray('runs'),
+      AutomationRunTriggers.groupArray('triggers'),
+      AutomationFunctionRuns.groupArray('functionRuns'),
+      knex.raw(`(array_agg(??))[1] as "automationId"`, [
+        AutomationRevisions.col.automationId
+      ])
     ])
-  ])
-    .innerJoin(
-      AutomationRunTriggers.name,
-      AutomationRunTriggers.col.automationRunId,
-      AutomationRuns.col.id
+      .innerJoin(
+        AutomationRunTriggers.name,
+        AutomationRunTriggers.col.automationRunId,
+        AutomationRuns.col.id
+      )
+      .innerJoin(
+        AutomationFunctionRuns.name,
+        AutomationFunctionRuns.col.runId,
+        AutomationRuns.col.id
+      )
+
+      .groupBy(AutomationRuns.col.id)
+      .orderBy([
+        { column: AutomationRuns.col.updatedAt, order: 'desc' },
+        { column: AutomationRuns.col.updatedAt, order: 'desc' }
+      ])
+      .limit(limit)
+
+    if (args.cursor?.length) {
+      q.andWhere(AutomationRuns.col.updatedAt, '<', decodeCursor(args.cursor))
+    }
+
+    const res = await q
+    const items = res.map(
+      (r): AutomationRunWithTriggersFunctionRuns => ({
+        ...formatJsonArrayRecords(r.runs)[0],
+        triggers: formatJsonArrayRecords(r.triggers),
+        functionRuns: formatJsonArrayRecords(r.functionRuns),
+        automationId: r.automationId
+      })
     )
-    .innerJoin(
-      AutomationFunctionRuns.name,
-      AutomationFunctionRuns.col.runId,
-      AutomationRuns.col.id
-    )
 
-    .groupBy(AutomationRuns.col.id)
-    .orderBy([
-      { column: AutomationRuns.col.updatedAt, order: 'desc' },
-      { column: AutomationRuns.col.updatedAt, order: 'desc' }
-    ])
-    .limit(limit)
-
-  if (args.cursor?.length) {
-    q.andWhere(AutomationRuns.col.updatedAt, '<', decodeCursor(args.cursor))
+    return {
+      items,
+      cursor: items.length ? items[items.length - 1].updatedAt.toISOString() : null
+    }
   }
-
-  const res = await q
-  const items = res.map(
-    (r): AutomationRunWithTriggersFunctionRuns => ({
-      ...formatJsonArrayRecords(r.runs)[0],
-      triggers: formatJsonArrayRecords(r.triggers),
-      functionRuns: formatJsonArrayRecords(r.functionRuns),
-      automationId: r.automationId
-    })
-  )
-
-  return {
-    items,
-    cursor: items.length ? items[items.length - 1].updatedAt.toISOString() : null
-  }
-}
 
 const getProjectAutomationsBaseQuery =
   ({ db }: { db: Knex }) =>
@@ -638,7 +650,7 @@ const getAutomationRunsForVersion =
     params: GetAutomationRunsForVersionParams,
     options?: Partial<{ limit: number }>
   ) => {
-    const { projectId, modelId, versionId } = params
+    const { versionId } = params
     const { limit = 20 } = options || {}
 
     // yes, this is a long raw sql query, but its more expressive
@@ -661,154 +673,53 @@ inner join automations a on rev."automationId" = a.id
 inner join automation_run_triggers run_tr on run.id = run_tr."automationRunId"
 left join lateral(
 	select coalesce(
-		json_agg(
-			json_build_array(
-        ${AutomationRunTriggers.withoutTablePrefix.cols
-          .map((col) => `${AutomationRunTriggers.name}."${col}"`)
-          .join(',\n')}
-      )
-		), '[]'::json
+		json_agg(row_to_json(automation_run_triggers.*)), '[]'::json
 	)
 	as items from automation_run_triggers
 	where automation_run_triggers."automationRunId" = run.id
 ) run_triggers on true
 left join lateral (
 	select coalesce(json_agg(
-		json_build_array(
-      afr.id, 
-      afr."runId", 
-      afr."functionId", 
-      afr."functionReleaseId", 
-      afr.elapsed, 
-      afr.status, 
-      afr."contextView", 
-      afr."statusMessage", 
-      afr.results, 
-      afr."createdAt", 
-      afr."updatedAt"
-    )
-	), '[]'::json)
-	as items from automation_function_runs afr
-	where afr."runId" = run.id
+		json_build_array(automation_function_runs.*)), '[]'::json)
+	as items from automation_function_runs
+	where automation_function_runs."runId" = run.id
 ) "functionRuns" on true
 where run_tr."triggeringId"= ?
 and run_tr."triggerType"= ?
 order by rev."automationId", run."createdAt" desc
+limit ?
     `
     const items: {
       rows: Array<
         AutomationRunRecord & {
           automationId: string
-          triggers: Array<Array<string | number>>
-          functionRuns: Array<Array<string | number>>
+          triggers: Array<AutomationRunTriggerRecord>
+          functionRuns: Array<Record<string, unknown>>
         }
       >
-    } = await db.raw(rawSql, [versionId, 'versionCreation'])
+    } = await db.raw(rawSql, [versionId, 'versionCreation', limit])
 
     const parsed = items.rows.map((i) => {
-      const triggers = i.triggers.map((t) => {
-        const trigger: AutomationRunTriggerRecord = Object.fromEntries(
-          zip(AutomationRunTriggers.withoutTablePrefix.cols, t)
-        )
-        return trigger
-      })
       const functionRuns = i.functionRuns.map((fr) => {
-        const functionRun: AutomationFunctionRunRecord = Object.fromEntries(
-          zip(AutomationFunctionRuns.withoutTablePrefix.cols, fr).map(
-            ([key, value]) => {
-              if (key === undefined || value === undefined)
-                throw new Error(
-                  `Object zip mismatch, key/value ${key}/${value} undefined`
-                )
+        const functionRun = Object.fromEntries(
+          // remapping entries to parse dates
+          Object.entries(fr).map(([key, value]) => {
+            if (isString(value) && key?.endsWith('atedAt'))
+              return [key, new Date(value)]
 
-              if (key?.endsWith('atedAt')) return [key, new Date(value)]
-              // might need to parse objectResults
-              return [key, value]
-            }
-          )
+            // might need to parse objectResults
+            return [key, value]
+          })
         )
-        return functionRun
+        return functionRun as AutomationFunctionRunRecord
       })
-      const record = omit(i, 'triggers', 'functionRuns')
+      const record = omit(i, 'functionRuns')
       return {
         ...record,
-        triggers,
         functionRuns
       }
     })
     return parsed
-
-    const runsQ = db(AutomationRuns.name)
-      .select<Array<AutomationRunRecord & { automationId: string }>>([
-        ...AutomationRuns.cols,
-        AutomationRevisions.col.automationId
-      ])
-      .innerJoin(
-        AutomationRevisions.name,
-        AutomationRevisions.col.id,
-        AutomationRuns.col.automationRevisionId
-      )
-      .innerJoin(
-        Automations.name,
-        Automations.col.id,
-        AutomationRevisions.col.automationId
-      )
-      .innerJoin(
-        AutomationRunTriggers.name,
-        AutomationRunTriggers.col.automationRunId,
-        AutomationRuns.col.id
-      )
-      .innerJoin(
-        BranchCommits.name,
-        BranchCommits.col.commitId,
-        AutomationRunTriggers.col.triggeringId
-      )
-      .where(AutomationRunTriggers.col.triggerType, VersionCreationTriggerType)
-      .andWhere(AutomationRunTriggers.col.triggeringId, versionId)
-      .andWhere(Automations.col.projectId, projectId)
-      .andWhere(BranchCommits.col.branchId, modelId)
-      .distinctOn(AutomationRevisions.col.automationId)
-      .orderBy([
-        { column: AutomationRevisions.col.automationId },
-        { column: AutomationRuns.col.createdAt, order: 'desc' }
-      ])
-      .limit(limit)
-
-    const mainQ = knex()
-      .select<
-        Array<{
-          runs: Array<AutomationRunRecord & { automationId: string }>
-          functionRuns: AutomationFunctionRunRecord[]
-          triggers: AutomationRunTriggerRecord[]
-        }>
-      >([
-        // We will only have 1 run here, but we have to use an aggregation because of the grouping,
-        // so we just take the 1st array item later on
-        AutomationRuns.with({ withCustomTablePrefix: 'rq' }).groupArray('runs'),
-        AutomationFunctionRuns.groupArray('functionRuns'),
-        AutomationRunTriggers.groupArray(
-          '                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  '
-        )
-      ])
-      .from(runsQ.as('rq'))
-      .innerJoin(AutomationFunctionRuns.name, AutomationFunctionRuns.col.runId, 'rq.id')
-      .innerJoin(
-        AutomationRunTriggers.name,
-        AutomationRunTriggers.col.automationRunId,
-        'rq.id'
-      )
-      .orderBy([{ column: 'rq.updatedAt', order: 'desc' }])
-      .groupBy('rq.id', 'rq.updatedAt')
-
-    const res = await mainQ
-    const formattedItems: AutomationRunWithTriggersFunctionRuns[] = res.map(
-      (r): AutomationRunWithTriggersFunctionRuns => ({
-        ...formatJsonArrayRecords(r.runs)[0],
-        triggers: formatJsonArrayRecords(r.triggers),
-        functionRuns: formatJsonArrayRecords(r.functionRuns)
-      })
-    )
-    return formattedItems
   }
 
 const queryAutomationProjects =

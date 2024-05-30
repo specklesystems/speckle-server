@@ -26,8 +26,6 @@ export type QueryProjectAutomationsParams = {
 }
 
 export type GetAutomationRunsForVersionParams = {
-  projectId: string
-  modelId: string
   versionId: string
 }
 
