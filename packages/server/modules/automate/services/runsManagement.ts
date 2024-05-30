@@ -148,7 +148,7 @@ export const reportFunctionRunStatus =
 
     await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.StatusUpdated, {
       run: updatedRun,
-      functionRuns: [nextFunctionRunRecord],
+      functionRun: nextFunctionRunRecord,
       automationId
     })
 

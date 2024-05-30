@@ -606,8 +606,7 @@ export const AutomationRuns = buildTableHelper('automation_runs', [
   'createdAt',
   'updatedAt',
   'status',
-  'executionEngineRunId',
-  'triggeredByUserId'
+  'executionEngineRunId'
 ])
 
 export const AutomationTriggers = buildTableHelper('automation_triggers', [

@@ -48,7 +48,6 @@ export type AutomationRunRecord = {
   updatedAt: Date
   status: AutomationRunStatus
   executionEngineRunId: string | null
-  triggeredByUserId: string | null
 }
 
 export type AutomateRevisionFunctionRecord = {

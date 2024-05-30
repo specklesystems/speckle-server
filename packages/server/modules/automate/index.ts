@@ -26,7 +26,6 @@ import {
   setupStatusUpdateSubscriptions
 } from '@/modules/automate/services/subscriptions'
 import { setupRunFinishedTracking } from '@/modules/automate/services/tracking'
-import { getUser } from '@/modules/core/repositories/users'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -68,7 +67,6 @@ const initializeEventListeners = () => {
   })
   const setupAutomationUpdateSubscriptionsInvoke = setupAutomationUpdateSubscriptions()
   const setupRunFinishedTrackingInvoke = setupRunFinishedTracking({
-    getUser,
     getFullAutomationRevisionMetadata
   })
 
@@ -79,7 +77,7 @@ const initializeEventListeners = () => {
         await onModelVersionCreate({
           getTriggers: getActiveTriggerDefinitions,
           triggerFunction: triggerFn
-        })({ modelId, versionId: version.id, projectId, createdBy: version.author })
+        })({ modelId, versionId: version.id, projectId })
       }
     ),
     setupStatusUpdateSubscriptionsInvoke(),

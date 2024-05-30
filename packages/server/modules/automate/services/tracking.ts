@@ -5,7 +5,6 @@ import {
   AutomationRunStatuses
 } from '@/modules/automate/helpers/types'
 import { getFullAutomationRevisionMetadata } from '@/modules/automate/repositories/automations'
-import { getUser } from '@/modules/core/repositories/users'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import dayjs from 'dayjs'
 
@@ -22,23 +21,21 @@ const isFinished = (runStatus: AutomationRunStatus) => {
 }
 
 export type SetupRunFinishedTrackingDeps = {
-  getUser: typeof getUser
   getFullAutomationRevisionMetadata: typeof getFullAutomationRevisionMetadata
 }
 
 export const setupRunFinishedTracking = (deps: SetupRunFinishedTrackingDeps) => () => {
-  const { getUser, getFullAutomationRevisionMetadata } = deps
+  const { getFullAutomationRevisionMetadata } = deps
 
   const quitters = [
     AutomateRunsEmitter.listen(
       AutomateRunsEmitter.events.StatusUpdated,
-      async ({ run }) => {
+      async ({ run, functionRun, automationId }) => {
         if (!isFinished(run.status)) return
 
-        const [user, automationWithRevision] = await Promise.all([
-          run.triggeredByUserId ? await getUser(run.triggeredByUserId) : null,
-          getFullAutomationRevisionMetadata(run.automationRevisionId)
-        ])
+        const automationWithRevision = await getFullAutomationRevisionMetadata(
+          run.automationRevisionId
+        )
         if (!automationWithRevision) {
           automateLogger.error(
             {
@@ -49,14 +46,18 @@ export const setupRunFinishedTracking = (deps: SetupRunFinishedTrackingDeps) => 
           return
         }
 
-        const mp = mixpanel({ userEmail: user?.email })
-        await mp.track('Automation Run Finished', {
-          automationId: automationWithRevision.id,
+        const mp = mixpanel({ userEmail: undefined })
+        await mp.track('Automate Function Run Finished', {
+          automationId,
+          automationRevisionId: automationWithRevision.id,
           automationName: automationWithRevision.name,
           runId: run.id,
-          status: run.status,
-          durationInSeconds: dayjs(run.updatedAt).diff(run.createdAt, 'second'),
-          triggeredBy: run.triggeredByUserId
+          functionRunId: functionRun.id,
+          status: functionRun.status,
+          durationInSeconds: dayjs(functionRun.updatedAt).diff(
+            functionRun.createdAt,
+            'second'
+          )
         })
       }
     )

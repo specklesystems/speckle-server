@@ -53,13 +53,8 @@ export type OnModelVersionCreateDeps = {
  */
 export const onModelVersionCreate =
   (deps: OnModelVersionCreateDeps) =>
-  async (params: {
-    modelId: string
-    versionId: string
-    projectId: string
-    createdBy: string | null
-  }) => {
-    const { modelId, versionId, projectId, createdBy } = params
+  async (params: { modelId: string; versionId: string; projectId: string }) => {
+    const { modelId, versionId, projectId } = params
     const { getTriggers, triggerFunction } = deps
 
     // get triggers where modelId matches
@@ -79,8 +74,7 @@ export const onModelVersionCreate =
               projectId,
               modelId: tr.triggeringId,
               triggerType: tr.triggerType
-            },
-            triggeredBy: createdBy
+            }
           })
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
@@ -111,10 +105,9 @@ const createAutomationRunData =
   async (params: {
     manifests: BaseTriggerManifest[]
     automationWithRevision: AutomationWithRevision<AutomationRevisionWithTriggersFunctions>
-    triggeredBy: string | null
   }): Promise<InsertableAutomationRunWithExtendedFunctionRuns> => {
     const { getEncryptionKeyPairFor, getFunctionInputDecryptor } = deps
-    const { manifests, automationWithRevision, triggeredBy } = params
+    const { manifests, automationWithRevision } = params
     const runId = cryptoRandomString({ length: 15 })
     const versionCreatedManifests = manifests.filter(isVersionCreatedTriggerManifest)
     if (!versionCreatedManifests.length) {
@@ -130,7 +123,6 @@ const createAutomationRunData =
     let automationRun: InsertableAutomationRunWithExtendedFunctionRuns
     try {
       automationRun = {
-        triggeredByUserId: triggeredBy,
         id: runId,
         triggers: [
           ...versionCreatedManifests.map((m) => ({
@@ -197,10 +189,9 @@ export const triggerAutomationRevisionRun =
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
-    triggeredBy: string | null
   }): Promise<{ automationRunId: string }> => {
     const { automateRunTrigger } = deps
-    const { revisionId, manifest, triggeredBy } = params
+    const { revisionId, manifest } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
       throw new AutomateInvalidTriggerError(
@@ -248,8 +239,7 @@ export const triggerAutomationRevisionRun =
 
     const automationRun = await createAutomationRunData(deps)({
       manifests: triggerManifests,
-      automationWithRevision,
-      triggeredBy
+      automationWithRevision
     })
     await upsertAutomationRun(automationRun)
 
@@ -468,14 +458,14 @@ export const manuallyTriggerAutomation =
     }
 
     // Trigger "model version created"
-    return await triggerFunction({
+    const { automationRunId } = await triggerFunction({
       revisionId: triggerDefs[0].automationRevisionId,
       manifest: <VersionCreatedTriggerManifest>{
         projectId,
         modelId: latestCommit.branchId,
         versionId: latestCommit.id,
         triggerType: VersionCreationTriggerType
-      },
-      triggeredBy: userId
+      }
     })
+    return { automationRunId }
   }

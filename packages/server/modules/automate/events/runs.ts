@@ -20,7 +20,7 @@ export type AutomateEventsPayloads = {
   }
   [AutomateRunsEvents.StatusUpdated]: {
     run: AutomationRunRecord
-    functionRuns: AutomationFunctionRunRecord[]
+    functionRun: AutomationFunctionRunRecord
     automationId: string
   }
 }
