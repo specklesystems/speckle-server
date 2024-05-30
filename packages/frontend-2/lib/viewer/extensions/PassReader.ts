@@ -1,19 +1,29 @@
 import { type SpecklePass } from '@speckle/viewer'
 import { Extension } from '@speckle/viewer'
-import { Vector3, Vector4 } from 'three'
+import type SpeckleRenderer from '@speckle/viewer/dist/modules/SpeckleRenderer'
+import { Vector3, Vector4, WebGLRenderTarget } from 'three'
 
 export class PassReader extends Extension {
-  private outputBuffer: Uint8Array = []
+  private outputBuffer: Uint8Array = new Uint8Array()
+  private renderTarget: WebGLRenderTarget | undefined = undefined
   private needsRead: boolean = false
-  private readbackExecutor: (arg: string) => void
+  private readbackExecutor: ((arg: string) => void) | null = null
 
   public async read(): Promise<string> {
-    return new Promise<string>((resolve) => {
-      const dephPass: SpecklePass =
-        this.viewer.getRenderer().pipeline.composer.passes[0]
+    return new Promise<string>((resolve, reject) => {
+      const renderer: SpeckleRenderer = this.viewer.getRenderer()
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const dephPass: SpecklePass = renderer.pipeline.composer
+        .passes[0] as unknown as SpecklePass
+      // o_0
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      this.renderTarget = dephPass.outputRenderTarget
+      if (!this.renderTarget) {
+        reject('Issue with depth pass render target')
+        return
+      }
 
-      const bufferSize =
-        dephPass.outputRenderTarget.width * dephPass.outputRenderTarget.height * 4
+      const bufferSize = this.renderTarget.width * this.renderTarget.height * 4
       if (this.outputBuffer.length !== bufferSize)
         this.outputBuffer = new Uint8Array(bufferSize)
       this.needsRead = true
@@ -22,18 +32,16 @@ export class PassReader extends Extension {
   }
 
   public onRender(): void {
-    if (!this.needsRead) return
+    if (!this.needsRead || this.renderTarget === undefined) return
 
-    const dephPass: SpecklePass = this.viewer.getRenderer().pipeline.composer.passes[0]
-    const depthPassRT = dephPass.outputRenderTarget
     this.viewer
       .getRenderer()
       .renderer.readRenderTargetPixels(
-        depthPassRT,
+        this.renderTarget,
         0,
         0,
-        depthPassRT.width,
-        depthPassRT.height,
+        this.renderTarget.width,
+        this.renderTarget.height,
         this.outputBuffer
       )
     const UnpackDownscale = 255 / 256
@@ -63,11 +71,11 @@ export class PassReader extends Extension {
     const canvas = document.createElement('canvas')
     const ctx = canvas.getContext('2d')
     if (!ctx) return
-    canvas.width = depthPassRT.width
-    canvas.height = depthPassRT.height
+    canvas.width = this.renderTarget.width
+    canvas.height = this.renderTarget.height
 
     // create imageData object
-    const idata = ctx.createImageData(depthPassRT.width, depthPassRT.height)
+    const idata = ctx.createImageData(this.renderTarget.width, this.renderTarget.height)
 
     // set our buffer as source
     idata.data.set(this.outputBuffer)
@@ -79,10 +87,10 @@ export class PassReader extends Extension {
      */
     ctx.globalCompositeOperation = 'copy'
     ctx.scale(1, -1)
-    ctx.drawImage(canvas, 0, 0, depthPassRT.width, -depthPassRT.height)
+    ctx.drawImage(canvas, 0, 0, this.renderTarget.width, -this.renderTarget.height)
     ctx.restore()
 
-    this.readbackExecutor(canvas.toDataURL())
+    if (this.readbackExecutor) this.readbackExecutor(canvas.toDataURL())
     this.needsRead = false
   }
 }
