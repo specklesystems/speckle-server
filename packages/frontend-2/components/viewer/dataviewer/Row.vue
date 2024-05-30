@@ -29,7 +29,7 @@
         <span v-if="prop.type === 'array'" class="text-foreground-2 text-xs">
           ({{ arrayLen }})
         </span>
-        <span v-if="isDetached" class="select-all truncate mr-1">
+        <span v-if="isDetached" class="mr-1 flex space-x-1">
           <!-- eslint-disable-next-line vuejs-accessibility/anchor-has-content -->
           <a
             title="detached object - click to open in a new tab"
@@ -39,6 +39,13 @@
           >
             <ArrowUpRightIcon class="w-3" />
           </a>
+          <button
+            title="isolate objects"
+            class="hover:text-primary"
+            @click.stop="handleHighlight"
+          >
+            <FunnelIcon class="w-2" />
+          </button>
         </span>
       </div>
     </div>
@@ -48,9 +55,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronRightIcon, ArrowUpRightIcon } from '@heroicons/vue/20/solid'
+import { ChevronRightIcon, ArrowUpRightIcon, FunnelIcon } from '@heroicons/vue/20/solid'
 import { modelRoute } from '~/lib/common/helpers/route'
+import { containsAll } from '~/lib/common/helpers/utils'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
+import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 const props = defineProps<{
   prop: {
     key: string
@@ -59,7 +68,15 @@ const props = defineProps<{
   }
 }>()
 
-const { projectId } = useInjectedViewerState()
+const {
+  projectId,
+  viewer: {
+    instance,
+    metadata: { filteringState }
+  }
+} = useInjectedViewerState()
+
+const { isolateObjects, resetFilters } = useFilterUtilities()
 
 const expanded = ref(false)
 
@@ -83,7 +100,7 @@ const handleExpand = () => {
 }
 
 const isDetached = computed(() => {
-  return !!(props.prop.value as { referencedId: string }).referencedId
+  return (props.prop.value as { referencedId: string }).referencedId
 })
 
 const selectionLink = computed(() => {
@@ -91,4 +108,13 @@ const selectionLink = computed(() => {
   if (!refId) return
   return modelRoute(projectId.value, refId)
 })
+
+const handleHighlight = () => {
+  if (!isDetached.value) return
+  const isIsolated = filteringState.value?.isolatedObjects?.includes(isDetached.value)
+  if (isIsolated) return resetFilters()
+  instance.zoom([isDetached.value])
+  resetFilters()
+  isolateObjects([isDetached.value])
+}
 </script>
