@@ -118,11 +118,14 @@ spec:
 
           - name: FF_AUTOMATE_MODULE_ENABLED
             value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
-          
-            {{- if .Values.featureFlags.automateModuleEnabled }}
+
+          {{- if .Values.featureFlags.automateModuleEnabled }}
+          - name: SPECKLE_AUTOMATE_URL
+            value: {{ .Values.server.speckleAutomateUrl }}
+
           - name: AUTOMATE_ENCRYPTION_KEYS_PATH
             value: {{ .Values.server.encryptionKeys.path }}
-            {{- end }}
+          {{- end }}
 
           - name: ONBOARDING_STREAM_URL
             value: {{ .Values.server.onboarding.stream_url }}
@@ -143,10 +146,6 @@ spec:
 
           - name: MAX_OBJECT_SIZE_MB
             value: {{ .Values.server.max_object_size_mb | quote }}
-
-          - name: SPECKLE_AUTOMATE_URL
-            value: {{ .Values.server.speckleAutomateUrl }}
-
 
             {{- if .Values.server.migration.movedFrom }}
           - name: MIGRATION_SERVER_MOVED_FROM

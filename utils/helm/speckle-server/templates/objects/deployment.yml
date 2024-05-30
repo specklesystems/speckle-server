@@ -128,9 +128,6 @@ spec:
           - name: MAX_OBJECT_SIZE_MB
             value: {{ .Values.objects.max_object_size_mb | quote }}
 
-          - name: SPECKLE_AUTOMATE_URL
-            value: {{ .Values.server.speckleAutomateUrl }}
-
           # *** Redis ***
           - name: REDIS_URL
             valueFrom:
@@ -322,6 +319,18 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.server.monitoring.apollo.key.secretName }}
                 key: {{ default "apollo_key" .Values.server.monitoring.apollo.key.secretKey }}
+          {{- end }}
+
+          # Automate
+          - name: FF_AUTOMATE_MODULE_ENABLED
+            value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
+
+          {{- if .Values.featureFlags.automateModuleEnabled }}
+          - name: SPECKLE_AUTOMATE_URL
+            value: {{ .Values.server.speckleAutomateUrl }}
+
+          - name: AUTOMATE_ENCRYPTION_KEYS_PATH
+            value: {{ .Values.server.encryptionKeys.path }}
           {{- end }}
 
           # Rate Limiting
