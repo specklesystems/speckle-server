@@ -20,7 +20,7 @@ export interface IBasicConnectorBinding
   addModel: (model: IModelCard) => Promise<void>
   updateModel: (model: IModelCard) => Promise<void>
   highlightModel: (modelCardId: string) => Promise<void>
-  highlightObjects: (objectId: string[]) => Promise<void>
+  highlightObjects: (objectIds: string[]) => Promise<void>
   removeModel: (model: IModelCard) => Promise<void>
 }
 
