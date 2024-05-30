@@ -9,12 +9,10 @@
       :class="`grid grid-cols-3 ${expandable ? 'cursor-pointer' : ''}`"
       @click="handleExpand"
     >
-      <div
-        class="col-span-1 mr-1 flex items-center text-foreground-2 font-semibold"
-      >
+      <div class="col-span-1 mr-1 flex items-center text-foreground-2 font-semibold">
         <ChevronRightIcon
           v-if="expandable"
-          :class="`w-3 ${expanded ? 'rotate-90' : ''} transition `"
+          :class="`w-3 ${expanded ? 'rotate-90' : ''} transition shrink-0 `"
         />
         <span class="select-all truncate">{{ prop.key }}</span>
       </div>
