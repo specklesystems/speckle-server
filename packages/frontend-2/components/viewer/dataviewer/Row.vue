@@ -1,10 +1,8 @@
 <template>
   <div
     :class="`w-full bg-foundation-2 hover:bg-blue-500/5 rounded px-1 py-1 border-l-2 text-xs ${
-      expandable && !expanded
-        ? 'border-blue-500 border-opacity-50'
-        : 'border-neutral-500 border-opacity-20'
-    } `"
+      expandable ? 'border-blue-500' : 'border-transparent'
+    } ${expanded ? 'border-neutral-500 border-opacity-30' : ''}`"
   >
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
