@@ -91,7 +91,7 @@ export interface ViewerEventPayload {
 export type SpeckleView = {
   name: string
   id: string
-  view: { origin: Vector3Like; target: Vector3Like }
+  view: { name: string; origin: Vector3Like; target: Vector3Like }
 }
 
 export type SelectionEvent = {
