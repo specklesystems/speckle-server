@@ -13,7 +13,7 @@ export class ExtendedSelection extends SelectionExtension {
   /** This object will recieve the TransformControls translation */
   private dummyAnchor: Object3D = new Object3D()
   /** Stock three.js gizmo */
-  private transformControls: TransformControls = null
+  private transformControls: TransformControls | undefined
   private lastGizmoTranslation: Vector3 = new Vector3()
 
   public init() {
@@ -36,9 +36,13 @@ export class ExtendedSelection extends SelectionExtension {
   }
 
   private initGizmo() {
+    const camera = this.viewer.getRenderer().renderingCamera
+    if (!camera) {
+      throw new Error('Cannot init move gizmo with no camera')
+    }
     /** Create a new TransformControls gizmo */
     this.transformControls = new TransformControls(
-      this.viewer.getRenderer().renderingCamera,
+      camera,
       this.viewer.getRenderer().renderer.domElement
     )
     /** The gizmo creates an entire hierarchy of children internally,
@@ -96,10 +100,12 @@ export class ExtendedSelection extends SelectionExtension {
     const center = box.getCenter(new Vector3())
     this.dummyAnchor.position.copy(center)
     this.lastGizmoTranslation.copy(this.dummyAnchor.position)
-    if (attach) {
-      this.transformControls.attach(this.dummyAnchor)
-    } else {
-      this.transformControls.detach()
+    if (this.transformControls) {
+      if (attach) {
+        this.transformControls.attach(this.dummyAnchor)
+      } else {
+        this.transformControls.detach()
+      }
     }
   }
 
