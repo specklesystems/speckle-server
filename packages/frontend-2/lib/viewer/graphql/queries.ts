@@ -134,3 +134,15 @@ export const viewerLoadedThreadsQuery = graphql(`
     }
   }
 `)
+
+export const viewerRawObjectQuery = graphql(`
+  query Stream($streamId: String!, $objectId: String!) {
+    stream(id: $streamId) {
+      id
+      object(id: $objectId) {
+        id
+        data
+      }
+    }
+  }
+`)
