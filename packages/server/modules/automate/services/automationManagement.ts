@@ -124,6 +124,7 @@ export const createAutomation =
   }
 
 export type CreateTestAutomationDeps = {
+  getEncryptionKeyPair: typeof getEncryptionKeyPair
   getFunction: typeof getFunction
   storeAutomation: typeof storeAutomation
   storeAutomationRevision: typeof storeAutomationRevision
@@ -144,7 +145,12 @@ export const createTestAutomation =
       userId,
       userResourceAccessRules
     } = params
-    const { getFunction, storeAutomation, storeAutomationRevision } = deps
+    const {
+      getEncryptionKeyPair,
+      getFunction,
+      storeAutomation,
+      storeAutomationRevision
+    } = deps
 
     validateAutomationName(name)
 
@@ -187,6 +193,8 @@ export const createTestAutomation =
     })
 
     // Create and store the automation revision
+    const encryptionKeyPair = await getEncryptionKeyPair()
+
     const automationRevisionRecord = await storeAutomationRevision({
       functions: [
         {
@@ -204,8 +212,7 @@ export const createTestAutomation =
       automationId,
       userId,
       active: true,
-      // TODO: Should this be formally nullable?
-      publicKey: ''
+      publicKey: encryptionKeyPair.publicKey
     })
 
     await AutomationsEmitter.emit(AutomationsEmitter.events.CreatedRevision, {

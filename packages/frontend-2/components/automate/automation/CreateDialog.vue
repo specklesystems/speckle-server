@@ -114,10 +114,7 @@ const props = defineProps<{
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
-const config = useRuntimeConfig()
-const enableCreateTestAutomation = computed(() => {
-  return config.public.FF_TEST_AUTOMATIONS_ENABLED
-})
+const enableCreateTestAutomation = useEnableTestAutomation()
 
 const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
 

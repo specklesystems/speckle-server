@@ -9,4 +9,12 @@ export const useIsAutomateModuleEnabled = () => {
   return ref(FF_AUTOMATE_MODULE_ENABLED)
 }
 
+export const useEnableTestAutomation = () => {
+  const {
+    public: { FF_TEST_AUTOMATIONS_ENABLED }
+  } = useRuntimeConfig()
+
+  return ref(FF_TEST_AUTOMATIONS_ENABLED)
+}
+
 export { useGlobalToast, useActiveUser }

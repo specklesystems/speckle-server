@@ -476,6 +476,7 @@ export = {
     },
     async createTestAutomation(parent, { input }, ctx) {
       const create = createTestAutomation({
+        getEncryptionKeyPair,
         getFunction,
         storeAutomation,
         storeAutomationRevision
