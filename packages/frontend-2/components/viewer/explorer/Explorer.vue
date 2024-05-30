@@ -25,15 +25,11 @@
             </FormButton>
           </div>
           <div v-else>
-            <h4 class="font-bold whitespace-normal text-xs ml-1">Raw Data Viewer</h4>
+            <h4 class="font-bold whitespace-normal text-xs ml-1">Dev Mode</h4>
           </div>
 
           <FormButton
-            v-tippy="
-              showRaw
-                ? 'Switch to the classic data viewer'
-                : 'Switch to the raw data viewer'
-            "
+            v-tippy="showRaw ? 'Switch back' : 'Switch to Dev Mode'"
             size="xs"
             text
             class="-mr-0.5 sm:-mr-1"

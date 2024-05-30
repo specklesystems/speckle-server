@@ -1,7 +1,7 @@
 <template>
   <div class="px-2 divide-y divide-dashed divide-primary-muted">
-    <div v-for="obj in rootObjs" :key="obj.referencedId" class="py-2">
-      <div class="font-bold text-xs pl-1 mb-2 text-foreground-2">
+    <div v-for="obj in rootObjs" :key="obj.referencedId" class="py-3">
+      <div class="font-bold text-xs pl-1 mb-2 text-foreground-1">
         {{ obj.name }}
       </div>
       <ViewerDataviewerObject :object="obj" />
@@ -19,14 +19,14 @@ const { objects: selectedObjects } = useSelectionUtilities()
 const rootObjs = computed(() => {
   const selection = selectedObjects.value.map((o) => ({
     referencedId: o.id,
-    name: 'Selected object ' + o.id,
+    name: 'Selection',
     // eslint-disable-next-line camelcase
     speckle_type: 'reference'
   }))
 
   const models = modelsAndVersionIds.value.map((m) => ({
     referencedId: m.model.loadedVersion.items[0].referencedObject,
-    name: 'Model ' + m.model.name,
+    name: m.model.name,
     // eslint-disable-next-line camelcase
     speckle_type: 'reference'
   }))
