@@ -52,6 +52,7 @@ const searchQuery = graphql(`
 
 const props = defineProps<{
   preselectedFunction: Optional<CreateAutomationSelectableFunction>
+  pageSize?: Optional<number>
 }>()
 const selectedFunction = defineModel<Optional<CreateAutomationSelectableFunction>>(
   'selectedFunction',
@@ -67,7 +68,7 @@ const { result } = useQuery(searchQuery, () => ({
 
 const queryItems = computed(() => result.value?.automateFunctions.items)
 const items = computed(() => {
-  const baseItems = (queryItems.value || []).slice()
+  const baseItems = (queryItems.value || []).slice(0, props.pageSize)
   const preselectedFn = props.preselectedFunction
 
   if (!preselectedFn || baseItems.find((fn) => fn.id === preselectedFn.id)) {

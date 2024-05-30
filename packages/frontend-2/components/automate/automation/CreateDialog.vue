@@ -49,6 +49,12 @@
         :automation-id="automationId"
         :function-name="selectedFunction.name"
       />
+      <AutomateAutomationCreateDialogSelectFunctionStep
+        v-if="enumStep === AutomationCreateSteps.AutomationDetails && isTestAutomation"
+        v-model:selected-function="selectedFunction"
+        :preselected-function="validatedPreselectedFunction"
+        :page-size="2"
+      />
     </div>
   </LayoutDialog>
 </template>
