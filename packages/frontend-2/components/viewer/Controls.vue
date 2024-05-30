@@ -28,16 +28,6 @@
         <IconFileExplorer class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
-      <!-- JSON Viewer -->
-      <!-- NOTE: It's embedded in the scene explorer as a different mode! -->
-      <!-- <ViewerControlsButtonToggle
-        v-tippy="'Raw data viewer'"
-        :active="activeControl === 'jsonViewer'"
-        @click="toggleActiveControl('jsonViewer')"
-      >
-        <CodeBracketIcon class="h-4 w-4 md:h-5 md:w-5" />
-      </ViewerControlsButtonToggle> -->
-
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
         v-tippy="isSmallerOrEqualSm ? undefined : discussionsShortcut"
@@ -210,15 +200,6 @@
         </KeepAlive>
       </div>
 
-      <div v-show="resourceItems.length !== 0 && activeControl === 'jsonViewer'">
-        <!-- <KeepAlive> -->
-        <ViewerDataviewerPanel
-          class="pointer-events-auto"
-          @close="activeControl = 'none'"
-        />
-        <!-- </KeepAlive> -->
-      </div>
-
       <ViewerComments
         v-if="resourceItems.length !== 0 && activeControl === 'discussions'"
         class="pointer-events-auto"
@@ -338,7 +319,6 @@ type ActiveControl =
   | 'none'
   | 'models'
   | 'explorer'
-  | 'jsonViewer'
   | 'filters'
   | 'discussions'
   | 'automate'

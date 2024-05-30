@@ -1,18 +1,12 @@
 <template>
-  <ViewerLayoutPanel @close="$emit('close')">
-    <template #title>
-      <span class="text-foreground">Raw Data Viewer</span>
-    </template>
-
-    <div class="px-1 divide-y divide-dashed divide-primary-muted">
-      <div v-for="obj in rootObjs" :key="obj.referencedId" class="py-2">
-        <div class="font-bold text-xs pl-1 mb-2 text-foreground-2">
-          {{ obj.name }}
-        </div>
-        <ViewerDataviewerObject :object="obj" />
+  <div class="px-2 divide-y divide-dashed divide-primary-muted">
+    <div v-for="obj in rootObjs" :key="obj.referencedId" class="py-2">
+      <div class="font-bold text-xs pl-1 mb-2 text-foreground-2">
+        {{ obj.name }}
       </div>
+      <ViewerDataviewerObject :object="obj" />
     </div>
-  </ViewerLayoutPanel>
+  </div>
 </template>
 <script setup lang="ts">
 import { useSelectionUtilities } from '~/lib/viewer/composables/ui'
@@ -21,10 +15,6 @@ import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setu
 const { modelsAndVersionIds, objects } = useInjectedViewerLoadedResources()
 
 const { objects: selectedObjects } = useSelectionUtilities()
-
-defineEmits<{
-  (e: 'close'): void
-}>()
 
 const rootObjs = computed(() => {
   const selection = selectedObjects.value.map((o) => ({

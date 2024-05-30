@@ -1,40 +1,56 @@
 <template>
   <div>
-    <ViewerLayoutPanel v-if="!showRaw" @close="$emit('close')">
+    <ViewerLayoutPanel @close="$emit('close')">
       <template #title>Scene Explorer</template>
 
       <template #actions>
-        <div class="flex items-center w-full">
-          <FormButton
-            size="xs"
-            text
-            :icon-left="BarsArrowDownIcon"
-            @click="expandLevel++"
-          >
-            Unfold
-          </FormButton>
-          <FormButton
-            size="xs"
-            text
-            :icon-left="BarsArrowUpIcon"
-            :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
-            @click="collapse()"
-          >
-            Collapse
-          </FormButton>
-          <div class="text-right w-full grow">
+        <div class="flex items-center justify-between w-full">
+          <div v-if="!showRaw" class="flex items-center">
             <FormButton
-              v-tippy="'Switch to the raw data viewer'"
               size="xs"
               text
-              @click="showRaw = true"
+              :icon-left="BarsArrowDownIcon"
+              @click="expandLevel++"
             >
-              <CodeBracketIcon class="w-3" />
+              Unfold
+            </FormButton>
+            <FormButton
+              size="xs"
+              text
+              :icon-left="BarsArrowUpIcon"
+              :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
+              @click="collapse()"
+            >
+              Collapse
             </FormButton>
           </div>
+          <div v-else>
+            <h4 class="font-bold whitespace-normal text-xs ml-1">Raw Data Viewer</h4>
+          </div>
+
+          <FormButton
+            v-tippy="
+              showRaw
+                ? 'Switch to the classic data viewer'
+                : 'Switch to the raw data viewer'
+            "
+            size="xs"
+            text
+            class="-mr-0.5 sm:-mr-1"
+            color="secondary"
+            @click="showRaw = !showRaw"
+          >
+            <CodeBracketIcon
+              class="size-4 sm:size-3"
+              :class="showRaw ? 'text-primary' : 'text-foreground'"
+            />
+          </FormButton>
         </div>
       </template>
-      <div v-if="rootNodes.length !== 0" class="relative flex flex-col space-y-2 py-2">
+      <div
+        v-if="!showRaw && rootNodes.length !== 0"
+        class="relative flex flex-col gap-y-2 py-2"
+      >
         <div
           v-for="(rootNode, idx) in rootNodes"
           :key="idx"
@@ -51,15 +67,8 @@
           />
         </div>
       </div>
+      <ViewerDataviewerPanel v-if="showRaw" class="pointer-events-auto" />
     </ViewerLayoutPanel>
-    <ViewerDataviewerPanel
-      v-if="showRaw"
-      class="pointer-events-auto"
-      @close="$emit('close')"
-    />
-    <FormButton full-width size="xs" class="my-2" @click="showRaw = !showRaw">
-      {{ showRaw ? 'Classic explorer' : 'Raw data viewer' }}
-    </FormButton>
     <ViewerExplorerFilters :filters="allFilters || []" />
   </div>
 </template>
