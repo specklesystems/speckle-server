@@ -1,15 +1,18 @@
 <template>
   <div>
     <FormTextInput
+      label="Select Function"
+      show-label
+      show-required
       name="search"
-      placeholder="Search Functions"
       color="foundation"
+      placeholder="Search Functions..."
       show-clear
       :model-value="bind.modelValue.value"
       full-width
       v-on="on"
     />
-    <div class="mt-2">
+    <div class="mt-4">
       <CommonLoadingBar :loading="loading" />
       <template v-if="!loading">
         <AutomateFunctionCardView v-if="queryItems?.length" small-view>

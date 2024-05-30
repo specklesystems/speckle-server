@@ -13,14 +13,34 @@
       <span class="font-extrabold text-fancy-gradient">Test</span>
       Automation
     </template>
-    <div class="flex flex-col gap-11">
+    <div class="flex flex-col gap-6">
       <CommonStepsNumber
         v-if="shouldShowStepsWidget"
         v-model="stepsWidgetModel"
+        class="mb-2"
         :steps="stepsWidgetSteps"
         :go-vertical-below="TailwindBreakpoints.sm"
         non-interactive
       />
+      <CommonAlert v-if="isTestAutomation" color="info">
+        <template #title>What is a "test automation"?</template>
+        <template #description>
+          <ul class="list-disc ml-4">
+            <li>
+              A test automation is a sandbox environment that allows you to connect your
+              local development environment for testing purposes. It enables you to run
+              your code against project data and submit results directly to the
+              connected test automation.
+            </li>
+            <li>
+              Unlike regular automations, test automations are not triggered by changes
+              to project data. They cannot be started by pushing a new version to a
+              model.
+            </li>
+            <li>Consequently, test automations do not execute published functions.</li>
+          </ul>
+        </template>
+      </CommonAlert>
       <AutomateAutomationCreateDialogSelectFunctionStep
         v-if="enumStep === AutomationCreateSteps.SelectFunction"
         v-model:selected-function="selectedFunction"
