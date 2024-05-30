@@ -47,12 +47,33 @@ export class GenericBridge extends BaseBridge {
     return true
   }
 
+  private async emitResponseReady(eventName: string, requestId: string) {
+    this.registerPromise(eventName, requestId)
+    const data = await this.bridge.GetCallResult(requestId)
+    const request = this.requests[requestId]
+    try {
+      const parsedData = data ? (JSON.parse(data) as Record<string, unknown>) : null
+      this.emitter.emit(eventName, parsedData)
+      request.resolve(parsedData)
+    } catch (e) {
+      console.error(e)
+      request.reject(e as Error)
+    } finally {
+      window.clearTimeout(request.rejectTimerId)
+      delete this.requests[requestId]
+    }
+  }
+
   private async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
     const requestId = (Math.random() + 1).toString(36).substring(2) + '_' + methodName
     const preserializedArgs = args.map((a) => JSON.stringify(a))
 
     this.bridge.RunMethod(methodName, requestId, JSON.stringify(preserializedArgs))
 
+    return this.registerPromise(methodName, requestId)
+  }
+
+  private async registerPromise(methodName: string, requestId: string) {
     return new Promise((resolve, reject) => {
       this.requests[requestId] = {
         methodName,
