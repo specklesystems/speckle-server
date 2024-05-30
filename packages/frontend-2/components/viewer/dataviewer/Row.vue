@@ -57,7 +57,6 @@
 <script setup lang="ts">
 import { ChevronRightIcon, ArrowUpRightIcon, FunnelIcon } from '@heroicons/vue/20/solid'
 import { modelRoute } from '~/lib/common/helpers/route'
-import { containsAll } from '~/lib/common/helpers/utils'
 import { useInjectedViewerState } from '~/lib/viewer/composables/setup'
 import { useFilterUtilities } from '~/lib/viewer/composables/ui'
 const props = defineProps<{
