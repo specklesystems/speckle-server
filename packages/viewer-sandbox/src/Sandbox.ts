@@ -36,6 +36,7 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3 } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
+import { PassReader } from './Extensions/PassReader'
 
 export default class Sandbox {
   private viewer: Viewer
@@ -463,7 +464,8 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
+      // console.warn(await this.viewer.screenshot())
+      console.log(await this.viewer.getExtension(PassReader).read())
     })
 
     const rotate = this.tabs.pages[0].addButton({

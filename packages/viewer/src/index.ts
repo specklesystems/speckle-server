@@ -72,6 +72,7 @@ import { NodeRenderView } from './modules/tree/NodeRenderView'
 import { type ExtendedIntersection } from './modules/objects/SpeckleRaycaster'
 import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter'
 import { Assets } from './modules/Assets'
+import { SpecklePass } from './modules/pipeline/SpecklePass'
 
 export {
   Viewer,
@@ -146,7 +147,8 @@ export type {
   ViewerEventPayload,
   InputEventPayload,
   SectionToolEventPayload,
-  CameraEventPayload
+  CameraEventPayload,
+  SpecklePass
 }
 
 export * as UrlHelper from './modules/UrlHelper'
