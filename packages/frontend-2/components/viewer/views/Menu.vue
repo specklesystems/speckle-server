@@ -18,11 +18,7 @@
         <!-- Canonical views first -->
         <div v-for="view in canonicalViews" :key="view.name">
           <button
-            :class="{
-              'bg-primary text-foreground-on-primary': active,
-              'hover:bg-primary-muted text-foreground': !active,
-              'w-full h-full text-xs sm:text-sm py-2 transition': true
-            }"
+            class="hover:bg-primary-muted text-foreground w-full h-full text-xs sm:text-sm py-2 transition"
             @click="setView(view.name.toLowerCase() as CanonicalView)"
           >
             {{ view.name }}
@@ -32,11 +28,7 @@
         <!-- Any model other views -->
         <div v-for="view in views" :key="view.name">
           <button
-            :class="{
-              'bg-primary text-foreground-on-primary': active,
-              'hover:bg-primary-muted text-foreground': !active,
-              'w-full h-full text-sm py-2 transition xxx-truncate': true
-            }"
+            class="hover:bg-primary-muted text-foreground w-full h-full text-xs sm:text-sm py-2 transition"
             @click="setView(view)"
           >
             {{
@@ -66,7 +58,6 @@ const { setView: setViewRaw } = useCameraUtilities()
 const mp = useMixpanel()
 
 const open = ref(false)
-const active = ref(false)
 
 const menuWrapper = ref(null)
 
