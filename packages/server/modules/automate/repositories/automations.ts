@@ -538,6 +538,16 @@ export async function getLatestAutomationRevisions(params: {
   return keyBy(res, (r) => r.automationId)
 }
 
+export async function getLatestAutomationRevision(params: { automationId: string }) {
+  const { automationId } = params
+
+  const revisions = await getLatestAutomationRevisions({
+    automationIds: [automationId]
+  })
+
+  return (revisions[automationId] ?? null) as Nullable<(typeof revisions)[0]>
+}
+
 export async function getRevisionsTriggerDefinitions(params: {
   automationRevisionIds: string[]
 }) {

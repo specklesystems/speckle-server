@@ -297,7 +297,7 @@ type ProjectAutomationMutations {
   """
   trigger(automationId: ID!): Boolean!
   createTestAutomation(input: ProjectTestAutomationCreateInput!): Automation!
-  # createTestAutomationRun(automationId: ID!): String!
+  createTestAutomationRun(automationId: ID!): String!
 }
 
 extend type ProjectMutations {
