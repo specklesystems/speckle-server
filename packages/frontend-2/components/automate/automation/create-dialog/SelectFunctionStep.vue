@@ -3,6 +3,7 @@
     <FormTextInput
       name="search"
       placeholder="Search Functions"
+      color="foundation"
       show-clear
       :model-value="bind.modelValue.value"
       full-width

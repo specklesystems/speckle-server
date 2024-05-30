@@ -21,7 +21,6 @@
       show-label
       help="Choose the model you want to run your automation on."
       show-required
-      button-style="tinted"
       mount-menu-on-body
       :rules="modelRules"
       :allow-unset="false"
