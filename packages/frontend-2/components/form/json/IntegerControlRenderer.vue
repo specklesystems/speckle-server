@@ -7,6 +7,7 @@
     :label="control.label"
     :placeholder="appliedOptions['placeholder']"
     :help="control.description"
+    color="foundation"
     type="number"
     step="1"
     size="lg"

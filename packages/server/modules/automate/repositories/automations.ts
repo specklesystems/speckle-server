@@ -272,18 +272,20 @@ export async function getFullAutomationRunById(
     : null
 }
 
-export async function storeAutomation(
-  automation: AutomationRecord,
-  automationToken: AutomationTokenRecord
-) {
+export async function storeAutomation(automation: AutomationRecord) {
   const [newAutomation] = await Automations.knex()
     .insert(pick(automation, Automations.withoutTablePrefix.cols))
     .returning<AutomationRecord[]>('*')
+
+  return newAutomation
+}
+
+export async function storeAutomationToken(automationToken: AutomationTokenRecord) {
   const [newToken] = await AutomationTokens.knex()
     .insert(pick(automationToken, AutomationTokens.withoutTablePrefix.cols))
     .returning<AutomationTokenRecord[]>('*')
 
-  return { automation: newAutomation, token: newToken }
+  return newToken
 }
 
 export type InsertableAutomationRevisionFunction = Omit<

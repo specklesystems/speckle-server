@@ -29,19 +29,7 @@ import { graphql } from '~/lib/common/generated/gql'
 // TODO: Proper search & pagination
 
 definePageMeta({
-  middleware: [
-    function () {
-      const isAutomateEnabled = useIsAutomateModuleEnabled()
-      if (!isAutomateEnabled.value) {
-        return abortNavigation(
-          createError({
-            statusCode: 404,
-            message: 'Page not found'
-          })
-        )
-      }
-    }
-  ]
+  middleware: ['requires-automate-enabled']
 })
 
 const pageQuery = graphql(`
