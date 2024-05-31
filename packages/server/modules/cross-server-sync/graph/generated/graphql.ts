@@ -1831,7 +1831,7 @@ export type ProjectAutomationMutations = {
    * Trigger an automation with a fake "version created" trigger. The "version created" will
    * just refer to the last version of the model.
    */
-  trigger: Scalars['Boolean'];
+  trigger: Scalars['String'];
   update: Automation;
 };
 

@@ -1828,7 +1828,7 @@ export type ProjectAutomationMutations = {
    * Trigger an automation with a fake "version created" trigger. The "version created" will
    * just refer to the last version of the model.
    */
-  trigger: Scalars['Boolean'];
+  trigger: Scalars['String'];
   update: Automation;
 };
 
@@ -4045,7 +4045,7 @@ export type TriggerAutomationMutationVariables = Exact<{
 }>;
 
 
-export type TriggerAutomationMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', automationMutations: { __typename?: 'ProjectAutomationMutations', trigger: boolean } } };
+export type TriggerAutomationMutation = { __typename?: 'Mutation', projectMutations: { __typename?: 'ProjectMutations', automationMutations: { __typename?: 'ProjectAutomationMutations', trigger: string } } };
 
 export type ProjectAccessCheckQueryVariables = Exact<{
   id: Scalars['String'];

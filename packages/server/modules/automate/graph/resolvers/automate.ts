@@ -494,14 +494,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             })
           })
 
-          await trigger({
+          const { automationRunId } = await trigger({
             automationId,
             userId: ctx.userId!,
             userResourceAccessRules: ctx.resourceAccessRules,
             projectId: parent.projectId
           })
 
-          return true
+          return automationRunId
         }
       },
       Query: {
