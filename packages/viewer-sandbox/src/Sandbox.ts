@@ -36,7 +36,6 @@ import Bright from '../assets/hdri/Bright.png'
 import { Euler, Vector3 } from 'three'
 import { GeometryType } from '@speckle/viewer'
 import { MeshBatch } from '@speckle/viewer'
-import { PassReader } from './Extensions/PassReader'
 
 export default class Sandbox {
   private viewer: Viewer
