@@ -28,16 +28,12 @@
             Isolate
           </div>
         </FormButton>
-        <div class="w-full text-right">
-          <FormButton
-            title="Open selection in new window"
-            size="xs"
-            text
-            :to="selectionLink"
-            target="_blank"
-          >
-            <ArrowTopRightOnSquareIcon class="w-4" />
-          </FormButton>
+        <div class="flex justify-end w-full">
+          <div v-tippy="`Open selection in new window`" class="max-w-max">
+            <FormButton size="xs" :to="selectionLink" color="secondary" target="_blank">
+              <ArrowTopRightOnSquareIcon class="w-4" />
+            </FormButton>
+          </div>
         </div>
       </template>
       <div class="p-1 mb-2 sm:mb-0 sm:py-2">
