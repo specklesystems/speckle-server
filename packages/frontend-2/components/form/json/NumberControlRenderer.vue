@@ -5,6 +5,7 @@
     :model-value="control.data + ''"
     :rules="validator"
     :label="control.label"
+    color="foundation"
     type="number"
     step="any"
     size="lg"
