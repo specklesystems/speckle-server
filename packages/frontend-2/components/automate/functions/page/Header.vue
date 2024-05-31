@@ -21,7 +21,7 @@
           v-on="on"
         />
         <FormButton
-          v-if="canCreateFunction && false"
+          v-if="canCreateFunction"
           :icon-left="PlusIcon"
           @click="() => (createDialogOpen = true)"
         >
@@ -68,10 +68,8 @@ const props = defineProps<{
   activeUser: Optional<AutomateFunctionsPageHeader_QueryFragment['activeUser']>
   serverInfo: Optional<AutomateFunctionsPageHeader_QueryFragment['serverInfo']>
 }>()
-const {
-  public: { automateGhClientId }
-} = useRuntimeConfig()
 const search = defineModel<string>('search')
+
 const { on, bind } = useDebouncedTextInput({ model: search })
 const { triggerNotification } = useGlobalToast()
 const route = useRoute()
@@ -83,10 +81,7 @@ const availableTemplates = computed(
   () => props.serverInfo?.automate.availableFunctionTemplates || []
 )
 const canCreateFunction = computed(
-  () =>
-    !!props.activeUser?.id &&
-    !!automateGhClientId.length &&
-    !!availableTemplates.value.length
+  () => !!props.activeUser?.id && !!availableTemplates.value.length
 )
 
 if (process.client) {
