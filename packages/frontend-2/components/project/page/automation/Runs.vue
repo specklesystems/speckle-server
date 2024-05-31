@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col w-full">
-    <div class="flex items-center justify-between mb-2">
+    <div class="flex items-center justify-between h-6 mb-6">
       <h2 class="h6 font-bold">Runs</h2>
       <FormButton
         :icon-left="ArrowPathIcon"
@@ -11,7 +11,6 @@
       </FormButton>
     </div>
     <AutomateRunsTable
-      class="mt-3"
       :runs="automation.runs.items"
       :project-id="projectId"
       :automation-id="automation.id"

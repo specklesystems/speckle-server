@@ -44,7 +44,7 @@ type ObjectResult = Automate.AutomateTypes.ResultsSchema['values']['objectResult
 
 const props = defineProps<{
   result: ObjectResult
-  functionId: string
+  functionId?: string
 }>()
 
 const {
@@ -65,7 +65,11 @@ const hasMetadataGradient = computed(() => {
 const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
 const isIsolated = computed(() => {
   if (!isolatedObjects.value?.length) return false
-  if (filteringState.value?.activePropFilterKey === props.functionId) return false
+  if (
+    props.functionId &&
+    filteringState.value?.activePropFilterKey === props.functionId
+  )
+    return false
   const ids = props.result.objectIds
   return containsAll(ids, isolatedObjects.value)
 })
@@ -103,6 +107,8 @@ watch(filteringState, (newVal) => {
 const computedPropInfo = computed(() => {
   if (!hasMetadataGradient.value) return
   if (!props.result.metadata) return
+  if (!props.functionId) return
+
   const propInfo: NumericPropertyInfo = {
     objectCount: 0,
     key: props.functionId,

@@ -37,6 +37,8 @@ const config = useRuntimeConfig()
 if (config.public.FF_AUTOMATE_MODULE_ENABLED) console.log("Hurray I'm enabled")
 ```
 
+You'll need to add these env vars manually in the `.env` files of all relevant packages. Note that in `frontend-2` and other Nuxt based packages, you'll need to prefix the env var with `NUXT_PUBLIC_`.
+
 ## Definition
 
 The `@speckle/shared` package is the place where the common implementation of the feature flags is declared.

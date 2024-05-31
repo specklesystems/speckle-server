@@ -8,7 +8,7 @@ export type ExplorerNode = {
   data?: SpeckleObject
   raw?: SpeckleObject
   atomic?: boolean
-  model?: Record<string, unknown>
+  model?: Record<string, unknown> & { id?: string }
   children: ExplorerNode[]
 }
 

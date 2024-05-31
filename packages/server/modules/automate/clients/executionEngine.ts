@@ -1,7 +1,9 @@
+import { automateLogger } from '@/logging/logging'
 import {
   ExecutionEngineBadResponseBodyError,
   ExecutionEngineErrorResponse,
-  ExecutionEngineFailedResponseError
+  ExecutionEngineFailedResponseError,
+  ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
 import {
@@ -17,7 +19,14 @@ import {
 } from '@/modules/automate/helpers/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
-import { Nullable, SourceAppName, isNullOrUndefined } from '@speckle/shared'
+import {
+  Nullable,
+  SourceAppName,
+  isNonNullable,
+  isNullOrUndefined,
+  retry,
+  timeoutAt
+} from '@speckle/shared'
 import { has, isObjectLike } from 'lodash'
 
 const isErrorResponse = (e: unknown): e is ExecutionEngineErrorResponse =>
@@ -72,17 +81,34 @@ const invokeRequest = async (params: {
   method?: RequestInit['method']
   body?: Record<string, unknown>
   token?: string
+  retry?: boolean
 }) => {
   const { url, method = 'get', body, token } = params
 
-  const response = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
-    },
-    body: body && isObjectLike(body) ? JSON.stringify(body) : undefined
-  })
+  const response = await retry(
+    async () =>
+      await Promise.race([
+        fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: body && isObjectLike(body) ? JSON.stringify(body) : undefined
+        }).catch((e) => {
+          throw new ExecutionEngineNetworkError({ method, url, body }, e)
+        }),
+        timeoutAt(20 * 1000, 'Automate Execution Engine API request timed out')
+      ]),
+    params.retry !== false ? 3 : 1,
+    (i, error) => {
+      automateLogger.warn(
+        { url, method, err: error },
+        'Automate Execution Engine API call failed, retrying...'
+      )
+      return i * 1000
+    }
+  )
 
   if (response.status >= 400) {
     const errorReq = {
@@ -108,15 +134,17 @@ export const createAutomation = async (params: {
   const { speckleServerUrl, authCode } = params
 
   const url = getApiUrl(`/api/v2/automations`)
-  const speckleServerDomain = new URL(speckleServerUrl).hostname
+
+  const speckleServerOrigin = new URL(speckleServerUrl).origin
 
   const result = await invokeJsonRequest<AutomationCreateResponse>({
     url,
     method: 'post',
     body: {
-      speckleServerDomain,
+      speckleServerOrigin,
       speckleServerAuthenticationCode: authCode
-    }
+    },
+    retry: false
   })
 
   return result
@@ -194,7 +222,8 @@ export const triggerAutomationRun = async (params: {
     url,
     method: 'post',
     body: payload,
-    token: automationToken
+    token: automationToken,
+    retry: false
   })
 
   return result
@@ -287,11 +316,27 @@ export const getFunctionReleases = async (params: {
   ids: Array<{ functionId: string; functionReleaseId: string }>
 }) => {
   const { ids } = params
-  return await Promise.all(
-    ids.map(async ({ functionId, functionReleaseId }) =>
-      getFunctionRelease({ functionId, functionReleaseId })
-    )
+  const results = await Promise.all(
+    ids.map(async ({ functionId, functionReleaseId }) => {
+      try {
+        return await getFunctionRelease({ functionId, functionReleaseId })
+      } catch (e) {
+        if (e instanceof ExecutionEngineNetworkError) {
+          return null
+        }
+        if (
+          e instanceof ExecutionEngineFailedResponseError &&
+          e.response.statusMessage === 'FunctionNotFound'
+        ) {
+          return null
+        }
+
+        throw e
+      }
+    })
   )
+
+  return results.filter(isNonNullable)
 }
 
 export const getFunctionRelease = async (params: {

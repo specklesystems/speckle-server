@@ -4,7 +4,8 @@ import {
   PerspectiveCamera,
   Plane,
   Scene,
-  Texture
+  Texture,
+  WebGLRenderTarget
 } from 'three'
 import { Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { ObjectLayers } from '../../IViewer'
@@ -22,6 +23,7 @@ export type InputColorInterpolateTextureUniform = 'tDiffuseInterp'
 export interface SpecklePass {
   onBeforeRender?: () => void
   onAferRender?: () => void
+  outputRenderTarget?: WebGLRenderTarget
 
   get displayName(): string
   get outputTexture(): Texture | null

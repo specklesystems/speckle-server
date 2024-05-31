@@ -633,8 +633,10 @@ export default class SpeckleRenderer {
     if (batch.geometryType === GeometryType.MESH) {
       batchRenderable.traverse((obj: Object3D) => {
         if (obj instanceof Mesh) {
-          obj.castShadow = !obj.material.transparent
-          obj.receiveShadow = !obj.material.transparent
+          const material = Array.isArray(obj.material) ? obj.material[0] : obj.material
+
+          obj.castShadow = !material.transparent
+          obj.receiveShadow = !material.transparent
           obj.customDepthMaterial = new SpeckleDepthMaterial(
             {
               depthPacking: RGBADepthPacking
