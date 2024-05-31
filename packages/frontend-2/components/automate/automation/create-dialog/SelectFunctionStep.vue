@@ -2,8 +2,8 @@
   <div>
     <FormTextInput
       label="Select Function"
-      show-label
-      show-required
+      :show-label="showLabel"
+      :show-required="showRequired"
       name="search"
       color="foundation"
       placeholder="Search Functions..."
@@ -54,10 +54,18 @@ const searchQuery = graphql(`
   }
 `)
 
-const props = defineProps<{
-  preselectedFunction: Optional<CreateAutomationSelectableFunction>
-  pageSize?: Optional<number>
-}>()
+const props = withDefaults(
+  defineProps<{
+    preselectedFunction: Optional<CreateAutomationSelectableFunction>
+    pageSize?: Optional<number>
+    showLabel?: Optional<boolean>
+    showRequired?: Optional<boolean>
+  }>(),
+  {
+    showLabel: true,
+    showRequired: true
+  }
+)
 const selectedFunction = defineModel<Optional<CreateAutomationSelectableFunction>>(
   'selectedFunction',
   {

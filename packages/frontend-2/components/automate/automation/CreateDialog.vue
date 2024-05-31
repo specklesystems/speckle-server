@@ -44,6 +44,8 @@
       <AutomateAutomationCreateDialogSelectFunctionStep
         v-if="enumStep === AutomationCreateSteps.SelectFunction"
         v-model:selected-function="selectedFunction"
+        :show-label="false"
+        :show-required="false"
         :preselected-function="validatedPreselectedFunction"
       />
       <AutomateAutomationCreateDialogFunctionParametersStep
@@ -61,6 +63,7 @@
         v-model:model="selectedModel"
         v-model:automation-name="automationName"
         :preselected-project="preselectedProject"
+        :is-test-automation="isTestAutomation"
       />
       <AutomateAutomationCreateDialogDoneStep
         v-else-if="

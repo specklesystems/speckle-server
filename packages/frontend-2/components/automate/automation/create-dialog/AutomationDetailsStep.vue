@@ -19,7 +19,7 @@
       :project-id="project.id"
       label="Model"
       show-label
-      help="The model that should trigger this automation"
+      :help="selectModelHelpText"
       show-required
       mount-menu-on-body
       :rules="modelRules"
@@ -50,6 +50,7 @@ import type {
 
 const props = defineProps<{
   preselectedProject?: Optional<FormSelectProjects_ProjectFragment>
+  isTestAutomation: boolean
 }>()
 const project = defineModel<Optional<FormSelectProjects_ProjectFragment>>('project', {
   required: true
@@ -67,6 +68,12 @@ const nameRules = computed(() => [
   ValidationHelpers.isRequired,
   ValidationHelpers.isStringOfLength({ maxLength: 150 })
 ])
+
+const selectModelHelpText = computed(() => {
+  return props.isTestAutomation
+    ? 'Local function executions will be provided the latest version of this model'
+    : 'The model that should trigger this automation'
+})
 
 watch(
   () => props.preselectedProject,
