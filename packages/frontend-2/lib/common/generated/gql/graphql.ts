@@ -1825,6 +1825,7 @@ export type ProjectAutomationMutations = {
   create: Automation;
   createRevision: AutomationRevision;
   createTestAutomation: Automation;
+  createTestAutomationRun: TestAutomationRun;
   /**
    * Trigger an automation with a fake "version created" trigger. The "version created" will
    * just refer to the last version of the model.
@@ -1846,6 +1847,11 @@ export type ProjectAutomationMutationsCreateRevisionArgs = {
 
 export type ProjectAutomationMutationsCreateTestAutomationArgs = {
   input: ProjectTestAutomationCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationRunArgs = {
+  automationId: Scalars['ID'];
 };
 
 
@@ -3028,6 +3034,25 @@ export type SubscriptionUserViewerActivityArgs = {
 export type SubscriptionViewerUserActivityBroadcastedArgs = {
   sessionId?: InputMaybe<Scalars['String']>;
   target: ViewerUpdateTrackingTarget;
+};
+
+export type TestAutomationRun = {
+  __typename?: 'TestAutomationRun';
+  automationRunId: Scalars['String'];
+  functionRunId: Scalars['String'];
+  triggers: Array<TestAutomationRunTrigger>;
+};
+
+export type TestAutomationRunTrigger = {
+  __typename?: 'TestAutomationRunTrigger';
+  payload: TestAutomationRunTriggerPayload;
+  triggerType: Scalars['String'];
+};
+
+export type TestAutomationRunTriggerPayload = {
+  __typename?: 'TestAutomationRunTriggerPayload';
+  modelId: Scalars['String'];
+  versionId: Scalars['String'];
 };
 
 export type TokenResourceIdentifier = {

@@ -511,13 +511,15 @@ export type CreateTestAutomationRunDeps = {
 
 export const createTestAutomationRun =
   (deps: CreateTestAutomationRunDeps) =>
-  async (params: { automationId: string; userId: string }) => {
+  async (params: { projectId: string; automationId: string; userId: string }) => {
     const {
       getAutomation,
       getLatestAutomationRevision,
       getFullAutomationRevisionMetadata
     } = deps
-    const { automationId, userId } = params
+    const { projectId, automationId, userId } = params
+
+    await validateStreamAccess(userId, projectId, Roles.Stream.Owner)
 
     const automationRecord = await getAutomation({ automationId })
 
@@ -530,8 +532,6 @@ export const createTestAutomationRun =
         'Automation is not a test automation and cannot create test function runs'
       )
     }
-
-    await validateStreamAccess(userId, automationRecord.projectId, Roles.Stream.Owner)
 
     const { id: automationRevisionId } =
       (await getLatestAutomationRevision({ automationId })) ?? {}
@@ -579,6 +579,7 @@ export const createTestAutomationRun =
     })
     await upsertAutomationRun(automationRunRecord)
 
+    // TODO: Test functions only support one function run per automation
     const functionRunId = automationRunRecord.functionRuns[0].id
 
     return {
