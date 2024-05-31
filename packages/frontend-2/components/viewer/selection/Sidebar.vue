@@ -31,6 +31,7 @@
         <div class="flex justify-end w-full">
           <div v-tippy="`Open selection in new window`" class="max-w-max">
             <FormButton size="xs" :to="selectionLink" color="secondary" target="_blank">
+              <span class="sr-only">Open selection in new window</span>
               <ArrowTopRightOnSquareIcon class="w-4" />
             </FormButton>
           </div>
