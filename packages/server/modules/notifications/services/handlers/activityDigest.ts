@@ -179,8 +179,7 @@ export const mostActiveComment: TopicDigesterFunction = (
   if (!replyActions.length) return null
 
   const parentCommentGroups = groupBy(replyActions, (a) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const info = a.info as any
+    const info = a.info as { input: { parentComment: string } }
     return info.input.parentComment
   })
 

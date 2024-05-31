@@ -348,7 +348,7 @@ jobs:
         type: string
     docker:
       - image: speckle/pre-commit-runner:latest
-    resource_class: medium
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
@@ -416,6 +416,8 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
+      FF_AUTOMATE_MODULE_ENABLED: 'true'
+      AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
     steps:
       - checkout
       - restore_cache:

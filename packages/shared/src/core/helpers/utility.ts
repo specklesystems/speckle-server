@@ -1,5 +1,9 @@
-import { isNull, isUndefined } from 'lodash'
-import type { MaybeAsync } from './utilityTypes'
+import { isNull, isNumber, isUndefined } from 'lodash'
+import type {
+  MaybeAsync,
+  NonNullableProperties,
+  NullableKeysToOptional
+} from './utilityTypes'
 import { ensureError } from './error'
 
 export class TimeoutError extends Error {}
@@ -65,7 +69,11 @@ export const timeoutAt = (ms: number, optionalMessage?: string) =>
 /**
  * Invoke and return fn(), but retry it up to n times if it throws
  */
-export const retry = async <V = unknown>(fn: () => MaybeAsync<V>, n: number) => {
+export const retry = async <V = unknown>(
+  fn: () => MaybeAsync<V>,
+  n: number,
+  delayMs?: number | ((attempt: number, error: Error) => number)
+) => {
   let lastError: Error | undefined
   for (let i = 0; i < n; i++) {
     try {
@@ -73,6 +81,14 @@ export const retry = async <V = unknown>(fn: () => MaybeAsync<V>, n: number) => 
       return res
     } catch (error) {
       lastError = ensureError(error)
+
+      if (delayMs && i + 1 < n) {
+        if (isNumber(delayMs)) {
+          await wait(delayMs)
+        } else {
+          await wait(delayMs(i + 1, lastError))
+        }
+      }
     }
   }
   throw lastError
@@ -113,3 +129,18 @@ export const profileSync = <V = unknown>(
   )
   return res
 }
+
+export const removeNullOrUndefinedKeys = <T extends Record<string, unknown>>(
+  obj: T
+) => {
+  const ret = {} as T
+  for (const key in obj) {
+    if (!isNullOrUndefined(obj[key])) {
+      ret[key] = obj[key]
+    }
+  }
+  return ret as NonNullableProperties<NullableKeysToOptional<T>>
+}
+
+export const isArrayOf = <T>(arr: unknown, guard: (v: unknown) => v is T): arr is T[] =>
+  Array.isArray(arr) && arr.every(guard)

@@ -65,6 +65,7 @@ import {
 } from '~/lib/viewer/composables/setup/core'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
+import { PassReader } from '../extensions/PassReader'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -324,6 +325,7 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
       ...DefaultViewerParams,
       verbose: !!(process.client && params.viewerDebug)
     })
+    viewer.createExtension(PassReader)
     const initPromise = viewer.init()
 
     return {

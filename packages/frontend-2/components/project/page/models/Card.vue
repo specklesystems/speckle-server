@@ -92,23 +92,23 @@
         v-if="
           !isPendingModelFragment(model) && model.commentThreadCount.totalCount !== 0
         "
-        :class="`absolute opacity-100 top-0 right-0 p-2 flex items-center transition border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2 ${
+        :class="[
+          `z-10 absolute opacity-100 top-0 right-0 p-2 flex items-center transition`,
+          'border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center',
+          'rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2',
           hovered ? 'sm:opacity-100' : 'sm:opacity-0'
-        }`"
+        ]"
       >
         <ChatBubbleLeftRightIcon class="w-4 h-4" />
         <span>{{ model.commentThreadCount.totalCount }}</span>
       </div>
       <div
-        v-if="!isPendingModelFragment(model) && model.automationStatus"
-        class="absolute top-0 left-0 p-2"
+        v-if="!isPendingModelFragment(model) && model.automationsStatus"
+        class="z-20 absolute top-0 left-0"
       >
-        <ProjectPageModelsCardAutomationStatusRefactor
+        <AutomateRunsTriggerStatus
           :project-id="projectId"
-          :model-or-version="{
-            ...model,
-            automationStatus: model.automationStatus
-          }"
+          :status="model.automationsStatus"
           :model-id="model.id"
         />
       </div>

@@ -17,16 +17,14 @@
             <PreviewImage :preview-url="version.previewUrl" />
           </NuxtLink>
           <div
-            v-if="!isPendingVersionFragment(version) && version.automationStatus"
+            v-if="!isPendingVersionFragment(version) && version.automationsStatus"
             class="absolute top-1 left-0 p-2"
           >
-            <ProjectPageModelsCardAutomationStatusRefactor
+            <AutomateRunsTriggerStatus
               :project-id="projectId"
-              :model-or-version="{
-                ...version,
-                automationStatus: version.automationStatus
-              }"
+              :status="version.automationsStatus"
               :model-id="modelId"
+              :version-id="version.id"
             />
           </div>
           <div
@@ -114,7 +112,9 @@ graphql(`
     }
     ...ProjectModelPageDialogDeleteVersion
     ...ProjectModelPageDialogMoveToVersion
-    ...ModelCardAutomationStatus_Version
+    automationsStatus {
+      ...AutomateRunsTriggerStatus_TriggeredAutomationsStatus
+    }
   }
 `)
 
@@ -134,12 +134,11 @@ const props = defineProps<{
   selected?: boolean
   selectionDisabled?: boolean
 }>()
-provide('projectId', props.projectId)
 
 const showActionsMenu = ref(false)
 
 const hasAutomationStatus = computed(
-  () => !isPendingVersionFragment(props.version) && props.version.automationStatus
+  () => !isPendingVersionFragment(props.version) && props.version.automationsStatus
 )
 const createdAt = computed(() => {
   const date = isPendingVersionFragment(props.version)

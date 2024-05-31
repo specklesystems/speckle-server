@@ -10,6 +10,7 @@
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           show-required
           auto-focus
+          autocomplete="off"
         />
         <FormTextArea
           name="description"
@@ -32,6 +33,7 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
+import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useForm } from 'vee-validate'
 import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
@@ -66,7 +68,7 @@ const onSubmit = handleSubmit(async (values) => {
   open.value = false
 })
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true },
@@ -77,7 +79,7 @@ const dialogButtons = computed(() => [
   {
     text: 'Create',
     props: {
-      color: 'primary',
+      color: 'default',
       fullWidth: true,
       outline: true,
       submit: true

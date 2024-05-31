@@ -28,14 +28,6 @@
         <IconFileExplorer class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
-      <!-- TODO -->
-      <!-- <ViewerControlsButtonToggle
-        :active="activeControl === 'filters'"
-        @click="toggleActiveControl('filters')"
-      >
-        <FunnelIcon class="w-5 h-5" />
-      </ViewerControlsButtonToggle> -->
-
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
         v-tippy="isSmallerOrEqualSm ? undefined : discussionsShortcut"
@@ -45,17 +37,19 @@
         <ChatBubbleLeftRightIcon class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
-      <!-- Automateeeeeeee FTW -->
+      <!-- Automation runs -->
       <ViewerControlsButtonToggle
         v-if="allAutomationRuns.length !== 0"
         v-tippy="isSmallerOrEqualSm ? undefined : summary.longSummary"
         :active="activeControl === 'automate'"
-        class="p-2"
         @click="toggleActiveControl('automate')"
       >
         <!-- <PlayCircleIcon class="h-5 w-5" /> -->
         <!-- {{allAutomationRuns.length}} -->
-        <AutomationDoughnutSummary :summary="summary" />
+        <AutomateRunsTriggerStatusIcon
+          :summary="summary"
+          class="h-5 w-5 md:h-6 md:w-6"
+        />
       </ViewerControlsButtonToggle>
 
       <!-- TODO: direct add comment -->
@@ -135,17 +129,51 @@
             <!-- Settings -->
             <ViewerSettingsMenu />
           </ViewerControlsButtonGroup>
+
+          <!-- Gendo -->
+          <ViewerControlsButtonToggle
+            v-show="isGendoEnabled"
+            v-tippy="'Real time AI rendering powered by Gendo'"
+            :active="activeControl === 'gendo'"
+            class="hover:hue-rotate-30 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-amber-200 via-violet-600 to-sky-900"
+            @click="toggleActiveControl('gendo')"
+          >
+            <img
+              src="~/assets/images/gendo/logo.svg"
+              alt="gendo Logo"
+              class="h-6 w-6 md:h-8 md:w-8 -ml-1 -mt-1"
+            />
+          </ViewerControlsButtonToggle>
         </div>
         <!-- Standard viewer controls -->
       </div>
     </div>
     <div
+      v-if="activeControl !== 'none'"
+      ref="resizeHandle"
+      class="absolute z-10 ml-12 md:ml-14 max-h-[calc(100dvh-4.5rem)] w-7 mt-[4.2rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
+      :style="`left:${width - 4}px; height:${height}px`"
+      @mousedown="startResizing"
+    >
+      <div
+        class="relative z-30 w-3 ml-1 h-full pt-[4.2rem] bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition rounded-r"
+      ></div>
+      <div
+        class="w-7 h-8 mr-1 bg-foundation group-hover:bg-outline-2 rounded-r -translate-x-10 group-hover:translate-x-0 transition cursor-ew-resize flex items-center justify-center group-hover:shadow-xl"
+      >
+        <ArrowsRightLeftIcon
+          class="h-3 w-3 transition opacity-0 group-hover:opacity-80 text-outline-1 -ml-[2px]"
+        />
+      </div>
+    </div>
+    <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] w-56 md:w-72 overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
       } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
+      :style="`width:${width + 4}px;`"
     >
       <div v-if="activeControl.length !== 0 && activeControl === 'measurements'">
         <KeepAlive>
@@ -165,26 +193,30 @@
           </div>
         </KeepAlive>
       </div>
+
       <div v-show="resourceItems.length !== 0 && activeControl === 'explorer'">
         <KeepAlive>
           <ViewerExplorer class="pointer-events-auto" @close="activeControl = 'none'" />
         </KeepAlive>
       </div>
+
       <ViewerComments
         v-if="resourceItems.length !== 0 && activeControl === 'discussions'"
         class="pointer-events-auto"
         @close="activeControl = 'none'"
       />
-      <ViewerFilters
-        v-if="resourceItems.length !== 0 && activeControl === 'filters'"
-        class="pointer-events-auto"
-      />
+
       <div v-show="resourceItems.length !== 0 && activeControl === 'automate'">
-        <ViewerAutomatePanel
+        <AutomateViewerPanel
           :automation-runs="allAutomationRuns"
           :summary="summary"
           @close="activeControl = 'none'"
         />
+      </div>
+      <div
+        v-if="resourceItems.length !== 0 && activeControl === 'gendo' && isGendoEnabled"
+      >
+        <ViewerGendoPanel @close="activeControl = 'none'" />
       </div>
 
       <!-- Empty state -->
@@ -214,9 +246,10 @@ import {
   ArrowsPointingOutIcon,
   ScissorsIcon,
   PlusIcon,
-  ChevronDoubleRightIcon
+  ChevronDoubleRightIcon,
+  ArrowsRightLeftIcon
 } from '@heroicons/vue/24/outline'
-import type { Nullable } from '@speckle/shared'
+import { isNonNullable, type Nullable } from '@speckle/shared'
 import {
   useCameraUtilities,
   useSectionBoxUtilities,
@@ -233,90 +266,54 @@ import {
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
-const {
-  zoomExtentsOrSelection,
-  toggleProjection,
-  camera: { isOrthoProjection }
-} = useCameraUtilities()
-
-import { AutomationRunStatus } from '~~/lib/common/generated/gql/graphql'
-import type { AutomationRun } from '~~/lib/common/generated/gql/graphql'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
-import { onKeyStroke } from '@vueuse/core'
+import { onKeyStroke, useEventListener, useResizeObserver } from '@vueuse/core'
+import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
 
-const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
+const isGendoEnabled = useIsGendoModuleEnabled()
 
-const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
+const width = ref(360)
+const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 
-const { enableMeasurements } = useMeasurementUtilities()
+const height = ref(scrollableControlsContainer.value?.clientHeight) //computed(() => scrollableControlsContainer.value?.clientHeight)
+const isResizing = ref(false)
+const resizeHandle = ref(null)
+let startWidth = 0
+let startX = 0
 
-const { showNavbar, showControls } = useViewerTour()
+const startResizing = (event: MouseEvent) => {
+  event.preventDefault()
+  isResizing.value = true
+  startX = event.clientX
+  startWidth = width.value
+}
 
-const { isTransparent, isEnabled: isEmbedEnabled } = useEmbed()
+if (process.client) {
+  useResizeObserver(scrollableControlsContainer, (entries) => {
+    // const entry = entries[0]
+    const { height: newHeight } = entries[0].contentRect
+    height.value = newHeight
+  })
+  useEventListener(resizeHandle, 'mousedown', startResizing)
 
-const allAutomationRuns = computed(() => {
-  const allAutomationStatuses = modelsAndVersionIds.value
-    .map((model) => model.model.loadedVersion.items[0].automationStatus)
-    .flat()
-    .filter((run) => !!run)
-  return allAutomationStatuses
-    .map((status) => status?.automationRuns)
-    .flat() as AutomationRun[]
-})
-
-const allFunctionRuns = computed(() => {
-  return allAutomationRuns.value.map((run) => run.functionRuns).flat()
-})
-
-const summary = computed(() => {
-  const result = {
-    failed: 0,
-    passed: 0,
-    inProgress: 0,
-    total: allFunctionRuns.value.length,
-    title: 'All runs passed.',
-    titleColor: 'text-success',
-    longSummary: ''
-  }
-
-  for (const run of allFunctionRuns.value) {
-    switch (run?.status) {
-      case AutomationRunStatus.Succeeded:
-        result.passed++
-        break
-      case AutomationRunStatus.Failed:
-        result.title = 'Some runs failed.'
-        result.titleColor = 'text-danger'
-        result.failed++
-        break
-      default:
-        if (result.failed === 0) {
-          result.title = 'Some runs are still in progress.'
-          result.titleColor = 'text-warning'
-        }
-        result.inProgress++
-        break
+  useEventListener(document, 'mousemove', (event) => {
+    if (isResizing.value) {
+      const diffX = event.clientX - startX
+      width.value = Math.max(
+        300,
+        Math.min(startWidth + diffX, (parseInt('75vw') * window.innerWidth) / 100)
+      )
     }
-  }
+  })
 
-  // format:
-  // 2 failed, 1 passed runs
-  // 1 passed, 2 in progress, 1 failed runs
-  // 1 passed run
-  const longSummarySegments = []
-  if (result.passed > 0) longSummarySegments.push(`${result.passed} passed`)
-  if (result.inProgress > 0)
-    longSummarySegments.push(`${result.inProgress} in progress`)
-  if (result.failed > 0) longSummarySegments.push(`${result.failed} failed`)
-
-  result.longSummary = (
-    longSummarySegments.join(', ') + ` run${result.total > 1 ? 's' : ''}.`
-  ).replace(/,(?=[^,]+$)/, ', and')
-
-  return result
-})
+  useEventListener(document, 'mouseup', () => {
+    if (isResizing.value) {
+      isResizing.value = false
+    }
+  })
+}
 
 type ActiveControl =
   | 'none'
@@ -327,12 +324,40 @@ type ActiveControl =
   | 'automate'
   | 'measurements'
   | 'mobileOverflow'
+  | 'gendo'
+
+const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
+const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
+const { enableMeasurements } = useMeasurementUtilities()
+const { showNavbar, showControls } = useViewerTour()
+const { isTransparent, isEnabled: isEmbedEnabled } = useEmbed()
+const {
+  zoomExtentsOrSelection,
+  toggleProjection,
+  camera: { isOrthoProjection }
+} = useCameraUtilities()
+
+const allAutomationRuns = computed(() => {
+  const allAutomationStatuses = modelsAndVersionIds.value
+    .map(({ model }) => model.loadedVersion.items[0].automationsStatus)
+    .flat()
+    .filter(isNonNullable)
+
+  return allAutomationStatuses.map((status) => status.automationRuns).flat()
+})
+
+const allFunctionRuns = computed(() => {
+  return allAutomationRuns.value.map((run) => run.functionRuns).flat()
+})
+
+const { summary } = useFunctionRunsStatusSummary({
+  runs: allFunctionRuns
+})
 
 const openAddModel = ref(false)
 
 const activeControl = ref<ActiveControl>('models')
 
-const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 const {
   diff: { enabled }
 } = useInjectedViewerInterfaceState()

@@ -19,7 +19,7 @@ import {
 } from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { AllScopes, Roles, Scopes } from '@speckle/shared'
+import { AllScopes, Roles, Scopes } from '@/modules/core/helpers/mainConstants'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import { difference } from 'lodash'

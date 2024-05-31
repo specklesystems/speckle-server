@@ -64,7 +64,11 @@
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
 import { WebhookTriggers } from '@speckle/shared'
-import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
+import {
+  LayoutDialog,
+  FormSelectBadges,
+  type LayoutDialogButton
+} from '@speckle/ui-components'
 import type { WebhookItem, WebhookFormValues } from '~~/lib/projects/helpers/types'
 import {
   createWebhookMutation,
@@ -218,7 +222,7 @@ const resetWebhookModel = () => {
   }))
 }
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
@@ -228,7 +232,7 @@ const dialogButtons = computed(() => [
   },
   {
     text: props.webhook ? 'Save' : 'Create',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'default', fullWidth: true },
     onClick: onSubmit
   }
 ])

@@ -20,23 +20,19 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useApolloClient, useQuery } from '@vue/apollo-composable'
-import type { Optional } from '@speckle/shared'
+import { useQuery } from '@vue/apollo-composable'
+import { Roles, type Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  projectDiscussionsPageQuery,
-  projectModelsPageQuery,
-  projectPageQuery
-} from '~~/lib/projects/graphql/queries'
+import { projectPageQuery } from '~~/lib/projects/graphql/queries'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { LayoutTabsHoriztonal, type LayoutPageTabItem } from '@speckle/ui-components'
 import {
   CubeIcon,
   ChatBubbleLeftRightIcon,
+  BoltIcon,
   Cog6ToothIcon
 } from '@heroicons/vue/24/outline'
 import { projectRoute, projectWebhooksRoute } from '~/lib/common/helpers/route'
-import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 
 graphql(`
   fragment ProjectPageProject on Project {
@@ -83,17 +79,17 @@ const { result: projectPageResult } = useQuery(
   projectPageQuery,
   () => ({
     id: projectId.value,
-    token: token.value
+    ...(token.value?.length ? { token: token.value } : {})
   }),
   () => ({
     // Custom error policy so that a failing invitedTeam resolver (due to access rights)
     // doesn't kill the entire query
-    errorPolicy: 'all',
-    context: {
-      skipLoggingErrors: (err) =>
-        err.graphQLErrors?.length === 1 &&
-        err.graphQLErrors.some((e) => !!e.path?.includes('invitedTeam'))
-    }
+    errorPolicy: 'all'
+    // context: {
+    //   skipLoggingErrors: (err) =>
+    //     err.graphQLErrors?.length === 1 &&
+    //     err.graphQLErrors.some((e) => !!e.path?.includes('invitedTeam'))
+    // }
   })
 )
 
@@ -104,6 +100,7 @@ const projectName = computed(() =>
 )
 const modelCount = computed(() => project.value?.modelCount.totalCount)
 const commentCount = computed(() => project.value?.commentThreadCount.totalCount)
+const hasRole = computed(() => project.value?.role)
 
 useHead({
   title: projectName
@@ -117,41 +114,58 @@ const onInviteAccepted = async (params: { accepted: boolean }) => {
   }
 }
 
-const pageTabItems = computed((): LayoutPageTabItem[] => [
-  {
-    title: 'Models',
-    id: 'models',
-    count: modelCount.value,
-    icon: CubeIcon
-  },
-  {
-    title: 'Discussions',
-    id: 'discussions',
-    count: commentCount.value,
-    icon: ChatBubbleLeftRightIcon
-  },
-  //   {
-  //   title: 'Automations',
-  //   id: 'automations',
-  //   tag: 'New',
-  //   icon: BoltIcon
-  //   },
-  {
-    title: 'Settings',
-    id: 'settings',
-    icon: Cog6ToothIcon
+const isOwner = computed(() => project.value?.role === Roles.Stream.Owner)
+const isAutomateEnabled = useIsAutomateModuleEnabled()
+
+const pageTabItems = computed((): LayoutPageTabItem[] => {
+  const items: LayoutPageTabItem[] = [
+    {
+      title: 'Models',
+      id: 'models',
+      count: modelCount.value,
+      icon: CubeIcon
+    },
+    {
+      title: 'Discussions',
+      id: 'discussions',
+      count: commentCount.value,
+      icon: ChatBubbleLeftRightIcon
+    }
+  ]
+
+  if (isOwner.value && isAutomateEnabled.value) {
+    items.push({
+      title: 'Automations',
+      id: 'automations',
+      icon: BoltIcon,
+      tag: 'Beta'
+    })
   }
-])
+
+  if (hasRole.value) {
+    items.push({
+      title: 'Settings',
+      id: 'settings',
+      icon: Cog6ToothIcon
+    })
+  }
+
+  return items
+})
+
+const findTabById = (id: string) =>
+  pageTabItems.value.find((tab) => tab.id === id) || pageTabItems.value[0]
 
 const activePageTab = computed({
   get: () => {
     const path = router.currentRoute.value.path
-    if (/\/discussions\/?$/i.test(path)) return pageTabItems.value[1]
-    // if (/\/automations\/?$/i.test(path)) return pageTabItems.value[2]
-    if (/\/settings\/?/i.test(path)) return pageTabItems.value[2]
-    return pageTabItems.value[0]
+    if (/\/discussions\/?$/i.test(path)) return findTabById('discussions')
+    if (/\/automations\/?.*$/i.test(path)) return findTabById('automations')
+    if (/\/settings\/?/i.test(path) && hasRole.value) return findTabById('settings')
+    return findTabById('models')
   },
   set: (val: LayoutPageTabItem) => {
+    if (!val) return
     switch (val.id) {
       case 'models':
         router.push({ path: projectRoute(projectId.value, 'models') })
@@ -163,42 +177,11 @@ const activePageTab = computed({
         router.push({ path: projectRoute(projectId.value, 'automations') })
         break
       case 'settings':
-        router.push({ path: projectRoute(projectId.value, 'settings') })
+        if (hasRole.value) {
+          router.push({ path: projectRoute(projectId.value, 'settings') })
+        }
         break
     }
   }
 })
-
-if (process.server) {
-  /**
-   * There seems to be some sort of vue/nuxt bug where Apollo queries in tabs cause
-   * weird hydration mismatches. Honestly I've no idea wtf is happening, but if we preload
-   * those queries from the root page it seems to work. This is a hack, but it works.
-   *
-   * Hopefully we can figure this out at some point, cause this is quite nasty
-   */
-
-  const serverActiveTab = activePageTab.value
-  const client = useApolloClient().client
-
-  if (serverActiveTab.id === 'models') {
-    await client
-      .query({
-        query: projectModelsPageQuery,
-        variables: {
-          projectId: projectId.value
-        }
-      })
-      .catch(convertThrowIntoFetchResult)
-  } else if (serverActiveTab.id === 'discussions') {
-    await client
-      .query({
-        query: projectDiscussionsPageQuery,
-        variables: {
-          projectId: projectId.value
-        }
-      })
-      .catch(convertThrowIntoFetchResult)
-  }
-}
 </script>

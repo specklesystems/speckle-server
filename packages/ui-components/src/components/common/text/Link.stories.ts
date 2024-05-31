@@ -1,4 +1,4 @@
-import { userEvent, within } from '@storybook/testing-library'
+import { userEvent, within } from '@storybook/test'
 import type { Meta, StoryObj } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import CommonTextLink from '~~/src/components/common/text/Link.vue'

@@ -1,12 +1,17 @@
 import { UserNotificationPreferences } from '@/modules/core/dbSchema'
-import { NotificationPreferences } from '@/modules/notifications/helpers/types'
+import {
+  NotificationPreferences,
+  UserNotificationPreferencesRecord
+} from '@/modules/notifications/helpers/types'
 
 export async function getUserNotificationPreferences(
   userId: string
 ): Promise<NotificationPreferences> {
-  const userPreferences = await UserNotificationPreferences.knex()
-    .where({ userId })
-    .first('*')
+  const userPreferences =
+    await UserNotificationPreferences.knex<UserNotificationPreferencesRecord>()
+      .where({ userId })
+      .first()
+
   return userPreferences?.preferences ?? {}
 }
 

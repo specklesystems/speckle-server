@@ -100,6 +100,10 @@ function createCache(): InMemoryCache {
           },
           admin: {
             merge: mergeAsObjectsFunction
+          },
+          automateFunctions: {
+            keyArgs: ['filter', 'limit'],
+            merge: buildAbstractCollectionMergeFunction('AutomateFunctionCollection')
           }
         }
       },
@@ -172,6 +176,10 @@ function createCache(): InMemoryCache {
           replyAuthors: {
             keyArgs: false,
             merge: buildAbstractCollectionMergeFunction('CommentReplyAuthorCollection')
+          },
+          automations: {
+            keyArgs: ['filter', 'limit'],
+            merge: buildAbstractCollectionMergeFunction('AutomationCollection')
           },
           viewerResources: {
             merge: (_existing, incoming) => [...incoming]
@@ -258,6 +266,16 @@ function createCache(): InMemoryCache {
       },
       CommentThreadActivityMessage: {
         merge: true
+      },
+      AutomateFunction: {
+        fields: {
+          releases: {
+            keyArgs: ['filter', 'limit'],
+            merge: buildAbstractCollectionMergeFunction(
+              'AutomateFunctionReleaseCollection'
+            )
+          }
+        }
       }
     }
   })

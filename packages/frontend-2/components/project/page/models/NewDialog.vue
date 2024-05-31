@@ -19,6 +19,7 @@
           :rules="rules"
           :disabled="anyMutationsLoading"
           help="Use forward slashes in the model name to nest it below other models."
+          autocomplete="off"
         />
         <FormTextArea
           v-model="newDescription"
@@ -36,6 +37,7 @@
 </template>
 <script setup lang="ts">
 import { CubeIcon } from '@heroicons/vue/24/solid'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'
 import { useMixpanel } from '~~/lib/core/composables/mp'
@@ -43,6 +45,7 @@ import {
   useCreateNewModel,
   useModelNameValidationRules
 } from '~~/lib/projects/composables/modelManagement'
+import { sanitizeModelName } from '~~/lib/projects/helpers/models'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -74,7 +77,11 @@ const openState = computed({
 })
 
 const onSubmit = handleSubmit(async ({ name, description }) => {
-  await createModel({ name, description, projectId: props.projectId })
+  await createModel({
+    name: sanitizeModelName(name),
+    description,
+    projectId: props.projectId
+  })
   mp.track('Branch Action', { type: 'action', name: 'create', mode: 'dialog' })
   openState.value = false
 })
@@ -89,7 +96,7 @@ watch(
   }
 )
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
@@ -99,7 +106,7 @@ const dialogButtons = computed(() => [
   },
   {
     text: 'Create',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'default', fullWidth: true },
     onClick: () => {
       onSubmit()
     },

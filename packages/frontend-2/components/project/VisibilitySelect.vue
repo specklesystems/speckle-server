@@ -10,6 +10,11 @@
     :label-id="labelId"
     :button-id="buttonId"
     by="id"
+    :help="
+      disabled
+        ? 'You must be an Owner of this project to change this setting'
+        : undefined
+    "
   >
     <template #something-selected="{ value }">
       <div class="text-sm">

@@ -8,6 +8,7 @@ export const projectDashboardItemNoModelsFragment = graphql(`
     updatedAt
     role
     team {
+      id
       user {
         id
         name
@@ -68,7 +69,9 @@ export const projectPageLatestItemsModelItemFragment = graphql(`
     ...ProjectPageModelsCardRenameDialog
     ...ProjectPageModelsCardDeleteDialog
     ...ProjectPageModelsActions
-    ...ModelCardAutomationStatus_Model
+    automationsStatus {
+      ...AutomateRunsTriggerStatus_TriggeredAutomationsStatus
+    }
   }
 `)
 

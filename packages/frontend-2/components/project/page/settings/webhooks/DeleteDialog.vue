@@ -26,7 +26,7 @@
 
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
-import { LayoutDialog } from '@speckle/ui-components'
+import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import type { WebhookItem } from '~~/lib/projects/helpers/types'
 import { deleteWebhookMutation } from '~~/lib/projects/graphql/mutations'
 import {
@@ -105,7 +105,7 @@ const deleteConfirmed = async () => {
   }
 }
 
-const dialogButtons = [
+const dialogButtons: LayoutDialogButton[] = [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },

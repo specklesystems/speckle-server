@@ -43,3 +43,15 @@ export const useStrictLogger = async (
 
   return logger
 }
+
+/**
+ * Short-cut to useLogger().info, useful when you quickly want to console.log something during development.
+ * Calls to this are skipped outside of dev mode.
+ */
+export const useDevLogger = () => {
+  if (!process.dev) return noop
+
+  const logger = useLogger()
+  const info = logger.info.bind(logger)
+  return info as (...args: unknown[]) => void
+}
