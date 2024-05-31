@@ -20,6 +20,7 @@ import {
   getProjectAutomationsTotalCount,
   storeAutomation,
   storeAutomationRevision,
+  storeAutomationToken,
   updateAutomationRun,
   updateAutomation as updateDbAutomation,
   upsertAutomationFunctionRun
@@ -27,6 +28,7 @@ import {
 import {
   createAutomation,
   createAutomationRevision,
+  createTestAutomation,
   getAutomationsStatus,
   updateAutomation
 } from '@/modules/automate/services/automationManagement'
@@ -451,7 +453,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               ? async () => testAutomateAuthCode
               : createStoredAuthCode({ redis: getGenericRedis() }),
             automateCreateAutomation: clientCreateAutomation,
-            storeAutomation
+            storeAutomation,
+            storeAutomationToken
           })
 
           return (
@@ -514,6 +517,21 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
 
           return true
+        },
+        async createTestAutomation(parent, { input }, ctx) {
+          const create = createTestAutomation({
+            getEncryptionKeyPair,
+            getFunction,
+            storeAutomation,
+            storeAutomationRevision
+          })
+
+          return await create({
+            input,
+            projectId: parent.projectId,
+            userId: ctx.userId!,
+            userResourceAccessRules: ctx.resourceAccessRules
+          })
         }
       },
       Query: {
