@@ -2,12 +2,19 @@
   <div class="bg-foundation border border-outline-3 rounded-lg pt-5 px-6 pb-6">
     <div class="flex w-full justify-between items-center mb-2">
       <div class="flex flex-col md:flex-row gap-4">
-        <RouterLink
-          class="h5 font-bold text-foreground hover:underline"
-          :to="projectAutomationRoute(projectId, automation.id)"
-        >
-          {{ automation.name }}
-        </RouterLink>
+        <div class="flex flex-row justify-start items-cetner gap-4">
+          <RouterLink
+            class="h5 font-bold text-foreground hover:underline"
+            :to="projectAutomationRoute(projectId, automation.id)"
+          >
+            {{ automation.name }}
+          </RouterLink>
+          <div>
+            <CommonBadge v-if="isTestAutomation" size="base">
+              Test Automation
+            </CommonBadge>
+          </div>
+        </div>
         <template v-if="!isEnabled">
           <div>
             <CommonBadge size="lg" color-classes="bg-danger-lighter text-danger-darker">
@@ -67,6 +74,7 @@ graphql(`
     id
     name
     enabled
+    isTestAutomation
     currentRevision {
       id
       triggerDefinitions {
@@ -95,6 +103,7 @@ const props = defineProps<{
 const { modelUrl } = useViewerRouteBuilder()
 
 const isEnabled = computed(() => props.automation.enabled)
+const isTestAutomation = computed(() => props.automation.isTestAutomation)
 
 const triggerModels = computed(
   () =>
