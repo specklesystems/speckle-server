@@ -28,6 +28,14 @@
             Isolate
           </div>
         </FormButton>
+        <div class="flex justify-end w-full">
+          <div v-tippy="`Open selection in new window`" class="max-w-max">
+            <FormButton size="xs" :to="selectionLink" color="secondary" target="_blank">
+              <span class="sr-only">Open selection in new window</span>
+              <ArrowTopRightOnSquareIcon class="w-4" />
+            </FormButton>
+          </div>
+        </div>
       </template>
       <div class="p-1 mb-2 sm:mb-0 sm:py-2">
         <div class="space-y-2">
@@ -54,7 +62,12 @@
   </ViewerCommentsPortalOrDiv>
 </template>
 <script setup lang="ts">
-import { EyeIcon, EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
+import {
+  EyeIcon,
+  EyeSlashIcon,
+  FunnelIcon,
+  ArrowTopRightOnSquareIcon
+} from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 
 import { onKeyStroke } from '@vueuse/core'
@@ -65,8 +78,10 @@ import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composa
 import { uniqWith } from 'lodash-es'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { modelRoute } from '~/lib/common/helpers/route'
 
 const {
+  projectId,
   viewer: {
     metadata: { filteringState }
   },
@@ -119,6 +134,10 @@ const isIsolated = computed(() => {
 })
 
 const mp = useMixpanel()
+
+const selectionLink = computed(() => {
+  return modelRoute(projectId.value, allTargetIds.value.join(','))
+})
 
 const hideOrShowSelection = () => {
   if (!isHidden.value) {
