@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 import {
   CreateFunctionBody,
   createFunction,
@@ -30,6 +31,11 @@ import {
   FunctionReleaseSchemaType,
   FunctionSchemaType
 } from '@/modules/automate/helpers/executionEngine'
+import { Request, Response } from 'express'
+import { UnauthorizedError } from '@/modules/shared/errors'
+import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
+import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
+import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 
 const repoUrlToBasicGitRepositoryMetadata = (
   url: string
@@ -166,4 +172,51 @@ export const updateFunction =
     })
 
     return convertFunctionToGraphQLReturn(apiResult)
+  }
+
+export type StartAutomateFunctionCreatorAuthDeps = {
+  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
+}
+
+export const startAutomateFunctionCreatorAuth =
+  (deps: StartAutomateFunctionCreatorAuthDeps) =>
+  async (params: { req: Request; res: Response }) => {
+    const { createStoredAuthCode } = deps
+    const { req, res } = params
+
+    const userId = req.context.userId
+    if (!userId) {
+      throw new UnauthorizedError()
+    }
+
+    const authCode = await createStoredAuthCode()
+    const redirectUrl = new URL(
+      '/api/v2/functions/auth/githubapp/authorize',
+      speckleAutomateUrl()
+    )
+    redirectUrl.searchParams.set('speckleUserId', userId)
+    redirectUrl.searchParams.set(
+      'speckleServerOrigin',
+      new URL(getServerOrigin()).origin
+    )
+    redirectUrl.searchParams.set('authenticationCode', authCode)
+
+    return res.redirect(redirectUrl.toString())
+  }
+
+export const handleAutomateFunctionCreatorAuthCallback =
+  () => async (params: { req: Request; res: Response }) => {
+    const { req, res } = params
+    const {
+      error = 'unknown',
+      error_description = 'GitHub Authentication unexpectedly failed',
+      isAuthenticated = 'false'
+    } = req.query as Record<string, string>
+
+    const isSuccess = ['true', '1', true].includes(isAuthenticated as string)
+    const redirectUrl = getFunctionsMarketplaceUrl()
+    redirectUrl.searchParams.set('ghAuth', isSuccess ? 'success' : error)
+    redirectUrl.searchParams.set('ghAuthDesc', isSuccess ? '' : error_description)
+
+    return res.redirect(redirectUrl.toString())
   }

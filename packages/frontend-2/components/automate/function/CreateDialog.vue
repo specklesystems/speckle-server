@@ -50,6 +50,7 @@ import type {
   CreatableFunctionTemplate,
   FunctionDetailsFormValues
 } from '~/lib/automate/helpers/functions'
+import { automateGithubAppAuthorizationRoute } from '~/lib/common/helpers/route'
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { useForm } from 'vee-validate'
 import { useCreateAutomateFunction } from '~/lib/automate/composables/management'
@@ -152,8 +153,8 @@ const title = computed(() => {
 })
 
 const authorizeGithubUrl = computed(() => {
-  // TODO:
-  return new URL('/', apiBaseUrl).toString()
+  const redirectUrl = new URL(automateGithubAppAuthorizationRoute, apiBaseUrl)
+  return redirectUrl.toString()
 })
 
 const buttons = computed((): LayoutDialogButton[] => {

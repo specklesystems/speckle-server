@@ -24,6 +24,7 @@ import {
   setupAutomationUpdateSubscriptions,
   setupStatusUpdateSubscriptions
 } from '@/modules/automate/services/subscriptions'
+import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -91,6 +92,7 @@ const automateModule: SpeckleModule = {
 
     await initScopes()
     logStreamRest(app)
+    authGithubAppRest(app)
 
     if (isInitial) {
       quitListeners = initializeEventListeners()
