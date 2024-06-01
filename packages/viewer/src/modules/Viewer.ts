@@ -282,12 +282,8 @@ export class Viewer extends EventEmitter implements IViewer {
       .findAll((node: TreeNode) => {
         return node.model.renderView?.speckleType === SpeckleType.View3D
       })
-      .map((v) => {
-        return {
-          name: v.model.raw.applicationId,
-          id: v.model.id,
-          view: v.model.raw
-        } as SpeckleView
+      .map((v: TreeNode) => {
+        return v.model.raw as SpeckleView
       })
   }
 
