@@ -487,7 +487,7 @@ export default class Batcher {
     if (geometryType === undefined) return true
     switch (geometryType) {
       case GeometryType.MESH:
-        return batch instanceof MeshBatch
+        return batch instanceof MeshBatch || batch instanceof InstancedMeshBatch
       case GeometryType.LINE:
         return batch instanceof LineBatch
       case GeometryType.POINT:

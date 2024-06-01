@@ -356,6 +356,7 @@ export type Automation = {
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
+  isTestAutomation: Scalars['Boolean'];
   name: Scalars['String'];
   runs: AutomateRunCollection;
   updatedAt: Scalars['DateTime'];
@@ -4026,7 +4027,7 @@ export type HasStreamRoleDirectiveArgs = {
 
 export type HasStreamRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasStreamRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
-export type IsOwnerDirectiveArgs = { };
+export type IsOwnerDirectiveArgs = {};
 
 export type IsOwnerDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = IsOwnerDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
@@ -4222,6 +4223,7 @@ export type AutomationResolvers<ContextType = GraphQLContext, ParentType extends
   currentRevision?: Resolver<Maybe<ResolversTypes['AutomationRevision']>, ParentType, ContextType>;
   enabled?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  isTestAutomation?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   runs?: Resolver<ResolversTypes['AutomateRunCollection'], ParentType, ContextType, Partial<AutomationRunsArgs>>;
   updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;

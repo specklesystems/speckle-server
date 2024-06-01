@@ -15,7 +15,7 @@
         size="xs"
         text
         :icon-left="showRemove ? CheckIcon : MinusIcon"
-        :disabled="modelsAndVersionIds.length <= 1"
+        :disabled="!removeEnabled"
         @click="showRemove = !showRemove"
       >
         {{ showRemove ? 'Done' : 'Remove' }}
@@ -35,6 +35,15 @@
             @remove="(id:string) => removeModel(id)"
           />
         </div>
+        <template v-if="objects.length !== 0">
+          <ViewerResourcesObjectCard
+            v-for="object in objects"
+            :key="object.objectId"
+            :object="object"
+            :show-remove="showRemove"
+            @remove="(id:string) => removeModel(id)"
+          />
+        </template>
       </template>
     </div>
     <ViewerResourcesAddModelDialog v-model:open="open" />
@@ -52,7 +61,8 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 defineEmits(['close'])
 
 const showRemove = ref(false)
-const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
+const { resourceItems, modelsAndVersionIds, objects } =
+  useInjectedViewerLoadedResources()
 const { items } = useInjectedViewerRequestedResources()
 
 const open = ref(false)
@@ -68,7 +78,8 @@ const removeModel = async (modelId: string) => {
         builder.addModel(loadedResource.modelId, loadedResource.versionId || undefined)
       }
     } else {
-      builder.addObject(loadedResource.objectId)
+      if (loadedResource.objectId !== modelId)
+        builder.addObject(loadedResource.objectId)
     }
   }
   mp.track('Viewer Action', { type: 'action', name: 'federation', action: 'remove' })
@@ -78,4 +89,6 @@ const removeModel = async (modelId: string) => {
 watch(modelsAndVersionIds, (newVal) => {
   if (newVal.length <= 1) showRemove.value = false
 })
+
+const removeEnabled = computed(() => items.value.length > 1)
 </script>

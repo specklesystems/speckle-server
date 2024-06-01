@@ -28,14 +28,6 @@
         <IconFileExplorer class="h-4 w-4 md:h-5 md:w-5" />
       </ViewerControlsButtonToggle>
 
-      <!-- TODO -->
-      <!-- <ViewerControlsButtonToggle
-        :active="activeControl === 'filters'"
-        @click="toggleActiveControl('filters')"
-      >
-        <FunnelIcon class="w-5 h-5" />
-      </ViewerControlsButtonToggle> -->
-
       <!-- Comment threads -->
       <ViewerControlsButtonToggle
         v-tippy="isSmallerOrEqualSm ? undefined : discussionsShortcut"
@@ -201,16 +193,19 @@
           </div>
         </KeepAlive>
       </div>
+
       <div v-show="resourceItems.length !== 0 && activeControl === 'explorer'">
         <KeepAlive>
           <ViewerExplorer class="pointer-events-auto" @close="activeControl = 'none'" />
         </KeepAlive>
       </div>
+
       <ViewerComments
         v-if="resourceItems.length !== 0 && activeControl === 'discussions'"
         class="pointer-events-auto"
         @close="activeControl = 'none'"
       />
+
       <div v-show="resourceItems.length !== 0 && activeControl === 'automate'">
         <AutomateViewerPanel
           :automation-runs="allAutomationRuns"

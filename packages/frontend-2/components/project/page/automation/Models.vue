@@ -28,6 +28,7 @@ graphql(`
     id
     name
     enabled
+    isTestAutomation
     currentRevision {
       id
       triggerDefinitions {

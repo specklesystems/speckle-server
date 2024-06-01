@@ -62,6 +62,7 @@ type Automation {
   id: ID!
   name: String!
   enabled: Boolean!
+  isTestAutomation: Boolean!
   runs(cursor: String, limit: Int): AutomateRunCollection!
   currentRevision: AutomationRevision
   createdAt: DateTime!
