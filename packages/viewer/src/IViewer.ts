@@ -88,10 +88,12 @@ export interface ViewerEventPayload {
   [ViewerEvent.LightConfigUpdated]: LightConfiguration
 }
 
-export type SpeckleView = {
-  name: string
-  id: string
-  view: { name: string; origin: Vector3Like; target: Vector3Like }
+export type SpeckleView = SpeckleObject & {
+  origin: Vector3Like
+  target: Vector3Like
+  name?: string
+  upDirection?: Vector3Like
+  forwardDirection?: Vector3Like
 }
 
 export type SelectionEvent = {
