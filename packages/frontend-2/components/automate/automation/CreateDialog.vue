@@ -143,8 +143,6 @@ const props = defineProps<{
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
-const enableCreateTestAutomation = useisTestAutomationsEnabled()
-
 const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
 
 const stepsOrder = computed(() => [
@@ -213,39 +211,33 @@ const title = computed(() => {
 
 const buttons = computed((): LayoutDialogButton[] => {
   switch (enumStep.value) {
-    case AutomationCreateSteps.SelectFunction: {
-      const selectFnNextButton: LayoutDialogButton = {
-        id: 'selectFnNext',
-        text: 'Next',
-        props: {
-          iconRight: ChevronRightIcon,
-          disabled: !selectedFunction.value
+    case AutomationCreateSteps.SelectFunction:
+      return [
+        {
+          id: 'createTestAutomation',
+          text: 'Create test automation',
+          props: {
+            color: 'secondary',
+            iconLeft: CodeBracketIcon,
+            textColor: 'primary'
+          },
+          onClick: () => {
+            isTestAutomation.value = true
+            step.value = 2
+          }
         },
-        onClick: () => {
-          step.value++
+        {
+          id: 'selectFnNext',
+          text: 'Next',
+          props: {
+            iconRight: ChevronRightIcon,
+            disabled: !selectedFunction.value
+          },
+          onClick: () => {
+            step.value++
+          }
         }
-      }
-
-      const createTestAutomationButton: LayoutDialogButton = {
-        id: 'createTestAutomation',
-        text: 'Create test automation',
-        props: {
-          color: 'secondary',
-          iconLeft: CodeBracketIcon,
-          textColor: 'primary'
-        },
-        onClick: () => {
-          isTestAutomation.value = true
-          step.value = 2
-        }
-      }
-
-      const stepButtons = enableCreateTestAutomation.value
-        ? [createTestAutomationButton, selectFnNextButton]
-        : [selectFnNextButton]
-
-      return stepButtons
-    }
+      ]
     case AutomationCreateSteps.FunctionParameters:
       return [
         {
@@ -341,7 +333,7 @@ const buttons = computed((): LayoutDialogButton[] => {
 const buttonsWrapperClasses = computed(() => {
   switch (enumStep.value) {
     case AutomationCreateSteps.SelectFunction:
-      return enableCreateTestAutomation.value ? 'justify-between' : 'justify-end'
+      return 'justify-between'
     case AutomationCreateSteps.Done:
       return 'flex-col sm:flex-row sm:justify-between'
     default:
