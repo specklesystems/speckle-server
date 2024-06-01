@@ -463,7 +463,10 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      console.warn(await this.viewer.screenshot())
+      // console.warn(await this.viewer.screenshot())
+      this.viewer
+        .getExtension(FilteringExtension)
+        .hideObjects([this.viewer.getWorldTree().root.model.children[0].id])
     })
 
     const rotate = this.tabs.pages[0].addButton({
