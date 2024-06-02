@@ -1,7 +1,7 @@
 'use strict'
 const { performance } = require('perf_hooks')
 const crypto = require('crypto')
-const { set, get, chunk } = require('lodash')
+const { set, get } = require('lodash')
 
 const knex = require(`@/db/knex`)
 const { servicesLogger } = require('@/logging/logging')
@@ -61,49 +61,21 @@ module.exports = {
   },
 
   async createObjectsBatched(streamId, objects) {
-    const closures = []
     const objsToInsert = []
     const ids = []
 
     // Prep objects up
     objects.forEach((obj) => {
       const insertionObject = prepInsertionObject(streamId, obj)
-      let totalChildrenCountGlobal = 0
-      const totalChildrenCountByDepth = {}
-
-      if (obj.__closure !== null) {
-        for (const prop in obj.__closure) {
-          closures.push({
-            streamId,
-            parent: insertionObject.id,
-            child: prop,
-            minDepth: obj.__closure[prop]
-          })
-          totalChildrenCountGlobal++
-          if (totalChildrenCountByDepth[obj.__closure[prop].toString()])
-            totalChildrenCountByDepth[obj.__closure[prop].toString()]++
-          else totalChildrenCountByDepth[obj.__closure[prop].toString()] = 1
-        }
-      }
-
-      insertionObject.totalChildrenCount = totalChildrenCountGlobal
-      insertionObject.totalChildrenCountByDepth = JSON.stringify(
-        totalChildrenCountByDepth
-      )
-
-      delete insertionObject.__tree
       delete insertionObject.__closure
-
       objsToInsert.push(insertionObject)
       ids.push(insertionObject.id)
     })
 
-    const closureBatchSize = 1000
     const objectsBatchSize = 500
 
     // step 1: insert objects
     if (objsToInsert.length > 0) {
-      // const batches = chunk(objsToInsert, objectsBatchSize)
       const batches = chunkInsertionObjectArray({
         objects: objsToInsert,
         chunkLengthLimit: objectsBatchSize,
@@ -116,19 +88,15 @@ module.exports = {
       }
     }
 
-    // step 2: insert closures
-    if (closures.length > 0) {
-      const batches = chunk(closures, closureBatchSize)
-
-      for (const batch of batches) {
-        prepInsertionClosureBatch(batch)
-        await Closures().insert(batch).onConflict().ignore()
-        servicesLogger.info(`Inserted ${batch.length} closures`)
-      }
-    }
-    return true
+    return ids
   },
 
+  /**
+   *  @deprecated Use 'createObjectsBatched()' instead
+   * @param {*} streamId
+   * @param {*} objects
+   * @returns
+   */
   async createObjects(streamId, objects) {
     // TODO: Switch to knex batch inserting functionality
     // see http://knexjs.org/#Utility-BatchInsert
@@ -600,12 +568,11 @@ module.exports = {
 function prepInsertionObject(streamId, obj) {
   const MAX_OBJECT_SIZE_MB = getMaximumObjectSizeMB()
 
-  if (obj.hash) obj.id = obj.hash
-  else
-    obj.id =
-      obj.id || crypto.createHash('md5').update(JSON.stringify(obj)).digest('hex') // generate a hash if none is present
-
   const stringifiedObj = JSON.stringify(obj)
+
+  if (obj.hash) obj.id = obj.hash
+  else obj.id = obj.id || crypto.createHash('md5').update(stringifiedObj).digest('hex') // generate a hash if none is present
+
   const objectByteSize = estimateStringMegabyteSize(stringifiedObj)
   if (objectByteSize > MAX_OBJECT_SIZE_MB) {
     throw new ObjectHandlingError(
@@ -623,10 +590,4 @@ function prepInsertionObject(streamId, obj) {
 // Batches need to be inserted ordered by id to avoid deadlocks
 function prepInsertionObjectBatch(batch) {
   batch.sort((a, b) => (a.id > b.id ? 1 : -1))
-}
-
-function prepInsertionClosureBatch(batch) {
-  batch.sort((a, b) =>
-    a.parent > b.parent ? 1 : a.parent === b.parent ? (a.child > b.child ? 1 : -1) : -1
-  )
 }

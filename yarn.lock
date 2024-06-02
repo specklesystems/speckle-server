@@ -14009,6 +14009,7 @@ __metadata:
     "@tiptap/core": ^2.0.0-beta.176
     "@types/bcrypt": ^5.0.0
     "@types/bull": ^3.15.9
+    "@types/busboy": ^1.5.4
     "@types/chai-as-promised": ^7.1.8
     "@types/compression": ^1.7.2
     "@types/cookie-parser": ^1.4.7
@@ -14030,6 +14031,7 @@ __metadata:
     "@types/pg": ^8.6.6
     "@types/pino-http": ^5.8.4
     "@types/sanitize-html": ^2.6.2
+    "@types/stream-json": ^1.7.7
     "@types/supertest": ^2.0.12
     "@types/uuid": ^9.0.0
     "@types/verror": ^1.10.6
@@ -14108,6 +14110,7 @@ __metadata:
     response-time: ^2.3.2
     sanitize-html: ^2.7.1
     sharp: ^0.32.6
+    stream-json: ^1.8.0
     string-pixel-width: ^1.10.0
     subscriptions-transport-ws: ^0.11.0
     supertest: ^4.0.2
@@ -16251,6 +16254,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/busboy@npm:^1.5.4":
+  version: 1.5.4
+  resolution: "@types/busboy@npm:1.5.4"
+  dependencies:
+    "@types/node": "*"
+  checksum: 56444ed1223d5c8f6340128561c25bf7d6567494f507d386241de2ed6e22f9a69de7f536d71502c2f0897f81be7e8253455522ddd791db7e3eb769db7eae9e92
+  languageName: node
+  linkType: hard
+
 "@types/cacheable-request@npm:^6.0.1":
   version: 6.0.3
   resolution: "@types/cacheable-request@npm:6.0.3"
@@ -17349,6 +17361,25 @@ __metadata:
   version: 2.0.1
   resolution: "@types/stack-utils@npm:2.0.1"
   checksum: 205fdbe3326b7046d7eaf5e494d8084f2659086a266f3f9cf00bccc549c8e36e407f88168ad4383c8b07099957ad669f75f2532ed4bc70be2b037330f7bae019
+  languageName: node
+  linkType: hard
+
+"@types/stream-chain@npm:*":
+  version: 2.1.0
+  resolution: "@types/stream-chain@npm:2.1.0"
+  dependencies:
+    "@types/node": "*"
+  checksum: 0cc764e01abb0d86725081206751f1dd1c52ba147c2d15b03698aa373ad06ff0085afd577b92927347d288539803af78166314a4f50c2d17d275cb911ee92a29
+  languageName: node
+  linkType: hard
+
+"@types/stream-json@npm:^1.7.7":
+  version: 1.7.7
+  resolution: "@types/stream-json@npm:1.7.7"
+  dependencies:
+    "@types/node": "*"
+    "@types/stream-chain": "*"
+  checksum: 5ab30cb5c478bec6969b788343293fb5d268a2164947617a8550b336f80a1e85d354e510e823e0a4b4dd21c932f921f7146ef426a87df8834a5984a1d943ed1e
   languageName: node
   linkType: hard
 
@@ -43675,6 +43706,22 @@ __metadata:
   version: 3.0.2
   resolution: "stream-buffers@npm:3.0.2"
   checksum: b09fdeea606e3113ebd0e07010ed0cf038608fa396130add9e45deaff5cc3ba845dc25c31ad24f8341f85907846344cb7c85f75ea52c6572e2ac646e9b6072d0
+  languageName: node
+  linkType: hard
+
+"stream-chain@npm:^2.2.5":
+  version: 2.2.5
+  resolution: "stream-chain@npm:2.2.5"
+  checksum: c83cbf504bd11e2bcbe761a92801295b3decac7ffa4092ceffca2eb1b5d0763bcc511fa22cd8044e8a18c21ca66794fd10c8d9cd1292a3e6c0d83a4194c6b8ed
+  languageName: node
+  linkType: hard
+
+"stream-json@npm:^1.8.0":
+  version: 1.8.0
+  resolution: "stream-json@npm:1.8.0"
+  dependencies:
+    stream-chain: ^2.2.5
+  checksum: c17ac72228815850fc5226d8c0a80afd6c2ffbfa71c572ad99ad2eac145dc836a3fc6f62a298b3df716f1726cc1ed8a448892ed9fb6123f46abf2f89c908749f
   languageName: node
   linkType: hard
 

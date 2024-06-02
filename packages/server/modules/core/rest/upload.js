@@ -1,5 +1,6 @@
 'use strict'
 const zlib = require('zlib')
+
 const { corsMiddleware } = require('@/modules/core/configs/cors')
 const Busboy = require('busboy')
 
@@ -9,12 +10,105 @@ const { createObjectsBatched } = require('@/modules/core/services/objects')
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
 const { estimateStringMegabyteSize } = require('@/modules/core/utils/chunking')
 
-const MAX_FILE_SIZE = 50 * 1024 * 1024
+const { getDbPipeline } = require('@/modules/core/services/custom-stream')
+
+const MAX_FILE_SIZE = 500 * 1024 * 1024 // env var?
+const allowedMimeTypes = [
+  'application/gzip',
+  'text/plain',
+  'application/json',
+  'application/octet-stream'
+]
 
 module.exports = (app) => {
   app.options('/objects/:streamId', corsMiddleware())
 
   app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {
+    req.log = req.log.child({
+      userId: req.context.userId || '-',
+      streamId: req.params.streamId
+    })
+
+    const hasStreamAccess = await validatePermissionsWriteStream(
+      req.params.streamId,
+      req
+    )
+    if (!hasStreamAccess.result) {
+      return res.status(hasStreamAccess.status).end()
+    }
+
+    const handleError = (err) => {
+      req.log.error(err)
+      return res.status(400).send(err)
+    }
+
+    let busboy
+    try {
+      busboy = Busboy({ headers: req.headers })
+    } catch (e) {
+      handleError(
+        new Error(
+          'Failed to parse request headers and body content as valid multipart/form-data.'
+        )
+      )
+    }
+
+    let t0 = 0
+    let f0 = 0
+
+    busboy.on('file', (name, file, info) => {
+      const { mimeType } = info
+
+      if (!allowedMimeTypes.includes(mimeType)) {
+        handleError(
+          new Error(
+            `Invalid ContentType header "${mimeType}". This route only accepts "application/gzip", "text/plain" or "application/json".`
+          )
+        )
+      }
+
+      const pipeline = getDbPipeline(
+        req.params.streamId,
+        mimeType === 'application/gzip',
+        true
+      )
+
+      t0 = performance.now()
+      let bytes = 0
+      file
+        .pipe(pipeline)
+        .on('data', (data) => {
+          bytes += data.length
+          if (bytes > MAX_FILE_SIZE) {
+            // TODO: throw error and terminate req
+          }
+        })
+        .on('error', (err) => handleError(err))
+        .on('end', () => {
+          const duration = (performance.now() - t0) / 1000
+          const fileEndVsEnd = (performance.now() - f0) / 1000
+          req.log.info(
+            `Finished processing objects in ${duration}s. Delta file upload end vs. processing end ${fileEndVsEnd}s.`
+          )
+          res.status(201).end()
+        })
+    })
+
+    busboy.on('finish', async () => {
+      f0 = performance.now()
+      req.log.info(
+        `file finished uploading in ${
+          (performance.now() - t0) / 1000
+        }s. processing still ongoing.`
+      )
+    })
+
+    busboy.on('error', handleError)
+
+    req.pipe(busboy)
+  })
+
+  app.post('/old/objects/:streamId', corsMiddleware(), async (req, res) => {
     req.log = req.log.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId
