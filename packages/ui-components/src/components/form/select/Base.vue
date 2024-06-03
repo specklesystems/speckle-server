@@ -27,7 +27,10 @@
           :class="buttonClasses"
         >
           <div class="flex items-center justify-between w-full">
-            <div class="block truncate grow text-left text-xs sm:text-sm">
+            <div
+              class="block truncate grow text-left text-xs sm:text-sm"
+              :class="[hasValueSelected ? 'text-foreground' : 'text-foreground-2']"
+            >
               <template
                 v-if="!wrappedValue || (isArray(wrappedValue) && !wrappedValue.length)"
               >
@@ -72,7 +75,6 @@
         <!-- Clear Button -->
         <button
           v-if="renderClearButton"
-          v-tippy="'Clear'"
           :class="clearButtonClasses"
           :disabled="disabled"
           @click="clearValue()"
@@ -98,13 +100,13 @@
                   <div
                     class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
                   >
-                    <MagnifyingGlassIcon class="h-5 w-5 text-foreground" />
+                    <MagnifyingGlassIcon class="h-4 w-4 text-foreground-2" />
                   </div>
                   <input
                     ref="searchInput"
                     v-model="searchValue"
                     type="text"
-                    class="pl-9 w-full border-0 bg-foundation-page rounded placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 focus:border-outline-1 focus:ring-outline-1"
+                    class="py-1 pl-7 w-full bg-foundation-page rounded-[5px] placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 border-outline-3 focus:border-outline-1 focus:ring-outline-1 text-sm"
                     :placeholder="searchPlaceholder"
                     @keydown.stop
                   />
@@ -119,7 +121,7 @@
                 </div>
                 <div v-else-if="isAsyncSearchMode && !currentItems.length">
                   <slot name="nothing-found">
-                    <div class="text-foreground-2 text-center">Nothing found 🤷‍♂️</div>
+                    <div class="text-foreground-2 text-center">Nothing found</div>
                   </slot>
                 </div>
                 <template v-if="!isAsyncSearchMode || !isAsyncLoading">
@@ -212,7 +214,6 @@ import { useField } from 'vee-validate'
 import type { RuleExpression } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
-import { directive as vTippy } from 'vue-tippy'
 import { useElementBounding, useMounted, useIntersectionObserver } from '@vueuse/core'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'

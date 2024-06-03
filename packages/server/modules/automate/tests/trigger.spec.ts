@@ -10,10 +10,13 @@ import {
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
 import {
+  AutomationRecord,
+  AutomationRevisionRecord,
   AutomationRunStatuses,
   AutomationTriggerDefinitionRecord,
   AutomationTriggerType,
   BaseTriggerManifest,
+  LiveAutomation,
   VersionCreatedTriggerManifest,
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
@@ -39,7 +42,8 @@ import {
   updateAutomationRevision,
   updateAutomationRun,
   upsertAutomationRun,
-  upsertAutomationFunctionRun
+  upsertAutomationFunctionRun,
+  storeAutomationToken
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { Automate, Environment } from '@speckle/shared'
@@ -156,6 +160,25 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       it('No trigger no run', async () => {
         const triggered: Record<string, BaseTriggerManifest> = {}
         await onModelVersionCreate({
+          getAutomation: async () => ({} as AutomationRecord),
+          getAutomationRevision: async () => ({} as AutomationRevisionRecord),
+          getTriggers: async () => [],
+          triggerFunction: async ({ manifest, revisionId }) => {
+            triggered[revisionId] = manifest
+            return { automationRunId: cryptoRandomString({ length: 10 }) }
+          }
+        })({
+          modelId: cryptoRandomString({ length: 10 }),
+          versionId: cryptoRandomString({ length: 10 }),
+          projectId: cryptoRandomString({ length: 10 })
+        })
+        expect(Object.keys(triggered)).length(0)
+      })
+      it('Does not trigger test automations', async () => {
+        const triggered: Record<string, BaseTriggerManifest> = {}
+        await onModelVersionCreate({
+          getAutomation: async () => ({ isTestAutomation: true } as AutomationRecord),
+          getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async () => [],
           triggerFunction: async ({ manifest, revisionId }) => {
             triggered[revisionId] = manifest
@@ -188,6 +211,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const projectId = cryptoRandomString({ length: 10 })
 
         await onModelVersionCreate({
+          getAutomation: async () => ({} as AutomationRecord),
+          getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async <
             T extends AutomationTriggerType = AutomationTriggerType
           >() => storedTriggers as AutomationTriggerDefinitionRecord<T>[],
@@ -231,6 +256,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         const triggered: Record<string, VersionCreatedTriggerManifest> = {}
         const versionId = cryptoRandomString({ length: 10 })
         await onModelVersionCreate({
+          getAutomation: async () => ({} as AutomationRecord),
+          getAutomationRevision: async () => ({} as AutomationRevisionRecord),
           getTriggers: async <
             T extends AutomationTriggerType = AutomationTriggerType
           >() => storedTriggers as AutomationTriggerDefinitionRecord<T>[],
@@ -297,7 +324,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         // @ts-expect-error force setting the objectId to null
         await createTestCommit(version)
         // create automation,
-        const automation = {
+        const automation: LiveAutomation<AutomationRecord> = {
           id: cryptoRandomString({ length: 10 }),
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -305,6 +332,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           enabled: true,
           projectId: project.id,
           executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+          isTestAutomation: false,
           userId
         }
         const automationToken = {
@@ -312,7 +340,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           automateToken: cryptoRandomString({ length: 10 }),
           automateRefreshToken: cryptoRandomString({ length: 10 })
         }
-        await storeAutomation(automation, automationToken)
+        await storeAutomation(automation)
+        await storeAutomationToken(automationToken)
 
         const automationRevisionId = cryptoRandomString({ length: 10 })
         const trigger = {
@@ -385,7 +414,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         // @ts-expect-error force setting the objectId to null
         await createTestCommit(version)
         // create automation,
-        const automation = {
+        const automation: LiveAutomation<AutomationRecord> = {
           id: cryptoRandomString({ length: 10 }),
           createdAt: new Date(),
           updatedAt: new Date(),
@@ -393,6 +422,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           enabled: true,
           projectId: project.id,
           executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+          isTestAutomation: false,
           userId
         }
         const automationToken = {
@@ -400,7 +430,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           automateToken: cryptoRandomString({ length: 10 }),
           automateRefreshToken: cryptoRandomString({ length: 10 })
         }
-        await storeAutomation(automation, automationToken)
+        await storeAutomation(automation)
+        await storeAutomationToken(automationToken)
 
         const automationRevisionId = cryptoRandomString({ length: 10 })
         const trigger = {
@@ -487,6 +518,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               updatedAt: new Date(),
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
+              isTestAutomation: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
@@ -529,6 +561,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               updatedAt: new Date(),
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
+              isTestAutomation: false,
               revision: {
                 publicKey,
                 active: false,
@@ -571,6 +604,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               projectId: cryptoRandomString({ length: 10 }),
               enabled: true,
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
+              isTestAutomation: false,
               revision: {
                 publicKey,
                 id: cryptoRandomString({ length: 10 }),
@@ -620,6 +654,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               updatedAt: new Date(),
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
+              isTestAutomation: false,
               revision: {
                 publicKey,
                 id: cryptoRandomString({ length: 10 }),
@@ -668,6 +703,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               updatedAt: new Date(),
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
+              isTestAutomation: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 createdAt: new Date(),
@@ -717,6 +753,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               enabled: true,
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
+              isTestAutomation: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
@@ -779,6 +816,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               updatedAt: new Date(),
               executionEngineAutomationId: cryptoRandomString({ length: 10 }),
               userId: cryptoRandomString({ length: 10 }),
+              isTestAutomation: false,
               revision: {
                 id: cryptoRandomString({ length: 10 }),
                 userId: cryptoRandomString({ length: 10 }),
@@ -819,6 +857,67 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
         } catch (error) {
           if (!(error instanceof Error)) throw error
           expect(error.message).contains('Cannot find a token for the automation')
+        }
+      })
+      it('the automation is a test automation', async () => {
+        const manifest: VersionCreatedTriggerManifest = {
+          triggerType: VersionCreationTriggerType,
+          modelId: cryptoRandomString({ length: 10 }),
+          versionId: cryptoRandomString({ length: 10 }),
+          projectId: cryptoRandomString({ length: 10 })
+        }
+        try {
+          await ensureRunConditions({
+            revisionGetter: async () => ({
+              id: cryptoRandomString({ length: 10 }),
+              name: cryptoRandomString({ length: 10 }),
+              projectId: cryptoRandomString({ length: 10 }),
+              enabled: true,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              executionEngineAutomationId: null,
+              userId: cryptoRandomString({ length: 10 }),
+              isTestAutomation: true,
+              revision: {
+                id: cryptoRandomString({ length: 10 }),
+                userId: cryptoRandomString({ length: 10 }),
+                createdAt: new Date(),
+                active: true,
+                publicKey,
+                triggers: [
+                  {
+                    triggeringId: manifest.modelId,
+                    triggerType: manifest.triggerType,
+                    automationRevisionId: cryptoRandomString({ length: 10 })
+                  }
+                ],
+                functions: [],
+                automationId: cryptoRandomString({ length: 10 }),
+                automationToken: cryptoRandomString({ length: 15 })
+              }
+            }),
+            versionGetter: async () => ({
+              author: cryptoRandomString({ length: 10 }),
+              id: cryptoRandomString({ length: 10 }),
+              createdAt: new Date(),
+              message: 'foobar',
+              parents: [],
+              referencedObject: cryptoRandomString({ length: 10 }),
+              totalChildrenCount: null,
+              sourceApplication: 'test suite',
+              streamId: cryptoRandomString({ length: 10 }),
+              branchId: cryptoRandomString({ length: 10 }),
+              branchName: cryptoRandomString({ length: 10 })
+            }),
+            automationTokenGetter: async () => null
+          })({
+            revisionId: cryptoRandomString({ length: 10 }),
+            manifest
+          })
+          throw 'this should have thrown'
+        } catch (error) {
+          if (!(error instanceof Error)) throw error
+          expect(error.message).contains('This is a test automation')
         }
       })
     })

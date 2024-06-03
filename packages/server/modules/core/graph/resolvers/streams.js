@@ -49,7 +49,6 @@ const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 const { Roles, Scopes } = require('@speckle/shared')
 const { StreamNotFoundError } = require('@/modules/core/errors/stream')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
-const { logger } = require('@/logging/logging')
 
 const {
   toProjectIdWhitelist,
@@ -337,7 +336,6 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([USER_STREAM_ADDED]),
         (payload, variables, context) => {
-          logger.info('whattt')
           const hasResourceAccess = isResourceAllowed({
             resourceId: payload.userStreamAdded.id,
             resourceType: TokenResourceIdentifierType.Project,

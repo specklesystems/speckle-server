@@ -43,6 +43,11 @@ const config = {
       }
     ]
   },
+  externals: {
+    znv: 'znv',
+    zod: 'zod'
+  },
+
   plugins: [
     new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
     new HtmlWebpackPlugin({
@@ -57,10 +62,7 @@ const config = {
       path.resolve('./node_modules'),
       path.resolve('.render_page/src')
     ],
-    extensions: ['.json', '.js'],
-    fallback: {
-      tty: false
-    }
+    extensions: ['.json', '.js']
   },
   devServer: {
     contentBase: path.join(__dirname, 'example'),
