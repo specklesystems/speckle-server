@@ -14,7 +14,9 @@ import {
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
+  getFullAutomationRevisionMetadata,
   getFunctionRun,
+  getLatestAutomationRevision,
   getLatestVersionAutomationRuns,
   getProjectAutomationsItems,
   getProjectAutomationsTotalCount,
@@ -62,6 +64,7 @@ import {
   getBranchesByIds
 } from '@/modules/core/repositories/branches'
 import {
+  createTestAutomationRun,
   manuallyTriggerAutomation,
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
@@ -531,6 +534,23 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             projectId: parent.projectId,
             userId: ctx.userId!,
             userResourceAccessRules: ctx.resourceAccessRules
+          })
+        },
+        async createTestAutomationRun(parent, { automationId }, ctx) {
+          const create = createTestAutomationRun({
+            getEncryptionKeyPairFor,
+            getFunctionInputDecryptor: getFunctionInputDecryptor({
+              buildDecryptor
+            }),
+            getAutomation,
+            getLatestAutomationRevision,
+            getFullAutomationRevisionMetadata
+          })
+
+          return await create({
+            projectId: parent.projectId,
+            automationId,
+            userId: ctx.userId!
           })
         }
       },

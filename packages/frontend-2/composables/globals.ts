@@ -9,14 +9,6 @@ export const useIsAutomateModuleEnabled = () => {
   return ref(FF_AUTOMATE_MODULE_ENABLED)
 }
 
-export const useisTestAutomationsEnabled = () => {
-  const {
-    public: { FF_TEST_AUTOMATIONS_ENABLED }
-  } = useRuntimeConfig()
-
-  return ref(FF_TEST_AUTOMATIONS_ENABLED)
-}
-
 export const useIsGendoModuleEnabled = () => {
   const {
     public: { FF_GENDOAI_MODULE_ENABLED }

@@ -1840,6 +1840,7 @@ export type ProjectAutomationMutations = {
   create: Automation;
   createRevision: AutomationRevision;
   createTestAutomation: Automation;
+  createTestAutomationRun: TestAutomationRun;
   /**
    * Trigger an automation with a fake "version created" trigger. The "version created" will
    * just refer to the last version of the model.
@@ -1861,6 +1862,11 @@ export type ProjectAutomationMutationsCreateRevisionArgs = {
 
 export type ProjectAutomationMutationsCreateTestAutomationArgs = {
   input: ProjectTestAutomationCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationRunArgs = {
+  automationId: Scalars['ID'];
 };
 
 
@@ -3045,6 +3051,25 @@ export type SubscriptionViewerUserActivityBroadcastedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
 
+export type TestAutomationRun = {
+  __typename?: 'TestAutomationRun';
+  automationRunId: Scalars['String'];
+  functionRunId: Scalars['String'];
+  triggers: Array<TestAutomationRunTrigger>;
+};
+
+export type TestAutomationRunTrigger = {
+  __typename?: 'TestAutomationRunTrigger';
+  payload: TestAutomationRunTriggerPayload;
+  triggerType: Scalars['String'];
+};
+
+export type TestAutomationRunTriggerPayload = {
+  __typename?: 'TestAutomationRunTriggerPayload';
+  modelId: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
 export type TokenResourceIdentifier = {
   __typename?: 'TokenResourceIdentifier';
   id: Scalars['String'];
@@ -3735,6 +3760,9 @@ export type ResolversTypes = {
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: ResolverTypeWrapper<Scalars['String']>;
   Subscription: ResolverTypeWrapper<{}>;
+  TestAutomationRun: ResolverTypeWrapper<TestAutomationRun>;
+  TestAutomationRunTrigger: ResolverTypeWrapper<TestAutomationRunTrigger>;
+  TestAutomationRunTriggerPayload: ResolverTypeWrapper<TestAutomationRunTriggerPayload>;
   TokenResourceIdentifier: ResolverTypeWrapper<TokenResourceIdentifier>;
   TokenResourceIdentifierInput: TokenResourceIdentifierInput;
   TokenResourceIdentifierType: TokenResourceIdentifierType;
@@ -3939,6 +3967,9 @@ export type ResolversParentTypes = {
   StreamUpdatePermissionInput: StreamUpdatePermissionInput;
   String: Scalars['String'];
   Subscription: {};
+  TestAutomationRun: TestAutomationRun;
+  TestAutomationRunTrigger: TestAutomationRunTrigger;
+  TestAutomationRunTriggerPayload: TestAutomationRunTriggerPayload;
   TokenResourceIdentifier: TokenResourceIdentifier;
   TokenResourceIdentifierInput: TokenResourceIdentifierInput;
   TriggeredAutomationsStatus: TriggeredAutomationsStatusGraphQLReturn;
@@ -4704,6 +4735,7 @@ export type ProjectAutomationMutationsResolvers<ContextType = GraphQLContext, Pa
   create?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateArgs, 'input'>>;
   createRevision?: Resolver<ResolversTypes['AutomationRevision'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateRevisionArgs, 'input'>>;
   createTestAutomation?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateTestAutomationArgs, 'input'>>;
+  createTestAutomationRun?: Resolver<ResolversTypes['TestAutomationRun'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateTestAutomationRunArgs, 'automationId'>>;
   trigger?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsTriggerArgs, 'automationId'>>;
   update?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
@@ -5074,6 +5106,25 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   viewerUserActivityBroadcasted?: SubscriptionResolver<ResolversTypes['ViewerUserActivityMessage'], "viewerUserActivityBroadcasted", ParentType, ContextType, RequireFields<SubscriptionViewerUserActivityBroadcastedArgs, 'target'>>;
 };
 
+export type TestAutomationRunResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TestAutomationRun'] = ResolversParentTypes['TestAutomationRun']> = {
+  automationRunId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  functionRunId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  triggers?: Resolver<Array<ResolversTypes['TestAutomationRunTrigger']>, ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type TestAutomationRunTriggerResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TestAutomationRunTrigger'] = ResolversParentTypes['TestAutomationRunTrigger']> = {
+  payload?: Resolver<ResolversTypes['TestAutomationRunTriggerPayload'], ParentType, ContextType>;
+  triggerType?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type TestAutomationRunTriggerPayloadResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TestAutomationRunTriggerPayload'] = ResolversParentTypes['TestAutomationRunTriggerPayload']> = {
+  modelId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  versionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type TokenResourceIdentifierResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['TokenResourceIdentifier'] = ResolversParentTypes['TokenResourceIdentifier']> = {
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['TokenResourceIdentifierType'], ParentType, ContextType>;
@@ -5348,6 +5399,9 @@ export type Resolvers<ContextType = GraphQLContext> = {
   StreamCollaborator?: StreamCollaboratorResolvers<ContextType>;
   StreamCollection?: StreamCollectionResolvers<ContextType>;
   Subscription?: SubscriptionResolvers<ContextType>;
+  TestAutomationRun?: TestAutomationRunResolvers<ContextType>;
+  TestAutomationRunTrigger?: TestAutomationRunTriggerResolvers<ContextType>;
+  TestAutomationRunTriggerPayload?: TestAutomationRunTriggerPayloadResolvers<ContextType>;
   TokenResourceIdentifier?: TokenResourceIdentifierResolvers<ContextType>;
   TriggeredAutomationsStatus?: TriggeredAutomationsStatusResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
