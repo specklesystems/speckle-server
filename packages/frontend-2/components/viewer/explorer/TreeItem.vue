@@ -26,6 +26,10 @@
             ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}
           `"
           @click="(e:MouseEvent) => setSelection(e)"
+          @mouseenter="highlightObject"
+          @focusin="highlightObject"
+          @mouseleave="unhighlightObject"
+          @focusout="unhighlightObject"
         >
           <div
             :class="`truncate ${unfold ? 'font-semibold' : ''} ${
@@ -172,7 +176,8 @@ const emit = defineEmits<{
 const {
   viewer: {
     metadata: { filteringState }
-  }
+  },
+  ui: { highlightedObjectIds }
 } = useInjectedViewerState()
 const { addToSelection, clearSelection, removeFromSelection, objects } =
   useSelectionUtilities()
@@ -327,6 +332,18 @@ const setSelection = (e: MouseEvent) => {
   }
   if (!e.shiftKey) clearSelection()
   addToSelection(rawSpeckleData)
+}
+
+const highlightObject = () => {
+  const ids = getTargetObjectIds(rawSpeckleData)
+  highlightedObjectIds.value = [...highlightedObjectIds.value, ...ids]
+}
+
+const unhighlightObject = () => {
+  const ids = getTargetObjectIds(rawSpeckleData)
+  highlightedObjectIds.value = highlightedObjectIds.value.filter(
+    (id) => !ids.includes(id)
+  )
 }
 
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
