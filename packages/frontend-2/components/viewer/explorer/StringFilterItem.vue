@@ -95,8 +95,6 @@ const availableTargetIds = computed(() => {
   if (isolatedObjectIds.value.length)
     targets = props.item.ids.filter((id) => isolatedObjectIds.value.includes(id))
 
-  if (hiddenObjectIds.value.length)
-    targets = props.item.ids.filter((id) => !hiddenObjectIds.value.includes(id))
   return targets
 })
 
