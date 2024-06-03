@@ -1,9 +1,6 @@
 import { Knex } from 'knex'
 
 export async function up(knex: Knex): Promise<void> {
-  // TODO: Remove, this is a temporary shortcut to avoid messing up the db schema which makes it difficult to jump to different branches
-  if (process.env.SKIP_AUTOMATE_MIGRATION_DEV) return
-
   await knex.schema.createTable('automation_tokens', (table) => {
     // yes I'm using an FK as a PK. it's deliberately a 1-1 relationship
     // the tokens are a lot more sensitive, that should only be queried if needed
@@ -40,9 +37,6 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  // TODO: Remove, this is a temporary shortcut to avoid messing up the db schema which makes it difficult to jump to different branches
-  if (process.env.SKIP_AUTOMATE_MIGRATION_DEV) return
-
   await knex.schema.dropTable('automation_tokens')
   await knex.schema.dropTable('automation_run_triggers')
   await knex.schema.alterTable('automations', (table) => {

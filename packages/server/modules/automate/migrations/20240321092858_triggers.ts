@@ -6,9 +6,6 @@ const AUTOMATION_RUNS_TABLE_NAME = 'automation_runs'
 const AUTOMATION_FUNCTION_RUNS_TABLE_NAME = 'automation_function_runs'
 
 export async function up(knex: Knex): Promise<void> {
-  // TODO: Remove, this is a temporary shortcut to avoid messing up the db schema which makes it difficult to jump to different branches
-  if (process.env.SKIP_AUTOMATE_MIGRATION_DEV) return
-
   await knex.schema.alterTable(REVISIONS_TABLE_NAME, (table) => {
     table.dropColumn('triggers')
     table.dropColumn('published')
@@ -53,9 +50,6 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  // TODO: Remove, this is a temporary shortcut to avoid messing up the db schema which makes it difficult to jump to different branches
-  if (process.env.SKIP_AUTOMATE_MIGRATION_DEV) return
-
   // delete invalid data
   await knex.delete().from(AUTOMATION_RUNS_TABLE_NAME)
 
