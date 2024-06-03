@@ -1,29 +1,48 @@
-import { Euler, EventDispatcher, Matrix4, Object3D, Quaternion, Vector3 } from 'three'
+import {
+  Euler,
+  EventDispatcher,
+  Matrix4,
+  Object3D,
+  Quaternion,
+  Vector2,
+  Vector3
+} from 'three'
+import { Damper } from '../../utils/Damper'
 
-const _euler = new Euler(0, 0, 0, 'YXZ')
 const _vector = new Vector3()
 
 const _changeEvent = { type: 'change' }
-const _lockEvent = { type: 'lock' }
-const _unlockEvent = { type: 'unlock' }
 
 const _PI_2 = Math.PI / 2
+type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
+const walkingSpeed = 1.42 // m/s
 
 class FlyControls extends EventDispatcher {
   protected camera: Object3D
   protected domElement: HTMLElement
-  protected isLocked: boolean
-  protected minPolarAngle: number
-  protected maxPolarAngle: number
   protected pointerSpeed: number
-  protected moveForward = false
-  protected moveBackward = false
-  protected moveLeft = false
-  protected moveRight = false
-  protected moveUp = false
-  protected moveDown = false
   protected velocity = new Vector3()
+  protected euler = new Euler(0, 0, 0, 'YXZ')
+  protected goalVelocity = new Vector3()
+  protected goalEuler = new Euler(0, 0, 0, 'YXZ')
   protected direction = new Vector3()
+  protected speed: number = 10
+  protected keyMap: Record<MoveType, boolean> = {
+    forward: false,
+    back: false,
+    left: false,
+    right: false,
+    up: false,
+    down: false
+  }
+
+  protected velocityXDamper: Damper = new Damper()
+  protected velocityYDamper: Damper = new Damper()
+  protected velocityZDamper: Damper = new Damper()
+  protected eulerXDamper: Damper = new Damper()
+  protected eulerYDamper: Damper = new Damper()
+  protected eulerZDamper: Damper = new Damper()
+  private _lastTick: number = 0
 
   constructor(camera: Object3D, domElement: HTMLElement) {
     super()
@@ -31,64 +50,81 @@ class FlyControls extends EventDispatcher {
     this.camera = camera
     this.domElement = domElement
 
-    this.isLocked = true
-
-    // Set to constrain the pitch of the camera
-    // Range is 0 to Math.PI radians
-    this.minPolarAngle = 0 // radians
-    this.maxPolarAngle = Math.PI // radians
-
     this.pointerSpeed = 1.0
 
     this.connect()
   }
 
-  update(delta: number) {
-    this.velocity.x -= this.velocity.x * 10.0 * delta
-    this.velocity.z -= this.velocity.z * 10.0 * delta
-    this.velocity.y -= this.velocity.y * 10.0 * delta
+  // public isStationary() {
+  //   const naturalFrequency = 1 / Math.max(0.01, 10.0 * (1 / 60))
+  //   const nilSpeed = 0.0002 * naturalFrequency
+  //   if (Math.abs(this.velocity.x) < nilSpeed) console.log('done')
+  // }
 
-    this.direction.z = Number(this.moveForward) - Number(this.moveBackward)
-    this.direction.x = Number(this.moveRight) - Number(this.moveLeft)
-    this.direction.y = Number(this.moveUp) - Number(this.moveDown)
+  update(delta?: number) {
+    const now = performance.now()
+    delta = delta !== undefined ? delta : now - this._lastTick
+    this._lastTick = now
+    const deltaSeconds = delta / 1000
+
+    this.direction.z = Number(this.keyMap.forward) - Number(this.keyMap.back)
+    this.direction.x = Number(this.keyMap.right) - Number(this.keyMap.left)
+    this.direction.y = Number(this.keyMap.up) - Number(this.keyMap.down)
     this.direction.normalize() // this ensures consistent movements in all directions
 
-    if (this.moveForward || this.moveBackward)
-      this.velocity.z -= this.direction.z * 400.0 * delta
-    if (this.moveLeft || this.moveRight)
-      this.velocity.x -= this.direction.x * 400.0 * delta
-    if (this.moveUp || this.moveDown)
-      this.velocity.y -= this.direction.y * 400.0 * delta
+    if (this.keyMap.forward)
+      this.goalVelocity.z = -walkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.back) this.goalVelocity.z = walkingSpeed * this.speed * deltaSeconds
+    if (!this.keyMap.forward && !this.keyMap.back) this.goalVelocity.z = 0
 
-    this.moveRightF(-this.velocity.x * delta)
-    this.moveForwardF(-this.velocity.z * delta)
-    this.moveUpF(-this.velocity.y * delta)
+    if (this.keyMap.left) this.goalVelocity.x = walkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.right)
+      this.goalVelocity.x = -walkingSpeed * this.speed * deltaSeconds
+    if (!this.keyMap.left && !this.keyMap.right) this.goalVelocity.x = 0
+
+    if (this.keyMap.up) this.goalVelocity.y = -walkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.down) this.goalVelocity.y = walkingSpeed * this.speed * deltaSeconds
+    if (!this.keyMap.down && !this.keyMap.up) this.goalVelocity.y = 0
+
+    this.velocity.x = this.velocityXDamper.update(
+      this.velocity.x,
+      this.goalVelocity.x,
+      delta,
+      1
+    )
+
+    this.velocity.y = this.velocityYDamper.update(
+      this.velocity.y,
+      this.goalVelocity.y,
+      delta,
+      1
+    )
+
+    this.velocity.z = this.velocityZDamper.update(
+      this.velocity.z,
+      this.goalVelocity.z,
+      delta,
+      1
+    )
+
+    this.euler.x = this.eulerXDamper.update(this.euler.x, this.goalEuler.x, delta, 1)
+    this.euler.y = this.eulerYDamper.update(this.euler.y, this.goalEuler.y, delta, 1)
+    this.euler.z = this.eulerZDamper.update(this.euler.z, this.goalEuler.z, delta, 1)
+
+    this.moveRightF(-this.velocity.x)
+    this.moveForwardF(-this.velocity.z)
+    this.moveUpF(-this.velocity.y)
+    this.rotate(this.euler)
   }
 
   connect() {
     this.domElement.addEventListener('pointermove', this.onMouseMove)
-    this.domElement.ownerDocument.addEventListener(
-      'pointerlockchange',
-      this.onPointerlockChange
-    )
-    this.domElement.ownerDocument.addEventListener(
-      'pointerlockerror',
-      this.onPointerlockError
-    )
     document.addEventListener('keydown', this.onKeyDown)
     document.addEventListener('keyup', this.onKeyUp)
   }
 
   disconnect() {
     this.domElement.removeEventListener('pointermove', this.onMouseMove)
-    this.domElement.ownerDocument.removeEventListener(
-      'pointerlockchange',
-      this.onPointerlockChange
-    )
-    this.domElement.ownerDocument.removeEventListener(
-      'pointerlockerror',
-      this.onPointerlockError
-    )
     document.removeEventListener('keydown', this.onKeyDown)
     document.removeEventListener('keyup', this.onKeyUp)
   }
@@ -98,120 +134,88 @@ class FlyControls extends EventDispatcher {
   }
 
   moveForwardF(distance: number) {
-    // move forward parallel to the xz-plane
-    // assumes camera.up is y-up
-
     const camera = this.camera
     const dir = camera.getWorldDirection(new Vector3())
     camera.position.addScaledVector(dir, distance)
-    // _vector.setFromMatrixColumn(camera.matrix, 0)
-
-    // _vector.crossVectors(new Vector3(0, 0, 1), _vector)
-
-    // camera.position.addScaledVector(_vector, distance)
   }
 
   moveUpF(distance: number) {
     const camera = this.camera
     _vector.setFromMatrixColumn(camera.matrix, 1)
-
-    // _vector.crossVectors(new Vector3(0, 0, 1), _vector)
-
     camera.position.addScaledVector(_vector, distance)
   }
 
   moveRightF(distance: number) {
     const camera = this.camera
-
     _vector.setFromMatrixColumn(camera.matrix, 0)
-
     camera.position.addScaledVector(_vector, distance)
   }
 
-  lock() {
-    this.domElement.requestPointerLock()
+  rotateBy(amount: Vector2) {
+    this.goalEuler.y -= amount.y
+    this.goalEuler.x -= amount.x
+    // Set to constrain the pitch of the camera
+    const minPolarAngle = 0 // radians
+    const maxPolarAngle = Math.PI // radians
+    this.goalEuler.x = Math.max(
+      _PI_2 - maxPolarAngle,
+      Math.min(_PI_2 - minPolarAngle, this.goalEuler.x)
+    )
   }
 
-  unlock() {
-    this.domElement.ownerDocument.exitPointerLock()
+  rotate(euler: Euler) {
+    const q = new Quaternion()
+    const t = new Quaternion().setFromRotationMatrix(
+      new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5))
+    )
+    q.setFromEuler(euler).premultiply(t)
+    this.camera.quaternion.copy(q)
   }
 
   // event listeners
-
   protected onMouseMove = (event: PointerEvent) => {
     if (event.buttons !== 1) return
 
     const movementX = event.movementX || 0
     const movementY = event.movementY || 0
+    const amount = new Vector2()
+    amount.y = movementX * 0.005 * this.pointerSpeed
+    amount.x = movementY * 0.005 * this.pointerSpeed
 
-    const t = new Quaternion().setFromRotationMatrix(
-      new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5))
-    )
-    const tInv = new Quaternion().copy(t).invert()
-
-    const q = new Quaternion().copy(this.camera.quaternion).premultiply(tInv)
-    _euler.setFromQuaternion(q)
-
-    _euler.y -= movementX * 0.002 * this.pointerSpeed
-    _euler.x -= movementY * 0.002 * this.pointerSpeed
-
-    _euler.x = Math.max(
-      _PI_2 - this.maxPolarAngle,
-      Math.min(_PI_2 - this.minPolarAngle, _euler.x)
-    )
-
-    q.setFromEuler(_euler).premultiply(t)
-    this.camera.quaternion.copy(q)
-
+    this.rotateBy(amount)
     this.dispatchEvent(_changeEvent)
-  }
-
-  protected onPointerlockChange = () => {
-    if (this.domElement.ownerDocument.pointerLockElement === this.domElement) {
-      this.dispatchEvent(_lockEvent)
-
-      this.isLocked = true
-    } else {
-      this.dispatchEvent(_unlockEvent)
-
-      this.isLocked = false
-    }
-  }
-
-  protected onPointerlockError = () => {
-    console.error('THREE.PointerLockControls: Unable to use Pointer Lock API')
   }
 
   protected onKeyDown = (event: KeyboardEvent) => {
     switch (event.code) {
       case 'ArrowUp':
       case 'KeyW':
-        this.moveForward = true
+        this.keyMap.forward = true
         break
 
       case 'ArrowLeft':
       case 'KeyA':
-        this.moveLeft = true
+        this.keyMap.left = true
         break
 
       case 'ArrowDown':
       case 'KeyS':
-        this.moveBackward = true
+        this.keyMap.back = true
         break
 
       case 'ArrowRight':
       case 'KeyD':
-        this.moveRight = true
+        this.keyMap.right = true
         break
 
       case 'PageUp':
       case 'KeyQ':
-        this.moveDown = true
+        this.keyMap.down = true
         break
 
       case 'PageDown':
       case 'KeyE':
-        this.moveUp = true
+        this.keyMap.up = true
         break
     }
   }
@@ -220,32 +224,32 @@ class FlyControls extends EventDispatcher {
     switch (event.code) {
       case 'ArrowUp':
       case 'KeyW':
-        this.moveForward = false
+        this.keyMap.forward = false
         break
 
       case 'ArrowLeft':
       case 'KeyA':
-        this.moveLeft = false
+        this.keyMap.left = false
         break
 
       case 'ArrowDown':
       case 'KeyS':
-        this.moveBackward = false
+        this.keyMap.back = false
         break
 
       case 'ArrowRight':
       case 'KeyD':
-        this.moveRight = false
+        this.keyMap.right = false
         break
 
       case 'PageUp':
       case 'KeyQ':
-        this.moveDown = false
+        this.keyMap.down = false
         break
 
       case 'PageDown':
       case 'KeyE':
-        this.moveUp = false
+        this.keyMap.up = false
         break
     }
   }
