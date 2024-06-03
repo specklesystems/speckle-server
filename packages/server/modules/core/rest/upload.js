@@ -10,7 +10,10 @@ const { createObjectsBatched } = require('@/modules/core/services/objects')
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
 const { estimateStringMegabyteSize } = require('@/modules/core/utils/chunking')
 
-const { getDbPipeline } = require('@/modules/core/services/custom-stream')
+const {
+  getDbPipeline,
+  getTestPipeline
+} = require('@/modules/core/services/custom-stream')
 
 const MAX_FILE_SIZE = 500 * 1024 * 1024 // env var?
 const allowedMimeTypes = [
@@ -21,9 +24,58 @@ const allowedMimeTypes = [
 ]
 
 module.exports = (app) => {
-  app.options('/objects/:streamId', corsMiddleware())
+  // V4 - patched .net client, pipeline'd server architecture, no more closures
+  // V4: Finished sending 11944 objects after 13.7292366s.
+  // V4: Finished sending 11944 objects after 13.6377732s.
+  // V4: Finished sending 11944 objects after 15.4552502s.
+  // V4: Finished sending 23882 objects after 27.6380942s.
 
-  app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {
+  // V4: Finished sending 23882 objects after 33.3323251s.
+  // V4: Finished sending 23882 objects after 27.6585795s.
+  app.options('/objects/v4/:projectId', corsMiddleware())
+  app.post('/objects/v4/:projectId', corsMiddleware(), async (req, res) => {
+    console.log(`
+    
+    V4 - patched .net client, pipeline'd server architecture
+    
+    `)
+    const busboy = Busboy({ headers: req.headers })
+
+    let t0 = 0
+
+    busboy.on('file', (name, file, info) => {
+      const pipe = getTestPipeline(req.params.projectId)
+
+      t0 = performance.now()
+      file
+        .pipe(pipe)
+        .on('error', (err) => console.log(err))
+        .on('end', () => {
+          const duration = (performance.now() - t0) / 1000
+          // const fileEndVsEnd = (performance.now() - f0) / 1000
+          req.log.info(`Finished processing objects in ${duration}s.`)
+          res.status(201).send('ok')
+        })
+    })
+    req.pipe(busboy)
+  })
+
+  // V3 - existing .net client, pipeline'd server architecture, no more closures
+  // V3: Finished sending 1844 objects after 8.4055994s.
+  // V3: Finished sending 1844 objects after 8.4579102s.
+  // V3: Finished sending 1844 objects after 10.173536s.
+  // V3: Finished sending 3682 objects after 16.7458571s.
+
+  // V3: Finished sending 23882 objects after 30.0713102s.
+  // V3: Finished sending 23882 objects after 29.2390551s.
+
+  app.options('/objects/v3/:streamId', corsMiddleware())
+  app.post('/objects/v3/:streamId', corsMiddleware(), async (req, res) => {
+    console.log(`
+    
+    V3 - existing .net client, pipeline'd server architecture
+    
+    `)
     req.log = req.log.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId
@@ -108,7 +160,21 @@ module.exports = (app) => {
     req.pipe(busboy)
   })
 
-  app.post('/old/objects/:streamId', corsMiddleware(), async (req, res) => {
+  // V2 - existing .net client, existing server architecture, no more closures
+  // V2: Finished sending 6220 objects after 10.415615s.
+  // V2: Finished sending 5949 objects after 9.5852275s.
+  // V2: Finished sending 6113 objects after 10.824452s.
+  // V2: Finished sending 12214 objects after 19.6617508s.
+
+  // V2: Finished sending 23882 objects after 20.4832349s.
+  // V2: Finished sending 23882 objects after 18.0330272s.
+  app.options('/objects/v2/:streamId', corsMiddleware())
+  app.post('/objects/v2/:streamId', corsMiddleware(), async (req, res) => {
+    console.log(`
+    
+    V2 - existing .net client, existing server architecture
+    
+    `)
     req.log = req.log.child({
       userId: req.context.userId || '-',
       streamId: req.params.streamId

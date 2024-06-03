@@ -3,6 +3,8 @@
 import { Writable, Readable, Transform, TransformCallback } from 'stream'
 import zlib from 'zlib'
 import StreamArray from 'stream-json/streamers/StreamArray'
+import { parser as jsonLineParser } from 'stream-json/jsonl/Parser'
+
 import Chain from 'stream-chain'
 import crs from 'crypto-random-string'
 import knex from '@/db/knex'
@@ -71,6 +73,9 @@ class InsertionObjectTransformer extends Transform {
  * Batches insertion objects in chunks of maximum estimated size or maximum object count.
  * This is basically a "custom" backpressure mechanism for the db writer. It's needed as we can't control
  * the high water mark from both ends (size and object count) at the same time in a writable stream.
+ *
+ * This dude is needed as we want to keep in check memory pressure coming from large insert statements,
+ * where knex does its things, etc.
  */
 class DatabaseBatchSplitter extends Transform {
   maxSizeMb: number
@@ -161,9 +166,10 @@ class SingleTransactionDatabaseWriter extends Writable {
   trx: Knex.Transaction
   // @ts-expect-error
   t0: number
-
+  totalCount: number
   constructor() {
     super({ objectMode: true }) // highwatermark = 16 InsertionObjectChunks
+    this.totalCount = 0
   }
 
   async _construct(
@@ -194,6 +200,7 @@ class SingleTransactionDatabaseWriter extends Writable {
       servicesLogger.info(
         `Dropped in the transaction ${chunk.data.length} objects, approx size ${chunk.size}mb`
       )
+      this.totalCount += chunk.data.length
       callback()
     } catch (err: unknown) {
       callback(err as Error)
@@ -228,7 +235,9 @@ class SingleTransactionDatabaseWriter extends Writable {
     try {
       await this.trx.commit()
       const duration = (performance.now() - this.t0) / 1000
-      servicesLogger.info(`Commited the transaction in ${duration}s.`)
+      servicesLogger.info(
+        `Commited the transaction with ${this.totalCount} objects in ${duration}s.`
+      )
 
       callback()
     } catch (err: unknown) {
@@ -264,4 +273,14 @@ export function getDbPipeline(
   }
 
   return new Chain(operations)
+}
+
+export function getTestPipeline(projectId: string) {
+  return new Chain([
+    zlib.createGunzip(),
+    jsonLineParser(),
+    new InsertionObjectTransformer(projectId),
+    new DatabaseBatchSplitter(),
+    new SingleTransactionDatabaseWriter()
+  ])
 }
