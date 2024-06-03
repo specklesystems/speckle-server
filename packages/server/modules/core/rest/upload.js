@@ -25,10 +25,10 @@ const allowedMimeTypes = [
 
 module.exports = (app) => {
   // V4 - patched .net client, pipeline'd server architecture, no more closures
-  // V4: Finished sending 11944 objects after 13.7292366s.
-  // V4: Finished sending 11944 objects after 13.6377732s.
-  // V4: Finished sending 11944 objects after 15.4552502s.
-  // V4: Finished sending 23882 objects after 27.6380942s.
+  // V4: Finished sending 11944 objects after 13.7292366s. invalid
+  // V4: Finished sending 11944 objects after 13.6377732s. invalid
+  // V4: Finished sending 11944 objects after 15.4552502s. invalid
+  // V4: Finished sending 23882 objects after 27.6380942s. invalid
 
   // V4: Finished sending 23882 objects after 33.3323251s.
   // V4: Finished sending 23882 objects after 27.6585795s.
@@ -61,10 +61,10 @@ module.exports = (app) => {
   })
 
   // V3 - existing .net client, pipeline'd server architecture, no more closures
-  // V3: Finished sending 1844 objects after 8.4055994s.
-  // V3: Finished sending 1844 objects after 8.4579102s.
-  // V3: Finished sending 1844 objects after 10.173536s.
-  // V3: Finished sending 3682 objects after 16.7458571s.
+  // V3: Finished sending 1844 objects after 8.4055994s. invalid
+  // V3: Finished sending 1844 objects after 8.4579102s. invalid
+  // V3: Finished sending 1844 objects after 10.173536s. invalid
+  // V3: Finished sending 3682 objects after 16.7458571s. invalid
 
   // V3: Finished sending 23882 objects after 30.0713102s.
   // V3: Finished sending 23882 objects after 29.2390551s.
@@ -161,10 +161,10 @@ module.exports = (app) => {
   })
 
   // V2 - existing .net client, existing server architecture, no more closures
-  // V2: Finished sending 6220 objects after 10.415615s.
-  // V2: Finished sending 5949 objects after 9.5852275s.
-  // V2: Finished sending 6113 objects after 10.824452s.
-  // V2: Finished sending 12214 objects after 19.6617508s.
+  // V2: Finished sending 6220 objects after 10.415615s. invalid
+  // V2: Finished sending 5949 objects after 9.5852275s. invalid
+  // V2: Finished sending 6113 objects after 10.824452s. invalid
+  // V2: Finished sending 12214 objects after 19.6617508s. invalid
 
   // V2: Finished sending 23882 objects after 20.4832349s.
   // V2: Finished sending 23882 objects after 18.0330272s.
