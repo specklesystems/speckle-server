@@ -613,7 +613,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           let hasAutomateGithubApp = false
           try {
             const authState = await getUserGithubAuthState({ userId })
-            hasAutomateGithubApp = authState.userHasAuthorizedGithubApp
+            hasAutomateGithubApp = authState.userHasAuthorizedGitHubApp
           } catch (e) {
             if (e instanceof ExecutionEngineFailedResponseError) {
               if (e.response.statusMessage === 'FunctionCreatorDoesNotExist') {

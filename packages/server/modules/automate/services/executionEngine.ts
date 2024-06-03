@@ -6,8 +6,8 @@ export const createStoredAuthCode = (deps: { redis: Redis }) => async () => {
   const { redis } = deps
   const codeId = cryptoRandomString({ length: 10 })
   const authCode = cryptoRandomString({ length: 20 })
-  // prob hashing and salting it would be better, but they expire in 2 mins...
-  await redis.set(codeId, authCode, 'EX', 120)
+  // prob hashing and salting it would be better, but they expire in 5 mins...
+  await redis.set(codeId, authCode, 'EX', 60 * 5)
   return `${codeId}${authCode}`
 }
 

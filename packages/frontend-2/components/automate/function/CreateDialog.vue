@@ -50,6 +50,7 @@ import type {
   CreatableFunctionTemplate,
   FunctionDetailsFormValues
 } from '~/lib/automate/helpers/functions'
+import { automateGithubAppAuthorizationRoute } from '~/lib/common/helpers/route'
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { useForm } from 'vee-validate'
 import { useCreateAutomateFunction } from '~/lib/automate/composables/management'
@@ -152,8 +153,8 @@ const title = computed(() => {
 })
 
 const authorizeGithubUrl = computed(() => {
-  // TODO:
-  return new URL('/', apiBaseUrl).toString()
+  const redirectUrl = new URL(automateGithubAppAuthorizationRoute, apiBaseUrl)
+  return redirectUrl.toString()
 })
 
 const buttons = computed((): LayoutDialogButton[] => {
@@ -174,7 +175,6 @@ const buttons = computed((): LayoutDialogButton[] => {
           text: 'Authorize',
           props: {
             fullWidth: true,
-            disabled: true,
             to: authorizeGithubUrl.value,
             external: true
           }
@@ -187,7 +187,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           text: 'Next',
           props: {
             iconRight: ChevronRightIcon,
-            disabled: !selectedTemplate.value
+            disabled: !selectedTemplate.value || true // TODO: Remove once fns work
           },
           onClick: () => step.value++
         }
@@ -200,7 +200,8 @@ const buttons = computed((): LayoutDialogButton[] => {
           props: {
             color: 'secondary',
             iconLeft: ChevronLeftIcon,
-            textColor: 'primary'
+            textColor: 'primary',
+            disabled: true // TODO: Remove once fns work
           },
           onClick: () => step.value--
         },
