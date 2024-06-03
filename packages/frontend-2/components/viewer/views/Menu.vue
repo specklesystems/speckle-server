@@ -26,16 +26,14 @@
         </div>
         <div v-if="views.length !== 0" class="w-full border-b"></div>
         <!-- Any model other views -->
-        <div v-for="view in views" :key="view.name">
+        <div v-for="view in views" :key="view.id">
           <button
             class="hover:bg-primary-muted text-foreground w-full h-full text-xs sm:text-sm py-2 transition"
             @click="setView(view)"
           >
-            {{
-              view.view.name.length > 12
-                ? view.view.name.substring(0, 12) + '...'
-                : view.view.name
-            }}
+            <span class="block truncate max-w-28 mx-auto">
+              {{ view.name ? view.name : view.id }}
+            </span>
           </button>
         </div>
       </div>
