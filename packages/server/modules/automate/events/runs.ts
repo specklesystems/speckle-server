@@ -1,6 +1,7 @@
 import {
   AutomationFunctionRunRecord,
   AutomationRunRecord,
+  AutomationTriggerType,
   AutomationWithRevision,
   BaseTriggerManifest
 } from '@/modules/automate/helpers/types'
@@ -17,6 +18,7 @@ export type AutomateEventsPayloads = {
     automation: AutomationWithRevision
     run: InsertableAutomationRun
     manifests: BaseTriggerManifest[]
+    source: AutomationTriggerType | 'manual'
   }
   [AutomateRunsEvents.StatusUpdated]: {
     run: AutomationRunRecord

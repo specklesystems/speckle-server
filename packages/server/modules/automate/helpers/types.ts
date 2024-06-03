@@ -74,10 +74,10 @@ export type AutomateRevisionFunctionRecord = {
 }
 
 export const VersionCreationTriggerType = <const>'versionCreation'
-export const TestTriggerType = <const>'testtttt'
+export const ManualTriggerType = <const>'manual'
 export type AutomationTriggerType =
   | typeof VersionCreationTriggerType
-  | typeof TestTriggerType
+  | typeof ManualTriggerType
 
 export type AutomationTriggerRecordBase<
   T extends AutomationTriggerType = AutomationTriggerType
