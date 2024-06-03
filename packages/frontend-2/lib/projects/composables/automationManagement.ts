@@ -7,6 +7,7 @@ import {
   type ProjectAutomationsArgs,
   type CreateAutomationMutationVariables,
   type CreateAutomationRevisionMutationVariables,
+  type CreateTestAutomationMutationVariables,
   type OnProjectAutomationsUpdatedSubscription,
   type OnProjectTriggeredAutomationsStatusUpdatedSubscription,
   type Project,
@@ -27,6 +28,7 @@ import {
 import {
   createAutomationMutation,
   createAutomationRevisionMutation,
+  createTestAutomationMutation,
   triggerAutomationMutation,
   updateAutomationMutation
 } from '~/lib/projects/graphql/mutations'
@@ -61,6 +63,33 @@ export function useCreateAutomation() {
     }
 
     return res?.data?.projectMutations.automationMutations.create
+  }
+}
+
+export function useCreateTestAutomation() {
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+  const { mutate: createTestAutomation } = useMutation(createTestAutomationMutation)
+
+  return async (input: CreateTestAutomationMutationVariables) => {
+    if (!activeUser.value) return
+
+    const res = await createTestAutomation(input).catch(convertThrowIntoFetchResult)
+    if (res?.data?.projectMutations?.automationMutations?.createTestAutomation?.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Test automation created'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to create test automation',
+        description: errMsg
+      })
+    }
+
+    return res?.data?.projectMutations?.automationMutations?.createTestAutomation?.id
   }
 }
 

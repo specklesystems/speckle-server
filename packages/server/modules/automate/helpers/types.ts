@@ -8,7 +8,23 @@ export type AutomationRecord = {
   enabled: boolean
   createdAt: Date
   updatedAt: Date
-  executionEngineAutomationId: string
+} & (
+  | {
+      executionEngineAutomationId: string
+      isTestAutomation: false
+    }
+  | {
+      executionEngineAutomationId: null
+      isTestAutomation: true
+    }
+)
+
+export type TestAutomation<R extends AutomationRecord> = R & {
+  isTestAutomation: true
+}
+
+export type LiveAutomation<R extends AutomationRecord> = R & {
+  isTestAutomation: false
 }
 
 export type AutomationRevisionRecord = {

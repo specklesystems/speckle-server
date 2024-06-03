@@ -20,10 +20,10 @@ const AutomationRunStatusOrder: { [key in AutomationRunStatus]: number } = {
   [AutomationRunStatuses.initializing]: 1,
   [AutomationRunStatuses.running]: 2,
   [AutomationRunStatuses.succeeded]: 3,
-  [AutomationRunStatuses.failed]: 4,
+  [AutomationRunStatuses.failed]: 3,
   [AutomationRunStatuses.exception]: 5,
-  [AutomationRunStatuses.timeout]: 6,
-  [AutomationRunStatuses.canceled]: 7
+  [AutomationRunStatuses.timeout]: 5,
+  [AutomationRunStatuses.canceled]: 4
 }
 
 /**

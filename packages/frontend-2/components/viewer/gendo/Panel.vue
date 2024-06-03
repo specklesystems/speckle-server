@@ -55,6 +55,7 @@
 import { useApolloClient } from '@vue/apollo-composable'
 import { useTimeoutFn } from '@vueuse/core'
 import { getFirstErrorMessage } from '~/lib/common/helpers/graphql'
+import { PassReader } from '~/lib/viewer/extensions/PassReader'
 import { requestGendoAIRender } from '~~/lib/gendo/graphql/queriesAndMutations'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 
@@ -75,24 +76,10 @@ const prompt = ref<string>()
 const isLoading = ref(false)
 const timeOutWait = ref(false)
 
-const enqueMagic = () => {
+const enqueMagic = async () => {
   isLoading.value = true
-  viewerInstance.getRenderer().pipelineOptions = {
-    ...viewerInstance.getRenderer().pipelineOptions,
-    pipelineOutput: 1
-  }
-
-  viewerInstance.requestRender()
-  setTimeout(async () => {
-    const screenshot = await viewerInstance.screenshot()
-    void lodgeRequest(screenshot)
-    // Reset renderer back to normal
-    viewerInstance.getRenderer().pipelineOptions = {
-      ...viewerInstance.getRenderer().pipelineOptions,
-      pipelineOutput: 8
-    }
-    viewerInstance.requestRender()
-  }, 100)
+  const screenshot = await viewerInstance.getExtension(PassReader).read()
+  void lodgeRequest(screenshot)
 
   timeOutWait.value = true
 

@@ -6,12 +6,14 @@ import {
   getLatestVersionAutomationRuns,
   storeAutomation,
   storeAutomationRevision,
+  storeAutomationToken,
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import { getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import cryptoRandomString from 'crypto-random-string'
 import {
   createAutomation as clientCreateAutomation,
+  getFunction,
   getFunctionRelease,
   getFunctionReleases
 } from '@/modules/automate/clients/executionEngine'
@@ -21,7 +23,8 @@ import { createStoredAuthCode } from '@/modules/automate/services/executionEngin
 import {
   ProjectAutomationCreateInput,
   ProjectAutomationRevisionCreateInput,
-  ProjectAutomationUpdateInput
+  ProjectAutomationUpdateInput,
+  ProjectTestAutomationCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import {
@@ -47,11 +50,13 @@ import {
 import { LibsodiumEncryptionError } from '@/modules/shared/errors/encryption'
 import { validateInputAgainstFunctionSchema } from '@/modules/automate/utils/inputSchemaValidator'
 import { AutomationsEmitter } from '@/modules/automate/events/automations'
+import { validateAutomationName } from '@/modules/automate/utils/automationConfigurationValidator'
 
 export type CreateAutomationDeps = {
   createAuthCode: ReturnType<typeof createStoredAuthCode>
   automateCreateAutomation: typeof clientCreateAutomation
   storeAutomation: typeof storeAutomation
+  storeAutomationToken: typeof storeAutomationToken
 }
 
 export const createAutomation =
@@ -68,14 +73,14 @@ export const createAutomation =
       userId,
       userResourceAccessRules
     } = params
-    const { createAuthCode, automateCreateAutomation, storeAutomation } = deps
+    const {
+      createAuthCode,
+      automateCreateAutomation,
+      storeAutomation,
+      storeAutomationToken
+    } = deps
 
-    const nameLength = name?.length || 0
-    if (nameLength < 1 || nameLength > 255) {
-      throw new AutomationCreationError(
-        'Automation name should be a string between the length of 1 and 255 characters.'
-      )
-    }
+    validateAutomationName(name)
 
     await validateStreamAccess(
       userId,
@@ -95,28 +100,128 @@ export const createAutomation =
 
     const automationId = cryptoRandomString({ length: 10 })
 
-    const res = await storeAutomation(
-      {
-        id: automationId,
-        name,
-        userId,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        enabled,
-        projectId,
-        executionEngineAutomationId
-      },
-      {
-        automationId,
-        automateToken: token
-      }
-    )
-
-    await AutomationsEmitter.emit(AutomationsEmitter.events.Created, {
-      automation: res.automation
+    const automationRecord = await storeAutomation({
+      id: automationId,
+      name,
+      userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      enabled,
+      projectId,
+      executionEngineAutomationId,
+      isTestAutomation: false
     })
 
-    return res
+    const automationTokenRecord = await storeAutomationToken({
+      automationId,
+      automateToken: token
+    })
+
+    await AutomationsEmitter.emit(AutomationsEmitter.events.Created, {
+      automation: automationRecord
+    })
+
+    return { automation: automationRecord, token: automationTokenRecord }
+  }
+
+export type CreateTestAutomationDeps = {
+  getEncryptionKeyPair: typeof getEncryptionKeyPair
+  getFunction: typeof getFunction
+  storeAutomation: typeof storeAutomation
+  storeAutomationRevision: typeof storeAutomationRevision
+}
+
+/** Create a test automation and its first revision in one request. */
+export const createTestAutomation =
+  (deps: CreateTestAutomationDeps) =>
+  async (params: {
+    input: ProjectTestAutomationCreateInput
+    projectId: string
+    userId: string
+    userResourceAccessRules?: ContextResourceAccessRules
+  }) => {
+    const {
+      input: { name, functionId, modelId },
+      projectId,
+      userId,
+      userResourceAccessRules
+    } = params
+    const {
+      getEncryptionKeyPair,
+      getFunction,
+      storeAutomation,
+      storeAutomationRevision
+    } = deps
+
+    validateAutomationName(name)
+
+    await validateStreamAccess(
+      userId,
+      projectId,
+      Roles.Stream.Owner,
+      userResourceAccessRules
+    )
+
+    // Get latest release for specified function
+    const { functionVersions: functionReleases } = await getFunction({ functionId })
+
+    if (!functionReleases || functionReleases.length === 0) {
+      // TODO: This should probably be okay for test automations
+      throw new AutomationCreationError(
+        'The specified function does not have any releases'
+      )
+    }
+
+    const latestFunctionRelease = functionReleases[0]
+
+    // Create and store the automation record
+    const automationId = cryptoRandomString({ length: 10 })
+
+    const automationRecord = await storeAutomation({
+      id: automationId,
+      name,
+      userId,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      enabled: true,
+      projectId,
+      executionEngineAutomationId: null,
+      isTestAutomation: true
+    })
+
+    await AutomationsEmitter.emit(AutomationsEmitter.events.Created, {
+      automation: automationRecord
+    })
+
+    // Create and store the automation revision
+    const encryptionKeyPair = await getEncryptionKeyPair()
+
+    const automationRevisionRecord = await storeAutomationRevision({
+      functions: [
+        {
+          functionId,
+          functionReleaseId: latestFunctionRelease.functionVersionId,
+          functionInputs: null
+        }
+      ],
+      triggers: [
+        {
+          triggerType: VersionCreationTriggerType,
+          triggeringId: modelId
+        }
+      ],
+      automationId,
+      userId,
+      active: true,
+      publicKey: encryptionKeyPair.publicKey
+    })
+
+    await AutomationsEmitter.emit(AutomationsEmitter.events.CreatedRevision, {
+      automation: automationRecord,
+      revision: automationRevisionRecord
+    })
+
+    return automationRecord
   }
 
 export type UpdateAutomationDeps = {

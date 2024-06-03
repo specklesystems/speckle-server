@@ -5,7 +5,8 @@ import {
   getFunction,
   getFunctionRelease,
   getFunctions,
-  getFunctionReleases
+  getFunctionReleases,
+  getUserGithubAuthState
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
@@ -19,6 +20,7 @@ import {
   getProjectAutomationsTotalCount,
   storeAutomation,
   storeAutomationRevision,
+  storeAutomationToken,
   updateAutomationRun,
   updateAutomation as updateDbAutomation,
   upsertAutomationFunctionRun
@@ -26,6 +28,7 @@ import {
 import {
   createAutomation,
   createAutomationRevision,
+  createTestAutomation,
   getAutomationsStatus,
   updateAutomation
 } from '@/modules/automate/services/automationManagement'
@@ -66,7 +69,10 @@ import {
   reportFunctionRunStatus,
   ReportFunctionRunStatusDeps
 } from '@/modules/automate/services/runsManagement'
-import { FunctionNotFoundError } from '@/modules/automate/errors/management'
+import {
+  AutomationNotFoundError,
+  FunctionNotFoundError
+} from '@/modules/automate/errors/management'
 import {
   FunctionReleaseSchemaType,
   dbToGraphqlTriggerTypeMap,
@@ -97,7 +103,6 @@ import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
-import { automateLogger } from '@/logging/logging'
 
 /**
  * TODO:
@@ -163,7 +168,16 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Project: {
         async automation(parent, args, ctx) {
-          return ctx.loaders.streams.getAutomation.forStream(parent.id).load(args.id)
+          const res = ctx.loaders.streams.getAutomation
+            .forStream(parent.id)
+            .load(args.id)
+          if (!res) {
+            if (!res) {
+              throw new AutomationNotFoundError()
+            }
+          }
+
+          return res
         },
         async automations(parent, args) {
           const retrievalArgs: GetProjectAutomationsParams = {
@@ -287,7 +301,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             parent.functionId
           )
           if (!fn) {
-            automateLogger.warn(
+            ctx.log.warn(
               { id: parent.functionId, fnRunId: parent.id, runid: parent.runId },
               'AutomateFunctionRun function unexpectedly not found'
             )
@@ -439,7 +453,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               ? async () => testAutomateAuthCode
               : createStoredAuthCode({ redis: getGenericRedis() }),
             automateCreateAutomation: clientCreateAutomation,
-            storeAutomation
+            storeAutomation,
+            storeAutomationToken
           })
 
           return (
@@ -502,6 +517,21 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           })
 
           return automationRunId
+        },
+        async createTestAutomation(parent, { input }, ctx) {
+          const create = createTestAutomation({
+            getEncryptionKeyPair,
+            getFunction,
+            storeAutomation,
+            storeAutomationRevision
+          })
+
+          return await create({
+            input,
+            projectId: parent.projectId,
+            userId: ctx.userId!,
+            userResourceAccessRules: ctx.resourceAccessRules
+          })
         }
       },
       Query: {
@@ -558,11 +588,28 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       User: {
-        // TODO: Needs proper integration w/ Execution engine
-        automateInfo: () => ({
-          hasAutomateGithubApp: false,
-          availableGithubOrgs: []
-        })
+        automateInfo: async (parent, _args, ctx) => {
+          const userId = parent.id
+
+          let hasAutomateGithubApp = false
+          try {
+            const authState = await getUserGithubAuthState({ userId })
+            hasAutomateGithubApp = authState.userHasAuthorizedGithubApp
+          } catch (e) {
+            if (e instanceof ExecutionEngineFailedResponseError) {
+              if (e.response.statusMessage === 'FunctionCreatorDoesNotExist') {
+                hasAutomateGithubApp = false
+              }
+            } else {
+              ctx.log.error(e, 'Failed to resolve user automate github auth state')
+            }
+          }
+
+          return {
+            hasAutomateGithubApp,
+            availableGithubOrgs: []
+          }
+        }
       },
       ServerInfo: {
         // TODO: Needs proper integration w/ Execution engine

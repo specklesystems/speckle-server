@@ -62,6 +62,7 @@ type Automation {
   id: ID!
   name: String!
   enabled: Boolean!
+  isTestAutomation: Boolean!
   runs(cursor: String, limit: Int): AutomateRunCollection!
   currentRevision: AutomationRevision
   createdAt: DateTime!
@@ -197,6 +198,12 @@ input ProjectAutomationCreateInput {
   enabled: Boolean!
 }
 
+input ProjectTestAutomationCreateInput {
+  name: String!
+  modelId: String!
+  functionId: String!
+}
+
 input AutomateFunctionsFilter {
   search: String
   """
@@ -290,6 +297,8 @@ type ProjectAutomationMutations {
   just refer to the last version of the model.
   """
   trigger(automationId: ID!): String!
+  createTestAutomation(input: ProjectTestAutomationCreateInput!): Automation!
+  # createTestAutomationRun(automationId: ID!): String!
 }
 
 extend type ProjectMutations {

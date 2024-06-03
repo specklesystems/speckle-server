@@ -18,7 +18,7 @@ import {
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
+import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import {
   Nullable,
   SourceAppName,
@@ -128,19 +128,20 @@ const invokeRequest = async (params: {
 }
 
 export const createAutomation = async (params: {
-  speckleServerUrl: string
+  speckleServerUrl?: string
   authCode: string
 }) => {
-  const { speckleServerUrl, authCode } = params
+  const { speckleServerUrl = getServerOrigin(), authCode } = params
 
   const url = getApiUrl(`/api/v2/automations`)
-  const speckleServerDomain = new URL(speckleServerUrl).hostname
+
+  const speckleServerOrigin = new URL(speckleServerUrl).origin
 
   const result = await invokeJsonRequest<AutomationCreateResponse>({
     url,
     method: 'post',
     body: {
-      speckleServerDomain,
+      speckleServerOrigin,
       speckleServerAuthenticationCode: authCode
     },
     retry: false
@@ -380,6 +381,30 @@ export const getFunctions = async (params: {
   })
 
   return result
+}
+
+type UserGithubAuthStateResponse = {
+  userHasAuthorizedGithubApp: boolean
+}
+
+export const getUserGithubAuthState = async (params: {
+  speckleServerUrl?: string
+  userId: string
+}) => {
+  const { speckleServerUrl = getServerOrigin(), userId: speckleUserId } = params
+  const speckleServerOrigin = new URL(speckleServerUrl).origin
+
+  const url = getApiUrl(`/api/v2/functions/auth/githubapp`, {
+    query: {
+      speckleServerOrigin,
+      speckleUserId
+    }
+  })
+
+  return await invokeJsonRequest<UserGithubAuthStateResponse>({
+    url,
+    method: 'get'
+  })
 }
 
 export async function* getAutomationRunLogs(params: {
