@@ -8,6 +8,7 @@
     :placeholder="appliedOptions['placeholder']"
     :help="control.description"
     :show-required="isRequired"
+    color="foundation"
     show-label
     size="lg"
     :validate-on-value-update="validateOnValueUpdate"

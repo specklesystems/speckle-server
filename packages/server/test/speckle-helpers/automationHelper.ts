@@ -2,7 +2,8 @@
 import {
   getAutomation,
   storeAutomation,
-  storeAutomationRevision
+  storeAutomationRevision,
+  storeAutomationToken
 } from '@/modules/automate/repositories/automations'
 import {
   CreateAutomationRevisionDeps,
@@ -55,7 +56,8 @@ export const buildAutomationCreate = (
         automationId: cryptoRandomString({ length: 10 }),
         token: cryptoRandomString({ length: 10 })
       })),
-    storeAutomation
+    storeAutomation,
+    storeAutomationToken
   })
 
   return create
