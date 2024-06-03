@@ -175,7 +175,6 @@ const buttons = computed((): LayoutDialogButton[] => {
           text: 'Authorize',
           props: {
             fullWidth: true,
-            disabled: true,
             to: authorizeGithubUrl.value,
             external: true
           }
@@ -188,7 +187,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           text: 'Next',
           props: {
             iconRight: ChevronRightIcon,
-            disabled: !selectedTemplate.value
+            disabled: !selectedTemplate.value || true // TODO: Remove once fns work
           },
           onClick: () => step.value++
         }
@@ -201,7 +200,8 @@ const buttons = computed((): LayoutDialogButton[] => {
           props: {
             color: 'secondary',
             iconLeft: ChevronLeftIcon,
-            textColor: 'primary'
+            textColor: 'primary',
+            disabled: true // TODO: Remove once fns work
           },
           onClick: () => step.value--
         },

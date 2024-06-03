@@ -199,7 +199,7 @@ export const startAutomateFunctionCreatorAuth =
       'speckleServerOrigin',
       new URL(getServerOrigin()).origin
     )
-    redirectUrl.searchParams.set('authenticationCode', authCode)
+    redirectUrl.searchParams.set('speckleServerAuthenticationCode', authCode)
 
     return res.redirect(redirectUrl.toString())
   }
@@ -208,15 +208,14 @@ export const handleAutomateFunctionCreatorAuthCallback =
   () => async (params: { req: Request; res: Response }) => {
     const { req, res } = params
     const {
-      error = 'unknown',
-      error_description = 'GitHub Authentication unexpectedly failed',
-      isAuthenticated = 'false'
+      ghAuth = 'unknown',
+      ghAuthDesc = 'GitHub Authentication unexpectedly failed'
     } = req.query as Record<string, string>
 
-    const isSuccess = ['true', '1', true].includes(isAuthenticated as string)
+    const isSuccess = ghAuth === 'success'
     const redirectUrl = getFunctionsMarketplaceUrl()
-    redirectUrl.searchParams.set('ghAuth', isSuccess ? 'success' : error)
-    redirectUrl.searchParams.set('ghAuthDesc', isSuccess ? '' : error_description)
+    redirectUrl.searchParams.set('ghAuth', isSuccess ? 'success' : ghAuth)
+    redirectUrl.searchParams.set('ghAuthDesc', isSuccess ? '' : ghAuthDesc)
 
     return res.redirect(redirectUrl.toString())
   }
