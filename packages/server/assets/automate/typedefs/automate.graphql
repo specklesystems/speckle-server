@@ -11,7 +11,7 @@ enum AutomateRunStatus {
 
 enum AutomateRunTriggerType {
   VERSION_CREATED
-  TEST_TYPE
+  MANUAL
 }
 
 type AutomationRevisionFunction {

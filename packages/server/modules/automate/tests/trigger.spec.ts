@@ -294,7 +294,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               versionId: cryptoRandomString({ length: 10 }),
               triggerType: VersionCreationTriggerType,
               modelId: cryptoRandomString({ length: 10 })
-            }
+            },
+            source: 'manual'
           })
           throw 'this should have thrown'
         } catch (error) {
@@ -378,7 +379,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             versionId: version.id,
             modelId: trigger.triggeringId,
             triggerType: trigger.triggerType
-          }
+          },
+          source: 'manual'
         })
 
         const storedRun = await getFullAutomationRunById(automationRunId)
@@ -468,7 +470,8 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             versionId: version.id,
             modelId: trigger.triggeringId,
             triggerType: trigger.triggerType
-          }
+          },
+          source: 'manual'
         })
 
         const storedRun = await getFullAutomationRunById(automationRunId)

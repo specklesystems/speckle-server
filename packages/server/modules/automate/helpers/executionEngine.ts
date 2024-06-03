@@ -1,5 +1,5 @@
 import {
-  TestTriggerType,
+  ManualTriggerType,
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
 import {
@@ -51,10 +51,10 @@ export const functionTemplateRepos = <const>[
 
 export const dbToGraphqlTriggerTypeMap = <const>{
   [VersionCreationTriggerType]: AutomateRunTriggerType.VersionCreated,
-  [TestTriggerType]: AutomateRunTriggerType.TestType
+  [ManualTriggerType]: AutomateRunTriggerType.Manual
 }
 
 export const graphqlToDbTriggerTypeMap = <const>{
   [AutomateRunTriggerType.VersionCreated]: VersionCreationTriggerType,
-  [AutomateRunTriggerType.TestType]: TestTriggerType
+  [AutomateRunTriggerType.Manual]: ManualTriggerType
 }
