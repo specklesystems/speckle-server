@@ -8,6 +8,8 @@ import {
 import { Environment } from '@speckle/shared'
 import {
   getActiveTriggerDefinitions,
+  getAutomation,
+  getAutomationRevision,
   getAutomationRunFullTriggers
 } from '@/modules/automate/repositories/automations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
@@ -71,6 +73,8 @@ const initializeEventListeners = () => {
       VersionEvents.Created,
       async ({ modelId, version, projectId }) => {
         await onModelVersionCreate({
+          getAutomation,
+          getAutomationRevision,
           getTriggers: getActiveTriggerDefinitions,
           triggerFunction: triggerFn
         })({ modelId, versionId: version.id, projectId })

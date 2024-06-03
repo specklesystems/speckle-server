@@ -493,12 +493,12 @@ export class CameraController extends Extension implements SpeckleCamera {
 
   private setViewSpeckle(view: SpeckleView, transition = true) {
     this._controls.setLookAt(
-      view.view.origin.x,
-      view.view.origin.y,
-      view.view.origin.z,
-      view.view.target.x,
-      view.view.target.y,
-      view.view.target.z,
+      view.origin.x,
+      view.origin.y,
+      view.origin.z,
+      view.target.x,
+      view.target.y,
+      view.target.z,
       transition
     )
     this.enableRotations()
