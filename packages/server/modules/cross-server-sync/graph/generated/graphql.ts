@@ -244,7 +244,8 @@ export type AutomateFunctionRun = {
   contextView?: Maybe<Scalars['String']>;
   createdAt: Scalars['DateTime'];
   elapsed: Scalars['Float'];
-  function: AutomateFunction;
+  /** Nullable, in case the function is not retrievable due to poor network conditions */
+  function?: Maybe<AutomateFunction>;
   functionId?: Maybe<Scalars['String']>;
   functionReleaseId?: Maybe<Scalars['String']>;
   id: Scalars['ID'];
@@ -344,6 +345,7 @@ export type Automation = {
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
+  isTestAutomation: Scalars['Boolean'];
   name: Scalars['String'];
   runs: AutomateRunCollection;
   updatedAt: Scalars['DateTime'];
@@ -477,6 +479,13 @@ export type AutomationsStatus = {
   id: Scalars['ID'];
   status: AutomationRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
+};
+
+export type AvatarUser = {
+  __typename?: 'AvatarUser';
+  avatar?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  name: Scalars['String'];
 };
 
 export type BasicGitRepositoryMetadata = {
@@ -940,6 +949,41 @@ export type FunctionRunStatusInput = {
   results?: InputMaybe<Scalars['JSONObject']>;
   status: AutomationRunStatus;
   statusMessage?: InputMaybe<Scalars['String']>;
+};
+
+export type GendoAiRender = {
+  __typename?: 'GendoAIRender';
+  camera?: Maybe<Scalars['JSONObject']>;
+  createdAt: Scalars['String'];
+  gendoGenerationId?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  modelId: Scalars['String'];
+  projectId: Scalars['String'];
+  prompt: Scalars['String'];
+  /** This is a blob id. */
+  responseImage?: Maybe<Scalars['String']>;
+  status: Scalars['String'];
+  updatedAt: Scalars['String'];
+  user?: Maybe<AvatarUser>;
+  userId: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+export type GendoAiRenderCollection = {
+  __typename?: 'GendoAIRenderCollection';
+  items: Array<Maybe<GendoAiRender>>;
+  totalCount: Scalars['Int'];
+};
+
+export type GendoAiRenderInput = {
+  /** Base64 encoded image of the depthmap. */
+  baseImage: Scalars['String'];
+  camera: Scalars['JSONObject'];
+  modelId: Scalars['ID'];
+  projectId: Scalars['ID'];
+  /** The generation prompt. */
+  prompt: Scalars['String'];
+  versionId: Scalars['ID'];
 };
 
 export type LegacyCommentViewerData = {
@@ -1784,6 +1828,8 @@ export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
   create: Automation;
   createRevision: AutomationRevision;
+  createTestAutomation: Automation;
+  createTestAutomationRun: TestAutomationRun;
   /**
    * Trigger an automation with a fake "version created" trigger. The "version created" will
    * just refer to the last version of the model.
@@ -1800,6 +1846,16 @@ export type ProjectAutomationMutationsCreateArgs = {
 
 export type ProjectAutomationMutationsCreateRevisionArgs = {
   input: ProjectAutomationRevisionCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationArgs = {
+  input: ProjectTestAutomationCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationRunArgs = {
+  automationId: Scalars['ID'];
 };
 
 
@@ -2088,6 +2144,12 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
 }
+
+export type ProjectTestAutomationCreateInput = {
+  functionId: Scalars['String'];
+  modelId: Scalars['String'];
+  name: Scalars['String'];
+};
 
 export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
   __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
@@ -2813,6 +2875,8 @@ export type Subscription = {
   projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
+  projectVersionGendoAIRenderCreated: GendoAiRender;
+  projectVersionGendoAIRenderUpdated: GendoAiRender;
   /** Subscribe to when a project's versions get their preview image fully generated. */
   projectVersionsPreviewGenerated: ProjectVersionsPreviewGeneratedMessage;
   /** Subscribe to changes to a project's versions. */
@@ -2933,6 +2997,18 @@ export type SubscriptionProjectUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectVersionGendoAiRenderCreatedArgs = {
+  id: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+
+export type SubscriptionProjectVersionGendoAiRenderUpdatedArgs = {
+  id: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+
 export type SubscriptionProjectVersionsPreviewGeneratedArgs = {
   id: Scalars['String'];
 };
@@ -2962,6 +3038,25 @@ export type SubscriptionUserViewerActivityArgs = {
 export type SubscriptionViewerUserActivityBroadcastedArgs = {
   sessionId?: InputMaybe<Scalars['String']>;
   target: ViewerUpdateTrackingTarget;
+};
+
+export type TestAutomationRun = {
+  __typename?: 'TestAutomationRun';
+  automationRunId: Scalars['String'];
+  functionRunId: Scalars['String'];
+  triggers: Array<TestAutomationRunTrigger>;
+};
+
+export type TestAutomationRunTrigger = {
+  __typename?: 'TestAutomationRunTrigger';
+  payload: TestAutomationRunTriggerPayload;
+  triggerType: Scalars['String'];
+};
+
+export type TestAutomationRunTriggerPayload = {
+  __typename?: 'TestAutomationRunTriggerPayload';
+  modelId: Scalars['String'];
+  versionId: Scalars['String'];
 };
 
 export type TokenResourceIdentifier = {
@@ -3207,6 +3302,8 @@ export type Version = {
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
+  gendoAIRender: GendoAiRender;
+  gendoAIRenders: GendoAiRenderCollection;
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;
@@ -3221,6 +3318,11 @@ export type Version = {
 export type VersionCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type VersionGendoAiRenderArgs = {
+  id: Scalars['String'];
 };
 
 export type VersionCollection = {
@@ -3247,6 +3349,7 @@ export type VersionMutations = {
   __typename?: 'VersionMutations';
   delete: Scalars['Boolean'];
   moveToModel: Model;
+  requestGendoAIRender: Scalars['Boolean'];
   update: Version;
 };
 
@@ -3258,6 +3361,11 @@ export type VersionMutationsDeleteArgs = {
 
 export type VersionMutationsMoveToModelArgs = {
   input: MoveVersionsInput;
+};
+
+
+export type VersionMutationsRequestGendoAiRenderArgs = {
+  input: GendoAiRenderInput;
 };
 
 

@@ -1,14 +1,18 @@
 <template>
   <div>
     <FormTextInput
+      label="Select Function"
+      :show-label="showLabel"
+      :show-required="showRequired"
       name="search"
-      placeholder="Search Functions"
+      color="foundation"
+      placeholder="Search Functions..."
       show-clear
       :model-value="bind.modelValue.value"
       full-width
       v-on="on"
     />
-    <div class="mt-2">
+    <div class="mt-4">
       <CommonLoadingBar :loading="loading" />
       <template v-if="!loading">
         <AutomateFunctionCardView v-if="queryItems?.length" small-view>
@@ -50,9 +54,18 @@ const searchQuery = graphql(`
   }
 `)
 
-const props = defineProps<{
-  preselectedFunction: Optional<CreateAutomationSelectableFunction>
-}>()
+const props = withDefaults(
+  defineProps<{
+    preselectedFunction: Optional<CreateAutomationSelectableFunction>
+    pageSize?: Optional<number>
+    showLabel?: Optional<boolean>
+    showRequired?: Optional<boolean>
+  }>(),
+  {
+    showLabel: true,
+    showRequired: true
+  }
+)
 const selectedFunction = defineModel<Optional<CreateAutomationSelectableFunction>>(
   'selectedFunction',
   {
@@ -67,7 +80,7 @@ const { result } = useQuery(searchQuery, () => ({
 
 const queryItems = computed(() => result.value?.automateFunctions.items)
 const items = computed(() => {
-  const baseItems = (queryItems.value || []).slice()
+  const baseItems = (queryItems.value || []).slice(0, props.pageSize)
   const preselectedFn = props.preselectedFunction
 
   if (!preselectedFn || baseItems.find((fn) => fn.id === preselectedFn.id)) {

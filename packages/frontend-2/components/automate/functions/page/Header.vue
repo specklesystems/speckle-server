@@ -14,7 +14,7 @@
       <div class="flex flex-col sm:flex-row gap-2">
         <FormTextInput
           name="search"
-          placeholder="Search Functions"
+          placeholder="Search Functions..."
           show-clear
           :model-value="bind.modelValue.value"
           color="foundation"
@@ -68,10 +68,8 @@ const props = defineProps<{
   activeUser: Optional<AutomateFunctionsPageHeader_QueryFragment['activeUser']>
   serverInfo: Optional<AutomateFunctionsPageHeader_QueryFragment['serverInfo']>
 }>()
-const {
-  public: { automateGhClientId }
-} = useRuntimeConfig()
 const search = defineModel<string>('search')
+
 const { on, bind } = useDebouncedTextInput({ model: search })
 const { triggerNotification } = useGlobalToast()
 const route = useRoute()
@@ -83,10 +81,7 @@ const availableTemplates = computed(
   () => props.serverInfo?.automate.availableFunctionTemplates || []
 )
 const canCreateFunction = computed(
-  () =>
-    !!props.activeUser?.id &&
-    !!automateGhClientId.length &&
-    !!availableTemplates.value.length
+  () => !!props.activeUser?.id && !!availableTemplates.value.length
 )
 
 if (process.client) {

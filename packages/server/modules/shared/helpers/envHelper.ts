@@ -273,13 +273,6 @@ export function delayGraphqlResponsesBy() {
   return getIntFromEnv('DELAY_GQL_RESPONSES_BY', '0')
 }
 
-/**
- * TODO: Remove, this is a temporary shortcut to avoid messing up the db schema which makes it difficult to jump to different branches
- */
-export function skipAutomateMigrations() {
-  return getBooleanFromEnv('SKIP_AUTOMATE_MIGRATION_DEV')
-}
-
 export function getAutomateEncryptionKeysPath() {
   if (!process.env.AUTOMATE_ENCRYPTION_KEYS_PATH) {
     throw new MisconfiguredEnvironmentError(
@@ -288,4 +281,16 @@ export function getAutomateEncryptionKeysPath() {
   }
 
   return process.env.AUTOMATE_ENCRYPTION_KEYS_PATH
+}
+
+export function getGendoAIKey() {
+  return process.env.GENDOAI_KEY
+}
+
+export function getGendoAIResponseKey() {
+  return process.env.GENDOAI_KEY_RESPONSE
+}
+
+export function getGendoAIAPIEndpoint() {
+  return process.env.GENDOAI_API_ENDPOINT
 }

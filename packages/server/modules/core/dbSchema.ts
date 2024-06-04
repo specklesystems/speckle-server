@@ -4,7 +4,6 @@ import knex from '@/db/knex'
 import { BaseMetaRecord } from '@/modules/core/helpers/meta'
 import { Knex } from 'knex'
 import { reduce } from 'lodash'
-import { skipAutomateMigrations } from '@/modules/shared/helpers/envHelper'
 
 type BaseInnerSchemaConfig<T extends string, C extends string> = {
   /**
@@ -490,36 +489,28 @@ export const FileUploads = buildTableHelper('file_uploads', [
   'convertedCommitId'
 ])
 
-export const BetaAutomations = buildTableHelper(
-  skipAutomateMigrations() ? 'automations' : 'beta_automations',
-  [
-    'automationId',
-    'automationRevisionId',
-    'automationName',
-    'projectId',
-    'modelId',
-    'createdAt',
-    'updatedAt',
-    'webhookId'
-  ]
-)
+export const BetaAutomations = buildTableHelper('beta_automations', [
+  'automationId',
+  'automationRevisionId',
+  'automationName',
+  'projectId',
+  'modelId',
+  'createdAt',
+  'updatedAt',
+  'webhookId'
+])
 
-export const BetaAutomationRuns = buildTableHelper(
-  skipAutomateMigrations() ? 'automation_runs' : 'beta_automation_runs',
-  [
-    'automationId',
-    'automationRevisionId',
-    'automationRunId',
-    'versionId',
-    'createdAt',
-    'updatedAt'
-  ]
-)
+export const BetaAutomationRuns = buildTableHelper('beta_automation_runs', [
+  'automationId',
+  'automationRevisionId',
+  'automationRunId',
+  'versionId',
+  'createdAt',
+  'updatedAt'
+])
 
 export const BetaAutomationFunctionRuns = buildTableHelper(
-  skipAutomateMigrations()
-    ? 'automation_function_runs'
-    : 'beta_automation_function_runs',
+  'beta_automation_function_runs',
   [
     'automationRunId',
     'functionId',
@@ -534,9 +525,7 @@ export const BetaAutomationFunctionRuns = buildTableHelper(
 )
 
 export const BetaAutomationFunctionRunsResultVersions = buildTableHelper(
-  skipAutomateMigrations()
-    ? 'automation_function_runs_result_version'
-    : 'beta_automation_function_runs_result_versions',
+  'beta_automation_function_runs_result_versions',
   ['automationRunId', 'functionId', 'resultVersionId']
 )
 
@@ -629,7 +618,24 @@ export const Automations = buildTableHelper('automations', [
   'createdAt',
   'updatedAt',
   'userId',
-  'executionEngineAutomationId'
+  'executionEngineAutomationId',
+  'isTestAutomation'
+])
+
+export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [
+  'id',
+  'userId',
+  'projectId',
+  'modelId',
+  'versionId',
+  'createdAt',
+  'updatedAt',
+  'gendoGenerationId',
+  'status',
+  'prompt',
+  'camera',
+  'baseImage',
+  'responseImage'
 ])
 
 export { knex }

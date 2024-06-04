@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col items-start w-full">
+  <div class="col-span-1">
     <h2 class="h6 font-bold mb-6">Model</h2>
     <div class="w-full">
       <ProjectModelsBasicCardView
@@ -28,6 +28,7 @@ graphql(`
     id
     name
     enabled
+    isTestAutomation
     currentRevision {
       id
       triggerDefinitions {

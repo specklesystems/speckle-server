@@ -315,4 +315,11 @@ const categorisedValuePairs = computed(() => {
     nulls: keyValuePairs.value.filter((item) => item.value === null)
   }
 })
+
+watch(
+  () => props.unfold,
+  (newVal) => {
+    unfold.value = newVal
+  }
+)
 </script>

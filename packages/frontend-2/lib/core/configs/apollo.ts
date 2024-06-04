@@ -276,6 +276,14 @@ function createCache(): InMemoryCache {
             )
           }
         }
+      },
+      Automation: {
+        fields: {
+          runs: {
+            keyArgs: ['limit'],
+            merge: buildAbstractCollectionMergeFunction('AutomateRunCollection')
+          }
+        }
       }
     }
   })

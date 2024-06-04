@@ -28,6 +28,10 @@ import { graphql } from '~/lib/common/generated/gql'
 
 // TODO: Proper search & pagination
 
+definePageMeta({
+  middleware: ['requires-automate-enabled']
+})
+
 const pageQuery = graphql(`
   query AutomateFunctionsPage($search: String) {
     ...AutomateFunctionsPageItems_Query

@@ -15,10 +15,10 @@
           :class="['h-4 w-4 outline-none', statusMetaData.iconColor]"
         />
       </div>
-      <AutomateFunctionLogo :logo="functionRun.function.logo" size="xs" />
+      <AutomateFunctionLogo :logo="functionRun.function?.logo" size="xs" />
       <div class="font-bold text-xs truncate">
         {{ automationName ? automationName + ' / ' : ''
-        }}{{ functionRun.function.name }}
+        }}{{ functionRun.function?.name || 'Unknown function' }}
       </div>
 
       <div class="h-full grow flex justify-end">
@@ -37,8 +37,11 @@
         <div class="text-xs font-bold text-foreground-2">Status</div>
         <div
           v-if="
-            functionRun.status === AutomateRunStatus.Initializing ||
-            functionRun.status === AutomateRunStatus.Running
+            [
+              AutomateRunStatus.Initializing,
+              AutomateRunStatus.Running,
+              AutomateRunStatus.Pending
+            ].includes(functionRun.status)
           "
           class="text-xs text-foreground-2 italic"
         >
@@ -68,16 +71,13 @@
         </div>
       </div>
       <!-- Context view -->
-      <div
-        v-if="functionRun.contextView?.length"
-        class="border-t pt-2 border-foreground-2"
-      >
+      <div v-if="hasValidContextView" class="border-t pt-2 border-foreground-2">
         <div>
           <FormButton
             size="xs"
             link
             class="truncate max-w-full"
-            :to="functionRun.contextView"
+            :to="functionRun.contextView || ''"
           >
             Open view
           </FormButton>
@@ -96,7 +96,7 @@
               pageRunLimit
             )"
             :key="index"
-            :function-id="functionRun.function.id"
+            :function-id="functionRun.function?.id"
             :result="result"
           />
           <FormButton
@@ -122,6 +122,7 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~/lib/common/generated/gql'
 import { useAutomationFunctionRunResults } from '~/lib/automate/composables/runs'
 import { useRunStatusMetadata } from '~/lib/automate/composables/runStatus'
+import { doesRouteFitTarget } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment AutomateViewerPanelFunctionRunRow_AutomateFunctionRun on AutomateFunctionRun {
@@ -140,19 +141,19 @@ graphql(`
   }
 `)
 
-const { projectId } = useInjectedViewerState()
-
 const props = defineProps<{
   functionRun: AutomateViewerPanelFunctionRunRow_AutomateFunctionRunFragment
   automationName: string
 }>()
 
+const { projectId } = useInjectedViewerState()
 const results = useAutomationFunctionRunResults({
   results: computed(() => props.functionRun.results)
 })
 const { metadata: statusMetaData } = useRunStatusMetadata({
   status: computed(() => props.functionRun.status)
 })
+const route = useRoute()
 
 const pageRunLimit = ref(5)
 const expanded = ref(false)
@@ -160,4 +161,11 @@ const expanded = ref(false)
 const attachments = computed(() =>
   (results.value?.values.blobIds || []).filter((b) => !!b)
 )
+const hasValidContextView = computed(() => {
+  const ctxView = props.functionRun.contextView
+  if (!ctxView?.length) return false
+
+  const currentPath = route.fullPath
+  return !doesRouteFitTarget(ctxView, currentPath)
+})
 </script>
