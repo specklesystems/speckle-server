@@ -64,9 +64,12 @@ type SerializableObject = {
     | SerializableObject[]
 }
 
-type BasicPaginatedResult = {
-  totalCount: number
+type BasicCursorContainer = {
   cursor?: string | null | undefined
+}
+
+type BasicPaginatedResult = BasicCursorContainer & {
+  totalCount: number
   items: unknown[]
 }
 
@@ -99,9 +102,10 @@ export const usePaginatedQuery = <
     result: TResult | undefined
   ) => BasicPaginatedResult | undefined
   /**
-   * Use this to resolve the initial result that may have come from a previous non-paginated query
+   * Use this to resolve the initial cursor that may have come from a previous non-paginated query. If undefined,
+   * or returns undefined - we expect that there's no initial result
    */
-  resolveInitialResult: () => BasicPaginatedResult | undefined
+  resolveInitialResult?: () => BasicCursorContainer | undefined
   /**
    * Predicate for resolving the variables to use for next page of items
    */
@@ -166,9 +170,14 @@ export const usePaginatedQuery = <
     }
   }
 
+  const bustCache = () => {
+    cacheBusterKey.value++
+  }
+
   return {
     query: useQueryReturn,
     identifier: queryKey,
-    onInfiniteLoad
+    onInfiniteLoad,
+    bustCache
   }
 }

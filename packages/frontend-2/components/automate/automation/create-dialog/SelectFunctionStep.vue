@@ -13,9 +13,8 @@
       v-on="on"
     />
     <div class="mt-4">
-      <CommonLoadingBar :loading="loading" />
-      <template v-if="!loading">
-        <AutomateFunctionCardView v-if="queryItems?.length" small-view>
+      <template v-if="queryItems?.length || loading">
+        <AutomateFunctionCardView small-view>
           <AutomateFunctionCard
             v-for="fn in items"
             :key="fn.id"
@@ -25,27 +24,25 @@
             @use="() => (selectedFunction = fn)"
           />
         </AutomateFunctionCardView>
-        <CommonGenericEmptyState
-          v-else
-          :search="!!search"
-          @clear-search="search = ''"
-        />
+        <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
       </template>
+      <CommonGenericEmptyState v-else :search="!!search" @clear-search="search = ''" />
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { useDebouncedTextInput } from '@speckle/ui-components'
-import { useQueryLoading, useQuery } from '@vue/apollo-composable'
+import { useQueryLoading } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 import type { Optional } from '@speckle/shared'
-
-// TODO: Pagination
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const searchQuery = graphql(`
-  query AutomationCreateDialogFunctionsSearch($search: String) {
-    automateFunctions(limit: 21, filter: { search: $search }) {
+  query AutomationCreateDialogFunctionsSearch($search: String, $cursor: String = null) {
+    automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
+      cursor
+      totalCount
       items {
         id
         ...AutomateAutomationCreateDialog_AutomateFunction
@@ -74,9 +71,23 @@ const selectedFunction = defineModel<Optional<CreateAutomationSelectableFunction
 )
 const { on, bind, value: search } = useDebouncedTextInput()
 const loading = useQueryLoading()
-const { result } = useQuery(searchQuery, () => ({
-  search: search.value?.length ? search.value : null
-}))
+
+const {
+  identifier,
+  onInfiniteLoad,
+  query: { result }
+} = usePaginatedQuery({
+  query: searchQuery,
+  baseVariables: computed(() => ({
+    search: search.value?.length ? search.value : null
+  })),
+  resolveKey: (vars) => [vars.search || ''],
+  resolveCurrentResult: (res) => res?.automateFunctions,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  })
+})
 
 const queryItems = computed(() => result.value?.automateFunctions.items)
 const items = computed(() => {
