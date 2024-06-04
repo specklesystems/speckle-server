@@ -217,19 +217,40 @@ export const projectDiscussionsPageQuery = graphql(`
 `)
 
 export const projectAutomationsTabQuery = graphql(`
-  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {
+  query ProjectAutomationsTab($projectId: String!) {
     project(id: $projectId) {
       id
-      automations(filter: $search, cursor: $cursor, limit: 5) {
+      automations(filter: null, cursor: null, limit: 5) {
         totalCount
         items {
           id
           ...ProjectPageAutomationsRow_Automation
         }
+        cursor
       }
       ...FormSelectProjects_Project
     }
     ...ProjectPageAutomationsEmptyState_Query
+  }
+`)
+
+export const projectAutomationsTabAutomationsPaginationQuery = graphql(`
+  query ProjectAutomationsTabAutomationsPagination(
+    $projectId: String!
+    $search: String = null
+    $cursor: String = null
+  ) {
+    project(id: $projectId) {
+      id
+      automations(filter: $search, cursor: $cursor, limit: 5) {
+        totalCount
+        cursor
+        items {
+          id
+          ...ProjectPageAutomationsRow_Automation
+        }
+      }
+    }
   }
 `)
 
