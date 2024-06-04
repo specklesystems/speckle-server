@@ -57,26 +57,27 @@
         v-model:has-errors="hasParameterErrors"
         :fn="selectedFunction"
       />
-      <AutomateAutomationCreateDialogAutomationDetailsStep
-        v-else-if="enumStep === AutomationCreateSteps.AutomationDetails"
-        v-model:project="selectedProject"
-        v-model:model="selectedModel"
-        v-model:automation-name="automationName"
-        :preselected-project="preselectedProject"
-        :is-test-automation="isTestAutomation"
-      />
+      <template v-else-if="enumStep === AutomationCreateSteps.AutomationDetails">
+        <AutomateAutomationCreateDialogAutomationDetailsStep
+          v-model:project="selectedProject"
+          v-model:model="selectedModel"
+          v-model:automation-name="automationName"
+          :preselected-project="preselectedProject"
+          :is-test-automation="isTestAutomation"
+        />
+        <AutomateAutomationCreateDialogSelectFunctionStep
+          v-if="isTestAutomation"
+          v-model:selected-function="selectedFunction"
+          :preselected-function="validatedPreselectedFunction"
+          :page-size="2"
+        />
+      </template>
       <AutomateAutomationCreateDialogDoneStep
         v-else-if="
           enumStep === AutomationCreateSteps.Done && automationId && selectedFunction
         "
         :automation-id="automationId"
         :function-name="selectedFunction.name"
-      />
-      <AutomateAutomationCreateDialogSelectFunctionStep
-        v-if="enumStep === AutomationCreateSteps.AutomationDetails && isTestAutomation"
-        v-model:selected-function="selectedFunction"
-        :preselected-function="validatedPreselectedFunction"
-        :page-size="2"
       />
     </div>
   </LayoutDialog>
@@ -223,7 +224,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           },
           onClick: () => {
             isTestAutomation.value = true
-            step.value = 2
+            enumStep.value = AutomationCreateSteps.AutomationDetails
           }
         },
         {
