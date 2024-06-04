@@ -59,11 +59,13 @@ class FlyControls extends EventDispatcher {
     return this.goalEuler.equals(this.euler) && this.velocity.length() === 0
   }
 
-  update(delta?: number) {
+  update(delta?: number): boolean {
     const now = performance.now()
     delta = delta !== undefined ? delta : now - this._lastTick
     this._lastTick = now
     const deltaSeconds = delta / 1000
+
+    if (this.isStationary()) return false
 
     this.direction.z = Number(this.keyMap.forward) - Number(this.keyMap.back)
     this.direction.x = Number(this.keyMap.right) - Number(this.keyMap.left)
@@ -113,6 +115,8 @@ class FlyControls extends EventDispatcher {
     this.moveForwardF(-this.velocity.z)
     this.moveUpF(-this.velocity.y)
     this.rotate(this.euler)
+
+    return true
   }
 
   connect() {
