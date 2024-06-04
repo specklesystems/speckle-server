@@ -3,6 +3,7 @@
     <div class="flex items-center justify-between h-6 mb-6">
       <h2 class="h6 font-bold">Runs</h2>
       <FormButton
+        v-if="!automation.isTestAutomation"
         :icon-left="ArrowPathIcon"
         :disabled="!automation.enabled"
         @click="onTrigger"
@@ -32,6 +33,7 @@ graphql(`
   fragment ProjectPageAutomationRuns_Automation on Automation {
     id
     enabled
+    isTestAutomation
     runs(limit: 10) {
       items {
         ...AutomationRunDetails
