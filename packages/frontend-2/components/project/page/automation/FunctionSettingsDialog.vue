@@ -30,9 +30,11 @@
         </CommonAlert>
         <FormJsonForm
           v-else
+          ref="jsonForm"
           v-model:data="selectedVersionInputs"
           :schema="inputSchema"
           class="space-y-4"
+          :validate-on-mount="false"
           @change="handler"
         />
         <CommonModelSelect
@@ -61,12 +63,7 @@
         </FormButton>
         <div class="grow" />
         <FormButton outlined @click="open = false">Close</FormButton>
-        <FormButton
-          :disabled="hasErrors || loading || !hasRequiredData || !selectedModel"
-          @click="onSave"
-        >
-          Save
-        </FormButton>
+        <FormButton :disabled="!canSave" @click="onSave">Save</FormButton>
       </div>
     </template>
   </LayoutDialog>
@@ -146,6 +143,7 @@ const inputEncryption = useAutomationInputEncryptor({ ensureWhen: open })
 const { triggerNotification } = useGlobalToast()
 const logger = useLogger()
 
+const jsonForm = ref<{ triggerChange: () => Promise<void> }>()
 const selectedModel = ref<CommonModelSelectorModelFragment>()
 const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment>()
 const inputSchema = computed(() =>
@@ -170,6 +168,12 @@ const hasErrors = computed(() => {
   if (hasJsonFormErrors.value) return true
   if (!selectedRelease.value) return true
   return false
+})
+
+const canSave = computed(() => {
+  return (
+    !hasErrors.value && !loading.value && hasRequiredData.value && selectedModel.value
+  )
 })
 
 const resolveFirstModelValue = (items: SearchAutomateFunctionReleaseItemFragment[]) => {
@@ -198,7 +202,11 @@ const onSave = async () => {
   const rId = selectedReleaseId.value
   const model = selectedModel.value
 
-  if (hasErrors.value || !fId || !rId || !hasRequiredData.value || !model) return
+  if (!fId || !rId || !model || !canSave.value) return
+
+  // Trigger jsonforms validation, in case it hasn't happened yet
+  await jsonForm.value?.triggerChange()
+  if (!canSave.value) return
 
   loading.value = true
   let automationEncrypt: Optional<AutomationInputEncryptor> = undefined
