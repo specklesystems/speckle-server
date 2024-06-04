@@ -220,7 +220,7 @@ export const projectAutomationsTabQuery = graphql(`
   query ProjectAutomationsTab($projectId: String!) {
     project(id: $projectId) {
       id
-      automations(filter: null, cursor: null, limit: 3) {
+      automations(filter: null, cursor: null, limit: 5) {
         totalCount
         items {
           id
@@ -242,7 +242,7 @@ export const projectAutomationsTabAutomationsPaginationQuery = graphql(`
   ) {
     project(id: $projectId) {
       id
-      automations(filter: $search, cursor: $cursor, limit: 3) {
+      automations(filter: $search, cursor: $cursor, limit: 5) {
         totalCount
         cursor
         items {
@@ -262,6 +262,29 @@ export const projectAutomationPageQuery = graphql(`
       automation(id: $automationId) {
         id
         ...ProjectPageAutomationPage_Automation
+      }
+    }
+  }
+`)
+
+export const projectAutomationPagePaginatedRunsQuery = graphql(`
+  query ProjectAutomationPagePaginatedRuns(
+    $projectId: String!
+    $automationId: String!
+    $cursor: String = null
+  ) {
+    project(id: $projectId) {
+      id
+      automation(id: $automationId) {
+        id
+        runs(cursor: $cursor, limit: 10) {
+          totalCount
+          cursor
+          items {
+            id
+            ...AutomationRunDetails
+          }
+        }
       }
     }
   }
