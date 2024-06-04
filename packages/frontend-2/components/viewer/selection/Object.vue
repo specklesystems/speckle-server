@@ -11,6 +11,10 @@
         class="flex h-full w-full px-2 py-0.5 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
         :class="unfold && 'text-primary'"
         @click="unfold = !unfold"
+        @mouseenter="highlightObject"
+        @focusin="highlightObject"
+        @mouseleave="unhighlightObject"
+        @focusout="unhighlightObject"
       >
         <ChevronDownIcon
           :class="`h-3 w-3 transition ${headerClasses} ${
@@ -128,11 +132,15 @@
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
-import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
+import {
+  getHeaderAndSubheaderForSpeckleObject,
+  getTargetObjectIds
+} from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 const {
   ui: {
-    diff: { result, enabled: diffEnabled }
+    diff: { result, enabled: diffEnabled },
+    highlightedObjectIds
   }
 } = useInjectedViewerState()
 
@@ -315,6 +323,18 @@ const categorisedValuePairs = computed(() => {
     nulls: keyValuePairs.value.filter((item) => item.value === null)
   }
 })
+
+const highlightObject = () => {
+  const ids = getTargetObjectIds(props.object)
+  highlightedObjectIds.value = [...highlightedObjectIds.value, ...ids]
+}
+
+const unhighlightObject = () => {
+  const ids = getTargetObjectIds(props.object)
+  highlightedObjectIds.value = highlightedObjectIds.value.filter(
+    (id) => !ids.includes(id)
+  )
+}
 
 watch(
   () => props.unfold,
