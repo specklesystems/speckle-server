@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-8">
     <ProjectPageAutomationsHeader
       v-model:search="search"
-      :has-automations="hasAutomations && isAutomateEnabled"
+      :show-empty-state="shouldShowEmptyState"
       @new-automation="onNewAutomation"
     />
     <template v-if="loading">
@@ -10,19 +10,26 @@
     </template>
     <template v-else>
       <ProjectPageAutomationsEmptyState
-        v-if="!hasAutomations || !isAutomateEnabled"
+        v-if="shouldShowEmptyState"
         :functions="result"
         :is-automate-enabled="isAutomateEnabled"
         @new-automation="onNewAutomation"
       />
       <template v-else>
-        <ProjectPageAutomationsRow
-          v-for="a in automations"
-          :key="a.id"
-          :automation="a"
-          :project-id="projectId"
+        <template v-if="automations.length">
+          <ProjectPageAutomationsRow
+            v-for="a in automations"
+            :key="a.id"
+            :automation="a"
+            :project-id="projectId"
+          />
+          <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
+        </template>
+        <CommonGenericEmptyState
+          v-else
+          :search="!!search.length"
+          @clear-search="search = ''"
         />
-        <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
       </template>
     </template>
     <AutomateAutomationCreateDialog
@@ -64,13 +71,16 @@ const { result, loading } = useQuery(
 const {
   identifier,
   onInfiniteLoad,
-  query: { result: paginatedResult }
+  query: { result: paginatedResult, variables: paginationVariables }
 } = usePaginatedQuery({
   query: projectAutomationsTabAutomationsPaginationQuery,
   baseVariables: computed(() => ({
     projectId: projectId.value,
     search: search.value?.length ? search.value : null
   })),
+  options: () => ({
+    enabled: isAutomateEnabled.value
+  }),
   resolveCurrentResult: (res) => res?.project?.automations,
   resolveInitialResult: () => result.value?.project?.automations,
   resolveNextPageVariables: (baseVars, cursor) => ({ ...baseVars, cursor }),
@@ -88,6 +98,13 @@ const automationsResult = computed(
 
 const hasAutomations = computed(() => (automationsResult.value?.totalCount ?? 1) > 0)
 const automations = computed(() => automationsResult.value?.items || [])
+
+const shouldShowEmptyState = computed(() => {
+  if (!isAutomateEnabled.value) return true
+  if (!hasAutomations.value && !paginationVariables.value?.search && !loading.value)
+    return true
+  return false
+})
 
 const onNewAutomation = (fn?: CreateAutomationSelectableFunction) => {
   newAutomationTargetFn.value = fn
