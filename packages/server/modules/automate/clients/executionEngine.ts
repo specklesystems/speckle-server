@@ -384,7 +384,7 @@ export const getFunctions = async (params: {
 }
 
 type UserGithubAuthStateResponse = {
-  userHasAuthorizedGithubApp: boolean
+  userHasAuthorizedGitHubApp: boolean
 }
 
 export const getUserGithubAuthState = async (params: {

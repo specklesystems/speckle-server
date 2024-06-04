@@ -6,7 +6,8 @@ import {
   getAutomationToken,
   getAutomationTriggerDefinitions,
   upsertAutomationRun,
-  getAutomationRevision
+  getAutomationRevision,
+  getLatestAutomationRevision
 } from '@/modules/automate/repositories/automations'
 import {
   AutomationWithRevision,
@@ -500,4 +501,98 @@ export const manuallyTriggerAutomation =
         triggerType: VersionCreationTriggerType
       }
     })
+  }
+
+export type CreateTestAutomationRunDeps = {
+  getAutomation: typeof getAutomation
+  getLatestAutomationRevision: typeof getLatestAutomationRevision
+  getFullAutomationRevisionMetadata: typeof getFullAutomationRevisionMetadata
+} & CreateAutomationRunDataDeps
+
+export const createTestAutomationRun =
+  (deps: CreateTestAutomationRunDeps) =>
+  async (params: { projectId: string; automationId: string; userId: string }) => {
+    const {
+      getAutomation,
+      getLatestAutomationRevision,
+      getFullAutomationRevisionMetadata
+    } = deps
+    const { projectId, automationId, userId } = params
+
+    await validateStreamAccess(userId, projectId, Roles.Stream.Owner)
+
+    const automationRecord = await getAutomation({ automationId })
+
+    if (!automationRecord) {
+      throw new TriggerAutomationError('Automation not found')
+    }
+
+    if (!automationRecord.isTestAutomation) {
+      throw new TriggerAutomationError(
+        'Automation is not a test automation and cannot create test function runs'
+      )
+    }
+
+    const { id: automationRevisionId } =
+      (await getLatestAutomationRevision({ automationId })) ?? {}
+
+    if (!automationRevisionId) {
+      throw new TriggerAutomationError('Automation revision not found')
+    }
+
+    const automationRevisionRecord = await getFullAutomationRevisionMetadata(
+      automationRevisionId
+    )
+
+    if (!automationRevisionRecord) {
+      throw new TriggerAutomationError('Automation revision metadata not found')
+    }
+
+    const trigger = automationRevisionRecord.revision.triggers[0]
+
+    if (!trigger || !isVersionCreatedTriggerManifest(trigger)) {
+      throw new TriggerAutomationError('Trigger is not found or malformed')
+    }
+
+    const modelId = trigger.triggeringId
+
+    const [latestCommit] = await getBranchLatestCommits(
+      [modelId],
+      automationRevisionRecord.projectId,
+      { limit: 1 }
+    )
+
+    const triggerManifests = await composeTriggerData({
+      projectId: automationRevisionRecord.projectId,
+      triggerDefinitions: automationRevisionRecord.revision.triggers,
+      manifest: <VersionCreatedTriggerManifest>{
+        projectId: automationRevisionRecord.projectId,
+        modelId: latestCommit.branchId,
+        versionId: latestCommit.id,
+        triggerType: VersionCreationTriggerType
+      }
+    })
+
+    const automationRunRecord = await createAutomationRunData(deps)({
+      manifests: triggerManifests,
+      automationWithRevision: automationRevisionRecord
+    })
+    await upsertAutomationRun(automationRunRecord)
+
+    // TODO: Test functions only support one function run per automation
+    const functionRunId = automationRunRecord.functionRuns[0].id
+
+    return {
+      automationRunId: automationRunRecord.id,
+      functionRunId,
+      triggers: [
+        {
+          payload: {
+            modelId: latestCommit.branchId,
+            versionId: latestCommit.id
+          },
+          triggerType: VersionCreationTriggerType
+        }
+      ]
+    }
   }

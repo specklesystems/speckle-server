@@ -55,7 +55,7 @@ export const projectWebhooksRoute = (projectId: string) =>
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`
 
-export const automateGithubAppAuthorizationCallback = '/api/auth/automate-github-app'
+export const automateGithubAppAuthorizationRoute = '/api/automate/auth/githubapp'
 
 export const automationFunctionsRoute = '/functions'
 
