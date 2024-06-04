@@ -110,7 +110,6 @@ import {
 /**
  * TODO:
  * - FE:
- *  - Fix up pagination & all remaining TODOs
  *  - Subscriptions & cache updates
  */
 

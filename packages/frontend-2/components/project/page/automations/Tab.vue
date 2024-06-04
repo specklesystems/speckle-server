@@ -59,7 +59,6 @@ const { result, loading } = useQuery(
   () => ({
     projectId: projectId.value,
     search: search.value?.length ? search.value : null,
-    // TODO: Pagination & search
     cursor: null
   }),
   () => ({
