@@ -225,6 +225,7 @@ export const createTestAutomationMutation = graphql(`
       automationMutations(projectId: $projectId) {
         createTestAutomation(input: $input) {
           id
+          ...ProjectPageAutomationsRow_Automation
         }
       }
     }
