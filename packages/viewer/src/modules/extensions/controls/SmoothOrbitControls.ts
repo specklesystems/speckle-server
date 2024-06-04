@@ -453,7 +453,7 @@ export class SmoothOrbitControls extends EventEmitter {
 
     if (deltaZoom === 0) return
 
-    // const start = performance.now()
+    const start = performance.now()
     const tasIntersect =
       this.intersections.intersect(
         this.scene,
@@ -465,7 +465,7 @@ export class SmoothOrbitControls extends EventEmitter {
         true,
         false
       ) !== null
-    // console.log(performance.now() - start)
+    console.warn(performance.now() - start)
     /** Original approach to zoom amount varying which works quite bad */
     // const { minimumRadius, maximumRadius, minimumFieldOfView, maximumFieldOfView } =
     // this._options
