@@ -11,3 +11,12 @@ export function ensureError(
   if (e instanceof Error) return e
   return new UnexpectedErrorStructureError(fallbackMessage)
 }
+
+// this makes sure that a case is breaking in typing and in runtime too
+export function throwUncoveredError(e: never): never {
+  throw createUncoveredError(e)
+}
+
+export function createUncoveredError(e: never) {
+  return new Error(`Uncovered error case ${e}.`)
+}

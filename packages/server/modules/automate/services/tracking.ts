@@ -5,6 +5,7 @@ import {
   AutomationRunRecord,
   AutomationRunStatus,
   AutomationRunStatuses,
+  AutomationTriggerType,
   AutomationWithRevision
 } from '@/modules/automate/helpers/types'
 import {
@@ -12,6 +13,7 @@ import {
   getFullAutomationRevisionMetadata
 } from '@/modules/automate/repositories/automations'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
+import { throwUncoveredError } from '@speckle/shared'
 import dayjs from 'dayjs'
 
 const isFinished = (runStatus: AutomationRunStatus) => {
@@ -78,17 +80,27 @@ const onRunCreated = async ({
 }: {
   automation: AutomationWithRevision
   run: InsertableAutomationRun
-  source: string
+  source: AutomationTriggerType
 }) => {
-  const mp = mixpanel({ userEmail: undefined })
-  await mp.track('Automation Run Triggered', {
-    automationId: automation.id,
-    automationRevisionId: automation.revision.id,
-    automationRunId: automationRun.id,
-    functionRunIds: automationRun.functionRuns.map((fr) => fr.id),
-    projectId: automation.projectId,
-    source
-  })
+  // all triggers, that are automatic result of an action are in a need to be tracked
+  switch (source) {
+    case 'versionCreation': {
+      const mp = mixpanel({ userEmail: undefined })
+      await mp.track('Automation Run Triggered', {
+        automationId: automation.id,
+        automationName: automation.name,
+        automationRunId: automationRun.id,
+        projectId: automation.projectId,
+        source
+      })
+      break
+    }
+    // runs created from a user interaction are tracked in the frontend
+    case 'manual':
+      return
+    default:
+      throwUncoveredError(source)
+  }
 }
 
 export const setupRunFinishedTracking = (deps: SetupRunFinishedTrackingDeps) => () => {
