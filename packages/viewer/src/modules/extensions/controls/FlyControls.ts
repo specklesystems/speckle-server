@@ -55,11 +55,9 @@ class FlyControls extends EventDispatcher {
     this.connect()
   }
 
-  // public isStationary() {
-  //   const naturalFrequency = 1 / Math.max(0.01, 10.0 * (1 / 60))
-  //   const nilSpeed = 0.0002 * naturalFrequency
-  //   if (Math.abs(this.velocity.x) < nilSpeed) console.log('done')
-  // }
+  public isStationary() {
+    return this.goalEuler.equals(this.euler) && this.velocity.length() === 0
+  }
 
   update(delta?: number) {
     const now = performance.now()
