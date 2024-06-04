@@ -236,8 +236,11 @@ export enum ExecutionEngineFunctionTemplateId {
 }
 
 export type CreateFunctionBody = {
+  speckleServerOrigin: string
+  speckleUserId: string
+  authenticationCode: string
   template: ExecutionEngineFunctionTemplateId
-  functionname: string
+  functionName: string
   description: string
   supportedSourceApps: SourceAppName[]
   tags: string[]

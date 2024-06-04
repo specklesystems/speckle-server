@@ -10,7 +10,7 @@ import {
   createAutomation,
   createAutomationRevision
 } from '@/modules/automate/services/automationManagement'
-import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
+import { createStoredAuthCode } from '@/modules/automate/services/authCode'
 import { createInmemoryRedisClient } from '@/test/redisHelper'
 import cryptoRandomString from 'crypto-random-string'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
