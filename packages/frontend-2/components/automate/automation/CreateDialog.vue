@@ -464,13 +464,16 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
     }
 
     // Enable
-    await updateAutomation({
-      projectId: project.id,
-      input: {
-        id: aId,
-        enabled: true
-      }
-    })
+    await updateAutomation(
+      {
+        projectId: project.id,
+        input: {
+          id: aId,
+          enabled: true
+        }
+      },
+      { hideSuccessToast: true }
+    )
 
     step.value++
   } finally {

@@ -122,7 +122,7 @@ import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { graphql } from '~/lib/common/generated/gql'
 import { useAutomationFunctionRunResults } from '~/lib/automate/composables/runs'
 import { useRunStatusMetadata } from '~/lib/automate/composables/runStatus'
-import { areRoutesEqual } from '~/lib/common/helpers/route'
+import { doesRouteFitTarget } from '~/lib/common/helpers/route'
 
 graphql(`
   fragment AutomateViewerPanelFunctionRunRow_AutomateFunctionRun on AutomateFunctionRun {
@@ -166,6 +166,6 @@ const hasValidContextView = computed(() => {
   if (!ctxView?.length) return false
 
   const currentPath = route.fullPath
-  return !areRoutesEqual(ctxView, currentPath)
+  return !doesRouteFitTarget(ctxView, currentPath)
 })
 </script>

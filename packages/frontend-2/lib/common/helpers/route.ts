@@ -87,7 +87,7 @@ export const useNavigateToProject = () => {
 /**
  * Check that fullPathA fits fullPathB (not necessarily the inverse)
  */
-export const areRoutesEqual = (fullPathA: string, fullPathB: string) => {
+export const doesRouteFitTarget = (fullPathA: string, fullPathB: string) => {
   const fakeOrigin = 'https://test.com'
 
   let urlA: URL
