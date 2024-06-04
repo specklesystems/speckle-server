@@ -6,6 +6,10 @@
         isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
       }`"
       @click="setSelection()"
+      @mouseenter="highlightObject"
+      @focusin="highlightObject"
+      @mouseleave="unhighlightObject"
+      @focusout="unhighlightObject"
     >
       <div class="flex gap-1 items-center flex-shrink truncate text-xs sm:text-sm">
         <span
@@ -79,12 +83,14 @@ const props = defineProps<{
 
 const {
   ui: {
-    filters: { isolatedObjectIds, hiddenObjectIds }
+    filters: { isolatedObjectIds, hiddenObjectIds },
+    highlightedObjectIds
   },
   viewer: {
     metadata: { filteringState }
   }
 } = useInjectedViewerState()
+
 const { clearSelection, setSelectionFromObjectIds, objectIds } = useSelectionUtilities()
 
 const isSelected = computed(() => hasIntersection(objectIds.value, props.item.ids))
@@ -121,6 +127,18 @@ const color = computed(() => {
   return filteringState.value?.colorGroups?.find((gr) => gr.value === props.item.value)
     ?.color
 })
+
+const highlightObject = () => {
+  const ids = props.item.ids
+  highlightedObjectIds.value = [...highlightedObjectIds.value, ...ids]
+}
+
+const unhighlightObject = () => {
+  const ids = props.item.ids
+  highlightedObjectIds.value = highlightedObjectIds.value.filter(
+    (id) => !ids.includes(id)
+  )
+}
 
 // It is possible to control the visibility and isolation of objects from here, There are
 // some performance concerns here, so this is something to come back to. For now, the icons

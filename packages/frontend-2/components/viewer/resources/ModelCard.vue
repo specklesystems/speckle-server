@@ -7,6 +7,10 @@
           ? 'border-primary max-h-96 shadow-md'
           : 'hover:border-primary border-transparent'
       }`"
+      @mouseenter="highlightObject"
+      @mouseleave="unhighlightObject"
+      @focusin="highlightObject"
+      @focusout="unhighlightObject"
     >
       <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
       <div
@@ -116,7 +120,8 @@ import type {
 import type { Get } from 'type-fest'
 import {
   useInjectedViewerLoadedResources,
-  useInjectedViewerRequestedResources
+  useInjectedViewerRequestedResources,
+  useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
 import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
 
@@ -135,6 +140,9 @@ const props = defineProps<{
 const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 const { diffModelVersions } = useDiffUtilities()
+const {
+  ui: { highlightedObjectIds }
+} = useInjectedViewerState()
 
 const showVersions = ref(false)
 
@@ -213,5 +221,17 @@ const onLoadMore = async () => {
 async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
   if (!loadedVersion.value?.id) return
   await diffModelVersions(modelId.value, loadedVersion.value.id, version.id)
+}
+
+const highlightObject = () => {
+  const ids = [props.model.loadedVersion.items[0].referencedObject]
+  highlightedObjectIds.value = [...highlightedObjectIds.value, ...ids]
+}
+
+const unhighlightObject = () => {
+  const ids = [props.model.loadedVersion.items[0].referencedObject]
+  highlightedObjectIds.value = highlightedObjectIds.value.filter(
+    (id) => !ids.includes(id)
+  )
 }
 </script>
