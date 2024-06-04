@@ -49,3 +49,7 @@ export function getStreamCollaboratorsRoute(streamId: string): string {
 export function buildAbsoluteFrontendUrlFromPath(route: string): string {
   return new URL(route, getFrontendOrigin()).toString()
 }
+
+export function getFunctionsMarketplaceUrl() {
+  return new URL('/functions', getFrontendOrigin())
+}

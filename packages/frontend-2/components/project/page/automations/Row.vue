@@ -35,7 +35,7 @@
     <div class="flex flex-col mb-6">
       <template v-if="triggerModels.length">
         <div class="flex gap-2">
-          <div class="mt-1">Triggered by</div>
+          <div class="mt-1">{{ triggerLabel }}</div>
           <div v-for="model in triggerModels" :key="model.id" class="truncate">
             <CommonTextLink :icon-left="CubeIcon" :to="finalModelUrl(model.id)">
               {{ model.name }}
@@ -111,6 +111,10 @@ const triggerModels = computed(
       (trigger) => trigger.model
     ) || []
 )
+
+const triggerLabel = computed(() => {
+  return isTestAutomation.value ? 'Connected to' : 'Triggered by'
+})
 
 const finalModelUrl = (modelId: string) =>
   modelUrl({ projectId: props.projectId, modelId })

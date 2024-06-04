@@ -57,26 +57,27 @@
         v-model:has-errors="hasParameterErrors"
         :fn="selectedFunction"
       />
-      <AutomateAutomationCreateDialogAutomationDetailsStep
-        v-else-if="enumStep === AutomationCreateSteps.AutomationDetails"
-        v-model:project="selectedProject"
-        v-model:model="selectedModel"
-        v-model:automation-name="automationName"
-        :preselected-project="preselectedProject"
-        :is-test-automation="isTestAutomation"
-      />
+      <template v-else-if="enumStep === AutomationCreateSteps.AutomationDetails">
+        <AutomateAutomationCreateDialogAutomationDetailsStep
+          v-model:project="selectedProject"
+          v-model:model="selectedModel"
+          v-model:automation-name="automationName"
+          :preselected-project="preselectedProject"
+          :is-test-automation="isTestAutomation"
+        />
+        <AutomateAutomationCreateDialogSelectFunctionStep
+          v-if="isTestAutomation"
+          v-model:selected-function="selectedFunction"
+          :preselected-function="validatedPreselectedFunction"
+          :page-size="2"
+        />
+      </template>
       <AutomateAutomationCreateDialogDoneStep
         v-else-if="
           enumStep === AutomationCreateSteps.Done && automationId && selectedFunction
         "
         :automation-id="automationId"
         :function-name="selectedFunction.name"
-      />
-      <AutomateAutomationCreateDialogSelectFunctionStep
-        v-if="enumStep === AutomationCreateSteps.AutomationDetails && isTestAutomation"
-        v-model:selected-function="selectedFunction"
-        :preselected-function="validatedPreselectedFunction"
-        :page-size="2"
       />
     </div>
   </LayoutDialog>
@@ -145,7 +146,6 @@ const props = defineProps<{
 const open = defineModel<boolean>('open', { required: true })
 
 const mixpanel = useMixpanel()
-const enableCreateTestAutomation = useisTestAutomationsEnabled()
 
 const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
 
@@ -215,39 +215,33 @@ const title = computed(() => {
 
 const buttons = computed((): LayoutDialogButton[] => {
   switch (enumStep.value) {
-    case AutomationCreateSteps.SelectFunction: {
-      const selectFnNextButton: LayoutDialogButton = {
-        id: 'selectFnNext',
-        text: 'Next',
-        props: {
-          iconRight: ChevronRightIcon,
-          disabled: !selectedFunction.value
+    case AutomationCreateSteps.SelectFunction:
+      return [
+        {
+          id: 'createTestAutomation',
+          text: 'Create test automation',
+          props: {
+            color: 'secondary',
+            iconLeft: CodeBracketIcon,
+            textColor: 'primary'
+          },
+          onClick: () => {
+            isTestAutomation.value = true
+            enumStep.value = AutomationCreateSteps.AutomationDetails
+          }
         },
-        onClick: () => {
-          step.value++
+        {
+          id: 'selectFnNext',
+          text: 'Next',
+          props: {
+            iconRight: ChevronRightIcon,
+            disabled: !selectedFunction.value
+          },
+          onClick: () => {
+            step.value++
+          }
         }
-      }
-
-      const createTestAutomationButton: LayoutDialogButton = {
-        id: 'createTestAutomation',
-        text: 'Create test automation',
-        props: {
-          color: 'secondary',
-          iconLeft: CodeBracketIcon,
-          textColor: 'primary'
-        },
-        onClick: () => {
-          isTestAutomation.value = true
-          step.value = 2
-        }
-      }
-
-      const stepButtons = enableCreateTestAutomation.value
-        ? [createTestAutomationButton, selectFnNextButton]
-        : [selectFnNextButton]
-
-      return stepButtons
-    }
+      ]
     case AutomationCreateSteps.FunctionParameters:
       return [
         {
@@ -343,7 +337,7 @@ const buttons = computed((): LayoutDialogButton[] => {
 const buttonsWrapperClasses = computed(() => {
   switch (enumStep.value) {
     case AutomationCreateSteps.SelectFunction:
-      return enableCreateTestAutomation.value ? 'justify-between' : 'justify-end'
+      return 'justify-between'
     case AutomationCreateSteps.Done:
       return 'flex-col sm:flex-row sm:justify-between'
     default:
@@ -483,13 +477,16 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
     })
 
     // Enable
-    await updateAutomation({
-      projectId: project.id,
-      input: {
-        id: aId,
-        enabled: true
-      }
-    })
+    await updateAutomation(
+      {
+        projectId: project.id,
+        input: {
+          id: aId,
+          enabled: true
+        }
+      },
+      { hideSuccessToast: true }
+    )
 
     step.value++
   } finally {

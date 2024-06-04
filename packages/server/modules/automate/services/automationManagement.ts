@@ -131,7 +131,10 @@ export type CreateTestAutomationDeps = {
   storeAutomationRevision: typeof storeAutomationRevision
 }
 
-/** Create a test automation and its first revision in one request. */
+/**
+ * Create a test automation and its first revision in one request.
+ * TODO: Reduce code duplication w/ createAutomation
+ */
 export const createTestAutomation =
   (deps: CreateTestAutomationDeps) =>
   async (params: {

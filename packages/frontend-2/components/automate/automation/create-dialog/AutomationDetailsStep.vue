@@ -12,6 +12,7 @@
       :rules="projectRules"
       :allow-unset="false"
       validate-on-value-update
+      owned-only
     />
     <FormSelectModels
       v-if="project?.id"
@@ -84,4 +85,10 @@ watch(
   },
   { immediate: true }
 )
+
+watch(project, (newVal, oldVal) => {
+  if (model.value && newVal && newVal.id !== oldVal?.id) {
+    model.value = undefined
+  }
+})
 </script>
