@@ -205,7 +205,8 @@ const onSave = async () => {
   if (!fId || !rId || !model || !canSave.value) return
 
   // Trigger jsonforms validation, in case it hasn't happened yet
-  await jsonForm.value?.triggerChange()
+  if (!jsonForm.value) return
+  await jsonForm.value.triggerChange()
   if (!canSave.value) return
 
   loading.value = true
