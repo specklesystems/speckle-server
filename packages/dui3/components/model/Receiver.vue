@@ -88,7 +88,7 @@ import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { versionDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
-import { watchOnce } from '@vueuse/core'
+import { useInterval, watchOnce } from '@vueuse/core'
 
 const { trackEvent } = useMixpanel()
 const app = useNuxtApp()
@@ -203,7 +203,10 @@ const { result: versionDetailsResult, refetch } = useQuery(
   })
 )
 
+const createdAgoUpdater = useInterval(500)
+
 const createdAgo = computed(() => {
+  createdAgoUpdater.value++
   return dayjs(versionDetailsResult.value?.project.model.version.createdAt).from(
     dayjs()
   )
