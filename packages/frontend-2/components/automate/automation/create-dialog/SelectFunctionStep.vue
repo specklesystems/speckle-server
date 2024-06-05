@@ -86,7 +86,8 @@ const {
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
     cursor
-  })
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
 })
 
 const queryItems = computed(() => result.value?.automateFunctions.items)

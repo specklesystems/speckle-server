@@ -8,6 +8,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
 import type { InfiniteLoaderState } from '@speckle/ui-components'
 import { isUndefined } from 'lodash-es'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 
 export const useApolloClientIfAvailable = () => {
   const nuxt = useNuxtApp()
@@ -110,6 +111,10 @@ export const usePaginatedQuery = <
    * Predicate for resolving the variables to use for next page of items
    */
   resolveNextPageVariables: (baseVariables: TVariables, newCursor: string) => TVariables
+  /**
+   * Resolve cursor from variables object. If not available, return null or undefined
+   */
+  resolveCursorFromVariables: (vars: TVariables) => MaybeNullOrUndefined<string>
 }) => {
   const logger = useLogger()
 
@@ -120,7 +125,8 @@ export const usePaginatedQuery = <
     options,
     resolveCurrentResult,
     resolveNextPageVariables,
-    resolveInitialResult
+    resolveInitialResult,
+    resolveCursorFromVariables
   } = params
   const cacheBusterKey = ref(0)
 
@@ -173,6 +179,17 @@ export const usePaginatedQuery = <
   const bustCache = () => {
     cacheBusterKey.value++
   }
+
+  // If for some reason the query is invoked w/ baseVariables & null cursor, we should bust the cache,
+  // & reset loader state, cause a refetch was triggered for some reason (maybe a cache eviction)
+  useQueryReturn.onResult(() => {
+    const vars = useQueryReturn.variables.value
+    const cursor = vars ? resolveCursorFromVariables(vars) : undefined
+
+    if (!cursor) {
+      bustCache()
+    }
+  })
 
   return {
     query: useQueryReturn,

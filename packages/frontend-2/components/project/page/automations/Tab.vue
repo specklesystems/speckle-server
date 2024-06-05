@@ -83,7 +83,8 @@ const {
   resolveCurrentResult: (res) => res?.project?.automations,
   resolveInitialResult: () => result.value?.project?.automations,
   resolveNextPageVariables: (baseVars, cursor) => ({ ...baseVars, cursor }),
-  resolveKey: (vars) => [vars.projectId, vars.search || '']
+  resolveKey: (vars) => [vars.projectId, vars.search || ''],
+  resolveCursorFromVariables: (vars) => vars.cursor
 })
 
 const showNewAutomationDialog = ref(false)

@@ -61,7 +61,8 @@ const { identifier, onInfiniteLoad } = usePaginatedQuery({
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
     cursor
-  })
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
 })
 const triggerAutomation = useTriggerAutomation()
 

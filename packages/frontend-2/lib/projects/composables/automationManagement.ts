@@ -351,9 +351,9 @@ export const useProjectAutomationsUpdateTracking = (params: {
       modifyObjectFields<ProjectAutomationsArgs, Project['automations']>(
         apollo.cache,
         projectCacheId,
-        (_fieldName, vars, data, { ref, INVALIDATE }) => {
+        (_fieldName, vars, data, { ref, DELETE }) => {
           if (vars['filter']?.length) {
-            return INVALIDATE // Invalidate those lists w/ filters
+            return DELETE // Evict those lists w/ filters
           }
 
           const limit = vars['limit']

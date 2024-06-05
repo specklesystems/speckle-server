@@ -64,7 +64,8 @@ const {
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
     cursor
-  })
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
 })
 
 const showNewAutomationDialog = ref(false)
