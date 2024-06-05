@@ -153,7 +153,11 @@ import {
   getTargetObjectIds
 } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
-import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useFilterUtilities,
+  useHighlightedObjectsUtilities,
+  useSelectionUtilities
+} from '~~/lib/viewer/composables/ui'
 
 const props = withDefaults(
   defineProps<{
@@ -176,13 +180,13 @@ const emit = defineEmits<{
 const {
   viewer: {
     metadata: { filteringState }
-  },
-  ui: { highlightedObjectIds }
+  }
 } = useInjectedViewerState()
 const { addToSelection, clearSelection, removeFromSelection, objects } =
   useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
@@ -335,15 +339,11 @@ const setSelection = (e: MouseEvent) => {
 }
 
 const highlightObject = () => {
-  const ids = getTargetObjectIds(rawSpeckleData)
-  highlightedObjectIds.value = [...highlightedObjectIds.value, ...ids]
+  highlightObjects(getTargetObjectIds(rawSpeckleData))
 }
 
 const unhighlightObject = () => {
-  const ids = getTargetObjectIds(rawSpeckleData)
-  highlightedObjectIds.value = highlightedObjectIds.value.filter(
-    (id) => !ids.includes(id)
-  )
+  unhighlightObjects(getTargetObjectIds(rawSpeckleData))
 }
 
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)

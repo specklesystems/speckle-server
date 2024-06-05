@@ -418,3 +418,29 @@ export function useConditionalViewerRendering() {
     showControls
   }
 }
+
+export function useHighlightedObjectsUtilities() {
+  const {
+    ui: { highlightedObjectIds }
+  } = useInjectedViewerState()
+
+  const highlightObjects = (ids: string[]) => {
+    highlightedObjectIds.value = [...new Set([...highlightedObjectIds.value, ...ids])]
+  }
+
+  const unhighlightObjects = (ids: string[]) => {
+    highlightedObjectIds.value = highlightedObjectIds.value.filter(
+      (id) => !ids.includes(id)
+    )
+  }
+
+  const clearHighlightedObjects = () => {
+    highlightedObjectIds.value = []
+  }
+
+  return {
+    highlightObjects,
+    unhighlightObjects,
+    clearHighlightedObjects
+  }
+}

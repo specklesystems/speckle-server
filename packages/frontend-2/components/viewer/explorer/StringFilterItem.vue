@@ -72,7 +72,10 @@ import { EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import { containsAll, hasIntersection } from '~~/lib/common/helpers/utils'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useSelectionUtilities,
+  useHighlightedObjectsUtilities
+} from '~~/lib/viewer/composables/ui'
 
 const props = defineProps<{
   item: {
@@ -83,8 +86,7 @@ const props = defineProps<{
 
 const {
   ui: {
-    filters: { isolatedObjectIds, hiddenObjectIds },
-    highlightedObjectIds
+    filters: { isolatedObjectIds, hiddenObjectIds }
   },
   viewer: {
     metadata: { filteringState }
@@ -92,6 +94,7 @@ const {
 } = useInjectedViewerState()
 
 const { clearSelection, setSelectionFromObjectIds, objectIds } = useSelectionUtilities()
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const isSelected = computed(() => hasIntersection(objectIds.value, props.item.ids))
 
@@ -129,15 +132,11 @@ const color = computed(() => {
 })
 
 const highlightObject = () => {
-  const ids = props.item.ids
-  highlightedObjectIds.value = [...highlightedObjectIds.value, ...ids]
+  highlightObjects(props.item.ids)
 }
 
 const unhighlightObject = () => {
-  const ids = props.item.ids
-  highlightedObjectIds.value = highlightedObjectIds.value.filter(
-    (id) => !ids.includes(id)
-  )
+  unhighlightObjects(props.item.ids)
 }
 
 // It is possible to control the visibility and isolation of objects from here, There are

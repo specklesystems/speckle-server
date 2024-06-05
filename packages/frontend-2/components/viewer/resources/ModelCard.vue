@@ -120,10 +120,12 @@ import type {
 import type { Get } from 'type-fest'
 import {
   useInjectedViewerLoadedResources,
-  useInjectedViewerRequestedResources,
-  useInjectedViewerState
+  useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
-import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useDiffUtilities,
+  useHighlightedObjectsUtilities
+} from '~~/lib/viewer/composables/ui'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
@@ -140,9 +142,7 @@ const props = defineProps<{
 const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 const { diffModelVersions } = useDiffUtilities()
-const {
-  ui: { highlightedObjectIds }
-} = useInjectedViewerState()
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const showVersions = ref(false)
 
@@ -224,14 +224,10 @@ async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
 }
 
 const highlightObject = () => {
-  const ids = [props.model.loadedVersion.items[0].referencedObject]
-  highlightedObjectIds.value = [...highlightedObjectIds.value, ...ids]
+  highlightObjects([props.model.loadedVersion.items[0].referencedObject])
 }
 
 const unhighlightObject = () => {
-  const ids = [props.model.loadedVersion.items[0].referencedObject]
-  highlightedObjectIds.value = highlightedObjectIds.value.filter(
-    (id) => !ids.includes(id)
-  )
+  unhighlightObjects([props.model.loadedVersion.items[0].referencedObject])
 }
 </script>

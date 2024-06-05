@@ -137,10 +137,10 @@ import {
   getTargetObjectIds
 } from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
 const {
   ui: {
-    diff: { result, enabled: diffEnabled },
-    highlightedObjectIds
+    diff: { result, enabled: diffEnabled }
   }
 } = useInjectedViewerState()
 
@@ -155,6 +155,8 @@ const props = withDefaults(
   }>(),
   { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
+
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const unfold = ref(props.unfold)
 
@@ -325,15 +327,11 @@ const categorisedValuePairs = computed(() => {
 })
 
 const highlightObject = () => {
-  const ids = getTargetObjectIds(props.object)
-  highlightedObjectIds.value = [...highlightedObjectIds.value, ...ids]
+  highlightObjects(getTargetObjectIds(props.object))
 }
 
 const unhighlightObject = () => {
-  const ids = getTargetObjectIds(props.object)
-  highlightedObjectIds.value = highlightedObjectIds.value.filter(
-    (id) => !ids.includes(id)
-  )
+  unhighlightObjects(getTargetObjectIds(props.object))
 }
 
 watch(
