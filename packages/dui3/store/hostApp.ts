@@ -372,7 +372,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendModelCancel,
     receiveModelCancel,
     refreshSendFilters,
-    setModelCreatedVersionId,
+    setModelSendResult,
     setModelReceiveResult,
     handleModelProgressEvents
   }

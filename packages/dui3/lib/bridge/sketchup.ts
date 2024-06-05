@@ -207,7 +207,8 @@ export class SketchupBridge extends BaseBridge {
     const commitCreate = await this.createVersion(args)
 
     const hostAppStore = useHostAppStore()
-    hostAppStore.setModelCreatedVersionId({
+    // TODO: Alignment needed
+    hostAppStore.setModelSendResult({
       modelCardId: args.modelCardId,
       versionId: commitCreate as string,
       sendConversionResults
