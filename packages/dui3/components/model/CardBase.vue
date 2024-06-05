@@ -5,16 +5,25 @@
     <div v-if="modelData" class="px-2 py-2">
       <div class="flex items-center space-x-2 min-w-0">
         <div class="text-foreground-2 mt-[2px] flex items-center -space-x-2 relative">
-          <div v-if="!isSender" title="you are loading this model">
+          <div v-if="!isSender" title="you are loading this model" class="z-10">
             <ArrowDownCircleIcon
               v-if="!isSender"
               class="w-8 text-blue-500 drop-shadowxxx"
             />
           </div>
-          <div v-else title="you are sending this model">
-            <ArrowUpCircleIcon class="w-8 text-blue-500 drop-shadowxxx" />
-          </div>
-          <UserAvatar :user="modelData.author" size="sm" class="max-[275px]:hidden" />
+
+          <button
+            v-tippy="'Update model'"
+            class="z-10 transition hover:scale-110 rounded-full hover:shadow-md hover:bg-foundation text-primary"
+          >
+            <ArrowUpCircleIcon class="w-8" />
+          </button>
+
+          <UserAvatar
+            :user="modelData.author"
+            size="sm"
+            class="z-0 max-[275px]:hidden"
+          />
         </div>
         <div
           class="truncate font-bold text-foreground grow select-none -mt-[2px]"

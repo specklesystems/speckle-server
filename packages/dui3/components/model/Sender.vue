@@ -1,8 +1,9 @@
 <template>
   <ModelCardBase ref="cardBase" :model-card="modelCard" :project="project">
-    <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2">
+    <!-- <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2"> -->
+    <div class="flex max-[275px]:flex-col items-center space-x-2 py-2">
       <div>
-        <FormButton
+        <!-- <FormButton
           size="sm"
           full-width
           color="card"
@@ -10,23 +11,26 @@
           @click="sendOrCancel"
         >
           {{ modelCard.progress ? 'Cancel' : 'Publish' }}
-        </FormButton>
-      </div>
-      <div
-        class="flex h-full items-center space-x-2 text-xs max-[275px]:justify-center rounded-md pl-2 font-bold"
-      >
+        </FormButton> -->
         <FormButton
           v-tippy="'Edit what gets published'"
-          :icon-left="CubeIcon"
-          link
+          :icon-left="Square3Stack3DIcon"
+          text
           size="sm"
           color="card"
           class="flex min-w-0 transition hover:text-primary py-1"
           :disabled="!!modelCard.progress"
           @click="openFilterDialog = true"
         >
-          <span class="truncate">{{ modelCard.sendFilter?.name }}</span>
+          <span class="">{{ modelCard.sendFilter?.name }}</span>
         </FormButton>
+      </div>
+      <div
+        class="flex h-full items-center space-x-2 text-xs max-[275px]:justify-center rounded-md pl-2 min-w-0 user-select-none"
+      >
+        <span class="truncate max-[275px]:truncate-no text-foreground-2">
+          {{ modelCard.sendFilter?.summary }}
+        </span>
         <LayoutDialog
           v-model:open="openFilterDialog"
           :title="`Change filter for ${cardBase?.modelData?.displayName}`"
@@ -74,7 +78,8 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import ModelCardBase from '~/components/model/CardBase.vue'
-import { CubeIcon } from '@heroicons/vue/24/outline'
+import { CubeIcon, PencilIcon } from '@heroicons/vue/24/outline'
+import { Square3Stack3DIcon } from '@heroicons/vue/20/solid'
 import { ModelCardNotification } from '~/lib/models/card/notification'
 import { ISendFilter, ISenderModelCard } from '~/lib/models/card/send'
 import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'

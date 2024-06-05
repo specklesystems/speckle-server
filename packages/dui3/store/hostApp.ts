@@ -9,8 +9,7 @@ import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
 import { ToastNotification } from '@speckle/ui-components'
 import { Nullable } from '@speckle/shared'
 import { HostAppError } from '~/lib/bridge/errorHandler'
-import { ReceiveConversionResult } from '~/lib/conversions/receiveConversionResult'
-import { SendConversionResult } from '~/lib/conversions/sendConversionResult'
+import { ConversionResult } from 'lib/conversions/conversionResult'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -204,10 +203,10 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       })
   })
 
-  const setModelCreatedVersionId = (args: {
+  const setModelSendResult = (args: {
     modelCardId: string
     versionId: string
-    sendConversionResults: SendConversionResult[]
+    sendConversionResults: ConversionResult[]
   }) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
@@ -217,7 +216,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = undefined
   }
 
-  app.$sendBinding?.on('setModelCreatedVersionId', setModelCreatedVersionId)
+  app.$sendBinding?.on('setModelSendResult', setModelSendResult)
 
   /// RECEIVE STUFF
   const receiveModel = async (modelCardId: string) => {
@@ -231,7 +230,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       model.accountId
     )
 
-    model.receiveResult = undefined
+    model.report = undefined
     model.error = undefined
     model.hasDismissedUpdateWarning = true
     model.progress = { status: 'Starting to receive...' }
@@ -249,22 +248,23 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   const setModelReceiveResult = async (args: {
     modelCardId: string
-    receiveResult: {
-      receiveConversionResults: ReceiveConversionResult[]
-      display: boolean
-    }
+    bakedObjectIds: string[]
+    conversionResults: ConversionResult[]
   }) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as IReceiverModelCard
 
-    args.receiveResult.display = true
     model.progress = undefined
-    model.receiveResult = args.receiveResult
+    model.displayReceiveComplete = true
+    model.bakedObjectIds = args.bakedObjectIds
+    model.report = args.conversionResults
 
+    // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
+    // TODO: check if it's still needed - we can store the bakedobject ids straigth into the receive ops in .net. Is the above reproducible?
     await patchModel(model.modelCardId, {
-      receiveResult: args.receiveResult
-    }) // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
+      bakedObjectIds: args.bakedObjectIds
+    })
   }
 
   app.$receiveBinding?.on('setModelReceiveResult', setModelReceiveResult)
