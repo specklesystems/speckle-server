@@ -74,6 +74,12 @@ type BasicPaginatedResult = BasicCursorContainer & {
   items: unknown[]
 }
 
+/**
+ * Simplifies setting up pagination between an Apollo Client query and the Vue InfiniteLoader component. Manages loading next pages,
+ * reseting state on refetch, and more.
+ *
+ * All you need to do is set up all of the params, especially the various resolution predicates
+ */
 export const usePaginatedQuery = <
   TResult = any,
   TVariables extends OperationVariables = OperationVariables
@@ -187,6 +193,7 @@ export const usePaginatedQuery = <
     const cursor = vars ? resolveCursorFromVariables(vars) : undefined
 
     if (!cursor) {
+      // TODO: Maybe add check to skip this on initial result? Lets see how well this works first
       bustCache()
     }
   })
