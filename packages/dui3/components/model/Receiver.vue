@@ -9,8 +9,10 @@
         <FormButton
           v-tippy="
             isExpired
-              ? 'Warning: you have loaded an older version. Click to change.'
-              : 'Change the loaded version'
+              ? 'A new version was pushed ' +
+                latestVersionCreatedAt +
+                '. Click to load a different version.'
+              : 'Load a different version'
           "
           :icon-left="ClockIcon"
           text
@@ -106,14 +108,6 @@ app.$baseBinding.on('documentChanged', () => {
   openVersionsDialog.value = false
 })
 
-const receiveOrCancel = async () => {
-  if (props.modelCard.progress) {
-    await store.receiveModelCancel(props.modelCard.modelCardId)
-  } else {
-    await store.receiveModel(props.modelCard.modelCardId)
-  }
-}
-
 const isExpired = computed(() => {
   return props.modelCard.latestVersionId !== props.modelCard.selectedVersionId
 })
@@ -127,11 +121,15 @@ const handleVersionSelection = async (
     name: 'Load Card Version Change',
     isLatestVersion: selectedVersion === latestVersion
   })
+  if (props.modelCard.progress) {
+    await store.receiveModelCancel(props.modelCard.modelCardId)
+  }
   await store.patchModel(props.modelCard.modelCardId, {
     selectedVersionId: selectedVersion.id,
     latestVersionId: latestVersion.id, // patch this dude as well, to make sure
     hasSelectedOldVersion: selectedVersion.id === latestVersion.id
   })
+
   await store.receiveModel(props.modelCard.modelCardId)
 }
 
@@ -203,13 +201,18 @@ const { result: versionDetailsResult, refetch } = useQuery(
   })
 )
 
-const createdAgoUpdater = useInterval(500)
+const createdAgoUpdater = useInterval(200)
 
 const createdAgo = computed(() => {
   createdAgoUpdater.value++
   return dayjs(versionDetailsResult.value?.project.model.version.createdAt).from(
     dayjs()
   )
+})
+
+const latestVersionCreatedAt = computed(() => {
+  createdAgoUpdater.value++
+  return dayjs(props.modelCard.latestVersionCreatedAt).from(dayjs())
 })
 
 onMounted(() => {
@@ -228,6 +231,7 @@ watchOnce(versionDetailsResult, async (newVal) => {
   ) {
     patchObject = {
       latestVersionId: newVal?.project.model.versions.items[0].id,
+      latestVersionCreatedAt: newVal?.project.model.versions.items[0].createdAt,
       hasDismissedUpdateWarning: props.modelCard.hasSelectedOldVersion ? true : false
     }
   }

@@ -139,6 +139,7 @@ onResult((res) => {
 
   hostAppStore.patchModel(relevantReceiver.modelCardId, {
     latestVersionId: res.data.projectVersionsUpdated.version?.id,
+    latestVersionCreatedAt: res.data.projectVersionsUpdated.version?.createdAt,
     hasDismissedUpdateWarning: false,
     displayReceiveComplete: false
   })
