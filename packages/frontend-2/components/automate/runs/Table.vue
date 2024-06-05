@@ -27,15 +27,17 @@
       </template>
       <template #modelVersion="{ item }">
         <CommonTextLink
+          v-if="item.trigger.model && item.trigger.version"
           :to="
             runModelVersionUrl({
               run: item,
               projectId
-            })
+            }) || ''
           "
         >
           {{ item.trigger.version.id }}
         </CommonTextLink>
+        <span v-else class="italic">unknown</span>
       </template>
       <template #date="{ item }">
         <span class="caption">{{ runDate(item) }}</span>

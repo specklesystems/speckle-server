@@ -220,6 +220,11 @@ export const projectAutomationsTabQuery = graphql(`
   query ProjectAutomationsTab($projectId: String!) {
     project(id: $projectId) {
       id
+      models(limit: 1) {
+        items {
+          id
+        }
+      }
       automations(filter: null, cursor: null, limit: 5) {
         totalCount
         items {
