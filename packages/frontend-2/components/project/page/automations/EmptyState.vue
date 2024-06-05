@@ -19,14 +19,16 @@
         </div>
       </div>
       <div>
-        <FormButton
-          v-if="isAutomateEnabled"
-          :icon-left="PlusIcon"
-          size="lg"
-          @click="$emit('new-automation')"
-        >
-          New Automation
-        </FormButton>
+        <div v-if="isAutomateEnabled" v-tippy="disabledCreateBecauseOf">
+          <FormButton
+            :icon-left="PlusIcon"
+            size="lg"
+            :disabled="!!disabledCreateBecauseOf"
+            @click="$emit('new-automation')"
+          >
+            New Automation
+          </FormButton>
+        </div>
         <FormButton
           v-else
           :icon-left="PlusIcon"
@@ -83,6 +85,7 @@ defineEmits<{
 const props = defineProps<{
   functions?: ProjectPageAutomationsEmptyState_QueryFragment
   isAutomateEnabled: boolean
+  disabledCreateBecauseOf?: string
 }>()
 
 const functions = computed(() => props.functions?.automateFunctions.items || [])

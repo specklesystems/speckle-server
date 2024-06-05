@@ -21,13 +21,16 @@
       >
         Explore Functions
       </FormButton>
-      <FormButton
-        :icon-left="PlusIcon"
-        class="shrink-0"
-        @click="$emit('new-automation')"
-      >
-        New Automation
-      </FormButton>
+      <div v-tippy="disabledCreateBecauseOf" class="shrink-0">
+        <FormButton
+          :icon-left="PlusIcon"
+          class="shrink-0"
+          :disabled="!!disabledCreateBecauseOf"
+          @click="$emit('new-automation')"
+        >
+          New Automation
+        </FormButton>
+      </div>
     </div>
   </div>
 </template>
@@ -42,6 +45,7 @@ defineEmits<{
 
 defineProps<{
   showEmptyState?: boolean
+  disabledCreateBecauseOf?: string
 }>()
 
 const search = defineModel<string>('search')
