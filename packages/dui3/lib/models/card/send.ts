@@ -1,4 +1,3 @@
-import { SendConversionResult } from '~/lib/conversions/sendConversionResult'
 import { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
 import { IModelCard, ModelCard } from '~~/lib/models/card'
 
@@ -6,7 +5,6 @@ export interface ISenderModelCard extends IModelCard {
   sendFilter?: ISendFilter
   sending?: boolean
   latestCreatedVersionId?: string
-  report?: SendConversionResult[]
 }
 
 export interface ISendFilter extends IDiscriminatedObject {

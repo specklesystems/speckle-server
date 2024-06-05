@@ -19,6 +19,9 @@
       >
         <span :class="`${textClassColor}`">Dismiss</span>
       </FormButton>
+      <button v-tippy="'Report'" :class="`${textClassColor}`">
+        <InformationCircleIcon class="w-4" />
+      </button>
       <FormButton
         v-if="notification.cta"
         size="sm"
@@ -32,6 +35,7 @@
 </template>
 
 <script setup lang="ts">
+import { InformationCircleIcon } from '@heroicons/vue/20/solid'
 import { useTimeoutFn } from '@vueuse/core'
 import { ModelCardNotification } from '~/lib/models/card/notification'
 

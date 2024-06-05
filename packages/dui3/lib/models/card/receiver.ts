@@ -1,4 +1,3 @@
-import { ReceiveConversionResult } from '~/lib/conversions/receiveConversionResult'
 import { IModelCard, ModelCard } from '~~/lib/models/card'
 
 export interface IReceiverModelCard extends IModelCard {
@@ -9,10 +8,8 @@ export interface IReceiverModelCard extends IModelCard {
   hasDismissedUpdateWarning: boolean
   /** Keeps track whether the user intentionally selected an older version to receive when creating the model card. */
   hasSelectedOldVersion: boolean
-  receiveResult?: {
-    receiveConversionResults: ReceiveConversionResult[]
-    display: boolean
-  }
+  bakedObjectIds?: string[]
+  displayReceiveComplete: boolean
 }
 
 export class ReceiverModelCard extends ModelCard implements IReceiverModelCard {
@@ -22,7 +19,9 @@ export class ReceiverModelCard extends ModelCard implements IReceiverModelCard {
   latestVersionId!: string
   hasDismissedUpdateWarning!: boolean
   hasSelectedOldVersion!: boolean
+  displayReceiveComplete!: boolean
   constructor() {
     super('ReceiverModelCard')
+    this.displayReceiveComplete = false
   }
 }
