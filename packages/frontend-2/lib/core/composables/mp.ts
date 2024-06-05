@@ -1,7 +1,7 @@
 import type { OverridedMixpanel } from 'mixpanel-browser'
 import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-import md5 from '~~/lib/common/helpers/md5'
+import { md5 } from '~/lib/common/helpers/encodeDecode'
 import { useTheme } from '~~/lib/core/composables/theme'
 
 const HOST_APP = 'web-2'

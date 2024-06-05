@@ -107,12 +107,6 @@ import {
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 
-/**
- * TODO:
- * - FE:
- *  - Subscriptions & cache updates
- */
-
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
 export = (FF_AUTOMATE_MODULE_ENABLED
