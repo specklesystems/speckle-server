@@ -20,8 +20,6 @@ import { graphql } from '~/lib/common/generated/gql'
 import type { AutomateFunctionsPageItems_QueryFragment } from '~/lib/common/generated/gql/graphql'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 
-// TODO: Pagination
-
 defineEmits<{
   createAutomationFrom: [fn: CreateAutomationSelectableFunction]
   clearSearch: []
@@ -29,11 +27,14 @@ defineEmits<{
 
 graphql(`
   fragment AutomateFunctionsPageItems_Query on Query {
-    automateFunctions(limit: 21, filter: { search: $search }) {
+    automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
+      totalCount
       items {
+        id
         ...AutomationsFunctionsCard_AutomateFunction
         ...AutomateAutomationCreateDialog_AutomateFunction
       }
+      cursor
     }
   }
 `)

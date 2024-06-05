@@ -37,8 +37,6 @@ import {
   onProjectTriggeredAutomationsStatusUpdatedSubscription
 } from '~/lib/projects/graphql/subscriptions'
 
-// TODO: Cache updates
-
 export function useCreateAutomation() {
   const { activeUser } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
@@ -259,14 +257,15 @@ export const useProjectTriggeredAutomationsStatusUpdateTracking = (params: {
         apollo.cache,
         automationCacheId,
         (_fieldName, vars, data, { ref }) => {
-          if (vars['limit'] === 0) return
-
           const limit = vars['limit']
           let newItems = data['items']
-          if (newItems) {
-            newItems = [ref('AutomateRun', run.id), ...newItems]
-            if (limit && newItems.length > limit) {
-              newItems = newItems.slice(0, limit)
+
+          if (limit !== 0) {
+            if (newItems) {
+              // Intentionally not slicing off items over limit, cause we have no way of
+              // knowing if this is a paginable list w/ more results loaded through fetchMore
+              // Also if we slice off the end, we'd need to re-calculate the cursor
+              newItems = [ref('AutomateRun', run.id), ...newItems]
             }
           }
 
@@ -310,8 +309,6 @@ export const useProjectAutomationsUpdateTracking = (params: {
   const { hasLock } = useLock(
     computed(() => `useProjectAutomationsUpdateTracking-${unref(projectId)}`)
   )
-  // const isEnabled = computed(() => !!(hasLock.value || handler))
-
   const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
   const isEnabled = computed(
     () => isAutomateModuleEnabled.value && !!(hasLock.value || handler)
@@ -354,16 +351,17 @@ export const useProjectAutomationsUpdateTracking = (params: {
       modifyObjectFields<ProjectAutomationsArgs, Project['automations']>(
         apollo.cache,
         projectCacheId,
-        (_fieldName, vars, data, { ref }) => {
-          if (vars['limit'] === 0) return
-          if (vars['filter']?.length) return
+        (_fieldName, vars, data, { ref, DELETE }) => {
+          if (vars['filter']?.length) {
+            return DELETE // Evict those lists w/ filters
+          }
 
           const limit = vars['limit']
           let newItems = data['items']
-          if (newItems) {
-            newItems = [ref('Automation', newAutomation.id), ...newItems]
-            if (limit && newItems.length > limit) {
-              newItems = newItems.slice(0, limit)
+
+          if (limit !== 0) {
+            if (newItems) {
+              newItems = [ref('Automation', newAutomation.id), ...newItems]
             }
           }
 

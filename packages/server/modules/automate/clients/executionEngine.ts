@@ -298,6 +298,7 @@ export const getFunction = async (params: {
     query: params.releases?.cursor || params.releases?.limit ? params.releases : {}
   })
 
+  // TODO: This still doesn't accept the search query
   const result = await invokeJsonRequest<GetFunctionResponse>({
     url,
     method: 'get',
