@@ -8,7 +8,7 @@
       <div class="relative flex items-center space-x-2 min-w-0">
         <div class="text-foreground-2 mt-[2px] flex items-center -space-x-2 relative">
           <button
-            v-tippy="isSender ? 'Publish model update' : 'Load model'"
+            v-tippy="buttonTooltip"
             class="z-10 transition hover:scale-110 rounded-full hover:shadow-md bg-foundation text-primary"
             @click.stop="$emit('manual-publish-or-load')"
           >
@@ -103,6 +103,14 @@ const props = defineProps<{
 defineEmits<{
   (e: 'manual-publish-or-load'): void
 }>()
+
+const buttonTooltip = computed(() => {
+  return props.modelCard.progress
+    ? 'Cancel'
+    : isSender.value
+    ? 'Publish model'
+    : 'Load model'
+})
 
 const { result: modelResult, loading } = useQuery(
   modelDetailsQuery,
