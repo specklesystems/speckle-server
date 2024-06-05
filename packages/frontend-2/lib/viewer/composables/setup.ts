@@ -616,7 +616,8 @@ function setupResponseResourceItems(
       const modelId = item.modelId
       const objectId = item.objectId
 
-      // In case we want to go back to 1 resource per model:
+      // Uncommenting the following line resolved model duplication issues in the Model Panel
+      // without affecting diffing functionality. If future diffing problems arise, revisit this.
       if (modelId && encounteredModels.has(modelId)) continue
       if (encounteredObjects.has(objectId)) continue
 
