@@ -24,6 +24,7 @@
         </div>
       </div>
       <FormSwitch
+        v-if="!automation.isTestAutomation"
         :id="switchId"
         v-model="enabled"
         name="enable"

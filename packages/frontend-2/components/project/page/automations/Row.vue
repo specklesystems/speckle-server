@@ -86,11 +86,12 @@ graphql(`
         }
       }
     }
-    runs {
+    runs(limit: 10) {
       totalCount
       items {
         ...AutomationRunDetails
       }
+      cursor
     }
   }
 `)

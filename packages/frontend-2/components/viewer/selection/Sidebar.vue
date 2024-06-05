@@ -9,10 +9,13 @@
           class="opacity-80 hover:opacity-100"
           @click.stop="hideOrShowSelection"
         >
-          <div class="flex items-center gap-1">
-            <EyeIcon v-if="!isHidden" class="h-4 w-4" />
-            <EyeSlashIcon v-else class="h-4 w-4" />
+          <div v-if="!isHidden" class="flex items-center gap-1">
+            <EyeSlashIcon class="h-4 w-4" />
             Hide
+          </div>
+          <div v-else class="flex items-center gap-1">
+            <EyeIcon class="h-4 w-4" />
+            Unhide
           </div>
         </FormButton>
         <FormButton

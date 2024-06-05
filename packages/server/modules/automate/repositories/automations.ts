@@ -40,7 +40,11 @@ import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers
 
 import { LogicError } from '@/modules/shared/errors'
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
-import { decodeCursor } from '@/modules/shared/helpers/graphqlHelper'
+import {
+  decodeCursor,
+  decodeIsoDateCursor,
+  encodeIsoDateCursor
+} from '@/modules/shared/helpers/graphqlHelper'
 import { Nullable, StreamRoles, isNullOrUndefined } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import _, { clamp, groupBy, keyBy, pick, reduce } from 'lodash'
@@ -655,6 +659,7 @@ export async function getAutomationRunsItems(params: { args: GetAutomationRunsAr
   >(params)
 
   const limit = clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25)
+  const cursor = args.cursor ? decodeIsoDateCursor(args.cursor) : null
 
   // Attach trigger & function runs
   q.select([
@@ -683,8 +688,8 @@ export async function getAutomationRunsItems(params: { args: GetAutomationRunsAr
     ])
     .limit(limit)
 
-  if (args.cursor?.length) {
-    q.andWhere(AutomationRuns.col.updatedAt, '<', decodeCursor(args.cursor))
+  if (cursor?.length) {
+    q.andWhere(AutomationRuns.col.updatedAt, '<', cursor)
   }
 
   const res = await q
@@ -699,7 +704,7 @@ export async function getAutomationRunsItems(params: { args: GetAutomationRunsAr
 
   return {
     items,
-    cursor: items.length ? items[items.length - 1].updatedAt.toISOString() : null
+    cursor: items.length ? encodeIsoDateCursor(items[items.length - 1].updatedAt) : null
   }
 }
 
@@ -740,17 +745,21 @@ export const getProjectAutomationsItems = async (
   const { args } = params
   if (args.limit === 0) return { items: [], cursor: null }
 
+  const cursor = args.cursor ? decodeCursor(args.cursor) : null
+
   const q = getProjectAutomationsBaseQuery(params)
     .limit(clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25))
     .orderBy(Automations.col.updatedAt, 'desc')
 
-  if (args.cursor?.length) {
-    q.andWhere(Automations.col.updatedAt, '<', decodeCursor(args.cursor))
+  if (cursor?.length) {
+    q.andWhere(Automations.col.updatedAt, '<', cursor)
   }
 
+  const res = await q
+
   return {
-    items: await q,
-    cursor: null
+    items: res,
+    cursor: res.length ? encodeIsoDateCursor(res[res.length - 1].updatedAt) : null
   }
 }
 

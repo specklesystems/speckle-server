@@ -12,11 +12,10 @@
         :buttons="[
           {
             props: {
-              color: 'primary',
-              to: apiOrigin + '/explorer',
               target: '_blank',
               external: true
             },
+            onClick: goToExplorer,
             label: 'Explore GraphQL'
           }
         ]"
@@ -40,7 +39,6 @@
             },
             {
               props: {
-                color: 'primary',
                 iconLeft: PlusIcon,
                 onClick: openCreateTokenDialog
               },
@@ -120,7 +118,6 @@
             },
             {
               props: {
-                color: 'primary',
                 onClick: openCreateApplicationDialog,
                 iconLeft: PlusIcon
               },
@@ -375,5 +372,10 @@ const handleApplicationCreated = (applicationId: string) => {
       showCreateApplicationSuccessDialog.value = true
     }
   })
+}
+
+const goToExplorer = () => {
+  if (!process.client) return
+  window.location.href = new URL('/explorer', apiOrigin).toString()
 }
 </script>

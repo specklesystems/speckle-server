@@ -509,6 +509,9 @@ export type CreateTestAutomationRunDeps = {
   getFullAutomationRevisionMetadata: typeof getFullAutomationRevisionMetadata
 } & CreateAutomationRunDataDeps
 
+/**
+ * TODO: Reduce duplication w/ other fns in this service
+ */
 export const createTestAutomationRun =
   (deps: CreateTestAutomationRunDeps) =>
   async (params: { projectId: string; automationId: string; userId: string }) => {
