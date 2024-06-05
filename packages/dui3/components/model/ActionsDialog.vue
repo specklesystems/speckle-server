@@ -2,7 +2,7 @@
   <div>
     <button
       class="transition hover:text-primary"
-      @click="openModelCardActionsDialog = true"
+      @click.stop="openModelCardActionsDialog = true"
     >
       <Cog6ToothIcon class="w-4" />
     </button>

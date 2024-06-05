@@ -1,52 +1,76 @@
 <template>
-  <div class="rounded-lg p-0.5 mb-1 transition hover:bg-primary-muted">
+  <button
+    v-tippy="
+      reportItem.status === 1
+        ? `${reportItem.sourceType} > ${reportItem.resultType}`
+        : reportItem.error?.stackTrace
+    "
+    class="block rounded-lg p-1 transition hover:bg-primary-muted"
+    @click="highlightObject"
+  >
     <div class="text-foreground-2 flex items-center relative">
-      <div class="mr-2 hover:cursor-pointer" :onclick="toggleDetails">
-        <div v-if="props.report.isSuccessful">
-          <CheckIcon class="h-5 w-5 stroke-green-500 text-green-500"></CheckIcon>
+      <div class="mr-1 hover:cursor-pointer" :onclick="toggleDetails">
+        <div v-if="reportItem.status === 1">
+          <CheckCircleIcon class="w-4 stroke-green-500 text-green-500" />
         </div>
         <div v-else>
-          <ExclamationCircleIcon class="h-5 w-5 text-danger"></ExclamationCircleIcon>
+          <ExclamationCircleIcon class="w-4 text-danger"></ExclamationCircleIcon>
         </div>
       </div>
-      <button class="text-sm transition hover:text-primary" @click="toggleDetails">
-        {{ props.report.targetType }}
-      </button>
-      <button
-        v-tippy="`Highlight object`"
-        class="transition hover:text-primary ml-auto"
-        @click="
-          emit('onHighlight', report.targetId, report.resultId, report.isSuccessful)
-        "
-      >
-        <EyeIcon class="h-4 w-4"></EyeIcon>
-      </button>
+      <div class="text-xs transition truncate">
+        <span v-if="reportItem.status === 1">
+          {{ reportItem.sourceType?.split('.').reverse()[0] }} >
+        </span>
+
+        <span>
+          {{
+            reportItem.resultType
+              ? reportItem.resultType?.split('.').reverse()[0]
+              : reportItem.error?.message
+          }}
+        </span>
+      </div>
     </div>
-    <div v-if="showDetails" class="text-foreground-2 text-xs ml-7">
-      {{ props.report.errorMessage }}
-    </div>
-  </div>
+  </button>
 </template>
 
 <script setup lang="ts">
-import { ExclamationCircleIcon, CheckIcon } from '@heroicons/vue/24/solid'
-import { EyeIcon } from '@heroicons/vue/24/outline'
+import { ExclamationCircleIcon, CheckCircleIcon } from '@heroicons/vue/24/solid'
 import { ConversionResult } from '~/lib/conversions/conversionResult'
+import { useAccountStore } from '~/store/accounts'
+import { IModelCard } from 'lib/models/card'
+
+const app = useNuxtApp()
+const accStore = useAccountStore()
 
 const showDetails = ref<boolean>(false)
 
 const props = defineProps<{
-  report: ConversionResult
+  reportItem: ConversionResult
 }>()
 
-const emit = defineEmits<{
-  (
-    e: 'onHighlight',
-    targetId: string,
-    resultId: string | undefined,
-    isSuccessful: boolean
-  ): void
-}>()
+const cardBase = inject('cardBase') as IModelCard
+
+const acc = accStore.accounts.find((acc) => acc.accountInfo.id === cardBase.accountId)
+
+const highlightObject = () => {
+  // sender reports highlight in source app
+  if (cardBase.typeDiscriminator.toLowerCase().includes('send')) {
+    app.$baseBinding.highlightObjects([props.reportItem.sourceId])
+    return
+  }
+
+  // receive reports that are ok highliht in source app
+  if (props.reportItem.status === 1 && props.reportItem.resultId) {
+    app.$baseBinding.highlightObjects([props.reportItem.resultId])
+    return
+  }
+
+  // lastly, open in browser for failed receive reports
+  // This is a POC implementation. Later we will highlight object(s) within the model. Currently it is done by 'Isolate' filter on viewer but there is no direct URL to achieve this.
+  const url = `${acc?.accountInfo.serverInfo.url}/projects/${cardBase?.projectId}/models/${props.reportItem.sourceId}`
+  app.$openUrl(url)
+}
 
 const toggleDetails = () => {
   showDetails.value = !showDetails.value

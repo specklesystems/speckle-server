@@ -15,18 +15,20 @@
         size="xs"
         text
         :color="notification.level"
-        @click="$emit('dismiss')"
+        @click.stop="$emit('dismiss')"
       >
         <span :class="`${textClassColor}`">Dismiss</span>
       </FormButton>
-      <button v-tippy="'Report'" :class="`${textClassColor}`">
-        <InformationCircleIcon class="w-4" />
-      </button>
+      <ReportBase
+        v-if="notification.report"
+        :report="notification.report"
+        class="mt-[3px]"
+      />
       <FormButton
         v-if="notification.cta"
         size="sm"
         :color="notification.level === 'info' ? 'primary' : notification.level"
-        @click="notification.cta?.action"
+        @click.stop="notification.cta?.action"
       >
         {{ notification.cta.name }}
       </FormButton>
@@ -35,7 +37,6 @@
 </template>
 
 <script setup lang="ts">
-import { InformationCircleIcon } from '@heroicons/vue/20/solid'
 import { useTimeoutFn } from '@vueuse/core'
 import { ModelCardNotification } from '~/lib/models/card/notification'
 

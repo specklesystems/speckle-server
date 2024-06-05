@@ -232,6 +232,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
     model.report = undefined
     model.error = undefined
+    model.displayReceiveComplete = false
     model.hasDismissedUpdateWarning = true
     model.progress = { status: 'Starting to receive...' }
     await app.$receiveBinding.receive(modelCardId)
