@@ -1,8 +1,8 @@
 export interface ConversionResult {
   /**
-   * 0 = success, 1 = info, 2 = warning, 3 = error
+   * 1 = success, 2 = info, 3 = warning, 4 = error
    */
-  status: 0 | 1 | 2 | 3
+  status: 1 | 2 | 3 | 4
   /**
    * For receive conversion reports, this is the id of the speckle object. For send, it's the host app object id.
    */
@@ -26,4 +26,8 @@ export interface ConversionResult {
     message: string
     stackTrace: string
   }
+  /**
+   * This currently inherits from base
+   */
+  speckle_type: string
 }

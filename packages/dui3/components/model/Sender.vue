@@ -1,17 +1,13 @@
 <template>
-  <ModelCardBase ref="cardBase" :model-card="modelCard" :project="project">
+  <ModelCardBase
+    ref="cardBase"
+    :model-card="modelCard"
+    :project="project"
+    @manual-publish-or-load="sendOrCancel"
+  >
     <!-- <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2"> -->
     <div class="flex max-[275px]:flex-col items-center space-x-2 py-2">
       <div>
-        <!-- <FormButton
-          size="sm"
-          full-width
-          color="card"
-          class="flex items-center justify-center"
-          @click="sendOrCancel"
-        >
-          {{ modelCard.progress ? 'Cancel' : 'Publish' }}
-        </FormButton> -->
         <FormButton
           v-tippy="'Edit what gets published'"
           :icon-left="Square3Stack3DIcon"
@@ -20,41 +16,39 @@
           color="card"
           class="flex min-w-0 transition hover:text-primary py-1"
           :disabled="!!modelCard.progress"
-          @click="openFilterDialog = true"
+          @click.stop="openFilterDialog = true"
         >
           <span class="">{{ modelCard.sendFilter?.name }}</span>
         </FormButton>
       </div>
       <div
+        :title="modelCard.sendFilter?.summary"
         class="flex h-full items-center space-x-2 text-xs max-[275px]:justify-center rounded-md pl-2 min-w-0 user-select-none"
       >
-        <span class="truncate max-[275px]:truncate-no text-foreground-2">
+        <span class="truncate text-foreground-2 select-none">
           {{ modelCard.sendFilter?.summary }}
         </span>
-        <LayoutDialog
-          v-model:open="openFilterDialog"
-          :title="`Change filter for ${cardBase?.modelData?.displayName}`"
-          chromium65-compatibility
-        >
-          <FilterListSelect
-            :filter="modelCard.sendFilter"
-            @update:filter="updateFilter"
-          />
-          <div class="mt-2 flex">
-            <!-- TODO: Ux wise, users might want to just save the selection and publish it later. -->
-            <!-- <FormButton text @click=";(openFilterDialog = false), saveFilter()">
-              Save
-            </FormButton> -->
-            <FormButton
-              full-width
-              @click=";(openFilterDialog = false), saveFilterAndSend()"
-            >
-              Save & Publish
-            </FormButton>
-          </div>
-        </LayoutDialog>
       </div>
     </div>
+    <LayoutDialog
+      v-model:open="openFilterDialog"
+      :title="`Change filter for ${cardBase?.modelData?.displayName}`"
+      chromium65-compatibility
+    >
+      <FilterListSelect :filter="modelCard.sendFilter" @update:filter="updateFilter" />
+      <div class="mt-2 flex">
+        <!-- TODO: Ux wise, users might want to just save the selection and publish it later. -->
+        <!-- <FormButton text @click.stop=";(openFilterDialog = false), saveFilter()">
+              Save
+            </FormButton> -->
+        <FormButton
+          full-width
+          @click.stop=";(openFilterDialog = false), saveFilterAndSend()"
+        >
+          Save & Publish
+        </FormButton>
+      </div>
+    </LayoutDialog>
     <template #states>
       <CommonModelNotification
         v-if="expiredNotification"
@@ -63,13 +57,20 @@
       <CommonModelNotification
         v-if="errorNotification"
         :notification="errorNotification"
-        @dismiss="store.patchModel(modelCard.modelCardId, { error: undefined })"
+        :report="modelCard.report"
+        @dismiss="
+          store.patchModel(modelCard.modelCardId, { error: undefined, report: null })
+        "
       />
       <CommonModelNotification
         v-if="latestVersionNotification"
         :notification="latestVersionNotification"
+        :report="modelCard.report"
         @dismiss="
-          store.patchModel(modelCard.modelCardId, { latestCreatedVersionId: undefined })
+          store.patchModel(modelCard.modelCardId, {
+            latestCreatedVersionId: undefined,
+            report: null
+          })
         "
       />
     </template>
@@ -78,7 +79,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import ModelCardBase from '~/components/model/CardBase.vue'
-import { CubeIcon, PencilIcon } from '@heroicons/vue/24/outline'
 import { Square3Stack3DIcon } from '@heroicons/vue/20/solid'
 import { ModelCardNotification } from '~/lib/models/card/notification'
 import { ISendFilter, ISenderModelCard } from '~/lib/models/card/send'
@@ -154,6 +154,7 @@ const errorNotification = computed(() => {
   notification.dismissible = true
   notification.level = 'danger'
   notification.text = props.modelCard.error
+  notification.report = props.modelCard.report
   return notification
 })
 
@@ -163,6 +164,7 @@ const latestVersionNotification = computed(() => {
   notification.dismissible = true
   notification.level = 'success'
   notification.text = 'Version created!'
+  notification.report = props.modelCard.report
   notification.cta = {
     name: 'View',
     // eslint-disable-next-line @typescript-eslint/no-unsafe-call

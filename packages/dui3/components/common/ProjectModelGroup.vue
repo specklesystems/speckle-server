@@ -11,7 +11,9 @@
         <ChevronDownIcon
           :class="`w-5 ${showModels ? '' : '-rotate-90'} transition mt-1`"
         />
-        <div class="font-bold text-left truncate">{{ projectDetails.name }}</div>
+        <div class="font-bold text-left truncate select-none">
+          {{ projectDetails.name }}
+        </div>
       </div>
 
       <div class="rounded-md px-2 flex items-center space-x-2 justify-end">
@@ -138,7 +140,7 @@ onResult((res) => {
   hostAppStore.patchModel(relevantReceiver.modelCardId, {
     latestVersionId: res.data.projectVersionsUpdated.version?.id,
     hasDismissedUpdateWarning: false,
-    receiveResult: { ...relevantReceiver.receiveResult, display: false }
+    displayReceiveComplete: false
   })
 
   // res.data.projectVersionsUpdated.version.

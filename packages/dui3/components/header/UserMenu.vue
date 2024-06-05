@@ -4,10 +4,16 @@
       <MenuButton v-slot="{ open }">
         <span class="sr-only">Open user menu</span>
 
-        <UserAvatar v-if="!open" :user="user" hover-effect />
+        <!-- <UserAvatar v-if="!open" :user="user" hover-effect />
         <UserAvatar v-else hover-effect>
           <XMarkIcon class="w-5 h-5" />
-        </UserAvatar>
+        </UserAvatar> -->
+        <button
+          class="rounded-full transition hover:bg-primary hover:text-foreground-on-primary p-1 shadow-md"
+        >
+          <Bars3Icon v-if="!open" class="w-4" />
+          <XMarkIcon v-else class="w-4" />
+        </button>
       </MenuButton>
       <Transition
         enter-active-class="transition ease-out duration-200"
@@ -22,7 +28,10 @@
         >
           <MenuItem v-slot="{ close }" as="div">
             <div class="px-2 py-3 flex flex-col space-y-2 border-t-1 justify-between">
+              <!-- <div class="flex space-x-2"> -->
               <FormButton
+                size="sm"
+                color="secondary"
                 class="text-xs text-foreground-2 hover:text-primary transition"
                 @click="$showDevTools"
               >
@@ -30,12 +39,15 @@
               </FormButton>
 
               <FormButton
+                size="sm"
+                color="secondary"
                 class="text-xs text-foreground-2 hover:text-primary transition"
                 to="/test"
                 @click="close()"
               >
                 Test Page
               </FormButton>
+              <!-- </div> -->
               <!-- 
                 NOTE: Here's an example of customising the frontend app based on what bindings we
                 have loaded. E.g., if config bindings are not present, we do not show any button
@@ -54,7 +66,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { XMarkIcon } from '@heroicons/vue/20/solid'
+import { XMarkIcon, Bars3Icon } from '@heroicons/vue/20/solid'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useAccountStore } from '~/store/accounts'
 import { useConfigStore } from '~/store/config'

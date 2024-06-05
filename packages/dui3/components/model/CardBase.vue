@@ -1,22 +1,24 @@
 <template>
+  <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor}`"
+    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor} cursor-pointer`"
+    @click="highlightModel"
   >
-    <div v-if="modelData" class="px-2 py-2">
-      <div class="flex items-center space-x-2 min-w-0">
+    <div v-if="modelData" class="relative px-2 py-2">
+      <div class="relative flex items-center space-x-2 min-w-0">
         <div class="text-foreground-2 mt-[2px] flex items-center -space-x-2 relative">
-          <div v-if="!isSender" title="you are loading this model" class="z-10">
-            <ArrowDownCircleIcon
-              v-if="!isSender"
-              class="w-8 text-blue-500 drop-shadowxxx"
-            />
-          </div>
-
           <button
-            v-tippy="'Update model'"
-            class="z-10 transition hover:scale-110 rounded-full hover:shadow-md hover:bg-foundation text-primary"
+            v-tippy="isSender ? 'Publish model update' : 'Load model'"
+            class="z-10 transition hover:scale-110 rounded-full hover:shadow-md bg-foundation text-primary"
+            @click.stop="$emit('manual-publish-or-load')"
           >
-            <ArrowUpCircleIcon class="w-8" />
+            <template v-if="!modelCard.progress">
+              <ArrowUpCircleIcon v-if="isSender" class="w-8" />
+              <ArrowDownCircleIcon v-else class="w-8" />
+            </template>
+            <template v-else>
+              <XCircleIcon class="w-8" />
+            </template>
           </button>
 
           <UserAvatar
@@ -31,38 +33,6 @@
         >
           {{ modelData.displayName }}
         </div>
-        <!-- TBD: Report -->
-        <button
-          v-if="isSender ? (modelCard as ISenderModelCard).report : (modelCard as IReceiverModelCard).receiveResult?.receiveConversionResults"
-          v-tippy="`Show ${isSender ? 'publish' : 'load'} report`"
-          class="transition hover:text-primary -mt-1"
-          @click="showReportDialog = true"
-        >
-          <DocumentArrowUpIcon v-if="isSender" class="w-4" />
-          <DocumentArrowDownIcon v-else class="w-4" />
-        </button>
-        <LayoutDialog
-          v-model:open="showReportDialog"
-          :title="`${isSender ? 'Publish' : 'Load'} Report`"
-          chromium65-compatibility
-        >
-          <SendReport
-            v-if="isSender"
-            :reports="(modelCard as ISenderModelCard).report"
-          ></SendReport>
-          <ReceiveReport
-            v-else
-            :model-card="(modelCard as IReceiverModelCard)"
-          ></ReceiveReport>
-        </LayoutDialog>
-
-        <button
-          v-tippy="'Highlight objects in app'"
-          class="transition hover:text-primary -mt-1"
-          @click="highlightModel"
-        >
-          <CursorArrowRaysIcon class="w-4" />
-        </button>
         <ModelActionsDialog
           :model-name="modelData.displayName"
           @view="viewModel"
@@ -110,18 +80,14 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-
 import { modelDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { CommonLoadingProgressBar } from '@speckle/ui-components'
-import {
-  CursorArrowRaysIcon,
-  DocumentArrowDownIcon,
-  DocumentArrowUpIcon
-} from '@heroicons/vue/24/outline'
+// import { CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
+import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
 import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
 import { IModelCard } from '~~/lib/models/card'
-import { useAccountStore } from '~/store/accounts'
+import { DUIAccount, useAccountStore } from '~/store/accounts'
 import { ISenderModelCard } from 'lib/models/card/send'
 import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
@@ -134,7 +100,9 @@ const props = defineProps<{
   project: ProjectModelGroup
 }>()
 
-const showReportDialog = ref(false)
+defineEmits<{
+  (e: 'manual-publish-or-load'): void
+}>()
 
 const { result: modelResult, loading } = useQuery(
   modelDetailsQuery,
@@ -153,13 +121,16 @@ const accStore = useAccountStore()
 
 const acc = accStore.accounts.find(
   (acc) => acc.accountInfo.id === props.modelCard.accountId
-)
+) as DUIAccount
+
+provide<IModelCard>('cardBase', props.modelCard)
 
 const isSender = computed(() => {
   return props.modelCard.typeDiscriminator === 'SenderModelCard'
 })
 
 const highlightModel = () => {
+  if (!modelData) return
   trackEvent('DUI3 Action', { name: 'Highlight Model' }, props.modelCard.accountId)
   app.$baseBinding.highlightModel(props.modelCard.modelCardId)
 }
@@ -193,7 +164,7 @@ const cardBgColor = computed(() => {
   if (props.modelCard.expired) return 'bg-blue-500/10 hover:bg-blue-500/20'
   if (
     (props.modelCard as ISenderModelCard).latestCreatedVersionId ||
-    (props.modelCard as IReceiverModelCard).receiveResult?.display === true
+    (props.modelCard as IReceiverModelCard).displayReceiveComplete === true
   )
     return 'bg-green-500/10 hover:bg-green-500/20'
   if (
