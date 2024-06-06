@@ -1,5 +1,5 @@
-import { get } from 'lodash'
-import type { Nullable } from './utilityTypes'
+import { get } from '#lodash'
+import type { Nullable } from './utilityTypes.js'
 
 export enum OperatingSystem {
   Windows = 'win',

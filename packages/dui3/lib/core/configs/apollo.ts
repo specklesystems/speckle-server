@@ -20,7 +20,7 @@ import {
   incomingOverwritesExistingMergeFunction
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
-import { Observability } from '@speckle/shared'
+import * as Observability from '@speckle/shared/dist/esm/observability/index.js'
 
 let subscriptionsStopped = false
 const errorRpm = Observability.simpleRpmCounter()

@@ -1,4 +1,4 @@
-import { isSafari } from './os'
+import { isSafari } from './os.js'
 
 const shouldPolyfillIdleCallback = isSafari() || !globalThis.requestIdleCallback
 

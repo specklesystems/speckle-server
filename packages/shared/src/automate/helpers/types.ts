@@ -1,10 +1,10 @@
-import { get, has, intersection, isArray, isNumber, isObjectLike } from 'lodash'
+import { get, has, intersection, isArray, isNumber, isObjectLike } from '#lodash'
 import type { PartialDeep } from 'type-fest'
 import {
   UnformattableResultsSchemaError,
   UnformattableTriggerDefinitionSchemaError
-} from '../errors'
-import type { Nullable } from '../../core'
+} from '../errors/index.js'
+import type { Nullable } from '../../core/index.js'
 
 export const TRIGGER_DEFINITIONS_SCHEMA_VERSION = 1.0
 export const RESULTS_SCHEMA_VERSION = 1.0
