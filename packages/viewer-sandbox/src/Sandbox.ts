@@ -253,9 +253,10 @@ export default class Sandbox {
       expanded: true
     })
     for (let k = 0; k < views.length; k++) {
+      const view = views[k]
       this.viewsFolder
         .addButton({
-          title: views[k].name ? views[k].name : 'Unnamed'
+          title: view.name ? view.name : 'Unnamed'
         })
         .on('click', () => {
           this.viewer.getExtension(CameraController).setCameraView(views[k], true)
@@ -484,7 +485,7 @@ export default class Sandbox {
     })
 
     this.tabs.pages[0]
-      .addInput({ dampening: 60 }, 'dampening', {
+      .addInput({ dampening: 30 }, 'dampening', {
         label: 'Dampening',
         min: 0,
         max: 300,

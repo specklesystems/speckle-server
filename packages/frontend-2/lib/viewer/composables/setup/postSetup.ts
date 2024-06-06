@@ -290,6 +290,9 @@ function useViewerSectionBoxIntegration() {
     },
     { immediate: true, deep: true, flush: 'sync' }
   )
+  onBeforeUnmount(() => {
+    instance.sectionBoxOff()
+  })
 }
 
 function useViewerCameraIntegration() {

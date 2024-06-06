@@ -27,6 +27,7 @@ import { BatchObject } from '../batching/BatchObject'
 import Materials from '../materials/Materials'
 import { ObjectLayers } from '../../IViewer'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
+import { SpeckleRaycaster } from './SpeckleRaycaster'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -302,7 +303,7 @@ export default class SpeckleMesh extends Mesh {
     }
   }
 
-  raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
+  raycast(raycaster: SpeckleRaycaster, intersects: Array<Intersection>) {
     if (this.tas) {
       if (this.batchMaterial === undefined) return
 
@@ -311,7 +312,7 @@ export default class SpeckleMesh extends Mesh {
 
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
-          this.tas.raycastFirst(ray, this.batchMaterial),
+          this.tas.raycastFirst(ray, raycaster.intersectTASOnly, this.batchMaterial),
           this,
           raycaster
         )
@@ -319,7 +320,11 @@ export default class SpeckleMesh extends Mesh {
           intersects.push(hit)
         }
       } else {
-        const hits = this.tas.raycast(ray, this.batchMaterial)
+        const hits = this.tas.raycast(
+          ray,
+          raycaster.intersectTASOnly,
+          this.batchMaterial
+        )
         for (let i = 0, l = hits.length; i < l; i++) {
           const hit = this.convertRaycastIntersect(hits[i], this, raycaster)
           if (hit) {

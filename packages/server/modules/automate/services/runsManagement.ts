@@ -20,10 +20,10 @@ const AutomationRunStatusOrder: { [key in AutomationRunStatus]: number } = {
   initializing: 1,
   running: 2,
   succeeded: 3,
-  failed: 4,
+  failed: 3,
+  canceled: 4,
   exception: 5,
-  timeout: 6,
-  canceled: 7
+  timeout: 5
 }
 
 /**
@@ -118,7 +118,9 @@ export const reportFunctionRunStatus =
     const { automationId, ...currentFunctionRunRecord } = currentFunctionRunRecordResult
 
     if (statusReportData.results) {
-      Automate.AutomateTypes.formatResultsSchema(statusReportData.results)
+      statusReportData.results = Automate.AutomateTypes.formatResultsSchema(
+        statusReportData.results
+      )
     }
 
     if (statusReportData.contextView) validateContextView(statusReportData.contextView)

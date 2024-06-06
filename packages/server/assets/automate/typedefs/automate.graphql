@@ -62,6 +62,7 @@ type Automation {
   id: ID!
   name: String!
   enabled: Boolean!
+  isTestAutomation: Boolean!
   runs(cursor: String, limit: Int): AutomateRunCollection!
   currentRevision: AutomationRevision
   createdAt: DateTime!
@@ -79,7 +80,10 @@ type AutomateFunctionRun {
   contextView: String
   functionId: String
   functionReleaseId: String
-  function: AutomateFunction!
+  """
+  Nullable, in case the function is not retrievable due to poor network conditions
+  """
+  function: AutomateFunction
   elapsed: Float!
   """
   AutomateTypes.ResultsSchema type from @speckle/shared
@@ -194,6 +198,12 @@ input ProjectAutomationCreateInput {
   enabled: Boolean!
 }
 
+input ProjectTestAutomationCreateInput {
+  name: String!
+  modelId: String!
+  functionId: String!
+}
+
 input AutomateFunctionsFilter {
   search: String
   """
@@ -287,6 +297,8 @@ type ProjectAutomationMutations {
   just refer to the last version of the model.
   """
   trigger(automationId: ID!): Boolean!
+  createTestAutomation(input: ProjectTestAutomationCreateInput!): Automation!
+  createTestAutomationRun(automationId: ID!): TestAutomationRun!
 }
 
 extend type ProjectMutations {
@@ -376,4 +388,20 @@ extend type Subscription {
   Subscribe to updates to automations in the project
   """
   projectAutomationsUpdated(projectId: String!): ProjectAutomationsUpdatedMessage!
+}
+
+type TestAutomationRun {
+  automationRunId: String!
+  functionRunId: String!
+  triggers: [TestAutomationRunTrigger!]!
+}
+
+type TestAutomationRunTrigger {
+  payload: TestAutomationRunTriggerPayload!
+  triggerType: String!
+}
+
+type TestAutomationRunTriggerPayload {
+  modelId: String!
+  versionId: String!
 }

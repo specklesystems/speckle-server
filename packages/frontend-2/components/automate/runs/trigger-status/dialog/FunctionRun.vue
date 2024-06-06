@@ -11,11 +11,11 @@
             :class="['h-5 w-5 outline-none', statusMetaData.iconColor]"
           />
         </div>
-        <AutomateFunctionLogo :logo="functionRun.function.logo" size="xs" />
+        <AutomateFunctionLogo :logo="functionRun.function?.logo" size="xs" />
 
         <div class="font-bold text-sm truncate">
           {{ automationName ? automationName + ' / ' : ''
-          }}{{ functionRun.function.name }}
+          }}{{ functionRun.function?.name || 'Unknown function' }}
         </div>
       </div>
 
@@ -23,8 +23,11 @@
         <div class="sm:truncate">
           <div
             v-if="
-              functionRun.status === AutomateRunStatus.Initializing ||
-              functionRun.status === AutomateRunStatus.Running
+              [
+                AutomateRunStatus.Initializing,
+                AutomateRunStatus.Running,
+                AutomateRunStatus.Pending
+              ].includes(functionRun.status)
             "
             class="text-sm text-foreground-2 italic whitespace-normal sm:truncate"
           >
@@ -62,7 +65,7 @@
             </FormButton>
             <LayoutDialog
               v-model:open="showAttachmentDialog"
-              :title="`${functionRun.function.name} attachments`"
+              :title="`${functionRun.function?.name || 'Unknown function'} attachments`"
               max-width="sm"
             >
               <div v-for="id in attachments" :key="id">

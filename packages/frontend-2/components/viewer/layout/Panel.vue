@@ -6,7 +6,7 @@
         class="absolute top-1.5 sm:top-2 right-0.5 sm:right-0 z-10"
       >
         <FormButton size="sm" color="secondary" text @click="$emit('close')">
-          <XMarkIcon class="h-4 w-4 sm:h-3 sm:w-3 text-primary sm:text-foreground" />
+          <XMarkIcon class="size-4 sm:size-3 text-primary sm:text-foreground" />
         </FormButton>
       </div>
       <div

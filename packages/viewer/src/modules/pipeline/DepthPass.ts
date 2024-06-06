@@ -57,6 +57,10 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
     return this.renderTargetHalf.texture
   }
 
+  get outputRenderTarget(): WebGLRenderTarget {
+    return this.renderTarget
+  }
+
   public set depthType(value: DepthType) {
     if (value === DepthType.LINEAR_DEPTH)
       if (this.depthMaterial.defines) {

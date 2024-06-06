@@ -46,7 +46,6 @@ export default defineNuxtConfig({
   ],
   runtimeConfig: {
     redisUrl: '',
-    automateGhClientSecret: '',
     public: {
       ...featureFlags,
       apiOrigin: 'UNDEFINED',
@@ -73,8 +72,7 @@ export default defineNuxtConfig({
       datadogSite: '',
       datadogService: '',
       datadogEnv: '',
-      enableDirectPreviews: true,
-      automateGhClientId: 'Iv1.79a1df48749f11b4'
+      enableDirectPreviews: true
     }
   },
 

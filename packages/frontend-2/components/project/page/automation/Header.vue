@@ -5,17 +5,26 @@
         <CommonTextLink :icon-left="ArrowLeftIcon" size="xs" :to="automationsLink">
           Back to Automations
         </CommonTextLink>
-        <CommonEditableTitle
-          v-model="name"
-          :disabled="loading"
-          :custom-classes="{
-            input: 'h4 font-bold',
-            pencil: 'ml-2 mt-2 w-4 h-4'
-          }"
-          class="relative top-1.5"
-        />
+        <div class="flex flow-row justify-start items-center z-20">
+          <CommonEditableTitle
+            v-model="name"
+            :disabled="loading"
+            :custom-classes="{
+              input: 'h4 font-bold',
+              pencil: 'ml-2 mt-2 w-4 h-4'
+            }"
+            class="relative top-1.5"
+          />
+          <div
+            v-if="automation.isTestAutomation"
+            class="pointer-events-none -translate-x-4 z-10"
+          >
+            <CommonBadge>Test Automation</CommonBadge>
+          </div>
+        </div>
       </div>
       <FormSwitch
+        v-if="!automation.isTestAutomation"
         :id="switchId"
         v-model="enabled"
         name="enable"
@@ -42,6 +51,7 @@ graphql(`
     id
     name
     enabled
+    isTestAutomation
     currentRevision {
       id
       triggerDefinitions {

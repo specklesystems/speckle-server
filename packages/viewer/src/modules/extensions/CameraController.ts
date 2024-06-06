@@ -2,7 +2,9 @@ import { Extension } from './Extension'
 import {
   Box3,
   Camera,
+  Euler,
   MathUtils,
+  Matrix4,
   OrthographicCamera,
   PerspectiveCamera,
   Sphere,
@@ -63,7 +65,7 @@ export const DefaultControllerOptions = Object.freeze<
   zoomSensitivity: 1,
   panSensitivity: 1,
   inputSensitivity: 1,
-  minimumRadius: 1,
+  minimumRadius: 0,
   maximumRadius: Infinity,
   minimumPolarAngle: Math.PI / 8,
   maximumPolarAngle: Math.PI - Math.PI / 8,
@@ -195,21 +197,29 @@ export class CameraController extends Extension implements SpeckleCamera {
     // this._controls.on(PointerChangeEvent.PointerChangeEnd, () => {
     //   this.emit(CameraEvent.InteractionEnded)
     // })
-    this._controlsList.push(
-      new FlyControls(this._renderingCamera, this.viewer.getContainer())
+    const flyControls = new FlyControls(
+      this._renderingCamera,
+      this.viewer.getContainer()
     )
-    this._controlsList.push(
-      new SmoothOrbitControls(
-        this.perspectiveCamera,
-        this.viewer.getContainer(),
-        this.viewer.getRenderer().renderer,
-        this.viewer.getRenderer().scene,
-        this.viewer.World,
-        this._options
-      )
+    const orbitControls = new SmoothOrbitControls(
+      this.perspectiveCamera,
+      this.viewer.getContainer(),
+      this.viewer.getRenderer().renderer,
+      this.viewer.getRenderer().scene,
+      this.viewer.World,
+      this.viewer.getRenderer().intersections,
+      this._options
+    )
+    orbitControls.enabled = true
+    orbitControls.setDamperDecayTime(30)
+    orbitControls.basisTransform = new Matrix4().makeRotationFromEuler(
+      new Euler(Math.PI * 0.5)
     )
 
     this.viewer.getRenderer().speckleCamera = this
+
+    this._controlsList.push(flyControls)
+    this._controlsList.push(orbitControls)
   }
 
   public on<T extends CameraEvent>(

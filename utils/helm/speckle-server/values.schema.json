@@ -39,6 +39,11 @@
           "type": "boolean",
           "description": "High level flag fully toggles the integrated automate module",
           "default": false
+        },
+        "gendoAIModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag that toggles the Gendo AI render module",
+          "default": false
         }
       }
     },
@@ -540,6 +545,81 @@
           "type": "string",
           "description": "The url of the Speckle Automate instance",
           "default": "https://automate.speckle.systems"
+        },
+        "gendoAI": {
+          "type": "object",
+          "properties": {
+            "apiUrl": {
+              "type": "string",
+              "description": "The url of the Gendo AI application, including protocol.",
+              "default": "https://api.gendo.ai/external/generate"
+            },
+            "key": {
+              "type": "object",
+              "properties": {
+                "secretName": {
+                  "type": "string",
+                  "description": "The name of the Kubernetes Secret containing the Gendo AI key. If left blank, will default to the `secretName` parameter.",
+                  "default": ""
+                },
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the Gendo AI key as its value.",
+                  "default": "gendoai_key"
+                }
+              }
+            },
+            "keyResponse": {
+              "type": "object",
+              "properties": {
+                "secretName": {
+                  "type": "string",
+                  "description": "The name of the Kubernetes Secret containing the Gendo AI key response. If left blank, will default to the `secretName` parameter.",
+                  "default": ""
+                },
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the Gendo AI key response as its value.",
+                  "default": "gendoai_key_response"
+                }
+              }
+            },
+            "ratelimiting": {
+              "type": "object",
+              "properties": {
+                "renderRequest": {
+                  "type": "number",
+                  "description": "The number of render requests allowed per period",
+                  "default": 1
+                },
+                "renderRequestPeriodSeconds": {
+                  "type": "number",
+                  "description": "The period in seconds for the render request limit",
+                  "default": 20
+                },
+                "burstRenderRequest": {
+                  "type": "number",
+                  "description": "The number of render requests allowed in 'burst' mode when the other limit is reached.",
+                  "default": 3
+                },
+                "burstRenderRequestPeriodSeconds": {
+                  "type": "number",
+                  "description": "The period in seconds for the burst render request limit.",
+                  "default": 60
+                }
+              }
+            }
+          }
+        },
+        "encryptionKeys": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The path where the encryption keys should be loaded from",
+              "default": "/encryption-keys/keys.json"
+            }
+          }
         },
         "sessionSecret": {
           "type": "object",

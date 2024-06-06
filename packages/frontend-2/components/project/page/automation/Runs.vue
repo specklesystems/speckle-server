@@ -1,8 +1,9 @@
 <template>
   <div class="flex flex-col w-full">
-    <div class="flex items-center justify-between mb-2">
+    <div class="flex items-center justify-between h-6 mb-6">
       <h2 class="h6 font-bold">Runs</h2>
       <FormButton
+        v-if="!automation.isTestAutomation"
         :icon-left="ArrowPathIcon"
         :disabled="!automation.enabled"
         @click="onTrigger"
@@ -11,7 +12,6 @@
       </FormButton>
     </div>
     <AutomateRunsTable
-      class="mt-3"
       :runs="automation.runs.items"
       :project-id="projectId"
       :automation-id="automation.id"
@@ -31,6 +31,7 @@ graphql(`
   fragment ProjectPageAutomationRuns_Automation on Automation {
     id
     enabled
+    isTestAutomation
     runs {
       items {
         ...AutomationRunDetails
