@@ -236,8 +236,11 @@ export enum ExecutionEngineFunctionTemplateId {
 }
 
 export type CreateFunctionBody = {
+  speckleServerOrigin: string
+  speckleUserId: string
+  authenticationCode: string
   template: ExecutionEngineFunctionTemplateId
-  functionname: string
+  functionName: string
   description: string
   supportedSourceApps: SourceAppName[]
   tags: string[]
@@ -258,11 +261,18 @@ export type CreateFunctionResponse = {
   }
 }
 
-export const createFunction = async (params: {
+export const createFunction = async ({
+  body
+}: {
   body: CreateFunctionBody
 }): Promise<CreateFunctionResponse> => {
-  throw new Error('Not implemented! Needs re-thinking by Gergo & Iain')
-  console.log(params.body)
+  const url = getApiUrl('/api/v2/functions/from-template')
+  return invokeJsonRequest<CreateFunctionResponse>({
+    url,
+    method: 'post',
+    body,
+    retry: false
+  })
 }
 
 export type UpdateFunctionBody = {
@@ -298,6 +308,7 @@ export const getFunction = async (params: {
     query: params.releases?.cursor || params.releases?.limit ? params.releases : {}
   })
 
+  // TODO: This still doesn't accept the search query
   const result = await invokeJsonRequest<GetFunctionResponse>({
     url,
     method: 'get',

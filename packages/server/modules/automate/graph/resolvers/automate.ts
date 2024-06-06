@@ -37,7 +37,7 @@ import {
 import {
   createStoredAuthCode,
   validateStoredAuthCode
-} from '@/modules/automate/services/executionEngine'
+} from '@/modules/automate/services/authCode'
 import {
   convertFunctionReleaseToGraphQLReturn,
   convertFunctionToGraphQLReturn,
@@ -106,13 +106,6 @@ import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
-
-/**
- * TODO:
- * - FE:
- *  - Fix up pagination & all remaining TODOs
- *  - Subscriptions & cache updates
- */
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
@@ -434,7 +427,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         async createFunction(_parent, args, ctx) {
           const create = createFunctionFromTemplate({
             createExecutionEngineFn: createFunction,
-            getUser
+            getUser,
+            createStoredAuthCode: createStoredAuthCode({ redis: getGenericRedis() })
           })
 
           return (await create({ input: args.input, userId: ctx.userId! }))

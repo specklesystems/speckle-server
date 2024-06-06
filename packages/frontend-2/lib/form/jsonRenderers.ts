@@ -39,12 +39,12 @@ export const booleanControlRenderer: JsonFormsRendererRegistryEntry = {
 
 export const enumControlRenderer: JsonFormsRendererRegistryEntry = {
   renderer: EnumControlRenderer as unknown,
-  tester: rankWith(4, isEnumControl)
+  tester: rankWith(6, isEnumControl)
 }
 
 export const enumOneOfControlRenderer: JsonFormsRendererRegistryEntry = {
   renderer: EnumOneOfControlRenderer as unknown,
-  tester: rankWith(4, isOneOfEnumControl)
+  tester: rankWith(6, isOneOfEnumControl)
 }
 
 export const integerControlRenderer: JsonFormsRendererRegistryEntry = {

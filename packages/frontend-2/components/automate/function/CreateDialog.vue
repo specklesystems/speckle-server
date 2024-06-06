@@ -194,7 +194,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           text: 'Next',
           props: {
             iconRight: ChevronRightIcon,
-            disabled: !selectedTemplate.value || true // TODO: Remove once fns work
+            disabled: !selectedTemplate.value
           },
           onClick: () => step.value++
         }
@@ -207,8 +207,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           props: {
             color: 'secondary',
             iconLeft: ChevronLeftIcon,
-            textColor: 'primary',
-            disabled: true // TODO: Remove once fns work
+            textColor: 'primary'
           },
           onClick: () => step.value--
         },

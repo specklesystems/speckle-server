@@ -298,7 +298,7 @@ watch(
   (newVal, oldVal) => {
     if (newVal?.id === oldVal?.id) return
 
-    selectedModel.value = newVal
+    selectedModel.value = newVal || undefined
   },
   { immediate: true }
 )

@@ -3334,14 +3334,14 @@ export type VersionCollection = {
 
 export type VersionCreatedTrigger = {
   __typename?: 'VersionCreatedTrigger';
-  model: Model;
+  model?: Maybe<Model>;
   type: AutomateRunTriggerType;
-  version: Version;
+  version?: Maybe<Version>;
 };
 
 export type VersionCreatedTriggerDefinition = {
   __typename?: 'VersionCreatedTriggerDefinition';
-  model: Model;
+  model?: Maybe<Model>;
   type: AutomateRunTriggerType;
 };
 

@@ -120,9 +120,9 @@
                   <CommonLoadingBar :loading="true" />
                 </div>
                 <div v-else-if="isAsyncSearchMode && !currentItems.length">
-                  <slot name="nothing-found">
-                    <div class="text-foreground-2 text-center">Nothing found</div>
-                  </slot>
+                  <div class="text-foreground-2 text-center">
+                    <slot name="nothing-found">Nothing found</slot>
+                  </div>
                 </div>
                 <template v-if="!isAsyncSearchMode || !isAsyncLoading">
                   <ListboxOption

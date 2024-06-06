@@ -11164,40 +11164,40 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@jsonforms/core@npm:^3.0.0":
-  version: 3.2.1
-  resolution: "@jsonforms/core@npm:3.2.1"
+"@jsonforms/core@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "@jsonforms/core@npm:3.3.0"
   dependencies:
     "@types/json-schema": ^7.0.3
     ajv: ^8.6.1
     ajv-formats: ^2.1.0
     lodash: ^4.17.21
-  checksum: 610a5de7085274bfca51a1fc1f68ec13e6e0ee64f382fd2c5402efa611b26ef93aaa3295f90754c7ffe6d3a076d61cfc77a83a048f09af358fd429668c2a7c7a
+  checksum: e0d4c85ccae0f851734102ff74eb3bda33afdedec0b437399b9c401a1478e30ee70a067c88cec2877a844528fa4c16aad660aa742f463590a55ce2360f9b9d54
   languageName: node
   linkType: hard
 
-"@jsonforms/vue-vanilla@npm:^3.0.0":
-  version: 3.2.1
-  resolution: "@jsonforms/vue-vanilla@npm:3.2.1"
+"@jsonforms/vue-vanilla@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "@jsonforms/vue-vanilla@npm:3.3.0"
   dependencies:
     lodash: ^4.17.21
   peerDependencies:
-    "@jsonforms/core": 3.2.1
-    "@jsonforms/vue": 3.2.1
+    "@jsonforms/core": 3.3.0
+    "@jsonforms/vue": 3.3.0
     vue: ^3.2.26
-  checksum: aa09f409ae8ad5122a0814d2b7ddb340d8aaa7b515e635c5bd22f1f20aef10b8bb46adfe75008c0c6acf121faea7560c591ac8f9e846b521cfd0170b77989c62
+  checksum: 369c2e721e12c87d6c397ef8a04e6dc43aa4328036ba4268e57a5dedaf1af7e1df55094980fbadb868f15b9b28e854fc7e0dc8aba3b306246dcec3f2e3735c76
   languageName: node
   linkType: hard
 
-"@jsonforms/vue@npm:^3.0.0":
-  version: 3.2.1
-  resolution: "@jsonforms/vue@npm:3.2.1"
+"@jsonforms/vue@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "@jsonforms/vue@npm:3.3.0"
   dependencies:
     lodash: ^4.17.21
   peerDependencies:
-    "@jsonforms/core": 3.2.1
+    "@jsonforms/core": 3.3.0
     vue: ^3.2.26
-  checksum: 4a27342a77ef0f98fbe872c1f29badc23db0dcea7d8bbbc20a80ef4b66b22618c34553a251b422448eb27f865a3de81d41534c35e38f1cd4ad3ed96a95c585e9
+  checksum: 07dcfab09825f8fb94e4d84f1fdf0298db6469badfab71e22bae990b1c2a5e00eedd621980f2cc9b070040e81cca5f07d28087be62413c0d34b0f009f750dd8a
   languageName: node
   linkType: hard
 
@@ -13716,9 +13716,9 @@ __metadata:
     "@graphql-codegen/client-preset": ^1.2.5
     "@headlessui/vue": ^1.7.13
     "@heroicons/vue": ^2.0.12
-    "@jsonforms/core": ^3.0.0
-    "@jsonforms/vue": ^3.0.0
-    "@jsonforms/vue-vanilla": ^3.0.0
+    "@jsonforms/core": ^3.3.0
+    "@jsonforms/vue": ^3.3.0
+    "@jsonforms/vue-vanilla": ^3.3.0
     "@nuxt/devtools": ^0.2.5
     "@nuxtjs/tailwindcss": ^6.3.0
     "@speckle/shared": "workspace:^"

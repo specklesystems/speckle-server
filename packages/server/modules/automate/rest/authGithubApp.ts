@@ -1,4 +1,4 @@
-import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
+import { createStoredAuthCode } from '@/modules/automate/services/authCode'
 import {
   handleAutomateFunctionCreatorAuthCallback,
   startAutomateFunctionCreatorAuth

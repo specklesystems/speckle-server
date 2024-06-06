@@ -117,12 +117,19 @@ export const useAutomationRunDetailsFns = () => {
     run: AutomationRunDetailsFragment
     projectId: string
   }) => {
-    const { run, projectId } = params
-    return versionUrl({
-      projectId,
-      modelId: run.trigger.model.id,
-      versionId: run.trigger.version.id
-    })
+    const {
+      run: {
+        trigger: { model, version }
+      },
+      projectId
+    } = params
+    return model && version
+      ? versionUrl({
+          projectId,
+          modelId: model.id,
+          versionId: version.id
+        })
+      : null
   }
 
   const runDate = (run: AutomationRunDetailsFragment) => {
