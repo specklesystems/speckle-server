@@ -21,6 +21,7 @@ import Logger from 'js-logger'
 import type { IViewer, SpeckleView } from '../../IViewer'
 import { FlyControls, FlyControlsOptions } from './controls/FlyControls'
 import { SpeckleControls } from './controls/SpeckleControls'
+import { InputEvent } from '../input/Input'
 
 export type CanonicalView =
   | 'front'
@@ -132,19 +133,17 @@ export class CameraController extends Extension implements SpeckleCamera {
 
   public constructor(viewer: IViewer) {
     super(viewer)
+
     /** Create the default perspective camera */
     this.perspectiveCamera = new PerspectiveCamera(
       55,
       window.innerWidth / window.innerHeight
     )
-    // this.perspectiveCamera.up.set(0, 0, 1)
-    // this.perspectiveCamera.position.set(1, 1, 1)
-    // this.perspectiveCamera.updateProjectionMatrix()
 
     const aspect =
       this.viewer.getContainer().offsetWidth / this.viewer.getContainer().offsetHeight
 
-    /** Create the defaultorthographic camera */
+    /** Create the default orthographic camera */
     const fustrumSize = 50
     this.orthographicCamera = new OrthographicCamera(
       (-fustrumSize * aspect) / 2,
@@ -154,53 +153,16 @@ export class CameraController extends Extension implements SpeckleCamera {
       0.001,
       10000
     )
-    // this.orthographicCamera.up.set(0, 0, 1)
-    // this.orthographicCamera.position.set(100, 100, 100)
-    // this.orthographicCamera.updateProjectionMatrix()
 
     /** Perspective camera as default on startup */
     this.renderingCamera = this.perspectiveCamera
 
-    // this._controls.maxPolarAngle = Math.PI / 2
-    // this._controls.restThreshold = 0.001
-
-    // this._controls.addEventListener('rest', () => {
-    //   this.emit(CameraEvent.Stationary)
-    // })
-    // this._controls.addEventListener('controlstart', () => {
-    //   this.emit(CameraEvent.Dynamic)
-    // })
-
-    // this._controls.addEventListener('controlend', () => {
-    //   if (this._controls.hasRested) this.emit(CameraEvent.Stationary)
-    // })
-
-    // this._controls.addEventListener('control', () => {
-    //   this.emit(CameraEvent.Dynamic)
-    // })
-    // this._controls = new SmoothOrbitControls(
-    //   this.perspectiveCamera,
-    //   this.viewer.getContainer(),
-    //   this.viewer.getRenderer().renderer,
-    //   this.viewer.getRenderer().scene,
-    //   this.viewer.World,
-    //   this._options
-    // )
-    // this._controls.enableInteraction()
-    // this._controls.setDamperDecayTime(60)
-    // this._controls.basisTransform = new Matrix4().makeRotationFromEuler(
-    //   new Euler(Math.PI * 0.5)
-    // )
-    // this._controls.on(PointerChangeEvent.PointerChangeStart, () => {
-    //   this.emit(CameraEvent.InteractionStarted)
-    // })
-    // this._controls.on(PointerChangeEvent.PointerChangeEnd, () => {
-    //   this.emit(CameraEvent.InteractionEnded)
-    // })
     const flyControls = new FlyControls(
       this._renderingCamera,
       this.viewer.getContainer()
     )
+    flyControls.enabled = true
+
     const orbitControls = new SmoothOrbitControls(
       this.perspectiveCamera,
       this.viewer.getContainer(),
@@ -210,7 +172,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.viewer.getRenderer().intersections,
       this._options
     )
-    orbitControls.enabled = true
+    orbitControls.enabled = false
     orbitControls.setDamperDecayTime(30)
     orbitControls.basisTransform = new Matrix4().makeRotationFromEuler(
       new Euler(Math.PI * 0.5)
@@ -218,8 +180,12 @@ export class CameraController extends Extension implements SpeckleCamera {
 
     this.viewer.getRenderer().speckleCamera = this
 
-    this._controlsList.push(flyControls)
     this._controlsList.push(orbitControls)
+    this._controlsList.push(flyControls)
+
+    this._controls = flyControls
+
+    this.viewer.getRenderer().input.on(InputEvent.KeyUp, this.onKeyUp.bind(this))
   }
 
   public on<T extends CameraEvent>(
@@ -235,6 +201,24 @@ export class CameraController extends Extension implements SpeckleCamera {
 
   public getPosition(): Vector3 {
     return this._controls.getPosition()
+  }
+
+  private onKeyUp(e: KeyboardEvent) {
+    if (e.code === 'Space') this.toggleControllers()
+  }
+
+  public toggleControllers() {
+    if (this._controls instanceof SmoothOrbitControls) {
+      this._controls.enabled = false
+      const fly = this._controlsList[1]
+      fly.enabled = true
+      this._controls = fly
+    } else if (this._controls instanceof FlyControls) {
+      this._controls.enabled = false
+      const orbit = this._controlsList[0]
+      orbit.enabled = true
+      this._controls = orbit
+    }
   }
 
   setCameraView(

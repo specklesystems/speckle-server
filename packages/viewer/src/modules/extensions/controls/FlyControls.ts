@@ -50,7 +50,7 @@ class FlyControls extends SpeckleControls {
   protected positionYDamper: Damper = new Damper()
   protected positionZDamper: Damper = new Damper()
   protected _lastTick: number = 0
-  protected _enabled: boolean = true
+  protected _enabled: boolean = false
 
   public get enabled(): boolean {
     return this._enabled
