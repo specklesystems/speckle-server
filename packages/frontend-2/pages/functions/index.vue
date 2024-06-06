@@ -10,6 +10,7 @@
     <AutomateFunctionsPageItems
       :functions="finalResult"
       :search="!!search"
+      :loading="paginationLoading"
       @create-automation-from="openCreateNewAutomation"
       @clear-search="search = ''"
     />
@@ -48,7 +49,7 @@ const { result, loading: pageQueryLoading } = useQuery(pageQuery, () => ({
 const {
   identifier,
   onInfiniteLoad,
-  query: { result: paginatedResult }
+  query: { result: paginatedResult, loading: paginationLoading }
 } = usePaginatedQuery({
   query: automateFunctionsPagePaginationQuery,
   baseVariables: computed(() => ({
