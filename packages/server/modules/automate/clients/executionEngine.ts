@@ -261,11 +261,18 @@ export type CreateFunctionResponse = {
   }
 }
 
-export const createFunction = async (params: {
+export const createFunction = async ({
+  body
+}: {
   body: CreateFunctionBody
 }): Promise<CreateFunctionResponse> => {
-  throw new Error('Not implemented! Needs re-thinking by Gergo & Iain')
-  console.log(params.body)
+  const url = getApiUrl('/api/v2/functions/from-template')
+  return invokeJsonRequest<CreateFunctionResponse>({
+    url,
+    method: 'post',
+    body,
+    retry: false
+  })
 }
 
 export type UpdateFunctionBody = {
