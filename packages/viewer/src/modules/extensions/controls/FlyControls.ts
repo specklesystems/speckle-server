@@ -1,31 +1,38 @@
 import {
   Euler,
-  EventDispatcher,
   Matrix4,
-  Object3D,
+  OrthographicCamera,
+  PerspectiveCamera,
   Quaternion,
+  Sphere,
+  Spherical,
   Vector2,
   Vector3
 } from 'three'
-import { Damper } from '../../utils/Damper'
+import { Damper, SETTLING_TIME } from '../../utils/Damper'
+import { SpeckleControls } from './SpeckleControls'
 
-const _vector = new Vector3()
-
+const _vectorBuff0 = new Vector3()
 const _changeEvent = { type: 'change' }
 
 const _PI_2 = Math.PI / 2
 type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
 const walkingSpeed = 1.42 // m/s
 
-class FlyControls extends EventDispatcher {
-  protected camera: Object3D
+export interface FlyControlsOptions {
+  lookSpeed?: number
+  moveSpeed?: number
+}
+
+class FlyControls extends SpeckleControls {
+  protected camera: PerspectiveCamera | OrthographicCamera
   protected domElement: HTMLElement
   protected pointerSpeed: number
   protected velocity = new Vector3()
   protected euler = new Euler(0, 0, 0, 'YXZ')
-  protected goalVelocity = new Vector3()
+  protected position = new Vector3()
   protected goalEuler = new Euler(0, 0, 0, 'YXZ')
-  protected direction = new Vector3()
+  protected goalPosition = new Vector3()
   protected speed: number = 10
   protected keyMap: Record<MoveType, boolean> = {
     forward: false,
@@ -36,15 +43,34 @@ class FlyControls extends EventDispatcher {
     down: false
   }
 
-  protected velocityXDamper: Damper = new Damper()
-  protected velocityYDamper: Damper = new Damper()
-  protected velocityZDamper: Damper = new Damper()
   protected eulerXDamper: Damper = new Damper()
   protected eulerYDamper: Damper = new Damper()
   protected eulerZDamper: Damper = new Damper()
-  private _lastTick: number = 0
+  protected positionXDamper: Damper = new Damper()
+  protected positionYDamper: Damper = new Damper()
+  protected positionZDamper: Damper = new Damper()
+  protected _lastTick: number = 0
+  protected _enabled: boolean = true
 
-  constructor(camera: Object3D, domElement: HTMLElement) {
+  public get enabled(): boolean {
+    return this._enabled
+  }
+
+  public set enabled(value: boolean) {
+    if (value) this.connect()
+    else this.disconnect()
+    this._enabled = value
+  }
+
+  public set options(_value: Record<string, unknown>) {}
+
+  public set controlTarget(target: PerspectiveCamera | OrthographicCamera) {
+    this.camera = target
+    this.rotate(this.euler)
+    this.camera.position.copy(this.position)
+  }
+
+  constructor(camera: PerspectiveCamera | OrthographicCamera, domElement: HTMLElement) {
     super()
 
     this.camera = camera
@@ -55,54 +81,51 @@ class FlyControls extends EventDispatcher {
     this.connect()
   }
 
-  public isStationary() {
-    return this.goalEuler.equals(this.euler) && this.velocity.length() === 0
+  public isStationary(): boolean {
+    return (
+      this.goalEuler.equals(this.euler) &&
+      this.goalPosition.equals(this.position) &&
+      this.velocity.length() === 0
+    )
   }
 
-  update(delta?: number): boolean {
+  public update(delta?: number): boolean {
     const now = performance.now()
     delta = delta !== undefined ? delta : now - this._lastTick
     this._lastTick = now
     const deltaSeconds = delta / 1000
 
+    if (this.keyMap.forward) this.velocity.z = -walkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.back) this.velocity.z = walkingSpeed * this.speed * deltaSeconds
+    if (!this.keyMap.forward && !this.keyMap.back) this.velocity.z = 0
+
+    if (this.keyMap.left) this.velocity.x = -walkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.right) this.velocity.x = walkingSpeed * this.speed * deltaSeconds
+    if (!this.keyMap.left && !this.keyMap.right) this.velocity.x = 0
+
+    if (this.keyMap.up) this.velocity.y = walkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.down) this.velocity.y = -walkingSpeed * this.speed * deltaSeconds
+    if (!this.keyMap.down && !this.keyMap.up) this.velocity.y = 0
+
     if (this.isStationary()) return false
 
-    this.direction.z = Number(this.keyMap.forward) - Number(this.keyMap.back)
-    this.direction.x = Number(this.keyMap.right) - Number(this.keyMap.left)
-    this.direction.y = Number(this.keyMap.up) - Number(this.keyMap.down)
-    this.direction.normalize() // this ensures consistent movements in all directions
+    this.moveBy(this.velocity)
 
-    if (this.keyMap.forward)
-      this.goalVelocity.z = -walkingSpeed * this.speed * deltaSeconds
-    if (this.keyMap.back) this.goalVelocity.z = walkingSpeed * this.speed * deltaSeconds
-    if (!this.keyMap.forward && !this.keyMap.back) this.goalVelocity.z = 0
-
-    if (this.keyMap.left) this.goalVelocity.x = walkingSpeed * this.speed * deltaSeconds
-    if (this.keyMap.right)
-      this.goalVelocity.x = -walkingSpeed * this.speed * deltaSeconds
-    if (!this.keyMap.left && !this.keyMap.right) this.goalVelocity.x = 0
-
-    if (this.keyMap.up) this.goalVelocity.y = -walkingSpeed * this.speed * deltaSeconds
-    if (this.keyMap.down) this.goalVelocity.y = walkingSpeed * this.speed * deltaSeconds
-    if (!this.keyMap.down && !this.keyMap.up) this.goalVelocity.y = 0
-
-    this.velocity.x = this.velocityXDamper.update(
-      this.velocity.x,
-      this.goalVelocity.x,
+    this.position.x = this.positionXDamper.update(
+      this.position.x,
+      this.goalPosition.x,
       delta,
       1
     )
-
-    this.velocity.y = this.velocityYDamper.update(
-      this.velocity.y,
-      this.goalVelocity.y,
+    this.position.y = this.positionYDamper.update(
+      this.position.y,
+      this.goalPosition.y,
       delta,
       1
     )
-
-    this.velocity.z = this.velocityZDamper.update(
-      this.velocity.z,
-      this.goalVelocity.z,
+    this.position.z = this.positionZDamper.update(
+      this.position.z,
+      this.goalPosition.z,
       delta,
       1
     )
@@ -111,49 +134,57 @@ class FlyControls extends EventDispatcher {
     this.euler.y = this.eulerYDamper.update(this.euler.y, this.goalEuler.y, delta, 1)
     this.euler.z = this.eulerZDamper.update(this.euler.z, this.goalEuler.z, delta, 1)
 
-    this.moveRightF(-this.velocity.x)
-    this.moveForwardF(-this.velocity.z)
-    this.moveUpF(-this.velocity.y)
     this.rotate(this.euler)
+    this.camera.position.copy(this.position)
 
     return true
   }
 
-  connect() {
-    this.domElement.addEventListener('pointermove', this.onMouseMove)
-    document.addEventListener('keydown', this.onKeyDown)
-    document.addEventListener('keyup', this.onKeyUp)
+  public jumpToGoal(): void {
+    this.update(SETTLING_TIME)
   }
 
-  disconnect() {
-    this.domElement.removeEventListener('pointermove', this.onMouseMove)
-    document.removeEventListener('keydown', this.onKeyDown)
-    document.removeEventListener('keyup', this.onKeyUp)
+  public fitToSphere(sphere: Sphere): void {
+    const forward = this.camera.getWorldDirection(new Vector3())
+    forward.negate()
+    const pos = new Vector3()
+      .copy(sphere.center)
+      .addScaledVector(forward, sphere.radius)
+    this.goalPosition.copy(pos)
   }
 
-  dispose() {
-    this.disconnect()
+  public fromPositionAndTarget(position: Vector3, target: Vector3): void {
+    const cameraForward = new Vector3().setFromMatrixColumn(this.camera.matrix, 2)
+    const dir = new Vector3().subVectors(target, position).normalize()
+    const quaternion = new Quaternion().setFromUnitVectors(cameraForward, dir)
+    this.goalEuler.setFromQuaternion(quaternion)
+    this.goalPosition.copy(position)
   }
 
-  moveForwardF(distance: number) {
+  public fromSpherical(_spherical: Spherical, _origin?: Vector3 | undefined): void {
+    _spherical
+    _origin
+  }
+
+  public getTarget(): Vector3 {
+    throw new Error('Method not implemented.')
+  }
+
+  public getPosition(): Vector3 {
+    return this.goalPosition
+  }
+
+  public moveBy(amount: Vector3) {
     const camera = this.camera
-    const dir = camera.getWorldDirection(new Vector3())
-    camera.position.addScaledVector(dir, distance)
+    _vectorBuff0.setFromMatrixColumn(camera.matrix, 2)
+    this.goalPosition.addScaledVector(_vectorBuff0, amount.z)
+    _vectorBuff0.setFromMatrixColumn(camera.matrix, 1)
+    this.goalPosition.addScaledVector(_vectorBuff0, amount.y)
+    _vectorBuff0.setFromMatrixColumn(camera.matrix, 0)
+    this.goalPosition.addScaledVector(_vectorBuff0, amount.x)
   }
 
-  moveUpF(distance: number) {
-    const camera = this.camera
-    _vector.setFromMatrixColumn(camera.matrix, 1)
-    camera.position.addScaledVector(_vector, distance)
-  }
-
-  moveRightF(distance: number) {
-    const camera = this.camera
-    _vector.setFromMatrixColumn(camera.matrix, 0)
-    camera.position.addScaledVector(_vector, distance)
-  }
-
-  rotateBy(amount: Vector2) {
+  public rotateBy(amount: Vector2) {
     this.goalEuler.y -= amount.y
     this.goalEuler.x -= amount.x
     // Set to constrain the pitch of the camera
@@ -165,7 +196,27 @@ class FlyControls extends EventDispatcher {
     )
   }
 
-  rotate(euler: Euler) {
+  protected connect() {
+    if (this._enabled) return
+
+    this.domElement.addEventListener('pointermove', this.onMouseMove)
+    document.addEventListener('keydown', this.onKeyDown)
+    document.addEventListener('keyup', this.onKeyUp)
+  }
+
+  protected disconnect() {
+    if (!this._enabled) return
+
+    this.domElement.removeEventListener('pointermove', this.onMouseMove)
+    document.removeEventListener('keydown', this.onKeyDown)
+    document.removeEventListener('keyup', this.onKeyUp)
+  }
+
+  public dispose() {
+    this.disconnect()
+  }
+
+  protected rotate(euler: Euler) {
     const q = new Quaternion()
     const t = new Quaternion().setFromRotationMatrix(
       new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5))
@@ -185,7 +236,7 @@ class FlyControls extends EventDispatcher {
     amount.x = movementY * 0.005 * this.pointerSpeed
 
     this.rotateBy(amount)
-    this.dispatchEvent(_changeEvent)
+    this.emit(_changeEvent)
   }
 
   protected onKeyDown = (event: KeyboardEvent) => {

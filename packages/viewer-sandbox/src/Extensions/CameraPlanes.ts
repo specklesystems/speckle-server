@@ -48,7 +48,7 @@ export class CameraPlanes extends Extension {
 
   public getClosestGeometryDistance(camera: PerspectiveCamera): number {
     const cameraPosition = camera.position
-    const cameraTarget = this.camerController.getOrigin()
+    const cameraTarget = this.camerController.getTarget()
     const cameraDir = new Vector3()
       .subVectors(cameraTarget, camera.position)
       .normalize()

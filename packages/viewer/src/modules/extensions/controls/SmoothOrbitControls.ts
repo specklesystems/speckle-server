@@ -17,10 +17,8 @@ import {
   Spherical,
   Vector2,
   Vector3,
-  Object3D,
   WebGLRenderer,
   PerspectiveCamera,
-  Box3,
   Sphere,
   Matrix4,
   MathUtils,
@@ -35,9 +33,9 @@ import {
 
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
 
-import EventEmitter from '../../EventEmitter.js'
 import { ObjectLayers } from '../../../IViewer.js'
 import { World } from '../../World.js'
+import { SpeckleControls } from './SpeckleControls.js'
 
 /**
  * @param {Number} value
@@ -49,9 +47,6 @@ const clamp = (value: number, lowerLimit: number, upperLimit: number): number =>
   Math.max(lowerLimit, Math.min(upperLimit, value))
 
 const PAN_SENSITIVITY = 0.018
-// const TAP_DISTANCE = 2
-// const TAP_MS = 300
-// const vector2 = new Vector2()
 const vector3 = new Vector3()
 
 export type TouchMode = null | ((dx: number, dy: number) => void)
@@ -102,21 +97,7 @@ export interface SmoothControlsOptions {
   zoomToCursor?: boolean
 }
 
-// Constants
-// const KEYBOARD_ORBIT_INCREMENT = Math.PI / 8
 const ZOOM_SENSITIVITY = 0.08
-
-// The move size on pan key event
-// const PAN_KEY_INCREMENT = 10
-
-export const KeyCode = {
-  PAGE_UP: 33,
-  PAGE_DOWN: 34,
-  LEFT: 37,
-  UP: 38,
-  RIGHT: 39,
-  DOWN: 40
-}
 
 export enum PointerChangeEvent {
   PointerChangeStart = 'pointer-change-start',
@@ -141,8 +122,8 @@ export enum PointerChangeEvent {
  * has been set in terms of position, rotation and scale, so it is important to
  * ensure that the camera's matrixWorld is in sync before using SmoothControls.
  */
-export class SmoothOrbitControls extends EventEmitter {
-  private _interactionEnabled: boolean = false
+export class SmoothOrbitControls extends SpeckleControls {
+  private _enabled: boolean = false
   private _options: Required<SmoothControlsOptions>
   private isUserPointing = false
 
@@ -175,7 +156,7 @@ export class SmoothOrbitControls extends EventEmitter {
   private touchDecided = false
   private zoomControlCoord: Vector2 = new Vector2()
 
-  public _controlTarget: Object3D
+  public _controlTarget: PerspectiveCamera | OrthographicCamera
   private _container: HTMLElement
   private _renderer: WebGLRenderer
   private _lastTick: number = 0
@@ -187,8 +168,18 @@ export class SmoothOrbitControls extends EventEmitter {
   private cursorSphere: Mesh
   private world: World
 
+  public get enabled(): boolean {
+    return this._enabled
+  }
+  public set enabled(value: boolean) {
+    if (value) {
+      this.enableInteraction()
+    } else this.disableInteraction()
+    this._enabled = value
+  }
+
   constructor(
-    controlTarget: Object3D,
+    controlTarget: PerspectiveCamera | OrthographicCamera,
     container: HTMLElement,
     renderer: WebGLRenderer,
     scene: Scene,
@@ -237,82 +228,78 @@ export class SmoothOrbitControls extends EventEmitter {
     return this._basisTransform
   }
 
-  get interactionEnabled(): boolean {
-    return this._interactionEnabled
-  }
-
-  set controlTarget(value: Object3D) {
+  set controlTarget(value: PerspectiveCamera | OrthographicCamera) {
     this._controlTarget = value
     this.moveCamera()
   }
 
-  get originValue(): Vector3 {
-    return this.origin
+  public fromPositionAndTarget(position: Vector3, target: Vector3): void {
+    /** This check is targeted exclusevely towards the frontend which calls this method pointlessly each frame
+     *  We don't want to make pointless calculations more than we already are
+     */
+    const targetPosition = this.getPosition()
+    if (position.equals(targetPosition) && target.equals(this.origin)) return
+
+    const v0 = new Vector3()
+      .copy(position)
+      .applyMatrix4(
+        new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5)).invert()
+      )
+    v0.sub(target)
+    const spherical = new Spherical()
+    spherical.setFromCartesianCoords(v0.x, v0.y, v0.z)
+    this.setOrbit(spherical.theta, spherical.phi, spherical.radius)
+    this.setTarget(target.x, target.y, target.z)
   }
 
-  get sphericalValue(): Spherical {
-    return this.spherical
-  }
-
-  enableInteraction() {
-    if (this._interactionEnabled === false) {
-      this._container.addEventListener('pointerdown', this.onPointerDown)
-      this._container.addEventListener('pointercancel', this.onPointerUp)
-
-      this._container.addEventListener('wheel', this.onWheel)
-      document.addEventListener('keydown', this.onKeyDown)
-      // This little beauty is to work around a WebKit bug that otherwise makes
-      // touch events randomly not cancelable.
-      this._container.addEventListener('touchmove', () => {}, { passive: false })
-      this._container.addEventListener('contextmenu', this.onContext)
-
-      // this.element.style.cursor = 'grab'
-      this._interactionEnabled = true
-    }
-  }
-
-  disableInteraction() {
-    if (this._interactionEnabled === true) {
-      this._container.removeEventListener('pointerdown', this.onPointerDown)
-      this._container.removeEventListener('pointermove', this.onPointerMove)
-      this._container.removeEventListener('pointerup', this.onPointerUp)
-      this._container.removeEventListener('pointercancel', this.onPointerUp)
-      this._container.removeEventListener('wheel', this.onWheel)
-      document.removeEventListener('keydown', this.onKeyDown)
-      this._container.removeEventListener('contextmenu', this.onContext)
-
-      //   element.style.cursor = ''
-      this.touchMode = null
-      this._interactionEnabled = false
-    }
-  }
-
-  onContext = (event: MouseEvent) => {
-    if (this.enablePan) {
-      event.preventDefault()
-    } else {
-      for (const pointer of this.pointers) {
-        // Required because of a common browser bug where the context menu never
-        // fires a pointercancel event.
-        this.onPointerUp(
-          new PointerEvent('pointercancel', {
-            ...this.startPointerPosition,
-            pointerId: pointer.id
-          })
-        )
-      }
-    }
+  public fromSpherical(
+    spherical: Spherical,
+    origin: Vector3 = new Vector3(0, 0, 0)
+  ): void {
+    this.setOrbit(spherical.theta, spherical.phi, spherical.radius)
+    this.setTarget(origin.x, origin.y, origin.z)
   }
 
   /**
-   * Copy the spherical values that represent the current camera orbital
-   * position relative to the configured target into a provided Spherical
-   * instance. If no Spherical is provided, a new Spherical will be allocated
-   * to copy the values into. The Spherical that values are copied into is
-   * returned.
+   * Move the camera instantly instead of accelerating toward the goal
+   * parameters.
    */
-  getCameraSpherical(target: Spherical = new Spherical()) {
-    return target.copy(this.spherical)
+  public jumpToGoal() {
+    this.update(SETTLING_TIME)
+  }
+
+  public fitToSphere(sphere: Sphere) {
+    /** The three.js Sphere has it's origin in a CS where Y is up (proper way) */
+    const nativeOrigin = new Vector3()
+      .copy(sphere.center)
+      .applyMatrix4(this._basisTransformInv)
+    this.setTarget(nativeOrigin.x, nativeOrigin.y, nativeOrigin.z)
+
+    this.setRadius(sphere.radius)
+  }
+
+  /**
+   * Gets the current goal position
+   */
+  public getPosition(): Vector3 {
+    return this.positionFromSpherical(this.goalSpherical, this.origin)
+  }
+
+  /**
+   * Gets the point in model coordinates the model should orbit/pivot around.
+   */
+  public getTarget(): Vector3 {
+    return this.goalOrigin.clone()
+  }
+
+  public isStationary(): boolean {
+    return (
+      this.goalSpherical.theta === this.spherical.theta &&
+      this.goalSpherical.phi === this.spherical.phi &&
+      this.goalSpherical.radius === this.spherical.radius &&
+      this.goalLogFov === this.logFov &&
+      this.goalOrigin.equals(this.origin)
+    )
   }
 
   /**
@@ -320,7 +307,7 @@ export class SmoothOrbitControls extends EventEmitter {
    * merged with whatever _options have already been configured for this
    * controls instance.
    */
-  applyOptions(_options: SmoothControlsOptions) {
+  public applyOptions(_options: SmoothControlsOptions) {
     Object.assign(this._options, _options)
     // Re-evaluates clamping based on potentially new values for min/max
     // polar, azimuth and radius:
@@ -336,7 +323,7 @@ export class SmoothOrbitControls extends EventEmitter {
    * Returns true if invoking the method will result in the camera changing
    * position and/or rotation, otherwise false.
    */
-  setOrbit(
+  public setOrbit(
     goalTheta: number = this.goalSpherical.theta,
     goalPhi: number = this.goalSpherical.phi,
     goalRadius: number = this.goalSpherical.radius
@@ -380,7 +367,7 @@ export class SmoothOrbitControls extends EventEmitter {
   /**
    * Subset of setOrbit() above, which only sets the camera's radius.
    */
-  setRadius(radius: number) {
+  public setRadius(radius: number) {
     this.goalSpherical.radius = radius
     this.setOrbit()
   }
@@ -388,7 +375,7 @@ export class SmoothOrbitControls extends EventEmitter {
   /**
    * Sets the goal field of view for the camera
    */
-  setFieldOfView(fov: number) {
+  public setFieldOfView(fov: number) {
     const { minimumFieldOfView, maximumFieldOfView } = this._options
     fov = clamp(fov, minimumFieldOfView, maximumFieldOfView)
     this.goalLogFov = Math.log(fov)
@@ -397,7 +384,7 @@ export class SmoothOrbitControls extends EventEmitter {
   /**
    * Sets the smoothing decay time.
    */
-  setDamperDecayTime(decayMilliseconds: number) {
+  public setDamperDecayTime(decayMilliseconds: number) {
     this.thetaDamper.setDecayTime(decayMilliseconds)
     this.phiDamper.setDecayTime(decayMilliseconds)
     this.radiusDamper.setDecayTime(decayMilliseconds)
@@ -410,15 +397,8 @@ export class SmoothOrbitControls extends EventEmitter {
   /**
    * Sets the point in model coordinates the object should orbit/pivot around.
    */
-  setTarget(x: number, y: number, z: number) {
+  public setTarget(x: number, y: number, z: number) {
     this.goalOrigin.set(x, y, z)
-  }
-
-  /**
-   * Gets the point in model coordinates the model should orbit/pivot around.
-   */
-  getTarget(): Vector3 {
-    return this.goalOrigin.clone()
   }
 
   /**
@@ -428,7 +408,7 @@ export class SmoothOrbitControls extends EventEmitter {
    * The deltaZoom parameter adjusts both the field of view and the orbit radius
    * such that they progress across their allowed ranges in sync.
    */
-  adjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {
+  public adjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {
     const { theta, phi, radius } = this.goalSpherical
 
     const dTheta = this.spherical.theta - theta
@@ -436,22 +416,6 @@ export class SmoothOrbitControls extends EventEmitter {
     const goalTheta =
       theta - clamp(deltaTheta, -dThetaLimit - dTheta, dThetaLimit - dTheta)
     const goalPhi = phi - deltaPhi
-
-    /** Original approach to zoom amount varying which works quite bad */
-    // const { minimumRadius, maximumRadius, minimumFieldOfView, maximumFieldOfView } =
-    // this._options
-    // const a = (deltaZoom > 0 ? maximumRadius : minimumRadius) - radius
-    // const b =
-    //   Math.log(deltaZoom > 0 ? maximumFieldOfView : minimumFieldOfView) -
-    //   this.goalLogFov
-    // const deltaRatio = deltaZoom === 0 ? 0 : a / b
-    // const size = this._renderer.getSize(new Vector2())
-    // const zoomPerPixel = (ZOOM_SENSITIVITY * this.zoomSensitivity) / size.y
-    // const metersPerPixel = this.spherical.radius * Math.exp(this.logFov) * zoomPerPixel
-    // const zoomAmount =
-    //   deltaZoom *
-    //   (isFinite(deltaRatio) ? deltaRatio : (maximumRadius - minimumRadius) * 2) *
-    //   metersPerPixel
 
     /** Simpler approach to zoom amount varying */
     // half of the fov is center to top of screen
@@ -523,36 +487,6 @@ export class SmoothOrbitControls extends EventEmitter {
     // }
   }
 
-  private orthographicHeightToDistance(height: number) {
-    if (!(this._controlTarget instanceof OrthographicCamera))
-      return this.spherical.radius
-
-    return height / (Math.tan(MathUtils.DEG2RAD * Math.exp(this.logFov) * 0.5) * 2)
-  }
-
-  private distanceToOrthogrtaphicHeight(distance: number) {
-    const fov = Math.exp(this.logFov)
-    const dephtS = Math.tan(MathUtils.DEG2RAD * (fov / 2)) * 2.0
-    return dephtS * distance
-  }
-  /**
-   * Move the camera instantly instead of accelerating toward the goal
-   * parameters.
-   */
-  public jumpToGoal() {
-    this.update(SETTLING_TIME)
-  }
-
-  public fitToSphere(sphere: Sphere) {
-    /** The three.js Sphere has it's origin in a CS where Y is up (proper way) */
-    const nativeOrigin = new Vector3()
-      .copy(sphere.center)
-      .applyMatrix4(this._basisTransformInv)
-    this.setTarget(nativeOrigin.x, nativeOrigin.y, nativeOrigin.z)
-
-    this.setRadius(sphere.radius)
-  }
-
   /**
    * Update controls. In most cases, this will result in the camera
    * interpolating its position and rotation until it lines up with the
@@ -560,7 +494,7 @@ export class SmoothOrbitControls extends EventEmitter {
    *
    * Time and delta are measured in milliseconds.
    */
-  update(delta?: number, worldBox?: Box3): boolean {
+  public update(delta?: number): boolean {
     const now = performance.now()
     delta = delta !== undefined ? delta : now - this._lastTick
     this._lastTick = now
@@ -568,9 +502,9 @@ export class SmoothOrbitControls extends EventEmitter {
     if (this.isStationary()) {
       return false
     }
-    if (worldBox) {
+    if (this.world) {
       this.applyOptions({
-        maximumRadius: worldBox.max.distanceTo(worldBox.min) * 2
+        maximumRadius: this.world.worldBox.max.distanceTo(this.world.worldBox.min) * 2
       })
     }
 
@@ -616,8 +550,8 @@ export class SmoothOrbitControls extends EventEmitter {
     // )
 
     let normalization = 1
-    if (worldBox) {
-      normalization = worldBox.getBoundingSphere(new Sphere()).radius / 10
+    if (this.world) {
+      normalization = this.world.worldBox.getBoundingSphere(new Sphere()).radius / 10
     }
     const x = this.targetDamperX.update(
       this.origin.x,
@@ -644,45 +578,7 @@ export class SmoothOrbitControls extends EventEmitter {
     return true
   }
 
-  private isStationary(): boolean {
-    return (
-      this.goalSpherical.theta === this.spherical.theta &&
-      this.goalSpherical.phi === this.spherical.phi &&
-      this.goalSpherical.radius === this.spherical.radius &&
-      this.goalLogFov === this.logFov &&
-      this.goalOrigin.equals(this.origin)
-    )
-  }
-
-  private positionFromSpherical(spherical: Spherical, origin?: Vector3) {
-    const position: Vector3 = new Vector3()
-    position.setFromSpherical(spherical)
-    if (origin) position.add(origin)
-
-    position.applyQuaternion(
-      new Quaternion().setFromRotationMatrix(this._basisTransform)
-    )
-    return position
-  }
-
-  private quaternionFromSpherical(spherical: Spherical) {
-    const quaternion: Quaternion = new Quaternion()
-    quaternion.setFromEuler(
-      new Euler(spherical.phi - Math.PI / 2, spherical.theta, 0, 'YXZ')
-    )
-    quaternion.premultiply(new Quaternion().setFromRotationMatrix(this._basisTransform))
-    return quaternion
-  }
-
-  public getTargetPosition(): Vector3 {
-    return this.positionFromSpherical(this.goalSpherical, this.origin)
-  }
-
-  public getPosition(): Vector3 {
-    return this.positionFromSpherical(this.spherical, this.origin)
-  }
-
-  private moveCamera() {
+  protected moveCamera() {
     // Derive the new camera position from the updated spherical:
     this.spherical.makeSafe()
     const position = this.positionFromSpherical(this.spherical, this.origin)
@@ -736,17 +632,51 @@ export class SmoothOrbitControls extends EventEmitter {
       this._controlTarget.updateProjectionMatrix()
     }
 
-    const plm = new Vector3()
-      .copy(this._controlTarget.position)
-      .applyMatrix4(this._basisTransformInv)
-    const offset = new Vector3().copy(plm).sub(this.origin)
-    const ortho = this.distanceToOrthogrtaphicHeight(offset.length())
-    const dist = this.orthographicHeightToDistance(ortho)
-    dist
-    // console.log(this.spherical.radius, offset.length(), ortho, dist)
+    /** Ortho height to distance test */
+    // const plm = new Vector3()
+    //   .copy(this._controlTarget.position)
+    //   .applyMatrix4(this._basisTransformInv)
+    // const offset = new Vector3().copy(plm).sub(this.origin)
+    // const ortho = this.distanceToOrthogrtaphicHeight(offset.length())
+    // const dist = this.orthographicHeightToDistance(ortho)
   }
 
-  private userAdjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {
+  /* Ortho height to distance functions
+  private orthographicHeightToDistance(height: number) {
+    if (!(this._controlTarget instanceof OrthographicCamera))
+      return this.spherical.radius
+
+    return height / (Math.tan(MathUtils.DEG2RAD * Math.exp(this.logFov) * 0.5) * 2)
+  }
+
+  private distanceToOrthogrtaphicHeight(distance: number) {
+    const fov = Math.exp(this.logFov)
+    const dephtS = Math.tan(MathUtils.DEG2RAD * (fov / 2)) * 2.0
+    return dephtS * distance
+  }
+  */
+
+  protected positionFromSpherical(spherical: Spherical, origin?: Vector3) {
+    const position: Vector3 = new Vector3()
+    position.setFromSpherical(spherical)
+    if (origin) position.add(origin)
+
+    position.applyQuaternion(
+      new Quaternion().setFromRotationMatrix(this._basisTransform)
+    )
+    return position
+  }
+
+  protected quaternionFromSpherical(spherical: Spherical) {
+    const quaternion: Quaternion = new Quaternion()
+    quaternion.setFromEuler(
+      new Euler(spherical.phi - Math.PI / 2, spherical.theta, 0, 'YXZ')
+    )
+    quaternion.premultiply(new Quaternion().setFromRotationMatrix(this._basisTransform))
+    return quaternion
+  }
+
+  protected userAdjustOrbit(deltaTheta: number, deltaPhi: number, deltaZoom: number) {
     this.adjustOrbit(
       deltaTheta *
         this._options.orbitSensitivity *
@@ -763,19 +693,48 @@ export class SmoothOrbitControls extends EventEmitter {
     )
   }
 
+  protected enableInteraction() {
+    if (this._enabled) return
+
+    this._container.addEventListener('pointerdown', this.onPointerDown)
+    this._container.addEventListener('pointercancel', this.onPointerUp)
+
+    this._container.addEventListener('wheel', this.onWheel)
+    // This little beauty is to work around a WebKit bug that otherwise makes
+    // touch events randomly not cancelable.
+    this._container.addEventListener('touchmove', () => {}, { passive: false })
+    this._container.addEventListener('contextmenu', this.onContext)
+
+    // this.element.style.cursor = 'grab'
+  }
+
+  protected disableInteraction() {
+    if (!this._enabled) return
+
+    this._container.removeEventListener('pointerdown', this.onPointerDown)
+    this._container.removeEventListener('pointermove', this.onPointerMove)
+    this._container.removeEventListener('pointerup', this.onPointerUp)
+    this._container.removeEventListener('pointercancel', this.onPointerUp)
+    this._container.removeEventListener('wheel', this.onWheel)
+    this._container.removeEventListener('contextmenu', this.onContext)
+
+    //   element.style.cursor = ''
+    this.touchMode = null
+  }
+
   // Wraps to between -pi and pi
-  private wrapAngle(radians: number): number {
+  protected wrapAngle(radians: number): number {
     const normalized = (radians + Math.PI) / (2 * Math.PI)
     const wrapped = normalized - Math.floor(normalized)
     return wrapped * 2 * Math.PI - Math.PI
   }
 
-  private pixelLengthToSphericalAngle(pixelLength: number): number {
+  protected pixelLengthToSphericalAngle(pixelLength: number): number {
     const size = this._renderer.getSize(new Vector2())
     return (2 * Math.PI * pixelLength) / size.y
   }
 
-  private twoTouchDistance(touchOne: Pointer, touchTwo: Pointer): number {
+  protected twoTouchDistance(touchOne: Pointer, touchTwo: Pointer): number {
     const { clientX: xOne, clientY: yOne } = touchOne
     const { clientX: xTwo, clientY: yTwo } = touchTwo
     const xDelta = xTwo - xOne
@@ -784,7 +743,7 @@ export class SmoothOrbitControls extends EventEmitter {
     return Math.sqrt(xDelta * xDelta + yDelta * yDelta)
   }
 
-  private touchModeZoom: TouchMode = (dx: number, dy: number) => {
+  protected touchModeZoom: TouchMode = (dx: number, dy: number) => {
     const size = this._renderer.getSize(new Vector2())
     const touchDistance = this.twoTouchDistance(this.pointers[0], this.pointers[1])
     const deltaZoom =
@@ -808,11 +767,11 @@ export class SmoothOrbitControls extends EventEmitter {
   // match Android. Specifically, even if a touch gesture begins by panning X,
   // iOS will switch to scrolling as soon as the gesture moves in the Y, rather
   // than staying in the same mode until the end of the gesture.
-  private disableScroll = (event: TouchEvent) => {
+  protected disableScroll = (event: TouchEvent) => {
     event.preventDefault()
   }
 
-  private touchModeRotate: TouchMode = (dx: number, dy: number) => {
+  protected touchModeRotate: TouchMode = (dx: number, dy: number) => {
     const { touchAction } = this._options
     if (!this.touchDecided && touchAction !== 'none') {
       this.touchDecided = true
@@ -834,7 +793,7 @@ export class SmoothOrbitControls extends EventEmitter {
     this.handleSinglePointerMove(dx, dy)
   }
 
-  private handleSinglePointerMove(dx: number, dy: number) {
+  protected handleSinglePointerMove(dx: number, dy: number) {
     const deltaTheta = this.pixelLengthToSphericalAngle(dx)
     const deltaPhi = this.pixelLengthToSphericalAngle(dy)
 
@@ -846,7 +805,7 @@ export class SmoothOrbitControls extends EventEmitter {
     this.userAdjustOrbit(deltaTheta, deltaPhi, 0)
   }
 
-  private initializePan() {
+  protected initializePan() {
     const size = this._renderer.getSize(new Vector2())
     const { theta, phi } = this.spherical
     const psi = theta //- this.scene.yaw
@@ -866,7 +825,7 @@ export class SmoothOrbitControls extends EventEmitter {
     )
   }
 
-  private movePan(dx: number, dy: number) {
+  protected movePan(dx: number, dy: number) {
     const dxy = vector3.set(dx, dy, 0).multiplyScalar(this._options.inputSensitivity)
     const metersPerPixel =
       this.spherical.radius * Math.exp(this.logFov) * this.panPerPixel
@@ -877,7 +836,7 @@ export class SmoothOrbitControls extends EventEmitter {
     this.setTarget(target.x, target.y, target.z)
   }
 
-  private onPointerDown = (event: PointerEvent) => {
+  protected onPointerDown = (event: PointerEvent) => {
     if (this.pointers.length > 2) {
       return
     }
@@ -914,7 +873,7 @@ export class SmoothOrbitControls extends EventEmitter {
     //   this.dispatchEvent({ type: 'user-interaction' })
   }
 
-  private onPointerMove = (event: PointerEvent) => {
+  protected onPointerMove = (event: PointerEvent) => {
     const pointer = this.pointers.find((pointer) => pointer.id === event.pointerId)
     if (!pointer) {
       return
@@ -948,7 +907,7 @@ export class SmoothOrbitControls extends EventEmitter {
     }
   }
 
-  private onPointerUp = (event: PointerEvent) => {
+  protected onPointerUp = (event: PointerEvent) => {
     const index = this.pointers.findIndex((pointer) => pointer.id === event.pointerId)
     if (index !== -1) {
       this.pointers.splice(index, 1)
@@ -979,7 +938,7 @@ export class SmoothOrbitControls extends EventEmitter {
     }
   }
 
-  private onTouchChange(event: PointerEvent) {
+  protected onTouchChange(event: PointerEvent) {
     if (this.pointers.length === 1) {
       this.touchMode = this.touchModeRotate
     } else {
@@ -1006,7 +965,7 @@ export class SmoothOrbitControls extends EventEmitter {
     }
   }
 
-  private onMouseDown(event: MouseEvent) {
+  protected onMouseDown(event: MouseEvent) {
     this.panPerPixel = 0
     if (
       this.enablePan &&
@@ -1018,7 +977,7 @@ export class SmoothOrbitControls extends EventEmitter {
     // this.element.style.cursor = 'grabbing'
   }
 
-  private onWheel = (event: WheelEvent) => {
+  protected onWheel = (event: WheelEvent) => {
     const x =
       ((event.clientX - this._container.clientLeft) / this._container.clientWidth) * 2 -
       1
@@ -1042,98 +1001,24 @@ export class SmoothOrbitControls extends EventEmitter {
     // this.dispatchEvent({ type: 'user-interaction' })
   }
 
-  private onKeyDown = (event: KeyboardEvent) => {
-    event
-    // We track if the key is actually one we respond to, so as not to
-    // accidentally clobber unrelated key inputs when the <model-viewer> has
-    // focus.
-    // const relevantKey =
-    //   event.shiftKey && this.enablePan
-    //     ? this.panKeyCodeHandler(event)
-    //     : this.orbitZoomKeyCodeHandler(event)
-    // this.orbitZoomKeyCodeHandler(event)
-    // if (relevantKey) {
-    //   event.preventDefault()
-    // TO DO
-    //   this.dispatchEvent({ type: 'user-interaction' })
-    // }
+  protected onContext = (event: MouseEvent) => {
+    if (this.enablePan) {
+      event.preventDefault()
+    } else {
+      for (const pointer of this.pointers) {
+        // Required because of a common browser bug where the context menu never
+        // fires a pointercancel event.
+        this.onPointerUp(
+          new PointerEvent('pointercancel', {
+            ...this.startPointerPosition,
+            pointerId: pointer.id
+          })
+        )
+      }
+    }
   }
 
-  /**
-   * Handles the orbit and Zoom key presses
-   * Uses constants for the increment.
-   * @param event The keyboard event for the .key value
-   * @returns boolean to indicate if the key event has been handled
-   */
-  // private orbitZoomKeyCodeHandler(event: KeyboardEvent) {
-  //   let relevantKey = true
-  //   this.initializePan()
-  //   console.log(event.key)
-  //   switch (event.key) {
-  //     case 'w':
-  //       this.userAdjustOrbit(
-  //         0,
-  //         0,
-  //         -1 *
-  //           ZOOM_SENSITIVITY *
-  //           this._options.zoomSensitivity *
-  //           +this._options.enableZoom
-  //       )
-  //       break
-  //     case 's':
-  //       this.userAdjustOrbit(
-  //         0,
-  //         0,
-  //         ZOOM_SENSITIVITY * this._options.zoomSensitivity * +this._options.enableZoom
-  //       )
-  //       break
-  //     case 'a':
-  //       this.movePan(PAN_KEY_INCREMENT, 0)
-  //       break
-  //     case 'd':
-  //       this.movePan(-1 * PAN_KEY_INCREMENT, 0)
-  //       break
-  //     case 'q':
-  //       this.userAdjustOrbit(-KEYBOARD_ORBIT_INCREMENT, 0, 0)
-  //       break
-  //     case 'e':
-  //       this.userAdjustOrbit(KEYBOARD_ORBIT_INCREMENT, 0, 0)
-  //       break
-  //     default:
-  //       relevantKey = false
-  //       break
-  //   }
-  //   return relevantKey
-  // }
-
-  /**
-   * Handles the Pan key presses
-   * Uses constants for the increment.
-   * @param event The keyboard event for the .key value
-   * @returns boolean to indicate if the key event has been handled
-   */
-  // private panKeyCodeHandler(event: KeyboardEvent) {
-  //   this.initializePan()
-  //   let relevantKey = true
-  //   switch (event.key) {
-  //     case 'ArrowUp':
-  //       this.movePan(0, -1 * PAN_KEY_INCREMENT) // This is the negative one so that the
-  //       // model appears to move as the arrow
-  //       // direction rather than the view moving
-  //       break
-  //     case 'ArrowDown':
-  //       this.movePan(0, PAN_KEY_INCREMENT)
-  //       break
-  //     case 'ArrowLeft':
-  //       this.movePan(-1 * PAN_KEY_INCREMENT, 0)
-  //       break
-  //     case 'ArrowRight':
-  //       this.movePan(PAN_KEY_INCREMENT, 0)
-  //       break
-  //     default:
-  //       relevantKey = false
-  //       break
-  //   }
-  //   return relevantKey
-  // }
+  public dispose(): void {
+    throw new Error('Method not implemented.')
+  }
 }
