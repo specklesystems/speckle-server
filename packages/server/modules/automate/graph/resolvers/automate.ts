@@ -126,6 +126,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       AutomationRunTrigger: {
+        // TODO: What about manual?
         __resolveType(parent) {
           if (
             dbToGraphqlTriggerTypeMap[parent.triggerType] ===

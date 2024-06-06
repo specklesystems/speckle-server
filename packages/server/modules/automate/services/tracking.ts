@@ -5,8 +5,8 @@ import {
   AutomationRunRecord,
   AutomationRunStatus,
   AutomationRunStatuses,
-  AutomationTriggerType,
-  AutomationWithRevision
+  AutomationWithRevision,
+  RunTriggerSource
 } from '@/modules/automate/helpers/types'
 import {
   InsertableAutomationRun,
@@ -80,11 +80,11 @@ const onRunCreated = async ({
 }: {
   automation: AutomationWithRevision
   run: InsertableAutomationRun
-  source: AutomationTriggerType
+  source: RunTriggerSource
 }) => {
   // all triggers, that are automatic result of an action are in a need to be tracked
   switch (source) {
-    case 'versionCreation': {
+    case RunTriggerSource.Automatic: {
       const mp = mixpanel({ userEmail: undefined })
       await mp.track('Automation Run Triggered', {
         automationId: automation.id,
@@ -96,7 +96,7 @@ const onRunCreated = async ({
       break
     }
     // runs created from a user interaction are tracked in the frontend
-    case 'manual':
+    case RunTriggerSource.Manual:
       return
     default:
       throwUncoveredError(source)

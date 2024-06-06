@@ -17,6 +17,7 @@ import {
   AutomationTriggerType,
   BaseTriggerManifest,
   LiveAutomation,
+  RunTriggerSource,
   VersionCreatedTriggerManifest,
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
@@ -295,7 +296,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
               triggerType: VersionCreationTriggerType,
               modelId: cryptoRandomString({ length: 10 })
             },
-            source: 'manual'
+            source: RunTriggerSource.Manual
           })
           throw 'this should have thrown'
         } catch (error) {
@@ -380,7 +381,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             modelId: trigger.triggeringId,
             triggerType: trigger.triggerType
           },
-          source: 'manual'
+          source: RunTriggerSource.Manual
         })
 
         const storedRun = await getFullAutomationRunById(automationRunId)
@@ -471,7 +472,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
             modelId: trigger.triggeringId,
             triggerType: trigger.triggerType
           },
-          source: 'manual'
+          source: RunTriggerSource.Manual
         })
 
         const storedRun = await getFullAutomationRunById(automationRunId)

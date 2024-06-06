@@ -73,11 +73,13 @@ export type AutomateRevisionFunctionRecord = {
   automationRevisionId: string
 }
 
+export enum RunTriggerSource {
+  Automatic = 'automatic',
+  Manual = 'manual'
+}
+
 export const VersionCreationTriggerType = <const>'versionCreation'
-export const ManualTriggerType = <const>'manual'
-export type AutomationTriggerType =
-  | typeof VersionCreationTriggerType
-  | typeof ManualTriggerType
+export type AutomationTriggerType = typeof VersionCreationTriggerType
 
 export type AutomationTriggerRecordBase<
   T extends AutomationTriggerType = AutomationTriggerType

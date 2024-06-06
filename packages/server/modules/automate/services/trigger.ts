@@ -18,7 +18,7 @@ import {
   BaseTriggerManifest,
   isVersionCreatedTriggerManifest,
   LiveAutomation,
-  AutomationTriggerType
+  RunTriggerSource
 } from '@/modules/automate/helpers/types'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { getCommit } from '@/modules/core/repositories/commits'
@@ -105,8 +105,7 @@ export const onModelVersionCreate =
               projectId,
               modelId: triggeringId,
               triggerType
-            },
-            source: triggerType
+            }
           })
         } catch (error) {
           // TODO: this error should be persisted for automation status display somehow
@@ -221,10 +220,10 @@ export const triggerAutomationRevisionRun =
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
-    source: AutomationTriggerType
+    source?: RunTriggerSource
   }): Promise<{ automationRunId: string }> => {
     const { automateRunTrigger } = deps
-    const { revisionId, manifest } = params
+    const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
       throw new AutomateInvalidTriggerError(
@@ -306,7 +305,8 @@ export const triggerAutomationRevisionRun =
       run: automationRun,
       manifests: triggerManifests,
       automation: automationWithRevision,
-      source: params.source
+      source,
+      triggerType: manifest.triggerType
     })
 
     return { automationRunId: automationRun.id }
@@ -509,7 +509,7 @@ export const manuallyTriggerAutomation =
         versionId: latestCommit.id,
         triggerType: VersionCreationTriggerType
       },
-      source: 'manual'
+      source: RunTriggerSource.Manual
     })
     return { automationRunId }
   }
