@@ -72,13 +72,6 @@
           :page-size="2"
         />
       </template>
-      <AutomateAutomationCreateDialogDoneStep
-        v-else-if="
-          enumStep === AutomationCreateSteps.Done && automationId && selectedFunction
-        "
-        :automation-id="automationId"
-        :function-name="selectedFunction.name"
-      />
     </div>
   </LayoutDialog>
 </template>
@@ -90,7 +83,6 @@ import {
   type LayoutDialogButton
 } from '@speckle/ui-components'
 import {
-  ArrowRightIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CodeBracketIcon
@@ -120,8 +112,7 @@ import {
 enum AutomationCreateSteps {
   SelectFunction,
   FunctionParameters,
-  AutomationDetails,
-  Done
+  AutomationDetails
 }
 
 type DetailsFormValues = {
@@ -149,8 +140,7 @@ const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
 const stepsOrder = computed(() => [
   AutomationCreateSteps.SelectFunction,
   AutomationCreateSteps.FunctionParameters,
-  AutomationCreateSteps.AutomationDetails,
-  AutomationCreateSteps.Done
+  AutomationCreateSteps.AutomationDetails
 ])
 
 const stepsWidgetData = computed(() => [
@@ -168,6 +158,7 @@ const stepsWidgetData = computed(() => [
   }
 ])
 
+const router = useRouter()
 const inputEncryption = useAutomationInputEncryptor({ ensureWhen: open })
 const logger = useLogger()
 const updateAutomation = useUpdateAutomation()
@@ -302,30 +293,6 @@ const buttons = computed((): LayoutDialogButton[] => {
 
       return isTestAutomation.value ? testAutomationButtons : automationButtons
     }
-    case AutomationCreateSteps.Done:
-      return [
-        {
-          id: 'doneClose',
-          text: 'Close',
-          props: {
-            color: 'secondary',
-            fullWidth: true
-          },
-          onClick: () => (open.value = false)
-        },
-        {
-          id: 'doneGoToAutomation',
-          text: 'Go to Automation',
-          props: {
-            iconRight: ArrowRightIcon,
-            fullWidth: true,
-            to:
-              selectedProject.value && automationId.value
-                ? projectAutomationRoute(selectedProject.value.id, automationId.value)
-                : undefined
-          }
-        }
-      ]
     default:
       return []
   }
@@ -335,8 +302,6 @@ const buttonsWrapperClasses = computed(() => {
   switch (enumStep.value) {
     case AutomationCreateSteps.SelectFunction:
       return 'justify-between'
-    case AutomationCreateSteps.Done:
-      return 'flex-col sm:flex-row sm:justify-between'
     default:
       return 'justify-between'
   }
@@ -349,6 +314,20 @@ const validatedPreselectedFunction = computed(() => {
 
   return props.preselectedFunction
 })
+
+const goToNewAutomation = async () => {
+  if (!selectedProject.value || !automationId.value) {
+    logger.error('Missing required data for redirect', {
+      project: selectedProject.value,
+      automationId: automationId.value
+    })
+    return
+  }
+
+  await router.push(
+    projectAutomationRoute(selectedProject.value.id, automationId.value)
+  )
+}
 
 const reset = () => {
   step.value = 0
@@ -404,7 +383,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       }
 
       automationId.value = testAutomationId
-      step.value++
+      await goToNewAutomation()
       return
     }
 
@@ -475,7 +454,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       { hideSuccessToast: true }
     )
 
-    step.value++
+    await goToNewAutomation()
   } finally {
     creationLoading.value = false
     automationEncrypt?.dispose()
