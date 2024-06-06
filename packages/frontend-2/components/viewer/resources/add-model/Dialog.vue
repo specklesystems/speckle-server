@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="lg">
     <template #header>Add Model</template>
-    <div class="flex flex-col gap-y-4">
+    <div class="relative pt-8 sm:pt-0">
       <LayoutTabsHoriztonal v-model:active-item="activeTab" :items="tabItems">
         <template #default="{ activeItem }">
           <ViewerResourcesAddModelDialogModelTab
@@ -14,12 +14,16 @@
           />
         </template>
       </LayoutTabsHoriztonal>
+      <div class="absolute right-0 top-0 z-10 scale-90">
+        <FormSwitch v-model="zoomToObject" name="zoomToObject" label="Zoom to object" />
+      </div>
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
 import { SpeckleViewer } from '@speckle/shared'
 import { LayoutTabsHoriztonal } from '@speckle/ui-components'
+import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useInjectedViewerRequestedResources } from '~~/lib/viewer/composables/setup'
@@ -40,6 +44,8 @@ const tabItems = ref<LayoutTabItem[]>([
 ])
 
 const activeTab = ref(tabItems.value[0])
+
+const zoomToObject = useSynchronizedCookie<boolean>('zoomToObject')
 
 const open = computed({
   get: () => props.open,
