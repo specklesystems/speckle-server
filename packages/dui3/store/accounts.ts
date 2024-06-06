@@ -69,8 +69,6 @@ export const useAccountStore = defineStore('accountStore', () => {
   const refreshAccounts = async () => {
     isLoading.value = true
     const accs = await $accountBinding.getAccounts()
-    console.log(accs)
-
     const newAccs: DUIAccount[] = []
 
     for (const acc of accs) {
