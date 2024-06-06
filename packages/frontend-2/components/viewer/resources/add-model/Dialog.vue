@@ -14,21 +14,19 @@
           />
         </template>
       </LayoutTabsHoriztonal>
-      <div class="absolute right-0 top-0 z-10 scale-90">
-        <FormSwitch v-model="zoomToObject" name="zoomToObject" label="Zoom to object" />
-      </div>
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
 import { SpeckleViewer } from '@speckle/shared'
 import { LayoutTabsHoriztonal } from '@speckle/ui-components'
-import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
+import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useInjectedViewerRequestedResources } from '~~/lib/viewer/composables/setup'
 
 const { items } = useInjectedViewerRequestedResources()
+const { zoom } = useCameraUtilities()
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
@@ -44,8 +42,7 @@ const tabItems = ref<LayoutTabItem[]>([
 ])
 
 const activeTab = ref(tabItems.value[0])
-
-const zoomToObject = useSynchronizedCookie<boolean>('zoomToObject')
+const { triggerNotification } = useGlobalToast()
 
 const open = computed({
   get: () => props.open,
@@ -53,6 +50,19 @@ const open = computed({
 })
 
 const mp = useMixpanel()
+
+const triggerZoomNotification = () => {
+  triggerNotification({
+    type: ToastNotificationType.Success,
+    title: 'Model added successfully',
+    cta: {
+      title: 'Zoom to fit',
+      onClick: () => {
+        zoom()
+      }
+    }
+  })
+}
 
 const onModelChosen = async (params: { modelId: string }) => {
   const { modelId } = params
@@ -67,6 +77,8 @@ const onModelChosen = async (params: { modelId: string }) => {
     action: 'add',
     resource: 'model'
   })
+
+  triggerZoomNotification()
 
   open.value = false
 }
@@ -87,6 +99,8 @@ const onObjectsChosen = async (params: { objectIds: string[] }) => {
     action: 'add',
     resource: 'object'
   })
+
+  triggerZoomNotification()
 
   open.value = false
 }

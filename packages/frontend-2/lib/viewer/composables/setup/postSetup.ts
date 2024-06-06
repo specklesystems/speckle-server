@@ -52,7 +52,6 @@ import type { Reference } from '@apollo/client'
 import type { Modifier } from '@apollo/client/cache'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
-import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -79,10 +78,6 @@ function useViewerObjectAutoLoading() {
     SafeLocalStorage.get('FE2_FORCE_DISABLE_VIEWER_CACHE') === 'true'
   const authToken = useAuthCookie()
   const getObjectUrl = useGetObjectUrl()
-
-  const zoomToObject = useSynchronizedCookie<boolean>('zoomToObject', {
-    default: () => true
-  })
 
   const {
     projectId,
@@ -124,14 +119,14 @@ function useViewerObjectAutoLoading() {
       if (!newIsInitialized) return
 
       const [oldResources, oldIsInitialized] = oldData || [[], false]
-      const zoomToThread = !focusedThreadId.value // we want to zoom to the thread instead
+      const zoomToObject = !focusedThreadId.value // we want to zoom to the thread instead
 
       // Viewer initialized - load in all resources
       if (newIsInitialized && !oldIsInitialized) {
         const allObjectIds = getUniqueObjectIds(newResources)
 
         await Promise.all(
-          allObjectIds.map((i) => loadObject(i, false, { zoomToObject: zoomToThread }))
+          allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
         )
 
         return
@@ -145,9 +140,7 @@ function useViewerObjectAutoLoading() {
 
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
       await Promise.all(
-        addableObjectIds.map((i) =>
-          loadObject(i, false, { zoomToObject: zoomToObject.value })
-        )
+        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
       )
     },
     { deep: true, immediate: true }
