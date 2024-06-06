@@ -8,6 +8,7 @@ import {
 } from '~/lib/graphql/mutationsAndQueries'
 import { DUIAccount, useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
+import { ConversionResult } from '~/lib/conversions/conversionResult'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
@@ -22,6 +23,7 @@ type SendViaBrowserArgs = {
   serverUrl: string
   accountId: string
   message: string
+  sendConversionResults: ConversionResult[]
   sendObject: {
     id: string // the root object id which should be used for creating the version
     totalChildrenCount: number
@@ -166,6 +168,7 @@ export class SketchupBridge extends BaseBridge {
       modelId,
       modelCardId,
       sendObject,
+      sendConversionResults,
       message
     } = eventPayload
     this.emit('setModelProgress', {
@@ -204,9 +207,11 @@ export class SketchupBridge extends BaseBridge {
     const commitCreate = await this.createVersion(args)
 
     const hostAppStore = useHostAppStore()
-    hostAppStore.setModelCreatedVersionId({
+    // TODO: Alignment needed
+    hostAppStore.setModelSendResult({
       modelCardId: args.modelCardId,
-      versionId: commitCreate as string
+      versionId: commitCreate as string,
+      sendConversionResults
     })
   }
 

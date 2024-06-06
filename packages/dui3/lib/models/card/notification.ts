@@ -1,3 +1,5 @@
+import { ConversionResult } from 'lib/conversions/conversionResult'
+
 export type ModelCardNotification = {
   modelCardId: string
   text: string
@@ -6,6 +8,11 @@ export type ModelCardNotification = {
     name: string
     action: () => void
   }
+  /**
+   * If set, will display a view report button next to cta
+   */
+  report?: ConversionResult[]
+  // TODO figure out re report button
   dismissible: boolean
   timeout?: number
 }

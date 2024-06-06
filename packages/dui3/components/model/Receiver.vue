@@ -1,50 +1,56 @@
 <template>
-  <ModelCardBase :model-card="modelCard" :project="project">
-    <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2">
-      <div>
-        <FormButton
-          size="sm"
-          full-width
-          color="card"
-          class="flex items-center justify-center"
-          @click="receiveOrCancel"
-        >
-          {{ modelCard.progress ? 'Cancel' : 'Load' }}
-        </FormButton>
-      </div>
-      <div
-        class="flex h-full items-center space-x-2 text-xs max-[275px]:justify-center rounded-md pl-2 font-bold"
-      >
+  <ModelCardBase
+    :model-card="modelCard"
+    :project="project"
+    @manual-publish-or-load="receiveLatestVersion"
+  >
+    <div class="flex max-[275px]:flex-col items-center space-x-2 py-2">
+      <div class="shrink-0">
         <FormButton
           v-tippy="
             isExpired
-              ? 'Warning: you have loaded an older version. Click to change.'
-              : 'Change the loaded version'
+              ? 'A new version was pushed ' +
+                latestVersionCreatedAt +
+                '. Click to load a different version.'
+              : 'Load a different version'
           "
-          :color="isExpired ? 'warning' : 'default'"
+          :icon-left="ClockIcon"
           text
           size="sm"
-          full-width
-          :icon-left="!isExpired ? ClockIcon : ExclamationCircleIcon"
-          @click="openVersionsDialog = true"
+          :color="isExpired ? 'warning' : 'card'"
+          class="flex min-w-0 transition hover:text-primary py-1"
+          :disabled="!!modelCard.progress"
+          @click.stop="openVersionsDialog = true"
         >
-          {{ modelCard.selectedVersionId }}
+          <span class="">{{ createdAgo }}</span>
         </FormButton>
-        <LayoutDialog
-          v-model:open="openVersionsDialog"
-          chromium65-compatibility
-          title="Change loaded version"
-        >
-          <WizardVersionSelector
-            :account-id="modelCard.accountId"
-            :project-id="modelCard.projectId"
-            :model-id="modelCard.modelId"
-            :selected-version-id="modelCard.selectedVersionId"
-            @next="handleVersionSelection"
-          />
-        </LayoutDialog>
+      </div>
+      <div
+        class="min-w-0 truncate text-foreground-2 -mt-1"
+        :title="
+          versionDetailsResult?.project.model.version.message || 'No message provided'
+        "
+      >
+        <span class="truncate max-[275px]:truncate-no select-none text-xs">
+          {{
+            versionDetailsResult?.project.model.version.message || 'No message provided'
+          }}
+        </span>
       </div>
     </div>
+    <LayoutDialog
+      v-model:open="openVersionsDialog"
+      chromium65-compatibility
+      title="Change loaded version"
+    >
+      <WizardVersionSelector
+        :account-id="modelCard.accountId"
+        :project-id="modelCard.projectId"
+        :model-id="modelCard.modelId"
+        :selected-version-id="modelCard.selectedVersionId"
+        @next="handleVersionSelection"
+      />
+    </LayoutDialog>
     <template #states>
       <CommonModelNotification
         v-if="expiredNotification"
@@ -65,24 +71,26 @@
         :notification="receiveResultNotification"
         @dismiss="
           store.patchModel(modelCard.modelCardId, {
-            receiveResult: { ...modelCard.receiveResult, display: false }
+            displayReceiveComplete: false,
+            report: null
           })
         "
       />
-      <!-- {{ props.modelCard.receiveResult.display }} -->
     </template>
   </ModelCardBase>
 </template>
 <script setup lang="ts">
+import dayjs from 'dayjs'
+
 import { useQuery } from '@vue/apollo-composable'
-import { ClockIcon, ExclamationCircleIcon } from '@heroicons/vue/24/outline'
+import { ClockIcon } from '@heroicons/vue/24/solid'
 import { ModelCardNotification } from '~/lib/models/card/notification'
 import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
 import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { versionDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
-import { watchOnce } from '@vueuse/core'
+import { useInterval, watchOnce } from '@vueuse/core'
 
 const { trackEvent } = useMixpanel()
 const app = useNuxtApp()
@@ -100,14 +108,6 @@ app.$baseBinding.on('documentChanged', () => {
   openVersionsDialog.value = false
 })
 
-const receiveOrCancel = async () => {
-  if (props.modelCard.progress) {
-    await store.receiveModelCancel(props.modelCard.modelCardId)
-  } else {
-    await store.receiveModel(props.modelCard.modelCardId)
-  }
-}
-
 const isExpired = computed(() => {
   return props.modelCard.latestVersionId !== props.modelCard.selectedVersionId
 })
@@ -121,11 +121,25 @@ const handleVersionSelection = async (
     name: 'Load Card Version Change',
     isLatestVersion: selectedVersion === latestVersion
   })
+  if (props.modelCard.progress) {
+    await store.receiveModelCancel(props.modelCard.modelCardId)
+  }
   await store.patchModel(props.modelCard.modelCardId, {
     selectedVersionId: selectedVersion.id,
     latestVersionId: latestVersion.id, // patch this dude as well, to make sure
     hasSelectedOldVersion: selectedVersion.id === latestVersion.id
   })
+
+  await store.receiveModel(props.modelCard.modelCardId)
+}
+
+const receiveLatestVersion = async () => {
+  // Note: here we're updating the model card info, and afterwards we're hitting the receive action
+  await store.patchModel(props.modelCard.modelCardId, {
+    selectedVersionId: props.modelCard.latestVersionId
+  })
+  if (props.modelCard.progress)
+    await store.receiveModelCancel(props.modelCard.modelCardId)
   await store.receiveModel(props.modelCard.modelCardId)
 }
 
@@ -139,27 +153,23 @@ const expiredNotification = computed(() => {
   notification.text = 'Newer version available!'
   notification.cta = {
     name: 'Update',
-    action: async () => {
-      // Note: here we're updating the model card info, and afterwards we're hitting the receive action
-      await store.patchModel(props.modelCard.modelCardId, {
-        selectedVersionId: props.modelCard.latestVersionId
-      })
-      if (props.modelCard.progress)
-        await store.receiveModelCancel(props.modelCard.modelCardId)
-      await store.receiveModel(props.modelCard.modelCardId)
-    }
+    action: receiveLatestVersion
   }
   return notification
 })
 
 const receiveResultNotification = computed(() => {
-  if (!props.modelCard.receiveResult || props.modelCard.receiveResult.display !== true)
+  if (
+    !props.modelCard.bakedObjectIds ||
+    props.modelCard.displayReceiveComplete !== true
+  )
     return
 
   const notification = {} as ModelCardNotification
   notification.dismissible = true
   notification.level = 'success'
   notification.text = 'Model loaded!'
+  notification.report = props.modelCard.report
   notification.cta = {
     name: 'Highlight',
     action: () => {
@@ -175,6 +185,7 @@ const errorNotification = computed(() => {
   notification.dismissible = true
   notification.level = 'danger'
   notification.text = props.modelCard.error
+  notification.report = props.modelCard.report
   return notification
 })
 
@@ -189,6 +200,20 @@ const { result: versionDetailsResult, refetch } = useQuery(
     clientId: props.modelCard.accountId
   })
 )
+
+const createdAgoUpdater = useInterval(200)
+
+const createdAgo = computed(() => {
+  createdAgoUpdater.value++
+  return dayjs(versionDetailsResult.value?.project.model.version.createdAt).from(
+    dayjs()
+  )
+})
+
+const latestVersionCreatedAt = computed(() => {
+  createdAgoUpdater.value++
+  return dayjs(props.modelCard.latestVersionCreatedAt).from(dayjs())
+})
 
 onMounted(() => {
   refetch()
@@ -206,6 +231,7 @@ watchOnce(versionDetailsResult, async (newVal) => {
   ) {
     patchObject = {
       latestVersionId: newVal?.project.model.versions.items[0].id,
+      latestVersionCreatedAt: newVal?.project.model.versions.items[0].createdAt,
       hasDismissedUpdateWarning: props.modelCard.hasSelectedOldVersion ? true : false
     }
   }

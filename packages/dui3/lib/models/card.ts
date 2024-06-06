@@ -1,4 +1,5 @@
 import crs from 'crypto-random-string'
+import { ConversionResult } from 'lib/conversions/conversionResult'
 import { CardSetting } from 'lib/models/card/setting'
 import {
   DiscriminatedObject,
@@ -14,6 +15,7 @@ export interface IModelCard extends IDiscriminatedObject {
   progress?: ModelCardProgress
   settings?: CardSetting[]
   error?: string
+  report?: ConversionResult[]
 }
 
 export class ModelCard extends DiscriminatedObject implements IModelCard {

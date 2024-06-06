@@ -1,5 +1,6 @@
-import { IModelCardSharedEvents } from 'lib/models/card'
-import { CardSetting } from 'lib/models/card/setting'
+import { ConversionResult } from 'lib/conversions/conversionResult'
+import { IModelCardSharedEvents } from '~/lib/models/card'
+import { CardSetting } from '~/lib/models/card/setting'
 import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 import { BaseBridge } from '~~/lib/bridge/base'
 
@@ -15,7 +16,8 @@ export interface IReceiveBindingEvents extends IModelCardSharedEvents {
   // See note oon timeout in bridge v2; we might not need this
   setModelReceiveResult: (args: {
     modelCardId: string
-    receiveResult: { bakedObjectIds: string[]; display: boolean }
+    bakedObjectIds: string[]
+    conversionResults: ConversionResult[]
   }) => void
 }
 

@@ -4,8 +4,12 @@ import {
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import { IModelCard, ModelCardProgress } from 'lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
-import { IReceiverModelCard } from 'lib/models/card/receiver'
+import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
+import { ToastNotification } from '@speckle/ui-components'
+import { Nullable } from '@speckle/shared'
+import { HostAppError } from '~/lib/bridge/errorHandler'
+import { ConversionResult } from 'lib/conversions/conversionResult'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -19,11 +23,27 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
   const { trackEvent } = useMixpanel()
 
+  const currentNotification = ref<Nullable<ToastNotification>>(null)
+  const showErrorDialog = ref<boolean>(false)
+  const hostAppError = ref<Nullable<HostAppError>>(null)
+
   const hostAppName = ref<string>()
   const hostAppVersion = ref<string>()
   const connectorVersion = ref<string>()
   const documentInfo = ref<DocumentInfo>()
   const documentModelStore = ref<DocumentModelStore>({ models: [] })
+
+  const dismissNotification = () => {
+    currentNotification.value = null
+  }
+
+  const setNotification = (notification: Nullable<ToastNotification>) => {
+    currentNotification.value = notification
+  }
+
+  const setHostAppError = (error: Nullable<HostAppError>) => {
+    hostAppError.value = error
+  }
 
   /**
    * Model Card Operations
@@ -183,18 +203,20 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       })
   })
 
-  const setModelCreatedVersionId = (args: {
+  const setModelSendResult = (args: {
     modelCardId: string
     versionId: string
+    sendConversionResults: ConversionResult[]
   }) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as ISenderModelCard
     model.latestCreatedVersionId = args.versionId
+    model.report = args.sendConversionResults
     model.progress = undefined
   }
 
-  app.$sendBinding?.on('setModelCreatedVersionId', setModelCreatedVersionId)
+  app.$sendBinding?.on('setModelSendResult', setModelSendResult)
 
   /// RECEIVE STUFF
   const receiveModel = async (modelCardId: string) => {
@@ -208,8 +230,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
       model.accountId
     )
 
-    model.receiveResult = undefined
+    model.report = undefined
     model.error = undefined
+    model.displayReceiveComplete = false
     model.hasDismissedUpdateWarning = true
     model.progress = { status: 'Starting to receive...' }
     await app.$receiveBinding.receive(modelCardId)
@@ -226,18 +249,23 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
 
   const setModelReceiveResult = async (args: {
     modelCardId: string
-    receiveResult: {
-      bakedObjectIds: string[]
-      display: boolean
-    }
+    bakedObjectIds: string[]
+    conversionResults: ConversionResult[]
   }) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as IReceiverModelCard
 
-    args.receiveResult.display = true
     model.progress = undefined
-    await patchModel(model.modelCardId, { receiveResult: args.receiveResult }) // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
+    model.displayReceiveComplete = true
+    model.bakedObjectIds = args.bakedObjectIds
+    model.report = args.conversionResults
+
+    // NOTE: going through this method to ensure state sync between FE and BE. It's because of a very weird rhino bug on first receives, ask dim and he will cry
+    // TODO: check if it's still needed - we can store the bakedobject ids straigth into the receive ops in .net. Is the above reproducible?
+    await patchModel(model.modelCardId, {
+      bakedObjectIds: args.bakedObjectIds
+    })
   }
 
   app.$receiveBinding?.on('setModelReceiveResult', setModelReceiveResult)
@@ -331,6 +359,12 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendFilters,
     selectionFilter,
     everythingFilter,
+    currentNotification,
+    showErrorDialog,
+    hostAppError,
+    setNotification,
+    dismissNotification,
+    setHostAppError,
     addModel,
     patchModel,
     removeModel,
@@ -339,7 +373,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     sendModelCancel,
     receiveModelCancel,
     refreshSendFilters,
-    setModelCreatedVersionId,
+    setModelSendResult,
     setModelReceiveResult,
     handleModelProgressEvents
   }

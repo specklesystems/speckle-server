@@ -15,15 +15,20 @@
         size="xs"
         text
         :color="notification.level"
-        @click="$emit('dismiss')"
+        @click.stop="$emit('dismiss')"
       >
         <span :class="`${textClassColor}`">Dismiss</span>
       </FormButton>
+      <ReportBase
+        v-if="notification.report"
+        :report="notification.report"
+        class="mt-[3px]"
+      />
       <FormButton
         v-if="notification.cta"
         size="sm"
         :color="notification.level === 'info' ? 'primary' : notification.level"
-        @click="notification.cta?.action"
+        @click.stop="notification.cta?.action"
       >
         {{ notification.cta.name }}
       </FormButton>

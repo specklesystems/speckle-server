@@ -3,6 +3,7 @@ import { IBinding } from '~~/lib/bindings/definitions/IBinding'
 import { BaseBridge } from '~~/lib/bridge/base'
 import { CardSetting } from '~/lib/models/card/setting'
 import { IModelCardSharedEvents } from '~/lib/models/card'
+import { ConversionResult } from 'lib/conversions/conversionResult'
 
 export const ISendBindingKey = 'sendBinding'
 
@@ -16,7 +17,11 @@ export interface ISendBinding extends IBinding<ISendBindingEvents> {
 export interface ISendBindingEvents extends IModelCardSharedEvents {
   refreshSendFilters: () => void
   setModelsExpired: (modelCardIds: string[]) => void
-  setModelCreatedVersionId: (args: { modelCardId: string; versionId: string }) => void
+  setModelSendResult: (args: {
+    modelCardId: string
+    versionId: string
+    sendConversionResults: ConversionResult[]
+  }) => void
 }
 
 export class MockedSendBinding extends BaseBridge {

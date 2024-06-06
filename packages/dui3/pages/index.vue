@@ -81,6 +81,12 @@
       v-model:open="showReceiveDialog"
       @close="showReceiveDialog = false"
     />
+    <!-- Triggered by "Show Details" button on Toast Notification -->
+    <ErrorDialog
+      v-model:open="store.showErrorDialog"
+      chromium65-compatibility
+      @close="store.showErrorDialog = false"
+    />
   </div>
   <div v-else>
     <div class="fixed top-0 h-screen w-screen flex items-center pointer-events-none">

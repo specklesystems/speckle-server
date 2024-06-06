@@ -1,20 +1,31 @@
 <template>
+  <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor}`"
+    :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor} cursor-pointer`"
+    @click="highlightModel"
   >
-    <div v-if="modelData" class="px-2 py-2">
-      <div class="flex items-center space-x-2 min-w-0">
+    <div v-if="modelData" class="relative px-2 py-2">
+      <div class="relative flex items-center space-x-2 min-w-0">
         <div class="text-foreground-2 mt-[2px] flex items-center -space-x-2 relative">
-          <div v-if="!isSender" title="you are loading this model">
-            <ArrowDownCircleIcon
-              v-if="!isSender"
-              class="w-8 text-blue-500 drop-shadowxxx"
-            />
-          </div>
-          <div v-else title="you are sending this model">
-            <ArrowUpCircleIcon class="w-8 text-blue-500 drop-shadowxxx" />
-          </div>
-          <UserAvatar :user="modelData.author" size="sm" class="max-[275px]:hidden" />
+          <button
+            v-tippy="buttonTooltip"
+            class="z-10 transition hover:scale-110 rounded-full hover:shadow-md bg-foundation text-primary"
+            @click.stop="$emit('manual-publish-or-load')"
+          >
+            <template v-if="!modelCard.progress">
+              <ArrowUpCircleIcon v-if="isSender" class="w-8" />
+              <ArrowDownCircleIcon v-else class="w-8" />
+            </template>
+            <template v-else>
+              <XCircleIcon class="w-8" />
+            </template>
+          </button>
+
+          <UserAvatar
+            :user="modelData.author"
+            size="sm"
+            class="z-0 max-[275px]:hidden"
+          />
         </div>
         <div
           class="truncate font-bold text-foreground grow select-none -mt-[2px]"
@@ -22,13 +33,6 @@
         >
           {{ modelData.displayName }}
         </div>
-        <button
-          v-tippy="'Highlight objects in app'"
-          class="transition hover:text-primary -mt-1"
-          @click="highlightModel()"
-        >
-          <CursorArrowRaysIcon class="w-4" />
-        </button>
         <ModelActionsDialog
           :model-name="modelData.displayName"
           @view="viewModel"
@@ -76,14 +80,14 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-
 import { modelDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { CommonLoadingProgressBar } from '@speckle/ui-components'
-import { CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
+// import { CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
+import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
 import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
 import { IModelCard } from '~~/lib/models/card'
-import { useAccountStore } from '~/store/accounts'
+import { DUIAccount, useAccountStore } from '~/store/accounts'
 import { ISenderModelCard } from 'lib/models/card/send'
 import { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
@@ -95,6 +99,18 @@ const props = defineProps<{
   modelCard: IModelCard
   project: ProjectModelGroup
 }>()
+
+defineEmits<{
+  (e: 'manual-publish-or-load'): void
+}>()
+
+const buttonTooltip = computed(() => {
+  return props.modelCard.progress
+    ? 'Cancel'
+    : isSender.value
+    ? 'Publish model'
+    : 'Load model'
+})
 
 const { result: modelResult, loading } = useQuery(
   modelDetailsQuery,
@@ -113,13 +129,16 @@ const accStore = useAccountStore()
 
 const acc = accStore.accounts.find(
   (acc) => acc.accountInfo.id === props.modelCard.accountId
-)
+) as DUIAccount
+
+provide<IModelCard>('cardBase', props.modelCard)
 
 const isSender = computed(() => {
   return props.modelCard.typeDiscriminator === 'SenderModelCard'
 })
 
 const highlightModel = () => {
+  if (!modelData) return
   trackEvent('DUI3 Action', { name: 'Highlight Model' }, props.modelCard.accountId)
   app.$baseBinding.highlightModel(props.modelCard.modelCardId)
 }
@@ -153,7 +172,7 @@ const cardBgColor = computed(() => {
   if (props.modelCard.expired) return 'bg-blue-500/10 hover:bg-blue-500/20'
   if (
     (props.modelCard as ISenderModelCard).latestCreatedVersionId ||
-    (props.modelCard as IReceiverModelCard).receiveResult?.display === true
+    (props.modelCard as IReceiverModelCard).displayReceiveComplete === true
   )
     return 'bg-green-500/10 hover:bg-green-500/20'
   if (
