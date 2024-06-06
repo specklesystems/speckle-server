@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="lg">
     <template #header>Add Model</template>
-    <div class="relative pt-8 sm:pt-0">
+    <div class="flex flex-col gap-y-4">
       <LayoutTabsHoriztonal v-model:active-item="activeTab" :items="tabItems">
         <template #default="{ activeItem }">
           <ViewerResourcesAddModelDialogModelTab
@@ -25,9 +25,6 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useInjectedViewerRequestedResources } from '~~/lib/viewer/composables/setup'
 
-const { items } = useInjectedViewerRequestedResources()
-const { zoom } = useCameraUtilities()
-
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
 }>()
@@ -36,13 +33,16 @@ const props = defineProps<{
   open: boolean
 }>()
 
+const { items } = useInjectedViewerRequestedResources()
+const { zoom } = useCameraUtilities()
+const { triggerNotification } = useGlobalToast()
+
 const tabItems = ref<LayoutTabItem[]>([
   { title: 'By model', id: 'model' },
   { title: 'By object URL', id: 'object' }
 ])
 
 const activeTab = ref(tabItems.value[0])
-const { triggerNotification } = useGlobalToast()
 
 const open = computed({
   get: () => props.open,

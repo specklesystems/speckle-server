@@ -78,7 +78,6 @@ function useViewerObjectAutoLoading() {
     SafeLocalStorage.get('FE2_FORCE_DISABLE_VIEWER_CACHE') === 'true'
   const authToken = useAuthCookie()
   const getObjectUrl = useGetObjectUrl()
-
   const {
     projectId,
     viewer: {
