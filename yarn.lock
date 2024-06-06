@@ -14162,6 +14162,8 @@ __metadata:
     tshy: ^1.14.0
     type-fest: ^3.11.1
     typescript: ^4.5.4
+    znv: ^0.4.0
+    zod: ^3.22.4
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
     pino: ^8.7.0
