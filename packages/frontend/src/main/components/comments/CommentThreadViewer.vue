@@ -605,7 +605,8 @@ export default {
       editorSchemaOptions: SMART_EDITOR_SCHEMA,
       anyAttachmentsProcessing: false,
       mobileExpanded: false,
-      mobileFullyClosing: false
+      mobileFullyClosing: false,
+      commentSlideShow: false
     }
   },
   computed: {
