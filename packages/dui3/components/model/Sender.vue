@@ -6,8 +6,13 @@
     @manual-publish-or-load="sendOrCancel"
   >
     <!-- <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2"> -->
-    <div class="flex max-[275px]:flex-col items-center space-x-2 py-2">
-      <div>
+    <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
+    <div
+      class="flex max-[275px]:flex-col items-center space-x-2 max-[275px]:space-x-0 py-2 max-[275px]:space-y-2"
+      @mouseenter="hover = true"
+      @mouseleave="hover = false"
+    >
+      <div class="flex">
         <FormButton
           v-tippy="'Edit what gets published'"
           :icon-left="Square3Stack3DIcon"
@@ -23,9 +28,24 @@
       </div>
       <div
         :title="modelCard.sendFilter?.summary"
-        class="flex h-full items-center space-x-2 text-xs max-[275px]:justify-center rounded-md pl-2 min-w-0 user-select-none"
+        class="flex items-center h-6 space-x-2 text-xs max-[275px]:justify-center rounded-md pl-2 min-w-0 max-w-full truncate user-select-none"
       >
-        <span class="truncate text-foreground-2 select-none">
+        <FormButton
+          v-if="
+            hover &&
+            modelCard.sendFilter?.expired &&
+            modelCard.sendFilter.name === 'Selection'
+          "
+          text
+          color="secondary"
+          size="xs"
+          class="truncate mt-[2px]"
+          :disabled="!!modelCard.progress"
+          @click.stop="openFilterDialog = true"
+        >
+          Publish current selection
+        </FormButton>
+        <span v-else class="truncate text-foreground-2 select-none max-w-full">
           {{ modelCard.sendFilter?.summary }}
         </span>
       </div>
@@ -120,6 +140,8 @@ const saveFilter = async () => {
     expired: true
   })
 }
+
+const hover = ref(false)
 
 const saveFilterAndSend = async () => {
   await saveFilter()
