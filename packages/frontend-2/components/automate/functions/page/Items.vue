@@ -9,7 +9,7 @@
       />
     </AutomateFunctionCardView>
     <CommonGenericEmptyState
-      v-else
+      v-else-if="!loading"
       :search="!!search"
       @clear-search="$emit('clearSearch')"
     />
@@ -42,6 +42,7 @@ graphql(`
 const props = defineProps<{
   functions?: AutomateFunctionsPageItems_QueryFragment
   search?: boolean
+  loading?: boolean
 }>()
 
 const fns = computed(() => props.functions?.automateFunctions.items || [])

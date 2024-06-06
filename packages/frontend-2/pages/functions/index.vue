@@ -6,17 +6,15 @@
       :server-info="result?.serverInfo"
       class="mb-8"
     />
-    <CommonLoadingBar :loading="loading" />
-    <template v-if="!loading">
-      <AutomateFunctionsPageItems
-        v-if="!loading"
-        :functions="finalResult"
-        :search="!!search"
-        @create-automation-from="openCreateNewAutomation"
-        @clear-search="search = ''"
-      />
-      <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
-    </template>
+    <CommonLoadingBar :loading="pageQueryLoading" />
+    <AutomateFunctionsPageItems
+      :functions="finalResult"
+      :search="!!search"
+      :loading="paginationLoading"
+      @create-automation-from="openCreateNewAutomation"
+      @clear-search="search = ''"
+    />
+    <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
 
     <AutomateAutomationCreateDialog
       v-model:open="showNewAutomationDialog"
@@ -26,7 +24,7 @@
 </template>
 <script setup lang="ts">
 import { CommonLoadingBar } from '@speckle/ui-components'
-import { useQuery, useQueryLoading } from '@vue/apollo-composable'
+import { useQuery } from '@vue/apollo-composable'
 import { automateFunctionsPagePaginationQuery } from '~/lib/automate/graphql/queries'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
@@ -44,15 +42,14 @@ const pageQuery = graphql(`
 `)
 
 const search = ref('')
-const loading = useQueryLoading()
-const { result } = useQuery(pageQuery, () => ({
+const { result, loading: pageQueryLoading } = useQuery(pageQuery, () => ({
   search: search.value?.length ? search.value : null
 }))
 
 const {
   identifier,
   onInfiniteLoad,
-  query: { result: paginatedResult }
+  query: { result: paginatedResult, loading: paginationLoading }
 } = usePaginatedQuery({
   query: automateFunctionsPagePaginationQuery,
   baseVariables: computed(() => ({

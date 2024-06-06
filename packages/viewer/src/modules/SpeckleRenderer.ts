@@ -1066,10 +1066,12 @@ export default class SpeckleRenderer {
         return null
     } else {
       const index =
-        intersection.faceIndex !== undefined
+        intersection.faceIndex !== undefined && intersection.faceIndex !== null
           ? intersection.faceIndex
-          : intersection.index
-      if (index) {
+          : intersection.index !== undefined && intersection.index !== null
+          ? intersection.index
+          : undefined
+      if (index !== undefined) {
         rv = this.batcher.getRenderView(intersection.object.uuid, index)
         if (rv) {
           const material = this.batcher.getRenderViewMaterial(

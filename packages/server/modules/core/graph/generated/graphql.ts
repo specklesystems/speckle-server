@@ -3345,14 +3345,14 @@ export type VersionCollection = {
 
 export type VersionCreatedTrigger = {
   __typename?: 'VersionCreatedTrigger';
-  model: Model;
+  model?: Maybe<Model>;
   type: AutomateRunTriggerType;
-  version: Version;
+  version?: Maybe<Version>;
 };
 
 export type VersionCreatedTriggerDefinition = {
   __typename?: 'VersionCreatedTriggerDefinition';
-  model: Model;
+  model?: Maybe<Model>;
   type: AutomateRunTriggerType;
 };
 
@@ -5215,14 +5215,14 @@ export type VersionCollectionResolvers<ContextType = GraphQLContext, ParentType 
 };
 
 export type VersionCreatedTriggerResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionCreatedTrigger'] = ResolversParentTypes['VersionCreatedTrigger']> = {
-  model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
   type?: Resolver<ResolversTypes['AutomateRunTriggerType'], ParentType, ContextType>;
-  version?: Resolver<ResolversTypes['Version'], ParentType, ContextType>;
+  version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type VersionCreatedTriggerDefinitionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionCreatedTriggerDefinition'] = ResolversParentTypes['VersionCreatedTriggerDefinition']> = {
-  model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
   type?: Resolver<ResolversTypes['AutomateRunTriggerType'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

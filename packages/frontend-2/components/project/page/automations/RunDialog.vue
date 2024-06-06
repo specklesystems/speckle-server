@@ -9,20 +9,21 @@
         },
         props: { color: 'secondary', fullWidth: true }
       },
-      {
-        text: 'View Model Version',
-        props: {
-          fullWidth: true,
-          to:
-            run && projectId
-              ? versionUrl({
+      ...(run && projectId && run.trigger.model && run.trigger.version
+        ? [
+            {
+              text: 'View Model Version',
+              props: {
+                fullWidth: true,
+                to: versionUrl({
                   projectId,
                   modelId: run.trigger.model.id,
                   versionId: run.trigger.version.id
                 })
-              : undefined
-        }
-      }
+              }
+            }
+          ]
+        : [])
     ]"
   >
     <template #header>

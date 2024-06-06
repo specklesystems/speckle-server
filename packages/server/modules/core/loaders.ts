@@ -244,9 +244,12 @@ export function buildRequestLoaders(
         const results = await getStreamRoles(userId, streamIds.slice())
         return streamIds.map((id) => results[id] || null)
       }),
+      /**
+       * Works in FE2 mode - skips `main` if it doesn't have any versions
+       */
       getBranchCount: createLoader<string, number>(async (streamIds) => {
         const results = keyBy(
-          await getStreamBranchCounts(streamIds.slice()),
+          await getStreamBranchCounts(streamIds.slice(), { skipEmptyMain: true }),
           'streamId'
         )
         return streamIds.map((i) => results[i]?.count || 0)

@@ -7,6 +7,7 @@
     :buttons="buttons"
     :on-submit="onDialogSubmit"
     prevent-close-on-click-outside
+    @fully-closed="reset"
   >
     <template v-if="isTestAutomation" #header>
       Create
@@ -493,24 +494,20 @@ const onDialogSubmit = async (e: SubmitEvent) => {
   }
 }
 
-watch(
-  open,
-  (newVal, oldVal) => {
-    if (newVal && !oldVal) {
-      reset()
+watch(open, (newVal, oldVal) => {
+  if (newVal && !oldVal) {
+    reset()
 
-      if (validatedPreselectedFunction.value) {
-        selectedFunction.value = validatedPreselectedFunction.value
-        enumStep.value = AutomationCreateSteps.FunctionParameters
-      }
-
-      if (props.preselectedProject) {
-        selectedProject.value = props.preselectedProject
-      }
+    if (validatedPreselectedFunction.value) {
+      selectedFunction.value = validatedPreselectedFunction.value
+      enumStep.value = AutomationCreateSteps.FunctionParameters
     }
-  },
-  { flush: 'sync' }
-)
+
+    if (props.preselectedProject) {
+      selectedProject.value = props.preselectedProject
+    }
+  }
+})
 
 watch(selectedFunction, (newVal, oldVal) => {
   if (newVal?.id !== oldVal?.id) {

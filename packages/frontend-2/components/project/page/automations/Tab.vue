@@ -3,6 +3,9 @@
     <ProjectPageAutomationsHeader
       v-model:search="search"
       :show-empty-state="shouldShowEmptyState"
+      :disabled-create-because-of="
+        allowNewCreation !== true ? allowNewCreation : undefined
+      "
       @new-automation="onNewAutomation"
     />
     <template v-if="loading">
@@ -13,6 +16,9 @@
         v-if="shouldShowEmptyState"
         :functions="result"
         :is-automate-enabled="isAutomateEnabled"
+        :disabled-create-because-of="
+          allowNewCreation !== true ? allowNewCreation : undefined
+        "
         @new-automation="onNewAutomation"
       />
       <template v-else>
@@ -104,6 +110,12 @@ const shouldShowEmptyState = computed(() => {
   if (!hasAutomations.value && !paginationVariables.value?.search && !loading.value)
     return true
   return false
+})
+
+const allowNewCreation = computed(() => {
+  return (result.value?.project?.models?.items.length || 0) > 0
+    ? true
+    : 'Your project should have at least 1 model before you can create an automation.'
 })
 
 const onNewAutomation = (fn?: CreateAutomationSelectableFunction) => {

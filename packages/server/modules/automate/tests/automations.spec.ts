@@ -7,7 +7,7 @@ import {
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import { updateAutomation } from '@/modules/automate/services/automationManagement'
-import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
+import { createStoredAuthCode } from '@/modules/automate/services/authCode'
 import { getGenericRedis } from '@/modules/core'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
