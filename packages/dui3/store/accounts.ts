@@ -49,6 +49,7 @@ export const useAccountStore = defineStore('accountStore', () => {
 
     for (const acc of accounts.value) {
       if (!acc.client) continue
+      if (!acc.accountInfo.serverInfo.frontend2) continue
       try {
         await acc.client.query({ query: accountTestQuery })
         acc.isValid = true
@@ -71,6 +72,7 @@ export const useAccountStore = defineStore('accountStore', () => {
     const newAccs: DUIAccount[] = []
 
     for (const acc of accs) {
+      if (!acc.serverInfo.frontend2) continue
       const existing = accounts.value.find((a) => a.accountInfo.id === acc.id)
       if (existing) {
         newAccs.push(existing as DUIAccount)

@@ -14,6 +14,7 @@ export type Account = {
   serverInfo: {
     name: string
     url: string
+    frontend2: boolean
   }
   userInfo: {
     id: string
@@ -39,7 +40,8 @@ export class MockedAccountBinding extends BaseBridge {
         token: config.public.speckleToken,
         serverInfo: {
           name: 'DUI3 Test',
-          url: config.public.speckleUrl
+          url: config.public.speckleUrl,
+          frontend2: true
         },
         userInfo: {
           id: config.public.speckleUserId,
