@@ -5,7 +5,11 @@ import {
 import { IModelCard, ModelCardProgress } from 'lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { IReceiverModelCard } from '~/lib/models/card/receiver'
-import { ISendFilter, ISenderModelCard } from 'lib/models/card/send'
+import {
+  IDirectSelectionSendFilter,
+  ISendFilter,
+  ISenderModelCard
+} from 'lib/models/card/send'
 import { ToastNotification } from '@speckle/ui-components'
 import { Nullable } from '@speckle/shared'
 import { HostAppError } from '~/lib/bridge/errorHandler'
@@ -139,6 +143,29 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   const selectionFilter = computed(
     () => sendFilters.value?.find((f) => f.name === 'Selection') as ISendFilter
   )
+
+  app.$selectionBinding?.on('setSelection', (selInfo) => {
+    const modelCards = models.value.filter(
+      (m) =>
+        m.typeDiscriminator.toLowerCase().includes('sender') &&
+        (m as ISenderModelCard).sendFilter?.name === 'Selection'
+    ) as ISenderModelCard[]
+
+    for (const model of modelCards) {
+      const filter = model.sendFilter as IDirectSelectionSendFilter
+      if (selInfo.selectedObjectIds.length === 0) {
+        filter.expired = false
+        continue
+      }
+      const a1 = filter.selectedObjectIds.sort().join()
+      const a2 = selInfo.selectedObjectIds.sort().join()
+
+      filter.expired = a1 !== a2
+      // filter.expired =
+      //   filter.selectedObjectIds.filter((id) => !selInfo.selectedObjectIds.includes(id))
+      //     .length !== 0
+    }
+  })
 
   /**
    * Everything filter shortcut - do not use it as a default.
