@@ -21,6 +21,12 @@
   "main": "./dist/lib.cjs",
   "module": "./dist/lib.js",
   "types": "./dist/lib.d.ts",
+  "imports": {
+    "#lodash": {
+      "require": "lodash",
+      "import": "lodash-es"
+    }
+  },
   "exports": {
     ".": {
       "import": "./dist/lib.js",

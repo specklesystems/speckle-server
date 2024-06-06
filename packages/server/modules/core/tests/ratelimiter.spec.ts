@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-import { TIME } from '@/../shared/dist-esm'
+import { TIME } from '@speckle/shared'
 import {
   createRateLimiterMiddleware,
   getRateLimitResult,
