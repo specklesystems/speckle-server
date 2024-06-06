@@ -132,10 +132,7 @@
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
-import {
-  getHeaderAndSubheaderForSpeckleObject,
-  getTargetObjectIds
-} from '~~/lib/object-sidebar/helpers'
+import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
 const {
@@ -327,11 +324,11 @@ const categorisedValuePairs = computed(() => {
 })
 
 const highlightObject = () => {
-  highlightObjects(getTargetObjectIds(props.object))
+  highlightObjects([props.object.id])
 }
 
 const unhighlightObject = () => {
-  unhighlightObjects(getTargetObjectIds(props.object))
+  unhighlightObjects([props.object.id])
 }
 
 watch(

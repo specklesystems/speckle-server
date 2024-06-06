@@ -6,10 +6,6 @@
         isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
       }`"
       @click="setSelection()"
-      @mouseenter="highlightObject"
-      @focusin="highlightObject"
-      @mouseleave="unhighlightObject"
-      @focusout="unhighlightObject"
     >
       <div class="flex gap-1 items-center flex-shrink truncate text-xs sm:text-sm">
         <span
@@ -72,10 +68,7 @@ import { EyeSlashIcon, FunnelIcon } from '@heroicons/vue/24/solid'
 import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import { containsAll, hasIntersection } from '~~/lib/common/helpers/utils'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import {
-  useSelectionUtilities,
-  useHighlightedObjectsUtilities
-} from '~~/lib/viewer/composables/ui'
+import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
 const props = defineProps<{
   item: {
@@ -94,7 +87,6 @@ const {
 } = useInjectedViewerState()
 
 const { clearSelection, setSelectionFromObjectIds, objectIds } = useSelectionUtilities()
-const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const isSelected = computed(() => hasIntersection(objectIds.value, props.item.ids))
 
@@ -128,14 +120,6 @@ const color = computed(() => {
   return filteringState.value?.colorGroups?.find((gr) => gr.value === props.item.value)
     ?.color
 })
-
-const highlightObject = () => {
-  highlightObjects(props.item.ids)
-}
-
-const unhighlightObject = () => {
-  unhighlightObjects(props.item.ids)
-}
 
 // It is possible to control the visibility and isolation of objects from here, There are
 // some performance concerns here, so this is something to come back to. For now, the icons
