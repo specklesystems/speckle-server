@@ -345,6 +345,7 @@ export type Automation = {
   currentRevision?: Maybe<AutomationRevision>;
   enabled: Scalars['Boolean'];
   id: Scalars['ID'];
+  isTestAutomation: Scalars['Boolean'];
   name: Scalars['String'];
   runs: AutomateRunCollection;
   updatedAt: Scalars['DateTime'];
@@ -1827,6 +1828,8 @@ export type ProjectAutomationMutations = {
   __typename?: 'ProjectAutomationMutations';
   create: Automation;
   createRevision: AutomationRevision;
+  createTestAutomation: Automation;
+  createTestAutomationRun: TestAutomationRun;
   /**
    * Trigger an automation with a fake "version created" trigger. The "version created" will
    * just refer to the last version of the model.
@@ -1843,6 +1846,16 @@ export type ProjectAutomationMutationsCreateArgs = {
 
 export type ProjectAutomationMutationsCreateRevisionArgs = {
   input: ProjectAutomationRevisionCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationArgs = {
+  input: ProjectTestAutomationCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationRunArgs = {
+  automationId: Scalars['ID'];
 };
 
 
@@ -2131,6 +2144,12 @@ export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
 }
+
+export type ProjectTestAutomationCreateInput = {
+  functionId: Scalars['String'];
+  modelId: Scalars['String'];
+  name: Scalars['String'];
+};
 
 export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
   __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
@@ -3021,6 +3040,25 @@ export type SubscriptionViewerUserActivityBroadcastedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
 
+export type TestAutomationRun = {
+  __typename?: 'TestAutomationRun';
+  automationRunId: Scalars['String'];
+  functionRunId: Scalars['String'];
+  triggers: Array<TestAutomationRunTrigger>;
+};
+
+export type TestAutomationRunTrigger = {
+  __typename?: 'TestAutomationRunTrigger';
+  payload: TestAutomationRunTriggerPayload;
+  triggerType: Scalars['String'];
+};
+
+export type TestAutomationRunTriggerPayload = {
+  __typename?: 'TestAutomationRunTriggerPayload';
+  modelId: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
 export type TokenResourceIdentifier = {
   __typename?: 'TokenResourceIdentifier';
   id: Scalars['String'];
@@ -3296,14 +3334,14 @@ export type VersionCollection = {
 
 export type VersionCreatedTrigger = {
   __typename?: 'VersionCreatedTrigger';
-  model: Model;
+  model?: Maybe<Model>;
   type: AutomateRunTriggerType;
-  version: Version;
+  version?: Maybe<Version>;
 };
 
 export type VersionCreatedTriggerDefinition = {
   __typename?: 'VersionCreatedTriggerDefinition';
-  model: Model;
+  model?: Maybe<Model>;
   type: AutomateRunTriggerType;
 };
 

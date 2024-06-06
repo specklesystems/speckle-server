@@ -9,10 +9,13 @@
           class="opacity-80 hover:opacity-100"
           @click.stop="hideOrShowSelection"
         >
-          <div class="flex items-center gap-1">
-            <EyeIcon v-if="!isHidden" class="h-4 w-4" />
-            <EyeSlashIcon v-else class="h-4 w-4" />
+          <div v-if="!isHidden" class="flex items-center gap-1">
+            <EyeSlashIcon class="h-4 w-4" />
             Hide
+          </div>
+          <div v-else class="flex items-center gap-1">
+            <EyeIcon class="h-4 w-4" />
+            Unhide
           </div>
         </FormButton>
         <FormButton
@@ -28,16 +31,13 @@
             Isolate
           </div>
         </FormButton>
-        <div class="w-full text-right">
-          <FormButton
-            title="Open selection in new window"
-            size="xs"
-            text
-            :to="selectionLink"
-            target="_blank"
-          >
-            <ArrowTopRightOnSquareIcon class="w-4" />
-          </FormButton>
+        <div class="flex justify-end w-full">
+          <div v-tippy="`Open selection in new window`" class="max-w-max">
+            <FormButton size="xs" :to="selectionLink" color="secondary" target="_blank">
+              <span class="sr-only">Open selection in new window</span>
+              <ArrowTopRightOnSquareIcon class="w-4" />
+            </FormButton>
+          </div>
         </div>
       </template>
       <div class="p-1 mb-2 sm:mb-0 sm:py-2">

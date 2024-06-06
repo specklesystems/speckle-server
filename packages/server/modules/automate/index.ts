@@ -8,6 +8,8 @@ import {
 import { Environment } from '@speckle/shared'
 import {
   getActiveTriggerDefinitions,
+  getAutomation,
+  getAutomationRevision,
   getAutomationRunFullTriggers
 } from '@/modules/automate/repositories/automations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
@@ -24,6 +26,7 @@ import {
   setupAutomationUpdateSubscriptions,
   setupStatusUpdateSubscriptions
 } from '@/modules/automate/services/subscriptions'
+import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
@@ -70,6 +73,8 @@ const initializeEventListeners = () => {
       VersionEvents.Created,
       async ({ modelId, version, projectId }) => {
         await onModelVersionCreate({
+          getAutomation,
+          getAutomationRevision,
           getTriggers: getActiveTriggerDefinitions,
           triggerFunction: triggerFn
         })({ modelId, versionId: version.id, projectId })
@@ -91,6 +96,7 @@ const automateModule: SpeckleModule = {
 
     await initScopes()
     logStreamRest(app)
+    authGithubAppRest(app)
 
     if (isInitial) {
       quitListeners = initializeEventListeners()

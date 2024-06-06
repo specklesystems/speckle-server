@@ -215,3 +215,19 @@ export const triggerAutomationMutation = graphql(`
     }
   }
 `)
+
+export const createTestAutomationMutation = graphql(`
+  mutation CreateTestAutomation(
+    $projectId: ID!
+    $input: ProjectTestAutomationCreateInput!
+  ) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        createTestAutomation(input: $input) {
+          id
+          ...ProjectPageAutomationsRow_Automation
+        }
+      }
+    }
+  }
+`)

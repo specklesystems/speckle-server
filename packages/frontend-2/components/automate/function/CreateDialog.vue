@@ -50,7 +50,7 @@ import type {
   CreatableFunctionTemplate,
   FunctionDetailsFormValues
 } from '~/lib/automate/helpers/functions'
-import { automateGithubAppAuthorizationCallback } from '~/lib/common/helpers/route'
+import { automateGithubAppAuthorizationRoute } from '~/lib/common/helpers/route'
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { useForm } from 'vee-validate'
 import { useCreateAutomateFunction } from '~/lib/automate/composables/management'
@@ -128,13 +128,9 @@ const stepsWidgetData = computed(() => [
 ])
 
 const selectedTemplate = ref<CreatableFunctionTemplate>()
-const githubScopes = ref(['read:org', 'read:user', 'repo'])
 const createdFunction =
   ref<AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment>()
 
-const {
-  public: { automateGhClientId }
-} = useRuntimeConfig()
 const apiBaseUrl = useApiOrigin()
 const { enumStep, step } = useEnumSteps({ order: stepsOrder })
 const {
@@ -157,14 +153,8 @@ const title = computed(() => {
 })
 
 const authorizeGithubUrl = computed(() => {
-  const redirectUrl = new URL(automateGithubAppAuthorizationCallback, apiBaseUrl)
-  const url = new URL(`/login/oauth/authorize`, 'https://github.com')
-
-  url.searchParams.set('client_id', automateGhClientId)
-  url.searchParams.set('scope', githubScopes.value.join(','))
-  url.searchParams.set('redirect_uri', redirectUrl.toString())
-
-  return url.toString()
+  const redirectUrl = new URL(automateGithubAppAuthorizationRoute, apiBaseUrl)
+  return redirectUrl.toString()
 })
 
 const buttons = computed((): LayoutDialogButton[] => {
@@ -185,7 +175,6 @@ const buttons = computed((): LayoutDialogButton[] => {
           text: 'Authorize',
           props: {
             fullWidth: true,
-            disabled: !automateGhClientId.length,
             to: authorizeGithubUrl.value,
             external: true
           }

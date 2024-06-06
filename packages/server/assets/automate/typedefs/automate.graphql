@@ -24,7 +24,7 @@ type AutomationRevisionFunction {
 
 type VersionCreatedTriggerDefinition {
   type: AutomateRunTriggerType!
-  model: Model!
+  model: Model
 }
 
 union AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition
@@ -37,8 +37,8 @@ type AutomationRevision {
 
 type VersionCreatedTrigger {
   type: AutomateRunTriggerType!
-  version: Version!
-  model: Model!
+  version: Version
+  model: Model
 }
 
 union AutomationRunTrigger = VersionCreatedTrigger
@@ -62,6 +62,7 @@ type Automation {
   id: ID!
   name: String!
   enabled: Boolean!
+  isTestAutomation: Boolean!
   runs(cursor: String, limit: Int): AutomateRunCollection!
   currentRevision: AutomationRevision
   createdAt: DateTime!
@@ -197,6 +198,12 @@ input ProjectAutomationCreateInput {
   enabled: Boolean!
 }
 
+input ProjectTestAutomationCreateInput {
+  name: String!
+  modelId: String!
+  functionId: String!
+}
+
 input AutomateFunctionsFilter {
   search: String
   """
@@ -290,6 +297,8 @@ type ProjectAutomationMutations {
   just refer to the last version of the model.
   """
   trigger(automationId: ID!): Boolean!
+  createTestAutomation(input: ProjectTestAutomationCreateInput!): Automation!
+  createTestAutomationRun(automationId: ID!): TestAutomationRun!
 }
 
 extend type ProjectMutations {
@@ -379,4 +388,20 @@ extend type Subscription {
   Subscribe to updates to automations in the project
   """
   projectAutomationsUpdated(projectId: String!): ProjectAutomationsUpdatedMessage!
+}
+
+type TestAutomationRun {
+  automationRunId: String!
+  functionRunId: String!
+  triggers: [TestAutomationRunTrigger!]!
+}
+
+type TestAutomationRunTrigger {
+  payload: TestAutomationRunTriggerPayload!
+  triggerType: String!
+}
+
+type TestAutomationRunTriggerPayload {
+  modelId: String!
+  versionId: String!
 }

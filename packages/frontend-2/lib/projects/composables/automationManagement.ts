@@ -7,6 +7,7 @@ import {
   type ProjectAutomationsArgs,
   type CreateAutomationMutationVariables,
   type CreateAutomationRevisionMutationVariables,
+  type CreateTestAutomationMutationVariables,
   type OnProjectAutomationsUpdatedSubscription,
   type OnProjectTriggeredAutomationsStatusUpdatedSubscription,
   type Project,
@@ -27,6 +28,7 @@ import {
 import {
   createAutomationMutation,
   createAutomationRevisionMutation,
+  createTestAutomationMutation,
   triggerAutomationMutation,
   updateAutomationMutation
 } from '~/lib/projects/graphql/mutations'
@@ -34,8 +36,6 @@ import {
   onProjectAutomationsUpdatedSubscription,
   onProjectTriggeredAutomationsStatusUpdatedSubscription
 } from '~/lib/projects/graphql/subscriptions'
-
-// TODO: Cache updates
 
 export function useCreateAutomation() {
   const { activeUser } = useActiveUser()
@@ -61,6 +61,33 @@ export function useCreateAutomation() {
     }
 
     return res?.data?.projectMutations.automationMutations.create
+  }
+}
+
+export function useCreateTestAutomation() {
+  const { activeUser } = useActiveUser()
+  const { triggerNotification } = useGlobalToast()
+  const { mutate: createTestAutomation } = useMutation(createTestAutomationMutation)
+
+  return async (input: CreateTestAutomationMutationVariables) => {
+    if (!activeUser.value) return
+
+    const res = await createTestAutomation(input).catch(convertThrowIntoFetchResult)
+    if (res?.data?.projectMutations?.automationMutations?.createTestAutomation?.id) {
+      triggerNotification({
+        type: ToastNotificationType.Success,
+        title: 'Test automation created'
+      })
+    } else {
+      const errMsg = getFirstErrorMessage(res?.errors)
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: 'Failed to create test automation',
+        description: errMsg
+      })
+    }
+
+    return res?.data?.projectMutations?.automationMutations?.createTestAutomation?.id
   }
 }
 
@@ -230,14 +257,15 @@ export const useProjectTriggeredAutomationsStatusUpdateTracking = (params: {
         apollo.cache,
         automationCacheId,
         (_fieldName, vars, data, { ref }) => {
-          if (vars['limit'] === 0) return
-
           const limit = vars['limit']
           let newItems = data['items']
-          if (newItems) {
-            newItems = [ref('AutomateRun', run.id), ...newItems]
-            if (limit && newItems.length > limit) {
-              newItems = newItems.slice(0, limit)
+
+          if (limit !== 0) {
+            if (newItems) {
+              // Intentionally not slicing off items over limit, cause we have no way of
+              // knowing if this is a paginable list w/ more results loaded through fetchMore
+              // Also if we slice off the end, we'd need to re-calculate the cursor
+              newItems = [ref('AutomateRun', run.id), ...newItems]
             }
           }
 
@@ -281,8 +309,6 @@ export const useProjectAutomationsUpdateTracking = (params: {
   const { hasLock } = useLock(
     computed(() => `useProjectAutomationsUpdateTracking-${unref(projectId)}`)
   )
-  // const isEnabled = computed(() => !!(hasLock.value || handler))
-
   const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
   const isEnabled = computed(
     () => isAutomateModuleEnabled.value && !!(hasLock.value || handler)
@@ -325,16 +351,17 @@ export const useProjectAutomationsUpdateTracking = (params: {
       modifyObjectFields<ProjectAutomationsArgs, Project['automations']>(
         apollo.cache,
         projectCacheId,
-        (_fieldName, vars, data, { ref }) => {
-          if (vars['limit'] === 0) return
-          if (vars['filter']?.length) return
+        (_fieldName, vars, data, { ref, DELETE }) => {
+          if (vars['filter']?.length) {
+            return DELETE // Evict those lists w/ filters
+          }
 
           const limit = vars['limit']
           let newItems = data['items']
-          if (newItems) {
-            newItems = [ref('Automation', newAutomation.id), ...newItems]
-            if (limit && newItems.length > limit) {
-              newItems = newItems.slice(0, limit)
+
+          if (limit !== 0) {
+            if (newItems) {
+              newItems = [ref('Automation', newAutomation.id), ...newItems]
             }
           }
 

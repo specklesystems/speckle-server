@@ -40,7 +40,11 @@ import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers
 
 import { LogicError } from '@/modules/shared/errors'
 import { formatJsonArrayRecords } from '@/modules/shared/helpers/dbHelper'
-import { decodeCursor } from '@/modules/shared/helpers/graphqlHelper'
+import {
+  decodeCursor,
+  decodeIsoDateCursor,
+  encodeIsoDateCursor
+} from '@/modules/shared/helpers/graphqlHelper'
 import { Nullable, StreamRoles, isNullOrUndefined } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import _, { clamp, groupBy, keyBy, pick, reduce } from 'lodash'
@@ -272,18 +276,20 @@ export async function getFullAutomationRunById(
     : null
 }
 
-export async function storeAutomation(
-  automation: AutomationRecord,
-  automationToken: AutomationTokenRecord
-) {
+export async function storeAutomation(automation: AutomationRecord) {
   const [newAutomation] = await Automations.knex()
     .insert(pick(automation, Automations.withoutTablePrefix.cols))
     .returning<AutomationRecord[]>('*')
+
+  return newAutomation
+}
+
+export async function storeAutomationToken(automationToken: AutomationTokenRecord) {
   const [newToken] = await AutomationTokens.knex()
     .insert(pick(automationToken, AutomationTokens.withoutTablePrefix.cols))
     .returning<AutomationTokenRecord[]>('*')
 
-  return { automation: newAutomation, token: newToken }
+  return newToken
 }
 
 export type InsertableAutomationRevisionFunction = Omit<
@@ -536,6 +542,16 @@ export async function getLatestAutomationRevisions(params: {
   return keyBy(res, (r) => r.automationId)
 }
 
+export async function getLatestAutomationRevision(params: { automationId: string }) {
+  const { automationId } = params
+
+  const revisions = await getLatestAutomationRevisions({
+    automationIds: [automationId]
+  })
+
+  return (revisions[automationId] ?? null) as Nullable<(typeof revisions)[0]>
+}
+
 export async function getRevisionsTriggerDefinitions(params: {
   automationRevisionIds: string[]
 }) {
@@ -643,6 +659,7 @@ export async function getAutomationRunsItems(params: { args: GetAutomationRunsAr
   >(params)
 
   const limit = clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25)
+  const cursor = args.cursor ? decodeIsoDateCursor(args.cursor) : null
 
   // Attach trigger & function runs
   q.select([
@@ -671,8 +688,8 @@ export async function getAutomationRunsItems(params: { args: GetAutomationRunsAr
     ])
     .limit(limit)
 
-  if (args.cursor?.length) {
-    q.andWhere(AutomationRuns.col.updatedAt, '<', decodeCursor(args.cursor))
+  if (cursor?.length) {
+    q.andWhere(AutomationRuns.col.updatedAt, '<', cursor)
   }
 
   const res = await q
@@ -687,7 +704,7 @@ export async function getAutomationRunsItems(params: { args: GetAutomationRunsAr
 
   return {
     items,
-    cursor: items.length ? items[items.length - 1].updatedAt.toISOString() : null
+    cursor: items.length ? encodeIsoDateCursor(items[items.length - 1].updatedAt) : null
   }
 }
 
@@ -728,17 +745,21 @@ export const getProjectAutomationsItems = async (
   const { args } = params
   if (args.limit === 0) return { items: [], cursor: null }
 
+  const cursor = args.cursor ? decodeCursor(args.cursor) : null
+
   const q = getProjectAutomationsBaseQuery(params)
     .limit(clamp(isNullOrUndefined(args.limit) ? 10 : args.limit, 0, 25))
     .orderBy(Automations.col.updatedAt, 'desc')
 
-  if (args.cursor?.length) {
-    q.andWhere(Automations.col.updatedAt, '<', decodeCursor(args.cursor))
+  if (cursor?.length) {
+    q.andWhere(Automations.col.updatedAt, '<', cursor)
   }
 
+  const res = await q
+
   return {
-    items: await q,
-    cursor: null
+    items: res,
+    cursor: res.length ? encodeIsoDateCursor(res[res.length - 1].updatedAt) : null
   }
 }
 

@@ -18,7 +18,7 @@ import {
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
+import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import {
   Nullable,
   SourceAppName,
@@ -128,10 +128,10 @@ const invokeRequest = async (params: {
 }
 
 export const createAutomation = async (params: {
-  speckleServerUrl: string
+  speckleServerUrl?: string
   authCode: string
 }) => {
-  const { speckleServerUrl, authCode } = params
+  const { speckleServerUrl = getServerOrigin(), authCode } = params
 
   const url = getApiUrl(`/api/v2/automations`)
 
@@ -236,8 +236,11 @@ export enum ExecutionEngineFunctionTemplateId {
 }
 
 export type CreateFunctionBody = {
+  speckleServerOrigin: string
+  speckleUserId: string
+  authenticationCode: string
   template: ExecutionEngineFunctionTemplateId
-  functionname: string
+  functionName: string
   description: string
   supportedSourceApps: SourceAppName[]
   tags: string[]
@@ -258,11 +261,18 @@ export type CreateFunctionResponse = {
   }
 }
 
-export const createFunction = async (params: {
+export const createFunction = async ({
+  body
+}: {
   body: CreateFunctionBody
 }): Promise<CreateFunctionResponse> => {
-  throw new Error('Not implemented! Needs re-thinking by Gergo & Iain')
-  console.log(params.body)
+  const url = getApiUrl('/api/v2/functions/from-template')
+  return invokeJsonRequest<CreateFunctionResponse>({
+    url,
+    method: 'post',
+    body,
+    retry: false
+  })
 }
 
 export type UpdateFunctionBody = {
@@ -298,6 +308,7 @@ export const getFunction = async (params: {
     query: params.releases?.cursor || params.releases?.limit ? params.releases : {}
   })
 
+  // TODO: This still doesn't accept the search query
   const result = await invokeJsonRequest<GetFunctionResponse>({
     url,
     method: 'get',
@@ -381,6 +392,30 @@ export const getFunctions = async (params: {
   })
 
   return result
+}
+
+type UserGithubAuthStateResponse = {
+  userHasAuthorizedGitHubApp: boolean
+}
+
+export const getUserGithubAuthState = async (params: {
+  speckleServerUrl?: string
+  userId: string
+}) => {
+  const { speckleServerUrl = getServerOrigin(), userId: speckleUserId } = params
+  const speckleServerOrigin = new URL(speckleServerUrl).origin
+
+  const url = getApiUrl(`/api/v2/functions/auth/githubapp`, {
+    query: {
+      speckleServerOrigin,
+      speckleUserId
+    }
+  })
+
+  return await invokeJsonRequest<UserGithubAuthStateResponse>({
+    url,
+    method: 'get'
+  })
 }
 
 export async function* getAutomationRunLogs(params: {

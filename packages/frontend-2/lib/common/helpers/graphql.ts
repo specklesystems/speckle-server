@@ -19,6 +19,8 @@ import type { PartialDeep } from 'type-fest'
 import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
+import dayjs from 'dayjs'
+import { base64Encode } from '~/lib/common/helpers/encodeDecode'
 
 export const isServerError = (err: Error): err is ServerError =>
   has(err, 'response') && has(err, 'result') && has(err, 'statusCode')
@@ -325,7 +327,11 @@ export function modifyObjectFields<
       ref: typeof getObjectReference
       revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
     }
-  ) => Optional<ModifyFnCacheData<D>> | void,
+  ) =>
+    | Optional<ModifyFnCacheData<D>>
+    | void
+    | Parameters<Modifier<ModifyFnCacheData<D>>>[1]['DELETE']
+    | Parameters<Modifier<ModifyFnCacheData<D>>>[1]['INVALIDATE'],
   options?: Partial<{
     fieldNameWhitelist: string[]
     debug: boolean
@@ -454,4 +460,19 @@ export const resolveGenericStatusCode = (errors: GraphQLErrors) => {
 export const errorFailedAtPathSegment = (error: GraphQLError, segment: string) => {
   const path = error.path || []
   return path[path.length - 1] === segment
+}
+
+export const getDateCursorFromReference = (params: {
+  ref: Reference
+  dateProp: string
+  readField: (fieldName: string, ref: Reference) => unknown
+}): string | null => {
+  const dateStr = params.readField(params.dateProp, params.ref) as string
+  if (!dateStr || !isString(dateStr)) return null
+
+  const date = dayjs(dateStr)
+  if (!date.isValid()) return null
+
+  const iso = date.toISOString()
+  return base64Encode(iso)
 }

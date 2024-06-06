@@ -9,6 +9,7 @@
           :key="index"
           v-bind="button.props"
           class="shrink-0 whitespace-nowrap"
+          @click="($event) => button.onClick?.($event)"
         >
           {{ button.label }}
         </FormButton>
@@ -21,9 +22,14 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormButton } from '@speckle/ui-components'
+
+type FormButtonProps = InstanceType<typeof FormButton>['$props']
+
 interface Button {
   label: string
-  props: Record<string, unknown>
+  props: Record<string, unknown> & FormButtonProps
+  onClick?: (e: MouseEvent) => void
 }
 
 withDefaults(

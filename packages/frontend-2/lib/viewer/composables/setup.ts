@@ -65,6 +65,7 @@ import {
 } from '~/lib/viewer/composables/setup/core'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
+import { PassReader } from '../extensions/PassReader'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -324,6 +325,7 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
       ...DefaultViewerParams,
       verbose: !!(process.client && params.viewerDebug)
     })
+    viewer.createExtension(PassReader)
     const initPromise = viewer.init()
 
     return {
@@ -614,8 +616,9 @@ function setupResponseResourceItems(
       const modelId = item.modelId
       const objectId = item.objectId
 
-      // In case we want to go back to 1 resource per model:
-      // if (modelId && encounteredModels.has(modelId)) continue
+      // Uncommenting the following line resolved model duplication issues in the Model Panel
+      // without affecting diffing functionality. If future diffing problems arise, revisit this.
+      if (modelId && encounteredModels.has(modelId)) continue
       if (encounteredObjects.has(objectId)) continue
 
       finalItems.push(item)
