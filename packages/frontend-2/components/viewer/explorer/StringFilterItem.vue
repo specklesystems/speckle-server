@@ -85,7 +85,6 @@ const {
     metadata: { filteringState }
   }
 } = useInjectedViewerState()
-
 const { clearSelection, setSelectionFromObjectIds, objectIds } = useSelectionUtilities()
 
 const isSelected = computed(() => hasIntersection(objectIds.value, props.item.ids))
