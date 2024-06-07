@@ -35,10 +35,6 @@ export const validateStatusChange = (
   previousStatus: AutomationRunStatus,
   newStatus: AutomationRunStatus
 ): void => {
-  console.log(`${previousStatus} => ${newStatus}`)
-
-  if (previousStatus === newStatus) return
-
   const previousStatusRank = AutomationRunStatusOrder[previousStatus]
   const newStatusRank = AutomationRunStatusOrder[newStatus]
 
