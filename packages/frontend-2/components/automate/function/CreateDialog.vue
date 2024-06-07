@@ -57,6 +57,7 @@ import { useCreateAutomateFunction } from '~/lib/automate/composables/management
 import { useMutationLoading } from '@vue/apollo-composable'
 import type { AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment } from '~~/lib/common/generated/gql/graphql'
 import { automationFunctionRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 enum FunctionCreateSteps {
   Authorize,
@@ -74,6 +75,7 @@ const props = defineProps<{
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
+const mixpanel = useMixpanel()
 const logger = useLogger()
 const mutationLoading = useMutationLoading()
 const createFunction = useCreateAutomateFunction()
@@ -96,6 +98,11 @@ const onDetailsSubmit = handleDetailsSubmit(async (values) => {
   })
 
   if (res?.id) {
+    mixpanel.track('Automate Function Created', {
+      functionId: res.id,
+      templateId: selectedTemplate.value.id,
+      name: values.name
+    })
     createdFunction.value = res
     step.value++
   }

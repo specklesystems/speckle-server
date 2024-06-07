@@ -17,7 +17,8 @@ import {
   VersionCreationTriggerType,
   BaseTriggerManifest,
   isVersionCreatedTriggerManifest,
-  LiveAutomation
+  LiveAutomation,
+  RunTriggerSource
 } from '@/modules/automate/helpers/types'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { getCommit } from '@/modules/core/repositories/commits'
@@ -219,9 +220,10 @@ export const triggerAutomationRevisionRun =
   async <M extends BaseTriggerManifest = BaseTriggerManifest>(params: {
     revisionId: string
     manifest: M
+    source?: RunTriggerSource
   }): Promise<{ automationRunId: string }> => {
     const { automateRunTrigger } = deps
-    const { revisionId, manifest } = params
+    const { revisionId, manifest, source = RunTriggerSource.Automatic } = params
 
     if (!isVersionCreatedTriggerManifest(manifest)) {
       throw new AutomateInvalidTriggerError(
@@ -302,7 +304,9 @@ export const triggerAutomationRevisionRun =
     await AutomateRunsEmitter.emit(AutomateRunsEmitter.events.Created, {
       run: automationRun,
       manifests: triggerManifests,
-      automation: automationWithRevision
+      automation: automationWithRevision,
+      source,
+      triggerType: manifest.triggerType
     })
 
     return { automationRunId: automationRun.id }
@@ -392,12 +396,17 @@ export const ensureRunConditions =
 async function composeTriggerData(params: {
   projectId: string
   manifest: BaseTriggerManifest
-  // TODO: Q Gergo: What's going on here? Why do we pass in extra unrelated triggers?
   triggerDefinitions: AutomationTriggerDefinitionRecord[]
 }): Promise<BaseTriggerManifest[]> {
   const { projectId, manifest, triggerDefinitions } = params
 
   const manifests: BaseTriggerManifest[] = [{ ...manifest }]
+
+  /**
+   * The reason why we collect multiple triggers, even tho there's only one:
+   * - We want to collect the current context (all active versions of all triggers) at the time when the run is triggered,
+   * cause once the function already runs, there may be new versions already
+   */
 
   if (triggerDefinitions.length > 1) {
     const associatedTriggers = triggerDefinitions.filter((t) => {
@@ -492,15 +501,17 @@ export const manuallyTriggerAutomation =
     }
 
     // Trigger "model version created"
-    return await triggerFunction({
+    const { automationRunId } = await triggerFunction({
       revisionId: triggerDefs[0].automationRevisionId,
       manifest: <VersionCreatedTriggerManifest>{
         projectId,
         modelId: latestCommit.branchId,
         versionId: latestCommit.id,
         triggerType: VersionCreationTriggerType
-      }
+      },
+      source: RunTriggerSource.Manual
     })
+    return { automationRunId }
   }
 
 export type CreateTestAutomationRunDeps = {

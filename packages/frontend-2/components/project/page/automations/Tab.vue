@@ -68,7 +68,8 @@ const { result, loading } = useQuery(
     cursor: null
   }),
   () => ({
-    enabled: isAutomateEnabled.value
+    enabled: isAutomateEnabled.value,
+    fetchPolicy: 'cache-and-network'
   })
 )
 

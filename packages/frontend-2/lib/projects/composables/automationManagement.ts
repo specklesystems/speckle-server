@@ -193,7 +193,7 @@ export const useTriggerAutomation = () => {
       })
     }
 
-    return !!res?.data?.projectMutations?.automationMutations?.trigger
+    return res?.data?.projectMutations?.automationMutations?.trigger
   }
 }
 

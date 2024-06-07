@@ -82,12 +82,11 @@ export class MeshBatch extends PrimitiveBatch {
   protected shuffleMaterialOrder(a: DrawGroup, b: DrawGroup): number {
     const materialA: Material = this.materials[a.materialIndex]
     const materialB: Material = this.materials[b.materialIndex]
-    const visibleOrder =
-      +materialB.visible +
-      +materialB.colorWrite -
-      (+materialA.visible + +materialA.colorWrite)
+    const visibleOrder = +materialB.visible - +materialA.visible
+    const colorWriteOrder = +materialB.colorWrite - +materialA.colorWrite
     const transparentOrder = +materialA.transparent - +materialB.transparent
     if (visibleOrder !== 0) return visibleOrder
+    if (colorWriteOrder !== 0) return colorWriteOrder
     return transparentOrder
   }
 

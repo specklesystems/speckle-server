@@ -82,6 +82,7 @@ const { result: projectPageResult } = useQuery(
     ...(token.value?.length ? { token: token.value } : {})
   }),
   () => ({
+    fetchPolicy: 'cache-and-network',
     // Custom error policy so that a failing invitedTeam resolver (due to access rights)
     // doesn't kill the entire query
     errorPolicy: 'all'

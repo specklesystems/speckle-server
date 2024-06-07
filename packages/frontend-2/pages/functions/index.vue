@@ -42,9 +42,15 @@ const pageQuery = graphql(`
 `)
 
 const search = ref('')
-const { result, loading: pageQueryLoading } = useQuery(pageQuery, () => ({
-  search: search.value?.length ? search.value : null
-}))
+const { result, loading: pageQueryLoading } = useQuery(
+  pageQuery,
+  () => ({
+    search: search.value?.length ? search.value : null
+  }),
+  {
+    fetchPolicy: 'cache-and-network'
+  }
+)
 
 const {
   identifier,
@@ -62,7 +68,10 @@ const {
     ...baseVars,
     cursor
   }),
-  resolveCursorFromVariables: (vars) => vars.cursor
+  resolveCursorFromVariables: (vars) => vars.cursor,
+  options: {
+    fetchPolicy: 'cache-and-network'
+  }
 })
 
 const showNewAutomationDialog = ref(false)

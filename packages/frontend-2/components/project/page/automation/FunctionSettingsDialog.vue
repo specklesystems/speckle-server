@@ -93,6 +93,7 @@ import {
   useAutomationInputEncryptor,
   type AutomationInputEncryptor
 } from '~/lib/automate/composables/automations'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 type AutomationRevisionFunction =
   ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment
@@ -145,6 +146,7 @@ const createNewAutomationRevision = useCreateAutomationRevision()
 const inputEncryption = useAutomationInputEncryptor({ ensureWhen: open })
 const { triggerNotification } = useGlobalToast()
 const logger = useLogger()
+const mixpanel = useMixpanel()
 
 const selectedModel = ref<CommonModelSelectorModelFragment>()
 const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment>()
@@ -215,7 +217,7 @@ const onSave = async () => {
     })
 
     // TODO: Apollo cache mutation afterwards
-    await createNewAutomationRevision({
+    const res = await createNewAutomationRevision({
       projectId: props.projectId,
       input: {
         automationId: props.automationId,
@@ -237,6 +239,15 @@ const onSave = async () => {
         }
       }
     })
+    if (res?.id) {
+      mixpanel.track('Automation Revision Created', {
+        automationId: props.automationId,
+        projectId: props.projectId,
+        functionId: fId,
+        functionReleaseId: rId,
+        modelId: model.id
+      })
+    }
   } finally {
     automationEncrypt?.dispose()
     loading.value = false

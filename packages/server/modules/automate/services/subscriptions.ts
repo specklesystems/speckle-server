@@ -121,7 +121,7 @@ export const setupStatusUpdateSubscriptions =
 
       AutomateRunsEmitter.listen(
         AutomateRunsEmitter.events.StatusUpdated,
-        async ({ run, functionRuns, automationId }) => {
+        async ({ run, functionRun, automationId }) => {
           const triggers = await getAutomationRunFullTriggers({
             automationRunId: run.id
           })
@@ -141,7 +141,7 @@ export const setupStatusUpdateSubscriptions =
                       versionId: trigger.version.id,
                       run: {
                         ...run,
-                        functionRuns,
+                        functionRuns: [functionRun],
                         automationId,
                         triggers: undefined
                       },
