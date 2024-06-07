@@ -96,7 +96,6 @@ import {
   type AutomationInputEncryptor
 } from '~/lib/automate/composables/automations'
 import { useMixpanel } from '~/lib/core/composables/mp'
-import type { FormJsonForm } from '#build/components'
 import type { JsonFormsChangeEvent } from '@jsonforms/vue'
 
 type AutomationRevisionFunction =
