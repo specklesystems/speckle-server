@@ -59,10 +59,11 @@ export async function createOnboardingStream(
   logger.info('Updating onboarding stream title')
   const user = await getUser(targetUserId)
   const name = user.name.split(' ')[0]
-  await updateStream({ 
-    id: newStream.id, 
-    name: `${name}'s First Project`, 
-    description: `Welcome to Speckle! This is your sample project , designed by Beijia Gu - feel free to do whatever you want with it!` })
+  await updateStream({
+    id: newStream.id,
+    name: `${name}'s First Project`,
+    description: `Welcome to Speckle! This is your sample project, designed by Beijia Gu - feel free to do whatever you want with it!`
+  })
   logger.info('Done updating onboarding stream title')
   return newStream
 }
