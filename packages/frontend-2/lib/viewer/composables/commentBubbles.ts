@@ -84,8 +84,7 @@ export function useViewerNewThreadBubble(params: {
       state.style = {
         ...state.style,
         ...result.style,
-        opacity: state.isOccluded ? '0.8' : '1.0',
-        transition: 'all 0.1s ease'
+        opacity: state.isOccluded ? '0.8' : '1.0'
       }
     }
   })
@@ -319,7 +318,6 @@ export function useExpandedThreadResponsiveLocation(params: {
         : leftForShowingOnLeftSide,
     transformOrigin: 'center center',
     transform: 'translateY(-50%)',
-    transition: 'all 0.1s ease',
     width: `${width}px`
   }))
 

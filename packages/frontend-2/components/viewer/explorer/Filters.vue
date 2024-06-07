@@ -63,7 +63,7 @@
           class="text-xs"
         >
           <button
-            class="block w-full text-left hover:bg-primary-muted transition truncate rounded-md py-1 px-2 mx-2"
+            class="block w-full text-left hover:bg-primary-muted truncate rounded-md py-1 px-2 mx-2"
             @click="
               ;(showAllFilters = false),
                 setPropertyFilter(filter),
