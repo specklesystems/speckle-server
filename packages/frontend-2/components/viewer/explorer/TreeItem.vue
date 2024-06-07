@@ -26,6 +26,10 @@
             ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}
           `"
           @click="(e:MouseEvent) => setSelection(e)"
+          @mouseenter="highlightObject"
+          @focusin="highlightObject"
+          @mouseleave="unhighlightObject"
+          @focusout="unhighlightObject"
         >
           <div
             :class="`truncate ${unfold ? 'font-semibold' : ''} ${
@@ -149,7 +153,11 @@ import {
   getTargetObjectIds
 } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
-import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useFilterUtilities,
+  useHighlightedObjectsUtilities,
+  useSelectionUtilities
+} from '~~/lib/viewer/composables/ui'
 
 const props = withDefaults(
   defineProps<{
@@ -178,6 +186,7 @@ const { addToSelection, clearSelection, removeFromSelection, objects } =
   useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
@@ -326,6 +335,14 @@ const setSelection = (e: MouseEvent) => {
   }
   if (!e.shiftKey) clearSelection()
   addToSelection(rawSpeckleData)
+}
+
+const highlightObject = () => {
+  highlightObjects(getTargetObjectIds(rawSpeckleData))
+}
+
+const unhighlightObject = () => {
+  unhighlightObjects(getTargetObjectIds(rawSpeckleData))
 }
 
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)

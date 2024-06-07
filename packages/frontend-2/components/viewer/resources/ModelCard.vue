@@ -7,6 +7,10 @@
           ? 'border-primary max-h-96 shadow-md'
           : 'hover:border-primary border-transparent'
       }`"
+      @mouseenter="highlightObject"
+      @mouseleave="unhighlightObject"
+      @focusin="highlightObject"
+      @focusout="unhighlightObject"
     >
       <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
       <div
@@ -118,7 +122,10 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
-import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useDiffUtilities,
+  useHighlightedObjectsUtilities
+} from '~~/lib/viewer/composables/ui'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
@@ -135,6 +142,7 @@ const props = defineProps<{
 const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 const { diffModelVersions } = useDiffUtilities()
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const showVersions = ref(false)
 
@@ -213,5 +221,13 @@ const onLoadMore = async () => {
 async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
   if (!loadedVersion.value?.id) return
   await diffModelVersions(modelId.value, loadedVersion.value.id, version.id)
+}
+
+const highlightObject = () => {
+  highlightObjects([props.model.loadedVersion.items[0].referencedObject])
+}
+
+const unhighlightObject = () => {
+  unhighlightObjects([props.model.loadedVersion.items[0].referencedObject])
 }
 </script>

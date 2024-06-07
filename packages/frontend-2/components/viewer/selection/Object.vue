@@ -11,6 +11,10 @@
         class="flex h-full w-full px-2 py-0.5 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
         :class="unfold && 'text-primary'"
         @click="unfold = !unfold"
+        @mouseenter="highlightObject"
+        @focusin="highlightObject"
+        @mouseleave="unhighlightObject"
+        @focusout="unhighlightObject"
       >
         <ChevronDownIcon
           :class="`h-3 w-3 transition ${headerClasses} ${
@@ -130,6 +134,7 @@ import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
 const {
   ui: {
     diff: { result, enabled: diffEnabled }
@@ -147,6 +152,8 @@ const props = withDefaults(
   }>(),
   { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
+
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const unfold = ref(props.unfold)
 
@@ -315,6 +322,14 @@ const categorisedValuePairs = computed(() => {
     nulls: keyValuePairs.value.filter((item) => item.value === null)
   }
 })
+
+const highlightObject = () => {
+  highlightObjects([props.object.id])
+}
+
+const unhighlightObject = () => {
+  unhighlightObjects([props.object.id])
+}
 
 watch(
   () => props.unfold,
