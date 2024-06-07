@@ -380,7 +380,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 args?.cursor || args?.filter?.search || args?.limit
                   ? {
                       cursor: args.cursor || undefined,
-                      search: args.filter?.search || undefined,
+                      versionsFilter: args.filter?.search || undefined,
                       limit: args.limit || undefined
                     }
                   : {}
