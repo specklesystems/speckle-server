@@ -109,6 +109,7 @@ import {
   useAutomationInputEncryptor,
   type AutomationInputEncryptor
 } from '~/lib/automate/composables/automations'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 enum AutomationCreateSteps {
   SelectFunction,
@@ -135,6 +136,8 @@ const props = defineProps<{
   preselectedProject?: Optional<FormSelectProjects_ProjectFragment>
 }>()
 const open = defineModel<boolean>('open', { required: true })
+
+const mixpanel = useMixpanel()
 
 const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
 
@@ -442,6 +445,16 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       logger.error('Failed to create revision', { revisionRes })
       return
     }
+
+    mixpanel.track('Automation Created', {
+      automationId: aId,
+      name,
+      projectId: project.id,
+      functionName: fn.name,
+      functionId: fn.id,
+      functionReleaseId: fnRelease.id,
+      modelId: model.id
+    })
 
     // Enable
     await updateAutomation(
