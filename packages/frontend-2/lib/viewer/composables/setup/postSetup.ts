@@ -139,7 +139,7 @@ function useViewerObjectAutoLoading() {
 
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
       await Promise.all(
-        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
+        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
       )
     },
     { deep: true, immediate: true }
