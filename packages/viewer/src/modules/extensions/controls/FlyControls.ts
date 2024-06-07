@@ -5,7 +5,6 @@ import {
   PerspectiveCamera,
   Quaternion,
   Sphere,
-  Spherical,
   Vector2,
   Vector3
 } from 'three'
@@ -51,6 +50,7 @@ class FlyControls extends SpeckleControls {
   protected positionZDamper: Damper = new Damper()
   protected _lastTick: number = 0
   protected _enabled: boolean = false
+  protected _lastQuat: Quaternion = new Quaternion()
 
   public get enabled(): boolean {
     return this._enabled
@@ -154,20 +154,29 @@ class FlyControls extends SpeckleControls {
   }
 
   public fromPositionAndTarget(position: Vector3, target: Vector3): void {
-    const cameraForward = new Vector3().setFromMatrixColumn(this.camera.matrix, 2)
-    const dir = new Vector3().subVectors(target, position).normalize()
-    const quaternion = new Quaternion().setFromUnitVectors(cameraForward, dir)
-    this.goalEuler.setFromQuaternion(quaternion)
+    target
+    position
+    const t = new Quaternion().setFromRotationMatrix(
+      new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5))
+    )
+    const tInv = new Quaternion().copy(t).invert()
+
+    const tTarget = new Vector3().copy(target).applyQuaternion(t)
+    const matrix = new Matrix4().lookAt(position, tTarget, new Vector3(0, 0, 1))
+    const quat = new Quaternion().setFromRotationMatrix(matrix).premultiply(tInv)
+
+    this.goalEuler.setFromQuaternion(quat)
     this.goalPosition.copy(position)
   }
 
-  public fromSpherical(_spherical: Spherical, _origin?: Vector3 | undefined): void {
-    _spherical
-    _origin
-  }
-
   public getTarget(): Vector3 {
-    throw new Error('Method not implemented.')
+    const target = new Vector3().copy(this.goalPosition)
+    const matrix = new Matrix4().makeRotationFromEuler(this.goalEuler)
+    const forward = new Vector3().setFromMatrixColumn(matrix, 2)
+    target.addScaledVector(forward, 5)
+    return target.applyMatrix4(
+      new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5)).invert()
+    )
   }
 
   public getPosition(): Vector3 {
@@ -223,6 +232,7 @@ class FlyControls extends SpeckleControls {
     )
     q.setFromEuler(euler).premultiply(t)
     this.camera.quaternion.copy(q)
+    this._lastQuat.copy(q)
   }
 
   // event listeners

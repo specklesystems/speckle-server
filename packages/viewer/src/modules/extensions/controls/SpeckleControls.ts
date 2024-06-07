@@ -1,10 +1,4 @@
-import {
-  OrthographicCamera,
-  PerspectiveCamera,
-  Sphere,
-  Spherical,
-  Vector3
-} from 'three'
+import { OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three'
 import EventEmitter from '../../EventEmitter'
 
 export abstract class SpeckleControls extends EventEmitter {
@@ -19,7 +13,6 @@ export abstract class SpeckleControls extends EventEmitter {
   abstract dispose(): void
 
   abstract fromPositionAndTarget(position: Vector3, target: Vector3): void
-  abstract fromSpherical(spherical: Spherical, origin?: Vector3): void
   abstract getTarget(): Vector3
   abstract getPosition(): Vector3
 }

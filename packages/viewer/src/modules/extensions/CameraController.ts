@@ -8,7 +8,6 @@ import {
   OrthographicCamera,
   PerspectiveCamera,
   Sphere,
-  Spherical,
   Vector3
 } from 'three'
 import {
@@ -208,17 +207,26 @@ export class CameraController extends Extension implements SpeckleCamera {
   }
 
   public toggleControllers() {
+    const oldControls: SpeckleControls = this._controls
+    let newControls: SpeckleControls | undefined = undefined
+
     if (this._controls instanceof SmoothOrbitControls) {
-      this._controls.enabled = false
-      const fly = this._controlsList[1]
-      fly.enabled = true
-      this._controls = fly
+      newControls = this._controlsList[1]
     } else if (this._controls instanceof FlyControls) {
-      this._controls.enabled = false
-      const orbit = this._controlsList[0]
-      orbit.enabled = true
-      this._controls = orbit
+      newControls = this._controlsList[0]
     }
+
+    if (!newControls) throw new Error('Not controls found!')
+
+    oldControls.enabled = false
+    newControls.enabled = true
+    newControls.fromPositionAndTarget(
+      oldControls.getPosition(),
+      oldControls.getTarget()
+    )
+    newControls.jumpToGoal()
+    this._controls = newControls
+    this.viewer.requestRender()
   }
 
   setCameraView(
@@ -582,10 +590,10 @@ export class CameraController extends Extension implements SpeckleCamera {
   private setViewPolar(_view: PolarView, transition = true) {
     transition
     // TO DO
-    this._controls.fromSpherical(
-      new Spherical(_view.radius, _view.polar, _view.azimuth),
-      _view.origin
-    )
+    // this._controls.fromSpherical(
+    //   new Spherical(_view.radius, _view.polar, _view.azimuth),
+    //   _view.origin
+    // )
 
     if (!transition) this._controls.jumpToGoal()
     this.enableRotations()
