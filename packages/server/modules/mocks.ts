@@ -230,7 +230,7 @@ export async function buildMocksConfig(): Promise<{
             ...(isNullOrUndefined(enabled) ? {} : { enabled })
           }
         },
-        trigger: () => true,
+        trigger: () => faker.datatype.string(10),
         createRevision: () => store.get('AutomationRevision') as any
       },
       UserAutomateInfo: {

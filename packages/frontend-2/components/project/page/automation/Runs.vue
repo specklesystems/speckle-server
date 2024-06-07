@@ -24,6 +24,7 @@ import { ArrowPathIcon } from '@heroicons/vue/24/outline'
 import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import type { ProjectPageAutomationRuns_AutomationFragment } from '~/lib/common/generated/gql/graphql'
+import { useMixpanel } from '~/lib/core/composables/mp'
 import { useTriggerAutomation } from '~/lib/projects/composables/automationManagement'
 import { projectAutomationPagePaginatedRunsQuery } from '~/lib/projects/graphql/queries'
 
@@ -32,6 +33,7 @@ import { projectAutomationPagePaginatedRunsQuery } from '~/lib/projects/graphql/
 graphql(`
   fragment ProjectPageAutomationRuns_Automation on Automation {
     id
+    name
     enabled
     isTestAutomation
     runs(limit: 10) {
@@ -65,8 +67,18 @@ const { identifier, onInfiniteLoad } = usePaginatedQuery({
   resolveCursorFromVariables: (vars) => vars.cursor
 })
 const triggerAutomation = useTriggerAutomation()
+const mixpanel = useMixpanel()
 
-const onTrigger = () => {
-  triggerAutomation(props.projectId, props.automation.id)
+const onTrigger = async () => {
+  const res = await triggerAutomation(props.projectId, props.automation.id)
+  if (res) {
+    mixpanel.track('Automation Run Triggered', {
+      automationId: props.automation.id,
+      automationName: props.automation.name,
+      automationRunId: res,
+      projectId: props.projectId,
+      source: 'manual'
+    })
+  }
 }
 </script>

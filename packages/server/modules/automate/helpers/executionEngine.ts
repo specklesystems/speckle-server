@@ -1,7 +1,4 @@
-import {
-  TestTriggerType,
-  VersionCreationTriggerType
-} from '@/modules/automate/helpers/types'
+import { VersionCreationTriggerType } from '@/modules/automate/helpers/types'
 import {
   AutomateFunctionTemplateLanguage,
   AutomateRunTriggerType
@@ -50,11 +47,9 @@ export const functionTemplateRepos = <const>[
 ]
 
 export const dbToGraphqlTriggerTypeMap = <const>{
-  [VersionCreationTriggerType]: AutomateRunTriggerType.VersionCreated,
-  [TestTriggerType]: AutomateRunTriggerType.TestType
+  [VersionCreationTriggerType]: AutomateRunTriggerType.VersionCreated
 }
 
 export const graphqlToDbTriggerTypeMap = <const>{
-  [AutomateRunTriggerType.VersionCreated]: VersionCreationTriggerType,
-  [AutomateRunTriggerType.TestType]: TestTriggerType
+  [AutomateRunTriggerType.VersionCreated]: VersionCreationTriggerType
 }

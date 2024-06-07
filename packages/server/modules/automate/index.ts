@@ -8,9 +8,10 @@ import {
 import { Environment } from '@speckle/shared'
 import {
   getActiveTriggerDefinitions,
+  getAutomationRunFullTriggers,
+  getFullAutomationRevisionMetadata,
   getAutomation,
-  getAutomationRevision,
-  getAutomationRunFullTriggers
+  getAutomationRevision
 } from '@/modules/automate/repositories/automations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
@@ -26,6 +27,7 @@ import {
   setupAutomationUpdateSubscriptions,
   setupStatusUpdateSubscriptions
 } from '@/modules/automate/services/subscriptions'
+import { setupRunFinishedTracking } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
@@ -67,6 +69,9 @@ const initializeEventListeners = () => {
     getAutomationRunFullTriggers
   })
   const setupAutomationUpdateSubscriptionsInvoke = setupAutomationUpdateSubscriptions()
+  const setupRunFinishedTrackingInvoke = setupRunFinishedTracking({
+    getFullAutomationRevisionMetadata
+  })
 
   const quitters = [
     VersionsEmitter.listen(
@@ -81,7 +86,8 @@ const initializeEventListeners = () => {
       }
     ),
     setupStatusUpdateSubscriptionsInvoke(),
-    setupAutomationUpdateSubscriptionsInvoke()
+    setupAutomationUpdateSubscriptionsInvoke(),
+    setupRunFinishedTrackingInvoke()
   ]
 
   return () => {

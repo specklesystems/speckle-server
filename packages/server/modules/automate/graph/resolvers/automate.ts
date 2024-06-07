@@ -506,14 +506,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             })
           })
 
-          await trigger({
+          const { automationRunId } = await trigger({
             automationId,
             userId: ctx.userId!,
             userResourceAccessRules: ctx.resourceAccessRules,
             projectId: parent.projectId
           })
 
-          return true
+          return automationRunId
         },
         async createTestAutomation(parent, { input }, ctx) {
           const create = createTestAutomation({
@@ -596,6 +596,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 items: []
               }
             }
+
             throw e
           }
         }

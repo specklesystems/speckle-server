@@ -1,4 +1,3 @@
-import type { OverridedMixpanel } from 'mixpanel-browser'
 import { useOnAuthStateChange } from '~/lib/auth/composables/auth'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { md5 } from '~/lib/common/helpers/encodeDecode'
@@ -17,16 +16,10 @@ function getMixpanelServerId(): string {
 /**
  * Get Mixpanel instance
  * Note: Mixpanel is not available during SSR because mixpanel-browser only works in the browser!
- * If this composable is invoked during SSR it will return undefined!
  */
-export function useMixpanel(): OverridedMixpanel {
-  // we're making TS lie here cause we don't want to constantly check if the return of this
-  // is undefined
-  if (process.server) return undefined as unknown as OverridedMixpanel
-
+export function useMixpanel() {
   const nuxt = useNuxtApp()
-  const $mixpanel = nuxt.$mixpanel as () => OverridedMixpanel
-
+  const $mixpanel = nuxt.$mixpanel
   return $mixpanel()
 }
 
