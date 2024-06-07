@@ -2,7 +2,7 @@
   <div class="relative">
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
-      :class="`rounded-md border-l-4 transition  ${
+      :class="`rounded-md border-l-4  ${
         showVersions
           ? 'border-primary max-h-96 shadow-md'
           : 'hover:border-primary border-transparent'
@@ -12,7 +12,7 @@
       <div
         :class="`${
           showVersions ? 'bg-primary' : 'bg-foundation hover:bg-primary-muted'
-        } group sticky cursor-pointer top-0 z-20 flex h-10 sm:h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 transition select-none`"
+        } group sticky cursor-pointer top-0 z-20 flex h-10 sm:h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 select-none`"
         @click="showVersions = !showVersions"
       >
         <div>

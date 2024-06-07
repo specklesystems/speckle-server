@@ -2,7 +2,7 @@
   <div>
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
-      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md transition-all text-foreground cursor-pointer ${
+      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md text-foreground cursor-pointer ${
         isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
       }`"
       @click="setSelection()"
