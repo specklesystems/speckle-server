@@ -6,7 +6,8 @@ import {
   getFunctionRelease,
   getFunctions,
   getFunctionReleases,
-  getUserGithubAuthState
+  getUserGithubAuthState,
+  getUserGithubOrganizations
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
@@ -602,27 +603,49 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       User: {
-        automateInfo: async (parent, _args, ctx) => {
-          const userId = parent.id
+        automateInfo: (parent) => ({ userId: parent.id })
+      },
+      UserAutomateInfo: {
+        hasAutomateGithubApp: async (parent, _args, ctx) => {
+          const userId = parent.userId
 
           let hasAutomateGithubApp = false
           try {
             const authState = await getUserGithubAuthState({ userId })
             hasAutomateGithubApp = authState.userHasAuthorizedGitHubApp
           } catch (e) {
+            ctx.log.error(e, 'Failed to resolve user automate github auth state')
+          }
+
+          return hasAutomateGithubApp
+        },
+        availableGithubOrgs: async (parent, _args, ctx) => {
+          const authCode = await createStoredAuthCode({ redis: getGenericRedis() })()
+          const userId = parent.userId
+
+          let orgs: string[] = []
+          try {
+            orgs = (
+              await getUserGithubOrganizations({
+                userId,
+                authCode
+              })
+            ).availableGitHubOrganisations
+          } catch (e) {
+            let isSeriousError = true
+
             if (e instanceof ExecutionEngineFailedResponseError) {
-              if (e.response.statusMessage === 'FunctionCreatorDoesNotExist') {
-                hasAutomateGithubApp = false
+              if (e.response.statusMessage === 'InvalidOrMissingGithubAuth') {
+                isSeriousError = false
               }
-            } else {
-              ctx.log.error(e, 'Failed to resolve user automate github auth state')
+            }
+
+            if (isSeriousError) {
+              ctx.log.error(e, 'Failed to resolve user automate github orgs')
             }
           }
 
-          return {
-            hasAutomateGithubApp,
-            availableGithubOrgs: []
-          }
+          return orgs
         }
       },
       ServerInfo: {

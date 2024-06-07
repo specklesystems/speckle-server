@@ -418,6 +418,32 @@ export const getUserGithubAuthState = async (params: {
   })
 }
 
+export const getUserGithubOrganizations = async (params: {
+  speckleServerUrl?: string
+  userId: string
+  authCode: string
+}) => {
+  const {
+    speckleServerUrl = getServerOrigin(),
+    userId: speckleUserId,
+    authCode: speckleServerAuthenticationCode
+  } = params
+  const speckleServerOrigin = new URL(speckleServerUrl).origin
+
+  const url = getApiUrl(`/api/v2/functions/auth/githubapp/organizations`, {
+    query: {
+      speckleServerOrigin,
+      speckleUserId,
+      speckleServerAuthenticationCode
+    }
+  })
+
+  return await invokeJsonRequest<{ availableGitHubOrganisations: string[] }>({
+    url,
+    method: 'get'
+  })
+}
+
 export async function* getAutomationRunLogs(params: {
   automationId: string
   automationRunId: string

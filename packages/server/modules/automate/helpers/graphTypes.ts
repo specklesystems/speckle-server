@@ -80,3 +80,5 @@ export type ProjectAutomationsUpdatedMessageGraphQLReturn = Merge<
     revision: AutomationRevisionGraphQLReturn | null
   }
 >
+
+export type UserAutomateInfoGraphQLReturn = { userId: string }
