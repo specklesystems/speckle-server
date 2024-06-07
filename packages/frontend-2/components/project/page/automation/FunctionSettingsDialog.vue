@@ -76,7 +76,10 @@
 <script setup lang="ts">
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { automationFunctionRoute } from '~/lib/common/helpers/route'
-import { useJsonFormsChangeHandler } from '~/lib/automate/composables/jsonSchema'
+import {
+  useJsonFormsChangeHandler,
+  hasJsonFormErrors as hasFormErrors
+} from '~/lib/automate/composables/jsonSchema'
 import {
   formatJsonFormSchemaInputs,
   formattedJsonFormSchema
@@ -205,7 +208,10 @@ const onSave = async () => {
   const model = selectedModel.value
 
   // Validate
-  await jsonForm.value?.triggerChange()
+  const validationResult = await jsonForm.value?.triggerChange()
+  if (!validationResult || hasFormErrors(validationResult)) {
+    return
+  }
 
   if (hasErrors.value || !fId || !rId || !hasRequiredData.value || !model) return
 

@@ -32,5 +32,9 @@ const {
   fieldName,
   validateOnValueUpdate,
   isRequired
-} = useJsonRendererBaseSetup(useJsonFormsControl(props))
+} = useJsonRendererBaseSetup(useJsonFormsControl(props), {
+  onChangeValueConverter(val: string) {
+    return val?.length > 0 ? val : undefined
+  }
+})
 </script>
