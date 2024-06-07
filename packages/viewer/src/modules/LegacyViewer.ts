@@ -193,6 +193,7 @@ export class LegacyViewer extends Viewer {
   }
 
   public resetSelection(): Promise<FilteringState> {
+    this.highlightExtension.clearSelection()
     this.selection.clearSelection()
     if (this.filtering.filteringState.selectedObjects)
       this.filtering.filteringState.selectedObjects.length = 0
