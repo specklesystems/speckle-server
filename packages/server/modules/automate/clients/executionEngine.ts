@@ -301,14 +301,17 @@ export type GetFunctionResponse = FunctionWithVersionsSchemaType & {
 export const getFunction = async (params: {
   functionId: string
   token?: string
-  releases?: { cursor?: string; limit?: number; search?: string }
+  releases?: { cursor?: string; limit?: number; versionsFilter?: string }
 }) => {
   const { functionId, token } = params
+  const query = Object.values(params.releases || {}).filter(isNonNullable).length
+    ? params.releases
+    : undefined
+
   const url = getApiUrl(`/api/v1/functions/${functionId}`, {
-    query: params.releases?.cursor || params.releases?.limit ? params.releases : {}
+    query
   })
 
-  // TODO: This still doesn't accept the search query
   const result = await invokeJsonRequest<GetFunctionResponse>({
     url,
     method: 'get',
