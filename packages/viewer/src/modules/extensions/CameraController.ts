@@ -160,7 +160,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       this._renderingCamera,
       this.viewer.getContainer()
     )
-    flyControls.enabled = true
+    flyControls.enabled = false
 
     const orbitControls = new SmoothOrbitControls(
       this.perspectiveCamera,
@@ -171,7 +171,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.viewer.getRenderer().intersections,
       this._options
     )
-    orbitControls.enabled = false
+    orbitControls.enabled = true
     orbitControls.setDamperDecayTime(30)
     orbitControls.basisTransform = new Matrix4().makeRotationFromEuler(
       new Euler(Math.PI * 0.5)
@@ -182,7 +182,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     this._controlsList.push(orbitControls)
     this._controlsList.push(flyControls)
 
-    this._controls = flyControls
+    this._controls = orbitControls
 
     this.viewer.getRenderer().input.on(InputEvent.KeyUp, this.onKeyUp.bind(this))
   }
@@ -212,8 +212,10 @@ export class CameraController extends Extension implements SpeckleCamera {
 
     if (this._controls instanceof SmoothOrbitControls) {
       newControls = this._controlsList[1]
+      // console.log('Fly -> ', oldControls.getPosition(), oldControls.getTarget())
     } else if (this._controls instanceof FlyControls) {
       newControls = this._controlsList[0]
+      // console.log('Orbit -> ', newControls.getPosition(), newControls.getTarget())
     }
 
     if (!newControls) throw new Error('Not controls found!')

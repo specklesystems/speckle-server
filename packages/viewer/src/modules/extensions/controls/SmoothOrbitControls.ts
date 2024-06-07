@@ -251,11 +251,24 @@ export class SmoothOrbitControls extends SpeckleControls {
     if (position.equals(targetPosition) && target.equals(this.origin)) return
 
     const v0 = new Vector3().copy(position).applyMatrix4(this._basisTransformInv)
-    v0.sub(target)
+    const v1 = new Vector3().copy(target).applyMatrix4(this._basisTransformInv)
+    v0.sub(v1)
     const spherical = new Spherical()
     spherical.setFromCartesianCoords(v0.x, v0.y, v0.z)
+
+    // const v0_1 = new Vector3()
+    //   .copy(this.getPosition())
+    //   .applyMatrix4(this._basisTransformInv)
+    // const v1_1 = new Vector3().copy(this.getTarget()) //.applyMatrix4(this._basisTransformInv)
+    // v0_1.sub(v1_1)
+
+    // console.log('This -> ', v0_1.normalize())
+    // console.log('Computed -> ', v0.normalize())
+    // console.log('This -> ', this.goalSpherical)
+    // console.log('Computed -> ', spherical)
+
     this.setOrbit(spherical.theta, spherical.phi, spherical.radius)
-    this.setTarget(target.x, target.y, target.z)
+    this.setTarget(v1.x, v1.y, v1.z)
   }
 
   /**

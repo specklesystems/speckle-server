@@ -172,11 +172,12 @@ class FlyControls extends SpeckleControls {
   public getTarget(): Vector3 {
     const target = new Vector3().copy(this.goalPosition)
     const matrix = new Matrix4().makeRotationFromEuler(this.goalEuler)
-    const forward = new Vector3().setFromMatrixColumn(matrix, 2)
-    target.addScaledVector(forward, 5)
-    return target.applyMatrix4(
-      new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5)).invert()
-    )
+    const forward = new Vector3()
+      .setFromMatrixColumn(matrix, 2)
+      .applyMatrix4(new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5)))
+      .normalize()
+    target.addScaledVector(forward, -10)
+    return target
   }
 
   public getPosition(): Vector3 {
