@@ -30,7 +30,9 @@
         </CommonAlert>
         <FormJsonForm
           v-else
+          ref="jsonForm"
           v-model:data="selectedVersionInputs"
+          :validate-on-mount="false"
           :schema="inputSchema"
           class="space-y-4"
           @change="handler"
@@ -94,6 +96,8 @@ import {
   type AutomationInputEncryptor
 } from '~/lib/automate/composables/automations'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import type { FormJsonForm } from '#build/components'
+import type { JsonFormsChangeEvent } from '@jsonforms/vue'
 
 type AutomationRevisionFunction =
   ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment
@@ -148,6 +152,7 @@ const { triggerNotification } = useGlobalToast()
 const logger = useLogger()
 const mixpanel = useMixpanel()
 
+const jsonForm = ref<{ triggerChange: () => Promise<Optional<JsonFormsChangeEvent>> }>()
 const selectedModel = ref<CommonModelSelectorModelFragment>()
 const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment>()
 const inputSchema = computed(() =>
@@ -199,6 +204,9 @@ const onSave = async () => {
   const fId = functionId.value
   const rId = selectedReleaseId.value
   const model = selectedModel.value
+
+  // Validate
+  await jsonForm.value?.triggerChange()
 
   if (hasErrors.value || !fId || !rId || !hasRequiredData.value || !model) return
 
