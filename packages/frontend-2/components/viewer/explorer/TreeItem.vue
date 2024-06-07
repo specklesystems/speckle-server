@@ -14,7 +14,7 @@
             @click="manualUnfoldToggle()"
           >
             <ChevronDownIcon
-              :class="`h-3 w-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'} ${
+              :class="`h-3 w-3 ${!unfold ? '-rotate-90' : 'rotate-0'} ${
                 isSelected ? 'text-primary' : ''
               }`"
             />
@@ -22,7 +22,7 @@
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          :class="`hover:bg-primary-muted group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1 transition hover:shadow-md
+          :class="`hover:bg-primary-muted group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1 hover:shadow-md
             ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}
           `"
           @click="(e:MouseEvent) => setSelection(e)"
@@ -54,9 +54,9 @@
           <div class="flex-grow"></div>
           <div class="flex flex-shrink-0 items-center space-x-1">
             <!-- <div v-if="!(isSingleCollection || isMultipleCollection)"> -->
-            <div class="flex space-x-2 transition">
+            <div class="flex space-x-2">
               <button
-                :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
+                :class="`hover:text-primary px-1 py-2 opacity-0 group-hover:opacity-100 ${
                   isHidden ? 'opacity-100' : ''
                 }`"
                 @click.stop="hideOrShowObject"
@@ -65,7 +65,7 @@
                 <EyeSlashIcon v-else class="h-3 w-3" />
               </button>
               <button
-                :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
+                :class="`hover:text-primary px-1 py-2 opacity-0 group-hover:opacity-100 ${
                   isIsolated ? 'opacity-100' : ''
                 }`"
                 @click.stop="isolateOrUnisolateObject"

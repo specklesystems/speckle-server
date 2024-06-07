@@ -20,11 +20,10 @@
 <script setup lang="ts">
 import { SpeckleViewer } from '@speckle/shared'
 import { LayoutTabsHoriztonal } from '@speckle/ui-components'
+import { useCameraUtilities } from '~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import type { LayoutTabItem } from '~~/lib/layout/helpers/components'
 import { useInjectedViewerRequestedResources } from '~~/lib/viewer/composables/setup'
-
-const { items } = useInjectedViewerRequestedResources()
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
@@ -33,6 +32,10 @@ const emit = defineEmits<{
 const props = defineProps<{
   open: boolean
 }>()
+
+const { items } = useInjectedViewerRequestedResources()
+const { zoom } = useCameraUtilities()
+const { triggerNotification } = useGlobalToast()
 
 const tabItems = ref<LayoutTabItem[]>([
   { title: 'By model', id: 'model' },
@@ -48,6 +51,19 @@ const open = computed({
 
 const mp = useMixpanel()
 
+const triggerZoomNotification = () => {
+  triggerNotification({
+    type: ToastNotificationType.Success,
+    title: 'Model added successfully',
+    cta: {
+      title: 'Zoom to fit',
+      onClick: () => {
+        zoom()
+      }
+    }
+  })
+}
+
 const onModelChosen = async (params: { modelId: string }) => {
   const { modelId } = params
   await items.update([
@@ -61,6 +77,8 @@ const onModelChosen = async (params: { modelId: string }) => {
     action: 'add',
     resource: 'model'
   })
+
+  triggerZoomNotification()
 
   open.value = false
 }
@@ -81,6 +99,8 @@ const onObjectsChosen = async (params: { objectIds: string[] }) => {
     action: 'add',
     resource: 'object'
   })
+
+  triggerZoomNotification()
 
   open.value = false
 }

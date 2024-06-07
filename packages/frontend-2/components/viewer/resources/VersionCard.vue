@@ -1,6 +1,6 @@
 <template>
   <div
-    :class="`bg-foundation group relative block w-full space-y-2 rounded-md pb-2 text-left transition ${
+    :class="`bg-foundation group relative block w-full space-y-2 rounded-md pb-2 text-left ${
       clickable
         ? 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'
         : ' bg-primary-muted cursor-default'
@@ -17,7 +17,7 @@
         isLoaded
           ? 'border-primary border-r-4 border'
           : 'border-dashed border-outline-3 border-r-2'
-      } group-hover:border-primary left-[7px] z-10 transition-all`"
+      } group-hover:border-primary left-[7px] z-10`"
     ></div>
     <div
       v-if="last"

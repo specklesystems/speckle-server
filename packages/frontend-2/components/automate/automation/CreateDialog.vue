@@ -110,6 +110,8 @@ import {
   type AutomationInputEncryptor
 } from '~/lib/automate/composables/automations'
 import { useMixpanel } from '~/lib/core/composables/mp'
+import { hasJsonFormErrors } from '~/lib/automate/composables/jsonSchema'
+import type { JsonFormsChangeEvent } from '@jsonforms/vue'
 
 enum AutomationCreateSteps {
   SelectFunction,
@@ -177,7 +179,7 @@ const {
   shouldShowWidget
 } = useEnumStepsWidgetSetup({ enumStep, widgetStepsMap: stepsWidgetData })
 
-const parametersStep = ref<{ submit: () => Promise<void> }>()
+const parametersStep = ref<{ submit: () => Promise<Optional<JsonFormsChangeEvent>> }>()
 
 const creationLoading = ref(false)
 const automationId = ref<string>()
@@ -479,8 +481,8 @@ const onDialogSubmit = async (e: SubmitEvent) => {
   if (enumStep.value === AutomationCreateSteps.AutomationDetails) {
     await onDetailsSubmit(e)
   } else if (enumStep.value === AutomationCreateSteps.FunctionParameters) {
-    await parametersStep.value?.submit()
-    if (!hasParameterErrors.value) {
+    const validationResult = await parametersStep.value?.submit()
+    if (validationResult && !hasJsonFormErrors(validationResult)) {
       step.value++
     }
   }
