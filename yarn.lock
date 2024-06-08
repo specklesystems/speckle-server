@@ -15628,11 +15628,11 @@ __metadata:
   resolution: "@speckle/tailwind-theme@workspace:packages/tailwind-theme"
   dependencies:
     "@tailwindcss/forms": ^0.5.3
-    "@types/eslint": ^8.4.5
+    "@types/eslint": ^8.56.10
     "@typescript-eslint/eslint-plugin": ^5.38.1
     "@typescript-eslint/parser": ^5.38.1
-    eslint: ^8.24.0
-    eslint-config-prettier: ^8.5.0
+    eslint: ^9.4.0
+    eslint-config-prettier: ^9.1.0
     prettier: ^2.7.1
     rimraf: ^5.0.0
     tailwind-config-viewer: ^1.7.2
