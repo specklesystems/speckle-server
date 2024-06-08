@@ -7,7 +7,7 @@
     "build": "vite build",
     "serve": "vite preview --port 8080",
     "profile": "vite-bundle-visualizer --output profiler/stats.html",
-    "lint:eslint": "eslint . --ext .js,.ts,.vue,.tsx,.jsx",
+    "lint:eslint": "eslint .",
     "lint:ts": "vue-tsc --noEmit",
     "lint": "yarn lint:eslint && yarn lint:ts",
     "gqlgen": "graphql-codegen --config codegen.yml"

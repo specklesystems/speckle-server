@@ -83,7 +83,7 @@ import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { storeToRefs } from 'pinia'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useAccountStore } from '~/store/accounts'
-import { DUIAccount } from '~/lib/accounts/composables/setup'
+import type { DUIAccount } from '~/lib/accounts/composables/setup'
 import { useDocumentInfoStore } from '~/store/uiConfig'
 
 const accountStore = useAccountStore()
