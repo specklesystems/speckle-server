@@ -10,6 +10,7 @@ import {
 } from 'three'
 import { Damper, SETTLING_TIME } from '../../utils/Damper'
 import { SpeckleControls } from './SpeckleControls'
+import { World } from '../../World'
 
 const _vectorBuff0 = new Vector3()
 const _changeEvent = { type: 'change' }
@@ -53,6 +54,8 @@ class FlyControls extends SpeckleControls {
   private _basisTransform: Matrix4 = new Matrix4()
   private _basisTransformInv: Matrix4 = new Matrix4()
 
+  private world: World
+
   public get enabled(): boolean {
     return this._enabled
   }
@@ -80,11 +83,16 @@ class FlyControls extends SpeckleControls {
     this._basisTransformInv.invert()
   }
 
-  constructor(camera: PerspectiveCamera | OrthographicCamera, container: HTMLElement) {
+  constructor(
+    camera: PerspectiveCamera | OrthographicCamera,
+    container: HTMLElement,
+    world: World
+  ) {
     super()
 
     this.camera = camera
     this.container = container
+    this.world = world
 
     this.pointerSpeed = 1.0
   }
@@ -103,39 +111,47 @@ class FlyControls extends SpeckleControls {
     this._lastTick = now
     const deltaSeconds = delta / 1000
 
-    if (this.keyMap.forward) this.velocity.z = -walkingSpeed * this.speed * deltaSeconds
-    if (this.keyMap.back) this.velocity.z = walkingSpeed * this.speed * deltaSeconds
+    const scaledWalkingSpeed = this.world.getRelativeOffset(0.02) * walkingSpeed
+    if (this.keyMap.forward)
+      this.velocity.z = -scaledWalkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.back)
+      this.velocity.z = scaledWalkingSpeed * this.speed * deltaSeconds
     if (!this.keyMap.forward && !this.keyMap.back) this.velocity.z = 0
 
-    if (this.keyMap.left) this.velocity.x = -walkingSpeed * this.speed * deltaSeconds
-    if (this.keyMap.right) this.velocity.x = walkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.left)
+      this.velocity.x = -scaledWalkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.right)
+      this.velocity.x = scaledWalkingSpeed * this.speed * deltaSeconds
     if (!this.keyMap.left && !this.keyMap.right) this.velocity.x = 0
 
-    if (this.keyMap.up) this.velocity.y = walkingSpeed * this.speed * deltaSeconds
-    if (this.keyMap.down) this.velocity.y = -walkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.up) this.velocity.y = scaledWalkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.down)
+      this.velocity.y = -scaledWalkingSpeed * this.speed * deltaSeconds
     if (!this.keyMap.down && !this.keyMap.up) this.velocity.y = 0
 
     if (this.isStationary()) return false
 
     this.moveBy(this.velocity)
 
+    const diagonal = this.world.worldBox.min.distanceTo(this.world.worldBox.max)
+    const minMaxRange = diagonal < 1 ? diagonal : 1
     this.position.x = this.positionXDamper.update(
       this.position.x,
       this.goalPosition.x,
       delta,
-      1
+      minMaxRange
     )
     this.position.y = this.positionYDamper.update(
       this.position.y,
       this.goalPosition.y,
       delta,
-      1
+      minMaxRange
     )
     this.position.z = this.positionZDamper.update(
       this.position.z,
       this.goalPosition.z,
       delta,
-      1
+      minMaxRange
     )
 
     this.euler.x = this.eulerXDamper.update(this.euler.x, this.goalEuler.x, delta, 1)
@@ -182,7 +198,7 @@ class FlyControls extends SpeckleControls {
       .setFromMatrixColumn(matrix, 2)
       .applyMatrix4(this._basisTransform)
       .normalize()
-    target.addScaledVector(forward, -10)
+    target.addScaledVector(forward, -this.world.getRelativeOffset(0.2))
     return target.applyMatrix4(this._basisTransformInv)
   }
 

@@ -156,7 +156,8 @@ export class CameraController extends Extension implements SpeckleCamera {
 
     const flyControls = new FlyControls(
       this._renderingCamera,
-      this.viewer.getContainer()
+      this.viewer.getContainer(),
+      this.viewer.World
     )
     flyControls.enabled = false
     flyControls.up = new Vector3(0, 0, 1)
