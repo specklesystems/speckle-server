@@ -161,17 +161,20 @@ class FlyControls extends SpeckleControls {
     this.goalPosition.copy(pos)
   }
 
+  /** The input position and target will be in a basis with (0,1,0) as up */
   public fromPositionAndTarget(position: Vector3, target: Vector3): void {
+    const tPosition = new Vector3().copy(position).applyMatrix4(this._basisTransform)
     const tTarget = new Vector3().copy(target).applyMatrix4(this._basisTransform)
     const matrix = new Matrix4()
-      .lookAt(position, tTarget, new Vector3(0, 0, 1))
+      .lookAt(tPosition, tTarget, this._up)
       .premultiply(this._basisTransformInv)
     const quat = new Quaternion().setFromRotationMatrix(matrix)
 
     this.goalEuler.setFromQuaternion(quat)
-    this.goalPosition.copy(position)
+    this.goalPosition.copy(tPosition)
   }
 
+  /** The returned vector needs to be in a basis with (0,1,0) as up */
   public getTarget(): Vector3 {
     const target = new Vector3().copy(this.goalPosition)
     const matrix = new Matrix4().makeRotationFromEuler(this.goalEuler)
@@ -180,11 +183,12 @@ class FlyControls extends SpeckleControls {
       .applyMatrix4(this._basisTransform)
       .normalize()
     target.addScaledVector(forward, -10)
-    return target
+    return target.applyMatrix4(this._basisTransformInv)
   }
 
+  /** The returned vector needs to be in a basis with (0,1,0) as up */
   public getPosition(): Vector3 {
-    return this.goalPosition
+    return new Vector3().copy(this.goalPosition).applyMatrix4(this._basisTransformInv)
   }
 
   public moveBy(amount: Vector3) {

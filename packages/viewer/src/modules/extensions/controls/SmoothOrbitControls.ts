@@ -220,6 +220,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.moveCamera()
   }
 
+  /** The input position and target will be in a basis with (0,1,0) as up */
   public fromPositionAndTarget(position: Vector3, target: Vector3): void {
     /** This check is targeted exclusevely towards the frontend which calls this method pointlessly each frame
      *  We don't want to make pointless calculations more than we already are
@@ -227,8 +228,8 @@ export class SmoothOrbitControls extends SpeckleControls {
     const targetPosition = this.getPosition()
     if (position.equals(targetPosition) && target.equals(this.origin)) return
 
-    const v0 = new Vector3().copy(position).applyMatrix4(this._basisTransformInv)
-    const v1 = new Vector3().copy(target).applyMatrix4(this._basisTransformInv)
+    const v0 = new Vector3().copy(position)
+    const v1 = new Vector3().copy(target)
     v0.sub(v1)
     const spherical = new Spherical()
     spherical.setFromCartesianCoords(v0.x, v0.y, v0.z)
@@ -255,14 +256,18 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   /**
-   * Gets the current goal position
+   * Gets the current goal position. Needs to be in a basis with (0,1,0) as up
    */
   public getPosition(): Vector3 {
-    return this.positionFromSpherical(this.goalSpherical, this.origin)
+    return this.positionFromSpherical(this.goalSpherical, this.origin).applyMatrix4(
+      this._basisTransformInv
+    )
   }
 
   /**
    * Gets the point in model coordinates the model should orbit/pivot around.
+   * Needs to be in a basis with (0,1,0) as up
+   * We keep goalOrigin untransformed, so there is no need to transform back from the controller's defined basis
    */
   public getTarget(): Vector3 {
     return this.goalOrigin.clone()
