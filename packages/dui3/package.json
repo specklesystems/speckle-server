@@ -13,7 +13,7 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "yarn ensure:tailwind-deps && nuxt prepare",
-    "lint:js": "eslint --ext \".js,.ts,.vue\" .",
+    "lint:js": "eslint .",
     "lint:tsc": "vue-tsc --noEmit",
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
     "lint:css": "stylelint \"**/*.{css,vue}\"",
