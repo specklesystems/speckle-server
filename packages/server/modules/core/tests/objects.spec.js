@@ -364,7 +364,7 @@ describe('Objects @core-objects', () => {
         orderBy: { field: 'test.value', direction: 'desc' }
       })
       assert.fail('sql injections are bad for health')
-    } catch (err) {
+    } catch {
       // pass
     }
   })

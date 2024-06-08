@@ -30,7 +30,7 @@ async function checkForPresence() {
   try {
     require('@speckle/tailwind-theme')
     require('@speckle/shared')
-  } catch (e) {
+  } catch {
     return false
   }
 

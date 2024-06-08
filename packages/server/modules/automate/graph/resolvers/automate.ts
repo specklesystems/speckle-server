@@ -262,7 +262,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         },
         async creationPublicKeys(parent, _args, ctx) {
           await authorizeResolver(
-            ctx.userId!,
+            ctx.userId,
             parent.projectId,
             Roles.Stream.Owner,
             ctx.resourceAccessRules
@@ -657,7 +657,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       ProjectMutations: {
         async automationMutations(_parent, { projectId }, ctx) {
           await validateStreamAccess(
-            ctx.userId!,
+            ctx.userId,
             projectId,
             Roles.Stream.Owner,
             ctx.resourceAccessRules

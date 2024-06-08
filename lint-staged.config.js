@@ -16,7 +16,7 @@ module.exports = {
       '**/packages/ui-components/utils/tailwind-configure.d.ts'
     ])
 
-    return 'eslint --cache --max-warnings=0 ' + finalFiles.join(' ')
+    return 'eslint --cache --max-warnings=0 --no-warn-ignored ' + finalFiles.join(' ')
   },
   '*.**': 'prettier --check --ignore-unknown'
 }

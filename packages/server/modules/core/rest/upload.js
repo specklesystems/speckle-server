@@ -100,7 +100,7 @@ module.exports = (app) => {
 
           try {
             objs = JSON.parse(gunzippedBuffer)
-          } catch (e) {
+          } catch {
             req.log.error(`Upload error: Batch not in JSON format`)
             if (!requestDropped) res.status(400).send('Failed to parse data.')
             requestDropped = true
@@ -176,7 +176,7 @@ module.exports = (app) => {
 
           try {
             objs = JSON.parse(buffer)
-          } catch (e) {
+          } catch {
             req.log.error(`Upload error: Batch not in JSON format`)
             if (!requestDropped)
               res.status(400).send('Failed to parse data. Batch is not in JSON format.')

@@ -75,7 +75,7 @@ async function authorizeResolver(
       .where({ id: resourceId })
       .first()
     if (isPublic && role.weight < 200) return true
-  } catch (e) {
+  } catch {
     throw new ApolloError(
       `Resource of type ${role.resourceTarget} with ${resourceId} not found`
     )
