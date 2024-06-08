@@ -38,7 +38,7 @@ export function usePreviewImageBlob(
   const isLoadingPanorama = ref(false)
   const shouldLoadPanorama = ref(false)
   const basePanoramaUrl = computed(() => unref(previewUrl) + '/all')
-  const isEnabled = computed(() => (process.server ? true : unref(enabled)))
+  const isEnabled = computed(() => (import.meta.server ? true : unref(enabled)))
 
   const ret = {
     previewUrl: computed(() => url.value),
@@ -64,7 +64,7 @@ export function usePreviewImageBlob(
     })
   }
 
-  if (process.server) return ret
+  if (import.meta.server) return ret
 
   const previewUrlPath = computed(() => {
     const basePreviewUrl = unref(previewUrl)
@@ -134,7 +134,7 @@ export function usePreviewImageBlob(
       }
 
       let blobUrl: string
-      if (enableDirectPreviews || process.server) {
+      if (enableDirectPreviews || import.meta.server) {
         blobUrl = basePreviewUrl
       } else {
         const res = await fetch(basePreviewUrl, {
@@ -150,7 +150,7 @@ export function usePreviewImageBlob(
       }
 
       // Load img in browser first, before we set the url
-      if (process.client) {
+      if (import.meta.client) {
         const img = new Image()
         img.src = blobUrl
         await new Promise((resolve, reject) => {
@@ -180,7 +180,7 @@ export function usePreviewImageBlob(
       }
 
       let blobUrl: string
-      if (enableDirectPreviews || process.server) {
+      if (enableDirectPreviews || import.meta.server) {
         blobUrl = basePanoramaUrl.value
       } else {
         const res = await fetch(basePanoramaUrl.value, {
@@ -203,7 +203,7 @@ export function usePreviewImageBlob(
       }
 
       // Load img in browser first, before we set the url
-      if (process.client) {
+      if (import.meta.client) {
         const img = new Image()
         img.src = blobUrl
         await new Promise((resolve, reject) => {

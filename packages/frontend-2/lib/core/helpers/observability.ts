@@ -3,7 +3,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { Observability, type Optional } from '@speckle/shared'
+import type { Observability, type Optional } from '@speckle/shared'
 import {
   upperFirst,
   get,

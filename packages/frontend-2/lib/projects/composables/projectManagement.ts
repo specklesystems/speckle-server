@@ -1,4 +1,4 @@
-import { ApolloCache } from '@apollo/client/core'
+import type { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
 import { isArray } from 'lodash-es'

@@ -1,4 +1,4 @@
-import { AllScopes } from '@speckle/shared'
+import type { AllScopes } from '@speckle/shared'
 import type { Get } from 'type-fest'
 import type {
   DeveloperSettingsAccessTokensQuery,

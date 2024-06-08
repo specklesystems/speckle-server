@@ -38,7 +38,7 @@ const route = useRoute()
 const state = ref<InjectableViewerState>()
 
 const checkUrlForEmbedManualLoadSettings = () => {
-  if (process.server) return
+  if (import.meta.server) return
 
   const hashParams = new URLSearchParams(route.hash.substring(1))
   const embedParam = hashParams.get('embed')

@@ -1,3 +1,5 @@
+import { useStorage } from '@vueuse/core'
+import { isString, uniq } from 'lodash-es'
 export {
   ThrottleOrDebounce,
   HorizontalDirection,
@@ -5,13 +7,11 @@ export {
   useOnBeforeWindowUnload,
   useResponsiveHorizontalDirectionCalculation
 } from '@speckle/ui-components'
-import { useStorage } from '@vueuse/core'
-import { isString, uniq } from 'lodash-es'
 
 export function useDisableGlobalTextSelection() {
   const disableTextSelection = ref(false)
 
-  if (process.client) {
+  if (import.meta.client) {
     watch(disableTextSelection, (newVal, oldVal) => {
       if (!!newVal === !!oldVal) return
 
@@ -32,12 +32,12 @@ export function useItemsExpandedState(params: { stateName: string }) {
   })
 
   const fakeState = ref(initializer())
-  const storageState = process.server
+  const storageState = import.meta.server
     ? fakeState
     : useStorage('useItemsExpandedState-' + params.stateName, initializer)
 
   const hasMounted = ref(false)
-  const useRealState = computed(() => process.client && hasMounted.value)
+  const useRealState = computed(() => import.meta.client && hasMounted.value)
 
   const state = computed({
     get: () => {

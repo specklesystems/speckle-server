@@ -32,9 +32,9 @@ export const useStrictLogger = async (
   )
 
   let logger: ReturnType<typeof buildFakePinoLogger>
-  if (process.server) {
+  if (import.meta.server) {
     const { buildLogger } = await import('~/server/lib/core/helpers/observability')
-    logger = buildLogger('info', process.dev ? true : false) // no runtime config, so falling back to default settings
+    logger = buildLogger('info', import.meta.dev ? true : false) // no runtime config, so falling back to default settings
   } else {
     logger = buildFakePinoLogger()
   }
@@ -49,7 +49,7 @@ export const useStrictLogger = async (
  * Calls to this are skipped outside of dev mode.
  */
 export const useDevLogger = () => {
-  if (!process.dev) return noop
+  if (!import.meta.dev) return noop
 
   const logger = useLogger()
   const info = logger.info.bind(logger)

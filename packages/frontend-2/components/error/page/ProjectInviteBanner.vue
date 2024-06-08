@@ -39,7 +39,7 @@ const onError = (err: unknown) => logger.error(err)
 const onProcessed = (val: { accepted: boolean }) => {
   const { accepted } = val
 
-  if (accepted && projectId.value && process.client) {
+  if (accepted && projectId.value && import.meta.client) {
     goToProject({ id: projectId.value })
   }
 }

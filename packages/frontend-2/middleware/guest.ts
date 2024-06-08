@@ -24,7 +24,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
 
   // Redirect home, if logged in
   if (data?.activeUser?.id) {
-    if (process.server && nuxt.ssrContext?.event.node.req.method === 'OPTIONS') {
+    if (import.meta.server && nuxt.ssrContext?.event.node.req.method === 'OPTIONS') {
       // quickfix hack to prevent redirect in OPTIONS
       return
     }

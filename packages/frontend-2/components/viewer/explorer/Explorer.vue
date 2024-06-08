@@ -119,6 +119,7 @@ const rootNodes = computed(() => {
   refhack.value
 
   if (!worldTree.value) return []
+  // eslint-disable-next-line vue/no-side-effects-in-computed-properties
   expandLevel.value = -1
   const nodes = []
   const rootNodes = worldTree.value._root.children as ExplorerNode[]

@@ -1,7 +1,6 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import type { TreeNode } from '@speckle/viewer'
+import type { TreeNode, MeasurementOptions, PropertyInfo } from '@speckle/viewer'
 import { CameraController, MeasurementsExtension } from '@speckle/viewer'
-import type { MeasurementOptions, PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState } from '~/lib/viewer/composables/setup/embed'
