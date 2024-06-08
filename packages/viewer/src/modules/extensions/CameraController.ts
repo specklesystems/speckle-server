@@ -2,9 +2,7 @@ import { Extension } from './Extension'
 import {
   Box3,
   Camera,
-  Euler,
   MathUtils,
-  Matrix4,
   OrthographicCamera,
   PerspectiveCamera,
   Sphere,
@@ -161,6 +159,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       this.viewer.getContainer()
     )
     flyControls.enabled = false
+    flyControls.up = new Vector3(0, 0, 1)
 
     const orbitControls = new SmoothOrbitControls(
       this.perspectiveCamera,
@@ -173,9 +172,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     )
     orbitControls.enabled = true
     orbitControls.setDamperDecayTime(30)
-    orbitControls.basisTransform = new Matrix4().makeRotationFromEuler(
-      new Euler(Math.PI * 0.5)
-    )
+    orbitControls.up = new Vector3(0, 0, 1)
 
     this.viewer.getRenderer().speckleCamera = this
 
@@ -212,10 +209,8 @@ export class CameraController extends Extension implements SpeckleCamera {
 
     if (this._controls instanceof SmoothOrbitControls) {
       newControls = this._controlsList[1]
-      // console.log('Fly -> ', oldControls.getPosition(), oldControls.getTarget())
     } else if (this._controls instanceof FlyControls) {
       newControls = this._controlsList[0]
-      // console.log('Orbit -> ', newControls.getPosition(), newControls.getTarget())
     }
 
     if (!newControls) throw new Error('Not controls found!')

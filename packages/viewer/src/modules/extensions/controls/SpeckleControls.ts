@@ -2,6 +2,14 @@ import { OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three'
 import EventEmitter from '../../EventEmitter'
 
 export abstract class SpeckleControls extends EventEmitter {
+  protected _up: Vector3 = new Vector3(0, 1, 0)
+  public get up() {
+    return this._up
+  }
+  public set up(value: Vector3) {
+    this._up.copy(value)
+  }
+
   abstract get enabled(): boolean
   abstract set enabled(value: boolean)
   abstract set controlTarget(target: PerspectiveCamera | OrthographicCamera)

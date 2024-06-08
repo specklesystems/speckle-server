@@ -169,7 +169,6 @@ export class SmoothOrbitControls extends SpeckleControls {
   private originSphere: Mesh
   private cursorSphere: Mesh
   private world: World
-  private lastTarget: Vector3 = new Vector3()
   private intersections: Intersections
   private scene: Scene
 
@@ -181,6 +180,15 @@ export class SmoothOrbitControls extends SpeckleControls {
       this.enableInteraction()
     } else this.disableInteraction()
     this._enabled = value
+  }
+
+  public set up(value: Vector3) {
+    this._up.copy(value)
+    this._basisTransform.makeRotationFromQuaternion(
+      new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), this._up)
+    )
+    this._basisTransformInv.copy(this._basisTransform)
+    this._basisTransformInv.invert()
   }
 
   constructor(
@@ -228,16 +236,6 @@ export class SmoothOrbitControls extends SpeckleControls {
     Object.assign(this._options, value)
   }
 
-  set basisTransform(value: Matrix4) {
-    this._basisTransform.copy(value)
-    this._basisTransformInv.copy(value)
-    this._basisTransformInv.invert()
-  }
-
-  get basisTrasform() {
-    return this._basisTransform
-  }
-
   set controlTarget(value: PerspectiveCamera | OrthographicCamera) {
     this._controlTarget = value
     this.moveCamera()
@@ -255,18 +253,6 @@ export class SmoothOrbitControls extends SpeckleControls {
     v0.sub(v1)
     const spherical = new Spherical()
     spherical.setFromCartesianCoords(v0.x, v0.y, v0.z)
-
-    // const v0_1 = new Vector3()
-    //   .copy(this.getPosition())
-    //   .applyMatrix4(this._basisTransformInv)
-    // const v1_1 = new Vector3().copy(this.getTarget()) //.applyMatrix4(this._basisTransformInv)
-    // v0_1.sub(v1_1)
-
-    // console.log('This -> ', v0_1.normalize())
-    // console.log('Computed -> ', v0.normalize())
-    // console.log('This -> ', this.goalSpherical)
-    // console.log('Computed -> ', spherical)
-
     this.setOrbit(spherical.theta, spherical.phi, spherical.radius)
     this.setTarget(v1.x, v1.y, v1.z)
   }
@@ -661,9 +647,6 @@ export class SmoothOrbitControls extends SpeckleControls {
     }
     this._controlTarget.position.copy(position)
     this._controlTarget.quaternion.copy(quaternion)
-    // console.log(this._controlTarget.position.distanceTo(this.lastTarget))
-    // console.log(this.spherical.radius)
-    this.lastTarget.copy(this._controlTarget.position)
 
     const originSphereT = new Vector3()
       .copy(this.origin)
@@ -783,6 +766,7 @@ export class SmoothOrbitControls extends SpeckleControls {
 
     //   element.style.cursor = ''
     this.touchMode = null
+    this.pointers.length = 0
   }
 
   // Wraps to between -pi and pi

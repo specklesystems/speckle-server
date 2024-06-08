@@ -50,7 +50,8 @@ class FlyControls extends SpeckleControls {
   protected positionZDamper: Damper = new Damper()
   protected _lastTick: number = 0
   protected _enabled: boolean = false
-  protected _lastQuat: Quaternion = new Quaternion()
+  private _basisTransform: Matrix4 = new Matrix4()
+  private _basisTransformInv: Matrix4 = new Matrix4()
 
   public get enabled(): boolean {
     return this._enabled
@@ -70,6 +71,15 @@ class FlyControls extends SpeckleControls {
     this.camera.position.copy(this.position)
   }
 
+  public set up(value: Vector3) {
+    this._up.copy(value)
+    this._basisTransform.makeRotationFromQuaternion(
+      new Quaternion().setFromUnitVectors(new Vector3(0, 1, 0), this._up)
+    )
+    this._basisTransformInv.copy(this._basisTransform)
+    this._basisTransformInv.invert()
+  }
+
   constructor(camera: PerspectiveCamera | OrthographicCamera, domElement: HTMLElement) {
     super()
 
@@ -77,8 +87,6 @@ class FlyControls extends SpeckleControls {
     this.domElement = domElement
 
     this.pointerSpeed = 1.0
-
-    this.connect()
   }
 
   public isStationary(): boolean {
@@ -154,16 +162,11 @@ class FlyControls extends SpeckleControls {
   }
 
   public fromPositionAndTarget(position: Vector3, target: Vector3): void {
-    target
-    position
-    const t = new Quaternion().setFromRotationMatrix(
-      new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5))
-    )
-    const tInv = new Quaternion().copy(t).invert()
-
-    const tTarget = new Vector3().copy(target).applyQuaternion(t)
-    const matrix = new Matrix4().lookAt(position, tTarget, new Vector3(0, 0, 1))
-    const quat = new Quaternion().setFromRotationMatrix(matrix).premultiply(tInv)
+    const tTarget = new Vector3().copy(target).applyMatrix4(this._basisTransform)
+    const matrix = new Matrix4()
+      .lookAt(position, tTarget, new Vector3(0, 0, 1))
+      .premultiply(this._basisTransformInv)
+    const quat = new Quaternion().setFromRotationMatrix(matrix)
 
     this.goalEuler.setFromQuaternion(quat)
     this.goalPosition.copy(position)
@@ -174,7 +177,7 @@ class FlyControls extends SpeckleControls {
     const matrix = new Matrix4().makeRotationFromEuler(this.goalEuler)
     const forward = new Vector3()
       .setFromMatrixColumn(matrix, 2)
-      .applyMatrix4(new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5)))
+      .applyMatrix4(this._basisTransform)
       .normalize()
     target.addScaledVector(forward, -10)
     return target
@@ -220,6 +223,7 @@ class FlyControls extends SpeckleControls {
     this.domElement.removeEventListener('pointermove', this.onMouseMove)
     document.removeEventListener('keydown', this.onKeyDown)
     document.removeEventListener('keyup', this.onKeyUp)
+    for (const k in this.keyMap) this.keyMap[k as MoveType] = false
   }
 
   public dispose() {
@@ -228,12 +232,9 @@ class FlyControls extends SpeckleControls {
 
   protected rotate(euler: Euler) {
     const q = new Quaternion()
-    const t = new Quaternion().setFromRotationMatrix(
-      new Matrix4().makeRotationFromEuler(new Euler(Math.PI * 0.5))
-    )
+    const t = new Quaternion().setFromRotationMatrix(this._basisTransform)
     q.setFromEuler(euler).premultiply(t)
     this.camera.quaternion.copy(q)
-    this._lastQuat.copy(q)
   }
 
   // event listeners
