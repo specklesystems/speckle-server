@@ -15681,21 +15681,21 @@ __metadata:
     "@storybook/test-runner": ^0.17.0
     "@storybook/vue3": ^8.0.5
     "@storybook/vue3-vite": ^8.0.5
-    "@types/eslint": ^8.4.5
+    "@types/eslint": ^8.56.10
     "@types/lodash": ^4.0.0
-    "@typescript-eslint/eslint-plugin": ^5.38.1
-    "@typescript-eslint/parser": ^5.38.1
+    "@typescript-eslint/eslint-plugin": ^7.12.0
+    "@typescript-eslint/parser": ^7.12.0
     "@vitejs/plugin-vue": ^4.5.0
     "@vueuse/core": ^9.13.0
     autoprefixer: ^10.4.14
     browserify-zlib: ^0.2.0
     chromatic: ^6.17.4
     concurrently: ^8.0.1
-    eslint: ^8.24.0
-    eslint-config-prettier: ^8.5.0
+    eslint: ^9.4.0
+    eslint-config-prettier: ^9.1.0
     eslint-plugin-storybook: ^0.8.0
-    eslint-plugin-vue: ^9.5.1
-    eslint-plugin-vuejs-accessibility: ^1.2.0
+    eslint-plugin-vue: ^9.26.0
+    eslint-plugin-vuejs-accessibility: ^2.3.0
     lodash: ^4.0.0
     lodash-es: ^4.0.0
     nanoid: ^3.0.0
@@ -17945,16 +17945,6 @@ __metadata:
     "@types/estree": "*"
     "@types/json-schema": "*"
   checksum: e81268cdeb8d64d84af649344df88f064ece0f05db62072657c976b6162ffe16f94b6480a5367d627c629272c2d86d0ee8c24f7095e98f8e743b16f98500673b
-  languageName: node
-  linkType: hard
-
-"@types/eslint@npm:^8.4.5":
-  version: 8.4.6
-  resolution: "@types/eslint@npm:8.4.6"
-  dependencies:
-    "@types/estree": "*"
-    "@types/json-schema": "*"
-  checksum: bfaf27b00031b2238139003965475d023306119e467947f7a43a41e380918e365618e2ae6a6ae638697f6421a6bb1571db078695ff5e548f23618000b38acd23
   languageName: node
   linkType: hard
 
@@ -28449,36 +28439,6 @@ __metadata:
   peerDependencies:
     eslint: ^6.2.0 || ^7.0.0 || ^8.0.0 || ^9.0.0
   checksum: 407a35eb84101cc70f2a622ada1ee561bc63325806764809cd6fb2e9be230e5a8911b960fb2fd4b166d9dff1d202dd6a6cf82b80be52a0458fb422943f732f2c
-  languageName: node
-  linkType: hard
-
-"eslint-plugin-vue@npm:^9.5.1":
-  version: 9.18.1
-  resolution: "eslint-plugin-vue@npm:9.18.1"
-  dependencies:
-    "@eslint-community/eslint-utils": ^4.4.0
-    natural-compare: ^1.4.0
-    nth-check: ^2.1.1
-    postcss-selector-parser: ^6.0.13
-    semver: ^7.5.4
-    vue-eslint-parser: ^9.3.1
-    xml-name-validator: ^4.0.0
-  peerDependencies:
-    eslint: ^6.2.0 || ^7.0.0 || ^8.0.0
-  checksum: 774c1e91634f3fce33d5dcb8055959890f2b7620b558f9a5372175b2161d1341d69857d158bb9e97846252722d569126478c0be313bb4d3ac47beac875076f36
-  languageName: node
-  linkType: hard
-
-"eslint-plugin-vuejs-accessibility@npm:^1.2.0":
-  version: 1.2.0
-  resolution: "eslint-plugin-vuejs-accessibility@npm:1.2.0"
-  dependencies:
-    aria-query: ^5.0.0
-    emoji-regex: ^10.0.0
-    vue-eslint-parser: ^9.0.1
-  peerDependencies:
-    eslint: ^5.0.0 || ^6.0.0 || ^7.0.0 || ^8.0.0
-  checksum: 2a2665f8e943a0af643c77630c8e836d0e80a2e6279cf2c170a62919f459fdb680dd00f96cb70b3561a0c34dabbf6336671bb9a7dfeeb0945009914db131c245
   languageName: node
   linkType: hard
 
@@ -49771,23 +49731,6 @@ __metadata:
   peerDependencies:
     eslint: ">=6.0.0"
   checksum: 61248eb504b8d0cbc95ed3f7ec6b11b72782cd76e4049798626f9c09031d620691a967231985c79d8ece8b04864797e465b7f47bcf91828e18344ae3691d9066
-  languageName: node
-  linkType: hard
-
-"vue-eslint-parser@npm:^9.3.1":
-  version: 9.3.2
-  resolution: "vue-eslint-parser@npm:9.3.2"
-  dependencies:
-    debug: ^4.3.4
-    eslint-scope: ^7.1.1
-    eslint-visitor-keys: ^3.3.0
-    espree: ^9.3.1
-    esquery: ^1.4.0
-    lodash: ^4.17.21
-    semver: ^7.3.6
-  peerDependencies:
-    eslint: ">=6.0.0"
-  checksum: f55056fcd94b6c9d4e940616294f72fb20ae9561a23bc2d7f32499307db7af128dc84d8c43cb8c1a267e0c5d34fc61a9215656a5ea7413df4f58eec81175c6ad
   languageName: node
   linkType: hard
 

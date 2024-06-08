@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div :class="[fullWidth ? 'w-full' : '', wrapperClasses]">
     <label :for="name" :class="labelClasses">
@@ -92,7 +93,7 @@ import type { Nullable, Optional } from '@speckle/shared'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
-type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
+type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number'
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 type InputColor = 'page' | 'foundation' | 'transparent'
 

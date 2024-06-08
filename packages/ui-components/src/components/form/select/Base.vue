@@ -186,11 +186,6 @@
   lang="ts"
   generic="SingleItem extends Record<string, unknown> | string | number"
 >
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import {
   Listbox,
   ListboxButton,
@@ -407,7 +402,7 @@ const props = defineProps({
 const { value, errorMessage: error } = useField<ValueType>(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
   validateOnValueUpdate: props.validateOnValueUpdate,
-  initialValue: props.modelValue as ValueType
+  initialValue: props.modelValue
 })
 
 const isMounted = useMounted()
@@ -705,12 +700,12 @@ watch(
 
 watch(searchValue, () => {
   if (!isAsyncSearchMode.value) return
-  debouncedSearch()
+  void debouncedSearch()
 })
 
 onMounted(() => {
   if (isAsyncSearchMode.value && !props.items.length) {
-    triggerSearch()
+    void triggerSearch()
   }
 })
 

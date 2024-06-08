@@ -5,6 +5,12 @@ import { fileURLToPath } from 'url'
 import { dirname } from 'path'
 
 /**
+ * TODO:
+ * - Check speed (inspect ignored files, that we're not processing junk)
+ * - Fix lint-staged
+ */
+
+/**
  * Feed in import.meta.url in your .mjs module to get the equivalent of __dirname
  * @param {string} importMetaUrl
  */

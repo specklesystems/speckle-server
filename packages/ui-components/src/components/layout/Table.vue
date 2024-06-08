@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="text-foreground">
     <div
