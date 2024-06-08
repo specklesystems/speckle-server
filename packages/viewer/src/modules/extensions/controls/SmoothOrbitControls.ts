@@ -17,18 +17,14 @@ import {
   Spherical,
   Vector2,
   Vector3,
-  WebGLRenderer,
   PerspectiveCamera,
   Sphere,
   Matrix4,
   MathUtils,
-  Scene,
-  Mesh,
-  SphereGeometry,
-  MeshBasicMaterial,
   OrthographicCamera,
   Quaternion,
-  Euler
+  Euler,
+  Scene
 } from 'three'
 
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
@@ -158,19 +154,16 @@ export class SmoothOrbitControls extends SpeckleControls {
   private touchDecided = false
   private zoomControlCoord: Vector2 = new Vector2()
 
-  public _controlTarget: PerspectiveCamera | OrthographicCamera
+  private _camera: PerspectiveCamera | OrthographicCamera
   private _container: HTMLElement
-  private _renderer: WebGLRenderer
   private _lastTick: number = 0
   private _basisTransform: Matrix4 = new Matrix4()
   private _basisTransformInv: Matrix4 = new Matrix4()
   private _radiusDelta: number = 0
 
-  private originSphere: Mesh
-  private cursorSphere: Mesh
+  private scene: Scene
   private world: World
   private intersections: Intersections
-  private scene: Scene
 
   public get enabled(): boolean {
     return this._enabled
@@ -192,34 +185,20 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   constructor(
-    controlTarget: PerspectiveCamera | OrthographicCamera,
+    camera: PerspectiveCamera | OrthographicCamera,
     container: HTMLElement,
-    renderer: WebGLRenderer,
-    scene: Scene,
     world: World,
+    scene: Scene,
     intersections: Intersections,
     options: Required<SmoothControlsOptions>
   ) {
-    scene
     super()
-    this._controlTarget = controlTarget
+    this._camera = camera
     this._container = container
-    this._renderer = renderer
     this.world = world
     this.intersections = intersections
     this.scene = scene
-    this.world
-    this.intersections
     this._options = Object.assign({}, options) as Required<SmoothControlsOptions>
-    const geometry = new SphereGeometry(0.1, 32, 16)
-    const material = new MeshBasicMaterial({ color: 0xffff00 })
-    this.originSphere = new Mesh(geometry, material)
-    this.originSphere.layers.set(ObjectLayers.OVERLAY)
-    const material2 = new MeshBasicMaterial({ color: 0xff0000 })
-    this.cursorSphere = new Mesh(geometry, material2)
-    this.cursorSphere.layers.set(ObjectLayers.OVERLAY)
-    // scene.add(this.originSphere)
-    // scene.add(this.cursorSphere)
 
     this.setOrbit(2.356, 0.955, 0)
     this.jumpToGoal()
@@ -237,7 +216,7 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   set controlTarget(value: PerspectiveCamera | OrthographicCamera) {
-    this._controlTarget = value
+    this._camera = value
     this.moveCamera()
   }
 
@@ -424,7 +403,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     const tasIntersect =
       this.intersections.intersect(
         this.scene,
-        this._controlTarget as PerspectiveCamera,
+        this._camera as PerspectiveCamera,
         this.zoomControlCoord,
         ObjectLayers.STREAM_CONTENT_MESH,
         false,
@@ -433,25 +412,8 @@ export class SmoothOrbitControls extends SpeckleControls {
         false
       ) !== null
     console.warn(performance.now() - start)
-    /** Original approach to zoom amount varying which works quite bad */
-    // const { minimumRadius, maximumRadius, minimumFieldOfView, maximumFieldOfView } =
-    // this._options
-    // const a = (deltaZoom > 0 ? maximumRadius : minimumRadius) - radius
-    // const b =
-    //   Math.log(deltaZoom > 0 ? maximumFieldOfView : minimumFieldOfView) -
-    //   this.goalLogFov
-    // const deltaRatio = deltaZoom === 0 ? 0 : a / b
-    // const size = this._renderer.getSize(new Vector2())
-    // const zoomPerPixel = (ZOOM_SENSITIVITY * this.zoomSensitivity) / size.y
-    // const metersPerPixel = this.spherical.radius * Math.exp(this.logFov) * zoomPerPixel
-    // const zoomAmount =
-    //   deltaZoom *
-    //   (isFinite(deltaRatio) ? deltaRatio : (maximumRadius - minimumRadius) * 2) *
-    //   metersPerPixel
 
     /** Simpler approach to zoom amount varying */
-    // half of the fov is center to top of screen
-    // const fov = Math.exp(this.logFov) * MathUtils.DEG2RAD
     const normalizedRadius =
       this.spherical.radius / this.world.worldBox.getSize(new Vector3()).length()
 
@@ -476,7 +438,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     if (this._options.zoomToCursor) {
       const dollyAmount = new Vector3()
       if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
-        if (this._controlTarget instanceof PerspectiveCamera) {
+        if (this._camera instanceof PerspectiveCamera) {
           const dir = new Vector3().setFromSpherical(this.spherical).normalize()
           dollyAmount.copy(dir).multiplyScalar(zoomAmount)
           this._radiusDelta = -zoomAmount
@@ -512,11 +474,8 @@ export class SmoothOrbitControls extends SpeckleControls {
         )
         .add(dollyAmount)
       const lerpRatio = clamp(this._radiusDelta / this.goalSpherical.radius, -1, 1)
-      // console.log('Delta -> ', this._radiusDelta, this.goalSpherical.radius, lerpRatio)
       const newTargetEnd = new Vector3().copy(this.goalOrigin).lerp(cursor, lerpRatio)
-      this.cursorSphere.position.copy(
-        new Vector3().copy(cursor).applyMatrix4(this._basisTransform)
-      )
+
       this.setTarget(newTargetEnd.x, newTargetEnd.y, newTargetEnd.z)
     }
     /** We're not varying fov based on zoom level for now */
@@ -630,7 +589,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     const position = this.positionFromSpherical(this.spherical, this.origin)
     const quaternion = this.quaternionFromSpherical(this.spherical)
 
-    if (this._controlTarget instanceof OrthographicCamera) {
+    if (this._camera instanceof OrthographicCamera) {
       const cameraDirection = new Vector3()
         .setFromSpherical(this.spherical)
         .applyQuaternion(new Quaternion().setFromRotationMatrix(this._basisTransform))
@@ -645,20 +604,15 @@ export class SmoothOrbitControls extends SpeckleControls {
         )
       )
     }
-    this._controlTarget.position.copy(position)
-    this._controlTarget.quaternion.copy(quaternion)
+    this._camera.position.copy(position)
+    this._camera.quaternion.copy(quaternion)
 
-    const originSphereT = new Vector3()
-      .copy(this.origin)
-      .applyMatrix4(this._basisTransform)
-    this.originSphere.position.copy(originSphereT)
-
-    if (this._controlTarget instanceof PerspectiveCamera)
-      if (this._controlTarget.fov !== Math.exp(this.logFov)) {
-        this._controlTarget.fov = Math.exp(this.logFov)
-        this._controlTarget.updateProjectionMatrix()
+    if (this._camera instanceof PerspectiveCamera)
+      if (this._camera.fov !== Math.exp(this.logFov)) {
+        this._camera.fov = Math.exp(this.logFov)
+        this._camera.updateProjectionMatrix()
       }
-    if (this._controlTarget instanceof OrthographicCamera) {
+    if (this._camera instanceof OrthographicCamera) {
       const depth = this.spherical.radius
       const dims = {
         x: this._container.offsetWidth,
@@ -670,12 +624,12 @@ export class SmoothOrbitControls extends SpeckleControls {
       const Z = depth
       const width = dephtS * Z * aspect
       const height = dephtS * Z
-      this._controlTarget.zoom = 1
-      this._controlTarget.left = width / -2
-      this._controlTarget.right = width / 2
-      this._controlTarget.top = height / 2
-      this._controlTarget.bottom = height / -2
-      this._controlTarget.updateProjectionMatrix()
+      this._camera.zoom = 1
+      this._camera.left = width / -2
+      this._camera.right = width / 2
+      this._camera.top = height / 2
+      this._camera.bottom = height / -2
+      this._camera.updateProjectionMatrix()
     }
 
     /** Ortho height to distance test */
@@ -694,13 +648,13 @@ export class SmoothOrbitControls extends SpeckleControls {
 
     return height / (Math.tan(MathUtils.DEG2RAD * Math.exp(this.logFov) * 0.5) * 2)
   }
+  */
 
-  private distanceToOrthogrtaphicHeight(distance: number) {
+  public distanceToOrthogrtaphicHeight(distance: number) {
     const fov = Math.exp(this.logFov)
     const dephtS = Math.tan(MathUtils.DEG2RAD * (fov / 2)) * 2.0
     return dephtS * distance
   }
-  */
 
   protected positionFromSpherical(spherical: Spherical, origin?: Vector3) {
     const position: Vector3 = new Vector3()
@@ -777,8 +731,7 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   protected pixelLengthToSphericalAngle(pixelLength: number): number {
-    const size = this._renderer.getSize(new Vector2())
-    return (2 * Math.PI * pixelLength) / size.y
+    return (2 * Math.PI * pixelLength) / this._container.offsetHeight
   }
 
   protected twoTouchDistance(touchOne: Pointer, touchTwo: Pointer): number {
@@ -791,7 +744,6 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   protected touchModeZoom: TouchMode = (dx: number, dy: number) => {
-    const size = this._renderer.getSize(new Vector2())
     const touchDistance = this.twoTouchDistance(this.pointers[0], this.pointers[1])
     const deltaZoom =
       (ZOOM_SENSITIVITY *
@@ -799,7 +751,7 @@ export class SmoothOrbitControls extends SpeckleControls {
         +this._options.enableZoom *
         (this.lastSeparation - touchDistance) *
         50) /
-      size.y
+      this._container.offsetHeight
     this.lastSeparation = touchDistance
 
     this.userAdjustOrbit(0, 0, deltaZoom)
@@ -853,12 +805,11 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   protected initializePan() {
-    const size = this._renderer.getSize(new Vector2())
     const { theta, phi } = this.spherical
     const psi = theta //- this.scene.yaw
     this.panPerPixel =
       (PAN_SENSITIVITY * this._options.panSensitivity * +this._options.enablePan) /
-      size.y
+      this._container.offsetHeight
     this.panProjection.set(
       -Math.cos(psi),
       -Math.cos(phi) * Math.sin(psi),

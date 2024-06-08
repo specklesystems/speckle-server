@@ -164,9 +164,8 @@ export class CameraController extends Extension implements SpeckleCamera {
     const orbitControls = new SmoothOrbitControls(
       this.perspectiveCamera,
       this.viewer.getContainer(),
-      this.viewer.getRenderer().renderer,
-      this.viewer.getRenderer().scene,
       this.viewer.World,
+      this.viewer.getRenderer().scene,
       this.viewer.getRenderer().intersections,
       this._options
     )
@@ -282,26 +281,24 @@ export class CameraController extends Extension implements SpeckleCamera {
 
     const lineOfSight = new Vector3()
     this.perspectiveCamera.getWorldDirection(lineOfSight)
-    // const target = new Vector3()
-    // TO DO
-    // this._controls.getTarget(target)
-    // const distance = target.clone().sub(this.perspectiveCamera.position)
-    // const depth = distance.dot(lineOfSight)
-    // const dims = {
-    //   x: this.viewer.getContainer().offsetWidth,
-    //   y: this.viewer.getContainer().offsetHeight
-    // }
-    // const aspect = dims.x / dims.y
-    // const fov = this.perspectiveCamera.fov
-    // const height = depth * 2 * Math.atan((fov * (Math.PI / 180)) / 2)
-    // const width = height * aspect
+    const target = this._controls.getTarget()
+    const distance = target.clone().sub(this.perspectiveCamera.position)
+    const depth = distance.dot(lineOfSight)
+    const dims = {
+      x: this.viewer.getContainer().offsetWidth,
+      y: this.viewer.getContainer().offsetHeight
+    }
+    const aspect = dims.x / dims.y
+    const fov = this.perspectiveCamera.fov
+    const height = depth * 2 * Math.atan((fov * (Math.PI / 180)) / 2)
+    const width = height * aspect
 
-    // this.orthographicCamera.zoom = 1
-    // this.orthographicCamera.left = width / -2
-    // this.orthographicCamera.right = width / 2
-    // this.orthographicCamera.top = height / 2
-    // this.orthographicCamera.bottom = height / -2
-    // this.orthographicCamera.updateProjectionMatrix()
+    this.orthographicCamera.zoom = 1
+    this.orthographicCamera.left = width / -2
+    this.orthographicCamera.right = width / 2
+    this.orthographicCamera.top = height / 2
+    this.orthographicCamera.bottom = height / -2
+    this.orthographicCamera.updateProjectionMatrix()
   }
 
   public setPerspectiveCameraOn() {

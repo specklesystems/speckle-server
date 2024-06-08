@@ -25,7 +25,7 @@ export interface FlyControlsOptions {
 
 class FlyControls extends SpeckleControls {
   protected camera: PerspectiveCamera | OrthographicCamera
-  protected domElement: HTMLElement
+  protected container: HTMLElement
   protected pointerSpeed: number
   protected velocity = new Vector3()
   protected euler = new Euler(0, 0, 0, 'YXZ')
@@ -80,11 +80,11 @@ class FlyControls extends SpeckleControls {
     this._basisTransformInv.invert()
   }
 
-  constructor(camera: PerspectiveCamera | OrthographicCamera, domElement: HTMLElement) {
+  constructor(camera: PerspectiveCamera | OrthographicCamera, container: HTMLElement) {
     super()
 
     this.camera = camera
-    this.domElement = domElement
+    this.container = container
 
     this.pointerSpeed = 1.0
   }
@@ -212,7 +212,7 @@ class FlyControls extends SpeckleControls {
   protected connect() {
     if (this._enabled) return
 
-    this.domElement.addEventListener('pointermove', this.onMouseMove)
+    this.container.addEventListener('pointermove', this.onMouseMove)
     document.addEventListener('keydown', this.onKeyDown)
     document.addEventListener('keyup', this.onKeyUp)
   }
@@ -220,7 +220,7 @@ class FlyControls extends SpeckleControls {
   protected disconnect() {
     if (!this._enabled) return
 
-    this.domElement.removeEventListener('pointermove', this.onMouseMove)
+    this.container.removeEventListener('pointermove', this.onMouseMove)
     document.removeEventListener('keydown', this.onKeyDown)
     document.removeEventListener('keyup', this.onKeyUp)
     for (const k in this.keyMap) this.keyMap[k as MoveType] = false
