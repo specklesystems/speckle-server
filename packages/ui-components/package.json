@@ -12,7 +12,7 @@
     "storybook:test:ci": "concurrently -k -s first -n \"SB,TEST\" -c \"magenta,blue\" \"yarn build-storybook --quiet && npx http-server storybook-static --port 6006 --silent\" \"wait-on tcp:6006 && yarn test-storybook --ci\"",
     "storybook:test:watch": "test-storybook --watch",
     "chromatic": "chromatic --exit-zero-on-changes --exit-once-uploaded",
-    "lint:js": "eslint --ext \".js,.ts,.vue\" .",
+    "lint:js": "eslint .",
     "lint:tsc": "vue-tsc --noEmit",
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
     "lint": "yarn lint:js && yarn lint:tsc && yarn lint:prettier"
