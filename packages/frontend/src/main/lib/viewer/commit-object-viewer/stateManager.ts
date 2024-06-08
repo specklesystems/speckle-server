@@ -1,4 +1,4 @@
-/* eslint-disable  @typescript-eslint/no-explicit-any */
+ 
 // NOTE: any disabling temporary, most of the filtering stuff will go away
 
 import { Nullable } from '@/helpers/typeHelpers'
@@ -277,7 +277,7 @@ export async function handleViewerDoubleClick(selectionInfo: SelectionEvent) {
   const firstVisibleHit = getFirstVisibleSelectionHit(selectionInfo)
   if (!firstVisibleHit) return
 
-  await getInitializedViewer().zoom([firstVisibleHit.object.id as string])
+  await getInitializedViewer().zoom([firstVisibleHit.object.id])
 }
 
 function getFirstVisibleSelectionHit({ hits }: SelectionEvent) {
@@ -291,11 +291,11 @@ function getFirstVisibleSelectionHit({ hits }: SelectionEvent) {
 
   for (const hit of hits) {
     if (hasHiddenObjects) {
-      if (!currentFilterState?.hiddenObjects?.includes(hit.object.id as string)) {
+      if (!currentFilterState?.hiddenObjects?.includes(hit.object.id)) {
         return hit
       }
     } else if (hasIsolatedObjects) {
-      if (currentFilterState.isolatedObjects?.includes(hit.object.id as string))
+      if (currentFilterState.isolatedObjects?.includes(hit.object.id))
         return hit
     } else {
       return hit
