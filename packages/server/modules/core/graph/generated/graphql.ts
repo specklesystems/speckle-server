@@ -5,7 +5,7 @@ import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from 
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes';
-import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
+import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn, UserAutomateInfoGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -344,7 +344,6 @@ export enum AutomateRunStatus {
 }
 
 export enum AutomateRunTriggerType {
-  TestType = 'TEST_TYPE',
   VersionCreated = 'VERSION_CREATED'
 }
 
@@ -1845,7 +1844,7 @@ export type ProjectAutomationMutations = {
    * Trigger an automation with a fake "version created" trigger. The "version created" will
    * just refer to the last version of the model.
    */
-  trigger: Scalars['Boolean'];
+  trigger: Scalars['String'];
   update: Automation;
 };
 
@@ -3345,14 +3344,14 @@ export type VersionCollection = {
 
 export type VersionCreatedTrigger = {
   __typename?: 'VersionCreatedTrigger';
-  model: Model;
+  model?: Maybe<Model>;
   type: AutomateRunTriggerType;
-  version: Version;
+  version?: Maybe<Version>;
 };
 
 export type VersionCreatedTriggerDefinition = {
   __typename?: 'VersionCreatedTriggerDefinition';
-  model: Model;
+  model?: Maybe<Model>;
   type: AutomateRunTriggerType;
 };
 
@@ -3770,8 +3769,8 @@ export type ResolversTypes = {
   UpdateAutomateFunctionInput: UpdateAutomateFunctionInput;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
-  User: ResolverTypeWrapper<Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projectInvites: Array<ResolversTypes['PendingStreamCollaborator']>, projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
-  UserAutomateInfo: ResolverTypeWrapper<UserAutomateInfo>;
+  User: ResolverTypeWrapper<Omit<User, 'automateInfo' | 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { automateInfo: ResolversTypes['UserAutomateInfo'], commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projectInvites: Array<ResolversTypes['PendingStreamCollaborator']>, projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
+  UserAutomateInfo: ResolverTypeWrapper<UserAutomateInfoGraphQLReturn>;
   UserDeleteInput: UserDeleteInput;
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: ResolverTypeWrapper<Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
@@ -3976,8 +3975,8 @@ export type ResolversParentTypes = {
   UpdateAutomateFunctionInput: UpdateAutomateFunctionInput;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
-  User: Omit<User, 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projectInvites: Array<ResolversParentTypes['PendingStreamCollaborator']>, projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
-  UserAutomateInfo: UserAutomateInfo;
+  User: Omit<User, 'automateInfo' | 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { automateInfo: ResolversParentTypes['UserAutomateInfo'], commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projectInvites: Array<ResolversParentTypes['PendingStreamCollaborator']>, projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
+  UserAutomateInfo: UserAutomateInfoGraphQLReturn;
   UserDeleteInput: UserDeleteInput;
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
@@ -4736,7 +4735,7 @@ export type ProjectAutomationMutationsResolvers<ContextType = GraphQLContext, Pa
   createRevision?: Resolver<ResolversTypes['AutomationRevision'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateRevisionArgs, 'input'>>;
   createTestAutomation?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateTestAutomationArgs, 'input'>>;
   createTestAutomationRun?: Resolver<ResolversTypes['TestAutomationRun'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateTestAutomationRunArgs, 'automationId'>>;
-  trigger?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsTriggerArgs, 'automationId'>>;
+  trigger?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsTriggerArgs, 'automationId'>>;
   update?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsUpdateArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -5215,14 +5214,14 @@ export type VersionCollectionResolvers<ContextType = GraphQLContext, ParentType 
 };
 
 export type VersionCreatedTriggerResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionCreatedTrigger'] = ResolversParentTypes['VersionCreatedTrigger']> = {
-  model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
   type?: Resolver<ResolversTypes['AutomateRunTriggerType'], ParentType, ContextType>;
-  version?: Resolver<ResolversTypes['Version'], ParentType, ContextType>;
+  version?: Resolver<Maybe<ResolversTypes['Version']>, ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type VersionCreatedTriggerDefinitionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionCreatedTriggerDefinition'] = ResolversParentTypes['VersionCreatedTriggerDefinition']> = {
-  model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
+  model?: Resolver<Maybe<ResolversTypes['Model']>, ParentType, ContextType>;
   type?: Resolver<ResolversTypes['AutomateRunTriggerType'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };

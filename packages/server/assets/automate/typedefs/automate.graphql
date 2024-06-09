@@ -11,7 +11,6 @@ enum AutomateRunStatus {
 
 enum AutomateRunTriggerType {
   VERSION_CREATED
-  TEST_TYPE
 }
 
 type AutomationRevisionFunction {
@@ -24,7 +23,7 @@ type AutomationRevisionFunction {
 
 type VersionCreatedTriggerDefinition {
   type: AutomateRunTriggerType!
-  model: Model!
+  model: Model
 }
 
 union AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition
@@ -37,8 +36,8 @@ type AutomationRevision {
 
 type VersionCreatedTrigger {
   type: AutomateRunTriggerType!
-  version: Version!
-  model: Model!
+  version: Version
+  model: Model
 }
 
 union AutomationRunTrigger = VersionCreatedTrigger
@@ -296,7 +295,7 @@ type ProjectAutomationMutations {
   Trigger an automation with a fake "version created" trigger. The "version created" will
   just refer to the last version of the model.
   """
-  trigger(automationId: ID!): Boolean!
+  trigger(automationId: ID!): String!
   createTestAutomation(input: ProjectTestAutomationCreateInput!): Automation!
   createTestAutomationRun(automationId: ID!): TestAutomationRun!
 }

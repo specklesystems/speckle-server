@@ -6,7 +6,8 @@ import {
   getFunctionRelease,
   getFunctions,
   getFunctionReleases,
-  getUserGithubAuthState
+  getUserGithubAuthState,
+  getUserGithubOrganizations
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
@@ -37,7 +38,7 @@ import {
 import {
   createStoredAuthCode,
   validateStoredAuthCode
-} from '@/modules/automate/services/executionEngine'
+} from '@/modules/automate/services/authCode'
 import {
   convertFunctionReleaseToGraphQLReturn,
   convertFunctionToGraphQLReturn,
@@ -106,13 +107,6 @@ import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
-
-/**
- * TODO:
- * - FE:
- *  - Fix up pagination & all remaining TODOs
- *  - Subscriptions & cache updates
- */
 
 const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
 
@@ -387,7 +381,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 args?.cursor || args?.filter?.search || args?.limit
                   ? {
                       cursor: args.cursor || undefined,
-                      search: args.filter?.search || undefined,
+                      versionsFilter: args.filter?.search || undefined,
                       limit: args.limit || undefined
                     }
                   : {}
@@ -434,7 +428,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         async createFunction(_parent, args, ctx) {
           const create = createFunctionFromTemplate({
             createExecutionEngineFn: createFunction,
-            getUser
+            getUser,
+            createStoredAuthCode: createStoredAuthCode({ redis: getGenericRedis() })
           })
 
           return (await create({ input: args.input, userId: ctx.userId! }))
@@ -512,14 +507,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             })
           })
 
-          await trigger({
+          const { automationRunId } = await trigger({
             automationId,
             userId: ctx.userId!,
             userResourceAccessRules: ctx.resourceAccessRules,
             projectId: parent.projectId
           })
 
-          return true
+          return automationRunId
         },
         async createTestAutomation(parent, { input }, ctx) {
           const create = createTestAutomation({
@@ -602,32 +597,55 @@ export = (FF_AUTOMATE_MODULE_ENABLED
                 items: []
               }
             }
+
             throw e
           }
         }
       },
       User: {
-        automateInfo: async (parent, _args, ctx) => {
-          const userId = parent.id
+        automateInfo: (parent) => ({ userId: parent.id })
+      },
+      UserAutomateInfo: {
+        hasAutomateGithubApp: async (parent, _args, ctx) => {
+          const userId = parent.userId
 
           let hasAutomateGithubApp = false
           try {
             const authState = await getUserGithubAuthState({ userId })
             hasAutomateGithubApp = authState.userHasAuthorizedGitHubApp
           } catch (e) {
+            ctx.log.error(e, 'Failed to resolve user automate github auth state')
+          }
+
+          return hasAutomateGithubApp
+        },
+        availableGithubOrgs: async (parent, _args, ctx) => {
+          const authCode = await createStoredAuthCode({ redis: getGenericRedis() })()
+          const userId = parent.userId
+
+          let orgs: string[] = []
+          try {
+            orgs = (
+              await getUserGithubOrganizations({
+                userId,
+                authCode
+              })
+            ).availableGitHubOrganisations
+          } catch (e) {
+            let isSeriousError = true
+
             if (e instanceof ExecutionEngineFailedResponseError) {
-              if (e.response.statusMessage === 'FunctionCreatorDoesNotExist') {
-                hasAutomateGithubApp = false
+              if (e.response.statusMessage === 'InvalidOrMissingGithubAuth') {
+                isSeriousError = false
               }
-            } else {
-              ctx.log.error(e, 'Failed to resolve user automate github auth state')
+            }
+
+            if (isSeriousError) {
+              ctx.log.error(e, 'Failed to resolve user automate github orgs')
             }
           }
 
-          return {
-            hasAutomateGithubApp,
-            availableGithubOrgs: []
-          }
+          return orgs
         }
       },
       ServerInfo: {

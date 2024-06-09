@@ -30,7 +30,9 @@
         </CommonAlert>
         <FormJsonForm
           v-else
+          ref="jsonForm"
           v-model:data="selectedVersionInputs"
+          :validate-on-mount="false"
           :schema="inputSchema"
           class="space-y-4"
           @change="handler"
@@ -74,7 +76,10 @@
 <script setup lang="ts">
 import type { MaybeNullOrUndefined, Optional } from '@speckle/shared'
 import { automationFunctionRoute } from '~/lib/common/helpers/route'
-import { useJsonFormsChangeHandler } from '~/lib/automate/composables/jsonSchema'
+import {
+  useJsonFormsChangeHandler,
+  hasJsonFormErrors as hasFormErrors
+} from '~/lib/automate/composables/jsonSchema'
 import {
   formatJsonFormSchemaInputs,
   formattedJsonFormSchema
@@ -93,6 +98,8 @@ import {
   useAutomationInputEncryptor,
   type AutomationInputEncryptor
 } from '~/lib/automate/composables/automations'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import type { JsonFormsChangeEvent } from '@jsonforms/vue'
 
 type AutomationRevisionFunction =
   ProjectPageAutomationFunctionSettingsDialog_AutomationRevisionFunctionFragment
@@ -145,7 +152,9 @@ const createNewAutomationRevision = useCreateAutomationRevision()
 const inputEncryption = useAutomationInputEncryptor({ ensureWhen: open })
 const { triggerNotification } = useGlobalToast()
 const logger = useLogger()
+const mixpanel = useMixpanel()
 
+const jsonForm = ref<{ triggerChange: () => Promise<Optional<JsonFormsChangeEvent>> }>()
 const selectedModel = ref<CommonModelSelectorModelFragment>()
 const selectedRelease = ref<SearchAutomateFunctionReleaseItemFragment>()
 const inputSchema = computed(() =>
@@ -198,6 +207,12 @@ const onSave = async () => {
   const rId = selectedReleaseId.value
   const model = selectedModel.value
 
+  // Validate
+  const validationResult = await jsonForm.value?.triggerChange()
+  if (!validationResult || hasFormErrors(validationResult)) {
+    return
+  }
+
   if (hasErrors.value || !fId || !rId || !hasRequiredData.value || !model) return
 
   loading.value = true
@@ -215,7 +230,7 @@ const onSave = async () => {
     })
 
     // TODO: Apollo cache mutation afterwards
-    await createNewAutomationRevision({
+    const res = await createNewAutomationRevision({
       projectId: props.projectId,
       input: {
         automationId: props.automationId,
@@ -237,6 +252,15 @@ const onSave = async () => {
         }
       }
     })
+    if (res?.id) {
+      mixpanel.track('Automation Revision Created', {
+        automationId: props.automationId,
+        projectId: props.projectId,
+        functionId: fId,
+        functionReleaseId: rId,
+        modelId: model.id
+      })
+    }
   } finally {
     automationEncrypt?.dispose()
     loading.value = false
@@ -287,7 +311,7 @@ watch(
   (newVal, oldVal) => {
     if (newVal?.id === oldVal?.id) return
 
-    selectedModel.value = newVal
+    selectedModel.value = newVal || undefined
   },
   { immediate: true }
 )

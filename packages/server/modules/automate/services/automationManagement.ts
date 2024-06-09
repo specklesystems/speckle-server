@@ -19,7 +19,7 @@ import {
 } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Automate, Roles, removeNullOrUndefinedKeys } from '@speckle/shared'
-import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
+import { createStoredAuthCode } from '@/modules/automate/services/authCode'
 import {
   ProjectAutomationCreateInput,
   ProjectAutomationRevisionCreateInput,
@@ -35,6 +35,7 @@ import {
   JsonSchemaInputValidationError
 } from '@/modules/automate/errors/management'
 import {
+  AutomationRunStatus,
   AutomationRunStatuses,
   VersionCreationTriggerType
 } from '@/modules/automate/helpers/types'
@@ -561,7 +562,7 @@ export const getAutomationsStatus =
       (a) => a.status === AutomationRunStatuses.pending
     )
 
-    let status = AutomationRunStatuses.succeeded
+    let status: AutomationRunStatus = AutomationRunStatuses.succeeded
     let statusMessage = 'All automations have succeeded'
 
     if (failedAutomations.length) {

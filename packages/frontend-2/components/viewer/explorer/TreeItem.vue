@@ -14,7 +14,7 @@
             @click="manualUnfoldToggle()"
           >
             <ChevronDownIcon
-              :class="`h-3 w-3 transition ${!unfold ? '-rotate-90' : 'rotate-0'} ${
+              :class="`h-3 w-3 ${!unfold ? '-rotate-90' : 'rotate-0'} ${
                 isSelected ? 'text-primary' : ''
               }`"
             />
@@ -22,10 +22,14 @@
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          :class="`hover:bg-primary-muted group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1 transition hover:shadow-md
+          :class="`hover:bg-primary-muted group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1 hover:shadow-md
             ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}
           `"
           @click="(e:MouseEvent) => setSelection(e)"
+          @mouseenter="highlightObject"
+          @focusin="highlightObject"
+          @mouseleave="unhighlightObject"
+          @focusout="unhighlightObject"
         >
           <div
             :class="`truncate ${unfold ? 'font-semibold' : ''} ${
@@ -50,9 +54,9 @@
           <div class="flex-grow"></div>
           <div class="flex flex-shrink-0 items-center space-x-1">
             <!-- <div v-if="!(isSingleCollection || isMultipleCollection)"> -->
-            <div class="flex space-x-2 transition">
+            <div class="flex space-x-2">
               <button
-                :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
+                :class="`hover:text-primary px-1 py-2 opacity-0 group-hover:opacity-100 ${
                   isHidden ? 'opacity-100' : ''
                 }`"
                 @click.stop="hideOrShowObject"
@@ -61,7 +65,7 @@
                 <EyeSlashIcon v-else class="h-3 w-3" />
               </button>
               <button
-                :class="`hover:text-primary px-1 py-2 opacity-0 transition group-hover:opacity-100 ${
+                :class="`hover:text-primary px-1 py-2 opacity-0 group-hover:opacity-100 ${
                   isIsolated ? 'opacity-100' : ''
                 }`"
                 @click.stop="isolateOrUnisolateObject"
@@ -149,7 +153,11 @@ import {
   getTargetObjectIds
 } from '~~/lib/object-sidebar/helpers'
 import { containsAll } from '~~/lib/common/helpers/utils'
-import { useFilterUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useFilterUtilities,
+  useHighlightedObjectsUtilities,
+  useSelectionUtilities
+} from '~~/lib/viewer/composables/ui'
 
 const props = withDefaults(
   defineProps<{
@@ -178,6 +186,7 @@ const { addToSelection, clearSelection, removeFromSelection, objects } =
   useSelectionUtilities()
 const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const isAtomic = computed(() => props.treeItem.atomic === true)
 const speckleData = props.treeItem?.raw as SpeckleObject
@@ -316,7 +325,6 @@ const isSelected = computed(() => {
 })
 
 const setSelection = (e: MouseEvent) => {
-  if (isHidden.value) return
   if (isSelected.value && !e.shiftKey) {
     clearSelection()
     return
@@ -327,6 +335,14 @@ const setSelection = (e: MouseEvent) => {
   }
   if (!e.shiftKey) clearSelection()
   addToSelection(rawSpeckleData)
+}
+
+const highlightObject = () => {
+  highlightObjects(getTargetObjectIds(rawSpeckleData))
+}
+
+const unhighlightObject = () => {
+  unhighlightObjects(getTargetObjectIds(rawSpeckleData))
 }
 
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
@@ -352,7 +368,6 @@ const isIsolated = computed(() => {
 const hideOrShowObject = () => {
   const ids = getTargetObjectIds(rawSpeckleData)
   if (!isHidden.value) {
-    removeFromSelection(rawSpeckleData)
     hideObjects(ids)
     return
   }

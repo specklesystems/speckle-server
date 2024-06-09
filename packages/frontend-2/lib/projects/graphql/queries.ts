@@ -217,19 +217,45 @@ export const projectDiscussionsPageQuery = graphql(`
 `)
 
 export const projectAutomationsTabQuery = graphql(`
-  query ProjectAutomationsTab($projectId: String!, $search: String, $cursor: String) {
+  query ProjectAutomationsTab($projectId: String!) {
     project(id: $projectId) {
       id
-      automations(filter: $search, cursor: $cursor, limit: 5) {
+      models(limit: 1) {
+        items {
+          id
+        }
+      }
+      automations(filter: null, cursor: null, limit: 5) {
         totalCount
         items {
           id
           ...ProjectPageAutomationsRow_Automation
         }
+        cursor
       }
       ...FormSelectProjects_Project
     }
     ...ProjectPageAutomationsEmptyState_Query
+  }
+`)
+
+export const projectAutomationsTabAutomationsPaginationQuery = graphql(`
+  query ProjectAutomationsTabAutomationsPagination(
+    $projectId: String!
+    $search: String = null
+    $cursor: String = null
+  ) {
+    project(id: $projectId) {
+      id
+      automations(filter: $search, cursor: $cursor, limit: 5) {
+        totalCount
+        cursor
+        items {
+          id
+          ...ProjectPageAutomationsRow_Automation
+        }
+      }
+    }
   }
 `)
 
@@ -241,6 +267,29 @@ export const projectAutomationPageQuery = graphql(`
       automation(id: $automationId) {
         id
         ...ProjectPageAutomationPage_Automation
+      }
+    }
+  }
+`)
+
+export const projectAutomationPagePaginatedRunsQuery = graphql(`
+  query ProjectAutomationPagePaginatedRuns(
+    $projectId: String!
+    $automationId: String!
+    $cursor: String = null
+  ) {
+    project(id: $projectId) {
+      id
+      automation(id: $automationId) {
+        id
+        runs(cursor: $cursor, limit: 10) {
+          totalCount
+          cursor
+          items {
+            id
+            ...AutomationRunDetails
+          }
+        }
       }
     }
   }

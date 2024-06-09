@@ -236,8 +236,11 @@ export enum ExecutionEngineFunctionTemplateId {
 }
 
 export type CreateFunctionBody = {
+  speckleServerOrigin: string
+  speckleUserId: string
+  authenticationCode: string
   template: ExecutionEngineFunctionTemplateId
-  functionname: string
+  functionName: string
   description: string
   supportedSourceApps: SourceAppName[]
   tags: string[]
@@ -258,11 +261,18 @@ export type CreateFunctionResponse = {
   }
 }
 
-export const createFunction = async (params: {
+export const createFunction = async ({
+  body
+}: {
   body: CreateFunctionBody
 }): Promise<CreateFunctionResponse> => {
-  throw new Error('Not implemented! Needs re-thinking by Gergo & Iain')
-  console.log(params.body)
+  const url = getApiUrl('/api/v2/functions/from-template')
+  return invokeJsonRequest<CreateFunctionResponse>({
+    url,
+    method: 'post',
+    body,
+    retry: false
+  })
 }
 
 export type UpdateFunctionBody = {
@@ -291,11 +301,15 @@ export type GetFunctionResponse = FunctionWithVersionsSchemaType & {
 export const getFunction = async (params: {
   functionId: string
   token?: string
-  releases?: { cursor?: string; limit?: number; search?: string }
+  releases?: { cursor?: string; limit?: number; versionsFilter?: string }
 }) => {
   const { functionId, token } = params
+  const query = Object.values(params.releases || {}).filter(isNonNullable).length
+    ? params.releases
+    : undefined
+
   const url = getApiUrl(`/api/v1/functions/${functionId}`, {
-    query: params.releases?.cursor || params.releases?.limit ? params.releases : {}
+    query
   })
 
   const result = await invokeJsonRequest<GetFunctionResponse>({
@@ -402,6 +416,32 @@ export const getUserGithubAuthState = async (params: {
   })
 
   return await invokeJsonRequest<UserGithubAuthStateResponse>({
+    url,
+    method: 'get'
+  })
+}
+
+export const getUserGithubOrganizations = async (params: {
+  speckleServerUrl?: string
+  userId: string
+  authCode: string
+}) => {
+  const {
+    speckleServerUrl = getServerOrigin(),
+    userId: speckleUserId,
+    authCode: speckleServerAuthenticationCode
+  } = params
+  const speckleServerOrigin = new URL(speckleServerUrl).origin
+
+  const url = getApiUrl(`/api/v2/functions/auth/githubapp/organizations`, {
+    query: {
+      speckleServerOrigin,
+      speckleUserId,
+      speckleServerAuthenticationCode
+    }
+  })
+
+  return await invokeJsonRequest<{ availableGitHubOrganisations: string[] }>({
     url,
     method: 'get'
   })

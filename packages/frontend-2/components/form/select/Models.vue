@@ -55,6 +55,11 @@
         <span class="truncate">{{ item.name }}</span>
       </div>
     </template>
+    <template #nothing-found>
+      <div class="px-1">
+        {{ nothingFoundText || 'No models found in selected project' }}
+      </div>
+    </template>
   </FormSelectBase>
 </template>
 <script setup lang="ts">
@@ -139,6 +144,9 @@ const props = defineProps({
   showRequired: {
     type: Boolean,
     default: false
+  },
+  nothingFoundText: {
+    type: String
   }
 })
 

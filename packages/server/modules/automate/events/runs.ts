@@ -1,8 +1,10 @@
 import {
   AutomationFunctionRunRecord,
   AutomationRunRecord,
+  AutomationTriggerType,
   AutomationWithRevision,
-  BaseTriggerManifest
+  BaseTriggerManifest,
+  RunTriggerSource
 } from '@/modules/automate/helpers/types'
 import { InsertableAutomationRun } from '@/modules/automate/repositories/automations'
 import { initializeModuleEventEmitter } from '@/modules/shared/services/moduleEventEmitterSetup'
@@ -17,10 +19,12 @@ export type AutomateEventsPayloads = {
     automation: AutomationWithRevision
     run: InsertableAutomationRun
     manifests: BaseTriggerManifest[]
+    source: RunTriggerSource
+    triggerType: AutomationTriggerType
   }
   [AutomateRunsEvents.StatusUpdated]: {
     run: AutomationRunRecord
-    functionRuns: AutomationFunctionRunRecord[]
+    functionRun: AutomationFunctionRunRecord
     automationId: string
   }
 }

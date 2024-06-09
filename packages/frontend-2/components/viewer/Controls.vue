@@ -328,7 +328,8 @@ type ActiveControl =
 
 const { resourceItems, modelsAndVersionIds } = useInjectedViewerLoadedResources()
 const { toggleSectionBox, isSectionBoxEnabled } = useSectionBoxUtilities()
-const { enableMeasurements } = useMeasurementUtilities()
+const { getActiveMeasurement, removeMeasurement, enableMeasurements } =
+  useMeasurementUtilities()
 const { showNavbar, showControls } = useViewerTour()
 const { isTransparent, isEnabled: isEmbedEnabled } = useEmbed()
 const {
@@ -469,6 +470,15 @@ watch(isSmallerOrEqualSm, (newVal) => {
 })
 
 onKeyStroke('Escape', () => {
-  activeControl.value = 'none'
+  const isActiveMeasurement = getActiveMeasurement()
+
+  if (isActiveMeasurement) {
+    removeMeasurement()
+  } else {
+    if (activeControl.value === 'measurements') {
+      toggleMeasurements()
+    }
+    activeControl.value = 'none'
+  }
 })
 </script>

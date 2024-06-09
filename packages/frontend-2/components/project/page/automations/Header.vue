@@ -3,7 +3,7 @@
     class="flex flex-col gap-y-2 md:gap-y-0 md:flex-row md:justify-between md:items-center"
   >
     <h1 class="block h4 font-bold">Automations</h1>
-    <div v-if="hasAutomations" class="flex flex-col gap-2 md:flex-row md:items-center">
+    <div v-if="!showEmptyState" class="flex flex-col gap-2 md:flex-row md:items-center">
       <FormTextInput
         name="search"
         color="foundation"
@@ -21,13 +21,16 @@
       >
         Explore Functions
       </FormButton>
-      <FormButton
-        :icon-left="PlusIcon"
-        class="shrink-0"
-        @click="$emit('new-automation')"
-      >
-        New Automation
-      </FormButton>
+      <div v-tippy="disabledCreateBecauseOf" class="shrink-0">
+        <FormButton
+          :icon-left="PlusIcon"
+          class="shrink-0"
+          :disabled="!!disabledCreateBecauseOf"
+          @click="$emit('new-automation')"
+        >
+          New Automation
+        </FormButton>
+      </div>
     </div>
   </div>
 </template>
@@ -41,7 +44,8 @@ defineEmits<{
 }>()
 
 defineProps<{
-  hasAutomations?: boolean
+  showEmptyState?: boolean
+  disabledCreateBecauseOf?: string
 }>()
 
 const search = defineModel<string>('search')

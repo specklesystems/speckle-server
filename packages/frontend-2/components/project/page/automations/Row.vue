@@ -64,6 +64,7 @@ import {
   CubeIcon,
   ExclamationTriangleIcon
 } from '@heroicons/vue/24/outline'
+import { isNonNullable } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
 import { type ProjectPageAutomationsRow_AutomationFragment } from '~/lib/common/generated/gql/graphql'
 import { projectAutomationRoute } from '~/lib/common/helpers/route'
@@ -86,11 +87,12 @@ graphql(`
         }
       }
     }
-    runs {
+    runs(limit: 10) {
       totalCount
       items {
         ...AutomationRunDetails
       }
+      cursor
     }
   }
 `)
@@ -107,9 +109,9 @@ const isTestAutomation = computed(() => props.automation.isTestAutomation)
 
 const triggerModels = computed(
   () =>
-    props.automation.currentRevision?.triggerDefinitions.map(
-      (trigger) => trigger.model
-    ) || []
+    props.automation.currentRevision?.triggerDefinitions
+      .map((trigger) => trigger.model)
+      .filter(isNonNullable) || []
 )
 
 const triggerLabel = computed(() => {
