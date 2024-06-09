@@ -78,7 +78,7 @@ export enum RunTriggerSource {
   Manual = 'manual'
 }
 
-export const VersionCreationTriggerType = 'versionCreation'
+export const VersionCreationTriggerType = <const>'versionCreation'
 export type AutomationTriggerType = typeof VersionCreationTriggerType
 
 export type AutomationTriggerRecordBase<

@@ -37,7 +37,7 @@
     "prepare": "husky install",
     "postinstall": "husky install",
     "cm": "cz",
-    "eslint:inspect": "npx @eslint/config-inspector",
+    "eslint:inspect": "eslint-config-inspector",
     "eslint:projectwide": "node ./utils/eslint-projectwide.mjs"
   },
   "devDependencies": {

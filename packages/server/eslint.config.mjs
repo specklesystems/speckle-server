@@ -46,6 +46,7 @@ const configs = [
       '@typescript-eslint/restrict-template-expressions': 'off', // too restrictive
       '@typescript-eslint/no-unsafe-enum-comparison': 'off', // too restrictive
       '@typescript-eslint/unbound-method': 'off', // too many false positives
+      '@typescript-eslint/no-unnecessary-type-assertion': 'off', // false positives - sometimes they are actually necessary
 
       // TODO: Enable these
       '@typescript-eslint/require-await': 'off', // can be turned on, but there's a lot of fixing to do
