@@ -17,7 +17,8 @@
     "lint:css": "stylelint \"**/*.{css,vue}\"",
     "lint": "yarn lint:js && yarn lint:tsc && yarn lint:prettier && yarn lint:css",
     "gqlgen": "graphql-codegen",
-    "gqlgen:watch": "graphql-codegen --watch"
+    "gqlgen:watch": "graphql-codegen --watch",
+    "eslint:inspect": "eslint-config-inspector"
   },
   "dependencies": {
     "@apollo/client": "^3.9.6",
@@ -83,6 +84,7 @@
     "@babel/preset-env": "^7.19.4",
     "@babel/preset-react": "^7.18.6",
     "@babel/preset-typescript": "^7.18.6",
+    "@eslint/config-inspector": "^0.4.10",
     "@graphql-codegen/cli": "^2.13.6",
     "@graphql-codegen/client-preset": "^1.2.5",
     "@nuxt/devtools": "^0.2.5",

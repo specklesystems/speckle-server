@@ -22,9 +22,6 @@ workflows:
               # run tests for any commit on any branch, including any tags
               only: /.*/
 
-      - test-frontend-2:
-          filters: *filters-allow-all
-
       - test-viewer:
           filters: *filters-allow-all
 
@@ -56,7 +53,6 @@ workflows:
             - get-version
             - pre-commit
             - deployment-testing-approval
-            - test-frontend-2
             - test-viewer
             - test-server
             - docker-build-server
@@ -75,7 +71,6 @@ workflows:
             - get-version
             - pre-commit
             - deployment-testing-approval
-            - test-frontend-2
             - test-viewer
             - test-server
             - docker-build-server
@@ -167,7 +162,6 @@ workflows:
             - get-version
             - pre-commit
             - publish-approval
-            - test-frontend-2
             - test-viewer
             - test-server
 
@@ -179,7 +173,6 @@ workflows:
             - get-version
             - pre-commit
             - publish-approval
-            - test-frontend-2
             - test-viewer
             - test-server
 
@@ -191,7 +184,6 @@ workflows:
             - get-version
             - pre-commit
             - publish-approval
-            - test-frontend-2
             - test-viewer
             - test-server
 
@@ -203,7 +195,6 @@ workflows:
             - get-version
             - pre-commit
             - publish-approval
-            - test-frontend-2
             - test-viewer
             - test-server
 
@@ -215,7 +206,6 @@ workflows:
             - get-version
             - pre-commit
             - publish-approval
-            - test-frontend-2
             - test-viewer
             - test-server
 
@@ -227,7 +217,6 @@ workflows:
             - get-version
             - pre-commit
             - publish-approval
-            - test-frontend-2
             - test-viewer
             - test-server
 
@@ -239,7 +228,6 @@ workflows:
             - get-version
             - pre-commit
             - publish-approval
-            - test-frontend-2
             - test-viewer
             - test-server
 
@@ -251,7 +239,6 @@ workflows:
             - get-version
             - pre-commit
             - publish-approval
-            - test-frontend-2
             - test-viewer
             - test-server
 
@@ -302,7 +289,6 @@ workflows:
             - get-version
             - test-server
             - test-ui-components
-            - test-frontend-2
             - test-viewer
 
       - publish-viewer-sandbox-cloudflare-pages:
@@ -485,40 +471,6 @@ jobs:
       # path: packages/server/coverage/lcov-report
       # destination: package/server/coverage
 
-  test-frontend-2:
-    docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
-    resource_class: xlarge
-    steps:
-      - checkout
-      - restore_cache:
-          name: Restore Yarn Package Cache
-          keys:
-            - yarn-packages-server-{{ checksum "yarn.lock" }}
-      - run:
-          name: Install Dependencies
-          command: yarn
-
-      - run:
-          name: Install Dependencies v2 (.node files missing bug)
-          command: yarn
-
-      - save_cache:
-          name: Save Yarn Package Cache
-          key: yarn-packages-server-{{ checksum "yarn.lock" }}
-          paths:
-            - .yarn/cache
-            - .yarn/unplugged
-
-      - run:
-          name: Build public packages
-          command: yarn build:public
-
-      - run:
-          name: Lint everything
-          command: yarn lint
-          working_directory: 'packages/frontend-2'
-
   test-viewer:
     docker: &docker-node-browsers-image
       - image: cimg/node:18.19.0-browsers
@@ -547,11 +499,6 @@ jobs:
       - run:
           name: Build public packages
           command: yarn build:public
-
-      - run:
-          name: Lint everything
-          command: yarn lint
-          working_directory: 'packages/viewer'
 
       - run:
           name: Run tests
@@ -585,21 +532,6 @@ jobs:
       - run:
           name: Build public packages
           command: yarn build:public
-
-      - run:
-          name: Lint tailwind theme
-          command: yarn lint
-          working_directory: 'packages/tailwind-theme'
-
-      - run:
-          name: Lint ui components
-          command: yarn lint
-          working_directory: 'packages/ui-components'
-
-      - run:
-          name: Lint component nuxt package
-          command: yarn lint
-          working_directory: 'packages/ui-components-nuxt'
 
       - run:
           name: Install Playwright
