@@ -226,7 +226,8 @@ export class SmoothOrbitControls extends SpeckleControls {
      *  We don't want to make pointless calculations more than we already are
      */
     const targetPosition = this.getPosition()
-    if (position.equals(targetPosition) && target.equals(this.origin)) return
+    const targetTarget = this.getTarget()
+    if (position.equals(targetPosition) && target.equals(targetTarget)) return
 
     const v0 = new Vector3().copy(position)
     const v1 = new Vector3().copy(target)

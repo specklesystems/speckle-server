@@ -164,13 +164,13 @@ export function useViewerCameraTracker(
 
   onMounted(() => {
     const extension = instance.getExtension(CameraController)
-    extension.on(CameraEvent.FrameUpdate, finalCallback)
+    extension.on(CameraEvent.LateFrameUpdate, finalCallback)
   })
 
   onBeforeUnmount(() => {
     instance
       .getExtension(CameraController)
-      .removeListener(CameraEvent.FrameUpdate, finalCallback)
+      .removeListener(CameraEvent.LateFrameUpdate, finalCallback)
   })
 }
 
