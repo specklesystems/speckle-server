@@ -24,7 +24,19 @@ export const getESMDirname = (importMetaUrl) => {
  */
 const rootConfigs = [
   {
-    ignores: ['packages/**/*']
+    ignores: [
+      'packages/**/*',
+      '.circleci',
+      '.devcontainer',
+      '.github',
+      '.husky',
+      '.vscode',
+      '.yarn',
+      'docker',
+      'node_modules',
+      'test-queries',
+      'setup'
+    ]
   },
   {
     files: ['*.{js,mjs,cjs}', '.*.{js,mjs,cjs}', 'utils/*.{js,mjs,cjs}'],

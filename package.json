@@ -13,7 +13,7 @@
     "build:public": "yarn workspaces foreach -ptv --no-private run build",
     "build:tailwind-deps": "yarn workspaces foreach -iv -j unlimited --include '{@speckle/shared,@speckle/tailwind-theme,@speckle/ui-components}' run build",
     "ensure:tailwind-deps": "node ./utils/ensure-tailwind-deps.mjs",
-    "lint": "node --max-old-space-size=4096 ./node_modules/eslint/bin/eslint.js . --ext .js,.ts,.vue --max-warnings=0",
+    "lint": "node --max-old-space-size=4096 ./node_modules/eslint/bin/eslint.js . -c ./eslint.full.config.mjs",
     "helm:readme:generate": "./utils/helm/update-schema-json.sh",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
@@ -37,7 +37,8 @@
     "dev:shared": "yarn workspace @speckle/shared dev",
     "prepare": "husky install",
     "postinstall": "husky install",
-    "cm": "cz"
+    "cm": "cz",
+    "eslint:inspect": "npx @eslint/config-inspector"
   },
   "devDependencies": {
     "@eslint/config-inspector": "^0.4.10",
@@ -52,6 +53,7 @@
     "cz-conventional-changelog": "^3.3.0",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
+    "eslint-flat-config-utils": "^0.2.5",
     "globals": "^15.4.0",
     "husky": "^7.0.4",
     "lint-staged": "^12.3.7",

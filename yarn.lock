@@ -44428,6 +44428,7 @@ __metadata:
     cz-conventional-changelog: ^3.3.0
     eslint: ^9.4.0
     eslint-config-prettier: ^9.1.0
+    eslint-flat-config-utils: ^0.2.5
     globals: ^15.4.0
     husky: ^7.0.4
     lint-staged: ^12.3.7
