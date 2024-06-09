@@ -15629,8 +15629,8 @@ __metadata:
   dependencies:
     "@nuxt/kit": ^3.8.2
     "@speckle/ui-components": "workspace:^"
-    eslint: ^8.24.0
-    eslint-config-prettier: ^8.5.0
+    eslint: ^9.4.0
+    eslint-config-prettier: ^9.1.0
     lodash-es: ^4.0.0
     prettier: ^2.7.1
   peerDependencies:

@@ -3,7 +3,7 @@
   "description": "Companion Nuxt module for @speckle/ui-components",
   "version": "0.0.1",
   "scripts": {
-    "lint:js": "eslint --ext \".js,.ts,.vue\" .",
+    "lint:js": "eslint .",
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
     "lint": "yarn lint:js && yarn lint:prettier"
   },
@@ -24,8 +24,8 @@
   "devDependencies": {
     "@nuxt/kit": "^3.8.2",
     "@speckle/ui-components": "workspace:^",
-    "eslint": "^8.24.0",
-    "eslint-config-prettier": "^8.5.0",
+    "eslint": "^9.4.0",
+    "eslint-config-prettier": "^9.1.0",
     "prettier": "^2.7.1"
   }
 }
