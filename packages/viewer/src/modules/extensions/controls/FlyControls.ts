@@ -20,20 +20,21 @@ type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
 const walkingSpeed = 1.42 // m/s
 
 export interface FlyControlsOptions {
+  [name: string]: unknown
   lookSpeed?: number
   moveSpeed?: number
+  damperDecay?: number
 }
 
 class FlyControls extends SpeckleControls {
-  protected camera: PerspectiveCamera | OrthographicCamera
+  protected _options: Required<FlyControlsOptions>
+  protected _targetCamera: PerspectiveCamera | OrthographicCamera
   protected container: HTMLElement
-  protected pointerSpeed: number
   protected velocity = new Vector3()
   protected euler = new Euler(0, 0, 0, 'YXZ')
   protected position = new Vector3()
   protected goalEuler = new Euler(0, 0, 0, 'YXZ')
   protected goalPosition = new Vector3()
-  protected speed: number = 10
   protected keyMap: Record<MoveType, boolean> = {
     forward: false,
     back: false,
@@ -66,12 +67,19 @@ class FlyControls extends SpeckleControls {
     this._enabled = value
   }
 
-  public set options(_value: Record<string, unknown>) {}
+  public get options(): FlyControlsOptions {
+    return this._options
+  }
 
-  public set controlTarget(target: PerspectiveCamera | OrthographicCamera) {
-    this.camera = target
+  public set options(value: FlyControlsOptions) {
+    Object.assign(this._options, value)
+    this.setDamperDecayTime(this._options.damperDecay)
+  }
+
+  public set targetCamera(target: PerspectiveCamera | OrthographicCamera) {
+    this._targetCamera = target
     this.rotate(this.euler)
-    this.camera.position.copy(this.position)
+    this._targetCamera.position.copy(this.position)
   }
 
   public set up(value: Vector3) {
@@ -86,15 +94,15 @@ class FlyControls extends SpeckleControls {
   constructor(
     camera: PerspectiveCamera | OrthographicCamera,
     container: HTMLElement,
-    world: World
+    world: World,
+    options: Required<FlyControlsOptions>
   ) {
     super()
 
-    this.camera = camera
+    this._targetCamera = camera
     this.container = container
     this.world = world
-
-    this.pointerSpeed = 1.0
+    this._options = Object.assign({}, options) as Required<FlyControlsOptions>
   }
 
   public isStationary(): boolean {
@@ -111,22 +119,23 @@ class FlyControls extends SpeckleControls {
     this._lastTick = now
     const deltaSeconds = delta / 1000
 
-    const scaledWalkingSpeed = this.world.getRelativeOffset(0.02) * walkingSpeed
+    const scaledWalkingSpeed = this.world.getRelativeOffset(0.2) * walkingSpeed
     if (this.keyMap.forward)
-      this.velocity.z = -scaledWalkingSpeed * this.speed * deltaSeconds
+      this.velocity.z = -scaledWalkingSpeed * this._options.moveSpeed * deltaSeconds
     if (this.keyMap.back)
-      this.velocity.z = scaledWalkingSpeed * this.speed * deltaSeconds
+      this.velocity.z = scaledWalkingSpeed * this._options.moveSpeed * deltaSeconds
     if (!this.keyMap.forward && !this.keyMap.back) this.velocity.z = 0
 
     if (this.keyMap.left)
-      this.velocity.x = -scaledWalkingSpeed * this.speed * deltaSeconds
+      this.velocity.x = -scaledWalkingSpeed * this._options.moveSpeed * deltaSeconds
     if (this.keyMap.right)
-      this.velocity.x = scaledWalkingSpeed * this.speed * deltaSeconds
+      this.velocity.x = scaledWalkingSpeed * this._options.moveSpeed * deltaSeconds
     if (!this.keyMap.left && !this.keyMap.right) this.velocity.x = 0
 
-    if (this.keyMap.up) this.velocity.y = scaledWalkingSpeed * this.speed * deltaSeconds
+    if (this.keyMap.up)
+      this.velocity.y = scaledWalkingSpeed * this._options.moveSpeed * deltaSeconds
     if (this.keyMap.down)
-      this.velocity.y = -scaledWalkingSpeed * this.speed * deltaSeconds
+      this.velocity.y = -scaledWalkingSpeed * this._options.moveSpeed * deltaSeconds
     if (!this.keyMap.down && !this.keyMap.up) this.velocity.y = 0
 
     if (this.isStationary()) return false
@@ -159,7 +168,7 @@ class FlyControls extends SpeckleControls {
     this.euler.z = this.eulerZDamper.update(this.euler.z, this.goalEuler.z, delta, 1)
 
     this.rotate(this.euler)
-    this.camera.position.copy(this.position)
+    this._targetCamera.position.copy(this.position)
 
     return true
   }
@@ -169,7 +178,7 @@ class FlyControls extends SpeckleControls {
   }
 
   public fitToSphere(sphere: Sphere): void {
-    const forward = this.camera.getWorldDirection(new Vector3())
+    const forward = this._targetCamera.getWorldDirection(new Vector3())
     forward.negate()
     const pos = new Vector3()
       .copy(sphere.center)
@@ -207,8 +216,20 @@ class FlyControls extends SpeckleControls {
     return new Vector3().copy(this.goalPosition).applyMatrix4(this._basisTransformInv)
   }
 
+  /**
+   * Sets the smoothing decay time.
+   */
+  public setDamperDecayTime(decayMilliseconds: number) {
+    this.eulerXDamper.setDecayTime(decayMilliseconds)
+    this.eulerYDamper.setDecayTime(decayMilliseconds)
+    this.eulerZDamper.setDecayTime(decayMilliseconds)
+    this.positionXDamper.setDecayTime(decayMilliseconds)
+    this.positionYDamper.setDecayTime(decayMilliseconds)
+    this.positionZDamper.setDecayTime(decayMilliseconds)
+  }
+
   public moveBy(amount: Vector3) {
-    const camera = this.camera
+    const camera = this._targetCamera
     _vectorBuff0.setFromMatrixColumn(camera.matrix, 2)
     this.goalPosition.addScaledVector(_vectorBuff0, amount.z)
     _vectorBuff0.setFromMatrixColumn(camera.matrix, 1)
@@ -254,7 +275,7 @@ class FlyControls extends SpeckleControls {
     const q = new Quaternion()
     const t = new Quaternion().setFromRotationMatrix(this._basisTransform)
     q.setFromEuler(euler).premultiply(t)
-    this.camera.quaternion.copy(q)
+    this._targetCamera.quaternion.copy(q)
   }
 
   // event listeners
@@ -264,8 +285,8 @@ class FlyControls extends SpeckleControls {
     const movementX = event.movementX || 0
     const movementY = event.movementY || 0
     const amount = new Vector2()
-    amount.y = movementX * 0.005 * this.pointerSpeed
-    amount.x = movementY * 0.005 * this.pointerSpeed
+    amount.y = movementX * 0.005 * this._options.lookSpeed
+    amount.x = movementY * 0.005 * this._options.lookSpeed
 
     this.rotateBy(amount)
     this.emit(_changeEvent)

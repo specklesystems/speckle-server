@@ -492,9 +492,9 @@ export default class Sandbox {
         step: 10
       })
       .on('change', (value) => {
-        this.viewer
-          .getExtension(CameraController)
-          .controls.setDamperDecayTime(value.value)
+        this.viewer.getExtension(CameraController).options = {
+          damperDecay: value.value
+        }
       })
 
     const canonicalViewsFolder = this.tabs.pages[0].addFolder({

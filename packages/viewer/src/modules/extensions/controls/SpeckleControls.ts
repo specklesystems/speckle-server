@@ -10,9 +10,12 @@ export abstract class SpeckleControls extends EventEmitter {
     this._up.copy(value)
   }
 
+  abstract get options(): Partial<Record<string, unknown>>
+  abstract set options(value: Partial<Record<string, unknown>>)
+
   abstract get enabled(): boolean
   abstract set enabled(value: boolean)
-  abstract set controlTarget(target: PerspectiveCamera | OrthographicCamera)
+  abstract set targetCamera(target: PerspectiveCamera | OrthographicCamera)
 
   abstract isStationary(): boolean
   abstract update(delta?: number): boolean

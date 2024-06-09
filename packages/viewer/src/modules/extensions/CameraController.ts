@@ -9,7 +9,7 @@ import {
   Vector3
 } from 'three'
 import {
-  SmoothControlsOptions,
+  SmoothOrbitControlsOptions,
   SmoothOrbitControls
 } from './controls/SmoothOrbitControls'
 import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera'
@@ -43,7 +43,7 @@ export type PolarView = {
   origin?: Vector3
 }
 
-export type CameraControllerOptions = SmoothControlsOptions & FlyControlsOptions
+export type CameraControllerOptions = SmoothOrbitControlsOptions & FlyControlsOptions
 
 export function isPerspectiveCamera(camera: Camera): camera is PerspectiveCamera {
   return (camera as PerspectiveCamera).isPerspectiveCamera
@@ -53,9 +53,7 @@ export function isOrthographicCamera(camera: Camera): camera is OrthographicCame
   return (camera as OrthographicCamera).isOrthographicCamera
 }
 
-export const DefaultControllerOptions = Object.freeze<
-  Required<CameraControllerOptions>
->({
+export const DefaultOrbitControlsOptions: Required<CameraControllerOptions> = {
   enableOrbit: true,
   enableZoom: true,
   enablePan: true,
@@ -75,16 +73,17 @@ export const DefaultControllerOptions = Object.freeze<
   infiniteZoom: true,
   zoomToCursor: true,
   lookSpeed: 1,
-  moveSpeed: 1
-})
+  moveSpeed: 1,
+  damperDecay: 30
+}
 
 export class CameraController extends Extension implements SpeckleCamera {
   protected _renderingCamera: PerspectiveCamera | OrthographicCamera
   protected perspectiveCamera: PerspectiveCamera
   protected orthographicCamera: OrthographicCamera
   protected _lastCameraChanged: boolean = false
-  protected _options: Required<CameraControllerOptions> = DefaultControllerOptions
-  protected _controls: SpeckleControls
+  protected _options: Required<CameraControllerOptions> = DefaultOrbitControlsOptions
+  protected _activeControls: SpeckleControls
   protected _controlsList: SpeckleControls[] = []
 
   get renderingCamera(): PerspectiveCamera | OrthographicCamera {
@@ -96,7 +95,7 @@ export class CameraController extends Extension implements SpeckleCamera {
   }
 
   public get enabled() {
-    return this._controls.enabled
+    return this._activeControls.enabled
   }
 
   public set enabled(val) {
@@ -117,16 +116,19 @@ export class CameraController extends Extension implements SpeckleCamera {
   }
 
   public get controls(): SpeckleControls {
-    return this._controls
+    return this._activeControls
   }
 
-  // public get options(): Required<CameraControllerOptions> {
-  //   return this._options
-  // }
+  public get options(): Required<CameraControllerOptions> {
+    return this._options
+  }
 
-  // public set options(value: CameraControllerOptions) {
-  //   this._controls.options = value
-  // }
+  public set options(value: CameraControllerOptions) {
+    Object.assign(this._options, value)
+    this._controlsList.forEach((controls: SpeckleControls) => {
+      controls.options = value
+    })
+  }
 
   public constructor(viewer: IViewer) {
     super(viewer)
@@ -157,9 +159,11 @@ export class CameraController extends Extension implements SpeckleCamera {
     const flyControls = new FlyControls(
       this._renderingCamera,
       this.viewer.getContainer(),
-      this.viewer.World
+      this.viewer.World,
+      this._options
     )
     flyControls.enabled = false
+    flyControls.setDamperDecayTime(30)
     flyControls.up = new Vector3(0, 0, 1)
 
     const orbitControls = new SmoothOrbitControls(
@@ -171,15 +175,16 @@ export class CameraController extends Extension implements SpeckleCamera {
       this._options
     )
     orbitControls.enabled = true
-    orbitControls.setDamperDecayTime(30)
     orbitControls.up = new Vector3(0, 0, 1)
+    orbitControls.setOrbit(2.356, 0.955, 0)
+    orbitControls.jumpToGoal()
 
     this.viewer.getRenderer().speckleCamera = this
 
     this._controlsList.push(orbitControls)
     this._controlsList.push(flyControls)
 
-    this._controls = orbitControls
+    this._activeControls = orbitControls
 
     this.viewer.getRenderer().input.on(InputEvent.KeyUp, this.onKeyUp.bind(this))
   }
@@ -192,24 +197,24 @@ export class CameraController extends Extension implements SpeckleCamera {
   }
 
   public getTarget(): Vector3 {
-    return this._controls.getTarget()
+    return this._activeControls.getTarget()
   }
 
   public getPosition(): Vector3 {
-    return this._controls.getPosition()
+    return this._activeControls.getPosition()
   }
 
   private onKeyUp(e: KeyboardEvent) {
-    if (e.code === 'Space') this.toggleControllers()
+    if (e.code === 'Space') this.toggleControls()
   }
 
-  public toggleControllers() {
-    const oldControls: SpeckleControls = this._controls
+  public toggleControls() {
+    const oldControls: SpeckleControls = this._activeControls
     let newControls: SpeckleControls | undefined = undefined
 
-    if (this._controls instanceof SmoothOrbitControls) {
+    if (this._activeControls instanceof SmoothOrbitControls) {
       newControls = this._controlsList[1]
-    } else if (this._controls instanceof FlyControls) {
+    } else if (this._activeControls instanceof FlyControls) {
       newControls = this._controlsList[0]
     }
 
@@ -222,7 +227,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       oldControls.getTarget()
     )
     newControls.jumpToGoal()
-    this._controls = newControls
+    this._activeControls = newControls
     this.viewer.requestRender()
   }
 
@@ -262,13 +267,13 @@ export class CameraController extends Extension implements SpeckleCamera {
   }
 
   public onEarlyUpdate() {
-    const changed = this._controls.update(undefined)
+    const changed = this._activeControls.update(undefined)
     if (changed !== this._lastCameraChanged) {
       this.emit(changed ? CameraEvent.Dynamic : CameraEvent.Stationary)
     }
     this.emit(CameraEvent.FrameUpdate, changed)
     this._lastCameraChanged = changed
-    this._controls.update()
+    this._activeControls.update()
   }
 
   public onLateUpdate(): void {
@@ -282,7 +287,7 @@ export class CameraController extends Extension implements SpeckleCamera {
 
     const lineOfSight = new Vector3()
     this.perspectiveCamera.getWorldDirection(lineOfSight)
-    const target = this._controls.getTarget()
+    const target = this._activeControls.getTarget()
     const distance = target.clone().sub(this.perspectiveCamera.position)
     const depth = distance.dot(lineOfSight)
     const dims = {
@@ -322,14 +327,14 @@ export class CameraController extends Extension implements SpeckleCamera {
   }
 
   protected setupOrthoCamera() {
-    this.controls.controlTarget = this.orthographicCamera
+    this.controls.targetCamera = this.orthographicCamera
     this.enableRotations()
     this.setCameraPlanes(this.viewer.getRenderer().sceneBox)
     this.emit(CameraEvent.ProjectionChanged, CameraProjection.ORTHOGRAPHIC)
   }
 
   protected setupPerspectiveCamera() {
-    this.controls.controlTarget = this.perspectiveCamera
+    this.controls.targetCamera = this.perspectiveCamera
     this.enableRotations()
     this.setCameraPlanes(this.viewer.getRenderer().sceneBox)
     this.emit(CameraEvent.ProjectionChanged, CameraProjection.PERSPECTIVE)
@@ -422,7 +427,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       //   promises.push(this.zoomTo(zoom, enableTransition))
     }
     targetSphere.radius = radius * fit
-    this._controls.fitToSphere(targetSphere)
+    this._activeControls.fitToSphere(targetSphere)
 
     this.setCameraPlanes(box, fit)
   }
@@ -576,8 +581,8 @@ export class CameraController extends Extension implements SpeckleCamera {
     /** This check is targeted exclusevely towards the frontend which calls this method pointlessly each frame
      *  We don't want to make pointless calculations more than we already are
      */
-    this._controls.fromPositionAndTarget(view.position, view.target)
-    if (!transition) this._controls.jumpToGoal()
+    this._activeControls.fromPositionAndTarget(view.position, view.target)
+    if (!transition) this._activeControls.jumpToGoal()
 
     this.enableRotations()
   }
@@ -590,7 +595,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     //   _view.origin
     // )
 
-    if (!transition) this._controls.jumpToGoal()
+    if (!transition) this._activeControls.jumpToGoal()
     this.enableRotations()
   }
 }

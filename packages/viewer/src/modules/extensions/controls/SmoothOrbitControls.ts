@@ -56,7 +56,7 @@ export interface Pointer {
   id: number
 }
 
-export interface SmoothControlsOptions {
+export interface SmoothOrbitControlsOptions {
   // Sensitivity of rotating.
   enableOrbit?: boolean
   // Sensitivity of zooming.
@@ -93,6 +93,8 @@ export interface SmoothControlsOptions {
   infiniteZoom?: boolean
   // Zoom to cursor
   zoomToCursor?: boolean
+  // Dampening
+  damperDecay?: number
 }
 
 const ZOOM_SENSITIVITY = 0.08
@@ -122,7 +124,7 @@ export enum PointerChangeEvent {
  */
 export class SmoothOrbitControls extends SpeckleControls {
   private _enabled: boolean = false
-  private _options: Required<SmoothControlsOptions>
+  private _options: Required<SmoothOrbitControlsOptions>
   private isUserPointing = false
 
   // Pan state
@@ -154,7 +156,7 @@ export class SmoothOrbitControls extends SpeckleControls {
   private touchDecided = false
   private zoomControlCoord: Vector2 = new Vector2()
 
-  private _camera: PerspectiveCamera | OrthographicCamera
+  private _targetCamera: PerspectiveCamera | OrthographicCamera
   private _container: HTMLElement
   private _lastTick: number = 0
   private _basisTransform: Matrix4 = new Matrix4()
@@ -190,33 +192,31 @@ export class SmoothOrbitControls extends SpeckleControls {
     world: World,
     scene: Scene,
     intersections: Intersections,
-    options: Required<SmoothControlsOptions>
+    options: Required<SmoothOrbitControlsOptions>
   ) {
     super()
-    this._camera = camera
+    this._targetCamera = camera
     this._container = container
     this.world = world
     this.intersections = intersections
     this.scene = scene
-    this._options = Object.assign({}, options) as Required<SmoothControlsOptions>
-
-    this.setOrbit(2.356, 0.955, 0)
-    this.jumpToGoal()
+    this._options = Object.assign({}, options) as Required<SmoothOrbitControlsOptions>
+    this.setDamperDecayTime(this._options.damperDecay)
   }
 
   /**
    * The options that are currently configured for the controls instance.
    */
-  get options(): Required<SmoothControlsOptions> {
+  get options(): Required<SmoothOrbitControlsOptions> {
     return this._options
   }
 
-  set options(value: SmoothControlsOptions) {
-    Object.assign(this._options, value)
+  set options(value: SmoothOrbitControlsOptions) {
+    this.applyOptions(value)
   }
 
-  set controlTarget(value: PerspectiveCamera | OrthographicCamera) {
-    this._camera = value
+  set targetCamera(value: PerspectiveCamera | OrthographicCamera) {
+    this._targetCamera = value
     this.moveCamera()
   }
 
@@ -288,8 +288,9 @@ export class SmoothOrbitControls extends SpeckleControls {
    * merged with whatever _options have already been configured for this
    * controls instance.
    */
-  public applyOptions(_options: SmoothControlsOptions) {
+  protected applyOptions(_options: SmoothOrbitControlsOptions) {
     Object.assign(this._options, _options)
+    this.setDamperDecayTime(this._options.damperDecay)
     // Re-evaluates clamping based on potentially new values for min/max
     // polar, azimuth and radius:
     this.setOrbit()
@@ -408,7 +409,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     const tasIntersect =
       this.intersections.intersect(
         this.scene,
-        this._camera as PerspectiveCamera,
+        this._targetCamera as PerspectiveCamera,
         this.zoomControlCoord,
         ObjectLayers.STREAM_CONTENT_MESH,
         false,
@@ -443,7 +444,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     if (this._options.zoomToCursor) {
       const dollyAmount = new Vector3()
       if (goalRadius < this._options.minimumRadius && this._options.infiniteZoom) {
-        if (this._camera instanceof PerspectiveCamera) {
+        if (this._targetCamera instanceof PerspectiveCamera) {
           const dir = new Vector3().setFromSpherical(this.spherical).normalize()
           dollyAmount.copy(dir).multiplyScalar(zoomAmount)
           this._radiusDelta = -zoomAmount
@@ -594,7 +595,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     const position = this.positionFromSpherical(this.spherical, this.origin)
     const quaternion = this.quaternionFromSpherical(this.spherical)
 
-    if (this._camera instanceof OrthographicCamera) {
+    if (this._targetCamera instanceof OrthographicCamera) {
       const cameraDirection = new Vector3()
         .setFromSpherical(this.spherical)
         .applyQuaternion(new Quaternion().setFromRotationMatrix(this._basisTransform))
@@ -609,15 +610,15 @@ export class SmoothOrbitControls extends SpeckleControls {
         )
       )
     }
-    this._camera.position.copy(position)
-    this._camera.quaternion.copy(quaternion)
+    this._targetCamera.position.copy(position)
+    this._targetCamera.quaternion.copy(quaternion)
 
-    if (this._camera instanceof PerspectiveCamera)
-      if (this._camera.fov !== Math.exp(this.logFov)) {
-        this._camera.fov = Math.exp(this.logFov)
-        this._camera.updateProjectionMatrix()
+    if (this._targetCamera instanceof PerspectiveCamera)
+      if (this._targetCamera.fov !== Math.exp(this.logFov)) {
+        this._targetCamera.fov = Math.exp(this.logFov)
+        this._targetCamera.updateProjectionMatrix()
       }
-    if (this._camera instanceof OrthographicCamera) {
+    if (this._targetCamera instanceof OrthographicCamera) {
       const depth = this.spherical.radius
       const dims = {
         x: this._container.offsetWidth,
@@ -629,12 +630,12 @@ export class SmoothOrbitControls extends SpeckleControls {
       const Z = depth
       const width = dephtS * Z * aspect
       const height = dephtS * Z
-      this._camera.zoom = 1
-      this._camera.left = width / -2
-      this._camera.right = width / 2
-      this._camera.top = height / 2
-      this._camera.bottom = height / -2
-      this._camera.updateProjectionMatrix()
+      this._targetCamera.zoom = 1
+      this._targetCamera.left = width / -2
+      this._targetCamera.right = width / 2
+      this._targetCamera.top = height / 2
+      this._targetCamera.bottom = height / -2
+      this._targetCamera.updateProjectionMatrix()
     }
 
     /** Ortho height to distance test */
