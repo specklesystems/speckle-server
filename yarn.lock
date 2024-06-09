@@ -15787,8 +15787,8 @@ __metadata:
   dependencies:
     "@speckle/shared": "workspace:^"
     cross-env: ^7.0.3
-    eslint: ^8.11.0
-    eslint-config-prettier: ^8.5.0
+    eslint: ^9.4.0
+    eslint-config-prettier: ^9.1.0
     knex: ^2.4.1
     node-fetch: ^2.6.1
     pg: ^8.7.3
