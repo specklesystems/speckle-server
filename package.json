@@ -40,6 +40,7 @@
     "cm": "cz"
   },
   "devDependencies": {
+    "@eslint/config-inspector": "^0.4.10",
     "@eslint/js": "^9.4.0",
     "@rollup/plugin-typescript": "^11.1.0",
     "@swc/core": "^1.2.222",

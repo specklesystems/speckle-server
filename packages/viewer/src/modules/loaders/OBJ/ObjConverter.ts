@@ -65,7 +65,7 @@ export class ObjConverter {
       }
     }
     for (let k = 0; k < object.children.length; k++) {
-      this.traverse(objectURL, object.children[k], callback, childNode)
+      void this.traverse(objectURL, object.children[k], callback, childNode)
     }
   }
 

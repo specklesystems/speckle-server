@@ -607,7 +607,7 @@ export default class SpeckleRenderer {
       }
 
       if (this.cancel[renderTree.id]) {
-        generator.return()
+        void generator.return()
         this.removeRenderTree(renderTree.id)
         delete this.cancel[renderTree.id]
         break
@@ -701,15 +701,12 @@ export default class SpeckleRenderer {
     if (Materials.isMaterialInstance(material)) {
       this.setMaterialInstance(rvMap, material)
     } else if (Materials.isFilterMaterial(material)) {
-      this.setFilterMaterial(rvMap, material as FilterMaterial)
+      this.setFilterMaterial(rvMap, material)
     } else if (
       Materials.isRendeMaterial(material) ||
       Materials.isDisplayStyle(material)
     ) {
-      this.setDataMaterial(
-        rvMap,
-        material as RenderMaterial & DisplayStyle & MaterialOptions
-      )
+      this.setDataMaterial(rvMap, material)
     }
   }
 
@@ -1263,7 +1260,7 @@ export default class SpeckleRenderer {
 
   public isolateBatch(batchId: string) {
     this.batcher.resetBatchesDrawRanges()
-    this.batcher.isolateBatch(batchId)
+    void this.batcher.isolateBatch(batchId)
   }
 
   public getObjects(): BatchObject[] {

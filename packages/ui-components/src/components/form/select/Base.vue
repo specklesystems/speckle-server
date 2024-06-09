@@ -402,7 +402,8 @@ const props = defineProps({
 const { value, errorMessage: error } = useField<ValueType>(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
   validateOnValueUpdate: props.validateOnValueUpdate,
-  initialValue: props.modelValue
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
+  initialValue: props.modelValue as ValueType
 })
 
 const isMounted = useMounted()

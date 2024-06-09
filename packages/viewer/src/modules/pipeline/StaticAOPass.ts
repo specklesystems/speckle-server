@@ -173,12 +173,8 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
     this.aoMaterial.defines['KERNEL_SIZE'] = this.params.kernelSize
     this.accumulateMaterial.defines['NUM_FRAMES'] = this.accumulationFrames
     /** UNIFORMS */
-    this.aoMaterial.uniforms['cameraNear'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.aoMaterial.uniforms['cameraFar'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
+    this.aoMaterial.uniforms['cameraNear'].value = camera.near
+    this.aoMaterial.uniforms['cameraFar'].value = camera.far
     this.aoMaterial.uniforms['cameraInverseProjectionMatrix'].value.copy(
       camera.projectionMatrixInverse
     )

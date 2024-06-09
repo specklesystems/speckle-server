@@ -281,9 +281,7 @@ export class InstancedMeshBatch implements Batch {
          */
         if (range.materialOptions.rampTexture !== undefined) {
           if (range.material instanceof SpeckleStandardColoredMaterial) {
-            ;(range.material as SpeckleStandardColoredMaterial).setGradientTexture(
-              range.materialOptions.rampTexture
-            )
+            range.material.setGradientTexture(range.materialOptions.rampTexture)
           }
         }
       }

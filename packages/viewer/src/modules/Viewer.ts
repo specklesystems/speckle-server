@@ -109,7 +109,7 @@ export class Viewer extends EventEmitter implements IViewer {
 
     const extension = new type(this, ...injectedExtensions)
     this.extensions[type.name] = extension
-    return extension as T
+    return extension
   }
 
   public getExtension<T extends Extension>(type: Constructor<T>): T {

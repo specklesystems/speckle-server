@@ -29,14 +29,15 @@ export class ObjLoader extends Loader {
 
   public load(): Promise<boolean> {
     return new Promise<boolean>((resolve, reject) => {
-      const pload = new Promise<void>((loadResolve, loadReject) => {
+      new Promise<void>((loadResolve, loadReject) => {
         if (!this._resourceData) {
           this.baseLoader.load(
             this._resource,
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
             async (group: Group) => {
               await this.converter.traverse(this._resource, group, async () => {})
 
-              loadResolve()
+              void loadResolve()
             },
             (event: ProgressEvent) => {
               this.emit(LoaderEvent.LoadProgress, {
@@ -63,24 +64,23 @@ export class ObjLoader extends Loader {
             })
         }
       })
-
-      pload.then(async () => {
-        const t0 = performance.now()
-        const renderTree = this.tree.getRenderTree(this._resource)
-        if (renderTree) {
-          const res = await renderTree.buildRenderTree(new ObjGeometryConverter())
-          Logger.log('Tree build time -> ', performance.now() - t0)
-          this.isFinished = true
-          resolve(res)
-        } else {
-          Logger.error(`Could not get render tree for ${this._resource}`)
+        .then(async () => {
+          const t0 = performance.now()
+          const renderTree = this.tree.getRenderTree(this._resource)
+          if (renderTree) {
+            const res = await renderTree.buildRenderTree(new ObjGeometryConverter())
+            Logger.log('Tree build time -> ', performance.now() - t0)
+            this.isFinished = true
+            resolve(res)
+          } else {
+            Logger.error(`Could not get render tree for ${this._resource}`)
+            reject()
+          }
+        })
+        .catch(() => {
+          Logger.error(`Could not load ${this._resource}`)
           reject()
-        }
-      })
-      pload.catch(() => {
-        Logger.error(`Could not load ${this._resource}`)
-        reject()
-      })
+        })
     })
   }
 

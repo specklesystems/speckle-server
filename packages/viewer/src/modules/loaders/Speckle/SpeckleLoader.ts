@@ -135,10 +135,11 @@ export class SpeckleLoader extends Loader {
     if (!renderTree) return Promise.resolve(false)
     const p = renderTree.buildRenderTree(geometryConverter)
 
-    p.then(() => {
+    void p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
       this.isFinished = true
     })
+
     return p
   }
 

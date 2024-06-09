@@ -99,7 +99,7 @@ export class PropertyManager {
         // propInfo.sortedValues = sorted.map(s => s.value)
         // propInfo.sortedIds = sorted.map(s => s.value) // tl;dr: not worth it
       }
-      allPropInfos.push(propInfo as PropertyInfo)
+      allPropInfos.push(propInfo)
     }
 
     this.propCache[rootNode.model.id] = allPropInfos

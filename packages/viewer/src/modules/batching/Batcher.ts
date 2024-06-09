@@ -49,7 +49,7 @@ export default class Batcher {
     )
     this.floatTextures = floatTextures
     this.materials = new Materials()
-    this.materials.createDefaultMaterials()
+    void this.materials.createDefaultMaterials()
   }
 
   public async *makeBatches(
@@ -133,11 +133,7 @@ export default class Batcher {
         }
 
         const materialHash = rvs[0].renderMaterialHash
-        const instancedBatch = await this.buildInstancedBatch(
-          renderTree,
-          rvs,
-          materialHash
-        )
+        const instancedBatch = this.buildInstancedBatch(renderTree, rvs, materialHash)
         if (!instancedBatch) continue
 
         this.batches[instancedBatch.id] = instancedBatch
@@ -193,7 +189,7 @@ export default class Batcher {
           await pause.wait(50)
         }
         const restrictedRvs = batches[k]
-        const batch = await this.buildBatch(
+        const batch = this.buildBatch(
           renderTree,
           restrictedRvs,
           materialHashes[i],
@@ -278,11 +274,11 @@ export default class Batcher {
     return vSplit
   }
 
-  private async buildInstancedBatch(
+  private buildInstancedBatch(
     renderTree: RenderTree,
     renderViews: NodeRenderView[],
     materialHash: number
-  ): Promise<Batch | null> {
+  ): Batch | null {
     if (!renderViews.length) {
       /** This is for the case when all renderviews have invalid geometries, and it generally
        * means there is something wrong with the stream
@@ -299,17 +295,17 @@ export default class Batcher {
     const batchID = MathUtils.generateUUID()
     const geometryBatch = new InstancedMeshBatch(batchID, renderTree.id, renderViews)
     geometryBatch.setBatchMaterial(material)
-    await geometryBatch.buildBatch()
+    geometryBatch.buildBatch()
 
     return geometryBatch
   }
 
-  private async buildBatch(
+  private buildBatch(
     renderTree: RenderTree,
     renderViews: NodeRenderView[],
     materialHash: number,
     batchType?: GeometryType
-  ): Promise<Batch | null> {
+  ): Batch | null {
     if (!renderViews.length) {
       /** This is for the case when all renderviews have invalid geometries, and it generally
        * means there is something wrong with the stream
@@ -368,7 +364,7 @@ export default class Batcher {
     }
 
     geometryBatch.setBatchMaterial(material)
-    await geometryBatch.buildBatch()
+    geometryBatch.buildBatch()
 
     return geometryBatch
   }
@@ -532,7 +528,7 @@ export default class Batcher {
   /**
    * Used for debuggin only
    */
-  public async isolateBatch(batchId: string) {
+  public isolateBatch(batchId: string) {
     for (const k in this.batches) {
       if (k !== batchId) {
         this.batches[k].setDrawRanges([

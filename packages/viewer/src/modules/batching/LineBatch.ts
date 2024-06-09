@@ -250,7 +250,7 @@ export default class LineBatch implements Batch {
           points[2 * i + 5] = geometry.attributes.POSITION[i + 5]
         }
       } else {
-        points = geometry.attributes.POSITION as number[]
+        points = geometry.attributes.POSITION
       }
 
       position.set(points, offset)
@@ -259,11 +259,8 @@ export default class LineBatch implements Batch {
       offset += points.length
     }
     this.makeLineGeometry(position)
-    this.mesh = new LineSegments2(
-      this.geometry as LineSegmentsGeometry,
-      this.batchMaterial as SpeckleLineMaterial
-    )
-    ;(this.mesh as LineSegments2).computeLineDistances()
+    this.mesh = new LineSegments2(this.geometry, this.batchMaterial)
+    this.mesh.computeLineDistances()
     this.mesh.scale.set(1, 1, 1)
 
     this.mesh.uuid = this.id
