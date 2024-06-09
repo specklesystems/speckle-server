@@ -18,6 +18,7 @@ const { isDarkTheme } = useTheme()
 
 const z = 1
 const b: any = 1
+const z = 1
 
 useHead({
   // Title suffix

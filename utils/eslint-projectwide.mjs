@@ -35,23 +35,42 @@ const resolvePackageContexts = async (absoluteFileNames) => {
     }
   ]
 
-  if (absoluteFileNames.length) {
-    // Group filenames by packages
-    // TODO: Clean up same file being in multiple packages (app.vue fe2)
-    return allPackages
-      .map((p) => {
-        const filesInPackage = absoluteFileNames.filter((f) =>
-          f.startsWith(p.absolutePath)
-        )
-        return { ...p, files: filesInPackage }
-      })
-      .filter((c) => !!c.files.length)
-  } else {
+  if (!absoluteFileNames.length) {
     return allPackages.map((p) => ({
       ...p,
       files: ['.']
     }))
   }
+
+  /**
+   * @type {Map<string, Set<string>>}
+   */
+  const contexts = new Map()
+
+  // Group filenames by packages
+  for (const absoluteFileName of absoluteFileNames) {
+    const fittingPkgs = allPackages.filter((p) =>
+      absoluteFileName.startsWith(p.absolutePath)
+    )
+
+    // get pkg w/ longest path to get the most appropriate/fitting one
+    fittingPkgs.sort((a, b) => b.absolutePath.length - a.absolutePath.length)
+    const pkg = fittingPkgs[0]
+
+    if (!pkg) {
+      throw new Error(`File ${absoluteFileName} does not belong to any package`)
+    }
+
+    if (!contexts.has(pkg.absolutePath)) {
+      contexts.set(pkg, new Set())
+    }
+    contexts.get(pkg).add(absoluteFileName)
+  }
+
+  return [...contexts.entries()].map(([pkg, files]) => ({
+    absolutePath: pkg.absolutePath,
+    files: [...files]
+  }))
 }
 
 const execEslintFromPackageContexts = async (packageContexts) => {

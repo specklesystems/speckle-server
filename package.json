@@ -13,7 +13,6 @@
     "build:public": "yarn workspaces foreach -ptv --no-private run build",
     "build:tailwind-deps": "yarn workspaces foreach -iv -j unlimited --include '{@speckle/shared,@speckle/tailwind-theme,@speckle/ui-components}' run build",
     "ensure:tailwind-deps": "node ./utils/ensure-tailwind-deps.mjs",
-    "lint": "node --max-old-space-size=4096 ./node_modules/eslint/bin/eslint.js . -c ./eslint.full.config.mjs",
     "helm:readme:generate": "./utils/helm/update-schema-json.sh",
     "prettier:check": "prettier --check .",
     "prettier:fix": "prettier --write .",
@@ -38,7 +37,8 @@
     "prepare": "husky install",
     "postinstall": "husky install",
     "cm": "cz",
-    "eslint:inspect": "npx @eslint/config-inspector"
+    "eslint:inspect": "npx @eslint/config-inspector",
+    "eslint:projectwide": "node ./utils/eslint-projectwide.mjs"
   },
   "devDependencies": {
     "@eslint/config-inspector": "^0.4.10",
