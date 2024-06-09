@@ -3,7 +3,7 @@ import { baseConfigs, globals, getESMDirname } from '../../eslint.config.mjs'
 import withNuxt from './.nuxt/eslint.config.mjs'
 import pluginVueA11y from 'eslint-plugin-vuejs-accessibility'
 
-const configs = withNuxt([
+const configs = await withNuxt([
   {
     rules: {
       camelcase: [
@@ -20,7 +20,7 @@ const configs = withNuxt([
     }
   },
   {
-    files: ['**/*.{ts,vue}'],
+    files: ['**/*.{ts,vue,tsx,mts,cts}'],
     languageOptions: {
       parserOptions: {
         project: ['./tsconfig.eslint.json'],

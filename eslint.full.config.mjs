@@ -1,7 +1,7 @@
 import path from 'node:path'
 import fs from 'node:fs/promises'
 import { getESMDirname } from './eslint.config.mjs'
-import { composer } from 'eslint-flat-config-utils'
+import { composer, extend } from 'eslint-flat-config-utils'
 import { trim, trimStart } from 'lodash-es'
 
 /**
@@ -72,14 +72,33 @@ const buildConfigs = async () => {
   for (const { relativeContext, configs, isRoot } of loadedConfigs) {
     const namePrefix = isRoot ? 'root' : relativeContext
 
-    // Update glob patterns
-    const formattedConfigs = configs.map((c, i) => {
+    const extended = isRoot
+      ? configs
+      : await extend(
+          // Make sure there's a files config of some kind (unless if global ignore)
+          configs.map((c) => {
+            const isGlobalIgnore = Object.keys(c).length === 1 && c.ignores
+            if (isGlobalIgnore) return c
+
+            return {
+              ...c,
+              files: c.files ? c.files : [`${relativeContext}/**/*`]
+            }
+          }),
+          relativeContext
+        )
+
+    // Update glob patterns & names
+    const formattedConfigs = extended.map((c, i) => {
       let name = `${namePrefix} #${i}`
       if (c.ignores) {
         name += ` (${c.ignores.length} ignore globs)`
       }
       if (c.files) {
         name += ` (${c.files.length} file globs)`
+      }
+      if (c.name) {
+        name += ` - ${c.name}`
       }
 
       if (isRoot) {
@@ -94,28 +113,55 @@ const buildConfigs = async () => {
         }
       }
 
-      const isGlobalIgnores = Object.keys(c).length === 1 && c.ignores
-
-      if (isGlobalIgnores) {
-        // Just update ignores, don't add files
-        const ignores = c.ignores.map((i) => concatGlobPatterns(relativeContext, i))
-        return {
-          ignores,
-          name
-        }
-      } else {
-        const files = c.files
-          ? c.files.map((f) => concatGlobPatterns(relativeContext, f))
-          : [relativeContext]
-        const ignores = c.ignores
-          ? c.ignores.map((i) => concatGlobPatterns(relativeContext, i))
-          : undefined
-
-        return { ...c, files, ...(ignores ? { ignores } : {}), name }
+      return {
+        ...c,
+        name
       }
     })
 
-    c.append(formattedConfigs)
+    // Collect all plugins
+    const plugins = formattedConfigs.reduce((acc, c) => {
+      const plugins = c.plugins
+      if (plugins) {
+        return { ...acc, ...plugins }
+      }
+
+      return acc
+    }, {})
+
+    // Attempt to fill in missing plugins
+    const fixedMissingPluginConfigs = formattedConfigs.map((c) => {
+      const rules = c.rules
+      if (!rules) return c
+
+      const requiredPlugins = Object.keys(rules)
+        .map((r) => {
+          const [pluginName, ruleName] = r.split('/')
+          if (!ruleName?.length) return null
+
+          return pluginName
+        })
+        .filter((p) => !!p?.length)
+
+      const newPlugins = {
+        ...(c.plugins || {}),
+        ...requiredPlugins.reduce((acc, p) => {
+          const pluginDef = plugins[p]
+          if (pluginDef) {
+            acc[p] = pluginDef
+          }
+
+          return acc
+        }, {})
+      }
+
+      return {
+        ...c,
+        ...(Object.keys(newPlugins).length ? { plugins: newPlugins } : {})
+      }
+    })
+
+    c.append(fixedMissingPluginConfigs)
   }
 
   const result = await c
