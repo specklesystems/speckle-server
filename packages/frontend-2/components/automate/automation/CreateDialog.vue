@@ -481,8 +481,8 @@ const onDialogSubmit = async (e: SubmitEvent) => {
   if (enumStep.value === AutomationCreateSteps.AutomationDetails) {
     await onDetailsSubmit(e)
   } else if (enumStep.value === AutomationCreateSteps.FunctionParameters) {
-    const validationResult = await parametersStep.value?.submit()
-    if (validationResult && !hasJsonFormErrors(validationResult)) {
+    const validationResult = (await parametersStep.value?.submit()) || {}
+    if (!hasJsonFormErrors(validationResult)) {
       step.value++
     }
   }
