@@ -3,8 +3,8 @@ import type { JsonFormsChangeEvent } from '@jsonforms/vue'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { formatJsonFormSchemaInputs } from '~/lib/automate/helpers/jsonSchema'
 
-export const hasJsonFormErrors = (event: JsonFormsChangeEvent) =>
-  event?.errors?.length > 0
+export const hasJsonFormErrors = (event?: JsonFormsChangeEvent) =>
+  (event?.errors?.length || 0) > 0
 
 export const useJsonFormsChangeHandler = (params: {
   schema: MaybeRef<MaybeNullOrUndefined<JsonSchema>>
