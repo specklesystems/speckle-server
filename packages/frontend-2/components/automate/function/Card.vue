@@ -51,7 +51,14 @@
           >
             Learn More
           </FormButton>
-          <FormButton :icon-left="BoltIcon" @click="$emit('use')">Use</FormButton>
+          <template v-if="selected">
+            <FormButton :icon-left="CheckIcon" @click="$emit('use')">
+              Selected
+            </FormButton>
+          </template>
+          <template v-else>
+            <FormButton @click="$emit('use')">Select</FormButton>
+          </template>
         </template>
       </div>
       <div class="absolute top-0 right-0">
@@ -73,7 +80,7 @@
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomationsFunctionsCard_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
-import { BoltIcon, PencilIcon } from '@heroicons/vue/24/outline'
+import { CheckIcon, PencilIcon } from '@heroicons/vue/24/outline'
 import { automationFunctionRoute } from '~/lib/common/helpers/route'
 import { useMarkdown } from '~/lib/common/composables/markdown'
 
