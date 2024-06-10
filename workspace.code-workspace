@@ -46,7 +46,11 @@
     },
     {
       "path": "packages/objectloader",
-      "name": "🌐 objectloader"
+      "name": "⬇️ objectloader"
+    },
+    {
+      "path": "packages/objectsender",
+      "name": "⬆️ objectsender"
     },
     {
       "path": "packages/shared",
