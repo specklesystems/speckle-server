@@ -16,10 +16,6 @@ import { useMixpanelInitialization } from '~~/lib/core/composables/mp'
 
 const { isDarkTheme } = useTheme()
 
-const z = 1
-const b: any = 1
-const z = 1
-
 useHead({
   // Title suffix
   titleTemplate: (titleChunk) => (titleChunk ? `${titleChunk} - Speckle` : 'Speckle'),
