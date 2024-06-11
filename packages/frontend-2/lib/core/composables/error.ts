@@ -1,5 +1,5 @@
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import { Observability } from '@speckle/shared'
+import * as Observability from '@speckle/shared/dist/esm/observability/index'
 import type {
   AbstractErrorHandler,
   AbstractErrorHandlerParams,

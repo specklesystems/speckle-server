@@ -53,13 +53,8 @@ import { getGenericRedis } from '@/modules/core/index'
 import { getUser } from '@/modules/core/repositories/users'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
-import {
-  Automate,
-  Environment,
-  Roles,
-  isNullOrUndefined,
-  isNonNullable
-} from '@speckle/shared'
+import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommits,
   getBranchesByIds
@@ -108,7 +103,7 @@ import {
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 
-const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {

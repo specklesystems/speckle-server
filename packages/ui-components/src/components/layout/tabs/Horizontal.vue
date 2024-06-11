@@ -97,7 +97,7 @@ import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 import { isClient } from '@vueuse/core'
 import { ArrowLongRightIcon, ArrowLongLeftIcon } from '@heroicons/vue/24/outline'
 import type { Nullable } from '@speckle/shared'
-import { throttle } from 'lodash-es'
+import { throttle } from '#lodash'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]

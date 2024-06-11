@@ -4,7 +4,7 @@ const { logger: parentLogger } = require('../observability/logging')
 const TMP_RESULTS_PATH = '/tmp/import_result.json'
 
 const { parseAndCreateCommit } = require('./index')
-const { Observability } = require('@speckle/shared')
+const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
 
 async function main() {
   const cmdArgs = process.argv.slice(2)

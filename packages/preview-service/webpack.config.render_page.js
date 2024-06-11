@@ -43,11 +43,6 @@ const config = {
       }
     ]
   },
-  externals: {
-    znv: 'znv',
-    zod: 'zod'
-  },
-
   plugins: [
     new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
     new HtmlWebpackPlugin({

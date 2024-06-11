@@ -1,2 +1,2 @@
-export * as AutomateTypes from './helpers/types'
-export * from './errors/index'
+export * as AutomateTypes from './helpers/types.js'
+export * from './errors/index.js'

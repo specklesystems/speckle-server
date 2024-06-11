@@ -1,10 +1,10 @@
-import { isNull, isNumber, isUndefined } from 'lodash'
+import { isNull, isNumber, isUndefined } from '#lodash'
 import type {
   MaybeAsync,
   NonNullableProperties,
   NullableKeysToOptional
-} from './utilityTypes'
-import { ensureError } from './error'
+} from './utilityTypes.js'
+import { ensureError } from './error.js'
 
 export class TimeoutError extends Error {}
 export class WaitIntervalUntilCanceledError extends Error {}

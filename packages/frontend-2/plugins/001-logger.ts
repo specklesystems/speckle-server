@@ -75,7 +75,9 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   }
 
   // Set up logger
-  let logger: ReturnType<typeof import('@speckle/shared').Observability.getLogger>
+  let logger: ReturnType<
+    typeof import('@speckle/shared/dist/esm/observability/index').getLogger
+  >
   const errorHandlers: AbstractErrorHandler[] = []
   const unhandledErrorHandlers: AbstractUnhandledErrorHandler[] = []
 
