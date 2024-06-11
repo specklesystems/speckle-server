@@ -10,13 +10,13 @@ import { getMainDefinition } from '@apollo/client/utilities'
 import type { OperationDefinitionNode } from 'graphql'
 import { Kind } from 'graphql'
 import type { Nullable } from '@speckle/shared'
-import { Observability } from '@speckle/shared'
 import {
   buildAbstractCollectionMergeFunction,
   buildArrayMergeFunction,
   incomingOverwritesExistingMergeFunction
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
+import * as Observability from '@speckle/shared/dist/esm/observability/index.js'
 
 let subscriptionsStopped = false
 const errorRpm = Observability.simpleRpmCounter()

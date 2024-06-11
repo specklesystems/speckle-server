@@ -15249,6 +15249,8 @@ __metadata:
     vue-tsc: 2.0.10
     wait-on: ^6.0.1
     ws: ^8.9.0
+    znv: ^0.4.0
+    zod: ^3.22.4
   languageName: unknown
   linkType: soft
 
@@ -15578,6 +15580,7 @@ __metadata:
   dependencies:
     "@tiptap/core": ^2.0.0-beta.176
     "@types/lodash": ^4.14.184
+    "@types/lodash-es": ^4.17.12
     "@typescript-eslint/eslint-plugin": ^7.12.0
     "@typescript-eslint/parser": ^7.12.0
     eslint: ^9.4.0
@@ -15586,9 +15589,7 @@ __metadata:
     lodash-es: ^4.17.21
     pino: ^8.7.0
     pino-http: ^8.0.0
-    rollup: ^2.79.1
-    rollup-plugin-delete: ^2.0.0
-    rollup-plugin-typescript2: ^0.34.1
+    tshy: ^1.14.0
     type-fest: ^3.11.1
     typescript: ^4.5.4
     znv: ^0.4.0
@@ -15598,6 +15599,8 @@ __metadata:
     pino: ^8.7.0
     pino-http: ^8.0.0
     pino-pretty: ">=8.0.0"
+    znv: ^0.4.0
+    zod: ^3.22.4
   languageName: unknown
   linkType: soft
 
@@ -15661,6 +15664,7 @@ __metadata:
     "@storybook/vue3-vite": ^8.0.5
     "@types/eslint": ^8.56.10
     "@types/lodash": ^4.0.0
+    "@types/lodash-es": ^4.17.12
     "@typescript-eslint/eslint-plugin": ^7.12.0
     "@typescript-eslint/parser": ^7.12.0
     "@vitejs/plugin-vue": ^4.5.0
@@ -18290,7 +18294,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash-es@npm:4.17.12":
+"@types/lodash-es@npm:4.17.12, @types/lodash-es@npm:^4.17.12":
   version: 4.17.12
   resolution: "@types/lodash-es@npm:4.17.12"
   dependencies:
@@ -29648,7 +29652,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"foreground-child@npm:^3.1.0":
+"foreground-child@npm:^3.1.0, foreground-child@npm:^3.1.1":
   version: 3.1.1
   resolution: "foreground-child@npm:3.1.1"
   dependencies:
@@ -30394,6 +30398,21 @@ __metadata:
   bin:
     glob: dist/cjs/src/bin.js
   checksum: 29190d3291f422da0cb40b77a72fc8d2c51a36524e99b8bf412548b7676a6627489528b57250429612b6eec2e6fe7826d328451d3e694a9d15e575389308ec53
+  languageName: node
+  linkType: hard
+
+"glob@npm:^10.2.6, glob@npm:^10.3.3, glob@npm:^10.3.7":
+  version: 10.4.1
+  resolution: "glob@npm:10.4.1"
+  dependencies:
+    foreground-child: ^3.1.0
+    jackspeak: ^3.1.2
+    minimatch: ^9.0.4
+    minipass: ^7.1.2
+    path-scurry: ^1.11.1
+  bin:
+    glob: dist/esm/bin.mjs
+  checksum: 5d33c686c80bf6877f4284adf99a8c3cbb2a6eccbc92342943fe5d4b42c01d78c1881f2223d950c92a938d0f857e12e37b86a8e5483ab2141822e053b67d0dde
   languageName: node
   linkType: hard
 
@@ -33129,6 +33148,19 @@ __metadata:
     "@pkgjs/parseargs":
       optional: true
   checksum: 57d43ad11eadc98cdfe7496612f6bbb5255ea69fe51ea431162db302c2a11011642f50cfad57288bd0aea78384a0612b16e131944ad8ecd09d619041c8531b54
+  languageName: node
+  linkType: hard
+
+"jackspeak@npm:^3.1.2":
+  version: 3.4.0
+  resolution: "jackspeak@npm:3.4.0"
+  dependencies:
+    "@isaacs/cliui": ^8.0.2
+    "@pkgjs/parseargs": ^0.11.0
+  dependenciesMeta:
+    "@pkgjs/parseargs":
+      optional: true
+  checksum: 350f6f311018bb175ffbe736b19c26ac0b134bb5a17a638169e89594eb0c24ab1c658ab3a2fda24ff63b3b19292e1a5ec19d2255bc526df704e8168d392bef85
   languageName: node
   linkType: hard
 
@@ -36836,6 +36868,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"minipass@npm:^7.1.2":
+  version: 7.1.2
+  resolution: "minipass@npm:7.1.2"
+  checksum: 2bfd325b95c555f2b4d2814d49325691c7bee937d753814861b0b49d5edcda55cbbf22b6b6a60bb91eddac8668771f03c5ff647dcd9d0f798e9548b9cdc46ee3
+  languageName: node
+  linkType: hard
+
 "minizlib@npm:^2.1.1, minizlib@npm:^2.1.2":
   version: 2.1.2
   resolution: "minizlib@npm:2.1.2"
@@ -37698,6 +37737,15 @@ __metadata:
   bin:
     mkdirp: bin/cmd.js
   checksum: a96865108c6c3b1b8e1d5e9f11843de1e077e57737602de1b82030815f311be11f96f09cce59bd5b903d0b29834733e5313f9301e3ed6d6f6fba2eae0df4298f
+  languageName: node
+  linkType: hard
+
+"mkdirp@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "mkdirp@npm:3.0.1"
+  bin:
+    mkdirp: dist/cjs/src/bin.js
+  checksum: 972deb188e8fb55547f1e58d66bd6b4a3623bf0c7137802582602d73e6480c1c2268dcbafbfb1be466e00cc7e56ac514d7fd9334b7cf33e3e2ab547c16f83a8d
   languageName: node
   linkType: hard
 
@@ -40311,6 +40359,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"path-scurry@npm:^1.11.1, path-scurry@npm:^1.9.2":
+  version: 1.11.1
+  resolution: "path-scurry@npm:1.11.1"
+  dependencies:
+    lru-cache: ^10.2.0
+    minipass: ^5.0.0 || ^6.0.2 || ^7.0.0
+  checksum: 890d5abcd593a7912dcce7cf7c6bf7a0b5648e3dee6caf0712c126ca0a65c7f3d7b9d769072a4d1baf370f61ce493ab5b038d59988688e0c5f3f646ee3c69023
+  languageName: node
+  linkType: hard
+
 "path-scurry@npm:^1.7.0":
   version: 1.7.0
   resolution: "path-scurry@npm:1.7.0"
@@ -40907,6 +40965,13 @@ __metadata:
   dependencies:
     "@babel/runtime": ^7.17.8
   checksum: 97fb927dc55cd34aeb11b31ae2a3332463f114351c86e8aa6580d7755864a0120164fdc3770e6160c8b1775052f0eda14db9a6e34402cd4b08ab2d658a593725
+  languageName: node
+  linkType: hard
+
+"polite-json@npm:^4.0.1":
+  version: 4.0.1
+  resolution: "polite-json@npm:4.0.1"
+  checksum: 99ac929317d2869a3614cd41caa4d2d42fedbdb4569871d72f9ead41477d87f4b633bddf65fc03bdeb24c18b430b24df6c5c8e28b338ea31e86cddb665d1d896
   languageName: node
   linkType: hard
 
@@ -43905,6 +43970,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"resolve-import@npm:^1.4.5":
+  version: 1.4.5
+  resolution: "resolve-import@npm:1.4.5"
+  dependencies:
+    glob: ^10.3.3
+    walk-up-path: ^3.0.1
+  checksum: 343e62e5c93e2b2870f390c20355a85987442702fda733b43f20f00bbe59f7a7d239188476c667838a31f8644d756f3a6729b5218ec4b80e5667963b318c89e2
+  languageName: node
+  linkType: hard
+
 "resolve-path@npm:^1.4.0":
   version: 1.4.0
   resolution: "resolve-path@npm:1.4.0"
@@ -44173,6 +44248,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"rimraf@npm:^5.0.1":
+  version: 5.0.7
+  resolution: "rimraf@npm:5.0.7"
+  dependencies:
+    glob: ^10.3.7
+  bin:
+    rimraf: dist/esm/bin.mjs
+  checksum: 884852abf8aefd4667448d87bdab04120a8641266c828cf382ac811713547eda18f81799d2146ffec3178f357d83d44ec01c10095949c82e23551660732bf14f
+  languageName: node
+  linkType: hard
+
 "rimraf@npm:~2.4.0":
   version: 2.4.5
   resolution: "rimraf@npm:2.4.5"
@@ -44277,22 +44363,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-typescript2@npm:^0.34.1":
-  version: 0.34.1
-  resolution: "rollup-plugin-typescript2@npm:0.34.1"
-  dependencies:
-    "@rollup/pluginutils": ^4.1.2
-    find-cache-dir: ^3.3.2
-    fs-extra: ^10.0.0
-    semver: ^7.3.7
-    tslib: ^2.4.0
-  peerDependencies:
-    rollup: ">=1.26.3"
-    typescript: ">=2.4.0"
-  checksum: 107e66b9ab1aaf4b237564e500ea9de9f2d3f0a81be5139dc753fc76bbf00a1a2230eb1ec59145d2dfc4c4da9be8211f1f3e1370007efe1e24ce45a00905e558
-  languageName: node
-  linkType: hard
-
 "rollup-plugin-visualizer@npm:^5.12.0":
   version: 5.12.0
   resolution: "rollup-plugin-visualizer@npm:5.12.0"
@@ -44359,7 +44429,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup@npm:^2.70.1, rollup@npm:^2.79.1":
+"rollup@npm:^2.70.1":
   version: 2.79.1
   resolution: "rollup@npm:2.79.1"
   dependencies:
@@ -46537,6 +46607,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"sync-content@npm:^1.0.2":
+  version: 1.0.2
+  resolution: "sync-content@npm:1.0.2"
+  dependencies:
+    glob: ^10.2.6
+    mkdirp: ^3.0.1
+    path-scurry: ^1.9.2
+    rimraf: ^5.0.1
+  bin:
+    sync-content: dist/mjs/bin.mjs
+  checksum: a3da9efefbf24bf8e1842f3bc7237675cabaf09ed91369cbcbc735356679371a1019c0294bdba4e5506a07b690d4a7958c902184a0d000409ac6ff4e6823dd7c
+  languageName: node
+  linkType: hard
+
 "sync-fetch@npm:^0.4.0":
   version: 0.4.1
   resolution: "sync-fetch@npm:0.4.1"
@@ -47431,6 +47515,27 @@ __metadata:
   bin:
     tsconfig-to-dual-package: bin/cmd.mjs
   checksum: 744f675bfbceab1611669f24c53f5c3c17481dc389a97a0cdb3b93f5625d3bd8d9fd4cf9d28b947d6b48844646ae2898620fce8adf10b9cb170c55a556cb356f
+  languageName: node
+  linkType: hard
+
+"tshy@npm:^1.14.0":
+  version: 1.14.0
+  resolution: "tshy@npm:1.14.0"
+  dependencies:
+    chalk: ^5.3.0
+    chokidar: ^3.6.0
+    foreground-child: ^3.1.1
+    minimatch: ^9.0.4
+    mkdirp: ^3.0.1
+    polite-json: ^4.0.1
+    resolve-import: ^1.4.5
+    rimraf: ^5.0.1
+    sync-content: ^1.0.2
+    typescript: ^5.4.5
+    walk-up-path: ^3.0.1
+  bin:
+    tshy: dist/esm/index.js
+  checksum: 73e092131b274f97e033a2c5111869766d7950dbeec8ef6de3b846582312e6434d60ef8bdc1d1ede1fd00ee7b669f52ddd2144bee9cdbce471f86c915971d864
   languageName: node
   linkType: hard
 
@@ -50065,6 +50170,13 @@ __metadata:
   bin:
     wait-port: bin/wait-port.js
   checksum: 3a3d6c4b3d45fff2e284d314166cff17101ca6ffbfe9bb7c30c0602d89c2585ec82e37e7b07910a679dc1bde7e2cf8b1881fcd38ba9336a60b45bfe83adf8855
+  languageName: node
+  linkType: hard
+
+"walk-up-path@npm:^3.0.1":
+  version: 3.0.1
+  resolution: "walk-up-path@npm:3.0.1"
+  checksum: 9ffca02fe30fb65f6db531260582988c5e766f4c739cf86a6109380a7f791236b5d0b92b1dce37a6f73e22dca6bc9d93bf3700413e16251b2bd6bbd1ca2be316
   languageName: node
   linkType: hard
 

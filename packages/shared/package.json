@@ -8,13 +8,12 @@
     "url": "https://github.com/specklesystems/speckle-server.git",
     "directory": "packages/shared"
   },
-  "main": "./dist-cjs/index.js",
-  "types": "./dist-esm/index.d.ts",
-  "module": "./dist-esm/index.js",
+  "type": "module",
+  "main": "./dist/commonjs/index.js",
+  "types": "./dist/commonjs/index.d.ts",
   "scripts": {
-    "build": "NODE_ENV=production rollup --config",
-    "build:dev": "rollup --config",
-    "dev": "rollup --config --watch",
+    "build": "NODE_ENV=production tshy",
+    "dev": "tshy --watch",
     "prepack": "yarn build",
     "lint:eslint": "eslint .",
     "lint:tsc": "tsc --noEmit",
@@ -34,29 +33,81 @@
   "dependencies": {
     "lodash": "^4.17.0",
     "lodash-es": "^4.17.21",
-    "type-fest": "^3.11.1",
-    "znv": "^0.4.0",
-    "zod": "^3.22.4"
+    "type-fest": "^3.11.1"
   },
   "peerDependencies": {
     "@tiptap/core": "^2.0.0-beta.176",
     "pino": "^8.7.0",
     "pino-http": "^8.0.0",
-    "pino-pretty": ">=8.0.0"
+    "pino-pretty": ">=8.0.0",
+    "znv": "^0.4.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@tiptap/core": "^2.0.0-beta.176",
     "@types/lodash": "^4.14.184",
+    "@types/lodash-es": "^4.17.12",
     "@typescript-eslint/eslint-plugin": "^7.12.0",
     "@typescript-eslint/parser": "^7.12.0",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
     "pino": "^8.7.0",
     "pino-http": "^8.0.0",
-    "rollup": "^2.79.1",
-    "rollup-plugin-delete": "^2.0.0",
-    "rollup-plugin-typescript2": "^0.34.1",
-    "typescript": "^4.5.4"
+    "tshy": "^1.14.0",
+    "typescript": "^4.5.4",
+    "znv": "^0.4.0",
+    "zod": "^3.22.4"
   },
-  "stableVersion": "0.1.0"
+  "stableVersion": "0.1.0",
+  "tshy": {
+    "exports": {
+      "./package.json": "./package.json",
+      "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
+      "./environment": "./src/environment/index.ts",
+      "./observability": "./src/observability/index.ts",
+      "./dist/*": "./dist/*",
+      ".": "./src/index.ts"
+    }
+  },
+  "imports": {
+    "#lodash": {
+      "require": "lodash",
+      "import": "lodash-es"
+    }
+  },
+  "exports": {
+    "./package.json": "./package.json",
+    "./pinoPrettyTransport.cjs": "./pinoPrettyTransport.cjs",
+    "./environment": {
+      "import": {
+        "types": "./dist/esm/environment/index.d.ts",
+        "default": "./dist/esm/environment/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/environment/index.d.ts",
+        "default": "./dist/commonjs/environment/index.js"
+      }
+    },
+    "./observability": {
+      "import": {
+        "types": "./dist/esm/observability/index.d.ts",
+        "default": "./dist/esm/observability/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/observability/index.d.ts",
+        "default": "./dist/commonjs/observability/index.js"
+      }
+    },
+    "./dist/*": "./dist/*",
+    ".": {
+      "import": {
+        "types": "./dist/esm/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "require": {
+        "types": "./dist/commonjs/index.d.ts",
+        "default": "./dist/commonjs/index.js"
+      }
+    }
+  }
 }

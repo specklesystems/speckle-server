@@ -2,7 +2,7 @@ import { join } from 'path'
 import { withoutLeadingSlash } from 'ufo'
 import { sanitizeFilePath } from 'mlly'
 import { filename } from 'pathe/utils'
-import { Environment } from '@speckle/shared'
+import * as Environment from '@speckle/shared/dist/esm/environment/index'
 
 // Copied out from nuxt vite-builder source to correctly build output chunk/entry/asset/etc file names
 const buildOutputFileName = (chunkName: string) =>
@@ -91,7 +91,6 @@ export default defineNuxtConfig({
 
     vue: {
       script: {
-         
         defineModel: true
       }
     },

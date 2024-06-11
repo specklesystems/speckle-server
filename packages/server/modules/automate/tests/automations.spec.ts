@@ -35,9 +35,10 @@ import {
   truncateAutomations
 } from '@/test/speckle-helpers/automationHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { Automate, Environment, Roles } from '@speckle/shared'
+import { Automate, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import { times } from 'lodash'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 /**
  * TODO: Extra test ideas
@@ -45,7 +46,7 @@ import { times } from 'lodash'
  * - All of the Automation/Function/Run GQL resolvers
  */
 
-const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const buildAutomationUpdate = () => {
   const update = updateAutomation({

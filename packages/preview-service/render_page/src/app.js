@@ -1,4 +1,3 @@
-import './bootstrap'
 import { LegacyViewer } from '@speckle/viewer'
 import { DefaultViewerParams } from '@speckle/viewer'
 // import { logger } from '../../observability/logging'
