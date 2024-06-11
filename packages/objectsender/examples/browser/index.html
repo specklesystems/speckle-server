@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en" class="no-js">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+
+    <title>Object Sender Test</title>
+  </head>
+
+  <body class="p-2">
+    <h1 class="text-2xl">Object Sender Test</h1>
+    <p>All the magic is in the console.</p>
+    <p>
+      To ensure this example runs correctly, please serve this file from a local http
+      server - if you manually open the file in a browser, it might not work.
+    </p>
+    <p>This will send a random speckle object to the server to flex things around.</p>
+    <div>
+      <p>How does this work?</p>
+      <pre>
+import { send, Base } from './objectsender.web.js'
+
+const testObject = new Base({
+  prop: value, 
+  '@detachedValue': new Base({...}),
+  '@detachedArray': [...Array(100).fill(0).map( _ => new Base({...}))],
+  '@(10)chunkedArr': [...Array(100).fill(0)]
+})
+
+const { hash } = await send(testObject, { serverUrl, projectId, token }) 
+      </pre>
+    </div>
+    <div>
+      <label for="pass" class="text-xs text-neutral-500">Server:</label>
+      <input type="text" id="serverUrl" name="serverUrl" minlength="42" required value="https://app.speckle.systems"/>
+    </div>
+    <div>
+      <label for="pass" class="text-xs text-neutral-500">API token:</label>
+      <input type="text" id="apiToken" name="apiToken" minlength="42" required placeholder="c6cef1e202e0dbd4275ed7019bf2719135128071b6"/>
+    </div>
+    <div>
+      <label for=projectId" class="text-xs text-neutral-500">Project id:</label>
+      <input type="text" id="projectId" name="projectId" minlength="6" required placeholder="67ab820e8b"/>
+    </div>
+    <br>
+    <button type="button" onclick="loadData()">Send random object</button>
+    <pre id="result">resulting link will be displayed here (note, nothing will be visible in the viewer)</pre>
+  </body>
+
+  <script src="script.js" type="module"></script>
+  <style>
+    body {
+      max-width: 850px;
+      margin: 40px auto;
+      padding: 0 10px;
+      font: 18px/1.5 -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+        'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji',
+        'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+      color: #444;
+    }
+    h1,
+    h2,
+    h3 {
+      line-height: 1.2;
+    }
+
+    pre {
+      white-space: pre-wrap;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        color: #c9d1d9;
+        background: #0d1117;
+      }
+      a:link {
+        color: #58a6ff;
+      }
+      a:visited {
+        color: #8e96f0;
+      }
+    }
+  </style>
+</html>

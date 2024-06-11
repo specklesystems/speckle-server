@@ -4,7 +4,7 @@
   "description": "Simple API helper to serialize and send objects to the server.",
   "main": "dist/objectsender.js",
   "module": "dist/objectsender.esm.js",
-  "types": "types/index.d.ts",
+  "types": "dist/index.d.ts",
   "homepage": "https://speckle.systems",
   "repository": {
     "type": "git",
@@ -20,7 +20,8 @@
     "build": "NODE_ENV=production rollup --config",
     "prepack": "yarn build",
     "dev": "rollup --config --watch",
-    "example": "EXAMPLE_BUILD=1 rollup --config && http-server ./examples/browser -p 3031 -o"
+    "example": "EXAMPLE_BUILD=1 rollup --config && http-server ./examples/browser -p 3031 -o",
+    "example-dev": "EXAMPLE_BUILD=1 rollup --config --watch & http-server ./examples/browser -p 3031 -o"
   },
   "keywords": [
     "speckle",
@@ -33,8 +34,6 @@
     "@babel/core": "^7.17.9",
     "@speckle/shared": "workspace:^",
     "core-js": "^3.21.1",
-    "crypto-random-string": "^5.0.0",
-    "md5": "^2.3.0",
     "regenerator-runtime": "^0.13.7"
   },
   "devDependencies": {
@@ -45,7 +44,6 @@
     "@rollup/plugin-commonjs": "^21.0.3",
     "@rollup/plugin-node-resolve": "^13.1.3",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/md5": "^2.3.5",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
     "cross-fetch": "^3.1.5",

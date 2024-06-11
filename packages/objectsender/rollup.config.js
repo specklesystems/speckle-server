@@ -51,7 +51,7 @@ function buildConfig(isWebBuild = false) {
         ? [
             // Bundling in all deps in web build
             commonjs(),
-            nodeResolve()
+            nodeResolve({ browser: true })
           ]
         : [
             // Cleaning dir only inside 'dist'

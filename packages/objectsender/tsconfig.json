@@ -20,6 +20,6 @@
     "checkJs": false,
     "declaration": true
   },
-  "include": ["./src/**/*", "test"],
+  "include": ["./src/*", "test"],
   "exclude": ["dist"]
 }

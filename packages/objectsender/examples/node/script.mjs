@@ -1,1 +1,3 @@
-import Serializer from '../../dist/objectsender.js'
+import { Serializer, BatchServerSender } from '../../dist/objectsender.js'
+
+// TODO
