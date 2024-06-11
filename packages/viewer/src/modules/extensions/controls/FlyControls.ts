@@ -188,13 +188,16 @@ class FlyControls extends SpeckleControls {
 
   /** The input position and target will be in a basis with (0,1,0) as up */
   public fromPositionAndTarget(position: Vector3, target: Vector3): void {
+    const cPos = this.getPosition()
+    const cTarget = this.getTarget()
+    if (cPos.equals(position) && cTarget.equals(target)) return
+
     const tPosition = new Vector3().copy(position).applyMatrix4(this._basisTransform)
     const tTarget = new Vector3().copy(target).applyMatrix4(this._basisTransform)
     const matrix = new Matrix4()
       .lookAt(tPosition, tTarget, this._up)
       .premultiply(this._basisTransformInv)
     const quat = new Quaternion().setFromRotationMatrix(matrix)
-
     this.goalEuler.setFromQuaternion(quat)
     this.goalPosition.copy(tPosition)
   }
@@ -275,7 +278,8 @@ class FlyControls extends SpeckleControls {
     const q = new Quaternion()
     const t = new Quaternion().setFromRotationMatrix(this._basisTransform)
     q.setFromEuler(euler).premultiply(t)
-    this._targetCamera.quaternion.copy(q)
+
+    this._targetCamera.quaternion.slerp(q, 0.999)
   }
 
   // event listeners
