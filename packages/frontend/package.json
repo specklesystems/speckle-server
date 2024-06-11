@@ -10,6 +10,7 @@
     "lint:eslint": "eslint .",
     "lint:ts": "vue-tsc --noEmit",
     "lint": "yarn lint:eslint && yarn lint:ts",
+    "lint:ci": "yarn lint:ts",
     "gqlgen": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {

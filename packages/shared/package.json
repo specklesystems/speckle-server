@@ -17,7 +17,8 @@
     "prepack": "yarn build",
     "lint:eslint": "eslint .",
     "lint:tsc": "tsc --noEmit",
-    "lint": "yarn lint:eslint && yarn lint:tsc"
+    "lint": "yarn lint:eslint && yarn lint:tsc",
+    "lint:ci": "yarn lint:tsc"
   },
   "sideEffects": false,
   "engines": {

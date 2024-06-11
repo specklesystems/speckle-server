@@ -16,6 +16,7 @@
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
     "lint:css": "stylelint \"**/*.{css,vue}\"",
     "lint": "yarn lint:js && yarn lint:tsc && yarn lint:prettier && yarn lint:css",
+    "lint:ci": "yarn lint:tsc && yarn lint:css",
     "gqlgen": "graphql-codegen",
     "gqlgen:watch": "graphql-codegen --watch",
     "eslint:inspect": "eslint-config-inspector"

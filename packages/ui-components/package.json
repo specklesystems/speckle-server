@@ -15,6 +15,7 @@
     "lint:js": "eslint .",
     "lint:tsc": "vue-tsc --noEmit",
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
+    "lint:ci": "yarn lint:tsc",
     "lint": "yarn lint:js && yarn lint:tsc && yarn lint:prettier"
   },
   "type": "module",

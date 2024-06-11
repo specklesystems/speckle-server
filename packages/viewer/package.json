@@ -37,7 +37,10 @@
     "build:dev": "rollup --config",
     "dev": "rollup --config --watch",
     "prepack": "yarn build",
-    "lint": "eslint .",
+    "lint:js": "eslint .",
+    "lint:tsc": "tsc --noEmit",
+    "lint": "yarn lint:js && yarn lint:tsc",
+    "lint:ci": "yarn lint:tsc",
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run"

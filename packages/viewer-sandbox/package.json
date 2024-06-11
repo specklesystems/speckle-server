@@ -15,9 +15,10 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "lint:eslint": "eslint .",
+    "lint:js": "eslint .",
     "lint:tsc": "tsc --noEmit",
-    "lint": "yarn lint:eslint && yarn lint:tsc",
+    "lint": "yarn lint:js && yarn lint:ts",
+    "lint:ci": "yarn lint:tsc",
     "wrangler": "wrangler"
   },
   "dependencies": {

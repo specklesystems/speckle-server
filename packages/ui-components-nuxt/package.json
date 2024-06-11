@@ -5,7 +5,8 @@
   "scripts": {
     "lint:js": "eslint .",
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
-    "lint": "yarn lint:js && yarn lint:prettier"
+    "lint": "yarn lint:js && yarn lint:prettier",
+    "lint:ci": "echo 1"
   },
   "type": "module",
   "module": "index.js",
