@@ -21,7 +21,11 @@
             :fn="fn"
             external-more-info
             :selected="selectedFunction && selectedFunction?.id === fn.id"
-            @use="() => (selectedFunction = fn)"
+            @use="
+              () =>
+                (selectedFunction =
+                  selectedFunction && selectedFunction.id === fn.id ? undefined : fn)
+            "
           />
         </AutomateFunctionCardView>
         <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />

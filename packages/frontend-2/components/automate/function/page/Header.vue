@@ -24,7 +24,7 @@
         full-width
         @click="$emit('createAutomation')"
       >
-        Use in Automation
+        Use in an Automation
       </FormButton>
     </div>
   </div>
