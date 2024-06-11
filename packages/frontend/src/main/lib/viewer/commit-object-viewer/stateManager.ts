@@ -1,4 +1,3 @@
- 
 // NOTE: any disabling temporary, most of the filtering stuff will go away
 
 import { Nullable } from '@/helpers/typeHelpers'
@@ -295,8 +294,7 @@ function getFirstVisibleSelectionHit({ hits }: SelectionEvent) {
         return hit
       }
     } else if (hasIsolatedObjects) {
-      if (currentFilterState.isolatedObjects?.includes(hit.object.id))
-        return hit
+      if (currentFilterState.isolatedObjects?.includes(hit.object.id)) return hit
     } else {
       return hit
     }
