@@ -51,14 +51,12 @@
           >
             Learn More
           </FormButton>
-          <template v-if="selected">
-            <FormButton :icon-left="CheckIcon" @click="$emit('use')">
-              Selected
-            </FormButton>
-          </template>
-          <template v-else>
-            <FormButton @click="$emit('use')">Select</FormButton>
-          </template>
+          <FormButton
+            :icon-left="selected ? CheckIcon : undefined"
+            @click="$emit('use')"
+          >
+            {{ selected ? 'Selected' : 'Select' }}
+          </FormButton>
         </template>
       </div>
       <div class="absolute top-0 right-0">

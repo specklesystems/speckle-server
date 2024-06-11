@@ -24,7 +24,7 @@
             @use="
               () =>
                 (selectedFunction =
-                  selectedFunction && selectedFunction.id === fn.id ? null : fn)
+                  selectedFunction && selectedFunction.id === fn.id ? undefined : fn)
             "
           />
         </AutomateFunctionCardView>
