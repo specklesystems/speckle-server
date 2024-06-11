@@ -57,7 +57,13 @@ const release = computed(() =>
   props.fn.releases.items.length ? props.fn.releases.items[0] : undefined
 )
 
-const submit = async () => await jsonForm.value?.triggerChange()
+const submit = async () => {
+  if (jsonForm.value && finalParams.value) {
+    return await jsonForm.value?.triggerChange()
+  }
+
+  return { data: undefined, errors: undefined }
+}
 
 // watch(
 //   release,
