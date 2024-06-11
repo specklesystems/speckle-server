@@ -93,7 +93,7 @@ import type { Nullable, Optional } from '@speckle/shared'
 import { useTextInputCore } from '~~/src/composables/form/textInput'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
-type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number'
+type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 type InputColor = 'page' | 'foundation' | 'transparent'
 
