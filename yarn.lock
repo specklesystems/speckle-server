@@ -2001,6 +2001,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@babel/eslint-parser@npm:^7.24.7":
+  version: 7.24.7
+  resolution: "@babel/eslint-parser@npm:7.24.7"
+  dependencies:
+    "@nicolo-ribaudo/eslint-scope-5-internals": 5.1.1-v1
+    eslint-visitor-keys: ^2.1.0
+    semver: ^6.3.1
+  peerDependencies:
+    "@babel/core": ^7.11.0
+    eslint: ^7.5.0 || ^8.0.0 || ^9.0.0
+  checksum: 0e08ccecfe48cf9dacd96fb46747014b9c3683882ae6886a17a666533f0d5e99b61e31e3992ffee0efc67d805ae8be9b2a6342ce5d66a36de8d99d88c9a244a0
+  languageName: node
+  linkType: hard
+
 "@babel/generator@npm:^7.14.0, @babel/generator@npm:^7.18.2":
   version: 7.18.2
   resolution: "@babel/generator@npm:7.18.2"
@@ -12523,6 +12537,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nicolo-ribaudo/eslint-scope-5-internals@npm:5.1.1-v1":
+  version: 5.1.1-v1
+  resolution: "@nicolo-ribaudo/eslint-scope-5-internals@npm:5.1.1-v1"
+  dependencies:
+    eslint-scope: 5.1.1
+  checksum: f2e3b2d6a6e2d9f163ca22105910c9f850dc4897af0aea3ef0a5886b63d8e1ba6505b71c99cb78a3bba24a09557d601eb21c8dede3f3213753fcfef364eb0e57
+  languageName: node
+  linkType: hard
+
 "@nodelib/fs.scandir@npm:2.1.5":
   version: 2.1.5
   resolution: "@nodelib/fs.scandir@npm:2.1.5"
@@ -14981,6 +15004,7 @@ __metadata:
   dependencies:
     "@babel/cli": 7.15.7
     "@babel/core": ^7.17.5
+    "@babel/eslint-parser": ^7.24.7
     "@babel/preset-env": ^7.24.7
     "@rollup/plugin-babel": ^5.3.1
     "@rollup/plugin-commonjs": ^21.0.3

@@ -32,6 +32,7 @@
   "license": "Apache-2.0",
   "dependencies": {
     "@babel/core": "^7.17.9",
+    "@babel/eslint-parser": "^7.24.7",
     "@speckle/shared": "workspace:^",
     "core-js": "^3.21.1",
     "regenerator-runtime": "^0.13.7"
