@@ -66,7 +66,7 @@ class HighlightExtension extends SelectionExtension {
         metalness: 0,
         vertexColors: false,
         lineWeight: 1,
-        stencilOutlines: StencilOutlineType.NONE,
+        stencilOutlines: StencilOutlineType.OVERLAY,
         pointSize: 4
       }
     }
