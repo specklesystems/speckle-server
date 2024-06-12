@@ -175,7 +175,7 @@ export default class Sandbox {
       this.addViewControls()
       this.properties = await this.viewer.getObjectProperties()
     })
-    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent) => {
+    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent) => {
       if (selectionEvent && selectionEvent.hits) {
         const firstHitNode = selectionEvent.hits[0].node
         if (firstHitNode) {
@@ -368,7 +368,8 @@ export default class Sandbox {
     const loadObjButton = this.tabs.pages[0].addButton({
       title: 'Load OBJ'
     })
-    loadObjButton.on('click', () => {
+    loadObjButton.on('click', async () => {
+      /** Load from string */
       const input = document.createElement('input')
       input.type = 'file'
       input.onchange = (e) => {
@@ -387,6 +388,10 @@ export default class Sandbox {
         }
       }
       input.click()
+      /** Load as resource */
+      // import BrandenburgGate from '../assets/BrandenburgGate.png'
+      // const loader = new ObjLoader(this.viewer.getWorldTree(), brandnburd)
+      // await this.viewer.loadObject(loader, true)
     })
 
     const clearButton = this.tabs.pages[0].addButton({

@@ -133,7 +133,11 @@ export default class Batcher {
         }
 
         const materialHash = rvs[0].renderMaterialHash
-        const instancedBatch = this.buildInstancedBatch(renderTree, rvs, materialHash)
+        const instancedBatch = await this.buildInstancedBatch(
+          renderTree,
+          rvs,
+          materialHash
+        )
         if (!instancedBatch) continue
 
         this.batches[instancedBatch.id] = instancedBatch
@@ -189,7 +193,7 @@ export default class Batcher {
           await pause.wait(50)
         }
         const restrictedRvs = batches[k]
-        const batch = this.buildBatch(
+        const batch = await this.buildBatch(
           renderTree,
           restrictedRvs,
           materialHashes[i],
@@ -274,11 +278,11 @@ export default class Batcher {
     return vSplit
   }
 
-  private buildInstancedBatch(
+  private async buildInstancedBatch(
     renderTree: RenderTree,
     renderViews: NodeRenderView[],
     materialHash: number
-  ): Batch | null {
+  ): Promise<Batch | null> {
     if (!renderViews.length) {
       /** This is for the case when all renderviews have invalid geometries, and it generally
        * means there is something wrong with the stream
@@ -295,17 +299,17 @@ export default class Batcher {
     const batchID = MathUtils.generateUUID()
     const geometryBatch = new InstancedMeshBatch(batchID, renderTree.id, renderViews)
     geometryBatch.setBatchMaterial(material)
-    geometryBatch.buildBatch()
+    await geometryBatch.buildBatch()
 
     return geometryBatch
   }
 
-  private buildBatch(
+  private async buildBatch(
     renderTree: RenderTree,
     renderViews: NodeRenderView[],
     materialHash: number,
     batchType?: GeometryType
-  ): Batch | null {
+  ): Promise<Batch | null> {
     if (!renderViews.length) {
       /** This is for the case when all renderviews have invalid geometries, and it generally
        * means there is something wrong with the stream
@@ -364,7 +368,7 @@ export default class Batcher {
     }
 
     geometryBatch.setBatchMaterial(material)
-    geometryBatch.buildBatch()
+    await geometryBatch.buildBatch()
 
     return geometryBatch
   }

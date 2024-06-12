@@ -411,7 +411,7 @@ export abstract class PrimitiveBatch implements Batch {
     this.primitive.geometry.setDrawRange(0, Infinity)
   }
 
-  public abstract buildBatch(): void
+  public abstract buildBatch(): Promise<void>
   public abstract getRenderView(index: number): NodeRenderView | null
   public abstract getMaterialAtIndex(index: number): Material | null
   public getMaterial(rv: NodeRenderView): Material | null {

@@ -265,6 +265,7 @@ export default class LineBatch implements Batch {
 
     this.mesh.uuid = this.id
     this.mesh.layers.set(ObjectLayers.STREAM_CONTENT_LINE)
+    return Promise.resolve()
   }
 
   public getRenderView(index: number): NodeRenderView | null {

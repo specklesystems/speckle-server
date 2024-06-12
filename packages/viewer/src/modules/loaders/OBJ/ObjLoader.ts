@@ -33,11 +33,15 @@ export class ObjLoader extends Loader {
         if (!this._resourceData) {
           this.baseLoader.load(
             this._resource,
-            // eslint-disable-next-line @typescript-eslint/no-misused-promises
-            async (group: Group) => {
-              await this.converter.traverse(this._resource, group, async () => {})
-
-              void loadResolve()
+            (group: Group) => {
+              this.converter
+                .traverse(this._resource, group, async () => {})
+                .then(() => {
+                  loadResolve()
+                })
+                .catch(() => {
+                  loadReject()
+                })
             },
             (event: ProgressEvent) => {
               this.emit(LoaderEvent.LoadProgress, {
