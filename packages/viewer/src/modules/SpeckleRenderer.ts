@@ -1260,7 +1260,7 @@ export default class SpeckleRenderer {
 
   public isolateBatch(batchId: string) {
     this.batcher.resetBatchesDrawRanges()
-    void this.batcher.isolateBatch(batchId)
+    this.batcher.isolateBatch(batchId)
   }
 
   public getObjects(): BatchObject[] {
