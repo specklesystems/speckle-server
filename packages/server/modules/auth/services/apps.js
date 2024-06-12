@@ -135,9 +135,10 @@ module.exports = {
     delete app.trustByDefault
 
     await ServerApps().insert(app)
-    await ServerAppsScopes().insert(
-      scopes.map((s) => ({ appId: app.id, scopeName: s }))
-    )
+    await ServerAppsScopes()
+      .insert(scopes.map((s) => ({ appId: app.id, scopeName: s })))
+      .onConflict(['appId', 'scopeName'])
+      .ignore()
     return { id: app.id, secret: app.secret }
   },
 

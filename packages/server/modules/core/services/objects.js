@@ -112,7 +112,10 @@ module.exports = {
       for (const batch of batches) {
         prepInsertionObjectBatch(batch)
         await Objects().insert(batch).onConflict().ignore()
-        servicesLogger.info(`Inserted ${batch.length} objects`)
+        servicesLogger.info(
+          { objectCount: batch.length },
+          'Inserted ${objectCount} objects'
+        )
       }
     }
 
@@ -123,7 +126,10 @@ module.exports = {
       for (const batch of batches) {
         prepInsertionClosureBatch(batch)
         await Closures().insert(batch).onConflict().ignore()
-        servicesLogger.info(`Inserted ${batch.length} closures`)
+        servicesLogger.info(
+          { batchLength: batch.length },
+          'Inserted ${batchLength} closures'
+        )
       }
     }
     return true

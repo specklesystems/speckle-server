@@ -37,7 +37,7 @@ async function registerDefaultApp(app) {
   const scopes = app.scopes.map((s) => ({ appId: app.id, scopeName: s }))
   delete app.scopes
   await Apps().insert(app)
-  await AppScopes().insert(scopes)
+  await AppScopes().insert(scopes).onConflict(['appId', 'scopeName']).ignore()
 }
 
 async function updateDefaultApp(app, existingApp) {
@@ -61,6 +61,8 @@ async function updateDefaultApp(app, existingApp) {
     if (newScopes.length)
       await AppScopes()
         .insert(newScopes.map((s) => ({ appId: app.id, scopeName: s })))
+        .onConflict(['appId', 'scopeName'])
+        .ignore()
         .transacting(trx)
 
     // remove scopes from the app
