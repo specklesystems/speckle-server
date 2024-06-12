@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
+/* eslint-disable @typescript-eslint/no-unsafe-return */
+/* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import Vue from 'vue'
 import { createApolloProvider, ApolloProvider } from '@vue/apollo-option'
 import {
@@ -35,7 +38,7 @@ const httpEndpoint = `${window.location.origin}/graphql`
 // WS endpoint
 const wsEndpoint = `${window.location.origin.replace('http', 'ws')}/graphql`
 // app version
-const appVersion = import.meta.env.SPECKLE_SERVER_VERSION || 'unknown'
+const appVersion = (import.meta.env.SPECKLE_SERVER_VERSION || 'unknown') as string
 
 let instance: Optional<ApolloProvider> = undefined
 

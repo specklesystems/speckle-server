@@ -452,8 +452,8 @@ jobs:
           working_directory: 'packages/server'
 
       - run:
-          name: 'Lint with TypeScript Compiler'
-          command: yarn lint:tsc
+          name: 'Lint'
+          command: yarn lint:ci
           working_directory: 'packages/server'
 
       - run:
@@ -516,7 +516,7 @@ jobs:
 
       - run:
           name: Lint everything
-          command: yarn lint
+          command: yarn lint:ci
           working_directory: 'packages/frontend-2'
 
   test-viewer:
@@ -550,7 +550,7 @@ jobs:
 
       - run:
           name: Lint everything
-          command: yarn lint
+          command: yarn lint:ci
           working_directory: 'packages/viewer'
 
       - run:
@@ -588,17 +588,17 @@ jobs:
 
       - run:
           name: Lint tailwind theme
-          command: yarn lint
+          command: yarn lint:ci
           working_directory: 'packages/tailwind-theme'
 
       - run:
           name: Lint ui components
-          command: yarn lint
+          command: yarn lint:ci
           working_directory: 'packages/ui-components'
 
       - run:
           name: Lint component nuxt package
-          command: yarn lint
+          command: yarn lint:ci
           working_directory: 'packages/ui-components-nuxt'
 
       - run:
@@ -1018,7 +1018,7 @@ jobs:
           command: yarn build:public
       - run:
           name: Lint viewer-sandbox
-          command: yarn lint
+          command: yarn lint:ci
           working_directory: 'packages/viewer-sandbox'
       - run:
           name: Build viewer-sandbox

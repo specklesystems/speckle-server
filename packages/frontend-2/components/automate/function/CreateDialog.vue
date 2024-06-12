@@ -50,13 +50,15 @@ import type {
   CreatableFunctionTemplate,
   FunctionDetailsFormValues
 } from '~/lib/automate/helpers/functions'
-import { automateGithubAppAuthorizationRoute } from '~/lib/common/helpers/route'
+import {
+  automateGithubAppAuthorizationRoute,
+  automationFunctionRoute
+} from '~/lib/common/helpers/route'
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { useForm } from 'vee-validate'
 import { useCreateAutomateFunction } from '~/lib/automate/composables/management'
 import { useMutationLoading } from '@vue/apollo-composable'
 import type { AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment } from '~~/lib/common/generated/gql/graphql'
-import { automationFunctionRoute } from '~/lib/common/helpers/route'
 import { useMixpanel } from '~/lib/core/composables/mp'
 
 enum FunctionCreateSteps {

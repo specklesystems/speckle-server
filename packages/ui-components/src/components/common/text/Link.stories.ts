@@ -47,14 +47,14 @@ const clickPlayBuilder: (rightClick: boolean) => VuePlayFunction =
     const button = canvas.getByRole('link')
 
     if (useRightClick) {
-      rightClick(button)
+      await rightClick(button)
     } else {
-      userEvent.click(button)
+      await userEvent.click(button)
     }
 
     await wait(1000)
 
-    userEvent.tab()
+    await userEvent.tab()
   }
 const rightClickPlay = clickPlayBuilder(true)
 const leftClickPlay = clickPlayBuilder(false)

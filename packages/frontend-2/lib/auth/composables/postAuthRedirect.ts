@@ -34,7 +34,7 @@ export const usePostAuthRedirect = (
 
     deleteState()
 
-    if (process.server) {
+    if (import.meta.server) {
       const url = new URL(pathWithQuery, 'http://notimportant.com')
       router
         .push({

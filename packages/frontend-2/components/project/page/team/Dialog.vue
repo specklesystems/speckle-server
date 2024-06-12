@@ -7,7 +7,7 @@
 <script setup lang="ts">
 import type { ProjectPageTeamDialogFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
-import { OpenSectionType } from '~~/lib/projects/helpers/components'
+import type { OpenSectionType } from '~~/lib/projects/helpers/components'
 
 graphql(`
   fragment ProjectPageTeamDialog on Project {

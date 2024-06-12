@@ -502,7 +502,7 @@ export default class SpeckleConverter {
     if (elements) {
       for (const element of elements as SpeckleObject[]) {
         const elementObj = await this.resolveReference(element)
-        this.parseInstanceElement(obj, elementObj, node)
+        void this.parseInstanceElement(obj, elementObj, node)
       }
     }
   }
@@ -516,7 +516,7 @@ export default class SpeckleConverter {
     if (elements) {
       for (const element of elements as SpeckleObject[]) {
         const elementObj = await this.resolveReference(element)
-        this.parseInstanceElement(obj, elementObj, node)
+        void this.parseInstanceElement(obj, elementObj, node)
       }
     }
   }
@@ -663,9 +663,7 @@ export default class SpeckleConverter {
       i < (obj as unknown as { segments: SpeckleObject[] }).segments.length;
       i++
     ) {
-      let element = (obj as unknown as { segments: SpeckleObject[] }).segments[
-        i
-      ] as SpeckleObject
+      let element = (obj as unknown as { segments: SpeckleObject[] }).segments[i]
       /** Not a big fan of this... */
       if (!this.directNodeConverterExists(element)) {
         element = this.getDisplayValue(element) as SpeckleObject

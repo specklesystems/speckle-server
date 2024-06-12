@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
 import { type Optional } from '@speckle/shared'
-import * as Observability from '@speckle/shared/dist/esm/observability/index'
+import type * as Observability from '@speckle/shared/dist/esm/observability/index'
 import {
   upperFirst,
   get,

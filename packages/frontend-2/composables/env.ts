@@ -7,7 +7,7 @@ export const useApiOrigin = () => {
     public: { apiOrigin, backendApiOrigin }
   } = useRuntimeConfig()
 
-  if (process.server && backendApiOrigin.length > 1) {
+  if (import.meta.server && backendApiOrigin.length > 1) {
     return backendApiOrigin
   }
 

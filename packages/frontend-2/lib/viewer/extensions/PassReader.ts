@@ -1,7 +1,8 @@
 import { type SpecklePass } from '@speckle/viewer'
 import { Extension } from '@speckle/viewer'
 import type SpeckleRenderer from '@speckle/viewer/dist/modules/SpeckleRenderer'
-import { Vector3, Vector4, WebGLRenderTarget } from 'three'
+import type { WebGLRenderTarget } from 'three'
+import { Vector3, Vector4 } from 'three'
 
 export class PassReader extends Extension {
   private outputBuffer: Uint8Array = new Uint8Array()
@@ -12,11 +13,11 @@ export class PassReader extends Extension {
   public async read(): Promise<string> {
     return new Promise<string>((resolve, reject) => {
       const renderer: SpeckleRenderer = this.viewer.getRenderer()
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+
       const dephPass: SpecklePass = renderer.pipeline.composer
         .passes[0] as unknown as SpecklePass
       // o_0
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+
       this.renderTarget = dephPass.outputRenderTarget
       if (!this.renderTarget) {
         reject('Issue with depth pass render target')

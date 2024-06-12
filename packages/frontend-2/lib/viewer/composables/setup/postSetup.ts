@@ -1,6 +1,5 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { ViewerEvent, VisualDiffMode } from '@speckle/viewer'
+import { ViewerEvent, VisualDiffMode, CameraController } from '@speckle/viewer'
 import type {
   PropertyInfo,
   StringPropertyInfo,
@@ -44,14 +43,15 @@ import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage, type Nullable } from '@speckle/shared'
-import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useCameraUtilities,
+  useMeasurementUtilities
+} from '~~/lib/viewer/composables/ui'
 import { onKeyStroke, watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
-import { CameraController } from '@speckle/viewer'
 import type { Reference } from '@apollo/client'
 import type { Modifier } from '@apollo/client/cache'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -72,7 +72,7 @@ function useViewerIsBusyEventHandler() {
  * Automatically loads & unloads objects into the viewer depending on the global URL resource identifier state
  */
 function useViewerObjectAutoLoading() {
-  if (process.server) return
+  if (import.meta.server) return
 
   const disableViewerCache =
     SafeLocalStorage.get('FE2_FORCE_DISABLE_VIEWER_CACHE') === 'true'
@@ -155,7 +155,7 @@ function useViewerObjectAutoLoading() {
  * cache updates so that we don't need to always refetch queries
  */
 function useViewerSubscriptionEventTracker() {
-  if (process.server) return
+  if (import.meta.server) return
 
   const {
     projectId,
@@ -784,7 +784,7 @@ function useDisableZoomOnEmbed() {
 }
 
 export function useViewerPostSetup() {
-  if (process.server) return
+  if (import.meta.server) return
   useViewerObjectAutoLoading()
   useViewerSelectionEventHandler()
   useViewerIsBusyEventHandler()

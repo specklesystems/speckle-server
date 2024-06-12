@@ -31,6 +31,7 @@ export default defineNuxtConfig({
     devLogs: false
   },
   modules: [
+    '@nuxt/eslint',
     '@nuxt/devtools',
     '@nuxtjs/tailwindcss',
     [
@@ -90,7 +91,6 @@ export default defineNuxtConfig({
 
     vue: {
       script: {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         defineModel: true
       }
     },

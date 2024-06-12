@@ -40,8 +40,10 @@ export default defineNuxtPlugin(async () => {
   let mixpanel: LimitedMixpanel | undefined = undefined
 
   try {
-    mixpanel = process.client ? (await import('mixpanel-browser')).default : undefined
-    if (process.server) {
+    mixpanel = import.meta.client
+      ? (await import('mixpanel-browser')).default
+      : undefined
+    if (import.meta.server) {
       mixpanel = {
         ...fakeLimitedMixpanel(),
         track: () => {
@@ -66,9 +68,8 @@ export default defineNuxtPlugin(async () => {
 
   // Init
   mixpanel.init(mixpanelTokenId, {
-    // eslint-disable-next-line camelcase
     api_host: mixpanelApiHost,
-    debug: !!process.dev && logCsrEmitProps
+    debug: !!import.meta.dev && logCsrEmitProps
   })
 
   return {

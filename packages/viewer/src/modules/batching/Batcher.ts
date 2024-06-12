@@ -49,7 +49,7 @@ export default class Batcher {
     )
     this.floatTextures = floatTextures
     this.materials = new Materials()
-    this.materials.createDefaultMaterials()
+    void this.materials.createDefaultMaterials()
   }
 
   public async *makeBatches(
@@ -532,7 +532,7 @@ export default class Batcher {
   /**
    * Used for debuggin only
    */
-  public async isolateBatch(batchId: string) {
+  public isolateBatch(batchId: string) {
     for (const k in this.batches) {
       if (k !== batchId) {
         this.batches[k].setDrawRanges([
