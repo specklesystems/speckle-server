@@ -1,4 +1,4 @@
-import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import { IBinding, IBindingSharedEvents } from '~~/lib/bindings/definitions/IBinding'
 import { BaseBridge } from '~~/lib/bridge/base'
 
 export const ISelectionBindingKey = 'selectionBinding'
@@ -7,7 +7,7 @@ export interface ISelectionBinding extends IBinding<ISelectionBindingHostEvents>
   getSelection: () => Promise<SelectionInfo>
 }
 
-export interface ISelectionBindingHostEvents {
+export interface ISelectionBindingHostEvents extends IBindingSharedEvents {
   setSelection: (args: SelectionInfo) => void
 }
 

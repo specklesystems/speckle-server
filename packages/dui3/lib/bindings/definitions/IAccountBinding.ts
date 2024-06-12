@@ -1,8 +1,9 @@
+import { IBinding, IBindingSharedEvents } from 'lib/bindings/definitions/IBinding'
 import { BaseBridge } from '~~/lib/bridge/base'
 
 export const IAccountBindingKey = 'accountsBinding'
 
-export interface IAccountBinding {
+export interface IAccountBinding extends IBinding<IAccountBindingEvents> {
   getAccounts: () => Promise<Account[]>
 }
 
@@ -25,6 +26,8 @@ export type Account = {
     streams: { totalCount: number }
   }
 }
+
+export interface IAccountBindingEvents extends IBindingSharedEvents {}
 
 export class MockedAccountBinding extends BaseBridge {
   constructor() {

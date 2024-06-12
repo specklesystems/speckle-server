@@ -1,5 +1,5 @@
 import { BaseBridge } from '~/lib/bridge/base'
-import { IBinding } from '~/lib/bindings/definitions/IBinding'
+import { IBinding, IBindingSharedEvents } from '~/lib/bindings/definitions/IBinding'
 
 /**
  * The name under which this binding will be registered.
@@ -14,7 +14,7 @@ export interface IConfigBinding extends IBinding<IConfigBindingEvents> {
   updateConfig: (config: ConnectorConfig) => void
 }
 
-export interface IConfigBindingEvents {}
+export interface IConfigBindingEvents extends IBindingSharedEvents {}
 
 export type ConnectorConfig = {
   darkTheme: boolean

@@ -1,7 +1,7 @@
 import { ConversionResult } from 'lib/conversions/conversionResult'
 import { IModelCardSharedEvents } from '~/lib/models/card'
 import { CardSetting } from '~/lib/models/card/setting'
-import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import { IBinding, IBindingSharedEvents } from '~~/lib/bindings/definitions/IBinding'
 import { BaseBridge } from '~~/lib/bridge/base'
 
 export const IReceiveBindingKey = 'receiveBinding'
@@ -12,7 +12,9 @@ export interface IReceiveBinding extends IBinding<IReceiveBindingEvents> {
   cancelReceive: (modelId: string) => Promise<void>
 }
 
-export interface IReceiveBindingEvents extends IModelCardSharedEvents {
+export interface IReceiveBindingEvents
+  extends IBindingSharedEvents,
+    IModelCardSharedEvents {
   // See note oon timeout in bridge v2; we might not need this
   setModelReceiveResult: (args: {
     modelCardId: string
