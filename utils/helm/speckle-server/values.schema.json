@@ -1496,8 +1496,8 @@
         },
         "enabled": {
           "type": "boolean",
-          "description": "Feature flag to enable running the new experimental frontend.",
-          "default": false
+          "description": "Feature flag to enable running the new web application frontend.",
+          "default": true
         },
         "replicas": {
           "type": "number",
