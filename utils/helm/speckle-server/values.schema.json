@@ -1497,7 +1497,7 @@
         "enabled": {
           "type": "boolean",
           "description": "Feature flag to enable running the new experimental frontend.",
-          "default": false
+          "default": true
         },
         "replicas": {
           "type": "number",

@@ -948,7 +948,7 @@ frontend_2:
   logLevel: 'info'
   ## @param frontend_2.enabled Feature flag to enable running the new experimental frontend.
   ##
-  enabled: false
+  enabled: true
   ## @param frontend_2.replicas The number of instances of the Frontend 2 server prod to be deployed withing the cluster.
   ##
   replicas: 1
