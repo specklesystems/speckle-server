@@ -122,7 +122,7 @@ export const getAutomateFunctionsQuery = gql`
 `
 
 export const automateValidateAuthCodeQuery = gql`
-  query AutomateValidateAuthCode($code: String!) {
-    automateValidateAuthCode(code: $code)
+  query AutomateValidateAuthCode($payload: AutomateAuthCodePayloadTest!) {
+    automateValidateAuthCode(payload: $payload)
   }
 `

@@ -34,7 +34,10 @@ import {
 } from '@/modules/automate/helpers/executionEngine'
 import { Request, Response } from 'express'
 import { UnauthorizedError } from '@/modules/shared/errors'
-import { createStoredAuthCode } from '@/modules/automate/services/authCode'
+import {
+  AuthCodePayloadAction,
+  createStoredAuthCode
+} from '@/modules/automate/services/authCode'
 import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 
@@ -124,7 +127,10 @@ export const createFunctionFromTemplate =
       throw new AutomateFunctionCreationError('Speckle user not found')
     }
 
-    const authCode = await createStoredAuthCode()
+    const authCode = await createStoredAuthCode({
+      userId: user.id,
+      action: AuthCodePayloadAction.CreateFunction
+    })
     const body: CreateFunctionBody = {
       ...input,
       speckleServerOrigin: new URL(getServerOrigin()).origin,
@@ -219,7 +225,10 @@ export const startAutomateFunctionCreatorAuth =
       throw new UnauthorizedError()
     }
 
-    const authCode = await createStoredAuthCode()
+    const authCode = await createStoredAuthCode({
+      userId,
+      action: AuthCodePayloadAction.BecomeFunctionAuthor
+    })
     const redirectUrl = new URL(
       '/api/v2/functions/auth/githubapp/authorize',
       speckleAutomateUrl()
@@ -229,7 +238,10 @@ export const startAutomateFunctionCreatorAuth =
       'speckleServerOrigin',
       new URL(getServerOrigin()).origin
     )
-    redirectUrl.searchParams.set('speckleServerAuthenticationCode', authCode)
+    redirectUrl.searchParams.set(
+      'speckleServerAuthenticationCode',
+      JSON.stringify(authCode)
+    )
 
     return res.redirect(redirectUrl.toString())
   }

@@ -17,6 +17,7 @@ import {
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
+import { AuthCodePayload } from '@/modules/automate/services/authCode'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import {
@@ -129,7 +130,7 @@ const invokeRequest = async (params: {
 
 export const createAutomation = async (params: {
   speckleServerUrl?: string
-  authCode: string
+  authCode: AuthCodePayload
 }) => {
   const { speckleServerUrl = getServerOrigin(), authCode } = params
 
@@ -238,7 +239,7 @@ export enum ExecutionEngineFunctionTemplateId {
 export type CreateFunctionBody = {
   speckleServerOrigin: string
   speckleUserId: string
-  authenticationCode: string
+  authenticationCode: AuthCodePayload
   template: ExecutionEngineFunctionTemplateId
   functionName: string
   description: string
@@ -424,7 +425,7 @@ export const getUserGithubAuthState = async (params: {
 export const getUserGithubOrganizations = async (params: {
   speckleServerUrl?: string
   userId: string
-  authCode: string
+  authCode: AuthCodePayload
 }) => {
   const {
     speckleServerUrl = getServerOrigin(),
@@ -437,7 +438,7 @@ export const getUserGithubOrganizations = async (params: {
     query: {
       speckleServerOrigin,
       speckleUserId,
-      speckleServerAuthenticationCode
+      speckleServerAuthenticationCode: JSON.stringify(speckleServerAuthenticationCode)
     }
   })
 

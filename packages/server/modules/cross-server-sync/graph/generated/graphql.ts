@@ -188,6 +188,12 @@ export type AuthStrategy = {
   url: Scalars['String'];
 };
 
+export type AutomateAuthCodePayloadTest = {
+  action: Scalars['String'];
+  code: Scalars['String'];
+  userId: Scalars['String'];
+};
+
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
   automationCount: Scalars['Int'];
@@ -2349,7 +2355,7 @@ export type QueryAutomateFunctionsArgs = {
 
 
 export type QueryAutomateValidateAuthCodeArgs = {
-  code: Scalars['String'];
+  payload: AutomateAuthCodePayloadTest;
 };
 
 

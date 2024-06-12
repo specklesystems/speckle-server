@@ -7,7 +7,10 @@ import {
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import { updateAutomation } from '@/modules/automate/services/automationManagement'
-import { createStoredAuthCode } from '@/modules/automate/services/authCode'
+import {
+  AuthCodePayloadAction,
+  createStoredAuthCode
+} from '@/modules/automate/services/authCode'
 import { getGenericRedis } from '@/modules/core'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
@@ -482,7 +485,11 @@ const buildAutomationUpdate = () => {
 
       it('fails if code is invalid', async () => {
         const res = await apollo.execute(AutomateValidateAuthCodeDocument, {
-          code: 'invalid'
+          payload: {
+            code: 'invalid',
+            userId: 'a',
+            action: 'aty'
+          }
         })
 
         expect(res).to.haveGraphQLErrors('Invalid automate auth code')
@@ -493,10 +500,13 @@ const buildAutomationUpdate = () => {
         const storeCode = createStoredAuthCode({
           redis: getGenericRedis()
         })
-        const code = await storeCode()
+        const code = await storeCode({
+          userId: me.id,
+          action: AuthCodePayloadAction.BecomeFunctionAuthor
+        })
 
         const res = await apollo.execute(AutomateValidateAuthCodeDocument, {
-          code
+          payload: code
         })
 
         expect(res).to.not.haveGraphQLErrors()

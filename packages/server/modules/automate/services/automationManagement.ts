@@ -19,7 +19,10 @@ import {
 } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Automate, Roles, removeNullOrUndefinedKeys } from '@speckle/shared'
-import { createStoredAuthCode } from '@/modules/automate/services/authCode'
+import {
+  AuthCodePayloadAction,
+  createStoredAuthCode
+} from '@/modules/automate/services/authCode'
 import {
   ProjectAutomationCreateInput,
   ProjectAutomationRevisionCreateInput,
@@ -89,7 +92,10 @@ export const createAutomation =
       userResourceAccessRules
     )
 
-    const authCode = await createAuthCode()
+    const authCode = await createAuthCode({
+      userId,
+      action: AuthCodePayloadAction.CreateAutomation
+    })
 
     // trigger automation creation on automate
     const { automationId: executionEngineAutomationId, token } =
