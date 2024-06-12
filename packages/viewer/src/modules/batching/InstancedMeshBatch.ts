@@ -32,6 +32,7 @@ import Logger from 'js-logger'
 import Materials from '../materials/Materials'
 import { DrawRanges } from './DrawRanges'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
+import { BatchObject } from './BatchObject'
 
 export class InstancedMeshBatch implements Batch {
   public id: string
@@ -281,9 +282,7 @@ export class InstancedMeshBatch implements Batch {
          */
         if (range.materialOptions.rampTexture !== undefined) {
           if (range.material instanceof SpeckleStandardColoredMaterial) {
-            ;(range.material as SpeckleStandardColoredMaterial).setGradientTexture(
-              range.materialOptions.rampTexture
-            )
+            range.material.setGradientTexture(range.materialOptions.rampTexture)
           }
         }
       }
@@ -500,8 +499,8 @@ export class InstancedMeshBatch implements Batch {
     return this.instanceGradientBuffer
   }
 
-  public buildBatch(): void {
-    const batchObjects = []
+  public buildBatch(): Promise<void> {
+    const batchObjects: BatchObject[] = []
     let instanceBVH = null
     this.instanceTransformBuffer0 = new Float32Array(
       this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE
@@ -601,6 +600,8 @@ export class InstancedMeshBatch implements Batch {
       this.getCurrentTransformBuffer(),
       this.getCurrentGradientBuffer()
     )
+
+    return Promise.resolve()
   }
 
   public getRenderView(index: number): NodeRenderView | null {

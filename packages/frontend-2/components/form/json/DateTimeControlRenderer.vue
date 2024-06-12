@@ -43,7 +43,6 @@ const {
   onChangeValueConverter: (val) => toISOString(val as string)
 })
 
-// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 const modelValue = computed(() =>
   control.value.data
     ? (control.value.data as string).replace(zuluTimeSuffix, '')

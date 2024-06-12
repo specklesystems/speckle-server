@@ -24,8 +24,9 @@
     "test:coverage": "cross-env NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true nyc --reporter lcov mocha",
     "test:report": "yarn test:coverage -- --reporter mocha-junit-reporter --reporter-options mochaFile=reports/test-results.xml",
     "lint": "yarn lint:tsc && yarn lint:eslint",
+    "lint:ci": "yarn lint:tsc",
     "lint:tsc": "tsc --noEmit",
-    "lint:eslint": "eslint . --ext .js,.ts",
+    "lint:eslint": "eslint .",
     "cli": "cross-env LOG_LEVEL=debug LOG_PRETTY=true NODE_ENV=development ts-node ./modules/cli/index.js",
     "cli:download:commit": "cross-env LOG_PRETTY=true LOG_LEVEL=debug yarn cli download commit",
     "migrate": "yarn cli db migrate",
@@ -171,6 +172,7 @@
     "tsconfig-paths": "^4.0.0",
     "type-fest": "^2.19.0",
     "typescript": "^4.6.4",
+    "typescript-eslint": "^7.12.0",
     "ws": "^7.5.7",
     "yargs": "^17.3.1"
   },

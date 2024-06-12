@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div v-if="showControls">
     <div
@@ -290,7 +291,7 @@ const startResizing = (event: MouseEvent) => {
   startWidth = width.value
 }
 
-if (process.client) {
+if (import.meta.client) {
   useResizeObserver(scrollableControlsContainer, (entries) => {
     // const entry = entries[0]
     const { height: newHeight } = entries[0].contentRect

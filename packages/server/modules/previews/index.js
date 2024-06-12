@@ -147,7 +147,7 @@ exports.init = (app, isInitial) => {
     if (!stream.isPublic) {
       try {
         await validateScopes(req.context.scopes, Scopes.Streams.Read)
-      } catch (err) {
+      } catch {
         return { hasPermissions: false, httpErrorCode: 401 }
       }
 
@@ -158,7 +158,7 @@ exports.init = (app, isInitial) => {
           Roles.Stream.Reviewer,
           req.context.resourceAccessRules
         )
-      } catch (err) {
+      } catch {
         return { hasPermissions: false, httpErrorCode: 401 }
       }
     }

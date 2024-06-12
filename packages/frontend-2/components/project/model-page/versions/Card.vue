@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
@@ -93,7 +94,7 @@ import type {
 import { modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
-import { VersionActionTypes } from '~~/lib/projects/helpers/components'
+import type { VersionActionTypes } from '~~/lib/projects/helpers/components'
 import { isPendingVersionFragment } from '~~/lib/projects/helpers/models'
 import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
 

@@ -362,14 +362,14 @@ function resolveInitParams(app: PluginNuxtApp) {
     },
     speckleServerVersion,
     baseUrl,
-    debug: logCsrEmitProps && process.dev,
+    debug: logCsrEmitProps && import.meta.dev,
     debugCoreWebVitals: shouldDebugCoreWebVitals,
     logger
   }
 }
 
 export default defineNuxtPlugin(async (app) => {
-  if (process.server) {
+  if (import.meta.server) {
     await initRumServer(app)
   } else {
     await initRumClient(app)

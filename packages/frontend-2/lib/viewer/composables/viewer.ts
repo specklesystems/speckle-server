@@ -4,15 +4,18 @@ import type {
   InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
 import { ViewerEvent } from '@speckle/viewer'
-import type { SelectionEvent } from '@speckle/viewer'
 import { debounce, isArray, throttle } from 'lodash-es'
 import { until } from '@vueuse/core'
 import { TimeoutError, timeoutAt } from '@speckle/shared'
 import type { MaybeAsync, Nullable } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
-import { CameraController, type ViewerEventPayload } from '@speckle/viewer'
-import type { TreeNode } from '@speckle/viewer'
+import {
+  CameraController,
+  type ViewerEventPayload,
+  type SelectionEvent,
+  type TreeNode
+} from '@speckle/viewer'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 
 // NOTE: this is a preformance optimisation - this function is hot, and has to do
@@ -77,7 +80,6 @@ function getFirstVisibleSelectionHit(
   return null
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useViewerEventListener<K extends ViewerEvent>(
   name: K | K[],
   listener: (args: ViewerEventPayload[K]) => MaybeAsync<void>,
@@ -266,7 +268,7 @@ export function useSelectionEvents(
     debounceWait: number
   }>
 ) {
-  if (process.server) return
+  if (import.meta.server) return
   const { singleClickCallback, doubleClickCallback } = params
   const state = options?.state || useInjectedViewerState()
   const {

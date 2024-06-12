@@ -1,4 +1,4 @@
-import { ApolloCache } from '@apollo/client/cache'
+import type { ApolloCache } from '@apollo/client/cache'
 import type { JSONContent } from '@tiptap/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'

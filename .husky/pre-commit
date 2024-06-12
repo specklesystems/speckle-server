@@ -5,7 +5,7 @@ set -e
 if [ -n "$CI" ] 
 then
   echo "running eslint"
-  yarn lint
+  yarn eslint:projectwide
   echo "...eslint done"
   echo "running prettier"
   yarn prettier:check

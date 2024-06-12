@@ -1,5 +1,5 @@
 import type { Range } from '@tiptap/core'
-import { ResolvedPos } from '@tiptap/pm/model'
+import type { ResolvedPos } from '@tiptap/pm/model'
 
 const EMAIL_RGX = /[\w-_.+]+@[\w-_.+]+/
 

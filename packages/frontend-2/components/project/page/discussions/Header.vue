@@ -19,7 +19,7 @@
 import type { Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectDiscussionsPageHeader_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
-import { GridListToggleValue } from '~~/lib/layout/helpers/components'
+import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
 
 graphql(`
   fragment ProjectDiscussionsPageHeader_Project on Project {

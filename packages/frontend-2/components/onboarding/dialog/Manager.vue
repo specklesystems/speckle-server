@@ -60,7 +60,7 @@ const openState = computed({
 const hasDownloadedManager = useSynchronizedCookie<boolean>(`hasDownloadedManager`)
 
 const getOs = () => {
-  if (process.server) return 'unknown'
+  if (import.meta.server) return 'unknown'
   const userAgent = window.navigator.userAgent
   const platform =
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment

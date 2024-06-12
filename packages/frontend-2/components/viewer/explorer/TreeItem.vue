@@ -1,7 +1,5 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <!--     -->
-  <!-- WIP -->
-  <!--     -->
   <div class="w-full select-none">
     <!-- Header -->
     <div class="bg-foundation w-full rounded-md py-1 px-1">
@@ -210,6 +208,7 @@ const childrenLength = computed(() => {
     return rawSpeckleData.elements.length
   if (rawSpeckleData.children && Array.isArray(rawSpeckleData.children))
     return rawSpeckleData.children.length
+  return 0
 })
 
 const isSingleCollection = computed(() => {

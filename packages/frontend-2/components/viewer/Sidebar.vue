@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
     ref="resizableElement"
@@ -106,7 +107,7 @@ const startResizing = (event: MouseEvent) => {
   startWidth = width.value
 }
 
-if (process.client) {
+if (import.meta.client) {
   useEventListener(resizeHandle, 'mousedown', startResizing)
 
   useEventListener(document, 'mousemove', (event) => {

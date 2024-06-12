@@ -22,6 +22,6 @@ const props = defineProps<{
   }
 }>()
 
-const isDev = ref(process.dev)
+const isDev = ref(import.meta.dev)
 const finalError = computed(() => formatAppError(props.error))
 </script>

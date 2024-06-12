@@ -102,7 +102,7 @@ describe('Actors & Tokens @user-services', () => {
           email: 'dim@gmail.com',
           password: '1234567'
         })
-      } catch (e) {
+      } catch {
         return
       }
       assert.fail('short pwd')

@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
     :class="`w-full bg-foundation-2 hover:bg-blue-500/5 rounded pl-1 py-1 border-l-2 text-xs ${

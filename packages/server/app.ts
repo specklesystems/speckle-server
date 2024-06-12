@@ -206,7 +206,6 @@ function buildApolloSubscriptionServer(
         })
         const ctx = baseParams.context as GraphQLContext
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         baseParams.formatResponse = (val: SubscriptionResponse) => {
           ctx.loaders.clearAll()
           logSubscriptionOperation({ ctx, execParams: baseParams, response: val })

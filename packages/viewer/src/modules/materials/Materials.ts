@@ -253,11 +253,11 @@ export default class Materials {
         (renderView.geometryType === GeometryType.MESH ||
           renderView.geometryType === GeometryType.POINT ||
           renderView.geometryType === GeometryType.TEXT)
-          ? Materials.renderMaterialToString(materialData as RenderMaterial)
+          ? Materials.renderMaterialToString(materialData)
           : Materials.isDisplayStyle(materialData) &&
             renderView.geometryType !== GeometryType.MESH &&
             renderView.geometryType !== GeometryType.POINT
-          ? Materials.displayStyleToString(materialData as DisplayStyle)
+          ? Materials.displayStyleToString(materialData)
           : ''
       if ((materialData as MaterialOptions).stencilOutlines) {
         mat += '/' + (materialData as MaterialOptions).stencilOutlines
@@ -800,7 +800,7 @@ export default class Materials {
 
   private getPointMaterial(hash: number, material: RenderMaterial) {
     if (!this.materialMap[hash]) {
-      this.materialMap[hash] = this.makePointMaterial(material as RenderMaterial)
+      this.materialMap[hash] = this.makePointMaterial(material)
     }
     return this.materialMap[hash]
   }

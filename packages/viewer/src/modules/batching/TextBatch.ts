@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 
 import { NodeRenderView } from '../tree/NodeRenderView'
@@ -134,7 +133,7 @@ export default class TextBatch implements Batch {
     this.mesh.textMesh.visible = true
   }
 
-  public async buildBatch() {
+  public async buildBatch(): Promise<void> {
     /** Catering to typescript
      *  There is no unniverse where there is no metadata
      */
