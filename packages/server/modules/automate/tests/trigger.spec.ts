@@ -134,6 +134,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
           }
         })
       ])
+
       testUserStreamModel = projectModel
       createdAutomation = newAutomation
 
@@ -1112,6 +1113,16 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
       let automationRun: InsertableAutomationRun
 
       before(async () => {
+        const testVersion = {
+          id: cryptoRandomString({ length: 10 }),
+          authorId: testUser.id,
+          streamId: testUserStream.id,
+          branchName: testUserStreamModel.name,
+          objectId: null
+        }
+
+        // @ts-expect-error force setting the objectId to null
+        await createTestCommit(testVersion)
         // Insert automation run directly to DB
         automationRun = {
           id: cryptoRandomString({ length: 10 }),
@@ -1122,7 +1133,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
           executionEngineRunId: cryptoRandomString({ length: 10 }),
           triggers: [
             {
-              triggeringId: testUserStreamModel.id,
+              triggeringId: testVersion.id,
               triggerType: VersionCreationTriggerType
             }
           ],
