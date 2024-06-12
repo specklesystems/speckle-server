@@ -1,3 +1,5 @@
+import { ToastNotification } from '@speckle/ui-components'
+
 /**
  * Basic interface scaffolding two standard method.
  */
@@ -15,4 +17,8 @@ export interface IBinding<T> {
    * Opens an url in the OS's default browser.
    */
   openUrl: (url: string) => Promise<void>
+}
+
+export interface IBindingSharedEvents {
+  setGlobalNotification: (toastNotification: ToastNotification) => void
 }

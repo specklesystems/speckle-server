@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/require-await */
 
 import { BaseBridge } from '~~/lib/bridge/base'
-import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import { IBinding, IBindingSharedEvents } from '~~/lib/bindings/definitions/IBinding'
 import { IModelCard, IModelCardSharedEvents } from '~~/lib/models/card'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
@@ -24,7 +24,9 @@ export interface IBasicConnectorBinding
   removeModel: (model: IModelCard) => Promise<void>
 }
 
-export interface IBasicConnectorBindingHostEvents extends IModelCardSharedEvents {
+export interface IBasicConnectorBindingHostEvents
+  extends IBindingSharedEvents,
+    IModelCardSharedEvents {
   documentChanged: () => void
 }
 

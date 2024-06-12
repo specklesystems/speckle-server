@@ -1,5 +1,5 @@
 import { ISendFilter } from '~~/lib/models/card/send'
-import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import { IBinding, IBindingSharedEvents } from '~~/lib/bindings/definitions/IBinding'
 import { BaseBridge } from '~~/lib/bridge/base'
 import { CardSetting } from '~/lib/models/card/setting'
 import { IModelCardSharedEvents } from '~/lib/models/card'
@@ -14,7 +14,9 @@ export interface ISendBinding extends IBinding<ISendBindingEvents> {
   cancelSend: (modelId: string) => Promise<void>
 }
 
-export interface ISendBindingEvents extends IModelCardSharedEvents {
+export interface ISendBindingEvents
+  extends IBindingSharedEvents,
+    IModelCardSharedEvents {
   refreshSendFilters: () => void
   setModelsExpired: (modelCardIds: string[]) => void
   setModelSendResult: (args: {
