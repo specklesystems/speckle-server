@@ -1,9 +1,6 @@
 const passport = require('passport')
 const { logger } = require('@/logging/logging')
-const {
-  useNewFrontend,
-  getFrontendOrigin
-} = require('@/modules/shared/helpers/envHelper')
+const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
 const {
   UnverifiedEmailSSOLoginError,
   UserInputError
@@ -29,9 +26,7 @@ function passportAuthenticate(strategy, options = undefined) {
           errPath = `/error-email-verify?email=${email}`
         }
 
-        return useNewFrontend()
-          ? res.redirect(new URL(errPath, getFrontendOrigin()).toString())
-          : res.redirect(errPath)
+        return res.redirect(new URL(errPath, getFrontendOrigin()).toString())
       }
 
       req.user = user

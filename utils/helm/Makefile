@@ -1,7 +1,6 @@
 # This file is only useful to test the helm chart locally with minikube before committing changes
 
 build:
-	cd ../.. && docker build -t speckle/speckle-frontend:local -f packages/frontend/Dockerfile .
 	cd ../.. && docker build -t speckle/speckle-frontend-2:local -f packages/frontend-2/Dockerfile .
 	cd ../.. && docker build -t speckle/speckle-server:local -f packages/server/Dockerfile .
 	cd ../.. && docker build -t speckle/speckle-preview-service:local -f packages/preview-service/Dockerfile .
@@ -12,7 +11,6 @@ build:
 
 	echo "Making locally built images available inside minikube cluster. This takes a bit to copy, unfortunately..."
 
-	minikube image load speckle/speckle-frontend:local
 	minikube image load speckle/speckle-frontend-2:local
 	minikube image load speckle/speckle-server:local
 	minikube image load speckle/speckle-preview-service:local

@@ -1,5 +1,5 @@
 import { InvalidArgumentError } from '@/modules/shared/errors'
-import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
+import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { MaybeNullOrUndefined } from '@/modules/shared/helpers/typeHelper'
 
 /**
@@ -8,11 +8,11 @@ import { MaybeNullOrUndefined } from '@/modules/shared/helpers/typeHelper'
  */
 
 export function getStreamRoute(streamId: string): string {
-  return useNewFrontend() ? `/projects/${streamId}` : `/streams/${streamId}`
+  return `/projects/${streamId}`
 }
 
 export function getRegistrationRoute(): string {
-  return useNewFrontend() ? `/authn/register` : '/authn/register'
+  return '/authn/register'
 }
 
 export function getCommentRoute(
@@ -33,9 +33,7 @@ export function getCommentRoute(
 }
 
 export function getPasswordResetFinalizationRoute(tokenId: string): string {
-  return useNewFrontend()
-    ? `/authn/reset-password?token=${tokenId}`
-    : `/authn/resetpassword/finalize?t=${tokenId}`
+  return `/authn/reset-password?token=${tokenId}`
 }
 
 export function getEmailVerificationFinalizationRoute(tokenId: string): string {

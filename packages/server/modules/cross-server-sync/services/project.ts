@@ -229,7 +229,7 @@ export const downloadProject = async (
 
   const newProjectUrl = new URL(
     `/projects/${project.id}`,
-    getFrontendOrigin(true)
+    getFrontendOrigin()
   ).toString()
   logger.info(`New Project URL: ${newProjectUrl}`)
 

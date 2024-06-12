@@ -1,8 +1,6 @@
 *node_modules
 packages/server/.env
 packages/server/dist
-packages/frontend/dist
-packages/frontend/profiler
 packages/viewer/dist
 packages/objectloader/dist
 packages/*/dist
@@ -23,7 +21,6 @@ test-queries
 
 packages/viewer/example/*.js
 packages/viewer/example/*.js.map
-packages/frontend/schema.graphql
 .tool-versions
 
 packages/server/reports*

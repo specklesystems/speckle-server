@@ -661,7 +661,7 @@ export const downloadCommit = async (
   }
 
   const linkToNewCommit = parsedCommitUrl.isFe2
-    ? `${getFrontendOrigin(true)}/projects/${targetStreamId}/models/${
+    ? `${getFrontendOrigin()}/projects/${targetStreamId}/models/${
         localResources.targetBranch.id
       }@${newCommitId}`
     : `${getFrontendOrigin()}/streams/${targetStreamId}/commits/${newCommitId}`

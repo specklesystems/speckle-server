@@ -545,9 +545,6 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: LOG_LEVEL
   value: {{ .Values.server.logLevel }}
 
-- name: USE_FRONTEND_2
-  value: {{ .Values.frontend_2.enabled | quote }}
-
 - name: FRONTEND_ORIGIN
   {{- if .Values.ssl_canonical_url }}
   value: https://{{ .Values.domain }}

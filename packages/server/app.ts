@@ -43,7 +43,6 @@ import {
   getFileSizeLimitMB,
   isDevEnv,
   isTestEnv,
-  useNewFrontend,
   isApolloMonitoringEnabled
 } from '@/modules/shared/helpers/envHelper'
 import * as ModulesSetup from '@/modules'
@@ -299,9 +298,7 @@ export async function buildApolloServer(
  * Initialises all server (express/subscription/http) instances
  */
 export async function init() {
-  if (useNewFrontend()) {
-    startupLogger.info('🖼️  Serving for frontend-2...')
-  }
+  startupLogger.info('🖼️  Serving for frontend-2...')
 
   const app = express()
   app.disable('x-powered-by')

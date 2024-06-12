@@ -60,7 +60,6 @@ workflows:
             - test-viewer
             - test-server
             - docker-build-server
-            - docker-build-frontend
             - docker-build-frontend-2
             - docker-build-previews
             - docker-build-webhooks
@@ -79,7 +78,6 @@ workflows:
             - test-viewer
             - test-server
             - docker-build-server
-            - docker-build-frontend
             - docker-build-frontend-2
             - docker-build-previews
             - docker-build-webhooks
@@ -99,12 +97,6 @@ workflows:
           filters: &filters-build
             tags:
               only: /.*/
-          requires:
-            - get-version
-
-      - docker-build-frontend:
-          context: *build-context
-          filters: *filters-build
           requires:
             - get-version
 
@@ -164,18 +156,6 @@ workflows:
               only: /.*/
           requires:
             - docker-build-server
-            - get-version
-            - pre-commit
-            - publish-approval
-            - test-frontend-2
-            - test-viewer
-            - test-server
-
-      - docker-publish-frontend:
-          context: *docker-hub-context
-          filters: *filters-publish
-          requires:
-            - docker-build-frontend
             - get-version
             - pre-commit
             - publish-approval
@@ -275,7 +255,6 @@ workflows:
             - deployment-test-helm-chart
             - docker-publish-docker-compose-ingress
             - docker-publish-file-imports
-            - docker-publish-frontend
             - docker-publish-frontend-2
             - docker-publish-monitor-container
             - docker-publish-previews
@@ -809,11 +788,6 @@ jobs:
     environment:
       SPECKLE_SERVER_PACKAGE: server
 
-  docker-build-frontend:
-    <<: *build-job
-    environment:
-      SPECKLE_SERVER_PACKAGE: frontend
-
   docker-build-frontend-2:
     <<: *build-job
     environment:
@@ -872,11 +846,6 @@ jobs:
     <<: *publish-job
     environment:
       SPECKLE_SERVER_PACKAGE: server
-
-  docker-publish-frontend:
-    <<: *publish-job
-    environment:
-      SPECKLE_SERVER_PACKAGE: frontend
 
   docker-publish-frontend-2:
     <<: *publish-job

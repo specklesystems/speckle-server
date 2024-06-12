@@ -1,11 +1,11 @@
 secret:
-  ignored-paths:
+  ignored_paths:
     - 'packages/server/modules/emails/tests'
-  ignored-matches:
-    - match: acd87c5a50b56df91a795e999812a3a4
-      name: 'packages/frontend/src/bootstrapper.ts - mixpanel token'
+  ignored_matches:
     - match: c7bf45ffe02afaae52c8e37cdb1ae33165370be3b44a5da43e8cba43c7da5f33
       name: '.circleci/deployment/manifests/speckle-server.secret.yaml - test s3_secret_key'
     - match: 9f1d96876edbf847bb792754025ed131374869e60866d5e9c349c9423b37dd09
       name: '.circleci/deployment/manifests/speckle-server.secret.yaml - test session_secret'
+    - match: a181060b766606db0652528b7065e2bbd5a639ccf44e1d5ca8fe01af709f9fb1
+      name: 'packages/frontend/src/bootstrapper.ts - mixpanel semi-public key'
 version: 2

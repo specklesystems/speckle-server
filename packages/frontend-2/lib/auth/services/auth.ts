@@ -6,7 +6,6 @@ import {
 } from '~~/lib/auth/errors/errors'
 import { speckleWebAppId } from '~~/lib/auth/helpers/strategies'
 
-// TODO: Should these differ from the old frontend values?
 const appId = speckleWebAppId
 const appSecret = speckleWebAppId
 
