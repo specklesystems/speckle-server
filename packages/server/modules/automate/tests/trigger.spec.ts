@@ -1118,10 +1118,9 @@ const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
           authorId: testUser.id,
           streamId: testUserStream.id,
           branchName: testUserStreamModel.name,
-          objectId: null
+          objectId: ''
         }
 
-        // @ts-expect-error force setting the objectId to null
         await createTestCommit(testVersion)
         // Insert automation run directly to DB
         automationRun = {
