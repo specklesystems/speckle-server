@@ -13,15 +13,19 @@ const buildOutputFileName = (chunkName: string) =>
 const {
   SPECKLE_SERVER_VERSION,
   NUXT_PUBLIC_LOG_LEVEL = 'info',
-  NUXT_PUBLIC_LOG_PRETTY = false
+  NUXT_PUBLIC_LOG_PRETTY = false,
+  BUILD_SOURCEMAPS = 'false'
 } = process.env
 
 const featureFlags = Environment.getFeatureFlags()
 
 const isLogPretty = ['1', 'true', true, 1].includes(NUXT_PUBLIC_LOG_PRETTY)
+const buildSourceMaps = ['1', 'true', true, 1].includes(BUILD_SOURCEMAPS)
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
+  // sourcemaps in prod only needed for datadog and should be deleted after (or at least made inaccessible?)
+  sourcemap: !!buildSourceMaps,
   typescript: {
     shim: false,
     strict: true
