@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/require-await */
 
 import { BaseBridge } from '~~/lib/bridge/base'
-import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import type { IBinding } from '~~/lib/bindings/definitions/IBinding'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 
@@ -52,10 +52,6 @@ export type ToastInfo = {
 }
 
 export class MockedBaseBinding extends BaseBridge {
-  constructor() {
-    super()
-  }
-
   public async getAccounts() {
     return []
   }

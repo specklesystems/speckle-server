@@ -27,10 +27,8 @@
 </template>
 <script setup lang="ts">
 import { isArray } from 'lodash-es'
-import {
-  CommentPermissions,
-  commentPermissionsSelectItems
-} from '~~/lib/projects/helpers/components'
+import type { CommentPermissions } from '~~/lib/projects/helpers/components'
+import { commentPermissionsSelectItems } from '~~/lib/projects/helpers/components'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentPermissions): void

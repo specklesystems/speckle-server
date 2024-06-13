@@ -410,7 +410,7 @@ export default class SpeckleMesh extends Mesh {
               if (intersection) {
                 intersection.faceIndex = Math.floor(j / 3) // triangle number in indexed buffer semantics
                 if (intersection.face)
-                  intersection.face.materialIndex = group.materialIndex as number
+                  intersection.face.materialIndex = group.materialIndex
                 intersects.push(intersection)
               }
             }

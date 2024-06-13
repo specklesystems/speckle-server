@@ -2,7 +2,7 @@ const { performance } = require('perf_hooks')
 const { fetch } = require('undici')
 const Parser = require('./parser_v2')
 const ServerAPI = require('./api.js')
-const { Observability } = require('@speckle/shared')
+const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
 const { logger: parentLogger } = require('../observability/logging')
 
 async function parseAndCreateCommit({

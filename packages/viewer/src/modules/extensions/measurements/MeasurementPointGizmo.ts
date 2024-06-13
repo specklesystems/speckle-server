@@ -326,7 +326,7 @@ export class MeasurementPointGizmo extends Group {
     quaternion?: Quaternion,
     scale?: Vector3
   ) {
-    this.text
+    void this.text
       .update({
         textValue: value,
         height: 1,

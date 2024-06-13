@@ -108,11 +108,11 @@ export class AccelerationStructure {
     let bvhIndices = null
     if (position.length >= 65535 || indices.length >= 65535) {
       bvhIndices = new Uint32Array(indices.length)
-      ;(bvhIndices as Uint32Array).set(indices, 0)
+      bvhIndices.set(indices, 0)
       bvhGeometry.setIndex(new Uint32BufferAttribute(bvhIndices, 1))
     } else {
       bvhIndices = new Uint16Array(indices.length)
-      ;(bvhIndices as Uint16Array).set(indices, 0)
+      bvhIndices.set(indices, 0)
       bvhGeometry.setIndex(new Uint16BufferAttribute(bvhIndices, 1))
     }
 

@@ -17,11 +17,11 @@ export const abortControllerManager = () => {
   return {
     pop,
     popOnlyInCSR: () => {
-      if (process.server) return null
+      if (import.meta.server) return null
       return pop()
     },
     popOnlyInSSR: () => {
-      if (process.client) return null
+      if (import.meta.client) return null
       return pop()
     }
   }

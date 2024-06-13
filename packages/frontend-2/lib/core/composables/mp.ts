@@ -29,7 +29,7 @@ export function useMixpanel() {
  * Note: The returned function will only work on the client-side
  */
 export function useMixpanelUserIdentification() {
-  if (process.server) return { reidentify: () => void 0 }
+  if (import.meta.server) return { reidentify: () => void 0 }
 
   const mp = useMixpanel()
   const { distinctId } = useActiveUser()
@@ -68,7 +68,7 @@ export function useMixpanelUserIdentification() {
  * Note: The returned function will only initialize mixpanel on the client-side
  */
 export async function useMixpanelInitialization() {
-  if (process.server) return
+  if (import.meta.server) return
 
   const mp = useMixpanel()
   const { reidentify } = useMixpanelUserIdentification()

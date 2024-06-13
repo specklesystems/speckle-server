@@ -99,7 +99,7 @@ module.exports = {
         try {
           await validateScopes(context.scopes, Scopes.Profile.Email)
           return parent.email
-        } catch (err) {
+        } catch {
           return null
         }
       }
@@ -109,7 +109,7 @@ module.exports = {
         await throwForNotHavingServerRole(context, Roles.Server.Admin)
         await validateScopes(context.scopes, Scopes.Users.Email)
         return parent.email
-      } catch (err) {
+      } catch {
         return null
       }
     },

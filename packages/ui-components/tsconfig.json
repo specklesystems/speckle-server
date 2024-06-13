@@ -24,7 +24,7 @@
     /* Extra */
     "paths": {
       "~~/src/*": ["./src/*"],
-      "@speckle/shared": ["../shared/dist-esm/index"]
+      "@speckle/shared": ["../shared/dist/esm/index"]
     }
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],

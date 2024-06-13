@@ -1,5 +1,6 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
+import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
@@ -294,3 +295,5 @@ export function getGendoAIResponseKey() {
 export function getGendoAIAPIEndpoint() {
   return process.env.GENDOAI_API_ENDPOINT
 }
+
+export const getFeatureFlags = () => Environment.getFeatureFlags()

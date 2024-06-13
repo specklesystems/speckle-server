@@ -1,6 +1,7 @@
-import { Roles, Scopes, AllScopes as BaseAllScopes, Environment } from '@speckle/shared'
+import { Roles, Scopes, AllScopes as BaseAllScopes } from '@speckle/shared'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
-const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const AllScopes = FF_AUTOMATE_MODULE_ENABLED
   ? BaseAllScopes

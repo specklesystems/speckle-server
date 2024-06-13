@@ -13,7 +13,10 @@ function parseFeatureFlags() {
 
 let parsedFlags: ReturnType<typeof parseFeatureFlags> | undefined
 
-export function getFeatureFlags() {
+export function getFeatureFlags(): {
+  FF_AUTOMATE_MODULE_ENABLED: boolean
+  FF_GENDOAI_MODULE_ENABLED: boolean
+} {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags
 }

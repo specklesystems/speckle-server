@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="max-w-xl w-screen h-[100dvh] flex items-center justify-center">
     <Transition

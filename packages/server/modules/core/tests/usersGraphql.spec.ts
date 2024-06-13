@@ -49,7 +49,9 @@ describe('Users (GraphQL)', () => {
       const results = await getOtherUser(apollo, { id: otherGuy.id })
 
       expect(results.data?.otherUser).to.be.null
-      expect(results).to.haveGraphQLErrors('you do not have the required privileges')
+      expect(results).to.haveGraphQLErrors(
+        'Your auth token does not have the required scope'
+      )
     })
   })
 

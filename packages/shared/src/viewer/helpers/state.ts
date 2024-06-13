@@ -1,7 +1,7 @@
-import { intersection, isObjectLike } from 'lodash'
-import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes'
+import { intersection, isObjectLike } from '#lodash'
+import type { MaybeNullOrUndefined, Nullable } from '../../core/helpers/utilityTypes.js'
 import type { PartialDeep } from 'type-fest'
-import { UnformattableSerializedViewerStateError } from '../errors'
+import { UnformattableSerializedViewerStateError } from '../errors/index.js'
 
 enum MeasurementType {
   PERPENDICULAR = 0,

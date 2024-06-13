@@ -375,7 +375,7 @@ const handleApplicationCreated = (applicationId: string) => {
 }
 
 const goToExplorer = () => {
-  if (!process.client) return
+  if (!import.meta.client) return
   window.location.href = new URL('/explorer', apiOrigin).toString()
 }
 </script>

@@ -4,10 +4,7 @@
       class="pt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
     >
       <Portal to="navigation">
-        <HeaderNavLink
-          :to="automationFunctionsRoute"
-          :name="'Automate Functions'"
-        ></HeaderNavLink>
+        <HeaderNavLink :to="automationFunctionsRoute" :name="'Automate Functions'" />
       </Portal>
 
       <h1 class="h3 font-bold">Automate Functions</h1>
@@ -84,7 +81,7 @@ const canCreateFunction = computed(
   () => !!props.activeUser?.id && !!availableTemplates.value.length
 )
 
-if (process.client) {
+if (import.meta.client) {
   watch(
     () => route.query['ghAuth'] as Nullable<string>,
     (ghAuthVal) => {

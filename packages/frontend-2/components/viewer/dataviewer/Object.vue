@@ -35,7 +35,6 @@ if (props.object['referencedId']) {
 }
 
 const kvps = computed(() => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
   const obj = (result.value?.stream?.object?.data || props.object) as Record<
     string,
     unknown

@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div :class="[fullWidth ? 'w-full' : '']">
     <label :for="name" :class="labelClasses">

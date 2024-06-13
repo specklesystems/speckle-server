@@ -2,7 +2,7 @@ import { join } from 'path'
 import { withoutLeadingSlash } from 'ufo'
 import { sanitizeFilePath } from 'mlly'
 import { filename } from 'pathe/utils'
-import { Environment } from '@speckle/shared'
+import * as Environment from '@speckle/shared/dist/esm/environment/index'
 
 // Copied out from nuxt vite-builder source to correctly build output chunk/entry/asset/etc file names
 const buildOutputFileName = (chunkName: string) =>
@@ -31,6 +31,7 @@ export default defineNuxtConfig({
     devLogs: false
   },
   modules: [
+    '@nuxt/eslint',
     '@nuxt/devtools',
     '@nuxtjs/tailwindcss',
     [
@@ -62,10 +63,6 @@ export default defineNuxtConfig({
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
       serverName: 'UNDEFINED',
       viewerDebug: false,
-      raygunKey: '',
-      logrocketAppId: '',
-      speedcurveId: 0,
-      debugbearId: '',
       debugCoreWebVitals: false,
       datadogAppId: '',
       datadogClientToken: '',
@@ -90,7 +87,6 @@ export default defineNuxtConfig({
 
     vue: {
       script: {
-        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         defineModel: true
       }
     },
@@ -129,7 +125,9 @@ export default defineNuxtConfig({
 
             return buildOutputFileName(chunkInfo.name)
           }
-        }
+        },
+        // Leave imports as is, they're server-side only
+        external: ['jsdom']
       }
       // // optionally disable minification for debugging
       // minify: false,

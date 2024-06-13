@@ -207,7 +207,7 @@ export function useViewerCommentBubblesProjection(params: {
 }
 
 export function useViewerOpenedThreadUpdateEmitter() {
-  if (process.server) return
+  if (import.meta.server) return
 
   const {
     urlHashState: { focusedThreadId }
@@ -225,7 +225,7 @@ export function useViewerOpenedThreadUpdateEmitter() {
  * Set up auto-focusing on opened thread and setting/unsetting viewer state
  */
 export function useViewerThreadTracking() {
-  if (process.server) return
+  if (import.meta.server) return
 
   const applyState = useApplySerializedState()
   const { serialize: serializeState } = useStateSerialization()

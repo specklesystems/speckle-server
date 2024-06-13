@@ -56,7 +56,7 @@ export = {
       }
 
       await authorizeResolver(
-        ctx.userId!,
+        ctx.userId,
         stream.id,
         Roles.Stream.Contributor,
         ctx.resourceAccessRules

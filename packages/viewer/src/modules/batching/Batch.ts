@@ -42,7 +42,7 @@ export interface Batch {
   getVisibleRange(): BatchUpdateRange
   setDrawRanges(ranges: BatchUpdateRange[]): void
   resetDrawRanges(): void
-  buildBatch(): void
+  buildBatch(): Promise<void>
   getRenderView(index: number): NodeRenderView | null
   getMaterialAtIndex(index: number): Material | null
   getMaterial(rv: NodeRenderView): Material | null

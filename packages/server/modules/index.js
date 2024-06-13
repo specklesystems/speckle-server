@@ -8,7 +8,7 @@ const { scalarResolvers } = require('./core/graph/scalars')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
 const { moduleLogger } = require('@/logging/logging')
 const { addMocksToSchema } = require('@graphql-tools/mock')
-const { Environment } = require('@speckle/shared')
+const { getFeatureFlags } = require('@/modules/shared/helpers/envHelper')
 
 /**
  * Cached speckle module requires
@@ -42,8 +42,7 @@ function autoloadFromDirectory(dirPath) {
 }
 
 const getEnabledModuleNames = () => {
-  const { FF_AUTOMATE_MODULE_ENABLED, FF_GENDOAI_MODULE_ENABLED } =
-    Environment.getFeatureFlags()
+  const { FF_AUTOMATE_MODULE_ENABLED, FF_GENDOAI_MODULE_ENABLED } = getFeatureFlags()
   const moduleNames = [
     'accessrequests',
     'activitystream',

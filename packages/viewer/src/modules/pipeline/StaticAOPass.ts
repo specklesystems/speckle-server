@@ -27,7 +27,7 @@ import { speckleStaticAoGenerateVert } from '../materials/shaders/speckle-static
 import { speckleStaticAoGenerateFrag } from '../materials/shaders/speckle-static-ao-generate-frag'
 import { speckleStaticAoAccumulateVert } from '../materials/shaders/speckle-static-ao-accumulate-vert'
 import { speckleStaticAoAccumulateFrag } from '../materials/shaders/speckle-static-ao-accumulate-frag'
-import { SimplexNoise } from 'three/examples/jsm//math/SimplexNoise.js'
+import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js'
 import type {
   InputDepthTextureUniform,
   InputNormalsTextureUniform,
@@ -173,12 +173,8 @@ export class StaticAOPass extends Pass implements SpeckleProgressivePass {
     this.aoMaterial.defines['KERNEL_SIZE'] = this.params.kernelSize
     this.accumulateMaterial.defines['NUM_FRAMES'] = this.accumulationFrames
     /** UNIFORMS */
-    this.aoMaterial.uniforms['cameraNear'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.aoMaterial.uniforms['cameraFar'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
+    this.aoMaterial.uniforms['cameraNear'].value = camera.near
+    this.aoMaterial.uniforms['cameraFar'].value = camera.far
     this.aoMaterial.uniforms['cameraInverseProjectionMatrix'].value.copy(
       camera.projectionMatrixInverse
     )

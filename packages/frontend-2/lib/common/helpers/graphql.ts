@@ -1,15 +1,15 @@
 /* eslint-disable @typescript-eslint/no-unsafe-argument */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { isUndefinedOrVoid } from '@speckle/shared'
 import type { Optional } from '@speckle/shared'
-import { ApolloError, ApolloCache, defaultDataIdFromObject } from '@apollo/client/core'
+import { ApolloError, defaultDataIdFromObject } from '@apollo/client/core'
 import type {
   FetchResult,
   DataProxy,
   TypedDocumentNode,
   ServerError,
-  ServerParseError
+  ServerParseError,
+  ApolloCache
 } from '@apollo/client/core'
 import { GraphQLError } from 'graphql'
 import type { DocumentNode } from 'graphql'
@@ -101,7 +101,6 @@ export function convertThrowIntoFetchResult(
   } else if (err instanceof Error) {
     gqlErrors = [new GraphQLError(err.message)]
   } else {
-    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     gqlErrors = [new GraphQLError(`${err}`)]
   }
 
@@ -141,7 +140,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
    * mutate anything being passed into this function! E.g. if you want to mutate arrays,
    * create new arrays through slice()/filter() instead
    */
-  updater: (data: TData) => TData | undefined | void,
+  updater: (data: TData) => TData | undefined,
   options: Partial<{
     /**
      * Whether to suppress errors that occur when the fragment being queried
@@ -329,7 +328,6 @@ export function modifyObjectFields<
     }
   ) =>
     | Optional<ModifyFnCacheData<D>>
-    | void
     | Parameters<Modifier<ModifyFnCacheData<D>>>[1]['DELETE']
     | Parameters<Modifier<ModifyFnCacheData<D>>>[1]['INVALIDATE'],
   options?: Partial<{
@@ -337,7 +335,7 @@ export function modifyObjectFields<
     debug: boolean
   }>
 ) {
-  const { fieldNameWhitelist, debug = !!(process.dev && process.client) } =
+  const { fieldNameWhitelist, debug = !!(import.meta.dev && import.meta.client) } =
     options || {}
 
   const logger = useLogger()
@@ -346,7 +344,6 @@ export function modifyObjectFields<
     if (!debug) return
     const [message, ...rest] = args
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     logger.debug(`[${invocationId}] ${message}`, ...rest)
   }
 

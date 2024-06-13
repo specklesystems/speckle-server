@@ -5,7 +5,6 @@ import {
   onModelVersionCreate,
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
-import { Environment } from '@speckle/shared'
 import {
   getActiveTriggerDefinitions,
   getAutomationRunFullTriggers,
@@ -29,8 +28,9 @@ import {
 } from '@/modules/automate/services/subscriptions'
 import { setupRunFinishedTracking } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
-const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
 
 async function initScopes() {

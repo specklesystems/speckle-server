@@ -1,4 +1,4 @@
-import { ApolloCache } from '@apollo/client/core'
+import type { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useQuery, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
 import type { Get } from 'type-fest'
