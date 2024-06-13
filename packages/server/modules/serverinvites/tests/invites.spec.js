@@ -31,6 +31,8 @@ const { getUserStreamRole } = require('@/test/speckle-helpers/streamHelper')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { buildAuthenticatedApolloServer } = require('@/test/serverHelper')
 const { EmailSendingServiceMock } = require('@/test/mocks/global')
+const knexInstance = require('@/db/knex')
+const { createServerInvitesRepository } = require('../repositories/serverInvites')
 
 async function cleanup() {
   await truncateTables([ServerInvites.name, Streams.name, Users.name])
@@ -409,7 +411,11 @@ describe('[Stream & Server Invites]', () => {
         // Creating some invites
         await Promise.all(
           invites.map((i) =>
-            createInviteDirectly(i, me.id).then((o) => {
+            createInviteDirectly({
+              serverInvitesRepository: createServerInvitesRepository({
+                db: knexInstance
+              })
+            })(i, me.id).then((o) => {
               i.inviteId = o.inviteId
               i.token = o.token
             })
@@ -457,7 +463,11 @@ describe('[Stream & Server Invites]', () => {
         ]
         await Promise.all(
           deletableInvites.map((i) =>
-            createInviteDirectly(i, me.id).then((o) => {
+            createInviteDirectly({
+              serverInvitesRepository: createServerInvitesRepository({
+                db: knexInstance
+              })
+            })(i, me.id).then((o) => {
               i.inviteId = o.inviteId
               i.token = o.token
             })
@@ -571,7 +581,9 @@ describe('[Stream & Server Invites]', () => {
       beforeEach(async () => {
         // Create an invite before each test so that we can mutate them
         // in each test as needed
-        await createInviteDirectly(inviteFromOtherGuy, otherGuy.id).then((o) => {
+        await createInviteDirectly({
+          serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        })(inviteFromOtherGuy, otherGuy.id).then((o) => {
           inviteFromOtherGuy.inviteId = o.inviteId
           inviteFromOtherGuy.token = o.token
         })
@@ -680,11 +692,15 @@ describe('[Stream & Server Invites]', () => {
 
         // Create a couple of static invites that shouldn't be mutated in tests
         await Promise.all([
-          createInviteDirectly(myInvite, me.id).then((o) => {
+          createInviteDirectly({
+            serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+          })(myInvite, me.id).then((o) => {
             myInvite.inviteId = o.inviteId
             myInvite.token = o.token
           }),
-          createInviteDirectly(otherGuysInvite, otherGuy.id).then((o) => {
+          createInviteDirectly({
+            serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+          })(otherGuysInvite, otherGuy.id).then((o) => {
             otherGuysInvite.inviteId = o.inviteId
             otherGuysInvite.token = o.token
           })
@@ -694,7 +710,9 @@ describe('[Stream & Server Invites]', () => {
       beforeEach(async () => {
         // Create an invite before each test so that we can mutate them
         // in each test as needed
-        await createInviteDirectly(dynamicInvite, me.id).then((o) => {
+        await createInviteDirectly({
+          serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        })(dynamicInvite, me.id).then((o) => {
           dynamicInvite.inviteId = o.inviteId
           dynamicInvite.token = o.token
         })
@@ -766,14 +784,18 @@ describe('[Stream & Server Invites]', () => {
 
         // Invite him to a few streams
         await Promise.all([
-          createInviteDirectly(
+          createInviteDirectly({
+            serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+          })(
             {
               user: ownInvitesGuy,
               stream: myPrivateStream
             },
             me.id
           ),
-          createInviteDirectly(
+          createInviteDirectly({
+            serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+          })(
             {
               user: ownInvitesGuy,
               stream: otherGuysStream

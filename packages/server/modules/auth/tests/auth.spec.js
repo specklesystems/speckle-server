@@ -12,6 +12,10 @@ const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { getInvite } = require('@/modules/serverinvites/repositories')
 const { RateLimiterMemory } = require('rate-limiter-flexible')
+const {
+  createServerInvitesRepository
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const knexInstance = require('@/db/knex')
 
 const expect = chai.expect
 
@@ -90,7 +94,9 @@ describe('Auth @auth', () => {
         }@speckle.systems`
 
         const inviterUser = await getUserByEmail({ email: registeredUserEmail })
-        const { token, inviteId } = await createInviteDirectly(
+        const { token, inviteId } = await createInviteDirectly({
+          serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        })(
           streamInvite
             ? {
                 email: targetEmail,

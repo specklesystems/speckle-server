@@ -1,3 +1,4 @@
+import knexInstance from '@/db/knex'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import {
@@ -26,6 +27,7 @@ import {
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
+import { createServerInvitesRepository } from '@/modules/serverinvites/repositories/serverInvites'
 import { cancelStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
 import {
   getPendingStreamCollaborators,
@@ -129,7 +131,9 @@ export = {
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
-      await createStreamInviteAndNotify(
+      await createStreamInviteAndNotify({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(
         {
           ...args.input,
           projectId: args.projectId
@@ -158,7 +162,11 @@ export = {
       for (const batch of inputBatches) {
         await Promise.all(
           batch.map((i) =>
-            createStreamInviteAndNotify(
+            createStreamInviteAndNotify({
+              serverInvitesRepository: createServerInvitesRepository({
+                db: knexInstance
+              })
+            })(
               { ...i, projectId: args.projectId },
               ctx.userId!,
               ctx.resourceAccessRules
@@ -216,7 +224,9 @@ export = {
     },
     async projectInvites(_parent, _args, context) {
       const { userId } = context
-      return await getUserPendingStreamInvites(userId!)
+      return await getUserPendingStreamInvites({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(userId!)
     }
   },
   Project: {

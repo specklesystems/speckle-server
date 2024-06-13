@@ -26,6 +26,8 @@ const {
   addStreamInviteDeclinedActivity
 } = require('@/modules/activitystream/services/streamActivity')
 const { getFrontendOrigin } = require('@/modules/shared/helpers/envHelper')
+const { createServerInvitesRepository } = require('../repositories/serverInvites')
+const knexInstance = require('@/db/knex')
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
@@ -168,8 +170,10 @@ async function resendInvite(inviteId) {
   if (!invite) {
     throw new NoInviteFoundError('Attempted to re-send a nonexistant invite')
   }
-
-  await resendInviteEmail(invite)
+  // TODO: injection
+  await resendInviteEmail({
+    serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+  })(invite)
 }
 
 /**

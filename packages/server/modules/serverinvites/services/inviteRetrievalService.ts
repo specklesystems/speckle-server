@@ -13,14 +13,13 @@ import {
   ServerInviteRecord,
   StreamInviteRecord
 } from '@/modules/serverinvites/helpers/types'
-import {
-  getAllStreamInvites,
-  getStreamInvite,
-  getAllUserStreamInvites,
-  getServerInvite
-} from '@/modules/serverinvites/repositories'
 import { MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { keyBy, uniq } from 'lodash'
+import { ServerInvitesRepository } from '../domain'
+import {
+  getAllStreamInvites,
+  getServerInvite
+} from '@/modules/serverinvites/repositories'
 
 /**
  * The token field is intentionally ommited from this and only managed through the .token resolver
@@ -79,14 +78,13 @@ export async function getPendingStreamCollaborators(
   // Build results
   const results = []
   for (const invite of invites) {
-    /** @type {import("@/modules/core/helpers/userHelper").LimitedUserRecord} */
-    let user
+    let user: LimitedUserRecord | null = null
     const { userId } = resolveTarget(invite.target)
     if (userId && usersById[userId]) {
       user = removePrivateFields(usersById[userId])
     }
 
-    results.push(buildPendingStreamCollaboratorModel(invite, user || null))
+    results.push(buildPendingStreamCollaboratorModel(invite, user))
   }
 
   return results
@@ -96,40 +94,52 @@ export async function getPendingStreamCollaborators(
  * Find a pending invitation to the specified stream for the specified user
  * Either the user ID or invite ID must be set
  */
-export async function getUserPendingStreamInvite(
-  streamId: string,
-  userId: MaybeNullOrUndefined<string>,
-  token: MaybeNullOrUndefined<string>
-): Promise<Nullable<PendingStreamCollaboratorGraphQLType>> {
-  if (!userId && !token) return null
+export const getUserPendingStreamInvite =
+  ({
+    serverInvitesRepository
+  }: {
+    serverInvitesRepository: Pick<ServerInvitesRepository, 'findStreamInvite'>
+  }) =>
+  async (
+    streamId: string,
+    userId: MaybeNullOrUndefined<string>,
+    token: MaybeNullOrUndefined<string>
+  ): Promise<Nullable<PendingStreamCollaboratorGraphQLType>> => {
+    if (!userId && !token) return null
 
-  const invite = await getStreamInvite(streamId, {
-    target: buildUserTarget(userId),
-    token
-  })
-  if (!invite) return null
+    const invite = await serverInvitesRepository.findStreamInvite(streamId, {
+      target: buildUserTarget(userId),
+      token
+    })
+    if (!invite) return null
 
-  const targetUser = userId ? await getUser(userId) : null
+    // TODO: user repo should be injected
+    const targetUser = userId ? await getUser(userId) : null
 
-  return buildPendingStreamCollaboratorModel(invite, targetUser)
-}
+    return buildPendingStreamCollaboratorModel(invite, targetUser)
+  }
 
 /**
  * Get all pending invitations to streams that this user has
  */
-export async function getUserPendingStreamInvites(
-  userId: string
-): Promise<PendingStreamCollaboratorGraphQLType[]> {
-  if (!userId) return []
+export const getUserPendingStreamInvites =
+  ({
+    serverInvitesRepository
+  }: {
+    serverInvitesRepository: Pick<ServerInvitesRepository, 'queryAllUserStreamInvites'>
+  }) =>
+  async (userId: string): Promise<PendingStreamCollaboratorGraphQLType[]> => {
+    if (!userId) return []
 
-  const targetUser = await getUser(userId)
-  if (!targetUser) {
-    throw new NoInviteFoundError('Nonexistant user specified')
+    // TODO: user repository should be injected
+    const targetUser = await getUser(userId)
+    if (!targetUser) {
+      throw new NoInviteFoundError('Nonexistant user specified')
+    }
+
+    const invites = await serverInvitesRepository.queryAllUserStreamInvites(userId)
+    return invites.map((i) => buildPendingStreamCollaboratorModel(i, targetUser))
   }
-
-  const invites = await getAllUserStreamInvites(userId)
-  return invites.map((i) => buildPendingStreamCollaboratorModel(i, targetUser))
-}
 
 export async function getServerInviteForToken(
   token: string

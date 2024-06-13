@@ -23,20 +23,29 @@ import {
 import { authorizeResolver } from '@/modules/shared'
 import { chunk } from 'lodash'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import knexInstance from '@/db/knex'
+import { createServerInvitesRepository } from '../../repositories/serverInvites'
+import { ServerRoles, StreamRoles } from '@speckle/shared'
 
 export = {
   Query: {
     async streamInvite(_parent, args, context) {
       const { streamId, token } = args
-      return await getUserPendingStreamInvite(streamId, context.userId, token)
+      return getUserPendingStreamInvite({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(streamId, context.userId, token)
     },
     async projectInvite(_parent, args, context) {
       const { projectId, token } = args
-      return await getUserPendingStreamInvite(projectId, context.userId, token)
+      return await getUserPendingStreamInvite({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(projectId, context.userId, token)
     },
     async streamInvites(_parent, _args, context) {
       const { userId } = context
-      return await getUserPendingStreamInvites(userId!)
+      return getUserPendingStreamInvites({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(userId!)
     },
     async serverInviteByToken(_parent, args) {
       const { token } = args
@@ -54,12 +63,14 @@ export = {
   },
   Mutation: {
     async serverInviteCreate(_parent, args, context) {
-      await createAndSendInvite(
+      await createAndSendInvite({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(
         {
           target: args.input.email,
           inviterId: context.userId!,
           message: args.input.message,
-          serverRole: args.input.serverRole
+          serverRole: args.input.serverRole as null | undefined | ServerRoles
         },
         context.resourceAccessRules
       )
@@ -74,11 +85,9 @@ export = {
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
-      await createStreamInviteAndNotify(
-        args.input,
-        context.userId!,
-        context.resourceAccessRules
-      )
+      await createStreamInviteAndNotify({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(args.input, context.userId!, context.resourceAccessRules)
 
       return true
     },
@@ -98,12 +107,16 @@ export = {
       for (const paramsBatchArray of batches) {
         await Promise.all(
           paramsBatchArray.map((params) =>
-            createAndSendInvite(
+            createAndSendInvite({
+              serverInvitesRepository: createServerInvitesRepository({
+                db: knexInstance
+              })
+            })(
               {
                 target: params.email,
                 inviterId: context.userId!,
                 message: params.message,
-                serverRole: params.serverRole
+                serverRole: params.serverRole as ServerRoles | null | undefined
               },
               context.resourceAccessRules
             )
@@ -134,15 +147,19 @@ export = {
           paramsBatchArray.map((params) => {
             const { email, userId, message, streamId, role, serverRole } = params
             const target = (userId ? buildUserTarget(userId) : email)!
-            return createAndSendInvite(
+            return createAndSendInvite({
+              serverInvitesRepository: createServerInvitesRepository({
+                db: knexInstance
+              })
+            })(
               {
                 target,
                 inviterId: context.userId!,
                 message,
                 resourceTarget: ResourceTargets.Streams,
                 resourceId: streamId,
-                role: role || Roles.Stream.Contributor,
-                serverRole
+                role: (role as unknown as StreamRoles) || Roles.Stream.Contributor,
+                serverRole: serverRole as ServerRoles | null | undefined
               },
               context.resourceAccessRules
             )

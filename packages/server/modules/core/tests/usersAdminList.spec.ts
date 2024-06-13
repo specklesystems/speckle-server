@@ -12,6 +12,8 @@ import { expect } from 'chai'
 import { ApolloServer } from 'apollo-server-express'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { wait } from '@speckle/shared'
+import { createServerInvitesRepository } from '@/modules/serverinvites/repositories/serverInvites'
+import knexInstance from '@/db/knex'
 
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
 const WAIT_TIMEOUT = 5
@@ -120,7 +122,9 @@ describe('[Admin users list]', () => {
     // Create invites
     // Server invites
     for (let i = 0; i < SERVER_INVITE_COUNT; i++) {
-      await createInviteDirectly(
+      await createInviteDirectly({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(
         {
           email: `randominvitee${i}.${
             remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
@@ -138,7 +142,9 @@ describe('[Admin users list]', () => {
         remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
       }@gmail.com`
 
-      await createInviteDirectly(
+      await createInviteDirectly({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(
         {
           streamId,
           email
@@ -157,7 +163,9 @@ describe('[Admin users list]', () => {
       const userId = randomEl(userIds.filter((i) => i !== ownerId))
 
       createdInvitesData.push(
-        await createInviteDirectly(
+        await createInviteDirectly({
+          serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        })(
           {
             streamId,
             userId

@@ -1,4 +1,4 @@
-import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import { MaybeNullOrUndefined, Roles, ServerRoles, StreamRoles } from '@speckle/shared'
 import {
   MutationStreamInviteUseArgs,
   ProjectInviteCreateInput,
@@ -20,6 +20,7 @@ import {
   isResourceAllowed
 } from '@/modules/core/helpers/token'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import { ServerInvitesRepository } from '../domain'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
 
@@ -27,33 +28,42 @@ const isStreamInviteCreateInput = (
   i: StreamInviteCreateInput | FullProjectInviteCreateInput
 ): i is StreamInviteCreateInput => has(i, 'streamId')
 
-export async function createStreamInviteAndNotify(
-  input: StreamInviteCreateInput | FullProjectInviteCreateInput,
-  inviterId: string,
-  inviterResourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
-) {
-  const { email, userId, role } = input
+export const createStreamInviteAndNotify =
+  ({
+    serverInvitesRepository
+  }: {
+    serverInvitesRepository: Pick<
+      ServerInvitesRepository,
+      'findUserByTarget' | 'findResource' | 'insertInviteAndDeleteOld'
+    >
+  }) =>
+  async (
+    input: StreamInviteCreateInput | FullProjectInviteCreateInput,
+    inviterId: string,
+    inviterResourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
+  ) => {
+    const { email, userId, role } = input
 
-  if (!email && !userId) {
-    throw new InviteCreateValidationError('Either email or userId must be specified')
+    if (!email && !userId) {
+      throw new InviteCreateValidationError('Either email or userId must be specified')
+    }
+
+    const target = (userId ? buildUserTarget(userId) : email)!
+    await createAndSendInvite({ serverInvitesRepository })(
+      {
+        target,
+        inviterId,
+        resourceTarget: ResourceTargets.Streams,
+        resourceId: isStreamInviteCreateInput(input) ? input.streamId : input.projectId,
+        role: (role as StreamRoles) || Roles.Stream.Contributor,
+        message: isStreamInviteCreateInput(input)
+          ? input.message || undefined
+          : undefined,
+        serverRole: (input.serverRole as ServerRoles) || undefined
+      },
+      inviterResourceAccessRules
+    )
   }
-
-  const target = (userId ? buildUserTarget(userId) : email)!
-  await createAndSendInvite(
-    {
-      target,
-      inviterId,
-      resourceTarget: ResourceTargets.Streams,
-      resourceId: isStreamInviteCreateInput(input) ? input.streamId : input.projectId,
-      role: role || Roles.Stream.Contributor,
-      message: isStreamInviteCreateInput(input)
-        ? input.message || undefined
-        : undefined,
-      serverRole: input.serverRole || undefined
-    },
-    inviterResourceAccessRules
-  )
-}
 
 const isStreamInviteUseArgs = (
   i: MutationStreamInviteUseArgs | ProjectInviteUseInput

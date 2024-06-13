@@ -4,8 +4,8 @@ const ResourceTargets = Object.freeze({
 
 /**
  * @typedef {{
- *  resourceTarget?: string,
- *  resourceId?: string
+ *  resourceTarget?: string | null,
+ *  resourceId?: string | null
  * }} InviteResourceData
  */
 

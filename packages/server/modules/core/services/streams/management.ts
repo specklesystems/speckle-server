@@ -41,6 +41,8 @@ import {
   isNewResourceAllowed
 } from '@/modules/core/helpers/token'
 import { authorizeResolver } from '@/modules/shared'
+import { createServerInvitesRepository } from '@/modules/serverinvites/repositories/serverInvites'
+import knexInstance from '@/db/knex'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & {
@@ -75,12 +77,10 @@ export async function createStreamReturnRecord(
 
   // Invite contributors?
   if (!isProjectCreateInput(params) && params.withContributors?.length) {
-    await inviteUsersToStream(
-      ownerId,
-      streamId,
-      params.withContributors,
-      ownerResourceAccessRules
-    )
+    // TODO: should be injected in the resolver
+    await inviteUsersToStream({
+      serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+    })(ownerId, streamId, params.withContributors, ownerResourceAccessRules)
   }
 
   // Save activity
