@@ -6,6 +6,7 @@ import {
   OrthographicCamera,
   PerspectiveCamera,
   Sphere,
+  Vector2,
   Vector3
 } from 'three'
 import {
@@ -51,6 +52,16 @@ export function isPerspectiveCamera(camera: Camera): camera is PerspectiveCamera
 
 export function isOrthographicCamera(camera: Camera): camera is OrthographicCamera {
   return (camera as OrthographicCamera).isOrthographicCamera
+}
+
+export function computeOrthographicSize(
+  distance: number,
+  fov: number,
+  aspect: number
+): Vector2 {
+  const height = Math.tan(MathUtils.DEG2RAD * (fov / 2)) * 2.0 * distance
+  const width = height * aspect
+  return new Vector2(width, height)
 }
 
 export const DefaultOrbitControlsOptions: Required<CameraControllerOptions> = {
@@ -281,29 +292,24 @@ export class CameraController extends Extension implements SpeckleCamera {
   }
 
   public onResize() {
-    this.perspectiveCamera.aspect =
+    const aspect =
       this.viewer.getContainer().offsetWidth / this.viewer.getContainer().offsetHeight
+    this.perspectiveCamera.aspect = aspect
     this.perspectiveCamera.updateProjectionMatrix()
 
-    const lineOfSight = new Vector3()
-    this.perspectiveCamera.getWorldDirection(lineOfSight)
-    const target = this._activeControls.getTarget()
-    const distance = target.clone().sub(this.perspectiveCamera.position)
-    const depth = distance.dot(lineOfSight)
-    const dims = {
-      x: this.viewer.getContainer().offsetWidth,
-      y: this.viewer.getContainer().offsetHeight
-    }
-    const aspect = dims.x / dims.y
-    const fov = this.perspectiveCamera.fov
-    const height = depth * 2 * Math.atan((fov * (Math.PI / 180)) / 2)
-    const width = height * aspect
-
+    const distance = this._activeControls
+      .getPosition()
+      .distanceTo(this._activeControls.getTarget())
+    const orthographicSize = computeOrthographicSize(
+      distance,
+      this.perspectiveCamera.fov,
+      aspect
+    )
     this.orthographicCamera.zoom = 1
-    this.orthographicCamera.left = width / -2
-    this.orthographicCamera.right = width / 2
-    this.orthographicCamera.top = height / 2
-    this.orthographicCamera.bottom = height / -2
+    this.orthographicCamera.left = orthographicSize.x / -2
+    this.orthographicCamera.right = orthographicSize.x / 2
+    this.orthographicCamera.top = orthographicSize.y / 2
+    this.orthographicCamera.bottom = orthographicSize.y / -2
     this.orthographicCamera.updateProjectionMatrix()
   }
 
@@ -399,7 +405,6 @@ export class CameraController extends Extension implements SpeckleCamera {
       box.expandByVector(new Vector3(1, 1, 1))
     }
     this.zoomToBox(box, fit, transition)
-    // this.viewer.controls.setBoundary( box )
   }
 
   private zoomToBox(box: Box3, fit = 1.2, _transition = true) {

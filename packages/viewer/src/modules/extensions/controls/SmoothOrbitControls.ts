@@ -34,6 +34,7 @@ import { World } from '../../World.js'
 import { SpeckleControls } from './SpeckleControls.js'
 import { Intersections } from '../../Intersections.js'
 import { lerp } from 'three/src/math/MathUtils.js'
+import { computeOrthographicSize } from '../CameraController.js'
 
 /**
  * @param {Number} value
@@ -601,13 +602,11 @@ export class SmoothOrbitControls extends SpeckleControls {
         .setFromSpherical(this.spherical)
         .applyQuaternion(new Quaternion().setFromRotationMatrix(this._basisTransform))
         .normalize()
-        .negate()
       position.add(
         cameraDirection.multiplyScalar(
-          (this._options.maximumRadius -
+          this._options.maximumRadius -
             this.options.minimumRadius -
-            this.spherical.radius) *
-            -1
+            this.spherical.radius
         )
       )
     }
@@ -620,48 +619,27 @@ export class SmoothOrbitControls extends SpeckleControls {
         this._targetCamera.updateProjectionMatrix()
       }
     if (this._targetCamera instanceof OrthographicCamera) {
-      const depth = this.spherical.radius
-      const dims = {
-        x: this._container.offsetWidth,
-        y: this._container.offsetHeight
-      }
-      const aspect = dims.x / dims.y
-      const fov = Math.exp(this.logFov)
-      const dephtS = Math.tan(MathUtils.DEG2RAD * (fov / 2)) * 2.0
-      const Z = depth
-      const width = dephtS * Z * aspect
-      const height = dephtS * Z
+      const orthographicSize = computeOrthographicSize(
+        this.spherical.radius,
+        Math.exp(this.logFov),
+        this._container.offsetWidth / this._container.offsetHeight
+      )
       this._targetCamera.zoom = 1
-      this._targetCamera.left = width / -2
-      this._targetCamera.right = width / 2
-      this._targetCamera.top = height / 2
-      this._targetCamera.bottom = height / -2
+      this._targetCamera.left = orthographicSize.x / -2
+      this._targetCamera.right = orthographicSize.x / 2
+      this._targetCamera.top = orthographicSize.y / 2
+      this._targetCamera.bottom = orthographicSize.y / -2
       this._targetCamera.updateProjectionMatrix()
     }
-
-    /** Ortho height to distance test */
-    // const plm = new Vector3()
-    //   .copy(this._controlTarget.position)
-    //   .applyMatrix4(this._basisTransformInv)
-    // const offset = new Vector3().copy(plm).sub(this.origin)
-    // const ortho = this.distanceToOrthogrtaphicHeight(offset.length())
-    // const dist = this.orthographicHeightToDistance(ortho)
   }
 
   /* Ortho height to distance functions
   private orthographicHeightToDistance(height: number) {
-    if (!(this._controlTarget instanceof OrthographicCamera))
+    if (!(this._targetCamera instanceof OrthographicCamera))
       return this.spherical.radius
 
     return height / (Math.tan(MathUtils.DEG2RAD * Math.exp(this.logFov) * 0.5) * 2)
-  }
-  */
-
-  public distanceToOrthogrtaphicHeight(distance: number) {
-    const fov = Math.exp(this.logFov)
-    const dephtS = Math.tan(MathUtils.DEG2RAD * (fov / 2)) * 2.0
-    return dephtS * distance
-  }
+  }*/
 
   protected positionFromSpherical(spherical: Spherical, origin?: Vector3) {
     const position: Vector3 = new Vector3()
