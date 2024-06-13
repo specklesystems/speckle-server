@@ -227,19 +227,18 @@ export abstract class PrimitiveBatch implements Batch {
            *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
            *  sampling can occur.
            */
-          if (range.materialOptions.rampIndex && range.materialOptions.rampWidth) {
-            const shiftedIndex =
-              range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
-            const minMaxIndices = this.updateGradientIndexBufferData(
-              start,
-              range.count === Infinity
-                ? this.primitive.geometry.attributes['gradientIndex'].array.length
-                : len,
-              shiftedIndex
-            )
-            minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
-            maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
-          }
+
+          const shiftedIndex =
+            range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
+          const minMaxIndices = this.updateGradientIndexBufferData(
+            start,
+            range.count === Infinity
+              ? this.primitive.geometry.attributes['gradientIndex'].array.length
+              : len,
+            shiftedIndex
+          )
+          minGradientIndex = Math.min(minGradientIndex, minMaxIndices.minIndex)
+          maxGradientIndex = Math.max(maxGradientIndex, minMaxIndices.maxIndex)
         }
         /** We need to update the texture here, because each batch uses it's own clone for any material we use on it
          *  because otherwise three.js won't properly update our custom uniforms
