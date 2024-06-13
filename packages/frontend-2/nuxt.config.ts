@@ -125,7 +125,9 @@ export default defineNuxtConfig({
 
             return buildOutputFileName(chunkInfo.name)
           }
-        }
+        },
+        // Leave imports as is, they're server-side only
+        external: ['jsdom']
       }
       // // optionally disable minification for debugging
       // minify: false,
