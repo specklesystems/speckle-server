@@ -32,23 +32,6 @@ const getInvitesBaseQuery = (sort = 'asc') => {
  * a specific invite. For backwards compatibility purposes, the token can also just be the invite ID.
  * @returns {import('@/modules/serverinvites/helpers/types').ServerInviteRecord | null}
  */
-async function getServerInvite(email = undefined, token = undefined) {
-  if (!email && !token) return null
-
-  const q = getInvitesBaseQuery()
-
-  if (email) {
-    q.andWhere({
-      [ServerInvites.col.target]: email.toLowerCase()
-    })
-  }
-
-  if (token) {
-    q.andWhere(ServerInvites.col.token, token)
-  }
-
-  return await q.first()
-}
 
 /**
  * Use up/delete all server-only for the specified email
@@ -263,7 +246,6 @@ async function getInvites(inviteIds) {
 }
 
 module.exports = {
-  getServerInvite,
   deleteServerOnlyInvites,
   updateAllInviteTargets,
   deleteStreamInvite,

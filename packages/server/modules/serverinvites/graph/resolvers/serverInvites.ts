@@ -49,7 +49,9 @@ export = {
     },
     async serverInviteByToken(_parent, args) {
       const { token } = args
-      return getServerInviteForToken(token)
+      return getServerInviteForToken({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(token)
     }
   },
   ServerInvite: {

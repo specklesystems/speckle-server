@@ -34,6 +34,10 @@ export interface ServerInvitesRepository {
     >,
     alternateTargets: string[]
   ) => Promise<number[]>
+  findServerInvite: (
+    email?: string,
+    token?: string
+  ) => Promise<ServerInviteRecord | null>
 }
 
 export interface CreateInviteParams {

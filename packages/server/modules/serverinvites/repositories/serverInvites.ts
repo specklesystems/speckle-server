@@ -161,10 +161,31 @@ const findStreamInvite =
     return q.first()
   }
 
+const findServerInvite =
+  ({ db }: { db: Knex }) =>
+  async (email?: string, token?: string): Promise<ServerInviteRecord | null> => {
+    if (!email && !token) return null
+
+    const q = buildInvitesBaseQuery({ db })()
+
+    if (email) {
+      q.andWhere({
+        [ServerInvites.col.target]: email.toLowerCase()
+      })
+    }
+
+    if (token) {
+      q.andWhere(ServerInvites.col.token, token)
+    }
+
+    return q.first()
+  }
+
 export const createServerInvitesRepository = ({ db }: { db: Knex }) => ({
   queryAllUserStreamInvites: queryAllUserStreamInvites({ db }),
   findStreamInvite: findStreamInvite({ db }),
   findUserByTarget: findUserByTarget(),
   findResource: findResource(),
-  insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db })
+  insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db }),
+  findServerInvite: findServerInvite({ db })
 })

@@ -16,10 +16,7 @@ import {
 import { MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { keyBy, uniq } from 'lodash'
 import { ServerInvitesRepository } from '../domain'
-import {
-  getAllStreamInvites,
-  getServerInvite
-} from '@/modules/serverinvites/repositories'
+import { getAllStreamInvites } from '@/modules/serverinvites/repositories'
 
 /**
  * The token field is intentionally ommited from this and only managed through the .token resolver
@@ -141,18 +138,22 @@ export const getUserPendingStreamInvites =
     return invites.map((i) => buildPendingStreamCollaboratorModel(i, targetUser))
   }
 
-export async function getServerInviteForToken(
-  token: string
-): Promise<Nullable<ServerInviteGraphQLReturnType>> {
-  const invite = await getServerInvite(undefined, token)
-  if (!invite) return null
+export const getServerInviteForToken =
+  ({
+    serverInvitesRepository
+  }: {
+    serverInvitesRepository: Pick<ServerInvitesRepository, 'findServerInvite'>
+  }) =>
+  async (token: string): Promise<Nullable<ServerInviteGraphQLReturnType>> => {
+    const invite = await serverInvitesRepository.findServerInvite(undefined, token)
+    if (!invite) return null
 
-  const target = resolveTarget(invite.target)
-  if (!target.userEmail) return null
+    const target = resolveTarget(invite.target)
+    if (!target.userEmail) return null
 
-  return {
-    id: invite.id,
-    invitedById: invite.inviterId,
-    email: target.userEmail
+    return {
+      id: invite.id,
+      invitedById: invite.inviterId,
+      email: target.userEmail
+    }
   }
-}

@@ -7,10 +7,8 @@ const {
   ResourceTargets
 } = require('@/modules/serverinvites/helpers/inviteHelper')
 const {
-  getServerInvite,
   deleteServerOnlyInvites,
   updateAllInviteTargets,
-  getStreamInvite,
   deleteStreamInvite,
   getInvite,
   deleteInvite: deleteInviteFromDb,
@@ -56,7 +54,10 @@ function resolveAuthRedirectPath(invite) {
  * @returns {import('@/modules/serverinvites/helpers/types').ServerInviteRecord}
  */
 async function validateServerInvite(email, token) {
-  const invite = await getServerInvite(email, token)
+  // TODO: injection
+  const invite = await createServerInvitesRepository({
+    db: knexInstance
+  }).findServerInvite(email, token)
   if (!invite) {
     throw new NoInviteFoundError(
       token
@@ -97,7 +98,10 @@ async function finalizeInvitedServerRegistration(email, userId) {
  * @param {string} userId User who's accepting the invite
  */
 async function finalizeStreamInvite(accept, streamId, token, userId) {
-  const invite = await getStreamInvite(streamId, {
+  // TODO: injection
+  const invite = await createServerInvitesRepository({
+    db: knexInstance
+  }).findStreamInvite(streamId, {
     token,
     target: buildUserTarget(userId)
   })
@@ -147,7 +151,10 @@ async function finalizeStreamInvite(accept, streamId, token, userId) {
  * @param {string} inviteId
  */
 async function cancelStreamInvite(streamId, inviteId) {
-  const invite = await getStreamInvite(streamId, { inviteId })
+  // TODO: injection
+  const invite = await createServerInvitesRepository({
+    db: knexInstance
+  }).findStreamInvite(streamId, { inviteId })
   if (!invite) {
     throw new NoInviteFoundError('Attempted to process nonexistant stream invite', {
       info: {
