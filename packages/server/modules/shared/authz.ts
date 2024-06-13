@@ -194,7 +194,7 @@ export const validateResourceAccess: AuthPipelineFunction = async ({
   if (!hasAccess) {
     return authFailed(
       context,
-      new ForbiddenError('You do not have the required privileges.'),
+      new ForbiddenError('You are not authorized to access this resource.'),
       true
     )
   }
@@ -205,12 +205,16 @@ export const validateResourceAccess: AuthPipelineFunction = async ({
 export const validateScope =
   ({ requiredScope }: { requiredScope: string }): AuthPipelineFunction =>
   async ({ context, authResult }) => {
+    const errMsg = `Your auth token does not have the required scope${
+      requiredScope?.length ? ': ' + requiredScope + '.' : '.'
+    }`
+
     // having the required role doesn't rescue from authResult failure
     if (authHasFailed(authResult)) return { context, authResult }
     if (!context.scopes)
       return authFailed(
         context,
-        new ForbiddenError('You do not have the required privileges.')
+        new ForbiddenError(errMsg, { info: { scope: requiredScope } })
       )
     if (
       context.scopes.indexOf(requiredScope) === -1 &&
@@ -218,7 +222,7 @@ export const validateScope =
     )
       return authFailed(
         context,
-        new ForbiddenError('You do not have the required privileges.')
+        new ForbiddenError(errMsg, { info: { scope: requiredScope } })
       )
     return authSuccess(context)
   }
