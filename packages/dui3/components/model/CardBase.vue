@@ -140,7 +140,9 @@ const isSender = computed(() => {
 const highlightModel = () => {
   if (!modelData) return
   trackEvent('DUI3 Action', { name: 'Highlight Model' }, props.modelCard.accountId)
-  app.$baseBinding.highlightModel(props.modelCard.modelCardId)
+  if (!props.modelCard.progress){
+    app.$baseBinding.highlightModel(props.modelCard.modelCardId)
+  }
 }
 
 const viewModel = () => {
