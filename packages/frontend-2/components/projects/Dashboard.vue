@@ -18,6 +18,9 @@
     </div>
 
     <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
+    <div v-if="showErrorTest" class="w-full">
+      <FormButton @click="testError">Test error</FormButton>
+    </div>
 
     <div
       v-if="!showEmptyState"
@@ -131,6 +134,7 @@ const promoBanners = ref<PromoBanner[]>([
   }
 ])
 
+const route = useRoute()
 const { activeUser, isGuest } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const areQueriesLoading = useQueryLoading()
@@ -155,6 +159,8 @@ onProjectsResult((res) => {
 const { onResult: onUserProjectsUpdate } = useSubscription(
   onUserProjectsUpdateSubscription
 )
+
+const showErrorTest = computed(() => route.query.showErrorButton === '1')
 
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 const showEmptyState = computed(() => {
@@ -333,5 +339,9 @@ const clearSearch = () => {
   search.value = ''
   selectedRoles.value = []
   updateSearchImmediately()
+}
+
+const testError = () => {
+  throw new Error('what duhh hell')
 }
 </script>

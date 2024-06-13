@@ -22,6 +22,8 @@ const isLogPretty = ['1', 'true', true, 1].includes(NUXT_PUBLIC_LOG_PRETTY)
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
+  // sourcemaps in prod only needed for datadog and should be deleted after (or at least made inaccessible?)
+  sourcemap: true,
   typescript: {
     shim: false,
     strict: true
