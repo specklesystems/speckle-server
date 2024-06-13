@@ -27,7 +27,7 @@ import { speckleStaticAoGenerateVert } from '../materials/shaders/speckle-static
 import { speckleStaticAoGenerateFrag } from '../materials/shaders/speckle-static-ao-generate-frag'
 import { speckleStaticAoAccumulateVert } from '../materials/shaders/speckle-static-ao-accumulate-vert'
 import { speckleStaticAoAccumulateFrag } from '../materials/shaders/speckle-static-ao-accumulate-frag'
-import { SimplexNoise } from 'three/examples/jsm//math/SimplexNoise.js'
+import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js'
 import type {
   InputDepthTextureUniform,
   InputNormalsTextureUniform,
