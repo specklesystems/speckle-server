@@ -1,4 +1,5 @@
-import { baseConfigs } from '../../eslint.config.mjs'
+import { baseConfigs, globals, getESMDirname } from '../../eslint.config.mjs'
+import tseslint from 'typescript-eslint'
 
 /**
  * @type {Array<import('eslint').Linter.FlatConfig>}
@@ -6,7 +7,31 @@ import { baseConfigs } from '../../eslint.config.mjs'
 const configs = [
   ...baseConfigs,
   {
-    ignores: ['examples']
+    files: ['examples/browser/**/*.{ts,js}'],
+    languageOptions: {
+      globals: {
+        ...globals.browser
+      }
+    }
+  },
+  ...tseslint.configs.recommendedTypeChecked.map((c) => ({
+    ...c,
+    files: [...(c.files || []), '**/*.ts', '**/*.d.ts']
+  })),
+  {
+    files: ['**/*.ts', '**/*.d.ts'],
+    languageOptions: {
+      parserOptions: {
+        tsconfigRootDir: getESMDirname(import.meta.url),
+        project: './tsconfig.json'
+      }
+    }
+  },
+  {
+    files: ['**/*.d.ts'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off'
+    }
   }
 ]
 

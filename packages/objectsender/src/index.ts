@@ -1,6 +1,7 @@
 import { Serializer } from './Serializer'
 import { ServerTransport } from './transports/ServerTransport'
 import { Base } from './utils/Base'
+export { Base }
 
 export type SendParams = {
   serverUrl?: string
@@ -23,7 +24,7 @@ export type SendResult = {
  * @param parameters: server url, project id and token
  * @returns the hash of the root object and the value of the root object
  */
-const send = async (
+export const send = async (
   object: Base,
   {
     serverUrl = 'https://app.speckle.systems',
@@ -37,11 +38,9 @@ const send = async (
   const transport = new ServerTransport(serverUrl, projectId, token)
   const serializer = new Serializer(transport)
 
-  let result: SendResult | undefined
+  let result: SendResult
   try {
     result = await serializer.write(object)
-  } catch (e: unknown) {
-    logger.error(e)
   } finally {
     transport.dispose()
     serializer.dispose()
@@ -50,5 +49,3 @@ const send = async (
   logger.log(`Finished sending in ${(t1 - t0) / 1000}s.`)
   return result
 }
-
-export { Base, send }

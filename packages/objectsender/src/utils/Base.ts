@@ -4,9 +4,12 @@
  */
 export class Base implements Record<string, unknown> {
   speckle_type: string
-  constructor(props: Record<string, unknown>) {
+  constructor(props?: Record<string, unknown>) {
     this.speckle_type = this.constructor.name
-    for (const key in props) this[key] = props[key]
+
+    if (props) {
+      for (const key in props) this[key] = props[key]
+    }
   }
   [x: string]: unknown
 }

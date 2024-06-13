@@ -1998,7 +1998,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/eslint-parser@npm:^7.18.2, @babel/eslint-parser@npm:^7.24.7":
+"@babel/eslint-parser@npm:^7.18.2":
   version: 7.24.7
   resolution: "@babel/eslint-parser@npm:7.24.7"
   dependencies:
@@ -7936,7 +7936,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/preset-env@npm:^7.24.6, @babel/preset-env@npm:^7.24.7":
+"@babel/preset-env@npm:^7.24.6":
   version: 7.24.7
   resolution: "@babel/preset-env@npm:7.24.7"
   dependencies:
@@ -15377,27 +15377,13 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/objectsender@workspace:packages/objectsender"
   dependencies:
-    "@babel/cli": 7.15.7
-    "@babel/core": ^7.17.5
-    "@babel/eslint-parser": ^7.24.7
-    "@babel/preset-env": ^7.24.7
-    "@rollup/plugin-babel": ^5.3.1
-    "@rollup/plugin-commonjs": ^21.0.3
-    "@rollup/plugin-node-resolve": ^13.1.3
-    "@rollup/plugin-terser": ^0.4.4
-    "@speckle/shared": "workspace:^"
-    "@typescript-eslint/eslint-plugin": ^5.39.0
-    "@typescript-eslint/parser": ^5.39.0
-    core-js: ^3.21.1
-    cross-fetch: ^3.1.5
-    eslint: ^8.11.0
-    eslint-config-prettier: ^8.5.0
-    http-server: ^14.1.0
-    prettier: ^2.5.1
-    regenerator-runtime: ^0.13.7
-    rollup: ^2.70.1
-    rollup-plugin-delete: ^2.0.0
-    rollup-plugin-typescript2: ^0.36.0
+    "@typescript-eslint/eslint-plugin": ^7.12.0
+    "@typescript-eslint/parser": ^7.12.0
+    eslint: ^9.4.0
+    eslint-config-prettier: ^9.1.0
+    prettier: ^3.3.2
+    typescript: ^5.2.2
+    vite: ^5.2.0
   languageName: unknown
   linkType: soft
 
@@ -27821,7 +27807,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0, esbuild@npm:^0.20.2":
+"esbuild@npm:^0.18.0 || ^0.19.0 || ^0.20.0, esbuild@npm:^0.20.1, esbuild@npm:^0.20.2":
   version: 0.20.2
   resolution: "esbuild@npm:0.20.2"
   dependencies:
@@ -41984,6 +41970,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postcss@npm:^8.4.38":
+  version: 8.4.38
+  resolution: "postcss@npm:8.4.38"
+  dependencies:
+    nanoid: ^3.3.7
+    picocolors: ^1.0.0
+    source-map-js: ^1.2.0
+  checksum: 649f9e60a763ca4b5a7bbec446a069edf07f057f6d780a5a0070576b841538d1ecf7dd888f2fbfd1f76200e26c969e405aeeae66332e6927dbdc8bdcb90b9451
+  languageName: node
+  linkType: hard
+
 "postgres-array@npm:~2.0.0":
   version: 2.0.0
   resolution: "postgres-array@npm:2.0.0"
@@ -44335,22 +44332,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rollup-plugin-typescript2@npm:^0.36.0":
-  version: 0.36.0
-  resolution: "rollup-plugin-typescript2@npm:0.36.0"
-  dependencies:
-    "@rollup/pluginutils": ^4.1.2
-    find-cache-dir: ^3.3.2
-    fs-extra: ^10.0.0
-    semver: ^7.5.4
-    tslib: ^2.6.2
-  peerDependencies:
-    rollup: ">=1.26.3"
-    typescript: ">=2.4.0"
-  checksum: 199afe11f9218ad943b67138b3165c2be2cd2535926da6ed467124273f7bbb1dd779521a648a26a65073cafe43388104857a90e0fdf06ca526a6613771eb2e70
-  languageName: node
-  linkType: hard
-
 "rollup-plugin-visualizer@npm:^5.12.0":
   version: 5.12.0
   resolution: "rollup-plugin-visualizer@npm:5.12.0"
@@ -45460,6 +45441,13 @@ __metadata:
   version: 1.1.0
   resolution: "source-map-js@npm:1.1.0"
   checksum: 6ef39381cdf5451c3db406e4b0fa95657be3c35db76fe6df3be430174b2e6af3c0b57d9728328dc62a211ae6209a0295d6a26442a55d5fccbf7cf1211fffa80e
+  languageName: node
+  linkType: hard
+
+"source-map-js@npm:^1.2.0":
+  version: 1.2.0
+  resolution: "source-map-js@npm:1.2.0"
+  checksum: 791a43306d9223792e84293b00458bf102a8946e7188f3db0e4e22d8d530b5f80a4ce468eb5ec0bf585443ad55ebbd630bf379c98db0b1f317fd902500217f97
   languageName: node
   linkType: hard
 
@@ -49466,6 +49454,46 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 21863ca12303ea6305fe9230a55e7cb30b4cac05dd2a2596889e079163ccc81bcb465ff6dd165001042f47e999192b9c579329484211e000afe9b47068c7fab0
+  languageName: node
+  linkType: hard
+
+"vite@npm:^5.2.0":
+  version: 5.2.13
+  resolution: "vite@npm:5.2.13"
+  dependencies:
+    esbuild: ^0.20.1
+    fsevents: ~2.3.3
+    postcss: ^8.4.38
+    rollup: ^4.13.0
+  peerDependencies:
+    "@types/node": ^18.0.0 || >=20.0.0
+    less: "*"
+    lightningcss: ^1.21.0
+    sass: "*"
+    stylus: "*"
+    sugarss: "*"
+    terser: ^5.4.0
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  peerDependenciesMeta:
+    "@types/node":
+      optional: true
+    less:
+      optional: true
+    lightningcss:
+      optional: true
+    sass:
+      optional: true
+    stylus:
+      optional: true
+    sugarss:
+      optional: true
+    terser:
+      optional: true
+  bin:
+    vite: bin/vite.js
+  checksum: 79620413e45804494bedb81f2b78b48ca1d26fb026894a114a2f40cb1a3ad9b6783e777bc8969a51f8711e168b4db93a9563a5af027c80eecf000ef9b675a3be
   languageName: node
   linkType: hard
 
