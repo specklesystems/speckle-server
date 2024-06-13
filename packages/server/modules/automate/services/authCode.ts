@@ -16,6 +16,8 @@ export type AuthCodePayload = {
   action: AuthCodePayloadAction
 }
 
+export type AuthCodePayloadWithOrigin = AuthCodePayload & { origin: string }
+
 const isPayload = (payload: unknown): payload is AuthCodePayload =>
   !!(
     payload &&
