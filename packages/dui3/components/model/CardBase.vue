@@ -140,7 +140,8 @@ const isSender = computed(() => {
 const highlightModel = () => {
   if (!modelData) return
   trackEvent('DUI3 Action', { name: 'Highlight Model' }, props.modelCard.accountId)
-  if (!props.modelCard.progress){
+  if (!props.modelCard.progress) {
+    // Some host apps doesn't friendly to handle highlighting models when some other ops are running.
     app.$baseBinding.highlightModel(props.modelCard.modelCardId)
   }
 }
