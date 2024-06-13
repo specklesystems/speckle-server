@@ -271,11 +271,9 @@ export class InstancedMeshBatch implements Batch {
            *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
            *  sampling can occur.
            */
-          if (range.materialOptions.rampIndex && range.materialOptions.rampWidth) {
-            const shiftedIndex =
-              range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
-            this.updateGradientIndexBufferData(start / 16, shiftedIndex)
-          }
+          const shiftedIndex =
+            range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
+          this.updateGradientIndexBufferData(start / 16, shiftedIndex)
         }
         /** We need to update the texture here, because each batch uses it's own clone for any material we use on it
          *  because otherwise three.js won't properly update our custom uniforms
