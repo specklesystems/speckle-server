@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   DefaultViewerParams,
   SelectionEvent,
@@ -70,6 +68,7 @@ const createViewer = async (containerName: string, stream: string) => {
   })
 
   viewer.on(ViewerEvent.ObjectClicked, (event: SelectionEvent | null) => {
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     if (event) console.log(event.hits[0].node.model.id)
   })
 
@@ -101,7 +100,6 @@ const createViewer = async (containerName: string, stream: string) => {
   await sandbox.loadUrl(stream)
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getStream = () => {
   return (
     // prettier-ignore
@@ -388,4 +386,4 @@ if (!container0) {
   throw new Error("Couldn't find app container!")
 }
 
-createViewer('#renderer', getStream())
+void createViewer('#renderer', getStream())

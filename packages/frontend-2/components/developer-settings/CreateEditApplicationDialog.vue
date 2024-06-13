@@ -60,7 +60,7 @@
 
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
-import { AllScopes } from '@speckle/shared'
+import type { AllScopes } from '@speckle/shared'
 import {
   LayoutDialog,
   FormSelectBadges,
@@ -74,7 +74,12 @@ import {
   createApplicationMutation,
   editApplicationMutation
 } from '~~/lib/developer-settings/graphql/mutations'
-import { isItemSelected } from '~~/lib/common/helpers/validation'
+import {
+  isItemSelected,
+  isRequired,
+  isUrl,
+  fullyResetForm
+} from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
 import {
   convertThrowIntoFetchResult,
@@ -82,7 +87,6 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { isRequired, isUrl, fullyResetForm } from '~~/lib/common/helpers/validation'
 import { useServerInfoScopes } from '~~/lib/common/composables/serverInfo'
 
 const props = defineProps<{

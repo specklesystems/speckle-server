@@ -5,6 +5,7 @@
         v-for="fn in fns"
         :key="fn.id"
         :fn="fn"
+        no-buttons
         @use="() => $emit('createAutomationFrom', fn)"
       />
     </AutomateFunctionCardView>

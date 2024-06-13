@@ -100,7 +100,7 @@ import type {
   ProjectModelsPageHeader_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
-import { GridListToggleValue } from '~~/lib/layout/helpers/components'
+import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { PlusIcon } from '@heroicons/vue/24/solid'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { CubeIcon } from '@heroicons/vue/24/outline'

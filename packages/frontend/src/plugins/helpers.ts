@@ -1,3 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
+/* eslint-disable @typescript-eslint/no-unsafe-call */
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import Vue from 'vue'
 import { getMixpanelUserId, getMixpanelServerId } from '@/mixpanelManager'
 import { NotificationEventPayload } from '@/main/lib/core/helpers/eventHubHelper'

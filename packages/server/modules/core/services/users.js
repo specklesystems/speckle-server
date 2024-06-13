@@ -145,7 +145,7 @@ module.exports = {
 
   /**
    * @param {{userId: string}} param0
-   * @returns Promise<{import('@/modules/core/helpers/userHelper').UserRecord | null>}
+   * @returns {Promise<import('@/modules/core/helpers/types').UserRecord | null>}
    */
   async getUserById({ userId }) {
     const user = await Users().where({ id: userId }).select('*').first()

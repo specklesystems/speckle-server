@@ -9,8 +9,10 @@
 </template>
 
 <script setup lang="ts">
-import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
-import type { ProjectsPageTeamDialogManagePermissions_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
+import type {
+  ProjectVisibility,
+  ProjectsPageTeamDialogManagePermissions_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { useTeamManagePermissionsInternals } from '~~/lib/projects/composables/team'
 import { graphql } from '~~/lib/common/generated/gql/gql'
 

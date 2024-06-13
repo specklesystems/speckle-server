@@ -357,7 +357,7 @@ export default defineComponent({
     }
 
     const { result: streamSettingsResult } = useQuery(StreamSettingsDocument, () => ({
-      id: route.params.streamId as string
+      id: route.params.streamId
     }))
 
     const stream = computed(

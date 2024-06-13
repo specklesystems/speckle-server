@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import { BatchObject, type Vector3Like } from './BatchObject'
 
 import { Matrix4 } from 'three'

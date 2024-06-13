@@ -44,14 +44,16 @@ import type {
   PendingFileUploadFragment,
   ProjectPageLatestItemsModelsFragment,
   SingleLevelModelTreeItemFragment,
-  FormUsersSelectItemFragment
+  FormUsersSelectItemFragment,
+  ProjectModelsTreeTopLevelQueryVariables
 } from '~~/lib/common/generated/gql/graphql'
 import { useQuery, useQueryLoading } from '@vue/apollo-composable'
-import { projectModelsTreeTopLevelQuery } from '~~/lib/projects/graphql/queries'
+import {
+  projectModelsTreeTopLevelQuery,
+  projectModelsTreeTopLevelPaginationQuery
+} from '~~/lib/projects/graphql/queries'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
-import type { ProjectModelsTreeTopLevelQueryVariables } from '~~/lib/common/generated/gql/graphql'
 import type { Nullable, SourceAppDefinition } from '@speckle/shared'
-import { projectModelsTreeTopLevelPaginationQuery } from '~~/lib/projects/graphql/queries'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { useEvictProjectModelFields } from '~~/lib/projects/composables/modelManagement'
 import { allProjectModelsRoute } from '~~/lib/common/helpers/route'

@@ -123,12 +123,8 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
   public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.camera = camera
     this.scene = scene
-    this.depthMaterial.userData.near.value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.depthMaterial.userData.far.value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
+    this.depthMaterial.userData.near.value = camera.near
+    this.depthMaterial.userData.far.value = camera.far
     this.depthMaterial.needsUpdate = true
   }
 

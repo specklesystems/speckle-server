@@ -439,7 +439,7 @@ const onLoadThreadContext = async () => {
 }
 
 const onCopyLink = async () => {
-  if (process.server) return
+  if (import.meta.server) return
   const url = getLinkToThread(projectId.value, props.modelValue)
   if (!url) return
 

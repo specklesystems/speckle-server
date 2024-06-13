@@ -170,7 +170,7 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
       delete this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS']
     }
 
-    this.params.scale = (camera as PerspectiveCamera | OrthographicCamera).far
+    this.params.scale = camera.far
     /** SAO DEFINES */
     this.saoMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
       .isPerspectiveCamera
@@ -185,12 +185,8 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
       this.params.normalsType === NormalsType.ACCURATE ? 1 : 0
 
     /** SAO UNIFORMS */
-    this.saoMaterial.uniforms['cameraNear'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.saoMaterial.uniforms['cameraFar'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
+    this.saoMaterial.uniforms['cameraNear'].value = camera.near
+    this.saoMaterial.uniforms['cameraFar'].value = camera.far
     this.saoMaterial.uniforms['cameraInverseProjectionMatrix'].value.copy(
       camera.projectionMatrixInverse
     )
@@ -215,24 +211,13 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
       : 0
 
     /** BLUR UNIFORMS */
-    this.vBlurMaterial.uniforms['cameraNear'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.vBlurMaterial.uniforms['cameraFar'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
-    this.hBlurMaterial.uniforms['cameraNear'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.hBlurMaterial.uniforms['cameraFar'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
+    this.vBlurMaterial.uniforms['cameraNear'].value = camera.near
+    this.vBlurMaterial.uniforms['cameraFar'].value = camera.far
+    this.hBlurMaterial.uniforms['cameraNear'].value = camera.near
+    this.hBlurMaterial.uniforms['cameraFar'].value = camera.far
 
     /** BLUR UNIFORM PARAMS */
-    const depthCutoff =
-      this.params.blurDepthCutoff *
-      ((camera as PerspectiveCamera | OrthographicCamera).far -
-        (camera as PerspectiveCamera | OrthographicCamera).near)
+    const depthCutoff = this.params.blurDepthCutoff * (camera.far - camera.near)
     this.vBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
     this.hBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
 

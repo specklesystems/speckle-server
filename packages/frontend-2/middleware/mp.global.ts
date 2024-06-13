@@ -1,7 +1,7 @@
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 export default defineNuxtRouteMiddleware((to) => {
-  if (process.server) return
+  if (import.meta.server) return
   const mp = useMixpanel()
   const pathDefinition = getRouteDefinition(to)
   const path = to.path

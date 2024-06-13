@@ -93,7 +93,7 @@ const getButtonComponent = (strat: StrategyType) => {
 }
 
 const onClick = (strat: StrategyType) => {
-  if (!process.client) return
+  if (!import.meta.client) return
 
   const redirectUrl = buildAuthUrl(strat)
   mixpanel.track('Log In', {

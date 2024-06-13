@@ -126,7 +126,7 @@ export = {
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
       await authorizeResolver(
-        ctx.userId!,
+        ctx.userId,
         args.projectId,
         Roles.Stream.Owner,
         ctx.resourceAccessRules
@@ -145,7 +145,7 @@ export = {
     },
     async batchCreate(_parent, args, ctx) {
       await authorizeResolver(
-        ctx.userId!,
+        ctx.userId,
         args.projectId,
         Roles.Stream.Owner,
         ctx.resourceAccessRules

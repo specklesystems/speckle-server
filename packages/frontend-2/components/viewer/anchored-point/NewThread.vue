@@ -87,9 +87,8 @@ import {
   convertCommentEditorValueToInput
 } from '~~/lib/viewer/helpers/comments'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useThreadUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
 

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Box3, SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
 import {
   CanonicalView,
@@ -142,6 +141,7 @@ export default class Sandbox {
     this.pane = new Pane({ title: 'Speckle Sandbox', expanded: true })
     // Mad HTML/CSS skills
     container.appendChild(this.pane['containerElem_'])
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.pane['containerElem_'].style = 'pointer-events:auto;'
 
     this.tabs = this.pane.addTab({
@@ -241,7 +241,7 @@ export default class Sandbox {
   }
 
   private removeStreamControls(url: string) {
-    this.viewer.unloadObject(url)
+    void this.viewer.unloadObject(url)
     ;(this.streams[url][0] as { dispose: () => void }).dispose()
     delete this.streams[url]
   }
@@ -273,6 +273,7 @@ export default class Sandbox {
       this.objectControls.dispose()
     }
     this.objectControls = this.tabs.pages[0].addFolder({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       title: `Object: ${node.model.id}`
     })
 
@@ -361,19 +362,21 @@ export default class Sandbox {
     })
 
     loadButton.on('click', () => {
-      this.loadUrl(this.urlParams.url)
+      void this.loadUrl(this.urlParams.url)
     })
 
     const loadObjButton = this.tabs.pages[0].addButton({
       title: 'Load OBJ'
     })
-    loadObjButton.on('click', () => {
+    loadObjButton.on('click', async () => {
+      /** Load from string */
       const input = document.createElement('input')
       input.type = 'file'
       input.onchange = (e) => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const file = e.target?.files[0]
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const file = e.target?.files[0] as Blob & { name: string }
 
         const reader = new FileReader()
         reader.readAsText(file, 'UTF-8')
@@ -385,6 +388,10 @@ export default class Sandbox {
         }
       }
       input.click()
+      /** Load as resource */
+      // import BrandenburgGate from '../assets/BrandenburgGate.png'
+      // const loader = new ObjLoader(this.viewer.getWorldTree(), brandnburd)
+      // await this.viewer.loadObject(loader, true)
     })
 
     const clearButton = this.tabs.pages[0].addButton({
@@ -392,7 +399,7 @@ export default class Sandbox {
     })
 
     clearButton.on('click', () => {
-      this.viewer.unloadAll()
+      void this.viewer.unloadAll()
     })
 
     this.tabs.pages[0].addSeparator()
@@ -402,11 +409,10 @@ export default class Sandbox {
       title: 'Toggle Section Box'
     })
     toggleSectionBox.on('click', () => {
-      let box = this.viewer
-        .getRenderer()
-        .boxFromObjects(
-          this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
-        )
+      let box = this.viewer.getRenderer().boxFromObjects(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
+      )
       if (!box) {
         box = this.viewer.getRenderer().sceneBox
       }
@@ -425,12 +431,11 @@ export default class Sandbox {
       title: 'Zoom Extents'
     })
     zoomExtents.on('click', () => {
-      this.viewer
-        .getExtension(CameraController)
-        .setCameraView(
-          this.selectionList.map((val) => val.hits[0].node.model.id) as string[],
-          true
-        )
+      this.viewer.getExtension(CameraController).setCameraView(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        this.selectionList.map((val) => val.hits[0].node.model.id) as string[],
+        true
+      )
     })
 
     this.tabs.pages[0].addSeparator()
@@ -1161,7 +1166,7 @@ export default class Sandbox {
       title: 'Undiff'
     })
     unDiffButton.on('click', async () => {
-      this.viewer.getExtension(DiffExtension).undiff()
+      void this.viewer.getExtension(DiffExtension).undiff()
     })
 
     container
@@ -1274,8 +1279,9 @@ export default class Sandbox {
     const objects = this.viewer.getRenderer().allObjects
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     objects.traverse((obj: any) => {
-      // eslint-disable-next-line no-prototype-builtins
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       if (obj.hasOwnProperty('boundsTreeSizeInBytes')) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         size += obj['boundsTreeSizeInBytes']
         // console.log(obj['boundsTreeSizeInBytes'] / 1024 / 1024)
       }

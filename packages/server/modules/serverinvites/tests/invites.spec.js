@@ -353,7 +353,7 @@ describe('[Stream & Server Invites]', () => {
 
         expect(result.data).to.not.be.ok
         expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-          'You do not have access to this resource'
+          'You are not authorized to access this resource'
         )
       })
 
@@ -762,7 +762,7 @@ describe('[Stream & Server Invites]', () => {
         expect(data.stream.pendingCollaborators).to.be.not.ok
         expect(errors).to.be.ok
         expect(errors.map((e) => e.message).join('|')).to.contain(
-          'You do not have access'
+          'You are not authorized to access this resource'
         )
       })
     })

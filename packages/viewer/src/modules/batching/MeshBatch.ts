@@ -188,7 +188,7 @@ export class MeshBatch extends PrimitiveBatch {
     this.primitive.setBatchMaterial(this.batchMaterial)
   }
 
-  public buildBatch(): void {
+  public buildBatch(): Promise<void> {
     let indicesCount = 0
     let attributeCount = 0
     for (let k = 0; k < this.renderViews.length; k++) {
@@ -276,6 +276,8 @@ export class MeshBatch extends PrimitiveBatch {
     batchObjects.forEach((element: BatchObject) => {
       element.renderView.disposeGeometry()
     })
+
+    return Promise.resolve()
   }
 
   protected makeMeshGeometry(

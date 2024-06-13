@@ -76,7 +76,7 @@ export class SpeckleCameraControls extends CameraControls {
     const prevRadius = this._sphericalEnd.radius
     const signedPrevRadius = prevRadius * (delta >= 0 ? -1 : 1)
 
-    this.dollyTo(distance, true, 0.9)
+    void this.dollyTo(distance, true, 0.9)
 
     if (
       this.infinityDolly &&
@@ -108,10 +108,10 @@ export class SpeckleCameraControls extends CameraControls {
     /** We need to move the camera as well when zooming in orthographic mode */
     const dollyScale = Math.pow(0.95, -delta * this.dollySpeed)
     const distance = this._sphericalEnd.radius * dollyScale
-    this.dollyTo(distance, true, 0.9)
+    void this.dollyTo(distance, true, 0.9)
 
     // for both PerspectiveCamera and OrthographicCamera
-    this.zoomTo(this._zoom * zoomScale, false, 1)
+    void this.zoomTo(this._zoom * zoomScale, false, 1)
     this._didDolly = true
     this.dispatchEvent({ type: 'controlstart' })
     if (this.dollyToCursor) {

@@ -127,7 +127,7 @@ describe('Commits (GraphQL)', () => {
           }
 
           const newCursor = results.data!.activeUser!.commits!.cursor!
-          const totalCount = results.data!.activeUser!.commits!.totalCount!
+          const totalCount = results.data!.activeUser!.commits!.totalCount
 
           return { newCursor, returnedCommitCount, totalCount }
         }
@@ -182,7 +182,7 @@ describe('Commits (GraphQL)', () => {
           }
 
           const newCursor = results.data!.otherUser!.commits!.cursor!
-          const totalCount = results.data!.otherUser!.commits!.totalCount!
+          const totalCount = results.data!.otherUser!.commits!.totalCount
 
           return { newCursor, returnedCommitCount, totalCount }
         }

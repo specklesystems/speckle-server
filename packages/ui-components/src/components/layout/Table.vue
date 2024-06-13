@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="text-foreground">
     <div
@@ -5,7 +6,7 @@
     >
       <div
         v-if="items.length > 0"
-        class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[900px]"
+        class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
         :style="{ paddingRight: paddingRightStyle }"
       >
         <div
@@ -118,7 +119,7 @@ const paddingRightStyle = computed(() => {
 
 const rowsWrapperClasses = computed(() => {
   const classParts = [
-    'relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[900px] bg-foundation'
+    'relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[750px] bg-foundation'
   ]
 
   if (props.onRowClick && props.items.length) {

@@ -14,7 +14,7 @@ async function main() {
     parentLogger.child({ streamId, branchName, userId, fileId, filePath }),
     'ifc'
   )
-  // eslint-disable-next-line no-console
+
   logger.info('ARGV: ', filePath, userId, streamId, branchName, commitMessage)
 
   const data = fs.readFileSync(filePath)
