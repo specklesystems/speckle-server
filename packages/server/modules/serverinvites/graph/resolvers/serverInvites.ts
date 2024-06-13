@@ -49,7 +49,7 @@ export = {
     },
     async serverInviteByToken(_parent, args) {
       const { token } = args
-      return await getServerInviteForToken(token)
+      return getServerInviteForToken(token)
     }
   },
   ServerInvite: {
