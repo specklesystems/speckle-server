@@ -1,8 +1,16 @@
 /* eslint-disable camelcase */
-import { SHA1 } from './utils/Sha1'
-import { ITransport } from './transports/ITransport'
-import { Base } from './utils/Base'
-import { IDisposable } from './utils/IDisposable'
+import { SHA1 } from './Sha1'
+import { ITransport } from '../transports/ITransport'
+import { Base } from './Base'
+import { IDisposable } from './IDisposable'
+import { isObjectLike, get } from '#lodash'
+
+type BasicSpeckleObject = Record<string, unknown> & {
+  speckle_type: string
+}
+
+const isSpeckleObject = (obj: unknown): obj is BasicSpeckleObject =>
+  isObjectLike(obj) && !!get(obj, 'speckle_type')
 
 export class Serializer implements IDisposable {
   chunkSize: number
@@ -87,7 +95,7 @@ export class Serializer implements IDisposable {
         })) as {
           id: string
         }
-        traversed[propKey] = isDetachedProp ? await this.#detachHelper(child.id) : child
+        traversed[propKey] = isDetachedProp ? this.#detachHelper(child.id) : child
         continue
       }
 
@@ -145,7 +153,7 @@ export class Serializer implements IDisposable {
     if (Array.isArray(value)) {
       const arr = value as unknown[]
       // 2.1 empty arrays
-      if (arr.length === 0) return value
+      if (arr.length === 0) return value as unknown
 
       // 2.2 primitive arrays
       if (typeof arr[0] !== 'object') return arr
@@ -160,7 +168,7 @@ export class Serializer implements IDisposable {
       // 2.4 non-primitive detached arrays
       const detachedList = [] as unknown[]
       for (const el of value) {
-        if (typeof el === 'object' && el.speckle_type) {
+        if (isSpeckleObject(el)) {
           this.detachLineage.push(isDetached)
           const { hash } = await this.#traverse(el, false)
           detachedList.push(this.#detachHelper(hash))
@@ -178,7 +186,7 @@ export class Serializer implements IDisposable {
     if ((value as { speckle_type?: string }).speckle_type) {
       this.detachLineage.push(isDetached)
       const res = await this.#traverse(value as Record<string, unknown>, false)
-      return await res.traversed
+      return res.traversed
     }
 
     throw new Error(`Unsupported type '${typeof value}': ${value}.`)

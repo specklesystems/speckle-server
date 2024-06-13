@@ -1,4 +1,5 @@
 import { send, Base, type SendResult } from '../../index'
+import { times } from '#lodash'
 
 window.send = send
 
@@ -58,8 +59,8 @@ window.loadData = async () => {
 
   try {
     res = await send(obj, {
-      serverUrl: serverUrl,
-      projectId: projectId,
+      serverUrl,
+      projectId,
       token: apiToken
     })
   } catch (e) {
@@ -98,9 +99,9 @@ function generateTestObject() {
     '@detachedArray': [
       ...Array(100)
         .fill(0)
-        .map((_) => new RandomFoo({ bar: 'baz baz baz' }))
+        .map(() => new RandomFoo({ bar: 'baz baz baz' }))
     ],
-    '@(10)chunkedArr': [...Array(100).fill(42)]
+    '@(10)chunkedArr': times(100, () => 42)
   })
 }
 

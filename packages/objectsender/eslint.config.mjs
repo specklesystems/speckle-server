@@ -25,6 +25,9 @@ const configs = [
         tsconfigRootDir: getESMDirname(import.meta.url),
         project: './tsconfig.json'
       }
+    },
+    rules: {
+      '@typescript-eslint/restrict-template-expressions': 'off'
     }
   },
   {

@@ -1,4 +1,4 @@
-import { Serializer } from './Serializer'
+import { Serializer } from './utils/Serializer'
 import { ServerTransport } from './transports/ServerTransport'
 import { Base } from './utils/Base'
 export { Base }
