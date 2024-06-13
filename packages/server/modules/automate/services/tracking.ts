@@ -10,8 +10,11 @@ import {
 } from '@/modules/automate/helpers/types'
 import {
   InsertableAutomationRun,
-  getFullAutomationRevisionMetadata
+  getFullAutomationRevisionMetadata,
+  getFullAutomationRunById
 } from '@/modules/automate/repositories/automations'
+import { getCommit } from '@/modules/core/repositories/commits'
+import { getUserById } from '@/modules/core/services/users'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { throwUncoveredError } from '@speckle/shared'
 import dayjs from 'dayjs'
@@ -28,12 +31,15 @@ const isFinished = (runStatus: AutomationRunStatus) => {
   return finishedStatuses.includes(runStatus)
 }
 
-export type SetupRunFinishedTrackingDeps = {
+export type AutomateTrackingDeps = {
   getFullAutomationRevisionMetadata: typeof getFullAutomationRevisionMetadata
+  getFullAutomationRunById: typeof getFullAutomationRunById
+  getCommit: typeof getCommit
+  getUserById: typeof getUserById
 }
 
 const onAutomationRunStatusUpdated =
-  ({ getFullAutomationRevisionMetadata }: SetupRunFinishedTrackingDeps) =>
+  (deps: AutomateTrackingDeps) =>
   async ({
     run,
     functionRun,
@@ -45,9 +51,12 @@ const onAutomationRunStatusUpdated =
   }) => {
     if (!isFinished(run.status)) return
 
-    const automationWithRevision = await getFullAutomationRevisionMetadata(
+    const automationWithRevision = await deps.getFullAutomationRevisionMetadata(
       run.automationRevisionId
     )
+    const fullRun = await deps.getFullAutomationRunById(run.id)
+    if (!fullRun) throw new Error('This should never happen')
+
     if (!automationWithRevision) {
       automateLogger.error(
         {
@@ -58,7 +67,12 @@ const onAutomationRunStatusUpdated =
       return
     }
 
-    const mp = mixpanel({ userEmail: undefined })
+    const userEmail = await getUserEmailFromAutomationRun(deps)(
+      fullRun,
+      automationWithRevision.projectId
+    )
+
+    const mp = mixpanel({ userEmail })
     await mp.track('Automate Function Run Finished', {
       automationId,
       automationRevisionId: automationWithRevision.id,
@@ -73,43 +87,77 @@ const onAutomationRunStatusUpdated =
     })
   }
 
-const onRunCreated = async ({
-  automation,
-  run: automationRun,
-  source
-}: {
-  automation: AutomationWithRevision
-  run: InsertableAutomationRun
-  source: RunTriggerSource
-}) => {
-  // all triggers, that are automatic result of an action are in a need to be tracked
-  switch (source) {
-    case RunTriggerSource.Automatic: {
-      const mp = mixpanel({ userEmail: undefined })
-      await mp.track('Automation Run Triggered', {
-        automationId: automation.id,
-        automationName: automation.name,
-        automationRunId: automationRun.id,
-        projectId: automation.projectId,
-        source
-      })
-      break
-    }
-    // runs created from a user interaction are tracked in the frontend
-    case RunTriggerSource.Manual:
-      return
-    default:
-      throwUncoveredError(source)
-  }
-}
+const getUserEmailFromAutomationRun =
+  (deps: AutomateTrackingDeps) =>
+  async (
+    automationRun: Pick<InsertableAutomationRun, 'triggers'>,
+    projectId: string
+  ): Promise<string | undefined> => {
+    let userEmail: string | undefined = undefined
+    const trigger = automationRun.triggers[0]
+    switch (trigger.triggerType) {
+      case 'versionCreation': {
+        const version = await deps.getCommit(trigger.triggeringId, {
+          streamId: projectId
+        })
+        if (!version) throw new Error("Version doesn't exist any more")
+        const userId = version.author
+        if (userId) {
+          const user = await deps.getUserById({ userId })
+          if (user) userEmail = user.email
+        }
 
-export const setupRunFinishedTracking = (deps: SetupRunFinishedTrackingDeps) => () => {
+        break
+      }
+      default:
+        throwUncoveredError(trigger.triggerType)
+    }
+    return userEmail
+  }
+
+const onRunCreated =
+  (deps: AutomateTrackingDeps) =>
+  async ({
+    automation,
+    run: automationRun,
+    source
+  }: {
+    automation: AutomationWithRevision
+    run: InsertableAutomationRun
+    source: RunTriggerSource
+  }) => {
+    // all triggers, that are automatic result of an action are in a need to be tracked
+    switch (source) {
+      case RunTriggerSource.Automatic: {
+        const userEmail = await getUserEmailFromAutomationRun(deps)(
+          automationRun,
+          automation.projectId
+        )
+        const mp = mixpanel({ userEmail })
+        await mp.track('Automation Run Triggered', {
+          automationId: automation.id,
+          automationName: automation.name,
+          automationRunId: automationRun.id,
+          projectId: automation.projectId,
+          source
+        })
+        break
+      }
+      // runs created from a user interaction are tracked in the frontend
+      case RunTriggerSource.Manual:
+        return
+      default:
+        throwUncoveredError(source)
+    }
+  }
+
+export const setupRunFinishedTracking = (deps: AutomateTrackingDeps) => () => {
   const quitters = [
     AutomateRunsEmitter.listen(
       AutomateRunsEmitter.events.StatusUpdated,
       onAutomationRunStatusUpdated(deps)
     ),
-    AutomateRunsEmitter.listen(AutomateRunsEmitter.events.Created, onRunCreated)
+    AutomateRunsEmitter.listen(AutomateRunsEmitter.events.Created, onRunCreated(deps))
   ]
 
   return () => quitters.forEach((quitter) => quitter())
