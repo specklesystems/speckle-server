@@ -20,5 +20,5 @@ pushd "${GIT_ROOT}/${FE2_DIR_PATH}"
 yarn datadog-ci sourcemaps upload ./.output/public/_nuxt \
 --service="${FE2_DATADOG_SERVICE}" \
 --release-version="${IMAGE_VERSION_TAG}" \
---minified-path-prefix=/_nuxt \
+--minified-path-prefix=/_nuxt
 popd
