@@ -1070,7 +1070,7 @@ jobs:
           command: yarn build:public
       - run:
           name: Build FE2
-          command: yarn build:sourcemaps
+          command: NODE_ENV=production yarn build:sourcemaps
           working_directory: 'packages/frontend-2'
       - run:
           name: Upload source maps

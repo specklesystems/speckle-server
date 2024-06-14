@@ -58,7 +58,7 @@ const pageQuery = graphql(`
 `)
 
 definePageMeta({
-  middleware: ['require-valid-function']
+  middleware: ['auth', 'require-valid-function']
 })
 
 // const { activeUser } = useActiveUser()
