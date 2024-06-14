@@ -38,6 +38,7 @@ export interface ServerInvitesRepository {
     email?: string,
     token?: string
   ) => Promise<ServerInviteRecord | null>
+  queryAllStreamInvites: (streamId: string) => Promise<StreamInviteRecord[]>
 }
 
 export interface CreateInviteParams {

@@ -181,11 +181,23 @@ const findServerInvite =
     return q.first()
   }
 
+const queryAllStreamInvites =
+  ({ db }: { db: Knex }) =>
+  async (streamId: string): Promise<StreamInviteRecord[]> => {
+    if (!streamId) return []
+
+    return buildInvitesBaseQuery({ db })().where({
+      [ServerInvites.col.resourceTarget]: ResourceTargets.Streams,
+      [ServerInvites.col.resourceId]: streamId
+    })
+  }
+
 export const createServerInvitesRepository = ({ db }: { db: Knex }) => ({
   queryAllUserStreamInvites: queryAllUserStreamInvites({ db }),
   findStreamInvite: findStreamInvite({ db }),
   findUserByTarget: findUserByTarget(),
   findResource: findResource(),
   insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db }),
-  findServerInvite: findServerInvite({ db })
+  findServerInvite: findServerInvite({ db }),
+  queryAllStreamInvites: queryAllStreamInvites({ db })
 })

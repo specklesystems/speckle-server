@@ -173,7 +173,9 @@ export = {
     },
 
     async streamInviteUse(_parent, args, ctx) {
-      await useStreamInviteAndNotify(args, ctx.userId!, ctx.resourceAccessRules)
+      await useStreamInviteAndNotify({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(args, ctx.userId!, ctx.resourceAccessRules)
       return true
     },
 

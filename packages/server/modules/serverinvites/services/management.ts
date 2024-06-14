@@ -21,8 +21,6 @@ import {
 } from '@/modules/core/helpers/token'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { ServerInvitesRepository } from '../domain'
-import { createServerInvitesRepository } from '../repositories/serverInvites'
-import knexInstance from '@/db/knex'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
 
@@ -71,39 +69,44 @@ const isStreamInviteUseArgs = (
   i: MutationStreamInviteUseArgs | ProjectInviteUseInput
 ): i is MutationStreamInviteUseArgs => has(i, 'streamId')
 
-export async function useStreamInviteAndNotify(
-  input: MutationStreamInviteUseArgs | ProjectInviteUseInput,
-  userId: string,
-  userResourceAccessRules: ContextResourceAccessRules
-) {
-  const { accept, token } = input
+export const useStreamInviteAndNotify =
+  ({
+    serverInvitesRepository
+  }: {
+    serverInvitesRepository: Pick<ServerInvitesRepository, 'findStreamInvite'>
+  }) =>
+  async (
+    input: MutationStreamInviteUseArgs | ProjectInviteUseInput,
+    userId: string,
+    userResourceAccessRules: ContextResourceAccessRules
+  ) => {
+    const { accept, token } = input
 
-  if (
-    !isResourceAllowed({
-      resourceId: isStreamInviteUseArgs(input) ? input.streamId : input.projectId,
-      resourceType: TokenResourceIdentifierType.Project,
-      resourceAccessRules: userResourceAccessRules
-    })
-  ) {
-    throw new StreamInvalidAccessError(
-      'You are not allowed to process an invite for this stream',
-      {
-        info: {
-          userId,
-          userResourceAccessRules,
-          input
+    if (
+      !isResourceAllowed({
+        resourceId: isStreamInviteUseArgs(input) ? input.streamId : input.projectId,
+        resourceType: TokenResourceIdentifierType.Project,
+        resourceAccessRules: userResourceAccessRules
+      })
+    ) {
+      throw new StreamInvalidAccessError(
+        'You are not allowed to process an invite for this stream',
+        {
+          info: {
+            userId,
+            userResourceAccessRules,
+            input
+          }
         }
-      }
+      )
+    }
+
+    await finalizeStreamInvite({
+      serverInvitesRepository
+    })(
+      accept,
+      isStreamInviteUseArgs(input) ? input.streamId : input.projectId,
+      token,
+      userId
     )
   }
-
-  // TODO: injection
-  await finalizeStreamInvite({
-    serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
-  })(
-    accept,
-    isStreamInviteUseArgs(input) ? input.streamId : input.projectId,
-    token,
-    userId
-  )
-}

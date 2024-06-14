@@ -68,22 +68,6 @@ async function updateAllInviteTargets(oldTargets, newTarget) {
 }
 
 /**
- * Get all pending stream invites
- * @param {string} streamId
- * @returns {Promise<import('@/modules/serverinvites/helpers/types').StreamInviteRecord[]>}
- */
-async function getAllStreamInvites(streamId) {
-  if (!streamId) return []
-
-  const q = getInvitesBaseQuery().where({
-    [ServerInvites.col.resourceTarget]: ResourceTargets.Streams,
-    [ServerInvites.col.resourceId]: streamId
-  })
-
-  return await q
-}
-
-/**
  * Delete a single stream invite
  * @param {string} inviteId
  */
@@ -249,7 +233,6 @@ module.exports = {
   deleteServerOnlyInvites,
   updateAllInviteTargets,
   deleteStreamInvite,
-  getAllStreamInvites,
   countServerInvites,
   findServerInvites,
   getInvite,

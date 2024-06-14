@@ -57,6 +57,10 @@ const {
 const {
   TokenResourceIdentifierType
 } = require('@/modules/core/graph/generated/graphql')
+const {
+  createServerInvitesRepository
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const knexInstance = require('@/db/knex')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -167,7 +171,9 @@ module.exports = {
 
     async pendingCollaborators(parent) {
       const { id: streamId } = parent
-      return await getPendingStreamCollaborators(streamId)
+      return await getPendingStreamCollaborators({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(streamId)
     },
 
     async favoritedDate(parent, _args, ctx) {

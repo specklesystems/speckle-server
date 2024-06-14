@@ -177,7 +177,9 @@ export = {
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async use(_parent, args, ctx) {
-      await useStreamInviteAndNotify(args.input, ctx.userId!, ctx.resourceAccessRules)
+      await useStreamInviteAndNotify({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(args.input, ctx.userId!, ctx.resourceAccessRules)
       return true
     },
     async cancel(_parent, args, ctx) {
@@ -250,7 +252,9 @@ export = {
       return ctx.loaders.streams.getSourceApps.load(parent.id) || []
     },
     async invitedTeam(parent) {
-      return await getPendingStreamCollaborators(parent.id)
+      return getPendingStreamCollaborators({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(parent.id)
     },
     async visibility(parent) {
       const { isPublic, isDiscoverable } = parent

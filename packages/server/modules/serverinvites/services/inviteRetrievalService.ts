@@ -16,7 +16,6 @@ import {
 import { MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { keyBy, uniq } from 'lodash'
 import { ServerInvitesRepository } from '../domain'
-import { getAllStreamInvites } from '@/modules/serverinvites/repositories'
 
 /**
  * The token field is intentionally ommited from this and only managed through the .token resolver
@@ -63,29 +62,33 @@ async function getInvitationTargetUsers(invites: ServerInviteRecord[]) {
 /**
  * Get pending stream collaborators (invited, but not accepted)
  */
-export async function getPendingStreamCollaborators(
-  streamId: string
-): Promise<PendingStreamCollaboratorGraphQLType[]> {
-  // Get all pending invites
-  const invites = await getAllStreamInvites(streamId)
+export const getPendingStreamCollaborators =
+  ({
+    serverInvitesRepository
+  }: {
+    serverInvitesRepository: Pick<ServerInvitesRepository, 'queryAllStreamInvites'>
+  }) =>
+  async (streamId: string): Promise<PendingStreamCollaboratorGraphQLType[]> => {
+    // Get all pending invites
+    const invites = await serverInvitesRepository.queryAllStreamInvites(streamId)
 
-  // Get all target users, if any
-  const usersById = await getInvitationTargetUsers(invites)
+    // Get all target users, if any
+    const usersById = await getInvitationTargetUsers(invites)
 
-  // Build results
-  const results = []
-  for (const invite of invites) {
-    let user: LimitedUserRecord | null = null
-    const { userId } = resolveTarget(invite.target)
-    if (userId && usersById[userId]) {
-      user = removePrivateFields(usersById[userId])
+    // Build results
+    const results = []
+    for (const invite of invites) {
+      let user: LimitedUserRecord | null = null
+      const { userId } = resolveTarget(invite.target)
+      if (userId && usersById[userId]) {
+        user = removePrivateFields(usersById[userId])
+      }
+
+      results.push(buildPendingStreamCollaboratorModel(invite, user))
     }
 
-    results.push(buildPendingStreamCollaboratorModel(invite, user))
+    return results
   }
-
-  return results
-}
 
 /**
  * Find a pending invitation to the specified stream for the specified user
