@@ -12,6 +12,14 @@
       chromium65-compatibility
     >
       <div class="-mx-1">
+        <ReportBase v-if="modelCard.report" :report="modelCard.report">
+          <template #activator="{ toggle }">
+            <button class="action action-normal" @click="toggle()">
+              <div class="truncate max-[275px]:text-xs">View Report</div>
+              <div><InformationCircleIcon class="w-5 h-5" /></div>
+            </button>
+          </template>
+        </ReportBase>
         <button
           v-for="item in items"
           :key="item.name"
@@ -29,11 +37,13 @@
 </template>
 <script setup lang="ts">
 import {
+  InformationCircleIcon,
   Cog6ToothIcon,
   ArrowTopRightOnSquareIcon,
   ClockIcon,
   ArchiveBoxXMarkIcon
 } from '@heroicons/vue/24/outline'
+import { IModelCard } from '~/lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
@@ -43,6 +53,7 @@ const emit = defineEmits(['view', 'view-versions', 'copy-model-link', 'remove'])
 
 defineProps<{
   modelName: string
+  modelCard: IModelCard
 }>()
 
 const app = useNuxtApp()
@@ -95,6 +106,7 @@ const items = [
 .action-normal {
   @apply text-primary hover:bg-primary-muted;
 }
+
 .action-danger {
   @apply text-danger hover:bg-rose-500/10;
 }

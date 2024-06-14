@@ -201,6 +201,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.error = undefined
     model.progress = { status: 'Starting to send...' }
     model.expired = false
+    model.report = undefined
 
     void app.$sendBinding.send(modelCardId)
   }

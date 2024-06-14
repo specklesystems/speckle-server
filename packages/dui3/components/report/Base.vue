@@ -1,16 +1,18 @@
 <template>
   <div>
-    <button
-      v-tippy="summary.hint"
-      class="rounded-full bg-foundation"
-      @click.stop="showReportDialog = true"
-    >
-      <InformationCircleIcon
-        v-if="summary.failedCount === 0"
-        class="w-4 text-success"
-      />
-      <ExclamationCircleIcon v-else class="w-4 text-warning" />
-    </button>
+    <slot name="activator" :toggle="toggleDialog">
+      <button
+        v-tippy="summary.hint"
+        class="rounded-full bg-foundation"
+        @click.stop="toggleDialog()"
+      >
+        <InformationCircleIcon
+          v-if="summary.failedCount === 0"
+          class="w-4 text-success"
+        />
+        <ExclamationCircleIcon v-else class="w-4 text-warning" />
+      </button>
+    </slot>
     <LayoutDialog
       v-model:open="showReportDialog"
       :title="`Report`"
@@ -40,6 +42,9 @@ const props = defineProps<{
 }>()
 
 const showReportDialog = ref(false)
+const toggleDialog = () => {
+  showReportDialog.value = !showReportDialog.value
+}
 
 const reportSlice = ref(10)
 // Limit so we don't display 100k items at once and burn
