@@ -34,7 +34,7 @@ RUN yarn workspaces focus -A
 # hadolint ignore=DL3059
 RUN yarn workspaces foreach run build
 # hadolint ignore=DL3059
-RUN find ./packages/frontend-2/.output/ -type f -name "*.js.map" -exec rm -f {} \;
+RUN find ./packages/frontend-2/.output/ -type f \( -name "*.js.map" -o -name "*.mjs.map" -o -name "*.cjs.map" \) -exec rm -f {} \;
 
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
