@@ -78,9 +78,7 @@
         v-if="errorNotification"
         :notification="errorNotification"
         :report="modelCard.report"
-        @dismiss="
-          store.patchModel(modelCard.modelCardId, { error: undefined, report: null })
-        "
+        @dismiss="store.patchModel(modelCard.modelCardId, { error: undefined })"
       />
       <CommonModelNotification
         v-if="latestVersionNotification"
@@ -88,8 +86,7 @@
         :report="modelCard.report"
         @dismiss="
           store.patchModel(modelCard.modelCardId, {
-            latestCreatedVersionId: undefined,
-            report: null
+            latestCreatedVersionId: undefined
           })
         "
       />

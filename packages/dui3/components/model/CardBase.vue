@@ -34,6 +34,7 @@
           {{ modelData.displayName }}
         </div>
         <ModelActionsDialog
+          :model-card="modelCard"
           :model-name="modelData.displayName"
           @view="viewModel"
           @view-versions="viewModelVersions"
