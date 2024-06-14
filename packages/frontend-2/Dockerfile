@@ -29,9 +29,11 @@ COPY packages/ui-components-nuxt ./packages/ui-components-nuxt/
 COPY packages/tailwind-theme ./packages/tailwind-theme/
 COPY packages/frontend-2 ./packages/frontend-2/
 
+# hadolint ignore=DL3059
 RUN yarn workspaces focus -A
 # hadolint ignore=DL3059
 RUN yarn workspaces foreach run build
+# hadolint ignore=DL3059
 RUN find ./packages/frontend-2/.output/ -type f -name "*.js.map" -exec rm -f {} \;
 
 ENV TINI_VERSION v0.19.0
