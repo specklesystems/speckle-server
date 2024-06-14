@@ -21,6 +21,7 @@ const walkingSpeed = 1.42 // m/s
 
 export interface FlyControlsOptions {
   [name: string]: unknown
+  enableLook?: boolean
   lookSpeed?: number
   moveSpeed?: number
   damperDecay?: number
@@ -275,6 +276,8 @@ class FlyControls extends SpeckleControls {
   }
 
   protected rotate(euler: Euler) {
+    if (!this._options.enableLook) return
+
     const q = new Quaternion()
     const t = new Quaternion().setFromRotationMatrix(this._basisTransform)
     q.setFromEuler(euler).premultiply(t)
