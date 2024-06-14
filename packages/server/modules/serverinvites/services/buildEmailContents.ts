@@ -1,19 +1,19 @@
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import { ServerInviteRecord } from '../../helpers/types'
+import { ServerInviteRecord } from '../helpers/types'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { ResourceTargets, isServerInvite } from '../../helpers/inviteHelper'
+import { ResourceTargets, isServerInvite } from '../helpers/inviteHelper'
 import {
   getRegistrationRoute,
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { InviteCreateValidationError } from '../../errors'
+import { InviteCreateValidationError } from '../errors'
 import {
   EmailTemplateParams,
   renderEmail
 } from '@/modules/emails/services/emailRendering'
 import sanitizeHtml from 'sanitize-html'
-import { CreateInviteParams } from '../../domain'
+import { CreateInviteParams } from '../domain'
 
 type InviteOrInputParams =
   | CreateInviteParams
