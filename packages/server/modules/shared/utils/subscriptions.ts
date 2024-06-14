@@ -271,10 +271,11 @@ type SubscriptionTypeMap = {
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
-  | UserSubscriptions
-  | ProjectSubscriptions
-  | ViewerSubscriptions
+  | CommentSubscriptions
   | FileImportSubscriptions
+  | ProjectSubscriptions
+  | UserSubscriptions
+  | ViewerSubscriptions
 
 /**
  * Publish a GQL subscription event

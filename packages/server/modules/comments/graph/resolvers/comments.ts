@@ -1,10 +1,10 @@
-const { pubsub } = require('@/modules/shared/utils/subscriptions')
-const { ForbiddenError: ApolloForbiddenError } = require('apollo-server-express')
-const { ForbiddenError } = require('@/modules/shared/errors')
-const { getStream } = require('@/modules/core/services/streams')
-const { Roles } = require('@/modules/core/helpers/mainConstants')
+import { pubsub } from '@/modules/shared/utils/subscriptions'
+import { ForbiddenError as ApolloForbiddenError } from 'apollo-server-express'
+import { ForbiddenError } from '@/modules/shared/errors'
+import { getStream } from '@/modules/core/services/streams'
+import { Roles } from '@/modules/core/helpers/mainConstants'
 
-const {
+import {
   getComment,
   getComments,
   getResourceCommentCount,
@@ -14,38 +14,37 @@ const {
   archiveComment,
   editComment,
   streamResourceCheck
-} = require('@/modules/comments/services/index')
-const {
+} from '@/modules/comments/services/index'
+import {
   ensureCommentSchema
-} = require('@/modules/comments/services/commentTextService')
-const { withFilter } = require('graphql-subscriptions')
-const { has } = require('lodash')
-const {
+} from '@/modules/comments/services/commentTextService'
+import { has } from 'lodash'
+import {
   documentToBasicString
-} = require('@/modules/core/services/richTextEditorService')
-const {
+} from '@/modules/core/services/richTextEditorService'
+import {
   getPaginatedCommitComments,
   getPaginatedBranchComments,
   getPaginatedProjectComments
-} = require('@/modules/comments/services/retrieval')
-const {
+} from '@/modules/comments/services/retrieval'
+import {
   publish,
   ViewerSubscriptions,
   CommentSubscriptions,
   filteredSubscribe,
   ProjectSubscriptions
-} = require('@/modules/shared/utils/subscriptions')
-const {
+} from '@/modules/shared/utils/subscriptions'
+import {
   addCommentCreatedActivity,
   addCommentArchivedActivity,
   addReplyAddedActivity
-} = require('@/modules/activitystream/services/commentActivity')
-const {
+} from '@/modules/activitystream/services/commentActivity'
+import {
   getViewerResourceItemsUngrouped,
   getViewerResourcesForComment,
   doViewerResourcesFit
-} = require('@/modules/core/services/commit/viewerResources')
-const {
+} from '@/modules/core/services/commit/viewerResources'
+import {
   authorizeProjectCommentsAccess,
   authorizeCommentAccess,
   markViewed,
@@ -53,17 +52,20 @@ const {
   createCommentReplyAndNotify,
   editCommentAndNotify,
   archiveCommentAndNotify
-} = require('@/modules/comments/services/management')
-const {
+} from '@/modules/comments/services/management'
+import {
   isLegacyData,
   isDataStruct,
   formatSerializedViewerState,
   convertStateToLegacyData,
   convertLegacyDataToState
-} = require('@/modules/comments/services/data')
+} from '@/modules/comments/services/data'
+import {
+  Resolvers
+} from '@/modules/core/graph/generated/graphql'
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
-module.exports = {
+export = {
   Query: {
     async comment(parent, args, context) {
       await authorizeProjectCommentsAccess({
@@ -489,8 +491,8 @@ module.exports = {
   },
   Subscription: {
     userViewerActivity: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([CommentSubscriptions.ViewerActivity]),
+      subscribe: filteredSubscribe(
+        CommentSubscriptions.ViewerActivity,
         async (payload, variables, context) => {
           const stream = await getStream({
             streamId: payload.streamId,
@@ -513,8 +515,8 @@ module.exports = {
       )
     },
     commentActivity: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([CommentSubscriptions.CommentActivity]),
+      subscribe: filteredSubscribe(
+        CommentSubscriptions.CommentActivity,
         async (payload, variables, context) => {
           const stream = await getStream({
             streamId: payload.streamId,
@@ -553,11 +555,11 @@ module.exports = {
             return false
           }
         }
-      )
+      ),
     },
     commentThreadActivity: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([CommentSubscriptions.CommentThreadActivity]),
+      subscribe: filteredSubscribe(
+        CommentSubscriptions.CommentThreadActivity,
         async (payload, variables, context) => {
           const stream = await getStream({
             streamId: payload.streamId,
@@ -645,4 +647,4 @@ module.exports = {
       )
     }
   }
-}
+} as Resolvers
