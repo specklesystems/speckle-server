@@ -64,10 +64,9 @@ import {
   Resolvers
 } from '@/modules/core/graph/generated/graphql'
 
-/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 export = {
   Query: {
-    async comment(parent, args, context) {
+    async comment(_parent, args, context) {
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context
