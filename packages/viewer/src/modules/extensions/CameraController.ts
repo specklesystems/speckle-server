@@ -417,20 +417,11 @@ export class CameraController extends Extension implements SpeckleCamera {
     box.getBoundingSphere(targetSphere)
     let radius = targetSphere.radius
 
-    if (isPerspectiveCamera(this._renderingCamera)) {
-      // https://stackoverflow.com/a/44849975
-      const vFOV = this._renderingCamera.getEffectiveFOV() * MathUtils.DEG2RAD
-      const hFOV = Math.atan(Math.tan(vFOV * 0.5) * this._renderingCamera.aspect) * 2
-      const fov = 1 < this._renderingCamera.aspect ? vFOV : hFOV
-      radius = radius / Math.sin(fov * 0.5)
-    } else if (isOrthographicCamera(this._renderingCamera)) {
-      // TO DO
-      //   const width = this._camera.right - this._camera.left
-      //   const height = this._camera.top - this._camera.bottom
-      //   const diameter = 2 * boundingSphere.radius
-      //   const zoom = Math.min(width / diameter, height / diameter)
-      //   promises.push(this.zoomTo(zoom, enableTransition))
-    }
+    // https://stackoverflow.com/a/44849975
+    const vFOV = this.perspectiveCamera.getEffectiveFOV() * MathUtils.DEG2RAD
+    const hFOV = Math.atan(Math.tan(vFOV * 0.5) * this.perspectiveCamera.aspect) * 2
+    const fov = 1 < this.perspectiveCamera.aspect ? vFOV : hFOV
+    radius = radius / Math.sin(fov * 0.5)
     targetSphere.radius = radius * fit
     this._activeControls.fitToSphere(targetSphere)
 
