@@ -492,7 +492,7 @@ const buildAutomationUpdate = () => {
           }
         })
 
-        expect(res).to.haveGraphQLErrors('Invalid automate auth code')
+        expect(res).to.haveGraphQLErrors('Invalid automate auth payload')
         expect(res.data?.automateValidateAuthCode).to.not.be.ok
       })
 

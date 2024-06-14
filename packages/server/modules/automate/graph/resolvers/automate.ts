@@ -626,7 +626,6 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           try {
             orgs = (
               await getUserGithubOrganizations({
-                userId,
                 authCode
               })
             ).availableGitHubOrganisations

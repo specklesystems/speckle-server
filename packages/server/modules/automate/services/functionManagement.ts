@@ -133,9 +133,7 @@ export const createFunctionFromTemplate =
     })
     const body: CreateFunctionBody = {
       ...input,
-      speckleServerOrigin: new URL(getServerOrigin()).origin,
-      speckleUserId: user.id,
-      authenticationCode: authCode,
+      authenticationCode: { ...authCode, origin: new URL(getServerOrigin()).origin },
       functionName: input.name,
       template: mapGqlTemplateIdToExecEngineTemplateId(input.template),
       supportedSourceApps: input.supportedSourceApps as SourceAppName[],
@@ -233,14 +231,9 @@ export const startAutomateFunctionCreatorAuth =
       '/api/v2/functions/auth/githubapp/authorize',
       speckleAutomateUrl()
     )
-    redirectUrl.searchParams.set('speckleUserId', userId)
     redirectUrl.searchParams.set(
-      'speckleServerOrigin',
-      new URL(getServerOrigin()).origin
-    )
-    redirectUrl.searchParams.set(
-      'speckleServerAuthenticationCode',
-      JSON.stringify(authCode)
+      'speckleServerAuthenticationPayload',
+      JSON.stringify({ ...authCode, origin: new URL(getServerOrigin()).origin })
     )
 
     return res.redirect(redirectUrl.toString())
