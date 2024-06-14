@@ -21,6 +21,8 @@ import {
 } from '@/modules/core/helpers/token'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { ServerInvitesRepository } from '../domain'
+import { createServerInvitesRepository } from '../repositories/serverInvites'
+import knexInstance from '@/db/knex'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
 
@@ -95,7 +97,10 @@ export async function useStreamInviteAndNotify(
     )
   }
 
-  await finalizeStreamInvite(
+  // TODO: injection
+  await finalizeStreamInvite({
+    serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+  })(
     accept,
     isStreamInviteUseArgs(input) ? input.streamId : input.projectId,
     token,

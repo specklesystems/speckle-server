@@ -187,7 +187,9 @@ export = {
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
-      await cancelStreamInvite(args.projectId, args.inviteId)
+      await cancelStreamInvite({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(args.projectId, args.inviteId)
       return ctx.loaders.streams.getStream.load(args.projectId)
     }
   },

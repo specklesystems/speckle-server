@@ -182,7 +182,9 @@ export = {
       const { userId, resourceAccessRules } = ctx
 
       await authorizeResolver(userId, streamId, Roles.Stream.Owner, resourceAccessRules)
-      await cancelStreamInvite(streamId, inviteId)
+      await cancelStreamInvite({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(streamId, inviteId)
 
       return true
     },
@@ -190,7 +192,9 @@ export = {
     async inviteResend(_parent, args) {
       const { inviteId } = args
 
-      await resendInvite(inviteId)
+      await resendInvite({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(inviteId)
 
       return true
     },
@@ -198,7 +202,7 @@ export = {
     async inviteDelete(_parent, args) {
       const { inviteId } = args
 
-      await deleteInvite(inviteId)
+      await deleteInvite()(inviteId)
 
       return true
     }
