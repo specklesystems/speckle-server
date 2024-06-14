@@ -133,7 +133,10 @@ export const createFunctionFromTemplate =
     })
     const body: CreateFunctionBody = {
       ...input,
-      authenticationCode: { ...authCode, origin: new URL(getServerOrigin()).origin },
+      speckleServerAuthenticationPayload: {
+        ...authCode,
+        origin: new URL(getServerOrigin()).origin
+      },
       functionName: input.name,
       template: mapGqlTemplateIdToExecEngineTemplateId(input.template),
       supportedSourceApps: input.supportedSourceApps as SourceAppName[],

@@ -242,7 +242,7 @@ export enum ExecutionEngineFunctionTemplateId {
 }
 
 export type CreateFunctionBody = {
-  authenticationCode: AuthCodePayloadWithOrigin
+  speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
   template: ExecutionEngineFunctionTemplateId
   functionName: string
   description: string
