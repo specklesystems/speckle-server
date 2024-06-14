@@ -13,15 +13,18 @@ const buildOutputFileName = (chunkName: string) =>
 const {
   SPECKLE_SERVER_VERSION,
   NUXT_PUBLIC_LOG_LEVEL = 'info',
-  NUXT_PUBLIC_LOG_PRETTY = false
+  NUXT_PUBLIC_LOG_PRETTY = false,
+  BUILD_SOURCEMAPS = 'false'
 } = process.env
 
 const featureFlags = Environment.getFeatureFlags()
 
 const isLogPretty = ['1', 'true', true, 1].includes(NUXT_PUBLIC_LOG_PRETTY)
+const buildSourceMaps = ['1', 'true', true, 1].includes(BUILD_SOURCEMAPS)
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
+  ...(buildSourceMaps ? { sourcemap: true } : {}),
   typescript: {
     shim: false,
     strict: true
@@ -63,10 +66,6 @@ export default defineNuxtConfig({
       speckleServerVersion: SPECKLE_SERVER_VERSION || 'unknown',
       serverName: 'UNDEFINED',
       viewerDebug: false,
-      raygunKey: '',
-      logrocketAppId: '',
-      speedcurveId: 0,
-      debugbearId: '',
       debugCoreWebVitals: false,
       datadogAppId: '',
       datadogClientToken: '',
@@ -129,7 +128,9 @@ export default defineNuxtConfig({
 
             return buildOutputFileName(chunkInfo.name)
           }
-        }
+        },
+        // Leave imports as is, they're server-side only
+        external: ['jsdom']
       }
       // // optionally disable minification for debugging
       // minify: false,

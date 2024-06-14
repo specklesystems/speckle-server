@@ -1255,9 +1255,15 @@ export type Mutation = {
   commitsDelete: Scalars['Boolean'];
   /** Move a batch of commits to a new branch */
   commitsMove: Scalars['Boolean'];
-  /** Delete a pending invite */
+  /**
+   * Delete a pending invite
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   inviteDelete: Scalars['Boolean'];
-  /** Re-send a pending invite */
+  /**
+   * Re-send a pending invite
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   inviteResend: Scalars['Boolean'];
   modelMutations: ModelMutations;
   objectCreate: Array<Maybe<Scalars['String']>>;
@@ -1266,6 +1272,7 @@ export type Mutation = {
   requestVerification: Scalars['Boolean'];
   requestVerificationByEmail: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
+  /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   serverInviteBatchCreate: Scalars['Boolean'];
   /** Invite a new user to the speckle server and return the invite ID */
   serverInviteCreate: Scalars['Boolean'];
@@ -1278,10 +1285,17 @@ export type Mutation = {
   /** Deletes an existing stream. */
   streamDelete: Scalars['Boolean'];
   streamFavorite?: Maybe<Stream>;
+  /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   streamInviteBatchCreate: Scalars['Boolean'];
-  /** Cancel a pending stream invite. Can only be invoked by a stream owner. */
+  /**
+   * Cancel a pending stream invite. Can only be invoked by a stream owner.
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   streamInviteCancel: Scalars['Boolean'];
-  /** Invite a new or registered user to the specified stream */
+  /**
+   * Invite a new or registered user to the specified stream
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   streamInviteCreate: Scalars['Boolean'];
   /** Accept or decline a stream invite */
   streamInviteUse: Scalars['Boolean'];

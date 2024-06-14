@@ -147,9 +147,8 @@ describe('API Tokens', () => {
 
       expect(data?.apiTokenCreate).to.not.be.ok
       expect(errors).to.be.ok
-      expect(
-        errors!.find((e) => e.message.includes('do not have the required privileges'))
-      ).to.be.ok
+      expect(errors!.find((e) => e.message.includes('not have the required scope'))).to
+        .be.ok
     })
 
     it("can't delete PAT tokens", async () => {
@@ -166,9 +165,8 @@ describe('API Tokens', () => {
 
       expect(data?.apiTokenRevoke).to.not.be.ok
       expect(errors).to.be.ok
-      expect(
-        errors!.find((e) => e.message.includes('do not have the required privileges'))
-      ).to.be.ok
+      expect(errors!.find((e) => e.message.includes('not have the required scope'))).to
+        .be.ok
     })
   })
 
@@ -260,9 +258,8 @@ describe('API Tokens', () => {
 
       expect(data?.appTokenCreate).to.not.be.ok
       expect(errors).to.be.ok
-      expect(
-        errors!.find((e) => e.message.includes('do not have the required privileges'))
-      ).to.be.ok
+      expect(errors!.find((e) => e.message.includes('not have the required scope'))).to
+        .be.ok
     })
 
     it("can't create app tokens with scopes that the authenticated req itself doesn't have", async () => {
@@ -424,7 +421,7 @@ describe('API Tokens', () => {
         expect(stream2Res.data?.stream).to.not.be.ok
         expect(
           (stream2Res.errors || []).find((e) =>
-            e.message.includes('You do not have access to this resource')
+            e.message.includes('You are not authorized to access this resource')
           )
         ).to.be.ok
 
