@@ -3,10 +3,8 @@ import { ForbiddenError as ApolloForbiddenError } from 'apollo-server-express'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/services/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-
+import knexInstance from '@/db/knex'
 import {
-  getComment,
-  getComments,
   getResourceCommentCount,
   createComment,
   createCommentReply,
@@ -18,6 +16,7 @@ import {
 import {
   ensureCommentSchema
 } from '@/modules/comments/services/commentTextService'
+import { getComments } from '@/modules/comments/services/retrieval/deprecated'
 import { has } from 'lodash'
 import {
   documentToBasicString
@@ -63,6 +62,9 @@ import {
 import {
   Resolvers
 } from '@/modules/core/graph/generated/graphql'
+import {
+  createCommentsRepository
+} from '@/modules/comments/repositories/comments'
 
 export = {
   Query: {
@@ -72,17 +74,21 @@ export = {
         authCtx: context
       })
 
+      const { getComment } = createCommentsRepository({ db: knexInstance })
+
       const comment = await getComment({ id: args.id, userId: context.userId })
-      if (comment.streamId !== args.streamId)
+
+      if (!comment || (comment.streamId !== args.streamId))
         throw new ApolloForbiddenError('You do not have access to this comment.')
+
       return comment
     },
-
     async comments(parent, args, context) {
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context
       })
+
       return { ...(await getComments({ ...args, userId: context.userId })) }
     }
   },

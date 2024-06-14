@@ -64,9 +64,9 @@ export async function getPaginatedProjectComments(
     alreadyRequestingArchivedOnly
       ? undefined
       : getPaginatedProjectCommentsTotalCount(
-          { ...params, filter: { ...(params.filter || {}), archivedOnly: true } },
-          { preloadedModelLatestVersions }
-        )
+        { ...params, filter: { ...(params.filter || {}), archivedOnly: true } },
+        { preloadedModelLatestVersions }
+      )
   ])
 
   return {
