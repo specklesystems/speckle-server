@@ -71,8 +71,7 @@
         :notification="receiveResultNotification"
         @dismiss="
           store.patchModel(modelCard.modelCardId, {
-            displayReceiveComplete: false,
-            report: null
+            displayReceiveComplete: false
           })
         "
       />
