@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: rusty_objects
+  name: rusty-objects
   namespace: {{ .Values.namespace }}
   labels:
 {{ include "rusty_objects.labels" . | indent 4 }}
