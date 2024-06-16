@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rusty_objects
+  namespace: {{ .Values.namespace }}
+  labels:
+{{ include "rusty_objects.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.rusty_objects.replicas }}
+  selector:
+    matchLabels:
+      app: rusty-objects
+      project: speckle-server
+    strategy:
+      type: RollingUpdate
+    template:
+      metadata:
+        labels:
+{{ include "rusty_objects.labels" . | indent 8 }}  
+    spec:
+      containers:
+      - name: main
+        image: {{ printf "gjedlicska/rusty_speckle_objects:%s" .Values.rusty_objects.image_tag }}
+        imagePullPolicy: {{ .Values.imagePullPolicy }}
+        ports:
+          - name: http
+            containerPort: {{ include "rusty_objects.port" $ }}
+            protocol: TCP
+
+        resources:
+          requests:
+            cpu: {{ .Values.rusty_objects.requests.cpu }}
+            memory: {{ .Values.rusty_objects.requests.memory }}
+          limits:
+            cpu: {{ .Values.rusty_objects.limits.cpu }}
+            memory: {{ .Values.rusty_objects.limits.memory }}
+
+        volumeMounts:
+          - mountPath: /tmp
+            name: tmp
+        {{- if .Values.db.useCertificate }}
+          - name: postgres-certificate
+            mountPath: /postgres-certificate
+        {{- end }}
+        env:
+          - name: PG_CONNECTION_STRING
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName .Values.db.connectionString.secretName }}
+                key: {{ default "postgres_url" .Values.db.connectionString.secretKey }}
+          - name: ROCKET_DATABASES
+            value: '{speckle={url="$(PG_CONNECTION_STRING)"}}'
+
+
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- if .Values.db.useCertificate }}
+        - name: postgres-certificate
+          configMap:
+            name: postgres-certificate
+      {{- end }}

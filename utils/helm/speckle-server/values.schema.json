@@ -611,6 +611,11 @@
             }
           }
         },
+        "experimentalObjectsUrl": {
+          "type": "string",
+          "description": "Experimental objects backend url",
+          "default": ""
+        },
         "encryptionKeys": {
           "type": "object",
           "properties": {
@@ -1376,6 +1381,51 @@
           "description": "Spread Constraints for Speckle server pod scheduling",
           "default": [],
           "items": {}
+        }
+      }
+    },
+    "rusty_objects": {
+      "type": "object",
+      "properties": {
+        "image_tag": {
+          "type": "string",
+          "description": "Specify with image tag to deploy",
+          "default": "0.1.0"
+        },
+        "replicas": {
+          "type": "number",
+          "description": "Number of replicas to start",
+          "default": 2
+        },
+        "requests": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "The CPU that should be available on a node when scheduling this pod.",
+              "default": "1000m"
+            },
+            "memory": {
+              "type": "string",
+              "description": "The Memory that should be available on a node when scheduling this pod.",
+              "default": "1Gi"
+            }
+          }
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "cpu": {
+              "type": "string",
+              "description": "The maximum CPU that will be made available to the server Pod in a given period.",
+              "default": "1500m"
+            },
+            "memory": {
+              "type": "string",
+              "description": "The maximum Memory that will be made available to the server Pod.",
+              "default": "2Gi"
+            }
+          }
         }
       }
     },

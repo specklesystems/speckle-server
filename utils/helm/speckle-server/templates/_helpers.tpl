@@ -603,6 +603,10 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_GENDOAI_MODULE_ENABLED
   value: {{ .Values.featureFlags.gendoAIModuleEnabled | quote }}
 
+# *** Experimental objects api v2 ***
+- name: NEW_OBJECTS_URL
+  value: {{ .Values.server.experimentalObjectsUrl }}
+
 {{- if .Values.featureFlags.gendoAIModuleEnabled }}
 - name: GENDOAI_KEY
   valueFrom:
