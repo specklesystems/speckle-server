@@ -16,7 +16,6 @@ import {
 import {
   ensureCommentSchema
 } from '@/modules/comments/services/commentTextService'
-import { getComments } from '@/modules/comments/services/retrieval/deprecated'
 import { has } from 'lodash'
 import {
   documentToBasicString
@@ -83,12 +82,15 @@ export = {
 
       return comment
     },
-    async comments(parent, args, context) {
+    async comments(_parent, args, context) {
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context
       })
 
+      const { getComments } = createCommentsRepository({ db: knexInstance })
+
+      // TODO: Double-check spread is necessary
       return { ...(await getComments({ ...args, userId: context.userId })) }
     }
   },

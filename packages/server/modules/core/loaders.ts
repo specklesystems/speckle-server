@@ -33,16 +33,7 @@ import {
   getUserStreamCommitCounts
 } from '@/modules/core/repositories/commits'
 import { ResourceIdentifier, Scope } from '@/modules/core/graph/generated/graphql'
-import {
-  getBranchCommentCounts,
-  getCommentParents,
-  getCommentReplyAuthorIds,
-  getCommentReplyCounts,
-  getCommentsResources,
-  getCommentsViewedAt,
-  getCommitCommentCounts,
-  getStreamCommentCounts
-} from '@/modules/comments/repositories/comments'
+import { createCommentsRepository } from '@/modules/comments/repositories/comments'
 import {
   getBranchCommitCounts,
   getBranchesByIds,
@@ -85,6 +76,7 @@ import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
+import knexInstance from '@/db/knex'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -263,6 +255,8 @@ export function buildRequestLoaders(
         return streamIds.map((i) => results[i]?.count || 0)
       }),
       getCommentThreadCount: createLoader<string, number>(async (streamIds) => {
+        const { getStreamCommentCounts } = createCommentsRepository({ db: knexInstance })
+
         const results = keyBy(
           await getStreamCommentCounts(streamIds.slice(), { threadsOnly: true }),
           'streamId'
@@ -347,6 +341,8 @@ export function buildRequestLoaders(
         }
       ),
       getCommentThreadCount: createLoader<string, number>(async (branchIds) => {
+        const { getBranchCommentCounts } = createCommentsRepository({ db: knexInstance })
+
         const results = keyBy(
           await getBranchCommentCounts(branchIds.slice(), { threadsOnly: true }),
           'id'
@@ -395,6 +391,8 @@ export function buildRequestLoaders(
         }
       ),
       getCommentThreadCount: createLoader<string, number>(async (commitIds) => {
+        const { getCommitCommentCounts } = createCommentsRepository({ db: knexInstance })
+
         const results = keyBy(
           await getCommitCommentCounts(commitIds.slice(), { threadsOnly: true }),
           'commitId'
@@ -410,6 +408,8 @@ export function buildRequestLoaders(
       getViewedAt: createLoader<string, Nullable<Date>>(async (commentIds) => {
         if (!userId) return commentIds.slice().map(() => null)
 
+        const { getCommentsViewedAt } = createCommentsRepository({ db: knexInstance })
+
         const results = keyBy(
           await getCommentsViewedAt(commentIds.slice(), userId),
           'commentId'
@@ -417,10 +417,12 @@ export function buildRequestLoaders(
         return commentIds.map((id) => results[id]?.viewedAt || null)
       }),
       getResources: createLoader<string, ResourceIdentifier[]>(async (commentIds) => {
+        const { getCommentsResources } = createCommentsRepository({ db: knexInstance })
         const results = await getCommentsResources(commentIds.slice())
         return commentIds.map((id) => results[id]?.resources || [])
       }),
       getReplyCount: createLoader<string, number>(async (threadIds) => {
+        const { getCommentReplyCounts } = createCommentsRepository({ db: knexInstance })
         const results = keyBy(
           await getCommentReplyCounts(threadIds.slice()),
           'threadId'
@@ -428,11 +430,13 @@ export function buildRequestLoaders(
         return threadIds.map((id) => results[id]?.count || 0)
       }),
       getReplyAuthorIds: createLoader<string, string[]>(async (threadIds) => {
+        const { getCommentReplyAuthorIds } = createCommentsRepository({ db: knexInstance })
         const results = await getCommentReplyAuthorIds(threadIds.slice())
         return threadIds.map((id) => results[id] || [])
       }),
       getReplyParent: createLoader<string, Nullable<CommentRecord>>(
         async (replyIds) => {
+          const { getCommentParents } = createCommentsRepository({ db: knexInstance })
           const results = keyBy(await getCommentParents(replyIds.slice()), 'replyId')
           return replyIds.map((id) => results[id] || null)
         }
@@ -657,7 +661,7 @@ export function buildRequestLoaders(
   const clearAll = () => {
     for (const groupedLoaders of Object.values(loaders)) {
       for (const loaderItem of Object.values(groupedLoaders)) {
-        ;(loaderItem as DataLoader<unknown, unknown>).clearAll()
+        ; (loaderItem as DataLoader<unknown, unknown>).clearAll()
       }
     }
   }

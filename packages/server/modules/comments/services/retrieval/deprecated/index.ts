@@ -1,1 +1,0 @@
-export { getComments } from './getComments'
