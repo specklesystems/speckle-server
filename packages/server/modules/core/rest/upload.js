@@ -8,10 +8,34 @@ const { validatePermissionsWriteStream } = require('./authUtils')
 const { createObjectsBatched } = require('@/modules/core/services/objects')
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
 const { estimateStringMegabyteSize } = require('@/modules/core/utils/chunking')
+const request = require('request')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
 
 module.exports = (app) => {
+  app.options('/api/v2/projects/:projectId/objects', corsMiddleware())
+  app.post(
+    '/api/v2/projects/:projectId/objects',
+    corsMiddleware(),
+    async (req, res) => {
+      req.log = req.log.child({
+        userId: req.context.userId || '-',
+        streamId: req.params.projectId
+      })
+
+      const hasStreamAccess = await validatePermissionsWriteStream(
+        req.params.projectId,
+        req
+      )
+      if (!hasStreamAccess.result) {
+        return res.status(hasStreamAccess.status).end()
+      }
+
+      const url = `${process.env.NEW_OBJECTS_URL}${req.originalUrl}`
+      req.pipe(request.post(url)).pipe(res)
+    }
+  )
+
   app.options('/objects/:streamId', corsMiddleware())
 
   app.post('/objects/:streamId', corsMiddleware(), async (req, res) => {

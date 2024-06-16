@@ -321,7 +321,13 @@ export async function init() {
   }
 
   app.use(corsMiddleware())
-  app.use(express.json({ limit: '100mb' }))
+
+  //the v2 api's cannot proxy the requests if their body is parsed and consumed
+  const shouldParseRequest = (req: express.Request) =>
+    !req.path.startsWith('/api/v2/projects/')
+  app.use((req, res, next) =>
+    shouldParseRequest(req) ? express.json({ limit: '100mb' })(req, res, next) : next()
+  )
   app.use(express.urlencoded({ limit: `${getFileSizeLimitMB()}mb`, extended: false }))
 
   // Trust X-Forwarded-* headers (for https protocol detection)
