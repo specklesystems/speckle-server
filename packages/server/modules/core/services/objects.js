@@ -622,7 +622,9 @@ function prepInsertionObject(streamId, obj) {
     data: stringifiedObj, // stored in jsonb column
     streamId,
     id: obj.id,
-    speckleType: obj.speckleType
+    // YEAH, this has been broken forever...
+    // speckleType: obj.speckleType
+    speckleType: obj.speckle_type
   }
 }
 
