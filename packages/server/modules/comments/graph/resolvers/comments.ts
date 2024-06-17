@@ -64,6 +64,7 @@ import {
 import {
   createCommentsRepository
 } from '@/modules/comments/repositories/comments'
+import { ResourceIdentifier, ResourceType } from '@/test/graphql/generated/graphql'
 
 export = {
   Query: {
@@ -105,7 +106,10 @@ export = {
         }
       }
 
-      const resources = [{ resourceId: parent.id, resourceType: 'comment' }]
+      const { getComments } = createCommentsRepository({ db: knexInstance })
+
+      const resources: ResourceIdentifier[] = [{ resourceId: parent.id, resourceType: ResourceType.Comment }]
+
       return await getComments({
         resources,
         replies: true,
@@ -120,7 +124,6 @@ export = {
       const commentText = parent?.text || ''
       return ensureCommentSchema(commentText)
     },
-
     rawText(parent) {
       const { doc } = ensureCommentSchema(parent.text || '')
       return documentToBasicString(doc)
@@ -153,7 +156,8 @@ export = {
       }
     },
     async viewerResources(parent) {
-      return await getViewerResourcesForComment(parent.streamId, parent.id)
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      return await getViewerResourcesForComment({ commentsRepository })(parent.streamId, parent.id)
     },
     /**
      * Until recently 'data' was just a JSONObject so theoretically it was possible to return all kinds of object

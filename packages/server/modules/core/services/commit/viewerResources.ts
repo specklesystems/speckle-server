@@ -1,4 +1,4 @@
-import { getCommentsResources } from '@/modules/comments/repositories/comments'
+import type { CommentsRepository } from '@/modules/comments/domain'
 import {
   ResourceIdentifier,
   ResourceIdentifierInput,
@@ -365,29 +365,34 @@ export async function getViewerResourcesFromLegacyIdentifiers(
   return uniqWith(results, isResourceItemEqual)
 }
 
-export async function getViewerResourcesForComments(
-  projectId: string,
-  commentIds: string[]
-): Promise<ViewerResourceItem[]> {
-  const commentsResources = reduce(
-    await getCommentsResources(commentIds),
-    (result, item) => {
-      const resources = item.resources
-      return result.concat(resources)
-    },
-    [] as ResourceIdentifier[]
-  )
-  const uniqueResources = uniqWith(commentsResources, isResourceIdentifierEqual)
+export const getViewerResourcesForComments =
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getCommentsResources'> }) =>
+    async (
+      projectId: string,
+      commentIds: string[]
+    ): Promise<ViewerResourceItem[]> => {
+      const { getCommentsResources } = commentsRepository
+      const commentsResources = reduce(
+        await getCommentsResources(commentIds),
+        (result, item) => {
+          const resources = item.resources
+          return result.concat(resources)
+        },
+        [] as ResourceIdentifier[]
+      )
+      const uniqueResources = uniqWith(commentsResources, isResourceIdentifierEqual)
 
-  return await getViewerResourcesFromLegacyIdentifiers(projectId, uniqueResources)
-}
+      return await getViewerResourcesFromLegacyIdentifiers(projectId, uniqueResources)
+    }
 
-export async function getViewerResourcesForComment(
-  projectId: string,
-  commentId: string
-): Promise<ViewerResourceItem[]> {
-  return await getViewerResourcesForComments(projectId, [commentId])
-}
+export const getViewerResourcesForComment =
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getCommentsResources'> }) =>
+    async (
+      projectId: string,
+      commentId: string
+    ): Promise<ViewerResourceItem[]> => {
+      return await getViewerResourcesForComments({ commentsRepository })(projectId, [commentId])
+    }
 
 /**
  * Whether any of the resource items match
