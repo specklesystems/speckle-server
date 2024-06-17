@@ -23,7 +23,7 @@ const configs = [
     languageOptions: {
       parserOptions: {
         tsconfigRootDir: getESMDirname(import.meta.url),
-        project: './tsconfig.json'
+        project: './tsconfig.eslint.json'
       }
     },
     rules: {
@@ -34,6 +34,14 @@ const configs = [
     files: ['**/*.d.ts'],
     rules: {
       '@typescript-eslint/no-explicit-any': 'off'
+    }
+  },
+  {
+    files: ['vite.config.ts'],
+    languageOptions: {
+      globals: {
+        ...globals.node
+      }
     }
   }
 ]
