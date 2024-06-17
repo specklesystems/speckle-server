@@ -159,7 +159,10 @@ module.exports = {
       for (const batch of batches) {
         prepInsertionObjectBatch(batch)
         await Objects().insert(batch).onConflict().ignore()
-        servicesLogger.info(`Inserted ${batch.length} objects`)
+        servicesLogger.info(
+          { batchLength: batch.length },
+          'Inserted {batchLength} objects'
+        )
       }
     }
 
