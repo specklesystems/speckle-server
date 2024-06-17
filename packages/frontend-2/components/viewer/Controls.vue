@@ -365,25 +365,25 @@ const {
 } = useInjectedViewerInterfaceState()
 
 const modelsShortcut = ref(
-  `Models (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'm'])})`
+  `Models (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'm'])})`
 )
 const explorerShortcut = ref(
-  `Scene Explorer (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'e'])})`
+  `Scene Explorer (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'e'])})`
 )
 const discussionsShortcut = ref(
-  `Discussions (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 't'])})`
+  `Discussions (${getKeyboardShortcutTitle([ModifierKeys.Shift, 't'])})`
 )
 const zoomExtentsShortcut = ref(
-  `Fit to screen (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'Space'])})`
+  `Fit to screen (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'Space'])})`
 )
 const projectionShortcut = ref(
-  `Projection (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'p'])})`
+  `Projection (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'p'])})`
 )
 const sectionBoxShortcut = ref(
-  `Section Box (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'b'])})`
+  `Section Box (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'b'])})`
 )
 const measureShortcut = ref(
-  `Measure Mode (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'd'])})`
+  `Measure Mode (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'r'])})`
 )
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
@@ -396,30 +396,31 @@ const toggleActiveControl = (control: ActiveControl) => {
   activeControl.value = activeControl.value === control ? 'none' : control
 }
 
-onKeyboardShortcut([ModifierKeys.AltOrOpt], 'm', () => {
+onKeyboardShortcut([ModifierKeys.Shift], 'm', () => {
   toggleActiveControl('models')
 })
-onKeyboardShortcut([ModifierKeys.AltOrOpt], 'e', () => {
+
+onKeyboardShortcut([ModifierKeys.Shift], 'e', () => {
   toggleActiveControl('explorer')
 })
-onKeyboardShortcut([ModifierKeys.AltOrOpt], 'f', () => {
+onKeyboardShortcut([ModifierKeys.Shift], 'f', () => {
   toggleActiveControl('filters')
 })
-onKeyboardShortcut([ModifierKeys.AltOrOpt], ['t'], () => {
+onKeyboardShortcut([ModifierKeys.Shift], 't', () => {
   toggleActiveControl('discussions')
 })
-onKeyboardShortcut([ModifierKeys.AltOrOpt], 'd', () => {
+onKeyboardShortcut([ModifierKeys.Shift], 'r', () => {
   toggleActiveControl('measurements')
 })
 
 // Viewer actions kbd shortcuts
-onKeyboardShortcut([ModifierKeys.AltOrOpt], ' ', () => {
+onKeyboardShortcut([ModifierKeys.Shift], ' ', () => {
   trackAndzoomExtentsOrSelection()
 })
-onKeyboardShortcut([ModifierKeys.AltOrOpt], 'p', () => {
+onKeyboardShortcut([ModifierKeys.Shift], 'p', () => {
   toggleProjection()
 })
-onKeyboardShortcut([ModifierKeys.AltOrOpt], 'b', () => {
+onKeyboardShortcut([ModifierKeys.Shift], 'b', () => {
   toggleSectionBox()
 })
 
