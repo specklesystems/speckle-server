@@ -21,9 +21,9 @@ import { Knex } from 'knex'
  */
 const buildInvitesBaseQuery =
   ({ db }: { db: Knex }) =>
-  (sort = 'asc') => {
+  (sort: 'asc' | 'desc' = 'asc') => {
     // join just to ensure we don't retrieve invalid invites
-    return db<ServerInviteRecord>(ServerInvites.name)
+    const q = db<ServerInviteRecord>(ServerInvites.name)
       .select(ServerInvites.cols)
       .leftJoin(Streams.name, (j) => {
         j.onNotNull(ServerInvites.col.resourceId)
@@ -34,6 +34,7 @@ const buildInvitesBaseQuery =
         w1.whereNull(ServerInvites.col.resourceId).orWhereNotNull(Streams.col.id)
       })
       .orderBy(ServerInvites.col.createdAt, sort)
+    return q
   }
 
 /**
@@ -216,6 +217,146 @@ const deleteServerOnlyInvites =
       .delete()
   }
 
+const updateAllInviteTargets =
+  ({ db }: { db: Knex }) =>
+  async (oldTargets?: string | string[], newTarget?: string) => {
+    if (!oldTargets || !newTarget) return
+    oldTargets = Array.isArray(oldTargets) ? oldTargets : [oldTargets]
+    oldTargets = oldTargets.map((t) => t.toLowerCase())
+    if (!oldTargets.length) return
+
+    // PostgreSQL doesn't support aliases in update calls for some reason...
+    const ServerInvitesCols = ServerInvites.with({ withoutTablePrefix: true }).col
+    return db(ServerInvites.name)
+      .whereIn(ServerInvitesCols.target, oldTargets)
+      .update(ServerInvitesCols.target, newTarget.toLowerCase())
+  }
+
+const deleteStreamInvite =
+  ({ db }: { db: Knex }) =>
+  async (inviteId?: string) => {
+    if (!inviteId) return
+
+    return db(ServerInvites.name)
+      .where({
+        [ServerInvites.col.id]: inviteId,
+        [ServerInvites.col.resourceTarget]: ResourceTargets.Streams
+      })
+      .delete()
+  }
+
+const findServerInvitesBaseQuery =
+  ({ db }: { db: Knex }) =>
+  (searchQuery: string | null, sort: 'asc' | 'desc' = 'asc'): Knex.QueryBuilder => {
+    const q = buildInvitesBaseQuery({ db })(sort)
+
+    if (searchQuery) {
+      // TODO: Is this safe from SQL injection?
+      q.andWhere(ServerInvites.col.target, 'ILIKE', `%${searchQuery}%`)
+    }
+
+    // Not an invite for an already registered user
+    q.andWhere(ServerInvites.col.target, 'NOT ILIKE', '@%')
+    return q
+  }
+
+const countServerInvites =
+  ({ db }: { db: Knex }) =>
+  async (searchQuery: string | null) => {
+    const q = findServerInvitesBaseQuery({ db })(searchQuery)
+    const [count] = await db()
+      .count()
+      .from((q as Knex.QueryBuilder).as('sq1'))
+    return parseInt(count.count.toString())
+  }
+
+const findServerInvites =
+  ({ db }: { db: Knex }) =>
+  async (
+    searchQuery: string | null,
+    limit: number,
+    offset: number
+  ): Promise<ServerInviteRecord[]> => {
+    const q = findServerInvitesBaseQuery({ db })(searchQuery) as Knex.QueryBuilder
+    return q.limit(limit).offset(offset) as Promise<ServerInviteRecord[]>
+  }
+
+const queryServerInvites =
+  ({ db }: { db: Knex }) =>
+  async (searchQuery: string | null, limit: number, cursor: Date | null) => {
+    const q = findServerInvitesBaseQuery({ db })(searchQuery, 'desc')
+    q.limit(limit)
+
+    if (cursor) q.where(ServerInvites.col.createdAt, '<', cursor.toISOString())
+    return q
+  }
+
+const findInvite =
+  ({ db }: { db: Knex }) =>
+  async (inviteId?: string): Promise<ServerInviteRecord | null> => {
+    if (!inviteId) return null
+    return buildInvitesBaseQuery({ db })().where(ServerInvites.col.id, inviteId).first()
+  }
+
+const deleteInvite =
+  ({ db }: { db: Knex }) =>
+  async (inviteId?: string): Promise<boolean> => {
+    if (!inviteId) return false
+    await db(ServerInvites.name).where(ServerInvites.col.id, inviteId).delete()
+    return true
+  }
+
+/**
+ * Delete invites by target - useful when there are potentially duplicate invites that need cleaning up
+ * (e.g. same target, but multiple inviters)
+ */
+const deleteInvitesByTarget =
+  ({ db }: { db: Knex }) =>
+  async (
+    targets?: string | string[],
+    resourceTarget?: string,
+    resourceId?: string
+  ): Promise<boolean> => {
+    if (!targets) return false
+    targets = Array.isArray(targets) ? targets : [targets]
+    if (!targets.length) return false
+
+    await db(ServerInvites.name)
+      .where({
+        [ServerInvites.col.resourceTarget]: resourceTarget,
+        [ServerInvites.col.resourceId]: resourceId
+      })
+      .whereIn(ServerInvites.col.target, targets)
+      .delete()
+
+    return true
+  }
+const queryInvites =
+  ({ db }: { db: Knex }) =>
+  async (inviteIds?: readonly string[]): Promise<ServerInviteRecord[]> => {
+    if (!inviteIds?.length) return []
+    return buildInvitesBaseQuery({ db })().whereIn(ServerInvites.col.id, inviteIds)
+  }
+
+const deleteAllUserInvites =
+  ({ db }: { db: Knex }) =>
+  async (userId?: string): Promise<boolean> => {
+    if (!userId) return false
+    await db(ServerInvites.name)
+      .where(ServerInvites.col.target, buildUserTarget(userId))
+      .delete()
+    return true
+  }
+
+const findInviteByToken =
+  ({ db }: { db: Knex }) =>
+  async (inviteToken?: string): Promise<ServerInviteRecord | null> => {
+    if (!inviteToken) return null
+    return buildInvitesBaseQuery({ db })()
+      .where(ServerInvites.col.token, inviteToken)
+      .first()
+  }
+
 export const createServerInvitesRepository = ({ db }: { db: Knex }) => ({
   queryAllUserStreamInvites: queryAllUserStreamInvites({ db }),
   findStreamInvite: findStreamInvite({ db }),
@@ -225,5 +366,16 @@ export const createServerInvitesRepository = ({ db }: { db: Knex }) => ({
   findServerInvite: findServerInvite({ db }),
   queryAllStreamInvites: queryAllStreamInvites({ db }),
   deleteAllStreamInvites: deleteAllStreamInvites({ db }),
-  deleteServerOnlyInvites: deleteServerOnlyInvites({ db })
+  deleteServerOnlyInvites: deleteServerOnlyInvites({ db }),
+  updateAllInviteTargets: updateAllInviteTargets({ db }),
+  deleteStreamInvite: deleteStreamInvite({ db }),
+  countServerInvites: countServerInvites({ db }),
+  findServerInvites: findServerInvites({ db }),
+  queryServerInvites: queryServerInvites({ db }),
+  findInvite: findInvite({ db }),
+  deleteInvite: deleteInvite({ db }),
+  deleteInvitesByTarget: deleteInvitesByTarget({ db }),
+  queryInvites: queryInvites({ db }),
+  deleteAllUserInvites: deleteAllUserInvites({ db }),
+  findInviteByToken: findInviteByToken({ db })
 })

@@ -204,7 +204,9 @@ export = {
     async inviteDelete(_parent, args) {
       const { inviteId } = args
 
-      await deleteInvite()(inviteId)
+      await deleteInvite({
+        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      })(inviteId)
 
       return true
     }

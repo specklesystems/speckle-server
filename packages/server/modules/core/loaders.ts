@@ -12,7 +12,6 @@ import {
 } from '@/modules/core/repositories/streams'
 import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
-import { getInvites } from '@/modules/serverinvites/repositories'
 import { AuthContext } from '@/modules/shared/authz'
 import {
   BranchRecord,
@@ -85,6 +84,8 @@ import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
+import { createServerInvitesRepository } from '../serverinvites/repositories/serverInvites'
+import knexInstance from '@/db/knex'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -519,8 +520,13 @@ export function buildRequestLoaders(
        */
       getInvite: createLoader<string, Nullable<ServerInviteRecord>>(
         async (inviteIds) => {
-          const results = keyBy(await getInvites(inviteIds), 'id')
-          return inviteIds.map((i) => results[i] || null)
+          const results = keyBy(
+            await createServerInvitesRepository({ db: knexInstance }).queryInvites(
+              inviteIds
+            ),
+            'id'
+          )
+          return inviteIds.map((i) => (results[i] as ServerInviteRecord) || null)
         }
       )
     },

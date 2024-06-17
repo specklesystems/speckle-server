@@ -73,7 +73,10 @@ export const useStreamInviteAndNotify =
   ({
     serverInvitesRepository
   }: {
-    serverInvitesRepository: Pick<ServerInvitesRepository, 'findStreamInvite'>
+    serverInvitesRepository: Pick<
+      ServerInvitesRepository,
+      'findStreamInvite' | 'deleteInvitesByTarget'
+    >
   }) =>
   async (
     input: MutationStreamInviteUseArgs | ProjectInviteUseInput,

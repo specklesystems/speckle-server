@@ -10,7 +10,6 @@ const { TIME } = require('@speckle/shared')
 const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
-const { getInvite } = require('@/modules/serverinvites/repositories')
 const { RateLimiterMemory } = require('rate-limiter-flexible')
 const {
   createServerInvitesRepository
@@ -161,7 +160,9 @@ describe('Auth @auth', () => {
         expect(newUser).to.be.ok
 
         // Check that in the case of a stream invite, it remainds valid post registration
-        const inviteRecord = await getInvite(inviteId)
+        const inviteRecord = await createServerInvitesRepository({
+          db: knexInstance
+        }).findInvite(inviteId)
         if (streamInvite) {
           expect(inviteRecord).to.be.ok
         } else {

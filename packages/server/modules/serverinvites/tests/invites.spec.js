@@ -10,12 +10,12 @@ const {
   resendInvite,
   batchCreateServerInvites,
   batchCreateStreamInvites,
-  deleteInvite,
   getStreamInvite,
   useUpStreamInvite,
   cancelStreamInvite,
   getStreamPendingCollaborators,
-  getStreamInvites
+  getStreamInvites,
+  deleteInvite
 } = require('@/test/graphql/serverInvites')
 const { truncateTables } = require('@/test/hooks')
 const { expect } = require('chai')
@@ -23,10 +23,6 @@ const {
   createStream,
   grantPermissionsStream
 } = require('@/modules/core/services/streams')
-const {
-  getInviteByToken,
-  getInvite: getInviteFromDB
-} = require('@/modules/serverinvites/repositories')
 const { getUserStreamRole } = require('@/test/speckle-helpers/streamHelper')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { buildAuthenticatedApolloServer } = require('@/test/serverHelper')
@@ -48,7 +44,9 @@ async function validateInviteExistanceFromEmail(emailParams) {
   // Validate that invite exists
   const token = getInviteTokenFromEmailParams(emailParams)
   expect(token).to.be.ok
-  const invite = await getInviteByToken(token)
+  const invite = await createServerInvitesRepository({
+    db: knexInstance
+  }).findInviteByToken(token)
   expect(invite).to.be.ok
 
   return invite
@@ -461,12 +459,13 @@ describe('[Stream & Server Invites]', () => {
             token: undefined
           }
         ]
+        const serverInvitesRepository = createServerInvitesRepository({
+          db: knexInstance
+        })
         await Promise.all(
           deletableInvites.map((i) =>
             createInviteDirectly({
-              serverInvitesRepository: createServerInvitesRepository({
-                db: knexInstance
-              })
+              serverInvitesRepository
             })(i, me.id).then((o) => {
               i.inviteId = o.inviteId
               i.token = o.token
@@ -476,14 +475,16 @@ describe('[Stream & Server Invites]', () => {
 
         // Delete all invites
         for (const invite of deletableInvites) {
-          const result = await deleteInvite(apollo, { inviteId: invite.inviteId })
+          const result = await deleteInvite(apollo, {
+            inviteId: invite.inviteId
+          })
           expect(result.data?.inviteDelete).to.be.ok
           expect(result.errors).to.not.be.ok
         }
 
         // Validate that invites no longer exist
         const invitesInDb = await Promise.all(
-          deletableInvites.map((i) => getInviteFromDB(i.inviteId))
+          deletableInvites.map((i) => serverInvitesRepository.findInvite(i.inviteId))
         )
         expect(invitesInDb.every((i) => !i)).to.be.true
       })
@@ -635,7 +636,11 @@ describe('[Stream & Server Invites]', () => {
 
           expect(data?.streamInviteUse).to.be.ok
           expect(errors).to.not.be.ok
-          expect(await getInviteFromDB(inviteId)).to.be.not.ok
+          expect(
+            await createServerInvitesRepository({ db: knexInstance }).findInvite(
+              inviteId
+            )
+          ).to.be.not.ok
 
           const userStreamRole = await getUserStreamRole(me.id, streamId)
           expect(userStreamRole).to.eq(accept ? Roles.Stream.Contributor : null)
@@ -728,7 +733,9 @@ describe('[Stream & Server Invites]', () => {
 
         expect(data?.streamInviteCancel).to.be.ok
         expect(errors).to.be.not.ok
-        expect(await getInviteFromDB(inviteId)).to.be.not.ok
+        expect(
+          await createServerInvitesRepository({ db: knexInstance }).findInvite(inviteId)
+        ).to.be.not.ok
       })
 
       it('own pending collaborators can be retrieved', async () => {

@@ -40,7 +40,19 @@ export interface ServerInvitesRepository {
   ) => Promise<ServerInviteRecord | null>
   queryAllStreamInvites: (streamId: string) => Promise<StreamInviteRecord[]>
   deleteAllStreamInvites: (streamId: string) => Promise<boolean>
-  deleteServerOnlyInvites: (email?: string) => Promise<void>
+  deleteServerOnlyInvites: (email?: string) => Promise<number | undefined>
+  updateAllInviteTargets: (
+    oldTargets?: string | string[],
+    newTarget?: string
+  ) => Promise<void>
+  deleteStreamInvite: (inviteId?: string) => Promise<number | undefined>
+  findInvite: (inviteId?: string) => Promise<ServerInviteRecord | null>
+  deleteInvite: (inviteId?: string) => Promise<boolean>
+  deleteInvitesByTarget: (
+    targets?: string | string[],
+    resourceTarget?: string,
+    resourceId?: string
+  ) => Promise<boolean>
 }
 
 export interface CreateInviteParams {

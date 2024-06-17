@@ -1,9 +1,9 @@
+const knexInstance = require('@/db/knex')
 const { countUsers, getUsers } = require('@/modules/core/services/users')
 const { resolveTarget } = require('@/modules/serverinvites/helpers/inviteHelper')
 const {
-  countServerInvites,
-  findServerInvites
-} = require('@/modules/serverinvites/repositories')
+  createServerInvitesRepository
+} = require('@/modules/serverinvites/repositories/serverInvites')
 const { clamp } = require('lodash')
 
 /**
@@ -74,7 +74,7 @@ async function getTotalCounts(params) {
     // Actual users
     countUsers(query),
     // Invites
-    countServerInvites(query)
+    createServerInvitesRepository({ db: knexInstance }).countServerInvites(query)
   ])
   const totalCount = userCount + inviteCount
 
@@ -146,7 +146,12 @@ async function retrieveItems(params, counts) {
   const [invites, users] = await Promise.all([
     // Invites
     invitesFilter
-      ? findServerInvites(query, invitesFilter.limit, invitesFilter.offset)
+      ? // TODO: injection
+        createServerInvitesRepository({ db: knexInstance }).findServerInvites(
+          query,
+          invitesFilter.limit,
+          invitesFilter.offset
+        )
       : [],
     // Users
     usersFilter ? getUsers(usersFilter.limit, usersFilter.offset, query) : []

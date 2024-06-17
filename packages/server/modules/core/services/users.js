@@ -17,7 +17,6 @@ const Acl = () => ServerAclSchema.knex()
 
 const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
-const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
 const { getUserByEmail } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { pick } = require('lodash')
@@ -29,6 +28,10 @@ const {
 const { Roles } = require('@speckle/shared')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
+const {
+  createServerInvitesRepository
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const knexInstance = require('@/db/knex')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -258,7 +261,8 @@ module.exports = {
     }
 
     // Delete all invites (they don't have a FK, so we need to do this manually)
-    await deleteAllUserInvites(id)
+    // TODO: injection
+    await createServerInvitesRepository({ db: knexInstance }).deleteAllUserInvites(id)
 
     return await Users().where({ id }).del()
   },
