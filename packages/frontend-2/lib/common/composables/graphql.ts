@@ -228,9 +228,10 @@ export const usePageQueryStandardFetchPolicy = () => {
     'usePageQueryStandardFetchPolicy-state',
     () => ref(false)
   )
-  router.beforeEach((to, from) => {
+  const quitTracking = router.beforeEach((to, from) => {
     if (!from || !to) return
     hasNavigatedInCSR.value = true
+    quitTracking()
   })
 
   return computed((): Optional<WatchQueryFetchPolicy> => {
