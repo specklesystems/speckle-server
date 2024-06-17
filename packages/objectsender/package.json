@@ -22,7 +22,7 @@
     "build": "tsc && vite build",
     "prepack": "yarn build",
     "test": "vitest",
-    "test:ci": "vitest --run"
+    "test:ci": "vitest --run --coverage"
   },
   "keywords": [
     "speckle",
@@ -41,6 +41,7 @@
     "@types/lodash-es": "^4.17.12",
     "@typescript-eslint/eslint-plugin": "^7.12.0",
     "@typescript-eslint/parser": "^7.12.0",
+    "@vitest/coverage-v8": "^1.6.0",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.3.2",
