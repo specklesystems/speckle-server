@@ -604,6 +604,8 @@ jobs:
           name: Run tests
           command: yarn test:ci
           working_directory: 'packages/objectsender'
+      - store_artifacts:
+          path: 'packages/objectsender/coverage'
 
   test-ui-components:
     docker: *docker-node-browsers-image
