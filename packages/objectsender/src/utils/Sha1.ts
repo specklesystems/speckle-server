@@ -134,5 +134,5 @@ export function SHA1(msg: string) {
     H4 = (H4 + E) & 0x0ffffffff
   }
   const h = cvt_hex(H0) + cvt_hex(H1) + cvt_hex(H2) + cvt_hex(H3) + cvt_hex(H4)
-  return h.toLowerCase().substring(0, 32)
+  return h.toLowerCase().substring(0, 40)
 }

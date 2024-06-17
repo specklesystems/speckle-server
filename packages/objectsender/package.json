@@ -20,7 +20,9 @@
     "dev": "vite",
     "example": "yarn dev",
     "build": "tsc && vite build",
-    "prepack": "yarn build"
+    "prepack": "yarn build",
+    "test": "vitest",
+    "test:ci": "vitest --run"
   },
   "keywords": [
     "speckle",
@@ -43,7 +45,8 @@
     "prettier": "^3.3.2",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
-    "vite-plugin-dts": "^3.9.1"
+    "vite-plugin-dts": "^3.9.1",
+    "vitest": "^1.6.0"
   },
   "exports": {
     ".": {

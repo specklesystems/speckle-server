@@ -1,3 +1,4 @@
+/// <reference types="vitest" />
 import pkg from './package.json'
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
