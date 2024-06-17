@@ -1,7 +1,14 @@
 import { send, Base, type SendResult } from '../../index'
 import { times } from '#lodash'
 
-window.send = send
+interface ExampleAppWindow extends Window {
+  send: typeof import('../../index').send
+  loadData: () => Promise<void>
+}
+
+const appWindow = window as unknown as ExampleAppWindow
+
+appWindow.send = send
 
 const setInputValue = (
   key: string,
@@ -27,7 +34,7 @@ const getInputValue = (key: string) => {
   return input.value
 }
 
-window.onload = () => {
+appWindow.onload = () => {
   const serverUrl = localStorage.getItem('serverUrl')
   const apiToken = localStorage.getItem('apiToken')
   const projectId = localStorage.getItem('projectId')
@@ -43,7 +50,7 @@ window.onload = () => {
   }
 }
 
-window.loadData = async () => {
+appWindow.loadData = async () => {
   const serverUrl = getInputValue('serverUrl')
   const apiToken = getInputValue('apiToken')
   const projectId = getInputValue('projectId')
