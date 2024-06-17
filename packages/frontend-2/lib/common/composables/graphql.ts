@@ -212,10 +212,10 @@ export const usePaginatedQuery = <
 }
 
 /**
- * We want our page queries to be cache-and-network, so that when you switch to a new page, the data
+ * We want our page queries to have the cache-and-network fetch policy, so that when you switch to a new page, the data
  * gets refreshed, but in the background - while the old data is still shown.
  *
- * This, however, is necessary when hydrating the SSR page in CSR for the first time, and also
+ * This, however, is unnecessary when hydrating the SSR page in CSR for the first time, and also
  * causes weird hydration mismatches.
  *
  * So this sets the correct fetch policy based on whether this is a CSR->CSR navigation
