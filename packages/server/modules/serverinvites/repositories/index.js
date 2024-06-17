@@ -34,21 +34,6 @@ const getInvitesBaseQuery = (sort = 'asc') => {
  */
 
 /**
- * Use up/delete all server-only for the specified email
- * @param {string} email
- */
-async function deleteServerOnlyInvites(email) {
-  if (!email) return
-
-  await ServerInvites.knex()
-    .where({
-      [ServerInvites.col.target]: email.toLowerCase(),
-      [ServerInvites.col.resourceTarget]: null
-    })
-    .delete()
-}
-
-/**
  * Update all invites that have the specified targets to have a new target value
  * @param {string[]|string} oldTargets A single target or an array of targets
  * @param {string} newTarget
@@ -216,7 +201,6 @@ async function getInvites(inviteIds) {
 }
 
 module.exports = {
-  deleteServerOnlyInvites,
   updateAllInviteTargets,
   deleteStreamInvite,
   countServerInvites,

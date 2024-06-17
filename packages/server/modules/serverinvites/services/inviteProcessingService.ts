@@ -7,7 +7,6 @@ import {
   ResourceTargets
 } from '@/modules/serverinvites/helpers/inviteHelper'
 import {
-  deleteServerOnlyInvites,
   updateAllInviteTargets,
   deleteStreamInvite,
   getInvite,
@@ -73,9 +72,14 @@ export const validateServerInvite =
  * the remaining ones
  */
 export const finalizeInvitedServerRegistration =
-  () => async (email: string, userId: string) => {
+  ({
+    serverInvitesRepository
+  }: {
+    serverInvitesRepository: Pick<ServerInvitesRepository, 'deleteServerOnlyInvites'>
+  }) =>
+  async (email: string, userId: string) => {
     // Delete all server-only invites for this email
-    await deleteServerOnlyInvites(email)
+    await serverInvitesRepository.deleteServerOnlyInvites(email)
 
     // Update all remaining invites to use a userId target, not the e-mail
     // (in case the user changes his e-mail right after)
