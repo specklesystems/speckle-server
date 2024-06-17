@@ -4,12 +4,21 @@ const { corsMiddleware } = require('@/modules/core/configs/cors')
 const Busboy = require('busboy')
 
 const { validatePermissionsWriteStream } = require('./authUtils')
-
-const { createObjectsBatched } = require('@/modules/core/services/objects')
+const { getFeatureFlags } = require('@/modules/shared/helpers/envHelper')
+const {
+  createObjectsBatched,
+  createObjectsBatchedAndNoClosures
+} = require('@/modules/core/services/objects')
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
 const { estimateStringMegabyteSize } = require('@/modules/core/utils/chunking')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
+const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
+
+let objectInsertionService = createObjectsBatched
+if (FF_NO_CLOSURE_WRITES) {
+  objectInsertionService = createObjectsBatchedAndNoClosures
+}
 
 module.exports = (app) => {
   app.options('/objects/:streamId', corsMiddleware())
@@ -115,25 +124,27 @@ module.exports = (app) => {
             await Promise.all(promises)
           }
 
-          const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-            req.log.error(e, `Upload error.`)
-            if (!requestDropped) {
-              switch (e.constructor) {
-                case ObjectHandlingError:
-                  res
-                    .status(400)
-                    .send(`Error inserting object in the database: ${e.message}`)
-                  break
-                default:
-                  res
-                    .status(400)
-                    .send(
-                      'Error inserting object in the database. Check server logs for details'
-                    )
+          const promise = objectInsertionService(req.params.streamId, objs).catch(
+            (e) => {
+              req.log.error(e, `Upload error.`)
+              if (!requestDropped) {
+                switch (e.constructor) {
+                  case ObjectHandlingError:
+                    res
+                      .status(400)
+                      .send(`Error inserting object in the database: ${e.message}`)
+                    break
+                  default:
+                    res
+                      .status(400)
+                      .send(
+                        'Error inserting object in the database. Check server logs for details'
+                      )
+                }
               }
+              requestDropped = true
             }
-            requestDropped = true
-          })
+          )
           promises.push(promise)
 
           await promise
@@ -204,24 +215,26 @@ module.exports = (app) => {
             await Promise.all(promises)
           }
 
-          const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-            req.log.error(e, `Upload error.`)
-            if (!requestDropped)
-              switch (e.constructor) {
-                case ObjectHandlingError:
-                  res
-                    .status(400)
-                    .send(`Error inserting object in the database. ${e.message}`)
-                  break
-                default:
-                  res
-                    .status(400)
-                    .send(
-                      'Error inserting object in the database. Check server logs for details'
-                    )
-              }
-            requestDropped = true
-          })
+          const promise = objectInsertionService(req.params.streamId, objs).catch(
+            (e) => {
+              req.log.error(e, `Upload error.`)
+              if (!requestDropped)
+                switch (e.constructor) {
+                  case ObjectHandlingError:
+                    res
+                      .status(400)
+                      .send(`Error inserting object in the database. ${e.message}`)
+                    break
+                  default:
+                    res
+                      .status(400)
+                      .send(
+                        'Error inserting object in the database. Check server logs for details'
+                      )
+                }
+              requestDropped = true
+            }
+          )
           promises.push(promise)
 
           await promise
