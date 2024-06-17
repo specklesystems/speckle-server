@@ -148,8 +148,8 @@ export type ApiTokenCreateInput = {
 export type AppAuthor = {
   __typename?: 'AppAuthor';
   avatar?: Maybe<Scalars['String']>;
-  id?: Maybe<Scalars['String']>;
-  name?: Maybe<Scalars['String']>;
+  id: Scalars['String'];
+  name: Scalars['String'];
 };
 
 export type AppCreateInput = {
@@ -160,6 +160,14 @@ export type AppCreateInput = {
   redirectUrl: Scalars['String'];
   scopes: Array<InputMaybe<Scalars['String']>>;
   termsAndConditionsLink?: InputMaybe<Scalars['String']>;
+};
+
+export type AppTokenCreateInput = {
+  lifespan?: InputMaybe<Scalars['BigInt']>;
+  /** Optionally limit the token to only have access to specific resources */
+  limitResources?: InputMaybe<Array<TokenResourceIdentifierInput>>;
+  name: Scalars['String'];
+  scopes: Array<Scalars['String']>;
 };
 
 export type AppUpdateInput = {
@@ -179,6 +187,319 @@ export type AuthStrategy = {
   icon: Scalars['String'];
   id: Scalars['String'];
   name: Scalars['String'];
+  url: Scalars['String'];
+};
+
+export type AutomateAuthCodePayloadTest = {
+  action: Scalars['String'];
+  code: Scalars['String'];
+  userId: Scalars['String'];
+};
+
+export type AutomateFunction = {
+  __typename?: 'AutomateFunction';
+  automationCount: Scalars['Int'];
+  description: Scalars['String'];
+  id: Scalars['ID'];
+  isFeatured: Scalars['Boolean'];
+  logo?: Maybe<Scalars['String']>;
+  name: Scalars['String'];
+  releases: AutomateFunctionReleaseCollection;
+  repo: BasicGitRepositoryMetadata;
+  /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
+  supportedSourceApps: Array<Scalars['String']>;
+  tags: Array<Scalars['String']>;
+};
+
+
+export type AutomateFunctionReleasesArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<AutomateFunctionReleasesFilter>;
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+export type AutomateFunctionCollection = {
+  __typename?: 'AutomateFunctionCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<AutomateFunction>;
+  totalCount: Scalars['Int'];
+};
+
+export type AutomateFunctionRelease = {
+  __typename?: 'AutomateFunctionRelease';
+  commitId: Scalars['String'];
+  createdAt: Scalars['DateTime'];
+  function: AutomateFunction;
+  functionId: Scalars['String'];
+  id: Scalars['ID'];
+  inputSchema?: Maybe<Scalars['JSONObject']>;
+  versionTag: Scalars['String'];
+};
+
+export type AutomateFunctionReleaseCollection = {
+  __typename?: 'AutomateFunctionReleaseCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<AutomateFunctionRelease>;
+  totalCount: Scalars['Int'];
+};
+
+export type AutomateFunctionReleasesFilter = {
+  search?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomateFunctionRun = {
+  __typename?: 'AutomateFunctionRun';
+  contextView?: Maybe<Scalars['String']>;
+  createdAt: Scalars['DateTime'];
+  elapsed: Scalars['Float'];
+  /** Nullable, in case the function is not retrievable due to poor network conditions */
+  function?: Maybe<AutomateFunction>;
+  functionId?: Maybe<Scalars['String']>;
+  functionReleaseId?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  /** AutomateTypes.ResultsSchema type from @speckle/shared */
+  results?: Maybe<Scalars['JSONObject']>;
+  status: AutomateRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+  updatedAt: Scalars['DateTime'];
+};
+
+export type AutomateFunctionRunStatusReportInput = {
+  contextView?: InputMaybe<Scalars['String']>;
+  functionRunId: Scalars['String'];
+  /** AutomateTypes.ResultsSchema type from @speckle/shared */
+  results?: InputMaybe<Scalars['JSONObject']>;
+  status: AutomateRunStatus;
+  statusMessage?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomateFunctionTemplate = {
+  __typename?: 'AutomateFunctionTemplate';
+  id: AutomateFunctionTemplateLanguage;
+  logo: Scalars['String'];
+  title: Scalars['String'];
+  url: Scalars['String'];
+};
+
+export enum AutomateFunctionTemplateLanguage {
+  DotNet = 'DOT_NET',
+  Python = 'PYTHON',
+  Typescript = 'TYPESCRIPT'
+}
+
+export type AutomateFunctionsFilter = {
+  featuredFunctionsOnly?: InputMaybe<Scalars['Boolean']>;
+  /** By default we skip functions without releases. Set this to true to include them. */
+  functionsWithoutReleases?: InputMaybe<Scalars['Boolean']>;
+  search?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomateMutations = {
+  __typename?: 'AutomateMutations';
+  createFunction: AutomateFunction;
+  updateFunction: AutomateFunction;
+};
+
+
+export type AutomateMutationsCreateFunctionArgs = {
+  input: CreateAutomateFunctionInput;
+};
+
+
+export type AutomateMutationsUpdateFunctionArgs = {
+  input: UpdateAutomateFunctionInput;
+};
+
+export type AutomateRun = {
+  __typename?: 'AutomateRun';
+  automation: Automation;
+  automationId: Scalars['String'];
+  createdAt: Scalars['DateTime'];
+  functionRuns: Array<AutomateFunctionRun>;
+  id: Scalars['ID'];
+  status: AutomateRunStatus;
+  trigger: AutomationRunTrigger;
+  updatedAt: Scalars['DateTime'];
+};
+
+export type AutomateRunCollection = {
+  __typename?: 'AutomateRunCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<AutomateRun>;
+  totalCount: Scalars['Int'];
+};
+
+export enum AutomateRunStatus {
+  Canceled = 'CANCELED',
+  Exception = 'EXCEPTION',
+  Failed = 'FAILED',
+  Initializing = 'INITIALIZING',
+  Pending = 'PENDING',
+  Running = 'RUNNING',
+  Succeeded = 'SUCCEEDED',
+  Timeout = 'TIMEOUT'
+}
+
+export enum AutomateRunTriggerType {
+  VersionCreated = 'VERSION_CREATED'
+}
+
+export type Automation = {
+  __typename?: 'Automation';
+  createdAt: Scalars['DateTime'];
+  /** Only accessible to automation owners */
+  creationPublicKeys: Array<Scalars['String']>;
+  currentRevision?: Maybe<AutomationRevision>;
+  enabled: Scalars['Boolean'];
+  id: Scalars['ID'];
+  isTestAutomation: Scalars['Boolean'];
+  name: Scalars['String'];
+  runs: AutomateRunCollection;
+  updatedAt: Scalars['DateTime'];
+};
+
+
+export type AutomationRunsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+export type AutomationCollection = {
+  __typename?: 'AutomationCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Automation>;
+  totalCount: Scalars['Int'];
+};
+
+export type AutomationCreateInput = {
+  automationId: Scalars['String'];
+  automationName: Scalars['String'];
+  automationRevisionId: Scalars['String'];
+  modelId: Scalars['String'];
+  projectId: Scalars['String'];
+  webhookId?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomationFunctionRun = {
+  __typename?: 'AutomationFunctionRun';
+  contextView?: Maybe<Scalars['String']>;
+  elapsed: Scalars['Float'];
+  functionId: Scalars['String'];
+  functionLogo?: Maybe<Scalars['String']>;
+  functionName: Scalars['String'];
+  id: Scalars['ID'];
+  resultVersions: Array<Version>;
+  /**
+   * NOTE: this is the schema for the results field below!
+   * Current schema: {
+   *   version: "1.0.0",
+   *   values: {
+   *     objectResults: Record<str, {
+   *       category: string
+   *       level: ObjectResultLevel
+   *       objectIds: string[]
+   *       message: str | null
+   *       metadata: Records<str, unknown> | null
+   *       visualoverrides: Records<str, unknown> | null
+   *     }[]>
+   *     blobIds?: string[]
+   *   }
+   * }
+   */
+  results?: Maybe<Scalars['JSONObject']>;
+  status: AutomationRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+};
+
+export type AutomationMutations = {
+  __typename?: 'AutomationMutations';
+  create: Scalars['Boolean'];
+  functionRunStatusReport: Scalars['Boolean'];
+};
+
+
+export type AutomationMutationsCreateArgs = {
+  input: AutomationCreateInput;
+};
+
+
+export type AutomationMutationsFunctionRunStatusReportArgs = {
+  input: AutomationRunStatusUpdateInput;
+};
+
+export type AutomationRevision = {
+  __typename?: 'AutomationRevision';
+  functions: Array<AutomationRevisionFunction>;
+  id: Scalars['ID'];
+  triggerDefinitions: Array<AutomationRevisionTriggerDefinition>;
+};
+
+export type AutomationRevisionCreateFunctionInput = {
+  functionId: Scalars['String'];
+  functionReleaseId: Scalars['String'];
+  /** Should be encrypted from the client side */
+  parameters?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomationRevisionFunction = {
+  __typename?: 'AutomationRevisionFunction';
+  /** The secrets in parameters are redacted with six asterisks - ****** */
+  parameters?: Maybe<Scalars['JSONObject']>;
+  release: AutomateFunctionRelease;
+};
+
+export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition;
+
+export type AutomationRun = {
+  __typename?: 'AutomationRun';
+  automationId: Scalars['String'];
+  automationName: Scalars['String'];
+  createdAt: Scalars['DateTime'];
+  functionRuns: Array<AutomationFunctionRun>;
+  id: Scalars['ID'];
+  /** Resolved from all function run statuses */
+  status: AutomationRunStatus;
+  updatedAt: Scalars['DateTime'];
+  versionId: Scalars['String'];
+};
+
+export enum AutomationRunStatus {
+  Failed = 'FAILED',
+  Initializing = 'INITIALIZING',
+  Running = 'RUNNING',
+  Succeeded = 'SUCCEEDED'
+}
+
+export type AutomationRunStatusUpdateInput = {
+  automationId: Scalars['String'];
+  automationRevisionId: Scalars['String'];
+  automationRunId: Scalars['String'];
+  functionRuns: Array<FunctionRunStatusInput>;
+  versionId: Scalars['String'];
+};
+
+export type AutomationRunTrigger = VersionCreatedTrigger;
+
+export type AutomationsStatus = {
+  __typename?: 'AutomationsStatus';
+  automationRuns: Array<AutomationRun>;
+  id: Scalars['ID'];
+  status: AutomationRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+};
+
+export type AvatarUser = {
+  __typename?: 'AvatarUser';
+  avatar?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  name: Scalars['String'];
+};
+
+export type BasicGitRepositoryMetadata = {
+  __typename?: 'BasicGitRepositoryMetadata';
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  owner: Scalars['String'];
   url: Scalars['String'];
 };
 
@@ -512,6 +833,28 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String'];
 };
 
+/**
+ * Can be used instead of a full item collection, when the implementation doesn't call for it yet. Because
+ * of the structure, it can be swapped out to a full item collection in the future
+ */
+export type CountOnlyCollection = {
+  __typename?: 'CountOnlyCollection';
+  totalCount: Scalars['Int'];
+};
+
+export type CreateAutomateFunctionInput = {
+  description: Scalars['String'];
+  /** Base64 encoded image data string */
+  logo?: InputMaybe<Scalars['String']>;
+  name: Scalars['String'];
+  /** GitHub organization to create the repository in */
+  org?: InputMaybe<Scalars['String']>;
+  /** SourceAppNames values from @speckle/shared */
+  supportedSourceApps: Array<Scalars['String']>;
+  tags: Array<Scalars['String']>;
+  template: AutomateFunctionTemplateLanguage;
+};
+
 export type CreateCommentInput = {
   content: CommentContentInput;
   projectId: Scalars['String'];
@@ -531,6 +874,7 @@ export type CreateCommentReplyInput = {
 };
 
 export type CreateModelInput = {
+  description?: InputMaybe<Scalars['String']>;
   name: Scalars['String'];
   projectId: Scalars['ID'];
 };
@@ -586,6 +930,62 @@ export type FileUpload = {
   uploadDate: Scalars['DateTime'];
   /** The user's id that uploaded this file. */
   userId: Scalars['String'];
+};
+
+export type FunctionRunStatusInput = {
+  contextView?: InputMaybe<Scalars['String']>;
+  elapsed: Scalars['Float'];
+  functionId: Scalars['String'];
+  functionLogo?: InputMaybe<Scalars['String']>;
+  functionName: Scalars['String'];
+  resultVersionIds: Array<Scalars['String']>;
+  /**
+   * Current schema: {
+   *   version: "1.0.0",
+   *   values: {
+   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
+   *     blobIds?: string[]
+   *   }
+   * }
+   */
+  results?: InputMaybe<Scalars['JSONObject']>;
+  status: AutomationRunStatus;
+  statusMessage?: InputMaybe<Scalars['String']>;
+};
+
+export type GendoAiRender = {
+  __typename?: 'GendoAIRender';
+  camera?: Maybe<Scalars['JSONObject']>;
+  createdAt: Scalars['String'];
+  gendoGenerationId?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  modelId: Scalars['String'];
+  projectId: Scalars['String'];
+  prompt: Scalars['String'];
+  /** This is a blob id. */
+  responseImage?: Maybe<Scalars['String']>;
+  status: Scalars['String'];
+  updatedAt: Scalars['String'];
+  user?: Maybe<AvatarUser>;
+  userId: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+export type GendoAiRenderCollection = {
+  __typename?: 'GendoAIRenderCollection';
+  items: Array<Maybe<GendoAiRender>>;
+  totalCount: Scalars['Int'];
+};
+
+export type GendoAiRenderInput = {
+  /** Base64 encoded image of the depthmap. */
+  baseImage: Scalars['String'];
+  camera: Scalars['JSONObject'];
+  modelId: Scalars['ID'];
+  projectId: Scalars['ID'];
+  /** The generation prompt. */
+  prompt: Scalars['String'];
+  versionId: Scalars['ID'];
 };
 
 export type LegacyCommentViewerData = {
@@ -678,6 +1078,8 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
+  automationStatus?: Maybe<AutomationsStatus>;
+  automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
   /** All comment threads in this model */
@@ -795,7 +1197,7 @@ export type Mutation = {
   adminDeleteUser: Scalars['Boolean'];
   /** Creates an personal api token. */
   apiTokenCreate: Scalars['String'];
-  /** Revokes (deletes) an personal api token. */
+  /** Revokes (deletes) an personal api token/app token. */
   apiTokenRevoke: Scalars['Boolean'];
   /** Register a new third party application. */
   appCreate: Scalars['String'];
@@ -803,8 +1205,13 @@ export type Mutation = {
   appDelete: Scalars['Boolean'];
   /** Revokes (de-authorizes) an application that you have previously authorized. */
   appRevokeAccess?: Maybe<Scalars['Boolean']>;
+  /** Create an app token. Only apps can create app tokens and they don't show up under personal access tokens. */
+  appTokenCreate: Scalars['String'];
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
+  automateFunctionRunStatusReport: Scalars['Boolean'];
+  automateMutations: AutomateMutations;
+  automationMutations: AutomationMutations;
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
   branchUpdate: Scalars['Boolean'];
@@ -844,16 +1251,24 @@ export type Mutation = {
   commitsDelete: Scalars['Boolean'];
   /** Move a batch of commits to a new branch */
   commitsMove: Scalars['Boolean'];
-  /** Delete a pending invite */
+  /**
+   * Delete a pending invite
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   inviteDelete: Scalars['Boolean'];
-  /** Re-send a pending invite */
+  /**
+   * Re-send a pending invite
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   inviteResend: Scalars['Boolean'];
   modelMutations: ModelMutations;
   objectCreate: Array<Maybe<Scalars['String']>>;
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean'];
+  requestVerificationByEmail: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
+  /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   serverInviteBatchCreate: Scalars['Boolean'];
   /** Invite a new user to the speckle server and return the invite ID */
   serverInviteCreate: Scalars['Boolean'];
@@ -866,10 +1281,17 @@ export type Mutation = {
   /** Deletes an existing stream. */
   streamDelete: Scalars['Boolean'];
   streamFavorite?: Maybe<Stream>;
+  /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   streamInviteBatchCreate: Scalars['Boolean'];
-  /** Cancel a pending stream invite. Can only be invoked by a stream owner. */
+  /**
+   * Cancel a pending stream invite. Can only be invoked by a stream owner.
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   streamInviteCancel: Scalars['Boolean'];
-  /** Invite a new or registered user to the specified stream */
+  /**
+   * Invite a new or registered user to the specified stream
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   streamInviteCreate: Scalars['Boolean'];
   /** Accept or decline a stream invite */
   streamInviteUse: Scalars['Boolean'];
@@ -941,8 +1363,18 @@ export type MutationAppRevokeAccessArgs = {
 };
 
 
+export type MutationAppTokenCreateArgs = {
+  token: AppTokenCreateInput;
+};
+
+
 export type MutationAppUpdateArgs = {
   app: AppUpdateInput;
+};
+
+
+export type MutationAutomateFunctionRunStatusReportArgs = {
+  input: AutomateFunctionRunStatusReportInput;
 };
 
 
@@ -1038,6 +1470,11 @@ export type MutationInviteResendArgs = {
 
 export type MutationObjectCreateArgs = {
   objectInput: ObjectCreateInput;
+};
+
+
+export type MutationRequestVerificationByEmailArgs = {
+  email: Scalars['String'];
 };
 
 
@@ -1273,6 +1710,12 @@ export type PendingStreamCollaborator = {
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean'];
+  /** Get a single automation by id. Error will be thrown if automation is not found or inaccessible. */
+  automation: Automation;
+  automations: AutomationCollection;
+  blob?: Maybe<BlobMetadata>;
+  /** Get the metadata collection of blobs stored for this stream. */
+  blobs?: Maybe<BlobMetadataCollection>;
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime'];
@@ -1300,11 +1743,38 @@ export type Project = {
   sourceApps: Array<Scalars['String']>;
   team: Array<ProjectCollaborator>;
   updatedAt: Scalars['DateTime'];
+  /** Retrieve a specific project version by its ID */
+  version?: Maybe<Version>;
   /** Returns a flat list of all project versions */
   versions: VersionCollection;
   /** Return metadata about resources being requested in the viewer */
   viewerResources: Array<ViewerResourceGroup>;
   visibility: ProjectVisibility;
+  webhooks: WebhookCollection;
+};
+
+
+export type ProjectAutomationArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectAutomationsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type ProjectBlobArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectBlobsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+  query?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -1344,6 +1814,11 @@ export type ProjectPendingImportedModelsArgs = {
 };
 
 
+export type ProjectVersionArgs = {
+  id: Scalars['String'];
+};
+
+
 export type ProjectVersionsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
@@ -1355,8 +1830,99 @@ export type ProjectViewerResourcesArgs = {
   resourceIdString: Scalars['String'];
 };
 
+
+export type ProjectWebhooksArgs = {
+  id?: InputMaybe<Scalars['String']>;
+};
+
+export type ProjectAutomationCreateInput = {
+  enabled: Scalars['Boolean'];
+  name: Scalars['String'];
+};
+
+export type ProjectAutomationMutations = {
+  __typename?: 'ProjectAutomationMutations';
+  create: Automation;
+  createRevision: AutomationRevision;
+  createTestAutomation: Automation;
+  createTestAutomationRun: TestAutomationRun;
+  /**
+   * Trigger an automation with a fake "version created" trigger. The "version created" will
+   * just refer to the last version of the model.
+   */
+  trigger: Scalars['String'];
+  update: Automation;
+};
+
+
+export type ProjectAutomationMutationsCreateArgs = {
+  input: ProjectAutomationCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateRevisionArgs = {
+  input: ProjectAutomationRevisionCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationArgs = {
+  input: ProjectTestAutomationCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationRunArgs = {
+  automationId: Scalars['ID'];
+};
+
+
+export type ProjectAutomationMutationsTriggerArgs = {
+  automationId: Scalars['ID'];
+};
+
+
+export type ProjectAutomationMutationsUpdateArgs = {
+  input: ProjectAutomationUpdateInput;
+};
+
+export type ProjectAutomationRevisionCreateInput = {
+  automationId: Scalars['ID'];
+  functions: Array<AutomationRevisionCreateFunctionInput>;
+  /** AutomateTypes.TriggerDefinitionsSchema type from @speckle/shared */
+  triggerDefinitions: Scalars['JSONObject'];
+};
+
+export type ProjectAutomationUpdateInput = {
+  enabled?: InputMaybe<Scalars['Boolean']>;
+  id: Scalars['ID'];
+  name?: InputMaybe<Scalars['String']>;
+};
+
+export type ProjectAutomationsStatusUpdatedMessage = {
+  __typename?: 'ProjectAutomationsStatusUpdatedMessage';
+  model: Model;
+  project: Project;
+  status: AutomationsStatus;
+  version: Version;
+};
+
+export type ProjectAutomationsUpdatedMessage = {
+  __typename?: 'ProjectAutomationsUpdatedMessage';
+  automation?: Maybe<Automation>;
+  automationId: Scalars['String'];
+  /** Only set if type === CREATED_REVISION */
+  revision?: Maybe<AutomationRevision>;
+  type: ProjectAutomationsUpdatedMessageType;
+};
+
+export enum ProjectAutomationsUpdatedMessageType {
+  Created = 'CREATED',
+  CreatedRevision = 'CREATED_REVISION',
+  Updated = 'UPDATED'
+}
+
 export type ProjectCollaborator = {
   __typename?: 'ProjectCollaborator';
+  id: Scalars['ID'];
   role: Scalars['String'];
   user: LimitedUser;
 };
@@ -1412,6 +1978,19 @@ export type ProjectCreateInput = {
   name?: InputMaybe<Scalars['String']>;
   visibility?: InputMaybe<ProjectVisibility>;
 };
+
+export type ProjectFileImportUpdatedMessage = {
+  __typename?: 'ProjectFileImportUpdatedMessage';
+  /** Upload ID */
+  id: Scalars['String'];
+  type: ProjectFileImportUpdatedMessageType;
+  upload: FileUpload;
+};
+
+export enum ProjectFileImportUpdatedMessageType {
+  Created = 'CREATED',
+  Updated = 'UPDATED'
+}
 
 export type ProjectInviteCreateInput = {
   /** Either this or userId must be filled */
@@ -1506,6 +2085,7 @@ export enum ProjectModelsUpdatedMessageType {
 
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
+  automationMutations: ProjectAutomationMutations;
   /** Create new project */
   create: Project;
   /**
@@ -1523,6 +2103,11 @@ export type ProjectMutations = {
   update: Project;
   /** Update role for a collaborator */
   updateRole: Project;
+};
+
+
+export type ProjectMutationsAutomationMutationsArgs = {
+  projectId: Scalars['ID'];
 };
 
 
@@ -1574,6 +2159,26 @@ export type ProjectPendingVersionsUpdatedMessage = {
 export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
+}
+
+export type ProjectTestAutomationCreateInput = {
+  functionId: Scalars['String'];
+  modelId: Scalars['String'];
+  name: Scalars['String'];
+};
+
+export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
+  __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
+  model: Model;
+  project: Project;
+  run: AutomateRun;
+  type: ProjectTriggeredAutomationsStatusUpdatedMessageType;
+  version: Version;
+};
+
+export enum ProjectTriggeredAutomationsStatusUpdatedMessageType {
+  RunCreated = 'RUN_CREATED',
+  RunUpdated = 'RUN_UPDATED'
 }
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
@@ -1659,6 +2264,13 @@ export type Query = {
   app?: Maybe<ServerApp>;
   /** Returns all the publicly available apps on this server. */
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
+  /** If user is authenticated using an app token, this will describe the app */
+  authenticatedAsApp?: Maybe<ServerAppListItem>;
+  /** Get a single automate function by id. Error will be thrown if function is not found or inaccessible. */
+  automateFunction: AutomateFunction;
+  automateFunctions: AutomateFunctionCollection;
+  /** Part of the automation/function creation handshake mechanism */
+  automateValidateAuthCode: Scalars['Boolean'];
   comment?: Maybe<Comment>;
   /**
    * This query can be used in the following ways:
@@ -1682,6 +2294,8 @@ export type Query = {
    */
   projectInvite?: Maybe<PendingStreamCollaborator>;
   serverInfo: ServerInfo;
+  /** Receive metadata about an invite by the invite token */
+  serverInviteByToken?: Maybe<ServerInvite>;
   /** @deprecated use admin.serverStatistics instead */
   serverStats: ServerStats;
   /**
@@ -1703,8 +2317,6 @@ export type Query = {
    * Pass in the `query` parameter to search by name, description or ID.
    */
   streams?: Maybe<StreamCollection>;
-  testList: Array<TestItem>;
-  testNumber?: Maybe<Scalars['Int']>;
   /**
    * Gets the profile of a user. If no id argument is provided, will return the current authenticated user's profile (as extracted from the authorization header).
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
@@ -1738,6 +2350,23 @@ export type QueryAdminUsersArgs = {
 
 export type QueryAppArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueryAutomateFunctionArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type QueryAutomateFunctionsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<AutomateFunctionsFilter>;
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type QueryAutomateValidateAuthCodeArgs = {
+  payload: AutomateAuthCodePayloadTest;
 };
 
 
@@ -1776,6 +2405,11 @@ export type QueryProjectArgs = {
 export type QueryProjectInviteArgs = {
   projectId: Scalars['String'];
   token?: InputMaybe<Scalars['String']>;
+};
+
+
+export type QueryServerInviteByTokenArgs = {
+  token: Scalars['String'];
 };
 
 
@@ -1891,18 +2525,30 @@ export type ServerAppListItem = {
   trustByDefault?: Maybe<Scalars['Boolean']>;
 };
 
+export type ServerAutomateInfo = {
+  __typename?: 'ServerAutomateInfo';
+  availableFunctionTemplates: Array<AutomateFunctionTemplate>;
+};
+
 /** Information about this server. */
 export type ServerInfo = {
   __typename?: 'ServerInfo';
   adminContact?: Maybe<Scalars['String']>;
   /** The authentication strategies available on this server. */
   authStrategies: Array<AuthStrategy>;
+  automate: ServerAutomateInfo;
+  /** Base URL of Speckle Automate, if set */
+  automateUrl?: Maybe<Scalars['String']>;
   blobSizeLimitBytes: Scalars['Int'];
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
   description?: Maybe<Scalars['String']>;
+  /** Whether or not to show messaging about FE2 (banners etc.) */
+  enableNewWebUiMessaging?: Maybe<Scalars['Boolean']>;
   guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
+  /** Server relocation / migration info */
+  migration?: Maybe<ServerMigration>;
   name: Scalars['String'];
   /** @deprecated Use role constants from the @speckle/shared npm package instead */
   roles: Array<Role>;
@@ -1934,6 +2580,12 @@ export type ServerInviteCreateInput = {
   message?: InputMaybe<Scalars['String']>;
   /** Can only be specified if guest mode is on or if the user is an admin */
   serverRole?: InputMaybe<Scalars['String']>;
+};
+
+export type ServerMigration = {
+  __typename?: 'ServerMigration';
+  movedFrom?: Maybe<Scalars['String']>;
+  movedTo?: Maybe<Scalars['String']>;
 };
 
 export enum ServerRole {
@@ -2043,7 +2695,7 @@ export type Stream = {
   role?: Maybe<Scalars['String']>;
   size?: Maybe<Scalars['String']>;
   updatedAt: Scalars['DateTime'];
-  webhooks?: Maybe<WebhookCollection>;
+  webhooks: WebhookCollection;
 };
 
 
@@ -2219,19 +2871,28 @@ export type Subscription = {
   commitDeleted?: Maybe<Scalars['JSONObject']>;
   /** Subscribe to commit updated event. */
   commitUpdated?: Maybe<Scalars['JSONObject']>;
+  projectAutomationsStatusUpdated: ProjectAutomationsStatusUpdatedMessage;
+  /** Subscribe to updates to automations in the project */
+  projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
    * Subscribe to updates to resource comments/threads. Optionally specify resource ID string to only receive
    * updates regarding comments for those resources.
    */
   projectCommentsUpdated: ProjectCommentsUpdatedMessage;
+  /** Subscribe to changes to any of a project's file imports */
+  projectFileImportUpdated: ProjectFileImportUpdatedMessage;
   /** Subscribe to changes to a project's models. Optionally specify modelIds to track. */
   projectModelsUpdated: ProjectModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending models */
   projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending versions */
   projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
+  /** Subscribe to updates to any triggered automations statuses in the project */
+  projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
+  projectVersionGendoAIRenderCreated: GendoAiRender;
+  projectVersionGendoAIRenderUpdated: GendoAiRender;
   /** Subscribe to when a project's versions get their preview image fully generated. */
   projectVersionsPreviewGenerated: ProjectVersionsPreviewGeneratedMessage;
   /** Subscribe to changes to a project's versions. */
@@ -2306,8 +2967,23 @@ export type SubscriptionCommitUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
+  projectId: Scalars['String'];
+};
+
+
+export type SubscriptionProjectAutomationsUpdatedArgs = {
+  projectId: Scalars['String'];
+};
+
+
 export type SubscriptionProjectCommentsUpdatedArgs = {
   target: ViewerUpdateTrackingTarget;
+};
+
+
+export type SubscriptionProjectFileImportUpdatedArgs = {
+  id: Scalars['String'];
 };
 
 
@@ -2327,8 +3003,25 @@ export type SubscriptionProjectPendingVersionsUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs = {
+  projectId: Scalars['String'];
+};
+
+
 export type SubscriptionProjectUpdatedArgs = {
   id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectVersionGendoAiRenderCreatedArgs = {
+  id: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+
+export type SubscriptionProjectVersionGendoAiRenderUpdatedArgs = {
+  id: Scalars['String'];
+  versionId: Scalars['String'];
 };
 
 
@@ -2363,15 +3056,63 @@ export type SubscriptionViewerUserActivityBroadcastedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
 
-export type TestItem = {
-  __typename?: 'TestItem';
-  bar: Scalars['String'];
-  foo: Scalars['String'];
+export type TestAutomationRun = {
+  __typename?: 'TestAutomationRun';
+  automationRunId: Scalars['String'];
+  functionRunId: Scalars['String'];
+  triggers: Array<TestAutomationRunTrigger>;
+};
+
+export type TestAutomationRunTrigger = {
+  __typename?: 'TestAutomationRunTrigger';
+  payload: TestAutomationRunTriggerPayload;
+  triggerType: Scalars['String'];
+};
+
+export type TestAutomationRunTriggerPayload = {
+  __typename?: 'TestAutomationRunTriggerPayload';
+  modelId: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+export type TokenResourceIdentifier = {
+  __typename?: 'TokenResourceIdentifier';
+  id: Scalars['String'];
+  type: TokenResourceIdentifierType;
+};
+
+export type TokenResourceIdentifierInput = {
+  id: Scalars['String'];
+  type: TokenResourceIdentifierType;
+};
+
+export enum TokenResourceIdentifierType {
+  Project = 'project'
+}
+
+export type TriggeredAutomationsStatus = {
+  __typename?: 'TriggeredAutomationsStatus';
+  automationRuns: Array<AutomateRun>;
+  id: Scalars['ID'];
+  status: AutomateRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+};
+
+/** Any null values will be ignored */
+export type UpdateAutomateFunctionInput = {
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['ID'];
+  logo?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  /** SourceAppNames values from @speckle/shared */
+  supportedSourceApps?: InputMaybe<Array<Scalars['String']>>;
+  tags?: InputMaybe<Array<Scalars['String']>>;
 };
 
 export type UpdateModelInput = {
+  description?: InputMaybe<Scalars['String']>;
   id: Scalars['ID'];
-  name: Scalars['String'];
+  name?: InputMaybe<Scalars['String']>;
   projectId: Scalars['ID'];
 };
 
@@ -2390,9 +3131,10 @@ export type User = {
   /** All the recent activity from this user in chronological order */
   activity?: Maybe<ActivityCollection>;
   /** Returns a list of your personal api tokens. */
-  apiTokens?: Maybe<Array<Maybe<ApiToken>>>;
+  apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
-  authorizedApps?: Maybe<Array<Maybe<ServerAppListItem>>>;
+  authorizedApps?: Maybe<Array<ServerAppListItem>>;
+  automateInfo: UserAutomateInfo;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
   /**
@@ -2433,6 +3175,13 @@ export type User = {
   /** Total amount of favorites attached to streams owned by the user */
   totalOwnedStreamsFavorites: Scalars['Int'];
   verified?: Maybe<Scalars['Boolean']>;
+  /**
+   * Get (count of) user's versions. By default gets all versions of all projects the user has access to.
+   * Set authoredOnly=true to only retrieve versions authored by the user.
+   *
+   * Note: Only count resolution is currently implemented
+   */
+  versions: CountOnlyCollection;
 };
 
 
@@ -2501,6 +3250,22 @@ export type UserTimelineArgs = {
   limit?: Scalars['Int'];
 };
 
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserVersionsArgs = {
+  authoredOnly?: Scalars['Boolean'];
+  limit?: Scalars['Int'];
+};
+
+export type UserAutomateInfo = {
+  __typename?: 'UserAutomateInfo';
+  availableGithubOrgs: Array<Scalars['String']>;
+  hasAutomateGithubApp: Scalars['Boolean'];
+};
+
 export type UserDeleteInput = {
   email: Scalars['String'];
 };
@@ -2548,21 +3313,32 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
+  automationStatus?: Maybe<AutomationsStatus>;
+  automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
+  gendoAIRender: GendoAiRender;
+  gendoAIRenders: GendoAiRenderCollection;
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;
+  parents?: Maybe<Array<Maybe<Scalars['String']>>>;
   previewUrl: Scalars['String'];
   referencedObject: Scalars['String'];
   sourceApplication?: Maybe<Scalars['String']>;
+  totalChildrenCount?: Maybe<Scalars['Int']>;
 };
 
 
 export type VersionCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']>;
   limit?: Scalars['Int'];
+};
+
+
+export type VersionGendoAiRenderArgs = {
+  id: Scalars['String'];
 };
 
 export type VersionCollection = {
@@ -2572,10 +3348,24 @@ export type VersionCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type VersionCreatedTrigger = {
+  __typename?: 'VersionCreatedTrigger';
+  model?: Maybe<Model>;
+  type: AutomateRunTriggerType;
+  version?: Maybe<Version>;
+};
+
+export type VersionCreatedTriggerDefinition = {
+  __typename?: 'VersionCreatedTriggerDefinition';
+  model?: Maybe<Model>;
+  type: AutomateRunTriggerType;
+};
+
 export type VersionMutations = {
   __typename?: 'VersionMutations';
   delete: Scalars['Boolean'];
   moveToModel: Model;
+  requestGendoAIRender: Scalars['Boolean'];
   update: Version;
 };
 
@@ -2587,6 +3377,11 @@ export type VersionMutationsDeleteArgs = {
 
 export type VersionMutationsMoveToModelArgs = {
   input: MoveVersionsInput;
+};
+
+
+export type VersionMutationsRequestGendoAiRenderArgs = {
+  input: GendoAiRenderInput;
 };
 
 
@@ -2655,10 +3450,12 @@ export type Webhook = {
   __typename?: 'Webhook';
   description?: Maybe<Scalars['String']>;
   enabled?: Maybe<Scalars['Boolean']>;
+  hasSecret: Scalars['Boolean'];
   history?: Maybe<WebhookEventCollection>;
   id: Scalars['String'];
+  projectId: Scalars['String'];
   streamId: Scalars['String'];
-  triggers: Array<Maybe<Scalars['String']>>;
+  triggers: Array<Scalars['String']>;
   url: Scalars['String'];
 };
 
@@ -2669,8 +3466,8 @@ export type WebhookHistoryArgs = {
 
 export type WebhookCollection = {
   __typename?: 'WebhookCollection';
-  items?: Maybe<Array<Maybe<Webhook>>>;
-  totalCount?: Maybe<Scalars['Int']>;
+  items: Array<Webhook>;
+  totalCount: Scalars['Int'];
 };
 
 export type WebhookCreateInput = {
