@@ -1,3 +1,4 @@
+import { automateLogger } from '@/logging/logging'
 import { AutomateAuthCodeHandshakeError } from '@/modules/automate/errors/management'
 import cryptoRandomString from 'crypto-random-string'
 import Redis from 'ioredis'
@@ -58,6 +59,12 @@ export const validateStoredAuthCode =
       formattedPayload.action !== formattedPayload.action
     ) {
       throw new AutomateAuthCodeHandshakeError('Invalid automate auth payload')
+    }
+
+    try {
+      await redis.del(payload.code)
+    } catch (e) {
+      automateLogger.error(e, 'Auth code deletion unexpectedly failed')
     }
 
     return true
