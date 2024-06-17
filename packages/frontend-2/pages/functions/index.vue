@@ -31,7 +31,7 @@ import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 
 definePageMeta({
-  middleware: ['requires-automate-enabled']
+  middleware: ['auth', 'requires-automate-enabled']
 })
 
 const pageQuery = graphql(`
