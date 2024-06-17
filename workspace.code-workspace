@@ -46,7 +46,11 @@
     },
     {
       "path": "packages/objectloader",
-      "name": "🌐 objectloader"
+      "name": "⬇️ objectloader"
+    },
+    {
+      "path": "packages/objectsender",
+      "name": "⬆️ objectsender"
     },
     {
       "path": "packages/shared",
@@ -134,6 +138,6 @@
       "graphql.vscode-graphql-syntax"
     ],
     // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
-    "unwantedRecommendations": ["octref.vetur", "vscode.typescript-language-features"]
+    "unwantedRecommendations": ["octref.vetur"]
   }
 }
