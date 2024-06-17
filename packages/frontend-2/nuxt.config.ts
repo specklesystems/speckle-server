@@ -25,6 +25,7 @@ const buildSourceMaps = ['1', 'true', true, 1].includes(BUILD_SOURCEMAPS)
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
   ...(buildSourceMaps ? { sourcemap: true } : {}),
+  modulesDir: ['./node_modules'],
   typescript: {
     shim: false,
     strict: true
