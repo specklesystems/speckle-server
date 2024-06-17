@@ -192,6 +192,17 @@ const queryAllStreamInvites =
     })
   }
 
+const deleteAllStreamInvites =
+  ({ db }: { db: Knex }) =>
+  async (streamId: string): Promise<boolean> => {
+    if (!streamId) return false
+    await db(ServerInvites.name)
+      .where(ServerInvites.col.resourceId, streamId)
+      .andWhere(ServerInvites.col.resourceTarget, ResourceTargets.Streams)
+      .delete()
+    return true
+  }
+
 export const createServerInvitesRepository = ({ db }: { db: Knex }) => ({
   queryAllUserStreamInvites: queryAllUserStreamInvites({ db }),
   findStreamInvite: findStreamInvite({ db }),
@@ -199,5 +210,6 @@ export const createServerInvitesRepository = ({ db }: { db: Knex }) => ({
   findResource: findResource(),
   insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db }),
   findServerInvite: findServerInvite({ db }),
-  queryAllStreamInvites: queryAllStreamInvites({ db })
+  queryAllStreamInvites: queryAllStreamInvites({ db }),
+  deleteAllStreamInvites: deleteAllStreamInvites({ db })
 })

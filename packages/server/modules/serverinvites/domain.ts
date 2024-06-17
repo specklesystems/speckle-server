@@ -39,6 +39,7 @@ export interface ServerInvitesRepository {
     token?: string
   ) => Promise<ServerInviteRecord | null>
   queryAllStreamInvites: (streamId: string) => Promise<StreamInviteRecord[]>
+  deleteAllStreamInvites: (streamId: string) => Promise<boolean>
 }
 
 export interface CreateInviteParams {

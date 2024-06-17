@@ -207,20 +207,6 @@ async function deleteAllUserInvites(userId) {
 }
 
 /**
- * Delete all invites for the specified stream
- * @param {string} streamId
- * @returns {Promise<boolean>}
- */
-async function deleteAllStreamInvites(streamId) {
-  if (!streamId) return false
-  await ServerInvites.knex()
-    .where(ServerInvites.col.resourceId, streamId)
-    .andWhere(ServerInvites.col.resourceTarget, ResourceTargets.Streams)
-    .delete()
-  return true
-}
-
-/**
  * Get all invites by IDs
  * @returns {Promise<import('@/modules/serverinvites/helpers/types').ServerInviteRecord[]>}
  */
@@ -241,6 +227,5 @@ module.exports = {
   deleteAllUserInvites,
   getInvites,
   getInviteByToken,
-  deleteAllStreamInvites,
   queryServerInvites
 }

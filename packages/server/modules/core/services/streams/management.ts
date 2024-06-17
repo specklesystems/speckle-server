@@ -35,7 +35,6 @@ import {
   isStreamCollaborator,
   removeStreamCollaborator
 } from '@/modules/core/services/streams/streamAccessService'
-import { deleteAllStreamInvites } from '@/modules/serverinvites/repositories'
 import {
   ContextResourceAccessRules,
   isNewResourceAllowed
@@ -126,8 +125,13 @@ export async function deleteStreamAndNotify(
   // delay deletion by a bit so we can do auth checks
   await wait(250)
 
+  // TODO: use proper injection once we refactor this module
+  const serverInvitesRepository = createServerInvitesRepository({ db: knexInstance })
   // Delete after event so we can do authz
-  await Promise.all([deleteAllStreamInvites(streamId), deleteStream(streamId)])
+  await Promise.all([
+    serverInvitesRepository.deleteAllStreamInvites(streamId),
+    deleteStream(streamId)
+  ])
   return true
 }
 
