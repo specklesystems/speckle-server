@@ -135,6 +135,37 @@ module.exports = {
     return true
   },
 
+  async createObjectsBatchedAndNoClosures(streamId, objects) {
+    const objsToInsert = []
+    const ids = []
+
+    // Prep objects up
+    objects.forEach((obj) => {
+      const insertionObject = prepInsertionObject(streamId, obj)
+      delete insertionObject.__closure
+      objsToInsert.push(insertionObject)
+      ids.push(insertionObject.id)
+    })
+
+    const objectsBatchSize = 500
+
+    // step 1: insert objects
+    if (objsToInsert.length > 0) {
+      const batches = chunkInsertionObjectArray({
+        objects: objsToInsert,
+        chunkLengthLimit: objectsBatchSize,
+        chunkSizeLimitMb: 2
+      })
+      for (const batch of batches) {
+        prepInsertionObjectBatch(batch)
+        await Objects().insert(batch).onConflict().ignore()
+        servicesLogger.info(`Inserted ${batch.length} objects`)
+      }
+    }
+
+    return ids
+  },
+
   async createObjects(streamId, objects) {
     // TODO: Switch to knex batch inserting functionality
     // see http://knexjs.org/#Utility-BatchInsert
