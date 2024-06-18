@@ -63,12 +63,12 @@
     "vuetify-image-input": "^19.1.0"
   },
   "devDependencies": {
-    "@graphql-codegen/cli": "^2.16.3",
-    "@graphql-codegen/introspection": "2.1.1",
-    "@graphql-codegen/typed-document-node": "^2.3.1",
-    "@graphql-codegen/typescript": "2.5.1",
-    "@graphql-codegen/typescript-document-nodes": "2.2.13",
-    "@graphql-codegen/typescript-operations": "2.4.2",
+    "@graphql-codegen/cli": "^5.0.2",
+    "@graphql-codegen/introspection": "^4.0.3",
+    "@graphql-codegen/typed-document-node": "^5.0.7",
+    "@graphql-codegen/typescript": "^4.0.7",
+    "@graphql-codegen/typescript-document-nodes": "^4.0.7",
+    "@graphql-codegen/typescript-operations": "^4.2.1",
     "@mdi/font": "^5.8.55",
     "@swc/core": "^1.2.222",
     "@types/apollo-upload-client": "^17.0.1",
