@@ -1010,15 +1010,15 @@ jobs:
 
       - run:
           name: build public packages
-          command: yarn workspaces foreach -ptv --no-private run build
+          command: yarn workspaces foreach -ptvW --no-private run build
       - run:
           name: bump all versions
           # bump all versions in dependency tree order but not in parallel
-          command: yarn workspaces foreach -tv version $IMAGE_VERSION_TAG
+          command: yarn workspaces foreach -tvW version $IMAGE_VERSION_TAG
 
       - run:
           name: publish to npm
-          command: 'yarn workspaces foreach -pv --no-private npm publish --access public'
+          command: 'yarn workspaces foreach -pvW --no-private npm publish --access public'
 
   publish-helm-chart:
     docker:

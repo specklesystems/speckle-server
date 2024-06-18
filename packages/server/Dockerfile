@@ -35,7 +35,7 @@ COPY packages/server ./packages/server/
 COPY packages/shared ./packages/shared/
 COPY packages/objectloader ./packages/objectloader/
 
-RUN yarn workspaces foreach run build
+RUN yarn workspaces foreach run build -W
 
 # install only production dependencies
 # we need a clean environment, free of build dependencies

@@ -32,7 +32,7 @@ COPY packages/frontend-2 ./packages/frontend-2/
 # hadolint ignore=DL3059
 RUN yarn workspaces focus -A
 # hadolint ignore=DL3059
-RUN yarn workspaces foreach run build
+RUN yarn workspaces foreach run build -W
 # hadolint ignore=DL3059
 RUN find ./packages/frontend-2/.output/ -type f \( -name "*.js.map" -o -name "*.mjs.map" -o -name "*.cjs.map" \) -exec rm -f {} \;
 

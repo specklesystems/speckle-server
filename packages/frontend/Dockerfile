@@ -29,7 +29,7 @@ COPY packages/frontend ./packages/frontend/
 COPY packages/shared ./packages/shared/
 
 # This way the foreach only builds the frontend and its deps
-RUN yarn workspaces foreach run build
+RUN yarn workspaces foreach run build -W
 
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get -q update && \
