@@ -71,7 +71,6 @@
     "@typescript-eslint/parser": "^7.12.0",
     "typescript-eslint": "^7.12.0",
     "@types/react": "file:./packages/frontend-2/type-augmentations/stubs/types__react",
-    "axios": ">=1.6.0",
     "core-js": "3.22.4",
     "core-js-compat/semver": "^7.5.4",
     "eslint": "^9.4.0",
