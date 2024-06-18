@@ -36,4 +36,5 @@ Vue.use(VueMixpanel, {
 Vue.use(PortalVue)
 
 // Event hub
+// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
 Vue.prototype.$eventHub = new Vue()

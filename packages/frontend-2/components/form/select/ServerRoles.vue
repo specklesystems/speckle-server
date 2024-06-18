@@ -8,6 +8,9 @@
     label="Server roles"
     class="min-w-[110px]"
     :fully-control-value="fullyControlValue"
+    :label-id="labelId"
+    :button-id="buttonId"
+    mount-menu-on-body
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}
@@ -67,6 +70,8 @@ const props = defineProps({
 
 const elementToWatchForChanges = ref(null as Nullable<HTMLElement>)
 const itemContainer = ref(null as Nullable<HTMLElement>)
+const labelId = useId()
+const buttonId = useId()
 
 const { selectedValue, isMultiItemArrayValue, hiddenSelectedItemCount, firstItem } =
   useFormSelectChildInternals<ServerRoles>({

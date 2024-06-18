@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="block h4 font-bold mb-4">Versions</h1>
+    <h1 class="block h4 font-bold my-4">Versions</h1>
     <div
       v-if="selectedItems.length"
       class="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:justify-between sm:items-center"
@@ -82,8 +82,7 @@
     />
     <ProjectModelPageDialogEmbed
       v-model:open="embedDialogOpen"
-      :visibility="project.visibility"
-      :project-id="project.id"
+      :project="project"
       :version-id="currentVersionId"
       :model-id="project.model.id"
     />
@@ -121,6 +120,7 @@ graphql(`
         }
       }
     }
+    ...ProjectsModelPageEmbed_Project
   }
 `)
 
@@ -135,6 +135,7 @@ graphql(`
       }
     }
     ...ProjectModelPageVersionsPagination
+    ...ProjectsModelPageEmbed_Project
   }
 `)
 

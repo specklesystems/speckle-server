@@ -28,11 +28,7 @@
             <strong>Note:</strong>
             To authenticate users inside your app, direct them to
           </p>
-          <CommonClipboardInputWithToast
-            v-if="props.application?.secret"
-            :value="`https://latest.speckle.dev/authn/verify/${props.application?.id}/{code_challenge}`"
-            is-multiline
-          />
+          <CommonClipboardInputWithToast v-if="authUrl" :value="authUrl" is-multiline />
           <p>
             `{code_challenge}` is an OAuth2 plain code challenge that your app needs to
             generate for each authentication request.
@@ -44,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutDialog } from '@speckle/ui-components'
+import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import type { ApplicationItem } from '~~/lib/developer-settings/helpers/types'
 
@@ -54,10 +50,25 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const dialogButtons = computed(() => [
+const {
+  public: { baseUrl }
+} = useRuntimeConfig()
+
+const authUrl = computed(() => {
+  if (props.application?.id) {
+    const url = new URL(`/authn/verify/${props.application.id}`, baseUrl)
+
+    const finalUrl = `${url.toString()}/{code_challenge}`
+
+    return finalUrl
+  }
+  return null
+})
+
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'default', fullWidth: true },
     onClick: () => (isOpen.value = false)
   }
 ])

@@ -21,7 +21,6 @@ const {
 const { authorizeResolver, validateScopes } = require(`@/modules/shared`)
 const {
   RateLimitError,
-  RateLimitAction,
   getRateLimitResult,
   isRateLimitBreached
 } = require('@/modules/core/services/ratelimiter')
@@ -50,7 +49,6 @@ const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 const { Roles, Scopes } = require('@speckle/shared')
 const { StreamNotFoundError } = require('@/modules/core/errors/stream')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
-const { logger } = require('@/logging/logging')
 
 const {
   toProjectIdWhitelist,
@@ -250,10 +248,7 @@ module.exports = {
   },
   Mutation: {
     async streamCreate(parent, args, context) {
-      const rateLimitResult = await getRateLimitResult(
-        RateLimitAction.STREAM_CREATE,
-        context.userId
-      )
+      const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
       }
@@ -341,7 +336,6 @@ module.exports = {
       subscribe: withFilter(
         () => pubsub.asyncIterator([USER_STREAM_ADDED]),
         (payload, variables, context) => {
-          logger.info('whattt')
           const hasResourceAccess = isResourceAllowed({
             resourceId: payload.userStreamAdded.id,
             resourceType: TokenResourceIdentifierType.Project,

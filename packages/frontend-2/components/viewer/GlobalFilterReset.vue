@@ -1,38 +1,22 @@
 <template>
   <div
-    v-show="hasAnyFiltersApplied"
-    class="absolute left-0 w-screen p-2 bg-pink-300/0 flex justify-center pointer-events-none"
-    :class="isEmbedEnabled ? 'bottom-16 mb-2' : 'bottom-4'"
+    v-if="hasAnyFiltersApplied"
+    class="bg-pink-300/0 flex justify-center items-center pointer-events-none transition-all duration-300 ease-in overflow-hidden h-8"
   >
-    <Transition
-      enter-active-class="transform ease-out duration-300 transition"
-      enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
-      enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
-      leave-active-class="transition ease-in duration-100"
-      leave-from-class="opacity-100"
-      leave-to-class="opacity-0"
-    >
-      <FormButton
-        :size="isEmbedEnabled ? 'xs' : 'sm'"
-        class="pointer-events-auto"
-        @click="trackAndResetFilters"
-      >
-        Reset Filters
-      </FormButton>
-    </Transition>
+    <FormButton size="sm" class="pointer-events-auto" @click="trackAndResetFilters">
+      Reset Filters
+    </FormButton>
   </div>
 </template>
 <script setup lang="ts">
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
-import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 const {
   resetFilters,
   filters: { hasAnyFiltersApplied }
 } = useFilterUtilities()
 
-const { isEnabled: isEmbedEnabled } = useEmbed()
 const mp = useMixpanel()
 const trackAndResetFilters = () => {
   resetFilters()

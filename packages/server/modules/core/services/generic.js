@@ -1,5 +1,11 @@
 'use strict'
 const knex = require('@/db/knex')
+const {
+  getServerVersion,
+  getServerOrigin,
+  getServerMovedTo,
+  getServerMovedFrom
+} = require('@/modules/shared/helpers/envHelper')
 
 const Roles = () => knex('user_roles')
 const Scopes = () => knex('scopes')
@@ -11,8 +17,11 @@ module.exports = {
    */
   async getServerInfo() {
     const serverInfo = await Info().select('*').first()
-    serverInfo.version = process.env.SPECKLE_SERVER_VERSION || 'dev'
-    serverInfo.canonicalUrl = process.env.CANONICAL_URL || '127.0.0.1'
+    serverInfo.version = getServerVersion()
+    serverInfo.canonicalUrl = getServerOrigin()
+    const movedTo = getServerMovedTo()
+    const movedFrom = getServerMovedFrom()
+    if (movedTo || movedFrom) serverInfo.migration = { movedTo, movedFrom }
     return serverInfo
   },
 

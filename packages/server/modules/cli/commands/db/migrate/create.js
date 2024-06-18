@@ -25,7 +25,7 @@ const command = {
 
     try {
       await fs.access(migrationDir)
-    } catch (e) {
+    } catch {
       throw new Error(
         `Migration directory '${migrationDir}' is not accessible! Check if it exists.`
       )

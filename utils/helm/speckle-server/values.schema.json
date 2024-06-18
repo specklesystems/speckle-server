@@ -32,6 +32,26 @@
       "description": "The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate",
       "default": "letsencrypt-staging"
     },
+    "featureFlags": {
+      "type": "object",
+      "properties": {
+        "automateModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag fully toggles the integrated automate module",
+          "default": false
+        },
+        "gendoAIModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag that toggles the Gendo AI render module",
+          "default": false
+        },
+        "noClosureWrites": {
+          "type": "boolean",
+          "description": "Toggles whether to stop writing to the closure table",
+          "default": false
+        }
+      }
+    },
     "analytics": {
       "type": "object",
       "properties": {
@@ -471,6 +491,11 @@
           "description": "The Docker image to be used for the Speckle Server component. If blank, defaults to speckle/speckle-server:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
         },
+        "enableFe2Messaging": {
+          "type": "boolean",
+          "description": "If enabled, the related FE1 deployment will show banners/messages about the new frontend",
+          "default": false
+        },
         "onboarding": {
           "type": "object",
           "properties": {
@@ -525,6 +550,81 @@
           "type": "string",
           "description": "The url of the Speckle Automate instance",
           "default": "https://automate.speckle.systems"
+        },
+        "gendoAI": {
+          "type": "object",
+          "properties": {
+            "apiUrl": {
+              "type": "string",
+              "description": "The url of the Gendo AI application, including protocol.",
+              "default": "https://api.gendo.ai/external/generate"
+            },
+            "key": {
+              "type": "object",
+              "properties": {
+                "secretName": {
+                  "type": "string",
+                  "description": "The name of the Kubernetes Secret containing the Gendo AI key. If left blank, will default to the `secretName` parameter.",
+                  "default": ""
+                },
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the Gendo AI key as its value.",
+                  "default": "gendoai_key"
+                }
+              }
+            },
+            "keyResponse": {
+              "type": "object",
+              "properties": {
+                "secretName": {
+                  "type": "string",
+                  "description": "The name of the Kubernetes Secret containing the Gendo AI key response. If left blank, will default to the `secretName` parameter.",
+                  "default": ""
+                },
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the Gendo AI key response as its value.",
+                  "default": "gendoai_key_response"
+                }
+              }
+            },
+            "ratelimiting": {
+              "type": "object",
+              "properties": {
+                "renderRequest": {
+                  "type": "number",
+                  "description": "The number of render requests allowed per period",
+                  "default": 1
+                },
+                "renderRequestPeriodSeconds": {
+                  "type": "number",
+                  "description": "The period in seconds for the render request limit",
+                  "default": 20
+                },
+                "burstRenderRequest": {
+                  "type": "number",
+                  "description": "The number of render requests allowed in 'burst' mode when the other limit is reached.",
+                  "default": 3
+                },
+                "burstRenderRequestPeriodSeconds": {
+                  "type": "number",
+                  "description": "The period in seconds for the burst render request limit.",
+                  "default": 60
+                }
+              }
+            }
+          }
+        },
+        "encryptionKeys": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The path where the encryption keys should be loaded from",
+              "default": "/encryption-keys/keys.json"
+            }
+          }
         },
         "sessionSecret": {
           "type": "object",
@@ -953,13 +1053,13 @@
             },
             "get_auth": {
               "type": "number",
-              "description": "The maximum number of requests that can be made to the Speckle server to authenticate in a moving one second window.",
-              "default": 2
+              "description": "The maximum number of requests that can be made to the Speckle server to authenticate in a moving 10 minute window.",
+              "default": 4
             },
             "burst_get_auth": {
               "type": "number",
-              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to authenticate in a moving one minute window.",
-              "default": 20
+              "description": "If the regular limit is exceeded, the limit is increased to the burst limit. This is the maximum number of requests that can be made to the Speckle server to authenticate in a moving thirty minute window.",
+              "default": 10
             }
           }
         },
@@ -980,6 +1080,71 @@
               "type": "boolean",
               "description": "If enabled, file uploads on the server will be flagged as enabled",
               "default": true
+            }
+          }
+        },
+        "mailchimp": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "description": "Mailchimp integration feature flag",
+              "default": false
+            },
+            "apikey": {
+              "type": "object",
+              "properties": {
+                "secretName": {
+                  "type": "string",
+                  "description": "The name of the Kubernetes Secret containing the Mailchimp API key.",
+                  "default": ""
+                },
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the Mailchimp API key as its value.",
+                  "default": "mailchimp_apikey"
+                }
+              }
+            },
+            "serverPrefix": {
+              "type": "string",
+              "description": "Mailchimp api server prefix",
+              "default": ""
+            },
+            "newsletterListId": {
+              "type": "string",
+              "description": "Audience id for the newsletter list",
+              "default": ""
+            },
+            "onboardingListId": {
+              "type": "string",
+              "description": "Audience id for the onboarding list",
+              "default": ""
+            },
+            "onboardingJourneyId": {
+              "type": "string",
+              "description": "Id of the onboarding journey",
+              "default": ""
+            },
+            "onboardingStepId": {
+              "type": "string",
+              "description": "Id of the onboarding journey step we trigger",
+              "default": ""
+            }
+          }
+        },
+        "migration": {
+          "type": "object",
+          "properties": {
+            "movedFrom": {
+              "type": "string",
+              "description": "Indicate the URL where the server moved from",
+              "default": ""
+            },
+            "movedTo": {
+              "type": "string",
+              "description": "Indicate the URL where the server moved to",
+              "default": ""
             }
           }
         },
@@ -1079,6 +1244,11 @@
           "type": "number",
           "description": "The number of instances of the Server pod to be deployed within the cluster.",
           "default": 1
+        },
+        "image": {
+          "type": "string",
+          "description": "The Docker image to be used for the Speckle Objects component. If blank, defaults to speckle/speckle-server:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
+          "default": ""
         },
         "logLevel": {
           "type": "string",
@@ -1331,8 +1501,8 @@
         },
         "enabled": {
           "type": "boolean",
-          "description": "Feature flag to enable running the new experimental frontend.",
-          "default": false
+          "description": "Feature flag to enable running the new web application frontend.",
+          "default": true
         },
         "replicas": {
           "type": "number",

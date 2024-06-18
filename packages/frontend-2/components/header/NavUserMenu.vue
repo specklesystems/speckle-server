@@ -1,7 +1,7 @@
 <template>
   <div>
     <Menu as="div" class="flex items-center">
-      <MenuButton v-slot="{ open: userOpen }">
+      <MenuButton :id="menuButtonId" v-slot="{ open: userOpen }">
         <span class="sr-only">Open user menu</span>
         <UserAvatar v-if="!userOpen" size="lg" :user="activeUser" hover-effect />
         <UserAvatar v-else size="lg" hover-effect>
@@ -61,7 +61,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="onThemeClick"
+              @click="toggleTheme"
             >
               <Icon class="w-5 h-5" />
               {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
@@ -145,9 +145,10 @@ import {
 import { Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
-import { useTheme, AppTheme } from '~~/lib/core/composables/theme'
+import { useTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
 import type { RouteLocationRaw } from 'vue-router'
+import { homeRoute, profileRoute } from '~/lib/common/helpers/route'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -155,28 +156,22 @@ defineProps<{
 
 const { logout } = useAuthManager()
 const { activeUser, isGuest } = useActiveUser()
-const { isDarkTheme, setTheme } = useTheme()
+const { isDarkTheme, toggleTheme } = useTheme()
 const { serverInfo } = useServerInfo()
 const router = useRouter()
+const route = useRoute()
 
 const showInviteDialog = ref(false)
 const showProfileEditDialog = ref(false)
+const menuButtonId = useId()
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => serverInfo.value?.version)
-
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
+const isProfileRoute = computed(() => route.path === profileRoute)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
-}
-
-const onThemeClick = () => {
-  if (isDarkTheme.value) {
-    setTheme(AppTheme.Light)
-  } else {
-    setTheme(AppTheme.Dark)
-  }
 }
 
 const goToConnectors = () => {
@@ -186,4 +181,15 @@ const goToConnectors = () => {
 const goToServerManagement = () => {
   router.push('/server-management')
 }
+
+watch(
+  isProfileRoute,
+  (newVal, oldVal) => {
+    if (newVal && !oldVal) {
+      showProfileEditDialog.value = true
+      void router.replace({ path: homeRoute, force: true }) // in-place replace
+    }
+  },
+  { immediate: true }
+)
 </script>

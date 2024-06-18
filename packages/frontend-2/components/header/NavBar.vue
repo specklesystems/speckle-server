@@ -10,11 +10,15 @@
             :separator="true"
             class="hidden md:inline-block"
           />
-          <PortalTarget name="navigation"></PortalTarget>
+          <ClientOnly>
+            <PortalTarget name="navigation"></PortalTarget>
+          </ClientOnly>
         </div>
         <div class="flex items-center gap-2.5 sm:gap-2">
-          <PortalTarget name="secondary-actions"></PortalTarget>
-          <PortalTarget name="primary-actions"></PortalTarget>
+          <ClientOnly>
+            <PortalTarget name="secondary-actions"></PortalTarget>
+            <PortalTarget name="primary-actions"></PortalTarget>
+          </ClientOnly>
           <!-- Notifications dropdown -->
           <HeaderNavNotifications />
           <FormButton

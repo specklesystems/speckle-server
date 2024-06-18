@@ -34,7 +34,8 @@ export function metaHelpers<
         .where(table.meta.col.key, <string>key)
         .andWhere(table.meta.parentIdentityCol, id)
         .first()
-      return (await q) || null
+      const res = (await q) as Nullable<RR>
+      return res
     },
     /**
      * Get multiple values at once, keyed by ID

@@ -82,6 +82,7 @@ export type ServerInfo = ServerConfigRecord & {
    * Dynamically resolved from env vars
    */
   version: string
+  migration?: { movedFrom?: string; movedTo?: string }
 }
 
 export type CommitRecord = {

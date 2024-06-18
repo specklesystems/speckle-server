@@ -19,7 +19,8 @@ import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { broadcastViewerUserActivityMutation } from '~~/lib/viewer/graphql/mutations'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import dayjs, { Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { useIntervalFn } from '@vueuse/core'
 import type { MaybeRef } from '@vueuse/core'
 import type { CSSProperties, Ref } from 'vue'
@@ -82,7 +83,7 @@ export function useViewerUserActivityBroadcasting(
   const { isEnabled: isEmbedEnabled } = useEmbed()
 
   const invokeMutation = async (message: ViewerUserActivityMessageInput) => {
-    if (!isLoggedIn.value || isEmbedEnabled) return false
+    if (!isLoggedIn.value || isEmbedEnabled.value) return false
     const result = await apollo
       .mutate({
         mutation: broadcastViewerUserActivityMutation,
@@ -176,7 +177,7 @@ export function useViewerUserActivityTracking(params: {
     const incomingSessionId = event.sessionId
 
     if (sessionId.value === incomingSessionId) return
-    if (!isEmbedEnabled && status === ViewerUserActivityStatus.Disconnected) {
+    if (!isEmbedEnabled.value && status === ViewerUserActivityStatus.Disconnected) {
       triggerNotification({
         description: `${users.value[incomingSessionId]?.userName || 'A user'} left.`,
         type: ToastNotificationType.Info
@@ -208,7 +209,10 @@ export function useViewerUserActivityTracking(params: {
       lastUpdate: dayjs()
     }
 
-    if (!isEmbedEnabled && !Object.keys(users.value).includes(incomingSessionId)) {
+    if (
+      !isEmbedEnabled.value &&
+      !Object.keys(users.value).includes(incomingSessionId)
+    ) {
       triggerNotification({
         description: `${userData.userName} joined.`,
         type: ToastNotificationType.Info

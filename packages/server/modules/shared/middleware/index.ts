@@ -17,14 +17,15 @@ import {
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
 import { getUser } from '@/modules/core/repositories/users'
-import { Optional, resolveMixpanelUserId } from '@speckle/shared'
+import { Optional, wait } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
-import { Observability } from '@speckle/shared'
+import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
 import { pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
+import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -50,8 +51,17 @@ export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   return middleware
 }
 
-export const getTokenFromRequest = (req: Request | null | undefined): string | null =>
-  req?.headers?.authorization ?? null
+export const getTokenFromRequest = (req: Request | null | undefined): string | null => {
+  const removeBearerPrefix = (token: string) => token.replace('Bearer ', '')
+
+  const fromHeader = req?.headers?.authorization || null
+  if (fromHeader?.length) return removeBearerPrefix(fromHeader)
+
+  const fromCookie = (req?.cookies?.authn as Nullable<string>) || null
+  if (fromCookie?.length) return removeBearerPrefix(fromCookie)
+
+  return null
+}
 
 /**
  * Create an AuthContext from a raw token value
@@ -152,6 +162,12 @@ export async function buildContext({
     'graphql'
   )
 
+  const delay = delayGraphqlResponsesBy()
+  if (delay > 0) {
+    log.info({ delay }, 'Delaying GraphQL response by {delay}ms')
+    await wait(delay)
+  }
+
   // Adding request data loaders
   return addLoadersToCtx(
     {
@@ -172,8 +188,7 @@ export async function mixpanelTrackerHelperMiddleware(
 ) {
   const ctx = req.context
   const user = ctx.userId ? await getUser(ctx.userId) : null
-  const mixpanelUserId = user?.email ? resolveMixpanelUserId(user.email) : undefined
-  const mp = mixpanel({ mixpanelUserId })
+  const mp = mixpanel({ userEmail: user?.email })
 
   req.mixpanel = mp
   next()

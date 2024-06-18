@@ -1,13 +1,15 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <button
-    :class="`bg-foundation group relative block w-full space-y-2 rounded-md pb-2 text-left transition ${
+  <div
+    :class="`bg-foundation group relative block w-full space-y-2 rounded-md pb-2 text-left ${
       clickable
-        ? 'hover:bg-gray-100 dark:hover:bg-gray-700'
+        ? 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'
         : ' bg-primary-muted cursor-default'
     }
     ${isLoaded ? '' : ''}
     `"
     @click="handleClick"
+    @keypress="keyboardClick(handleClick)"
   >
     <!-- Timeline left border -->
     <div
@@ -16,7 +18,7 @@
         isLoaded
           ? 'border-primary border-r-4 border'
           : 'border-dashed border-outline-3 border-r-2'
-      } group-hover:border-primary left-[7px] z-10 transition-all`"
+      } group-hover:border-primary left-[7px] z-10`"
     ></div>
     <div
       v-if="last"
@@ -28,14 +30,14 @@
     >
       <ChevronDownIcon class="h-3 w-3" />
     </div>
-    <div class="flex items-center space-x-2 pl-1">
+    <div class="flex items-center gap-1 pl-1">
       <div class="z-20 -ml-2">
         <UserAvatar :user="author" />
       </div>
       <div
         v-show="showTimeline"
         v-tippy="`${createdAt}`"
-        class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold"
+        class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold shrink-0"
       >
         <span>{{ isLatest ? 'Latest' : timeAgoCreatedAt }}</span>
       </div>
@@ -44,7 +46,6 @@
         v-tippy="'Shows a summary of added, deleted and changed elements.'"
         size="xs"
         text
-        class="opacity-0 group-hover:opacity-100 transition"
         @click.stop="handleViewChanges"
       >
         View Changes
@@ -67,10 +68,11 @@
         </div>
       </div>
     </div>
-  </button>
+  </div>
 </template>
 <script setup lang="ts">
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
+import { keyboardClick } from '@speckle/ui-components'
 import dayjs from 'dayjs'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'

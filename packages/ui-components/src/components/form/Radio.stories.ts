@@ -5,10 +5,10 @@ import type { Meta, StoryObj } from '@storybook/vue3'
 import { action } from '@storybook/addon-actions'
 import type { RuleExpression, SubmissionHandler } from 'vee-validate'
 import { Form } from 'vee-validate'
-import { userEvent, within } from '@storybook/testing-library'
+import { userEvent, within } from '@storybook/test'
 import { wait } from '@speckle/shared'
 import type { Optional } from '@speckle/shared'
-import { expect } from '@storybook/jest'
+import { expect } from '@storybook/test'
 import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
 import { computed, type ConcreteComponent } from 'vue'
 import { ArrowRightIcon } from '@heroicons/vue/20/solid'
@@ -42,12 +42,12 @@ export default {
 
 const toggleRadioPlayFunction: VuePlayFunction = async (params) => {
   const canvas = within(params.canvasElement)
-  const radio = canvas.getByRole('radio') as HTMLInputElement
+  const radio = canvas.getByRole('radio')
 
-  userEvent.click(radio)
+  await userEvent.click(radio)
   // expect(radio.checked).toBeTruthy()
   await wait(1000)
-  userEvent.click(radio)
+  await userEvent.click(radio)
   // expect(radio.checked).toBeFalsy()
 }
 
@@ -131,23 +131,23 @@ export const Group: StoryObj<typeof defaultArgs> = {
     const barRadio = canvas.getByAltText('bar')
     const button = canvas.getByRole('button')
 
-    userEvent.click(fooRadio)
+    await userEvent.click(fooRadio)
     await wait(smallDelay)
-    userEvent.click(button)
+    await userEvent.click(button)
 
     await wait(bigDelay)
 
-    userEvent.click(barRadio)
+    await userEvent.click(barRadio)
     await wait(smallDelay)
-    userEvent.click(button)
+    await userEvent.click(button)
 
     await wait(bigDelay)
 
-    userEvent.click(barRadio)
+    await userEvent.click(barRadio)
     await wait(smallDelay)
-    userEvent.click(barRadio)
+    await userEvent.click(barRadio)
     await wait(smallDelay)
-    userEvent.click(button)
+    await userEvent.click(button)
   },
   parameters: {
     docs: {
@@ -175,23 +175,24 @@ export const WithIcon: StoryObj<typeof defaultArgs> = {
   args: {
     name: 'withIcon',
     label: 'Example radio with Icon',
-    icon: ArrowRightIcon
+    icon: ArrowRightIcon,
+    description: 'Example discription'
   }
 }
 
 export const Disabled: StoryObj<typeof defaultArgs> = {
   ...Default,
-  play: (params) => {
+  play: async (params) => {
     const canvas = within(params.canvasElement)
     const radio = canvas.getByRole('radio')
 
     const isChecked = (radio as HTMLInputElement).checked
 
     // click and assert that radio checked state hasn't changed
-    userEvent.click(radio)
+    await userEvent.click(radio)
 
     const newIsChecked = (radio as HTMLInputElement).checked
-    expect(isChecked).toBe(newIsChecked)
+    await expect(isChecked).toBe(newIsChecked)
   },
   args: {
     name: 'disabled1',

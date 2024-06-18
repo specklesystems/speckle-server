@@ -28,7 +28,7 @@ dc_resource('maildev', labels=['dependencies'])
 dc_resource('postgres', labels=['dependencies'])
 
 # Prepare the Speckle resources
-docker_compose('../../docker-compose-speckle.yml')
+docker_compose(['../../docker-compose-speckle.yml', encode_yaml({'services': {'speckle-server': {'environment': {'ENABLE_MP': 'false'}}}})])
 dc_resource('speckle-server', resource_deps=['postgres', 'redis', 'minio', 'maildev'], labels=['speckle'])
 dc_resource('speckle-frontend-2', resource_deps=[], labels=['speckle'])
 dc_resource('speckle-ingress', resource_deps=[], labels=['speckle'])

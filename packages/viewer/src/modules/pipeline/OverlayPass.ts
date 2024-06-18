@@ -1,12 +1,20 @@
-import { Camera, Scene, Texture } from 'three'
-import { BaseSpecklePass, SpecklePass } from './SpecklePass'
+import {
+  Camera,
+  OrthographicCamera,
+  PerspectiveCamera,
+  Scene,
+  Texture,
+  WebGLRenderTarget,
+  WebGLRenderer
+} from 'three'
+import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
 
 export class OverlayPass extends BaseSpecklePass implements SpecklePass {
-  private camera: Camera
-  private scene: Scene
+  private camera!: Camera
+  private scene!: Scene
 
-  public onBeforeRender: () => void = null
-  public onAfterRender: () => void = null
+  public onBeforeRender: (() => void) | undefined = undefined
+  public onAfterRender: (() => void) | undefined = undefined
 
   public constructor() {
     super()
@@ -14,16 +22,20 @@ export class OverlayPass extends BaseSpecklePass implements SpecklePass {
   public get displayName(): string {
     return 'OVERLAY'
   }
-  public get outputTexture(): Texture {
+  public get outputTexture(): Texture | null {
     return null
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.camera = camera
     this.scene = scene
   }
 
-  render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */) {
+  render(
+    renderer: WebGLRenderer,
+    _writeBuffer: WebGLRenderTarget,
+    readBuffer: WebGLRenderTarget
+  ) {
     const oldAutoClear = renderer.autoClear
     renderer.autoClear = false
     this.applyLayers(this.camera)

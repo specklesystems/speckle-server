@@ -34,3 +34,21 @@ export const developerSettingsApplicationsQuery = graphql(`
     }
   }
 `)
+
+export const developerSettingsAuthorizedAppsQuery = graphql(`
+  query DeveloperSettingsAuthorizedApps {
+    activeUser {
+      id
+      authorizedApps {
+        id
+        description
+        name
+        author {
+          id
+          name
+          avatar
+        }
+      }
+    }
+  }
+`)

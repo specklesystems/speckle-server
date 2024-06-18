@@ -8,7 +8,12 @@ import {
 } from '../objects/AccelerationStructure'
 import { MeshBVH } from 'three-mesh-bvh'
 
-export type VectorLike = { x: number; y: number; z?: number; w?: number }
+export type VectorLike =
+  | { x: number; y: number; z?: number; w?: number }
+  | undefined
+  | null
+export type Vector3Like = VectorLike & { z: number }
+export type Vector4Like = Vector3Like & { w: number }
 
 export class BatchObject {
   protected _renderView: NodeRenderView
@@ -18,8 +23,8 @@ export class BatchObject {
   public transform: Matrix4
   public transformInv: Matrix4
 
-  public tasVertIndexStart: number
-  public tasVertIndexEnd: number
+  public tasVertIndexStart!: number
+  public tasVertIndexEnd!: number
 
   public quaternion: Quaternion = new Quaternion()
   public eulerValue: Euler = new Euler()
@@ -50,14 +55,13 @@ export class BatchObject {
     return this._batchIndex
   }
 
-  public get speckleId(): string {
-    return this._renderView.renderData.id
-  }
-
   public get aabb(): Box3 {
-    const box = new Box3().copy(this.renderView.aabb)
-    box.applyMatrix4(this.transform)
-    return box
+    if (this.renderView.aabb) {
+      const box = new Box3().copy(this.renderView.aabb)
+      box.applyMatrix4(this.transform)
+      return box
+    }
+    return new Box3()
   }
 
   public get localOrigin(): Vector3 {
@@ -114,11 +118,13 @@ export class BatchObject {
     transform.invert()
 
     if (!bvh) {
-      const indices = this._renderView.renderData.geometry.attributes.INDEX
-      const position = this._renderView.renderData.geometry.attributes.POSITION
+      const indices: number[] | undefined =
+        this._renderView.renderData.geometry.attributes?.INDEX
+      const position: number[] | undefined =
+        this._renderView.renderData.geometry.attributes?.POSITION
       bvh = AccelerationStructure.buildBVH(
         indices,
-        new Float32Array(position),
+        position,
         DefaultBVHOptions,
         transform
       )
@@ -134,10 +140,10 @@ export class BatchObject {
   }
 
   public transformTRS(
-    translation: VectorLike,
-    euler: VectorLike,
-    scale: VectorLike,
-    pivot: VectorLike
+    translation: Vector3Like,
+    euler?: Vector3Like,
+    scale?: Vector3Like,
+    pivot?: Vector3Like
   ) {
     let T: Matrix4 = BatchObject.matBuff0.identity()
     let R: Matrix4 = BatchObject.matBuff1.identity()

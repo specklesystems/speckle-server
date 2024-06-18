@@ -16,3 +16,11 @@ export function isPendingVersionFragment(
 ): i is PendingFileUploadFragment {
   return has(i, 'convertedMessage')
 }
+
+// Function to sanitize model name by trimming spaces around slashes
+export function sanitizeModelName(name: string): string {
+  return name
+    .split('/')
+    .map((part) => part.trim())
+    .join('/')
+}

@@ -5,7 +5,7 @@
         :is="getButtonComponent(strat)"
         v-for="strat in thirdPartyStrategies"
         :key="strat.id"
-        :to="buildAuthUrl(strat)"
+        to="javascript:;"
         @click="() => onClick(strat)"
       />
     </div>
@@ -93,10 +93,15 @@ const getButtonComponent = (strat: StrategyType) => {
 }
 
 const onClick = (strat: StrategyType) => {
+  if (!import.meta.client) return
+
+  const redirectUrl = buildAuthUrl(strat)
   mixpanel.track('Log In', {
     isInvite: !!inviteToken.value,
     type: 'action',
     provider: strat.name
   })
+
+  window.location.href = redirectUrl
 }
 </script>

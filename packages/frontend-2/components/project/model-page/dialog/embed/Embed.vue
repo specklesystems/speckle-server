@@ -1,34 +1,27 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    :max-width="visibility == ProjectVisibility.Private ? 'sm' : 'md'"
-    :buttons="
-      visibility == ProjectVisibility.Private
-        ? nonDiscoverableButtons
-        : discoverableButtons
-    "
+    :max-width="isPrivate ? 'sm' : 'md'"
+    :buttons="isPrivate ? nonDiscoverableButtons : discoverableButtons"
   >
-    <template #header>Embed Model</template>
-    <div v-if="visibility === ProjectVisibility.Private">
-      <p>
-        <strong>Model embedding only works if the project is “Discoverable”.</strong>
-      </p>
-      <p class="mt-5">
-        To change this setting you must be logged in as a user with the
-        <strong>Owner</strong>
-        project permission.
-      </p>
-      <p>
-        Go to
-        <strong>“Project Dashboard > Manage > Access”</strong>
-        and choose
-        <strong>“Discoverable”</strong>
-        from the drop-down list.
-      </p>
+    <template v-if="isPrivate" #header>Change Access Permissions</template>
+    <template v-else #header>Embed Model</template>
+
+    <div v-if="isPrivate">
+      <CommonAlert color="info">
+        <template #title>
+          Model embedding does not work when the project is "Private".
+        </template>
+      </CommonAlert>
+
+      <ProjectPageTeamDialogManagePermissions
+        :project="project"
+        @changed-visibility="handleChangeVisibility"
+      />
     </div>
     <div v-else>
       <CommonAlert v-if="multipleVersionedResources" class="mb-4 sm:-mt-4" color="info">
-        <template #title>You are about embedding a specific version</template>
+        <template #title>You are embedding a specific version</template>
         <template #description>
           <p>
             This means that any changes you made after this version will not be included
@@ -101,36 +94,50 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
 import { Cog6ToothIcon, EyeIcon } from '@heroicons/vue/24/outline'
-import { ProjectVisibility } from '~~/lib/common/generated/gql/graphql'
+import {
+  ProjectVisibility,
+  type ProjectsModelPageEmbed_ProjectFragment
+} from '~~/lib/common/generated/gql/graphql'
 import { useClipboard } from '~~/composables/browser'
 import { SpeckleViewer } from '@speckle/shared'
-import { projectRoute } from '~~/lib/common/helpers/route'
+import { graphql } from '~~/lib/common/generated/gql'
+import type { LayoutDialogButton } from '@speckle/ui-components'
+import { useUpdateProject } from '~/lib/projects/composables/projectManagement'
+import { useMixpanel } from '~/lib/core/composables/mp'
+
+graphql(`
+  fragment ProjectsModelPageEmbed_Project on Project {
+    id
+    ...ProjectsPageTeamDialogManagePermissions_Project
+  }
+`)
 
 const props = defineProps<{
-  visibility?: ProjectVisibility
-  projectId: string
+  project: ProjectsModelPageEmbed_ProjectFragment
   modelId?: string
   versionId?: string
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const router = useRouter()
 const route = useRoute()
+const logger = useLogger()
 const { copy } = useClipboard()
 const {
   public: { baseUrl }
 } = useRuntimeConfig()
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
+const updateProject = useUpdateProject()
+const mp = useMixpanel()
 
 const transparentBackground = ref(false)
 const hideViewerControls = ref(false)
 const hideSelectionInfo = ref(false)
 const preventScrolling = ref(false)
 const manuallyLoadModel = ref(false)
+const projectVisibility = ref(props.project.visibility)
 
 const routeModelId = computed(() => route.params.modelId as string)
 
@@ -149,7 +156,7 @@ const multipleVersionedResources = computed(() => {
 })
 
 const updatedUrl = computed(() => {
-  const url = new URL(`/projects/${encodeURIComponent(props.projectId)}`, baseUrl)
+  const url = new URL(`/projects/${encodeURIComponent(props.project.id)}`, baseUrl)
 
   url.pathname += '/models/'
 
@@ -184,7 +191,11 @@ const iframeCode = computed(() => {
   return `<iframe title="Speckle" src="${updatedUrl.value}" width="600" height="400" frameborder="0"></iframe>`
 })
 
-const discoverableButtons = computed(() => [
+const isPrivate = computed(() => {
+  return props.project.visibility === ProjectVisibility.Private
+})
+
+const discoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'invert', fullWidth: true, outline: true },
@@ -194,14 +205,14 @@ const discoverableButtons = computed(() => [
   },
   {
     text: 'Copy Embed Code',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'default', fullWidth: true },
     onClick: () => {
       handleEmbedCodeCopy(iframeCode.value)
     }
   }
 ])
 
-const nonDiscoverableButtons = computed(() => [
+const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
     props: { color: 'invert', fullWidth: true, outline: true },
@@ -210,12 +221,12 @@ const nonDiscoverableButtons = computed(() => [
     }
   },
   {
-    text: 'Change Access',
-    props: { color: 'primary', fullWidth: true },
-    onClick: () => {
-      isOpen.value = false
-      router.push(`${projectRoute(props.projectId)}?settings=access`)
-    }
+    text: 'Save',
+    props: {
+      fullWidth: true,
+      disabled: projectVisibility.value === props.project.visibility
+    },
+    onClick: saveProjectVisibility
   }
 ])
 
@@ -228,6 +239,27 @@ const handleEmbedCodeCopy = async (value: string) => {
 
 const updateOption = (optionRef: Ref<boolean>, newValue: unknown) => {
   optionRef.value = newValue === undefined ? false : !!newValue
+}
+
+const handleChangeVisibility = (newVisibility: ProjectVisibility) => {
+  projectVisibility.value = newVisibility
+}
+
+const saveProjectVisibility = async () => {
+  try {
+    await updateProject({
+      visibility: projectVisibility.value,
+      id: props.project.id
+    })
+    mp.track('Stream Action', {
+      type: 'action',
+      name: 'update',
+      action: 'project-access',
+      to: projectVisibility.value
+    })
+  } catch (e) {
+    logger.error(e)
+  }
 }
 
 const embedDialogOptions = [

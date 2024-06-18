@@ -12,11 +12,10 @@
         :buttons="[
           {
             props: {
-              color: 'primary',
-              to: apiOrigin + '/explorer',
               target: '_blank',
               external: true
             },
+            onClick: goToExplorer,
             label: 'Explore GraphQL'
           }
         ]"
@@ -26,6 +25,7 @@
       <div class="flex flex-col gap-4">
         <DeveloperSettingsSectionHeader
           title="Access Tokens"
+          subheading
           :buttons="[
             {
               props: {
@@ -39,7 +39,6 @@
             },
             {
               props: {
-                color: 'primary',
                 iconLeft: PlusIcon,
                 onClick: openCreateTokenDialog
               },
@@ -72,7 +71,7 @@
               icon: TrashIcon,
               label: 'Delete',
               action: openDeleteDialog,
-              class: 'text-red-500'
+              textColor: 'danger'
             }
           ]"
         >
@@ -104,6 +103,7 @@
 
       <div class="flex flex-col gap-4">
         <DeveloperSettingsSectionHeader
+          subheading
           title="Applications"
           :buttons="[
             {
@@ -118,7 +118,6 @@
             },
             {
               props: {
-                color: 'primary',
                 onClick: openCreateApplicationDialog,
                 iconLeft: PlusIcon
               },
@@ -145,19 +144,19 @@
               icon: LockOpenIcon,
               label: 'Reveal Secret',
               action: openRevealSecretDialog,
-              class: 'text-primary'
+              textColor: 'primary'
             },
             {
               icon: PencilIcon,
               label: 'Edit',
               action: openEditApplicationDialog,
-              class: 'text-primary'
+              textColor: 'primary'
             },
             {
               icon: TrashIcon,
               label: 'Delete',
               action: openDeleteDialog,
-              class: 'text-red-500'
+              textColor: 'danger'
             }
           ]"
         >
@@ -181,6 +180,64 @@
                   .join(' ')
               }}
             </div>
+          </template>
+        </LayoutTable>
+      </div>
+
+      <div class="flex flex-col gap-4">
+        <DeveloperSettingsSectionHeader
+          subheading
+          title="Authorized Apps"
+          :buttons="[
+            {
+              props: {
+                color: 'invert',
+                to: 'https://speckle.guide/dev/apps.html',
+                target: '_blank',
+                external: true,
+                iconLeft: BookOpenIcon
+              },
+              label: 'Open Docs'
+            }
+          ]"
+        >
+          Here you can review the apps that you have granted access to. If something
+          looks suspicious, revoke the access.
+        </DeveloperSettingsSectionHeader>
+        <LayoutTable
+          :columns="[
+            { id: 'name', header: 'Name', classes: 'col-span-3 ' },
+            { id: 'author', header: 'Author', classes: 'col-span-3 ' },
+            { id: 'description', header: 'Description', classes: 'col-span-6 !pt-1.5' }
+          ]"
+          :items="authorizedApps"
+          :buttons="[
+            {
+              icon: XMarkIcon,
+              label: 'Revoke Access',
+              action: openDeleteDialog,
+              textColor: 'danger'
+            }
+          ]"
+          row-items-align="stretch"
+        >
+          <template #name="{ item }">
+            {{ item.name }}
+          </template>
+          <template #author="{ item }">
+            <div class="flex space-x-2 items-center">
+              <template v-if="item.author">
+                <UserAvatar :user="item.author" />
+                <span>{{ item.author.name }}</span>
+              </template>
+              <template v-else>
+                <HeaderLogoBlock minimal no-link />
+                <span>Speckle</span>
+              </template>
+            </div>
+          </template>
+          <template #description="{ item }">
+            {{ item.description }}
           </template>
         </LayoutTable>
       </div>
@@ -220,17 +277,24 @@ import {
   BookOpenIcon,
   TrashIcon,
   PencilIcon,
-  LockOpenIcon
+  LockOpenIcon,
+  XMarkIcon
 } from '@heroicons/vue/24/outline'
 import type {
   TokenItem,
-  ApplicationItem
+  ApplicationItem,
+  AuthorizedAppItem
 } from '~~/lib/developer-settings/helpers/types'
 import {
   developerSettingsAccessTokensQuery,
-  developerSettingsApplicationsQuery
+  developerSettingsApplicationsQuery,
+  developerSettingsAuthorizedAppsQuery
 } from '~~/lib/developer-settings/graphql/queries'
 import { useQuery } from '@vue/apollo-composable'
+
+useHead({
+  title: 'Developer Settings'
+})
 
 const apiOrigin = useApiOrigin()
 
@@ -240,8 +304,9 @@ const { result: tokensResult, refetch: refetchTokens } = useQuery(
 const { result: applicationsResult, refetch: refetchApplications } = useQuery(
   developerSettingsApplicationsQuery
 )
+const { result: authorizedAppsResult } = useQuery(developerSettingsAuthorizedAppsQuery)
 
-const itemToModify = ref<TokenItem | ApplicationItem | null>(null)
+const itemToModify = ref<TokenItem | ApplicationItem | AuthorizedAppItem | null>(null)
 const tokenSuccess = ref('')
 const showCreateTokenDialog = ref(false)
 const showCreateTokenSuccessDialog = ref(false)
@@ -262,7 +327,13 @@ const applications = computed<ApplicationItem[]>(() => {
   return applicationsResult.value?.activeUser?.createdApps || []
 })
 
-const openDeleteDialog = (item: TokenItem | ApplicationItem) => {
+const authorizedApps = computed(() =>
+  (authorizedAppsResult.value?.activeUser?.authorizedApps || []).filter(
+    (app) => app.id !== 'spklwebapp'
+  )
+)
+
+const openDeleteDialog = (item: TokenItem | ApplicationItem | AuthorizedAppItem) => {
   itemToModify.value = item
   showDeleteDialog.value = true
 }
@@ -301,5 +372,10 @@ const handleApplicationCreated = (applicationId: string) => {
       showCreateApplicationSuccessDialog.value = true
     }
   })
+}
+
+const goToExplorer = () => {
+  if (!import.meta.client) return
+  window.location.href = new URL('/explorer', apiOrigin).toString()
 }
 </script>

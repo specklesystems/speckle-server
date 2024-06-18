@@ -1,6 +1,6 @@
 import type { CSSProperties, Ref } from 'vue'
 import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
-import { Vector3 } from 'three'
+import type { Vector3 } from 'three'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import type { IntersectionQuery, PointQuery } from '@speckle/viewer'
 import { isArray, round } from 'lodash-es'

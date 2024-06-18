@@ -12,7 +12,7 @@
       },
       {
         text: 'Save',
-        props: { color: 'primary', fullWidth: true },
+        props: { color: 'default', fullWidth: true },
         onClick: () => {
           onSubmit()
         }
@@ -34,6 +34,7 @@
           auto-focus
           :disabled="loading"
           help="Use forward slashes in the model name to nest it below other models."
+          autocomplete="off"
         />
         <FormTextArea
           v-model="newDescription"
@@ -61,6 +62,7 @@ import {
   useModelNameValidationRules,
   useUpdateModel
 } from '~~/lib/projects/composables/modelManagement'
+import { sanitizeModelName } from '~~/lib/projects/helpers/models'
 
 graphql(`
   fragment ProjectPageModelsCardRenameDialog on Model {
@@ -98,7 +100,7 @@ const onSubmit = handleSubmit(async (vals) => {
   loading.value = true
   const updatedModel = await updateModel({
     id: props.model.id,
-    name: vals.name,
+    name: sanitizeModelName(vals.name),
     description: vals.description,
     projectId: props.projectId
   }).finally(() => (loading.value = false))

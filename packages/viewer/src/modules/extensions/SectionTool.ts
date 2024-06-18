@@ -13,14 +13,16 @@ import {
   BufferAttribute,
   Raycaster,
   DoubleSide,
-  SphereGeometry
+  SphereGeometry,
+  type Intersection,
+  Vector2
 } from 'three'
-import { TransformControls } from 'three/examples/jsm/controls/TransformControls'
-import { IViewer, ObjectLayers } from '../../IViewer'
-import { Extension } from './core-extensions/Extension'
-import { CameraControllerEvent, ICameraProvider } from './core-extensions/Providers'
+import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
+import { type IViewer, ObjectLayers } from '../../IViewer'
+import { Extension } from './Extension'
+import { CameraEvent } from '../objects/SpeckleCamera'
 import { InputEvent } from '../input/Input'
-import { ISectionProvider } from './core-extensions/Providers'
+import { CameraController } from './CameraController'
 
 export enum SectionToolEvent {
   DragStart = 'section-box-drag-start',
@@ -28,13 +30,15 @@ export enum SectionToolEvent {
   Updated = 'section-box-changed'
 }
 
-export class SectionTool extends Extension implements ISectionProvider {
-  public get inject() {
-    return [ICameraProvider.Symbol]
-  }
+export interface SectionToolEventPayload {
+  [SectionToolEvent.DragStart]: void
+  [SectionToolEvent.DragEnd]: void
+  [SectionToolEvent.Updated]: Plane[]
+}
 
-  public get provide(): string {
-    return ISectionProvider.Symbol
+export class SectionTool extends Extension {
+  public get inject() {
+    return [CameraController]
   }
 
   protected dragging = false
@@ -43,24 +47,23 @@ export class SectionTool extends Extension implements ISectionProvider {
   protected boxMaterial: MeshStandardMaterial
   protected boxMesh: Mesh
   protected boxMeshHelper: Box3Helper
-  protected boxMeshHelperMaterial: LineBasicMaterial
+  protected boxMeshHelperMaterial!: LineBasicMaterial
   protected plane: PlaneGeometry
   protected hoverPlane: Mesh
   protected sphere: Mesh
 
   protected sidesSimple: { [id: string]: { verts: number[]; axis: string } }
-  protected currentRange: number[]
-  protected planes: Plane[]
+  protected currentRange: number[] | null
+  protected planes!: Plane[]
 
-  protected prevPosition: Vector3
+  protected prevPosition: Vector3 | null
   protected attachedToBox: boolean
 
-  protected controls: TransformControls
-  protected allowSelection: boolean
+  protected controls!: TransformControls
+  protected allowSelection!: boolean
 
   protected raycaster: Raycaster
 
-  private _enabled = false
   public get enabled() {
     return this._enabled
   }
@@ -73,7 +76,15 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.viewer.requestRender()
   }
 
-  constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  public get visible(): boolean {
+    return this.display.visible
+  }
+
+  public set visible(value: boolean) {
+    this.display.visible = value
+  }
+
+  constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer)
     this.viewer = viewer
 
@@ -99,7 +110,7 @@ export class SectionTool extends Extension implements ISectionProvider {
 
     this.display.add(this.boxMesh)
 
-    this.boxMeshHelper = new Box3Helper(this.boxGeometry.boundingBox)
+    this.boxMeshHelper = new Box3Helper(this.boxGeometry.boundingBox || new Box3())
     this.boxMeshHelper.material = new LineBasicMaterial({
       color: 0x0a66ff,
       opacity: 0.4
@@ -160,22 +171,34 @@ export class SectionTool extends Extension implements ISectionProvider {
     this._setupControls()
     this._attachControlsToBox()
 
-    this.cameraProvider.on(CameraControllerEvent.ProjectionChanged, () => {
+    this.cameraProvider.on(CameraEvent.ProjectionChanged, () => {
       this._setupControls()
       this._attachControlsToBox()
     })
-    this.cameraProvider.on(CameraControllerEvent.FrameUpdate, (data: boolean) => {
+    this.cameraProvider.on(CameraEvent.FrameUpdate, (data: boolean) => {
       this.allowSelection = !data
     })
-    this.viewer.getRenderer().input.on(InputEvent.Click, this._clickHandler.bind(this))
+    this.viewer.getRenderer().input.on(InputEvent.Click, this.clickHandler.bind(this))
     this.enabled = false
   }
 
+  public on<T extends SectionToolEvent>(
+    eventType: T,
+    listener: (arg: SectionToolEventPayload[T]) => void
+  ): void {
+    super.on(eventType, listener)
+  }
+
   private _setupControls() {
+    const camera = this.viewer.getRenderer().renderingCamera
+    if (!camera) {
+      throw new Error('Cannot create SectionTool extension. No rendering camera found')
+    }
+
     this.controls?.dispose()
     this.controls?.detach()
     this.controls = new TransformControls(
-      this.viewer.getRenderer().renderingCamera,
+      camera,
       this.viewer.getRenderer().renderer.domElement
     )
     for (let k = 0; k < this.controls?.children.length; k++) {
@@ -208,7 +231,7 @@ export class SectionTool extends Extension implements ISectionProvider {
   private _draggingChangeHandler() {
     if (!this.display.visible) return
     this.boxGeometry.computeBoundingBox()
-    this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox)
+    this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox || new Box3())
 
     // Dragging a side / plane
     if (this.dragging && this.currentRange) {
@@ -252,16 +275,16 @@ export class SectionTool extends Extension implements ISectionProvider {
       this.prevPosition = this.sphere.position.clone()
     }
     this.viewer.getRenderer().clippingPlanes = this.planes
-    this.viewer.getRenderer().clippingVolume = this.getCurrentBox()
+    this.viewer.getRenderer().clippingVolume = this.getBox()
     this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.requestRender()
   }
 
-  private _clickHandler(args) {
+  private clickHandler(args: Vector2 & { event: PointerEvent; multiSelect: boolean }) {
     if (!this.allowSelection || this.dragging) return
 
     this.raycaster.setFromCamera(args, this.cameraProvider.renderingCamera)
-    let intersectedObjects = []
+    let intersectedObjects: Array<Intersection> = []
     if (this.display.visible) {
       intersectedObjects = this.raycaster.intersectObject(this.boxMesh)
     }
@@ -277,8 +300,14 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.hoverPlane.visible = true
     const side =
       this.sidesSimple[
-        `${intersectedObjects[0].face.a}${intersectedObjects[0].face.b}${intersectedObjects[0].face.c}`
+        `${intersectedObjects[0].face?.a}${intersectedObjects[0].face?.b}${intersectedObjects[0].face?.c}`
       ]
+    /** Catering to typescript
+     *  We're intersection an indexed mesh. There will always be an intersected face
+     */
+    if (!side) {
+      throw new Error('Cannot determine section side')
+    }
     this.controls.showX = side.axis === 'x'
     this.controls.showY = side.axis === 'y'
     this.controls.showZ = side.axis === 'z'
@@ -418,12 +447,12 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.controls.showZ = true
   }
 
-  public getCurrentBox() {
+  public getBox(): Box3 {
     if (!this.display.visible) return new Box3()
-    return this.boxGeometry.boundingBox
+    return this.boxGeometry.boundingBox || new Box3()
   }
 
-  public setBox(targetBox, offset = 0.05) {
+  public setBox(targetBox: Box3, offset = 0): void {
     let box
 
     if (targetBox) box = targetBox
@@ -433,6 +462,10 @@ export class SectionTool extends Extension implements ISectionProvider {
 
     if (box.min.x === Infinity) {
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
+    }
+
+    if (offset === 0) {
+      offset = this.viewer.World.getRelativeOffset()
     }
 
     const x1 = box.min.x - (box.max.x - box.min.x) * offset
@@ -480,22 +513,14 @@ export class SectionTool extends Extension implements ISectionProvider {
     this.boxGeometry.computeBoundingSphere()
     this._generateOrUpdatePlanes()
     this._attachControlsToBox()
-    this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox)
+    this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox || new Box3())
     this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.getRenderer().clippingPlanes = this.planes
-    this.viewer.getRenderer().clippingVolume = this.getCurrentBox()
+    this.viewer.getRenderer().clippingVolume = this.getBox()
     this.viewer.requestRender()
   }
 
-  public toggle() {
+  public toggle(): void {
     this.enabled = !this._enabled
-  }
-
-  public displayOff() {
-    this.display.visible = false
-  }
-
-  public displayOn() {
-    this.display.visible = true
   }
 }

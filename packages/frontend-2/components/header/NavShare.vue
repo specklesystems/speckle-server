@@ -1,9 +1,10 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <Menu
     as="div"
     class="flex items-center relative sm:border-r border-outline-1 sm:pr-4"
   >
-    <MenuButton as="div">
+    <MenuButton :id="menuButtonId" as="div">
       <FormButton
         class="hidden sm:flex"
         size="sm"
@@ -68,11 +69,7 @@
         </MenuItem>
       </MenuItems>
     </Transition>
-    <ProjectModelPageDialogEmbed
-      v-model:open="embedDialogOpen"
-      :project-id="projectId"
-      :visibility="visibility"
-    />
+    <ProjectModelPageDialogEmbed v-model:open="embedDialogOpen" :project="project" />
   </Menu>
 </template>
 <script setup lang="ts">
@@ -86,17 +83,26 @@ import {
 } from '@heroicons/vue/24/outline'
 import { SpeckleViewer } from '@speckle/shared'
 import { keyboardClick } from '@speckle/ui-components'
-import type { ProjectVisibility } from '~/lib/common/generated/gql/graphql'
+import { graphql } from '~/lib/common/generated/gql/gql'
+import type { HeaderNavShare_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 
+graphql(`
+  fragment HeaderNavShare_Project on Project {
+    id
+    visibility
+    ...ProjectsModelPageEmbed_Project
+  }
+`)
+
 const props = defineProps<{
-  projectId: string
+  project: HeaderNavShare_ProjectFragment
   resourceIdString: string
-  visibility: ProjectVisibility
 }>()
 
 const { copy } = useClipboard()
 const copyModelLink = useCopyModelLink()
+const menuButtonId = useId()
 
 const embedDialogOpen = ref(false)
 
@@ -129,7 +135,7 @@ const handleCopyId = () => {
 const handleCopyLink = () => {
   const modelIdValue = modelId.value
   const versionIdValue = versionId.value ? versionId.value : undefined
-  copyModelLink(props.projectId, modelIdValue, versionIdValue)
+  copyModelLink(props.project.id, modelIdValue, versionIdValue)
 }
 
 const handleEmbed = () => {

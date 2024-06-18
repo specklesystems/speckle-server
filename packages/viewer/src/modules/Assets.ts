@@ -1,21 +1,27 @@
 import {
   Texture,
-  PMREMGenerator,
   WebGLRenderer,
   TextureLoader,
   Color,
-  DataTexture
+  DataTexture,
+  DataTextureLoader,
+  Matrix4,
+  Euler
 } from 'three'
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
 import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js'
-import { Asset, AssetType } from '../IViewer'
+import { type Asset, AssetType } from '../IViewer'
 import Logger from 'js-logger'
+import { RotatablePMREMGenerator } from './objects/RotatablePMREMGenerator'
 
 export class Assets {
   private static _cache: { [name: string]: Texture | Font } = {}
 
-  private static getLoader(src: string, assetType: AssetType): TextureLoader {
+  private static getLoader(
+    src: string,
+    assetType: AssetType
+  ): TextureLoader | DataTextureLoader | null {
     if (assetType === undefined) assetType = src.split('.').pop() as AssetType
     if (!Object.values(AssetType).includes(assetType)) {
       Logger.warn(`Asset ${src} could not be loaded. Unknown type`)
@@ -28,102 +34,94 @@ export class Assets {
         return new RGBELoader()
       case AssetType.TEXTURE_8BPP:
         return new TextureLoader()
+      default:
+        return null
     }
   }
 
+  private static hdriToPMREM(renderer: WebGLRenderer, hdriTex: Texture): Texture {
+    const generator = new RotatablePMREMGenerator(renderer)
+    const mat = new Matrix4().makeRotationFromEuler(
+      new Euler(-Math.PI * 0.5, 0, -Math.PI * 0.5)
+    )
+    generator.compileProperEquirectShader(mat)
+    const pmremRT = generator.fromEquirectangular(hdriTex)
+    generator.dispose()
+    return pmremRT.texture
+  }
+
   public static getEnvironment(
-    asset: Asset | string,
+    asset: Asset,
     renderer: WebGLRenderer
   ): Promise<Texture> {
-    let srcUrl: string = null
-    let assetType: AssetType = undefined
-    if ((<Asset>asset).src) {
-      srcUrl = (asset as Asset).src
-      assetType = (asset as Asset).type
-    } else {
-      srcUrl = asset as string
-    }
-    if (this._cache[srcUrl]) {
-      return Promise.resolve(this._cache[srcUrl] as Texture)
+    if (this._cache[asset.id]) {
+      return Promise.resolve(
+        Assets.hdriToPMREM(renderer, this._cache[asset.id] as Texture)
+      )
     }
 
     return new Promise<Texture>((resolve, reject) => {
-      const loader = Assets.getLoader(srcUrl, assetType)
+      const loader = Assets.getLoader(asset.src, asset.type)
       if (loader) {
         loader.load(
-          srcUrl,
+          asset.src,
           (texture) => {
-            const generator = new PMREMGenerator(renderer)
-            generator.compileEquirectangularShader()
-            const pmremRT = generator.fromEquirectangular(texture)
-            this._cache[srcUrl] = pmremRT.texture
-            texture.dispose()
-            generator.dispose()
-            resolve(this._cache[srcUrl] as Texture)
+            this._cache[asset.id] = texture
+            resolve(Assets.hdriToPMREM(renderer, texture))
           },
           undefined,
           (error: ErrorEvent) => {
-            reject(`Loading asset ${srcUrl} failed ${error.message}`)
+            reject(`Loading asset ${asset.id} failed ${error.message}`)
           }
         )
       } else {
-        reject(`Loading asset ${srcUrl} failed`)
+        reject(`Loading asset ${asset.id} failed`)
       }
     })
   }
 
-  /** Will unify with environment fetching soon */
-  public static getTexture(asset: Asset | string): Promise<Texture> {
-    let srcUrl: string = null
-    let assetType: AssetType = undefined
-    if ((<Asset>asset).src) {
-      srcUrl = (asset as Asset).src
-      assetType = (asset as Asset).type
-    } else {
-      srcUrl = asset as string
-    }
-
-    if (this._cache[srcUrl]) {
-      return Promise.resolve(this._cache[srcUrl] as Texture)
+  public static getTexture(asset: Asset): Promise<Texture> {
+    if (this._cache[asset.id]) {
+      return Promise.resolve(this._cache[asset.id] as Texture)
     }
     return new Promise<Texture>((resolve, reject) => {
       // Hack to load 'data:image's - for some reason, the frontend receives the default
       // gradient map as a data image url, rather than a file (?).
-      if (srcUrl.includes('data:image')) {
+      if (asset.src.includes('data:image')) {
         const image = new Image()
-        image.src = srcUrl
+        image.src = asset.src
         image.onload = () => {
           const texture = new Texture(image)
           texture.needsUpdate = true
-          this._cache[srcUrl] = texture
+          this._cache[asset.id] = texture
           resolve(texture)
         }
         image.onerror = (ev) => {
-          reject(`Loading asset ${srcUrl} failed with ${ev.toString()}`)
+          reject(`Loading asset ${asset.id} failed with ${ev.toString()}`)
         }
       } else {
-        const loader = Assets.getLoader(srcUrl, assetType)
+        const loader = Assets.getLoader(asset.src, asset.type)
         if (loader) {
           loader.load(
-            srcUrl,
+            asset.src,
             (texture) => {
-              this._cache[srcUrl] = texture
-              resolve(this._cache[srcUrl] as Texture)
+              this._cache[asset.id] = texture
+              resolve(this._cache[asset.id] as Texture)
             },
             undefined,
             (error: ErrorEvent) => {
-              reject(`Loading asset ${srcUrl} failed ${error.message}`)
+              reject(`Loading asset ${asset.id} failed ${error.message}`)
             }
           )
         } else {
-          reject(`Loading asset ${srcUrl} failed`)
+          reject(`Loading asset ${asset.id} failed`)
         }
       }
     })
   }
 
   public static getFont(asset: Asset | string): Promise<Font> {
-    let srcUrl: string = null
+    let srcUrl: string | null = null
     if ((<Asset>asset).src) {
       srcUrl = (asset as Asset).src
     } else {
@@ -136,7 +134,7 @@ export class Assets {
 
     return new Promise<Font>((resolve, reject) => {
       new FontLoader().load(
-        srcUrl,
+        srcUrl as string,
         (font: Font) => {
           resolve(font)
         },
@@ -149,13 +147,21 @@ export class Assets {
   }
 
   /** To be used wisely */
-  public static async getTextureData(asset: Asset | string): Promise<ImageData> {
+  public static async getTextureData(asset: Asset): Promise<ImageData> {
     const texture = await Assets.getTexture(asset)
     const canvas = document.createElement('canvas')
     canvas.width = texture.image.width
     canvas.height = texture.image.height
 
     const context = canvas.getContext('2d')
+    /** As you can see here https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext#return_value
+     *  The only valid cases where `getContext` returns null are:
+     *  - "contextType doesn't match a possible drawing context" Definetely not the case as we're providing '2d'!
+     *  - "differs from the first contextType requested". It can't since **we're only requesting a context once**!
+     *  - If it returns null outside of these two casese, you have bigger problems than us throwing an exception here
+     */
+    if (!context) throw new Error('Fatal! 2d context could not be retrieved.')
+
     context.drawImage(texture.image, 0, 0)
 
     const data = context.getImageData(0, 0, canvas.width, canvas.height)

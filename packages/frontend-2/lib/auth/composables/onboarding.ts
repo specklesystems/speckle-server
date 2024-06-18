@@ -123,7 +123,7 @@ export function useProcessOnboarding() {
   const finishOnboarding = async (state: OnboardingState, goToDashboard = true) => {
     const user = activeUser.value
 
-    if (process.server)
+    if (import.meta.server)
       throw new UnsupportedEnvironmentError("Can't process onboarding during SSR")
 
     if (!distinctId.value || !user)

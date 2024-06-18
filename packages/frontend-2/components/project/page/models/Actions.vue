@@ -3,6 +3,7 @@
   <div>
     <LayoutMenu
       v-model:open="showActionsMenu"
+      :menu-id="menuId"
       :items="actionsItems"
       @click.stop.prevent
       @chosen="onActionChosen"
@@ -14,19 +15,18 @@
     <ProjectPageModelsCardEditDialog
       v-model:open="isRenameDialogOpen"
       :model="model"
-      :project-id="projectId"
+      :project-id="project.id"
       @updated="$emit('model-updated')"
     />
     <ProjectPageModelsCardDeleteDialog
       v-model:open="isDeleteDialogOpen"
       :model="model"
-      :project-id="projectId"
+      :project-id="project.id"
       @deleted="$emit('model-updated')"
     />
     <ProjectModelPageDialogEmbed
       v-model:open="embedDialogOpen"
-      :project-id="projectId"
-      :visibility="visibility"
+      :project="project"
       :model-id="model.id"
     />
   </div>
@@ -35,7 +35,7 @@
 import type { Nullable } from '@speckle/shared'
 import type {
   ProjectPageModelsActionsFragment,
-  ProjectVisibility
+  ProjectPageModelsActions_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
@@ -58,6 +58,13 @@ graphql(`
   }
 `)
 
+graphql(`
+  fragment ProjectPageModelsActions_Project on Project {
+    id
+    ...ProjectsModelPageEmbed_Project
+  }
+`)
+
 enum ActionTypes {
   Rename = 'rename',
   Delete = 'delete',
@@ -77,13 +84,13 @@ const emit = defineEmits<{
 const props = defineProps<{
   open?: boolean
   model: ProjectPageModelsActionsFragment
-  projectId: string
+  project: ProjectPageModelsActions_ProjectFragment
   canEdit?: boolean
-  visibility?: ProjectVisibility
 }>()
 
 const copyModelLink = useCopyModelLink()
 const { copy } = useClipboard()
+const menuId = useId()
 
 const showActionsMenu = ref(false)
 const openDialog = ref(null as Nullable<ActionTypes>)
@@ -142,7 +149,7 @@ const onActionChosen = (params: { item: LayoutMenuItem; event: MouseEvent }) => 
       break
     case ActionTypes.Share:
       mp.track('Branch Action', { type: 'action', name: 'share' })
-      copyModelLink(props.projectId, props.model.id)
+      copyModelLink(props.project.id, props.model.id)
       break
     case ActionTypes.UploadVersion:
       emit('upload-version')

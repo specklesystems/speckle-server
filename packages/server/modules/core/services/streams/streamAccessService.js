@@ -3,7 +3,10 @@ const { authorizeResolver } = require(`@/modules/shared`)
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 const { LogicError } = require('@/modules/shared/errors')
 const { ForbiddenError, UserInputError } = require('apollo-server-express')
-const { StreamInvalidAccessError } = require('@/modules/core/errors/stream')
+const {
+  StreamInvalidAccessError,
+  StreamAccessUpdateError
+} = require('@/modules/core/errors/stream')
 const {
   addStreamPermissionsAddedActivity,
   addStreamPermissionsRevokedActivity,
@@ -16,6 +19,7 @@ const {
 } = require('@/modules/core/repositories/streams')
 
 const { ServerAcl } = require('@/modules/core/dbSchema')
+const { ensureError } = require('@speckle/shared')
 
 /**
  * Check if user is a stream collaborator
@@ -58,11 +62,14 @@ async function validateStreamAccess(
   try {
     await authorizeResolver(userId, streamId, expectedRole, userResourceAccessLimits)
   } catch (e) {
-    if (e instanceof ForbiddenError) {
+    if (
+      e instanceof ForbiddenError ||
+      /^resource of type streams .* not found$/i.test(ensureError(e).message)
+    ) {
       throw new StreamInvalidAccessError(
         'User does not have required access to stream',
         {
-          cause: e,
+          // cause: e, // We don't want to show the real cause to the user
           info: {
             userId,
             streamId,
@@ -101,7 +108,10 @@ async function removeStreamCollaborator(
     )
   } else {
     // User must have any kind of role to remove himself
-    await isStreamCollaborator(userId, streamId)
+    const isCollaborator = await isStreamCollaborator(userId, streamId)
+    if (!isCollaborator) {
+      throw new StreamAccessUpdateError('User is not a stream collaborator')
+    }
   }
 
   const stream = await revokeStreamPermissions({ streamId, userId })

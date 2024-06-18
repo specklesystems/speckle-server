@@ -48,7 +48,7 @@
             ]"
           >
             <div
-              class="relative w-full sm:w-80 flex justify-between items-center py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
+              class="relative w-full flex justify-between items-center py-2 pl-3 pr-2 sm:px-2 bg-foundation-2"
             >
               <div class="flex-grow flex items-center">
                 <FormButton
@@ -109,7 +109,9 @@
                 ></FormButton>
               </div>
             </div>
-            <div class="relative w-full sm:w-80 flex flex-col flex-1 justify-between">
+            <div
+              class="relative w-full pr-3 sm:w-80 flex flex-col flex-1 justify-between pb-4 sm:pb-0"
+            >
               <div
                 ref="commentsContainer"
                 class="max-h-[40vh] sm:max-h-[300px] 2xl:max-h-[500px] overflow-y-auto simple-scrollbar flex flex-col space-y-1 pr-1"
@@ -148,10 +150,7 @@
               :model-value="modelValue"
               @submit="onNewReply"
             />
-            <div
-              v-if="isEmbedEnabled"
-              class="flex justify-between w-full gap-2 p-2 mt-2"
-            >
+            <div v-if="isEmbedEnabled" class="flex justify-between w-full gap-2 p-2">
               <FormButton
                 :icon-right="ArrowTopRightOnSquareIcon"
                 full-width
@@ -163,7 +162,7 @@
               </FormButton>
             </div>
             <div
-              v-if="!canReply && !isEmbedEnabled"
+              v-if="!canReply && !isEmbedEnabled && !isLoggedIn"
               class="p-3 flex flex-col items-center justify-center bg-foundation-2"
             >
               <FormButton full-width @click="$emit('login')">Reply</FormButton>
@@ -230,7 +229,7 @@ const { isEmbedEnabled } = useEmbed()
 
 const threadId = computed(() => props.modelValue.id)
 const { copy } = useClipboard()
-const { activeUser } = useActiveUser()
+const { activeUser, isLoggedIn } = useActiveUser()
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const archiveComment = useArchiveComment()
@@ -440,7 +439,7 @@ const onLoadThreadContext = async () => {
 }
 
 const onCopyLink = async () => {
-  if (process.server) return
+  if (import.meta.server) return
   const url = getLinkToThread(projectId.value, props.modelValue)
   if (!url) return
 

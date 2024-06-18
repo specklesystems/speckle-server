@@ -30,12 +30,13 @@ const config = {
     typescript2({
       tsconfigOverride: {
         sourceMap: sourcemap
-      }
+      },
+      tsconfig: './tsconfig.build.json'
     }),
     babel({
       extensions: [...DEFAULT_EXTENSIONS, '.ts', '.tsx'],
       babelHelpers: 'bundled',
-      configFile: './babel.config.cjs'
+      configFile: './.babelrc'
     }),
     ...(isProd ? [terser()] : [])
   ],

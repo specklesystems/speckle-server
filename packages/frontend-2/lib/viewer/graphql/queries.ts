@@ -29,6 +29,7 @@ export const viewerLoadedResourcesQuery = graphql(`
     project(id: $projectId) {
       id
       role
+      allowPublicComments
       models(filter: { ids: $modelIds }) {
         totalCount
         items {
@@ -40,37 +41,10 @@ export const viewerLoadedResourcesQuery = graphql(`
           ) {
             items {
               ...ViewerModelVersionCardItem
-              automationStatus {
+              automationsStatus {
                 id
-                status
-                statusMessage
                 automationRuns {
-                  id
-                  automationId
-                  automationName
-                  versionId
-                  createdAt
-                  updatedAt
-                  status
-                  functionRuns {
-                    id
-                    functionId
-                    functionName
-                    functionLogo
-                    resultVersions {
-                      id
-                      referencedObject
-                      model {
-                        id
-                        name
-                      }
-                    }
-                    elapsed
-                    status
-                    contextView
-                    statusMessage
-                    results
-                  }
+                  ...AutomateViewerPanel_AutomateRun
                 }
               }
             }
@@ -86,6 +60,7 @@ export const viewerLoadedResourcesQuery = graphql(`
       }
       ...ProjectPageLatestItemsModels
       ...ModelPageProject
+      ...HeaderNavShare_Project
     }
   }
 `)
@@ -155,6 +130,18 @@ export const viewerLoadedThreadsQuery = graphql(`
           ...ViewerCommentThread
           ...LinkableComment
         }
+      }
+    }
+  }
+`)
+
+export const viewerRawObjectQuery = graphql(`
+  query Stream($streamId: String!, $objectId: String!) {
+    stream(id: $streamId) {
+      id
+      object(id: $objectId) {
+        id
+        data
       }
     }
   }

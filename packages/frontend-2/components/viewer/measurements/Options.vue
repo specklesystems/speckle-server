@@ -16,9 +16,9 @@
         color="danger"
         :icon-left="TrashIcon"
         class="font-normal py-1"
-        @click="() => removeMeasurement()"
+        @click="() => clearMeasurements()"
       >
-        Delete Selected
+        Delete All Measurements
       </FormButton>
     </template>
     <div class="px-3 py-2 sm:p-3 flex flex-col gap-3 border-b border-outline-3">
@@ -28,6 +28,7 @@
           v-for="option in measurementTypeOptions"
           :key="option.value"
           :label="option.title"
+          :description="option.description"
           :value="option.value.toString()"
           name="measurementType"
           :icon="option.icon"
@@ -73,6 +74,12 @@
         </div>
       </div>
     </div>
+    <Portal to="pocket-tip">
+      <ViewerTip class="hidden sm:flex">
+        <strong>Tip:</strong>
+        Right click to cancel measurement
+      </ViewerTip>
+    </Portal>
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
@@ -101,7 +108,7 @@ const measurementParams = ref({
   precision: measurementPrecision.value
 })
 
-const { setMeasurementOptions, removeMeasurement } = useMeasurementUtilities()
+const { setMeasurementOptions, clearMeasurements } = useMeasurementUtilities()
 
 const updateMeasurementsType = (selectedOption: MeasurementTypeOption) => {
   measurementParams.value.type = selectedOption.value
@@ -135,12 +142,14 @@ const measurementTypeOptions = [
   {
     title: 'Point to Point',
     icon: IconPointToPoint,
-    value: MeasurementType.POINTTOPOINT
+    value: MeasurementType.POINTTOPOINT,
+    description: 'Choose two points for precise measurements'
   },
   {
     title: 'Perpendicular',
     icon: IconPerpendicular,
-    value: MeasurementType.PERPENDICULAR
+    value: MeasurementType.PERPENDICULAR,
+    description: 'Tip: Double-click to quick-measure'
   }
 ]
 </script>
