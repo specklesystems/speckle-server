@@ -332,28 +332,47 @@ export = {
       return await createCommentThreadAndNotify({ commentsRepository })(args.input, ctx.userId)
     },
     async reply(_parent, args, ctx) {
+      if (!ctx.userId)
+        throw new ApolloForbiddenError('You are not authorized.')
+
       await authorizeCommentAccess({
         commentId: args.input.threadId,
         authCtx: ctx,
         requireProjectRole: true
       })
-      return await createCommentReplyAndNotify(args.input, ctx.userId)
+
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
+      return await createCommentReplyAndNotify({ commentsRepository })(args.input, ctx.userId)
     },
     async edit(_parent, args, ctx) {
+      if (!ctx.userId)
+        throw new ApolloForbiddenError('You are not authorized.')
+
       await authorizeCommentAccess({
         authCtx: ctx,
         commentId: args.input.commentId,
         requireProjectRole: true
       })
-      return await editCommentAndNotify(args.input, ctx.userId)
+
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
+      return await editCommentAndNotify({ commentsRepository })(args.input, ctx.userId)
     },
     async archive(_parent, args, ctx) {
+      if (!ctx.userId)
+        throw new ApolloForbiddenError('You are not authorized.')
+
       await authorizeCommentAccess({
         authCtx: ctx,
         commentId: args.commentId,
         requireProjectRole: true
       })
-      await archiveCommentAndNotify(args.commentId, ctx.userId, args.archived)
+
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
+      await archiveCommentAndNotify({ commentsRepository })(args.commentId, ctx.userId, args.archived)
+
       return true
     }
   },
@@ -371,6 +390,7 @@ export = {
         viewerUserActivityBroadcasted: args.message,
         userId: context.userId
       })
+
       return true
     },
 
