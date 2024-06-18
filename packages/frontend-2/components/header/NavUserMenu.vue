@@ -20,17 +20,18 @@
           class="absolute right-4 top-14 w-56 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
           <MenuItem v-slot="{ active }">
-            <a
+            <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3 border-b border-primary items-center px-3 py-3 text-sm text-primary cursor-pointer transition mb-1'
               ]"
               target="_blank"
-              href="https://speckle.systems/features/connectors/"
+              external
+              :href="connectorsPageUrl"
             >
               <CloudArrowDownIcon class="w-5 h-5" />
               Connector Downloads
-            </a>
+            </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
@@ -148,8 +149,8 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
+import { homeRoute, profileRoute, connectorsPageUrl } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
-import { homeRoute, profileRoute } from '~/lib/common/helpers/route'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
