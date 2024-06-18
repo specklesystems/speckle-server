@@ -20,16 +20,17 @@
           class="absolute right-4 top-14 w-56 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
           <MenuItem v-slot="{ active }">
-            <NuxtLink
+            <a
               :class="[
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3 border-b border-primary items-center px-3 py-3 text-sm text-primary cursor-pointer transition mb-1'
               ]"
-              @click="goToConnectors()"
+              target="_blank"
+              href="https://speckle.systems/features/connectors/"
             >
               <CloudArrowDownIcon class="w-5 h-5" />
               Connector Downloads
-            </NuxtLink>
+            </a>
           </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
@@ -172,10 +173,6 @@ const isProfileRoute = computed(() => route.path === profileRoute)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
-}
-
-const goToConnectors = () => {
-  router.push('/downloads')
 }
 
 const goToServerManagement = () => {
