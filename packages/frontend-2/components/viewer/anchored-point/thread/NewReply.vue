@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
   <div
-    class="hidden sm:flex bg-foundation pl-4 pr-3 py-2 sm:py-1.5 rounded-b items-center w-full"
+    class="hidden sm:flex bg-foundation pl-4 pr-3 py-2 sm:py-1.5 sm:pb-3 rounded-b w-full relative"
   >
     <FormButton
       :icon-left="PaperClipIcon"
@@ -9,7 +9,7 @@
       text
       :disabled="loading"
       size="sm"
-      class="-ml-2 sm:mr-2"
+      class="-ml-2 sm:mr-2 sm:mt-2"
       @click="trackAttachAndOpenFilePicker()"
     />
     <ViewerCommentsEditor
@@ -27,7 +27,7 @@
       size="sm"
       color="invert"
       :disabled="loading"
-      class="absolute right-6 sm:right-6"
+      class="absolute right-5 top-4"
       @click="onSubmit"
     />
   </div>

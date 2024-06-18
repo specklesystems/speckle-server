@@ -1,21 +1,26 @@
 <template>
-  <div class="bg-foundation rounded-4xl px-4 py-3 w-full max-w-full relative">
+  <div
+    class="bg-foundation rounded-lg p-2 pr-1 w-full max-w-full relative dark:bg-foundation-2 bg-neutral-100"
+  >
     <div class="flex space-x-1 items-center">
-      <span class="truncate text-sm flex-shrink">{{ item.file.name }}</span>
-      <span class="text-tiny flex-grow text-foreground-2">
+      <span class="truncate text-xs pr-4 flex-1">{{ item.file.name }}</span>
+      <span class="text-tiny text-foreground-2">
         {{ prettyFileSize(item.file.size) }}
       </span>
-      <FormButton
+      <!-- <FormButton
         color="danger"
         size="xs"
         rounded
         hide-text
         :icon-left="XMarkIcon"
         @click="onDelete"
-      ></FormButton>
+      ></FormButton> -->
+      <button class="p-0.5 text-foreground hover:text-primary" @click="onDelete">
+        <XMarkIcon class="h-4 w-4" />
+      </button>
     </div>
     <div
-      v-if="item.progress > 0"
+      v-if="item.progress > 0 && item.progress < 100"
       :class="[' w-full mt-2', progressBarClasses]"
       :style="progressBarStyle"
     />
