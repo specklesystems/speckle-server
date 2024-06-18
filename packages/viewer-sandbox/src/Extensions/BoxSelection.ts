@@ -92,6 +92,7 @@ export class BoxSelection extends Extension {
     const ndcTransform = this.getNDCTransform(this.ndcFrom, this.ndcTo)
 
     /** Update the selection box visual */
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     this.dragBoxMaterial.uniforms.transform.value.copy(ndcTransform)
     this.dragBoxMaterial.needsUpdate = true
 

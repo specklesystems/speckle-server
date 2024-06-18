@@ -1,7 +1,6 @@
-import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, type MaybeNullOrUndefined, md5 } from '@speckle/shared'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
-import md5 from '~~/lib/common/helpers/md5'
 
 export const activeUserQuery = graphql(`
   query ActiveUserMainMetadata {

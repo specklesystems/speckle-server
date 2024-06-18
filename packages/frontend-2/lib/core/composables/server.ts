@@ -41,7 +41,7 @@ export function useServerRequestId() {
   const nuxt = useNuxtApp()
   const state = useState('server_request_id', () => {
     // The client side should not need to resolve this info, as it should come from the serialized SSR state
-    if (process.client || !nuxt.ssrContext) return undefined
+    if (import.meta.client || !nuxt.ssrContext) return undefined
     return nuxt.ssrContext.event.node.req.id as string
   })
 
@@ -62,7 +62,7 @@ export function useRequestId(params?: {
   event?: H3Event
 }) {
   let id = nanoid()
-  if (process.server) {
+  if (import.meta.server) {
     id = (params?.event || useNuxtApp().ssrContext?.event)?.node.req.id as string
     if (!id) {
       throw new Error("Couldn't determine request ID")
@@ -84,7 +84,7 @@ export function useUserCountry() {
   const nuxt = useNuxtApp()
   const state = useState('active_user_country', () => {
     // The client side should not need to resolve this info, as it should come from the serialized SSR state
-    if (process.client || !nuxt.ssrContext) return undefined
+    if (import.meta.client || !nuxt.ssrContext) return undefined
     return nuxt.ssrContext.event.node.req.headers['cf-ipcountry'] as Optional<string>
   })
 

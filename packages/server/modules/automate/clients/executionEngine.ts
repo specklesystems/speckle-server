@@ -1,23 +1,36 @@
+import { automateLogger } from '@/logging/logging'
 import {
   ExecutionEngineBadResponseBodyError,
-  ExecutionEngineErrorResponse,
-  ExecutionEngineFailedResponseError
+  type ExecutionEngineErrorResponse,
+  ExecutionEngineFailedResponseError,
+  ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
-import {
+import type {
   FunctionReleaseSchemaType,
   FunctionSchemaType,
   FunctionWithVersionsSchemaType
 } from '@/modules/automate/helpers/executionEngine'
 import {
-  AutomationFunctionRunRecord,
-  BaseTriggerManifest,
+  type AutomationFunctionRunRecord,
+  type BaseTriggerManifest,
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
+import type {
+  AuthCodePayload,
+  AuthCodePayloadWithOrigin
+} from '@/modules/automate/services/authCode'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
-import { speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
-import { Nullable, SourceAppName, isNullOrUndefined } from '@speckle/shared'
+import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
+import {
+  type Nullable,
+  type SourceAppName,
+  isNonNullable,
+  isNullOrUndefined,
+  retry,
+  timeoutAt
+} from '@speckle/shared'
 import { has, isObjectLike } from 'lodash'
 
 const isErrorResponse = (e: unknown): e is ExecutionEngineErrorResponse =>
@@ -72,17 +85,34 @@ const invokeRequest = async (params: {
   method?: RequestInit['method']
   body?: Record<string, unknown>
   token?: string
+  retry?: boolean
 }) => {
   const { url, method = 'get', body, token } = params
 
-  const response = await fetch(url, {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
-    },
-    body: body && isObjectLike(body) ? JSON.stringify(body) : undefined
-  })
+  const response = await retry(
+    async () =>
+      await Promise.race([
+        fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token?.length ? { Authorization: `Bearer ${token}` } : {})
+          },
+          body: body && isObjectLike(body) ? JSON.stringify(body) : undefined
+        }).catch((e) => {
+          throw new ExecutionEngineNetworkError({ method, url, body }, e)
+        }),
+        timeoutAt(20 * 1000, 'Automate Execution Engine API request timed out')
+      ]),
+    params.retry !== false ? 3 : 1,
+    (i, error) => {
+      automateLogger.warn(
+        { url, method, err: error },
+        'Automate Execution Engine API call failed, retrying...'
+      )
+      return i * 1000
+    }
+  )
 
   if (response.status >= 400) {
     const errorReq = {
@@ -102,21 +132,25 @@ const invokeRequest = async (params: {
 }
 
 export const createAutomation = async (params: {
-  speckleServerUrl: string
-  authCode: string
+  speckleServerUrl?: string
+  authCode: AuthCodePayload
 }) => {
-  const { speckleServerUrl, authCode } = params
+  const { speckleServerUrl = getServerOrigin(), authCode } = params
 
   const url = getApiUrl(`/api/v2/automations`)
-  const speckleServerDomain = new URL(speckleServerUrl).hostname
+
+  const speckleServerOrigin = new URL(speckleServerUrl).origin
 
   const result = await invokeJsonRequest<AutomationCreateResponse>({
     url,
     method: 'post',
     body: {
-      speckleServerDomain,
-      speckleServerAuthenticationCode: authCode
-    }
+      speckleServerAuthenticationPayload: {
+        ...authCode,
+        origin: speckleServerOrigin
+      }
+    },
+    retry: false
   })
 
   return result
@@ -194,7 +228,8 @@ export const triggerAutomationRun = async (params: {
     url,
     method: 'post',
     body: payload,
-    token: automationToken
+    token: automationToken,
+    retry: false
   })
 
   return result
@@ -207,8 +242,9 @@ export enum ExecutionEngineFunctionTemplateId {
 }
 
 export type CreateFunctionBody = {
+  speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
   template: ExecutionEngineFunctionTemplateId
-  functionname: string
+  functionName: string
   description: string
   supportedSourceApps: SourceAppName[]
   tags: string[]
@@ -229,14 +265,22 @@ export type CreateFunctionResponse = {
   }
 }
 
-export const createFunction = async (params: {
+export const createFunction = async ({
+  body
+}: {
   body: CreateFunctionBody
 }): Promise<CreateFunctionResponse> => {
-  throw new Error('Not implemented! Needs re-thinking by Gergo & Iain')
-  console.log(params.body)
+  const url = getApiUrl('/api/v2/functions/from-template')
+  return invokeJsonRequest<CreateFunctionResponse>({
+    url,
+    method: 'post',
+    body,
+    retry: false
+  })
 }
 
 export type UpdateFunctionBody = {
+  //TODO add speckleServerAuthenticationPayload
   functionName?: string
   description?: string
   supportedSourceApps?: SourceAppName[]
@@ -262,11 +306,15 @@ export type GetFunctionResponse = FunctionWithVersionsSchemaType & {
 export const getFunction = async (params: {
   functionId: string
   token?: string
-  releases?: { cursor?: string; limit?: number; search?: string }
+  releases?: { cursor?: string; limit?: number; versionsFilter?: string }
 }) => {
   const { functionId, token } = params
+  const query = Object.values(params.releases || {}).filter(isNonNullable).length
+    ? params.releases
+    : undefined
+
   const url = getApiUrl(`/api/v1/functions/${functionId}`, {
-    query: params.releases?.cursor || params.releases?.limit ? params.releases : {}
+    query
   })
 
   const result = await invokeJsonRequest<GetFunctionResponse>({
@@ -287,11 +335,27 @@ export const getFunctionReleases = async (params: {
   ids: Array<{ functionId: string; functionReleaseId: string }>
 }) => {
   const { ids } = params
-  return await Promise.all(
-    ids.map(async ({ functionId, functionReleaseId }) =>
-      getFunctionRelease({ functionId, functionReleaseId })
-    )
+  const results = await Promise.all(
+    ids.map(async ({ functionId, functionReleaseId }) => {
+      try {
+        return await getFunctionRelease({ functionId, functionReleaseId })
+      } catch (e) {
+        if (e instanceof ExecutionEngineNetworkError) {
+          return null
+        }
+        if (
+          e instanceof ExecutionEngineFailedResponseError &&
+          e.response.statusMessage === 'FunctionNotFound'
+        ) {
+          return null
+        }
+
+        throw e
+      }
+    })
   )
+
+  return results.filter(isNonNullable)
 }
 
 export const getFunctionRelease = async (params: {
@@ -336,6 +400,55 @@ export const getFunctions = async (params: {
   })
 
   return result
+}
+
+type UserGithubAuthStateResponse = {
+  userHasAuthorizedGitHubApp: boolean
+}
+
+export const getUserGithubAuthState = async (params: {
+  speckleServerUrl?: string
+  userId: string
+}) => {
+  const { speckleServerUrl = getServerOrigin(), userId: speckleUserId } = params
+  const speckleServerOrigin = new URL(speckleServerUrl).origin
+
+  const url = getApiUrl(`/api/v2/functions/auth/githubapp`, {
+    query: {
+      speckleServerOrigin,
+      speckleUserId
+    }
+  })
+
+  return await invokeJsonRequest<UserGithubAuthStateResponse>({
+    url,
+    method: 'get'
+  })
+}
+
+export const getUserGithubOrganizations = async (params: {
+  speckleServerUrl?: string
+  authCode: AuthCodePayload
+}) => {
+  const {
+    speckleServerUrl = getServerOrigin(),
+    authCode: speckleServerAuthenticationPayload
+  } = params
+  const speckleServerOrigin = new URL(speckleServerUrl).origin
+
+  const url = getApiUrl(`/api/v2/functions/auth/githubapp/organizations`, {
+    query: {
+      speckleServerAuthenticationPayload: JSON.stringify({
+        ...speckleServerAuthenticationPayload,
+        origin: speckleServerOrigin
+      })
+    }
+  })
+
+  return await invokeJsonRequest<{ availableGitHubOrganisations: string[] }>({
+    url,
+    method: 'get'
+  })
 }
 
 export async function* getAutomationRunLogs(params: {

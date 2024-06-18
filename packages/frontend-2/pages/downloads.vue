@@ -73,9 +73,9 @@ const connectorTags = await useAppCached(
     }>(cmsTagsEndpoint)
     const relevantTags = cmsTags.tags.filter((tag) => {
       if (!tag.codeinjection_head) return false
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, camelcase
+      // eslint-disable-next-line camelcase
       tag.codeinjection_head = (tag.codeinjection_head as string).replace(/\s/g, '')
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+
       if ((tag.codeinjection_head as string).match(/(window.connectorTag=true)/))
         return true
     }) as Tag[]

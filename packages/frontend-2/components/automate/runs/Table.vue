@@ -4,9 +4,9 @@
       :columns="[
         { id: 'status', header: 'status', classes: 'col-span-2' },
         { id: 'runId', header: 'Run ID', classes: 'col-span-3' },
-        { id: 'modelVersion', header: 'Model Version', classes: 'col-span-2' },
+        { id: 'modelVersion', header: 'Model Version', classes: 'col-span-3' },
         { id: 'date', header: 'Date', classes: 'col-span-2' },
-        { id: 'duration', header: 'Duration', classes: 'col-span-3' }
+        { id: 'duration', header: 'Duration', classes: 'col-span-2' }
       ]"
       :items="runs"
       :buttons="[
@@ -27,15 +27,17 @@
       </template>
       <template #modelVersion="{ item }">
         <CommonTextLink
+          v-if="item.trigger.model && item.trigger.version"
           :to="
             runModelVersionUrl({
               run: item,
               projectId
-            })
+            }) || ''
           "
         >
           {{ item.trigger.version.id }}
         </CommonTextLink>
+        <span v-else class="italic">unknown</span>
       </template>
       <template #date="{ item }">
         <span class="caption">{{ runDate(item) }}</span>

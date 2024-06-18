@@ -35,7 +35,7 @@
         <div
           v-if="modelValue.isExpanded && canPostComment"
           ref="threadContainer"
-          class="sm:absolute min-w-[200px] hover:bg-foundation transition bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm sm:rounded-lg shadow-md"
+          class="sm:absolute min-w-[200px] hover:bg-foundation bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm sm:rounded-lg shadow-md"
         >
           <div class="relative">
             <ViewerCommentsEditor
@@ -87,9 +87,8 @@ import {
   convertCommentEditorValueToInput
 } from '~~/lib/viewer/helpers/comments'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useThreadUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
 

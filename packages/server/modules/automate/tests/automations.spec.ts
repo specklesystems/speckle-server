@@ -7,7 +7,10 @@ import {
   updateAutomation as updateDbAutomation
 } from '@/modules/automate/repositories/automations'
 import { updateAutomation } from '@/modules/automate/services/automationManagement'
-import { createStoredAuthCode } from '@/modules/automate/services/executionEngine'
+import {
+  AuthCodePayloadAction,
+  createStoredAuthCode
+} from '@/modules/automate/services/authCode'
 import { getGenericRedis } from '@/modules/core'
 import { ProjectAutomationRevisionCreateInput } from '@/modules/core/graph/generated/graphql'
 import { BranchRecord } from '@/modules/core/helpers/types'
@@ -35,9 +38,10 @@ import {
   truncateAutomations
 } from '@/test/speckle-helpers/automationHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { Automate, Environment, Roles } from '@speckle/shared'
+import { Automate, Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import { times } from 'lodash'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
 /**
  * TODO: Extra test ideas
@@ -45,7 +49,7 @@ import { times } from 'lodash'
  * - All of the Automation/Function/Run GQL resolvers
  */
 
-const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 const buildAutomationUpdate = () => {
   const update = updateAutomation({
@@ -481,10 +485,14 @@ const buildAutomationUpdate = () => {
 
       it('fails if code is invalid', async () => {
         const res = await apollo.execute(AutomateValidateAuthCodeDocument, {
-          code: 'invalid'
+          payload: {
+            code: 'invalid',
+            userId: 'a',
+            action: 'aty'
+          }
         })
 
-        expect(res).to.haveGraphQLErrors('Invalid automate auth code')
+        expect(res).to.haveGraphQLErrors('Invalid automate auth payload')
         expect(res.data?.automateValidateAuthCode).to.not.be.ok
       })
 
@@ -492,10 +500,13 @@ const buildAutomationUpdate = () => {
         const storeCode = createStoredAuthCode({
           redis: getGenericRedis()
         })
-        const code = await storeCode()
+        const code = await storeCode({
+          userId: me.id,
+          action: AuthCodePayloadAction.BecomeFunctionAuthor
+        })
 
         const res = await apollo.execute(AutomateValidateAuthCodeDocument, {
-          code
+          payload: code
         })
 
         expect(res).to.not.haveGraphQLErrors()

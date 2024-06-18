@@ -30,7 +30,9 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         throw new Error('This should have been rejected')
       })
       .catch((err) =>
-        expect('You do not have the required privileges.').to.equal(err.message)
+        expect('Your auth token does not have the required scope.').to.equal(
+          err.message
+        )
       )
 
     await validateScopes(['a'], 'b')
@@ -38,7 +40,9 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         throw new Error('This should have been rejected')
       })
       .catch((err) =>
-        expect('You do not have the required privileges.').to.equal(err.message)
+        expect('Your auth token does not have the required scope: b.').to.equal(
+          err.message
+        )
       )
 
     await validateScopes(['a', 'b'], 'b') // should pass

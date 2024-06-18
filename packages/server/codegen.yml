@@ -49,6 +49,7 @@ generates:
         ProjectAutomationMutations: '@/modules/automate/helpers/graphTypes#ProjectAutomationMutationsGraphQLReturn'
         ProjectTriggeredAutomationsStatusUpdatedMessage: '@/modules/automate/helpers/graphTypes#ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn'
         ProjectAutomationsUpdatedMessage: '@/modules/automate/helpers/graphTypes#ProjectAutomationsUpdatedMessageGraphQLReturn'
+        UserAutomateInfo: '@/modules/automate/helpers/graphTypes#UserAutomateInfoGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:
       - 'typescript'

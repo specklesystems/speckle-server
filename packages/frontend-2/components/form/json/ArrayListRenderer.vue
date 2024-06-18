@@ -128,7 +128,6 @@ const onAdd = () => {
   const path = control.value.path
   const val = createDefaultValue(control.value.schema, props.schema)
 
-  // eslint-disable-next-line @typescript-eslint/unbound-method
   const addItem = baseControl.addItem
   if (!addItem) return
 

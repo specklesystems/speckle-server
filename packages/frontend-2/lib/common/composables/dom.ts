@@ -5,7 +5,7 @@ import DOMPurify from 'dompurify'
 const purify = async (source: string) => {
   let purify: DOMPurify.DOMPurifyI
 
-  if (process.server) {
+  if (import.meta.server) {
     const jsdom = await import('jsdom')
     const window = new jsdom.JSDOM('').window
     purify = DOMPurify(window)

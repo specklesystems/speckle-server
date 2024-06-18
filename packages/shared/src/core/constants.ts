@@ -1,4 +1,4 @@
-import { flatMap } from 'lodash'
+import { flatMap } from '#lodash'
 
 /**
  * Speckle role constants

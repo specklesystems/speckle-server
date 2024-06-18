@@ -188,7 +188,9 @@ describe('AuthZ @shared', () => {
       const step = validateScope({ requiredScope: 'play mahjong' })
       const { authResult } = await step({ context: {}, authResult: {} })
       expect(authResult.authorized).to.equal(false)
-      const expectedError = new SFE('You do not have the required privileges.')
+      const expectedError = new SFE(
+        'Your auth token does not have the required scope: play mahjong.'
+      )
       expect(authResult.error.message).to.equal(expectedError.message)
       expect(authResult.error.name).to.equal(expectedError.name)
     })
@@ -199,7 +201,9 @@ describe('AuthZ @shared', () => {
         authResult: {}
       })
       expect(authResult.authorized).to.equal(false)
-      const expectedError = new SFE('You do not have the required privileges.')
+      const expectedError = new SFE(
+        'Your auth token does not have the required scope: play mahjong.'
+      )
 
       expect(authResult.error.message).to.equal(expectedError.message)
       expect(authResult.error.name).to.equal(expectedError.name)
@@ -264,7 +268,7 @@ describe('AuthZ @shared', () => {
 
       expect(res.authResult.authorized).to.be.false
       expect(res.authResult.error.message).to.equal(
-        'You do not have the required privileges.'
+        'You are not authorized to access this resource.'
       )
     })
 

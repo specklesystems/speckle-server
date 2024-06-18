@@ -7,23 +7,46 @@
     :buttons="buttons"
     :on-submit="onDialogSubmit"
     prevent-close-on-click-outside
+    @fully-closed="reset"
   >
     <template v-if="isTestAutomation" #header>
       Create
       <span class="font-extrabold text-fancy-gradient">Test</span>
       Automation
     </template>
-    <div class="flex flex-col gap-11">
+    <div class="flex flex-col gap-6">
       <CommonStepsNumber
         v-if="shouldShowStepsWidget"
         v-model="stepsWidgetModel"
+        class="mb-2"
         :steps="stepsWidgetSteps"
         :go-vertical-below="TailwindBreakpoints.sm"
         non-interactive
       />
+      <CommonAlert v-if="isTestAutomation" color="info">
+        <template #title>What is a "test automation"?</template>
+        <template #description>
+          <ul class="list-disc ml-4">
+            <li>
+              A test automation is a sandbox environment that allows you to connect your
+              local development environment for testing purposes. It enables you to run
+              your code against project data and submit results directly to the
+              connected test automation.
+            </li>
+            <li>
+              Unlike regular automations, test automations are not triggered by changes
+              to project data. They cannot be started by pushing a new version to a
+              model.
+            </li>
+            <li>Consequently, test automations do not execute published functions.</li>
+          </ul>
+        </template>
+      </CommonAlert>
       <AutomateAutomationCreateDialogSelectFunctionStep
         v-if="enumStep === AutomationCreateSteps.SelectFunction"
         v-model:selected-function="selectedFunction"
+        :show-label="false"
+        :show-required="false"
         :preselected-function="validatedPreselectedFunction"
       />
       <AutomateAutomationCreateDialogFunctionParametersStep
@@ -35,20 +58,21 @@
         v-model:has-errors="hasParameterErrors"
         :fn="selectedFunction"
       />
-      <AutomateAutomationCreateDialogAutomationDetailsStep
-        v-else-if="enumStep === AutomationCreateSteps.AutomationDetails"
-        v-model:project="selectedProject"
-        v-model:model="selectedModel"
-        v-model:automation-name="automationName"
-        :preselected-project="preselectedProject"
-      />
-      <AutomateAutomationCreateDialogDoneStep
-        v-else-if="
-          enumStep === AutomationCreateSteps.Done && automationId && selectedFunction
-        "
-        :automation-id="automationId"
-        :function-name="selectedFunction.name"
-      />
+      <template v-else-if="enumStep === AutomationCreateSteps.AutomationDetails">
+        <AutomateAutomationCreateDialogAutomationDetailsStep
+          v-model:project="selectedProject"
+          v-model:model="selectedModel"
+          v-model:automation-name="automationName"
+          :preselected-project="preselectedProject"
+          :is-test-automation="isTestAutomation"
+        />
+        <AutomateAutomationCreateDialogSelectFunctionStep
+          v-if="isTestAutomation"
+          v-model:selected-function="selectedFunction"
+          :preselected-function="validatedPreselectedFunction"
+          :page-size="2"
+        />
+      </template>
     </div>
   </LayoutDialog>
 </template>
@@ -60,7 +84,6 @@ import {
   type LayoutDialogButton
 } from '@speckle/ui-components'
 import {
-  ArrowRightIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   CodeBracketIcon
@@ -77,6 +100,7 @@ import { useForm } from 'vee-validate'
 import {
   useCreateAutomation,
   useCreateAutomationRevision,
+  useCreateTestAutomation,
   useUpdateAutomation
 } from '~/lib/projects/composables/automationManagement'
 import { formatJsonFormSchemaInputs } from '~/lib/automate/helpers/jsonSchema'
@@ -85,12 +109,14 @@ import {
   useAutomationInputEncryptor,
   type AutomationInputEncryptor
 } from '~/lib/automate/composables/automations'
+import { useMixpanel } from '~/lib/core/composables/mp'
+import { hasJsonFormErrors } from '~/lib/automate/composables/jsonSchema'
+import type { JsonFormsChangeEvent } from '@jsonforms/vue'
 
 enum AutomationCreateSteps {
   SelectFunction,
   FunctionParameters,
-  AutomationDetails,
-  Done
+  AutomationDetails
 }
 
 type DetailsFormValues = {
@@ -113,18 +139,14 @@ const props = defineProps<{
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
-const config = useRuntimeConfig()
-const enableCreateTestAutomation = computed(() => {
-  return config.public.FF_TEST_AUTOMATIONS_ENABLED
-})
+const mixpanel = useMixpanel()
 
 const { handleSubmit: handleDetailsSubmit } = useForm<DetailsFormValues>()
 
 const stepsOrder = computed(() => [
   AutomationCreateSteps.SelectFunction,
   AutomationCreateSteps.FunctionParameters,
-  AutomationCreateSteps.AutomationDetails,
-  AutomationCreateSteps.Done
+  AutomationCreateSteps.AutomationDetails
 ])
 
 const stepsWidgetData = computed(() => [
@@ -142,11 +164,14 @@ const stepsWidgetData = computed(() => [
   }
 ])
 
+const router = useRouter()
 const inputEncryption = useAutomationInputEncryptor({ ensureWhen: open })
 const logger = useLogger()
 const updateAutomation = useUpdateAutomation()
 const createAutomation = useCreateAutomation()
 const createRevision = useCreateAutomationRevision()
+const createTestAutomation = useCreateTestAutomation()
+
 const { enumStep, step } = useEnumSteps({ order: stepsOrder })
 const {
   items: stepsWidgetSteps,
@@ -154,7 +179,7 @@ const {
   shouldShowWidget
 } = useEnumStepsWidgetSetup({ enumStep, widgetStepsMap: stepsWidgetData })
 
-const parametersStep = ref<{ submit: () => Promise<void> }>()
+const parametersStep = ref<{ submit: () => Promise<Optional<JsonFormsChangeEvent>> }>()
 
 const creationLoading = ref(false)
 const automationId = ref<string>()
@@ -170,45 +195,47 @@ const shouldShowStepsWidget = computed(() => {
   return !!shouldShowWidget.value && !isTestAutomation.value
 })
 
+const enableSubmitTestAutomation = computed(() => {
+  const isValidInput =
+    !!automationName.value && !!selectedModel.value && !!selectedFunction.value
+  const isLoading = creationLoading.value
+
+  return isValidInput && !isLoading
+})
+
 const title = computed(() => {
   return isTestAutomation.value ? undefined : 'Create Automation'
 })
 
 const buttons = computed((): LayoutDialogButton[] => {
   switch (enumStep.value) {
-    case AutomationCreateSteps.SelectFunction: {
-      const selectFnNextButton: LayoutDialogButton = {
-        id: 'selectFnNext',
-        text: 'Next',
-        props: {
-          iconRight: ChevronRightIcon,
-          disabled: !selectedFunction.value
+    case AutomationCreateSteps.SelectFunction:
+      return [
+        {
+          id: 'createTestAutomation',
+          text: 'Create test automation',
+          props: {
+            color: 'secondary',
+            iconLeft: CodeBracketIcon,
+            textColor: 'primary'
+          },
+          onClick: () => {
+            isTestAutomation.value = true
+            enumStep.value = AutomationCreateSteps.AutomationDetails
+          }
         },
-        onClick: () => {
-          step.value++
+        {
+          id: 'selectFnNext',
+          text: 'Next',
+          props: {
+            iconRight: ChevronRightIcon,
+            disabled: !selectedFunction.value
+          },
+          onClick: () => {
+            step.value++
+          }
         }
-      }
-
-      const createTestAutomationButton: LayoutDialogButton = {
-        id: 'createTestAutomation',
-        text: 'Create test automation',
-        props: {
-          color: 'secondary',
-          iconLeft: CodeBracketIcon,
-          textColor: 'primary'
-        },
-        onClick: () => {
-          isTestAutomation.value = true
-          step.value = 2
-        }
-      }
-
-      const stepButtons = enableCreateTestAutomation.value
-        ? [createTestAutomationButton, selectFnNextButton]
-        : [selectFnNextButton]
-
-      return stepButtons
-    }
+      ]
     case AutomationCreateSteps.FunctionParameters:
       return [
         {
@@ -265,39 +292,13 @@ const buttons = computed((): LayoutDialogButton[] => {
         {
           id: 'submitTestAutomation',
           text: 'Create',
-          disabled: !automationName.value,
-          onClick: () => {
-            // TODO: Make request
-          }
+          disabled: !enableSubmitTestAutomation.value,
+          submit: true
         }
       ]
 
       return isTestAutomation.value ? testAutomationButtons : automationButtons
     }
-    case AutomationCreateSteps.Done:
-      return [
-        {
-          id: 'doneClose',
-          text: 'Close',
-          props: {
-            color: 'secondary',
-            fullWidth: true
-          },
-          onClick: () => (open.value = false)
-        },
-        {
-          id: 'doneGoToAutomation',
-          text: 'Go to Automation',
-          props: {
-            iconRight: ArrowRightIcon,
-            fullWidth: true,
-            to:
-              selectedProject.value && automationId.value
-                ? projectAutomationRoute(selectedProject.value.id, automationId.value)
-                : undefined
-          }
-        }
-      ]
     default:
       return []
   }
@@ -306,9 +307,7 @@ const buttons = computed((): LayoutDialogButton[] => {
 const buttonsWrapperClasses = computed(() => {
   switch (enumStep.value) {
     case AutomationCreateSteps.SelectFunction:
-      return enableCreateTestAutomation.value ? 'justify-between' : 'justify-end'
-    case AutomationCreateSteps.Done:
-      return 'flex-col sm:flex-row sm:justify-between'
+      return 'justify-between'
     default:
       return 'justify-between'
   }
@@ -321,6 +320,20 @@ const validatedPreselectedFunction = computed(() => {
 
   return props.preselectedFunction
 })
+
+const goToNewAutomation = async () => {
+  if (!selectedProject.value || !automationId.value) {
+    logger.error('Missing required data for redirect', {
+      project: selectedProject.value,
+      automationId: automationId.value
+    })
+    return
+  }
+
+  await router.push(
+    projectAutomationRoute(selectedProject.value.id, automationId.value)
+  )
+}
 
 const reset = () => {
   step.value = 0
@@ -355,9 +368,31 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
   }
 
   creationLoading.value = true
+
   let aId: Optional<string> = undefined
   let automationEncrypt: Optional<AutomationInputEncryptor> = undefined
   try {
+    if (isTestAutomation.value) {
+      // Use simplified pathway
+      const testAutomationId = await createTestAutomation({
+        projectId: project.id,
+        input: {
+          name,
+          functionId: fn.id,
+          modelId: model.id
+        }
+      })
+
+      if (!testAutomationId) {
+        logger.error('Failed to create test automation')
+        return
+      }
+
+      automationId.value = testAutomationId
+      await goToNewAutomation()
+      return
+    }
+
     const createRes = await createAutomation({
       projectId: project.id,
       input: {
@@ -413,16 +448,29 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       return
     }
 
-    // Enable
-    await updateAutomation({
+    mixpanel.track('Automation Created', {
+      automationId: aId,
+      name,
       projectId: project.id,
-      input: {
-        id: aId,
-        enabled: true
-      }
+      functionName: fn.name,
+      functionId: fn.id,
+      functionReleaseId: fnRelease.id,
+      modelId: model.id
     })
 
-    step.value++
+    // Enable
+    await updateAutomation(
+      {
+        projectId: project.id,
+        input: {
+          id: aId,
+          enabled: true
+        }
+      },
+      { hideSuccessToast: true }
+    )
+
+    await goToNewAutomation()
   } finally {
     creationLoading.value = false
     automationEncrypt?.dispose()
@@ -433,31 +481,27 @@ const onDialogSubmit = async (e: SubmitEvent) => {
   if (enumStep.value === AutomationCreateSteps.AutomationDetails) {
     await onDetailsSubmit(e)
   } else if (enumStep.value === AutomationCreateSteps.FunctionParameters) {
-    await parametersStep.value?.submit()
-    if (!hasParameterErrors.value) {
+    const validationResult = await parametersStep.value?.submit()
+    if (validationResult && !hasJsonFormErrors(validationResult)) {
       step.value++
     }
   }
 }
 
-watch(
-  open,
-  (newVal, oldVal) => {
-    if (newVal && !oldVal) {
-      reset()
+watch(open, (newVal, oldVal) => {
+  if (newVal && !oldVal) {
+    reset()
 
-      if (validatedPreselectedFunction.value) {
-        selectedFunction.value = validatedPreselectedFunction.value
-        enumStep.value = AutomationCreateSteps.FunctionParameters
-      }
-
-      if (props.preselectedProject) {
-        selectedProject.value = props.preselectedProject
-      }
+    if (validatedPreselectedFunction.value) {
+      selectedFunction.value = validatedPreselectedFunction.value
+      enumStep.value = AutomationCreateSteps.FunctionParameters
     }
-  },
-  { flush: 'sync' }
-)
+
+    if (props.preselectedProject) {
+      selectedProject.value = props.preselectedProject
+    }
+  }
+})
 
 watch(selectedFunction, (newVal, oldVal) => {
   if (newVal?.id !== oldVal?.id) {

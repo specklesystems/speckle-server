@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import DataLoader from 'dataloader'
 import {
   getBatchUserFavoriteData,
@@ -82,6 +81,10 @@ import {
   FunctionReleaseSchemaType,
   FunctionSchemaType
 } from '@/modules/automate/helpers/executionEngine'
+import {
+  ExecutionEngineFailedResponseError,
+  ExecutionEngineNetworkError
+} from '@/modules/automate/errors/executionEngine'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -240,9 +243,12 @@ export function buildRequestLoaders(
         const results = await getStreamRoles(userId, streamIds.slice())
         return streamIds.map((id) => results[id] || null)
       }),
+      /**
+       * Works in FE2 mode - skips `main` if it doesn't have any versions
+       */
       getBranchCount: createLoader<string, number>(async (streamIds) => {
         const results = keyBy(
-          await getStreamBranchCounts(streamIds.slice()),
+          await getStreamBranchCounts(streamIds.slice(), { skipEmptyMain: true }),
           'streamId'
         )
         return streamIds.map((i) => results[i]?.count || 0)
@@ -604,7 +610,20 @@ export function buildRequestLoaders(
     automationsApi: {
       getFunction: createLoader<string, Nullable<FunctionSchemaType>>(async (fnIds) => {
         const results = await Promise.all(
-          fnIds.map((fnId) => getFunction({ functionId: fnId }))
+          fnIds.map(async (fnId) => {
+            try {
+              return await getFunction({ functionId: fnId })
+            } catch (e) {
+              const isNotFound =
+                e instanceof ExecutionEngineFailedResponseError &&
+                e.response.statusMessage === 'FunctionNotFound'
+              if (e instanceof ExecutionEngineNetworkError || isNotFound) {
+                return null
+              }
+
+              throw e
+            }
+          })
         )
 
         return results

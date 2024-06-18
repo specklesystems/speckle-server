@@ -66,7 +66,7 @@ class HighlightExtension extends SelectionExtension {
         metalness: 0,
         vertexColors: false,
         lineWeight: 1,
-        stencilOutlines: StencilOutlineType.NONE,
+        stencilOutlines: StencilOutlineType.OVERLAY,
         pointSize: 4
       }
     }
@@ -193,6 +193,7 @@ export class LegacyViewer extends Viewer {
   }
 
   public resetSelection(): Promise<FilteringState> {
+    this.highlightExtension.clearSelection()
     this.selection.clearSelection()
     if (this.filtering.filteringState.selectedObjects)
       this.filtering.filteringState.selectedObjects.length = 0
@@ -386,13 +387,7 @@ export class LegacyViewer extends Viewer {
       .findAll((node: TreeNode) => {
         return node.model.renderView?.speckleType === SpeckleType.View3D
       })
-      .map((v) => {
-        return {
-          name: v.model.raw.applicationId,
-          id: v.model.id,
-          view: v.model.raw
-        } as SpeckleView
-      })
+      .map((v: TreeNode) => v.model.raw)
   }
 
   public setView(

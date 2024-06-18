@@ -32,6 +32,7 @@ import Logger from 'js-logger'
 import Materials from '../materials/Materials'
 import { DrawRanges } from './DrawRanges'
 import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
+import { BatchObject } from './BatchObject'
 
 export class InstancedMeshBatch implements Batch {
   public id: string
@@ -270,20 +271,16 @@ export class InstancedMeshBatch implements Batch {
            *  a ton of artifacts. To avoid this, we are shifting the sampling indices so they're right on the center of each texel, so no inconsistent
            *  sampling can occur.
            */
-          if (range.materialOptions.rampIndex && range.materialOptions.rampWidth) {
-            const shiftedIndex =
-              range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
-            this.updateGradientIndexBufferData(start / 16, shiftedIndex)
-          }
+          const shiftedIndex =
+            range.materialOptions.rampIndex + 0.5 / range.materialOptions.rampWidth
+          this.updateGradientIndexBufferData(start / 16, shiftedIndex)
         }
         /** We need to update the texture here, because each batch uses it's own clone for any material we use on it
          *  because otherwise three.js won't properly update our custom uniforms
          */
         if (range.materialOptions.rampTexture !== undefined) {
           if (range.material instanceof SpeckleStandardColoredMaterial) {
-            ;(range.material as SpeckleStandardColoredMaterial).setGradientTexture(
-              range.materialOptions.rampTexture
-            )
+            range.material.setGradientTexture(range.materialOptions.rampTexture)
           }
         }
       }
@@ -500,8 +497,8 @@ export class InstancedMeshBatch implements Batch {
     return this.instanceGradientBuffer
   }
 
-  public buildBatch(): void {
-    const batchObjects = []
+  public buildBatch(): Promise<void> {
+    const batchObjects: BatchObject[] = []
     let instanceBVH = null
     this.instanceTransformBuffer0 = new Float32Array(
       this.renderViews.length * INSTANCE_TRANSFORM_BUFFER_STRIDE
@@ -601,6 +598,8 @@ export class InstancedMeshBatch implements Batch {
       this.getCurrentTransformBuffer(),
       this.getCurrentGradientBuffer()
     )
+
+    return Promise.resolve()
   }
 
   public getRenderView(index: number): NodeRenderView | null {

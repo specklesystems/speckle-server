@@ -8,15 +8,22 @@ extend type Mutation {
 
   """
   Invite a new or registered user to the specified stream
+  Note: The required scope to invoke this is not given out to app or personal access tokens
   """
   streamInviteCreate(input: StreamInviteCreateInput!): Boolean!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "users:invite")
 
+  """
+  Note: The required scope to invoke this is not given out to app or personal access tokens
+  """
   serverInviteBatchCreate(input: [ServerInviteCreateInput!]!): Boolean!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "users:invite")
 
+  """
+  Note: The required scope to invoke this is not given out to app or personal access tokens
+  """
   streamInviteBatchCreate(input: [StreamInviteCreateInput!]!): Boolean!
     @hasServerRole(role: SERVER_ADMIN)
     @hasScope(scope: "users:invite")
@@ -29,6 +36,7 @@ extend type Mutation {
 
   """
   Cancel a pending stream invite. Can only be invoked by a stream owner.
+  Note: The required scope to invoke this is not given out to app or personal access tokens
   """
   streamInviteCancel(streamId: String!, inviteId: String!): Boolean!
     @hasServerRole(role: SERVER_GUEST)
@@ -36,6 +44,7 @@ extend type Mutation {
 
   """
   Re-send a pending invite
+  Note: The required scope to invoke this is not given out to app or personal access tokens
   """
   inviteResend(inviteId: String!): Boolean!
     @hasServerRole(role: SERVER_ADMIN)
@@ -43,6 +52,7 @@ extend type Mutation {
 
   """
   Delete a pending invite
+  Note: The required scope to invoke this is not given out to app or personal access tokens
   """
   inviteDelete(inviteId: String!): Boolean!
     @hasServerRole(role: SERVER_ADMIN)

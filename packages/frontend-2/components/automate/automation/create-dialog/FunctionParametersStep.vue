@@ -58,7 +58,11 @@ const release = computed(() =>
 )
 
 const submit = async () => {
-  await jsonForm.value?.triggerChange()
+  if (jsonForm.value && finalParams.value) {
+    return await jsonForm.value?.triggerChange()
+  }
+
+  return { data: undefined, errors: undefined }
 }
 
 // watch(

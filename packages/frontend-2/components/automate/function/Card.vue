@@ -12,19 +12,30 @@
       <div class="flex gap-3 items-center" :class="{ 'w-4/5': hasLabel }">
         <AutomateFunctionLogo :logo="fn.logo" />
         <div class="flex flex-col truncate">
-          <div class="normal font-semibold text-foreground truncate hover:underline">
-            <RouterLink
+          <div
+            :class="[
+              'normal font-semibold text-foreground truncate',
+              noButtons ? '' : 'hover:underline'
+            ]"
+          >
+            <Component
+              :is="noButtons ? 'div' : NuxtLink"
               :to="automationFunctionRoute(fn.id)"
               :target="externalMoreInfo ? '_blank' : undefined"
             >
               {{ fn.name }}
-            </RouterLink>
+            </Component>
           </div>
           <div class="label-light flex items-center space-x-1">
             <span>by</span>
-            <CommonTextLink external :to="fn.repo.url" size="sm">
+            <Component
+              :is="noButtons ? 'div' : CommonTextLink"
+              external
+              :to="fn.repo.url"
+              size="sm"
+            >
               {{ fn.repo.owner }}
-            </CommonTextLink>
+            </Component>
           </div>
         </div>
       </div>
@@ -51,7 +62,12 @@
           >
             Learn More
           </FormButton>
-          <FormButton :icon-left="BoltIcon" @click="$emit('use')">Use</FormButton>
+          <FormButton
+            :icon-left="selected ? CheckIcon : undefined"
+            @click="$emit('use')"
+          >
+            {{ selected ? 'Selected' : 'Select' }}
+          </FormButton>
         </template>
       </div>
       <div class="absolute top-0 right-0">
@@ -73,9 +89,10 @@
 <script setup lang="ts">
 import { graphql } from '~/lib/common/generated/gql'
 import type { AutomationsFunctionsCard_AutomateFunctionFragment } from '~/lib/common/generated/gql/graphql'
-import { BoltIcon, PencilIcon } from '@heroicons/vue/24/outline'
+import { CheckIcon, PencilIcon } from '@heroicons/vue/24/outline'
 import { automationFunctionRoute } from '~/lib/common/helpers/route'
 import { useMarkdown } from '~/lib/common/composables/markdown'
+import { CommonTextLink } from '@speckle/ui-components'
 
 graphql(`
   fragment AutomationsFunctionsCard_AutomateFunction on AutomateFunction {

@@ -19,14 +19,16 @@
         </div>
       </div>
       <div>
-        <FormButton
-          v-if="isAutomateEnabled"
-          :icon-left="PlusIcon"
-          size="lg"
-          @click="$emit('new-automation')"
-        >
-          New Automation
-        </FormButton>
+        <div v-if="isAutomateEnabled" v-tippy="disabledCreateBecauseOf">
+          <FormButton
+            :icon-left="PlusIcon"
+            size="lg"
+            :disabled="!!disabledCreateBecauseOf"
+            @click="$emit('new-automation')"
+          >
+            New Automation
+          </FormButton>
+        </div>
         <FormButton
           v-else
           :icon-left="PlusIcon"
@@ -51,7 +53,7 @@
           v-for="fn in functions"
           :key="fn.id"
           :fn="fn"
-          @use="() => $emit('new-automation', fn)"
+          no-buttons
         />
       </AutomateFunctionCardView>
       <CommonGenericEmptyState v-else />
@@ -83,6 +85,7 @@ defineEmits<{
 const props = defineProps<{
   functions?: ProjectPageAutomationsEmptyState_QueryFragment
   isAutomateEnabled: boolean
+  disabledCreateBecauseOf?: string
 }>()
 
 const functions = computed(() => props.functions?.automateFunctions.items || [])

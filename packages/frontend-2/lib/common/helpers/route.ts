@@ -1,6 +1,6 @@
 import type { LocationQueryRaw } from 'vue-router'
-import { serializeHashState } from '~~/lib/common/composables/url'
-import { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
+import { deserializeHashState, serializeHashState } from '~~/lib/common/composables/url'
+import type { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
 
 export const profileRoute = '/profile'
 export const authBlockedDueToVerificationRoute = '/error-email-verify'
@@ -55,7 +55,7 @@ export const projectWebhooksRoute = (projectId: string) =>
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`
 
-export const automateGithubAppAuthorizationCallback = '/api/auth/automate-github-app'
+export const automateGithubAppAuthorizationRoute = '/api/automate/auth/githubapp'
 
 export const automationFunctionsRoute = '/functions'
 
@@ -82,4 +82,43 @@ export const useNavigateToProject = () => {
     const { query, id } = params || {}
     return router.push({ path: projectRoute(id), query })
   }
+}
+
+/**
+ * Check that fullPathA fits fullPathB (not necessarily the inverse)
+ */
+export const doesRouteFitTarget = (fullPathA: string, fullPathB: string) => {
+  const fakeOrigin = 'https://test.com'
+
+  let urlA: URL
+  let urlB: URL
+
+  try {
+    urlA = new URL(fullPathA, fakeOrigin)
+    urlB = new URL(fullPathB, fakeOrigin)
+  } catch (e) {
+    useLogger().warn('Failed to parse URLs', e)
+    return false
+  }
+
+  if (urlA.pathname !== urlB.pathname) {
+    return false
+  }
+
+  const queryKeysA = urlA.searchParams.keys()
+  for (const key of queryKeysA) {
+    if (urlB.searchParams.get(key) !== urlA.searchParams.get(key)) {
+      return false
+    }
+  }
+
+  const hashA = deserializeHashState(urlA.hash)
+  const hashB = deserializeHashState(urlB.hash)
+  for (const [key, value] of Object.entries(hashA)) {
+    if (hashB[key] !== value) {
+      return false
+    }
+  }
+
+  return true
 }

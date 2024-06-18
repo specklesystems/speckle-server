@@ -5,7 +5,9 @@ import {
   getFunction,
   getFunctionRelease,
   getFunctions,
-  getFunctionReleases
+  getFunctionReleases,
+  getUserGithubAuthState,
+  getUserGithubOrganizations
 } from '@/modules/automate/clients/executionEngine'
 import {
   GetProjectAutomationsParams,
@@ -13,12 +15,15 @@ import {
   getAutomationRunsItems,
   getAutomationRunsTotalCount,
   getAutomationTriggerDefinitions,
+  getFullAutomationRevisionMetadata,
   getFunctionRun,
+  getLatestAutomationRevision,
   getLatestVersionAutomationRuns,
   getProjectAutomationsItems,
   getProjectAutomationsTotalCount,
   storeAutomation,
   storeAutomationRevision,
+  storeAutomationToken,
   updateAutomationRun,
   updateAutomation as updateDbAutomation,
   upsertAutomationFunctionRun
@@ -26,13 +31,15 @@ import {
 import {
   createAutomation,
   createAutomationRevision,
+  createTestAutomation,
   getAutomationsStatus,
   updateAutomation
 } from '@/modules/automate/services/automationManagement'
 import {
+  AuthCodePayloadAction,
   createStoredAuthCode,
   validateStoredAuthCode
-} from '@/modules/automate/services/executionEngine'
+} from '@/modules/automate/services/authCode'
 import {
   convertFunctionReleaseToGraphQLReturn,
   convertFunctionToGraphQLReturn,
@@ -47,12 +54,14 @@ import { getGenericRedis } from '@/modules/core/index'
 import { getUser } from '@/modules/core/repositories/users'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
-import { Automate, Environment, Roles, isNullOrUndefined } from '@speckle/shared'
+import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommits,
   getBranchesByIds
 } from '@/modules/core/repositories/branches'
 import {
+  createTestAutomationRun,
   manuallyTriggerAutomation,
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
@@ -61,7 +70,7 @@ import {
   ReportFunctionRunStatusDeps
 } from '@/modules/automate/services/runsManagement'
 import {
-  AutomateFunctionReleaseNotFoundError,
+  AutomationNotFoundError,
   FunctionNotFoundError
 } from '@/modules/automate/errors/management'
 import {
@@ -90,15 +99,12 @@ import {
   mapGqlStatusToDbStatus
 } from '@/modules/automate/utils/automateFunctionRunStatus'
 import { AutomateApiDisabledError } from '@/modules/automate/errors/core'
+import {
+  ExecutionEngineFailedResponseError,
+  ExecutionEngineNetworkError
+} from '@/modules/automate/errors/executionEngine'
 
-/**
- * TODO:
- * - FE:
- *  - Fix up pagination & all remaining TODOs
- *  - Subscriptions & cache updates
- */
-
-const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -155,7 +161,16 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       Project: {
         async automation(parent, args, ctx) {
-          return ctx.loaders.streams.getAutomation.forStream(parent.id).load(args.id)
+          const res = ctx.loaders.streams.getAutomation
+            .forStream(parent.id)
+            .load(args.id)
+          if (!res) {
+            if (!res) {
+              throw new AutomationNotFoundError()
+            }
+          }
+
+          return res
         },
         async automations(parent, args) {
           const retrievalArgs: GetProjectAutomationsParams = {
@@ -243,7 +258,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         },
         async creationPublicKeys(parent, _args, ctx) {
           await authorizeResolver(
-            ctx.userId!,
+            ctx.userId,
             parent.projectId,
             Roles.Stream.Owner,
             ctx.resourceAccessRules
@@ -279,9 +294,11 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             parent.functionId
           )
           if (!fn) {
-            throw new FunctionNotFoundError('Function not found', {
-              info: { id: parent.functionId }
-            })
+            ctx.log.warn(
+              { id: parent.functionId, fnRunId: parent.id, runid: parent.runId },
+              'AutomateFunctionRun function unexpectedly not found'
+            )
+            return null
           }
 
           return convertFunctionToGraphQLReturn(fn)
@@ -323,19 +340,11 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             (r) => r.functionVersionId
           )
 
-          const fnsForRedaction: AutomationRevisionFunctionForInputRedaction[] =
+          const fnsForRedaction: Array<AutomationRevisionFunctionForInputRedaction | null> =
             fns.map((fn) => {
               const release = fnsReleases[fn.functionReleaseId]
               if (!release) {
-                throw new AutomateFunctionReleaseNotFoundError(
-                  `Could not find function release #${fn.functionReleaseId} for function #${fn.functionId}`,
-                  {
-                    info: {
-                      functionId: fn.functionId,
-                      functionReleaseId: fn.functionReleaseId
-                    }
-                  }
-                )
+                return null
               }
 
               return {
@@ -344,7 +353,10 @@ export = (FF_AUTOMATE_MODULE_ENABLED
               }
             })
 
-          return prepareInputs({ fns: fnsForRedaction, publicKey: parent.publicKey })
+          return prepareInputs({
+            fns: fnsForRedaction.filter(isNonNullable),
+            publicKey: parent.publicKey
+          })
         }
       },
       AutomationRevisionFunction: {
@@ -357,25 +369,40 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return ctx.loaders.automations.getFunctionAutomationCount.load(parent.id)
         },
         async releases(parent, args) {
-          // TODO: Replace w/ dataloader batch call, when/if possible
-          const fn = await getFunction({
-            functionId: parent.id,
-            releases:
-              args?.cursor || args?.filter?.search || args?.limit
-                ? {
-                    cursor: args.cursor || undefined,
-                    search: args.filter?.search || undefined,
-                    limit: args.limit || undefined
-                  }
-                : {}
-          })
+          try {
+            // TODO: Replace w/ dataloader batch call, when/if possible
+            const fn = await getFunction({
+              functionId: parent.id,
+              releases:
+                args?.cursor || args?.filter?.search || args?.limit
+                  ? {
+                      cursor: args.cursor || undefined,
+                      versionsFilter: args.filter?.search || undefined,
+                      limit: args.limit || undefined
+                    }
+                  : {}
+            })
 
-          return {
-            cursor: fn.versionCursor,
-            totalCount: fn.versionCount,
-            items: fn.functionVersions.map((r) =>
-              convertFunctionReleaseToGraphQLReturn({ ...r, functionId: parent.id })
-            )
+            return {
+              cursor: fn.versionCursor,
+              totalCount: fn.versionCount,
+              items: fn.functionVersions.map((r) =>
+                convertFunctionReleaseToGraphQLReturn({ ...r, functionId: parent.id })
+              )
+            }
+          } catch (e) {
+            const isNotFound =
+              e instanceof ExecutionEngineFailedResponseError &&
+              e.response.statusMessage === 'FunctionNotFound'
+            if (e instanceof ExecutionEngineNetworkError || isNotFound) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
+
+            throw e
           }
         }
       },
@@ -397,7 +424,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         async createFunction(_parent, args, ctx) {
           const create = createFunctionFromTemplate({
             createExecutionEngineFn: createFunction,
-            getUser
+            getUser,
+            createStoredAuthCode: createStoredAuthCode({ redis: getGenericRedis() })
           })
 
           return (await create({ input: args.input, userId: ctx.userId! }))
@@ -413,13 +441,11 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       ProjectAutomationMutations: {
         async create(parent, { input }, ctx) {
-          const testAutomateAuthCode = process.env['TEST_AUTOMATE_AUTHENTICATION_CODE']
           const create = createAutomation({
-            createAuthCode: testAutomateAuthCode
-              ? async () => testAutomateAuthCode
-              : createStoredAuthCode({ redis: getGenericRedis() }),
+            createAuthCode: createStoredAuthCode({ redis: getGenericRedis() }),
             automateCreateAutomation: clientCreateAutomation,
-            storeAutomation
+            storeAutomation,
+            storeAutomationToken
           })
 
           return (
@@ -474,22 +500,57 @@ export = (FF_AUTOMATE_MODULE_ENABLED
             })
           })
 
-          await trigger({
+          const { automationRunId } = await trigger({
             automationId,
             userId: ctx.userId!,
             userResourceAccessRules: ctx.resourceAccessRules,
             projectId: parent.projectId
           })
 
-          return true
+          return automationRunId
+        },
+        async createTestAutomation(parent, { input }, ctx) {
+          const create = createTestAutomation({
+            getEncryptionKeyPair,
+            getFunction,
+            storeAutomation,
+            storeAutomationRevision
+          })
+
+          return await create({
+            input,
+            projectId: parent.projectId,
+            userId: ctx.userId!,
+            userResourceAccessRules: ctx.resourceAccessRules
+          })
+        },
+        async createTestAutomationRun(parent, { automationId }, ctx) {
+          const create = createTestAutomationRun({
+            getEncryptionKeyPairFor,
+            getFunctionInputDecryptor: getFunctionInputDecryptor({
+              buildDecryptor
+            }),
+            getAutomation,
+            getLatestAutomationRevision,
+            getFullAutomationRevisionMetadata
+          })
+
+          return await create({
+            projectId: parent.projectId,
+            automationId,
+            userId: ctx.userId!
+          })
         }
       },
       Query: {
-        async automateValidateAuthCode(_parent, { code }) {
+        async automateValidateAuthCode(_parent, args) {
           const validate = validateStoredAuthCode({
             redis: getGenericRedis()
           })
-          return await validate(code)
+          return await validate({
+            ...args.payload,
+            action: args.payload.action as AuthCodePayloadAction
+          })
         },
         async automateFunction(_parent, { id }, ctx) {
           const fn = await ctx.loaders.automationsApi.getFunction.load(id)
@@ -502,32 +563,88 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return convertFunctionToGraphQLReturn(fn)
         },
         async automateFunctions(_parent, args) {
-          const res = await getFunctions({
-            query: {
-              query: args.filter?.search || undefined,
-              cursor: args.cursor || undefined,
-              limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
-              functionsWithoutVersions:
-                args.filter?.functionsWithoutReleases || undefined,
-              featuredFunctionsOnly: args.filter?.featuredFunctionsOnly || undefined
+          try {
+            const res = await getFunctions({
+              query: {
+                query: args.filter?.search || undefined,
+                cursor: args.cursor || undefined,
+                limit: isNullOrUndefined(args.limit) ? undefined : args.limit,
+                functionsWithoutVersions:
+                  args.filter?.functionsWithoutReleases || undefined,
+                featuredFunctionsOnly: args.filter?.featuredFunctionsOnly || undefined
+              }
+            })
+
+            const items = res.items.map(convertFunctionToGraphQLReturn)
+
+            return {
+              cursor: res.cursor,
+              totalCount: res.totalCount,
+              items
             }
-          })
+          } catch (e) {
+            const isNotFound =
+              e instanceof ExecutionEngineFailedResponseError &&
+              e.response.statusMessage === 'FunctionNotFound'
+            if (e instanceof ExecutionEngineNetworkError || isNotFound) {
+              return {
+                cursor: null,
+                totalCount: 0,
+                items: []
+              }
+            }
 
-          const items = res.items.map(convertFunctionToGraphQLReturn)
-
-          return {
-            cursor: res.cursor,
-            totalCount: res.totalCount,
-            items
+            throw e
           }
         }
       },
       User: {
-        // TODO: Needs proper integration w/ Execution engine
-        automateInfo: () => ({
-          hasAutomateGithubApp: false,
-          availableGithubOrgs: []
-        })
+        automateInfo: (parent) => ({ userId: parent.id })
+      },
+      UserAutomateInfo: {
+        hasAutomateGithubApp: async (parent, _args, ctx) => {
+          const userId = parent.userId
+
+          let hasAutomateGithubApp = false
+          try {
+            const authState = await getUserGithubAuthState({ userId })
+            hasAutomateGithubApp = authState.userHasAuthorizedGitHubApp
+          } catch (e) {
+            ctx.log.error(e, 'Failed to resolve user automate github auth state')
+          }
+
+          return hasAutomateGithubApp
+        },
+        availableGithubOrgs: async (parent, _args, ctx) => {
+          const userId = parent.userId
+          const authCode = await createStoredAuthCode({ redis: getGenericRedis() })({
+            userId,
+            action: AuthCodePayloadAction.GetAvailableGithubOrganizations
+          })
+
+          let orgs: string[] = []
+          try {
+            orgs = (
+              await getUserGithubOrganizations({
+                authCode
+              })
+            ).availableGitHubOrganisations
+          } catch (e) {
+            let isSeriousError = true
+
+            if (e instanceof ExecutionEngineFailedResponseError) {
+              if (e.response.statusMessage === 'InvalidOrMissingGithubAuth') {
+                isSeriousError = false
+              }
+            }
+
+            if (isSeriousError) {
+              ctx.log.error(e, 'Failed to resolve user automate github orgs')
+            }
+          }
+
+          return orgs
+        }
       },
       ServerInfo: {
         // TODO: Needs proper integration w/ Execution engine
@@ -538,7 +655,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       ProjectMutations: {
         async automationMutations(_parent, { projectId }, ctx) {
           await validateStreamAccess(
-            ctx.userId!,
+            ctx.userId,
             projectId,
             Roles.Stream.Owner,
             ctx.resourceAccessRules

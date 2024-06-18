@@ -20,7 +20,7 @@ The Speckle shared package exposes a `FeatureFlags` object, that contains all th
 For any usecase that is not Nuxt based, the code below is the preferred way of using feature flags.
 
 ```typescript
-import { Environment } from '@speckle/shared'
+import { Environment } from '@speckle/shared/dist/commonjs/environment/index' // or @speckle/shared/environment, if supported
 
 if (Environment.getFeatureFlags().FF_AUTOMATE_MODULE_ENABLED)
   console.log("Hurray I'm enabled")

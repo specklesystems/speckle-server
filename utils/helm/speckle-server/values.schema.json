@@ -44,6 +44,11 @@
           "type": "boolean",
           "description": "High level flag that toggles the Gendo AI render module",
           "default": false
+        },
+        "noClosureWrites": {
+          "type": "boolean",
+          "description": "Toggles whether to stop writing to the closure table",
+          "default": false
         }
       }
     },
@@ -1496,8 +1501,8 @@
         },
         "enabled": {
           "type": "boolean",
-          "description": "Feature flag to enable running the new experimental frontend.",
-          "default": false
+          "description": "Feature flag to enable running the new web application frontend.",
+          "default": true
         },
         "replicas": {
           "type": "number",

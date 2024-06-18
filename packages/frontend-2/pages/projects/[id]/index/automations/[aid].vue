@@ -43,14 +43,21 @@ graphql(`
   }
 `)
 
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 const automationId = computed(() => route.params.aid as string)
 
-const { result, loading } = useQuery(projectAutomationPageQuery, () => ({
-  projectId: projectId.value,
-  automationId: automationId.value
-}))
+const { result, loading } = useQuery(
+  projectAutomationPageQuery,
+  () => ({
+    projectId: projectId.value,
+    automationId: automationId.value
+  }),
+  () => ({
+    fetchPolicy: pageFetchPolicy.value
+  })
+)
 const automation = computed(() => result.value?.project.automation || null)
 const project = computed(() => result.value?.project)
 </script>

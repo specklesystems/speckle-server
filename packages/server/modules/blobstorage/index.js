@@ -71,7 +71,6 @@ const errorHandler = async (req, res, callback) => {
 
 exports.init = async (app) => {
   await ensureConditions()
-  // eslint-disable-next-line no-unused-vars
   app.post(
     '/api/stream/:streamId/blob',
     authMiddlewareCreator([

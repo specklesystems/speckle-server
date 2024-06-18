@@ -1,8 +1,9 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div>
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
-      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md transition-all text-foreground cursor-pointer ${
+      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md text-foreground cursor-pointer ${
         isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
       }`"
       @click="setSelection()"
@@ -95,8 +96,6 @@ const availableTargetIds = computed(() => {
   if (isolatedObjectIds.value.length)
     targets = props.item.ids.filter((id) => isolatedObjectIds.value.includes(id))
 
-  if (hiddenObjectIds.value.length)
-    targets = props.item.ids.filter((id) => !hiddenObjectIds.value.includes(id))
   return targets
 })
 

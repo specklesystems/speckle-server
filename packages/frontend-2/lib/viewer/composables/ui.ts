@@ -1,7 +1,6 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
-import type { TreeNode } from '@speckle/viewer'
+import type { TreeNode, MeasurementOptions, PropertyInfo } from '@speckle/viewer'
 import { CameraController, MeasurementsExtension } from '@speckle/viewer'
-import type { MeasurementOptions, PropertyInfo } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState } from '~/lib/viewer/composables/setup/embed'
@@ -379,11 +378,19 @@ export function useMeasurementUtilities() {
     state.viewer.instance.getExtension(MeasurementsExtension).clearMeasurements()
   }
 
+  const getActiveMeasurement = () => {
+    const measurementsExtension =
+      state.viewer.instance.getExtension(MeasurementsExtension)
+    const activeMeasurement = measurementsExtension?.activeMeasurement
+    return activeMeasurement && activeMeasurement.state === 2
+  }
+
   return {
     enableMeasurements,
     setMeasurementOptions,
     removeMeasurement,
-    clearMeasurements
+    clearMeasurements,
+    getActiveMeasurement
   }
 }
 
@@ -416,5 +423,31 @@ export function useConditionalViewerRendering() {
   return {
     showNavbar,
     showControls
+  }
+}
+
+export function useHighlightedObjectsUtilities() {
+  const {
+    ui: { highlightedObjectIds }
+  } = useInjectedViewerState()
+
+  const highlightObjects = (ids: string[]) => {
+    highlightedObjectIds.value = [...new Set([...highlightedObjectIds.value, ...ids])]
+  }
+
+  const unhighlightObjects = (ids: string[]) => {
+    highlightedObjectIds.value = highlightedObjectIds.value.filter(
+      (id) => !ids.includes(id)
+    )
+  }
+
+  const clearHighlightedObjects = () => {
+    highlightedObjectIds.value = []
+  }
+
+  return {
+    highlightObjects,
+    unhighlightObjects,
+    clearHighlightedObjects
   }
 }

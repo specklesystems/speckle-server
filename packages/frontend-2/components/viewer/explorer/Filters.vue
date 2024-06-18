@@ -63,7 +63,7 @@
           class="text-xs"
         >
           <button
-            class="block w-full text-left hover:bg-primary-muted transition truncate rounded-md py-1 px-2 mx-2"
+            class="block w-full text-left hover:bg-primary-muted truncate rounded-md py-1 px-2 mx-2"
             @click="
               ;(showAllFilters = false),
                 setPropertyFilter(filter),
@@ -176,6 +176,7 @@ const numericActiveFilter = computed(() => activeFilter.value as NumericProperty
 const searchString = ref<string | undefined>(undefined)
 const relevantFiltersSearched = computed(() => {
   if (!searchString.value) return relevantFilters.value
+  // eslint-disable-next-line vue/no-side-effects-in-computed-properties
   itemCount.value = 30 // nasty, but yolo - reset max limit on search change
   return relevantFilters.value.filter((f) =>
     f.key.toLowerCase().includes((searchString.value as string).toLowerCase())
@@ -202,7 +203,6 @@ const title = computed(() => {
     currentFilterKey.startsWith('parameters.') &&
     currentFilterKey.endsWith('.value')
   ) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
     return (
       props.filters.find(
         (f) => f.key === currentFilterKey.replace('.value', '.name')

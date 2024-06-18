@@ -39,6 +39,8 @@ featureFlags:
   automateModuleEnabled: false
   ## @param featureFlags.gendoAIModuleEnabled High level flag that toggles the Gendo AI render module
   gendoAIModuleEnabled: false
+  ## @param featureFlags.noClosureWrites Toggles whether to stop writing to the closure table
+  noClosureWrites: false
 
 analytics:
   ## @param analytics.enabled Enable or disable analytics
@@ -930,7 +932,7 @@ frontend:
 
 ## @section frontend_2
 ## @descriptionStart
-## Defines parameters related to the frontend_2 component of Speckle
+## Defines parameters related to the new web application component of Speckle
 ## @descriptionEnd
 ##
 frontend_2:
@@ -946,9 +948,9 @@ frontend_2:
   ## @param frontend_2.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
-  ## @param frontend_2.enabled Feature flag to enable running the new experimental frontend.
+  ## @param frontend_2.enabled Feature flag to enable running the new web application frontend.
   ##
-  enabled: false
+  enabled: true
   ## @param frontend_2.replicas The number of instances of the Frontend 2 server prod to be deployed withing the cluster.
   ##
   replicas: 1

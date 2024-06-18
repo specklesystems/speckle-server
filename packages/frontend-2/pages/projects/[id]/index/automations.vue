@@ -3,6 +3,6 @@
 </template>
 <script setup lang="ts">
 definePageMeta({
-  middleware: ['require-valid-automation']
+  middleware: ['auth', 'require-valid-automation']
 })
 </script>

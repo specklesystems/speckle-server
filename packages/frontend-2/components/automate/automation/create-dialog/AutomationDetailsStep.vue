@@ -1,27 +1,26 @@
 <template>
-  <div class="flex flex-col gap-2">
+  <div class="flex flex-col gap-6">
     <FormSelectProjects
       v-if="!preselectedProject"
       v-model="project"
       label="Speckle Project"
       show-label
-      help="Choose the project where your target model is located."
+      help="Choose the project where your target model is located"
       show-required
-      button-style="tinted"
       mount-menu-on-body
       :rules="projectRules"
       :allow-unset="false"
       validate-on-value-update
+      owned-only
     />
     <FormSelectModels
       v-if="project?.id"
       v-model="model"
       :project-id="project.id"
-      label="Speckle Model"
+      label="Model"
       show-label
-      help="Choose the model you want to run your automation on."
+      :help="selectModelHelpText"
       show-required
-      button-style="tinted"
       mount-menu-on-body
       :rules="modelRules"
       :allow-unset="false"
@@ -30,10 +29,11 @@
     <FormTextInput
       v-model="automationName"
       name="automationName"
-      label="Name"
+      label="Automation Name"
+      color="foundation"
       show-label
-      help="Give your automation a name."
-      placeholder="Automation Name"
+      help="Give your automation a name"
+      placeholder="Name"
       :rules="nameRules"
       show-required
       validate-on-value-update
@@ -50,6 +50,7 @@ import type {
 
 const props = defineProps<{
   preselectedProject?: Optional<FormSelectProjects_ProjectFragment>
+  isTestAutomation: boolean
 }>()
 const project = defineModel<Optional<FormSelectProjects_ProjectFragment>>('project', {
   required: true
@@ -68,6 +69,12 @@ const nameRules = computed(() => [
   ValidationHelpers.isStringOfLength({ maxLength: 150 })
 ])
 
+const selectModelHelpText = computed(() => {
+  return props.isTestAutomation
+    ? 'Local function executions will be provided the latest version of this model'
+    : 'The model that should trigger this automation'
+})
+
 watch(
   () => props.preselectedProject,
   (newVal) => {
@@ -77,4 +84,10 @@ watch(
   },
   { immediate: true }
 )
+
+watch(project, (newVal, oldVal) => {
+  if (model.value && newVal && newVal.id !== oldVal?.id) {
+    model.value = undefined
+  }
+})
 </script>

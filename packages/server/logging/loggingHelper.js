@@ -1,3 +1,6 @@
+/**
+ * @returns {Record<string, unknown>}
+ */
 const redactSensitiveVariables = (variables) => {
   if (!variables) {
     return variables

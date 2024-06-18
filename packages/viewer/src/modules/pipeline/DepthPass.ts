@@ -57,6 +57,10 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
     return this.renderTargetHalf.texture
   }
 
+  get outputRenderTarget(): WebGLRenderTarget {
+    return this.renderTarget
+  }
+
   public set depthType(value: DepthType) {
     if (value === DepthType.LINEAR_DEPTH)
       if (this.depthMaterial.defines) {
@@ -119,12 +123,8 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
   public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.camera = camera
     this.scene = scene
-    this.depthMaterial.userData.near.value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.depthMaterial.userData.far.value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
+    this.depthMaterial.userData.near.value = camera.near
+    this.depthMaterial.userData.far.value = camera.far
     this.depthMaterial.needsUpdate = true
   }
 

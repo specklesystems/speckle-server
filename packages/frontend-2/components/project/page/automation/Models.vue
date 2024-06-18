@@ -17,6 +17,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { isNonNullable } from '@speckle/shared'
 import { graphql } from '~/lib/common/generated/gql'
 import type {
   ProjectPageAutomationHeader_AutomationFragment,
@@ -28,6 +29,7 @@ graphql(`
     id
     name
     enabled
+    isTestAutomation
     currentRevision {
       id
       triggerDefinitions {
@@ -54,6 +56,9 @@ const props = defineProps<{
 }>()
 
 const triggerModels = computed(
-  () => props.automation.currentRevision?.triggerDefinitions.map((t) => t.model) || []
+  () =>
+    props.automation.currentRevision?.triggerDefinitions
+      .map((t) => t.model)
+      .filter(isNonNullable) || []
 )
 </script>

@@ -120,7 +120,7 @@ export default defineComponent({
   },
   setup() {
     const route = useRoute()
-    const streamId = computed(() => route.params.streamId as string)
+    const streamId = computed(() => route.params.streamId)
 
     const { isLoggedIn } = useIsLoggedIn()
 

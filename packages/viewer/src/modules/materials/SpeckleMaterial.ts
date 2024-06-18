@@ -131,7 +131,6 @@ export class SpeckleMaterial {
     if (!this._internalUniforms) return
 
     for (const k in this.uniformsDef) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       this._internalUniforms.uniforms[k] = this.speckleUserData[k] as IUniform
     }
   }
@@ -146,7 +145,6 @@ export class SpeckleMaterial {
       this.needsCopy = (source as unknown as SpeckleMaterial).needsCopy
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected onCompile(shader: Shader) {
     this._internalUniforms = shader
     this.bindUniforms()
@@ -210,15 +208,15 @@ export class ExtendedLineMaterial extends LineMaterial {}
 export class ExtendedPointsMaterial extends PointsMaterial {}
 
 export interface ExtendedMeshStandardMaterial extends SpeckleMaterial {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+
 export interface ExtendedMeshBasicMaterial extends SpeckleMaterial {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+
 export interface ExtendedMeshDepthMaterial extends SpeckleMaterial {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+
 export interface ExtendedMeshNormalMaterial extends SpeckleMaterial {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+
 export interface ExtendedLineMaterial extends SpeckleMaterial {}
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
+
 export interface ExtendedPointsMaterial extends SpeckleMaterial {}
 
 applyMixins(ExtendedMeshStandardMaterial, [SpeckleMaterial])

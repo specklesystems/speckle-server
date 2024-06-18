@@ -607,7 +607,7 @@ export default class SpeckleRenderer {
       }
 
       if (this.cancel[renderTree.id]) {
-        generator.return()
+        void generator.return()
         this.removeRenderTree(renderTree.id)
         delete this.cancel[renderTree.id]
         break
@@ -633,8 +633,10 @@ export default class SpeckleRenderer {
     if (batch.geometryType === GeometryType.MESH) {
       batchRenderable.traverse((obj: Object3D) => {
         if (obj instanceof Mesh) {
-          obj.castShadow = !obj.material.transparent
-          obj.receiveShadow = !obj.material.transparent
+          const material = Array.isArray(obj.material) ? obj.material[0] : obj.material
+
+          obj.castShadow = !material.transparent
+          obj.receiveShadow = !material.transparent
           obj.customDepthMaterial = new SpeckleDepthMaterial(
             {
               depthPacking: RGBADepthPacking
@@ -699,15 +701,12 @@ export default class SpeckleRenderer {
     if (Materials.isMaterialInstance(material)) {
       this.setMaterialInstance(rvMap, material)
     } else if (Materials.isFilterMaterial(material)) {
-      this.setFilterMaterial(rvMap, material as FilterMaterial)
+      this.setFilterMaterial(rvMap, material)
     } else if (
       Materials.isRendeMaterial(material) ||
       Materials.isDisplayStyle(material)
     ) {
-      this.setDataMaterial(
-        rvMap,
-        material as RenderMaterial & DisplayStyle & MaterialOptions
-      )
+      this.setDataMaterial(rvMap, material)
     }
   }
 
@@ -1064,10 +1063,12 @@ export default class SpeckleRenderer {
         return null
     } else {
       const index =
-        intersection.faceIndex !== undefined
+        intersection.faceIndex !== undefined && intersection.faceIndex !== null
           ? intersection.faceIndex
-          : intersection.index
-      if (index) {
+          : intersection.index !== undefined && intersection.index !== null
+          ? intersection.index
+          : undefined
+      if (index !== undefined) {
         rv = this.batcher.getRenderView(intersection.object.uuid, index)
         if (rv) {
           const material = this.batcher.getRenderViewMaterial(

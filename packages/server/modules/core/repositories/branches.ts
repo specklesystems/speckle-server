@@ -101,7 +101,16 @@ export async function insertBranches(
   return await q
 }
 
-export async function getStreamBranchCounts(streamIds: string[]) {
+export async function getStreamBranchCounts(
+  streamIds: string[],
+  options?: Partial<{
+    /**
+     * In FE2 we skip main branches in our queries, if they don't have any commits
+     */
+    skipEmptyMain: boolean
+  }>
+) {
+  const { skipEmptyMain } = options || {}
   if (!streamIds?.length) return []
 
   const q = Branches.knex()
@@ -110,12 +119,32 @@ export async function getStreamBranchCounts(streamIds: string[]) {
     .count()
     .groupBy(Branches.col.streamId)
 
+  if (skipEmptyMain) {
+    q.andWhere((w) => {
+      w.whereNot(Branches.col.name, 'main').orWhere(
+        0,
+        '<',
+        BranchCommits.knex()
+          .count()
+          .where(BranchCommits.col.branchId, knex.raw(Branches.col.id))
+      )
+    })
+  }
+
   const results = (await q) as { streamId: string; count: string }[]
   return results.map((r) => ({ ...r, count: parseInt(r.count) }))
 }
 
-export async function getStreamBranchCount(streamId: string) {
-  const [res] = await getStreamBranchCounts([streamId])
+export async function getStreamBranchCount(
+  streamId: string,
+  options?: Partial<{
+    /**
+     * In FE2 we skip main branches in our queries, if they don't have any commits
+     */
+    skipEmptyMain: boolean
+  }>
+) {
+  const [res] = await getStreamBranchCounts([streamId], options)
   return res?.count || 0
 }
 

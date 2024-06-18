@@ -276,6 +276,14 @@ function createCache(): InMemoryCache {
             )
           }
         }
+      },
+      Automation: {
+        fields: {
+          runs: {
+            keyArgs: ['limit'],
+            merge: buildAbstractCollectionMergeFunction('AutomateRunCollection')
+          }
+        }
       }
     }
   })
@@ -290,7 +298,7 @@ function createWsClient(params: {
 
   // WS IN SSR DOESN'T WORK CURRENTLY CAUSE OF SOME NUXT TRANSPILATION WEIRDNESS
   // SO DON'T RUN createWsClient in SSR
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
+
   // const wsImplementation = process.server ? (await import('ws')).default : undefined
   return new SubscriptionClient(
     wsEndpoint,
@@ -348,7 +356,7 @@ function createLink(params: {
       authToken.value = undefined
 
       // A bit hacky, but since this may happen mid-routing, a standard router.push call may not work
-      if (process.client) {
+      if (import.meta.client) {
         window.location.href = loginRoute
       } else {
         goToLogin()
@@ -433,7 +441,7 @@ function createLink(params: {
     })
   })
 
-  return from([...(process.server ? [loggerLink] : []), errorLink, link])
+  return from([...(import.meta.server ? [loggerLink] : []), errorLink, link])
 }
 
 const defaultConfigResolver: ApolloConfigResolver = () => {
@@ -448,7 +456,7 @@ const defaultConfigResolver: ApolloConfigResolver = () => {
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
   const authToken = useAuthCookie()
-  const wsClient = process.client
+  const wsClient = import.meta.client
     ? createWsClient({ wsEndpoint, authToken, reqId })
     : undefined
   const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp, reqId })

@@ -5,17 +5,26 @@
         <CommonTextLink :icon-left="ArrowLeftIcon" size="xs" :to="automationsLink">
           Back to Automations
         </CommonTextLink>
-        <CommonEditableTitle
-          v-model="name"
-          :disabled="loading"
-          :custom-classes="{
-            input: 'h4 font-bold',
-            pencil: 'ml-2 mt-2 w-4 h-4'
-          }"
-          class="relative top-1.5"
-        />
+        <div class="flex flow-row justify-start items-center z-20">
+          <CommonEditableTitle
+            v-model="name"
+            :disabled="loading"
+            :custom-classes="{
+              input: 'h4 font-bold',
+              pencil: 'ml-2 mt-2 w-4 h-4'
+            }"
+            class="relative top-1.5"
+          />
+          <div
+            v-if="automation.isTestAutomation"
+            class="pointer-events-none -translate-x-4 z-10"
+          >
+            <CommonBadge>Test Automation</CommonBadge>
+          </div>
+        </div>
       </div>
       <FormSwitch
+        v-if="!automation.isTestAutomation"
         :id="switchId"
         v-model="enabled"
         name="enable"
@@ -35,6 +44,7 @@ import type {
   ProjectPageAutomationHeader_ProjectFragment
 } from '~/lib/common/generated/gql/graphql'
 import { projectRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
 import { useUpdateAutomation } from '~/lib/projects/composables/automationManagement'
 
 graphql(`
@@ -42,6 +52,7 @@ graphql(`
     id
     name
     enabled
+    isTestAutomation
     currentRevision {
       id
       triggerDefinitions {
@@ -70,6 +81,7 @@ const props = defineProps<{
 const switchId = useId()
 const loading = useMutationLoading()
 const updateAutomation = useUpdateAutomation()
+const mixpanel = useMixpanel()
 
 const automationsLink = computed(() => projectRoute(props.project.id, 'automations'))
 const name = computed({
@@ -112,7 +124,7 @@ const enabled = computed({
         enabled: newVal
       }
     }
-    await updateAutomation(args, {
+    const res = await updateAutomation(args, {
       optimisticResponse: {
         projectMutations: {
           automationMutations: {
@@ -129,6 +141,14 @@ const enabled = computed({
         failure: `Failed to ${args.input.enabled ? 'enable' : 'disable'} automation`
       }
     })
+    if (res?.id) {
+      mixpanel.track('Automation Enabled/Disabled', {
+        automationId: res.id,
+        automationName: res.name,
+        projectId: props.project.id,
+        enabled: res.enabled
+      })
+    }
   }
 })
 </script>

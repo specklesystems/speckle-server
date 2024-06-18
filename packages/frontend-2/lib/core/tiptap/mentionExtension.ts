@@ -3,7 +3,7 @@ import { VueRenderer } from '@tiptap/vue-3'
 import TiptapMentionList from '~~/components/common/tiptap/MentionList.vue'
 
 import type { SuggestionKeyDownProps, SuggestionOptions } from '@tiptap/suggestion'
-import { ApolloClient } from '@apollo/client/core'
+import type { ApolloClient } from '@apollo/client/core'
 import { mentionsUserSearchQuery } from '~~/lib/common/graphql/queries'
 import type { MentionsUserSearchQuery } from '~~/lib/common/generated/gql/graphql'
 import type { Get } from 'type-fest'

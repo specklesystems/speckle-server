@@ -8,7 +8,23 @@ export type AutomationRecord = {
   enabled: boolean
   createdAt: Date
   updatedAt: Date
-  executionEngineAutomationId: string
+} & (
+  | {
+      executionEngineAutomationId: string
+      isTestAutomation: false
+    }
+  | {
+      executionEngineAutomationId: null
+      isTestAutomation: true
+    }
+)
+
+export type TestAutomation<R extends AutomationRecord> = R & {
+  isTestAutomation: true
+}
+
+export type LiveAutomation<R extends AutomationRecord> = R & {
+  isTestAutomation: false
 }
 
 export type AutomationRevisionRecord = {
@@ -30,7 +46,7 @@ export type AutomationRunStatus =
   | 'timeout'
   | 'canceled'
 
-export const AutomationRunStatuses: Record<AutomationRunStatus, AutomationRunStatus> = {
+export const AutomationRunStatuses: { [key in AutomationRunStatus]: key } = {
   pending: 'pending',
   initializing: 'initializing',
   running: 'running',
@@ -57,11 +73,13 @@ export type AutomateRevisionFunctionRecord = {
   automationRevisionId: string
 }
 
+export enum RunTriggerSource {
+  Automatic = 'automatic',
+  Manual = 'manual'
+}
+
 export const VersionCreationTriggerType = <const>'versionCreation'
-export const TestTriggerType = <const>'testtttt'
-export type AutomationTriggerType =
-  | typeof VersionCreationTriggerType
-  | typeof TestTriggerType
+export type AutomationTriggerType = typeof VersionCreationTriggerType
 
 export type AutomationTriggerRecordBase<
   T extends AutomationTriggerType = AutomationTriggerType

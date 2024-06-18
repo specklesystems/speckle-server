@@ -1,4 +1,4 @@
-import { uniq, uniqBy } from 'lodash'
+import { uniq, uniqBy } from '#lodash'
 
 export enum ViewerResourceType {
   Model = 'Model',

@@ -74,6 +74,7 @@ const projectId = computed(() => route.params.id as string)
 const shouldAutoAcceptInvite = computed(() => route.query.accept === 'true')
 const token = computed(() => route.query.token as Optional<string>)
 
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 useGeneralProjectPageUpdateTracking({ projectId }, { notifyOnProjectUpdate: true })
 const { result: projectPageResult } = useQuery(
   projectPageQuery,
@@ -82,6 +83,7 @@ const { result: projectPageResult } = useQuery(
     ...(token.value?.length ? { token: token.value } : {})
   }),
   () => ({
+    fetchPolicy: pageFetchPolicy.value,
     // Custom error policy so that a failing invitedTeam resolver (due to access rights)
     // doesn't kill the entire query
     errorPolicy: 'all'

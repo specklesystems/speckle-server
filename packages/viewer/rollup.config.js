@@ -36,7 +36,7 @@ const config = {
     babel({
       extensions: [...DEFAULT_EXTENSIONS, '.ts', '.tsx'],
       babelHelpers: 'bundled',
-      configFile: './babel.config.cjs'
+      configFile: './.babelrc'
     }),
     ...(isProd ? [terser()] : [])
   ],

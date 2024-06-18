@@ -1,7 +1,7 @@
 import { ApolloClient, gql } from '@apollo/client/core'
 import { ApolloClients } from '@vue/apollo-composable'
-import { ComputedRef, Ref } from 'vue'
-import { Account } from '~/lib/bindings/definitions/IBasicConnectorBinding'
+import type { ComputedRef, Ref } from 'vue'
+import type { Account } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import { resolveClientConfig } from '~/lib/core/configs/apollo'
 
 export type DUIAccount = {

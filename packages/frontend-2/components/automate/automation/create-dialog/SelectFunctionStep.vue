@@ -1,47 +1,52 @@
 <template>
   <div>
     <FormTextInput
+      label="Select Function"
+      :show-label="showLabel"
+      :show-required="showRequired"
       name="search"
-      placeholder="Search Functions"
+      color="foundation"
+      placeholder="Search Functions..."
       show-clear
       :model-value="bind.modelValue.value"
       full-width
       v-on="on"
     />
-    <div class="mt-2">
-      <CommonLoadingBar :loading="loading" />
-      <template v-if="!loading">
-        <AutomateFunctionCardView v-if="queryItems?.length" small-view>
+    <div class="mt-4">
+      <template v-if="queryItems?.length || loading">
+        <AutomateFunctionCardView small-view>
           <AutomateFunctionCard
             v-for="fn in items"
             :key="fn.id"
             :fn="fn"
             external-more-info
             :selected="selectedFunction && selectedFunction?.id === fn.id"
-            @use="() => (selectedFunction = fn)"
+            @use="
+              () =>
+                (selectedFunction =
+                  selectedFunction && selectedFunction.id === fn.id ? undefined : fn)
+            "
           />
         </AutomateFunctionCardView>
-        <CommonGenericEmptyState
-          v-else
-          :search="!!search"
-          @clear-search="search = ''"
-        />
+        <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
       </template>
+      <CommonGenericEmptyState v-else :search="!!search" @clear-search="search = ''" />
     </div>
   </div>
 </template>
 <script setup lang="ts">
 import { useDebouncedTextInput } from '@speckle/ui-components'
-import { useQueryLoading, useQuery } from '@vue/apollo-composable'
+import { useQueryLoading } from '@vue/apollo-composable'
 import { graphql } from '~/lib/common/generated/gql'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
 import type { Optional } from '@speckle/shared'
-
-// TODO: Pagination
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 const searchQuery = graphql(`
-  query AutomationCreateDialogFunctionsSearch($search: String) {
-    automateFunctions(limit: 21, filter: { search: $search }) {
+  query AutomationCreateDialogFunctionsSearch($search: String, $cursor: String = null) {
+    automateFunctions(limit: 20, filter: { search: $search }, cursor: $cursor) {
+      cursor
+      totalCount
       items {
         id
         ...AutomateAutomationCreateDialog_AutomateFunction
@@ -50,9 +55,18 @@ const searchQuery = graphql(`
   }
 `)
 
-const props = defineProps<{
-  preselectedFunction: Optional<CreateAutomationSelectableFunction>
-}>()
+const props = withDefaults(
+  defineProps<{
+    preselectedFunction: Optional<CreateAutomationSelectableFunction>
+    pageSize?: Optional<number>
+    showLabel?: Optional<boolean>
+    showRequired?: Optional<boolean>
+  }>(),
+  {
+    showLabel: true,
+    showRequired: true
+  }
+)
 const selectedFunction = defineModel<Optional<CreateAutomationSelectableFunction>>(
   'selectedFunction',
   {
@@ -61,13 +75,28 @@ const selectedFunction = defineModel<Optional<CreateAutomationSelectableFunction
 )
 const { on, bind, value: search } = useDebouncedTextInput()
 const loading = useQueryLoading()
-const { result } = useQuery(searchQuery, () => ({
-  search: search.value?.length ? search.value : null
-}))
+
+const {
+  identifier,
+  onInfiniteLoad,
+  query: { result }
+} = usePaginatedQuery({
+  query: searchQuery,
+  baseVariables: computed(() => ({
+    search: search.value?.length ? search.value : null
+  })),
+  resolveKey: (vars) => [vars.search || ''],
+  resolveCurrentResult: (res) => res?.automateFunctions,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
 
 const queryItems = computed(() => result.value?.automateFunctions.items)
 const items = computed(() => {
-  const baseItems = (queryItems.value || []).slice()
+  const baseItems = (queryItems.value || []).slice(0, props.pageSize)
   const preselectedFn = props.preselectedFunction
 
   if (!preselectedFn || baseItems.find((fn) => fn.id === preselectedFn.id)) {

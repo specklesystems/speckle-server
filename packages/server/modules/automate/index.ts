@@ -5,10 +5,13 @@ import {
   onModelVersionCreate,
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
-import { Environment } from '@speckle/shared'
 import {
   getActiveTriggerDefinitions,
-  getAutomationRunFullTriggers
+  getAutomationRunFullTriggers,
+  getFullAutomationRevisionMetadata,
+  getAutomation,
+  getAutomationRevision,
+  getFullAutomationRunById
 } from '@/modules/automate/repositories/automations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
@@ -24,8 +27,13 @@ import {
   setupAutomationUpdateSubscriptions,
   setupStatusUpdateSubscriptions
 } from '@/modules/automate/services/subscriptions'
+import { setupRunFinishedTracking } from '@/modules/automate/services/tracking'
+import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getUserById } from '@/modules/core/services/users'
+import { getCommit } from '@/modules/core/repositories/commits'
 
-const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
 
 async function initScopes() {
@@ -64,19 +72,28 @@ const initializeEventListeners = () => {
     getAutomationRunFullTriggers
   })
   const setupAutomationUpdateSubscriptionsInvoke = setupAutomationUpdateSubscriptions()
+  const setupRunFinishedTrackingInvoke = setupRunFinishedTracking({
+    getFullAutomationRevisionMetadata,
+    getUserById,
+    getCommit,
+    getFullAutomationRunById
+  })
 
   const quitters = [
     VersionsEmitter.listen(
       VersionEvents.Created,
       async ({ modelId, version, projectId }) => {
         await onModelVersionCreate({
+          getAutomation,
+          getAutomationRevision,
           getTriggers: getActiveTriggerDefinitions,
           triggerFunction: triggerFn
         })({ modelId, versionId: version.id, projectId })
       }
     ),
     setupStatusUpdateSubscriptionsInvoke(),
-    setupAutomationUpdateSubscriptionsInvoke()
+    setupAutomationUpdateSubscriptionsInvoke(),
+    setupRunFinishedTrackingInvoke()
   ]
 
   return () => {
@@ -91,6 +108,7 @@ const automateModule: SpeckleModule = {
 
     await initScopes()
     logStreamRest(app)
+    authGithubAppRest(app)
 
     if (isInitial) {
       quitListeners = initializeEventListeners()

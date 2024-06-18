@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { Color, DoubleSide, FrontSide, Material } from 'three'
 import { type TreeNode, WorldTree } from '../tree/WorldTree'
 import Logger from 'js-logger'
@@ -42,7 +41,7 @@ export class DiffExtension extends Extension {
   public get enabled(): boolean {
     return this._enabled
   }
-  /* eslint-disable @typescript-eslint/no-unused-vars */
+
   public set enabled(value: boolean) {
     this._enabled = value
   }
@@ -464,25 +463,25 @@ export class DiffExtension extends Extension {
     const renderTree = this.tree.getRenderTree()
 
     const addedRvs = diffResult.added.flatMap((value) => {
-      return renderTree.getRenderViewsForNode(value as TreeNode)
+      return renderTree.getRenderViewsForNode(value)
     })
     const removedRvs = diffResult.removed.flatMap((value) => {
-      return renderTree.getRenderViewsForNode(value as TreeNode)
+      return renderTree.getRenderViewsForNode(value)
     })
     const unchangedRvs = diffResult.unchanged.flatMap((value) => {
-      return renderTree.getRenderViewsForNode(value as TreeNode)
+      return renderTree.getRenderViewsForNode(value)
     })
 
     const modifiedOldRvs = diffResult.modified
       .flatMap((value) => {
-        return renderTree.getRenderViewsForNode(value[0] as TreeNode)
+        return renderTree.getRenderViewsForNode(value[0])
       })
       .filter((value) => {
         return !unchangedRvs.includes(value) && !removedRvs.includes(value)
       })
     const modifiedNewRvs = diffResult.modified
       .flatMap((value) => {
-        return renderTree.getRenderViewsForNode(value[1] as TreeNode)
+        return renderTree.getRenderViewsForNode(value[1])
       })
       .filter((value) => {
         return !unchangedRvs.includes(value) && !addedRvs.includes(value)

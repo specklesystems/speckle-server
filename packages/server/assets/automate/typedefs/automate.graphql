@@ -11,7 +11,6 @@ enum AutomateRunStatus {
 
 enum AutomateRunTriggerType {
   VERSION_CREATED
-  TEST_TYPE
 }
 
 type AutomationRevisionFunction {
@@ -24,7 +23,7 @@ type AutomationRevisionFunction {
 
 type VersionCreatedTriggerDefinition {
   type: AutomateRunTriggerType!
-  model: Model!
+  model: Model
 }
 
 union AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition
@@ -37,8 +36,8 @@ type AutomationRevision {
 
 type VersionCreatedTrigger {
   type: AutomateRunTriggerType!
-  version: Version!
-  model: Model!
+  version: Version
+  model: Model
 }
 
 union AutomationRunTrigger = VersionCreatedTrigger
@@ -62,6 +61,7 @@ type Automation {
   id: ID!
   name: String!
   enabled: Boolean!
+  isTestAutomation: Boolean!
   runs(cursor: String, limit: Int): AutomateRunCollection!
   currentRevision: AutomationRevision
   createdAt: DateTime!
@@ -79,7 +79,10 @@ type AutomateFunctionRun {
   contextView: String
   functionId: String
   functionReleaseId: String
-  function: AutomateFunction!
+  """
+  Nullable, in case the function is not retrievable due to poor network conditions
+  """
+  function: AutomateFunction
   elapsed: Float!
   """
   AutomateTypes.ResultsSchema type from @speckle/shared
@@ -194,6 +197,12 @@ input ProjectAutomationCreateInput {
   enabled: Boolean!
 }
 
+input ProjectTestAutomationCreateInput {
+  name: String!
+  modelId: String!
+  functionId: String!
+}
+
 input AutomateFunctionsFilter {
   search: String
   """
@@ -286,7 +295,9 @@ type ProjectAutomationMutations {
   Trigger an automation with a fake "version created" trigger. The "version created" will
   just refer to the last version of the model.
   """
-  trigger(automationId: ID!): Boolean!
+  trigger(automationId: ID!): String!
+  createTestAutomation(input: ProjectTestAutomationCreateInput!): Automation!
+  createTestAutomationRun(automationId: ID!): TestAutomationRun!
 }
 
 extend type ProjectMutations {
@@ -309,6 +320,12 @@ extend type Project {
   automation(id: String!): Automation! @hasStreamRole(role: STREAM_OWNER)
 }
 
+input AutomateAuthCodePayloadTest {
+  code: String!
+  userId: String!
+  action: String!
+}
+
 extend type Query {
   automateFunctions(
     filter: AutomateFunctionsFilter
@@ -323,7 +340,7 @@ extend type Query {
   """
   Part of the automation/function creation handshake mechanism
   """
-  automateValidateAuthCode(code: String!): Boolean!
+  automateValidateAuthCode(payload: AutomateAuthCodePayloadTest!): Boolean!
 }
 
 extend type Mutation {
@@ -376,4 +393,20 @@ extend type Subscription {
   Subscribe to updates to automations in the project
   """
   projectAutomationsUpdated(projectId: String!): ProjectAutomationsUpdatedMessage!
+}
+
+type TestAutomationRun {
+  automationRunId: String!
+  functionRunId: String!
+  triggers: [TestAutomationRunTrigger!]!
+}
+
+type TestAutomationRunTrigger {
+  payload: TestAutomationRunTriggerPayload!
+  triggerType: String!
+}
+
+type TestAutomationRunTriggerPayload {
+  modelId: String!
+  versionId: String!
 }

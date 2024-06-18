@@ -58,16 +58,21 @@ const pageQuery = graphql(`
 `)
 
 definePageMeta({
-  middleware: ['require-valid-function']
+  middleware: ['auth', 'require-valid-function']
 })
-
-// const { activeUser } = useActiveUser()
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const route = useRoute()
 const functionId = computed(() => route.params.fid as string)
 const loading = useQueryLoading()
-const { result, onResult } = useQuery(pageQuery, () => ({
-  functionId: functionId.value
-}))
+const { result, onResult } = useQuery(
+  pageQuery,
+  () => ({
+    functionId: functionId.value
+  }),
+  () => ({
+    fetchPolicy: pageFetchPolicy.value
+  })
+)
 
 const queryLoadedOnce = useQueryLoaded({ onResult })
 const showEditDialog = ref(false)

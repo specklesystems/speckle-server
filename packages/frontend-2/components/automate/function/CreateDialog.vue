@@ -50,13 +50,16 @@ import type {
   CreatableFunctionTemplate,
   FunctionDetailsFormValues
 } from '~/lib/automate/helpers/functions'
-import { automateGithubAppAuthorizationCallback } from '~/lib/common/helpers/route'
+import {
+  automateGithubAppAuthorizationRoute,
+  automationFunctionRoute
+} from '~/lib/common/helpers/route'
 import { useEnumSteps, useEnumStepsWidgetSetup } from '~/lib/form/composables/steps'
 import { useForm } from 'vee-validate'
 import { useCreateAutomateFunction } from '~/lib/automate/composables/management'
 import { useMutationLoading } from '@vue/apollo-composable'
 import type { AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment } from '~~/lib/common/generated/gql/graphql'
-import { automationFunctionRoute } from '~/lib/common/helpers/route'
+import { useMixpanel } from '~/lib/core/composables/mp'
 
 enum FunctionCreateSteps {
   Authorize,
@@ -74,6 +77,7 @@ const props = defineProps<{
 }>()
 const open = defineModel<boolean>('open', { required: true })
 
+const mixpanel = useMixpanel()
 const logger = useLogger()
 const mutationLoading = useMutationLoading()
 const createFunction = useCreateAutomateFunction()
@@ -96,6 +100,11 @@ const onDetailsSubmit = handleDetailsSubmit(async (values) => {
   })
 
   if (res?.id) {
+    mixpanel.track('Automate Function Created', {
+      functionId: res.id,
+      templateId: selectedTemplate.value.id,
+      name: values.name
+    })
     createdFunction.value = res
     step.value++
   }
@@ -128,13 +137,9 @@ const stepsWidgetData = computed(() => [
 ])
 
 const selectedTemplate = ref<CreatableFunctionTemplate>()
-const githubScopes = ref(['read:org', 'read:user', 'repo'])
 const createdFunction =
   ref<AutomateFunctionCreateDialogDoneStep_AutomateFunctionFragment>()
 
-const {
-  public: { automateGhClientId }
-} = useRuntimeConfig()
 const apiBaseUrl = useApiOrigin()
 const { enumStep, step } = useEnumSteps({ order: stepsOrder })
 const {
@@ -157,14 +162,8 @@ const title = computed(() => {
 })
 
 const authorizeGithubUrl = computed(() => {
-  const redirectUrl = new URL(automateGithubAppAuthorizationCallback, apiBaseUrl)
-  const url = new URL(`/login/oauth/authorize`, 'https://github.com')
-
-  url.searchParams.set('client_id', automateGhClientId)
-  url.searchParams.set('scope', githubScopes.value.join(','))
-  url.searchParams.set('redirect_uri', redirectUrl.toString())
-
-  return url.toString()
+  const redirectUrl = new URL(automateGithubAppAuthorizationRoute, apiBaseUrl)
+  return redirectUrl.toString()
 })
 
 const buttons = computed((): LayoutDialogButton[] => {
@@ -185,7 +184,6 @@ const buttons = computed((): LayoutDialogButton[] => {
           text: 'Authorize',
           props: {
             fullWidth: true,
-            disabled: !automateGhClientId.length,
             to: authorizeGithubUrl.value,
             external: true
           }
