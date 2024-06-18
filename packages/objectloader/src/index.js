@@ -2,13 +2,12 @@
 import 'core-js'
 import 'regenerator-runtime/runtime'
 
-import { SafeLocalStorage } from '@speckle/shared'
 import {
   ObjectLoaderConfigurationError,
   ObjectLoaderRuntimeError
 } from './errors/index.js'
 import { polyfillReadableStreamForAsyncIterator } from './helpers/stream.js'
-
+import { chunk } from 'lodash'
 /**
  * Simple client that streams object info from a Speckle Server.
  * TODO: Object construction progress reporting is weird.
@@ -54,11 +53,17 @@ export default class ObjectLoader {
     }
 
     this.logger('Object loader constructor called!')
-    try {
-      this.token = token || SafeLocalStorage.get('AuthToken')
-    } catch (error) {
-      // Accessing localStorage may throw when executing on sandboxed document, ignore.
-    }
+
+    /** I don't think the object-loader should read the token from local storage, since there is no
+     *  builtin mechanism that sets it in the first place. So you're reading a key from the local storage
+     *  and hoping it will magically be there.
+     */
+    // try {
+    //   this.token = token || SafeLocalStorage.get('AuthToken')
+    // } catch (error) {
+    //   // Accessing localStorage may throw when executing on sandboxed document, ignore.
+    // }
+    this.token = token
 
     this.headers = {
       Accept: 'text/plain'
@@ -119,6 +124,7 @@ export default class ObjectLoader {
 
   dispose() {
     this.buffer = []
+    this.promises = []
     Object.values(this.intervals).forEach((i) => clearInterval(i.interval))
   }
 
@@ -291,7 +297,19 @@ export default class ObjectLoader {
 
   processLine(chunk) {
     const pieces = chunk.split('\t')
-    return { id: pieces[0], obj: JSON.parse(pieces[1]) }
+    const [id, unparsedObj] = pieces
+
+    let obj
+    try {
+      obj = JSON.parse(unparsedObj)
+    } catch (e) {
+      throw new Error(`Error parsing object ${id}: ${e.message}`)
+    }
+
+    return {
+      id,
+      obj
+    }
   }
 
   supportsCache() {
@@ -364,7 +382,13 @@ export default class ObjectLoader {
         const newChildrenForBatch = splitBeforeCacheCheck[i].filter(
           (id) => !(id in cachedObjects)
         )
-        newChildren.push(...newChildrenForBatch)
+        /** On Safari this would throw a RangeError for large newChildrenForBatch lengths*/
+        //newChildren.push(...newChildrenForBatch)
+        /** The workaround for the above based off https://stackoverflow.com/a/9650855 */
+        const splitN = 500
+        const chunked = chunk(newChildrenForBatch, splitN)
+        for (let k = 0; k < chunked.length; k++)
+          newChildren.push.apply(newChildren, chunked[k])
       }
 
       if (newChildren.length === 0) return
@@ -501,6 +525,10 @@ export default class ObjectLoader {
     if (cachedRootObject[this.objectId]) return cachedRootObject[this.objectId]
     const response = await this.fetch(this.requestUrlRootObj, { headers: this.headers })
     const responseText = await response.text()
+    if ([401, 403].includes(response.status)) {
+      throw new ObjectLoaderRuntimeError('You do not have access to the root object!')
+    }
+
     this.cacheStoreObjects([`${this.objectId}\t${responseText}`])
     return responseText
   }

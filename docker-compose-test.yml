@@ -1,0 +1,23 @@
+version: '2.4'
+services:
+  test:
+    build:
+      context: .
+      dockerfile: ./utils/test-deployment/Dockerfile
+    image: speckle/speckle-test-deployment:local
+    network_mode: 'host'
+    environment:
+      SPECKLE_SERVER: http://127.0.0.1 # this is the canonical url
+      SERVER_VERSION: 2
+      FRONTEND_VERSION: '2'
+      VERIFY_CERTIFICATE: '0'
+    restart: 'no'
+
+  # It wasn't clear that the test was just being deployed or was actually running to completion before docker compose up was exiting.
+  # This service is a hack to make docker compose wait for the test to finish before exiting.
+  confirm_test_finished:
+    image: busybox
+    command: sh -c "echo '✅ Deployment of test completed successfully!'"
+    depends_on:
+      test:
+        condition: service_completed_successfully

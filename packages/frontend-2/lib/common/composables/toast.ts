@@ -38,7 +38,7 @@ export function useGlobalToastManager() {
 
         // (re-)init timeout
         stop()
-        start()
+        if (newVal.autoClose !== false) start()
       })
     },
     { deep: true }

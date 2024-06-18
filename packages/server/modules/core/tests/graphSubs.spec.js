@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 const expect = require('chai').expect
 const request = require('supertest')
 const { gql } = require('apollo-server-express')
@@ -75,15 +74,19 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
     addr = `http://127.0.0.1:${childPort}/graphql`
     wsAddr = `ws://127.0.0.1:${childPort}/graphql`
 
+    // if u want to see full child process output, change LOG_LEVEL to info for dev:server:test in package.json
     serverProcess = childProcess.spawn(
       /^win/.test(process.platform) ? 'npm.cmd' : 'npm',
       ['run', 'dev:server:test'],
-      { cwd: packageRoot, env: { ...process.env, PORT: childPort } }
+      { cwd: packageRoot, env: { ...process.env, PORT: childPort }, stdio: 'inherit' }
     )
+    serverProcess.on('error', (err) => {
+      console.error(err)
+    })
 
     console.log(`      Waiting on child server to be started at PORT ${childPort} `)
     // lets wait for the server is starting up
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
       try {
         const res = await sendRequest('', {

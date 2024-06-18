@@ -18,7 +18,7 @@ const {
 } = require('@/modules/core/services/commit/management')
 const { clamp } = require('lodash')
 
-const getCommitsByUserIdBase = ({ userId, publicOnly }) => {
+const getCommitsByUserIdBase = ({ userId, publicOnly, streamIdWhitelist }) => {
   publicOnly = publicOnly !== false
 
   const query = Commits()
@@ -46,6 +46,7 @@ const getCommitsByUserIdBase = ({ userId, publicOnly }) => {
     .where('author', userId)
 
   if (publicOnly) query.andWhere('streams.isPublic', true)
+  if (streamIdWhitelist?.length) query.whereIn('streams.streamId', streamIdWhitelist)
 
   return query
 }
@@ -204,11 +205,11 @@ module.exports = {
     }
   },
 
-  async getCommitsByUserId({ userId, limit, cursor, publicOnly }) {
+  async getCommitsByUserId({ userId, limit, cursor, publicOnly, streamIdWhitelist }) {
     limit = limit || 25
     publicOnly = publicOnly !== false
 
-    const query = getCommitsByUserIdBase({ userId, publicOnly })
+    const query = getCommitsByUserIdBase({ userId, publicOnly, streamIdWhitelist })
 
     if (cursor) query.andWhere('commits.createdAt', '<', cursor)
 
@@ -221,8 +222,8 @@ module.exports = {
     }
   },
 
-  async getCommitsTotalCountByUserId({ userId, publicOnly }) {
-    const query = getCommitsByUserIdBase({ userId, publicOnly })
+  async getCommitsTotalCountByUserId({ userId, publicOnly, streamIdWhitelist }) {
+    const query = getCommitsByUserIdBase({ userId, publicOnly, streamIdWhitelist })
     query.clearSelect()
     query.select(knex.raw('COUNT(*) as count'))
 

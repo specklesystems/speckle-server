@@ -5,10 +5,10 @@ import type { Meta, StoryObj } from '@storybook/vue3'
 import { action } from '@storybook/addon-actions'
 import type { RuleExpression, SubmissionHandler } from 'vee-validate'
 import { Form } from 'vee-validate'
-import { userEvent, within } from '@storybook/testing-library'
+import { userEvent, within } from '@storybook/test'
 import { wait } from '@speckle/shared'
 import type { Optional } from '@speckle/shared'
-import { expect } from '@storybook/jest'
+import { expect } from '@storybook/test'
 import type { VuePlayFunction } from '~~/src/stories/helpers/storybook'
 import { computed } from 'vue'
 
@@ -41,12 +41,12 @@ export default {
 
 const toggleCheckboxPlayFunction: VuePlayFunction = async (params) => {
   const canvas = within(params.canvasElement)
-  const checkbox = canvas.getByRole('checkbox') as HTMLInputElement
+  const checkbox = canvas.getByRole('checkbox')
 
-  userEvent.click(checkbox)
+  await userEvent.click(checkbox)
   // expect(checkbox.checked).toBeTruthy()
   await wait(1000)
-  userEvent.click(checkbox)
+  await userEvent.click(checkbox)
   // expect(checkbox.checked).toBeFalsy()
 }
 
@@ -129,23 +129,23 @@ export const Group: StoryObj<typeof defaultArgs> = {
     const barCheckbox = canvas.getByAltText('bar')
     const button = canvas.getByRole('button')
 
-    userEvent.click(fooCheckbox)
+    await userEvent.click(fooCheckbox)
     await wait(smallDelay)
-    userEvent.click(button)
+    await userEvent.click(button)
 
     await wait(bigDelay)
 
-    userEvent.click(barCheckbox)
+    await userEvent.click(barCheckbox)
     await wait(smallDelay)
-    userEvent.click(button)
+    await userEvent.click(button)
 
     await wait(bigDelay)
 
-    userEvent.click(fooCheckbox)
+    await userEvent.click(fooCheckbox)
     await wait(smallDelay)
-    userEvent.click(barCheckbox)
+    await userEvent.click(barCheckbox)
     await wait(smallDelay)
-    userEvent.click(button)
+    await userEvent.click(button)
   },
   parameters: {
     docs: {
@@ -170,17 +170,17 @@ export const InlineDescription: StoryObj<typeof defaultArgs> = {
 
 export const Disabled: StoryObj<typeof defaultArgs> = {
   ...Default,
-  play: (params) => {
+  play: async (params) => {
     const canvas = within(params.canvasElement)
     const checkbox = canvas.getByRole('checkbox')
 
     const isChecked = (checkbox as HTMLInputElement).checked
 
     // click and assert that checkbox checked state hasn't changed
-    userEvent.click(checkbox)
+    await userEvent.click(checkbox)
 
     const newIsChecked = (checkbox as HTMLInputElement).checked
-    expect(isChecked).toBe(newIsChecked)
+    await expect(isChecked).toBe(newIsChecked)
   },
   args: {
     name: 'disabled1',

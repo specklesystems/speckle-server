@@ -1,18 +1,23 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="relative">
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
-      :class="`rounded-md border-l-4 transition  ${
+      :class="`rounded-md border-l-4  ${
         showVersions
           ? 'border-primary max-h-96 shadow-md'
           : 'hover:border-primary border-transparent'
       }`"
+      @mouseenter="highlightObject"
+      @mouseleave="unhighlightObject"
+      @focusin="highlightObject"
+      @focusout="unhighlightObject"
     >
       <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
       <div
         :class="`${
           showVersions ? 'bg-primary' : 'bg-foundation hover:bg-primary-muted'
-        } group sticky cursor-pointer top-0 z-20 flex h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 transition select-none`"
+        } group sticky cursor-pointer top-0 z-20 flex h-10 sm:h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 select-none`"
         @click="showVersions = !showVersions"
       >
         <div>
@@ -23,7 +28,7 @@
             v-tippy="modelName.subheader ? model.name : null"
             :class="`${
               showVersions ? 'text-foundation' : ''
-            } font-bold truncate min-w-0`"
+            } text-sm sm:text-base font-bold truncate min-w-0`"
           >
             {{ modelName.header }}
           </div>
@@ -42,8 +47,8 @@
           v-if="!showVersions"
           class="flex flex-none items-center space-x-1 text-xs font-bold"
         >
+          <IconVersions class="h-4 w-4" />
           <span>{{ model.versions?.totalCount }}</span>
-          <ArrowPathRoundedSquareIcon class="h-4 w-4" />
         </div>
         <div
           v-else
@@ -108,11 +113,7 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
-import {
-  XMarkIcon,
-  ArrowPathRoundedSquareIcon,
-  ChevronUpIcon
-} from '@heroicons/vue/24/solid'
+import { XMarkIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
 import type {
   ViewerLoadedResourcesQuery,
   ViewerModelVersionCardItemFragment
@@ -122,7 +123,10 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
-import { useDiffUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useDiffUtilities,
+  useHighlightedObjectsUtilities
+} from '~~/lib/viewer/composables/ui'
 
 type ModelItem = NonNullable<Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>>
 
@@ -139,6 +143,7 @@ const props = defineProps<{
 const { switchModelToVersion } = useInjectedViewerRequestedResources()
 const { loadMoreVersions } = useInjectedViewerLoadedResources()
 const { diffModelVersions } = useDiffUtilities()
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const showVersions = ref(false)
 
@@ -217,5 +222,13 @@ const onLoadMore = async () => {
 async function handleViewChanges(version: ViewerModelVersionCardItemFragment) {
   if (!loadedVersion.value?.id) return
   await diffModelVersions(modelId.value, loadedVersion.value.id, version.id)
+}
+
+const highlightObject = () => {
+  highlightObjects([props.model.loadedVersion.items[0].referencedObject])
+}
+
+const unhighlightObject = () => {
+  unhighlightObjects([props.model.loadedVersion.items[0].referencedObject])
 }
 </script>

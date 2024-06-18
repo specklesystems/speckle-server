@@ -1,7 +1,6 @@
 // Note logging is imported by www & ts-www, prior to init() being called
 // so we can't use local imports with '@' etc., as they aren't yet defined.
-import { Observability } from '@speckle/shared'
-export { Observability } from '@speckle/shared'
+import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
 
 const { getLogger, extendLoggerComponent } = Observability
 
@@ -29,6 +28,7 @@ export const mixpanelLogger = extendLoggerComponent(logger, 'mixpanel')
 export const graphqlLogger = extendLoggerComponent(logger, 'graphql')
 export const authLogger = extendLoggerComponent(logger, 'auth')
 export const crossServerSyncLogger = extendLoggerComponent(logger, 'cross-server-sync')
+export const automateLogger = extendLoggerComponent(logger, 'automate')
 
 export type Logger = typeof logger
-export { extendLoggerComponent }
+export { extendLoggerComponent, Observability }

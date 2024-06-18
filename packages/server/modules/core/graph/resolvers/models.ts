@@ -27,8 +27,27 @@ import { BranchNotFoundError } from '@/modules/core/errors/branch'
 import { CommitNotFoundError } from '@/modules/core/errors/commit'
 
 export = {
+  User: {
+    async versions(parent, args, ctx) {
+      const authoredOnly = args.authoredOnly
+      return {
+        totalCount: authoredOnly
+          ? await ctx.loaders.users.getAuthoredCommitCount.load(parent.id)
+          : await ctx.loaders.users.getStreamCommitCount.load(parent.id)
+      }
+    }
+  },
   Project: {
-    async models(parent, args) {
+    async models(parent, args, ctx) {
+      // If limit=0 & no filter, short-cut full execution and use data loader
+      if (args.limit === 0 && !args.filter) {
+        return {
+          totalCount: await ctx.loaders.streams.getBranchCount.load(parent.id),
+          items: [],
+          cursor: null
+        }
+      }
+
       return await getPaginatedProjectModels(parent.id, args)
     },
     async model(_parent, args, ctx) {
@@ -58,7 +77,18 @@ export = {
         loadedVersionsOnly
       })
     },
-    async versions(parent, args) {
+    async versions(parent, args, ctx) {
+      // If limit=0, short-cut full execution and use data loader
+      if (args.limit === 0) {
+        return {
+          totalCount: await ctx.loaders.streams.getCommitCountWithoutGlobals.load(
+            parent.id
+          ),
+          items: [],
+          cursor: null
+        }
+      }
+
       return await getPaginatedStreamCommits(parent.id, args)
     }
   },
@@ -83,7 +113,16 @@ export = {
     async displayName(parent) {
       return last(parent.name.split('/'))
     },
-    async versions(parent, args) {
+    async versions(parent, args, ctx) {
+      // If limit=0 & no filter, short-cut full execution and use data loader
+      if (!args.filter && args.limit === 0) {
+        return {
+          totalCount: await ctx.loaders.branches.getCommitCount.load(parent.id),
+          items: [],
+          cursor: null
+        }
+      }
+
       return await getPaginatedBranchCommits({
         branchId: parent.id,
         cursor: args.cursor,
@@ -127,7 +166,8 @@ export = {
       await authorizeResolver(
         ctx.userId,
         args.input.projectId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        ctx.resourceAccessRules
       )
       return await createBranchAndNotify(args.input, ctx.userId!)
     },
@@ -135,7 +175,8 @@ export = {
       await authorizeResolver(
         ctx.userId,
         args.input.projectId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        ctx.resourceAccessRules
       )
       return await updateBranchAndNotify(args.input, ctx.userId!)
     },
@@ -143,7 +184,8 @@ export = {
       await authorizeResolver(
         ctx.userId,
         args.input.projectId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        ctx.resourceAccessRules
       )
       return await deleteBranchAndNotify(args.input, ctx.userId!)
     }
@@ -156,7 +198,12 @@ export = {
           const { id: projectId, modelIds } = args
           if (payload.projectId !== projectId) return false
 
-          await authorizeResolver(ctx.userId, projectId, Roles.Stream.Reviewer)
+          await authorizeResolver(
+            ctx.userId,
+            projectId,
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
+          )
           if (!modelIds?.length) return true
           return modelIds.includes(payload.projectModelsUpdated.id)
         }

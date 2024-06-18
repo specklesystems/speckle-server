@@ -15,14 +15,24 @@
       </LayoutDialogSection>
       <UserProfileEditDialogChangePassword :user="user" />
       <UserProfileEditDialogDeleteAccount :user="user" @deleted="isOpen = false" />
-      <div class="text-tiny text-foreground-2 mt-4">User #{{ user.id }}</div>
+      <div class="text-xs text-foreground-2 mt-4">
+        User ID:
+        <CommonTextLink size="xs" no-underline @click="copyUserId">
+          #{{ user.id }}
+        </CommonTextLink>
+        <template v-if="distinctId">
+          |
+          <CommonTextLink size="xs" no-underline @click="copyDistinctId">
+            {{ distinctId }}
+          </CommonTextLink>
+        </template>
+      </div>
     </div>
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
 import { CodeBracketIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
-import { profileEditDialogQuery } from '~~/lib/user/graphql/queries'
+import { useActiveUser } from '~/lib/auth/composables/activeUser'
 
 type FormButtonColor =
   | 'default'
@@ -42,9 +52,8 @@ const props = defineProps<{
   open: boolean
 }>()
 
-const { result } = useQuery(profileEditDialogQuery)
-
-const user = computed(() => result.value?.activeUser)
+const { activeUser: user, distinctId } = useActiveUser()
+const { copy } = useClipboard()
 
 const isOpen = computed({
   get: () => !!(props.open && user.value),
@@ -60,4 +69,14 @@ const developerSettingsButton = computed(() => ({
     isOpen.value = false
   }
 }))
+
+const copyUserId = () => {
+  if (!user.value) return
+  copy(user.value.id)
+}
+
+const copyDistinctId = () => {
+  if (!distinctId.value) return
+  copy(distinctId.value)
+}
 </script>

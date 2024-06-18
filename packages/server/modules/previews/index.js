@@ -31,7 +31,7 @@ const cors = require('cors')
 const noPreviewImage = require.resolve('#/assets/previews/images/no_preview.png')
 const previewErrorImage = require.resolve('#/assets/previews/images/preview_error.png')
 
-exports.init = (app) => {
+exports.init = (app, isInitial) => {
   if (process.env.DISABLE_PREVIEWS) {
     moduleLogger.warn('📸 Object preview module is DISABLED')
   } else {
@@ -120,6 +120,7 @@ exports.init = (app) => {
       res.set('X-Preview-Error-Code', previewBufferOrFile.errorCode)
     }
     if (previewBufferOrFile.type === 'file') {
+      res.set('Cache-Control', 'public, max-age=604800')
       res.sendFile(previewBufferOrFile.file)
     } else {
       res.contentType('image/png')
@@ -146,7 +147,7 @@ exports.init = (app) => {
     if (!stream.isPublic) {
       try {
         await validateScopes(req.context.scopes, Scopes.Streams.Read)
-      } catch (err) {
+      } catch {
         return { hasPermissions: false, httpErrorCode: 401 }
       }
 
@@ -154,9 +155,10 @@ exports.init = (app) => {
         await authorizeResolver(
           req.context.userId,
           req.params.streamId,
-          Roles.Stream.Reviewer
+          Roles.Stream.Reviewer,
+          req.context.resourceAccessRules
         )
-      } catch (err) {
+      } catch {
         return { hasPermissions: false, httpErrorCode: 401 }
       }
     }
@@ -266,7 +268,9 @@ exports.init = (app) => {
     )
   })
 
-  listenForPreviewGenerationUpdates()
+  if (isInitial) {
+    listenForPreviewGenerationUpdates()
+  }
 }
 
 exports.finalize = () => {}

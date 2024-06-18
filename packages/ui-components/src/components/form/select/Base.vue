@@ -10,16 +10,27 @@
       as="div"
     >
       <ListboxLabel
-        class="block label text-foreground-2 mb-2"
+        :id="labelId"
+        class="flex label text-foreground mb-1.5"
         :class="{ 'sr-only': !showLabel }"
+        :for="buttonId"
       >
         {{ label }}
+        <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
       </ListboxLabel>
       <div :class="buttonsWrapperClasses">
         <!-- <div class="relative flex"> -->
-        <ListboxButton ref="listboxButton" v-slot="{ open }" :class="buttonClasses">
+        <ListboxButton
+          :id="buttonId"
+          ref="listboxButton"
+          v-slot="{ open }"
+          :class="buttonClasses"
+        >
           <div class="flex items-center justify-between w-full">
-            <div class="block truncate grow text-left text-xs sm:text-sm">
+            <div
+              class="block truncate grow text-left text-xs sm:text-sm"
+              :class="[hasValueSelected ? 'text-foreground' : 'text-foreground-2']"
+            >
               <template
                 v-if="!wrappedValue || (isArray(wrappedValue) && !wrappedValue.length)"
               >
@@ -40,7 +51,7 @@
                 aria-hidden="true"
               />
               <div
-                v-else-if="showRequired"
+                v-else-if="!showLabel && showRequired"
                 class="text-4xl text-danger opacity-50 h-4 w-4 leading-6"
               >
                 *
@@ -57,12 +68,13 @@
               />
             </div>
           </div>
+          <!-- Sync isOpen with dropdown open state -->
+          <template v-if="(isOpen = open)"></template>
         </ListboxButton>
         <!-- </div> -->
         <!-- Clear Button -->
         <button
           v-if="renderClearButton"
-          v-tippy="'Clear'"
           :class="clearButtonClasses"
           :disabled="disabled"
           @click="clearValue()"
@@ -88,13 +100,13 @@
                   <div
                     class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
                   >
-                    <MagnifyingGlassIcon class="h-5 w-5 text-foreground" />
+                    <MagnifyingGlassIcon class="h-4 w-4 text-foreground-2" />
                   </div>
                   <input
                     ref="searchInput"
                     v-model="searchValue"
                     type="text"
-                    class="pl-9 w-full border-0 bg-foundation-page rounded placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 focus:border-outline-1 focus:ring-outline-1"
+                    class="py-1 pl-7 w-full bg-foundation-page rounded-[5px] placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 border-outline-3 focus:border-outline-1 focus:ring-outline-1 text-sm"
                     :placeholder="searchPlaceholder"
                     @keydown.stop
                   />
@@ -108,9 +120,9 @@
                   <CommonLoadingBar :loading="true" />
                 </div>
                 <div v-else-if="isAsyncSearchMode && !currentItems.length">
-                  <slot name="nothing-found">
-                    <div class="text-foreground-2 text-center">Nothing found 🤷‍♂️</div>
-                  </slot>
+                  <div class="text-foreground-2 text-center">
+                    <slot name="nothing-found">Nothing found</slot>
+                  </div>
                 </div>
                 <template v-if="!isAsyncSearchMode || !isAsyncLoading">
                   <ListboxOption
@@ -164,12 +176,7 @@
         </Transition>
       </div>
     </Listbox>
-    <p
-      v-if="helpTipId"
-      :id="helpTipId"
-      class="mt-2 text-xs sm:text-sm"
-      :class="helpTipClasses"
-    >
+    <p v-if="helpTipId" :id="helpTipId" class="mt-2 text-xs" :class="helpTipClasses">
       {{ helpTip }}
     </p>
   </div>
@@ -179,11 +186,6 @@
   lang="ts"
   generic="SingleItem extends Record<string, unknown> | string | number"
 >
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-
 import {
   Listbox,
   ListboxButton,
@@ -207,7 +209,6 @@ import { useField } from 'vee-validate'
 import type { RuleExpression } from 'vee-validate'
 import { nanoid } from 'nanoid'
 import CommonLoadingBar from '~~/src/components/common/loading/Bar.vue'
-import { directive as vTippy } from 'vue-tippy'
 import { useElementBounding, useMounted, useIntersectionObserver } from '@vueuse/core'
 
 type ButtonStyle = 'base' | 'simple' | 'tinted'
@@ -387,12 +388,21 @@ const props = defineProps({
   mountMenuOnBody: {
     type: Boolean,
     default: false
+  },
+  labelId: {
+    type: String,
+    default: undefined
+  },
+  buttonId: {
+    type: String,
+    default: undefined
   }
 })
 
 const { value, errorMessage: error } = useField<ValueType>(props.name, props.rules, {
   validateOnMount: props.validateOnMount,
   validateOnValueUpdate: props.validateOnValueUpdate,
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
   initialValue: props.modelValue as ValueType
 })
 
@@ -406,6 +416,7 @@ const currentItems = ref([]) as Ref<SingleItem[]>
 const isAsyncLoading = ref(false)
 const forceUpdateKey = ref(1)
 const internalHelpTipId = ref(nanoid())
+const isOpen = ref(false)
 
 const listboxButtonBounding = useElementBounding(
   computed(() => listboxButton.value?.el),
@@ -451,8 +462,12 @@ const buttonsWrapperClasses = computed(() => {
       classParts.push('outline outline-2 outline-danger')
     }
   } else if (props.buttonStyle !== 'simple') {
-    classParts.push('hover:shadow rounded-md')
-    classParts.push('outline outline-2 outline-primary-muted')
+    classParts.push('rounded-md border')
+    if (isOpen.value) {
+      classParts.push('border-outline-1')
+    } else {
+      classParts.push('border-outline-3')
+    }
   }
 
   if (props.fixedHeight) {
@@ -686,12 +701,12 @@ watch(
 
 watch(searchValue, () => {
   if (!isAsyncSearchMode.value) return
-  debouncedSearch()
+  void debouncedSearch()
 })
 
 onMounted(() => {
   if (isAsyncSearchMode.value && !props.items.length) {
-    triggerSearch()
+    void triggerSearch()
   }
 })
 

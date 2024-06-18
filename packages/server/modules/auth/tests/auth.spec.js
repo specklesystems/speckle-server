@@ -7,11 +7,7 @@ const { createStream } = require('@/modules/core/services/streams')
 const { updateServerInfo } = require('@/modules/core/services/generic')
 const { getUserByEmail } = require('@/modules/core/services/users')
 const { TIME } = require('@speckle/shared')
-const {
-  RATE_LIMITERS,
-  createConsumer,
-  RateLimitAction
-} = require('@/modules/core/services/ratelimiter')
+const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { getInvite } = require('@/modules/serverinvites/repositories')
@@ -465,9 +461,9 @@ describe('Auth @auth', () => {
       const oldRateLimiter = RATE_LIMITERS.USER_CREATE
 
       RATE_LIMITERS.USER_CREATE = createConsumer(
-        RateLimitAction.USER_CREATE,
+        'USER_CREATE',
         new RateLimiterMemory({
-          keyPrefix: RateLimitAction.USER_CREATE,
+          keyPrefix: 'USER_CREATE',
           points: 1,
           duration: 1 * TIME.week
         })

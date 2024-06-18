@@ -1,16 +1,16 @@
 import Logger from 'js-logger'
 import { Vector3 } from 'three'
 import SpeckleRenderer from '../SpeckleRenderer'
-import { PointQuery, PointQueryResult } from './Query'
+import type { PointQuery, PointQueryResult } from './Query'
 
 export class PointQuerySolver {
-  private renderer: SpeckleRenderer
+  private renderer!: SpeckleRenderer
 
   public setContext(renderer: SpeckleRenderer) {
     this.renderer = renderer
   }
 
-  public solve(query: PointQuery): PointQueryResult {
+  public solve(query: PointQuery): PointQueryResult | null {
     switch (query.operation) {
       case 'Project':
         return this.solveProjection(query)
@@ -18,14 +18,15 @@ export class PointQuerySolver {
         return this.solveUnprojection(query)
       default:
         Logger.error('Malformed query')
-        break
+        return null
     }
   }
 
   private solveProjection(query: PointQuery): PointQueryResult {
     // WORLD
     const projected = new Vector3(query.point.x, query.point.y, query.point.z)
-    projected.project(this.renderer.renderingCamera)
+    if (this.renderer.renderingCamera) projected.project(this.renderer.renderingCamera)
+    else Logger.error('Could not run query. Camera is null')
 
     return {
       // NDC
@@ -38,8 +39,9 @@ export class PointQuerySolver {
   private solveUnprojection(query: PointQuery): PointQueryResult {
     // NDC
     const unprojected = new Vector3(query.point.x, query.point.y, query.point.z)
-    unprojected.unproject(this.renderer.renderingCamera)
-
+    if (this.renderer.renderingCamera)
+      unprojected.unproject(this.renderer.renderingCamera)
+    else Logger.error('Could not run query. Camera is null')
     return {
       // WORLD
       x: unprojected.x,

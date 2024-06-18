@@ -7,7 +7,7 @@ const {
   GeometryTypes,
   IfcTypesMap
 } = require('./utils')
-const { Observability } = require('@speckle/shared')
+const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
 const { logger: parentLogger } = require('../observability/logging')
 
 module.exports = class IFCParser {

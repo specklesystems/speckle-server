@@ -51,7 +51,7 @@ const digestNotificationEmailHandler = async (
   // if there are no activities stop early
   if (!wantDigests || !activitySummary || !activitySummary.streamActivities.length)
     return null
-  const serverInfo = (await getServerInfo()) as ServerInfo
+  const serverInfo = await getServerInfo()
   const digest = digestSummaryData(activitySummary, serverInfo)
   if (!digest) return null
   const emailInput = await prepareSummaryEmail(digest, serverInfo)
@@ -179,8 +179,7 @@ export const mostActiveComment: TopicDigesterFunction = (
   if (!replyActions.length) return null
 
   const parentCommentGroups = groupBy(replyActions, (a) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const info = a.info as any
+    const info = a.info as { input: { parentComment: string } }
     return info.input.parentComment
   })
 

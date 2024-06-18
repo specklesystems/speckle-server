@@ -1,5 +1,6 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { mapServerRoleToValue } from '@/modules/core/helpers/graphTypes'
+import { toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import {
   adminInviteList,
   adminProjectList,
@@ -20,13 +21,14 @@ export = {
         role: role ? mapServerRoleToValue(role) : null
       })
     },
-    async projectList(_parent, args) {
+    async projectList(_parent, args, ctx) {
       return await adminProjectList({
         query: args.query ?? null,
         orderBy: args.orderBy ?? null,
         visibility: args.visibility ?? null,
         limit: args.limit,
-        cursor: args.cursor
+        cursor: args.cursor,
+        streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules)
       })
     },
     serverStatistics: () => ({}),

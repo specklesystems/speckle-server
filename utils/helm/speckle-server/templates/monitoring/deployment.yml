@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: main
-        image: speckle/speckle-monitor-deployment:{{ .Values.docker_image_tag }}
+        image: {{ default (printf "speckle/speckle-monitor-deployment:%s" .Values.docker_image_tag) .Values.monitoring.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:

@@ -1,6 +1,6 @@
-import { trim, isNumber } from 'lodash'
+import { trim, isNumber } from '#lodash'
 import type { JSONContent } from '@tiptap/core'
-import type { Optional } from '../../core/helpers/utilityTypes'
+import type { Optional } from '../../core/helpers/utilityTypes.js'
 
 /**
  * Used to match URLs that can appear anywhere in a string, not perfect, but crafting a perfect

@@ -16,6 +16,9 @@ if (env === 'build') {
   outputFile = filename + '.js'
 }
 
+/**
+ * @type {import('webpack').Configuration}
+ */
 const config = {
   mode,
   entry: path.resolve(__dirname + '/render_page/src/app.js'),

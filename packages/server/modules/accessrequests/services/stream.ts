@@ -15,6 +15,7 @@ import {
   ServerAccessRequestRecord
 } from '@/modules/accessrequests/repositories'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { getStream } from '@/modules/core/repositories/streams'
 import {
@@ -22,7 +23,7 @@ import {
   validateStreamAccess
 } from '@/modules/core/services/streams/streamAccessService'
 import { ensureError } from '@/modules/shared/helpers/errorHelper'
-import { Nullable } from '@/modules/shared/helpers/typeHelper'
+import { MaybeNullOrUndefined, Nullable } from '@/modules/shared/helpers/typeHelper'
 
 function buildStreamAccessRequestGraphQLReturn(
   record: ServerAccessRequestRecord<AccessRequestType.Stream, string>
@@ -107,7 +108,8 @@ export async function processPendingStreamRequest(
   userId: string,
   requestId: string,
   accept: boolean,
-  role: StreamRoles = Roles.Stream.Contributor
+  role: StreamRoles = Roles.Stream.Contributor,
+  resourceAccessRules: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 ) {
   const req = await getPendingAccessRequest(requestId, AccessRequestType.Stream)
   if (!req) {
@@ -115,7 +117,12 @@ export async function processPendingStreamRequest(
   }
 
   try {
-    await validateStreamAccess(userId, req.resourceId, Roles.Stream.Owner)
+    await validateStreamAccess(
+      userId,
+      req.resourceId,
+      Roles.Stream.Owner,
+      resourceAccessRules
+    )
   } catch (e: unknown) {
     const err = ensureError(e, 'Stream access validation failed')
     if (err instanceof StreamInvalidAccessError) {
@@ -129,7 +136,13 @@ export async function processPendingStreamRequest(
   }
 
   if (accept) {
-    await addOrUpdateStreamCollaborator(req.resourceId, req.requesterId, role, userId)
+    await addOrUpdateStreamCollaborator(
+      req.resourceId,
+      req.requesterId,
+      role,
+      userId,
+      resourceAccessRules
+    )
   }
 
   await deleteRequestById(req.id)

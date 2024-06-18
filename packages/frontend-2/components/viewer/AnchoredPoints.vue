@@ -5,10 +5,12 @@
   >
     <!-- Add new thread bubble -->
     <ViewerAnchoredPointNewThread
-      v-if="canPostComment"
+      v-if="shouldShowNewThread"
       v-model="buttonState"
+      :can-post-comment="canPostComment"
       class="z-[13]"
       @close="closeNewThread"
+      @login="showLoginDialog = true"
     />
 
     <!-- Comment bubbles -->
@@ -22,14 +24,24 @@
       @update:expanded="onThreadExpandedChange"
       @next="(model) => openNextThread(model)"
       @prev="(model) => openPrevThread(model)"
+      @login="showLoginDialog = true"
     />
 
-    <!-- Active users -->
-    <ViewerAnchoredPointUser
-      v-for="user in Object.values(users)"
-      :key="user.state.sessionId"
-      :user="user"
-      class="z-[10]"
+    <div v-if="!isEmbedEnabled">
+      <!-- Active users -->
+      <ViewerAnchoredPointUser
+        v-for="user in Object.values(users)"
+        :key="user.state.sessionId"
+        :user="user"
+        class="z-[10]"
+      />
+    </div>
+
+    <AuthLoginPanel
+      v-model:open="showLoginDialog"
+      dialog-mode
+      max-width="sm"
+      subtitle="Join the conversation"
     />
 
     <!-- Active user avatars in navbar -->
@@ -37,7 +49,7 @@
       <ViewerScope :state="state">
         <div
           v-if="usersWithAvatars.length > 0"
-          class="px-1 py-1 flex space-x-1 items-center"
+          class="scale-90 flex space-x-1 items-center"
         >
           <!-- <UserAvatarGroup :users="activeUserAvatars" :overlap="false" hover-effect /> -->
           <template v-for="user in usersWithAvatars" :key="user.id">
@@ -62,32 +74,65 @@
 
     <!-- Active user tracking cancel & Follower count display -->
     <div
-      v-if="(spotlightUserSessionId && spotlightUser) || followers.length !== 0"
-      class="absolute w-screen mt-[3.5rem] h-[calc(100dvh-3.5rem)] z-10 p-1"
+      v-if="
+        (!isEmbedEnabled && spotlightUserSessionId && spotlightUser) ||
+        followers.length !== 0
+      "
+      class="absolute w-screen z-10 p-1"
+      :class="
+        isEmbedEnabled
+          ? 'h-[calc(100dvh-3.5rem)]'
+          : 'h-[calc(100dvh-3.5rem)] mt-[3.5rem]'
+      "
     >
       <div
-        class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500/40"
+        class="w-full h-full outline -outline-offset-0 outline-8 rounded-md outline-blue-500"
       >
-        <div class="absolute bottom-4 right-4 p-2 pointer-events-auto">
-          <FormButton
-            v-if="spotlightUserSessionId && spotlightUser"
-            size="xs"
-            class="truncate"
-            @click="() => (spotlightUserSessionId = null)"
+        <div class="absolute top-0 left-0 w-full justify-center flex">
+          <svg
+            class="mt-1"
+            width="8"
+            height="8"
+            viewBox="0 0 8 8"
+            xmlns="http://www.w3.org/2000/svg"
           >
-            <span>Stop Following {{ spotlightUser?.userName.split(' ')[0] }}</span>
-          </FormButton>
+            <path d="M0 0C4.5 0 8 3.5 8 8V0H0Z" class="fill-blue-500" />
+          </svg>
           <div
-            v-else
-            v-tippy="followers.map((u) => u.name).join(', ')"
-            class="text-xs p-2 font-bold text-primary"
+            class="pointer-events-auto bg-primary text-white text-xs px-3 h-8 flex items-center rounded-b-md cursor-default"
           >
-            Followed by {{ followers[0].name.split(' ')[0] }}
-            <span v-if="followers.length > 1">
-              & {{ followers.length - 1 }}
-              {{ followers.length - 1 === 1 ? 'other' : 'others' }}
-            </span>
+            <div v-if="spotlightUserSessionId && spotlightUser">
+              Following {{ spotlightUser?.userName.split(' ')[0] }}
+              <FormButton
+                color="secondary"
+                size="xs"
+                class="ml-1 -mr-1.5"
+                @click="() => (spotlightUserSessionId = null)"
+              >
+                <span>Stop</span>
+              </FormButton>
+            </div>
+            <div
+              v-else
+              v-tippy="{ placement: 'bottom' }"
+              :content="followers.map((u) => u.name).join(', ')"
+            >
+              Followed by {{ followers[0].name.split(' ')[0] }}
+              <span v-if="followers.length > 1">
+                & {{ followers.length - 1 }}
+                {{ followers.length - 1 === 1 ? 'other' : 'others' }}
+              </span>
+            </div>
           </div>
+          <svg
+            class="mt-1"
+            width="8"
+            height="8"
+            viewBox="0 0 8 8"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path d="M0 0H8C3.5 0 0 3.5 0 8V0Z" class="fill-blue-500" />
+          </svg>
         </div>
       </div>
     </div>
@@ -95,6 +140,7 @@
 </template>
 <script setup lang="ts">
 import type { Nullable } from '@speckle/shared'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { LimitedUser } from '~~/lib/common/generated/gql/graphql'
 import type { SetFullyRequired } from '~~/lib/common/helpers/type'
@@ -120,6 +166,8 @@ const { isOpenThread, open } = useThreadUtilities()
 
 const canPostComment = useCheckViewerCommentingAccess()
 
+const { isEnabled: isEmbedEnabled } = useEmbed()
+
 const followers = computed(() => {
   if (!isLoggedIn.value) return []
   const res = [] as LimitedUser[]
@@ -138,6 +186,8 @@ const {
     hideBubbles
   }
 } = useInjectedViewerInterfaceState()
+
+const showLoginDialog = ref(false)
 
 useViewerCommentBubblesProjection({ parentEl })
 
@@ -160,6 +210,11 @@ const onThreadExpandedChange = (isExpanded: boolean) => {
     closeNewThread()
   }
 }
+
+const shouldShowNewThread = computed(
+  () =>
+    !isEmbedEnabled.value && !state.ui.measurement.enabled.value && canPostComment.value
+)
 
 const allThreadsChronologicalOrder = computed(() => {
   const vals = Object.values(commentThreads.value)

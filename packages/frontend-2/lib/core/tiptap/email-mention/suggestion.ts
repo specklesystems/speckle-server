@@ -1,19 +1,17 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { Editor } from '@tiptap/core'
-import type { Range } from '@tiptap/core'
-import { EditorState, Plugin, PluginKey } from '@tiptap/pm/state'
-import { Decoration, DecorationSet, EditorView } from '@tiptap/pm/view'
+import type { Editor, Range } from '@tiptap/core'
+import type { EditorState } from '@tiptap/pm/state'
+import { Plugin, PluginKey } from '@tiptap/pm/state'
+import type { EditorView } from '@tiptap/pm/view'
+import { Decoration, DecorationSet } from '@tiptap/pm/view'
 
 import tippy from 'tippy.js'
 import type { Instance, GetReferenceClientRect } from 'tippy.js'
 import TiptapEmailMentionPopup from '~~/components/common/tiptap/EmailMentionPopup.vue'
 import { VueRenderer } from '@tiptap/vue-3'
 import { mentionsUserSearchQuery } from '~~/lib/common/graphql/queries'
-import { ApolloClient } from '@apollo/client/core'
+import type { ApolloClient } from '@apollo/client/core'
 import type {
   MentionData,
   SuggestionOptionsItem

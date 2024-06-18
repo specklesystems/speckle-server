@@ -1,12 +1,12 @@
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
-import cron from 'node-cron'
 import { sendActivityNotifications } from '@/modules/activitystream/services/summary'
 import { initializeEventListener } from '@/modules/activitystream/services/eventListener'
 import { publishNotification } from '@/modules/notifications/services/publication'
 import { scheduleExecution } from '@/modules/core/services/taskScheduler'
 import { activitiesLogger, moduleLogger } from '@/logging/logging'
+import { weeklyEmailDigestEnabled } from '@/modules/shared/helpers/envHelper'
 
-let scheduledTask: cron.ScheduledTask | null = null
+let scheduledTask: ReturnType<typeof scheduleExecution> | null = null
 
 const scheduleWeeklyActivityNotifications = () => {
   // just to test stuff
@@ -38,7 +38,8 @@ const activityModule: SpeckleModule = {
     moduleLogger.info('🤺 Init activity module')
     if (isInitial) {
       initializeEventListener()
-      scheduledTask = scheduleWeeklyActivityNotifications()
+      if (weeklyEmailDigestEnabled())
+        scheduledTask = scheduleWeeklyActivityNotifications()
     }
   },
   shutdown: () => {

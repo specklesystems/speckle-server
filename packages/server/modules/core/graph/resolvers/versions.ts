@@ -14,6 +14,13 @@ import { CommitUpdateError } from '@/modules/core/errors/commit'
 import { updateCommitAndNotify } from '@/modules/core/services/commit/management'
 
 export = {
+  Project: {
+    async version(parent, args, ctx) {
+      return await ctx.loaders.streams.getStreamCommit
+        .forStream(parent.id)
+        .load(args.id)
+    }
+  },
   Version: {
     async authorUser(parent, _args, ctx) {
       const { author } = parent
@@ -48,7 +55,12 @@ export = {
         throw new CommitUpdateError('Commit stream not found')
       }
 
-      await authorizeResolver(ctx.userId!, stream.id, Roles.Stream.Contributor)
+      await authorizeResolver(
+        ctx.userId,
+        stream.id,
+        Roles.Stream.Contributor,
+        ctx.resourceAccessRules
+      )
       return await updateCommitAndNotify(args.input, ctx.userId!)
     }
   },
@@ -59,7 +71,12 @@ export = {
         async (payload, args, ctx) => {
           if (payload.projectId !== args.id) return false
 
-          await authorizeResolver(ctx.userId, payload.projectId, Roles.Stream.Reviewer)
+          await authorizeResolver(
+            ctx.userId,
+            payload.projectId,
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
+          )
           return true
         }
       )
@@ -73,7 +90,8 @@ export = {
           await authorizeResolver(
             ctx.userId,
             payload.projectVersionsPreviewGenerated.projectId,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
           )
           return true
         }

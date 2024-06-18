@@ -1,17 +1,18 @@
-import { Group, Mesh, Object3D } from 'three'
-import { TreeNode, WorldTree } from '../../tree/WorldTree'
-import {
-  ConverterNodeDelegate,
-  ConverterResultDelegate
-} from '../Speckle/SpeckleConverter'
+import { Mesh, Object3D } from 'three'
+import { type TreeNode, WorldTree } from '../../tree/WorldTree'
+import type { ConverterResultDelegate } from '../Speckle/SpeckleConverter'
 import Logger from 'js-logger'
 
+export type ObjConverterNodeDelegate =
+  | ((object: Object3D, node: TreeNode) => Promise<void>)
+  | null
+
 export class ObjConverter {
-  private lastAsyncPause: number
+  private lastAsyncPause: number = 0
   private tree: WorldTree
 
   private readonly NodeConverterMapping: {
-    [name: string]: ConverterNodeDelegate
+    [name: string]: ObjConverterNodeDelegate
   } = {
     Group: this.groupToNode.bind(this),
     Mesh: this.MeshToNode.bind(this)
@@ -33,7 +34,7 @@ export class ObjConverter {
     objectURL: string,
     object: Object3D,
     callback: ConverterResultDelegate,
-    node: TreeNode = null
+    node: TreeNode | null = null
   ) {
     await this.asyncPause()
 
@@ -64,18 +65,19 @@ export class ObjConverter {
       }
     }
     for (let k = 0; k < object.children.length; k++) {
-      this.traverse(objectURL, object.children[k], callback, childNode)
+      void this.traverse(objectURL, object.children[k], callback, childNode)
     }
   }
 
-  private directNodeConverterExists(obj) {
+  private directNodeConverterExists(obj: Object3D) {
     return obj.type in this.NodeConverterMapping
   }
 
-  private async convertToNode(obj, node) {
+  private async convertToNode(obj: Object3D, node: TreeNode) {
     try {
       if (this.directNodeConverterExists(obj)) {
-        return await this.NodeConverterMapping[obj.type](obj, node)
+        const delegate = this.NodeConverterMapping[obj.type]
+        if (delegate) return await delegate(obj, node)
       }
       return null
     } catch (e) {
@@ -84,7 +86,8 @@ export class ObjConverter {
     }
   }
 
-  private async MeshToNode(obj: Mesh, node) {
+  private async MeshToNode(_obj: Object3D, node: TreeNode) {
+    const obj = _obj as Mesh
     if (!obj) return
     if (
       !obj.geometry.attributes.position ||
@@ -99,10 +102,12 @@ export class ObjConverter {
     node.model.raw.vertices = obj.geometry.attributes.position.array
     node.model.raw.faces = obj.geometry.index?.array
     node.model.raw.colors = obj.geometry.attributes.color?.array
+    return Promise.resolve()
   }
 
-  private groupToNode(obj: Group, node) {
+  private groupToNode(obj: Object3D, node: TreeNode) {
     obj
     node
+    return Promise.resolve()
   }
 }

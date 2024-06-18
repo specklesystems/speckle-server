@@ -13,7 +13,12 @@ const {
 const { Roles } = require('@speckle/shared')
 
 const streamWebhooksResolver = async (parent, args, context) => {
-  await authorizeResolver(context.userId, parent.id, Roles.Stream.Owner)
+  await authorizeResolver(
+    context.userId,
+    parent.id,
+    Roles.Stream.Owner,
+    context.resourceAccessRules
+  )
 
   if (args.id) {
     const wh = await getWebhook({ id: args.id })
@@ -50,7 +55,12 @@ module.exports = {
 
   Mutation: {
     async webhookCreate(parent, args, context) {
-      await authorizeResolver(context.userId, args.webhook.streamId, Roles.Stream.Owner)
+      await authorizeResolver(
+        context.userId,
+        args.webhook.streamId,
+        Roles.Stream.Owner,
+        context.resourceAccessRules
+      )
 
       const id = await createWebhook({
         streamId: args.webhook.streamId,
@@ -64,7 +74,12 @@ module.exports = {
       return id
     },
     async webhookUpdate(parent, args, context) {
-      await authorizeResolver(context.userId, args.webhook.streamId, Roles.Stream.Owner)
+      await authorizeResolver(
+        context.userId,
+        args.webhook.streamId,
+        Roles.Stream.Owner,
+        context.resourceAccessRules
+      )
 
       const wh = await getWebhook({ id: args.webhook.id })
       if (args.webhook.streamId !== wh.streamId)
@@ -84,7 +99,12 @@ module.exports = {
       return !!updated
     },
     async webhookDelete(parent, args, context) {
-      await authorizeResolver(context.userId, args.webhook.streamId, Roles.Stream.Owner)
+      await authorizeResolver(
+        context.userId,
+        args.webhook.streamId,
+        Roles.Stream.Owner,
+        context.resourceAccessRules
+      )
 
       const wh = await getWebhook({ id: args.webhook.id })
       if (args.webhook.streamId !== wh.streamId)

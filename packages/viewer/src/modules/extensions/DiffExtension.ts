@@ -1,20 +1,17 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { Color, DoubleSide, FrontSide } from 'three'
-import { TreeNode, WorldTree } from '../tree/WorldTree'
+import { Color, DoubleSide, FrontSide, Material } from 'three'
+import { type TreeNode, WorldTree } from '../tree/WorldTree'
 import Logger from 'js-logger'
-import _, { omit } from 'underscore'
+import { groupBy } from 'lodash-es'
 import { GeometryType } from '../batching/Batch'
 import SpeckleLineMaterial from '../materials/SpeckleLineMaterial'
 import SpecklePointMaterial from '../materials/SpecklePointMaterial'
 import SpeckleStandardMaterial from '../materials/SpeckleStandardMaterial'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { IViewer } from '../../IViewer'
-import { Extension } from './core-extensions/Extension'
+import { type IViewer } from '../../IViewer'
+import { Extension } from './Extension'
 import { SpeckleTypeAllRenderables } from '../loaders/GeometryConverter'
 import { SpeckleLoader } from '../loaders/Speckle/SpeckleLoader'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type SpeckleObject = Record<string, any>
 type SpeckleMaterialType =
   | SpeckleStandardMaterial
   | SpecklePointMaterial
@@ -26,10 +23,10 @@ export enum VisualDiffMode {
 }
 
 export interface DiffResult {
-  unchanged: Array<SpeckleObject>
-  added: Array<SpeckleObject>
-  removed: Array<SpeckleObject>
-  modified: Array<Array<SpeckleObject>>
+  unchanged: Array<TreeNode>
+  added: Array<TreeNode>
+  removed: Array<TreeNode>
+  modified: Array<Array<TreeNode>>
 }
 
 interface VisualDiffResult {
@@ -41,24 +38,38 @@ interface VisualDiffResult {
 }
 
 export class DiffExtension extends Extension {
-  protected tree: WorldTree = null
-  private addedMaterialMesh: SpeckleStandardMaterial = null
-  private changedNewMaterialMesh: SpeckleStandardMaterial = null
-  private changedOldMaterialMesh: SpeckleStandardMaterial = null
-  private removedMaterialMesh: SpeckleStandardMaterial = null
+  public get enabled(): boolean {
+    return this._enabled
+  }
 
-  private addedMaterialPoint: SpecklePointMaterial = null
-  private changedNewMaterialPoint: SpecklePointMaterial = null
-  private changedOldMaterialPoint: SpecklePointMaterial = null
-  private removedMaterialPoint: SpecklePointMaterial = null
+  public set enabled(value: boolean) {
+    this._enabled = value
+  }
+
+  protected tree: WorldTree
+  private addedMaterialMesh: SpeckleStandardMaterial
+  private changedNewMaterialMesh: SpeckleStandardMaterial
+  private changedOldMaterialMesh: SpeckleStandardMaterial
+  private removedMaterialMesh: SpeckleStandardMaterial
+
+  private addedMaterialPoint: SpecklePointMaterial
+  private changedNewMaterialPoint: SpecklePointMaterial
+  private changedOldMaterialPoint: SpecklePointMaterial
+  private removedMaterialPoint: SpecklePointMaterial
 
   private addedMaterials: Array<SpeckleMaterialType> = []
   private changedOldMaterials: Array<SpeckleMaterialType> = []
   private changedNewMaterials: Array<SpeckleMaterialType> = []
   private removedMaterials: Array<SpeckleMaterialType> = []
 
-  private _materialGroups = null
-  private _visualDiff: VisualDiffResult = null
+  private _materialGroups:
+    | {
+        rvs: NodeRenderView[]
+        material: SpeckleMaterialType
+      }[]
+    | null
+
+  private _visualDiff!: VisualDiffResult
   private _diffTime = -1
   private _diffMode: VisualDiffMode = VisualDiffMode.COLORED
 
@@ -200,7 +211,8 @@ export class DiffExtension extends Extension {
     if (!this.tree.findId(urlA)) {
       loadPromises.push(
         this.viewer.loadObject(
-          new SpeckleLoader(this.viewer.getWorldTree(), urlA, authToken)
+          new SpeckleLoader(this.viewer.getWorldTree(), urlA, authToken),
+          false
         )
       )
       this.dynamicallyLoadedDiffResources.push(urlA)
@@ -208,7 +220,8 @@ export class DiffExtension extends Extension {
     if (!this.tree.findId(urlB)) {
       loadPromises.push(
         this.viewer.loadObject(
-          new SpeckleLoader(this.viewer.getWorldTree(), urlB, authToken)
+          new SpeckleLoader(this.viewer.getWorldTree(), urlB, authToken),
+          false
         )
       )
       this.dynamicallyLoadedDiffResources.push(urlB)
@@ -227,7 +240,7 @@ export class DiffExtension extends Extension {
   }
 
   /** Currently, the diff does not store the existing materials. We can do that if we need to */
-  public async undiff() {
+  public async undiff(): Promise<void> {
     const pipelineOptions = this.viewer.getRenderer().pipelineOptions
     pipelineOptions.depthSide = DoubleSide
     this.viewer.getRenderer().pipelineOptions = pipelineOptions
@@ -241,12 +254,6 @@ export class DiffExtension extends Extension {
     }
     this.dynamicallyLoadedDiffResources = []
     await Promise.all(unloadPromises)
-  }
-
-  private intersection(o1, o2) {
-    const [k1, k2] = [Object.keys(o1), Object.keys(o2)]
-    const [first, next] = k1.length > k2.length ? [k2, o1] : [k1, o2]
-    return first.filter((k) => k in next)
   }
 
   private buildIdMaps(
@@ -278,93 +285,7 @@ export class DiffExtension extends Extension {
     return Promise.resolve(diffResult)
   }
 
-  private diffBoolean(urlA: string, urlB: string): Promise<DiffResult> {
-    const start = performance.now()
-    const diffResult: DiffResult = {
-      unchanged: [],
-      added: [],
-      removed: [],
-      modified: []
-    }
-
-    const renderTreeA = this.tree.getRenderTree(urlA)
-    const renderTreeB = this.tree.getRenderTree(urlB)
-    let rvsA = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
-    let rvsB = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
-
-    rvsA = rvsA.map((value) => {
-      return renderTreeA.getAtomicParent(value)
-    })
-
-    rvsB = rvsB.map((value) => {
-      return renderTreeB.getAtomicParent(value)
-    })
-
-    rvsA = [...Array.from(new Set(rvsA))]
-    rvsB = [...Array.from(new Set(rvsB))]
-
-    const idMapA = {}
-    const appIdMapA = {}
-    this.buildIdMaps(rvsA, idMapA, appIdMapA)
-
-    const idMapB = {}
-    const appIdMapB = {}
-    this.buildIdMaps(rvsB, idMapB, appIdMapB)
-
-    /** Get the ids which are common between the two maps. This will be objects
-     *  which have not changed
-     */
-    const unchanged: Array<string> = this.intersection(idMapA, idMapB)
-    /** We remove the unchanged objects from B and end up with changed + added */
-    const addedModified = _.omit(idMapB, unchanged)
-    /** We remove the unchanged objects from A and end up with changed + removed */
-    const removedModified = _.omit(idMapA, unchanged)
-    /** We remove the changed objects from B. An object from B is changed if
-     *  it's application ID exists in A
-     */
-    const added = _.omit(addedModified, function (value, key, object) {
-      return value.applicationId && appIdMapA[value.applicationId] !== undefined
-    })
-    /** We remove the changed objects from A. An object from A is changed if
-     *  it's application ID exists in B
-     */
-    const removed = _.omit(removedModified, function (value, key, object) {
-      return value.applicationId && appIdMapB[value.applicationId] !== undefined
-    })
-    /** We remove the removed objects from A, leaving us only changed objects */
-    const modifiedRemoved = _.omit(removedModified, Object.keys(removed))
-    /** We remove the removed objects from B, leaving us only changed objects */
-    const modifiedAdded = _.omit(addedModified, Object.keys(added))
-
-    /** We fill the arrays from here on out */
-    const modifiedOld = Object.values(modifiedRemoved).map(
-      (value: { node: TreeNode }) => value.node
-    )
-    const modifiedNew = Object.values(modifiedAdded).map(
-      (value: { node: TreeNode }) => value.node
-    )
-    diffResult.unchanged.push(...unchanged.map((value) => idMapA[value].node))
-    diffResult.unchanged.push(...unchanged.map((value) => idMapB[value].node))
-    diffResult.removed.push(
-      ...Object.values(removed).map((value: { node: TreeNode }) => value.node)
-    )
-    diffResult.added.push(
-      ...Object.values(added).map((value: { node: TreeNode }) => value.node)
-    )
-
-    modifiedOld.forEach((value, index) => {
-      value
-      diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
-    })
-    console.warn('Boolean Time -> ', performance.now() - start)
-    return Promise.resolve(diffResult)
-  }
-
   private diffIterative(urlA: string, urlB: string): Promise<DiffResult> {
-    const start = performance.now()
-    const modifiedNew: Array<SpeckleObject> = []
-    const modifiedOld: Array<SpeckleObject> = []
-
     const diffResult: DiffResult = {
       unchanged: [],
       added: [],
@@ -374,8 +295,18 @@ export class DiffExtension extends Extension {
 
     const renderTreeA = this.tree.getRenderTree(urlA)
     const renderTreeB = this.tree.getRenderTree(urlB)
-    let rvsA = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
-    let rvsB = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
+    if (!renderTreeA) {
+      return Promise.reject(
+        `Could not make diff. Resource ${urlA} could not be fetched`
+      )
+    }
+    if (!renderTreeB) {
+      return Promise.reject(
+        `Could not make diff. Resource ${urlB} could not be fetched`
+      )
+    }
+    let rvsA: TreeNode[] = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
+    let rvsB: TreeNode[] = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
 
     rvsA = rvsA.map((value) => {
       return renderTreeA.getAtomicParent(value)
@@ -388,12 +319,12 @@ export class DiffExtension extends Extension {
     rvsA = [...Array.from(new Set(rvsA))]
     rvsB = [...Array.from(new Set(rvsB))]
 
-    const idMapA = {}
-    const appIdMapA = {}
+    const idMapA: { [id: string]: { node: TreeNode; applicationId: string } } = {}
+    const appIdMapA: { [id: string]: TreeNode } = {}
     this.buildIdMaps(rvsA, idMapA, appIdMapA)
 
-    const idMapB = {}
-    const appIdMapB = {}
+    const idMapB: { [id: string]: { node: TreeNode; applicationId: string } } = {}
+    const appIdMapB: { [id: string]: TreeNode } = {}
     this.buildIdMaps(rvsB, idMapB, appIdMapB)
 
     for (let k = 0; k < rvsB.length; k++) {
@@ -438,28 +369,27 @@ export class DiffExtension extends Extension {
       }
     }
 
-    console.warn('Interative Time -> ', performance.now() - start)
-
     return Promise.resolve(diffResult)
   }
 
-  public updateVisualDiff(time?: number, mode?: VisualDiffMode) {
-    if (
-      (mode !== undefined && mode !== this._diffMode) ||
-      this._materialGroups === null
-    ) {
+  public updateVisualDiff(time?: number, mode?: VisualDiffMode): void {
+    if ((mode !== undefined && mode !== this._diffMode) || !this._materialGroups) {
       this.resetMaterialGroups()
-      this.buildMaterialGroups(mode)
-      this._diffMode = mode
+      /** Catering to typescript */
+      if (mode !== undefined) {
+        this.buildMaterialGroups(mode)
+        this._diffMode = mode
+      }
     }
     if (time !== undefined && time !== this._diffTime) {
       this.setDiffTime(time)
       this._diffTime = time
     }
 
-    this._materialGroups.forEach((value) => {
-      this.viewer.getRenderer().setMaterial(value.rvs, value.material)
-    })
+    if (this._materialGroups)
+      this._materialGroups.forEach((value) => {
+        this.viewer.getRenderer().setMaterial(value.rvs, value.material)
+      })
     this.viewer.requestRender()
   }
 
@@ -469,7 +399,9 @@ export class DiffExtension extends Extension {
 
     this.addedMaterials.forEach((mat) => {
       mat.opacity =
-        mat['clampOpacity'] !== undefined ? Math.min(from, mat['clampOpacity']) : from
+        (mat as never)['clampOpacity'] !== undefined
+          ? Math.min(from, (mat as never)['clampOpacity'])
+          : from
       mat.depthWrite = from < 0.5 ? false : true
       mat.transparent = mat.opacity < 1
       mat.needsCopy = true
@@ -477,7 +409,9 @@ export class DiffExtension extends Extension {
 
     this.changedOldMaterials.forEach((mat) => {
       mat.opacity =
-        mat['clampOpacity'] !== undefined ? Math.min(to, mat['clampOpacity']) : to
+        (mat as never)['clampOpacity'] !== undefined
+          ? Math.min(to, (mat as never)['clampOpacity'])
+          : to
       mat.depthWrite = to < 0.5 ? false : true
       mat.transparent = mat.opacity < 1
       mat.needsCopy = true
@@ -485,7 +419,9 @@ export class DiffExtension extends Extension {
 
     this.changedNewMaterials.forEach((mat) => {
       mat.opacity =
-        mat['clampOpacity'] !== undefined ? Math.min(from, mat['clampOpacity']) : from
+        (mat as never)['clampOpacity'] !== undefined
+          ? Math.min(from, (mat as never)['clampOpacity'])
+          : from
       mat.depthWrite = from < 0.5 ? false : true
       mat.transparent = mat.opacity < 1
       mat.needsCopy = true
@@ -493,7 +429,9 @@ export class DiffExtension extends Extension {
 
     this.removedMaterials.forEach((mat) => {
       mat.opacity =
-        mat['clampOpacity'] !== undefined ? Math.min(to, mat['clampOpacity']) : to
+        (mat as never)['clampOpacity'] !== undefined
+          ? Math.min(to, (mat as never)['clampOpacity'])
+          : to
       mat.depthWrite = to < 0.5 ? false : true
       mat.transparent = mat.opacity < 1
       mat.needsCopy = true
@@ -525,31 +463,25 @@ export class DiffExtension extends Extension {
     const renderTree = this.tree.getRenderTree()
 
     const addedRvs = diffResult.added.flatMap((value) => {
-      return renderTree.getRenderViewsForNode(value as TreeNode, value as TreeNode)
+      return renderTree.getRenderViewsForNode(value)
     })
     const removedRvs = diffResult.removed.flatMap((value) => {
-      return renderTree.getRenderViewsForNode(value as TreeNode, value as TreeNode)
+      return renderTree.getRenderViewsForNode(value)
     })
     const unchangedRvs = diffResult.unchanged.flatMap((value) => {
-      return renderTree.getRenderViewsForNode(value as TreeNode, value as TreeNode)
+      return renderTree.getRenderViewsForNode(value)
     })
 
     const modifiedOldRvs = diffResult.modified
       .flatMap((value) => {
-        return renderTree.getRenderViewsForNode(
-          value[0] as TreeNode,
-          value[0] as TreeNode
-        )
+        return renderTree.getRenderViewsForNode(value[0])
       })
       .filter((value) => {
         return !unchangedRvs.includes(value) && !removedRvs.includes(value)
       })
     const modifiedNewRvs = diffResult.modified
       .flatMap((value) => {
-        return renderTree.getRenderViewsForNode(
-          value[1] as TreeNode,
-          value[1] as TreeNode
-        )
+        return renderTree.getRenderViewsForNode(value[1])
       })
       .filter((value) => {
         return !unchangedRvs.includes(value) && !addedRvs.includes(value)
@@ -655,23 +587,42 @@ export class DiffExtension extends Extension {
     const changedOld = this.getBatchesSubgroups(visualDiffResult.modifiedOld)
     const changedNew = this.getBatchesSubgroups(visualDiffResult.modifiedNew)
     const removed = this.getBatchesSubgroups(visualDiffResult.removed)
-    this.addedMaterials = added.map((value) => value.material)
-    this.changedOldMaterials = changedOld.map((value) => value.material)
-    this.changedNewMaterials = changedNew.map((value) => value.material)
-    this.removedMaterials = removed.map((value) => value.material)
+    this.addedMaterials = added.map(
+      (value: { rvs: NodeRenderView[]; material: SpeckleMaterialType }) =>
+        value.material
+    )
+    this.changedOldMaterials = changedOld.map(
+      (value: { rvs: NodeRenderView[]; material: SpeckleMaterialType }) =>
+        value.material
+    )
+    this.changedNewMaterials = changedNew.map(
+      (value: { rvs: NodeRenderView[]; material: SpeckleMaterialType }) =>
+        value.material
+    )
+    this.removedMaterials = removed.map(
+      (value: { rvs: NodeRenderView[]; material: SpeckleMaterialType }) =>
+        value.material
+    )
     return [...added, ...changedOld, ...changedNew, ...removed]
   }
 
-  private getBatchesSubgroups(subgroup: Array<NodeRenderView>) {
-    const groupBatches = _.groupBy(subgroup, 'batchId')
+  private getBatchesSubgroups(subgroup: Array<NodeRenderView>): {
+    rvs: NodeRenderView[]
+    material: SpeckleMaterialType
+  }[] {
+    const groupBatches = groupBy(subgroup, 'batchId')
 
-    const materialGroup = []
+    const materialGroup: {
+      rvs: NodeRenderView[]
+      material: SpeckleMaterialType
+    }[] = []
     for (const k in groupBatches) {
-      const matClone = this.viewer
-        .getRenderer()
-        .getBatchMaterial(groupBatches[k][0])
-        .clone()
-      matClone['clampOpacity'] = matClone.opacity
+      const matClone: SpeckleMaterialType = (
+        this.viewer.getRenderer().getBatchMaterial(groupBatches[k][0]) as Material
+      ).clone() as SpeckleMaterialType
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ;(matClone as any)['clampOpacity'] = matClone.opacity
       matClone.opacity = 0.5
       matClone.transparent = true
       materialGroup.push({
@@ -682,4 +633,114 @@ export class DiffExtension extends Extension {
 
     return materialGroup
   }
+
+  /** Keeping this for reference */
+  // private intersection(o1: object, o2: object) {
+  //   const [k1, k2] = [Object.keys(o1), Object.keys(o2)]
+  //   const [first, next] = k1.length > k2.length ? [k2, o1] : [k1, o2]
+  //   return first.filter((k) => k in next)
+  // }
+
+  // private diffBoolean(urlA: string, urlB: string): Promise<DiffResult> {
+  //   const diffResult: DiffResult = {
+  //     unchanged: [],
+  //     added: [],
+  //     removed: [],
+  //     modified: []
+  //   }
+
+  //   const renderTreeA = this.tree!.getRenderTree(urlA)
+  //   const renderTreeB = this.tree!.getRenderTree(urlB)
+  //   if (!renderTreeA) {
+  //     return Promise.reject(
+  //       `Could not make diff. Resource ${urlA} could not be fetched`
+  //     )
+  //   }
+  //   if (!renderTreeB) {
+  //     return Promise.reject(
+  //       `Could not make diff. Resource ${urlB} could not be fetched`
+  //     )
+  //   }
+  //   let rvsA: TreeNode[] = renderTreeA.getRenderableNodes(...SpeckleTypeAllRenderables)
+  //   let rvsB: TreeNode[] = renderTreeB.getRenderableNodes(...SpeckleTypeAllRenderables)
+
+  //   rvsA = rvsA.map((value: TreeNode) => {
+  //     return renderTreeA.getAtomicParent(value)
+  //   })
+
+  //   rvsB = rvsB.map((value) => {
+  //     return renderTreeB.getAtomicParent(value)
+  //   })
+
+  //   rvsA = [...Array.from(new Set(rvsA))]
+  //   rvsB = [...Array.from(new Set(rvsB))]
+
+  //   const idMapA: { [id: string]: { node: TreeNode; applicationId: string } } = {}
+  //   const appIdMapA: { [id: string]: TreeNode } = {}
+  //   this.buildIdMaps(rvsA, idMapA, appIdMapA)
+
+  //   const idMapB: { [id: string]: { node: TreeNode; applicationId: string } } = {}
+  //   const appIdMapB: { [id: string]: TreeNode } = {}
+  //   this.buildIdMaps(rvsB, idMapB, appIdMapB)
+
+  //   /** Get the ids which are common between the two maps. This will be objects
+  //    *  which have not changed
+  //    */
+  //   const unchanged: Array<string> = this.intersection(idMapA, idMapB)
+  //   /** We remove the unchanged objects from B and end up with changed + added */
+  //   const addedModified = _.omit(idMapB, unchanged)
+  //   /** We remove the unchanged objects from A and end up with changed + removed */
+  //   const removedModified = _.omit(idMapA, unchanged)
+  //   /** We remove the changed objects from B. An object from B is changed if
+  //    *  it's application ID exists in A
+  //    */
+  //   const added = _.omit(addedModified, function (value: { applicationId: string }) {
+  //     return (
+  //       value.applicationId !== undefined &&
+  //       appIdMapA[value.applicationId] !== undefined
+  //     )
+  //   })
+  //   /** We remove the changed objects from A. An object from A is changed if
+  //    *  it's application ID exists in B
+  //    */
+  //   const removed = _.omit(
+  //     removedModified,
+  //     function (value: { applicationId: string }) {
+  //       return (
+  //         value.applicationId !== undefined &&
+  //         appIdMapB[value.applicationId] !== undefined
+  //       )
+  //     }
+  //   )
+  //   /** We remove the removed objects from A, leaving us only changed objects */
+  //   const modifiedRemoved = _.omit(removedModified, Object.keys(removed))
+  //   /** We remove the removed objects from B, leaving us only changed objects */
+  //   const modifiedAdded = _.omit(addedModified, Object.keys(added))
+
+  //   /** We fill the arrays from here on out */
+  //   const modifiedOld = (Object.values(modifiedRemoved) as { node: TreeNode }[]).map(
+  //     (value: { node: TreeNode }) => value.node
+  //   )
+  //   const modifiedNew = (Object.values(modifiedAdded) as { node: TreeNode }[]).map(
+  //     (value: { node: TreeNode }) => value.node
+  //   )
+  //   diffResult.unchanged.push(...unchanged.map((value) => idMapA[value].node))
+  //   diffResult.unchanged.push(...unchanged.map((value) => idMapB[value].node))
+  //   diffResult.removed.push(
+  //     ...(Object.values(removed) as { node: TreeNode }[]).map(
+  //       (value: { node: TreeNode }) => value.node
+  //     )
+  //   )
+  //   diffResult.added.push(
+  //     ...(Object.values(added) as { node: TreeNode }[]).map(
+  //       (value: { node: TreeNode }) => value.node
+  //     )
+  //   )
+
+  //   modifiedOld.forEach((value, index) => {
+  //     value
+  //     diffResult.modified.push([modifiedOld[index], modifiedNew[index]])
+  //   })
+  //   return Promise.resolve(diffResult)
+  // }
 }

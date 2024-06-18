@@ -44,7 +44,7 @@ import dayjs from 'dayjs'
 import { times } from 'lodash-es'
 import type { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
-import { getLinkToThread } from '~~/lib/viewer/helpers/comments'
+import { getLightLinkToThread } from '~~/lib/viewer/helpers/comments'
 import { CheckCircleIcon } from '@heroicons/vue/24/solid'
 import type { AvatarUserWithId } from '@speckle/ui-components'
 
@@ -81,5 +81,7 @@ const allAvatars = computed((): AvatarUserWithId[] => [
   )
 ])
 
-const threadLink = computed(() => getLinkToThread(props.projectId, props.thread))
+const threadLink = computed(() =>
+  getLightLinkToThread(props.projectId, props.thread.id)
+)
 </script>

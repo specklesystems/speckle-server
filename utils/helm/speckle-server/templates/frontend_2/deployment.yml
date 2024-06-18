@@ -20,7 +20,7 @@ spec:
     spec:
       containers:
       - name: main
-        image: speckle/speckle-frontend-2:{{ .Values.docker_image_tag }}
+        image: {{ default (printf "speckle/speckle-frontend-2:%s" .Values.docker_image_tag) .Values.frontend_2.image }}
         imagePullPolicy: {{ .Values.imagePullPolicy }}
 
         ports:
@@ -44,24 +44,29 @@ spec:
 
         livenessProbe:
           httpGet:
-            path: /health
+            path: /api/status
             port: www
           failureThreshold: 3
           initialDelaySeconds: 10
-          periodSeconds: 10
+          periodSeconds: 5
           successThreshold: 1
-          timeoutSeconds: 10
+          timeoutSeconds: 5
         readinessProbe:
           httpGet:
-            path: /health
+            path: /api/status
             port: www
+          failureThreshold: 1
           initialDelaySeconds: 5
           periodSeconds: 5
+          successThreshold: 1
+          timeoutSeconds: 5
 
-        env: 
+        env:
           - name: FILE_SIZE_LIMIT_MB
             value: {{ .Values.file_size_limit_mb | quote }}
           - name: NUXT_PUBLIC_API_ORIGIN
+            value: {{ .Values.ssl_canonical_url | ternary (printf "https://%s" .Values.domain) (printf "http://%s" .Values.domain) }}
+          - name: NUXT_PUBLIC_BASE_URL
             value: {{ .Values.ssl_canonical_url | ternary (printf "https://%s" .Values.domain) (printf "http://%s" .Values.domain) }}
           - name: NUXT_PUBLIC_BACKEND_API_ORIGIN
             value: {{ printf "http://%s.%s.svc.cluster.local.:3000" (include "server.name" $) .Values.namespace }}
@@ -79,6 +84,37 @@ spec:
             value: {{ .Values.frontend_2.logClientApiEndpoint }}
           - name: NODE_TLS_REJECT_UNAUTHORIZED
             value: {{ .Values.tlsRejectUnauthorized | quote }}
+          - name: NUXT_REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
+                key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
+          {{- if .Values.analytics.datadog_app_id }}
+          - name: NUXT_PUBLIC_DATADOG_APP_ID
+            value: {{ .Values.analytics.datadog_app_id | quote }}
+          {{- end }}
+          {{- if .Values.analytics.datadog_client_token }}
+          - name: NUXT_PUBLIC_DATADOG_CLIENT_TOKEN
+            value: {{ .Values.analytics.datadog_client_token | quote }}
+          {{- end }}
+          {{- if .Values.analytics.datadog_site }}
+          - name: NUXT_PUBLIC_DATADOG_SITE
+            value: {{ .Values.analytics.datadog_site | quote }}
+          {{- end }}
+          {{- if .Values.analytics.datadog_service }}
+          - name: NUXT_PUBLIC_DATADOG_SERVICE
+            value: {{ .Values.analytics.datadog_service | quote }}
+          {{- end }}
+          {{- if .Values.analytics.datadog_env }}
+          - name: NUXT_PUBLIC_DATADOG_ENV
+            value: {{ .Values.analytics.datadog_env | quote }}
+          {{- end }}
+          - name: NUXT_PUBLIC_FF_AUTOMATE_MODULE_ENABLED
+            value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
+          {{- if .Values.analytics.survicate_workspace_key }}
+          - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
+            value: {{ .Values.analytics.survicate_workspace_key | quote }}
+          {{- end }}
 
       priorityClassName: high-priority
       {{- if .Values.frontend_2.affinity }}

@@ -1,0 +1,16 @@
+# Build each Dockerfile and reference resource for use in the primary Tiltfile
+# The referenced resources can then be deployed by the Helm Chart
+
+def speckle_image(package,original_package_name=None):
+    if not original_package_name:
+        original_package_name = package
+
+    package_dir = 'packages/{}'.format(original_package_name)
+    if package == 'test-deployment' or package == 'monitor-deployment' or package == 'docker-compose-ingress':
+        package_dir = 'utils/{}'.format(package)
+    docker_build('speckle/speckle-{}'.format(package),
+                  context='../..',
+                  dockerfile='../../{}/Dockerfile'.format(package_dir),
+                  platform='linux/amd64',
+                  ignore = ['**/node_modules', '**/dist', '**/build', '**/coverage', 'minio-data', 'postgres-data']
+                )

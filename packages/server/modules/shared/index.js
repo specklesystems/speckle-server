@@ -12,6 +12,11 @@ const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
 const { getRoles } = require('@/modules/shared/roles')
+const {
+  roleResourceTypeToTokenResourceType,
+  isResourceAllowed
+} = require('@/modules/core/helpers/token')
+
 const ServerAcl = () => ServerAclSchema.knex()
 
 /**
@@ -21,9 +26,13 @@ const ServerAcl = () => ServerAclSchema.knex()
  * @return {void}
  */
 async function validateScopes(scopes, scope) {
-  if (!scopes) throw new ForbiddenError('You do not have the required privileges.')
+  const errMsg = `Your auth token does not have the required scope${
+    scope?.length ? ': ' + scope + '.' : '.'
+  }`
+
+  if (!scopes) throw new ForbiddenError(errMsg, { scope })
   if (scopes.indexOf(scope) === -1 && scopes.indexOf('*') === -1)
-    throw new ForbiddenError('You do not have the required privileges.')
+    throw new ForbiddenError(errMsg, { scope })
 }
 
 /**
@@ -31,17 +40,33 @@ async function validateScopes(scopes, scope) {
  * @param  {string | null | undefined} userId
  * @param  {string} resourceId
  * @param  {string} requiredRole
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} [userResourceAccessLimits]
  */
-async function authorizeResolver(userId, resourceId, requiredRole) {
+async function authorizeResolver(
+  userId,
+  resourceId,
+  requiredRole,
+  userResourceAccessLimits
+) {
   userId = userId || null
-
   const roles = await getRoles()
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
   const role = roles.find((r) => r.name === requiredRole)
-
   if (!role) throw new ApolloError('Unknown role: ' + requiredRole)
+
+  const resourceRuleType = roleResourceTypeToTokenResourceType(role.resourceTarget)
+  const isResourceLimited =
+    resourceRuleType &&
+    !isResourceAllowed({
+      resourceId,
+      resourceType: resourceRuleType,
+      resourceAccessRules: userResourceAccessLimits
+    })
+  if (isResourceLimited) {
+    throw new ForbiddenError('You are not authorized to access this resource.')
+  }
 
   if (adminOverrideEnabled()) {
     const serverRoles = await ServerAcl().select('role').where({ userId })
@@ -54,7 +79,7 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
       .where({ id: resourceId })
       .first()
     if (isPublic && role.weight < 200) return true
-  } catch (e) {
+  } catch {
     throw new ApolloError(
       `Resource of type ${role.resourceTarget} with ${resourceId} not found`
     )
@@ -64,8 +89,9 @@ async function authorizeResolver(userId, resourceId, requiredRole) {
     ? await knex(role.aclTableName).select('*').where({ resourceId, userId }).first()
     : null
 
-  if (!userAclEntry)
-    throw new ForbiddenError('You do not have access to this resource.')
+  if (!userAclEntry) {
+    throw new ForbiddenError('You are not authorized to access this resource.')
+  }
 
   userAclEntry.role = roles.find((r) => r.name === userAclEntry.role)
 

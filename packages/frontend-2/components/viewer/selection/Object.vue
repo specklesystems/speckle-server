@@ -8,10 +8,19 @@
   >
     <div class="mb-1 flex items-center">
       <button
-        class="flex h-full w-full p-2 items-center justify-between gap-4 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
+        class="flex h-full w-full px-2 py-0.5 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
         :class="unfold && 'text-primary'"
         @click="unfold = !unfold"
+        @mouseenter="highlightObject"
+        @focusin="highlightObject"
+        @mouseleave="unhighlightObject"
+        @focusout="unhighlightObject"
       >
+        <ChevronDownIcon
+          :class="`h-3 w-3 transition ${headerClasses} ${
+            !unfold ? '-rotate-90' : 'rotate-0'
+          }`"
+        />
         <div :class="`truncate text-xs font-bold ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
           <span
@@ -20,41 +29,59 @@
             {{ isModifiedQuery.isNew ? '(New)' : '(Old)' }}
           </span>
         </div>
-        <ChevronDownIcon
-          :class="`h-3 w-3 transition ${headerClasses} ${
-            !unfold ? '-rotate-90' : 'rotate-0'
-          }`"
-        />
       </button>
     </div>
-    <div v-if="unfold" class="ml-1 space-y-1 p-2">
+    <div v-if="unfold" class="ml-1 space-y-1 px-2 py-1">
       <div
         v-for="(kvp, index) in [
           ...categorisedValuePairs.primitives,
           ...categorisedValuePairs.nulls
         ]"
         :key="index"
+        class="flex w-full"
       >
         <div
-          :class="`grid grid-cols-3 ${
+          :class="`grid grid-cols-3 w-full pl-2 ${
             kvp.value === null || kvp.value === undefined ? 'text-foreground-2' : ''
           }`"
         >
           <div
-            class="col-span-1 truncate text-xs font-bold"
+            class="col-span-1 truncate text-xs font-bold mr-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
-          <div class="col-span-2 pl-1 truncate text-xs" :title="(kvp.value as string)">
-            <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
-            {{ kvp.value === null ? 'null' : kvp.value }}
+          <div
+            class="group col-span-2 pl-1 truncate text-xs flex gap-1 items-center"
+            :title="(kvp.value as string)"
+          >
+            <div class="flex gap-1 items-center w-full">
+              <!-- NOTE: can't do kvp.value || 'null' because 0 || 'null' = 'null' -->
+              <span
+                class="truncate"
+                :class="kvp.value === null ? '' : 'group-hover:max-w-[calc(100%-1rem)]'"
+              >
+                {{ kvp.value === null ? 'null' : kvp.value }}
+              </span>
+              <button
+                v-if="isCopyable(kvp)"
+                :class="isCopyable(kvp) ? 'cursor-pointer' : 'cursor-default'"
+                class="opacity-0 group-hover:opacity-100 w-4"
+                @click="handleCopy(kvp)"
+              >
+                <ClipboardDocumentIcon class="h-3 w-3" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
-      <div v-for="(kvp, index) in categorisedValuePairs.objects" :key="index">
+      <div
+        v-for="(kvp, index) in categorisedValuePairs.objects"
+        :key="index"
+        class="pl-2"
+      >
         <ViewerSelectionObject
-          :object="(kvp.value as Record<string,unknown>) || {}"
+          :object="(kvp.value as SpeckleObject) || {}"
           :title="(kvp.key as string)"
           :unfold="false"
         />
@@ -103,9 +130,11 @@
 <script setup lang="ts">
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
+import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
 const {
   ui: {
     diff: { result, enabled: diffEnabled }
@@ -123,6 +152,8 @@ const props = withDefaults(
   }>(),
   { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
+
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const unfold = ref(props.unfold)
 
@@ -192,6 +223,21 @@ const headerClasses = computed(() => {
 const headerAndSubheader = computed(() => {
   return getHeaderAndSubheaderForSpeckleObject(props.object)
 })
+
+const isCopyable = (kvp: Record<string, unknown>) => {
+  return kvp.value !== null && kvp.value !== undefined && typeof kvp.value !== 'object'
+}
+
+const handleCopy = async (kvp: Record<string, unknown>) => {
+  const { copy } = useClipboard()
+  if (isCopyable(kvp)) {
+    const keyName = kvp.key as string
+    await copy(kvp.value as string, {
+      successMessage: `${keyName} copied to clipboard`,
+      failureMessage: `Failed to copy ${keyName} to clipboard`
+    })
+  }
+}
 
 const ignoredProps = [
   '__closure',
@@ -276,4 +322,19 @@ const categorisedValuePairs = computed(() => {
     nulls: keyValuePairs.value.filter((item) => item.value === null)
   }
 })
+
+const highlightObject = () => {
+  highlightObjects([props.object.id])
+}
+
+const unhighlightObject = () => {
+  unhighlightObjects([props.object.id])
+}
+
+watch(
+  () => props.unfold,
+  (newVal) => {
+    unfold.value = newVal
+  }
+)
 </script>

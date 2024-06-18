@@ -1,4 +1,4 @@
-import { ApolloCache } from '@apollo/client/core'
+import type { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
 import { isArray } from 'lodash-es'
@@ -268,16 +268,19 @@ export function useUpdateProject() {
 
   return async (
     update: ProjectUpdateInput,
-    options?: Partial<{ optimisticResponse: UpdateProjectMetadataMutation }>
+    options?: Partial<{
+      customSuccessMessage?: string
+      optimisticResponse: UpdateProjectMetadataMutation
+    }>
   ) => {
     if (!activeUser.value) return
+
+    const successMessage = options?.customSuccessMessage || 'Project updated'
 
     const result = await apollo
       .mutate({
         mutation: updateProjectMetadataMutation,
-        variables: {
-          update
-        },
+        variables: { update },
         optimisticResponse: options?.optimisticResponse
       })
       .catch(convertThrowIntoFetchResult)
@@ -285,7 +288,7 @@ export function useUpdateProject() {
     if (result?.data?.projectMutations.update?.id) {
       triggerNotification({
         type: ToastNotificationType.Success,
-        title: 'Project updated'
+        title: successMessage
       })
     } else {
       const errMsg = getFirstErrorMessage(result.errors)

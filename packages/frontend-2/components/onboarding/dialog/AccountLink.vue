@@ -1,21 +1,13 @@
 <template>
   <OnboardingDialogBase v-model:open="openState">
     <template #header>Log In 🔑</template>
-    <div
-      class="w-full h-[351px] bg-primary rounded-xl flex items-center justify-center overflow-hidden"
-    >
-      <iframe
-        width="560"
-        height="315"
-        src="https://www.youtube-nocookie.com/embed/enJk9lslnvs?rel=0&autoplay=1"
-        title="YouTube video player"
-        frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        class="w-full h-full"
-      ></iframe>
-    </div>
-
-    <div class="flex justify-center">
+    <CommonVimeoEmbed
+      vimeo-id="925894038"
+      title="Onboarding: Log in to your Speckle account"
+      autoplay
+      controls
+    />
+    <div class="flex justify-center mt-2">
       <FormButton size="xl" class="shadow-md" @click="authoriseManager()">
         Authorize Manager
       </FormButton>
@@ -24,6 +16,7 @@
 </template>
 <script setup lang="ts">
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
+import { CommonVimeoEmbed } from '@speckle/ui-components'
 
 const props = defineProps<{
   open: boolean

@@ -12,10 +12,11 @@ import {
   Scene,
   Side,
   Texture,
-  WebGLRenderTarget
+  WebGLRenderTarget,
+  WebGLRenderer
 } from 'three'
 import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
-import { BaseSpecklePass, SpecklePass } from './SpecklePass'
+import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
 
 export enum DepthType {
   PERSPECTIVE_DEPTH,
@@ -30,15 +31,15 @@ export enum DepthSize {
 export class DepthPass extends BaseSpecklePass implements SpecklePass {
   private renderTarget: WebGLRenderTarget
   private renderTargetHalf: WebGLRenderTarget
-  private depthMaterial: SpeckleDepthMaterial = null
+  private depthMaterial: SpeckleDepthMaterial
   private depthBufferSize: DepthSize = DepthSize.FULL
-  private scene: Scene
-  private camera: Camera
+  private scene: Scene | null
+  private camera: Camera | null
 
   private colorBuffer: Color = new Color()
 
-  public onBeforeRender: () => void = null
-  public onAfterRender: () => void = null
+  public onBeforeRender: (() => void) | undefined = undefined
+  public onAfterRender: (() => void) | undefined = undefined
 
   get displayName(): string {
     return 'DEPTH'
@@ -56,10 +57,22 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
     return this.renderTargetHalf.texture
   }
 
+  get outputRenderTarget(): WebGLRenderTarget {
+    return this.renderTarget
+  }
+
   public set depthType(value: DepthType) {
     if (value === DepthType.LINEAR_DEPTH)
-      this.depthMaterial.defines['LINEAR_DEPTH'] = ' '
-    else delete this.depthMaterial.defines['LINEAR_DEPTH']
+      if (this.depthMaterial.defines) {
+        /** Catering to typescript
+         *  SpeckleDepthMaterial always has it's 'defines' defined
+         */
+        this.depthMaterial.defines['LINEAR_DEPTH'] = ' '
+      } else {
+        if (this.depthMaterial.defines) {
+          delete this.depthMaterial.defines['LINEAR_DEPTH']
+        }
+      }
     this.depthMaterial.needsUpdate = true
   }
 
@@ -107,23 +120,18 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
     this.depthMaterial.clippingPlanes = planes
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.camera = camera
     this.scene = scene
-    this.depthMaterial.userData.near.value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.depthMaterial.userData.far.value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
+    this.depthMaterial.userData.near.value = camera.near
+    this.depthMaterial.userData.far.value = camera.far
     this.depthMaterial.needsUpdate = true
   }
 
-  public render(renderer, writeBuffer, readBuffer) {
-    writeBuffer
-    readBuffer
+  public render(renderer: WebGLRenderer) {
+    if (!this.camera || !this.scene) return
 
-    this.onBeforeRender()
+    if (this.onBeforeRender) this.onBeforeRender()
     renderer.getClearColor(this.colorBuffer)
     const originalClearAlpha = renderer.getClearAlpha()
     const originalAutoClear = renderer.autoClear
@@ -154,7 +162,7 @@ export class DepthPass extends BaseSpecklePass implements SpecklePass {
     renderer.autoClear = originalAutoClear
     renderer.setClearColor(this.colorBuffer)
     renderer.setClearAlpha(originalClearAlpha)
-    this.onAfterRender()
+    if (this.onAfterRender) this.onAfterRender()
   }
 
   public setSize(width: number, height: number) {

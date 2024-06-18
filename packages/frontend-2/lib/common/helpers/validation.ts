@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ValidationHelpers } from '@speckle/ui-components'
-import { useForm } from 'vee-validate'
+import type { useForm } from 'vee-validate'
 
 export const VALID_HTTP_URL = ValidationHelpers.VALID_HTTP_URL
 export const VALID_EMAIL = ValidationHelpers.VALID_EMAIL

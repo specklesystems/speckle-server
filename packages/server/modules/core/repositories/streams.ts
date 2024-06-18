@@ -17,7 +17,8 @@ import {
   Users,
   StreamCommits,
   Commits,
-  Branches
+  Branches,
+  ServerAcl
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
@@ -41,19 +42,19 @@ import {
 import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import dayjs from 'dayjs'
-import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import cryptoRandomString from 'crypto-random-string'
 import { Knex } from 'knex'
 import { isProjectCreateInput } from '@/modules/core/helpers/stream'
-import { SetRequired } from 'type-fest'
 import { StreamAccessUpdateError } from '@/modules/core/errors/stream'
 import { metaHelpers } from '@/modules/core/helpers/meta'
+import { UserWithRole } from '@/modules/core/repositories/users'
+import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 
 export type StreamWithOptionalRole = StreamRecord & {
   /**
    * Available, if query joined this data StreamAcl
    */
-  role?: string
+  role?: StreamRoles
 }
 
 /**
@@ -201,7 +202,7 @@ export async function getCommitStream(params: { commitId: string; userId?: strin
  */
 function getFavoritedStreamsQueryBase<
   Result = Array<StreamFavoriteRecord & StreamRecord & StreamAclRecord>
->(userId: string) {
+>(userId: string, streamIdWhitelist?: Optional<string[]>) {
   if (!userId)
     throw new InvalidArgumentError(
       'User ID must be specified to retrieve favorited streams'
@@ -219,6 +220,10 @@ function getFavoritedStreamsQueryBase<
       q.where(Streams.col.isPublic, true).orWhereNotNull(StreamAcl.col.resourceId)
     )
 
+  if (streamIdWhitelist?.length) {
+    query.whereIn(Streams.col.id, streamIdWhitelist)
+  }
+
   return query
 }
 
@@ -233,13 +238,13 @@ export async function getFavoritedStreams(params: {
   userId: string
   cursor?: string
   limit?: number
+  streamIdWhitelist?: Optional<string[]>
 }) {
-  const { userId, cursor, limit } = params
+  const { userId, cursor, limit, streamIdWhitelist } = params
   const finalLimit = _.clamp(limit || 25, 1, 25)
-  const query =
-    getFavoritedStreamsQueryBase<
-      Array<StreamWithOptionalRole & { favoritedDate: Date; favCursor: string }>
-    >(userId)
+  const query = getFavoritedStreamsQueryBase<
+    Array<StreamWithOptionalRole & { favoritedDate: Date; favCursor: string }>
+  >(userId, streamIdWhitelist)
   query
     .select([
       ...STREAM_WITH_OPTIONAL_ROLE_COLUMNS,
@@ -262,8 +267,14 @@ export async function getFavoritedStreams(params: {
 /**
  * Get total amount of streams favorited by user
  */
-export async function getFavoritedStreamsCount(userId: string) {
-  const query = getFavoritedStreamsQueryBase<[{ count: string }]>(userId)
+export async function getFavoritedStreamsCount(
+  userId: string,
+  streamIdWhitelist?: Optional<string[]>
+) {
+  const query = getFavoritedStreamsQueryBase<[{ count: string }]>(
+    userId,
+    streamIdWhitelist
+  )
   query.count()
 
   const [res] = await query
@@ -462,13 +473,23 @@ export async function getStreamRoles(userId: string, streamIds: string[]) {
 
 export type GetDiscoverableStreamsParams = Required<QueryDiscoverableStreamsArgs> & {
   sort: DiscoverableStreamsSortingInput
+  /**
+   * Only allow streams with the specified IDs to be returned
+   */
+  streamIdWhitelist?: string[]
 }
 
-function buildDiscoverableStreamsBaseQuery<Result = Array<StreamRecord>>() {
+function buildDiscoverableStreamsBaseQuery<Result = Array<StreamRecord>>(
+  params: GetDiscoverableStreamsParams
+) {
   const q = Streams.knex()
     .select<Result>(Streams.cols)
     .where(Streams.col.isDiscoverable, true)
     .andWhere(Streams.col.isPublic, true)
+
+  if (params.streamIdWhitelist?.length) {
+    q.whereIn(Streams.col.id, params.streamIdWhitelist)
+  }
 
   return q
 }
@@ -534,8 +555,8 @@ export const encodeDiscoverableStreamsCursor = (
 /**
  * Counts all discoverable streams
  */
-export async function countDiscoverableStreams() {
-  const q = buildDiscoverableStreamsBaseQuery<{ count: string }[]>()
+export async function countDiscoverableStreams(params: GetDiscoverableStreamsParams) {
+  const q = buildDiscoverableStreamsBaseQuery<{ count: string }[]>(params)
   q.clearSelect()
   q.count()
 
@@ -548,7 +569,7 @@ export async function countDiscoverableStreams() {
  */
 export async function getDiscoverableStreams(params: GetDiscoverableStreamsParams) {
   const { cursor, sort, limit } = params
-  const q = buildDiscoverableStreamsBaseQuery().limit(limit)
+  const q = buildDiscoverableStreamsBaseQuery(params).limit(limit)
 
   const decodedCursor = cursor
     ? decodeDiscoverableStreamsCursor(sort.type, cursor)
@@ -587,19 +608,26 @@ export async function getDiscoverableStreams(params: GetDiscoverableStreamsParam
  */
 export async function getStreamCollaborators(streamId: string, type?: StreamRoles) {
   const q = StreamAcl.knex()
-    .select<SetRequired<UserWithOptionalRole, 'role'>[]>([
+    .select<Array<UserWithRole & { streamRole: StreamRoles }>>([
       ...Users.cols,
-      StreamAcl.col.role
+      knex.raw(`${StreamAcl.col.role} as "streamRole"`),
+      knex.raw(`(array_agg(${ServerAcl.col.role}))[1] as "role"`)
     ])
     .where(StreamAcl.col.resourceId, streamId)
     .innerJoin(Users.name, Users.col.id, StreamAcl.col.userId)
-    .orderBy(StreamAcl.col.role)
+    .innerJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    .groupBy(Users.col.id, StreamAcl.col.role)
 
   if (type) {
     q.andWhere(StreamAcl.col.role, type)
   }
 
-  return await q
+  const items = (await q).map((i) => ({
+    ...removePrivateFields(i),
+    streamRole: i.streamRole,
+    role: i.role
+  }))
+  return items
 }
 
 type BaseUserStreamsQueryParams = {
@@ -625,6 +653,11 @@ type BaseUserStreamsQueryParams = {
    * Only return streams where user has the specified roles
    */
   withRoles?: StreamRoles[]
+
+  /**
+   * Only allow streams with the specified IDs to be returned
+   */
+  streamIdWhitelist?: string[]
 }
 
 export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
@@ -650,7 +683,8 @@ function getUserStreamsQueryBase<
   searchQuery,
   forOtherUser,
   ownedOnly,
-  withRoles
+  withRoles,
+  streamIdWhitelist
 }: BaseUserStreamsQueryParams) {
   const query = StreamAcl.knex<Array<S>>()
     .where(StreamAcl.col.userId, userId)
@@ -670,12 +704,17 @@ function getUserStreamsQueryBase<
       .andWhere(Streams.col.isPublic, true)
   }
 
-  if (searchQuery)
+  if (searchQuery) {
     query.andWhere(function () {
       this.where(Streams.col.name, 'ILIKE', `%${searchQuery}%`)
         .orWhere(Streams.col.description, 'ILIKE', `%${searchQuery}%`)
         .orWhere(Streams.col.id, 'ILIKE', `%${searchQuery}%`) //potentially useless?
     })
+  }
+
+  if (streamIdWhitelist?.length) {
+    query.whereIn(Streams.col.id, streamIdWhitelist)
+  }
 
   return query
 }
@@ -764,6 +803,34 @@ export async function createStream(
   }
 
   return newStream
+}
+
+export async function getUserStreamCounts(params: {
+  userIds: string[]
+  /**
+   * If true, will only count public & discoverable streams
+   */
+  publicOnly?: boolean
+}) {
+  const { userIds, publicOnly = false } = params
+  if (!userIds.length) return {}
+
+  const q = StreamAcl.knex()
+    .select<{ userId: string; count: string }[]>([
+      StreamAcl.col.userId,
+      knex.raw('COUNT(*)')
+    ])
+    .whereIn(StreamAcl.col.userId, userIds)
+    .groupBy(StreamAcl.col.userId)
+
+  if (publicOnly) {
+    q.join(Streams.name, Streams.col.id, StreamAcl.col.resourceId).andWhere((q1) => {
+      q1.where(Streams.col.isPublic, true).orWhere(Streams.col.isDiscoverable, true)
+    })
+  }
+
+  const results = await q
+  return _.mapValues(_.keyBy(results, 'userId'), (r) => parseInt(r.count))
 }
 
 export async function deleteStream(streamId: string) {

@@ -1,5 +1,4 @@
 import {
-  Camera,
   Color,
   NoBlending,
   OrthographicCamera,
@@ -9,7 +8,8 @@ import {
   Texture,
   UniformsUtils,
   Vector2,
-  WebGLRenderTarget
+  WebGLRenderTarget,
+  WebGLRenderer
 } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { speckleSaoFrag } from '../materials/shaders/speckle-sao-frag'
@@ -17,7 +17,7 @@ import { speckleSaoVert } from '../materials/shaders/speckle-sao-vert'
 import { SAOShader } from 'three/examples/jsm/shaders/SAOShader.js'
 import { DepthLimitedBlurShader } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
 import { BlurShaderUtils } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
-import {
+import type {
   InputDepthTextureUniform,
   InputNormalsTextureUniform,
   SpecklePass
@@ -62,17 +62,17 @@ export const DefaultDynamicAOPassParams = {
 export class DynamicSAOPass extends Pass implements SpecklePass {
   private params: DynamicAOPassParams = DefaultDynamicAOPassParams
   private colorBuffer: Color = new Color()
-  private saoMaterial: ShaderMaterial = null
-  private vBlurMaterial: ShaderMaterial = null
-  private hBlurMaterial: ShaderMaterial = null
-  private saoRenderTarget: WebGLRenderTarget = null
-  private blurIntermediateRenderTarget: WebGLRenderTarget = null
-  private fsQuad: FullScreenQuad = null
+  private saoMaterial: ShaderMaterial
+  private vBlurMaterial: ShaderMaterial
+  private hBlurMaterial: ShaderMaterial
+  private saoRenderTarget: WebGLRenderTarget
+  private blurIntermediateRenderTarget: WebGLRenderTarget
+  private fsQuad: FullScreenQuad
   private _outputType: DynamicAOOutputType = DynamicAOOutputType.AO_BLURRED
   private outputScale = 0.5
 
-  private prevStdDev: number
-  private prevNumSamples: number
+  private prevStdDev: number = 0
+  private prevNumSamples: number = 0
 
   public get displayName(): string {
     return 'SAO'
@@ -163,14 +163,14 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
     this.hBlurMaterial.needsUpdate = true
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(_scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     if (this._outputType === DynamicAOOutputType.RECONSTRUCTED_NORMALS) {
       this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS'] = ''
     } else {
       delete this.saoMaterial.defines['OUTPUT_RECONSTRUCTED_NORMALS']
     }
 
-    this.params.scale = (camera as PerspectiveCamera | OrthographicCamera).far
+    this.params.scale = camera.far
     /** SAO DEFINES */
     this.saoMaterial.defines['PERSPECTIVE_CAMERA'] = (camera as PerspectiveCamera)
       .isPerspectiveCamera
@@ -185,12 +185,8 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
       this.params.normalsType === NormalsType.ACCURATE ? 1 : 0
 
     /** SAO UNIFORMS */
-    this.saoMaterial.uniforms['cameraNear'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.saoMaterial.uniforms['cameraFar'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
+    this.saoMaterial.uniforms['cameraNear'].value = camera.near
+    this.saoMaterial.uniforms['cameraFar'].value = camera.far
     this.saoMaterial.uniforms['cameraInverseProjectionMatrix'].value.copy(
       camera.projectionMatrixInverse
     )
@@ -215,24 +211,13 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
       : 0
 
     /** BLUR UNIFORMS */
-    this.vBlurMaterial.uniforms['cameraNear'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.vBlurMaterial.uniforms['cameraFar'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
-    this.hBlurMaterial.uniforms['cameraNear'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).near
-    this.hBlurMaterial.uniforms['cameraFar'].value = (
-      camera as PerspectiveCamera | OrthographicCamera
-    ).far
+    this.vBlurMaterial.uniforms['cameraNear'].value = camera.near
+    this.vBlurMaterial.uniforms['cameraFar'].value = camera.far
+    this.hBlurMaterial.uniforms['cameraNear'].value = camera.near
+    this.hBlurMaterial.uniforms['cameraFar'].value = camera.far
 
     /** BLUR UNIFORM PARAMS */
-    const depthCutoff =
-      this.params.blurDepthCutoff *
-      ((camera as PerspectiveCamera | OrthographicCamera).far -
-        (camera as PerspectiveCamera | OrthographicCamera).near)
+    const depthCutoff = this.params.blurDepthCutoff * (camera.far - camera.near)
     this.vBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
     this.hBlurMaterial.uniforms['depthCutoff'].value = depthCutoff
 
@@ -260,7 +245,7 @@ export class DynamicSAOPass extends Pass implements SpecklePass {
     this.hBlurMaterial.needsUpdate = true
   }
 
-  public render(renderer) {
+  public render(renderer: WebGLRenderer) {
     // Rendering SAO texture
     renderer.getClearColor(this.colorBuffer)
     const originalClearAlpha = renderer.getClearAlpha()

@@ -12,7 +12,7 @@ module.exports = {
 
     try {
       await throwForNotHavingServerRole(req.context, Roles.Server.Guest)
-    } catch (err) {
+    } catch {
       return { result: false, status: 401 }
     }
 
@@ -25,13 +25,18 @@ module.exports = {
     if (!stream.isPublic) {
       try {
         await validateScopes(req.context.scopes, Scopes.Streams.Read)
-      } catch (err) {
+      } catch {
         return { result: false, status: 401 }
       }
 
       try {
-        await authorizeResolver(req.context.userId, streamId, Roles.Stream.Reviewer)
-      } catch (err) {
+        await authorizeResolver(
+          req.context.userId,
+          streamId,
+          Roles.Stream.Reviewer,
+          req.context.resourceAccessRules
+        )
+      } catch {
         return { result: false, status: 401 }
       }
     }
@@ -45,19 +50,24 @@ module.exports = {
 
     try {
       await throwForNotHavingServerRole(req.context, Roles.Server.Guest)
-    } catch (err) {
+    } catch {
       return { result: false, status: 401 }
     }
 
     try {
       await validateScopes(req.context.scopes, Scopes.Streams.Write)
-    } catch (err) {
+    } catch {
       return { result: false, status: 401 }
     }
 
     try {
-      await authorizeResolver(req.context.userId, streamId, Roles.Stream.Contributor)
-    } catch (err) {
+      await authorizeResolver(
+        req.context.userId,
+        streamId,
+        Roles.Stream.Contributor,
+        req.context.resourceAccessRules
+      )
+    } catch {
       return { result: false, status: 401 }
     }
 

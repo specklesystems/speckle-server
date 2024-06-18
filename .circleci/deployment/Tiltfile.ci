@@ -1,0 +1,44 @@
+# In CI environment we expect the Images to exist as tarball files in the workspace
+# We need to docker load them into the kind registry and reference these resources
+# The referenced resources can then be deployed by the Helm Chart
+
+load('ext://helm_resource', 'helm_resource', 'helm_repo')
+
+def docker_load(name, filename=None, existing_ref=None, deps=None):
+    if not name:
+        fail('name must be specified')
+    if not filename:
+        fail('filename must be specified')
+    if not existing_ref:
+        fail('existing_tag must be specified')
+    return custom_build(name,
+                        'echo "Loading {DOCKER_FILE_NAME} into local docker cache" && \
+                        docker load --input "/tmp/ci/workspace/{DOCKER_FILE_NAME}" && \
+                        echo "Tagging {EXISTING_REF} as $EXPECTED_REF" && \
+                        docker tag "{EXISTING_REF}" "$EXPECTED_REF"'.format(DOCKER_FILE_NAME=filename, EXISTING_REF=existing_ref),
+                        deps=deps)
+
+def speckle_image(package,original_package_name=None):
+    if not package:
+        fail('package must be specified')
+    if not original_package_name:
+        original_package_name = package
+
+    image_version_tag = os.getenv('IMAGE_VERSION_TAG')
+    if not image_version_tag:
+        image_version_tag=os.getenv('CIRCLE_SHA1')
+    if not image_version_tag:
+        fail('IMAGE_VERSION_TAG or CIRCLE_SHA1 must be specified.')
+
+    workspace='/tmp/ci/workspace'
+
+    docker_image_tag = 'speckle/speckle-{}'.format(package)
+    original_docker_image_tag = 'speckle/speckle-{}'.format(original_package_name)
+    existing_ref = '{}:{}'.format(original_docker_image_tag, image_version_tag)
+    docker_file_name = "".join([ c if c.isalnum() or c=='-' or c=='_' or c=='.' else "_" for c in existing_ref.elems() ])
+    return docker_load(docker_image_tag,
+                        filename=docker_file_name,
+                        existing_ref=existing_ref,
+                        deps=[workspace])
+
+
