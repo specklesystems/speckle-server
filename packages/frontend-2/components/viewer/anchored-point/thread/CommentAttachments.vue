@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col w-full items-start">
+  <div class="flex flex-col w-full items-start mt-1">
     <CommonTextLink
       v-for="attachment in attachments.text.attachments || []"
       :key="attachment.id"

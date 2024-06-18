@@ -26,7 +26,7 @@
           </CommonTextLink>
         </div> -->
       </div>
-      <div class="truncate text-xs sm:text-sm text-foreground flex flex-col mt-2">
+      <div class="truncate text-xs sm:text-sm text-foreground flex flex-col mt-3">
         <CommonTiptapTextEditor
           v-if="comment.text.doc"
           :model-value="comment.text.doc"
