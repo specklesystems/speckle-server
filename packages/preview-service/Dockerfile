@@ -95,9 +95,9 @@ COPY --from=build-stage /speckle-server/packages/viewer ./viewer
 COPY --from=build-stage /speckle-server/packages/preview-service ./preview-service
 
 WORKDIR /speckle-server/packages/preview-service
-# hadolint ignore=DL3059
-RUN npx @puppeteer/browsers install chrome@stable --path /puppeteer
-# hadolint ignore=DL3059
-RUN yarn workspaces focus --production
+
+RUN npx @puppeteer/browsers install chrome@stable --path /puppeteer && \
+    chmod -R 777 /puppeteer && \
+    yarn workspaces focus --production
 
 ENTRYPOINT [ "tini", "--", "node", "bin/www" ]
