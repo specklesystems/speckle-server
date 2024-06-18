@@ -151,12 +151,13 @@ module.exports = (app) => {
 
           req.log.info(
             {
+              objectCount: objs.length,
               durationSeconds: (Date.now() - t0) / 1000,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               uploadedSizeMB: gunzippedBuffer.length / 1000000,
               requestDropped
             },
-            `Uploaded batch of ${objs.length} objects`
+            'Uploaded batch of {objectCount} objects'
           )
         })
       } else if (
@@ -240,12 +241,13 @@ module.exports = (app) => {
           await promise
           req.log.info(
             {
+              objectCount: objs.length,
               uploadedSizeMB: estimateStringMegabyteSize(buffer),
               durationSeconds: (Date.now() - t0) / 1000,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               requestDropped
             },
-            `Uploaded batch of ${objs.length} objects.`
+            'Uploaded batch of {objectCount} objects.'
           )
         })
       } else {
