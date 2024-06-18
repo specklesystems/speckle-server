@@ -44,6 +44,9 @@ export default defineNuxtPlugin(async (nuxt) => {
     });
     if (key === 'default') {
       defaultClient = client;
+      if (process.client && process.dev) {
+        window.__APOLLO_CLIENT__ = client;
+      }
     } else {
       keyedClients[key] = client;
     }

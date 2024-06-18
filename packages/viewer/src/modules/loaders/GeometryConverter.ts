@@ -1,5 +1,5 @@
-import { NodeData } from '../..'
-import { GeometryData } from '../converter/Geometry'
+import { type GeometryData } from '../converter/Geometry'
+import type { NodeData } from '../tree/WorldTree'
 
 export enum SpeckleType {
   View3D = 'View3D',
@@ -40,6 +40,6 @@ export const SpeckleTypeAllRenderables: SpeckleType[] = [
 
 export abstract class GeometryConverter {
   public abstract getSpeckleType(node: NodeData): SpeckleType
-  public abstract convertNodeToGeometryData(node: NodeData): GeometryData
+  public abstract convertNodeToGeometryData(node: NodeData): GeometryData | null
   public abstract disposeNodeGeometryData(node: NodeData): void
 }

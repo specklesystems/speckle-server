@@ -1,6 +1,6 @@
 import { IntersectionQuerySolver } from './IntersectionQuerySolver'
 import { PointQuerySolver } from './PointQuerySolver'
-import { IntersectionQuery, PointQuery, Query } from './Query'
+import type { IntersectionQuery, PointQuery, Query } from './Query'
 
 export class Queries {
   public static DefaultPointQuerySolver: PointQuerySolver = new PointQuerySolver()

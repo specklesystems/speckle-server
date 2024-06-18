@@ -3,7 +3,7 @@ import { getServerInfo } from '@/modules/core/services/generic'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 
-module.exports = (app: express.Application) => {
+export default (app: express.Application) => {
   app.options('/liveness')
   app.get('/liveness', handleLiveness)
   app.options('/readiness')

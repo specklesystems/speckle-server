@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="max-w-xl w-screen h-[100dvh] flex items-center justify-center">
     <Transition
@@ -7,7 +8,7 @@
       <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
       <div
         v-show="step === 0"
-        class="dark:bg-neutral-900/80 border dark:border-neutral-800 text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
+        class="border border-outline bg-foundation text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
         @mouseenter="rotateGently(Math.random() * 2)"
         @mouseleave="rotateGently(Math.random() * 2)"
       >
@@ -38,7 +39,7 @@
       <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
       <div
         v-show="step === 1"
-        class="dark:bg-neutral-900/80 border dark:border-neutral-800 text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
+        class="bg-foundation border dark:border-neutral-800 text-foreground backdrop-blur shadow-lg rounded-xl p-4 space-y-4 absolute pointer-events-auto mx-2"
         @mouseenter="rotateGently(Math.random() * 2)"
         @mouseleave="rotateGently(Math.random() * 2)"
       >
@@ -73,6 +74,7 @@ import {
 import type { OnboardingState } from '~~/lib/auth/helpers/onboarding'
 import { useProcessOnboarding } from '~~/lib/auth/composables/onboarding'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
+import { useViewerTour } from '~/lib/viewer/composables/tour'
 
 const { setMixpanelSegments } = useProcessOnboarding()
 const {
@@ -84,7 +86,7 @@ const {
 const onboardingState = ref<OnboardingState>({ industry: undefined, role: undefined })
 
 const { activeUser } = useActiveUser()
-const tourState = useTourStageState()
+const tourState = useViewerTour()
 
 const emit = defineEmits(['next'])
 
@@ -102,7 +104,7 @@ function setRole(val: OnboardingRole) {
   nextView()
   // NOTE: workaround for being able to view this in storybook
   if (activeUser.value?.id) setMixpanelSegments(onboardingState.value)
-  tourState.value.showSegmentation = false
+  tourState.showSegmentation.value = false
   emit('next')
 }
 

@@ -120,7 +120,7 @@ export async function consumeIncomingNotifications() {
       notificationsLogger.info('New notification received...')
 
       // Parse
-      const payload = job.data
+      const payload = job.data as unknown
       const typedPayload = isNotificationMessage(payload) ? payload : undefined
       if (!typedPayload) {
         throw new InvalidNotificationError('Received an invalid notification', {
@@ -131,7 +131,7 @@ export async function consumeIncomingNotifications() {
       }
 
       // Invoke correct handler
-      const type = typedPayload.type
+      const type = typedPayload.type as NotificationType
       notificationType = type
 
       const handler = handlers.get(type)

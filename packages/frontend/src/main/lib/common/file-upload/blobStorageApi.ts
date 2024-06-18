@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import Vue from 'vue'
 import {
   UploadableFileItem,
@@ -160,7 +161,8 @@ export function uploadFiles(
   })
 
   req.addEventListener('load', () => {
-    const uploadResults: BlobPostResultItem[] = req.response?.uploadResults || []
+    const uploadResults: BlobPostResultItem[] = (req.response?.uploadResults ||
+      []) as BlobPostResultItem[]
     for (const uploadFile of Object.values(uploadFiles)) {
       if (uploadFile.error) continue
 
@@ -176,7 +178,8 @@ export function uploadFiles(
   })
 
   req.addEventListener('error', () => {
-    const uploadResults: BlobPostResultItem[] = req.response?.uploadResults || []
+    const uploadResults: BlobPostResultItem[] = (req.response?.uploadResults ||
+      []) as BlobPostResultItem[]
     for (const uploadFile of Object.values(uploadFiles)) {
       if (uploadFile.error) continue
 

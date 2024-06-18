@@ -1,10 +1,8 @@
 <template>
-  <Menu as="div" class="relative z-30">
-    <MenuButton v-slot="{ open }" as="template">
-      <ViewerControlsButtonToggle flat secondary :active="open">
-        <IconViews class="w-5 h-5" />
-      </ViewerControlsButtonToggle>
-    </MenuButton>
+  <div ref="menuWrapper" class="relative z-30">
+    <ViewerControlsButtonToggle flat secondary :active="open" @click="open = !open">
+      <IconViews class="w-5 h-5" />
+    </ViewerControlsButtonToggle>
     <Transition
       enter-active-class="transform ease-out duration-300 transition"
       enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
@@ -13,59 +11,41 @@
       leave-from-class="opacity-100"
       leave-to-class="opacity-0"
     >
-      <MenuItems
-        class="absolute translate-x-0 w-32 left-12 top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col"
+      <div
+        v-if="open"
+        class="absolute translate-x-0 w-32 left-10 sm:left-12 -top-0 sm:-top-2 bg-foundation max-h-64 simple-scrollbar overflow-y-auto outline outline-2 outline-primary-muted rounded-lg shadow-lg overflow-hidden flex flex-col"
       >
         <!-- Canonical views first -->
-        <MenuItem
-          v-for="view in canonicalViews"
-          :key="view.name"
-          v-slot="{ active }"
-          as="template"
-        >
+        <div v-for="view in canonicalViews" :key="view.name">
           <button
-            :class="{
-              'bg-primary text-foreground-on-primary': active,
-              'text-foreground': !active,
-              'text-sm py-2 transition': true
-            }"
+            class="hover:bg-primary-muted text-foreground w-full h-full text-xs sm:text-sm py-2"
             @click="setView(view.name.toLowerCase() as CanonicalView)"
           >
             {{ view.name }}
           </button>
-        </MenuItem>
+        </div>
         <div v-if="views.length !== 0" class="w-full border-b"></div>
-        <!-- <div v-else class="text-tiny text-foreground-2 p-2">No other model views</div> -->
-
         <!-- Any model other views -->
-        <MenuItem
-          v-for="view in views"
-          :key="view.name"
-          v-slot="{ active }"
-          as="template"
-        >
+        <div v-for="view in views" :key="view.id">
           <button
-            :class="{
-              'bg-primary text-foreground-on-primary': active,
-              'text-foreground': !active,
-              'text-sm py-2 transition xxx-truncate': true
-            }"
+            class="hover:bg-primary-muted text-foreground w-full h-full text-xs sm:text-sm py-2 transition"
             @click="setView(view)"
           >
-            <!-- TODO: For some reason using the `truncate` class creates weird behaviour in the layout -->
-            {{ view.name.length > 12 ? view.name.substring(0, 12) + '...' : view.name }}
+            <span class="block truncate max-w-28 mx-auto">
+              {{ view.name ? view.name : view.id }}
+            </span>
           </button>
-        </MenuItem>
-      </MenuItems>
+        </div>
+      </div>
     </Transition>
-  </Menu>
+  </div>
 </template>
 <script setup lang="ts">
-import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import type { CanonicalView, SpeckleView } from '~~/../viewer/dist'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
+import { onClickOutside } from '@vueuse/core'
 
 const {
   viewer: {
@@ -74,6 +54,10 @@ const {
 } = useInjectedViewerState()
 const { setView: setViewRaw } = useCameraUtilities()
 const mp = useMixpanel()
+
+const open = ref(false)
+
+const menuWrapper = ref(null)
 
 const setView = (v: CanonicalView | SpeckleView) => {
   setViewRaw(v)
@@ -91,4 +75,8 @@ const canonicalViews = [
   { name: 'Back' },
   { name: 'Right' }
 ]
+
+onClickOutside(menuWrapper, () => {
+  open.value = false
+})
 </script>

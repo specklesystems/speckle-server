@@ -35,6 +35,22 @@ extend type Project {
   Returns a flat list of all project versions
   """
   versions(limit: Int! = 25, cursor: String): VersionCollection!
+
+  """
+  Retrieve a specific project version by its ID
+  """
+  version(id: String!): Version
+}
+
+extend type User {
+  """
+  Get (count of) user's versions. By default gets all versions of all projects the user has access to.
+  Set authoredOnly=true to only retrieve versions authored by the user.
+
+  Note: Only count resolution is currently implemented
+  """
+  versions(authoredOnly: Boolean! = false, limit: Int! = 25): CountOnlyCollection!
+    @isOwner
 }
 
 input ProjectModelsTreeFilter {
@@ -201,6 +217,8 @@ type Version {
   createdAt: DateTime!
   model: Model!
   previewUrl: String!
+  totalChildrenCount: Int
+  parents: [String]
 }
 
 type VersionCollection {

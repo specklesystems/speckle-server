@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div :class="[fullWidth ? 'w-full' : '']">
     <label :for="name" :class="labelClasses">
@@ -13,7 +14,7 @@
           coreClasses,
           iconClasses,
           textareaClasses || '',
-          'min-h-[3rem] simple-scrollbar text-sm'
+          'min-h-[6rem] sm:min-h-[3rem] simple-scrollbar text-sm'
         ]"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -24,7 +25,7 @@
         @input="$emit('input', { event: $event, value })"
       />
       <a
-        v-if="showClear"
+        v-if="shouldShowClear"
         title="Clear input"
         class="absolute top-2 right-0 flex items-center pr-2 cursor-pointer"
         @click="clear"
@@ -37,7 +38,7 @@
         v-if="errorMessage"
         :class="[
           'pointer-events-none absolute inset-y-0 right-0 flex items-start mt-2',
-          showClear ? 'pr-8' : 'pr-2'
+          shouldShowClear ? 'pr-8' : 'pr-2'
         ]"
       >
         <ExclamationCircleIcon class="h-4 w-4 text-danger" aria-hidden="true" />
@@ -45,7 +46,7 @@
       <div
         v-if="showRequired && !errorMessage"
         class="pointer-events-none absolute inset-y-0 mt-0.5 text-4xl right-0 flex items-start text-danger opacity-50"
-        :class="[showClear ? 'pr-8' : 'pr-2']"
+        :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
       >
         *
       </div>
@@ -112,7 +113,8 @@ const {
   errorMessage,
   labelClasses,
   clear,
-  focus
+  focus,
+  shouldShowClear
 } = useTextInputCore({
   props: toRefs(props),
   emit,
@@ -122,9 +124,9 @@ const {
 const iconClasses = computed(() => {
   const classParts: string[] = ['pl-2']
 
-  if (props.showClear && errorMessage.value) {
+  if (shouldShowClear.value && errorMessage.value) {
     classParts.push('pr-12')
-  } else if (props.showClear || errorMessage.value) {
+  } else if (shouldShowClear.value || errorMessage.value) {
     classParts.push('pr-8')
   }
 

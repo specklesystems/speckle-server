@@ -1,9 +1,10 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <a
     :class="[
       'flex flex-col p-2 cursor-pointer',
-      isSelected ? 'bg-foundation-2' : 'hover:bg-foundation-3'
+      isSelected ? 'bg-foundation-focus dark:bg-foundation-2' : 'hover:bg-foundation-3'
     ]"
     @click="($event) => $emit('click', $event)"
   >

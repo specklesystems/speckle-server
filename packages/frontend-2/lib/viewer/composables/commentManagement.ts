@@ -1,4 +1,4 @@
-import { ApolloCache } from '@apollo/client/cache'
+import type { ApolloCache } from '@apollo/client/cache'
 import type { JSONContent } from '@tiptap/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import type { MaybeRef } from '@vueuse/core'
@@ -223,5 +223,13 @@ export function useCheckViewerCommentingAccess() {
     }
   } = useInjectedViewerState()
   const { activeUser } = useActiveUser()
-  return computed(() => activeUser.value && !!project.value?.role)
+
+  return computed(() => {
+    if (!activeUser.value) return false
+
+    const hasRole = !!project.value?.role
+    const allowPublicComments = !!project.value?.allowPublicComments
+
+    return hasRole || allowPublicComments
+  })
 }

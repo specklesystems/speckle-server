@@ -151,6 +151,11 @@ export default plugin(function ({ addComponents, addBase }) {
   })
 
   addComponents({
+    // Fancy gradient text
+    '.text-fancy-gradient': {
+      '@apply font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 text-transparent bg-clip-text':
+        {}
+    },
     // Font sizes
     '.h1': {
       '@apply text-5xl leading-10': {}
@@ -232,6 +237,23 @@ export default plugin(function ({ addComponents, addBase }) {
       },
       '&::-webkit-scrollbar-thumb:active': {
         background: 'rgba(90 90 90 10100%)'
+      }
+    },
+    // Auto-growing textarea for editable fields
+    // more info: https://css-tricks.com/the-cleanest-trick-for-autogrowing-textareas/
+    '.grow-textarea': {
+      display: 'grid',
+      '&::after': {
+        content: "attr(data-replicated-value) ' '",
+        visibility: 'hidden',
+        'white-space': 'pre-wrap'
+      },
+      '& > textarea': {
+        resize: 'none',
+        overflow: 'hidden'
+      },
+      '& > textarea, &::after': {
+        'grid-area': '1 / 1 / 2 / 2'
       }
     }
   })

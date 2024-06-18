@@ -1,0 +1,9 @@
+controller:
+  # We must set the kind cluster listen address for every port to '127.0.0.1' when hostNetwork is true, see ./deploy/local/cluster-config.yaml
+  hostNetwork: true
+  admissionWebhooks:
+    enabled: false
+tcp:
+  5433: 'postgres/postgresql:5432'
+  6380: 'redis/redis-master:6379'
+  9002: 'minio/minio:9000'

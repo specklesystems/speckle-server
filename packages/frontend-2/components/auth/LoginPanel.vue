@@ -1,6 +1,7 @@
 <template>
   <Component
     :is="concreteComponent"
+    v-if="!isLoggedIn"
     fancy-glow
     no-shadow
     class="max-w-lg mx-auto w-full"
@@ -34,16 +35,25 @@
           }}
         </div>
         <AuthLoginWithEmailBlock v-if="hasLocalStrategy" :challenge="challenge" />
+        <div class="text-center">
+          <span class="mr-2">Don't have an account?</span>
+          <CommonTextLink :to="finalRegisterRoute" :icon-right="ArrowRightIcon">
+            Register
+          </CommonTextLink>
+        </div>
       </div>
     </div>
   </Component>
+  <div v-else />
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
-import { useLoginOrRegisterUtils } from '~~/lib/auth/composables/auth'
+import { useLoginOrRegisterUtils, useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
 import { LayoutDialog, LayoutPanel } from '@speckle/ui-components'
+import { ArrowRightIcon } from '@heroicons/vue/20/solid'
+import { registerRoute } from '~~/lib/common/helpers/route'
 
 const props = withDefaults(
   defineProps<{
@@ -54,9 +64,21 @@ const props = withDefaults(
   {
     dialogMode: false,
     title: 'Speckle Login',
-    subtitle: 'Interoperability, Collaboration and Automation for 3D'
+    subtitle: 'Connectivity, Collaboration and Automation for 3D'
   }
 )
+
+const { isLoggedIn } = useActiveUser()
+const { inviteToken } = useAuthManager()
+const router = useRouter()
+
+const finalRegisterRoute = computed(() => {
+  const result = router.resolve({
+    path: registerRoute,
+    query: inviteToken.value ? { token: inviteToken.value } : {}
+  })
+  return result.fullPath
+})
 
 const concreteComponent = computed(() => {
   return props.dialogMode ? LayoutDialog : LayoutPanel

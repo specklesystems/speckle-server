@@ -1,23 +1,26 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { isUndefinedOrVoid } from '@speckle/shared'
 import type { Optional } from '@speckle/shared'
-import { ApolloError, ApolloCache, defaultDataIdFromObject } from '@apollo/client/core'
+import { ApolloError, defaultDataIdFromObject } from '@apollo/client/core'
 import type {
   FetchResult,
   DataProxy,
   TypedDocumentNode,
   ServerError,
-  ServerParseError
+  ServerParseError,
+  ApolloCache
 } from '@apollo/client/core'
 import { GraphQLError } from 'graphql'
 import type { DocumentNode } from 'graphql'
 import { flatten, isUndefined, has, isFunction, isString } from 'lodash-es'
 import type { Modifier, Reference } from '@apollo/client/cache'
 import type { PartialDeep } from 'type-fest'
-import type { NetworkError } from '@apollo/client/errors'
+import type { GraphQLErrors, NetworkError } from '@apollo/client/errors'
 import { nanoid } from 'nanoid'
 import { StackTrace } from '~~/lib/common/helpers/debugging'
+import dayjs from 'dayjs'
+import { base64Encode } from '~/lib/common/helpers/encodeDecode'
 
 export const isServerError = (err: Error): err is ServerError =>
   has(err, 'response') && has(err, 'result') && has(err, 'statusCode')
@@ -37,13 +40,17 @@ export const ROOT_SUBSCRIPTION = 'ROOT_SUBSCRIPTION'
 export type ModifyFnCacheData<Data> = Data extends
   | Record<string, unknown>
   | Record<string, unknown>[]
-  ? PartialDeep<{
-      [key in keyof Data]: Data[key] extends { id: string }
-        ? CacheObjectReference
-        : Data[key] extends { id: string }[]
-        ? CacheObjectReference[]
-        : ModifyFnCacheData<Data[key]>
-    }>
+  ? Data extends { id: string }
+    ? CacheObjectReference
+    : Data extends { id: string }[]
+    ? CacheObjectReference[]
+    : PartialDeep<{
+        [key in keyof Data]: Data[key] extends { id: string }
+          ? CacheObjectReference
+          : Data[key] extends { id: string }[]
+          ? CacheObjectReference[]
+          : ModifyFnCacheData<Data[key]>
+      }>
   : Data
 
 /**
@@ -94,7 +101,6 @@ export function convertThrowIntoFetchResult(
   } else if (err instanceof Error) {
     gqlErrors = [new GraphQLError(err.message)]
   } else {
-    // eslint-disable-next-line @typescript-eslint/restrict-template-expressions
     gqlErrors = [new GraphQLError(`${err}`)]
   }
 
@@ -134,7 +140,7 @@ export function updateCacheByFilter<TData, TVariables = unknown>(
    * mutate anything being passed into this function! E.g. if you want to mutate arrays,
    * create new arrays through slice()/filter() instead
    */
-  updater: (data: TData) => TData | undefined | void,
+  updater: (data: TData) => TData | undefined,
   options: Partial<{
     /**
      * Whether to suppress errors that occur when the fragment being queried
@@ -320,13 +326,16 @@ export function modifyObjectFields<
       ref: typeof getObjectReference
       revolveFieldNameAndVariables: typeof revolveFieldNameAndVariables
     }
-  ) => Optional<ModifyFnCacheData<D>> | void,
+  ) =>
+    | Optional<ModifyFnCacheData<D>>
+    | Parameters<Modifier<ModifyFnCacheData<D>>>[1]['DELETE']
+    | Parameters<Modifier<ModifyFnCacheData<D>>>[1]['INVALIDATE'],
   options?: Partial<{
     fieldNameWhitelist: string[]
     debug: boolean
   }>
 ) {
-  const { fieldNameWhitelist, debug = !!(process.dev && process.client) } =
+  const { fieldNameWhitelist, debug = !!(import.meta.dev && import.meta.client) } =
     options || {}
 
   const logger = useLogger()
@@ -335,7 +344,6 @@ export function modifyObjectFields<
     if (!debug) return
     const [message, ...rest] = args
 
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     logger.debug(`[${invocationId}] ${message}`, ...rest)
   }
 
@@ -361,7 +369,7 @@ export function modifyObjectFields<
       log('invoking updater', { fieldName, variables, fieldValue })
       const res = updater(
         fieldName,
-        variables as V,
+        (variables || {}) as V,
         fieldValue as ModifyFnCacheData<D>,
         {
           ...details,
@@ -422,4 +430,46 @@ export function evictObjectFields<
     },
     { debug: false }
   )
+}
+
+export const resolveGenericStatusCode = (errors: GraphQLErrors) => {
+  if (errors.some((e) => e.extensions?.code === 'FORBIDDEN')) return 403
+  if (
+    errors.some((e) =>
+      ['UNAUTHENTICATED', 'UNAUTHORIZED_ACCESS_ERROR'].includes(
+        e.extensions?.code || ''
+      )
+    )
+  )
+    return 401
+  if (
+    errors.some((e) =>
+      ['NOT_FOUND_ERROR', 'STREAM_NOT_FOUND', 'AUTOMATION_NOT_FOUND'].includes(
+        e.extensions?.code || ''
+      )
+    )
+  )
+    return 404
+
+  return 500
+}
+
+export const errorFailedAtPathSegment = (error: GraphQLError, segment: string) => {
+  const path = error.path || []
+  return path[path.length - 1] === segment
+}
+
+export const getDateCursorFromReference = (params: {
+  ref: Reference
+  dateProp: string
+  readField: (fieldName: string, ref: Reference) => unknown
+}): string | null => {
+  const dateStr = params.readField(params.dateProp, params.ref) as string
+  if (!dateStr || !isString(dateStr)) return null
+
+  const date = dayjs(dateStr)
+  if (!date.isValid()) return null
+
+  const iso = date.toISOString()
+  return base64Encode(iso)
 }

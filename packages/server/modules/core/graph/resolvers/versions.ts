@@ -14,6 +14,13 @@ import { CommitUpdateError } from '@/modules/core/errors/commit'
 import { updateCommitAndNotify } from '@/modules/core/services/commit/management'
 
 export = {
+  Project: {
+    async version(parent, args, ctx) {
+      return await ctx.loaders.streams.getStreamCommit
+        .forStream(parent.id)
+        .load(args.id)
+    }
+  },
   Version: {
     async authorUser(parent, _args, ctx) {
       const { author } = parent
@@ -49,7 +56,7 @@ export = {
       }
 
       await authorizeResolver(
-        ctx.userId!,
+        ctx.userId,
         stream.id,
         Roles.Stream.Contributor,
         ctx.resourceAccessRules

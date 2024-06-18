@@ -3,7 +3,7 @@
     aria-live="assertive"
     class="pointer-events-none fixed inset-0 flex items-end px-4 py-6 mt-10 sm:items-start sm:p-6 z-50"
   >
-    <div class="flex w-full flex-col items-center space-y-4 sm:items-end">
+    <div class="flex w-full flex-col items-center gap-4 sm:items-end">
       <!-- Notification panel, dynamically insert this into the live region when it needs to be displayed -->
       <Transition
         enter-active-class="transform ease-out duration-300 transition"
@@ -15,66 +15,71 @@
       >
         <div
           v-if="notification"
-          class="pointer-events-auto w-full max-w-sm overflow-hidden rounded-lg bg-foundation text-foreground shadow-lg ring-1 ring-primary-muted ring-opacity-5"
+          class="pointer-events-auto w-full max-w-[20rem] overflow-hidden rounded-lg bg-foundation text-foreground shadow-lg ring-1 ring-primary-muted ring-opacity-5"
+          :class="isTitleOnly ? 'p-2' : 'p-3'"
         >
-          <div class="p-4">
-            <div class="flex items-start">
-              <div class="flex-shrink-0">
-                <CheckCircleIcon
-                  v-if="notification.type === ToastNotificationType.Success"
-                  class="h-6 w-6 text-success"
-                  aria-hidden="true"
-                />
-                <XCircleIcon
-                  v-else-if="notification.type === ToastNotificationType.Danger"
-                  class="h-6 w-6 text-danger"
-                  aria-hidden="true"
-                />
-                <ExclamationCircleIcon
-                  v-else-if="notification.type === ToastNotificationType.Warning"
-                  class="h-6 w-6 text-warning"
-                  aria-hidden="true"
-                />
-                <InformationCircleIcon
-                  v-else-if="notification.type === ToastNotificationType.Info"
-                  class="h-6 w-6 text-info"
-                  aria-hidden="true"
-                />
-              </div>
-              <div class="ml-2 w-0 flex-1 flex flex-col">
-                <p v-if="notification.title" class="text-foreground font-bold">
-                  {{ notification.title }}
-                </p>
-                <p
-                  v-if="notification.description"
-                  class="label label--light text-foreground-2"
-                >
-                  {{ notification.description }}
-                </p>
-                <div v-if="notification.cta" class="flex justify-start mt-2">
-                  <CommonTextLink
-                    :to="notification.cta.url"
-                    class="label"
-                    primary
-                    @click="onCtaClick"
-                  >
-                    {{ notification.cta.title }}
-                  </CommonTextLink>
-                </div>
-              </div>
-              <div
-                class="ml-4 flex flex-shrink-0"
-                :class="{ 'self-center': shouldVerticallyCenterCloser }"
+          <div class="flex gap-2" :class="isTitleOnly ? 'items-center' : 'items-start'">
+            <div class="flex-shrink-0">
+              <CheckCircleIcon
+                v-if="notification.type === ToastNotificationType.Success"
+                class="text-success"
+                :class="isTitleOnly ? 'h-5 w-5' : 'h-6 w-6'"
+                aria-hidden="true"
+              />
+              <XCircleIcon
+                v-else-if="notification.type === ToastNotificationType.Danger"
+                class="text-danger"
+                :class="isTitleOnly ? 'h-5 w-5' : 'h-6 w-6'"
+                aria-hidden="true"
+              />
+              <ExclamationCircleIcon
+                v-else-if="notification.type === ToastNotificationType.Warning"
+                class="text-warning"
+                :class="isTitleOnly ? 'h-5 w-5' : 'h-6 w-6'"
+                aria-hidden="true"
+              />
+              <InformationCircleIcon
+                v-else-if="notification.type === ToastNotificationType.Info"
+                class="text-info"
+                :class="isTitleOnly ? 'h-5 w-5' : 'h-6 w-6'"
+                aria-hidden="true"
+              />
+            </div>
+            <div class="w-full min-w-[10rem]">
+              <p
+                v-if="notification.title"
+                class="text-foreground font-bold"
+                :class="isTitleOnly ? 'text-sm' : 'text-base'"
               >
-                <button
-                  type="button"
-                  class="inline-flex rounded-md bg-foundation text-foreground-2 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
-                  @click="dismiss"
+                {{ notification.title }}
+              </p>
+              <p
+                v-if="notification.description"
+                class="label label--light text-foreground-2 text-sm"
+              >
+                {{ notification.description }}
+              </p>
+              <div v-if="notification.cta">
+                <CommonTextLink
+                  :to="notification.cta.url"
+                  class="label"
+                  size="xs"
+                  primary
+                  @click="onCtaClick"
                 >
-                  <span class="sr-only">Close</span>
-                  <XMarkIcon class="h-6 w-6" aria-hidden="true" />
-                </button>
+                  {{ notification.cta.title }}
+                </CommonTextLink>
               </div>
+            </div>
+            <div class="ml-2 flex-shrink-0" :class="isTitleOnly ? 'mt-1.5' : ''">
+              <button
+                type="button"
+                class="inline-flex rounded-md bg-foundation text-foreground-2 hover:text-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                @click="dismiss"
+              >
+                <span class="sr-only">Close</span>
+                <XMarkIcon class="h-5 w-5" aria-hidden="true" />
+              </button>
             </div>
           </div>
         </div>
@@ -104,7 +109,7 @@ const props = defineProps<{
   notification: Nullable<ToastNotification>
 }>()
 
-const shouldVerticallyCenterCloser = computed(
+const isTitleOnly = computed(
   () => !props.notification?.description && !props.notification?.cta
 )
 

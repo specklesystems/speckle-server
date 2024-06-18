@@ -15,8 +15,7 @@ import {
 } from '@/modules/core/repositories/streams'
 import {
   getRateLimitResult,
-  isRateLimitBreached,
-  RateLimitAction
+  isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import {
   createStreamReturnRecord,
@@ -26,6 +25,7 @@ import {
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import { cancelStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
 import {
   getPendingStreamCollaborators,
@@ -84,10 +84,7 @@ export = {
       return await updateStreamAndNotify(update, userId!, resourceAccessRules)
     },
     async create(_parent, args, context) {
-      const rateLimitResult = await getRateLimitResult(
-        RateLimitAction.STREAM_CREATE,
-        context.userId!
-      )
+      const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
       }
@@ -127,7 +124,7 @@ export = {
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
       await authorizeResolver(
-        ctx.userId!,
+        ctx.userId,
         args.projectId,
         Roles.Stream.Owner,
         ctx.resourceAccessRules
@@ -144,11 +141,19 @@ export = {
     },
     async batchCreate(_parent, args, ctx) {
       await authorizeResolver(
-        ctx.userId!,
+        ctx.userId,
         args.projectId,
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
+
+      const inviteCount = args.input.length
+      if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
+        throw new InviteCreateValidationError(
+          'Maximum 10 invites can be sent at once by non admins'
+        )
+      }
+
       const inputBatches = chunk(args.input, 10)
       for (const batch of inputBatches) {
         await Promise.all(
@@ -180,6 +185,15 @@ export = {
   },
   User: {
     async projects(_parent, args, ctx) {
+      // If limit=0 & no filter, short-cut full execution and use data loader
+      if (!args.filter && args.limit === 0) {
+        return {
+          totalCount: await ctx.loaders.users.getOwnStreamCount.load(ctx.userId!),
+          items: [],
+          cursor: null
+        }
+      }
+
       const totalCount = await getUserStreamsCount({
         userId: ctx.userId!,
         forOtherUser: false,
@@ -216,7 +230,8 @@ export = {
       const users = await getStreamCollaborators(parent.id)
       return users.map((u) => ({
         user: u,
-        role: u.role
+        role: u.streamRole,
+        id: u.id
       }))
     },
     async sourceApps(parent, _args, ctx) {

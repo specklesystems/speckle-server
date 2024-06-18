@@ -14,6 +14,7 @@ import { Logger, crossServerSyncLogger } from '@/logging/logging'
 import { createCommitByBranchId } from '@/modules/core/services/commit/management'
 import { getUser } from '@/modules/core/repositories/users'
 import type { SpeckleViewer } from '@speckle/shared'
+import { retry } from '@speckle/shared'
 import {
   createCommentThreadAndNotify,
   createCommentReplyAndNotify
@@ -84,6 +85,25 @@ const commitMetadataQuery = gql`
     }
   }
 `
+
+// const versionMetadataQuery = gql`
+//   query CrossSyncVersionDownloadMetadata($streamId: String!, $commitId: String!) {
+//     project(id: $streamId) {
+//       version(id: $commitId) {
+//         id
+//         referencedObject
+//         authorUser {
+//           id
+//         }
+//         message
+//         createdAt
+//         sourceApplication
+//         totalChildrenCount
+//         parents
+//       }
+//     }
+//   }
+// `
 
 const viewerResourcesQuery = gql`
   query CrossSyncProjectViewerResources(
@@ -496,6 +516,7 @@ const loadAllObjectsFromParent = async (
     targetStreamId: string
     sourceCommit: CommitMetadata
     parsedCommitUrl: ParsedCommitUrl
+    token?: string
   },
   options?: Partial<{
     logger: typeof crossServerSyncLogger
@@ -505,7 +526,8 @@ const loadAllObjectsFromParent = async (
   const {
     targetStreamId,
     sourceCommit,
-    parsedCommitUrl: { origin, streamId: sourceStreamId }
+    parsedCommitUrl: { origin, streamId: sourceStreamId },
+    token
   } = params
 
   // Initialize ObjectLoader
@@ -513,7 +535,8 @@ const loadAllObjectsFromParent = async (
     serverUrl: origin,
     streamId: sourceStreamId,
     objectId: sourceCommit.referencedObject,
-    options: { fetch, customLogger: noop }
+    options: { fetch, customLogger: noop },
+    token
   })
 
   // Iterate over all objects and download them into the DB
@@ -527,10 +550,14 @@ const loadAllObjectsFromParent = async (
     const work = async () => {
       const id = `${obj.id} - ${processedObjectCount++}/${totalObjectCount}`
       logger.debug(`Processing ${id}...`)
-      await Promise.race([
-        createNewObject(typedObj, targetStreamId, { logger }),
-        timeoutAt(60 * 1000, `Object create timed out! - ${id}`)
-      ])
+      await retry(
+        () =>
+          Promise.race([
+            createNewObject(typedObj, targetStreamId, { logger }),
+            timeoutAt(30 * 1000, `Object create timed out! - ${id}`)
+          ]),
+        3
+      )
       logger.debug(`Processed! ${id}`)
     }
 
@@ -540,6 +567,9 @@ const loadAllObjectsFromParent = async (
       batchPromises = []
     }
   }
+
+  // If any remaining promises - await them
+  await Promise.all(batchPromises)
 }
 
 /**
@@ -567,6 +597,12 @@ export const downloadCommit = async (
      * Specify if you want comments to be pulled in also
      */
     commentAuthorId?: string
+
+    /**
+     * Specify if you want to sync in automation statuses. If set to true, the Project.version
+     * query will be used, which might not be supported if you're targetting an old server instance.
+     */
+    loadAutomations?: boolean
   },
   options?: Partial<{
     logger: Logger
@@ -612,7 +648,8 @@ export const downloadCommit = async (
     {
       targetStreamId,
       sourceCommit: commit,
-      parsedCommitUrl
+      parsedCommitUrl,
+      token
     },
     { logger }
   )

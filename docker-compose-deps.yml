@@ -3,7 +3,9 @@ services:
   # Actual Speckle Server dependencies
 
   postgres:
-    image: 'postgres:14.5-alpine'
+    build:
+      context: .
+      dockerfile: docker/postgres/Dockerfile
     restart: always
     environment:
       POSTGRES_DB: speckle

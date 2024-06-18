@@ -49,7 +49,7 @@
 <script setup lang="ts">
 // Disclaimer, not the cleanest code.
 import type { Nullable } from '@speckle/shared'
-import { Vector3 } from 'three'
+import type { Vector3 } from 'three'
 import { items as slideshowItemsRaw } from '~~/lib/tour/slideshowItems'
 import { ArrowRightIcon } from '@heroicons/vue/24/solid'
 import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
@@ -60,10 +60,11 @@ import BasicViewerNavigation from '~~/components/tour/content/BasicViewerNavigat
 import OverlayModel from '~~/components/tour/content/OverlayModel.vue'
 import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useViewerTour } from '~/lib/viewer/composables/tour'
 
 const emit = defineEmits(['next'])
 
-const tourStage = useTourStageState()
+const tourStage = useViewerTour()
 const { zoom, setView } = useCameraUtilities()
 
 // Drives the amount of slideshow items
@@ -148,8 +149,8 @@ useViewerAnchoredPoints({
 const finishSlideshow = () => {
   zoom()
   setView('left')
-  tourStage.value.showNavbar = true
-  tourStage.value.showViewerControls = true
+  tourStage.showNavbar.value = true
+  tourStage.showControls.value = true
   emit('next')
 }
 

@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/require-await */
-
 import { BaseBridge } from '~~/lib/bridge/base'
-import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import type { IBinding } from '~~/lib/bindings/definitions/IBinding'
 
 /**
  * The name under which this binding will be registered.
@@ -25,10 +23,6 @@ export type Config = {
 }
 
 export class MockedConfigBinding extends BaseBridge {
-  constructor() {
-    super()
-  }
-
   getConfig() {
     return {
       darkTheme: false

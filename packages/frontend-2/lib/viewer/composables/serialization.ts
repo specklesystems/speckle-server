@@ -2,7 +2,6 @@ import {
   useInjectedViewerState,
   useResetUiState
 } from '~~/lib/viewer/composables/setup'
-import { isNonNullable } from '~~/lib/common/helpers/utils'
 import { SpeckleViewer, TimeoutError } from '@speckle/shared'
 import { get } from 'lodash-es'
 import { Vector3, Box3 } from 'three'
@@ -94,9 +93,7 @@ export function useStateSerialization() {
         filters: {
           isolatedObjectIds: state.ui.filters.isolatedObjectIds.value,
           hiddenObjectIds: state.ui.filters.hiddenObjectIds.value,
-          selectedObjectIds: state.ui.filters.selectedObjects.value
-            .map((o) => o.id)
-            .filter(isNonNullable),
+          selectedObjectIds: [...state.ui.filters.selectedObjectIds.value.values()],
           propertyFilter: {
             key: state.ui.filters.propertyFilter.filter.value?.key || null,
             isApplied: state.ui.filters.propertyFilter.isApplied.value

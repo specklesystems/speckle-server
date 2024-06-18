@@ -1,6 +1,6 @@
-import pino from 'pino'
+import { pino } from 'pino'
 import type { LoggerOptions } from 'pino'
-import { toClef, clefLevels } from './pinoClef'
+import { toClef, clefLevels } from './pinoClef.js'
 
 let logger: pino.Logger
 type MixinFn = (mergeObject: object, level: number) => object
@@ -37,7 +37,7 @@ export function getLogger(
 
   if (pretty) {
     pinoOptions.transport = {
-      target: '@speckle/shared/pinoPrettyTransport.js',
+      target: '@speckle/shared/pinoPrettyTransport.cjs',
       options: {
         colorize: true,
         destination: 2, //stderr

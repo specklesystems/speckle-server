@@ -220,3 +220,11 @@ export const WithButtons: StoryObj = {
     ]
   }
 }
+
+export const NoItems: StoryObj = {
+  ...Default,
+  args: {
+    ...Default.args,
+    items: []
+  }
+}

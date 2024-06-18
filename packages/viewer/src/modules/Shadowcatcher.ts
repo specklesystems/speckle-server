@@ -12,23 +12,26 @@ import {
   Scene,
   Vector2,
   Vector3,
-  WebGLRenderer,
   ZeroFactor
 } from 'three'
 import { Geometry } from './converter/Geometry'
 import SpeckleBasicMaterial from './materials/SpeckleBasicMaterial'
 import { ShadowcatcherPass } from './pipeline/ShadowcatcherPass'
 import { ObjectLayers } from '../IViewer'
-import { DefaultShadowcatcherConfig, ShadowcatcherConfig } from './ShadowcatcherConfig'
+import {
+  DefaultShadowcatcherConfig,
+  type ShadowcatcherConfig
+} from './ShadowcatcherConfig'
+import type { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
 
 export class Shadowcatcher {
   public static readonly MESH_NAME = 'Shadowcatcher'
   public static readonly PLANE_SUBD = 2
   public static readonly MAX_TEXTURE_SIZE_SCALE = 0.5
-  private planeMesh: Mesh = null
+  private planeMesh: Mesh
   private planeSize: Vector2 = new Vector2()
-  private displayMaterial: SpeckleBasicMaterial = null
-  public shadowcatcherPass: ShadowcatcherPass = null
+  private displayMaterial: SpeckleBasicMaterial
+  public shadowcatcherPass: ShadowcatcherPass
   private _config: ShadowcatcherConfig = DefaultShadowcatcherConfig
 
   public get shadowcatcherMesh() {
@@ -73,8 +76,8 @@ export class Shadowcatcher {
     this.shadowcatcherPass.update(scene)
   }
 
-  public render(renderer: WebGLRenderer) {
-    this.shadowcatcherPass.render(renderer, null, null)
+  public render(renderer: SpeckleWebGLRenderer) {
+    this.shadowcatcherPass.render(renderer)
   }
 
   public bake(worldBox: Box3, maxTexSize: number, force?: boolean) {

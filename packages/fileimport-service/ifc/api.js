@@ -6,7 +6,7 @@ const { chunk } = require('lodash')
 const { logger: parentLogger } = require('../observability/logging')
 
 const knex = require('../knex')
-const { Observability } = require('@speckle/shared')
+const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
 const Streams = () => knex('streams')
 const Branches = () => knex('branches')
 const Objects = () => knex('objects')
@@ -156,7 +156,8 @@ module.exports = class ServerAPI {
   }
 
   prepInsertionObject(streamId, obj) {
-    const MAX_OBJECT_SIZE = 10 * 1024 * 1024
+    const maximumObjectSizeMB = parseInt(process.env['MAX_OBJECT_SIZE_MB'] || '10')
+    const MAX_OBJECT_SIZE = maximumObjectSizeMB * 1024 * 1024
 
     if (obj.hash) obj.id = obj.hash
     else

@@ -5,6 +5,9 @@ import ToastRenderer from '~~/src/components/global/ToastRenderer.vue'
 import FormButton from '~~/src/components/form/Button.vue'
 import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
+import { useGlobalToast } from '~~/src/stories/composables/toast'
+
+type StoryType = StoryObj<{ notification: ToastNotification }>
 
 export default {
   component: ToastRenderer,
@@ -27,20 +30,63 @@ export default {
   }
 } as Meta
 
-export const Default: StoryObj = {
+export const Default: StoryType = {
+  render: (args) => ({
+    components: { ToastRenderer, FormButton },
+    setup() {
+      const { triggerNotification } = useGlobalToast()
+      const notification = ref(null as Nullable<ToastNotification>)
+      const onClick = () => {
+        triggerNotification(args.notification)
+      }
+      return { args, onClick, notification }
+    },
+    template: `
+      <div>
+        <FormButton @click="onClick">Trigger!</FormButton>
+      </div>
+    `
+  }),
+  parameters: {
+    docs: {
+      source: {
+        code: '<GlobalToastRenderer v-model:notification="notification"/>'
+      }
+    }
+  },
+  args: {
+    notification: {
+      type: ToastNotificationType.Info,
+      title: 'Title',
+      description: 'Description',
+      cta: {
+        title: 'CTA',
+        onClick: () => console.log('Clicked')
+      }
+    }
+  }
+}
+
+export const WithManualClose: StoryType = {
+  ...Default,
+  args: {
+    notification: {
+      ...Default.args!.notification!,
+      autoClose: false
+    }
+  }
+}
+
+export const NoCtaOrDescription: StoryObj = {
   render: (args) => ({
     components: { ToastRenderer, FormButton },
     setup() {
       const notification = ref(null as Nullable<ToastNotification>)
       const onClick = () => {
+        // Update notification without cta or description
         notification.value = {
           type: ToastNotificationType.Info,
-          title: 'Title',
-          description: 'Description',
-          cta: {
-            title: 'CTA',
-            onClick: () => console.log('Clicked')
-          }
+          title: 'Displays a toast notification'
         }
 
         // Clear after 2s
@@ -50,15 +96,21 @@ export const Default: StoryObj = {
     },
     template: `
       <div>
-        <FormButton @click="onClick">Trigger!</FormButton>
+        <FormButton @click="onClick">Trigger Title Only</FormButton>
         <ToastRenderer v-model:notification="notification"/>
       </div>
     `
   }),
   parameters: {
     docs: {
+      description: {
+        story: 'Displays a toast notification with only a title, no description or CTA.'
+      },
       source: {
-        code: '<GlobalToastRenderer v-model:notification="notification"/>'
+        code: `
+<FormButton @click="onClick">Trigger Title Only</FormButton>
+<ToastRenderer v-model:notification="notification"/>
+        `
       }
     }
   }

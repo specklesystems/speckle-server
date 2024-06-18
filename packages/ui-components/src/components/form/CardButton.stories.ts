@@ -1,4 +1,4 @@
-import { userEvent, within } from '@storybook/testing-library'
+import { userEvent, within } from '@storybook/test'
 import type { Meta, StoryObj } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import FormCardButton from '~~/src/components/form/CardButton.vue'
@@ -42,20 +42,20 @@ const clickPlayBuilder: (rightClick?: boolean) => VuePlayFunction =
     const canvas = within(canvasElement)
 
     if (useRightClick) {
-      rightClick(canvas.getByRole('button'))
+      await rightClick(canvas.getByRole('button'))
     } else {
-      userEvent.click(canvas.getByRole('button'))
+      await userEvent.click(canvas.getByRole('button'))
     }
 
     await wait(500)
 
     if (useRightClick) {
-      rightClick(canvas.getByRole('button'))
+      await rightClick(canvas.getByRole('button'))
     } else {
-      userEvent.click(canvas.getByRole('button'))
+      await userEvent.click(canvas.getByRole('button'))
     }
 
-    userEvent.tab()
+    await userEvent.tab()
   }
 
 export const Default: StoryType = {

@@ -15,4 +15,10 @@ declare module 'express-serve-static-core' {
   }
 }
 
+declare module 'http' {
+  interface IncomingMessage {
+    context?: AuthContext
+  }
+}
+
 export {}

@@ -1,7 +1,8 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    :class="`py-2 my-2 px-2 flex flex-col space-y-1 bg-foundation border-l-4 hover:shadow-lg hover:bg-primary-muted rounded transition cursor-pointer
+    :class="`py-1 sm:py-2 my-1 sm:my-2 px-2 flex flex-col space-y-1 bg-foundation border-l-4 hover:shadow-lg hover:bg-primary-muted rounded transition cursor-pointer
       ${isOpenInViewer ? 'border-primary' : 'border-transparent'}
     `"
     @click="open(thread.id)"
@@ -27,7 +28,7 @@
         </span>
       </span>
     </div>
-    <div class="truncate text-sm mb-1">
+    <div class="truncate text-xs sm:text-sm mb-1">
       {{ thread.rawText }}
     </div>
     <div
@@ -93,7 +94,6 @@ const open = (id: string) => {
 
 const formattedDate = computed(() => dayjs(props.thread.createdAt).from(dayjs()))
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const isThreadResourceLoaded = computed(() => {
   const thread = props.thread
   const loadedResources = resourceItems.value

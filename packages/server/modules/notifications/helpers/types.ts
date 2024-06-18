@@ -20,6 +20,11 @@ export type NotificationPreferences = Partial<
   Record<NotificationType, Partial<Record<NotificationChannel, boolean>>>
 >
 
+export type UserNotificationPreferencesRecord = {
+  userId: string
+  preferences: NotificationPreferences
+}
+
 // Add mappings between NotificationTypes and expected Message types here
 export type NotificationTypeMessageMap = {
   [NotificationType.MentionedInComment]: MentionedInCommentMessage

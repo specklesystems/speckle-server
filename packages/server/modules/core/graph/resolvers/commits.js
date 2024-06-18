@@ -32,8 +32,7 @@ const { getUser } = require('../../services/users')
 const {
   isRateLimitBreached,
   getRateLimitResult,
-  RateLimitError,
-  RateLimitAction
+  RateLimitError
 } = require('@/modules/core/services/ratelimiter')
 const {
   batchMoveCommits,
@@ -198,10 +197,7 @@ module.exports = {
         context.resourceAccessRules
       )
 
-      const rateLimitResult = await getRateLimitResult(
-        RateLimitAction.COMMIT_CREATE,
-        context.userId
-      )
+      const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', context.userId)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
       }

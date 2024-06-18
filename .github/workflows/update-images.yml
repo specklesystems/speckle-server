@@ -19,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Update the image digest
-        uses: chainguard-dev/digestabot@v1.0.2
+        uses: chainguard-dev/digestabot@v1.0.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           signoff: true # optional

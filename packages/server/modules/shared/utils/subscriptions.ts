@@ -17,11 +17,13 @@ import {
   ProjectVersionsPreviewGeneratedMessage,
   ProjectVersionsUpdatedMessage,
   SubscriptionProjectAutomationsStatusUpdatedArgs,
+  SubscriptionProjectAutomationsUpdatedArgs,
   SubscriptionProjectCommentsUpdatedArgs,
   SubscriptionProjectFileImportUpdatedArgs,
   SubscriptionProjectModelsUpdatedArgs,
   SubscriptionProjectPendingModelsUpdatedArgs,
   SubscriptionProjectPendingVersionsUpdatedArgs,
+  SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs,
   SubscriptionProjectUpdatedArgs,
   SubscriptionProjectVersionsPreviewGeneratedArgs,
   SubscriptionProjectVersionsUpdatedArgs,
@@ -29,7 +31,10 @@ import {
   SubscriptionViewerUserActivityBroadcastedArgs,
   UserProjectsUpdatedMessage,
   ViewerResourceItem,
-  ViewerUserActivityMessage
+  ViewerUserActivityMessage,
+  GendoAiRender,
+  SubscriptionProjectVersionGendoAiRenderUpdatedArgs,
+  SubscriptionProjectVersionGendoAiRenderCreatedArgs
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -39,7 +44,11 @@ import {
 } from '@/modules/core/helpers/graphTypes'
 import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
-import { AutomationFunctionRunGraphQLReturn } from '@/modules/automations/helpers/graphTypes'
+import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes'
+import {
+  ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn,
+  ProjectAutomationsUpdatedMessageGraphQLReturn
+} from '@/modules/automate/helpers/graphTypes'
 
 /**
  * GraphQL Subscription PubSub instance
@@ -90,7 +99,12 @@ export enum ProjectSubscriptions {
   ProjectVersionsUpdated = 'PROJECT_VERSIONS_UPDATED',
   ProjectVersionsPreviewGenerated = 'PROJECT_VERSIONS_PREVIEW_GENERATED',
   ProjectCommentsUpdated = 'PROJECT_COMMENTS_UPDATED',
-  ProjectAutomationStatusUpdated = 'PROJECT_AUTOMATION_STATUS_UPDATED'
+  // old beta subscription:
+  ProjectAutomationStatusUpdated = 'PROJECT_AUTOMATION_STATUS_UPDATED',
+  ProjectTriggeredAutomationsStatusUpdated = 'PROJECT_TRIGGERED_AUTOMATION_STATUS_UPDATED',
+  ProjectAutomationsUpdated = 'PROJECT_AUTOMATIONS_UPDATED',
+  ProjectVersionGendoAIRenderUpdated = 'PROJECT_VERSION_GENDO_AI_RENDER_UPDATED',
+  ProjectVersionGendoAIRenderCreated = 'PROJECT_VERSION_GENDO_AI_RENDER_CREATED'
 }
 
 export enum ViewerSubscriptions {
@@ -125,6 +139,18 @@ type SubscriptionTypeMap = {
       >
     }
     variables: SubscriptionProjectUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectVersionGendoAIRenderUpdated]: {
+    payload: {
+      projectVersionGendoAIRenderUpdated: GendoAiRender
+    }
+    variables: SubscriptionProjectVersionGendoAiRenderUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectVersionGendoAIRenderCreated]: {
+    payload: {
+      projectVersionGendoAIRenderCreated: GendoAiRender
+    }
+    variables: SubscriptionProjectVersionGendoAiRenderCreatedArgs
   }
   [ProjectSubscriptions.ProjectModelsUpdated]: {
     payload: {
@@ -227,6 +253,20 @@ type SubscriptionTypeMap = {
       projectId: string
     }
     variables: SubscriptionProjectAutomationsStatusUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectTriggeredAutomationsStatusUpdated]: {
+    payload: {
+      projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn
+      projectId: string
+    }
+    variables: SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs
+  }
+  [ProjectSubscriptions.ProjectAutomationsUpdated]: {
+    payload: {
+      projectAutomationsUpdated: ProjectAutomationsUpdatedMessageGraphQLReturn
+      projectId: string
+    }
+    variables: SubscriptionProjectAutomationsUpdatedArgs
   }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 

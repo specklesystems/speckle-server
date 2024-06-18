@@ -1,5 +1,8 @@
 import type { MaybeRef } from '@vueuse/core'
-import { useModelVersionCardAutomationsStatusUpdateTracking } from '~~/lib/automations/composables/automationsStatus'
+import {
+  useProjectAutomationsUpdateTracking,
+  useProjectTriggeredAutomationsStatusUpdateTracking
+} from '~/lib/projects/composables/automationManagement'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import {
@@ -16,9 +19,9 @@ export function useProjectPageItemViewType(contentType: string) {
   const viewTypeCookie = useSynchronizedCookie(`projectPage-${contentType}-viewType`)
   const gridOrList = computed({
     get: () =>
-      viewTypeCookie.value === GridListToggleValue.List
-        ? GridListToggleValue.List
-        : GridListToggleValue.Grid,
+      viewTypeCookie.value === GridListToggleValue.Grid
+        ? GridListToggleValue.Grid
+        : GridListToggleValue.List,
     set: (newVal) => {
       viewTypeCookie.value = newVal
     }
@@ -63,6 +66,6 @@ export function useGeneralProjectPageUpdateTracking(
   useProjectPendingModelUpdateTracking(projectId)
 
   // AUTOMATIONS:
-  // AutomationsStatus update
-  useModelVersionCardAutomationsStatusUpdateTracking(projectId)
+  useProjectTriggeredAutomationsStatusUpdateTracking({ projectId })
+  useProjectAutomationsUpdateTracking({ projectId })
 }

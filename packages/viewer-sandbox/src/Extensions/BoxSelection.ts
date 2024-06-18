@@ -1,16 +1,10 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import { InputEvent } from '@speckle/viewer'
 import { ObjectLayers } from '@speckle/viewer'
+import { NodeRenderView } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { BatchObject } from '@speckle/viewer'
-import {
-  Extension,
-  ICameraProvider,
-  IViewer,
-  GeometryType,
-  MeshBatch
-} from '@speckle/viewer'
-import { NodeRenderView } from '@speckle/viewer/dist/modules/tree/NodeRenderView'
+import { Extension, IViewer, GeometryType, CameraController } from '@speckle/viewer'
 import {
   Matrix4,
   ShaderMaterial,
@@ -25,7 +19,7 @@ import {
 
 export class BoxSelection extends Extension {
   get inject() {
-    return [ICameraProvider.Symbol]
+    return [CameraController]
   }
 
   private selectionExtension: SelectionExtension
@@ -36,9 +30,17 @@ export class BoxSelection extends Extension {
 
   private idsToSelect: Array<string> | null = []
 
-  public constructor(viewer: IViewer, private cameraController: ICameraProvider) {
+  get enabled(): boolean {
+    return this._enabled
+  }
+  set enabled(value: boolean) {
+    this._enabled = value
+  }
+
+  public constructor(viewer: IViewer, private cameraController: CameraController) {
     super(viewer)
     /** Get the SelectionExtension. We'll need it to remotely enable/disable it */
+    //@ts-ignore
     this.selectionExtension = this.viewer.getExtension(SelectionExtension)
 
     /** Create the drag box */
@@ -60,8 +62,7 @@ export class BoxSelection extends Extension {
     }
     this.frameLock = false
   }
-
-  private onPointerDown(e) {
+  private onPointerDown(e: Vector2 & { event: PointerEvent }) {
     if (e.event.altKey) {
       /** Disable camera controller. We want to be able to drag the selection box */
       this.cameraController.enabled = false
@@ -82,7 +83,7 @@ export class BoxSelection extends Extension {
     this.viewer.requestRender()
   }
 
-  private onPointerMove(e) {
+  private onPointerMove(e: Vector2 & { event: PointerEvent }) {
     /** Selection box only when holding the alt key */
     if (!e.event.altKey || !this.dragging || this.frameLock) return
     /** Copy the current point */
@@ -91,6 +92,7 @@ export class BoxSelection extends Extension {
     const ndcTransform = this.getNDCTransform(this.ndcFrom, this.ndcTo)
 
     /** Update the selection box visual */
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     this.dragBoxMaterial.uniforms.transform.value.copy(ndcTransform)
     this.dragBoxMaterial.needsUpdate = true
 
@@ -106,24 +108,25 @@ export class BoxSelection extends Extension {
 
   /** Gets the object ids that fall withing the provided selection box */
   private getSelectionIds(selectionBox: Box3) {
+    /** Get the renderer */
+    const renderer = this.viewer.getRenderer()
     /** Get the mesh batches */
-    const batches = this.viewer
-      .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
-
+    const batches = renderer.batcher.getBatches(undefined, GeometryType.MESH)
     /** Compute the clip matrix */
     const clipMatrix = new Matrix4()
-    clipMatrix.multiplyMatrices(
-      this.viewer.getRenderer().renderingCamera.projectionMatrix,
-      this.viewer.getRenderer().renderingCamera.matrixWorldInverse
-    )
+    if (renderer.renderingCamera) {
+      clipMatrix.multiplyMatrices(
+        renderer.renderingCamera.projectionMatrix,
+        renderer.renderingCamera.matrixWorldInverse
+      )
+    }
 
     /** We're using three-mesh-bvh library for out BVH
      *  Go over each batch and test it against the TAS only.
      **/
     const selectionRvs: Array<NodeRenderView> = []
     for (let b = 0; b < batches.length; b++) {
-      batches[b].mesh.BVH.shapecast({
+      batches[b].mesh.TAS.shapecast({
         /** This is the callback from the TAS's bounds internal nodes */
         intersectsTAS: (box: Box3) => {
           /** We continue traversion only if the selection box intersects an internal node */
