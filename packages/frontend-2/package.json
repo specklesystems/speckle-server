@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "build": "nuxt build",
+    "build": "NODE_OPTIONS=--max-old-space-size=8192 nuxt build",
     "build:sourcemaps": "BUILD_SOURCEMAPS=true yarn build",
     "dev:nuxt": "nuxt dev",
     "dev:app": "concurrently \"nuxt dev\" \"yarn gqlgen:watch\"",
