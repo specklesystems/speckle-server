@@ -2,6 +2,7 @@ import * as express from 'express'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import type { Redis } from 'ioredis'
 
 export default (app: express.Application) => {
   app.options('/liveness')
@@ -23,20 +24,21 @@ const handleLiveness: express.RequestHandler = async (req, res) => {
     return
   }
 
-  const client = createRedisClient(getRedisUrl(), {})
-  client.ping((err) => {
-    if (err) {
-      req.log.error(err, 'Health check failed. Redis is not available.')
+  let client: Redis | undefined = undefined
+  try {
+    client = createRedisClient(getRedisUrl(), {})
+    const redisRes = await client.ping()
+    if (redisRes !== 'PONG') {
       res.status(500).json({
-        message: 'Redis is not available',
-        error: err
+        message: 'Redis is not available'
       })
-      res.send()
-      return
+      req.log.error('Health check failed. Redis is not available.')
+    } else {
+      res.status(200).json({ message: 'OK' })
+      req.log.trace('Health check passed.')
     }
-  })
-
-  req.log.trace('Health check passed.')
-  res.status(200).json({ message: 'OK' })
-  res.send()
+  } finally {
+    await client?.quit()
+    res.send()
+  }
 }
