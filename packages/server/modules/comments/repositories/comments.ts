@@ -792,6 +792,12 @@ const updateComment = ({ db }: { db: Knex }) => async (
   return res as CommentRecord
 }
 
+const deleteComment =
+  ({ db }: { db: Knex }) =>
+    async ({ commentId }: { commentId: string }): Promise<void> => {
+      await tables.comments(db).where({ id: commentId }).delete()
+    }
+
 export const createCommentsRepository = ({ db }: { db: Knex }) => ({
   getComment: getComment({ db }),
   getComments: getComments({ db }),
@@ -821,5 +827,6 @@ export const createCommentsRepository = ({ db }: { db: Knex }) => ({
   markCommentViewed: markCommentViewed({ db }),
   insertComment: insertComment({ db }),
   markCommentUpdated: markCommentUpdated({ db }),
-  updateComment: updateComment({ db })
+  updateComment: updateComment({ db }),
+  deleteComment: deleteComment({ db })
 })

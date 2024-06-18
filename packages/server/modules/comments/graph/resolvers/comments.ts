@@ -455,11 +455,14 @@ export = {
       if (!stream || !stream.allowPublicComments && !stream.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
-      const comment = await createComment({
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
+      const comment = await createComment({ commentsRepository })({
         userId: context.userId,
         input: args.input
       })
 
+      // TODO: Inject activitystream service
       await addCommentCreatedActivity({
         streamId: args.input.streamId,
         userId: context.userId,

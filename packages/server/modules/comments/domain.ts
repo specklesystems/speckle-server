@@ -10,6 +10,7 @@ import { Merge } from 'type-fest'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 
 export interface CommentsRepository {
+  deleteComment: (params: { commentId: string }) => Promise<void>
   getComment: (params: { id: string, userId?: string }) => Promise<Optional<ExtendedComment>>
   getCommentsResources: (commentIds: string[]) => Promise<Dictionary<{ commentId: string, resources: ResourceIdentifier[] }>>
   getPaginatedBranchComments: (params: PaginatedBranchCommentsParams) => Promise<{ items: CommentRecord[], cursor: string | null }>
@@ -18,7 +19,7 @@ export interface CommentsRepository {
   getPaginatedCommitCommentsTotalCount: (params: Omit<PaginatedCommitCommentsParams, 'limit' | 'cursor'>) => Promise<number>
   getPaginatedProjectComments: (params: PaginatedProjectCommentsParams, options?: PaginatedProjectCommentsOptions) => Promise<{ items: CommentRecord[], cursor: string | null }>
   getPaginatedProjectCommentsTotalCount: (params: Omit<PaginatedProjectCommentsParams, 'limit' | 'cursor'>, options?: PaginatedProjectCommentsOptions) => Promise<number>
-  getResourceCommentCount: ({ resourceId }: { resourceId: string }) => Promise<number>
+  getResourceCommentCount: (params: { resourceId: string }) => Promise<number>
   insertComment: (input: InsertCommentPayload, options?: Partial<{ trx: Knex.Transaction }>) => Promise<CommentRecord>
   insertCommentLinks: (commentLinks: CommentLinkRecord[], options?: Partial<{ trx: Knex.Transaction }>) => Promise<number[]>
   markCommentUpdated: (commentId: string) => Promise<number>

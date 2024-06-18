@@ -8,6 +8,8 @@ import {
 import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
 import { clamp } from 'lodash'
 import { Roles } from '@speckle/shared'
+import { CommentCreateInput } from '@/modules/core/graph/generated/graphql'
+import { CommentsRepository } from '@/modules/comments/domain'
 
 const Comments = () => knex('comments')
 const CommentLinks = () => knex('comment_links')
@@ -62,63 +64,77 @@ export const streamResourceCheck = async ({ streamId, resources }) => {
 /**
  * @deprecated Use 'createCommentThreadAndNotify()' instead
  */
-export const createComment = async ({ userId, input }) => {
-  if (input.resources.length < 1)
-    throw Error('Must specify at least one resource as the comment target')
+export const createComment =
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'deleteComment' | 'insertComment' | 'insertCommentLinks'> }) =>
+    async ({ userId, input }: { userId: string, input: CommentCreateInput }) => {
+      const {
+        deleteComment,
+        insertComment,
+        insertCommentLinks,
+      } = commentsRepository
 
-  const commentResource = input.resources.find((r) => r.resourceType === 'comment')
-  if (commentResource) throw new Error('Please use the comment reply mutation.')
+      if (input.resources.length < 1)
+        throw Error('Must specify at least one resource as the comment target')
 
-  // Stream checks
-  const streamResources = input.resources.filter((r) => r.resourceType === 'stream')
-  if (streamResources.length > 1)
-    throw Error('Commenting on multiple streams is not supported')
+      const commentResource = input.resources.find((r) => r?.resourceType === 'comment')
+      if (commentResource) throw new Error('Please use the comment reply mutation.')
 
-  const [stream] = streamResources
-  if (stream && stream.resourceId !== input.streamId)
-    throw Error("Input streamId doesn't match the stream resource.resourceId")
+      // Stream checks
+      const streamResources = input.resources.filter((r) => r?.resourceType === 'stream')
+      if (streamResources.length > 1)
+        throw Error('Commenting on multiple streams is not supported')
 
-  const comment = {
-    streamId: input.streamId,
-    text: input.text,
-    data: input.data,
-    screenshot: input.screenshot
-  }
+      const [stream] = streamResources
+      if (stream && stream.resourceId !== input.streamId)
+        throw Error("Input streamId doesn't match the stream resource.resourceId")
 
-  comment.id = crs({ length: 10 })
-  comment.authorId = userId
+      // TODO: Inject blobstorage module repo
+      await validateInputAttachments(input.streamId, input.blobIds)
 
-  await validateInputAttachments(input.streamId, input.blobIds)
-  comment.text = buildCommentTextFromInput({
-    doc: input.text,
-    blobIds: input.blobIds
-  })
+      const comment = {
+        streamId: input.streamId,
+        text: buildCommentTextFromInput({
+          doc: input.text,
+          blobIds: input.blobIds
+        }),
+        data: input.data,
+        screenshot: input.screenshot,
+        authorId: userId
+      }
 
-  const [newComment] = await Comments().insert(comment, '*')
-  try {
-    await module.exports.streamResourceCheck({
-      streamId: input.streamId,
-      resources: input.resources
-    })
-    for (const res of input.resources) {
-      await CommentLinks().insert({
-        commentId: comment.id,
-        resourceId: res.resourceId,
-        resourceType: res.resourceType
+      const newComment = await insertComment(comment)
+
+      try {
+        await module.exports.streamResourceCheck({
+          streamId: input.streamId,
+          resources: input.resources
+        })
+        for (const res of input.resources) {
+          if (!res) {
+            continue
+          }
+
+          await insertCommentLinks([
+            {
+              commentId: newComment.id,
+              resourceId: res.resourceId,
+              resourceType: res.resourceType
+            }
+          ])
+        }
+      } catch (e) {
+        await deleteComment({ commentId: newComment.id })
+        await Comments().where({ id: newComment.id }).delete() // roll back
+        throw e // pass on to resolver
+      }
+      await module.exports.viewComment({ userId, commentId: newComment.id }) // so we don't self mark a comment as unread the moment it's created
+
+      await CommentsEmitter.emit(CommentsEvents.Created, {
+        comment: newComment
       })
+
+      return newComment
     }
-  } catch (e) {
-    await Comments().where({ id: comment.id }).delete() // roll back
-    throw e // pass on to resolver
-  }
-  await module.exports.viewComment({ userId, commentId: comment.id }) // so we don't self mark a comment as unread the moment it's created
-
-  await CommentsEmitter.emit(CommentsEvents.Created, {
-    comment: newComment
-  })
-
-  return newComment
-}
 
 /**
  * @deprecated Use 'createCommentReplyAndNotify()' instead
