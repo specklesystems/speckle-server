@@ -26,6 +26,14 @@ yarn dev
 
 This will use the default dev DB connection of `postgres://speckle:speckle@127.0.0.1/speckle`. You can pass the environment variable `PG_CONNECTION_STRING` to change this to a different DB.
 
+### In a docker image
+
+Once you build the previewservice Dockerfile, you can run it like so:
+
+```
+docker run --rm -p 3001:3001 -e PG_CONNECTION_STRING=postgres://speckle:speckle@host.docker.internal/speckle {IMAGEID}
+```
+
 ## Deployment notes
 
 When deploying the PreviewService, it's important to pay attention to the memory requirements: Speckle streams can be arbitrarily large and the preview service must load the entire stream in order to generate the preview image.

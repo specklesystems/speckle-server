@@ -76,6 +76,7 @@ COPY --from=build-stage /speckle-server/wait /wait
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
+ENV PUPPETEER_CACHE_DIR=/puppeteer
 
 WORKDIR /speckle-server
 COPY .yarnrc.yml .
@@ -95,7 +96,7 @@ COPY --from=build-stage /speckle-server/packages/preview-service ./preview-servi
 
 WORKDIR /speckle-server/packages/preview-service
 # hadolint ignore=DL3059
-RUN npx puppeteer browsers install chrome
+RUN npx @puppeteer/browsers install chrome@stable --path /puppeteer
 # hadolint ignore=DL3059
 RUN yarn workspaces focus --production
 
