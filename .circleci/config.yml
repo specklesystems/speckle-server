@@ -875,7 +875,7 @@ jobs:
 
   docker-build-frontend-2:
     <<: *build-job
-    resource_class: large
+    resource_class: xlarge
     environment:
       SPECKLE_SERVER_PACKAGE: frontend-2
 
