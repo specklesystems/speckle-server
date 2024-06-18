@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/require-await */
 
 import { BaseBridge } from '~~/lib/bridge/base'
-import { IBinding } from '~~/lib/bindings/definitions/IBinding'
+import { IBinding, IBindingSharedEvents } from '~~/lib/bindings/definitions/IBinding'
 
 /**
  * The name under which this binding will be registered.
@@ -19,7 +19,7 @@ export interface ITestBinding extends IBinding<ITestBindingEvents> {
   triggerEvent: (eventName: string) => Promise<void>
 }
 
-export interface ITestBindingEvents {
+export interface ITestBindingEvents extends IBindingSharedEvents {
   emptyTestEvent: () => void
   testEvent: (args: TestEventArgs) => void
 }

@@ -330,6 +330,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   app.$configBinding?.on('setGlobalNotification', setNotification)
   app.$accountBinding?.on('setGlobalNotification', setNotification)
   app.$selectionBinding?.on('setGlobalNotification', setNotification)
+  app.$testBindings?.on('setGlobalNotification', setNotification)
 
   app.$sendBinding?.on('setModelError', handleModelError)
   app.$receiveBinding?.on('setModelError', handleModelError)
