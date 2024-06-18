@@ -1,6 +1,9 @@
-FROM node:18-bookworm-slim@sha256:7642244621c75012ab49a03156639537fd7ab654a1f772e854115c93edb039df as build-stage
+FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 as build-stage
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
+
+# have to build w/ sourcemaps and then delete them, cause otherwise the file hashes are different (absurd, i know...)
+ENV BUILD_SOURCEMAPS=true
 
 WORKDIR /speckle-server
 
@@ -26,15 +29,18 @@ COPY packages/ui-components-nuxt ./packages/ui-components-nuxt/
 COPY packages/tailwind-theme ./packages/tailwind-theme/
 COPY packages/frontend-2 ./packages/frontend-2/
 
+# hadolint ignore=DL3059
 RUN yarn workspaces focus -A
 # hadolint ignore=DL3059
 RUN yarn workspaces foreach run build
+# hadolint ignore=DL3059
+RUN find ./packages/frontend-2/.output/ -type f \( -name "*.js.map" -o -name "*.mjs.map" -o -name "*.cjs.map" \) -exec rm -f {} \;
 
 ENV TINI_VERSION v0.19.0
 ADD https://github.com/krallin/tini/releases/download/${TINI_VERSION}/tini /tini
 RUN chmod +x /tini
 
-FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:7be61ef4dbb5dc518f64476514a0007479efc3839da74d1ac0928b841455005c as production-stage
+FROM gcr.io/distroless/nodejs18-debian12:nonroot@sha256:afdea027580f7afcaf1f316b2b3806690c297cb3ce6ddc5cf6a15804dc1c790f as production-stage
 ARG NODE_ENV=production
 ENV NODE_ENV=${NODE_ENV}
 

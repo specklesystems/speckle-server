@@ -1,4 +1,4 @@
-import { Observability } from '@speckle/shared'
+import * as Observability from '@speckle/shared/dist/esm/observability/index'
 import Vue from 'vue'
 
 const ENTER_STATE_AT_ERRORS_PER_MIN = 100

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { MaybeAsync } from '@speckle/shared'
+import { type MaybeAsync, buildManualPromise } from '@speckle/shared'
 import { computedAsync } from '@vueuse/core'
 import type { AsyncComputedOptions } from '@vueuse/core'
 import { computed } from 'vue'
@@ -65,3 +65,5 @@ export function writableAsyncComputed<T>(
 
   return getter
 }
+
+export { buildManualPromise }

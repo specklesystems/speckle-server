@@ -44,7 +44,7 @@ spec:
 
         livenessProbe:
           httpGet:
-            path: /health
+            path: /api/status
             port: www
           failureThreshold: 3
           initialDelaySeconds: 10
@@ -53,7 +53,7 @@ spec:
           timeoutSeconds: 5
         readinessProbe:
           httpGet:
-            path: /health
+            path: /api/status
             port: www
           failureThreshold: 1
           initialDelaySeconds: 5
@@ -89,21 +89,31 @@ spec:
               secretKeyRef:
                 name: {{ default .Values.secretName .Values.redis.connectionString.secretName }}
                 key: {{ default "redis_url" .Values.redis.connectionString.secretKey }}
-          {{- if .Values.analytics.raygun_key }}
-          - name: NUXT_PUBLIC_RAYGUN_KEY
-            value: {{ .Values.analytics.raygun_key | quote }}
+          {{- if .Values.analytics.datadog_app_id }}
+          - name: NUXT_PUBLIC_DATADOG_APP_ID
+            value: {{ .Values.analytics.datadog_app_id | quote }}
           {{- end }}
-          {{- if .Values.analytics.logrocket_app_id }}
-          - name: NUXT_PUBLIC_LOGROCKET_APP_ID
-            value: {{ .Values.analytics.logrocket_app_id | quote }}
+          {{- if .Values.analytics.datadog_client_token }}
+          - name: NUXT_PUBLIC_DATADOG_CLIENT_TOKEN
+            value: {{ .Values.analytics.datadog_client_token | quote }}
           {{- end }}
-          {{- if .Values.analytics.speedcurve_id }}
-          - name: NUXT_PUBLIC_SPEEDCURVE_ID
-            value: {{ .Values.analytics.speedcurve_id | quote }}
+          {{- if .Values.analytics.datadog_site }}
+          - name: NUXT_PUBLIC_DATADOG_SITE
+            value: {{ .Values.analytics.datadog_site | quote }}
           {{- end }}
-          {{- if .Values.analytics.debugbear_id }}
-          - name: NUXT_PUBLIC_DEBUGBEAR_ID
-            value: {{ .Values.analytics.debugbear_id | quote }}
+          {{- if .Values.analytics.datadog_service }}
+          - name: NUXT_PUBLIC_DATADOG_SERVICE
+            value: {{ .Values.analytics.datadog_service | quote }}
+          {{- end }}
+          {{- if .Values.analytics.datadog_env }}
+          - name: NUXT_PUBLIC_DATADOG_ENV
+            value: {{ .Values.analytics.datadog_env | quote }}
+          {{- end }}
+          - name: NUXT_PUBLIC_FF_AUTOMATE_MODULE_ENABLED
+            value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
+          {{- if .Values.analytics.survicate_workspace_key }}
+          - name: NUXT_PUBLIC_SURVICATE_WORKSPACE_KEY
+            value: {{ .Values.analytics.survicate_workspace_key | quote }}
           {{- end }}
 
       priorityClassName: high-priority

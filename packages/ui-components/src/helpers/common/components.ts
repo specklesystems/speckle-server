@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { ConcreteComponent, FunctionalComponent } from 'vue'
+import type { ConcreteComponent, FunctionalComponent, DefineComponent } from 'vue'
 
 export type PropAnyComponent =
   | ConcreteComponent<any, any, any, any, any>
   | FunctionalComponent<any, any, any>
+  | DefineComponent
+  | string
 
 export type HorizontalOrVertical = 'horizontal' | 'vertical'
 
@@ -13,7 +15,6 @@ export interface StepCoreType {
   onClick?: () => void
 }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface BulletStepType extends StepCoreType {}
 
 export interface NumberStepType extends BulletStepType {

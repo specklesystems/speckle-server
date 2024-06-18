@@ -6,7 +6,7 @@ const { chunk } = require('lodash')
 const { logger: parentLogger } = require('../observability/logging')
 
 const knex = require('../knex')
-const { Observability } = require('@speckle/shared')
+const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
 const Streams = () => knex('streams')
 const Branches = () => knex('branches')
 const Objects = () => knex('objects')

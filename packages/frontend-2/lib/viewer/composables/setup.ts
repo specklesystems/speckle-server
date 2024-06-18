@@ -1,13 +1,10 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import {
-  Viewer,
   DefaultViewerParams,
-  WorldTree,
   ViewerEvent,
   DefaultLightConfiguration,
   LegacyViewer,
-  VisualDiffMode,
-  MeasurementType
+  MeasurementType,
+  FilteringExtension
 } from '@speckle/viewer'
 import type {
   FilteringState,
@@ -15,7 +12,10 @@ import type {
   SunLightConfiguration,
   SpeckleView,
   MeasurementOptions,
-  DiffResult
+  DiffResult,
+  Viewer,
+  WorldTree,
+  VisualDiffMode
 } from '@speckle/viewer'
 import type { MaybeRef } from '@vueuse/shared'
 import { inject, ref, provide } from 'vue'
@@ -23,7 +23,7 @@ import type { ComputedRef, WritableComputedRef, Raw, Ref, ShallowRef } from 'vue
 import { useScopedState } from '~~/lib/common/composables/scopedState'
 import type { MaybeNullOrUndefined, Nullable, Optional } from '@speckle/shared'
 import { SpeckleViewer, isNonNullable } from '@speckle/shared'
-import { useApolloClient, useQuery } from '@vue/apollo-composable'
+import { useApolloClient, useLazyQuery, useQuery } from '@vue/apollo-composable'
 import {
   projectViewerResourcesQuery,
   viewerLoadedResourcesQuery,
@@ -50,9 +50,8 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
-import { Box3, Vector3 } from 'three'
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { wrapRefWithTracking } from '~~/lib/common/helpers/debugging'
+import type { Box3 } from 'three'
+import { Vector3 } from 'three'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
 import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
@@ -60,12 +59,13 @@ import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
 import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { flatten, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
-import { FilteringExtension } from '@speckle/viewer'
 import {
   InjectableViewerStateKey,
   useSetupViewerScope
 } from '~/lib/viewer/composables/setup/core'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
+import { buildManualPromise } from '@speckle/ui-components'
+import { PassReader } from '../extensions/PassReader'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -164,6 +164,14 @@ export type InjectableViewerState = Readonly<{
       resourceItemsQueryVariables: ComputedRef<
         Optional<ProjectViewerResourcesQueryVariables>
       >
+      /**
+       * Whether or not the initial resource items load has happened (useful in SSR)
+       */
+      resourceItemsLoaded: ComputedRef<boolean>
+      /**
+       * Whether or not the initial resources (models, objects etc.) have been loaded (useful in SSR)
+       */
+      resourcesLoaded: ComputedRef<boolean>
       /**
        * Model GQL objects paired with their loaded version IDs
        */
@@ -302,7 +310,7 @@ const GlobalViewerDataKey = Symbol('GlobalViewerData')
 
 function createViewerDataBuilder(params: { viewerDebug: boolean }) {
   return () => {
-    if (process.server)
+    if (import.meta.server)
       // we don't want to use nullable checks everywhere, so the nicer route here ends
       // up being telling TS to ignore the undefineds - you shouldn't use any of this in SSR anyway
       return undefined as unknown as CachedViewerState
@@ -315,8 +323,9 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
 
     const viewer = new LegacyViewer(container, {
       ...DefaultViewerParams,
-      verbose: !!(process.client && params.viewerDebug)
+      verbose: !!(import.meta.client && params.viewerDebug)
     })
+    viewer.createExtension(PassReader)
     const initPromise = viewer.init()
 
     return {
@@ -390,8 +399,21 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
   return {
     projectId,
     sessionId,
-    viewer: process.server
-      ? (undefined as unknown as InitialSetupState['viewer'])
+    viewer: import.meta.server
+      ? ({
+          instance: undefined,
+          container: undefined,
+          init: {
+            promise: new Promise(() => {}),
+            ref: computed(() => false)
+          },
+          metadata: {
+            worldTree: computed(() => undefined),
+            availableFilters: computed(() => undefined),
+            views: computed(() => []),
+            filteringState: computed(() => undefined)
+          }
+        } as unknown as InitialSetupState['viewer'])
       : {
           instance,
           container,
@@ -504,7 +526,7 @@ function setupResponseResourceItems(
   state: InitialStateWithRequest
 ): Pick<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables'
+  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded'
 > {
   const globalError = useError()
   const {
@@ -514,10 +536,12 @@ function setupResponseResourceItems(
     }
   } = state
 
+  const initLoadDone = ref(import.meta.server ? false : true)
   const {
     result: resolvedResourcesResult,
     variables: resourceItemsQueryVariables,
-    onError
+    onError,
+    onResult
   } = useQuery(
     projectViewerResourcesQuery,
     () => ({
@@ -532,6 +556,11 @@ function setupResponseResourceItems(
       statusCode: 500,
       message: `Viewer resource resolution failed: ${err}`
     })
+    initLoadDone.value = true
+  })
+
+  onResult(() => {
+    initLoadDone.value = true
   })
 
   const resolvedResourceGroups = computed(
@@ -587,8 +616,9 @@ function setupResponseResourceItems(
       const modelId = item.modelId
       const objectId = item.objectId
 
-      // In case we want to go back to 1 resource per model:
-      // if (modelId && encounteredModels.has(modelId)) continue
+      // Uncommenting the following line resolved model duplication issues in the Model Panel
+      // without affecting diffing functionality. If future diffing problems arise, revisit this.
+      if (modelId && encounteredModels.has(modelId)) continue
       if (encounteredObjects.has(objectId)) continue
 
       finalItems.push(item)
@@ -599,9 +629,12 @@ function setupResponseResourceItems(
     return finalItems
   })
 
+  const resourceItemsLoaded = computed(() => initLoadDone.value)
+
   return {
     resourceItems,
-    resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value)
+    resourceItemsQueryVariables: computed(() => resourceItemsQueryVariables.value),
+    resourceItemsLoaded
   }
 }
 
@@ -610,7 +643,7 @@ function setupResponseResourceData(
   resourceItemsData: ReturnType<typeof setupResponseResourceItems>
 ): Omit<
   InjectableViewerState['resources']['response'],
-  'resourceItems' | 'resourceItemsQueryVariables'
+  'resourceItems' | 'resourceItemsQueryVariables' | 'resourceItemsLoaded'
 > {
   const apollo = useApolloClient().client
   const globalError = useError()
@@ -624,8 +657,9 @@ function setupResponseResourceData(
     },
     urlHashState: { diff }
   } = state
-  const { resourceItems } = resourceItemsData
+  const { resourceItems, resourceItemsLoaded } = resourceItemsData
 
+  const initLoadDone = ref(import.meta.server ? false : true)
   const objects = computed(() =>
     resourceItems.value.filter((i) => !i.modelId && !i.versionId)
   )
@@ -667,10 +701,29 @@ function setupResponseResourceData(
     result: viewerLoadedResourcesResult,
     variables: viewerLoadedResourcesVariables,
     onError: onViewerLoadedResourcesError,
-    onResult: onViewerLoadedResourcesResult
-  } = useQuery(viewerLoadedResourcesQuery, viewerLoadedResourcesVariablesFunc, {
+    onResult: onViewerLoadedResourcesResult,
+    load: loadViewerLoadedResources
+  } = useLazyQuery(viewerLoadedResourcesQuery, viewerLoadedResourcesVariablesFunc, {
     keepPreviousResult: true
   })
+
+  const serverResourcesLoadedPromise = buildManualPromise<void>()
+  if (import.meta.server) {
+    watch(
+      () => resourceItemsLoaded.value,
+      async (newVal, oldVal) => {
+        if (!newVal || oldVal) return
+
+        // Load only now - once the previous query is done
+        await loadViewerLoadedResources()
+        serverResourcesLoadedPromise.resolve()
+      },
+      { flush: 'sync' }
+    )
+  } else {
+    loadViewerLoadedResources()
+    serverResourcesLoadedPromise.resolve()
+  }
 
   const project = computed(() => viewerLoadedResourcesResult.value?.project)
   const models = computed(() => project.value?.models?.items || [])
@@ -707,10 +760,12 @@ function setupResponseResourceData(
       statusCode: 500,
       message: `Viewer loaded resource resolution failed: ${err}`
     })
+    initLoadDone.value = true
   })
 
   // Load initial batch of cursors for each model
   onViewerLoadedResourcesResult((res) => {
+    initLoadDone.value = true
     if (!res.data?.project?.models) return
 
     for (const model of res.data.project.models.items) {
@@ -784,6 +839,10 @@ function setupResponseResourceData(
     logger.error(err)
   })
 
+  onServerPrefetch(async () => {
+    await Promise.all([serverResourcesLoadedPromise.promise])
+  })
+
   return {
     objects,
     commentThreads,
@@ -793,7 +852,8 @@ function setupResponseResourceData(
     project,
     resourceQueryVariables: computed(() => viewerLoadedResourcesVariables.value),
     threadsQueryVariables: computed(() => threadsQueryVariables.value),
-    loadMoreVersions
+    loadMoreVersions,
+    resourcesLoaded: computed(() => initLoadDone.value)
   }
 }
 
@@ -941,10 +1001,15 @@ export function useSetupViewer(params: UseSetupViewerParams): InjectableViewerSt
   const stateWithResources = setupResourceResponse(initialStateWithRequest)
   const state: InjectableViewerState = setupInterfaceState(stateWithResources)
 
-  // Inject it into descendant components
-  provide(InjectableViewerStateKey, state)
+  // We don't want the state to ever be proxified (e.g. when passed through props),
+  // cause that will break composables (refs will be automatically unwrapped as if
+  // they're accessed in a template)
+  const rawState = markRaw(state)
 
-  return state
+  // Inject it into descendant components
+  provide(InjectableViewerStateKey, rawState)
+
+  return rawState
 }
 
 /**

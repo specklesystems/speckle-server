@@ -23,6 +23,7 @@ async function checkForPresence() {
     // We can't properly require this package from a node environment, so as long as we
     // get to the expected error, we at least know that the package is built and exists
     if (!(e instanceof Error) || !e.message.includes('v3-infinite-loading')) {
+      console.log(e)
       return false
     }
   }
@@ -31,6 +32,7 @@ async function checkForPresence() {
     require('@speckle/tailwind-theme')
     require('@speckle/shared')
   } catch (e) {
+    console.log(e)
     return false
   }
 

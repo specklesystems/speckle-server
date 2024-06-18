@@ -10,7 +10,6 @@ import { addLoadersToCtx } from '@/modules/shared/middleware'
 import { Roles, AllScopes } from '@/modules/core/helpers/mainConstants'
 import { expect } from 'chai'
 import { ApolloServer } from 'apollo-server-express'
-import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { wait } from '@speckle/shared'
 
@@ -29,15 +28,13 @@ async function getOrderedInviteIds() {
   // Only returning invites that can appear on the admin users list
   return (
     await ServerInvites.knex()
-      .select(ServerInvites.col.id)
+      .select<{ id: string }[]>(ServerInvites.col.id)
       .where(ServerInvites.col.target, 'NOT ILIKE', `@%`)
-  ).map((o: Pick<ServerInviteRecord, 'id'>) => o.id)
+  ).map((o) => o.id)
 }
 
 async function getOrderedUserIds() {
-  return (await Users.knex().select(Users.col.id)).map(
-    (o: Pick<ServerInviteRecord, 'id'>) => o.id
-  )
+  return (await Users.knex().select<{ id: string }[]>(Users.col.id)).map((o) => o.id)
 }
 
 describe('[Admin users list]', () => {

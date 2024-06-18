@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="relative">
@@ -7,19 +8,6 @@
       } ${allCompleted ? 'max-w-lg mx-auto' : ''}`"
     >
       <div>
-        <div class="sm:hidden px-4 pt-2 pb-1">
-          <div
-            class="bg-foundation p-2 rounded-md text-sm flex flex-col text-center gap-2"
-          >
-            <p>
-              There's more to Speckle - be sure to visit on a computer. Since you're on
-              a mobile device, feel free to keep exploring the web app!
-            </p>
-            <FormButton text size="sm" @click="dismissChecklistForever()">
-              Don't show again
-            </FormButton>
-          </div>
-        </div>
         <div
           v-if="!allCompleted"
           :class="`hidden sm:grid gap-2 ${
@@ -170,7 +158,7 @@
         </div>
         <div
           v-else
-          class="hidden sm:flex flex-col sm:flex-row items-center justify-center flex-1 gap-x-2 py-4"
+          class="relative hidden sm:flex flex-col sm:flex-row items-center justify-center flex-1 gap-x-2 py-4"
         >
           <div class="w-6 h-6">
             <!-- <CheckCircleIcon class="absolute w-6 h-6 text-primary" /> -->
@@ -203,7 +191,7 @@
       viewer. It does not directly dismiss the checklist as we still want to show it
       on the main dasboard page.  
     -->
-    <div v-if="showBottomEscape" class="text-center mt-2">
+    <div v-if="showBottomEscape && !allCompleted" class="text-center mt-2">
       <FormButton size="sm" @click="$emit('dismiss')">
         I'll do it later - let me explore first!
       </FormButton>
@@ -418,7 +406,7 @@ const goToFirstUncompletedStep = () => {
   const firstNonCompleteStepIndex = steps.value.findIndex((s) => s.completed === false)
   activateStep(firstNonCompleteStepIndex)
 
-  if (process.client) {
+  if (import.meta.client) {
     mp.track('Onboarding Action', {
       type: 'action',
       name: 'checklist',

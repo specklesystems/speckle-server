@@ -1,11 +1,11 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 import { useField } from 'vee-validate'
 import type { RuleExpression } from 'vee-validate'
-import { computed, onMounted, ref, unref } from 'vue'
+import { computed, onMounted, ref, unref, watch } from 'vue'
 import type { Ref, ToRefs } from 'vue'
-import type { Nullable } from '@speckle/shared'
+import type { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 import { nanoid } from 'nanoid'
-import { isArray } from 'lodash'
+import { debounce, isArray, isBoolean, isString, isUndefined, noop } from 'lodash'
 
 export type InputColor = 'page' | 'foundation' | 'transparent'
 
@@ -46,7 +46,10 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   })
 
   const labelClasses = computed(() => {
-    const classParts = ['block label text-foreground-2 mb-2']
+    const classParts = [
+      'flex label mb-1.5',
+      unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2'
+    ]
     if (!unref(props.showLabel)) {
       classParts.push('sr-only')
     }
@@ -58,7 +61,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     const classParts: string[] = [
       'focus:outline-none disabled:cursor-not-allowed disabled:bg-foundation-disabled',
       'disabled:text-disabled-muted placeholder:text-foreground-2',
-      'rounded'
+      'rounded-md'
     ]
 
     return classParts.join(' ')
@@ -80,7 +83,9 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
     const color = unref(props.color)
     if (color === 'foundation') {
-      classParts.push('bg-foundation shadow-sm hover:shadow')
+      classParts.push(
+        'bg-foundation !border border-outline-3 focus:border-outline-1 focus:!outline-0 focus:!ring-0'
+      )
     } else if (color === 'transparent') {
       classParts.push('bg-transparent')
     } else {
@@ -108,9 +113,13 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     hasHelpTip.value ? `${unref(props.name)}-${internalHelpTipId.value}` : undefined
   )
   const helpTipClasses = computed((): string => {
-    const classParts = ['mt-2 text-xs sm:text-sm']
+    const classParts = ['mt-2 text-xs']
     classParts.push(error.value ? 'text-danger' : 'text-foreground-2')
     return classParts.join(' ')
+  })
+  const shouldShowClear = computed(() => {
+    if (!unref(props.showClear)) return false
+    return (value.value?.length || 0) > 0
   })
 
   const focus = () => {
@@ -143,6 +152,135 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     errorMessage,
     clear,
     focus,
-    labelClasses
+    labelClasses,
+    shouldShowClear
+  }
+}
+
+type FormInputChangeEvent = { event?: Event; value: string }
+
+/**
+ * Attach returned on and bind using v-on and v-bind, and then you can use the returned `value`
+ * ref to get the input's value while ensuring normal input events are debounced and only change/clear
+ * events cause the value to propagate immediately
+ *
+ * Very useful for search inputs and other kind of auto-submitting inputs!
+ */
+export function useDebouncedTextInput(params?: {
+  /**
+   * For how long should basic input events be debounced.
+   * Default: 1000 (ms)
+   */
+  debouncedBy?: number
+
+  /**
+   * Optionally pass in the model ref that should be used as the source of truth
+   */
+  model?: Ref<MaybeNullOrUndefined<string>>
+
+  /**
+   * Set to true if you're tracking changes on a basic HTML input element. This will change the events
+   * being used (e.g. input instead of update:modelValue)
+   *
+   * Default: false
+   */
+  isBasicHtmlInput?: boolean
+
+  /**
+   * Set to false if you don't want the change event to be emitted on Enter key press.
+   * Setting only works for basic html inputs currently!
+   *
+   * Default: Default behavior (true for input, false for textarea)
+   */
+  submitOnEnter?: boolean
+
+  /**
+   * Set to true if you want to see debug output for how events fire and are handled
+   */
+  debug?: boolean | ((...logArgs: unknown[]) => void)
+}) {
+  const { debouncedBy = 1000, isBasicHtmlInput = false, submitOnEnter } = params || {}
+  const log = params?.debug
+    ? isBoolean(params.debug)
+      ? console.debug
+      : params.debug
+    : noop
+
+  const value = params?.model || ref('')
+  const model = ref(value.value)
+
+  const getValue = (val: string | InputEvent | Event | FormInputChangeEvent) => {
+    if (isString(val)) return val
+    if ('value' in val) return val.value
+
+    const target = val.target as Nullable<HTMLInputElement | HTMLTextAreaElement>
+    return target?.value || ''
+  }
+
+  const debouncedValueUpdate = debounce((val: string) => {
+    value.value = val
+    log('Value updated: ' + val)
+  }, debouncedBy)
+
+  const inputEventName = isBasicHtmlInput ? 'input' : 'update:modelValue'
+  const on = {
+    [inputEventName]: (val: string | InputEvent) => {
+      const newVal = getValue(val)
+      model.value = newVal
+      debouncedValueUpdate(newVal)
+      log(`Input event [${inputEventName}] triggered: ${newVal}`)
+    },
+    clear: () => {
+      debouncedValueUpdate.cancel()
+      model.value = ''
+      value.value = ''
+      log('Clear event')
+    },
+    change: (val: FormInputChangeEvent | Event) => {
+      const newVal = getValue(val)
+      debouncedValueUpdate.cancel()
+      value.value = newVal
+      model.value = newVal
+      log('Change event: ' + newVal)
+    },
+    keydown: (e: KeyboardEvent) => {
+      if (!isBasicHtmlInput) return
+      if (isUndefined(submitOnEnter)) return
+
+      const isEnter = e.key === 'Enter'
+      if (!isEnter) return
+
+      const isTextarea = e.target instanceof HTMLTextAreaElement
+
+      if (isTextarea) {
+        if (submitOnEnter) {
+          log('Triggering submit on enter')
+          e.preventDefault()
+          e.stopPropagation()
+          on.change(e)
+        }
+      } else {
+        if (!submitOnEnter) {
+          log('Preventing submit on enter')
+          e.preventDefault()
+          e.stopPropagation()
+        }
+      }
+    }
+  }
+  const bind = {
+    modelValue: computed(() => model.value || '')
+  }
+
+  watch(value, (newVal, oldVal) => {
+    if (oldVal === newVal && !oldVal && !newVal) return
+    if (model.value === value.value) return
+    model.value = value.value
+  })
+
+  return {
+    on,
+    bind,
+    value
   }
 }

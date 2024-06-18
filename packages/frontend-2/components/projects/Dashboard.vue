@@ -11,11 +11,17 @@
         v-if="projectsPanelResult?.activeUser?.projectInvites?.length"
         :invites="projectsPanelResult?.activeUser"
       />
-      <ProjectsFeedbackRequestBanner
-        v-if="showFeedbackRequest"
-        @feedback-dismissed-or-opened="onDismissOrOpenFeedback"
+      <ProjectsNewSpeckleBanner
+        v-if="showNewSpeckleBanner"
+        @dismissed="onDismissNewSpeckleBanner"
       />
     </div>
+
+    <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
+    <div v-if="showErrorTest" class="w-full">
+      <FormButton @click="testError">Test error</FormButton>
+    </div>
+
     <div
       v-if="!showEmptyState"
       class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
@@ -31,7 +37,7 @@
           :show-label="false"
           placeholder="Search"
           color="foundation"
-          wrapper-classes="grow md:grow-0 md:w-60 hover:shadow rounded-md outline outline-2 outline-primary-muted"
+          wrapper-classes="grow md:grow-0 md:w-60"
           :show-clear="!!search"
           @change="updateSearchImmediately"
           @update:model-value="updateDebouncedSearch"
@@ -93,7 +99,7 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, Optional, StreamRoles } from '@speckle/shared'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
-import dayjs from 'dayjs'
+import type { PromoBanner } from '~/lib/promo-banners/types'
 
 const onUserProjectsUpdateSubscription = graphql(`
   subscription OnUserProjectsUpdate {
@@ -117,6 +123,18 @@ const debouncedSearch = ref('')
 const openNewProject = ref(false)
 const showLoadingBar = ref(false)
 
+const promoBanners = ref<PromoBanner[]>([
+  {
+    id: 'speckleverse',
+    primaryText: 'Join our online hackathon!',
+    secondaryText: 'June 7 - 9, 2024',
+    url: 'https://beyond-the-speckleverse.devpost.com/',
+    priority: 1,
+    expiryDate: '2024-06-10'
+  }
+])
+
+const route = useRoute()
 const { activeUser, isGuest } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const areQueriesLoading = useQueryLoading()
@@ -141,6 +159,8 @@ onProjectsResult((res) => {
 const { onResult: onUserProjectsUpdate } = useSubscription(
   onUserProjectsUpdateSubscription
 )
+
+const showErrorTest = computed(() => route.query.showErrorButton === '1')
 
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 const showEmptyState = computed(() => {
@@ -167,9 +187,8 @@ const updateSearchImmediately = () => {
   debouncedSearch.value = search.value.trim()
 }
 
-const onDismissOrOpenFeedback = () => {
-  onboardingOrFeedbackDate.value = undefined
-  hasDismissedOrOpenedFeedback.value = true
+const onDismissNewSpeckleBanner = () => {
+  hasDismissedNewSpeckleBanner.value = true
 }
 
 onUserProjectsUpdate((res) => {
@@ -266,23 +285,10 @@ watch(search, (newVal) => {
 
 watch(areQueriesLoading, (newVal) => (showLoadingBar.value = newVal))
 
-function getFutureDateByDays(daysToAdd: number) {
-  return dayjs().add(daysToAdd, 'day').toDate()
-}
-
-const onboardingOrFeedbackDate = useSynchronizedCookie<string | undefined>(
-  `onboardingOrFeedbackDate`,
-  {
-    default: () => undefined,
-    expires: getFutureDateByDays(180)
-  }
-)
-
 const hasCompletedChecklistV1 = useSynchronizedCookie<boolean>(
   `hasCompletedChecklistV1`,
   {
-    default: () => false,
-    expires: getFutureDateByDays(999)
+    default: () => false
   }
 )
 
@@ -294,14 +300,8 @@ const hasDismissedChecklistTime = useSynchronizedCookie<string | undefined>(
 const hasDismissedChecklistForever = useSynchronizedCookie<boolean | undefined>(
   `hasDismissedChecklistForever`,
   {
-    default: () => false,
-    expires: getFutureDateByDays(999)
+    default: () => false
   }
-)
-
-const hasDismissedOrOpenedFeedback = useSynchronizedCookie<boolean | undefined>(
-  `hasDismissedOrOpenedFeedback`,
-  { default: () => false, expires: getFutureDateByDays(180) }
 )
 
 const hasDismissedChecklistTimeAgo = computed(() => {
@@ -310,6 +310,11 @@ const hasDismissedChecklistTimeAgo = computed(() => {
     new Date(hasDismissedChecklistTime.value || Date.now()).getTime()
   )
 })
+
+const hasDismissedNewSpeckleBanner = useSynchronizedCookie<boolean | undefined>(
+  `hasDismissedNewSpeckleBanner`,
+  { default: () => false }
+)
 
 const showChecklist = computed(() => {
   if (hasDismissedChecklistForever.value) return false
@@ -323,29 +328,20 @@ const showChecklist = computed(() => {
   return false
 })
 
-const showFeedbackRequest = computed(() => {
-  let storedDateString = onboardingOrFeedbackDate.value
-  const currentDate = dayjs()
-
-  if (!storedDateString) {
-    const formattedDate = currentDate.format('YYYY-MM-DD')
-    onboardingOrFeedbackDate.value = formattedDate
-    storedDateString = formattedDate
-  }
-
-  if (hasDismissedOrOpenedFeedback.value) return false
-  if (showChecklist.value) return false
+const showNewSpeckleBanner = computed(() => {
+  if (hasDismissedNewSpeckleBanner.value) return false
   if (projectsPanelResult?.value?.activeUser?.projectInvites.length) return false
 
-  const firstVisitDate = dayjs(storedDateString)
-  const daysDifference = currentDate.diff(firstVisitDate, 'day')
-
-  return daysDifference > 14
+  return true
 })
 
 const clearSearch = () => {
   search.value = ''
   selectedRoles.value = []
   updateSearchImmediately()
+}
+
+const testError = () => {
+  throw new Error('what duhh hell')
 }
 </script>

@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
@@ -17,16 +18,14 @@
             <PreviewImage :preview-url="version.previewUrl" />
           </NuxtLink>
           <div
-            v-if="!isPendingVersionFragment(version) && version.automationStatus"
+            v-if="!isPendingVersionFragment(version) && version.automationsStatus"
             class="absolute top-1 left-0 p-2"
           >
-            <ProjectPageModelsCardAutomationStatusRefactor
+            <AutomateRunsTriggerStatus
               :project-id="projectId"
-              :model-or-version="{
-                ...version,
-                automationStatus: version.automationStatus
-              }"
+              :status="version.automationsStatus"
               :model-id="modelId"
+              :version-id="version.id"
             />
           </div>
           <div
@@ -95,7 +94,7 @@ import type {
 import { modelRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
-import { VersionActionTypes } from '~~/lib/projects/helpers/components'
+import type { VersionActionTypes } from '~~/lib/projects/helpers/components'
 import { isPendingVersionFragment } from '~~/lib/projects/helpers/models'
 import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
 
@@ -114,7 +113,9 @@ graphql(`
     }
     ...ProjectModelPageDialogDeleteVersion
     ...ProjectModelPageDialogMoveToVersion
-    ...ModelCardAutomationStatus_Version
+    automationsStatus {
+      ...AutomateRunsTriggerStatus_TriggeredAutomationsStatus
+    }
   }
 `)
 
@@ -134,12 +135,11 @@ const props = defineProps<{
   selected?: boolean
   selectionDisabled?: boolean
 }>()
-provide('projectId', props.projectId)
 
 const showActionsMenu = ref(false)
 
 const hasAutomationStatus = computed(
-  () => !isPendingVersionFragment(props.version) && props.version.automationStatus
+  () => !isPendingVersionFragment(props.version) && props.version.automationsStatus
 )
 const createdAt = computed(() => {
   const date = isPendingVersionFragment(props.version)

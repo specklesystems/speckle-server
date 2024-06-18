@@ -3,7 +3,8 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 
-import { Observability, type Optional } from '@speckle/shared'
+import { type Optional } from '@speckle/shared'
+import type * as Observability from '@speckle/shared/dist/esm/observability/index'
 import {
   upperFirst,
   get,
@@ -134,6 +135,8 @@ export type AbstractUnhandledErrorHandler = (params: {
   error: Error | unknown
   message: string
 }) => void
+
+export type AbstractErrorHandlerParams = Parameters<AbstractErrorHandler>[0]
 
 /**
  * Adds proxy that intercepts error log calls so that they can be sent to any transport

@@ -1,5 +1,6 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
+import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
@@ -30,7 +31,7 @@ export function getFileSizeLimitMB() {
 }
 
 export function getMaximumObjectSizeMB() {
-  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '10')
+  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
 }
 
 export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
@@ -46,6 +47,10 @@ export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean 
  */
 export function useNewFrontend() {
   return getBooleanFromEnv('USE_FRONTEND_2')
+}
+
+export function enableNewFrontendMessaging() {
+  return getBooleanFromEnv('ENABLE_FE2_MESSAGING')
 }
 
 export function getRedisUrl() {
@@ -93,19 +98,33 @@ export function getMailchimpStatus() {
 }
 
 export function getMailchimpConfig() {
-  if (
-    !process.env.MAILCHIMP_API_KEY ||
-    !process.env.MAILCHIMP_SERVER_PREFIX ||
-    !process.env.MAILCHIMP_LIST_ID
-  ) {
-    throw new MisconfiguredEnvironmentError('Mailchimp is not configured')
-  }
-
+  if (!getMailchimpStatus()) return null
+  if (!process.env.MAILCHIMP_API_KEY || !process.env.MAILCHIMP_SERVER_PREFIX)
+    throw new MisconfiguredEnvironmentError('Mailchimp api is not configured')
   return {
     apiKey: process.env.MAILCHIMP_API_KEY,
-    serverPrefix: process.env.MAILCHIMP_SERVER_PREFIX,
-    listId: process.env.MAILCHIMP_LIST_ID
+    serverPrefix: process.env.MAILCHIMP_SERVER_PREFIX
   }
+}
+
+export function getMailchimpOnboardingIds() {
+  if (
+    !process.env.MAILCHIMP_ONBOARDING_LIST_ID ||
+    !process.env.MAILCHIMP_ONBOARDING_JOURNEY_ID ||
+    !process.env.MAILCHIMP_ONBOARDING_STEP_ID
+  )
+    throw new MisconfiguredEnvironmentError('Mailchimp onboarding is not configured')
+  return {
+    listId: process.env.MAILCHIMP_ONBOARDING_LIST_ID,
+    journeyId: parseInt(process.env.MAILCHIMP_ONBOARDING_JOURNEY_ID),
+    stepId: parseInt(process.env.MAILCHIMP_ONBOARDING_STEP_ID)
+  }
+}
+
+export function getMailchimpNewsletterIds() {
+  if (!process.env.MAILCHIMP_NEWSLETTER_LIST_ID)
+    throw new MisconfiguredEnvironmentError('Mailchimp newsletter id is not configured')
+  return { listId: process.env.MAILCHIMP_NEWSLETTER_LIST_ID }
 }
 
 /**
@@ -197,8 +216,7 @@ export function enableMixpanel() {
 }
 
 export function speckleAutomateUrl() {
-  const automateUrl =
-    process.env.SPECKLE_AUTOMATE_URL || 'https://automate.speckle.systems'
+  const automateUrl = process.env.SPECKLE_AUTOMATE_URL
   return automateUrl
 }
 
@@ -250,3 +268,32 @@ export function getEmailFromAddress() {
 export function getMaximumProjectModelsPerPage() {
   return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
 }
+
+export function delayGraphqlResponsesBy() {
+  if (!isDevEnv()) return 0
+  return getIntFromEnv('DELAY_GQL_RESPONSES_BY', '0')
+}
+
+export function getAutomateEncryptionKeysPath() {
+  if (!process.env.AUTOMATE_ENCRYPTION_KEYS_PATH) {
+    throw new MisconfiguredEnvironmentError(
+      'Automate encryption keys path environment variable (AUTOMATE_ENCRYPTION_KEYS_PATH) is not configured'
+    )
+  }
+
+  return process.env.AUTOMATE_ENCRYPTION_KEYS_PATH
+}
+
+export function getGendoAIKey() {
+  return process.env.GENDOAI_KEY
+}
+
+export function getGendoAIResponseKey() {
+  return process.env.GENDOAI_KEY_RESPONSE
+}
+
+export function getGendoAIAPIEndpoint() {
+  return process.env.GENDOAI_API_ENDPOINT
+}
+
+export const getFeatureFlags = () => Environment.getFeatureFlags()

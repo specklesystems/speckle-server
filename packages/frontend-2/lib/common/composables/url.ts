@@ -13,6 +13,24 @@ export function serializeHashState(
         .join('&')}`
 }
 
+export function deserializeHashState(hashString: string) {
+  if (hashString.length < 2 || !hashString.startsWith('#')) return {}
+
+  const keyValuePairs = hashString.substring(1).split('&')
+  const result = reduce(
+    keyValuePairs,
+    (result, item) => {
+      const [key, value] = item.split('=')
+      if (key && value) {
+        result[key] = value
+      }
+      return result
+    },
+    {} as Record<string, Nullable<string>>
+  )
+  return result
+}
+
 /**
  * Read/writable state similar to one in the querystring, but one that uses anchor (#) data instead
  */
@@ -22,22 +40,7 @@ export function useRouteHashState() {
 
   const hashState = writableAsyncComputed({
     get: () => {
-      const hash = route.hash
-      if (hash.length < 2 || !hash.startsWith('#')) return {}
-
-      const keyValuePairs = hash.substring(1).split('&')
-      const result = reduce(
-        keyValuePairs,
-        (result, item) => {
-          const [key, value] = item.split('=')
-          if (key && value) {
-            result[key] = value
-          }
-          return result
-        },
-        {} as Record<string, Nullable<string>>
-      )
-      return result
+      return deserializeHashState(route.hash)
     },
     set: async (newVal) => {
       const hashString = serializeHashState(newVal)

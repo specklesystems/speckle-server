@@ -4,12 +4,21 @@ const { corsMiddleware } = require('@/modules/core/configs/cors')
 const Busboy = require('busboy')
 
 const { validatePermissionsWriteStream } = require('./authUtils')
-
-const { createObjectsBatched } = require('@/modules/core/services/objects')
+const { getFeatureFlags } = require('@/modules/shared/helpers/envHelper')
+const {
+  createObjectsBatched,
+  createObjectsBatchedAndNoClosures
+} = require('@/modules/core/services/objects')
 const { ObjectHandlingError } = require('@/modules/core/errors/object')
 const { estimateStringMegabyteSize } = require('@/modules/core/utils/chunking')
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024
+const { FF_NO_CLOSURE_WRITES } = getFeatureFlags()
+
+let objectInsertionService = createObjectsBatched
+if (FF_NO_CLOSURE_WRITES) {
+  objectInsertionService = createObjectsBatchedAndNoClosures
+}
 
 module.exports = (app) => {
   app.options('/objects/:streamId', corsMiddleware())
@@ -100,7 +109,7 @@ module.exports = (app) => {
 
           try {
             objs = JSON.parse(gunzippedBuffer)
-          } catch (e) {
+          } catch {
             req.log.error(`Upload error: Batch not in JSON format`)
             if (!requestDropped) res.status(400).send('Failed to parse data.')
             requestDropped = true
@@ -115,37 +124,40 @@ module.exports = (app) => {
             await Promise.all(promises)
           }
 
-          const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-            req.log.error(e, `Upload error.`)
-            if (!requestDropped) {
-              switch (e.constructor) {
-                case ObjectHandlingError:
-                  res
-                    .status(400)
-                    .send(`Error inserting object in the database: ${e.message}`)
-                  break
-                default:
-                  res
-                    .status(400)
-                    .send(
-                      'Error inserting object in the database. Check server logs for details'
-                    )
+          const promise = objectInsertionService(req.params.streamId, objs).catch(
+            (e) => {
+              req.log.error(e, `Upload error.`)
+              if (!requestDropped) {
+                switch (e.constructor) {
+                  case ObjectHandlingError:
+                    res
+                      .status(400)
+                      .send(`Error inserting object in the database: ${e.message}`)
+                    break
+                  default:
+                    res
+                      .status(400)
+                      .send(
+                        'Error inserting object in the database. Check server logs for details'
+                      )
+                }
               }
+              requestDropped = true
             }
-            requestDropped = true
-          })
+          )
           promises.push(promise)
 
           await promise
 
           req.log.info(
             {
+              objectCount: objs.length,
               durationSeconds: (Date.now() - t0) / 1000,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               uploadedSizeMB: gunzippedBuffer.length / 1000000,
               requestDropped
             },
-            `Uploaded batch of ${objs.length} objects`
+            'Uploaded batch of {objectCount} objects'
           )
         })
       } else if (
@@ -176,7 +188,7 @@ module.exports = (app) => {
 
           try {
             objs = JSON.parse(buffer)
-          } catch (e) {
+          } catch {
             req.log.error(`Upload error: Batch not in JSON format`)
             if (!requestDropped)
               res.status(400).send('Failed to parse data. Batch is not in JSON format.')
@@ -204,35 +216,38 @@ module.exports = (app) => {
             await Promise.all(promises)
           }
 
-          const promise = createObjectsBatched(req.params.streamId, objs).catch((e) => {
-            req.log.error(e, `Upload error.`)
-            if (!requestDropped)
-              switch (e.constructor) {
-                case ObjectHandlingError:
-                  res
-                    .status(400)
-                    .send(`Error inserting object in the database. ${e.message}`)
-                  break
-                default:
-                  res
-                    .status(400)
-                    .send(
-                      'Error inserting object in the database. Check server logs for details'
-                    )
-              }
-            requestDropped = true
-          })
+          const promise = objectInsertionService(req.params.streamId, objs).catch(
+            (e) => {
+              req.log.error(e, `Upload error.`)
+              if (!requestDropped)
+                switch (e.constructor) {
+                  case ObjectHandlingError:
+                    res
+                      .status(400)
+                      .send(`Error inserting object in the database. ${e.message}`)
+                    break
+                  default:
+                    res
+                      .status(400)
+                      .send(
+                        'Error inserting object in the database. Check server logs for details'
+                      )
+                }
+              requestDropped = true
+            }
+          )
           promises.push(promise)
 
           await promise
           req.log.info(
             {
+              objectCount: objs.length,
               uploadedSizeMB: estimateStringMegabyteSize(buffer),
               durationSeconds: (Date.now() - t0) / 1000,
               crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024,
               requestDropped
             },
-            `Uploaded batch of ${objs.length} objects.`
+            'Uploaded batch of {objectCount} objects.'
           )
         })
       } else {

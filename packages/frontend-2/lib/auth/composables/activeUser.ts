@@ -1,7 +1,6 @@
-import { Roles, type MaybeNullOrUndefined } from '@speckle/shared'
+import { Roles, type MaybeNullOrUndefined, md5 } from '@speckle/shared'
 import { useApolloClient, useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
-import md5 from '~~/lib/common/helpers/md5'
 
 export const activeUserQuery = graphql(`
   query ActiveUserMainMetadata {
@@ -17,6 +16,9 @@ export const activeUserQuery = graphql(`
       createdAt
       verified
       notificationPreferences
+      versions(limit: 0) {
+        totalCount
+      }
     }
   }
 `)
@@ -57,11 +59,24 @@ export function useActiveUser() {
     const user = activeUser.value
     return getDistinctId(user)
   })
+  const userId = computed(() => activeUser.value?.id)
 
   const isGuest = computed(() => activeUser.value?.role === Roles.Server.Guest)
   const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
-  return { activeUser, isLoggedIn, distinctId, refetch, onResult, isGuest, isAdmin }
+  const projectVersionCount = computed(() => activeUser.value?.versions.totalCount)
+
+  return {
+    activeUser,
+    userId,
+    isLoggedIn,
+    distinctId,
+    refetch,
+    onResult,
+    isGuest,
+    isAdmin,
+    projectVersionCount
+  }
 }
 
 /**

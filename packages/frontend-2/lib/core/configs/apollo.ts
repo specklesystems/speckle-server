@@ -4,7 +4,7 @@ import { ApolloLink, InMemoryCache, split, from } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import type { ApolloConfigResolver } from '~~/lib/core/nuxt-modules/apollo/module'
-import { createUploadLink } from 'apollo-upload-client'
+import createUploadLink from 'apollo-upload-client/createUploadLink.mjs'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { Kind } from 'graphql'
@@ -100,6 +100,10 @@ function createCache(): InMemoryCache {
           },
           admin: {
             merge: mergeAsObjectsFunction
+          },
+          automateFunctions: {
+            keyArgs: ['filter', 'limit'],
+            merge: buildAbstractCollectionMergeFunction('AutomateFunctionCollection')
           }
         }
       },
@@ -144,6 +148,10 @@ function createCache(): InMemoryCache {
           projects: {
             keyArgs: ['filter', 'limit'],
             merge: buildAbstractCollectionMergeFunction('ProjectCollection')
+          },
+          versions: {
+            keyArgs: ['authoredOnly', 'limit'],
+            merge: buildAbstractCollectionMergeFunction('CountOnlyCollection')
           }
         }
       },
@@ -168,6 +176,10 @@ function createCache(): InMemoryCache {
           replyAuthors: {
             keyArgs: false,
             merge: buildAbstractCollectionMergeFunction('CommentReplyAuthorCollection')
+          },
+          automations: {
+            keyArgs: ['filter', 'limit'],
+            merge: buildAbstractCollectionMergeFunction('AutomationCollection')
           },
           viewerResources: {
             merge: (_existing, incoming) => [...incoming]
@@ -254,22 +266,40 @@ function createCache(): InMemoryCache {
       },
       CommentThreadActivityMessage: {
         merge: true
+      },
+      AutomateFunction: {
+        fields: {
+          releases: {
+            keyArgs: ['filter', 'limit'],
+            merge: buildAbstractCollectionMergeFunction(
+              'AutomateFunctionReleaseCollection'
+            )
+          }
+        }
+      },
+      Automation: {
+        fields: {
+          runs: {
+            keyArgs: ['limit'],
+            merge: buildAbstractCollectionMergeFunction('AutomateRunCollection')
+          }
+        }
       }
     }
   })
 }
 
-async function createWsClient(params: {
+function createWsClient(params: {
   wsEndpoint: string
   authToken: CookieRef<Optional<string>>
   reqId: string
-}): Promise<SubscriptionClient> {
+}): SubscriptionClient {
   const { wsEndpoint, authToken, reqId } = params
 
   // WS IN SSR DOESN'T WORK CURRENTLY CAUSE OF SOME NUXT TRANSPILATION WEIRDNESS
   // SO DON'T RUN createWsClient in SSR
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const wsImplementation = process.server ? (await import('ws')).default : undefined
+
+  // const wsImplementation = process.server ? (await import('ws')).default : undefined
   return new SubscriptionClient(
     wsEndpoint,
     {
@@ -280,8 +310,8 @@ async function createWsClient(params: {
           ? { Authorization, headers: { Authorization, 'x-request-id': reqId } }
           : {}
       }
-    },
-    wsImplementation
+    }
+    // wsImplementation
   )
 }
 
@@ -326,7 +356,7 @@ function createLink(params: {
       authToken.value = undefined
 
       // A bit hacky, but since this may happen mid-routing, a standard router.push call may not work
-      if (process.client) {
+      if (import.meta.client) {
         window.location.href = loginRoute
       } else {
         goToLogin()
@@ -411,10 +441,10 @@ function createLink(params: {
     })
   })
 
-  return from([...(process.server ? [loggerLink] : []), errorLink, link])
+  return from([...(import.meta.server ? [loggerLink] : []), errorLink, link])
 }
 
-const defaultConfigResolver: ApolloConfigResolver = async () => {
+const defaultConfigResolver: ApolloConfigResolver = () => {
   const {
     public: { speckleServerVersion = 'unknown' }
   } = useRuntimeConfig()
@@ -426,8 +456,8 @@ const defaultConfigResolver: ApolloConfigResolver = async () => {
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
   const authToken = useAuthCookie()
-  const wsClient = process.client
-    ? await createWsClient({ wsEndpoint, authToken, reqId })
+  const wsClient = import.meta.client
+    ? createWsClient({ wsEndpoint, authToken, reqId })
     : undefined
   const link = createLink({ httpEndpoint, wsClient, authToken, nuxtApp, reqId })
 

@@ -10,3 +10,14 @@ export function useServerInfo() {
 
   return { serverInfo, isGuestMode }
 }
+
+export function useFE2Messaging() {
+  const { serverInfo } = useServerInfo()
+  const fe2MessagingEnabled = computed(
+    () => serverInfo.value?.enableNewWebUiMessaging || false
+  )
+  const migrationMovedTo = computed(
+    () => serverInfo.value?.migration?.movedTo || 'https://app.speckle.systems'
+  )
+  return { fe2MessagingEnabled, migrationMovedTo }
+}

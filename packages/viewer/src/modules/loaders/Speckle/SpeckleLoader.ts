@@ -3,14 +3,13 @@ import SpeckleConverter from './SpeckleConverter'
 import { Loader, LoaderEvent } from '../Loader'
 import ObjectLoader from '@speckle/objectloader'
 import { SpeckleGeometryConverter } from './SpeckleGeometryConverter'
-import { WorldTree } from '../../..'
+import { WorldTree, type SpeckleObject } from '../../..'
 import { AsyncPause } from '../../World'
 
 export class SpeckleLoader extends Loader {
   private loader: ObjectLoader
   private converter: SpeckleConverter
   private tree: WorldTree
-  private priority: number = 1
   private isCancelled = false
   private isFinished = false
 
@@ -25,17 +24,15 @@ export class SpeckleLoader extends Loader {
   constructor(
     targetTree: WorldTree,
     resource: string,
-    authToken: string,
+    authToken?: string,
     enableCaching?: boolean,
-    resourceData?: string | ArrayBuffer,
-    priority: number = 1
+    resourceData?: string | ArrayBuffer
   ) {
     super(resource, resourceData)
     this.tree = targetTree
-    this.priority = priority
-    let token = null
+    let token = undefined
     try {
-      token = authToken || localStorage.getItem('AuthToken')
+      token = authToken || (localStorage.getItem('AuthToken') as string | undefined)
     } catch (error) {
       // Accessing localStorage may throw when executing on sandboxed document, ignore.
     }
@@ -90,15 +87,19 @@ export class SpeckleLoader extends Loader {
         return Promise.resolve(false)
       }
       if (first) {
-        firstObjectPromise = this.converter.traverse(this._resource, obj, async () => {
-          viewerLoads++
-          pause.tick(100)
-          if (pause.needsWait) {
-            await pause.wait(16)
+        firstObjectPromise = this.converter.traverse(
+          this._resource,
+          obj as SpeckleObject,
+          async () => {
+            viewerLoads++
+            pause.tick(100)
+            if (pause.needsWait) {
+              await pause.wait(16)
+            }
           }
-        })
+        )
         first = false
-        total = obj.totalChildrenCount
+        total = obj.totalChildrenCount as number
       }
       current++
       this.emit(LoaderEvent.LoadProgress, {
@@ -134,10 +135,11 @@ export class SpeckleLoader extends Loader {
     if (!renderTree) return Promise.resolve(false)
     const p = renderTree.buildRenderTree(geometryConverter)
 
-    p.then(() => {
+    void p.then(() => {
       Logger.log('ASYNC Tree build time -> ', performance.now() - t0)
       this.isFinished = true
     })
+
     return p
   }
 
@@ -147,6 +149,7 @@ export class SpeckleLoader extends Loader {
   }
 
   dispose() {
+    super.dispose()
     this.loader.dispose()
   }
 }

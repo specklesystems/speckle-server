@@ -22,7 +22,7 @@
       </v-card-title>
       <v-card-title class="justify-center pt-5 pb-2">
         <span class="hidden-md-and-up mr-2 primary--text">Speckle:</span>
-        Interoperability in seconds
+        Connectivity in seconds
       </v-card-title>
       <auth-strategies
         :strategies="strategies"
@@ -201,10 +201,14 @@ import {
 } from '@/main/lib/auth/services/authService'
 import { AppLocalStorage } from '@/utils/localStorage'
 import { useValidatablePasswordEntry } from '@/main/lib/auth/composables/useValidatablePasswordEntry'
+import { useFE2Messaging } from '@/main/lib/core/composables/server'
+import { watch } from 'vue'
 
 export default {
   name: 'TheRegistration',
-  components: { AuthStrategies },
+  components: {
+    AuthStrategies
+  },
   apollo: {
     serverInfo: {
       query: gql`
@@ -233,10 +237,26 @@ export default {
   },
   setup() {
     const validatablePasswordEntry = useValidatablePasswordEntry()
+    const { fe2MessagingEnabled, migrationMovedTo } = useFE2Messaging()
+
+    watch(
+      [fe2MessagingEnabled, migrationMovedTo],
+      ([enabled, url]) => {
+        if (enabled && url) {
+          const fullUrl = new URL('/authn/register', url)
+          window.location.href = fullUrl.href
+        }
+      },
+      { immediate: true }
+    )
+
     return {
+      fe2MessagingEnabled,
+      migrationMovedTo,
       ...validatablePasswordEntry
     }
   },
+
   data() {
     return {
       serverInfo: { authStrategies: [] },

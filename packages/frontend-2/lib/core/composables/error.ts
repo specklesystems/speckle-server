@@ -1,7 +1,8 @@
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import { Observability } from '@speckle/shared'
+import * as Observability from '@speckle/shared/dist/esm/observability/index'
 import type {
   AbstractErrorHandler,
+  AbstractErrorHandlerParams,
   AbstractUnhandledErrorHandler
 } from '~/lib/core/helpers/observability'
 
@@ -57,5 +58,18 @@ export const useCreateErrorLoggingTransport = () => {
 
 export const useGetErrorLoggingTransports = () => {
   const { transports } = useErrorLoggingTransportState()
+
   return transports
+}
+
+export const useLogToErrorLoggingTransports = () => {
+  const transports = useGetErrorLoggingTransports()
+  const invokeTransportsWithPayload = (payload: AbstractErrorHandlerParams) => {
+    transports.forEach((handler) => handler.onError(payload))
+  }
+
+  return {
+    transports,
+    invokeTransportsWithPayload
+  }
 }

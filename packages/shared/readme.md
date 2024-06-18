@@ -14,6 +14,9 @@ Some dependencies are marked as peer dependencies, to ensure that package consum
 import { Roles, RichTextEditor } from '@speckle/shared'
 ```
 
+There are also "heavy" imports, that are not exported by default, like `@speckle/shared/environment`. These are used to avoid importing the whole package when only a small part of it is needed.
+If export maps don't work (due to a legacy TS configuration) you can always import from `@speckle/shared/dist/**` directly
+
 ## Development
 
 Do `yarn build` to build or `yarn dev` to build in watch mode

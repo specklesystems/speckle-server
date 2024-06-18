@@ -30,6 +30,18 @@ tlsRejectUnauthorized: '1'
 ##
 cert_manager_issuer: letsencrypt-staging
 
+## @section Feature flags
+## @descriptionStart
+## This object is a central location to define feature flags for the whole chart.
+## @descriptionEnd
+featureFlags:
+  ## @param featureFlags.automateModuleEnabled High level flag fully toggles the integrated automate module
+  automateModuleEnabled: false
+  ## @param featureFlags.gendoAIModuleEnabled High level flag that toggles the Gendo AI render module
+  gendoAIModuleEnabled: false
+  ## @param featureFlags.noClosureWrites Toggles whether to stop writing to the closure table
+  noClosureWrites: false
+
 analytics:
   ## @param analytics.enabled Enable or disable analytics
   enabled: true
@@ -381,6 +393,10 @@ server:
   ##
   image: ''
 
+  ## @param server.enableFe2Messaging If enabled, the related FE1 deployment will show banners/messages about the new frontend
+  ##
+  enableFe2Messaging: false
+
   onboarding:
     ## @param server.onboarding.stream_url The (cross-server) URL to the project/stream that should be used as the onboarding project base.
     ##
@@ -406,6 +422,34 @@ server:
   max_project_models_per_page: 500
   ## @param server.speckleAutomateUrl The url of the Speckle Automate instance
   speckleAutomateUrl: 'https://automate.speckle.systems'
+
+  gendoAI:
+    ## @param server.gendoAI.apiUrl The url of the Gendo AI application, including protocol.
+    apiUrl: 'https://api.gendo.ai/external/generate'
+    key:
+      ## @param server.gendoAI.key.secretName The name of the Kubernetes Secret containing the Gendo AI key. If left blank, will default to the `secretName` parameter.
+      secretName: ''
+      ## @param server.gendoAI.key.secretKey The key within the Kubernetes Secret holding the Gendo AI key as its value.
+      secretKey: 'gendoai_key'
+    keyResponse:
+      ## @param server.gendoAI.keyResponse.secretName The name of the Kubernetes Secret containing the Gendo AI key response. If left blank, will default to the `secretName` parameter.
+      secretName: ''
+      ## @param server.gendoAI.keyResponse.secretKey The key within the Kubernetes Secret holding the Gendo AI key response as its value.
+      secretKey: 'gendoai_key_response'
+    ratelimiting:
+      ## @param server.gendoAI.ratelimiting.renderRequest The number of render requests allowed per period
+      renderRequest: 1
+      ## @param server.gendoAI.ratelimiting.renderRequestPeriodSeconds The period in seconds for the render request limit
+      renderRequestPeriodSeconds: 20
+      ## @param server.gendoAI.ratelimiting.burstRenderRequest The number of render requests allowed in 'burst' mode when the other limit is reached.
+      burstRenderRequest: 3
+      ## @param server.gendoAI.ratelimiting.burstRenderRequestPeriodSeconds The period in seconds for the burst render request limit.
+      burstRenderRequestPeriodSeconds: 60
+
+  ## @param server.encryptionKeys.path The path where the encryption keys should be loaded from
+  encryptionKeys:
+    path: '/encryption-keys/keys.json'
+
   sessionSecret:
     ## @param server.sessionSecret.secretName The name of the Kubernetes Secret containing the Session secret.  This is a unique value (can be generated randomly). This is expected to be provided within the Kubernetes cluster as an opaque Kubernetes Secret. Ref: https://kubernetes.io/docs/concepts/configuration/secret/#opaque-secrets
     ##
@@ -647,6 +691,25 @@ server:
     ## @param server.fileUploads.enabled If enabled, file uploads on the server will be flagged as enabled
     enabled: true
 
+  mailchimp:
+    ## @param server.mailchimp.enabled Mailchimp integration feature flag
+    enabled: false
+    apikey:
+      ## @param server.mailchimp.apikey.secretName The name of the Kubernetes Secret containing the Mailchimp API key.
+      secretName: '' # defaults to .secretName
+      ## @param server.mailchimp.apikey.secretKey The key within the Kubernetes Secret holding the Mailchimp API key as its value.
+      secretKey: 'mailchimp_apikey'
+    ## @param server.mailchimp.serverPrefix Mailchimp api server prefix
+    serverPrefix: ''
+    ## @param server.mailchimp.newsletterListId Audience id for the newsletter list
+    newsletterListId: ''
+    ## @param server.mailchimp.onboardingListId Audience id for the onboarding list
+    onboardingListId: ''
+    ## @param server.mailchimp.onboardingJourneyId Id of the onboarding journey
+    onboardingJourneyId: ''
+    ## @param server.mailchimp.onboardingStepId Id of the onboarding journey step we trigger
+    onboardingStepId: ''
+
   migration:
     ## @param server.migration.movedFrom Indicate the URL where the server moved from
     movedFrom: ''
@@ -676,6 +739,7 @@ server:
   ## @param server.sentry_dns (Optional) The Data Source Name that was provided by Sentry.io
   ## Sentry.io allows events within Speckle to be monitored
   ##
+
   sentry_dns: ''
   ## @param server.disable_tracking If set to true, will prevent tracking metrics from being collected
   ## Setting this value to false requires `sentry_dns` to be set
@@ -717,6 +781,9 @@ objects:
   ## @param objects.replicas The number of instances of the Server pod to be deployed within the cluster.
   ##
   replicas: 1
+  ## @param objects.image The Docker image to be used for the Speckle Objects component. If blank, defaults to speckle/speckle-server:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
+  ##
+  image: ''
   ## @param objects.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
@@ -865,7 +932,7 @@ frontend:
 
 ## @section frontend_2
 ## @descriptionStart
-## Defines parameters related to the frontend_2 component of Speckle
+## Defines parameters related to the new web application component of Speckle
 ## @descriptionEnd
 ##
 frontend_2:
@@ -881,9 +948,9 @@ frontend_2:
   ## @param frontend_2.logLevel The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent
   ##
   logLevel: 'info'
-  ## @param frontend_2.enabled Feature flag to enable running the new experimental frontend.
+  ## @param frontend_2.enabled Feature flag to enable running the new web application frontend.
   ##
-  enabled: false
+  enabled: true
   ## @param frontend_2.replicas The number of instances of the Frontend 2 server prod to be deployed withing the cluster.
   ##
   replicas: 1

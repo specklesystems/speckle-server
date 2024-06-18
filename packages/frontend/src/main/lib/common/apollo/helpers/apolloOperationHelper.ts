@@ -32,7 +32,7 @@ export function convertThrowIntoFetchResult(err: unknown): FetchResult<undefined
   } else if (err instanceof Error) {
     gqlErrors = [new GraphQLError(err.message)]
   } else {
-    gqlErrors = [new GraphQLError(err + '')]
+    gqlErrors = [new GraphQLError(`${err}` + '')]
   }
 
   return {

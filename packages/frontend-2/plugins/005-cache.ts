@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/require-await */
+
 import type { Optional } from '@speckle/shared'
 import { has as objectHas } from 'lodash-es'
 import type { Redis } from 'ioredis'
@@ -144,14 +145,14 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   })
   const reqTouched: Record<string, boolean> = {}
 
-  if (process.server) {
+  if (import.meta.server) {
     nuxtApp.hook('app:rendered', async () => {
       const touchedKeys = Object.keys(reqTouched)
       const cacheToSend = await internalCache.getMultiple(touchedKeys)
 
       nuxtApp.ssrContext!.payload.appCache = cacheToSend
     })
-  } else if (process.client) {
+  } else if (import.meta.client) {
     const restorable = window.__NUXT__?.appCache as Optional<Record<string, unknown>>
     if (restorable) {
       await internalCache.setMultiple(restorable)

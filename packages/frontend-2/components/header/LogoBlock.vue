@@ -1,10 +1,12 @@
 <template>
-  <NuxtLink class="flex items-center shrink-0" :to="to" :target="target">
+  <Component
+    :is="mainComponent"
+    class="flex items-center shrink-0"
+    :to="to"
+    :target="target"
+  >
     <img
       class="h-8 w-8 block"
-      :class="{
-        grayscale: active
-      }"
       src="~~/assets/images/speckle_logo_big.png"
       alt="Speckle"
     />
@@ -16,20 +18,22 @@
     >
       Speckle
     </div>
-  </NuxtLink>
+  </Component>
 </template>
 <script setup lang="ts">
-withDefaults(
+const props = withDefaults(
   defineProps<{
     minimal?: boolean
-    active?: boolean
     to?: string
     showTextOnMobile?: boolean
     target?: string
+    noLink?: boolean
   }>(),
   {
-    active: true,
     to: '/'
   }
 )
+
+const NuxtLink = resolveComponent('NuxtLink')
+const mainComponent = computed(() => (props.noLink ? 'div' : NuxtLink))
 </script>

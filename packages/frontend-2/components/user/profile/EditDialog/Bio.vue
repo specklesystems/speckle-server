@@ -8,6 +8,7 @@
         <div class="flex flex-col space-y-4 w-full md:w-9/12">
           <FormTextInput
             v-model="name"
+            color="foundation"
             label="Name"
             name="name"
             placeholder="John Doe"
@@ -19,6 +20,7 @@
           />
           <FormTextInput
             v-model="company"
+            color="foundation"
             label="Company"
             name="company"
             placeholder="Example Ltd."

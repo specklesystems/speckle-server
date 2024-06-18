@@ -27,7 +27,7 @@ export function getPostAuthRedirect(): Optional<PostAuthRedirectState> {
 
   let state: Optional<PostAuthRedirectState> = undefined
   try {
-    state = JSON.parse(stateString)
+    state = JSON.parse(stateString) as PostAuthRedirectState
     if (!state?.pathWithQuery || !state.date) {
       throw new Error('Invalid state struct')
     }

@@ -1,12 +1,22 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable camelcase */
 import { speckleLineVert } from './shaders/speckle-line-vert'
 import { speckleLineFrag } from './shaders/speckle-line-frag'
-import { ShaderLib, Vector3, IUniform, Material } from 'three'
-import { Matrix4 } from 'three'
-import { Geometry } from '../converter/Geometry'
-import { ExtendedLineMaterial, Uniforms } from './SpeckleMaterial'
-import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
+import {
+  ShaderLib,
+  Vector3,
+  type IUniform,
+  Material,
+  Scene,
+  Camera,
+  BufferGeometry,
+  Object3D
+} from 'three'
+import { ExtendedLineMaterial, type Uniforms } from './SpeckleMaterial'
+import {
+  LineMaterial,
+  type LineMaterialParameters
+} from 'three/examples/jsm/lines/LineMaterial.js'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
 class SpeckleLineMaterial extends ExtendedLineMaterial {
   protected get vertexProgram(): string {
@@ -34,7 +44,7 @@ class SpeckleLineMaterial extends ExtendedLineMaterial {
     this.needsUpdate = true
   }
 
-  constructor(parameters, defines = ['USE_RTE']) {
+  constructor(parameters: LineMaterialParameters, defines = ['USE_RTE']) {
     super(parameters)
     this.init(defines)
   }
@@ -44,7 +54,7 @@ class SpeckleLineMaterial extends ExtendedLineMaterial {
     return this.constructor.name
   }
 
-  public copy(source) {
+  public copy(source: Material) {
     super.copy(source)
     this.copyFrom(source)
     return this
@@ -58,7 +68,13 @@ class SpeckleLineMaterial extends ExtendedLineMaterial {
     to.userData.pixelThreshold.value = from.userData.pixelThreshold.value
   }
 
-  onBeforeRender(_this, scene, camera, geometry, object, group) {
+  onBeforeRender(
+    _this: SpeckleWebGLRenderer,
+    _scene: Scene,
+    _camera: Camera,
+    _geometry: BufferGeometry,
+    object: Object3D
+  ) {
     object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
     this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
     this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)

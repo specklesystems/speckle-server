@@ -45,6 +45,7 @@ export const updateProjectRoleMutation = graphql(`
       updateRole(input: $input) {
         id
         team {
+          id
           role
           user {
             ...LimitedUserAvatar
@@ -160,5 +161,73 @@ export const createWebhookMutation = graphql(`
 export const updateWebhookMutation = graphql(`
   mutation updateWebhook($webhook: WebhookUpdateInput!) {
     webhookUpdate(webhook: $webhook)
+  }
+`)
+
+export const createAutomationMutation = graphql(`
+  mutation CreateAutomation($projectId: ID!, $input: ProjectAutomationCreateInput!) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        create(input: $input) {
+          id
+          ...ProjectPageAutomationsRow_Automation
+        }
+      }
+    }
+  }
+`)
+
+export const updateAutomationMutation = graphql(`
+  mutation UpdateAutomation($projectId: ID!, $input: ProjectAutomationUpdateInput!) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        update(input: $input) {
+          id
+          name
+          enabled
+        }
+      }
+    }
+  }
+`)
+
+export const createAutomationRevisionMutation = graphql(`
+  mutation CreateAutomationRevision(
+    $projectId: ID!
+    $input: ProjectAutomationRevisionCreateInput!
+  ) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        createRevision(input: $input) {
+          id
+        }
+      }
+    }
+  }
+`)
+
+export const triggerAutomationMutation = graphql(`
+  mutation TriggerAutomation($projectId: ID!, $automationId: ID!) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        trigger(automationId: $automationId)
+      }
+    }
+  }
+`)
+
+export const createTestAutomationMutation = graphql(`
+  mutation CreateTestAutomation(
+    $projectId: ID!
+    $input: ProjectTestAutomationCreateInput!
+  ) {
+    projectMutations {
+      automationMutations(projectId: $projectId) {
+        createTestAutomation(input: $input) {
+          id
+          ...ProjectPageAutomationsRow_Automation
+        }
+      }
+    }
   }
 `)

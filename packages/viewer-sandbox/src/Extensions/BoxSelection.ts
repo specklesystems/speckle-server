@@ -4,13 +4,7 @@ import { ObjectLayers } from '@speckle/viewer'
 import { NodeRenderView } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
 import { BatchObject } from '@speckle/viewer'
-import {
-  Extension,
-  ICameraProvider,
-  IViewer,
-  GeometryType,
-  MeshBatch
-} from '@speckle/viewer'
+import { Extension, IViewer, GeometryType, CameraController } from '@speckle/viewer'
 import {
   Matrix4,
   ShaderMaterial,
@@ -25,7 +19,7 @@ import {
 
 export class BoxSelection extends Extension {
   get inject() {
-    return [ICameraProvider.Symbol]
+    return [CameraController]
   }
 
   private selectionExtension: SelectionExtension
@@ -36,7 +30,14 @@ export class BoxSelection extends Extension {
 
   private idsToSelect: Array<string> | null = []
 
-  public constructor(viewer: IViewer, private cameraController: ICameraProvider) {
+  get enabled(): boolean {
+    return this._enabled
+  }
+  set enabled(value: boolean) {
+    this._enabled = value
+  }
+
+  public constructor(viewer: IViewer, private cameraController: CameraController) {
     super(viewer)
     /** Get the SelectionExtension. We'll need it to remotely enable/disable it */
     //@ts-ignore
@@ -91,6 +92,7 @@ export class BoxSelection extends Extension {
     const ndcTransform = this.getNDCTransform(this.ndcFrom, this.ndcTo)
 
     /** Update the selection box visual */
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
     this.dragBoxMaterial.uniforms.transform.value.copy(ndcTransform)
     this.dragBoxMaterial.needsUpdate = true
 
@@ -106,17 +108,18 @@ export class BoxSelection extends Extension {
 
   /** Gets the object ids that fall withing the provided selection box */
   private getSelectionIds(selectionBox: Box3) {
+    /** Get the renderer */
+    const renderer = this.viewer.getRenderer()
     /** Get the mesh batches */
-    const batches = this.viewer
-      .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
-
+    const batches = renderer.batcher.getBatches(undefined, GeometryType.MESH)
     /** Compute the clip matrix */
     const clipMatrix = new Matrix4()
-    clipMatrix.multiplyMatrices(
-      this.viewer.getRenderer().renderingCamera.projectionMatrix,
-      this.viewer.getRenderer().renderingCamera.matrixWorldInverse
-    )
+    if (renderer.renderingCamera) {
+      clipMatrix.multiplyMatrices(
+        renderer.renderingCamera.projectionMatrix,
+        renderer.renderingCamera.matrixWorldInverse
+      )
+    }
 
     /** We're using three-mesh-bvh library for out BVH
      *  Go over each batch and test it against the TAS only.

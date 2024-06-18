@@ -1,3 +1,4 @@
+import type { RouteLocationNormalized } from '#vue-router'
 import type { Optional } from '@speckle/shared'
 import { reduce } from 'lodash-es'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
@@ -8,10 +9,12 @@ const usePostAuthRedirectCookie = () =>
     maxAge: 60 * 5 // 5 mins
   })
 
-export const usePostAuthRedirect = () => {
+export const usePostAuthRedirect = (
+  options?: Partial<{ route: RouteLocationNormalized }>
+) => {
   const cookie = usePostAuthRedirectCookie()
   const router = useRouter()
-  const route = useRoute()
+  const route = options?.route || useRoute()
   const logger = useLogger()
 
   const hadPendingRedirect = computed(() => !!cookie.value?.length)
@@ -31,7 +34,7 @@ export const usePostAuthRedirect = () => {
 
     deleteState()
 
-    if (process.server) {
+    if (import.meta.server) {
       const url = new URL(pathWithQuery, 'http://notimportant.com')
       router
         .push({

@@ -189,6 +189,187 @@ export type AuthStrategy = {
   url: Scalars['String'];
 };
 
+export type AutomateAuthCodePayloadTest = {
+  action: Scalars['String'];
+  code: Scalars['String'];
+  userId: Scalars['String'];
+};
+
+export type AutomateFunction = {
+  __typename?: 'AutomateFunction';
+  automationCount: Scalars['Int'];
+  description: Scalars['String'];
+  id: Scalars['ID'];
+  isFeatured: Scalars['Boolean'];
+  logo?: Maybe<Scalars['String']>;
+  name: Scalars['String'];
+  releases: AutomateFunctionReleaseCollection;
+  repo: BasicGitRepositoryMetadata;
+  /** SourceAppNames values from @speckle/shared. Empty array means - all of them */
+  supportedSourceApps: Array<Scalars['String']>;
+  tags: Array<Scalars['String']>;
+};
+
+
+export type AutomateFunctionReleasesArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<AutomateFunctionReleasesFilter>;
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+export type AutomateFunctionCollection = {
+  __typename?: 'AutomateFunctionCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<AutomateFunction>;
+  totalCount: Scalars['Int'];
+};
+
+export type AutomateFunctionRelease = {
+  __typename?: 'AutomateFunctionRelease';
+  commitId: Scalars['String'];
+  createdAt: Scalars['DateTime'];
+  function: AutomateFunction;
+  functionId: Scalars['String'];
+  id: Scalars['ID'];
+  inputSchema?: Maybe<Scalars['JSONObject']>;
+  versionTag: Scalars['String'];
+};
+
+export type AutomateFunctionReleaseCollection = {
+  __typename?: 'AutomateFunctionReleaseCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<AutomateFunctionRelease>;
+  totalCount: Scalars['Int'];
+};
+
+export type AutomateFunctionReleasesFilter = {
+  search?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomateFunctionRun = {
+  __typename?: 'AutomateFunctionRun';
+  contextView?: Maybe<Scalars['String']>;
+  createdAt: Scalars['DateTime'];
+  elapsed: Scalars['Float'];
+  /** Nullable, in case the function is not retrievable due to poor network conditions */
+  function?: Maybe<AutomateFunction>;
+  functionId?: Maybe<Scalars['String']>;
+  functionReleaseId?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  /** AutomateTypes.ResultsSchema type from @speckle/shared */
+  results?: Maybe<Scalars['JSONObject']>;
+  status: AutomateRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+  updatedAt: Scalars['DateTime'];
+};
+
+export type AutomateFunctionRunStatusReportInput = {
+  contextView?: InputMaybe<Scalars['String']>;
+  functionRunId: Scalars['String'];
+  /** AutomateTypes.ResultsSchema type from @speckle/shared */
+  results?: InputMaybe<Scalars['JSONObject']>;
+  status: AutomateRunStatus;
+  statusMessage?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomateFunctionTemplate = {
+  __typename?: 'AutomateFunctionTemplate';
+  id: AutomateFunctionTemplateLanguage;
+  logo: Scalars['String'];
+  title: Scalars['String'];
+  url: Scalars['String'];
+};
+
+export enum AutomateFunctionTemplateLanguage {
+  DotNet = 'DOT_NET',
+  Python = 'PYTHON',
+  Typescript = 'TYPESCRIPT'
+}
+
+export type AutomateFunctionsFilter = {
+  featuredFunctionsOnly?: InputMaybe<Scalars['Boolean']>;
+  /** By default we skip functions without releases. Set this to true to include them. */
+  functionsWithoutReleases?: InputMaybe<Scalars['Boolean']>;
+  search?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomateMutations = {
+  __typename?: 'AutomateMutations';
+  createFunction: AutomateFunction;
+  updateFunction: AutomateFunction;
+};
+
+
+export type AutomateMutationsCreateFunctionArgs = {
+  input: CreateAutomateFunctionInput;
+};
+
+
+export type AutomateMutationsUpdateFunctionArgs = {
+  input: UpdateAutomateFunctionInput;
+};
+
+export type AutomateRun = {
+  __typename?: 'AutomateRun';
+  automation: Automation;
+  automationId: Scalars['String'];
+  createdAt: Scalars['DateTime'];
+  functionRuns: Array<AutomateFunctionRun>;
+  id: Scalars['ID'];
+  status: AutomateRunStatus;
+  trigger: AutomationRunTrigger;
+  updatedAt: Scalars['DateTime'];
+};
+
+export type AutomateRunCollection = {
+  __typename?: 'AutomateRunCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<AutomateRun>;
+  totalCount: Scalars['Int'];
+};
+
+export enum AutomateRunStatus {
+  Canceled = 'CANCELED',
+  Exception = 'EXCEPTION',
+  Failed = 'FAILED',
+  Initializing = 'INITIALIZING',
+  Pending = 'PENDING',
+  Running = 'RUNNING',
+  Succeeded = 'SUCCEEDED',
+  Timeout = 'TIMEOUT'
+}
+
+export enum AutomateRunTriggerType {
+  VersionCreated = 'VERSION_CREATED'
+}
+
+export type Automation = {
+  __typename?: 'Automation';
+  createdAt: Scalars['DateTime'];
+  /** Only accessible to automation owners */
+  creationPublicKeys: Array<Scalars['String']>;
+  currentRevision?: Maybe<AutomationRevision>;
+  enabled: Scalars['Boolean'];
+  id: Scalars['ID'];
+  isTestAutomation: Scalars['Boolean'];
+  name: Scalars['String'];
+  runs: AutomateRunCollection;
+  updatedAt: Scalars['DateTime'];
+};
+
+
+export type AutomationRunsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+export type AutomationCollection = {
+  __typename?: 'AutomationCollection';
+  cursor?: Maybe<Scalars['String']>;
+  items: Array<Automation>;
+  totalCount: Scalars['Int'];
+};
+
 export type AutomationCreateInput = {
   automationId: Scalars['String'];
   automationName: Scalars['String'];
@@ -245,6 +426,29 @@ export type AutomationMutationsFunctionRunStatusReportArgs = {
   input: AutomationRunStatusUpdateInput;
 };
 
+export type AutomationRevision = {
+  __typename?: 'AutomationRevision';
+  functions: Array<AutomationRevisionFunction>;
+  id: Scalars['ID'];
+  triggerDefinitions: Array<AutomationRevisionTriggerDefinition>;
+};
+
+export type AutomationRevisionCreateFunctionInput = {
+  functionId: Scalars['String'];
+  functionReleaseId: Scalars['String'];
+  /** Should be encrypted from the client side */
+  parameters?: InputMaybe<Scalars['String']>;
+};
+
+export type AutomationRevisionFunction = {
+  __typename?: 'AutomationRevisionFunction';
+  /** The secrets in parameters are redacted with six asterisks - ****** */
+  parameters?: Maybe<Scalars['JSONObject']>;
+  release: AutomateFunctionRelease;
+};
+
+export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition;
+
 export type AutomationRun = {
   __typename?: 'AutomationRun';
   automationId: Scalars['String'];
@@ -273,12 +477,29 @@ export type AutomationRunStatusUpdateInput = {
   versionId: Scalars['String'];
 };
 
+export type AutomationRunTrigger = VersionCreatedTrigger;
+
 export type AutomationsStatus = {
   __typename?: 'AutomationsStatus';
   automationRuns: Array<AutomationRun>;
   id: Scalars['ID'];
   status: AutomationRunStatus;
   statusMessage?: Maybe<Scalars['String']>;
+};
+
+export type AvatarUser = {
+  __typename?: 'AvatarUser';
+  avatar?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  name: Scalars['String'];
+};
+
+export type BasicGitRepositoryMetadata = {
+  __typename?: 'BasicGitRepositoryMetadata';
+  id: Scalars['ID'];
+  name: Scalars['String'];
+  owner: Scalars['String'];
+  url: Scalars['String'];
 };
 
 export type BlobMetadata = {
@@ -616,6 +837,28 @@ export type CommitsMoveInput = {
   targetBranch: Scalars['String'];
 };
 
+/**
+ * Can be used instead of a full item collection, when the implementation doesn't call for it yet. Because
+ * of the structure, it can be swapped out to a full item collection in the future
+ */
+export type CountOnlyCollection = {
+  __typename?: 'CountOnlyCollection';
+  totalCount: Scalars['Int'];
+};
+
+export type CreateAutomateFunctionInput = {
+  description: Scalars['String'];
+  /** Base64 encoded image data string */
+  logo?: InputMaybe<Scalars['String']>;
+  name: Scalars['String'];
+  /** GitHub organization to create the repository in */
+  org?: InputMaybe<Scalars['String']>;
+  /** SourceAppNames values from @speckle/shared */
+  supportedSourceApps: Array<Scalars['String']>;
+  tags: Array<Scalars['String']>;
+  template: AutomateFunctionTemplateLanguage;
+};
+
 export type CreateCommentInput = {
   content: CommentContentInput;
   projectId: Scalars['String'];
@@ -714,6 +957,41 @@ export type FunctionRunStatusInput = {
   statusMessage?: InputMaybe<Scalars['String']>;
 };
 
+export type GendoAiRender = {
+  __typename?: 'GendoAIRender';
+  camera?: Maybe<Scalars['JSONObject']>;
+  createdAt: Scalars['String'];
+  gendoGenerationId?: Maybe<Scalars['String']>;
+  id: Scalars['ID'];
+  modelId: Scalars['String'];
+  projectId: Scalars['String'];
+  prompt: Scalars['String'];
+  /** This is a blob id. */
+  responseImage?: Maybe<Scalars['String']>;
+  status: Scalars['String'];
+  updatedAt: Scalars['String'];
+  user?: Maybe<AvatarUser>;
+  userId: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+export type GendoAiRenderCollection = {
+  __typename?: 'GendoAIRenderCollection';
+  items: Array<Maybe<GendoAiRender>>;
+  totalCount: Scalars['Int'];
+};
+
+export type GendoAiRenderInput = {
+  /** Base64 encoded image of the depthmap. */
+  baseImage: Scalars['String'];
+  camera: Scalars['JSONObject'];
+  modelId: Scalars['ID'];
+  projectId: Scalars['ID'];
+  /** The generation prompt. */
+  prompt: Scalars['String'];
+  versionId: Scalars['ID'];
+};
+
 export type LegacyCommentViewerData = {
   __typename?: 'LegacyCommentViewerData';
   /**
@@ -805,6 +1083,7 @@ export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
   automationStatus?: Maybe<AutomationsStatus>;
+  automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
   /** All comment threads in this model */
@@ -934,6 +1213,8 @@ export type Mutation = {
   appTokenCreate: Scalars['String'];
   /** Update an existing third party application. **Note: This will invalidate all existing tokens, refresh tokens and access codes and will require existing users to re-authorize it.** */
   appUpdate: Scalars['Boolean'];
+  automateFunctionRunStatusReport: Scalars['Boolean'];
+  automateMutations: AutomateMutations;
   automationMutations: AutomationMutations;
   branchCreate: Scalars['String'];
   branchDelete: Scalars['Boolean'];
@@ -974,9 +1255,15 @@ export type Mutation = {
   commitsDelete: Scalars['Boolean'];
   /** Move a batch of commits to a new branch */
   commitsMove: Scalars['Boolean'];
-  /** Delete a pending invite */
+  /**
+   * Delete a pending invite
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   inviteDelete: Scalars['Boolean'];
-  /** Re-send a pending invite */
+  /**
+   * Re-send a pending invite
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   inviteResend: Scalars['Boolean'];
   modelMutations: ModelMutations;
   objectCreate: Array<Maybe<Scalars['String']>>;
@@ -985,6 +1272,7 @@ export type Mutation = {
   requestVerification: Scalars['Boolean'];
   requestVerificationByEmail: Scalars['Boolean'];
   serverInfoUpdate?: Maybe<Scalars['Boolean']>;
+  /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   serverInviteBatchCreate: Scalars['Boolean'];
   /** Invite a new user to the speckle server and return the invite ID */
   serverInviteCreate: Scalars['Boolean'];
@@ -997,10 +1285,17 @@ export type Mutation = {
   /** Deletes an existing stream. */
   streamDelete: Scalars['Boolean'];
   streamFavorite?: Maybe<Stream>;
+  /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   streamInviteBatchCreate: Scalars['Boolean'];
-  /** Cancel a pending stream invite. Can only be invoked by a stream owner. */
+  /**
+   * Cancel a pending stream invite. Can only be invoked by a stream owner.
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   streamInviteCancel: Scalars['Boolean'];
-  /** Invite a new or registered user to the specified stream */
+  /**
+   * Invite a new or registered user to the specified stream
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   */
   streamInviteCreate: Scalars['Boolean'];
   /** Accept or decline a stream invite */
   streamInviteUse: Scalars['Boolean'];
@@ -1079,6 +1374,11 @@ export type MutationAppTokenCreateArgs = {
 
 export type MutationAppUpdateArgs = {
   app: AppUpdateInput;
+};
+
+
+export type MutationAutomateFunctionRunStatusReportArgs = {
+  input: AutomateFunctionRunStatusReportInput;
 };
 
 
@@ -1414,6 +1714,12 @@ export type PendingStreamCollaborator = {
 export type Project = {
   __typename?: 'Project';
   allowPublicComments: Scalars['Boolean'];
+  /** Get a single automation by id. Error will be thrown if automation is not found or inaccessible. */
+  automation: Automation;
+  automations: AutomationCollection;
+  blob?: Maybe<BlobMetadata>;
+  /** Get the metadata collection of blobs stored for this stream. */
+  blobs?: Maybe<BlobMetadataCollection>;
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime'];
@@ -1449,6 +1755,30 @@ export type Project = {
   viewerResources: Array<ViewerResourceGroup>;
   visibility: ProjectVisibility;
   webhooks: WebhookCollection;
+};
+
+
+export type ProjectAutomationArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectAutomationsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type ProjectBlobArgs = {
+  id: Scalars['String'];
+};
+
+
+export type ProjectBlobsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  limit?: InputMaybe<Scalars['Int']>;
+  query?: InputMaybe<Scalars['String']>;
 };
 
 
@@ -1509,6 +1839,68 @@ export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']>;
 };
 
+export type ProjectAutomationCreateInput = {
+  enabled: Scalars['Boolean'];
+  name: Scalars['String'];
+};
+
+export type ProjectAutomationMutations = {
+  __typename?: 'ProjectAutomationMutations';
+  create: Automation;
+  createRevision: AutomationRevision;
+  createTestAutomation: Automation;
+  createTestAutomationRun: TestAutomationRun;
+  /**
+   * Trigger an automation with a fake "version created" trigger. The "version created" will
+   * just refer to the last version of the model.
+   */
+  trigger: Scalars['String'];
+  update: Automation;
+};
+
+
+export type ProjectAutomationMutationsCreateArgs = {
+  input: ProjectAutomationCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateRevisionArgs = {
+  input: ProjectAutomationRevisionCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationArgs = {
+  input: ProjectTestAutomationCreateInput;
+};
+
+
+export type ProjectAutomationMutationsCreateTestAutomationRunArgs = {
+  automationId: Scalars['ID'];
+};
+
+
+export type ProjectAutomationMutationsTriggerArgs = {
+  automationId: Scalars['ID'];
+};
+
+
+export type ProjectAutomationMutationsUpdateArgs = {
+  input: ProjectAutomationUpdateInput;
+};
+
+export type ProjectAutomationRevisionCreateInput = {
+  automationId: Scalars['ID'];
+  functions: Array<AutomationRevisionCreateFunctionInput>;
+  /** AutomateTypes.TriggerDefinitionsSchema type from @speckle/shared */
+  triggerDefinitions: Scalars['JSONObject'];
+};
+
+export type ProjectAutomationUpdateInput = {
+  enabled?: InputMaybe<Scalars['Boolean']>;
+  id: Scalars['ID'];
+  name?: InputMaybe<Scalars['String']>;
+};
+
 export type ProjectAutomationsStatusUpdatedMessage = {
   __typename?: 'ProjectAutomationsStatusUpdatedMessage';
   model: Model;
@@ -1517,8 +1909,24 @@ export type ProjectAutomationsStatusUpdatedMessage = {
   version: Version;
 };
 
+export type ProjectAutomationsUpdatedMessage = {
+  __typename?: 'ProjectAutomationsUpdatedMessage';
+  automation?: Maybe<Automation>;
+  automationId: Scalars['String'];
+  /** Only set if type === CREATED_REVISION */
+  revision?: Maybe<AutomationRevision>;
+  type: ProjectAutomationsUpdatedMessageType;
+};
+
+export enum ProjectAutomationsUpdatedMessageType {
+  Created = 'CREATED',
+  CreatedRevision = 'CREATED_REVISION',
+  Updated = 'UPDATED'
+}
+
 export type ProjectCollaborator = {
   __typename?: 'ProjectCollaborator';
+  id: Scalars['ID'];
   role: Scalars['String'];
   user: LimitedUser;
 };
@@ -1681,6 +2089,7 @@ export enum ProjectModelsUpdatedMessageType {
 
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
+  automationMutations: ProjectAutomationMutations;
   /** Create new project */
   create: Project;
   /**
@@ -1698,6 +2107,11 @@ export type ProjectMutations = {
   update: Project;
   /** Update role for a collaborator */
   updateRole: Project;
+};
+
+
+export type ProjectMutationsAutomationMutationsArgs = {
+  projectId: Scalars['ID'];
 };
 
 
@@ -1749,6 +2163,26 @@ export type ProjectPendingVersionsUpdatedMessage = {
 export enum ProjectPendingVersionsUpdatedMessageType {
   Created = 'CREATED',
   Updated = 'UPDATED'
+}
+
+export type ProjectTestAutomationCreateInput = {
+  functionId: Scalars['String'];
+  modelId: Scalars['String'];
+  name: Scalars['String'];
+};
+
+export type ProjectTriggeredAutomationsStatusUpdatedMessage = {
+  __typename?: 'ProjectTriggeredAutomationsStatusUpdatedMessage';
+  model: Model;
+  project: Project;
+  run: AutomateRun;
+  type: ProjectTriggeredAutomationsStatusUpdatedMessageType;
+  version: Version;
+};
+
+export enum ProjectTriggeredAutomationsStatusUpdatedMessageType {
+  RunCreated = 'RUN_CREATED',
+  RunUpdated = 'RUN_UPDATED'
 }
 
 /** Any values left null will be ignored, so only set the properties that you want updated */
@@ -1836,6 +2270,11 @@ export type Query = {
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   /** If user is authenticated using an app token, this will describe the app */
   authenticatedAsApp?: Maybe<ServerAppListItem>;
+  /** Get a single automate function by id. Error will be thrown if function is not found or inaccessible. */
+  automateFunction: AutomateFunction;
+  automateFunctions: AutomateFunctionCollection;
+  /** Part of the automation/function creation handshake mechanism */
+  automateValidateAuthCode: Scalars['Boolean'];
   comment?: Maybe<Comment>;
   /**
    * This query can be used in the following ways:
@@ -1915,6 +2354,23 @@ export type QueryAdminUsersArgs = {
 
 export type QueryAppArgs = {
   id: Scalars['String'];
+};
+
+
+export type QueryAutomateFunctionArgs = {
+  id: Scalars['ID'];
+};
+
+
+export type QueryAutomateFunctionsArgs = {
+  cursor?: InputMaybe<Scalars['String']>;
+  filter?: InputMaybe<AutomateFunctionsFilter>;
+  limit?: InputMaybe<Scalars['Int']>;
+};
+
+
+export type QueryAutomateValidateAuthCodeArgs = {
+  payload: AutomateAuthCodePayloadTest;
 };
 
 
@@ -2073,18 +2529,26 @@ export type ServerAppListItem = {
   trustByDefault?: Maybe<Scalars['Boolean']>;
 };
 
+export type ServerAutomateInfo = {
+  __typename?: 'ServerAutomateInfo';
+  availableFunctionTemplates: Array<AutomateFunctionTemplate>;
+};
+
 /** Information about this server. */
 export type ServerInfo = {
   __typename?: 'ServerInfo';
   adminContact?: Maybe<Scalars['String']>;
   /** The authentication strategies available on this server. */
   authStrategies: Array<AuthStrategy>;
+  automate: ServerAutomateInfo;
   /** Base URL of Speckle Automate, if set */
   automateUrl?: Maybe<Scalars['String']>;
   blobSizeLimitBytes: Scalars['Int'];
   canonicalUrl?: Maybe<Scalars['String']>;
   company?: Maybe<Scalars['String']>;
   description?: Maybe<Scalars['String']>;
+  /** Whether or not to show messaging about FE2 (banners etc.) */
+  enableNewWebUiMessaging?: Maybe<Scalars['Boolean']>;
   guestModeEnabled: Scalars['Boolean'];
   inviteOnly?: Maybe<Scalars['Boolean']>;
   /** Server relocation / migration info */
@@ -2412,6 +2876,8 @@ export type Subscription = {
   /** Subscribe to commit updated event. */
   commitUpdated?: Maybe<Scalars['JSONObject']>;
   projectAutomationsStatusUpdated: ProjectAutomationsStatusUpdatedMessage;
+  /** Subscribe to updates to automations in the project */
+  projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
    * Subscribe to updates to resource comments/threads. Optionally specify resource ID string to only receive
    * updates regarding comments for those resources.
@@ -2425,8 +2891,12 @@ export type Subscription = {
   projectPendingModelsUpdated: ProjectPendingModelsUpdatedMessage;
   /** Subscribe to changes to a project's pending versions */
   projectPendingVersionsUpdated: ProjectPendingVersionsUpdatedMessage;
+  /** Subscribe to updates to any triggered automations statuses in the project */
+  projectTriggeredAutomationsStatusUpdated: ProjectTriggeredAutomationsStatusUpdatedMessage;
   /** Track updates to a specific project */
   projectUpdated: ProjectUpdatedMessage;
+  projectVersionGendoAIRenderCreated: GendoAiRender;
+  projectVersionGendoAIRenderUpdated: GendoAiRender;
   /** Subscribe to when a project's versions get their preview image fully generated. */
   projectVersionsPreviewGenerated: ProjectVersionsPreviewGeneratedMessage;
   /** Subscribe to changes to a project's versions. */
@@ -2506,6 +2976,11 @@ export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectAutomationsUpdatedArgs = {
+  projectId: Scalars['String'];
+};
+
+
 export type SubscriptionProjectCommentsUpdatedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
@@ -2532,8 +3007,25 @@ export type SubscriptionProjectPendingVersionsUpdatedArgs = {
 };
 
 
+export type SubscriptionProjectTriggeredAutomationsStatusUpdatedArgs = {
+  projectId: Scalars['String'];
+};
+
+
 export type SubscriptionProjectUpdatedArgs = {
   id: Scalars['String'];
+};
+
+
+export type SubscriptionProjectVersionGendoAiRenderCreatedArgs = {
+  id: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
+
+export type SubscriptionProjectVersionGendoAiRenderUpdatedArgs = {
+  id: Scalars['String'];
+  versionId: Scalars['String'];
 };
 
 
@@ -2568,6 +3060,25 @@ export type SubscriptionViewerUserActivityBroadcastedArgs = {
   target: ViewerUpdateTrackingTarget;
 };
 
+export type TestAutomationRun = {
+  __typename?: 'TestAutomationRun';
+  automationRunId: Scalars['String'];
+  functionRunId: Scalars['String'];
+  triggers: Array<TestAutomationRunTrigger>;
+};
+
+export type TestAutomationRunTrigger = {
+  __typename?: 'TestAutomationRunTrigger';
+  payload: TestAutomationRunTriggerPayload;
+  triggerType: Scalars['String'];
+};
+
+export type TestAutomationRunTriggerPayload = {
+  __typename?: 'TestAutomationRunTriggerPayload';
+  modelId: Scalars['String'];
+  versionId: Scalars['String'];
+};
+
 export type TokenResourceIdentifier = {
   __typename?: 'TokenResourceIdentifier';
   id: Scalars['String'];
@@ -2582,6 +3093,25 @@ export type TokenResourceIdentifierInput = {
 export enum TokenResourceIdentifierType {
   Project = 'project'
 }
+
+export type TriggeredAutomationsStatus = {
+  __typename?: 'TriggeredAutomationsStatus';
+  automationRuns: Array<AutomateRun>;
+  id: Scalars['ID'];
+  status: AutomateRunStatus;
+  statusMessage?: Maybe<Scalars['String']>;
+};
+
+/** Any null values will be ignored */
+export type UpdateAutomateFunctionInput = {
+  description?: InputMaybe<Scalars['String']>;
+  id: Scalars['ID'];
+  logo?: InputMaybe<Scalars['String']>;
+  name?: InputMaybe<Scalars['String']>;
+  /** SourceAppNames values from @speckle/shared */
+  supportedSourceApps?: InputMaybe<Array<Scalars['String']>>;
+  tags?: InputMaybe<Array<Scalars['String']>>;
+};
 
 export type UpdateModelInput = {
   description?: InputMaybe<Scalars['String']>;
@@ -2607,7 +3137,8 @@ export type User = {
   /** Returns a list of your personal api tokens. */
   apiTokens: Array<ApiToken>;
   /** Returns the apps you have authorized. */
-  authorizedApps?: Maybe<Array<Maybe<ServerAppListItem>>>;
+  authorizedApps?: Maybe<Array<ServerAppListItem>>;
+  automateInfo: UserAutomateInfo;
   avatar?: Maybe<Scalars['String']>;
   bio?: Maybe<Scalars['String']>;
   /**
@@ -2648,6 +3179,13 @@ export type User = {
   /** Total amount of favorites attached to streams owned by the user */
   totalOwnedStreamsFavorites: Scalars['Int'];
   verified?: Maybe<Scalars['Boolean']>;
+  /**
+   * Get (count of) user's versions. By default gets all versions of all projects the user has access to.
+   * Set authoredOnly=true to only retrieve versions authored by the user.
+   *
+   * Note: Only count resolution is currently implemented
+   */
+  versions: CountOnlyCollection;
 };
 
 
@@ -2716,6 +3254,22 @@ export type UserTimelineArgs = {
   limit?: Scalars['Int'];
 };
 
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserVersionsArgs = {
+  authoredOnly?: Scalars['Boolean'];
+  limit?: Scalars['Int'];
+};
+
+export type UserAutomateInfo = {
+  __typename?: 'UserAutomateInfo';
+  availableGithubOrgs: Array<Scalars['String']>;
+  hasAutomateGithubApp: Scalars['Boolean'];
+};
+
 export type UserDeleteInput = {
   email: Scalars['String'];
 };
@@ -2764,9 +3318,12 @@ export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
   automationStatus?: Maybe<AutomationsStatus>;
+  automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** All comment threads in this version */
   commentThreads: CommentCollection;
   createdAt: Scalars['DateTime'];
+  gendoAIRender: GendoAiRender;
+  gendoAIRenders: GendoAiRenderCollection;
   id: Scalars['ID'];
   message?: Maybe<Scalars['String']>;
   model: Model;
@@ -2783,6 +3340,11 @@ export type VersionCommentThreadsArgs = {
   limit?: Scalars['Int'];
 };
 
+
+export type VersionGendoAiRenderArgs = {
+  id: Scalars['String'];
+};
+
 export type VersionCollection = {
   __typename?: 'VersionCollection';
   cursor?: Maybe<Scalars['String']>;
@@ -2790,10 +3352,24 @@ export type VersionCollection = {
   totalCount: Scalars['Int'];
 };
 
+export type VersionCreatedTrigger = {
+  __typename?: 'VersionCreatedTrigger';
+  model?: Maybe<Model>;
+  type: AutomateRunTriggerType;
+  version?: Maybe<Version>;
+};
+
+export type VersionCreatedTriggerDefinition = {
+  __typename?: 'VersionCreatedTriggerDefinition';
+  model?: Maybe<Model>;
+  type: AutomateRunTriggerType;
+};
+
 export type VersionMutations = {
   __typename?: 'VersionMutations';
   delete: Scalars['Boolean'];
   moveToModel: Model;
+  requestGendoAIRender: Scalars['Boolean'];
   update: Version;
 };
 
@@ -2805,6 +3381,11 @@ export type VersionMutationsDeleteArgs = {
 
 export type VersionMutationsMoveToModelArgs = {
   input: MoveVersionsInput;
+};
+
+
+export type VersionMutationsRequestGendoAiRenderArgs = {
+  input: GendoAiRenderInput;
 };
 
 
@@ -2998,6 +3579,34 @@ export type AppTokenCreateMutationVariables = Exact<{
 
 
 export type AppTokenCreateMutation = { __typename?: 'Mutation', appTokenCreate: string };
+
+export type TestAutomateFunctionFragment = { __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, automationCount: number, supportedSourceApps: Array<string>, tags: Array<string>, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number, items: Array<{ __typename?: 'AutomateFunctionRelease', id: string, versionTag: string, createdAt: string, inputSchema?: Record<string, unknown> | null, commitId: string }> } };
+
+export type TestAutomationFragment = { __typename?: 'Automation', id: string, name: string, enabled: boolean, createdAt: string, updatedAt: string, runs: { __typename?: 'AutomateRunCollection', totalCount: number, items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, createdAt: string, updatedAt: string, trigger: { __typename?: 'VersionCreatedTrigger', version?: { __typename?: 'Version', id: string } | null, model?: { __typename?: 'Model', id: string } | null }, functionRuns: Array<{ __typename?: 'AutomateFunctionRun', id: string, status: AutomateRunStatus, statusMessage?: string | null, contextView?: string | null, elapsed: number, results?: Record<string, unknown> | null, function?: { __typename?: 'AutomateFunction', id: string } | null }> }> }, currentRevision?: { __typename?: 'AutomationRevision', id: string, triggerDefinitions: Array<{ __typename?: 'VersionCreatedTriggerDefinition', type: AutomateRunTriggerType, model?: { __typename?: 'Model', id: string } | null }>, functions: Array<{ __typename?: 'AutomationRevisionFunction', parameters?: Record<string, unknown> | null, release: { __typename?: 'AutomateFunctionRelease', id: string, versionTag: string, createdAt: string, inputSchema?: Record<string, unknown> | null, commitId: string, function: { __typename?: 'AutomateFunction', id: string } } }> } | null };
+
+export type GetProjectAutomationQueryVariables = Exact<{
+  projectId: Scalars['String'];
+  automationId: Scalars['String'];
+}>;
+
+
+export type GetProjectAutomationQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, automation: { __typename?: 'Automation', id: string, name: string, enabled: boolean, createdAt: string, updatedAt: string, runs: { __typename?: 'AutomateRunCollection', totalCount: number, items: Array<{ __typename?: 'AutomateRun', id: string, status: AutomateRunStatus, createdAt: string, updatedAt: string, trigger: { __typename?: 'VersionCreatedTrigger', version?: { __typename?: 'Version', id: string } | null, model?: { __typename?: 'Model', id: string } | null }, functionRuns: Array<{ __typename?: 'AutomateFunctionRun', id: string, status: AutomateRunStatus, statusMessage?: string | null, contextView?: string | null, elapsed: number, results?: Record<string, unknown> | null, function?: { __typename?: 'AutomateFunction', id: string } | null }> }> }, currentRevision?: { __typename?: 'AutomationRevision', id: string, triggerDefinitions: Array<{ __typename?: 'VersionCreatedTriggerDefinition', type: AutomateRunTriggerType, model?: { __typename?: 'Model', id: string } | null }>, functions: Array<{ __typename?: 'AutomationRevisionFunction', parameters?: Record<string, unknown> | null, release: { __typename?: 'AutomateFunctionRelease', id: string, versionTag: string, createdAt: string, inputSchema?: Record<string, unknown> | null, commitId: string, function: { __typename?: 'AutomateFunction', id: string } } }> } | null } } };
+
+export type GetAutomateFunctionsQueryVariables = Exact<{
+  cursor?: InputMaybe<Scalars['String']>;
+  limit: Scalars['Int'];
+  filter?: InputMaybe<AutomateFunctionsFilter>;
+}>;
+
+
+export type GetAutomateFunctionsQuery = { __typename?: 'Query', automateFunctions: { __typename?: 'AutomateFunctionCollection', cursor?: string | null, totalCount: number, items: Array<{ __typename?: 'AutomateFunction', id: string, name: string, isFeatured: boolean, description: string, logo?: string | null, automationCount: number, supportedSourceApps: Array<string>, tags: Array<string>, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number, items: Array<{ __typename?: 'AutomateFunctionRelease', id: string, versionTag: string, createdAt: string, inputSchema?: Record<string, unknown> | null, commitId: string }> } }> } };
+
+export type AutomateValidateAuthCodeQueryVariables = Exact<{
+  payload: AutomateAuthCodePayloadTest;
+}>;
+
+
+export type AutomateValidateAuthCodeQuery = { __typename?: 'Query', automateValidateAuthCode: boolean };
 
 export type CommentWithRepliesFragment = { __typename?: 'Comment', id: string, rawText: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null }, replies: { __typename?: 'CommentCollection', items: Array<{ __typename?: 'Comment', id: string, text: { __typename?: 'SmartTextEditorValue', doc?: Record<string, unknown> | null, attachments?: Array<{ __typename?: 'BlobMetadata', id: string, fileName: string, streamId: string }> | null } }> } };
 
@@ -3268,6 +3877,8 @@ export type RequestVerificationMutationVariables = Exact<{ [key: string]: never;
 export type RequestVerificationMutation = { __typename?: 'Mutation', requestVerification: boolean };
 
 export const BasicStreamAccessRequestFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicStreamAccessRequestFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"StreamAccessRequest"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"requester"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"requesterId"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]} as unknown as DocumentNode<BasicStreamAccessRequestFieldsFragment, unknown>;
+export const TestAutomateFunctionFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"TestAutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"repo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"isFeatured"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"releases"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"5"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"versionTag"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}},{"kind":"Field","name":{"kind":"Name","value":"commitId"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"automationCount"}},{"kind":"Field","name":{"kind":"Name","value":"supportedSourceApps"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}}]}}]} as unknown as DocumentNode<TestAutomateFunctionFragment, unknown>;
+export const TestAutomationFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"TestAutomation"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Automation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"runs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"trigger"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"VersionCreatedTrigger"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"version"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"functionRuns"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"statusMessage"}},{"kind":"Field","name":{"kind":"Name","value":"contextView"}},{"kind":"Field","name":{"kind":"Name","value":"function"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"elapsed"}},{"kind":"Field","name":{"kind":"Name","value":"results"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"currentRevision"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"triggerDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"VersionCreatedTriggerDefinition"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"functions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"release"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"function"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"versionTag"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}},{"kind":"Field","name":{"kind":"Name","value":"commitId"}}]}}]}}]}}]}}]} as unknown as DocumentNode<TestAutomationFragment, unknown>;
 export const CommentWithRepliesFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"CommentWithReplies"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}},{"kind":"Field","name":{"kind":"Name","value":"attachments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"replies"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"10"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}},{"kind":"Field","name":{"kind":"Name","value":"attachments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<CommentWithRepliesFragment, unknown>;
 export const BaseCommitFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BaseCommitFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Commit"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"authorName"}},{"kind":"Field","name":{"kind":"Name","value":"authorId"}},{"kind":"Field","name":{"kind":"Name","value":"authorAvatar"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}},{"kind":"Field","name":{"kind":"Name","value":"streamName"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"commentCount"}}]}}]} as unknown as DocumentNode<BaseCommitFieldsFragment, unknown>;
 export const BasicProjectFieldsFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"BasicProjectFields"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}},{"kind":"Field","name":{"kind":"Name","value":"allowPublicComments"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}}]}}]} as unknown as DocumentNode<BasicProjectFieldsFragment, unknown>;
@@ -3284,6 +3895,9 @@ export const CreateTokenDocument = {"kind":"Document","definitions":[{"kind":"Op
 export const RevokeTokenDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"RevokeToken"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"token"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"apiTokenRevoke"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"token"},"value":{"kind":"Variable","name":{"kind":"Name","value":"token"}}}]}]}}]} as unknown as DocumentNode<RevokeTokenMutation, RevokeTokenMutationVariables>;
 export const TokenAppInfoDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"TokenAppInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"authenticatedAsApp"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}}]} as unknown as DocumentNode<TokenAppInfoQuery, TokenAppInfoQueryVariables>;
 export const AppTokenCreateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"AppTokenCreate"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"token"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AppTokenCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"appTokenCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"token"},"value":{"kind":"Variable","name":{"kind":"Name","value":"token"}}}]}]}}]} as unknown as DocumentNode<AppTokenCreateMutation, AppTokenCreateMutationVariables>;
+export const GetProjectAutomationDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetProjectAutomation"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"automationId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"automation"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"automationId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"TestAutomation"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"TestAutomation"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Automation"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"enabled"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"runs"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"trigger"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"VersionCreatedTrigger"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"version"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"functionRuns"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"status"}},{"kind":"Field","name":{"kind":"Name","value":"statusMessage"}},{"kind":"Field","name":{"kind":"Name","value":"contextView"}},{"kind":"Field","name":{"kind":"Name","value":"function"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"elapsed"}},{"kind":"Field","name":{"kind":"Name","value":"results"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"currentRevision"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"triggerDefinitions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"InlineFragment","typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"VersionCreatedTriggerDefinition"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"type"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"functions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"parameters"}},{"kind":"Field","name":{"kind":"Name","value":"release"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"function"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}},{"kind":"Field","name":{"kind":"Name","value":"versionTag"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}},{"kind":"Field","name":{"kind":"Name","value":"commitId"}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetProjectAutomationQuery, GetProjectAutomationQueryVariables>;
+export const GetAutomateFunctionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetAutomateFunctions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunctionsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automateFunctions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"TestAutomateFunction"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"TestAutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"repo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"isFeatured"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"releases"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"5"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"versionTag"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}},{"kind":"Field","name":{"kind":"Name","value":"commitId"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"automationCount"}},{"kind":"Field","name":{"kind":"Name","value":"supportedSourceApps"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}}]}}]} as unknown as DocumentNode<GetAutomateFunctionsQuery, GetAutomateFunctionsQueryVariables>;
+export const AutomateValidateAuthCodeDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AutomateValidateAuthCode"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"payload"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateAuthCodePayloadTest"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automateValidateAuthCode"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"payload"},"value":{"kind":"Variable","name":{"kind":"Name","value":"payload"}}}]}]}}]} as unknown as DocumentNode<AutomateValidateAuthCodeQuery, AutomateValidateAuthCodeQueryVariables>;
 export const CreateCommentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateComment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CommentCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commentCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<CreateCommentMutation, CreateCommentMutationVariables>;
 export const CreateReplyDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateReply"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ReplyCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commentReply"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}]}]}}]} as unknown as DocumentNode<CreateReplyMutation, CreateReplyMutationVariables>;
 export const GetCommentDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"GetComment"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"id"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"comment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"id"}}},{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"CommentWithReplies"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"CommentWithReplies"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"rawText"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}},{"kind":"Field","name":{"kind":"Name","value":"attachments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"replies"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"10"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"text"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"doc"}},{"kind":"Field","name":{"kind":"Name","value":"attachments"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"fileName"}},{"kind":"Field","name":{"kind":"Name","value":"streamId"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<GetCommentQuery, GetCommentQueryVariables>;
