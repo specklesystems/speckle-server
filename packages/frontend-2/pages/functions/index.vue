@@ -4,9 +4,9 @@
       v-model:search="search"
       :active-user="result?.activeUser"
       :server-info="result?.serverInfo"
-      class="mb-8"
+      class="mb-6"
     />
-    <CommonLoadingBar :loading="pageQueryLoading" />
+    <CommonLoadingBar :loading="pageQueryLoading" client-only class="mb-2" />
     <AutomateFunctionsPageItems
       :functions="finalResult"
       :search="!!search"
@@ -27,7 +27,10 @@ import { CommonLoadingBar } from '@speckle/ui-components'
 import { useQuery } from '@vue/apollo-composable'
 import { automateFunctionsPagePaginationQuery } from '~/lib/automate/graphql/queries'
 import type { CreateAutomationSelectableFunction } from '~/lib/automate/helpers/automations'
-import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import {
+  usePageQueryStandardFetchPolicy,
+  usePaginatedQuery
+} from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 
 definePageMeta({
@@ -42,14 +45,15 @@ const pageQuery = graphql(`
 `)
 
 const search = ref('')
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const { result, loading: pageQueryLoading } = useQuery(
   pageQuery,
   () => ({
     search: search.value?.length ? search.value : null
   }),
-  {
-    fetchPolicy: 'cache-and-network'
-  }
+  () => ({
+    fetchPolicy: pageFetchPolicy.value
+  })
 )
 
 const {
@@ -69,9 +73,9 @@ const {
     cursor
   }),
   resolveCursorFromVariables: (vars) => vars.cursor,
-  options: {
-    fetchPolicy: 'cache-and-network'
-  }
+  options: () => ({
+    fetchPolicy: pageFetchPolicy.value
+  })
 })
 
 const showNewAutomationDialog = ref(false)
