@@ -92,6 +92,7 @@
     "@nuxt/devtools": "^0.2.5",
     "@nuxt/eslint": "^0.3.13",
     "@nuxtjs/tailwindcss": "^6.3.0",
+    "@parcel/watcher": "^2.4.1",
     "@speckle/tailwind-theme": "workspace:^",
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/line-clamp": "^0.4.2",
