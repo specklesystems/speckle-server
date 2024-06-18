@@ -43,7 +43,7 @@ RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
   tini=0.19.0-1 \
-  chromium=121.0.6167.139-1~deb12u1 \
+  chromium=126.0.6478.56-1~deb12u1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
