@@ -2,7 +2,7 @@
 ARG NODE_ENV=production
 ARG SPECKLE_SERVER_VERSION=custom
 # build stage
-FROM node:18-bullseye-slim@sha256:cf2cfd6631c5c80e6dbef767bbdf40766af1b58244080a7e3111bc811b58c784 as build-stage
+FROM node:18-bullseye-slim@sha256:8cc7dcd5aa06715247f8f2f258332f188d4221e2685b1a0159e4e6c3382e4918 as build-stage
 ARG NODE_ENV
 ARG SPECKLE_SERVER_VERSION
 
@@ -29,7 +29,7 @@ COPY packages/frontend ./packages/frontend/
 COPY packages/shared ./packages/shared/
 
 # This way the foreach only builds the frontend and its deps
-RUN yarn workspaces foreach run build
+RUN yarn workspaces foreach -W run build
 
 RUN DEBIAN_FRONTEND=noninteractive \
     apt-get -q update && \

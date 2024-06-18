@@ -28,6 +28,7 @@ import {
 import { getStream, markBranchStreamUpdated } from '@/modules/core/repositories/streams'
 import { has } from 'lodash'
 import { isBranchDeleteInput, isBranchUpdateInput } from '@/modules/core/helpers/branch'
+import { ModelsEmitter } from '@/modules/core/events/modelsEmitter'
 
 const isBranchCreateInput = (
   i: BranchCreateInput | CreateModelInput
@@ -132,12 +133,19 @@ export async function deleteBranchAndNotify(
 
   const isDeleted = !!(await deleteBranchById(existingBranch.id))
   if (isDeleted) {
-    await addBranchDeletedActivity({
-      input,
-      userId,
-      branchName: existingBranch.name
-    })
-    await markBranchStreamUpdated(input.id)
+    await Promise.all([
+      addBranchDeletedActivity({
+        input,
+        userId,
+        branchName: existingBranch.name
+      }),
+      markBranchStreamUpdated(input.id),
+      ModelsEmitter.emit(ModelsEmitter.events.Deleted, {
+        modelId: existingBranch.id,
+        model: existingBranch,
+        projectId: streamId
+      })
+    ])
   }
 
   return isDeleted

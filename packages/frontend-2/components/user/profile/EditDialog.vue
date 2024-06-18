@@ -15,7 +15,18 @@
       </LayoutDialogSection>
       <UserProfileEditDialogChangePassword :user="user" />
       <UserProfileEditDialogDeleteAccount :user="user" @deleted="isOpen = false" />
-      <div class="text-tiny text-foreground-2 mt-4">User #{{ user.id }}</div>
+      <div class="text-xs text-foreground-2 mt-4">
+        User ID:
+        <CommonTextLink size="xs" no-underline @click="copyUserId">
+          #{{ user.id }}
+        </CommonTextLink>
+        <template v-if="distinctId">
+          |
+          <CommonTextLink size="xs" no-underline @click="copyDistinctId">
+            {{ distinctId }}
+          </CommonTextLink>
+        </template>
+      </div>
     </div>
   </LayoutDialog>
 </template>
@@ -41,7 +52,8 @@ const props = defineProps<{
   open: boolean
 }>()
 
-const { activeUser: user } = useActiveUser()
+const { activeUser: user, distinctId } = useActiveUser()
+const { copy } = useClipboard()
 
 const isOpen = computed({
   get: () => !!(props.open && user.value),
@@ -57,4 +69,14 @@ const developerSettingsButton = computed(() => ({
     isOpen.value = false
   }
 }))
+
+const copyUserId = () => {
+  if (!user.value) return
+  copy(user.value.id)
+}
+
+const copyDistinctId = () => {
+  if (!distinctId.value) return
+  copy(distinctId.value)
+}
 </script>

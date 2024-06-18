@@ -267,7 +267,7 @@ const goToFinalUrl = (url: string) => {
 }
 
 const deny = () => {
-  if (process.server || !denyUrl.value || !activeUser.value || loading.value) return
+  if (import.meta.server || !denyUrl.value || !activeUser.value || loading.value) return
 
   loading.value = true
   action.value = ChosenAction.Deny
@@ -276,7 +276,7 @@ const deny = () => {
 }
 
 const allow = async () => {
-  if (process.server || !allowUrl.value || loading.value) return
+  if (import.meta.server || !allowUrl.value || loading.value) return
 
   loading.value = true
   mp.track('App Authorization', { allow: true, type: 'action' })
@@ -311,7 +311,7 @@ const onSwitchAccounts = async () => {
   postAuthRedirect.set(path, true)
 }
 
-if (process.client) {
+if (import.meta.client) {
   watch(
     () => trustByDefault.value,
     (newVal) => {

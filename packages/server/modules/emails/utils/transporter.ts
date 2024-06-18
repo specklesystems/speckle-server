@@ -1,4 +1,5 @@
 import { logger, moduleLogger } from '@/logging/logging'
+import { isEmailEnabled, isTestEnv } from '@/modules/shared/helpers/envHelper'
 import { createTransport, Transporter } from 'nodemailer'
 
 let transporter: Transporter | undefined = undefined
@@ -29,8 +30,26 @@ const initSmtpTransporter = async () => {
 export async function initializeTransporter(): Promise<Transporter | undefined> {
   let newTransporter = undefined
 
-  if (process.env.NODE_ENV === 'test') newTransporter = createJsonEchoTransporter()
-  if (process.env.EMAIL === 'true') newTransporter = await initSmtpTransporter()
+  if (isEmailEnabled()) {
+    newTransporter = await initSmtpTransporter()
+
+    if (!newTransporter) {
+      const message =
+        '📧 Email provider is enabled but transport has not initialized correctly. Please review the email configuration or your email system for problems.'
+      moduleLogger.error(message)
+      throw new Error(message)
+    }
+  }
+
+  if (!newTransporter && isTestEnv()) {
+    newTransporter = createJsonEchoTransporter()
+    if (!newTransporter) {
+      const message =
+        '📧 In testing a mock email provider is enabled but transport has not initialized correctly.'
+      moduleLogger.error(message)
+      throw new Error(message)
+    }
+  }
 
   if (!newTransporter) {
     moduleLogger.warn(

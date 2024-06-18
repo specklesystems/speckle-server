@@ -3,7 +3,6 @@ import {
   Extension,
   GeometryType,
   IViewer,
-  MeshBatch,
   Vector3
 } from '@speckle/viewer'
 import { PerspectiveCamera } from 'three'
@@ -11,11 +10,16 @@ import { PerspectiveCamera } from 'three'
 export class CameraPlanes extends Extension {
   private camerController: CameraController
 
+  get enabled(): boolean {
+    return this._enabled
+  }
+  set enabled(value: boolean) {
+    this._enabled = value
+  }
+
   public constructor(viewer: IViewer) {
     super(viewer)
-    this.camerController = viewer.getExtension(
-      CameraController as new () => CameraController
-    )
+    this.camerController = viewer.getExtension(CameraController)
   }
 
   public onEarlyUpdate(): void {
@@ -23,7 +27,10 @@ export class CameraPlanes extends Extension {
   }
 
   public computePerspectiveCameraPlanes() {
-    const camera = this.viewer.getRenderer().renderingCamera as PerspectiveCamera
+    const renderer = this.viewer.getRenderer()
+    if (!renderer.renderingCamera) return
+
+    const camera = renderer.renderingCamera as PerspectiveCamera
     const minDist = this.getClosestGeometryDistance(camera)
     if (minDist === Number.POSITIVE_INFINITY) return
 
@@ -35,7 +42,7 @@ export class CameraPlanes extends Extension {
         1 +
           Math.pow(Math.tan(((fov / 180) * Math.PI) / 2), 2) * (Math.pow(aspect, 2) + 1)
       )
-    this.viewer.getRenderer().renderingCamera.near = nearPlane
+    renderer.renderingCamera.near = nearPlane
     console.log(minDist, nearPlane)
   }
 
@@ -48,11 +55,13 @@ export class CameraPlanes extends Extension {
 
     const batches = this.viewer
       .getRenderer()
-      .batcher.getBatches(undefined, GeometryType.MESH) as MeshBatch[]
+      .batcher.getBatches(undefined, GeometryType.MESH)
     let minDist = Number.POSITIVE_INFINITY
     const minPoint = new Vector3()
     for (let b = 0; b < batches.length; b++) {
       const result = batches[b].mesh.TAS.closestPointToPoint(cameraPosition)
+      if (!result) continue
+
       const planarity = cameraDir.dot(
         new Vector3().subVectors(result.point, cameraPosition).normalize()
       )

@@ -1,4 +1,4 @@
-import { userEvent, within } from '@storybook/testing-library'
+import { userEvent, within } from '@storybook/test'
 import type { Meta, StoryObj } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
 import CommonTextLink from '~~/src/components/common/text/Link.vue'
@@ -47,14 +47,14 @@ const clickPlayBuilder: (rightClick: boolean) => VuePlayFunction =
     const button = canvas.getByRole('link')
 
     if (useRightClick) {
-      rightClick(button)
+      await rightClick(button)
     } else {
-      userEvent.click(button)
+      await userEvent.click(button)
     }
 
     await wait(1000)
 
-    userEvent.tab()
+    await userEvent.tab()
   }
 const rightClickPlay = clickPlayBuilder(true)
 const leftClickPlay = clickPlayBuilder(false)

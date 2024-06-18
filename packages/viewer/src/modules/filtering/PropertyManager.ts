@@ -1,5 +1,5 @@
 import flatten from '../../helpers/flatten'
-import { TreeNode, WorldTree } from '../tree/WorldTree'
+import { type TreeNode, WorldTree } from '../tree/WorldTree'
 
 export class PropertyManager {
   private propCache = {} as Record<string, PropertyInfo[]>
@@ -12,7 +12,7 @@ export class PropertyManager {
    */
   public async getProperties(
     tree: WorldTree,
-    resourceUrl: string = null,
+    resourceUrl: string | null = null,
     bypassCache = false
   ): Promise<PropertyInfo[]> {
     let rootNode: TreeNode = tree.root
@@ -21,14 +21,16 @@ export class PropertyManager {
       return this.propCache[resourceUrl ? resourceUrl : rootNode.model.id]
 
     if (resourceUrl) {
-      const actualRoot = rootNode.children.find((n) => n.model.id === resourceUrl)
+      const actualRoot = rootNode.children.find(
+        (n: { model: { id: string } }) => n.model.id === resourceUrl
+      )
       if (actualRoot) rootNode = actualRoot
       else {
         throw new Error(`Could not find root node for ${resourceUrl} - is it loaded?`)
       }
     }
 
-    const propValues = {}
+    const propValues: { [key: string]: unknown } = {}
 
     await tree.walkAsync((node: TreeNode) => {
       if (!node.model.atomic) return true
@@ -36,7 +38,7 @@ export class PropertyManager {
       for (const key in obj) {
         if (Array.isArray(obj[key])) continue
         if (!propValues[key]) propValues[key] = []
-        propValues[key].push({ value: obj[key], id: obj.id })
+        ;(propValues[key] as Array<unknown>).push({ value: obj[key], id: obj.id })
       }
       return true
     }, rootNode)
@@ -47,20 +49,33 @@ export class PropertyManager {
       const propValuesArr = propValues[propKey]
       const propInfo = {} as PropertyInfo
       propInfo.key = propKey
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
       propInfo.type = typeof propValuesArr[0].value === 'string' ? 'string' : 'number'
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
       propInfo.objectCount = propValuesArr.length
 
       // For string based props, keep track of which ids belong to which group
       if (propInfo.type === 'string') {
         const stringPropInfo = propInfo as StringPropertyInfo
         const valueGroups = {}
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
         for (const { value, id } of propValuesArr) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          //@ts-ignore
           if (!valueGroups[value]) valueGroups[value] = []
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          //@ts-ignore
           valueGroups[value].push(id)
         }
         stringPropInfo.valueGroups = []
-        for (const key in valueGroups)
+        for (const key in valueGroups) {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          //@ts-ignore
           stringPropInfo.valueGroups.push({ value: key, ids: valueGroups[key] })
+        }
 
         stringPropInfo.valueGroups = stringPropInfo.valueGroups.sort((a, b) =>
           a.value.localeCompare(b.value)
@@ -71,16 +86,20 @@ export class PropertyManager {
         const numProp = propInfo as NumericPropertyInfo
         numProp.min = Number.MAX_VALUE
         numProp.max = Number.MIN_VALUE
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
         for (const { value } of propValuesArr) {
           if (value < numProp.min) numProp.min = value
           if (value > numProp.max) numProp.max = value
         }
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        //@ts-ignore
         numProp.valueGroups = propValuesArr.sort((a, b) => a.value - b.value)
         // const sorted = propValuesArr.sort((a, b) => a.value - b.value)
         // propInfo.sortedValues = sorted.map(s => s.value)
         // propInfo.sortedIds = sorted.map(s => s.value) // tl;dr: not worth it
       }
-      allPropInfos.push(propInfo as PropertyInfo)
+      allPropInfos.push(propInfo)
     }
 
     this.propCache[rootNode.model.id] = allPropInfos

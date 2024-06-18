@@ -26,8 +26,7 @@ definePageMeta({
   middleware: ['require-valid-project'],
   pageTransition: false, // NOTE: transitions fuck viewer up
   layoutTransition: false,
-  key: '/projects/:id/models/resources', // To prevent controls flickering on resource url param changes
-  raygunTags: ['viewer']
+  key: '/projects/:id/models/resources' // To prevent controls flickering on resource url param changes
 })
 
 const ViewerScope = resolveComponent('ViewerScope')
@@ -38,7 +37,7 @@ const route = useRoute()
 const state = ref<InjectableViewerState>()
 
 const checkUrlForEmbedManualLoadSettings = () => {
-  if (process.server) return
+  if (import.meta.server) return
 
   const hashParams = new URLSearchParams(route.hash.substring(1))
   const embedParam = hashParams.get('embed')

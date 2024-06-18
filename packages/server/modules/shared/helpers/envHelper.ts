@@ -1,5 +1,6 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
+import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
@@ -30,7 +31,7 @@ export function getFileSizeLimitMB() {
 }
 
 export function getMaximumObjectSizeMB() {
-  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '10')
+  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
 }
 
 export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
@@ -266,4 +267,37 @@ export function getEmailFromAddress() {
 
 export function getMaximumProjectModelsPerPage() {
   return getIntFromEnv('MAX_PROJECT_MODELS_PER_PAGE', '500')
+}
+
+export function delayGraphqlResponsesBy() {
+  if (!isDevEnv()) return 0
+  return getIntFromEnv('DELAY_GQL_RESPONSES_BY', '0')
+}
+
+export function getAutomateEncryptionKeysPath() {
+  if (!process.env.AUTOMATE_ENCRYPTION_KEYS_PATH) {
+    throw new MisconfiguredEnvironmentError(
+      'Automate encryption keys path environment variable (AUTOMATE_ENCRYPTION_KEYS_PATH) is not configured'
+    )
+  }
+
+  return process.env.AUTOMATE_ENCRYPTION_KEYS_PATH
+}
+
+export function getGendoAIKey() {
+  return process.env.GENDOAI_KEY
+}
+
+export function getGendoAIResponseKey() {
+  return process.env.GENDOAI_KEY_RESPONSE
+}
+
+export function getGendoAIAPIEndpoint() {
+  return process.env.GENDOAI_API_ENDPOINT
+}
+
+export const getFeatureFlags = () => Environment.getFeatureFlags()
+
+export function isEmailEnabled() {
+  return process.env.EMAIL === 'true'
 }

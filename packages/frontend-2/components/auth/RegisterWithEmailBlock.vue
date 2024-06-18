@@ -1,6 +1,6 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
-  <form @submit="onSubmit">
+  <form method="post" @submit="onSubmit">
     <div class="flex flex-col space-y-2">
       <FormTextInput
         type="text"
@@ -63,7 +63,7 @@
       v-if="serverInfo.termsOfService"
       class="mt-2 text-xs text-foreground-2 text-center terms-of-service"
       v-html="serverInfo.termsOfService"
-    ></div>
+    />
     <div class="mt-2 sm:mt-8 text-center text-xs sm:text-base">
       <span class="mr-2">Already have an account?</span>
       <CommonTextLink :to="finalLoginRoute" :icon-right="ArrowRightIcon">

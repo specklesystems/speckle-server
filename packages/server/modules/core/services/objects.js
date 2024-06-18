@@ -112,7 +112,10 @@ module.exports = {
       for (const batch of batches) {
         prepInsertionObjectBatch(batch)
         await Objects().insert(batch).onConflict().ignore()
-        servicesLogger.info(`Inserted ${batch.length} objects`)
+        servicesLogger.info(
+          { objectCount: batch.length },
+          'Inserted ${objectCount} objects'
+        )
       }
     }
 
@@ -123,10 +126,47 @@ module.exports = {
       for (const batch of batches) {
         prepInsertionClosureBatch(batch)
         await Closures().insert(batch).onConflict().ignore()
-        servicesLogger.info(`Inserted ${batch.length} closures`)
+        servicesLogger.info(
+          { batchLength: batch.length },
+          'Inserted ${batchLength} closures'
+        )
       }
     }
     return true
+  },
+
+  async createObjectsBatchedAndNoClosures(streamId, objects) {
+    const objsToInsert = []
+    const ids = []
+
+    // Prep objects up
+    objects.forEach((obj) => {
+      const insertionObject = prepInsertionObject(streamId, obj)
+      delete insertionObject.__closure
+      objsToInsert.push(insertionObject)
+      ids.push(insertionObject.id)
+    })
+
+    const objectsBatchSize = 500
+
+    // step 1: insert objects
+    if (objsToInsert.length > 0) {
+      const batches = chunkInsertionObjectArray({
+        objects: objsToInsert,
+        chunkLengthLimit: objectsBatchSize,
+        chunkSizeLimitMb: 2
+      })
+      for (const batch of batches) {
+        prepInsertionObjectBatch(batch)
+        await Objects().insert(batch).onConflict().ignore()
+        servicesLogger.info(
+          { batchLength: batch.length },
+          'Inserted {batchLength} objects'
+        )
+      }
+    }
+
+    return ids
   },
 
   async createObjects(streamId, objects) {
@@ -616,7 +656,9 @@ function prepInsertionObject(streamId, obj) {
     data: stringifiedObj, // stored in jsonb column
     streamId,
     id: obj.id,
-    speckleType: obj.speckleType
+    // YEAH, this has been broken forever...
+    // speckleType: obj.speckleType
+    speckleType: obj.speckle_type
   }
 }
 

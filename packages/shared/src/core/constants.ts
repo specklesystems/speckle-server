@@ -1,4 +1,4 @@
-import _ from 'lodash'
+import { flatMap } from '#lodash'
 
 /**
  * Speckle role constants
@@ -80,13 +80,19 @@ export const Scopes = Object.freeze(<const>{
   },
   Automate: {
     ReportResults: 'automate:report-results'
+  },
+  AutomateFunctions: {
+    Read: 'automate-functions:read',
+    Write: 'automate-functions:write'
   }
 })
 
 /**
  * All scopes
  */
-export const AllScopes = _.flatMap(Scopes, (v) => Object.values(v))
+export const AllScopes = flatMap(Scopes, (v) => Object.values(v))
+
+export type ServerScope = (typeof AllScopes)[number]
 
 export const SourceAppNames = [
   'Dynamo',

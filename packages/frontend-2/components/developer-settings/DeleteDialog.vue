@@ -25,7 +25,7 @@
 
 <script setup lang="ts">
 import { useMutation, useMutationLoading } from '@vue/apollo-composable'
-import { LayoutDialog } from '@speckle/ui-components'
+import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import type {
   ApplicationItem,
   TokenItem,
@@ -191,7 +191,7 @@ const deleteConfirmed = async () => {
   }
 }
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },

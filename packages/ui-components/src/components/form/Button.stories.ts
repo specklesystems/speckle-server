@@ -1,4 +1,4 @@
-import { userEvent, within } from '@storybook/testing-library'
+import { userEvent, within } from '@storybook/test'
 import FormButton from '~~/src/components/form/Button.vue'
 import type { StoryObj, Meta } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
@@ -79,14 +79,14 @@ const clickPlayBuilder: (rightClick: boolean) => VuePlayFunction =
     const button = canvas.getByRole('button')
 
     if (useRightClick) {
-      rightClick(button)
+      await rightClick(button)
     } else {
-      userEvent.click(button)
+      await userEvent.click(button)
     }
 
     await wait(1000)
 
-    userEvent.tab()
+    await userEvent.tab()
   }
 const rightClickPlay = clickPlayBuilder(true)
 const leftClickPlay = clickPlayBuilder(false)

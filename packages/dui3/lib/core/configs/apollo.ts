@@ -1,26 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import {
-  ApolloLink,
-  InMemoryCache,
-  split,
-  ApolloClientOptions,
-  from
-} from '@apollo/client/core'
+import type { ApolloLink, ApolloClientOptions } from '@apollo/client/core'
+import { InMemoryCache, split, from } from '@apollo/client/core'
 import { setContext } from '@apollo/client/link/context'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { createUploadLink } from 'apollo-upload-client'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
-import { OperationDefinitionNode, Kind } from 'graphql'
-import { Nullable } from '@speckle/shared'
+import type { OperationDefinitionNode } from 'graphql'
+import { Kind } from 'graphql'
+import type { Nullable } from '@speckle/shared'
 import {
   buildAbstractCollectionMergeFunction,
   buildArrayMergeFunction,
   incomingOverwritesExistingMergeFunction
 } from '~~/lib/core/helpers/apolloSetup'
 import { onError } from '@apollo/client/link/error'
-import { Observability } from '@speckle/shared'
+import * as Observability from '@speckle/shared/dist/esm/observability/index.js'
 
 let subscriptionsStopped = false
 const errorRpm = Observability.simpleRpmCounter()
@@ -303,7 +299,7 @@ function createLink(params: {
     // Disable subscriptions if too many errors per minute
     const rpm = errorRpm.hit()
     if (
-      process.client &&
+      import.meta.client &&
       wsClient &&
       !subscriptionsStopped &&
       rpm > STOP_SUBSCRIPTIONS_AT_ERRORS_PER_MIN
@@ -336,7 +332,7 @@ export const resolveClientConfig = (
   const { httpEndpoint, authToken } = params
   const wsEndpoint = httpEndpoint.replace('http', 'ws')
 
-  const wsClient = process.client
+  const wsClient = import.meta.client
     ? createWsClient({ wsEndpoint, authToken })
     : undefined
   const link = createLink({ httpEndpoint, wsClient, authToken })

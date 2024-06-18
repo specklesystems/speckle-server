@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
-import { omit } from 'lodash-es'
+import type { Optional } from '@speckle/shared'
+import { get, omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
 import { useReadUserId } from '~/lib/auth/composables/activeUser'
 import {
   useCreateErrorLoggingTransport,
-  useGetErrorLoggingTransports
+  useGetErrorLoggingTransports,
+  useLogToErrorLoggingTransports
 } from '~/lib/core/composables/error'
 import {
   useRequestId,
@@ -16,8 +17,19 @@ import {
   buildFakePinoLogger,
   enableCustomErrorHandling,
   type AbstractErrorHandler,
+  type AbstractErrorHandlerParams,
   type AbstractUnhandledErrorHandler
 } from '~~/lib/core/helpers/observability'
+
+class CustomDeserializedError extends Error {
+  code: string
+
+  constructor(params: { code: string; message: string; stack: string }) {
+    super(params.message)
+    this.code = params.code
+    this.stack = params.stack
+  }
+}
 
 /**
  * - Setting up Pino logger in SSR, basic console.log fallback in CSR
@@ -43,6 +55,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   const getUserId = useReadUserId()
   const country = useUserCountry()
   const registerErrorTransport = useCreateErrorLoggingTransport()
+  const { invokeTransportsWithPayload } = useLogToErrorLoggingTransports()
 
   const collectMainInfo = (params: { isBrowser: boolean }) => {
     const info = {
@@ -61,11 +74,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   }
 
   // Set up logger
-  let logger: ReturnType<typeof import('@speckle/shared').Observability.getLogger>
+  let logger: ReturnType<
+    typeof import('@speckle/shared/dist/esm/observability/index').getLogger
+  >
   const errorHandlers: AbstractErrorHandler[] = []
   const unhandledErrorHandlers: AbstractUnhandledErrorHandler[] = []
 
-  if (process.server) {
+  if (import.meta.server) {
     const { buildLogger, enableDynamicBindings, serializeRequest } = await import(
       '~/server/lib/core/helpers/observability'
     )
@@ -207,15 +222,22 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
   // Global error handler - handle all transports
   const transports = useGetErrorLoggingTransports()
+  let serverFatalError: Optional<AbstractErrorHandlerParams> = undefined
   logger = enableCustomErrorHandling({
     logger,
     onError: (params) => {
+      const { otherData } = params
+
+      if (import.meta.server && otherData?.isAppError) {
+        serverFatalError = params
+      }
+
       transports.forEach((handler) => handler.onError(params))
     }
   })
 
   // Unhandled error handler
-  if (process.client && window) {
+  if (import.meta.client && window) {
     const unhandledHandler = (event: ErrorEvent | PromiseRejectionEvent) => {
       const handlers = transports.filter(
         (t): t is SetRequired<typeof t, 'onUnhandledError'> => !!t.onUnhandledError
@@ -243,7 +265,8 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
     logger.error(err, 'Unhandled error in routing', {
       to: to.path,
-      from: from?.path
+      from: from?.path,
+      isAppError: !!import.meta.server
     })
   })
 
@@ -256,6 +279,56 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       isAppError: true
     })
   })
+
+  // Hydrate server fatal error to CSR
+  if (import.meta.server) {
+    nuxtApp.hook('app:rendered', () => {
+      let serializableError: Optional<AbstractErrorHandlerParams> = undefined
+      try {
+        serializableError = serverFatalError
+          ? (JSON.parse(JSON.stringify(serverFatalError)) as AbstractErrorHandlerParams)
+          : undefined
+        if (serializableError && serverFatalError?.firstError) {
+          serializableError.firstError = {
+            code: get(serverFatalError.firstError, 'code', 'unknown') as string,
+            message: get(serverFatalError.firstError, 'message', 'unknown') as string,
+            stack: get(serverFatalError.firstError, 'stack', 'unknown') as string
+          } as unknown as Error // fakin it
+        }
+      } catch (e) {
+        serializableError = {
+          args: [],
+          firstString: 'Failed to serialize serverFatalError',
+          firstError: e as Error,
+          otherData: {},
+          nonObjectOtherData: []
+        }
+      }
+
+      nuxtApp.ssrContext!.payload.serverFatalError = serializableError
+    })
+  } else {
+    nuxtApp.hook('app:mounted', () => {
+      const serverFatalError = nuxtApp.payload.serverFatalError
+      if (serverFatalError) {
+        if (serverFatalError.firstError) {
+          serverFatalError.firstError = new CustomDeserializedError({
+            message: get(serverFatalError.firstError, 'message', 'unknown') as string,
+            code: get(serverFatalError.firstError, 'code', 'unknown') as string,
+            stack: get(serverFatalError.firstError, 'stack', 'unknown') as string
+          })
+        }
+
+        invokeTransportsWithPayload(serverFatalError)
+
+        if (import.meta.dev) {
+          // intentionally skipping error pipeline:
+          // eslint-disable-next-line no-console
+          console.error('Fatal error occurred on server:', serverFatalError)
+        }
+      }
+    })
+  }
 
   return {
     provide: {

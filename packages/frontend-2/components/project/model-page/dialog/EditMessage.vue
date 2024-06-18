@@ -12,7 +12,7 @@
       },
       {
         text: 'Save',
-        props: { color: 'primary', fullWidth: true, disabled: loading },
+        props: { color: 'default', fullWidth: true, disabled: loading },
         onClick: () => {
           onSubmit()
         }

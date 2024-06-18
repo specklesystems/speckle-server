@@ -1,17 +1,16 @@
 import SpeckleRenderer from '../../SpeckleRenderer'
 
-import { IViewer, ObjectLayers } from '../../../IViewer'
+import { type IViewer, ObjectLayers } from '../../../IViewer'
 import { PerpendicularMeasurement } from './PerpendicularMeasurement'
 import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
 import { PointToPointMeasurement } from './PointToPointMeasurement'
 import { Measurement, MeasurementState } from './Measurement'
-import { ExtendedIntersection } from '../../objects/SpeckleRaycaster'
+import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster'
 import Logger from 'js-logger'
-import SpeckleMesh from '../../objects/SpeckleMesh'
 import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial'
-import { Extension } from '../core-extensions/Extension'
+import { Extension } from '../Extension'
 import { InputEvent } from '../../input/Input'
-import { ICameraProvider } from '../core-extensions/Providers'
+import { CameraController } from '../CameraController'
 
 export enum MeasurementType {
   PERPENDICULAR,
@@ -36,19 +35,18 @@ const DefaultMeasurementsOptions = {
 
 export class MeasurementsExtension extends Extension {
   public get inject() {
-    return [ICameraProvider.Symbol]
+    return [CameraController]
   }
 
-  protected renderer: SpeckleRenderer = null
+  protected renderer: SpeckleRenderer
 
   protected measurements: Measurement[] = []
-  protected _activeMeasurement: Measurement = null
-  protected _selectedMeasurement: Measurement = null
-  protected raycaster: Raycaster = null
+  protected _activeMeasurement: Measurement | null = null
+  protected _selectedMeasurement: Measurement | null = null
+  protected raycaster: Raycaster
   protected _options: MeasurementOptions = Object.assign({}, DefaultMeasurementsOptions)
 
   private _frameLock = false
-  private _enabled = false
   private _paused = false
   private _sceneHit = false
 
@@ -59,10 +57,6 @@ export class MeasurementsExtension extends Extension {
 
   public get enabled(): boolean {
     return this._enabled
-  }
-
-  public get visible(): boolean {
-    return this._options.visible
   }
 
   public set enabled(value: boolean) {
@@ -76,8 +70,8 @@ export class MeasurementsExtension extends Extension {
     this.renderer.resetPipeline()
   }
 
-  public set paused(value: boolean) {
-    this._paused = value
+  public get options(): MeasurementOptions {
+    return this._options
   }
 
   public set options(options: MeasurementOptions) {
@@ -93,15 +87,15 @@ export class MeasurementsExtension extends Extension {
     this.applyOptions()
   }
 
-  public get selectedMeasurement(): Measurement {
+  public get selectedMeasurement(): Measurement | null {
     return this._selectedMeasurement
   }
 
-  public get activeMeasurement(): Measurement {
+  public get activeMeasurement(): Measurement | null {
     return this._activeMeasurement
   }
 
-  public constructor(viewer: IViewer, protected cameraProvider: ICameraProvider) {
+  public constructor(viewer: IViewer, protected cameraProvider: CameraController) {
     super(viewer)
     this.renderer = viewer.getRenderer()
     this.raycaster = new Raycaster()
@@ -112,25 +106,22 @@ export class MeasurementsExtension extends Extension {
     this.renderer.input.on(InputEvent.DoubleClick, this.onPointerDoubleClick.bind(this))
   }
 
-  public onLateUpdate(deltaTime: number) {
-    deltaTime
+  public onLateUpdate() {
     if (!this._enabled) return
+    const camera = this.renderer.renderingCamera
+    if (!camera) return
 
     this._frameLock = false
     this.renderer.renderer.getDrawingBufferSize(this.screenBuff0)
 
     if (this._activeMeasurement)
       this._activeMeasurement.frameUpdate(
-        this.renderer.renderingCamera,
+        camera,
         this.screenBuff0,
         this.renderer.sceneBox
       )
     this.measurements.forEach((value: Measurement) => {
-      value.frameUpdate(
-        this.renderer.renderingCamera,
-        this.screenBuff0,
-        this.renderer.sceneBox
-      )
+      value.frameUpdate(camera, this.screenBuff0, this.renderer.sceneBox)
     })
   }
 
@@ -138,28 +129,29 @@ export class MeasurementsExtension extends Extension {
     this.renderer.renderer.getDrawingBufferSize(this.screenBuff0)
   }
 
-  protected onPointerMove(data) {
+  protected onPointerMove(data: Vector2 & { event: Event }) {
     if (!this._enabled || this._paused) return
+
+    const camera = this.renderer.renderingCamera
+    if (!camera) return
 
     if (this._frameLock) {
       return
     }
 
-    let result =
-      (this.renderer.intersections.intersect(
+    let result: ExtendedMeshIntersection[] =
+      this.renderer.intersections.intersect(
         this.renderer.scene,
-        this.renderer.renderingCamera,
+        camera,
         data,
+        ObjectLayers.STREAM_CONTENT_MESH,
         true,
-        this.renderer.clippingVolume,
-        [ObjectLayers.STREAM_CONTENT_MESH]
-      ) as ExtendedIntersection[]) || []
+        this.renderer.clippingVolume
+      ) || []
 
-    result = result.filter((value: ExtendedIntersection) => {
-      const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
-        value.batchObject
-      )
-      return !(material instanceof SpeckleGhostMaterial) && material.visible
+    result = result.filter((value: ExtendedMeshIntersection) => {
+      const material = value.object.getBatchObjectMaterial(value.batchObject)
+      return material && !(material instanceof SpeckleGhostMaterial) && material.visible
     })
 
     if (!result.length) {
@@ -167,16 +159,21 @@ export class MeasurementsExtension extends Extension {
       return
     }
 
-    if (!this._activeMeasurement) {
-      this.startMeasurement()
-    }
-    this._activeMeasurement.isVisible = true
-
+    /** Catering to typescript
+     *  There will always be an intersected face. We're casting against indexed meshes only
+     */
     this.pointBuff.copy(result[0].point)
     this.normalBuff.copy(result[0].face.normal)
+
     if (this._options.vertexSnap) {
       this.snap(result[0], this.pointBuff, this.normalBuff)
     }
+
+    if (!this._activeMeasurement) {
+      this._activeMeasurement = this.startMeasurement()
+      this._activeMeasurement.isVisible = true
+    }
+
     if (this._activeMeasurement.state === MeasurementState.DANGLING_START) {
       this._activeMeasurement.startPoint.copy(this.pointBuff)
       this._activeMeasurement.startNormal.copy(this.normalBuff)
@@ -190,9 +187,12 @@ export class MeasurementsExtension extends Extension {
     this.renderer.resetPipeline()
     this._frameLock = true
     this._sceneHit = true
+    // console.log('Time -> ', performance.now() - start)
   }
 
-  protected onPointerClick(data) {
+  protected onPointerClick(
+    data: { event: PointerEvent; multiSelect: boolean } & Vector2
+  ) {
     if (!this._enabled) return
 
     const measurement = this.pickMeasurement(data)
@@ -217,7 +217,9 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  protected onPointerDoubleClick(data) {
+  protected onPointerDoubleClick(
+    data: Vector2 & { event: PointerEvent; multiSelect: boolean }
+  ) {
     const measurement = this.pickMeasurement(data)
     if (measurement) {
       this.cameraProvider.setCameraView(measurement.bounds, true)
@@ -229,25 +231,24 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  protected autoLazerMeasure(data) {
+  protected autoLazerMeasure(data: Vector2) {
     if (!this._activeMeasurement) return
+    if (!this.renderer.renderingCamera) return
 
     this._activeMeasurement.state = MeasurementState.DANGLING_START
-    let result =
-      (this.renderer.intersections.intersect(
+    let result: ExtendedMeshIntersection[] =
+      this.renderer.intersections.intersect(
         this.renderer.scene,
         this.renderer.renderingCamera,
         data,
+        ObjectLayers.STREAM_CONTENT_MESH,
         true,
-        this.renderer.clippingVolume,
-        [ObjectLayers.STREAM_CONTENT_MESH]
-      ) as ExtendedIntersection[]) || []
+        this.renderer.clippingVolume
+      ) || []
 
     result = result.filter((value) => {
-      const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
-        value.batchObject
-      )
-      return !(material instanceof SpeckleGhostMaterial) && material.visible
+      const material = value.object.getBatchObjectMaterial(value.batchObject)
+      return material && !(material instanceof SpeckleGhostMaterial) && material.visible
     })
 
     if (!result.length) return
@@ -258,21 +259,19 @@ export class MeasurementsExtension extends Extension {
     const offsetPoint = new Vector3()
       .copy(startPoint)
       .add(new Vector3().copy(startNormal).multiplyScalar(0.000001))
-    let perpResult =
-      (this.renderer.intersections.intersectRay(
+    let perpResult: ExtendedMeshIntersection[] =
+      this.renderer.intersections.intersectRay(
         this.renderer.scene,
         this.renderer.renderingCamera,
         new Ray(offsetPoint, startNormal),
+        ObjectLayers.STREAM_CONTENT_MESH,
         true,
-        this.renderer.clippingVolume,
-        [ObjectLayers.STREAM_CONTENT_MESH]
-      ) as ExtendedIntersection[]) || []
+        this.renderer.clippingVolume
+      ) || []
 
-    perpResult = perpResult.filter((value) => {
-      const material = (value.object as unknown as SpeckleMesh).getBatchObjectMaterial(
-        value.batchObject
-      )
-      return !(material instanceof SpeckleGhostMaterial) && material.visible
+    perpResult = perpResult.filter((value: ExtendedMeshIntersection) => {
+      const material = value.object.getBatchObjectMaterial(value.batchObject)
+      return material && !(material instanceof SpeckleGhostMaterial) && material.visible
     })
 
     if (!perpResult.length) {
@@ -289,29 +288,34 @@ export class MeasurementsExtension extends Extension {
     this.finishMeasurement()
   }
 
-  protected startMeasurement() {
+  protected startMeasurement(): Measurement {
+    let measurement: Measurement
     if (this._options.type === MeasurementType.PERPENDICULAR)
-      this._activeMeasurement = new PerpendicularMeasurement()
+      measurement = new PerpendicularMeasurement()
     else if (this._options.type === MeasurementType.POINTTOPOINT)
-      this._activeMeasurement = new PointToPointMeasurement()
+      measurement = new PointToPointMeasurement()
+    else throw new Error('Unsupported measurement type!')
 
-    this._activeMeasurement.state = MeasurementState.DANGLING_START
-    this._activeMeasurement.frameUpdate(
+    measurement.state = MeasurementState.DANGLING_START
+    measurement.frameUpdate(
       this.renderer.renderingCamera,
       this.screenBuff0,
       this.renderer.sceneBox
     )
-    this.renderer.scene.add(this._activeMeasurement)
+    this.renderer.scene.add(measurement)
+    return measurement
   }
 
   protected cancelMeasurement() {
-    this.renderer.scene.remove(this._activeMeasurement)
+    if (this._activeMeasurement) this.renderer.scene.remove(this._activeMeasurement)
     this._activeMeasurement = null
     this.renderer.needsRender = true
     this.renderer.resetPipeline()
   }
 
   protected finishMeasurement() {
+    if (!this._activeMeasurement) return
+
     this._activeMeasurement.state = MeasurementState.COMPLETE
     this._activeMeasurement.update()
     if (this._activeMeasurement.value > 0) {
@@ -335,7 +339,7 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  public clearMeasurements() {
+  public clearMeasurements(): void {
     this.removeMeasurement()
     this.measurements.forEach((measurement: Measurement) => {
       this.renderer.scene.remove(measurement)
@@ -348,16 +352,20 @@ export class MeasurementsExtension extends Extension {
     let flashCount = 0
     const maxFlashCount = 5
     const handle = setInterval(() => {
-      this._activeMeasurement.highlight(Boolean(flashCount++ % 2))
-      if (flashCount >= maxFlashCount) {
-        clearInterval(handle)
+      if (this._activeMeasurement) {
+        this._activeMeasurement.highlight(Boolean(flashCount++ % 2))
+        if (flashCount >= maxFlashCount) {
+          clearInterval(handle)
+        }
+        this.renderer.needsRender = true
+        this.renderer.resetPipeline()
       }
-      this.renderer.needsRender = true
-      this.renderer.resetPipeline()
     }, 100)
   }
 
-  protected pickMeasurement(data): Measurement {
+  protected pickMeasurement(data: Vector2): Measurement | null {
+    if (!this.renderer.renderingCamera) return null
+
     this.measurements.forEach((value) => {
       value.highlight(false)
     })
@@ -373,10 +381,12 @@ export class MeasurementsExtension extends Extension {
   }
 
   protected snap(
-    intersection: ExtendedIntersection,
+    intersection: ExtendedMeshIntersection,
     outPoint: Vector3,
     outNormal: Vector3
   ) {
+    if (!this.renderer.renderingCamera) return
+
     const v0 = intersection.batchObject.accelerationStructure
       .getVertexAtIndex(intersection.face.a)
       .project(this.renderer.renderingCamera)
@@ -408,7 +418,7 @@ export class MeasurementsExtension extends Extension {
     }
   }
 
-  protected updateClippingPlanes(planes: Plane[]) {
+  protected updateClippingPlanes(planes: Plane[]): void {
     this.measurements.forEach((value) => {
       value.updateClippingPlanes(planes)
     })
@@ -418,8 +428,14 @@ export class MeasurementsExtension extends Extension {
     const all = [this._activeMeasurement, ...this.measurements]
     all.forEach((value) => {
       if (value) {
-        value.units = this._options.units
-        value.precision = this._options.precision
+        value.units =
+          this._options.units !== undefined
+            ? this._options.units
+            : DefaultMeasurementsOptions.units
+        value.precision =
+          this._options.precision !== undefined
+            ? this._options.precision
+            : DefaultMeasurementsOptions.precision
         value.update()
       }
     })
@@ -442,6 +458,6 @@ export class MeasurementsExtension extends Extension {
     measurement.update()
     measurement.state = MeasurementState.COMPLETE
     measurement.update()
-    this.measurements.push(this._activeMeasurement)
+    this.measurements.push(measurement)
   }
 }

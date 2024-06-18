@@ -26,9 +26,13 @@ import {
 } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
 import SpeckleDepthMaterial from '../materials/SpeckleDepthMaterial'
 import SpeckleShadowcatcherMaterial from '../materials/SpeckleShadowcatcherMaterial'
-import { BaseSpecklePass, SpecklePass } from './SpecklePass'
+import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
 import { ObjectLayers } from '../../IViewer'
-import { DefaultShadowcatcherConfig, ShadowcatcherConfig } from '../ShadowcatcherConfig'
+import {
+  DefaultShadowcatcherConfig,
+  type ShadowcatcherConfig
+} from '../ShadowcatcherConfig'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
 export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
   private readonly levels: number = 4
@@ -36,23 +40,23 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
   private renderTargets: WebGLRenderTarget[] = []
   private tempTargets: WebGLRenderTarget[] = []
   private outputTarget: WebGLRenderTarget
-  private camera: OrthographicCamera = null
-  private scene: Scene = null
+  private camera: OrthographicCamera
+  private scene!: Scene
   private _needsUpdate = false
 
-  private fsQuad: FullScreenQuad = null
-  private blendMaterial: SpeckleShadowcatcherMaterial = null
-  private depthMaterial: SpeckleDepthMaterial = null
-  private vBlurMaterial: ShaderMaterial = null
-  private hBlurMaterial: ShaderMaterial = null
+  private fsQuad: FullScreenQuad
+  private blendMaterial: SpeckleShadowcatcherMaterial
+  private depthMaterial: SpeckleDepthMaterial
+  private vBlurMaterial: ShaderMaterial
+  private hBlurMaterial: ShaderMaterial
   private blurStdDev = DefaultShadowcatcherConfig.stdDeviation
   private blurRadius = DefaultShadowcatcherConfig.blurRadius
   private prevBlurStdDev = 0
   private prevBlurRadius = 0
-  private cameraHelper = null
+  private cameraHelper!: CameraHelper
 
-  public onBeforeRender: () => void = null
-  public onAfterRender: () => void = null
+  public onBeforeRender: (() => void) | undefined = undefined
+  public onAfterRender: (() => void) | undefined = undefined
 
   get displayName(): string {
     return 'Shadowcatcher'
@@ -124,7 +128,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
   public update(scene: Scene) {
     this.scene = scene
     if (this._needsUpdate) {
-      if (this.cameraHelper === null && this.debugCamera) {
+      if (!this.cameraHelper && this.debugCamera) {
         this.cameraHelper = new CameraHelper(this.camera)
         this.cameraHelper.layers.set(ObjectLayers.PROPS)
         this.scene.add(this.cameraHelper)
@@ -180,9 +184,7 @@ export class ShadowcatcherPass extends BaseSpecklePass implements SpecklePass {
     }
   }
 
-  public render(renderer, writeBuffer, readBuffer) {
-    writeBuffer
-    readBuffer
+  public render(renderer: SpeckleWebGLRenderer) {
     if (this._needsUpdate) {
       renderer.RTEBuffers.push()
       renderer.updateRTEViewModel(this.camera)

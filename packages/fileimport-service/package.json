@@ -17,7 +17,7 @@
   "scripts": {
     "dev": "cross-env POSTGRES_URL=postgres://speckle:speckle@127.0.0.1/speckle NODE_ENV=development LOG_PRETTY=true SPECKLE_SERVER_URL=http://127.0.0.1:3000 nodemon --no-experimental-fetch ./src/daemon.js",
     "parse:ifc": "node --no-experimental-fetch ./ifc/import_file.js ./ifc/ifcs/steelplates.ifc 33763848d6 2e4bfb467a main File upload: steelplates.ifc",
-    "lint": "eslint . --ext .js,.ts"
+    "lint": "eslint ."
   },
   "bugs": {
     "url": "https://github.com/specklesystems/speckle-server/issues"
@@ -32,14 +32,14 @@
     "pino-http": "^8.0.0",
     "pino-pretty": "^9.1.1",
     "prom-client": "^14.0.1",
-    "undici": "^5.28.3",
+    "undici": "^5.28.4",
     "valid-filename": "^3.1.0",
     "web-ifc": "^0.0.36"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "eslint": "^8.11.0",
-    "eslint-config-prettier": "^8.5.0",
+    "eslint": "^9.4.0",
+    "eslint-config-prettier": "^9.1.0",
     "nodemon": "^2.0.20",
     "prettier": "^2.5.1"
   }

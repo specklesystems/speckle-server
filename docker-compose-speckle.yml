@@ -40,7 +40,7 @@ services:
         - CMD
         - node
         - -e
-        - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/graphql?query={serverInfo{version}}', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
+        - "try { require('node:http').request({headers: {'Content-Type': 'application/json'}, port:3000, hostname:'127.0.0.1', path:'/liveness', method: 'GET', timeout: 2000 }, (res) => { body = ''; res.on('data', (chunk) => {body += chunk;}); res.on('end', () => {process.exit(res.statusCode != 200 || body.toLowerCase().includes('error'));}); }).end(); } catch { process.exit(1); }"
       interval: 10s
       timeout: 10s
       retries: 3
@@ -73,6 +73,7 @@ services:
 
       USE_FRONTEND_2: true
       FRONTEND_ORIGIN: 'http://127.0.0.1'
+      ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
 
   preview-service:
     build:
@@ -84,8 +85,11 @@ services:
     mem_limit: '3000m'
     memswap_limit: '3000m'
     environment:
+      HOST: '127.0.0.1'
       LOG_LEVEL: 'info'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
+    ports:
+      - 127.0.0.1:3001:3001
 
   webhook-service:
     build:

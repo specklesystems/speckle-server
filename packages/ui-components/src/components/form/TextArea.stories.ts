@@ -1,4 +1,4 @@
-import { userEvent, within } from '@storybook/testing-library'
+import { userEvent, within } from '@storybook/test'
 import FormTextArea from '~~/src/components/form/TextArea.vue'
 import type { StoryObj, Meta } from '@storybook/vue3'
 import { wait } from '@speckle/shared'
@@ -42,7 +42,7 @@ const buildTextWriterPlayFunction =
     // https://github.com/storybookjs/storybook/pull/19659
     await userEvent.type(input, text, { delay: viewMode === 'story' ? 100 : 0 })
 
-    userEvent.tab()
+    await userEvent.tab()
   }
 
 export const Default: StoryObj = {
@@ -88,11 +88,11 @@ export const Required = mergeStories(Default, {
     const canvas = within(canvasElement)
     const input = canvas.getByRole('textbox')
 
-    userEvent.clear(input)
+    await userEvent.clear(input)
 
     await wait(1000)
 
-    userEvent.tab()
+    await userEvent.tab()
   },
   args: {
     name: generateRandomName('required'),

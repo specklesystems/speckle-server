@@ -16,11 +16,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/vue/24/outline'
-import { CommonVimeoEmbed } from '@speckle/ui-components'
+import { CommonVimeoEmbed, type LayoutDialogButton } from '@speckle/ui-components'
 
 const open = defineModel<boolean>('open', { required: true })
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
     props: { color: 'secondary', fullWidth: true },

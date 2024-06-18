@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
   <div
@@ -122,7 +123,7 @@ const setParentDimensions = () => {
   parentWidth = parent.value?.getBoundingClientRect().width as number
   parentHeight = parent.value?.getBoundingClientRect().height as number
 }
-if (process.client) useResizeObserver(document.body, () => setParentDimensions())
+if (import.meta.client) useResizeObserver(document.body, () => setParentDimensions())
 
 const positionMagic = ref(0)
 const calculatePanoramaStyle = (e: MouseEvent) => {
@@ -157,7 +158,7 @@ watch(hovered, (newVal) => {
     shouldLoadPanorama.value = true
 })
 
-if (process.client) {
+if (import.meta.client) {
   // Trigger transitions when preview image changes
   watch(finalPreviewUrl, (newVal, oldVal) => {
     if (newVal === oldVal) return

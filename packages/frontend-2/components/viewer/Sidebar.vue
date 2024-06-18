@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
     ref="resizableElement"
@@ -37,7 +38,7 @@
       >
         <!-- Header -->
         <div
-          class="h-18 absolute z-10 top-0 w-full left-0 bg-foundation shadow-md sm:rounded-t-md"
+          class="h-[4.5rem] absolute z-10 top-0 w-full left-0 bg-foundation shadow-md sm:rounded-t-md"
         >
           <div
             class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-3"
@@ -57,7 +58,7 @@
             </div>
           </div>
         </div>
-        <div class="w-full" :class="$slots.actions ? 'h-16 sm:h-20' : 'h-10'"></div>
+        <div class="w-full" :class="$slots.actions ? 'h-[4.5rem]' : 'h-10'"></div>
         <div
           class="overflow-y-auto simple-scrollbar h-full bg-foundation w-full pt-2 sm:rounded-b-md"
         >
@@ -106,7 +107,7 @@ const startResizing = (event: MouseEvent) => {
   startWidth = width.value
 }
 
-if (process.client) {
+if (import.meta.client) {
   useEventListener(resizeHandle, 'mousedown', startResizing)
 
   useEventListener(document, 'mousemove', (event) => {

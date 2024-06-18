@@ -1,4 +1,4 @@
-const { Observability } = require('@speckle/shared')
+const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
 
 // loggers for specific components within normal operation
 const logger = Observability.extendLoggerComponent(

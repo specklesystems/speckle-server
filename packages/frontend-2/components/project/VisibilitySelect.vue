@@ -10,6 +10,11 @@
     :label-id="labelId"
     :button-id="buttonId"
     by="id"
+    :help="
+      disabled
+        ? 'You must be an Owner of this project to change this setting'
+        : undefined
+    "
   >
     <template #something-selected="{ value }">
       <div class="text-sm">
@@ -56,17 +61,17 @@ const items = ref<
 >({
   [ProjectVisibility.Public]: {
     id: ProjectVisibility.Public,
-    description: 'Project will be visible to everyone',
+    description: 'Project is visible to everyone',
     title: 'Discoverable'
   },
   [ProjectVisibility.Unlisted]: {
     id: ProjectVisibility.Unlisted,
-    description: 'Anyone with the link will be able to view',
+    description: 'Anyone with the link can view',
     title: 'Link Shareable'
   },
   [ProjectVisibility.Private]: {
     id: ProjectVisibility.Private,
-    description: 'Only team members will have access',
+    description: 'Only collaborators can access',
     title: 'Private'
   }
 })

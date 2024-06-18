@@ -350,7 +350,7 @@ export async function switchCommitBranch(
     q.andWhere(BranchCommits.col.branchId, oldBranchId)
   }
 
-  return await q
+  await q
 }
 
 export async function updateCommit(commitId: string, commit: Partial<CommitRecord>) {

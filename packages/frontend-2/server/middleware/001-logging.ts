@@ -1,13 +1,12 @@
 import { defineEventHandler, fromNodeMiddleware } from 'h3'
-import { IncomingMessage, ServerResponse } from 'http'
+import type { IncomingMessage, ServerResponse, IncomingHttpHeaders } from 'http'
 import pino from 'pino'
 import type { SerializedResponse } from 'pino'
 import { pinoHttp } from 'pino-http'
 import type { GenReqId } from 'pino-http'
 import { randomUUID } from 'crypto'
-import type { IncomingHttpHeaders } from 'http'
 import { REQUEST_ID_HEADER } from '~~/server/lib/core/helpers/constants'
-import { get } from 'lodash'
+import { get } from 'lodash-es'
 import {
   serializeRequest,
   getRequestPath

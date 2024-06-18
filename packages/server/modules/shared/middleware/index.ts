@@ -17,14 +17,15 @@ import {
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
 import { getUser } from '@/modules/core/repositories/users'
-import { Optional } from '@speckle/shared'
+import { Optional, wait } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
-import { Observability } from '@speckle/shared'
+import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
 import { pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
+import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -160,6 +161,12 @@ export async function buildContext({
     req?.log || Observability.getLogger(),
     'graphql'
   )
+
+  const delay = delayGraphqlResponsesBy()
+  if (delay > 0) {
+    log.info({ delay }, 'Delaying GraphQL response by {delay}ms')
+    await wait(delay)
+  }
 
   // Adding request data loaders
   return addLoadersToCtx(

@@ -222,7 +222,7 @@ describe('Branches @core-branches', () => {
     try {
       await deleteBranchById({ id: b.id, streamId: stream.id, userId: user.id })
       assert.fail()
-    } catch (e) {
+    } catch {
       // pass
     }
   })

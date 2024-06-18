@@ -1,4 +1,3 @@
-import { trimStart } from 'lodash-es'
 import {
   useGetInitialAuthState,
   useOnAuthStateChange
@@ -6,145 +5,100 @@ import {
 import { useCreateErrorLoggingTransport } from '~/lib/core/composables/error'
 import type { Plugin } from 'nuxt/dist/app/nuxt'
 import { isH3Error } from '~/lib/common/helpers/error'
+import { useRequestId, useServerRequestId } from '~/lib/core/composables/server'
+import { isBrave, isSafari } from '@speckle/shared'
 
 type PluginNuxtApp = Parameters<Plugin>[0]
 
-async function initRumClient(app: PluginNuxtApp) {
-  const { keys, baseUrl, speckleServerVersion } = resolveInitParams(app)
+function initRumClient(app: PluginNuxtApp) {
+  const { keys } = resolveInitParams(app)
   const router = useRouter()
   const onAuthStateChange = useOnAuthStateChange()
   const registerErrorTransport = useCreateErrorLoggingTransport()
-
-  // RayGun
-  const rg4js = window.rg4js
-  if (keys.raygun && rg4js) {
-    const setupTags = (extraTags: string[]) => {
-      rg4js('withTags', [
-        `baseUrl:${baseUrl}`,
-        `version:${speckleServerVersion}`,
-        ...extraTags
-      ])
-    }
-
-    router.beforeEach((to, from) => {
-      // Update with tags
-      const newTags = (to.meta.raygunTags || []) as string[]
-      setupTags(newTags)
-
-      if (!from?.path || from.path === to.path) return
-
-      rg4js('trackEvent', {
-        type: 'pageView',
-        path: '/' + trimStart(to.path, '/')
-      })
-    })
-
-    await onAuthStateChange(
-      (user, { resolveDistinctId }) => {
-        const distinctId = resolveDistinctId(user)
-        rg4js('setUser', {
-          identifier: distinctId || '',
-          isAnonymous: !distinctId
-        })
-      },
-      { immediate: true }
-    )
-
-    registerErrorTransport({
-      onError: ({ args, firstError, firstString, otherData, nonObjectOtherData }) => {
-        const error = firstError || firstString || args[0]
-        rg4js('send', {
-          error,
-          customData: {
-            ...otherData,
-            extraData: nonObjectOtherData,
-            mainErrorMessage: firstString
-          }
-        })
-      }
-      // Apparently unhandleds are auto-handled by raygun
-      // onUnhandledError: ({ isUnhandledRejection, error, message }) => {
-      //   rg4js('send', {
-      //     error: error || message,
-      //     customData: {
-      //       isUnhandledRejection,
-      //       message,
-      //       mainErrorMessage: message
-      //     }
-      //   })
-      // }
-    })
-  }
+  const reqId = useRequestId()
 
   // Datadog
   const datadog = window.DD_RUM
   if (keys.datadog && datadog) {
-    await onAuthStateChange(
-      (user, { resolveDistinctId }) => {
-        const distinctId = resolveDistinctId(user)
-        // setUser might not be there, if blocked by adblock
-        if (!datadog || !('setUser' in datadog)) return
+    datadog.onReady(async () => {
+      if ('setGlobalContextProperty' in datadog && reqId?.length) {
+        datadog.setGlobalContextProperty('requestId', reqId)
 
-        if (distinctId && user) {
-          datadog.setUser({
-            id: distinctId
-          })
-        } else {
-          datadog.clearUser()
+        if (isSafari()) {
+          datadog.setGlobalContextProperty('isSafari', 'true')
         }
-      },
-      { immediate: true }
-    )
 
-    router.beforeEach((to) => {
-      const pathDefinition = getRouteDefinition(to)
-      const routeName = to.meta.datadogName || pathDefinition
-      const realPath = to.path
-
-      window.DD_RUM_START_VIEW?.(realPath, routeName)
-    })
-
-    const resolveH3Data = (error: unknown) =>
-      error && isH3Error(error)
-        ? {
-            statusCode: error.statusCode,
-            fatal: error.fatal,
-            statusMessage: error.statusMessage,
-            h3Data: error.data
-          }
-        : {}
-
-    registerErrorTransport({
-      onError: ({ args, firstError, firstString, otherData, nonObjectOtherData }) => {
-        if (!datadog || !('addError' in datadog)) return
-
-        const error = firstError || firstString || args[0]
-        datadog.addError(error, {
-          ...otherData,
-          ...resolveH3Data(firstError),
-          extraData: nonObjectOtherData,
-          mainErrorMessage: firstString,
-          isProperlySentError: true
-        })
-      },
-      onUnhandledError: ({ isUnhandledRejection, error, message }) => {
-        if (!datadog || !('addError' in datadog)) return
-
-        datadog.addError(error || message, {
-          ...resolveH3Data(error),
-          isUnhandledRejection,
-          message,
-          mainErrorMessage: message,
-          isProperlySentError: true
-        })
+        if (isBrave()) {
+          datadog.setGlobalContextProperty('isBrave', 'true')
+        }
       }
+
+      await onAuthStateChange(
+        (user, { resolveDistinctId }) => {
+          const distinctId = resolveDistinctId(user)
+          // setUser might not be there, if blocked by adblock
+          if (!datadog || !('setUser' in datadog)) return
+
+          if (distinctId && user) {
+            datadog.setUser({
+              id: distinctId
+            })
+          } else {
+            datadog.clearUser()
+          }
+        },
+        { immediate: true }
+      )
+
+      router.beforeEach((to) => {
+        const pathDefinition = getRouteDefinition(to)
+        const routeName = (to.meta.datadogName || pathDefinition) as string
+        const realPath = to.path
+
+        window.DD_RUM_START_VIEW?.(realPath, routeName)
+      })
+
+      const resolveH3Data = (error: unknown) =>
+        error && isH3Error(error)
+          ? {
+              statusCode: error.statusCode,
+              fatal: error.fatal,
+              statusMessage: error.statusMessage,
+              h3Data: error.data
+            }
+          : {}
+
+      registerErrorTransport({
+        onError: ({ args, firstError, firstString, otherData, nonObjectOtherData }) => {
+          if (!datadog || !('addError' in datadog)) return
+
+          const error = firstError || firstString || args[0]
+          datadog.addError(error, {
+            ...otherData,
+            ...resolveH3Data(firstError),
+            extraData: nonObjectOtherData,
+            mainErrorMessage: firstString,
+            isProperlySentError: true
+          })
+        },
+        onUnhandledError: ({ isUnhandledRejection, error, message }) => {
+          if (!datadog || !('addError' in datadog)) return
+
+          datadog.addError(error || message, {
+            ...resolveH3Data(error),
+            isUnhandledRejection,
+            message,
+            mainErrorMessage: message,
+            isProperlySentError: true
+          })
+        }
+      })
     })
   }
 }
 
 async function initRumServer(app: PluginNuxtApp) {
-  const registerErrorTransport = useCreateErrorLoggingTransport()
-  const { keys, baseUrl, speckleServerVersion, debug, debugCoreWebVitals } =
+  const { keys, baseUrl, speckleServerVersion, debugCoreWebVitals } =
     resolveInitParams(app)
   const initUser = useGetInitialAuthState()
 
@@ -161,7 +115,7 @@ async function initRumServer(app: PluginNuxtApp) {
                 onLCP,
                 onINP,
                 onTTFB
-              } from 'https://unpkg.com/web-vitals@3/dist/web-vitals.attribution.js?module';
+              } from 'https://cdn.jsdelivr.net/npm/web-vitals@3/dist/web-vitals.attribution.js?module';
 
               onCLS(console.log);
               onFID(console.log);
@@ -170,57 +124,6 @@ async function initRumServer(app: PluginNuxtApp) {
               onTTFB(console.log);
               `,
             type: 'module'
-          }
-        ]
-      })
-    })
-  }
-
-  // RayGun
-  if (keys.raygun) {
-    const raygun = (await import('raygun')).default
-    const raygunClient = new raygun.Client().init({
-      apiKey: keys.raygun,
-      batch: true,
-      reportUncaughtExceptions: true
-    })
-
-    registerErrorTransport({
-      onError: ({ firstError, firstString, otherData, nonObjectOtherData }) => {
-        const error = firstError || firstString || 'Unknown error'
-        raygunClient.send(error, {
-          ...otherData,
-          extraData: nonObjectOtherData,
-          mainErrorMessage: firstString
-        })
-      }
-    })
-
-    // Add client-side snippet
-    app.hook('app:rendered', (context) => {
-      const initRaygunTags = app._route?.meta.raygunTags || []
-
-      context.ssrContext!.head.push({
-        script: [
-          {
-            innerHTML: `!function(a,b,c,d,e,f,g,h){a.RaygunObject=e,a[e]=a[e]||function(){
-  (a[e].o=a[e].o||[]).push(arguments)},f=b.createElement(c),g=b.getElementsByTagName(c)[0],
-  f.async=1,f.src=d,g.parentNode.insertBefore(f,g),h=a.onerror,a.onerror=function(b,c,d,f,g){
-  h&&h(b,c,d,f,g),g||(g=new Error(b)),a[e].q=a[e].q||[],a[e].q.push({
-  e:g})}}(window,document,"script","//cdn.raygun.io/raygun4js/raygun.min.js","rg4js");`
-          },
-          {
-            innerHTML: `
-                rg4js('apiKey', '${keys.raygun}')
-                rg4js('enableCrashReporting', true)
-                rg4js('enablePulse', true)
-                rg4js('withTags', ['baseUrl:${baseUrl}', 'version:${speckleServerVersion}', ...${JSON.stringify(
-              initRaygunTags
-            )}])
-                rg4js('options', {
-                  debugMode: ${!!debug},
-                })
-            `
           }
         ]
       })
@@ -240,6 +143,7 @@ async function initRumServer(app: PluginNuxtApp) {
     const { distinctId } = await initUser()
 
     app.hook('app:rendered', (context) => {
+      const serverReqId = useServerRequestId()
       const route = app._route
       const pathDefinition = getRouteDefinition(route)
       const pathReal = route.path
@@ -260,6 +164,13 @@ async function initRumServer(app: PluginNuxtApp) {
               (distinctId ? `window.DD_RUM.setUser({ id: '${distinctId}' });` : '') +
               `
                 window.DD_RUM.setGlobalContextProperty('serverBaseUrl', '${baseUrl}');
+
+                ` +
+              (serverReqId.value
+                ? `window.DD_RUM.setGlobalContextProperty('serverRequestId', '${serverReqId.value}');`
+                : '') +
+              `
+
                 window.DD_RUM.init({
                   clientToken: '${datadogClientToken}',
                   applicationId: '${datadogAppId}',
@@ -305,7 +216,6 @@ async function initRumServer(app: PluginNuxtApp) {
 function resolveInitParams(app: PluginNuxtApp) {
   const {
     public: {
-      raygunKey,
       speckleServerVersion,
       logCsrEmitProps,
       baseUrl,
@@ -318,7 +228,6 @@ function resolveInitParams(app: PluginNuxtApp) {
     }
   } = useRuntimeConfig()
   const logger = useLogger()
-  const raygun = raygunKey?.length ? raygunKey : null
   const datadog =
     datadogClientToken?.length &&
     datadogAppId?.length &&
@@ -332,21 +241,20 @@ function resolveInitParams(app: PluginNuxtApp) {
 
   return {
     keys: {
-      raygun,
       datadog
     },
     speckleServerVersion,
     baseUrl,
-    debug: logCsrEmitProps && process.dev,
+    debug: logCsrEmitProps && import.meta.dev,
     debugCoreWebVitals: shouldDebugCoreWebVitals,
     logger
   }
 }
 
 export default defineNuxtPlugin(async (app) => {
-  if (process.server) {
+  if (import.meta.server) {
     await initRumServer(app)
   } else {
-    await initRumClient(app)
+    initRumClient(app)
   }
 })

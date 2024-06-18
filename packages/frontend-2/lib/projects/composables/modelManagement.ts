@@ -1,4 +1,4 @@
-import { ApolloCache } from '@apollo/client/core'
+import type { ApolloCache } from '@apollo/client/core'
 import { useApolloClient, useSubscription } from '@vue/apollo-composable'
 import { useClipboard } from '@vueuse/core'
 import type { MaybeRef } from '@vueuse/core'
@@ -416,7 +416,7 @@ export function useCopyModelLink() {
   const { triggerNotification } = useGlobalToast()
 
   return async (projectId: string, modelId: string, versionId?: string) => {
-    if (process.server) {
+    if (import.meta.server) {
       throw new Error('Not supported in SSR')
     }
 

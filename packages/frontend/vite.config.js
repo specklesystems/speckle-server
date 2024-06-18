@@ -39,6 +39,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // eslint-disable-next-line no-undef
       '@': path.resolve(__dirname, './src'),
       // redirects lodash to lodash-es in prod build, for a reduced & tree-shaked bundle
       lodash: 'lodash-es'

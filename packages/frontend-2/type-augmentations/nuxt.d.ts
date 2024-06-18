@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 declare module '#app' {
   interface NuxtApp {
     /**
@@ -12,6 +11,10 @@ declare module '#app' {
      * Used by useScopedState
      */
     __scopedStates?: Record<string | symbol, any>
+  }
+
+  interface NuxtPayload {
+    serverFatalError?: import('~~/lib/core/helpers/observability').AbstractErrorHandlerParams
   }
 }
 

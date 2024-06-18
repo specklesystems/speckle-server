@@ -1,4 +1,5 @@
-import type { Nullable } from './utilityTypes'
+import { get } from '#lodash'
+import type { Nullable } from './utilityTypes.js'
 
 export enum OperatingSystem {
   Windows = 'win',
@@ -85,3 +86,19 @@ export function isSafari() {
   const userAgent = globalThis.navigator.userAgent
   return /^((?!chrome|android).)*safari/i.test(userAgent)
 }
+
+/**
+ * Check if user is in Brave browser
+ */
+export function isBrave() {
+  if (!globalThis || !globalThis.navigator || !('brave' in globalThis.navigator)) {
+    return false
+  }
+
+  const braveObj = get(globalThis.navigator, 'brave')
+  if (!braveObj) return false
+
+  return !!get(braveObj, 'isBrave', false)
+}
+
+export const isBraveOrSafari = () => isBrave() || isSafari()

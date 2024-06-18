@@ -120,7 +120,8 @@ exports.init = (app, isInitial) => {
       res.set('X-Preview-Error-Code', previewBufferOrFile.errorCode)
     }
     if (previewBufferOrFile.type === 'file') {
-      res.set('Cache-Control', 'public, max-age=604800')
+      // we can't cache these cause they may switch to proper buffer previews in a sec
+      // res.set('Cache-Control', 'public, max-age=604800')
       res.sendFile(previewBufferOrFile.file)
     } else {
       res.contentType('image/png')
@@ -147,7 +148,7 @@ exports.init = (app, isInitial) => {
     if (!stream.isPublic) {
       try {
         await validateScopes(req.context.scopes, Scopes.Streams.Read)
-      } catch (err) {
+      } catch {
         return { hasPermissions: false, httpErrorCode: 401 }
       }
 
@@ -158,7 +159,7 @@ exports.init = (app, isInitial) => {
           Roles.Stream.Reviewer,
           req.context.resourceAccessRules
         )
-      } catch (err) {
+      } catch {
         return { hasPermissions: false, httpErrorCode: 401 }
       }
     }

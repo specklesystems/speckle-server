@@ -136,7 +136,6 @@ export default {
         (v) => !!v || 'Redirect url is required',
         (v) => {
           try {
-            // eslint-disable-next-line no-unused-vars
             new URL(v)
             return true
           } catch {
