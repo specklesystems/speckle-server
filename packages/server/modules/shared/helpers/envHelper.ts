@@ -297,3 +297,7 @@ export function getGendoAIAPIEndpoint() {
 }
 
 export const getFeatureFlags = () => Environment.getFeatureFlags()
+
+export function isEmailEnabled() {
+  return process.env.EMAIL === 'true'
+}
