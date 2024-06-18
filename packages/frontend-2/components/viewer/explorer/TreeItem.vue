@@ -219,7 +219,12 @@ const isSingleCollection = computed(() => {
 })
 
 const singleCollectionItems = computed(() => {
-  const treeItems = props.treeItem.children.filter((child) => !!child.raw?.id) // filter out random tree children (no id means they're not actual objects)
+  const treeItems = props.treeItem.children.filter(
+    (child) =>
+      !!child.raw?.id && child.raw?.speckle_type !== 'Objects.Other.DisplayStyle'
+    // filter out random tree children (no id means they're not actual objects)
+    // filter out speckle_type of DisplayStyle - this should not be shown in the UI
+  )
   // Handle the case of a wall, roof or other atomic objects that have nested children
   if (isNonEmptyObjectArray(speckleData.elements) && isAtomic.value) {
     // We need to filter out children that are not direct descendants of `elements`
@@ -251,8 +256,10 @@ const arrayCollections = computed(() => {
 
     const ids = val.map((ref) => ref.referencedId) // NOTE: we're assuming all collections have refs inside; might revisit/to think re edge cases
 
-    const actualRawRefs = props.treeItem.children.filter((node) =>
-      ids.includes(node.raw?.id as string)
+    const actualRawRefs = props.treeItem.children.filter(
+      (node) =>
+        ids.includes(node.raw?.id as string) &&
+        node.raw?.speckle_type !== 'Objects.Other.DisplayStyle'
     )
 
     if (actualRawRefs.length === 0) continue // bypasses chunks: if the actual object is not part of the tree item's children, it means it's a sublimated type (ie, a chunk). the assumption we're making is that any list of actual atomic objects is not chunked.
