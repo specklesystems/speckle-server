@@ -8,8 +8,7 @@ const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   sendRateLimitResponse,
   getRateLimitResult,
-  isRateLimitBreached,
-  RateLimitAction
+  isRateLimitBreached
 } = require('@/modules/core/services/ratelimiter')
 const {
   validateServerInvite,
@@ -71,10 +70,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         const ip = getIpFromRequest(req)
         if (ip) user.ip = ip
         const source = ip ? ip : 'unknown'
-        const rateLimitResult = await getRateLimitResult(
-          RateLimitAction.USER_CREATE,
-          source
-        )
+        const rateLimitResult = await getRateLimitResult('USER_CREATE', source)
         if (isRateLimitBreached(rateLimitResult)) {
           return sendRateLimitResponse(res, rateLimitResult)
         }

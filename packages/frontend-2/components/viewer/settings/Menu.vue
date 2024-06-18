@@ -29,8 +29,8 @@ const localViewerSettings = useSynchronizedCookie<ViewerUserSettings>(
 const { instance } = useInjectedViewer()
 
 const setViewerCameraHandlerControlsMaxPolarAngle = (angle: number) => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  instance.getExtension(CameraController).controls.maxPolarAngle = angle
+  const extension = instance.getExtension(CameraController)
+  if (extension) extension.controls.maxPolarAngle = angle
 }
 
 const toggleTurntableMode = () => {

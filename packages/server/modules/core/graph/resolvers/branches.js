@@ -67,7 +67,8 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        context.resourceAccessRules
       )
 
       const { id } = await createBranchAndNotify(args.branch, context.userId)
@@ -79,7 +80,8 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        context.resourceAccessRules
       )
 
       const newBranch = await updateBranchAndNotify(args.branch, context.userId)
@@ -90,7 +92,8 @@ module.exports = {
       await authorizeResolver(
         context.userId,
         args.branch.streamId,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        context.resourceAccessRules
       )
 
       const deleted = await deleteBranchAndNotify(args.branch, context.userId)
@@ -105,7 +108,8 @@ module.exports = {
           await authorizeResolver(
             context.userId,
             payload.streamId,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
           )
 
           return payload.streamId === variables.streamId
@@ -120,7 +124,8 @@ module.exports = {
           await authorizeResolver(
             context.userId,
             payload.streamId,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
           )
 
           const streamMatch = payload.streamId === variables.streamId
@@ -140,7 +145,8 @@ module.exports = {
           await authorizeResolver(
             context.userId,
             payload.streamId,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            context.resourceAccessRules
           )
 
           return payload.streamId === variables.streamId

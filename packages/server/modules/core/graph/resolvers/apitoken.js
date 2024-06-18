@@ -24,8 +24,10 @@ const resolvers = {
   Mutation: {
     async apiTokenCreate(parent, args, context) {
       canCreatePAT({
-        userScopes: context.scopes || [],
-        tokenScopes: args.token.scopes
+        scopes: {
+          user: context.scopes || [],
+          token: args.token.scopes
+        }
       })
 
       return await createPersonalAccessToken(

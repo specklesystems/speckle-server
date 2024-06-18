@@ -61,7 +61,6 @@ class Version:
         if self.pre_release_priority > other.pre_release_priority:
             return True
         if self.pre_release_priority < other.pre_release_priority:
-            print("foo")
             return False
 
         return True

@@ -1,10 +1,20 @@
 /* eslint-disable camelcase */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { specklePointVert } from './shaders/speckle-point-vert'
 import { specklePointFrag } from './shaders/speckle-point-frag'
-import { IUniform, Material, Matrix4, PointsMaterial, ShaderLib, Vector3 } from 'three'
-import { Geometry } from '../converter/Geometry'
-import { ExtendedPointsMaterial, Uniforms } from './SpeckleMaterial'
+import {
+  type IUniform,
+  Material,
+  PointsMaterial,
+  ShaderLib,
+  Vector3,
+  type PointsMaterialParameters,
+  Scene,
+  Camera,
+  BufferGeometry,
+  Object3D
+} from 'three'
+import { ExtendedPointsMaterial, type Uniforms } from './SpeckleMaterial'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
 class SpecklePointMaterial extends ExtendedPointsMaterial {
   protected get vertexProgram(): string {
@@ -26,7 +36,7 @@ class SpecklePointMaterial extends ExtendedPointsMaterial {
     }
   }
 
-  constructor(parameters, defines = ['USE_RTE']) {
+  constructor(parameters: PointsMaterialParameters, defines = ['USE_RTE']) {
     super(parameters)
     this.init(defines)
   }
@@ -36,7 +46,7 @@ class SpecklePointMaterial extends ExtendedPointsMaterial {
     return this.constructor.name
   }
 
-  public copy(source) {
+  public copy(source: Material) {
     super.copy(source)
     this.copyFrom(source)
     return this
@@ -51,7 +61,13 @@ class SpecklePointMaterial extends ExtendedPointsMaterial {
     toStandard.sizeAttenuation = fromStandard.sizeAttenuation
   }
 
-  onBeforeRender(_this, scene, camera, geometry, object, group) {
+  onBeforeRender(
+    _this: SpeckleWebGLRenderer,
+    _scene: Scene,
+    _camera: Camera,
+    _geometry: BufferGeometry,
+    object: Object3D
+  ) {
     object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
     this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
     this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)

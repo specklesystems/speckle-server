@@ -27,7 +27,7 @@ export function useGlobalToastManager() {
 
   watch(
     stateNotification,
-    (newVal) => {
+    async (newVal) => {
       if (!newVal) return
 
       // First dismiss old notification, then set a new one on next tick
@@ -35,12 +35,12 @@ export function useGlobalToastManager() {
       // instead of just having its contents replaced
       dismiss()
 
-      nextTick(() => {
+      await nextTick(() => {
         currentNotification.value = newVal
 
         // (re-)init timeout
         stop()
-        start()
+        if (newVal.autoClose !== false) start()
       })
     },
     { deep: true }

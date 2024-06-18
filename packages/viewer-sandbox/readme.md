@@ -16,4 +16,4 @@ Sandbox for testing, debugging & developing the viewer package.
 
 ## Linting
 
-Use `yarn lint` to run ESLint and you can also run `yarn lint:tsc` to lint with the TypeScript compiler
+Use `yarn lint` to run ESLint and you can also run `yarn lint:tsc` to lint with the TypeScript compiler.

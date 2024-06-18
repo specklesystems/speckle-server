@@ -102,7 +102,12 @@ module.exports = {
                   )
                 }
 
-                await authorizeResolver(context.userId, parent.id, requiredRole)
+                await authorizeResolver(
+                  context.userId,
+                  parent.id,
+                  requiredRole,
+                  context.resourceAccessRules
+                )
               }
 
               const data = await resolve.apply(this, args)

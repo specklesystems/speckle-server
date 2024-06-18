@@ -30,6 +30,8 @@
           show-label
           :items="apiTokenScopes"
           mount-menu-on-body
+          :label-id="badgesLabelId"
+          :button-id="badgesButtonId"
           by="id"
         />
       </div>
@@ -39,7 +41,11 @@
 
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
-import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
+import {
+  LayoutDialog,
+  FormSelectBadges,
+  type LayoutDialogButton
+} from '@speckle/ui-components'
 import type { TokenFormValues } from '~~/lib/developer-settings/helpers/types'
 import { createAccessTokenMutation } from '~~/lib/developer-settings/graphql/mutations'
 import { isItemSelected, isRequired } from '~~/lib/common/helpers/validation'
@@ -62,6 +68,8 @@ const { handleSubmit } = useForm<TokenFormValues>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
+const badgesLabelId = useId()
+const badgesButtonId = useId()
 const name = ref('')
 const scopes = ref<typeof apiTokenScopes.value>([])
 
@@ -99,7 +107,7 @@ const onSubmit = handleSubmit(async (tokenFormValues) => {
   }
 })
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
@@ -109,7 +117,7 @@ const dialogButtons = computed(() => [
   },
   {
     text: 'Create',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'default', fullWidth: true },
     onClick: onSubmit
   }
 ])

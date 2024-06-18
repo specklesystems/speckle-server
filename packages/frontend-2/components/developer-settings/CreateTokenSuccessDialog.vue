@@ -29,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-import { LayoutDialog } from '@speckle/ui-components'
+import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 
 const props = defineProps<{
@@ -38,10 +38,10 @@ const props = defineProps<{
 
 const isOpen = defineModel<boolean>('open', { required: true })
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'default', fullWidth: true },
     onClick: () => (isOpen.value = false)
   }
 ])

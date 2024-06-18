@@ -1,7 +1,6 @@
 import { Box3, Material, Object3D, WebGLRenderer } from 'three'
-import { FilterMaterialOptions } from '../materials/Materials'
+import { type FilterMaterialOptions } from '../materials/Materials'
 import { NodeRenderView } from '../tree/NodeRenderView'
-import { DrawGroup } from './InstancedMeshBatch'
 
 export enum GeometryType {
   MESH,
@@ -11,6 +10,13 @@ export enum GeometryType {
   TEXT
 }
 
+export interface DrawGroup {
+  start: number
+  count: number
+  materialIndex: number
+}
+
+/** TO DO: Unify point and mesh batch implementations */
 export interface Batch {
   id: string
   subtreeId: string
@@ -25,25 +31,28 @@ export interface Batch {
   get materials(): Material[]
   get groups(): DrawGroup[]
   get triCount(): number
+  get pointCount(): number
+  get lineCount(): number
   get vertCount(): number
 
   getCount(): number
   setBatchMaterial(material: Material): void
-  setBatchBuffers(...range: BatchUpdateRange[]): void
-  setVisibleRange(...range: BatchUpdateRange[])
+  setBatchBuffers(range: BatchUpdateRange[]): void
+  setVisibleRange(range: BatchUpdateRange[]): void
   getVisibleRange(): BatchUpdateRange
-  setDrawRanges(...ranges: BatchUpdateRange[])
-  resetDrawRanges()
-  buildBatch()
-  getRenderView(index: number): NodeRenderView
-  getMaterialAtIndex(index: number): Material
-  getMaterial(rv: NodeRenderView): Material
+  setDrawRanges(ranges: BatchUpdateRange[]): void
+  resetDrawRanges(): void
+  buildBatch(): Promise<void>
+  getRenderView(index: number): NodeRenderView | null
+  getMaterialAtIndex(index: number): Material | null
+  getMaterial(rv: NodeRenderView): Material | null
   getOpaque(): BatchUpdateRange
   getTransparent(): BatchUpdateRange
   getStencil(): BatchUpdateRange
-  onUpdate(deltaTime: number)
-  onRender(renderer: WebGLRenderer)
-  purge()
+  getDepth(): BatchUpdateRange
+  onUpdate(deltaTime?: number): void
+  onRender?(renderer: WebGLRenderer): void
+  purge(): void
 }
 
 export interface BatchUpdateRange {
@@ -62,3 +71,6 @@ export const AllBatchUpdateRange = {
   offset: 0,
   count: Infinity
 } as BatchUpdateRange
+
+export const INSTANCE_TRANSFORM_BUFFER_STRIDE = 16
+export const INSTANCE_GRADIENT_BUFFER_STRIDE = 1

@@ -37,7 +37,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { LayoutDialog } from '@speckle/ui-components'
+import { LayoutDialog, type LayoutDialogButton } from '@speckle/ui-components'
 import type { UserItem } from '~~/lib/server-management/helpers/types'
 import { Roles } from '@speckle/shared'
 import type { ServerRoles } from '@speckle/shared'
@@ -115,7 +115,7 @@ const changeUserRoleConfirmed = async () => {
   emit('update:open', false)
 }
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Change Role',
     props: { color: 'danger', fullWidth: true },

@@ -55,11 +55,11 @@ function buildEmailTemplateMjml(
     bodyStart: `<mj-text>
 Hello,<br/>
 <br/>
-You have just been granted access to the <b>${stream.name}</b> stream. Check it out below:
+You have just been granted access to the <b>${stream.name}</b> project. Check it out below:
 </mj-text>
 `,
     bodyEnd: `<mj-text>
-You received this email because you requested access to this stream
+You received this email because you requested access to this project
 </mj-text>`
   }
 }
@@ -103,7 +103,7 @@ const handler: NotificationHandler<StreamAccessRequestApprovedMessage> = async (
     to: state.targetUser.email,
     text,
     html,
-    subject: 'Your stream access request has been approved'
+    subject: 'Your project access request has been approved'
   })
 }
 

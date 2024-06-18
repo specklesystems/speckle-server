@@ -62,15 +62,21 @@ function resolveResourceName(params, resource) {
  * Validate that the inviter has access to the resources he's trying to invite people to
  * @param {CreateInviteParams} params
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} inviterResourceAccessLimits
  */
-async function validateInviter(params, inviter) {
+async function validateInviter(params, inviter, inviterResourceAccessLimits) {
   const { resourceId, resourceTarget } = params
   if (!inviter) throw new InviteCreateValidationError('Invalid inviter')
   if (isServerInvite(params)) return
 
   try {
     if (resourceTarget === ResourceTargets.Streams) {
-      await authorizeResolver(inviter.id, resourceId, Roles.Stream.Owner)
+      await authorizeResolver(
+        inviter.id,
+        resourceId,
+        Roles.Stream.Owner,
+        inviterResourceAccessLimits
+      )
     } else {
       throw new InviteCreateValidationError('Unexpected resource target type')
     }
@@ -124,7 +130,7 @@ async function validateResource(params, resource, targetUser) {
       ))
       if (isStreamCollaborator) {
         throw new InviteCreateValidationError(
-          'The target user is already a collaborator of the specified stream'
+          'The target user is already a collaborator of the specified project'
         )
       }
     }
@@ -141,13 +147,20 @@ async function validateResource(params, resource, targetUser) {
  * @param {import('@/modules/core/helpers/userHelper').UserRecord} inviter Inviter, resolved from DB
  * @param {import('@/modules/core/helpers/userHelper').UserRecord | undefined} targetUser Target user, if one exists in our DB
  * @param {Object | null} resource Invite resource (stream or null)
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} inviterResourceAccessLimits
  */
-async function validateInput(params, inviter, targetUser, resource) {
+async function validateInput(
+  params,
+  inviter,
+  targetUser,
+  resource,
+  inviterResourceAccessLimits
+) {
   const { message } = params
 
   // validate inviter & invitee
   validateTargetUser(params, targetUser)
-  await validateInviter(params, inviter)
+  await validateInviter(params, inviter, inviterResourceAccessLimits)
 
   // validate resource
   await validateResource(params, resource, targetUser)
@@ -186,7 +199,7 @@ function buildEmailSubject(invite, inviter, resourceName) {
   }
 
   if (resourceTarget === 'streams') {
-    return `${inviter.name} wants to share the stream "${resourceName}" on Speckle with you`
+    return `${inviter.name} wants to share the project "${resourceName}" on Speckle with you`
   } else {
     throw new InviteCreateValidationError('Unexpected resource target type')
   }
@@ -209,7 +222,7 @@ function buildInviteLink(invite) {
 
   if (resourceTarget === 'streams') {
     return new URL(
-      `${getStreamRoute(resourceId)}?token=${token}`,
+      `${getStreamRoute(resourceId)}?token=${token}&accept=true`,
       getFrontendOrigin()
     ).toString()
   } else {
@@ -223,7 +236,7 @@ function buildMjmlPreamble(invite, inviter, serverInfo, resourceName) {
 
   const dynamicText = forServer
     ? `join the <b>${serverInfo.name}</b> Speckle Server`
-    : `become a collaborator on the <b>${resourceName}</b> stream`
+    : `become a collaborator on the <b>${resourceName}</b> project`
 
   const bodyStart = `
   <mj-text>
@@ -248,7 +261,7 @@ function buildTextPreamble(invite, inviter, serverInfo, resourceName) {
 
   const dynamicText = forServer
     ? `join the ${serverInfo.name} Speckle Server`
-    : `become a collaborator on the "${resourceName}" stream`
+    : `become a collaborator on the "${resourceName}" project`
 
   const bodyStart = `Hello!
 
@@ -325,9 +338,10 @@ async function buildEmailContents(invite, inviter, targetUser, resource) {
 /**
  * Create and send out an invite
  * @param {CreateInviteParams} params
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} inviterResourceAccessLimits
  * @returns {Promise<string>} The ID of the created invite
  */
-async function createAndSendInvite(params) {
+async function createAndSendInvite(params, inviterResourceAccessLimits) {
   const { inviterId, resourceTarget, resourceId, role, serverRole } = params
   let { message, target } = params
 
@@ -343,7 +357,13 @@ async function createAndSendInvite(params) {
   const { userEmail, userId } = resolveTarget(target)
 
   // validate inputs
-  await validateInput(params, inviter, targetUser, resource)
+  await validateInput(
+    params,
+    inviter,
+    targetUser,
+    resource,
+    inviterResourceAccessLimits
+  )
 
   // Sanitize msg
   // TODO: We should just use TipTap here
@@ -365,7 +385,7 @@ async function createAndSendInvite(params) {
   }
   if (targetUser && targetUser.role === Roles.Server.Guest) {
     if (role === Roles.Stream.Owner) {
-      throw new InviteCreateValidationError('Guest users cannot be owners of streams')
+      throw new InviteCreateValidationError('Guest users cannot be owners of projects')
     }
   }
 
@@ -432,9 +452,15 @@ async function resendInviteEmail(invite) {
  * @param {string} inviterId
  * @param {string} streamId
  * @param {string[]} userIds
+ * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} inviterResourceAccessLimits
  * @returns {Promise<boolean>}
  */
-async function inviteUsersToStream(inviterId, streamId, userIds) {
+async function inviteUsersToStream(
+  inviterId,
+  streamId,
+  userIds,
+  inviterResourceAccessLimits
+) {
   const users = await getUsers(userIds)
   if (!users.length) return false
 
@@ -446,7 +472,9 @@ async function inviteUsersToStream(inviterId, streamId, userIds) {
     role: Roles.Stream.Contributor
   }))
 
-  await Promise.all(inviteParamsArray.map((p) => createAndSendInvite(p)))
+  await Promise.all(
+    inviteParamsArray.map((p) => createAndSendInvite(p, inviterResourceAccessLimits))
+  )
 
   return true
 }

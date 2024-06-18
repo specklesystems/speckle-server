@@ -18,6 +18,5 @@ const props = defineProps({
 })
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-
-const isMobile = computed(() => breakpoints.smallerOrEqual('sm').value)
+const isMobile = breakpoints.smallerOrEqual('sm')
 </script>

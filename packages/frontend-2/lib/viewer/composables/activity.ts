@@ -19,7 +19,8 @@ import { Vector3 } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { broadcastViewerUserActivityMutation } from '~~/lib/viewer/graphql/mutations'
 import { convertThrowIntoFetchResult } from '~~/lib/common/helpers/graphql'
-import dayjs, { Dayjs } from 'dayjs'
+import type { Dayjs } from 'dayjs'
+import dayjs from 'dayjs'
 import { useIntervalFn } from '@vueuse/core'
 import type { MaybeRef } from '@vueuse/core'
 import type { CSSProperties, Ref } from 'vue'
@@ -27,6 +28,7 @@ import { useViewerAnchoredPoints } from '~~/lib/viewer/composables/anchorPoints'
 import { useOnBeforeWindowUnload } from '~~/lib/common/composables/window'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { onViewerUserActivityBroadcastedSubscription } from '~~/lib/viewer/graphql/subscriptions'
+import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 import {
   StateApplyMode,
@@ -56,7 +58,6 @@ function useCollectMainMetadata() {
   const { sessionId } = useInjectedViewerState()
   const { activeUser } = useActiveUser()
   const { serialize } = useStateSerialization()
-
   return (): Omit<ViewerUserActivityMessageInput, 'status' | 'selection'> => ({
     userId: activeUser.value?.id || null,
     userName: activeUser.value?.name || 'Anonymous Viewer',
@@ -79,9 +80,10 @@ export function useViewerUserActivityBroadcasting(
   const { isLoggedIn } = useActiveUser()
   const getMainMetadata = useCollectMainMetadata()
   const apollo = useApolloClient().client
+  const { isEnabled: isEmbedEnabled } = useEmbed()
 
   const invokeMutation = async (message: ViewerUserActivityMessageInput) => {
-    if (!isLoggedIn.value) return false
+    if (!isLoggedIn.value || isEmbedEnabled.value) return false
     const result = await apollo
       .mutate({
         mutation: broadcastViewerUserActivityMutation,
@@ -143,6 +145,7 @@ export function useViewerUserActivityTracking(params: {
   const { isLoggedIn } = useActiveUser()
   const { triggerNotification } = useGlobalToast()
   const sendUpdate = useViewerUserActivityBroadcasting()
+  const { isEnabled: isEmbedEnabled } = useEmbed()
 
   // TODO: For some reason subscription is set up twice? Vue Apollo bug?
   const { onResult: onUserActivity } = useSubscription(
@@ -174,7 +177,7 @@ export function useViewerUserActivityTracking(params: {
     const incomingSessionId = event.sessionId
 
     if (sessionId.value === incomingSessionId) return
-    if (status === ViewerUserActivityStatus.Disconnected) {
+    if (!isEmbedEnabled.value && status === ViewerUserActivityStatus.Disconnected) {
       triggerNotification({
         description: `${users.value[incomingSessionId]?.userName || 'A user'} left.`,
         type: ToastNotificationType.Info
@@ -206,7 +209,10 @@ export function useViewerUserActivityTracking(params: {
       lastUpdate: dayjs()
     }
 
-    if (!Object.keys(users.value).includes(incomingSessionId)) {
+    if (
+      !isEmbedEnabled.value &&
+      !Object.keys(users.value).includes(incomingSessionId)
+    ) {
       triggerNotification({
         description: `${userData.userName} joined.`,
         type: ToastNotificationType.Info

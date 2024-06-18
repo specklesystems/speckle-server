@@ -1,10 +1,15 @@
-import pino from 'pino'
+import { pino } from 'pino'
 import type { LoggerOptions } from 'pino'
-import { toClef, clefLevels } from './pinoClef'
+import { toClef, clefLevels } from './pinoClef.js'
 
 let logger: pino.Logger
+type MixinFn = (mergeObject: object, level: number) => object
 
-export function getLogger(logLevel = 'info', pretty = false): pino.Logger {
+export function getLogger(
+  logLevel = 'info',
+  pretty = false,
+  mixin?: MixinFn
+): pino.Logger {
   if (logger) return logger
 
   const pinoOptions: LoggerOptions = {
@@ -22,6 +27,7 @@ export function getLogger(logLevel = 'info', pretty = false): pino.Logger {
             },
       log: (logObject) => (pretty ? logObject : toClef(logObject))
     },
+    mixin,
     // when not pretty, to produce a clef format, we need the message to be the message template key
     messageKey: pretty ? 'msg' : '@mt',
     level: logLevel,
@@ -31,7 +37,7 @@ export function getLogger(logLevel = 'info', pretty = false): pino.Logger {
 
   if (pretty) {
     pinoOptions.transport = {
-      target: '../pinoPrettyTransport.js',
+      target: '@speckle/shared/pinoPrettyTransport.cjs',
       options: {
         colorize: true,
         destination: 2, //stderr

@@ -49,7 +49,12 @@ export = {
           const { id: projectId } = args
           if (payload.projectId !== projectId) return false
 
-          await authorizeResolver(ctx.userId, projectId, Roles.Stream.Reviewer)
+          await authorizeResolver(
+            ctx.userId,
+            projectId,
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
+          )
           return true
         }
       )
@@ -61,7 +66,12 @@ export = {
           const { id: projectId } = args
           if (payload.projectId !== projectId) return false
 
-          await authorizeResolver(ctx.userId, projectId, Roles.Stream.Reviewer)
+          await authorizeResolver(
+            ctx.userId,
+            projectId,
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
+          )
           return true
         }
       )
@@ -73,7 +83,12 @@ export = {
           const { id: projectId } = args
           if (payload.projectId !== projectId) return false
 
-          await authorizeResolver(ctx.userId, projectId, Roles.Stream.Reviewer)
+          await authorizeResolver(
+            ctx.userId,
+            projectId,
+            Roles.Stream.Reviewer,
+            ctx.resourceAccessRules
+          )
           return true
         }
       )

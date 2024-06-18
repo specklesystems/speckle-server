@@ -16,7 +16,9 @@ async function messageProcessor(msg: MessageType) {
   if (status !== 'finished' || !objectId || !streamId) return
 
   // Get all commits with that objectId
-  const commits = await getObjectCommitsWithStreamIds([objectId])
+  const commits = await getObjectCommitsWithStreamIds([objectId], {
+    streamIds: [streamId]
+  })
   if (!commits.length) return
 
   await Promise.all(

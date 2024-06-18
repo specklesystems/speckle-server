@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-import { Box3, SectionTool, TreeNode } from '@speckle/viewer'
-import { Vector3 } from '@speckle/viewer'
+import { Box3, SectionTool, SpeckleStandardMaterial, TreeNode } from '@speckle/viewer'
 import {
   CanonicalView,
-  DebugViewer,
+  Viewer,
   PropertyInfo,
   SelectionEvent,
   SunLightConfiguration,
@@ -14,21 +12,32 @@ import {
   ExplodeExtension,
   DiffExtension,
   SpeckleLoader,
-  ObjLoader
+  ObjLoader,
+  UrlHelper,
+  LoaderEvent
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
-import UrlHelper from './UrlHelper'
 import { DiffResult } from '@speckle/viewer'
 import type { PipelineOptions } from '@speckle/viewer/dist/modules/pipeline/Pipeline'
 import { Units } from '@speckle/viewer'
 import { SelectionExtension } from '@speckle/viewer'
-import { MeasurementsExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
+import { MeasurementsExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
 import { UpdateFlags } from '@speckle/viewer'
+import { AssetType, Assets } from '@speckle/viewer'
+import Neutral from '../assets/hdri/Neutral.png'
+import Mild from '../assets/hdri/Mild.png'
+import Mild2 from '../assets/hdri/Mild2.png'
+import Sharp from '../assets/hdri/Sharp.png'
+import Bright from '../assets/hdri/Bright.png'
+
+import { Euler, Vector3 } from 'three'
+import { GeometryType } from '@speckle/viewer'
+import { MeshBatch } from '@speckle/viewer'
 
 export default class Sandbox {
-  private viewer: DebugViewer
+  private viewer: Viewer
   private pane: Pane
   private tabs
   private viewsFolder!: FolderApi
@@ -37,6 +46,7 @@ export default class Sandbox {
   private selectionList: SelectionEvent[]
   private objectControls: FolderApi | null = null
   private batchesFolder: FolderApi | null = null
+  public ids: Array<string> = []
 
   public urlParams = {
     url: 'https://latest.speckle.dev/streams/c43ac05d04/commits/ec724cfbeb'
@@ -47,7 +57,11 @@ export default class Sandbox {
     worldOrigin: { x: 0, y: 0, z: 0 },
     pixelThreshold: 0.5,
     exposure: 0.5,
-    tonemapping: 4 //'ACESFilmicToneMapping'
+    tonemapping: 4, //'ACESFilmicToneMapping',
+    contrast: 1,
+    saturation: 1,
+    hdri: Mild,
+    minRoughness: 0.5
   }
 
   public pipelineParams = {
@@ -119,7 +133,7 @@ export default class Sandbox {
 
   public constructor(
     container: HTMLElement,
-    viewer: DebugViewer,
+    viewer: Viewer,
     selectionList: SelectionEvent[]
   ) {
     this.viewer = viewer
@@ -127,6 +141,7 @@ export default class Sandbox {
     this.pane = new Pane({ title: 'Speckle Sandbox', expanded: true })
     // Mad HTML/CSS skills
     container.appendChild(this.pane['containerElem_'])
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     this.pane['containerElem_'].style = 'pointer-events:auto;'
 
     this.tabs = this.pane.addTab({
@@ -142,27 +157,25 @@ export default class Sandbox {
     this.properties = []
 
     viewer.on(ViewerEvent.LoadComplete, async (url: string) => {
+      url
       this.addStreamControls(url)
-      // this.addViewControls()
+      this.addViewControls()
       this.addBatches()
-      // this.properties = await this.viewer.getObjectProperties()
+      this.properties = await this.viewer.getObjectProperties()
       this.batchesParams.totalBvhSize = this.getBVHSize()
       this.refresh()
     })
-    viewer.on(ViewerEvent.UnloadComplete, (url: string) => {
-      url
+    viewer.on(ViewerEvent.UnloadComplete, async () => {
       this.removeViewControls()
       this.addViewControls()
-      this.properties = this.viewer.getObjectProperties()
+      this.properties = await this.viewer.getObjectProperties()
     })
-    viewer.on(ViewerEvent.UnloadAllComplete, (url: string) => {
+    viewer.on(ViewerEvent.UnloadAllComplete, async () => {
       this.removeViewControls()
       this.addViewControls()
-      this.properties = this.viewer.getObjectProperties()
-      // viewer.World.resetWorld()
-      url
+      this.properties = await this.viewer.getObjectProperties()
     })
-    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent) => {
+    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent) => {
       if (selectionEvent && selectionEvent.hits) {
         const firstHitNode = selectionEvent.hits[0].node
         if (firstHitNode) {
@@ -203,13 +216,14 @@ export default class Sandbox {
     })
     const position = { value: { x: 0, y: 0, z: 0 } }
     folder.addInput(position, 'value', { label: 'Position' }).on('change', () => {
-      const rvs = this.viewer
-        .getWorldTree()
-        .getRenderTree(url)
-        .getRenderViewsForNodeId(url)
-      for (let k = 0; k < rvs.length; k++) {
-        const object = this.viewer.getRenderer().getObject(rvs[k])
-        object.transformTRS(position.value, undefined, undefined, undefined)
+      const tree = this.viewer.getWorldTree()
+      const rvs = tree.getRenderTree(url)?.getRenderViewsForNodeId(url)
+      if (rvs) {
+        for (let k = 0; k < rvs.length; k++) {
+          const object = this.viewer.getRenderer().getObject(rvs[k])
+          if (object)
+            object.transformTRS(position.value, undefined, undefined, undefined)
+        }
       }
       this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
       this.viewer.getRenderer().updateShadowCatcher()
@@ -227,7 +241,7 @@ export default class Sandbox {
   }
 
   private removeStreamControls(url: string) {
-    this.viewer.unloadObject(url)
+    void this.viewer.unloadObject(url)
     ;(this.streams[url][0] as { dispose: () => void }).dispose()
     delete this.streams[url]
   }
@@ -239,12 +253,13 @@ export default class Sandbox {
       expanded: true
     })
     for (let k = 0; k < views.length; k++) {
+      const view = views[k]
       this.viewsFolder
         .addButton({
-          title: views[k].name ? views[k].name : 'Unnamed'
+          title: view.name ? view.name : 'Unnamed'
         })
         .on('click', () => {
-          this.viewer.setView(views[k], true)
+          this.viewer.getExtension(CameraController).setCameraView(views[k], true)
         })
     }
   }
@@ -258,13 +273,11 @@ export default class Sandbox {
       this.objectControls.dispose()
     }
     this.objectControls = this.tabs.pages[0].addFolder({
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       title: `Object: ${node.model.id}`
     })
 
-    const rvs = this.viewer
-      .getWorldTree()
-      .getRenderTree()
-      .getRenderViewsForNode(node, node)
+    const rvs = this.viewer.getWorldTree().getRenderTree().getRenderViewsForNode(node)
     const objects: BatchObject[] = []
     for (let k = 0; k < rvs.length; k++) {
       const batchObject = this.viewer.getRenderer().getObject(rvs[k])
@@ -285,7 +298,11 @@ export default class Sandbox {
         // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
           // obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          obj.position = position.value
+          obj.position = new Vector3(
+            position.value.x,
+            position.value.y,
+            position.value.z
+          )
         })
         this.viewer.requestRender()
       })
@@ -305,7 +322,12 @@ export default class Sandbox {
         // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
           // obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          obj.euler = rotation.value
+          obj.euler = new Euler(
+            rotation.value.x,
+            rotation.value.y,
+            rotation.value.z,
+            'XYZ'
+          )
         })
         this.viewer.requestRender()
       })
@@ -320,7 +342,7 @@ export default class Sandbox {
       .on('change', () => {
         const unionBox: Box3 = new Box3()
         objects.forEach((obj: BatchObject) => {
-          unionBox.union(obj.renderView.aabb)
+          unionBox.union(obj.renderView.aabb || new Box3())
         })
         const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
@@ -340,30 +362,36 @@ export default class Sandbox {
     })
 
     loadButton.on('click', () => {
-      this.loadUrl(this.urlParams.url)
+      void this.loadUrl(this.urlParams.url)
     })
 
     const loadObjButton = this.tabs.pages[0].addButton({
       title: 'Load OBJ'
     })
-    loadObjButton.on('click', () => {
+    loadObjButton.on('click', async () => {
+      /** Load from string */
       const input = document.createElement('input')
       input.type = 'file'
       input.onchange = (e) => {
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
-        const file = e.target?.files[0]
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        const file = e.target?.files[0] as Blob & { name: string }
 
         const reader = new FileReader()
         reader.readAsText(file, 'UTF-8')
 
         reader.onload = async (readerEvent) => {
-          const content = readerEvent?.target?.result
+          const content = readerEvent?.target?.result as string
           const loader = new ObjLoader(this.viewer.getWorldTree(), file.name, content)
-          await this.viewer.loadObject(loader, 1, true)
+          await this.viewer.loadObject(loader, true)
         }
       }
       input.click()
+      /** Load as resource */
+      // import BrandenburgGate from '../assets/BrandenburgGate.png'
+      // const loader = new ObjLoader(this.viewer.getWorldTree(), brandnburd)
+      // await this.viewer.loadObject(loader, true)
     })
 
     const clearButton = this.tabs.pages[0].addButton({
@@ -371,7 +399,7 @@ export default class Sandbox {
     })
 
     clearButton.on('click', () => {
-      this.viewer.unloadAll()
+      void this.viewer.unloadAll()
     })
 
     this.tabs.pages[0].addSeparator()
@@ -381,32 +409,31 @@ export default class Sandbox {
       title: 'Toggle Section Box'
     })
     toggleSectionBox.on('click', () => {
-      let box = this.viewer
-        .getRenderer()
-        .boxFromObjects(
-          this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
-        )
+      let box = this.viewer.getRenderer().boxFromObjects(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        this.selectionList.map((val) => val.hits[0].node.model.raw.id) as string[]
+      )
       if (!box) {
         box = this.viewer.getRenderer().sceneBox
       }
-      this.viewer.getExtension<SectionTool>(SectionTool).setBox(box)
-      this.viewer.getExtension<SectionTool>(SectionTool).toggle()
+      this.viewer.getExtension(SectionTool).setBox(box)
+      this.viewer.getExtension(SectionTool).toggle()
     })
 
     const toggleProjection = this.tabs.pages[0].addButton({
       title: 'Toggle Projection'
     })
     toggleProjection.on('click', () => {
-      this.viewer.getExtension<CameraController>(CameraController).toggleCameras()
+      this.viewer.getExtension(CameraController).toggleCameras()
     })
 
     const zoomExtents = this.tabs.pages[0].addButton({
       title: 'Zoom Extents'
     })
     zoomExtents.on('click', () => {
-      this.viewer.zoom(
-        this.selectionList.map((val) => val.hits[0].object.id) as string[],
-        undefined,
+      this.viewer.getExtension(CameraController).setCameraView(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
+        this.selectionList.map((val) => val.hits[0].node.model.id) as string[],
         true
       )
     })
@@ -442,16 +469,10 @@ export default class Sandbox {
       title: 'Screenshot'
     })
     screenshot.on('click', async () => {
-      // console.warn(await this.viewer.screenshot())
-      // const start = performance.now()
-      const nodes = this.viewer.getWorldTree().root.all(
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (node: any) => node.model.raw.id === 'c35234a1e8584b159f7e8be59323cd64'
-      )
-      console.log(nodes)
-      // this.viewer.cancelLoad(
-      //   'https://latest.speckle.dev/streams/97750296c2/objects/c3138e24a866d447eb86b2a8107b2c09'
-      // )
+      console.warn(await this.viewer.screenshot())
+      // this.viewer
+      //   .getExtension(FilteringExtension)
+      //   .hideObjects([this.viewer.getWorldTree().root.model.children[0].id])
     })
 
     const rotate = this.tabs.pages[0].addButton({
@@ -463,15 +484,17 @@ export default class Sandbox {
           setTimeout(resolve, ms)
         })
       for (let i = 0; i < 24; i++) {
-        this.viewer.setView({ azimuth: Math.PI / 12, polar: 0 }, false)
-        this.viewer.getRenderer().resetPipeline(true)
+        this.viewer
+          .getExtension(CameraController)
+          .setCameraView({ azimuth: Math.PI / 12, polar: 0 }, false)
+        this.viewer.getRenderer().resetPipeline()
         await waitForAnimation(1000)
       }
     })
 
     const canonicalViewsFolder = this.tabs.pages[0].addFolder({
       title: 'Canonical Views',
-      expanded: true
+      expanded: false
     })
     const sides = ['front', 'back', 'top', 'bottom', 'right', 'left', '3d']
     for (let k = 0; k < sides.length; k++) {
@@ -480,7 +503,9 @@ export default class Sandbox {
           title: sides[k]
         })
         .on('click', () => {
-          this.viewer.setView(sides[k] as CanonicalView)
+          this.viewer
+            .getExtension(CameraController)
+            .setCameraView(sides[k] as CanonicalView, true)
         })
     }
   }
@@ -526,6 +551,18 @@ export default class Sandbox {
     })
 
     postFolder
+      .addInput(this.sceneParams, 'tonemapping', {
+        options: {
+          Linear: 1,
+          ACES: 4
+        }
+      })
+      .on('change', () => {
+        this.viewer.getRenderer().renderer.toneMapping = this.sceneParams.tonemapping
+        this.viewer.requestRender()
+      })
+
+    postFolder
       .addInput(this.sceneParams, 'exposure', {
         min: 0,
         max: 1
@@ -536,40 +573,63 @@ export default class Sandbox {
         this.viewer.requestRender()
       })
 
+    /** Disabled color grading for now 
     postFolder
-      .addInput({ near: 0.01 }, 'near', {
+      .addInput(this.sceneParams, 'contrast', {
         min: 0,
-        max: 2,
-        step: 0.001
-      })
-      .on('change', (ev) => {
-        this.viewer.cameraHandler.activeCam.camera.near = ev.value
-        this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
-        this.viewer.requestRender()
-      })
-
-    postFolder
-      .addInput({ far: 10 }, 'far', {
-        min: 0,
-        max: 10000,
-        step: 1
-      })
-      .on('change', (ev) => {
-        this.viewer.cameraHandler.activeCam.camera.far = ev.value
-        this.viewer.cameraHandler.activeCam.camera.updateProjectionMatrix()
-        this.viewer.requestRender()
-      })
-
-    postFolder
-      .addInput(this.sceneParams, 'tonemapping', {
-        options: {
-          Linear: 1,
-          ACES: 4
-        }
+        max: 2
       })
       .on('change', () => {
-        this.viewer.getRenderer().renderer.toneMapping = this.sceneParams.tonemapping
-        this.viewer.requestRender()
+        const batches = this.viewer
+          .getRenderer()
+          .batcher.getBatches(undefined, GeometryType.MESH)
+        batches.forEach((batch: MeshBatch) => {
+          const materials = batch.materials as SpeckleStandardMaterial[]
+          materials.forEach((material: SpeckleStandardMaterial) => {
+            material.userData.contrast.value = this.sceneParams.contrast
+            material.needsCopy = true
+          })
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+      })
+    postFolder
+      .addInput(this.sceneParams, 'saturation', {
+        min: 0,
+        max: 2
+      })
+      .on('change', () => {
+        const batches = this.viewer
+          .getRenderer()
+          .batcher.getBatches(undefined, GeometryType.MESH)
+        batches.forEach((batch: MeshBatch) => {
+          const materials = batch.materials as SpeckleStandardMaterial[]
+          materials.forEach((material: SpeckleStandardMaterial) => {
+            material.userData.saturation.value = this.sceneParams.saturation
+            material.needsCopy = true
+          })
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+      })
+      */
+
+    postFolder
+      .addInput(this.sceneParams, 'minRoughness', {
+        label: 'Shininess',
+        min: 0,
+        max: 1,
+        step: 0.05
+      })
+      .on('change', () => {
+        const batches = this.viewer
+          .getRenderer()
+          .batcher.getBatches(undefined, GeometryType.MESH)
+        batches.forEach((batch: MeshBatch) => {
+          const materials = batch.materials as SpeckleStandardMaterial[]
+          materials.forEach((material: SpeckleStandardMaterial) => {
+            material.updateArtificialRoughness(1 - this.sceneParams.minRoughness)
+          })
+        })
+        this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
       })
 
     const pipelineFolder = this.tabs.pages[1].addFolder({
@@ -827,8 +887,7 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         this.viewer.getRenderer().sunLight.shadow.bias = value.value
-        this.viewer.requestRenderShadowmap()
-        this.viewer.requestRender()
+        this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
       })
 
     directLightFolder
@@ -840,14 +899,35 @@ export default class Sandbox {
       })
       .on('change', (value) => {
         this.viewer.getRenderer().sunLight.shadow.radius = value.value
-        this.viewer.requestRenderShadowmap()
-        this.viewer.requestRender()
+        this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
       })
 
     const indirectLightsFolder = lightsFolder.addFolder({
       title: 'Indirect',
       expanded: true
     })
+    indirectLightsFolder
+      .addInput(this.sceneParams, 'hdri', {
+        label: 'HDRI',
+        options: {
+          Neutral,
+          Mild,
+          Mild2,
+          Sharp,
+          Bright
+        }
+      })
+      .on('change', async (value) => {
+        this.viewer.getRenderer().indirectIBL = await Assets.getEnvironment(
+          {
+            id: this.sceneParams.hdri,
+            src: value.value,
+            type: AssetType.TEXTURE_EXR
+          },
+          this.viewer.getRenderer().renderer
+        )
+        this.viewer.requestRender()
+      })
 
     indirectLightsFolder
       .addInput(this.lightParams, 'indirectLightIntensity', {
@@ -872,6 +952,13 @@ export default class Sandbox {
         this.viewer.setLightConfiguration(this.lightParams)
       })
 
+    const updateShadowcatcher = () => {
+      const shadowCatcher = this.viewer.getRenderer().shadowcatcher
+      if (shadowCatcher) {
+        shadowCatcher.configuration = this.shadowCatcherParams
+        this.viewer.getRenderer().updateShadowCatcher()
+      }
+    }
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'textureSize', {
         label: 'Texture Size',
@@ -879,10 +966,8 @@ export default class Sandbox {
         max: 1024,
         step: 1
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'weights', {
@@ -892,10 +977,8 @@ export default class Sandbox {
         z: { min: -100, max: 100 },
         w: { min: -100, max: 100 }
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'blurRadius', {
@@ -904,10 +987,8 @@ export default class Sandbox {
         max: 128,
         step: 1
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'stdDeviation', {
@@ -916,10 +997,8 @@ export default class Sandbox {
         max: 128,
         step: 1
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'sigmoidRange', {
@@ -928,10 +1007,8 @@ export default class Sandbox {
         max: 10,
         step: 0.1
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
     shadowcatcherFolder
       .addInput(this.shadowCatcherParams, 'sigmoidStrength', {
@@ -940,10 +1017,8 @@ export default class Sandbox {
         max: 10,
         step: 0.1
       })
-      .on('change', (value) => {
-        value
-        this.viewer.getRenderer().shadowcatcher.configuration = this.shadowCatcherParams
-        this.viewer.getRenderer().updateShadowCatcher()
+      .on('change', () => {
+        updateShadowcatcher()
       })
   }
 
@@ -964,7 +1039,8 @@ export default class Sandbox {
         Floor: 'Floor',
         Name: 'name',
         TypeName: 'parameters.SYMBOL_NAME_PARAM.value',
-        Id: 'id'
+        Id: 'id',
+        DSD: 'DSD.@TYPE'
       }
     })
 
@@ -977,14 +1053,6 @@ export default class Sandbox {
           return value.key === this.filterParams.filterBy
         }) as PropertyInfo
         this.viewer.getExtension(FilteringExtension).setColorFilter(data)
-        // this.viewer
-        //   .getExtension(FilteringExtension)
-        //   .isolateObjects(['2f2ab0d53fc998bd34581e6ac8593eaa'], 'isolate', true, true)
-        // this.viewer
-        //   .getExtension(FilteringExtension)
-        //   .setUserObjectColors([
-        //     { objectIds: ['2f2ab0d53fc998bd34581e6ac8593eaa'], color: '#ff0000' }
-        //   ])
         this.pane.refresh()
       })
 
@@ -1057,14 +1125,14 @@ export default class Sandbox {
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/06bed1819e6c61d9df7196d424ab1eec',
         // 'https://latest.speckle.dev/streams/aea12cab71/objects/9026f1d6495789b9eab31b5028c9a8ef',
         //latest
-        // 'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
-        // 'https://latest.speckle.dev/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8',
+        'https://latest.speckle.dev/streams/cdbe82b016/objects/c14d1a33fd68323193813ec215737472',
+        'https://latest.speckle.dev/streams/cdbe82b016/objects/16676fc95a9ead877f6a825d9e28cbe8',
         //lines
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/3b42d6ef51d3110b4e33b9f8cdc9f357',
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/774384d431fb34d447d4696abbc4b816',
         // points
-        'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec',
-        'https://latest.speckle.dev/streams/92b620fb17/objects/4ffcf75dc4a28ed52500df73d08058ee',
+        // 'https://latest.speckle.dev/streams/92b620fb17/objects/7118603b197c00944f53be650ce721ec',
+        // 'https://latest.speckle.dev/streams/92b620fb17/objects/4ffcf75dc4a28ed52500df73d08058ee',
         // randos
         // 'https://latest.speckle.dev/streams/3ed8357f29/objects/d8786c21f277be67a0ea2cd43a1930df',
         // 'https://latest.speckle.dev/streams/92b620fb17/objects/8247bbc53865b0e0cb5ee4e252e66216',
@@ -1098,7 +1166,7 @@ export default class Sandbox {
       title: 'Undiff'
     })
     unDiffButton.on('click', async () => {
-      this.viewer.undiff()
+      void this.viewer.getExtension(DiffExtension).undiff()
     })
 
     container
@@ -1197,6 +1265,13 @@ export default class Sandbox {
       .on('click', () => {
         this.viewer.getExtension(MeasurementsExtension).removeMeasurement()
       })
+    container
+      .addButton({
+        title: 'Delete All'
+      })
+      .on('click', () => {
+        this.viewer.getExtension(MeasurementsExtension).clearMeasurements()
+      })
   }
 
   private getBVHSize() {
@@ -1204,8 +1279,9 @@ export default class Sandbox {
     const objects = this.viewer.getRenderer().allObjects
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     objects.traverse((obj: any) => {
-      // eslint-disable-next-line no-prototype-builtins
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
       if (obj.hasOwnProperty('boundsTreeSizeInBytes')) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         size += obj['boundsTreeSizeInBytes']
         // console.log(obj['boundsTreeSizeInBytes'] / 1024 / 1024)
       }
@@ -1215,20 +1291,31 @@ export default class Sandbox {
   }
 
   public async loadUrl(url: string) {
-    const objUrls = await UrlHelper.getResourceUrls(url)
+    const authToken = localStorage.getItem(
+      url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
+    ) as string
+    const objUrls = await UrlHelper.getResourceUrls(url, authToken)
     for (const url of objUrls) {
       console.log(`Loading ${url}`)
-      const authToken = localStorage.getItem(
-        url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
-      ) as string
       const loader = new SpeckleLoader(
         this.viewer.getWorldTree(),
         url,
         authToken,
         true,
-        1
+        undefined
       )
-      await this.viewer.loadObject(loader, 1, true)
+      /** Too spammy */
+      // loader.on(LoaderEvent.LoadProgress, (arg: { progress: number; id: string }) => {
+      //   console.warn(arg)
+      // })
+      loader.on(LoaderEvent.LoadCancelled, (resource: string) => {
+        console.warn(`Resource ${resource} loading was canceled`)
+      })
+      loader.on(LoaderEvent.LoadWarning, (arg: { message: string }) => {
+        console.error(`Loader warning: ${arg.message}`)
+      })
+
+      await this.viewer.loadObject(loader, true)
     }
     localStorage.setItem('last-load-url', url)
   }

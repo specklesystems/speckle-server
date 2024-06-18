@@ -1,3 +1,4 @@
+import { UpdateFlags } from '@speckle/viewer'
 import {
   Box3,
   ObjectLayers,
@@ -12,7 +13,8 @@ export class ExtendedSelection extends SelectionExtension {
   /** This object will recieve the TransformControls translation */
   private dummyAnchor: Object3D = new Object3D()
   /** Stock three.js gizmo */
-  private transformControls: TransformControls = null
+  private transformControls: TransformControls | undefined
+  private lastGizmoTranslation: Vector3 = new Vector3()
 
   public init() {
     /** We set the layers to PROPS so that the viewer regular pipeline ignores it */
@@ -34,9 +36,13 @@ export class ExtendedSelection extends SelectionExtension {
   }
 
   private initGizmo() {
+    const camera = this.viewer.getRenderer().renderingCamera
+    if (!camera) {
+      throw new Error('Cannot init move gizmo with no camera')
+    }
     /** Create a new TransformControls gizmo */
     this.transformControls = new TransformControls(
-      this.viewer.getRenderer().renderingCamera,
+      camera,
       this.viewer.getRenderer().renderer.domElement
     )
     /** The gizmo creates an entire hierarchy of children internally,
@@ -93,9 +99,13 @@ export class ExtendedSelection extends SelectionExtension {
     }
     const center = box.getCenter(new Vector3())
     this.dummyAnchor.position.copy(center)
-    if (attach) this.transformControls.attach(this.dummyAnchor)
-    else {
-      this.transformControls.detach()
+    this.lastGizmoTranslation.copy(this.dummyAnchor.position)
+    if (this.transformControls) {
+      if (attach) {
+        this.transformControls.attach(this.dummyAnchor)
+      } else {
+        this.transformControls.detach()
+      }
     }
   }
 
@@ -105,12 +115,12 @@ export class ExtendedSelection extends SelectionExtension {
      *  on a single object might yield multiple objects (hosted elements,
      *  multiple display values, etc)
      */
-    const box = new Box3()
-    for (const k in this.selectionRvs) {
-      box.union(this.selectionRvs[k].aabb)
-    }
-    /** We get the center of the accumulated box */
-    const center = box.getCenter(new Vector3())
+    // const box = new Box3()
+    // for (const k in this.selectionRvs) {
+    //   box.union(this.selectionRvs[k].aabb)
+    // }
+    // /** We get the center of the accumulated box */
+    // const center = box.getCenter(new Vector3())
 
     for (const k in this.selectionRvs) {
       const batchObject = this.viewer.getRenderer().getObject(this.selectionRvs[k])
@@ -118,15 +128,22 @@ export class ExtendedSelection extends SelectionExtension {
        *  Lines and points do not
        */
       if (!batchObject) continue
-
       /** This is where we moved the gizmo to */
       const anchorPos = new Vector3().copy(this.dummyAnchor.position)
+      const anchorPosDelta = anchorPos.sub(this.lastGizmoTranslation)
       /** We subtract the group's bounds center, to keep individual object
        *  offsets consistent
        */
-      anchorPos.sub(center)
+      // anchorPos.sub(center)
       /** Apply the transformation */
-      batchObject.transformTRS(anchorPos, undefined, undefined, undefined)
+      batchObject.transformTRS(
+        anchorPosDelta.add(batchObject.translation),
+        undefined,
+        undefined,
+        undefined
+      )
     }
+    this.lastGizmoTranslation.copy(this.dummyAnchor.position)
+    this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
   }
 }

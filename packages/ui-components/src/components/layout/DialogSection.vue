@@ -24,8 +24,12 @@
         class="text-sm sm:text-base font-bold flex items-center gap-1 sm:gap-2 select-none"
         :class="titleClasses"
       >
-        <div class="h-4 sm:h-5 h-4 sm:w-5 empty:h-0 empty:w-0">
-          <slot name="icon"></slot>
+        <div
+          v-if="$slots.icon || icon"
+          class="h-4 sm:h-5 w-4 sm:w-5 empty:h-0 empty:w-0"
+        >
+          <slot v-if="$slots.icon" name="icon" />
+          <Component :is="icon" v-if="icon" class="w-full h-full" />
         </div>
         <span>{{ title }}</span>
       </div>
@@ -51,7 +55,7 @@
       </div>
     </div>
     <div
-      class="transition-all duration-700 overflow-hidden"
+      class="transition-all duration-300 overflow-hidden"
       :class="[
         allowOverflow && isExpanded ? '!overflow-visible' : '',
         isExpanded ? 'mb-3 mt-1' : '',
@@ -63,16 +67,28 @@
           : `max-height: ${isExpanded ? contentHeight + 'px' : '0px'}`
       "
     >
-      <div ref="content" class="rounded-md text-sm pb-3 px-2 mt-1">
-        <slot>Panel contents</slot>
-      </div>
+      <template v-if="props.lazyLoad">
+        <div
+          v-if="isExpanded || props.alwaysOpen"
+          ref="content"
+          class="rounded-md text-sm pb-3 px-2 mt-1"
+        >
+          <slot>Panel contents</slot>
+        </div>
+      </template>
+
+      <template v-else>
+        <div ref="content" class="rounded-md text-sm pb-3 px-2 mt-1">
+          <slot>Panel contents</slot>
+        </div>
+      </template>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, unref, computed } from 'vue'
-import type { Ref } from 'vue'
+import { ref, unref, computed, nextTick } from 'vue'
+import type { PropType, Ref } from 'vue'
 import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
 import { keyboardClick } from '~~/src/helpers/global/accessibility'
@@ -109,7 +125,15 @@ const props = defineProps({
         onClick?: () => void
       }
     | undefined,
-  alwaysOpen: Boolean
+  alwaysOpen: Boolean,
+  lazyLoad: {
+    type: Boolean,
+    default: false
+  },
+  icon: {
+    type: [Function, Object] as PropType<PropAnyComponent>,
+    default: undefined
+  }
 })
 
 const content: Ref<HTMLElement | null> = ref(null)
@@ -147,9 +171,11 @@ const titleClasses = computed(() => {
   }
 })
 
-const toggleExpansion = () => {
+const toggleExpansion = async () => {
   isExpanded.value = !isExpanded.value
+
   if (isExpanded.value) {
+    await nextTick()
     contentHeight.value = (unref(content)?.scrollHeight || 0) + 64
   }
 }

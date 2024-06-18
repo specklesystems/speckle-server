@@ -44,6 +44,7 @@
             size="xs"
             :icon-left="loadedVersionsOnly ? CheckCircleIcon : CheckCircleIconOutlined"
             text
+            class="!text-left"
             @click="
               loadedVersionsOnly = loadedVersionsOnly ? undefined : 'loadedVersionsOnly'
             "
@@ -57,9 +58,10 @@
         :key="thread.id"
         :thread="thread"
       />
-      <div v-if="commentThreads.length === 0">
-        <ProjectPageLatestItemsCommentsIntroCard
+      <div v-if="commentThreads.length === 0" class="pb-4">
+        <ProjectPageLatestItemsCommentsEmptyState
           small
+          :show-button="canPostComment"
           @new-discussion="onNewDiscussion"
         />
       </div>
@@ -84,6 +86,7 @@ import {
   useInjectedViewerRequestedResources
 } from '~~/lib/viewer/composables/setup'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import { useCheckViewerCommentingAccess } from '~~/lib/viewer/composables/commentManagement'
 
 defineEmits(['close'])
 
@@ -125,10 +128,10 @@ const {
     openThread: { newThreadEditor }
   }
 } = useInjectedViewerInterfaceState()
+const canPostComment = useCheckViewerCommentingAccess()
 
 const showVisibilityOptions = ref(false)
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const loadedVersionsOnly = computed({
   get: () =>
     threadFilters.value.loadedVersionsOnly || false ? 'loadedVersionsOnly' : undefined,

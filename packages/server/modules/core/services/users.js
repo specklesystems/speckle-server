@@ -28,6 +28,7 @@ const {
 } = require('@/modules/core/errors/userinput')
 const { Roles } = require('@speckle/shared')
 const { getServerInfo } = require('@/modules/core/services/generic')
+const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -85,11 +86,15 @@ module.exports = {
 
     user = skipPropertyValidation
       ? user
-      : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company'])
+      : pick(user, ['id', 'bio', 'email', 'password', 'name', 'company', 'verified'])
 
     const newId = crs({ length: 10 })
     user.id = newId
     user.email = user.email.toLowerCase()
+
+    if (user.avatar) {
+      user.avatar = sanitizeImageUrl(user.avatar)
+    }
 
     if (user.password) {
       if (user.password.length < MINIMUM_PASSWORD_LENGTH)
@@ -140,7 +145,7 @@ module.exports = {
 
   /**
    * @param {{userId: string}} param0
-   * @returns {import('@/modules/core/helpers/userHelper').UserRecord | null}
+   * @returns {Promise<import('@/modules/core/helpers/types').UserRecord | null>}
    */
   async getUserById({ userId }) {
     const user = await Users().where({ id: userId }).select('*').first()

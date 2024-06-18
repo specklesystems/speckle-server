@@ -1,6 +1,6 @@
-import { userEvent } from '@storybook/testing-library'
+import { userEvent } from '@storybook/test'
 
-export function rightClick(target: HTMLElement) {
-  userEvent.pointer({ keys: '[MouseRight>]', target })
-  userEvent.pointer({ keys: '[/MouseRight]', target })
+export async function rightClick(target: HTMLElement) {
+  await userEvent.pointer({ keys: '[MouseRight>]', target })
+  await userEvent.pointer({ keys: '[/MouseRight]', target })
 }

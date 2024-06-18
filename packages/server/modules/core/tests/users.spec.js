@@ -16,7 +16,8 @@ const {
   updateUser,
   deleteUser,
   validatePasssword,
-  updateUserPassword
+  updateUserPassword,
+  getUserById
 } = require('../services/users')
 const {
   createPersonalAccessToken,
@@ -101,7 +102,7 @@ describe('Actors & Tokens @user-services', () => {
           email: 'dim@gmail.com',
           password: '1234567'
         })
-      } catch (e) {
+      } catch {
         return
       }
       assert.fail('short pwd')
@@ -151,18 +152,20 @@ describe('Actors & Tokens @user-services', () => {
     it('Find or create should create a user', async () => {
       const newUser = {}
       newUser.name = 'Steve Ballmer Balls'
-      newUser.email = 'ballmer@balls.com'
+      newUser.email = 'ballmer@example.test'
       newUser.password = 'testthebest'
 
       const { id } = await findOrCreateUser({ user: newUser })
       ballmerUserId = id
       expect(id).to.be.a('string')
+      const user = await getUserById({ userId: id })
+      expect(user.verified).to.equal(true)
     })
 
     it('Find or create should NOT create a user', async () => {
       const newUser = {}
       newUser.name = 'Steve Ballmer Balls'
-      newUser.email = 'ballmer@balls.com'
+      newUser.email = 'ballmer@example.test'
       newUser.password = 'testthebest'
 
       const { id } = await findOrCreateUser({ user: newUser })

@@ -155,6 +155,7 @@ type ProjectCollection {
 }
 
 type ProjectCollaborator {
+  id: ID!
   role: String!
   user: LimitedUser!
 }

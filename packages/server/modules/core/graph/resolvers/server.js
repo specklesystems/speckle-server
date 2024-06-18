@@ -8,7 +8,10 @@ const {
 } = require('../../services/generic')
 const { Roles, Scopes, RoleInfo } = require('@speckle/shared')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
-const { speckleAutomateUrl } = require('@/modules/shared/helpers/envHelper')
+const {
+  speckleAutomateUrl,
+  enableNewFrontendMessaging
+} = require('@/modules/shared/helpers/envHelper')
 
 module.exports = {
   Query: {
@@ -37,6 +40,9 @@ module.exports = {
     },
     automateUrl() {
       return speckleAutomateUrl()
+    },
+    enableNewWebUiMessaging() {
+      return enableNewFrontendMessaging()
     }
   },
 

@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
@@ -17,6 +18,9 @@
         <template v-else-if="pendingModel">
           <ArrowUpOnSquareIcon class="w-4 h-4 text-foreground-2 mx-2" />
         </template>
+        <template v-else>
+          <div class="w-4 h-4 mx-2" />
+        </template>
 
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
@@ -30,7 +34,7 @@
             <ProjectPageModelsActions
               v-model:open="showActionsMenu"
               :model="model"
-              :project-id="projectId"
+              :project="project"
               :can-edit="canContribute"
               @click.stop.prevent
               @model-updated="$emit('model-updated')"
@@ -56,7 +60,7 @@
         <ProjectCardImportFileArea
           v-if="!isPendingFileUpload(item)"
           ref="importArea"
-          :project-id="projectId"
+          :project-id="project.id"
           :model-name="item.fullName"
           class="hidden"
         />
@@ -75,7 +79,7 @@
           />
           <ProjectCardImportFileArea
             v-else
-            :project-id="projectId"
+            :project-id="project.id"
             :model-name="item.fullName"
             class="h-full w-full"
           />
@@ -91,13 +95,10 @@
             <span>{{ model?.commentThreadCount.totalCount }}</span>
             <ChatBubbleLeftRightIcon class="w-4 h-4" />
           </div>
-          <div v-if="model && model.automationStatus" class="text-xs text-foreground-2">
-            <ProjectPageModelsCardAutomationStatusRefactor
-              :project-id="props.projectId"
-              :model-or-version="{
-                ...model,
-                automationStatus: model.automationStatus
-              }"
+          <div v-if="model?.automationsStatus">
+            <AutomateRunsTriggerStatus
+              :project-id="project.id"
+              :status="model.automationsStatus"
               :model-id="model.id"
             />
           </div>
@@ -106,9 +107,10 @@
               v-if="!isPendingFileUpload(item) && item.model"
               rounded
               size="xs"
-              :icon-left="ArrowPathRoundedSquareIcon"
-              :to="modelVersionsRoute(projectId, item.model.id)"
+              :to="modelVersionsRoute(project.id, item.model.id)"
+              class="gap-0.5"
             >
+              <IconVersions class="h-4 w-4" />
               {{ model?.versionCount.totalCount }}
             </FormButton>
           </div>
@@ -199,25 +201,32 @@
         v-if="hasChildren && expanded && !isPendingFileUpload(item)"
         class="pl-8 mt-4 space-y-4"
       >
-        <div v-for="child in children" :key="child.fullName" class="flex">
-          <div class="h-20 absolute -ml-8 flex items-center mt-0 mr-1 pl-1">
-            <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />
-          </div>
+        <div v-if="childrenLoading" class="mr-8">
+          <CommonLoadingBar loading />
+        </div>
 
-          <ProjectPageModelsStructureItem
-            :item="child"
-            :project-id="projectId"
-            :can-contribute="canContribute"
-            class="flex-grow"
-            @model-updated="onModelUpdated"
-            @create-submodel="emit('create-submodel', $event)"
+        <template v-else>
+          <div v-for="child in children" :key="child.fullName" class="flex">
+            <div class="h-20 absolute -ml-8 flex items-center mt-0 mr-1 pl-1">
+              <ChevronDownIcon class="w-4 h-4 rotate-45 text-foreground-2" />
+            </div>
+
+            <ProjectPageModelsStructureItem
+              :item="child"
+              :project="project"
+              :can-contribute="canContribute"
+              class="flex-grow"
+              @model-updated="onModelUpdated"
+              @create-submodel="emit('create-submodel', $event)"
+            />
+          </div>
+        </template>
+        <div v-if="canContribute" class="mr-8">
+          <ProjectPageModelsNewModelStructureItem
+            :project-id="project.id"
+            :parent-model-name="item.fullName"
           />
         </div>
-        <ProjectPageModelsNewModelStructureItem
-          v-if="canContribute"
-          :project-id="projectId"
-          :parent-model-name="item.fullName"
-        />
       </div>
     </div>
   </div>
@@ -231,13 +240,13 @@ import {
   CubeIcon,
   CubeTransparentIcon,
   PlusIcon,
-  ArrowPathRoundedSquareIcon,
   ChatBubbleLeftRightIcon,
   ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import { ArrowUpOnSquareIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
+  ProjectPageModelsStructureItem_ProjectFragment,
   SingleLevelModelTreeItemFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -259,6 +268,13 @@ enum StructureItemType {
   ModelWithVersionsAndSubmodels, // mixed
   PendingModel
 }
+
+graphql(`
+  fragment ProjectPageModelsStructureItem_Project on Project {
+    id
+    ...ProjectPageModelsActions_Project
+  }
+`)
 
 graphql(`
   fragment SingleLevelModelTreeItem on ModelsTreeItem {
@@ -284,12 +300,12 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   item: SingleLevelModelTreeItemFragment | PendingFileUploadFragment
-  projectId: string
+  project: ProjectPageModelsStructureItem_ProjectFragment
   canContribute?: boolean
   isSearchResult?: boolean
 }>()
 
-provide('projectId', props.projectId)
+provide('projectId', props.project.id)
 
 const importArea = ref(
   null as Nullable<{
@@ -349,7 +365,7 @@ const fullName = computed(() =>
 )
 const expanded = useIsModelExpanded({
   fullName,
-  projectId: computed(() => props.projectId)
+  projectId: computed(() => props.project.id)
 })
 
 const model = computed(() =>
@@ -380,18 +396,22 @@ const modelLink = computed(() => {
     props.item.model?.versionCount.totalCount === 0
   )
     return null
-  return modelRoute(props.projectId, props.item.model.id)
+  return modelRoute(props.project.id, props.item.model.id)
 })
 
 const viewAllUrl = computed(() => {
   if (isPendingFileUpload(props.item)) return undefined
-  return modelRoute(props.projectId, `$${props.item.fullName}`)
+  return modelRoute(props.project.id, `$${props.item.fullName}`)
 })
 
-const { result: childrenResult, refetch: refetchChildren } = useQuery(
+const {
+  result: childrenResult,
+  refetch: refetchChildren,
+  loading: childrenLoading
+} = useQuery(
   projectModelChildrenTreeQuery,
   () => ({
-    projectId: props.projectId,
+    projectId: props.project.id,
     parentName: isPendingFileUpload(props.item) ? '' : props.item.fullName
   }),
   () => ({

@@ -1,5 +1,5 @@
 import { round } from 'lodash-es'
-import { Vector3 } from 'three'
+import type { Vector3 } from 'three'
 
 export function areVectorsLooselyEqual(v1: Vector3, v2: Vector3, precision = 6) {
   const coords1 = v1.toArray()

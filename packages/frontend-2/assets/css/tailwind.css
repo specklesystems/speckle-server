@@ -24,3 +24,11 @@ body,
 div#__nuxt {
   height: 100%;
 }
+
+@layer components {
+  .terms-of-service {
+    a {
+      @apply underline;
+    }
+  }
+}

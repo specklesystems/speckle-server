@@ -1,19 +1,29 @@
-import { Camera, Color, Material, Scene, Texture } from 'three'
-import { BaseSpecklePass, SpecklePass } from './SpecklePass'
+import {
+  Camera,
+  Color,
+  Material,
+  OrthographicCamera,
+  PerspectiveCamera,
+  Scene,
+  Texture,
+  WebGLRenderTarget,
+  WebGLRenderer
+} from 'three'
+import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
 
 export class ColorPass extends BaseSpecklePass implements SpecklePass {
-  private camera: Camera
-  private scene: Scene
-  private overrideMaterial: Material = null
+  private camera: Camera | null = null
+  private scene: Scene | null = null
+  private overrideMaterial: Material
   private _oldClearColor: Color = new Color()
-  private clearColor: Color = null
+  private clearColor: Color
   private clearAlpha = 0
   private clearDepth = true
 
-  public onBeforeRenderOpauqe: () => void = null
-  public onAfterRenderOpaque: () => void = null
-  public onBeforeRenderTransparent: () => void = null
-  public onAfterRenderTransparent: () => void = null
+  public onBeforeRenderOpauqe: (() => void) | undefined = undefined
+  public onAfterRenderOpaque: (() => void) | undefined = undefined
+  public onBeforeRenderTransparent: (() => void) | undefined = undefined
+  public onAfterRenderTransparent: (() => void) | undefined = undefined
 
   public constructor() {
     super()
@@ -21,20 +31,26 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
   public get displayName(): string {
     return 'COLOR'
   }
-  public get outputTexture(): Texture {
+  public get outputTexture(): Texture | null {
     return null
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.camera = camera
     this.scene = scene
   }
 
-  render(renderer, writeBuffer, readBuffer /*, deltaTime, maskActive */) {
+  render(
+    renderer: WebGLRenderer,
+    _writeBuffer: WebGLRenderTarget,
+    readBuffer: WebGLRenderTarget
+  ) {
+    if (!this.camera || !this.scene) return
+
     const oldAutoClear = renderer.autoClear
     renderer.autoClear = false
 
-    let oldClearAlpha, oldOverrideMaterial
+    let oldClearAlpha, oldOverrideMaterial!: Material | null
 
     if (this.overrideMaterial !== undefined) {
       oldOverrideMaterial = this.scene.overrideMaterial

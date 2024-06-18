@@ -53,7 +53,7 @@ describe('User notification preferences @notifications', () => {
       expect(preferences.activityDigest?.email).to.be.true
     })
     it("doesn't store invalid preference keys", async () => {
-      const invalidKeys = [
+      const invalidKeys = <const>[
         [NotificationType.ActivityDigest, 'mailPigeon', true],
         ['birthdayParty', NotificationChannel.Email, false],
         [

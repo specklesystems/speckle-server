@@ -15,6 +15,13 @@ import {
   BadRequestError
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import {
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
+} from '@/modules/core/graph/generated/graphql'
+import { isResourceAllowed } from '@/modules/core/helpers/token'
+import { getAutomationProject } from '@/modules/automate/repositories/automations'
 
 interface AuthResult {
   authorized: boolean
@@ -27,6 +34,7 @@ interface AuthFailedResult extends AuthResult {
 }
 
 interface Stream {
+  id: string
   role?: StreamRoles
   isPublic: boolean
   allowPublicComments: boolean
@@ -44,10 +52,15 @@ export interface AuthContext {
    * Set if authenticated with an app token
    */
   appId?: string | null
+  /**
+   * Set, if the token has resource access limits (e.g. only access to specific projects)
+   */
+  resourceAccessRules?: Nullable<TokenResourceIdentifier[]>
 }
 
 export interface AuthParams {
   streamId?: string
+  automationId?: string
 }
 
 interface AuthData {
@@ -158,15 +171,50 @@ export const validateStreamRole = ({ requiredRole }: { requiredRole: StreamRoles
     roleGetter: (context) => context?.stream?.role || null
   })
 
+export const validateResourceAccess: AuthPipelineFunction = async ({
+  context,
+  authResult
+}) => {
+  const { resourceAccessRules } = context
+
+  if (authHasFailed(authResult)) return { context, authResult }
+  if (!resourceAccessRules?.length) return authSuccess(context)
+
+  const streamId = context.stream?.id
+  if (!streamId) {
+    return authSuccess(context)
+  }
+
+  const hasAccess = isResourceAllowed({
+    resourceId: streamId,
+    resourceType: TokenResourceIdentifierType.Project,
+    resourceAccessRules
+  })
+
+  if (!hasAccess) {
+    return authFailed(
+      context,
+      new ForbiddenError('You are not authorized to access this resource.'),
+      true
+    )
+  }
+
+  return authSuccess(context)
+}
+
 export const validateScope =
   ({ requiredScope }: { requiredScope: string }): AuthPipelineFunction =>
   async ({ context, authResult }) => {
+    const errMsg = `Your auth token does not have the required scope${
+      requiredScope?.length ? ': ' + requiredScope + '.' : '.'
+    }`
+
     // having the required role doesn't rescue from authResult failure
     if (authHasFailed(authResult)) return { context, authResult }
     if (!context.scopes)
       return authFailed(
         context,
-        new ForbiddenError('You do not have the required privileges.')
+        new ForbiddenError(errMsg, { info: { scope: requiredScope } })
       )
     if (
       context.scopes.indexOf(requiredScope) === -1 &&
@@ -174,24 +222,32 @@ export const validateScope =
     )
       return authFailed(
         context,
-        new ForbiddenError('You do not have the required privileges.')
+        new ForbiddenError(errMsg, { info: { scope: requiredScope } })
       )
     return authSuccess(context)
   }
 
-type StreamGetter = (params: { streamId: string; userId?: string }) => Promise<Stream>
+type StreamGetter = (params: {
+  streamId: string
+  userId?: string
+}) => Promise<MaybeNullOrUndefined<Stream>>
 
 // this doesn't do any checks  on the scopes, its sole responsibility is to add the
 // stream object to the pipeline context
 export const contextRequiresStream =
-  (streamGetter: StreamGetter): AuthPipelineFunction =>
+  (deps: {
+    getStream: StreamGetter
+    getAutomationProject: typeof getAutomationProject
+  }): AuthPipelineFunction =>
   // stream getter is an async func over { streamId, userId } returning a stream object
   // IoC baby...
   async ({ context, authResult, params }) => {
-    if (!params?.streamId)
+    const { getStream, getAutomationProject } = deps
+
+    if (!params?.streamId && !params?.automationId)
       return authFailed(
         context,
-        new ContextError("The context doesn't have a streamId")
+        new ContextError("The context doesn't have a streamId or automationId")
       )
     // because we're assigning to the context, it would raise if it would be null
     // its probably?? safer than returning a new context
@@ -201,10 +257,16 @@ export const contextRequiresStream =
     // cause stream getter could throw, its not a safe function if we want to
     // keep the pipeline rolling
     try {
-      const stream = await streamGetter({
-        streamId: params.streamId,
-        userId: context?.userId
-      })
+      const stream = params.streamId
+        ? await getStream({
+            streamId: params.streamId,
+            userId: context?.userId
+          })
+        : await getAutomationProject({
+            automationId: params.automationId!,
+            userId: context?.userId
+          })
+
       if (!stream)
         return authFailed(
           context,
@@ -263,17 +325,19 @@ export const authPipelineCreator = (
   return pipeline
 }
 
-export const streamWritePermissions = [
+export const streamWritePermissions: AuthPipelineFunction[] = [
   validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Write }),
-  contextRequiresStream(getStream as StreamGetter),
-  validateStreamRole({ requiredRole: Roles.Stream.Contributor })
+  contextRequiresStream({ getStream, getAutomationProject }),
+  validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
+  validateResourceAccess
 ]
-export const streamReadPermissions = [
+export const streamReadPermissions: AuthPipelineFunction[] = [
   validateServerRole({ requiredRole: Roles.Server.Guest }),
   validateScope({ requiredScope: Scopes.Streams.Read }),
-  contextRequiresStream(getStream as StreamGetter),
-  validateStreamRole({ requiredRole: Roles.Stream.Contributor })
+  contextRequiresStream({ getStream, getAutomationProject }),
+  validateStreamRole({ requiredRole: Roles.Stream.Contributor }),
+  validateResourceAccess
 ]
 
 if (adminOverrideEnabled()) streamReadPermissions.push(allowForServerAdmins)

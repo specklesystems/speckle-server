@@ -1,0 +1,11 @@
+defaultBuckets: 'speckle-server'
+auth:
+  rootUser: minioadmin
+  rootPassword: minioadmin
+image:
+  debug: true
+persistence:
+  enabled: true
+  existingClaim: minio-pvc
+volumePermissions:
+  enabled: true

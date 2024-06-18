@@ -1,0 +1,9 @@
+services:
+  nginx:
+    restart: always
+    image: nginx:1-alpine
+    ports:
+      - 8080:8080
+    volumes:
+      - ./utils/docker-compose-ingress/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    network_mode: host

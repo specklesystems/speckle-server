@@ -29,3 +29,9 @@ export const editApplicationMutation = graphql(`
     appUpdate(app: $app)
   }
 `)
+
+export const revokeAppAccessMutation = graphql(`
+  mutation RevokeAppAccess($appId: String!) {
+    appRevokeAccess(appId: $appId)
+  }
+`)

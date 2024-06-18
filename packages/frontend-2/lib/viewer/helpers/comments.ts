@@ -5,7 +5,7 @@ import type {
   CommentContentInput,
   LinkableCommentFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { modelRoute } from '~~/lib/common/helpers/route'
+import { modelRoute, threadRedirectRoute } from '~~/lib/common/helpers/route'
 import type { CommentEditorValue } from '~~/lib/viewer/composables/commentManagement'
 import { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
 
@@ -40,6 +40,14 @@ graphql(`
     }
   }
 `)
+
+/**
+ * Resolving the actual full link requires viewerResources which are pretty heavy to fetch.
+ * This link defers viewerResources resolution to when the link is actually clicked
+ */
+export function getLightLinkToThread(projectId: string, threadId: string) {
+  return threadRedirectRoute(projectId, threadId)
+}
 
 export function getLinkToThread(projectId: string, thread: LinkableCommentFragment) {
   if (!thread.viewerResources.length) return undefined

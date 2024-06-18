@@ -8,9 +8,12 @@
     :name="name || 'role'"
     :allow-unset="false"
     :disabled="disabled"
+    :label-id="labelId"
+    :button-id="buttonId"
     hide-checkmarks
     by="id"
     class="min-w-[85px]"
+    mount-menu-on-body
   >
     <template #something-selected="{ value }">
       <div class="text-normal text-right">
@@ -36,8 +39,7 @@
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import { Roles } from '@speckle/shared'
 import type { StreamRoles } from '@speckle/shared'
-import { reduce } from 'lodash-es'
-import { isArray } from 'lodash-es'
+import { reduce, isArray } from 'lodash-es'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: StreamRoles): void
@@ -53,6 +55,8 @@ const props = defineProps<{
   hideOwner?: boolean
 }>()
 
+const labelId = useId()
+const buttonId = useId()
 const items = ref(
   reduce(
     roleSelectItems,

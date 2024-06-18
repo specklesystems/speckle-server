@@ -7,6 +7,8 @@
     :name="name || 'commentPermissions'"
     :allow-unset="false"
     :disabled="disabled"
+    :label-id="labelId"
+    :button-id="buttonId"
     by="id"
   >
     <template #something-selected="{ value }">
@@ -25,10 +27,8 @@
 </template>
 <script setup lang="ts">
 import { isArray } from 'lodash-es'
-import {
-  CommentPermissions,
-  commentPermissionsSelectItems
-} from '~~/lib/projects/helpers/components'
+import type { CommentPermissions } from '~~/lib/projects/helpers/components'
+import { commentPermissionsSelectItems } from '~~/lib/projects/helpers/components'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: CommentPermissions): void
@@ -41,6 +41,8 @@ const props = defineProps<{
   disabled?: boolean
 }>()
 
+const labelId = useId()
+const buttonId = useId()
 const items = ref(commentPermissionsSelectItems)
 
 const selectedValue = computed({

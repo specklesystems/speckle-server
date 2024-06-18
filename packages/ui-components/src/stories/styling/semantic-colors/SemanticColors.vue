@@ -92,9 +92,9 @@ const buildColorString = (colorBase: string, variation: ColorVariation) => {
   return base
 }
 
-const onVariationClick = (colorBase: string, variation: ColorVariation) => {
+const onVariationClick = async (colorBase: string, variation: ColorVariation) => {
   const colorString = buildColorString(colorBase, variation)
-  copy(colorString)
+  await copy(colorString)
   triggerNotification({
     type: ToastNotificationType.Info,
     title: 'Copied!'

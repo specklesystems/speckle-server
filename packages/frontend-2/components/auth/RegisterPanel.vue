@@ -8,7 +8,7 @@
           Create your Speckle Account
         </h1>
         <h2 class="text-sm sm:text-base text-center text-foreground-2">
-          Interoperability, Collaboration and Automation for 3D
+          Connectivity, Collaboration and Automation for 3D
         </h2>
       </div>
       <template v-if="isInviteOnly && !inviteToken">
@@ -33,7 +33,7 @@
         />
         <div>
           <div
-            v-if="hasThirdPartyStrategies"
+            v-if="hasThirdPartyStrategies && hasLocalStrategy"
             class="text-center label text-foreground-2 mb-3 text-xs font-normal"
           >
             Or sign up with your email

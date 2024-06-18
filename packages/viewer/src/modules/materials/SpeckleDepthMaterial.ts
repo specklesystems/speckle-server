@@ -1,17 +1,21 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable camelcase */
 import { speckleDepthVert } from './shaders/speckle-depth-vert'
 import { speckleDepthFrag } from './shaders/speckle-depth-frag'
-import { ShaderLib, Vector3, IUniform } from 'three'
+import {
+  BufferGeometry,
+  Camera,
+  Object3D,
+  Scene,
+  ShaderLib,
+  Vector3,
+  type IUniform,
+  type MeshDepthMaterialParameters
+} from 'three'
 import { Matrix4, Material } from 'three'
-import { ExtendedMeshDepthMaterial, Uniforms } from './SpeckleMaterial'
+import { ExtendedMeshDepthMaterial, type Uniforms } from './SpeckleMaterial'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
 
 class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
-  private static readonly matBuff: Matrix4 = new Matrix4()
-  private static readonly vecBuff0: Vector3 = new Vector3()
-  private static readonly vecBuff1: Vector3 = new Vector3()
-  private static readonly vecBuff2: Vector3 = new Vector3()
-
   protected get vertexProgram(): string {
     return speckleDepthVert
   }
@@ -37,7 +41,7 @@ class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
     }
   }
 
-  constructor(parameters, defines = []) {
+  constructor(parameters: MeshDepthMaterialParameters, defines: string[] = []) {
     super(parameters)
     this.init(defines)
   }
@@ -47,7 +51,7 @@ class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
     return this.constructor.name
   }
 
-  public copy(source) {
+  public copy(source: Material) {
     super.copy(source)
     this.copyFrom(source)
     return this
@@ -62,8 +66,14 @@ class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
   /** Another note here, this will NOT get called by three when rendering shadowmaps. We update the uniforms manually
    * inside SpeckleRenderer for shadowmaps
    */
-  onBeforeRender(_this, scene, camera, geometry, object, group) {
-    if (this.defines['USE_RTE']) {
+  onBeforeRender(
+    _this: SpeckleWebGLRenderer,
+    _scene: Scene,
+    _camera: Camera,
+    _geometry: BufferGeometry,
+    object: Object3D
+  ) {
+    if (this.defines && this.defines['USE_RTE']) {
       object.modelViewMatrix.copy(_this.RTEBuffers.rteViewModelMatrix)
       this.userData.uViewer_low.value.copy(_this.RTEBuffers.viewerLow)
       this.userData.uViewer_high.value.copy(_this.RTEBuffers.viewerHigh)
