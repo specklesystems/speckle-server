@@ -379,6 +379,9 @@ export = {
   Mutation: {
     commentMutations: () => ({}),
     async broadcastViewerUserActivity(_parent, args, context) {
+      if (!context.userId)
+        throw new ApolloForbiddenError('You are not authorized.')
+
       await authorizeProjectCommentsAccess({
         projectId: args.projectId,
         authCtx: context
@@ -386,6 +389,7 @@ export = {
 
       await publish(ViewerSubscriptions.UserActivityBroadcasted, {
         projectId: args.projectId,
+        // TODO: Inject core module repository
         resourceItems: await getViewerResourceItemsUngrouped(args),
         viewerUserActivityBroadcasted: args.message,
         userId: context.userId
@@ -421,12 +425,13 @@ export = {
     async userCommentThreadActivityBroadcast(parent, args, context) {
       if (!context.userId) return false
 
+      // TODO: Inject core module repository
       const stream = await getStream({
         streamId: args.streamId,
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !stream.role)
+      if (!stream || !stream.allowPublicComments && !stream.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
       await pubsub.publish(CommentSubscriptions.CommentThreadActivity, {
@@ -441,12 +446,13 @@ export = {
       if (!context.userId)
         throw new ApolloForbiddenError('Only registered users can comment.')
 
+      // TODO: Inject core module repository
       const stream = await getStream({
         streamId: args.input.streamId,
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !stream.role)
+      if (!stream || !stream.allowPublicComments && !stream.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
       const comment = await createComment({
