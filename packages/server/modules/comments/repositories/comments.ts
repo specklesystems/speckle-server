@@ -19,7 +19,6 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import {
   MarkNullableOptional,
-  MaybeNullOrUndefined,
   Optional
 } from '@/modules/shared/helpers/typeHelper'
 import { clamp, keyBy, reduce } from 'lodash'
@@ -35,6 +34,7 @@ import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEdit
 import { Merge } from 'type-fest'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
+import type { PaginatedProjectCommentsParams, PaginatedBranchCommentsParams, PaginatedCommitCommentsParams, PaginatedProjectCommentsOptions } from '@/modules/comments/domain'
 
 export const generateCommentId = () => crs({ length: 10 })
 
@@ -423,16 +423,6 @@ const getCommentReplyAuthorIds = ({ db }: { db: Knex }) => async (
   )
 }
 
-export type PaginatedCommitCommentsParams = {
-  commitId: string
-  limit: number
-  cursor?: MaybeNullOrUndefined<string>
-  filter?: MaybeNullOrUndefined<{
-    threadsOnly: boolean
-    includeArchived: boolean
-  }>
-}
-
 // Internal
 const getPaginatedCommitCommentsBaseQuery = <T = CommentRecord[]>({ db }: { db: Knex }) =>
   (params: Omit<PaginatedCommitCommentsParams, 'limit' | 'cursor'>) => {
@@ -480,7 +470,7 @@ const getPaginatedCommitComments = ({ db }: { db: Knex }) =>
       items,
       cursor: items.length
         ? encodeCursor(items[items.length - 1].createdAt.toISOString())
-        : null
+        : null,
     }
   }
 
@@ -493,16 +483,6 @@ const getPaginatedCommitCommentsTotalCount =
 
       return parseInt(row.count || '0')
     }
-
-export type PaginatedBranchCommentsParams = {
-  branchId: string
-  limit: number
-  cursor?: MaybeNullOrUndefined<string>
-  filter?: MaybeNullOrUndefined<{
-    threadsOnly: boolean
-    includeArchived: boolean
-  }>
-}
 
 // Internal
 const getPaginatedBranchCommentsBaseQuery = ({ db }: { db: Knex }) =>
@@ -553,7 +533,7 @@ const getPaginatedBranchComments = ({ db }: { db: Knex }) =>
       items,
       cursor: items.length
         ? encodeCursor(items[items.length - 1].createdAt.toISOString())
-        : null
+        : null,
     }
   }
 
@@ -567,26 +547,6 @@ const getPaginatedBranchCommentsTotalCount = ({ db }: { db: Knex }) => async (
   return parseInt(row.count || '0')
 }
 
-export type PaginatedProjectCommentsParams = {
-  projectId: string
-  limit: number
-  cursor?: MaybeNullOrUndefined<string>
-  filter?: MaybeNullOrUndefined<
-    Partial<{
-      threadsOnly: boolean
-      includeArchived: boolean
-      archivedOnly: boolean
-      resourceIdString: string
-      /**
-       * If true, will ignore the version parts of `model@version` identifiers and look for comments of
-       * all versions of any selected comments
-       */
-      allModelVersions: boolean
-    }>
-  >
-}
-
-// Internal
 /**
  * Used exclusively in paginated project comment retrieval to resolve latest commit IDs for
  * model resource identifiers that just target latest (no versionId specified). This is required
@@ -724,9 +684,7 @@ const getPaginatedProjectCommentsBaseQuery = ({ db }: { db: Knex }) => async (
 
 const getPaginatedProjectComments = ({ db }: { db: Knex }) => async (
   params: PaginatedProjectCommentsParams,
-  options?: {
-    preloadedModelLatestVersions?: Awaited<ReturnType<typeof getBranchLatestCommits>>
-  }
+  options?: PaginatedProjectCommentsOptions
 ) => {
   const { cursor } = params
   const limit = clamp(params.limit, 0, 100)
@@ -744,15 +702,13 @@ const getPaginatedProjectComments = ({ db }: { db: Knex }) => async (
     items,
     cursor: items.length
       ? encodeCursor(items[items.length - 1].createdAt.toISOString())
-      : null
+      : null,
   }
 }
 
 const getPaginatedProjectCommentsTotalCount = ({ db }: { db: Knex }) => async (
   params: Omit<PaginatedProjectCommentsParams, 'limit' | 'cursor'>,
-  options?: {
-    preloadedModelLatestVersions?: Awaited<ReturnType<typeof getBranchLatestCommits>>
-  }
+  options?: PaginatedProjectCommentsOptions
 ) => {
   const { baseQuery } = await getPaginatedProjectCommentsBaseQuery({ db })(params, options)
   const q = knex.count<{ count: string }[]>().from(baseQuery.as('sq1'))
@@ -836,6 +792,8 @@ export const createCommentsRepository = ({ db }: { db: Knex }) => ({
   getBranchCommentCounts: getBranchCommentCounts({ db }),
   getCommentReplyCounts: getCommentReplyCounts({ db }),
   getCommentReplyAuthorIds: getCommentReplyAuthorIds({ db }),
+  // TODO: Decide on pattern for accessing one repo from another
+  resolvePaginatedProjectCommentsLatestModelResources,
   getPaginatedCommitComments: getPaginatedCommitComments({ db }),
   getPaginatedCommitCommentsTotalCount: getPaginatedCommitCommentsTotalCount({ db }),
   getPaginatedBranchComments: getPaginatedBranchComments({ db }),

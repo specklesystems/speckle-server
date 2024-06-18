@@ -214,7 +214,10 @@ export = {
         projectId: parent.id,
         authCtx: context
       })
-      return await getPaginatedProjectComments({
+
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
+      return await getPaginatedProjectComments({ ...commentsRepository })({
         ...args,
         projectId: parent.id,
         filter: {
@@ -228,17 +231,21 @@ export = {
   Version: {
     async commentThreads(parent, args, context) {
       const stream = await context.loaders.commits.getCommitStream.load(parent.id)
+
+      if (!stream)
+        throw new ApolloForbiddenError(`Could not authorize request for project ${parent.id}`)
+
+
       await authorizeProjectCommentsAccess({
         projectId: stream.id,
         authCtx: context
       })
-      return await getPaginatedCommitComments({
+
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
+      return await getPaginatedCommitComments({ ...commentsRepository })({
         ...args,
         commitId: parent.id,
-        filter: {
-          ...(args.filter || {}),
-          threadsOnly: true
-        }
       })
     }
   },
@@ -248,19 +255,22 @@ export = {
         projectId: parent.streamId,
         authCtx: context
       })
-      return await getPaginatedBranchComments({
+
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
+      return await getPaginatedBranchComments({ ...commentsRepository })({
         ...args,
-        branchId: parent.id,
-        filter: {
-          ...(args.filter || {}),
-          threadsOnly: true
-        }
+        branchId: parent.id
       })
     }
   },
   ViewerUserActivityMessage: {
     async user(parent, args, context) {
       const { userId } = parent
+
+      if (!userId)
+        throw new ApolloForbiddenError('You are not authorized.')
+
       return context.loaders.users.getUser.load(userId)
     }
   },
