@@ -3,15 +3,7 @@ import { AuthContext } from '@/modules/shared/authz'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/repositories/streams'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
-import {
-  InsertCommentPayload,
-  getComment,
-  markCommentViewed,
-  insertComment,
-  insertCommentLinks,
-  markCommentUpdated,
-  updateComment
-} from '@/modules/comments/repositories/comments'
+import { InsertCommentPayload } from '@/modules/comments/repositories/comments'
 import {
   CreateCommentInput,
   CreateCommentReplyInput,
@@ -40,6 +32,7 @@ import {
   inputToDataStruct
 } from '@/modules/comments/services/data'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { CommentsRepository } from '@/modules/comments/domain'
 
 export async function authorizeProjectCommentsAccess(params: {
   projectId: string
@@ -88,86 +81,97 @@ export async function authorizeCommentAccess(params: {
   })
 }
 
-export async function markViewed(commentId: string, userId: string) {
-  await markCommentViewed(commentId, userId)
-}
+export const markViewed =
+  /** */
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'markCommentViewed'> }) =>
+    /** */
+    async (commentId: string, userId: string) => {
+      await commentsRepository.markCommentViewed(commentId, userId)
+    }
 
-export async function createCommentThreadAndNotify(
-  input: CreateCommentInput,
-  userId: string
-) {
-  const [resources] = await Promise.all([
-    getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
-    validateInputAttachments(input.projectId, input.content.blobIds || [])
-  ])
-  if (!resources.length) {
-    throw new CommentCreateError(
-      "Resource ID string doesn't resolve to any valid resources for the specified project/stream"
-    )
-  }
+export const createCommentThreadAndNotify =
+  /** */
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'insertComment' | 'insertCommentLinks' | 'markCommentViewed'> }) =>
+    /** */
+    async (input: CreateCommentInput, userId: string) => {
+      const { insertComment, insertCommentLinks } = commentsRepository
 
-  const state = SpeckleViewer.ViewerState.isSerializedViewerState(input.viewerState)
-    ? formatSerializedViewerState(input.viewerState)
-    : null
-  const dataStruct = inputToDataStruct(state)
+      const [resources] = await Promise.all([
+        // TODO: Inject core module service
+        getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
+        // TODO: Inject blob storage service
+        validateInputAttachments(input.projectId, input.content.blobIds || [])
+      ])
 
-  const commentPayload: InsertCommentPayload = {
-    streamId: input.projectId,
-    authorId: userId,
-    text: buildCommentTextFromInput({
-      doc: input.content.doc,
-      blobIds: input.content.blobIds || undefined
-    }),
-    screenshot: input.screenshot,
-    data: dataStruct
-  }
+      if (!resources.length) {
+        throw new CommentCreateError(
+          "Resource ID string doesn't resolve to any valid resources for the specified project/stream"
+        )
+      }
 
-  let comment: CommentRecord
-  try {
-    comment = await knex.transaction(async (trx) => {
-      const comment = await insertComment(commentPayload, { trx })
+      const state = SpeckleViewer.ViewerState.isSerializedViewerState(input.viewerState)
+        ? formatSerializedViewerState(input.viewerState)
+        : null
+      const dataStruct = inputToDataStruct(state)
 
-      const links: CommentLinkRecord[] = resources.map((r) => {
-        let resourceId = r.objectId
-        let resourceType: CommentLinkResourceType = 'object'
-        if (r.versionId) {
-          resourceId = r.versionId
-          resourceType = 'commit'
-        }
+      const commentPayload: InsertCommentPayload = {
+        streamId: input.projectId,
+        authorId: userId,
+        text: buildCommentTextFromInput({
+          doc: input.content.doc,
+          blobIds: input.content.blobIds || undefined
+        }),
+        screenshot: input.screenshot,
+        data: dataStruct
+      }
 
-        return {
-          commentId: comment.id,
-          resourceId,
-          resourceType
-        }
-      })
-      await insertCommentLinks(links, { trx })
+      let comment: CommentRecord
+      try {
+        // TODO: Inject knex for creating transaction into service
+        comment = await knex.transaction(async (trx) => {
+          const comment = await insertComment(commentPayload, { trx })
+
+          const links: CommentLinkRecord[] = resources.map((r) => {
+            let resourceId = r.objectId
+            let resourceType: CommentLinkResourceType = 'object'
+            if (r.versionId) {
+              resourceId = r.versionId
+              resourceType = 'commit'
+            }
+
+            return {
+              commentId: comment.id,
+              resourceId,
+              resourceType
+            }
+          })
+          await insertCommentLinks(links, { trx })
+
+          return comment
+        })
+      } catch (e) {
+        throw new CommentCreateError('Comment creation failed', { cause: ensureError(e) })
+      }
+
+      // Mark as viewed and emit events
+      await Promise.all([
+        markViewed({ commentsRepository })(comment.id, userId),
+        CommentsEmitter.emit(CommentsEvents.Created, {
+          comment
+        }),
+        addCommentCreatedActivity({
+          streamId: input.projectId,
+          userId,
+          input: {
+            ...input,
+            resolvedResourceItems: resources
+          },
+          comment
+        })
+      ])
 
       return comment
-    })
-  } catch (e) {
-    throw new CommentCreateError('Comment creation failed', { cause: ensureError(e) })
-  }
-
-  // Mark as viewed and emit events
-  await Promise.all([
-    markViewed(comment.id, userId),
-    CommentsEmitter.emit(CommentsEvents.Created, {
-      comment
-    }),
-    addCommentCreatedActivity({
-      streamId: input.projectId,
-      userId,
-      input: {
-        ...input,
-        resolvedResourceItems: resources
-      },
-      comment
-    })
-  ])
-
-  return comment
-}
+    }
 
 export async function createCommentReplyAndNotify(
   input: CreateCommentReplyInput,

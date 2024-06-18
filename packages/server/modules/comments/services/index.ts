@@ -299,18 +299,18 @@ export const archiveComment = async ({ commentId, userId, streamId, archived = t
 //   }
 // }
 
-export const getResourceCommentCount = async ({ resourceId }) => {
-  const [res] = await CommentLinks()
-    .count('commentId')
-    .where({ resourceId })
-    .join('comments', 'comments.id', '=', 'commentId')
-    .where('comments.archived', '=', false)
+// export const getResourceCommentCount = ({ }) async ({ resourceId }) => {
+//   const [res] = await CommentLinks()
+//     .count('commentId')
+//     .where({ resourceId })
+//     .join('comments', 'comments.id', '=', 'commentId')
+//     .where('comments.archived', '=', false)
 
-  if (res && res.count) {
-    return parseInt(res.count)
-  }
-  return 0
-}
+//   if (res && res.count) {
+//     return parseInt(res.count)
+//   }
+//   return 0
+// }
 
 export const getStreamCommentCount = async ({ streamId }) => {
   return (await repositoryGetCommentCount(streamId, { threadsOnly: true })) || 0

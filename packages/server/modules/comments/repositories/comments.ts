@@ -717,6 +717,22 @@ const getPaginatedProjectCommentsTotalCount = ({ db }: { db: Knex }) => async (
   return parseInt(row.count || '0')
 }
 
+const getResourceCommentCount =
+  ({ db }: { db: Knex }) =>
+    async ({ resourceId }: { resourceId: string }) => {
+      const [res] = await tables.commentLinks(db)
+        .count('commentId')
+        .where({ resourceId })
+        .join('comments', 'comments.id', '=', 'commentId')
+        .where('comments.archived', '=', false)
+
+      if (res && res.count) {
+        return typeof res.count === 'number' ? res.count : parseInt(res.count)
+      }
+
+      return 0
+    }
+
 const getCommentParents = ({ db }: { db: Knex }) =>
   async (replyIds: string[]) => {
     const q = tables.comments(db)
@@ -800,6 +816,7 @@ export const createCommentsRepository = ({ db }: { db: Knex }) => ({
   getPaginatedBranchCommentsTotalCount: getPaginatedBranchCommentsTotalCount({ db }),
   getPaginatedProjectComments: getPaginatedProjectComments({ db }),
   getPaginatedProjectCommentsTotalCount: getPaginatedProjectCommentsTotalCount({ db }),
+  getResourceCommentCount: getResourceCommentCount({ db }),
   getCommentParents: getCommentParents({ db }),
   markCommentViewed: markCommentViewed({ db }),
   insertComment: insertComment({ db }),

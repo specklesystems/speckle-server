@@ -1,17 +1,12 @@
 import type { CommentsRepository, PaginatedBranchCommentsParams, PaginatedCommitCommentsParams, PaginatedProjectCommentsOptions, PaginatedProjectCommentsParams } from '@/modules/comments/domain'
 import { isUndefined } from 'lodash'
 
-type GetPaginatedBranchCommentsDeps = {
-  getPaginatedBranchComments: CommentsRepository['getPaginatedBranchComments'],
-  getPaginatedBranchCommentsTotalCount: CommentsRepository['getPaginatedBranchCommentsTotalCount']
-}
-
 export const getPaginatedBranchComments =
   /** Factory function */
-  (deps: GetPaginatedBranchCommentsDeps) =>
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getPaginatedBranchComments' | 'getPaginatedBranchCommentsTotalCount'> }) =>
     /** Service function */
     async (params: PaginatedBranchCommentsParams) => {
-      const { getPaginatedBranchComments, getPaginatedBranchCommentsTotalCount } = deps
+      const { getPaginatedBranchComments, getPaginatedBranchCommentsTotalCount } = commentsRepository
 
       const [result, totalCount] = await Promise.all([
         getPaginatedBranchComments(params),
@@ -24,17 +19,12 @@ export const getPaginatedBranchComments =
       }
     }
 
-type GetPaginatedCommitCommentsDeps = {
-  getPaginatedCommitComments: CommentsRepository['getPaginatedCommitComments'],
-  getPaginatedCommitCommentsTotalCount: CommentsRepository['getPaginatedCommitCommentsTotalCount']
-}
-
 export const getPaginatedCommitComments =
   /** Factory function */
-  (deps: GetPaginatedCommitCommentsDeps) =>
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getPaginatedCommitComments' | 'getPaginatedCommitCommentsTotalCount'> }) =>
     /** Service function */
     async (params: PaginatedCommitCommentsParams) => {
-      const { getPaginatedCommitComments, getPaginatedCommitCommentsTotalCount } = deps
+      const { getPaginatedCommitComments, getPaginatedCommitCommentsTotalCount } = commentsRepository
 
       const [result, totalCount] = await Promise.all([
         getPaginatedCommitComments(params),
@@ -47,23 +37,16 @@ export const getPaginatedCommitComments =
       }
     }
 
-
-type GetPaginatedProjectCommentsDeps = {
-  getPaginatedProjectComments: CommentsRepository['getPaginatedProjectComments'],
-  getPaginatedProjectCommentsTotalCount: CommentsRepository['getPaginatedProjectCommentsTotalCount'],
-  resolvePaginatedProjectCommentsLatestModelResources: CommentsRepository['resolvePaginatedProjectCommentsLatestModelResources'],
-}
-
 export const getPaginatedProjectComments =
   /** Factory function */
-  (deps: GetPaginatedProjectCommentsDeps) =>
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getPaginatedProjectComments' | 'getPaginatedProjectCommentsTotalCount' | 'resolvePaginatedProjectCommentsLatestModelResources'> }) =>
     /** Service function */
     async (params: PaginatedProjectCommentsParams) => {
       const {
         getPaginatedProjectComments,
         getPaginatedProjectCommentsTotalCount,
         resolvePaginatedProjectCommentsLatestModelResources
-      } = deps
+      } = commentsRepository
 
       let preloadedModelLatestVersions: PaginatedProjectCommentsOptions['preloadedModelLatestVersions'] = undefined
 

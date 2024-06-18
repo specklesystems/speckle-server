@@ -5,7 +5,6 @@ import { getStream } from '@/modules/core/services/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import knexInstance from '@/db/knex'
 import {
-  getResourceCommentCount,
   createComment,
   createCommentReply,
   viewComment,
@@ -217,7 +216,7 @@ export = {
 
       const commentsRepository = createCommentsRepository({ db: knexInstance })
 
-      return await getPaginatedProjectComments({ ...commentsRepository })({
+      return await getPaginatedProjectComments({ commentsRepository })({
         ...args,
         projectId: parent.id,
         filter: {
@@ -243,7 +242,7 @@ export = {
 
       const commentsRepository = createCommentsRepository({ db: knexInstance })
 
-      return await getPaginatedCommitComments({ ...commentsRepository })({
+      return await getPaginatedCommitComments({ commentsRepository })({
         ...args,
         commitId: parent.id,
       })
@@ -258,7 +257,7 @@ export = {
 
       const commentsRepository = createCommentsRepository({ db: knexInstance })
 
-      return await getPaginatedBranchComments({ ...commentsRepository })({
+      return await getPaginatedBranchComments({ commentsRepository })({
         ...args,
         branchId: parent.id
       })
@@ -286,6 +285,9 @@ export = {
     async commentCount(parent, args, context) {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ApolloForbiddenError('You are not authorized.')
+
+      const { getResourceCommentCount } = createCommentsRepository({ db: knexInstance })
+
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
@@ -293,25 +295,41 @@ export = {
     async commentCount(parent, args, context) {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ApolloForbiddenError('You are not authorized.')
+
+      const { getResourceCommentCount } = createCommentsRepository({ db: knexInstance })
+
       return await getResourceCommentCount({ resourceId: parent.id })
     }
   },
   CommentMutations: {
     async markViewed(_parent, args, ctx) {
+      if (!ctx.userId)
+        throw new ApolloForbiddenError('You are not authorized.')
+
       await authorizeCommentAccess({
         authCtx: ctx,
         commentId: args.commentId
       })
-      await markViewed(args.commentId, ctx.userId)
+
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
+      await markViewed({ commentsRepository })(args.commentId, ctx.userId)
+
       return true
     },
     async create(_parent, args, ctx) {
+      if (!ctx.userId)
+        throw new ApolloForbiddenError('You are not authorized.')
+
       await authorizeProjectCommentsAccess({
         projectId: args.input.projectId,
         authCtx: ctx,
         requireProjectRole: true
       })
-      return await createCommentThreadAndNotify(args.input, ctx.userId)
+
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
+      return await createCommentThreadAndNotify({ commentsRepository })(args.input, ctx.userId)
     },
     async reply(_parent, args, ctx) {
       await authorizeCommentAccess({
