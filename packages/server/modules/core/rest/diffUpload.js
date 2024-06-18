@@ -26,7 +26,10 @@ module.exports = (app) => {
 
     const objectList = JSON.parse(req.body.objects)
 
-    req.log.info(`Diffing ${objectList.length} objects.`)
+    req.log.info(
+      { objectCount: objectList.length },
+      'Diffing {objectList.length} objects.'
+    )
 
     const chunkSize = 1000
     const objectListChunks = chunk(objectList, chunkSize)
