@@ -81,8 +81,8 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { markRaw } from 'vue'
 import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
+import { sortBy, flatten } from 'lodash-es'
 
 defineEmits(['close'])
 
@@ -121,13 +121,21 @@ const rootNodes = computed(() => {
   if (!worldTree.value) return []
   // eslint-disable-next-line vue/no-side-effects-in-computed-properties
   expandLevel.value = -1
-  const nodes = []
   const rootNodes = worldTree.value._root.children as ExplorerNode[]
+
+  const results: Record<number, ExplorerNode[]> = {}
+  const unmatchedNodes: ExplorerNode[] = []
+
   for (const node of rootNodes) {
     const objectId = ((node.model as Record<string, unknown>).id as string)
       .split('/')
       .reverse()[0] as string
-    const resourceItem = resourceItems.value.find((res) => res.objectId === objectId)
+    const resourceItemIdx = resourceItems.value.findIndex(
+      (res) => res.objectId === objectId
+    )
+    const resourceItem =
+      resourceItemIdx !== -1 ? resourceItems.value[resourceItemIdx] : null
+
     const raw = node.model?.raw as Record<string, unknown>
     if (resourceItem?.modelId) {
       // Model resource
@@ -140,9 +148,18 @@ const rootNodes = computed(() => {
       raw.name = 'Object'
       raw.type = 'Single Object'
     }
-    nodes.push(node.model as ExplorerNode)
+
+    const res = node.model as ExplorerNode
+    if (resourceItem) {
+      ;(results[resourceItemIdx] = results[resourceItemIdx] || []).push(res)
+    } else {
+      unmatchedNodes.push(res)
+    }
   }
 
-  return nodes
+  return [
+    ...flatten(sortBy(Object.entries(results), (i) => i[0]).map((i) => i[1])),
+    ...unmatchedNodes
+  ]
 })
 </script>
