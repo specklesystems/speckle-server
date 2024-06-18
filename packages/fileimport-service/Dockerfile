@@ -33,7 +33,7 @@ RUN yarn workspaces focus --all
 # build shared libraries
 COPY packages/shared ./packages/shared/
 COPY packages/fileimport-service ./packages/fileimport-service/
-RUN yarn workspaces foreach run build -W
+RUN yarn workspaces foreach -W run build
 
 # Install python virtual env and python dependencies
 RUN apt-get update && \

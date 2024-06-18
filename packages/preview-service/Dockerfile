@@ -34,7 +34,7 @@ COPY packages/viewer ./packages/viewer/
 COPY packages/preview-service ./packages/preview-service/
 
 # This way the foreach only builds the frontend and its deps
-RUN yarn workspaces foreach run build -W
+RUN yarn workspaces foreach -W run build
 
 FROM node:18-bookworm-slim@sha256:c569d19289293797aefad0473a046d882f1b9eb0f444e9a0018648d5fd03c812 as node
 
