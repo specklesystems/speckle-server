@@ -71,8 +71,6 @@ COPY --from=build-stage /speckle-server/packages/preview-service ./preview-servi
 
 WORKDIR /speckle-server/packages/preview-service
 
-RUN npx @puppeteer/browsers install chrome@stable --path /puppeteer && \
-    chmod -R 777 /puppeteer && \
-    yarn workspaces focus --production
+RUN yarn workspaces focus --production
 
 ENTRYPOINT [ "tini", "--", "node", "bin/www" ]
