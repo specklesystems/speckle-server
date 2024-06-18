@@ -51,6 +51,7 @@ COPY --from=build-stage /speckle-server/wait /wait
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
+ENV PUPPETEER_CACHE_DIR=/puppeteer
 
 WORKDIR /speckle-server
 COPY .yarnrc.yml .
@@ -69,6 +70,9 @@ COPY --from=build-stage /speckle-server/packages/viewer ./viewer
 COPY --from=build-stage /speckle-server/packages/preview-service ./preview-service
 
 WORKDIR /speckle-server/packages/preview-service
-RUN yarn workspaces focus --production
+
+RUN npx @puppeteer/browsers install chrome@stable --path /puppeteer && \
+    chmod -R 777 /puppeteer && \
+    yarn workspaces focus --production
 
 ENTRYPOINT [ "tini", "--", "node", "bin/www" ]
