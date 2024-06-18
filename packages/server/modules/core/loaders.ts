@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import DataLoader from 'dataloader'
 import {
   getBatchUserFavoriteData,
@@ -56,8 +55,38 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { getAutomationFunctionRunResultVersions } from '@/modules/automations/repositories/automations'
+import { getAutomationFunctionRunResultVersions } from '@/modules/betaAutomations/repositories/automations'
 import { getAppScopes } from '@/modules/auth/repositories'
+import {
+  AutomateRevisionFunctionRecord,
+  AutomationRecord,
+  AutomationRevisionRecord,
+  AutomationRunTriggerRecord,
+  AutomationTriggerDefinitionRecord
+} from '@/modules/automate/helpers/types'
+import {
+  getAutomationRevisions,
+  getAutomationRunsTriggers,
+  getAutomations,
+  getFunctionAutomationCounts,
+  getLatestAutomationRevisions,
+  getRevisionsFunctions,
+  getRevisionsTriggerDefinitions
+} from '@/modules/automate/repositories/automations'
+import {
+  getFunction,
+  getFunctionReleases
+} from '@/modules/automate/clients/executionEngine'
+import {
+  FunctionReleaseSchemaType,
+  FunctionSchemaType
+} from '@/modules/automate/helpers/executionEngine'
+import {
+  ExecutionEngineFailedResponseError,
+  ExecutionEngineNetworkError
+} from '@/modules/automate/errors/executionEngine'
+
+const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
 /**
  * TODO: Lazy load DataLoaders to reduce memory usage
@@ -107,6 +136,31 @@ export function buildRequestLoaders(
 
   const loaders = {
     streams: {
+      getAutomation: (() => {
+        type AutomationDataLoader = DataLoader<string, Nullable<AutomationRecord>>
+        const streamAutomationLoaders = new Map<string, AutomationDataLoader>()
+        return {
+          clearAll: () => streamAutomationLoaders.clear(),
+          forStream(streamId: string): AutomationDataLoader {
+            let loader = streamAutomationLoaders.get(streamId)
+            if (!loader) {
+              loader = createLoader<string, Nullable<AutomationRecord>>(
+                async (automationIds) => {
+                  const results = keyBy(
+                    await getAutomations({ automationIds: automationIds.slice() }),
+                    (a) => a.id
+                  )
+                  return automationIds.map((i) => results[i] || null)
+                }
+              )
+              streamAutomationLoaders.set(streamId, loader)
+            }
+
+            return loader
+          }
+        }
+      })(),
+
       /**
        * Get a specific commit of a specific stream. Each stream ID technically has its own loader &
        * thus its own query.
@@ -189,9 +243,12 @@ export function buildRequestLoaders(
         const results = await getStreamRoles(userId, streamIds.slice())
         return streamIds.map((id) => results[id] || null)
       }),
+      /**
+       * Works in FE2 mode - skips `main` if it doesn't have any versions
+       */
       getBranchCount: createLoader<string, number>(async (streamIds) => {
         const results = keyBy(
-          await getStreamBranchCounts(streamIds.slice()),
+          await getStreamBranchCounts(streamIds.slice(), { skipEmptyMain: true }),
           'streamId'
         )
         return streamIds.map((i) => results[i]?.count || 0)
@@ -245,7 +302,7 @@ export function buildRequestLoaders(
         }
       })(),
       /**
-       * Get a specific branch of a specific stream. Each stream ID technically has its own loader &
+       * Get a specific pending model (upload) of a specific stream. Each stream ID technically has its own loader &
        * thus its own query.
        */
       getStreamPendingBranchByName: (() => {
@@ -343,6 +400,10 @@ export function buildRequestLoaders(
           'commitId'
         )
         return commitIds.map((i) => results[i]?.count || 0)
+      }),
+      getById: createLoader<string, Nullable<CommitRecord>>(async (commitIds) => {
+        const results = keyBy(await getCommits(commitIds.slice()), (c) => c.id)
+        return commitIds.map((i) => results[i] || null)
       })
     },
     comments: {
@@ -486,6 +547,106 @@ export function buildRequestLoaders(
           })
         },
         { cacheKeyFn: (key) => `${key[0]}:${key[1]}` }
+      )
+    },
+    automations: {
+      getFunctionAutomationCount: createLoader<string, number>(async (functionIds) => {
+        const results = await getFunctionAutomationCounts({
+          functionIds: functionIds.slice()
+        })
+        return functionIds.map((i) => results[i] || 0)
+      }),
+      getAutomation: createLoader<string, Nullable<AutomationRecord>>(async (ids) => {
+        const results = keyBy(
+          await getAutomations({ automationIds: ids.slice() }),
+          (a) => a.id
+        )
+        return ids.map((i) => results[i] || null)
+      }),
+      getAutomationRevision: createLoader<string, Nullable<AutomationRevisionRecord>>(
+        async (ids) => {
+          const results = keyBy(
+            await getAutomationRevisions({ automationRevisionIds: ids.slice() }),
+            (a) => a.id
+          )
+          return ids.map((i) => results[i] || null)
+        }
+      ),
+      getLatestAutomationRevision: createLoader<
+        string,
+        Nullable<AutomationRevisionRecord>
+      >(async (ids) => {
+        const results = await getLatestAutomationRevisions({
+          automationIds: ids.slice()
+        })
+        return ids.map((i) => results[i] || null)
+      }),
+      getRevisionTriggerDefinitions: createLoader<
+        string,
+        AutomationTriggerDefinitionRecord[]
+      >(async (ids) => {
+        const results = await getRevisionsTriggerDefinitions({
+          automationRevisionIds: ids.slice()
+        })
+        return ids.map((i) => results[i] || [])
+      }),
+      getRevisionFunctions: createLoader<string, AutomateRevisionFunctionRecord[]>(
+        async (ids) => {
+          const results = await getRevisionsFunctions({
+            automationRevisionIds: ids.slice()
+          })
+          return ids.map((i) => results[i] || [])
+        }
+      ),
+      getRunTriggers: createLoader<string, AutomationRunTriggerRecord[]>(
+        async (ids) => {
+          const results = await getAutomationRunsTriggers({
+            automationRunIds: ids.slice()
+          })
+          return ids.map((i) => results[i] || [])
+        }
+      )
+    },
+    automationsApi: {
+      getFunction: createLoader<string, Nullable<FunctionSchemaType>>(async (fnIds) => {
+        const results = await Promise.all(
+          fnIds.map(async (fnId) => {
+            try {
+              return await getFunction({ functionId: fnId })
+            } catch (e) {
+              const isNotFound =
+                e instanceof ExecutionEngineFailedResponseError &&
+                e.response.statusMessage === 'FunctionNotFound'
+              if (e instanceof ExecutionEngineNetworkError || isNotFound) {
+                return null
+              }
+
+              throw e
+            }
+          })
+        )
+
+        return results
+      }),
+      getFunctionRelease: createLoader<
+        [fnId: string, fnReleaseId: string],
+        Nullable<FunctionReleaseSchemaType>,
+        string
+      >(
+        async (keys) => {
+          const results = keyBy(
+            await getFunctionReleases({
+              ids: keys.map(([fnId, fnReleaseId]) => ({
+                functionId: fnId,
+                functionReleaseId: fnReleaseId
+              }))
+            }),
+            (r) => simpleTupleCacheKey([r.functionId, r.functionVersionId])
+          )
+
+          return keys.map((k) => results[simpleTupleCacheKey(k)] || null)
+        },
+        { cacheKeyFn: simpleTupleCacheKey }
       )
     }
   }

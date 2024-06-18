@@ -1,4 +1,4 @@
-import { SpeckleViewer } from '@speckle/shared'
+import { SpeckleViewer, type Optional } from '@speckle/shared'
 import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'
 import { graphql } from '~/lib/common/generated/gql'
 import { convertThrowIntoFetchResult } from '~/lib/common/helpers/graphql'
@@ -9,6 +9,7 @@ import {
   projectRoute,
   serverManagementRoute
 } from '~/lib/common/helpers/route'
+import { ViewerHashStateKeys } from '~/lib/viewer/composables/setup/urlHashState'
 
 const legacyBranchMetadataQuery = graphql(`
   query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {
@@ -52,9 +53,16 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (viewerStreamId && viewerType && viewerId) {
     const resourceIdStringBuilder = SpeckleViewer.ViewerRoute.resourceBuilder()
 
+    // Resolve comment ID, if any
+    const commentId = to.query['cId'] as Optional<string>
+    const hashState: Optional<Partial<Record<ViewerHashStateKeys, string>>> =
+      commentId?.length
+        ? { [ViewerHashStateKeys.FocusedThreadId]: commentId }
+        : undefined
+
     if (viewerType === 'objects') {
       const resourceIdString = resourceIdStringBuilder.addObject(viewerId).toString()
-      return navigateTo(modelRoute(viewerStreamId, resourceIdString))
+      return navigateTo(modelRoute(viewerStreamId, resourceIdString, hashState))
     } else {
       const { data } = await apollo
         .query({
@@ -68,7 +76,8 @@ export default defineNuxtRouteMiddleware(async (to) => {
         branchId
           ? modelRoute(
               viewerStreamId,
-              resourceIdStringBuilder.addModel(branchId, viewerId).toString()
+              resourceIdStringBuilder.addModel(branchId, viewerId).toString(),
+              hashState
             )
           : projectRoute(viewerStreamId)
       )

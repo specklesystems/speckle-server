@@ -26,9 +26,13 @@ const ServerAcl = () => ServerAclSchema.knex()
  * @return {void}
  */
 async function validateScopes(scopes, scope) {
-  if (!scopes) throw new ForbiddenError('You do not have the required privileges.')
+  const errMsg = `Your auth token does not have the required scope${
+    scope?.length ? ': ' + scope + '.' : '.'
+  }`
+
+  if (!scopes) throw new ForbiddenError(errMsg, { scope })
   if (scopes.indexOf(scope) === -1 && scopes.indexOf('*') === -1)
-    throw new ForbiddenError('You do not have the required privileges.')
+    throw new ForbiddenError(errMsg, { scope })
 }
 
 /**
@@ -61,7 +65,7 @@ async function authorizeResolver(
       resourceAccessRules: userResourceAccessLimits
     })
   if (isResourceLimited) {
-    throw new ForbiddenError('You do not have access to this resource.')
+    throw new ForbiddenError('You are not authorized to access this resource.')
   }
 
   if (adminOverrideEnabled()) {
@@ -75,7 +79,7 @@ async function authorizeResolver(
       .where({ id: resourceId })
       .first()
     if (isPublic && role.weight < 200) return true
-  } catch (e) {
+  } catch {
     throw new ApolloError(
       `Resource of type ${role.resourceTarget} with ${resourceId} not found`
     )
@@ -86,7 +90,7 @@ async function authorizeResolver(
     : null
 
   if (!userAclEntry) {
-    throw new ForbiddenError('You do not have access to this resource.')
+    throw new ForbiddenError('You are not authorized to access this resource.')
   }
 
   userAclEntry.role = roles.find((r) => r.name === userAclEntry.role)

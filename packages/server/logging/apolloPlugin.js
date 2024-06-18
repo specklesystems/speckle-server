@@ -1,4 +1,3 @@
-/* eslint-disable no-unreachable */
 /* eslint-disable camelcase */
 /* istanbul ignore file */
 const Sentry = require('@sentry/node')

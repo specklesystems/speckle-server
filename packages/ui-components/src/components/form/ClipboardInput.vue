@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div class="relative group bg-foundation-page p-2 rounded-lg pr-12">
     <div

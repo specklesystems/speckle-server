@@ -73,7 +73,6 @@ export function vueWithMixins<
     (m): m is A | B | C | D | E => !!m
   )
 
-  // eslint-disable-next-line vue/require-name-property
   return Vue.extend({
     mixins
   }) as VueWithMixins<A, B, C, D, E>

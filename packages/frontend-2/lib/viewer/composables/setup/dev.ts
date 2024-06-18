@@ -7,7 +7,6 @@ function useDebugViewerEvents() {
   const logger = useLogger()
 
   for (const [key, val] of Object.entries(ViewerEvent)) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     useViewerEventListener(val, (...args) => logger.debug(key, ...args))
   }
 }
@@ -27,8 +26,8 @@ function useDebugViewer() {
 }
 
 export function setupDebugMode() {
-  if (process.server) return
-  if (!process.dev) return
+  if (import.meta.server) return
+  if (!import.meta.dev) return
 
   // useDebugViewerEvents()
   useDebugViewer()

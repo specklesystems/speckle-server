@@ -52,7 +52,6 @@ import { createRateLimiterMiddleware } from '@/modules/core/services/ratelimiter
 
 import { get, has, isString, toNumber } from 'lodash'
 import { corsMiddleware } from '@/modules/core/configs/cors'
-import { IMocks } from '@graphql-tools/mock'
 import {
   authContextMiddleware,
   buildContext,
@@ -61,6 +60,9 @@ import {
 } from '@/modules/shared/middleware'
 import { GraphQLError } from 'graphql'
 import { redactSensitiveVariables } from '@/logging/loggingHelper'
+import { buildMocksConfig } from '@/modules/mocks'
+import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
+import { migrateDbToLatest } from '@/db/migrations'
 
 let graphqlServer: ApolloServer
 
@@ -205,7 +207,6 @@ function buildApolloSubscriptionServer(
         })
         const ctx = baseParams.context as GraphQLContext
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         baseParams.formatResponse = (val: SubscriptionResponse) => {
           ctx.loaders.clearAll()
           logSubscriptionOperation({ ctx, execParams: baseParams, response: val })
@@ -237,24 +238,6 @@ function buildApolloSubscriptionServer(
 }
 
 /**
- * Define mocking config in dev env
- * https://www.apollographql.com/docs/apollo-server/v3/testing/mocking
- */
-async function buildMocksConfig(): Promise<{
-  mocks: boolean | IMocks
-  mockEntireSchema: boolean
-}> {
-  const isDebugEnv = isDevEnv()
-  if (!isDebugEnv) return { mocks: false, mockEntireSchema: false } // we def don't want this on in prod
-
-  // feel free to define mocks for your dev env below
-  // const roles = Object.values(Roles.Stream)
-  // const { faker } = await import('@faker-js/faker')
-
-  return { mocks: false, mockEntireSchema: false }
-}
-
-/**
  * Create Apollo Server instance
  * @param optionOverrides Optionally override ctor options
  * @param subscriptionServerResolver If you expect to use subscriptions on this instance,
@@ -265,8 +248,7 @@ export async function buildApolloServer(
   subscriptionServerResolver?: () => SubscriptionServer
 ): Promise<ApolloServer> {
   const debug = optionOverrides?.debug || isDevEnv() || isTestEnv()
-  const schema = ModulesSetup.graphSchema()
-  const { mockEntireSchema, mocks } = await buildMocksConfig()
+  const schema = ModulesSetup.graphSchema(await buildMocksConfig())
 
   const server = new ApolloServer({
     schema,
@@ -305,8 +287,6 @@ export async function buildApolloServer(
     csrfPrevention: true,
     formatError: buildErrorFormatter(debug),
     debug,
-    mocks,
-    mockEntireSchema,
     ...optionOverrides
   })
   await server.start()
@@ -329,7 +309,7 @@ export async function init() {
 
   // Moves things along automatically on restart.
   // Should perhaps be done manually?
-  await knex.migrate.latest()
+  await migrateDbToLatest(knex)()
 
   app.use(cookieParser())
   app.use(DetermineRequestIdMiddleware)
@@ -379,6 +359,9 @@ export async function init() {
   // Init HTTP server & subscription server
   const server = http.createServer(app)
   subscriptionServer = buildApolloSubscriptionServer(graphqlServer, server)
+
+  // At the very end adding default error handler middleware
+  app.use(defaultErrorHandler)
 
   return { app, graphqlServer, server, subscriptionServer }
 }

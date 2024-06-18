@@ -1,8 +1,5 @@
 import { DoubleSide, Plane, Side, Vector2, WebGLRenderer } from 'three'
-import {
-  EffectComposer,
-  Pass
-} from 'three/examples/jsm/postprocessing/EffectComposer.js'
+import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
 import Batcher from '../batching/Batcher'
 import SpeckleRenderer from '../SpeckleRenderer'
 import { ApplySAOPass } from './ApplyAOPass'
@@ -13,20 +10,21 @@ import {
   DefaultDynamicAOPassParams,
   DynamicSAOPass,
   DynamicAOOutputType,
-  DynamicAOPassParams,
+  type DynamicAOPassParams,
   NormalsType
 } from './DynamicAOPass'
 import {
   DefaultStaticAoPassParams,
   StaticAOPass,
-  StaticAoPassParams
+  type StaticAoPassParams
 } from './StaticAOPass'
-import { RenderType, SpecklePass } from './SpecklePass'
+import { BaseSpecklePass, RenderType, type SpecklePass } from './SpecklePass'
 import { ColorPass } from './ColorPass'
 import { StencilPass } from './StencilPass'
 import { StencilMaskPass } from './StencilMaskPass'
 import { OverlayPass } from './OverlayPass'
 import { ObjectLayers } from '../../IViewer'
+import type { BatchUpdateRange } from '../batching/Batch'
 
 export enum PipelineOutputType {
   DEPTH_RGBA = 0,
@@ -61,40 +59,42 @@ export const DefaultPipelineOptions: PipelineOptions = {
 }
 
 export class Pipeline {
-  private _renderer: WebGLRenderer = null
-  private _batcher: Batcher = null
+  private _renderer: WebGLRenderer
+  private _batcher: Batcher
   private _pipelineOptions: PipelineOptions = Object.assign({}, DefaultPipelineOptions)
   private _needsProgressive = false
   private _resetFrame = false
-  private _composer: EffectComposer = null
+  private _composer: EffectComposer
 
-  private depthPass: DepthPass = null
-  private normalsPass: NormalsPass = null
-  private stencilPass: StencilPass = null
-  private renderPass: ColorPass = null
-  private stencilMaskPass: StencilMaskPass = null
-  private dynamicAoPass: DynamicSAOPass = null
-  private applySaoPass: ApplySAOPass = null
-  private copyOutputPass: CopyOutputPass = null
-  private staticAoPass: StaticAOPass = null
-  private overlayPass: OverlayPass = null
+  private depthPass: DepthPass
+  private normalsPass: NormalsPass
+  private stencilPass: StencilPass
+  private renderPass: ColorPass
+  private stencilMaskPass: StencilMaskPass
+  private dynamicAoPass: DynamicSAOPass
+  private applySaoPass: ApplySAOPass
+  private copyOutputPass: CopyOutputPass
+  private staticAoPass: StaticAOPass
+  private overlayPass: OverlayPass
 
   private drawingSize: Vector2 = new Vector2()
   private _renderType: RenderType = RenderType.NORMAL
   private accumulationFrame = 0
 
-  private onBeforePipelineRender = null
-  private onAfterPipelineRender = null
+  private onBeforePipelineRender: (() => void) | null = null
+  private onAfterPipelineRender: (() => void) | null = null
 
   public set pipelineOptions(options: Partial<PipelineOptions>) {
     Object.assign(this._pipelineOptions, options)
     this.dynamicAoPass.setParams(options.dynamicAoParams)
     this.staticAoPass.setParams(options.staticAoParams)
     this.accumulationFrame = 0
-    this.depthPass.depthSide = options.depthSide
-    this.applySaoPass.setAccumulationFrames(options.accumulationFrames)
-    this.staticAoPass.setAccumulationFrames(options.accumulationFrames)
-    this.pipelineOutput = options.pipelineOutput
+    if (options.depthSide) this.depthPass.depthSide = options.depthSide
+    if (options.accumulationFrames) {
+      this.applySaoPass.setAccumulationFrames(options.accumulationFrames)
+      this.staticAoPass.setAccumulationFrames(options.accumulationFrames)
+    }
+    if (options.pipelineOutput) this.pipelineOutput = options.pipelineOutput
   }
 
   public get pipelineOptions(): PipelineOptions {
@@ -102,7 +102,7 @@ export class Pipeline {
   }
 
   public set pipelineOutput(outputType: PipelineOutputType) {
-    let pipeline = []
+    let pipeline: Array<SpecklePass> = []
     this.clearPipeline()
     switch (outputType) {
       case PipelineOutputType.FINAL:
@@ -237,8 +237,11 @@ export class Pipeline {
     this._renderer = renderer
     this._batcher = batcher
     this._composer = new EffectComposer(renderer)
-    this._composer.readBuffer = null
-    this._composer.writeBuffer = null
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(this._composer as any).readBuffer = null
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    ;(this._composer as any).writeBuffer = null
   }
 
   public configure() {
@@ -270,7 +273,10 @@ export class Pipeline {
     ])
     this.stencilMaskPass.setLayers([ObjectLayers.STREAM_CONTENT_MESH])
     this.overlayPass.setLayers([ObjectLayers.OVERLAY, ObjectLayers.MEASUREMENTS])
-    let restoreVisibility, opaque, stencil, depth
+    let restoreVisibility: Record<string, BatchUpdateRange>,
+      opaque: Record<string, BatchUpdateRange>,
+      stencil: Record<string, BatchUpdateRange>,
+      depth: Record<string, BatchUpdateRange>
 
     this.onBeforePipelineRender = () => {
       restoreVisibility = this._batcher.saveVisiblity()
@@ -381,7 +387,7 @@ export class Pipeline {
 
   private setPipeline(pipeline: Array<SpecklePass>) {
     for (let k = 0; k < pipeline.length; k++) {
-      this._composer.addPass(pipeline[k] as unknown as Pass)
+      this._composer.addPass(pipeline[k] as BaseSpecklePass)
     }
   }
 
@@ -397,6 +403,8 @@ export class Pipeline {
   }
 
   public update(renderer: SpeckleRenderer) {
+    if (!renderer.scene || !renderer.renderingCamera) return
+
     this.stencilPass.update(renderer.scene, renderer.renderingCamera)
     this.renderPass.update(renderer.scene, renderer.renderingCamera)
     this.stencilMaskPass.update(renderer.scene, renderer.renderingCamera)
@@ -413,7 +421,7 @@ export class Pipeline {
 
   public render(): boolean {
     this._renderer.getDrawingBufferSize(this.drawingSize)
-    if (this.drawingSize.length() === 0) return
+    if (this.drawingSize.length() === 0) return false
 
     if (this.onBeforePipelineRender) this.onBeforePipelineRender()
 

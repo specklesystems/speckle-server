@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import type { Optional } from '@speckle/shared'
 import { get, omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
@@ -75,11 +74,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   }
 
   // Set up logger
-  let logger: ReturnType<typeof import('@speckle/shared').Observability.getLogger>
+  let logger: ReturnType<
+    typeof import('@speckle/shared/dist/esm/observability/index').getLogger
+  >
   const errorHandlers: AbstractErrorHandler[] = []
   const unhandledErrorHandlers: AbstractUnhandledErrorHandler[] = []
 
-  if (process.server) {
+  if (import.meta.server) {
     const { buildLogger, enableDynamicBindings, serializeRequest } = await import(
       '~/server/lib/core/helpers/observability'
     )
@@ -227,7 +228,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     onError: (params) => {
       const { otherData } = params
 
-      if (process.server && otherData?.isAppError) {
+      if (import.meta.server && otherData?.isAppError) {
         serverFatalError = params
       }
 
@@ -236,7 +237,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   })
 
   // Unhandled error handler
-  if (process.client && window) {
+  if (import.meta.client && window) {
     const unhandledHandler = (event: ErrorEvent | PromiseRejectionEvent) => {
       const handlers = transports.filter(
         (t): t is SetRequired<typeof t, 'onUnhandledError'> => !!t.onUnhandledError
@@ -265,7 +266,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     logger.error(err, 'Unhandled error in routing', {
       to: to.path,
       from: from?.path,
-      isAppError: !!process.server
+      isAppError: !!import.meta.server
     })
   })
 
@@ -280,7 +281,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   })
 
   // Hydrate server fatal error to CSR
-  if (process.server) {
+  if (import.meta.server) {
     nuxtApp.hook('app:rendered', () => {
       let serializableError: Optional<AbstractErrorHandlerParams> = undefined
       try {
@@ -320,7 +321,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
         invokeTransportsWithPayload(serverFatalError)
 
-        if (process.dev) {
+        if (import.meta.dev) {
           // intentionally skipping error pipeline:
           // eslint-disable-next-line no-console
           console.error('Fatal error occurred on server:', serverFatalError)

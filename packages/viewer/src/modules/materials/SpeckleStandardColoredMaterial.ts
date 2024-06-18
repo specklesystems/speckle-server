@@ -1,8 +1,8 @@
 import { speckleStandardColoredVert } from './shaders/speckle-standard-colored-vert'
 import { speckleStandardColoredFrag } from './shaders/speckle-standard-colored-frag'
-import { Texture, NearestFilter } from 'three'
+import { Texture, NearestFilter, type MeshStandardMaterialParameters } from 'three'
 import SpeckleStandardMaterial from './SpeckleStandardMaterial'
-import { Uniforms } from './SpeckleMaterial'
+import { type Uniforms } from './SpeckleMaterial'
 
 class SpeckleStandardColoredMaterial extends SpeckleStandardMaterial {
   protected get vertexProgram(): string {
@@ -17,7 +17,7 @@ class SpeckleStandardColoredMaterial extends SpeckleStandardMaterial {
     return { ...super.uniformsDef, gradientRamp: null }
   }
 
-  constructor(parameters, defines = ['USE_RTE']) {
+  constructor(parameters: MeshStandardMaterialParameters, defines = ['USE_RTE']) {
     super(parameters, defines)
   }
 

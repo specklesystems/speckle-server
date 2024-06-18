@@ -4,24 +4,27 @@ import {
   DoubleSide,
   Material,
   NoBlending,
+  OrthographicCamera,
+  PerspectiveCamera,
   Plane,
   Scene,
   Texture,
-  WebGLRenderTarget
+  WebGLRenderTarget,
+  WebGLRenderer
 } from 'three'
 import SpeckleNormalMaterial from '../materials/SpeckleNormalMaterial'
-import { BaseSpecklePass, SpecklePass } from './SpecklePass'
+import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
 
 export class NormalsPass extends BaseSpecklePass implements SpecklePass {
   private renderTarget: WebGLRenderTarget
-  private normalsMaterial: SpeckleNormalMaterial = null
+  private normalsMaterial: SpeckleNormalMaterial
   private scene: Scene
   private camera: Camera
 
   private colorBuffer: Color = new Color()
 
-  public onBeforeRender: () => void = null
-  public onAfterRender: () => void = null
+  public onBeforeRender: (() => void) | undefined = undefined
+  public onAfterRender: (() => void) | undefined = undefined
 
   get displayName(): string {
     return 'GEOMETRY-NORMALS'
@@ -55,16 +58,13 @@ export class NormalsPass extends BaseSpecklePass implements SpecklePass {
     this.normalsMaterial.clippingPlanes = planes
   }
 
-  public update(scene: Scene, camera: Camera) {
+  public update(scene: Scene, camera: PerspectiveCamera | OrthographicCamera) {
     this.camera = camera
     this.scene = scene
   }
 
-  public render(renderer, writeBuffer, readBuffer) {
-    writeBuffer
-    readBuffer
-
-    this.onBeforeRender()
+  public render(renderer: WebGLRenderer) {
+    if (this.onBeforeRender) this.onBeforeRender()
     renderer.getClearColor(this.colorBuffer)
     const originalClearAlpha = renderer.getClearAlpha()
     const originalAutoClear = renderer.autoClear
@@ -91,7 +91,7 @@ export class NormalsPass extends BaseSpecklePass implements SpecklePass {
     renderer.autoClear = originalAutoClear
     renderer.setClearColor(this.colorBuffer)
     renderer.setClearAlpha(originalClearAlpha)
-    this.onAfterRender()
+    if (this.onAfterRender) this.onAfterRender()
   }
 
   public setSize(width: number, height: number) {

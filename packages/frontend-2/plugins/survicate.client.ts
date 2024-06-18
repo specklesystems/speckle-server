@@ -55,7 +55,8 @@ export default defineNuxtPlugin(async () => {
           (user, { resolveDistinctId }) => {
             const distinctId = resolveDistinctId(user)
             if (distinctId && survicateInstance) {
-              survicateInstance.setVisitorTraits({ distinctId })
+              // eslint-disable-next-line camelcase
+              survicateInstance.setVisitorTraits({ user_id: distinctId, distinctId })
             }
           },
           { immediate: true }
@@ -79,8 +80,7 @@ function useInitMainSurvey() {
   const onboardingOrFeedbackDateString = useSynchronizedCookie<string | undefined>(
     'onboardingOrFeedbackDate',
     {
-      default: () => dayjs().startOf('day').format('YYYY-MM-DD'),
-      expires: dayjs().add(999, 'day').toDate()
+      default: () => dayjs().startOf('day').format('YYYY-MM-DD')
     }
   )
   const { projectVersionCount } = useActiveUser()

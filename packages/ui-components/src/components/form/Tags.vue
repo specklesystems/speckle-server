@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <Combobox
     v-model="selectedItems"
@@ -335,9 +336,9 @@ const resolveAutocompleteItems = async () => {
   isAutocompleteLoading.value = false
 }
 const debouncedResolve = debounce(resolveAutocompleteItems, 1000)
-const debouncedResolveAndMarkLoading = () => {
+const debouncedResolveAndMarkLoading = async () => {
   isAutocompleteLoading.value = true
-  debouncedResolve()
+  await debouncedResolve()
 }
 
 const onQueryInput = (e: Event, forceCreateFromInput?: boolean) => {
@@ -386,7 +387,7 @@ watch(isAutocompleteOpen, (newIsOpen, oldIsOpen) => {
 })
 
 watch(query, () => {
-  debouncedResolveAndMarkLoading()
+  void debouncedResolveAndMarkLoading()
 })
 
 // // syncing value w/ vee-validate internal state
@@ -399,7 +400,7 @@ watch(query, () => {
 // )
 
 onMounted(() => {
-  resolveAutocompleteItems()
+  void resolveAutocompleteItems()
 })
 
 defineExpose({ resolveAutocompleteItems })

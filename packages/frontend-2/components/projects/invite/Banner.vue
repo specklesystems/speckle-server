@@ -124,7 +124,7 @@ const onLoginClick = () => {
   })
 }
 
-if (process.client) {
+if (import.meta.client) {
   watch(
     () => props.autoAccept,
     async (newVal, oldVal) => {

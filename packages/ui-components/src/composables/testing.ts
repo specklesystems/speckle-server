@@ -16,7 +16,7 @@ export const useStorybookVmodel = (params: {
   blockChanges?: boolean
 }) => {
   const { args, prop, ctx, blockChanges } = params
-  const storybookAction = action(`update:${prop as string}`)
+  const storybookAction = action(`update:${prop}`)
 
   const modelValue = computed({
     get: () => params.args[prop],

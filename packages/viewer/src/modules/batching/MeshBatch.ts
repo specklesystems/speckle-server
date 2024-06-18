@@ -9,37 +9,33 @@ import {
   DynamicDrawUsage,
   Sphere
 } from 'three'
-import { GeometryType, BatchUpdateRange } from './Batch'
-import { DrawGroup } from './Batch'
 import { PrimitiveBatch } from './PrimitiveBatch'
 import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
 import Logger from 'js-logger'
 import { DrawRanges } from './DrawRanges'
 import { NodeRenderView } from '../tree/NodeRenderView'
+import { type BatchUpdateRange, type DrawGroup, GeometryType } from './Batch'
 import { BatchObject } from './BatchObject'
 import { Geometry } from '../converter/Geometry'
 import { ObjectLayers } from '../../IViewer'
 
 export class MeshBatch extends PrimitiveBatch {
-  protected primitive: SpeckleMesh
+  protected primitive!: SpeckleMesh
   protected transformStorage: TransformStorage
 
-  private indexBuffer0: BufferAttribute
-  private indexBuffer1: BufferAttribute
+  private indexBuffer0!: BufferAttribute
+  private indexBuffer1!: BufferAttribute
   private indexBufferIndex = 0
 
-  private drawRanges: DrawRanges = new DrawRanges()
+  protected drawRanges: DrawRanges = new DrawRanges()
 
   get bounds(): Box3 {
     return this.primitive.TAS.getBoundingBox(new Box3())
   }
 
   get minDrawCalls(): number {
-    return [
-      ...Array.from(
-        new Set(this.primitive.geometry.groups.map((value) => value.materialIndex))
-      )
-    ].length
+    return [...Array.from(new Set(this.groups.map((value) => value.materialIndex)))]
+      .length
   }
 
   get triCount(): number {
@@ -86,12 +82,11 @@ export class MeshBatch extends PrimitiveBatch {
   protected shuffleMaterialOrder(a: DrawGroup, b: DrawGroup): number {
     const materialA: Material = this.materials[a.materialIndex]
     const materialB: Material = this.materials[b.materialIndex]
-    const visibleOrder =
-      +materialB.visible +
-      +materialB.colorWrite -
-      (+materialA.visible + +materialA.colorWrite)
+    const visibleOrder = +materialB.visible - +materialA.visible
+    const colorWriteOrder = +materialB.colorWrite - +materialA.colorWrite
     const transparentOrder = +materialA.transparent - +materialB.transparent
     if (visibleOrder !== 0) return visibleOrder
+    if (colorWriteOrder !== 0) return colorWriteOrder
     return transparentOrder
   }
 
@@ -100,6 +95,9 @@ export class MeshBatch extends PrimitiveBatch {
     end: number,
     value: number
   ): { minIndex: number; maxIndex: number } {
+    if (!this.primitive.geometry.index) {
+      throw new Error(`Invalid geometry on batch ${this.id}`)
+    }
     const index = this.primitive.geometry.index.array as number[]
     const data = this.gradientIndexBuffer.array as number[]
     let minVertexIndex = Infinity
@@ -122,7 +120,7 @@ export class MeshBatch extends PrimitiveBatch {
     }
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
+  public setDrawRanges(ranges: BatchUpdateRange[]) {
     // const current = this.groups.slice()
     // const incoming = ranges.slice()
     ranges.forEach((value: BatchUpdateRange) => {
@@ -130,24 +128,22 @@ export class MeshBatch extends PrimitiveBatch {
         value.material = this.primitive.getCachedMaterial(value.material)
       }
     })
-    const materials = ranges.map((val) => {
-      return val.material
+    const materials: Array<Material> = ranges.map((val: BatchUpdateRange) => {
+      return val.material as Material
     })
-    const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
+    const uniqueMaterials: Array<Material> = [
+      ...Array.from(new Set(materials.map((value: Material) => value)))
+    ]
 
     for (let k = 0; k < uniqueMaterials.length; k++) {
       if (!this.materials.includes(uniqueMaterials[k]))
         this.materials.push(uniqueMaterials[k])
     }
 
-    this.primitive.geometry.groups = this.drawRanges.integrateRanges(
-      this.groups,
-      this.materials,
-      ranges
-    )
+    this.groups = this.drawRanges.integrateRanges(this.groups, this.materials, ranges)
 
     let count = 0
-    this.primitive.geometry.groups.forEach((value) => (count += value.count))
+    this.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {
       // Logger.error('Current -> ', current)
       // Logger.error('Incoming -> ', incoming)
@@ -158,7 +154,7 @@ export class MeshBatch extends PrimitiveBatch {
         }, ${this.getCount()}, ${this.getCount() - count}`
       )
     }
-    this.setBatchBuffers(...ranges)
+    this.setBatchBuffers(ranges)
     this.cleanMaterials()
 
     if (this.drawCalls > this.minDrawCalls + 2) {
@@ -192,17 +188,26 @@ export class MeshBatch extends PrimitiveBatch {
     this.primitive.setBatchMaterial(this.batchMaterial)
   }
 
-  public buildBatch(): void {
+  public buildBatch(): Promise<void> {
     let indicesCount = 0
     let attributeCount = 0
     for (let k = 0; k < this.renderViews.length; k++) {
-      indicesCount += this.renderViews[k].renderData.geometry.attributes.INDEX.length
-      attributeCount +=
-        this.renderViews[k].renderData.geometry.attributes.POSITION.length
+      const ervee = this.renderViews[k]
+      /** Catering to typescript
+       *  There is no unniverse where indices or positions are undefined at this point
+       */
+      if (
+        !ervee.renderData.geometry.attributes ||
+        !ervee.renderData.geometry.attributes.INDEX
+      ) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
+      }
+      indicesCount += ervee.renderData.geometry.attributes.INDEX.length
+      attributeCount += ervee.renderData.geometry.attributes.POSITION.length
     }
 
     const hasVertexColors =
-      this.renderViews[0].renderData.geometry.attributes.COLOR !== undefined
+      this.renderViews[0].renderData.geometry.attributes?.COLOR !== undefined
     const indices = new Uint32Array(indicesCount)
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(hasVertexColors ? attributeCount : 0)
@@ -215,6 +220,12 @@ export class MeshBatch extends PrimitiveBatch {
 
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
+      /** Catering to typescript
+       *  There is no unniverse where indices or positions are undefined at this point
+       */
+      if (!geometry.attributes || !geometry.attributes.INDEX) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
+      }
       indices.set(
         geometry.attributes.INDEX.map((val) => val + offset / 3),
         arrayOffset
@@ -246,7 +257,7 @@ export class MeshBatch extends PrimitiveBatch {
       indices,
       position,
       batchIndices,
-      hasVertexColors ? color : null
+      hasVertexColors ? color : undefined
     )
 
     this.primitive = new SpeckleMesh(geometry)
@@ -265,6 +276,8 @@ export class MeshBatch extends PrimitiveBatch {
     batchObjects.forEach((element: BatchObject) => {
       element.renderView.disposeGeometry()
     })
+
+    return Promise.resolve()
   }
 
   protected makeMeshGeometry(
@@ -310,12 +323,12 @@ export class MeshBatch extends PrimitiveBatch {
     return geometry
   }
 
-  public getRenderView(index: number): NodeRenderView {
+  public getRenderView(index: number): NodeRenderView | null {
     index
     Logger.warn('Deprecated! Use BatchObject')
     return null
   }
-  public getMaterialAtIndex(index: number): Material {
+  public getMaterialAtIndex(index: number): Material | null {
     index
     Logger.warn('Deprecated! Use BatchObject')
     return null

@@ -96,7 +96,7 @@ function handleAction(action: Action) {
     case 'delay':
       return delay(action)
     case 'slot':
-      toggleSlotVisibility(action as SlotAction)
+      toggleSlotVisibility(action)
       break
   }
 }
@@ -115,7 +115,7 @@ onMounted(() => {
     }
   }
 
-  loopActions()
+  void loopActions()
 })
 
 onBeforeUnmount(() => {

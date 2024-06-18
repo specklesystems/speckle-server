@@ -4,31 +4,32 @@ import EventEmitter from './EventEmitter'
 
 import { Clock, Texture } from 'three'
 import { Assets } from './Assets'
-import { Optional } from '../helpers/typeHelper'
+import { type Optional } from '../helpers/typeHelper'
 import {
   DefaultViewerParams,
-  IViewer,
-  SpeckleView,
-  SunLightConfiguration,
+  type IViewer,
+  type SpeckleView,
+  type SunLightConfiguration,
   UpdateFlags,
   ViewerEvent,
-  ViewerParams
+  type ViewerParams,
+  type ViewerEventPayload
 } from '../IViewer'
 import { World } from './World'
-import { TreeNode, WorldTree } from './tree/WorldTree'
+import { type TreeNode, WorldTree } from './tree/WorldTree'
 import SpeckleRenderer from './SpeckleRenderer'
-import { PropertyInfo, PropertyManager } from './filtering/PropertyManager'
-import { DataTree, DataTreeBuilder } from './tree/DataTree'
+import { type PropertyInfo, PropertyManager } from './filtering/PropertyManager'
 import Logger from 'js-logger'
-import { Query, QueryArgsResultMap, QueryResult } from './queries/Query'
+import type { Query, QueryArgsResultMap } from './queries/Query'
 import { Queries } from './queries/Queries'
-import { Utils } from './Utils'
+import { type Utils } from './Utils'
 import { Extension } from './extensions/Extension'
 import Input from './input/Input'
 import { CameraController } from './extensions/CameraController'
 import { SpeckleType } from './loaders/GeometryConverter'
 import { Loader } from './loaders/Loader'
 import { type Constructor } from 'type-fest'
+import { RenderTree } from './tree/RenderTree'
 
 export class Viewer extends EventEmitter implements IViewer {
   /** Container and optional stats element */
@@ -41,7 +42,7 @@ export class Viewer extends EventEmitter implements IViewer {
   /** Viewer components */
   protected tree: WorldTree = new WorldTree()
   protected world: World = new World()
-  public static Assets: Assets
+  public static readonly theAssets: Assets = new Assets()
   public speckleRenderer: SpeckleRenderer
   protected propertyManager: PropertyManager
 
@@ -55,7 +56,7 @@ export class Viewer extends EventEmitter implements IViewer {
   } = {}
 
   /** various utils/helpers */
-  protected utils: Utils
+  protected utils: Utils | undefined
   /** Gets the World object. Currently it's used for info mostly */
   public get World(): World {
     return this.world
@@ -87,28 +88,43 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public createExtension<T extends Extension>(type: Constructor<T>): T {
-    const extensionsToInject: Array<new (viewer: IViewer, ...args) => Extension> =
-      type.prototype.inject
+    const extensionsToInject: Array<
+      new (viewer: IViewer, ...args: Extension[]) => Extension
+    > = type.prototype.inject
     const injectedExtensions: Array<Extension> = []
-    extensionsToInject.forEach((value: new (viewer: IViewer, ...args) => Extension) => {
-      if (this.extensions[value.name]) {
-        injectedExtensions.push(this.extensions[value.name])
-        return
-      }
-      for (const k in this.extensions) {
-        const prototypeChain = this.getConstructorChain(this.extensions[k])
-        if (prototypeChain.includes(value.name)) {
-          injectedExtensions.push(this.extensions[k])
+    extensionsToInject.forEach(
+      (value: new (viewer: IViewer, ...args: Extension[]) => Extension) => {
+        if (this.extensions[value.name]) {
+          injectedExtensions.push(this.extensions[value.name])
+          return
+        }
+        for (const k in this.extensions) {
+          const prototypeChain = this.getConstructorChain(this.extensions[k])
+          if (prototypeChain.includes(value.name)) {
+            injectedExtensions.push(this.extensions[k])
+          }
         }
       }
-    })
+    )
 
     const extension = new type(this, ...injectedExtensions)
     this.extensions[type.name] = extension
-    return extension as T
+    return extension
   }
 
   public getExtension<T extends Extension>(type: Constructor<T>): T {
+    let extension
+    if ((extension = this.getExtensionInternal(type)) !== null) return extension
+
+    throw new Error(`Could not get Extension of type ${type.name}. Is it created?`)
+  }
+
+  public hasExtension<T extends Extension>(type: Constructor<T>): boolean {
+    const extension = this.getExtensionInternal(type)
+    return extension ? true : false
+  }
+
+  private getExtensionInternal<T extends Extension>(type: Constructor<T>): T | null {
     if (this.extensions[type.name]) return this.extensions[type.name] as T
     else {
       for (const k in this.extensions) {
@@ -118,6 +134,7 @@ export class Viewer extends EventEmitter implements IViewer {
         }
       }
     }
+    return null
   }
 
   public constructor(
@@ -139,19 +156,14 @@ export class Viewer extends EventEmitter implements IViewer {
     this.clock = new Clock()
     this.inProgressOperations = 0
 
-    this.speckleRenderer = new SpeckleRenderer(this)
+    this.speckleRenderer = new SpeckleRenderer(this.tree, this)
     this.speckleRenderer.create(this.container)
     window.addEventListener('resize', this.resize.bind(this), false)
 
-    new Assets()
     this.propertyManager = new PropertyManager()
 
     this.frame()
     this.resize()
-
-    this.on(ViewerEvent.LoadCancelled, (url: string) => {
-      Logger.warn(`Cancelled load for ${url}`)
-    })
   }
 
   public getContainer() {
@@ -171,7 +183,7 @@ export class Viewer extends EventEmitter implements IViewer {
     })
   }
 
-  public requestRender(flags: number = UpdateFlags.RENDER) {
+  public requestRender(flags: UpdateFlags = UpdateFlags.RENDER) {
     if (flags & UpdateFlags.RENDER) {
       this.speckleRenderer.needsRender = true
       this.speckleRenderer.resetPipeline()
@@ -226,26 +238,29 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  public on(eventType: ViewerEvent, listener: (arg) => void): void {
+  on<T extends ViewerEvent>(
+    eventType: T,
+    listener: (arg: ViewerEventPayload[T]) => void
+  ): void {
     super.on(eventType, listener)
   }
 
   public getObjectProperties(
-    resourceURL: string = null,
+    resourceURL: string | null = null,
     bypassCache = true
   ): Promise<PropertyInfo[]> {
     return this.propertyManager.getProperties(this.tree, resourceURL, bypassCache)
   }
 
-  public getDataTree(): DataTree {
-    return DataTreeBuilder.build(this.tree)
+  public getDataTree(): void {
+    Logger.error('DataTree has been deprecated! Please use WorldTree')
   }
 
   public getWorldTree(): WorldTree {
     return this.tree
   }
 
-  public query<T extends Query>(query: T): QueryArgsResultMap[T['operation']] {
+  public query<T extends Query>(query: T): QueryArgsResultMap[T['operation']] | null {
     if (Queries.isPointQuery(query)) {
       Queries.DefaultPointQuerySolver.setContext(this.speckleRenderer)
       return Queries.DefaultPointQuerySolver.solve(query)
@@ -254,11 +269,7 @@ export class Viewer extends EventEmitter implements IViewer {
       Queries.DefaultIntersectionQuerySolver.setContext(this.speckleRenderer)
       return Queries.DefaultIntersectionQuerySolver.solve(query)
     }
-  }
 
-  public queryAsync(query: Query): Promise<QueryResult> {
-    //TO DO
-    query
     return null
   }
 
@@ -271,12 +282,8 @@ export class Viewer extends EventEmitter implements IViewer {
       .findAll((node: TreeNode) => {
         return node.model.renderView?.speckleType === SpeckleType.View3D
       })
-      .map((v) => {
-        return {
-          name: v.model.raw.applicationId,
-          id: v.model.id,
-          view: v.model.raw
-        } as SpeckleView
+      .map((v: TreeNode) => {
+        return v.model.raw as SpeckleView
       })
   }
 
@@ -284,11 +291,11 @@ export class Viewer extends EventEmitter implements IViewer {
     return new Promise((resolve) => {
       // const sectionBoxVisible = this.sectionBox.display.visible
       // if (sectionBoxVisible) {
-      //   this.sectionBox.displayOff()
+      //   this.sectionBox.visible = false
       // }
       const screenshot = this.speckleRenderer.renderer.domElement.toDataURL('image/png')
       // if (sectionBoxVisible) {
-      //   this.sectionBox.displayOn()
+      //   this.sectionBox.visible = true
       // }
       resolve(screenshot)
     })
@@ -299,14 +306,20 @@ export class Viewer extends EventEmitter implements IViewer {
    */
 
   public async loadObject(loader: Loader, zoomToObject = true) {
-    if (++this.inProgressOperations === 1)
-      (this as EventEmitter).emit(ViewerEvent.Busy, true)
+    if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
 
     this.loaders[loader.resource] = loader
     const treeBuilt = await loader.load()
     if (treeBuilt) {
+      const renderTree: RenderTree | null = this.tree.getRenderTree(loader.resource)
+      /** Catering to typescript
+       *  The render tree can't be null, we've just built it
+       */
+      if (!renderTree) {
+        throw new Error(`Could not get render tree ${loader.resource}`)
+      }
       const t0 = performance.now()
-      for await (const step of this.speckleRenderer.addRenderTree(loader.resource)) {
+      for await (const step of this.speckleRenderer.addRenderTree(renderTree)) {
         step
         if (zoomToObject) {
           const extension = this.getExtension(CameraController)
@@ -325,26 +338,23 @@ export class Viewer extends EventEmitter implements IViewer {
 
     if (this.loaders[loader.resource]) this.loaders[loader.resource].dispose()
     delete this.loaders[loader.resource]
-    if (--this.inProgressOperations === 0)
-      (this as EventEmitter).emit(ViewerEvent.Busy, false)
+    if (--this.inProgressOperations === 0) this.emit(ViewerEvent.Busy, false)
   }
 
   public async cancelLoad(resource: string, unload = false) {
     this.loaders[resource].cancel()
-    this.tree.getRenderTree(resource).cancelBuild(resource)
+    this.tree.getRenderTree(resource)?.cancelBuild()
     this.speckleRenderer.cancelRenderTree(resource)
     if (unload) {
       await this.unloadObject(resource)
     } else {
-      if (--this.inProgressOperations === 0)
-        (this as EventEmitter).emit(ViewerEvent.Busy, false)
+      if (--this.inProgressOperations === 0) this.emit(ViewerEvent.Busy, false)
     }
   }
 
   public async unloadObject(resource: string) {
     try {
-      if (++this.inProgressOperations === 1)
-        (this as EventEmitter).emit(ViewerEvent.Busy, true)
+      if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
       if (this.tree.findSubtree(resource)) {
         if (this.loaders[resource]) {
           await this.cancelLoad(resource, true)
@@ -352,38 +362,37 @@ export class Viewer extends EventEmitter implements IViewer {
         }
         delete this.loaders[resource]
         this.speckleRenderer.removeRenderTree(resource)
-        this.tree.getRenderTree(resource).purge()
+        this.tree.getRenderTree(resource)?.purge()
         this.tree.purge(resource)
         this.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
       }
     } finally {
       if (--this.inProgressOperations === 0) {
-        ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
+        this.emit(ViewerEvent.Busy, false)
         Logger.warn(`Removed subtree ${resource}`)
-        ;(this as EventEmitter).emit(ViewerEvent.UnloadComplete, resource)
+        this.emit(ViewerEvent.UnloadComplete, resource)
       }
     }
   }
 
   public async unloadAll() {
     try {
-      if (++this.inProgressOperations === 1)
-        (this as EventEmitter).emit(ViewerEvent.Busy, true)
+      if (++this.inProgressOperations === 1) this.emit(ViewerEvent.Busy, true)
       for (const key of Object.keys(this.loaders)) {
         if (this.loaders[key]) await this.cancelLoad(key, false)
         delete this.loaders[key]
       }
-      this.tree.root.children.forEach((node) => {
+      this.tree.root.children.forEach((node: TreeNode) => {
         this.speckleRenderer.removeRenderTree(node.model.id)
-        this.tree.getRenderTree().purge()
+        this.tree.getRenderTree()?.purge()
       })
 
       this.tree.purge()
     } finally {
       if (--this.inProgressOperations === 0) {
-        ;(this as EventEmitter).emit(ViewerEvent.Busy, false)
+        this.emit(ViewerEvent.Busy, false)
         Logger.warn(`Removed all subtrees`)
-        ;(this as EventEmitter).emit(ViewerEvent.UnloadAllComplete)
+        this.emit(ViewerEvent.UnloadAllComplete)
       }
     }
   }

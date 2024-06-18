@@ -1,6 +1,7 @@
 <template>
   <Component
     :is="concreteComponent"
+    v-if="!isLoggedIn"
     fancy-glow
     no-shadow
     class="max-w-lg mx-auto w-full"
@@ -43,16 +44,16 @@
       </div>
     </div>
   </Component>
+  <div v-else />
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
-import { useLoginOrRegisterUtils } from '~~/lib/auth/composables/auth'
+import { useLoginOrRegisterUtils, useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
 import { LayoutDialog, LayoutPanel } from '@speckle/ui-components'
 import { ArrowRightIcon } from '@heroicons/vue/20/solid'
 import { registerRoute } from '~~/lib/common/helpers/route'
-import { useAuthManager } from '~~/lib/auth/composables/auth'
 
 const props = withDefaults(
   defineProps<{
@@ -63,10 +64,11 @@ const props = withDefaults(
   {
     dialogMode: false,
     title: 'Speckle Login',
-    subtitle: 'Interoperability, Collaboration and Automation for 3D'
+    subtitle: 'Connectivity, Collaboration and Automation for 3D'
   }
 )
 
+const { isLoggedIn } = useActiveUser()
 const { inviteToken } = useAuthManager()
 const router = useRouter()
 

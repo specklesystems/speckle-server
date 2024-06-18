@@ -59,7 +59,7 @@ export const isOwner: GraphqlDirectiveBuilder = () => {
               }
             }
 
-            const data = await resolve.apply(this, args)
+            const data = (await resolve.apply(this, args)) as unknown
             return data
           }
 

@@ -39,8 +39,7 @@
 import { roleSelectItems } from '~~/lib/projects/helpers/components'
 import { Roles } from '@speckle/shared'
 import type { StreamRoles } from '@speckle/shared'
-import { reduce } from 'lodash-es'
-import { isArray } from 'lodash-es'
+import { reduce, isArray } from 'lodash-es'
 
 const emit = defineEmits<{
   (e: 'update:modelValue', v: StreamRoles): void

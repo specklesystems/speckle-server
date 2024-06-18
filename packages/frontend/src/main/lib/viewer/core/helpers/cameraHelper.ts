@@ -14,7 +14,7 @@ export function getCamArray(viewer: Viewer) {
     parseFloat(target.y.toFixed(5)),
     parseFloat(target.z.toFixed(5)),
     viewer.cameraHandler.activeCam.name === 'ortho' ? 1 : 0,
-    get(controls, '_zoom')
+    get(controls, '_zoom') as number
   ]
   return c
 }

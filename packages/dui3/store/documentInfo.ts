@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { DocumentInfo } from 'lib/bindings/definitions/IBasicConnectorBinding'
+import type { DocumentInfo } from 'lib/bindings/definitions/IBasicConnectorBinding'
 
 export const useDocumentInfoStore = defineStore('documentInfoStore', () => {
   const app = useNuxtApp()

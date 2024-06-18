@@ -124,7 +124,7 @@ export = {
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
       await authorizeResolver(
-        ctx.userId!,
+        ctx.userId,
         args.projectId,
         Roles.Stream.Owner,
         ctx.resourceAccessRules
@@ -141,7 +141,7 @@ export = {
     },
     async batchCreate(_parent, args, ctx) {
       await authorizeResolver(
-        ctx.userId!,
+        ctx.userId,
         args.projectId,
         Roles.Stream.Owner,
         ctx.resourceAccessRules
@@ -230,7 +230,8 @@ export = {
       const users = await getStreamCollaborators(parent.id)
       return users.map((u) => ({
         user: u,
-        role: u.role
+        role: u.streamRole,
+        id: u.id
       }))
     },
     async sourceApps(parent, _args, ctx) {

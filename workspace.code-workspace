@@ -46,7 +46,11 @@
     },
     {
       "path": "packages/objectloader",
-      "name": "🌐 objectloader"
+      "name": "⬇️ objectloader"
+    },
+    {
+      "path": "packages/objectsender",
+      "name": "⬆️ objectsender"
     },
     {
       "path": "packages/shared",
@@ -86,7 +90,7 @@
     },
     "files.eol": "\n",
     "volar.vueserver.maxOldSpaceSize": 4000,
-    "cSpell.words": ["Automations", "Bursty", "mjml"],
+    "cSpell.words": ["Automations", "Bursty", "Insertable", "mjml"],
     "tailwindCSS.experimental.configFile": {
       "packages/frontend-2/tailwind.config.mjs": "packages/frontend-2/**"
     },
@@ -110,7 +114,11 @@
     },
     "[json]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode"
-    }
+    },
+    "vue.complete.casing.props": "kebab",
+    "vue.inlayHints.missingProps": true,
+    "circleci.persistedProjectSelection": ["gh/specklesystems/speckle-server"],
+    "eslint.experimental.useFlatConfig": true
   },
   "extensions": {
     // See https://go.microsoft.com/fwlink/?LinkId=827846 to learn about workspace recommendations.
@@ -125,9 +133,11 @@
       "Vue.volar",
       "bradlc.vscode-tailwindcss",
       "stylelint.vscode-stylelint",
-      "cpylua.language-postcss"
+      "cpylua.language-postcss",
+      "graphql.vscode-graphql",
+      "graphql.vscode-graphql-syntax"
     ],
     // List of extensions recommended by VS Code that should not be recommended for users of this workspace.
-    "unwantedRecommendations": ["octref.vetur", "vscode.typescript-language-features"]
+    "unwantedRecommendations": ["octref.vetur"]
   }
 }

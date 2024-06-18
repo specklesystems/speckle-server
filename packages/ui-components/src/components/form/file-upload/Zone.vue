@@ -18,7 +18,6 @@
   </div>
 </template>
 <script setup lang="ts">
-/* eslint-disable vue/require-default-prop */
 import type { Nullable } from '@speckle/shared'
 import { useDropZone } from '@vueuse/core'
 import { computed, ref } from 'vue'

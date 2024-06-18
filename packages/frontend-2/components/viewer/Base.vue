@@ -12,7 +12,7 @@ const {
 } = useInjectedViewer()
 
 onMounted(async () => {
-  if (!process.client) return
+  if (!import.meta.client) return
 
   await isInitializedPromise
   container.style.display = 'block'
@@ -24,7 +24,7 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
-  if (!process.client) return
+  if (!import.meta.client) return
   container.style.display = 'none'
 
   document.body.appendChild(container)
