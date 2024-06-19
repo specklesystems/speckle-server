@@ -4,9 +4,7 @@
       <span>{{ absoluteDate }}</span>
       <span>{{ timeFromNow }}</span>
     </div> -->
-    <div
-      class="xxx-bg-foundation sm:rounded-xl py-2 px-3 sm:p-4 sm:pb-3 w-full relative"
-    >
+    <div class="xxx-bg-foundation sm:rounded-xl py-2 sm:p-4 sm:pb-2 w-full relative">
       <div class="flex items-center space-x-1">
         <UserAvatar :user="comment.author" class="mr-1" />
         <span class="grow truncate text-xs sm:text-sm font-bold">

@@ -7,16 +7,8 @@
       <span class="text-tiny text-foreground-2">
         {{ prettyFileSize(item.file.size) }}
       </span>
-      <!-- <FormButton
-        color="danger"
-        size="xs"
-        rounded
-        hide-text
-        :icon-left="XMarkIcon"
-        @click="onDelete"
-      ></FormButton> -->
       <button class="p-0.5 text-foreground hover:text-primary" @click="onDelete">
-        <XMarkIcon class="h-4 w-4" />
+        <XMarkIcon class="h-4 w-4" alt="close" />
       </button>
     </div>
     <div
