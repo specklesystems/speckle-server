@@ -43,10 +43,14 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 RUN apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     --no-install-recommends \
+    tini=0.19.0-1 \
+    #wget has differing versions for different architectures
     wget \
-    gnupg && \
+    gnupg=2.2.40-1.1 && \
+    # Install Chrome sources
     wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
     sh -c 'echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' && \
+    # Install chrome and fonts
     apt-get update && \
     DEBIAN_FRONTEND=noninteractive apt-get install -y \
     --no-install-recommends \
@@ -57,6 +61,7 @@ RUN apt-get update && \
     fonts-kacst=2.01+mry-15 \
     fonts-freefont-ttf=20120503-10 \
     libxss1=1:1.2.3-1 && \
+    # Clean up
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
