@@ -1,4 +1,5 @@
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
+import { usePageQueryStandardFetchPolicy } from '~/lib/common/composables/graphql'
 import { useGlobalToast } from '~/lib/common/composables/toast'
 
 export const useIsAutomateModuleEnabled = () => {
@@ -16,4 +17,4 @@ export const useIsGendoModuleEnabled = () => {
   return ref(FF_GENDOAI_MODULE_ENABLED)
 }
 
-export { useGlobalToast, useActiveUser }
+export { useGlobalToast, useActiveUser, usePageQueryStandardFetchPolicy }

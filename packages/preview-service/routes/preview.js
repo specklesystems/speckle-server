@@ -5,6 +5,9 @@ const express = require('express')
 const router = express.Router()
 const puppeteer = require('puppeteer')
 const { logger } = require('../observability/logging')
+const { reduce } = require('lodash')
+
+const shouldBeHeadless = process.env.PREVIEWS_HEADED !== 'true'
 
 async function pageFunction(objectUrl) {
   waitForAnimation = async (ms = 70) =>
@@ -56,7 +59,8 @@ async function pageFunction(objectUrl) {
 
 async function getScreenshot(objectUrl, boundLogger = logger) {
   const launchParams = {
-    headless: true,
+    headless: shouldBeHeadless,
+    userDataDir: '/tmp/puppeteer',
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   }
   // if ( process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD === 'true' ) {
@@ -97,7 +101,11 @@ async function getScreenshot(objectUrl, boundLogger = logger) {
   boundLogger.info(
     {
       durationSeconds: ret.duration,
-      totalMemoryMB: ret.mem.total / 1000000
+      totalMemoryMB: ret.mem.total / 1000000,
+      resultingImages: {
+        count: Object.keys(ret.scr || {}).length,
+        totalStringSize: reduce(ret.scr || {}, (acc, val) => acc + val.length, 0)
+      }
     },
     `Generated preview.`
   )
