@@ -38,7 +38,9 @@
         :class="isModelCardVariant ? ' opacity-50 group-hover:opacity-100' : ''"
       >
         Use our
-        <FormButton link size="sm" to="/downloads">connectors</FormButton>
+        <FormButton link size="sm" external target="_blank" :to="connectorsPageUrl">
+          connectors
+        </FormButton>
         to publish a {{ modelName ? '' : 'new model' }} version to
         {{ modelName ? 'this model' : 'this project' }}, or drag and drop a IFC/OBJ/STL
         file here.
@@ -50,6 +52,7 @@
 import { useFileImport } from '~~/lib/core/composables/fileImport'
 import { useFileUploadProgressCore } from '~~/lib/form/composables/fileUpload'
 import { ExclamationTriangleIcon } from '@heroicons/vue/24/solid'
+import { connectorsPageUrl } from '~/lib/common/helpers/route'
 import type { Nullable } from '@speckle/shared'
 
 const props = defineProps<{
