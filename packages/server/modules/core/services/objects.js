@@ -283,11 +283,16 @@ module.exports = {
 
     let fullObjectSelect = false
 
-    const q = Closures()
-    q.select('id')
-    q.select('createdAt')
-    q.select('speckleType')
-    q.select('totalChildrenCount')
+    const q = knex.with(
+      'object_children_closure',
+      knex.raw(
+        `SELECT objects.id as parent, d.key as child, d.value as minDepth, ? as "streamId"
+        FROM objects
+        JOIN jsonb_each_text(objects.data->'__closure') d ON true
+        where objects.id = ?`,
+        [streamId, objectId]
+      )
+    )
 
     if (Array.isArray(select)) {
       select.forEach((field, index) => {
@@ -303,6 +308,13 @@ module.exports = {
       q.select('data')
     }
 
+    q.select('id')
+    q.select('createdAt')
+    q.select('speckleType')
+    q.select('totalChildrenCount')
+
+    q.from('object_children_closure')
+
     q.rightJoin('objects', function () {
       this.on('objects.streamId', '=', 'object_children_closure.streamId').andOn(
         'objects.id',
@@ -316,7 +328,7 @@ module.exports = {
           objectId
         ])
       )
-      .andWhere(knex.raw('"minDepth" < ?', [depth]))
+      .andWhere(knex.raw('object_children_closure."mindepth" < ?', [depth]))
       .andWhere(knex.raw('id > ?', [cursor ? cursor : '0']))
       .orderBy('objects.id')
       .limit(limit)
