@@ -229,9 +229,9 @@ export function usePreviewImageBlob(
   }
 
   const regeneratePreviews = (basePreviewUrl?: string) => {
+    cacheBust.value++
     processBasePreviewUrl(basePreviewUrl || unref(previewUrl))
     if (shouldLoadPanorama) processPanoramaPreviewUrl()
-    cacheBust.value++
   }
 
   watch(shouldLoadPanorama, (newVal) => {
