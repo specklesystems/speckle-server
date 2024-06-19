@@ -12,6 +12,7 @@
           name="Dashboard"
           :separator="false"
           class="hidden md:inline-block"
+          :show-active-state="false"
         />
         <ClientOnly>
           <PortalTarget name="navigation"></PortalTarget>

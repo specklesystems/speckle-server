@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col gap-8">
+  <div class="flex flex-col gap-4">
     <SidebarMenuGroup :items="dashboardItems">
       <template #dashboard>
         <HomeIcon class="h-5 w-5" />
@@ -48,29 +48,29 @@ import {
   BoltIcon
 } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import { homeRoute } from '~/lib/common/helpers/route'
 
 const { activeUser } = useActiveUser()
 
-interface MenuItem {
-  label: string
-  id: string
-}
-
 const dashboardItems = computed<MenuItem[]>(() => [
-  { label: 'Dashboard', id: 'dashboard' },
-  { label: 'Activity', id: 'activity' }
+  {
+    label: 'Dashboard',
+    id: 'dashboard',
+    to: homeRoute
+  },
+  { label: 'Activity', id: 'activity', to: '/activity' }
 ])
 
 const workspacesItems = computed<MenuItem[]>(() => [
-  { label: "Benjamin's space", id: 'default-space', tag: 'Free' },
-  { label: 'Acme Inc', id: 'profile' }
+  { label: "Benjamin's space", id: 'default-space', tag: 'Free', to: '/workspace' },
+  { label: 'Acme Inc', id: 'profile', to: '/workspace' }
 ])
 
 const favouritesItems = computed<MenuItem[]>(() => [
-  { label: 'Different Houses', id: 'different-houses' },
-  { label: 'Another Project', id: 'another-project' },
-  { label: 'The Palace', id: 'the-palace' },
-  { label: 'A discussion title', id: 'a-discussion-title' },
-  { label: 'An automation name', id: 'an-automation-name' }
+  { label: 'Different Houses', id: 'different-houses', to: '' },
+  { label: 'Another Project', id: 'another-project', to: '' },
+  { label: 'The Palace', id: 'the-palace', to: '' },
+  { label: 'A discussion title', id: 'a-discussion-title', to: '' },
+  { label: 'An automation name', id: 'an-automation-name', to: '' }
 ])
 </script>

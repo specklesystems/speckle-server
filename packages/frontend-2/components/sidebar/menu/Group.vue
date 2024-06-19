@@ -7,8 +7,10 @@
       {{ title }}
     </h6>
     <div v-for="(item, itemIndex) in items" :key="itemIndex">
-      <button
+      <NuxtLink
+        :to="item.to"
         class="group flex items-center justify-between gap-2 shrink-0 text-sm select-none rounded-md w-full hover:bg-primary-muted p-2"
+        active-class="bg-foundation-focus hover:!bg-foundation-focus"
       >
         <div class="flex items-center gap-1.5">
           <div class="w-6 h-6 flex items-center justify-center">
@@ -22,7 +24,7 @@
         >
           {{ item.tag }}
         </div>
-      </button>
+      </NuxtLink>
     </div>
   </div>
 </template>
@@ -31,6 +33,7 @@
 interface MenuItem {
   label: string
   id: string
+  to: string
   tag?: string
 }
 
