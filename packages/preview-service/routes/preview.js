@@ -60,6 +60,7 @@ async function pageFunction(objectUrl) {
 async function getScreenshot(objectUrl, boundLogger = logger) {
   const launchParams = {
     headless: shouldBeHeadless,
+    userDataDir: '/tmp/puppeteer',
     executablePath: '/usr/bin/chromium',
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   }
