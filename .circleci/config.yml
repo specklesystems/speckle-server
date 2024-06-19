@@ -28,6 +28,9 @@ workflows:
       - test-viewer:
           filters: *filters-allow-all
 
+      - test-objectsender:
+          filters: *filters-allow-all
+
       - test-ui-components:
           filters: *filters-allow-all
 
@@ -58,6 +61,7 @@ workflows:
             - deployment-testing-approval
             - test-frontend-2
             - test-viewer
+            - test-objectsender
             - test-server
             - docker-build-server
             - docker-build-frontend
@@ -77,6 +81,7 @@ workflows:
             - deployment-testing-approval
             - test-frontend-2
             - test-viewer
+            - test-objectsender
             - test-server
             - docker-build-server
             - docker-build-frontend
@@ -169,6 +174,7 @@ workflows:
             - publish-approval
             - test-frontend-2
             - test-viewer
+            - test-objectsender
             - test-server
 
       - docker-publish-frontend:
@@ -181,6 +187,7 @@ workflows:
             - publish-approval
             - test-frontend-2
             - test-viewer
+            - test-objectsender
             - test-server
 
       - docker-publish-frontend-2:
@@ -193,6 +200,7 @@ workflows:
             - publish-approval
             - test-frontend-2
             - test-viewer
+            - test-objectsender
             - test-server
 
       - docker-publish-webhooks:
@@ -205,6 +213,7 @@ workflows:
             - publish-approval
             - test-frontend-2
             - test-viewer
+            - test-objectsender
             - test-server
 
       - docker-publish-file-imports:
@@ -217,6 +226,7 @@ workflows:
             - publish-approval
             - test-frontend-2
             - test-viewer
+            - test-objectsender
             - test-server
 
       - docker-publish-previews:
@@ -229,6 +239,7 @@ workflows:
             - publish-approval
             - test-frontend-2
             - test-viewer
+            - test-objectsender
             - test-server
 
       - docker-publish-test-container:
@@ -241,6 +252,7 @@ workflows:
             - publish-approval
             - test-frontend-2
             - test-viewer
+            - test-objectsender
             - test-server
 
       - docker-publish-monitor-container:
@@ -253,6 +265,7 @@ workflows:
             - publish-approval
             - test-frontend-2
             - test-viewer
+            - test-objectsender
             - test-server
 
       - docker-publish-docker-compose-ingress:
@@ -304,6 +317,7 @@ workflows:
             - test-ui-components
             - test-frontend-2
             - test-viewer
+            - test-objectsender
 
       - publish-viewer-sandbox-cloudflare-pages:
           filters: *filters-publish
@@ -568,6 +582,41 @@ jobs:
           command: yarn test
           working_directory: 'packages/viewer'
 
+  test-objectsender:
+    docker: &docker-node-browsers-image
+      - image: cimg/node:18.19.0-browsers
+    resource_class: large
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build public packages
+          command: yarn build:public
+      - run:
+          name: Run tests
+          command: yarn test:ci
+          working_directory: 'packages/objectsender'
+      - store_artifacts:
+          path: 'packages/objectsender/coverage'
+
   test-ui-components:
     docker: *docker-node-browsers-image
     resource_class: xlarge
@@ -826,6 +875,7 @@ jobs:
 
   docker-build-frontend-2:
     <<: *build-job
+    resource_class: large
     environment:
       SPECKLE_SERVER_PACKAGE: frontend-2
 
@@ -961,15 +1011,15 @@ jobs:
 
       - run:
           name: build public packages
-          command: yarn workspaces foreach -ptv --no-private run build
+          command: yarn workspaces foreach -ptvW --no-private run build
       - run:
           name: bump all versions
           # bump all versions in dependency tree order but not in parallel
-          command: yarn workspaces foreach -tv version $IMAGE_VERSION_TAG
+          command: yarn workspaces foreach -tvW version $IMAGE_VERSION_TAG
 
       - run:
           name: publish to npm
-          command: 'yarn workspaces foreach -pv --no-private npm publish --access public'
+          command: 'yarn workspaces foreach -pvW --no-private npm publish --access public'
 
   publish-helm-chart:
     docker:
@@ -1043,6 +1093,7 @@ jobs:
 
   frontend-2-sourcemaps:
     docker: *docker-node-image
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout
@@ -1070,7 +1121,7 @@ jobs:
           command: yarn build:public
       - run:
           name: Build FE2
-          command: yarn build:sourcemaps
+          command: NODE_ENV=production SPECKLE_SERVER_VERSION="${IMAGE_VERSION_TAG}" yarn build:sourcemaps
           working_directory: 'packages/frontend-2'
       - run:
           name: Upload source maps

@@ -112,7 +112,10 @@ module.exports = {
       for (const batch of batches) {
         prepInsertionObjectBatch(batch)
         await Objects().insert(batch).onConflict().ignore()
-        servicesLogger.info(`Inserted ${batch.length} objects`)
+        servicesLogger.info(
+          { objectCount: batch.length },
+          'Inserted ${objectCount} objects'
+        )
       }
     }
 
@@ -123,10 +126,47 @@ module.exports = {
       for (const batch of batches) {
         prepInsertionClosureBatch(batch)
         await Closures().insert(batch).onConflict().ignore()
-        servicesLogger.info(`Inserted ${batch.length} closures`)
+        servicesLogger.info(
+          { batchLength: batch.length },
+          'Inserted ${batchLength} closures'
+        )
       }
     }
     return true
+  },
+
+  async createObjectsBatchedAndNoClosures(streamId, objects) {
+    const objsToInsert = []
+    const ids = []
+
+    // Prep objects up
+    objects.forEach((obj) => {
+      const insertionObject = prepInsertionObject(streamId, obj)
+      delete insertionObject.__closure
+      objsToInsert.push(insertionObject)
+      ids.push(insertionObject.id)
+    })
+
+    const objectsBatchSize = 500
+
+    // step 1: insert objects
+    if (objsToInsert.length > 0) {
+      const batches = chunkInsertionObjectArray({
+        objects: objsToInsert,
+        chunkLengthLimit: objectsBatchSize,
+        chunkSizeLimitMb: 2
+      })
+      for (const batch of batches) {
+        prepInsertionObjectBatch(batch)
+        await Objects().insert(batch).onConflict().ignore()
+        servicesLogger.info(
+          { batchLength: batch.length },
+          'Inserted {batchLength} objects'
+        )
+      }
+    }
+
+    return ids
   },
 
   async createObjects(streamId, objects) {
@@ -243,11 +283,16 @@ module.exports = {
 
     let fullObjectSelect = false
 
-    const q = Closures()
-    q.select('id')
-    q.select('createdAt')
-    q.select('speckleType')
-    q.select('totalChildrenCount')
+    const q = knex.with(
+      'object_children_closure',
+      knex.raw(
+        `SELECT objects.id as parent, d.key as child, d.value as minDepth, ? as "streamId"
+        FROM objects
+        JOIN jsonb_each_text(objects.data->'__closure') d ON true
+        where objects.id = ?`,
+        [streamId, objectId]
+      )
+    )
 
     if (Array.isArray(select)) {
       select.forEach((field, index) => {
@@ -263,6 +308,13 @@ module.exports = {
       q.select('data')
     }
 
+    q.select('id')
+    q.select('createdAt')
+    q.select('speckleType')
+    q.select('totalChildrenCount')
+
+    q.from('object_children_closure')
+
     q.rightJoin('objects', function () {
       this.on('objects.streamId', '=', 'object_children_closure.streamId').andOn(
         'objects.id',
@@ -276,7 +328,7 @@ module.exports = {
           objectId
         ])
       )
-      .andWhere(knex.raw('"minDepth" < ?', [depth]))
+      .andWhere(knex.raw('object_children_closure."mindepth" < ?', [depth]))
       .andWhere(knex.raw('id > ?', [cursor ? cursor : '0']))
       .orderBy('objects.id')
       .limit(limit)
@@ -616,7 +668,9 @@ function prepInsertionObject(streamId, obj) {
     data: stringifiedObj, // stored in jsonb column
     streamId,
     id: obj.id,
-    speckleType: obj.speckleType
+    // YEAH, this has been broken forever...
+    // speckleType: obj.speckleType
+    speckleType: obj.speckle_type
   }
 }
 

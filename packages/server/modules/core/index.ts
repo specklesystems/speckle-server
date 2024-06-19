@@ -12,6 +12,7 @@ import uploadRest from '@/modules/core/rest/upload'
 import downloadRest from '@/modules/core/rest/download'
 import diffUpload from '@/modules/core/rest/diffUpload'
 import diffDownload from '@/modules/core/rest/diffDownload'
+import healthRest from '@/modules/core/rest/health'
 import scopes from '@/modules/core/scopes'
 import roles from '@/modules/core/roles'
 import Redis from 'ioredis'
@@ -29,6 +30,9 @@ const coreModule: SpeckleModule<{
 
     // Initialize the static route
     staticRest(app)
+
+    // Initialize the health check route
+    healthRest(app)
 
     // Initialises the two main bulk upload/download endpoints
     uploadRest(app)

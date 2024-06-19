@@ -1,27 +1,31 @@
 import { automateLogger } from '@/logging/logging'
 import {
   ExecutionEngineBadResponseBodyError,
-  ExecutionEngineErrorResponse,
+  type ExecutionEngineErrorResponse,
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
-import {
+import type {
   FunctionReleaseSchemaType,
   FunctionSchemaType,
   FunctionWithVersionsSchemaType
 } from '@/modules/automate/helpers/executionEngine'
 import {
-  AutomationFunctionRunRecord,
-  BaseTriggerManifest,
+  type AutomationFunctionRunRecord,
+  type BaseTriggerManifest,
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
+import type {
+  AuthCodePayload,
+  AuthCodePayloadWithOrigin
+} from '@/modules/automate/services/authCode'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import {
-  Nullable,
-  SourceAppName,
+  type Nullable,
+  type SourceAppName,
   isNonNullable,
   isNullOrUndefined,
   retry,
@@ -129,7 +133,7 @@ const invokeRequest = async (params: {
 
 export const createAutomation = async (params: {
   speckleServerUrl?: string
-  authCode: string
+  authCode: AuthCodePayload
 }) => {
   const { speckleServerUrl = getServerOrigin(), authCode } = params
 
@@ -141,8 +145,10 @@ export const createAutomation = async (params: {
     url,
     method: 'post',
     body: {
-      speckleServerOrigin,
-      speckleServerAuthenticationCode: authCode
+      speckleServerAuthenticationPayload: {
+        ...authCode,
+        origin: speckleServerOrigin
+      }
     },
     retry: false
   })
@@ -236,9 +242,7 @@ export enum ExecutionEngineFunctionTemplateId {
 }
 
 export type CreateFunctionBody = {
-  speckleServerOrigin: string
-  speckleUserId: string
-  authenticationCode: string
+  speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
   template: ExecutionEngineFunctionTemplateId
   functionName: string
   description: string
@@ -276,6 +280,7 @@ export const createFunction = async ({
 }
 
 export type UpdateFunctionBody = {
+  //TODO add speckleServerAuthenticationPayload
   functionName?: string
   description?: string
   supportedSourceApps?: SourceAppName[]
@@ -423,21 +428,20 @@ export const getUserGithubAuthState = async (params: {
 
 export const getUserGithubOrganizations = async (params: {
   speckleServerUrl?: string
-  userId: string
-  authCode: string
+  authCode: AuthCodePayload
 }) => {
   const {
     speckleServerUrl = getServerOrigin(),
-    userId: speckleUserId,
-    authCode: speckleServerAuthenticationCode
+    authCode: speckleServerAuthenticationPayload
   } = params
   const speckleServerOrigin = new URL(speckleServerUrl).origin
 
   const url = getApiUrl(`/api/v2/functions/auth/githubapp/organizations`, {
     query: {
-      speckleServerOrigin,
-      speckleUserId,
-      speckleServerAuthenticationCode
+      speckleServerAuthenticationPayload: JSON.stringify({
+        ...speckleServerAuthenticationPayload,
+        origin: speckleServerOrigin
+      })
     }
   })
 

@@ -58,10 +58,9 @@ const pageQuery = graphql(`
 `)
 
 definePageMeta({
-  middleware: ['require-valid-function']
+  middleware: ['auth', 'require-valid-function']
 })
-
-// const { activeUser } = useActiveUser()
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const route = useRoute()
 const functionId = computed(() => route.params.fid as string)
 const loading = useQueryLoading()
@@ -70,9 +69,9 @@ const { result, onResult } = useQuery(
   () => ({
     functionId: functionId.value
   }),
-  {
-    fetchPolicy: 'cache-and-network'
-  }
+  () => ({
+    fetchPolicy: pageFetchPolicy.value
+  })
 )
 
 const queryLoadedOnce = useQueryLoaded({ onResult })

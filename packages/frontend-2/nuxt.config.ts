@@ -24,8 +24,8 @@ const buildSourceMaps = ['1', 'true', true, 1].includes(BUILD_SOURCEMAPS)
 
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 export default defineNuxtConfig({
-  // sourcemaps in prod only needed for datadog and should be deleted after (or at least made inaccessible?)
-  sourcemap: !!buildSourceMaps,
+  ...(buildSourceMaps ? { sourcemap: true } : {}),
+  modulesDir: ['./node_modules'],
   typescript: {
     shim: false,
     strict: true
