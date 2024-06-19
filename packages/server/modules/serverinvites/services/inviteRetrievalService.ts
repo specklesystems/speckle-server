@@ -15,7 +15,7 @@ import {
 } from '@/modules/serverinvites/domain/types'
 import { MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { keyBy, uniq } from 'lodash'
-import { ServerInvitesRepository } from '@/modules/serverinvites/domain/interfaces'
+import { ServerInvitesRepository } from '@/modules/serverinvites/domain/operations'
 
 /**
  * The token field is intentionally ommited from this and only managed through the .token resolver

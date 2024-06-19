@@ -15,7 +15,7 @@ import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import {
   CreateInviteParams,
   ServerInvitesRepository
-} from '@/modules/serverinvites/domain/interfaces'
+} from '@/modules/serverinvites/domain/operations'
 import { validateInput } from './validation'
 import { buildEmailContents } from './buildEmailContents'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'

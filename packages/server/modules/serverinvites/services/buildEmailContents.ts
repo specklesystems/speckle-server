@@ -13,7 +13,7 @@ import {
   renderEmail
 } from '@/modules/emails/services/emailRendering'
 import sanitizeHtml from 'sanitize-html'
-import { CreateInviteParams } from '@/modules/serverinvites/domain/interfaces'
+import { CreateInviteParams } from '@/modules/serverinvites/domain/operations'
 
 type InviteOrInputParams =
   | CreateInviteParams

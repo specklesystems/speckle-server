@@ -11,7 +11,7 @@ import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/s
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import { ServerInvitesRepository } from '@/modules/serverinvites/domain/interfaces'
+import { ServerInvitesRepository } from '@/modules/serverinvites/domain/operations'
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
