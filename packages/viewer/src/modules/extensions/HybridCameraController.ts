@@ -50,21 +50,13 @@ export class HybridCameraController extends CameraController {
         this.keyMap.down = true
         break
       case 'KeyF':
-        moveSpeed += this.viewer.World.getRelativeOffset(0.001)
-        moveSpeed = clamp(
-          moveSpeed,
-          this.viewer.World.getRelativeOffset(0.002),
-          this.viewer.World.getRelativeOffset(0.5)
-        )
+        moveSpeed += 0.25
+        moveSpeed = clamp(moveSpeed, 0.1, 5)
         this.options = { moveSpeed }
         break
       case 'KeyC':
-        moveSpeed -= this.viewer.World.getRelativeOffset(0.001)
-        moveSpeed = clamp(
-          moveSpeed,
-          this.viewer.World.getRelativeOffset(0.002),
-          this.viewer.World.getRelativeOffset(0.5)
-        )
+        moveSpeed -= 0.25
+        moveSpeed = clamp(moveSpeed, 0.1, 5)
         this.options = { moveSpeed }
         break
     }

@@ -74,7 +74,7 @@ class FlyControls extends SpeckleControls {
 
   public set options(value: FlyControlsOptions) {
     Object.assign(this._options, value)
-    console.warn('Fly speed modifier: ', value.moveSpeed)
+    if (value.moveSpeed) console.warn('Fly speed modifier: ', this._options.moveSpeed)
     this.setDamperDecayTime(this._options.damperDecay)
   }
 
