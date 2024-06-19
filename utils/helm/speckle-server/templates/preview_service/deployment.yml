@@ -50,16 +50,14 @@ spec:
           capabilities:
             drop:
               - ALL
+            add:
+              - SYS_ADMIN #TODO remove this and replace with sec comp profile: https://stackoverflow.com/a/53975412
           privileged: false
-          readOnlyRootFilesystem: true
+          # readOnlyRootFilesystem: true # this breaks chromium
           runAsNonRoot: true
-          runAsUser: 20000
+          runAsUser: 800
 
         volumeMounts:
-          - mountPath: /tmp
-            name: tmp
-          - mountPath: /.cache/puppeteer
-            name: puppeteer-cache
         {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
@@ -99,21 +97,17 @@ spec:
 
       securityContext:
         runAsNonRoot: true
-        runAsUser: 20000
+        runAsUser: 800
         fsGroup: 25000
         fsGroupChangePolicy: OnRootMismatch
         runAsGroup: 30000
-        seccompProfile:
-          type: RuntimeDefault
+        # seccompProfile:
+        #   type: RuntimeDefault #TODO: uncomment this when we have a profile for chromium
 
       # Should be > preview generation time ( 1 hour for good measure )
       terminationGracePeriodSeconds: 3600
 
       volumes:
-        - name: tmp
-          emptyDir: {}
-        - name: puppeteer-cache
-          emptyDir: {}
       {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:

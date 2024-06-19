@@ -38,20 +38,32 @@ RUN yarn workspaces foreach -W run build
 
 FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 as node
 
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# hadolint ignore=DL3008
 RUN apt-get update && \
-  DEBIAN_FRONTEND=noninteractive apt-get install -y \
-  --no-install-recommends \
-  tini=0.19.0-1 \
-  chromium=126.0.6478.56-1~deb12u1 \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    --no-install-recommends \
+    wget \
+    gnupg && \
+    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    sh -c 'echo "deb [arch=amd64] https://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    --no-install-recommends \
+    google-chrome-stable \
+    fonts-ipafont-gothic=00303-23 \
+    fonts-wqy-zenhei=0.9.45-8 \
+    fonts-thai-tlwg=1:0.7.3-1 \
+    fonts-kacst=2.01+mry-15 \
+    fonts-freefont-ttf=20120503-10 \
+    libxss1=1:1.2.3-1 && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=build-stage /speckle-server/wait /wait
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
-ENV PUPPETEER_CACHE_DIR=/puppeteer
 
 WORKDIR /speckle-server
 COPY .yarnrc.yml .
@@ -72,5 +84,15 @@ COPY --from=build-stage /speckle-server/packages/preview-service ./preview-servi
 WORKDIR /speckle-server/packages/preview-service
 
 RUN yarn workspaces focus --production
+
+RUN groupadd -g 30000 -r pptruser && \
+    useradd -r -g pptruser -G audio,video -u 800 pptruser && \
+    mkdir -p /home/pptruser/Downloads && \
+    chown -R pptruser:pptruser /home/pptruser && \
+    chown -R pptruser:pptruser ./node_modules && \
+    chown -R pptruser:pptruser ./package.json
+
+# Run everything after as non-privileged user.
+USER pptruser
 
 ENTRYPOINT [ "tini", "--", "node", "bin/www" ]
