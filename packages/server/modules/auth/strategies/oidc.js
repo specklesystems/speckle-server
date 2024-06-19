@@ -21,7 +21,7 @@ const {
 } = require('@/modules/shared/helpers/envHelper')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 const { UnverifiedEmailSSOLoginError } = require('@/modules/core/errors/userinput')
-const { getNameFromUserInfo } = require('@modules/auth/domain/logic')
+const { getNameFromUserInfo } = require('@/modules/auth/domain/logic')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const oidcIssuer = await Issuer.discover(getOidcDiscoveryUrl())

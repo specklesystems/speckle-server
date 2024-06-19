@@ -1,4 +1,4 @@
-import { UserInfo } from './types'
+import { UserInfo } from '@/modules/auth/domain/types'
 
 /* eslint-disable camelcase */
 export function getNameFromUserInfo({
