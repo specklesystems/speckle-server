@@ -47,7 +47,8 @@ type ServerInviteRecordInsertModel = Pick<
 >
 
 export type InsertInviteAndDeleteOld = (
-  args: ServerInviteRecordInsertModel
+  invite: ServerInviteRecordInsertModel,
+  alternateTargets: string[]
 ) => Promise<number[]>
 
 export type FindServerInvite = (
