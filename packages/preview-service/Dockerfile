@@ -38,56 +38,36 @@ RUN yarn workspaces foreach -W run build
 
 FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 as node
 
-#hadolint ignore=DL3008
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+# hadolint ignore=DL3008,DL3015
 RUN apt-get update && \
-  DEBIAN_FRONTEND=noninteractive apt-get install -y \
-  --no-install-recommends \
-  tini=0.19.0-1 \
-  # chromium dependencies
-  ca-certificates \
-  fonts-liberation \
-  libasound2 \
-  libatk-bridge2.0-0 \
-  libatk1.0-0 \
-  libc6 \
-  libcairo2 \
-  libcups2 \
-  libdbus-1-3 \
-  libexpat1 \
-  libfontconfig1 \
-  libgbm1 \
-  libgcc1 \
-  libglib2.0-0 \
-  libgtk-3-0 \
-  libnspr4 \
-  libnss3 \
-  libpango-1.0-0 \
-  libpangocairo-1.0-0 \
-  libstdc++6 \
-  libx11-6 \
-  libx11-xcb1 \
-  libxcb1 \
-  libxcomposite1 \
-  libxcursor1 \
-  libxdamage1 \
-  libxext6 \
-  libxfixes3 \
-  libxi6 \
-  libxrandr2 \
-  libxrender1 \
-  libxss1 \
-  libxtst6 \
-  lsb-release \
-  wget \
-  xdg-utils \
-  && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    # --no-install-recommends # This is causing issues with the google-chrome-stable install as not all gpg components are installed if recommended installs are disabled
+    tini=0.19.0-1 \
+    # wget has different versions for different architectures
+    wget \
+    gnupg=2.2.40-1.1 && \
+    wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg && \
+    sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] https://dl-ssl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' && \
+    # Install Chrome and fonts
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    --no-install-recommends \
+    google-chrome-stable \
+    fonts-ipafont-gothic=00303-23 \
+    fonts-wqy-zenhei=0.9.45-8 \
+    fonts-thai-tlwg=1:0.7.3-1 \
+    fonts-kacst=2.01+mry-15 \
+    fonts-freefont-ttf=20120503-10 \
+    libxss1=1:1.2.3-1 && \
+    # Clean up
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY --from=build-stage /speckle-server/wait /wait
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
-ENV PUPPETEER_CACHE_DIR=/puppeteer
 
 WORKDIR /speckle-server
 COPY .yarnrc.yml .
@@ -107,8 +87,16 @@ COPY --from=build-stage /speckle-server/packages/preview-service ./preview-servi
 
 WORKDIR /speckle-server/packages/preview-service
 
-RUN npx @puppeteer/browsers install chrome@stable --path /puppeteer && \
-    chmod -R 777 /puppeteer && \
-    yarn workspaces focus --production
+RUN yarn workspaces focus --production
+
+RUN groupadd -g 30000 -r pptruser && \
+    useradd -r -g pptruser -G audio,video -u 800 pptruser && \
+    mkdir -p /home/pptruser/Downloads && \
+    chown -R pptruser:pptruser /home/pptruser && \
+    chown -R pptruser:pptruser ./node_modules && \
+    chown -R pptruser:pptruser ./package.json
+
+# Run everything after as non-privileged user.
+USER pptruser
 
 ENTRYPOINT [ "tini", "--", "node", "bin/www" ]
