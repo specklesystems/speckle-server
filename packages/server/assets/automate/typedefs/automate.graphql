@@ -144,6 +144,10 @@ type AutomateFunction {
   """
   supportedSourceApps: [String!]!
   tags: [String!]!
+  """
+  Only returned if user is a part of this speckle server
+  """
+  creator: LimitedUser
 }
 
 type AutomateFunctionRelease {

@@ -35,11 +35,17 @@ import {
 import { Request, Response } from 'express'
 import { UnauthorizedError } from '@/modules/shared/errors'
 import {
+  AuthCodePayload,
   AuthCodePayloadAction,
   createStoredAuthCode
 } from '@/modules/automate/services/authCode'
-import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
+import {
+  getServerOrigin,
+  isDevEnv,
+  speckleAutomateUrl
+} from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
+import { automateLogger } from '@/logging/logging'
 
 const mapGqlTemplateIdToExecEngineTemplateId = (
   id: AutomateFunctionTemplateLanguage
@@ -88,7 +94,8 @@ export const convertFunctionToGraphQLReturn = (
     description: fn.description,
     logo: cleanFunctionLogo(fn.logo),
     tags: fn.tags,
-    supportedSourceApps: fn.supportedSourceApps
+    supportedSourceApps: fn.supportedSourceApps,
+    functionCreator: fn.functionCreator
   }
 
   return ret
@@ -131,12 +138,9 @@ export const createFunctionFromTemplate =
       userId: user.id,
       action: AuthCodePayloadAction.CreateFunction
     })
-    const body: CreateFunctionBody = {
+    const body: CreateFunctionBody<AuthCodePayload> = {
       ...input,
-      speckleServerAuthenticationPayload: {
-        ...authCode,
-        origin: new URL(getServerOrigin()).origin
-      },
+      speckleServerAuthenticationPayload: authCode,
       functionName: input.name,
       template: mapGqlTemplateIdToExecEngineTemplateId(input.template),
       supportedSourceApps: input.supportedSourceApps as SourceAppName[],
@@ -145,6 +149,10 @@ export const createFunctionFromTemplate =
     }
 
     const created = await createExecutionEngineFn({ body })
+
+    if (isDevEnv() && created) {
+      automateLogger.info({ created }, `[dev] Created function #${created.functionId}`)
+    }
 
     // Don't want to pull the function w/ another req, so we'll just return the input
     const gqlReturn: AutomateFunctionGraphQLReturn = {
@@ -160,7 +168,11 @@ export const createFunctionFromTemplate =
       description: body.description,
       logo: body.logo,
       tags: body.tags,
-      supportedSourceApps: body.supportedSourceApps
+      supportedSourceApps: body.supportedSourceApps,
+      functionCreator: {
+        speckleServerOrigin: getServerOrigin(),
+        speckleUserId: user.id
+      }
     }
 
     return {
@@ -172,15 +184,14 @@ export const createFunctionFromTemplate =
 export type UpdateFunctionDeps = {
   updateFunction: typeof updateExecEngineFunction
   getFunction: typeof getFunction
+  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
 }
 
 export const updateFunction =
   (deps: UpdateFunctionDeps) =>
   async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
-    throw new AutomateFunctionUpdateError('Function update not supported yet')
-
-    const { updateFunction } = deps
-    const { input } = params
+    const { updateFunction, createStoredAuthCode } = deps
+    const { input, userId } = params
 
     const existingFn = await getFunction({ functionId: input.id })
     if (!existingFn) {
@@ -200,11 +211,18 @@ export const updateFunction =
       return existingFn
     }
 
+    const authCode = await createStoredAuthCode({
+      userId,
+      action: AuthCodePayloadAction.UpdateFunction
+    })
+
     const apiResult = await updateFunction({
       functionId: updates.id,
       body: {
         ...updates,
-        supportedSourceApps: updates.supportedSourceApps as Optional<SourceAppName[]>
+        functionName: updates.name,
+        supportedSourceApps: updates.supportedSourceApps as Optional<SourceAppName[]>,
+        speckleServerAuthenticationPayload: authCode
       }
     })
 
@@ -236,7 +254,7 @@ export const startAutomateFunctionCreatorAuth =
     )
     redirectUrl.searchParams.set(
       'speckleServerAuthenticationPayload',
-      JSON.stringify({ ...authCode, origin: new URL(getServerOrigin()).origin })
+      JSON.stringify({ ...authCode, origin: getServerOrigin() })
     )
 
     return res.redirect(redirectUrl.toString())
