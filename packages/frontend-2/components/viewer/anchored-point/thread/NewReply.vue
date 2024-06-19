@@ -26,7 +26,7 @@
       <FormButton
         :icon-left="PaperAirplaneIcon"
         hide-text
-        color="standard"
+        color="default"
         :disabled="loading"
         @click="onSubmit"
       />
