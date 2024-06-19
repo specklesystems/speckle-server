@@ -138,7 +138,7 @@ const receiveLatestVersion = async () => {
     selectedVersionId: props.modelCard.latestVersionId
   })
   if (props.modelCard.progress)
-    await store.receiveModelCancel(props.modelCard.modelCardId)
+    return await store.receiveModelCancel(props.modelCard.modelCardId)
   await store.receiveModel(props.modelCard.modelCardId)
 }
 
