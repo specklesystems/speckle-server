@@ -1,5 +1,5 @@
 import { UserRecord } from '@/modules/core/helpers/types'
-import { CreateInviteParams } from '../domain/domain'
+import { CreateInviteParams } from '@/modules/serverinvites/domain/interfaces'
 import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import { InviteCreateValidationError } from '../errors'
 import { ResourceTargets, isServerInvite, resolveTarget } from '../helpers/inviteHelper'
