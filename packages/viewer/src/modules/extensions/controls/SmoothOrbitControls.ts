@@ -29,7 +29,6 @@ import {
 
 import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
 
-import { ObjectLayers } from '../../../IViewer.js'
 import { World } from '../../World.js'
 import { SpeckleControls } from './SpeckleControls.js'
 import { Intersections } from '../../Intersections.js'
@@ -203,6 +202,8 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.scene = scene
     this._options = Object.assign({}, options) as Required<SmoothOrbitControlsOptions>
     this.setDamperDecayTime(this._options.damperDecay)
+    this.scene
+    this.intersections
   }
 
   /**
@@ -407,30 +408,28 @@ export class SmoothOrbitControls extends SpeckleControls {
 
     if (deltaZoom === 0) return
 
-    const start = performance.now()
-    const tasIntersect =
-      this.intersections.intersect(
-        this.scene,
-        this._targetCamera as PerspectiveCamera,
-        this.zoomControlCoord,
-        ObjectLayers.STREAM_CONTENT_MESH,
-        false,
-        this.world.worldBox,
-        true,
-        false
-      ) !== null
-    console.warn(performance.now() - start)
+    const tasIntersect = true
+    // Currently disabling this
+    // this.intersections.intersect(
+    //   this.scene,
+    //   this._targetCamera as PerspectiveCamera,
+    //   this.zoomControlCoord,
+    //   ObjectLayers.STREAM_CONTENT_MESH,
+    //   false,
+    //   this.world.worldBox,
+    //   true,
+    //   false
+    // ) !== null
 
     /** Simpler approach to zoom amount varying */
     const normalizedRadius =
       this.spherical.radius / this.world.worldBox.getSize(new Vector3()).length()
 
     let worldSizeOffset = lerp(
-      this.world.getRelativeOffset(0.08) * Math.abs(deltaZoom),
-      this.world.getRelativeOffset(0.32) * Math.abs(deltaZoom),
+      this.world.getRelativeOffset(0.16) * Math.abs(deltaZoom),
+      this.world.getRelativeOffset(0.64) * Math.abs(deltaZoom),
       normalizedRadius >= 0.5 ? Math.exp(normalizedRadius) : normalizedRadius
     )
-
     worldSizeOffset = clamp(
       worldSizeOffset,
       this.world.getRelativeOffset(0.01),

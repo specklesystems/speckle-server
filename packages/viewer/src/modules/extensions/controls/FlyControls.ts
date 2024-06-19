@@ -74,6 +74,7 @@ class FlyControls extends SpeckleControls {
 
   public set options(value: FlyControlsOptions) {
     Object.assign(this._options, value)
+    console.warn('Fly speed modifier: ', value.moveSpeed)
     this.setDamperDecayTime(this._options.damperDecay)
   }
 
@@ -323,12 +324,12 @@ class FlyControls extends SpeckleControls {
 
       case 'PageUp':
       case 'KeyQ':
-        this.keyMap.down = true
+        this.keyMap.up = true
         break
 
       case 'PageDown':
       case 'KeyE':
-        this.keyMap.up = true
+        this.keyMap.down = true
         break
     }
   }
@@ -357,12 +358,12 @@ class FlyControls extends SpeckleControls {
 
       case 'PageUp':
       case 'KeyQ':
-        this.keyMap.down = false
+        this.keyMap.up = false
         break
 
       case 'PageDown':
       case 'KeyE':
-        this.keyMap.up = false
+        this.keyMap.down = false
         break
     }
   }

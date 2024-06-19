@@ -217,7 +217,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     return this._activeControls.getPosition()
   }
 
-  private onKeyUp(e: KeyboardEvent) {
+  protected onKeyUp(e: KeyboardEvent) {
     if (e.code === 'Space') this.toggleControls()
   }
 
@@ -244,18 +244,22 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.viewer.requestRender()
   }
 
-  setCameraView(
+  public setCameraView(
     objectIds: string[] | undefined,
     transition: boolean | undefined,
     fit?: number
   ): void
-  setCameraView(
+  public setCameraView(
     view: CanonicalView | SpeckleView | InlineView | PolarView,
     transition: boolean | undefined,
     fit?: number
   ): void
-  setCameraView(bounds: Box3, transition: boolean | undefined, fit?: number): void
-  setCameraView(
+  public setCameraView(
+    bounds: Box3,
+    transition: boolean | undefined,
+    fit?: number
+  ): void
+  public setCameraView(
     arg0:
       | string[]
       | CanonicalView
@@ -386,7 +390,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.zoomToBox(this.viewer.getRenderer().boxFromObjects(objectIds), fit, transition)
   }
 
-  private zoomExtents(fit = 1.2, transition = true) {
+  protected zoomExtents(fit = 1.2, transition = true) {
     if (this.viewer.getRenderer().clippingVolume.isEmpty()) {
       const box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
       this.zoomToBox(box, fit, transition)
@@ -405,7 +409,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.zoomToBox(box, fit, transition)
   }
 
-  private zoomToBox(box: Box3, fit = 1.2, _transition = true) {
+  protected zoomToBox(box: Box3, fit = 1.2, _transition = true) {
     _transition
     if (box.max.x === Infinity || box.max.x === -Infinity) {
       box = new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1))
@@ -426,19 +430,19 @@ export class CameraController extends Extension implements SpeckleCamera {
     this.setCameraPlanes(box, fit)
   }
 
-  private isSpeckleView(
+  protected isSpeckleView(
     view: CanonicalView | SpeckleView | InlineView | PolarView
   ): view is SpeckleView {
     return (view as SpeckleView).name !== undefined
   }
 
-  private isCanonicalView(
+  protected isCanonicalView(
     view: CanonicalView | SpeckleView | InlineView | PolarView
   ): view is CanonicalView {
     return typeof (view as CanonicalView) === 'string'
   }
 
-  private isInlineView(
+  protected isInlineView(
     view: CanonicalView | SpeckleView | InlineView | PolarView
   ): view is InlineView {
     return (
@@ -447,7 +451,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     )
   }
 
-  private isBox3(
+  protected isBox3(
     view: CanonicalView | SpeckleView | InlineView | PolarView | Box3
   ): view is Box3 {
     return view instanceof Box3
@@ -468,7 +472,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     }
   }
 
-  private setViewSpeckle(view: SpeckleView, transition = true) {
+  protected setViewSpeckle(view: SpeckleView, transition = true) {
     /** SpeckleViews assume Z up, so we pre-transform to Z forward  */
     const quat = new Quaternion()
       .setFromUnitVectors(new Vector3(0, 1, 0), new Vector3(0, 0, 1))
@@ -489,21 +493,19 @@ export class CameraController extends Extension implements SpeckleCamera {
    * @param  {Boolean} transition [description]
    * @return {[type]}             [description]
    */
-  private setViewCanonical(side: string, transition = true) {
+  protected setViewCanonical(side: string, transition = true) {
+    this.zoomExtents()
     const target = this._activeControls.getTarget()
     const position = this._activeControls.getPosition()
-    // console.log(position.distanceTo(target))
     const canonicalPosition = new Vector3()
     switch (side) {
       case 'front':
-        this.zoomExtents()
         canonicalPosition.set(0, 0, 1).multiplyScalar(position.distanceTo(target))
         this._activeControls.fromPositionAndTarget(canonicalPosition, target)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'back':
-        this.zoomExtents()
         canonicalPosition.set(0, 0, -1).multiplyScalar(position.distanceTo(target))
         this._activeControls.fromPositionAndTarget(canonicalPosition, target)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
@@ -511,7 +513,6 @@ export class CameraController extends Extension implements SpeckleCamera {
 
       case 'up':
       case 'top':
-        this.zoomExtents()
         canonicalPosition.set(0, 1, 0).multiplyScalar(position.distanceTo(target))
         this._activeControls.fromPositionAndTarget(canonicalPosition, target)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
@@ -519,21 +520,18 @@ export class CameraController extends Extension implements SpeckleCamera {
 
       case 'down':
       case 'bottom':
-        this.zoomExtents()
         canonicalPosition.set(0, -1, 0).multiplyScalar(position.distanceTo(target))
         this._activeControls.fromPositionAndTarget(canonicalPosition, target)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'right':
-        this.zoomExtents()
         canonicalPosition.set(1, 0, 0).multiplyScalar(position.distanceTo(target))
         this._activeControls.fromPositionAndTarget(canonicalPosition, target)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'left':
-        this.zoomExtents()
         canonicalPosition.set(-1, 0, 0).multiplyScalar(position.distanceTo(target))
         this._activeControls.fromPositionAndTarget(canonicalPosition, target)
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
@@ -542,7 +540,6 @@ export class CameraController extends Extension implements SpeckleCamera {
       case '3d':
       case '3D':
       default: {
-        this.zoomExtents()
         this.enableRotations()
         break
       }
@@ -550,10 +547,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     if (!transition) this._activeControls.jumpToGoal()
   }
 
-  private setViewInline(view: InlineView, transition = true) {
-    /** This check is targeted exclusevely towards the frontend which calls this method pointlessly each frame
-     *  We don't want to make pointless calculations more than we already are
-     */
+  protected setViewInline(view: InlineView, transition = true) {
     this._activeControls.fromPositionAndTarget(view.position, view.target)
     if (!transition) this._activeControls.jumpToGoal()
 

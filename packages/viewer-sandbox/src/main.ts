@@ -11,7 +11,7 @@ import './style.css'
 import Sandbox from './Sandbox'
 import {
   SelectionExtension,
-  CameraController,
+  HybridCameraController,
   MeasurementsExtension,
   ExplodeExtension,
   DiffExtension,
@@ -42,7 +42,7 @@ const createViewer = async (containerName: string, stream: string) => {
   const viewer: Viewer = new Viewer(container, params)
   await viewer.init()
 
-  const cameraController = viewer.createExtension(CameraController)
+  const cameraController = viewer.createExtension(HybridCameraController)
   const selection = viewer.createExtension(SelectionExtension)
   const sections = viewer.createExtension(SectionTool)
   const sectionOutlines = viewer.createExtension(SectionOutlines)
