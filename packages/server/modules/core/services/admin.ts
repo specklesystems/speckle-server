@@ -3,7 +3,7 @@ import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import { listUsers, countUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
-import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { createServerInvitesRepository } from '@/modules/serverinvites/repositories/serverInvites'
 import { BaseError } from '@/modules/shared/errors/base'
 import { ServerRoles } from '@speckle/shared'

@@ -20,7 +20,7 @@ import {
   isResourceAllowed
 } from '@/modules/core/helpers/token'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
-import { ServerInvitesRepository } from '../domain'
+import { ServerInvitesRepository } from '../domain/domain'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
 

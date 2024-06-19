@@ -86,7 +86,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           )
 
         // 2. if you have an invite it must be valid, both for invite only and public servers
-        /** @type {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} */
+        /** @type {import('@/modules/serverinvites/domain/types').ServerInviteRecord} */
         let invite
         const serverInvitesRepository = createServerInvitesRepository({
           db: knexInstance

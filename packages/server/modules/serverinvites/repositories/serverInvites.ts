@@ -13,7 +13,10 @@ import {
 } from '@/modules/serverinvites/helpers/inviteHelper'
 import { uniq } from 'lodash'
 import { StreamWithOptionalRole, getStream } from '@/modules/core/repositories/streams'
-import { ServerInviteRecord, StreamInviteRecord } from '../helpers/types'
+import {
+  ServerInviteRecord,
+  StreamInviteRecord
+} from '@/modules/serverinvites/domain/types'
 import { Knex } from 'knex'
 
 /**

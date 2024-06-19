@@ -22,7 +22,7 @@ import {
   UsersMetaRecord
 } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   getCommitBranches,
   getCommits,

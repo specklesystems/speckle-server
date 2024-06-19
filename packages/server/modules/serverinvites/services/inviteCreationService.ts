@@ -12,10 +12,13 @@ import {
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { addStreamInviteSentOutActivity } from '@/modules/activitystream/services/streamActivity'
 import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
-import { CreateInviteParams, ServerInvitesRepository } from '../domain'
+import {
+  CreateInviteParams,
+  ServerInvitesRepository
+} from '@/modules/serverinvites/domain/interfaces'
 import { validateInput } from './validation'
 import { buildEmailContents } from './buildEmailContents'
-import { ServerInviteRecord } from '../helpers/types'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 
 /**
  * Create and send out an invite

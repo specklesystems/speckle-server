@@ -1,18 +1,32 @@
 import { ServerRoles, StreamRoles } from '@speckle/shared'
-import { UserWithOptionalRole } from '../core/repositories/users'
-import { ResourceTargets } from './helpers/inviteHelper'
-import { ServerInviteRecord, StreamInviteRecord } from './helpers/types'
-import { StreamWithOptionalRole } from '../core/repositories/streams'
+import { UserWithOptionalRole } from '../../core/repositories/users'
+import { ResourceTargets } from '../helpers/inviteHelper'
+import {
+  ServerInviteRecord,
+  StreamInviteRecord
+} from '@/modules/serverinvites/domain/types'
+import { StreamWithOptionalRole } from '../../core/repositories/streams'
+
+export type QueryAllUserStreamInvites = (
+  userId: string
+) => Promise<StreamInviteRecord[]>
+
+type FindStreamInviteArgs = {
+  target?: string | null
+  token?: string | null
+  inviteId?: string | null
+}
+
+export type FindStreamInvite = (
+  streamId: string,
+  args: FindStreamInviteArgs
+) => Promise<StreamInviteRecord | null>
 
 export interface ServerInvitesRepository {
-  queryAllUserStreamInvites: (userId: string) => Promise<StreamInviteRecord[]>
+  queryAllUserStreamInvites: QueryAllUserStreamInvites
   findStreamInvite: (
     streamId: string,
-    {
-      target,
-      token,
-      inviteId
-    }: { target?: string | null; token?: string | null; inviteId?: string | null }
+    args: FindStreamInviteArgs
   ) => Promise<StreamInviteRecord | null>
   findUserByTarget: (target: string) => Promise<UserWithOptionalRole | null>
   findResource: (invite: {

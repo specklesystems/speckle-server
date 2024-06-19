@@ -12,10 +12,10 @@ import {
 import {
   ServerInviteRecord,
   StreamInviteRecord
-} from '@/modules/serverinvites/helpers/types'
+} from '@/modules/serverinvites/domain/types'
 import { MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { keyBy, uniq } from 'lodash'
-import { ServerInvitesRepository } from '../domain'
+import { ServerInvitesRepository } from '@/modules/serverinvites/domain/interfaces'
 
 /**
  * The token field is intentionally ommited from this and only managed through the .token resolver

@@ -1,5 +1,5 @@
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
-import { ServerInviteRecord } from '../helpers/types'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { ResourceTargets, isServerInvite } from '../helpers/inviteHelper'
 import {
@@ -13,7 +13,7 @@ import {
   renderEmail
 } from '@/modules/emails/services/emailRendering'
 import sanitizeHtml from 'sanitize-html'
-import { CreateInviteParams } from '../domain'
+import { CreateInviteParams } from '@/modules/serverinvites/domain/interfaces'
 
 type InviteOrInputParams =
   | CreateInviteParams

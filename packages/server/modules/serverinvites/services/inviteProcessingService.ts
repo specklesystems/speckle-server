@@ -10,8 +10,8 @@ import { resendInviteEmail } from '@/modules/serverinvites/services/inviteCreati
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { ServerInviteRecord } from '../helpers/types'
-import { ServerInvitesRepository } from '../domain'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import { ServerInvitesRepository } from '@/modules/serverinvites/domain/interfaces'
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
