@@ -85,6 +85,15 @@ const getComment = ({ db }: { db: Knex }) =>
     return (await query) as unknown as Optional<ExtendedComment>
   }
 
+/**
+ * @deprecated You should probably use `getComment`. This was written to limit logic changes during refactoring.
+ */
+const legacyGetComment =
+  ({ db }: { db: Knex }) =>
+    async (params: { id: string }) => {
+      return await tables.comments(db).where({ id: params.id }).first()
+    }
+
 /** One of `resources` or `streamId` expected. */
 type GetCommentsParams = {
   resources?: (ResourceIdentifier | null)[] | null
@@ -800,6 +809,7 @@ const deleteComment =
 
 export const createCommentsRepository = ({ db }: { db: Knex }) => ({
   getComment: getComment({ db }),
+  legacyGetComment: legacyGetComment({ db }),
   getComments: getComments({ db }),
   getCommentsResources: getCommentsResources({ db }),
   getCommentsViewedAt: getCommentsViewedAt({ db }),

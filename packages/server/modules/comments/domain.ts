@@ -22,6 +22,7 @@ export interface CommentsRepository {
   getResourceCommentCount: (params: { resourceId: string }) => Promise<number>
   insertComment: (input: InsertCommentPayload, options?: Partial<{ trx: Knex.Transaction }>) => Promise<CommentRecord>
   insertCommentLinks: (commentLinks: CommentLinkRecord[], options?: Partial<{ trx: Knex.Transaction }>) => Promise<number[]>
+  legacyGetComment: (params: { id: string }) => Promise<CommentRecord | undefined>
   markCommentUpdated: (commentId: string) => Promise<number>
   markCommentViewed: (commentId: string, userId: string) => Promise<number[]>
   resolvePaginatedProjectCommentsLatestModelResources: (resourceIdString: string | null | undefined) => Promise<(CommitRecord & { branchId: string })[]>

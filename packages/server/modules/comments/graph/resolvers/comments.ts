@@ -442,7 +442,7 @@ export = {
       return true
     },
 
-    async commentCreate(parent, args, context) {
+    async commentCreate(_parent, args, context) {
       if (!context.userId)
         throw new ApolloForbiddenError('Only registered users can comment.')
 
@@ -473,16 +473,22 @@ export = {
       return comment.id
     },
 
-    async commentEdit(parent, args, context) {
+    async commentEdit(_parent, args, context) {
       // NOTE: This is NOT in use anywhere
+      if (!context.userId)
+        throw new ApolloForbiddenError('Only registered users can comment.')
+
       const stream = await authorizeProjectCommentsAccess({
         projectId: args.input.streamId,
         authCtx: context,
         requireProjectRole: true
       })
       const matchUser = !stream.role
+
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
       try {
-        await editComment({ userId: context.userId, input: args.input, matchUser })
+        await editComment({ commentsRepository })({ userId: context.userId, input: args.input, matchUser })
         return true
       } catch (err) {
         if (err instanceof ForbiddenError) throw new ApolloForbiddenError(err.message)
@@ -491,25 +497,37 @@ export = {
     },
 
     // used for flagging a comment as viewed
-    async commentView(parent, args, context) {
+    async commentView(_parent, args, context) {
+      if (!context.userId)
+        throw new ApolloForbiddenError('You are not authorized.')
+
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context
       })
-      await viewComment({ userId: context.userId, commentId: args.commentId })
+
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
+      await viewComment({ commentsRepository })({ userId: context.userId, commentId: args.commentId })
+
       return true
     },
 
-    async commentArchive(parent, args, context) {
+    async commentArchive(_parent, args, context) {
+      if (!context.userId)
+        throw new ApolloForbiddenError('You are not authorized.')
+
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context,
         requireProjectRole: true
       })
 
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
       let updatedComment
       try {
-        updatedComment = await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
+        updatedComment = await archiveComment({ commentsRepository })({ ...args, userId: context.userId }) // NOTE: permissions check inside service
       } catch (err) {
         if (err instanceof ForbiddenError) throw new ApolloForbiddenError(err.message)
         throw err
@@ -526,24 +544,27 @@ export = {
       return true
     },
 
-    async commentReply(parent, args, context) {
+    async commentReply(_parent, args, context) {
       if (!context.userId)
         throw new ApolloForbiddenError('Only registered users can comment.')
 
+      // TODO: Inject core repo/service method
       const stream = await getStream({
         streamId: args.input.streamId,
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !stream.role)
+      if (!stream || !stream.allowPublicComments && !stream.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
-      const reply = await createCommentReply({
+      const commentsRepository = createCommentsRepository({ db: knexInstance })
+
+      const reply = await createCommentReply({ commentsRepository })({
         authorId: context.userId,
         parentCommentId: args.input.parentComment,
         streamId: args.input.streamId,
-        text: args.input.text,
-        data: args.input.data,
+        text: args.input.text ?? null,
+        data: args.input.data ?? null,
         blobIds: args.input.blobIds
       })
 
