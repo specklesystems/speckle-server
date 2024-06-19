@@ -1,7 +1,7 @@
 <template>
   <div>
     <div
-      class="absolute z-50 top-0 md:left-0 md:relative h-full flex flex-col justify-between w-64 sm:w-80 bg-foundation border-r border-outline-3 overflow-x-visible p-4 transition-all duration-200 shadow-md md:shadow-none"
+      class="absolute z-50 top-0 md:left-0 md:relative h-full flex flex-col justify-between w-64 md:w-80 bg-foundation border-r border-outline-3 overflow-x-visible p-4 transition-all duration-200 shadow-md md:shadow-none"
       :class="isOpen ? 'left-0' : '-left-64 '"
     >
       <button
