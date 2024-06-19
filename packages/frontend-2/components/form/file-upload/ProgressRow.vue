@@ -8,7 +8,7 @@
         {{ prettyFileSize(item.file.size) }}
       </span>
       <button class="p-0.5 text-foreground hover:text-primary" @click="onDelete">
-        <XMarkIcon class="h-4 w-4" alt="close" />
+        <XMarkIcon class="h-4 w-4" alt="delete" />
       </button>
     </div>
     <div

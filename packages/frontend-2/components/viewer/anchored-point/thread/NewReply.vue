@@ -21,13 +21,11 @@
         :disabled="loading"
         color="card"
         class="sm:px-0"
-        size="sm"
         @click="trackAttachAndOpenFilePicker()"
       />
       <FormButton
         :icon-left="PaperAirplaneIcon"
         hide-text
-        size="sm"
         color="primary"
         :disabled="loading"
         @click="onSubmit"
