@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import { specklePointVert } from './shaders/speckle-point-vert'
 import { specklePointFrag } from './shaders/speckle-point-frag'
 import { Material, NearestFilter, Texture, type PointsMaterialParameters } from 'three'

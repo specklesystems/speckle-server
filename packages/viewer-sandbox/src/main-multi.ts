@@ -78,15 +78,17 @@ const createViewer = async (containerName: string, stream: string) => {
   await sandbox.loadUrl(stream)
 }
 
-createViewer(
+void createViewer(
   '#renderer0',
   'https://latest.speckle.dev/streams/0c6ad366c4/commits/aa1c393aec'
 )
-createViewer('#renderer1', 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8')
+void createViewer(
+  '#renderer1',
+  'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+)
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const getStream = () => {
   return (
     // prettier-ignore

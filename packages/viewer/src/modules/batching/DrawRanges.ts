@@ -17,9 +17,9 @@ export class DrawRanges {
     for (let k = 0, l = groups.length - 1; k < groups.length; k++, l--) {
       const groupForward = groups[k]
       const groupBackwards = groups[l]
-      edgesForward[groupForward.start] = groupForward.materialIndex as number
+      edgesForward[groupForward.start] = groupForward.materialIndex
       edgesBackwards[groupBackwards.start + groupBackwards.count] =
-        groupBackwards.materialIndex as number
+        groupBackwards.materialIndex
     }
 
     _flatRanges = groups.map((group: DrawGroup) => {

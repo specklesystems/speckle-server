@@ -155,7 +155,7 @@ export class PointBatch extends PrimitiveBatch {
     }
   }
 
-  public buildBatch(): void {
+  public buildBatch(): Promise<void> {
     let attributeCount = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const ervee = this.renderViews[k]
@@ -206,6 +206,8 @@ export class PointBatch extends PrimitiveBatch {
         ? ObjectLayers.STREAM_CONTENT_POINT
         : ObjectLayers.STREAM_CONTENT_POINT_CLOUD
     )
+
+    return Promise.resolve()
   }
 
   protected makePointGeometry(

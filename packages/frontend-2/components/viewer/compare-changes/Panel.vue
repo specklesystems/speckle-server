@@ -65,10 +65,9 @@
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import { VisualDiffMode } from '@speckle/viewer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
-import { uniqBy } from 'lodash-es'
+import { uniqBy, debounce } from 'lodash-es'
 import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { debounce } from 'lodash-es'
 
 defineEmits<{
   (e: 'close'): void
@@ -143,7 +142,6 @@ const added = computed(() => {
 const addedIds = computed(() => added.value.map((o) => o.id as string))
 
 const removed = computed(() => {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   const mapped = diffState.result.value?.removed.map(
     (node) => node.model.raw as SpeckleObject
   )

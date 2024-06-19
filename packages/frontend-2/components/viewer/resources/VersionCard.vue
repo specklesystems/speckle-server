@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
     :class="`bg-foundation group relative block w-full space-y-2 rounded-md pb-2 text-left ${

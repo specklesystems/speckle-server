@@ -320,6 +320,12 @@ extend type Project {
   automation(id: String!): Automation! @hasStreamRole(role: STREAM_OWNER)
 }
 
+input AutomateAuthCodePayloadTest {
+  code: String!
+  userId: String!
+  action: String!
+}
+
 extend type Query {
   automateFunctions(
     filter: AutomateFunctionsFilter
@@ -334,7 +340,7 @@ extend type Query {
   """
   Part of the automation/function creation handshake mechanism
   """
-  automateValidateAuthCode(code: String!): Boolean!
+  automateValidateAuthCode(payload: AutomateAuthCodePayloadTest!): Boolean!
 }
 
 extend type Mutation {

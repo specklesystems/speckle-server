@@ -36,6 +36,7 @@ import {
   updateAutomation
 } from '@/modules/automate/services/automationManagement'
 import {
+  AuthCodePayloadAction,
   createStoredAuthCode,
   validateStoredAuthCode
 } from '@/modules/automate/services/authCode'
@@ -53,13 +54,8 @@ import { getGenericRedis } from '@/modules/core/index'
 import { getUser } from '@/modules/core/repositories/users'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
-import {
-  Automate,
-  Environment,
-  Roles,
-  isNullOrUndefined,
-  isNonNullable
-} from '@speckle/shared'
+import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommits,
   getBranchesByIds
@@ -108,7 +104,7 @@ import {
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 
-const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 export = (FF_AUTOMATE_MODULE_ENABLED
   ? {
@@ -262,7 +258,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         },
         async creationPublicKeys(parent, _args, ctx) {
           await authorizeResolver(
-            ctx.userId!,
+            ctx.userId,
             parent.projectId,
             Roles.Stream.Owner,
             ctx.resourceAccessRules
@@ -445,11 +441,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       },
       ProjectAutomationMutations: {
         async create(parent, { input }, ctx) {
-          const testAutomateAuthCode = process.env['TEST_AUTOMATE_AUTHENTICATION_CODE']
           const create = createAutomation({
-            createAuthCode: testAutomateAuthCode
-              ? async () => testAutomateAuthCode
-              : createStoredAuthCode({ redis: getGenericRedis() }),
+            createAuthCode: createStoredAuthCode({ redis: getGenericRedis() }),
             automateCreateAutomation: clientCreateAutomation,
             storeAutomation,
             storeAutomationToken
@@ -550,11 +543,14 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         }
       },
       Query: {
-        async automateValidateAuthCode(_parent, { code }) {
+        async automateValidateAuthCode(_parent, args) {
           const validate = validateStoredAuthCode({
             redis: getGenericRedis()
           })
-          return await validate(code)
+          return await validate({
+            ...args.payload,
+            action: args.payload.action as AuthCodePayloadAction
+          })
         },
         async automateFunction(_parent, { id }, ctx) {
           const fn = await ctx.loaders.automationsApi.getFunction.load(id)
@@ -620,14 +616,16 @@ export = (FF_AUTOMATE_MODULE_ENABLED
           return hasAutomateGithubApp
         },
         availableGithubOrgs: async (parent, _args, ctx) => {
-          const authCode = await createStoredAuthCode({ redis: getGenericRedis() })()
           const userId = parent.userId
+          const authCode = await createStoredAuthCode({ redis: getGenericRedis() })({
+            userId,
+            action: AuthCodePayloadAction.GetAvailableGithubOrganizations
+          })
 
           let orgs: string[] = []
           try {
             orgs = (
               await getUserGithubOrganizations({
-                userId,
                 authCode
               })
             ).availableGitHubOrganisations
@@ -657,7 +655,7 @@ export = (FF_AUTOMATE_MODULE_ENABLED
       ProjectMutations: {
         async automationMutations(_parent, { projectId }, ctx) {
           await validateStreamAccess(
-            ctx.userId!,
+            ctx.userId,
             projectId,
             Roles.Stream.Owner,
             ctx.resourceAccessRules

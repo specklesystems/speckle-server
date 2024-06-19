@@ -53,7 +53,7 @@
           v-for="fn in functions"
           :key="fn.id"
           :fn="fn"
-          @use="() => $emit('new-automation', fn)"
+          no-buttons
         />
       </AutomateFunctionCardView>
       <CommonGenericEmptyState v-else />

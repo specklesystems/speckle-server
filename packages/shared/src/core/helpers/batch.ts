@@ -1,4 +1,4 @@
-import { range } from 'lodash'
+import { range } from '#lodash'
 
 /**
  * Utility for batching async operations. Useful when you have thousands of async operations and you can't

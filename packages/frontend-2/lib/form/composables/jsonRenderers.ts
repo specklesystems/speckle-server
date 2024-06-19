@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useJsonFormsArrayControl, useJsonFormsControl } from '@jsonforms/vue'
+import type { useJsonFormsArrayControl, useJsonFormsControl } from '@jsonforms/vue'
 import { useVanillaArrayControl } from '@jsonforms/vue-vanilla'
 import { cloneDeep, merge } from 'lodash-es'
 import { type RuleExpression } from 'vee-validate'

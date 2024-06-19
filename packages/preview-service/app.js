@@ -27,7 +27,7 @@ app.use('/api', apiRouter)
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
-  next(createError(404))
+  next(createError(404, `Not Found: ${req.url}`))
 })
 
 // error handler

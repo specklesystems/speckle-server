@@ -16,7 +16,7 @@
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
-import type { Optional } from '~~/../shared/dist-esm'
+import type { Optional } from '@speckle/shared'
 import { useProjectPageItemViewType } from '~~/lib/projects/composables/projectPages'
 import { projectDiscussionsPageQuery } from '~~/lib/projects/graphql/queries'
 

@@ -43,17 +43,13 @@ const config = {
       }
     ]
   },
-  externals: {
-    znv: 'znv',
-    zod: 'zod'
-  },
-
   plugins: [
     new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
     new HtmlWebpackPlugin({
       title: 'Speckle Viewer Example',
       template: 'render_page/src/example.html',
-      filename: 'index.html'
+      filename: 'index.html',
+      favicon: 'render_page/src/favicon.ico'
     })
   ],
   resolve: {

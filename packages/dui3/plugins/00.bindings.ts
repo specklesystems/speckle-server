@@ -1,22 +1,22 @@
-import { IRawBridge } from '~/lib/bridge/definitions'
+import type { IRawBridge } from '~/lib/bridge/definitions'
 
 import { GenericBridge } from '~/lib/bridge/generic'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
 
+import type { IBasicConnectorBinding } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import {
-  IBasicConnectorBinding,
   IBasicConnectorBindingKey,
   MockedBaseBinding
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 
+import type { ITestBinding } from '~/lib/bindings/definitions/ITestBinding'
 import {
-  ITestBinding,
   ITestBindingKey,
   MockedTestBinding
 } from '~/lib/bindings/definitions/ITestBinding'
 
+import type { IConfigBinding } from '~/lib/bindings/definitions/IConfigBinding'
 import {
-  IConfigBinding,
   IConfigBindingKey,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   MockedConfigBinding

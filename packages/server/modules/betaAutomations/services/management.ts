@@ -275,7 +275,7 @@ export const getAutomationsStatus = async ({
     statusMessage = 'Some automations are initializing'
   }
   return {
-    status: status as AutomationRunStatus,
+    status,
     automationRuns,
     statusMessage,
     id: versionId

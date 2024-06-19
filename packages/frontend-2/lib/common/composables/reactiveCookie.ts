@@ -31,7 +31,7 @@ export const useSynchronizedCookie = <CookieValue = string>(
     const cookie = useCookie<CookieValue>(name, finalOpts as any)
 
     // Hack to resolve Safari & Brave limiting client-side cookies to 7 days - set temporary cookie to be read from server-side where it'll be fixed
-    if (process.client && isBraveOrSafari()) {
+    if (import.meta.client && isBraveOrSafari()) {
       const tmpCookie = useCookie(`tmp-${name}`, finalOpts as any)
 
       watch(cookie, (newVal) => {

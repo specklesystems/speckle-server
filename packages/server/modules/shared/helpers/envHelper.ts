@@ -1,5 +1,6 @@
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { trimEnd } from 'lodash'
+import * as Environment from '@speckle/shared/dist/commonjs/environment/index.js'
 
 export function isTestEnv() {
   return process.env.NODE_ENV === 'test'
@@ -30,7 +31,7 @@ export function getFileSizeLimitMB() {
 }
 
 export function getMaximumObjectSizeMB() {
-  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '10')
+  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
 }
 
 export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
@@ -293,4 +294,10 @@ export function getGendoAIResponseKey() {
 
 export function getGendoAIAPIEndpoint() {
   return process.env.GENDOAI_API_ENDPOINT
+}
+
+export const getFeatureFlags = () => Environment.getFeatureFlags()
+
+export function isEmailEnabled() {
+  return process.env.EMAIL === 'true'
 }

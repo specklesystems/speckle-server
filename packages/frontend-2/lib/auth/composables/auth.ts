@@ -179,7 +179,7 @@ export const useAuthManager = () => {
    * Check for 'emailverifiedstatus' in query string and report it to user
    */
   const watchEmailVerificationStatus = () => {
-    if (process.server) return
+    if (import.meta.server) return
 
     watch(
       () =>
@@ -222,7 +222,7 @@ export const useAuthManager = () => {
    * (either used just logged in or registered)
    */
   const watchLoginAccessCode = () => {
-    if (process.server) return
+    if (import.meta.server) return
 
     watch(
       () => route.query['access_code'] as Optional<string>,

@@ -47,7 +47,8 @@ import {
   storeAutomationToken
 } from '@/modules/automate/repositories/automations'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
-import { Automate, Environment } from '@speckle/shared'
+import { Automate } from '@speckle/shared'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommits,
   getLatestStreamBranch
@@ -71,7 +72,7 @@ import {
 import { buildDecryptor } from '@/modules/shared/utils/libsodium'
 import { mapGqlStatusToDbStatus } from '@/modules/automate/utils/automateFunctionRunStatus'
 
-const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 
 ;(FF_AUTOMATE_MODULE_ENABLED ? describe : describe.skip)(
   'Automate triggers @automate',
@@ -133,6 +134,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           }
         })
       ])
+
       testUserStreamModel = projectModel
       createdAutomation = newAutomation
 
@@ -1111,6 +1113,15 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
       let automationRun: InsertableAutomationRun
 
       before(async () => {
+        const testVersion = {
+          id: cryptoRandomString({ length: 10 }),
+          authorId: testUser.id,
+          streamId: testUserStream.id,
+          branchName: testUserStreamModel.name,
+          objectId: ''
+        }
+
+        await createTestCommit(testVersion)
         // Insert automation run directly to DB
         automationRun = {
           id: cryptoRandomString({ length: 10 }),
@@ -1121,7 +1132,7 @@ const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
           executionEngineRunId: cryptoRandomString({ length: 10 }),
           triggers: [
             {
-              triggeringId: testUserStreamModel.id,
+              triggeringId: testVersion.id,
               triggerType: VersionCreationTriggerType
             }
           ],

@@ -42,20 +42,20 @@ const clickPlayBuilder: (rightClick?: boolean) => VuePlayFunction =
     const canvas = within(canvasElement)
 
     if (useRightClick) {
-      rightClick(canvas.getByRole('button'))
+      await rightClick(canvas.getByRole('button'))
     } else {
-      userEvent.click(canvas.getByRole('button'))
+      await userEvent.click(canvas.getByRole('button'))
     }
 
     await wait(500)
 
     if (useRightClick) {
-      rightClick(canvas.getByRole('button'))
+      await rightClick(canvas.getByRole('button'))
     } else {
-      userEvent.click(canvas.getByRole('button'))
+      await userEvent.click(canvas.getByRole('button'))
     }
 
-    userEvent.tab()
+    await userEvent.tab()
   }
 
 export const Default: StoryType = {

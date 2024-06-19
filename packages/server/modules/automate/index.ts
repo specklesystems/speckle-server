@@ -5,13 +5,13 @@ import {
   onModelVersionCreate,
   triggerAutomationRevisionRun
 } from '@/modules/automate/services/trigger'
-import { Environment } from '@speckle/shared'
 import {
   getActiveTriggerDefinitions,
   getAutomationRunFullTriggers,
   getFullAutomationRevisionMetadata,
   getAutomation,
-  getAutomationRevision
+  getAutomationRevision,
+  getFullAutomationRunById
 } from '@/modules/automate/repositories/automations'
 import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
@@ -29,8 +29,11 @@ import {
 } from '@/modules/automate/services/subscriptions'
 import { setupRunFinishedTracking } from '@/modules/automate/services/tracking'
 import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
+import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getUserById } from '@/modules/core/services/users'
+import { getCommit } from '@/modules/core/repositories/commits'
 
-const { FF_AUTOMATE_MODULE_ENABLED } = Environment.getFeatureFlags()
+const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
 
 async function initScopes() {
@@ -70,7 +73,10 @@ const initializeEventListeners = () => {
   })
   const setupAutomationUpdateSubscriptionsInvoke = setupAutomationUpdateSubscriptions()
   const setupRunFinishedTrackingInvoke = setupRunFinishedTracking({
-    getFullAutomationRevisionMetadata
+    getFullAutomationRevisionMetadata,
+    getUserById,
+    getCommit,
+    getFullAutomationRunById
   })
 
   const quitters = [

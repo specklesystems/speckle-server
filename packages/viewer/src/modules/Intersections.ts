@@ -57,7 +57,7 @@ export class Intersections {
         .set(min.x, min.y)
         .distanceTo(new Vector2(max.x, max.y))
 
-      const mat: LineMaterial = (obj as LineSegments2).material
+      const mat: LineMaterial = obj.material
       const lineWidth = mat.linewidth
       const worldSpace = mat.worldUnits
       /** So we empirically adjust the threshold of each line(batch) based on it's

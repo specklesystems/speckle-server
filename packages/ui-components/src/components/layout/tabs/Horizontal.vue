@@ -97,7 +97,7 @@ import type { LayoutPageTabItem } from '~~/src/helpers/layout/components'
 import { isClient } from '@vueuse/core'
 import { ArrowLongRightIcon, ArrowLongLeftIcon } from '@heroicons/vue/24/outline'
 import type { Nullable } from '@speckle/shared'
-import { throttle } from 'lodash-es'
+import { throttle } from '#lodash'
 
 const props = defineProps<{
   items: LayoutPageTabItem[]
@@ -217,7 +217,7 @@ watch(
   () => [props.items, activeItem.value] as const,
   ([newItems]) => {
     if (Array.isArray(newItems) && newItems.length && !activeItem.value) {
-      setActiveItem(newItems[0] as LayoutPageTabItem)
+      setActiveItem(newItems[0])
     }
     checkArrowsVisibility()
   }

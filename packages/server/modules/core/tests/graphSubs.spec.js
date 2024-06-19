@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 const expect = require('chai').expect
 const request = require('supertest')
 const { gql } = require('apollo-server-express')
@@ -87,7 +86,7 @@ describe('GraphQL API Subscriptions @gql-subscriptions', () => {
 
     console.log(`      Waiting on child server to be started at PORT ${childPort} `)
     // lets wait for the server is starting up
-    // eslint-disable-next-line no-constant-condition
+
     while (true) {
       try {
         const res = await sendRequest('', {

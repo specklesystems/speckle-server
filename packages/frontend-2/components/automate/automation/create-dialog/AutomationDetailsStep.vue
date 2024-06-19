@@ -7,7 +7,6 @@
       show-label
       help="Choose the project where your target model is located"
       show-required
-      button-style="tinted"
       mount-menu-on-body
       :rules="projectRules"
       :allow-unset="false"

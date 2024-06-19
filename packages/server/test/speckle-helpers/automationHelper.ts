@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import {
   getAutomation,
   storeAutomation,

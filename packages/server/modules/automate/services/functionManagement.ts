@@ -1,4 +1,3 @@
-/* eslint-disable camelcase */
 import {
   CreateFunctionBody,
   ExecutionEngineFunctionTemplateId,
@@ -35,7 +34,10 @@ import {
 } from '@/modules/automate/helpers/executionEngine'
 import { Request, Response } from 'express'
 import { UnauthorizedError } from '@/modules/shared/errors'
-import { createStoredAuthCode } from '@/modules/automate/services/authCode'
+import {
+  AuthCodePayloadAction,
+  createStoredAuthCode
+} from '@/modules/automate/services/authCode'
 import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
 
@@ -125,12 +127,16 @@ export const createFunctionFromTemplate =
       throw new AutomateFunctionCreationError('Speckle user not found')
     }
 
-    const authCode = await createStoredAuthCode()
+    const authCode = await createStoredAuthCode({
+      userId: user.id,
+      action: AuthCodePayloadAction.CreateFunction
+    })
     const body: CreateFunctionBody = {
       ...input,
-      speckleServerOrigin: new URL(getServerOrigin()).origin,
-      speckleUserId: user.id,
-      authenticationCode: authCode,
+      speckleServerAuthenticationPayload: {
+        ...authCode,
+        origin: new URL(getServerOrigin()).origin
+      },
       functionName: input.name,
       template: mapGqlTemplateIdToExecEngineTemplateId(input.template),
       supportedSourceApps: input.supportedSourceApps as SourceAppName[],
@@ -220,17 +226,18 @@ export const startAutomateFunctionCreatorAuth =
       throw new UnauthorizedError()
     }
 
-    const authCode = await createStoredAuthCode()
+    const authCode = await createStoredAuthCode({
+      userId,
+      action: AuthCodePayloadAction.BecomeFunctionAuthor
+    })
     const redirectUrl = new URL(
       '/api/v2/functions/auth/githubapp/authorize',
       speckleAutomateUrl()
     )
-    redirectUrl.searchParams.set('speckleUserId', userId)
     redirectUrl.searchParams.set(
-      'speckleServerOrigin',
-      new URL(getServerOrigin()).origin
+      'speckleServerAuthenticationPayload',
+      JSON.stringify({ ...authCode, origin: new URL(getServerOrigin()).origin })
     )
-    redirectUrl.searchParams.set('speckleServerAuthenticationCode', authCode)
 
     return res.redirect(redirectUrl.toString())
   }

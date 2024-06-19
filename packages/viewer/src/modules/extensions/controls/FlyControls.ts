@@ -104,7 +104,7 @@ class FlyControls extends SpeckleControls {
     this._targetCamera = camera
     this.container = container
     this.world = world
-    this._options = Object.assign({}, options) as Required<FlyControlsOptions>
+    this._options = Object.assign({}, options)
   }
 
   public isStationary(): boolean {

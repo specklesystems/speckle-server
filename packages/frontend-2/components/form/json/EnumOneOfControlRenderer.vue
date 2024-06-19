@@ -13,6 +13,5 @@ const props = defineProps({
   ...rendererProps<ControlElement>()
 })
 
-// eslint-disable-next-line @typescript-eslint/unbound-method
 const controlOverrides = useJsonFormsOneOfEnumControl(props)
 </script>

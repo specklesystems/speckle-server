@@ -19,7 +19,7 @@ import {
 import { getUser } from '@/modules/core/repositories/users'
 import { Optional, wait } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
-import { Observability } from '@speckle/shared'
+import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
 import { pino } from 'pino'
 import { getIpFromRequest } from '@/modules/shared/utils/ip'
 import { Netmask } from 'netmask'

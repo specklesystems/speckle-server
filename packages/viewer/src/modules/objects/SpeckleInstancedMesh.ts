@@ -373,7 +373,7 @@ export default class SpeckleInstancedMesh extends Group {
               if (intersection) {
                 intersection.faceIndex = Math.floor(j / 3) // triangle number in indexed buffer semantics
                 if (intersection.face)
-                  intersection.face.materialIndex = group.materialIndex as number
+                  intersection.face.materialIndex = group.materialIndex
                 intersects.push(intersection)
               }
             }
@@ -451,7 +451,7 @@ export default class SpeckleInstancedMesh extends Group {
               if (intersection) {
                 intersection.faceIndex = Math.floor(j / 3) // triangle number in non-indexed buffer semantics
                 if (intersection.face)
-                  intersection.face.materialIndex = group.materialIndex as number
+                  intersection.face.materialIndex = group.materialIndex
                 intersects.push(intersection)
               }
             }

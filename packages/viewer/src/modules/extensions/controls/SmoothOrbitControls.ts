@@ -200,7 +200,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.world = world
     this.intersections = intersections
     this.scene = scene
-    this._options = Object.assign({}, options) as Required<SmoothOrbitControlsOptions>
+    this._options = Object.assign({}, options)
     this.setDamperDecayTime(this._options.damperDecay)
     this.scene
     this.intersections
@@ -977,8 +977,8 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.zoomControlCoord.set(x, y)
 
     const deltaZoom =
-      ((event as WheelEvent).deltaY *
-        ((event as WheelEvent).deltaMode === 1 ? 18 : 1) *
+      (event.deltaY *
+        (event.deltaMode === 1 ? 18 : 1) *
         ZOOM_SENSITIVITY *
         this._options.zoomSensitivity *
         +this._options.enableZoom) /

@@ -63,7 +63,7 @@ const props = withDefaults(
 defineModel<string>()
 const { value } = useField<string>(props.name, props.rules)
 
-const body = computed(() => (process.client ? document.body : undefined))
+const body = computed(() => (import.meta.client ? document.body : undefined))
 const isEditing = ref(true)
 const isPreviewDisabled = computed(() => !(value.value || '').trim().length)
 

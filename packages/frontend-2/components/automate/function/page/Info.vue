@@ -81,7 +81,7 @@
         class="shrink-0"
         @click="$emit('createAutomation')"
       >
-        Use in Automation
+        Use in an Automation
       </FormButton>
     </div>
     <AutomateFunctionPageParametersDialog

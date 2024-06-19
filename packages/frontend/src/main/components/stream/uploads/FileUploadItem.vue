@@ -106,7 +106,7 @@ export default {
       try {
         request.send(data)
       } catch (e) {
-        this.error = 'There was an error: ' + e
+        this.error = 'There was an error: ' + `${e}`
       }
     }
   }
