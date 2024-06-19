@@ -4,7 +4,7 @@
       <span>{{ absoluteDate }}</span>
       <span>{{ timeFromNow }}</span>
     </div> -->
-    <div class="xxx-bg-foundation sm:rounded-xl py-2 sm:p-4 sm:pb-2 w-full relative">
+    <div class="xxx-bg-foundation sm:rounded-xl p-4 sm:pb-2 w-full relative">
       <div class="flex items-center space-x-1">
         <UserAvatar :user="comment.author" class="mr-1" />
         <span class="grow truncate text-xs sm:text-sm font-bold">
@@ -24,7 +24,7 @@
           </CommonTextLink>
         </div> -->
       </div>
-      <div class="truncate text-xs sm:text-sm text-foreground flex flex-col mt-3">
+      <div class="truncate text-xs sm:text-sm text-foreground flex flex-col mt-2">
         <CommonTiptapTextEditor
           v-if="comment.text.doc"
           :model-value="comment.text.doc"

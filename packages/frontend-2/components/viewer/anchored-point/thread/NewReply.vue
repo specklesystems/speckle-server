@@ -1,44 +1,38 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
   <div
-    class="hidden sm:flex bg-foundation pl-4 pr-3 py-2 sm:pt-1 sm:pr-1 sm:pb-3 rounded-b w-full relative"
+    class="hidden sm:flex bg-foundation pl-4 pr-3 py-2 sm:p-1 sm:pb-3 rounded-b w-full relative flex flex-col"
   >
-    <!-- <FormButton
-      :icon-left="PaperClipIcon"
-      hide-text
-      text
-      :disabled="loading"
-      size="sm"
-      class="-ml-2 sm:mt-3 sm:pr-1"
-      @click="trackAttachAndOpenFilePicker()"
-    /> -->
-    <div class="flex flex-col">
-      <ViewerCommentsEditor
-        ref="editor"
-        v-model="commentValue"
-        prompt="Press enter to reply"
-        autofocus
-        max-height="150px"
-        @keydown="onKeyDownHandler"
-        @submit="onSubmit"
-      />
-      <CommonTextLink
+    <ViewerCommentsEditor
+      ref="editor"
+      v-model="commentValue"
+      prompt="Press enter to reply"
+      autofocus
+      max-height="150px"
+      @keydown="onKeyDownHandler"
+      @submit="onSubmit"
+    />
+    <div class="flex justify-between items-center p-3 pb-0">
+      <FormButton
+        v-tippy="'Attach'"
         :icon-left="PaperClipIcon"
+        hide-text
+        text
+        :disabled="loading"
+        color="card"
+        class="sm:px-0"
         size="sm"
         @click="trackAttachAndOpenFilePicker()"
-      >
-        <span class="truncate relative text-xs">Add attachment</span>
-      </CommonTextLink>
+      />
+      <FormButton
+        :icon-left="PaperAirplaneIcon"
+        hide-text
+        size="sm"
+        color="primary"
+        :disabled="loading"
+        @click="onSubmit"
+      />
     </div>
-    <FormButton
-      :icon-left="PaperAirplaneIcon"
-      hide-text
-      size="sm"
-      color="invert"
-      :disabled="loading"
-      class="absolute right-5 top-5"
-      @click="onSubmit"
-    />
   </div>
 </template>
 <script setup lang="ts">
