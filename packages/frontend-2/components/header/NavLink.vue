@@ -1,13 +1,7 @@
 <template>
   <div class="text-foreground hover:text-primary-focus transition last:truncate">
-    <NuxtLink
-      :to="to"
-      class="flex gap-1 items-center text-sm ml-0.5"
-      active-class="text-primary font-bold group is-active"
-    >
-      <div v-if="separator">
-        <ChevronRightIcon class="flex w-4 h-4" />
-      </div>
+    <NuxtLink :to="to" class="flex gap-1 items-center text-sm ml-0.5 font-semibold">
+      <div v-if="separator">/</div>
       <div class="group-[.is-active]:truncate">
         {{ name || to }}
       </div>
@@ -15,7 +9,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 defineProps({
   separator: {
     type: Boolean,

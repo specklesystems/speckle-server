@@ -18,7 +18,7 @@
       <MenuItems
         ref="menuItems"
         :class="[
-          'absolute mt-2 w-48 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40',
+          'absolute mt-2 w-max origin-top-right divide-y divide-outline-3 rounded-md bg-foundation shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40',
           menuDirection === HorizontalDirection.Left ? 'right-0' : ''
         ]"
       >
@@ -94,7 +94,7 @@ const buildButtonClassses = (params: {
 }) => {
   const { active, disabled, color } = params
   const classParts = [
-    'group flex gap-3 w-full items-center rounded-md px-2 py-1.5 text-sm'
+    'group flex gap-3 w-full items-center rounded-md px-2 py-1.5 text-sm select-none shrink-0'
   ]
 
   if (active && !color) {

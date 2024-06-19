@@ -2,19 +2,21 @@
   <div>
     <nav class="fixed z-20 top-0 h-14 bg-foundation shadow hover:shadow-md transition">
       <div class="flex gap-4 items-center justify-between h-full w-screen px-4">
-        <div class="flex items-center truncate">
-          <HeaderLogoBlock :active="false" to="/" />
+        <div class="flex items-center">
+          <HeaderLogoMenu />
+        </div>
+        <div class="flex items-center gap-2.5 sm:gap-2">
           <HeaderNavLink
             to="/"
             name="Dashboard"
-            :separator="true"
+            :separator="false"
             class="hidden md:inline-block"
           />
           <ClientOnly>
             <PortalTarget name="navigation"></PortalTarget>
           </ClientOnly>
         </div>
-        <div class="flex items-center gap-2.5 sm:gap-2">
+        <div class="flex items-center gap-2">
           <ClientOnly>
             <PortalTarget name="secondary-actions"></PortalTarget>
             <PortalTarget name="primary-actions"></PortalTarget>
