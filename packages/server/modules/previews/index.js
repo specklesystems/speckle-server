@@ -121,7 +121,7 @@ exports.init = (app, isInitial) => {
     }
     if (previewBufferOrFile.type === 'file') {
       // we can't cache these cause they may switch to proper buffer previews in a sec
-      // res.set('Cache-Control', 'public, max-age=604800')
+      res.set('Cache-Control', 'no-cache, no-store')
       res.sendFile(previewBufferOrFile.file)
     } else {
       res.contentType('image/png')
