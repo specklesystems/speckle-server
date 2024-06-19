@@ -38,48 +38,52 @@ RUN yarn workspaces foreach -W run build
 
 FROM node:18-bookworm-slim@sha256:408f8cbbb7b33a5bb94bdb8862795a94d2b64c2d516856824fd86c4a5594a443 as node
 
-#hadolint ignore=DL3008
+# hadolint ignore=DL3008
 RUN apt-get update && \
   DEBIAN_FRONTEND=noninteractive apt-get install -y \
   --no-install-recommends \
   tini=0.19.0-1 \
   # chromium dependencies
+  # Update list from https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#chrome-doesnt-launch-on-linux
   ca-certificates \
-  fonts-liberation \
-  libasound2 \
-  libatk-bridge2.0-0 \
-  libatk1.0-0 \
-  libc6 \
-  libcairo2 \
-  libcups2 \
-  libdbus-1-3 \
-  libexpat1 \
-  libfontconfig1 \
-  libgbm1 \
+  fonts-liberation=1:1.07.4-11 \
+  libasound2=1.2.8-1+b1 \
+  libatk-bridge2.0-0=2.46.0-5 \
+  libatk1.0-0=2.46.0-5 \
+  libc6=2.36-9+deb12u7 \
+  libcairo2=1.16.0-7 \
+  libcups2=2.4.2-3+deb12u5 \
+  libdbus-1-3=1.14.10-1~deb12u1 \
+  libexpat1=2.5.0-1 \
+  libfontconfig1=2.14.1-4 \
+  libgbm1=22.3.6-1+deb12u1 \
+  #NOTE the only available version of libgcc1 is from buster, not bookworm
   libgcc1 \
-  libglib2.0-0 \
-  libgtk-3-0 \
-  libnspr4 \
-  libnss3 \
-  libpango-1.0-0 \
-  libpangocairo-1.0-0 \
-  libstdc++6 \
-  libx11-6 \
-  libx11-xcb1 \
-  libxcb1 \
-  libxcomposite1 \
-  libxcursor1 \
-  libxdamage1 \
-  libxext6 \
-  libxfixes3 \
-  libxi6 \
-  libxrandr2 \
-  libxrender1 \
-  libxss1 \
-  libxtst6 \
-  lsb-release \
-  wget \
-  xdg-utils \
+  libglib2.0-0=2.74.6-2+deb12u2 \
+  libgtk-3-0=3.24.38-2~deb12u1 \
+  libnspr4=2:4.35-1 \
+  libnss3=2:3.87.1-1 \
+  libpango-1.0-0=1.50.12+ds-1 \
+  libpangocairo-1.0-0=1.50.12+ds-1 \
+  libstdc++6=12.2.0-14 \
+  libx11-6=2:1.8.4-2+deb12u2 \
+  libx11-xcb1=2:1.8.4-2+deb12u2 \
+  libxcb1=1.15-1 \
+  libxcomposite1=1:0.4.5-1 \
+  libxcursor1=1:1.2.1-1 \
+  libxdamage1=1:1.1.6-1 \
+  libxext6=2:1.3.4-1+b1 \
+  libxfixes3=1:6.0.0-2 \
+  libxi6=2:1.8-1+b1 \
+  libxrandr2=2:1.5.2-2+b1 \
+  libxrender1=1:0.9.10-1.1 \
+  libxss1=1:1.2.3-1 \
+  libxtst6=2:1.2.3-1.1 \
+  lsb-release=12.0-1 \
+  wget=1.21.3-1+b2 \
+  xdg-utils=1.1.3-4.1 \
+  # mkdir was missing
+  coreutils=9.1-1 \
   && apt-get clean \
   && rm -rf /var/lib/apt/lists/*
 
@@ -87,7 +91,10 @@ COPY --from=build-stage /speckle-server/wait /wait
 
 ARG NODE_ENV
 ENV NODE_ENV=${NODE_ENV}
-ENV PUPPETEER_CACHE_DIR=/puppeteer
+ARG PUPPETEER_CACHE_DIR=/puppeteer
+ENV PUPPETEER_CACHE_DIR=${PUPPETEER_CACHE_DIR}
+ARG CHROME_DEVEL_SANDBOX=/usr/local/sbin/chrome-devel-sandbox
+ENV CHROME_DEVEL_SANDBOX=${CHROME_DEVEL_SANDBOX}
 
 WORKDIR /speckle-server
 COPY .yarnrc.yml .
@@ -107,8 +114,17 @@ COPY --from=build-stage /speckle-server/packages/preview-service ./preview-servi
 
 WORKDIR /speckle-server/packages/preview-service
 
-RUN npx @puppeteer/browsers install chrome@stable --path /puppeteer && \
-    chmod -R 777 /puppeteer && \
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+RUN npx @puppeteer/browsers install chrome@stable --path "${PUPPETEER_CACHE_DIR}" && \
+    #TODO reduce chmod permissions to minimum
+    chmod -R 777 "${PUPPETEER_CACHE_DIR}" && \
+    # copy sandbox executable to a shared location
+    # https://github.com/puppeteer/puppeteer/blob/main/docs/troubleshooting.md#alternative-setup-setuid-sandbox
+    CHROME_SANDBOX_PATH=$(find "${PUPPETEER_CACHE_DIR}" -name chrome_sandbox | tail -n 1) && \
+    chown root:root "${CHROME_SANDBOX_PATH}" && \
+    chmod 4755 "${CHROME_SANDBOX_PATH}" && \
+    cp -p "${CHROME_SANDBOX_PATH}" "${CHROME_DEVEL_SANDBOX}" && \
+    # build preview-service
     yarn workspaces focus --production
 
 ENTRYPOINT [ "tini", "--", "node", "bin/www" ]
