@@ -282,12 +282,6 @@ module.exports = {
     depth = parseInt(depth) || 1000
 
     let fullObjectSelect = false
-    // TODO
-    // const q = Closures()
-    // q.select('id')
-    // q.select('createdAt')
-    // q.select('speckleType')
-    // q.select('totalChildrenCount')
 
     const q = knex.with(
       'object_children_closure',

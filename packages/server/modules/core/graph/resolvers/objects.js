@@ -34,7 +34,7 @@ module.exports = {
         })
         result.objects.forEach((x) => (x.streamId = parent.streamId))
         return {
-          totalCount: parent.totalChildrenCount,
+          totalCount: parent.totalChildrenCount || '0',
           cursor: result.cursor,
           objects: result.objects
         }
