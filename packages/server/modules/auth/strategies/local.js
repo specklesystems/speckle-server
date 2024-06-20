@@ -23,7 +23,8 @@ const {
 } = require('@/modules/core/errors/userinput')
 const {
   findServerInvite,
-  deleteServerOnlyInvites
+  deleteServerOnlyInvites,
+  updateAllInviteTargets
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const knexInstance = require('@/db/knex')
 
@@ -114,7 +115,8 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         // 4. use up all server-only invites the email had attached to it
         await finalizeInvitedServerRegistration({
-          deleteServerOnlyInvites: deleteServerOnlyInvites({ db: knexInstance })
+          deleteServerOnlyInvites: deleteServerOnlyInvites({ db: knexInstance }),
+          updateAllInviteTargets: updateAllInviteTargets({ db: knexInstance })
         })(user.email, userId)
 
         // Resolve redirect path

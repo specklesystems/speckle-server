@@ -21,6 +21,11 @@ const {
 } = require('@/modules/shared/helpers/envHelper')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 const { UnverifiedEmailSSOLoginError } = require('@/modules/core/errors/userinput')
+const {
+  deleteServerOnlyInvites,
+  updateAllInviteTargets
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const knexInstance = require('@/db/knex')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const oidcIssuer = await Issuer.discover(getOidcDiscoveryUrl())
@@ -82,7 +87,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
             // process invites
             if (myUser.isNewUser) {
-              await finalizeInvitedServerRegistration(user.email, myUser.id)
+              await finalizeInvitedServerRegistration({
+                deleteServerOnlyInvites: deleteServerOnlyInvites({ db: knexInstance }),
+                updateAllInviteTargets: updateAllInviteTargets({ db: knexInstance })
+              })(user.email, myUser.id)
             }
             return done(null, myUser)
           }
@@ -107,7 +115,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
             rawProfile: userinfo
           })
 
-          await finalizeInvitedServerRegistration(user.email, myUser.id)
+          await finalizeInvitedServerRegistration({
+            deleteServerOnlyInvites: deleteServerOnlyInvites({ db: knexInstance }),
+            updateAllInviteTargets: updateAllInviteTargets({ db: knexInstance })
+          })(user.email, myUser.id)
 
           // Resolve redirect path
           req.authRedirectPath = resolveAuthRedirectPath(validInvite)

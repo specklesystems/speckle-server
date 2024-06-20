@@ -24,7 +24,8 @@ const { getServerInfo } = require('@/modules/core/services/generic')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 const {
   deleteAllUserInvites,
-  countServerInvites
+  countServerInvites,
+  findServerInvites
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const knexInstance = require('@/db/knex')
 
@@ -67,6 +68,7 @@ module.exports = {
 
     async adminUsers(_parent, args) {
       return await getAdminUsersListCollection({
+        findServerInvites: findServerInvites({ db: knexInstance }),
         getTotalCounts: getTotalCounts({
           countServerInvites: countServerInvites({ db: knexInstance })
         })

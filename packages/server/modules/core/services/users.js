@@ -230,7 +230,7 @@ module.exports = {
   /**
    * @param {{ deleteAllUserInvites: import('@/modules/serverinvites/domain/operations').DeleteAllUserInvites }} param0
    */
-  async deleteUser({ deleteAllUserInvites }) {
+  deleteUser({ deleteAllUserInvites }) {
     return async (id) => {
       //TODO: check for the last admin user to survive
       dbLogger.info('Deleting user ' + id)

@@ -156,7 +156,7 @@ describe('Auth @auth', () => {
         expect(newUser).to.be.ok
 
         // Check that in the case of a stream invite, it remainds valid post registration
-        const inviteRecord = findInvite({
+        const inviteRecord = await findInvite({
           db: knexInstance
         })(inviteId)
         if (streamInvite) {

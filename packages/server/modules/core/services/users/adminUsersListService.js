@@ -62,7 +62,7 @@ function sanitizeParams(params) {
  * Get total users & invites that we can find using these params
  * @param {{ countServerInvites: import('@/modules/serverinvites/domain/operations').CountServerInvites}} param0
  */
-async function getTotalCounts({ countServerInvites }) {
+function getTotalCounts({ countServerInvites }) {
   /**
    * Get total users & invites that we can find using these params
    * @param {PaginationParams} params
@@ -139,7 +139,7 @@ function mapInviteToListItem(invite) {
  *
  * @param {{findServerInvites: import('@/modules/serverinvites/domain/operations').FindServerInvites}} param0
  */
-async function retrieveItems({ findServerInvites }) {
+function retrieveItems({ findServerInvites }) {
   /**
    * Retrieve all list items from DB and convert them to the target model
    * @param {PaginationParams} params
@@ -170,9 +170,9 @@ async function retrieveItems({ findServerInvites }) {
 
 /**
  *
- * @param {{ getTotalCounts: (params: PaginationParams) => Promise<number>}} param0
+ * @param {{ getTotalCounts: (params: PaginationParams) => Promise<number>, findServerInvites: import('@/modules/serverinvites/domain/operations').FindServerInvites}} param0
  */
-async function getAdminUsersListCollection({ getTotalCounts }) {
+function getAdminUsersListCollection({ getTotalCounts, findServerInvites }) {
   /**
    * Resolve admin users list data using the specified filter params
    * @param {PaginationParams} params
@@ -182,7 +182,7 @@ async function getAdminUsersListCollection({ getTotalCounts }) {
     sanitizeParams(params)
 
     const totalCounts = await getTotalCounts(params)
-    const items = await retrieveItems(params, totalCounts)
+    const items = await retrieveItems({ findServerInvites })(params, totalCounts)
 
     return {
       items,
