@@ -588,6 +588,7 @@ export default class ObjectLoader {
     } catch (e) {
       this.logger.error(e)
     }
+    return Promise.resolve()
   }
 }
 
