@@ -58,7 +58,7 @@ const {
   TokenResourceIdentifierType
 } = require('@/modules/core/graph/generated/graphql')
 const {
-  createServerInvitesRepository
+  queryAllStreamInvites
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const knexInstance = require('@/db/knex')
 
@@ -172,7 +172,7 @@ module.exports = {
     async pendingCollaborators(parent) {
       const { id: streamId } = parent
       return await getPendingStreamCollaborators({
-        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        queryAllStreamInvites: queryAllStreamInvites({ db: knexInstance })
       })(streamId)
     },
 

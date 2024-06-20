@@ -13,36 +13,38 @@ import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { addStreamInviteSentOutActivity } from '@/modules/activitystream/services/streamActivity'
 import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
 import {
-  CreateInviteParams,
-  ServerInvitesRepository
+  FindResource,
+  FindUserByTarget,
+  InsertInviteAndDeleteOld
 } from '@/modules/serverinvites/domain/operations'
-import { validateInput } from './validation'
-import { buildEmailContents } from './buildEmailContents'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import { validateInput } from '@/modules/serverinvites/services/validation'
+import { buildEmailContents } from '@/modules/serverinvites/services/buildEmailContents'
+import {
+  CreateAndSendInvite,
+  ResendInviteEmail
+} from '@/modules/serverinvites/services/operations'
 
 /**
  * Create and send out an invite
  */
 export const createAndSendInvite =
   ({
-    serverInvitesRepository
+    findUserByTarget,
+    findResource,
+    insertInviteAndDeleteOld
   }: {
-    serverInvitesRepository: Pick<
-      ServerInvitesRepository,
-      'findUserByTarget' | 'findResource' | 'insertInviteAndDeleteOld'
-    >
-  }) =>
-  async (
-    params: CreateInviteParams,
-    inviterResourceAccessLimits?: TokenResourceIdentifier[] | null
-  ) => {
+    findUserByTarget: FindUserByTarget
+    findResource: FindResource
+    insertInviteAndDeleteOld: InsertInviteAndDeleteOld
+  }): CreateAndSendInvite =>
+  async (params, inviterResourceAccessLimits?) => {
     const { inviterId, resourceTarget, resourceId, role, serverRole } = params
     let { message, target } = params
 
     const [inviter, targetUser, resource, serverInfo] = await Promise.all([
       getUser(inviterId, { withRole: true }),
-      serverInvitesRepository.findUserByTarget(target),
-      serverInvitesRepository.findResource(params),
+      findUserByTarget(target),
+      findResource(params),
       getServerInfo()
     ])
 
@@ -97,7 +99,7 @@ export const createAndSendInvite =
       token: crs({ length: 50 }),
       serverRole: serverRole ?? null
     }
-    await serverInvitesRepository.insertInviteAndDeleteOld(
+    await insertInviteAndDeleteOld(
       invite,
       targetUser ? [targetUser.email, buildUserTarget(targetUser.id)!] : []
     )
@@ -140,20 +142,19 @@ function sanitizeMessage(message: string, stripAll: boolean = false) {
  */
 export const resendInviteEmail =
   ({
-    serverInvitesRepository
+    findResource,
+    findUserByTarget
   }: {
-    serverInvitesRepository: Pick<
-      ServerInvitesRepository,
-      'findResource' | 'findUserByTarget'
-    >
-  }) =>
-  async (invite: ServerInviteRecord) => {
+    findResource: FindResource
+    findUserByTarget: FindUserByTarget
+  }): ResendInviteEmail =>
+  async (invite) => {
     const { inviterId, target } = invite
 
     const [inviter, targetUser, resource] = await Promise.all([
       getUser(inviterId),
-      serverInvitesRepository.findUserByTarget(target),
-      serverInvitesRepository.findResource(
+      findUserByTarget(target),
+      findResource(
         invite as {
           resourceId?: string | null
           resourceTarget?: typeof ResourceTargets.Streams | null
@@ -170,14 +171,7 @@ export const resendInviteEmail =
  * Invite users to be contributors for the specified stream
  */
 export const inviteUsersToStream =
-  ({
-    serverInvitesRepository
-  }: {
-    serverInvitesRepository: Pick<
-      ServerInvitesRepository,
-      'findUserByTarget' | 'findResource' | 'insertInviteAndDeleteOld'
-    >
-  }) =>
+  ({ createAndSendInvite }: { createAndSendInvite: CreateAndSendInvite }) =>
   async (
     inviterId: string,
     streamId: string,
@@ -196,9 +190,7 @@ export const inviteUsersToStream =
     }))
 
     await Promise.all(
-      inviteParamsArray.map((p) =>
-        createAndSendInvite({ serverInvitesRepository })(p, inviterResourceAccessLimits)
-      )
+      inviteParamsArray.map((p) => createAndSendInvite(p, inviterResourceAccessLimits))
     )
 
     return true

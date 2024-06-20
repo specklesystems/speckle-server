@@ -69,6 +69,20 @@ export type UpdateAllInviteTargets = (
 
 export type DeleteStreamInvite = (inviteId?: string) => Promise<number | undefined>
 
+export type CountServerInvites = (searchQuery: string | null) => Promise<number>
+
+export type FindServerInvites = (
+  searchQuery: string | null,
+  limit: number,
+  offset: number
+) => Promise<ServerInviteRecord[]>
+
+export type QueryServerInvites = (
+  searchQuery: string | null,
+  limit: number,
+  cursor: Date | null
+) => Promise<ServerInviteRecord[]>
+
 export type FindInvite = (inviteId?: string) => Promise<ServerInviteRecord | null>
 
 export type DeleteInvite = (inviteId?: string) => Promise<boolean>
@@ -79,24 +93,17 @@ export type DeleteInvitesByTarget = (
   resourceId?: string
 ) => Promise<boolean>
 
-export interface ServerInvitesRepository {
-  queryAllUserStreamInvites: QueryAllUserStreamInvites
-  findStreamInvite: FindStreamInvite
-  findUserByTarget: FindUserByTarget
-  findResource: FindResource
-  insertInviteAndDeleteOld: InsertInviteAndDeleteOld
-  findServerInvite: FindServerInvite
-  queryAllStreamInvites: QueryAllStreamInvites
-  deleteAllStreamInvites: DeleteAllStreamInvites
-  deleteServerOnlyInvites: DeleteServerOnlyInvites
-  updateAllInviteTargets: UpdateAllInviteTargets
-  deleteStreamInvite: DeleteStreamInvite
-  findInvite: FindInvite
-  deleteInvite: DeleteInvite
-  deleteInvitesByTarget: DeleteInvitesByTarget
-}
+export type QueryInvites = (
+  inviteIds?: readonly string[]
+) => Promise<ServerInviteRecord[]>
 
-export interface CreateInviteParams {
+export type DeleteAllUserInvites = (userId: string) => Promise<boolean>
+
+export type FindInviteByToken = (
+  inviteToken?: string
+) => Promise<ServerInviteRecord | null>
+
+export type CreateInviteParams = {
   target: string
   inviterId: string
   message?: string | null

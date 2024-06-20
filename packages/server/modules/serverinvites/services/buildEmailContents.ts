@@ -1,13 +1,16 @@
 import { ServerInfo, UserRecord } from '@/modules/core/helpers/types'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { getServerInfo } from '@/modules/core/services/generic'
-import { ResourceTargets, isServerInvite } from '../helpers/inviteHelper'
+import {
+  ResourceTargets,
+  isServerInvite
+} from '@/modules/serverinvites/helpers/inviteHelper'
 import {
   getRegistrationRoute,
   getStreamRoute
 } from '@/modules/core/helpers/routeHelper'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
-import { InviteCreateValidationError } from '../errors'
+import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
   EmailTemplateParams,
   renderEmail

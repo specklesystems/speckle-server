@@ -11,9 +11,7 @@ const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratel
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
 const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
 const { RateLimiterMemory } = require('rate-limiter-flexible')
-const {
-  createServerInvitesRepository
-} = require('@/modules/serverinvites/repositories/serverInvites')
+const { findInvite } = require('@/modules/serverinvites/repositories/serverInvites')
 const knexInstance = require('@/db/knex')
 
 const expect = chai.expect
@@ -93,9 +91,7 @@ describe('Auth @auth', () => {
         }@speckle.systems`
 
         const inviterUser = await getUserByEmail({ email: registeredUserEmail })
-        const { token, inviteId } = await createInviteDirectly({
-          serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
-        })(
+        const { token, inviteId } = await createInviteDirectly({ db: knexInstance })(
           streamInvite
             ? {
                 email: targetEmail,
@@ -160,9 +156,9 @@ describe('Auth @auth', () => {
         expect(newUser).to.be.ok
 
         // Check that in the case of a stream invite, it remainds valid post registration
-        const inviteRecord = await createServerInvitesRepository({
+        const inviteRecord = findInvite({
           db: knexInstance
-        }).findInvite(inviteId)
+        })(inviteId)
         if (streamInvite) {
           expect(inviteRecord).to.be.ok
         } else {

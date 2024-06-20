@@ -22,7 +22,8 @@ const {
   PasswordTooShortError
 } = require('@/modules/core/errors/userinput')
 const {
-  createServerInvitesRepository
+  findServerInvite,
+  deleteServerOnlyInvites
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const knexInstance = require('@/db/knex')
 
@@ -88,14 +89,10 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         // 2. if you have an invite it must be valid, both for invite only and public servers
         /** @type {import('@/modules/serverinvites/domain/types').ServerInviteRecord} */
         let invite
-        const serverInvitesRepository = createServerInvitesRepository({
-          db: knexInstance
-        })
         if (req.session.token) {
-          invite = await validateServerInvite({ serverInvitesRepository })(
-            user.email,
-            req.session.token
-          )
+          invite = await validateServerInvite({
+            findServerInvite: findServerInvite({ db: knexInstance })
+          })(user.email, req.session.token)
         }
 
         // 3. at this point we know, that we have one of these cases:
@@ -116,10 +113,9 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         req.log = req.log.child({ userId })
 
         // 4. use up all server-only invites the email had attached to it
-        await finalizeInvitedServerRegistration({ serverInvitesRepository })(
-          user.email,
-          userId
-        )
+        await finalizeInvitedServerRegistration({
+          deleteServerOnlyInvites: deleteServerOnlyInvites({ db: knexInstance })
+        })(user.email, userId)
 
         // Resolve redirect path
         req.authRedirectPath = resolveAuthRedirectPath(invite)

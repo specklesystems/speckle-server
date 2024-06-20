@@ -12,15 +12,16 @@ import {
   buildUserTarget,
   ResourceTargets
 } from '@/modules/serverinvites/helpers/inviteHelper'
-import { createAndSendInvite } from '@/modules/serverinvites/services/inviteCreationService'
 import { has } from 'lodash'
-import { finalizeStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
 import {
   ContextResourceAccessRules,
   isResourceAllowed
 } from '@/modules/core/helpers/token'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
-import { ServerInvitesRepository } from '../domain/domain'
+import {
+  CreateAndSendInvite,
+  FinalizeStreamInvite
+} from '@/modules/serverinvites/services/operations'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
 
@@ -29,14 +30,7 @@ const isStreamInviteCreateInput = (
 ): i is StreamInviteCreateInput => has(i, 'streamId')
 
 export const createStreamInviteAndNotify =
-  ({
-    serverInvitesRepository
-  }: {
-    serverInvitesRepository: Pick<
-      ServerInvitesRepository,
-      'findUserByTarget' | 'findResource' | 'insertInviteAndDeleteOld'
-    >
-  }) =>
+  ({ createAndSendInvite }: { createAndSendInvite: CreateAndSendInvite }) =>
   async (
     input: StreamInviteCreateInput | FullProjectInviteCreateInput,
     inviterId: string,
@@ -49,7 +43,7 @@ export const createStreamInviteAndNotify =
     }
 
     const target = (userId ? buildUserTarget(userId) : email)!
-    await createAndSendInvite({ serverInvitesRepository })(
+    await createAndSendInvite(
       {
         target,
         inviterId,
@@ -70,14 +64,7 @@ const isStreamInviteUseArgs = (
 ): i is MutationStreamInviteUseArgs => has(i, 'streamId')
 
 export const useStreamInviteAndNotify =
-  ({
-    serverInvitesRepository
-  }: {
-    serverInvitesRepository: Pick<
-      ServerInvitesRepository,
-      'findStreamInvite' | 'deleteInvitesByTarget'
-    >
-  }) =>
+  ({ finalizeStreamInvite }: { finalizeStreamInvite: FinalizeStreamInvite }) =>
   async (
     input: MutationStreamInviteUseArgs | ProjectInviteUseInput,
     userId: string,
@@ -104,9 +91,7 @@ export const useStreamInviteAndNotify =
       )
     }
 
-    await finalizeStreamInvite({
-      serverInvitesRepository
-    })(
+    await finalizeStreamInvite(
       accept,
       isStreamInviteUseArgs(input) ? input.streamId : input.projectId,
       token,

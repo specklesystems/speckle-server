@@ -6,12 +6,24 @@ import {
   buildUserTarget,
   ResourceTargets
 } from '@/modules/serverinvites/helpers/inviteHelper'
-import { resendInviteEmail } from '@/modules/serverinvites/services/inviteCreationService'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-import { ServerInvitesRepository } from '@/modules/serverinvites/domain/operations'
+import {
+  DeleteInvite,
+  DeleteInvitesByTarget,
+  DeleteServerOnlyInvites,
+  DeleteStreamInvite,
+  FindInvite,
+  FindServerInvite,
+  FindStreamInvite,
+  UpdateAllInviteTargets
+} from '@/modules/serverinvites/domain/operations'
+import {
+  FinalizeStreamInvite,
+  ResendInviteEmail
+} from '@/modules/serverinvites/services/operations'
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
@@ -36,13 +48,9 @@ export const resolveAuthRedirectPath = () => (invite?: ServerInviteRecord) => {
  * Validate that the new user has a valid invite for registering to the server
  */
 export const validateServerInvite =
-  ({
-    serverInvitesRepository
-  }: {
-    serverInvitesRepository: Pick<ServerInvitesRepository, 'findServerInvite'>
-  }) =>
+  ({ findServerInvite }: { findServerInvite: FindServerInvite }) =>
   async (email: string, token: string): Promise<ServerInviteRecord> => {
-    const invite = await serverInvitesRepository.findServerInvite(email, token)
+    const invite = await findServerInvite(email, token)
     if (!invite) {
       throw new NoInviteFoundError(
         token
@@ -66,23 +74,19 @@ export const validateServerInvite =
  */
 export const finalizeInvitedServerRegistration =
   ({
-    serverInvitesRepository
+    deleteServerOnlyInvites,
+    updateAllInviteTargets
   }: {
-    serverInvitesRepository: Pick<
-      ServerInvitesRepository,
-      'deleteServerOnlyInvites' | 'updateAllInviteTargets'
-    >
+    deleteServerOnlyInvites: DeleteServerOnlyInvites
+    updateAllInviteTargets: UpdateAllInviteTargets
   }) =>
   async (email: string, userId: string) => {
     // Delete all server-only invites for this email
-    await serverInvitesRepository.deleteServerOnlyInvites(email)
+    await deleteServerOnlyInvites(email)
 
     // Update all remaining invites to use a userId target, not the e-mail
     // (in case the user changes his e-mail right after)
-    await serverInvitesRepository.updateAllInviteTargets(
-      email,
-      buildUserTarget(userId)!
-    )
+    await updateAllInviteTargets(email, buildUserTarget(userId)!)
   }
 
 /**
@@ -90,15 +94,14 @@ export const finalizeInvitedServerRegistration =
  */
 export const finalizeStreamInvite =
   ({
-    serverInvitesRepository
+    findStreamInvite,
+    deleteInvitesByTarget
   }: {
-    serverInvitesRepository: Pick<
-      ServerInvitesRepository,
-      'findStreamInvite' | 'deleteInvitesByTarget'
-    >
-  }) =>
-  async (accept: boolean, streamId: string, token: string, userId: string) => {
-    const invite = await serverInvitesRepository.findStreamInvite(streamId, {
+    findStreamInvite: FindStreamInvite
+    deleteInvitesByTarget: DeleteInvitesByTarget
+  }): FinalizeStreamInvite =>
+  async (accept, streamId, token, userId) => {
+    const invite = await findStreamInvite(streamId, {
       token,
       target: buildUserTarget(userId)
     })
@@ -122,7 +125,7 @@ export const finalizeStreamInvite =
       })
 
       // Delete all invites to this stream
-      await serverInvitesRepository.deleteInvitesByTarget(
+      await deleteInvitesByTarget(
         buildUserTarget(userId)!,
         ResourceTargets.Streams,
         streamId
@@ -136,7 +139,7 @@ export const finalizeStreamInvite =
     }
 
     // Delete all invites to this stream
-    await serverInvitesRepository.deleteInvitesByTarget(
+    await deleteInvitesByTarget(
       buildUserTarget(userId)!,
       ResourceTargets.Streams,
       streamId
@@ -148,15 +151,14 @@ export const finalizeStreamInvite =
  */
 export const cancelStreamInvite =
   ({
-    serverInvitesRepository
+    findStreamInvite,
+    deleteStreamInvite
   }: {
-    serverInvitesRepository: Pick<
-      ServerInvitesRepository,
-      'findStreamInvite' | 'deleteStreamInvite'
-    >
+    findStreamInvite: FindStreamInvite
+    deleteStreamInvite: DeleteStreamInvite
   }) =>
   async (streamId: string, inviteId: string) => {
-    const invite = await serverInvitesRepository.findStreamInvite(streamId, {
+    const invite = await findStreamInvite(streamId, {
       inviteId
     })
     if (!invite) {
@@ -167,9 +169,7 @@ export const cancelStreamInvite =
         }
       })
     }
-
-    // Delete invite
-    await serverInvitesRepository.deleteStreamInvite(invite.id)
+    await deleteStreamInvite(invite.id)
   }
 
 /**
@@ -177,21 +177,18 @@ export const cancelStreamInvite =
  */
 export const resendInvite =
   ({
-    serverInvitesRepository
+    findInvite,
+    resendInviteEmail
   }: {
-    serverInvitesRepository: Pick<
-      ServerInvitesRepository,
-      'findResource' | 'findUserByTarget' | 'findInvite'
-    >
+    resendInviteEmail: ResendInviteEmail
+    findInvite: FindInvite
   }) =>
   async (inviteId: string) => {
-    const invite = await serverInvitesRepository.findInvite(inviteId)
+    const invite = await findInvite(inviteId)
     if (!invite) {
       throw new NoInviteFoundError('Attempted to re-send a nonexistant invite')
     }
-    await resendInviteEmail({
-      serverInvitesRepository
-    })(invite)
+    await resendInviteEmail(invite)
   }
 
 /**
@@ -199,18 +196,17 @@ export const resendInvite =
  */
 export const deleteInvite =
   ({
-    serverInvitesRepository
+    findInvite,
+    deleteInvite
   }: {
-    serverInvitesRepository: Pick<
-      ServerInvitesRepository,
-      'findInvite' | 'deleteInvite'
-    >
+    findInvite: FindInvite
+    deleteInvite: DeleteInvite
   }) =>
   async (inviteId: string) => {
-    const invite = await serverInvitesRepository.findInvite(inviteId)
+    const invite = await findInvite(inviteId)
     if (!invite) {
       throw new NoInviteFoundError('Attempted to delete a nonexistant invite')
     }
 
-    await serverInvitesRepository.deleteInvite(invite.id)
+    await deleteInvite(invite.id)
   }

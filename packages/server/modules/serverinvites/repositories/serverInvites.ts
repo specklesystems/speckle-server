@@ -13,11 +13,28 @@ import {
 } from '@/modules/serverinvites/helpers/inviteHelper'
 import { uniq } from 'lodash'
 import { StreamWithOptionalRole, getStream } from '@/modules/core/repositories/streams'
-import {
-  ServerInviteRecord,
-  StreamInviteRecord
-} from '@/modules/serverinvites/domain/types'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { Knex } from 'knex'
+import {
+  CountServerInvites,
+  DeleteAllStreamInvites,
+  DeleteAllUserInvites,
+  DeleteInvite,
+  DeleteInvitesByTarget,
+  DeleteServerOnlyInvites,
+  DeleteStreamInvite,
+  FindInvite,
+  FindInviteByToken,
+  FindServerInvite,
+  FindServerInvites,
+  FindStreamInvite,
+  InsertInviteAndDeleteOld,
+  QueryAllStreamInvites,
+  QueryAllUserStreamInvites,
+  QueryInvites,
+  QueryServerInvites,
+  UpdateAllInviteTargets
+} from '@/modules/serverinvites/domain/operations'
 
 /**
  * Use this wherever you're retrieving invites, not necessarily where you're writing to them
@@ -43,7 +60,7 @@ const buildInvitesBaseQuery =
 /**
  * Resolve resource from invite
  */
-const findResource =
+export const findResource =
   () =>
   async (invite: {
     resourceId?: string | null
@@ -62,7 +79,7 @@ const findResource =
 /**
  * Try to find a user using the target value
  */
-const findUserByTarget =
+export const findUserByTarget =
   () =>
   (target: string): Promise<UserWithOptionalRole | null> => {
     const { userEmail, userId } = resolveTarget(target)
@@ -77,23 +94,9 @@ const findUserByTarget =
  * (e.g. user ID & email), you can specify them to ensure those will be cleaned up
  * also
  */
-const insertInviteAndDeleteOld =
-  ({ db }: { db: Knex }) =>
-  async (
-    invite: Pick<
-      ServerInviteRecord,
-      | 'id'
-      | 'target'
-      | 'inviterId'
-      | 'message'
-      | 'resourceTarget'
-      | 'resourceId'
-      | 'role'
-      | 'token'
-      | 'serverRole'
-    >,
-    alternateTargets: string[] = []
-  ): Promise<number[]> => {
+export const insertInviteAndDeleteOld =
+  ({ db }: { db: Knex }): InsertInviteAndDeleteOld =>
+  async (invite, alternateTargets = []) => {
     const allTargets = uniq(
       [invite.target, ...alternateTargets].map((t) => t.toLowerCase())
     )
@@ -115,9 +118,9 @@ const insertInviteAndDeleteOld =
 /**
  * Get all invitations to streams that the specified user has
  */
-const queryAllUserStreamInvites =
-  ({ db }: { db: Knex }) =>
-  async (userId: string): Promise<StreamInviteRecord[]> => {
+export const queryAllUserStreamInvites =
+  ({ db }: { db: Knex }): QueryAllUserStreamInvites =>
+  async (userId) => {
     if (!userId) return []
     const target = buildUserTarget(userId)
 
@@ -131,16 +134,9 @@ const queryAllUserStreamInvites =
  * Retrieve a stream invite for the specified target, token or both.
  * Note: Either the target, inviteId or token must be set
  */
-const findStreamInvite =
-  ({ db }: { db: Knex }) =>
-  async (
-    streamId: string,
-    {
-      target = null,
-      token = null,
-      inviteId = null
-    }: { target?: string | null; token?: string | null; inviteId?: string | null } = {}
-  ): Promise<StreamInviteRecord | null> => {
+export const findStreamInvite =
+  ({ db }: { db: Knex }): FindStreamInvite =>
+  async (streamId, { target = null, token = null, inviteId = null } = {}) => {
     if (!target && !token && !inviteId) return null
 
     const q = buildInvitesBaseQuery({ db })().where({
@@ -165,9 +161,9 @@ const findStreamInvite =
     return q.first()
   }
 
-const findServerInvite =
-  ({ db }: { db: Knex }) =>
-  async (email?: string, token?: string): Promise<ServerInviteRecord | null> => {
+export const findServerInvite =
+  ({ db }: { db: Knex }): FindServerInvite =>
+  async (email, token) => {
     if (!email && !token) return null
 
     const q = buildInvitesBaseQuery({ db })()
@@ -185,9 +181,9 @@ const findServerInvite =
     return q.first()
   }
 
-const queryAllStreamInvites =
-  ({ db }: { db: Knex }) =>
-  async (streamId: string): Promise<StreamInviteRecord[]> => {
+export const queryAllStreamInvites =
+  ({ db }: { db: Knex }): QueryAllStreamInvites =>
+  async (streamId) => {
     if (!streamId) return []
 
     return buildInvitesBaseQuery({ db })().where({
@@ -196,9 +192,9 @@ const queryAllStreamInvites =
     })
   }
 
-const deleteAllStreamInvites =
-  ({ db }: { db: Knex }) =>
-  async (streamId: string): Promise<boolean> => {
+export const deleteAllStreamInvites =
+  ({ db }: { db: Knex }): DeleteAllStreamInvites =>
+  async (streamId) => {
     if (!streamId) return false
     await db(ServerInvites.name)
       .where(ServerInvites.col.resourceId, streamId)
@@ -207,9 +203,9 @@ const deleteAllStreamInvites =
     return true
   }
 
-const deleteServerOnlyInvites =
-  ({ db }: { db: Knex }) =>
-  async (email?: string) => {
+export const deleteServerOnlyInvites =
+  ({ db }: { db: Knex }): DeleteServerOnlyInvites =>
+  async (email) => {
     if (!email) return
 
     return db<ServerInviteRecord>(ServerInvites.name)
@@ -220,9 +216,9 @@ const deleteServerOnlyInvites =
       .delete()
   }
 
-const updateAllInviteTargets =
-  ({ db }: { db: Knex }) =>
-  async (oldTargets?: string | string[], newTarget?: string) => {
+export const updateAllInviteTargets =
+  ({ db }: { db: Knex }): UpdateAllInviteTargets =>
+  async (oldTargets, newTarget) => {
     if (!oldTargets || !newTarget) return
     oldTargets = Array.isArray(oldTargets) ? oldTargets : [oldTargets]
     oldTargets = oldTargets.map((t) => t.toLowerCase())
@@ -235,9 +231,9 @@ const updateAllInviteTargets =
       .update(ServerInvitesCols.target, newTarget.toLowerCase())
   }
 
-const deleteStreamInvite =
-  ({ db }: { db: Knex }) =>
-  async (inviteId?: string) => {
+export const deleteStreamInvite =
+  ({ db }: { db: Knex }): DeleteStreamInvite =>
+  async (inviteId) => {
     if (!inviteId) return
 
     return db(ServerInvites.name)
@@ -263,9 +259,9 @@ const findServerInvitesBaseQuery =
     return q
   }
 
-const countServerInvites =
-  ({ db }: { db: Knex }) =>
-  async (searchQuery: string | null) => {
+export const countServerInvites =
+  ({ db }: { db: Knex }): CountServerInvites =>
+  async (searchQuery) => {
     const q = findServerInvitesBaseQuery({ db })(searchQuery)
     const [count] = await db()
       .count()
@@ -273,20 +269,16 @@ const countServerInvites =
     return parseInt(count.count.toString())
   }
 
-const findServerInvites =
-  ({ db }: { db: Knex }) =>
-  async (
-    searchQuery: string | null,
-    limit: number,
-    offset: number
-  ): Promise<ServerInviteRecord[]> => {
+export const findServerInvites =
+  ({ db }: { db: Knex }): FindServerInvites =>
+  async (searchQuery, limit, offset) => {
     const q = findServerInvitesBaseQuery({ db })(searchQuery) as Knex.QueryBuilder
     return q.limit(limit).offset(offset) as Promise<ServerInviteRecord[]>
   }
 
-const queryServerInvites =
-  ({ db }: { db: Knex }) =>
-  async (searchQuery: string | null, limit: number, cursor: Date | null) => {
+export const queryServerInvites =
+  ({ db }: { db: Knex }): QueryServerInvites =>
+  async (searchQuery, limit, cursor) => {
     const q = findServerInvitesBaseQuery({ db })(searchQuery, 'desc')
     q.limit(limit)
 
@@ -294,16 +286,16 @@ const queryServerInvites =
     return q
   }
 
-const findInvite =
-  ({ db }: { db: Knex }) =>
-  async (inviteId?: string): Promise<ServerInviteRecord | null> => {
+export const findInvite =
+  ({ db }: { db: Knex }): FindInvite =>
+  async (inviteId) => {
     if (!inviteId) return null
     return buildInvitesBaseQuery({ db })().where(ServerInvites.col.id, inviteId).first()
   }
 
-const deleteInvite =
-  ({ db }: { db: Knex }) =>
-  async (inviteId?: string): Promise<boolean> => {
+export const deleteInvite =
+  ({ db }: { db: Knex }): DeleteInvite =>
+  async (inviteId) => {
     if (!inviteId) return false
     await db(ServerInvites.name).where(ServerInvites.col.id, inviteId).delete()
     return true
@@ -313,13 +305,9 @@ const deleteInvite =
  * Delete invites by target - useful when there are potentially duplicate invites that need cleaning up
  * (e.g. same target, but multiple inviters)
  */
-const deleteInvitesByTarget =
-  ({ db }: { db: Knex }) =>
-  async (
-    targets?: string | string[],
-    resourceTarget?: string,
-    resourceId?: string
-  ): Promise<boolean> => {
+export const deleteInvitesByTarget =
+  ({ db }: { db: Knex }): DeleteInvitesByTarget =>
+  async (targets, resourceTarget, resourceId) => {
     if (!targets) return false
     targets = Array.isArray(targets) ? targets : [targets]
     if (!targets.length) return false
@@ -334,16 +322,17 @@ const deleteInvitesByTarget =
 
     return true
   }
-const queryInvites =
-  ({ db }: { db: Knex }) =>
-  async (inviteIds?: readonly string[]): Promise<ServerInviteRecord[]> => {
+
+export const queryInvites =
+  ({ db }: { db: Knex }): QueryInvites =>
+  async (inviteIds) => {
     if (!inviteIds?.length) return []
     return buildInvitesBaseQuery({ db })().whereIn(ServerInvites.col.id, inviteIds)
   }
 
-const deleteAllUserInvites =
-  ({ db }: { db: Knex }) =>
-  async (userId?: string): Promise<boolean> => {
+export const deleteAllUserInvites =
+  ({ db }: { db: Knex }): DeleteAllUserInvites =>
+  async (userId) => {
     if (!userId) return false
     await db(ServerInvites.name)
       .where(ServerInvites.col.target, buildUserTarget(userId))
@@ -351,34 +340,11 @@ const deleteAllUserInvites =
     return true
   }
 
-const findInviteByToken =
-  ({ db }: { db: Knex }) =>
-  async (inviteToken?: string): Promise<ServerInviteRecord | null> => {
+export const findInviteByToken =
+  ({ db }: { db: Knex }): FindInviteByToken =>
+  async (inviteToken) => {
     if (!inviteToken) return null
     return buildInvitesBaseQuery({ db })()
       .where(ServerInvites.col.token, inviteToken)
       .first()
   }
-
-export const createServerInvitesRepository = ({ db }: { db: Knex }) => ({
-  queryAllUserStreamInvites: queryAllUserStreamInvites({ db }),
-  findStreamInvite: findStreamInvite({ db }),
-  findUserByTarget: findUserByTarget(),
-  findResource: findResource(),
-  insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db }),
-  findServerInvite: findServerInvite({ db }),
-  queryAllStreamInvites: queryAllStreamInvites({ db }),
-  deleteAllStreamInvites: deleteAllStreamInvites({ db }),
-  deleteServerOnlyInvites: deleteServerOnlyInvites({ db }),
-  updateAllInviteTargets: updateAllInviteTargets({ db }),
-  deleteStreamInvite: deleteStreamInvite({ db }),
-  countServerInvites: countServerInvites({ db }),
-  findServerInvites: findServerInvites({ db }),
-  queryServerInvites: queryServerInvites({ db }),
-  findInvite: findInvite({ db }),
-  deleteInvite: deleteInvite({ db }),
-  deleteInvitesByTarget: deleteInvitesByTarget({ db }),
-  queryInvites: queryInvites({ db }),
-  deleteAllUserInvites: deleteAllUserInvites({ db }),
-  findInviteByToken: findInviteByToken({ db })
-})

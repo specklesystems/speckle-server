@@ -1,9 +1,5 @@
-const knexInstance = require('@/db/knex')
 const { countUsers, getUsers } = require('@/modules/core/services/users')
 const { resolveTarget } = require('@/modules/serverinvites/helpers/inviteHelper')
-const {
-  createServerInvitesRepository
-} = require('@/modules/serverinvites/repositories/serverInvites')
 const { clamp } = require('lodash')
 
 /**
@@ -64,21 +60,27 @@ function sanitizeParams(params) {
 
 /**
  * Get total users & invites that we can find using these params
- * @param {PaginationParams} params
- * @returns {Promise<TotalCounts>}
+ * @param {{ countServerInvites: import('@/modules/serverinvites/domain/operations').CountServerInvites}} param0
  */
-async function getTotalCounts(params) {
-  const { query } = params
+async function getTotalCounts({ countServerInvites }) {
+  /**
+   * Get total users & invites that we can find using these params
+   * @param {PaginationParams} params
+   * @returns {Promise<TotalCounts>}
+   */
+  return async (params) => {
+    const { query } = params
 
-  const [userCount, inviteCount] = await Promise.all([
-    // Actual users
-    countUsers(query),
-    // Invites
-    createServerInvitesRepository({ db: knexInstance }).countServerInvites(query)
-  ])
-  const totalCount = userCount + inviteCount
+    const [userCount, inviteCount] = await Promise.all([
+      // Actual users
+      countUsers(query),
+      // Invites
+      countServerInvites(query)
+    ])
+    const totalCount = userCount + inviteCount
 
-  return { userCount, inviteCount, totalCount }
+    return { userCount, inviteCount, totalCount }
+  }
 }
 
 /**
@@ -134,54 +136,62 @@ function mapInviteToListItem(invite) {
 }
 
 /**
- * Retrieve all list items from DB and convert them to the target model
- * @param {PaginationParams} params
- * @param {TotalCounts} counts
- * @returns {Promise<AdminUsersListItem[]>}
+ *
+ * @param {{findServerInvites: import('@/modules/serverinvites/domain/operations').FindServerInvites}} param0
  */
-async function retrieveItems(params, counts) {
-  const { invitesFilter, usersFilter } = resolveLimitsAndOffsets(params, counts)
-  const { query } = params
+async function retrieveItems({ findServerInvites }) {
+  /**
+   * Retrieve all list items from DB and convert them to the target model
+   * @param {PaginationParams} params
+   * @param {TotalCounts} counts
+   * @returns {Promise<AdminUsersListItem[]>}
+   */
+  return async (params, counts) => {
+    const { invitesFilter, usersFilter } = resolveLimitsAndOffsets(params, counts)
+    const { query } = params
 
-  const [invites, users] = await Promise.all([
-    // Invites
-    invitesFilter
-      ? // TODO: injection
-        createServerInvitesRepository({ db: knexInstance }).findServerInvites(
-          query,
-          invitesFilter.limit,
-          invitesFilter.offset
-        )
-      : [],
-    // Users
-    usersFilter ? getUsers(usersFilter.limit, usersFilter.offset, query) : []
-  ])
+    const [invites, users] = await Promise.all([
+      // Invites
+      invitesFilter
+        ? findServerInvites(query, invitesFilter.limit, invitesFilter.offset)
+        : [],
+      // Users
+      usersFilter ? getUsers(usersFilter.limit, usersFilter.offset, query) : []
+    ])
 
-  return [
-    // Invites first
-    ...invites.map((i) => mapInviteToListItem(i)),
-    // Users after
-    ...users.map((u) => mapUserToListItem(u))
-  ]
+    return [
+      // Invites first
+      ...invites.map((i) => mapInviteToListItem(i)),
+      // Users after
+      ...users.map((u) => mapUserToListItem(u))
+    ]
+  }
 }
 
 /**
- * Resolve admin users list data using the specified filter params
- * @param {PaginationParams} params
- * @returns {Promise<AdminUsersListCollection>}
+ *
+ * @param {{ getTotalCounts: (params: PaginationParams) => Promise<number>}} param0
  */
-async function getAdminUsersListCollection(params) {
-  sanitizeParams(params)
+async function getAdminUsersListCollection({ getTotalCounts }) {
+  /**
+   * Resolve admin users list data using the specified filter params
+   * @param {PaginationParams} params
+   * @returns {Promise<AdminUsersListCollection>}
+   */
+  return async (params) => {
+    sanitizeParams(params)
 
-  const totalCounts = await getTotalCounts(params)
-  const items = await retrieveItems(params, totalCounts)
+    const totalCounts = await getTotalCounts(params)
+    const items = await retrieveItems(params, totalCounts)
 
-  return {
-    items,
-    totalCount: totalCounts.totalCount
+    return {
+      items,
+      totalCount: totalCounts.totalCount
+    }
   }
 }
 
 module.exports = {
-  getAdminUsersListCollection
+  getAdminUsersListCollection,
+  getTotalCounts
 }

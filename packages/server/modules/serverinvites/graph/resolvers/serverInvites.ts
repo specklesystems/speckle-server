@@ -5,7 +5,10 @@ import {
   buildUserTarget,
   ResourceTargets
 } from '@/modules/serverinvites/helpers/inviteHelper'
-import { createAndSendInvite } from '@/modules/serverinvites/services/inviteCreationService'
+import {
+  createAndSendInvite,
+  resendInviteEmail
+} from '@/modules/serverinvites/services/inviteCreationService'
 import {
   createStreamInviteAndNotify,
   useStreamInviteAndNotify
@@ -13,7 +16,8 @@ import {
 import {
   cancelStreamInvite,
   resendInvite,
-  deleteInvite
+  deleteInvite,
+  finalizeStreamInvite
 } from '@/modules/serverinvites/services/inviteProcessingService'
 import {
   getServerInviteForToken,
@@ -24,33 +28,44 @@ import { authorizeResolver } from '@/modules/shared'
 import { chunk } from 'lodash'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import knexInstance from '@/db/knex'
-import { createServerInvitesRepository } from '../../repositories/serverInvites'
 import { ServerRoles, StreamRoles } from '@speckle/shared'
+import {
+  deleteInvitesByTarget,
+  deleteStreamInvite,
+  findInvite,
+  findResource,
+  findServerInvite,
+  findStreamInvite,
+  findUserByTarget,
+  insertInviteAndDeleteOld,
+  queryAllUserStreamInvites,
+  deleteInvite as deleteInviteFrom
+} from '@/modules/serverinvites/repositories/serverInvites'
 
 export = {
   Query: {
     async streamInvite(_parent, args, context) {
       const { streamId, token } = args
       return getUserPendingStreamInvite({
-        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        findStreamInvite: findStreamInvite({ db: knexInstance })
       })(streamId, context.userId, token)
     },
     async projectInvite(_parent, args, context) {
       const { projectId, token } = args
       return await getUserPendingStreamInvite({
-        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        findStreamInvite: findStreamInvite({ db: knexInstance })
       })(projectId, context.userId, token)
     },
     async streamInvites(_parent, _args, context) {
       const { userId } = context
       return getUserPendingStreamInvites({
-        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        queryAllUserStreamInvites: queryAllUserStreamInvites({ db: knexInstance })
       })(userId!)
     },
     async serverInviteByToken(_parent, args) {
       const { token } = args
       return getServerInviteForToken({
-        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        findServerInvite: findServerInvite({ db: knexInstance })
       })(token)
     }
   },
@@ -66,7 +81,9 @@ export = {
   Mutation: {
     async serverInviteCreate(_parent, args, context) {
       await createAndSendInvite({
-        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        findResource: findResource(),
+        findUserByTarget: findUserByTarget(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db: knexInstance })
       })(
         {
           target: args.input.email,
@@ -88,7 +105,11 @@ export = {
         context.resourceAccessRules
       )
       await createStreamInviteAndNotify({
-        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        createAndSendInvite: createAndSendInvite({
+          findResource: findResource(),
+          findUserByTarget: findUserByTarget(),
+          insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db: knexInstance })
+        })
       })(args.input, context.userId!, context.resourceAccessRules)
 
       return true
@@ -110,9 +131,9 @@ export = {
         await Promise.all(
           paramsBatchArray.map((params) =>
             createAndSendInvite({
-              serverInvitesRepository: createServerInvitesRepository({
-                db: knexInstance
-              })
+              findResource: findResource(),
+              findUserByTarget: findUserByTarget(),
+              insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db: knexInstance })
             })(
               {
                 target: params.email,
@@ -150,9 +171,9 @@ export = {
             const { email, userId, message, streamId, role, serverRole } = params
             const target = (userId ? buildUserTarget(userId) : email)!
             return createAndSendInvite({
-              serverInvitesRepository: createServerInvitesRepository({
-                db: knexInstance
-              })
+              findResource: findResource(),
+              findUserByTarget: findUserByTarget(),
+              insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db: knexInstance })
             })(
               {
                 target,
@@ -174,7 +195,10 @@ export = {
 
     async streamInviteUse(_parent, args, ctx) {
       await useStreamInviteAndNotify({
-        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        finalizeStreamInvite: finalizeStreamInvite({
+          findStreamInvite: findStreamInvite({ db: knexInstance }),
+          deleteInvitesByTarget: deleteInvitesByTarget({ db: knexInstance })
+        })
       })(args, ctx.userId!, ctx.resourceAccessRules)
       return true
     },
@@ -185,7 +209,8 @@ export = {
 
       await authorizeResolver(userId, streamId, Roles.Stream.Owner, resourceAccessRules)
       await cancelStreamInvite({
-        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        findStreamInvite: findStreamInvite({ db: knexInstance }),
+        deleteStreamInvite: deleteStreamInvite({ db: knexInstance })
       })(streamId, inviteId)
 
       return true
@@ -195,7 +220,11 @@ export = {
       const { inviteId } = args
 
       await resendInvite({
-        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        findInvite: findInvite({ db: knexInstance }),
+        resendInviteEmail: resendInviteEmail({
+          findResource: findResource(),
+          findUserByTarget: findUserByTarget()
+        })
       })(inviteId)
 
       return true
@@ -205,7 +234,8 @@ export = {
       const { inviteId } = args
 
       await deleteInvite({
-        serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+        findInvite: findInvite({ db: knexInstance }),
+        deleteInvite: deleteInviteFrom({ db: knexInstance })
       })(inviteId)
 
       return true

@@ -23,7 +23,10 @@ import {
   updateStream
 } from '@/modules/core/repositories/streams'
 import { createBranch } from '@/modules/core/services/branches'
-import { inviteUsersToStream } from '@/modules/serverinvites/services/inviteCreationService'
+import {
+  createAndSendInvite,
+  inviteUsersToStream
+} from '@/modules/serverinvites/services/inviteCreationService'
 import {
   StreamInvalidAccessError,
   StreamUpdateError
@@ -40,7 +43,12 @@ import {
   isNewResourceAllowed
 } from '@/modules/core/helpers/token'
 import { authorizeResolver } from '@/modules/shared'
-import { createServerInvitesRepository } from '@/modules/serverinvites/repositories/serverInvites'
+import {
+  deleteAllStreamInvites,
+  findResource,
+  findUserByTarget,
+  insertInviteAndDeleteOld
+} from '@/modules/serverinvites/repositories/serverInvites'
 import knexInstance from '@/db/knex'
 
 export async function createStreamReturnRecord(
@@ -78,7 +86,11 @@ export async function createStreamReturnRecord(
   if (!isProjectCreateInput(params) && params.withContributors?.length) {
     // TODO: should be injected in the resolver
     await inviteUsersToStream({
-      serverInvitesRepository: createServerInvitesRepository({ db: knexInstance })
+      createAndSendInvite: createAndSendInvite({
+        findResource: findResource(),
+        findUserByTarget: findUserByTarget(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db: knexInstance })
+      })
     })(ownerId, streamId, params.withContributors, ownerResourceAccessRules)
   }
 
@@ -126,10 +138,9 @@ export async function deleteStreamAndNotify(
   await wait(250)
 
   // TODO: use proper injection once we refactor this module
-  const serverInvitesRepository = createServerInvitesRepository({ db: knexInstance })
   // Delete after event so we can do authz
   await Promise.all([
-    serverInvitesRepository.deleteAllStreamInvites(streamId),
+    deleteAllStreamInvites({ db: knexInstance })(streamId),
     deleteStream(streamId)
   ])
   return true

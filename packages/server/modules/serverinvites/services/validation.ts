@@ -1,12 +1,12 @@
 import { UserRecord } from '@/modules/core/helpers/types'
 import { CreateInviteParams } from '@/modules/serverinvites/domain/operations'
-import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
-import { InviteCreateValidationError } from '../errors'
+import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import { ResourceTargets, isServerInvite, resolveTarget } from '../helpers/inviteHelper'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { getStreamCollaborator } from '@/modules/core/repositories/streams'
+import { TokenResourceIdentifier } from '@/modules/serverinvites/services/operations'
 
 /**
  * Validate invite creation input data

@@ -28,10 +28,6 @@ const {
 const { Roles } = require('@speckle/shared')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
-const {
-  createServerInvitesRepository
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const knexInstance = require('@/db/knex')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -231,12 +227,16 @@ module.exports = {
     })
   },
 
-  async deleteUser(id) {
-    //TODO: check for the last admin user to survive
-    dbLogger.info('Deleting user ' + id)
-    await _ensureAtleastOneAdminRemains(id)
-    const streams = await knex.raw(
-      `
+  /**
+   * @param {{ deleteAllUserInvites: import('@/modules/serverinvites/domain/operations').DeleteAllUserInvites }} param0
+   */
+  async deleteUser({ deleteAllUserInvites }) {
+    return async (id) => {
+      //TODO: check for the last admin user to survive
+      dbLogger.info('Deleting user ' + id)
+      await _ensureAtleastOneAdminRemains(id)
+      const streams = await knex.raw(
+        `
       -- Get the stream ids with only this user as owner
       SELECT "resourceId" as id
       FROM (
@@ -254,17 +254,18 @@ module.exports = {
       ) AS soc
       WHERE cnt = 1
       `,
-      [id]
-    )
-    for (const i in streams.rows) {
-      await deleteStream({ streamId: streams.rows[i].id })
+        [id]
+      )
+      for (const i in streams.rows) {
+        await deleteStream({ streamId: streams.rows[i].id })
+      }
+
+      // Delete all invites (they don't have a FK, so we need to do this manually)
+      // THIS REALLY SHOULD BE A REACTION TO THE USER DELETED EVENT EMITTED HER
+      await deleteAllUserInvites(id)
+
+      return await Users().where({ id }).del()
     }
-
-    // Delete all invites (they don't have a FK, so we need to do this manually)
-    // TODO: injection
-    await createServerInvitesRepository({ db: knexInstance }).deleteAllUserInvites(id)
-
-    return await Users().where({ id }).del()
   },
 
   /**
