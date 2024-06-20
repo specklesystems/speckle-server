@@ -66,7 +66,7 @@ import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import { VisualDiffMode } from '@speckle/viewer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { uniqBy, debounce } from 'lodash-es'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 defineEmits<{
