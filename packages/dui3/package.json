@@ -43,10 +43,11 @@
     "vue-tippy": "^6.2.0"
   },
   "devDependencies": {
-    "@graphql-codegen/cli": "^2.13.6",
-    "@graphql-codegen/client-preset": "^1.2.5",
+    "@graphql-codegen/cli": "^5.0.2",
+    "@graphql-codegen/client-preset": "^4.3.0",
     "@nuxt/eslint": "^0.3.13",
     "@nuxtjs/tailwindcss": "^6.7.0",
+    "@parcel/watcher": "^2.4.1",
     "@types/apollo-upload-client": "^17.0.1",
     "@types/eslint": "^8.56.10",
     "@types/lodash-es": "^4.17.6",

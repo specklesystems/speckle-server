@@ -69,7 +69,10 @@ const onSubmit = handleSubmit(async (values) => {
 })
 
 const reset = () => {
-  setValues(props.model)
+  // Temp hack while FormSelectBase has a bug where it rewrites form value with initialValue
+  nextTick(() => {
+    setValues(props.model)
+  })
 }
 
 watch(
