@@ -338,4 +338,3 @@ watch(
   }
 )
 </script>
-~/lib/viewer/helpers/sceneExplorer
