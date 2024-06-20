@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
   <div
-    class="flex flex-col w-full max-h-28 overflow-y-auto imple-scrollbar p-2 sm:pb-0"
+    class="flex flex-col w-full max-h-28 overflow-y-auto simple-scrollbar p-2 sm:pb-0"
   >
     <FormFileUploadZone
       ref="uploadZone"
