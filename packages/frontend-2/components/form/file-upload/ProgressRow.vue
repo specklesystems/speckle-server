@@ -1,7 +1,5 @@
 <template>
-  <div
-    class="bg-foundation rounded-lg p-2 pr-1 w-full max-w-full relative dark:bg-foundation-2"
-  >
+  <div class="bg-foundation rounded-lg p-2 pr-1 w-full max-w-full relative">
     <div class="flex space-x-1 items-center">
       <span class="truncate text-xs pr-4 flex-1">{{ item.file.name }}</span>
       <span class="text-tiny text-foreground-2">
