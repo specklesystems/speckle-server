@@ -16,6 +16,10 @@ export type FunctionSchemaType = {
   createdAt: string
   isFeatured: boolean
   logo: Nullable<string>
+  functionCreator: Nullable<{
+    speckleUserId: string
+    speckleServerOrigin: string
+  }>
 }
 
 export type FunctionReleaseSchemaType = {

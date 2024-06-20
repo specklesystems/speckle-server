@@ -26,6 +26,7 @@ const {
   updateAllInviteTargets
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const knexInstance = require('@/db/knex')
+const { getNameFromUserInfo } = require('@/modules/auth/domain/logic')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const oidcIssuer = await Issuer.discover(getOidcDiscoveryUrl())
@@ -53,7 +54,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         try {
           const email = userinfo['email']
-          const name = `${userinfo['given_name']} ${userinfo['family_name']}`
+          const name = getNameFromUserInfo(userinfo)
 
           const user = { email, name }
 

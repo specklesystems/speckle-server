@@ -53,7 +53,9 @@ exports.init = (app, isInitial) => {
     if (!dbObj) {
       return {
         type: 'file',
-        file: require.resolve('#/assets/previews/images/preview_404.png')
+        file: require.resolve('#/assets/previews/images/preview_404.png'),
+        error: true,
+        errorCode: 'OBJECT_NOT_FOUND'
       }
     }
 
@@ -84,7 +86,9 @@ exports.init = (app, isInitial) => {
       logger.warn(`Preview image not found: ${previewImgId}`)
       return {
         type: 'file',
-        file: previewErrorImage
+        file: previewErrorImage,
+        error: true,
+        errorCode: 'PREVIEW_NOT_FOUND'
       }
     }
     return { type: 'buffer', buffer: previewImg }
@@ -120,7 +124,13 @@ exports.init = (app, isInitial) => {
       res.set('X-Preview-Error-Code', previewBufferOrFile.errorCode)
     }
     if (previewBufferOrFile.type === 'file') {
-      res.set('Cache-Control', 'public, max-age=604800')
+      // we can't cache these cause they may switch to proper buffer previews in a sec
+      // at least if they're not in the error state which they will not get out of (and thus can be cached in that scenario)
+      if (previewBufferOrFile.error) {
+        res.set('Cache-Control', 'private, max-age=604800')
+      } else {
+        res.set('Cache-Control', 'no-cache, no-store')
+      }
       res.sendFile(previewBufferOrFile.file)
     } else {
       res.contentType('image/png')

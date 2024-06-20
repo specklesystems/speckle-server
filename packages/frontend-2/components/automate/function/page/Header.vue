@@ -17,11 +17,17 @@
         Edit
       </FormButton>
     </div>
-    <div class="flex gap-2 shrink-0">
+    <div
+      v-tippy="
+        hasReleases ? undefined : 'Your function needs to have at least one release'
+      "
+      class="flex gap-2 shrink-0"
+    >
       <FormButton
         :icon-left="BoltIcon"
         class="shrink-0"
         full-width
+        :disabled="!hasReleases"
         @click="$emit('createAutomation')"
       >
         Use in an Automation
@@ -54,11 +60,16 @@ graphql(`
       owner
       name
     }
+    releases(limit: 1) {
+      totalCount
+    }
   }
 `)
 
-defineProps<{
+const props = defineProps<{
   fn: AutomateFunctionPageHeader_FunctionFragment
   isOwner: boolean
 }>()
+
+const hasReleases = computed(() => props.fn.releases.totalCount > 0)
 </script>

@@ -44,6 +44,11 @@
           "type": "boolean",
           "description": "High level flag that toggles the Gendo AI render module",
           "default": false
+        },
+        "noClosureWrites": {
+          "type": "boolean",
+          "description": "Toggles whether to stop writing to the closure table",
+          "default": false
         }
       }
     },

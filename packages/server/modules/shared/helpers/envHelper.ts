@@ -31,7 +31,7 @@ export function getFileSizeLimitMB() {
 }
 
 export function getMaximumObjectSizeMB() {
-  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '10')
+  return getIntFromEnv('MAX_OBJECT_SIZE_MB', '100')
 }
 
 export function getIntFromEnv(envVarKey: string, aDefault = '0'): number {
@@ -169,7 +169,7 @@ export function getServerOrigin() {
     )
   }
 
-  return trimEnd(process.env.CANONICAL_URL, '/')
+  return new URL(trimEnd(process.env.CANONICAL_URL, '/')).origin
 }
 
 /**
@@ -297,3 +297,7 @@ export function getGendoAIAPIEndpoint() {
 }
 
 export const getFeatureFlags = () => Environment.getFeatureFlags()
+
+export function isEmailEnabled() {
+  return process.env.EMAIL === 'true'
+}

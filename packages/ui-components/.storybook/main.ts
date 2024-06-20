@@ -17,9 +17,6 @@ const config: StorybookConfig = {
     name: getAbsolutePath('@storybook/vue3-vite'),
     options: {}
   },
-  docs: {
-    autodocs: true
-  },
   viteFinal(config) {
     // Remove dts plugin, we don't need it and it only causes issues
     // eslint-disable-next-line @typescript-eslint/no-floating-promises

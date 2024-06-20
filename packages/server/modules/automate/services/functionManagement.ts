@@ -34,9 +34,18 @@ import {
 } from '@/modules/automate/helpers/executionEngine'
 import { Request, Response } from 'express'
 import { UnauthorizedError } from '@/modules/shared/errors'
-import { createStoredAuthCode } from '@/modules/automate/services/authCode'
-import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
+import {
+  AuthCodePayload,
+  AuthCodePayloadAction,
+  createStoredAuthCode
+} from '@/modules/automate/services/authCode'
+import {
+  getServerOrigin,
+  isDevEnv,
+  speckleAutomateUrl
+} from '@/modules/shared/helpers/envHelper'
 import { getFunctionsMarketplaceUrl } from '@/modules/core/helpers/routeHelper'
+import { automateLogger } from '@/logging/logging'
 
 const mapGqlTemplateIdToExecEngineTemplateId = (
   id: AutomateFunctionTemplateLanguage
@@ -85,7 +94,8 @@ export const convertFunctionToGraphQLReturn = (
     description: fn.description,
     logo: cleanFunctionLogo(fn.logo),
     tags: fn.tags,
-    supportedSourceApps: fn.supportedSourceApps
+    supportedSourceApps: fn.supportedSourceApps,
+    functionCreator: fn.functionCreator
   }
 
   return ret
@@ -124,12 +134,13 @@ export const createFunctionFromTemplate =
       throw new AutomateFunctionCreationError('Speckle user not found')
     }
 
-    const authCode = await createStoredAuthCode()
-    const body: CreateFunctionBody = {
+    const authCode = await createStoredAuthCode({
+      userId: user.id,
+      action: AuthCodePayloadAction.CreateFunction
+    })
+    const body: CreateFunctionBody<AuthCodePayload> = {
       ...input,
-      speckleServerOrigin: new URL(getServerOrigin()).origin,
-      speckleUserId: user.id,
-      authenticationCode: authCode,
+      speckleServerAuthenticationPayload: authCode,
       functionName: input.name,
       template: mapGqlTemplateIdToExecEngineTemplateId(input.template),
       supportedSourceApps: input.supportedSourceApps as SourceAppName[],
@@ -138,6 +149,10 @@ export const createFunctionFromTemplate =
     }
 
     const created = await createExecutionEngineFn({ body })
+
+    if (isDevEnv() && created) {
+      automateLogger.info({ created }, `[dev] Created function #${created.functionId}`)
+    }
 
     // Don't want to pull the function w/ another req, so we'll just return the input
     const gqlReturn: AutomateFunctionGraphQLReturn = {
@@ -153,7 +168,11 @@ export const createFunctionFromTemplate =
       description: body.description,
       logo: body.logo,
       tags: body.tags,
-      supportedSourceApps: body.supportedSourceApps
+      supportedSourceApps: body.supportedSourceApps,
+      functionCreator: {
+        speckleServerOrigin: getServerOrigin(),
+        speckleUserId: user.id
+      }
     }
 
     return {
@@ -165,15 +184,14 @@ export const createFunctionFromTemplate =
 export type UpdateFunctionDeps = {
   updateFunction: typeof updateExecEngineFunction
   getFunction: typeof getFunction
+  createStoredAuthCode: ReturnType<typeof createStoredAuthCode>
 }
 
 export const updateFunction =
   (deps: UpdateFunctionDeps) =>
   async (params: { input: UpdateAutomateFunctionInput; userId: string }) => {
-    throw new AutomateFunctionUpdateError('Function update not supported yet')
-
-    const { updateFunction } = deps
-    const { input } = params
+    const { updateFunction, createStoredAuthCode } = deps
+    const { input, userId } = params
 
     const existingFn = await getFunction({ functionId: input.id })
     if (!existingFn) {
@@ -193,11 +211,18 @@ export const updateFunction =
       return existingFn
     }
 
+    const authCode = await createStoredAuthCode({
+      userId,
+      action: AuthCodePayloadAction.UpdateFunction
+    })
+
     const apiResult = await updateFunction({
       functionId: updates.id,
       body: {
         ...updates,
-        supportedSourceApps: updates.supportedSourceApps as Optional<SourceAppName[]>
+        functionName: updates.name,
+        supportedSourceApps: updates.supportedSourceApps as Optional<SourceAppName[]>,
+        speckleServerAuthenticationPayload: authCode
       }
     })
 
@@ -219,17 +244,18 @@ export const startAutomateFunctionCreatorAuth =
       throw new UnauthorizedError()
     }
 
-    const authCode = await createStoredAuthCode()
+    const authCode = await createStoredAuthCode({
+      userId,
+      action: AuthCodePayloadAction.BecomeFunctionAuthor
+    })
     const redirectUrl = new URL(
       '/api/v2/functions/auth/githubapp/authorize',
       speckleAutomateUrl()
     )
-    redirectUrl.searchParams.set('speckleUserId', userId)
     redirectUrl.searchParams.set(
-      'speckleServerOrigin',
-      new URL(getServerOrigin()).origin
+      'speckleServerAuthenticationPayload',
+      JSON.stringify({ ...authCode, origin: getServerOrigin() })
     )
-    redirectUrl.searchParams.set('speckleServerAuthenticationCode', authCode)
 
     return res.redirect(redirectUrl.toString())
   }

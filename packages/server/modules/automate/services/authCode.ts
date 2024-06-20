@@ -1,25 +1,69 @@
+import { automateLogger } from '@/logging/logging'
 import { AutomateAuthCodeHandshakeError } from '@/modules/automate/errors/management'
 import cryptoRandomString from 'crypto-random-string'
 import Redis from 'ioredis'
+import { get, has, isObjectLike } from 'lodash'
 
-export const createStoredAuthCode = (deps: { redis: Redis }) => async () => {
-  const { redis } = deps
-  const codeId = cryptoRandomString({ length: 10 })
-  const authCode = cryptoRandomString({ length: 20 })
-  // prob hashing and salting it would be better, but they expire in 5 mins...
-  await redis.set(codeId, authCode, 'EX', 60 * 5)
-  return `${codeId}${authCode}`
+export enum AuthCodePayloadAction {
+  CreateAutomation = 'createAutomation',
+  CreateFunction = 'createFunction',
+  BecomeFunctionAuthor = 'becomeFunctionAuthor',
+  GetAvailableGithubOrganizations = 'getAvailableGithubOrganizations',
+  UpdateFunction = 'updateFunction'
 }
 
-export const validateStoredAuthCode =
-  (deps: { redis: Redis }) => async (code: string) => {
-    const { redis } = deps
-    const codeId = code.slice(0, 10)
-    const authCode = code.slice(10)
-    const storedAuthCode = await redis.get(codeId)
+export type AuthCodePayload = {
+  code: string
+  userId: string
+  action: AuthCodePayloadAction
+}
 
-    if (!storedAuthCode || authCode !== storedAuthCode) {
-      throw new AutomateAuthCodeHandshakeError('Invalid automate auth code')
+const isPayload = (payload: unknown): payload is AuthCodePayload =>
+  !!(
+    payload &&
+    isObjectLike(payload) &&
+    has(payload, 'code') &&
+    has(payload, 'userId') &&
+    has(payload, 'action') &&
+    Object.values(AuthCodePayloadAction).includes(get(payload, 'action'))
+  )
+
+export const createStoredAuthCode =
+  (deps: { redis: Redis }) => async (params: Omit<AuthCodePayload, 'code'>) => {
+    const { redis } = deps
+
+    const payload: AuthCodePayload = {
+      ...params,
+      code: cryptoRandomString({ length: 20 })
+    }
+
+    await redis.set(payload.code, JSON.stringify(payload), 'EX', 60 * 5)
+    return payload
+  }
+
+export const validateStoredAuthCode =
+  (deps: { redis: Redis }) => async (payload: AuthCodePayload) => {
+    const { redis } = deps
+
+    const potentialPayloadString = await redis.get(payload.code)
+    const potentialPayload: unknown = potentialPayloadString
+      ? JSON.parse(potentialPayloadString)
+      : null
+    const formattedPayload = isPayload(potentialPayload) ? potentialPayload : null
+
+    if (
+      !formattedPayload ||
+      formattedPayload.code !== formattedPayload.code ||
+      formattedPayload.userId !== formattedPayload.userId ||
+      formattedPayload.action !== formattedPayload.action
+    ) {
+      throw new AutomateAuthCodeHandshakeError('Invalid automate auth payload')
+    }
+
+    try {
+      await redis.del(payload.code)
+    } catch (e) {
+      automateLogger.error(e, 'Auth code deletion unexpectedly failed')
     }
 
     return true

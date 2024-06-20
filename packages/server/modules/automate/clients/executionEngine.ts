@@ -1,33 +1,41 @@
 import { automateLogger } from '@/logging/logging'
 import {
   ExecutionEngineBadResponseBodyError,
-  ExecutionEngineErrorResponse,
+  type ExecutionEngineErrorResponse,
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 import { AutomateInvalidTriggerError } from '@/modules/automate/errors/management'
-import {
+import type {
   FunctionReleaseSchemaType,
   FunctionSchemaType,
   FunctionWithVersionsSchemaType
 } from '@/modules/automate/helpers/executionEngine'
 import {
-  AutomationFunctionRunRecord,
-  BaseTriggerManifest,
+  type AutomationFunctionRunRecord,
+  type BaseTriggerManifest,
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
+import type { AuthCodePayload } from '@/modules/automate/services/authCode'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import {
-  Nullable,
-  SourceAppName,
+  type Nullable,
+  type SourceAppName,
   isNonNullable,
   isNullOrUndefined,
   retry,
   timeoutAt
 } from '@speckle/shared'
 import { has, isObjectLike } from 'lodash'
+
+export type AuthCodePayloadWithOrigin = AuthCodePayload & { origin: string }
+
+const addOrigin = (P: AuthCodePayload): AuthCodePayloadWithOrigin => {
+  const origin = getServerOrigin()
+  return { ...P, origin }
+}
 
 const isErrorResponse = (e: unknown): e is ExecutionEngineErrorResponse =>
   isObjectLike(e) && has(e, 'statusCode') && has(e, 'statusMessage')
@@ -116,7 +124,14 @@ const invokeRequest = async (params: {
       url,
       body
     }
-    const errorResponse = await response.json()
+
+    let errorResponse: unknown
+    try {
+      errorResponse = await response.json()
+    } catch (e) {
+      throw new ExecutionEngineBadResponseBodyError(errorReq)
+    }
+
     if (!isErrorResponse(errorResponse)) {
       throw new ExecutionEngineBadResponseBodyError(errorReq)
     }
@@ -129,7 +144,7 @@ const invokeRequest = async (params: {
 
 export const createAutomation = async (params: {
   speckleServerUrl?: string
-  authCode: string
+  authCode: AuthCodePayload
 }) => {
   const { speckleServerUrl = getServerOrigin(), authCode } = params
 
@@ -141,8 +156,10 @@ export const createAutomation = async (params: {
     url,
     method: 'post',
     body: {
-      speckleServerOrigin,
-      speckleServerAuthenticationCode: authCode
+      speckleServerAuthenticationPayload: {
+        ...authCode,
+        origin: speckleServerOrigin
+      }
     },
     retry: false
   })
@@ -235,18 +252,17 @@ export enum ExecutionEngineFunctionTemplateId {
   TypeScript = 'typescript'
 }
 
-export type CreateFunctionBody = {
-  speckleServerOrigin: string
-  speckleUserId: string
-  authenticationCode: string
-  template: ExecutionEngineFunctionTemplateId
-  functionName: string
-  description: string
-  supportedSourceApps: SourceAppName[]
-  tags: string[]
-  logo: Nullable<string>
-  org: Nullable<string>
-}
+export type CreateFunctionBody<AP extends AuthCodePayload = AuthCodePayloadWithOrigin> =
+  {
+    speckleServerAuthenticationPayload: AP
+    template: ExecutionEngineFunctionTemplateId
+    functionName: string
+    description: string
+    supportedSourceApps: SourceAppName[]
+    tags: string[]
+    logo: Nullable<string>
+    org: Nullable<string>
+  }
 
 export type CreateFunctionResponse = {
   functionId: string
@@ -264,33 +280,55 @@ export type CreateFunctionResponse = {
 export const createFunction = async ({
   body
 }: {
-  body: CreateFunctionBody
+  body: CreateFunctionBody<AuthCodePayload>
 }): Promise<CreateFunctionResponse> => {
   const url = getApiUrl('/api/v2/functions/from-template')
+
+  const formattedBody: CreateFunctionBody = {
+    ...body,
+    speckleServerAuthenticationPayload: addOrigin(
+      body.speckleServerAuthenticationPayload
+    )
+  }
   return invokeJsonRequest<CreateFunctionResponse>({
     url,
     method: 'post',
-    body,
+    body: formattedBody,
     retry: false
   })
 }
 
-export type UpdateFunctionBody = {
-  functionName?: string
-  description?: string
-  supportedSourceApps?: SourceAppName[]
-  tags?: string[]
-  logo?: string
-}
+export type UpdateFunctionBody<AP extends AuthCodePayload = AuthCodePayloadWithOrigin> =
+  {
+    speckleServerAuthenticationPayload: AP
+    functionName?: string
+    description?: string
+    supportedSourceApps?: SourceAppName[]
+    tags?: string[]
+    logo?: string
+  }
 
 export type UpdateFunctionResponse = FunctionSchemaType
 
 export const updateFunction = async (params: {
   functionId: string
-  body: UpdateFunctionBody
+  body: UpdateFunctionBody<AuthCodePayload>
 }): Promise<UpdateFunctionResponse> => {
-  throw new Error('Not implemented! Needs re-thinking by Gergo & Iain')
-  console.log(params)
+  const { functionId, body } = params
+  const url = getApiUrl(`/api/v2/functions/${functionId}`)
+
+  const formattedBody: UpdateFunctionBody = {
+    ...body,
+    speckleServerAuthenticationPayload: addOrigin(
+      body.speckleServerAuthenticationPayload
+    )
+  }
+  return await invokeJsonRequest<UpdateFunctionResponse>({
+    url,
+    method: 'PATCH',
+    body: formattedBody,
+    retry: false
+  })
 }
 
 export type GetFunctionResponse = FunctionWithVersionsSchemaType & {
@@ -423,21 +461,20 @@ export const getUserGithubAuthState = async (params: {
 
 export const getUserGithubOrganizations = async (params: {
   speckleServerUrl?: string
-  userId: string
-  authCode: string
+  authCode: AuthCodePayload
 }) => {
   const {
     speckleServerUrl = getServerOrigin(),
-    userId: speckleUserId,
-    authCode: speckleServerAuthenticationCode
+    authCode: speckleServerAuthenticationPayload
   } = params
   const speckleServerOrigin = new URL(speckleServerUrl).origin
 
   const url = getApiUrl(`/api/v2/functions/auth/githubapp/organizations`, {
     query: {
-      speckleServerOrigin,
-      speckleUserId,
-      speckleServerAuthenticationCode
+      speckleServerAuthenticationPayload: JSON.stringify({
+        ...speckleServerAuthenticationPayload,
+        origin: speckleServerOrigin
+      })
     }
   })
 

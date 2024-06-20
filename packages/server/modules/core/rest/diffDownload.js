@@ -46,9 +46,11 @@ module.exports = (app) => {
           req.log.error(err, `App error streaming objects`)
         } else {
           req.log.info(
-            `Streamed ${childrenList.length} objects (size: ${
-              gzipStream.bytesWritten / 1000000
-            } MB)`
+            {
+              childCount: childrenList.length,
+              mbWritten: gzipStream.bytesWritten / 1000000
+            },
+            'Streamed {childCount} objects (size: {mbWritten} MB)'
           )
         }
       }

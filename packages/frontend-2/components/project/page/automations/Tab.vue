@@ -58,6 +58,7 @@ const route = useRoute()
 const projectId = computed(() => route.params.id as string)
 const search = ref('')
 const isAutomateEnabled = useIsAutomateModuleEnabled()
+const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 
 // Base tab query (no pagination)
 const { result, loading } = useQuery(
@@ -69,7 +70,7 @@ const { result, loading } = useQuery(
   }),
   () => ({
     enabled: isAutomateEnabled.value,
-    fetchPolicy: 'cache-and-network'
+    fetchPolicy: pageFetchPolicy.value
   })
 )
 
