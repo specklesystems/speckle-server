@@ -4,7 +4,6 @@ import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpe
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
-import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes';
 import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn, UserAutomateInfoGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
@@ -384,62 +383,6 @@ export type AutomationCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type AutomationCreateInput = {
-  automationId: Scalars['String']['input'];
-  automationName: Scalars['String']['input'];
-  automationRevisionId: Scalars['String']['input'];
-  modelId: Scalars['String']['input'];
-  projectId: Scalars['String']['input'];
-  webhookId?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type AutomationFunctionRun = {
-  __typename?: 'AutomationFunctionRun';
-  contextView?: Maybe<Scalars['String']['output']>;
-  elapsed: Scalars['Float']['output'];
-  functionId: Scalars['String']['output'];
-  functionLogo?: Maybe<Scalars['String']['output']>;
-  functionName: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  resultVersions: Array<Version>;
-  /**
-   * NOTE: this is the schema for the results field below!
-   * Current schema: {
-   *   version: "1.0.0",
-   *   values: {
-   *     objectResults: Record<str, {
-   *       category: string
-   *       level: ObjectResultLevel
-   *       objectIds: string[]
-   *       message: str | null
-   *       metadata: Records<str, unknown> | null
-   *       visualoverrides: Records<str, unknown> | null
-   *     }[]>
-   *     blobIds?: string[]
-   *   }
-   * }
-   */
-  results?: Maybe<Scalars['JSONObject']['output']>;
-  status: AutomationRunStatus;
-  statusMessage?: Maybe<Scalars['String']['output']>;
-};
-
-export type AutomationMutations = {
-  __typename?: 'AutomationMutations';
-  create: Scalars['Boolean']['output'];
-  functionRunStatusReport: Scalars['Boolean']['output'];
-};
-
-
-export type AutomationMutationsCreateArgs = {
-  input: AutomationCreateInput;
-};
-
-
-export type AutomationMutationsFunctionRunStatusReportArgs = {
-  input: AutomationRunStatusUpdateInput;
-};
-
 export type AutomationRevision = {
   __typename?: 'AutomationRevision';
   functions: Array<AutomationRevisionFunction>;
@@ -463,43 +406,7 @@ export type AutomationRevisionFunction = {
 
 export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition;
 
-export type AutomationRun = {
-  __typename?: 'AutomationRun';
-  automationId: Scalars['String']['output'];
-  automationName: Scalars['String']['output'];
-  createdAt: Scalars['DateTime']['output'];
-  functionRuns: Array<AutomationFunctionRun>;
-  id: Scalars['ID']['output'];
-  /** Resolved from all function run statuses */
-  status: AutomationRunStatus;
-  updatedAt: Scalars['DateTime']['output'];
-  versionId: Scalars['String']['output'];
-};
-
-export enum AutomationRunStatus {
-  Failed = 'FAILED',
-  Initializing = 'INITIALIZING',
-  Running = 'RUNNING',
-  Succeeded = 'SUCCEEDED'
-}
-
-export type AutomationRunStatusUpdateInput = {
-  automationId: Scalars['String']['input'];
-  automationRevisionId: Scalars['String']['input'];
-  automationRunId: Scalars['String']['input'];
-  functionRuns: Array<FunctionRunStatusInput>;
-  versionId: Scalars['String']['input'];
-};
-
 export type AutomationRunTrigger = VersionCreatedTrigger;
-
-export type AutomationsStatus = {
-  __typename?: 'AutomationsStatus';
-  automationRuns: Array<AutomationRun>;
-  id: Scalars['ID']['output'];
-  status: AutomationRunStatus;
-  statusMessage?: Maybe<Scalars['String']['output']>;
-};
 
 export type AvatarUser = {
   __typename?: 'AvatarUser';
@@ -950,27 +857,6 @@ export type FileUpload = {
   userId: Scalars['String']['output'];
 };
 
-export type FunctionRunStatusInput = {
-  contextView?: InputMaybe<Scalars['String']['input']>;
-  elapsed: Scalars['Float']['input'];
-  functionId: Scalars['String']['input'];
-  functionLogo?: InputMaybe<Scalars['String']['input']>;
-  functionName: Scalars['String']['input'];
-  resultVersionIds: Array<Scalars['String']['input']>;
-  /**
-   * Current schema: {
-   *   version: "1.0.0",
-   *   values: {
-   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
-   *     blobIds?: string[]
-   *   }
-   * }
-   */
-  results?: InputMaybe<Scalars['JSONObject']['input']>;
-  status: AutomationRunStatus;
-  statusMessage?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
   camera?: Maybe<Scalars['JSONObject']['output']>;
@@ -1096,7 +982,6 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
-  automationStatus?: Maybe<AutomationsStatus>;
   automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
@@ -1229,7 +1114,6 @@ export type Mutation = {
   appUpdate: Scalars['Boolean']['output'];
   automateFunctionRunStatusReport: Scalars['Boolean']['output'];
   automateMutations: AutomateMutations;
-  automationMutations: AutomationMutations;
   branchCreate: Scalars['String']['output'];
   branchDelete: Scalars['Boolean']['output'];
   branchUpdate: Scalars['Boolean']['output'];
@@ -1913,14 +1797,6 @@ export type ProjectAutomationUpdateInput = {
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type ProjectAutomationsStatusUpdatedMessage = {
-  __typename?: 'ProjectAutomationsStatusUpdatedMessage';
-  model: Model;
-  project: Project;
-  status: AutomationsStatus;
-  version: Version;
 };
 
 export type ProjectAutomationsUpdatedMessage = {
@@ -2889,7 +2765,6 @@ export type Subscription = {
   commitDeleted?: Maybe<Scalars['JSONObject']['output']>;
   /** Subscribe to commit updated event. */
   commitUpdated?: Maybe<Scalars['JSONObject']['output']>;
-  projectAutomationsStatusUpdated: ProjectAutomationsStatusUpdatedMessage;
   /** Subscribe to updates to automations in the project */
   projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
@@ -2982,11 +2857,6 @@ export type SubscriptionCommitDeletedArgs = {
 export type SubscriptionCommitUpdatedArgs = {
   commitId?: InputMaybe<Scalars['String']['input']>;
   streamId: Scalars['String']['input'];
-};
-
-
-export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
-  projectId: Scalars['String']['input'];
 };
 
 
@@ -3331,7 +3201,6 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
-  automationStatus?: Maybe<AutomationsStatus>;
   automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** All comment threads in this version */
   commentThreads: CommentCollection;
@@ -3634,18 +3503,11 @@ export type ResolversTypes = {
   AutomateRunTriggerType: AutomateRunTriggerType;
   Automation: ResolverTypeWrapper<AutomationGraphQLReturn>;
   AutomationCollection: ResolverTypeWrapper<Omit<AutomationCollection, 'items'> & { items: Array<ResolversTypes['Automation']> }>;
-  AutomationCreateInput: AutomationCreateInput;
-  AutomationFunctionRun: ResolverTypeWrapper<AutomationFunctionRunGraphQLReturn>;
-  AutomationMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   AutomationRevision: ResolverTypeWrapper<AutomationRevisionGraphQLReturn>;
   AutomationRevisionCreateFunctionInput: AutomationRevisionCreateFunctionInput;
   AutomationRevisionFunction: ResolverTypeWrapper<AutomationRevisionFunctionGraphQLReturn>;
   AutomationRevisionTriggerDefinition: ResolverTypeWrapper<AutomationRevisionTriggerDefinitionGraphQLReturn>;
-  AutomationRun: ResolverTypeWrapper<Omit<AutomationRun, 'functionRuns'> & { functionRuns: Array<ResolversTypes['AutomationFunctionRun']> }>;
-  AutomationRunStatus: AutomationRunStatus;
-  AutomationRunStatusUpdateInput: AutomationRunStatusUpdateInput;
   AutomationRunTrigger: ResolverTypeWrapper<AutomationRunTriggerGraphQLReturn>;
-  AutomationsStatus: ResolverTypeWrapper<Omit<AutomationsStatus, 'automationRuns'> & { automationRuns: Array<ResolversTypes['AutomationRun']> }>;
   AvatarUser: ResolverTypeWrapper<AvatarUser>;
   BasicGitRepositoryMetadata: ResolverTypeWrapper<BasicGitRepositoryMetadata>;
   BigInt: ResolverTypeWrapper<Scalars['BigInt']['output']>;
@@ -3690,7 +3552,6 @@ export type ResolversTypes = {
   EmailAddress: ResolverTypeWrapper<Scalars['EmailAddress']['output']>;
   FileUpload: ResolverTypeWrapper<FileUploadGraphQLReturn>;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
-  FunctionRunStatusInput: FunctionRunStatusInput;
   GendoAIRender: ResolverTypeWrapper<GendoAiRender>;
   GendoAIRenderCollection: ResolverTypeWrapper<GendoAiRenderCollection>;
   GendoAIRenderInput: GendoAiRenderInput;
@@ -3718,7 +3579,6 @@ export type ResolversTypes = {
   ProjectAutomationMutations: ResolverTypeWrapper<ProjectAutomationMutationsGraphQLReturn>;
   ProjectAutomationRevisionCreateInput: ProjectAutomationRevisionCreateInput;
   ProjectAutomationUpdateInput: ProjectAutomationUpdateInput;
-  ProjectAutomationsStatusUpdatedMessage: ResolverTypeWrapper<Omit<ProjectAutomationsStatusUpdatedMessage, 'model' | 'project' | 'status' | 'version'> & { model: ResolversTypes['Model'], project: ResolversTypes['Project'], status: ResolversTypes['AutomationsStatus'], version: ResolversTypes['Version'] }>;
   ProjectAutomationsUpdatedMessage: ResolverTypeWrapper<ProjectAutomationsUpdatedMessageGraphQLReturn>;
   ProjectAutomationsUpdatedMessageType: ProjectAutomationsUpdatedMessageType;
   ProjectCollaborator: ResolverTypeWrapper<Omit<ProjectCollaborator, 'user'> & { user: ResolversTypes['LimitedUser'] }>;
@@ -3858,17 +3718,11 @@ export type ResolversParentTypes = {
   AutomateRunCollection: Omit<AutomateRunCollection, 'items'> & { items: Array<ResolversParentTypes['AutomateRun']> };
   Automation: AutomationGraphQLReturn;
   AutomationCollection: Omit<AutomationCollection, 'items'> & { items: Array<ResolversParentTypes['Automation']> };
-  AutomationCreateInput: AutomationCreateInput;
-  AutomationFunctionRun: AutomationFunctionRunGraphQLReturn;
-  AutomationMutations: MutationsObjectGraphQLReturn;
   AutomationRevision: AutomationRevisionGraphQLReturn;
   AutomationRevisionCreateFunctionInput: AutomationRevisionCreateFunctionInput;
   AutomationRevisionFunction: AutomationRevisionFunctionGraphQLReturn;
   AutomationRevisionTriggerDefinition: AutomationRevisionTriggerDefinitionGraphQLReturn;
-  AutomationRun: Omit<AutomationRun, 'functionRuns'> & { functionRuns: Array<ResolversParentTypes['AutomationFunctionRun']> };
-  AutomationRunStatusUpdateInput: AutomationRunStatusUpdateInput;
   AutomationRunTrigger: AutomationRunTriggerGraphQLReturn;
-  AutomationsStatus: Omit<AutomationsStatus, 'automationRuns'> & { automationRuns: Array<ResolversParentTypes['AutomationRun']> };
   AvatarUser: AvatarUser;
   BasicGitRepositoryMetadata: BasicGitRepositoryMetadata;
   BigInt: Scalars['BigInt']['output'];
@@ -3912,7 +3766,6 @@ export type ResolversParentTypes = {
   EmailAddress: Scalars['EmailAddress']['output'];
   FileUpload: FileUploadGraphQLReturn;
   Float: Scalars['Float']['output'];
-  FunctionRunStatusInput: FunctionRunStatusInput;
   GendoAIRender: GendoAiRender;
   GendoAIRenderCollection: GendoAiRenderCollection;
   GendoAIRenderInput: GendoAiRenderInput;
@@ -3940,7 +3793,6 @@ export type ResolversParentTypes = {
   ProjectAutomationMutations: ProjectAutomationMutationsGraphQLReturn;
   ProjectAutomationRevisionCreateInput: ProjectAutomationRevisionCreateInput;
   ProjectAutomationUpdateInput: ProjectAutomationUpdateInput;
-  ProjectAutomationsStatusUpdatedMessage: Omit<ProjectAutomationsStatusUpdatedMessage, 'model' | 'project' | 'status' | 'version'> & { model: ResolversParentTypes['Model'], project: ResolversParentTypes['Project'], status: ResolversParentTypes['AutomationsStatus'], version: ResolversParentTypes['Version'] };
   ProjectAutomationsUpdatedMessage: ProjectAutomationsUpdatedMessageGraphQLReturn;
   ProjectCollaborator: Omit<ProjectCollaborator, 'user'> & { user: ResolversParentTypes['LimitedUser'] };
   ProjectCollection: Omit<ProjectCollection, 'items'> & { items: Array<ResolversParentTypes['Project']> };
@@ -4265,26 +4117,6 @@ export type AutomationCollectionResolvers<ContextType = GraphQLContext, ParentTy
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
-export type AutomationFunctionRunResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationFunctionRun'] = ResolversParentTypes['AutomationFunctionRun']> = {
-  contextView?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  elapsed?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
-  functionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  functionLogo?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  functionName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  resultVersions?: Resolver<Array<ResolversTypes['Version']>, ParentType, ContextType>;
-  results?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['AutomationRunStatus'], ParentType, ContextType>;
-  statusMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type AutomationMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationMutations'] = ResolversParentTypes['AutomationMutations']> = {
-  create?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AutomationMutationsCreateArgs, 'input'>>;
-  functionRunStatusReport?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<AutomationMutationsFunctionRunStatusReportArgs, 'input'>>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type AutomationRevisionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationRevision'] = ResolversParentTypes['AutomationRevision']> = {
   functions?: Resolver<Array<ResolversTypes['AutomationRevisionFunction']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
@@ -4302,28 +4134,8 @@ export type AutomationRevisionTriggerDefinitionResolvers<ContextType = GraphQLCo
   __resolveType: TypeResolveFn<'VersionCreatedTriggerDefinition', ParentType, ContextType>;
 };
 
-export type AutomationRunResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationRun'] = ResolversParentTypes['AutomationRun']> = {
-  automationId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  automationName?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  functionRuns?: Resolver<Array<ResolversTypes['AutomationFunctionRun']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['AutomationRunStatus'], ParentType, ContextType>;
-  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  versionId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
 export type AutomationRunTriggerResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationRunTrigger'] = ResolversParentTypes['AutomationRunTrigger']> = {
   __resolveType: TypeResolveFn<'VersionCreatedTrigger', ParentType, ContextType>;
-};
-
-export type AutomationsStatusResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AutomationsStatus'] = ResolversParentTypes['AutomationsStatus']> = {
-  automationRuns?: Resolver<Array<ResolversTypes['AutomationRun']>, ParentType, ContextType>;
-  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['AutomationRunStatus'], ParentType, ContextType>;
-  statusMessage?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
 export type AvatarUserResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['AvatarUser'] = ResolversParentTypes['AvatarUser']> = {
@@ -4569,7 +4381,6 @@ export type LimitedUserResolvers<ContextType = GraphQLContext, ParentType extend
 
 export type ModelResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Model'] = ResolversParentTypes['Model']> = {
   author?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
-  automationStatus?: Resolver<Maybe<ResolversTypes['AutomationsStatus']>, ParentType, ContextType>;
   automationsStatus?: Resolver<Maybe<ResolversTypes['TriggeredAutomationsStatus']>, ParentType, ContextType>;
   childrenTree?: Resolver<Array<ResolversTypes['ModelsTreeItem']>, ParentType, ContextType>;
   commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<ModelCommentThreadsArgs, 'limit'>>;
@@ -4631,7 +4442,6 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   appUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAppUpdateArgs, 'app'>>;
   automateFunctionRunStatusReport?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationAutomateFunctionRunStatusReportArgs, 'input'>>;
   automateMutations?: Resolver<ResolversTypes['AutomateMutations'], ParentType, ContextType>;
-  automationMutations?: Resolver<ResolversTypes['AutomationMutations'], ParentType, ContextType>;
   branchCreate?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<MutationBranchCreateArgs, 'branch'>>;
   branchDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationBranchDeleteArgs, 'branch'>>;
   branchUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationBranchUpdateArgs, 'branch'>>;
@@ -4766,14 +4576,6 @@ export type ProjectAutomationMutationsResolvers<ContextType = GraphQLContext, Pa
   createTestAutomationRun?: Resolver<ResolversTypes['TestAutomationRun'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsCreateTestAutomationRunArgs, 'automationId'>>;
   trigger?: Resolver<ResolversTypes['String'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsTriggerArgs, 'automationId'>>;
   update?: Resolver<ResolversTypes['Automation'], ParentType, ContextType, RequireFields<ProjectAutomationMutationsUpdateArgs, 'input'>>;
-  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
-};
-
-export type ProjectAutomationsStatusUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectAutomationsStatusUpdatedMessage'] = ResolversParentTypes['ProjectAutomationsStatusUpdatedMessage']> = {
-  model?: Resolver<ResolversTypes['Model'], ParentType, ContextType>;
-  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
-  status?: Resolver<ResolversTypes['AutomationsStatus'], ParentType, ContextType>;
-  version?: Resolver<ResolversTypes['Version'], ParentType, ContextType>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -5112,7 +4914,6 @@ export type SubscriptionResolvers<ContextType = GraphQLContext, ParentType exten
   commitCreated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitCreated", ParentType, ContextType, RequireFields<SubscriptionCommitCreatedArgs, 'streamId'>>;
   commitDeleted?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitDeleted", ParentType, ContextType, RequireFields<SubscriptionCommitDeletedArgs, 'streamId'>>;
   commitUpdated?: SubscriptionResolver<Maybe<ResolversTypes['JSONObject']>, "commitUpdated", ParentType, ContextType, RequireFields<SubscriptionCommitUpdatedArgs, 'streamId'>>;
-  projectAutomationsStatusUpdated?: SubscriptionResolver<ResolversTypes['ProjectAutomationsStatusUpdatedMessage'], "projectAutomationsStatusUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectAutomationsStatusUpdatedArgs, 'projectId'>>;
   projectAutomationsUpdated?: SubscriptionResolver<ResolversTypes['ProjectAutomationsUpdatedMessage'], "projectAutomationsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectAutomationsUpdatedArgs, 'projectId'>>;
   projectCommentsUpdated?: SubscriptionResolver<ResolversTypes['ProjectCommentsUpdatedMessage'], "projectCommentsUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectCommentsUpdatedArgs, 'target'>>;
   projectFileImportUpdated?: SubscriptionResolver<ResolversTypes['ProjectFileImportUpdatedMessage'], "projectFileImportUpdated", ParentType, ContextType, RequireFields<SubscriptionProjectFileImportUpdatedArgs, 'id'>>;
@@ -5218,7 +5019,6 @@ export type UserSearchResultCollectionResolvers<ContextType = GraphQLContext, Pa
 
 export type VersionResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['Version'] = ResolversParentTypes['Version']> = {
   authorUser?: Resolver<Maybe<ResolversTypes['LimitedUser']>, ParentType, ContextType>;
-  automationStatus?: Resolver<Maybe<ResolversTypes['AutomationsStatus']>, ParentType, ContextType>;
   automationsStatus?: Resolver<Maybe<ResolversTypes['TriggeredAutomationsStatus']>, ParentType, ContextType>;
   commentThreads?: Resolver<ResolversTypes['CommentCollection'], ParentType, ContextType, RequireFields<VersionCommentThreadsArgs, 'limit'>>;
   createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
@@ -5346,14 +5146,10 @@ export type Resolvers<ContextType = GraphQLContext> = {
   AutomateRunCollection?: AutomateRunCollectionResolvers<ContextType>;
   Automation?: AutomationResolvers<ContextType>;
   AutomationCollection?: AutomationCollectionResolvers<ContextType>;
-  AutomationFunctionRun?: AutomationFunctionRunResolvers<ContextType>;
-  AutomationMutations?: AutomationMutationsResolvers<ContextType>;
   AutomationRevision?: AutomationRevisionResolvers<ContextType>;
   AutomationRevisionFunction?: AutomationRevisionFunctionResolvers<ContextType>;
   AutomationRevisionTriggerDefinition?: AutomationRevisionTriggerDefinitionResolvers<ContextType>;
-  AutomationRun?: AutomationRunResolvers<ContextType>;
   AutomationRunTrigger?: AutomationRunTriggerResolvers<ContextType>;
-  AutomationsStatus?: AutomationsStatusResolvers<ContextType>;
   AvatarUser?: AvatarUserResolvers<ContextType>;
   BasicGitRepositoryMetadata?: BasicGitRepositoryMetadataResolvers<ContextType>;
   BigInt?: GraphQLScalarType;
@@ -5392,7 +5188,6 @@ export type Resolvers<ContextType = GraphQLContext> = {
   PendingStreamCollaborator?: PendingStreamCollaboratorResolvers<ContextType>;
   Project?: ProjectResolvers<ContextType>;
   ProjectAutomationMutations?: ProjectAutomationMutationsResolvers<ContextType>;
-  ProjectAutomationsStatusUpdatedMessage?: ProjectAutomationsStatusUpdatedMessageResolvers<ContextType>;
   ProjectAutomationsUpdatedMessage?: ProjectAutomationsUpdatedMessageResolvers<ContextType>;
   ProjectCollaborator?: ProjectCollaboratorResolvers<ContextType>;
   ProjectCollection?: ProjectCollectionResolvers<ContextType>;
