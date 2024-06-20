@@ -46,6 +46,9 @@ graphql(`
     ...AutomateFunctionPageHeader_Function
     ...AutomateFunctionPageInfo_AutomateFunction
     ...AutomateAutomationCreateDialog_AutomateFunction
+    creator {
+      id
+    }
   }
 `)
 
@@ -60,6 +63,8 @@ const pageQuery = graphql(`
 definePageMeta({
   middleware: ['auth', 'require-valid-function']
 })
+
+const { activeUser } = useActiveUser()
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()
 const route = useRoute()
 const functionId = computed(() => route.params.fid as string)
@@ -80,12 +85,12 @@ const showNewAutomationDialog = ref(false)
 
 const fn = computed(() => result.value?.automateFunction)
 const isOwner = computed(
-  () => false // TODO: Gergo rethinking function auth logic
-  // !!(
-  //   activeUser.value?.id &&
-  //   fn.value?.creator &&
-  //   activeUser.value.id === fn.value.creator.id
-  // )
+  () =>
+    !!(
+      activeUser.value?.id &&
+      fn.value?.creator &&
+      activeUser.value.id === fn.value.creator.id
+    )
 )
 
 const { html: plaintextDescription } = useMarkdown(

@@ -267,9 +267,10 @@ module.exports = (app) => {
 
       req.log.info(
         {
+          totalProcessed,
           crtMemUsageMB: process.memoryUsage().heapUsed / 1024 / 1024
         },
-        `Upload finished: ${totalProcessed} objs`
+        'Upload finished: {totalProcessed} objects'
       )
 
       let previouslyAwaitedPromises = 0

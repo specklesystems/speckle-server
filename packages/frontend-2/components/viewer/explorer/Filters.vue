@@ -82,11 +82,11 @@
     </div>
     <div v-if="activeFilter">
       <ViewerExplorerStringFilter
-        v-if="activeFilter.type === 'string'"
+        v-if="stringActiveFilter"
         :filter="stringActiveFilter"
       />
       <ViewerExplorerNumericFilter
-        v-if="activeFilter.type === 'number'"
+        v-if="numericActiveFilter"
         :filter="numericActiveFilter"
       />
     </div>
@@ -95,13 +95,13 @@
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
 import { ArrowPathIcon } from '@heroicons/vue/24/outline'
-import type {
-  PropertyInfo,
-  StringPropertyInfo,
-  NumericPropertyInfo
-} from '@speckle/viewer'
+import type { PropertyInfo, StringPropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
+import {
+  isNumericPropertyInfo,
+  isStringPropertyInfo
+} from '~/lib/viewer/helpers/sceneExplorer'
 
 const {
   setPropertyFilter,
@@ -150,9 +150,8 @@ const relevantFilters = computed(() => {
   })
 })
 
-const speckleTypeFilter = computed(
-  () =>
-    relevantFilters.value.find((f) => f.key === 'speckle_type') as StringPropertyInfo
+const speckleTypeFilter = computed(() =>
+  relevantFilters.value.find((f) => f.key === 'speckle_type')
 )
 const activeFilter = computed(
   () => propertyFilter.filter.value || speckleTypeFilter.value
@@ -169,9 +168,12 @@ watch(activeFilter, (newVal) => {
   })
 })
 
-// Using these as casting activeFilter as XXX in the prop causes some syntax highliting bug to show. Apologies :)
-const stringActiveFilter = computed(() => activeFilter.value as StringPropertyInfo)
-const numericActiveFilter = computed(() => activeFilter.value as NumericPropertyInfo)
+const stringActiveFilter = computed(() =>
+  isStringPropertyInfo(activeFilter.value) ? activeFilter.value : undefined
+)
+const numericActiveFilter = computed(() =>
+  isNumericPropertyInfo(activeFilter.value) ? activeFilter.value : undefined
+)
 
 const searchString = ref<string | undefined>(undefined)
 const relevantFiltersSearched = computed(() => {
@@ -229,7 +231,7 @@ const toggleColors = () => {
 // Handles a rather complicated ux flow: user sets a numeric filter which only makes sense with colors on. we set the force colors flag in that scenario, so we can revert it if user selects a non-numeric filter afterwards.
 let forcedColors = false
 const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
-  if (activeFilter.value.type === 'number' && !colors.value) {
+  if (!!numericActiveFilter.value && !colors.value) {
     forcedColors = true
     applyPropertyFilter()
     return
