@@ -509,7 +509,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     }
 
     if (this.world) {
-      const maxDistance = this.world.getRelativeOffset(5)
+      const maxDistance = this.world.getRelativeOffset(10)
       const minDistance = this.world.getRelativeOffset(0.01)
       this.applyOptions({
         maximumRadius: maxDistance,

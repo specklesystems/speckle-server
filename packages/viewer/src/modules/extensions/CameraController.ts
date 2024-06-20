@@ -17,10 +17,9 @@ import {
 import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera'
 import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera'
 import Logger from 'js-logger'
-import type { IViewer, SpeckleView } from '../../IViewer'
+import { type IViewer, type SpeckleView } from '../../IViewer'
 import { FlyControls, FlyControlsOptions } from './controls/FlyControls'
 import { SpeckleControls } from './controls/SpeckleControls'
-import { InputEvent } from '../input/Input'
 
 export type CanonicalView =
   | 'front'
@@ -198,8 +197,6 @@ export class CameraController extends Extension implements SpeckleCamera {
     this._controlsList.push(flyControls)
 
     this._activeControls = orbitControls
-
-    this.viewer.getRenderer().input.on(InputEvent.KeyUp, this.onKeyUp.bind(this))
   }
 
   public on<T extends CameraEvent>(
@@ -215,10 +212,6 @@ export class CameraController extends Extension implements SpeckleCamera {
 
   public getPosition(): Vector3 {
     return this._activeControls.getPosition()
-  }
-
-  protected onKeyUp(e: KeyboardEvent) {
-    if (e.code === 'Space') this.toggleControls()
   }
 
   public toggleControls() {
@@ -417,17 +410,18 @@ export class CameraController extends Extension implements SpeckleCamera {
 
     const targetSphere = new Sphere()
     box.getBoundingSphere(targetSphere)
-    let radius = targetSphere.radius
+    targetSphere.radius = this.fitToRadius(targetSphere.radius) * fit
+    this._activeControls.fitToSphere(targetSphere)
 
+    this.setCameraPlanes(box, fit)
+  }
+
+  protected fitToRadius(radius: number) {
     // https://stackoverflow.com/a/44849975
     const vFOV = this.perspectiveCamera.getEffectiveFOV() * MathUtils.DEG2RAD
     const hFOV = Math.atan(Math.tan(vFOV * 0.5) * this.perspectiveCamera.aspect) * 2
     const fov = 1 < this.perspectiveCamera.aspect ? vFOV : hFOV
-    radius = radius / Math.sin(fov * 0.5)
-    targetSphere.radius = radius * fit
-    this._activeControls.fitToSphere(targetSphere)
-
-    this.setCameraPlanes(box, fit)
+    return radius / Math.sin(fov * 0.5)
   }
 
   protected isSpeckleView(
@@ -494,46 +488,67 @@ export class CameraController extends Extension implements SpeckleCamera {
    * @return {[type]}             [description]
    */
   protected setViewCanonical(side: string, transition = true) {
-    this.zoomExtents()
-    const target = this._activeControls.getTarget()
-    const position = this._activeControls.getPosition()
+    const targetSphere = new Sphere()
+    this.viewer.World.worldBox.getBoundingSphere(targetSphere)
+    const distance = this.fitToRadius(targetSphere.radius)
+
     const canonicalPosition = new Vector3()
+      .copy(this.viewer.World.worldBox.getCenter(new Vector3()))
+      .applyQuaternion(
+        new Quaternion()
+          .setFromUnitVectors(new Vector3(0, 1, 0), new Vector3(0, 0, 1))
+          .invert()
+      )
+    const canonicalTarget = new Vector3().copy(canonicalPosition)
+
     switch (side) {
       case 'front':
-        canonicalPosition.set(0, 0, 1).multiplyScalar(position.distanceTo(target))
-        this._activeControls.fromPositionAndTarget(canonicalPosition, target)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(new Vector3(0, 0, 1).multiplyScalar(distance)),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'back':
-        canonicalPosition.set(0, 0, -1).multiplyScalar(position.distanceTo(target))
-        this._activeControls.fromPositionAndTarget(canonicalPosition, target)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(new Vector3(0, 0, -1).multiplyScalar(distance)),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'up':
       case 'top':
-        canonicalPosition.set(0, 1, 0).multiplyScalar(position.distanceTo(target))
-        this._activeControls.fromPositionAndTarget(canonicalPosition, target)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(new Vector3(0, 1, 0).multiplyScalar(distance)),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'down':
       case 'bottom':
-        canonicalPosition.set(0, -1, 0).multiplyScalar(position.distanceTo(target))
-        this._activeControls.fromPositionAndTarget(canonicalPosition, target)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(new Vector3(0, -1, 0).multiplyScalar(distance)),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'right':
-        canonicalPosition.set(1, 0, 0).multiplyScalar(position.distanceTo(target))
-        this._activeControls.fromPositionAndTarget(canonicalPosition, target)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(new Vector3(1, 0, 0).multiplyScalar(distance)),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 
       case 'left':
-        canonicalPosition.set(-1, 0, 0).multiplyScalar(position.distanceTo(target))
-        this._activeControls.fromPositionAndTarget(canonicalPosition, target)
+        this._activeControls.fromPositionAndTarget(
+          canonicalPosition.add(new Vector3(-1, 0, 0).multiplyScalar(distance)),
+          canonicalTarget
+        )
         if (this._renderingCamera === this.orthographicCamera) this.disableRotations()
         break
 

@@ -43,7 +43,6 @@ import { type PropertyInfo } from './filtering/PropertyManager'
 import { BatchObject } from './batching/BatchObject'
 import { SpeckleLoader } from './loaders/Speckle/SpeckleLoader'
 import Logger from 'js-logger'
-import { HybridCameraController } from './extensions/HybridCameraController'
 
 class LegacySelectionExtension extends SelectionExtension {
   /** FE2 'manually' selects objects pon it's own, so we're disabling the extension's event handler
@@ -119,7 +118,7 @@ export class LegacyViewer extends Viewer {
     params: ViewerParams = DefaultViewerParams
   ) {
     super(container, params)
-    this.cameraController = this.createExtension(HybridCameraController)
+    this.cameraController = this.createExtension(CameraController)
     this.selection = this.createExtension(LegacySelectionExtension)
     this.sections = this.createExtension(SectionTool)
     this.createExtension(SectionOutlines)
