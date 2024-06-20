@@ -576,15 +576,19 @@ export default class ObjectLoader {
       return {}
     }
 
-    const store = this.cacheDB
-      .transaction('objects', 'readwrite')
-      .objectStore('objects')
-    for (const obj of objects) {
-      const idAndData = obj.split('\t')
-      store.put(idAndData[1], idAndData[0])
+    try {
+      const store = this.cacheDB
+        .transaction('objects', 'readwrite')
+        .objectStore('objects')
+      for (const obj of objects) {
+        const idAndData = obj.split('\t')
+        store.put(idAndData[1], idAndData[0])
+      }
+      return this.promisifyIdbRequest(store.transaction)
+    } catch (e) {
+      this.logger.error(e)
     }
-
-    return this.promisifyIdbRequest(store.transaction)
+    return Promise.resolve()
   }
 }
 
