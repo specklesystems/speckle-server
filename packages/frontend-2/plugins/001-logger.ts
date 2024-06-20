@@ -136,6 +136,10 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       ...collectMainInfo({ isBrowser: true })
     })
 
+    logger = buildFakePinoLogger({
+      consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined
+    })
+
     // SEQ Browser integration
     if (logClientApiToken?.length && logClientApiEndpoint?.length) {
       const seq = await import('seq-logging/browser')
@@ -195,24 +199,15 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         })
       }
       errorHandlers.push(errorLogger)
-
-      logger = buildFakePinoLogger({
-        consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined
-      })
       logger.debug('Set up seq ingestion...')
-    } else {
-      // No seq integration, fallback to basic console logging
-      logger = buildFakePinoLogger({
-        consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined
-      })
     }
   }
 
   // Register seq transports, if any
   if (errorHandlers.length) {
     registerErrorTransport({
-      onError: (params) => {
-        errorHandlers.forEach((handler) => handler(params))
+      onError: (...params) => {
+        errorHandlers.forEach((handler) => handler(...params))
       },
       onUnhandledError: (event) => {
         unhandledErrorHandlers.forEach((handler) => handler(event))
@@ -220,19 +215,19 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     })
   }
 
-  // Global error handler - handle all transports
+  // Global error handler - handle all transports besides the core pino/console.log logger
   const transports = useGetErrorLoggingTransports()
   let serverFatalError: Optional<AbstractErrorHandlerParams> = undefined
   logger = enableCustomErrorHandling({
     logger,
-    onError: (params) => {
+    onError: (params, helpers) => {
       const { otherData } = params
 
       if (import.meta.server && otherData?.isAppError) {
         serverFatalError = params
       }
 
-      transports.forEach((handler) => handler.onError(params))
+      transports.forEach((handler) => handler.onError(params, helpers))
     }
   })
 

@@ -144,7 +144,7 @@ import type {
   ExplorerNode,
   SpeckleObject,
   SpeckleReference
-} from '~~/lib/common/helpers/sceneExplorer'
+} from '~~/lib/viewer/helpers/sceneExplorer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import {
   getHeaderAndSubheaderForSpeckleObject,
@@ -384,3 +384,4 @@ const isolateOrUnisolateObject = () => {
   unIsolateObjects(ids)
 }
 </script>
+~/lib/viewer/helpers/sceneExplorer

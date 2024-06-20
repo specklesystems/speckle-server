@@ -134,6 +134,7 @@ const promoBanners = ref<PromoBanner[]>([
   }
 ])
 
+const router = useRouter()
 const route = useRoute()
 const { activeUser, isGuest } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
@@ -342,6 +343,7 @@ const clearSearch = () => {
 }
 
 const testError = () => {
-  throw new Error('what duhh hell')
+  // throw new Error('what duhh hell')
+  void router.push('/projects/d860700b71/settings')
 }
 </script>
