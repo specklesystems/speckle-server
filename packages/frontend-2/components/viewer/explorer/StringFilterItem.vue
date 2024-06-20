@@ -2,10 +2,11 @@
 <template>
   <div>
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-    <div
+    <button
       :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md text-foreground cursor-pointer ${
         isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
       }`"
+      :title="item.value"
       @click="setSelection()"
     >
       <div class="flex gap-1 items-center flex-shrink truncate text-xs sm:text-sm">
@@ -57,7 +58,7 @@
         <FunnelIcon v-else class="h-3 w-3" />
         <!-- </button> -->
       </div>
-    </div>
+    </button>
     <!-- Debugging info -->
     <!-- <div v-if="true" class="text-xs text-foreground-2">
       selected: {{ isSelected }}; isHidden {{ isHidden }}; isIsolated: {{ isIsolated }}
