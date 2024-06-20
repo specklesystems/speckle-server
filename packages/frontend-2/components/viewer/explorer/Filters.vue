@@ -95,7 +95,7 @@
 <script setup lang="ts">
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
 import { ArrowPathIcon } from '@heroicons/vue/24/outline'
-import type { PropertyInfo, StringPropertyInfo } from '@speckle/viewer'
+import type { PropertyInfo } from '@speckle/viewer'
 import { useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 import {
@@ -110,6 +110,8 @@ const {
   unApplyPropertyFilter,
   filters: { propertyFilter }
 } = useFilterUtilities()
+
+const revitPropertyRegex = /^parameters\./
 
 const showAllFilters = ref(false)
 
@@ -142,7 +144,7 @@ const relevantFilters = computed(() => {
       return false
     }
     // handle revit params: the actual one single value we're interested is in paramters.HOST_BLA BLA_.value, the rest are not needed
-    if (f.key.startsWith('parameters')) {
+    if (isRevitProperty(f.key)) {
       if (f.key.endsWith('.value')) return true
       else return false
     }
@@ -197,7 +199,7 @@ const relevantFiltersLimited = computed(() => {
     .sort((a, b) => a.key.length - b.key.length)
 })
 
-const title = computed(() => getPropertyName(activeFilter.value?.key))
+const title = computed(() => getPropertyName(activeFilter.value?.key ?? ''))
 
 const colors = computed(() => !!propertyFilter.isApplied.value)
 
@@ -234,7 +236,7 @@ const refreshColorsIfSetOrActiveFilterIsNumeric = () => {
 }
 
 const isRevitProperty = (key: string): boolean => {
-  return key.startsWith('parameters.') && key.endsWith('.value')
+  return revitPropertyRegex.test(key)
 }
 
 const getPropertyName = (key: string): string => {
@@ -243,11 +245,13 @@ const getPropertyName = (key: string): string => {
   if (key === 'level.name') return 'Level Name'
   if (key === 'speckle_type') return 'Object Type'
 
-  if (isRevitProperty(key)) {
-    const correspondingName = props.filters.find(
+  if (isRevitProperty(key) && key.endsWith('.value')) {
+    const correspondingProperty = props.filters.find(
       (f) => f.key === key.replace('.value', '.name')
-    ) as StringPropertyInfo
-    return correspondingName?.valueGroups[0]?.value || key
+    )
+    if (correspondingProperty && isStringPropertyInfo(correspondingProperty)) {
+      return correspondingProperty.valueGroups[0]?.value || key
+    }
   }
 
   // Return the key as is for non-Revit properties
