@@ -18,10 +18,6 @@
     </div>
 
     <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
-    <div v-if="showErrorTest" class="w-full">
-      <FormButton @click="testError">Test error</FormButton>
-    </div>
-
     <div
       v-if="!showEmptyState"
       class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
@@ -134,8 +130,6 @@ const promoBanners = ref<PromoBanner[]>([
   }
 ])
 
-const router = useRouter()
-const route = useRoute()
 const { activeUser, isGuest } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const areQueriesLoading = useQueryLoading()
@@ -160,8 +154,6 @@ onProjectsResult((res) => {
 const { onResult: onUserProjectsUpdate } = useSubscription(
   onUserProjectsUpdateSubscription
 )
-
-const showErrorTest = computed(() => route.query.showErrorButton === '1')
 
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 const showEmptyState = computed(() => {
@@ -340,10 +332,5 @@ const clearSearch = () => {
   search.value = ''
   selectedRoles.value = []
   updateSearchImmediately()
-}
-
-const testError = () => {
-  // throw new Error('what duhh hell')
-  void router.push('/projects/d860700b71/settings')
 }
 </script>

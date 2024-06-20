@@ -384,4 +384,3 @@ const isolateOrUnisolateObject = () => {
   unIsolateObjects(ids)
 }
 </script>
-~/lib/viewer/helpers/sceneExplorer

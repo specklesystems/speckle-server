@@ -179,4 +179,3 @@ const clearDiff = async () => {
   await diff.update(null)
 }
 </script>
-~/lib/viewer/helpers/sceneExplorer

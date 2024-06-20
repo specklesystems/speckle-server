@@ -146,4 +146,3 @@ const rootNodes = computed(() => {
   return nodes
 })
 </script>
-~/lib/viewer/helpers/sceneExplorer
