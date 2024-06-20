@@ -29,6 +29,7 @@
         <div v-for="view in views" :key="view.id">
           <button
             class="hover:bg-primary-muted text-foreground w-full h-full text-xs sm:text-sm py-2 transition"
+            :title="view.name"
             @click="setView(view)"
           >
             <span class="block truncate max-w-28 mx-auto">

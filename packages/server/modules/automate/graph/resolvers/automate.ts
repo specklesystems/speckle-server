@@ -55,7 +55,7 @@ import { getUser } from '@/modules/core/repositories/users'
 import { createAutomation as clientCreateAutomation } from '@/modules/automate/clients/executionEngine'
 import { validateStreamAccess } from '@/modules/core/services/streams/streamAccessService'
 import { Automate, Roles, isNullOrUndefined, isNonNullable } from '@speckle/shared'
-import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
+import { getFeatureFlags, getServerOrigin } from '@/modules/shared/helpers/envHelper'
 import {
   getBranchLatestCommits,
   getBranchesByIds
@@ -404,6 +404,16 @@ export = (FF_AUTOMATE_MODULE_ENABLED
 
             throw e
           }
+        },
+        async creator(parent, _args, ctx) {
+          if (
+            !parent.functionCreator ||
+            parent.functionCreator.speckleServerOrigin !== getServerOrigin()
+          ) {
+            return null
+          }
+
+          return ctx.loaders.users.getUser.load(parent.functionCreator.speckleUserId)
         }
       },
       AutomateFunctionRelease: {
@@ -434,7 +444,8 @@ export = (FF_AUTOMATE_MODULE_ENABLED
         async updateFunction(_parent, args, ctx) {
           const update = updateFunction({
             updateFunction: execEngineUpdateFunction,
-            getFunction
+            getFunction,
+            createStoredAuthCode: createStoredAuthCode({ redis: getGenericRedis() })
           })
           return await update({ input: args.input, userId: ctx.userId! })
         }

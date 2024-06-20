@@ -60,7 +60,9 @@ async function pageFunction(objectUrl) {
 async function getScreenshot(objectUrl, boundLogger = logger) {
   const launchParams = {
     headless: shouldBeHeadless,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+    userDataDir: '/tmp/puppeteer',
+    executablePath: '/usr/bin/google-chrome-stable',
+    args: ['--disable-dev-shm-usage']
   }
   // if ( process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD === 'true' ) {
   //   launchParams.executablePath = 'chromium'

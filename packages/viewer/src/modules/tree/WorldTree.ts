@@ -120,6 +120,8 @@ export class WorldTree {
   }
 
   public findId(id: string, subtreeId?: number): TreeNode[] | null {
+    if (!id) return null
+
     let idNode = null
     if (subtreeId) {
       idNode = this.nodeMaps[subtreeId].getNodeById(id)

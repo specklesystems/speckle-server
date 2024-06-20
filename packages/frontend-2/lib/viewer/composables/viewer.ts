@@ -16,7 +16,7 @@ import {
   type SelectionEvent,
   type TreeNode
 } from '@speckle/viewer'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 
 // NOTE: this is a preformance optimisation - this function is hot, and has to do
 // potentially large searches if many elements are hidden/isolated. We cache the
