@@ -15,7 +15,7 @@ import {
   ServerAccessRequestRecord
 } from '@/modules/accessrequests/repositories'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
-import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifier } from '@/modules/serverinvites/services/operations'
 import { Roles, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { getStream } from '@/modules/core/repositories/streams'
 import {

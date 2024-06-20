@@ -3,9 +3,7 @@ import {
   MutationStreamInviteUseArgs,
   ProjectInviteCreateInput,
   ProjectInviteUseInput,
-  StreamInviteCreateInput,
-  TokenResourceIdentifier,
-  TokenResourceIdentifierType
+  StreamInviteCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
@@ -20,7 +18,8 @@ import {
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
   CreateAndSendInvite,
-  FinalizeStreamInvite
+  FinalizeStreamInvite,
+  TokenResourceIdentifier
 } from '@/modules/serverinvites/services/operations'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
@@ -75,7 +74,7 @@ export const useStreamInviteAndNotify =
     if (
       !isResourceAllowed({
         resourceId: isStreamInviteUseArgs(input) ? input.streamId : input.projectId,
-        resourceType: TokenResourceIdentifierType.Project,
+        resourceType: 'project',
         resourceAccessRules: userResourceAccessRules
       })
     ) {

@@ -11,7 +11,7 @@ import {
 } from '@/modules/serverinvites/helpers/inviteHelper'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { addStreamInviteSentOutActivity } from '@/modules/activitystream/services/streamActivity'
-import { TokenResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifier } from '@/modules/serverinvites/services/operations'
 import {
   FindResource,
   FindUserByTarget,

@@ -11,9 +11,7 @@ import {
   StreamCreateInput,
   StreamRevokePermissionInput,
   StreamUpdateInput,
-  StreamUpdatePermissionInput,
-  TokenResourceIdentifier,
-  TokenResourceIdentifierType
+  StreamUpdatePermissionInput
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
@@ -50,6 +48,7 @@ import {
   insertInviteAndDeleteOld
 } from '@/modules/serverinvites/repositories/serverInvites'
 import knexInstance from '@/db/knex'
+import { TokenResourceIdentifier } from '@/modules/serverinvites/services/operations'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & {
@@ -62,7 +61,7 @@ export async function createStreamReturnRecord(
   const { createActivity = true } = options || {}
 
   const canCreateStream = isNewResourceAllowed({
-    resourceType: TokenResourceIdentifierType.Project,
+    resourceType: 'project',
     resourceAccessRules: ownerResourceAccessRules
   })
   if (!canCreateStream) {
