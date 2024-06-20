@@ -7,6 +7,7 @@ import type { Plugin } from 'nuxt/dist/app/nuxt'
 import { isH3Error } from '~/lib/common/helpers/error'
 import { useRequestId, useServerRequestId } from '~/lib/core/composables/server'
 import { isBrave, isSafari } from '@speckle/shared'
+import { isString } from 'lodash-es'
 
 type PluginNuxtApp = Parameters<Plugin>[0]
 
@@ -69,15 +70,28 @@ function initRumClient(app: PluginNuxtApp) {
           : {}
 
       registerErrorTransport({
-        onError: ({ args, firstError, firstString, otherData, nonObjectOtherData }) => {
+        onError: (
+          { args, firstError, firstString, otherData, nonObjectOtherData },
+          { prettifyMessage }
+        ) => {
           if (!datadog || !('addError' in datadog)) return
 
-          const error = firstError || firstString || args[0]
+          let error = firstError || firstString || args[0]
+          const mainErrorMessageTemplate = firstString
+          const mainErrorMessage = mainErrorMessageTemplate
+            ? prettifyMessage(mainErrorMessageTemplate)
+            : undefined
+
+          if (isString(error)) {
+            error = prettifyMessage(error)
+          }
+
           datadog.addError(error, {
             ...otherData,
             ...resolveH3Data(firstError),
             extraData: nonObjectOtherData,
-            mainErrorMessage: firstString,
+            mainErrorMessageTemplate,
+            mainErrorMessage,
             isProperlySentError: true
           })
         },
