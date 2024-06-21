@@ -7,8 +7,9 @@ const puppeteer = require('puppeteer')
 const { logger } = require('../observability/logging')
 const { reduce } = require('lodash')
 const { retry } = require('@speckle/shared')
+const { shouldBeHeadless, getAppPort, getHost } = require('../env')
 
-const shouldBeHeadless = process.env.PREVIEWS_HEADED !== 'true'
+const getServiceUrl = () => new URL(`http://${getHost}:${getAppPort()}`).toString()
 
 async function pageFunction(objectUrl) {
   waitForAnimation = async (ms = 70) =>
@@ -60,9 +61,9 @@ async function pageFunction(objectUrl) {
 
 async function getScreenshot(objectUrl, boundLogger = logger) {
   const launchParams = {
-    headless: shouldBeHeadless,
-    userDataDir: process.env.USER_DATA_DIR || '/tmp/puppeteer',
-    executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
+    headless: shouldBeHeadless(),
+    userDataDir: getPuppeteerUserDataDir(),
+    executablePath: getChromiumExecutablePath(),
     // we trust the web content that is running, so can disable the sandbox
     // disabling the sandbox allows us to run the docker image without linux kernel privileges
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
@@ -72,7 +73,7 @@ async function getScreenshot(objectUrl, boundLogger = logger) {
   const page = await browser.newPage()
 
   const wrapperPromise = (async () => {
-    await page.goto('http://127.0.0.1:3001/render/')
+    await page.goto(`${getServiceUrl()}/render/`)
 
     boundLogger.info('Page loaded')
 
@@ -85,9 +86,13 @@ async function getScreenshot(objectUrl, boundLogger = logger) {
 
   let ret = null
   try {
-    retry(async () => {
+    await retry(
+      async () => {
         ret = await wrapperPromise
-    }, 10, 500)
+      },
+      10,
+      500
+    )
   } catch (err) {
     boundLogger.error(err, 'Error generating preview.')
     ret = {
@@ -151,7 +156,9 @@ router.get('/:streamId/:objectId', async function (req, res) {
     return res.status(400).json({ error: 'Invalid streamId or objectId!' })
   }
 
-  const objectUrl = `http://127.0.0.1:3001/streams/${req.params.streamId}/objects/${req.params.objectId}`
+  const objectUrl = `${getServiceUrl()}/streams/${req.params.streamId}/objects/${
+    req.params.objectId
+  }`
   /*
   let authToken = ''
   let authorizationHeader = req.header( 'Authorization' )

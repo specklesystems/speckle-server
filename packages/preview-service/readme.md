@@ -12,7 +12,7 @@ This is an overview of this service:
 
 With an updated viewer installed in the current directory, you should first build the frontend-part of the preview service: The simple webpage with the viewer that will be accessed with Puppeteer to generate the preview:
 
-```
+```bash
 yarn build
 ```
 
@@ -20,7 +20,7 @@ This should be rerun whenever you make changes to the viewer (if you make local 
 
 After the viewer web page is up to date, run the preview service with:
 
-```
+```bash
 yarn dev
 ```
 
@@ -30,8 +30,8 @@ This will use the default dev DB connection of `postgres://speckle:speckle@127.0
 
 Once you build the previewservice Dockerfile, you can run it like so:
 
-```
-docker run --rm -p 3001:3001 -e PG_CONNECTION_STRING=postgres://speckle:speckle@host.docker.internal/speckle {IMAGEID}
+```bash
+docker run --rm -p 3001:3001 -e PORT=3001 -e PG_CONNECTION_STRING=postgres://speckle:speckle@host.docker.internal/speckle {IMAGEID}
 ```
 
 ## Deployment notes

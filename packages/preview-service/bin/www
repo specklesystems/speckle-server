@@ -8,12 +8,13 @@ const app = require('../app')
 const http = require('http')
 const { startPreviewService } = require('../bg_service')
 const { serverLogger, logger } = require('../observability/logging')
+const { getAppPort, getHost } = require('../env')
 
 /**
  * Get port from environment and store in Express.
  */
 
-const port = normalizePort(process.env.PORT || '3001')
+const port = normalizePort(getAppPort())
 app.set('port', port)
 
 /**
@@ -26,7 +27,7 @@ const server = http.createServer(app)
  * Listen on provided port, on all network interfaces.
  */
 
-const host = process.env.HOST || '127.0.0.1'
+const host = getHost()
 server.listen(port, host)
 server.on('error', onError)
 server.on('listening', onListening)
