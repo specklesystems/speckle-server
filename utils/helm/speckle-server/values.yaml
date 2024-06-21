@@ -1022,6 +1022,10 @@ preview_service:
   ##
   image: ''
 
+  monitoring:
+    ## @param preview_service.monitoring.metricsPort The port on which the metrics server will be exposed. Defaults to 9094 if left blank.
+    metricsPort: '' # blank to use default of 9094
+
   requests:
     ## @param preview_service.requests.cpu The CPU that should be available on a node when scheduling this pod.
     ## ref: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/

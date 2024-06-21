@@ -1601,6 +1601,16 @@
           "description": "The Docker image to be used for the Speckle Preview Service component. If blank, defaults to speckle/speckle-preview-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
         },
+        "monitoring": {
+          "type": "object",
+          "properties": {
+            "metricsPort": {
+              "type": "string",
+              "description": "The port on which the metrics server will be exposed. Defaults to 9094 if left blank.",
+              "default": ""
+            }
+          }
+        },
         "requests": {
           "type": "object",
           "properties": {

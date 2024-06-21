@@ -76,6 +76,11 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
+          {{- if .Values.preview_service.monitoring.metricsPort -}}
+          - name: PROMETHEUS_METRICS_PORT
+            value: {{ .Values.preview_service.monitoring.metricsPort | quote }}
+          {{- end -}}
+
       {{- if .Values.preview_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.affinity "context" $) | nindent 8 }}
       {{- end }}
