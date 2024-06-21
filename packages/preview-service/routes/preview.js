@@ -6,6 +6,7 @@ const router = express.Router()
 const puppeteer = require('puppeteer')
 const { logger } = require('../observability/logging')
 const { reduce } = require('lodash')
+const { retry } = require('@speckle/shared')
 
 const shouldBeHeadless = process.env.PREVIEWS_HEADED !== 'true'
 
@@ -60,8 +61,8 @@ async function pageFunction(objectUrl) {
 async function getScreenshot(objectUrl, boundLogger = logger) {
   const launchParams = {
     headless: shouldBeHeadless,
-    userDataDir: '/tmp/puppeteer',
-    executablePath: '/usr/bin/google-chrome-stable',
+    userDataDir: process.env.USER_DATA_DIR || '/tmp/puppeteer',
+    executablePath: process.env.CHROMIUM_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable',
     // we trust the web content that is running, so can disable the sandbox
     // disabling the sandbox allows us to run the docker image without linux kernel privileges
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
@@ -84,7 +85,9 @@ async function getScreenshot(objectUrl, boundLogger = logger) {
 
   let ret = null
   try {
-    ret = await wrapperPromise
+    retry(async () => {
+        ret = await wrapperPromise
+    }, 10, 500)
   } catch (err) {
     boundLogger.error(err, 'Error generating preview.')
     ret = {
@@ -95,7 +98,7 @@ async function getScreenshot(objectUrl, boundLogger = logger) {
   // Don't await for cleanup
   browser.close()
 
-  if (ret.error) {
+  if (!ret || ret.error) {
     return null
   }
 
