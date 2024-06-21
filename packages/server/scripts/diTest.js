@@ -66,6 +66,9 @@ const container = (depConfig) => {
   }
 }
 
+/**
+ * Deps have to be specified in correct order
+ */
 const c = container({
   add,
   subtract,
@@ -80,7 +83,7 @@ console.log(test2(10, 3, 2, 3)) // 13
 
 /**
  * TypeScript support issues:
- * It's impossible to type-check the container and slow erorrs if the container doesn't have the required dependencies for the thing that you're trying to inject.
+ * It's impossible to type-check the container and show TS errors if the container doesn't have the required dependencies for the thing that you're trying to inject.
  * A missing dependency can only be a run-time error, but usually you would notice those during development
  * Invalid dependency types in the container (e.g. {add: noop}, instead of putting in the real function) wouldn't even be a (clear) run-time error, cause there's no way to validate that during runtime,
  * the engine would just try to execute the wrong dep and fail with potentially weird errors
