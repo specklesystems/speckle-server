@@ -116,6 +116,10 @@ export type InjectableViewerState = Readonly<{
       views: ComputedRef<SpeckleView[]>
       filteringState: ComputedRef<Optional<FilteringState>>
     }
+    /**
+     * Whether the Viewer has finished doing the initial object loading
+     */
+    hasDoneInitialLoad: Ref<boolean>
   }
   /**
    * Loaded/loadable resources
@@ -395,6 +399,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
     createViewerDataBuilder({ viewerDebug })
   ) || { initPromise: Promise.resolve() }
   initPromise.then(() => (isInitialized.value = true))
+  const hasDoneInitialLoad = ref(false)
 
   return {
     projectId,
@@ -412,7 +417,8 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
             availableFilters: computed(() => undefined),
             views: computed(() => []),
             filteringState: computed(() => undefined)
-          }
+          },
+          hasDoneInitialLoad
         } as unknown as InitialSetupState['viewer'])
       : {
           instance,
@@ -421,7 +427,8 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
             promise: initPromise,
             ref: computed(() => isInitialized.value)
           },
-          metadata: setupViewerMetadata({ viewer: instance })
+          metadata: setupViewerMetadata({ viewer: instance }),
+          hasDoneInitialLoad
         },
     urlHashState: setupUrlHashState()
   }

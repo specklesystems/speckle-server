@@ -82,7 +82,8 @@ function useViewerObjectAutoLoading() {
     projectId,
     viewer: {
       instance: viewer,
-      init: { ref: isInitialized }
+      init: { ref: isInitialized },
+      hasDoneInitialLoad
     },
     resources: {
       response: { resourceItems }
@@ -112,21 +113,24 @@ function useViewerObjectAutoLoading() {
     uniq(resourceItems.map((i) => i.objectId))
 
   watch(
-    () => <const>[resourceItems.value, isInitialized.value],
-    async ([newResources, newIsInitialized], oldData) => {
+    () => <const>[resourceItems.value, isInitialized.value, hasDoneInitialLoad.value],
+    async ([newResources, newIsInitialized, newHasDoneInitialLoad], oldData) => {
       // Wait till viewer loaded in
       if (!newIsInitialized) return
 
-      const [oldResources, oldIsInitialized] = oldData || [[], false]
+      const [oldResources] = oldData || [[], false]
       const zoomToObject = !focusedThreadId.value // we want to zoom to the thread instead
 
       // Viewer initialized - load in all resources
-      if (newIsInitialized && !oldIsInitialized) {
+      if (!newHasDoneInitialLoad) {
         const allObjectIds = getUniqueObjectIds(newResources)
 
-        await Promise.all(
+        const res = await Promise.all(
           allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
         )
+        if (res.length) {
+          hasDoneInitialLoad.value = true
+        }
 
         return
       }
@@ -139,7 +143,7 @@ function useViewerObjectAutoLoading() {
 
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
       await Promise.all(
-        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
+        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
       )
     },
     { deep: true, immediate: true }
