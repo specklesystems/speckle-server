@@ -11,7 +11,6 @@ metadata:
     cert-manager.io/cluster-issuer: {{ .Values.cert_manager_issuer }}
     {{- end }}
     nginx.ingress.kubernetes.io/proxy-body-size: {{ (printf "%dm" (int .Values.file_size_limit_mb)) | quote }}
-    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   rules:
@@ -36,14 +35,49 @@ spec:
               name: www
       {{- end }}
       - pathType: Exact
-        path: "/(graphql|explorer|(auth/.*)|(static/.*))"
+        path: "/graphql"
         backend:
           service:
             name: speckle-server
             port:
               name: web
       - pathType: Exact
-        path: "/((objects/.*)|(api/.*)|(preview/.*))"
+        path: "/explorer"
+        backend:
+          service:
+            name: speckle-server
+            port:
+              name: web
+      - pathType: Prefix
+        path: "/auth/"
+        backend:
+          service:
+            name: speckle-server
+            port:
+              name: web
+      - pathType: Prefix
+        path: "/static/"
+        backend:
+          service:
+            name: speckle-server
+            port:
+              name: web
+      - pathType: Prefix
+        path: "/objects/"
+        backend:
+          service:
+            name: speckle-objects
+            port:
+              name: web
+      - pathType: Prefix
+        path: "/api/"
+        backend:
+          service:
+            name: speckle-objects
+            port:
+              name: web
+      - pathType: Prefix
+        path: "/preview/"
         backend:
           service:
             name: speckle-objects
