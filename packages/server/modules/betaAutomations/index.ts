@@ -1,11 +1,12 @@
 import { moduleLogger } from '@/logging/logging'
-import { ScopeRecord } from '@/modules/auth/helpers/types'
-import { registerOrUpdateScope } from '@/modules/shared'
+import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
+import { registerOrUpdateScope } from '@/modules/shared/repositories/scopes'
 import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { Scopes } from '@speckle/shared'
+import db from '@/db/knex'
 
 async function initScopes() {
-  const scopes: ScopeRecord[] = [
+  const scopes: TokenScopeData[] = [
     {
       name: Scopes.Automate.ReportResults,
       description: 'Report automation results to the server.',
@@ -13,8 +14,9 @@ async function initScopes() {
     }
   ]
 
+  const registerFunc = registerOrUpdateScope({ db })
   for (const scope of scopes) {
-    await registerOrUpdateScope(scope)
+    await registerFunc({ scope })
   }
 }
 

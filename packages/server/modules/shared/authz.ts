@@ -1,10 +1,5 @@
-import {
-  Scopes,
-  Roles,
-  ServerRoles,
-  StreamRoles
-} from '@/modules/core/helpers/mainConstants'
-import { getRoles } from '@/modules/shared/roles'
+import { Scopes, Roles } from '@/modules/core/helpers/mainConstants'
+import { getRoles } from '@/modules/shared/repositories/roles'
 import { getStream } from '@/modules/core/services/streams'
 
 import {
@@ -15,13 +10,21 @@ import {
   BadRequestError
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import {
+  MaybeNullOrUndefined,
+  Nullable,
+  AvailableRoles,
+  StreamRoles,
+  ServerRoles
+} from '@speckle/shared'
 import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { getAutomationProject } from '@/modules/automate/repositories/automations'
+import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
+import db from '@/db/knex'
 
 interface AuthResult {
   authorized: boolean
@@ -87,13 +90,6 @@ export const authSuccess = (context: AuthContext): AuthData => ({
   authResult: { authorized: true }
 })
 
-type AvailableRoles = ServerRoles | StreamRoles
-
-interface RoleData<T extends AvailableRoles> {
-  weight: number
-  name: T
-}
-
 export type AuthPipelineFunction = ({
   context,
   authResult,
@@ -105,17 +101,10 @@ export const authHasFailed = (authResult: AuthResult): authResult is AuthFailedR
 
 interface RoleValidationInput<T extends AvailableRoles> {
   requiredRole: T
-  rolesLookup: () => Promise<RoleData<T>[]>
+  rolesLookup: () => Promise<UserRoleData<T>[]>
   iddqd: T
   roleGetter: (context: AuthContext) => T | null
 }
-
-// interface StreamRoleValidationInput {
-// requiredRole: StreamRoles
-// rolesLookup: () => Promise<StreamRoleData[]>
-// iddqd: StreamRoles
-// roleGetter: (AuthContext) => StreamRoles
-// }
 
 export function validateRole<T extends AvailableRoles>({
   requiredRole,
@@ -158,7 +147,7 @@ export function validateRole<T extends AvailableRoles>({
 export const validateServerRole = ({ requiredRole }: { requiredRole: ServerRoles }) =>
   validateRole({
     requiredRole,
-    rolesLookup: getRoles,
+    rolesLookup: getRoles({ db }),
     iddqd: Roles.Server.Admin,
     roleGetter: (context) => context.role || null
   })
@@ -166,7 +155,7 @@ export const validateServerRole = ({ requiredRole }: { requiredRole: ServerRoles
 export const validateStreamRole = ({ requiredRole }: { requiredRole: StreamRoles }) =>
   validateRole({
     requiredRole,
-    rolesLookup: getRoles,
+    rolesLookup: getRoles({ db }),
     iddqd: Roles.Stream.Owner,
     roleGetter: (context) => context?.stream?.role || null
   })

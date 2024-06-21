@@ -11,7 +11,7 @@ const { Roles } = require('@speckle/shared')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
-const { getRoles } = require('@/modules/shared/roles')
+const { getRoles } = require('@/modules/shared/repositories/roles')
 const {
   roleResourceTypeToTokenResourceType,
   isResourceAllowed
@@ -99,37 +99,10 @@ async function authorizeResolver(
   throw new ForbiddenError('You are not authorized.')
 }
 
-const Scopes = () => knex('scopes')
-
-async function registerOrUpdateScope(scope) {
-  await knex.raw(
-    `${Scopes()
-      .insert(scope)
-      .toString()} on conflict (name) do update set public = ?, description = ? `,
-    [scope.public, scope.description]
-  )
-  return
-}
-
-const UserRoles = () => knex('user_roles')
-async function registerOrUpdateRole(role) {
-  await knex.raw(
-    `${UserRoles()
-      .insert(role)
-      .toString()} on conflict (name) do update set weight = ?, description = ?, "resourceTarget" = ? `,
-    [role.weight, role.description, role.resourceTarget]
-  )
-  return
-}
-
 module.exports = {
-  registerOrUpdateScope,
-  registerOrUpdateRole,
-  // validateServerRole,
   validateScopes,
   authorizeResolver,
   pubsub,
-  getRoles,
   StreamPubsubEvents: StreamSubscriptions,
   CommitPubsubEvents: CommitSubscriptions,
   BranchPubsubEvents: BranchSubscriptions
