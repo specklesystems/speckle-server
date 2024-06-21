@@ -70,7 +70,7 @@
                 refreshColorsIfSetOrActiveFilterIsNumeric()
             "
           >
-            {{ getPropertyName(filter) }}
+            {{ getPropertyName(filter.key) }}
           </button>
         </div>
         <div v-if="itemCount < relevantFiltersSearched.length" class="mb-2">
@@ -184,7 +184,7 @@ const relevantFiltersSearched = computed(() => {
   // eslint-disable-next-line vue/no-side-effects-in-computed-properties
   itemCount.value = 30 // nasty, but yolo - reset max limit on search change
   return relevantFilters.value.filter((f) => {
-    const userFriendlyName = getPropertyName(f).toLowerCase()
+    const userFriendlyName = getPropertyName(f.key).toLowerCase()
     return (
       f.key.toLowerCase().includes(searchLower) ||
       userFriendlyName.includes(searchLower)
@@ -199,7 +199,7 @@ const relevantFiltersLimited = computed(() => {
     .sort((a, b) => a.key.length - b.key.length)
 })
 
-const title = computed(() => getPropertyName(activeFilter.value))
+const title = computed(() => getPropertyName(activeFilter.value?.key ?? ''))
 
 const colors = computed(() => !!propertyFilter.isApplied.value)
 
@@ -239,8 +239,7 @@ const isRevitProperty = (key: string): boolean => {
   return revitPropertyRegex.test(key)
 }
 
-const getPropertyName = (property: PropertyInfo): string => {
-  const key = property.key
+const getPropertyName = (key: string): string => {
   if (!key) return 'Loading'
 
   if (key === 'level.name') return 'Level Name'
