@@ -30133,7 +30133,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"express@npm:>=4.19.2":
+"express@npm:>=4.19.2, express@npm:^4.17.3, express@npm:^4.19.2":
   version: 4.19.2
   resolution: "express@npm:4.19.2"
   dependencies:
