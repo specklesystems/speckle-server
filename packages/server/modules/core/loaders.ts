@@ -55,7 +55,6 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { getAutomationFunctionRunResultVersions } from '@/modules/betaAutomations/repositories/automations'
 import { getAppScopes } from '@/modules/auth/repositories'
 import {
   AutomateRevisionFunctionRecord,
@@ -529,25 +528,6 @@ export function buildRequestLoaders(
         const results = await getAppScopes(appIds.slice())
         return appIds.map((i) => results[i] || [])
       })
-    },
-    automationFunctionRuns: {
-      /**
-       * Get result versions/commits from function runs
-       */
-      getResultVersions: createLoader<
-        [automationRunId: string, functionId: string],
-        CommitRecord[],
-        string
-      >(
-        async (ids) => {
-          const results = await getAutomationFunctionRunResultVersions(ids.slice())
-          return ids.map((i) => {
-            const [automationRunId, functionId] = i
-            return results[automationRunId]?.[functionId] || []
-          })
-        },
-        { cacheKeyFn: (key) => `${key[0]}:${key[1]}` }
-      )
     },
     automations: {
       getFunctionAutomationCount: createLoader<string, number>(async (functionIds) => {

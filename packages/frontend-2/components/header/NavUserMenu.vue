@@ -25,7 +25,9 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3 border-b border-primary items-center px-3 py-3 text-sm text-primary cursor-pointer transition mb-1'
               ]"
-              @click="goToConnectors()"
+              target="_blank"
+              external
+              :href="connectorsPageUrl"
             >
               <CloudArrowDownIcon class="w-5 h-5" />
               Connector Downloads
@@ -147,8 +149,8 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
+import { homeRoute, profileRoute, connectorsPageUrl } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
-import { homeRoute, profileRoute } from '~/lib/common/helpers/route'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -172,10 +174,6 @@ const isProfileRoute = computed(() => route.path === profileRoute)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
-}
-
-const goToConnectors = () => {
-  router.push('/downloads')
 }
 
 const goToServerManagement = () => {

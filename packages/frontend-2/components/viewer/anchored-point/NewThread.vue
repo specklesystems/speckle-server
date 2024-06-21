@@ -48,24 +48,22 @@
               @submit="() => onSubmit()"
               @keydown="onKeyDownHandler"
             />
-            <div class="w-full flex justify-end p-2 space-x-2">
-              <div class="space-x-2">
-                <FormButton
-                  v-tippy="'Attach'"
-                  :icon-left="PaperClipIcon"
-                  hide-text
-                  text
-                  :disabled="isPostingNewThread"
-                  @click="trackAttachAndOpenFilePicker()"
-                />
-
-                <FormButton
-                  :icon-left="PaperAirplaneIcon"
-                  hide-text
-                  :loading="isPostingNewThread"
-                  @click="() => onSubmit()"
-                />
-              </div>
+            <div class="w-full flex p-2 justify-between">
+              <FormButton
+                v-tippy="'Attach'"
+                :icon-left="PaperClipIcon"
+                hide-text
+                text
+                class="sm:px-1"
+                :disabled="isPostingNewThread"
+                @click="trackAttachAndOpenFilePicker()"
+              />
+              <FormButton
+                :icon-left="PaperAirplaneIcon"
+                hide-text
+                :loading="isPostingNewThread"
+                @click="() => onSubmit()"
+              />
             </div>
           </div>
         </div>

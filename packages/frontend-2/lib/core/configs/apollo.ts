@@ -8,7 +8,7 @@ import createUploadLink from 'apollo-upload-client/createUploadLink.mjs'
 import { WebSocketLink } from '@apollo/client/link/ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { Kind } from 'graphql'
-import type { OperationDefinitionNode } from 'graphql'
+import type { GraphQLError, OperationDefinitionNode } from 'graphql'
 import type { CookieRef, NuxtApp } from '#app'
 import type { Optional } from '@speckle/shared'
 import { useAuthCookie } from '~~/lib/auth/composables/auth'
@@ -22,7 +22,7 @@ import { onError } from '@apollo/client/link/error'
 import { useNavigateToLogin, loginRoute } from '~~/lib/common/helpers/route'
 import { useAppErrorState } from '~~/lib/core/composables/error'
 import { isInvalidAuth } from '~~/lib/common/helpers/graphql'
-import { isBoolean, omit } from 'lodash-es'
+import { isArray, isBoolean, omit } from 'lodash-es'
 import { useRequestId } from '~/lib/core/composables/server'
 
 const appName = 'frontend-2'
@@ -337,12 +337,15 @@ function createLink(params: {
       ? skipLoggingErrors
       : skipLoggingErrors?.(res)
     if (!isSubTokenMissingError && !shouldSkip) {
-      const errMsg = res.networkError?.message || res.graphQLErrors?.[0]?.message
+      const gqlErrors: Array<GraphQLError> = isArray(res.graphQLErrors)
+        ? res.graphQLErrors
+        : []
+      const errMsg = res.networkError?.message || gqlErrors[0]?.message
       logger.error(
         {
           ...omit(res, ['forward', 'response']),
           networkErrorMessage: res.networkError?.message,
-          gqlErrorMessages: res.graphQLErrors?.map((e) => e.message),
+          gqlErrorMessages: gqlErrors.map((e) => e.message),
           errorMessage: errMsg,
           graphql: true
         },

@@ -19,7 +19,7 @@ import type { Logger } from 'pino'
 /**
  * Add pino-pretty like formatting
  */
-const prettify = (log: object, msg: string) =>
+export const prettify = (log: object, msg: string) =>
   msg.replace(/{([^{}]+)}/g, (match: string, p1: string) => {
     const val = get(log, p1)
     if (val === undefined) return match
@@ -33,7 +33,7 @@ const prettify = (log: object, msg: string) =>
  * Wrap any logger call w/ logic that prettifies the error message like pino-pretty does
  * and emits bindings if they are provided
  */
-const log =
+const prettifiedLoggerFactory =
   (logger: (...args: unknown[]) => void, bindings?: () => Record<string, unknown>) =>
   (...vals: unknown[]) => {
     const finalVals = vals.slice()
@@ -72,16 +72,16 @@ export function buildFakePinoLogger(
   const errLogger = (...args: unknown[]) => {
     const { onError } = options || {}
     if (onError) onError(...args)
-    log(console.error, bindings)(...args)
+    prettifiedLoggerFactory(console.error, bindings)(...args)
   }
 
   const logger = {
-    debug: log(console.debug, bindings),
-    info: log(console.info, bindings),
-    warn: log(console.warn, bindings),
+    debug: prettifiedLoggerFactory(console.debug, bindings),
+    info: prettifiedLoggerFactory(console.info, bindings),
+    warn: prettifiedLoggerFactory(console.warn, bindings),
     error: errLogger,
     fatal: errLogger,
-    trace: log(console.trace, bindings),
+    trace: prettifiedLoggerFactory(console.trace, bindings),
     silent: noop
   } as unknown as ReturnType<typeof Observability.getLogger>
 
@@ -121,13 +121,18 @@ export const formatAppError = (err: SimpleError) => {
   }
 }
 
-export type AbstractErrorHandler = (params: {
-  args: unknown[]
-  firstString: Optional<string>
-  firstError: Optional<Error>
-  otherData: Record<string, unknown>
-  nonObjectOtherData: unknown[]
-}) => void
+export type AbstractErrorHandler = (
+  params: {
+    args: unknown[]
+    firstString: Optional<string>
+    firstError: Optional<Error>
+    otherData: Record<string, unknown>
+    nonObjectOtherData: unknown[]
+  },
+  helpers: {
+    prettifyMessage: (msg: string) => string
+  }
+) => void
 
 export type AbstractUnhandledErrorHandler = (params: {
   event: ErrorEvent | PromiseRejectionEvent
@@ -175,13 +180,16 @@ export function enableCustomErrorHandling(params: {
               {},
               ...otherDataObjects
             ) as Record<string, unknown>
-            onError({
-              args,
-              firstError,
-              firstString,
-              otherData: mergedOtherDataObject,
-              nonObjectOtherData: otherDataNonObjects
-            })
+            onError(
+              {
+                args,
+                firstError,
+                firstString,
+                otherData: mergedOtherDataObject,
+                nonObjectOtherData: otherDataNonObjects
+              },
+              { prettifyMessage: (msg) => prettify(mergedOtherDataObject, msg) }
+            )
           }
 
           return log(...args)

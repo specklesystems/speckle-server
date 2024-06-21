@@ -5,9 +5,6 @@ import Redis from 'ioredis'
 import { withFilter } from 'graphql-subscriptions'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import {
-  AutomationRun,
-  AutomationsStatus,
-  ProjectAutomationsStatusUpdatedMessage,
   ProjectCommentsUpdatedMessage,
   ProjectFileImportUpdatedMessage,
   ProjectModelsUpdatedMessage,
@@ -16,7 +13,6 @@ import {
   ProjectUpdatedMessage,
   ProjectVersionsPreviewGeneratedMessage,
   ProjectVersionsUpdatedMessage,
-  SubscriptionProjectAutomationsStatusUpdatedArgs,
   SubscriptionProjectAutomationsUpdatedArgs,
   SubscriptionProjectCommentsUpdatedArgs,
   SubscriptionProjectFileImportUpdatedArgs,
@@ -44,7 +40,6 @@ import {
 } from '@/modules/core/helpers/graphTypes'
 import { CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes'
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types'
-import { AutomationFunctionRunGraphQLReturn } from '@/modules/betaAutomations/helpers/graphTypes'
 import {
   ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn,
   ProjectAutomationsUpdatedMessageGraphQLReturn
@@ -100,7 +95,6 @@ export enum ProjectSubscriptions {
   ProjectVersionsPreviewGenerated = 'PROJECT_VERSIONS_PREVIEW_GENERATED',
   ProjectCommentsUpdated = 'PROJECT_COMMENTS_UPDATED',
   // old beta subscription:
-  ProjectAutomationStatusUpdated = 'PROJECT_AUTOMATION_STATUS_UPDATED',
   ProjectTriggeredAutomationsStatusUpdated = 'PROJECT_TRIGGERED_AUTOMATION_STATUS_UPDATED',
   ProjectAutomationsUpdated = 'PROJECT_AUTOMATIONS_UPDATED',
   ProjectVersionGendoAIRenderUpdated = 'PROJECT_VERSION_GENDO_AI_RENDER_UPDATED',
@@ -228,31 +222,6 @@ type SubscriptionTypeMap = {
       projectId: string
     }
     variables: SubscriptionProjectFileImportUpdatedArgs
-  }
-  [ProjectSubscriptions.ProjectAutomationStatusUpdated]: {
-    payload: {
-      projectAutomationsStatusUpdated: Merge<
-        ProjectAutomationsStatusUpdatedMessage,
-        {
-          version: VersionGraphQLReturn
-          model: ModelGraphQLReturn
-          project: ProjectGraphQLReturn
-          status: Merge<
-            AutomationsStatus,
-            {
-              automationRuns: Array<
-                Merge<
-                  AutomationRun,
-                  { functionRuns: AutomationFunctionRunGraphQLReturn[] }
-                >
-              >
-            }
-          >
-        }
-      >
-      projectId: string
-    }
-    variables: SubscriptionProjectAutomationsStatusUpdatedArgs
   }
   [ProjectSubscriptions.ProjectTriggeredAutomationsStatusUpdated]: {
     payload: {
