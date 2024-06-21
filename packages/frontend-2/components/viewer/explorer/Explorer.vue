@@ -53,8 +53,7 @@
           class="bg-foundation rounded-lg"
         >
           <ViewerExplorerTreeItem
-            :item-id="(rootNode.data?.id as string)"
-            :tree-item="markRaw(rootNode)"
+            :tree-item="rootNode"
             :sub-header="'Model Version'"
             :debug="false"
             :expand-level="expandLevel"
@@ -75,7 +74,10 @@ import {
   CodeBracketIcon
 } from '@heroicons/vue/24/solid'
 import { ViewerEvent } from '@speckle/viewer'
-import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
+import type {
+  ExplorerNode,
+  TreeItemComponentModel
+} from '~~/lib/viewer/helpers/sceneExplorer'
 import {
   useInjectedViewer,
   useInjectedViewerLoadedResources,
@@ -157,9 +159,15 @@ const rootNodes = computed(() => {
     }
   }
 
-  return [
+  const nodes = [
     ...flatten(sortBy(Object.entries(results), (i) => i[0]).map((i) => i[1])),
     ...unmatchedNodes
   ]
+
+  return nodes.map(
+    (n): TreeItemComponentModel => ({
+      rawNode: markRaw(n)
+    })
+  )
 })
 </script>

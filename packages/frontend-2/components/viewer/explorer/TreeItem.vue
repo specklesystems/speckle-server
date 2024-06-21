@@ -95,10 +95,13 @@
       <!-- If we have array collections -->
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
-        <div v-for="collection in arrayCollections" :key="collection?.raw?.name">
+        <div
+          v-for="(item, idx) in arrayCollections"
+          :key="item?.rawNode.raw?.name || idx"
+        >
           <TreeItem
-            :item-id="(collection.raw?.id as string)"
-            :tree-item="collection"
+            :item-id="(item.rawNode.raw?.id as string)"
+            :tree-item="item"
             :depth="depth + 1"
             :expand-level="props.expandLevel"
             :manual-expand-level="manualExpandLevel"
@@ -111,9 +114,12 @@
       <!-- If we have a single model collection -->
       <div v-if="isSingleCollection">
         <!-- single col items -->
-        <div v-for="item in singleCollectionItemsPaginated" :key="item.raw?.id">
+        <div
+          v-for="(item, idx) in singleCollectionItemsPaginated"
+          :key="item.rawNode.raw?.id || idx"
+        >
           <TreeItem
-            :item-id="(item.raw?.id as string)"
+            :item-id="(item.rawNode.raw?.id as string)"
             :tree-item="item"
             :depth="depth + 1"
             :expand-level="props.expandLevel"
@@ -143,7 +149,8 @@ import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import type {
   ExplorerNode,
   SpeckleObject,
-  SpeckleReference
+  SpeckleReference,
+  TreeItemComponentModel
 } from '~~/lib/viewer/helpers/sceneExplorer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import {
@@ -159,8 +166,8 @@ import {
 
 const props = withDefaults(
   defineProps<{
-    treeItem: ExplorerNode
-    parent?: ExplorerNode
+    treeItem: TreeItemComponentModel
+    parent?: TreeItemComponentModel
     depth?: number
     debug?: boolean
     expandLevel: number
@@ -186,8 +193,8 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
-const isAtomic = computed(() => props.treeItem.atomic === true)
-const rawSpeckleData = computed(() => props.treeItem?.raw as SpeckleObject)
+const isAtomic = computed(() => props.treeItem.rawNode.atomic === true)
+const rawSpeckleData = computed(() => props.treeItem?.rawNode.raw as SpeckleObject)
 const speckleData = rawSpeckleData
 
 function getNestedModelHeader(name: string): string {
@@ -221,7 +228,7 @@ const isSingleCollection = computed(() => {
 })
 
 const singleCollectionItems = computed(() => {
-  const treeItems = props.treeItem.children.filter(
+  const treeItems = props.treeItem.rawNode.children.filter(
     (child) => !!child.raw?.id && isAllowedType(child)
     // filter out random tree children (no id means they're not actual objects)
   )
@@ -232,9 +239,19 @@ const singleCollectionItems = computed(() => {
     const ids = (speckleData.value.elements as SpeckleReference[]).map(
       (obj) => obj.referencedId
     )
-    return treeItems.filter((item) => ids.includes(item.raw?.id as string))
+    return treeItems
+      .filter((item) => ids.includes(item.raw?.id as string))
+      .map(
+        (i): TreeItemComponentModel => ({
+          rawNode: i
+        })
+      )
   }
-  return treeItems
+  return treeItems.map(
+    (i): TreeItemComponentModel => ({
+      rawNode: i
+    })
+  )
 })
 
 const itemCount = ref(10)
@@ -247,7 +264,7 @@ const singleCollectionItemsPaginated = computed(() => {
 // object { @boat: [obj, obj, obj], @harbour: [obj, obj, obj], etc. }
 // @boat and @harbour would ideally be model collections, but, alas, connectors don't have that yet.
 const arrayCollections = computed(() => {
-  const arr = [] as ExplorerNode[]
+  const arr = [] as TreeItemComponentModel[]
   for (const k of Object.keys(rawSpeckleData)) {
     if (k === 'children' || k === 'elements' || k.includes('displayValue')) continue
 
@@ -256,7 +273,7 @@ const arrayCollections = computed(() => {
 
     const ids = val.map((ref) => ref.referencedId) // NOTE: we're assuming all collections have refs inside; might revisit/to think re edge cases
 
-    const actualRawRefs = props.treeItem.children.filter(
+    const actualRawRefs = props.treeItem.rawNode.children.filter(
       (node) => ids.includes(node.raw?.id as string) && isAllowedType(node)
     )
 
@@ -272,7 +289,9 @@ const arrayCollections = computed(() => {
       children: actualRawRefs,
       expanded: false
     }
-    arr.push(modelCollectionItem)
+    arr.push({
+      rawNode: modelCollectionItem
+    })
   }
 
   return arr
