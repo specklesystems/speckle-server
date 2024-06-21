@@ -20,7 +20,7 @@ RUN yarn workspaces focus --all
 COPY packages/shared ./packages/shared/
 COPY packages/webhook-service/src ./packages/webhook-service/
 
-RUN yarn workspaces foreach run build
+RUN yarn workspaces foreach -W run build
 
 ARG WAIT_VERSION=2.8.0
 ENV WAIT_VERSION=${WAIT_VERSION}

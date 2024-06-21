@@ -169,7 +169,7 @@ export function getServerOrigin() {
     )
   }
 
-  return trimEnd(process.env.CANONICAL_URL, '/')
+  return new URL(trimEnd(process.env.CANONICAL_URL, '/')).origin
 }
 
 /**
@@ -297,3 +297,7 @@ export function getGendoAIAPIEndpoint() {
 }
 
 export const getFeatureFlags = () => Environment.getFeatureFlags()
+
+export function isEmailEnabled() {
+  return process.env.EMAIL === 'true'
+}

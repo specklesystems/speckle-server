@@ -49,7 +49,7 @@ import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import type { Box3 } from 'three'
 import { Vector3 } from 'three'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
@@ -111,11 +111,18 @@ export type InjectableViewerState = Readonly<{
      * Various values that represent the current Viewer instance state
      */
     metadata: {
+      /**
+       * Based on a shallow ref
+       */
       worldTree: ComputedRef<Optional<WorldTree>>
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       views: ComputedRef<SpeckleView[]>
       filteringState: ComputedRef<Optional<FilteringState>>
     }
+    /**
+     * Whether the Viewer has finished doing the initial object loading
+     */
+    hasDoneInitialLoad: Ref<boolean>
   }
   /**
    * Loaded/loadable resources
@@ -395,6 +402,7 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
     createViewerDataBuilder({ viewerDebug })
   ) || { initPromise: Promise.resolve() }
   initPromise.then(() => (isInitialized.value = true))
+  const hasDoneInitialLoad = ref(false)
 
   return {
     projectId,
@@ -412,7 +420,8 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
             availableFilters: computed(() => undefined),
             views: computed(() => []),
             filteringState: computed(() => undefined)
-          }
+          },
+          hasDoneInitialLoad
         } as unknown as InitialSetupState['viewer'])
       : {
           instance,
@@ -421,7 +430,8 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
             promise: initPromise,
             ref: computed(() => isInitialized.value)
           },
-          metadata: setupViewerMetadata({ viewer: instance })
+          metadata: setupViewerMetadata({ viewer: instance }),
+          hasDoneInitialLoad
         },
     urlHashState: setupUrlHashState()
   }

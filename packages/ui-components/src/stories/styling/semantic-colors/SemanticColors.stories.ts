@@ -13,5 +13,6 @@ export const SemanticColors: StoryObj = {
   }),
   parameters: {
     viewMode: 'docs'
-  }
+  },
+  tags: ['!autodocs']
 }
