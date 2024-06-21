@@ -144,7 +144,7 @@ import type {
   ExplorerNode,
   SpeckleObject,
   SpeckleReference
-} from '~~/lib/common/helpers/sceneExplorer'
+} from '~~/lib/viewer/helpers/sceneExplorer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import {
   getHeaderAndSubheaderForSpeckleObject,
@@ -221,7 +221,10 @@ const isSingleCollection = computed(() => {
 })
 
 const singleCollectionItems = computed(() => {
-  const treeItems = props.treeItem.children.filter((child) => !!child.raw?.id) // filter out random tree children (no id means they're not actual objects)
+  const treeItems = props.treeItem.children.filter(
+    (child) => !!child.raw?.id && isAllowedType(child)
+    // filter out random tree children (no id means they're not actual objects)
+  )
   // Handle the case of a wall, roof or other atomic objects that have nested children
   if (isNonEmptyObjectArray(speckleData.value.elements) && isAtomic.value) {
     // We need to filter out children that are not direct descendants of `elements`
@@ -253,8 +256,8 @@ const arrayCollections = computed(() => {
 
     const ids = val.map((ref) => ref.referencedId) // NOTE: we're assuming all collections have refs inside; might revisit/to think re edge cases
 
-    const actualRawRefs = props.treeItem.children.filter((node) =>
-      ids.includes(node.raw?.id as string)
+    const actualRawRefs = props.treeItem.children.filter(
+      (node) => ids.includes(node.raw?.id as string) && isAllowedType(node)
     )
 
     if (actualRawRefs.length === 0) continue // bypasses chunks: if the actual object is not part of the tree item's children, it means it's a sublimated type (ie, a chunk). the assumption we're making is that any list of actual atomic objects is not chunked.
@@ -284,6 +287,9 @@ const isNonEmptyObjectArray = (x: unknown) => isNonEmptyArray(x) && isObject(x[0
 
 const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
+
+const isAllowedType = (node: ExplorerNode) =>
+  !['Objects.Other.DisplayStyle'].includes(node.raw?.speckle_type || '')
 
 const unfold = ref(false)
 

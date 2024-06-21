@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   snyk: snyk/snyk@2.0.3
-  codecov: codecov/codecov@4.0.0
+  codecov: codecov/codecov@4.1.0
 
 workflows:
   test-build:
@@ -1093,6 +1093,7 @@ jobs:
 
   frontend-2-sourcemaps:
     docker: *docker-node-image
+    resource_class: large
     working_directory: *work-dir
     steps:
       - checkout

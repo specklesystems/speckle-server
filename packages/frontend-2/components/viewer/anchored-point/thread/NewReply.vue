@@ -1,17 +1,8 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
   <div
-    class="hidden sm:flex bg-foundation pl-4 pr-3 py-2 sm:py-1.5 rounded-b items-center w-full"
+    class="hidden sm:flex bg-foundation pl-4 pr-3 py-2 sm:p-1 sm:pb-3 rounded-b w-full relative flex flex-col"
   >
-    <FormButton
-      :icon-left="PaperClipIcon"
-      hide-text
-      text
-      :disabled="loading"
-      size="sm"
-      class="-ml-2 sm:mr-2"
-      @click="trackAttachAndOpenFilePicker()"
-    />
     <ViewerCommentsEditor
       ref="editor"
       v-model="commentValue"
@@ -21,15 +12,25 @@
       @keydown="onKeyDownHandler"
       @submit="onSubmit"
     />
-    <FormButton
-      :icon-left="PaperAirplaneIcon"
-      hide-text
-      size="sm"
-      color="invert"
-      :disabled="loading"
-      class="absolute right-6 sm:right-6"
-      @click="onSubmit"
-    />
+    <div class="flex justify-between items-center p-3 pb-0">
+      <FormButton
+        v-tippy="'Attach'"
+        :icon-left="PaperClipIcon"
+        hide-text
+        text
+        :disabled="loading"
+        color="card"
+        class="sm:px-0"
+        @click="trackAttachAndOpenFilePicker()"
+      />
+      <FormButton
+        :icon-left="PaperAirplaneIcon"
+        hide-text
+        color="default"
+        :disabled="loading"
+        @click="onSubmit"
+      />
+    </div>
   </div>
 </template>
 <script setup lang="ts">

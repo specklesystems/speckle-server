@@ -131,7 +131,7 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'

@@ -17,10 +17,7 @@ import {
   VersionCreationTriggerType,
   isVersionCreatedTriggerManifest
 } from '@/modules/automate/helpers/types'
-import type {
-  AuthCodePayload,
-  AuthCodePayloadWithOrigin
-} from '@/modules/automate/services/authCode'
+import type { AuthCodePayload } from '@/modules/automate/services/authCode'
 import { MisconfiguredEnvironmentError } from '@/modules/shared/errors'
 import { getServerOrigin, speckleAutomateUrl } from '@/modules/shared/helpers/envHelper'
 import {
@@ -32,6 +29,13 @@ import {
   timeoutAt
 } from '@speckle/shared'
 import { has, isObjectLike } from 'lodash'
+
+export type AuthCodePayloadWithOrigin = AuthCodePayload & { origin: string }
+
+const addOrigin = (P: AuthCodePayload): AuthCodePayloadWithOrigin => {
+  const origin = getServerOrigin()
+  return { ...P, origin }
+}
 
 const isErrorResponse = (e: unknown): e is ExecutionEngineErrorResponse =>
   isObjectLike(e) && has(e, 'statusCode') && has(e, 'statusMessage')
@@ -120,7 +124,14 @@ const invokeRequest = async (params: {
       url,
       body
     }
-    const errorResponse = await response.json()
+
+    let errorResponse: unknown
+    try {
+      errorResponse = await response.json()
+    } catch (e) {
+      throw new ExecutionEngineBadResponseBodyError(errorReq)
+    }
+
     if (!isErrorResponse(errorResponse)) {
       throw new ExecutionEngineBadResponseBodyError(errorReq)
     }
@@ -241,16 +252,17 @@ export enum ExecutionEngineFunctionTemplateId {
   TypeScript = 'typescript'
 }
 
-export type CreateFunctionBody = {
-  speckleServerAuthenticationPayload: AuthCodePayloadWithOrigin
-  template: ExecutionEngineFunctionTemplateId
-  functionName: string
-  description: string
-  supportedSourceApps: SourceAppName[]
-  tags: string[]
-  logo: Nullable<string>
-  org: Nullable<string>
-}
+export type CreateFunctionBody<AP extends AuthCodePayload = AuthCodePayloadWithOrigin> =
+  {
+    speckleServerAuthenticationPayload: AP
+    template: ExecutionEngineFunctionTemplateId
+    functionName: string
+    description: string
+    supportedSourceApps: SourceAppName[]
+    tags: string[]
+    logo: Nullable<string>
+    org: Nullable<string>
+  }
 
 export type CreateFunctionResponse = {
   functionId: string
@@ -268,34 +280,55 @@ export type CreateFunctionResponse = {
 export const createFunction = async ({
   body
 }: {
-  body: CreateFunctionBody
+  body: CreateFunctionBody<AuthCodePayload>
 }): Promise<CreateFunctionResponse> => {
   const url = getApiUrl('/api/v2/functions/from-template')
+
+  const formattedBody: CreateFunctionBody = {
+    ...body,
+    speckleServerAuthenticationPayload: addOrigin(
+      body.speckleServerAuthenticationPayload
+    )
+  }
   return invokeJsonRequest<CreateFunctionResponse>({
     url,
     method: 'post',
-    body,
+    body: formattedBody,
     retry: false
   })
 }
 
-export type UpdateFunctionBody = {
-  //TODO add speckleServerAuthenticationPayload
-  functionName?: string
-  description?: string
-  supportedSourceApps?: SourceAppName[]
-  tags?: string[]
-  logo?: string
-}
+export type UpdateFunctionBody<AP extends AuthCodePayload = AuthCodePayloadWithOrigin> =
+  {
+    speckleServerAuthenticationPayload: AP
+    functionName?: string
+    description?: string
+    supportedSourceApps?: SourceAppName[]
+    tags?: string[]
+    logo?: string
+  }
 
 export type UpdateFunctionResponse = FunctionSchemaType
 
 export const updateFunction = async (params: {
   functionId: string
-  body: UpdateFunctionBody
+  body: UpdateFunctionBody<AuthCodePayload>
 }): Promise<UpdateFunctionResponse> => {
-  throw new Error('Not implemented! Needs re-thinking by Gergo & Iain')
-  console.log(params)
+  const { functionId, body } = params
+  const url = getApiUrl(`/api/v2/functions/${functionId}`)
+
+  const formattedBody: UpdateFunctionBody = {
+    ...body,
+    speckleServerAuthenticationPayload: addOrigin(
+      body.speckleServerAuthenticationPayload
+    )
+  }
+  return await invokeJsonRequest<UpdateFunctionResponse>({
+    url,
+    method: 'PATCH',
+    body: formattedBody,
+    retry: false
+  })
 }
 
 export type GetFunctionResponse = FunctionWithVersionsSchemaType & {

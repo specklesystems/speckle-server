@@ -8,7 +8,8 @@ export enum AuthCodePayloadAction {
   CreateAutomation = 'createAutomation',
   CreateFunction = 'createFunction',
   BecomeFunctionAuthor = 'becomeFunctionAuthor',
-  GetAvailableGithubOrganizations = 'getAvailableGithubOrganizations'
+  GetAvailableGithubOrganizations = 'getAvailableGithubOrganizations',
+  UpdateFunction = 'updateFunction'
 }
 
 export type AuthCodePayload = {
@@ -16,8 +17,6 @@ export type AuthCodePayload = {
   userId: string
   action: AuthCodePayloadAction
 }
-
-export type AuthCodePayloadWithOrigin = AuthCodePayload & { origin: string }
 
 const isPayload = (payload: unknown): payload is AuthCodePayload =>
   !!(

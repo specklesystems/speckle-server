@@ -75,7 +75,7 @@ import {
   CodeBracketIcon
 } from '@heroicons/vue/24/solid'
 import { ViewerEvent } from '@speckle/viewer'
-import type { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
+import type { ExplorerNode } from '~~/lib/viewer/helpers/sceneExplorer'
 import {
   useInjectedViewer,
   useInjectedViewerLoadedResources,

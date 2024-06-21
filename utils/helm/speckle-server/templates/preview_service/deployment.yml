@@ -51,15 +51,11 @@ spec:
             drop:
               - ALL
           privileged: false
-          readOnlyRootFilesystem: true
+          # readOnlyRootFilesystem: true #FIXME this currently breaks chromium. Need to identify which directories should be mounted.
           runAsNonRoot: true
-          runAsUser: 20000
+          runAsUser: 800
 
         volumeMounts:
-          - mountPath: /tmp
-            name: tmp
-          - mountPath: /.cache/puppeteer
-            name: puppeteer-cache
         {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
@@ -99,7 +95,7 @@ spec:
 
       securityContext:
         runAsNonRoot: true
-        runAsUser: 20000
+        runAsUser: 800
         fsGroup: 25000
         fsGroupChangePolicy: OnRootMismatch
         runAsGroup: 30000
@@ -110,10 +106,6 @@ spec:
       terminationGracePeriodSeconds: 3600
 
       volumes:
-        - name: tmp
-          emptyDir: {}
-        - name: puppeteer-cache
-          emptyDir: {}
       {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
