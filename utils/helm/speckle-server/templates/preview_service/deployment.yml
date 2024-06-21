@@ -50,10 +50,8 @@ spec:
           capabilities:
             drop:
               - ALL
-            add:
-              - SYS_ADMIN #TODO remove this and replace with sec comp profile: https://stackoverflow.com/a/53975412
           privileged: false
-          # readOnlyRootFilesystem: true # this breaks chromium
+          # readOnlyRootFilesystem: true #FIXME this currently breaks chromium. Need to identify which directories should be mounted.
           runAsNonRoot: true
           runAsUser: 800
 
@@ -101,8 +99,8 @@ spec:
         fsGroup: 25000
         fsGroupChangePolicy: OnRootMismatch
         runAsGroup: 30000
-        # seccompProfile:
-        #   type: RuntimeDefault #TODO: uncomment this when we have a profile for chromium
+        seccompProfile:
+          type: RuntimeDefault
 
       # Should be > preview generation time ( 1 hour for good measure )
       terminationGracePeriodSeconds: 3600
