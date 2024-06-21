@@ -29,7 +29,7 @@ export interface SpeckleCamera {
     eventType: T,
     listener: (arg: CameraEventPayload[T]) => void
   ): void
-  setCameraPlanes(targetVolume: Box3, offsetScale?: number): void
+  updateCameraPlanes(targetVolume?: Box3, offsetScale?: number): void
 }
 export enum CameraProjection {
   PERSPECTIVE,
