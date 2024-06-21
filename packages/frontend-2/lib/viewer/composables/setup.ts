@@ -111,6 +111,9 @@ export type InjectableViewerState = Readonly<{
      * Various values that represent the current Viewer instance state
      */
     metadata: {
+      /**
+       * Based on a shallow ref
+       */
       worldTree: ComputedRef<Optional<WorldTree>>
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       views: ComputedRef<SpeckleView[]>

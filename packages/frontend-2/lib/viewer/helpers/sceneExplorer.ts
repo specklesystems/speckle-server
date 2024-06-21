@@ -6,6 +6,7 @@ import {
   type SpeckleReference,
   type StringPropertyInfo
 } from '@speckle/viewer'
+import type { Raw } from 'vue'
 
 export const isStringPropertyInfo = (
   info: MaybeNullOrUndefined<PropertyInfo>
@@ -24,6 +25,10 @@ export type ExplorerNode = {
   atomic?: boolean
   model?: Record<string, unknown> & { id?: string }
   children: ExplorerNode[]
+}
+
+export type TreeItemComponentModel = {
+  rawNode: Raw<ExplorerNode>
 }
 
 export type { SpeckleObject, SpeckleReference }
