@@ -41,9 +41,11 @@ router.post('/getobjects/:streamId', async (req, res) => {
         boundLogger.error(err, `Error streaming objects.`)
       } else {
         boundLogger.info(
-          `Streamed ${childrenList.length} objects (size: ${
-            gzipStream.bytesWritten / 1000000
-          } MB)`
+          {
+            numberOfStreamedObjects: childrenList.length,
+            sizeOfStreamedObjectsMB: gzipStream.bytesWritten / 1000000
+          },
+          'Streamed {numberOfStreamedObjects} objects (size: {sizeOfStreamedObjectsMB} MB)'
         )
       }
     }
