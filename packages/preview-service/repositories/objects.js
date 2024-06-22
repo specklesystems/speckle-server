@@ -1,6 +1,6 @@
 'use strict'
 
-const knex = require('../../knex')
+const knex = require('../knex')
 
 const Objects = () => knex('objects')
 const Closures = () => knex('object_children_closure')
