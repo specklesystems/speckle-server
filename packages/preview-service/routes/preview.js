@@ -6,7 +6,6 @@ const router = express.Router()
 const puppeteer = require('puppeteer')
 const { logger } = require('../observability/logging')
 const { reduce } = require('lodash')
-const { retry } = require('@speckle/shared')
 const { shouldBeHeadless, getAppPort, getHost } = require('../env')
 
 const getServiceUrl = () => new URL(`http://${getHost}:${getAppPort()}`).toString()
@@ -86,13 +85,7 @@ async function getScreenshot(objectUrl, boundLogger = logger) {
 
   let ret = null
   try {
-    await retry(
-      async () => {
-        ret = await wrapperPromise
-      },
-      10,
-      500
-    )
+    ret = await wrapperPromise
   } catch (err) {
     boundLogger.error(err, 'Error generating preview.')
     ret = {
@@ -103,7 +96,7 @@ async function getScreenshot(objectUrl, boundLogger = logger) {
   // Don't await for cleanup
   browser.close()
 
-  if (!ret || ret.error) {
+  if (ret.error) {
     return null
   }
 

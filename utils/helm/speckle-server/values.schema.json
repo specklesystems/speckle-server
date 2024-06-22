@@ -1616,6 +1616,21 @@
             }
           }
         },
+        "puppeteer": {
+          "type": "object",
+          "properties": {
+            "chromiumExecutablePath": {
+              "type": "string",
+              "description": "The path to the Chromium executable. If not set, defaults to '/usr/bin/google-chrome-stable'.",
+              "default": ""
+            },
+            "userDataDirectory": {
+              "type": "string",
+              "description": "The path to the user data directory. If not set, defaults to '/tmp/puppeteer'.",
+              "default": ""
+            }
+          }
+        },
         "requests": {
           "type": "object",
           "properties": {
