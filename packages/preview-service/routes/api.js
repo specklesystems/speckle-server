@@ -3,11 +3,13 @@
 const zlib = require('zlib')
 const express = require('express')
 const { getObjectsStream } = require('./services/objects_utils')
-const { SpeckleObjectsStream } = require('./speckleObjectsStream')
+const { SpeckleObjectsStream } = require('../services/speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
 const { logger } = require('../observability/logging')
 
 const router = express.Router()
+
+const isSimpleTextRequested = (req) => req.headers.accept === 'text/plain'
 
 // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
 router.post('/getobjects/:streamId', async (req, res) => {
@@ -16,18 +18,16 @@ router.post('/getobjects/:streamId', async (req, res) => {
   })
   const childrenList = JSON.parse(req.body.objects)
 
-  const simpleText = req.headers.accept === 'text/plain'
-
   res.writeHead(200, {
     'Content-Encoding': 'gzip',
-    'Content-Type': simpleText ? 'text/plain' : 'application/json'
+    'Content-Type': isSimpleTextRequested(req) ? 'text/plain' : 'application/json'
   })
 
   const dbStream = await getObjectsStream({
     streamId: req.params.streamId,
     objectIds: childrenList
   })
-  const speckleObjStream = new SpeckleObjectsStream(simpleText)
+  const speckleObjStream = new SpeckleObjectsStream(isSimpleTextRequested(req))
   const gzipStream = zlib.createGzip()
 
   pipeline(

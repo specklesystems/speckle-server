@@ -3,7 +3,7 @@
 const zlib = require('zlib')
 const express = require('express')
 const { getObject, getObjectChildrenStream } = require('./services/objects_utils')
-const { SpeckleObjectsStream } = require('./speckleObjectsStream')
+const { SpeckleObjectsStream } = require('../services/speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
 const { logger } = require('../observability/logging')
 
