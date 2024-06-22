@@ -9,7 +9,7 @@ exports.init = async () => {
   const scopes = require('./scopes.js')
   const registerFunc = registerOrUpdateScope({ db })
   for (const scope of scopes) {
-    await registerFunc({ db })({ scope })
+    await registerFunc({ scope })
   }
 }
 

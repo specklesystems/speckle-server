@@ -16,7 +16,7 @@ const {
   roleResourceTypeToTokenResourceType,
   isResourceAllowed
 } = require('@/modules/core/helpers/token')
-
+const db = require('@/db/knex')
 const ServerAcl = () => ServerAclSchema.knex()
 
 /**
@@ -49,7 +49,7 @@ async function authorizeResolver(
   userResourceAccessLimits
 ) {
   userId = userId || null
-  const roles = await getRoles()
+  const roles = await getRoles({ db })()
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
