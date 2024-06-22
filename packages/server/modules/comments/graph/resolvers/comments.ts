@@ -61,6 +61,7 @@ import {
   Resolvers
 } from '@/modules/core/graph/generated/graphql'
 import {
+  ExtendedComment,
   createCommentsRepository
 } from '@/modules/comments/repositories/comments'
 import { ResourceIdentifier, ResourceType } from '@/test/graphql/generated/graphql'
@@ -137,11 +138,13 @@ export = {
      * Resolve resources, if they weren't already preloaded
      */
     async resources(parent, _args, ctx) {
-      if (has(parent, 'resources')) return parent.resources
+      // TODO: Type assertion instead of only `has`?
+      if (has(parent, 'resources')) return (parent as ExtendedComment).resources
       return await ctx.loaders.comments.getResources.load(parent.id)
     },
     async viewedAt(parent, _args, ctx) {
-      if (has(parent, 'viewedAt')) return parent.viewedAt
+      // TODO: Type assertion instead of only `has`?
+      if (has(parent, 'viewedAt')) return (parent as ExtendedComment).viewedAt
       return await ctx.loaders.comments.getViewedAt.load(parent.id)
     },
     async author(parent, _args, ctx) {
@@ -583,12 +586,13 @@ export = {
       subscribe: filteredSubscribe(
         CommentSubscriptions.ViewerActivity,
         async (payload, variables, context) => {
+          // TODO: Inject core module repo
           const stream = await getStream({
             streamId: payload.streamId,
             userId: context.userId
           })
 
-          if (!stream.allowPublicComments && !stream.role)
+          if (!stream || (!stream.allowPublicComments && !stream.role))
             throw new ApolloForbiddenError('You are not authorized.')
 
           // dont report users activity to himself
@@ -612,7 +616,7 @@ export = {
             userId: context.userId
           })
 
-          if (!stream.allowPublicComments && !stream.role)
+          if (!stream || (!stream.allowPublicComments && !stream.role))
             throw new ApolloForbiddenError('You are not authorized.')
 
           // if we're listening for a stream's root comments events
@@ -625,14 +629,20 @@ export = {
             // prevents comment exfiltration by listening in to a auth'ed stream, but different commit ("stream hopping" for subscriptions)
             await streamResourceCheck({
               streamId: variables.streamId,
-              resources: variables.resourceIds.map((resId) => {
-                return {
-                  resourceId: resId,
-                  resourceType: resId.length === 10 ? 'commit' : 'object'
-                }
-              })
+              resources: variables.resourceIds
+                .filter((resId): resId is string => !!resId)
+                .map((resId) => {
+                  return {
+                    resourceId: resId,
+                    resourceType: resId.length === 10 ? 'commit' : 'object'
+                  }
+                })
             })
             for (const res of variables.resourceIds) {
+              if (!res) {
+                continue
+              }
+
               if (
                 payload.resourceIds.includes(res) &&
                 payload.streamId === variables.streamId
@@ -643,6 +653,8 @@ export = {
           } catch {
             return false
           }
+
+          return false
         }
       ),
     },
@@ -650,12 +662,13 @@ export = {
       subscribe: filteredSubscribe(
         CommentSubscriptions.CommentThreadActivity,
         async (payload, variables, context) => {
+          // TODO: Inject core module repository
           const stream = await getStream({
             streamId: payload.streamId,
             userId: context.userId
           })
 
-          if (!stream.allowPublicComments && !stream.role)
+          if (!stream || (!stream.allowPublicComments && !stream.role))
             throw new ApolloForbiddenError('You are not authorized.')
 
           return (
@@ -684,7 +697,7 @@ export = {
             getViewerResourceItemsUngrouped(target)
           ])
 
-          if (!stream.isPublic && !stream.role)
+          if (!stream || (!stream.isPublic && !stream.role))
             throw new ApolloForbiddenError('You are not authorized.')
 
           // dont report users activity to himself
@@ -719,7 +732,7 @@ export = {
             getViewerResourceItemsUngrouped(target)
           ])
 
-          if (!(stream.isDiscoverable || stream.isPublic) && !stream.role)
+          if (!stream || (!(stream.isDiscoverable || stream.isPublic) && !stream.role))
             throw new ApolloForbiddenError('You are not authorized.')
 
           if (!target.resourceIdString) {
