@@ -8,7 +8,7 @@ const { logger } = require('../observability/logging')
 const { reduce } = require('lodash')
 const { shouldBeHeadless, getAppPort, getHost } = require('../env')
 
-const getServiceUrl = () => new URL(`http://${getHost}:${getAppPort()}`).toString()
+const getServiceUrl = () => `http://${getHost}:${getAppPort()}`
 
 async function pageFunction(objectUrl) {
   waitForAnimation = async (ms = 70) =>
