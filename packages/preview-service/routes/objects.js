@@ -5,13 +5,12 @@ const express = require('express')
 const { getObject, getObjectChildrenStream } = require('../repositories/objects')
 const { SpeckleObjectsStream } = require('../services/speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
-const { logger } = require('../observability/logging')
 
 const router = express.Router()
 
 // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
 router.get('/:streamId/:objectId', async function (req, res) {
-  const boundLogger = logger.child({
+  const boundLogger = req.log.child({
     streamId: req.params.streamId,
     objectId: req.params.objectId
   })
@@ -62,7 +61,7 @@ router.get('/:streamId/:objectId', async function (req, res) {
 })
 
 router.get('/:streamId/:objectId/single', async (req, res) => {
-  const boundLogger = logger.child({
+  const boundLogger = req.log.child({
     streamId: req.params.streamId,
     objectId: req.params.objectId
   })

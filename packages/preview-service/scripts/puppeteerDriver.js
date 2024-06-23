@@ -1,9 +1,7 @@
-/* eslint-disable no-undef */
-// we disable undefined because this function will be evaluated in the browser context
 'use strict'
 
-const puppeteerScript = async (objectUrl) => {
-  waitForAnimation = async (ms = 70) =>
+const puppeteerDriver = async (objectUrl) => {
+  const waitForAnimation = async (ms = 70) =>
     await new Promise((resolve) => {
       setTimeout(resolve, ms)
     })
@@ -51,5 +49,5 @@ const puppeteerScript = async (objectUrl) => {
 }
 
 module.exports = {
-  puppeteerScript
+  puppeteerDriver
 }

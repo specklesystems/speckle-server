@@ -5,7 +5,6 @@ const express = require('express')
 const { getObjectsStream } = require('../repositories/objects')
 const { SpeckleObjectsStream } = require('../services/speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
-const { logger } = require('../observability/logging')
 
 const router = express.Router()
 
@@ -13,7 +12,7 @@ const isSimpleTextRequested = (req) => req.headers.accept === 'text/plain'
 
 // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
 router.post('/getobjects/:streamId', async (req, res) => {
-  const boundLogger = logger.child({
+  const boundLogger = req.log.child({
     streamId: req.params.streamId
   })
   const childrenList = JSON.parse(req.body.objects)

@@ -1,10 +1,9 @@
 'use strict'
 
 const express = require('express')
-const { logger } = require('../observability/logging')
 const { getScreenshot } = require('../services/screenshot')
 const { PuppeteerClient } = require('../clients/puppeteer')
-const { puppeteerScript } = require('./puppeteerScript')
+const { puppeteerDriver } = require('../scripts/puppeteerDriver')
 const { serviceUrl } = require('../env')
 
 const router = express.Router()
@@ -15,7 +14,7 @@ router.get('/:streamId/:objectId', async function (req, res) {
   if (!safeParamRgx.test(streamId) || !safeParamRgx.test(objectId)) {
     return res.status(400).json({ error: 'Invalid streamId or objectId!' })
   }
-  const boundLogger = logger.child({ streamId, objectId })
+  const boundLogger = req.log.child({ streamId, objectId })
 
   const objectUrl = `${serviceUrl()}/streams/${req.params.streamId}/objects/${
     req.params.objectId
@@ -41,7 +40,7 @@ router.get('/:streamId/:objectId', async function (req, res) {
   const scr = await getScreenshot(
     puppeteerClient,
     pageToOpenUrl,
-    puppeteerScript,
+    puppeteerDriver,
     objectUrl,
     boundLogger
   )

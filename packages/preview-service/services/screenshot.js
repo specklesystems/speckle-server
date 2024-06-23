@@ -18,6 +18,7 @@ const getScreenshot = async (
     headless: shouldBeHeadless(),
     userDataDir: getPuppeteerUserDataDir(),
     executablePath: getChromiumExecutablePath(),
+    protocolTimeout: 360_000,
     // we trust the web content that is running, so can disable the sandbox
     // disabling the sandbox allows us to run the docker image without linux kernel privileges
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']

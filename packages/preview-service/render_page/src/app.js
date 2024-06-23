@@ -1,6 +1,6 @@
 import { LegacyViewer } from '@speckle/viewer'
 import { DefaultViewerParams } from '@speckle/viewer'
-// import { logger } from '../../observability/logging'
+
 console.log('Initialising Viewer')
 const v = new LegacyViewer(document.getElementById('renderer'), DefaultViewerParams)
 window.v = v
@@ -13,7 +13,7 @@ window.LoadData = async function LoadData(url) {
 }
 
 window.onload = () => {
-  const testUrl = window.location.hash.substr(1)
+  const testUrl = window.location.hash.substring(1)
   if (testUrl) {
     window.LoadData(testUrl)
   }

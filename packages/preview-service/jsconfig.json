@@ -9,6 +9,7 @@
     "render_page",
     "repositories",
     "routes",
+    "scripts",
     "services"
   ]
 }
