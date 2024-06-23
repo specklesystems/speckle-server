@@ -27,7 +27,7 @@
   </button>
 </template>
 <script setup lang="ts">
-import { DUIAccount } from '~~/store/accounts'
+import type { DUIAccount } from '~~/store/accounts'
 
 const props = defineProps<{
   account: DUIAccount

@@ -1,4 +1,4 @@
-import { IDiscriminatedObject } from '~/lib/bindings/definitions/common'
+import type { IDiscriminatedObject } from '~/lib/bindings/definitions/common'
 
 export interface CardSetting extends IDiscriminatedObject {
   id: string

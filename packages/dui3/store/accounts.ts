@@ -1,8 +1,11 @@
 import { defineStore } from 'pinia'
-import { ApolloClient, gql } from '@apollo/client/core'
+import type { ApolloLink } from '@apollo/client/core'
+import { ApolloClient, InMemoryCache, gql, HttpLink, split } from '@apollo/client/core'
 import { ApolloClients, provideApolloClients } from '@vue/apollo-composable'
-import { resolveClientConfig } from '~/lib/core/configs/apollo'
-import { Account } from '~/lib/bindings/definitions/IAccountBinding'
+import type { Account } from '~/lib/bindings/definitions/IAccountBinding'
+import { WebSocketLink } from '@apollo/client/link/ws'
+import { getMainDefinition } from '@apollo/client/utilities'
+import { setContext } from '@apollo/client/link/context'
 
 export type DUIAccount = {
   /** account info coming from the host app */
@@ -72,18 +75,23 @@ export const useAccountStore = defineStore('accountStore', () => {
     const newAccs: DUIAccount[] = []
 
     for (const acc of accs) {
-      if (!acc.serverInfo.frontend2) continue
       const existing = accounts.value.find((a) => a.accountInfo.id === acc.id)
       if (existing) {
         newAccs.push(existing as DUIAccount)
         continue
       }
-      const client = new ApolloClient(
-        resolveClientConfig({
-          httpEndpoint: new URL('/graphql', acc.serverInfo.url).href,
-          authToken: () => acc.token
-        })
+
+      const link = splitLink(
+        getLinks(new URL('/graphql', acc.serverInfo.url).href, 'Bearer ' + acc.token)
       )
+      const client = new ApolloClient({
+        cache: new InMemoryCache(),
+        link,
+        headers: {
+          Authorization: 'Bearer ' + acc.token
+        }
+      })
+
       apolloClients[acc.id] = client
       newAccs.push({
         accountInfo: acc,
@@ -95,6 +103,50 @@ export const useAccountStore = defineStore('accountStore', () => {
     accounts.value = newAccs
     isLoading.value = false
   }
+
+  const getLinks = (serverUrl: string, token: string) => {
+    const authHeaderValue = token
+    const httpLink = new HttpLink({
+      uri: serverUrl
+    })
+
+    const authLink = setContext((_, { headers }) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      return { headers: { ...headers, Authorization: authHeaderValue } }
+    })
+
+    const link = authLink.concat(httpLink as unknown as ApolloLink)
+
+    const wsLink = new WebSocketLink({
+      uri: serverUrl.replace('http', 'ws'),
+      options: {
+        reconnect: true,
+        connectionParams: {
+          Authorization: authHeaderValue
+        }
+      }
+    })
+    return { httpLink: link, wsLink }
+  }
+
+  const splitLink = ({
+    httpLink,
+    wsLink
+  }: {
+    httpLink: ApolloLink
+    wsLink: WebSocketLink
+  }) =>
+    split(
+      ({ query }) => {
+        const definition = getMainDefinition(query)
+        return (
+          definition.kind === 'OperationDefinition' &&
+          definition.operation === 'subscription'
+        )
+      },
+      wsLink,
+      httpLink
+    )
 
   const provideClients = () => {
     provideApolloClients(apolloClients)

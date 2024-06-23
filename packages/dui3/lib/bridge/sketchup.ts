@@ -1,14 +1,17 @@
 import { uniqueId } from 'lodash-es'
 import { BaseBridge } from './base'
-import ObjectLoader, { ProgressStage } from '@speckle/objectloader'
+import type { ProgressStage } from '@speckle/objectloader'
+import ObjectLoader from '@speckle/objectloader'
 import { provideApolloClient, useMutation } from '@vue/apollo-composable'
 import {
   createCommitMutation,
   versionDetailsQuery
 } from '~/lib/graphql/mutationsAndQueries'
-import { DUIAccount, useAccountStore } from '~/store/accounts'
+import type { DUIAccount } from '~/store/accounts'
+import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
-import { ConversionResult } from '~/lib/conversions/conversionResult'
+import type { ConversionResult } from '~/lib/conversions/conversionResult'
+import { storeToRefs } from 'pinia'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
@@ -144,7 +147,7 @@ export class SketchupBridge extends BaseBridge {
       })
     }
 
-    const rootObj = await loader.getAndConstructObject(updateProgress)
+    const rootObj = loader.getAndConstructObject(updateProgress)
     const args = [
       eventPayload.modelCardId,
       result.data.project.model.version.sourceApplication,

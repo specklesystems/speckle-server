@@ -63,6 +63,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { useConfigStore } from '~/store/config'
 import {
   Cog6ToothIcon,
@@ -72,7 +73,7 @@ import {
   SunIcon
 } from '@heroicons/vue/24/solid'
 import { useHostAppStore } from '~/store/hostApp'
-const isDev = ref(process.dev)
+const isDev = ref(import.meta.dev)
 const openConfigDialog = ref(false)
 // NOTE: make it true to test settings, it might be removed later. TBD
 const testSettings = ref(false)

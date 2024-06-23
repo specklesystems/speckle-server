@@ -1,8 +1,10 @@
-import { ConversionResult } from 'lib/conversions/conversionResult'
-import { IModelCardSharedEvents } from '~/lib/models/card'
-import { CardSetting } from '~/lib/models/card/setting'
-import { IBinding, IBindingSharedEvents } from '~~/lib/bindings/definitions/IBinding'
-import { BaseBridge } from '~~/lib/bridge/base'
+import type { ConversionResult } from 'lib/conversions/conversionResult'
+import type { IModelCardSharedEvents } from '~/lib/models/card'
+import type { CardSetting } from '~/lib/models/card/setting'
+import type {
+  IBinding,
+  IBindingSharedEvents
+} from '~~/lib/bindings/definitions/IBinding'
 
 export const IReceiveBindingKey = 'receiveBinding'
 
@@ -21,37 +23,4 @@ export interface IReceiveBindingEvents
     bakedObjectIds: string[]
     conversionResults: ConversionResult[]
   }) => void
-}
-
-export class MockedReceiveBinding extends BaseBridge {
-  constructor() {
-    super()
-  }
-
-  getReceiveSettings() {
-    return [
-      {
-        id: 'includeAttributes',
-        type: 'boolean',
-        title: 'Include Attributes',
-        value: true,
-        typeDiscriminator: 'CardSetting'
-      },
-      {
-        id: 'mergeCoplanarFaces',
-        type: 'boolean',
-        title: 'Merge Coplanar Faces',
-        value: true,
-        typeDiscriminator: 'CardSetting'
-      },
-      {
-        id: 'receiveMode',
-        type: 'string',
-        title: 'Receive Mode',
-        value: 'Update',
-        enum: ['Update', 'Create', 'Ignore'],
-        typeDiscriminator: 'CardSetting'
-      }
-    ]
-  }
 }

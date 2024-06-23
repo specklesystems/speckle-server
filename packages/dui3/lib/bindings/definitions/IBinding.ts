@@ -1,4 +1,4 @@
-import { ToastNotification } from '@speckle/ui-components'
+import type { ToastNotification } from '@speckle/ui-components'
 
 /**
  * Basic interface scaffolding two standard method.

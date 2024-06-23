@@ -115,7 +115,7 @@
 <script setup lang="ts">
 import { PlusIcon, ExclamationTriangleIcon } from '@heroicons/vue/20/solid'
 import { provideApolloClient, useMutation, useQuery } from '@vue/apollo-composable'
-import {
+import type {
   ProjectListProjectItemFragment,
   ModelListModelItemFragment
 } from '~/lib/common/generated/gql/graphql'
@@ -125,7 +125,8 @@ import {
   projectModelsQuery
 } from '~/lib/graphql/mutationsAndQueries'
 import { useForm } from 'vee-validate'
-import { DUIAccount, useAccountStore } from '~/store/accounts'
+import type { DUIAccount } from '~/store/accounts'
+import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 

@@ -61,6 +61,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { XMarkIcon, Bars3Icon } from '@heroicons/vue/20/solid'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import { useConfigStore } from '~/store/config'

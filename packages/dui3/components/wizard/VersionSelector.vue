@@ -25,7 +25,7 @@
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import { modelVersionsQuery } from '~/lib/graphql/mutationsAndQueries'
-import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
+import type { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 
 defineEmits<{
   (

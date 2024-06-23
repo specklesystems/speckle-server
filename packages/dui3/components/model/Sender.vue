@@ -6,7 +6,7 @@
     @manual-publish-or-load="sendOrCancel"
   >
     <!-- <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2"> -->
-    <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events -->
+    <!-- eslint-disable-next-line vuejs-accessibility/mouse-events-have-key-events vuejs-accessibility/no-static-element-interactions-->
     <div
       class="flex max-[275px]:flex-col items-center space-x-2 max-[275px]:space-x-0 py-2 max-[275px]:space-y-2"
       @mouseenter="hover = true"
@@ -97,9 +97,10 @@
 import { ref } from 'vue'
 import ModelCardBase from '~/components/model/CardBase.vue'
 import { Square3Stack3DIcon } from '@heroicons/vue/20/solid'
-import { ModelCardNotification } from '~/lib/models/card/notification'
-import { ISendFilter, ISenderModelCard } from '~/lib/models/card/send'
-import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
+import type { ModelCardNotification } from '~/lib/models/card/notification'
+import type { ISendFilter, ISenderModelCard } from '~/lib/models/card/send'
+import type { ProjectModelGroup } from '~/store/hostApp'
+import { useHostAppStore } from '~/store/hostApp'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()

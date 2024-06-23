@@ -5,7 +5,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ISendFilter } from 'lib/models/card/send'
+import type { ISendFilter } from 'lib/models/card/send'
 
 const emit = defineEmits<{
   (e: 'update:filter', filter: ISendFilter): void

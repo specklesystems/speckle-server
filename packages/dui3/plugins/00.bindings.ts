@@ -1,31 +1,18 @@
 import type { IRawBridge } from '~/lib/bridge/definitions'
 import { GenericBridge } from '~/lib/bridge/generic-v2'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
-import type { BaseBridge } from '~~/lib/bridge/base'
 
 import type { IBasicConnectorBinding } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import type { IAccountBinding } from '~/lib/bindings/definitions/IAccountBinding'
-import {
-  IAccountBindingKey,
-  MockedAccountBinding
-} from '~/lib/bindings/definitions/IAccountBinding'
+import { IAccountBindingKey } from '~/lib/bindings/definitions/IAccountBinding'
 
 import type { ITestBinding } from '~/lib/bindings/definitions/ITestBinding'
-import {
-  ITestBindingKey,
-  MockedTestBinding
-} from '~/lib/bindings/definitions/ITestBinding'
+import { ITestBindingKey } from '~/lib/bindings/definitions/ITestBinding'
 
 import type { IConfigBinding } from '~/lib/bindings/definitions/IConfigBinding'
-import {
-  IConfigBindingKey,
-  MockedConfigBinding
-} from '~/lib/bindings/definitions/IConfigBinding'
+import { IConfigBindingKey } from '~/lib/bindings/definitions/IConfigBinding'
 
-import {
-  IBasicConnectorBindingKey,
-  MockedBaseBinding
-} from '~/lib/bindings/definitions/IBasicConnectorBinding'
+import { IBasicConnectorBindingKey } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 
 import type { ISendBinding } from '~/lib/bindings/definitions/ISendBinding'
 import { ISendBindingKey } from '~/lib/bindings/definitions/ISendBinding'
@@ -33,10 +20,7 @@ import type { IReceiveBinding } from '~/lib/bindings/definitions/IReceiveBinding
 import { IReceiveBindingKey } from '~/lib/bindings/definitions/IReceiveBinding'
 
 import type { ISelectionBinding } from '~/lib/bindings/definitions/ISelectionBinding'
-import {
-  ISelectionBindingKey,
-  MockedSelectionBinding
-} from '~/lib/bindings/definitions/ISelectionBinding'
+import { ISelectionBindingKey } from '~/lib/bindings/definitions/ISelectionBinding'
 
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
@@ -55,30 +39,24 @@ export default defineNuxtPlugin(async () => {
   const nonExistantBindings = await tryHoistBinding('nonExistantBindings')
 
   // Registers some default test bindings.
-  const testBindings =
-    (await tryHoistBinding<ITestBinding>(ITestBindingKey)) ||
-    hoistMockBinding(new MockedTestBinding(), ITestBindingKey)
+  const testBindings = await tryHoistBinding<ITestBinding>(ITestBindingKey)
 
-  // Actual || mock bindings follow below.
-  const configBinding =
-    (await tryHoistBinding<IConfigBinding>(IConfigBindingKey)) ||
-    hoistMockBinding(new MockedConfigBinding(), IConfigBindingKey)
+  // Actual bindings follow below.
+  const configBinding = await tryHoistBinding<IConfigBinding>(IConfigBindingKey)
 
-  const accountBinding =
-    (await tryHoistBinding<IAccountBinding>(IAccountBindingKey)) ||
-    hoistMockBinding(new MockedAccountBinding(), IAccountBindingKey)
+  const accountBinding = await tryHoistBinding<IAccountBinding>(IAccountBindingKey)
 
-  const baseBinding =
-    (await tryHoistBinding<IBasicConnectorBinding>(IBasicConnectorBindingKey)) ||
-    hoistMockBinding(new MockedBaseBinding(), IBasicConnectorBindingKey)
+  const baseBinding = await tryHoistBinding<IBasicConnectorBinding>(
+    IBasicConnectorBindingKey
+  )
 
   const sendBinding = await tryHoistBinding<ISendBinding>(ISendBindingKey)
 
   const receiveBinding = await tryHoistBinding<IReceiveBinding>(IReceiveBindingKey)
 
-  const selectionBinding =
-    (await tryHoistBinding<ISelectionBinding>(ISelectionBindingKey)) ||
-    hoistMockBinding(new MockedSelectionBinding(), ISelectionBindingKey)
+  const selectionBinding = await tryHoistBinding<ISelectionBinding>(
+    ISelectionBindingKey
+  )
 
   // Any binding implments these two methods below, we just choose one to
   // expose globally to the app.
@@ -145,11 +123,11 @@ const tryHoistBinding = async <T>(name: string) => {
   return bridge as unknown as T
 }
 
-const hoistMockBinding = (mockBinding: BaseBridge, name: string) => {
-  globalThis[name] = mockBinding
-  console.log(
-    `%c✔ Mocked ${name} binding added succesfully.`,
-    'color: green; font-weight: bold; font-size: small'
-  )
-  return mockBinding
-}
+// const hoistMockBinding = (mockBinding: BaseBridge, name: string) => {
+//   globalThis[name] = mockBinding
+//   console.log(
+//     `%c✔ Mocked ${name} binding added succesfully.`,
+//     'color: green; font-weight: bold; font-size: small'
+//   )
+//   return mockBinding
+// }

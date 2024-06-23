@@ -119,6 +119,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { CloudArrowDownIcon, CloudArrowUpIcon } from '@heroicons/vue/24/solid'
 import { useAccountStore } from '~~/store/accounts'
 import { useHostAppStore } from '~~/store/hostApp'

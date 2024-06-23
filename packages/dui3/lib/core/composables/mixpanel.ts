@@ -99,7 +99,7 @@ export function useMixpanel() {
         properties
       }
 
-      if (process.dev) {
+      if (import.meta.dev) {
         console.info('Mixpanel event', eventData)
       }
 

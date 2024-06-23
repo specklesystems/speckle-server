@@ -1,5 +1,5 @@
 import { ValidationHelpers } from '@speckle/ui-components'
-import { GenericValidateFunction } from 'vee-validate'
+import type { GenericValidateFunction } from 'vee-validate'
 
 export const isEmail = ValidationHelpers.isEmail
 

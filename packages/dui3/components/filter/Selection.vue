@@ -7,9 +7,8 @@
   </div>
 </template>
 <script setup lang="ts">
-// TODO: set initial filter info from potentially passed in filter prop
-
-import { IDirectSelectionSendFilter, ISendFilter } from 'lib/models/card/send'
+import { storeToRefs } from 'pinia'
+import type { IDirectSelectionSendFilter, ISendFilter } from 'lib/models/card/send'
 import { useHostAppStore } from '~~/store/hostApp'
 import { useSelectionStore } from '~~/store/selection'
 

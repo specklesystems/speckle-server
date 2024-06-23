@@ -69,14 +69,15 @@
 <script setup lang="ts">
 import { useQuery, useSubscription } from '@vue/apollo-composable'
 import { ChevronDownIcon, ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
-import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
+import type { ProjectModelGroup } from '~~/store/hostApp'
+import { useHostAppStore } from '~~/store/hostApp'
 import { useAccountStore } from '~~/store/accounts'
 import {
   projectDetailsQuery,
   versionCreatedSubscription
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
-import { ApolloError } from '@apollo/client/errors'
+import type { ApolloError } from '@apollo/client/errors'
 
 const { trackEvent } = useMixpanel()
 const accountStore = useAccountStore()
@@ -143,7 +144,5 @@ onResult((res) => {
     hasDismissedUpdateWarning: false,
     displayReceiveComplete: false
   })
-
-  // res.data.projectVersionsUpdated.version.
 })
 </script>

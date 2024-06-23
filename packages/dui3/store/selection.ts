@@ -1,4 +1,5 @@
-import { SelectionInfo } from '~/lib/bindings/definitions/ISelectionBinding'
+import { defineStore } from 'pinia'
+import type { SelectionInfo } from '~/lib/bindings/definitions/ISelectionBinding'
 
 export const useSelectionStore = defineStore('selectionStore', () => {
   const { $selectionBinding } = useNuxtApp()

@@ -54,9 +54,9 @@
   </FormSelectBase>
 </template>
 <script setup lang="ts">
-import { ControlElement } from '@jsonforms/core'
+import type { ControlElement } from '@jsonforms/core'
 import { rendererProps, useJsonFormsEnumControl } from '@jsonforms/vue'
-import { Nullable } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { useFormSelectChildInternals } from '@speckle/ui-components'
 import { useJsonRendererBaseSetup } from '~/lib/form/composables/jsonRenderers'
 

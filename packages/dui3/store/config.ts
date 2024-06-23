@@ -1,4 +1,5 @@
-import { ConnectorConfig } from 'lib/bindings/definitions/IConfigBinding'
+import type { ConnectorConfig } from 'lib/bindings/definitions/IConfigBinding'
+import { defineStore } from 'pinia'
 
 export const useConfigStore = defineStore('configStore', () => {
   const { $configBinding } = useNuxtApp()

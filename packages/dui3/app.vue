@@ -9,7 +9,8 @@
 <script setup lang="ts">
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useConfigStore } from '~/store/config'
-import { useAccountStore, DUIAccount } from '~/store/accounts'
+import { useAccountStore } from '~/store/accounts'
+import { storeToRefs } from 'pinia'
 
 const uiConfigStore = useConfigStore()
 const { isDarkTheme } = storeToRefs(uiConfigStore)
@@ -26,7 +27,7 @@ useHead({
     class: 'simple-scrollbar bg-foundation-page text-foreground '
   },
   // For standalone vue devtools see: https://devtools.vuejs.org/guide/installation.html#standalone
-  script: process.dev ? ['http://localhost:8098'] : []
+  script: import.meta.dev ? ['http://localhost:8098'] : []
 })
 
 onMounted(() => {
@@ -38,7 +39,7 @@ onMounted(() => {
   const { accounts } = useAccountStore()
 
   const uniqueEmails = new Set<string>()
-  accounts.forEach((account: DUIAccount) => {
+  accounts.forEach((account) => {
     const email = account?.accountInfo.userInfo.email
     if (email && !uniqueEmails.has(email)) {
       addConnectorToProfile(email)

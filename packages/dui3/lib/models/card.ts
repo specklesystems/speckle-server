@@ -1,10 +1,8 @@
 import crs from 'crypto-random-string'
-import { ConversionResult } from 'lib/conversions/conversionResult'
-import { CardSetting } from 'lib/models/card/setting'
-import {
-  DiscriminatedObject,
-  IDiscriminatedObject
-} from '~~/lib/bindings/definitions/common'
+import type { ConversionResult } from 'lib/conversions/conversionResult'
+import type { CardSetting } from 'lib/models/card/setting'
+import type { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
+import { DiscriminatedObject } from '~~/lib/bindings/definitions/common'
 
 export interface IModelCard extends IDiscriminatedObject {
   modelCardId: string

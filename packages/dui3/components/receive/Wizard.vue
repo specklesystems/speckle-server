@@ -69,7 +69,8 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import {
+import { storeToRefs } from 'pinia'
+import type {
   ModelListModelItemFragment,
   ProjectListProjectItemFragment,
   VersionListItemFragment
@@ -82,7 +83,7 @@ import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
 
-const showReceiveDialog = defineModel({ default: false })
+const showReceiveDialog = defineModel<boolean>({ default: false })
 
 const emit = defineEmits(['close'])
 

@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-unsafe-member-access */
-/* eslint-disable @typescript-eslint/no-unsafe-argument */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useJsonFormsControl } from '@jsonforms/vue'
+import type { useJsonFormsControl } from '@jsonforms/vue'
 import { cloneDeep, merge } from 'lodash-es'
-import { RuleExpression } from 'vee-validate'
+import type { RuleExpression } from 'vee-validate'
 
 export function useJsonRendererBaseSetup<
   I extends ReturnType<typeof useJsonFormsControl>

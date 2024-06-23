@@ -7,7 +7,7 @@
 </template>
 
 <script setup lang="ts">
-import { JsonFormsChangeEvent } from '@jsonforms/vue'
+import type { JsonFormsChangeEvent } from '@jsonforms/vue'
 
 const jsonSchema = {
   type: 'object',

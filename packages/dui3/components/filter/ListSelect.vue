@@ -29,7 +29,7 @@
       <div v-else-if="selectedFilter.name === 'Selection'">
         <FilterSelection
           :filter="(selectedFilter as IDirectSelectionSendFilter)"
-          @update:filter="(filter) => (selectedFilter = filter)"
+          @update:filter="(filter : ISendFilter) => (selectedFilter = filter)"
         />
       </div>
       <div v-else-if="selectedFilter.name === 'Layers'">TODO</div>
@@ -42,8 +42,9 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ISendFilter, IDirectSelectionSendFilter } from 'lib/models/card/send'
+import type { ISendFilter, IDirectSelectionSendFilter } from 'lib/models/card/send'
 import { useHostAppStore } from '~~/store/hostApp'
+import { storeToRefs } from 'pinia'
 
 const store = useHostAppStore()
 const { sendFilters, selectionFilter } = storeToRefs(store)

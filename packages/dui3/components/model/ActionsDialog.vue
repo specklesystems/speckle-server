@@ -43,7 +43,7 @@ import {
   ClockIcon,
   ArchiveBoxXMarkIcon
 } from '@heroicons/vue/24/outline'
-import { IModelCard } from '~/lib/models/card'
+import type { IModelCard } from '~/lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()

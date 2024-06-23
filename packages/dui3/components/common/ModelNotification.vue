@@ -38,7 +38,7 @@
 
 <script setup lang="ts">
 import { useTimeoutFn } from '@vueuse/core'
-import { ModelCardNotification } from '~/lib/models/card/notification'
+import type { ModelCardNotification } from '~/lib/models/card/notification'
 
 const props = defineProps<{
   notification: ModelCardNotification
@@ -60,6 +60,8 @@ const containerClassColor = computed(() => {
       return 'bg-green-500/10'
     case 'warning':
       return 'bg-orange-500/10'
+    default:
+      return 'bg-blue-500/10'
   }
 })
 
@@ -73,6 +75,8 @@ const textClassColor = computed(() => {
       return 'text-green-500'
     case 'warning':
       return 'text-orange-500'
+    default:
+      return 'bg-blue-500/10'
   }
 })
 </script>

@@ -35,7 +35,7 @@
 </template>
 <script setup lang="ts">
 import { InformationCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
-import { ConversionResult } from 'lib/conversions/conversionResult'
+import type { ConversionResult } from '~~/lib/conversions/conversionResult'
 
 const props = defineProps<{
   report: ConversionResult[]

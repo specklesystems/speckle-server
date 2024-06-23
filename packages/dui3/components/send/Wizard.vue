@@ -65,11 +65,13 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import {
+import { storeToRefs } from 'pinia'
+import type {
   ModelListModelItemFragment,
   ProjectListProjectItemFragment
 } from '~/lib/common/generated/gql/graphql'
-import { ISendFilter, SenderModelCard } from '~/lib/models/card/send'
+import type { ISendFilter } from '~/lib/models/card/send'
+import { SenderModelCard } from '~/lib/models/card/send'
 import { useHostAppStore } from '~/store/hostApp'
 import { useAccountStore } from '~/store/accounts'
 import { ChevronRightIcon } from '@heroicons/vue/24/solid'
@@ -77,7 +79,7 @@ import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()
 
-const showSendDialog = defineModel({ default: false })
+const showSendDialog = defineModel<boolean>({ default: false })
 
 const emit = defineEmits(['close'])
 

@@ -11,9 +11,10 @@
   </form>
 </template>
 <script setup lang="ts">
-import { JsonSchema, UISchemaElement } from '@jsonforms/core'
-import { JsonForms, JsonFormsChangeEvent } from '@jsonforms/vue'
-import { Nullable, Optional } from '@speckle/shared'
+import type { JsonSchema, UISchemaElement } from '@jsonforms/core'
+import type { JsonFormsChangeEvent } from '@jsonforms/vue'
+import { JsonForms } from '@jsonforms/vue'
+import type { Nullable, Optional } from '@speckle/shared'
 import { omit } from 'lodash-es'
 import { useForm } from 'vee-validate'
 import { renderers } from '~/lib/form/jsonRenderers'

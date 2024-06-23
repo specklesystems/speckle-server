@@ -1,4 +1,5 @@
-import { IModelCard, ModelCard } from '~~/lib/models/card'
+import type { IModelCard } from '~~/lib/models/card'
+import { ModelCard } from '~~/lib/models/card'
 
 export interface IReceiverModelCard extends IModelCard {
   projectName: string

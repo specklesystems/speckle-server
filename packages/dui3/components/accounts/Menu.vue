@@ -27,8 +27,10 @@
   </div>
 </template>
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { XMarkIcon } from '@heroicons/vue/20/solid'
-import { useAccountStore, DUIAccount } from '~/store/accounts'
+import type { DUIAccount } from '~/store/accounts'
+import { useAccountStore } from '~/store/accounts'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const { trackEvent } = useMixpanel()

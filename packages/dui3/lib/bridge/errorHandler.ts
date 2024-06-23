@@ -1,5 +1,6 @@
-import { ToastNotification, ToastNotificationType } from '@speckle/ui-components'
-import { Emitter } from 'nanoevents'
+import type { ToastNotification } from '@speckle/ui-components'
+import { ToastNotificationType } from '@speckle/ui-components'
+import type { Emitter } from 'nanoevents'
 import { useHostAppStore } from '~/store/hostApp'
 
 export type HostAppError = {

@@ -9,7 +9,7 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { ProjectListProjectItemFragment } from '~/lib/common/generated/gql/graphql'
+import type { ProjectListProjectItemFragment } from '~/lib/common/generated/gql/graphql'
 const props = defineProps<{
   project: ProjectListProjectItemFragment
 }>()

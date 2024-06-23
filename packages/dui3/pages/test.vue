@@ -110,6 +110,7 @@
 </template>
 
 <script setup lang="ts">
+import { storeToRefs } from 'pinia'
 import { ArrowLeftIcon , CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import type { TestEventArgs } from '~/lib/bindings/definitions/ITestBinding'
 import { useHostAppStore } from '~/store/hostApp'

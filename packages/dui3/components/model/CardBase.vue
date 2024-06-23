@@ -1,5 +1,5 @@
 <template>
-  <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
+  <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events vuejs-accessibility/no-static-element-interactions -->
   <div
     :class="`rounded-md hover:shadow-md shadow transition overflow-hidden ${cardBgColor} cursor-pointer`"
     @click="highlightModel"
@@ -86,11 +86,13 @@ import { CommonLoadingProgressBar } from '@speckle/ui-components'
 // import { CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
-import { ProjectModelGroup, useHostAppStore } from '~~/store/hostApp'
-import { IModelCard } from '~~/lib/models/card'
-import { DUIAccount, useAccountStore } from '~/store/accounts'
-import { ISenderModelCard } from 'lib/models/card/send'
-import { IReceiverModelCard } from '~/lib/models/card/receiver'
+import type { ProjectModelGroup } from '~~/store/hostApp'
+import { useHostAppStore } from '~~/store/hostApp'
+import type { IModelCard } from '~~/lib/models/card'
+import type { DUIAccount } from '~/store/accounts'
+import { useAccountStore } from '~/store/accounts'
+import type { ISenderModelCard } from 'lib/models/card/send'
+import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const app = useNuxtApp()
@@ -139,7 +141,7 @@ const isSender = computed(() => {
 })
 
 const highlightModel = () => {
-  if (!modelData) return
+  if (!modelData.value) return
   trackEvent('DUI3 Action', { name: 'Highlight Model' }, props.modelCard.accountId)
   if (!props.modelCard.progress) {
     // Some host apps aren't friendly enough to handle highlighting models when some other ops are running.

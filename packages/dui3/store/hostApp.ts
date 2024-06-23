@@ -1,19 +1,20 @@
-import {
+import type {
   DocumentInfo,
   DocumentModelStore
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
-import { IModelCard, ModelCardProgress } from 'lib/models/card'
+import type { IModelCard, ModelCardProgress } from 'lib/models/card'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
-import { IReceiverModelCard } from '~/lib/models/card/receiver'
-import {
+import type { IReceiverModelCard } from '~/lib/models/card/receiver'
+import type {
   IDirectSelectionSendFilter,
   ISendFilter,
   ISenderModelCard
 } from 'lib/models/card/send'
-import { ToastNotification } from '@speckle/ui-components'
-import { Nullable } from '@speckle/shared'
-import { HostAppError } from '~/lib/bridge/errorHandler'
-import { ConversionResult } from 'lib/conversions/conversionResult'
+import type { ToastNotification } from '@speckle/ui-components'
+import type { Nullable } from '@speckle/shared'
+import type { HostAppError } from '~/lib/bridge/errorHandler'
+import type { ConversionResult } from 'lib/conversions/conversionResult'
+import { defineStore } from 'pinia'
 
 export type ProjectModelGroup = {
   projectId: string
@@ -22,7 +23,6 @@ export type ProjectModelGroup = {
   receivers: IReceiverModelCard[]
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 export const useHostAppStore = defineStore('hostAppStore', () => {
   const app = useNuxtApp()
   const { trackEvent } = useMixpanel()

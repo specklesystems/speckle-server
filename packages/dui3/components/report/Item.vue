@@ -60,9 +60,9 @@ import {
   ChevronUpIcon,
   ChevronDownIcon
 } from '@heroicons/vue/24/solid'
-import { ConversionResult } from '~/lib/conversions/conversionResult'
+import type { ConversionResult } from '~/lib/conversions/conversionResult'
 import { useAccountStore } from '~/store/accounts'
-import { IModelCard } from 'lib/models/card'
+import type { IModelCard } from 'lib/models/card'
 
 const app = useNuxtApp()
 const accStore = useAccountStore()

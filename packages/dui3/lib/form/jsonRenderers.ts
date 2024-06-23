@@ -1,5 +1,5 @@
+import type { JsonFormsRendererRegistryEntry } from '@jsonforms/core'
 import {
-  JsonFormsRendererRegistryEntry,
   and,
   isBooleanControl,
   isDateControl,

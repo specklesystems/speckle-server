@@ -50,8 +50,9 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-import { SourceApps, SourceAppName } from '@speckle/shared'
-import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
+import type { SourceAppName } from '@speckle/shared'
+import { SourceApps } from '@speckle/shared'
+import type { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   version: VersionListItemFragment

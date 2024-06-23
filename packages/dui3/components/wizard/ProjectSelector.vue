@@ -86,14 +86,14 @@
 </template>
 <script setup lang="ts">
 import { PlusIcon } from '@heroicons/vue/20/solid'
-
-import { DUIAccount, useAccountStore } from '~/store/accounts'
+import type { DUIAccount } from '~/store/accounts'
+import { useAccountStore } from '~/store/accounts'
 import {
   createProjectMutation,
   projectsListQuery
 } from '~/lib/graphql/mutationsAndQueries'
 import { useMutation, useQuery, provideApolloClient } from '@vue/apollo-composable'
-import { ProjectListProjectItemFragment } from 'lib/common/generated/gql/graphql'
+import type { ProjectListProjectItemFragment } from 'lib/common/generated/gql/graphql'
 import { useForm } from 'vee-validate'
 import { ValidationHelpers } from '@speckle/ui-components'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'

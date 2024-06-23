@@ -80,14 +80,14 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
-
 import { useQuery } from '@vue/apollo-composable'
 import { ClockIcon } from '@heroicons/vue/24/solid'
-import { ModelCardNotification } from '~/lib/models/card/notification'
-import { ProjectModelGroup, useHostAppStore } from '~/store/hostApp'
-import { IReceiverModelCard } from '~/lib/models/card/receiver'
+import type { ModelCardNotification } from '~/lib/models/card/notification'
+import type { ProjectModelGroup } from '~/store/hostApp'
+import { useHostAppStore } from '~/store/hostApp'
+import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { versionDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
-import { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
+import type { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useInterval, watchOnce } from '@vueuse/core'
 
@@ -203,14 +203,14 @@ const { result: versionDetailsResult, refetch } = useQuery(
 const createdAgoUpdater = useInterval(200)
 
 const createdAgo = computed(() => {
-  createdAgoUpdater.value++
+  createdAgoUpdater.value
   return dayjs(versionDetailsResult.value?.project.model.version.createdAt).from(
     dayjs()
   )
 })
 
 const latestVersionCreatedAt = computed(() => {
-  createdAgoUpdater.value++
+  createdAgoUpdater.value
   return dayjs(props.modelCard.latestVersionCreatedAt).from(dayjs())
 })
 

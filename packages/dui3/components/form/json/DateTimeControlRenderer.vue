@@ -16,7 +16,7 @@
   />
 </template>
 <script setup lang="ts">
-import { ControlElement } from '@jsonforms/core'
+import type { ControlElement } from '@jsonforms/core'
 import { rendererProps, useJsonFormsControl } from '@jsonforms/vue'
 import { useJsonRendererBaseSetup } from '~/lib/form/composables/jsonRenderers'
 
@@ -41,7 +41,6 @@ const {
   onChangeValueConverter: (val) => toISOString(val as string)
 })
 
-// eslint-disable-next-line @typescript-eslint/restrict-template-expressions
 const modelValue = computed(() =>
   control.value.data
     ? (control.value.data as string).replace(zuluTimeSuffix, '')

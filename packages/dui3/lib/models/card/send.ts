@@ -1,5 +1,6 @@
-import { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
-import { IModelCard, ModelCard } from '~~/lib/models/card'
+import type { IDiscriminatedObject } from '~~/lib/bindings/definitions/common'
+import type { IModelCard } from '~~/lib/models/card'
+import { ModelCard } from '~~/lib/models/card'
 
 export interface ISenderModelCard extends IModelCard {
   sendFilter?: ISendFilter

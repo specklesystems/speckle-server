@@ -47,8 +47,9 @@
 <script setup lang="ts">
 import dayjs from 'dayjs'
 import { CubeTransparentIcon } from '@heroicons/vue/20/solid'
-import { SourceApps, SourceAppName } from '@speckle/shared'
-import { ModelListModelItemFragment } from '~/lib/common/generated/gql/graphql'
+import type { SourceAppName } from '@speckle/shared'
+import { SourceApps } from '@speckle/shared'
+import type { ModelListModelItemFragment } from '~/lib/common/generated/gql/graphql'
 
 const props = defineProps<{
   model: ModelListModelItemFragment
