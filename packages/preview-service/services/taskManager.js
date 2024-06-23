@@ -4,6 +4,9 @@ const metrics = require('../observability/prometheusMetrics')
 const { logger } = require('../observability/logging')
 const { getNextUnstartedObjectPreview } = require('../repositories/objectPreview')
 const { generateAndStore360Preview } = require('./360preview')
+const fs = require('fs')
+
+const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
 let shouldExit = false
 
@@ -14,6 +17,8 @@ async function repeatedlyPollForWork() {
 
   try {
     const task = await getNextUnstartedObjectPreview()
+
+    fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
 
     if (!task) {
       setTimeout(repeatedlyPollForWork, 1000)

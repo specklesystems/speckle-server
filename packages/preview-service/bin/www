@@ -4,10 +4,10 @@
  * Module dependencies.
  */
 
-const app = require('../app')
+const app = require('../server/app')
 const metricsApp = require('../observability/metricsApp')
 const http = require('http')
-const { startPreviewService } = require('../bg_service')
+const { startPreviewService } = require('../services/taskManager')
 const { serverLogger, logger } = require('../observability/logging')
 const { getAppPort, getHost, getMetricsPort } = require('../env')
 const { initPrometheusMetrics } = require('../observability/prometheusMetrics')

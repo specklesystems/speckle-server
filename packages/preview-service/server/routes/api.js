@@ -2,8 +2,8 @@
 
 const zlib = require('zlib')
 const express = require('express')
-const { getObjectsStream } = require('../repositories/objects')
-const { SpeckleObjectsStream } = require('../services/speckleObjectsStream')
+const { getObjectsStream } = require('../../repositories/objects')
+const { SpeckleObjectsStream } = require('../../services/speckleObjectsStream')
 const { pipeline, PassThrough } = require('stream')
 
 const router = express.Router()

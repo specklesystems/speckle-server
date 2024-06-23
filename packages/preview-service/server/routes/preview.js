@@ -1,10 +1,10 @@
 'use strict'
 
 const express = require('express')
-const { getScreenshot } = require('../services/screenshot')
-const { PuppeteerClient } = require('../clients/puppeteer')
-const { puppeteerDriver } = require('../scripts/puppeteerDriver')
-const { serviceUrl } = require('../env')
+const { getScreenshot } = require('../../services/screenshot')
+const { PuppeteerClient } = require('../../clients/puppeteer')
+const { puppeteerDriver } = require('../../scripts/puppeteerDriver')
+const { serviceUrl } = require('../../env')
 
 const router = express.Router()
 
