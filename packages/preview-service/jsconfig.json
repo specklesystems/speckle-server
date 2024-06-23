@@ -3,14 +3,13 @@
   "compilerOptions": {},
   "include": [
     "*.js",
-    "bg_service",
     "bin/www",
     "clients",
-    "render_page",
+    "observability",
+    "renderPage",
     "repositories",
-    "routes",
     "scripts",
-    "services",
-    "observability/prometheusMetrics.js"
+    "server",
+    "services"
   ]
 }

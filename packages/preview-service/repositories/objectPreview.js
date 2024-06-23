@@ -1,4 +1,4 @@
-const knex = require('../knex')
+const knex = require('./knex')
 
 async function getNextUnstartedObjectPreview() {
   const [maybeRow] = await knex.raw(`
@@ -38,7 +38,7 @@ async function notifyUpdate(streamId, objectId) {
 }
 
 module.exports = {
-  getAvailableObjectPreview: getNextUnstartedObjectPreview,
+  getNextUnstartedObjectPreview,
   notifyUpdate,
   updatePreviewMetadata
 }

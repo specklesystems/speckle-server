@@ -21,7 +21,7 @@ if (env === 'build') {
  */
 const config = {
   mode,
-  entry: path.resolve(__dirname + '/render_page/src/app.js'),
+  entry: path.resolve(__dirname + '/renderPage/src/app.js'),
   target: 'web',
   devtool: 'source-map',
   output: {
@@ -47,16 +47,16 @@ const config = {
     new CleanWebpackPlugin({ cleanStaleWebpackAssets: false }),
     new HtmlWebpackPlugin({
       title: 'Speckle Viewer Example',
-      template: 'render_page/src/example.html',
+      template: 'renderPage/src/example.html',
       filename: 'index.html',
-      favicon: 'render_page/src/favicon.ico'
+      favicon: 'renderPage/src/favicon.ico'
     })
   ],
   resolve: {
     modules: [
       path.resolve('../../node_modules'),
       path.resolve('./node_modules'),
-      path.resolve('.render_page/src')
+      path.resolve('.renderPage/src')
     ],
     extensions: ['.json', '.js']
   },

@@ -1,4 +1,4 @@
-const knex = require('../knex')
+const knex = require('./knex')
 
 const insertPreview = async (previewId, imgBuffer) => {
   await knex.raw(

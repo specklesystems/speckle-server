@@ -2,23 +2,13 @@
 
 const crypto = require('crypto')
 const fetch = require('node-fetch')
-const fs = require('fs')
 const metrics = require('../observability/prometheusMetrics')
 const joinImages = require('join-images')
-const { logger } = require('../observability/logging')
-const {
-  getAvailableObjectPreview,
-  updatePreviewMetadata,
-  notifyUpdate
-} = require('../repositories/objectPreview')
+const { updatePreviewMetadata, notifyUpdate } = require('../repositories/objectPreview')
 const { serviceUrl } = require('../env')
 const { insertPreview } = require('../repositories/previews')
 
-let shouldExit = false
-
-const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
-
-async function doTask(task) {
+async function generateAndStore360Preview(task) {
   const previewUrl = `${serviceUrl()}/preview/${task.streamId}/${task.objectId}`
 
   try {
@@ -59,62 +49,17 @@ async function doTask(task) {
     await insertPreview(fullImgId, buff)
     metadata['all'] = fullImgId
 
+    //FIXME it should be the task manager's responsibility to handle preview metadata
     await updatePreviewMetadata(metadata, task.streamId, task.objectId)
 
     await notifyUpdate(task.streamId, task.objectId)
   } catch (err) {
-    // Update preview metadata
+    //FIXME it should be the task manager's responsibility to handle preview metadata
     await updatePreviewMetadata({ err: err.toString() }, task.streamId, task.objectId)
     metrics.metricOperationErrors.labels('preview').inc()
   }
 }
 
-async function tick() {
-  if (shouldExit) {
-    process.exit(0)
-  }
-
-  try {
-    const task = await getAvailableObjectPreview()
-
-    fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
-
-    if (!task) {
-      setTimeout(tick, 1000)
-      return
-    }
-
-    const metricDurationEnd = metrics.metricDuration.startTimer()
-
-    await doTask(task)
-
-    metricDurationEnd({ op: 'preview' })
-
-    // Check for another task very soon
-    setTimeout(tick, 10)
-  } catch (err) {
-    metrics.metricOperationErrors.labels('main_loop').inc()
-    logger.error(err, 'Error executing task')
-    setTimeout(tick, 5000)
-  }
+module.exports = {
+  generateAndStore360Preview
 }
-
-async function startPreviewService() {
-  logger.info('📸 Started Preview Service')
-
-  process.on('SIGTERM', () => {
-    shouldExit = true
-    //TODO wait until current ongoing preview is complete
-    logger.info('Shutting down...')
-  })
-
-  process.on('SIGINT', () => {
-    shouldExit = true
-    //TODO wait until current ongoing preview is complete
-    logger.info('Shutting down...')
-  })
-
-  tick()
-}
-
-module.exports = { startPreviewService }
