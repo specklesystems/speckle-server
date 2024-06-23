@@ -1030,9 +1030,7 @@ preview_service:
     metricsPort: '9094'
 
   puppeteer:
-    ## @param preview_service.puppeteer.chromiumExecutablePath The path to the Chromium executable. If not set, defaults to '/usr/bin/google-chrome-stable'.
-    chromiumExecutablePath: ''
-    ## @param preview_service.puppeteer.userDataDirectory The path to the user data directory. If not set, defaults to '/tmp/puppeteer'.
+    ## @param preview_service.puppeteer.userDataDirectory The path to the user data directory. If not set, defaults to '/tmp/puppeteer'. This is mounted in the deployment as a volume with read-write access.
     userDataDirectory: ''
 
   requests:
