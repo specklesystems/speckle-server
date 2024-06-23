@@ -1,37 +1,25 @@
 'use strict'
 
 const crypto = require('crypto')
-const knex = require('../knex')
 const fetch = require('node-fetch')
 const fs = require('fs')
 const metrics = require('../observability/prometheusMetrics')
 const joinImages = require('join-images')
 const { logger } = require('../observability/logging')
+const {
+  getAvailableObjectPreview,
+  updatePreviewMetadata,
+  notifyUpdate
+} = require('../repositories/objectPreview')
+const { serviceUrl } = require('../env')
+const { insertPreview } = require('../repositories/previews')
 
 let shouldExit = false
 
 const HEALTHCHECK_FILE_PATH = '/tmp/last_successful_query'
 
-async function startTask() {
-  const { rows } = await knex.raw(`
-    UPDATE object_preview
-    SET 
-      "previewStatus" = 1,
-      "lastUpdate" = NOW()
-    FROM (
-      SELECT "streamId", "objectId" FROM object_preview
-      WHERE "previewStatus" = 0 OR ("previewStatus" = 1 AND "lastUpdate" < NOW() - INTERVAL '1 WEEK')
-      ORDER BY "priority" ASC, "lastUpdate" ASC
-      LIMIT 1
-    ) as task
-    WHERE object_preview."streamId" = task."streamId" AND object_preview."objectId" = task."objectId"
-    RETURNING object_preview."streamId", object_preview."objectId"
-  `)
-  return rows[0]
-}
-
 async function doTask(task) {
-  const previewUrl = `http://127.0.0.1:3001/preview/${task.streamId}/${task.objectId}`
+  const previewUrl = `${serviceUrl()}/preview/${task.streamId}/${task.objectId}`
 
   try {
     let res = await fetch(previewUrl)
@@ -50,10 +38,7 @@ async function doTask(task) {
 
       // Save first preview image
       if (i++ === 0) {
-        await knex.raw(
-          'INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING',
-          [previewId, imgBuffer]
-        )
+        await insertPreview(previewId, imgBuffer)
         metadata[angle] = previewId
       }
 
@@ -71,41 +56,15 @@ async function doTask(task) {
     const buff = await png.toBuffer()
     const fullImgId = crypto.createHash('md5').update(buff).digest('hex')
 
-    await knex.raw(
-      'INSERT INTO "previews" (id, data) VALUES (?, ?) ON CONFLICT DO NOTHING',
-      [fullImgId, buff]
-    )
+    await insertPreview(fullImgId, buff)
     metadata['all'] = fullImgId
 
-    // Update preview metadata
-    await knex.raw(
-      `
-      UPDATE object_preview
-      SET
-        "previewStatus" = 2,
-        "lastUpdate" = NOW(),
-        "preview" = ?
-      WHERE "streamId" = ? AND "objectId" = ?
-    `,
-      [metadata, task.streamId, task.objectId]
-    )
+    await updatePreviewMetadata(metadata, task.streamId, task.objectId)
 
-    await knex.raw(
-      `NOTIFY preview_generation_update, 'finished:${task.streamId}:${task.objectId}'`
-    )
+    await notifyUpdate(task.streamId, task.objectId)
   } catch (err) {
     // Update preview metadata
-    await knex.raw(
-      `
-      UPDATE object_preview
-      SET
-        "previewStatus" = 3,
-        "lastUpdate" = NOW(),
-        "preview" = ?
-      WHERE "streamId" = ? AND "objectId" = ?
-    `,
-      [{ err: err.toString() }, task.streamId, task.objectId]
-    )
+    await updatePreviewMetadata({ err: err.toString() }, task.streamId, task.objectId)
     metrics.metricOperationErrors.labels('preview').inc()
   }
 }
@@ -116,7 +75,7 @@ async function tick() {
   }
 
   try {
-    const task = await startTask()
+    const task = await getAvailableObjectPreview()
 
     fs.writeFile(HEALTHCHECK_FILE_PATH, '' + Date.now(), () => {})
 
@@ -145,11 +104,13 @@ async function startPreviewService() {
 
   process.on('SIGTERM', () => {
     shouldExit = true
+    //TODO wait until current ongoing preview is complete
     logger.info('Shutting down...')
   })
 
   process.on('SIGINT', () => {
     shouldExit = true
+    //TODO wait until current ongoing preview is complete
     logger.info('Shutting down...')
   })
 
