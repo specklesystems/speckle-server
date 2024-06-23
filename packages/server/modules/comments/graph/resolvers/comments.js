@@ -549,7 +549,7 @@ module.exports = {
                 return true
               }
             }
-          } catch (e) {
+          } catch {
             return false
           }
         }

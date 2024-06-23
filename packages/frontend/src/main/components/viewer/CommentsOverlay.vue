@@ -199,6 +199,7 @@ import {
 } from '@/main/lib/viewer/commit-object-viewer/stateManager'
 import { useEmbedViewerQuery } from '@/main/lib/viewer/commit-object-viewer/composables/embed'
 export default {
+  name: 'CommentsOverlay',
   components: {
     CommentThreadViewer: () => import('@/main/components/comments/CommentThreadViewer'),
     CommentsViewerNavbar: () =>

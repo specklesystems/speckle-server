@@ -1,18 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { MathUtils } from 'three'
-import { TreeNode, WorldTree } from '../../tree/WorldTree'
+import { type TreeNode, WorldTree } from '../../tree/WorldTree'
 import Logger from 'js-logger'
 import { NodeMap } from '../../tree/NodeMap'
+import type { SpeckleObject } from '../../..'
+import type ObjectLoader from '@speckle/objectloader'
 
 export type ConverterResultDelegate = () => Promise<void>
-export type ConverterNodeDelegate = (object, node) => Promise<void>
+export type SpeckleConverterNodeDelegate =
+  | ((object: SpeckleObject, node: TreeNode) => Promise<void>)
+  | null
 
 /**
  * Utility class providing some top level conversion methods.
  * Warning: HIC SVNT DRACONES.
  */
 export default class SpeckleConverter {
-  private objectLoader
+  private objectLoader: ObjectLoader
   private activePromises: number
   private maxChildrenPromises: number
   private spoofIDs = false
@@ -21,7 +25,7 @@ export default class SpeckleConverter {
   private instanceCounter = 0
 
   private readonly NodeConverterMapping: {
-    [name: string]: ConverterNodeDelegate
+    [name: string]: SpeckleConverterNodeDelegate
   } = {
     View3D: this.View3DToNode.bind(this),
     BlockInstance: this.BlockInstanceToNode.bind(this),
@@ -45,7 +49,7 @@ export default class SpeckleConverter {
 
   private readonly IgnoreNodes = ['Parameter']
 
-  constructor(objectLoader: unknown, tree: WorldTree) {
+  constructor(objectLoader: ObjectLoader, tree: WorldTree) {
     if (!objectLoader) {
       Logger.warn(
         'Converter initialized without a corresponding object loader. Any objects that include references will throw errors.'
@@ -67,9 +71,9 @@ export default class SpeckleConverter {
    */
   public async traverse(
     objectURL: string,
-    obj,
+    obj: SpeckleObject,
     callback: ConverterResultDelegate,
-    node: TreeNode = null
+    node: TreeNode | null = null
   ) {
     // Exit on primitives (string, ints, bools, bigints, etc.)
     if (obj === null || typeof obj !== 'object') return
@@ -126,7 +130,7 @@ export default class SpeckleConverter {
     // If we can convert it, we should invoke the respective conversion routine.
     if (this.directNodeConverterExists(obj)) {
       try {
-        await this.convertToNode(obj.data || obj, childNode)
+        await this.convertToNode(obj, childNode)
         await callback()
         return
       } catch (e) {
@@ -139,7 +143,7 @@ export default class SpeckleConverter {
       }
     }
 
-    const target = obj
+    const target: SpeckleObject = obj
 
     // Check if the object has a display value of sorts
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -167,7 +171,9 @@ export default class SpeckleConverter {
           await callback()
         } catch (e) {
           Logger.warn(
-            `(Traversing) Failed to convert obj with id: ${obj.id} — ${e.message}`
+            `(Traversing) Failed to convert obj with id: ${obj.id} — ${
+              (e as never)['message']
+            }`
           )
         }
       } else {
@@ -192,7 +198,7 @@ export default class SpeckleConverter {
         const elements = this.getElementsValue(obj)
         if (elements) {
           childrenConversionPromisses.push(
-            this.traverse(objectURL, elements, callback, childNode)
+            this.traverse(objectURL, elements as SpeckleObject, callback, childNode)
           )
           this.activePromises += childrenConversionPromisses.length
           await Promise.all(childrenConversionPromisses)
@@ -214,9 +220,19 @@ export default class SpeckleConverter {
       if (typeof target[prop] !== 'object' || target[prop] === null) continue
 
       if (this.activePromises >= this.maxChildrenPromises) {
-        await this.traverse(objectURL, target[prop], callback, childNode)
+        await this.traverse(
+          objectURL,
+          target[prop] as SpeckleObject,
+          callback,
+          childNode
+        )
       } else {
-        const childPromise = this.traverse(objectURL, target[prop], callback, childNode)
+        const childPromise = this.traverse(
+          objectURL,
+          target[prop] as SpeckleObject,
+          callback,
+          childNode
+        )
         childrenConversionPromisses.push(childPromise)
       }
     }
@@ -225,7 +241,7 @@ export default class SpeckleConverter {
     this.activePromises -= childrenConversionPromisses.length
   }
 
-  private getNodeId(obj) {
+  private getNodeId(obj: SpeckleObject): string {
     if (this.spoofIDs) return MathUtils.generateUUID()
     return obj.id
   }
@@ -235,19 +251,22 @@ export default class SpeckleConverter {
    * @param  {[type]} arr [description]
    * @return {[type]}     [description]
    */
-  private async dechunk(arr) {
+  private async dechunk(arr: Array<{ referencedId: string }>) {
     if (!arr || arr.length === 0) return arr
     // Handles pre-chunking objects, or arrs that have not been chunked
     if (!arr[0].referencedId) return arr
 
-    const chunked = []
+    const chunked: unknown[] = []
     for (const ref of arr) {
-      const real = await this.objectLoader.getObject(ref.referencedId)
+      const real: Record<string, unknown> = await this.objectLoader.getObject(
+        ref.referencedId
+      )
       chunked.push(real.data)
       // await this.asyncPause()
     }
 
-    const dechunked = [].concat(...chunked)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const dechunked = [].concat(...(chunked as any))
 
     return dechunked
   }
@@ -257,9 +276,11 @@ export default class SpeckleConverter {
    * @param  {[type]} obj [description]
    * @return {[type]}     [description]
    */
-  private async resolveReference(obj) {
+  private async resolveReference(obj: SpeckleObject): Promise<SpeckleObject> {
     if (obj.referencedId) {
-      const resolvedObj = await this.objectLoader.getObject(obj.referencedId)
+      const resolvedObj = (await this.objectLoader.getObject(
+        obj.referencedId
+      )) as SpeckleObject
       // this.asyncPause()
       return resolvedObj
     } else return obj
@@ -270,10 +291,8 @@ export default class SpeckleConverter {
    * @param  {[type]} obj [description]
    * @return {[type]}     [description]
    */
-  private getSpeckleType(obj): string {
-    let rawType = 'Base'
-    if (obj.data) rawType = obj.data.speckle_type ? obj.data.speckle_type : 'Base'
-    else rawType = obj.speckle_type ? obj.speckle_type : 'Base'
+  private getSpeckleType(obj: SpeckleObject): string {
+    const rawType = obj.speckle_type ? obj.speckle_type : 'Base'
 
     const lookup = this.typeLookupTable[rawType]
     if (lookup) return lookup
@@ -291,11 +310,9 @@ export default class SpeckleConverter {
     return typeRet
   }
 
-  private getSpeckleTypeChain(obj): string[] {
+  private getSpeckleTypeChain(obj: SpeckleObject): string[] {
     let type = ['Base']
-    if (obj.data)
-      type = obj.data.speckle_type ? obj.data.speckle_type.split(':').reverse() : type
-    else type = obj.speckle_type ? obj.speckle_type.split(':').reverse() : type
+    type = obj.speckle_type ? obj.speckle_type.split(':').reverse() : type
     type = type.map<string>((value: string) => {
       return value.split('.').reverse()[0]
     })
@@ -303,15 +320,16 @@ export default class SpeckleConverter {
     return type
   }
 
-  private directNodeConverterExists(obj) {
+  private directNodeConverterExists(obj: SpeckleObject) {
     return this.getSpeckleType(obj) in this.NodeConverterMapping
   }
 
-  private async convertToNode(obj, node) {
+  private async convertToNode(obj: SpeckleObject, node: TreeNode) {
     if (obj.referencedId) obj = await this.resolveReference(obj)
     try {
       if (this.directNodeConverterExists(obj)) {
-        return await this.NodeConverterMapping[this.getSpeckleType(obj)](obj, node)
+        const delegate = this.NodeConverterMapping[this.getSpeckleType(obj)]
+        if (delegate) return await delegate(obj, node)
       }
       return null
     } catch (e) {
@@ -320,7 +338,7 @@ export default class SpeckleConverter {
     }
   }
 
-  private getDisplayValue(obj) {
+  private getDisplayValue(obj: SpeckleObject) {
     const displayValue =
       obj['displayValue'] ||
       obj['@displayValue'] ||
@@ -340,11 +358,11 @@ export default class SpeckleConverter {
     return null
   }
 
-  private getElementsValue(obj) {
+  private getElementsValue(obj: SpeckleObject) {
     return obj['elements'] || obj['@elements']
   }
 
-  private getBlockDefinition(obj) {
+  private getBlockDefinition(obj: SpeckleObject) {
     return (
       obj['@blockDefinition'] ||
       obj['blockDefinition'] ||
@@ -353,12 +371,12 @@ export default class SpeckleConverter {
     )
   }
 
-  private getBlockDefinitionGeometry(obj) {
+  private getBlockDefinitionGeometry(obj: SpeckleObject) {
     return obj['@geometry'] || obj['geometry']
   }
 
   /** We're wasting a few milis here, but it is what it is */
-  private getCompoundId(baseId, counter) {
+  private getCompoundId(baseId: string, counter: number) {
     const index = baseId.indexOf(NodeMap.COMPOUND_ID_CHAR)
     if (index === -1) {
       return baseId + NodeMap.COMPOUND_ID_CHAR + counter
@@ -375,8 +393,12 @@ export default class SpeckleConverter {
    * 
     NODES
    */
-  private async View3DToNode(obj, node) {
+  private async View3DToNode(obj: SpeckleObject, _node: TreeNode) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     obj.origin.units = obj.units
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     obj.target.units = obj.units
   }
 
@@ -384,15 +406,19 @@ export default class SpeckleConverter {
    *  It's only looking for 'elements' and 'displayValues'
    *  I think it can be used for RevitInstances as well to replace it's current lookup, but I'm afraid to do it
    */
-  private async displayableLookup(obj, node, instanced) {
+  private async displayableLookup(
+    obj: SpeckleObject,
+    node: TreeNode,
+    instanced: boolean
+  ) {
     if (this.directNodeConverterExists(obj)) {
       await this.convertToNode(obj, node)
     } else {
       const displayValues = this.getDisplayValue(obj)
       const elements = this.getElementsValue(obj)
       const entries = [
-        ...(displayValues ? displayValues : []),
-        ...(elements ? elements : [])
+        ...(displayValues ? (displayValues as SpeckleObject[]) : []),
+        ...(elements ? (elements as SpeckleObject[]) : [])
       ]
       for (const entry of entries) {
         const value = await this.resolveReference(entry)
@@ -411,16 +437,16 @@ export default class SpeckleConverter {
   }
 
   private async parseInstanceDefinitionGeometry(
-    instanceObj,
-    defGeometry,
-    instanceNode
+    instanceObj: SpeckleObject,
+    defGeometry: SpeckleObject,
+    instanceNode: TreeNode
   ) {
     const transformNodeId = MathUtils.generateUUID()
     let transformData = null
     /** Legacy form of Transform */
     if (Array.isArray(instanceObj.transform)) {
       transformData = this.getEmptyTransformData(transformNodeId)
-      transformData.units = instanceObj.units
+      transformData.units = instanceObj.units as string
       transformData.matrix = instanceObj.transform
     } else {
       transformData = instanceObj.transform
@@ -447,7 +473,11 @@ export default class SpeckleConverter {
     await this.displayableLookup(defGeometry, childNode, true)
   }
 
-  private async parseInstanceElement(instanceObj, elementObj, instanceNode) {
+  private async parseInstanceElement(
+    _instanceObj: SpeckleObject,
+    elementObj: SpeckleObject,
+    instanceNode: TreeNode
+  ) {
     const childNode: TreeNode = this.tree.parse({
       id: this.getNodeId(elementObj),
       raw: elementObj,
@@ -458,43 +488,49 @@ export default class SpeckleConverter {
     await this.displayableLookup(elementObj, childNode, false)
   }
 
-  private async BlockInstanceToNode(obj, node) {
-    const definition = await this.resolveReference(this.getBlockDefinition(obj))
+  private async BlockInstanceToNode(obj: SpeckleObject, node: TreeNode) {
+    const definition: SpeckleObject = await this.resolveReference(
+      this.getBlockDefinition(obj) as SpeckleObject
+    )
     node.model.raw.definition = definition
-    for (const def of this.getBlockDefinitionGeometry(definition)) {
+    for (const def of this.getBlockDefinitionGeometry(definition) as SpeckleObject[]) {
       const ref = await this.resolveReference(def)
       await this.parseInstanceDefinitionGeometry(obj, ref, node)
     }
 
     const elements = this.getElementsValue(obj)
     if (elements) {
-      for (const element of elements) {
+      for (const element of elements as SpeckleObject[]) {
         const elementObj = await this.resolveReference(element)
-        this.parseInstanceElement(obj, elementObj, node)
+        void this.parseInstanceElement(obj, elementObj, node)
       }
     }
   }
 
-  private async RevitInstanceToNode(obj, node) {
-    const definition = await this.resolveReference(obj.definition)
+  private async RevitInstanceToNode(obj: SpeckleObject, node: TreeNode) {
+    const definition = await this.resolveReference(obj.definition as SpeckleObject)
     node.model.raw.definition = definition
     await this.parseInstanceDefinitionGeometry(obj, definition, node)
 
     const elements = this.getElementsValue(obj)
     if (elements) {
-      for (const element of elements) {
+      for (const element of elements as SpeckleObject[]) {
         const elementObj = await this.resolveReference(element)
-        this.parseInstanceElement(obj, elementObj, node)
+        void this.parseInstanceElement(obj, elementObj, node)
       }
     }
   }
 
-  private async PointcloudToNode(obj, node) {
+  private async PointcloudToNode(obj: SpeckleObject, node: TreeNode) {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     node.model.raw.points = await this.dechunk(obj.points)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     node.model.raw.colors = await this.dechunk(obj.colors)
   }
 
-  private async BrepToNode(obj, node) {
+  private async BrepToNode(obj: SpeckleObject, node: TreeNode) {
     try {
       if (!obj) return
 
@@ -503,7 +539,7 @@ export default class SpeckleConverter {
       if (Array.isArray(displayValue)) displayValue = displayValue[0] //Just take the first display value for now (not ideal)
       if (!displayValue) return
 
-      const ref = await this.resolveReference(displayValue)
+      const ref = await this.resolveReference(displayValue as SpeckleObject)
       const nestedNode: TreeNode = this.tree.parse({
         id: node.model.instanced
           ? this.getCompoundId(ref.id, this.instanceCounter++)
@@ -531,32 +567,37 @@ export default class SpeckleConverter {
     }
   }
 
-  private async MeshToNode(obj, node) {
+  private async MeshToNode(obj: SpeckleObject, node: TreeNode) {
     if (!obj) return
-    if (!obj.vertices || obj.vertices.length === 0) {
+    if (!obj.vertices || (obj.vertices as Array<number>).length === 0) {
       Logger.warn(
         `Object id ${obj.id} of type ${obj.speckle_type} has no vertex position data and will be ignored`
       )
       return
     }
-    if (!obj.faces || obj.faces.length === 0) {
+    if (!obj.faces || (obj.faces as Array<number>).length === 0) {
       Logger.warn(
         `Object id ${obj.id} of type ${obj.speckle_type} has no face data and will be ignored`
       )
       return
     }
-
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     node.model.raw.vertices = await this.dechunk(obj.vertices)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     node.model.raw.faces = await this.dechunk(obj.faces)
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    //@ts-ignore
     node.model.raw.colors = await this.dechunk(obj.colors)
   }
 
-  private async TextToNode(obj, node) {
+  private async TextToNode(_obj: SpeckleObject, _node: TreeNode) {
     return
   }
 
-  private async DimensionToNode(obj, node) {
-    const displayValues = [...this.getDisplayValue(obj)]
+  private async DimensionToNode(obj: SpeckleObject, node: TreeNode) {
+    const displayValues = [...(this.getDisplayValue(obj) as SpeckleObject[])]
     for (const displayValue of displayValues) {
       const childNode: TreeNode = this.tree.parse({
         id: this.getNodeId(displayValue),
@@ -598,28 +639,34 @@ export default class SpeckleConverter {
     await this.convertToNode(textObj, textNode)
   }
 
-  private async PointToNode(obj, node) {
+  private async PointToNode(_obj: SpeckleObject, _node: TreeNode) {
     return
   }
-  private async LineToNode(obj, node) {
-    return
-  }
-
-  private async PolylineToNode(obj, node) {
-    node.model.raw.value = await this.dechunk(obj.value)
-  }
-
-  private async BoxToNode(obj, node) {
+  private async LineToNode(_obj: SpeckleObject, _node: TreeNode) {
     return
   }
 
-  private async PolycurveToNode(obj, node) {
+  private async PolylineToNode(obj: SpeckleObject, node: TreeNode) {
+    node.model.raw.value = await this.dechunk(
+      obj.value as Array<{ referencedId: string }>
+    )
+  }
+
+  private async BoxToNode(_obj: SpeckleObject, _node: TreeNode) {
+    return
+  }
+
+  private async PolycurveToNode(obj: SpeckleObject, node: TreeNode) {
     node.model.nestedNodes = []
-    for (let i = 0; i < obj.segments.length; i++) {
-      let element = obj.segments[i]
+    for (
+      let i = 0;
+      i < (obj as unknown as { segments: SpeckleObject[] }).segments.length;
+      i++
+    ) {
+      let element = (obj as unknown as { segments: SpeckleObject[] }).segments[i]
       /** Not a big fan of this... */
       if (!this.directNodeConverterExists(element)) {
-        element = this.getDisplayValue(element)
+        element = this.getDisplayValue(element) as SpeckleObject
         if (element.referencedId) {
           element = await this.resolveReference(element)
         }
@@ -636,8 +683,8 @@ export default class SpeckleConverter {
     }
   }
 
-  private async CurveToNode(obj, node) {
-    let displayValue = this.getDisplayValue(obj)
+  private async CurveToNode(obj: SpeckleObject, node: TreeNode) {
+    let displayValue: SpeckleObject = this.getDisplayValue(obj) as SpeckleObject
     if (!displayValue) {
       Logger.warn(
         `Object ${obj.id} of type ${obj.speckle_type} has no display value and will be ignored`
@@ -645,7 +692,7 @@ export default class SpeckleConverter {
       return
     }
     node.model.nestedNodes = []
-    displayValue = await this.resolveReference(obj.displayValue)
+    displayValue = await this.resolveReference(obj.displayValue as SpeckleObject)
     displayValue.units = displayValue.units || obj.units
     const nestedNode: TreeNode = this.tree.parse({
       id: this.getNodeId(displayValue),
@@ -658,15 +705,15 @@ export default class SpeckleConverter {
     node.model.nestedNodes.push(nestedNode)
   }
 
-  private async CircleToNode(obj, node) {
+  private async CircleToNode(_obj: SpeckleObject, _node: TreeNode) {
     return
   }
 
-  private async ArcToNode(obj, node) {
+  private async ArcToNode(_obj: SpeckleObject, _node: TreeNode) {
     return
   }
 
-  private async EllipseToNode(obj, node) {
+  private async EllipseToNode(_obj: SpeckleObject, _node: TreeNode) {
     return
   }
 }

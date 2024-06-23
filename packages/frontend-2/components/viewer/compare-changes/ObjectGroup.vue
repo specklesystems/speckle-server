@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
     :class="`bg-foundation-2 shadow h-24 flex items-center justify-center flex-col rounded-md min-w-0 cursor-pointer

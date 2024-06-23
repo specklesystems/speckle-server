@@ -1,10 +1,12 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div>
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
-    <div
-      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md transition-all text-foreground cursor-pointer ${
+    <button
+      :class="`flex group pl-1 justify-between items-center w-full max-w-full overflow-hidden select-none space-x-2 rounded border-l-4 hover:bg-primary-muted hover:shadow-md text-foreground cursor-pointer ${
         isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'
       }`"
+      :title="item.value"
       @click="setSelection()"
     >
       <div class="flex gap-1 items-center flex-shrink truncate text-xs sm:text-sm">
@@ -14,7 +16,7 @@
           :style="`background-color: #${color};`"
         ></span>
         <span class="truncate">
-          {{ item.value.split('.').reverse()[0] || item.value || 'No Name' }}
+          {{ item.value || 'No Name' }}
         </span>
         <div class="flex">
           <span
@@ -56,7 +58,7 @@
         <FunnelIcon v-else class="h-3 w-3" />
         <!-- </button> -->
       </div>
-    </div>
+    </button>
     <!-- Debugging info -->
     <!-- <div v-if="true" class="text-xs text-foreground-2">
       selected: {{ isSelected }}; isHidden {{ isHidden }}; isIsolated: {{ isIsolated }}
@@ -95,8 +97,6 @@ const availableTargetIds = computed(() => {
   if (isolatedObjectIds.value.length)
     targets = props.item.ids.filter((id) => isolatedObjectIds.value.includes(id))
 
-  if (hiddenObjectIds.value.length)
-    targets = props.item.ids.filter((id) => !hiddenObjectIds.value.includes(id))
   return targets
 })
 

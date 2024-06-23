@@ -38,7 +38,8 @@ export function usePreviewImageBlob(
   const isLoadingPanorama = ref(false)
   const shouldLoadPanorama = ref(false)
   const basePanoramaUrl = computed(() => unref(previewUrl) + '/all')
-  const isEnabled = computed(() => (process.server ? true : unref(enabled)))
+  const isEnabled = computed(() => (import.meta.server ? true : unref(enabled)))
+  const cacheBust = ref(0)
 
   const ret = {
     previewUrl: computed(() => url.value),
@@ -64,7 +65,7 @@ export function usePreviewImageBlob(
     })
   }
 
-  if (process.server) return ret
+  if (import.meta.server) return ret
 
   const previewUrlPath = computed(() => {
     const basePreviewUrl = unref(previewUrl)
@@ -118,8 +119,7 @@ export function usePreviewImageBlob(
     }
 
     if (regenerate) {
-      processBasePreviewUrl(unref(previewUrl))
-      if (shouldLoadPanorama) processPanoramaPreviewUrl()
+      regeneratePreviews()
     }
   })
 
@@ -134,8 +134,10 @@ export function usePreviewImageBlob(
       }
 
       let blobUrl: string
-      if (enableDirectPreviews || process.server) {
-        blobUrl = basePreviewUrl
+      if (enableDirectPreviews || import.meta.server) {
+        const blobUrlConfig = new URL(basePreviewUrl)
+        blobUrlConfig.searchParams.set('v', cacheBust.value.toString())
+        blobUrl = blobUrlConfig.toString()
       } else {
         const res = await fetch(basePreviewUrl, {
           headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
@@ -150,7 +152,7 @@ export function usePreviewImageBlob(
       }
 
       // Load img in browser first, before we set the url
-      if (process.client) {
+      if (import.meta.client) {
         const img = new Image()
         img.src = blobUrl
         await new Promise((resolve, reject) => {
@@ -180,8 +182,10 @@ export function usePreviewImageBlob(
       }
 
       let blobUrl: string
-      if (enableDirectPreviews || process.server) {
-        blobUrl = basePanoramaUrl.value
+      if (enableDirectPreviews || import.meta.server) {
+        const blobUrlConfig = new URL(basePreviewUrl)
+        blobUrlConfig.searchParams.set('v', cacheBust.value.toString())
+        blobUrl = blobUrlConfig.toString()
       } else {
         const res = await fetch(basePanoramaUrl.value, {
           headers: authToken.value ? { Authorization: `Bearer ${authToken.value}` } : {}
@@ -203,7 +207,7 @@ export function usePreviewImageBlob(
       }
 
       // Load img in browser first, before we set the url
-      if (process.client) {
+      if (import.meta.client) {
         const img = new Image()
         img.src = blobUrl
         await new Promise((resolve, reject) => {
@@ -224,6 +228,12 @@ export function usePreviewImageBlob(
     }
   }
 
+  const regeneratePreviews = (basePreviewUrl?: string) => {
+    cacheBust.value++
+    processBasePreviewUrl(basePreviewUrl || unref(previewUrl))
+    if (shouldLoadPanorama) processPanoramaPreviewUrl()
+  }
+
   watch(shouldLoadPanorama, (newVal) => {
     if (newVal) processPanoramaPreviewUrl()
   })
@@ -231,8 +241,7 @@ export function usePreviewImageBlob(
   watch(
     () => unref(previewUrl),
     (newVal) => {
-      processBasePreviewUrl(newVal)
-      if (shouldLoadPanorama.value) processPanoramaPreviewUrl()
+      regeneratePreviews(newVal || undefined)
     },
     { immediate: true }
   )
@@ -242,8 +251,7 @@ export function usePreviewImageBlob(
     (newVal) => {
       if (!newVal) return
 
-      processBasePreviewUrl(unref(previewUrl))
-      if (shouldLoadPanorama.value) processPanoramaPreviewUrl()
+      regeneratePreviews()
     }
   )
 

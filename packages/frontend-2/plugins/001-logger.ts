@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import type { Optional } from '@speckle/shared'
 import { get, omit } from 'lodash-es'
 import type { SetRequired } from 'type-fest'
@@ -75,11 +74,13 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   }
 
   // Set up logger
-  let logger: ReturnType<typeof import('@speckle/shared').Observability.getLogger>
+  let logger: ReturnType<
+    typeof import('@speckle/shared/dist/esm/observability/index').getLogger
+  >
   const errorHandlers: AbstractErrorHandler[] = []
   const unhandledErrorHandlers: AbstractUnhandledErrorHandler[] = []
 
-  if (process.server) {
+  if (import.meta.server) {
     const { buildLogger, enableDynamicBindings, serializeRequest } = await import(
       '~/server/lib/core/helpers/observability'
     )
@@ -133,6 +134,10 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     const collectCoreInfo = () => ({
       ...collectBrowserInfo(),
       ...collectMainInfo({ isBrowser: true })
+    })
+
+    logger = buildFakePinoLogger({
+      consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined
     })
 
     // SEQ Browser integration
@@ -194,24 +199,15 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         })
       }
       errorHandlers.push(errorLogger)
-
-      logger = buildFakePinoLogger({
-        consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined
-      })
       logger.debug('Set up seq ingestion...')
-    } else {
-      // No seq integration, fallback to basic console logging
-      logger = buildFakePinoLogger({
-        consoleBindings: logCsrEmitProps ? collectCoreInfo : undefined
-      })
     }
   }
 
   // Register seq transports, if any
   if (errorHandlers.length) {
     registerErrorTransport({
-      onError: (params) => {
-        errorHandlers.forEach((handler) => handler(params))
+      onError: (...params) => {
+        errorHandlers.forEach((handler) => handler(...params))
       },
       onUnhandledError: (event) => {
         unhandledErrorHandlers.forEach((handler) => handler(event))
@@ -219,24 +215,24 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     })
   }
 
-  // Global error handler - handle all transports
+  // Global error handler - handle all transports besides the core pino/console.log logger
   const transports = useGetErrorLoggingTransports()
   let serverFatalError: Optional<AbstractErrorHandlerParams> = undefined
   logger = enableCustomErrorHandling({
     logger,
-    onError: (params) => {
+    onError: (params, helpers) => {
       const { otherData } = params
 
-      if (process.server && otherData?.isAppError) {
+      if (import.meta.server && otherData?.isAppError) {
         serverFatalError = params
       }
 
-      transports.forEach((handler) => handler.onError(params))
+      transports.forEach((handler) => handler.onError(params, helpers))
     }
   })
 
   // Unhandled error handler
-  if (process.client && window) {
+  if (import.meta.client && window) {
     const unhandledHandler = (event: ErrorEvent | PromiseRejectionEvent) => {
       const handlers = transports.filter(
         (t): t is SetRequired<typeof t, 'onUnhandledError'> => !!t.onUnhandledError
@@ -265,7 +261,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
     logger.error(err, 'Unhandled error in routing', {
       to: to.path,
       from: from?.path,
-      isAppError: !!process.server
+      isAppError: !!import.meta.server
     })
   })
 
@@ -280,7 +276,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
   })
 
   // Hydrate server fatal error to CSR
-  if (process.server) {
+  if (import.meta.server) {
     nuxtApp.hook('app:rendered', () => {
       let serializableError: Optional<AbstractErrorHandlerParams> = undefined
       try {
@@ -320,7 +316,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
 
         invokeTransportsWithPayload(serverFatalError)
 
-        if (process.dev) {
+        if (import.meta.dev) {
           // intentionally skipping error pipeline:
           // eslint-disable-next-line no-console
           console.error('Fatal error occurred on server:', serverFatalError)

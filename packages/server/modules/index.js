@@ -7,6 +7,8 @@ const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
 const { scalarResolvers } = require('./core/graph/scalars')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
 const { moduleLogger } = require('@/logging/logging')
+const { addMocksToSchema } = require('@graphql-tools/mock')
+const { getFeatureFlags } = require('@/modules/shared/helpers/envHelper')
 
 /**
  * Cached speckle module requires
@@ -39,30 +41,39 @@ function autoloadFromDirectory(dirPath) {
   return results
 }
 
+const getEnabledModuleNames = () => {
+  const { FF_AUTOMATE_MODULE_ENABLED, FF_GENDOAI_MODULE_ENABLED } = getFeatureFlags()
+  const moduleNames = [
+    'accessrequests',
+    'activitystream',
+    'apiexplorer',
+    'auth',
+    'blobstorage',
+    'comments',
+    'core',
+    'cross-server-sync',
+    'emails',
+    'fileuploads',
+    'notifications',
+    'previews',
+    'pwdreset',
+    'serverinvites',
+    'stats',
+    'webhooks'
+  ]
+
+  if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
+  if (FF_GENDOAI_MODULE_ENABLED) moduleNames.push('gendo')
+  return moduleNames
+}
+
 async function getSpeckleModules() {
   if (loadedModules.length) return loadedModules
 
-  const moduleDirs = [
-    './core',
-    './auth',
-    './apiexplorer',
-    './emails',
-    './pwdreset',
-    './serverinvites',
-    './previews',
-    './fileuploads',
-    './comments',
-    './blobstorage',
-    './notifications',
-    './activitystream',
-    './accessrequests',
-    './webhooks',
-    './cross-server-sync',
-    './automations'
-  ]
+  const moduleNames = getEnabledModuleNames()
 
-  for (const dir of moduleDirs) {
-    loadedModules.push(require(dir))
+  for (const dir of moduleNames) {
+    loadedModules.push(require(`./${dir}`))
   }
 
   return loadedModules
@@ -96,6 +107,8 @@ exports.shutdown = async () => {
 }
 
 /**
+ * GQL components will be loaded even from disabled modules to avoid schema complexity, so ensure
+ * that resolvers return valid values even if the module is disabled
  * @returns {Pick<import('apollo-server-express').Config, 'resolvers' | 'typeDefs'> & { directiveBuilders: Record<string, import('@/modules/core/graph/helpers/directiveHelper').GraphqlDirectiveBuilder>}}
  */
 const graphComponents = () => {
@@ -145,7 +158,12 @@ const graphComponents = () => {
   return { resolvers, typeDefs, directiveBuilders }
 }
 
-exports.graphSchema = () => {
+/**
+ *
+ * @param {import('@/modules/mocks').AppMocksConfig | undefined} [mocksConfig]
+ * @returns
+ */
+exports.graphSchema = (mocksConfig) => {
   const { resolvers, typeDefs, directiveBuilders } = graphComponents()
 
   /** @type {string[]} */
@@ -163,6 +181,19 @@ exports.graphSchema = () => {
     resolvers,
     typeDefs: [...directiveTypedefs, ...typeDefs]
   })
+
+  // Add mocks before directives intentionally (we still want auth checks to work for real)
+  if (mocksConfig) {
+    const { mockEntireSchema, mocks, resolvers } = mocksConfig
+    if (mocks || mockEntireSchema) {
+      schema = addMocksToSchema({
+        schema,
+        mocks: !mocks || mocks === true ? {} : mocks,
+        preserveResolvers: !mockEntireSchema,
+        resolvers
+      })
+    }
+  }
 
   // Apply directives
   for (const schemaTransformer of directiveSchemaTransformers) {

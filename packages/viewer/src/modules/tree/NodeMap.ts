@@ -1,10 +1,9 @@
 import Logger from 'js-logger'
-import { TreeNode } from './WorldTree'
+import { type TreeNode } from './WorldTree'
 
 export class NodeMap {
   public static readonly COMPOUND_ID_CHAR = '~'
 
-  private subtreeRoot: TreeNode
   private all: { [id: string]: TreeNode } = {}
   public instances: { [id: string]: { [id: string]: TreeNode } } = {}
 
@@ -13,7 +12,6 @@ export class NodeMap {
   }
 
   public constructor(subtreeRoot: TreeNode) {
-    this.subtreeRoot = subtreeRoot
     this.registerNode(subtreeRoot)
   }
 
@@ -43,7 +41,7 @@ export class NodeMap {
     return true
   }
 
-  public getNodeById(id: string): TreeNode[] {
+  public getNodeById(id: string): TreeNode[] | null {
     if (id.includes(NodeMap.COMPOUND_ID_CHAR)) {
       const baseId = id.substring(0, id.indexOf(NodeMap.COMPOUND_ID_CHAR))
       if (this.instances[baseId]) {
@@ -68,7 +66,7 @@ export class NodeMap {
     return this.all[id]
   }
 
-  public hasId(id: string) {
+  public hasId(id: string): boolean {
     if (id.includes(NodeMap.COMPOUND_ID_CHAR)) {
       const baseId = id.substring(0, id.indexOf(NodeMap.COMPOUND_ID_CHAR))
       if (this.instances[baseId]) {
@@ -83,9 +81,10 @@ export class NodeMap {
     if (this.instances[id]) {
       return true
     }
+    return false
   }
 
-  private registerInstance(node: TreeNode) {
+  private registerInstance(node: TreeNode): void {
     const baseId = node.model.id.substring(
       0,
       node.model.id.indexOf(NodeMap.COMPOUND_ID_CHAR)
@@ -101,7 +100,7 @@ export class NodeMap {
   }
 
   public purge() {
-    this.all = null
-    this.instances = null
+    this.all = {}
+    this.instances = {}
   }
 }

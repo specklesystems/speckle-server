@@ -1,13 +1,10 @@
-/* eslint-disable @typescript-eslint/restrict-template-expressions */
 import {
-  Viewer,
   DefaultViewerParams,
-  WorldTree,
   ViewerEvent,
   DefaultLightConfiguration,
   LegacyViewer,
-  VisualDiffMode,
-  MeasurementType
+  MeasurementType,
+  FilteringExtension
 } from '@speckle/viewer'
 import type {
   FilteringState,
@@ -15,7 +12,10 @@ import type {
   SunLightConfiguration,
   SpeckleView,
   MeasurementOptions,
-  DiffResult
+  DiffResult,
+  Viewer,
+  WorldTree,
+  VisualDiffMode
 } from '@speckle/viewer'
 import type { MaybeRef } from '@vueuse/shared'
 import { inject, ref, provide } from 'vue'
@@ -49,8 +49,9 @@ import { nanoid } from 'nanoid'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import type { CommentBubbleModel } from '~~/lib/viewer/composables/commentBubbles'
 import { setupUrlHashState } from '~~/lib/viewer/composables/setup/urlHashState'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
-import { Box3, Vector3 } from 'three'
+import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
+import type { Box3 } from 'three'
+import { Vector3 } from 'three'
 import { writableAsyncComputed } from '~~/lib/common/composables/async'
 import type { AsyncWritableComputedRef } from '~~/lib/common/composables/async'
 import { setupUiDiffState } from '~~/lib/viewer/composables/setup/diff'
@@ -58,13 +59,13 @@ import type { DiffStateCommand } from '~~/lib/viewer/composables/setup/diff'
 import { useDiffUtilities, useFilterUtilities } from '~~/lib/viewer/composables/ui'
 import { flatten, reduce } from 'lodash-es'
 import { setupViewerCommentBubbles } from '~~/lib/viewer/composables/setup/comments'
-import { FilteringExtension } from '@speckle/viewer'
 import {
   InjectableViewerStateKey,
   useSetupViewerScope
 } from '~/lib/viewer/composables/setup/core'
 import { useSynchronizedCookie } from '~~/lib/common/composables/reactiveCookie'
 import { buildManualPromise } from '@speckle/ui-components'
+import { PassReader } from '../extensions/PassReader'
 
 export type LoadedModel = NonNullable<
   Get<ViewerLoadedResourcesQuery, 'project.models.items[0]'>
@@ -110,11 +111,18 @@ export type InjectableViewerState = Readonly<{
      * Various values that represent the current Viewer instance state
      */
     metadata: {
+      /**
+       * Based on a shallow ref
+       */
       worldTree: ComputedRef<Optional<WorldTree>>
       availableFilters: ComputedRef<Optional<PropertyInfo[]>>
       views: ComputedRef<SpeckleView[]>
       filteringState: ComputedRef<Optional<FilteringState>>
     }
+    /**
+     * Whether the Viewer has finished doing the initial object loading
+     */
+    hasDoneInitialLoad: Ref<boolean>
   }
   /**
    * Loaded/loadable resources
@@ -309,7 +317,7 @@ const GlobalViewerDataKey = Symbol('GlobalViewerData')
 
 function createViewerDataBuilder(params: { viewerDebug: boolean }) {
   return () => {
-    if (process.server)
+    if (import.meta.server)
       // we don't want to use nullable checks everywhere, so the nicer route here ends
       // up being telling TS to ignore the undefineds - you shouldn't use any of this in SSR anyway
       return undefined as unknown as CachedViewerState
@@ -322,8 +330,9 @@ function createViewerDataBuilder(params: { viewerDebug: boolean }) {
 
     const viewer = new LegacyViewer(container, {
       ...DefaultViewerParams,
-      verbose: !!(process.client && params.viewerDebug)
+      verbose: !!(import.meta.client && params.viewerDebug)
     })
+    viewer.createExtension(PassReader)
     const initPromise = viewer.init()
 
     return {
@@ -393,11 +402,12 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
     createViewerDataBuilder({ viewerDebug })
   ) || { initPromise: Promise.resolve() }
   initPromise.then(() => (isInitialized.value = true))
+  const hasDoneInitialLoad = ref(false)
 
   return {
     projectId,
     sessionId,
-    viewer: process.server
+    viewer: import.meta.server
       ? ({
           instance: undefined,
           container: undefined,
@@ -410,7 +420,8 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
             availableFilters: computed(() => undefined),
             views: computed(() => []),
             filteringState: computed(() => undefined)
-          }
+          },
+          hasDoneInitialLoad
         } as unknown as InitialSetupState['viewer'])
       : {
           instance,
@@ -419,7 +430,8 @@ function setupInitialState(params: UseSetupViewerParams): InitialSetupState {
             promise: initPromise,
             ref: computed(() => isInitialized.value)
           },
-          metadata: setupViewerMetadata({ viewer: instance })
+          metadata: setupViewerMetadata({ viewer: instance }),
+          hasDoneInitialLoad
         },
     urlHashState: setupUrlHashState()
   }
@@ -534,7 +546,7 @@ function setupResponseResourceItems(
     }
   } = state
 
-  const initLoadDone = ref(process.server ? false : true)
+  const initLoadDone = ref(import.meta.server ? false : true)
   const {
     result: resolvedResourcesResult,
     variables: resourceItemsQueryVariables,
@@ -614,8 +626,9 @@ function setupResponseResourceItems(
       const modelId = item.modelId
       const objectId = item.objectId
 
-      // In case we want to go back to 1 resource per model:
-      // if (modelId && encounteredModels.has(modelId)) continue
+      // Uncommenting the following line resolved model duplication issues in the Model Panel
+      // without affecting diffing functionality. If future diffing problems arise, revisit this.
+      if (modelId && encounteredModels.has(modelId)) continue
       if (encounteredObjects.has(objectId)) continue
 
       finalItems.push(item)
@@ -656,7 +669,7 @@ function setupResponseResourceData(
   } = state
   const { resourceItems, resourceItemsLoaded } = resourceItemsData
 
-  const initLoadDone = ref(process.server ? false : true)
+  const initLoadDone = ref(import.meta.server ? false : true)
   const objects = computed(() =>
     resourceItems.value.filter((i) => !i.modelId && !i.versionId)
   )
@@ -705,7 +718,7 @@ function setupResponseResourceData(
   })
 
   const serverResourcesLoadedPromise = buildManualPromise<void>()
-  if (process.server) {
+  if (import.meta.server) {
     watch(
       () => resourceItemsLoaded.value,
       async (newVal, oldVal) => {

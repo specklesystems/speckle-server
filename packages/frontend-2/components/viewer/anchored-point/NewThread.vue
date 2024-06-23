@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-autofocus -->
 <template>
   <div
-    v-if="modelValue.isVisible"
+    v-if="shouldShowThreadBubble"
     class="absolute pointer-events-auto"
     :style="{
       ...modelValue.style,
@@ -35,7 +35,7 @@
         <div
           v-if="modelValue.isExpanded && canPostComment"
           ref="threadContainer"
-          class="sm:absolute min-w-[200px] hover:bg-foundation transition bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm sm:rounded-lg shadow-md"
+          class="sm:absolute min-w-[200px] hover:bg-foundation bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm sm:rounded-lg shadow-md"
         >
           <div class="relative">
             <ViewerCommentsEditor
@@ -48,30 +48,29 @@
               @submit="() => onSubmit()"
               @keydown="onKeyDownHandler"
             />
-            <div class="w-full flex justify-end p-2 space-x-2">
-              <div class="space-x-2">
-                <FormButton
-                  v-tippy="'Attach'"
-                  :icon-left="PaperClipIcon"
-                  hide-text
-                  text
-                  :disabled="isPostingNewThread"
-                  @click="trackAttachAndOpenFilePicker()"
-                />
-
-                <FormButton
-                  :icon-left="PaperAirplaneIcon"
-                  hide-text
-                  :loading="isPostingNewThread"
-                  @click="() => onSubmit()"
-                />
-              </div>
+            <div class="w-full flex p-2 justify-between">
+              <FormButton
+                v-tippy="'Attach'"
+                :icon-left="PaperClipIcon"
+                hide-text
+                text
+                class="sm:px-1"
+                :disabled="isPostingNewThread"
+                @click="trackAttachAndOpenFilePicker()"
+              />
+              <FormButton
+                :icon-left="PaperAirplaneIcon"
+                hide-text
+                :loading="isPostingNewThread"
+                @click="() => onSubmit()"
+              />
             </div>
           </div>
         </div>
       </ViewerCommentsPortalOrDiv>
     </div>
   </div>
+  <div v-else></div>
 </template>
 <script setup lang="ts">
 import { PlusIcon, PaperAirplaneIcon, PaperClipIcon } from '@heroicons/vue/24/solid'
@@ -86,7 +85,7 @@ import {
   convertCommentEditorValueToInput
 } from '~~/lib/viewer/helpers/comments'
 import { useMixpanel } from '~~/lib/core/composables/mp'
-import { useThreadUtilities } from '~~/lib/viewer/composables/ui'
+import { useThreadUtilities, useSelectionUtilities } from '~~/lib/viewer/composables/ui'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 
 const { isEnabled: isEmbedEnabled } = useEmbed()
@@ -116,12 +115,16 @@ const isPostingNewThread = ref(false)
 //   width: 320
 // })
 const createThread = useSubmitComment()
+const { isLoggedIn } = useActiveUser()
+const { objects } = useSelectionUtilities()
 
 const onThreadClick = () => {
   const newIsExpanded = !props.modelValue.isExpanded
 
-  if (!props.canPostComment) {
-    emit('login')
+  if (!isLoggedIn.value || !props.canPostComment) {
+    if (!isLoggedIn.value) {
+      emit('login')
+    }
     return
   }
 
@@ -174,6 +177,10 @@ const trackAttachAndOpenFilePicker = () => {
   editor.value?.openFilePicker()
   mp.track('Comment Action', { type: 'action', name: 'attach' })
 }
+
+const shouldShowThreadBubble = computed(() => {
+  return props.modelValue.isVisible && objects.value.length > 0
+})
 
 onKeyDown('Escape', () => {
   if (props.modelValue.isExpanded) {

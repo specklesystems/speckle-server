@@ -3,11 +3,6 @@
     <Menu as="div" class="ml-1 flex items-center z-100">
       <MenuButton v-slot="{ open }">
         <span class="sr-only">Open user menu</span>
-
-        <!-- <UserAvatar v-if="!open" :user="user" hover-effect />
-        <UserAvatar v-else hover-effect>
-          <XMarkIcon class="w-5 h-5" />
-        </UserAvatar> -->
         <button
           class="rounded-full transition hover:bg-primary hover:text-foreground-on-primary p-1 shadow-md"
         >
@@ -68,23 +63,11 @@
 <script setup lang="ts">
 import { XMarkIcon, Bars3Icon } from '@heroicons/vue/20/solid'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import { useAccountStore } from '~/store/accounts'
 import { useConfigStore } from '~/store/config'
-
-const accountStore = useAccountStore()
-const { defaultAccount } = storeToRefs(accountStore)
 
 const uiConfigStore = useConfigStore()
 const { isDarkTheme, hasConfigBindings } = storeToRefs(uiConfigStore)
 const { toggleTheme } = uiConfigStore
 
 const { $showDevTools } = useNuxtApp()
-
-const user = computed(() => {
-  if (!defaultAccount.value) return undefined
-  return {
-    name: defaultAccount.value?.accountInfo.userInfo.name,
-    avatar: defaultAccount.value?.accountInfo.userInfo.avatar
-  }
-})
 </script>

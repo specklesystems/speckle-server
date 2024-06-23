@@ -1,5 +1,5 @@
-import { MockedApolloProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedApolloProvider'
-import { MockedRouteParameters } from '~~/lib/fake-nuxt-env/utils/mockedRouter'
+import type { MockedApolloProviderOptions } from '~~/lib/fake-nuxt-env/components/MockedApolloProvider'
+import type { MockedRouteParameters } from '~~/lib/fake-nuxt-env/utils/mockedRouter'
 
 declare module '@storybook/types' {
   interface Parameters {

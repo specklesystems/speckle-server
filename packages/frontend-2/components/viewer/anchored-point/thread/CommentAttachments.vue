@@ -1,5 +1,5 @@
 <template>
-  <div class="flex flex-col w-full items-start">
+  <div class="flex flex-col w-full items-start pt-2">
     <CommonTextLink
       v-for="attachment in attachments.text.attachments || []"
       :key="attachment.id"
@@ -7,7 +7,7 @@
       size="sm"
       @click="() => onAttachmentClick(attachment)"
     >
-      <span class="truncate relative text-xs">
+      <span class="truncate relative text-xs pl-1">
         {{ attachment.fileName }}
       </span>
     </CommonTextLink>
@@ -56,12 +56,13 @@ import {
 } from '@heroicons/vue/24/solid'
 import type { Get } from 'type-fest'
 import { ensureError } from '@speckle/shared'
-import type { Nullable } from '@speckle/shared'
+import type { Nullable, Optional } from '@speckle/shared'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ThreadCommentAttachmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { prettyFileSize } from '~~/lib/core/helpers/file'
 import { useFileDownload } from '~~/lib/core/composables/fileUpload'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import type { LayoutDialogButton } from '@speckle/ui-components'
 
 type AttachmentFile = NonNullable<
   Get<ThreadCommentAttachmentFragment, 'text.attachments[0]'>
@@ -142,15 +143,15 @@ const onDownloadClick = async () => {
   }
 }
 
-const dialogButtons = computed(() => {
+const dialogButtons = computed((): Optional<LayoutDialogButton[]> => {
   if (!dialogAttachment.value) return undefined
 
-  const button = {
+  const button: LayoutDialogButton = {
     text: dialogAttachment.value.fileSize
       ? prettyFileSize(dialogAttachment.value.fileSize)
       : 'Download',
     props: {
-      color: 'primary',
+      color: 'default',
       fullWidth: true,
       iconLeft: ArrowDownTrayIcon
     },

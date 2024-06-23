@@ -1,26 +1,26 @@
 <template>
   <div>
-    <div v-if="project">
-      <ProjectPageModelsHeader
-        v-model:selected-apps="selectedApps"
-        v-model:selected-members="selectedMembers"
-        v-model:grid-or-list="gridOrList"
-        v-model:search="search"
-        :project="project"
-        :disabled="loading"
-        class="z-[1] relative"
-      />
-      <ProjectPageModelsResults
-        v-model:grid-or-list="gridOrList"
-        v-model:search="search"
-        v-model:loading="loading"
-        :source-apps="selectedApps"
-        :contributors="selectedMembers"
-        :project="project"
-        class="z-[0] relative mt-8"
-        @clear-search="clearSearch"
-      />
-    </div>
+    <ProjectPageModelsHeader
+      v-model:selected-apps="selectedApps"
+      v-model:selected-members="selectedMembers"
+      v-model:grid-or-list="gridOrList"
+      v-model:search="search"
+      :project="project"
+      :project-id="projectId"
+      :disabled="loading"
+      class="z-[1] relative"
+    />
+    <ProjectPageModelsResults
+      v-model:grid-or-list="gridOrList"
+      v-model:search="search"
+      v-model:loading="loading"
+      :source-apps="selectedApps"
+      :contributors="selectedMembers"
+      :project="project"
+      :project-id="projectId"
+      class="z-[0] relative mt-8"
+      @clear-search="clearSearch"
+    />
   </div>
 </template>
 <script setup lang="ts">

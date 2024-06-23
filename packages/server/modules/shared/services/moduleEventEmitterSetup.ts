@@ -43,7 +43,7 @@ export function initializeModuleEventEmitter<P extends Record<string, unknown>>(
      * the part of code that triggers this emit() call.
      */
     emit: async <K extends keyof P & string>(eventName: K, payload: P[K]) => {
-      return await emitter.emitAsync(eventName, payload)
+      return (await emitter.emitAsync(eventName, payload)) as unknown[]
     },
 
     /**

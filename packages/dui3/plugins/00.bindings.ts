@@ -1,47 +1,40 @@
-import { IRawBridge } from '~/lib/bridge/definitions'
+import type { IRawBridge } from '~/lib/bridge/definitions'
 import { GenericBridge } from '~/lib/bridge/generic-v2'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
-import { BaseBridge } from '~~/lib/bridge/base'
+import type { BaseBridge } from '~~/lib/bridge/base'
 
+import type { IBasicConnectorBinding } from '~/lib/bindings/definitions/IBasicConnectorBinding'
+import type { IAccountBinding } from '~/lib/bindings/definitions/IAccountBinding'
 import {
-  IAccountBinding,
   IAccountBindingKey,
   MockedAccountBinding
 } from '~/lib/bindings/definitions/IAccountBinding'
 
+import type { ITestBinding } from '~/lib/bindings/definitions/ITestBinding'
 import {
-  ITestBinding,
   ITestBindingKey,
   MockedTestBinding
 } from '~/lib/bindings/definitions/ITestBinding'
 
+import type { IConfigBinding } from '~/lib/bindings/definitions/IConfigBinding'
 import {
-  IConfigBinding,
   IConfigBindingKey,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   MockedConfigBinding
 } from '~/lib/bindings/definitions/IConfigBinding'
 
 import {
-  IBasicConnectorBinding,
   IBasicConnectorBindingKey,
   MockedBaseBinding
 } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 
-import {
-  ISendBindingKey,
-  ISendBinding,
-  MockedSendBinding
-} from '~/lib/bindings/definitions/ISendBinding'
-import {
-  IReceiveBindingKey,
-  IReceiveBinding,
-  MockedReceiveBinding
-} from '~/lib/bindings/definitions/IReceiveBinding'
+import type { ISendBinding } from '~/lib/bindings/definitions/ISendBinding'
+import { ISendBindingKey } from '~/lib/bindings/definitions/ISendBinding'
+import type { IReceiveBinding } from '~/lib/bindings/definitions/IReceiveBinding'
+import { IReceiveBindingKey } from '~/lib/bindings/definitions/IReceiveBinding'
 
+import type { ISelectionBinding } from '~/lib/bindings/definitions/ISelectionBinding'
 import {
   ISelectionBindingKey,
-  ISelectionBinding,
   MockedSelectionBinding
 } from '~/lib/bindings/definitions/ISelectionBinding'
 

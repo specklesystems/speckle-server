@@ -1,7 +1,10 @@
 /* eslint-disable @typescript-eslint/require-await */
 
 import { BaseBridge } from '~~/lib/bridge/base'
-import { IBinding, IBindingSharedEvents } from '~~/lib/bindings/definitions/IBinding'
+import type {
+  IBinding,
+  IBindingSharedEvents
+} from '~~/lib/bindings/definitions/IBinding'
 
 /**
  * The name under which this binding will be registered.
@@ -36,9 +39,6 @@ export type ComplexType = {
 }
 
 export class MockedTestBinding extends BaseBridge {
-  constructor() {
-    super()
-  }
   public async sayHi(name: string, count: number, sayHelloNotHi: boolean) {
     return `Hello from mocked bindings. Args: name = ${name}, count = ${count}, sayHelloNotHi = ${sayHelloNotHi.toString()}.`
   }

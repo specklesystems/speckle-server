@@ -1,5 +1,5 @@
 import { defineEventHandler, fromNodeMiddleware } from 'h3'
-import { IncomingMessage, ServerResponse } from 'http'
+import type { IncomingMessage, ServerResponse } from 'http'
 import { REQUEST_ID_HEADER } from '~~/server/lib/core/helpers/constants'
 
 export const getRequestIdMiddleware = (

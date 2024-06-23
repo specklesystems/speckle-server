@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
@@ -93,7 +94,6 @@ const open = (id: string) => {
 
 const formattedDate = computed(() => dayjs(props.thread.createdAt).from(dayjs()))
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const isThreadResourceLoaded = computed(() => {
   const thread = props.thread
   const loadedResources = resourceItems.value

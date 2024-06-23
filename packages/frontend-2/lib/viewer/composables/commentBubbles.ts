@@ -84,8 +84,7 @@ export function useViewerNewThreadBubble(params: {
       state.style = {
         ...state.style,
         ...result.style,
-        opacity: state.isOccluded ? '0.8' : '1.0',
-        transition: 'all 0.1s ease'
+        opacity: state.isOccluded ? '0.8' : '1.0'
       }
     }
   })
@@ -208,7 +207,7 @@ export function useViewerCommentBubblesProjection(params: {
 }
 
 export function useViewerOpenedThreadUpdateEmitter() {
-  if (process.server) return
+  if (import.meta.server) return
 
   const {
     urlHashState: { focusedThreadId }
@@ -226,7 +225,7 @@ export function useViewerOpenedThreadUpdateEmitter() {
  * Set up auto-focusing on opened thread and setting/unsetting viewer state
  */
 export function useViewerThreadTracking() {
-  if (process.server) return
+  if (import.meta.server) return
 
   const applyState = useApplySerializedState()
   const { serialize: serializeState } = useStateSerialization()
@@ -319,7 +318,6 @@ export function useExpandedThreadResponsiveLocation(params: {
         : leftForShowingOnLeftSide,
     transformOrigin: 'center center',
     transform: 'translateY(-50%)',
-    transition: 'all 0.1s ease',
     width: `${width}px`
   }))
 

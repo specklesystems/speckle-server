@@ -1,8 +1,9 @@
-/* eslint-disable @typescript-eslint/require-await */
-
 import { BaseBridge } from '~~/lib/bridge/base'
-import { IBinding, IBindingSharedEvents } from '~~/lib/bindings/definitions/IBinding'
-import { IModelCard, IModelCardSharedEvents } from '~~/lib/models/card'
+import type {
+  IBinding,
+  IBindingSharedEvents
+} from '~~/lib/bindings/definitions/IBinding'
+import type { IModelCard, IModelCardSharedEvents } from '~~/lib/models/card'
 
 export const IBasicConnectorBindingKey = 'baseBinding'
 

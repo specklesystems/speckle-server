@@ -1,7 +1,9 @@
 import Logger from 'js-logger'
 import {
   BackSide,
+  Box3,
   Box3Helper,
+  BufferAttribute,
   BufferGeometry,
   Color,
   DataTexture,
@@ -10,13 +12,16 @@ import {
   Material,
   Matrix4,
   Mesh,
+  Object3D,
   Ray,
   Raycaster,
   RGBAFormat,
+  SkinnedMesh,
   Sphere,
   Triangle,
   Vector2,
-  Vector3
+  Vector3,
+  type Intersection
 } from 'three'
 import { BatchObject } from '../batching/BatchObject'
 import Materials from '../materials/Materials'
@@ -57,23 +62,23 @@ export enum TransformStorage {
 export default class SpeckleMesh extends Mesh {
   public static MeshBatchNumber = 0
 
-  private tas: TopLevelAccelerationStructure = null
-  private batchMaterial: Material = null
+  private tas: TopLevelAccelerationStructure
+  private batchMaterial: Material
   private materialCache: { [id: string]: Material } = {}
   private materialStack: Array<Material | Material[]> = []
   private materialCacheLUT: { [id: string]: number } = {}
 
-  private _batchObjects: BatchObject[]
-  private transformsBuffer: Float32Array = null
-  private transformStorage: TransformStorage
+  private _batchObjects!: BatchObject[]
+  private transformsBuffer: Float32Array | undefined = undefined
+  private transformStorage!: TransformStorage
 
-  public transformsTextureUniform: DataTexture = null
-  public transformsArrayUniforms: Matrix4[] = null
+  public transformsTextureUniform: DataTexture
+  public transformsArrayUniforms: Matrix4[] | null = null
 
   private debugBatchBox = false
-  private boxHelper: Box3Helper
+  private boxHelper!: Box3Helper
 
-  public get TAS() {
+  public get TAS(): TopLevelAccelerationStructure {
     return this.tas
   }
 
@@ -134,17 +139,23 @@ export default class SpeckleMesh extends Mesh {
       this.materialCacheLUT[clone.id] = material.id
       cachedMaterial = clone
       this.updateMaterialTransformsUniform(this.materialCache[material.id])
-    } else if (copy || material['needsCopy'] || cachedMaterial['needsCopy']) {
+    } else if (
+      copy ||
+      (material as never)['needsCopy'] ||
+      (cachedMaterial as never)['needsCopy']
+    ) {
       Materials.fastCopy(material, cachedMaterial)
     }
     return cachedMaterial
   }
 
   public restoreMaterial() {
-    if (this.materialStack.length > 0) this.material = this.materialStack.pop()
+    if (this.materialStack.length > 0)
+      this.material = this.materialStack.pop() as Material | Material[]
   }
 
   public updateMaterialTransformsUniform(material: Material) {
+    if (!material.defines) material.defines = {}
     material.defines['TRANSFORM_STORAGE'] = this.transformStorage
 
     if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
@@ -165,6 +176,7 @@ export default class SpeckleMesh extends Mesh {
   }
 
   public updateTransformsUniform() {
+    if (!this.transformsBuffer) return
     let needsUpdate = false
     if (this.transformStorage === TransformStorage.VERTEX_TEXTURE) {
       for (let k = 0; k < this._batchObjects.length; k++) {
@@ -196,6 +208,7 @@ export default class SpeckleMesh extends Mesh {
       }
       this.transformsTextureUniform.needsUpdate = needsUpdate
     } else {
+      if (!this.transformsArrayUniforms) return
       for (let k = 0; k < this._batchObjects.length; k++) {
         const batchObject = this._batchObjects[k]
         if (!(needsUpdate ||= batchObject.transformDirty)) continue
@@ -223,12 +236,17 @@ export default class SpeckleMesh extends Mesh {
     if (this.tas && needsUpdate) {
       this.tas.refit()
       this.tas.getBoundingBox(this.tas.bounds)
+      /** Caterint to typescript
+       *  There is no unniverse where the geomery bounding box/sphere is null at this point
+       */
+      if (!this.geometry.boundingBox) this.geometry.boundingBox = new Box3()
       this.geometry.boundingBox.copy(this.tas.bounds)
+      if (!this.geometry.boundingSphere) this.geometry.boundingSphere = new Sphere()
       this.geometry.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
       if (!this.boxHelper && this.debugBatchBox) {
         this.boxHelper = new Box3Helper(this.tas.bounds, new Color(0xff0000))
         this.boxHelper.layers.set(ObjectLayers.PROPS)
-        this.parent.add(this.boxHelper)
+        if (this.parent) this.parent.add(this.boxHelper)
       }
     }
   }
@@ -258,13 +276,17 @@ export default class SpeckleMesh extends Mesh {
         )
         return null
       }
-      return this.material[group.materialIndex]
+      return this.material[group.materialIndex as number]
     }
   }
 
   // converts the given BVH raycast intersection to align with the three.js raycast
   // structure (include object, world space distance and point).
-  private convertRaycastIntersect(hit, object, raycaster) {
+  private convertRaycastIntersect(
+    hit: Intersection | null,
+    object: Object3D,
+    raycaster: Raycaster
+  ) {
     if (hit === null) {
       return null
     }
@@ -280,7 +302,7 @@ export default class SpeckleMesh extends Mesh {
     }
   }
 
-  raycast(raycaster: Raycaster, intersects) {
+  raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
     if (this.tas) {
       if (this.batchMaterial === undefined) return
 
@@ -316,7 +338,7 @@ export default class SpeckleMesh extends Mesh {
 
       if (geometry.boundingSphere === null) geometry.computeBoundingSphere()
 
-      _sphere.copy(geometry.boundingSphere)
+      _sphere.copy(geometry.boundingSphere || new Sphere())
       _sphere.applyMatrix4(matrixWorld)
 
       if (raycaster.ray.intersectsSphere(_sphere) === false) return
@@ -336,13 +358,13 @@ export default class SpeckleMesh extends Mesh {
 
       const index = geometry.index
       /** Stored high component if RTE is being used. Regular positions otherwise */
-      const position = geometry.attributes.position
+      const position = geometry.attributes.position as BufferAttribute
       /** Stored low component if RTE is being used. undefined otherwise */
-      const positionLow = geometry.attributes['position_low']
-      const morphPosition = geometry.morphAttributes.position
+      const positionLow = geometry.attributes['position_low'] as BufferAttribute
+      const morphPosition = geometry.morphAttributes.position as Array<BufferAttribute>
       const morphTargetsRelative = geometry.morphTargetsRelative
-      const uv = geometry.attributes.uv
-      const uv2 = geometry.attributes.uv2
+      const uv = geometry.attributes.uv as BufferAttribute
+      const uv2 = geometry.attributes.uv2 as BufferAttribute
       const groups = geometry.groups
       const drawRange = geometry.drawRange
 
@@ -352,6 +374,10 @@ export default class SpeckleMesh extends Mesh {
         if (Array.isArray(material)) {
           for (let i = 0, il = groups.length; i < il; i++) {
             const group = groups[i]
+            if (!group.materialIndex) {
+              Logger.error(`Group with no material, skipping!`)
+              continue
+            }
             const groupMaterial = material[group.materialIndex]
 
             const start = Math.max(group.start, drawRange.start)
@@ -383,7 +409,8 @@ export default class SpeckleMesh extends Mesh {
 
               if (intersection) {
                 intersection.faceIndex = Math.floor(j / 3) // triangle number in indexed buffer semantics
-                intersection.face.materialIndex = group.materialIndex
+                if (intersection.face)
+                  intersection.face.materialIndex = group.materialIndex
                 intersects.push(intersection)
               }
             }
@@ -425,7 +452,7 @@ export default class SpeckleMesh extends Mesh {
         if (Array.isArray(material)) {
           for (let i = 0, il = groups.length; i < il; i++) {
             const group = groups[i]
-            const groupMaterial = material[group.materialIndex]
+            const groupMaterial = material[group.materialIndex as number]
 
             const start = Math.max(group.start, drawRange.start)
             const end = Math.min(
@@ -456,7 +483,8 @@ export default class SpeckleMesh extends Mesh {
 
               if (intersection) {
                 intersection.faceIndex = Math.floor(j / 3) // triangle number in non-indexed buffer semantics
-                intersection.face.materialIndex = group.materialIndex
+                if (intersection.face)
+                  intersection.face.materialIndex = group.materialIndex as number
                 intersects.push(intersection)
               }
             }
@@ -497,7 +525,16 @@ export default class SpeckleMesh extends Mesh {
   }
 }
 
-function checkIntersection(object, material, raycaster, ray, pA, pB, pC, point) {
+function checkIntersection(
+  object: Object3D,
+  material: Material,
+  raycaster: Raycaster,
+  ray: Ray,
+  pA: Vector3,
+  pB: Vector3,
+  pC: Vector3,
+  point: Vector3
+): (Intersection & { uv2: Vector2 | undefined }) | null {
   let intersect
 
   if (material.side === BackSide) {
@@ -529,19 +566,19 @@ function checkIntersection(object, material, raycaster, ray, pA, pB, pC, point) 
  *  hold the default `position` attribute values
  */
 function checkBufferGeometryIntersection(
-  object,
-  material,
-  raycaster,
-  ray,
-  positionLow,
-  positionHigh,
-  morphPosition,
-  morphTargetsRelative,
-  uv,
-  uv2,
-  a,
-  b,
-  c
+  object: Object3D,
+  material: Material,
+  raycaster: Raycaster,
+  ray: Ray,
+  positionLow: BufferAttribute,
+  positionHigh: BufferAttribute,
+  morphPosition: Array<BufferAttribute>,
+  morphTargetsRelative: boolean,
+  uv: BufferAttribute,
+  uv2: BufferAttribute,
+  a: number,
+  b: number,
+  c: number
 ) {
   _vA.fromBufferAttribute(positionHigh, a)
   _vB.fromBufferAttribute(positionHigh, b)
@@ -552,7 +589,7 @@ function checkBufferGeometryIntersection(
     _vC.add(_vTemp.fromBufferAttribute(positionLow, c))
   }
 
-  const morphInfluences = object.morphTargetInfluences
+  const morphInfluences = (object as SkinnedMesh).morphTargetInfluences
 
   if (morphPosition && morphInfluences) {
     _morphA.set(0, 0, 0)
@@ -585,10 +622,10 @@ function checkBufferGeometryIntersection(
     _vC.add(_morphC)
   }
 
-  if (object.isSkinnedMesh) {
-    object.boneTransform(a, _vA)
-    object.boneTransform(b, _vB)
-    object.boneTransform(c, _vC)
+  if ((object as SkinnedMesh).isSkinnedMesh) {
+    ;(object as SkinnedMesh).boneTransform(a, _vA)
+    ;(object as SkinnedMesh).boneTransform(b, _vB)
+    ;(object as SkinnedMesh).boneTransform(c, _vC)
   }
 
   const intersection = checkIntersection(

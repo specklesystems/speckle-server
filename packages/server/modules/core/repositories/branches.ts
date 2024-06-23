@@ -13,7 +13,7 @@ import {
 } from '@/modules/shared/helpers/dbHelper'
 import crs from 'crypto-random-string'
 import { Knex } from 'knex'
-import { clamp, last, trim } from 'lodash'
+import { clamp, isUndefined, last, trim } from 'lodash'
 import { getMaximumProjectModelsPerPage } from '@/modules/shared/helpers/envHelper'
 
 export const generateBranchId = () => crs({ length: 10 })
@@ -101,7 +101,16 @@ export async function insertBranches(
   return await q
 }
 
-export async function getStreamBranchCounts(streamIds: string[]) {
+export async function getStreamBranchCounts(
+  streamIds: string[],
+  options?: Partial<{
+    /**
+     * In FE2 we skip main branches in our queries, if they don't have any commits
+     */
+    skipEmptyMain: boolean
+  }>
+) {
+  const { skipEmptyMain } = options || {}
   if (!streamIds?.length) return []
 
   const q = Branches.knex()
@@ -110,12 +119,32 @@ export async function getStreamBranchCounts(streamIds: string[]) {
     .count()
     .groupBy(Branches.col.streamId)
 
+  if (skipEmptyMain) {
+    q.andWhere((w) => {
+      w.whereNot(Branches.col.name, 'main').orWhere(
+        0,
+        '<',
+        BranchCommits.knex()
+          .count()
+          .where(BranchCommits.col.branchId, knex.raw(Branches.col.id))
+      )
+    })
+  }
+
   const results = (await q) as { streamId: string; count: string }[]
   return results.map((r) => ({ ...r, count: parseInt(r.count) }))
 }
 
-export async function getStreamBranchCount(streamId: string) {
-  const [res] = await getStreamBranchCounts([streamId])
+export async function getStreamBranchCount(
+  streamId: string,
+  options?: Partial<{
+    /**
+     * In FE2 we skip main branches in our queries, if they don't have any commits
+     */
+    skipEmptyMain: boolean
+  }>
+) {
+  const [res] = await getStreamBranchCounts([streamId], options)
   return res?.count || 0
 }
 
@@ -139,8 +168,15 @@ export async function getBranchCommitCount(branchId: string) {
   return res?.count || 0
 }
 
-export async function getBranchLatestCommits(branchIds?: string[], streamId?: string) {
+export async function getBranchLatestCommits(
+  branchIds?: string[],
+  streamId?: string,
+  options?: Partial<{
+    limit: number
+  }>
+) {
   if (!branchIds?.length && !streamId) return []
+  const { limit } = options || {}
 
   const q = Branches.knex()
     .select<Array<CommitRecord & { branchId: string }>>([
@@ -161,6 +197,10 @@ export async function getBranchLatestCommits(branchIds?: string[], streamId?: st
 
   if (streamId?.length) {
     q.where(Branches.col.streamId, streamId)
+  }
+
+  if (!isUndefined(limit)) {
+    q.limit(limit)
   }
 
   return await q
@@ -406,19 +446,23 @@ function getModelTreeItemsBaseQuery(
   projectId: string,
   options?: Partial<{ filterOutEmptyMain: boolean; parentModelName: string }>
 ) {
-  const cleanInput = (input: string | null | undefined) => {
-    const clean = (input || '').toLowerCase()
-    const trimmed = trim(trim(clean), '/')
-    return trimmed
+  const cleanInput = (
+    input: string | null | undefined,
+    options?: Partial<{ escapeRegexp: boolean }>
+  ) => {
+    let clean = (input || '').toLowerCase()
+    clean = trim(trim(clean), '/')
+    clean = options?.escapeRegexp ? clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : clean
+    return clean
   }
 
   const { filterOutEmptyMain = true, parentModelName } = options || {}
-  const cleanModelName = cleanInput(parentModelName)
+  const cleanModelName = cleanInput(parentModelName, { escapeRegexp: true })
   const branchPartPattern = `[^/]+` // regexp for each branch part between slashes
 
   const regExp = cleanModelName.length
     ? // only direct children of parentModelName
-      `^${cleanModelName.replace('/', '\\/')}\\/(${branchPartPattern})`
+      `^${cleanModelName}\\/(${branchPartPattern})`
     : // only first branch part (top level item)
       `^${branchPartPattern}`
 
@@ -470,7 +514,7 @@ function getModelTreeItemsBaseQuery(
 
   return {
     query: finalQuery,
-    parentModelName: cleanModelName
+    parentModelName: cleanInput(parentModelName)
   }
 }
 
@@ -598,5 +642,14 @@ export async function markCommitBranchUpdated(commitId: string) {
     })
     .update(Branches.withoutTablePrefix.col.updatedAt, new Date(), '*')
   const [branch] = (await q) as BranchRecord[]
+  return branch
+}
+
+export async function getLatestStreamBranch(streamId: string) {
+  const q = Branches.knex<BranchRecord[]>()
+    .where(Branches.col.streamId, streamId)
+    .orderBy(Branches.col.updatedAt, 'desc')
+    .limit(1)
+  const [branch] = await q
   return branch
 }

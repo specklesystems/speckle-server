@@ -1,9 +1,23 @@
 import { Scopes } from '@/modules/core/helpers/mainConstants'
-import { speckleAutomateUrl, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  speckleAutomateUrl,
+  getServerOrigin,
+  getFeatureFlags
+} from '@/modules/shared/helpers/envHelper'
+
+export enum DefaultAppIds {
+  Web = 'spklwebapp',
+  Explorer = 'explorer',
+  DesktopManager = 'sdm',
+  Connector = 'sca',
+  Excel = 'spklexcel',
+  PowerBI = 'spklpwerbi',
+  Automate = 'spklautoma'
+}
 
 const SpeckleWebApp = {
-  id: 'spklwebapp',
-  secret: 'spklwebapp',
+  id: DefaultAppIds.Web,
+  secret: DefaultAppIds.Web,
   name: 'Speckle Web Manager',
   description:
     'The Speckle Web Manager is your one-stop place to manage and coordinate your data.',
@@ -14,8 +28,8 @@ const SpeckleWebApp = {
 }
 
 const SpeckleApiExplorer = {
-  id: 'explorer',
-  secret: 'explorer',
+  id: DefaultAppIds.Explorer,
+  secret: DefaultAppIds.Explorer,
   name: 'Speckle Explorer',
   description: 'GraphiQL Playground with authentication.',
   trustByDefault: true,
@@ -25,8 +39,8 @@ const SpeckleApiExplorer = {
 }
 
 const SpeckleDesktopApp = {
-  id: 'sdm',
-  secret: 'sdm',
+  id: DefaultAppIds.DesktopManager,
+  secret: DefaultAppIds.DesktopManager,
   name: 'Speckle Desktop Manager',
   description:
     'Manages local installations of Speckle connectors, kits and everything else.',
@@ -44,8 +58,8 @@ const SpeckleDesktopApp = {
 }
 
 const SpeckleConnectorApp = {
-  id: 'sca',
-  secret: 'sca',
+  id: DefaultAppIds.Connector,
+  secret: DefaultAppIds.Connector,
   name: 'Speckle Connector',
   description: 'A Speckle Desktop Connectors.',
   trustByDefault: true,
@@ -62,8 +76,8 @@ const SpeckleConnectorApp = {
 }
 
 const SpeckleExcel = {
-  id: 'spklexcel',
-  secret: 'spklexcel',
+  id: DefaultAppIds.Excel,
+  secret: DefaultAppIds.Excel,
   name: 'Speckle Connector For Excel',
   description:
     'The Speckle Connector For Excel. For more info, check the docs here: https://speckle.guide/user/excel.',
@@ -81,8 +95,8 @@ const SpeckleExcel = {
 }
 
 const SpecklePowerBi = {
-  id: 'spklpwerbi',
-  secret: 'spklpwerbi',
+  id: DefaultAppIds.PowerBI,
+  secret: DefaultAppIds.PowerBI,
   name: 'Speckle Connector For PowerBI',
   description:
     'The Speckle Connector For Excel. For more info check the docs here: https://speckle.guide/user/powerbi.html.',
@@ -99,8 +113,8 @@ const SpecklePowerBi = {
 }
 
 const SpeckleAutomate = {
-  id: 'spklautoma',
-  secret: 'spklautoma',
+  id: DefaultAppIds.Automate,
+  secret: DefaultAppIds.Automate,
   name: 'Speckle Automate',
   description: 'Our automation platform',
   trustByDefault: true,
@@ -113,7 +127,9 @@ const SpeckleAutomate = {
     Scopes.Tokens.Write,
     Scopes.Streams.Read,
     Scopes.Streams.Write,
-    Scopes.Automate.ReportResults
+    ...(getFeatureFlags().FF_AUTOMATE_MODULE_ENABLED
+      ? [Scopes.Automate.ReportResults]
+      : [])
   ]
 }
 

@@ -1,6 +1,5 @@
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { difference, flatten, isEqual, uniq } from 'lodash-es'
-import { ViewerEvent, VisualDiffMode } from '@speckle/viewer'
+import { ViewerEvent, VisualDiffMode, CameraController } from '@speckle/viewer'
 import type {
   PropertyInfo,
   StringPropertyInfo,
@@ -44,14 +43,15 @@ import { getTargetObjectIds } from '~~/lib/object-sidebar/helpers'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
 import { SafeLocalStorage, type Nullable } from '@speckle/shared'
-import { useCameraUtilities } from '~~/lib/viewer/composables/ui'
+import {
+  useCameraUtilities,
+  useMeasurementUtilities
+} from '~~/lib/viewer/composables/ui'
 import { onKeyStroke, watchTriggerable } from '@vueuse/core'
 import { setupDebugMode } from '~~/lib/viewer/composables/setup/dev'
-import { CameraController } from '@speckle/viewer'
 import type { Reference } from '@apollo/client'
 import type { Modifier } from '@apollo/client/cache'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
-import { useMeasurementUtilities } from '~~/lib/viewer/composables/ui'
 
 function useViewerIsBusyEventHandler() {
   const state = useInjectedViewerState()
@@ -72,7 +72,7 @@ function useViewerIsBusyEventHandler() {
  * Automatically loads & unloads objects into the viewer depending on the global URL resource identifier state
  */
 function useViewerObjectAutoLoading() {
-  if (process.server) return
+  if (import.meta.server) return
 
   const disableViewerCache =
     SafeLocalStorage.get('FE2_FORCE_DISABLE_VIEWER_CACHE') === 'true'
@@ -82,7 +82,8 @@ function useViewerObjectAutoLoading() {
     projectId,
     viewer: {
       instance: viewer,
-      init: { ref: isInitialized }
+      init: { ref: isInitialized },
+      hasDoneInitialLoad
     },
     resources: {
       response: { resourceItems }
@@ -112,21 +113,24 @@ function useViewerObjectAutoLoading() {
     uniq(resourceItems.map((i) => i.objectId))
 
   watch(
-    () => <const>[resourceItems.value, isInitialized.value],
-    async ([newResources, newIsInitialized], oldData) => {
+    () => <const>[resourceItems.value, isInitialized.value, hasDoneInitialLoad.value],
+    async ([newResources, newIsInitialized, newHasDoneInitialLoad], oldData) => {
       // Wait till viewer loaded in
       if (!newIsInitialized) return
 
-      const [oldResources, oldIsInitialized] = oldData || [[], false]
+      const [oldResources] = oldData || [[], false]
       const zoomToObject = !focusedThreadId.value // we want to zoom to the thread instead
 
       // Viewer initialized - load in all resources
-      if (newIsInitialized && !oldIsInitialized) {
+      if (!newHasDoneInitialLoad) {
         const allObjectIds = getUniqueObjectIds(newResources)
 
-        await Promise.all(
+        const res = await Promise.all(
           allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
         )
+        if (res.length) {
+          hasDoneInitialLoad.value = true
+        }
 
         return
       }
@@ -139,7 +143,7 @@ function useViewerObjectAutoLoading() {
 
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
       await Promise.all(
-        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
+        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
       )
     },
     { deep: true, immediate: true }
@@ -155,7 +159,7 @@ function useViewerObjectAutoLoading() {
  * cache updates so that we don't need to always refetch queries
  */
 function useViewerSubscriptionEventTracker() {
-  if (process.server) return
+  if (import.meta.server) return
 
   const {
     projectId,
@@ -290,6 +294,9 @@ function useViewerSectionBoxIntegration() {
     },
     { immediate: true, deep: true, flush: 'sync' }
   )
+  onBeforeUnmount(() => {
+    instance.sectionBoxOff()
+  })
 }
 
 function useViewerCameraIntegration() {
@@ -306,13 +313,14 @@ function useViewerCameraIntegration() {
 
   const loadCameraDataFromViewer = () => {
     const controls = instance.getExtension(CameraController).controls
+    let cameraManuallyChanged = false
+
     const viewerPos = new Vector3()
     const viewerTarget = new Vector3()
 
     controls.getPosition(viewerPos)
     controls.getTarget(viewerTarget)
 
-    let cameraManuallyChanged = false
     if (!areVectorsLooselyEqual(position.value, viewerPos)) {
       if (hasInitialLoadFired.value) position.value = viewerPos.clone()
       cameraManuallyChanged = true
@@ -727,8 +735,7 @@ function useViewerMeasurementIntegration() {
     viewer: { instance }
   } = useInjectedViewerState()
 
-  const { clearMeasurements, removeMeasurement, enableMeasurements } =
-    useMeasurementUtilities()
+  const { clearMeasurements, removeMeasurement } = useMeasurementUtilities()
 
   onBeforeUnmount(() => {
     clearMeasurements()
@@ -760,9 +767,6 @@ function useViewerMeasurementIntegration() {
   onKeyStroke('Backspace', () => {
     removeMeasurement()
   })
-  onKeyStroke('Escape', () => {
-    enableMeasurements(false)
-  })
 }
 
 function useDisableZoomOnEmbed() {
@@ -784,7 +788,7 @@ function useDisableZoomOnEmbed() {
 }
 
 export function useViewerPostSetup() {
-  if (process.server) return
+  if (import.meta.server) return
   useViewerObjectAutoLoading()
   useViewerSelectionEventHandler()
   useViewerIsBusyEventHandler()

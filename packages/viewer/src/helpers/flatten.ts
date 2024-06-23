@@ -4,7 +4,7 @@
  * @param obj object to flatten
  * @returns an object with all its props flattened into `prop.subprop.subsubprop`.
  */
-const flattenObject = function (obj) {
+const flattenObject = function (obj: { [x: string]: unknown; id: unknown }) {
   const flatten = {} as Record<string, unknown>
   for (const k in obj) {
     if (
@@ -19,7 +19,7 @@ const flattenObject = function (obj) {
     const v = obj[k]
     if (v === null || v === undefined || Array.isArray(v)) continue
     if (v.constructor === Object) {
-      const flattenProp = flattenObject(v)
+      const flattenProp = flattenObject(v as { [x: string]: unknown; id: unknown })
       for (const pk in flattenProp) {
         flatten[k + '.' + pk] = flattenProp[pk]
       }

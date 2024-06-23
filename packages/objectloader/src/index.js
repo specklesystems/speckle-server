@@ -2,7 +2,6 @@
 import 'core-js'
 import 'regenerator-runtime/runtime'
 
-import { SafeLocalStorage } from '@speckle/shared'
 import {
   ObjectLoaderConfigurationError,
   ObjectLoaderRuntimeError
@@ -54,11 +53,17 @@ export default class ObjectLoader {
     }
 
     this.logger('Object loader constructor called!')
-    try {
-      this.token = token || SafeLocalStorage.get('AuthToken')
-    } catch (error) {
-      // Accessing localStorage may throw when executing on sandboxed document, ignore.
-    }
+
+    /** I don't think the object-loader should read the token from local storage, since there is no
+     *  builtin mechanism that sets it in the first place. So you're reading a key from the local storage
+     *  and hoping it will magically be there.
+     */
+    // try {
+    //   this.token = token || SafeLocalStorage.get('AuthToken')
+    // } catch (error) {
+    //   // Accessing localStorage may throw when executing on sandboxed document, ignore.
+    // }
+    this.token = token
 
     this.headers = {
       Accept: 'text/plain'
@@ -571,15 +576,19 @@ export default class ObjectLoader {
       return {}
     }
 
-    const store = this.cacheDB
-      .transaction('objects', 'readwrite')
-      .objectStore('objects')
-    for (const obj of objects) {
-      const idAndData = obj.split('\t')
-      store.put(idAndData[1], idAndData[0])
+    try {
+      const store = this.cacheDB
+        .transaction('objects', 'readwrite')
+        .objectStore('objects')
+      for (const obj of objects) {
+        const idAndData = obj.split('\t')
+        store.put(idAndData[1], idAndData[0])
+      }
+      return this.promisifyIdbRequest(store.transaction)
+    } catch (e) {
+      this.logger.error(e)
     }
-
-    return this.promisifyIdbRequest(store.transaction)
+    return Promise.resolve()
   }
 }
 

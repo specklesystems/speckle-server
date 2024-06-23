@@ -9,17 +9,16 @@ import {
   Uint16BufferAttribute,
   DynamicDrawUsage
 } from 'three'
-import { NodeRenderView } from '../..'
-import { GeometryType, BatchUpdateRange } from './Batch'
-import { DrawGroup } from './Batch'
+import { Geometry } from '../converter/Geometry'
+import { NodeRenderView } from '../tree/NodeRenderView'
+import { type BatchUpdateRange, type DrawGroup, GeometryType } from './Batch'
 import { PrimitiveBatch } from './PrimitiveBatch'
 import { DrawRanges } from './DrawRanges'
 import Logger from 'js-logger'
-import { Geometry } from '../converter/Geometry'
 import { ObjectLayers } from '../../IViewer'
 
 export class PointBatch extends PrimitiveBatch {
-  protected primitive: Points
+  protected primitive!: Points
   protected drawRanges: DrawRanges = new DrawRanges()
 
   public get geometryType(): GeometryType {
@@ -29,6 +28,8 @@ export class PointBatch extends PrimitiveBatch {
     if (!this.primitive.geometry.boundingBox)
       this.primitive.geometry.computeBoundingBox()
     return this.primitive.geometry.boundingBox
+      ? this.primitive.geometry.boundingBox
+      : new Box3()
   }
 
   public get minDrawCalls(): number {
@@ -54,9 +55,9 @@ export class PointBatch extends PrimitiveBatch {
     this.renderViews = renderViews
   }
 
-  public setDrawRanges(...ranges: BatchUpdateRange[]) {
-    const materials = ranges.map((val) => {
-      return val.material
+  public setDrawRanges(ranges: BatchUpdateRange[]) {
+    const materials: Array<Material> = ranges.map((val: BatchUpdateRange) => {
+      return val.material as Material
     })
     const uniqueMaterials = [...Array.from(new Set(materials.map((value) => value)))]
 
@@ -65,18 +66,14 @@ export class PointBatch extends PrimitiveBatch {
         this.materials.push(uniqueMaterials[k])
     }
 
-    this.primitive.geometry.groups = this.drawRanges.integrateRanges(
-      this.groups,
-      this.materials,
-      ranges
-    )
+    this.groups = this.drawRanges.integrateRanges(this.groups, this.materials, ranges)
 
     let count = 0
     this.groups.forEach((value) => (count += value.count))
     if (count !== this.getCount()) {
       Logger.error(`Draw groups invalid on ${this.id}`)
     }
-    this.setBatchBuffers(...ranges)
+    this.setBatchBuffers(ranges)
     this.cleanMaterials()
 
     if (this.drawCalls > this.minDrawCalls + 2) {
@@ -108,10 +105,22 @@ export class PointBatch extends PrimitiveBatch {
   }
 
   protected getCurrentIndexBuffer(): BufferAttribute {
+    /** Catering to typescript
+     * There is no unniverse where the geometry is non-indexed. We're **explicitly** setting the index at creation time
+     */
+    if (!this.primitive.geometry.index) {
+      throw new Error(`Invalid index buffer for batch ${this.id}`)
+    }
     return this.primitive.geometry.index
   }
 
   protected getNextIndexBuffer(): BufferAttribute {
+    /** Catering to typescript
+     * There is no unniverse where the geometry is non-indexed. We're **explicitly** setting the index at creation time
+     */
+    if (!this.primitive.geometry.index) {
+      throw new Error(`Invalid index buffer for batch ${this.id}`)
+    }
     return new BufferAttribute(
       (this.primitive.geometry.index.array as Uint16Array | Uint32Array).slice(),
       this.primitive.geometry.index.itemSize
@@ -146,11 +155,17 @@ export class PointBatch extends PrimitiveBatch {
     }
   }
 
-  public buildBatch(): void {
+  public buildBatch(): Promise<void> {
     let attributeCount = 0
     for (let k = 0; k < this.renderViews.length; k++) {
-      attributeCount +=
-        this.renderViews[k].renderData.geometry.attributes.POSITION.length
+      const ervee = this.renderViews[k]
+      /** Catering to typescript
+       *  There is no unniverse where indices or positions are undefined at this point
+       */
+      if (!ervee.renderData.geometry.attributes) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
+      }
+      attributeCount += ervee.renderData.geometry.attributes.POSITION.length
     }
     const position = new Float64Array(attributeCount)
     const color = new Float32Array(attributeCount).fill(1)
@@ -159,11 +174,14 @@ export class PointBatch extends PrimitiveBatch {
     let indexOffset = 0
     for (let k = 0; k < this.renderViews.length; k++) {
       const geometry = this.renderViews[k].renderData.geometry
+      if (!geometry.attributes) {
+        throw new Error(`Cannot build batch ${this.id}. Invalid geometry, or indices`)
+      }
       position.set(geometry.attributes.POSITION, offset)
       if (geometry.attributes.COLOR) color.set(geometry.attributes.COLOR, offset)
       index.set(
         new Int32Array(geometry.attributes.POSITION.length / 3).map(
-          (value, index) => index + indexOffset
+          (_value, index) => index + indexOffset
         ),
         indexOffset
       )
@@ -188,6 +206,8 @@ export class PointBatch extends PrimitiveBatch {
         ? ObjectLayers.STREAM_CONTENT_POINT
         : ObjectLayers.STREAM_CONTENT_POINT_CLOUD
     )
+
+    return Promise.resolve()
   }
 
   protected makePointGeometry(
@@ -218,7 +238,7 @@ export class PointBatch extends PrimitiveBatch {
     return geometry
   }
 
-  public getRenderView(index: number): NodeRenderView {
+  public getRenderView(index: number): NodeRenderView | null {
     for (let k = 0; k < this.renderViews.length; k++) {
       if (
         index >= this.renderViews[k].batchStart &&
@@ -227,8 +247,9 @@ export class PointBatch extends PrimitiveBatch {
         return this.renderViews[k]
       }
     }
+    return null
   }
-  public getMaterialAtIndex(index: number): Material {
+  public getMaterialAtIndex(index: number): Material | null {
     for (let k = 0; k < this.renderViews.length; k++) {
       if (
         index >= this.renderViews[k].batchStart &&
@@ -248,5 +269,6 @@ export class PointBatch extends PrimitiveBatch {
         return this.materials[group.materialIndex]
       }
     }
+    return null
   }
 }

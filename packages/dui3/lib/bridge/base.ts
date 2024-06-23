@@ -1,5 +1,6 @@
 import { BaseBridgeErrorHandler } from '~/lib/bridge/errorHandler'
-import { createNanoEvents, Emitter } from 'nanoevents'
+import type { Emitter } from 'nanoevents'
+import { createNanoEvents } from 'nanoevents'
 
 /**
  * A simple (typed) event emitter base class that host applications can use to send messages (and data) to the web ui,

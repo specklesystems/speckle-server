@@ -110,9 +110,8 @@
 </template>
 
 <script setup lang="ts">
-import { ArrowLeftIcon } from '@heroicons/vue/20/solid'
-import { TestEventArgs } from '~/lib/bindings/definitions/ITestBinding'
-import { CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import { ArrowLeftIcon , CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import type { TestEventArgs } from '~/lib/bindings/definitions/ITestBinding'
 import { useHostAppStore } from '~/store/hostApp'
 import { useSelectionStore } from '~/store/selection'
 

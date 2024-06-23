@@ -1,52 +1,55 @@
 import CameraControls from 'camera-controls'
-import { MathUtils, PerspectiveCamera, Vector3 } from 'three'
+import { MathUtils, OrthographicCamera, PerspectiveCamera, Vector3 } from 'three'
 
-let ACTION
-;(function (ACTION) {
-  ACTION[(ACTION['NONE'] = 0)] = 'NONE'
-  ACTION[(ACTION['ROTATE'] = 1)] = 'ROTATE'
-  ACTION[(ACTION['TRUCK'] = 2)] = 'TRUCK'
-  ACTION[(ACTION['OFFSET'] = 3)] = 'OFFSET'
-  ACTION[(ACTION['DOLLY'] = 4)] = 'DOLLY'
-  ACTION[(ACTION['ZOOM'] = 5)] = 'ZOOM'
-  ACTION[(ACTION['TOUCH_ROTATE'] = 6)] = 'TOUCH_ROTATE'
-  ACTION[(ACTION['TOUCH_TRUCK'] = 7)] = 'TOUCH_TRUCK'
-  ACTION[(ACTION['TOUCH_OFFSET'] = 8)] = 'TOUCH_OFFSET'
-  ACTION[(ACTION['TOUCH_DOLLY'] = 9)] = 'TOUCH_DOLLY'
-  ACTION[(ACTION['TOUCH_ZOOM'] = 10)] = 'TOUCH_ZOOM'
-  ACTION[(ACTION['TOUCH_DOLLY_TRUCK'] = 11)] = 'TOUCH_DOLLY_TRUCK'
-  ACTION[(ACTION['TOUCH_DOLLY_OFFSET'] = 12)] = 'TOUCH_DOLLY_OFFSET'
-  ACTION[(ACTION['TOUCH_ZOOM_TRUCK'] = 13)] = 'TOUCH_ZOOM_TRUCK'
-  ACTION[(ACTION['TOUCH_ZOOM_OFFSET'] = 14)] = 'TOUCH_ZOOM_OFFSET'
-})(ACTION || (ACTION = {}))
-function isPerspectiveCamera(camera) {
-  return camera.isPerspectiveCamera
+enum ACTION {
+  NONE = 0,
+  ROTATE = 1,
+  TRUCK = 2,
+  OFFSET = 3,
+  DOLLY = 4,
+  ZOOM = 5,
+  TOUCH_ROTATE = 6,
+  TOUCH_TRUCK = 7,
+  TOUCH_OFFSET = 8,
+  TOUCH_DOLLY = 9,
+  TOUCH_ZOOM = 10,
+  TOUCH_DOLLY_TRUCK = 11,
+  TOUCH_DOLLY_OFFSET = 12,
+  TOUCH_ZOOM_TRUCK = 13,
+  TOUCH_ZOOM_OFFSET = 14
 }
-function isOrthographicCamera(camera) {
-  return camera.isOrthographicCamera
+
+function isPerspectiveCamera(camera: PerspectiveCamera | OrthographicCamera) {
+  return (camera as PerspectiveCamera).isPerspectiveCamera
+}
+function isOrthographicCamera(camera: PerspectiveCamera | OrthographicCamera) {
+  return (camera as OrthographicCamera).isOrthographicCamera
 }
 
 const EPSILON = 1e-5
-function approxZero(number, error = EPSILON) {
+function approxZero(number: number, error = EPSILON) {
   return Math.abs(number) < error
 }
-function approxEquals(a, b, error = EPSILON) {
+function approxEquals(a: number, b: number, error = EPSILON) {
   return approxZero(a - b, error)
 }
 
-let _deltaTarget, _deltaOffset, _v3A, _v3B, _v3C
-let _xColumn
-let _yColumn
-let _zColumn
+let _deltaTarget: Vector3,
+  _deltaOffset: Vector3,
+  _v3A: Vector3,
+  _v3B: Vector3,
+  _v3C: Vector3
+let _xColumn: Vector3
+let _yColumn: Vector3
+let _zColumn: Vector3
 
 export class SpeckleCameraControls extends CameraControls {
   private _didDolly = false
   private _didDollyLastFrame = false
   public _isTrucking = false
-  private _hasRestedLastFrame = false
   private _didZoom = false
-  private overrideDollyLerpRatio = 0
-  private overrideZoomLerpRatio = 0
+  private overrideDollyLerpRatio: number | undefined = 0
+  private overrideZoomLerpRatio: number | undefined = 0
 
   static install() {
     _v3A = new Vector3()
@@ -73,7 +76,7 @@ export class SpeckleCameraControls extends CameraControls {
     const prevRadius = this._sphericalEnd.radius
     const signedPrevRadius = prevRadius * (delta >= 0 ? -1 : 1)
 
-    this.dollyTo(distance, true, 0.9)
+    void this.dollyTo(distance, true, 0.9)
 
     if (
       this.infinityDolly &&
@@ -105,10 +108,10 @@ export class SpeckleCameraControls extends CameraControls {
     /** We need to move the camera as well when zooming in orthographic mode */
     const dollyScale = Math.pow(0.95, -delta * this.dollySpeed)
     const distance = this._sphericalEnd.radius * dollyScale
-    this.dollyTo(distance, true, 0.9)
+    void this.dollyTo(distance, true, 0.9)
 
     // for both PerspectiveCamera and OrthographicCamera
-    this.zoomTo(this._zoom * zoomScale, false, 1)
+    void this.zoomTo(this._zoom * zoomScale, false, 1)
     this._didDolly = true
     this.dispatchEvent({ type: 'controlstart' })
     if (this.dollyToCursor) {
@@ -127,11 +130,7 @@ export class SpeckleCameraControls extends CameraControls {
    * @param enableTransition
    * @category Methods
    */
-  zoomTo(
-    zoom: number,
-    enableTransition = false,
-    lerpRatio: number = undefined
-  ): Promise<void> {
+  zoomTo(zoom: number, enableTransition = false, lerpRatio?: number): Promise<void> {
     this._zoomEnd = MathUtils.clamp(zoom, this.minZoom, this.maxZoom)
     this._needsUpdate = true
     this.overrideZoomLerpRatio = enableTransition ? 0.05 : lerpRatio
@@ -153,7 +152,7 @@ export class SpeckleCameraControls extends CameraControls {
   dollyTo(
     distance: number,
     enableTransition = true,
-    lerpRatio = undefined
+    lerpRatio?: number
   ): Promise<void> {
     const lastRadius = this._sphericalEnd.radius
     const newRadius = MathUtils.clamp(distance, this.minDistance, this.maxDistance)
@@ -193,8 +192,7 @@ export class SpeckleCameraControls extends CameraControls {
     return this._createOnRestPromise(resolveImmediately)
   }
 
-  update(delta) {
-    this._hasRestedLastFrame = this._hasRested
+  update(delta: number) {
     const dampingFactor =
       this._state === ACTION.NONE ? this.dampingFactor : this.draggingDampingFactor
     const lerpRatio = Math.min(dampingFactor * delta * 60, 1)

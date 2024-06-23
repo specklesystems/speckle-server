@@ -4,33 +4,56 @@
       <template #title>Scene Explorer</template>
 
       <template #actions>
-        <FormButton
-          size="xs"
-          text
-          :icon-left="BarsArrowDownIcon"
-          @click="expandLevel++"
-        >
-          Unfold
-        </FormButton>
-        <FormButton
-          size="xs"
-          text
-          :icon-left="BarsArrowUpIcon"
-          :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
-          @click="collapse()"
-        >
-          Collapse
-        </FormButton>
+        <div class="flex items-center justify-between w-full">
+          <div v-if="!showRaw" class="flex items-center">
+            <FormButton
+              size="xs"
+              text
+              :icon-left="BarsArrowDownIcon"
+              @click="expandLevel++"
+            >
+              Unfold
+            </FormButton>
+            <FormButton
+              size="xs"
+              text
+              :icon-left="BarsArrowUpIcon"
+              :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
+              @click="collapse()"
+            >
+              Collapse
+            </FormButton>
+          </div>
+          <div v-else>
+            <h4 class="font-bold whitespace-normal text-xs ml-1">Dev Mode</h4>
+          </div>
+
+          <FormButton
+            v-tippy="showRaw ? 'Switch back' : 'Switch to Dev Mode'"
+            size="xs"
+            text
+            class="-mr-0.5 sm:-mr-1"
+            color="secondary"
+            @click="showRaw = !showRaw"
+          >
+            <CodeBracketIcon
+              class="size-4 sm:size-3"
+              :class="showRaw ? 'text-primary' : 'text-foreground'"
+            />
+          </FormButton>
+        </div>
       </template>
-      <div v-if="rootNodes.length !== 0" class="relative flex flex-col space-y-2 py-2">
+      <div
+        v-if="!showRaw && rootNodes.length !== 0"
+        class="relative flex flex-col gap-y-2 py-2"
+      >
         <div
           v-for="(rootNode, idx) in rootNodes"
           :key="idx"
           class="bg-foundation rounded-lg"
         >
           <ViewerExplorerTreeItem
-            :item-id="(rootNode.data?.id as string)"
-            :tree-item="markRaw(rootNode)"
+            :tree-item="rootNode"
             :sub-header="'Model Version'"
             :debug="false"
             :expand-level="expandLevel"
@@ -39,21 +62,29 @@
           />
         </div>
       </div>
+      <ViewerDataviewerPanel v-if="showRaw" class="pointer-events-auto" />
     </ViewerLayoutPanel>
     <ViewerExplorerFilters :filters="allFilters || []" />
   </div>
 </template>
 <script setup lang="ts">
-import { BarsArrowUpIcon, BarsArrowDownIcon } from '@heroicons/vue/24/solid'
+import {
+  BarsArrowUpIcon,
+  BarsArrowDownIcon,
+  CodeBracketIcon
+} from '@heroicons/vue/24/solid'
 import { ViewerEvent } from '@speckle/viewer'
-import type { ExplorerNode } from '~~/lib/common/helpers/sceneExplorer'
+import type {
+  ExplorerNode,
+  TreeItemComponentModel
+} from '~~/lib/viewer/helpers/sceneExplorer'
 import {
   useInjectedViewer,
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import { markRaw } from 'vue'
 import { useViewerEventListener } from '~~/lib/viewer/composables/viewer'
+import { sortBy, flatten } from 'lodash-es'
 
 defineEmits(['close'])
 
@@ -75,6 +106,8 @@ const collapse = () => {
   if (manualExpandLevel.value > -1) manualExpandLevel.value--
 }
 
+const showRaw = ref(false)
+
 // TODO: worldTree being set in postSetup.ts (viewer) does not seem to create a reactive effect
 // in here (as i was expecting it to?). Therefore, refHack++ to trigger the computed prop rootNodes.
 // Possibly Fabs will know more :)
@@ -88,14 +121,23 @@ const rootNodes = computed(() => {
   refhack.value
 
   if (!worldTree.value) return []
+  // eslint-disable-next-line vue/no-side-effects-in-computed-properties
   expandLevel.value = -1
-  const nodes = []
   const rootNodes = worldTree.value._root.children as ExplorerNode[]
+
+  const results: Record<number, ExplorerNode[]> = {}
+  const unmatchedNodes: ExplorerNode[] = []
+
   for (const node of rootNodes) {
     const objectId = ((node.model as Record<string, unknown>).id as string)
       .split('/')
       .reverse()[0] as string
-    const resourceItem = resourceItems.value.find((res) => res.objectId === objectId)
+    const resourceItemIdx = resourceItems.value.findIndex(
+      (res) => res.objectId === objectId
+    )
+    const resourceItem =
+      resourceItemIdx !== -1 ? resourceItems.value[resourceItemIdx] : null
+
     const raw = node.model?.raw as Record<string, unknown>
     if (resourceItem?.modelId) {
       // Model resource
@@ -108,9 +150,24 @@ const rootNodes = computed(() => {
       raw.name = 'Object'
       raw.type = 'Single Object'
     }
-    nodes.push(node.model as ExplorerNode)
+
+    const res = node.model as ExplorerNode
+    if (resourceItem) {
+      ;(results[resourceItemIdx] = results[resourceItemIdx] || []).push(res)
+    } else {
+      unmatchedNodes.push(res)
+    }
   }
 
-  return nodes
+  const nodes = [
+    ...flatten(sortBy(Object.entries(results), (i) => i[0]).map((i) => i[1])),
+    ...unmatchedNodes
+  ]
+
+  return nodes.map(
+    (n): TreeItemComponentModel => ({
+      rawNode: markRaw(n)
+    })
+  )
 })
 </script>

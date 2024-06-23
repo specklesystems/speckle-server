@@ -11,6 +11,10 @@
         class="flex h-full w-full px-2 py-0.5 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
         :class="unfold && 'text-primary'"
         @click="unfold = !unfold"
+        @mouseenter="highlightObject"
+        @focusin="highlightObject"
+        @mouseleave="unhighlightObject"
+        @focusout="unhighlightObject"
       >
         <ChevronDownIcon
           :class="`h-3 w-3 transition ${headerClasses} ${
@@ -77,7 +81,7 @@
         class="pl-2"
       >
         <ViewerSelectionObject
-          :object="(kvp.value as Record<string,unknown>) || {}"
+          :object="(kvp.value as SpeckleObject) || {}"
           :title="(kvp.key as string)"
           :unfold="false"
         />
@@ -127,9 +131,10 @@
 /* eslint-disable @typescript-eslint/no-unsafe-member-access */
 import { ChevronDownIcon } from '@heroicons/vue/24/solid'
 import { ClipboardDocumentIcon } from '@heroicons/vue/24/outline'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~~/lib/viewer/helpers/sceneExplorer'
 import { getHeaderAndSubheaderForSpeckleObject } from '~~/lib/object-sidebar/helpers'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
+import { useHighlightedObjectsUtilities } from '~/lib/viewer/composables/ui'
 const {
   ui: {
     diff: { result, enabled: diffEnabled }
@@ -147,6 +152,8 @@ const props = withDefaults(
   }>(),
   { debug: false, unfold: false, root: false, modifiedSibling: false }
 )
+
+const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
 const unfold = ref(props.unfold)
 
@@ -315,4 +322,19 @@ const categorisedValuePairs = computed(() => {
     nulls: keyValuePairs.value.filter((item) => item.value === null)
   }
 })
+
+const highlightObject = () => {
+  highlightObjects([props.object.id])
+}
+
+const unhighlightObject = () => {
+  unhighlightObjects([props.object.id])
+}
+
+watch(
+  () => props.unfold,
+  (newVal) => {
+    unfold.value = newVal
+  }
+)
 </script>

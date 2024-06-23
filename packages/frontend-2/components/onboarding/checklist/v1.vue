@@ -1,3 +1,4 @@
+<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div class="relative">
@@ -405,7 +406,7 @@ const goToFirstUncompletedStep = () => {
   const firstNonCompleteStepIndex = steps.value.findIndex((s) => s.completed === false)
   activateStep(firstNonCompleteStepIndex)
 
-  if (process.client) {
+  if (import.meta.client) {
     mp.track('Onboarding Action', {
       type: 'action',
       name: 'checklist',

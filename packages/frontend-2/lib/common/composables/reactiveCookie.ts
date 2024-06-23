@@ -3,26 +3,11 @@
 import type { CookieOptions } from 'nuxt/dist/app/composables/cookie'
 import dayjs from 'dayjs'
 import { useScopedState } from '~~/lib/common/composables/scopedState'
-import { get, isUndefined } from 'lodash-es'
-import { isBraveOrSafari, type Nullable } from '@speckle/shared'
+import { isUndefined } from 'lodash-es'
+import { isBraveOrSafari } from '@speckle/shared'
+import { abortControllerManager, isAbortError } from '~/lib/common/utils/requests'
 
-class AbortControllerManager {
-  private abortController: Nullable<AbortController> = null
-
-  getAndAbortOld() {
-    if (process.server) return null
-
-    // Abort old
-    if (this.abortController) this.abortController.abort()
-    this.abortController = null
-
-    // Create new
-    this.abortController = new AbortController()
-    return this.abortController
-  }
-}
-
-const abortControllerManager = new AbortControllerManager()
+const aborts = abortControllerManager()
 
 /**
  * Makes useCookie() synchronized across the app so that a change to it from one place
@@ -46,7 +31,7 @@ export const useSynchronizedCookie = <CookieValue = string>(
     const cookie = useCookie<CookieValue>(name, finalOpts as any)
 
     // Hack to resolve Safari & Brave limiting client-side cookies to 7 days - set temporary cookie to be read from server-side where it'll be fixed
-    if (process.client && isBraveOrSafari()) {
+    if (import.meta.client && isBraveOrSafari()) {
       const tmpCookie = useCookie(`tmp-${name}`, finalOpts as any)
 
       watch(cookie, (newVal) => {
@@ -60,11 +45,11 @@ export const useSynchronizedCookie = <CookieValue = string>(
         }
 
         // Fetch w/ abort of previous call, if any
-        const controller = abortControllerManager.getAndAbortOld()
+        const controller = aborts.popOnlyInCSR()
         void fetch('/web-api/cookie-fix', {
           signal: controller?.signal
         }).catch((e) => {
-          if (get(e, 'name') !== 'AbortError') {
+          if (!isAbortError(e)) {
             throw e
           }
         })

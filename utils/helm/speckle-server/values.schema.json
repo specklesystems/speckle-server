@@ -32,6 +32,26 @@
       "description": "The name of the ClusterIssuer kubernetes resource that provides the SSL Certificate",
       "default": "letsencrypt-staging"
     },
+    "featureFlags": {
+      "type": "object",
+      "properties": {
+        "automateModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag fully toggles the integrated automate module",
+          "default": false
+        },
+        "gendoAIModuleEnabled": {
+          "type": "boolean",
+          "description": "High level flag that toggles the Gendo AI render module",
+          "default": false
+        },
+        "noClosureWrites": {
+          "type": "boolean",
+          "description": "Toggles whether to stop writing to the closure table",
+          "default": false
+        }
+      }
+    },
     "analytics": {
       "type": "object",
       "properties": {
@@ -530,6 +550,81 @@
           "type": "string",
           "description": "The url of the Speckle Automate instance",
           "default": "https://automate.speckle.systems"
+        },
+        "gendoAI": {
+          "type": "object",
+          "properties": {
+            "apiUrl": {
+              "type": "string",
+              "description": "The url of the Gendo AI application, including protocol.",
+              "default": "https://api.gendo.ai/external/generate"
+            },
+            "key": {
+              "type": "object",
+              "properties": {
+                "secretName": {
+                  "type": "string",
+                  "description": "The name of the Kubernetes Secret containing the Gendo AI key. If left blank, will default to the `secretName` parameter.",
+                  "default": ""
+                },
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the Gendo AI key as its value.",
+                  "default": "gendoai_key"
+                }
+              }
+            },
+            "keyResponse": {
+              "type": "object",
+              "properties": {
+                "secretName": {
+                  "type": "string",
+                  "description": "The name of the Kubernetes Secret containing the Gendo AI key response. If left blank, will default to the `secretName` parameter.",
+                  "default": ""
+                },
+                "secretKey": {
+                  "type": "string",
+                  "description": "The key within the Kubernetes Secret holding the Gendo AI key response as its value.",
+                  "default": "gendoai_key_response"
+                }
+              }
+            },
+            "ratelimiting": {
+              "type": "object",
+              "properties": {
+                "renderRequest": {
+                  "type": "number",
+                  "description": "The number of render requests allowed per period",
+                  "default": 1
+                },
+                "renderRequestPeriodSeconds": {
+                  "type": "number",
+                  "description": "The period in seconds for the render request limit",
+                  "default": 20
+                },
+                "burstRenderRequest": {
+                  "type": "number",
+                  "description": "The number of render requests allowed in 'burst' mode when the other limit is reached.",
+                  "default": 3
+                },
+                "burstRenderRequestPeriodSeconds": {
+                  "type": "number",
+                  "description": "The period in seconds for the burst render request limit.",
+                  "default": 60
+                }
+              }
+            }
+          }
+        },
+        "encryptionKeys": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string",
+              "description": "The path where the encryption keys should be loaded from",
+              "default": "/encryption-keys/keys.json"
+            }
+          }
         },
         "sessionSecret": {
           "type": "object",
@@ -1406,8 +1501,8 @@
         },
         "enabled": {
           "type": "boolean",
-          "description": "Feature flag to enable running the new experimental frontend.",
-          "default": false
+          "description": "Feature flag to enable running the new web application frontend.",
+          "default": true
         },
         "replicas": {
           "type": "number",
@@ -1505,6 +1600,21 @@
           "type": "string",
           "description": "The Docker image to be used for the Speckle Preview Service component. If blank, defaults to speckle/speckle-preview-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
           "default": ""
+        },
+        "port": {
+          "type": "string",
+          "description": "The port on which the Preview Service will run. This is not exposed, but used within its own local network within the pod.",
+          "default": "3001"
+        },
+        "monitoring": {
+          "type": "object",
+          "properties": {
+            "metricsPort": {
+              "type": "string",
+              "description": "The port on which the metrics server will be exposed.",
+              "default": "9094"
+            }
+          }
         },
         "requests": {
           "type": "object",

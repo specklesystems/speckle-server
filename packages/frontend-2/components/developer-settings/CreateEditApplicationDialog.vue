@@ -60,8 +60,12 @@
 
 <script setup lang="ts">
 import { useMutation } from '@vue/apollo-composable'
-import { AllScopes } from '@speckle/shared'
-import { LayoutDialog, FormSelectBadges } from '@speckle/ui-components'
+import type { AllScopes } from '@speckle/shared'
+import {
+  LayoutDialog,
+  FormSelectBadges,
+  type LayoutDialogButton
+} from '@speckle/ui-components'
 import type {
   ApplicationFormValues,
   ApplicationItem
@@ -70,7 +74,12 @@ import {
   createApplicationMutation,
   editApplicationMutation
 } from '~~/lib/developer-settings/graphql/mutations'
-import { isItemSelected } from '~~/lib/common/helpers/validation'
+import {
+  isItemSelected,
+  isRequired,
+  isUrl,
+  fullyResetForm
+} from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
 import {
   convertThrowIntoFetchResult,
@@ -78,7 +87,6 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
-import { isRequired, isUrl, fullyResetForm } from '~~/lib/common/helpers/validation'
 import { useServerInfoScopes } from '~~/lib/common/composables/serverInfo'
 
 const props = defineProps<{
@@ -190,7 +198,7 @@ const onSubmit = handleSubmit(async (applicationFormValues) => {
   }
 })
 
-const dialogButtons = computed(() => [
+const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: { color: 'secondary', fullWidth: true, outline: true },
@@ -200,7 +208,7 @@ const dialogButtons = computed(() => [
   },
   {
     text: props.application ? 'Save' : 'Create',
-    props: { color: 'primary', fullWidth: true },
+    props: { color: 'default', fullWidth: true },
     onClick: onSubmit
   }
 ])

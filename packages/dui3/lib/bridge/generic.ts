@@ -1,5 +1,5 @@
 import { BaseBridge } from '~/lib/bridge/base'
-import { IRawBridge } from '~/lib/bridge/definitions'
+import type { IRawBridge } from '~/lib/bridge/definitions'
 /**
  * A generic bridge class for Webivew2 or CefSharp.
  */

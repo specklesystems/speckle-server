@@ -4,16 +4,19 @@ import type {
   InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
 import { ViewerEvent } from '@speckle/viewer'
-import type { SelectionEvent } from '@speckle/viewer'
 import { debounce, isArray, throttle } from 'lodash-es'
 import { until } from '@vueuse/core'
 import { TimeoutError, timeoutAt } from '@speckle/shared'
 import type { MaybeAsync, Nullable } from '@speckle/shared'
 import { Vector3 } from 'three'
 import { areVectorsLooselyEqual } from '~~/lib/viewer/helpers/three'
-import { CameraController } from '@speckle/viewer'
-import type { TreeNode } from '@speckle/viewer'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import {
+  CameraController,
+  type ViewerEventPayload,
+  type SelectionEvent,
+  type TreeNode
+} from '@speckle/viewer'
+import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 
 // NOTE: this is a preformance optimisation - this function is hot, and has to do
 // potentially large searches if many elements are hidden/isolated. We cache the
@@ -77,10 +80,9 @@ function getFirstVisibleSelectionHit(
   return null
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function useViewerEventListener<A = any>(
-  name: ViewerEvent | ViewerEvent[],
-  listener: (...args: A[]) => MaybeAsync<void>,
+export function useViewerEventListener<K extends ViewerEvent>(
+  name: K | K[],
+  listener: (args: ViewerEventPayload[K]) => MaybeAsync<void>,
   options?: Partial<{
     state: InitialStateWithRequestAndResponse
   }>
@@ -135,7 +137,8 @@ export function useViewerCameraTracker(
     }
 
     // Only invoke callback if position/target changed in a meaningful way
-    const controls = instance.getExtension(CameraController).controls
+    const extension = instance.getExtension(CameraController)
+    const controls = extension.controls
     const viewerPos = new Vector3()
     const viewerTarget = new Vector3()
 
@@ -165,7 +168,6 @@ export function useViewerCameraTracker(
 
   onMounted(() => {
     const extension = instance.getExtension(CameraController)
-
     extension.controls.addEventListener('update', finalCallback)
   })
 
@@ -266,7 +268,7 @@ export function useSelectionEvents(
     debounceWait: number
   }>
 ) {
-  if (process.server) return
+  if (import.meta.server) return
   const { singleClickCallback, doubleClickCallback } = params
   const state = options?.state || useInjectedViewerState()
   const {

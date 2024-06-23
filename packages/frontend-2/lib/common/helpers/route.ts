@@ -1,6 +1,6 @@
 import type { LocationQueryRaw } from 'vue-router'
-import { serializeHashState } from '~~/lib/common/composables/url'
-import { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
+import { deserializeHashState, serializeHashState } from '~~/lib/common/composables/url'
+import type { ViewerHashStateKeys } from '~~/lib/viewer/composables/setup/urlHashState'
 
 export const profileRoute = '/profile'
 export const authBlockedDueToVerificationRoute = '/error-email-verify'
@@ -11,9 +11,11 @@ export const forgottenPasswordRoute = '/authn/forgotten-password'
 export const onboardingRoute = '/onboarding'
 export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
+export const connectorsPageUrl = 'https://speckle.systems/features/connectors/'
+
 export const projectRoute = (
   id: string,
-  tab?: 'models' | 'discussions' | 'automations'
+  tab?: 'models' | 'discussions' | 'automations' | 'settings'
 ) => {
   let res = `/projects/${id}`
   if (tab && tab !== 'models') {
@@ -22,6 +24,10 @@ export const projectRoute = (
 
   return res
 }
+export const projectAutomationRoute = (projectId: string, automationId: string) => {
+  return `${projectRoute(projectId, 'automations')}/${automationId}`
+}
+
 export const modelRoute = (
   projectId: string,
   resourceIdString: string,
@@ -39,14 +45,24 @@ export const allProjectModelsRoute = (projectId: string) => `/projects/${project
 // Temp change to projectDiscussionsRoute until tab routing is implemented
 export const projectDiscussionsRoute = (projectId: string) => `/projects/${projectId}`
 
-export const projectWebhooksRoute = (projectId: string) =>
-  `/projects/${projectId}/webhooks`
+export const projectSettingsRoute = (projectId: string) =>
+  `/projects/${projectId}/settings`
 
-export const automationDataPageRoute = (baseUrl: string, automationId: string) =>
-  new URL(`/automations/${automationId}`, baseUrl).toString()
+export const projectCollaboratorsRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/collaborators`
+
+export const projectWebhooksRoute = (projectId: string) =>
+  `/projects/${projectId}/settings/webhooks`
 
 export const threadRedirectRoute = (projectId: string, threadId: string) =>
   `/projects/${projectId}/threads/${threadId}`
+
+export const automateGithubAppAuthorizationRoute = '/api/automate/auth/githubapp'
+
+export const automationFunctionsRoute = '/functions'
+
+export const automationFunctionRoute = (functionId: string) =>
+  `${automationFunctionsRoute}/${functionId}`
 
 const buildNavigationComposable = (route: string) => () => {
   const router = useRouter()
@@ -68,4 +84,43 @@ export const useNavigateToProject = () => {
     const { query, id } = params || {}
     return router.push({ path: projectRoute(id), query })
   }
+}
+
+/**
+ * Check that fullPathA fits fullPathB (not necessarily the inverse)
+ */
+export const doesRouteFitTarget = (fullPathA: string, fullPathB: string) => {
+  const fakeOrigin = 'https://test.com'
+
+  let urlA: URL
+  let urlB: URL
+
+  try {
+    urlA = new URL(fullPathA, fakeOrigin)
+    urlB = new URL(fullPathB, fakeOrigin)
+  } catch (e) {
+    useLogger().warn('Failed to parse URLs', e)
+    return false
+  }
+
+  if (urlA.pathname !== urlB.pathname) {
+    return false
+  }
+
+  const queryKeysA = urlA.searchParams.keys()
+  for (const key of queryKeysA) {
+    if (urlB.searchParams.get(key) !== urlA.searchParams.get(key)) {
+      return false
+    }
+  }
+
+  const hashA = deserializeHashState(urlA.hash)
+  const hashB = deserializeHashState(urlB.hash)
+  for (const [key, value] of Object.entries(hashA)) {
+    if (hashB[key] !== value) {
+      return false
+    }
+  }
+
+  return true
 }

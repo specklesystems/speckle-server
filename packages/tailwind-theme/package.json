@@ -6,10 +6,11 @@
   "scripts": {
     "build": "rimraf ./dist ./dist-cjs && tsc -p . && tsc -p ./tsconfig.cjs.json && tsconfig-to-dual-package",
     "viewer": "tailwind-config-viewer -o -c tailwind.test.config.cjs",
-    "lint:js": "eslint --ext \".js,.ts,.vue\" .",
+    "lint:js": "eslint  .",
     "lint:tsc": "tsc --noEmit",
     "lint:prettier": "prettier --config ../../.prettierrc --ignore-path ../../.prettierignore --check .",
-    "lint": "yarn lint:js && yarn lint:tsc && yarn lint:prettier"
+    "lint": "yarn lint:js && yarn lint:tsc && yarn lint:prettier",
+    "lint:ci": "yarn lint:tsc"
   },
   "main": "./dist-cjs/index.js",
   "types": "./dist/index.d.ts",
@@ -43,11 +44,11 @@
     "@tailwindcss/forms": "^0.5.3"
   },
   "devDependencies": {
-    "@types/eslint": "^8.4.5",
+    "@types/eslint": "^8.56.10",
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
-    "eslint": "^8.24.0",
-    "eslint-config-prettier": "^8.5.0",
+    "eslint": "^9.4.0",
+    "eslint-config-prettier": "^9.1.0",
     "prettier": "^2.7.1",
     "rimraf": "^5.0.0",
     "tailwind-config-viewer": "^1.7.2",
