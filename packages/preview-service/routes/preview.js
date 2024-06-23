@@ -6,7 +6,13 @@ const router = express.Router()
 const puppeteer = require('puppeteer')
 const { logger } = require('../observability/logging')
 const { reduce } = require('lodash')
-const { shouldBeHeadless, getAppPort, getHost } = require('../env')
+const {
+  shouldBeHeadless,
+  getAppPort,
+  getHost,
+  getPuppeteerUserDataDir,
+  getChromiumExecutablePath
+} = require('../env')
 
 const getServiceUrl = () => `http://${getHost}:${getAppPort()}`
 

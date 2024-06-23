@@ -82,10 +82,6 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
-          {{- if .Values.preview_service.puppeteer.chromiumExecutablePath -}}
-          - name: CHROMIUM_EXECUTABLE_PATH
-            value: {{ .Values.preview_service.puppeteer.chromiumExecutablePath | quote }}
-          {{- end -}}
           {{- if .Values.preview_service.puppeteer.userDataDirectory -}}
           - name: USER_DATA_DIR
             value: {{ .Values.preview_service.puppeteer.userDataDirectory | quote }}
