@@ -10,6 +10,7 @@
     "repositories",
     "routes",
     "scripts",
-    "services"
+    "services",
+    "observability/prometheusMetrics.js"
   ]
 }

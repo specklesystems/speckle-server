@@ -4,7 +4,7 @@ const crypto = require('crypto')
 const knex = require('../knex')
 const fetch = require('node-fetch')
 const fs = require('fs')
-const metrics = require('./prometheusMetrics')
+const metrics = require('../observability/prometheusMetrics')
 const joinImages = require('join-images')
 const { logger } = require('../observability/logging')
 
@@ -152,8 +152,6 @@ async function startPreviewService() {
     shouldExit = true
     logger.info('Shutting down...')
   })
-
-  metrics.initPrometheusMetrics()
 
   tick()
 }
