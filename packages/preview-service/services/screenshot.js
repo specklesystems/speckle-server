@@ -5,7 +5,7 @@ const {
   shouldBeHeadless,
   getPuppeteerUserDataDir,
   getChromiumExecutablePath
-} = require('../env')
+} = require('../utils/env')
 
 const getScreenshot = async (
   puppeteerClient,

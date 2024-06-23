@@ -4,7 +4,7 @@ const express = require('express')
 const { getScreenshot } = require('../../services/screenshot')
 const { PuppeteerClient } = require('../../clients/puppeteer')
 const { puppeteerDriver } = require('../../scripts/puppeteerDriver')
-const { serviceUrl } = require('../../env')
+const { serviceUrl } = require('../../utils/env')
 
 const router = express.Router()
 

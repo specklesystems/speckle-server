@@ -1,5 +1,5 @@
 const puppeteer = require('puppeteer')
-const { isDevelopment } = require('../env')
+const { isDevelopment } = require('../utils/env')
 const { extendLoggerComponent } = require('../observability/logging')
 
 class PuppeteerClient {

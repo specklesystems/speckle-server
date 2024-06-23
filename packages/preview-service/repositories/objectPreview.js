@@ -1,7 +1,9 @@
 const knex = require('./knex')
 
 async function getNextUnstartedObjectPreview() {
-  const [maybeRow] = await knex.raw(`
+  const {
+    rows: [maybeRow]
+  } = await knex.raw(`
     UPDATE object_preview
     SET
       "previewStatus" = 1,

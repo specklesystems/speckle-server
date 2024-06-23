@@ -11,6 +11,7 @@
     "scripts",
     "server",
     "server/routes",
-    "services"
+    "services",
+    "utils"
   ]
 }

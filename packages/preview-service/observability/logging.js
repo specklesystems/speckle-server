@@ -1,5 +1,5 @@
 const Observability = require('@speckle/shared/dist/commonjs/observability/index.js')
-const { getLogLevel, isLogPretty } = require('../env')
+const { getLogLevel, isLogPretty } = require('../utils/env')
 
 // loggers for specific components within normal operation
 const logger = Observability.extendLoggerComponent(

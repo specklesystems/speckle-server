@@ -4,7 +4,7 @@
 const http = require('http')
 const prometheusClient = require('prom-client')
 const knex = require('../repositories/knex')
-const { getMetricsPort } = require('../env')
+const { getMetricsPort } = require('../utils/env')
 
 let metricFree = null
 let metricUsed = null

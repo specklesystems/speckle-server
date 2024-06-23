@@ -7,9 +7,9 @@
 const app = require('../server/app')
 const metricsApp = require('../observability/metricsApp')
 const http = require('http')
-const { startPreviewService } = require('../services/taskManager')
+const { startPreviewService } = require('../server/background')
 const { serverLogger, logger } = require('../observability/logging')
-const { getAppPort, getHost, getMetricsPort } = require('../env')
+const { getAppPort, getHost, getMetricsPort } = require('../utils/env')
 const { initPrometheusMetrics } = require('../observability/prometheusMetrics')
 
 /**
@@ -31,6 +31,12 @@ const server = http.createServer(app)
 const metricsServer = http.createServer(metricsApp)
 
 /**
+ * Initialize Prometheus metrics
+ */
+
+initPrometheusMetrics()
+
+/**
  * Listen on provided port, on all network interfaces.
  */
 
@@ -45,7 +51,6 @@ metricsServer.listen(metricsPort, host)
 metricsServer.on('error', onError)
 metricsServer.on('listening', () => {
   onListening()
-  initPrometheusMetrics()
 })
 
 /**

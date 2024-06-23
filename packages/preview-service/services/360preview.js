@@ -5,7 +5,7 @@ const fetch = require('node-fetch')
 const metrics = require('../observability/prometheusMetrics')
 const joinImages = require('join-images')
 const { updatePreviewMetadata, notifyUpdate } = require('../repositories/objectPreview')
-const { serviceUrl } = require('../env')
+const { serviceUrl } = require('../utils/env')
 const { insertPreview } = require('../repositories/previews')
 
 async function generateAndStore360Preview(task) {
