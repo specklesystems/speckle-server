@@ -6,7 +6,7 @@ import {
   getObjectFactory,
   getObjectChildrenStreamFactory
 } from '../../repositories/objects'
-import { SpeckleObjectsStream } from '../../services/speckleObjectsStream'
+import { SpeckleObjectsStream } from '../../utils/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
 import db from 'repositories/knex'
 

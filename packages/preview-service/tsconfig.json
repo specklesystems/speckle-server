@@ -111,7 +111,8 @@
     "repositories/**/*",
     "server/**/*",
     "services/**/*",
-    "tests/**/*"
+    "tests/**/*",
+    "utils/**/*"
   ],
   "exclude": ["node_modules", "coverage", "reports"]
 }
