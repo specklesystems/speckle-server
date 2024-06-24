@@ -269,14 +269,16 @@ export const countServerInvitesFactory =
     return parseInt(count.count.toString())
   }
 
-export const findServerInvites =
+export const findServerInvitesFactory =
   ({ db }: { db: Knex }): FindServerInvites =>
   async (searchQuery, limit, offset) => {
-    const q = findServerInvitesBaseQueryFactory({ db })(searchQuery) as Knex.QueryBuilder
+    const q = findServerInvitesBaseQueryFactory({ db })(
+      searchQuery
+    ) as Knex.QueryBuilder
     return q.limit(limit).offset(offset) as Promise<ServerInviteRecord[]>
   }
 
-export const queryServerInvites =
+export const queryServerInvitesFactory =
   ({ db }: { db: Knex }): QueryServerInvites =>
   async (searchQuery, limit, cursor) => {
     const q = findServerInvitesBaseQueryFactory({ db })(searchQuery, 'desc')
@@ -340,7 +342,7 @@ export const deleteAllUserInvitesFactory =
     return true
   }
 
-export const findInviteByTokenFactory=
+export const findInviteByTokenFactory =
   ({ db }: { db: Knex }): FindInviteByToken =>
   async (inviteToken) => {
     if (!inviteToken) return null

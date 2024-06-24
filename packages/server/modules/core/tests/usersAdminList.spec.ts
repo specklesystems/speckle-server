@@ -3,7 +3,7 @@ import { truncateTables } from '@/test/hooks'
 import { createUser } from '@/modules/core/services/users'
 import { createStream } from '@/modules/core/services/streams'
 import { times, clamp } from 'lodash'
-import { createInviteDirectly } from '@/test/speckle-helpers/inviteHelper'
+import { createInviteDirectlyFactory } from '@/test/speckle-helpers/inviteHelper'
 import { getAdminUsersList } from '@/test/graphql/users'
 import { buildApolloServer } from '@/app'
 import { addLoadersToCtx } from '@/modules/shared/middleware'
@@ -16,6 +16,8 @@ import knexInstance from '@/db/knex'
 
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
 const WAIT_TIMEOUT = 5
+
+const createInviteDirectly = createInviteDirectlyFactory({ db: knexInstance })
 
 function randomEl<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]
@@ -121,7 +123,7 @@ describe('[Admin users list]', () => {
     // Create invites
     // Server invites
     for (let i = 0; i < SERVER_INVITE_COUNT; i++) {
-      await createInviteDirectly({ db: knexInstance })(
+      await createInviteDirectly(
         {
           email: `randominvitee${i}.${
             remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
@@ -139,7 +141,7 @@ describe('[Admin users list]', () => {
         remainingSearchQueryInviteCount-- >= 1 ? SEARCH_QUERY : ''
       }@gmail.com`
 
-      await createInviteDirectly({ db: knexInstance })(
+      await createInviteDirectly(
         {
           streamId,
           email
@@ -158,7 +160,7 @@ describe('[Admin users list]', () => {
       const userId = randomEl(userIds.filter((i) => i !== ownerId))
 
       createdInvitesData.push(
-        await createInviteDirectly({ db: knexInstance })(
+        await createInviteDirectly(
           {
             streamId,
             userId

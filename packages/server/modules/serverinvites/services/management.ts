@@ -18,7 +18,7 @@ import {
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
   CreateAndSendInvite,
-  FinalizeStreamInvite,
+  FinalizeStreamInvite
 } from '@/modules/serverinvites/services/operations'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 

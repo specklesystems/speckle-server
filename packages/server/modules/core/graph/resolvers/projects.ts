@@ -28,14 +28,14 @@ import { createOnboardingStream } from '@/modules/core/services/streams/onboardi
 import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
-  deleteInvitesByTarget,
-  deleteStreamInvite,
-  findResource,
-  findStreamInvite,
-  findUserByTarget,
-  insertInviteAndDeleteOld,
-  queryAllStreamInvites,
-  queryAllUserStreamInvites
+  deleteInvitesByTargetFactory,
+  deleteStreamInviteFactory,
+  findResourceFactory,
+  findStreamInviteFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  queryAllStreamInvitesFactory,
+  queryAllUserStreamInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/inviteCreationService'
 import {
@@ -145,9 +145,9 @@ export = {
         ctx.resourceAccessRules
       )
       const createAndSendInvite = createAndSendInviteFactory({
-        findResource: findResource(),
-        findUserByTarget: findUserByTarget(),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db: knexInstance })
+        findResource: findResourceFactory(),
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db: knexInstance })
       })
       await createStreamInviteAndNotify({
         createAndSendInvite
@@ -181,10 +181,12 @@ export = {
         await Promise.all(
           batch.map((i) =>
             createStreamInviteAndNotify({
-              createAndSendInvite: createAndSendInvite({
-                findResource: findResource(),
-                findUserByTarget: findUserByTarget(),
-                insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db: knexInstance })
+              createAndSendInvite: createAndSendInviteFactory({
+                findResource: findResourceFactory(),
+                findUserByTarget: findUserByTargetFactory(),
+                insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({
+                  db: knexInstance
+                })
               })
             })(
               { ...i, projectId: args.projectId },
@@ -199,8 +201,8 @@ export = {
     async use(_parent, args, ctx) {
       await useStreamInviteAndNotify({
         finalizeStreamInvite: finalizeStreamInvite({
-          findStreamInvite: findStreamInvite({ db: knexInstance }),
-          deleteInvitesByTarget: deleteInvitesByTarget({ db: knexInstance })
+          findStreamInvite: findStreamInviteFactory({ db: knexInstance }),
+          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db: knexInstance })
         })
       })(args.input, ctx.userId!, ctx.resourceAccessRules)
       return true
@@ -213,8 +215,8 @@ export = {
         ctx.resourceAccessRules
       )
       await cancelStreamInvite({
-        findStreamInvite: findStreamInvite({ db: knexInstance }),
-        deleteStreamInvite: deleteStreamInvite({ db: knexInstance })
+        findStreamInvite: findStreamInviteFactory({ db: knexInstance }),
+        deleteStreamInvite: deleteStreamInviteFactory({ db: knexInstance })
       })(args.projectId, args.inviteId)
       return ctx.loaders.streams.getStream.load(args.projectId)
     }
@@ -253,7 +255,9 @@ export = {
     async projectInvites(_parent, _args, context) {
       const { userId } = context
       return await getUserPendingStreamInvites({
-        queryAllUserStreamInvites: queryAllUserStreamInvites({ db: knexInstance })
+        queryAllUserStreamInvites: queryAllUserStreamInvitesFactory({
+          db: knexInstance
+        })
       })(userId!)
     }
   },
@@ -277,7 +281,7 @@ export = {
     },
     async invitedTeam(parent) {
       return getPendingStreamCollaborators({
-        queryAllStreamInvites: queryAllStreamInvites({ db: knexInstance })
+        queryAllStreamInvites: queryAllStreamInvitesFactory({ db: knexInstance })
       })(parent.id)
     },
     async visibility(parent) {

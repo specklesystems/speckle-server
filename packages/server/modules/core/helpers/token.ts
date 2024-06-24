@@ -1,4 +1,7 @@
-import { TokenResourceIdentifier, TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
+import {
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
+} from '@/modules/core/domain/tokens/types'
 import { TokenCreateError } from '@/modules/core/errors/user'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 import { ResourceTargets } from '@/modules/serverinvites/helpers/inviteHelper'

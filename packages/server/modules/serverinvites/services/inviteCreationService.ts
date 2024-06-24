@@ -37,8 +37,7 @@ export const createAndSendInviteFactory =
     findResource: FindResource
     insertInviteAndDeleteOld: InsertInviteAndDeleteOld
   }): CreateAndSendInvite =>
-  async (
-   params , inviterResourceAccessLimits?) => {
+  async (params, inviterResourceAccessLimits?) => {
     const { inviterId, resourceTarget, resourceId, role, serverRole } = params
     let { message, target } = params
 

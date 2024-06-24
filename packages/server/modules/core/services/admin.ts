@@ -5,8 +5,8 @@ import { listUsers, countUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
-  countServerInvites,
-  queryServerInvites
+  countServerInvitesFactory,
+  queryServerInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { BaseError } from '@/modules/shared/errors/base'
 import { ServerRoles } from '@speckle/shared'
@@ -78,8 +78,12 @@ export const adminInviteList = async (
   const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
   // TODO: injection
   const [totalCount, inviteItems] = await Promise.all([
-    countServerInvites({ db: knexInstance })(args.query),
-    queryServerInvites({ db: knexInstance })(args.query, args.limit, parsedCursor)
+    countServerInvitesFactory({ db: knexInstance })(args.query),
+    queryServerInvitesFactory({ db: knexInstance })(
+      args.query,
+      args.limit,
+      parsedCursor
+    )
   ])
   const items = inviteItems.map((invite: ServerInviteRecord) => {
     return {
