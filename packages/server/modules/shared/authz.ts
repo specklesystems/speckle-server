@@ -16,7 +16,7 @@ import {
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
-import { TokenResourceIdentifier } from '@/modules/serverinvites/services/operations'
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { getAutomationProject } from '@/modules/automate/repositories/automations'
 

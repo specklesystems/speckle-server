@@ -1,9 +1,6 @@
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { CreateInviteParams } from '@/modules/serverinvites/domain/operations'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
-
-// TODO: these should be moved to domain
-export type TokenResourceIdentifierType = 'project'
-export type TokenResourceIdentifier = { id: string; type: TokenResourceIdentifierType }
 
 export type InviteResult = {
   inviteId: string

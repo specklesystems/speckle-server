@@ -6,7 +6,7 @@ import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
 import { getStreamCollaborator } from '@/modules/core/repositories/streams'
-import { TokenResourceIdentifier } from '@/modules/serverinvites/services/operations'
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 
 /**
  * Validate invite creation input data

@@ -22,8 +22,8 @@ import {
 } from '@/modules/core/repositories/streams'
 import { createBranch } from '@/modules/core/services/branches'
 import {
-  createAndSendInvite,
-  inviteUsersToStream
+  createAndSendInviteFactory,
+  inviteUsersToStreamFactory
 } from '@/modules/serverinvites/services/inviteCreationService'
 import {
   StreamInvalidAccessError,
@@ -42,13 +42,16 @@ import {
 } from '@/modules/core/helpers/token'
 import { authorizeResolver } from '@/modules/shared'
 import {
-  deleteAllStreamInvites,
-  findResource,
-  findUserByTarget,
-  insertInviteAndDeleteOld
+  deleteAllStreamInvitesFactory,
+  findResourceFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import knexInstance from '@/db/knex'
-import { TokenResourceIdentifier } from '@/modules/serverinvites/services/operations'
+import {
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
+} from '@/modules/core/domain/tokens/types'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & {
@@ -61,7 +64,7 @@ export async function createStreamReturnRecord(
   const { createActivity = true } = options || {}
 
   const canCreateStream = isNewResourceAllowed({
-    resourceType: 'project',
+    resourceType: TokenResourceIdentifierType.Project,
     resourceAccessRules: ownerResourceAccessRules
   })
   if (!canCreateStream) {
@@ -84,11 +87,11 @@ export async function createStreamReturnRecord(
   // Invite contributors?
   if (!isProjectCreateInput(params) && params.withContributors?.length) {
     // TODO: should be injected in the resolver
-    await inviteUsersToStream({
-      createAndSendInvite: createAndSendInvite({
-        findResource: findResource(),
-        findUserByTarget: findUserByTarget(),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db: knexInstance })
+    await inviteUsersToStreamFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findResource: findResourceFactory(),
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db: knexInstance })
       })
     })(ownerId, streamId, params.withContributors, ownerResourceAccessRules)
   }
@@ -138,10 +141,8 @@ export async function deleteStreamAndNotify(
 
   // TODO: use proper injection once we refactor this module
   // Delete after event so we can do authz
-  await Promise.all([
-    deleteAllStreamInvites({ db: knexInstance })(streamId),
-    deleteStream(streamId)
-  ])
+  const deleteAllStreamInvites = deleteAllStreamInvitesFactory({ db: knexInstance })
+  await Promise.all([deleteAllStreamInvites(streamId), deleteStream(streamId)])
   return true
 }
 

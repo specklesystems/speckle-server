@@ -37,7 +37,7 @@ import {
   queryAllStreamInvites,
   queryAllUserStreamInvites
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { createAndSendInvite } from '@/modules/serverinvites/services/inviteCreationService'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/inviteCreationService'
 import {
   cancelStreamInvite,
   finalizeStreamInvite
@@ -144,12 +144,13 @@ export = {
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
+      const createAndSendInvite = createAndSendInviteFactory({
+        findResource: findResource(),
+        findUserByTarget: findUserByTarget(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db: knexInstance })
+      })
       await createStreamInviteAndNotify({
-        createAndSendInvite: createAndSendInvite({
-          findResource: findResource(),
-          findUserByTarget: findUserByTarget(),
-          insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db: knexInstance })
-        })
+        createAndSendInvite
       })(
         {
           ...args.input,

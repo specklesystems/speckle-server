@@ -7,18 +7,18 @@ import {
 import { InviteResult } from '@/modules/serverinvites/services/operations'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import {
-  findResource,
-  findUserByTarget,
-  insertInviteAndDeleteOld
+  findResourceFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { Knex } from 'knex'
-import { createAndSendInvite } from '@/modules/serverinvites/services/inviteCreationService'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/inviteCreationService'
 
 /**
  * Create a new invite. User & userId are alternatives for each other, and so
  * are stream & streamId
  */
-export const createInviteDirectly =
+export const createInviteDirectlyFactory =
   // This is a test helper, so im ok, with leaking the internal abstractions here
 
 
@@ -43,10 +43,10 @@ export const createInviteDirectly =
       const target = email || buildUserTarget(userId)
       if (!target) throw new Error('Cannot create invite without a target')
 
-      return await createAndSendInvite({
-        findUserByTarget: findUserByTarget(),
-        findResource: findResource(),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOld({ db })
+      return await createAndSendInviteFactory({
+        findUserByTarget: findUserByTargetFactory(),
+        findResource: findResourceFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db })
       })({
         target,
         inviterId: creatorId,

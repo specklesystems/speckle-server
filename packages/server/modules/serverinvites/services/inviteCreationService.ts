@@ -11,7 +11,7 @@ import {
 } from '@/modules/serverinvites/helpers/inviteHelper'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { addStreamInviteSentOutActivity } from '@/modules/activitystream/services/streamActivity'
-import { TokenResourceIdentifier } from '@/modules/serverinvites/services/operations'
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import {
   FindResource,
   FindUserByTarget,
@@ -27,7 +27,7 @@ import {
 /**
  * Create and send out an invite
  */
-export const createAndSendInvite =
+export const createAndSendInviteFactory =
   ({
     findUserByTarget,
     findResource,
@@ -37,7 +37,8 @@ export const createAndSendInvite =
     findResource: FindResource
     insertInviteAndDeleteOld: InsertInviteAndDeleteOld
   }): CreateAndSendInvite =>
-  async (params, inviterResourceAccessLimits?) => {
+  async (
+   params , inviterResourceAccessLimits?) => {
     const { inviterId, resourceTarget, resourceId, role, serverRole } = params
     let { message, target } = params
 
@@ -140,7 +141,7 @@ function sanitizeMessage(message: string, stripAll: boolean = false) {
 /**
  * Re-send existing invite email
  */
-export const resendInviteEmail =
+export const resendInviteEmailFactory =
   ({
     findResource,
     findUserByTarget
@@ -170,7 +171,7 @@ export const resendInviteEmail =
 /**
  * Invite users to be contributors for the specified stream
  */
-export const inviteUsersToStream =
+export const inviteUsersToStreamFactory =
   ({ createAndSendInvite }: { createAndSendInvite: CreateAndSendInvite }) =>
   async (
     inviterId: string,

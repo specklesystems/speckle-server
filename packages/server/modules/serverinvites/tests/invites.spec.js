@@ -24,10 +24,10 @@ const {
   grantPermissionsStream
 } = require('@/modules/core/services/streams')
 const { getUserStreamRole } = require('@/test/speckle-helpers/streamHelper')
-const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
+const { createInviteDirectlyFactory } = require('@/test/speckle-helpers/inviteHelper')
 const { buildAuthenticatedApolloServer } = require('@/test/serverHelper')
 const { EmailSendingServiceMock } = require('@/test/mocks/global')
-const knexInstance = require('@/db/knex')
+const db = require('@/db/knex')
 const {
   findInviteByToken,
   findInvite
@@ -42,12 +42,13 @@ function getInviteTokenFromEmailParams(emailParams) {
   const [, inviteId] = text.match(/\?token=(.*?)(\s|&)/i)
   return inviteId
 }
+const createInviteDirectly = createInviteDirectlyFactory({ db })
 
 async function validateInviteExistanceFromEmail(emailParams) {
   // Validate that invite exists
   const token = getInviteTokenFromEmailParams(emailParams)
   expect(token).to.be.ok
-  const invite = await findInviteByToken({ db: knexInstance })(token)
+  const invite = await findInviteByToken({ db })(token)
   expect(invite).to.be.ok
 
   return invite
@@ -410,7 +411,7 @@ describe('[Stream & Server Invites]', () => {
         // Creating some invites
         await Promise.all(
           invites.map((i) =>
-            createInviteDirectly({ db: knexInstance })(i, me.id).then((o) => {
+            createInviteDirectly(i, me.id).then((o) => {
               i.inviteId = o.inviteId
               i.token = o.token
             })
@@ -458,7 +459,7 @@ describe('[Stream & Server Invites]', () => {
         ]
         await Promise.all(
           deletableInvites.map((i) =>
-            createInviteDirectly({ db: knexInstance })(i, me.id).then((o) => {
+            createInviteDirectly(i, me.id).then((o) => {
               i.inviteId = o.inviteId
               i.token = o.token
             })
@@ -476,7 +477,7 @@ describe('[Stream & Server Invites]', () => {
 
         // Validate that invites no longer exist
         const invitesInDb = await Promise.all(
-          deletableInvites.map((i) => findInvite({ db: knexInstance })(i.inviteId))
+          deletableInvites.map((i) => findInvite({ db })(i.inviteId))
         )
         expect(invitesInDb.every((i) => !i)).to.be.true
       })
@@ -574,10 +575,7 @@ describe('[Stream & Server Invites]', () => {
       beforeEach(async () => {
         // Create an invite before each test so that we can mutate them
         // in each test as needed
-        await createInviteDirectly({ db: knexInstance })(
-          inviteFromOtherGuy,
-          otherGuy.id
-        ).then((o) => {
+        await createInviteDirectly(inviteFromOtherGuy, otherGuy.id).then((o) => {
           inviteFromOtherGuy.inviteId = o.inviteId
           inviteFromOtherGuy.token = o.token
         })
@@ -629,7 +627,7 @@ describe('[Stream & Server Invites]', () => {
 
           expect(data?.streamInviteUse).to.be.ok
           expect(errors).to.not.be.ok
-          expect(await findInvite({ db: knexInstance })(inviteId)).to.be.not.ok
+          expect(await findInvite({ db })(inviteId)).to.be.not.ok
 
           const userStreamRole = await getUserStreamRole(me.id, streamId)
           expect(userStreamRole).to.eq(accept ? Roles.Stream.Contributor : null)
@@ -686,28 +684,24 @@ describe('[Stream & Server Invites]', () => {
 
         // Create a couple of static invites that shouldn't be mutated in tests
         await Promise.all([
-          createInviteDirectly({ db: knexInstance })(myInvite, me.id).then((o) => {
+          createInviteDirectly(myInvite, me.id).then((o) => {
             myInvite.inviteId = o.inviteId
             myInvite.token = o.token
           }),
-          createInviteDirectly({ db: knexInstance })(otherGuysInvite, otherGuy.id).then(
-            (o) => {
-              otherGuysInvite.inviteId = o.inviteId
-              otherGuysInvite.token = o.token
-            }
-          )
+          createInviteDirectly(otherGuysInvite, otherGuy.id).then((o) => {
+            otherGuysInvite.inviteId = o.inviteId
+            otherGuysInvite.token = o.token
+          })
         ])
       })
 
       beforeEach(async () => {
         // Create an invite before each test so that we can mutate them
         // in each test as needed
-        await createInviteDirectly({ db: knexInstance })(dynamicInvite, me.id).then(
-          (o) => {
-            dynamicInvite.inviteId = o.inviteId
-            dynamicInvite.token = o.token
-          }
-        )
+        await createInviteDirectly(dynamicInvite, me.id).then((o) => {
+          dynamicInvite.inviteId = o.inviteId
+          dynamicInvite.token = o.token
+        })
       })
 
       it('a pending invite can be deleted', async () => {
@@ -720,7 +714,7 @@ describe('[Stream & Server Invites]', () => {
 
         expect(data?.streamInviteCancel).to.be.ok
         expect(errors).to.be.not.ok
-        expect(await findInvite({ db: knexInstance })(inviteId)).to.be.not.ok
+        expect(await findInvite({ db })(inviteId)).to.be.not.ok
       })
 
       it('own pending collaborators can be retrieved', async () => {
@@ -776,14 +770,14 @@ describe('[Stream & Server Invites]', () => {
 
         // Invite him to a few streams
         await Promise.all([
-          createInviteDirectly({ db: knexInstance })(
+          createInviteDirectly(
             {
               user: ownInvitesGuy,
               stream: myPrivateStream
             },
             me.id
           ),
-          createInviteDirectly({ db: knexInstance })(
+          createInviteDirectly(
             {
               user: ownInvitesGuy,
               stream: otherGuysStream

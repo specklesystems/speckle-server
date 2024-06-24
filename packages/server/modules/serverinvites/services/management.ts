@@ -19,8 +19,8 @@ import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
   CreateAndSendInvite,
   FinalizeStreamInvite,
-  TokenResourceIdentifier
 } from '@/modules/serverinvites/services/operations'
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
 
