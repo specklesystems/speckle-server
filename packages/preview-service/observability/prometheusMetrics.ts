@@ -1,21 +1,17 @@
-/* eslint-disable no-unused-vars */
-'use strict'
+import prometheusClient from 'prom-client'
+import type { Counter, Histogram, Summary } from 'prom-client'
+import knex from '../repositories/knex'
+import { logger } from './logging'
 
-const http = require('http')
-const prometheusClient = require('prom-client')
-const knex = require('../repositories/knex')
-const { getMetricsPort } = require('../utils/env')
-const { logger } = require('./logging')
+// let metricFree: Gauge<string> | null = null
+// let metricUsed: Gauge<string> = null
+// let metricPendingAquires: Gauge<string> | null = null
+let metricQueryDuration: Summary<string> | null = null
+let metricQueryErrors: Counter<string> | null = null
+export let metricDuration: Histogram<string> | null = null
+export let metricOperationErrors: Counter<string> | null = null
 
-let metricFree = null
-let metricUsed = null
-let metricPendingAquires = null
-let metricQueryDuration = null
-let metricQueryErrors = null
-let metricDuration = null
-let metricOperationErrors = null
-
-const queryStartTime = {}
+const queryStartTime: Record<string, number> = {}
 prometheusClient.register.clear()
 prometheusClient.register.setDefaultLabels({
   project: 'speckle-server',
@@ -30,7 +26,8 @@ function isPrometheusInitialized() {
 }
 
 function initKnexPrometheusMetrics() {
-  metricFree = new prometheusClient.Gauge({
+  //metricFree =
+  new prometheusClient.Gauge({
     name: 'speckle_server_knex_free',
     help: 'Number of free DB connections',
     collect() {
@@ -38,7 +35,8 @@ function initKnexPrometheusMetrics() {
     }
   })
 
-  metricUsed = new prometheusClient.Gauge({
+  //metricUsed =
+  new prometheusClient.Gauge({
     name: 'speckle_server_knex_used',
     help: 'Number of used DB connections',
     collect() {
@@ -46,7 +44,8 @@ function initKnexPrometheusMetrics() {
     }
   })
 
-  metricPendingAquires = new prometheusClient.Gauge({
+  //metricPendingAquires =
+  new prometheusClient.Gauge({
     name: 'speckle_server_knex_pending',
     help: 'Number of pending DB connection aquires',
     collect() {
@@ -69,24 +68,27 @@ function initKnexPrometheusMetrics() {
     queryStartTime[queryId] = Date.now()
   })
 
-  knex.on('query-response', (data, obj, builder) => {
+  knex.on('query-response', (_data, obj) => {
     const queryId = obj.__knexQueryUid + ''
     const durationSec = (Date.now() - queryStartTime[queryId]) / 1000
     delete queryStartTime[queryId]
-    if (!isNaN(durationSec)) metricQueryDuration.observe(durationSec)
+    if (metricQueryDuration && !isNaN(durationSec))
+      metricQueryDuration.observe(durationSec)
   })
 
-  knex.on('query-error', (err, querySpec) => {
+  knex.on('query-error', (_err, querySpec) => {
     const queryId = querySpec.__knexQueryUid + ''
     const durationSec = (Date.now() - queryStartTime[queryId]) / 1000
     delete queryStartTime[queryId]
 
-    if (!isNaN(durationSec)) metricQueryDuration.observe(durationSec)
-    metricQueryErrors.inc()
+    if (metricQueryDuration && !isNaN(durationSec))
+      metricQueryDuration.observe(durationSec)
+
+    if (metricQueryErrors) metricQueryErrors.inc()
   })
 }
 
-function initPrometheusMetrics() {
+export function initPrometheusMetrics() {
   logger.info('Initializing Prometheus metrics...')
   if (isPrometheusInitialized()) {
     logger.info('Prometheus metrics already initialized')
@@ -113,10 +115,4 @@ function initPrometheusMetrics() {
   } catch {
     prometheusInitialized = false
   }
-}
-
-module.exports = {
-  initPrometheusMetrics,
-  metricDuration,
-  metricOperationErrors
 }
