@@ -1,14 +1,15 @@
 'use strict'
 
-const express = require('express')
-const { getScreenshot } = require('../../services/screenshot')
-const { PuppeteerClient } = require('../../clients/puppeteer')
-const { puppeteerDriver } = require('../../scripts/puppeteerDriver')
-const { serviceUrl } = require('../../utils/env')
+import express from 'express'
+import { getScreenshot } from '../../services/screenshot'
+import { PuppeteerClient } from '../../clients/puppeteer'
+import { puppeteerDriver } from '../../scripts/puppeteerDriver'
+import { serviceUrl } from '../../utils/env'
 
-const router = express.Router()
+const previewRouter = express.Router()
+export default previewRouter
 
-router.get('/:streamId/:objectId', async function (req, res) {
+previewRouter.get('/:streamId/:objectId', async function (req, res) {
   const { streamId, objectId } = req.params || {}
   const safeParamRgx = /^[\w]+$/i
   if (!safeParamRgx.test(streamId) || !safeParamRgx.test(objectId)) {
@@ -52,5 +53,3 @@ router.get('/:streamId/:objectId', async function (req, res) {
   // res.setHeader( 'content-type', 'image/png' )
   res.send(scr)
 })
-
-module.exports = router

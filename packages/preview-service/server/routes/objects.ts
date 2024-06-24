@@ -1,15 +1,16 @@
 'use strict'
 
-const zlib = require('zlib')
-const express = require('express')
-const { getObject, getObjectChildrenStream } = require('../../repositories/objects')
-const { SpeckleObjectsStream } = require('../../services/speckleObjectsStream')
-const { pipeline, PassThrough } = require('stream')
+import zlib from 'zlib'
+import express from 'express'
+import { getObject, getObjectChildrenStream } from '../../repositories/objects'
+import { SpeckleObjectsStream } from '../../services/speckleObjectsStream'
+import { pipeline, PassThrough } from 'stream'
 
-const router = express.Router()
+const objectsRouter = express.Router()
+export default objectsRouter
 
 // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
-router.get('/:streamId/:objectId', async function (req, res) {
+objectsRouter.get('/:streamId/:objectId', async function (req, res) {
   const boundLogger = req.log.child({
     streamId: req.params.streamId,
     objectId: req.params.objectId
@@ -60,7 +61,7 @@ router.get('/:streamId/:objectId', async function (req, res) {
   )
 })
 
-router.get('/:streamId/:objectId/single', async (req, res) => {
+objectsRouter.get('/:streamId/:objectId/single', async (req, res) => {
   const boundLogger = req.log.child({
     streamId: req.params.streamId,
     objectId: req.params.objectId
@@ -78,5 +79,3 @@ router.get('/:streamId/:objectId/single', async (req, res) => {
 
   res.send(obj.data)
 })
-
-module.exports = router
