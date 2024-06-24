@@ -1,17 +1,17 @@
-'use strict'
+import zlib from 'zlib'
+import express from 'express'
+import { getObjectsStream } from '../../repositories/objects'
+import { SpeckleObjectsStream } from '../../services/speckleObjectsStream'
+import { pipeline, PassThrough } from 'stream'
 
-const zlib = require('zlib')
-const express = require('express')
-const { getObjectsStream } = require('../../repositories/objects')
-const { SpeckleObjectsStream } = require('../../services/speckleObjectsStream')
-const { pipeline, PassThrough } = require('stream')
+const apiRouter = express.Router()
+export default apiRouter
 
-const router = express.Router()
-
-const isSimpleTextRequested = (req) => req.headers.accept === 'text/plain'
+const isSimpleTextRequested = (req: express.Request) =>
+  req.headers.accept === 'text/plain'
 
 // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
-router.post('/getobjects/:streamId', async (req, res) => {
+apiRouter.post('/getobjects/:streamId', async (req, res) => {
   const boundLogger = req.log.child({
     streamId: req.params.streamId
   })
@@ -50,5 +50,3 @@ router.post('/getobjects/:streamId', async (req, res) => {
     }
   )
 })
-
-module.exports = router

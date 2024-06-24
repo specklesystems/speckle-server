@@ -1,17 +1,17 @@
 'use strict'
 
-const createError = require('http-errors')
-const express = require('express')
-const path = require('path')
-const cookieParser = require('cookie-parser')
+import createError from 'http-errors'
+import express, { ErrorRequestHandler } from 'express'
+import path from 'path'
+import cookieParser from 'cookie-parser'
 
-const { router: indexRouter } = require('./routes/index')
-const previewRouter = require('./routes/preview')
-const objectsRouter = require('./routes/objects')
-const apiRouter = require('./routes/api')
-const { LoggingExpressMiddleware } = require('../observability/expressLogging')
+import indexRouter from './routes/index'
+import previewRouter from './routes/preview'
+import objectsRouter from './routes/objects'
+import apiRouter from './routes/api'
+import { LoggingExpressMiddleware } from '../observability/expressLogging'
 
-const app = express()
+export const app = express()
 
 app.use(LoggingExpressMiddleware)
 
@@ -31,14 +31,13 @@ app.use(function (req, res, next) {
   next(createError(404, `Not Found: ${req.url}`))
 })
 
-// error handler
-app.use(function (err, req, res) {
+const errorHandler: ErrorRequestHandler = (err, req, res) => {
   let errorText = err.message
   if (req.app.get('env') === 'development') {
     errorText = `<html><body><pre>${err.message}: ${err.status}\n${err.stack}</pre></body></html>`
   }
   res.status(err.status || 500)
   res.send(errorText)
-})
+}
 
-module.exports = app
+app.use(errorHandler)

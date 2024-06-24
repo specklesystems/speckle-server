@@ -1,7 +1,8 @@
 import express from 'express'
 
-export const router = express.Router()
+const indexRouter = express.Router()
+export default indexRouter
 
-router.get('/', (_req, res) => {
+indexRouter.get('/', (_req, res) => {
   res.send('Speckle Object Preview Service')
 })
