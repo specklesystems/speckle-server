@@ -9,12 +9,12 @@ import {
   getNextUnstartedObjectPreviewFactory,
   notifyUpdateFactory,
   updatePreviewMetadataFactory
-} from 'repositories/objectPreview'
-import db from 'repositories/knex'
-import { generateAndStore360PreviewFactory } from 'services/360preview'
-import { insertPreviewFactory } from 'repositories/previews'
-import { serviceOrigin } from 'utils/env'
-import { generatePreviewFactory } from 'clients/previewService'
+} from '../repositories/objectPreview'
+import db from '../repositories/knex'
+import { generateAndStore360PreviewFactory } from '../services/360preview'
+import { insertPreviewFactory } from '../repositories/previews'
+import { serviceOrigin } from '../utils/env'
+import { generatePreviewFactory } from '../clients/previewService'
 
 export async function startPreviewService() {
   logger.info('📸 Started Preview Service background worker')

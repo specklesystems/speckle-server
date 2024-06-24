@@ -3,7 +3,7 @@ import express from 'express'
 import { getObjectsStreamFactory } from '../../repositories/objects'
 import { SpeckleObjectsStream } from '../../utils/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
-import db from 'repositories/knex'
+import db from '../../repositories/knex'
 
 const apiRouter = express.Router()
 export default apiRouter

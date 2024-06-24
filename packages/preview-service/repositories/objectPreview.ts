@@ -1,4 +1,4 @@
-import type { ObjectIdentifier } from 'domain/domain'
+import type { ObjectIdentifier } from '../domain/domain'
 import type { Knex } from 'knex'
 
 export type GetNextUnstartedObjectPreview = () => Promise<ObjectIdentifier>

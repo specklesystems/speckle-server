@@ -1,10 +1,10 @@
 import crypto from 'crypto'
 import { metricOperationErrors } from '../observability/prometheusMetrics'
 import joinImages from 'join-images'
-import type { ObjectIdentifier } from 'domain/domain'
-import type { NotifyUpdate, UpdatePreviewMetadata } from 'repositories/objectPreview'
-import { InsertPreview } from 'repositories/previews'
-import { GeneratePreview } from 'clients/previewService'
+import type { ObjectIdentifier } from '../domain/domain'
+import type { NotifyUpdate, UpdatePreviewMetadata } from '../repositories/objectPreview'
+import type { InsertPreview } from '../repositories/previews'
+import type { GeneratePreview } from '../clients/previewService'
 
 export type GenerateAndStore360Preview = (task: ObjectIdentifier) => Promise<void>
 export const generateAndStore360PreviewFactory =

@@ -8,7 +8,7 @@ import {
 } from '../../repositories/objects'
 import { SpeckleObjectsStream } from '../../utils/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
-import db from 'repositories/knex'
+import db from '../../repositories/knex'
 
 const objectsRouter = express.Router()
 export default objectsRouter

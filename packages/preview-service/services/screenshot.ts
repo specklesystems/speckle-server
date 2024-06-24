@@ -5,8 +5,8 @@ import {
   getChromiumExecutablePath
 } from '../utils/env'
 import type { Logger } from 'pino'
-import { PuppeteerClient } from 'clients/puppeteer'
-import { ObjectIdentifier } from 'domain/domain'
+import { PuppeteerClient } from '../clients/puppeteer'
+import type { ObjectIdentifier } from '../domain/domain'
 
 export type GetScreenshot = (params: ObjectIdentifier) => Promise<string | null>
 
