@@ -3248,26 +3248,12 @@ export type VersionCreatedTriggerDefinition = {
   type: AutomateRunTriggerType;
 };
 
-export type VersionCreateInput = {
-  message?: InputMaybe<Scalars['String']>;
-  modelId: Scalars['String'];
-  objectId: Scalars['String'];
-  projectId: Scalars['String'];
-  sourceApplication?: InputMaybe<Scalars['String']>;
-  totalChildrenCount?: InputMaybe<Scalars['Int']>;
-};
-
 export type VersionMutations = {
   __typename?: 'VersionMutations';
   delete: Scalars['Boolean']['output'];
   moveToModel: Model;
   requestGendoAIRender: Scalars['Boolean']['output'];
   update: Version;
-};
-
-
-export type VersionMutationsCreateArgs = {
-  input: VersionCreateInput;
 };
 
 
@@ -5070,7 +5056,6 @@ export type VersionCreatedTriggerDefinitionResolvers<ContextType = GraphQLContex
 };
 
 export type VersionMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionMutations'] = ResolversParentTypes['VersionMutations']> = {
-  create?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<VersionMutationsCreateArgs, 'input'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsDeleteArgs, 'input'>>;
   moveToModel?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<VersionMutationsMoveToModelArgs, 'input'>>;
   requestGendoAIRender?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsRequestGendoAiRenderArgs, 'input'>>;

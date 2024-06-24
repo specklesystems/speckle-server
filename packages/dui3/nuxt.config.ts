@@ -14,12 +14,12 @@ export default defineNuxtConfig({
   ],
   alias: {
     // Rewriting all lodash calls to lodash-es for proper tree-shaking & chunk splitting
-    lodash: 'lodash-es'
+    // lodash: 'lodash-es'
   },
 
-  pinia: {
-    autoImports: ['defineStore', 'storeToRefs']
-  },
+  // pinia: {
+  //   autoImports: ['defineStore', 'storeToRefs']
+  // },
   runtimeConfig: {
     public: {
       mixpanelApiHost: 'UNDEFINED',
@@ -34,7 +34,7 @@ export default defineNuxtConfig({
   },
   vite: {
     resolve: {
-      alias: [{ find: /^lodash$/, replacement: 'lodash-es' }]
+      alias: [{ find: /^lodash(?!(-es|\/fp|\.))/, replacement: 'lodash-es' }]
     },
 
     build: {

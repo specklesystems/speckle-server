@@ -6,18 +6,6 @@ export const createCommitMutation = graphql(`
   }
 `)
 
-export const createVersionMutation = graphql(`
-  mutation CreateVersion($input: VersionCreateInput!) {
-    versionMutations {
-      create(input: $input) {
-        id
-        message
-        referencedObject
-      }
-    }
-  }
-`)
-
 export const createModelMutation = graphql(`
   mutation CreateModel($input: CreateModelInput!) {
     modelMutations {

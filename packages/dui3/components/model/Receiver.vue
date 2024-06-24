@@ -2,7 +2,7 @@
   <ModelCardBase
     :model-card="modelCard"
     :project="project"
-    @manual-publish-or-load="receiveLatestVersion"
+    @manual-publish-or-load="handleMainButtonClick"
   >
     <div class="flex max-[275px]:flex-col items-center space-x-2 py-2">
       <div class="shrink-0">
@@ -80,6 +80,7 @@
 </template>
 <script setup lang="ts">
 import dayjs from 'dayjs'
+
 import { useQuery } from '@vue/apollo-composable'
 import { ClockIcon } from '@heroicons/vue/24/solid'
 import type { ModelCardNotification } from '~/lib/models/card/notification'
@@ -111,6 +112,7 @@ const isExpired = computed(() => {
   return props.modelCard.latestVersionId !== props.modelCard.selectedVersionId
 })
 
+// Cancels any in progress receive AND load selected version
 const handleVersionSelection = async (
   selectedVersion: VersionListItemFragment,
   latestVersion: VersionListItemFragment
@@ -132,13 +134,21 @@ const handleVersionSelection = async (
   await store.receiveModel(props.modelCard.modelCardId)
 }
 
+// Cancels any in progress receive OR receives latest version
+const handleMainButtonClick = async () => {
+  if (props.modelCard.progress)
+    return await store.receiveModelCancel(props.modelCard.modelCardId)
+  await receiveLatestVersion()
+}
+
+// Cancels any in progress receive AND receives latest version
 const receiveLatestVersion = async () => {
   // Note: here we're updating the model card info, and afterwards we're hitting the receive action
   await store.patchModel(props.modelCard.modelCardId, {
     selectedVersionId: props.modelCard.latestVersionId
   })
   if (props.modelCard.progress)
-    return await store.receiveModelCancel(props.modelCard.modelCardId)
+    await store.receiveModelCancel(props.modelCard.modelCardId)
   await store.receiveModel(props.modelCard.modelCardId)
 }
 
@@ -200,7 +210,7 @@ const { result: versionDetailsResult, refetch } = useQuery(
   })
 )
 
-const createdAgoUpdater = useInterval(200)
+const createdAgoUpdater = useInterval(10_000) // refresh the created ago, and latestversion etc. every 10s
 
 const createdAgo = computed(() => {
   createdAgoUpdater.value

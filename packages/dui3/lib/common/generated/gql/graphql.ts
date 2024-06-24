@@ -172,14 +172,6 @@ export type AppTokenCreateInput = {
   scopes: Array<Scalars['String']['input']>;
 };
 
-export type AppTokenCreateInput = {
-  lifespan?: InputMaybe<Scalars['BigInt']>;
-  /** Optionally limit the token to only have access to specific resources */
-  limitResources?: InputMaybe<Array<TokenResourceIdentifierInput>>;
-  name: Scalars['String'];
-  scopes: Array<Scalars['String']>;
-};
-
 export type AppUpdateInput = {
   description: Scalars['String']['input'];
   id: Scalars['String']['input'];
@@ -209,6 +201,8 @@ export type AutomateAuthCodePayloadTest = {
 export type AutomateFunction = {
   __typename?: 'AutomateFunction';
   automationCount: Scalars['Int']['output'];
+  /** Only returned if user is a part of this speckle server */
+  creator?: Maybe<LimitedUser>;
   description: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   isFeatured: Scalars['Boolean']['output'];
@@ -381,62 +375,6 @@ export type AutomationCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type AutomationCreateInput = {
-  automationId: Scalars['String']['input'];
-  automationName: Scalars['String']['input'];
-  automationRevisionId: Scalars['String']['input'];
-  modelId: Scalars['String']['input'];
-  projectId: Scalars['String']['input'];
-  webhookId?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type AutomationFunctionRun = {
-  __typename?: 'AutomationFunctionRun';
-  contextView?: Maybe<Scalars['String']['output']>;
-  elapsed: Scalars['Float']['output'];
-  functionId: Scalars['String']['output'];
-  functionLogo?: Maybe<Scalars['String']['output']>;
-  functionName: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  resultVersions: Array<Version>;
-  /**
-   * NOTE: this is the schema for the results field below!
-   * Current schema: {
-   *   version: "1.0.0",
-   *   values: {
-   *     objectResults: Record<str, {
-   *       category: string
-   *       level: ObjectResultLevel
-   *       objectIds: string[]
-   *       message: str | null
-   *       metadata: Records<str, unknown> | null
-   *       visualoverrides: Records<str, unknown> | null
-   *     }[]>
-   *     blobIds?: string[]
-   *   }
-   * }
-   */
-  results?: Maybe<Scalars['JSONObject']['output']>;
-  status: AutomationRunStatus;
-  statusMessage?: Maybe<Scalars['String']['output']>;
-};
-
-export type AutomationMutations = {
-  __typename?: 'AutomationMutations';
-  create: Scalars['Boolean']['output'];
-  functionRunStatusReport: Scalars['Boolean']['output'];
-};
-
-
-export type AutomationMutationsCreateArgs = {
-  input: AutomationCreateInput;
-};
-
-
-export type AutomationMutationsFunctionRunStatusReportArgs = {
-  input: AutomationRunStatusUpdateInput;
-};
-
 export type AutomationRevision = {
   __typename?: 'AutomationRevision';
   functions: Array<AutomationRevisionFunction>;
@@ -460,43 +398,7 @@ export type AutomationRevisionFunction = {
 
 export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition;
 
-export type AutomationRun = {
-  __typename?: 'AutomationRun';
-  automationId: Scalars['String']['output'];
-  automationName: Scalars['String']['output'];
-  createdAt: Scalars['DateTime']['output'];
-  functionRuns: Array<AutomationFunctionRun>;
-  id: Scalars['ID']['output'];
-  /** Resolved from all function run statuses */
-  status: AutomationRunStatus;
-  updatedAt: Scalars['DateTime']['output'];
-  versionId: Scalars['String']['output'];
-};
-
-export enum AutomationRunStatus {
-  Failed = 'FAILED',
-  Initializing = 'INITIALIZING',
-  Running = 'RUNNING',
-  Succeeded = 'SUCCEEDED'
-}
-
-export type AutomationRunStatusUpdateInput = {
-  automationId: Scalars['String']['input'];
-  automationRevisionId: Scalars['String']['input'];
-  automationRunId: Scalars['String']['input'];
-  functionRuns: Array<FunctionRunStatusInput>;
-  versionId: Scalars['String']['input'];
-};
-
 export type AutomationRunTrigger = VersionCreatedTrigger;
-
-export type AutomationsStatus = {
-  __typename?: 'AutomationsStatus';
-  automationRuns: Array<AutomationRun>;
-  id: Scalars['ID']['output'];
-  status: AutomationRunStatus;
-  statusMessage?: Maybe<Scalars['String']['output']>;
-};
 
 export type AvatarUser = {
   __typename?: 'AvatarUser';
@@ -511,98 +413,6 @@ export type BasicGitRepositoryMetadata = {
   name: Scalars['String']['output'];
   owner: Scalars['String']['output'];
   url: Scalars['String']['output'];
-};
-
-export type AutomationCreateInput = {
-  automationId: Scalars['String'];
-  automationName: Scalars['String'];
-  automationRevisionId: Scalars['String'];
-  modelId: Scalars['String'];
-  projectId: Scalars['String'];
-  webhookId?: InputMaybe<Scalars['String']>;
-};
-
-export type AutomationFunctionRun = {
-  __typename?: 'AutomationFunctionRun';
-  contextView?: Maybe<Scalars['String']>;
-  elapsed: Scalars['Float'];
-  functionId: Scalars['String'];
-  functionLogo?: Maybe<Scalars['String']>;
-  functionName: Scalars['String'];
-  id: Scalars['ID'];
-  resultVersions: Array<Version>;
-  /**
-   * NOTE: this is the schema for the results field below!
-   * Current schema: {
-   *   version: "1.0.0",
-   *   values: {
-   *     objectResults: Record<str, {
-   *       category: string
-   *       level: ObjectResultLevel
-   *       objectIds: string[]
-   *       message: str | null
-   *       metadata: Records<str, unknown> | null
-   *       visualoverrides: Records<str, unknown> | null
-   *     }[]>
-   *     blobIds?: string[]
-   *   }
-   * }
-   */
-  results?: Maybe<Scalars['JSONObject']>;
-  status: AutomationRunStatus;
-  statusMessage?: Maybe<Scalars['String']>;
-};
-
-export type AutomationMutations = {
-  __typename?: 'AutomationMutations';
-  create: Scalars['Boolean'];
-  functionRunStatusReport: Scalars['Boolean'];
-};
-
-
-export type AutomationMutationsCreateArgs = {
-  input: AutomationCreateInput;
-};
-
-
-export type AutomationMutationsFunctionRunStatusReportArgs = {
-  input: AutomationRunStatusUpdateInput;
-};
-
-export type AutomationRun = {
-  __typename?: 'AutomationRun';
-  automationId: Scalars['String'];
-  automationName: Scalars['String'];
-  createdAt: Scalars['DateTime'];
-  functionRuns: Array<AutomationFunctionRun>;
-  id: Scalars['ID'];
-  /** Resolved from all function run statuses */
-  status: AutomationRunStatus;
-  updatedAt: Scalars['DateTime'];
-  versionId: Scalars['String'];
-};
-
-export enum AutomationRunStatus {
-  Failed = 'FAILED',
-  Initializing = 'INITIALIZING',
-  Running = 'RUNNING',
-  Succeeded = 'SUCCEEDED'
-}
-
-export type AutomationRunStatusUpdateInput = {
-  automationId: Scalars['String'];
-  automationRevisionId: Scalars['String'];
-  automationRunId: Scalars['String'];
-  functionRuns: Array<FunctionRunStatusInput>;
-  versionId: Scalars['String'];
-};
-
-export type AutomationsStatus = {
-  __typename?: 'AutomationsStatus';
-  automationRuns: Array<AutomationRun>;
-  id: Scalars['ID'];
-  status: AutomationRunStatus;
-  statusMessage?: Maybe<Scalars['String']>;
 };
 
 export type BlobMetadata = {
@@ -957,15 +767,6 @@ export type CreateAutomateFunctionInput = {
   template: AutomateFunctionTemplateLanguage;
 };
 
-/**
- * Can be used instead of a full item collection, when the implementation doesn't call for it yet. Because
- * of the structure, it can be swapped out to a full item collection in the future
- */
-export type CountOnlyCollection = {
-  __typename?: 'CountOnlyCollection';
-  totalCount: Scalars['Int'];
-};
-
 export type CreateCommentInput = {
   content: CommentContentInput;
   projectId: Scalars['String']['input'];
@@ -1043,27 +844,6 @@ export type FileUpload = {
   userId: Scalars['String']['output'];
 };
 
-export type FunctionRunStatusInput = {
-  contextView?: InputMaybe<Scalars['String']['input']>;
-  elapsed: Scalars['Float']['input'];
-  functionId: Scalars['String']['input'];
-  functionLogo?: InputMaybe<Scalars['String']['input']>;
-  functionName: Scalars['String']['input'];
-  resultVersionIds: Array<Scalars['String']['input']>;
-  /**
-   * Current schema: {
-   *   version: "1.0.0",
-   *   values: {
-   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
-   *     blobIds?: string[]
-   *   }
-   * }
-   */
-  results?: InputMaybe<Scalars['JSONObject']['input']>;
-  status: AutomationRunStatus;
-  statusMessage?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
   camera?: Maybe<Scalars['JSONObject']['output']>;
@@ -1097,27 +877,6 @@ export type GendoAiRenderInput = {
   /** The generation prompt. */
   prompt: Scalars['String']['input'];
   versionId: Scalars['ID']['input'];
-};
-
-export type FunctionRunStatusInput = {
-  contextView?: InputMaybe<Scalars['String']>;
-  elapsed: Scalars['Float'];
-  functionId: Scalars['String'];
-  functionLogo?: InputMaybe<Scalars['String']>;
-  functionName: Scalars['String'];
-  resultVersionIds: Array<Scalars['String']>;
-  /**
-   * Current schema: {
-   *   version: "1.0.0",
-   *   values: {
-   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
-   *     blobIds?: string[]
-   *   }
-   * }
-   */
-  results?: InputMaybe<Scalars['JSONObject']>;
-  status: AutomationRunStatus;
-  statusMessage?: InputMaybe<Scalars['String']>;
 };
 
 export type LegacyCommentViewerData = {
@@ -1210,7 +969,6 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
-  automationStatus?: Maybe<AutomationsStatus>;
   automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
@@ -1343,7 +1101,6 @@ export type Mutation = {
   appUpdate: Scalars['Boolean']['output'];
   automateFunctionRunStatusReport: Scalars['Boolean']['output'];
   automateMutations: AutomateMutations;
-  automationMutations: AutomationMutations;
   branchCreate: Scalars['String']['output'];
   branchDelete: Scalars['Boolean']['output'];
   branchUpdate: Scalars['Boolean']['output'];
@@ -1492,11 +1249,6 @@ export type MutationAppDeleteArgs = {
 
 export type MutationAppRevokeAccessArgs = {
   appId: Scalars['String']['input'];
-};
-
-
-export type MutationAppTokenCreateArgs = {
-  token: AppTokenCreateInput;
 };
 
 
@@ -1956,11 +1708,6 @@ export type ProjectVersionArgs = {
 };
 
 
-export type ProjectVersionArgs = {
-  id: Scalars['String'];
-};
-
-
 export type ProjectVersionsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
@@ -2037,14 +1784,6 @@ export type ProjectAutomationUpdateInput = {
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type ProjectAutomationsStatusUpdatedMessage = {
-  __typename?: 'ProjectAutomationsStatusUpdatedMessage';
-  model: Model;
-  project: Project;
-  status: AutomationsStatus;
-  version: Version;
 };
 
 export type ProjectAutomationsUpdatedMessage = {
@@ -2555,11 +2294,6 @@ export type QueryServerInviteByTokenArgs = {
 };
 
 
-export type QueryServerInviteByTokenArgs = {
-  token: Scalars['String'];
-};
-
-
 export type QueryStreamArgs = {
   id: Scalars['String']['input'];
 };
@@ -2733,12 +2467,6 @@ export type ServerMigration = {
   __typename?: 'ServerMigration';
   movedFrom?: Maybe<Scalars['String']['output']>;
   movedTo?: Maybe<Scalars['String']['output']>;
-};
-
-export type ServerMigration = {
-  __typename?: 'ServerMigration';
-  movedFrom?: Maybe<Scalars['String']>;
-  movedTo?: Maybe<Scalars['String']>;
 };
 
 export enum ServerRole {
@@ -3024,7 +2752,6 @@ export type Subscription = {
   commitDeleted?: Maybe<Scalars['JSONObject']['output']>;
   /** Subscribe to commit updated event. */
   commitUpdated?: Maybe<Scalars['JSONObject']['output']>;
-  projectAutomationsStatusUpdated: ProjectAutomationsStatusUpdatedMessage;
   /** Subscribe to updates to automations in the project */
   projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
@@ -3120,18 +2847,8 @@ export type SubscriptionCommitUpdatedArgs = {
 };
 
 
-export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
-  projectId: Scalars['String']['input'];
-};
-
-
 export type SubscriptionProjectAutomationsUpdatedArgs = {
   projectId: Scalars['String']['input'];
-};
-
-
-export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
-  projectId: Scalars['String'];
 };
 
 
@@ -3266,15 +2983,6 @@ export type UpdateAutomateFunctionInput = {
   supportedSourceApps?: InputMaybe<Array<Scalars['String']['input']>>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
 };
-
-export type TokenResourceIdentifierInput = {
-  id: Scalars['String'];
-  type: TokenResourceIdentifierType;
-};
-
-export enum TokenResourceIdentifierType {
-  Project = 'project'
-}
 
 export type UpdateModelInput = {
   description?: InputMaybe<Scalars['String']['input']>;
@@ -3433,16 +3141,6 @@ export type UserAutomateInfo = {
   hasAutomateGithubApp: Scalars['Boolean']['output'];
 };
 
-
-/**
- * Full user type, should only be used in the context of admin operations or
- * when a user is reading/writing info about himself
- */
-export type UserVersionsArgs = {
-  authoredOnly?: Scalars['Boolean'];
-  limit?: Scalars['Int'];
-};
-
 export type UserDeleteInput = {
   email: Scalars['String']['input'];
 };
@@ -3490,7 +3188,6 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
-  automationStatus?: Maybe<AutomationsStatus>;
   automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** All comment threads in this version */
   commentThreads: CommentCollection;
@@ -3538,26 +3235,12 @@ export type VersionCreatedTriggerDefinition = {
   type: AutomateRunTriggerType;
 };
 
-export type VersionCreateInput = {
-  message?: InputMaybe<Scalars['String']>;
-  modelId: Scalars['String'];
-  objectId: Scalars['String'];
-  projectId: Scalars['String'];
-  sourceApplication?: InputMaybe<Scalars['String']>;
-  totalChildrenCount?: InputMaybe<Scalars['Int']>;
-};
-
 export type VersionMutations = {
   __typename?: 'VersionMutations';
   delete: Scalars['Boolean']['output'];
   moveToModel: Model;
   requestGendoAIRender: Scalars['Boolean']['output'];
   update: Version;
-};
-
-
-export type VersionMutationsCreateArgs = {
-  input: VersionCreateInput;
 };
 
 
@@ -3709,13 +3392,6 @@ export type CommitCreateMutationVariables = Exact<{
 
 export type CommitCreateMutation = { __typename?: 'Mutation', commitCreate: string };
 
-export type CreateVersionMutationVariables = Exact<{
-  input: VersionCreateInput;
-}>;
-
-
-export type CreateVersionMutation = { __typename?: 'Mutation', versionMutations: { __typename?: 'VersionMutations', create: { __typename?: 'Version', id: string, message?: string | null, referencedObject: string } } };
-
 export type CreateModelMutationVariables = Exact<{
   input: CreateModelInput;
 }>;
@@ -3733,9 +3409,9 @@ export type CreateProjectMutation = { __typename?: 'Mutation', projectMutations:
 export type ProjectListProjectItemFragment = { __typename?: 'Project', id: string, name: string, role?: string | null, updatedAt: string, models: { __typename?: 'ModelCollection', totalCount: number } };
 
 export type ProjectListQueryQueryVariables = Exact<{
-  limit: Scalars['Int'];
+  limit: Scalars['Int']['input'];
   filter?: InputMaybe<UserProjectsFilter>;
-  cursor?: InputMaybe<Scalars['String']>;
+  cursor?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
@@ -3744,9 +3420,9 @@ export type ProjectListQueryQuery = { __typename?: 'Query', activeUser?: { __typ
 export type ModelListModelItemFragment = { __typename?: 'Model', displayName: string, name: string, id: string, previewUrl?: string | null, updatedAt: string, versions: { __typename?: 'VersionCollection', totalCount: number, items: Array<{ __typename?: 'Version', id: string, sourceApplication?: string | null }> } };
 
 export type ProjectModelsQueryVariables = Exact<{
-  projectId: Scalars['String'];
-  cursor?: InputMaybe<Scalars['String']>;
-  limit: Scalars['Int'];
+  projectId: Scalars['String']['input'];
+  cursor?: InputMaybe<Scalars['String']['input']>;
+  limit: Scalars['Int']['input'];
   filter?: InputMaybe<ProjectModelsFilter>;
 }>;
 
@@ -3756,10 +3432,10 @@ export type ProjectModelsQuery = { __typename?: 'Query', project: { __typename?:
 export type VersionListItemFragment = { __typename?: 'Version', id: string, referencedObject: string, message?: string | null, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', avatar?: string | null, id: string, name: string } | null };
 
 export type ModelVersionsQueryVariables = Exact<{
-  modelId: Scalars['String'];
-  projectId: Scalars['String'];
-  limit: Scalars['Int'];
-  cursor?: InputMaybe<Scalars['String']>;
+  modelId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
+  limit: Scalars['Int']['input'];
+  cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ModelVersionsFilter>;
 }>;
 
@@ -3767,31 +3443,31 @@ export type ModelVersionsQueryVariables = Exact<{
 export type ModelVersionsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, model: { __typename?: 'Model', id: string, versions: { __typename?: 'VersionCollection', totalCount: number, cursor?: string | null, items: Array<{ __typename?: 'Version', id: string, referencedObject: string, message?: string | null, sourceApplication?: string | null, createdAt: string, previewUrl: string, authorUser?: { __typename?: 'LimitedUser', avatar?: string | null, id: string, name: string } | null }> } } } };
 
 export type ProjectDetailsQueryVariables = Exact<{
-  projectId: Scalars['String'];
+  projectId: Scalars['String']['input'];
 }>;
 
 
 export type ProjectDetailsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, role?: string | null, name: string, visibility: ProjectVisibility, team: Array<{ __typename?: 'ProjectCollaborator', user: { __typename?: 'LimitedUser', avatar?: string | null, id: string, name: string } }> } };
 
 export type ModelDetailsQueryVariables = Exact<{
-  modelId: Scalars['String'];
-  projectId: Scalars['String'];
+  modelId: Scalars['String']['input'];
+  projectId: Scalars['String']['input'];
 }>;
 
 
 export type ModelDetailsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, model: { __typename?: 'Model', id: string, displayName: string, name: string, versions: { __typename?: 'VersionCollection', totalCount: number }, author: { __typename?: 'LimitedUser', id: string, name: string, avatar?: string | null } } } };
 
 export type VersionDetailsQueryVariables = Exact<{
-  projectId: Scalars['String'];
-  versionId: Scalars['String'];
-  modelId: Scalars['String'];
+  projectId: Scalars['String']['input'];
+  versionId: Scalars['String']['input'];
+  modelId: Scalars['String']['input'];
 }>;
 
 
 export type VersionDetailsQuery = { __typename?: 'Query', project: { __typename?: 'Project', id: string, name: string, model: { __typename?: 'Model', id: string, name: string, versions: { __typename?: 'VersionCollection', items: Array<{ __typename?: 'Version', id: string, createdAt: string }> }, version: { __typename?: 'Version', id: string, referencedObject: string, message?: string | null, sourceApplication?: string | null, createdAt: string, previewUrl: string } } } };
 
 export type OnProjectVersionsUpdateSubscriptionVariables = Exact<{
-  projectId: Scalars['String'];
+  projectId: Scalars['String']['input'];
 }>;
 
 
@@ -3801,12 +3477,11 @@ export const ProjectListProjectItemFragmentDoc = {"kind":"Document","definitions
 export const ModelListModelItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ModelListModelItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Model"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}}]}}]}}]}}]} as unknown as DocumentNode<ModelListModelItemFragment, unknown>;
 export const VersionListItemFragmentDoc = {"kind":"Document","definitions":[{"kind":"FragmentDefinition","name":{"kind":"Name","value":"VersionListItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Version"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}},{"kind":"Field","name":{"kind":"Name","value":"authorUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}}]}}]} as unknown as DocumentNode<VersionListItemFragment, unknown>;
 export const CommitCreateDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CommitCreate"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"commit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CommitCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commitCreate"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"commit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"commit"}}}]}]}}]} as unknown as DocumentNode<CommitCreateMutation, CommitCreateMutationVariables>;
-export const CreateVersionDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateVersion"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"VersionCreateInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"versionMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}}]}}]}}]}}]} as unknown as DocumentNode<CreateVersionMutation, CreateVersionMutationVariables>;
-export const CreateModelDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateModel"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateModelInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"modelMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ModelListModelItem"}}]}}]}}]}},...ModelListModelItemFragmentDoc.definitions]} as unknown as DocumentNode<CreateModelMutation, CreateModelMutationVariables>;
-export const CreateProjectDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateProject"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectCreateInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectListProjectItem"}}]}}]}}]}},...ProjectListProjectItemFragmentDoc.definitions]} as unknown as DocumentNode<CreateProjectMutation, CreateProjectMutationVariables>;
-export const ProjectListQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectListQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"UserProjectsFilter"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"projects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}},{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectListProjectItem"}}]}}]}}]}}]}},...ProjectListProjectItemFragmentDoc.definitions]} as unknown as DocumentNode<ProjectListQueryQuery, ProjectListQueryQueryVariables>;
-export const ProjectModelsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectModels"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectModelsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ModelListModelItem"}}]}}]}}]}}]}},...ModelListModelItemFragmentDoc.definitions]} as unknown as DocumentNode<ProjectModelsQuery, ProjectModelsQueryVariables>;
-export const ModelVersionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ModelVersions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ModelVersionsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"VersionListItem"}}]}}]}}]}}]}}]}},...VersionListItemFragmentDoc.definitions]} as unknown as DocumentNode<ModelVersionsQuery, ModelVersionsQueryVariables>;
+export const CreateModelDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateModel"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"CreateModelInput"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"modelMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ModelListModelItem"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ModelListModelItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Model"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}}]}}]}}]}}]} as unknown as DocumentNode<CreateModelMutation, CreateModelMutationVariables>;
+export const CreateProjectDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"mutation","name":{"kind":"Name","value":"CreateProject"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"input"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectCreateInput"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"projectMutations"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"create"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"input"},"value":{"kind":"Variable","name":{"kind":"Name","value":"input"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectListProjectItem"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectListProjectItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}}]} as unknown as DocumentNode<CreateProjectMutation, CreateProjectMutationVariables>;
+export const ProjectListQueryDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectListQuery"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"UserProjectsFilter"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"projects"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}},{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ProjectListProjectItem"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ProjectListProjectItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Project"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}}]} as unknown as DocumentNode<ProjectListQueryQuery, ProjectListQueryQueryVariables>;
+export const ProjectModelsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectModels"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ProjectModelsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"models"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"ModelListModelItem"}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"ModelListModelItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Model"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}},{"kind":"Field","name":{"kind":"Name","value":"updatedAt"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}}]}}]}}]}}]} as unknown as DocumentNode<ProjectModelsQuery, ProjectModelsQueryVariables>;
+export const ModelVersionsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ModelVersions"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"limit"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"Int"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"filter"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"ModelVersionsFilter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"Variable","name":{"kind":"Name","value":"limit"}}},{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"Variable","name":{"kind":"Name","value":"filter"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"VersionListItem"}}]}}]}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"VersionListItem"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Version"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}},{"kind":"Field","name":{"kind":"Name","value":"authorUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}}]}}]} as unknown as DocumentNode<ModelVersionsQuery, ModelVersionsQueryVariables>;
 export const ProjectDetailsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ProjectDetails"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"role"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"team"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"user"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"avatar"}},{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"visibility"}}]}}]}}]} as unknown as DocumentNode<ProjectDetailsQuery, ProjectDetailsQueryVariables>;
 export const ModelDetailsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ModelDetails"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"displayName"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}},{"kind":"Field","name":{"kind":"Name","value":"author"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"avatar"}}]}}]}}]}}]}}]} as unknown as DocumentNode<ModelDetailsQuery, ModelDetailsQueryVariables>;
 export const VersionDetailsDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"VersionDetails"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"versionId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"model"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"modelId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"versions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"version"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"versionId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"referencedObject"}},{"kind":"Field","name":{"kind":"Name","value":"message"}},{"kind":"Field","name":{"kind":"Name","value":"sourceApplication"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"previewUrl"}}]}}]}}]}}]}}]} as unknown as DocumentNode<VersionDetailsQuery, VersionDetailsQueryVariables>;
