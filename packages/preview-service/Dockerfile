@@ -74,7 +74,7 @@ COPY .yarnrc.yml .
 COPY .yarn ./.yarn
 COPY package.json yarn.lock ./
 
-# Onyl copy in the relevant package.json files for the dependencies
+# Only copy in the relevant package.json files for the dependencies
 COPY packages/frontend-2/type-augmentations/stubs ./packages/frontend-2/type-augmentations/stubs/
 COPY packages/preview-service/package.json ./packages/preview-service/
 

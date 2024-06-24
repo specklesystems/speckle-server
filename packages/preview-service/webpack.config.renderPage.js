@@ -21,11 +21,11 @@ if (env === 'build') {
  */
 const config = {
   mode,
-  entry: path.resolve(__dirname + '/renderPage/src/app.js'),
+  entry: path.resolve(path.join(__dirname, 'renderPage', 'src', 'app.js')),
   target: 'web',
   devtool: 'source-map',
   output: {
-    path: path.resolve(__dirname + '/public/render'),
+    path: path.resolve(path.join(__dirname, 'dist', 'public', 'render')),
     filename: outputFile
   },
   module: {

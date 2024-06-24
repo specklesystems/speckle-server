@@ -4,6 +4,7 @@
 //FIXME this doesn't quite fit in the /server directory, but it's not a service either. It's a background worker.
 'use strict'
 
+const { initPrometheusMetrics } = require('../observability/prometheusMetrics')
 const { logger } = require('../observability/logging')
 const { repeatedlyPollForWork, forceExit } = require('../services/taskManager')
 
@@ -20,6 +21,7 @@ async function startPreviewService() {
     logger.info('Shutting down...')
   })
 
+  initPrometheusMetrics()
   repeatedlyPollForWork()
 }
 

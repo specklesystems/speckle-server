@@ -5,6 +5,7 @@ const http = require('http')
 const prometheusClient = require('prom-client')
 const knex = require('../repositories/knex')
 const { getMetricsPort } = require('../utils/env')
+const { logger } = require('./logging')
 
 let metricFree = null
 let metricUsed = null
@@ -23,6 +24,10 @@ prometheusClient.register.setDefaultLabels({
 prometheusClient.collectDefaultMetrics()
 
 let prometheusInitialized = false
+
+function isPrometheusInitialized() {
+  return prometheusInitialized
+}
 
 function initKnexPrometheusMetrics() {
   metricFree = new prometheusClient.Gauge({
@@ -82,23 +87,32 @@ function initKnexPrometheusMetrics() {
 }
 
 function initPrometheusMetrics() {
-  if (prometheusInitialized) return
+  logger.info('Initializing Prometheus metrics...')
+  if (isPrometheusInitialized()) {
+    logger.info('Prometheus metrics already initialized')
+    return
+  }
+
   prometheusInitialized = true
 
-  metricDuration = new prometheusClient.Histogram({
-    name: 'speckle_server_operation_duration',
-    help: 'Summary of the operation durations in seconds',
-    buckets: [0.5, 1, 5, 10, 30, 60, 300, 600, 1200, 1800],
-    labelNames: ['op']
-  })
+  try {
+    metricDuration = new prometheusClient.Histogram({
+      name: 'speckle_server_operation_duration',
+      help: 'Summary of the operation durations in seconds',
+      buckets: [0.5, 1, 5, 10, 30, 60, 300, 600, 1200, 1800],
+      labelNames: ['op']
+    })
 
-  metricOperationErrors = new prometheusClient.Counter({
-    name: 'speckle_server_operation_errors',
-    help: 'Number of operations with errors',
-    labelNames: ['op']
-  })
+    metricOperationErrors = new prometheusClient.Counter({
+      name: 'speckle_server_operation_errors',
+      help: 'Number of operations with errors',
+      labelNames: ['op']
+    })
 
-  initKnexPrometheusMetrics()
+    initKnexPrometheusMetrics()
+  } catch {
+    prometheusInitialized = false
+  }
 }
 
 module.exports = {

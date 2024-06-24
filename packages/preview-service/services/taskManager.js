@@ -18,9 +18,9 @@ async function repeatedlyPollForWork() {
     process.exit(0)
   }
 
-  if (!metrics.metricDuration || !metrics.metricOperationErrors) {
-    logger.warn('Metrics not initialized yet...')
-  }
+  // if (!metrics.metricDuration || !metrics.metricOperationErrors) {
+  //   logger.warn('Metrics not initialized yet...')
+  // }
 
   try {
     const task = await getNextUnstartedObjectPreview()
