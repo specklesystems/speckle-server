@@ -4,7 +4,7 @@ import express from 'express'
 import { getScreenshot } from '../../services/screenshot'
 import { PuppeteerClient } from '../../clients/puppeteer'
 import { puppeteerDriver } from '../../scripts/puppeteerDriver'
-import { serviceUrl } from '../../utils/env'
+import { serviceOrigin } from '../../utils/env'
 
 const previewRouter = express.Router()
 export default previewRouter
@@ -17,7 +17,7 @@ previewRouter.get('/:streamId/:objectId', async function (req, res) {
   }
   const boundLogger = req.log.child({ streamId, objectId })
 
-  const objectUrl = `${serviceUrl()}/streams/${req.params.streamId}/objects/${
+  const objectUrl = `${serviceOrigin()}/streams/${req.params.streamId}/objects/${
     req.params.objectId
   }`
   /*
@@ -36,7 +36,7 @@ previewRouter.get('/:streamId/:objectId', async function (req, res) {
 
   const puppeteerClient = new PuppeteerClient()
 
-  const pageToOpenUrl = `${serviceUrl()}/render/`
+  const pageToOpenUrl = `${serviceOrigin()}/render/`
 
   const scr = await getScreenshot({
     puppeteerClient,

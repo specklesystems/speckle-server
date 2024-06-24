@@ -13,6 +13,8 @@ import {
 import db from 'repositories/knex'
 import { generateAndStore360PreviewFactory } from 'services/360preview'
 import { insertPreviewFactory } from 'repositories/previews'
+import { serviceOrigin } from 'utils/env'
+import { generatePreviewFactory } from 'clients/previewService'
 
 export async function startPreviewService() {
   logger.info('📸 Started Preview Service background worker')
@@ -31,6 +33,7 @@ export async function startPreviewService() {
   await repeatedlyPollForWorkFactory({
     getNextUnstartedObjectPreview: getNextUnstartedObjectPreviewFactory({ db }),
     generateAndStore360Preview: generateAndStore360PreviewFactory({
+      generatePreview: generatePreviewFactory({ serviceOrigin: serviceOrigin() }),
       updatePreviewMetadata: updatePreviewMetadataFactory({ db }),
       notifyUpdate: notifyUpdateFactory({ db }),
       insertPreview: insertPreviewFactory({ db })

@@ -13,5 +13,5 @@ export const isDevelopment = () => getNodeEnv() === 'development'
 export const isLogPretty = () => process.env.LOG_PRETTY === 'true'
 export const isProduction = () => getNodeEnv() === 'production'
 export const isTest = () => getNodeEnv() === 'test'
-export const serviceUrl = () => `http://${getHost()}:${getAppPort()}`
+export const serviceOrigin = () => `http://${getHost()}:${getAppPort()}`
 export const shouldBeHeadless = () => process.env.PREVIEWS_HEADED !== 'true'

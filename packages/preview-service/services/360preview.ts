@@ -1,25 +1,22 @@
 import crypto from 'crypto'
 import { metricOperationErrors } from '../observability/prometheusMetrics'
 import joinImages from 'join-images'
-import { serviceUrl } from '../utils/env'
 import type { ObjectIdentifier } from 'domain/domain'
 import type { NotifyUpdate, UpdatePreviewMetadata } from 'repositories/objectPreview'
 import { InsertPreview } from 'repositories/previews'
+import { GeneratePreview } from 'clients/previewService'
 
 export type GenerateAndStore360Preview = (task: ObjectIdentifier) => Promise<void>
 export const generateAndStore360PreviewFactory =
   (deps: {
+    generatePreview: GeneratePreview
     updatePreviewMetadata: UpdatePreviewMetadata
     notifyUpdate: NotifyUpdate
     insertPreview: InsertPreview
   }): GenerateAndStore360Preview =>
   async (task: ObjectIdentifier) => {
-    const previewUrl = `${serviceUrl()}/preview/${task.streamId}/${task.objectId}`
-
     try {
-      const response = await fetch(previewUrl)
-      const responseBody: Record<string, string> = await response.json()
-      // let imgBuffer = await res.buffer()  // this gets the binary response body
+      const responseBody = await deps.generatePreview(task)
 
       const metadata: Record<string, string> = {}
       const allImgsArr: Buffer[] = []
