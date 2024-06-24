@@ -2,15 +2,16 @@ import crypto from 'crypto'
 import { metricOperationErrors } from '../observability/prometheusMetrics'
 import joinImages from 'join-images'
 import { serviceUrl } from '../utils/env'
-import { insertPreview } from '../repositories/previews'
 import type { ObjectIdentifier } from 'domain/domain'
 import type { NotifyUpdate, UpdatePreviewMetadata } from 'repositories/objectPreview'
+import { InsertPreview } from 'repositories/previews'
 
 export type GenerateAndStore360Preview = (task: ObjectIdentifier) => Promise<void>
 export const generateAndStore360PreviewFactory =
   (deps: {
     updatePreviewMetadata: UpdatePreviewMetadata
     notifyUpdate: NotifyUpdate
+    insertPreview: InsertPreview
   }): GenerateAndStore360Preview =>
   async (task: ObjectIdentifier) => {
     const previewUrl = `${serviceUrl()}/preview/${task.streamId}/${task.objectId}`
@@ -32,7 +33,7 @@ export const generateAndStore360PreviewFactory =
 
         // Save first preview image
         if (i++ === 0) {
-          await insertPreview({ previewId, imgBuffer })
+          await deps.insertPreview({ previewId, imgBuffer })
           metadata[angle] = previewId
         }
 
@@ -50,7 +51,7 @@ export const generateAndStore360PreviewFactory =
       const buff = await png.toBuffer()
       const fullImgId = crypto.createHash('md5').update(buff).digest('hex')
 
-      await insertPreview({ previewId: fullImgId, imgBuffer: buff })
+      await deps.insertPreview({ previewId: fullImgId, imgBuffer: buff })
       metadata['all'] = fullImgId
 
       //FIXME it should be the task manager's responsibility to handle preview metadata
