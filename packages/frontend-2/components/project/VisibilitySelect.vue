@@ -18,7 +18,7 @@
   >
     <template #something-selected="{ value }">
       <div class="text-sm">
-        <div class="font-bold">
+        <div class="label">
           {{ isArray(value) ? value[0].title : value.title }}
         </div>
         <span class="text-foreground-2 text-xs sm:text-sm">
