@@ -6,11 +6,11 @@
       @click="showNewModelCard = true"
     >
       +
-      <span class="font-bold ml-1">NEW</span>
+      <span class="font-semibold ml-1">NEW</span>
     </button>
     <div
       v-if="showNewModelCard"
-      class="w-full py-2 px-3 flex items-center rounded-md transition bg-foundation-focus dark:bg-primary-muted"
+      class="w-full p-2 flex items-center rounded-md transition bg-foundation-focus dark:bg-primary-muted"
     >
       <form
         class="flex items-center justify-between w-full space-x-2"
@@ -30,13 +30,8 @@
           />
         </div>
         <div class="flex flex-wrap gap-1 sm:gap-2">
-          <FormButton submit :disabled="anyMutationsLoading" size="sm">Save</FormButton>
-          <FormButton
-            outlined
-            color="danger"
-            size="sm"
-            @click="showNewModelCard = false"
-          >
+          <FormButton submit :disabled="anyMutationsLoading">Save</FormButton>
+          <FormButton color="secondary" @click="showNewModelCard = false">
             Cancel
           </FormButton>
         </div>
