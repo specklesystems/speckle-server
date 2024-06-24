@@ -6,14 +6,14 @@
     :target="target"
   >
     <img
-      class="h-8 w-8 block"
+      class="h-8 w-8 block mr-1"
       src="~~/assets/images/speckle_logo_big.png"
       alt="Speckle"
     />
 
     <div
       v-if="!minimal"
-      class="text-primary text-base mt-0 font-bold leading-7"
+      class="text-sm mt-0 font-semibold"
       :class="showTextOnMobile ? '' : 'hidden md:flex'"
     >
       Speckle
