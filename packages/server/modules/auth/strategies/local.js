@@ -22,11 +22,11 @@ const {
   PasswordTooShortError
 } = require('@/modules/core/errors/userinput')
 const {
-  findServerInvite,
-  deleteServerOnlyInvites,
-  updateAllInviteTargets
+  findServerInviteFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const knexInstance = require('@/db/knex')
+const db = require('@/db/knex')
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
@@ -92,7 +92,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         let invite
         if (req.session.token) {
           invite = await validateServerInvite({
-            findServerInvite: findServerInvite({ db: knexInstance })
+            findServerInvite: findServerInviteFactory({ db })
           })(user.email, req.session.token)
         }
 
@@ -115,8 +115,8 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
 
         // 4. use up all server-only invites the email had attached to it
         await finalizeInvitedServerRegistration({
-          deleteServerOnlyInvites: deleteServerOnlyInvites({ db: knexInstance }),
-          updateAllInviteTargets: updateAllInviteTargets({ db: knexInstance })
+          deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+          updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
         })(user.email, userId)
 
         // Resolve redirect path

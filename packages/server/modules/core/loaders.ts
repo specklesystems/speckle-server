@@ -84,7 +84,7 @@ import {
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
 import { queryInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
-import knexInstance from '@/db/knex'
+import db from '@/db/knex'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -519,10 +519,7 @@ export function buildRequestLoaders(
        */
       getInvite: createLoader<string, Nullable<ServerInviteRecord>>(
         async (inviteIds) => {
-          const results = keyBy(
-            await queryInvitesFactory({ db: knexInstance })(inviteIds),
-            'id'
-          )
+          const results = keyBy(await queryInvitesFactory({ db })(inviteIds), 'id')
           return inviteIds.map((i) => results[i] || null)
         }
       )

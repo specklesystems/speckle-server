@@ -1,4 +1,4 @@
-import knexInstance from '@/db/knex'
+import db from '@/db/knex'
 import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import { listUsers, countUsers } from '@/modules/core/repositories/users'
@@ -78,12 +78,8 @@ export const adminInviteList = async (
   const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
   // TODO: injection
   const [totalCount, inviteItems] = await Promise.all([
-    countServerInvitesFactory({ db: knexInstance })(args.query),
-    queryServerInvitesFactory({ db: knexInstance })(
-      args.query,
-      args.limit,
-      parsedCursor
-    )
+    countServerInvitesFactory({ db })(args.query),
+    queryServerInvitesFactory({ db })(args.query, args.limit, parsedCursor)
   ])
   const items = inviteItems.map((invite: ServerInviteRecord) => {
     return {

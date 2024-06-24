@@ -1,4 +1,4 @@
-import knexInstance from '@/db/knex'
+import db from '@/db/knex'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import {
@@ -147,7 +147,7 @@ export = {
       const createAndSendInvite = createAndSendInviteFactory({
         findResource: findResourceFactory(),
         findUserByTarget: findUserByTargetFactory(),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db: knexInstance })
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db })
       })
       await createStreamInviteAndNotify({
         createAndSendInvite
@@ -185,7 +185,7 @@ export = {
                 findResource: findResourceFactory(),
                 findUserByTarget: findUserByTargetFactory(),
                 insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({
-                  db: knexInstance
+                  db
                 })
               })
             })(
@@ -201,8 +201,8 @@ export = {
     async use(_parent, args, ctx) {
       await useStreamInviteAndNotify({
         finalizeStreamInvite: finalizeStreamInvite({
-          findStreamInvite: findStreamInviteFactory({ db: knexInstance }),
-          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db: knexInstance })
+          findStreamInvite: findStreamInviteFactory({ db }),
+          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db })
         })
       })(args.input, ctx.userId!, ctx.resourceAccessRules)
       return true
@@ -215,8 +215,8 @@ export = {
         ctx.resourceAccessRules
       )
       await cancelStreamInvite({
-        findStreamInvite: findStreamInviteFactory({ db: knexInstance }),
-        deleteStreamInvite: deleteStreamInviteFactory({ db: knexInstance })
+        findStreamInvite: findStreamInviteFactory({ db }),
+        deleteStreamInvite: deleteStreamInviteFactory({ db })
       })(args.projectId, args.inviteId)
       return ctx.loaders.streams.getStream.load(args.projectId)
     }
@@ -256,7 +256,7 @@ export = {
       const { userId } = context
       return await getUserPendingStreamInvites({
         queryAllUserStreamInvites: queryAllUserStreamInvitesFactory({
-          db: knexInstance
+          db
         })
       })(userId!)
     }
@@ -281,7 +281,7 @@ export = {
     },
     async invitedTeam(parent) {
       return getPendingStreamCollaborators({
-        queryAllStreamInvites: queryAllStreamInvitesFactory({ db: knexInstance })
+        queryAllStreamInvites: queryAllStreamInvitesFactory({ db })
       })(parent.id)
     },
     async visibility(parent) {

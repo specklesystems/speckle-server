@@ -23,11 +23,11 @@ const { UsersMeta } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
 const {
-  deleteAllUserInvites,
-  countServerInvites,
-  findServerInvites
+  deleteAllUserInvitesFactory,
+  countServerInvitesFactory,
+  findServerInvitesFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const knexInstance = require('@/db/knex')
+const db = require('@/db/knex')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -68,9 +68,9 @@ module.exports = {
 
     async adminUsers(_parent, args) {
       return await getAdminUsersListCollection({
-        findServerInvites: findServerInvites({ db: knexInstance }),
+        findServerInvites: findServerInvitesFactory({ db }),
         getTotalCounts: getTotalCounts({
-          countServerInvites: countServerInvites({ db: knexInstance })
+          countServerInvites: countServerInvitesFactory({ db })
         })
       })(args)
     },
@@ -164,7 +164,7 @@ module.exports = {
       if (!user) return false
 
       await deleteUser({
-        deleteAllUserInvites: deleteAllUserInvites({ db: knexInstance })
+        deleteAllUserInvites: deleteAllUserInvitesFactory({ db })
       })(user.id)
       return true
     },
@@ -183,7 +183,7 @@ module.exports = {
       await validateScopes(context.scopes, Scopes.Profile.Delete)
 
       await deleteUser({
-        deleteAllUserInvites: deleteAllUserInvites({ db: knexInstance })
+        deleteAllUserInvites: deleteAllUserInvitesFactory({ db })
       })(context.userId, args.user)
 
       await saveActivity({

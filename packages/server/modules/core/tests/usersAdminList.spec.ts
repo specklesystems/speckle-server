@@ -12,12 +12,12 @@ import { expect } from 'chai'
 import { ApolloServer } from 'apollo-server-express'
 import { Optional } from '@/modules/shared/helpers/typeHelper'
 import { wait } from '@speckle/shared'
-import knexInstance from '@/db/knex'
+import db from '@/db/knex'
 
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
 const WAIT_TIMEOUT = 5
 
-const createInviteDirectly = createInviteDirectlyFactory({ db: knexInstance })
+const createInviteDirectly = createInviteDirectlyFactory({ db })
 
 function randomEl<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]

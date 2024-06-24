@@ -9,11 +9,15 @@ const { getUserByEmail } = require('@/modules/core/services/users')
 const { TIME } = require('@speckle/shared')
 const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
-const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
+const { createInviteDirectlyFactory } = require('@/test/speckle-helpers/inviteHelper')
 const { RateLimiterMemory } = require('rate-limiter-flexible')
-const { findInvite } = require('@/modules/serverinvites/repositories/serverInvites')
-const knexInstance = require('@/db/knex')
+const {
+  findInviteFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const db = require('@/db/knex')
 
+const createInviteDirectly = createInviteDirectlyFactory({ db })
+const findInvite = findInviteFactory({ db })
 const expect = chai.expect
 
 let app
@@ -91,7 +95,7 @@ describe('Auth @auth', () => {
         }@speckle.systems`
 
         const inviterUser = await getUserByEmail({ email: registeredUserEmail })
-        const { token, inviteId } = await createInviteDirectly({ db: knexInstance })(
+        const { token, inviteId } = await createInviteDirectly(
           streamInvite
             ? {
                 email: targetEmail,
@@ -156,9 +160,7 @@ describe('Auth @auth', () => {
         expect(newUser).to.be.ok
 
         // Check that in the case of a stream invite, it remainds valid post registration
-        const inviteRecord = await findInvite({
-          db: knexInstance
-        })(inviteId)
+        const inviteRecord = await findInvite(inviteId)
         if (streamInvite) {
           expect(inviteRecord).to.be.ok
         } else {

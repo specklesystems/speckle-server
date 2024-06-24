@@ -29,13 +29,16 @@ const { buildAuthenticatedApolloServer } = require('@/test/serverHelper')
 const { EmailSendingServiceMock } = require('@/test/mocks/global')
 const db = require('@/db/knex')
 const {
-  findInviteByToken,
-  findInvite
+  findInviteByTokenFactory,
+  findInviteFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 
 async function cleanup() {
   await truncateTables([ServerInvites.name, Streams.name, Users.name])
 }
+
+const findInviteByToken = findInviteByTokenFactory({ db })
+const findInvite = findInviteFactory({ db })
 
 function getInviteTokenFromEmailParams(emailParams) {
   const { text } = emailParams
@@ -48,7 +51,7 @@ async function validateInviteExistanceFromEmail(emailParams) {
   // Validate that invite exists
   const token = getInviteTokenFromEmailParams(emailParams)
   expect(token).to.be.ok
-  const invite = await findInviteByToken({ db })(token)
+  const invite = await findInviteByToken(token)
   expect(invite).to.be.ok
 
   return invite
@@ -477,7 +480,7 @@ describe('[Stream & Server Invites]', () => {
 
         // Validate that invites no longer exist
         const invitesInDb = await Promise.all(
-          deletableInvites.map((i) => findInvite({ db })(i.inviteId))
+          deletableInvites.map((i) => findInvite(i.inviteId))
         )
         expect(invitesInDb.every((i) => !i)).to.be.true
       })
@@ -627,7 +630,7 @@ describe('[Stream & Server Invites]', () => {
 
           expect(data?.streamInviteUse).to.be.ok
           expect(errors).to.not.be.ok
-          expect(await findInvite({ db })(inviteId)).to.be.not.ok
+          expect(await findInvite(inviteId)).to.be.not.ok
 
           const userStreamRole = await getUserStreamRole(me.id, streamId)
           expect(userStreamRole).to.eq(accept ? Roles.Stream.Contributor : null)
@@ -714,7 +717,7 @@ describe('[Stream & Server Invites]', () => {
 
         expect(data?.streamInviteCancel).to.be.ok
         expect(errors).to.be.not.ok
-        expect(await findInvite({ db })(inviteId)).to.be.not.ok
+        expect(await findInvite(inviteId)).to.be.not.ok
       })
 
       it('own pending collaborators can be retrieved', async () => {

@@ -47,7 +47,7 @@ import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import knexInstance from '@/db/knex'
+import db from '@/db/knex'
 import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
@@ -91,7 +91,7 @@ export async function createStreamReturnRecord(
       createAndSendInvite: createAndSendInviteFactory({
         findResource: findResourceFactory(),
         findUserByTarget: findUserByTargetFactory(),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db: knexInstance })
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db })
       })
     })(ownerId, streamId, params.withContributors, ownerResourceAccessRules)
   }
@@ -141,7 +141,7 @@ export async function deleteStreamAndNotify(
 
   // TODO: use proper injection once we refactor this module
   // Delete after event so we can do authz
-  const deleteAllStreamInvites = deleteAllStreamInvitesFactory({ db: knexInstance })
+  const deleteAllStreamInvites = deleteAllStreamInvitesFactory({ db })
   await Promise.all([deleteAllStreamInvites(streamId), deleteStream(streamId)])
   return true
 }

@@ -17,10 +17,10 @@ const {
   UserInputError,
   UnverifiedEmailSSOLoginError
 } = require('@/modules/core/errors/userinput')
-const knexInstance = require('@/db/knex')
+const db = require('@/db/knex')
 const {
-  deleteServerOnlyInvites,
-  updateAllInviteTargets
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
@@ -78,8 +78,8 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           // process invites
           if (myUser.isNewUser) {
             await finalizeInvitedServerRegistration({
-              deleteServerOnlyInvites: deleteServerOnlyInvites({ db: knexInstance }),
-              updateAllInviteTargets: updateAllInviteTargets({ db: knexInstance })
+              deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+              updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
             })(user.email, myUser.id)
           }
 
@@ -107,8 +107,8 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         // use the invite
         await finalizeInvitedServerRegistration({
-          deleteServerOnlyInvites: deleteServerOnlyInvites({ db: knexInstance }),
-          updateAllInviteTargets: updateAllInviteTargets({ db: knexInstance })
+          deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+          updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
         })(user.email, myUser.id)
 
         // Resolve redirect path

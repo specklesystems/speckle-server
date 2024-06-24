@@ -22,10 +22,10 @@ const {
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 const { UnverifiedEmailSSOLoginError } = require('@/modules/core/errors/userinput')
 const {
-  deleteServerOnlyInvites,
-  updateAllInviteTargets
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
-const knexInstance = require('@/db/knex')
+const db = require('@/db/knex')
 const { getNameFromUserInfo } = require('@/modules/auth/domain/logic')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
@@ -89,8 +89,8 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
             // process invites
             if (myUser.isNewUser) {
               await finalizeInvitedServerRegistration({
-                deleteServerOnlyInvites: deleteServerOnlyInvites({ db: knexInstance }),
-                updateAllInviteTargets: updateAllInviteTargets({ db: knexInstance })
+                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+                updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
               })(user.email, myUser.id)
             }
             return done(null, myUser)
@@ -117,8 +117,8 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
           })
 
           await finalizeInvitedServerRegistration({
-            deleteServerOnlyInvites: deleteServerOnlyInvites({ db: knexInstance }),
-            updateAllInviteTargets: updateAllInviteTargets({ db: knexInstance })
+            deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+            updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
           })(user.email, myUser.id)
 
           // Resolve redirect path
