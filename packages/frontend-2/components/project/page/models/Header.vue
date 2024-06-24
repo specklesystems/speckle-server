@@ -32,7 +32,7 @@
           v-model="localSearch"
           name="modelsearch"
           :show-label="false"
-          placeholder="Search"
+          placeholder="Search models..."
           color="foundation"
           wrapper-classes="grow lg:grow-0 lg:ml-2 lg:w-40 xl:w-60"
           :show-clear="localSearch !== ''"

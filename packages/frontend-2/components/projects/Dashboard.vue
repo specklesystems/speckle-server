@@ -31,7 +31,7 @@
           v-model="search"
           name="modelsearch"
           :show-label="false"
-          placeholder="Search"
+          placeholder="Search projects..."
           color="foundation"
           wrapper-classes="grow md:grow-0 md:w-60"
           :show-clear="!!search"

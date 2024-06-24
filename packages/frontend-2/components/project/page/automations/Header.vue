@@ -7,7 +7,7 @@
       <FormTextInput
         name="search"
         color="foundation"
-        placeholder="Search Automations"
+        placeholder="Search automations..."
         wrapper-classes="shrink-0"
         show-clear
         :model-value="bind.modelValue.value"
@@ -28,7 +28,7 @@
           :disabled="!!disabledCreateBecauseOf"
           @click="$emit('new-automation')"
         >
-          New Automation
+          New
         </FormButton>
       </div>
     </div>

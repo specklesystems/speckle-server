@@ -88,7 +88,7 @@
           <div
             class="text-xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
-            updated
+            Updated
             <b>{{ updatedAt }}</b>
           </div>
           <div class="text-xs text-foreground-2 flex items-center space-x-1">
@@ -172,7 +172,7 @@
             </div>
           </div> -->
           <div class="text-xs text-foreground-2">
-            updated
+            Updated
             <b>{{ updatedAt }}</b>
           </div>
           <div class="text-xs text-foreground-2">
@@ -184,7 +184,7 @@
               :disabled="!viewAllUrl"
               @click.stop="trackFederateModels"
             >
-              View All
+              View all
             </FormButton>
           </div>
           <div :class="`ml-4 w-24 h-20`">

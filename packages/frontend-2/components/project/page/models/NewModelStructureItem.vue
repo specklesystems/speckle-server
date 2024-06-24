@@ -21,7 +21,7 @@
             v-model="name"
             name="name"
             label="Model name"
-            placeholder="name"
+            placeholder="Model name"
             auto-focus
             color="foundation"
             :rules="rules"

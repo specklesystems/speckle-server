@@ -16,7 +16,7 @@
         Docs
       </FormButton>
       <FormButton :icon-left="PlusIcon" @click="openCreateWebhookDialog">
-        Create
+        New
       </FormButton>
     </template>
     <template v-if="webhooks.length !== 0">
