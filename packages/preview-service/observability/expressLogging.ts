@@ -1,19 +1,19 @@
-const { logger } = require('./logging')
-const HttpLogger = require('pino-http')
-const { randomUUID } = require('crypto')
+import { logger } from './logging'
+import HttpLogger from 'pino-http'
+import { randomUUID } from 'crypto'
+import type { IncomingHttpHeaders, IncomingMessage } from 'http'
+import { REQUEST_ID_HEADER } from '../domain/const'
 
-const REQUEST_ID_HEADER = 'x-request-id'
-
-function determineRequestId(headers, uuidGenerator = randomUUID) {
+function determineRequestId(headers: IncomingHttpHeaders, uuidGenerator = randomUUID) {
   const idHeader = headers[REQUEST_ID_HEADER]
   if (!idHeader) return uuidGenerator()
   if (Array.isArray(idHeader)) return idHeader[0] ?? uuidGenerator()
   return idHeader
 }
 
-const generateReqId = (req) => determineRequestId(req.headers)
+const generateReqId = (req: IncomingMessage) => determineRequestId(req.headers)
 
-module.exports.LoggingExpressMiddleware = HttpLogger({
+export const LoggingExpressMiddleware = HttpLogger({
   genReqId: generateReqId,
   logger,
   autoLogging: true,
