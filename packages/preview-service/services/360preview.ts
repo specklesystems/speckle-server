@@ -1,34 +1,32 @@
-'use strict'
+import crypto from 'crypto'
+import { metricOperationErrors } from '../observability/prometheusMetrics'
+import joinImages from 'join-images'
+import { updatePreviewMetadata, notifyUpdate } from '../repositories/objectPreview'
+import { serviceUrl } from '../utils/env'
+import { insertPreview } from '../repositories/previews'
+import { ObjectIdentifier } from 'domain/domain'
 
-const crypto = require('crypto')
-const fetch = require('node-fetch')
-const metrics = require('../observability/prometheusMetrics')
-const joinImages = require('join-images')
-const { updatePreviewMetadata, notifyUpdate } = require('../repositories/objectPreview')
-const { serviceUrl } = require('../utils/env')
-const { insertPreview } = require('../repositories/previews')
-
-async function generateAndStore360Preview(task) {
+export async function generateAndStore360Preview(task: ObjectIdentifier) {
   const previewUrl = `${serviceUrl()}/preview/${task.streamId}/${task.objectId}`
 
   try {
-    let res = await fetch(previewUrl)
-    res = await res.json()
+    const response = await fetch(previewUrl)
+    const responseBody: Record<string, string> = await response.json()
     // let imgBuffer = await res.buffer()  // this gets the binary response body
 
-    const metadata = {}
-    const allImgsArr = []
+    const metadata: Record<string, string> = {}
+    const allImgsArr: Buffer[] = []
     let i = 0
-    for (const angle in res) {
-      const imgBuffer = new Buffer.from(
-        res[angle].replace(/^data:image\/\w+;base64,/, ''),
+    for (const angle in responseBody) {
+      const imgBuffer = Buffer.from(
+        responseBody[angle].replace(/^data:image\/\w+;base64,/, ''),
         'base64'
       )
       const previewId = crypto.createHash('md5').update(imgBuffer).digest('hex')
 
       // Save first preview image
       if (i++ === 0) {
-        await insertPreview(previewId, imgBuffer)
+        await insertPreview({ previewId, imgBuffer })
         metadata[angle] = previewId
       }
 
@@ -36,7 +34,7 @@ async function generateAndStore360Preview(task) {
     }
 
     // stitch 360 image
-    const fullImg = await joinImages.joinImages(allImgsArr, {
+    const fullImg = await joinImages(allImgsArr, {
       direction: 'horizontal',
       offset: 700,
       margin: '0 700 0 700',
@@ -46,7 +44,7 @@ async function generateAndStore360Preview(task) {
     const buff = await png.toBuffer()
     const fullImgId = crypto.createHash('md5').update(buff).digest('hex')
 
-    await insertPreview(fullImgId, buff)
+    await insertPreview({ previewId: fullImgId, imgBuffer: buff })
     metadata['all'] = fullImgId
 
     //FIXME it should be the task manager's responsibility to handle preview metadata
@@ -56,18 +54,14 @@ async function generateAndStore360Preview(task) {
       objectId: task.objectId
     })
 
-    await notifyUpdate(task.streamId, task.objectId)
+    await notifyUpdate({ streamId: task.streamId, objectId: task.objectId })
   } catch (err) {
     //FIXME it should be the task manager's responsibility to handle preview metadata
     await updatePreviewMetadata({
-      metadata: { err: err.toString() },
+      metadata: { err: err instanceof Error ? err.message : JSON.stringify(err) },
       streamId: task.streamId,
       objectId: task.objectId
     })
-    metrics.metricOperationErrors.labels('preview').inc()
+    metricOperationErrors?.labels('preview').inc()
   }
-}
-
-module.exports = {
-  generateAndStore360Preview
 }

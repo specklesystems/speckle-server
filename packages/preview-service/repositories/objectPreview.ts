@@ -22,7 +22,7 @@ export async function getNextUnstartedObjectPreview(): Promise<ObjectIdentifier>
 }
 
 export type UpdatePreviewMetadataParams = ObjectIdentifier & {
-  metadata: string
+  metadata: Record<string, string>
 }
 export async function updatePreviewMetadata(params: UpdatePreviewMetadataParams) {
   // Update preview metadata

@@ -2,7 +2,7 @@ import knex from './knex'
 
 type Preview = {
   previewId: string
-  imgBuffer: string
+  imgBuffer: Buffer
 }
 export const insertPreview = async (params: Preview) => {
   await knex.raw(
