@@ -53,7 +53,7 @@ export class Serializer implements IDisposable {
     for (const propKey in obj) {
       const value = obj[propKey]
       // 0. skip some props
-      if (!value || propKey === 'id' || propKey.startsWith('_')) continue
+      if (value === undefined || propKey === 'id' || propKey.startsWith('_')) continue
 
       // 1. primitives (numbers, bools, strings)
       if (typeof value !== 'object') {
