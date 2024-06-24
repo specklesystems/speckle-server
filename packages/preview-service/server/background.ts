@@ -4,7 +4,14 @@
 //FIXME this doesn't quite fit in the /server directory, but it's not a service either. It's a background worker.
 import { initPrometheusMetrics } from '../observability/prometheusMetrics'
 import { logger } from '../observability/logging'
-import { repeatedlyPollForWork, forceExit } from '../services/taskManager'
+import { forceExit, repeatedlyPollForWorkFactory } from '../services/taskManager'
+import {
+  getNextUnstartedObjectPreviewFactory,
+  notifyUpdateFactory,
+  updatePreviewMetadataFactory
+} from 'repositories/objectPreview'
+import db from 'repositories/knex'
+import { generateAndStore360PreviewFactory } from 'services/360preview'
 
 export async function startPreviewService() {
   logger.info('📸 Started Preview Service background worker')
@@ -20,5 +27,11 @@ export async function startPreviewService() {
   })
 
   initPrometheusMetrics()
-  repeatedlyPollForWork()
+  await repeatedlyPollForWorkFactory({
+    getNextUnstartedObjectPreview: getNextUnstartedObjectPreviewFactory(db),
+    generateAndStore360Preview: generateAndStore360PreviewFactory({
+      updatePreviewMetadata: updatePreviewMetadataFactory(db),
+      notifyUpdate: notifyUpdateFactory(db)
+    })
+  })()
 }

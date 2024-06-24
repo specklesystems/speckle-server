@@ -1,10 +1,13 @@
 import type { ObjectIdentifier } from 'domain/domain'
-import knex from './knex'
+import type { Knex } from 'knex'
 
-export async function getNextUnstartedObjectPreview(): Promise<ObjectIdentifier> {
-  const {
-    rows: [maybeRow]
-  } = await knex.raw(`
+export type GetNextUnstartedObjectPreview = () => Promise<ObjectIdentifier>
+export const getNextUnstartedObjectPreviewFactory =
+  (db: Knex): GetNextUnstartedObjectPreview =>
+  async () => {
+    const {
+      rows: [maybeRow]
+    } = await db.raw(`
     UPDATE object_preview
     SET
       "previewStatus" = 1,
@@ -18,16 +21,21 @@ export async function getNextUnstartedObjectPreview(): Promise<ObjectIdentifier>
     WHERE object_preview."streamId" = task."streamId" AND object_preview."objectId" = task."objectId"
     RETURNING object_preview."streamId", object_preview."objectId"
   `)
-  return <ObjectIdentifier>maybeRow
-}
+    return <ObjectIdentifier>maybeRow
+  }
 
 export type UpdatePreviewMetadataParams = ObjectIdentifier & {
   metadata: Record<string, string>
 }
-export async function updatePreviewMetadata(params: UpdatePreviewMetadataParams) {
-  // Update preview metadata
-  await knex.raw(
-    `
+export type UpdatePreviewMetadata = (
+  params: UpdatePreviewMetadataParams
+) => Promise<void>
+export const updatePreviewMetadataFactory =
+  (db: Knex): UpdatePreviewMetadata =>
+  async (params) => {
+    // Update preview metadata
+    await db.raw(
+      `
       UPDATE object_preview
       SET
         "previewStatus" = 2,
@@ -35,12 +43,15 @@ export async function updatePreviewMetadata(params: UpdatePreviewMetadataParams)
         "preview" = ?
       WHERE "streamId" = ? AND "objectId" = ?
     `,
-    [params.metadata, params.streamId, params.objectId]
-  )
-}
+      [params.metadata, params.streamId, params.objectId]
+    )
+  }
 
-export async function notifyUpdate(params: ObjectIdentifier) {
-  await knex.raw(
-    `NOTIFY preview_generation_update, 'finished:${params.streamId}:${params.objectId}'`
-  )
-}
+export type NotifyUpdate = (params: ObjectIdentifier) => Promise<void>
+export const notifyUpdateFactory =
+  (db: Knex): NotifyUpdate =>
+  async (params) => {
+    await db.raw(
+      `NOTIFY preview_generation_update, 'finished:${params.streamId}:${params.objectId}'`
+    )
+  }
