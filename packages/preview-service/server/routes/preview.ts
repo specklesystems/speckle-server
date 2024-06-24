@@ -1,7 +1,7 @@
 'use strict'
 
 import express from 'express'
-import { getScreenshot } from '../../services/screenshot'
+import { getScreenshotFactory } from '../../services/screenshot'
 import { PuppeteerClient } from '../../clients/puppeteer'
 import { puppeteerDriver } from '../../scripts/puppeteerDriver'
 import { serviceOrigin } from '../../utils/env'
@@ -17,39 +17,27 @@ previewRouter.get('/:streamId/:objectId', async function (req, res) {
   }
   const boundLogger = req.log.child({ streamId, objectId })
 
-  const objectUrl = `${serviceOrigin()}/streams/${req.params.streamId}/objects/${
-    req.params.objectId
-  }`
-  /*
-  let authToken = ''
-  let authorizationHeader = req.header( 'Authorization' )
-  if ( authorizationHeader && authorizationHeader.toLowerCase().startsWith( 'bearer ' ) ) {
-    authToken = authorizationHeader.Substring( 'Bearer '.Length ).Trim()
-  }
-  // useful for testing (not the recommended way of passing the auth token)
-  if ( req.query.authToken ) {
-    authToken = req.query.authToken
-  }
-  */
-
   boundLogger.info('Requesting screenshot.')
 
-  const puppeteerClient = new PuppeteerClient()
-
-  const pageToOpenUrl = `${serviceOrigin()}/render/`
-
-  const scr = await getScreenshot({
-    puppeteerClient,
-    pageToOpenUrl,
-    puppeteerFunctionToEvaluateInBrowser: puppeteerDriver,
-    objectUrl,
-    boundLogger
+  const puppeteerClient = new PuppeteerClient({
+    logger: boundLogger,
+    url: `${serviceOrigin()}/render/`,
+    script: puppeteerDriver
   })
 
-  if (!scr) {
+  const screenshot = await getScreenshotFactory({
+    puppeteerClient,
+    logger: boundLogger,
+    serviceOrigin: serviceOrigin()
+  })({
+    objectId,
+    streamId
+  })
+
+  if (!screenshot) {
     return res.status(500).end()
   }
 
   // res.setHeader( 'content-type', 'image/png' )
-  res.send(scr)
+  res.send(screenshot)
 })

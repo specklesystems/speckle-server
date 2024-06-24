@@ -5,7 +5,20 @@ import { Logger } from 'pino'
 
 export class PuppeteerClient {
   browser: Browser | null
-  constructor() {
+  logger: Logger
+  url: string
+  script: EvaluateFunc<[unknown[]]>
+  constructor(params: {
+    logger: Logger
+    url: string
+    script: EvaluateFunc<[unknown[]]>
+  }) {
+    this.logger = extendLoggerComponent(
+      params.logger.child({ renderPageUrl: params.url }),
+      'puppeteer'
+    )
+    this.url = params.url
+    this.script = params.script
     this.browser = null
   }
 
@@ -15,58 +28,49 @@ export class PuppeteerClient {
     this.browser = await puppeteer.launch(launchParams)
   }
 
-  async loadPageAndEvaluateScript(
-    logger: Logger,
-    url: string,
-    script: EvaluateFunc<[unknown[]]>,
-    ...args: unknown[]
-  ): Promise<unknown> {
-    const boundLogger = extendLoggerComponent(
-      logger.child({ renderPageUrl: url }),
-      'puppeteer'
-    )
+  async loadPageAndEvaluateScript(...args: unknown[]): Promise<unknown> {
     if (!this.browser) {
       const errorMessage = 'Browser must be initialized using init() before use.'
-      boundLogger.error(errorMessage)
+      this.logger.error(errorMessage)
       throw new Error(errorMessage)
     }
-    boundLogger.info('Loading page from {renderPageUrl}')
+    this.logger.info('Loading page from {renderPageUrl}')
     const page = await this.browser.newPage()
 
-    await page.goto(url)
+    await page.goto(this.url)
 
-    boundLogger.info('Page loaded from {renderPageUrl}')
+    this.logger.info('Page loaded from {renderPageUrl}')
 
     // Handle page crash (oom?)
     page
       .on('error', (err) => {
-        boundLogger.error(err, 'Page crashed')
+        this.logger.error(err, 'Page crashed')
         throw err
       })
       .on('console', (message) => {
         let messageText = message.text()
         if (messageText.startsWith('data:image'))
           messageText = messageText.substring(0, 200).concat('...')
-        boundLogger.info(
+        this.logger.info(
           //FIXME: should be debug, but setting to info while developing.
           `${message.type().substring(0, 3).toUpperCase()} ${messageText}`
         )
       })
       .on('pageerror', ({ message }) => {
-        boundLogger.error(message)
+        this.logger.error(message)
       })
       .on('response', (response) =>
-        boundLogger.info(`${response.status()} ${response.url()}`)
+        this.logger.info(`${response.status()} ${response.url()}`)
       )
       .on('requestfailed', (request) =>
-        boundLogger.error(`${request.failure()?.errorText} ${request.url()}`)
+        this.logger.error(`${request.failure()?.errorText} ${request.url()}`)
       )
 
     //TODO add timeout for page load
     //TODO parse the response and ensure it's type of T
-    const evaluationResult: unknown = await page.evaluate(script, args)
+    const evaluationResult: unknown = await page.evaluate(this.script, args)
 
-    boundLogger.info('Page evaluated with Puppeteer script.')
+    this.logger.info('Page evaluated with Puppeteer script.')
     return evaluationResult
   }
 
