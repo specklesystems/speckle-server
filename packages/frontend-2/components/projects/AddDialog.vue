@@ -23,11 +23,12 @@
         />
       </div>
       <div
-        class="flex flex-col space-y-4 items-end md:flex-row md:justify-between md:items-center md:space-y-0"
+        class="space-y-4 items-end md:flex-row md:justify-between md:items-center md:space-y-0"
       >
+        <h3 class="label mb-3">Access permissions</h3>
         <ProjectVisibilitySelect
           v-model="visibility"
-          class="sm:max-w-none w-full sm:w-80"
+          class="sm:max-w-none w-full"
           mount-menu-on-body
         />
       </div>
