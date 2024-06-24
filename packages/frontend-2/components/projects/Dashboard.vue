@@ -79,7 +79,7 @@ import {
   useSubscription
 } from '@vue/apollo-composable'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
-import { PlusIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon } from '@heroicons/vue/20/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import {

@@ -30,7 +30,7 @@
 <script setup lang="ts">
 import type { ProjectModelPageDialogMoveToVersionFragment } from '~~/lib/common/generated/gql/graphql'
 import { useModelNameValidationRules } from '~~/lib/projects/composables/modelManagement'
-import { CubeIcon } from '@heroicons/vue/24/solid'
+import { CubeIcon } from '@heroicons/vue/24/outline'
 import { useForm } from 'vee-validate'
 import { sanitizeModelName } from '~~/lib/projects/helpers/models'
 

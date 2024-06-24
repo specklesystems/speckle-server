@@ -31,7 +31,7 @@
 <script setup lang="ts">
 import { useForm } from 'vee-validate'
 import type { RuleExpression } from 'vee-validate'
-import { PlusIcon, LinkIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon, LinkIcon } from '@heroicons/vue/20/solid'
 import { isRequired } from '~~/lib/common/helpers/validation'
 import { isObjectId } from '~~/lib/common/helpers/resources'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'

@@ -8,7 +8,6 @@
         <div class="flex items-center space-x-2 w-full mt-2 sm:w-auto sm:mt-0">
           <FormButton
             color="secondary"
-            :icon-right="CubeIcon"
             :to="allModelsRoute"
             class="grow inline-flex sm:grow-0 lg:hidden"
             @click="trackFederateAll"
@@ -18,7 +17,7 @@
           <FormButton
             v-if="canContribute"
             class="grow inline-flex sm:grow-0 lg:hidden"
-            :icon-right="PlusIcon"
+            :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
             New
@@ -69,7 +68,6 @@
           </div>
           <FormButton
             color="secondary"
-            :icon-right="CubeIcon"
             :to="allModelsRoute"
             class="hidden lg:inline-flex shrink-0"
             @click="trackFederateAll"
@@ -79,7 +77,7 @@
           <FormButton
             v-if="canContribute"
             class="hidden lg:inline-flex shrink-0"
-            :icon-right="PlusIcon"
+            :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
             New
@@ -101,9 +99,8 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { PlusIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon } from '@heroicons/vue/20/solid'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
-import { CubeIcon } from '@heroicons/vue/24/outline'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 
 const emit = defineEmits<{

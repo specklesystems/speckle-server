@@ -234,16 +234,15 @@
 <script lang="ts" setup>
 import dayjs from 'dayjs'
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
+import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import {
-  ChevronDownIcon,
   FolderIcon,
   CubeIcon,
   CubeTransparentIcon,
-  PlusIcon,
   ChatBubbleLeftRightIcon,
-  ArrowTopRightOnSquareIcon
-} from '@heroicons/vue/24/solid'
-import { ArrowUpOnSquareIcon } from '@heroicons/vue/24/outline'
+  ArrowTopRightOnSquareIcon,
+  ArrowUpOnSquareIcon
+} from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageModelsStructureItem_ProjectFragment,

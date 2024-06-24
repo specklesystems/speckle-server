@@ -35,7 +35,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { automationFunctionsRoute } from '~/lib/common/helpers/route'
 

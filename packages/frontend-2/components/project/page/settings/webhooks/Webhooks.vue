@@ -124,12 +124,11 @@
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import {
   PlusIcon,
-  BookOpenIcon,
   InformationCircleIcon,
   CheckCircleIcon,
   XCircleIcon
 } from '@heroicons/vue/20/solid'
-import { TrashIcon, PencilIcon } from '@heroicons/vue/24/outline'
+import { TrashIcon, PencilIcon, BookOpenIcon } from '@heroicons/vue/24/outline'
 import { FormSwitch, LayoutTable } from '@speckle/ui-components'
 import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'
