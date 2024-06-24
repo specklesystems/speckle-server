@@ -1,4 +1,4 @@
-export type ObjectPreview = {
+export type ObjectIdentifier = {
   streamId: string
   objectId: string
 }
