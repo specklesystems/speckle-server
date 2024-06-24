@@ -1,6 +1,7 @@
-import puppeteer, { Browser } from 'puppeteer'
+import puppeteer, { Browser, EvaluateFunc, PuppeteerLaunchOptions } from 'puppeteer'
 import { isDevelopment } from '../utils/env'
 import { extendLoggerComponent } from '../observability/logging'
+import { Logger } from 'pino'
 
 export class PuppeteerClient {
   browser: Browser | null
@@ -8,13 +9,18 @@ export class PuppeteerClient {
     this.browser = null
   }
 
-  async init(launchParams) {
+  async init(launchParams: PuppeteerLaunchOptions) {
     if (isDevelopment())
       this.browser = await puppeteer.launch({ ...launchParams, dumpio: true })
     this.browser = await puppeteer.launch(launchParams)
   }
 
-  async loadPageAndEvaluateScript<T>(logger, url, script, ...args): Promise<T> {
+  async loadPageAndEvaluateScript(
+    logger: Logger,
+    url: string,
+    script: EvaluateFunc<[unknown[]]>,
+    ...args: unknown[]
+  ): Promise<unknown> {
     const boundLogger = extendLoggerComponent(
       logger.child({ renderPageUrl: url }),
       'puppeteer'
@@ -58,7 +64,7 @@ export class PuppeteerClient {
 
     //TODO add timeout for page load
     //TODO parse the response and ensure it's type of T
-    const evaluationResult: T = await page.evaluate(script, args)
+    const evaluationResult: unknown = await page.evaluate(script, args)
 
     boundLogger.info('Page evaluated with Puppeteer script.')
     return evaluationResult
