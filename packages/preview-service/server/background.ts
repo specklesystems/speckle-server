@@ -29,11 +29,11 @@ export async function startPreviewService() {
 
   initPrometheusMetrics()
   await repeatedlyPollForWorkFactory({
-    getNextUnstartedObjectPreview: getNextUnstartedObjectPreviewFactory(db),
+    getNextUnstartedObjectPreview: getNextUnstartedObjectPreviewFactory({ db }),
     generateAndStore360Preview: generateAndStore360PreviewFactory({
-      updatePreviewMetadata: updatePreviewMetadataFactory(db),
-      notifyUpdate: notifyUpdateFactory(db),
-      insertPreview: insertPreviewFactory(db)
+      updatePreviewMetadata: updatePreviewMetadataFactory({ db }),
+      notifyUpdate: notifyUpdateFactory({ db }),
+      insertPreview: insertPreviewFactory({ db })
     })
   })()
 }

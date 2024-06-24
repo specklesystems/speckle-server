@@ -1,8 +1,9 @@
 import zlib from 'zlib'
 import express from 'express'
-import { getObjectsStream } from '../../repositories/objects'
+import { getObjectsStreamFactory } from '../../repositories/objects'
 import { SpeckleObjectsStream } from '../../services/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
+import db from 'repositories/knex'
 
 const apiRouter = express.Router()
 export default apiRouter
@@ -22,7 +23,7 @@ apiRouter.post('/getobjects/:streamId', async (req, res) => {
     'Content-Type': isSimpleTextRequested(req) ? 'text/plain' : 'application/json'
   })
 
-  const dbStream = await getObjectsStream({
+  const dbStream = await getObjectsStreamFactory({ db })({
     streamId: req.params.streamId,
     objectIds: childrenList
   })

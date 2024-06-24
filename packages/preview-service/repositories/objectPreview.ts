@@ -3,8 +3,9 @@ import type { Knex } from 'knex'
 
 export type GetNextUnstartedObjectPreview = () => Promise<ObjectIdentifier>
 export const getNextUnstartedObjectPreviewFactory =
-  (db: Knex): GetNextUnstartedObjectPreview =>
+  (deps: { db: Knex }): GetNextUnstartedObjectPreview =>
   async () => {
+    const { db } = deps
     const {
       rows: [maybeRow]
     } = await db.raw(`
@@ -31,8 +32,9 @@ export type UpdatePreviewMetadata = (
   params: UpdatePreviewMetadataParams
 ) => Promise<void>
 export const updatePreviewMetadataFactory =
-  (db: Knex): UpdatePreviewMetadata =>
+  (deps: { db: Knex }): UpdatePreviewMetadata =>
   async (params) => {
+    const { db } = deps
     // Update preview metadata
     await db.raw(
       `
@@ -49,8 +51,9 @@ export const updatePreviewMetadataFactory =
 
 export type NotifyUpdate = (params: ObjectIdentifier) => Promise<void>
 export const notifyUpdateFactory =
-  (db: Knex): NotifyUpdate =>
+  (deps: { db: Knex }): NotifyUpdate =>
   async (params) => {
+    const { db } = deps
     await db.raw(
       `NOTIFY preview_generation_update, 'finished:${params.streamId}:${params.objectId}'`
     )

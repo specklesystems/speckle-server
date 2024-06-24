@@ -2,9 +2,13 @@
 
 import zlib from 'zlib'
 import express from 'express'
-import { getObject, getObjectChildrenStream } from '../../repositories/objects'
+import {
+  getObjectFactory,
+  getObjectChildrenStreamFactory
+} from '../../repositories/objects'
 import { SpeckleObjectsStream } from '../../services/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
+import db from 'repositories/knex'
 
 const objectsRouter = express.Router()
 export default objectsRouter
@@ -16,7 +20,7 @@ objectsRouter.get('/:streamId/:objectId', async function (req, res) {
     objectId: req.params.objectId
   })
   // Populate first object (the "commit")
-  const obj = await getObject({
+  const obj = await getObjectFactory({ db })({
     streamId: req.params.streamId,
     objectId: req.params.objectId
   })
@@ -32,7 +36,7 @@ objectsRouter.get('/:streamId/:objectId', async function (req, res) {
     'Content-Type': simpleText ? 'text/plain' : 'application/json'
   })
 
-  const dbStream = await getObjectChildrenStream({
+  const dbStream = await getObjectChildrenStreamFactory({ db })({
     streamId: req.params.streamId,
     objectId: req.params.objectId
   })
@@ -66,7 +70,7 @@ objectsRouter.get('/:streamId/:objectId/single', async (req, res) => {
     streamId: req.params.streamId,
     objectId: req.params.objectId
   })
-  const obj = await getObject({
+  const obj = await getObjectFactory({ db })({
     streamId: req.params.streamId,
     objectId: req.params.objectId
   })
