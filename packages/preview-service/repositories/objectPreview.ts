@@ -1,6 +1,7 @@
-const knex = require('./knex')
+import type { ObjectPreview } from 'domain/domain'
+import knex from './knex'
 
-async function getNextUnstartedObjectPreview() {
+export async function getNextUnstartedObjectPreview(): Promise<ObjectPreview> {
   const {
     rows: [maybeRow]
   } = await knex.raw(`
@@ -17,10 +18,13 @@ async function getNextUnstartedObjectPreview() {
     WHERE object_preview."streamId" = task."streamId" AND object_preview."objectId" = task."objectId"
     RETURNING object_preview."streamId", object_preview."objectId"
   `)
-  return maybeRow
+  return <ObjectPreview>maybeRow
 }
 
-async function updatePreviewMetadata(metadata, streamId, objectId) {
+export type UpdatePreviewMetadataParams = ObjectPreview & {
+  metadata: string
+}
+export async function updatePreviewMetadata(params: UpdatePreviewMetadataParams) {
   // Update preview metadata
   await knex.raw(
     `
@@ -31,16 +35,12 @@ async function updatePreviewMetadata(metadata, streamId, objectId) {
         "preview" = ?
       WHERE "streamId" = ? AND "objectId" = ?
     `,
-    [metadata, streamId, objectId]
+    [params.metadata, params.streamId, params.objectId]
   )
 }
 
-async function notifyUpdate(streamId, objectId) {
-  await knex.raw(`NOTIFY preview_generation_update, 'finished:${streamId}:${objectId}'`)
-}
-
-module.exports = {
-  getNextUnstartedObjectPreview,
-  notifyUpdate,
-  updatePreviewMetadata
+export async function notifyUpdate(params: ObjectPreview) {
+  await knex.raw(
+    `NOTIFY preview_generation_update, 'finished:${params.streamId}:${params.objectId}'`
+  )
 }

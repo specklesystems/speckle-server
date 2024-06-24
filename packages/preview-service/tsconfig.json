@@ -106,6 +106,7 @@
   },
   "include": [
     "clients/**/*",
+    "domain/**/*",
     "observability/**/*",
     "repositories/**/*",
     "server/**/*",

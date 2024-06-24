@@ -50,12 +50,20 @@ async function generateAndStore360Preview(task) {
     metadata['all'] = fullImgId
 
     //FIXME it should be the task manager's responsibility to handle preview metadata
-    await updatePreviewMetadata(metadata, task.streamId, task.objectId)
+    await updatePreviewMetadata({
+      metadata,
+      streamId: task.streamId,
+      objectId: task.objectId
+    })
 
     await notifyUpdate(task.streamId, task.objectId)
   } catch (err) {
     //FIXME it should be the task manager's responsibility to handle preview metadata
-    await updatePreviewMetadata({ err: err.toString() }, task.streamId, task.objectId)
+    await updatePreviewMetadata({
+      metadata: { err: err.toString() },
+      streamId: task.streamId,
+      objectId: task.objectId
+    })
     metrics.metricOperationErrors.labels('preview').inc()
   }
 }
