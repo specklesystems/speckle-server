@@ -38,13 +38,13 @@ previewRouter.get('/:streamId/:objectId', async function (req, res) {
 
   const pageToOpenUrl = `${serviceUrl()}/render/`
 
-  const scr = await getScreenshot(
+  const scr = await getScreenshot({
     puppeteerClient,
     pageToOpenUrl,
-    puppeteerDriver,
+    puppeteerFunctionToEvaluateInBrowser: puppeteerDriver,
     objectUrl,
     boundLogger
-  )
+  })
 
   if (!scr) {
     return res.status(500).end()
