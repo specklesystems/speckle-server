@@ -11,20 +11,13 @@
         name="objectIdsOrUrl"
         label="Value"
         full-width
-        :size="isSmallerOrEqualSm ? 'base' : 'lg'"
         :custom-icon="LinkIcon"
         :rules="[isRequired, isValidValue]"
         placeholder="Comma-delimited object IDs/URLs"
         color="foundation"
         auto-focus
       />
-      <FormButton
-        :icon-left="PlusIcon"
-        :size="isSmallerOrEqualSm ? 'base' : 'lg'"
-        submit
-      >
-        Add
-      </FormButton>
+      <FormButton :icon-left="PlusIcon" submit>Add</FormButton>
     </form>
   </div>
 </template>
@@ -36,7 +29,6 @@ import { isRequired } from '~~/lib/common/helpers/validation'
 import { isObjectId } from '~~/lib/common/helpers/resources'
 import { useInjectedViewerLoadedResources } from '~~/lib/viewer/composables/setup'
 import { difference } from 'lodash-es'
-import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 
 const emit = defineEmits<{
   (e: 'chosen', val: { objectIds: string[] }): void
@@ -47,7 +39,6 @@ const urlRegexp = /\/models\/([a-zA-Z0-_9,@$]+)$/i
 
 const { handleSubmit } = useForm<FormPayload>()
 const { resourceItems } = useInjectedViewerLoadedResources()
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const explodeValidatedObjectIds = (commaDelimitedIdList: string) => {
   const idParts = commaDelimitedIdList.split(',')
