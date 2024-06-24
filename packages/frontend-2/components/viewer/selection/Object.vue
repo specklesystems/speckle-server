@@ -8,7 +8,7 @@
   >
     <div class="mb-1 flex items-center">
       <button
-        class="flex h-full w-full px-2 py-0.5 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
+        class="flex h-full w-full pl-1 pr-2 py-0.5 items-center gap-1 rounded bg-foundation-2 hover:sm:bg-primary-muted hover:text-primary"
         :class="unfold && 'text-primary'"
         @click="unfold = !unfold"
         @mouseenter="highlightObject"
@@ -91,14 +91,14 @@
         :key="index"
         class="text-xs"
       >
-        <div class="text-foreground-2 grid grid-cols-3">
+        <div class="text-foreground-2 grid grid-cols-3 pl-2">
           <div
             class="col-span-1 truncate text-xs font-bold"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
-          <div class="col-span-2 flex w-full min-w-0 truncate text-xs">
+          <div class="col-span-2 flex w-full min-w-0 truncate text-xs pl-1">
             <div class="flex-grow truncate">{{ kvp.innerType }} array</div>
             <div class="text-foreground-2">({{ kvp.arrayLength }})</div>
           </div>
@@ -107,7 +107,7 @@
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
           <div
-            class="col-span-1 truncate text-xs font-bold"
+            class="col-span-1 truncate text-xs font-bold pl-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
