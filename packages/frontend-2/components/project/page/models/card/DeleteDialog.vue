@@ -3,17 +3,17 @@
     v-model:open="isOpen"
     :buttons="[
       {
-        text: 'Delete',
-        props: { color: 'danger', fullWidth: true, disabled: loading },
-        onClick: () => {
-          onDelete()
-        }
-      },
-      {
         text: 'Cancel',
         props: { color: 'secondary', fullWidth: true },
         onClick: () => {
           isOpen = false
+        }
+      },
+      {
+        text: 'Delete',
+        props: { color: 'danger', fullWidth: true, disabled: loading },
+        onClick: () => {
+          onDelete()
         }
       }
     ]"
