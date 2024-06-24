@@ -3,7 +3,6 @@
 import createError from 'http-errors'
 import express, { ErrorRequestHandler } from 'express'
 import path from 'path'
-import cookieParser from 'cookie-parser'
 
 import indexRouter from './routes/index'
 import previewRouter from './routes/preview'
@@ -17,7 +16,6 @@ app.use(LoggingExpressMiddleware)
 
 app.use(express.json({ limit: '100mb' }))
 app.use(express.urlencoded({ limit: '100mb', extended: false }))
-app.use(cookieParser())
 //webpack will build the renderPage and save it to the packages/preview-service/dist/public directory
 app.use(express.static(path.join(__dirname, '../public')))
 

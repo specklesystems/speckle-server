@@ -10,7 +10,7 @@ export const getPostgresConnectionString = () =>
 export const getPuppeteerUserDataDir = () =>
   process.env.USER_DATA_DIR || '/tmp/puppeteer'
 export const isDevelopment = () => getNodeEnv() === 'development'
-export const isLogPretty = () => process.env.LOG_PRETTY === 'true'
+export const isLogPretty = () => process.env.LOG_PRETTY?.toLocaleLowerCase() === 'true'
 export const isProduction = () => getNodeEnv() === 'production'
 export const isTest = () => getNodeEnv() === 'test'
 export const serviceOrigin = () => `http://${getHost()}:${getAppPort()}`
