@@ -23,6 +23,7 @@
             label="Model name"
             placeholder="name"
             auto-focus
+            color="foundation"
             :rules="rules"
             :disabled="anyMutationsLoading"
             autocomplete="off"

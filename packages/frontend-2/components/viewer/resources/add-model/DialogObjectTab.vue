@@ -15,6 +15,7 @@
         :custom-icon="LinkIcon"
         :rules="[isRequired, isValidValue]"
         placeholder="Comma-delimited object IDs/URLs"
+        color="foundation"
         auto-focus
       />
       <FormButton

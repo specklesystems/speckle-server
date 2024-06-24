@@ -7,6 +7,7 @@
           name="name"
           label="Project name"
           placeholder="Project name"
+          color="foundation"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           show-required
           auto-focus
@@ -16,6 +17,7 @@
           name="description"
           label="Project description"
           placeholder="Description (optional)"
+          color="foundation"
           size="lg"
           :rules="[isStringOfLength({ maxLength: 65536 })]"
         />

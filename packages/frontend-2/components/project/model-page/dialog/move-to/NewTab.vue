@@ -15,6 +15,7 @@
         label="Model Name"
         placeholder="model/name/here"
         help="Use forward slashes in the model name to nest it below other models."
+        color="foundation"
         :custom-icon="CubeIcon"
         :rules="rules"
         :disabled="disabled"
