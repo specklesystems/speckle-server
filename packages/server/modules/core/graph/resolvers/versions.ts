@@ -10,12 +10,8 @@ import {
   batchDeleteCommits,
   batchMoveCommits
 } from '@/modules/core/services/commit/batchCommitActions'
-import { CommitUpdateError, CommitCreateError } from '@/modules/core/errors/commit'
-import {
-  updateCommitAndNotify,
-  createCommitByBranchName
-} from '@/modules/core/services/commit/management'
-import { getBranchById } from '@/modules/core/repositories/branches'
+import { CommitUpdateError } from '@/modules/core/errors/commit'
+import { updateCommitAndNotify } from '@/modules/core/services/commit/management'
 
 export = {
   Project: {
