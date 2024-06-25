@@ -135,12 +135,6 @@ const props = defineProps<{
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
    */
   onSubmit?: (e: SubmitEvent) => void
-  /**
-   * If set, it will replace inset-0 with top-0, bottom-0, etc. and it will not use dvh units.
-   * This is required as we're using this in DUI3, which needs to work in chromium 65, which does
-   * not support the above. Life is pain.
-   */
-  chromium65Compatibility?: boolean
 }>()
 
 const slots = useSlots()

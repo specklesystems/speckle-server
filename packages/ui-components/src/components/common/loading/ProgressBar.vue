@@ -9,8 +9,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 const props = defineProps<{
+  /**
+   * Whether we're actively loading. If set, the progress bar will be indefinite unless a progress argument is passed in too (see below).
+   */
   loading: boolean
+  /**
+   * Controls the color (will be red if set to true) - this should probably be unified in the future.
+   */
   cancelled?: boolean
+  /**
+   * A number between 0 and 1. If set, the progress bar will no longer be indefinite and have a fixed progress.
+   */
   progress?: number
 }>()
 
