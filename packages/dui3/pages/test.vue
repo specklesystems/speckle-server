@@ -24,9 +24,6 @@
             </span>
             <span class="text-xs text-foreground-2">{{ filter.summary }}</span>
           </div>
-          <div v-if="filter.name === 'Layers'" class="text-xs">
-            {{ (filter as unknown as Record<string,{name:string}[]>).options.map(o =>o.name) }}
-          </div>
         </div>
       </div>
       <div
@@ -39,7 +36,7 @@
       <p class="h5 mb-4">Chromium 65 Scrollable Dialogs Test</p>
       <FormButton @click="showBigDialog = !showBigDialog">Show Big Dialog</FormButton>
       <LayoutDialog v-model:open="showBigDialog" title="hello" chromium65-compatibility>
-        <div class="bg-purple-500" style="height: 2000px;">
+        <div class="bg-purple-500" style="height: 2000px">
           This is a test for chromium 65. If this is not scrollable, something is wrong!
         </div>
       </LayoutDialog>
@@ -68,7 +65,7 @@
         class="text-xs mx-3 p-4 rounded shadow-inner overflow-auto simple-scrollbar max-h-40"
       >
         <div class="text-info mb-2">
-          There are currently {{totalModelCount }} model card(s).
+          There are currently {{ totalModelCount }} model card(s).
         </div>
         <pre>{{ projectModelGroups }}</pre>
       </div>
@@ -111,7 +108,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { ArrowLeftIcon , CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
+import { ArrowLeftIcon, CheckIcon, MinusIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import type { TestEventArgs } from '~/lib/bindings/definitions/ITestBinding'
 import { useHostAppStore } from '~/store/hostApp'
 import { useSelectionStore } from '~/store/selection'
@@ -126,7 +123,7 @@ const { documentInfo, sendFilters, projectModelGroups } = storeToRefs(store)
 
 const totalModelCount = computed(() => {
   let count = 0
-  for(const pmg of projectModelGroups.value) {
+  for (const pmg of projectModelGroups.value) {
     count += pmg.senders.length
     count += pmg.receivers.length
   }
