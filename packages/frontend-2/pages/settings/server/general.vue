@@ -1,8 +1,6 @@
 <template>
   <div>
-    <Portal to="navigation">
-      <HeaderNavLink :to="'/downloads'" name="Speckle Connectors"></HeaderNavLink>
-    </Portal>
+    <Portal to="navigation" />
     <SettingsDebug />
     <div class="md:max-w-xl md:mx-auto md:py-12">
       <h1 class="h2">General</h1>
@@ -10,6 +8,8 @@
         <p>Manage your server settings</p>
         <hr />
         <SettingsServerGeneral />
+        <hr />
+        <SettingsServerVersionControl />
       </div>
     </div>
   </div>

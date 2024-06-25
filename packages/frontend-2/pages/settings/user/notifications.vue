@@ -1,8 +1,6 @@
 <template>
   <div>
-    <Portal to="navigation">
-      <HeaderNavLink :to="'/downloads'" name="Speckle Connectors"></HeaderNavLink>
-    </Portal>
+    <Portal to="navigation" />
     <SettingsDebug />
     <div class="md:max-w-xl md:mx-auto md:py-12">
       <h1 class="h2">Notifications</h1>
