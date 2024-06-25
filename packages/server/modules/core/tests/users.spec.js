@@ -226,7 +226,7 @@ describe('Actors & Tokens @user-services', () => {
         authorId: ballmerUserId
       })
 
-      await deleteUser(ballmerUserId)
+      await deleteUser({ deleteAllUserInvites: async () => true })(ballmerUserId)
 
       if ((await getStream({ streamId: soloOwnerStream.id })) !== undefined) {
         assert.fail('user stream not deleted')
@@ -263,7 +263,7 @@ describe('Actors & Tokens @user-services', () => {
 
     it('Should not delete the last admin user', async () => {
       try {
-        await deleteUser(myTestActor.id)
+        await deleteUser({ deleteAllUserInvites: async () => true })(myTestActor.id)
         assert.fail('boom')
       } catch (err) {
         expect(err.message).to.equal(
