@@ -14,10 +14,6 @@ const props = defineProps<{
    */
   loading: boolean
   /**
-   * Controls the color (will be red if set to true) - this should probably be unified in the future.
-   */
-  cancelled?: boolean
-  /**
    * A number between 0 and 1. If set, the progress bar will no longer be indefinite and have a fixed progress.
    */
   progress?: number
@@ -29,19 +25,11 @@ const widthStyle = computed(() => {
 })
 
 const containerStyle = computed(() => {
-  if (props.cancelled) {
-    return 'relative w-full h-1 bg-red-500/30 text-xs text-foreground-on-danger overflow-hidden rounded-xl'
-  } else {
-    return 'relative w-full h-1 bg-blue-500/30 text-xs text-foreground-on-primary overflow-hidden rounded-xl'
-  }
+  return 'relative w-full h-1 bg-blue-500/30 text-xs text-foreground-on-primary overflow-hidden rounded-xl'
 })
 
 const barStyle = computed(() => {
-  if (props.cancelled) {
-    return 'h-full relative bg-red-500/50 transition-[width]'
-  } else {
-    return 'h-full relative bg-blue-500/50 transition-[width]'
-  }
+  return 'h-full relative bg-blue-500/50 transition-[width]'
 })
 </script>
 <style scoped>

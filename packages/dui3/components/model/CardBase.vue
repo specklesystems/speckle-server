@@ -62,7 +62,6 @@
     >
       <CommonLoadingProgressBar
         :loading="!!modelCard.progress"
-        :cancelled="modelCard.progress?.status === 'Cancelled'"
         :progress="modelCard.progress ? modelCard.progress.progress : undefined"
       />
       <div class="text-xs font-bold px-2 h-full flex items-center text-primary">

@@ -14,7 +14,6 @@ export const Default: StoryObj = {
   }),
   args: {
     loading: true,
-    progress: 0.2,
-    cancelled: false
+    progress: 0.2
   }
 }
