@@ -28,7 +28,7 @@ const isStreamInviteCreateInput = (
   i: StreamInviteCreateInput | FullProjectInviteCreateInput
 ): i is StreamInviteCreateInput => has(i, 'streamId')
 
-export const createStreamInviteAndNotify =
+export const createStreamInviteAndNotifyFactory =
   ({ createAndSendInvite }: { createAndSendInvite: CreateAndSendInvite }) =>
   async (
     input: StreamInviteCreateInput | FullProjectInviteCreateInput,

@@ -10,7 +10,7 @@ import {
   resendInviteEmailFactory
 } from '@/modules/serverinvites/services/inviteCreationService'
 import {
-  createStreamInviteAndNotify,
+  createStreamInviteAndNotifyFactory,
   useStreamInviteAndNotify
 } from '@/modules/serverinvites/services/management'
 import {
@@ -106,7 +106,7 @@ export = {
         Roles.Stream.Owner,
         context.resourceAccessRules
       )
-      await createStreamInviteAndNotify({
+      await createStreamInviteAndNotifyFactory({
         createAndSendInvite: createAndSendInviteFactory({
           findResource: findResourceFactory(),
           findUserByTarget: findUserByTargetFactory(),

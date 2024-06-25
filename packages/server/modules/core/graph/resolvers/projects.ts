@@ -47,7 +47,7 @@ import {
   getUserPendingStreamInvites
 } from '@/modules/serverinvites/services/inviteRetrievalService'
 import {
-  createStreamInviteAndNotify,
+  createStreamInviteAndNotifyFactory,
   useStreamInviteAndNotify
 } from '@/modules/serverinvites/services/management'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
@@ -149,7 +149,7 @@ export = {
         findUserByTarget: findUserByTargetFactory(),
         insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db })
       })
-      await createStreamInviteAndNotify({
+      await createStreamInviteAndNotifyFactory({
         createAndSendInvite
       })(
         {
@@ -180,7 +180,7 @@ export = {
       for (const batch of inputBatches) {
         await Promise.all(
           batch.map((i) =>
-            createStreamInviteAndNotify({
+            createStreamInviteAndNotifyFactory({
               createAndSendInvite: createAndSendInviteFactory({
                 findResource: findResourceFactory(),
                 findUserByTarget: findUserByTargetFactory(),
