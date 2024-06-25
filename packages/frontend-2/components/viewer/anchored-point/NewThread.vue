@@ -35,7 +35,7 @@
         <div
           v-if="modelValue.isExpanded && canPostComment"
           ref="threadContainer"
-          class="sm:absolute min-w-[200px] hover:bg-foundation bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm sm:rounded-lg shadow-md"
+          class="sm:absolute min-w-[200px] bg-foundation sm:rounded-lg shadow-md"
         >
           <div class="relative">
             <ViewerCommentsEditor
@@ -48,24 +48,22 @@
               @submit="() => onSubmit()"
               @keydown="onKeyDownHandler"
             />
-            <div class="w-full flex justify-end p-2 space-x-2">
-              <div class="space-x-2">
-                <FormButton
-                  v-tippy="'Attach'"
-                  :icon-left="PaperClipIcon"
-                  hide-text
-                  text
-                  :disabled="isPostingNewThread"
-                  @click="trackAttachAndOpenFilePicker()"
-                />
-
-                <FormButton
-                  :icon-left="PaperAirplaneIcon"
-                  hide-text
-                  :loading="isPostingNewThread"
-                  @click="() => onSubmit()"
-                />
-              </div>
+            <div class="w-full flex p-2 justify-between">
+              <FormButton
+                v-tippy="'Attach'"
+                :icon-left="PaperClipIcon"
+                hide-text
+                text
+                class="sm:px-1"
+                :disabled="isPostingNewThread"
+                @click="trackAttachAndOpenFilePicker()"
+              />
+              <FormButton
+                :icon-left="PaperAirplaneIcon"
+                hide-text
+                :loading="isPostingNewThread"
+                @click="() => onSubmit()"
+              />
             </div>
           </div>
         </div>

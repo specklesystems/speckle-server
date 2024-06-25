@@ -28,10 +28,10 @@
           show-label
           label="Model Name"
           placeholder="model/name/here"
-          size="lg"
           :rules="rules"
           show-required
           auto-focus
+          color="foundation"
           :disabled="loading"
           help="Use forward slashes in the model name to nest it below other models."
           autocomplete="off"
@@ -42,7 +42,7 @@
           show-label
           label="Model Description"
           placeholder="Description (Optional)"
-          size="lg"
+          color="foundation"
           :disabled="loading"
         />
       </div>

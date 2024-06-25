@@ -21,6 +21,12 @@ const {
   UserInputError,
   PasswordTooShortError
 } = require('@/modules/core/errors/userinput')
+const {
+  findServerInviteFactory,
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const db = require('@/db/knex')
 
 module.exports = async (app, session, sessionAppId, finalizeAuth) => {
   const strategy = {
@@ -82,10 +88,12 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
           )
 
         // 2. if you have an invite it must be valid, both for invite only and public servers
-        /** @type {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} */
+        /** @type {import('@/modules/serverinvites/domain/types').ServerInviteRecord} */
         let invite
         if (req.session.token) {
-          invite = await validateServerInvite(user.email, req.session.token)
+          invite = await validateServerInvite({
+            findServerInvite: findServerInviteFactory({ db })
+          })(user.email, req.session.token)
         }
 
         // 3. at this point we know, that we have one of these cases:
@@ -106,7 +114,10 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         req.log = req.log.child({ userId })
 
         // 4. use up all server-only invites the email had attached to it
-        await finalizeInvitedServerRegistration(user.email, userId)
+        await finalizeInvitedServerRegistration({
+          deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+          updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+        })(user.email, userId)
 
         // Resolve redirect path
         req.authRedirectPath = resolveAuthRedirectPath(invite)

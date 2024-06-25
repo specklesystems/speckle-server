@@ -76,13 +76,21 @@
           Use this function to create an automation on your project.
         </div>
       </div>
-      <FormButton
-        :icon-left="BoltIcon"
+      <div
+        v-tippy="
+          hasReleases ? undefined : 'Your function needs to have at least one release'
+        "
         class="shrink-0"
-        @click="$emit('createAutomation')"
       >
-        Use in an Automation
-      </FormButton>
+        <FormButton
+          :icon-left="BoltIcon"
+          class="shrink-0"
+          :disabled="!hasReleases"
+          @click="$emit('createAutomation')"
+        >
+          Use in an Automation
+        </FormButton>
+      </div>
     </div>
     <AutomateFunctionPageParametersDialog
       v-if="latestRelease"
@@ -163,6 +171,7 @@ const publishedAt = computed(() => dayjs(latestRelease.value?.createdAt).from(da
 const description = computed(() =>
   props.fn.description?.length ? props.fn.description : 'No description provided.'
 )
+const hasReleases = computed(() => !!latestRelease.value)
 
 const onViewParameters = () => {
   if (!latestRelease.value) return

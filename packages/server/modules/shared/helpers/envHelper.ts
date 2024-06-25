@@ -169,7 +169,7 @@ export function getServerOrigin() {
     )
   }
 
-  return trimEnd(process.env.CANONICAL_URL, '/')
+  return new URL(trimEnd(process.env.CANONICAL_URL, '/')).origin
 }
 
 /**

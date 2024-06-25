@@ -12,7 +12,6 @@ import {
 } from '@/modules/core/repositories/streams'
 import { UserWithOptionalRole, getUsers } from '@/modules/core/repositories/users'
 import { keyBy } from 'lodash'
-import { getInvites } from '@/modules/serverinvites/repositories'
 import { AuthContext } from '@/modules/shared/authz'
 import {
   BranchRecord,
@@ -23,7 +22,7 @@ import {
   UsersMetaRecord
 } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   getCommitBranches,
   getCommits,
@@ -55,7 +54,6 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { Users } from '@/modules/core/dbSchema'
 import { getStreamPendingModels } from '@/modules/fileuploads/repositories/fileUploads'
 import { FileUploadRecord } from '@/modules/fileuploads/helpers/types'
-import { getAutomationFunctionRunResultVersions } from '@/modules/betaAutomations/repositories/automations'
 import { getAppScopes } from '@/modules/auth/repositories'
 import {
   AutomateRevisionFunctionRecord,
@@ -85,6 +83,8 @@ import {
   ExecutionEngineFailedResponseError,
   ExecutionEngineNetworkError
 } from '@/modules/automate/errors/executionEngine'
+import { queryInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import db from '@/db/knex'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -519,7 +519,7 @@ export function buildRequestLoaders(
        */
       getInvite: createLoader<string, Nullable<ServerInviteRecord>>(
         async (inviteIds) => {
-          const results = keyBy(await getInvites(inviteIds), 'id')
+          const results = keyBy(await queryInvitesFactory({ db })(inviteIds), 'id')
           return inviteIds.map((i) => results[i] || null)
         }
       )
@@ -529,25 +529,6 @@ export function buildRequestLoaders(
         const results = await getAppScopes(appIds.slice())
         return appIds.map((i) => results[i] || [])
       })
-    },
-    automationFunctionRuns: {
-      /**
-       * Get result versions/commits from function runs
-       */
-      getResultVersions: createLoader<
-        [automationRunId: string, functionId: string],
-        CommitRecord[],
-        string
-      >(
-        async (ids) => {
-          const results = await getAutomationFunctionRunResultVersions(ids.slice())
-          return ids.map((i) => {
-            const [automationRunId, functionId] = i
-            return results[automationRunId]?.[functionId] || []
-          })
-        },
-        { cacheKeyFn: (key) => `${key[0]}:${key[1]}` }
-      )
     },
     automations: {
       getFunctionAutomationCount: createLoader<string, number>(async (functionIds) => {

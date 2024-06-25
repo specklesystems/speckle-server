@@ -1,10 +1,11 @@
-import { TokenCreateError } from '@/modules/core/errors/user'
 import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
-} from '@/modules/core/graph/generated/graphql'
+} from '@/modules/core/domain/tokens/types'
+import { TokenCreateError } from '@/modules/core/errors/user'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
 import { ResourceTargets } from '@/modules/serverinvites/helpers/inviteHelper'
+import {} from '@/modules/serverinvites/services/operations'
 import { MaybeNullOrUndefined, Nullable, Optional, Scopes } from '@speckle/shared'
 import { differenceBy } from 'lodash'
 
@@ -24,7 +25,7 @@ export const roleResourceTypeToTokenResourceType = (
 ): Nullable<TokenResourceIdentifierType> => {
   switch (type) {
     case ResourceTargets.Streams:
-      return TokenResourceIdentifierType.Project
+      return 'project'
     default:
       return null
   }
@@ -52,9 +53,7 @@ export const isNewResourceAllowed = (params: {
 export const toProjectIdWhitelist = (
   resourceAccessRules: ContextResourceAccessRules
 ): Optional<string[]> => {
-  const projectRules = resourceAccessRules?.filter(
-    (r) => r.type === TokenResourceIdentifierType.Project
-  )
+  const projectRules = resourceAccessRules?.filter((r) => r.type === 'project')
   return projectRules?.map((r) => r.id)
 }
 

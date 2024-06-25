@@ -5,9 +5,12 @@
     <div v-if="separator">/</div>
     <NuxtLink
       :to="to"
-      class="flex gap-2 items-center text-sm ml-0.5 font-semibold"
-      :active-class="showActiveState ? 'text-primary font-bold group is-active' : ''"
+      class="flex gap-1 items-center text-sm ml-0.5"
+      active-class="text-primary font-semibold group is-active"
     >
+      <div v-if="separator">
+        <ChevronRightIcon class="flex w-4 h-4 text-foreground-2" />
+      </div>
       <div class="group-[.is-active]:truncate">
         {{ name || to }}
       </div>

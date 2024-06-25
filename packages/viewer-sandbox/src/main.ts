@@ -2,14 +2,14 @@ import {
   DefaultViewerParams,
   SelectionEvent,
   ViewerEvent,
-  Viewer
+  Viewer,
+  CameraController
 } from '@speckle/viewer'
 
 import './style.css'
 import Sandbox from './Sandbox'
 import {
   SelectionExtension,
-  CameraController,
   MeasurementsExtension,
   ExplodeExtension,
   DiffExtension,
@@ -364,7 +364,7 @@ const getStream = () => {
     // Nice towers
     // 'https://latest.speckle.dev/streams/f4efe4bd7f/objects/5083dffc2ce54ce64c1fc4fab48ca877'
     // 'http://127.0.0.1:3000/streams/30b75f0dea/objects/db765ed44ae10176c0bf8ba60d1ce67d'
-
+    //
     // 'https://speckle.xyz/streams/7b253e5c4c/commits/025fcbb9cf'
     // BIG railway
     // 'https://latest.speckle.dev/streams/a64b432b34/commits/cf7725e404'
@@ -378,6 +378,10 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
     // Shiny
     // 'https://latest.speckle.systems/projects/e8b81c24f5/models/759186b9ec'
+    // 'https://latest.speckle.systems/projects/c1faab5c62/models/c8ca2dcbe2@f79f9fe600'
+    // 'https://app.speckle.systems/projects/7591c56179/models/0185a7c62e'
+    // 'https://app.speckle.systems/projects/24c98619ac/models/38639656b8'
+    // 'https://app.speckle.systems/projects/96c43c61a6/models/fd12973e73'
   )
 }
 

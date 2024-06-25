@@ -82,7 +82,8 @@ function useViewerObjectAutoLoading() {
     projectId,
     viewer: {
       instance: viewer,
-      init: { ref: isInitialized }
+      init: { ref: isInitialized },
+      hasDoneInitialLoad
     },
     resources: {
       response: { resourceItems }
@@ -112,21 +113,24 @@ function useViewerObjectAutoLoading() {
     uniq(resourceItems.map((i) => i.objectId))
 
   watch(
-    () => <const>[resourceItems.value, isInitialized.value],
-    async ([newResources, newIsInitialized], oldData) => {
+    () => <const>[resourceItems.value, isInitialized.value, hasDoneInitialLoad.value],
+    async ([newResources, newIsInitialized, newHasDoneInitialLoad], oldData) => {
       // Wait till viewer loaded in
       if (!newIsInitialized) return
 
-      const [oldResources, oldIsInitialized] = oldData || [[], false]
+      const [oldResources] = oldData || [[], false]
       const zoomToObject = !focusedThreadId.value // we want to zoom to the thread instead
 
       // Viewer initialized - load in all resources
-      if (newIsInitialized && !oldIsInitialized) {
+      if (!newHasDoneInitialLoad) {
         const allObjectIds = getUniqueObjectIds(newResources)
 
-        await Promise.all(
+        const res = await Promise.all(
           allObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
         )
+        if (res.length) {
+          hasDoneInitialLoad.value = true
+        }
 
         return
       }
@@ -139,7 +143,7 @@ function useViewerObjectAutoLoading() {
 
       await Promise.all(removableObjectIds.map((i) => loadObject(i, true)))
       await Promise.all(
-        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject }))
+        addableObjectIds.map((i) => loadObject(i, false, { zoomToObject: false }))
       )
     },
     { deep: true, immediate: true }
@@ -308,14 +312,11 @@ function useViewerCameraIntegration() {
   const hasInitialLoadFired = ref(false)
 
   const loadCameraDataFromViewer = () => {
-    const controls = instance.getExtension(CameraController).controls
+    const extension: CameraController = instance.getExtension(CameraController)
     let cameraManuallyChanged = false
 
-    const viewerPos = new Vector3()
-    const viewerTarget = new Vector3()
-
-    controls.getPosition(viewerPos)
-    controls.getTarget(viewerTarget)
+    const viewerPos = new Vector3().copy(extension.getPosition())
+    const viewerTarget = new Vector3().copy(extension.getTarget())
 
     if (!areVectorsLooselyEqual(position.value, viewerPos)) {
       if (hasInitialLoadFired.value) position.value = viewerPos.clone()
@@ -772,11 +773,15 @@ function useDisableZoomOnEmbed() {
   watch(
     () => embedOptions.noScroll.value,
     (newNoScrollValue) => {
-      const cameraController = viewer.instance.getExtension(CameraController)
+      newNoScrollValue
+      viewer
+      const cameraController: CameraController =
+        viewer.instance.getExtension(CameraController)
+
       if (newNoScrollValue) {
-        cameraController.controls.mouseButtons.wheel = 0
+        cameraController.options = { enableZoom: false }
       } else {
-        cameraController.controls.mouseButtons.wheel = 4
+        cameraController.options = { enableZoom: true }
       }
     },
     { immediate: true }

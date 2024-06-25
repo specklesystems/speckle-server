@@ -48,11 +48,11 @@
             </div>
             <div class="flex items-center gap-0.5">
               <button class="p-0.5 text-foreground hover:text-primary" @click="onClose">
-                <XMarkIcon class="h-4 w-4" />
+                <XMarkIcon class="size-4" />
               </button>
             </div>
           </div>
-          <div v-if="$slots.actions" class="w-full px-3 h-8">
+          <div v-if="$slots.actions" class="w-full px-2 h-8">
             <div class="flex items-center gap-1 h-full">
               <slot name="actions"></slot>
             </div>
