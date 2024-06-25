@@ -4,10 +4,9 @@
     <SettingsDebug />
     <div class="md:max-w-xl md:mx-auto md:py-12">
       <h1 class="h2">Notifications</h1>
-      <div class="flex flex-col gap-y-8 mt-4">
-        <p>Your notification preferences</p>
-        <hr />
-        <SettingsUserNotifications :user="user" />
+      <div class="mt-4 divide-y">
+        <p class="py-8">Your notification preferences</p>
+        <SettingsUserNotifications class="py-8" :user="user" />
       </div>
     </div>
   </div>
