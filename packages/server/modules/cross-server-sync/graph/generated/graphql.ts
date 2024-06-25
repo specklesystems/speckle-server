@@ -1222,19 +1222,27 @@ export type Mutation = {
   streamDelete: Scalars['Boolean']['output'];
   /** @deprecated Part of the old API surface and will be removed in the future. */
   streamFavorite?: Maybe<Stream>;
-  /** Note: The required scope to invoke this is not given out to app or personal access tokens */
+  /**
+   * Note: The required scope to invoke this is not given out to app or personal access tokens
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectInviteMutations.batchCreate instead.
+   */
   streamInviteBatchCreate: Scalars['Boolean']['output'];
   /**
    * Cancel a pending stream invite. Can only be invoked by a stream owner.
    * Note: The required scope to invoke this is not given out to app or personal access tokens
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectInviteMutations.cancel instead.
    */
   streamInviteCancel: Scalars['Boolean']['output'];
   /**
    * Invite a new or registered user to the specified stream
    * Note: The required scope to invoke this is not given out to app or personal access tokens
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectInviteMutations.create instead.
    */
   streamInviteCreate: Scalars['Boolean']['output'];
-  /** Accept or decline a stream invite */
+  /**
+   * Accept or decline a stream invite
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectInviteMutations.use instead.
+   */
   streamInviteUse: Scalars['Boolean']['output'];
   /**
    * Remove yourself from stream collaborators (not possible for the owner)
@@ -2266,9 +2274,13 @@ export type Query = {
   /**
    * Look for an invitation to a stream, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
+   * @deprecated Part of the old API surface and will be removed in the future. Use Query.projectInvite instead.
    */
   streamInvite?: Maybe<PendingStreamCollaborator>;
-  /** Get all invitations to streams that the active user has */
+  /**
+   * Get all invitations to streams that the active user has
+   * @deprecated Part of the old API surface and will be removed in the future. Use User.projectInvites instead.
+   */
   streamInvites: Array<PendingStreamCollaborator>;
   /**
    * Returns all streams that the active user is a collaborator on.
@@ -2647,9 +2659,15 @@ export type Stream = {
   /** Date when you favorited this stream. `null` if stream isn't viewed from a specific user's perspective or if it isn't favorited. */
   favoritedDate?: Maybe<Scalars['DateTime']['output']>;
   favoritesCount: Scalars['Int']['output'];
-  /** Returns a specific file upload that belongs to this stream. */
+  /**
+   * Returns a specific file upload that belongs to this stream.
+   * @deprecated Part of the old API surface and will be removed in the future. Use Project.pendingImportedModels or Model.pendingImportedVersions instead.
+   */
   fileUpload?: Maybe<FileUpload>;
-  /** Returns a list of all the file uploads for this stream. */
+  /**
+   * Returns a list of all the file uploads for this stream.
+   * @deprecated Part of the old API surface and will be removed in the future. Use Project.pendingImportedModels or Model.pendingImportedVersions instead.
+   */
   fileUploads: Array<FileUpload>;
   id: Scalars['String']['output'];
   /**
@@ -2874,7 +2892,10 @@ export type Subscription = {
    * updates regarding comments for those resources.
    */
   projectCommentsUpdated: ProjectCommentsUpdatedMessage;
-  /** Subscribe to changes to any of a project's file imports */
+  /**
+   * Subscribe to changes to any of a project's file imports
+   * @deprecated Part of the old API surface and will be removed in the future. Use projectPendingModelsUpdated or projectPendingVersionsUpdated instead.
+   */
   projectFileImportUpdated: ProjectFileImportUpdatedMessage;
   /** Subscribe to changes to a project's models. Optionally specify modelIds to track. */
   projectModelsUpdated: ProjectModelsUpdatedMessage;
