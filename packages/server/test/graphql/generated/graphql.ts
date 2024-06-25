@@ -2692,6 +2692,7 @@ export type Stream = {
   role?: Maybe<Scalars['String']['output']>;
   size?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.webhooks instead. */
   webhooks: WebhookCollection;
 };
 
