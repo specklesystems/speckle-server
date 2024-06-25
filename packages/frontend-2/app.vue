@@ -36,6 +36,8 @@ watchAuthQueryString()
 await useMixpanelInitialization()
 </script>
 <style>
+@import 'https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap';
+
 .page-enter-active,
 .page-leave-active {
   transition: all 0.1s;
