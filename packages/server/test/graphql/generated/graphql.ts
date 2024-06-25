@@ -675,6 +675,7 @@ export type Commit = {
    *     ...
    *   }
    * ```
+   * @deprecated Part of the old API surface and will be removed in the future
    */
   commentCount: Scalars['Int']['output'];
   createdAt?: Maybe<Scalars['DateTime']['output']>;
@@ -919,7 +920,10 @@ export type LimitedUser = {
   activity?: Maybe<ActivityCollection>;
   avatar?: Maybe<Scalars['String']['output']>;
   bio?: Maybe<Scalars['String']['output']>;
-  /** Get public stream commits authored by the user */
+  /**
+   * Get public stream commits authored by the user
+   * @deprecated Part of the old API surface and will be removed in the future.
+   */
   commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
@@ -1117,8 +1121,11 @@ export type Mutation = {
   appUpdate: Scalars['Boolean']['output'];
   automateFunctionRunStatusReport: Scalars['Boolean']['output'];
   automateMutations: AutomateMutations;
+  /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.create instead. */
   branchCreate: Scalars['String']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.delete instead. */
   branchDelete: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use ModelMutations.update instead. */
   branchUpdate: Scalars['Boolean']['output'];
   /** Broadcast user activity in the viewer */
   broadcastViewerUserActivity: Scalars['Boolean']['output'];
@@ -1148,13 +1155,23 @@ export type Mutation = {
    * @deprecated Use commentMutations version
    */
   commentView: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. */
   commitCreate: Scalars['String']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.delete instead. */
   commitDelete: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. */
   commitReceive: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.update/moveToModel instead. */
   commitUpdate: Scalars['Boolean']['output'];
-  /** Delete a batch of commits */
+  /**
+   * Delete a batch of commits
+   * @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.delete instead.
+   */
   commitsDelete: Scalars['Boolean']['output'];
-  /** Move a batch of commits to a new branch */
+  /**
+   * Move a batch of commits to a new branch
+   * @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.moveToModel instead.
+   */
   commitsMove: Scalars['Boolean']['output'];
   /**
    * Delete a pending invite
@@ -1545,6 +1562,7 @@ export type Object = {
    *     ...
    *   }
    * ```
+   * @deprecated Part of the old API surface and will be removed in the future
    */
   commentCount: Scalars['Int']['output'];
   createdAt?: Maybe<Scalars['DateTime']['output']>;
@@ -2177,12 +2195,13 @@ export type Query = {
   automateFunctions: AutomateFunctionCollection;
   /** Part of the automation/function creation handshake mechanism */
   automateValidateAuthCode: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future */
   comment?: Maybe<Comment>;
   /**
    * This query can be used in the following ways:
    * - get all the comments for a stream: **do not pass in any resource identifiers**.
    * - get the comments targeting any of a set of provided resources (comments/objects): **pass in an array of resources.**
-   * @deprecated Use 'commentThreads' fields instead
+   * @deprecated Use Project/Version/Model 'commentThreads' fields instead
    */
   comments?: Maybe<CommentCollection>;
   /** All of the discoverable streams of the server */
@@ -2561,10 +2580,16 @@ export type Stream = {
    */
   activity?: Maybe<ActivityCollection>;
   allowPublicComments: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.blob */
   blob?: Maybe<BlobMetadata>;
-  /** Get the metadata collection of blobs stored for this stream. */
+  /**
+   * Get the metadata collection of blobs stored for this stream.
+   * @deprecated Part of the old API surface and will be removed in the future. Use Project.blobs
+   */
   blobs?: Maybe<BlobMetadataCollection>;
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.model instead. */
   branch?: Maybe<Branch>;
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.models or Project.modelsTree instead. */
   branches?: Maybe<BranchCollection>;
   collaborators: Array<StreamCollaborator>;
   /**
@@ -2576,9 +2601,12 @@ export type Stream = {
    *     ...
    *   }
    * ```
+   * @deprecated Part of the old API surface and will be removed in the future
    */
   commentCount: Scalars['Int']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.version instead. */
   commit?: Maybe<Commit>;
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.versions instead. */
   commits?: Maybe<CommitCollection>;
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
@@ -2760,11 +2788,20 @@ export type Subscription = {
   __typename?: 'Subscription';
   /** It's lonely in the void. */
   _?: Maybe<Scalars['String']['output']>;
-  /** Subscribe to branch created event */
+  /**
+   * Subscribe to branch created event
+   * @deprecated Part of the old API surface and will be removed in the future. Use 'projectModelsUpdated' instead.
+   */
   branchCreated?: Maybe<Scalars['JSONObject']['output']>;
-  /** Subscribe to branch deleted event */
+  /**
+   * Subscribe to branch deleted event
+   * @deprecated Part of the old API surface and will be removed in the future. Use 'projectModelsUpdated' instead.
+   */
   branchDeleted?: Maybe<Scalars['JSONObject']['output']>;
-  /** Subscribe to branch updated event. */
+  /**
+   * Subscribe to branch updated event.
+   * @deprecated Part of the old API surface and will be removed in the future. Use 'projectModelsUpdated' instead.
+   */
   branchUpdated?: Maybe<Scalars['JSONObject']['output']>;
   /**
    * Subscribe to new comment events. There's two ways to use this subscription:
@@ -2780,11 +2817,20 @@ export type Subscription = {
    * @deprecated Use projectCommentsUpdated or viewerUserActivityBroadcasted for reply status
    */
   commentThreadActivity: CommentThreadActivityMessage;
-  /** Subscribe to commit created event */
+  /**
+   * Subscribe to commit created event
+   * @deprecated Part of the old API surface and will be removed in the future. Use 'projectVersionsUpdated' instead.
+   */
   commitCreated?: Maybe<Scalars['JSONObject']['output']>;
-  /** Subscribe to commit deleted event */
+  /**
+   * Subscribe to commit deleted event
+   * @deprecated Part of the old API surface and will be removed in the future. Use 'projectVersionsUpdated' instead.
+   */
   commitDeleted?: Maybe<Scalars['JSONObject']['output']>;
-  /** Subscribe to commit updated event. */
+  /**
+   * Subscribe to commit updated event.
+   * @deprecated Part of the old API surface and will be removed in the future. Use 'projectVersionsUpdated' instead.
+   */
   commitUpdated?: Maybe<Scalars['JSONObject']['output']>;
   /** Subscribe to updates to automations in the project */
   projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
@@ -3052,6 +3098,7 @@ export type User = {
   /**
    * Get commits authored by the user. If requested for another user, then only commits
    * from public streams will be returned.
+   * @deprecated Part of the old API surface and will be removed in the future. Use User.versions instead.
    */
   commits?: Maybe<CommitCollection>;
   company?: Maybe<Scalars['String']['output']>;
