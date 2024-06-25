@@ -1,6 +1,8 @@
 export const getAppPort = () => process.env.PORT || '3001'
 export const getChromiumExecutablePath = () =>
   process.env.CHROMIUM_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
+export const getHealthCheckFilePath = () =>
+  process.env.HEALTHCHECK_FILE_PATH || '/tmp/last_successful_query'
 export const getHost = () => process.env.HOST || '127.0.0.1'
 export const getLogLevel = () => process.env.LOG_LEVEL || 'info'
 export const getMetricsPort = () => process.env.PROMETHEUS_METRICS_PORT || '9094'

@@ -44,6 +44,8 @@ export const startServer = () => {
     serverLogger.info('📊 Started Preview Service metrics server')
     onListening(metricsServer)
   })
+
+  return { app, server, metricsServer }
 }
 
 /**

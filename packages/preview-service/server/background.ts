@@ -3,7 +3,7 @@
  */
 //FIXME this doesn't quite fit in the /server directory, but it's not a service either. It's a background worker.
 import { initPrometheusMetrics } from '../observability/prometheusMetrics'
-import { logger } from '../observability/logging'
+import { extendLoggerComponent, logger } from '../observability/logging'
 import { forceExit, repeatedlyPollForWorkFactory } from '../services/taskManager'
 import {
   getNextUnstartedObjectPreviewFactory,
@@ -13,30 +13,36 @@ import {
 import db from '../repositories/knex'
 import { generateAndStore360PreviewFactory } from '../services/360preview'
 import { insertPreviewFactory } from '../repositories/previews'
-import { serviceOrigin } from '../utils/env'
+import { getHealthCheckFilePath, serviceOrigin } from '../utils/env'
 import { generatePreviewFactory } from '../clients/previewService'
+import { updateHealthcheckDataFactory } from 'clients/execHealthcheck'
 
 export async function startPreviewService() {
-  logger.info('📸 Starting Preview Service background worker')
+  const backgroundLogger = extendLoggerComponent(logger, 'backgroundWorker')
+  backgroundLogger.info('📸 Starting Preview Service background worker')
 
   process.on('SIGTERM', () => {
     forceExit()
-    logger.info('Shutting down...')
+    backgroundLogger.info('Shutting down...')
   })
 
   process.on('SIGINT', () => {
     forceExit()
-    logger.info('Shutting down...')
+    backgroundLogger.info('Shutting down...')
   })
 
   initPrometheusMetrics({ db })
   await repeatedlyPollForWorkFactory({
+    updateHealthcheckData: updateHealthcheckDataFactory({
+      healthCheckFilePath: getHealthCheckFilePath()
+    }),
     getNextUnstartedObjectPreview: getNextUnstartedObjectPreviewFactory({ db }),
     generateAndStore360Preview: generateAndStore360PreviewFactory({
       generatePreview: generatePreviewFactory({ serviceOrigin: serviceOrigin() }),
       updatePreviewMetadata: updatePreviewMetadataFactory({ db }),
       notifyUpdate: notifyUpdateFactory({ db }),
       insertPreview: insertPreviewFactory({ db })
-    })
+    }),
+    logger: backgroundLogger
   })()
 }
