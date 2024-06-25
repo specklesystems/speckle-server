@@ -1,3 +1,5 @@
+import { WorkspaceRoles } from "@speckle/shared"
+
 export type Workspace = {
   id: string
   name: string
@@ -9,4 +11,5 @@ export type Workspace = {
   logoUrl: string | null
 }
 
-export type GetUsersWorkspaces = (args: { userId: string }) => Promise<Workspace[]>
+export type WorkspaceAcl = { userId: string; role: WorkspaceRoles; workspaceId: string }
+
