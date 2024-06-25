@@ -175,7 +175,7 @@ export default class Sandbox {
       this.addViewControls()
       this.properties = await this.viewer.getObjectProperties()
     })
-    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent) => {
+    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent | null) => {
       if (selectionEvent && selectionEvent.hits) {
         const firstHitNode = selectionEvent.hits[0].node
         if (firstHitNode) {
@@ -491,6 +491,19 @@ export default class Sandbox {
         await waitForAnimation(1000)
       }
     })
+
+    this.tabs.pages[0]
+      .addInput({ dampening: 30 }, 'dampening', {
+        label: 'Dampening',
+        min: 0,
+        max: 300,
+        step: 10
+      })
+      .on('change', (value) => {
+        this.viewer.getExtension(CameraController).options = {
+          damperDecay: value.value
+        }
+      })
 
     const canonicalViewsFolder = this.tabs.pages[0].addFolder({
       title: 'Canonical Views',

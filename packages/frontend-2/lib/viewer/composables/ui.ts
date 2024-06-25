@@ -1,6 +1,6 @@
 import { SpeckleViewer, timeoutAt } from '@speckle/shared'
 import type { TreeNode, MeasurementOptions, PropertyInfo } from '@speckle/viewer'
-import { CameraController, MeasurementsExtension } from '@speckle/viewer'
+import { MeasurementsExtension } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState } from '~/lib/viewer/composables/setup/embed'
@@ -63,16 +63,6 @@ export function useCameraUtilities() {
     instance.setView(...args)
   }
 
-  let cameraController: CameraController | null = null
-  const truck = (
-    ...args: Parameters<NonNullable<typeof cameraController>['controls']['truck']>
-  ) => {
-    if (!cameraController) {
-      cameraController = instance.getExtension(CameraController)
-    }
-    cameraController?.controls.truck(...args)
-  }
-
   const zoomExtentsOrSelection = () => {
     const ids = selectedObjects.value.map((o) => o.id).filter(isNonNullable)
 
@@ -102,7 +92,6 @@ export function useCameraUtilities() {
     zoomExtentsOrSelection,
     toggleProjection,
     camera,
-    truck,
     setView,
     zoom,
     forceViewToViewerSync
