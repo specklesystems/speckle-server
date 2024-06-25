@@ -1,5 +1,9 @@
 import { Scopes } from '@/modules/core/helpers/mainConstants'
-import { speckleAutomateUrl, getServerOrigin } from '@/modules/shared/helpers/envHelper'
+import {
+  speckleAutomateUrl,
+  getServerOrigin,
+  getFeatureFlags
+} from '@/modules/shared/helpers/envHelper'
 
 export enum DefaultAppIds {
   Web = 'spklwebapp',
@@ -123,7 +127,9 @@ const SpeckleAutomate = {
     Scopes.Tokens.Write,
     Scopes.Streams.Read,
     Scopes.Streams.Write,
-    Scopes.Automate.ReportResults
+    ...(getFeatureFlags().FF_AUTOMATE_MODULE_ENABLED
+      ? [Scopes.Automate.ReportResults]
+      : [])
   ]
 }
 

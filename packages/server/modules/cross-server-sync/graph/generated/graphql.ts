@@ -373,62 +373,6 @@ export type AutomationCollection = {
   totalCount: Scalars['Int']['output'];
 };
 
-export type AutomationCreateInput = {
-  automationId: Scalars['String']['input'];
-  automationName: Scalars['String']['input'];
-  automationRevisionId: Scalars['String']['input'];
-  modelId: Scalars['String']['input'];
-  projectId: Scalars['String']['input'];
-  webhookId?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type AutomationFunctionRun = {
-  __typename?: 'AutomationFunctionRun';
-  contextView?: Maybe<Scalars['String']['output']>;
-  elapsed: Scalars['Float']['output'];
-  functionId: Scalars['String']['output'];
-  functionLogo?: Maybe<Scalars['String']['output']>;
-  functionName: Scalars['String']['output'];
-  id: Scalars['ID']['output'];
-  resultVersions: Array<Version>;
-  /**
-   * NOTE: this is the schema for the results field below!
-   * Current schema: {
-   *   version: "1.0.0",
-   *   values: {
-   *     objectResults: Record<str, {
-   *       category: string
-   *       level: ObjectResultLevel
-   *       objectIds: string[]
-   *       message: str | null
-   *       metadata: Records<str, unknown> | null
-   *       visualoverrides: Records<str, unknown> | null
-   *     }[]>
-   *     blobIds?: string[]
-   *   }
-   * }
-   */
-  results?: Maybe<Scalars['JSONObject']['output']>;
-  status: AutomationRunStatus;
-  statusMessage?: Maybe<Scalars['String']['output']>;
-};
-
-export type AutomationMutations = {
-  __typename?: 'AutomationMutations';
-  create: Scalars['Boolean']['output'];
-  functionRunStatusReport: Scalars['Boolean']['output'];
-};
-
-
-export type AutomationMutationsCreateArgs = {
-  input: AutomationCreateInput;
-};
-
-
-export type AutomationMutationsFunctionRunStatusReportArgs = {
-  input: AutomationRunStatusUpdateInput;
-};
-
 export type AutomationRevision = {
   __typename?: 'AutomationRevision';
   functions: Array<AutomationRevisionFunction>;
@@ -452,43 +396,7 @@ export type AutomationRevisionFunction = {
 
 export type AutomationRevisionTriggerDefinition = VersionCreatedTriggerDefinition;
 
-export type AutomationRun = {
-  __typename?: 'AutomationRun';
-  automationId: Scalars['String']['output'];
-  automationName: Scalars['String']['output'];
-  createdAt: Scalars['DateTime']['output'];
-  functionRuns: Array<AutomationFunctionRun>;
-  id: Scalars['ID']['output'];
-  /** Resolved from all function run statuses */
-  status: AutomationRunStatus;
-  updatedAt: Scalars['DateTime']['output'];
-  versionId: Scalars['String']['output'];
-};
-
-export enum AutomationRunStatus {
-  Failed = 'FAILED',
-  Initializing = 'INITIALIZING',
-  Running = 'RUNNING',
-  Succeeded = 'SUCCEEDED'
-}
-
-export type AutomationRunStatusUpdateInput = {
-  automationId: Scalars['String']['input'];
-  automationRevisionId: Scalars['String']['input'];
-  automationRunId: Scalars['String']['input'];
-  functionRuns: Array<FunctionRunStatusInput>;
-  versionId: Scalars['String']['input'];
-};
-
 export type AutomationRunTrigger = VersionCreatedTrigger;
-
-export type AutomationsStatus = {
-  __typename?: 'AutomationsStatus';
-  automationRuns: Array<AutomationRun>;
-  id: Scalars['ID']['output'];
-  status: AutomationRunStatus;
-  statusMessage?: Maybe<Scalars['String']['output']>;
-};
 
 export type AvatarUser = {
   __typename?: 'AvatarUser';
@@ -939,27 +847,6 @@ export type FileUpload = {
   userId: Scalars['String']['output'];
 };
 
-export type FunctionRunStatusInput = {
-  contextView?: InputMaybe<Scalars['String']['input']>;
-  elapsed: Scalars['Float']['input'];
-  functionId: Scalars['String']['input'];
-  functionLogo?: InputMaybe<Scalars['String']['input']>;
-  functionName: Scalars['String']['input'];
-  resultVersionIds: Array<Scalars['String']['input']>;
-  /**
-   * Current schema: {
-   *   version: "1.0.0",
-   *   values: {
-   *     speckleObjects: Record<ObjectId, {level: string; statusMessage: string}[]>
-   *     blobIds?: string[]
-   *   }
-   * }
-   */
-  results?: InputMaybe<Scalars['JSONObject']['input']>;
-  status: AutomationRunStatus;
-  statusMessage?: InputMaybe<Scalars['String']['input']>;
-};
-
 export type GendoAiRender = {
   __typename?: 'GendoAIRender';
   camera?: Maybe<Scalars['JSONObject']['output']>;
@@ -1085,7 +972,6 @@ export type LimitedUserTimelineArgs = {
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
-  automationStatus?: Maybe<AutomationsStatus>;
   automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** Return a model tree of children */
   childrenTree: Array<ModelsTreeItem>;
@@ -1218,7 +1104,6 @@ export type Mutation = {
   appUpdate: Scalars['Boolean']['output'];
   automateFunctionRunStatusReport: Scalars['Boolean']['output'];
   automateMutations: AutomateMutations;
-  automationMutations: AutomationMutations;
   branchCreate: Scalars['String']['output'];
   branchDelete: Scalars['Boolean']['output'];
   branchUpdate: Scalars['Boolean']['output'];
@@ -1902,14 +1787,6 @@ export type ProjectAutomationUpdateInput = {
   enabled?: InputMaybe<Scalars['Boolean']['input']>;
   id: Scalars['ID']['input'];
   name?: InputMaybe<Scalars['String']['input']>;
-};
-
-export type ProjectAutomationsStatusUpdatedMessage = {
-  __typename?: 'ProjectAutomationsStatusUpdatedMessage';
-  model: Model;
-  project: Project;
-  status: AutomationsStatus;
-  version: Version;
 };
 
 export type ProjectAutomationsUpdatedMessage = {
@@ -2878,7 +2755,6 @@ export type Subscription = {
   commitDeleted?: Maybe<Scalars['JSONObject']['output']>;
   /** Subscribe to commit updated event. */
   commitUpdated?: Maybe<Scalars['JSONObject']['output']>;
-  projectAutomationsStatusUpdated: ProjectAutomationsStatusUpdatedMessage;
   /** Subscribe to updates to automations in the project */
   projectAutomationsUpdated: ProjectAutomationsUpdatedMessage;
   /**
@@ -2971,11 +2847,6 @@ export type SubscriptionCommitDeletedArgs = {
 export type SubscriptionCommitUpdatedArgs = {
   commitId?: InputMaybe<Scalars['String']['input']>;
   streamId: Scalars['String']['input'];
-};
-
-
-export type SubscriptionProjectAutomationsStatusUpdatedArgs = {
-  projectId: Scalars['String']['input'];
 };
 
 
@@ -3320,7 +3191,6 @@ export type UserUpdateInput = {
 export type Version = {
   __typename?: 'Version';
   authorUser?: Maybe<LimitedUser>;
-  automationStatus?: Maybe<AutomationsStatus>;
   automationsStatus?: Maybe<TriggeredAutomationsStatus>;
   /** All comment threads in this version */
   commentThreads: CommentCollection;

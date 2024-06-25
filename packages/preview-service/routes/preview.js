@@ -62,11 +62,11 @@ async function getScreenshot(objectUrl, boundLogger = logger) {
     headless: shouldBeHeadless,
     userDataDir: '/tmp/puppeteer',
     executablePath: '/usr/bin/google-chrome-stable',
-    args: ['--disable-dev-shm-usage']
+    // we trust the web content that is running, so can disable the sandbox
+    // disabling the sandbox allows us to run the docker image without linux kernel privileges
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
   }
-  // if ( process.env.PUPPETEER_SKIP_CHROMIUM_DOWNLOAD === 'true' ) {
-  //   launchParams.executablePath = 'chromium'
-  // }
+
   const browser = await puppeteer.launch(launchParams)
   const page = await browser.newPage()
 

@@ -11,16 +11,13 @@ import {
 } from '@/modules/shared/errors'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
 import {
+  AvailableRoles,
   MaybeNullOrUndefined,
   Nullable,
-  AvailableRoles,
-  StreamRoles,
-  ServerRoles
+  ServerRoles,
+  StreamRoles
 } from '@speckle/shared'
-import {
-  TokenResourceIdentifier,
-  TokenResourceIdentifierType
-} from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { getAutomationProject } from '@/modules/automate/repositories/automations'
 import { UserRoleData } from '@/modules/shared/domain/rolesAndScopes/types'
@@ -176,7 +173,7 @@ export const validateResourceAccess: AuthPipelineFunction = async ({
 
   const hasAccess = isResourceAllowed({
     resourceId: streamId,
-    resourceType: TokenResourceIdentifierType.Project,
+    resourceType: 'project',
     resourceAccessRules
   })
 

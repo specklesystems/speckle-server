@@ -1,3 +1,4 @@
+import db from '@/db/knex'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import {
@@ -26,13 +27,27 @@ import {
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
-import { cancelStreamInvite } from '@/modules/serverinvites/services/inviteProcessingService'
+import {
+  deleteInvitesByTargetFactory,
+  deleteStreamInviteFactory,
+  findResourceFactory,
+  findStreamInviteFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory,
+  queryAllStreamInvitesFactory,
+  queryAllUserStreamInvitesFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/inviteCreationService'
+import {
+  cancelStreamInvite,
+  finalizeStreamInvite
+} from '@/modules/serverinvites/services/inviteProcessingService'
 import {
   getPendingStreamCollaborators,
   getUserPendingStreamInvites
 } from '@/modules/serverinvites/services/inviteRetrievalService'
 import {
-  createStreamInviteAndNotify,
+  createStreamInviteAndNotifyFactory,
   useStreamInviteAndNotify
 } from '@/modules/serverinvites/services/management'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
@@ -129,7 +144,14 @@ export = {
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
-      await createStreamInviteAndNotify(
+      const createAndSendInvite = createAndSendInviteFactory({
+        findResource: findResourceFactory(),
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db })
+      })
+      await createStreamInviteAndNotifyFactory({
+        createAndSendInvite
+      })(
         {
           ...args.input,
           projectId: args.projectId
@@ -158,7 +180,15 @@ export = {
       for (const batch of inputBatches) {
         await Promise.all(
           batch.map((i) =>
-            createStreamInviteAndNotify(
+            createStreamInviteAndNotifyFactory({
+              createAndSendInvite: createAndSendInviteFactory({
+                findResource: findResourceFactory(),
+                findUserByTarget: findUserByTargetFactory(),
+                insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({
+                  db
+                })
+              })
+            })(
               { ...i, projectId: args.projectId },
               ctx.userId!,
               ctx.resourceAccessRules
@@ -169,7 +199,12 @@ export = {
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async use(_parent, args, ctx) {
-      await useStreamInviteAndNotify(args.input, ctx.userId!, ctx.resourceAccessRules)
+      await useStreamInviteAndNotify({
+        finalizeStreamInvite: finalizeStreamInvite({
+          findStreamInvite: findStreamInviteFactory({ db }),
+          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db })
+        })
+      })(args.input, ctx.userId!, ctx.resourceAccessRules)
       return true
     },
     async cancel(_parent, args, ctx) {
@@ -179,7 +214,10 @@ export = {
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
-      await cancelStreamInvite(args.projectId, args.inviteId)
+      await cancelStreamInvite({
+        findStreamInvite: findStreamInviteFactory({ db }),
+        deleteStreamInvite: deleteStreamInviteFactory({ db })
+      })(args.projectId, args.inviteId)
       return ctx.loaders.streams.getStream.load(args.projectId)
     }
   },
@@ -216,7 +254,11 @@ export = {
     },
     async projectInvites(_parent, _args, context) {
       const { userId } = context
-      return await getUserPendingStreamInvites(userId!)
+      return await getUserPendingStreamInvites({
+        queryAllUserStreamInvites: queryAllUserStreamInvitesFactory({
+          db
+        })
+      })(userId!)
     }
   },
   Project: {
@@ -238,7 +280,9 @@ export = {
       return ctx.loaders.streams.getSourceApps.load(parent.id) || []
     },
     async invitedTeam(parent) {
-      return await getPendingStreamCollaborators(parent.id)
+      return getPendingStreamCollaborators({
+        queryAllStreamInvites: queryAllStreamInvitesFactory({ db })
+      })(parent.id)
     },
     async visibility(parent) {
       const { isPublic, isDiscoverable } = parent

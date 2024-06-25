@@ -4,7 +4,7 @@ import { CameraController, MeasurementsExtension } from '@speckle/viewer'
 import { until } from '@vueuse/shared'
 import { difference, isString, uniq } from 'lodash-es'
 import { useEmbedState } from '~/lib/viewer/composables/setup/embed'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 import { isNonNullable } from '~~/lib/common/helpers/utils'
 import {
   useInjectedViewer,

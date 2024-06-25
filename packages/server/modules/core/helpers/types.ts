@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
+import { TokenResourceIdentifierType } from '@/modules/core/domain/tokens/types'
 import { BaseMetaRecord } from '@/modules/core/helpers/meta'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerRoles } from '@speckle/shared'

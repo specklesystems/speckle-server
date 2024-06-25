@@ -95,10 +95,13 @@
       <!-- If we have array collections -->
       <div v-if="isMultipleCollection">
         <!-- mul col items -->
-        <div v-for="collection in arrayCollections" :key="collection?.raw?.name">
+        <div
+          v-for="(item, idx) in arrayCollections"
+          :key="item?.rawNode.raw?.name || idx"
+        >
           <TreeItem
-            :item-id="(collection.raw?.id as string)"
-            :tree-item="collection"
+            :item-id="(item.rawNode.raw?.id as string)"
+            :tree-item="item"
             :depth="depth + 1"
             :expand-level="props.expandLevel"
             :manual-expand-level="manualExpandLevel"
@@ -111,9 +114,12 @@
       <!-- If we have a single model collection -->
       <div v-if="isSingleCollection">
         <!-- single col items -->
-        <div v-for="item in singleCollectionItemsPaginated" :key="item.raw?.id">
+        <div
+          v-for="(item, idx) in singleCollectionItemsPaginated"
+          :key="item.rawNode.raw?.id || idx"
+        >
           <TreeItem
-            :item-id="(item.raw?.id as string)"
+            :item-id="(item.rawNode.raw?.id as string)"
             :tree-item="item"
             :depth="depth + 1"
             :expand-level="props.expandLevel"
@@ -143,8 +149,9 @@ import { FunnelIcon as FunnelIconOutline } from '@heroicons/vue/24/outline'
 import type {
   ExplorerNode,
   SpeckleObject,
-  SpeckleReference
-} from '~~/lib/common/helpers/sceneExplorer'
+  SpeckleReference,
+  TreeItemComponentModel
+} from '~~/lib/viewer/helpers/sceneExplorer'
 import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 import {
   getHeaderAndSubheaderForSpeckleObject,
@@ -159,8 +166,8 @@ import {
 
 const props = withDefaults(
   defineProps<{
-    treeItem: ExplorerNode
-    parent?: ExplorerNode
+    treeItem: TreeItemComponentModel
+    parent?: TreeItemComponentModel
     depth?: number
     debug?: boolean
     expandLevel: number
@@ -186,9 +193,9 @@ const { hideObjects, showObjects, isolateObjects, unIsolateObjects } =
   useFilterUtilities()
 const { highlightObjects, unhighlightObjects } = useHighlightedObjectsUtilities()
 
-const isAtomic = computed(() => props.treeItem.atomic === true)
-const speckleData = props.treeItem?.raw as SpeckleObject
-const rawSpeckleData = props.treeItem?.raw as SpeckleObject
+const isAtomic = computed(() => props.treeItem.rawNode.atomic === true)
+const rawSpeckleData = computed(() => props.treeItem?.rawNode.raw as SpeckleObject)
+const speckleData = rawSpeckleData
 
 function getNestedModelHeader(name: string): string {
   const parts = name.split('/')
@@ -196,7 +203,9 @@ function getNestedModelHeader(name: string): string {
 }
 
 const headerAndSubheader = computed(() => {
-  const { header, subheader } = getHeaderAndSubheaderForSpeckleObject(rawSpeckleData)
+  const { header, subheader } = getHeaderAndSubheaderForSpeckleObject(
+    rawSpeckleData.value
+  )
   return {
     header: getNestedModelHeader(header),
     subheader
@@ -204,32 +213,45 @@ const headerAndSubheader = computed(() => {
 })
 
 const childrenLength = computed(() => {
-  if (rawSpeckleData.elements && Array.isArray(rawSpeckleData.elements))
-    return rawSpeckleData.elements.length
-  if (rawSpeckleData.children && Array.isArray(rawSpeckleData.children))
-    return rawSpeckleData.children.length
+  if (rawSpeckleData.value.elements && Array.isArray(rawSpeckleData.value.elements))
+    return rawSpeckleData.value.elements.length
+  if (rawSpeckleData.value.children && Array.isArray(rawSpeckleData.value.children))
+    return rawSpeckleData.value.children.length
   return 0
 })
 
 const isSingleCollection = computed(() => {
   return (
-    isNonEmptyObjectArray(speckleData.children) ||
-    isNonEmptyObjectArray(speckleData.elements)
+    isNonEmptyObjectArray(speckleData.value.children) ||
+    isNonEmptyObjectArray(speckleData.value.elements)
   )
 })
 
 const singleCollectionItems = computed(() => {
-  const treeItems = props.treeItem.children.filter((child) => !!child.raw?.id) // filter out random tree children (no id means they're not actual objects)
+  const treeItems = props.treeItem.rawNode.children.filter(
+    (child) => !!child.raw?.id && isAllowedType(child)
+    // filter out random tree children (no id means they're not actual objects)
+  )
   // Handle the case of a wall, roof or other atomic objects that have nested children
-  if (isNonEmptyObjectArray(speckleData.elements) && isAtomic.value) {
+  if (isNonEmptyObjectArray(speckleData.value.elements) && isAtomic.value) {
     // We need to filter out children that are not direct descendants of `elements`
     // Note: this is a current assumption convention.
-    const ids = (speckleData.elements as SpeckleReference[]).map(
+    const ids = (speckleData.value.elements as SpeckleReference[]).map(
       (obj) => obj.referencedId
     )
-    return treeItems.filter((item) => ids.includes(item.raw?.id as string))
+    return treeItems
+      .filter((item) => ids.includes(item.raw?.id as string))
+      .map(
+        (i): TreeItemComponentModel => ({
+          rawNode: i
+        })
+      )
   }
-  return treeItems
+  return treeItems.map(
+    (i): TreeItemComponentModel => ({
+      rawNode: i
+    })
+  )
 })
 
 const itemCount = ref(10)
@@ -242,17 +264,17 @@ const singleCollectionItemsPaginated = computed(() => {
 // object { @boat: [obj, obj, obj], @harbour: [obj, obj, obj], etc. }
 // @boat and @harbour would ideally be model collections, but, alas, connectors don't have that yet.
 const arrayCollections = computed(() => {
-  const arr = [] as ExplorerNode[]
+  const arr = [] as TreeItemComponentModel[]
   for (const k of Object.keys(rawSpeckleData)) {
     if (k === 'children' || k === 'elements' || k.includes('displayValue')) continue
 
-    const val = rawSpeckleData[k] as SpeckleReference[]
+    const val = rawSpeckleData.value[k] as SpeckleReference[]
     if (!isNonEmptyObjectArray(val)) continue
 
     const ids = val.map((ref) => ref.referencedId) // NOTE: we're assuming all collections have refs inside; might revisit/to think re edge cases
 
-    const actualRawRefs = props.treeItem.children.filter((node) =>
-      ids.includes(node.raw?.id as string)
+    const actualRawRefs = props.treeItem.rawNode.children.filter(
+      (node) => ids.includes(node.raw?.id as string) && isAllowedType(node)
     )
 
     if (actualRawRefs.length === 0) continue // bypasses chunks: if the actual object is not part of the tree item's children, it means it's a sublimated type (ie, a chunk). the assumption we're making is that any list of actual atomic objects is not chunked.
@@ -267,7 +289,9 @@ const arrayCollections = computed(() => {
       children: actualRawRefs,
       expanded: false
     }
-    arr.push(modelCollectionItem)
+    arr.push({
+      rawNode: modelCollectionItem
+    })
   }
 
   return arr
@@ -282,6 +306,9 @@ const isNonEmptyObjectArray = (x: unknown) => isNonEmptyArray(x) && isObject(x[0
 
 const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
+
+const isAllowedType = (node: ExplorerNode) =>
+  !['Objects.Other.DisplayStyle'].includes(node.raw?.speckle_type || '')
 
 const unfold = ref(false)
 
@@ -320,7 +347,7 @@ const manualUnfoldToggle = () => {
 }
 
 const isSelected = computed(() => {
-  return !!objects.value.find((o) => o.id === speckleData.id)
+  return !!objects.value.find((o) => o.id === speckleData.value.id)
 })
 
 const setSelection = (e: MouseEvent) => {
@@ -329,19 +356,19 @@ const setSelection = (e: MouseEvent) => {
     return
   }
   if (isSelected.value && e.shiftKey) {
-    removeFromSelection(rawSpeckleData)
+    removeFromSelection(rawSpeckleData.value)
     return
   }
   if (!e.shiftKey) clearSelection()
-  addToSelection(rawSpeckleData)
+  addToSelection(rawSpeckleData.value)
 }
 
 const highlightObject = () => {
-  highlightObjects(getTargetObjectIds(rawSpeckleData))
+  highlightObjects(getTargetObjectIds(rawSpeckleData.value))
 }
 
 const unhighlightObject = () => {
-  unhighlightObjects(getTargetObjectIds(rawSpeckleData))
+  unhighlightObjects(getTargetObjectIds(rawSpeckleData.value))
 }
 
 const hiddenObjects = computed(() => filteringState.value?.hiddenObjects)
@@ -349,7 +376,7 @@ const isolatedObjects = computed(() => filteringState.value?.isolatedObjects)
 
 const isHidden = computed(() => {
   if (!hiddenObjects.value) return false
-  const ids = getTargetObjectIds(rawSpeckleData)
+  const ids = getTargetObjectIds(rawSpeckleData.value)
   return containsAll(ids, hiddenObjects.value)
 })
 
@@ -360,12 +387,12 @@ const stateHasIsolatedObjectsInGeneral = computed(() => {
 
 const isIsolated = computed(() => {
   if (!isolatedObjects.value) return false
-  const ids = getTargetObjectIds(rawSpeckleData)
+  const ids = getTargetObjectIds(rawSpeckleData.value)
   return containsAll(ids, isolatedObjects.value)
 })
 
 const hideOrShowObject = () => {
-  const ids = getTargetObjectIds(rawSpeckleData)
+  const ids = getTargetObjectIds(rawSpeckleData.value)
   if (!isHidden.value) {
     hideObjects(ids)
     return
@@ -375,7 +402,7 @@ const hideOrShowObject = () => {
 }
 
 const isolateOrUnisolateObject = () => {
-  const ids = getTargetObjectIds(rawSpeckleData)
+  const ids = getTargetObjectIds(rawSpeckleData.value)
   if (!isIsolated.value) {
     isolateObjects(ids)
     return
