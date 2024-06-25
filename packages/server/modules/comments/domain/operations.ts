@@ -32,6 +32,23 @@ type GetBatchedStreamCommentsOptions = BatchedSelectOptions & {
 
 export type GetBatchedStreamComments = (params: GetBatchedStreamCommentsParams) => AsyncGenerator<CommentRecord[], void, never>
 
+type GetBranchCommentCountsParams = {
+  branchIds: string[]
+  options: GetBranchCommentCountsOptions
+}
+
+type GetBranchCommentCountsOptions = {
+  includeArchived?: boolean
+  threadsOnly?: boolean
+}
+
+type GetBranchCommentCountsReturnValue = {
+  id: string
+  count: number
+}[]
+
+export type GetBranchCommentCounts = (params: GetBranchCommentCountsParams) => Promise<GetBranchCommentCountsReturnValue>
+
 type GetCommentParams = {
   id: string
   userId?: string
@@ -67,6 +84,47 @@ type GetCommentsReturnValue = {
 
 export type GetComments = (params: GetCommentsParams) => Promise<GetCommentsReturnValue>
 
+type GetCommentLinksParams = {
+  commentIds: string[]
+  options?: GetCommentLinksOptions
+}
+
+type GetCommentLinksOptions = {
+  trx?: Knex.Transaction
+}
+
+export type GetCommentLinks = (params: GetCommentLinksParams) => Promise<CommentLinkRecord[]>
+
+type GetCommentReplyAuthorIdsParams = {
+  threadIds: string[]
+  options?: GetCommentReplyAuthorIdsOptions
+}
+
+type GetCommentReplyAuthorIdsOptions = {
+  includeArchived?: boolean
+}
+
+/** Author user ids keyed by thread id */
+type GetCommentReplyAuthorIdsReturnValue = Record<string, string[]>
+
+export type GetCommentReplyAuthorIds = (params: GetCommentReplyAuthorIdsParams) => Promise<GetCommentReplyAuthorIdsReturnValue>
+
+type GetCommentReplyCountsParams = {
+  threadIds: string[]
+  options?: GetCommentReplyCountsOptions
+}
+
+type GetCommentReplyCountsOptions = {
+  includeArchived?: boolean
+}
+
+type GetCommentReplyCountsReturnValue = {
+  threadId: string
+  count: number
+}[]
+
+export type GetCommentReplyCounts = (params: GetCommentReplyCountsParams) => Promise<GetCommentReplyCountsReturnValue>
+
 type GetCommentsResourcesParams = {
   commentIds: string[]
 }
@@ -86,6 +144,106 @@ type GetCommentsViewedAtParams = {
 
 export type GetCommentsViewedAt = (params: GetCommentsViewedAtParams) => Promise<CommentViewRecord[]>
 
+type GetCommitCommentCountsParams = {
+  commitIds: string[]
+  options: GetCommitCommentCountsOptions
+}
+
+type GetCommitCommentCountsOptions = {
+  threadsOnly?: boolean
+  includeArchived?: boolean
+}
+
+type GetCommitCommentCountsReturnValue = {
+  commitId: string
+  count: number
+}[]
+
+export type GetCommitCommentCounts = (params: GetCommitCommentCountsParams) => Promise<GetCommitCommentCountsReturnValue>
+
+type GetStreamCommentCountParams = {
+  streamId: string
+  options?: GetStreamCommentCountOptions
+}
+
+type GetStreamCommentCountOptions = {
+  includeArchived?: boolean
+  threadsOnly?: boolean
+}
+
+export type GetStreamCommentCount = (params: GetStreamCommentCountParams) => Promise<number>
+
+type GetStreamCommentCountsParams = {
+  streamIds: string[]
+  options?: GetStreamCommentCountsOptions
+}
+
+type GetStreamCommentCountsOptions = {
+  includeArchived?: boolean
+  threadsOnly?: boolean
+}
+
+type GetStreamCommentCountsReturnValue = {
+  streamId: string
+  count: number
+}[]
+
+export type GetStreamCommentCounts = (params: GetStreamCommentCountsParams) => Promise<GetStreamCommentCountsReturnValue>
+
+type GetPaginatedCommitCommentsParams = {
+  commitId: string
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+}
+
+// type GetPaginatedProjectCommentsOptions = Partial<{
+//   preloadedModelLatestVersions: PreloadedModelVersionRecord
+// }>
+
+type GetPaginatedCommitCommentsReturnValue = {
+  items: CommentRecord[],
+  /** ISO string of `createdAt` value, if present */
+  cursor: string | null
+}
+
+export type GetPaginatedCommitComments = (params: GetPaginatedCommitCommentsParams) => Promise<GetPaginatedCommitCommentsReturnValue>
+
+type GetPaginatedCommitCommentsTotalCountParams = {
+  commitId: string
+  filter?: MaybeNullOrUndefined<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+}
+
+export type GetPaginatedCommitCommentsTotalCount = (params: GetPaginatedCommitCommentsTotalCountParams) => Promise<number>
+
+type InsertCommentLinksParams = {
+  commentLinks: CommentLinkRecord[]
+  options?: InsertCommentLinksOptions
+}
+
+type InsertCommentLinksOptions = {
+  trx?: Knex.Transaction
+}
+
+export type InsertCommentLinks = (params: InsertCommentLinksParams) => Promise<number[]>
+
+type InsertCommentsParams = {
+  comments: CommentRecord[]
+  options?: InsertCommentsOptions
+}
+
+type InsertCommentsOptions = {
+  trx?: Knex.Transaction
+}
+
+export type InsertComments = (params: InsertCommentsParams) => Promise<number[]>
+
 type LegacyGetCommentParams = {
   id: string
 }
@@ -93,8 +251,7 @@ type LegacyGetCommentParams = {
 export type LegacyGetComment = (params: LegacyGetCommentParams) => Promise<CommentRecord | undefined>
 
 
-
-export type PaginatedProjectCommentsParams = {
+type PaginatedProjectCommentsParams = {
   projectId: string
   limit: number
   cursor?: MaybeNullOrUndefined<string>
@@ -111,9 +268,6 @@ export type PaginatedProjectCommentsParams = {
   }>>
 }
 
-export type PaginatedProjectCommentsOptions = Partial<{
-  preloadedModelLatestVersions: PreloadedModelVersionRecord
-}>
 
 export type PaginatedBranchCommentsParams = {
   branchId: string
@@ -125,14 +279,14 @@ export type PaginatedBranchCommentsParams = {
   }>
 }
 
-export type PaginatedCommitCommentsParams = {
-  commitId: string
-  limit: number
-  cursor?: MaybeNullOrUndefined<string>
-  filter?: MaybeNullOrUndefined<{
-    threadsOnly: boolean
-    includeArchived: boolean
-  }>
-}
+// export type PaginatedCommitCommentsParams = {
+//   commitId: string
+//   limit: number
+//   cursor?: MaybeNullOrUndefined<string>
+//   filter?: MaybeNullOrUndefined<{
+//     threadsOnly: boolean
+//     includeArchived: boolean
+//   }>
+// }
 
 export type PreloadedModelVersionRecord = Awaited<ReturnType<typeof getBranchLatestCommits>>
