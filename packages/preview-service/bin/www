@@ -5,8 +5,8 @@
  */
 
 const http = require('http')
-const app = require('../dist/server/app')
-const metricsApp = require('../dist/observability/metricsApp')
+const { app } = require('../dist/server/app')
+const { app: metricsApp } = require('../dist/observability/metricsApp')
 const { startPreviewService } = require('../dist/server/background')
 const { serverLogger } = require('../dist/observability/logging')
 const { getAppPort, getHost, getMetricsPort } = require('../dist/utils/env')

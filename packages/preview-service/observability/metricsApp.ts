@@ -3,8 +3,7 @@ import createError from 'http-errors'
 import { LoggingExpressMiddleware } from './expressLogging'
 import metricsRouter from './metricsRoute'
 
-const app = express()
-export default app
+export const app = express()
 
 app.use(LoggingExpressMiddleware)
 app.use(express.json({ limit: '100mb' }))
