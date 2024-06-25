@@ -10,12 +10,12 @@ const {
   resendInvite,
   batchCreateServerInvites,
   batchCreateStreamInvites,
-  deleteInvite,
   getStreamInvite,
   useUpStreamInvite,
   cancelStreamInvite,
   getStreamPendingCollaborators,
-  getStreamInvites
+  getStreamInvites,
+  deleteInvite
 } = require('@/test/graphql/serverInvites')
 const { truncateTables } = require('@/test/hooks')
 const { expect } = require('chai')
@@ -23,30 +23,35 @@ const {
   createStream,
   grantPermissionsStream
 } = require('@/modules/core/services/streams')
-const {
-  getInviteByToken,
-  getInvite: getInviteFromDB
-} = require('@/modules/serverinvites/repositories')
 const { getUserStreamRole } = require('@/test/speckle-helpers/streamHelper')
-const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
+const { createInviteDirectlyFactory } = require('@/test/speckle-helpers/inviteHelper')
 const { buildAuthenticatedApolloServer } = require('@/test/serverHelper')
 const { EmailSendingServiceMock } = require('@/test/mocks/global')
+const db = require('@/db/knex')
+const {
+  findInviteByTokenFactory,
+  findInviteFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
 
 async function cleanup() {
   await truncateTables([ServerInvites.name, Streams.name, Users.name])
 }
+
+const findInviteByToken = findInviteByTokenFactory({ db })
+const findInvite = findInviteFactory({ db })
 
 function getInviteTokenFromEmailParams(emailParams) {
   const { text } = emailParams
   const [, inviteId] = text.match(/\?token=(.*?)(\s|&)/i)
   return inviteId
 }
+const createInviteDirectly = createInviteDirectlyFactory({ db })
 
 async function validateInviteExistanceFromEmail(emailParams) {
   // Validate that invite exists
   const token = getInviteTokenFromEmailParams(emailParams)
   expect(token).to.be.ok
-  const invite = await getInviteByToken(token)
+  const invite = await findInviteByToken(token)
   expect(invite).to.be.ok
 
   return invite
@@ -466,14 +471,16 @@ describe('[Stream & Server Invites]', () => {
 
         // Delete all invites
         for (const invite of deletableInvites) {
-          const result = await deleteInvite(apollo, { inviteId: invite.inviteId })
+          const result = await deleteInvite(apollo, {
+            inviteId: invite.inviteId
+          })
           expect(result.data?.inviteDelete).to.be.ok
           expect(result.errors).to.not.be.ok
         }
 
         // Validate that invites no longer exist
         const invitesInDb = await Promise.all(
-          deletableInvites.map((i) => getInviteFromDB(i.inviteId))
+          deletableInvites.map((i) => findInvite(i.inviteId))
         )
         expect(invitesInDb.every((i) => !i)).to.be.true
       })
@@ -623,7 +630,7 @@ describe('[Stream & Server Invites]', () => {
 
           expect(data?.streamInviteUse).to.be.ok
           expect(errors).to.not.be.ok
-          expect(await getInviteFromDB(inviteId)).to.be.not.ok
+          expect(await findInvite(inviteId)).to.be.not.ok
 
           const userStreamRole = await getUserStreamRole(me.id, streamId)
           expect(userStreamRole).to.eq(accept ? Roles.Stream.Contributor : null)
@@ -710,7 +717,7 @@ describe('[Stream & Server Invites]', () => {
 
         expect(data?.streamInviteCancel).to.be.ok
         expect(errors).to.be.not.ok
-        expect(await getInviteFromDB(inviteId)).to.be.not.ok
+        expect(await findInvite(inviteId)).to.be.not.ok
       })
 
       it('own pending collaborators can be retrieved', async () => {

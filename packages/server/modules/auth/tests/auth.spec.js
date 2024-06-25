@@ -9,10 +9,15 @@ const { getUserByEmail } = require('@/modules/core/services/users')
 const { TIME } = require('@speckle/shared')
 const { RATE_LIMITERS, createConsumer } = require('@/modules/core/services/ratelimiter')
 const { beforeEachContext, initializeTestServer } = require('@/test/hooks')
-const { createInviteDirectly } = require('@/test/speckle-helpers/inviteHelper')
-const { getInvite } = require('@/modules/serverinvites/repositories')
+const { createInviteDirectlyFactory } = require('@/test/speckle-helpers/inviteHelper')
 const { RateLimiterMemory } = require('rate-limiter-flexible')
+const {
+  findInviteFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const db = require('@/db/knex')
 
+const createInviteDirectly = createInviteDirectlyFactory({ db })
+const findInvite = findInviteFactory({ db })
 const expect = chai.expect
 
 let app
@@ -155,7 +160,7 @@ describe('Auth @auth', () => {
         expect(newUser).to.be.ok
 
         // Check that in the case of a stream invite, it remainds valid post registration
-        const inviteRecord = await getInvite(inviteId)
+        const inviteRecord = await findInvite(inviteId)
         if (streamInvite) {
           expect(inviteRecord).to.be.ok
         } else {

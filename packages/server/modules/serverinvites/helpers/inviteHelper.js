@@ -4,8 +4,8 @@ const ResourceTargets = Object.freeze({
 
 /**
  * @typedef {{
- *  resourceTarget?: string,
- *  resourceId?: string
+ *  resourceTarget?: string | null,
+ *  resourceId?: string | null
  * }} InviteResourceData
  */
 
@@ -77,7 +77,7 @@ function buildUserTarget(userId) {
 
 /**
  * Resolve a display name for the user being invited
- * @param {import('@/modules/serverinvites/helpers/types').ServerInviteRecord} invite
+ * @param {import('@/modules/serverinvites/domain/types').ServerInviteRecord} invite
  * @param {import("@/modules/core/helpers/userHelper").LimitedUserRecord | null} user The user,
  * if invite targets a registered user.
  * @returns {string}
