@@ -76,6 +76,8 @@ spec:
 
           - name: LOG_LEVEL
             value: {{ .Values.preview_service.logLevel | quote }}
+          - name: LOG_PRETTY
+            value: {{ .Values.preview_service.logPretty | quote }}
 
           - name: LOG_PRETTY
             value: {{ .Values.preview_service.logPretty | quote }}

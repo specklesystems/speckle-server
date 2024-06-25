@@ -2,11 +2,12 @@
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
     <template #header>Create new project</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
-      <div class="flex flex-col space-y-3 mb-6">
+      <div class="flex flex-col gap-3 mb-6">
         <FormTextInput
           name="name"
           label="Project name"
           placeholder="Project name"
+          color="foundation"
           :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
           show-required
           auto-focus
@@ -16,19 +17,17 @@
           name="description"
           label="Project description"
           placeholder="Description (optional)"
+          color="foundation"
           size="lg"
           :rules="[isStringOfLength({ maxLength: 65536 })]"
         />
       </div>
-      <div
-        class="flex flex-col space-y-4 items-end md:flex-row md:justify-between md:items-center md:space-y-0"
-      >
-        <ProjectVisibilitySelect
-          v-model="visibility"
-          class="sm:max-w-none w-full sm:w-80"
-          mount-menu-on-body
-        />
-      </div>
+      <h3 class="label mb-3">Access permissions</h3>
+      <ProjectVisibilitySelect
+        v-model="visibility"
+        class="sm:max-w-none w-full"
+        mount-menu-on-body
+      />
     </form>
   </LayoutDialog>
 </template>

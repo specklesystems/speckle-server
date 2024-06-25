@@ -78,7 +78,6 @@ import { useViewerTour } from '~/lib/viewer/composables/tour'
 
 const { setMixpanelSegments } = useProcessOnboarding()
 const {
-  truck,
   setView,
   camera: { position, target }
 } = useCameraUtilities()
@@ -120,7 +119,6 @@ const camPos = [
 let flip = 1
 const rotateGently = (factor = 1) => {
   setView({ azimuth: (Math.PI / 12) * flip * factor, polar: 0 }, true)
-  truck(factor * flip, factor * flip, true)
   flip *= -1
 }
 

@@ -28,6 +28,7 @@ import {
   INSTANCE_GRADIENT_BUFFER_STRIDE,
   INSTANCE_TRANSFORM_BUFFER_STRIDE
 } from '../batching/Batch'
+import { SpeckleRaycaster } from './SpeckleRaycaster'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()
@@ -259,7 +260,7 @@ export default class SpeckleInstancedMesh extends Group {
     }
   }
 
-  raycast(raycaster: Raycaster, intersects: Array<Intersection>) {
+  raycast(raycaster: SpeckleRaycaster, intersects: Array<Intersection>) {
     if (this.tas) {
       if (!this.batchMaterial) return
 
@@ -268,7 +269,7 @@ export default class SpeckleInstancedMesh extends Group {
 
       if (raycaster.firstHitOnly === true) {
         const hit = this.convertRaycastIntersect(
-          this.tas.raycastFirst(ray, this.batchMaterial),
+          this.tas.raycastFirst(ray, raycaster.intersectTASOnly, this.batchMaterial),
           this,
           raycaster
         )
@@ -276,7 +277,11 @@ export default class SpeckleInstancedMesh extends Group {
           intersects.push(hit)
         }
       } else {
-        const hits = this.tas.raycast(ray, this.batchMaterial)
+        const hits = this.tas.raycast(
+          ray,
+          raycaster.intersectTASOnly,
+          this.batchMaterial
+        )
         for (let i = 0, l = hits.length; i < l; i++) {
           const hit = this.convertRaycastIntersect(hits[i], this, raycaster)
           if (hit) {

@@ -143,9 +143,9 @@ export async function getStreams(
  * Get a single stream. If userId is specified, the role will be resolved as well.
  */
 export async function getStream(
-  params: { streamId: string; userId?: string },
+  params: { streamId?: string; userId?: string },
   options?: Partial<{ trx: Knex.Transaction }>
-) {
+): Promise<Optional<StreamWithOptionalRole>> {
   const { streamId, userId } = params
   if (!streamId) throw new InvalidArgumentError('Invalid stream ID')
 
