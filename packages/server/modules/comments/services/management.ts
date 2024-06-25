@@ -3,15 +3,7 @@ import { AuthContext } from '@/modules/shared/authz'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/repositories/streams'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
-import {
-  InsertCommentPayload,
-  getComment,
-  markCommentViewed,
-  insertComment,
-  insertCommentLinks,
-  markCommentUpdated,
-  updateComment
-} from '@/modules/comments/repositories/comments'
+import { InsertCommentPayload } from '@/modules/comments/repositories/comments'
 import {
   CreateCommentInput,
   CreateCommentReplyInput,
@@ -40,6 +32,7 @@ import {
   inputToDataStruct
 } from '@/modules/comments/services/data'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { CommentsRepository } from '@/modules/comments/domain'
 
 export async function authorizeProjectCommentsAccess(params: {
   projectId: string
@@ -88,200 +81,235 @@ export async function authorizeCommentAccess(params: {
   })
 }
 
-export async function markViewed(commentId: string, userId: string) {
-  await markCommentViewed(commentId, userId)
-}
+export const markViewed =
+  /** */
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'markCommentViewed'> }) =>
+    /** */
+    async (commentId: string, userId: string) => {
+      await commentsRepository.markCommentViewed(commentId, userId)
+    }
 
-export async function createCommentThreadAndNotify(
-  input: CreateCommentInput,
-  userId: string
-) {
-  const [resources] = await Promise.all([
-    getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
-    validateInputAttachments(input.projectId, input.content.blobIds || [])
-  ])
-  if (!resources.length) {
-    throw new CommentCreateError(
-      "Resource ID string doesn't resolve to any valid resources for the specified project/stream"
-    )
-  }
+export const createCommentThreadAndNotify =
+  /** */
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'insertComment' | 'insertCommentLinks' | 'markCommentViewed'> }) =>
+    /** */
+    async (input: CreateCommentInput, userId: string) => {
+      const { insertComment, insertCommentLinks } = commentsRepository
 
-  const state = SpeckleViewer.ViewerState.isSerializedViewerState(input.viewerState)
-    ? formatSerializedViewerState(input.viewerState)
-    : null
-  const dataStruct = inputToDataStruct(state)
+      const [resources] = await Promise.all([
+        // TODO: Inject core module service
+        getViewerResourceItemsUngrouped({ ...input, loadedVersionsOnly: true }),
+        // TODO: Inject blob storage service
+        validateInputAttachments(input.projectId, input.content.blobIds || [])
+      ])
 
-  const commentPayload: InsertCommentPayload = {
-    streamId: input.projectId,
-    authorId: userId,
-    text: buildCommentTextFromInput({
-      doc: input.content.doc,
-      blobIds: input.content.blobIds || undefined
-    }),
-    screenshot: input.screenshot,
-    data: dataStruct
-  }
+      if (!resources.length) {
+        throw new CommentCreateError(
+          "Resource ID string doesn't resolve to any valid resources for the specified project/stream"
+        )
+      }
 
-  let comment: CommentRecord
-  try {
-    comment = await knex.transaction(async (trx) => {
-      const comment = await insertComment(commentPayload, { trx })
+      const state = SpeckleViewer.ViewerState.isSerializedViewerState(input.viewerState)
+        ? formatSerializedViewerState(input.viewerState)
+        : null
+      const dataStruct = inputToDataStruct(state)
 
-      const links: CommentLinkRecord[] = resources.map((r) => {
-        let resourceId = r.objectId
-        let resourceType: CommentLinkResourceType = 'object'
-        if (r.versionId) {
-          resourceId = r.versionId
-          resourceType = 'commit'
-        }
+      const commentPayload: InsertCommentPayload = {
+        streamId: input.projectId,
+        authorId: userId,
+        text: buildCommentTextFromInput({
+          doc: input.content.doc,
+          blobIds: input.content.blobIds || undefined
+        }),
+        screenshot: input.screenshot,
+        data: dataStruct
+      }
 
-        return {
-          commentId: comment.id,
-          resourceId,
-          resourceType
-        }
-      })
-      await insertCommentLinks(links, { trx })
+      let comment: CommentRecord
+      try {
+        // TODO: Inject knex for creating transaction into service
+        comment = await knex.transaction(async (trx) => {
+          const comment = await insertComment(commentPayload, { trx })
+
+          const links: CommentLinkRecord[] = resources.map((r) => {
+            let resourceId = r.objectId
+            let resourceType: CommentLinkResourceType = 'object'
+            if (r.versionId) {
+              resourceId = r.versionId
+              resourceType = 'commit'
+            }
+
+            return {
+              commentId: comment.id,
+              resourceId,
+              resourceType
+            }
+          })
+          await insertCommentLinks(links, { trx })
+
+          return comment
+        })
+      } catch (e) {
+        throw new CommentCreateError('Comment creation failed', { cause: ensureError(e) })
+      }
+
+      // Mark as viewed and emit events
+      await Promise.all([
+        markViewed({ commentsRepository })(comment.id, userId),
+        CommentsEmitter.emit(CommentsEvents.Created, {
+          comment
+        }),
+        addCommentCreatedActivity({
+          streamId: input.projectId,
+          userId,
+          input: {
+            ...input,
+            resolvedResourceItems: resources
+          },
+          comment
+        })
+      ])
 
       return comment
-    })
-  } catch (e) {
-    throw new CommentCreateError('Comment creation failed', { cause: ensureError(e) })
-  }
+    }
 
-  // Mark as viewed and emit events
-  await Promise.all([
-    markViewed(comment.id, userId),
-    CommentsEmitter.emit(CommentsEvents.Created, {
-      comment
-    }),
-    addCommentCreatedActivity({
-      streamId: input.projectId,
-      userId,
-      input: {
-        ...input,
-        resolvedResourceItems: resources
-      },
-      comment
-    })
-  ])
+export const createCommentReplyAndNotify =
+  /**  */
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getComment' | 'insertComment' | 'insertCommentLinks' | 'markCommentUpdated'> }) =>
+    /**  */
+    async (input: CreateCommentReplyInput, userId: string) => {
+      const {
+        getComment,
+        insertComment,
+        insertCommentLinks,
+        markCommentUpdated
+      } = commentsRepository
 
-  return comment
-}
+      const thread = await getComment({ id: input.threadId, userId })
+      if (!thread) {
+        throw new CommentCreateError('Reply creation failed due to nonexistant thread')
+      }
+      await validateInputAttachments(thread.streamId, input.content.blobIds || [])
 
-export async function createCommentReplyAndNotify(
-  input: CreateCommentReplyInput,
-  userId: string
-) {
-  const thread = await getComment({ id: input.threadId, userId })
-  if (!thread) {
-    throw new CommentCreateError('Reply creation failed due to nonexistant thread')
-  }
-  await validateInputAttachments(thread.streamId, input.content.blobIds || [])
+      const commentPayload: InsertCommentPayload = {
+        streamId: thread.streamId,
+        authorId: userId,
+        text: buildCommentTextFromInput({
+          doc: input.content.doc,
+          blobIds: input.content.blobIds || undefined
+        }),
+        parentComment: thread.id,
+        data: null
+      }
 
-  const commentPayload: InsertCommentPayload = {
-    streamId: thread.streamId,
-    authorId: userId,
-    text: buildCommentTextFromInput({
-      doc: input.content.doc,
-      blobIds: input.content.blobIds || undefined
-    }),
-    parentComment: thread.id,
-    data: null
-  }
+      let reply: CommentRecord
+      try {
+        reply = await knex.transaction(async (trx) => {
+          const reply = await insertComment(commentPayload, { trx })
+          const links: CommentLinkRecord[] = [
+            { resourceType: 'comment', resourceId: thread.id, commentId: reply.id }
+          ]
+          await insertCommentLinks(links, { trx })
 
-  let reply: CommentRecord
-  try {
-    reply = await knex.transaction(async (trx) => {
-      const reply = await insertComment(commentPayload, { trx })
-      const links: CommentLinkRecord[] = [
-        { resourceType: 'comment', resourceId: thread.id, commentId: reply.id }
-      ]
-      await insertCommentLinks(links, { trx })
+          return reply
+        })
+      } catch (e) {
+        throw new CommentCreateError('Reply creation failed', { cause: ensureError(e) })
+      }
+
+      // Mark parent comment updated and emit events
+      await Promise.all([
+        markCommentUpdated(thread.id),
+        CommentsEmitter.emit(CommentsEvents.Created, {
+          comment: reply
+        }),
+        addReplyAddedActivity({
+          streamId: thread.streamId,
+          input,
+          reply,
+          userId
+        })
+      ])
 
       return reply
-    })
-  } catch (e) {
-    throw new CommentCreateError('Reply creation failed', { cause: ensureError(e) })
-  }
+    }
 
-  // Mark parent comment updated and emit events
-  await Promise.all([
-    markCommentUpdated(thread.id),
-    CommentsEmitter.emit(CommentsEvents.Created, {
-      comment: reply
-    }),
-    addReplyAddedActivity({
-      streamId: thread.streamId,
-      input,
-      reply,
-      userId
-    })
-  ])
+export const editCommentAndNotify =
+  /**  */
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getComment' | 'updateComment'> }) =>
+    /**  */
+    async (input: EditCommentInput, userId: string) => {
+      const {
+        getComment,
+        updateComment
+      } = commentsRepository
 
-  return reply
-}
+      const comment = await getComment({ id: input.commentId, userId })
+      if (!comment) {
+        throw new CommentUpdateError('Comment update failed due to nonexistant comment')
+      }
+      if (comment.authorId !== userId) {
+        throw new CommentUpdateError("You cannot edit someone else's comments")
+      }
 
-export async function editCommentAndNotify(input: EditCommentInput, userId: string) {
-  const comment = await getComment({ id: input.commentId, userId })
-  if (!comment) {
-    throw new CommentUpdateError('Comment update failed due to nonexistant comment')
-  }
-  if (comment.authorId !== userId) {
-    throw new CommentUpdateError("You cannot edit someone else's comments")
-  }
+      await validateInputAttachments(comment.streamId, input.content.blobIds || [])
+      const updatedComment = await updateComment(comment.id, {
+        text: buildCommentTextFromInput({
+          doc: input.content.doc,
+          blobIds: input.content.blobIds || undefined
+        })
+      })
 
-  await validateInputAttachments(comment.streamId, input.content.blobIds || [])
-  const updatedComment = await updateComment(comment.id, {
-    text: buildCommentTextFromInput({
-      doc: input.content.doc,
-      blobIds: input.content.blobIds || undefined
-    })
-  })
+      await Promise.all([
+        CommentsEmitter.emit(CommentsEvents.Updated, {
+          previousComment: comment,
+          newComment: updatedComment
+        })
+      ])
 
-  await Promise.all([
-    CommentsEmitter.emit(CommentsEvents.Updated, {
-      previousComment: comment,
-      newComment: updatedComment
-    })
-  ])
+      return updatedComment
+    }
 
-  return updatedComment
-}
+export const archiveCommentAndNotify =
+  /**  */
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getComment' | 'updateComment'> }) =>
+    /** */
+    async (commentId: string, userId: string, archived = true) => {
+      const {
+        getComment,
+        updateComment
+      } = commentsRepository
 
-export async function archiveCommentAndNotify(
-  commentId: string,
-  userId: string,
-  archived = true
-) {
-  const comment = await getComment({ id: commentId, userId })
-  if (!comment) {
-    throw new CommentUpdateError(
-      "Specified comment doesn't exist and thus it's archival status can't be changed"
-    )
-  }
+      const comment = await getComment({ id: commentId, userId })
+      if (!comment) {
+        throw new CommentUpdateError(
+          "Specified comment doesn't exist and thus it's archival status can't be changed"
+        )
+      }
 
-  const stream = await getStream({ streamId: comment.streamId, userId })
-  if (!stream || (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)) {
-    throw new CommentUpdateError('You do not have permissions to archive this comment')
-  }
-  const updatedComment = await updateComment(comment.id, {
-    archived
-  })
+      // TODO: Inject core repository method
+      const stream = await getStream({ streamId: comment.streamId, userId })
+      if (!stream || (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)) {
+        throw new CommentUpdateError('You do not have permissions to archive this comment')
+      }
+      const updatedComment = await updateComment(comment.id, {
+        archived
+      })
 
-  await Promise.all([
-    addCommentArchivedActivity({
-      streamId: stream.id,
-      commentId,
-      userId,
-      input: {
-        archived,
-        streamId: stream.id,
-        commentId
-      },
-      comment: updatedComment
-    })
-  ])
+      await Promise.all([
+        // TODO: Inject activity stream method
+        addCommentArchivedActivity({
+          streamId: stream.id,
+          commentId,
+          userId,
+          input: {
+            archived,
+            streamId: stream.id,
+            commentId
+          },
+          comment: updatedComment
+        })
+      ])
 
-  return updatedComment
-}
+      return updatedComment
+    }

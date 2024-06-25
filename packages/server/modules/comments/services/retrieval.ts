@@ -1,79 +1,81 @@
-import { Optional } from '@speckle/shared'
-import {
-  PaginatedCommitCommentsParams,
-  getPaginatedCommitComments as getPaginatedCommitCommentsDb,
-  getPaginatedCommitCommentsTotalCount,
-  PaginatedBranchCommentsParams,
-  getPaginatedBranchComments as getPaginatedBranchCommentsDb,
-  getPaginatedBranchCommentsTotalCount,
-  getPaginatedProjectComments as getPaginatedProjectCommentsDb,
-  getPaginatedProjectCommentsTotalCount,
-  PaginatedProjectCommentsParams,
-  resolvePaginatedProjectCommentsLatestModelResources
-} from '@/modules/comments/repositories/comments'
-import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
+import type { CommentsRepository, PaginatedBranchCommentsParams, PaginatedCommitCommentsParams, PaginatedProjectCommentsOptions, PaginatedProjectCommentsParams } from '@/modules/comments/domain'
 import { isUndefined } from 'lodash'
 
-export async function getPaginatedCommitComments(
-  params: PaginatedCommitCommentsParams
-) {
-  const [result, totalCount] = await Promise.all([
-    getPaginatedCommitCommentsDb(params),
-    getPaginatedCommitCommentsTotalCount(params)
-  ])
+export const getPaginatedBranchComments =
+  /** Factory function */
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getPaginatedBranchComments' | 'getPaginatedBranchCommentsTotalCount'> }) =>
+    /** Service function */
+    async (params: PaginatedBranchCommentsParams) => {
+      const { getPaginatedBranchComments, getPaginatedBranchCommentsTotalCount } = commentsRepository
 
-  return {
-    ...result,
-    totalCount
-  }
-}
+      const [result, totalCount] = await Promise.all([
+        getPaginatedBranchComments(params),
+        getPaginatedBranchCommentsTotalCount(params)
+      ])
 
-export async function getPaginatedBranchComments(
-  params: PaginatedBranchCommentsParams
-) {
-  const [result, totalCount] = await Promise.all([
-    getPaginatedBranchCommentsDb(params),
-    getPaginatedBranchCommentsTotalCount(params)
-  ])
+      return {
+        ...result,
+        totalCount
+      }
+    }
 
-  return {
-    ...result,
-    totalCount
-  }
-}
+export const getPaginatedCommitComments =
+  /** Factory function */
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getPaginatedCommitComments' | 'getPaginatedCommitCommentsTotalCount'> }) =>
+    /** Service function */
+    async (params: PaginatedCommitCommentsParams) => {
+      const { getPaginatedCommitComments, getPaginatedCommitCommentsTotalCount } = commentsRepository
 
-export async function getPaginatedProjectComments(
-  params: PaginatedProjectCommentsParams
-) {
-  let preloadedModelLatestVersions: Optional<
-    Awaited<ReturnType<typeof getBranchLatestCommits>>
-  > = undefined
-  // optimization to ensure we don't request this stuff twice
-  if (!params.filter?.allModelVersions && params.filter?.resourceIdString) {
-    preloadedModelLatestVersions =
-      await resolvePaginatedProjectCommentsLatestModelResources(
-        params.filter.resourceIdString
-      )
-  }
+      const [result, totalCount] = await Promise.all([
+        getPaginatedCommitComments(params),
+        getPaginatedCommitCommentsTotalCount(params)
+      ])
 
-  const alreadyRequestingArchivedOnly = !!params.filter?.archivedOnly
+      return {
+        ...result,
+        totalCount
+      }
+    }
 
-  const [result, totalCount, totalArchivedCount] = await Promise.all([
-    getPaginatedProjectCommentsDb(params, { preloadedModelLatestVersions }),
-    getPaginatedProjectCommentsTotalCount(params, { preloadedModelLatestVersions }),
-    alreadyRequestingArchivedOnly
-      ? undefined
-      : getPaginatedProjectCommentsTotalCount(
-          { ...params, filter: { ...(params.filter || {}), archivedOnly: true } },
-          { preloadedModelLatestVersions }
-        )
-  ])
+export const getPaginatedProjectComments =
+  /** Factory function */
+  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getPaginatedProjectComments' | 'getPaginatedProjectCommentsTotalCount' | 'resolvePaginatedProjectCommentsLatestModelResources'> }) =>
+    /** Service function */
+    async (params: PaginatedProjectCommentsParams) => {
+      const {
+        getPaginatedProjectComments,
+        getPaginatedProjectCommentsTotalCount,
+        resolvePaginatedProjectCommentsLatestModelResources
+      } = commentsRepository
 
-  return {
-    ...result,
-    totalCount,
-    totalArchivedCount: isUndefined(totalArchivedCount)
-      ? totalCount
-      : totalArchivedCount
-  }
-}
+      let preloadedModelLatestVersions: PaginatedProjectCommentsOptions['preloadedModelLatestVersions'] = undefined
+
+      // optimization to ensure we don't request this stuff twice
+      if (!params.filter?.allModelVersions && params.filter?.resourceIdString) {
+        preloadedModelLatestVersions =
+          await resolvePaginatedProjectCommentsLatestModelResources(
+            params.filter.resourceIdString
+          )
+      }
+
+      const alreadyRequestingArchivedOnly = !!params.filter?.archivedOnly
+
+      const [result, totalCount, totalArchivedCount] = await Promise.all([
+        getPaginatedProjectComments(params, { preloadedModelLatestVersions }),
+        getPaginatedProjectCommentsTotalCount(params, { preloadedModelLatestVersions }),
+        alreadyRequestingArchivedOnly
+          ? undefined
+          : getPaginatedProjectCommentsTotalCount(
+            { ...params, filter: { ...(params.filter || {}), archivedOnly: true } },
+            { preloadedModelLatestVersions }
+          )
+      ])
+
+      return {
+        ...result,
+        totalCount,
+        totalArchivedCount: isUndefined(totalArchivedCount)
+          ? totalCount
+          : totalArchivedCount
+      }
+    }

@@ -27,3 +27,16 @@ export interface CommentViewRecord {
   userId: string
   viewedAt: Date
 }
+
+export type ExtendedComment = CommentRecord & {
+  /**
+   * comment_links resources for the comment
+   */
+  resources: Array<Omit<CommentLinkRecord, 'commentId'>>
+
+  /**
+   * If userId was specified, this will contain the last time the user
+   * viewed this comment
+   */
+  viewedAt?: Date
+}
