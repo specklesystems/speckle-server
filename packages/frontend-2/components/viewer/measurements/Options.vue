@@ -5,9 +5,7 @@
       class="flex items-center gap-2 text-xs sm:text-sm px-3 py-1.5 sm:py-2 border-b border-outline-3 text-foreground-2"
     >
       <InformationCircleIcon class="h-5 w-5 sm:h-6 sm:h-6 shrink-0" />
-      <span class="max-w-[210px]">
-        Reloading the model will delete all measurements.
-      </span>
+      <span class="text-xs">Reloading will delete all measurements</span>
     </div>
     <template #actions>
       <FormButton
@@ -74,12 +72,6 @@
         </div>
       </div>
     </div>
-    <Portal to="pocket-tip">
-      <ViewerTip class="hidden sm:flex">
-        <strong>Tip:</strong>
-        Right click to cancel measurement
-      </ViewerTip>
-    </Portal>
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">
