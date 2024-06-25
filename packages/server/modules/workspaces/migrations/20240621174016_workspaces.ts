@@ -31,4 +31,5 @@ export async function down(knex: Knex): Promise<void> {
   await knex.schema.alterTable('streams', (table) => {
     table.dropColumn('workspaceId')
   })
+  await knex.schema.dropTable('workspace_acl')
 }
