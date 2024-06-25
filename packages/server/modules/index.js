@@ -62,16 +62,7 @@ const getEnabledModuleNames = () => {
     'webhooks'
   ]
 
-  if (FF_AUTOMATE_MODULE_ENABLED) {
-    // Push in after 'auth', important for scope order?
-    const authIdx = moduleNames.indexOf('auth')
-    if (authIdx !== -1) {
-      moduleNames.splice(authIdx + 1, 0, 'automate')
-    } else {
-      moduleNames.push('automate')
-    }
-  }
-
+  if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
   if (FF_GENDOAI_MODULE_ENABLED) moduleNames.push('gendo')
   return moduleNames
 }

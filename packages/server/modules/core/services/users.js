@@ -17,7 +17,6 @@ const Acl = () => ServerAclSchema.knex()
 
 const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
-const { deleteAllUserInvites } = require('@/modules/serverinvites/repositories')
 const { getUserByEmail } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { pick } = require('lodash')
@@ -228,12 +227,16 @@ module.exports = {
     })
   },
 
-  async deleteUser(id) {
-    //TODO: check for the last admin user to survive
-    dbLogger.info('Deleting user ' + id)
-    await _ensureAtleastOneAdminRemains(id)
-    const streams = await knex.raw(
-      `
+  /**
+   * @param {{ deleteAllUserInvites: import('@/modules/serverinvites/domain/operations').DeleteAllUserInvites }} param0
+   */
+  deleteUser({ deleteAllUserInvites }) {
+    return async (id) => {
+      //TODO: check for the last admin user to survive
+      dbLogger.info('Deleting user ' + id)
+      await _ensureAtleastOneAdminRemains(id)
+      const streams = await knex.raw(
+        `
       -- Get the stream ids with only this user as owner
       SELECT "resourceId" as id
       FROM (
@@ -251,16 +254,18 @@ module.exports = {
       ) AS soc
       WHERE cnt = 1
       `,
-      [id]
-    )
-    for (const i in streams.rows) {
-      await deleteStream({ streamId: streams.rows[i].id })
+        [id]
+      )
+      for (const i in streams.rows) {
+        await deleteStream({ streamId: streams.rows[i].id })
+      }
+
+      // Delete all invites (they don't have a FK, so we need to do this manually)
+      // THIS REALLY SHOULD BE A REACTION TO THE USER DELETED EVENT EMITTED HER
+      await deleteAllUserInvites(id)
+
+      return await Users().where({ id }).del()
     }
-
-    // Delete all invites (they don't have a FK, so we need to do this manually)
-    await deleteAllUserInvites(id)
-
-    return await Users().where({ id }).del()
   },
 
   /**
