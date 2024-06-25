@@ -22,6 +22,9 @@ import { FlyControls, FlyControlsOptions } from './controls/FlyControls'
 import { SpeckleControls } from './controls/SpeckleControls'
 import { GeometryType } from '../batching/Batch'
 
+const UP: Vector3 = new Vector3(0, 1, 0)
+const quatBuff = new Quaternion()
+
 export enum NearPlaneCalculation {
   EMPIRIC,
   ACCURATE
@@ -366,7 +369,7 @@ export class CameraController extends Extension implements SpeckleCamera {
 
   public updateCameraPlanes(targetVolume?: Box3, offsetScale: number = 1) {
     if (this._options.nearPlaneCalculation === NearPlaneCalculation.ACCURATE)
-      this.updateNearCameraPlaneAccurate()
+      this.updateNearCameraPlaneAccurate(targetVolume, offsetScale)
     else if (this._options.nearPlaneCalculation === NearPlaneCalculation.EMPIRIC)
       this.updateNearCameraPlaneEmpiric(targetVolume, offsetScale)
     this.updateFarCameraPlane()
@@ -395,13 +398,19 @@ export class CameraController extends Extension implements SpeckleCamera {
     this._renderingCamera.updateProjectionMatrix()
   }
 
-  protected updateNearCameraPlaneAccurate() {
+  protected updateNearCameraPlaneAccurate(
+    targetVolume?: Box3,
+    offsetScale: number = 1
+  ) {
     const renderer = this.viewer.getRenderer()
     if (!renderer.renderingCamera) return
 
     const camera = renderer.renderingCamera as PerspectiveCamera
     const minDist = this.getClosestGeometryDistance(camera)
-    if (minDist === Number.POSITIVE_INFINITY) return
+    if (minDist === Number.POSITIVE_INFINITY) {
+      this.updateNearCameraPlaneEmpiric(targetVolume, offsetScale)
+      return
+    }
 
     const camFov =
       this._renderingCamera === this.perspectiveCamera ? this.fieldOfView : 55
@@ -416,6 +425,7 @@ export class CameraController extends Extension implements SpeckleCamera {
       )
     renderer.renderingCamera.near = nearPlane
     renderer.renderingCamera.updateProjectionMatrix()
+    // console.log(minDist, nearPlane)
   }
 
   protected updateFarCameraPlane() {
@@ -449,31 +459,23 @@ export class CameraController extends Extension implements SpeckleCamera {
   protected getClosestGeometryDistance(camera: PerspectiveCamera): number {
     const cameraPosition = camera.position
     const cameraTarget = this.getTarget()
-    const cameraDir = new Vector3()
-      .subVectors(cameraTarget, camera.position)
-      .normalize()
+    cameraTarget.applyQuaternion(
+      quatBuff.setFromUnitVectors(UP, this._activeControls.up)
+    )
+    const cameraDir = new Vector3().subVectors(cameraTarget, cameraPosition).normalize()
 
     const batches = this.viewer
       .getRenderer()
       .batcher.getBatches(undefined, GeometryType.MESH)
     let minDist = Number.POSITIVE_INFINITY
-    const minPoint = new Vector3()
     for (let b = 0; b < batches.length; b++) {
-      const result = batches[b].mesh.TAS.closestPointToPoint(cameraPosition)
-      if (!result) continue
-
-      const planarity = cameraDir.dot(
-        new Vector3().subVectors(result.point, cameraPosition).normalize()
+      const result = batches[b].mesh.TAS.closestPointToPointHalfplane(
+        cameraPosition,
+        cameraDir
       )
-      if (planarity > 0) {
-        const dist = cameraPosition.distanceTo(result.point)
-        if (dist < minDist) {
-          minDist = dist
-          minPoint.copy(result.point)
-        }
-      }
+      if (!result) continue
+      minDist = Math.min(minDist, result.distance)
     }
-
     return minDist
   }
 
