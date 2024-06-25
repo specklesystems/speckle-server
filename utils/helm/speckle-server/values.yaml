@@ -390,7 +390,7 @@ server:
   logLevel: 'info'
   ## @param server.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
-  logPretty: 'false'
+  logPretty: false
 
   ## @param server.image The Docker image to be used for the Speckle Server component. If blank, defaults to speckle/speckle-server:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
@@ -792,7 +792,7 @@ objects:
   logLevel: 'info'
   ## @param objects.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
-  logPretty: 'false'
+  logPretty: false
   inspect:
     ## @param objects.inspect.enabled If enabled, indicates that the Speckle server should be deployed with the nodejs inspect feature enabled
     enabled: false
@@ -882,7 +882,7 @@ frontend:
   logLevel: 'info'
   ## @param frontend.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
-  logPretty: 'false'
+  logPretty: false
 
   ## @param frontend.image The Docker image to be used for the Speckle Frontend component. If blank, defaults to speckle/speckle-frontend:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
@@ -959,7 +959,7 @@ frontend_2:
   logLevel: 'info'
   ## @param frontend_2.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
-  logPretty: 'false'
+  logPretty: false
   ## @param frontend_2.enabled Feature flag to enable running the new web application frontend.
   ##
   enabled: true
@@ -1031,7 +1031,7 @@ preview_service:
   logLevel: 'info'
   ## @param preview_service.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
-  logPretty: 'false'
+  logPretty: false
 
   ## @param preview_service.image The Docker image to be used for the Speckle Preview Service component. If blank, defaults to speckle/speckle-preview-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
@@ -1109,7 +1109,7 @@ webhook_service:
   logLevel: 'info'
   ## @param webhook_service.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
-  logPretty: 'false'
+  logPretty: false
   ## @param webhook_service.image The Docker image to be used for the Speckle Webhook Service component. If blank, defaults to speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
   image: ''
@@ -1179,7 +1179,7 @@ fileimport_service:
   logLevel: 'info'
   ## @param fileimport_service.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
-  logPretty: 'false'
+  logPretty: false
 
   ## @param fileimport_service.image The Docker image to be used for the Speckle FileImport Service component. If blank, defaults to speckle/speckle-fileimport-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
@@ -1256,7 +1256,7 @@ monitoring:
   logLevel: 'info'
   ## @param monitoring.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
-  logPretty: 'false'
+  logPretty: false
 
   ## @param monitoring.image The Docker image to be used for the Speckle Monitoring component. If blank, defaults to speckle/speckle-monitoring-deployment:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
@@ -1329,7 +1329,7 @@ test:
   logLevel: 'info'
   ## @param test.logPretty If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.
   ##
-  logPretty: 'false'
+  logPretty: false
 
   ## @param test.image The Docker image to be used for the Speckle Test component. If blank, defaults to speckle/speckle-test-deployment:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.
   ##
