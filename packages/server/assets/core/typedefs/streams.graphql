@@ -148,8 +148,8 @@ type PendingStreamCollaborator {
   inviteId: String!
   projectId: String!
   projectName: String!
-  streamId: String!
-  streamName: String!
+  streamId: String! @deprecated(reason: "Use projectId instead")
+  streamName: String! @deprecated(reason: "Use projectName instead")
   """
   E-mail address or name of the invited user
   """

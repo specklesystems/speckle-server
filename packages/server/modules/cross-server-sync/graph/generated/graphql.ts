@@ -439,7 +439,7 @@ export type Branch = {
   __typename?: 'Branch';
   /**
    * All the recent activity on this branch in chronological order
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   activity?: Maybe<ActivityCollection>;
   author?: Maybe<User>;
@@ -657,7 +657,7 @@ export type Commit = {
   __typename?: 'Commit';
   /**
    * All the recent activity on this commit in chronological order
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   activity?: Maybe<ActivityCollection>;
   authorAvatar?: Maybe<Scalars['String']['output']>;
@@ -674,7 +674,7 @@ export type Commit = {
    *     ...
    *   }
    * ```
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   commentCount: Scalars['Int']['output'];
   createdAt?: Maybe<Scalars['DateTime']['output']>;
@@ -914,7 +914,7 @@ export type LimitedUser = {
   __typename?: 'LimitedUser';
   /**
    * All the recent activity from this user in chronological order
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   activity?: Maybe<ActivityCollection>;
   avatar?: Maybe<Scalars['String']['output']>;
@@ -935,7 +935,7 @@ export type LimitedUser = {
   streams: StreamCollection;
   /**
    * The user's timeline in chronological order
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   timeline?: Maybe<ActivityCollection>;
   /**
@@ -1189,7 +1189,7 @@ export type Mutation = {
    */
   inviteResend: Scalars['Boolean']['output'];
   modelMutations: ModelMutations;
-  /** @deprecated Part of the old API surface and will be removed in the future */
+  /** @deprecated Part of the old API surface and will be removed in the future. */
   objectCreate: Array<Maybe<Scalars['String']['output']>>;
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
@@ -1202,12 +1202,12 @@ export type Mutation = {
   serverInviteCreate: Scalars['Boolean']['output'];
   /**
    * Request access to a specific stream
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   streamAccessRequestCreate: StreamAccessRequest;
   /**
    * Accept or decline a stream access request. Must be a stream owner to invoke this.
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   streamAccessRequestUse: Scalars['Boolean']['output'];
   /**
@@ -1596,7 +1596,7 @@ export type Object = {
    *     ...
    *   }
    * ```
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   commentCount: Scalars['Int']['output'];
   createdAt?: Maybe<Scalars['DateTime']['output']>;
@@ -1660,7 +1660,9 @@ export type PendingStreamCollaborator = {
   projectId: Scalars['String']['output'];
   projectName: Scalars['String']['output'];
   role: Scalars['String']['output'];
+  /** @deprecated Use projectId instead */
   streamId: Scalars['String']['output'];
+  /** @deprecated Use projectName instead */
   streamName: Scalars['String']['output'];
   /** E-mail address or name of the invited user */
   title: Scalars['String']['output'];
@@ -2219,7 +2221,7 @@ export type Query = {
   app?: Maybe<ServerApp>;
   /**
    * Returns all the publicly available apps on this server.
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   /** If user is authenticated using an app token, this will describe the app */
@@ -2229,7 +2231,7 @@ export type Query = {
   automateFunctions: AutomateFunctionCollection;
   /** Part of the automation/function creation handshake mechanism */
   automateValidateAuthCode: Scalars['Boolean']['output'];
-  /** @deprecated Part of the old API surface and will be removed in the future */
+  /** @deprecated Part of the old API surface and will be removed in the future. */
   comment?: Maybe<Comment>;
   /**
    * This query can be used in the following ways:
@@ -2268,7 +2270,7 @@ export type Query = {
   stream?: Maybe<Stream>;
   /**
    * Get authed user's stream access request
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   streamAccessRequest?: Maybe<StreamAccessRequest>;
   /**
@@ -2622,15 +2624,15 @@ export type Stream = {
   __typename?: 'Stream';
   /**
    * All the recent activity on this stream in chronological order
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   activity?: Maybe<ActivityCollection>;
   allowPublicComments: Scalars['Boolean']['output'];
-  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.blob */
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.blob instead. */
   blob?: Maybe<BlobMetadata>;
   /**
    * Get the metadata collection of blobs stored for this stream.
-   * @deprecated Part of the old API surface and will be removed in the future. Use Project.blobs
+   * @deprecated Part of the old API surface and will be removed in the future. Use Project.blobs instead.
    */
   blobs?: Maybe<BlobMetadataCollection>;
   /** @deprecated Part of the old API surface and will be removed in the future. Use Project.model instead. */
@@ -2647,7 +2649,7 @@ export type Stream = {
    *     ...
    *   }
    * ```
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   commentCount: Scalars['Int']['output'];
   /** @deprecated Part of the old API surface and will be removed in the future. Use Project.version instead. */
@@ -2678,11 +2680,11 @@ export type Stream = {
   /** Whether the stream can be viewed by non-contributors */
   isPublic: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
-  /** @deprecated Part of the old API surface and will be removed in the future */
+  /** @deprecated Part of the old API surface and will be removed in the future. */
   object?: Maybe<Object>;
   /**
    * Pending stream access requests
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   pendingAccessRequests?: Maybe<Array<StreamAccessRequest>>;
   /** Collaborators who have been invited, but not yet accepted. */
@@ -3150,7 +3152,7 @@ export type User = {
   __typename?: 'User';
   /**
    * All the recent activity from this user in chronological order
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   activity?: Maybe<ActivityCollection>;
   /** Returns a list of your personal api tokens. */
@@ -3199,7 +3201,7 @@ export type User = {
   streams: StreamCollection;
   /**
    * The user's timeline in chronological order
-   * @deprecated Part of the old API surface and will be removed in the future
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   timeline?: Maybe<ActivityCollection>;
   /**

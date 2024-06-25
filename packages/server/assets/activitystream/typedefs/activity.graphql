@@ -11,7 +11,9 @@ extend type User {
   ): ActivityCollection
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "users:read")
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 
   """
   The user's timeline in chronological order
@@ -24,7 +26,9 @@ extend type User {
   ): ActivityCollection
     @hasServerRole(role: SERVER_GUEST)
     @hasScopes(scopes: ["users:read", "streams:read"])
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 extend type LimitedUser {
@@ -40,7 +44,9 @@ extend type LimitedUser {
   ): ActivityCollection
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "users:read")
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 
   """
   The user's timeline in chronological order
@@ -53,7 +59,9 @@ extend type LimitedUser {
   ): ActivityCollection
     @hasServerRole(role: SERVER_GUEST)
     @hasScopes(scopes: ["users:read", "streams:read"])
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 extend type Stream {
@@ -69,7 +77,9 @@ extend type Stream {
   ): ActivityCollection
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 extend type Branch {
@@ -85,7 +95,9 @@ extend type Branch {
   ): ActivityCollection
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 extend type Commit {
@@ -101,7 +113,9 @@ extend type Commit {
   ): ActivityCollection
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 type ActivityCollection {

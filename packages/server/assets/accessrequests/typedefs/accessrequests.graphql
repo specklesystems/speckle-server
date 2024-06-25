@@ -4,7 +4,9 @@ extend type Query {
   """
   streamAccessRequest(streamId: String!): StreamAccessRequest
     @hasServerRole(role: SERVER_GUEST)
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 extend type Stream {
@@ -13,7 +15,9 @@ extend type Stream {
   """
   pendingAccessRequests: [StreamAccessRequest!]
     @hasStreamRole(role: STREAM_OWNER)
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 extend type Mutation {
@@ -27,7 +31,9 @@ extend type Mutation {
   ): Boolean!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "users:invite")
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 
   """
   Request access to a specific stream
@@ -35,7 +41,9 @@ extend type Mutation {
   streamAccessRequestCreate(streamId: String!): StreamAccessRequest!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "users:invite")
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 """

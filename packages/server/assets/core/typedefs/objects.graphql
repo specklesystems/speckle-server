@@ -1,6 +1,8 @@
 extend type Stream {
   object(id: String!): Object
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 type Object {
@@ -35,7 +37,9 @@ type ObjectCollection {
 
 extend type Mutation {
   objectCreate(objectInput: ObjectCreateInput!): [String]!
-    @deprecated(reason: "Part of the old API surface and will be removed in the future")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 input ObjectCreateInput {
