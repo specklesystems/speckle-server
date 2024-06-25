@@ -928,14 +928,20 @@ export type LimitedUser = {
   id: Scalars['ID']['output'];
   name: Scalars['String']['output'];
   role?: Maybe<Scalars['String']['output']>;
-  /** Returns all discoverable streams that the user is a collaborator on */
+  /**
+   * Returns all discoverable streams that the user is a collaborator on
+   * @deprecated Part of the old API surface and will be removed in the future.
+   */
   streams: StreamCollection;
   /**
    * The user's timeline in chronological order
    * @deprecated Part of the old API surface and will be removed in the future
    */
   timeline?: Maybe<ActivityCollection>;
-  /** Total amount of favorites attached to streams owned by the user */
+  /**
+   * Total amount of favorites attached to streams owned by the user
+   * @deprecated Part of the old API surface and will be removed in the future.
+   */
   totalOwnedStreamsFavorites: Scalars['Int']['output'];
   verified?: Maybe<Scalars['Boolean']['output']>;
 };
@@ -1183,6 +1189,7 @@ export type Mutation = {
    */
   inviteResend: Scalars['Boolean']['output'];
   modelMutations: ModelMutations;
+  /** @deprecated Part of the old API surface and will be removed in the future */
   objectCreate: Array<Maybe<Scalars['String']['output']>>;
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
@@ -1203,10 +1210,17 @@ export type Mutation = {
    * @deprecated Part of the old API surface and will be removed in the future
    */
   streamAccessRequestUse: Scalars['Boolean']['output'];
-  /** Creates a new stream. */
+  /**
+   * Creates a new stream.
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectMutations.create instead.
+   */
   streamCreate?: Maybe<Scalars['String']['output']>;
-  /** Deletes an existing stream. */
+  /**
+   * Deletes an existing stream.
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectMutations.delete instead.
+   */
   streamDelete: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. */
   streamFavorite?: Maybe<Stream>;
   /** Note: The required scope to invoke this is not given out to app or personal access tokens */
   streamInviteBatchCreate: Scalars['Boolean']['output'];
@@ -1222,14 +1236,27 @@ export type Mutation = {
   streamInviteCreate: Scalars['Boolean']['output'];
   /** Accept or decline a stream invite */
   streamInviteUse: Scalars['Boolean']['output'];
-  /** Remove yourself from stream collaborators (not possible for the owner) */
+  /**
+   * Remove yourself from stream collaborators (not possible for the owner)
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectMutations.leave instead.
+   */
   streamLeave: Scalars['Boolean']['output'];
-  /** Revokes the permissions of a user on a given stream. */
+  /**
+   * Revokes the permissions of a user on a given stream.
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectMutations.updateRole instead.
+   */
   streamRevokePermission?: Maybe<Scalars['Boolean']['output']>;
-  /** Updates an existing stream. */
+  /**
+   * Updates an existing stream.
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectMutations.update instead.
+   */
   streamUpdate: Scalars['Boolean']['output'];
-  /** Update permissions of a user on a given stream. */
+  /**
+   * Update permissions of a user on a given stream.
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectMutations.updateRole instead.
+   */
   streamUpdatePermission?: Maybe<Scalars['Boolean']['output']>;
+  /** @deprecated Part of the old API surface and will be removed in the future. */
   streamsDelete: Scalars['Boolean']['output'];
   /**
    * Used for broadcasting real time typing status in comment threads. Does not persist any info.
@@ -2203,7 +2230,10 @@ export type Query = {
    * @deprecated Use Project/Version/Model 'commentThreads' fields instead
    */
   comments?: Maybe<CommentCollection>;
-  /** All of the discoverable streams of the server */
+  /**
+   * All of the discoverable streams of the server
+   * @deprecated Part of the old API surface and will be removed in the future.
+   */
   discoverableStreams?: Maybe<StreamCollection>;
   /** Get the (limited) profile information of another server user */
   otherUser?: Maybe<LimitedUser>;
@@ -2225,6 +2255,7 @@ export type Query = {
   /**
    * Returns a specific stream. Will throw an authorization error if active user isn't authorized
    * to see it, for example, if a stream isn't public and the user doesn't have the appropriate rights.
+   * @deprecated Part of the old API surface and will be removed in the future. Use Query.project instead.
    */
   stream?: Maybe<Stream>;
   /**
@@ -2242,6 +2273,7 @@ export type Query = {
   /**
    * Returns all streams that the active user is a collaborator on.
    * Pass in the `query` parameter to search by name, description or ID.
+   * @deprecated Part of the old API surface and will be removed in the future. Use User.projects instead.
    */
   streams?: Maybe<StreamCollection>;
   /**
@@ -2249,7 +2281,10 @@ export type Query = {
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
    */
   user?: Maybe<User>;
-  /** Validate password strength */
+  /**
+   * Validate password strength
+   * @deprecated Part of the old API surface and will be removed in the future.
+   */
   userPwdStrength: PasswordStrengthCheckResults;
   /**
    * Search for users and return limited metadata about them, if you have the server:user role.
@@ -2625,6 +2660,7 @@ export type Stream = {
   /** Whether the stream can be viewed by non-contributors */
   isPublic: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future */
   object?: Maybe<Object>;
   /**
    * Pending stream access requests
@@ -2856,20 +2892,28 @@ export type Subscription = {
   projectVersionsPreviewGenerated: ProjectVersionsPreviewGeneratedMessage;
   /** Subscribe to changes to a project's versions. */
   projectVersionsUpdated: ProjectVersionsUpdatedMessage;
-  /** Subscribes to stream deleted event. Use this in clients/components that pertain only to this stream. */
+  /**
+   * Subscribes to stream deleted event. Use this in clients/components that pertain only to this stream.
+   * @deprecated Part of the old API surface and will be removed in the future. Use projectUpdated instead.
+   */
   streamDeleted?: Maybe<Scalars['JSONObject']['output']>;
-  /** Subscribes to stream updated event. Use this in clients/components that pertain only to this stream. */
+  /**
+   * Subscribes to stream updated event. Use this in clients/components that pertain only to this stream.
+   * @deprecated Part of the old API surface and will be removed in the future. Use projectUpdated instead.
+   */
   streamUpdated?: Maybe<Scalars['JSONObject']['output']>;
   /** Track newly added or deleted projects owned by the active user */
   userProjectsUpdated: UserProjectsUpdatedMessage;
   /**
    * Subscribes to new stream added event for your profile. Use this to display an up-to-date list of streams.
    * **NOTE**: If someone shares a stream with you, this subscription will be triggered with an extra value of `sharedBy` in the payload.
+   * @deprecated Part of the old API surface and will be removed in the future. Use userProjectsUpdated instead.
    */
   userStreamAdded?: Maybe<Scalars['JSONObject']['output']>;
   /**
    * Subscribes to stream removed event for your profile. Use this to display an up-to-date list of streams for your profile.
    * **NOTE**: If someone revokes your permissions on a stream, this subscription will be triggered with an extra value of `revokedBy` in the payload.
+   * @deprecated Part of the old API surface and will be removed in the future. Use userProjectsUpdated instead.
    */
   userStreamRemoved?: Maybe<Scalars['JSONObject']['output']>;
   /**
@@ -3104,10 +3148,12 @@ export type User = {
   /** Returns the apps you have created. */
   createdApps?: Maybe<Array<ServerApp>>;
   createdAt?: Maybe<Scalars['DateTime']['output']>;
+  /** Only returned if API user is the user being requested or an admin */
   email?: Maybe<Scalars['String']['output']>;
   /**
    * All the streams that a active user has favorited.
    * Note: You can't use this to retrieve another user's favorite streams.
+   * @deprecated Part of the old API surface and will be removed in the future.
    */
   favoriteStreams: StreamCollection;
   /** Whether the user has a pending/active email verification token */
@@ -3126,6 +3172,7 @@ export type User = {
   /**
    * Returns all streams that the user is a collaborator on. If requested for a user, who isn't the
    * authenticated user, then this will only return discoverable streams.
+   * @deprecated Part of the old API surface and will be removed in the future. Use User.projects instead.
    */
   streams: StreamCollection;
   /**
@@ -3133,7 +3180,10 @@ export type User = {
    * @deprecated Part of the old API surface and will be removed in the future
    */
   timeline?: Maybe<ActivityCollection>;
-  /** Total amount of favorites attached to streams owned by the user */
+  /**
+   * Total amount of favorites attached to streams owned by the user
+   * @deprecated Part of the old API surface and will be removed in the future.
+   */
   totalOwnedStreamsFavorites: Scalars['Int']['output'];
   verified?: Maybe<Scalars['Boolean']['output']>;
   /**
