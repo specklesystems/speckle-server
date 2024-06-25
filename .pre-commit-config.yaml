@@ -45,6 +45,7 @@ repos:
         entry: utils/helm/update-schema-json.sh
         description: If this fails it is because the values.yaml file was updated. Or has missing or incorrect documentation.
 
+    # helmlint should occur after the json schema is updated
   - repo: https://github.com/gruntwork-io/pre-commit
     rev: 'v0.1.17'
     hooks:

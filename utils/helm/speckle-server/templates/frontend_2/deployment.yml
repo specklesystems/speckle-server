@@ -77,7 +77,7 @@ spec:
           - name: NUXT_PUBLIC_LOG_LEVEL
             value: {{ .Values.frontend_2.logLevel }}
           - name: NUXT_PUBLIC_LOG_PRETTY
-            value: {{ .Values.frontend_2.logPretty }}
+            value: {{ .Values.frontend_2.logPretty | quote }}
           - name: NUXT_PUBLIC_SERVER_NAME
             value: {{ .Release.Name }}
           - name: NUXT_PUBLIC_LOG_CLIENT_API_TOKEN
