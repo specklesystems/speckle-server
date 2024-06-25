@@ -438,7 +438,10 @@ export type BlobMetadataCollection = {
 
 export type Branch = {
   __typename?: 'Branch';
-  /** All the recent activity on this branch in chronological order */
+  /**
+   * All the recent activity on this branch in chronological order
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   activity?: Maybe<ActivityCollection>;
   author?: Maybe<User>;
   commits?: Maybe<CommitCollection>;
@@ -653,7 +656,10 @@ export type CommentThreadActivityMessage = {
 
 export type Commit = {
   __typename?: 'Commit';
-  /** All the recent activity on this commit in chronological order */
+  /**
+   * All the recent activity on this commit in chronological order
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   activity?: Maybe<ActivityCollection>;
   authorAvatar?: Maybe<Scalars['String']['output']>;
   authorId?: Maybe<Scalars['String']['output']>;
@@ -906,7 +912,10 @@ export type LegacyCommentViewerData = {
  */
 export type LimitedUser = {
   __typename?: 'LimitedUser';
-  /** All the recent activity from this user in chronological order */
+  /**
+   * All the recent activity from this user in chronological order
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   activity?: Maybe<ActivityCollection>;
   avatar?: Maybe<Scalars['String']['output']>;
   bio?: Maybe<Scalars['String']['output']>;
@@ -918,7 +927,10 @@ export type LimitedUser = {
   role?: Maybe<Scalars['String']['output']>;
   /** Returns all discoverable streams that the user is a collaborator on */
   streams: StreamCollection;
-  /** The user's timeline in chronological order */
+  /**
+   * The user's timeline in chronological order
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   timeline?: Maybe<ActivityCollection>;
   /** Total amount of favorites attached to streams owned by the user */
   totalOwnedStreamsFavorites: Scalars['Int']['output'];
@@ -1165,9 +1177,15 @@ export type Mutation = {
   serverInviteBatchCreate: Scalars['Boolean']['output'];
   /** Invite a new user to the speckle server and return the invite ID */
   serverInviteCreate: Scalars['Boolean']['output'];
-  /** Request access to a specific stream */
+  /**
+   * Request access to a specific stream
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   streamAccessRequestCreate: StreamAccessRequest;
-  /** Accept or decline a stream access request. Must be a stream owner to invoke this. */
+  /**
+   * Accept or decline a stream access request. Must be a stream owner to invoke this.
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   streamAccessRequestUse: Scalars['Boolean']['output'];
   /** Creates a new stream. */
   streamCreate?: Maybe<Scalars['String']['output']>;
@@ -2147,7 +2165,10 @@ export type Query = {
   adminUsers?: Maybe<AdminUsersListCollection>;
   /** Gets a specific app from the server. */
   app?: Maybe<ServerApp>;
-  /** Returns all the publicly available apps on this server. */
+  /**
+   * Returns all the publicly available apps on this server.
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   apps?: Maybe<Array<Maybe<ServerAppListItem>>>;
   /** If user is authenticated using an app token, this will describe the app */
   authenticatedAsApp?: Maybe<ServerAppListItem>;
@@ -2188,7 +2209,10 @@ export type Query = {
    * to see it, for example, if a stream isn't public and the user doesn't have the appropriate rights.
    */
   stream?: Maybe<Stream>;
-  /** Get authed user's stream access request */
+  /**
+   * Get authed user's stream access request
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   streamAccessRequest?: Maybe<StreamAccessRequest>;
   /**
    * Look for an invitation to a stream, for the current user (authed or not). If token
@@ -2531,7 +2555,10 @@ export enum SortDirection {
 
 export type Stream = {
   __typename?: 'Stream';
-  /** All the recent activity on this stream in chronological order */
+  /**
+   * All the recent activity on this stream in chronological order
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   activity?: Maybe<ActivityCollection>;
   allowPublicComments: Scalars['Boolean']['output'];
   blob?: Maybe<BlobMetadata>;
@@ -2572,7 +2599,10 @@ export type Stream = {
   isPublic: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
   object?: Maybe<Object>;
-  /** Pending stream access requests */
+  /**
+   * Pending stream access requests
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   pendingAccessRequests?: Maybe<Array<StreamAccessRequest>>;
   /** Collaborators who have been invited, but not yet accepted. */
   pendingCollaborators?: Maybe<Array<PendingStreamCollaborator>>;
@@ -3007,7 +3037,10 @@ export type UpdateVersionInput = {
  */
 export type User = {
   __typename?: 'User';
-  /** All the recent activity from this user in chronological order */
+  /**
+   * All the recent activity from this user in chronological order
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   activity?: Maybe<ActivityCollection>;
   /** Returns a list of your personal api tokens. */
   apiTokens: Array<ApiToken>;
@@ -3049,7 +3082,10 @@ export type User = {
    * authenticated user, then this will only return discoverable streams.
    */
   streams: StreamCollection;
-  /** The user's timeline in chronological order */
+  /**
+   * The user's timeline in chronological order
+   * @deprecated Part of the old API surface and will be removed in the future
+   */
   timeline?: Maybe<ActivityCollection>;
   /** Total amount of favorites attached to streams owned by the user */
   totalOwnedStreamsFavorites: Scalars['Int']['output'];

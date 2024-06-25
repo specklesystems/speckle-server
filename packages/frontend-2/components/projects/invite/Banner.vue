@@ -8,7 +8,9 @@
       <div class="text-foreground">
         <span class="font-bold">{{ invite.invitedBy.name }}</span>
         has invited you to be part of the team from
-        <template v-if="showStreamName">the project {{ invite.projectName }}.</template>
+        <template v-if="showProjectName">
+          the project {{ invite.projectName }}.
+        </template>
         <template v-else>this project.</template>
       </div>
     </div>
@@ -66,10 +68,10 @@ const emit = defineEmits<{
 const props = withDefaults(
   defineProps<{
     invite?: ProjectsInviteBannerFragment
-    showStreamName?: boolean
+    showProjectName?: boolean
     autoAccept?: boolean
   }>(),
-  { showStreamName: true }
+  { showProjectName: true }
 )
 
 const route = useRoute()
