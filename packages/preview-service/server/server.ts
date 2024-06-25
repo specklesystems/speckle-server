@@ -5,7 +5,6 @@
 import http from 'http'
 import { app } from './app'
 import { app as metricsApp } from '../observability/metricsApp'
-import { startPreviewService } from '../server/background'
 import { serverLogger } from '../observability/logging'
 import { getAppPort, getHost, getMetricsPort } from '../utils/env'
 
@@ -38,7 +37,6 @@ export const startServer = () => {
   server.on('listening', () => {
     serverLogger.info('📡 Started Preview Service server')
     onListening(server)
-    startPreviewService()
   })
   metricsServer.listen(metricsPort, host)
   metricsServer.on('error', onErrorFactory(port))

@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 'use strict'
-
-const { serverLogger } = require('../dist/observability/logging')
 const { startServer } = require('../dist/server/server')
-
+const { startPreviewService } = require('../dist/server/background')
 startServer()
+startPreviewService()
