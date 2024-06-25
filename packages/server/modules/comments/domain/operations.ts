@@ -1,15 +1,19 @@
-import { MaybeNullOrUndefined, Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
-import { InsertCommentPayload } from "@/modules/comments/repositories/comments"
+import { MarkNullableOptional, MaybeNullOrUndefined, Nullable } from '@/modules/shared/helpers/typeHelper'
 import { Dictionary } from 'lodash'
 import { ResourceIdentifier } from '@/test/graphql/generated/graphql'
 import { CommentLinkRecord, CommentRecord, CommentViewRecord } from '@/modules/comments/domain/types'
-import { CommitRecord } from '@/modules/core/helpers/types'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { Knex } from 'knex'
 import { Merge } from 'type-fest'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { ExtendedComment } from '@/modules/comments/domain/types'
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
+
+type DeleteCommentParams = {
+  commentId: string
+}
+
+export type DeleteComment = (params: DeleteCommentParams) => Promise<void>
 
 type GetBatchedStreamCommentsParams = {
   streamId: string
@@ -94,6 +98,16 @@ type GetCommentLinksOptions = {
 }
 
 export type GetCommentLinks = (params: GetCommentLinksParams) => Promise<CommentLinkRecord[]>
+
+type GetCommentParentsParams = {
+  replyIds: string[]
+}
+
+type GetCommentParentsReturnValue = (CommentRecord & {
+  replyId: string
+})[]
+
+export type GetCommentParents = (params: GetCommentParentsParams) => Promise<GetCommentParentsReturnValue>
 
 type GetCommentReplyAuthorIdsParams = {
   threadIds: string[]
@@ -190,6 +204,34 @@ type GetStreamCommentCountsReturnValue = {
 
 export type GetStreamCommentCounts = (params: GetStreamCommentCountsParams) => Promise<GetStreamCommentCountsReturnValue>
 
+type GetPaginatedBranchCommentsParams = {
+  branchId: string
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+}
+
+type GetPaginatedBranchCommentsReturnValue = {
+  items: CommentRecord[]
+  /** ISO string of `createdAt` value, if present */
+  cursor: string | null
+}
+
+export type GetPaginatedBranchComments = (params: GetPaginatedBranchCommentsParams) => Promise<GetPaginatedBranchCommentsReturnValue>
+
+type GetPaginatedBranchCommentsTotalCountParams = {
+  branchId: string
+  filter?: MaybeNullOrUndefined<{
+    threadsOnly: boolean
+    includeArchived: boolean
+  }>
+}
+
+export type GetPaginatedBranchCommentsTotalCount = (params: GetPaginatedBranchCommentsTotalCountParams) => Promise<number>
+
 type GetPaginatedCommitCommentsParams = {
   commitId: string
   limit: number
@@ -199,10 +241,6 @@ type GetPaginatedCommitCommentsParams = {
     includeArchived: boolean
   }>
 }
-
-// type GetPaginatedProjectCommentsOptions = Partial<{
-//   preloadedModelLatestVersions: PreloadedModelVersionRecord
-// }>
 
 type GetPaginatedCommitCommentsReturnValue = {
   items: CommentRecord[],
@@ -221,6 +259,74 @@ type GetPaginatedCommitCommentsTotalCountParams = {
 }
 
 export type GetPaginatedCommitCommentsTotalCount = (params: GetPaginatedCommitCommentsTotalCountParams) => Promise<number>
+
+type GetPaginatedProjectCommentsParams = {
+  projectId: string
+  limit: number
+  cursor?: MaybeNullOrUndefined<string>
+  filter?: MaybeNullOrUndefined<Partial<{
+    threadsOnly: Nullable<boolean>
+    includeArchived: Nullable<boolean>
+    archivedOnly: Nullable<boolean>
+    resourceIdString: Nullable<string>
+    /**
+     * If true, will ignore the version parts of `model@version` identifiers and look for comments of
+     * all versions of any selected comments
+     */
+    allModelVersions: Nullable<boolean>
+  }>>
+}
+
+type GetPaginatedProjectCommentsOptions = Partial<{
+  preloadedModelLatestVersions: Awaited<ReturnType<typeof getBranchLatestCommits>>
+}>
+
+type GetPaginatedProjectCommentsReturnValue = {
+  items: CommentRecord[]
+  /** ISO string of `createdAt` value, if present */
+  cursor: string | null
+}
+
+export type GetPaginatedProjectComments = (params: GetPaginatedProjectCommentsParams, options?: GetPaginatedProjectCommentsOptions) => Promise<GetPaginatedProjectCommentsReturnValue>
+
+type GetPaginatedProjectCommentsTotalCountParams = {
+  projectId: string
+  filter?: MaybeNullOrUndefined<Partial<{
+    threadsOnly: Nullable<boolean>
+    includeArchived: Nullable<boolean>
+    archivedOnly: Nullable<boolean>
+    resourceIdString: Nullable<string>
+    /**
+     * If true, will ignore the version parts of `model@version` identifiers and look for comments of
+     * all versions of any selected comments
+     */
+    allModelVersions: Nullable<boolean>
+  }>>
+}
+
+type GetPaginatedProjectCommentsTotalCountOptions = Partial<{
+  preloadedModelLatestVersions: Awaited<ReturnType<typeof getBranchLatestCommits>>
+}>
+
+export type GetPaginatedProjectCommentsTotalCount = (params: GetPaginatedProjectCommentsTotalCountParams, options?: GetPaginatedProjectCommentsTotalCountOptions) => Promise<number>
+
+type GetResourceCommentCountParams = {
+  resourceId: string
+}
+
+export type GetResourceCommentCount = (params: GetResourceCommentCountParams) => Promise<number>
+
+type InsertCommentParams = MarkNullableOptional<Omit<
+  CommentRecord, 'id' | 'createdAt' | 'updatedAt' | 'text' | 'archived'> & {
+    text: SmartTextEditorValueSchema
+    archived?: boolean
+  }>
+
+type InsertCommentOptions = {
+  trx?: Knex.Transaction
+}
+
+export type InsertComment = (params: InsertCommentParams, options?: InsertCommentOptions) => Promise<CommentRecord>
 
 type InsertCommentLinksParams = {
   commentLinks: CommentLinkRecord[]
@@ -250,43 +356,22 @@ type LegacyGetCommentParams = {
 
 export type LegacyGetComment = (params: LegacyGetCommentParams) => Promise<CommentRecord | undefined>
 
-
-type PaginatedProjectCommentsParams = {
-  projectId: string
-  limit: number
-  cursor?: MaybeNullOrUndefined<string>
-  filter?: MaybeNullOrUndefined<Partial<{
-    threadsOnly: Nullable<boolean>
-    includeArchived: Nullable<boolean>
-    archivedOnly: Nullable<boolean>
-    resourceIdString: Nullable<string>
-    /**
-     * If true, will ignore the version parts of `model@version` identifiers and look for comments of
-     * all versions of any selected comments
-     */
-    allModelVersions: Nullable<boolean>
-  }>>
+type MarkCommentUpdatedParams = {
+  commentId: string
 }
 
+export type MarkCommentUpdated = (params: MarkCommentUpdatedParams) => Promise<number>
 
-export type PaginatedBranchCommentsParams = {
-  branchId: string
-  limit: number
-  cursor?: MaybeNullOrUndefined<string>
-  filter?: MaybeNullOrUndefined<{
-    threadsOnly: boolean
-    includeArchived: boolean
-  }>
+type MarkCommentViewedParams = {
+  commentId: string
+  userId: string
 }
 
-// export type PaginatedCommitCommentsParams = {
-//   commitId: string
-//   limit: number
-//   cursor?: MaybeNullOrUndefined<string>
-//   filter?: MaybeNullOrUndefined<{
-//     threadsOnly: boolean
-//     includeArchived: boolean
-//   }>
-// }
+export type MarkCommentViewed = (params: MarkCommentViewedParams) => Promise<number[]>
 
-export type PreloadedModelVersionRecord = Awaited<ReturnType<typeof getBranchLatestCommits>>
+type UpdateCommentParams = {
+  id: string
+  input: Merge<Partial<CommentRecord>, { text?: SmartTextEditorValueSchema }>
+}
+
+export type UpdateComment = (params: UpdateCommentParams) => Promise<CommentRecord>

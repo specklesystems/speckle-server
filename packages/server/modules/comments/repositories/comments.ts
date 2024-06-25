@@ -25,18 +25,15 @@ import {
 import { clamp, keyBy, reduce } from 'lodash'
 import crs from 'crypto-random-string'
 import {
-  BatchedSelectOptions,
   executeBatchedSelect
 } from '@/modules/shared/helpers/dbHelper'
 import { Knex } from 'knex'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import { SpeckleViewer } from '@speckle/shared'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
-import { Merge } from 'type-fest'
 import { getBranchLatestCommits } from '@/modules/core/repositories/branches'
 import { BranchRecord, CommitRecord } from '@/modules/core/helpers/types'
-import { PaginatedProjectCommentsParams, PaginatedBranchCommentsParams, PaginatedCommitCommentsParams, PaginatedProjectCommentsOptions } from '@/modules/comments/domain'
-import { GetBatchedStreamComments, GetBranchCommentCounts, GetComment, GetCommentLinks, GetCommentReplyAuthorIds, GetCommentReplyCounts, GetComments, GetCommentsResources, GetCommentsViewedAt, GetCommitCommentCounts, GetPaginatedCommitComments, GetPaginatedCommitCommentsTotalCount, GetStreamCommentCount, GetStreamCommentCounts, InsertCommentLinks, InsertComments, LegacyGetComment } from '@/modules/comments/domain/operations'
+import { DeleteComment, GetBatchedStreamComments, GetBranchCommentCounts, GetComment, GetCommentLinks, GetCommentParents, GetCommentReplyAuthorIds, GetCommentReplyCounts, GetComments, GetCommentsResources, GetCommentsViewedAt, GetCommitCommentCounts, GetPaginatedBranchComments, GetPaginatedBranchCommentsTotalCount, GetPaginatedCommitComments, GetPaginatedCommitCommentsTotalCount, GetPaginatedProjectComments, GetPaginatedProjectCommentsTotalCount, GetResourceCommentCount, GetStreamCommentCount, GetStreamCommentCounts, InsertComment, InsertCommentLinks, InsertComments, LegacyGetComment, MarkCommentUpdated, MarkCommentViewed, UpdateComment } from '@/modules/comments/domain/operations'
 
 export const generateCommentId = () => crs({ length: 10 })
 
@@ -81,17 +78,6 @@ export const legacyGetCommentFactory =
     async ({ id }) => {
       return await tables.comments(db).where({ id }).first()
     }
-
-// /** One of `resources` or `streamId` expected. */
-// type GetCommentsParams = {
-//   resources?: (ResourceIdentifier | null)[] | null
-//   streamId?: string | null
-//   limit?: number
-//   cursor?: unknown
-//   userId?: string | null
-//   replies?: boolean
-//   archived?: boolean
-// }
 
 /**
  * @deprecated Use `getPaginatedProjectComments()` instead
@@ -202,20 +188,6 @@ export const getCommentsViewedAt =
 
       return await q
     }
-
-// type GetBatchedStreamCommentsOptions = BatchedSelectOptions & {
-//   /**
-//    * Filter out comments with parent comment references
-//    * Defaults to: false
-//    */
-//   withoutParentCommentOnly: boolean
-
-//   /**
-//    * Filter out comments without parent comment references
-//    * Defaults to: false
-//    */
-//   withParentCommentOnly: boolean
-// }
 
 export const getBatchedStreamCommentsFactory =
   ({ db }: { db: Knex }): GetBatchedStreamComments =>
@@ -472,7 +444,7 @@ export const getPaginatedCommitCommentsTotalCountFactory =
 
 // Internal
 const getPaginatedBranchCommentsBaseQuery = ({ db }: { db: Knex }) =>
-  (params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>) => {
+  (params: Omit<Parameters<GetPaginatedBranchComments>[0], 'limit' | 'cursor'>) => {
     const { branchId, filter } = params
 
     const q = tables.branches(db)
@@ -499,39 +471,40 @@ const getPaginatedBranchCommentsBaseQuery = ({ db }: { db: Knex }) =>
     return q
   }
 
-const getPaginatedBranchComments = ({ db }: { db: Knex }) =>
-  async (params: PaginatedBranchCommentsParams) => {
-    const { cursor } = params
+export const getPaginatedBranchCommentsFactory =
+  ({ db }: { db: Knex }): GetPaginatedBranchComments =>
+    async (params) => {
+      const { cursor } = params
 
-    const limit = clamp(params.limit, 0, 100)
-    if (!limit) return { items: [], cursor: null }
+      const limit = clamp(params.limit, 0, 100)
+      if (!limit) return { items: [], cursor: null }
 
-    const q = getPaginatedBranchCommentsBaseQuery({ db })(params)
-      .orderBy(Comments.col.createdAt, 'desc')
-      .limit(limit)
+      const q = getPaginatedBranchCommentsBaseQuery({ db })(params)
+        .orderBy(Comments.col.createdAt, 'desc')
+        .limit(limit)
 
-    if (cursor) {
-      q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))
+      if (cursor) {
+        q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))
+      }
+
+      const items = await q
+      return {
+        items,
+        cursor: items.length
+          ? encodeCursor(items[items.length - 1].createdAt.toISOString())
+          : null,
+      }
     }
 
-    const items = await q
-    return {
-      items,
-      cursor: items.length
-        ? encodeCursor(items[items.length - 1].createdAt.toISOString())
-        : null,
+export const getPaginatedBranchCommentsTotalCountFactory =
+  ({ db }: { db: Knex }): GetPaginatedBranchCommentsTotalCount =>
+    async (params) => {
+      const baseQ = getPaginatedBranchCommentsBaseQuery({ db })(params)
+      const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
+      const [row] = await q
+
+      return parseInt(row.count || '0')
     }
-  }
-
-const getPaginatedBranchCommentsTotalCount = ({ db }: { db: Knex }) => async (
-  params: Omit<PaginatedBranchCommentsParams, 'limit' | 'cursor'>
-) => {
-  const baseQ = getPaginatedBranchCommentsBaseQuery({ db })(params)
-  const q = knex.count<{ count: string }[]>().from(baseQ.as('sq1'))
-  const [row] = await q
-
-  return parseInt(row.count || '0')
-}
 
 /**
  * Used exclusively in paginated project comment retrieval to resolve latest commit IDs for
@@ -553,159 +526,158 @@ const resolvePaginatedProjectCommentsLatestModelResources = async (
 }
 
 // Internal
-const getPaginatedProjectCommentsBaseQuery = ({ db }: { db: Knex }) => async (
-  params: Omit<PaginatedProjectCommentsParams, 'limit' | 'cursor'>,
-  options?: {
-    preloadedModelLatestVersions?: Awaited<ReturnType<typeof getBranchLatestCommits>>
-  }
-) => {
-  const { projectId, filter } = params
-  const allModelVersions = filter?.allModelVersions || false
-
-  const resources = filter?.resourceIdString
-    ? SpeckleViewer.ViewerRoute.parseUrlParameters(filter.resourceIdString)
-    : []
-  const objectResources = resources.filter(SpeckleViewer.ViewerRoute.isObjectResource)
-  const modelResources = resources.filter(SpeckleViewer.ViewerRoute.isModelResource)
-  const folderResources = resources.filter(
-    SpeckleViewer.ViewerRoute.isModelFolderResource
-  )
-
-  // If loaded models only, we need to resolve target versions for model resources that target 'latest'
-  // (versionId is undefined)
-  if (!allModelVersions) {
-    const latestModelResources = modelResources.filter((r) => !r.versionId)
-    if (latestModelResources.length) {
-      const resolvedResourceItems = keyBy(
-        options?.preloadedModelLatestVersions ||
-        (await resolvePaginatedProjectCommentsLatestModelResources(
-          filter?.resourceIdString
-        )),
-        'branchId'
-      )
-
-      for (const r of modelResources) {
-        if (r.versionId) continue
-        const versionId = resolvedResourceItems[r.modelId]?.id
-        if (!versionId) continue
-
-        r.versionId = versionId
-      }
+const getPaginatedProjectCommentsBaseQuery =
+  ({ db }: { db: Knex }) => async (
+    params: Omit<Parameters<GetPaginatedProjectComments>[0], 'limit' | 'cursor'>,
+    options?: {
+      preloadedModelLatestVersions?: Awaited<ReturnType<typeof getBranchLatestCommits>>
     }
-  }
+  ) => {
+    const { projectId, filter } = params
+    const allModelVersions = filter?.allModelVersions || false
 
-  const resolvedModelResources = allModelVersions
-    ? modelResources
-    : modelResources.filter((r) => !!r.versionId)
+    const resources = filter?.resourceIdString
+      ? SpeckleViewer.ViewerRoute.parseUrlParameters(filter.resourceIdString)
+      : []
+    const objectResources = resources.filter(SpeckleViewer.ViewerRoute.isObjectResource)
+    const modelResources = resources.filter(SpeckleViewer.ViewerRoute.isModelResource)
+    const folderResources = resources.filter(
+      SpeckleViewer.ViewerRoute.isModelFolderResource
+    )
 
-  const q = tables.comments(db).distinct().select(Comments.cols)
-
-  q.where(Comments.col.streamId, projectId)
-
-  if (resources.length) {
-    // First join any necessary tables
-    q.innerJoin(CommentLinks.name, CommentLinks.col.commentId, Comments.col.id)
-    if (resolvedModelResources.length || folderResources.length) {
-      q.leftJoin(BranchCommits.name, (j) => {
-        j.on(BranchCommits.col.commitId, CommentLinks.col.resourceId).andOnVal(
-          CommentLinks.col.resourceType,
-          ResourceType.Commit
+    // If loaded models only, we need to resolve target versions for model resources that target 'latest'
+    // (versionId is undefined)
+    if (!allModelVersions) {
+      const latestModelResources = modelResources.filter((r) => !r.versionId)
+      if (latestModelResources.length) {
+        const resolvedResourceItems = keyBy(
+          options?.preloadedModelLatestVersions ||
+          (await resolvePaginatedProjectCommentsLatestModelResources(
+            filter?.resourceIdString
+          )),
+          'branchId'
         )
-      })
-      q.leftJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
+
+        for (const r of modelResources) {
+          if (r.versionId) continue
+          const versionId = resolvedResourceItems[r.modelId]?.id
+          if (!versionId) continue
+
+          r.versionId = versionId
+        }
+      }
     }
 
-    // Filter by resources
-    q.andWhere((w1) => {
-      if (objectResources.length) {
-        w1.orWhere((w2) => {
-          w2.where(CommentLinks.col.resourceType, ResourceType.Object).whereIn(
-            CommentLinks.col.resourceId,
-            objectResources.map((o) => o.objectId)
+    const resolvedModelResources = allModelVersions
+      ? modelResources
+      : modelResources.filter((r) => !!r.versionId)
+
+    const q = tables.comments(db).distinct().select(Comments.cols)
+
+    q.where(Comments.col.streamId, projectId)
+
+    if (resources.length) {
+      // First join any necessary tables
+      q.innerJoin(CommentLinks.name, CommentLinks.col.commentId, Comments.col.id)
+      if (resolvedModelResources.length || folderResources.length) {
+        q.leftJoin(BranchCommits.name, (j) => {
+          j.on(BranchCommits.col.commitId, CommentLinks.col.resourceId).andOnVal(
+            CommentLinks.col.resourceType,
+            ResourceType.Commit
           )
         })
+        q.leftJoin(Branches.name, Branches.col.id, BranchCommits.col.branchId)
       }
 
-      if (resolvedModelResources.length) {
-        w1.orWhere((w2) => {
-          w2.where(CommentLinks.col.resourceType, ResourceType.Commit).where((w3) => {
-            for (const modelResource of resolvedModelResources) {
-              w3.orWhere((w4) => {
-                w4.where(Branches.col.id, modelResource.modelId)
-                if (modelResource.versionId && !allModelVersions) {
-                  w4.andWhere(CommentLinks.col.resourceId, modelResource.versionId)
-                }
-              })
-            }
+      // Filter by resources
+      q.andWhere((w1) => {
+        if (objectResources.length) {
+          w1.orWhere((w2) => {
+            w2.where(CommentLinks.col.resourceType, ResourceType.Object).whereIn(
+              CommentLinks.col.resourceId,
+              objectResources.map((o) => o.objectId)
+            )
           })
-        })
+        }
+
+        if (resolvedModelResources.length) {
+          w1.orWhere((w2) => {
+            w2.where(CommentLinks.col.resourceType, ResourceType.Commit).where((w3) => {
+              for (const modelResource of resolvedModelResources) {
+                w3.orWhere((w4) => {
+                  w4.where(Branches.col.id, modelResource.modelId)
+                  if (modelResource.versionId && !allModelVersions) {
+                    w4.andWhere(CommentLinks.col.resourceId, modelResource.versionId)
+                  }
+                })
+              }
+            })
+          })
+        }
+
+        if (folderResources.length) {
+          w1.orWhere((w2) => {
+            w2.where(CommentLinks.col.resourceType, ResourceType.Commit).andWhere(
+              knex.raw('LOWER(??) ilike ANY(?)', [
+                Branches.col.name,
+                folderResources.map((r) => r.folderName.toLowerCase() + '%')
+              ])
+            )
+          })
+        }
+      })
+    }
+
+    if (!filter?.includeArchived && !filter?.archivedOnly) {
+      q.andWhere(Comments.col.archived, false)
+    } else if (filter?.archivedOnly) {
+      q.andWhere(Comments.col.archived, true)
+    }
+
+    if (filter?.threadsOnly) {
+      q.whereNull(Comments.col.parentComment)
+    }
+
+    // if we return `q` directly, it gets awaited as well
+    return { baseQuery: q }
+  }
+
+export const getPaginatedProjectCommentsFactory =
+  ({ db }: { db: Knex }): GetPaginatedProjectComments =>
+    async (params, options) => {
+      const { cursor } = params
+      const limit = clamp(params.limit, 0, 100)
+      if (!limit) return { items: [], cursor: null }
+
+      const { baseQuery } = await getPaginatedProjectCommentsBaseQuery({ db })(params, options)
+      const q = baseQuery.orderBy(Comments.col.createdAt, 'desc').limit(limit)
+
+      if (cursor) {
+        q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))
       }
 
-      if (folderResources.length) {
-        w1.orWhere((w2) => {
-          w2.where(CommentLinks.col.resourceType, ResourceType.Commit).andWhere(
-            knex.raw('LOWER(??) ilike ANY(?)', [
-              Branches.col.name,
-              folderResources.map((r) => r.folderName.toLowerCase() + '%')
-            ])
-          )
-        })
+      const items = await q
+      return {
+        items,
+        cursor: items.length
+          ? encodeCursor(items[items.length - 1].createdAt.toISOString())
+          : null,
       }
-    })
-  }
+    }
 
-  if (!filter?.includeArchived && !filter?.archivedOnly) {
-    q.andWhere(Comments.col.archived, false)
-  } else if (filter?.archivedOnly) {
-    q.andWhere(Comments.col.archived, true)
-  }
+export const getPaginatedProjectCommentsTotalCountFactory =
+  ({ db }: { db: Knex }): GetPaginatedProjectCommentsTotalCount =>
+    async (params, options) => {
+      const { baseQuery } = await getPaginatedProjectCommentsBaseQuery({ db })(params, options)
+      const q = knex.count<{ count: string }[]>().from(baseQuery.as('sq1'))
+      const [row] = await q
 
-  if (filter?.threadsOnly) {
-    q.whereNull(Comments.col.parentComment)
-  }
+      return parseInt(row.count || '0')
+    }
 
-  // if we return `q` directly, it gets awaited as well
-  return { baseQuery: q }
-}
-
-const getPaginatedProjectComments = ({ db }: { db: Knex }) => async (
-  params: PaginatedProjectCommentsParams,
-  options?: PaginatedProjectCommentsOptions
-) => {
-  const { cursor } = params
-  const limit = clamp(params.limit, 0, 100)
-  if (!limit) return { items: [], cursor: null }
-
-  const { baseQuery } = await getPaginatedProjectCommentsBaseQuery({ db })(params, options)
-  const q = baseQuery.orderBy(Comments.col.createdAt, 'desc').limit(limit)
-
-  if (cursor) {
-    q.andWhere(Comments.col.createdAt, '<', decodeCursor(cursor))
-  }
-
-  const items = await q
-  return {
-    items,
-    cursor: items.length
-      ? encodeCursor(items[items.length - 1].createdAt.toISOString())
-      : null,
-  }
-}
-
-const getPaginatedProjectCommentsTotalCount = ({ db }: { db: Knex }) => async (
-  params: Omit<PaginatedProjectCommentsParams, 'limit' | 'cursor'>,
-  options?: PaginatedProjectCommentsOptions
-) => {
-  const { baseQuery } = await getPaginatedProjectCommentsBaseQuery({ db })(params, options)
-  const q = knex.count<{ count: string }[]>().from(baseQuery.as('sq1'))
-  const [row] = await q
-
-  return parseInt(row.count || '0')
-}
-
-const getResourceCommentCount =
-  ({ db }: { db: Knex }) =>
-    async ({ resourceId }: { resourceId: string }) => {
+export const getResourceCommentCountFactory =
+  ({ db }: { db: Knex }): GetResourceCommentCount =>
+    async ({ resourceId }) => {
       const [res] = await tables.commentLinks(db)
         .count('commentId')
         .where({ resourceId })
@@ -719,27 +691,29 @@ const getResourceCommentCount =
       return 0
     }
 
-const getCommentParents = ({ db }: { db: Knex }) =>
-  async (replyIds: string[]) => {
-    const q = tables.comments(db)
-      .select<Array<CommentRecord & { replyId: string }>>([
-        knex.raw('?? as "replyId"', [Comments.col.id]),
-        knex.raw('"c2".*')
-      ])
-      .innerJoin(`${Comments.name} as c2`, `c2.id`, Comments.col.parentComment)
-      .whereIn(Comments.col.id, replyIds)
-      .whereNotNull(Comments.col.parentComment)
-    return await q
-  }
+export const getCommentParentsFactory =
+  ({ db }: { db: Knex }): GetCommentParents =>
+    async ({ replyIds }) => {
+      const q = tables.comments(db)
+        .select<Array<CommentRecord & { replyId: string }>>([
+          knex.raw('?? as "replyId"', [Comments.col.id]),
+          knex.raw('"c2".*')
+        ])
+        .innerJoin(`${Comments.name} as c2`, `c2.id`, Comments.col.parentComment)
+        .whereIn(Comments.col.id, replyIds)
+        .whereNotNull(Comments.col.parentComment)
+      return await q
+    }
 
-const markCommentViewed = ({ db }: { db: Knex }) =>
-  async (commentId: string, userId: string) => {
-    const query = tables.commentViews(db)
-      .insert({ commentId, userId, viewedAt: knex.fn.now() })
-      .onConflict(knex.raw('("commentId","userId")'))
-      .merge()
-    return await query
-  }
+export const markCommentViewedFactory =
+  ({ db }: { db: Knex }): MarkCommentViewed =>
+    async ({ commentId, userId }) => {
+      const query = tables.commentViews(db)
+        .insert({ commentId, userId, viewedAt: knex.fn.now() })
+        .onConflict(knex.raw('("commentId","userId")'))
+        .merge()
+      return await query
+    }
 
 export type InsertCommentPayload = MarkNullableOptional<
   Omit<CommentRecord, 'id' | 'createdAt' | 'updatedAt' | 'text' | 'archived'> & {
@@ -748,72 +722,38 @@ export type InsertCommentPayload = MarkNullableOptional<
   }
 >
 
-const insertComment = ({ db }: { db: Knex }) => async (
-  input: InsertCommentPayload,
-  options?: Partial<{ trx: Knex.Transaction }>
-): Promise<CommentRecord> => {
-  const finalInput = { ...input, id: generateCommentId() }
-  // TODO: The type of `text` in `InsertCommentPayload` appears to be incorrect
-  const q = tables.comments(db).insert(finalInput as unknown as CommentRecord, '*')
-  if (options?.trx) q.transacting(options.trx)
+export const insertCommentFactory =
+  ({ db }: { db: Knex }): InsertComment =>
+    async (input, options): Promise<CommentRecord> => {
+      const finalInput = { ...input, id: generateCommentId() }
+      // TODO: The type of `text` in `InsertCommentPayload` appears to be incorrect
+      const q = tables.comments(db).insert(finalInput as unknown as CommentRecord, '*')
+      if (options?.trx) q.transacting(options.trx)
 
-  const [res] = await q
-  return res as CommentRecord
-}
-
-const markCommentUpdated = ({ db }: { db: Knex }) => async (commentId: string) => {
-  return await tables.comments(db)
-    .where(Comments.col.id, commentId)
-    .update({
-      [Comments.withoutTablePrefix.col.updatedAt]: new Date()
-    })
-}
-
-const updateComment = ({ db }: { db: Knex }) => async (
-  id: string,
-  input: Merge<Partial<CommentRecord>, { text?: SmartTextEditorValueSchema }>
-) => {
-  // TODO: The type of `text` in `InsertCommentPayload` appears to be incorrect
-  const [res] = await tables.comments(db).where(Comments.col.id, id).update(input as unknown as CommentRecord, '*')
-  return res as CommentRecord
-}
-
-const deleteComment =
-  ({ db }: { db: Knex }) =>
-    async ({ commentId }: { commentId: string }): Promise<void> => {
-      await tables.comments(db).where({ id: commentId }).delete()
+      const [res] = await q
+      return res as CommentRecord
     }
 
-// export const createCommentsRepository = ({ db }: { db: Knex }) => ({
-//   getComment: getComment({ db }),
-//   legacyGetComment: legacyGetComment({ db }),
-//   getComments: getComments({ db }),
-//   getCommentsResources: getCommentsResources({ db }),
-//   getCommentsViewedAt: getCommentsViewedAt({ db }),
-//   getBatchedStreamComments: getBatchedStreamComments({ db }),
-//   getCommentLinks: getCommentLinks({ db }),
-//   insertComments: insertComments({ db }),
-//   insertCommentLinks: insertCommentLinks({ db }),
-//   // TODO: Does `getStreamCommentCounts` need to be exported?
-//   getStreamCommentCounts: getStreamCommentCounts({ db }),
-//   getCommitCommentCounts: getCommitCommentCounts({ db }),
-//   getStreamCommentCount: getStreamCommentCount({ db }),
-//   getBranchCommentCounts: getBranchCommentCounts({ db }),
-//   getCommentReplyCounts: getCommentReplyCounts({ db }),
-//   getCommentReplyAuthorIds: getCommentReplyAuthorIds({ db }),
-//   // TODO: Decide on pattern for accessing one repo from another
-//   resolvePaginatedProjectCommentsLatestModelResources,
-//   getPaginatedCommitComments: getPaginatedCommitComments({ db }),
-//   getPaginatedCommitCommentsTotalCount: getPaginatedCommitCommentsTotalCount({ db }),
-//   getPaginatedBranchComments: getPaginatedBranchComments({ db }),
-//   getPaginatedBranchCommentsTotalCount: getPaginatedBranchCommentsTotalCount({ db }),
-//   getPaginatedProjectComments: getPaginatedProjectComments({ db }),
-//   getPaginatedProjectCommentsTotalCount: getPaginatedProjectCommentsTotalCount({ db }),
-//   getResourceCommentCount: getResourceCommentCount({ db }),
-//   getCommentParents: getCommentParents({ db }),
-//   markCommentViewed: markCommentViewed({ db }),
-//   insertComment: insertComment({ db }),
-//   markCommentUpdated: markCommentUpdated({ db }),
-//   updateComment: updateComment({ db }),
-//   deleteComment: deleteComment({ db })
-// })
+export const markCommentUpdatedFactory =
+  ({ db }: { db: Knex }): MarkCommentUpdated =>
+    async ({ commentId }) => {
+      return await tables.comments(db)
+        .where(Comments.col.id, commentId)
+        .update({
+          [Comments.withoutTablePrefix.col.updatedAt]: new Date()
+        })
+    }
+
+export const updateCommentFactory =
+  ({ db }: { db: Knex }): UpdateComment =>
+    async ({ id, input }) => {
+      // TODO: The type of `text` in `InsertCommentPayload` appears to be incorrect
+      const [res] = await tables.comments(db).where(Comments.col.id, id).update(input as unknown as CommentRecord, '*')
+      return res as CommentRecord
+    }
+
+export const deleteCommentFactory =
+  ({ db }: { db: Knex }): DeleteComment =>
+    async ({ commentId }) => {
+      await tables.comments(db).where({ id: commentId }).delete()
+    }
