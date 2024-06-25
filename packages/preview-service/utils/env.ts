@@ -3,7 +3,7 @@ export const getChromiumExecutablePath = () =>
   process.env.CHROMIUM_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
 export const getHost = () => process.env.HOST || '127.0.0.1'
 export const getLogLevel = () => process.env.LOG_LEVEL || 'info'
-export const getMetricsPort = () => Number(process.env.PROMETHEUS_METRICS_PORT) || 9094
+export const getMetricsPort = () => process.env.PROMETHEUS_METRICS_PORT || '9094'
 export const getNodeEnv = () => process.env.NODE_ENV || 'production'
 export const getPostgresConnectionString = () =>
   process.env.PG_CONNECTION_STRING || 'postgres://speckle:speckle@127.0.0.1/speckle'

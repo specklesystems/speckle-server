@@ -1,7 +1,7 @@
 import prometheusClient from 'prom-client'
 import type { Counter, Histogram, Summary } from 'prom-client'
-import knex from '../repositories/knex'
 import { logger } from './logging'
+import type { Knex } from 'knex'
 
 // let metricFree: Gauge<string> | null = null
 // let metricUsed: Gauge<string> = null
@@ -25,13 +25,14 @@ function isPrometheusInitialized() {
   return prometheusInitialized
 }
 
-function initKnexPrometheusMetrics() {
+function initKnexPrometheusMetrics(params: { db: Knex }) {
+  const { db } = params
   //metricFree =
   new prometheusClient.Gauge({
     name: 'speckle_server_knex_free',
     help: 'Number of free DB connections',
     collect() {
-      this.set(knex.client.pool.numFree())
+      this.set(db.client.pool.numFree())
     }
   })
 
@@ -40,7 +41,7 @@ function initKnexPrometheusMetrics() {
     name: 'speckle_server_knex_used',
     help: 'Number of used DB connections',
     collect() {
-      this.set(knex.client.pool.numUsed())
+      this.set(db.client.pool.numUsed())
     }
   })
 
@@ -49,7 +50,7 @@ function initKnexPrometheusMetrics() {
     name: 'speckle_server_knex_pending',
     help: 'Number of pending DB connection aquires',
     collect() {
-      this.set(knex.client.pool.numPendingAcquires())
+      this.set(db.client.pool.numPendingAcquires())
     }
   })
 
@@ -63,12 +64,12 @@ function initKnexPrometheusMetrics() {
     help: 'Number of DB queries with errors'
   })
 
-  knex.on('query', (data) => {
+  db.on('query', (data) => {
     const queryId = data.__knexQueryUid + ''
     queryStartTime[queryId] = Date.now()
   })
 
-  knex.on('query-response', (_data, obj) => {
+  db.on('query-response', (_data, obj) => {
     const queryId = obj.__knexQueryUid + ''
     const durationSec = (Date.now() - queryStartTime[queryId]) / 1000
     delete queryStartTime[queryId]
@@ -76,7 +77,7 @@ function initKnexPrometheusMetrics() {
       metricQueryDuration.observe(durationSec)
   })
 
-  knex.on('query-error', (_err, querySpec) => {
+  db.on('query-error', (_err, querySpec) => {
     const queryId = querySpec.__knexQueryUid + ''
     const durationSec = (Date.now() - queryStartTime[queryId]) / 1000
     delete queryStartTime[queryId]
@@ -88,7 +89,7 @@ function initKnexPrometheusMetrics() {
   })
 }
 
-export function initPrometheusMetrics() {
+export function initPrometheusMetrics(params: { db: Knex }) {
   logger.info('Initializing Prometheus metrics...')
   if (isPrometheusInitialized()) {
     logger.info('Prometheus metrics already initialized')
@@ -111,7 +112,7 @@ export function initPrometheusMetrics() {
       labelNames: ['op']
     })
 
-    initKnexPrometheusMetrics()
+    initKnexPrometheusMetrics(params)
   } catch {
     prometheusInitialized = false
   }

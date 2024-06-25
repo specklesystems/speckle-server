@@ -17,7 +17,7 @@ import { serviceOrigin } from '../utils/env'
 import { generatePreviewFactory } from '../clients/previewService'
 
 export async function startPreviewService() {
-  logger.info('📸 Started Preview Service background worker')
+  logger.info('📸 Starting Preview Service background worker')
 
   process.on('SIGTERM', () => {
     forceExit()
@@ -29,7 +29,7 @@ export async function startPreviewService() {
     logger.info('Shutting down...')
   })
 
-  initPrometheusMetrics()
+  initPrometheusMetrics({ db })
   await repeatedlyPollForWorkFactory({
     getNextUnstartedObjectPreview: getNextUnstartedObjectPreviewFactory({ db }),
     generateAndStore360Preview: generateAndStore360PreviewFactory({

@@ -2,8 +2,13 @@ import express, { ErrorRequestHandler } from 'express'
 import createError from 'http-errors'
 import { LoggingExpressMiddleware } from './expressLogging'
 import metricsRouter from './metricsRoute'
+import { initPrometheusMetrics } from './prometheusMetrics'
+import db from '../repositories/knex'
 
-export const app = express()
+export const app = (() => {
+  initPrometheusMetrics({ db })
+  return express()
+})()
 
 app.use(LoggingExpressMiddleware)
 app.use(express.json({ limit: '100mb' }))
