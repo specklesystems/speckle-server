@@ -21,6 +21,11 @@ const {
 } = require('@/modules/shared/helpers/envHelper')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 const { UnverifiedEmailSSOLoginError } = require('@/modules/core/errors/userinput')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const db = require('@/db/knex')
 const { getNameFromUserInfo } = require('@/modules/auth/domain/logic')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
@@ -83,7 +88,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
             // process invites
             if (myUser.isNewUser) {
-              await finalizeInvitedServerRegistration(user.email, myUser.id)
+              await finalizeInvitedServerRegistration({
+                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+                updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+              })(user.email, myUser.id)
             }
             return done(null, myUser)
           }
@@ -108,7 +116,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
             rawProfile: userinfo
           })
 
-          await finalizeInvitedServerRegistration(user.email, myUser.id)
+          await finalizeInvitedServerRegistration({
+            deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+            updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+          })(user.email, myUser.id)
 
           // Resolve redirect path
           req.authRedirectPath = resolveAuthRedirectPath(validInvite)
