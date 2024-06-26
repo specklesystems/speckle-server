@@ -147,7 +147,8 @@ export class SketchupBridge extends BaseBridge {
       })
     }
 
-    const rootObj = loader.getAndConstructObject(updateProgress)
+    // eslint-disable-next-line @typescript-eslint/await-thenable
+    const rootObj = await loader.getAndConstructObject(updateProgress)
     const args = [
       eventPayload.modelCardId,
       result.data.project.model.version.sourceApplication,
