@@ -13,8 +13,8 @@ import {
   type Shader
 } from 'three'
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js'
-import { StencilOutlineType } from '../../IViewer'
-import { type MaterialOptions } from './MaterialOptions'
+import { StencilOutlineType } from '../../IViewer.js'
+import { type MaterialOptions } from './MaterialOptions.js'
 
 class SpeckleUserData {
   [k: string]: unknown

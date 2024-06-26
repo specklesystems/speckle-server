@@ -1,6 +1,6 @@
 import { Vector3 } from 'three'
-import { Extension } from './Extension'
-import { UpdateFlags } from '../../IViewer'
+import { Extension } from './Extension.js'
+import { UpdateFlags } from '../../IViewer.js'
 
 export class ExplodeExtension extends Extension {
   protected _enabled: boolean = true

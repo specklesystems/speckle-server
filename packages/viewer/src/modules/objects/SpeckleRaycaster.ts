@@ -8,10 +8,10 @@ import {
   Face
 } from 'three'
 import { ExtendedTriangle, ShapecastIntersection } from 'three-mesh-bvh'
-import { BatchObject } from '../batching/BatchObject'
-import { ObjectLayers } from '../../IViewer'
-import SpeckleMesh from './SpeckleMesh'
-import SpeckleInstancedMesh from './SpeckleInstancedMesh'
+import { BatchObject } from '../batching/BatchObject.js'
+import { ObjectLayers } from '../../IViewer.js'
+import SpeckleMesh from './SpeckleMesh.js'
+import SpeckleInstancedMesh from './SpeckleInstancedMesh.js'
 
 export type ExtendedShapeCastCallbacks = {
   intersectsTAS?: (

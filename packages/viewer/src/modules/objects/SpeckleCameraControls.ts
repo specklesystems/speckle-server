@@ -43,7 +43,7 @@ let _xColumn: Vector3
 let _yColumn: Vector3
 let _zColumn: Vector3
 
-export class SpeckleCameraControls extends CameraControls {
+export class SpeckleCameraControls extends CameraControls.default {
   private _didDolly = false
   private _didDollyLastFrame = false
   public _isTrucking = false

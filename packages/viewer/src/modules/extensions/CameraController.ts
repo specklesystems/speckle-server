@@ -1,4 +1,4 @@
-import { Extension } from './Extension'
+import { Extension } from './Extension.js'
 import {
   Box3,
   Camera,
@@ -13,13 +13,13 @@ import {
 import {
   SmoothOrbitControlsOptions,
   SmoothOrbitControls
-} from './controls/SmoothOrbitControls'
-import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera'
-import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera'
-import Logger from 'js-logger'
-import { type IViewer, type SpeckleView } from '../../IViewer'
-import { FlyControls, FlyControlsOptions } from './controls/FlyControls'
-import { SpeckleControls } from './controls/SpeckleControls'
+} from './controls/SmoothOrbitControls.js'
+import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera.js'
+import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera.js'
+import { type IViewer, type SpeckleView } from '../../IViewer.js'
+import { FlyControls, FlyControlsOptions } from './controls/FlyControls.js'
+import { SpeckleControls } from './controls/SpeckleControls.js'
+import Logger from '../utils/Logger.js'
 
 export type CanonicalView =
   | 'front'

@@ -11,14 +11,14 @@ import {
   Vector3
 } from 'three'
 import { ExtendedTriangle } from 'three-mesh-bvh'
-import { BatchObject } from '../batching/BatchObject'
+import { BatchObject } from '../batching/BatchObject.js'
 import type {
   ExtendedMeshIntersection,
   ExtendedShapeCastCallbacks,
   MeshIntersection
-} from './SpeckleRaycaster'
-import { ObjectLayers } from '../../IViewer'
-import { AccelerationStructure } from './AccelerationStructure'
+} from './SpeckleRaycaster.js'
+import { ObjectLayers } from '../../IViewer.js'
+import { AccelerationStructure } from './AccelerationStructure.js'
 
 /** 
  * 

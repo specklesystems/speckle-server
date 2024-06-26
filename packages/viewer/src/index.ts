@@ -1,4 +1,4 @@
-import { Viewer } from './modules/Viewer'
+import { Viewer } from './modules/Viewer.js'
 import {
   AssetType,
   DefaultLightConfiguration,
@@ -14,67 +14,70 @@ import {
   type ViewerParams,
   LightConfiguration,
   ViewerEventPayload
-} from './IViewer'
+} from './IViewer.js'
 import type {
   PropertyInfo,
   StringPropertyInfo,
   NumericPropertyInfo
-} from './modules/filtering/PropertyManager'
-import { type SunLightConfiguration } from './IViewer'
-import { World } from './modules/World'
-import { type NodeData, type TreeNode, WorldTree } from './modules/tree/WorldTree'
+} from './modules/filtering/PropertyManager.js'
+import { type SunLightConfiguration } from './IViewer.js'
+import { World } from './modules/World.js'
+import { type NodeData, type TreeNode, WorldTree } from './modules/tree/WorldTree.js'
 import type {
   PointQuery,
   QueryResult,
   IntersectionQuery,
   PointQueryResult,
   IntersectionQueryResult
-} from './modules/queries/Query'
-import { type Utils } from './modules/Utils'
-import { BatchObject } from './modules/batching/BatchObject'
+} from './modules/queries/Query.js'
+import { type Utils } from './modules/Utils.js'
+import { BatchObject } from './modules/batching/BatchObject.js'
 import { Box3, Vector3 } from 'three'
 import {
   type MeasurementOptions,
   MeasurementType,
   MeasurementsExtension
-} from './modules/extensions/measurements/MeasurementsExtension'
-import { Units } from './modules/converter/Units'
-import { SelectionExtension } from './modules/extensions/SelectionExtension'
-import { CameraController } from './modules/extensions/CameraController'
-import { type InlineView } from './modules/extensions/CameraController'
-import { type CanonicalView } from './modules/extensions/CameraController'
-import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera'
-import { SectionTool, SectionToolEventPayload } from './modules/extensions/SectionTool'
-import { SectionOutlines } from './modules/extensions/SectionOutlines'
+} from './modules/extensions/measurements/MeasurementsExtension.js'
+import { Units } from './modules/converter/Units.js'
+import { SelectionExtension } from './modules/extensions/SelectionExtension.js'
+import { CameraController } from './modules/extensions/CameraController.js'
+import { type InlineView } from './modules/extensions/CameraController.js'
+import { type CanonicalView } from './modules/extensions/CameraController.js'
+import { CameraEvent, CameraEventPayload } from './modules/objects/SpeckleCamera.js'
+import {
+  SectionTool,
+  SectionToolEventPayload
+} from './modules/extensions/SectionTool.js'
+import { SectionOutlines } from './modules/extensions/SectionOutlines.js'
 import {
   FilteringExtension,
   type FilteringState
-} from './modules/extensions/FilteringExtension'
-import { Extension } from './modules/extensions/Extension'
-import { ExplodeExtension } from './modules/extensions/ExplodeExtension'
+} from './modules/extensions/FilteringExtension.js'
+import { Extension } from './modules/extensions/Extension.js'
+import { ExplodeExtension } from './modules/extensions/ExplodeExtension.js'
 import {
   DiffExtension,
   type DiffResult,
   VisualDiffMode
-} from './modules/extensions/DiffExtension'
-import { Loader, LoaderEvent } from './modules/loaders/Loader'
-import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader'
-import { ObjLoader } from './modules/loaders/OBJ/ObjLoader'
-import { LegacyViewer } from './modules/LegacyViewer'
-import { SpeckleType } from './modules/loaders/GeometryConverter'
-import Input, { InputEvent, InputEventPayload } from './modules/input/Input'
-import { GeometryType } from './modules/batching/Batch'
-import { MeshBatch } from './modules/batching/MeshBatch'
-import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial'
-import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial'
-import { SpeckleText } from './modules/objects/SpeckleText'
-import { NodeRenderView } from './modules/tree/NodeRenderView'
-import { type ExtendedIntersection } from './modules/objects/SpeckleRaycaster'
-import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter'
-import { Assets } from './modules/Assets'
-import { SpecklePass } from './modules/pipeline/SpecklePass'
-import { InstancedBatchObject } from './modules/batching/InstancedBatchObject'
-import { HybridCameraController } from './modules/extensions/HybridCameraController'
+} from './modules/extensions/DiffExtension.js'
+import { Loader, LoaderEvent } from './modules/loaders/Loader.js'
+import { SpeckleLoader } from './modules/loaders/Speckle/SpeckleLoader.js'
+import { ObjLoader } from './modules/loaders/OBJ/ObjLoader.js'
+import { LegacyViewer } from './modules/LegacyViewer.js'
+import { SpeckleType } from './modules/loaders/GeometryConverter.js'
+import Input, { InputEvent, InputEventPayload } from './modules/input/Input.js'
+import { GeometryType } from './modules/batching/Batch.js'
+import { MeshBatch } from './modules/batching/MeshBatch.js'
+import SpeckleStandardMaterial from './modules/materials/SpeckleStandardMaterial.js'
+import SpeckleTextMaterial from './modules/materials/SpeckleTextMaterial.js'
+import { SpeckleText } from './modules/objects/SpeckleText.js'
+import { NodeRenderView } from './modules/tree/NodeRenderView.js'
+import { type ExtendedIntersection } from './modules/objects/SpeckleRaycaster.js'
+import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeometryConverter.js'
+import { Assets } from './modules/Assets.js'
+import { SpecklePass } from './modules/pipeline/SpecklePass.js'
+import { InstancedBatchObject } from './modules/batching/InstancedBatchObject.js'
+import { HybridCameraController } from './modules/extensions/HybridCameraController.js'
 
 export {
   Viewer,
@@ -155,4 +158,4 @@ export type {
   SpecklePass
 }
 
-export * as UrlHelper from './modules/UrlHelper'
+export * as UrlHelper from './modules/UrlHelper.js'

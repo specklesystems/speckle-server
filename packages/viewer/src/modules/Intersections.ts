@@ -15,8 +15,8 @@ import {
   ExtendedIntersection,
   ExtendedMeshIntersection,
   SpeckleRaycaster
-} from './objects/SpeckleRaycaster'
-import { ObjectLayers } from '../IViewer'
+} from './objects/SpeckleRaycaster.js'
+import { ObjectLayers } from '../IViewer.js'
 
 export class Intersections {
   protected raycaster: SpeckleRaycaster

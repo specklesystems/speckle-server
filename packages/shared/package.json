@@ -1,6 +1,6 @@
 {
   "name": "@speckle/shared",
-  "version": "2.16.1-alpha.1",
+  "version": "2.20.0-alpha4",
   "description": "Shared code between various Speckle JS packages",
   "homepage": "https://speckle.systems",
   "repository": {
@@ -32,7 +32,7 @@
     "3d"
   ],
   "dependencies": {
-    "lodash": "^4.17.0",
+    "lodash": "^4.17.21",
     "lodash-es": "^4.17.21",
     "type-fest": "^3.11.1"
   },
@@ -73,7 +73,9 @@
   "imports": {
     "#lodash": {
       "require": "lodash",
-      "import": "lodash-es"
+      "import": "lodash-es",
+      "node": "lodash",
+      "default": "lodash-es"
     }
   },
   "exports": {

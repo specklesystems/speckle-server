@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
-import { speckleBasicVert } from './shaders/speckle-basic-vert'
-import { speckleBasicFrag } from './shaders/speckle-basic-frag'
+import { speckleBasicVert } from './shaders/speckle-basic-vert.js'
+import { speckleBasicFrag } from './shaders/speckle-basic-frag.js'
 import {
   ShaderLib,
   Vector3,
@@ -15,8 +15,8 @@ import {
 } from 'three'
 import { Matrix4 } from 'three'
 
-import { ExtendedMeshBasicMaterial, type Uniforms } from './SpeckleMaterial'
-import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
+import { ExtendedMeshBasicMaterial, type Uniforms } from './SpeckleMaterial.js'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
 
 class SpeckleBasicMaterial extends ExtendedMeshBasicMaterial {
   protected static readonly matBuff: Matrix4 = new Matrix4()
