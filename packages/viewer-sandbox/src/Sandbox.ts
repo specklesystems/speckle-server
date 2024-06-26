@@ -14,7 +14,8 @@ import {
   SpeckleLoader,
   ObjLoader,
   UrlHelper,
-  LoaderEvent
+  LoaderEvent,
+  UpdateFlags
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import { DiffResult } from '@speckle/viewer'
@@ -297,12 +298,12 @@ export default class Sandbox {
         // })
         // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
-          // obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          obj.position = new Vector3(
-            position.value.x,
-            position.value.y,
-            position.value.z
-          )
+          obj.transformTRS(position.value)
+          // obj.position = new Vector3(
+          //   position.value.x,
+          //   position.value.y,
+          //   position.value.z
+          // )
         })
         this.viewer.requestRender()
       })
@@ -487,7 +488,7 @@ export default class Sandbox {
         this.viewer
           .getExtension(CameraController)
           .setCameraView({ azimuth: Math.PI / 12, polar: 0 }, false)
-        this.viewer.getRenderer().resetPipeline()
+        this.viewer.requestRender(UpdateFlags.RENDER_RESET)
         await waitForAnimation(1000)
       }
     })

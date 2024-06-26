@@ -547,7 +547,6 @@ export default class SpeckleRenderer {
   public resetPipeline() {
     this._needsRender = true
     this.pipeline.reset()
-    // if (force) this.pipeline.reset()
   }
 
   public render(): void {

@@ -62,8 +62,7 @@ export class Pipeline {
   private _renderer: WebGLRenderer
   private _batcher: Batcher
   private _pipelineOptions: PipelineOptions = Object.assign({}, DefaultPipelineOptions)
-  private _needsProgressive = false
-  private _resetFrame = false
+  // private _resetFrame = false
   private _composer: EffectComposer
 
   private depthPass: DepthPass
@@ -89,12 +88,13 @@ export class Pipeline {
     this.dynamicAoPass.setParams(options.dynamicAoParams)
     this.staticAoPass.setParams(options.staticAoParams)
     this.accumulationFrame = 0
-    if (options.depthSide) this.depthPass.depthSide = options.depthSide
-    if (options.accumulationFrames) {
+    if (options.depthSide !== undefined) this.depthPass.depthSide = options.depthSide
+    if (options.accumulationFrames !== undefined) {
       this.applySaoPass.setAccumulationFrames(options.accumulationFrames)
       this.staticAoPass.setAccumulationFrames(options.accumulationFrames)
     }
-    if (options.pipelineOutput) this.pipelineOutput = options.pipelineOutput
+    if (options.pipelineOutput !== undefined)
+      this.pipelineOutput = options.pipelineOutput
   }
 
   public get pipelineOptions(): PipelineOptions {
@@ -110,7 +110,6 @@ export class Pipeline {
         this.depthPass.depthSize = DepthSize.FULL
         this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
         this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
-        this.needsProgressive = true
         break
 
       case PipelineOutputType.DEPTH_RGBA:
@@ -119,7 +118,6 @@ export class Pipeline {
         this.depthPass.depthSize = DepthSize.FULL
         this.copyOutputPass.setTexture('tDiffuse', this.depthPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.DEPTH_RGBA)
-        this.needsProgressive = false
         break
 
       case PipelineOutputType.DEPTH:
@@ -128,7 +126,6 @@ export class Pipeline {
         this.depthPass.depthSize = DepthSize.FULL
         this.copyOutputPass.setTexture('tDiffuse', this.depthPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.DEPTH)
-        this.needsProgressive = false
         break
 
       case PipelineOutputType.COLOR:
@@ -141,7 +138,6 @@ export class Pipeline {
         this.normalsPass.enabled = true
         this.copyOutputPass.setTexture('tDiffuse', this.normalsPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.GEOMETRY_NORMALS)
-        this.needsProgressive = false
         break
 
       case PipelineOutputType.RECONSTRUCTED_NORMALS:
@@ -154,7 +150,6 @@ export class Pipeline {
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.RECONSTRUCTED_NORMALS)
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.GEOMETRY_NORMALS)
-        this.needsProgressive = false
         break
 
       case PipelineOutputType.DYNAMIC_AO:
@@ -171,7 +166,6 @@ export class Pipeline {
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO)
-        this.needsProgressive = false
         break
 
       case PipelineOutputType.DYNAMIC_AO_BLURED:
@@ -189,7 +183,6 @@ export class Pipeline {
         this.copyOutputPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
         this.dynamicAoPass.setOutputType(DynamicAOOutputType.AO_BLURRED)
-        this.needsProgressive = false
         break
 
       case PipelineOutputType.PROGRESSIVE_AO:
@@ -202,20 +195,11 @@ export class Pipeline {
         this.depthPass.depthSize = DepthSize.FULL
         this.copyOutputPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
         this.copyOutputPass.setOutputType(PipelineOutputType.COLOR)
-        this.needsProgressive = true
         break
       default:
         break
     }
     this.setPipeline(pipeline)
-  }
-
-  public set needsProgressive(value: boolean) {
-    this._needsProgressive = value
-    // if (!value) this._renderType = RenderType.NORMAL
-    // if (value && this._renderType === RenderType.NORMAL)
-    //   this._renderType = RenderType.ACCUMULATION
-    this.accumulationFrame = 0
   }
 
   public get needsAccumulation() {
@@ -375,7 +359,6 @@ export class Pipeline {
     pipeline.push(this.applySaoPass)
     pipeline.push(this.overlayPass)
 
-    // this.needsProgressive = true
     return pipeline
   }
 
@@ -398,7 +381,8 @@ export class Pipeline {
   }
 
   public reset() {
-    this._resetFrame = true
+    // this._resetFrame = true
+    this.accumulationFrame = 0
     this.onStationaryEnd()
   }
 
@@ -420,6 +404,7 @@ export class Pipeline {
   }
 
   public render(): boolean {
+    console.warn('render')
     this._renderer.getDrawingBufferSize(this.drawingSize)
     if (this.drawingSize.length() === 0) return false
 
@@ -427,24 +412,32 @@ export class Pipeline {
 
     let retVal = false
     this._renderer.clear(true)
-    if (this._renderType === RenderType.NORMAL) {
-      this._composer.render()
-      const ret = false || this._resetFrame
-      if (this._resetFrame) {
-        this._resetFrame = false
-        /** This might not be needed */
-        this.onStationaryBegin()
-      }
-      retVal = ret
-    } else {
-      // console.warn('Rendering accumulation frame -> ', this.accumulationFrame)
-      this._composer.render()
+
+    this._composer.render()
+
+    // if (this._renderType === RenderType.NORMAL) {
+    //   retVal = false || this._resetFrame
+    // }
+    if (this._renderType === RenderType.ACCUMULATION) {
       this.accumulationFrame++
       retVal = this.needsAccumulation
+      if (!retVal) this.onAccumulationComplete()
     }
 
     if (this.onAfterPipelineRender) this.onAfterPipelineRender()
     return retVal
+  }
+
+  protected onAccumulationComplete() {
+    this._renderType = RenderType.NORMAL
+    this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
+    this.depthPass.depthSize = DepthSize.HALF
+    this.staticAoPass.enabled = false
+    this.applySaoPass.enabled = true
+    this.dynamicAoPass.enabled = true
+    this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
+    this.applySaoPass.setRenderType(this._renderType)
+    console.warn('Accumulation complete')
   }
 
   public resize(width: number, height: number) {
@@ -453,11 +446,6 @@ export class Pipeline {
   }
 
   public onStationaryBegin() {
-    if (!this._needsProgressive) return
-    if (this._renderType === RenderType.ACCUMULATION) {
-      this.accumulationFrame = 0
-      return
-    }
     this._renderType = RenderType.ACCUMULATION
     this.accumulationFrame = 0
     this.depthPass.enabled = true
@@ -471,11 +459,10 @@ export class Pipeline {
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
+    console.warn('Stationary begin')
   }
 
   public onStationaryEnd() {
-    if (!this._needsProgressive) return
-    if (this._renderType === RenderType.NORMAL) return
     this.accumulationFrame = 0
     this._renderType = RenderType.NORMAL
     this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
@@ -485,5 +472,6 @@ export class Pipeline {
     this.dynamicAoPass.enabled = true
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
+    console.warn('Stationary End')
   }
 }
