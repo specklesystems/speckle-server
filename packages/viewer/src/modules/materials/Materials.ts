@@ -255,8 +255,8 @@ export default class Materials {
           renderView.geometryType === GeometryType.TEXT)
           ? Materials.renderMaterialToString(materialData)
           : Materials.isDisplayStyle(materialData) &&
-            renderView.geometryType !== GeometryType.MESH &&
-            renderView.geometryType !== GeometryType.POINT
+            // && renderView.geometryType !== GeometryType.POINT // Allow Points to use displayStyle
+            renderView.geometryType !== GeometryType.MESH
           ? Materials.displayStyleToString(materialData)
           : ''
       if ((materialData as MaterialOptions).stencilOutlines) {
@@ -438,7 +438,7 @@ export default class Materials {
         size: 2,
         sizeAttenuation: false
       },
-      ['USE_RTE']
+      ['USE_RTE', 'USE_GRADIENT_RAMP']
     )
     ;(this.pointCloudColouredMaterial as SpecklePointMaterial).toneMapped = false
     this.pointCloudGradientMaterial = new SpecklePointColouredMaterial(
@@ -448,7 +448,7 @@ export default class Materials {
         size: 2,
         sizeAttenuation: false
       },
-      ['USE_RTE']
+      ['USE_RTE', 'USE_GRADIENT_RAMP']
     )
     ;(
       this.pointCloudGradientMaterial as SpecklePointColouredMaterial

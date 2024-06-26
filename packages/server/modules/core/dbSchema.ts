@@ -261,7 +261,8 @@ export const Streams = buildTableHelper(
     'createdAt',
     'updatedAt',
     'allowPublicComments',
-    'isDiscoverable'
+    'isDiscoverable',
+    'workspaceId'
   ],
   StreamsMeta
 )
