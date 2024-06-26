@@ -1,4 +1,3 @@
-import crs from 'crypto-random-string'
 import knex from '@/db/knex'
 import { ForbiddenError } from '@/modules/shared/errors'
 import {
@@ -6,75 +5,88 @@ import {
   validateInputAttachments
 } from '@/modules/comments/services/commentTextService'
 import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
-import { clamp } from 'lodash'
 import { Roles } from '@speckle/shared'
-import { CommentCreateInput, CommentEditInput } from '@/modules/core/graph/generated/graphql'
-import { CommentsRepository } from '@/modules/comments/domain'
-import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
+import { CommentCreateInput, CommentEditInput, ResourceIdentifier } from '@/modules/core/graph/generated/graphql'
+import { CommentLinkRecord, CommentRecord } from '@/modules/comments/domain/types'
 import { JSONContent } from '@tiptap/core'
+import { DeleteComment, GetStreamCommentCount, InsertComment, InsertCommentLinks, LegacyGetComment, MarkCommentUpdated, MarkCommentViewed, UpdateComment } from '@/modules/comments/domain/operations'
 
-const Comments = () => knex('comments')
-const CommentLinks = () => knex('comment_links')
+// const Comments = () => knex('comments')
+// const CommentLinks = () => knex('comment_links')
 
-const resourceCheck = async (res, streamId: string) => {
-  // The `switch` of DOOM👻😩😨👻 - if something throws, we're out
-  switch (res.resourceType) {
-    case 'stream':
-      // Stream validity is already checked, so we can just go ahead.
-      break
-    case 'commit': {
-      const linkage = await knex('stream_commits')
-        .select()
-        .where({ commitId: res.resourceId, streamId })
-        .first()
-      if (!linkage) throw new Error('Commit not found')
-      if (linkage.streamId !== streamId)
-        throw new Error(
-          'Stop hacking - that commit id is not part of the specified stream.'
-        )
-      break
+const resourceCheckFactory =
+  ({
+    legacyGetComment
+  }: {
+    legacyGetComment: LegacyGetComment
+  }) =>
+    async (res: ResourceIdentifier, streamId: string) => {
+      // The `switch` of DOOM👻😩😨👻 - if something throws, we're out
+      switch (res.resourceType) {
+        case 'stream':
+          // Stream validity is already checked, so we can just go ahead.
+          break
+        case 'commit': {
+          const linkage = await knex('stream_commits')
+            .select()
+            .where({ commitId: res.resourceId, streamId })
+            .first()
+          if (!linkage) throw new Error('Commit not found')
+          if (linkage.streamId !== streamId)
+            throw new Error(
+              'Stop hacking - that commit id is not part of the specified stream.'
+            )
+          break
+        }
+        case 'object': {
+          const obj = await knex('objects')
+            .select()
+            .where({ id: res.resourceId, streamId })
+            .first()
+          if (!obj) throw new Error('Object not found')
+          break
+        }
+        case 'comment': {
+          const comment = await legacyGetComment({ id: res.resourceId })
+          if (!comment) throw new Error('Comment not found')
+          if (comment.streamId !== streamId)
+            throw new Error(
+              'Stop hacking - that comment is not part of the specified stream.'
+            )
+          break
+        }
+        default:
+          throw Error(
+            `resource type ${res.resourceType} is not supported as a comment target`
+          )
+      }
     }
-    case 'object': {
-      const obj = await knex('objects')
-        .select()
-        .where({ id: res.resourceId, streamId })
-        .first()
-      if (!obj) throw new Error('Object not found')
-      break
-    }
-    case 'comment': {
-      const comment = await Comments().where({ id: res.resourceId }).first()
-      if (!comment) throw new Error('Comment not found')
-      if (comment.streamId !== streamId)
-        throw new Error(
-          'Stop hacking - that comment is not part of the specified stream.'
-        )
-      break
-    }
-    default:
-      throw Error(
-        `resource type ${res.resourceType} is not supported as a comment target`
-      )
-  }
-}
 
-export const streamResourceCheck = async ({ streamId, resources }) => {
-  // this itches - a for loop with queries... but okay let's hit the road now
-  await Promise.all(resources.map((res) => resourceCheck(res, streamId)))
-}
+export const streamResourceCheckFactory =
+  ({
+    legacyGetComment
+  }: {
+    legacyGetComment: LegacyGetComment
+  }) =>
+    async ({ streamId, resources }: { streamId: string, resources: ResourceIdentifier[] }) => {
+      // this itches - a for loop with queries... but okay let's hit the road now
+      await Promise.all(resources.map((res) => resourceCheckFactory({ legacyGetComment })(res, streamId)))
+    }
 
 /**
  * @deprecated Use 'createCommentThreadAndNotify()' instead
  */
-export const createComment =
-  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'deleteComment' | 'insertComment' | 'insertCommentLinks'> }) =>
+export const createCommentFactory =
+  ({
+    deleteComment,
+    insertComment,
+    insertCommentLinks
+  }: {
+    deleteComment: DeleteComment,
+    insertComment: InsertComment,
+    insertCommentLinks: InsertCommentLinks
+  }) =>
     async ({ userId, input }: { userId: string, input: CommentCreateInput }): Promise<CommentRecord> => {
-      const {
-        deleteComment,
-        insertComment,
-        insertCommentLinks,
-      } = commentsRepository
-
       if (input.resources.length < 1)
         throw Error('Must specify at least one resource as the comment target')
 
@@ -116,13 +128,15 @@ export const createComment =
             continue
           }
 
-          await insertCommentLinks([
-            {
-              commentId: newComment.id,
-              resourceId: res.resourceId,
-              resourceType: res.resourceType
-            }
-          ])
+          await insertCommentLinks({
+            commentLinks: [
+              {
+                commentId: newComment.id,
+                resourceId: res.resourceId,
+                resourceType: res.resourceType
+              }
+            ]
+          })
         }
       } catch (e) {
         await deleteComment({ commentId: newComment.id }) // roll back
@@ -149,8 +163,18 @@ type CreateCommentReplyParams = {
 /**
  * @deprecated Use 'createCommentReplyAndNotify()' instead
  */
-export const createCommentReply =
-  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'deleteComment' | 'insertComment' | 'insertCommentLinks' | 'markCommentUpdated'> }) =>
+export const createCommentReplyFactory =
+  ({
+    deleteComment,
+    insertComment,
+    insertCommentLinks,
+    markCommentUpdated
+  }: {
+    deleteComment: DeleteComment,
+    insertComment: InsertComment,
+    insertCommentLinks: InsertCommentLinks,
+    markCommentUpdated: MarkCommentUpdated
+  }) =>
     async ({
       authorId,
       parentCommentId,
@@ -159,13 +183,6 @@ export const createCommentReply =
       data,
       blobIds
     }: CreateCommentReplyParams) => {
-      const {
-        deleteComment,
-        insertComment,
-        insertCommentLinks,
-        markCommentUpdated
-      } = commentsRepository
-
       await validateInputAttachments(streamId, blobIds)
       const comment = {
         // id: crs({ length: 10 }),
@@ -183,12 +200,12 @@ export const createCommentReply =
           streamId,
           resources: [commentLink]
         })
-        await insertCommentLinks([{ commentId: newComment.id, ...commentLink }])
+        await insertCommentLinks({ commentLinks: [{ commentId: newComment.id, ...commentLink }] })
       } catch (e) {
         await deleteComment({ commentId: newComment.id }) // roll back
         throw e // pass on to resolver
       }
-      await markCommentUpdated(parentCommentId)
+      await markCommentUpdated({ commentId: parentCommentId })
 
       await CommentsEmitter.emit(CommentsEvents.Created, {
         comment: newComment
@@ -200,11 +217,15 @@ export const createCommentReply =
 /**
  * @deprecated Use 'editCommentAndNotify()'
  */
-export const editComment =
-  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'legacyGetComment' | 'updateComment'> }) =>
+export const editCommentFactory =
+  ({
+    legacyGetComment,
+    updateComment
+  }: {
+    legacyGetComment: LegacyGetComment,
+    updateComment: UpdateComment
+  }) =>
     async ({ userId, input, matchUser = false }: { userId: string, input: CommentEditInput, matchUser: boolean }): Promise<CommentRecord> => {
-      const { legacyGetComment, updateComment } = commentsRepository
-
       const editedComment = await legacyGetComment({ id: input.id })
       if (!editedComment) throw new Error("The comment doesn't exist")
 
@@ -217,7 +238,7 @@ export const editComment =
         blobIds: input.blobIds
       })
 
-      const updatedComment = await updateComment(input.id, { text: newText })
+      const updatedComment = await updateComment({ id: input.id, input: { text: newText } })
 
       await CommentsEmitter.emit(CommentsEvents.Updated, {
         previousComment: editedComment,
@@ -230,25 +251,28 @@ export const editComment =
 /**
  * @deprecated Use 'markCommentViewed()'
  */
-export const viewComment =
-  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'markCommentViewed'> }) =>
+export const viewCommentFactory =
+  ({
+    markCommentViewed
+  }: {
+    markCommentViewed: MarkCommentViewed
+  }) =>
     async ({ userId, commentId }: { userId: string, commentId: string }) => {
-      await commentsRepository.markCommentViewed(commentId, userId)
+      await markCommentViewed({ commentId, userId })
     }
-
-/**
- * @deprecated Use repository method
- */
-export const getComment = repositoryGetComment
 
 /**
  * @deprecated Use 'archiveCommentAndNotify()'
  */
-export const archiveComment =
-  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'legacyGetComment' | 'updateComment'> }) =>
+export const archiveCommentFactory =
+  ({
+    legacyGetComment,
+    updateComment
+  }: {
+    legacyGetComment: LegacyGetComment,
+    updateComment: UpdateComment
+  }) =>
     async ({ commentId, userId, streamId, archived = true }: { commentId: string, userId: string, streamId: string, archived: boolean }): Promise<CommentRecord> => {
-      const { legacyGetComment, updateComment } = commentsRepository
-
       const comment = await legacyGetComment({ id: commentId })
       if (!comment)
         throw new Error(
@@ -266,7 +290,7 @@ export const archiveComment =
           throw new ForbiddenError("You don't have permission to archive the comment")
       }
 
-      const updatedComment = await updateComment(commentId, { archived })
+      const updatedComment = await updateComment({ id: commentId, input: { archived } })
 
       return updatedComment
     }
@@ -357,6 +381,12 @@ export const archiveComment =
 //   return 0
 // }
 
-export const getStreamCommentCount = async ({ streamId }) => {
-  return (await repositoryGetCommentCount(streamId, { threadsOnly: true })) || 0
-}
+export const getStreamCommentCountFactory =
+  ({
+    getStreamCommentCount
+  }: {
+    getStreamCommentCount: GetStreamCommentCount
+  }) =>
+    async ({ streamId }: { streamId: string }) => {
+      return (await getStreamCommentCount({ streamId })) || 0
+    }

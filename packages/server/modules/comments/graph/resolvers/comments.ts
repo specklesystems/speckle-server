@@ -5,12 +5,12 @@ import { getStream } from '@/modules/core/services/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import knexInstance from '@/db/knex'
 import {
-  createComment,
-  createCommentReply,
-  viewComment,
-  archiveComment,
-  editComment,
-  streamResourceCheck
+  createCommentFactory,
+  createCommentReplyFactory,
+  viewCommentFactory,
+  archiveCommentFactory,
+  editCommentFactory,
+  streamResourceCheckFactory
 } from '@/modules/comments/services/index'
 import {
   ensureCommentSchema
@@ -20,9 +20,9 @@ import {
   documentToBasicString
 } from '@/modules/core/services/richTextEditorService'
 import {
-  getPaginatedCommitComments,
-  getPaginatedBranchComments,
-  getPaginatedProjectComments
+  getPaginatedCommitCommentsFactory,
+  getPaginatedBranchCommentsFactory,
+  getPaginatedProjectCommentsFactory
 } from '@/modules/comments/services/retrieval'
 import {
   publish,
@@ -38,13 +38,13 @@ import {
 } from '@/modules/activitystream/services/commentActivity'
 import {
   getViewerResourceItemsUngrouped,
-  getViewerResourcesForComment,
+  getViewerResourcesForCommentFactory,
   doViewerResourcesFit
 } from '@/modules/core/services/commit/viewerResources'
 import {
   authorizeProjectCommentsAccess,
-  authorizeCommentAccess,
-  markViewed,
+  authorizeCommentAccessFactory,
+  markViewedFactory,
   createCommentThreadAndNotify,
   createCommentReplyAndNotify,
   editCommentAndNotify,
@@ -55,15 +55,12 @@ import {
   isDataStruct,
   formatSerializedViewerState,
   convertStateToLegacyData,
-  convertLegacyDataToState
+  convertLegacyDataToStateFactory
 } from '@/modules/comments/services/data'
 import {
   Resolvers
 } from '@/modules/core/graph/generated/graphql'
-import {
-  ExtendedComment,
-  createCommentsRepository
-} from '@/modules/comments/repositories/comments'
+import { ExtendedComment } from '@/modules/comments/domain/types'
 import { ResourceIdentifier, ResourceType } from '@/test/graphql/generated/graphql'
 
 export = {

@@ -1,4 +1,4 @@
-import { CommentRecord } from '@/modules/comments/helpers/types'
+import { CommentRecord } from '@/modules/comments/domain/types'
 import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
 import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
 import type { JSONContent } from '@tiptap/core'

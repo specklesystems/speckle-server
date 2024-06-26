@@ -8,6 +8,7 @@ import { Merge } from 'type-fest'
 import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 import { ExtendedComment } from '@/modules/comments/domain/types'
 import { BatchedSelectOptions } from '@/modules/shared/helpers/dbHelper'
+import { CommitRecord } from '@/modules/core/helpers/types'
 
 type DeleteCommentParams = {
   commentId: string
@@ -368,6 +369,8 @@ type MarkCommentViewedParams = {
 }
 
 export type MarkCommentViewed = (params: MarkCommentViewedParams) => Promise<number[]>
+
+export type ResolvePaginatedProjectCommentsLatestModelResources = (resourceIdString?: string | null) => Promise<(CommitRecord & { branchId: string })[]>
 
 type UpdateCommentParams = {
   id: string

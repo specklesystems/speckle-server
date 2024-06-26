@@ -511,7 +511,7 @@ export const getPaginatedBranchCommentsTotalCountFactory =
  * model resource identifiers that just target latest (no versionId specified). This is required
  * when we only wish to load comment threads for loaded resources.
  */
-const resolvePaginatedProjectCommentsLatestModelResources = async (
+export const resolvePaginatedProjectCommentsLatestModelResources = async (
   resourceIdString: string | null | undefined
 ) => {
   if (!resourceIdString?.length) return []
@@ -522,6 +522,7 @@ const resolvePaginatedProjectCommentsLatestModelResources = async (
   const latestModelResources = modelResources.filter((r) => !r.versionId)
   if (!latestModelResources.length) return []
 
+  // TODO: Inject core module service function
   return await getBranchLatestCommits(latestModelResources.map((r) => r.modelId))
 }
 

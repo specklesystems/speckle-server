@@ -20,7 +20,7 @@ import {
   CommentLinkRecord,
   CommentLinkResourceType,
   CommentRecord
-} from '@/modules/comments/helpers/types'
+} from '@/modules/comments/domain/types'
 import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
 import {
   addCommentArchivedActivity,
@@ -32,7 +32,7 @@ import {
   inputToDataStruct
 } from '@/modules/comments/services/data'
 import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
-import { CommentsRepository } from '@/modules/comments/domain'
+import { GetComment, InsertComment, InsertCommentLinks, MarkCommentUpdated, MarkCommentViewed, UpdateComment } from '@/modules/comments/domain/operations'
 
 export async function authorizeProjectCommentsAccess(params: {
   projectId: string
@@ -63,38 +63,52 @@ export async function authorizeProjectCommentsAccess(params: {
   return project
 }
 
-export async function authorizeCommentAccess(params: {
-  authCtx: AuthContext
-  commentId: string
-  requireProjectRole?: boolean
-}) {
-  const { authCtx, commentId, requireProjectRole } = params
-  const comment = await getComment({ id: commentId, userId: authCtx.userId })
-  if (!comment) {
-    throw new StreamInvalidAccessError('Attempting to access a nonexistant comment')
-  }
+export const authorizeCommentAccessFactory =
+  ({
+    getComment
+  }: {
+    getComment: GetComment
+  }) =>
+    async (params: {
+      authCtx: AuthContext
+      commentId: string
+      requireProjectRole?: boolean
+    }) => {
+      const { authCtx, commentId, requireProjectRole } = params
+      const comment = await getComment({ id: commentId, userId: authCtx.userId })
+      if (!comment) {
+        throw new StreamInvalidAccessError('Attempting to access a nonexistant comment')
+      }
 
-  return authorizeProjectCommentsAccess({
-    projectId: comment.streamId,
-    authCtx,
-    requireProjectRole
-  })
-}
+      return authorizeProjectCommentsAccess({
+        projectId: comment.streamId,
+        authCtx,
+        requireProjectRole
+      })
+    }
 
-export const markViewed =
-  /** */
-  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'markCommentViewed'> }) =>
-    /** */
+export const markViewedFactory =
+  ({
+    markCommentViewed
+  }: {
+    markCommentViewed: MarkCommentViewed
+  }) =>
     async (commentId: string, userId: string) => {
-      await commentsRepository.markCommentViewed(commentId, userId)
+      await markCommentViewed({ commentId, userId })
     }
 
 export const createCommentThreadAndNotify =
-  /** */
-  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'insertComment' | 'insertCommentLinks' | 'markCommentViewed'> }) =>
+  ({
+    insertComment,
+    insertCommentLinks,
+    markCommentViewed
+  }: {
+    insertComment: InsertComment,
+    insertCommentLinks: InsertCommentLinks,
+    markCommentViewed: MarkCommentViewed
+  }) =>
     /** */
     async (input: CreateCommentInput, userId: string) => {
-      const { insertComment, insertCommentLinks } = commentsRepository
 
       const [resources] = await Promise.all([
         // TODO: Inject core module service
@@ -131,7 +145,7 @@ export const createCommentThreadAndNotify =
         comment = await knex.transaction(async (trx) => {
           const comment = await insertComment(commentPayload, { trx })
 
-          const links: CommentLinkRecord[] = resources.map((r) => {
+          const commentLinks: CommentLinkRecord[] = resources.map((r) => {
             let resourceId = r.objectId
             let resourceType: CommentLinkResourceType = 'object'
             if (r.versionId) {
@@ -145,7 +159,7 @@ export const createCommentThreadAndNotify =
               resourceType
             }
           })
-          await insertCommentLinks(links, { trx })
+          await insertCommentLinks({ commentLinks, options: { trx } })
 
           return comment
         })
@@ -155,7 +169,7 @@ export const createCommentThreadAndNotify =
 
       // Mark as viewed and emit events
       await Promise.all([
-        markViewed({ commentsRepository })(comment.id, userId),
+        markCommentViewed({ commentId: comment.id, userId }),
         CommentsEmitter.emit(CommentsEvents.Created, {
           comment
         }),
@@ -174,17 +188,18 @@ export const createCommentThreadAndNotify =
     }
 
 export const createCommentReplyAndNotify =
-  /**  */
-  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getComment' | 'insertComment' | 'insertCommentLinks' | 'markCommentUpdated'> }) =>
-    /**  */
+  ({
+    getComment,
+    insertComment,
+    insertCommentLinks,
+    markCommentUpdated
+  }: {
+    getComment: GetComment,
+    insertComment: InsertComment,
+    insertCommentLinks: InsertCommentLinks,
+    markCommentUpdated: MarkCommentUpdated
+  }) =>
     async (input: CreateCommentReplyInput, userId: string) => {
-      const {
-        getComment,
-        insertComment,
-        insertCommentLinks,
-        markCommentUpdated
-      } = commentsRepository
-
       const thread = await getComment({ id: input.threadId, userId })
       if (!thread) {
         throw new CommentCreateError('Reply creation failed due to nonexistant thread')
@@ -206,10 +221,10 @@ export const createCommentReplyAndNotify =
       try {
         reply = await knex.transaction(async (trx) => {
           const reply = await insertComment(commentPayload, { trx })
-          const links: CommentLinkRecord[] = [
+          const commentLinks: CommentLinkRecord[] = [
             { resourceType: 'comment', resourceId: thread.id, commentId: reply.id }
           ]
-          await insertCommentLinks(links, { trx })
+          await insertCommentLinks({ commentLinks, options: { trx } })
 
           return reply
         })
@@ -219,7 +234,7 @@ export const createCommentReplyAndNotify =
 
       // Mark parent comment updated and emit events
       await Promise.all([
-        markCommentUpdated(thread.id),
+        markCommentUpdated({ commentId: thread.id }),
         CommentsEmitter.emit(CommentsEvents.Created, {
           comment: reply
         }),
@@ -235,14 +250,14 @@ export const createCommentReplyAndNotify =
     }
 
 export const editCommentAndNotify =
-  /**  */
-  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getComment' | 'updateComment'> }) =>
-    /**  */
+  ({
+    getComment,
+    updateComment
+  }: {
+    getComment: GetComment,
+    updateComment: UpdateComment
+  }) =>
     async (input: EditCommentInput, userId: string) => {
-      const {
-        getComment,
-        updateComment
-      } = commentsRepository
 
       const comment = await getComment({ id: input.commentId, userId })
       if (!comment) {
@@ -253,11 +268,14 @@ export const editCommentAndNotify =
       }
 
       await validateInputAttachments(comment.streamId, input.content.blobIds || [])
-      const updatedComment = await updateComment(comment.id, {
-        text: buildCommentTextFromInput({
-          doc: input.content.doc,
-          blobIds: input.content.blobIds || undefined
-        })
+      const updatedComment = await updateComment({
+        id: comment.id,
+        input: {
+          text: buildCommentTextFromInput({
+            doc: input.content.doc,
+            blobIds: input.content.blobIds || undefined
+          })
+        }
       })
 
       await Promise.all([
@@ -271,15 +289,14 @@ export const editCommentAndNotify =
     }
 
 export const archiveCommentAndNotify =
-  /**  */
-  ({ commentsRepository }: { commentsRepository: Pick<CommentsRepository, 'getComment' | 'updateComment'> }) =>
-    /** */
+  ({
+    getComment,
+    updateComment
+  }: {
+    getComment: GetComment,
+    updateComment: UpdateComment
+  }) =>
     async (commentId: string, userId: string, archived = true) => {
-      const {
-        getComment,
-        updateComment
-      } = commentsRepository
-
       const comment = await getComment({ id: commentId, userId })
       if (!comment) {
         throw new CommentUpdateError(
@@ -292,8 +309,11 @@ export const archiveCommentAndNotify =
       if (!stream || (comment.authorId !== userId && stream.role !== Roles.Stream.Owner)) {
         throw new CommentUpdateError('You do not have permissions to archive this comment')
       }
-      const updatedComment = await updateComment(comment.id, {
-        archived
+      const updatedComment = await updateComment({
+        id: comment.id,
+        input: {
+          archived
+        }
       })
 
       await Promise.all([
