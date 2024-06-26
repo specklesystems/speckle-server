@@ -1,0 +1,4 @@
+#!/usr/bin/env node
+const metrics = require('../observability/prometheusMetrics')
+
+metrics.initPrometheusMetrics()

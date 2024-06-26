@@ -15577,6 +15577,30 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@speckle/knex-metrics-debugger@workspace:packages/knex-metrics-debugger":
+  version: 0.0.0-use.local
+  resolution: "@speckle/knex-metrics-debugger@workspace:packages/knex-metrics-debugger"
+  dependencies:
+    "@speckle/objectloader": "workspace:^"
+    "@speckle/shared": "workspace:^"
+    "@speckle/viewer": "workspace:^"
+    eslint: "npm:^9.4.0"
+    eslint-config-prettier: "npm:^9.1.0"
+    express: "npm:^4.19.2"
+    http-errors: "npm:~1.6.3"
+    knex: "npm:^2.4.1"
+    node-fetch: "npm:^2.6.1"
+    nodemon: "npm:^2.0.20"
+    pg: "npm:^8.7.3"
+    pg-query-stream: "npm:^4.2.3"
+    pino: "npm:^8.7.0"
+    pino-http: "npm:^8.2.1"
+    pino-pretty: "npm:^9.1.1"
+    prettier: "npm:^2.5.1"
+    prom-client: "npm:^14.0.1"
+  languageName: unknown
+  linkType: soft
+
 "@speckle/objectloader@npm:^2.17.8":
   version: 2.17.9
   resolution: "@speckle/objectloader@npm:2.17.9"

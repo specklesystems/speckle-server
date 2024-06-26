@@ -1,0 +1,43 @@
+{
+  "name": "@speckle/knex-metrics-debugger",
+  "private": true,
+  "version": "2.5.4",
+  "description": "Debug knex issues with this tool",
+  "main": "index.js",
+  "homepage": "https://speckle.systems",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/specklesystems/speckle-server.git",
+    "directory": "packages/knex-metrics-debugger"
+  },
+  "engines": {
+    "node": "^18.19.0"
+  },
+  "scripts": {
+    "dev": "LOG_PRETTY=true nodemon --trace-deprecation ./bin/www",
+    "dev:headed": "yarn dev",
+    "build": "echo 'no-op'",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@speckle/objectloader": "workspace:^",
+    "@speckle/shared": "workspace:^",
+    "@speckle/viewer": "workspace:^",
+    "express": "^4.19.2",
+    "http-errors": "~1.6.3",
+    "knex": "^2.4.1",
+    "node-fetch": "^2.6.1",
+    "pg": "^8.7.3",
+    "pg-query-stream": "^4.2.3",
+    "pino": "^8.7.0",
+    "pino-http": "^8.2.1",
+    "pino-pretty": "^9.1.1",
+    "prom-client": "^14.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^9.4.0",
+    "eslint-config-prettier": "^9.1.0",
+    "nodemon": "^2.0.20",
+    "prettier": "^2.5.1"
+  }
+}

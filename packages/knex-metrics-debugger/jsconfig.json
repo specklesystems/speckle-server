@@ -1,0 +1,5 @@
+{
+  "extends": "../../jsconfig.base.json",
+  "compilerOptions": {},
+  "include": ["*.js", "bin/www"]
+}
