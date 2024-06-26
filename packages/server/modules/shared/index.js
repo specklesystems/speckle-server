@@ -11,7 +11,7 @@ const { Roles } = require('@speckle/shared')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
-const { getRoles } = require('@/modules/shared/repositories/roles')
+const { getRolesFactory } = require('@/modules/shared/repositories/roles')
 const {
   roleResourceTypeToTokenResourceType,
   isResourceAllowed
@@ -49,7 +49,7 @@ async function authorizeResolver(
   userResourceAccessLimits
 ) {
   userId = userId || null
-  const roles = await getRoles({ db })()
+  const roles = await getRolesFactory({ db })()
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 

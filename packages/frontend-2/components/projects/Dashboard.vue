@@ -31,7 +31,7 @@
           v-model="search"
           name="modelsearch"
           :show-label="false"
-          placeholder="Search"
+          placeholder="Search projects..."
           color="foundation"
           wrapper-classes="grow md:grow-0 md:w-60"
           :show-clear="!!search"
@@ -79,7 +79,7 @@ import {
   useSubscription
 } from '@vue/apollo-composable'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
-import { PlusIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon } from '@heroicons/vue/20/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import {

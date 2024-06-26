@@ -18,7 +18,7 @@ import Redis from 'ioredis'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
-import { registerOrUpdateScope } from '@/modules/shared/repositories/scopes'
+import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import db from '@/db/knex'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 
@@ -44,7 +44,7 @@ const coreModule: SpeckleModule<{
     diffUpload(app)
     diffDownload(app)
 
-    const scopeRegisterFunc = registerOrUpdateScope({ db })
+    const scopeRegisterFunc = registerOrUpdateScopeFactory({ db })
     // Register core-based scoeps
     for (const scope of scopes) {
       await scopeRegisterFunc({ scope })

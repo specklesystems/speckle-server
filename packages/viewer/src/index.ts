@@ -74,6 +74,7 @@ import { SpeckleGeometryConverter } from './modules/loaders/Speckle/SpeckleGeome
 import { Assets } from './modules/Assets'
 import { SpecklePass } from './modules/pipeline/SpecklePass'
 import { InstancedBatchObject } from './modules/batching/InstancedBatchObject'
+import { HybridCameraController } from './modules/extensions/HybridCameraController'
 
 export {
   Viewer,
@@ -117,7 +118,8 @@ export {
   NodeRenderView,
   SpeckleGeometryConverter,
   Assets,
-  AssetType
+  AssetType,
+  HybridCameraController
 }
 
 export type {

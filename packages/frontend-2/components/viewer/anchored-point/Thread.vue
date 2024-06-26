@@ -458,7 +458,7 @@ const onCopyLink = async () => {
 
   triggerNotification({
     type: ToastNotificationType.Info,
-    title: 'Thread link copied'
+    title: 'Link copied'
   })
 }
 

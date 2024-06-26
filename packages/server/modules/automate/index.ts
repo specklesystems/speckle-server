@@ -14,7 +14,7 @@ import {
   getFullAutomationRunById
 } from '@/modules/automate/repositories/automations'
 import { Scopes } from '@speckle/shared'
-import { registerOrUpdateScope } from '@/modules/shared/repositories/scopes'
+import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
 import logStreamRest from '@/modules/automate/rest/logStream'
 import {
@@ -56,7 +56,7 @@ async function initScopes() {
     }
   ]
 
-  const registerFunc = registerOrUpdateScope({ db })
+  const registerFunc = registerOrUpdateScopeFactory({ db })
   for (const scope of scopes) {
     await registerFunc({ scope })
   }

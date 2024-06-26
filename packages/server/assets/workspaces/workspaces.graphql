@@ -27,10 +27,8 @@ type WorkspaceCollaborator {
 type PendingWorkspaceCollaborator {
   id: ID!
   inviteId: String!
-  # projectId: String!
-  # projectName: String!
-  # streamId: String!
-  # streamName: String!
+  workspaceId: String!
+  workspaceName: String!
   """
   E-mail address or name of the invited user
   """
@@ -42,7 +40,7 @@ type PendingWorkspaceCollaborator {
   """
   user: LimitedUser
   """
-  Only available if the active user is the pending stream collaborator
+  Only available if the active user is the pending workspace collaborator
   """
   token: String
 }
@@ -61,7 +59,7 @@ extend type User {
     limit: Int! = 25
     cursor: String = null
     filter: UserWorkspacesFilter
-  ): WorkspaceCollection!
+  ): WorkspaceCollection! @isOwner
 }
 
 extend type Project {
@@ -83,7 +81,6 @@ extend type ServerInfo {
 extend type AdminQueries {
   workspaceList(
     query: String
-    orderBy: String
     limit: Int! = 25
     cursor: String = null
   ): WorkspaceCollection!

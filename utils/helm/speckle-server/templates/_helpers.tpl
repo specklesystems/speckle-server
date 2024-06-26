@@ -544,6 +544,8 @@ Generate the environment variables for Speckle server and Speckle objects deploy
   value: {{ include "server.port" $ | quote }}
 - name: LOG_LEVEL
   value: {{ .Values.server.logLevel }}
+- name: LOG_PRETTY
+  value: {{ .Values.server.logPretty | quote }}
 
 - name: USE_FRONTEND_2
   value: {{ .Values.frontend_2.enabled | quote }}
