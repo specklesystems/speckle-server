@@ -62,7 +62,15 @@ function initKnexPrometheusMetrics() {
     name: 'speckle_server_knex_remaining_capacity',
     help: 'Remaining capacity of the DB connection pool',
     collect() {
-      this.set(getMaximumNumberOfConnections() - knex.client.pool.numUsed())
+      const max = getMaximumNumberOfConnections()
+      const demand =
+        knex.client.pool.numUsed() +
+        knex.client.pool.numPendingCreates() +
+        knex.client.pool.numPendingAcquires()
+
+      //the higher value of zero or the difference between the max and the demand
+      const remainingCapacity = max <= demand ? 0 : max - demand
+      this.set(remainingCapacity)
     }
   })
 
