@@ -5,11 +5,13 @@ const http = require('http')
 const prometheusClient = require('prom-client')
 const knex = require('../knex')
 const { logger } = require('./logging')
+const { getMaximumNumberOfConnections } = require('../env')
 
 let metricFree = null
 let metricUsed = null
 let metricPendingAquires = null
 let metricPendingCreates = null
+let metricRemainingCapacity = null
 let metricQueryDuration = null
 let metricQueryErrors = null
 
@@ -53,6 +55,14 @@ function initKnexPrometheusMetrics() {
     help: 'Number of pending DB connection creates',
     collect() {
       this.set(knex.client.pool.numPendingCreates())
+    }
+  })
+
+  metricRemainingCapacity = new prometheusClient.Gauge({
+    name: 'speckle_server_knex_remaining_capacity',
+    help: 'Remaining capacity of the DB connection pool',
+    collect() {
+      this.set(getMaximumNumberOfConnections() - knex.client.pool.numUsed())
     }
   })
 
