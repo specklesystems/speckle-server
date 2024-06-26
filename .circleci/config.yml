@@ -31,6 +31,9 @@ workflows:
       - test-objectsender:
           filters: *filters-allow-all
 
+      - test-preview-service:
+          filters: *filters-allow-all
+
       - test-ui-components:
           filters: *filters-allow-all
 
@@ -63,6 +66,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-preview-service
             - docker-build-server
             - docker-build-frontend
             - docker-build-frontend-2
@@ -83,6 +87,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-preview-service
             - docker-build-server
             - docker-build-frontend
             - docker-build-frontend-2
@@ -176,6 +181,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-preview-service
 
       - docker-publish-frontend:
           context: *docker-hub-context
@@ -189,6 +195,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-preview-service
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
@@ -202,6 +209,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-preview-service
 
       - docker-publish-webhooks:
           context: *docker-hub-context
@@ -215,6 +223,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-preview-service
 
       - docker-publish-file-imports:
           context: *docker-hub-context
@@ -228,6 +237,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-preview-service
 
       - docker-publish-previews:
           context: *docker-hub-context
@@ -241,6 +251,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-preview-service
 
       - docker-publish-test-container:
           context: *docker-hub-context
@@ -254,6 +265,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-preview-service
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
@@ -267,6 +279,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
+            - test-preview-service
 
       - docker-publish-docker-compose-ingress:
           context: *docker-hub-context
@@ -318,6 +331,7 @@ workflows:
             - test-frontend-2
             - test-viewer
             - test-objectsender
+            - test-preview-service
 
       - publish-viewer-sandbox-cloudflare-pages:
           filters: *filters-publish
@@ -544,8 +558,7 @@ jobs:
           working_directory: 'packages/frontend-2'
 
   test-viewer:
-    docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
+    docker: *docker-node-browsers-image
     resource_class: large
     steps:
       - checkout
@@ -581,6 +594,44 @@ jobs:
           name: Run tests
           command: yarn test
           working_directory: 'packages/viewer'
+
+  test-preview-service:
+    docker: *docker-base-image
+    resource_class: large
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Yarn Package Cache
+          keys:
+            - yarn-packages-server-{{ checksum "yarn.lock" }}
+      - run:
+          name: Install Dependencies
+          command: yarn
+
+      - run:
+          name: Install Dependencies v2 (.node files missing bug)
+          command: yarn
+
+      - save_cache:
+          name: Save Yarn Package Cache
+          key: yarn-packages-server-{{ checksum "yarn.lock" }}
+          paths:
+            - .yarn/cache
+            - .yarn/unplugged
+
+      - run:
+          name: Build public packages
+          command: yarn build:public
+
+      - run:
+          name: Lint everything
+          command: yarn lint:ci
+          working_directory: 'packages/preview-service'
+
+      - run:
+          name: Run tests
+          command: yarn test
+          working_directory: 'packages/preview-service'
 
   test-objectsender:
     docker: &docker-node-browsers-image

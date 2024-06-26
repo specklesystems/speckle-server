@@ -21,7 +21,7 @@
     "lint:ci": "yarn lint:tsc",
     "lint:tsc": "tsc --noEmit",
     "lint:eslint": "eslint .",
-    "test": "NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true vitest"
+    "test": "NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true vitest --run"
   },
   "dependencies": {
     "@speckle/objectloader": "workspace:^",
