@@ -255,8 +255,8 @@ export default class Materials {
           renderView.geometryType === GeometryType.TEXT)
           ? Materials.renderMaterialToString(materialData)
           : Materials.isDisplayStyle(materialData) &&
-            renderView.geometryType !== GeometryType.MESH &&
-            renderView.geometryType !== GeometryType.POINT
+            // && renderView.geometryType !== GeometryType.POINT // Allow Points to use displayStyle
+            renderView.geometryType !== GeometryType.MESH
           ? Materials.displayStyleToString(materialData)
           : ''
       if ((materialData as MaterialOptions).stencilOutlines) {

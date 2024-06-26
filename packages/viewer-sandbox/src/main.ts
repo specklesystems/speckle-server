@@ -382,6 +382,8 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/24c98619ac/models/38639656b8'
     // 'https://app.speckle.systems/projects/96c43c61a6/models/fd12973e73'
     // 'https://latest.speckle.systems/projects/2099ac4b5f/models/5d6eb30c16'
+    // Points with display style
+    // 'https://latest.speckle.systems/projects/7117052f4e/models/95c27a604d@1fa0e17f84'
   )
 }
 
