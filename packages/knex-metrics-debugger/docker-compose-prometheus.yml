@@ -45,6 +45,8 @@ services:
       - 9094:9094
     depends_on:
       - postgres
+    environment:
+      - PG_CONNECTION_STRING=postgres://speckle:speckle@postgres/speckle
 
 volumes:
   prom_data:

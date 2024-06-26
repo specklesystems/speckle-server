@@ -17,7 +17,8 @@
     "dev": "LOG_PRETTY=true nodemon --trace-deprecation ./bin/www",
     "dev:headed": "yarn dev",
     "build": "echo 'no-op build script'",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "docker compose --file ./docker-compose-prometheus.yml up --detach --build"
   },
   "dependencies": {
     "@speckle/shared": "workspace:^",
