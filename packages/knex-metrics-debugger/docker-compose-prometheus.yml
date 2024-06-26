@@ -1,0 +1,51 @@
+services:
+  postgres:
+    image: postgres:14.5-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: speckle
+      POSTGRES_USER: speckle
+      POSTGRES_PASSWORD: speckle
+    volumes:
+      - postgres-data:/var/lib/postgresql/data/
+      - ./10-docker_postgres_init.sql:/docker-entrypoint-initdb.d/10-docker_postgres_init.sql
+    ports:
+      - '127.0.0.1:5432:5432'
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    ports:
+      - 9090:9090
+    restart: unless-stopped
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prom_data:/prometheus
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=grafana
+    volumes:
+      - ./grafana:/etc/grafana/provisioning/datasources
+
+  knex-metrics-debugger:
+    build:
+      context: ../..
+      dockerfile: packages/knex-metrics-debugger/Dockerfile
+    restart: always
+    ports:
+      - 9094:9094
+    depends_on:
+      - postgres
+
+volumes:
+  prom_data:
+  postgres-data:

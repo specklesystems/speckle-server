@@ -15581,9 +15581,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@speckle/knex-metrics-debugger@workspace:packages/knex-metrics-debugger"
   dependencies:
-    "@speckle/objectloader": "workspace:^"
     "@speckle/shared": "workspace:^"
-    "@speckle/viewer": "workspace:^"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     express: "npm:^4.19.2"

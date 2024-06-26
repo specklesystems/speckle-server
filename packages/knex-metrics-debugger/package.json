@@ -16,13 +16,11 @@
   "scripts": {
     "dev": "LOG_PRETTY=true nodemon --trace-deprecation ./bin/www",
     "dev:headed": "yarn dev",
-    "build": "echo 'no-op'",
+    "build": "echo 'no-op build script'",
     "lint": "eslint ."
   },
   "dependencies": {
-    "@speckle/objectloader": "workspace:^",
     "@speckle/shared": "workspace:^",
-    "@speckle/viewer": "workspace:^",
     "express": "^4.19.2",
     "http-errors": "~1.6.3",
     "knex": "^2.4.1",
