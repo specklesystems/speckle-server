@@ -15710,7 +15710,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:^7.12.0"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
-    lodash: "npm:^4.17.0"
+    lodash: "npm:^4.17.21"
     lodash-es: "npm:^4.17.21"
     pino: "npm:^8.7.0"
     pino-http: "npm:^8.0.0"
