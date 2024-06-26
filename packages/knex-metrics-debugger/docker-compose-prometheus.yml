@@ -47,6 +47,7 @@ services:
       - postgres
     environment:
       - PG_CONNECTION_STRING=postgres://speckle:speckle@postgres/speckle
+      - POSTGRES_MAX_CONNECTIONS_SERVER=25
 
 volumes:
   prom_data:

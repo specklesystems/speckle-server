@@ -1,5 +1,5 @@
 global:
-  scrape_interval: 1m
+  scrape_interval: 2s
 
 scrape_configs:
   - job_name: 'knex'

@@ -9,6 +9,7 @@ const { logger } = require('./logging')
 let metricFree = null
 let metricUsed = null
 let metricPendingAquires = null
+let metricPendingCreates = null
 let metricQueryDuration = null
 let metricQueryErrors = null
 
@@ -44,6 +45,14 @@ function initKnexPrometheusMetrics() {
     help: 'Number of pending DB connection aquires',
     collect() {
       this.set(knex.client.pool.numPendingAcquires())
+    }
+  })
+
+  metricPendingCreates = new prometheusClient.Gauge({
+    name: 'speckle_server_knex_pending_creates',
+    help: 'Number of pending DB connection creates',
+    collect() {
+      this.set(knex.client.pool.numPendingCreates())
     }
   })
 
