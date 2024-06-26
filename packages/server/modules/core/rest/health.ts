@@ -3,14 +3,18 @@ import { getServerInfo } from '@/modules/core/services/generic'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import type { Redis } from 'ioredis'
+import { calculateRemainingCapacity } from '@/logging/knexMonitoring'
 
 export default (app: express.Application) => {
   app.options('/liveness')
   app.get('/liveness', handleLiveness)
   app.options('/readiness')
-  app.get('/readiness', handleLiveness) //TODO create a dedicated handler for readiness
+  app.get('/readiness', handleReadiness)
 }
 
+/**
+ * Liveness check, if it fails, will eventually kubernetes or docker compose to restart the pod
+ */
 const handleLiveness: express.RequestHandler = async (req, res) => {
   try {
     await getServerInfo()
@@ -41,4 +45,20 @@ const handleLiveness: express.RequestHandler = async (req, res) => {
     await client?.quit()
     res.send()
   }
+}
+
+/**
+ * Readiness check, if it fails, will eventually cause kubernetes or docker compose to stop the pod from receiving traffic
+ */
+const handleReadiness: express.RequestHandler = async (req, res) => {
+  if (calculateRemainingCapacity() <= 0) {
+    res.status(503).json({
+      message: 'Service is not ready'
+    })
+    res.send()
+    return
+  }
+
+  res.status(200).json({ message: 'OK' })
+  res.send()
 }

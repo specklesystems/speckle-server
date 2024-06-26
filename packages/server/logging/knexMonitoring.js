@@ -18,6 +18,17 @@ const postgresMaxConnections =
   parseInt(process.env.POSTGRES_MAX_CONNECTIONS_SERVER) || 4
 
 module.exports = {
+  calculateRemainingCapacity() {
+    const postgresMaxConnections =
+      parseInt(process.env.POSTGRES_MAX_CONNECTIONS_SERVER) || 4
+    const demand =
+      knex.client.pool.numUsed() +
+      knex.client.pool.numPendingCreates() +
+      knex.client.pool.numPendingValidations() +
+      knex.client.pool.numPendingAcquires()
+
+    return Math.max(0, postgresMaxConnections - demand)
+  },
   initKnexPrometheusMetrics() {
     metricFree = new prometheusClient.Gauge({
       name: 'speckle_server_knex_free',
@@ -55,17 +66,7 @@ module.exports = {
       name: 'speckle_server_knex_remaining_capacity',
       help: 'Remaining capacity of the DB connection pool',
       collect() {
-        const postgresMaxConnections =
-          parseInt(process.env.POSTGRES_MAX_CONNECTIONS_SERVER) || 4
-        const demand =
-          knex.client.pool.numUsed() +
-          knex.client.pool.numPendingCreates() +
-          knex.client.pool.numPendingAcquires()
-
-        //the higher value of zero or the difference between the postgresMaxConnections and the demand
-        const remainingCapacity =
-          postgresMaxConnections <= demand ? 0 : postgresMaxConnections - demand
-        this.set(remainingCapacity)
+        this.set(exports.calculateRemainingCapacity())
       }
     })
 
