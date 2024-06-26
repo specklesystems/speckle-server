@@ -1,5 +1,5 @@
 import { Scopes, Roles } from '@/modules/core/helpers/mainConstants'
-import { getRoles } from '@/modules/shared/repositories/roles'
+import { getRolesFactory } from '@/modules/shared/repositories/roles'
 import { getStream } from '@/modules/core/services/streams'
 
 import {
@@ -144,7 +144,7 @@ export function validateRole<T extends AvailableRoles>({
 export const validateServerRole = ({ requiredRole }: { requiredRole: ServerRoles }) =>
   validateRole({
     requiredRole,
-    rolesLookup: getRoles({ db }),
+    rolesLookup: getRolesFactory({ db }),
     iddqd: Roles.Server.Admin,
     roleGetter: (context) => context.role || null
   })
@@ -152,7 +152,7 @@ export const validateServerRole = ({ requiredRole }: { requiredRole: ServerRoles
 export const validateStreamRole = ({ requiredRole }: { requiredRole: StreamRoles }) =>
   validateRole({
     requiredRole,
-    rolesLookup: getRoles({ db }),
+    rolesLookup: getRolesFactory({ db }),
     iddqd: Roles.Stream.Owner,
     roleGetter: (context) => context?.stream?.role || null
   })

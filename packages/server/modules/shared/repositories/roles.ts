@@ -4,7 +4,7 @@ import { Knex } from 'knex'
 
 let roles: UserRole[]
 
-export const getRoles =
+export const getRolesFactory =
   ({ db }: { db: Knex }): GetRoles =>
   async () => {
     if (roles) return roles
