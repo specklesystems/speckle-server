@@ -71,7 +71,7 @@ spec:
           timeoutSeconds: 10
           httpGet:
             path: /liveness
-            port: www
+            port: {{ include "objects.port" $ }}
 
         readinessProbe:
           initialDelaySeconds: 5
@@ -79,7 +79,7 @@ spec:
           timeoutSeconds: 3
           httpGet:
             path: /readiness
-            port: www
+            port: {{ include "objects.port" $ }}
 
         env:
 {{ include "server.env" $ | indent 10 }}
