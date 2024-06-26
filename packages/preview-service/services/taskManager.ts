@@ -22,12 +22,13 @@ export const repeatedlyPollForWorkFactory =
     generateAndStore360Preview: GenerateAndStore360Preview
     updatePreviewMetadata: UpdatePreviewMetadata
     notifyUpdate: NotifyUpdate
+    onExit: () => void
     logger: Logger
   }): RepeatedlyPollForWork =>
   async () => {
     if (shouldExit) {
-      //FIXME should this return instead of exiting via the process?
-      process.exit(0)
+      deps.onExit()
+      return
     }
 
     try {
@@ -57,7 +58,6 @@ export const repeatedlyPollForWorkFactory =
 
         await deps.notifyUpdate({ streamId: task.streamId, objectId: task.objectId })
       } catch (err) {
-        //FIXME it should be the task manager's responsibility to handle preview metadata
         await deps.updatePreviewMetadata({
           metadata: { err: err instanceof Error ? err.message : JSON.stringify(err) },
           streamId: task.streamId,

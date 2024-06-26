@@ -1,0 +1,48 @@
+import { PuppeteerClientInterface } from 'clients/puppeteer'
+import { logger } from '../../../observability/logging'
+import { getScreenshotFactory } from '../../../services/screenshot'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+describe('Screenshot', () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+  describe('with Puppeteer returning a valid responses', () => {
+    const puppeteerClient: PuppeteerClientInterface = {
+      init: () => Promise.resolve(),
+      loadPageAndEvaluateScript: (urlOfObjectToScreenshot) => {
+        //NOTE if this expectation fails it won't get explicitly captured by vitest. Instead we get null output from getScreenshot.
+        expect(urlOfObjectToScreenshot).toBe(
+          'http://localhost:0000/streams/streamId/objects/objectId'
+        )
+        return Promise.resolve({
+          duration: 1000,
+          mem: { total: 500, used: 400 },
+          userAgent: 'Test Testerson',
+          scr: {
+            '0': 'data:image/png;base64,foobar',
+            '1': 'data:image/png;base64,foobar'
+          }
+        })
+      },
+      close: () => {}
+    }
+    it('receives the screenshot', async () => {
+      const getScreenshot = getScreenshotFactory({
+        puppeteerClient,
+        logger,
+        serviceOrigin: 'http://localhost:0000'
+      })
+      const screenshot = await getScreenshot({
+        streamId: 'streamId',
+        objectId: 'objectId'
+      })
+      if (!screenshot) {
+        expect(screenshot).not.toBe(null)
+        return //to avoid TS error
+      }
+      expect(screenshot['0']).toBe('data:image/png;base64,foobar')
+      expect(screenshot['1']).toBe('data:image/png;base64,foobar')
+    })
+  })
+})

@@ -3,7 +3,13 @@ import { isDevelopment } from '../utils/env'
 import { extendLoggerComponent } from '../observability/logging'
 import { Logger } from 'pino'
 
-export class PuppeteerClient {
+export interface PuppeteerClientInterface {
+  init(launchParams?: PuppeteerLaunchOptions): Promise<void>
+  loadPageAndEvaluateScript(...args: unknown[]): Promise<unknown>
+  close(): void
+}
+
+export class PuppeteerClient implements PuppeteerClientInterface {
   browser: Browser | null
   logger: Logger
   url: string
@@ -22,7 +28,7 @@ export class PuppeteerClient {
     this.browser = null
   }
 
-  async init(launchParams: PuppeteerLaunchOptions) {
+  async init(launchParams?: PuppeteerLaunchOptions) {
     if (isDevelopment())
       this.browser = await puppeteer.launch({ ...launchParams, dumpio: true })
     this.browser = await puppeteer.launch(launchParams)

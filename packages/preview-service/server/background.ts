@@ -43,6 +43,9 @@ export async function startPreviewService() {
     }),
     updatePreviewMetadata: updatePreviewMetadataFactory({ db }),
     notifyUpdate: notifyUpdateFactory({ db }),
+    onExit: () => {
+      process.exit(0)
+    },
     logger: backgroundLogger
   })()
 }

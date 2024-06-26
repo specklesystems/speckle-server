@@ -5,14 +5,16 @@ import {
   getChromiumExecutablePath
 } from '../utils/env'
 import type { Logger } from 'pino'
-import { PuppeteerClient } from '../clients/puppeteer'
+import { PuppeteerClientInterface } from '../clients/puppeteer'
 import type { ObjectIdentifier } from '../domain/domain'
 
-export type GetScreenshot = (params: ObjectIdentifier) => Promise<string | null>
+export type GetScreenshot = (
+  params: ObjectIdentifier
+) => Promise<{ [key: string]: string } | null>
 
 export const getScreenshotFactory =
   (deps: {
-    puppeteerClient: PuppeteerClient
+    puppeteerClient: PuppeteerClientInterface
     logger: Logger
     serviceOrigin: string
   }): GetScreenshot =>
@@ -31,7 +33,11 @@ export const getScreenshotFactory =
 
     await deps.puppeteerClient.init(launchParams)
 
-    type RenderOutput = { duration: number; mem: { total: number }; scr: string }
+    type RenderOutput = {
+      duration: number
+      mem: { total: number }
+      scr: { [key: string]: string }
+    }
     type RenderErrorOutput = { error: unknown }
     let renderOutput: RenderOutput | RenderErrorOutput = {
       error: 'No response.'
@@ -76,7 +82,7 @@ export const getScreenshotFactory =
           count: Object.keys(renderOutput.scr || {}).length,
           totalStringSize: reduce(
             renderOutput.scr || {},
-            (acc: number, val: unknown[]) => acc + val.length,
+            (acc: number, val: string) => acc + val.length,
             0
           )
         }
