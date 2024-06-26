@@ -596,7 +596,8 @@ jobs:
           working_directory: 'packages/viewer'
 
   test-preview-service:
-    docker: *docker-base-image
+    docker: &docker-node-image
+      - image: cimg/node:18.19.0
     resource_class: large
     steps:
       - checkout
@@ -634,8 +635,7 @@ jobs:
           working_directory: 'packages/preview-service'
 
   test-objectsender:
-    docker: &docker-node-browsers-image
-      - image: cimg/node:18.19.0-browsers
+    docker: *docker-node-browsers-image
     resource_class: large
     steps:
       - checkout
@@ -722,8 +722,7 @@ jobs:
 
   ui-components-chromatic:
     resource_class: medium+
-    docker: &docker-node-image
-      - image: cimg/node:18.19.0
+    docker: *docker-node-image
     steps:
       - checkout
       - restore_cache:
