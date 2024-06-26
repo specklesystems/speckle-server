@@ -11,12 +11,12 @@ const { Roles } = require('@speckle/shared')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
-const { getRoles } = require('@/modules/shared/roles')
+const { getRolesFactory } = require('@/modules/shared/repositories/roles')
 const {
   roleResourceTypeToTokenResourceType,
   isResourceAllowed
 } = require('@/modules/core/helpers/token')
-
+const db = require('@/db/knex')
 const ServerAcl = () => ServerAclSchema.knex()
 
 /**
@@ -49,7 +49,7 @@ async function authorizeResolver(
   userResourceAccessLimits
 ) {
   userId = userId || null
-  const roles = await getRoles()
+  const roles = await getRolesFactory({ db })()
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
@@ -99,37 +99,10 @@ async function authorizeResolver(
   throw new ForbiddenError('You are not authorized.')
 }
 
-const Scopes = () => knex('scopes')
-
-async function registerOrUpdateScope(scope) {
-  await knex.raw(
-    `${Scopes()
-      .insert(scope)
-      .toString()} on conflict (name) do update set public = ?, description = ? `,
-    [scope.public, scope.description]
-  )
-  return
-}
-
-const UserRoles = () => knex('user_roles')
-async function registerOrUpdateRole(role) {
-  await knex.raw(
-    `${UserRoles()
-      .insert(role)
-      .toString()} on conflict (name) do update set weight = ?, description = ?, "resourceTarget" = ? `,
-    [role.weight, role.description, role.resourceTarget]
-  )
-  return
-}
-
 module.exports = {
-  registerOrUpdateScope,
-  registerOrUpdateRole,
-  // validateServerRole,
   validateScopes,
   authorizeResolver,
   pubsub,
-  getRoles,
   StreamPubsubEvents: StreamSubscriptions,
   CommitPubsubEvents: CommitSubscriptions,
   BranchPubsubEvents: BranchSubscriptions

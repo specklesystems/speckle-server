@@ -1,6 +1,7 @@
 'use strict'
-const { registerOrUpdateScope } = require('@/modules/shared')
+const { registerOrUpdateScopeFactory } = require('@/modules/shared/repositories/scopes')
 const { moduleLogger } = require('@/logging/logging')
+const db = require('@/db/knex')
 
 exports.init = async (app) => {
   moduleLogger.info('🔑 Init auth module')
@@ -13,8 +14,9 @@ exports.init = async (app) => {
 
   // Register core-based scopes
   const scopes = require('./scopes.js')
+  const registerFunc = registerOrUpdateScopeFactory({ db })
   for (const scope of scopes) {
-    await registerOrUpdateScope(scope)
+    await registerFunc({ scope })
   }
 }
 

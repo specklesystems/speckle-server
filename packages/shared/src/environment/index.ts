@@ -16,6 +16,11 @@ function parseFeatureFlags() {
       defaults: { production: false, _: true }
     },
     // Disables writing to the closure table in the create objects batched services (re object upload routes)
+    // Enables the workspaces module
+    FF_WORKSPACES_MODULE_ENABLED: {
+      schema: z.boolean(),
+      defaults: { production: false, _: true }
+    },
     FF_NO_CLOSURE_WRITES: {
       schema: z.boolean(),
       defaults: { production: false, _: false }
@@ -29,6 +34,7 @@ export function getFeatureFlags(): {
   FF_AUTOMATE_MODULE_ENABLED: boolean
   FF_GENDOAI_MODULE_ENABLED: boolean
   FF_NO_CLOSURE_WRITES: boolean
+  FF_WORKSPACES_MODULE_ENABLED: boolean
 } {
   if (!parsedFlags) parsedFlags = parseFeatureFlags()
   return parsedFlags
