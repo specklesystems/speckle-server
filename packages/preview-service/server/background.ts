@@ -15,7 +15,7 @@ import { generateAndStore360PreviewFactory } from '../services/360preview'
 import { insertPreviewFactory } from '../repositories/previews'
 import { getHealthCheckFilePath, serviceOrigin } from '../utils/env'
 import { generatePreviewFactory } from '../clients/previewService'
-import { updateHealthcheckDataFactory } from 'clients/execHealthcheck'
+import { updateHealthcheckDataFactory } from '../clients/execHealthcheck'
 
 export async function startPreviewService() {
   const backgroundLogger = extendLoggerComponent(logger, 'backgroundWorker')
@@ -39,10 +39,10 @@ export async function startPreviewService() {
     getNextUnstartedObjectPreview: getNextUnstartedObjectPreviewFactory({ db }),
     generateAndStore360Preview: generateAndStore360PreviewFactory({
       generatePreview: generatePreviewFactory({ serviceOrigin: serviceOrigin() }),
-      updatePreviewMetadata: updatePreviewMetadataFactory({ db }),
-      notifyUpdate: notifyUpdateFactory({ db }),
       insertPreview: insertPreviewFactory({ db })
     }),
+    updatePreviewMetadata: updatePreviewMetadataFactory({ db }),
+    notifyUpdate: notifyUpdateFactory({ db }),
     logger: backgroundLogger
   })()
 }
