@@ -44,6 +44,7 @@
       <template #email="{ item }">
         {{ isInvite(item) ? item.email : '' }}
       </template>
+
       <template #invitedBy="{ item }">
         <div class="flex items-center gap-2 py-1">
           <UserAvatar v-if="isInvite(item)" :user="item.invitedBy" />
@@ -52,6 +53,7 @@
           </span>
         </div>
       </template>
+
       <template #resend="{ item }">
         <FormButton
           :link="true"

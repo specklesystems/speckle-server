@@ -42,23 +42,29 @@
       <template #name="{ item }">
         {{ isProject(item) ? item.name : '' }}
       </template>
+
       <template #type="{ item }">
         <span class="capitalize">
           {{ isProject(item) ? item.visibility.toLowerCase() : '' }}
         </span>
       </template>
+
       <template #created="{ item }">
         {{ isProject(item) ? new Date(item.createdAt).toLocaleString('en-GB') : '' }}
       </template>
+
       <template #modified="{ item }">
         {{ isProject(item) ? new Date(item.updatedAt).toLocaleString('en-GB') : '' }}
       </template>
+
       <template #models="{ item }">
         {{ isProject(item) ? item.models.totalCount : '' }}
       </template>
+
       <template #versions="{ item }">
         {{ isProject(item) ? item.versions.totalCount : '' }}
       </template>
+
       <template #contributors="{ item }">
         <div v-if="isProject(item)" class="py-1">
           <UserAvatarGroup :users="item.team.map((t) => t.user)" :max-count="3" />

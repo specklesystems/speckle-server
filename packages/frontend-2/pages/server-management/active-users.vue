@@ -49,9 +49,11 @@
           </span>
         </div>
       </template>
+
       <template #email="{ item }">
         {{ isUser(item) ? item.email : '' }}
       </template>
+
       <template #emailState="{ item }">
         <div class="flex items-center gap-2 select-none">
           <template v-if="isUser(item) && item.verified">
@@ -64,9 +66,11 @@
           </template>
         </div>
       </template>
+
       <template #company="{ item }">
         {{ isUser(item) ? item.company : '' }}
       </template>
+
       <template #role="{ item }">
         <FormSelectServerRoles
           :allow-guest="isGuestMode"
