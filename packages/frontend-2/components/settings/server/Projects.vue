@@ -1,7 +1,6 @@
 <template>
-  <div>
-    <h2 class="h5">Projects</h2>
-
+  <div class="md:max-w-5xl md:mx-auto">
+    <h2 class="h3 font-semibold pb-8 hidden md:block">Projects</h2>
     <FormTextInput
       size="lg"
       name="search"
@@ -15,7 +14,6 @@
       @update:model-value="debounceSearchUpdate"
       @change="($event) => searchUpdateHandler($event.value)"
     />
-
     <ServerManagementTable
       class="mt-8"
       :headers="[

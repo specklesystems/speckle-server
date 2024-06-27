@@ -3,13 +3,7 @@
     <Portal to="navigation" />
     <SettingsDebug />
     <div class="md:max-w-xl md:mx-auto md:py-12">
-      <h1 class="h2">Profile</h1>
-      <div class="mt-4 divide-y">
-        <p class="py-8">Manage your profile information</p>
-        <SettingsUserDetails class="py-8" :user="user" />
-        <SettingsUserPassword class="py-8" :user="user" />
-        <SettingsUserDeleteAccount class="py-8" :user="user" />
-      </div>
+      <SettingsUserProfile :user="user" />
     </div>
   </div>
 </template>

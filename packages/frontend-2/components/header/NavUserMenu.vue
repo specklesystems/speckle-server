@@ -128,7 +128,7 @@
       </Transition>
     </Menu>
     <ServerManagementInviteDialog v-model:open="showInviteDialog" />
-    <UserProfileEditDialog v-model:open="showProfileEditDialog" />
+    <!-- <UserProfileEditDialog v-model:open="showProfileEditDialog" /> -->
   </div>
 </template>
 <script setup lang="ts">

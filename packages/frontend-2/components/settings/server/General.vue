@@ -1,69 +1,74 @@
 <template>
-  <h2 class="h5">Server details</h2>
-  <form class="flex flex-col gap-2" @submit="onSubmit">
-    <div class="flex flex-col gap-4">
-      <FormTextInput
-        v-model="name"
-        label="Server's public name"
-        name="serverName"
-        color="foundation"
-        placeholder="Server name"
-        show-label
-        :show-required="true"
-        :rules="requiredRule"
-        :type="'text'"
-      />
-      <FormTextArea
-        v-model="description"
-        color="foundation"
-        label="Description"
-        name="description"
-        placeholder="Description"
-        show-label
-      />
-      <FormTextInput
-        v-model="company"
-        color="foundation"
-        label="Owner"
-        name="owner"
-        placeholder="Owner"
-        show-label
-      />
-      <FormTextInput
-        v-model="adminContact"
-        color="foundation"
-        label="Admin Email"
-        name="adminEmail"
-        placeholder="Admin Email"
-        show-label
-        :type="'email'"
-      />
-      <FormTextInput
-        v-model="termsOfService"
-        color="foundation"
-        label="URL to the Terms of Service"
-        name="terms"
-        show-label
-      />
-      <div class="text-sm flex flex-col gap-2 mt-2">
-        <FormCheckbox
-          v-model="inviteOnly"
-          label="Invite only mode - Only users with an invitation will be able to join"
-          name="inviteOnly"
-          show-label
-        />
-        <FormCheckbox
-          v-model="guestModeEnabled"
-          label="Guest mode - Enables the 'Guest' server role, which allows users to only contribute to projects that they're invited to"
-          name="guestModeEnabled"
-          show-label
-        />
-      </div>
-      <div>
-        <FormButton color="default" @click="onSubmit">Save changes</FormButton>
-      </div>
+  <div class="md:max-w-xl md:mx-auto">
+    <h2 class="h3 font-semibold hidden md:block">General</h2>
+    <div class="flex flex-col mt-4 divide-y">
+      <h3 class="h5 py-8">Server details</h3>
+      <form class="flex flex-col gap-2 py-8" @submit="onSubmit">
+        <div class="flex flex-col gap-4">
+          <FormTextInput
+            v-model="name"
+            label="Server's public name"
+            name="serverName"
+            color="foundation"
+            placeholder="Server name"
+            show-label
+            :show-required="true"
+            :rules="requiredRule"
+            :type="'text'"
+          />
+          <FormTextArea
+            v-model="description"
+            color="foundation"
+            label="Description"
+            name="description"
+            placeholder="Description"
+            show-label
+          />
+          <FormTextInput
+            v-model="company"
+            color="foundation"
+            label="Owner"
+            name="owner"
+            placeholder="Owner"
+            show-label
+          />
+          <FormTextInput
+            v-model="adminContact"
+            color="foundation"
+            label="Admin Email"
+            name="adminEmail"
+            placeholder="Admin Email"
+            show-label
+            :type="'email'"
+          />
+          <FormTextInput
+            v-model="termsOfService"
+            color="foundation"
+            label="URL to the Terms of Service"
+            name="terms"
+            show-label
+          />
+          <div class="text-sm flex flex-col gap-2 mt-2">
+            <FormCheckbox
+              v-model="inviteOnly"
+              label="Invite only mode - Only users with an invitation will be able to join"
+              name="inviteOnly"
+              show-label
+            />
+            <FormCheckbox
+              v-model="guestModeEnabled"
+              label="Guest mode - Enables the 'Guest' server role, which allows users to only contribute to projects that they're invited to"
+              name="guestModeEnabled"
+              show-label
+            />
+          </div>
+          <div>
+            <FormButton color="default" @click="onSubmit">Save changes</FormButton>
+          </div>
+        </div>
+      </form>
     </div>
-  </form>
+  </div>
 </template>
 
 <script setup lang="ts">

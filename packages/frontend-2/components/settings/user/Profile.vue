@@ -1,9 +1,11 @@
 <template>
   <div class="md:max-w-xl md:mx-auto">
-    <h2 class="h3 font-semibold hidden md:block">Notifications</h2>
+    <h2 class="h3 font-semibold hidden md:block">Profile</h2>
     <div class="divide-y">
-      <p class="py-8">Your notification preferences</p>
-      <SettingsUserNotificationsTable class="py-8" :user="user" />
+      <p class="py-8">Manage your profile information</p>
+      <SettingsUserDetails class="py-8" :user="user" />
+      <SettingsUserPassword class="py-8" :user="user" />
+      <SettingsUserDeleteAccount class="py-8" :user="user" />
     </div>
   </div>
 </template>

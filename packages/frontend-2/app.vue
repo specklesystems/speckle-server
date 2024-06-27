@@ -7,6 +7,7 @@
       <NuxtPage />
     </NuxtLayout>
     <SingletonManagers />
+    <SettingsModal />
   </div>
 </template>
 <script setup lang="ts">
