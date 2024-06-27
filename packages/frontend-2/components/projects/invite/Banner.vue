@@ -27,8 +27,8 @@
         </FormButton>
       </div>
       <template v-else>
-        <FormButton size="sm" full-width @click.stop.prevent="onLoginClick">
-          Log In
+        <FormButton size="sm" full-width @click.stop.prevent="onLoginSignupClick">
+          {{ isForRegisteredUser ? 'Log In' : 'Sign Up' }}
         </FormButton>
       </template>
     </div>
@@ -39,7 +39,10 @@
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ProjectsInviteBannerFragment } from '~~/lib/common/generated/gql/graphql'
-import { useNavigateToLogin } from '~~/lib/common/helpers/route'
+import {
+  useNavigateToLogin,
+  useNavigateToRegistration
+} from '~~/lib/common/helpers/route'
 import { useProcessProjectInvite } from '~~/lib/projects/composables/projectManagement'
 import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 import type { Optional } from '@speckle/shared'
@@ -56,6 +59,9 @@ graphql(`
     projectId
     projectName
     token
+    user {
+      id
+    }
   }
 `)
 
@@ -77,6 +83,7 @@ const { isLoggedIn } = useActiveUser()
 const processInvite = useProcessProjectInvite()
 const postAuthRedirect = usePostAuthRedirect()
 const goToLogin = useNavigateToLogin()
+const goToSignUp = useNavigateToRegistration()
 const { triggerNotification } = useGlobalToast()
 
 const loading = ref(false)
@@ -84,6 +91,7 @@ const mp = useMixpanel()
 const token = computed(
   () => props.invite?.token || (route.query.token as Optional<string>)
 )
+const isForRegisteredUser = computed(() => !!props.invite?.user?.id)
 
 const useInvite = async (accept: boolean) => {
   if (!token.value || !props.invite) return
@@ -115,13 +123,19 @@ const useInvite = async (accept: boolean) => {
   })
 }
 
-const onLoginClick = () => {
+const onLoginSignupClick = async () => {
   postAuthRedirect.setCurrentRoute()
-  goToLogin({
-    query: {
-      token: token.value || undefined
-    }
-  })
+  const query = {
+    token: token.value || undefined
+  }
+
+  if (isForRegisteredUser.value) {
+    await goToLogin({
+      query
+    })
+  } else {
+    await goToSignUp({ query })
+  }
 }
 
 if (import.meta.client) {
