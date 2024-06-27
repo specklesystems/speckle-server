@@ -1,5 +1,7 @@
 <template>
-  <div class="relative mt-16 rounded-md border border-outline-3 p-3 text-sm mx-1">
+  <div
+    class="relative rounded-md border border-outline-3 px-3 py-2.5 text-sm mx-1 mt-auto"
+  >
     <button class="absolute top-4 right-3">
       <XMarkIcon class="h-3 w-3 text-foreground stroke-[3]" />
     </button>
@@ -13,4 +15,5 @@
 
 <script setup lang="ts">
 import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { homeRoute } from '~/lib/common/helpers/route'
 </script>
