@@ -123,6 +123,7 @@ const addModel = async () => {
   const model = new SenderModelCard()
   model.accountId = selectedAccountId.value
   model.projectId = selectedProject.value?.id as string
+  model.serverUrl = defaultAccount.value.accountInfo.serverInfo.url
   model.modelId = selectedModel.value?.id as string
   model.sendFilter = filter.value as ISendFilter
   model.expired = false

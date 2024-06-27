@@ -19,6 +19,7 @@ import { defineStore } from 'pinia'
 export type ProjectModelGroup = {
   projectId: string
   accountId: string
+  serverUrl: string
   senders: ISenderModelCard[]
   receivers: IReceiverModelCard[]
 }
@@ -64,6 +65,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         project = {
           projectId: model.projectId,
           accountId: model.accountId,
+          serverUrl: model.serverUrl,
           senders: [],
           receivers: []
         }

@@ -88,9 +88,19 @@ const props = defineProps<{
   project: ProjectModelGroup
 }>()
 
+console.log(props.project)
+
+const hasServerMatch = !!accountStore.accounts.find(
+  (acc) => acc.accountInfo.serverInfo.url === props.project.serverUrl
+)
+
 const hasAccountMatch = !!accountStore.accounts.find(
   (acc) => acc.accountInfo.id === props.project.accountId
 )
+
+console.log(hasAccountMatch, 'hasAccountMatch')
+console.log(hasServerMatch, 'hasServerMatch')
+
 const { result: projectDetailsResult, onError } = useQuery(
   projectDetailsQuery,
   () => ({ projectId: props.project.projectId }),

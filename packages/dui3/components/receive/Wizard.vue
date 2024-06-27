@@ -127,6 +127,7 @@ const selectVersionAndAddModel = async (
   const modelCard = new ReceiverModelCard()
   modelCard.accountId = selectedAccountId.value
   modelCard.projectId = selectedProject.value?.id as string
+  modelCard.serverUrl = defaultAccount.value.accountInfo.serverInfo.url
   modelCard.modelId = selectedModel.value?.id as string
 
   modelCard.projectName = selectedProject.value?.name as string
