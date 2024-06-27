@@ -198,16 +198,4 @@ const cardBgColor = computed(() => {
     return 'bg-orange-500/10'
   return 'bg-foundation hover:bg-blue-500/10'
 })
-
-watch(
-  () => props.modelCard.progress,
-  (newVal, oldVal) => {
-    console.log('new value for props.modelCard.progress', newVal, oldVal)
-
-    if (newVal === undefined) {
-      // Perform any additional actions if needed when progress is undefined
-    }
-  },
-  { deep: true }
-)
 </script>
