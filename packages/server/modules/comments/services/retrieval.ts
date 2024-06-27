@@ -2,7 +2,7 @@ import type { PaginatedBranchCommentsParams, PaginatedCommitCommentsParams, Pagi
 import { GetPaginatedBranchComments, GetPaginatedBranchCommentsTotalCount, GetPaginatedCommitComments, GetPaginatedCommitCommentsTotalCount, GetPaginatedProjectComments, GetPaginatedProjectCommentsTotalCount, ResolvePaginatedProjectCommentsLatestModelResources } from '@/modules/comments/domain/operations'
 import { isUndefined } from 'lodash'
 
-export const getPaginatedBranchCommentsFactory =
+export const getPaginatedBranchCommentsWithCountFactory =
   ({
     getPaginatedBranchComments,
     getPaginatedBranchCommentsTotalCount
@@ -22,7 +22,7 @@ export const getPaginatedBranchCommentsFactory =
       }
     }
 
-export const getPaginatedCommitCommentsFactory =
+export const getPaginatedCommitCommentsWithCountFactory =
   ({
     getPaginatedCommitComments,
     getPaginatedCommitCommentsTotalCount
@@ -42,7 +42,7 @@ export const getPaginatedCommitCommentsFactory =
       }
     }
 
-export const getPaginatedProjectCommentsFactory =
+export const getPaginatedProjectCommentsWithCountFactory =
   ({
     getPaginatedProjectComments,
     getPaginatedProjectCommentsTotalCount,

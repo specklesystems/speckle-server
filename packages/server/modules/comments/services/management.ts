@@ -97,7 +97,7 @@ export const markViewedFactory =
       await markCommentViewed({ commentId, userId })
     }
 
-export const createCommentThreadAndNotify =
+export const createCommentThreadAndNotifyFactory =
   ({
     insertComment,
     insertCommentLinks,
@@ -187,7 +187,7 @@ export const createCommentThreadAndNotify =
       return comment
     }
 
-export const createCommentReplyAndNotify =
+export const createCommentReplyAndNotifyFactory =
   ({
     getComment,
     insertComment,
@@ -249,7 +249,7 @@ export const createCommentReplyAndNotify =
       return reply
     }
 
-export const editCommentAndNotify =
+export const editCommentAndNotifyFactory =
   ({
     getComment,
     updateComment
@@ -288,7 +288,7 @@ export const editCommentAndNotify =
       return updatedComment
     }
 
-export const archiveCommentAndNotify =
+export const archiveCommentAndNotifyFactory =
   ({
     getComment,
     updateComment

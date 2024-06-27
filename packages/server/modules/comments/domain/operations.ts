@@ -62,8 +62,6 @@ type GetCommentParams = {
 export type GetComment = (params: GetCommentParams) => Promise<ExtendedComment | undefined>
 
 type GetCommentsParams = {
-  // resources?: (ResourceIdentifier | null)[] | null
-  // streamId?: string | null
   limit?: number
   cursor?: unknown
   userId?: string | null
@@ -72,10 +70,10 @@ type GetCommentsParams = {
 } & (
     | {
       resources: (ResourceIdentifier | null)[]
-      streamId: null
+      streamId?: null
     }
     | {
-      resources: null
+      resources?: (ResourceIdentifier | null)[] | null
       streamId: string
     }
   )

@@ -3,7 +3,7 @@ import { ForbiddenError as ApolloForbiddenError } from 'apollo-server-express'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { getStream } from '@/modules/core/services/streams'
 import { Roles } from '@/modules/core/helpers/mainConstants'
-import knexInstance from '@/db/knex'
+import db from '@/db/knex'
 import {
   createCommentFactory,
   createCommentReplyFactory,
@@ -20,9 +20,9 @@ import {
   documentToBasicString
 } from '@/modules/core/services/richTextEditorService'
 import {
-  getPaginatedCommitCommentsFactory,
-  getPaginatedBranchCommentsFactory,
-  getPaginatedProjectCommentsFactory
+  getPaginatedProjectCommentsWithCountFactory,
+  getPaginatedCommitCommentsWithCountFactory,
+  getPaginatedBranchCommentsWithCountFactory
 } from '@/modules/comments/services/retrieval'
 import {
   publish,
@@ -45,10 +45,10 @@ import {
   authorizeProjectCommentsAccess,
   authorizeCommentAccessFactory,
   markViewedFactory,
-  createCommentThreadAndNotify,
-  createCommentReplyAndNotify,
-  editCommentAndNotify,
-  archiveCommentAndNotify
+  createCommentThreadAndNotifyFactory,
+  createCommentReplyAndNotifyFactory,
+  editCommentAndNotifyFactory,
+  archiveCommentAndNotifyFactory
 } from '@/modules/comments/services/management'
 import {
   isLegacyData,
@@ -62,6 +62,7 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { ExtendedComment } from '@/modules/comments/domain/types'
 import { ResourceIdentifier, ResourceType } from '@/test/graphql/generated/graphql'
+import { deleteCommentFactory, getCommentFactory, getCommentsFactory, getCommentsResourcesFactory, getPaginatedBranchCommentsFactory, getPaginatedBranchCommentsTotalCountFactory, getPaginatedCommitCommentsFactory, getPaginatedCommitCommentsTotalCountFactory, getPaginatedProjectCommentsFactory, getPaginatedProjectCommentsTotalCountFactory, getResourceCommentCountFactory, insertCommentFactory, insertCommentLinksFactory, legacyGetCommentFactory, markCommentUpdatedFactory, markCommentViewedFactory, resolvePaginatedProjectCommentsLatestModelResources, updateCommentFactory } from '@/modules/comments/repositories/comments'
 
 export = {
   Query: {
@@ -71,8 +72,7 @@ export = {
         authCtx: context
       })
 
-      const { getComment } = createCommentsRepository({ db: knexInstance })
-
+      const getComment = getCommentFactory({ db })
       const comment = await getComment({ id: args.id, userId: context.userId })
 
       if (!comment || (comment.streamId !== args.streamId))
@@ -86,9 +86,9 @@ export = {
         authCtx: context
       })
 
-      const { getComments } = createCommentsRepository({ db: knexInstance })
+      const getComments = getCommentsFactory({ db })
 
-      // TODO: Double-check spread is necessary
+      // TODO: Double-check spread is still necessary vs direct return
       return { ...(await getComments({ ...args, userId: context.userId })) }
     }
   },
@@ -103,7 +103,7 @@ export = {
         }
       }
 
-      const { getComments } = createCommentsRepository({ db: knexInstance })
+      const getComments = getCommentsFactory({ db })
 
       const resources: ResourceIdentifier[] = [{ resourceId: parent.id, resourceType: ResourceType.Comment }]
 
@@ -155,8 +155,9 @@ export = {
       }
     },
     async viewerResources(parent) {
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
-      return await getViewerResourcesForComment({ commentsRepository })(parent.streamId, parent.id)
+      const getCommentsResources = getCommentsResourcesFactory({ db })
+      const getViewerResourcesForComment = getViewerResourcesForCommentFactory({ getCommentsResources })
+      return await getViewerResourcesForComment(parent.streamId, parent.id)
     },
     /**
      * Until recently 'data' was just a JSONObject so theoretically it was possible to return all kinds of object
@@ -196,6 +197,8 @@ export = {
       }
 
       if (isLegacyData(parentData)) {
+        const getCommentsResources = getCommentsResourcesFactory({ db })
+        const convertLegacyDataToState = convertLegacyDataToStateFactory({ getCommentsResources })
         return convertLegacyDataToState(parentData, parent)
       }
 
@@ -214,9 +217,16 @@ export = {
         authCtx: context
       })
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const getPaginatedProjectComments = getPaginatedProjectCommentsFactory({ db })
+      const getPaginatedProjectCommentsTotalCount = getPaginatedProjectCommentsTotalCountFactory({ db })
 
-      return await getPaginatedProjectComments({ commentsRepository })({
+      const getPaginatedProjectCommentsWithCount = getPaginatedProjectCommentsWithCountFactory({
+        getPaginatedProjectComments,
+        getPaginatedProjectCommentsTotalCount,
+        resolvePaginatedProjectCommentsLatestModelResources
+      })
+
+      return await getPaginatedProjectCommentsWithCount({
         ...args,
         projectId: parent.id,
         filter: {
@@ -240,9 +250,15 @@ export = {
         authCtx: context
       })
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const getPaginatedCommitComments = getPaginatedCommitCommentsFactory({ db })
+      const getPaginatedCommitCommentsTotalCount = getPaginatedCommitCommentsTotalCountFactory({ db })
 
-      return await getPaginatedCommitComments({ commentsRepository })({
+      const getPaginatedCommitCommentsWithCount = getPaginatedCommitCommentsWithCountFactory({
+        getPaginatedCommitComments,
+        getPaginatedCommitCommentsTotalCount
+      })
+
+      return await getPaginatedCommitCommentsWithCount({
         ...args,
         commitId: parent.id,
       })
@@ -255,9 +271,15 @@ export = {
         authCtx: context
       })
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const getPaginatedBranchComments = getPaginatedBranchCommentsFactory({ db })
+      const getPaginatedBranchCommentsTotalCount = getPaginatedBranchCommentsTotalCountFactory({ db })
 
-      return await getPaginatedBranchComments({ commentsRepository })({
+      const getPaginatedBranchCommentsWithCount = getPaginatedBranchCommentsWithCountFactory({
+        getPaginatedBranchComments,
+        getPaginatedBranchCommentsTotalCount
+      })
+
+      return await getPaginatedBranchCommentsWithCount({
         ...args,
         branchId: parent.id
       })
@@ -286,7 +308,7 @@ export = {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ApolloForbiddenError('You are not authorized.')
 
-      const { getResourceCommentCount } = createCommentsRepository({ db: knexInstance })
+      const getResourceCommentCount = getResourceCommentCountFactory({ db })
 
       return await getResourceCommentCount({ resourceId: parent.id })
     }
@@ -296,7 +318,7 @@ export = {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ApolloForbiddenError('You are not authorized.')
 
-      const { getResourceCommentCount } = createCommentsRepository({ db: knexInstance })
+      const getResourceCommentCount = getResourceCommentCountFactory({ db })
 
       return await getResourceCommentCount({ resourceId: parent.id })
     }
@@ -306,14 +328,20 @@ export = {
       if (!ctx.userId)
         throw new ApolloForbiddenError('You are not authorized.')
 
+      const getComment = getCommentFactory({ db })
+
+      const authorizeCommentAccess = authorizeCommentAccessFactory({ getComment })
+
       await authorizeCommentAccess({
         authCtx: ctx,
         commentId: args.commentId
       })
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const markCommentViewed = markCommentViewedFactory({ db })
 
-      await markViewed({ commentsRepository })(args.commentId, ctx.userId)
+      const markViewed = markViewedFactory({ markCommentViewed })
+
+      await markViewed(args.commentId, ctx.userId)
 
       return true
     },
@@ -327,13 +355,25 @@ export = {
         requireProjectRole: true
       })
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const insertComment = insertCommentFactory({ db })
+      const insertCommentLinks = insertCommentLinksFactory({ db })
+      const markCommentViewed = markCommentViewedFactory({ db })
 
-      return await createCommentThreadAndNotify({ commentsRepository })(args.input, ctx.userId)
+      const createCommentThreadAndNotify = createCommentThreadAndNotifyFactory({
+        insertComment,
+        insertCommentLinks,
+        markCommentViewed
+      })
+
+      return await createCommentThreadAndNotify(args.input, ctx.userId)
     },
     async reply(_parent, args, ctx) {
       if (!ctx.userId)
         throw new ApolloForbiddenError('You are not authorized.')
+
+      const getComment = getCommentFactory({ db })
+
+      const authorizeCommentAccess = authorizeCommentAccessFactory({ getComment })
 
       await authorizeCommentAccess({
         commentId: args.input.threadId,
@@ -341,13 +381,26 @@ export = {
         requireProjectRole: true
       })
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const insertComment = insertCommentFactory({ db })
+      const insertCommentLinks = insertCommentLinksFactory({ db })
+      const markCommentUpdated = markCommentUpdatedFactory({ db })
 
-      return await createCommentReplyAndNotify({ commentsRepository })(args.input, ctx.userId)
+      const createCommentReplyAndNotify = createCommentReplyAndNotifyFactory({
+        getComment,
+        insertComment,
+        insertCommentLinks,
+        markCommentUpdated
+      })
+
+      return await createCommentReplyAndNotify(args.input, ctx.userId)
     },
     async edit(_parent, args, ctx) {
       if (!ctx.userId)
         throw new ApolloForbiddenError('You are not authorized.')
+
+      const getComment = getCommentFactory({ db })
+
+      const authorizeCommentAccess = authorizeCommentAccessFactory({ getComment })
 
       await authorizeCommentAccess({
         authCtx: ctx,
@@ -355,13 +408,22 @@ export = {
         requireProjectRole: true
       })
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const updateComment = updateCommentFactory({ db })
 
-      return await editCommentAndNotify({ commentsRepository })(args.input, ctx.userId)
+      const editCommentAndNotify = editCommentAndNotifyFactory({
+        getComment,
+        updateComment
+      })
+
+      return await editCommentAndNotify(args.input, ctx.userId)
     },
     async archive(_parent, args, ctx) {
       if (!ctx.userId)
         throw new ApolloForbiddenError('You are not authorized.')
+
+      const getComment = getCommentFactory({ db })
+
+      const authorizeCommentAccess = authorizeCommentAccessFactory({ getComment })
 
       await authorizeCommentAccess({
         authCtx: ctx,
@@ -369,9 +431,14 @@ export = {
         requireProjectRole: true
       })
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const updateComment = updateCommentFactory({ db })
 
-      await archiveCommentAndNotify({ commentsRepository })(args.commentId, ctx.userId, args.archived)
+      const archiveCommentAndNotify = archiveCommentAndNotifyFactory({
+        getComment,
+        updateComment
+      })
+
+      await archiveCommentAndNotify(args.commentId, ctx.userId, args.archived)
 
       return true
     }
@@ -455,9 +522,17 @@ export = {
       if (!stream || !stream.allowPublicComments && !stream.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const deleteComment = deleteCommentFactory({ db })
+      const insertComment = insertCommentFactory({ db })
+      const insertCommentLinks = insertCommentLinksFactory({ db })
 
-      const comment = await createComment({ commentsRepository })({
+      const createComment = createCommentFactory({
+        deleteComment,
+        insertComment,
+        insertCommentLinks
+      })
+
+      const comment = await createComment({
         userId: context.userId,
         input: args.input
       })
@@ -485,10 +560,16 @@ export = {
       })
       const matchUser = !stream.role
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const legacyGetComment = legacyGetCommentFactory({ db })
+      const updateComment = updateCommentFactory({ db })
+
+      const editComment = editCommentFactory({
+        legacyGetComment,
+        updateComment
+      })
 
       try {
-        await editComment({ commentsRepository })({ userId: context.userId, input: args.input, matchUser })
+        await editComment({ userId: context.userId, input: args.input, matchUser })
         return true
       } catch (err) {
         if (err instanceof ForbiddenError) throw new ApolloForbiddenError(err.message)
@@ -506,13 +587,14 @@ export = {
         authCtx: context
       })
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const markCommentViewed = markCommentViewedFactory({ db })
 
-      await viewComment({ commentsRepository })({ userId: context.userId, commentId: args.commentId })
+      const viewComment = viewCommentFactory({ markCommentViewed })
+
+      await viewComment({ userId: context.userId, commentId: args.commentId })
 
       return true
     },
-
     async commentArchive(_parent, args, context) {
       if (!context.userId)
         throw new ApolloForbiddenError('You are not authorized.')
@@ -523,11 +605,17 @@ export = {
         requireProjectRole: true
       })
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const legacyGetComment = legacyGetCommentFactory({ db })
+      const updateComment = updateCommentFactory({ db })
+
+      const archiveComment = archiveCommentFactory({
+        legacyGetComment,
+        updateComment
+      })
 
       let updatedComment
       try {
-        updatedComment = await archiveComment({ commentsRepository })({ ...args, userId: context.userId }) // NOTE: permissions check inside service
+        updatedComment = await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
       } catch (err) {
         if (err instanceof ForbiddenError) throw new ApolloForbiddenError(err.message)
         throw err
@@ -557,9 +645,19 @@ export = {
       if (!stream || !stream.allowPublicComments && !stream.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
-      const commentsRepository = createCommentsRepository({ db: knexInstance })
+      const deleteComment = deleteCommentFactory({ db })
+      const insertComment = insertCommentFactory({ db })
+      const insertCommentLinks = insertCommentLinksFactory({ db })
+      const markCommentUpdated = markCommentUpdatedFactory({ db })
 
-      const reply = await createCommentReply({ commentsRepository })({
+      const createCommentReply = createCommentReplyFactory({
+        deleteComment,
+        insertComment,
+        insertCommentLinks,
+        markCommentUpdated
+      })
+
+      const reply = await createCommentReply({
         authorId: context.userId,
         parentCommentId: args.input.parentComment,
         streamId: args.input.streamId,
@@ -624,6 +722,10 @@ export = {
           // otherwise perform a deeper check
           try {
             // prevents comment exfiltration by listening in to a auth'ed stream, but different commit ("stream hopping" for subscriptions)
+            const legacyGetComment = legacyGetCommentFactory({ db })
+
+            const streamResourceCheck = streamResourceCheckFactory({ legacyGetComment })
+
             await streamResourceCheck({
               streamId: variables.streamId,
               resources: variables.resourceIds
@@ -631,7 +733,7 @@ export = {
                 .map((resId) => {
                   return {
                     resourceId: resId,
-                    resourceType: resId.length === 10 ? 'commit' : 'object'
+                    resourceType: resId.length === 10 ? ResourceType.Commit : ResourceType.Object
                   }
                 })
             })
