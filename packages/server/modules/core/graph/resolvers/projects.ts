@@ -39,16 +39,16 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/inviteCreationService'
 import {
-  cancelStreamInvite,
-  finalizeStreamInvite
+  cancelStreamInviteFactory,
+  finalizeStreamInviteFactory
 } from '@/modules/serverinvites/services/inviteProcessingService'
 import {
-  getPendingStreamCollaborators,
-  getUserPendingStreamInvites
+  getPendingStreamCollaboratorsFactory,
+  getUserPendingStreamInvitesFactory
 } from '@/modules/serverinvites/services/inviteRetrievalService'
 import {
   createStreamInviteAndNotifyFactory,
-  useStreamInviteAndNotify
+  useStreamInviteAndNotifyFactory
 } from '@/modules/serverinvites/services/management'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
@@ -199,8 +199,8 @@ export = {
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async use(_parent, args, ctx) {
-      await useStreamInviteAndNotify({
-        finalizeStreamInvite: finalizeStreamInvite({
+      await useStreamInviteAndNotifyFactory({
+        finalizeStreamInvite: finalizeStreamInviteFactory({
           findStreamInvite: findStreamInviteFactory({ db }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db })
         })
@@ -214,7 +214,7 @@ export = {
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
-      await cancelStreamInvite({
+      await cancelStreamInviteFactory({
         findStreamInvite: findStreamInviteFactory({ db }),
         deleteStreamInvite: deleteStreamInviteFactory({ db })
       })(args.projectId, args.inviteId)
@@ -254,7 +254,7 @@ export = {
     },
     async projectInvites(_parent, _args, context) {
       const { userId } = context
-      return await getUserPendingStreamInvites({
+      return await getUserPendingStreamInvitesFactory({
         queryAllUserStreamInvites: queryAllUserStreamInvitesFactory({
           db
         })
@@ -280,7 +280,7 @@ export = {
       return ctx.loaders.streams.getSourceApps.load(parent.id) || []
     },
     async invitedTeam(parent) {
-      return getPendingStreamCollaborators({
+      return getPendingStreamCollaboratorsFactory({
         queryAllStreamInvites: queryAllStreamInvitesFactory({ db })
       })(parent.id)
     },

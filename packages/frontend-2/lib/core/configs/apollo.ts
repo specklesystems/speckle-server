@@ -80,6 +80,10 @@ function createCache(): InMemoryCache {
               return original
             }
           },
+          userSearch: {
+            keyArgs: ['query', 'limit', 'archived', 'emailOnly'],
+            merge: buildAbstractCollectionMergeFunction('UserSearchResultCollection')
+          },
           streams: {
             keyArgs: ['query'],
             merge: buildAbstractCollectionMergeFunction('StreamCollection', {
