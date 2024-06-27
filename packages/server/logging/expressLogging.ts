@@ -35,6 +35,8 @@ export const LoggingExpressMiddleware = HttpLogger({
     } else if (res.statusCode >= 300 && res.statusCode < 400) {
       return 'info'
     }
+
+    if (req.url === '/readiness' || req.url === '/liveness') return 'debug'
     return 'info'
   },
 

@@ -77,6 +77,9 @@ spec:
           - name: LOG_LEVEL
             value: {{ .Values.fileimport_service.logLevel | quote }}
 
+          - name: LOG_PRETTY
+            value: {{ .Values.fileimport_service.logPretty | quote }}
+
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS
             value: "/postgres-certificate/ca-certificate.crt"

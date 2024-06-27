@@ -7,8 +7,9 @@ import {
 } from '@/modules/core/dbSchema'
 import { InvalidArgumentError } from '@/modules/shared/errors'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { ScopeRecord, ServerAppsScopesRecord } from '@/modules/auth/helpers/types'
+import { ServerAppsScopesRecord } from '@/modules/auth/helpers/types'
 import { groupBy, mapValues } from 'lodash'
+import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
 
 export type RefreshTokenRecord = {
   id: string
@@ -59,7 +60,7 @@ export async function deleteExistingAuthTokens(userId: string) {
 
 export async function getAppScopes(appIds: string[]) {
   const items = await ServerAppsScopes.knex<
-    Array<ServerAppsScopesRecord & ScopeRecord>
+    Array<ServerAppsScopesRecord & TokenScopeData>
   >()
     .whereIn(ServerAppsScopes.col.appId, appIds)
     .innerJoin(Scopes.name, Scopes.col.name, ServerAppsScopes.col.scopeName)
