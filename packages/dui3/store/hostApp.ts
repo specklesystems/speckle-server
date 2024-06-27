@@ -309,7 +309,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = args.progress
   }
 
-  const handleModelError = (args: { modelCardId: string; error: string }) => {
+  const setModelError = (args: { modelCardId: string; error: string }) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as IModelCard
@@ -332,9 +332,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   app.$selectionBinding?.on('setGlobalNotification', setNotification)
   app.$testBindings?.on('setGlobalNotification', setNotification)
 
-  app.$sendBinding?.on('setModelError', handleModelError)
-  app.$receiveBinding?.on('setModelError', handleModelError)
-  app.$baseBinding.on('setModelError', handleModelError)
+  app.$sendBinding?.on('setModelError', setModelError)
+  app.$receiveBinding?.on('setModelError', setModelError)
+  app.$baseBinding.on('setModelError', setModelError)
 
   /**
    * Used internally in this store store only for initialisation.
@@ -399,6 +399,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     showErrorDialog,
     hostAppError,
     setNotification,
+    setModelError,
     dismissNotification,
     setHostAppError,
     addModel,
