@@ -170,8 +170,6 @@ export class SpeckleMaterial {
     to.depthFunc = from.depthFunc
     to.depthTest = from.depthTest
     to.depthWrite = from.depthWrite
-    to.fog = from.fog
-    to.format = from.format
     to.stencilWrite = from.stencilWrite
     to.stencilFunc = from.stencilFunc
     to.stencilRef = from.stencilRef

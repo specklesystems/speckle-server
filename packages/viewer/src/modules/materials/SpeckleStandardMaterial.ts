@@ -76,7 +76,6 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     toStandard.emissiveIntensity = fromStandard.emissiveIntensity
     toStandard.envMap = fromStandard.envMap
     toStandard.envMapIntensity = fromStandard.envMapIntensity
-    toStandard.refractionRatio = fromStandard.refractionRatio
     toStandard.originalRoughness = fromStandard.originalRoughness
     toStandard.artificialRoughness = fromStandard.artificialRoughness
 
