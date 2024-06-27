@@ -141,11 +141,21 @@ const isSender = computed(() => {
 
 const highlightModel = () => {
   if (!modelData.value) return
-  trackEvent('DUI3 Action', { name: 'Highlight Model' }, props.modelCard.accountId)
-  if (!props.modelCard.progress) {
-    // Some host apps aren't friendly enough to handle highlighting models when some other ops are running.
-    app.$baseBinding.highlightModel(props.modelCard.modelCardId)
+
+  // Some host apps aren't friendly enough to handle highlighting models when some other ops are running.
+  if (props.modelCard.progress) return
+
+  // Do not highlight if baked object ids not set yet. Otherwise we rely on connector to handle it, don't if possible to handle here!
+  if (!isSender.value && !(props.modelCard as IReceiverModelCard).bakedObjectIds) {
+    store.setModelError({
+      modelCardId: props.modelCard.modelCardId,
+      error: 'No objects found to highlight.'
+    })
+    return
   }
+
+  app.$baseBinding.highlightModel(props.modelCard.modelCardId)
+  trackEvent('DUI3 Action', { name: 'Highlight Model' }, props.modelCard.accountId)
 }
 
 const viewModel = () => {
