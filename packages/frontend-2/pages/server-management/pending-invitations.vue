@@ -29,27 +29,21 @@
       @change="($event) => searchUpdateHandler($event.value)"
     />
 
-    <ServerManagementTable
+    <LayoutTable
       class="mt-8"
-      :headers="[
-        { id: 'email', title: 'Email' },
-        { id: 'invitedBy', title: 'Invited By' },
-        { id: 'resend', title: '' }
+      :columns="[
+        { id: 'email', header: 'Email', classes: 'col-span-5 truncate' },
+        { id: 'invitedBy', header: 'Invited By', classes: 'col-span-4' },
+        { id: 'resend', header: '', classes: 'col-span-3' }
       ]"
       :items="invites"
       :buttons="[
         { icon: TrashIcon, label: 'Delete', action: openDeleteInvitationDialog }
       ]"
-      :column-classes="{
-        email: 'col-span-5 truncate',
-        invitedBy: 'col-span-4',
-        resend: 'col-span-3'
-      }"
     >
       <template #email="{ item }">
         {{ isInvite(item) ? item.email : '' }}
       </template>
-
       <template #invitedBy="{ item }">
         <div class="flex items-center gap-2 py-1">
           <UserAvatar v-if="isInvite(item)" :user="item.invitedBy" />
@@ -58,7 +52,6 @@
           </span>
         </div>
       </template>
-
       <template #resend="{ item }">
         <FormButton
           :link="true"
@@ -77,7 +70,7 @@
           }}
         </FormButton>
       </template>
-    </ServerManagementTable>
+    </LayoutTable>
 
     <ServerManagementDeleteInvitationDialog
       v-model:open="showDeleteInvitationDialog"
@@ -101,7 +94,7 @@
 import { ref } from 'vue'
 import { debounce } from 'lodash-es'
 import { useQuery, useMutation } from '@vue/apollo-composable'
-import { MagnifyingGlassIcon, TrashIcon, UserPlusIcon } from '@heroicons/vue/20/solid'
+import { MagnifyingGlassIcon, TrashIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
 import type { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { getInvitesQuery } from '~~/lib/server-management/graphql/queries'
