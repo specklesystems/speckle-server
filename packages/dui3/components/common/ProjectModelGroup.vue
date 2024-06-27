@@ -88,27 +88,25 @@ const props = defineProps<{
   project: ProjectModelGroup
 }>()
 
-console.log(props.project)
-
-const hasServerMatch = !!accountStore.accounts.find(
+const serverMatchAccount = accountStore.accounts.find(
   (acc) => acc.accountInfo.serverInfo.url === props.project.serverUrl
 )
+const hasServerMatch = !!serverMatchAccount
 
 const hasAccountMatch = !!accountStore.accounts.find(
   (acc) => acc.accountInfo.id === props.project.accountId
 )
 
-console.log(hasAccountMatch, 'hasAccountMatch')
-console.log(hasServerMatch, 'hasServerMatch')
+const clientId = hasAccountMatch
+  ? props.project.accountId
+  : hasServerMatch
+  ? serverMatchAccount.accountInfo.id
+  : accountStore.activeAccount.accountInfo.id
 
 const { result: projectDetailsResult, onError } = useQuery(
   projectDetailsQuery,
   () => ({ projectId: props.project.projectId }),
-  () => ({
-    clientId: hasAccountMatch
-      ? props.project.accountId
-      : accountStore.activeAccount.accountInfo.id
-  })
+  () => ({ clientId })
 )
 
 const projectError = ref<string>()
@@ -132,11 +130,7 @@ const projectUrl = computed(() => {
 const { onResult } = useSubscription(
   versionCreatedSubscription,
   () => ({ projectId: props.project.projectId }),
-  () => ({
-    clientId: hasAccountMatch
-      ? props.project.accountId
-      : accountStore.activeAccount.accountInfo.id
-  })
+  () => ({ clientId })
 )
 
 onResult((res) => {

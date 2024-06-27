@@ -95,6 +95,8 @@ import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const app = useNuxtApp()
+const store = useHostAppStore()
+const accStore = useAccountStore()
 const { trackEvent } = useMixpanel()
 
 const props = defineProps<{
@@ -114,20 +116,32 @@ const buttonTooltip = computed(() => {
     : 'Load model'
 })
 
+const hasAccountMatch = !!accStore.accounts.find(
+  (acc) => acc.accountInfo.id === props.project.accountId
+)
+
+const serverMatchAccount = accStore.accounts.find(
+  (acc) => acc.accountInfo.serverInfo.url === props.project.serverUrl
+)
+const hasServerMatch = !!serverMatchAccount
+
+const clientId = hasAccountMatch
+  ? props.project.accountId
+  : hasServerMatch
+  ? serverMatchAccount.accountInfo.id
+  : accStore.activeAccount.accountInfo.id
+
 const { result: modelResult, loading } = useQuery(
   modelDetailsQuery,
   () => ({
     projectId: props.project.projectId,
     modelId: props.modelCard.modelId
   }),
-  () => ({ clientId: props.modelCard.accountId })
+  () => ({ clientId })
 )
 
 const modelData = computed(() => modelResult.value?.project.model)
 const queryData = computed(() => modelResult.value?.project)
-
-const store = useHostAppStore()
-const accStore = useAccountStore()
 
 const acc = accStore.accounts.find(
   (acc) => acc.accountInfo.id === props.modelCard.accountId
