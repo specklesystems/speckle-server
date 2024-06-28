@@ -486,6 +486,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "logPretty": {
+          "type": "boolean",
+          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
+          "default": false
+        },
         "image": {
           "type": "string",
           "description": "The Docker image to be used for the Speckle Server component. If blank, defaults to speckle/speckle-server:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
@@ -1255,6 +1260,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "logPretty": {
+          "type": "boolean",
+          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
+          "default": false
+        },
         "inspect": {
           "type": "object",
           "properties": {
@@ -1397,6 +1407,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "logPretty": {
+          "type": "boolean",
+          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
+          "default": false
+        },
         "image": {
           "type": "string",
           "description": "The Docker image to be used for the Speckle Frontend component. If blank, defaults to speckle/speckle-frontend:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
@@ -1499,6 +1514,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "logPretty": {
+          "type": "boolean",
+          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
+          "default": false
+        },
         "enabled": {
           "type": "boolean",
           "description": "Feature flag to enable running the new web application frontend.",
@@ -1595,6 +1615,11 @@
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
+        },
+        "logPretty": {
+          "type": "boolean",
+          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
+          "default": false
         },
         "image": {
           "type": "string",
@@ -1703,6 +1728,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "logPretty": {
+          "type": "boolean",
+          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
+          "default": false
+        },
         "image": {
           "type": "string",
           "description": "The Docker image to be used for the Speckle Webhook Service component. If blank, defaults to speckle/speckle-webhook-service:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
@@ -1794,6 +1824,11 @@
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
+        },
+        "logPretty": {
+          "type": "boolean",
+          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
+          "default": false
         },
         "image": {
           "type": "string",
@@ -1892,6 +1927,11 @@
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
         },
+        "logPretty": {
+          "type": "boolean",
+          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
+          "default": false
+        },
         "image": {
           "type": "string",
           "description": "The Docker image to be used for the Speckle Monitoring component. If blank, defaults to speckle/speckle-monitoring-deployment:{{ .Values.docker_image_tag }}. If provided, this value should be the full path including tag. The docker_image_tag value will be ignored.",
@@ -1983,6 +2023,11 @@
           "type": "string",
           "description": "The minimum level of logs which will be output. Suitable values are trace, debug, info, warn, error, fatal, or silent",
           "default": "info"
+        },
+        "logPretty": {
+          "type": "boolean",
+          "description": "If enabled, will output logs in a human-readable format. Otherwise, logs will be output in JSON format.",
+          "default": false
         },
         "image": {
           "type": "string",

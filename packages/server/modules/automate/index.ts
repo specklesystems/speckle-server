@@ -13,9 +13,8 @@ import {
   getAutomationRevision,
   getFullAutomationRunById
 } from '@/modules/automate/repositories/automations'
-import { ScopeRecord } from '@/modules/auth/helpers/types'
 import { Scopes } from '@speckle/shared'
-import { registerOrUpdateScope } from '@/modules/shared'
+import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
 import { triggerAutomationRun } from '@/modules/automate/clients/executionEngine'
 import logStreamRest from '@/modules/automate/rest/logStream'
 import {
@@ -32,12 +31,14 @@ import authGithubAppRest from '@/modules/automate/rest/authGithubApp'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getUserById } from '@/modules/core/services/users'
 import { getCommit } from '@/modules/core/repositories/commits'
+import { TokenScopeData } from '@/modules/shared/domain/rolesAndScopes/types'
+import db from '@/db/knex'
 
 const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
 let quitListeners: Optional<() => void> = undefined
 
 async function initScopes() {
-  const scopes: ScopeRecord[] = [
+  const scopes: TokenScopeData[] = [
     {
       name: Scopes.Automate.ReportResults,
       description: 'Report automation results to the server.',
@@ -55,8 +56,9 @@ async function initScopes() {
     }
   ]
 
+  const registerFunc = registerOrUpdateScopeFactory({ db })
   for (const scope of scopes) {
-    await registerOrUpdateScope(scope)
+    await registerFunc({ scope })
   }
 }
 

@@ -28,6 +28,7 @@
         label="Version message"
         placeholder="Version message"
         show-required
+        color="foundation"
         :rules="[isRequired]"
         :disabled="loading"
       />
