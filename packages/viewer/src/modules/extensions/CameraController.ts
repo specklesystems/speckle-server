@@ -445,6 +445,15 @@ export class CameraController extends Extension implements SpeckleCamera {
     )
   }
 
+  protected isPolarView(
+    view: CanonicalView | SpeckleView | InlineView | PolarView
+  ): view is PolarView {
+    return (
+      (view as PolarView).azimuth !== undefined &&
+      (view as PolarView).polar !== undefined
+    )
+  }
+
   protected isBox3(
     view: CanonicalView | SpeckleView | InlineView | PolarView | Box3
   ): view is Box3 {
@@ -463,6 +472,9 @@ export class CameraController extends Extension implements SpeckleCamera {
     }
     if (this.isInlineView(view)) {
       this.setViewInline(view, transition)
+    }
+    if (this.isPolarView(view)) {
+      this.setViewPolar(view, transition)
     }
   }
 
@@ -566,6 +578,16 @@ export class CameraController extends Extension implements SpeckleCamera {
     this._activeControls.fromPositionAndTarget(view.position, view.target)
     if (!transition) this._activeControls.jumpToGoal()
 
+    this.enableRotations()
+  }
+
+  private setViewPolar(view: PolarView, transition = true) {
+    ;(this._activeControls as SmoothOrbitControls).adjustOrbit(
+      view.azimuth,
+      view.polar,
+      view.radius ? view.radius : 0
+    )
+    if (!transition) this._activeControls.jumpToGoal()
     this.enableRotations()
   }
 }
