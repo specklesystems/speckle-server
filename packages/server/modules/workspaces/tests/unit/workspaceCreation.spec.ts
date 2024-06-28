@@ -4,12 +4,12 @@ import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 
-describe('Workspace creation', () => {
+describe('Workspace services', () => {
   describe('createWorkspaceFactory creates a function, that', () => {
     it('stores the workspace', async () => {
       const storedWorkspaces: Workspace[] = []
       const createWorkspace = createWorkspaceFactory({
-        storeWorkspace: async ({ workspace }: { workspace: Workspace }) => {
+        upsertWorkspace: async ({ workspace }: { workspace: Workspace }) => {
           storedWorkspaces.push(workspace)
         },
         upsertWorkspaceRole: async () => {},
@@ -32,7 +32,7 @@ describe('Workspace creation', () => {
     it('makes the workspace creator becomes a workspace:admin', async () => {
       const storedRole: WorkspaceAcl[] = []
       const createWorkspace = createWorkspaceFactory({
-        storeWorkspace: async () => {},
+        upsertWorkspace: async () => {},
         upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
           storedRole.push(workspaceAcl)
         },
