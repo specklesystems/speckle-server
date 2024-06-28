@@ -31,7 +31,9 @@ export class CameraPlanes extends Extension {
     if (!renderer.renderingCamera) return
 
     const camera = renderer.renderingCamera as PerspectiveCamera
+    const start = performance.now()
     const minDist = this.getClosestGeometryDistance(camera)
+    const end = performance.now()
     if (minDist === Number.POSITIVE_INFINITY) return
 
     const fov = camera.fov
@@ -43,7 +45,7 @@ export class CameraPlanes extends Extension {
           Math.pow(Math.tan(((fov / 180) * Math.PI) / 2), 2) * (Math.pow(aspect, 2) + 1)
       )
     renderer.renderingCamera.near = nearPlane
-    console.log(minDist, nearPlane)
+    console.log(minDist, nearPlane, end - start)
   }
 
   public getClosestGeometryDistance(camera: PerspectiveCamera): number {

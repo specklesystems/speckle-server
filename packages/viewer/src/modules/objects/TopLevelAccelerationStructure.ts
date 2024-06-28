@@ -10,7 +10,7 @@ import {
   Side,
   Vector3
 } from 'three'
-import { ExtendedTriangle } from 'three-mesh-bvh'
+import { ExtendedTriangle, HitPointInfo } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import type {
   ExtendedMeshIntersection,
@@ -323,6 +323,71 @@ export class TopLevelAccelerationStructure {
 
   public closestPointToPoint(point: Vector3) {
     return this.accelerationStructure.bvh.closestPointToPoint(point)
+  }
+
+  public closestPointToPointHalfplane(
+    point: Vector3,
+    planeNormal: Vector3,
+    target: HitPointInfo = {
+      point: new Vector3(),
+      distance: 0,
+      faceIndex: 0
+    },
+    minThreshold = 0,
+    maxThreshold = Infinity
+  ) {
+    // early out if under minThreshold
+    // skip checking if over maxThreshold
+    // set minThreshold = maxThreshold to quickly check if a point is within a threshold
+    // returns Infinity if no value found
+    const temp = new Vector3()
+    const temp1 = new Vector3()
+    const temp2 = new Vector3()
+    const minThresholdSq = minThreshold * minThreshold
+    const maxThresholdSq = maxThreshold * maxThreshold
+    let closestDistanceSq = Infinity
+    let closestDistanceTriIndex = -1
+    this.accelerationStructure.bvh.shapecast({
+      boundsTraverseOrder: (box: Box3) => {
+        temp.copy(point).clamp(box.min, box.max)
+        return temp.distanceToSquared(point)
+      },
+
+      // This is the default `closestPointToPoint` implementation. Keeping it intact for reference
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      intersectsBounds: (_box: Box3, _isLeaf, score: number) => {
+        return score < closestDistanceSq && score < maxThresholdSq
+      },
+
+      intersectsTriangle: (tri, triIndex) => {
+        tri.closestPointToPoint(point, temp)
+        const distSq = point.distanceToSquared(temp)
+        const v = temp2.subVectors(temp, point)
+        const planarity = planeNormal.dot(v)
+        if (planarity >= 0 && distSq < closestDistanceSq) {
+          temp1.copy(temp)
+          closestDistanceSq = distSq
+          closestDistanceTriIndex = triIndex
+        }
+
+        if (distSq < minThresholdSq) {
+          return true
+        } else {
+          return false
+        }
+      }
+    })
+
+    if (closestDistanceSq === Infinity) return null
+
+    const closestDistance = Math.sqrt(closestDistanceSq)
+
+    if (!target.point) target.point = temp1.clone()
+    else target.point.copy(temp1)
+    ;(target.distance = closestDistance), (target.faceIndex = closestDistanceTriIndex)
+
+    return target
   }
 
   public getBoundingBox(target: Box3): Box3 {
