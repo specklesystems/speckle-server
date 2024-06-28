@@ -409,7 +409,6 @@ export default class SpeckleRenderer {
     this.updateRTEShadows()
 
     this.updateTransforms()
-    this.updateFrustum(this.renderingCamera)
 
     this.pipeline.update(this)
 
@@ -519,31 +518,6 @@ export default class SpeckleRenderer {
     }
   }
 
-  private updateFrustum(camera: PerspectiveCamera | OrthographicCamera) {
-    const v = new Vector3()
-    const box = this.sceneBox
-    const camPos = new Vector3().copy(camera.position)
-    let d = 0
-    v.set(box.min.x, box.min.y, box.min.z) // 000
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.min.x, box.min.y, box.max.z) // 001
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.min.x, box.max.y, box.min.z) // 010
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.min.x, box.max.y, box.max.z) // 011
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.min.y, box.min.z) // 100
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.min.y, box.max.z) // 101
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.max.y, box.min.z) // 110
-    d = Math.max(camPos.distanceTo(v), d)
-    v.set(box.max.x, box.max.y, box.max.z) // 111
-    d = Math.max(camPos.distanceTo(v), d)
-    camera.far = d * 2
-    camera.updateProjectionMatrix()
-  }
-
   public resetPipeline() {
     this._needsRender = true
     this.pipeline.reset()
@@ -621,7 +595,7 @@ export default class SpeckleRenderer {
     /** We'll just update the shadowcatcher after all batches are loaded */
     this.updateShadowCatcher()
     this.updateClippingPlanes()
-    if (this._speckleCamera) this._speckleCamera.setCameraPlanes(this.sceneBox)
+    if (this._speckleCamera) this._speckleCamera.updateCameraPlanes(this.sceneBox)
     delete this.cancel[renderTree.id]
   }
 
