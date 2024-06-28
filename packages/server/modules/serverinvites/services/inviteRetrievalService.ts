@@ -110,8 +110,9 @@ export const getUserPendingStreamInviteFactory =
     })
     if (!invite) return null
 
+    const targetUserId = resolveTarget(invite.target).userId
     // TODO: user repo should be injected
-    const targetUser = userId ? await getUser(userId) : null
+    const targetUser = targetUserId ? await getUser(targetUserId) : null
 
     return buildPendingStreamCollaboratorModel(invite, targetUser)
   }

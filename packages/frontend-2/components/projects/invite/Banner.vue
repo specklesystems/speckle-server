@@ -1,10 +1,7 @@
 <template>
-  <div
-    v-if="invite"
-    class="flex flex-col space-y-4 sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row px-4 py-5 sm:py-2 transition hover:bg-primary-muted"
-  >
-    <div class="flex space-x-2 items-center grow text-sm">
-      <UserAvatar :user="invite.invitedBy" />
+  <div v-if="invite" :class="mainClasses">
+    <div :class="mainInfoBlockClasses">
+      <UserAvatar :user="invite.invitedBy" :size="avatarSize" />
       <div class="text-foreground">
         <span class="font-bold">{{ invite.invitedBy.name }}</span>
         has invited you to be part of the team from
@@ -14,11 +11,18 @@
     </div>
     <div class="flex space-x-2 w-full sm:w-auto shrink-0">
       <div v-if="isLoggedIn" class="flex items-center justify-end w-full space-x-2">
-        <FormButton size="sm" color="danger" text @click="useInvite(false)">
+        <FormButton
+          :size="buttonSize"
+          color="danger"
+          text
+          :full-width="block"
+          @click="useInvite(false)"
+        >
           Decline
         </FormButton>
         <FormButton
-          size="sm"
+          :full-width="block"
+          :size="buttonSize"
           class="px-4"
           :icon-left="CheckIcon"
           @click="useInvite(true)"
@@ -27,13 +31,17 @@
         </FormButton>
       </div>
       <template v-else>
-        <FormButton size="sm" full-width @click.stop.prevent="onLoginSignupClick">
+        <FormButton
+          :size="buttonSize"
+          full-width
+          @click.stop.prevent="onLoginSignupClick"
+        >
           {{ isForRegisteredUser ? 'Log In' : 'Sign Up' }}
         </FormButton>
       </template>
     </div>
   </div>
-  <div v-else />
+  <div v-else class="hidden" />
 </template>
 <script setup lang="ts">
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -74,6 +82,10 @@ const props = withDefaults(
     invite?: ProjectsInviteBannerFragment
     showStreamName?: boolean
     autoAccept?: boolean
+    /**
+     * Render this as a big block, instead of a small row. Used in full-page project access error pages.
+     */
+    block?: boolean
   }>(),
   { showStreamName: true }
 )
@@ -92,6 +104,32 @@ const token = computed(
   () => props.invite?.token || (route.query.token as Optional<string>)
 )
 const isForRegisteredUser = computed(() => !!props.invite?.user?.id)
+const mainClasses = computed(() => {
+  const classParts = ['flex flex-col space-y-4 px-4 py-5 transition ']
+
+  if (props.block) {
+    classParts.push('')
+  } else {
+    classParts.push('hover:bg-primary-muted')
+    classParts.push('sm:space-y-0 sm:space-x-2 sm:items-center sm:flex-row sm:py-2')
+  }
+
+  return classParts.join(' ')
+})
+
+const mainInfoBlockClasses = computed(() => {
+  const classParts = ['flex grow']
+
+  if (props.block) {
+    classParts.push('flex-col space-y-2 items-center')
+  } else {
+    classParts.push('flex-row space-x-2 items-center text-sm')
+  }
+
+  return classParts.join(' ')
+})
+const buttonSize = computed(() => (props.block ? 'lg' : 'sm'))
+const avatarSize = computed(() => (props.block ? 'xxl' : 'base'))
 
 const useInvite = async (accept: boolean) => {
   if (!token.value || !props.invite) return
