@@ -88,7 +88,7 @@ describe('Workspace creation', () => {
       })
 
       expect(eventData.isCalled).to.equal(true)
-      expect(eventData.payload).to.equal('created')
+      expect(eventData.event).to.equal('created')
       expect(eventData.payload).to.deep.equal(workspace)
     })
   })
