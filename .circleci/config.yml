@@ -2,7 +2,7 @@ version: 2.1
 
 orbs:
   snyk: snyk/snyk@2.0.3
-  codecov: codecov/codecov@4.1.0
+  # codecov: codecov/codecov@4.1.0
 
 workflows:
   test-build:
@@ -484,8 +484,8 @@ jobs:
           command: yarn test:report
           working_directory: 'packages/server'
 
-      - codecov/upload:
-          file: packages/server/coverage/lcov.info
+      # - codecov/upload:
+      #     file: packages/server/coverage/lcov.info
 
       - run:
           name: Introspect GQL schema for subsequent checks
