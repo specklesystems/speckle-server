@@ -2,6 +2,7 @@ import prometheusClient from 'prom-client'
 import type { Counter, Histogram, Summary } from 'prom-client'
 import { logger } from './logging'
 import type { Knex } from 'knex'
+import { getPostgresMaxConnections } from '../utils/env'
 
 // let metricFree: Gauge<string> | null = null
 // let metricUsed: Gauge<string> = null
@@ -51,6 +52,40 @@ function initKnexPrometheusMetrics(params: { db: Knex }) {
     help: 'Number of pending DB connection aquires',
     collect() {
       this.set(db.client.pool.numPendingAcquires())
+    }
+  })
+
+  //metricPendingCreates =
+  new prometheusClient.Gauge({
+    name: 'speckle_server_knex_pending_creates',
+    help: 'Number of pending DB connection creates',
+    collect() {
+      this.set(db.client.pool.numPendingCreates())
+    }
+  })
+
+  //metricPendingValidations =
+  new prometheusClient.Gauge({
+    name: 'speckle_server_knex_pending_validations',
+    help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
+    collect() {
+      this.set(db.client.pool.numPendingValidations())
+    }
+  })
+
+  //metricRemainingCapacity =
+  new prometheusClient.Gauge({
+    name: 'speckle_server_knex_remaining_capacity',
+    help: 'Remaining capacity of the DB connection pool',
+    collect() {
+      const postgresMaxConnections = getPostgresMaxConnections()
+      const demand =
+        db.client.pool.numUsed() +
+        db.client.pool.numPendingCreates() +
+        db.client.pool.numPendingValidations() +
+        db.client.pool.numPendingAcquires()
+
+      this.set(Math.max(postgresMaxConnections - demand, 0))
     }
   })
 
