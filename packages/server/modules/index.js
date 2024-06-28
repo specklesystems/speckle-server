@@ -63,7 +63,8 @@ const getEnabledModuleNames = () => {
     'pwdreset',
     'serverinvites',
     'stats',
-    'webhooks'
+    'webhooks',
+    'workspaces'
   ]
 
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')

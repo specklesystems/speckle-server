@@ -96,7 +96,7 @@ export type SimpleError = {
   stack?: string
 }
 
-export const formatAppError = (err: SimpleError) => {
+export const formatAppError = (err: SimpleError): SimpleError => {
   const { statusCode, message, stack } = err
 
   let finalMessage = message || ''
