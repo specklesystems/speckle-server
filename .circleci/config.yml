@@ -276,6 +276,10 @@ workflows:
             - get-version
             - pre-commit
             - publish-approval
+            - test-frontend-2
+            - test-viewer
+            - test-objectsender
+            - test-server
 
       - publish-helm-chart:
           filters: &filters-publish
