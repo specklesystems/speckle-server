@@ -8,6 +8,9 @@ const knex = require('../knex')
 let metricFree = null
 let metricUsed = null
 let metricPendingAquires = null
+let metricPendingCreates = null
+let metricPendingValidations = null
+let metricRemainingCapacity = null
 let metricQueryDuration = null
 let metricQueryErrors = null
 
@@ -43,6 +46,38 @@ function initKnexPrometheusMetrics() {
     help: 'Number of pending DB connection aquires',
     collect() {
       this.set(knex.client.pool.numPendingAcquires())
+    }
+  })
+
+  metricPendingCreates = new prometheusClient.Gauge({
+    name: 'speckle_server_knex_pending_creates',
+    help: 'Number of pending DB connection creates',
+    collect() {
+      this.set(knex.client.pool.numPendingCreates())
+    }
+  })
+
+  metricPendingValidations = new prometheusClient.Gauge({
+    name: 'speckle_server_knex_pending_validations',
+    help: 'Number of pending DB connection validations. This is a state between pending acquisition and acquiring a connection.',
+    collect() {
+      this.set(knex.client.pool.numPendingValidations())
+    }
+  })
+
+  metricRemainingCapacity = new prometheusClient.Gauge({
+    name: 'speckle_server_knex_remaining_capacity',
+    help: 'Remaining capacity of the DB connection pool',
+    collect() {
+      const postgresMaxConnections =
+        parseInt(process.env.POSTGRES_MAX_CONNECTIONS_PREVIEW_SERVICE) || 2
+      const demand =
+        knex.client.pool.numUsed() +
+        knex.client.pool.numPendingCreates() +
+        knex.client.pool.numPendingValidations() +
+        knex.client.pool.numPendingAcquires()
+
+      this.set(Math.max(postgresMaxConnections - demand, 0))
     }
   })
 
