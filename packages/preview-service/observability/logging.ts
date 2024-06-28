@@ -10,3 +10,4 @@ export const logger = extendLoggerComponent(
   'preview-service'
 )
 export const serverLogger = extendLoggerComponent(logger, 'server')
+export const testLogger = getLogger(getLogLevel(), isLogPretty())

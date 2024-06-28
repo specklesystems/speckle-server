@@ -2,5 +2,6 @@
 'use strict'
 const { startServer } = require('../dist/server/server')
 const { startPreviewService } = require('../dist/server/background')
-startServer()
-startPreviewService()
+const db = require('../dist/repositories/knex')
+startServer({ db })
+startPreviewService({ db })

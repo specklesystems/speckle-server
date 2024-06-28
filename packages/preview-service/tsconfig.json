@@ -112,7 +112,8 @@
     "server/**/*",
     "services/**/*",
     "tests/**/*",
-    "utils/**/*"
+    "utils/**/*",
+    "vitest.config.ts"
   ],
   "exclude": ["node_modules", "coverage", "reports"]
 }

@@ -10,14 +10,15 @@ import {
   notifyUpdateFactory,
   updatePreviewMetadataFactory
 } from '../repositories/objectPreview'
-import db from '../repositories/knex'
 import { generateAndStore360PreviewFactory } from '../services/360preview'
 import { insertPreviewFactory } from '../repositories/previews'
 import { getHealthCheckFilePath, serviceOrigin } from '../utils/env'
 import { generatePreviewFactory } from '../clients/previewService'
 import { updateHealthcheckDataFactory } from '../clients/execHealthcheck'
+import type { Knex } from 'knex'
 
-export async function startPreviewService() {
+export async function startPreviewService(params: { db: Knex }) {
+  const { db } = params
   const backgroundLogger = extendLoggerComponent(logger, 'backgroundWorker')
   backgroundLogger.info('📸 Starting Preview Service background worker')
 

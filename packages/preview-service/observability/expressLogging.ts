@@ -13,7 +13,7 @@ function determineRequestId(headers: IncomingHttpHeaders, uuidGenerator = random
 
 const generateReqId = (req: IncomingMessage) => determineRequestId(req.headers)
 
-export const LoggingExpressMiddleware = HttpLogger({
+export const loggingExpressMiddleware = HttpLogger({
   genReqId: generateReqId,
   logger,
   autoLogging: true,

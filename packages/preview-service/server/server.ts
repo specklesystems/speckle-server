@@ -3,21 +3,25 @@
  */
 
 import http from 'http'
-import { app } from './app'
-import { app as metricsApp } from '../observability/metricsApp'
+import { appFactory } from './app'
+import { appFactory as metricsAppFactory } from '../observability/metricsApp'
 import { serverLogger } from '../observability/logging'
 import { getAppPort, getHost, getMetricsPort } from '../utils/env'
+import type { Knex } from 'knex'
 
-export const startServer = () => {
+export const startServer = (params: { db: Knex }) => {
+  const { db } = params
   /**
    * Get port from environment and store in Express.
    */
 
   const port = normalizePort(getAppPort())
+  const app = appFactory({ db })
   app.set('port', port)
 
   // we place the metrics on a separate port as we wish to expose it to external monitoring tools, but do not wish to expose other routes (for now)
   const metricsPort = normalizePort(getMetricsPort())
+  const metricsApp = metricsAppFactory({ db })
   metricsApp.set('port', metricsPort)
 
   /**
@@ -32,18 +36,18 @@ export const startServer = () => {
    */
 
   const host = getHost()
-  server.listen(port, host)
   server.on('error', onErrorFactory(port))
   server.on('listening', () => {
     serverLogger.info('📡 Started Preview Service server')
     onListening(server)
   })
-  metricsServer.listen(metricsPort, host)
+  server.listen(port, host)
   metricsServer.on('error', onErrorFactory(port))
   metricsServer.on('listening', () => {
     serverLogger.info('📊 Started Preview Service metrics server')
     onListening(metricsServer)
   })
+  metricsServer.listen(metricsPort, host)
 
   return { app, server, metricsServer }
 }
