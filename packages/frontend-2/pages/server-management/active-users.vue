@@ -29,25 +29,17 @@
       @change="($event) => searchUpdateHandler($event.value)"
     />
 
-    <ServerManagementTable
+    <LayoutTable
       class="mt-8"
-      :headers="[
-        { id: 'name', title: 'Name' },
-        { id: 'email', title: 'Email' },
-        { id: 'emailState', title: 'Email State' },
-        { id: 'company', title: 'Company' },
-        { id: 'role', title: 'Role' }
+      :columns="[
+        { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
+        { id: 'email', header: 'Email', classes: 'col-span-3 truncate' },
+        { id: 'emailState', header: 'Email State', classes: 'col-span-2' },
+        { id: 'company', header: 'Company', classes: 'col-span-2 truncate' },
+        { id: 'role', header: 'Role', classes: 'col-span-2' }
       ]"
       :items="users"
       :buttons="[{ icon: TrashIcon, label: 'Delete', action: openUserDeleteDialog }]"
-      :column-classes="{
-        name: 'col-span-3 truncate',
-        email: 'col-span-3 truncate',
-        emailState: 'col-span-2',
-        company: 'col-span-2 truncate',
-        role: 'col-span-2'
-      }"
-      :overflow-cells="true"
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">
@@ -65,12 +57,12 @@
       <template #emailState="{ item }">
         <div class="flex items-center gap-2 select-none">
           <template v-if="isUser(item) && item.verified">
-            <ShieldCheckIcon class="h-4 w-4 text-primary" />
-            <span>verified</span>
+            <CheckCircleIcon class="h-4 w-4 text-primary" />
+            <span>Verified</span>
           </template>
           <template v-else>
-            <ShieldExclamationIcon class="h-4 w-4 text-danger" />
-            <span>not verified</span>
+            <ExclamationCircleIcon class="h-4 w-4 text-danger" />
+            <span>Not verified</span>
           </template>
         </div>
       </template>
@@ -90,7 +82,7 @@
           @update:model-value="(newRoleValue) => isUser(item) && !isArray(newRoleValue) && newRoleValue && openChangeUserRoleDialog(item, newRoleValue as ServerRoles)"
         />
       </template>
-    </ServerManagementTable>
+    </LayoutTable>
 
     <CommonLoadingBar v-if="loading && !users?.length" loading />
 
@@ -131,11 +123,11 @@ import { isUser } from '~~/lib/server-management/helpers/utils'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {
   MagnifyingGlassIcon,
-  ShieldExclamationIcon,
-  ShieldCheckIcon,
+  ExclamationCircleIcon,
+  CheckCircleIcon,
   TrashIcon,
   UserPlusIcon
-} from '@heroicons/vue/20/solid'
+} from '@heroicons/vue/24/outline'
 import { useServerInfo } from '~~/lib/core/composables/server'
 
 useHead({
