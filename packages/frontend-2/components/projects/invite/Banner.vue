@@ -118,12 +118,12 @@ const mainClasses = computed(() => {
 })
 
 const mainInfoBlockClasses = computed(() => {
-  const classParts = ['flex grow']
+  const classParts = ['flex grow items-center']
 
   if (props.block) {
-    classParts.push('flex-col space-y-2 items-center')
+    classParts.push('flex-col space-y-2')
   } else {
-    classParts.push('flex-row space-x-2 items-center text-sm')
+    classParts.push('flex-row space-x-2 text-sm')
   }
 
   return classParts.join(' ')
