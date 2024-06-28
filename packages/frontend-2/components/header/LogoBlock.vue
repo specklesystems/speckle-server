@@ -1,7 +1,7 @@
 <template>
   <Component
     :is="mainComponent"
-    class="flex items-center shrink-0 gap-0.5"
+    class="flex items-center shrink-0"
     :to="to"
     :target="target"
   >
@@ -11,13 +11,13 @@
       alt="Speckle"
     />
 
-    <span
+    <div
       v-if="!minimal"
       class="text-sm mt-0 font-semibold"
       :class="showTextOnMobile ? '' : 'hidden md:flex'"
     >
       Speckle
-    </span>
+    </div>
   </Component>
 </template>
 <script setup lang="ts">
