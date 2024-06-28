@@ -57,6 +57,39 @@ describe('Workspace creation', () => {
         role: Roles.Workspace.Admin
       })
     })
-    it('emits a workspace created event', async () => {})
+    it('emits a workspace created event', async () => {
+      const eventData = {
+        isCalled: false,
+        event: '',
+        payload: {}
+      }
+      const createWorkspace = createWorkspaceFactory({
+        storeWorkspace: async () => {},
+        upsertWorkspaceRole: async () => {},
+        emitWorkspaceEvent: async ({ event, payload }) => {
+          eventData.isCalled = true
+          eventData.event = event
+          eventData.payload = payload
+          return []
+        },
+        storeBlob: async () => cryptoRandomString({ length: 10 })
+      })
+
+      const workspaceInput = {
+        description: 'foobar',
+        logo: null,
+        name: cryptoRandomString({ length: 6 })
+      }
+      const userId = cryptoRandomString({ length: 10 })
+
+      const workspace = await createWorkspace({
+        userId,
+        workspaceInput
+      })
+
+      expect(eventData.isCalled).to.equal(true)
+      expect(eventData.payload).to.equal('created')
+      expect(eventData.payload).to.deep.equal(workspace)
+    })
   })
 })
