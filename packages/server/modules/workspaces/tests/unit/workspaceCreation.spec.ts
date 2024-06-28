@@ -12,12 +12,14 @@ describe('Workspace creation', () => {
         storeWorkspace: async ({ workspace }: { workspace: Workspace }) => {
           storedWorkspaces.push(workspace)
         },
-        upsertWorkspaceRole: async () => {}
+        upsertWorkspaceRole: async () => {},
+        emitWorkspaceEvent: async () => [],
+        storeBlob: async () => cryptoRandomString({ length: 10 })
       })
 
       const workspaceInput = {
         description: 'foobar',
-        logoUrl: null,
+        logo: null,
         name: cryptoRandomString({ length: 6 })
       }
       const workspace = await createWorkspace({
@@ -33,12 +35,14 @@ describe('Workspace creation', () => {
         storeWorkspace: async () => {},
         upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
           storedRole.push(workspaceAcl)
-        }
+        },
+        emitWorkspaceEvent: async () => [],
+        storeBlob: async () => cryptoRandomString({ length: 10 })
       })
 
       const workspaceInput = {
         description: 'foobar',
-        logoUrl: null,
+        logo: null,
         name: cryptoRandomString({ length: 6 })
       }
       const userId = cryptoRandomString({ length: 10 })
@@ -53,8 +57,6 @@ describe('Workspace creation', () => {
         role: Roles.Workspace.Admin
       })
     })
-    it('emits a workspace created event', async () => {
-
-    })
+    it('emits a workspace created event', async () => {})
   })
 })
