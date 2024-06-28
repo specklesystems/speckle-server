@@ -8,6 +8,10 @@ export type UpsertWorkspace = (args: { workspace: Workspace }) => Promise<void>
 export type GetWorkspace = (args: { workspaceId: string }) => Promise<Workspace | null>
 
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
+export type GetWorkspaceRole = (args: {
+  workspaceId: string
+  userId: string
+}) => Promise<WorkspaceAcl | null>
 
 export type StoreBlob = (args: string) => Promise<string>
 
