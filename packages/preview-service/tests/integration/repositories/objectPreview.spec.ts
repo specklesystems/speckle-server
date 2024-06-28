@@ -1,14 +1,11 @@
-import { describe, it, beforeEach, expect } from 'vitest'
+import { describe, it, expect } from 'vitest'
 import { getNextUnstartedObjectPreviewFactory } from '../../../repositories/objectPreview'
 import cryptoRandomString from 'crypto-random-string'
 import { getTestDb } from '../../testKnex'
-import { beforeEachContext } from '../../hooks'
 
 describe('Repositories: ObjectPreview', () => {
-  const db = getTestDb()
-  beforeEach(async () => {
-    await beforeEachContext({ db })
-  })
+  const db = getTestDb() //FIXME get from global context
+
   describe('getNextUnstartedObjectPreview', () => {
     it('should return the next unstarted object preview', async () => {
       const ObjectPreview = () => db('object_preview')

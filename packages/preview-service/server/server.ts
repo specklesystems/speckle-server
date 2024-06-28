@@ -52,6 +52,11 @@ export const startServer = (params: { db: Knex }) => {
   return { app, server, metricsServer }
 }
 
+export const stopServer = (params: { server: http.Server }) => {
+  const { server } = params
+  server.close()
+}
+
 /**
  * Normalize a port into a number, string, or false.
  */
