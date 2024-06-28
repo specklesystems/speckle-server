@@ -67,7 +67,7 @@ async function getInvitationTargetUsers(invites: ServerInviteRecord[]) {
 /**
  * Get pending stream collaborators (invited, but not accepted)
  */
-export const getPendingStreamCollaborators =
+export const getPendingStreamCollaboratorsFactory =
   ({ queryAllStreamInvites }: { queryAllStreamInvites: QueryAllStreamInvites }) =>
   async (streamId: string): Promise<PendingStreamCollaboratorGraphQLType[]> => {
     // Get all pending invites
@@ -95,7 +95,7 @@ export const getPendingStreamCollaborators =
  * Find a pending invitation to the specified stream for the specified user
  * Either the user ID or invite ID must be set
  */
-export const getUserPendingStreamInvite =
+export const getUserPendingStreamInviteFactory =
   ({ findStreamInvite }: { findStreamInvite: FindStreamInvite }) =>
   async (
     streamId: string,
@@ -110,8 +110,9 @@ export const getUserPendingStreamInvite =
     })
     if (!invite) return null
 
+    const targetUserId = resolveTarget(invite.target).userId
     // TODO: user repo should be injected
-    const targetUser = userId ? await getUser(userId) : null
+    const targetUser = targetUserId ? await getUser(targetUserId) : null
 
     return buildPendingStreamCollaboratorModel(invite, targetUser)
   }
@@ -119,7 +120,7 @@ export const getUserPendingStreamInvite =
 /**
  * Get all pending invitations to streams that this user has
  */
-export const getUserPendingStreamInvites =
+export const getUserPendingStreamInvitesFactory =
   ({
     queryAllUserStreamInvites
   }: {
@@ -138,7 +139,7 @@ export const getUserPendingStreamInvites =
     return invites.map((i) => buildPendingStreamCollaboratorModel(i, targetUser))
   }
 
-export const getServerInviteForToken =
+export const getServerInviteForTokenFactory =
   ({ findServerInvite }: { findServerInvite: FindServerInvite }) =>
   async (token: string): Promise<Nullable<ServerInviteGraphQLReturnType>> => {
     const invite = await findServerInvite(undefined, token)

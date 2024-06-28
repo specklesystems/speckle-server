@@ -28,7 +28,9 @@
         Forgot your password?
       </CommonTextLink>
     </div>
-    <FormButton submit full-width class="my-8" :disabled="loading">Log in</FormButton>
+    <FormButton submit full-width class="my-8" :disabled="loading || !isMounted">
+      Log in
+    </FormButton>
   </form>
 </template>
 <script setup lang="ts">
@@ -38,6 +40,7 @@ import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables
 import { ensureError } from '@speckle/shared'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { forgottenPasswordRoute } from '~~/lib/common/helpers/route'
+import { useMounted } from '@vueuse/core'
 
 type FormValues = { email: string; password: string }
 
@@ -51,6 +54,7 @@ const loading = ref(false)
 const emailRules = [isEmail]
 const passwordRules = [isRequired]
 
+const isMounted = useMounted()
 const { loginWithEmail } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 

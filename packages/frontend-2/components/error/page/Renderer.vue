@@ -1,18 +1,14 @@
-<!-- eslint-disable vue/no-v-html -->
 <template>
   <div class="flex flex-col items-center space-y-8">
-    <ErrorPageProjectInviteBanner />
-    <h1 class="h1 font-bold">Error {{ finalError.statusCode || 500 }}</h1>
-    <h2 class="h3 text-foreground-2 mx-4 break-words max-w-full">
-      {{ finalError.message }}
-    </h2>
-    <div v-if="isDev && finalError.stack" class="max-w-xl" v-html="finalError.stack" />
-    <FormButton :to="homeRoute" size="xl">Go Home</FormButton>
+    <ErrorPageProjectAccessErrorBlock
+      v-if="isNoProjectAccessError"
+      :error="finalError"
+    />
+    <ErrorPageGenericErrorBlock v-else :error="finalError" />
   </div>
 </template>
 <script setup lang="ts">
 import { formatAppError } from '~/lib/core/helpers/observability'
-import { homeRoute } from '~~/lib/common/helpers/route'
 
 const props = defineProps<{
   error: {
@@ -22,6 +18,10 @@ const props = defineProps<{
   }
 }>()
 
-const isDev = ref(import.meta.dev)
 const finalError = computed(() => formatAppError(props.error))
+const isNoProjectAccessError = computed(
+  () =>
+    finalError.value.statusCode === 403 &&
+    finalError.value.message.includes('You do not have access to this project')
+)
 </script>
