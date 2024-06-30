@@ -110,6 +110,7 @@ const cardBase = ref<InstanceType<typeof ModelCardBase>>()
 const props = defineProps<{
   modelCard: ISenderModelCard
   project: ProjectModelGroup
+  readonly: boolean
 }>()
 
 const store = useHostAppStore()
@@ -119,6 +120,13 @@ app.$baseBinding.on('documentChanged', () => {
 })
 
 const sendOrCancel = () => {
+  if (props.readonly) {
+    store.setModelError({
+      modelCardId: props.modelCard.modelCardId,
+      error: 'Model is read-only. Request write access to publish!'
+    })
+    return
+  }
   if (props.modelCard.progress) store.sendModelCancel(props.modelCard.modelCardId)
   else store.sendModel(props.modelCard.modelCardId)
 }

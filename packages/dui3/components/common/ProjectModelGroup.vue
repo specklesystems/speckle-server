@@ -2,7 +2,34 @@
   <div
     v-if="projectDetails && !projectError"
     class="p-2 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
+    :class="isProjectReadOnly ? 'bg-red-500/10' : ''"
   >
+    <div
+      v-if="isProjectReadOnly"
+      class="px-2 py-1 mb-1 flex w-full items-center text-xs text-foreground-2 justify-between bg-white rounded-md transition group shadow"
+    >
+      <div v-if="writeAccessRequested">Write access request is pending...</div>
+      <div v-else class="flex w-full items-center justify-between">
+        You do not have write access to this project.
+        <button
+          v-if="isProjectReadOnly"
+          v-tippy="'Request Write Access'"
+          class="hover:text-primary"
+        >
+          <LockClosedIcon
+            class="w-4"
+            @click.stop="
+              requestWriteAccess(),
+                trackEvent(
+                  'DUI3 Action',
+                  { name: 'Request Write Access' },
+                  serverMatchAccount?.accountInfo.id
+                )
+            "
+          />
+        </button>
+      </div>
+    </div>
     <button
       class="flex w-full items-center text-foreground-2 justify-between hover:bg-blue-500/10 rounded-md transition group"
       @click="showModels = !showModels"
@@ -16,7 +43,7 @@
         </div>
       </div>
 
-      <div class="rounded-md px-2 flex items-center space-x-2 justify-end">
+      <div class="flex items-center space-x-2 p-2">
         <button v-tippy="'Open project in browser'" class="hover:text-primary">
           <ArrowTopRightOnSquareIcon
             class="w-4"
@@ -29,12 +56,13 @@
       </div>
     </button>
 
-    <div v-show="showModels" class="space-y-4 mt-3 pb-2">
+    <div v-show="showModels" class="space-y-4 mt-3 pb-1">
       <ModelSender
         v-for="model in project.senders"
         :key="model.modelCardId"
         :model-card="model"
         :project="project"
+        :readonly="isProjectReadOnly"
       />
       <ModelReceiver
         v-for="model in project.receivers"
@@ -67,14 +95,26 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useQuery, useSubscription } from '@vue/apollo-composable'
-import { ChevronDownIcon, ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
+import {
+  provideApolloClient,
+  useMutation,
+  useQuery,
+  useSubscription
+} from '@vue/apollo-composable'
+import {
+  ChevronDownIcon,
+  ArrowTopRightOnSquareIcon,
+  LockClosedIcon
+} from '@heroicons/vue/20/solid'
 import type { ProjectModelGroup } from '~~/store/hostApp'
 import { useHostAppStore } from '~~/store/hostApp'
+import type { DUIAccount } from '~~/store/accounts'
 import { useAccountStore } from '~~/store/accounts'
 import {
   projectDetailsQuery,
-  versionCreatedSubscription
+  versionCreatedSubscription,
+  userProjectsUpdatedSubscription,
+  requestProjectAccess
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import type { ApolloError } from '@apollo/client/errors'
@@ -87,6 +127,9 @@ const { $openUrl } = useNuxtApp()
 const props = defineProps<{
   project: ProjectModelGroup
 }>()
+
+const showModels = ref(true)
+const writeAccessRequested = ref(false)
 
 const serverMatchAccount = accountStore.accounts.find(
   (acc) => acc.accountInfo.serverInfo.url === props.project.serverUrl
@@ -103,7 +146,11 @@ const clientId = hasAccountMatch
   ? serverMatchAccount.accountInfo.id
   : accountStore.activeAccount.accountInfo.id
 
-const { result: projectDetailsResult, onError } = useQuery(
+const {
+  result: projectDetailsResult,
+  onError,
+  refetch
+} = useQuery(
   projectDetailsQuery,
   () => ({ projectId: props.project.projectId }),
   () => ({ clientId })
@@ -115,8 +162,47 @@ onError((err: ApolloError) => {
 })
 const projectDetails = computed(() => projectDetailsResult.value?.project)
 
-const showModels = ref(true)
+const isProjectReadOnly = computed(() => {
+  if (!projectDetails.value) return true
 
+  if (
+    projectDetails.value?.role === null ||
+    projectDetails.value?.role === 'stream:reviewer'
+  )
+    return true
+  return false
+})
+
+const requestWriteAccess = async () => {
+  if (serverMatchAccount) {
+    const { mutate } = provideApolloClient((serverMatchAccount as DUIAccount).client)(
+      () => useMutation(requestProjectAccess)
+    )
+    const res = await mutate({
+      input: projectDetails.value?.id as string
+    })
+    writeAccessRequested.value = true
+    // TODO: It throws if it has already pending request, handle it!
+    console.log(res)
+  }
+}
+
+const { onResult: userProjectsUpdated } = useSubscription(
+  userProjectsUpdatedSubscription,
+  () => ({}),
+  () => ({ clientId })
+)
+
+userProjectsUpdated((res) => {
+  console.log(res, 'userProjectsUpdated subscription')
+  if (!res.data) return
+  if (!res.data.userProjectsUpdated.project) {
+    refetch()
+    writeAccessRequested.value = false
+  }
+})
+
+// TODO: fix url!
 const projectUrl = computed(() => {
   const acc = accountStore.accounts.find(
     (acc) => acc.accountInfo.id === props.project.accountId
