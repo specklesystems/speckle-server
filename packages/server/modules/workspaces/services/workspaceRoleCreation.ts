@@ -12,7 +12,7 @@ type WorkspaceRoleDeleteArgs = {
   workspaceId: string
 }
 
-export const deleteWorkspaceFactory =
+export const deleteWorkspaceRoleFactory =
   ({
     deleteWorkspaceRole,
     emitWorkspaceEvent
