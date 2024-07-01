@@ -16024,11 +16024,10 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
     "@vitest/ui": "npm:^1.4.0"
-    camera-controls: "npm:^1.33.1"
     core-js: "npm:^3.21.1"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
-    hold-event: "npm:^0.1.0"
+    flat: "npm:^5.0.2"
     js-logger: "npm:1.6.1"
     jsdom: "npm:^24.0.0"
     lodash-es: "npm:^4.17.21"
@@ -43783,7 +43782,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"pug-code-gen@npm:^3.0.2":
+"pug-code-gen@npm:^3.0.3":
   version: 3.0.3
   resolution: "pug-code-gen@npm:3.0.3"
   dependencies:
@@ -43891,10 +43890,10 @@ __metadata:
   linkType: hard
 
 "pug@npm:^3.0.2":
-  version: 3.0.2
-  resolution: "pug@npm:3.0.2"
+  version: 3.0.3
+  resolution: "pug@npm:3.0.3"
   dependencies:
-    pug-code-gen: "npm:^3.0.2"
+    pug-code-gen: "npm:^3.0.3"
     pug-filters: "npm:^4.0.0"
     pug-lexer: "npm:^5.0.1"
     pug-linker: "npm:^4.0.0"
@@ -43902,7 +43901,7 @@ __metadata:
     pug-parser: "npm:^6.0.0"
     pug-runtime: "npm:^3.0.1"
     pug-strip-comments: "npm:^2.0.0"
-  checksum: 10/4bb4cab1abbdfc3cc3e7d9a7813e204ca3febf8819f81f8c4279941fb1567939015a720a1f6de8a51cf1fa6ad134d1e783c9b66f7ef8c29d3feaf8a2445f7237
+  checksum: 10/a88364757512e3b9af024c008f23b910de049659655b5d9e6ca42f996d7849ce1aab059f61e2d44ccce0dde5ff291995682338c285e9f76f3e5bfa02de9c481b
   languageName: node
   linkType: hard
 

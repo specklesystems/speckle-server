@@ -13,13 +13,13 @@
     <Component
       :is="finalLeftIcon"
       v-if="finalLeftIcon"
-      :class="`${iconClasses} ${hideText ? '' : 'mr-2'}`"
+      :class="`${iconClasses} ${hideText ? '' : 'mr-1'}`"
     />
     <slot v-if="!hideText">Button</slot>
     <Component
       :is="iconRight"
       v-if="iconRight || !loading"
-      :class="`${iconClasses} ${hideText ? '' : 'ml-2'}`"
+      :class="`${iconClasses} ${hideText ? '' : 'ml-1'}`"
     />
   </Component>
 </template>
@@ -196,27 +196,25 @@ const finalLeftIcon = computed(() => (props.loading ? ArrowPathIcon : props.icon
 const bgAndBorderClasses = computed(() => {
   const classParts: string[] = []
 
-  classParts.push('border-2')
+  classParts.push('border')
   if (isDisabled.value) {
     classParts.push(
-      props.outlined
-        ? 'border-foreground-disabled'
-        : 'bg-foundation-disabled border-transparent'
+      props.outlined ? 'border-outline-3' : 'bg-foundation-disabled border-transparent'
     )
   } else {
     switch (props.color) {
       case 'invert':
         classParts.push(
           props.outlined
-            ? 'border-foundation dark:border-foreground'
-            : 'bg-foundation dark:bg-foreground border-transparent'
+            ? 'border-outline-3'
+            : 'border-outline-3 bg-foundation dark:bg-foreground'
         )
         break
       case 'card':
         classParts.push(
           props.outlined
-            ? 'border-foundation-2 shadow'
-            : 'bg-foundation-2 dark:bg-foundation-2 border-foundation shadow'
+            ? 'border-outline-3'
+            : 'bg-foundation-2 dark:bg-foundation-2 border-foundation'
         )
         break
       case 'danger':
@@ -224,7 +222,7 @@ const bgAndBorderClasses = computed(() => {
         break
       case 'secondary':
         classParts.push(
-          props.outlined ? 'border-foundation' : 'bg-foundation border-foundation-2'
+          props.outlined ? 'border-outline-3' : 'bg-foundation border-outline-3'
         )
         break
       case 'warning':
@@ -308,11 +306,7 @@ const foregroundClasses = computed(() => {
           )
           break
         case 'secondary':
-          classParts.push(
-            props.outlined
-              ? 'text-foreground hover:text-primary'
-              : 'text-foreground hover:text-primary'
-          )
+          classParts.push(props.outlined ? 'text-foreground' : 'text-foreground')
           break
         case 'default':
         default:
@@ -433,7 +427,7 @@ const generalClasses = computed(() => {
 const decoratorClasses = computed(() => {
   const classParts: string[] = []
   if (!isDisabled.value && !props.link && !props.text) {
-    classParts.push('active:scale-[0.97]')
+    classParts.push('shadow active:scale-[0.97]')
   }
 
   if (!isDisabled.value && props.link) {

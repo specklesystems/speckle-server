@@ -2,15 +2,10 @@
 <template>
   <Menu
     as="div"
-    class="flex items-center relative sm:border-r border-outline-1 sm:pr-4"
+    class="flex items-center relative sm:border-r border-outline-3 sm:pr-4"
   >
     <MenuButton :id="menuButtonId" as="div">
-      <FormButton
-        class="hidden sm:flex"
-        size="sm"
-        outlined
-        :icon-right="ChevronDownIcon"
-      >
+      <FormButton class="hidden sm:flex" size="sm" :icon-right="ChevronDownIcon">
         Share
       </FormButton>
       <button class="sm:hidden mt-1.5">
@@ -75,12 +70,12 @@
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
 import {
-  ChevronDownIcon,
   LinkIcon,
   FingerPrintIcon,
   CodeBracketIcon,
   ShareIcon
 } from '@heroicons/vue/24/outline'
+import { ChevronDownIcon } from '@heroicons/vue/20/solid'
 import { SpeckleViewer } from '@speckle/shared'
 import { keyboardClick } from '@speckle/ui-components'
 import { graphql } from '~/lib/common/generated/gql/gql'

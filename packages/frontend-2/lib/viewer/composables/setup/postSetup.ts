@@ -312,14 +312,11 @@ function useViewerCameraIntegration() {
   const hasInitialLoadFired = ref(false)
 
   const loadCameraDataFromViewer = () => {
-    const controls = instance.getExtension(CameraController).controls
+    const extension: CameraController = instance.getExtension(CameraController)
     let cameraManuallyChanged = false
 
-    const viewerPos = new Vector3()
-    const viewerTarget = new Vector3()
-
-    controls.getPosition(viewerPos)
-    controls.getTarget(viewerTarget)
+    const viewerPos = new Vector3().copy(extension.getPosition())
+    const viewerTarget = new Vector3().copy(extension.getTarget())
 
     if (!areVectorsLooselyEqual(position.value, viewerPos)) {
       if (hasInitialLoadFired.value) position.value = viewerPos.clone()
@@ -776,11 +773,15 @@ function useDisableZoomOnEmbed() {
   watch(
     () => embedOptions.noScroll.value,
     (newNoScrollValue) => {
-      const cameraController = viewer.instance.getExtension(CameraController)
+      newNoScrollValue
+      viewer
+      const cameraController: CameraController =
+        viewer.instance.getExtension(CameraController)
+
       if (newNoScrollValue) {
-        cameraController.controls.mouseButtons.wheel = 0
+        cameraController.options = { enableZoom: false }
       } else {
-        cameraController.controls.mouseButtons.wheel = 4
+        cameraController.options = { enableZoom: true }
       }
     },
     { immediate: true }

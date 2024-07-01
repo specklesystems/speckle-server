@@ -35,16 +35,9 @@
         :rules="passwordRules"
         show-label
         :disabled="loading"
-        @focus="pwdFocused = true"
-        @blur="pwdFocused = false"
       />
     </div>
-    <AuthPasswordChecks
-      :password="password"
-      :class="`mt-2 overflow-hidden ${
-        pwdFocused ? 'h-12 sm:h-8' : 'h-0'
-      } transition-[height]`"
-    />
+    <AuthPasswordChecks :password="password" class="mt-2 overflow-hidden h-12 sm:h-8" />
     <div
       class="mt-3 text-xs flex items-center justify-center text-foreground-2 space-x-2"
     >
@@ -58,7 +51,9 @@
         label="Opt in for exclusive Speckle news and tips"
       />
     </div>
-    <FormButton submit full-width class="mt-4" :disabled="loading">Sign up</FormButton>
+    <FormButton submit full-width class="mt-4" :disabled="loading || !isMounted">
+      Sign up
+    </FormButton>
     <div
       v-if="serverInfo.termsOfService"
       class="mt-2 text-xs text-foreground-2 text-center terms-of-service"
@@ -84,6 +79,7 @@ import { graphql } from '~~/lib/common/generated/gql'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserIcon, ArrowRightIcon } from '@heroicons/vue/20/solid'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { useMounted } from '@vueuse/core'
 
 /**
  * TODO:
@@ -110,6 +106,7 @@ const router = useRouter()
 const { signUpWithEmail, inviteToken } = useAuthManager()
 const { triggerNotification } = useGlobalToast()
 
+const isMounted = useMounted()
 const loading = ref(false)
 const password = ref('')
 const email = ref('')
@@ -118,8 +115,6 @@ const emailRules = [isEmail]
 const nameRules = [isRequired]
 
 const newsletterConsent = inject<Ref<boolean>>('newsletterconsent')
-
-const pwdFocused = ref(false)
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 

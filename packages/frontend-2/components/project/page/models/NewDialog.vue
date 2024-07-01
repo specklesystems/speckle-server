@@ -36,7 +36,7 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { CubeIcon } from '@heroicons/vue/24/solid'
+import { CubeIcon } from '@heroicons/vue/24/outline'
 import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useMutationLoading } from '@vue/apollo-composable'
 import { useForm } from 'vee-validate'

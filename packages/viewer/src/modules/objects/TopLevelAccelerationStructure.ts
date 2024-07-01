@@ -10,7 +10,7 @@ import {
   Side,
   Vector3
 } from 'three'
-import { ExtendedTriangle } from 'three-mesh-bvh'
+import { ExtendedTriangle, HitPointInfo } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import type {
   ExtendedMeshIntersection,
@@ -153,15 +153,16 @@ export class TopLevelAccelerationStructure {
   /* Core Cast Functions */
   public raycast(
     ray: Ray,
+    tasOnly: boolean = false,
     materialOrSide: Side | Material | Material[] = FrontSide
   ): ExtendedMeshIntersection[] {
     const res: ExtendedMeshIntersection[] = []
     const rayBuff = new Ray()
     rayBuff.copy(ray)
-    const tasResults: MeshIntersection[] = this.accelerationStructure.raycast(
+    const tasResults: ExtendedMeshIntersection[] = this.accelerationStructure.raycast(
       rayBuff,
       materialOrSide
-    )
+    ) as ExtendedMeshIntersection[]
     if (!tasResults.length) return res
 
     /** The index buffer for the bvh's geometry will *never* be undefined as it uses indexed geometry */
@@ -172,54 +173,83 @@ export class TopLevelAccelerationStructure {
       const batchObjectIndex = Math.trunc(
         vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
       )
-      rayBuff.copy(ray)
-      const hits = this.batchObjects[batchObjectIndex].accelerationStructure.raycast(
-        rayBuff,
-        materialOrSide
-      )
-      hits.forEach((hit) => {
-        /** We're promoting the MeshIntersection to ExtendedMeshIntersection because
-         *  now we know it's corresponding batch object
-         */
-        const extendedHit: ExtendedMeshIntersection = hit as ExtendedMeshIntersection
-        extendedHit.batchObject = this.batchObjects[batchObjectIndex]
-        res.push(extendedHit)
-      })
+      ;(tasRes as ExtendedMeshIntersection).batchObject =
+        this.batchObjects[batchObjectIndex]
+
+      /** If we requested only a TAS intersection, then we skip the BAS intersections */
+      if (!tasOnly) {
+        rayBuff.copy(ray)
+        const hits = this.batchObjects[batchObjectIndex].accelerationStructure.raycast(
+          rayBuff,
+          materialOrSide
+        )
+        hits.forEach((hit) => {
+          /** We're promoting the MeshIntersection to ExtendedMeshIntersection because
+           *  now we know it's corresponding batch object
+           */
+          const extendedHit: ExtendedMeshIntersection = hit as ExtendedMeshIntersection
+          extendedHit.batchObject = this.batchObjects[batchObjectIndex]
+          res.push(extendedHit)
+        })
+      }
     })
 
-    return res
+    return tasOnly ? tasResults : res
   }
 
   public raycastFirst(
     ray: Ray,
+    tasOnly: boolean = false,
     materialOrSide: Side | Material | Material[] = FrontSide
   ): ExtendedMeshIntersection | null {
     const rayBuff = new Ray()
     rayBuff.copy(ray)
-    const tasRes: MeshIntersection = this.accelerationStructure.raycastFirst(
-      rayBuff,
-      materialOrSide
-    )
-    if (!tasRes) return null
+    let extendedHit: ExtendedMeshIntersection | null = null
+    let tasRes: ExtendedMeshIntersection[] | null = null
+    if (tasOnly)
+      tasRes = [
+        this.accelerationStructure.raycastFirst(
+          rayBuff,
+          materialOrSide
+        ) as ExtendedMeshIntersection
+      ]
+    else
+      tasRes = this.accelerationStructure.raycast(
+        rayBuff,
+        materialOrSide
+      ) as ExtendedMeshIntersection[]
 
-    /** The index buffer for the bvh's geometry will *never* be undefined as it uses indexed geometry */
-    const indexBufferAttribute: BufferAttribute = this.accelerationStructure.geometry
-      .index as BufferAttribute
-    const vertIndex = indexBufferAttribute.array[tasRes.faceIndex * 3]
-    const batchObjectIndex = Math.trunc(
-      vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
-    )
-    rayBuff.copy(ray)
-    const hit: MeshIntersection = this.batchObjects[
-      batchObjectIndex
-    ].accelerationStructure.raycastFirst(rayBuff, materialOrSide)
-    /** We're promoting the MeshIntersection to ExtendedMeshIntersection because
-     *  now we know it's corresponding batch object
-     */
-    const extendedHit: ExtendedMeshIntersection = hit as ExtendedMeshIntersection
-    extendedHit.batchObject = this.batchObjects[batchObjectIndex]
+    if (!tasRes || tasRes.length === 0) return null
 
-    return extendedHit
+    tasRes.some((tasRes: ExtendedMeshIntersection) => {
+      /** The index buffer for the bvh's geometry will *never* be undefined as it uses indexed geometry */
+      const indexBufferAttribute: BufferAttribute = this.accelerationStructure.geometry
+        .index as BufferAttribute
+      const vertIndex = indexBufferAttribute.array[tasRes.faceIndex * 3]
+      const batchObjectIndex = Math.trunc(
+        vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
+      )
+      tasRes.batchObject = this.batchObjects[batchObjectIndex]
+
+      /** If we requested only a TAS intersection, then we skip the BAS intersections */
+      if (!tasOnly) {
+        rayBuff.copy(ray)
+        const hit: MeshIntersection = this.batchObjects[
+          batchObjectIndex
+        ].accelerationStructure.raycastFirst(rayBuff, materialOrSide)
+        /** We're promoting the MeshIntersection to ExtendedMeshIntersection because
+         *  now we know it's corresponding batch object
+         */
+        extendedHit = hit as ExtendedMeshIntersection
+        if (extendedHit) {
+          extendedHit.batchObject = this.batchObjects[batchObjectIndex]
+          return true
+        }
+      }
+      return false
+    })
+
+    return tasOnly ? tasRes[0] : extendedHit
   }
 
   public shapecast(callbacks: ExtendedShapeCastCallbacks): boolean {
@@ -293,6 +323,71 @@ export class TopLevelAccelerationStructure {
 
   public closestPointToPoint(point: Vector3) {
     return this.accelerationStructure.bvh.closestPointToPoint(point)
+  }
+
+  public closestPointToPointHalfplane(
+    point: Vector3,
+    planeNormal: Vector3,
+    target: HitPointInfo = {
+      point: new Vector3(),
+      distance: 0,
+      faceIndex: 0
+    },
+    minThreshold = 0,
+    maxThreshold = Infinity
+  ) {
+    // early out if under minThreshold
+    // skip checking if over maxThreshold
+    // set minThreshold = maxThreshold to quickly check if a point is within a threshold
+    // returns Infinity if no value found
+    const temp = new Vector3()
+    const temp1 = new Vector3()
+    const temp2 = new Vector3()
+    const minThresholdSq = minThreshold * minThreshold
+    const maxThresholdSq = maxThreshold * maxThreshold
+    let closestDistanceSq = Infinity
+    let closestDistanceTriIndex = -1
+    this.accelerationStructure.bvh.shapecast({
+      boundsTraverseOrder: (box: Box3) => {
+        temp.copy(point).clamp(box.min, box.max)
+        return temp.distanceToSquared(point)
+      },
+
+      // This is the default `closestPointToPoint` implementation. Keeping it intact for reference
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      intersectsBounds: (_box: Box3, _isLeaf, score: number) => {
+        return score < closestDistanceSq && score < maxThresholdSq
+      },
+
+      intersectsTriangle: (tri, triIndex) => {
+        tri.closestPointToPoint(point, temp)
+        const distSq = point.distanceToSquared(temp)
+        const v = temp2.subVectors(temp, point)
+        const planarity = planeNormal.dot(v)
+        if (planarity >= 0 && distSq < closestDistanceSq) {
+          temp1.copy(temp)
+          closestDistanceSq = distSq
+          closestDistanceTriIndex = triIndex
+        }
+
+        if (distSq < minThresholdSq) {
+          return true
+        } else {
+          return false
+        }
+      }
+    })
+
+    if (closestDistanceSq === Infinity) return null
+
+    const closestDistance = Math.sqrt(closestDistanceSq)
+
+    if (!target.point) target.point = temp1.clone()
+    else target.point.copy(temp1)
+    ;(target.distance = closestDistance), (target.faceIndex = closestDistanceTriIndex)
+
+    return target
   }
 
   public getBoundingBox(target: Box3): Box3 {
