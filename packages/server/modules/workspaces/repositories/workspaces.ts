@@ -50,9 +50,29 @@ export const getWorkspaceRoleFactory =
 export const upsertWorkspaceRoleFactory =
   ({ db }: { db: Knex }): UpsertWorkspaceRole =>
   async ({ userId, workspaceId, role }) => {
+    // Verify requested role is valid workspace role
     const validRoles = Object.values(Roles.Workspace)
     if (!validRoles.includes(role)) {
       throw new Error(`Unexpected workspace role provided: ${role}`)
+    }
+
+    const workspacesAclTable = tables.workspacesAcl(db)
+
+    // Protect against removing last admin in workspace
+    const workspaceAdmins = await workspacesAclTable.where('role', 'workspace:admin')
+
+    const targetUserIsWorkspaceAdmin = workspaceAdmins.some(
+      (acl) => acl.userId === userId
+    )
+    const targetUserNextRoleIsNotAdmin = role !== 'workspace:admin'
+    const targetUserIsLastAdmin = workspaceAdmins.length === 1
+
+    if (
+      targetUserIsWorkspaceAdmin &&
+      targetUserNextRoleIsNotAdmin &&
+      targetUserIsLastAdmin
+    ) {
+      throw new Error('Cannot remove last admin in workspace.')
     }
 
     await tables

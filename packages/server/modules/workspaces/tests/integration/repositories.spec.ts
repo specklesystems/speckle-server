@@ -82,5 +82,15 @@ describe('Workspace repositories', () => {
 
       expectToThrow(() => upsertWorkspaceRole(role))
     })
+    it('throws if last admin is being removed', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const workspaceId = cryptoRandomString({ length: 10 })
+
+      await upsertWorkspaceRole({ workspaceId, userId, role: 'workspace:admin' })
+
+      expectToThrow(() =>
+        upsertWorkspaceRole({ workspaceId, userId, role: 'workspace:member' })
+      )
+    })
   })
 })
