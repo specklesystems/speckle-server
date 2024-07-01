@@ -77,16 +77,41 @@ describe('Workspace repositories', () => {
 
   describe('deleteWorkspaceRoleFactory creates a function, that', () => {
     it('deletes specified workspace role', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const workspaceId = cryptoRandomString({ length: 10 })
 
+      await upsertWorkspaceRole({ userId, workspaceId, role: 'workspace:member' })
+      await deleteWorkspaceRole({ userId, workspaceId })
+
+      const role = await getWorkspaceRole({ userId, workspaceId })
+
+      expect(role).to.be.null
     })
     it('returns deleted workspace role', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const workspaceId = cryptoRandomString({ length: 10 })
 
+      const createdRole = await upsertWorkspaceRole({
+        userId,
+        workspaceId,
+        role: 'workspace:member'
+      })
+      const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
+
+      expect(deletedRole).to.deep.equal(createdRole)
     })
     it('return null if role does not exist', async () => {
+      const deletedRole = await deleteWorkspaceRole({ userId: '', workspaceId: '' })
 
+      expect(deletedRole).to.be.null
     })
     it('throws if target user is last workspace admin', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const workspaceId = cryptoRandomString({ length: 10 })
 
+      await upsertWorkspaceRole({ userId, workspaceId, role: 'workspace:admin' })
+
+      expectToThrow(() => deleteWorkspaceRole({ userId, workspaceId }))
     })
   })
 

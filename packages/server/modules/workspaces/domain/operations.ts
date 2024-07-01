@@ -25,7 +25,9 @@ type DeleteWorkspaceRoleArgs = {
   userId: string
 }
 
-export type DeleteWorkspaceRole = (args: DeleteWorkspaceRoleArgs) => Promise<WorkspaceAcl | null>
+export type DeleteWorkspaceRole = (
+  args: DeleteWorkspaceRoleArgs
+) => Promise<WorkspaceAcl | null>
 
 type GetWorkspaceRoleArgs = {
   workspaceId: string
