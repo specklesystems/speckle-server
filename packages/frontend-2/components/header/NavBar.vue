@@ -1,6 +1,6 @@
 <template>
   <div>
-    <nav class="fixed z-20 top-0 h-14 bg-foundation shadow">
+    <nav class="fixed z-40 top-0 h-14 bg-foundation shadow">
       <div
         class="flex gap-4 items-center justify-between h-full w-screen py-4 pl-3 pr-4"
       >
