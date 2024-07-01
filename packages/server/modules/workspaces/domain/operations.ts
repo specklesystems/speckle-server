@@ -1,19 +1,41 @@
 import {
   WorkspaceEvents,
   WorkspaceEventsPayloads
-} from '@/modules/workspaces/domain/events'
+} from '@/modules/workspacesCore/domain/events'
 import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
 
-export type UpsertWorkspace = (args: { workspace: Workspace }) => Promise<void>
-export type GetWorkspace = (args: { workspaceId: string }) => Promise<Workspace | null>
+/** Workspace */
+
+type UpsertWorkspaceArgs = {
+  workspace: Workspace
+}
+
+export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
+
+type GetWorkspaceArgs = {
+  workspaceId: string
+}
+
+export type GetWorkspace = (args: GetWorkspaceArgs) => Promise<Workspace | null>
+
+/** WorkspaceRole */
 
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
-export type GetWorkspaceRole = (args: {
+
+type GetWorkspaceRoleArgs = {
   workspaceId: string
   userId: string
-}) => Promise<WorkspaceAcl | null>
+}
+
+export type GetWorkspaceRole = (
+  args: GetWorkspaceRoleArgs
+) => Promise<WorkspaceAcl | null>
+
+/** Blob */
 
 export type StoreBlob = (args: string) => Promise<string>
+
+/** Events */
 
 export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   event: TEvent

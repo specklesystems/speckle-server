@@ -183,7 +183,7 @@ export function usePreviewImageBlob(
 
       let blobUrl: string
       if (enableDirectPreviews || import.meta.server) {
-        const blobUrlConfig = new URL(basePreviewUrl)
+        const blobUrlConfig = new URL(basePanoramaUrl.value)
         blobUrlConfig.searchParams.set('v', cacheBust.value.toString())
         blobUrl = blobUrlConfig.toString()
       } else {
@@ -231,7 +231,7 @@ export function usePreviewImageBlob(
   const regeneratePreviews = (basePreviewUrl?: string) => {
     cacheBust.value++
     processBasePreviewUrl(basePreviewUrl || unref(previewUrl))
-    if (shouldLoadPanorama) processPanoramaPreviewUrl()
+    if (shouldLoadPanorama.value) processPanoramaPreviewUrl()
   }
 
   watch(shouldLoadPanorama, (newVal) => {

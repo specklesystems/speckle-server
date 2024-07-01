@@ -1,4 +1,4 @@
-import { WorkspaceEvents } from '@/modules/workspaces/domain/events'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import {
   EmitWorkspaceEvent,
   StoreBlob,

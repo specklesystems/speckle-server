@@ -64,7 +64,7 @@ describe('Workspace services', () => {
         payload: {}
       }
       const createWorkspace = createWorkspaceFactory({
-        storeWorkspace: async () => {},
+        upsertWorkspace: async () => {},
         upsertWorkspaceRole: async () => {},
         emitWorkspaceEvent: async ({ event, payload }) => {
           eventData.isCalled = true
