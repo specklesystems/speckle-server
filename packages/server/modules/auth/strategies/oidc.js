@@ -8,8 +8,8 @@ const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/us
 const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   validateServerInvite,
-  finalizeInvitedServerRegistration,
-  resolveAuthRedirectPath
+  finalizeInvitedServerRegistrationFactory,
+  resolveAuthRedirectPathFactory
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { logger } = require('@/logging/logging')
 const {
@@ -88,7 +88,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
             // process invites
             if (myUser.isNewUser) {
-              await finalizeInvitedServerRegistration({
+              await finalizeInvitedServerRegistrationFactory({
                 deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
                 updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
               })(user.email, myUser.id)
@@ -116,13 +116,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
             rawProfile: userinfo
           })
 
-          await finalizeInvitedServerRegistration({
+          await finalizeInvitedServerRegistrationFactory({
             deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
             updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
           })(user.email, myUser.id)
 
           // Resolve redirect path
-          req.authRedirectPath = resolveAuthRedirectPath(validInvite)
+          req.authRedirectPath = resolveAuthRedirectPathFactory()(validInvite)
 
           // return to the auth flow
           return done(null, {

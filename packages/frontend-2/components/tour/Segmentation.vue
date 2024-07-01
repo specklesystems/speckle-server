@@ -64,7 +64,7 @@
   </div>
 </template>
 <script setup lang="ts">
-import { Vector3 } from 'three'
+import { Vector3, Quaternion } from 'three'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import {
   OnboardingIndustry,
@@ -107,6 +107,7 @@ function setRole(val: OnboardingRole) {
   emit('next')
 }
 
+/** Hardcoded vec3s in Z up space */
 const camPos = [
   [23.86779, 82.9541, 29.05586, -27.41942, 37.72358, 29.05586, 0, 1],
   [23.86779, 82.9541, 29.05586, -27.41942, 37.72358, 29.05586, 0, 1],
@@ -123,15 +124,21 @@ const rotateGently = (factor = 1) => {
 }
 
 function nextView() {
+  /** Camera controls works with vec3s in Y up space when setting inline views
+   *  That's why we're transforming them here
+   */
+  const quaternion = new Quaternion()
+    .setFromUnitVectors(new Vector3(0, 1, 0), new Vector3(0, 0, 1))
+    .invert()
   position.value = new Vector3(
     camPos[step.value][0],
     camPos[step.value][1],
     camPos[step.value][2]
-  )
+  ).applyQuaternion(quaternion)
   target.value = new Vector3(
     camPos[step.value][3],
     camPos[step.value][4],
     camPos[step.value][5]
-  )
+  ).applyQuaternion(quaternion)
 }
 </script>

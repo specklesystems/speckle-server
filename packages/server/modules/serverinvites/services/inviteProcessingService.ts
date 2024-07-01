@@ -8,7 +8,7 @@ import {
 } from '@/modules/serverinvites/helpers/inviteHelper'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
-import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
+import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   DeleteInvite,
@@ -30,7 +30,12 @@ import {
  * Note: Important auth query string params like the access_code are added separately
  * in auth middlewares
  */
-export const resolveAuthRedirectPath = () => (invite?: ServerInviteRecord) => {
+export const resolveAuthRedirectPathFactory = () => (invite?: ServerInviteRecord) => {
+  if (useNewFrontend()) {
+    // All post-auth redirects are handled by the frontend itself
+    return getFrontendOrigin()
+  }
+
   if (invite) {
     const { resourceId } = invite
 
@@ -47,7 +52,7 @@ export const resolveAuthRedirectPath = () => (invite?: ServerInviteRecord) => {
 /**
  * Validate that the new user has a valid invite for registering to the server
  */
-export const validateServerInvite =
+export const validateServerInviteFactory =
   ({ findServerInvite }: { findServerInvite: FindServerInvite }) =>
   async (email: string, token: string): Promise<ServerInviteRecord> => {
     const invite = await findServerInvite(email, token)
@@ -72,7 +77,7 @@ export const validateServerInvite =
  * Finalize server registration by deleting unnecessary invites and updating
  * the remaining ones
  */
-export const finalizeInvitedServerRegistration =
+export const finalizeInvitedServerRegistrationFactory =
   ({
     deleteServerOnlyInvites,
     updateAllInviteTargets
@@ -92,7 +97,7 @@ export const finalizeInvitedServerRegistration =
 /**
  * Accept or decline a stream invite
  */
-export const finalizeStreamInvite =
+export const finalizeStreamInviteFactory =
   ({
     findStreamInvite,
     deleteInvitesByTarget
@@ -149,7 +154,7 @@ export const finalizeStreamInvite =
 /**
  * Cancel/decline a stream invite
  */
-export const cancelStreamInvite =
+export const cancelStreamInviteFactory =
   ({
     findStreamInvite,
     deleteStreamInvite
@@ -175,7 +180,7 @@ export const cancelStreamInvite =
 /**
  * Re-send pending invite e-mail, without creating a new invite
  */
-export const resendInvite =
+export const resendInviteFactory =
   ({
     findInvite,
     resendInviteEmail
@@ -194,7 +199,7 @@ export const resendInvite =
 /**
  * Delete pending invite
  */
-export const deleteInvite =
+export const deleteInviteFactory =
   ({
     findInvite,
     deleteInvite

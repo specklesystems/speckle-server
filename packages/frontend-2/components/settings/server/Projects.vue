@@ -14,16 +14,16 @@
       @update:model-value="debounceSearchUpdate"
       @change="($event) => searchUpdateHandler($event.value)"
     />
-    <ServerManagementTable
+    <LayoutTable
       class="mt-8"
-      :headers="[
-        { id: 'name', title: 'Name' },
-        { id: 'type', title: 'Type' },
-        { id: 'created', title: 'Created' },
-        { id: 'modified', title: 'Modified' },
-        { id: 'models', title: 'Models' },
-        { id: 'versions', title: 'Versions' },
-        { id: 'contributors', title: 'Contributors' }
+      :columns="[
+        { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
+        { id: 'type', header: 'Type', classes: 'col-span-1' },
+        { id: 'created', header: 'Created', classes: 'col-span-2' },
+        { id: 'modified', header: 'Modified', classes: 'col-span-2' },
+        { id: 'models', header: 'Models', classes: 'col-span-1 text-right' },
+        { id: 'versions', header: 'Versions', classes: 'col-span-1 text-right' },
+        { id: 'contributors', header: 'Contributors', classes: 'col-span-2' }
       ]"
       :items="projects"
       :buttons="[{ icon: TrashIcon, label: 'Delete', action: openProjectDeleteDialog }]"
@@ -77,7 +77,7 @@
           <UserAvatarGroup :users="item.team.map((t) => t.user)" :max-count="3" />
         </div>
       </template>
-    </ServerManagementTable>
+    </LayoutTable>
 
     <CommonLoadingBar v-if="loading && !projects?.length" loading />
 

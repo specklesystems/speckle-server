@@ -64,6 +64,11 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
+          - name: LOG_LEVEL
+            value: {{ .Values.monitoring.logLevel }}
+          - name: LOG_PRETTY
+            value: {{ .Values.monitoring.logPretty | quote }}
+
       priorityClassName: low-priority
       {{- if .Values.monitoring.serviceAccount.create }}
       serviceAccountName: {{ include "monitoring.name" $ }}
