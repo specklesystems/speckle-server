@@ -20,7 +20,12 @@ export type GetWorkspace = (args: GetWorkspaceArgs) => Promise<Workspace | null>
 
 /** WorkspaceRole */
 
-export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
+type DeleteWorkspaceRoleArgs = {
+  workspaceId: string
+  userId: string
+}
+
+export type DeleteWorkspaceRole = (args: DeleteWorkspaceRoleArgs) => Promise<WorkspaceAcl | null>
 
 type GetWorkspaceRoleArgs = {
   workspaceId: string
@@ -30,6 +35,8 @@ type GetWorkspaceRoleArgs = {
 export type GetWorkspaceRole = (
   args: GetWorkspaceRoleArgs
 ) => Promise<WorkspaceAcl | null>
+
+export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 
 /** Blob */
 

@@ -1,7 +1,9 @@
 // TODO: test deleting user doesn't delete the workspace they created
 
 import {
+  deleteWorkspaceRoleFactory,
   getWorkspaceFactory,
+  getWorkspaceRoleFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
@@ -13,6 +15,8 @@ import { expectToThrow } from '@/test/assertionHelper'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
+const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
+const getWorkspaceRole = getWorkspaceRoleFactory({ db })
 const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
 
 describe('Workspace repositories', () => {
@@ -68,6 +72,21 @@ describe('Workspace repositories', () => {
 
       storedWorkspace = await getWorkspace({ workspaceId: workspace.id })
       expect(storedWorkspace).to.deep.equal(workspace)
+    })
+  })
+
+  describe('deleteWorkspaceRoleFactory creates a function, that', () => {
+    it('deletes specified workspace role', async () => {
+
+    })
+    it('returns deleted workspace role', async () => {
+
+    })
+    it('return null if role does not exist', async () => {
+
+    })
+    it('throws if target user is last workspace admin', async () => {
+
     })
   })
 
