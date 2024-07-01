@@ -23,7 +23,7 @@
         {{ tag }}
       </div>
     </NuxtLink>
-    <div v-else class="flex flex-col py-2">
+    <div v-else class="flex flex-col">
       <button
         class="group flex gap-1.5 items-center w-full hover:bg-foundation-3 rounded-md p-0.5"
         @click="isOpen = !isOpen"
