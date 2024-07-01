@@ -100,9 +100,9 @@ watch(step, (newVal, oldVal) => {
 })
 
 const accountStore = useAccountStore()
-const { defaultAccount } = storeToRefs(accountStore)
+const { activeAccount } = storeToRefs(accountStore)
 
-const selectedAccountId = ref<string>(defaultAccount.value?.accountInfo.id as string)
+const selectedAccountId = ref<string>(activeAccount.value?.accountInfo.id as string)
 const selectedProject = ref<ProjectListProjectItemFragment>()
 const selectedModel = ref<ModelListModelItemFragment>()
 
@@ -127,7 +127,7 @@ const selectVersionAndAddModel = async (
   const modelCard = new ReceiverModelCard()
   modelCard.accountId = selectedAccountId.value
   modelCard.projectId = selectedProject.value?.id as string
-  modelCard.serverUrl = defaultAccount.value.accountInfo.serverInfo.url
+  modelCard.serverUrl = activeAccount.value.accountInfo.serverInfo.url
   modelCard.modelId = selectedModel.value?.id as string
 
   modelCard.projectName = selectedProject.value?.name as string

@@ -85,9 +85,9 @@ const emit = defineEmits(['close'])
 
 const step = ref(1)
 const accountStore = useAccountStore()
-const { defaultAccount } = storeToRefs(accountStore)
+const { activeAccount } = storeToRefs(accountStore)
 
-const selectedAccountId = ref<string>(defaultAccount.value?.accountInfo.id as string)
+const selectedAccountId = ref<string>(activeAccount.value?.accountInfo.id as string)
 const selectedProject = ref<ProjectListProjectItemFragment>()
 const selectedModel = ref<ModelListModelItemFragment>()
 const filter = ref<ISendFilter | undefined>(undefined)
@@ -123,7 +123,7 @@ const addModel = async () => {
   const model = new SenderModelCard()
   model.accountId = selectedAccountId.value
   model.projectId = selectedProject.value?.id as string
-  model.serverUrl = defaultAccount.value.accountInfo.serverInfo.url
+  model.serverUrl = activeAccount.value?.accountInfo.serverInfo.url as string
   model.modelId = selectedModel.value?.id as string
   model.sendFilter = filter.value as ISendFilter
   model.expired = false
