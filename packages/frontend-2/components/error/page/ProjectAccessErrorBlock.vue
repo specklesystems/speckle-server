@@ -5,18 +5,21 @@
       :invite="invite"
       :show-stream-name="false"
       :auto-accept="shouldAutoAcceptInvite"
+      block
       @processed="onProcessed"
     />
+    <ErrorPageGenericUnauthorizedBlock v-else />
   </NuxtErrorBoundary>
 </template>
 <script setup lang="ts">
 import type { Optional } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
-import { projectRoute } from '~~/lib/common/helpers/route'
+import { projectRoute, useNavigateToHome } from '~/lib/common/helpers/route'
 import { projectInviteQuery } from '~~/lib/projects/graphql/queries'
 
 const route = useRoute()
 const logger = useLogger()
+const goHome = useNavigateToHome()
 
 const token = computed(() => route.query.token as Optional<string>)
 const projectId = computed(() => route.params.id as Optional<string>)
@@ -35,11 +38,18 @@ const invite = computed(() => result.value?.projectInvite)
 
 const onError = (err: unknown) => logger.error(err)
 
-const onProcessed = (val: { accepted: boolean }) => {
+const onProcessed = async (val: { accepted: boolean }) => {
+  if (!import.meta.client) return
   const { accepted } = val
 
-  if (accepted && projectId.value && import.meta.client) {
-    window.location.href = projectRoute(projectId.value)
+  if (accepted) {
+    if (projectId.value) {
+      window.location.href = projectRoute(projectId.value)
+    } else {
+      window.location.reload()
+    }
+  } else {
+    await goHome()
   }
 }
 </script>
