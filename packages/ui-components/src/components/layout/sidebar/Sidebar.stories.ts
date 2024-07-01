@@ -18,14 +18,6 @@ export default {
   argTypes: {
     title: {
       description: 'Title of the sidebar, displayed at the top if provided'
-    },
-    collapsible: {
-      description: 'Indicates if the sidebar sections are collapsible',
-      type: 'boolean'
-    },
-    isStatic: {
-      description: 'Indicates if the sidebar should always be visible',
-      type: 'boolean'
     }
   }
 } as Meta
