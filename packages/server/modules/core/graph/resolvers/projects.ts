@@ -104,6 +104,15 @@ export = {
         throw new RateLimitError(rateLimitResult)
       }
 
+      if (!!args.input?.workspaceId) {
+        await authorizeResolver(
+          context.userId!,
+          args.input.workspaceId,
+          Roles.Workspace.Member,
+          context.resourceAccessRules
+        )
+      }
+
       const project = await createStreamReturnRecord(
         {
           ...(args.input || {}),

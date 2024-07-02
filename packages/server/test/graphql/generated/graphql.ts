@@ -1862,6 +1862,7 @@ export type ProjectCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   visibility?: InputMaybe<ProjectVisibility>;
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProjectFileImportUpdatedMessage = {
@@ -2682,6 +2683,7 @@ export type StreamCreateInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   /** Optionally specify user IDs of users that you want to invite to be contributors to this stream */
   withContributors?: InputMaybe<Array<Scalars['String']['input']>>;
+  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type StreamInviteCreateInput = {
