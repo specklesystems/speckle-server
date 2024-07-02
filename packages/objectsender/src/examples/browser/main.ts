@@ -1,4 +1,4 @@
-import { send, Base, type SendResult, Detach } from '../../index'
+import { send, Base, type SendResult, Detach, Chunkable } from '../../index'
 import { times } from '#lodash'
 import { createCommit } from './utils'
 
@@ -116,7 +116,8 @@ function generateTestObject() {
         .fill(0)
         .map(() => new RandomFoo())
     ]),
-    '@(10)chunkedArr': times(100, () => 42)
+    '@(10)chunkedArr': times(100, () => 42),
+    some: new RandomJoe()
   })
 }
 
@@ -124,6 +125,17 @@ class RandomFoo extends Base {
   constructor(props?: Record<string, unknown>) {
     super(props)
     this.noise = Math.random().toString(16)
+  }
+}
+
+class RandomJoe extends Base {
+  @Detach()
+  @Chunkable(10)
+  numbers: number[]
+
+  constructor(props?: Record<string, unknown>) {
+    super(props)
+    this.numbers = times(100, () => 42)
   }
 }
 
