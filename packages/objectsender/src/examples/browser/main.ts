@@ -1,5 +1,6 @@
 import { send, Base, type SendResult, Detach } from '../../index'
 import { times } from '#lodash'
+import { createCommit } from './utils'
 
 interface ExampleAppWindow extends Window {
   send: typeof import('../../index').send
@@ -70,6 +71,8 @@ appWindow.loadData = async () => {
       projectId,
       token: apiToken
     })
+
+    await createCommit(res, { serverUrl, projectId, token: apiToken })
   } catch (e) {
     const msg = e instanceof Error ? e.message : JSON.stringify(e)
     setInputValue('result', msg, { valueKey: 'textContent' })
