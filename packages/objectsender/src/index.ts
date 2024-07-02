@@ -3,7 +3,7 @@ import { ServerTransport } from './transports/ServerTransport'
 import { Base } from './utils/Base'
 export { Base }
 
-export { Detach } from './utils/Decorators'
+export { Detach, Chunkable } from './utils/Decorators'
 
 export type SendParams = {
   serverUrl?: string
