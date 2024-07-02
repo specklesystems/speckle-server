@@ -230,53 +230,56 @@ export class SectionTool extends Extension {
 
   private _draggingChangeHandler() {
     if (!this.display.visible) return
+
     this.boxGeometry.computeBoundingBox()
     this.boxMeshHelper.box.copy(this.boxGeometry.boundingBox || new Box3())
 
-    // Dragging a side / plane
-    if (this.dragging && this.currentRange) {
-      this._generateOrUpdatePlanes()
-      if (this.prevPosition === null)
+    if (this.dragging) {
+      // Dragging a side / plane
+      if (this.currentRange) {
+        this._generateOrUpdatePlanes()
+        if (this.prevPosition === null)
+          this.prevPosition = this.hoverPlane.position.clone()
+        this.prevPosition.sub(this.hoverPlane.position)
+        this.prevPosition.negate()
+        const boxArr = this.boxGeometry.attributes.position.array as number[]
+        for (let i = 0; i < this.currentRange.length; i++) {
+          const index = this.currentRange[i]
+          boxArr[3 * index] += this.prevPosition.x
+          boxArr[3 * index + 1] += this.prevPosition.y
+          boxArr[3 * index + 2] += this.prevPosition.z
+        }
+
         this.prevPosition = this.hoverPlane.position.clone()
-      this.prevPosition.sub(this.hoverPlane.position)
-      this.prevPosition.negate()
-      const boxArr = this.boxGeometry.attributes.position.array as number[]
-      for (let i = 0; i < this.currentRange.length; i++) {
-        const index = this.currentRange[i]
-        boxArr[3 * index] += this.prevPosition.x
-        boxArr[3 * index + 1] += this.prevPosition.y
-        boxArr[3 * index + 2] += this.prevPosition.z
+        this.boxGeometry.attributes.position.needsUpdate = true
+        this.boxGeometry.computeVertexNormals()
+        this.boxGeometry.computeBoundingBox()
+        this.boxGeometry.computeBoundingSphere()
       }
 
-      this.prevPosition = this.hoverPlane.position.clone()
-      this.boxGeometry.attributes.position.needsUpdate = true
-      this.boxGeometry.computeVertexNormals()
-      this.boxGeometry.computeBoundingBox()
-      this.boxGeometry.computeBoundingSphere()
-    }
+      // Dragging the whole section box. This legacy bit seems to never happen ¯\_(ツ)_/¯
+      else {
+        this._generateOrUpdatePlanes()
+        if (this.prevPosition === null) this.prevPosition = this.sphere.position.clone()
+        this.prevPosition.sub(this.sphere.position)
+        this.prevPosition.negate()
+        const verts = this.boxGeometry.attributes.position.array as number[]
+        for (let i = 0; i < verts.length; i += 3) {
+          verts[i] += this.prevPosition.x
+          verts[i + 1] += this.prevPosition.y
+          verts[i + 2] += this.prevPosition.z
+        }
+        this.boxGeometry.attributes.position.needsUpdate = true
+        this.boxGeometry.computeVertexNormals()
+        this.boxGeometry.computeBoundingBox()
+        this.boxGeometry.computeBoundingSphere()
 
-    // Dragging the whole section box
-    if (this.dragging && !this.currentRange) {
-      this._generateOrUpdatePlanes()
-      if (this.prevPosition === null) this.prevPosition = this.sphere.position.clone()
-      this.prevPosition.sub(this.sphere.position)
-      this.prevPosition.negate()
-      const verts = this.boxGeometry.attributes.position.array as number[]
-      for (let i = 0; i < verts.length; i += 3) {
-        verts[i] += this.prevPosition.x
-        verts[i + 1] += this.prevPosition.y
-        verts[i + 2] += this.prevPosition.z
+        this.prevPosition = this.sphere.position.clone()
       }
-      this.boxGeometry.attributes.position.needsUpdate = true
-      this.boxGeometry.computeVertexNormals()
-      this.boxGeometry.computeBoundingBox()
-      this.boxGeometry.computeBoundingSphere()
-
-      this.prevPosition = this.sphere.position.clone()
+      this.viewer.getRenderer().clippingPlanes = this.planes
+      this.viewer.getRenderer().clippingVolume = this.getBox()
+      this.emit(SectionToolEvent.Updated, this.planes)
     }
-    this.viewer.getRenderer().clippingPlanes = this.planes
-    this.viewer.getRenderer().clippingVolume = this.getBox()
-    this.emit(SectionToolEvent.Updated, this.planes)
     this.viewer.requestRender()
   }
 

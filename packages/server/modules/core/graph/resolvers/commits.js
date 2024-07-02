@@ -1,6 +1,7 @@
 'use strict'
 
-const { UserInputError, ApolloError } = require('apollo-server-express')
+const { CommitNotFoundError } = require('@/modules/core/errors/commit')
+const { UserInputError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 const {
   pubsub,
@@ -29,10 +30,10 @@ const {
 
 const { getUser } = require('../../services/users')
 
+const { RateLimitError } = require('@/modules/core/errors/ratelimit')
 const {
   isRateLimitBreached,
-  getRateLimitResult,
-  RateLimitError
+  getRateLimitResult
 } = require('@/modules/core/services/ratelimiter')
 const {
   batchMoveCommits,
@@ -151,7 +152,7 @@ module.exports = {
           limit: 1
         })
         if (commits.length !== 0) return commits[0]
-        throw new ApolloError(
+        throw new CommitNotFoundError(
           'Cannot retrieve commit (there are no commits in this stream).'
         )
       }
