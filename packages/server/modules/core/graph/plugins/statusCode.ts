@@ -1,5 +1,5 @@
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { BaseError, ForbiddenError, UnauthorizedError } from '@/modules/shared/errors'
+import { BaseError } from '@/modules/shared/errors'
 import { Nullable } from '@speckle/shared'
 import type { ApolloServerPlugin } from 'apollo-server-plugin-base'
 import type { GraphQLError } from 'graphql'
@@ -22,28 +22,14 @@ export const statusCodePlugin: ApolloServerPlugin = {
         const resHttp = reqCtx.response.http
         if (!resHttp) return
 
-        const hasForbiddenError = reqCtx.errors?.some(
-          (e) => getErrorCode(e) === ForbiddenError.code
-        )
-        const hasUnauthenticatedError = reqCtx.errors?.some((e) =>
-          ['UNAUTHENTICATED', UnauthorizedError.code].includes(getErrorCode(e) || '')
-        )
         const hasRateLimitError = reqCtx.errors?.some(
           (e) => getErrorCode(e) === RateLimitError.code
         )
-        const hasInternalServerError = reqCtx.errors?.some(
-          (e) => getErrorCode(e) === 'INTERNAL_SERVER_ERROR'
-        )
-
-        if (hasForbiddenError) {
-          resHttp.status = ForbiddenError.statusCode
-        } else if (hasUnauthenticatedError) {
-          resHttp.status = UnauthorizedError.statusCode
-        } else if (hasRateLimitError) {
+        if (hasRateLimitError) {
           resHttp.status = RateLimitError.statusCode
-        } else if (hasInternalServerError) {
-          resHttp.status = 500
         }
+
+        // For now not handling 401, 403, 500, cause these will change how Apollo Client reports the error in some scenarios and thus - break our error handling
       }
     }
   }
