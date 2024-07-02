@@ -20,6 +20,7 @@ const {
 
 const { authorizeResolver, validateScopes } = require(`@/modules/shared`)
 const {
+  RateLimitError,
   getRateLimitResult,
   isRateLimitBreached
 } = require('@/modules/core/services/ratelimiter')
@@ -48,7 +49,6 @@ const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 const { Roles, Scopes } = require('@speckle/shared')
 const { StreamNotFoundError } = require('@/modules/core/errors/stream')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
-const { RateLimitError } = require('@/modules/core/errors/ratelimit')
 
 const {
   toProjectIdWhitelist,
