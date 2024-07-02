@@ -1,6 +1,7 @@
 'use strict'
 
-const { UserInputError, ApolloError } = require('apollo-server-express')
+const { CommitNotFoundError } = require('@/modules/core/errors/commit')
+const { UserInputError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 const {
   pubsub,
@@ -151,7 +152,7 @@ module.exports = {
           limit: 1
         })
         if (commits.length !== 0) return commits[0]
-        throw new ApolloError(
+        throw new CommitNotFoundError(
           'Cannot retrieve commit (there are no commits in this stream).'
         )
       }

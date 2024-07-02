@@ -1,6 +1,6 @@
 'use strict'
 const knex = require(`@/db/knex`)
-const { ForbiddenError, ApolloError } = require('apollo-server-express')
+const { ForbiddenError } = require('apollo-server-express')
 const {
   pubsub,
   StreamSubscriptions,
@@ -54,7 +54,7 @@ async function authorizeResolver(
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
   const role = roles.find((r) => r.name === requiredRole)
-  if (!role) throw new ApolloError('Unknown role: ' + requiredRole)
+  if (!role) throw new ForbiddenError('Unknown role: ' + requiredRole)
 
   const resourceRuleType = roleResourceTypeToTokenResourceType(role.resourceTarget)
   const isResourceLimited =
@@ -80,7 +80,7 @@ async function authorizeResolver(
       .first()
     if (isPublic && role.weight < 200) return true
   } catch {
-    throw new ApolloError(
+    throw new ForbiddenError(
       `Resource of type ${role.resourceTarget} with ${resourceId} not found`
     )
   }
