@@ -21,7 +21,7 @@ import {
   isRateLimitBreached
 } from '@/modules/core/services/ratelimiter'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
-import { ApolloError } from 'apollo-server-express'
+import { GendoRenderRequestError } from '@/modules/gendo/errors/main'
 
 export = {
   Version: {
@@ -91,8 +91,8 @@ export = {
           id: crs({ length: 10 })
         })
       } else {
-        const body = await response.json()
-        throw new ApolloError('Failed to enque gendo render. ' + body)
+        const body = await response.json().catch(() => '')
+        throw new GendoRenderRequestError('Failed to enque gendo render. ' + body)
       }
       return true
     }
