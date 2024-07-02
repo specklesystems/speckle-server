@@ -3,6 +3,7 @@ import {
   WorkspaceEventsPayloads
 } from '@/modules/workspacesCore/domain/events'
 import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
+import { WorkspaceRoles } from '@speckle/shared'
 
 /** Workspace */
 
@@ -37,6 +38,13 @@ type GetWorkspaceRoleArgs = {
 export type GetWorkspaceRole = (
   args: GetWorkspaceRoleArgs
 ) => Promise<WorkspaceAcl | null>
+
+type GetWorkspaceRolesArgs = {
+  workspaceId: string
+  roles: WorkspaceRoles[]
+}
+
+export type GetWorkspaceRoles = (args: GetWorkspaceRolesArgs) => Promise<WorkspaceAcl[]>
 
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 

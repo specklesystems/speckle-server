@@ -3,6 +3,7 @@ import {
   DeleteWorkspaceRole,
   GetWorkspace,
   GetWorkspaceRole,
+  GetWorkspaceRoles,
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -78,6 +79,21 @@ export const deleteWorkspaceRoleFactory =
     await currentRoleQuery.delete()
 
     return currentRole
+  }
+
+export const getWorkspaceMembersFactory =
+  ({ db }: { db: Knex }): GetWorkspaceRoles =>
+  async ({
+    workspaceId,
+    roles = ['workspace:admin', 'workspace:member', 'workspace:guest']
+  }): Promise<WorkspaceAcl[]> => {
+    const memberRoles = await tables
+      .workspacesAcl(db)
+      .select('*')
+      .where('workspaceId', workspaceId)
+      .and.whereIn('role', roles)
+
+    return memberRoles
   }
 
 export const upsertWorkspaceRoleFactory =
