@@ -5,8 +5,8 @@ import express from 'express'
 import {
   getObjectFactory,
   getObjectChildrenStreamFactory
-} from '../../repositories/objects'
-import { SpeckleObjectsStream } from '../../utils/speckleObjectsStream'
+} from '@/repositories/objects'
+import { SpeckleObjectsStream } from '@/utils/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
 import type { Knex } from 'knex'
 

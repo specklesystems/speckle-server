@@ -1,4 +1,4 @@
-import type { Preview } from '../domain/domain'
+import type { Preview } from '@/domain/domain'
 import type { Knex } from 'knex'
 
 export type InsertPreview = (params: Preview) => Promise<void>

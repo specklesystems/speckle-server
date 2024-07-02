@@ -1,7 +1,7 @@
 import zlib from 'zlib'
 import express from 'express'
-import { getObjectsStreamFactory } from '../../repositories/objects'
-import { SpeckleObjectsStream } from '../../utils/speckleObjectsStream'
+import { getObjectsStreamFactory } from '@/repositories/objects'
+import { SpeckleObjectsStream } from '@/utils/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
 import type { Knex } from 'knex'
 

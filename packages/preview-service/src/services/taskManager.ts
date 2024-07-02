@@ -2,10 +2,10 @@ import type { UpdateHealthcheckData } from 'clients/execHealthcheck'
 import {
   metricDuration,
   metricOperationErrors
-} from '../observability/prometheusMetrics'
-import type { NotifyUpdate, UpdatePreviewMetadata } from '../repositories/objectPreview'
-import type { GetNextUnstartedObjectPreview } from '../repositories/objectPreview'
-import type { GenerateAndStore360Preview } from './360preview'
+} from '@/observability/prometheusMetrics'
+import type { NotifyUpdate, UpdatePreviewMetadata } from '@/repositories/objectPreview'
+import type { GetNextUnstartedObjectPreview } from '@/repositories/objectPreview'
+import type { GenerateAndStore360Preview } from '@/services/360preview'
 import type { Logger } from 'pino'
 
 let shouldExit = false
@@ -14,7 +14,7 @@ export function forceExit() {
   shouldExit = true
 }
 
-type RepeatedlyPollForWork = () => Promise<void>
+type RepeatedlyPollForWork = () => void
 export const repeatedlyPollForWorkFactory =
   (deps: {
     updateHealthcheckData: UpdateHealthcheckData

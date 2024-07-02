@@ -1,8 +1,8 @@
 import prometheusClient from 'prom-client'
 import type { Counter, Histogram, Summary } from 'prom-client'
-import { logger } from './logging'
+import { logger } from '@/observability/logging'
 import type { Knex } from 'knex'
-import { getPostgresMaxConnections } from '../utils/env'
+import { getPostgresMaxConnections } from '@/utils/env'
 
 // let metricFree: Gauge<string> | null = null
 // let metricUsed: Gauge<string> = null

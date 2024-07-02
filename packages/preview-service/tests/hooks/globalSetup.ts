@@ -3,9 +3,9 @@
  * It is configured via the vitest.config.ts file.
  */
 
-import { getTestDb } from '../testKnex'
-import { testLogger as logger } from '../../observability/logging'
-import { truncateTables } from './helpers'
+import { getTestDb } from '#/testKnex'
+import { testLogger as logger } from '@/observability/logging'
+import { truncateTables } from '#/hooks/helpers'
 
 const testDb = getTestDb()
 

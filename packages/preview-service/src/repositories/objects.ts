@@ -1,5 +1,5 @@
 import type { Knex } from 'knex'
-import type { ObjectIdentifier } from '../domain/domain'
+import type { ObjectIdentifier } from '@/domain/domain'
 
 const Objects = (db: Knex) => db('objects')
 const Closures = (db: Knex) => db('object_children_closure')

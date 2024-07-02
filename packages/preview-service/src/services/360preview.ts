@@ -1,8 +1,8 @@
 import crypto from 'crypto'
 import joinImages from 'join-images'
-import type { ObjectIdentifier } from '../domain/domain'
-import type { InsertPreview } from '../repositories/previews'
-import type { GeneratePreview } from '../clients/previewService'
+import type { ObjectIdentifier } from '@/domain/domain'
+import type { InsertPreview } from '@/repositories/previews'
+import type { GeneratePreview } from '@/clients/previewService'
 
 export type GenerateAndStore360Preview = (
   task: ObjectIdentifier

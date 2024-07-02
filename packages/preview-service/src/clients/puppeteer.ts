@@ -1,6 +1,6 @@
 import puppeteer, { Browser, EvaluateFunc, PuppeteerLaunchOptions } from 'puppeteer'
-import { isDevelopment } from '../utils/env'
-import { extendLoggerComponent } from '../observability/logging'
+import { isDevelopment } from '@/utils/env'
+import { extendLoggerComponent } from '@/observability/logging'
 import { Logger } from 'pino'
 
 export interface PuppeteerClientInterface {
@@ -78,8 +78,8 @@ export class PuppeteerClient implements PuppeteerClientInterface {
     return evaluationResult
   }
 
-  close() {
+  async close() {
     if (!this.browser) return
-    this.browser.close()
+    await this.browser.close()
   }
 }

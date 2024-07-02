@@ -10,6 +10,7 @@
     "url": "https://github.com/specklesystems/speckle-server.git",
     "directory": "packages/preview-service"
   },
+  "type": "module",
   "engines": {
     "node": "^18.19.0"
   },
@@ -18,11 +19,12 @@
     "run:watch": "LOG_PRETTY=true LOG_LEVEL=debug nodemon ./bin/www --trace-deprecation --watch ./bin/www --watch ./dist",
     "dev": "concurrently \"npm:build:watch\" \"npm:run:watch\"",
     "dev:headed": "PREVIEWS_HEADED=true yarn dev",
-    "build": "tsc -p ./tsconfig.build.json && webpack --env dev --config webpack.config.renderPage.js && webpack --env build --config webpack.config.renderPage.js",
+    "build": "tsc -p ./tsconfig.build.json && webpack --env build --config webpack.config.renderPage.js",
     "lint": "yarn lint:tsc && yarn lint:eslint",
     "lint:ci": "yarn lint:tsc",
     "lint:tsc": "tsc --noEmit",
     "lint:eslint": "eslint .",
+    "start": "node ./bin/www",
     "test": "NODE_ENV=test LOG_LEVEL=silent LOG_PRETTY=true vitest --run"
   },
   "dependencies": {

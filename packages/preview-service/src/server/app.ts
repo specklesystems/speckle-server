@@ -3,12 +3,11 @@
 import createError from 'http-errors'
 import express, { ErrorRequestHandler } from 'express'
 import path from 'path'
-
-import indexRouterFactory from './routes/index'
-import previewRouterFactory from './routes/preview'
-import objectsRouterFactory from './routes/objects'
-import apiRouterFactory from './routes/api'
-import { loggingExpressMiddleware } from '../observability/expressLogging'
+import indexRouterFactory from '@/server/routes/index'
+import previewRouterFactory from '@/server/routes/preview'
+import objectsRouterFactory from '@/server/routes/objects'
+import apiRouterFactory from '@/server/routes/api'
+import { loggingExpressMiddleware } from '@/observability/expressLogging'
 import type { Knex } from 'knex'
 
 export const appFactory = (deps: { db: Knex }) => {

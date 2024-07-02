@@ -1,5 +1,5 @@
 import type { Knex } from 'knex'
-import { startServer, stopServer } from '../../server/server'
+import { startServer, stopServer } from '@/server/server'
 import http from 'http'
 
 export const truncateTables = async (params: { db: Knex; tableNames?: string[] }) => {

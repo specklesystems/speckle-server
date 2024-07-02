@@ -1,12 +1,8 @@
-/**
- * Module dependencies.
- */
-
 import http from 'http'
-import { appFactory } from './app'
-import { appFactory as metricsAppFactory } from '../observability/metricsApp'
-import { serverLogger } from '../observability/logging'
-import { getAppPort, getHost, getMetricsPort } from '../utils/env'
+import { appFactory } from '@/server/app'
+import { appFactory as metricsAppFactory } from '@/observability/metricsApp'
+import { serverLogger } from '@/observability/logging'
+import { getAppPort, getHost, getMetricsPort } from '@/utils/env'
 import type { Knex } from 'knex'
 
 export const startServer = (params: { db: Knex }) => {

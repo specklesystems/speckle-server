@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 
 import knexClient from 'knex'
-import { getPostgresConnectionString } from '../utils/env'
+import { getPostgresConnectionString } from '@/utils/env'
 
 const knex = knexClient({
   client: 'pg',

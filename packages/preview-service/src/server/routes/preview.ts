@@ -1,10 +1,10 @@
 'use strict'
 
 import express from 'express'
-import { getScreenshotFactory } from '../../services/screenshot'
-import { PuppeteerClient } from '../../clients/puppeteer'
+import { getScreenshotFactory } from '@/services/screenshot'
+import { PuppeteerClient } from '@/clients/puppeteer'
 import { puppeteerDriver } from '../../scripts/puppeteerDriver'
-import { serviceOrigin } from '../../utils/env'
+import { serviceOrigin } from '@/utils/env'
 
 const previewRouterFactory = () => {
   const previewRouter = express.Router()

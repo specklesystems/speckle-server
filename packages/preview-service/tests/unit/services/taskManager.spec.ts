@@ -1,5 +1,5 @@
-import { logger } from '../../../observability/logging'
-import { repeatedlyPollForWorkFactory } from '../../../services/taskManager'
+import { logger } from '@/observability/logging'
+import { repeatedlyPollForWorkFactory } from '@/services/taskManager'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 describe('Task Manager', () => {
@@ -13,15 +13,16 @@ describe('Task Manager', () => {
         updateHealthcheckData: () => {
           called['updateHealthcheckData'] = called['updateHealthcheckData']++ || 1
         },
-        getNextUnstartedObjectPreview: async () => ({
-          streamId: 'streamId',
-          objectId: 'objectId'
-        }),
+        getNextUnstartedObjectPreview: async () =>
+          Promise.resolve({
+            streamId: 'streamId',
+            objectId: 'objectId'
+          }),
         generateAndStore360Preview: async (task) => {
           called['generateAndStore360Preview'] =
             called['generateAndStore360Preview']++ || 1
           expect(task).toEqual({ streamId: 'streamId', objectId: 'objectId' })
-          return { metadata: { all: 'myJoinedUpPreviewId' } }
+          return Promise.resolve({ metadata: { all: 'myJoinedUpPreviewId' } })
         },
         updatePreviewMetadata: async (params) => {
           called['updatePreviewMetadata'] = called['updatePreviewMetadata']++ || 1
@@ -30,10 +31,12 @@ describe('Task Manager', () => {
             streamId: 'streamId',
             objectId: 'objectId'
           })
+          return Promise.resolve()
         },
         notifyUpdate: async (task) => {
           called['notifyUpdate'] = called['notifyUpdate']++ || 1
           expect(task).toEqual({ streamId: 'streamId', objectId: 'objectId' })
+          return Promise.resolve()
         },
         onExit: () => {
           called['onExit'] = called['onExit']++ || 1

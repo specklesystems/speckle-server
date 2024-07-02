@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { getNextUnstartedObjectPreviewFactory } from '../../../repositories/objectPreview'
+import { getNextUnstartedObjectPreviewFactory } from '@/repositories/objectPreview'
 import cryptoRandomString from 'crypto-random-string'
-import { getTestDb } from '../../testKnex'
+import { getTestDb } from '#/testKnex'
 
 describe('Repositories: ObjectPreview', () => {
   const db = getTestDb() //FIXME get from global context

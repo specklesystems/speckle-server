@@ -3,10 +3,10 @@ import {
   shouldBeHeadless,
   getPuppeteerUserDataDir,
   getChromiumExecutablePath
-} from '../utils/env'
+} from '@/utils/env'
 import type { Logger } from 'pino'
-import { PuppeteerClientInterface } from '../clients/puppeteer'
-import type { ObjectIdentifier } from '../domain/domain'
+import { PuppeteerClientInterface } from '@/clients/puppeteer'
+import type { ObjectIdentifier } from '@/domain/domain'
 
 export type GetScreenshot = (
   params: ObjectIdentifier

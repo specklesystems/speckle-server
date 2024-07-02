@@ -5,10 +5,10 @@
 //FIXME this is only relevant for integration tests... not unit tests
 
 import { beforeAll, beforeEach, afterEach, afterAll } from 'vitest'
-import { getTestDb } from '../testKnex'
-import { testLogger as logger } from '../../observability/logging'
-import { buildAndStartApp, truncateTables } from './helpers'
-import { stopServer } from 'server/server'
+import { getTestDb } from '#/testKnex'
+import { testLogger as logger } from '@/observability/logging'
+import { buildAndStartApp, truncateTables } from '#/hooks/helpers'
+import { stopServer } from '@/server/server'
 import http from 'http'
 
 const testDb = getTestDb()
