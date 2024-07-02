@@ -29,9 +29,7 @@ export class PuppeteerClient implements PuppeteerClientInterface {
   }
 
   async init(launchParams?: PuppeteerLaunchOptions) {
-    if (isDevelopment())
-      this.browser = await puppeteer.launch({ ...launchParams, dumpio: true })
-    this.browser = await puppeteer.launch(launchParams)
+    this.browser = await puppeteer.launch({ ...launchParams, dumpio: isDevelopment() })
   }
 
   async loadPageAndEvaluateScript(...args: unknown[]): Promise<unknown> {
