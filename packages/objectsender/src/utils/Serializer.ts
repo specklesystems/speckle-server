@@ -4,6 +4,7 @@ import { ITransport } from '../transports/ITransport'
 import { Base } from './Base'
 import { IDisposable } from './IDisposable'
 import { isObjectLike, get } from '#lodash'
+import { isDetached } from './Decorators'
 
 type BasicSpeckleObject = Record<string, unknown> & {
   speckle_type: string
@@ -61,7 +62,7 @@ export class Serializer implements IDisposable {
         continue
       }
 
-      const isDetachedProp = propKey.startsWith('@')
+      const isDetachedProp = propKey.startsWith('@') || isDetached(obj, propKey)
 
       // 2. chunked arrays
       const isArray = Array.isArray(value)
