@@ -1,7 +1,9 @@
 <template>
   <div>
-    <nav class="fixed z-20 top-0 h-14 bg-foundation shadow hover:shadow-md transition">
-      <div class="flex gap-4 items-center justify-between h-full w-screen px-4">
+    <nav class="fixed z-20 top-0 h-14 bg-foundation shadow">
+      <div
+        class="flex gap-4 items-center justify-between h-full w-screen py-4 pl-3 pr-4"
+      >
         <div class="flex items-center truncate">
           <HeaderLogoBlock :active="false" to="/" />
           <HeaderNavLink

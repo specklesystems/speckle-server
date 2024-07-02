@@ -200,7 +200,7 @@ import {
   MagnifyingGlassIcon,
   XMarkIcon,
   ExclamationCircleIcon
-} from '@heroicons/vue/24/solid'
+} from '@heroicons/vue/20/solid'
 import { debounce, isArray, isObjectLike } from 'lodash'
 import type { CSSProperties, PropType, Ref } from 'vue'
 import { computed, onMounted, ref, unref, watch } from 'vue'
@@ -525,7 +525,7 @@ const buttonClasses = computed(() => {
   ]
 
   if (props.buttonStyle !== 'simple') {
-    classParts.push('py-2 px-3')
+    classParts.push('p-2')
 
     if (!isDisabled.value) {
       if (props.buttonStyle === 'tinted') {
@@ -623,7 +623,7 @@ const finalItems = computed(() => {
 
 const listboxOptionsClasses = computed(() => {
   const classParts = [
-    'rounded-md bg-foundation-2 py-1 label label--light outline outline-2 outline-primary-muted focus:outline-none shadow mt-1 '
+    'rounded-md bg-foundation-2 py-1 label label--light border border-outline-3 shadow-md mt-1 '
   ]
 
   if (props.mountMenuOnBody) {

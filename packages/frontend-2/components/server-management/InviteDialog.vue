@@ -58,7 +58,7 @@
   </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { EnvelopeIcon } from '@heroicons/vue/24/solid'
+import { EnvelopeIcon } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
 import type { Optional, ServerRoles } from '@speckle/shared'
 import type { LayoutDialogButton } from '@speckle/ui-components'

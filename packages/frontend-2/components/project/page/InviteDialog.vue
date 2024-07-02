@@ -6,16 +6,12 @@
         v-model="search"
         name="search"
         size="lg"
-        placeholder="Search"
+        placeholder="Search by email or username..."
         :disabled="disabled"
-        :help="
-          disabled
-            ? 'You must be the project owner to invite users'
-            : 'Search by username or email'
-        "
+        :help="disabled ? 'You must be the project owner to invite users' : ''"
         input-classes="pr-[85px] text-sm"
         color="foundation"
-        label="Add people by email or username"
+        label="Add people"
         show-label
       >
         <template #input-right>
@@ -29,7 +25,7 @@
       </FormTextInput>
       <div
         v-if="searchUsers.length || selectedEmails?.length"
-        class="flex flex-col border bg-foundation border-primary-muted -mt-6"
+        class="flex flex-col border bg-foundation border-primary-muted mt-2"
       >
         <template v-if="searchUsers.length">
           <ProjectPageTeamDialogInviteUserServerUserRow
@@ -47,6 +43,7 @@
           :stream-role="role"
           :disabled="loading"
           :is-guest-mode="isGuestMode"
+          class="mx-1 my-2"
           @invite-emails="($event) => onInviteUser($event.emails, $event.serverRole)"
         />
       </div>

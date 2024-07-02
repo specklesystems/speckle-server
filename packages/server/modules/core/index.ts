@@ -1,4 +1,3 @@
-import { registerOrUpdateScope, registerOrUpdateRole } from '@/modules/shared'
 import { moduleLogger } from '@/logging/logging'
 import {
   setupResultListener,
@@ -12,12 +11,16 @@ import uploadRest from '@/modules/core/rest/upload'
 import downloadRest from '@/modules/core/rest/download'
 import diffUpload from '@/modules/core/rest/diffUpload'
 import diffDownload from '@/modules/core/rest/diffDownload'
+import healthRest from '@/modules/core/rest/health'
 import scopes from '@/modules/core/scopes'
 import roles from '@/modules/core/roles'
 import Redis from 'ioredis'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
+import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
+import db from '@/db/knex'
+import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 
 let genericRedisClient: Optional<Redis> = undefined
 
@@ -30,6 +33,9 @@ const coreModule: SpeckleModule<{
     // Initialize the static route
     staticRest(app)
 
+    // Initialize the health check route
+    healthRest(app)
+
     // Initialises the two main bulk upload/download endpoints
     uploadRest(app)
     downloadRest(app)
@@ -38,14 +44,16 @@ const coreModule: SpeckleModule<{
     diffUpload(app)
     diffDownload(app)
 
+    const scopeRegisterFunc = registerOrUpdateScopeFactory({ db })
     // Register core-based scoeps
     for (const scope of scopes) {
-      await registerOrUpdateScope(scope)
+      await scopeRegisterFunc({ scope })
     }
 
+    const roleRegisterFunc = registerOrUpdateRole({ db })
     // Register core-based roles
     for (const role of roles) {
-      await registerOrUpdateRole(role)
+      await roleRegisterFunc({ role })
     }
 
     if (isInitial) {

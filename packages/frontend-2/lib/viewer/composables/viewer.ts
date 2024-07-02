@@ -3,7 +3,7 @@ import type {
   InitialStateWithRequestAndResponse,
   InjectableViewerState
 } from '~~/lib/viewer/composables/setup'
-import { ViewerEvent } from '@speckle/viewer'
+import { CameraEvent, ViewerEvent } from '@speckle/viewer'
 import { debounce, isArray, throttle } from 'lodash-es'
 import { until } from '@vueuse/core'
 import { TimeoutError, timeoutAt } from '@speckle/shared'
@@ -16,7 +16,7 @@ import {
   type SelectionEvent,
   type TreeNode
 } from '@speckle/viewer'
-import type { SpeckleObject } from '~~/lib/common/helpers/sceneExplorer'
+import type { SpeckleObject } from '~/lib/viewer/helpers/sceneExplorer'
 
 // NOTE: this is a preformance optimisation - this function is hot, and has to do
 // potentially large searches if many elements are hidden/isolated. We cache the
@@ -131,19 +131,17 @@ export function useViewerCameraTracker(
   const lastPos = ref(null as Nullable<Vector3>)
   const lastTarget = ref(null as Nullable<Vector3>)
 
-  const callbackChangeTrackerWrapper = () => {
+  const callbackChangeTrackerWrapper = (changed: boolean) => {
+    if (!changed) return
+
     if (!onlyInvokeOnMeaningfulChanges) {
       return callback()
     }
 
     // Only invoke callback if position/target changed in a meaningful way
-    const extension = instance.getExtension(CameraController)
-    const controls = extension.controls
-    const viewerPos = new Vector3()
-    const viewerTarget = new Vector3()
-
-    controls.getPosition(viewerPos)
-    controls.getTarget(viewerTarget)
+    const extension: CameraController = instance.getExtension(CameraController)
+    const viewerPos = new Vector3().copy(extension.renderingCamera.position)
+    const viewerTarget = new Vector3().copy(extension.getTarget())
 
     let meaningfulChangeFound = false
     if (!lastPos.value || !areVectorsLooselyEqual(lastPos.value, viewerPos)) {
@@ -168,13 +166,13 @@ export function useViewerCameraTracker(
 
   onMounted(() => {
     const extension = instance.getExtension(CameraController)
-    extension.controls.addEventListener('update', finalCallback)
+    extension.on(CameraEvent.LateFrameUpdate, finalCallback)
   })
 
   onBeforeUnmount(() => {
     instance
       .getExtension(CameraController)
-      .controls.removeEventListener('update', finalCallback)
+      .removeListener(CameraEvent.LateFrameUpdate, finalCallback)
   })
 }
 
@@ -182,16 +180,14 @@ export function useViewerCameraControlStartTracker(callback: () => void) {
   const {
     viewer: { instance }
   } = useInjectedViewerState()
-
+  // Might need different event
   const removeListener = () =>
     instance
       .getExtension(CameraController)
-      .controls.removeEventListener('controlstart', callback)
+      .removeListener(CameraEvent.InteractionStarted, callback)
 
   onMounted(() => {
-    instance
-      .getExtension(CameraController)
-      .controls.addEventListener('controlstart', callback)
+    instance.getExtension(CameraController).on(CameraEvent.InteractionStarted, callback)
   })
 
   onBeforeUnmount(() => {
@@ -208,20 +204,18 @@ export function useViewerCameraRestTracker(
   const {
     viewer: { instance }
   } = useInjectedViewerState()
-
+  // Might need different event
   const { debounceWait = 200 } = options || {}
 
   const finalCallback = debounceWait ? debounce(callback, debounceWait) : callback
   const removeListener = () => {
     const extension = instance.getExtension(CameraController)
 
-    extension.controls.removeEventListener('rest', finalCallback)
+    extension.removeListener(CameraEvent.Stationary, finalCallback)
   }
 
   onMounted(() => {
-    instance
-      .getExtension(CameraController)
-      .controls.addEventListener('rest', finalCallback)
+    instance.getExtension(CameraController).on(CameraEvent.Stationary, finalCallback)
   })
 
   onBeforeUnmount(() => {
@@ -235,14 +229,14 @@ export function useViewerCameraControlEndTracker(callback: () => void) {
   const {
     viewer: { instance }
   } = useInjectedViewerState()
-
+  // Might need different event
   const removeListener = () =>
     instance
       .getExtension(CameraController)
-      .controls.removeEventListener('rest', callback)
+      .removeListener(CameraEvent.Stationary, callback)
 
   onMounted(() => {
-    instance.getExtension(CameraController).controls.addEventListener('rest', callback)
+    instance.getExtension(CameraController).on(CameraEvent.Stationary, callback)
   })
 
   onBeforeUnmount(() => {

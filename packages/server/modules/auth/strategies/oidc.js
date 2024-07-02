@@ -8,8 +8,8 @@ const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/us
 const { getServerInfo } = require('@/modules/core/services/generic')
 const {
   validateServerInvite,
-  finalizeInvitedServerRegistration,
-  resolveAuthRedirectPath
+  finalizeInvitedServerRegistrationFactory,
+  resolveAuthRedirectPathFactory
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { logger } = require('@/logging/logging')
 const {
@@ -21,6 +21,12 @@ const {
 } = require('@/modules/shared/helpers/envHelper')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 const { UnverifiedEmailSSOLoginError } = require('@/modules/core/errors/userinput')
+const {
+  deleteServerOnlyInvitesFactory,
+  updateAllInviteTargetsFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const db = require('@/db/knex')
+const { getNameFromUserInfo } = require('@/modules/auth/domain/logic')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
   const oidcIssuer = await Issuer.discover(getOidcDiscoveryUrl())
@@ -48,7 +54,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
         try {
           const email = userinfo['email']
-          const name = `${userinfo['given_name']} ${userinfo['family_name']}`
+          const name = getNameFromUserInfo(userinfo)
 
           const user = { email, name }
 
@@ -82,7 +88,10 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
             // process invites
             if (myUser.isNewUser) {
-              await finalizeInvitedServerRegistration(user.email, myUser.id)
+              await finalizeInvitedServerRegistrationFactory({
+                deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+                updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+              })(user.email, myUser.id)
             }
             return done(null, myUser)
           }
@@ -107,10 +116,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
             rawProfile: userinfo
           })
 
-          await finalizeInvitedServerRegistration(user.email, myUser.id)
+          await finalizeInvitedServerRegistrationFactory({
+            deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
+            updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
+          })(user.email, myUser.id)
 
           // Resolve redirect path
-          req.authRedirectPath = resolveAuthRedirectPath(validInvite)
+          req.authRedirectPath = resolveAuthRedirectPathFactory()(validInvite)
 
           // return to the auth flow
           return done(null, {

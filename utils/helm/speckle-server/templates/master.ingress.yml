@@ -12,7 +12,6 @@ metadata:
     {{- end }}
     nginx.ingress.kubernetes.io/proxy-body-size: {{ (printf "%dm" (int .Values.file_size_limit_mb)) | quote }}
     nginx.org/client-max-body-size: {{ (printf "%dm" (int .Values.file_size_limit_mb)) | quote }}
-    nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   ingressClassName: nginx
   {{- if .Values.cert_manager_issuer }}

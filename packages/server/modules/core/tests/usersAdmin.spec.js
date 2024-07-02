@@ -48,7 +48,7 @@ describe('User admin @user-services', () => {
 
     expect(await countUsers()).to.equal(2)
 
-    await deleteUser(actorId)
+    await deleteUser({ deleteAllUserInvites: async () => true })(actorId)
     expect(await countUsers()).to.equal(1)
   })
 

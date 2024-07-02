@@ -42,13 +42,16 @@ function autoloadFromDirectory(dirPath) {
 }
 
 const getEnabledModuleNames = () => {
-  const { FF_AUTOMATE_MODULE_ENABLED, FF_GENDOAI_MODULE_ENABLED } = getFeatureFlags()
+  const {
+    FF_AUTOMATE_MODULE_ENABLED,
+    FF_GENDOAI_MODULE_ENABLED,
+    FF_WORKSPACES_MODULE_ENABLED
+  } = getFeatureFlags()
   const moduleNames = [
     'accessrequests',
     'activitystream',
     'apiexplorer',
     'auth',
-    'betaAutomations',
     'blobstorage',
     'comments',
     'core',
@@ -60,11 +63,13 @@ const getEnabledModuleNames = () => {
     'pwdreset',
     'serverinvites',
     'stats',
-    'webhooks'
+    'webhooks',
+    'workspaces'
   ]
 
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
   if (FF_GENDOAI_MODULE_ENABLED) moduleNames.push('gendo')
+  if (FF_WORKSPACES_MODULE_ENABLED) moduleNames.push('workspaces')
   return moduleNames
 }
 

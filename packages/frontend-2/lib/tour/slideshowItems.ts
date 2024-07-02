@@ -11,20 +11,20 @@ export type SlideshowItem = {
 
 export const items = [
   {
-    camPos: [-31.86138, 41.14196, 15.93344, -22.0765, 35.10095, 15.93344, 0, 1],
+    camPos: [-31.86138, 15.93344, -41.14196, -22.0765, 15.93344, -35.10095, 0, 1],
     style: {} as Partial<CSSProperties>,
     viewed: false,
     showControls: true,
     expanded: true,
     filters: {},
     location: {
-      x: -22.07650243501704,
-      y: 35.10094975369238,
-      z: 15.933444297269238
+      x: -22.0765,
+      y: 35.10095,
+      z: 15.93344
     }
   },
   {
-    camPos: [-3.3795, 40.78977, 23.25852, -20.65056, 40.72203, 21.78906, 0, 1],
+    camPos: [-3.3795, 23.25852, -40.78977, -20.65056, 21.78906, -40.72203, 0, 1],
     style: {} as Partial<CSSProperties>,
     viewed: false,
     showControls: true,
@@ -36,7 +36,7 @@ export const items = [
     }
   },
   {
-    camPos: [-39.91711, 46.26069, 42.83686, -18.44162, 29.75982, 34.91624, 0, 1],
+    camPos: [-39.91711, 42.83686, -46.26069, -18.44162, 34.91624, -29.75982, 0, 1],
     style: {} as Partial<CSSProperties>,
     viewed: false,
     showControls: false,

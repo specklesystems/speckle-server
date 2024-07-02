@@ -11,9 +11,7 @@ import {
   StreamCreateInput,
   StreamRevokePermissionInput,
   StreamUpdateInput,
-  StreamUpdatePermissionInput,
-  TokenResourceIdentifier,
-  TokenResourceIdentifierType
+  StreamUpdatePermissionInput
 } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import {
@@ -23,7 +21,10 @@ import {
   updateStream
 } from '@/modules/core/repositories/streams'
 import { createBranch } from '@/modules/core/services/branches'
-import { inviteUsersToStream } from '@/modules/serverinvites/services/inviteCreationService'
+import {
+  createAndSendInviteFactory,
+  inviteUsersToStreamFactory
+} from '@/modules/serverinvites/services/inviteCreationService'
 import {
   StreamInvalidAccessError,
   StreamUpdateError
@@ -35,12 +36,22 @@ import {
   isStreamCollaborator,
   removeStreamCollaborator
 } from '@/modules/core/services/streams/streamAccessService'
-import { deleteAllStreamInvites } from '@/modules/serverinvites/repositories'
 import {
   ContextResourceAccessRules,
   isNewResourceAllowed
 } from '@/modules/core/helpers/token'
 import { authorizeResolver } from '@/modules/shared'
+import {
+  deleteAllStreamInvitesFactory,
+  findResourceFactory,
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import db from '@/db/knex'
+import {
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
+} from '@/modules/core/domain/tokens/types'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & {
@@ -75,12 +86,14 @@ export async function createStreamReturnRecord(
 
   // Invite contributors?
   if (!isProjectCreateInput(params) && params.withContributors?.length) {
-    await inviteUsersToStream(
-      ownerId,
-      streamId,
-      params.withContributors,
-      ownerResourceAccessRules
-    )
+    // TODO: should be injected in the resolver
+    await inviteUsersToStreamFactory({
+      createAndSendInvite: createAndSendInviteFactory({
+        findResource: findResourceFactory(),
+        findUserByTarget: findUserByTargetFactory(),
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db })
+      })
+    })(ownerId, streamId, params.withContributors, ownerResourceAccessRules)
   }
 
   // Save activity
@@ -126,7 +139,9 @@ export async function deleteStreamAndNotify(
   // delay deletion by a bit so we can do auth checks
   await wait(250)
 
+  // TODO: use proper injection once we refactor this module
   // Delete after event so we can do authz
+  const deleteAllStreamInvites = deleteAllStreamInvitesFactory({ db })
   await Promise.all([deleteAllStreamInvites(streamId), deleteStream(streamId)])
   return true
 }

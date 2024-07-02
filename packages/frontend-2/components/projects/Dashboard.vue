@@ -18,10 +18,6 @@
     </div>
 
     <PromoBannersWrapper v-if="promoBanners.length" :banners="promoBanners" />
-    <div v-if="showErrorTest" class="w-full">
-      <FormButton @click="testError">Test error</FormButton>
-    </div>
-
     <div
       v-if="!showEmptyState"
       class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
@@ -35,7 +31,7 @@
           v-model="search"
           name="modelsearch"
           :show-label="false"
-          placeholder="Search"
+          placeholder="Search projects..."
           color="foundation"
           wrapper-classes="grow md:grow-0 md:w-60"
           :show-clear="!!search"
@@ -83,7 +79,7 @@ import {
   useSubscription
 } from '@vue/apollo-composable'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
-import { PlusIcon } from '@heroicons/vue/24/solid'
+import { PlusIcon } from '@heroicons/vue/20/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
@@ -134,7 +130,6 @@ const promoBanners = ref<PromoBanner[]>([
   }
 ])
 
-const route = useRoute()
 const { activeUser, isGuest } = useActiveUser()
 const { triggerNotification } = useGlobalToast()
 const areQueriesLoading = useQueryLoading()
@@ -159,8 +154,6 @@ onProjectsResult((res) => {
 const { onResult: onUserProjectsUpdate } = useSubscription(
   onUserProjectsUpdateSubscription
 )
-
-const showErrorTest = computed(() => route.query.showErrorButton === '1')
 
 const projects = computed(() => projectsPanelResult.value?.activeUser?.projects)
 const showEmptyState = computed(() => {
@@ -339,9 +332,5 @@ const clearSearch = () => {
   search.value = ''
   selectedRoles.value = []
   updateSearchImmediately()
-}
-
-const testError = () => {
-  throw new Error('what duhh hell')
 }
 </script>

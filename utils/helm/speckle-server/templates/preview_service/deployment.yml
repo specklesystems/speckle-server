@@ -25,7 +25,7 @@ spec:
 
         ports:
           - name: metrics
-            containerPort: 9094
+            containerPort: {{ .Values.preview_service.monitoring.metricsPort }}
             protocol: TCP
 
         livenessProbe:
@@ -51,21 +51,23 @@ spec:
             drop:
               - ALL
           privileged: false
-          readOnlyRootFilesystem: true
+          # readOnlyRootFilesystem: true #FIXME this currently breaks chromium. Need to identify which directories should be mounted.
           runAsNonRoot: true
-          runAsUser: 20000
+          runAsUser: 800
 
         volumeMounts:
-          - mountPath: /tmp
-            name: tmp
-          - mountPath: /.cache/puppeteer
-            name: puppeteer-cache
         {{- if .Values.db.useCertificate }}
           - name: postgres-certificate
             mountPath: /postgres-certificate
         {{- end }}
 
         env:
+          - name: PORT
+            value: {{ .Values.preview_service.port | quote }}
+
+          - name: PROMETHEUS_METRICS_PORT
+            value: {{ .Values.preview_service.monitoring.metricsPort | quote }}
+
           - name: PG_CONNECTION_STRING
             valueFrom:
               secretKeyRef:
@@ -74,6 +76,8 @@ spec:
 
           - name: LOG_LEVEL
             value: {{ .Values.preview_service.logLevel | quote }}
+          - name: LOG_PRETTY
+            value: {{ .Values.preview_service.logPretty | quote }}
 
           {{- if .Values.db.useCertificate }}
           - name: NODE_EXTRA_CA_CERTS
@@ -99,7 +103,7 @@ spec:
 
       securityContext:
         runAsNonRoot: true
-        runAsUser: 20000
+        runAsUser: 800
         fsGroup: 25000
         fsGroupChangePolicy: OnRootMismatch
         runAsGroup: 30000
@@ -110,10 +114,6 @@ spec:
       terminationGracePeriodSeconds: 3600
 
       volumes:
-        - name: tmp
-          emptyDir: {}
-        - name: puppeteer-cache
-          emptyDir: {}
       {{- if .Values.db.useCertificate }}
         - name: postgres-certificate
           configMap:
