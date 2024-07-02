@@ -177,6 +177,10 @@ export class SmoothOrbitControls extends SpeckleControls {
     this._enabled = value
   }
 
+  public get up() {
+    return this._up
+  }
+
   public set up(value: Vector3) {
     this._up.copy(value)
     this._basisTransform.makeRotationFromQuaternion(

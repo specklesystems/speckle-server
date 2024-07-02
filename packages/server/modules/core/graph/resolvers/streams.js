@@ -25,7 +25,7 @@ const {
   isRateLimitBreached
 } = require('@/modules/core/services/ratelimiter')
 const {
-  getPendingStreamCollaborators
+  getPendingStreamCollaboratorsFactory
 } = require('@/modules/serverinvites/services/inviteRetrievalService')
 const { removePrivateFields } = require('@/modules/core/helpers/userHelper')
 const {
@@ -171,7 +171,7 @@ module.exports = {
 
     async pendingCollaborators(parent) {
       const { id: streamId } = parent
-      return await getPendingStreamCollaborators({
+      return await getPendingStreamCollaboratorsFactory({
         queryAllStreamInvites: queryAllStreamInvitesFactory({ db })
       })(streamId)
     },

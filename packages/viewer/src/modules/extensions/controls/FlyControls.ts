@@ -84,6 +84,10 @@ class FlyControls extends SpeckleControls {
     this._targetCamera.position.copy(this.position)
   }
 
+  public get up() {
+    return this._up
+  }
+
   public set up(value: Vector3) {
     this._up.copy(value)
     this._basisTransform.makeRotationFromQuaternion(

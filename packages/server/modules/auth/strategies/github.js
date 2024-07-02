@@ -7,9 +7,9 @@ const URL = require('url').URL
 const { findOrCreateUser, getUserByEmail } = require('@/modules/core/services/users')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const {
-  validateServerInvite,
-  finalizeInvitedServerRegistration,
-  resolveAuthRedirectPath
+  validateServerInviteFactory,
+  finalizeInvitedServerRegistrationFactory,
+  resolveAuthRedirectPathFactory
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 const { logger } = require('@/logging/logging')
@@ -20,7 +20,8 @@ const {
 const db = require('@/db/knex')
 const {
   deleteServerOnlyInvitesFactory,
-  updateAllInviteTargetsFactory
+  updateAllInviteTargetsFactory,
+  findServerInviteFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 
 module.exports = async (app, session, sessionStorage, finalizeAuth) => {
@@ -77,7 +78,7 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
 
           // process invites
           if (myUser.isNewUser) {
-            await finalizeInvitedServerRegistration({
+            await finalizeInvitedServerRegistrationFactory({
               deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
               updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
             })(user.email, myUser.id)
@@ -94,7 +95,9 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         }
 
         // validate the invite
-        const validInvite = await validateServerInvite(user.email, req.session.token)
+        const validInvite = await validateServerInviteFactory({
+          findServerInvite: findServerInviteFactory({ db })
+        })(user.email, req.session.token)
 
         // create the user
         const myUser = await findOrCreateUser({
@@ -106,13 +109,13 @@ module.exports = async (app, session, sessionStorage, finalizeAuth) => {
         })
 
         // use the invite
-        await finalizeInvitedServerRegistration({
+        await finalizeInvitedServerRegistrationFactory({
           deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
           updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
         })(user.email, myUser.id)
 
         // Resolve redirect path
-        req.authRedirectPath = resolveAuthRedirectPath(validInvite)
+        req.authRedirectPath = resolveAuthRedirectPathFactory()(validInvite)
 
         // return to the auth flow
         return done(null, {
