@@ -257,11 +257,6 @@ import {
   useMeasurementUtilities
 } from '~~/lib/viewer/composables/ui'
 import {
-  onKeyboardShortcut,
-  ModifierKeys,
-  getKeyboardShortcutTitle
-} from '@speckle/ui-components'
-import {
   useInjectedViewerLoadedResources,
   useInjectedViewerInterfaceState
 } from '~~/lib/viewer/composables/setup'
@@ -364,27 +359,13 @@ const {
   diff: { enabled }
 } = useInjectedViewerInterfaceState()
 
-const modelsShortcut = ref(
-  `Models (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'm'])})`
-)
-const explorerShortcut = ref(
-  `Scene Explorer (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'e'])})`
-)
-const discussionsShortcut = ref(
-  `Discussions (${getKeyboardShortcutTitle([ModifierKeys.Shift, 't'])})`
-)
-const zoomExtentsShortcut = ref(
-  `Fit to screen (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'Space'])})`
-)
-const projectionShortcut = ref(
-  `Projection (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'p'])})`
-)
-const sectionBoxShortcut = ref(
-  `Section Box (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'b'])})`
-)
-const measureShortcut = ref(
-  `Measure Mode (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'r'])})`
-)
+const modelsShortcut = ref(`Models (m)`)
+const explorerShortcut = ref(`Scene Explorer (e)`)
+const discussionsShortcut = ref(`Discussions (t)`)
+const zoomExtentsShortcut = ref(`Fit to screen (space)`)
+const projectionShortcut = ref(`Projection (p)`)
+const sectionBoxShortcut = ref(`Section Box (b)`)
+const measureShortcut = ref(`Measure Mode (r)`)
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
@@ -396,31 +377,30 @@ const toggleActiveControl = (control: ActiveControl) => {
   activeControl.value = activeControl.value === control ? 'none' : control
 }
 
-onKeyboardShortcut([ModifierKeys.Shift], 'm', () => {
+onKeyStroke('m', () => {
   toggleActiveControl('models')
 })
-
-onKeyboardShortcut([ModifierKeys.Shift], 'e', () => {
+onKeyStroke('e', () => {
   toggleActiveControl('explorer')
 })
-onKeyboardShortcut([ModifierKeys.Shift], 'f', () => {
+onKeyStroke('f', () => {
   toggleActiveControl('filters')
 })
-onKeyboardShortcut([ModifierKeys.Shift], 't', () => {
+onKeyStroke('t', () => {
   toggleActiveControl('discussions')
 })
-onKeyboardShortcut([ModifierKeys.Shift], 'r', () => {
+onKeyStroke('r', () => {
   toggleActiveControl('measurements')
 })
 
 // Viewer actions kbd shortcuts
-onKeyboardShortcut([ModifierKeys.Shift], ' ', () => {
+onKeyStroke(' ', () => {
   trackAndzoomExtentsOrSelection()
 })
-onKeyboardShortcut([ModifierKeys.Shift], 'p', () => {
+onKeyStroke('p', () => {
   toggleProjection()
 })
-onKeyboardShortcut([ModifierKeys.Shift], 'b', () => {
+onKeyStroke('b', () => {
   toggleSectionBox()
 })
 
