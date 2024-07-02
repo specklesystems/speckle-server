@@ -1,9 +1,7 @@
 <template>
   <!-- <LayoutDialog v-model:open="isOpen"> -->
-  <div
-    class="fixed z-40 w-screen h-screen bg-slate-700/40 top-0 left-0 pt-4 md:p-4 md:p-8"
-  >
-    <div class="bg-white w-full h-full flex bg-slate-700/40 rounded overflow-hidden">
+  <div class="fixed z-40 w-screen h-screen bg-black/70 top-0 left-0 pt-4 md:p-4 md:p-8">
+    <div class="w-full h-full flex rounded overflow-hidden">
       <ClientOnly>
         <div
           v-if="!isMobile || !selectedItem"
