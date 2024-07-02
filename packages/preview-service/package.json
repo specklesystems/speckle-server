@@ -14,7 +14,9 @@
     "node": "^18.19.0"
   },
   "scripts": {
-    "dev": "LOG_PRETTY=true LOG_LEVEL=debug nodemon --trace-deprecation ./bin/www",
+    "build:watch": "tsc -p ./tsconfig.build.json --watch",
+    "run:watch": "LOG_PRETTY=true LOG_LEVEL=debug nodemon ./bin/www --trace-deprecation --watch ./bin/www --watch ./dist",
+    "dev": "concurrently \"npm:build:watch\" \"npm:run:watch\"",
     "dev:headed": "PREVIEWS_HEADED=true yarn dev",
     "build": "tsc -p ./tsconfig.build.json && webpack --env dev --config webpack.config.renderPage.js && webpack --env build --config webpack.config.renderPage.js",
     "lint": "yarn lint:tsc && yarn lint:eslint",
@@ -54,6 +56,7 @@
     "@vitest/coverage-istanbul": "^1.6.0",
     "babel-loader": "^8.2.2",
     "clean-webpack-plugin": "^4.0.0-alpha.0",
+    "concurrently": "^8.2.2",
     "crypto-random-string": "^5.0.0",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
