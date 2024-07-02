@@ -186,6 +186,9 @@ export default class SpeckleRenderer {
   public set clippingPlanes(value: Plane[]) {
     this._clippingPlanes = value.map((value: Plane) => new Plane().copy(value))
     this.updateClippingPlanes()
+    this.renderer.shadowMap.needsUpdate = true
+    this.needsRender = true
+    this.resetPipeline()
   }
 
   /****************
@@ -521,7 +524,6 @@ export default class SpeckleRenderer {
   public resetPipeline() {
     this._needsRender = true
     this.pipeline.reset()
-    // if (force) this.pipeline.reset()
   }
 
   public render(): void {
@@ -829,8 +831,6 @@ export default class SpeckleRenderer {
     })
     this.pipeline.updateClippingPlanes(planes)
     this._shadowcatcher?.updateClippingPlanes(planes)
-    this.renderer.shadowMap.needsUpdate = true
-    this.resetPipeline()
   }
 
   public updateShadowCatcher() {
@@ -842,7 +842,7 @@ export default class SpeckleRenderer {
         this.clippingVolume,
         this._renderer.capabilities.maxTextureSize
       )
-      this.resetPipeline()
+      this.needsRender = true
     }
   }
 
