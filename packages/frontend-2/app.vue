@@ -1,14 +1,14 @@
 <template>
   <div
     id="speckle"
-    class="bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent"
+    class="bg-foundation-page text-foreground has-[.viewer]:!overflow-hidden has-[.viewer-transparent]:!bg-transparent"
   >
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
     <SingletonManagers />
-    <SettingsModal />
   </div>
+  <SettingsModal />
 </template>
 <script setup lang="ts">
 import { useTheme } from '~~/lib/core/composables/theme'

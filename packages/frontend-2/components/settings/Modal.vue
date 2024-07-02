@@ -1,5 +1,3 @@
-<!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div
     class="fixed z-40 w-screen h-screen bg-slate-700/40 top-0 left-0 pt-4 md:p-4 md:p-8"
@@ -8,45 +6,38 @@
       <ClientOnly>
         <div
           v-if="!isMobile || !selectedItem"
-          class="w-full md:w-64 h-full bg-gray-100 border-r border-gray-200 flex flex-col"
+          class="w-full md:w-56 lg:w-72 p-4 pt-6 bg-gray-100 md:border-r md:border-gray-200"
         >
-          <div class="py-4 px-6 md:py-6 flex gap-y-4 flex-col">
-            <h1 class="h4 font-semibold py-4 md:hidden">Settings</h1>
-            <div>
-              <p class="text-sm font-semibold">User settings</p>
-            </div>
-            <a
-              class="text-sm block cursor-pointer"
-              :class="{ 'text-blue-600': selectedItem?.title === 'Profile' }"
-              @click="setSelectedItem(itemConfig.profile)"
-            >
-              <p>Account</p>
-            </a>
-            <a
-              class="text-sm block cursor-pointer"
-              :class="{ 'text-blue-600': selectedItem?.title === 'Notifications' }"
-              @click="setSelectedItem(itemConfig.notifications)"
-            >
-              <p>Notifications</p>
-            </a>
-            <div class="mt-4">
-              <p class="text-sm font-semibold">Server settings</p>
-            </div>
-            <a
-              class="text-sm block cursor-pointer"
-              :class="{ 'text-blue-600': selectedItem?.title === 'General' }"
-              @click="setSelectedItem(itemConfig.general)"
-            >
-              <p>General</p>
-            </a>
-            <a
-              class="text-sm block cursor-pointer"
-              :class="{ 'text-blue-600': selectedItem?.title === 'Projects' }"
-              @click="setSelectedItem(itemConfig.projects)"
-            >
-              <p>Projects</p>
-            </a>
-          </div>
+          <LayoutSidebar>
+            <LayoutSidebarMenu>
+              <LayoutSidebarMenuGroup title="Account Settings">
+                <template #title-icon>
+                  <UserIcon />
+                </template>
+                <LayoutSidebarMenuGroupItem
+                  label="User Profile"
+                  @click="setSelectedItem(itemConfig.profile)"
+                />
+                <LayoutSidebarMenuGroupItem
+                  label="Notifications"
+                  @click="setSelectedItem(itemConfig.notifications)"
+                />
+              </LayoutSidebarMenuGroup>
+              <LayoutSidebarMenuGroup title="Server Settings">
+                <template #title-icon>
+                  <ServerStackIcon />
+                </template>
+                <LayoutSidebarMenuGroupItem
+                  label="General"
+                  @click="setSelectedItem(itemConfig.general)"
+                />
+                <LayoutSidebarMenuGroupItem
+                  label="Projects"
+                  @click="setSelectedItem(itemConfig.projects)"
+                />
+              </LayoutSidebarMenuGroup>
+            </LayoutSidebarMenu>
+          </LayoutSidebar>
         </div>
       </ClientOnly>
       <section
@@ -62,7 +53,9 @@
     </div>
   </div>
 </template>
+
 <script setup lang="ts">
+import type { defineComponent } from 'vue'
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import SettingsUserProfile from './user/Profile'
 import SettingsUserNotifications from './user/Notifications'
@@ -70,11 +63,22 @@ import SettingsServerGeneral from './server/General'
 import SettingsServerProjects from './server/Projects'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
+import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
+import {
+  LayoutSidebar,
+  LayoutSidebarMenu,
+  LayoutSidebarMenuGroup
+} from '@speckle/ui-components'
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smallerOrEqual('sm')
 
-const itemConfig = {
+type SelectableItem = {
+  title: string
+  component: ReturnType<typeof defineComponent>
+}
+
+const itemConfig: { [key: string]: SelectableItem } = {
   profile: {
     title: 'Profile',
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -99,7 +103,7 @@ const itemConfig = {
 
 const selectedItem = shallowRef()
 
-function setSelectedItem(item: string): void {
+function setSelectedItem(item: SelectableItem): void {
   selectedItem.value = item
 }
 
