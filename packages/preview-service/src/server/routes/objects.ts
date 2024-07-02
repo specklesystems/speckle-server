@@ -1,5 +1,3 @@
-'use strict'
-
 import zlib from 'zlib'
 import express from 'express'
 import {
@@ -9,6 +7,7 @@ import {
 import { SpeckleObjectsStream } from '@/utils/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
 import type { Knex } from 'knex'
+import { simpleTextOrJsonContentType } from '@/utils/headers'
 
 const objectsRouterFactory = (deps: { db: Knex }) => {
   const { db } = deps
@@ -30,11 +29,9 @@ const objectsRouterFactory = (deps: { db: Knex }) => {
       return res.status(404).send('Failed to find object.')
     }
 
-    const simpleText = req.headers.accept === 'text/plain'
-
     res.writeHead(200, {
       'Content-Encoding': 'gzip',
-      'Content-Type': simpleText ? 'text/plain' : 'application/json'
+      'Content-Type': simpleTextOrJsonContentType(req)
     })
 
     const dbStream = await getObjectChildrenStreamFactory({ db })({

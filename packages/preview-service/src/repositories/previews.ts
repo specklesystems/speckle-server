@@ -1,6 +1,8 @@
 import type { Preview } from '@/domain/domain'
 import type { Knex } from 'knex'
 
+export const Previews = (deps: { db: Knex }) => deps.db<Preview>('previews')
+
 export type InsertPreview = (params: Preview) => Promise<void>
 export const insertPreviewFactory = (deps: { db: Knex }) => async (params: Preview) => {
   const { db } = deps

@@ -2,13 +2,13 @@ import { describe, it, expect } from 'vitest'
 import { getNextUnstartedObjectPreviewFactory } from '@/repositories/objectPreview'
 import cryptoRandomString from 'crypto-random-string'
 import { getTestDb } from '#/testKnex'
+import { ObjectPreview } from '@/repositories/objectPreview.js'
 
 describe('Repositories: ObjectPreview', () => {
   const db = getTestDb() //FIXME get from global context
 
   describe('getNextUnstartedObjectPreview', () => {
     it('should return the next unstarted object preview', async () => {
-      const ObjectPreview = () => db('object_preview')
       const streamId = cryptoRandomString({ length: 10 })
       const objectId = cryptoRandomString({ length: 10 })
       const insertionObject = {
@@ -18,7 +18,8 @@ describe('Repositories: ObjectPreview', () => {
         previewStatus: 0
       }
       const sqlQuery =
-        ObjectPreview().insert(insertionObject).toString() + ' on conflict do nothing'
+        ObjectPreview({ db }).insert(insertionObject).toString() +
+        ' on conflict do nothing'
       await db.raw(sqlQuery)
 
       const getNextUnstartedObjectPreview = getNextUnstartedObjectPreviewFactory({ db })

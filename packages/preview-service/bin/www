@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-'use strict'
 const { startServer } = require('../dist/server/server')
 const { startPreviewService } = require('../dist/server/background')
 const db = require('../dist/repositories/knex')

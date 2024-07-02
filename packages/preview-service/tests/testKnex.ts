@@ -1,5 +1,4 @@
 /* eslint-disable camelcase */
-require('ts-node/register') //required to allow knex to understand typescript migration files
 import knexClient from 'knex'
 
 export const getTestDb = () =>

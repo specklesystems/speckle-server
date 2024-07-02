@@ -6,9 +6,6 @@ import {
 } from '../../eslint.config.mjs'
 import tseslint from 'typescript-eslint'
 
-/**
- * @type {Array<import('eslint').Linter.FlatConfig>}
- */
 const configs = [
   ...baseConfigs,
   {

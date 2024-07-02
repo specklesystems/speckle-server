@@ -15,9 +15,10 @@
     "node": "^18.19.0"
   },
   "scripts": {
-    "build:watch": "tsc -p ./tsconfig.build.json --watch",
+    "build:tsc:watch": "tsc -p ./tsconfig.build.json --watch",
+    "build:webpack:watch": "webpack --env build --config webpack.config.renderPage.js --watch",
     "run:watch": "LOG_PRETTY=true LOG_LEVEL=debug nodemon ./bin/www --trace-deprecation --watch ./bin/www --watch ./dist",
-    "dev": "concurrently \"npm:build:watch\" \"npm:run:watch\"",
+    "dev": "concurrently \"npm:build:tsc:watch\" \"npm:build:webpack:watch\"  \"npm:run:watch\"",
     "dev:headed": "PREVIEWS_HEADED=true yarn dev",
     "build": "tsc -p ./tsconfig.build.json && webpack --env build --config webpack.config.renderPage.js",
     "lint": "yarn lint:tsc && yarn lint:eslint",

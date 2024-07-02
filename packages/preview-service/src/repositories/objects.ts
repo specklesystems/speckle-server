@@ -1,34 +1,44 @@
 import type { Knex } from 'knex'
 import type { ObjectIdentifier } from '@/domain/domain'
 
-const Objects = (db: Knex) => db('objects')
-const Closures = (db: Knex) => db('object_children_closure')
+const Objects = (deps: { db: Knex }) => deps.db<DbObject>('objects')
+const Closures = (deps: { db: Knex }) => deps.db('object_children_closure')
 
 type DbObject = {
   id: string
-  data: unknown
+  data: object
+  totalChildrenCount: number
 }
 
-export type GetObject = (params: ObjectIdentifier) => Promise<DbObject | null>
+type ReturnedObject = Pick<DbObject, 'id'> & {
+  data: { totalChildrenCount: number } & Record<string, unknown>
+}
+
+export type GetObject = (params: ObjectIdentifier) => Promise<ReturnedObject | null>
 export const getObjectFactory =
   (deps: { db: Knex }): GetObject =>
   async ({ streamId, objectId }) => {
     const { db } = deps
-    const res = await Objects(db).where({ streamId, id: objectId }).select('*').first()
+    const res = await Objects({ db })
+      .where({ streamId, id: objectId })
+      .select('*')
+      .first()
     if (!res) return null
-    res.data.totalChildrenCount = res.totalChildrenCount
-    delete res.streamId
-    return <DbObject>res
+    const returned: ReturnedObject = {
+      id: res.id,
+      data: { totalChildrenCount: res.totalChildrenCount, ...res.data }
+    }
+    return returned
   }
 
 export type GetObjectChildrenStream = (
   params: ObjectIdentifier
-) => Promise<NodeJS.ReadableStream>
+) => NodeJS.ReadableStream
 export const getObjectChildrenStreamFactory =
   (deps: { db: Knex }): GetObjectChildrenStream =>
-  async ({ streamId, objectId }) => {
+  ({ streamId, objectId }) => {
     const { db } = deps
-    const q = Closures(db)
+    const q = Closures({ db })
     q.select('id')
     q.select(db.raw('data::text as "dataText"'))
     q.rightJoin('objects', function () {
@@ -59,7 +69,7 @@ export const getObjectsStreamFactory =
   (deps: { db: Knex }): GetObjectsStream =>
   async ({ streamId, objectIds }) => {
     const { db } = deps
-    const res = Objects(db)
+    const res = Objects({ db })
       .whereIn('id', objectIds)
       .andWhere('streamId', streamId)
       .orderBy('id')

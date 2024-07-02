@@ -1,5 +1,3 @@
-'use strict'
-
 import createError from 'http-errors'
 import express, { ErrorRequestHandler } from 'express'
 import path from 'path'
@@ -8,6 +6,7 @@ import previewRouterFactory from '@/server/routes/preview'
 import objectsRouterFactory from '@/server/routes/objects'
 import apiRouterFactory from '@/server/routes/api'
 import { loggingExpressMiddleware } from '@/observability/expressLogging'
+import { errorHandler } from '@/utils/errorHandler'
 import type { Knex } from 'knex'
 
 export const appFactory = (deps: { db: Knex }) => {
@@ -31,15 +30,7 @@ export const appFactory = (deps: { db: Knex }) => {
     next(createError(404, `Not Found: ${req.url}`))
   })
 
-  const errorHandler: ErrorRequestHandler = (err, req, res) => {
-    let errorText = err.message
-    if (req.app.get('env') === 'development') {
-      errorText = `<html><body><pre>${err.message}: ${err.status}\n${err.stack}</pre></body></html>`
-    }
-    res.status(err.status || 500)
-    res.send(errorText)
-  }
-
+  app.set('json spaces', 2) // pretty print json
   app.use(errorHandler)
   return app
 }

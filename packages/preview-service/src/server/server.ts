@@ -4,6 +4,7 @@ import { appFactory as metricsAppFactory } from '@/observability/metricsApp'
 import { serverLogger } from '@/observability/logging'
 import { getAppPort, getHost, getMetricsPort } from '@/utils/env'
 import type { Knex } from 'knex'
+import { isNaN, toNumber, isString } from 'lodash-es'
 
 export const startServer = (params: { db: Knex }) => {
   const { db } = params
@@ -57,16 +58,8 @@ export const stopServer = (params: { server: http.Server }) => {
  * Normalize a port into a number, string, or false.
  */
 function normalizePort(val: string | number) {
-  const port = typeof val === 'string' ? parseInt(val, 10) : val
-
-  if (isNaN(port)) {
-    throw new Error('Invalid port; port must be parseable as an integer.')
-  }
-
-  if (port >= 0) {
-    // port number
-    return port
-  }
+  const port = toNumber(val)
+  if (!isNaN(port) && port >= 0) return port
 
   throw new Error('Invalid port; port must be a positive integer.')
 }
@@ -80,7 +73,7 @@ const onErrorFactory = (port: string | number | false) => (error: Error) => {
     throw error
   }
 
-  const bind = typeof port === 'string' ? 'Pipe ' + port : 'Port ' + port
+  const bind = isString(port) ? 'Pipe ' + port : 'Port ' + port
 
   if (!('code' in error)) throw error
 
@@ -103,6 +96,6 @@ const onErrorFactory = (port: string | number | false) => (error: Error) => {
 
 function onListening(referenceServer: http.Server) {
   const addr = referenceServer.address()
-  const bind = typeof addr === 'string' ? 'pipe ' + addr : 'port ' + addr?.port
+  const bind = isString(addr) ? 'pipe ' + addr : 'port ' + addr?.port
   serverLogger.info('Listening on ' + bind)
 }

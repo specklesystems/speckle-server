@@ -1,5 +1,10 @@
-import type { ObjectIdentifier } from '@/domain/domain'
+import { ObjectIdentifier } from '@/domain/domain'
 import type { Knex } from 'knex'
+
+export const ObjectPreview = (deps: { db: Knex }) =>
+  deps.db<
+    ObjectIdentifier & { preview: unknown; previewStatus: number; lastUpdate: number }
+  >('object_preview')
 
 export type GetNextUnstartedObjectPreview = () => Promise<ObjectIdentifier>
 export const getNextUnstartedObjectPreviewFactory =
@@ -8,7 +13,7 @@ export const getNextUnstartedObjectPreviewFactory =
     const { db } = deps
     const {
       rows: [maybeRow]
-    } = await db.raw(`
+    } = await db.raw<ObjectIdentifier>(`
     UPDATE object_preview
     SET
       "previewStatus" = 1,
@@ -22,7 +27,7 @@ export const getNextUnstartedObjectPreviewFactory =
     WHERE object_preview."streamId" = task."streamId" AND object_preview."objectId" = task."objectId"
     RETURNING object_preview."streamId", object_preview."objectId"
   `)
-    return <ObjectIdentifier>maybeRow
+    return maybeRow
   }
 
 export type UpdatePreviewMetadataParams = ObjectIdentifier & {
@@ -36,7 +41,7 @@ export const updatePreviewMetadataFactory =
   async (params) => {
     const { db } = deps
     // Update preview metadata
-    await db.raw(
+    await db.raw<void>(
       `
       UPDATE object_preview
       SET
@@ -54,7 +59,7 @@ export const notifyUpdateFactory =
   (deps: { db: Knex }): NotifyUpdate =>
   async (params) => {
     const { db } = deps
-    await db.raw(
+    await db.raw<void>(
       `NOTIFY preview_generation_update, 'finished:${params.streamId}:${params.objectId}'`
     )
   }

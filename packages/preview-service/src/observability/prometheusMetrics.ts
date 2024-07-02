@@ -12,14 +12,6 @@ let metricQueryErrors: Counter<string> | null = null
 export let metricDuration: Histogram<string> | null = null
 export let metricOperationErrors: Counter<string> | null = null
 
-const queryStartTime: Record<string, number> = {}
-prometheusClient.register.clear()
-prometheusClient.register.setDefaultLabels({
-  project: 'speckle-server',
-  app: 'preview-service'
-})
-prometheusClient.collectDefaultMetrics()
-
 let prometheusInitialized = false
 
 function isPrometheusInitialized() {
@@ -27,6 +19,7 @@ function isPrometheusInitialized() {
 }
 
 function initKnexPrometheusMetrics(params: { db: Knex }) {
+  const queryStartTime: Record<string, number> = {}
   const { db } = params
   //metricFree =
   new prometheusClient.Gauge({
@@ -133,6 +126,12 @@ export function initPrometheusMetrics(params: { db: Knex }) {
 
   prometheusInitialized = true
 
+  prometheusClient.register.clear()
+  prometheusClient.register.setDefaultLabels({
+    project: 'speckle-server',
+    app: 'preview-service'
+  })
+
   try {
     metricDuration = new prometheusClient.Histogram({
       name: 'speckle_server_operation_duration',
@@ -148,7 +147,9 @@ export function initPrometheusMetrics(params: { db: Knex }) {
     })
 
     initKnexPrometheusMetrics(params)
-  } catch {
+    prometheusClient.collectDefaultMetrics()
+  } catch (e) {
+    logger.error(e, 'Failed to initialize Prometheus metrics.')
     prometheusInitialized = false
   }
 }

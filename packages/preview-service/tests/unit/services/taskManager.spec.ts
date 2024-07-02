@@ -7,7 +7,7 @@ describe('Task Manager', () => {
     vi.restoreAllMocks()
   })
   describe('repeatedly poll for work', () => {
-    it.skip('runs at least once', () => {
+    it.skip('runs at least once', async () => {
       const called: Record<string, number> = {}
       const repeatedlyPollForWork = repeatedlyPollForWorkFactory({
         updateHealthcheckData: () => {
@@ -44,7 +44,7 @@ describe('Task Manager', () => {
         logger
       })
 
-      repeatedlyPollForWork()
+      await repeatedlyPollForWork()
       expect(called['updateHealthcheckData']).toBeGreaterThanOrEqual(1)
       expect(called['generateAndStore360Preview']).toBeGreaterThanOrEqual(1)
       expect(called['updatePreviewMetadata']).toBeGreaterThanOrEqual(1)

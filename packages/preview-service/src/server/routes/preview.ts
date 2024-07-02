@@ -1,5 +1,3 @@
-'use strict'
-
 import express from 'express'
 import { getScreenshotFactory } from '@/services/screenshot'
 import { PuppeteerClient } from '@/clients/puppeteer'

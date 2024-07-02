@@ -1,9 +1,10 @@
 import express, { ErrorRequestHandler } from 'express'
 import createError from 'http-errors'
 import { loggingExpressMiddleware } from '@/observability/expressLogging'
-import metricsRouter from '@/observability/metricsRoute'
+import { metricsRouterFactory } from '@/observability/metricsRoute'
 import { initPrometheusMetrics } from '@/observability/prometheusMetrics'
 import type { Knex } from 'knex'
+import { errorHandler } from '@/utils/errorHandler'
 
 export const appFactory = (deps: { db: Knex }) => {
   const { db } = deps
@@ -14,17 +15,14 @@ export const appFactory = (deps: { db: Knex }) => {
   app.use(express.json({ limit: '100mb' }))
   app.use(express.urlencoded({ limit: '100mb', extended: false }))
 
-  app.use('/metrics', metricsRouter)
+  app.use('/metrics', metricsRouterFactory())
 
   // catch 404 and forward to error handler
   app.use(function (req, _res, next) {
     next(createError(404, `Not Found: ${req.url}`))
   })
+  app.set('json spaces', 2) // pretty print json
 
-  const errorHandler: ErrorRequestHandler = (err, _req, res) => {
-    res.status(err.status || 500)
-    res.send(err.message)
-  }
   app.use(errorHandler)
   return app
 }

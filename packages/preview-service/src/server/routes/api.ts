@@ -4,13 +4,11 @@ import { getObjectsStreamFactory } from '@/repositories/objects'
 import { SpeckleObjectsStream } from '@/utils/speckleObjectsStream'
 import { pipeline, PassThrough } from 'stream'
 import type { Knex } from 'knex'
+import { simpleTextOrJsonContentType } from '@/utils/headers'
 
 const apiRouterFactory = (deps: { db: Knex }) => {
   const { db } = deps
   const apiRouter = express.Router()
-
-  const isSimpleTextRequested = (req: express.Request) =>
-    req.headers.accept === 'text/plain'
 
   // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
   apiRouter.post('/getobjects/:streamId', async (req, res) => {
@@ -21,7 +19,7 @@ const apiRouterFactory = (deps: { db: Knex }) => {
 
     res.writeHead(200, {
       'Content-Encoding': 'gzip',
-      'Content-Type': isSimpleTextRequested(req) ? 'text/plain' : 'application/json'
+      'Content-Type': simpleTextOrJsonContentType(req)
     })
 
     const dbStream = await getObjectsStreamFactory({ db })({

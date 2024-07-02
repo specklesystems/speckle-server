@@ -1,4 +1,4 @@
-import type { UpdateHealthcheckData } from 'clients/execHealthcheck'
+import type { UpdateHealthcheckData } from '@/clients/execHealthcheck'
 import {
   metricDuration,
   metricOperationErrors

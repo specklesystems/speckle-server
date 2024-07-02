@@ -1,5 +1,3 @@
-'use strict'
-
 const puppeteerDriver = async (objectUrl) => {
   const waitForAnimation = async (ms = 70) =>
     await new Promise((resolve) => {
