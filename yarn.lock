@@ -15873,7 +15873,6 @@ __metadata:
   dependencies:
     "@tailwindcss/forms": "npm:^0.5.3"
     "@types/eslint": "npm:^8.56.10"
-    "@types/fs-extra": "npm:^11"
     "@typescript-eslint/eslint-plugin": "npm:^5.38.1"
     "@typescript-eslint/parser": "npm:^5.38.1"
     eslint: "npm:^9.4.0"
@@ -18492,7 +18491,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/fs-extra@npm:^11, @types/fs-extra@npm:^11.0.4":
+"@types/fs-extra@npm:^11.0.4":
   version: 11.0.4
   resolution: "@types/fs-extra@npm:11.0.4"
   dependencies:
