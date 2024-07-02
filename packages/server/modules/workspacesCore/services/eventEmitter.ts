@@ -2,7 +2,7 @@ import { initializeModuleEventEmitter } from '@/modules/shared/services/moduleEv
 import {
   WorkspaceEvents,
   WorkspaceEventsPayloads
-} from '@/modules/workspaces/domain/events'
+} from '@/modules/workspacesCore/domain/events'
 
 const { emit, listen } = initializeModuleEventEmitter<WorkspaceEventsPayloads>({
   moduleName: 'workspaces'
