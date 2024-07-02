@@ -11,9 +11,9 @@ const {
   isRateLimitBreached
 } = require('@/modules/core/services/ratelimiter')
 const {
-  validateServerInvite,
-  finalizeInvitedServerRegistration,
-  resolveAuthRedirectPath
+  validateServerInviteFactory,
+  finalizeInvitedServerRegistrationFactory,
+  resolveAuthRedirectPathFactory
 } = require('@/modules/serverinvites/services/inviteProcessingService')
 const { getIpFromRequest } = require('@/modules/shared/utils/ip')
 const { NoInviteFoundError } = require('@/modules/serverinvites/errors')
@@ -91,7 +91,7 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         /** @type {import('@/modules/serverinvites/domain/types').ServerInviteRecord} */
         let invite
         if (req.session.token) {
-          invite = await validateServerInvite({
+          invite = await validateServerInviteFactory({
             findServerInvite: findServerInviteFactory({ db })
           })(user.email, req.session.token)
         }
@@ -114,13 +114,13 @@ module.exports = async (app, session, sessionAppId, finalizeAuth) => {
         req.log = req.log.child({ userId })
 
         // 4. use up all server-only invites the email had attached to it
-        await finalizeInvitedServerRegistration({
+        await finalizeInvitedServerRegistrationFactory({
           deleteServerOnlyInvites: deleteServerOnlyInvitesFactory({ db }),
           updateAllInviteTargets: updateAllInviteTargetsFactory({ db })
         })(user.email, userId)
 
         // Resolve redirect path
-        req.authRedirectPath = resolveAuthRedirectPath(invite)
+        req.authRedirectPath = resolveAuthRedirectPathFactory()(invite)
 
         return next()
       } catch (err) {
