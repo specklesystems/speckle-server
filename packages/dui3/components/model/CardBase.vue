@@ -88,7 +88,6 @@ import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
 import type { ProjectModelGroup } from '~~/store/hostApp'
 import { useHostAppStore } from '~~/store/hostApp'
 import type { IModelCard } from '~~/lib/models/card'
-import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import type { ISenderModelCard } from 'lib/models/card/send'
 import type { IReceiverModelCard } from '~/lib/models/card/receiver'
@@ -134,10 +133,6 @@ const { result: modelResult, loading } = useQuery(
 const modelData = computed(() => modelResult.value?.project.model)
 const queryData = computed(() => modelResult.value?.project)
 
-const acc = accStore.accounts.find(
-  (acc) => acc.accountInfo.id === props.modelCard.accountId
-) as DUIAccount
-
 provide<IModelCard>('cardBase', props.modelCard)
 
 const isSender = computed(() => {
@@ -167,13 +162,13 @@ const viewModel = () => {
   // previously with DUI2, it was Stream View but actually it is "Version View" now. Also having conflict with old/new terminology.
   trackEvent('DUI3 Action', { name: 'Version View' }, props.modelCard.accountId)
   app.$baseBinding.openUrl(
-    `${acc?.accountInfo.serverInfo.url}/projects/${props.modelCard?.projectId}/models/${props.modelCard.modelId}`
+    `${projectAccount.value.accountInfo.serverInfo.url}/projects/${props.modelCard?.projectId}/models/${props.modelCard.modelId}`
   )
 }
 
 const viewModelVersions = () => {
   app.$baseBinding.openUrl(
-    `${acc?.accountInfo.serverInfo.url}/projects/${props.modelCard?.projectId}/models/${props.modelCard.modelId}/versions`
+    `${projectAccount.value.accountInfo.serverInfo.url}/projects/${props.modelCard?.projectId}/models/${props.modelCard.modelId}/versions`
   )
 }
 

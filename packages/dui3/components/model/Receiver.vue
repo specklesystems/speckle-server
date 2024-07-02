@@ -91,18 +91,25 @@ import { versionDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import type { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useInterval, watchOnce } from '@vueuse/core'
+import { useAccountStore } from '~~/store/accounts'
 
 const { trackEvent } = useMixpanel()
 const app = useNuxtApp()
+const accountStore = useAccountStore()
 
 const props = defineProps<{
   modelCard: IReceiverModelCard
   project: ProjectModelGroup
+  readonly: boolean
 }>()
 
 const store = useHostAppStore()
 
 const openVersionsDialog = ref(false)
+
+const projectAccount = computed(() =>
+  accountStore.accountWithFallback(props.project.accountId, props.project.serverUrl)
+)
 
 app.$baseBinding.on('documentChanged', () => {
   openVersionsDialog.value = false
@@ -136,6 +143,13 @@ const handleVersionSelection = async (
 
 // Cancels any in progress receive OR receives latest version
 const handleMainButtonClick = async () => {
+  if (props.readonly) {
+    store.setModelError({
+      modelCardId: props.modelCard.modelCardId,
+      error: 'Model is read-only. Request write access to load!'
+    })
+    return
+  }
   if (props.modelCard.progress)
     return await store.receiveModelCancel(props.modelCard.modelCardId)
   await receiveLatestVersion()
@@ -206,7 +220,7 @@ const { result: versionDetailsResult, refetch } = useQuery(
     versionId: props.modelCard.selectedVersionId
   }),
   () => ({
-    clientId: props.modelCard.accountId
+    clientId: projectAccount.value.accountInfo.id
   })
 )
 
