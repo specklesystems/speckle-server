@@ -23,6 +23,10 @@
                   label="Notifications"
                   @click="setSelectedItem(itemConfig.notifications)"
                 />
+                <LayoutSidebarMenuGroupItem
+                  label="Developer Settings"
+                  @click="setSelectedItem(itemConfig.developer)"
+                />
               </LayoutSidebarMenuGroup>
               <LayoutSidebarMenuGroup title="Server Settings">
                 <template #title-icon>
@@ -35,6 +39,14 @@
                 <LayoutSidebarMenuGroupItem
                   label="Projects"
                   @click="setSelectedItem(itemConfig.projects)"
+                />
+                <LayoutSidebarMenuGroupItem
+                  label="Active Users"
+                  @click="setSelectedItem(itemConfig.users)"
+                />
+                <LayoutSidebarMenuGroupItem
+                  label="Pending invitation"
+                  @click="setSelectedItem(itemConfig.invites)"
                 />
               </LayoutSidebarMenuGroup>
             </LayoutSidebarMenu>
@@ -61,8 +73,11 @@ import type { defineComponent } from 'vue'
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import SettingsUserProfile from './user/Profile'
 import SettingsUserNotifications from './user/Notifications'
+import SettingsUserDeveloper from './user/Developer'
 import SettingsServerGeneral from './server/General'
 import SettingsServerProjects from './server/Projects'
+import SettingsServerActiveUsers from './server/ActiveUsers'
+import SettingsServerInvites from './server/Invites'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
@@ -91,6 +106,11 @@ const itemConfig: { [key: string]: SelectableItem } = {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     component: SettingsUserNotifications
   },
+  developer: {
+    title: 'Developer Settings',
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    component: SettingsUserDeveloper
+  },
   general: {
     title: 'General',
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -100,6 +120,16 @@ const itemConfig: { [key: string]: SelectableItem } = {
     title: 'Projects',
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     component: SettingsServerProjects
+  },
+  users: {
+    title: 'Active users',
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    component: SettingsServerActiveUsers
+  },
+  invites: {
+    title: 'Pending Invitations',
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+    component: SettingsServerInvites
   }
 }
 

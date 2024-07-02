@@ -103,7 +103,7 @@
 import { ref } from 'vue'
 import { debounce } from 'lodash-es'
 import { useQuery } from '@vue/apollo-composable'
-import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/20/solid'
+import { MagnifyingGlassIcon, TrashIcon } from '@heroicons/vue/24/outline'
 import { getProjectsQuery } from '~~/lib/server-management/graphql/queries'
 import type { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
