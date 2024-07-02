@@ -62,6 +62,16 @@ export = {
         ctx.resourceAccessRules
       )
       return await updateCommitAndNotify(args.input, ctx.userId!)
+    },
+    async create(_parent, args, ctx) {
+      await authorizeResolver(
+        ctx.userId,
+        args.input.projectId,
+        Roles.Stream.Contributor,
+        ctx.resourceAccessRules
+      )
+
+      return null as any
     }
   },
   Subscription: {

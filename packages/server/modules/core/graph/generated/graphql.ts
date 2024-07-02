@@ -804,6 +804,16 @@ export type CreateModelInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CreateVersionInput = {
+  message?: InputMaybe<Scalars['String']['input']>;
+  modelId: Scalars['String']['input'];
+  objectId: Scalars['String']['input'];
+  parents?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  projectId: Scalars['String']['input'];
+  sourceApplication?: InputMaybe<Scalars['String']['input']>;
+  totalChildrenCount?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
@@ -3250,10 +3260,16 @@ export type VersionCreatedTriggerDefinition = {
 
 export type VersionMutations = {
   __typename?: 'VersionMutations';
+  create: Version;
   delete: Scalars['Boolean']['output'];
   moveToModel: Model;
   requestGendoAIRender: Scalars['Boolean']['output'];
   update: Version;
+};
+
+
+export type VersionMutationsCreateArgs = {
+  input: CreateVersionInput;
 };
 
 
@@ -3543,6 +3559,7 @@ export type ResolversTypes = {
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
+  CreateVersionInput: CreateVersionInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   DeleteModelInput: DeleteModelInput;
   DeleteVersionsInput: DeleteVersionsInput;
@@ -3758,6 +3775,7 @@ export type ResolversParentTypes = {
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
+  CreateVersionInput: CreateVersionInput;
   DateTime: Scalars['DateTime']['output'];
   DeleteModelInput: DeleteModelInput;
   DeleteVersionsInput: DeleteVersionsInput;
@@ -5056,6 +5074,7 @@ export type VersionCreatedTriggerDefinitionResolvers<ContextType = GraphQLContex
 };
 
 export type VersionMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionMutations'] = ResolversParentTypes['VersionMutations']> = {
+  create?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<VersionMutationsCreateArgs, 'input'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsDeleteArgs, 'input'>>;
   moveToModel?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<VersionMutationsMoveToModelArgs, 'input'>>;
   requestGendoAIRender?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsRequestGendoAiRenderArgs, 'input'>>;
