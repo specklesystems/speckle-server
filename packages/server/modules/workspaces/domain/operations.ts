@@ -1,7 +1,7 @@
 import {
   WorkspaceEvents,
   WorkspaceEventsPayloads
-} from '@/modules/workspaces/domain/events'
+} from '@/modules/workspacesCore/domain/events'
 import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
 
 export type StoreWorkspace = (args: { workspace: Workspace }) => Promise<void>
