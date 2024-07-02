@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "build": "rimraf ./dist ./dist-cjs && tsc -p . && tsc -p ./tsconfig.cjs.json && tsconfig-to-dual-package",
+    "build": "rimraf ./dist ./dist-cjs && tsc -p . && tsc -p ./tsconfig.cjs.json && tsconfig-to-dual-package && node scripts/copyFonts.js",
     "viewer": "tailwind-config-viewer -o -c tailwind.test.config.cjs",
     "lint:js": "eslint  .",
     "lint:tsc": "tsc --noEmit",
@@ -45,10 +45,12 @@
   },
   "devDependencies": {
     "@types/eslint": "^8.56.10",
+    "@types/fs-extra": "^11",
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",
+    "fs-extra": "^11.2.0",
     "prettier": "^2.7.1",
     "rimraf": "^5.0.0",
     "tailwind-config-viewer": "^1.7.2",
