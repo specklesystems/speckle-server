@@ -1,4 +1,4 @@
-import { send, Base, type SendResult } from '../../index'
+import { send, Base, type SendResult, Detach } from '../../index'
 import { times } from '#lodash'
 
 interface ExampleAppWindow extends Window {
@@ -108,6 +108,11 @@ function generateTestObject() {
         .fill(0)
         .map(() => new RandomFoo({ bar: 'baz baz baz' }))
     ],
+    detachedWithDecorator: new Collection<RandomFoo>('Collection of Foo', 'Foo', [
+      ...Array(10)
+        .fill(0)
+        .map(() => new RandomFoo())
+    ]),
     '@(10)chunkedArr': times(100, () => 42)
   })
 }
@@ -116,5 +121,24 @@ class RandomFoo extends Base {
   constructor(props?: Record<string, unknown>) {
     super(props)
     this.noise = Math.random().toString(16)
+  }
+}
+
+export class Collection<T extends Base> extends Base {
+  @Detach()
+  elements: T[]
+  // eslint-disable-next-line camelcase
+  speckle_type = 'Speckle.Core.Models.Collection'
+
+  constructor(
+    name: string,
+    collectionType: string,
+    elements: T[] = [],
+    props?: Record<string, unknown>
+  ) {
+    super(props)
+    this.name = name
+    this.collectionType = collectionType
+    this.elements = elements
   }
 }
