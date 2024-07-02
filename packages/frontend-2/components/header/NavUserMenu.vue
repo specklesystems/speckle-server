@@ -39,7 +39,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-2.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="() => (showProfileEditDialog = true)"
+              @click="() => (showSettingsDialog = true)"
             >
               <UserAvatar :user="activeUser" size="sm" class="-ml-0.5 mr-px" />
               Edit Profile
@@ -128,7 +128,7 @@
       </Transition>
     </Menu>
     <ServerManagementInviteDialog v-model:open="showInviteDialog" />
-    <!-- <UserProfileEditDialog v-model:open="showProfileEditDialog" /> -->
+    <SettingsDialog v-model:open="showSettingsDialog" />
   </div>
 </template>
 <script setup lang="ts">
@@ -164,7 +164,7 @@ const router = useRouter()
 const route = useRoute()
 
 const showInviteDialog = ref(false)
-const showProfileEditDialog = ref(false)
+const showSettingsDialog = ref(false)
 const menuButtonId = useId()
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
@@ -184,7 +184,7 @@ watch(
   isProfileRoute,
   (newVal, oldVal) => {
     if (newVal && !oldVal) {
-      showProfileEditDialog.value = true
+      showSettingsDialog.value = true
       void router.replace({ path: homeRoute, force: true }) // in-place replace
     }
   },

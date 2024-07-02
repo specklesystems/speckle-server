@@ -1,12 +1,13 @@
 <template>
+  <!-- <LayoutDialog v-model:open="isOpen"> -->
   <div
     class="fixed z-40 w-screen h-screen bg-slate-700/40 top-0 left-0 pt-4 md:p-4 md:p-8"
   >
-    <div class="bg-white w-full h-full rounded-md shadow-lg flex overflow-hidden">
+    <div class="bg-white w-full h-full flex bg-slate-700/40 rounded overflow-hidden">
       <ClientOnly>
         <div
           v-if="!isMobile || !selectedItem"
-          class="w-full md:w-56 lg:w-72 p-4 pt-6 bg-gray-100 md:border-r md:border-gray-200"
+          class="w-full md:w-56 lg:w-60 p-4 pt-6 bg-gray-100 md:border-r md:border-gray-200"
         >
           <LayoutSidebar>
             <LayoutSidebarMenu>
@@ -52,6 +53,7 @@
       </section>
     </div>
   </div>
+  <!-- </LayoutDialog> -->
 </template>
 
 <script setup lang="ts">

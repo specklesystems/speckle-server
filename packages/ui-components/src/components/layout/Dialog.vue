@@ -120,6 +120,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   open: boolean
   maxWidth?: MaxWidthValue
+  fullscreen?: boolean
   hideCloser?: boolean
   /**
    * Prevent modal from closing when the user clicks outside of the modal or presses Esc
@@ -177,7 +178,11 @@ const maxWidthWeight = computed(() => {
 })
 
 const widthClasses = computed(() => {
-  const classParts: string[] = ['w-full', 'sm:w-full sm:max-w-2xl']
+  const classParts: string[] = ['w-full', 'sm:w-full']
+
+  if (!props.fullscreen) {
+    classParts.push('sm:max-w-2xl')
+  }
 
   if (maxWidthWeight.value >= 1) {
     classParts.push('md:max-w-2xl')

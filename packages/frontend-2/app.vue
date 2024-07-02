@@ -8,7 +8,6 @@
     </NuxtLayout>
     <SingletonManagers />
   </div>
-  <SettingsModal />
 </template>
 <script setup lang="ts">
 import { useTheme } from '~~/lib/core/composables/theme'
