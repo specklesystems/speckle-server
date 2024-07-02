@@ -27,7 +27,8 @@ const documents = {
     "\n  query ModelDetails($modelId: String!, $projectId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      model(id: $modelId) {\n        id\n        displayName\n        name\n        versions {\n          totalCount\n        }\n        author {\n          id\n          name\n          avatar\n        }\n      }\n    }\n  }\n": types.ModelDetailsDocument,
     "\n  query VersionDetails($projectId: String!, $versionId: String!, $modelId: String!) {\n    project(id: $projectId) {\n      id\n      name\n      model(id: $modelId) {\n        id\n        name\n        versions(limit: 1) {\n          items {\n            id\n            createdAt\n          }\n        }\n        version(id: $versionId) {\n          id\n          referencedObject\n          message\n          sourceApplication\n          createdAt\n          previewUrl\n        }\n      }\n    }\n  }\n": types.VersionDetailsDocument,
     "\n  subscription OnProjectVersionsUpdate($projectId: String!) {\n    projectVersionsUpdated(id: $projectId) {\n      id\n      type\n      version {\n        id\n        createdAt\n        message\n        sourceApplication\n        authorUser {\n          id\n          name\n          avatar\n        }\n        model {\n          id\n          name\n          displayName\n        }\n      }\n    }\n  }\n": types.OnProjectVersionsUpdateDocument,
-    "\n  subscription OnUserProjectsUpdated {\n    userProjectsUpdated {\n      id\n      project {\n        id\n        team {\n          role\n        }\n      }\n    }\n  }\n": types.OnUserProjectsUpdatedDocument,
+    "\n  subscription OnUserProjectsUpdated {\n    userProjectsUpdated {\n      id\n      project {\n        id\n        visibility\n        team {\n          id\n          role\n        }\n      }\n    }\n  }\n": types.OnUserProjectsUpdatedDocument,
+    "\n  subscription ProjectUpdated($projectId: String!) {\n    projectUpdated(id: $projectId) {\n      id\n      project {\n        visibility\n      }\n    }\n  }\n": types.ProjectUpdatedDocument,
 };
 
 /**
@@ -103,7 +104,11 @@ export function graphql(source: "\n  subscription OnProjectVersionsUpdate($proje
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  subscription OnUserProjectsUpdated {\n    userProjectsUpdated {\n      id\n      project {\n        id\n        team {\n          role\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnUserProjectsUpdated {\n    userProjectsUpdated {\n      id\n      project {\n        id\n        team {\n          role\n        }\n      }\n    }\n  }\n"];
+export function graphql(source: "\n  subscription OnUserProjectsUpdated {\n    userProjectsUpdated {\n      id\n      project {\n        id\n        visibility\n        team {\n          id\n          role\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription OnUserProjectsUpdated {\n    userProjectsUpdated {\n      id\n      project {\n        id\n        visibility\n        team {\n          id\n          role\n        }\n      }\n    }\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  subscription ProjectUpdated($projectId: String!) {\n    projectUpdated(id: $projectId) {\n      id\n      project {\n        visibility\n      }\n    }\n  }\n"): (typeof documents)["\n  subscription ProjectUpdated($projectId: String!) {\n    projectUpdated(id: $projectId) {\n      id\n      project {\n        visibility\n      }\n    }\n  }\n"];
 
 export function graphql(source: string) {
   return (documents as any)[source] ?? {};

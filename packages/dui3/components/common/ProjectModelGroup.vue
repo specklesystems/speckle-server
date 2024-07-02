@@ -114,6 +114,7 @@ import {
   projectDetailsQuery,
   versionCreatedSubscription,
   userProjectsUpdatedSubscription,
+  projectUpdatedSubscription,
   requestProjectAccess
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
@@ -136,20 +137,24 @@ const serverMatchAccount = accountStore.accounts.find(
 )
 const hasServerMatch = !!serverMatchAccount
 
-const hasAccountMatch = !!accountStore.accounts.find(
+const accountMatch = accountStore.accounts.find(
   (acc) => acc.accountInfo.id === props.project.accountId
 )
 
-const clientId = hasAccountMatch
-  ? props.project.accountId
+const hasAccountMatch = !!accountMatch
+
+const projectAccount = hasAccountMatch
+  ? accountMatch
   : hasServerMatch
-  ? serverMatchAccount.accountInfo.id
-  : accountStore.activeAccount.accountInfo.id
+  ? serverMatchAccount
+  : accountStore.activeAccount
+
+const clientId = projectAccount.accountInfo.id
 
 const {
   result: projectDetailsResult,
   onError,
-  refetch
+  refetch: refetchProjectDetails
 } = useQuery(
   projectDetailsQuery,
   () => ({ projectId: props.project.projectId }),
@@ -193,20 +198,30 @@ const { onResult: userProjectsUpdated } = useSubscription(
   () => ({ clientId })
 )
 
-userProjectsUpdated((res) => {
-  console.log(res, 'userProjectsUpdated subscription')
+const { onResult: projectUpdated } = useSubscription(
+  projectUpdatedSubscription,
+  () => ({ projectId: props.project.projectId }),
+  () => ({ clientId })
+)
+
+// to catch changes on visibility of project
+projectUpdated((res) => {
+  // TODO: FIX needed: whenever project visibility changed from "discoverable" to "private", we can't get message if the `clientId` is not part of the team
+  // validated with Fabians this is a current behavior.
   if (!res.data) return
-  if (!res.data.userProjectsUpdated.project) {
-    refetch()
-    writeAccessRequested.value = false
-  }
+  projectError.value = undefined // clean error, refetch will set it if any
+  refetchProjectDetails()
 })
 
-// TODO: fix url!
+// to catch changes on team of the project
+userProjectsUpdated((res) => {
+  if (!res.data) return
+  writeAccessRequested.value = false
+  refetchProjectDetails()
+})
+
 const projectUrl = computed(() => {
-  const acc = accountStore.accounts.find(
-    (acc) => acc.accountInfo.id === props.project.accountId
-  )
+  const acc = accountStore.accounts.find((acc) => acc.accountInfo.id === clientId)
   return `${acc?.accountInfo.serverInfo.url as string}/projects/${
     props.project.projectId
   }`

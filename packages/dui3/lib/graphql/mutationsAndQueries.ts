@@ -236,9 +236,22 @@ export const userProjectsUpdatedSubscription = graphql(`
       id
       project {
         id
+        visibility
         team {
+          id
           role
         }
+      }
+    }
+  }
+`)
+
+export const projectUpdatedSubscription = graphql(`
+  subscription ProjectUpdated($projectId: String!) {
+    projectUpdated(id: $projectId) {
+      id
+      project {
+        visibility
       }
     }
   }
