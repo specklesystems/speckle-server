@@ -100,7 +100,6 @@ const accountStore = useAccountStore()
 const props = defineProps<{
   modelCard: IReceiverModelCard
   project: ProjectModelGroup
-  readonly: boolean
 }>()
 
 const store = useHostAppStore()
@@ -143,13 +142,6 @@ const handleVersionSelection = async (
 
 // Cancels any in progress receive OR receives latest version
 const handleMainButtonClick = async () => {
-  if (props.readonly) {
-    store.setModelError({
-      modelCardId: props.modelCard.modelCardId,
-      error: 'Model is read-only. Request write access to load!'
-    })
-    return
-  }
   if (props.modelCard.progress)
     return await store.receiveModelCancel(props.modelCard.modelCardId)
   await receiveLatestVersion()

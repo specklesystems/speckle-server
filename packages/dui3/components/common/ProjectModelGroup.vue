@@ -69,7 +69,6 @@
         :key="model.modelCardId"
         :model-card="model"
         :project="project"
-        :readonly="isProjectReadOnly"
       />
     </div>
   </div>
