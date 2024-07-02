@@ -23,7 +23,7 @@
                 trackEvent(
                   'DUI3 Action',
                   { name: 'Request Write Access' },
-                  serverMatchAccount?.accountInfo.id
+                  projectAccount?.accountInfo.id
                 )
             "
           />
@@ -132,24 +132,19 @@ const props = defineProps<{
 const showModels = ref(true)
 const writeAccessRequested = ref(false)
 
-const serverMatchAccount = accountStore.accounts.find(
-  (acc) => acc.accountInfo.serverInfo.url === props.project.serverUrl
-)
-const hasServerMatch = !!serverMatchAccount
-
-const accountMatch = accountStore.accounts.find(
-  (acc) => acc.accountInfo.id === props.project.accountId
+const hasAccountMatch = computed(() =>
+  accountStore.isAccountExistsById(props.project.accountId)
 )
 
-const hasAccountMatch = !!accountMatch
+const hasServerMatch = computed(() =>
+  accountStore.isAccountExistsByServer(props.project.serverUrl)
+)
 
-const projectAccount = hasAccountMatch
-  ? accountMatch
-  : hasServerMatch
-  ? serverMatchAccount
-  : accountStore.activeAccount
+const projectAccount = computed(() =>
+  accountStore.accountWithFallback(props.project.accountId, props.project.serverUrl)
+)
 
-const clientId = projectAccount.accountInfo.id
+const clientId = projectAccount.value.accountInfo.id
 
 const {
   result: projectDetailsResult,
@@ -179,8 +174,8 @@ const isProjectReadOnly = computed(() => {
 })
 
 const requestWriteAccess = async () => {
-  if (serverMatchAccount) {
-    const { mutate } = provideApolloClient((serverMatchAccount as DUIAccount).client)(
+  if (hasServerMatch.value) {
+    const { mutate } = provideApolloClient((projectAccount.value as DUIAccount).client)(
       () => useMutation(requestProjectAccess)
     )
     const res = await mutate({
@@ -216,8 +211,8 @@ projectUpdated((res) => {
 // to catch changes on team of the project
 userProjectsUpdated((res) => {
   if (!res.data) return
-  writeAccessRequested.value = false
   refetchProjectDetails()
+  writeAccessRequested.value = false
 })
 
 const projectUrl = computed(() => {

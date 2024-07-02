@@ -148,6 +148,28 @@ export const useAccountStore = defineStore('accountStore', () => {
       httpLink
     )
 
+  const isAccountExistsById = (accountId: string) => {
+    return !!accounts.value.find((acc) => acc.accountInfo.id === accountId)
+  }
+
+  const isAccountExistsByServer = (serverUrl: string) => {
+    return !!accounts.value.find((acc) => acc.accountInfo.serverInfo.url === serverUrl)
+  }
+
+  const accountWithFallback = (accountId: string, serverUrl: string) => {
+    const accountMatchWithId = accounts.value.find(
+      (acc) => acc.accountInfo.id === accountId
+    )
+    if (accountMatchWithId) return accountMatchWithId
+    // NOTE: we do assumption here by having first matched url.
+    const accountMatchWithServerUrl = accounts.value.find(
+      (acc) => acc.accountInfo.serverInfo.url === serverUrl
+    )
+    if (accountMatchWithServerUrl) return accountMatchWithServerUrl
+
+    return activeAccount.value
+  }
+
   const provideClients = () => {
     provideApolloClients(apolloClients)
   }
@@ -163,7 +185,10 @@ export const useAccountStore = defineStore('accountStore', () => {
     defaultAccount,
     activeAccount,
     userSelectedAccount,
+    isAccountExistsById,
+    isAccountExistsByServer,
     refreshAccounts,
+    accountWithFallback,
     provideClients
   }
 })

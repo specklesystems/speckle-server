@@ -116,20 +116,11 @@ const buttonTooltip = computed(() => {
     : 'Load model'
 })
 
-const hasAccountMatch = !!accStore.accounts.find(
-  (acc) => acc.accountInfo.id === props.project.accountId
+const projectAccount = computed(() =>
+  accStore.accountWithFallback(props.project.accountId, props.project.serverUrl)
 )
 
-const serverMatchAccount = accStore.accounts.find(
-  (acc) => acc.accountInfo.serverInfo.url === props.project.serverUrl
-)
-const hasServerMatch = !!serverMatchAccount
-
-const clientId = hasAccountMatch
-  ? props.project.accountId
-  : hasServerMatch
-  ? serverMatchAccount.accountInfo.id
-  : accStore.activeAccount.accountInfo.id
+const clientId = projectAccount.value.accountInfo.id
 
 const { result: modelResult, loading } = useQuery(
   modelDetailsQuery,
