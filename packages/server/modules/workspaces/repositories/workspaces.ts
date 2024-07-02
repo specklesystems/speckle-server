@@ -111,5 +111,5 @@ export const upsertWorkspaceRoleFactory =
     await workspacesAclTable
       .insert({ userId, workspaceId, role })
       .onConflict(['userId', 'workspaceId'])
-      .merge(['role'])
+      .merge({ role })
   }
