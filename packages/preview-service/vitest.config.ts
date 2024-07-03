@@ -1,3 +1,4 @@
+import path from 'path'
 import { configDefaults, defineConfig } from 'vitest/config'
 
 export default defineConfig({
@@ -6,5 +7,11 @@ export default defineConfig({
     globalSetup: ['./tests/hooks/globalSetup.ts'],
     setupFiles: ['./tests/hooks/setup.ts']
     // reporters: ['verbose', 'hanging-process'] //uncomment to debug hanging processes etc.
+  },
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+      '#': path.resolve(__dirname, './tests')
+    }
   }
 })
