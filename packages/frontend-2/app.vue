@@ -1,7 +1,7 @@
 <template>
   <div
     id="speckle"
-    class="bg-foundation-page text-foreground has-[.viewer-transparent]:!bg-transparent"
+    class="bg-foundation-page text-foreground has-[.viewer]:!overflow-hidden has-[.viewer-transparent]:!bg-transparent"
   >
     <NuxtLayout>
       <NuxtPage />
