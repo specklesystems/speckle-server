@@ -600,9 +600,15 @@ jobs:
           working_directory: 'packages/viewer'
 
   test-preview-service:
-    docker: &docker-node-image
+    docker:
       - image: cimg/node:18.19.0
+      - image: cimg/postgres:14.11
+        environment:
+          POSTGRES_DB: preview_service_test
+          POSTGRES_PASSWORD: preview_service_test
+          POSTGRES_USER: preview_service_test
     resource_class: large
+    environment: {}
     steps:
       - checkout
       - restore_cache:
@@ -726,7 +732,8 @@ jobs:
 
   ui-components-chromatic:
     resource_class: medium+
-    docker: *docker-node-image
+    docker: &docker-node-image
+      - image: cimg/node:18.19.0
     steps:
       - checkout
       - restore_cache:
