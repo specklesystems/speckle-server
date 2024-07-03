@@ -87,6 +87,10 @@ extend type Mutation {
   commitReceive(input: CommitReceivedInput!): Boolean!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:read")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use VersionMutations.markReceived instead."
+    )
+
   commitDelete(commit: CommitDeleteInput!): Boolean!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "streams:write")

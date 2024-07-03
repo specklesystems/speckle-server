@@ -13,6 +13,7 @@ generates:
         Stream: '@/modules/core/helpers/graphTypes#StreamGraphQLReturn'
         Commit: '@/modules/core/helpers/graphTypes#CommitGraphQLReturn'
         Project: '@/modules/core/helpers/graphTypes#ProjectGraphQLReturn'
+        Object: '@/modules/core/helpers/graphTypes#ObjectGraphQLReturn'
         Version: '@/modules/core/helpers/graphTypes#VersionGraphQLReturn'
         ServerInvite: '@/modules/core/helpers/graphTypes#ServerInviteGraphQLReturnType'
         Model: '@/modules/core/helpers/graphTypes#ModelGraphQLReturn'

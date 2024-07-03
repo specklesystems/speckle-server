@@ -1,24 +1,34 @@
-'use strict'
-const { validateScopes, authorizeResolver } = require('@/modules/shared')
+import { authorizeResolver } from '@/modules/shared'
 
-const {
+import {
   createObjects,
   getObject,
   getObjectChildren,
   getObjectChildrenQuery
-} = require('../../services/objects')
-const { Roles, Scopes } = require('@speckle/shared')
-const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
+} from '../../services/objects'
 
-module.exports = {
-  Stream: {
-    async object(parent, args) {
-      const obj = await getObject({ streamId: parent.id, objectId: args.id })
-      if (!obj) return null
+import { Roles } from '@speckle/shared'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { ObjectRecord } from '@/modules/core/helpers/types'
 
-      obj.streamId = parent.id
-      return obj
+const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
+  async function object(parent, args) {
+    const obj = await getObject({ streamId: parent.id, objectId: args.id })
+    if (!obj) return null
+
+    const ret: ObjectRecord = {
+      ...obj,
+      streamId: parent.id
     }
+    return ret
+  }
+
+export = {
+  Stream: {
+    object: getStreamObject
+  },
+  Project: {
+    object: getStreamObject
   },
   Object: {
     async children(parent, args) {
@@ -34,7 +44,7 @@ module.exports = {
         })
         result.objects.forEach((x) => (x.streamId = parent.streamId))
         return {
-          totalCount: parent.totalChildrenCount || '0',
+          totalCount: parent.totalChildrenCount || 0,
           cursor: result.cursor,
           objects: result.objects
         }
@@ -56,9 +66,7 @@ module.exports = {
     }
   },
   Mutation: {
-    async objectCreate(parent, args, context) {
-      await throwForNotHavingServerRole(context, Roles.Server.Guest)
-      await validateScopes(context.scopes, Scopes.Streams.Write)
+    async objectCreate(_parent, args, context) {
       await authorizeResolver(
         context.userId,
         args.objectInput.streamId,
@@ -73,4 +81,4 @@ module.exports = {
       return ids
     }
   }
-}
+} as Resolvers
