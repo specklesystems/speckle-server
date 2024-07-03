@@ -1,7 +1,7 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
-    <h2 class="h3 font-semibold pb-8 hidden md:block">Active Users</h2>
-    <div class="flex justify-end items-end mb-8">
+    <div class="flex justify-between flex-col md:flex-row gap-3 md:gap-0">
+      <h2 class="h3 font-semibold pb-8 hidden md:block">Pending Invitations</h2>
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
         Invite
       </FormButton>

@@ -1,7 +1,7 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
-    <div class="flex flex-col gap-y-6">
-      <div class="flex flex-col gap-16">
+    <div class="flex flex-col">
+      <div class="flex flex-col gap-12">
         <DeveloperSettingsSectionHeader
           title="Developer Settings"
           :buttons="[
@@ -14,9 +14,7 @@
               label: 'Explore GraphQL'
             }
           ]"
-        >
-          Heads up! The sections below are intended for developers.
-        </DeveloperSettingsSectionHeader>
+        />
         <div class="flex flex-col gap-4">
           <DeveloperSettingsSectionHeader
             title="Access Tokens"
@@ -95,7 +93,7 @@
             </template>
           </LayoutTable>
         </div>
-
+        <hr />
         <div class="flex flex-col gap-4">
           <DeveloperSettingsSectionHeader
             subheading
@@ -178,7 +176,7 @@
             </template>
           </LayoutTable>
         </div>
-
+        <hr />
         <div class="flex flex-col gap-4">
           <DeveloperSettingsSectionHeader
             subheading

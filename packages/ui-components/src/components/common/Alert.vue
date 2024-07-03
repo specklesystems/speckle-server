@@ -123,16 +123,22 @@ const containerClasses = computed(() => {
 
   switch (props.color) {
     case 'success':
-      classParts.push('bg-success-lighter border-l-4 border-success')
+      classParts.push(
+        `bg-success-lighter ${!props.hideIcon && 'border-l-4 border-success'}`
+      )
       break
     case 'info':
-      classParts.push('bg-info-lighter border-l-4 border-info')
+      classParts.push(`bg-info-lighter ${!props.hideIcon && 'border-l-4 border-info'}`)
       break
     case 'danger':
-      classParts.push('bg-danger-lighter border-l-4 border-danger')
+      classParts.push(
+        `bg-danger-lighter ${!props.hideIcon && 'border-l-4 border-danger'}`
+      )
       break
     case 'warning':
-      classParts.push('bg-warning-lighter border-l-4 border-warning')
+      classParts.push(
+        `bg-warning-lighter ${!props.hideIcon && 'border-l-4 border-warning'}`
+      )
       break
   }
 

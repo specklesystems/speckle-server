@@ -1,10 +1,9 @@
 <template>
   <div class="md:max-w-xl md:mx-auto">
-    <h2 class="h3 font-semibold hidden md:block">Notifications</h2>
-    <div class="divide-y">
-      <p class="py-8">Your notification preferences</p>
-      <SettingsUserNotificationsTable class="py-8" :user="user" />
-    </div>
+    <h2 class="text-2xl font-semibold font-semibold hidden md:block">Notifications</h2>
+    <p class="text-sm pt-4">Your notification preferences</p>
+    <hr class="pb-10 mt-10" />
+    <SettingsUserNotificationsTable class="py-8" :user="user" />
   </div>
 </template>
 <script setup lang="ts">

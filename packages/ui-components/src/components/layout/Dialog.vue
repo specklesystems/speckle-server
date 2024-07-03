@@ -16,7 +16,7 @@
       </TransitionChild>
       <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
         <div
-          class="flex md:justify-center items-end md:items-center h-full w-full md:p-4"
+          class="flex md:justify-center items-end md:items-center h-full w-full md:p-6"
         >
           <TransitionChild
             as="template"

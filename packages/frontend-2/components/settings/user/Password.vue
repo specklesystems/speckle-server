@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col space-y-6">
-    <h2 class="h5">Password change</h2>
+    <h2 class="text-xl">Password change</h2>
     <p class="text-sm">
       Press the button below to start the password reset process.
       <br />

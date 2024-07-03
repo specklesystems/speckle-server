@@ -2,7 +2,7 @@
   <div>
     <SettingsUserDeleteAccountDialog v-model:open="isOpen" :user="user" />
     <div class="flex flex-col space-y-6">
-      <h2 class="h5">Delete account</h2>
+      <h2 class="text-xl">Delete account</h2>
       <CommonAlert color="info" size="sm" hide-icon>
         <template #description>
           We will delete all projects where you are the sole owner, and any associated
