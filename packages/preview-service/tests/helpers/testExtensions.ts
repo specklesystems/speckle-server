@@ -1,59 +1,64 @@
 import { stopServer } from '@/server/server.js'
-import { test } from 'vitest'
+import { inject, test } from 'vitest'
 import { getTestDb } from '#/helpers/testKnexClient.js'
-import type {
-  DatabaseIntegrationTestContext,
-  E2ETestContext
-} from '#/helpers/testContext.js'
-import { buildAndStartServers } from '#/helpers/helpers.js'
-import http from 'http'
+import { startAndWaitOnServers } from '#/helpers/helpers.js'
 import type { Knex } from 'knex'
+import { Server } from 'http'
+
+export interface DatabaseIntegrationTestContext {
+  context: {
+    db: Knex.Transaction
+  }
+}
 
 // vitest reference: https://vitest.dev/guide/test-context#fixture-initialization
 export const databaseIntegrationTest = test.extend<DatabaseIntegrationTestContext>({
   context: [
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async ({ task }, use) => {
+    async ({ task, onTestFinished }, use) => {
+      const dbName = inject('dbName')
       // equivalent of beforeEach
-      const db = await getTestDb().transaction()
+      const db = await getTestDb(dbName).transaction()
+
+      // schedule the cleanup. Runs regardless of test status, and runs after afterEach.
+      onTestFinished(async () => {
+        await db.rollback()
+      })
 
       // now run the test
       await use({ db })
-
-      // cleanup. Equivalent of afterEach.
-      await db.rollback()
     },
     { auto: true } // we want to run this for each databaseIntegrationTest, even if the context is not explicitly requested by the test
   ]
 })
 
+export interface E2ETestContext extends DatabaseIntegrationTestContext {
+  context: {
+    db: Knex.Transaction
+    server: Server
+    metricsServer: Server
+  }
+}
+
 // vitest reference: https://vitest.dev/guide/test-context#fixture-initialization
 export const e2eTest = test.extend<E2ETestContext>({
   context: [
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async ({ task }, use) => {
-      let server: http.Server | null = null
-      let metricsServer: http.Server | null = null
-      let db: Knex.Transaction | null = null
-      try {
-        // equivalent of beforeEach
-        db = await getTestDb().transaction()
-        ;({ server, metricsServer } = await buildAndStartServers({ db }))
+    async ({ task, onTestFinished }, use) => {
+      const dbName = inject('dbName')
+      // equivalent of beforeEach
+      const db = await getTestDb(dbName).transaction()
+      const { server, metricsServer } = await startAndWaitOnServers({ db })
 
-        // now run the test
-        await use({ db, server, metricsServer })
-      } catch (e) {
-        // cleanup after throwing. Equivalent of afterEach.
+      // schedule the cleanup. Runs regardless of test status, and runs after afterEach.
+      onTestFinished(async () => {
         if (server) stopServer({ server })
         if (metricsServer) stopServer({ server: metricsServer })
         if (db) await db.rollback()
-        throw e
-      }
+      })
 
-      // if it didn't throw, we still need to cleanup. Equivalent of afterEach.
-      if (server) stopServer({ server })
-      if (metricsServer) stopServer({ server: metricsServer })
-      if (db) await db.rollback()
+      // now run the test
+      await use({ db, server, metricsServer })
     },
     { auto: true } // we want to run this for each e2eTest, even if the context is not explicitly requested by the test
   ]

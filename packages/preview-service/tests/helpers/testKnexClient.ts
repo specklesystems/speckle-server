@@ -1,19 +1,23 @@
 /* eslint-disable camelcase */
 import { knex } from 'knex'
-import path from 'path'
+// import path from 'path'
 
-export const getTestDb = () =>
+export const getTestDb = (databaseName?: string) =>
   knex({
     client: 'pg',
     connection: {
       application_name: 'speckle_preview_service',
-      connectionString:
-        'postgres://preview_service_test:preview_service_test@127.0.0.1/preview_service_test'
+      database: databaseName,
+      user: 'preview_service_test',
+      password: 'preview_service_test',
+      host: '127.0.0.1',
+      port: 5432,
+      protocol: 'postgres'
     },
-    pool: { min: 0, max: 2 },
+    pool: { min: 0, max: 2 }
     // migrations are managed in the server package for production, but managed here for tests
-    migrations: {
-      directory: path.resolve(__dirname, '../migrations'),
-      loadExtensions: ['.ts']
-    }
+    // migrations: {
+    //   directory: path.resolve(__dirname, '../migrations'),
+    //   loadExtensions: ['.ts']
+    // }
   })

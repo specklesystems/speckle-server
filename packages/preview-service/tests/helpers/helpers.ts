@@ -3,7 +3,7 @@ import type { Knex } from 'knex'
 import http from 'http'
 import { AddressInfo } from 'net'
 
-export const buildAndStartServers = async (deps: { db: Knex }) => {
+export const startAndWaitOnServers = async (deps: { db: Knex }) => {
   let serverAddress: string | AddressInfo | null = null
   let metricsServerAddress: string | AddressInfo | null = null
 
