@@ -1,8 +1,42 @@
 import type { Knex } from 'knex'
 
-export const up = (db: Knex) => {
-  //TODO validate that this database has no existing tables, or only the object_preview table
-  //i.e. ensure we aren't connected to an existing production database!
+const getAllTableNames = (deps: { db: Knex }) => {
+  return deps.db.raw<{ rows: { tablename: string }[] }>(
+    `SELECT tablename FROM pg_tables WHERE schemaname='public'`
+  )
+}
+
+const throwIfNotSafeToMigrateUp = async (deps: { db: Knex }) => {
+  const { rows } = await getAllTableNames(deps)
+  const tableNames = rows.map((x) => x.tablename)
+  if (
+    tableNames.length > 1 ||
+    (tableNames.length === 1 &&
+      !['object_preview'].every((t) => tableNames.includes(t)))
+  ) {
+    throw new Error(
+      'Database already has tables, it is unsafe to migrate to test schema. Aborting.'
+    )
+  }
+}
+
+const throwIfNotSafeToMigrateDown = async (deps: { db: Knex }) => {
+  const { rows } = await getAllTableNames(deps)
+  const tableNames = rows.map((x) => x.tablename)
+  if (
+    tableNames.length !== 1 ||
+    (tableNames.length === 1 &&
+      !['object_preview'].every((t) => tableNames.includes(t)))
+  ) {
+    throw new Error(
+      'Database already has tables, it is unsafe to migrate to test schema. Aborting.'
+    )
+  }
+}
+
+export const up = async (db: Knex) => {
+  await throwIfNotSafeToMigrateUp({ db })
+
   return db.schema.createTable('object_preview', (table) => {
     table.string('streamId', 10) //ignoring fk on streams table for simplicity
     table.string('objectId').notNullable()
@@ -15,8 +49,7 @@ export const up = (db: Knex) => {
   })
 }
 
-export const down = (db: Knex) => {
-  //TODO validate that this database only has the object_preview table, and no other tables
-  //i.e. ensure we aren't connected to a production database!
+export const down = async (db: Knex) => {
+  await throwIfNotSafeToMigrateDown({ db })
   return db.schema.dropTable('object_preview')
 }

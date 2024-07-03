@@ -31,7 +31,6 @@ const previewRouterFactory = () => {
         url: `${serviceOrigin()}/render/`,
         script: puppeteerDriver,
         launchParams: {
-          //TODO as the launch params are touching environment variables, should they be dependency injected?
           headless: shouldBeHeadless(),
           userDataDir: getPuppeteerUserDataDir(),
           executablePath: getChromiumExecutablePath(),
