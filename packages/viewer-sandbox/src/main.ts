@@ -387,7 +387,11 @@ const getStream = () => {
     // Sum fucking pipes
     // 'https://app.speckle.systems/projects/122448a81e/models/f21aff1f4a'
     // Thin plane
-    'https://app.speckle.systems/projects/20f72acc58/models/2cf8a736f8'
+    // 'https://app.speckle.systems/projects/20f72acc58/models/2cf8a736f8'
+    // Huge transforms
+    'https://app.speckle.systems/projects/54cc4aa7d0/models/4d1d5d5e10'
+    // 'https://app.speckle.systems/projects/54cc4aa7d0/models/9cef6fb1df0d587520a6ecb6cdb5de1c'
+    // 'https://app.speckle.systems/projects/54cc4aa7d0/models/5b1e396133'
   )
 }
 

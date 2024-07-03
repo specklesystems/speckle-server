@@ -285,6 +285,20 @@ export class Geometry {
     }
   }
 
+  public static vector3FitsInFP32(vector: Vector3) {
+    return (
+      Geometry.valueFitsInFP32(vector.x) &&
+      Geometry.valueFitsInFP32(vector.y) &&
+      Geometry.valueFitsInFP32(vector.z)
+    )
+  }
+
+  public static valueFitsInFP32(doubleValue: number) {
+    this.floatArrayBuff[0] = doubleValue
+    const doubleHigh = this.floatArrayBuff[0]
+    return doubleValue - doubleHigh === 0
+  }
+
   public static computeVertexNormals(
     buffer: BufferGeometry,
     doublePositions: Float64Array
