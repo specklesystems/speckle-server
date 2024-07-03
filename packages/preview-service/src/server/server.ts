@@ -6,20 +6,21 @@ import http from 'http'
 import type { Knex } from 'knex'
 import { isNaN, isString, toNumber } from 'lodash-es'
 
-export const startServer = (params: { db: Knex }) => {
+export const startServer = (params: { db: Knex; serveOnRandomPort?: boolean }) => {
   const { db } = params
   /**
    * Get port from environment and store in Express.
    */
-
-  const port = normalizePort(getAppPort())
+  const inputPort = params.serveOnRandomPort ? 0 : normalizePort(getAppPort())
   const app = appFactory({ db })
-  app.set('port', port)
+  app.set('port', inputPort)
 
   // we place the metrics on a separate port as we wish to expose it to external monitoring tools, but do not wish to expose other routes (for now)
-  const metricsPort = normalizePort(getMetricsPort())
+  const inputMetricsPort = params.serveOnRandomPort
+    ? 0
+    : normalizePort(getMetricsPort())
   const metricsApp = metricsAppFactory({ db })
-  metricsApp.set('port', metricsPort)
+  metricsApp.set('port', inputMetricsPort)
 
   /**
    * Create HTTP server.
@@ -31,20 +32,19 @@ export const startServer = (params: { db: Knex }) => {
   /**
    * Listen on provided port, on all network interfaces.
    */
-
   const host = getHost()
-  server.on('error', onErrorFactory(port))
+  server.on('error', onErrorFactory(inputPort))
   server.on('listening', () => {
     serverLogger.info('📡 Started Preview Service server')
     onListening(server)
   })
-  server.listen(port, host)
-  metricsServer.on('error', onErrorFactory(port))
+  server.listen(inputPort, host)
+  metricsServer.on('error', onErrorFactory(inputPort))
   metricsServer.on('listening', () => {
     serverLogger.info('📊 Started Preview Service metrics server')
     onListening(metricsServer)
   })
-  metricsServer.listen(metricsPort, host)
+  metricsServer.listen(inputMetricsPort, host)
 
   return { app, server, metricsServer }
 }
@@ -96,6 +96,14 @@ const onErrorFactory = (port: string | number | false) => (error: Error) => {
 
 function onListening(referenceServer: http.Server) {
   const addr = referenceServer.address()
-  const bind = isString(addr) ? 'pipe ' + addr : 'port ' + addr?.port
-  serverLogger.info('Listening on ' + bind)
+  if (!addr) throw new Error('Server address is not defined')
+
+  switch (typeof addr) {
+    case 'string':
+      serverLogger.info(`Listening on pipe ${addr}`)
+      return addr
+    default:
+      serverLogger.info(`Listening on port ${addr.port}`)
+      return addr.port
+  }
 }

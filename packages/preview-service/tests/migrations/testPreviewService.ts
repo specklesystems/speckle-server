@@ -1,6 +1,8 @@
 import type { Knex } from 'knex'
 
 export const up = (db: Knex) => {
+  //TODO validate that this database has no existing tables, or only the object_preview table
+  //i.e. ensure we aren't connected to an existing production database!
   return db.schema.createTable('object_preview', (table) => {
     table.string('streamId', 10) //ignoring fk on streams table for simplicity
     table.string('objectId').notNullable()
@@ -14,5 +16,7 @@ export const up = (db: Knex) => {
 }
 
 export const down = (db: Knex) => {
+  //TODO validate that this database only has the object_preview table, and no other tables
+  //i.e. ensure we aren't connected to a production database!
   return db.schema.dropTable('object_preview')
 }

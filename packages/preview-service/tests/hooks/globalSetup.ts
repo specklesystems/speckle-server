@@ -3,8 +3,7 @@
  * It is configured via the vitest.config.ts file.
  */
 
-import { truncateTables } from '#/hooks/helpers.js'
-import { getTestDb } from '#/testKnex.js'
+import { getTestDb } from '#/helpers/testKnexClient.js'
 import { testLogger as logger } from '@/observability/logging.js'
 
 const testDb = getTestDb()
@@ -17,10 +16,8 @@ const testDb = getTestDb()
 export async function setup() {
   logger.info('🏃🏻‍♀️‍➡️ Running vitest setup global hook')
   const db = testDb
-  await truncateTables({ db })
-  await db.migrate.rollback()
+  // await db.migrate.rollback()
   await db.migrate.latest()
-  // await init() // app currently has no init function that needs to run prior to the server starting
   logger.info('💁🏽‍♀️ Completed the vitest setup global hook')
 }
 
@@ -32,9 +29,7 @@ export async function setup() {
 export async function teardown() {
   logger.info('🏃🏻‍♀️ Running vitest teardown global hook')
   const db = testDb
-  await truncateTables({ db })
-  await db.migrate.rollback()
+  // await db.migrate.rollback()
   await db.destroy() // need to explicitly close the connection in clients to prevent hanging tests
-  // await shutdown() // the app currently has no shutdown function that needs to run to cleanly stop the server
   logger.info('✅ Completed the vitest teardown global hook')
 }

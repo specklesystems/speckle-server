@@ -1,5 +1,6 @@
 /* eslint-disable camelcase */
 import { knex } from 'knex'
+import path from 'path'
 
 export const getTestDb = () =>
   knex({
@@ -12,6 +13,7 @@ export const getTestDb = () =>
     pool: { min: 0, max: 2 },
     // migrations are managed in the server package for production, but managed here for tests
     migrations: {
-      directory: './tests/migrations'
+      directory: path.resolve(__dirname, '../migrations'),
+      loadExtensions: ['.ts']
     }
   })
