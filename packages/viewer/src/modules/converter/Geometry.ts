@@ -2,6 +2,7 @@
 import {
   BufferAttribute,
   BufferGeometry,
+  Camera,
   Float32BufferAttribute,
   InstancedInterleavedBuffer,
   InterleavedBufferAttribute,
@@ -9,6 +10,10 @@ import {
   Vector3
 } from 'three'
 import { type SpeckleObject } from '../../IViewer'
+
+const vecBuff0: Vector3 = new Vector3()
+const vecBuff1: Vector3 = new Vector3()
+const vecBuff3: Vector3 = new Vector3()
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',
@@ -31,7 +36,7 @@ export interface GeometryData {
 }
 
 export class Geometry {
-  private static readonly floatArrayBuff: Float32Array = new Float32Array(1)
+  private static readonly floatArrayBuff: Float32Array = new Float32Array(3)
 
   public static updateRTEGeometry(
     geometry: BufferGeometry,
@@ -285,18 +290,55 @@ export class Geometry {
     }
   }
 
-  public static vector3FitsInFP32(vector: Vector3) {
+  public static vector3FitsInFP32Projective(
+    vector: Vector3,
+    camera: Camera,
+    width: number,
+    height: number,
+    pixelThreshold: number
+  ) {
+    /** Cast to float, loose precision */
+    this.floatArrayBuff[0] = vector.x
+    this.floatArrayBuff[1] = vector.y
+    this.floatArrayBuff[2] = vector.z
+    const floatVector = vecBuff0.set(
+      this.floatArrayBuff[0],
+      this.floatArrayBuff[1],
+      this.floatArrayBuff[2]
+    )
+    /** Double full precision version */
+    const doubleVector = vecBuff1.set(vector.x, vector.y, vector.z)
+
+    const screenSizeVector = vecBuff3.set(width, height, 1)
+
+    /** Project to NDC.
+     *  THREE.JS APPLIES PERSPECTIVE DIVIDE IN THEIR `applyMatrix4` FUNCTION IMPLICITLY! */
+    floatVector.applyMatrix4(camera.projectionMatrix)
+    doubleVector.applyMatrix4(camera.projectionMatrix)
+
+    /** To pixels */
+    floatVector.addScalar(0.5).multiplyScalar(0.5)
+    floatVector.multiplyVectors(floatVector, screenSizeVector)
+    doubleVector.addScalar(0.5).multiplyScalar(0.5)
+    doubleVector.multiplyVectors(doubleVector, screenSizeVector)
+    doubleVector.sub(floatVector)
+    /** Check if pixel difference is under the given threshold */
+    return doubleVector.x < pixelThreshold && doubleVector.y < pixelThreshold
+  }
+
+  public static vector3FitsInFP32(vector: Vector3, tolerance: number) {
     return (
-      Geometry.valueFitsInFP32(vector.x) &&
-      Geometry.valueFitsInFP32(vector.y) &&
-      Geometry.valueFitsInFP32(vector.z)
+      this.valueFitsInFP32(vector.x, tolerance) &&
+      this.valueFitsInFP32(vector.y, tolerance) &&
+      this.valueFitsInFP32(vector.z, tolerance)
     )
   }
 
-  public static valueFitsInFP32(doubleValue: number) {
+  public static valueFitsInFP32(doubleValue: number, tolerance: number) {
     this.floatArrayBuff[0] = doubleValue
     const doubleHigh = this.floatArrayBuff[0]
-    return doubleValue - doubleHigh === 0
+    const doubleLow = doubleValue - doubleHigh
+    return Math.abs(doubleLow) < tolerance
   }
 
   public static computeVertexNormals(

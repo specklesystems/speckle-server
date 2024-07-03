@@ -1,4 +1,4 @@
-import { MathUtils, Vector3 } from 'three'
+import { MathUtils, PerspectiveCamera, Vector3 } from 'three'
 import LineBatch from './LineBatch'
 import Materials, {
   FilterMaterialType,
@@ -96,6 +96,11 @@ export default class Batcher {
       }
       instancedBatches[vertCount].push(g)
     }
+    const width = 1920
+    const height = 1080
+    const camera = new PerspectiveCamera(60, width / height)
+    camera.updateProjectionMatrix()
+
     for (const v in instancedBatches) {
       const instanceLocalCenter = new Vector3()
       const instanceWorldCenter = new Vector3()
@@ -112,11 +117,20 @@ export default class Batcher {
         const aabbCenter = nodes[0].model.renderView.aabb.getCenter(instanceLocalCenter)
 
         nodes.every((node: TreeNode) => {
+          if (!node.model.renderView) return fitsInFP32
+
           instanceWorldCenter.copy(aabbCenter)
           instanceWorldCenter.applyMatrix4(
             node.model.renderView.renderData.geometry.transform
           )
-          fitsInFP32 &&= Geometry.vector3FitsInFP32(instanceWorldCenter)
+
+          fitsInFP32 &&= Geometry.vector3FitsInFP32Projective(
+            instanceWorldCenter,
+            camera,
+            width,
+            height,
+            1
+          )
           return fitsInFP32
         })
 
