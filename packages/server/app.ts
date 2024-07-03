@@ -63,6 +63,7 @@ import { redactSensitiveVariables } from '@/logging/loggingHelper'
 import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
+import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 
 let graphqlServer: ApolloServer
 
@@ -254,6 +255,7 @@ export async function buildApolloServer(
     schema,
     context: buildContext,
     plugins: [
+      statusCodePlugin,
       require('@/logging/apolloPlugin'),
       ApolloServerPluginLandingPageLocalDefault({
         embed: true,
