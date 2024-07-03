@@ -13,16 +13,16 @@
                   <UserIcon />
                 </template>
                 <LayoutSidebarMenuGroupItem
-                  label="User Profile"
-                  @click="setSelectedItem(itemConfig.profile)"
+                  :label="itemConfig.profile.title"
+                  @click="setSelectedItem(itemConfig.profile.path)"
                 />
                 <LayoutSidebarMenuGroupItem
-                  label="Notifications"
-                  @click="setSelectedItem(itemConfig.notifications)"
+                  :label="itemConfig.notifications.title"
+                  @click="setSelectedItem(itemConfig.notifications.path)"
                 />
                 <LayoutSidebarMenuGroupItem
-                  label="Developer Settings"
-                  @click="setSelectedItem(itemConfig.developer)"
+                  :label="itemConfig.developerSettings.title"
+                  @click="setSelectedItem(itemConfig.developerSettings.path)"
                 />
               </LayoutSidebarMenuGroup>
               <LayoutSidebarMenuGroup title="Server Settings">
@@ -30,20 +30,20 @@
                   <ServerStackIcon />
                 </template>
                 <LayoutSidebarMenuGroupItem
-                  label="General"
-                  @click="setSelectedItem(itemConfig.general)"
+                  :label="itemConfig.general.title"
+                  @click="setSelectedItem(itemConfig.general.path)"
                 />
                 <LayoutSidebarMenuGroupItem
-                  label="Projects"
-                  @click="setSelectedItem(itemConfig.projects)"
+                  :label="itemConfig.projects.title"
+                  @click="setSelectedItem(itemConfig.projects.path)"
                 />
                 <LayoutSidebarMenuGroupItem
-                  label="Active Users"
-                  @click="setSelectedItem(itemConfig.users)"
+                  :label="itemConfig.activeUsers.title"
+                  @click="setSelectedItem(itemConfig.activeUsers.path)"
                 />
                 <LayoutSidebarMenuGroupItem
-                  label="Pending invitation"
-                  @click="setSelectedItem(itemConfig.invites)"
+                  :label="itemConfig.pendingInvitations.title"
+                  @click="setSelectedItem(itemConfig.pendingInvitations.path)"
                 />
               </LayoutSidebarMenuGroup>
             </LayoutSidebarMenu>
@@ -55,26 +55,25 @@
         class="overflow-scroll flex-1 bg-gray-50 p-6 py-8 md:p-4 md:py-12"
       >
         <div class="flex md:hidden items-center">
-          <ChevronLeftIcon class="w-6 h-6" @click="clearSelection" />
+          <ChevronLeftIcon class="w-6 h-6" @click="setSelectedItem(null)" />
           <h2 class="h4 font-semibold ml-4">{{ selectedItem.title }}</h2>
         </div>
         <component :is="selectedItem?.component" />
       </section>
     </div>
-    <!-- </div> -->
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
 import type { defineComponent } from 'vue'
 import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
-import SettingsUserProfile from './user/Profile'
-import SettingsUserNotifications from './user/Notifications'
-import SettingsUserDeveloper from './user/Developer'
-import SettingsServerGeneral from './server/General'
-import SettingsServerProjects from './server/Projects'
-import SettingsServerActiveUsers from './server/ActiveUsers'
-import SettingsServerInvites from './server/Invites'
+import SettingsUserProfile from './user/Profile.vue'
+import SettingsUserNotifications from './user/Notifications.vue'
+import SettingsUserDeveloper from './user/Developer.vue'
+import SettingsServerGeneral from './server/General.vue'
+import SettingsServerProjects from './server/Projects.vue'
+import SettingsServerActiveUsers from './server/ActiveUsers.vue'
+import SettingsServerInvites from './server/Invites.vue'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
@@ -83,6 +82,12 @@ import {
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
+
+type SelectableItem = {
+  title: string
+  component: ReturnType<typeof defineComponent>
+  path: string
+}
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -94,61 +99,62 @@ const props = defineProps<{
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smallerOrEqual('sm')
-const selectedItem = shallowRef()
+const router = useRouter()
 
 const isOpen = computed({
   get: () => props.open,
   set: (newVal: boolean) => emit('update:open', newVal)
 })
 
-type SelectableItem = {
-  title: string
-  component: ReturnType<typeof defineComponent>
-}
+const selectedItem = computed(() => {
+  const path = router.currentRoute.value.path
+  for (const key in itemConfig) {
+    if (new RegExp(`${itemConfig[key].path}?$`, 'i').test(path)) {
+      return itemConfig[key]
+    }
+  }
+  return null
+})
 
 const itemConfig: { [key: string]: SelectableItem } = {
   profile: {
     title: 'Profile',
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    component: SettingsUserProfile
+    component: SettingsUserProfile,
+    path: '/settings/user/profile'
   },
   notifications: {
     title: 'Notifications',
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    component: SettingsUserNotifications
+    component: SettingsUserNotifications,
+    path: '/settings/user/notifications'
   },
-  developer: {
+  developerSettings: {
     title: 'Developer Settings',
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    component: SettingsUserDeveloper
+    component: SettingsUserDeveloper,
+    path: '/settings/user/developer-settings'
   },
   general: {
     title: 'General',
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    component: SettingsServerGeneral
+    component: SettingsServerGeneral,
+    path: '/settings/server/general'
   },
   projects: {
     title: 'Projects',
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    component: SettingsServerProjects
+    component: SettingsServerProjects,
+    path: '/settings/server/projects'
   },
-  users: {
-    title: 'Active users',
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    component: SettingsServerActiveUsers
+  activeUsers: {
+    title: 'Active Users',
+    component: SettingsServerActiveUsers,
+    path: '/settings/server/active-users'
   },
-  invites: {
+  pendingInvitations: {
     title: 'Pending Invitations',
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    component: SettingsServerInvites
+    component: SettingsServerInvites,
+    path: '/settings/server/pending-invitations'
   }
 }
 
-function setSelectedItem(item: SelectableItem): void {
-  selectedItem.value = item
-}
-
-function clearSelection(): void {
-  selectedItem.value = null
+function setSelectedItem(path: string | null): void {
+  router.push({ path: path ?? '/settings' })
 }
 </script>
