@@ -11,10 +11,10 @@ export const speckleApplyAoFrag = `
             vec3 currentSample = texture2D( tDiffuse, vUv ).rgb;
             
             #if ACCUMULATE == 1
-                vec3 interpSample = texture2D( tDiffuseInterp, vUv ).rgb;
+                vec3 interpSample = vec3(1., 1., 1.);//texture2D( tDiffuseInterp, vUv ).rgb;
 			    gl_FragColor.rgb = mix(interpSample, currentSample, frameIndex/float(NUM_FRAMES));
             #else
-                gl_FragColor.rgb = currentSample;
+                gl_FragColor.rgb = vec3(1.,1.,1.);//currentSample;
             #endif
 			gl_FragColor.a = 1.;
 		}`
