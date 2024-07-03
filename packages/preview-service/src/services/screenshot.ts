@@ -1,10 +1,5 @@
-import { PuppeteerClientInterface } from '@/clients/puppeteer.js'
+import { LoadPageAndEvaluateScript } from '@/clients/puppeteer.js'
 import type { ObjectIdentifier } from '@/domain/domain.js'
-import {
-  getChromiumExecutablePath,
-  getPuppeteerUserDataDir,
-  shouldBeHeadless
-} from '@/utils/env.js'
 import { reduce } from 'lodash'
 import type { Logger } from 'pino'
 
@@ -14,24 +9,12 @@ export type GetScreenshot = (
 
 export const getScreenshotFactory =
   (deps: {
-    puppeteerClient: PuppeteerClientInterface
+    loadPageAndEvaluateScript: LoadPageAndEvaluateScript
     logger: Logger
     serviceOrigin: string
   }): GetScreenshot =>
   async (params) => {
     const objectUrl = `${deps.serviceOrigin}/streams/${params.streamId}/objects/${params.objectId}`
-    const launchParams = {
-      //TODO as the launch params are touching environment variables, should they be dependency injected?
-      headless: shouldBeHeadless(),
-      userDataDir: getPuppeteerUserDataDir(),
-      executablePath: getChromiumExecutablePath(),
-      protocolTimeout: 3600_000, //TODO make this configurable to match the maximum timeout of the service
-      // we trust the web content that is running, so can disable the sandbox
-      // disabling the sandbox allows us to run the docker image without linux kernel privileges
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-    }
-
-    await deps.puppeteerClient.init(launchParams)
 
     type RenderOutput = {
       duration: number
@@ -44,14 +27,9 @@ export const getScreenshotFactory =
     }
     try {
       // assume it is of type RenderOutput, and validate later
-      renderOutput = <RenderOutput>(
-        await deps.puppeteerClient.loadPageAndEvaluateScript(objectUrl)
-      )
+      renderOutput = <RenderOutput>await deps.loadPageAndEvaluateScript(objectUrl)
     } catch (err) {
       renderOutput = { error: err }
-    } finally {
-      // Don't await for cleanup
-      deps.puppeteerClient.close()
     }
 
     if (

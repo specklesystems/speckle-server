@@ -1,7 +1,12 @@
-import { PuppeteerClient } from '@/clients/puppeteer.js'
+import { puppeteerClientFactory } from '@/clients/puppeteer.js'
 import { puppeteerDriver } from '@/scripts/puppeteerDriver.js'
 import { getScreenshotFactory } from '@/services/screenshot.js'
-import { serviceOrigin } from '@/utils/env.js'
+import {
+  getChromiumExecutablePath,
+  getPuppeteerUserDataDir,
+  serviceOrigin,
+  shouldBeHeadless
+} from '@/utils/env.js'
 import express, { RequestHandler } from 'express'
 
 const previewRouterFactory = () => {
@@ -19,20 +24,36 @@ const previewRouterFactory = () => {
 
       boundLogger.info('Requesting screenshot.')
 
-      const puppeteerClient = new PuppeteerClient({
+      //FIXME should we be creating a puppeteer client for every request, or per app instance?
+      const puppeteerClient = await puppeteerClientFactory({
         logger: boundLogger,
         url: `${serviceOrigin()}/render/`,
-        script: puppeteerDriver
+        script: puppeteerDriver,
+        launchParams: {
+          //TODO as the launch params are touching environment variables, should they be dependency injected?
+          headless: shouldBeHeadless(),
+          userDataDir: getPuppeteerUserDataDir(),
+          executablePath: getChromiumExecutablePath(),
+          protocolTimeout: 3600_000, //TODO make this configurable to match the maximum timeout of the service
+          // we trust the web content that is running, so can disable the sandbox
+          // disabling the sandbox allows us to run the docker image without linux kernel privileges
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        }
       })
 
-      const screenshot = await getScreenshotFactory({
-        puppeteerClient,
-        logger: boundLogger,
-        serviceOrigin: serviceOrigin()
-      })({
-        objectId,
-        streamId
-      })
+      let screenshot: { [key: string]: string } | null = null
+      try {
+        screenshot = await getScreenshotFactory({
+          loadPageAndEvaluateScript: puppeteerClient.loadPageAndEvaluateScript,
+          logger: boundLogger,
+          serviceOrigin: serviceOrigin()
+        })({
+          objectId,
+          streamId
+        })
+      } finally {
+        await puppeteerClient.dispose()
+      }
 
       if (!screenshot) {
         return res.status(500).end()

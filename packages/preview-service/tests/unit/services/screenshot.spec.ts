@@ -1,4 +1,4 @@
-import { PuppeteerClientInterface } from '@/clients/puppeteer.js'
+import { LoadPageAndEvaluateScript } from '@/clients/puppeteer.js'
 import { logger } from '@/observability/logging.js'
 import { getScreenshotFactory } from '@/services/screenshot.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -8,28 +8,27 @@ describe('Screenshot', () => {
     vi.restoreAllMocks()
   })
   describe('with Puppeteer returning a valid responses', () => {
-    const puppeteerClient: PuppeteerClientInterface = {
-      init: () => Promise.resolve(),
-      loadPageAndEvaluateScript: (urlOfObjectToScreenshot) => {
-        //NOTE if this expectation fails it won't get explicitly captured by vitest. Instead we get null output from getScreenshot.
-        expect(urlOfObjectToScreenshot).toBe(
-          'http://localhost:0000/streams/streamId/objects/objectId'
-        )
-        return Promise.resolve({
-          duration: 1000,
-          mem: { total: 500, used: 400 },
-          userAgent: 'Test Testerson',
-          scr: {
-            '0': 'data:image/png;base64,foobar',
-            '1': 'data:image/png;base64,foobar'
-          }
-        })
-      },
-      close: () => {}
+    const loadPageAndEvaluateScript: LoadPageAndEvaluateScript = (
+      urlOfObjectToScreenshot
+    ) => {
+      //NOTE if this expectation fails it won't get explicitly captured by vitest. Instead we get null output from getScreenshot.
+      expect(urlOfObjectToScreenshot).toBe(
+        'http://localhost:0000/streams/streamId/objects/objectId'
+      )
+      return Promise.resolve({
+        duration: 1000,
+        mem: { total: 500, used: 400 },
+        userAgent: 'Test Testerson',
+        scr: {
+          '0': 'data:image/png;base64,foobar',
+          '1': 'data:image/png;base64,foobar'
+        }
+      })
     }
+
     it('receives the screenshot', async () => {
       const getScreenshot = getScreenshotFactory({
-        puppeteerClient,
+        loadPageAndEvaluateScript,
         logger,
         serviceOrigin: 'http://localhost:0000'
       })
