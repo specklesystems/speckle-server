@@ -3,7 +3,7 @@
     <NuxtLink
       v-if="!hasChildren"
       :to="to"
-      class="group flex items-center justify-between gap-2 shrink-0 text-sm select-none rounded-md w-full hover:bg-primary-muted p-1.5"
+      class="group flex items-center justify-between gap-2 shrink-0 text-sm select-none rounded-md w-full hover:bg-primary-muted p-1.5 cursor-pointer"
       active-class="bg-foundation-focus hover:!bg-foundation-focus"
       :external="external"
       :target="external ? '_blank' : undefined"
@@ -25,7 +25,7 @@
     </NuxtLink>
     <div v-else class="flex flex-col">
       <button
-        class="group flex gap-1.5 items-center w-full hover:bg-foundation-3 rounded-md p-0.5"
+        class="group flex gap-1.5 items-center w-full hover:bg-foundation-3 rounded-md p-0.5 cursor-pointer"
         @click="isOpen = !isOpen"
       >
         <ChevronDownIcon :class="isOpen ? '' : 'rotate-180'" class="size-2.5" />
