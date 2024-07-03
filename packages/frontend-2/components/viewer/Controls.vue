@@ -275,6 +275,17 @@ import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStat
 
 const isGendoEnabled = useIsGendoModuleEnabled()
 
+enum ViewerKeyboardActions {
+  ToggleModels,
+  ToggleExplorer,
+  ToggleDiscussions,
+  ToggleFilters,
+  ToggleMeasurements,
+  ToggleProjection,
+  ToggleSectionBox,
+  ZoomExtentsOrSelection
+}
+
 const width = ref(360)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
 
@@ -364,27 +375,75 @@ const {
   diff: { enabled }
 } = useInjectedViewerInterfaceState()
 
+const map: Record<ViewerKeyboardActions, [ModifierKeys[], string]> = {
+  [ViewerKeyboardActions.ToggleModels]: [[ModifierKeys.Shift], 'm'],
+  [ViewerKeyboardActions.ToggleExplorer]: [[ModifierKeys.Shift], 'e'],
+  [ViewerKeyboardActions.ToggleDiscussions]: [[ModifierKeys.Shift], 't'],
+  [ViewerKeyboardActions.ToggleFilters]: [[ModifierKeys.Shift], 'f'],
+  [ViewerKeyboardActions.ToggleMeasurements]: [[ModifierKeys.Shift], 'r'],
+  [ViewerKeyboardActions.ToggleProjection]: [[ModifierKeys.Shift], 'p'],
+  [ViewerKeyboardActions.ToggleSectionBox]: [[ModifierKeys.Shift], 'b'],
+  [ViewerKeyboardActions.ZoomExtentsOrSelection]: [[ModifierKeys.Shift], 'space']
+}
+
+const getShortcutTitle = (action: ViewerKeyboardActions) =>
+  `(${getKeyboardShortcutTitle([...map[action][0], map[action][1]])})`
+
 const modelsShortcut = ref(
-  `Models (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'm'])})`
+  `Models ${getShortcutTitle(ViewerKeyboardActions.ToggleModels)}`
 )
 const explorerShortcut = ref(
-  `Scene Explorer (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'e'])})`
+  `Scene Explorer ${getShortcutTitle(ViewerKeyboardActions.ToggleExplorer)}`
 )
 const discussionsShortcut = ref(
-  `Discussions (${getKeyboardShortcutTitle([ModifierKeys.Shift, 't'])})`
+  `Discussions ${getShortcutTitle(ViewerKeyboardActions.ToggleDiscussions)}`
 )
 const zoomExtentsShortcut = ref(
-  `Fit to screen (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'Space'])})`
+  `Fit to screen ${getShortcutTitle(ViewerKeyboardActions.ZoomExtentsOrSelection)}`
 )
 const projectionShortcut = ref(
-  `Projection (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'p'])})`
+  `Projection ${getShortcutTitle(ViewerKeyboardActions.ToggleProjection)}`
 )
 const sectionBoxShortcut = ref(
-  `Section Box (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'b'])})`
+  `Section Box ${getShortcutTitle(ViewerKeyboardActions.ToggleSectionBox)}`
 )
 const measureShortcut = ref(
-  `Measure Mode (${getKeyboardShortcutTitle([ModifierKeys.Shift, 'r'])})`
+  `Measure Mode ${getShortcutTitle(ViewerKeyboardActions.ToggleMeasurements)}`
 )
+
+const handleKeyboardAction = (action: ViewerKeyboardActions) => {
+  switch (action) {
+    case ViewerKeyboardActions.ToggleModels:
+      toggleActiveControl('models')
+      break
+    case ViewerKeyboardActions.ToggleExplorer:
+      toggleActiveControl('explorer')
+      break
+    case ViewerKeyboardActions.ToggleDiscussions:
+      toggleActiveControl('discussions')
+      break
+    case ViewerKeyboardActions.ToggleFilters:
+      toggleActiveControl('filters')
+      break
+    case ViewerKeyboardActions.ToggleMeasurements:
+      toggleMeasurements()
+      break
+    case ViewerKeyboardActions.ToggleProjection:
+      trackAndtoggleProjection()
+      break
+    case ViewerKeyboardActions.ToggleSectionBox:
+      toggleSectionBox()
+      break
+    case ViewerKeyboardActions.ZoomExtentsOrSelection:
+      trackAndzoomExtentsOrSelection()
+      break
+  }
+}
+
+Object.entries(map).forEach(([actionKey, [modifiers, key]]) => {
+  const action = Number(actionKey) as ViewerKeyboardActions
+  onKeyboardShortcut(modifiers, key, () => handleKeyboardAction(action))
+})
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
@@ -395,34 +454,6 @@ const toggleActiveControl = (control: ActiveControl) => {
   }
   activeControl.value = activeControl.value === control ? 'none' : control
 }
-
-onKeyboardShortcut([ModifierKeys.Shift], 'm', () => {
-  toggleActiveControl('models')
-})
-
-onKeyboardShortcut([ModifierKeys.Shift], 'e', () => {
-  toggleActiveControl('explorer')
-})
-onKeyboardShortcut([ModifierKeys.Shift], 'f', () => {
-  toggleActiveControl('filters')
-})
-onKeyboardShortcut([ModifierKeys.Shift], 't', () => {
-  toggleActiveControl('discussions')
-})
-onKeyboardShortcut([ModifierKeys.Shift], 'r', () => {
-  toggleActiveControl('measurements')
-})
-
-// Viewer actions kbd shortcuts
-onKeyboardShortcut([ModifierKeys.Shift], 'space', () => {
-  trackAndzoomExtentsOrSelection()
-})
-onKeyboardShortcut([ModifierKeys.Shift], 'p', () => {
-  toggleProjection()
-})
-onKeyboardShortcut([ModifierKeys.Shift], 'b', () => {
-  toggleSectionBox()
-})
 
 const mp = useMixpanel()
 watch(activeControl, (newVal) => {
