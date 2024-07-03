@@ -799,7 +799,7 @@ export type CreateVersionInput = {
   message?: InputMaybe<Scalars['String']['input']>;
   modelId: Scalars['String']['input'];
   objectId: Scalars['String']['input'];
-  parents?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  parents?: InputMaybe<Array<Scalars['String']['input']>>;
   projectId: Scalars['String']['input'];
   sourceApplication?: InputMaybe<Scalars['String']['input']>;
   totalChildrenCount?: InputMaybe<Scalars['Int']['input']>;

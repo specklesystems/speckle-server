@@ -181,7 +181,7 @@ input CreateVersionInput {
   message: String
   sourceApplication: String
   totalChildrenCount: Int
-  parents: [String]
+  parents: [String!]
 }
 
 type VersionMutations {

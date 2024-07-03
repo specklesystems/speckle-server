@@ -11,7 +11,15 @@ import {
   batchMoveCommits
 } from '@/modules/core/services/commit/batchCommitActions'
 import { CommitUpdateError } from '@/modules/core/errors/commit'
-import { updateCommitAndNotify } from '@/modules/core/services/commit/management'
+import {
+  createCommitByBranchId,
+  updateCommitAndNotify
+} from '@/modules/core/services/commit/management'
+import {
+  getRateLimitResult,
+  isRateLimitBreached
+} from '@/modules/core/services/ratelimiter'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
 
 export = {
   Project: {
@@ -71,7 +79,22 @@ export = {
         ctx.resourceAccessRules
       )
 
-      return null as any
+      const rateLimitResult = await getRateLimitResult('COMMIT_CREATE', ctx.userId!)
+      if (isRateLimitBreached(rateLimitResult)) {
+        throw new RateLimitError(rateLimitResult)
+      }
+
+      const commit = await createCommitByBranchId({
+        authorId: ctx.userId!,
+        streamId: args.input.projectId,
+        branchId: args.input.modelId,
+        message: args.input.message || null,
+        sourceApplication: args.input.sourceApplication || null,
+        objectId: args.input.objectId,
+        parents: args.input.parents || []
+      })
+
+      return commit
     }
   },
   Subscription: {
