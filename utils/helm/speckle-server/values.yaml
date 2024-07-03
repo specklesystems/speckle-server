@@ -1047,6 +1047,8 @@ preview_service:
   puppeteer:
     ## @param preview_service.puppeteer.userDataDirectory The path to the user data directory. If not set, defaults to '/tmp/puppeteer'. This is mounted in the deployment as a volume with read-write access.
     userDataDirectory: ''
+    ## @param preview_service.puppeteer.timeoutMilliseconds The timeout in milliseconds for the Puppeteer service.
+    timeoutMilliseconds: 3600000
 
   requests:
     ## @param preview_service.requests.cpu The CPU that should be available on a node when scheduling this pod.

@@ -3,6 +3,7 @@ import { puppeteerDriver } from '@/scripts/puppeteerDriver.js'
 import { getScreenshotFactory } from '@/services/screenshot.js'
 import {
   getChromiumExecutablePath,
+  getPreviewTimeout,
   getPuppeteerUserDataDir,
   serviceOrigin,
   shouldBeHeadless
@@ -34,11 +35,12 @@ const previewRouterFactory = () => {
           headless: shouldBeHeadless(),
           userDataDir: getPuppeteerUserDataDir(),
           executablePath: getChromiumExecutablePath(),
-          protocolTimeout: 3600_000, //TODO make this configurable to match the maximum timeout of the service
+          protocolTimeout: getPreviewTimeout(),
           // we trust the web content that is running, so can disable the sandbox
           // disabling the sandbox allows us to run the docker image without linux kernel privileges
           args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-        }
+        },
+        timeoutMilliseconds: getPreviewTimeout()
       })
 
       let screenshot: { [key: string]: string } | null = null

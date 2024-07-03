@@ -11,6 +11,8 @@ export const getPostgresConnectionString = () =>
   process.env.PG_CONNECTION_STRING || 'postgres://speckle:speckle@127.0.0.1/speckle'
 export const getPostgresMaxConnections = () =>
   parseInt(process.env.POSTGRES_MAX_CONNECTIONS_PREVIEW_SERVICE || '2')
+export const getPreviewTimeout = () =>
+  parseInt(process.env.PREVIEW_TIMEOUT || '3600000')
 export const getPuppeteerUserDataDir = () =>
   process.env.USER_DATA_DIR || '/tmp/puppeteer'
 export const isDevelopment = () => getNodeEnv() === 'development'

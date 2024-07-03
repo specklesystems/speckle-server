@@ -15,6 +15,7 @@ export const puppeteerClientFactory = async (deps: {
   url: string
   script: EvaluateFunc<[unknown[]]>
   launchParams?: PuppeteerLaunchOptions
+  timeoutMilliseconds: number
 }): Promise<PuppeteerClient> => {
   const logger = extendLoggerComponent(
     deps.logger.child({ renderPageUrl: deps.url }),
@@ -32,6 +33,8 @@ export const puppeteerClientFactory = async (deps: {
       logger.info('Loading page from {renderPageUrl}')
       const page = await browser.newPage()
 
+      page.setDefaultTimeout(deps.timeoutMilliseconds)
+
       await page.goto(url)
 
       logger.info('Page loaded from {renderPageUrl}')
@@ -46,10 +49,7 @@ export const puppeteerClientFactory = async (deps: {
           let messageText = message.text()
           if (messageText.startsWith('data:image'))
             messageText = messageText.substring(0, 200).concat('...')
-          logger.info(
-            //FIXME: should be debug, but setting to info while developing.
-            `${message.type().substring(0, 3).toUpperCase()} ${messageText}`
-          )
+          logger.debug(`${message.type().substring(0, 3).toUpperCase()} ${messageText}`)
         })
         .on('pageerror', ({ message }) => {
           logger.error(message)
@@ -61,7 +61,6 @@ export const puppeteerClientFactory = async (deps: {
           logger.error(`${request.failure()?.errorText} ${request.url()}`)
         )
 
-      //TODO add timeout for page load
       //TODO parse the response and ensure it's type of T
       const evaluationResult: unknown = await page.evaluate(script, args)
 
