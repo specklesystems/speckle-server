@@ -11,7 +11,7 @@
         leave-to="opacity-0"
       >
         <div
-          class="fixed top-0 left-0 w-full h-full bg-black/40 dark:bg-neutral-900/70 transition-opacity backdrop-blur-xs"
+          class="fixed top-0 left-0 w-full h-full bg-black/70 dark:bg-neutral-900/70 transition-opacity"
         />
       </TransitionChild>
       <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
@@ -30,7 +30,8 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-t-lg md:rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col h-[98vh] md:h-auto md:max-h-[90vh]',
+                'transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col h-[98vh] md:h-auto',
+                fullscreen ? 'md:h-full' : 'md:max-h-[90vh]',
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
@@ -61,12 +62,16 @@
                 class="absolute z-20 bg-foundation rounded-full p-1.5 shadow border top-4 right-4"
                 @click="open = false"
               >
-                <XMarkIcon class="h-4 w-4" />
+                <XMarkIcon class="h-4 w-4 md:w-5 md:h-5" />
               </button>
               <div
                 ref="slotContainer"
                 class="flex-1 simple-scrollbar overflow-y-auto text-sm sm:text-base"
-                :class="hasTitle ? 'px-6 pb-4' : 'p-6'"
+                :class="
+                  hasTitle
+                    ? `px-6 pb-4 ${fullscreen && 'md:p-0'}`
+                    : !fullscreen && 'p-6'
+                "
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
@@ -111,7 +116,7 @@ import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
 import { throttle } from 'lodash'
 import { isClient } from '@vueuse/core'
 
-type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
+type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl' | 'fullscreen'
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
@@ -183,19 +188,19 @@ const widthClasses = computed(() => {
 
   if (!props.fullscreen) {
     classParts.push('sm:max-w-2xl')
-  }
 
-  if (maxWidthWeight.value >= 1) {
-    classParts.push('md:max-w-2xl')
-  }
-  if (maxWidthWeight.value >= 2) {
-    classParts.push('lg:max-w-4xl')
-  }
-  if (maxWidthWeight.value >= 3) {
-    classParts.push('xl:max-w-6xl')
-  }
-  if (maxWidthWeight.value >= 4) {
-    classParts.push('2xl:max-w-7xl')
+    if (maxWidthWeight.value >= 1) {
+      classParts.push('md:max-w-2xl')
+    }
+    if (maxWidthWeight.value >= 2) {
+      classParts.push('lg:max-w-4xl')
+    }
+    if (maxWidthWeight.value >= 3) {
+      classParts.push('xl:max-w-6xl')
+    }
+    if (maxWidthWeight.value >= 4) {
+      classParts.push('2xl:max-w-7xl')
+    }
   }
 
   return classParts.join(' ')

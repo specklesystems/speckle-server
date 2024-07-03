@@ -1,7 +1,6 @@
 <template>
-  <!-- <LayoutDialog v-model:open="isOpen"> -->
-  <div class="fixed z-40 w-screen h-screen bg-black/70 top-0 left-0 pt-4 md:p-4 md:p-8">
-    <div class="w-full h-full flex rounded overflow-hidden">
+  <LayoutDialog v-model:open="isOpen" fullscreen>
+    <div class="w-full h-full flex">
       <ClientOnly>
         <div
           v-if="!isMobile || !selectedItem"
@@ -62,8 +61,8 @@
         <component :is="selectedItem?.component" />
       </section>
     </div>
-  </div>
-  <!-- </LayoutDialog> -->
+    <!-- </div> -->
+  </LayoutDialog>
 </template>
 
 <script setup lang="ts">
@@ -85,8 +84,22 @@ import {
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
 
+const emit = defineEmits<{
+  (e: 'update:open', val: boolean): void
+}>()
+
+const props = defineProps<{
+  open: boolean
+}>()
+
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smallerOrEqual('sm')
+const selectedItem = shallowRef()
+
+const isOpen = computed({
+  get: () => props.open,
+  set: (newVal: boolean) => emit('update:open', newVal)
+})
 
 type SelectableItem = {
   title: string
@@ -130,8 +143,6 @@ const itemConfig: { [key: string]: SelectableItem } = {
     component: SettingsServerInvites
   }
 }
-
-const selectedItem = shallowRef()
 
 function setSelectedItem(item: SelectableItem): void {
   selectedItem.value = item

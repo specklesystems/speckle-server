@@ -37,12 +37,12 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-2.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="() => (showSettingsDialog = true)"
             >
-              <UserAvatar :user="activeUser" size="sm" class="-ml-0.5 mr-px" />
-              Edit Profile
+              <UserCircleIcon class="w-5 h-5" />
+              Settings
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="isAdmin" v-slot="{ active }">
@@ -51,10 +51,10 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="goToServerManagement()"
+              @click="() => (showSettingsDialog = true)"
             >
-              <Cog6ToothIcon class="w-5 h-5" />
-              Server Management
+              <ServerStackIcon class="w-5 h-5" />
+              Server Settings
             </NuxtLink>
           </MenuItem>
           <MenuItem v-slot="{ active }">
@@ -140,9 +140,10 @@ import {
   SunIcon,
   MoonIcon,
   EnvelopeIcon,
-  Cog6ToothIcon,
   CloudArrowDownIcon,
-  ChatBubbleLeftRightIcon
+  ChatBubbleLeftRightIcon,
+  UserCircleIcon,
+  ServerStackIcon
 } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -174,10 +175,6 @@ const isProfileRoute = computed(() => route.path === profileRoute)
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
-}
-
-const goToServerManagement = () => {
-  router.push('/server-management')
 }
 
 watch(
