@@ -272,6 +272,7 @@ import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
 import { onKeyStroke, useEventListener, useResizeObserver } from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
+import { isString } from 'lodash-es'
 
 const isGendoEnabled = useIsGendoModuleEnabled()
 
@@ -441,6 +442,7 @@ const handleKeyboardAction = (action: ViewerKeyboardActions) => {
 }
 
 Object.entries(map).forEach(([actionKey, [modifiers, key]]) => {
+  if (isString(actionKey)) return
   const action = Number(actionKey) as ViewerKeyboardActions
   onKeyboardShortcut(modifiers, key, () => handleKeyboardAction(action))
 })
