@@ -1,16 +1,13 @@
-/* eslint-disable camelcase */
+import { getPostgresConnectionString } from '@/utils/env.js'
+import { knex } from 'knex'
 
-import knexClient from 'knex'
-import { getPostgresConnectionString } from '@/utils/env'
-
-const knex = knexClient({
+export const db = knex({
   client: 'pg',
   connection: {
+    // eslint-disable-next-line camelcase
     application_name: 'speckle_preview_service',
     connectionString: getPostgresConnectionString()
   },
   pool: { min: 0, max: 2 }
   // migrations are managed in the server package
 })
-
-export default knex

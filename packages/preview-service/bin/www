@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-const { startServer } = require('../dist/server/server')
-const { startPreviewService } = require('../dist/server/background')
-const db = require('../dist/repositories/knex')
+import { startServer } from '../dist/src/server/server.js'
+import { startPreviewService } from '../dist/src/server/background.js'
+import { db } from '../dist/src/repositories/knex.js'
 startServer({ db })
 startPreviewService({ db })

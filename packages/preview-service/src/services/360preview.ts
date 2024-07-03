@@ -1,8 +1,8 @@
+import type { GeneratePreview } from '@/clients/previewService.js'
+import type { ObjectIdentifier } from '@/domain/domain.js'
+import type { InsertPreview } from '@/repositories/previews.js'
 import crypto from 'crypto'
-import joinImages from 'join-images'
-import type { ObjectIdentifier } from '@/domain/domain'
-import type { InsertPreview } from '@/repositories/previews'
-import type { GeneratePreview } from '@/clients/previewService'
+import { joinImages } from 'join-images'
 
 export type GenerateAndStore360Preview = (
   task: ObjectIdentifier
@@ -42,7 +42,7 @@ export const generateAndStore360PreviewFactory =
       margin: '0 700 0 700',
       color: { alpha: 0, r: 0, g: 0, b: 0 }
     })
-    const png = await fullImg.png({ quality: 95 })
+    const png = fullImg.png({ quality: 95 })
     const buff = await png.toBuffer()
     const fullImgId = crypto.createHash('md5').update(buff).digest('hex')
 

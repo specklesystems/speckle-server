@@ -1,7 +1,7 @@
-import puppeteer, { Browser, EvaluateFunc, PuppeteerLaunchOptions } from 'puppeteer'
-import { isDevelopment } from '@/utils/env'
-import { extendLoggerComponent } from '@/observability/logging'
+import { extendLoggerComponent } from '@/observability/logging.js'
+import { isDevelopment } from '@/utils/env.js'
 import { Logger } from 'pino'
+import puppeteer, { Browser, EvaluateFunc, PuppeteerLaunchOptions } from 'puppeteer'
 
 export interface PuppeteerClientInterface {
   init(launchParams?: PuppeteerLaunchOptions): Promise<void>

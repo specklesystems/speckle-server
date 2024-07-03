@@ -1,4 +1,4 @@
-import { ObjectIdentifier } from '@/domain/domain'
+import { ObjectIdentifier } from '@/domain/domain.js'
 import type { Knex } from 'knex'
 
 export const ObjectPreview = (deps: { db: Knex }) =>
@@ -13,7 +13,7 @@ export const getNextUnstartedObjectPreviewFactory =
     const { db } = deps
     const {
       rows: [maybeRow]
-    } = await db.raw<ObjectIdentifier>(`
+    } = await db.raw<{ rows: ObjectIdentifier[] }>(`
     UPDATE object_preview
     SET
       "previewStatus" = 1,

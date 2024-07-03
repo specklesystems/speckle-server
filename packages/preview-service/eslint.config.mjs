@@ -1,10 +1,10 @@
+import tseslint from 'typescript-eslint'
 import {
   baseConfigs,
+  getESMDirname,
   globals,
-  prettierConfig,
-  getESMDirname
+  prettierConfig
 } from '../../eslint.config.mjs'
-import tseslint from 'typescript-eslint'
 
 const configs = [
   ...baseConfigs,
@@ -12,10 +12,19 @@ const configs = [
     ignores: ['dist', 'public', 'docs']
   },
   {
-    files: ['**/*.js', 'bin/www'],
-    ignores: ['renderPage', '**/*.mjs', 'scripts/puppeteerDriver.js'],
+    files: ['**/*.js', '**/*.cjs'],
+    ignores: ['renderPage', '**/*.mjs', 'src/scripts/puppeteerDriver.js'],
     languageOptions: {
       sourceType: 'commonjs',
+      globals: {
+        ...globals.node
+      }
+    }
+  },
+  {
+    files: ['bin/www'],
+    languageOptions: {
+      sourceType: 'module',
       globals: {
         ...globals.node
       }
@@ -31,7 +40,7 @@ const configs = [
     }
   },
   {
-    files: ['scripts/puppeteerDriver.js'],
+    files: ['src/scripts/puppeteerDriver.js'],
     languageOptions: {
       sourceType: 'commonjs',
       globals: {

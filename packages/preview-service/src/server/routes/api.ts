@@ -1,28 +1,30 @@
-import zlib from 'zlib'
+import { getObjectsStreamFactory } from '@/repositories/objects.js'
+import { isSimpleTextRequested, simpleTextOrJsonContentType } from '@/utils/headers.js'
+import { SpeckleObjectsStream } from '@/utils/speckleObjectsStream.js'
 import express from 'express'
-import { getObjectsStreamFactory } from '@/repositories/objects'
-import { SpeckleObjectsStream } from '@/utils/speckleObjectsStream'
-import { pipeline, PassThrough } from 'stream'
 import type { Knex } from 'knex'
-import { simpleTextOrJsonContentType } from '@/utils/headers'
+import { PassThrough, pipeline } from 'stream'
+import zlib from 'zlib'
 
 const apiRouterFactory = (deps: { db: Knex }) => {
   const { db } = deps
   const apiRouter = express.Router()
 
   // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)
-  apiRouter.post('/getobjects/:streamId', async (req, res) => {
+  apiRouter.post('/getobjects/:streamId', (req, res) => {
     const boundLogger = req.log.child({
       streamId: req.params.streamId
     })
-    const childrenList = JSON.parse(req.body.objects)
+    //TODO use zod to validate the input
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-unsafe-member-access
+    const childrenList = JSON.parse(req.body.objects) as string[]
 
     res.writeHead(200, {
       'Content-Encoding': 'gzip',
       'Content-Type': simpleTextOrJsonContentType(req)
     })
 
-    const dbStream = await getObjectsStreamFactory({ db })({
+    const dbStream = getObjectsStreamFactory({ db })({
       streamId: req.params.streamId,
       objectIds: childrenList
     })

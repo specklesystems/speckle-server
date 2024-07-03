@@ -1,8 +1,8 @@
-import { logger } from '@/observability/logging'
-import HttpLogger from 'pino-http'
+import { REQUEST_ID_HEADER } from '@/domain/const.js'
+import { logger } from '@/observability/logging.js'
 import { randomUUID } from 'crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'http'
-import { REQUEST_ID_HEADER } from '@/domain/const'
+import { pinoHttp } from 'pino-http'
 
 function determineRequestId(headers: IncomingHttpHeaders, uuidGenerator = randomUUID) {
   const idHeader = headers[REQUEST_ID_HEADER]
@@ -13,7 +13,7 @@ function determineRequestId(headers: IncomingHttpHeaders, uuidGenerator = random
 
 const generateReqId = (req: IncomingMessage) => determineRequestId(req.headers)
 
-export const loggingExpressMiddleware = HttpLogger({
+export const loggingExpressMiddleware = pinoHttp({
   genReqId: generateReqId,
   logger,
   autoLogging: true,

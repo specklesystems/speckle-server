@@ -1,6 +1,6 @@
-import { PuppeteerClientInterface } from '@/clients/puppeteer'
-import { logger } from '@/observability/logging'
-import { getScreenshotFactory } from '@/services/screenshot'
+import { PuppeteerClientInterface } from '@/clients/puppeteer.js'
+import { logger } from '@/observability/logging.js'
+import { getScreenshotFactory } from '@/services/screenshot.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 describe('Screenshot', () => {

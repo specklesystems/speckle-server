@@ -1,4 +1,4 @@
-import type { ObjectIdentifier } from '@/domain/domain'
+import type { ObjectIdentifier } from '@/domain/domain.js'
 
 export type GeneratePreview = (
   task: ObjectIdentifier

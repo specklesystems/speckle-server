@@ -1,5 +1,4 @@
-import { LegacyViewer } from '@speckle/viewer'
-import { DefaultViewerParams } from '@speckle/viewer'
+import { DefaultViewerParams, LegacyViewer } from '@speckle/viewer'
 
 console.log('Initialising Viewer')
 const v = new LegacyViewer(document.getElementById('renderer'), DefaultViewerParams)

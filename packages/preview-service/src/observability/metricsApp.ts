@@ -1,10 +1,10 @@
-import express, { ErrorRequestHandler } from 'express'
+import { loggingExpressMiddleware } from '@/observability/expressLogging.js'
+import { metricsRouterFactory } from '@/observability/metricsRoute.js'
+import { initPrometheusMetrics } from '@/observability/prometheusMetrics.js'
+import { errorHandler } from '@/utils/errorHandler.js'
+import express from 'express'
 import createError from 'http-errors'
-import { loggingExpressMiddleware } from '@/observability/expressLogging'
-import { metricsRouterFactory } from '@/observability/metricsRoute'
-import { initPrometheusMetrics } from '@/observability/prometheusMetrics'
 import type { Knex } from 'knex'
-import { errorHandler } from '@/utils/errorHandler'
 
 export const appFactory = (deps: { db: Knex }) => {
   const { db } = deps

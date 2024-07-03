@@ -1,16 +1,18 @@
+import type { ObjectIdentifier } from '@/domain/domain.js'
 import type { Knex } from 'knex'
-import type { ObjectIdentifier } from '@/domain/domain'
 
 const Objects = (deps: { db: Knex }) => deps.db<DbObject>('objects')
 const Closures = (deps: { db: Knex }) => deps.db('object_children_closure')
 
 type DbObject = {
   id: string
+  streamId: string
   data: object
   totalChildrenCount: number
 }
 
-type ReturnedObject = Pick<DbObject, 'id'> & {
+type ReturnedObject = {
+  id: string
   data: { totalChildrenCount: number } & Record<string, unknown>
 }
 
@@ -33,21 +35,22 @@ export const getObjectFactory =
 
 export type GetObjectChildrenStream = (
   params: ObjectIdentifier
-) => NodeJS.ReadableStream
+) => Promise<NodeJS.ReadableStream>
 export const getObjectChildrenStreamFactory =
   (deps: { db: Knex }): GetObjectChildrenStream =>
-  ({ streamId, objectId }) => {
+  async ({ streamId, objectId }) => {
     const { db } = deps
     const q = Closures({ db })
-    q.select('id')
-    q.select(db.raw('data::text as "dataText"'))
-    q.rightJoin('objects', function () {
-      this.on('objects.streamId', '=', 'object_children_closure.streamId').andOn(
-        'objects.id',
-        '=',
-        'object_children_closure.child'
-      )
-    })
+    await q.select('id')
+    await q.select(db.raw('data::text as "dataText"'))
+    await q
+      .rightJoin('objects', function () {
+        this.on('objects.streamId', '=', 'object_children_closure.streamId').andOn(
+          'objects.id',
+          '=',
+          'object_children_closure.child'
+        )
+      })
       .where(
         db.raw('object_children_closure."streamId" = ? AND parent = ?', [
           streamId,
@@ -62,12 +65,10 @@ type BatchObjectIdentifier = {
   streamId: string
   objectIds: string[]
 }
-export type GetObjectsStream = (
-  params: BatchObjectIdentifier
-) => Promise<NodeJS.ReadableStream>
+export type GetObjectsStream = (params: BatchObjectIdentifier) => NodeJS.ReadableStream
 export const getObjectsStreamFactory =
   (deps: { db: Knex }): GetObjectsStream =>
-  async ({ streamId, objectIds }) => {
+  ({ streamId, objectIds }) => {
     const { db } = deps
     const res = Objects({ db })
       .whereIn('id', objectIds)

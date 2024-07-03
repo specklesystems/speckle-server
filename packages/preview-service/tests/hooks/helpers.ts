@@ -1,6 +1,6 @@
-import type { Knex } from 'knex'
-import { startServer, stopServer } from '@/server/server'
+import { startServer, stopServer } from '@/server/server.js'
 import http from 'http'
+import type { Knex } from 'knex'
 
 export const truncateTables = async (params: { db: Knex; tableNames?: string[] }) => {
   const { db } = params
@@ -25,12 +25,12 @@ export const truncateTables = async (params: { db: Knex; tableNames?: string[] }
   await db.raw(`truncate table ${tableNames.join(',')} cascade`)
 }
 
-export const buildAndStartApp = async (deps: { db: Knex }) => {
+export const buildAndStartApp = (deps: { db: Knex }) => {
   const { db } = deps
-  const { app, server, metricsServer } = await startServer({ db })
+  const { app, server, metricsServer } = startServer({ db })
   return { app, server, metricsServer }
 }
 
-export const stopApp = async (params: { server: http.Server }) => {
-  await stopServer(params)
+export const stopApp = (params: { server: http.Server }) => {
+  stopServer(params)
 }

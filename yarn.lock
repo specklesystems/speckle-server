@@ -15673,6 +15673,7 @@ __metadata:
     prom-client: "npm:^14.0.1"
     puppeteer: "npm:^22.11.1"
     sharp: "npm:^0.32.6"
+    tarn: "npm:^3.0.2"
     typescript: "npm:^4.6.4"
     typescript-eslint: "npm:^7.12.0"
     vitest: "npm:^1.6.0"

@@ -1,8 +1,8 @@
 /* eslint-disable camelcase */
-import knexClient from 'knex'
+import { knex } from 'knex'
 
 export const getTestDb = () =>
-  knexClient({
+  knex({
     client: 'pg',
     connection: {
       application_name: 'speckle_preview_service',

@@ -16,11 +16,11 @@
   },
   "scripts": {
     "build:tsc:watch": "tsc -p ./tsconfig.build.json --watch",
-    "build:webpack:watch": "webpack --env build --config webpack.config.renderPage.js --watch",
+    "build:webpack:watch": "webpack --env build --config webpack.config.renderPage.cjs --watch",
     "run:watch": "LOG_PRETTY=true LOG_LEVEL=debug nodemon ./bin/www --trace-deprecation --watch ./bin/www --watch ./dist",
     "dev": "concurrently \"npm:build:tsc:watch\" \"npm:build:webpack:watch\"  \"npm:run:watch\"",
     "dev:headed": "PREVIEWS_HEADED=true yarn dev",
-    "build": "tsc -p ./tsconfig.build.json && webpack --env build --config webpack.config.renderPage.js",
+    "build": "tsc -p ./tsconfig.build.json && webpack --env build --config webpack.config.renderPage.cjs",
     "lint": "yarn lint:tsc && yarn lint:eslint",
     "lint:ci": "yarn lint:tsc",
     "lint:tsc": "tsc --noEmit",
@@ -49,6 +49,7 @@
     "prom-client": "^14.0.1",
     "puppeteer": "^22.11.1",
     "sharp": "^0.32.6",
+    "tarn": "^3.0.2",
     "yargs": "^17.3.0",
     "zlib": "^1.0.5"
   },

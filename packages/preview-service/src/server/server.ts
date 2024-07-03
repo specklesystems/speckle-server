@@ -1,10 +1,10 @@
+import { serverLogger } from '@/observability/logging.js'
+import { appFactory as metricsAppFactory } from '@/observability/metricsApp.js'
+import { appFactory } from '@/server/app.js'
+import { getAppPort, getHost, getMetricsPort } from '@/utils/env.js'
 import http from 'http'
-import { appFactory } from '@/server/app'
-import { appFactory as metricsAppFactory } from '@/observability/metricsApp'
-import { serverLogger } from '@/observability/logging'
-import { getAppPort, getHost, getMetricsPort } from '@/utils/env'
 import type { Knex } from 'knex'
-import { isNaN, toNumber, isString } from 'lodash-es'
+import { isNaN, isString, toNumber } from 'lodash-es'
 
 export const startServer = (params: { db: Knex }) => {
   const { db } = params

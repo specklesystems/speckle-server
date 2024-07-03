@@ -1,13 +1,13 @@
+import { loggingExpressMiddleware } from '@/observability/expressLogging.js'
+import apiRouterFactory from '@/server/routes/api.js'
+import indexRouterFactory from '@/server/routes/index.js'
+import objectsRouterFactory from '@/server/routes/objects.js'
+import previewRouterFactory from '@/server/routes/preview.js'
+import { errorHandler } from '@/utils/errorHandler.js'
+import express from 'express'
 import createError from 'http-errors'
-import express, { ErrorRequestHandler } from 'express'
-import path from 'path'
-import indexRouterFactory from '@/server/routes/index'
-import previewRouterFactory from '@/server/routes/preview'
-import objectsRouterFactory from '@/server/routes/objects'
-import apiRouterFactory from '@/server/routes/api'
-import { loggingExpressMiddleware } from '@/observability/expressLogging'
-import { errorHandler } from '@/utils/errorHandler'
 import type { Knex } from 'knex'
+import path from 'path'
 
 export const appFactory = (deps: { db: Knex }) => {
   const { db } = deps

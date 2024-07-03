@@ -1,8 +1,10 @@
-import { describe, it, expect } from 'vitest'
-import { getNextUnstartedObjectPreviewFactory } from '@/repositories/objectPreview'
+import { getTestDb } from '#/testKnex.js'
+import {
+  ObjectPreview,
+  getNextUnstartedObjectPreviewFactory
+} from '@/repositories/objectPreview.js'
 import cryptoRandomString from 'crypto-random-string'
-import { getTestDb } from '#/testKnex'
-import { ObjectPreview } from '@/repositories/objectPreview.js'
+import { describe, expect, it } from 'vitest'
 
 describe('Repositories: ObjectPreview', () => {
   const db = getTestDb() //FIXME get from global context
@@ -17,9 +19,10 @@ describe('Repositories: ObjectPreview', () => {
         priority: 0,
         previewStatus: 0
       }
-      const sqlQuery =
-        ObjectPreview({ db }).insert(insertionObject).toString() +
-        ' on conflict do nothing'
+      const sqlQuery = ObjectPreview({ db })
+        .insert(insertionObject)
+        .onConflict()
+        .ignore()
       await db.raw(sqlQuery)
 
       const getNextUnstartedObjectPreview = getNextUnstartedObjectPreviewFactory({ db })

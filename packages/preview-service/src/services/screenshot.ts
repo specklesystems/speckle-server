@@ -1,12 +1,12 @@
-import { reduce } from 'lodash'
+import { PuppeteerClientInterface } from '@/clients/puppeteer.js'
+import type { ObjectIdentifier } from '@/domain/domain.js'
 import {
-  shouldBeHeadless,
+  getChromiumExecutablePath,
   getPuppeteerUserDataDir,
-  getChromiumExecutablePath
-} from '@/utils/env'
+  shouldBeHeadless
+} from '@/utils/env.js'
+import { reduce } from 'lodash'
 import type { Logger } from 'pino'
-import { PuppeteerClientInterface } from '@/clients/puppeteer'
-import type { ObjectIdentifier } from '@/domain/domain'
 
 export type GetScreenshot = (
   params: ObjectIdentifier

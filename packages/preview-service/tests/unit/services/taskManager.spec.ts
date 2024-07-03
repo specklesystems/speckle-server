@@ -1,5 +1,5 @@
-import { logger } from '@/observability/logging'
-import { repeatedlyPollForWorkFactory } from '@/services/taskManager'
+import { logger } from '@/observability/logging.js'
+import { repeatedlyPollForWorkFactory } from '@/services/taskManager.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 describe('Task Manager', () => {
@@ -7,7 +7,7 @@ describe('Task Manager', () => {
     vi.restoreAllMocks()
   })
   describe('repeatedly poll for work', () => {
-    it.skip('runs at least once', async () => {
+    it.skip('runs at least once', () => {
       const called: Record<string, number> = {}
       const repeatedlyPollForWork = repeatedlyPollForWorkFactory({
         updateHealthcheckData: () => {
@@ -44,7 +44,7 @@ describe('Task Manager', () => {
         logger
       })
 
-      await repeatedlyPollForWork()
+      repeatedlyPollForWork()
       expect(called['updateHealthcheckData']).toBeGreaterThanOrEqual(1)
       expect(called['generateAndStore360Preview']).toBeGreaterThanOrEqual(1)
       expect(called['updatePreviewMetadata']).toBeGreaterThanOrEqual(1)

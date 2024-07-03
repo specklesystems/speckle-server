@@ -1,11 +1,14 @@
-import type { UpdateHealthcheckData } from '@/clients/execHealthcheck'
+import type { UpdateHealthcheckData } from '@/clients/execHealthcheck.js'
 import {
   metricDuration,
   metricOperationErrors
-} from '@/observability/prometheusMetrics'
-import type { NotifyUpdate, UpdatePreviewMetadata } from '@/repositories/objectPreview'
-import type { GetNextUnstartedObjectPreview } from '@/repositories/objectPreview'
-import type { GenerateAndStore360Preview } from '@/services/360preview'
+} from '@/observability/prometheusMetrics.js'
+import type {
+  GetNextUnstartedObjectPreview,
+  NotifyUpdate,
+  UpdatePreviewMetadata
+} from '@/repositories/objectPreview.js'
+import type { GenerateAndStore360Preview } from '@/services/360preview.js'
 import type { Logger } from 'pino'
 
 let shouldExit = false
