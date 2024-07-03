@@ -14,8 +14,8 @@ import { ViewerHashStateKeys } from '~/lib/viewer/composables/setup/urlHashState
 
 const legacyBranchMetadataQuery = graphql(`
   query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {
-    stream(id: $streamId) {
-      branch(name: $branchName) {
+    project(id: $streamId) {
+      modelByName(name: $branchName) {
         id
       }
     }
@@ -24,10 +24,10 @@ const legacyBranchMetadataQuery = graphql(`
 
 const legacyViewerCommitMetadataQuery = graphql(`
   query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {
-    stream(id: $streamId) {
-      commit(id: $commitId) {
+    project(id: $streamId) {
+      version(id: $commitId) {
         id
-        branch {
+        model {
           id
         }
       }
@@ -37,13 +37,13 @@ const legacyViewerCommitMetadataQuery = graphql(`
 
 const legacyViewerStreamMetadataQuery = graphql(`
   query LegacyViewerStreamRedirectMetadata($streamId: String!) {
-    stream(id: $streamId) {
+    project(id: $streamId) {
       id
-      commits(limit: 1) {
+      versions(limit: 1) {
         totalCount
         items {
           id
-          branch {
+          model {
             id
           }
         }
@@ -97,7 +97,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
           variables: { streamId: viewerStreamId, commitId: viewerId }
         })
         .catch(convertThrowIntoFetchResult)
-      const branchId = data?.stream?.commit?.branch?.id
+      const branchId = data?.project?.version?.model?.id
 
       return navigateTo(
         branchId
@@ -147,7 +147,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
           variables: { streamId, commitId }
         })
         .catch(convertThrowIntoFetchResult)
-      const branchId = data?.stream?.commit?.branch?.id
+      const branchId = data?.project?.version?.model?.id
 
       return navigateTo(
         branchId
@@ -172,10 +172,10 @@ export default defineNuxtRouteMiddleware(async (to) => {
         .catch(convertThrowIntoFetchResult)
 
       return navigateTo(
-        data?.stream?.branch?.id
+        data?.project?.modelByName?.id
           ? modelRoute(
               streamId,
-              resourceBuilder().addModel(data.stream.branch.id).toString(),
+              resourceBuilder().addModel(data.project.modelByName.id).toString(),
               {
                 [ViewerHashStateKeys.EmbedOptions]: JSON.stringify(embedOptions)
               }
@@ -188,13 +188,13 @@ export default defineNuxtRouteMiddleware(async (to) => {
         .catch(convertThrowIntoFetchResult)
 
       return navigateTo(
-        data?.stream?.commits?.items?.length && data.stream.commits.items[0].branch
+        data?.project?.versions?.items?.length && data.project.versions.items[0].model
           ? modelRoute(
-              data.stream.id,
+              data.project.id,
               SpeckleViewer.ViewerRoute.resourceBuilder()
                 .addModel(
-                  data.stream.commits.items[0].branch.id,
-                  data.stream.commits.items[0].id
+                  data.project.versions.items[0].model.id,
+                  data.project.versions.items[0].id
                 )
                 .toString(),
               {
@@ -217,7 +217,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
         }
       })
       .catch(convertThrowIntoFetchResult)
-    const branchId = data?.stream?.branch?.id
+    const branchId = data?.project?.modelByName?.id
 
     return navigateTo(
       branchId

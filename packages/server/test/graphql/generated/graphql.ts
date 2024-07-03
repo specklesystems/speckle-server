@@ -1640,6 +1640,8 @@ export type Project = {
   invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
   /** Returns a specific model by its ID */
   model: Model;
+  /** Retrieve a specific project model by its ID */
+  modelByName: Model;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
   /** Returns a flat list of all models */
@@ -1708,6 +1710,11 @@ export type ProjectCommentThreadsArgs = {
 
 export type ProjectModelArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type ProjectModelByNameArgs = {
+  name: Scalars['String']['input'];
 };
 
 
@@ -2571,6 +2578,7 @@ export type Stream = {
   blob?: Maybe<BlobMetadata>;
   /** Get the metadata collection of blobs stored for this stream. */
   blobs?: Maybe<BlobMetadataCollection>;
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.model or Project.modelByName instead. */
   branch?: Maybe<Branch>;
   branches?: Maybe<BranchCollection>;
   collaborators: Array<StreamCollaborator>;
@@ -2585,6 +2593,7 @@ export type Stream = {
    * ```
    */
   commentCount: Scalars['Int']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.version instead. */
   commit?: Maybe<Commit>;
   commits?: Maybe<CommitCollection>;
   createdAt: Scalars['DateTime']['output'];

@@ -1,8 +1,14 @@
 extend type Stream {
   commits(limit: Int! = 25, cursor: String): CommitCollection
   commit(id: String): Commit
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Project.version instead."
+    )
   branches(limit: Int! = 25, cursor: String): BranchCollection
   branch(name: String = "main"): Branch
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Project.model or Project.modelByName instead."
+    )
 }
 
 extend type User {
