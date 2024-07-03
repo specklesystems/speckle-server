@@ -4,6 +4,7 @@ import {
 } from '@/modules/workspacesCore/domain/events'
 import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
 import { WorkspaceRoles } from '@speckle/shared'
+import { StreamRecord } from '@/modules/core/helpers/types'
 
 /** Workspace */
 
@@ -47,6 +48,16 @@ type GetWorkspaceRolesArgs = {
 export type GetWorkspaceRoles = (args: GetWorkspaceRolesArgs) => Promise<WorkspaceAcl[]>
 
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
+
+/** Workspace Projects */
+
+type GetWorkspaceProjectsArgs = {
+  workspaceId: string
+}
+
+export type GetWorkspaceProjects = (
+  args: GetWorkspaceProjectsArgs
+) => Promise<StreamRecord[]>
 
 /** Blob */
 

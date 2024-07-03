@@ -2,6 +2,7 @@ import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
 import {
   DeleteWorkspaceRole,
   GetWorkspace,
+  GetWorkspaceProjects,
   GetWorkspaceRole,
   GetWorkspaceRoles,
   UpsertWorkspace,
@@ -9,8 +10,10 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
 import { Roles } from '@speckle/shared'
+import { StreamRecord } from '@/modules/core/helpers/types'
 
 const tables = {
+  streams: (db: Knex) => db<StreamRecord>('streams'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
 }
@@ -94,6 +97,17 @@ export const getWorkspaceMembersFactory =
       .and.whereIn('role', roles)
 
     return memberRoles
+  }
+
+export const getWorkspaceProjectsFactory =
+  ({ db }: { db: Knex }): GetWorkspaceProjects =>
+  async ({ workspaceId }) => {
+    const projects = await tables
+      .streams(db)
+      .select('*')
+      .where('workspaceId', workspaceId)
+
+    return projects
   }
 
 export const upsertWorkspaceRoleFactory =
