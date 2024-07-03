@@ -1,10 +1,13 @@
 import { ObjectIdentifier } from '@/domain/domain.js'
 import type { Knex } from 'knex'
 
+export type ObjectPreviewRow = ObjectIdentifier & {
+  preview: unknown
+  previewStatus: number
+  lastUpdate: number
+}
 export const ObjectPreview = (deps: { db: Knex }) =>
-  deps.db<
-    ObjectIdentifier & { preview: unknown; previewStatus: number; lastUpdate: number }
-  >('object_preview')
+  deps.db<ObjectPreviewRow>('object_preview')
 
 export type GetNextUnstartedObjectPreview = () => Promise<ObjectIdentifier>
 export const getNextUnstartedObjectPreviewFactory =

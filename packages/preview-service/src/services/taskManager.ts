@@ -10,6 +10,7 @@ import type {
 } from '@/repositories/objectPreview.js'
 import type { GenerateAndStore360Preview } from '@/services/360preview.js'
 import type { Logger } from 'pino'
+import { LabelValues } from 'prom-client'
 
 let shouldExit = false
 
@@ -45,7 +46,9 @@ export const repeatedlyPollForWorkFactory =
         return
       }
 
-      let metricDurationEnd = undefined
+      let metricDurationEnd:
+        | (<T extends string>(labels?: LabelValues<T>) => number)
+        | undefined = undefined
       if (metricDuration) {
         metricDurationEnd = metricDuration.startTimer()
       }
