@@ -13,11 +13,11 @@ const testDb = getTestDb()
  * This hook is run once before any tests are run
  * Defined in vitest.config.ts under test.globalSetup
  */
-export async function setup() {
+export function setup() {
   logger.info('🏃🏻‍♀️‍➡️ Running vitest setup global hook')
-  const db = testDb
+  // const db = testDb
   // await db.migrate.rollback()
-  await db.migrate.latest()
+  // await db.migrate.latest()
   logger.info('💁🏽‍♀️ Completed the vitest setup global hook')
 }
 
