@@ -1,6 +1,6 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, ObjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, LimitedUserGraphQLReturn, MutationsObjectGraphQLReturn, GraphQLEmptyReturn } from '@/modules/core/helpers/graphTypes';
-import { StreamAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
+import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, ObjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, MutationsObjectGraphQLReturn, LimitedUserGraphQLReturn, GraphQLEmptyReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamAccessRequestGraphQLReturn, ProjectAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
@@ -1193,9 +1193,15 @@ export type Mutation = {
   serverInviteBatchCreate: Scalars['Boolean']['output'];
   /** Invite a new user to the speckle server and return the invite ID */
   serverInviteCreate: Scalars['Boolean']['output'];
-  /** Request access to a specific stream */
+  /**
+   * Request access to a specific stream
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectAccessRequestMutations.create instead.
+   */
   streamAccessRequestCreate: StreamAccessRequest;
-  /** Accept or decline a stream access request. Must be a stream owner to invoke this. */
+  /**
+   * Accept or decline a stream access request. Must be a stream owner to invoke this.
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectAccessRequestMutations.use instead.
+   */
   streamAccessRequestUse: Scalars['Boolean']['output'];
   /** Creates a new stream. */
   streamCreate?: Maybe<Scalars['String']['output']>;
@@ -1663,6 +1669,8 @@ export type Project = {
   modelsTree: ModelsTreeItemCollection;
   name: Scalars['String']['output'];
   object?: Maybe<Object>;
+  /** Pending project access requests */
+  pendingAccessRequests?: Maybe<Array<ProjectAccessRequest>>;
   /** Returns a list models that are being created from a file import */
   pendingImportedModels: Array<FileUpload>;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
@@ -1776,6 +1784,38 @@ export type ProjectViewerResourcesArgs = {
 
 export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Created when a user requests to become a contributor on a project */
+export type ProjectAccessRequest = {
+  __typename?: 'ProjectAccessRequest';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  /** Can only be selected if authed user has proper access */
+  project: Project;
+  projectId: Scalars['String']['output'];
+  requester: LimitedUser;
+  requesterId: Scalars['String']['output'];
+};
+
+export type ProjectAccessRequestMutations = {
+  __typename?: 'ProjectAccessRequestMutations';
+  /** Request access to a specific project */
+  create: ProjectAccessRequest;
+  /** Accept or decline a project access request. Must be a project owner to invoke this. */
+  use: Project;
+};
+
+
+export type ProjectAccessRequestMutationsCreateArgs = {
+  projectId: Scalars['String']['input'];
+};
+
+
+export type ProjectAccessRequestMutationsUseArgs = {
+  accept: Scalars['Boolean']['input'];
+  requestId: Scalars['String']['input'];
+  role?: StreamRole;
 };
 
 export type ProjectAutomationCreateInput = {
@@ -2020,6 +2060,8 @@ export enum ProjectModelsUpdatedMessageType {
 
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
+  /** Access request related mutations */
+  accessRequestMutations: ProjectAccessRequestMutations;
   automationMutations: ProjectAutomationMutations;
   /** Batch delete projects */
   batchDelete: Scalars['Boolean']['output'];
@@ -2246,7 +2288,10 @@ export type Query = {
    * to see it, for example, if a stream isn't public and the user doesn't have the appropriate rights.
    */
   stream?: Maybe<Stream>;
-  /** Get authed user's stream access request */
+  /**
+   * Get authed user's stream access request
+   * @deprecated Part of the old API surface and will be removed in the future. Use User.projectAccessRequest instead.
+   */
   streamAccessRequest?: Maybe<StreamAccessRequest>;
   /**
    * Look for an invitation to a stream, for the current user (authed or not). If token
@@ -2633,7 +2678,10 @@ export type Stream = {
   name: Scalars['String']['output'];
   /** @deprecated Part of the old API surface and will be removed in the future. Use Project.object instead. */
   object?: Maybe<Object>;
-  /** Pending stream access requests */
+  /**
+   * Pending stream access requests
+   * @deprecated Part of the old API surface and will be removed in the future. Use Project.pendingAccessRequests instead.
+   */
   pendingAccessRequests?: Maybe<Array<StreamAccessRequest>>;
   /** Collaborators who have been invited, but not yet accepted. */
   pendingCollaborators?: Maybe<Array<PendingStreamCollaborator>>;
@@ -3100,6 +3148,8 @@ export type User = {
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
   profiles?: Maybe<Scalars['JSONObject']['output']>;
+  /** Get pending project access request, that the user made */
+  projectAccessRequest?: Maybe<ProjectAccessRequest>;
   /** Get all invitations to projects that the active user has */
   projectInvites: Array<PendingStreamCollaborator>;
   /** Get projects that the user participates in */
@@ -3155,6 +3205,15 @@ export type UserCommitsArgs = {
 export type UserFavoriteStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserProjectAccessRequestArgs = {
+  projectId: Scalars['String']['input'];
 };
 
 
@@ -3641,6 +3700,8 @@ export type ResolversTypes = {
   PasswordStrengthCheckResults: ResolverTypeWrapper<PasswordStrengthCheckResults>;
   PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaboratorGraphQLReturn>;
   Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
+  ProjectAccessRequest: ResolverTypeWrapper<ProjectAccessRequestGraphQLReturn>;
+  ProjectAccessRequestMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   ProjectAutomationCreateInput: ProjectAutomationCreateInput;
   ProjectAutomationMutations: ResolverTypeWrapper<ProjectAutomationMutationsGraphQLReturn>;
   ProjectAutomationRevisionCreateInput: ProjectAutomationRevisionCreateInput;
@@ -3722,7 +3783,7 @@ export type ResolversTypes = {
   UpdateAutomateFunctionInput: UpdateAutomateFunctionInput;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
-  User: ResolverTypeWrapper<Omit<User, 'automateInfo' | 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { automateInfo: ResolversTypes['UserAutomateInfo'], commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projectInvites: Array<ResolversTypes['PendingStreamCollaborator']>, projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
+  User: ResolverTypeWrapper<Omit<User, 'automateInfo' | 'commits' | 'favoriteStreams' | 'projectAccessRequest' | 'projectInvites' | 'projects' | 'streams'> & { automateInfo: ResolversTypes['UserAutomateInfo'], commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projectAccessRequest?: Maybe<ResolversTypes['ProjectAccessRequest']>, projectInvites: Array<ResolversTypes['PendingStreamCollaborator']>, projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'] }>;
   UserAutomateInfo: ResolverTypeWrapper<UserAutomateInfoGraphQLReturn>;
   UserDeleteInput: UserDeleteInput;
   UserProjectsFilter: UserProjectsFilter;
@@ -3857,6 +3918,8 @@ export type ResolversParentTypes = {
   PasswordStrengthCheckResults: PasswordStrengthCheckResults;
   PendingStreamCollaborator: PendingStreamCollaboratorGraphQLReturn;
   Project: ProjectGraphQLReturn;
+  ProjectAccessRequest: ProjectAccessRequestGraphQLReturn;
+  ProjectAccessRequestMutations: MutationsObjectGraphQLReturn;
   ProjectAutomationCreateInput: ProjectAutomationCreateInput;
   ProjectAutomationMutations: ProjectAutomationMutationsGraphQLReturn;
   ProjectAutomationRevisionCreateInput: ProjectAutomationRevisionCreateInput;
@@ -3923,7 +3986,7 @@ export type ResolversParentTypes = {
   UpdateAutomateFunctionInput: UpdateAutomateFunctionInput;
   UpdateModelInput: UpdateModelInput;
   UpdateVersionInput: UpdateVersionInput;
-  User: Omit<User, 'automateInfo' | 'commits' | 'favoriteStreams' | 'projectInvites' | 'projects' | 'streams'> & { automateInfo: ResolversParentTypes['UserAutomateInfo'], commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projectInvites: Array<ResolversParentTypes['PendingStreamCollaborator']>, projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
+  User: Omit<User, 'automateInfo' | 'commits' | 'favoriteStreams' | 'projectAccessRequest' | 'projectInvites' | 'projects' | 'streams'> & { automateInfo: ResolversParentTypes['UserAutomateInfo'], commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projectAccessRequest?: Maybe<ResolversParentTypes['ProjectAccessRequest']>, projectInvites: Array<ResolversParentTypes['PendingStreamCollaborator']>, projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'] };
   UserAutomateInfo: UserAutomateInfoGraphQLReturn;
   UserDeleteInput: UserDeleteInput;
   UserProjectsFilter: UserProjectsFilter;
@@ -4627,6 +4690,7 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   modelsTree?: Resolver<ResolversTypes['ModelsTreeItemCollection'], ParentType, ContextType, RequireFields<ProjectModelsTreeArgs, 'limit'>>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   object?: Resolver<Maybe<ResolversTypes['Object']>, ParentType, ContextType, RequireFields<ProjectObjectArgs, 'id'>>;
+  pendingAccessRequests?: Resolver<Maybe<Array<ResolversTypes['ProjectAccessRequest']>>, ParentType, ContextType>;
   pendingImportedModels?: Resolver<Array<ResolversTypes['FileUpload']>, ParentType, ContextType, RequireFields<ProjectPendingImportedModelsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   sourceApps?: Resolver<Array<ResolversTypes['String']>, ParentType, ContextType>;
@@ -4637,6 +4701,22 @@ export type ProjectResolvers<ContextType = GraphQLContext, ParentType extends Re
   viewerResources?: Resolver<Array<ResolversTypes['ViewerResourceGroup']>, ParentType, ContextType, RequireFields<ProjectViewerResourcesArgs, 'loadedVersionsOnly' | 'resourceIdString'>>;
   visibility?: Resolver<ResolversTypes['ProjectVisibility'], ParentType, ContextType>;
   webhooks?: Resolver<ResolversTypes['WebhookCollection'], ParentType, ContextType, Partial<ProjectWebhooksArgs>>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectAccessRequestResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectAccessRequest'] = ResolversParentTypes['ProjectAccessRequest']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  project?: Resolver<ResolversTypes['Project'], ParentType, ContextType>;
+  projectId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  requester?: Resolver<ResolversTypes['LimitedUser'], ParentType, ContextType>;
+  requesterId?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
+export type ProjectAccessRequestMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectAccessRequestMutations'] = ResolversParentTypes['ProjectAccessRequestMutations']> = {
+  create?: Resolver<ResolversTypes['ProjectAccessRequest'], ParentType, ContextType, RequireFields<ProjectAccessRequestMutationsCreateArgs, 'projectId'>>;
+  use?: Resolver<ResolversTypes['Project'], ParentType, ContextType, RequireFields<ProjectAccessRequestMutationsUseArgs, 'accept' | 'requestId' | 'role'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
@@ -4710,6 +4790,7 @@ export type ProjectModelsUpdatedMessageResolvers<ContextType = GraphQLContext, P
 };
 
 export type ProjectMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['ProjectMutations'] = ResolversParentTypes['ProjectMutations']> = {
+  accessRequestMutations?: Resolver<ResolversTypes['ProjectAccessRequestMutations'], ParentType, ContextType>;
   automationMutations?: Resolver<ResolversTypes['ProjectAutomationMutations'], ParentType, ContextType, RequireFields<ProjectMutationsAutomationMutationsArgs, 'projectId'>>;
   batchDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<ProjectMutationsBatchDeleteArgs, 'ids'>>;
   create?: Resolver<ResolversTypes['Project'], ParentType, ContextType, Partial<ProjectMutationsCreateArgs>>;
@@ -5059,6 +5140,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   notificationPreferences?: Resolver<ResolversTypes['JSONObject'], ParentType, ContextType>;
   profiles?: Resolver<Maybe<ResolversTypes['JSONObject']>, ParentType, ContextType>;
+  projectAccessRequest?: Resolver<Maybe<ResolversTypes['ProjectAccessRequest']>, ParentType, ContextType, RequireFields<UserProjectAccessRequestArgs, 'projectId'>>;
   projectInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
   projects?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<UserProjectsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5261,6 +5343,8 @@ export type Resolvers<ContextType = GraphQLContext> = {
   PasswordStrengthCheckResults?: PasswordStrengthCheckResultsResolvers<ContextType>;
   PendingStreamCollaborator?: PendingStreamCollaboratorResolvers<ContextType>;
   Project?: ProjectResolvers<ContextType>;
+  ProjectAccessRequest?: ProjectAccessRequestResolvers<ContextType>;
+  ProjectAccessRequestMutations?: ProjectAccessRequestMutationsResolvers<ContextType>;
   ProjectAutomationMutations?: ProjectAutomationMutationsResolvers<ContextType>;
   ProjectAutomationsUpdatedMessage?: ProjectAutomationsUpdatedMessageResolvers<ContextType>;
   ProjectCollaborator?: ProjectCollaboratorResolvers<ContextType>;
