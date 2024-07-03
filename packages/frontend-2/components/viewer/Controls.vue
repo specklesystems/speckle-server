@@ -414,7 +414,7 @@ onKeyboardShortcut([ModifierKeys.Shift], 'r', () => {
 })
 
 // Viewer actions kbd shortcuts
-onKeyboardShortcut([ModifierKeys.Shift], ' ', () => {
+onKeyboardShortcut([ModifierKeys.Shift], 'space', () => {
   trackAndzoomExtentsOrSelection()
 })
 onKeyboardShortcut([ModifierKeys.Shift], 'p', () => {
