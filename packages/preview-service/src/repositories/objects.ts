@@ -2,7 +2,6 @@ import type { ObjectIdentifier } from '@/domain/domain.js'
 import type { Knex } from 'knex'
 
 const Objects = (deps: { db: Knex }) => deps.db<DbObject>('objects')
-const Closures = (deps: { db: Knex }) => deps.db('object_children_closure')
 
 type DbObject = {
   id: string
@@ -40,9 +39,20 @@ export const getObjectChildrenStreamFactory =
   (deps: { db: Knex }): GetObjectChildrenStream =>
   async ({ streamId, objectId }) => {
     const { db } = deps
-    const q = Closures({ db })
+    const q = db.with(
+      'object_children_closure',
+      db.raw(
+        `SELECT objects.id as parent, d.key as child, d.value as mindepth, ? as "streamId"
+        FROM objects
+        JOIN jsonb_each_text(objects.data->'__closure') d ON true
+        where objects.id = ?`,
+        [streamId, objectId]
+      )
+    )
     await q.select('id')
     await q.select(db.raw('data::text as "dataText"'))
+    await q.from('object_children_closure')
+
     await q
       .rightJoin('objects', function () {
         this.on('objects.streamId', '=', 'object_children_closure.streamId').andOn(
