@@ -980,6 +980,13 @@ export type LimitedUserTimelineArgs = {
   limit?: Scalars['Int']['input'];
 };
 
+export type MarkReceivedVersionInput = {
+  message?: InputMaybe<Scalars['String']['input']>;
+  projectId: Scalars['String']['input'];
+  sourceApplication: Scalars['String']['input'];
+  versionId: Scalars['String']['input'];
+};
+
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
@@ -1146,6 +1153,7 @@ export type Mutation = {
    * @deprecated Use commentMutations version
    */
   commentView: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.create instead. */
   commitCreate: Scalars['String']['output'];
   commitDelete: Scalars['Boolean']['output'];
   commitReceive: Scalars['Boolean']['output'];
@@ -3253,6 +3261,7 @@ export type VersionMutations = {
   __typename?: 'VersionMutations';
   create: Version;
   delete: Scalars['Boolean']['output'];
+  markReceived: Scalars['Boolean']['output'];
   moveToModel: Model;
   requestGendoAIRender: Scalars['Boolean']['output'];
   update: Version;
@@ -3266,6 +3275,11 @@ export type VersionMutationsCreateArgs = {
 
 export type VersionMutationsDeleteArgs = {
   input: DeleteVersionsInput;
+};
+
+
+export type VersionMutationsMarkReceivedArgs = {
+  input: MarkReceivedVersionInput;
 };
 
 

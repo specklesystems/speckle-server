@@ -13,6 +13,7 @@ import {
 import { CommitUpdateError } from '@/modules/core/errors/commit'
 import {
   createCommitByBranchId,
+  markCommitReceivedAndNotify,
   updateCommitAndNotify
 } from '@/modules/core/services/commit/management'
 import {
@@ -95,6 +96,22 @@ export = {
       })
 
       return commit
+    },
+
+    async markReceived(_parent, args, ctx) {
+      await authorizeResolver(
+        ctx.userId,
+        args.input.projectId,
+        Roles.Stream.Reviewer,
+        ctx.resourceAccessRules
+      )
+
+      await markCommitReceivedAndNotify({
+        input: args.input,
+        userId: ctx.userId!
+      })
+
+      return true
     }
   },
   Subscription: {

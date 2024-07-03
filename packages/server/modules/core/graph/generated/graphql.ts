@@ -989,6 +989,13 @@ export type LimitedUserTimelineArgs = {
   limit?: Scalars['Int']['input'];
 };
 
+export type MarkReceivedVersionInput = {
+  message?: InputMaybe<Scalars['String']['input']>;
+  projectId: Scalars['String']['input'];
+  sourceApplication: Scalars['String']['input'];
+  versionId: Scalars['String']['input'];
+};
+
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
@@ -1155,6 +1162,7 @@ export type Mutation = {
    * @deprecated Use commentMutations version
    */
   commentView: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.create instead. */
   commitCreate: Scalars['String']['output'];
   commitDelete: Scalars['Boolean']['output'];
   commitReceive: Scalars['Boolean']['output'];
@@ -3262,6 +3270,7 @@ export type VersionMutations = {
   __typename?: 'VersionMutations';
   create: Version;
   delete: Scalars['Boolean']['output'];
+  markReceived: Scalars['Boolean']['output'];
   moveToModel: Model;
   requestGendoAIRender: Scalars['Boolean']['output'];
   update: Version;
@@ -3275,6 +3284,11 @@ export type VersionMutationsCreateArgs = {
 
 export type VersionMutationsDeleteArgs = {
   input: DeleteVersionsInput;
+};
+
+
+export type VersionMutationsMarkReceivedArgs = {
+  input: MarkReceivedVersionInput;
 };
 
 
@@ -3577,6 +3591,7 @@ export type ResolversTypes = {
   JSONObject: ResolverTypeWrapper<Scalars['JSONObject']['output']>;
   LegacyCommentViewerData: ResolverTypeWrapper<LegacyCommentViewerData>;
   LimitedUser: ResolverTypeWrapper<LimitedUserGraphQLReturn>;
+  MarkReceivedVersionInput: MarkReceivedVersionInput;
   Model: ResolverTypeWrapper<ModelGraphQLReturn>;
   ModelCollection: ResolverTypeWrapper<Omit<ModelCollection, 'items'> & { items: Array<ResolversTypes['Model']> }>;
   ModelMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -3792,6 +3807,7 @@ export type ResolversParentTypes = {
   JSONObject: Scalars['JSONObject']['output'];
   LegacyCommentViewerData: LegacyCommentViewerData;
   LimitedUser: LimitedUserGraphQLReturn;
+  MarkReceivedVersionInput: MarkReceivedVersionInput;
   Model: ModelGraphQLReturn;
   ModelCollection: Omit<ModelCollection, 'items'> & { items: Array<ResolversParentTypes['Model']> };
   ModelMutations: MutationsObjectGraphQLReturn;
@@ -5076,6 +5092,7 @@ export type VersionCreatedTriggerDefinitionResolvers<ContextType = GraphQLContex
 export type VersionMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['VersionMutations'] = ResolversParentTypes['VersionMutations']> = {
   create?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<VersionMutationsCreateArgs, 'input'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsDeleteArgs, 'input'>>;
+  markReceived?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsMarkReceivedArgs, 'input'>>;
   moveToModel?: Resolver<ResolversTypes['Model'], ParentType, ContextType, RequireFields<VersionMutationsMoveToModelArgs, 'input'>>;
   requestGendoAIRender?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<VersionMutationsRequestGendoAiRenderArgs, 'input'>>;
   update?: Resolver<ResolversTypes['Version'], ParentType, ContextType, RequireFields<VersionMutationsUpdateArgs, 'input'>>;
