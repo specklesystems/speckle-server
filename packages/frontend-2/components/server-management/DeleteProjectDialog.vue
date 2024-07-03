@@ -61,7 +61,7 @@ const deleteConfirmed = async () => {
     },
     {
       update: (cache, { data }) => {
-        if (data?.streamsDelete) {
+        if (data?.projectMutations.batchDelete) {
           // Remove project from cache
           const cacheId = getCacheId('Project', projectId)
           cache.evict({
@@ -103,7 +103,7 @@ const deleteConfirmed = async () => {
     }
   ).catch(convertThrowIntoFetchResult)
 
-  if (result?.data?.streamsDelete) {
+  if (result?.data?.projectMutations.batchDelete) {
     triggerNotification({
       type: ToastNotificationType.Success,
       title: 'Project deleted',

@@ -1214,6 +1214,7 @@ export type Mutation = {
   streamUpdate: Scalars['Boolean']['output'];
   /** Update permissions of a user on a given stream. */
   streamUpdatePermission?: Maybe<Scalars['Boolean']['output']>;
+  /** @deprecated Part of the old API surface and will be removed in the future. Use ProjectMutations.batchDelete instead. */
   streamsDelete: Scalars['Boolean']['output'];
   /**
    * Used for broadcasting real time typing status in comment threads. Does not persist any info.
@@ -2010,6 +2011,8 @@ export enum ProjectModelsUpdatedMessageType {
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
   automationMutations: ProjectAutomationMutations;
+  /** Batch delete projects */
+  batchDelete: Scalars['Boolean']['output'];
   /** Create new project */
   create: Project;
   /**
@@ -2032,6 +2035,11 @@ export type ProjectMutations = {
 
 export type ProjectMutationsAutomationMutationsArgs = {
   projectId: Scalars['ID']['input'];
+};
+
+
+export type ProjectMutationsBatchDeleteArgs = {
+  ids: Array<Scalars['String']['input']>;
 };
 
 

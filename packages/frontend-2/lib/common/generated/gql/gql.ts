@@ -194,7 +194,7 @@ const documents = {
     "\n  subscription OnProjectAutomationsUpdated($id: String!) {\n    projectAutomationsUpdated(projectId: $id) {\n      type\n      automationId\n      automation {\n        id\n        ...ProjectPageAutomationPage_Automation\n        ...ProjectPageAutomationsRow_Automation\n      }\n    }\n  }\n": types.OnProjectAutomationsUpdatedDocument,
     "\n  mutation ServerInfoUpdate($info: ServerInfoUpdateInput!) {\n    serverInfoUpdate(info: $info)\n  }\n": types.ServerInfoUpdateDocument,
     "\n  mutation AdminPanelDeleteUser($userConfirmation: UserDeleteInput!) {\n    adminDeleteUser(userConfirmation: $userConfirmation)\n  }\n": types.AdminPanelDeleteUserDocument,
-    "\n  mutation AdminPanelDeleteProject($ids: [String!]) {\n    streamsDelete(ids: $ids)\n  }\n": types.AdminPanelDeleteProjectDocument,
+    "\n  mutation AdminPanelDeleteProject($ids: [String!]!) {\n    projectMutations {\n      batchDelete(ids: $ids)\n    }\n  }\n": types.AdminPanelDeleteProjectDocument,
     "\n  mutation AdminPanelResendInvite($inviteId: String!) {\n    inviteResend(inviteId: $inviteId)\n  }\n": types.AdminPanelResendInviteDocument,
     "\n  mutation AdminPanelDeleteInvite($inviteId: String!) {\n    inviteDelete(inviteId: $inviteId)\n  }\n": types.AdminPanelDeleteInviteDocument,
     "\n  mutation AdminChangeUseRole($userRoleInput: UserRoleInput!) {\n    userRoleChange(userRoleInput: $userRoleInput)\n  }\n": types.AdminChangeUseRoleDocument,
@@ -982,7 +982,7 @@ export function graphql(source: "\n  mutation AdminPanelDeleteUser($userConfirma
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  mutation AdminPanelDeleteProject($ids: [String!]) {\n    streamsDelete(ids: $ids)\n  }\n"): (typeof documents)["\n  mutation AdminPanelDeleteProject($ids: [String!]) {\n    streamsDelete(ids: $ids)\n  }\n"];
+export function graphql(source: "\n  mutation AdminPanelDeleteProject($ids: [String!]!) {\n    projectMutations {\n      batchDelete(ids: $ids)\n    }\n  }\n"): (typeof documents)["\n  mutation AdminPanelDeleteProject($ids: [String!]!) {\n    projectMutations {\n      batchDelete(ids: $ids)\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

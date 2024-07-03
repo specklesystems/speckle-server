@@ -89,6 +89,14 @@ export = {
     projectMutations: () => ({})
   },
   ProjectMutations: {
+    async batchDelete(_parent, args, ctx) {
+      const results = await Promise.all(
+        args.ids.map((id) =>
+          deleteStreamAndNotify(id, ctx.userId!, ctx.resourceAccessRules)
+        )
+      )
+      return results.every((res) => res === true)
+    },
     async delete(_parent, { id }, { userId, resourceAccessRules }) {
       return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
     },
