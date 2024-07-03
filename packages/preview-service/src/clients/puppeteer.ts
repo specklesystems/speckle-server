@@ -61,7 +61,6 @@ export const puppeteerClientFactory = async (deps: {
           logger.error(`${request.failure()?.errorText} ${request.url()}`)
         )
 
-      //TODO parse the response and ensure it's type of T
       const evaluationResult: unknown = await page.evaluate(script, args)
 
       logger.info('Page evaluated with Puppeteer script.')

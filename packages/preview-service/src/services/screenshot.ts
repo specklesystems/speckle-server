@@ -2,6 +2,7 @@ import { LoadPageAndEvaluateScript } from '@/clients/puppeteer.js'
 import type { ObjectIdentifier } from '@/domain/domain.js'
 import { reduce } from 'lodash'
 import type { Logger } from 'pino'
+import { z } from 'zod'
 
 export type GetScreenshot = (
   params: ObjectIdentifier
@@ -16,39 +17,27 @@ export const getScreenshotFactory =
   async (params) => {
     const objectUrl = `${deps.serviceOrigin}/streams/${params.streamId}/objects/${params.objectId}`
 
-    type RenderOutput = {
-      duration: number
-      mem: { total: number }
-      scr: { [key: string]: string }
-    }
-    type RenderErrorOutput = { error: unknown }
-    let renderOutput: RenderOutput | RenderErrorOutput = {
-      error: 'No response.'
-    }
+    const RenderOutputSchema = z.object({
+      duration: z.number(),
+      mem: z.object({ total: z.number() }),
+      scr: z.record(z.string())
+    })
+    type RenderOutput = z.infer<typeof RenderOutputSchema>
+
+    let renderOutput: RenderOutput
     try {
       // assume it is of type RenderOutput, and validate later
-      renderOutput = <RenderOutput>await deps.loadPageAndEvaluateScript(objectUrl)
+      const rawRenderOutput = await deps.loadPageAndEvaluateScript(objectUrl)
+      renderOutput = await RenderOutputSchema.parseAsync(rawRenderOutput)
     } catch (err) {
-      renderOutput = { error: err }
-    }
-
-    if (
-      typeof renderOutput === 'object' &&
-      'error' in renderOutput &&
-      renderOutput.error
-    ) {
-      deps.logger.error(renderOutput.error, 'Error generating preview.')
-      return null
-    } else if (
-      typeof renderOutput !== 'object' ||
-      !('scr' in renderOutput) ||
-      !('duration' in renderOutput) ||
-      !('mem' in renderOutput)
-    ) {
-      deps.logger.error(
-        renderOutput,
-        'Error generating preview. Expected output was not returned.'
-      )
+      if (err instanceof z.ZodError) {
+        deps.logger.error(
+          err,
+          'Error generating preview. Expected output was not returned.'
+        )
+      } else {
+        deps.logger.error(err, 'Error generating preview.')
+      }
       return null
     }
 
