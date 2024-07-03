@@ -186,13 +186,16 @@ export class Viewer extends EventEmitter implements IViewer {
   public requestRender(flags: UpdateFlags = UpdateFlags.RENDER) {
     if (flags & UpdateFlags.RENDER) {
       this.speckleRenderer.needsRender = true
-      this.speckleRenderer.resetPipeline()
     }
     if (flags & UpdateFlags.SHADOWS) {
       this.speckleRenderer.shadowMapNeedsUpdate = true
     }
     if (flags & UpdateFlags.CLIPPING_PLANES) {
       this.speckleRenderer.updateClippingPlanes()
+    }
+    if (flags & UpdateFlags.RENDER_RESET) {
+      this.speckleRenderer.needsRender = true
+      this.speckleRenderer.resetPipeline()
     }
   }
 
@@ -331,8 +334,7 @@ export class Viewer extends EventEmitter implements IViewer {
       }
       Logger.log(this.getRenderer().renderingStats)
       Logger.log('ASYNC batch build time -> ', performance.now() - t0)
-      this.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
-      this.speckleRenderer.resetPipeline()
+      this.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
       this.emit(ViewerEvent.LoadComplete, loader.resource)
     }
 

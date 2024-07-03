@@ -39,6 +39,6 @@ export class ExplodeExtension extends Extension {
 
       objects[i].transformTRS(dir, undefined, undefined, undefined)
     }
-    this.viewer.requestRender(UpdateFlags.RENDER | UpdateFlags.SHADOWS)
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET | UpdateFlags.SHADOWS)
   }
 }
