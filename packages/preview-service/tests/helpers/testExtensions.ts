@@ -13,6 +13,7 @@ export interface DatabaseIntegrationTestContext {
 
 // vitest reference: https://vitest.dev/guide/test-context#fixture-initialization
 export const databaseIntegrationTest = test.extend<DatabaseIntegrationTestContext>({
+  // this key has to match the top level key in the interface (i.e. `context`). Some vitest typing magic at work here.
   context: [
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async ({ task, onTestFinished }, use) => {
@@ -42,6 +43,7 @@ export interface E2ETestContext extends DatabaseIntegrationTestContext {
 
 // vitest reference: https://vitest.dev/guide/test-context#fixture-initialization
 export const e2eTest = test.extend<E2ETestContext>({
+  // this key has to match the top level key in the interface (i.e. `context`). Some vitest typing magic at work here.
   context: [
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async ({ task, onTestFinished }, use) => {

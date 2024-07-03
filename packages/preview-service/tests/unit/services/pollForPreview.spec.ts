@@ -1,15 +1,12 @@
 import { logger } from '@/observability/logging.js'
-import { repeatedlyPollForWorkFactory } from '@/services/taskManager.js'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { pollForAndCreatePreviewFactory } from '@/services/pollForPreview.js'
+import { describe, expect, it } from 'vitest'
 
-describe('Task Manager', () => {
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-  describe('repeatedly poll for work', () => {
-    it.skip('runs at least once', () => {
+describe('Polling for preview', () => {
+  describe('pollForAndCreatePreview', () => {
+    it('calls all component functions with expected parameters', async () => {
       const called: Record<string, number> = {}
-      const repeatedlyPollForWork = repeatedlyPollForWorkFactory({
+      const pollForAndCreatePreview = pollForAndCreatePreviewFactory({
         updateHealthcheckData: () => {
           called['updateHealthcheckData'] = called['updateHealthcheckData']++ || 1
         },
@@ -38,18 +35,14 @@ describe('Task Manager', () => {
           expect(task).toEqual({ streamId: 'streamId', objectId: 'objectId' })
           return Promise.resolve()
         },
-        onExit: () => {
-          called['onExit'] = called['onExit']++ || 1
-        },
         logger
       })
 
-      repeatedlyPollForWork()
+      await pollForAndCreatePreview()
       expect(called['updateHealthcheckData']).toBeGreaterThanOrEqual(1)
       expect(called['generateAndStore360Preview']).toBeGreaterThanOrEqual(1)
       expect(called['updatePreviewMetadata']).toBeGreaterThanOrEqual(1)
       expect(called['notifyUpdate']).toBeGreaterThanOrEqual(1)
-      expect(called['onExit']).toBe(0)
     })
   })
 })

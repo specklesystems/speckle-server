@@ -13,7 +13,8 @@ import {
 } from '@/repositories/objectPreview.js'
 import { insertPreviewFactory } from '@/repositories/previews.js'
 import { generateAndStore360PreviewFactory } from '@/services/360preview.js'
-import { forceExit, repeatedlyPollForWorkFactory } from '@/services/taskManager.js'
+import { pollForAndCreatePreviewFactory } from '@/services/pollForPreview.js'
+import { forceExit, repeatedlyDoSomeWorkFactory } from '@/services/taskManager.js'
 import { getHealthCheckFilePath, serviceOrigin } from '@/utils/env.js'
 import type { Knex } from 'knex'
 
@@ -33,20 +34,27 @@ export function startPreviewService(params: { db: Knex }) {
   })
 
   initPrometheusMetrics({ db })
-  repeatedlyPollForWorkFactory({
-    updateHealthcheckData: updateHealthcheckDataFactory({
-      healthCheckFilePath: getHealthCheckFilePath()
+  repeatedlyDoSomeWorkFactory({
+    doSomeWork: pollForAndCreatePreviewFactory({
+      updateHealthcheckData: updateHealthcheckDataFactory({
+        healthCheckFilePath: getHealthCheckFilePath()
+      }),
+      getNextUnstartedObjectPreview: getNextUnstartedObjectPreviewFactory({ db }),
+      generateAndStore360Preview: generateAndStore360PreviewFactory({
+        generatePreview: generatePreviewFactory({ serviceOrigin: serviceOrigin() }),
+        insertPreview: insertPreviewFactory({ db })
+      }),
+      updatePreviewMetadata: updatePreviewMetadataFactory({ db }),
+      notifyUpdate: notifyUpdateFactory({ db }),
+      logger: backgroundLogger
     }),
-    getNextUnstartedObjectPreview: getNextUnstartedObjectPreviewFactory({ db }),
-    generateAndStore360Preview: generateAndStore360PreviewFactory({
-      generatePreview: generatePreviewFactory({ serviceOrigin: serviceOrigin() }),
-      insertPreview: insertPreviewFactory({ db })
-    }),
-    updatePreviewMetadata: updatePreviewMetadataFactory({ db }),
-    notifyUpdate: notifyUpdateFactory({ db }),
     onExit: () => {
       process.exit(0)
     },
-    logger: backgroundLogger
+    delayPeriods: {
+      onSuccess: 10,
+      onNoWorkFound: 1000,
+      onFailed: 5000
+    }
   })()
 }
