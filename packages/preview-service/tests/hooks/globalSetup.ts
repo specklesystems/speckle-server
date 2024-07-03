@@ -32,8 +32,6 @@ export async function setup({ provide }: GlobalSetupContext) {
     WITH
     OWNER = preview_service_test
     ENCODING = 'UTF8'
-    LC_COLLATE = 'en_US.utf8'
-    LC_CTYPE = 'en_US.utf8'
     TABLESPACE = pg_default
     CONNECTION LIMIT = -1;`)
   await dbWithUnspecifiedDatabase.destroy()
