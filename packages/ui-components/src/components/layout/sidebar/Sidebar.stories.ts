@@ -10,14 +10,8 @@ export default {
   parameters: {
     docs: {
       description: {
-        component:
-          'This component displays a sidebar with an optional topbar button slot.'
+        component: 'This component displays a sidebar.'
       }
-    }
-  },
-  argTypes: {
-    title: {
-      description: 'Title of the sidebar, displayed at the top if provided'
     }
   }
 } as Meta
@@ -41,37 +35,34 @@ export const Dashboard: StoryObj = {
         <LayoutSidebarMenu>
           <LayoutSidebarMenuGroup title="Group Title with Icon">
             <template #title-icon>
-              <HomeIcon class="size-5" />
+              <HomeIcon class="h-5 w-5" />
             </template>
             <LayoutSidebarMenuGroupItem label="Group Item with Icon" to="/" >
               <template #icon>
-                <HomeIcon class="size-5" />
+                <HomeIcon class="h-5 w-5" />
               </template>
             </LayoutSidebarMenuGroupItem>
             <LayoutSidebarMenuGroupItem label="Group Item with Icon" to="/" >
               <template #icon>
-                <HomeIcon class="size-5" />
+                <HomeIcon class="h-5 w-5" />
               </template>
             </LayoutSidebarMenuGroupItem>
             <LayoutSidebarMenuGroupItem label="Group Item with Icon" to="/" >
               <template #icon>
-                <HomeIcon class="size-5" />
+                <HomeIcon class="h-5 w-5" />
               </template>
             </LayoutSidebarMenuGroupItem>
-
             <LayoutSidebarMenuGroupItem label="Group Item with no Icon" to="/" />
-
             <LayoutSidebarMenuGroupItem label="Group Item with Child" to="/">
               <LayoutSidebarMenuGroupItem label="Group Item child with Child" to="/">
                 <LayoutSidebarMenuGroupItem label="Group Item child" to="/">
                   <template #icon>
-                    <HomeIcon class="size-5" />
+                    <HomeIcon class="h-5 w-5" />
                   </template>
                 </LayoutSidebarMenuGroupItem>
               </LayoutSidebarMenuGroupItem>
             </LayoutSidebarMenuGroupItem>
           </LayoutSidebarMenuGroup>
-
           <LayoutSidebarMenuGroup title="Group Title without icon">
             <LayoutSidebarMenuGroupItem label="Menu item with children" to="/">
               <LayoutSidebarMenuGroupItem label="Menu item" to="/" />
@@ -80,7 +71,6 @@ export const Dashboard: StoryObj = {
               <LayoutSidebarMenuGroupItem label="Menu item" to="/" />
             </LayoutSidebarMenuGroupItem>
           </LayoutSidebarMenuGroup>
-
         </LayoutSidebarMenu>
       </LayoutSidebar>
     `
