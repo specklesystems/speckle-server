@@ -231,7 +231,7 @@ const documents = {
     "\n  query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {\n    stream(id: $streamId) {\n      branch(name: $branchName) {\n        id\n      }\n    }\n  }\n": types.LegacyBranchRedirectMetadataDocument,
     "\n  query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {\n    stream(id: $streamId) {\n      commit(id: $commitId) {\n        id\n        branch {\n          id\n        }\n      }\n    }\n  }\n": types.LegacyViewerCommitRedirectMetadataDocument,
     "\n  query LegacyViewerStreamRedirectMetadata($streamId: String!) {\n    stream(id: $streamId) {\n      id\n      commits(limit: 1) {\n        totalCount\n        items {\n          id\n          branch {\n            id\n          }\n        }\n      }\n    }\n  }\n": types.LegacyViewerStreamRedirectMetadataDocument,
-    "\n  query ResolveCommentLink($commentId: String!, $projectId: String!) {\n    comment(id: $commentId, streamId: $projectId) {\n      ...LinkableComment\n    }\n  }\n": types.ResolveCommentLinkDocument,
+    "\n  query ResolveCommentLink($commentId: String!, $projectId: String!) {\n    project(id: $projectId) {\n      comment(id: $commentId) {\n        id\n        ...LinkableComment\n      }\n    }\n  }\n": types.ResolveCommentLinkDocument,
     "\n  fragment AutomateFunctionPage_AutomateFunction on AutomateFunction {\n    id\n    name\n    description\n    logo\n    supportedSourceApps\n    tags\n    ...AutomateFunctionPageHeader_Function\n    ...AutomateFunctionPageInfo_AutomateFunction\n    ...AutomateAutomationCreateDialog_AutomateFunction\n    creator {\n      id\n    }\n  }\n": types.AutomateFunctionPage_AutomateFunctionFragmentDoc,
     "\n  query AutomateFunctionPage($functionId: ID!) {\n    automateFunction(id: $functionId) {\n      ...AutomateFunctionPage_AutomateFunction\n    }\n  }\n": types.AutomateFunctionPageDocument,
     "\n  query AutomateFunctionsPage($search: String, $cursor: String = null) {\n    ...AutomateFunctionsPageItems_Query\n    ...AutomateFunctionsPageHeader_Query\n  }\n": types.AutomateFunctionsPageDocument,
@@ -1130,7 +1130,7 @@ export function graphql(source: "\n  query LegacyViewerStreamRedirectMetadata($s
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query ResolveCommentLink($commentId: String!, $projectId: String!) {\n    comment(id: $commentId, streamId: $projectId) {\n      ...LinkableComment\n    }\n  }\n"): (typeof documents)["\n  query ResolveCommentLink($commentId: String!, $projectId: String!) {\n    comment(id: $commentId, streamId: $projectId) {\n      ...LinkableComment\n    }\n  }\n"];
+export function graphql(source: "\n  query ResolveCommentLink($commentId: String!, $projectId: String!) {\n    project(id: $projectId) {\n      comment(id: $commentId) {\n        id\n        ...LinkableComment\n      }\n    }\n  }\n"): (typeof documents)["\n  query ResolveCommentLink($commentId: String!, $projectId: String!) {\n    project(id: $projectId) {\n      comment(id: $commentId) {\n        id\n        ...LinkableComment\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

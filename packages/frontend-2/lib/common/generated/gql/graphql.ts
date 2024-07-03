@@ -791,6 +791,16 @@ export type CreateModelInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CreateVersionInput = {
+  message?: InputMaybe<Scalars['String']['input']>;
+  modelId: Scalars['String']['input'];
+  objectId: Scalars['String']['input'];
+  parents?: InputMaybe<Array<Scalars['String']['input']>>;
+  projectId: Scalars['String']['input'];
+  sourceApplication?: InputMaybe<Scalars['String']['input']>;
+  totalChildrenCount?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
@@ -966,6 +976,13 @@ export type LimitedUserTimelineArgs = {
   limit?: Scalars['Int']['input'];
 };
 
+export type MarkReceivedVersionInput = {
+  message?: InputMaybe<Scalars['String']['input']>;
+  projectId: Scalars['String']['input'];
+  sourceApplication: Scalars['String']['input'];
+  versionId: Scalars['String']['input'];
+};
+
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
@@ -1132,8 +1149,10 @@ export type Mutation = {
    * @deprecated Use commentMutations version
    */
   commentView: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.create instead. */
   commitCreate: Scalars['String']['output'];
   commitDelete: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.markReceived instead. */
   commitReceive: Scalars['Boolean']['output'];
   commitUpdate: Scalars['Boolean']['output'];
   /** Delete a batch of commits */
@@ -1151,7 +1170,7 @@ export type Mutation = {
    */
   inviteResend: Scalars['Boolean']['output'];
   modelMutations: ModelMutations;
-  objectCreate: Array<Maybe<Scalars['String']['output']>>;
+  objectCreate: Array<Scalars['String']['output']>;
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean']['output'];
@@ -1508,6 +1527,7 @@ export type MutationWebhookUpdateArgs = {
 
 export type Object = {
   __typename?: 'Object';
+  /** @deprecated Not implemented. */
   applicationId?: Maybe<Scalars['String']['output']>;
   /**
    * Get any objects that this object references. In the case of commits, this will give you a commit's constituent objects.
@@ -1546,7 +1566,7 @@ export type ObjectChildrenArgs = {
 export type ObjectCollection = {
   __typename?: 'ObjectCollection';
   cursor?: Maybe<Scalars['String']['output']>;
-  objects: Array<Maybe<Object>>;
+  objects: Array<Object>;
   totalCount: Scalars['Int']['output'];
 };
 
@@ -1605,6 +1625,8 @@ export type Project = {
   blob?: Maybe<BlobMetadata>;
   /** Get the metadata collection of blobs stored for this stream. */
   blobs?: Maybe<BlobMetadataCollection>;
+  /** Get specific project comment/thread by ID */
+  comment?: Maybe<Comment>;
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
@@ -1624,6 +1646,7 @@ export type Project = {
    */
   modelsTree: ModelsTreeItemCollection;
   name: Scalars['String']['output'];
+  object?: Maybe<Object>;
   /** Returns a list models that are being created from a file import */
   pendingImportedModels: Array<FileUpload>;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
@@ -1667,6 +1690,11 @@ export type ProjectBlobsArgs = {
 };
 
 
+export type ProjectCommentArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
@@ -1695,6 +1723,11 @@ export type ProjectModelsTreeArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectModelsTreeFilter>;
   limit?: Scalars['Int']['input'];
+};
+
+
+export type ProjectObjectArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -2152,6 +2185,7 @@ export type Query = {
   automateFunctions: AutomateFunctionCollection;
   /** Part of the automation/function creation handshake mechanism */
   automateValidateAuthCode: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.comment instead. */
   comment?: Maybe<Comment>;
   /**
    * This query can be used in the following ways:
@@ -2567,6 +2601,7 @@ export type Stream = {
   /** Whether the stream can be viewed by non-contributors */
   isPublic: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.object instead. */
   object?: Maybe<Object>;
   /** Pending stream access requests */
   pendingAccessRequests?: Maybe<Array<StreamAccessRequest>>;
@@ -3237,15 +3272,27 @@ export type VersionCreatedTriggerDefinition = {
 
 export type VersionMutations = {
   __typename?: 'VersionMutations';
+  create: Version;
   delete: Scalars['Boolean']['output'];
+  markReceived: Scalars['Boolean']['output'];
   moveToModel: Model;
   requestGendoAIRender: Scalars['Boolean']['output'];
   update: Version;
 };
 
 
+export type VersionMutationsCreateArgs = {
+  input: CreateVersionInput;
+};
+
+
 export type VersionMutationsDeleteArgs = {
   input: DeleteVersionsInput;
+};
+
+
+export type VersionMutationsMarkReceivedArgs = {
+  input: MarkReceivedVersionInput;
 };
 
 
@@ -4499,7 +4546,7 @@ export type ResolveCommentLinkQueryVariables = Exact<{
 }>;
 
 
-export type ResolveCommentLinkQuery = { __typename?: 'Query', comment?: { __typename?: 'Comment', id: string, viewerResources: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> } | null };
+export type ResolveCommentLinkQuery = { __typename?: 'Query', project: { __typename?: 'Project', comment?: { __typename?: 'Comment', id: string, viewerResources: Array<{ __typename?: 'ViewerResourceItem', modelId?: string | null, versionId?: string | null, objectId: string }> } | null } };
 
 export type AutomateFunctionPage_AutomateFunctionFragment = { __typename?: 'AutomateFunction', id: string, name: string, description: string, logo?: string | null, supportedSourceApps: Array<string>, tags: Array<string>, automationCount: number, isFeatured: boolean, creator?: { __typename?: 'LimitedUser', id: string } | null, repo: { __typename?: 'BasicGitRepositoryMetadata', id: string, url: string, owner: string, name: string }, releases: { __typename?: 'AutomateFunctionReleaseCollection', totalCount: number, items: Array<{ __typename?: 'AutomateFunctionRelease', id: string, inputSchema?: {} | null, createdAt: string, commitId: string }> } };
 
@@ -4749,6 +4796,6 @@ export const OnViewerCommentsUpdatedDocument = {"kind":"Document","definitions":
 export const LegacyBranchRedirectMetadataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"LegacyBranchRedirectMetadata"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"branchName"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"branch"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"name"},"value":{"kind":"Variable","name":{"kind":"Name","value":"branchName"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]} as unknown as DocumentNode<LegacyBranchRedirectMetadataQuery, LegacyBranchRedirectMetadataQueryVariables>;
 export const LegacyViewerCommitRedirectMetadataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"LegacyViewerCommitRedirectMetadata"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"commitId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"commit"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"commitId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"branch"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]} as unknown as DocumentNode<LegacyViewerCommitRedirectMetadataQuery, LegacyViewerCommitRedirectMetadataQueryVariables>;
 export const LegacyViewerStreamRedirectMetadataDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"LegacyViewerStreamRedirectMetadata"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"stream"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"streamId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"commits"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"branch"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]}}]}}]}}]} as unknown as DocumentNode<LegacyViewerStreamRedirectMetadataQuery, LegacyViewerStreamRedirectMetadataQueryVariables>;
-export const ResolveCommentLinkDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ResolveCommentLink"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"commentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"comment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"commentId"}}},{"kind":"Argument","name":{"kind":"Name","value":"streamId"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"LinkableComment"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LinkableComment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"viewerResources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"modelId"}},{"kind":"Field","name":{"kind":"Name","value":"versionId"}},{"kind":"Field","name":{"kind":"Name","value":"objectId"}}]}}]}}]} as unknown as DocumentNode<ResolveCommentLinkQuery, ResolveCommentLinkQueryVariables>;
+export const ResolveCommentLinkDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"ResolveCommentLink"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"commentId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"project"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"projectId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"comment"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"commentId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"LinkableComment"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"LinkableComment"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Comment"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"viewerResources"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"modelId"}},{"kind":"Field","name":{"kind":"Name","value":"versionId"}},{"kind":"Field","name":{"kind":"Name","value":"objectId"}}]}}]}}]} as unknown as DocumentNode<ResolveCommentLinkQuery, ResolveCommentLinkQueryVariables>;
 export const AutomateFunctionPageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AutomateFunctionPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"functionId"}},"type":{"kind":"NonNullType","type":{"kind":"NamedType","name":{"kind":"Name","value":"ID"}}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automateFunction"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"id"},"value":{"kind":"Variable","name":{"kind":"Name","value":"functionId"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateFunctionPage_AutomateFunction"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateFunctionPageHeader_Function"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"repo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"releases"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateFunctionPageParametersDialog_AutomateFunctionRelease"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunctionRelease"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateFunctionPageInfo_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"repo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}},{"kind":"Field","name":{"kind":"Name","value":"automationCount"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"releases"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}},{"kind":"Field","name":{"kind":"Name","value":"createdAt"}},{"kind":"Field","name":{"kind":"Name","value":"commitId"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateFunctionPageParametersDialog_AutomateFunctionRelease"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isFeatured"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"repo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"releases"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateAutomationCreateDialog_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateFunctionPage_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"supportedSourceApps"}},{"kind":"Field","name":{"kind":"Name","value":"tags"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateFunctionPageHeader_Function"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateFunctionPageInfo_AutomateFunction"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateAutomationCreateDialog_AutomateFunction"}},{"kind":"Field","name":{"kind":"Name","value":"creator"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}}]}}]}}]} as unknown as DocumentNode<AutomateFunctionPageQuery, AutomateFunctionPageQueryVariables>;
 export const AutomateFunctionsPageDocument = {"kind":"Document","definitions":[{"kind":"OperationDefinition","operation":"query","name":{"kind":"Name","value":"AutomateFunctionsPage"},"variableDefinitions":[{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"search"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}}},{"kind":"VariableDefinition","variable":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}},"type":{"kind":"NamedType","name":{"kind":"Name","value":"String"}},"defaultValue":{"kind":"NullValue"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateFunctionsPageItems_Query"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateFunctionsPageHeader_Query"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"name"}},{"kind":"Field","name":{"kind":"Name","value":"isFeatured"}},{"kind":"Field","name":{"kind":"Name","value":"description"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"repo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"url"}},{"kind":"Field","name":{"kind":"Name","value":"owner"}},{"kind":"Field","name":{"kind":"Name","value":"name"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"releases"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"1"}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"inputSchema"}}]}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateAutomationCreateDialog_AutomateFunction"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunction"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateAutomationCreateDialogFunctionParametersStep_AutomateFunction"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplate"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"AutomateFunctionTemplate"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"title"}},{"kind":"Field","name":{"kind":"Name","value":"logo"}},{"kind":"Field","name":{"kind":"Name","value":"url"}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateFunctionsPageItems_Query"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Query"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automateFunctions"},"arguments":[{"kind":"Argument","name":{"kind":"Name","value":"limit"},"value":{"kind":"IntValue","value":"20"}},{"kind":"Argument","name":{"kind":"Name","value":"filter"},"value":{"kind":"ObjectValue","fields":[{"kind":"ObjectField","name":{"kind":"Name","value":"search"},"value":{"kind":"Variable","name":{"kind":"Name","value":"search"}}}]}},{"kind":"Argument","name":{"kind":"Name","value":"cursor"},"value":{"kind":"Variable","name":{"kind":"Name","value":"cursor"}}}],"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"totalCount"}},{"kind":"Field","name":{"kind":"Name","value":"items"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomationsFunctionsCard_AutomateFunction"}},{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateAutomationCreateDialog_AutomateFunction"}}]}},{"kind":"Field","name":{"kind":"Name","value":"cursor"}}]}}]}},{"kind":"FragmentDefinition","name":{"kind":"Name","value":"AutomateFunctionsPageHeader_Query"},"typeCondition":{"kind":"NamedType","name":{"kind":"Name","value":"Query"}},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"activeUser"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"id"}},{"kind":"Field","name":{"kind":"Name","value":"automateInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"hasAutomateGithubApp"}},{"kind":"Field","name":{"kind":"Name","value":"availableGithubOrgs"}}]}}]}},{"kind":"Field","name":{"kind":"Name","value":"serverInfo"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"automate"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"Field","name":{"kind":"Name","value":"availableFunctionTemplates"},"selectionSet":{"kind":"SelectionSet","selections":[{"kind":"FragmentSpread","name":{"kind":"Name","value":"AutomateFunctionCreateDialogTemplateStep_AutomateFunctionTemplate"}}]}}]}}]}}]}}]} as unknown as DocumentNode<AutomateFunctionsPageQuery, AutomateFunctionsPageQueryVariables>;

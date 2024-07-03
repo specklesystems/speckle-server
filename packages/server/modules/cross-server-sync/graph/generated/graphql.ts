@@ -1628,6 +1628,8 @@ export type Project = {
   blob?: Maybe<BlobMetadata>;
   /** Get the metadata collection of blobs stored for this stream. */
   blobs?: Maybe<BlobMetadataCollection>;
+  /** Get specific project comment/thread by ID */
+  comment?: Maybe<Comment>;
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
@@ -1688,6 +1690,11 @@ export type ProjectBlobsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   query?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type ProjectCommentArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -2181,6 +2188,7 @@ export type Query = {
   automateFunctions: AutomateFunctionCollection;
   /** Part of the automation/function creation handshake mechanism */
   automateValidateAuthCode: Scalars['Boolean']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.comment instead. */
   comment?: Maybe<Comment>;
   /**
    * This query can be used in the following ways:
@@ -2596,6 +2604,7 @@ export type Stream = {
   /** Whether the stream can be viewed by non-contributors */
   isPublic: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.object instead. */
   object?: Maybe<Object>;
   /** Pending stream access requests */
   pendingAccessRequests?: Maybe<Array<StreamAccessRequest>>;

@@ -1,5 +1,8 @@
 extend type Stream {
   object(id: String!): Object
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Project.object instead."
+    )
 }
 
 extend type Project {

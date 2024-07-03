@@ -2,25 +2,17 @@ import { authorizeResolver } from '@/modules/shared'
 
 import {
   createObjects,
-  getObject,
   getObjectChildren,
   getObjectChildrenQuery
 } from '../../services/objects'
 
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { ObjectRecord } from '@/modules/core/helpers/types'
+import { getObject } from '@/modules/core/repositories/objects'
 
 const getStreamObject: NonNullable<Resolvers['Stream']>['object'] =
   async function object(parent, args) {
-    const obj = await getObject({ streamId: parent.id, objectId: args.id })
-    if (!obj) return null
-
-    const ret: ObjectRecord = {
-      ...obj,
-      streamId: parent.id
-    }
-    return ret
+    return (await getObject(args.id, parent.id)) || null
   }
 
 export = {
