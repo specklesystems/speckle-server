@@ -61,7 +61,7 @@ const previewRouterFactory = () => {
         return res.status(500).end()
       }
 
-      // res.setHeader( 'content-type', 'image/png' )
+      res.setHeader('content-type', 'image/png')
       res.send(screenshot)
     } as RequestHandler //FIXME: this works around a type error with async, which is resolved in express 5
   )
