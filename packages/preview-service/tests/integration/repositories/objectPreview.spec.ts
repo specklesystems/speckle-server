@@ -6,8 +6,8 @@ import {
 import cryptoRandomString from 'crypto-random-string'
 import { describe, expect } from 'vitest'
 
-describe('Repositories: ObjectPreview', () => {
-  describe('getNextUnstartedObjectPreview', () => {
+describe.concurrent('Repositories: ObjectPreview', () => {
+  describe.concurrent('getNextUnstartedObjectPreview', () => {
     databaseIntegrationTest(
       'should return the next unstarted object preview',
       async ({ context }) => {

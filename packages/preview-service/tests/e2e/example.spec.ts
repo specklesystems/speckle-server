@@ -4,8 +4,8 @@ import { getServerPort } from '#/helpers/helpers.js'
 import { e2eTest } from '#/helpers/testExtensions.js'
 import { describe } from 'vitest'
 
-describe('E2E', () => {
-  describe('Example', () => {
+describe.concurrent('E2E', () => {
+  describe.concurrent('Example', () => {
     e2eTest('should start a server on an unique port', async ({ context }) => {
       const port = getServerPort(context.server)
       console.log(`port1 : ${port}`)

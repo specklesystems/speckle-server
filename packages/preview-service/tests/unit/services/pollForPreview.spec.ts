@@ -2,8 +2,8 @@ import { logger } from '@/observability/logging.js'
 import { pollForAndCreatePreviewFactory } from '@/services/pollForPreview.js'
 import { describe, expect, it } from 'vitest'
 
-describe('Polling for preview', () => {
-  describe('pollForAndCreatePreview', () => {
+describe.concurrent('Polling for preview', () => {
+  describe.concurrent('pollForAndCreatePreview', () => {
     it('calls all component functions with expected parameters', async () => {
       const called: Record<string, number> = {}
       const pollForAndCreatePreview = pollForAndCreatePreviewFactory({
