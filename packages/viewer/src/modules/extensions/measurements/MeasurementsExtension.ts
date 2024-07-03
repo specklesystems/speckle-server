@@ -66,8 +66,7 @@ export class MeasurementsExtension extends Extension {
       this._activeMeasurement.update()
       if (!value) this.cancelMeasurement()
     }
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    this.viewer.requestRender()
   }
 
   public get options(): MeasurementOptions {
@@ -183,8 +182,7 @@ export class MeasurementsExtension extends Extension {
     }
     this._activeMeasurement.update()
 
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    this.viewer.requestRender()
     this._frameLock = true
     this._sceneHit = true
     // console.log('Time -> ', performance.now() - start)
@@ -309,8 +307,7 @@ export class MeasurementsExtension extends Extension {
   protected cancelMeasurement() {
     if (this._activeMeasurement) this.renderer.scene.remove(this._activeMeasurement)
     this._activeMeasurement = null
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    this.viewer.requestRender()
   }
 
   protected finishMeasurement() {
@@ -332,8 +329,7 @@ export class MeasurementsExtension extends Extension {
       this.measurements.splice(this.measurements.indexOf(this._selectedMeasurement), 1)
       this.renderer.scene.remove(this._selectedMeasurement)
       this._selectedMeasurement = null
-      this.renderer.needsRender = true
-      this.renderer.resetPipeline()
+      this.viewer.requestRender()
     } else {
       this.cancelMeasurement()
     }
@@ -357,8 +353,7 @@ export class MeasurementsExtension extends Extension {
         if (flashCount >= maxFlashCount) {
           clearInterval(handle)
         }
-        this.renderer.needsRender = true
-        this.renderer.resetPipeline()
+        this.viewer.requestRender()
       }
     }, 100)
   }
@@ -446,8 +441,7 @@ export class MeasurementsExtension extends Extension {
     if (this._options.visible) this.raycaster.layers.enable(ObjectLayers.MEASUREMENTS)
     else this.raycaster.layers.disable(ObjectLayers.MEASUREMENTS)
 
-    this.renderer.needsRender = true
-    this.renderer.resetPipeline()
+    this.viewer.requestRender()
   }
 
   public fromMeasurementData(startPoint: Vector3, endPoint: Vector3) {

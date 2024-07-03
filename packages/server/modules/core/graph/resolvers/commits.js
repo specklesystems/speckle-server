@@ -30,10 +30,10 @@ const {
 
 const { getUser } = require('../../services/users')
 
+const { RateLimitError } = require('@/modules/core/errors/ratelimit')
 const {
   isRateLimitBreached,
-  getRateLimitResult,
-  RateLimitError
+  getRateLimitResult
 } = require('@/modules/core/services/ratelimiter')
 const {
   batchMoveCommits,

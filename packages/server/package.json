@@ -151,6 +151,7 @@
     "@types/zxcvbn": "^4.4.1",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.39.0",
+    "apollo-server-plugin-base": "^3.7.2",
     "axios": "^1.6.0",
     "chai": "^4.2.0",
     "chai-as-promised": "^7.1.2",

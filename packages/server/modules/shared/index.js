@@ -35,6 +35,32 @@ async function validateScopes(scopes, scope) {
     throw new ForbiddenError(errMsg, { scope })
 }
 
+const getUserAclEntry = async ({ aclTableName, userId, resourceId }) => {
+  if (!userId) {
+    return null
+  }
+
+  const query = { userId }
+
+  // Different acl tables have different names for the resource id column
+  switch (aclTableName) {
+    case 'server_acl': {
+      // No mutation necessary
+      break
+    }
+    case 'stream_acl': {
+      query.resourceId = resourceId
+      break
+    }
+    case 'workspace_acl': {
+      query.workspaceId = resourceId
+      break
+    }
+  }
+
+  return await knex(aclTableName).select('*').where(query).first()
+}
+
 /**
  * Checks the userId against the resource's acl.
  * @param  {string | null | undefined} userId
@@ -85,9 +111,11 @@ async function authorizeResolver(
     )
   }
 
-  const userAclEntry = userId
-    ? await knex(role.aclTableName).select('*').where({ resourceId, userId }).first()
-    : null
+  const userAclEntry = await getUserAclEntry({
+    aclTableName: role.aclTableName,
+    userId,
+    resourceId
+  })
 
   if (!userAclEntry) {
     throw new ForbiddenError('You are not authorized to access this resource.')
