@@ -1,20 +1,30 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
     <div class="flex flex-col">
+      <h2 class="text-2xl font-semibold hidden md:block">Developer Settings</h2>
+      <p class="text-sm pt-4">You can see stuff for developers here</p>
+      <hr class="my-10" />
       <div class="flex flex-col gap-12">
-        <DeveloperSettingsSectionHeader
-          title="Developer Settings"
-          :buttons="[
-            {
-              props: {
-                target: '_blank',
-                external: true
-              },
-              onClick: goToExplorer,
-              label: 'Explore GraphQL'
-            }
-          ]"
-        />
+        <div class="flex flex-col">
+          <DeveloperSettingsSectionHeader
+            title="Explore GraphQL"
+            class="md:gap-0"
+            subheading
+            :buttons="[
+              {
+                props: {
+                  color: 'invert',
+                  target: '_blank',
+                  external: true,
+                  iconLeft: BookOpenIcon
+                },
+                onClick: goToExplorer,
+                label: 'Open docs'
+              }
+            ]"
+          />
+        </div>
+        <hr />
         <div class="flex flex-col gap-4">
           <DeveloperSettingsSectionHeader
             title="Access Tokens"
@@ -47,7 +57,6 @@
               accessed by others (e.g., public repos).
             </strong>
           </DeveloperSettingsSectionHeader>
-
           <LayoutTable
             :columns="[
               { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },

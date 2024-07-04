@@ -1,20 +1,24 @@
 <template>
   <div class="md:max-w-xl md:mx-auto">
-    <h2 class="h3 font-semibold hidden md:block">General</h2>
-    <div class="flex flex-col mt-4 divide-y">
-      <h3 class="h5 py-8">Server details</h3>
-      <form class="flex flex-col gap-2 py-8" @submit="onSubmit">
+    <h2 class="text-2xl font-semibold font-semibold hidden md:block">General</h2>
+    <p class="text-sm pt-4">Here are your general settings</p>
+
+    <hr class="my-10" />
+
+    <div class="flex flex-col space-y-6">
+      <h2 class="text-xl">Server details</h2>
+      <form class="flex flex-col gap-2" @submit="onSubmit">
         <div class="flex flex-col gap-4">
           <FormTextInput
             v-model="name"
-            label="Server's public name"
+            label="Public name"
             name="serverName"
             color="foundation"
             placeholder="Server name"
             show-label
             :show-required="true"
             :rules="requiredRule"
-            :type="'text'"
+            type="text"
           />
           <FormTextArea
             v-model="description"
@@ -39,7 +43,7 @@
             name="adminEmail"
             placeholder="Admin Email"
             show-label
-            :type="'email'"
+            type="email"
           />
           <FormTextInput
             v-model="termsOfService"

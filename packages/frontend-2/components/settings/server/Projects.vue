@@ -1,8 +1,11 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
-    <h2 class="h3 font-semibold pb-8 hidden md:block">Projects</h2>
+    <h2 class="text-2xl font-semibold font-semibold hidden md:block">Projects</h2>
+    <p class="text-sm pt-4">And overview of all your projects</p>
+
+    <hr class="my-10" />
+
     <FormTextInput
-      size="lg"
       name="search"
       :custom-icon="MagnifyingGlassIcon"
       color="foundation"
@@ -10,10 +13,11 @@
       search
       :show-clear="!!searchString"
       placeholder="Search Projects"
-      class="rounded-md border border-outline-3"
+      class="rounded-md border border-outline-3 md:max-w-md"
       @update:model-value="debounceSearchUpdate"
       @change="($event) => searchUpdateHandler($event.value)"
     />
+
     <LayoutTable
       class="mt-8"
       :columns="[

@@ -3,7 +3,7 @@
     <div class="w-full h-full flex">
       <LayoutSidebar
         v-if="!isMobile || !selectedMenuItem"
-        class="w-full md:w-56 lg:w-60 p-4 pt-6 bg-primary-muted md:border-r md:border-outline-3"
+        class="w-full md:w-56 lg:w-60 p-4 pt-6 bg-foundation-page md:border-r md:border-outline-3"
       >
         <LayoutSidebarMenu>
           <LayoutSidebarMenuGroup title="Account Settings">
@@ -23,23 +23,22 @@
             </template>
             <LayoutSidebarMenuGroupItem
               v-for="(sidebarMenuItem, index) in sidebarConfig.server"
-              :key="`sidebarUserItem-${index}`"
+              :key="`sidebarServerItem-${index}`"
               :label="sidebarMenuItem.title"
               @click="setSelectedMenuItem(sidebarMenuItem.path)"
             />
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
-
       <main
         v-if="selectedMenuItem"
-        class="overflow-scroll flex-1 bg-foundation-page p-6 py-8 md:p-4 md:py-12"
+        class="simple-scrollbar overflow-y-scroll flex-1 bg-foundation p-6 py-8 md:p-4 md:py-12"
       >
         <div class="flex md:hidden items-center">
           <ChevronLeftIcon class="w-6 h-6" @click="setSelectedMenuItem(null)" />
           <h1 class="h4 font-semibold ml-4">{{ selectedMenuItem.title }}</h1>
         </div>
-        <component :is="selectedMenuItem?.component" />
+        <component :is="selectedMenuItem.component" />
       </main>
     </div>
   </LayoutDialog>
@@ -153,5 +152,6 @@ const sidebarConfig: SidebarConfig = {
 
 function setSelectedMenuItem(path: string | null): void {
   router.push({ path: path ?? '/settings' })
+  // history.pushState({}, '', path ?? '/settings')
 }
 </script>

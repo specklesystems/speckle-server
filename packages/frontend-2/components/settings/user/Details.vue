@@ -1,29 +1,33 @@
 <template>
   <div class="flex flex-col gap-y-4">
     <h2 class="text-xl">Your details</h2>
-    <FormTextInput
-      v-model="name"
-      class="pt-2 pb-1"
-      color="foundation"
-      label="Name"
-      name="name"
-      placeholder="John Doe"
-      show-label
-      :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
-      @change="save"
-    />
-    <hr />
-    <FormTextInput
-      v-model="company"
-      color="foundation"
-      label="Company"
-      name="company"
-      placeholder="Example Ltd."
-      show-label
-      :rules="[isStringOfLength({ maxLength: 512 })]"
-      @change="save"
-    />
-    <UserProfileEditDialogAvatar :user="user" size="xxl" />
+    <div class="grid grid-cols-2">
+      <UserProfileEditDialogAvatar :user="user" size="xxl" />
+      <div>
+        <FormTextInput
+          v-model="name"
+          class="pt-2 pb-1"
+          color="foundation"
+          label="Name"
+          name="name"
+          placeholder="John Doe"
+          show-label
+          :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
+          @change="save"
+        />
+        <hr class="mt-4 mb-2" />
+        <FormTextInput
+          v-model="company"
+          color="foundation"
+          label="Company"
+          name="company"
+          placeholder="Example Ltd."
+          show-label
+          :rules="[isStringOfLength({ maxLength: 512 })]"
+          @change="save"
+        />
+      </div>
+    </div>
   </div>
 </template>
 <script setup lang="ts">

@@ -1,25 +1,27 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
-    <div class="flex justify-between flex-col md:flex-row gap-3 md:gap-0">
-      <h2 class="h3 font-semibold pb-8 hidden md:block">Active Users</h2>
+    <h2 class="text-2xl font-semibold font-semibold hidden md:block">Active Users</h2>
+    <p class="text-sm pt-4">And overview of all your active users</p>
+
+    <hr class="my-10" />
+
+    <div class="flex">
+      <FormTextInput
+        name="search"
+        :custom-icon="MagnifyingGlassIcon"
+        color="foundation"
+        full-width
+        search
+        :show-clear="!!searchString"
+        placeholder="Search Users"
+        class="rounded-md border border-outline-3 md:max-w-md"
+        @update:model-value="debounceSearchUpdate"
+        @change="($event) => searchUpdateHandler($event.value)"
+      />
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
         Invite
       </FormButton>
     </div>
-
-    <FormTextInput
-      size="lg"
-      name="search"
-      :custom-icon="MagnifyingGlassIcon"
-      color="foundation"
-      full-width
-      search
-      :show-clear="!!searchString"
-      placeholder="Search Users"
-      class="rounded-md border border-outline-3"
-      @update:model-value="debounceSearchUpdate"
-      @change="($event) => searchUpdateHandler($event.value)"
-    />
 
     <LayoutTable
       class="mt-8"
