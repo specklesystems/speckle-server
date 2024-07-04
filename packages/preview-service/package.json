@@ -34,6 +34,7 @@
     "@speckle/viewer": "workspace:^",
     "cookie-parser": "~1.4.4",
     "crypto": "^1.0.1",
+    "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "file-type": "^16.5.4",
     "http-errors": "~1.6.3",

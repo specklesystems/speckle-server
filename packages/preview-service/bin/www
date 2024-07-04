@@ -2,5 +2,8 @@
 import { startServer } from '../dist/src/server/server.js'
 import { startPreviewService } from '../dist/src/server/background.js'
 import { db } from '../dist/src/repositories/knex.js'
+import dotenv from 'dotenv'
+
+dotenv.config()
 startServer({ db })
 startPreviewService({ db })

@@ -15652,6 +15652,7 @@ __metadata:
     cookie-parser: "npm:~1.4.4"
     crypto: "npm:^1.0.1"
     crypto-random-string: "npm:^5.0.0"
+    dotenv: "npm:^16.4.5"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     eslint-plugin-vitest: "npm:^0.5.4"

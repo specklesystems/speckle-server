@@ -8,6 +8,7 @@ import { down, up } from '#/migrations/testPreviewService.js'
 import { testLogger as logger } from '@/observability/logging.js'
 import cryptoRandomString from 'crypto-random-string'
 import type { GlobalSetupContext } from 'vitest/node'
+import dotenv from 'dotenv'
 
 declare module 'vitest' {
   export interface ProvidedContext {
@@ -27,6 +28,7 @@ const dbName = `preview_service_${cryptoRandomString({
  */
 export async function setup({ provide }: GlobalSetupContext) {
   logger.info('🏃🏻‍♀️‍➡️ Running vitest setup global hook')
+  dotenv.config()
   const dbWithUnspecifiedDatabase = getTestDb()
   await dbWithUnspecifiedDatabase.raw(`CREATE DATABASE ${dbName}
     WITH
