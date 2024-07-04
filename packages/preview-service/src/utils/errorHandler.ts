@@ -1,5 +1,5 @@
 import { ErrorRequestHandler } from 'express'
-import { isNaN, isObject, isString } from 'lodash-es'
+import { isNaN, isObject, isString } from 'lodash'
 
 export const errorHandler: ErrorRequestHandler = (err, req, res) => {
   if (

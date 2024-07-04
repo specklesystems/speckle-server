@@ -42,7 +42,7 @@ const configs = [
   {
     files: ['src/scripts/puppeteerDriver.js'],
     languageOptions: {
-      sourceType: 'module',
+      sourceType: 'commonjs',
       globals: {
         ...globals.browser
       }

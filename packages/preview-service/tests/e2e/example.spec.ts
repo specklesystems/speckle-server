@@ -1,7 +1,7 @@
 // example tests to confirm the servers are running and the API is working
 
-import { getServerPort } from '#tests/helpers/helpers.js'
-import { e2eTest } from '#tests/helpers/testExtensions.js'
+import { getServerPort } from '#/helpers/helpers.js'
+import { e2eTest } from '#/helpers/testExtensions.js'
 import { describe } from 'vitest'
 
 describe.concurrent('E2E', () => {

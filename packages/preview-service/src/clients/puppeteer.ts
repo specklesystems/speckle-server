@@ -1,5 +1,5 @@
-import { extendLoggerComponent } from '#src/observability/logging.js'
-import { isDevelopment } from '#src/utils/env.js'
+import { extendLoggerComponent } from '@/observability/logging.js'
+import { isDevelopment } from '@/utils/env.js'
 import type { Logger } from 'pino'
 import puppeteer, { type EvaluateFunc, type PuppeteerLaunchOptions } from 'puppeteer'
 
