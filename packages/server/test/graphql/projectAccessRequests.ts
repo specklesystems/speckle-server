@@ -9,10 +9,6 @@ const basicProjectAccessRequestFragment = gql`
     }
     requesterId
     projectId
-    project {
-      id
-      name
-    }
     createdAt
   }
 `
@@ -43,13 +39,33 @@ export const getActiveUserProjectAccessRequestQuery = gql`
   ${basicProjectAccessRequestFragment}
 `
 
+export const getActiveUserFullProjectAccessRequestQuery = gql`
+  query GetActiveUserFullProjectAccessRequest($projectId: String!) {
+    activeUser {
+      projectAccessRequest(projectId: $projectId) {
+        ...BasicProjectAccessRequestFields
+        project {
+          id
+          name
+        }
+      }
+    }
+  }
+
+  ${basicProjectAccessRequestFragment}
+`
+
 export const getPendingProjectAccessRequestsQuery = gql`
   query GetPendingProjectAccessRequests($projectId: String!) {
     project(id: $projectId) {
       id
       name
       pendingAccessRequests {
-        ...BasicStreamAccessRequestFields
+        ...BasicProjectAccessRequestFields
+        project {
+          id
+          name
+        }
       }
     }
   }
