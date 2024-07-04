@@ -12,6 +12,108 @@
 /**
  * Making sure page is always stretched to the bottom of the screen even if there's nothing in it
  */
+
+/* Michal: adding this variables just for testing purposes - compare with local variables here: https://www.figma.com/design/z9qYUyM3kLH534M19jvCGE/Michal's-library-WIP?node-id=2469-3658&t=urCpJVScS6kW9JQG-4 */
+
+html {
+  --simple-scrollbar-width: 4px;
+
+  /* light mode */
+  --foundation-page: #fafafa;
+  --foundation: #ffffff;
+  --foundation-2: #f5f5f5;
+
+  --foreground: #1a1a1a;
+  --foreground-2: #626263;
+  --foreground-on-primary: #ffffff;
+
+  --primary: #136cff;
+  --primary-focus: #0057E5;
+  --primary-muted: #ededed;
+
+  --outline-1: #276fe5;
+  --outline-2: #dfdfdf;
+  --outline-3: #E2E8F0;
+  --outline-4: #4b40c9;
+  --outline-4: #C4C4C4;
+
+  --danger: #C45959;
+
+  /* undecided - to do later */
+  
+  --success: #34d399;
+  --success-lighter: #d1fae5;
+  --success-darker: #064e3b;
+  
+  --warning: #fbbf24;
+  --warning-lighter: #fef3c7;
+  --warning-darker: #78350f;
+  
+  --info: green; /* #38bdf8; */
+  --info-lighter: violet; /* #e0f2fe; */
+  --info-darker: teal; /* #0c4a6e; */
+
+  --danger-lighter: #fee2e2;
+  --danger-darker: #7f1d1d;
+
+  --foundation-3: pink; /* #fcfcfc; */
+  --foundation-4: pink; /* #fcfcfc; */
+  --foundation-5: pink; /* #fcfcfc; */
+  --foundation-focus: pink; /* not used? #dbeafe; */
+  --foundation-disabled: pink;
+}
+
+html[class*='dark'] {
+  --foundation-page: #101012;
+  --foundation: #15161c;
+  --foundation-2: #191a22;
+
+  --foreground: #ffffff;
+  --foreground-2: #b0b1b5;
+  --foreground-on-primary: #ffffff;
+
+  --primary: #136cff;
+  --primary-focus: #458CFF;
+  --primary-muted: #292B39;
+
+  --outline-1: #2b7cff;
+  --outline-2: #2f313f;
+  --outline-3: #282833;
+  --outline-4: #4B40C9;
+  --outline-5: #434559;
+
+  --danger: #F87171;
+
+  /* undecided - to do later */
+
+  --success: #34d399;
+  --success-lighter: #a7f3d0;
+  --success-darker: #064e3b;
+
+  --warning: #facc15;
+  --warning-lighter: #fef08a;
+  --warning-darker: #78350f;
+  --info: #38bdf8;
+  --info-lighter: #bae6fd;
+  --info-darker: #0c4a6e;
+
+  --danger-lighter: #fecaca;
+  --danger-darker: #7f1d1d;
+ 
+
+  --foundation-3: pink; /* #52525b;*/
+  --foundation-4: pink; /* #71717a;*/
+  --foundation-5: pink; /* #a1a1aa;*/
+  --foundation-focus: #pink; /* not used? #52525b; */
+  --foundation-disabled: #pink;
+
+
+}
+
+body {
+  font-family: 'Inter';
+}
+
 html,
 body,
 div#__nuxt,
