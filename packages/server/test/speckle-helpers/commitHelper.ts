@@ -27,6 +27,10 @@ export type BasicTestCommit = {
   parents?: string[]
 }
 
+export async function createTestObject(params: { projectId: string }) {
+  return await createObject(params.projectId, { foo: 'bar' })
+}
+
 /**
  * Ensure all commits have objectId set
  */

@@ -39,7 +39,6 @@ import {
   getStream,
   markCommitStreamUpdated
 } from '@/modules/core/repositories/streams'
-import { getCommitById } from '@/modules/core/services/commits'
 import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
@@ -58,10 +57,7 @@ export async function markCommitReceivedAndNotify(params: {
         }
       : input
 
-  const commit = await getCommitById({
-    streamId: oldInput.streamId,
-    id: oldInput.commitId
-  })
+  const commit = await getCommit(oldInput.commitId, { streamId: oldInput.streamId })
   if (!commit) {
     throw new CommitReceiveError(
       `Failed to find commit with id ${oldInput.commitId} in stream ${oldInput.streamId}.`,

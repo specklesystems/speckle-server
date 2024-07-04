@@ -1,6 +1,6 @@
 import { gql } from 'apollo-server-express'
 
-export const createProjectModel = gql`
+export const createProjectModelQuery = gql`
   mutation CreateProjectModel($input: CreateModelInput!) {
     modelMutations {
       create(input: $input) {
@@ -12,7 +12,7 @@ export const createProjectModel = gql`
   }
 `
 
-export const findProjectModelByName = gql`
+export const findProjectModelByNameQuery = gql`
   query FindProjectModelByName($projectId: String!, $name: String!) {
     project(id: $projectId) {
       modelByName(name: $name) {

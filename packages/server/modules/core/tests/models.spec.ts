@@ -53,6 +53,7 @@ describe('Models', () => {
       }
       const res = await createModel(input)
 
+      expect(res).to.not.haveGraphQLErrors()
       expect(res.data?.modelMutations.create.id).to.be.ok
       expect(res.data?.modelMutations.create.name).to.equal(input.name)
       expect(res.data?.modelMutations.create.description).to.equal(input.description)
@@ -79,6 +80,7 @@ describe('Models', () => {
           name: firstModel.name
         })
 
+        expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.project.modelByName.id).to.equal(firstModel.id)
         expect(res.data?.project.modelByName.name).to.equal(firstModel.name)
       })
