@@ -5,11 +5,14 @@ import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/strea
 import { beforeEachContext } from '@/test/hooks'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import {
+  BatchDeleteProjectsDocument,
   CreateProjectDocument,
   GetProjectObjectDocument,
   ProjectCreateInput
 } from '@/test/graphql/generated/graphql'
 import { createTestObject } from '@/test/speckle-helpers/commitHelper'
+import { times } from 'lodash'
+import { Roles } from '@speckle/shared'
 
 describe('Projects', () => {
   const me: BasicTestUser = {
@@ -18,9 +21,15 @@ describe('Projects', () => {
     id: ''
   }
 
+  const otherUser: BasicTestUser = {
+    name: 'hello itsa some otha guy',
+    email: '',
+    id: ''
+  }
+
   before(async () => {
     await beforeEachContext()
-    await createTestUsers([me])
+    await createTestUsers([me, otherUser])
   })
 
   describe('in GraphQL API', () => {
@@ -78,6 +87,45 @@ describe('Projects', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.project.object?.id).to.equal(objectId)
+      })
+    })
+
+    describe('when doing batch deletion', () => {
+      const createOtherGuyProjectBatch = async () => {
+        const projects: BasicTestStream[] = times(3, () => ({
+          id: '',
+          ownerId: otherUser.id,
+          name: `project ${Math.random()}`,
+          isPublic: false
+        }))
+
+        await createTestStreams(projects.map((p) => [p, me]))
+        return projects.map((p) => p.id)
+      }
+
+      const batchDeleteProjects = async (ids: string[], asAdmin?: boolean) =>
+        await apollo.execute(
+          BatchDeleteProjectsDocument,
+          { ids },
+          {
+            context: asAdmin ? { role: Roles.Server.Admin } : undefined
+          }
+        )
+
+      it("it doesn't work if user is not an admin", async () => {
+        const projectIds = await createOtherGuyProjectBatch()
+        const res = await batchDeleteProjects(projectIds)
+
+        expect(res.data).to.not.be.ok
+        expect(res).to.haveGraphQLErrors('You do not have the required server role')
+      })
+
+      it('works if user is an admin, even for not owned projects', async () => {
+        const projectIds = await createOtherGuyProjectBatch()
+        const res = await batchDeleteProjects(projectIds, true)
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations.batchDelete).to.be.true
       })
     })
   })

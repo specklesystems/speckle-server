@@ -1,5 +1,7 @@
 import { createCommitByBranchName } from '@/modules/core/services/commits'
 import { createObject } from '@/modules/core/services/objects'
+import { BasicTestUser } from '@/test/authHelper'
+import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 
 export type BasicTestCommit = {
   /**
@@ -10,7 +12,13 @@ export type BasicTestCommit = {
    * Can be left empty, will be filled on creation
    */
   objectId: string
+  /**
+   * Can be left empty, will be filled on creation if stream passed in
+   */
   streamId: string
+  /**
+   * Can be left empty, will be filled on creation if owner passed in
+   */
   authorId: string
   /**
    * Defaults to 'main'
@@ -46,13 +54,23 @@ async function ensureObjects(commits: BasicTestCommit[]) {
 /**
  * Create test commits
  */
-export async function createTestCommits(commits: BasicTestCommit[]) {
+export async function createTestCommits(
+  commits: BasicTestCommit[],
+  options?: Partial<{ owner: BasicTestUser; stream: BasicTestStream }>
+) {
+  const { owner, stream } = options || {}
+
+  commits.forEach((c) => {
+    if (owner) c.authorId = owner.id
+    if (stream) c.streamId = stream.id
+  })
+
   await ensureObjects(commits)
   await Promise.all(
     commits.map((c) =>
       createCommitByBranchName({
         streamId: c.streamId,
-        branchName: 'main',
+        branchName: c.branchName || 'main',
         message: c.message || 'this message is auto generated',
         sourceApplication: 'tests',
         objectId: c.objectId,
@@ -64,6 +82,9 @@ export async function createTestCommits(commits: BasicTestCommit[]) {
   )
 }
 
-export async function createTestCommit(commit: BasicTestCommit) {
-  await createTestCommits([commit])
+export async function createTestCommit(
+  commit: BasicTestCommit,
+  options?: Partial<{ owner: BasicTestUser; stream: BasicTestStream }>
+) {
+  await createTestCommits([commit], options)
 }

@@ -95,7 +95,7 @@ export const testApolloServer = async (params?: {
     const realInstance = options?.context
       ? await buildApolloServer({
           context: createTestContext({
-            ...(params?.context || {}),
+            ...(initialCtx || {}),
             ...options.context
           })
         })

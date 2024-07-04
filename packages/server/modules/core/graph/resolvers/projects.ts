@@ -92,7 +92,9 @@ export = {
     async batchDelete(_parent, args, ctx) {
       const results = await Promise.all(
         args.ids.map((id) =>
-          deleteStreamAndNotify(id, ctx.userId!, ctx.resourceAccessRules)
+          deleteStreamAndNotify(id, ctx.userId!, ctx.resourceAccessRules, {
+            skipAccessChecks: true
+          })
         )
       )
       return results.every((res) => res === true)
