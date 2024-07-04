@@ -4,7 +4,7 @@
  */
 
 import { getTestDb } from '#/helpers/testKnexClient.js'
-import { down, up } from '#/migrations/testPreviewService.js'
+import { down, up } from '#/migrations/migrations.js'
 import { testLogger as logger } from '@/observability/logging.js'
 import cryptoRandomString from 'crypto-random-string'
 import type { GlobalSetupContext } from 'vitest/node'
@@ -29,24 +29,21 @@ const dbName = `preview_service_${cryptoRandomString({
 export async function setup({ provide }: GlobalSetupContext) {
   logger.info('🏃🏻‍♀️‍➡️ Running vitest setup global hook')
   dotenv.config()
-  const dbWithUnspecifiedDatabase = getTestDb()
-  await dbWithUnspecifiedDatabase.raw(`CREATE DATABASE ${dbName}
+  const superUserDbClient = getTestDb()
+  await superUserDbClient.raw(`CREATE DATABASE ${dbName}
     WITH
     OWNER = preview_service_test
     ENCODING = 'UTF8'
     TABLESPACE = pg_default
     CONNECTION LIMIT = -1;`)
-  await dbWithUnspecifiedDatabase.destroy()
+  await superUserDbClient.destroy() // need to explicitly close the connection in clients to prevent hanging tests
 
   // this provides the dbName to all tests, and can be accessed via inject('dbName'). NB: The test extensions already implement this, so use a test extension.
   provide('dbName', dbName)
 
   const db = getTestDb(dbName)
-  await up(db) //HACK call migration directly because knex.migrate is not playing ball with typescript
+  await up(db) //we need the migration to occur in our new database, so cannot use knex's built in migration functionality.
   await db.destroy() // need to explicitly close the connection in clients to prevent hanging tests
-
-  // await db.migrate.rollback()
-  // await db.migrate.latest()
   logger.info('💁🏽‍♀️ Completed the vitest setup global hook')
 }
 
@@ -58,13 +55,12 @@ export async function setup({ provide }: GlobalSetupContext) {
 export async function teardown() {
   logger.info('🏃🏻‍♀️ Running vitest teardown global hook')
   const db = getTestDb(dbName)
-  await down(db) //HACK call migration directly
+  await down(db) //we need the migration to occur in our named database, so cannot use knex's built in migration functionality.
   await db.destroy() // need to explicitly close the connection in clients to prevent hanging tests
 
   //use connection without database to drop the db
-  const dbWithoutDatabase = getTestDb()
-  await dbWithoutDatabase.raw(`DROP DATABASE ${dbName};`)
-  await dbWithoutDatabase.destroy() // need to explicitly close the connection in clients to prevent hanging tests
-  // await db.migrate.rollback()
+  const superUserDbClient = getTestDb()
+  await superUserDbClient.raw(`DROP DATABASE ${dbName};`)
+  await superUserDbClient.destroy() // need to explicitly close the connection in clients to prevent hanging tests
   logger.info('✅ Completed the vitest teardown global hook')
 }

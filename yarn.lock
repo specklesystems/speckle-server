@@ -15644,6 +15644,7 @@ __metadata:
     "@speckle/shared": "workspace:^"
     "@speckle/viewer": "workspace:^"
     "@types/express": "npm:^4.17.13"
+    "@types/module-alias": "npm:^2"
     "@types/node": "npm:^18.19.38"
     "@vitest/coverage-istanbul": "npm:^1.6.0"
     babel-loader: "npm:^8.2.2"
@@ -15663,6 +15664,7 @@ __metadata:
     join-images: "npm:^1.1.3"
     knex: "npm:^2.4.1"
     lodash: "npm:^4.17.21"
+    module-alias: "npm:^2.2.3"
     node-fetch: "npm:^2.6.1"
     nodemon: "npm:^2.0.20"
     pg: "npm:^8.7.3"
@@ -18850,6 +18852,13 @@ __metadata:
   dependencies:
     "@types/node": "npm:*"
   checksum: 10/8749a4b3fcb9f3d6ebaeff442f00997ca59c4806bc00fea648a1fd06b1ea8510a6900b8e47070561ddf15ce98abc80dfe24ff21a307c2b0d1a6845bd865f708b
+  languageName: node
+  linkType: hard
+
+"@types/module-alias@npm:^2":
+  version: 2.0.4
+  resolution: "@types/module-alias@npm:2.0.4"
+  checksum: 10/f324ec96e07955270b8729cbc03e56405780f7a87f1f8e75009b40ba47c07a08f22ac5fe27e8e9a8c08b7951565618357429f4cec1cfffb2b777e569a0ffb966
   languageName: node
   linkType: hard
 
@@ -39046,6 +39055,13 @@ __metadata:
   version: 2.2.2
   resolution: "module-alias@npm:2.2.2"
   checksum: 10/997aab639bff9b911fa856e445e5a6481b0ad84e5411b3b36a776624106e112984ff287b8be52ba53dd4088e09c2d7bd7afd951a540e4e87860017ec03e68d4e
+  languageName: node
+  linkType: hard
+
+"module-alias@npm:^2.2.3":
+  version: 2.2.3
+  resolution: "module-alias@npm:2.2.3"
+  checksum: 10/43bdf125f30a6967dedd97005693fd73b9535c6770e46c890b1a87b791df358b2d5b28951b3ebaf47092b645575eeee10388735d9f6866873cb8e87c153d1fa2
   languageName: node
   linkType: hard
 

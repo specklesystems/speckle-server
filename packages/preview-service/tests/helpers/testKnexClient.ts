@@ -1,6 +1,5 @@
 /* eslint-disable camelcase */
 import { knex } from 'knex'
-// import path from 'path'
 
 export const getTestDb = (databaseName?: string) =>
   knex({
@@ -15,9 +14,11 @@ export const getTestDb = (databaseName?: string) =>
       protocol: 'postgres'
     },
     pool: { min: 0, max: 2 }
-    // migrations are managed in the server package for production, but managed here for tests
+    // migrations are managed in the server package for production
+    // for tests, we are creating a new database for each test run so we can't use this default migration functionality
     // migrations: {
+    //   extension: '.ts',
     //   directory: path.resolve(__dirname, '../migrations'),
-    //   loadExtensions: ['.ts']
+    //   loadExtensions: ['js', 'ts']
     // }
   })

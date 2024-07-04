@@ -1,9 +1,9 @@
 #!/usr/bin/env node
+import '../dist/src/bootstrap.js' // this has side-effects, so it must be imported first
+
 import { startServer } from '../dist/src/server/server.js'
 import { startPreviewService } from '../dist/src/server/background.js'
 import { db } from '../dist/src/repositories/knex.js'
-import dotenv from 'dotenv'
 
-dotenv.config()
 startServer({ db })
 startPreviewService({ db })
