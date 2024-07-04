@@ -25,21 +25,12 @@
         { id: 'type', header: 'Type', classes: 'col-span-1' },
         { id: 'created', header: 'Created', classes: 'col-span-2' },
         { id: 'modified', header: 'Modified', classes: 'col-span-2' },
-        { id: 'models', header: 'Models', classes: 'col-span-1 text-right' },
-        { id: 'versions', header: 'Versions', classes: 'col-span-1 text-right' },
+        { id: 'models', header: 'Models', classes: 'col-span-1' },
+        { id: 'versions', header: 'Versions', classes: 'col-span-1' },
         { id: 'contributors', header: 'Contributors', classes: 'col-span-2' }
       ]"
       :items="projects"
       :buttons="[{ icon: TrashIcon, label: 'Delete', action: openProjectDeleteDialog }]"
-      :column-classes="{
-        name: 'col-span-3 truncate',
-        type: 'col-span-1',
-        created: 'col-span-2',
-        modified: 'col-span-2',
-        models: 'col-span-1 text-right',
-        versions: 'col-span-1 text-right',
-        contributors: 'col-span-2'
-      }"
       :on-row-click="handleProjectClick"
     >
       <template #name="{ item }">
@@ -53,25 +44,25 @@
       </template>
 
       <template #created="{ item }">
-        <div class="font-mono text-xs">
+        <div class="text-xs">
           {{ isProject(item) ? new Date(item.createdAt).toLocaleString('en-GB') : '' }}
         </div>
       </template>
 
       <template #modified="{ item }">
-        <div class="font-mono text-xs">
+        <div class="text-xs">
           {{ isProject(item) ? new Date(item.updatedAt).toLocaleString('en-GB') : '' }}
         </div>
       </template>
 
       <template #models="{ item }">
-        <div class="font-mono text-xs">
+        <div class="text-xs">
           {{ isProject(item) ? item.models.totalCount : '' }}
         </div>
       </template>
 
       <template #versions="{ item }">
-        <div class="font-mono text-xs">
+        <div class="text-xs">
           {{ isProject(item) ? item.versions.totalCount : '' }}
         </div>
       </template>
