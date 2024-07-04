@@ -1,9 +1,7 @@
-// TODO: test deleting user doesn't delete the workspace they created
-
 import {
   deleteWorkspaceRoleFactory,
-  getWorkspaceFactory,
   getWorkspaceRoleFactory,
+  getWorkspaceFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
@@ -19,6 +17,21 @@ const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
 const getWorkspaceRole = getWorkspaceRoleFactory({ db })
 const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
 
+const createAndStoreTestWorkspace = async (): Promise<Workspace> => {
+  const workspace: Workspace = {
+    id: cryptoRandomString({ length: 10 }),
+    name: cryptoRandomString({ length: 10 }),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    description: null,
+    logoUrl: null
+  }
+
+  await upsertWorkspace({ workspace })
+
+  return workspace
+}
+
 describe('Workspace repositories', () => {
   describe('getWorkspaceFactory creates a function, that', () => {
     it('returns null if the workspace is not found', async () => {
@@ -32,46 +45,41 @@ describe('Workspace repositories', () => {
 
   describe('upsertWorkspaceFactory creates a function, that', () => {
     it('upserts the workspace', async () => {
-      const workspace: Workspace = {
-        id: cryptoRandomString({ length: 10 }),
-        name: cryptoRandomString({ length: 10 }),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        description: null,
-        logoUrl: null
+      const testWorkspace = await createAndStoreTestWorkspace()
+      const storedWorkspace = await getWorkspace({ workspaceId: testWorkspace.id })
+      expect(storedWorkspace).to.deep.equal(testWorkspace)
+
+      const modifiedTestWorkspace: Workspace = {
+        ...testWorkspace,
+        description: 'now im adding a description to the workspace'
       }
-      await upsertWorkspace({ workspace })
-      let storedWorkspace = await getWorkspace({ workspaceId: workspace.id })
-      expect(storedWorkspace).to.deep.equal(workspace)
 
-      workspace.description = 'now im adding a description to the workspace'
+      await upsertWorkspace({ workspace: modifiedTestWorkspace })
 
-      await upsertWorkspace({ workspace })
-      storedWorkspace = await getWorkspace({ workspaceId: workspace.id })
-      expect(storedWorkspace).to.deep.equal(workspace)
+      const modifiedStoredWorkspace = await getWorkspace({
+        workspaceId: testWorkspace.id
+      })
+
+      expect(modifiedStoredWorkspace).to.deep.equal(modifiedTestWorkspace)
     })
-    it('updates only relevant work workspace fields', async () => {
-      const workspace: Workspace = {
-        id: cryptoRandomString({ length: 10 }),
-        name: cryptoRandomString({ length: 10 }),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        description: null,
-        logoUrl: null
-      }
-      await upsertWorkspace({ workspace })
-      let storedWorkspace = await getWorkspace({ workspaceId: workspace.id })
-      expect(storedWorkspace).to.deep.equal(workspace)
+    it('updates only relevant workspace fields', async () => {
+      const testWorkspace = await createAndStoreTestWorkspace()
+      const storedWorkspace = await getWorkspace({ workspaceId: testWorkspace.id })
+      expect(storedWorkspace).to.deep.equal(testWorkspace)
+
       await upsertWorkspace({
         workspace: {
-          ...workspace,
+          ...testWorkspace,
           id: cryptoRandomString({ length: 13 }),
           createdAt: new Date()
         }
       })
 
-      storedWorkspace = await getWorkspace({ workspaceId: workspace.id })
-      expect(storedWorkspace).to.deep.equal(workspace)
+      const modifiedStoredWorkspace = await getWorkspace({
+        workspaceId: testWorkspace.id
+      })
+
+      expect(modifiedStoredWorkspace).to.deep.equal(testWorkspace)
     })
   })
 
@@ -111,7 +119,7 @@ describe('Workspace repositories', () => {
 
       await upsertWorkspaceRole({ userId, workspaceId, role: 'workspace:admin' })
 
-      expectToThrow(() => deleteWorkspaceRole({ userId, workspaceId }))
+      await expectToThrow(() => deleteWorkspaceRole({ userId, workspaceId }))
     })
   })
 
@@ -132,7 +140,7 @@ describe('Workspace repositories', () => {
 
       await upsertWorkspaceRole({ workspaceId, userId, role: 'workspace:admin' })
 
-      expectToThrow(() =>
+      await expectToThrow(() =>
         upsertWorkspaceRole({ workspaceId, userId, role: 'workspace:member' })
       )
     })
