@@ -1,4 +1,4 @@
-import { MathUtils } from 'three'
+import { MathUtils, PerspectiveCamera, Vector3 } from 'three'
 import LineBatch from './LineBatch'
 import Materials, {
   FilterMaterialType,
@@ -96,7 +96,14 @@ export default class Batcher {
       }
       instancedBatches[vertCount].push(g)
     }
+    const width = 1920
+    const height = 1080
+    const camera = new PerspectiveCamera(60, width / height)
+    camera.updateProjectionMatrix()
+
     for (const v in instancedBatches) {
+      const instanceLocalCenter = new Vector3()
+      const instanceWorldCenter = new Vector3()
       for (let k = 0; k < instancedBatches[v].length; k++) {
         const nodes = worldTree.findId(instancedBatches[v][k])
         if (!nodes) continue
@@ -104,12 +111,39 @@ export default class Batcher {
         let instanced = true
         nodes.every((node: TreeNode) => (instanced &&= node.model.instanced))
 
+        /** Check if instance transform fits in fp32.
+         *  We're checking for the instance's aabb center, since checking all vertices would be too much */
+        let fitsInFP32 = true
+        const aabbCenter = nodes[0].model.renderView.aabb.getCenter(instanceLocalCenter)
+
+        nodes.every((node: TreeNode) => {
+          if (!node.model.renderView) return fitsInFP32
+
+          instanceWorldCenter.copy(aabbCenter)
+          instanceWorldCenter.applyMatrix4(
+            node.model.renderView.renderData.geometry.transform
+          )
+
+          fitsInFP32 &&= Geometry.vector3FitsInFP32Projective(
+            instanceWorldCenter,
+            camera,
+            width,
+            height,
+            1
+          )
+          return fitsInFP32
+        })
+
         const rvs = nodes
           .map((node: TreeNode) => node.model.renderView)
           /** This disconsiders orphaned nodes caused by incorrect id duplication in the stream */
           .filter((rv) => rv)
 
-        if (Number.parseInt(v) < this.minInstancedBatchVertices || !instanced) {
+        if (
+          Number.parseInt(v) < this.minInstancedBatchVertices ||
+          !instanced ||
+          !fitsInFP32
+        ) {
           rvs.forEach((nodeRv) => {
             const geometry = nodeRv.renderData.geometry
             geometry.instanced = false
