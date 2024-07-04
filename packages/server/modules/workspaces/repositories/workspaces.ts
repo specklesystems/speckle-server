@@ -48,6 +48,25 @@ export const getWorkspaceRoleFactory =
     return acl || null
   }
 
+const isUserLastAdminFactory =
+  ({ db }: { db: Knex }) =>
+  async ({
+    userId,
+    workspaceId
+  }: {
+    userId: string
+    workspaceId: string
+  }): Promise<boolean> => {
+    const workspaceAdmins = await tables
+      .workspacesAcl(db)
+      .where('role', 'workspace:admin')
+      .and.where('workspaceId', workspaceId)
+
+    const isUserAdmin = workspaceAdmins.some((acl) => acl.userId === userId)
+
+    return isUserAdmin && workspaceAdmins.length === 1
+  }
+
 export const deleteWorkspaceRoleFactory =
   ({ db }: { db: Knex }): DeleteWorkspaceRole =>
   async ({ userId, workspaceId }) => {
@@ -65,12 +84,12 @@ export const deleteWorkspaceRoleFactory =
     }
 
     // Protect against removing last admin in workspace
-    const workspaceAdmins = await workspacesAclTable.where('role', 'workspace:admin')
+    const isUserLastAdmin = await isUserLastAdminFactory({ db })({
+      userId,
+      workspaceId
+    })
 
-    const targetUserIsAdmin = currentRole.role === 'workspace:admin'
-    const targetUserIsLastAdmin = workspaceAdmins.length === 1
-
-    if (targetUserIsAdmin && targetUserIsLastAdmin) {
+    if (isUserLastAdmin) {
       throw new Error('Cannot remove last admin in workspace.')
     }
 
@@ -92,19 +111,12 @@ export const upsertWorkspaceRoleFactory =
     const workspacesAclTable = tables.workspacesAcl(db)
 
     // Protect against removing last admin in workspace
-    const workspaceAdmins = await workspacesAclTable.where('role', 'workspace:admin')
+    const isUserLastAdmin = await isUserLastAdminFactory({ db })({
+      userId,
+      workspaceId
+    })
 
-    const targetUserIsWorkspaceAdmin = workspaceAdmins.some(
-      (acl) => acl.userId === userId
-    )
-    const targetUserNextRoleIsNotAdmin = role !== 'workspace:admin'
-    const targetUserIsLastAdmin = workspaceAdmins.length === 1
-
-    if (
-      targetUserIsWorkspaceAdmin &&
-      targetUserNextRoleIsNotAdmin &&
-      targetUserIsLastAdmin
-    ) {
+    if (isUserLastAdmin && role !== 'workspace:admin') {
       throw new Error('Cannot remove last admin in workspace.')
     }
 
