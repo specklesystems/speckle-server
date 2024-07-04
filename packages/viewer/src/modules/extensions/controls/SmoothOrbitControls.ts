@@ -237,10 +237,13 @@ export class SmoothOrbitControls extends SpeckleControls {
 
     const v0 = new Vector3().copy(position)
     const v1 = new Vector3().copy(target)
-    v0.sub(v1)
+    /** Three.js Spherical assumes (0, 1, 0) as up... */
+    v0.sub(v1).applyMatrix4(this._basisTransformInv)
     const spherical = new Spherical()
     spherical.setFromCartesianCoords(v0.x, v0.y, v0.z)
     this.setOrbit(spherical.theta, spherical.phi, spherical.radius)
+    /** Three.js Spherical assumes (0, 1, 0) as up... */
+    v1.applyMatrix4(this._basisTransformInv)
     this.setTarget(v1.x, v1.y, v1.z)
   }
 
@@ -263,21 +266,17 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   /**
-   * Gets the current goal position. Needs to be in a basis with (0,1,0) as up
+   * Gets the current goal position
    */
   public getPosition(): Vector3 {
-    return this.positionFromSpherical(this.goalSpherical, this.origin).applyMatrix4(
-      this._basisTransformInv
-    )
+    return this.positionFromSpherical(this.goalSpherical, this.origin)
   }
 
   /**
    * Gets the point in model coordinates the model should orbit/pivot around.
-   * Needs to be in a basis with (0,1,0) as up
-   * We keep goalOrigin untransformed, so there is no need to transform back from the controller's defined basis
    */
   public getTarget(): Vector3 {
-    return this.goalOrigin.clone()
+    return this.goalOrigin.clone().applyMatrix4(this._basisTransform)
   }
 
   public isStationary(): boolean {
@@ -644,6 +643,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     return height / (Math.tan(MathUtils.DEG2RAD * Math.exp(this.logFov) * 0.5) * 2)
   }*/
 
+  /** Three.js Spherical assumes (0, 1, 0) as up... */
   protected positionFromSpherical(spherical: Spherical, origin?: Vector3) {
     const position: Vector3 = new Vector3()
     position.setFromSpherical(spherical)
@@ -655,6 +655,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     return position
   }
 
+  /** Three.js Spherical assumes (0, 1, 0) as up... */
   protected quaternionFromSpherical(spherical: Spherical) {
     const quaternion: Quaternion = new Quaternion()
     quaternion.setFromEuler(
@@ -823,7 +824,8 @@ export class SmoothOrbitControls extends SpeckleControls {
       this.panPerPixel
     dxy.multiplyScalar(metersPerPixel)
 
-    const target = this.getTarget()
+    /** This panProjection assumes (0, 1, 0) as up... */
+    const target = this.getTarget().applyMatrix4(this._basisTransformInv)
     target.add(dxy.applyMatrix3(this.panProjection))
     this.setTarget(target.x, target.y, target.z)
   }
