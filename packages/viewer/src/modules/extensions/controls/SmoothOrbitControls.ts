@@ -269,7 +269,7 @@ export class SmoothOrbitControls extends SpeckleControls {
    * Gets the current goal position
    */
   public getPosition(): Vector3 {
-    return this.positionFromSpherical(this.goalSpherical, this.origin)
+    return this.positionFromSpherical(this.goalSpherical, this.goalOrigin)
   }
 
   /**
@@ -303,6 +303,19 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.setFieldOfView(Math.exp(this.goalLogFov))
   }
 
+  /** Computes min/max radius values based on the current world size */
+  protected computeMinMaxRadius() {
+    if (this.world) {
+      const maxDistance = this.world.getRelativeOffset(10)
+      const minDistance = this.world.getRelativeOffset(0.01)
+      if (!isNaN(maxDistance) && !isNaN(minDistance))
+        Object.assign(this._options, {
+          maximumRadius: maxDistance,
+          minimumRadius: minDistance
+        })
+    }
+  }
+
   /**
    * Set the absolute orbital goal of the camera. The change will be
    * applied over a number of frames depending on configured acceleration and
@@ -324,6 +337,10 @@ export class SmoothOrbitControls extends SpeckleControls {
       minimumRadius,
       maximumRadius
     } = this._options
+
+    if (isNaN(minimumRadius) || isNaN(maximumRadius)) {
+      this.computeMinMaxRadius()
+    }
 
     const { theta, phi, radius } = this.goalSpherical
 
@@ -511,15 +528,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       return false
     }
 
-    if (this.world) {
-      const maxDistance = this.world.getRelativeOffset(10)
-      const minDistance = this.world.getRelativeOffset(0.01)
-      this.applyOptions({
-        maximumRadius: maxDistance,
-        minimumRadius: minDistance
-      })
-      // radiusNormalisationRange = this.world.worldBox.getSize(new Vector3()).length()
-    }
+    this.computeMinMaxRadius()
 
     const { maximumPolarAngle } = this._options
 
