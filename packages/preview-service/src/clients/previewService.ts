@@ -1,4 +1,4 @@
-import type { ObjectIdentifier } from '@/domain/domain.js'
+import type { ObjectIdentifier } from '#src/domain/domain.js'
 import { z } from 'zod'
 
 const previewResponseSchema = z.record(z.string())

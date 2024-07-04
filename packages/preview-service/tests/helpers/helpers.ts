@@ -1,7 +1,8 @@
-import { startServer } from '@/server/server.js'
+import { startServer } from '#src/server/server.js'
 import type { Knex } from 'knex'
 import http from 'http'
 import { AddressInfo } from 'net'
+import { getPostgresConnectionString } from '#src/utils/env.js'
 
 export const startAndWaitOnServers = async (deps: { db: Knex }) => {
   let serverAddress: string | AddressInfo | null = null
@@ -31,4 +32,18 @@ export const getServerPort = (server: http.Server) => {
     return address.port
   }
   throw new Error('Server port is not available')
+}
+
+export const customizePostgresConnectionString = (databaseName?: string) => {
+  const originalPostgresConnectionString = getPostgresConnectionString()
+  if (!databaseName) return originalPostgresConnectionString
+
+  const originalPostgresUrl = new URL(originalPostgresConnectionString)
+  const protocol = originalPostgresUrl.protocol
+  const user = originalPostgresUrl.username
+  const pass = originalPostgresUrl.password
+  const host = originalPostgresUrl.hostname
+  const port = originalPostgresUrl.port
+  const origin = `${protocol}//${user}:${pass}@${host}:${port}`
+  return new URL(databaseName, origin).toString()
 }

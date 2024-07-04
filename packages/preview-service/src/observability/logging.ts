@@ -1,4 +1,4 @@
-import { getLogLevel, isLogPretty } from '@/utils/env.js'
+import { getLogLevel, isLogPretty } from '#src/utils/env.js'
 import {
   extendLoggerComponent as elc,
   getLogger

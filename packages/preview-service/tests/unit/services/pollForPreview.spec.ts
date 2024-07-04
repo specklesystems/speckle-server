@@ -1,5 +1,5 @@
-import { logger } from '@/observability/logging.js'
-import { pollForAndCreatePreviewFactory } from '@/services/pollForPreview.js'
+import { logger } from '#src/observability/logging.js'
+import { pollForAndCreatePreviewFactory } from '#src/services/pollForPreview.js'
 import { describe, expect, it } from 'vitest'
 
 describe.concurrent('Polling for preview', () => {

@@ -1,17 +1,17 @@
-import type { UpdateHealthcheckData } from '@/clients/execHealthcheck.js'
+import type { UpdateHealthcheckData } from '#src/clients/execHealthcheck.js'
 import {
   metricDuration,
   metricOperationErrors
-} from '@/observability/prometheusMetrics.js'
+} from '#src/observability/prometheusMetrics.js'
 import type {
   GetNextUnstartedObjectPreview,
   NotifyUpdate,
   UpdatePreviewMetadata
-} from '@/repositories/objectPreview.js'
-import type { GenerateAndStore360Preview } from '@/services/360preview.js'
+} from '#src/repositories/objectPreview.js'
+import type { GenerateAndStore360Preview } from '#src/services/360preview.js'
 import type { Logger } from 'pino'
 import type { LabelValues } from 'prom-client'
-import { WorkStatus, type WorkToBeDone } from '@/domain/backgroundWorker.js'
+import { WorkStatus, type WorkToBeDone } from '#src/domain/backgroundWorker.js'
 
 export const pollForAndCreatePreviewFactory =
   (deps: {

@@ -1,13 +1,13 @@
-import { puppeteerClientFactory } from '@/clients/puppeteer.js'
-import { puppeteerDriver } from '@/scripts/puppeteerDriver.js'
-import { getScreenshotFactory } from '@/services/screenshot.js'
+import { puppeteerClientFactory } from '#src/clients/puppeteer.js'
+import { puppeteerDriver } from '#src/scripts/puppeteerDriver.js'
+import { getScreenshotFactory } from '#src/services/screenshot.js'
 import {
   getChromiumExecutablePath,
   getPreviewTimeout,
   getPuppeteerUserDataDir,
   serviceOrigin,
   shouldBeHeadless
-} from '@/utils/env.js'
+} from '#src/utils/env.js'
 import express, { RequestHandler } from 'express'
 
 const previewRouterFactory = () => {

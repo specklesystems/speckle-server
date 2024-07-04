@@ -1,6 +1,6 @@
-import { LoadPageAndEvaluateScript } from '@/clients/puppeteer.js'
-import type { ObjectIdentifier } from '@/domain/domain.js'
-import { reduce } from 'lodash'
+import { LoadPageAndEvaluateScript } from '#src/clients/puppeteer.js'
+import type { ObjectIdentifier } from '#src/domain/domain.js'
+import { reduce } from 'lodash-es'
 import type { Logger } from 'pino'
 import { z } from 'zod'
 

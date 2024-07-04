@@ -1,4 +1,4 @@
-import type { Preview } from '@/domain/domain.js'
+import type { Preview } from '#src/domain/domain.js'
 import type { Knex } from 'knex'
 
 export const Previews = (deps: { db: Knex }) => deps.db<Preview>('previews')

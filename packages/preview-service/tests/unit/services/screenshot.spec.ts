@@ -1,6 +1,6 @@
-import { LoadPageAndEvaluateScript } from '@/clients/puppeteer.js'
-import { logger } from '@/observability/logging.js'
-import { getScreenshotFactory } from '@/services/screenshot.js'
+import { LoadPageAndEvaluateScript } from '#src/clients/puppeteer.js'
+import { logger } from '#src/observability/logging.js'
+import { getScreenshotFactory } from '#src/services/screenshot.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 describe('Screenshot', () => {

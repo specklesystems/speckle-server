@@ -1,5 +1,6 @@
-import { getPostgresConnectionString } from '@/utils/env.js'
-import { knex } from 'knex'
+import { getPostgresConnectionString } from '#src/utils/env.js'
+import knexPkg from 'knex'
+const { knex } = knexPkg
 
 export const db = knex({
   client: 'pg',

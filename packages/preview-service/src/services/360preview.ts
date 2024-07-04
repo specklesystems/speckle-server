@@ -1,6 +1,6 @@
-import type { GeneratePreview } from '@/clients/previewService.js'
-import type { ObjectIdentifier } from '@/domain/domain.js'
-import type { InsertPreview } from '@/repositories/previews.js'
+import type { GeneratePreview } from '#src/clients/previewService.js'
+import type { ObjectIdentifier } from '#src/domain/domain.js'
+import type { InsertPreview } from '#src/repositories/previews.js'
 import crypto from 'crypto'
 import { joinImages } from 'join-images'
 
