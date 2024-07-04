@@ -67,7 +67,7 @@ export default class Sandbox {
   public pipelineParams = {
     pipelineOutput: 8,
     accumulationFrames: 16,
-    dynamicAoEnabled: true,
+    dynamicAoEnabled: false,
     dynamicAoParams: {
       intensity: 1.5,
       scale: 0,
@@ -683,6 +683,12 @@ export default class Sandbox {
       title: 'Dynamic AO',
       expanded: false
     })
+    dynamicAoFolder
+      .addInput(this.pipelineParams, 'dynamicAoEnabled')
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+        this.viewer.requestRender()
+      })
 
     dynamicAoFolder
       .addInput(this.pipelineParams.dynamicAoParams, 'intensity', { min: 0, max: 5 })

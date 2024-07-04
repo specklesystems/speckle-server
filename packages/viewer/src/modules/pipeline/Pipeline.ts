@@ -51,7 +51,7 @@ export interface PipelineOptions {
 export const DefaultPipelineOptions: PipelineOptions = {
   pipelineOutput: PipelineOutputType.FINAL,
   accumulationFrames: 16,
-  dynamicAoEnabled: true,
+  dynamicAoEnabled: false,
   dynamicAoParams: DefaultDynamicAOPassParams,
   staticAoEnabled: true,
   staticAoParams: DefaultStaticAoPassParams,
@@ -86,6 +86,7 @@ export class Pipeline {
     Object.assign(this._pipelineOptions, options)
     this.dynamicAoPass.setParams(options.dynamicAoParams)
     this.staticAoPass.setParams(options.staticAoParams)
+    this.applySaoPass.setParams(options.dynamicAoEnabled)
     this.accumulationFrame = 0
     if (options.depthSide !== undefined) this.depthPass.depthSide = options.depthSide
     if (options.accumulationFrames !== undefined) {
@@ -328,6 +329,7 @@ export class Pipeline {
 
   private getDefaultPipeline(): Array<SpecklePass> {
     this.renderPass.renderToScreen = true
+    this.depthPass.enabled = this._pipelineOptions.dynamicAoEnabled
     this.normalsPass.enabled =
       this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
         ? true
@@ -338,6 +340,7 @@ export class Pipeline {
         ? DynamicAOOutputType.AO_BLURRED
         : DynamicAOOutputType.AO
     )
+    this.dynamicAoPass.enabled = this._pipelineOptions.dynamicAoEnabled
     this.applySaoPass.renderToScreen = true
 
     this.dynamicAoPass.setTexture('tDepth', this.depthPass.outputTextureHalf)
@@ -435,7 +438,10 @@ export class Pipeline {
     this.depthPass.enabled = true
     this.depthPass.depthType = DepthType.LINEAR_DEPTH
     this.depthPass.depthSize = DepthSize.FULL
-    this.normalsPass.enabled = false
+    this.normalsPass.enabled =
+      this._pipelineOptions.dynamicAoParams.normalsType === NormalsType.DEFAULT
+        ? true
+        : false
     this.dynamicAoPass.enabled = false
     this.renderPass.enabled = true
     this.applySaoPass.enabled = true
@@ -448,22 +454,24 @@ export class Pipeline {
   public onStationaryEnd() {
     this.accumulationFrame = 0
     this._renderType = RenderType.NORMAL
+    this.depthPass.enabled = this._pipelineOptions.dynamicAoEnabled
     this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
     this.depthPass.depthSize = DepthSize.HALF
     this.staticAoPass.enabled = false
     this.applySaoPass.enabled = true
-    this.dynamicAoPass.enabled = true
+    this.dynamicAoPass.enabled = this._pipelineOptions.dynamicAoEnabled
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
   }
 
   protected onAccumulationComplete() {
     this._renderType = RenderType.NORMAL
+    this.depthPass.enabled = this._pipelineOptions.dynamicAoEnabled
     this.depthPass.depthType = DepthType.PERSPECTIVE_DEPTH
     this.depthPass.depthSize = DepthSize.HALF
     this.staticAoPass.enabled = false
     this.applySaoPass.enabled = true
-    this.dynamicAoPass.enabled = true
+    this.dynamicAoPass.enabled = this._pipelineOptions.dynamicAoEnabled
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
   }

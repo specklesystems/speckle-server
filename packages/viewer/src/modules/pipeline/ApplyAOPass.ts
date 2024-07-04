@@ -74,8 +74,10 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
     return null
   }
 
-  setParams(params: unknown) {
-    params
+  setParams(params: boolean | undefined) {
+    if (params !== undefined) {
+      this.materialCopy.defines['USE_DYNAMIC_AO'] = +params
+    }
   }
 
   setFrameIndex(index: number) {
