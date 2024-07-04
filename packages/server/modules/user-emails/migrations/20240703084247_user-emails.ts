@@ -22,6 +22,7 @@ export async function up(knex: Knex): Promise<void> {
       .timestamp('updatedAt', { precision: 3, useTz: true })
       .defaultTo(knex.fn.now())
       .notNullable()
+    table.unique(['userId', 'email'])
   })
 }
 
