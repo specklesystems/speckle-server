@@ -8,7 +8,12 @@ export async function up(knex: Knex): Promise<void> {
     table.string('email').notNullable()
     table.boolean('primary').defaultTo(false)
     table.boolean('verified').defaultTo(false)
-    table.string('userId').notNullable().references('id').inTable('users')
+    table
+      .string('userId')
+      .notNullable()
+      .references('id')
+      .inTable('users')
+      .onDelete('cascade')
     table
       .timestamp('createdAt', { precision: 3, useTz: true })
       .defaultTo(knex.fn.now())
