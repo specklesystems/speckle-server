@@ -56,10 +56,10 @@ PROM = {
     "previews": Gauge(
         "speckle_db_previews", "Number of previews, by status", labelnames=("status",)
     ),
-    "filesize": Gauge(
-        "speckle_db_filesize",
-        "Size of imported files, by type (in bytes)",
-        labelnames=("filetype",),
+    "tablesize": Gauge(
+        "speckle_db_tablesize",
+        "Size of tables in the database, by table (in bytes)",
+        labelnames=("table",),
     ),
 }
 
@@ -146,6 +146,30 @@ def tick(cur):
             PROM["previews"].labels(str(status)).set(values[str(status)])
         else:
             PROM["previews"].labels(str(status)).set(0)
+
+    # Table sizes
+    cur.execute(
+        """
+      SELECT
+        relname,
+        table_size
+
+      FROM (
+            SELECT
+              pg_catalog.pg_namespace.nspname           AS schema_name,
+              relname,
+              pg_relation_size(pg_catalog.pg_class.oid) AS table_size
+
+            FROM pg_catalog.pg_class
+              JOIN pg_catalog.pg_namespace ON relnamespace = pg_catalog.pg_namespace.oid
+          ) t
+      WHERE schema_name = 'public'
+      ORDER BY table_size DESC;
+      """
+    )
+    values = {}
+    for row in cur:
+        PROM["tablesize"].labels(row[0]).set(row[1])
 
 
 def main():
