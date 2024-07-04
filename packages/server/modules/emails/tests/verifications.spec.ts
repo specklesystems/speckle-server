@@ -23,7 +23,7 @@ import { EmailSendingServiceMock } from '@/test/mocks/global'
 const mailerMock = EmailSendingServiceMock
 
 const cleanup = async () => {
-  await truncateTables([Users.name, EmailVerifications.name])
+  await truncateTables([Users.name, EmailVerifications.name, 'user_emails'])
 }
 
 describe('Email verifications @emails', () => {

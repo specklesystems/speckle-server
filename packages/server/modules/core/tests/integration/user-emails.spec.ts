@@ -5,7 +5,7 @@ import { expect } from 'chai'
 import { getUserByEmail } from '../../repositories/users'
 import { UserRecord } from '../../helpers/types'
 
-describe.only('Core @user-emails', () => {
+describe('Core @user-emails', () => {
   before(async () => {
     await beforeEachContext()
   })
@@ -29,7 +29,7 @@ describe.only('Core @user-emails', () => {
     it('should return user merged with user-email', async () => {
       await createUser({
         name: 'John Doe',
-        email: 'test@example.org',
+        email: 'test1@example.org',
         password: 'sn3aky-1337-b1m'
       })
 
