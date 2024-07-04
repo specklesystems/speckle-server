@@ -72,6 +72,8 @@
         </div>
       </form>
     </div>
+    <hr class="my-10" />
+    <SettingsServerVersion />
   </div>
 </template>
 

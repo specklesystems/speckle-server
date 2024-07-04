@@ -15,6 +15,7 @@
           label="Name"
           help="The name of your app"
           name="hookName"
+          color="foundation"
           show-required
           :rules="[isRequired]"
           show-label
@@ -41,6 +42,7 @@
           help="After authentication, the users will be redirected (together with an access token) to this URL."
           show-required
           name="redirectUrl"
+          color="foundation"
           show-label
           :rules="[isRequired, isUrl]"
           type="text"
@@ -50,6 +52,7 @@
           label="Description"
           help="A short description of your application."
           name="description"
+          color="foundation"
           show-label
           type="text"
         />

@@ -1,8 +1,10 @@
 <template>
   <div class="flex flex-col gap-y-4">
     <h2 class="text-xl">Your details</h2>
-    <div class="grid grid-cols-2">
-      <UserProfileEditDialogAvatar :user="user" size="xxl" />
+    <div class="grid grid-cols-2 pt-4">
+      <div class="flex h-full items-center justify-center">
+        <UserProfileEditDialogAvatar :user="user" size="xxl" />
+      </div>
       <div>
         <FormTextInput
           v-model="name"

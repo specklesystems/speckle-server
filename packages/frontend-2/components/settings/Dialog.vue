@@ -32,7 +32,7 @@
       </LayoutSidebar>
       <main
         v-if="selectedMenuItem"
-        class="simple-scrollbar overflow-y-scroll flex-1 bg-foundation p-6 py-8 md:p-4 md:py-12"
+        class="simple-scrollbar overflow-y-scroll flex-1 bg-foundation px-6 py-8 md:px-4 md:py-12"
       >
         <div class="flex md:hidden items-center">
           <ChevronLeftIcon class="w-6 h-6" @click="setSelectedMenuItem(null)" />

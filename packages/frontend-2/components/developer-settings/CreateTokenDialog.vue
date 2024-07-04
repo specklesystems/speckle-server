@@ -13,6 +13,8 @@
           label="Name"
           help="A name to remember this token by. For example, the name of the script or application you're planning to use it in!"
           name="hookName"
+          placeholder="Token name"
+          color="foundation"
           :rules="[isRequired]"
           show-required
           show-label
