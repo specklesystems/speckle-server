@@ -82,9 +82,9 @@ def tick(cur):
     # File Imports
     cur.execute(
         """
-        SELECT "fileType", "convertedStatus", count(*)
-        FROM file_uploads
-        GROUP BY ("fileType", "convertedStatus")
+        SELECT LOWER("fileType"), "convertedStatus", count(*)
+          FROM file_uploads
+          GROUP BY (LOWER("fileType"), "convertedStatus");
         """
     )
     # put in a dictionary so we fill non-existing statuses with zeroes
@@ -107,8 +107,7 @@ def tick(cur):
         """
         SELECT LOWER("fileType") AS fileType, SUM("fileSize") AS fileSize
             FROM file_uploads
-            GROUP BY LOWER("fileType")
-            ORDER BY fileSize DESC;
+            GROUP BY LOWER("fileType");
         """
     )
     for row in cur:
