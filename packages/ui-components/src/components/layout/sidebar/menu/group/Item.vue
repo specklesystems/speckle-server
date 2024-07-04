@@ -9,7 +9,7 @@
       :target="external ? '_blank' : undefined"
     >
       <div class="flex items-center gap-2">
-        <div v-if="$slots.icon" class="size-5 flex items-center justify-center">
+        <div v-if="$slots.icon" class="h-5 w-5 flex items-center justify-center">
           <slot name="icon" />
         </div>
         <span :class="$slots.icon ? '' : 'pl-2'">
@@ -28,7 +28,7 @@
         class="group flex gap-1.5 items-center w-full hover:bg-foundation-3 rounded-md p-0.5 cursor-pointer"
         @click="isOpen = !isOpen"
       >
-        <ChevronDownIcon :class="isOpen ? '' : 'rotate-180'" class="size-2.5" />
+        <ChevronDownIcon :class="isOpen ? '' : 'rotate-180'" class="h-2.5 w-2.5" />
         <h6 class="font-bold text-foreground-2 text-xs flex items-center gap-1.5">
           {{ label }}
         </h6>
