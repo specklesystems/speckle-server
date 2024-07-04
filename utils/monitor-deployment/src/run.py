@@ -105,9 +105,10 @@ def tick(cur):
 
     cur.execute(
         """
-        SELECT "fileType", SUM("fileSize")
-        FROM file_uploads
-        GROUP BY "fileType"
+        SELECT LOWER("fileType") AS fileType, SUM("fileSize") AS fileSize
+            FROM file_uploads
+            GROUP BY LOWER("fileType")
+            ORDER BY fileSize DESC;
         """
     )
     for row in cur:
