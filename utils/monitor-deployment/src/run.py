@@ -56,6 +56,11 @@ PROM = {
     "previews": Gauge(
         "speckle_db_previews", "Number of previews, by status", labelnames=("status",)
     ),
+    "filesize": Gauge(
+        "speckle_db_filesize",
+        "Size of imported files, by type (in bytes)",
+        labelnames=("filetype",),
+    ),
     "tablesize": Gauge(
         "speckle_db_tablesize",
         "Size of tables in the database, by table (in bytes)",
