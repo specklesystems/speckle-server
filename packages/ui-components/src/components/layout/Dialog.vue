@@ -59,7 +59,7 @@
               <button
                 v-if="!hideCloser"
                 type="button"
-                class="absolute z-20 bg-foundation rounded-full p-1.5 shadow border top-5 right-5"
+                class="absolute z-20 bg-foundation hover:bg-foundation-page transition rounded-full p-1.5 shadow border top-5 right-5"
                 @click="open = false"
               >
                 <XMarkIcon class="h-4 w-4 md:w-5 md:h-5" />
