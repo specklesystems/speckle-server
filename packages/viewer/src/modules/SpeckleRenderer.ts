@@ -605,7 +605,9 @@ export default class SpeckleRenderer {
   private addBatch(batch: Batch, parent: Object3D) {
     const batchRenderable = batch.renderObject
     parent.add(batch.renderObject)
-
+    if (batchRenderable instanceof SpeckleMesh) {
+      parent.add(batchRenderable.TAS.bvhHelper)
+    }
     if (batch.geometryType === GeometryType.MESH) {
       batchRenderable.traverse((obj: Object3D) => {
         if (obj instanceof Mesh) {

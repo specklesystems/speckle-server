@@ -2,14 +2,19 @@ import {
   Box3,
   Box3Helper,
   BufferAttribute,
+  BufferGeometry,
   Color,
+  Float32BufferAttribute,
   FrontSide,
   Material,
   Matrix4,
+  Mesh,
   Ray,
   Side,
+  Uint32BufferAttribute,
   Vector3
 } from 'three'
+import { MeshBVHVisualizer } from 'three-mesh-bvh'
 import { ExtendedTriangle, HitPointInfo } from 'three-mesh-bvh'
 import { BatchObject } from '../batching/BatchObject'
 import type {
@@ -59,6 +64,7 @@ export class TopLevelAccelerationStructure {
 
   public boxHelpers: Box3Helper[] = []
   public accelerationStructure: AccelerationStructure
+  public bvhHelper: MeshBVHVisualizer
 
   public constructor(batchObjects: BatchObject[]) {
     this.batchObjects = batchObjects
@@ -99,6 +105,21 @@ export class TopLevelAccelerationStructure {
     this.accelerationStructure.outputTransform = new Matrix4()
     this.accelerationStructure.inputOriginTransform = new Matrix4()
     this.accelerationStructure.outputOriginTransfom = new Matrix4()
+    const geom = new BufferGeometry()
+    geom.setIndex(new Uint32BufferAttribute(new Uint32Array(indices), 1))
+    geom.setAttribute(
+      'position',
+      new Float32BufferAttribute(new Float32Array(vertices), 3)
+    )
+    geom.computeBoundingBox()
+
+    const mesh = new Mesh(geom)
+    mesh.layers.set(ObjectLayers.OVERLAY)
+    mesh.geometry.boundsTree = this.accelerationStructure.bvh
+    this.bvhHelper = new MeshBVHVisualizer(mesh)
+    this.bvhHelper.layers.set(ObjectLayers.OVERLAY)
+    this.bvhHelper.children[0].layers.set(ObjectLayers.OVERLAY)
+    this.bvhHelper.update()
   }
 
   private updateVertArray(box: Box3, offset: number, outPositions: number[]) {
