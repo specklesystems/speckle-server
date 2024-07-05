@@ -30,7 +30,7 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col h-[98vh] md:h-auto',
+                'transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col h-[98vh] md:h-auto',
                 fullscreen ? 'md:h-full' : 'md:max-h-[90vh]',
                 widthClasses
               ]"
@@ -42,10 +42,10 @@
                   v-if="hasTitle"
                   class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-lg sm:text-2xl font-bold"
                 >
-                  <div class="w-full truncate pr-12">
+                  <div v-if="props.title" class="w-full truncate pr-12">
                     {{ title }}
-                    <slot name="header"></slot>
                   </div>
+                  <slot v-else name="header" />
                 </div>
               </div>
 
@@ -141,6 +141,8 @@ const props = defineProps<{
   /**
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
    */
+  // Temp fix
+  backgroundColor?: string
   onSubmit?: (e: SubmitEvent) => void
 }>()
 

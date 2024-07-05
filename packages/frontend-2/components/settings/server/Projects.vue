@@ -1,22 +1,25 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
     <h2 class="text-2xl font-semibold font-semibold hidden md:block">Projects</h2>
-    <p class="text-sm pt-6 md:pt-4">And overview of all your projects</p>
+    <p class="text-sm pt-2 md:pt-4">And overview of all your projects</p>
 
     <hr class="my-6 md:my-10" />
 
-    <FormTextInput
-      name="search"
-      :custom-icon="MagnifyingGlassIcon"
-      color="foundation"
-      full-width
-      search
-      :show-clear="!!searchString"
-      placeholder="Search Projects"
-      class="rounded-md border border-outline-3 md:max-w-md"
-      @update:model-value="debounceSearchUpdate"
-      @change="($event) => searchUpdateHandler($event.value)"
-    />
+    <div class="flex flex-col-reverse md:flex-row">
+      <FormTextInput
+        name="search"
+        :custom-icon="MagnifyingGlassIcon"
+        color="foundation"
+        full-width
+        search
+        :show-clear="!!searchString"
+        placeholder="Search Projects"
+        class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
+        @update:model-value="debounceSearchUpdate"
+        @change="($event) => searchUpdateHandler($event.value)"
+      />
+      <FormButton :icon-left="PlusIcon" @click="openNewProject = true">New</FormButton>
+    </div>
 
     <LayoutTable
       class="mt-6 md:mt-8"

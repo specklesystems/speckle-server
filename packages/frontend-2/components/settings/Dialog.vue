@@ -1,11 +1,25 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" fullscreen>
+  <LayoutDialog
+    v-model:open="isOpen"
+    :title="selectedMenuItem || !isMobile ? null : 'Settings'"
+    fullscreen
+  >
+    <template v-if="isMobile" #header>
+      <div v-if="selectedMenuItem" class="flex md:hidden items-center">
+        <ChevronLeftIcon class="w-5 h-5 -ml-1" @click="setSelectedMenuItem(null)" />
+        <h2 class="text-xl font-semibold ml-3">{{ selectedMenuItem?.title }}</h2>
+      </div>
+    </template>
     <div class="w-full h-full flex">
-      <LayoutSidebar
+      <!-- <LayoutSidebar
         v-if="!isMobile || !selectedMenuItem"
         class="w-full md:w-56 lg:w-60 p-4 pt-6 bg-foundation-page md:border-r md:border-outline-3"
+      > -->
+      <LayoutSidebar
+        v-if="!isMobile || !selectedMenuItem"
+        class="w-full md:w-56 lg:w-60 md:p-4 md:pt-6 md:bg-foundation-page md:border-r md:border-outline-3"
       >
-        <h1 class="text-xl pl-1 pb-6 font-semibold md:hidden">Settings</h1>
+        <!-- <h1 class="text-xl pl-1 pb-6 font-semibold md:hidden">Settings</h1> -->
         <div class="flex-1">
           <LayoutSidebarMenu>
             <LayoutSidebarMenuGroup title="Account Settings">
@@ -33,15 +47,15 @@
           </LayoutSidebarMenu>
         </div>
       </LayoutSidebar>
+      <!-- simple-scrollbar overflow-y-scroll flex-1  -->
       <main
         v-if="selectedMenuItem"
-        class="simple-scrollbar overflow-y-scroll flex-1 bg-foundation p-6 md:px-4 md:py-12"
+        :class="[
+          'bg-foundation md:p-6 md:px-10 md:py-12 w-full md:bg-foundation',
+          !isMobile && 'simple-scrollbar overflow-y-scroll flex-1'
+        ]"
       >
-        <div class="flex md:hidden items-center">
-          <ChevronLeftIcon class="w-5 h-5 -ml-2" @click="setSelectedMenuItem(null)" />
-          <h2 class="text-xl font-semibold ml-4">{{ selectedMenuItem?.title }}</h2>
-        </div>
-        <component :is="selectedMenuItem?.component" />
+        <component :is="selectedMenuItem?.component" class="pb-6" />
       </main>
     </div>
   </LayoutDialog>
@@ -87,7 +101,7 @@ const props = defineProps<{
 }>()
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isMobile = breakpoints.smallerOrEqual('sm')
+const isMobile = breakpoints.smallerOrEqual('md')
 const router = useRouter()
 
 const isOpen = computed({

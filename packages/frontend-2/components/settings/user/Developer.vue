@@ -2,7 +2,7 @@
   <div class="md:max-w-5xl md:mx-auto">
     <div class="flex flex-col">
       <h2 class="text-2xl font-semibold hidden md:block">Developer Settings</h2>
-      <p class="text-sm pt-6 md:pt-4">You can see stuff for developers here</p>
+      <p class="text-sm pt-2 md:pt-4">You can see stuff for developers here</p>
       <hr class="my-6 md:my-10" />
       <div class="flex flex-col gap-6 md:gap-12">
         <div class="flex flex-col">
@@ -13,7 +13,7 @@
             :buttons="[
               {
                 props: {
-                  color: 'invert',
+                  color: 'secondary',
                   target: '_blank',
                   external: true,
                   iconLeft: BookOpenIcon
@@ -32,7 +32,7 @@
             :buttons="[
               {
                 props: {
-                  color: 'invert',
+                  color: 'secondary',
                   to: 'https://speckle.guide/dev/tokens.html',
                   iconLeft: BookOpenIcon,
                   target: '_blank',
@@ -110,7 +110,7 @@
             :buttons="[
               {
                 props: {
-                  color: 'invert',
+                  color: 'secondary',
                   to: 'https://speckle.guide/dev/apps.html',
                   target: '_blank',
                   external: true,
@@ -193,7 +193,7 @@
             :buttons="[
               {
                 props: {
-                  color: 'invert',
+                  color: 'secondary',
                   to: 'https://speckle.guide/dev/apps.html',
                   target: '_blank',
                   external: true,
