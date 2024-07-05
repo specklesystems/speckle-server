@@ -108,8 +108,6 @@ export const upsertWorkspaceRoleFactory =
       throw new Error(`Unexpected workspace role provided: ${role}`)
     }
 
-    const workspacesAclTable = tables.workspacesAcl(db)
-
     // Protect against removing last admin in workspace
     const isUserLastAdmin = await isUserLastAdminFactory({ db })({
       userId,
@@ -120,7 +118,8 @@ export const upsertWorkspaceRoleFactory =
       throw new Error('Cannot remove last admin in workspace.')
     }
 
-    await workspacesAclTable
+    await tables
+      .workspacesAcl(db)
       .insert({ userId, workspaceId, role })
       .onConflict(['userId', 'workspaceId'])
       .merge(['role'])
