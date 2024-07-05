@@ -7,7 +7,7 @@
       Once pressed, you will receive an e-mail with further instructions.
     </p>
     <div>
-      <FormButton color="default" @click="onClick">Reset password</FormButton>
+      <FormButton color="default" @click="onClick">Reset Password</FormButton>
     </div>
   </div>
 </template>
