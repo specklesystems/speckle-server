@@ -1,6 +1,8 @@
 export const getAppPort = () => process.env.PORT || '3001'
-export const getChromiumExecutablePath = () =>
-  process.env.CHROMIUM_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
+export const getChromiumExecutablePath = () => {
+  if (isDevelopment()) return undefined // use default
+  return process.env.CHROMIUM_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
+}
 export const getHealthCheckFilePath = () =>
   process.env.HEALTHCHECK_FILE_PATH || '/tmp/last_successful_query'
 export const getHost = () => process.env.HOST || '127.0.0.1'
@@ -13,9 +15,12 @@ export const getPostgresMaxConnections = () =>
   parseInt(process.env.POSTGRES_MAX_CONNECTIONS_PREVIEW_SERVICE || '2')
 export const getPreviewTimeout = () =>
   parseInt(process.env.PREVIEW_TIMEOUT || '3600000')
-export const getPuppeteerUserDataDir = () =>
-  process.env.USER_DATA_DIR || '/tmp/puppeteer'
-export const isDevelopment = () => getNodeEnv() === 'development'
+export const getPuppeteerUserDataDir = () => {
+  if (isDevelopment()) return undefined // use default
+  return process.env.USER_DATA_DIR || '/tmp/puppeteer'
+}
+export const isDevelopment = () =>
+  getNodeEnv() === 'development' || getNodeEnv() === 'dev'
 export const isLogPretty = () => process.env.LOG_PRETTY?.toLocaleLowerCase() === 'true'
 export const isProduction = () => getNodeEnv() === 'production'
 export const isTest = () => getNodeEnv() === 'test'

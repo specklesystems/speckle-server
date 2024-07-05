@@ -17,7 +17,7 @@
   "scripts": {
     "build:tsc:watch": "tsc -p ./tsconfig.build.json --watch",
     "build:webpack:watch": "webpack --env build --config webpack.config.renderPage.cjs --watch",
-    "run:watch": "LOG_PRETTY=true LOG_LEVEL=debug nodemon --exec \"yarn start\" --trace-deprecation --watch ./bin/www --watch ./dist",
+    "run:watch": "NODE_ENV=development LOG_PRETTY=true LOG_LEVEL=debug nodemon --exec \"yarn start\" --trace-deprecation --watch ./bin/www --watch ./dist",
     "dev": "concurrently \"npm:build:tsc:watch\" \"npm:build:webpack:watch\"  \"npm:run:watch\"",
     "dev:headed": "PREVIEWS_HEADED=true yarn dev",
     "build:tsc": "rimraf ./dist/src && tsc -p ./tsconfig.build.json",

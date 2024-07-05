@@ -2,9 +2,9 @@ import { puppeteerClientFactory } from '@/clients/puppeteer.js'
 import { puppeteerDriver } from '@/scripts/puppeteerDriver.js'
 import { getScreenshotFactory } from '@/services/screenshot.js'
 import {
-  // getChromiumExecutablePath,
+  getChromiumExecutablePath,
   getPreviewTimeout,
-  // getPuppeteerUserDataDir,
+  getPuppeteerUserDataDir,
   serviceOrigin,
   shouldBeHeadless
 } from '@/utils/env.js'
@@ -32,8 +32,8 @@ const previewRouterFactory = () => {
         script: puppeteerDriver,
         launchParams: {
           headless: shouldBeHeadless(),
-          // userDataDir: getPuppeteerUserDataDir(),
-          // executablePath: getChromiumExecutablePath(),
+          userDataDir: getPuppeteerUserDataDir(),
+          executablePath: getChromiumExecutablePath(),
           protocolTimeout: getPreviewTimeout(),
           // we trust the web content that is running, so can disable the sandbox
           // disabling the sandbox allows us to run the docker image without linux kernel privileges
