@@ -12,7 +12,7 @@ const apiRouterFactory = (deps: { db: Knex }) => {
   const apiRouter = express.Router()
 
   const getObjectsRequestBodySchema = z.object({
-    objects: z.array(z.string())
+    objects: z.preprocess((objects) => JSON.parse(String(objects)), z.array(z.string()))
   })
 
   // This method was copy-pasted from the server method, without authentication/authorization (this web service is an internal one)

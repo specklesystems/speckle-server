@@ -1650,9 +1650,9 @@
               "default": ""
             },
             "timeoutMilliseconds": {
-              "type": "number",
+              "type": "string",
               "description": "The timeout in milliseconds for the Puppeteer service.",
-              "default": 3600000
+              "default": "3600000"
             }
           }
         },
