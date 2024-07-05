@@ -17,4 +17,18 @@ describe.concurrent('E2E', () => {
       await Promise.resolve()
     })
   })
+  describe.concurrent('adding a job in the database', () => {
+    e2eTest('should create a preview', async ({ context }) => {
+      const port = getServerPort(context.server)
+      console.log(`port3 : ${port}`)
+
+      //TODO add an object in the object store
+      //TODO add a job in the database
+      //wait for the job in the database to be updated
+      //wait for the job in the database to be completed
+      //ensure the preview is created
+      //ensure the preview has all the required angles
+      await Promise.resolve()
+    })
+  })
 })
