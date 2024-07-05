@@ -87,15 +87,15 @@ spec:
             value: "/postgres-certificate/ca-certificate.crt"
           {{- end }}
 
-          {{- if .Values.preview_service.puppeteer.userDataDirectory -}}
+          {{- if .Values.preview_service.puppeteer.userDataDirectory }}
           - name: USER_DATA_DIR
             value: {{ .Values.preview_service.puppeteer.userDataDirectory | quote }}
-          {{- end -}}
+          {{- end }}
 
-          {{- if .Values.preview_service.puppeteer.timeoutMilliseconds -}}
+          {{- if .Values.preview_service.puppeteer.timeoutMilliseconds }}
           - name: PREVIEW_TIMEOUT
             value: {{ .Values.preview_service.puppeteer.timeoutMilliseconds | quote }}
-          {{- end -}}
+          {{- end }}
 
       {{- if .Values.preview_service.affinity }}
       affinity: {{- include "speckle.renderTpl" (dict "value" .Values.preview_service.affinity "context" $) | nindent 8 }}

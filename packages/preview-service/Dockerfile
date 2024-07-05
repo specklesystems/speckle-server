@@ -102,4 +102,4 @@ RUN groupadd -g 30000 -r pptruser && \
 # Run everything after as non-privileged user.
 USER pptruser
 
-ENTRYPOINT [ "tini", "--", "node", "bin/www" ]
+ENTRYPOINT [ "tini", "--", "node", "--loader=./dist/src/aliasLoader.js", "bin/www" ]
