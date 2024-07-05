@@ -1,9 +1,9 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
     <h2 class="text-2xl font-semibold font-semibold hidden md:block">Projects</h2>
-    <p class="text-sm pt-4">And overview of all your projects</p>
+    <p class="text-sm pt-6 md:pt-4">And overview of all your projects</p>
 
-    <hr class="my-10" />
+    <hr class="my-6 md:my-10" />
 
     <FormTextInput
       name="search"
@@ -19,7 +19,7 @@
     />
 
     <LayoutTable
-      class="mt-8"
+      class="mt-6 md:mt-8"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
         { id: 'type', header: 'Type', classes: 'col-span-1' },
@@ -106,14 +106,6 @@ import { isProject } from '~~/lib/server-management/helpers/utils'
 
 const logger = useLogger()
 const router = useRouter()
-
-useHead({
-  title: 'Projects'
-})
-
-definePageMeta({
-  middleware: ['admin']
-})
 
 const projectToModify = ref<ProjectItem | null>(null)
 const searchString = ref('')

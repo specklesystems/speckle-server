@@ -3,11 +3,11 @@
     <h2 class="text-2xl font-semibold font-semibold hidden md:block">
       Pending Invitations
     </h2>
-    <p class="text-sm pt-4">And overview of all your pending invititations</p>
+    <p class="text-sm pt-6 md:pt-4">And overview of all your pending invititations</p>
 
-    <hr class="my-10" />
+    <hr class="my-6 md:my-10" />
 
-    <div class="flex">
+    <div class="flex flex-col-reverse md:flex-row">
       <FormTextInput
         name="search"
         :custom-icon="MagnifyingGlassIcon"
@@ -16,7 +16,7 @@
         search
         :show-clear="!!searchString"
         placeholder="Search Invitations"
-        class="rounded-md border border-outline-3 md:max-w-md"
+        class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
         @update:model-value="debounceSearchUpdate"
         @change="($event) => searchUpdateHandler($event.value)"
       />
@@ -26,7 +26,7 @@
     </div>
 
     <LayoutTable
-      class="mt-8"
+      class="mt-6 md:mt-8"
       :columns="[
         { id: 'email', header: 'Email', classes: 'col-span-5 truncate' },
         { id: 'invitedBy', header: 'Invited By', classes: 'col-span-4' },
@@ -103,14 +103,6 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-
-useHead({
-  title: 'Pending Invitations'
-})
-
-definePageMeta({
-  middleware: ['admin']
-})
 
 const logger = useLogger()
 const { triggerNotification } = useGlobalToast()

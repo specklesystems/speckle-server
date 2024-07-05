@@ -1,9 +1,9 @@
 <template>
   <div class="md:max-w-xl md:mx-auto">
     <h2 class="text-2xl font-semibold font-semibold hidden md:block">General</h2>
-    <p class="text-sm pt-4">Here are your general settings</p>
+    <p class="text-sm pt-6 md:pt-4">Here are your general settings</p>
 
-    <hr class="my-10" />
+    <hr class="my-6 md:my-10" />
 
     <div class="flex flex-col space-y-6">
       <h2 class="text-xl">Server details</h2>
@@ -72,7 +72,7 @@
         </div>
       </form>
     </div>
-    <hr class="my-10" />
+    <hr class="my-6 md:my-10" />
     <SettingsServerVersion />
   </div>
 </template>

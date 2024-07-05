@@ -5,40 +5,43 @@
         v-if="!isMobile || !selectedMenuItem"
         class="w-full md:w-56 lg:w-60 p-4 pt-6 bg-foundation-page md:border-r md:border-outline-3"
       >
-        <LayoutSidebarMenu>
-          <LayoutSidebarMenuGroup title="Account Settings">
-            <template #title-icon>
-              <UserIcon />
-            </template>
-            <LayoutSidebarMenuGroupItem
-              v-for="(sidebarMenuItem, index) in sidebarConfig.user"
-              :key="`sidebarUserItem-${index}`"
-              :label="sidebarMenuItem.title"
-              @click="setSelectedMenuItem(sidebarMenuItem.path)"
-            />
-          </LayoutSidebarMenuGroup>
-          <LayoutSidebarMenuGroup title="Server Settings">
-            <template #title-icon>
-              <ServerStackIcon />
-            </template>
-            <LayoutSidebarMenuGroupItem
-              v-for="(sidebarMenuItem, index) in sidebarConfig.server"
-              :key="`sidebarServerItem-${index}`"
-              :label="sidebarMenuItem.title"
-              @click="setSelectedMenuItem(sidebarMenuItem.path)"
-            />
-          </LayoutSidebarMenuGroup>
-        </LayoutSidebarMenu>
+        <h1 class="text-xl pl-1 pb-6 font-semibold md:hidden">Settings</h1>
+        <div class="flex-1">
+          <LayoutSidebarMenu>
+            <LayoutSidebarMenuGroup title="Account Settings">
+              <template #title-icon>
+                <UserIcon />
+              </template>
+              <LayoutSidebarMenuGroupItem
+                v-for="(sidebarMenuItem, index) in sidebarConfig.user"
+                :key="`sidebarUserItem-${index}`"
+                :label="sidebarMenuItem.title"
+                @click="setSelectedMenuItem(sidebarMenuItem.path)"
+              />
+            </LayoutSidebarMenuGroup>
+            <LayoutSidebarMenuGroup title="Server Settings">
+              <template #title-icon>
+                <ServerStackIcon />
+              </template>
+              <LayoutSidebarMenuGroupItem
+                v-for="(sidebarMenuItem, index) in sidebarConfig.server"
+                :key="`sidebarServerItem-${index}`"
+                :label="sidebarMenuItem.title"
+                @click="setSelectedMenuItem(sidebarMenuItem.path)"
+              />
+            </LayoutSidebarMenuGroup>
+          </LayoutSidebarMenu>
+        </div>
       </LayoutSidebar>
       <main
         v-if="selectedMenuItem"
-        class="simple-scrollbar overflow-y-scroll flex-1 bg-foundation px-6 py-8 md:px-4 md:py-12"
+        class="simple-scrollbar overflow-y-scroll flex-1 bg-foundation p-6 md:px-4 md:py-12"
       >
         <div class="flex md:hidden items-center">
-          <ChevronLeftIcon class="w-6 h-6" @click="setSelectedMenuItem(null)" />
-          <h1 class="h4 font-semibold ml-4">{{ selectedMenuItem.title }}</h1>
+          <ChevronLeftIcon class="w-5 h-5 -ml-2" @click="setSelectedMenuItem(null)" />
+          <h2 class="text-xl font-semibold ml-4">{{ selectedMenuItem?.title }}</h2>
         </div>
-        <component :is="selectedMenuItem.component" />
+        <component :is="selectedMenuItem?.component" />
       </main>
     </div>
   </LayoutDialog>
@@ -53,7 +56,7 @@ import SettingsUserDeveloper from './user/Developer.vue'
 import SettingsServerGeneral from './server/General.vue'
 import SettingsServerProjects from './server/Projects.vue'
 import SettingsServerActiveUsers from './server/ActiveUsers.vue'
-import SettingsServerInvites from './server/Invites.vue'
+import SettingsServerPendingInvitations from './server/PendingInvitations.vue'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
@@ -144,7 +147,7 @@ const sidebarConfig: SidebarConfig = {
     },
     pendingInvitations: {
       title: 'Pending Invitations',
-      component: SettingsServerInvites,
+      component: SettingsServerPendingInvitations,
       path: '/settings/server/pending-invitations'
     }
   }

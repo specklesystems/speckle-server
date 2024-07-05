@@ -1,11 +1,11 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
     <h2 class="text-2xl font-semibold font-semibold hidden md:block">Active Users</h2>
-    <p class="text-sm pt-4">And overview of all your active users</p>
+    <p class="text-sm pt-6 md:pt-4">And overview of all your active users</p>
 
-    <hr class="my-10" />
+    <hr class="my-6 md:my-10" />
 
-    <div class="flex">
+    <div class="flex flex-col-reverse md:flex-row">
       <FormTextInput
         name="search"
         :custom-icon="MagnifyingGlassIcon"
@@ -14,7 +14,7 @@
         search
         :show-clear="!!searchString"
         placeholder="Search Users"
-        class="rounded-md border border-outline-3 md:max-w-md"
+        class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
         @update:model-value="debounceSearchUpdate"
         @change="($event) => searchUpdateHandler($event.value)"
       />
@@ -24,7 +24,7 @@
     </div>
 
     <LayoutTable
-      class="mt-8"
+      class="mt-6 md:mt-8"
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
         { id: 'email', header: 'Email', classes: 'col-span-3 truncate' },
@@ -123,14 +123,6 @@ import {
   UserPlusIcon
 } from '@heroicons/vue/24/outline'
 import { useServerInfo } from '~~/lib/core/composables/server'
-
-useHead({
-  title: 'Active Users'
-})
-
-definePageMeta({
-  middleware: ['admin']
-})
 
 const logger = useLogger()
 const { activeUser } = useActiveUser()

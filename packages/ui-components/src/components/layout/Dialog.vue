@@ -40,7 +40,7 @@
               <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
                 <div
                   v-if="hasTitle"
-                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] px-6 py-4 md:p-6 truncate text-lg sm:text-2xl font-bold"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-lg sm:text-2xl font-bold"
                 >
                   <div class="w-full truncate pr-12">
                     {{ title }}
@@ -59,7 +59,7 @@
               <button
                 v-if="!hideCloser"
                 type="button"
-                class="absolute z-20 bg-foundation rounded-full p-1.5 shadow border top-4 right-4"
+                class="absolute z-20 bg-foundation rounded-full p-1.5 shadow border top-5 right-5"
                 @click="open = false"
               >
                 <XMarkIcon class="h-4 w-4 md:w-5 md:h-5" />

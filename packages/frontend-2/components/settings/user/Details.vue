@@ -1,11 +1,11 @@
 <template>
   <div class="flex flex-col gap-y-4">
     <h2 class="text-xl">Your details</h2>
-    <div class="grid grid-cols-2 pt-4">
+    <div class="grid md:grid-cols-2 pt-4">
       <div class="flex h-full items-center justify-center">
         <UserProfileEditDialogAvatar :user="user" size="xxl" />
       </div>
-      <div>
+      <div class="pt-6 md:pt-0">
         <FormTextInput
           v-model="name"
           class="pt-2 pb-1"
