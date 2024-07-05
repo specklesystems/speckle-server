@@ -1,5 +1,5 @@
-import { logger } from '#src/observability/logging.js'
-import { getPostgresMaxConnections } from '#src/utils/env.js'
+import { logger } from '@/observability/logging.js'
+import { getPostgresMaxConnections } from '@/utils/env.js'
 import type { Knex } from 'knex'
 import { isObject } from 'lodash-es'
 import type { Counter, Histogram, Summary } from 'prom-client'

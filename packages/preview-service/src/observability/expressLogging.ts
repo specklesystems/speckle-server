@@ -1,5 +1,5 @@
-import { REQUEST_ID_HEADER } from '#src/domain/const.js'
-import { logger } from '#src/observability/logging.js'
+import { REQUEST_ID_HEADER } from '@/domain/const.js'
+import { logger } from '@/observability/logging.js'
 import { randomUUID } from 'crypto'
 import type { IncomingHttpHeaders, IncomingMessage } from 'http'
 import { pinoHttp } from 'pino-http'

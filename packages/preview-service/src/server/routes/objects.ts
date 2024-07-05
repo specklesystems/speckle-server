@@ -1,12 +1,9 @@
 import {
   getObjectChildrenStreamFactory,
   getObjectFactory
-} from '#src/repositories/objects.js'
-import {
-  isSimpleTextRequested,
-  simpleTextOrJsonContentType
-} from '#src/utils/headers.js'
-import { SpeckleObjectsStream } from '#src/utils/speckleObjectsStream.js'
+} from '@/repositories/objects.js'
+import { isSimpleTextRequested, simpleTextOrJsonContentType } from '@/utils/headers.js'
+import { SpeckleObjectsStream } from '@/utils/speckleObjectsStream.js'
 import express, { RequestHandler } from 'express'
 import type { Knex } from 'knex'
 import { PassThrough, pipeline } from 'stream'

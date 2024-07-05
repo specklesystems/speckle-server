@@ -1,8 +1,8 @@
-import { databaseIntegrationTest } from '#tests/helpers/testExtensions.js'
+import { databaseIntegrationTest } from '#/helpers/testExtensions.js'
 import {
   ObjectPreview,
   getNextUnstartedObjectPreviewFactory
-} from '#src/repositories/objectPreview.js'
+} from '@/repositories/objectPreview.js'
 import cryptoRandomString from 'crypto-random-string'
 import { describe, expect } from 'vitest'
 

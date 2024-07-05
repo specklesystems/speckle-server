@@ -1,4 +1,4 @@
-import { ObjectIdentifier } from '#src/domain/domain.js'
+import type { ObjectIdentifier } from '@/domain/domain.js'
 import type { Knex } from 'knex'
 
 export type ObjectPreviewRow = ObjectIdentifier & {

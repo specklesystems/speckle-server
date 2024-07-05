@@ -1,4 +1,4 @@
-import { WorkStatus, WorkToBeDone } from '#src/domain/backgroundWorker.js'
+import { WorkStatus, WorkToBeDone } from '@/domain/backgroundWorker.js'
 import { throwUncoveredError } from '@speckle/shared/dist/esm/index.js'
 
 let shouldExit = false

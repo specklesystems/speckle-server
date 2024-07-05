@@ -1,8 +1,8 @@
-import { startServer } from '#src/server/server.js'
+import { startServer } from '@/server/server.js'
 import type { Knex } from 'knex'
 import http from 'http'
-import { AddressInfo } from 'net'
-import { getPostgresConnectionString } from '#src/utils/env.js'
+import type { AddressInfo } from 'net'
+import { getPostgresConnectionString } from '@/utils/env.js'
 
 export const startAndWaitOnServers = async (deps: { db: Knex }) => {
   let serverAddress: string | AddressInfo | null = null

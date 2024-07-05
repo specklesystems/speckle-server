@@ -1,12 +1,14 @@
-import { loggingExpressMiddleware } from '#src/observability/expressLogging.js'
-import apiRouterFactory from '#src/server/routes/api.js'
-import indexRouterFactory from '#src/server/routes/index.js'
-import objectsRouterFactory from '#src/server/routes/objects.js'
-import previewRouterFactory from '#src/server/routes/preview.js'
-import { errorHandler } from '#src/utils/errorHandler.js'
+import { loggingExpressMiddleware } from '@/observability/expressLogging.js'
+import { srcRoot } from '@/root.js'
+import apiRouterFactory from '@/server/routes/api.js'
+import indexRouterFactory from '@/server/routes/index.js'
+import objectsRouterFactory from '@/server/routes/objects.js'
+import previewRouterFactory from '@/server/routes/preview.js'
+import { errorHandler } from '@/utils/errorHandler.js'
 import express from 'express'
 import createError from 'http-errors'
 import type { Knex } from 'knex'
+import path from 'path'
 
 export const appFactory = (deps: { db: Knex }) => {
   const { db } = deps
@@ -17,7 +19,7 @@ export const appFactory = (deps: { db: Knex }) => {
   app.use(express.json({ limit: '100mb' }))
   app.use(express.urlencoded({ limit: '100mb', extended: false }))
   //webpack will build the renderPage and save it to the packages/preview-service/dist/public directory
-  app.use(express.static('../public'))
+  app.use(express.static(path.join(srcRoot, '../public')))
 
   app.use('/', indexRouterFactory())
   app.use('/preview', previewRouterFactory())

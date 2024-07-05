@@ -1,7 +1,7 @@
-import { stopServer } from '#src/server/server.js'
+import { stopServer } from '@/server/server.js'
 import { inject, test } from 'vitest'
-import { getTestDb } from '#tests/helpers/testKnexClient.js'
-import { startAndWaitOnServers } from '#tests/helpers/helpers.js'
+import { getTestDb } from '#/helpers/testKnexClient.js'
+import { startAndWaitOnServers } from '#/helpers/helpers.js'
 import type { Knex } from 'knex'
 import { Server } from 'http'
 

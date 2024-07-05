@@ -1,9 +1,2 @@
 #!/usr/bin/env node
-import dotenv from 'dotenv'
-import { db } from '#src/clients/knex.js'
-import { startPreviewService } from '#src/server/background.js'
-import { startServer } from '#src/server/server.js'
-
-dotenv.config()
-startServer({ db })
-startPreviewService({ db })
+import '../dist/src/bin.js'

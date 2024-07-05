@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
 import { knex } from 'knex'
-import { customizePostgresConnectionString } from './helpers.js'
+import { customizePostgresConnectionString } from '#/helpers/helpers.js'
 
 export const getTestDb = (databaseName?: string) =>
   knex({
