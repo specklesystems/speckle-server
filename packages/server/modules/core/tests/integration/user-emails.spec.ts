@@ -9,6 +9,9 @@ import crs from 'crypto-random-string'
 function createRandomEmail() {
   return `${crs({ length: 6 })}@example.org`
 }
+function createRandomPassword() {
+  return crs({ length: 10 })
+}
 
 describe('Core @user-emails', () => {
   before(async () => {
@@ -24,7 +27,7 @@ describe('Core @user-emails', () => {
       await createUser({
         name: 'John Doe',
         email,
-        password: 'sn3aky-1337-b1m'
+        password: createRandomPassword()
       })
       // TODO: delete user email
 
@@ -38,7 +41,7 @@ describe('Core @user-emails', () => {
       await createUser({
         name: 'John Doe',
         email,
-        password: 'sn3aky-1337-b1m'
+        password: createRandomPassword()
       })
 
       const user = (await getUserByEmail(email)) as UserRecord
