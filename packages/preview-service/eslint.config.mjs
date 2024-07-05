@@ -12,10 +12,10 @@ const configs = [
     ignores: ['dist', 'public', 'docs']
   },
   {
-    files: ['**/*.js', '**/*.cjs'],
+    files: ['**/*.js'],
     ignores: ['renderPage', '**/*.mjs', 'src/scripts/puppeteerDriver.js'],
     languageOptions: {
-      sourceType: 'commonjs',
+      sourceType: 'module',
       globals: {
         ...globals.node
       }
@@ -42,7 +42,6 @@ const configs = [
   {
     files: ['src/scripts/puppeteerDriver.js'],
     languageOptions: {
-      sourceType: 'commonjs',
       globals: {
         ...globals.browser
       }

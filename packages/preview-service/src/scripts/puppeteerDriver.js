@@ -1,4 +1,4 @@
-const puppeteerDriver = async (objectUrl) => {
+export const puppeteerDriver = async (objectUrl) => {
   const waitForAnimation = async (ms = 70) =>
     await new Promise((resolve) => {
       setTimeout(resolve, ms)
@@ -46,6 +46,6 @@ const puppeteerDriver = async (objectUrl) => {
   return ret
 }
 
-module.exports = {
-  puppeteerDriver
-}
+// module.exports = {
+//   puppeteerDriver
+// }

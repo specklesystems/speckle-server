@@ -1,7 +1,12 @@
 import { getPostgresConnectionString } from '@/utils/env.js'
-import { knex } from 'knex'
+import * as knex from 'knex'
+import { get } from 'lodash-es'
 
-export const db = knex({
+// CJS interop (types are off)
+const knexBuilder = (get(knex, 'default') ||
+  get(knex, 'knex')) as unknown as typeof knex.knex
+
+export const db = knexBuilder({
   client: 'pg',
   connection: {
     // eslint-disable-next-line camelcase

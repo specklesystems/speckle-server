@@ -1,4 +1,5 @@
 import { loggingExpressMiddleware } from '@/observability/expressLogging.js'
+import { srcRoot } from '@/root.js'
 import apiRouterFactory from '@/server/routes/api.js'
 import indexRouterFactory from '@/server/routes/index.js'
 import objectsRouterFactory from '@/server/routes/objects.js'
@@ -18,7 +19,7 @@ export const appFactory = (deps: { db: Knex }) => {
   app.use(express.json({ limit: '100mb' }))
   app.use(express.urlencoded({ limit: '100mb', extended: false }))
   //webpack will build the renderPage and save it to the packages/preview-service/dist/public directory
-  app.use(express.static(path.join(__dirname, '../public')))
+  app.use(express.static(path.join(srcRoot, '../public')))
 
   app.use('/', indexRouterFactory())
   app.use('/preview', previewRouterFactory())

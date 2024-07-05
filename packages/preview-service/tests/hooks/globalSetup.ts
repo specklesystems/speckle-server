@@ -2,13 +2,12 @@
  * These hooks are run once, before and after the test suite.
  * It is configured via the vitest.config.ts file.
  */
-
+import '@/bootstrap.js'
 import { getTestDb } from '#/helpers/testKnexClient.js'
 import { down, up } from '#/migrations/migrations.js'
 import { testLogger as logger } from '@/observability/logging.js'
 import cryptoRandomString from 'crypto-random-string'
 import type { GlobalSetupContext } from 'vitest/node'
-import dotenv from 'dotenv'
 
 declare module 'vitest' {
   export interface ProvidedContext {
@@ -28,7 +27,6 @@ const dbName = `preview_service_${cryptoRandomString({
  */
 export async function setup({ provide }: GlobalSetupContext) {
   logger.info('🏃🏻‍♀️‍➡️ Running vitest setup global hook')
-  dotenv.config()
   const superUserDbClient = getTestDb()
   await superUserDbClient.raw(`CREATE DATABASE ${dbName}
     WITH

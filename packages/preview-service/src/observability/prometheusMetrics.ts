@@ -1,7 +1,7 @@
 import { logger } from '@/observability/logging.js'
 import { getPostgresMaxConnections } from '@/utils/env.js'
 import type { Knex } from 'knex'
-import { isObject } from 'lodash'
+import { isObject } from 'lodash-es'
 import type { Counter, Histogram, Summary } from 'prom-client'
 import prometheusClient from 'prom-client'
 import { Pool } from 'tarn'
