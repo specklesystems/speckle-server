@@ -19,9 +19,11 @@ const getWorkspaceRole = getWorkspaceRoleFactory({ db })
 const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
 
 const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
+  const testId = cryptoRandomString({ length: 6 })
+
   const userRecord: BasicTestUser = {
-    name: 'test-user',
-    email: 'test-user@test.com',
+    name: `test-user-${testId}`,
+    email: `test-user-${testId}@test.com`,
     password: '',
     id: '',
     role: 'server:user'
