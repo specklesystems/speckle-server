@@ -1,6 +1,5 @@
 import { Knex } from 'knex'
-
-const USER_EMAILS_TABLE_NAME = 'user_emails'
+import { USER_EMAILS_TABLE_NAME } from '../constants'
 
 export async function up(knex: Knex): Promise<void> {
   await knex.schema.createTable(USER_EMAILS_TABLE_NAME, (table) => {

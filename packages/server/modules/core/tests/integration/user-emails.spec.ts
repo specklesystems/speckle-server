@@ -1,9 +1,9 @@
 import { before } from 'mocha'
-import { createUser } from '../../services/users'
+import { createUser } from '@/modules/core/services/users'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
-import { getUserByEmail } from '../../repositories/users'
-import { UserRecord } from '../../helpers/types'
+import { getUserByEmail } from '@/modules/core/repositories/users'
+import { UserRecord } from '@/modules/core/helpers/types'
 import crs from 'crypto-random-string'
 
 function createRandomEmail() {
