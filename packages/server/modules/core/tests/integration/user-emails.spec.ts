@@ -26,6 +26,7 @@ describe('Core @user-emails', () => {
         email,
         password: 'sn3aky-1337-b1m'
       })
+      // TODO: delete user email
 
       const user = (await getUserByEmail('test@example.org')) as UserRecord
       expect(user.name).to.eq('John Doe')
