@@ -3,7 +3,7 @@
     <h2 class="text-2xl font-semibold font-semibold hidden md:block">
       Pending Invitations
     </h2>
-    <p class="text-sm pt-6 md:pt-4">And overview of all your pending invititations</p>
+    <p class="text-sm pt-6 md:pt-4">Manage invitations to join server</p>
 
     <hr class="my-6 md:my-10" />
 

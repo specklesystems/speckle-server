@@ -2,7 +2,7 @@
   <div class="md:max-w-5xl md:mx-auto">
     <div class="flex flex-col">
       <h2 class="text-2xl font-semibold hidden md:block">Developer Settings</h2>
-      <p class="text-sm pt-6 md:pt-4">You can see stuff for developers here</p>
+      <p class="text-sm pt-6 md:pt-4">Manage your tokens and authorized apps</p>
       <hr class="my-6 md:my-10" />
       <div class="flex flex-col gap-6 md:gap-12">
         <div class="flex flex-col">
