@@ -116,11 +116,12 @@ describe('Workspace repositories', () => {
       const { id: userId } = await createAndStoreTestUser()
       const { id: workspaceId } = await createAndStoreTestWorkspace()
 
-      const createdRole = await upsertWorkspaceRole({
+      const createdRole: WorkspaceAcl = {
         userId,
         workspaceId,
         role: 'workspace:member'
-      })
+      }
+      await upsertWorkspaceRole(createdRole)
       const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
 
       expect(deletedRole).to.deep.equal(createdRole)
@@ -149,7 +150,7 @@ describe('Workspace repositories', () => {
         workspaceId: ''
       }
 
-      expectToThrow(() => upsertWorkspaceRole(role))
+      await expectToThrow(() => upsertWorkspaceRole(role))
     })
     it('throws if last admin is being removed', async () => {
       const { id: userId } = await createAndStoreTestUser()
