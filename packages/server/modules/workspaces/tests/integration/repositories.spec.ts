@@ -10,12 +10,27 @@ import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
 import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
+import { BasicTestUser, createTestUser } from '@/test/authHelper'
 
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
 const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
 const getWorkspaceRole = getWorkspaceRoleFactory({ db })
 const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
+
+const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
+  const userRecord: BasicTestUser = {
+    name: 'test-user',
+    email: 'test-user@test.com',
+    password: '',
+    id: '',
+    role: 'server:user'
+  }
+
+  await createTestUser(userRecord)
+
+  return userRecord
+}
 
 const createAndStoreTestWorkspace = async (): Promise<Workspace> => {
   const workspace: Workspace = {
@@ -85,8 +100,8 @@ describe('Workspace repositories', () => {
 
   describe('deleteWorkspaceRoleFactory creates a function, that', () => {
     it('deletes specified workspace role', async () => {
-      const userId = cryptoRandomString({ length: 10 })
-      const workspaceId = cryptoRandomString({ length: 10 })
+      const { id: userId } = await createAndStoreTestUser()
+      const { id: workspaceId } = await createAndStoreTestWorkspace()
 
       await upsertWorkspaceRole({ userId, workspaceId, role: 'workspace:member' })
       await deleteWorkspaceRole({ userId, workspaceId })
@@ -96,8 +111,8 @@ describe('Workspace repositories', () => {
       expect(role).to.be.null
     })
     it('returns deleted workspace role', async () => {
-      const userId = cryptoRandomString({ length: 10 })
-      const workspaceId = cryptoRandomString({ length: 10 })
+      const { id: userId } = await createAndStoreTestUser()
+      const { id: workspaceId } = await createAndStoreTestWorkspace()
 
       const createdRole = await upsertWorkspaceRole({
         userId,
@@ -114,8 +129,8 @@ describe('Workspace repositories', () => {
       expect(deletedRole).to.be.null
     })
     it('throws if target user is last workspace admin', async () => {
-      const userId = cryptoRandomString({ length: 10 })
-      const workspaceId = cryptoRandomString({ length: 10 })
+      const { id: userId } = await createAndStoreTestUser()
+      const { id: workspaceId } = await createAndStoreTestWorkspace()
 
       await upsertWorkspaceRole({ userId, workspaceId, role: 'workspace:admin' })
 
@@ -135,8 +150,8 @@ describe('Workspace repositories', () => {
       expectToThrow(() => upsertWorkspaceRole(role))
     })
     it('throws if last admin is being removed', async () => {
-      const userId = cryptoRandomString({ length: 10 })
-      const workspaceId = cryptoRandomString({ length: 10 })
+      const { id: userId } = await createAndStoreTestUser()
+      const { id: workspaceId } = await createAndStoreTestWorkspace()
 
       await upsertWorkspaceRole({ workspaceId, userId, role: 'workspace:admin' })
 
