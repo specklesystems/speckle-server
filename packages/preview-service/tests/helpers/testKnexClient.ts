@@ -1,17 +1,13 @@
 /* eslint-disable camelcase */
 import { knex } from 'knex'
+import { customizePostgresConnectionString } from '#/helpers/helpers.js'
 
 export const getTestDb = (databaseName?: string) =>
   knex({
     client: 'pg',
     connection: {
       application_name: 'speckle_preview_service',
-      database: databaseName,
-      user: 'preview_service_test',
-      password: 'preview_service_test',
-      host: '127.0.0.1',
-      port: 5432,
-      protocol: 'postgres'
+      connectionString: customizePostgresConnectionString(databaseName)
     },
     pool: { min: 0, max: 2 }
     // migrations are managed in the server package for production

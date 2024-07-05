@@ -2,7 +2,7 @@
  * These hooks are run once, before and after the test suite.
  * It is configured via the vitest.config.ts file.
  */
-import '@/bootstrap.js'
+import '@/bootstrap.js' // This has side-effects and has to be imported first
 import { getTestDb } from '#/helpers/testKnexClient.js'
 import { down, up } from '#/migrations/migrations.js'
 import { testLogger as logger } from '@/observability/logging.js'
