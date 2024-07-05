@@ -45,7 +45,3 @@ export const puppeteerDriver = async (objectUrl) => {
   ret.userAgent = navigator.userAgent
   return ret
 }
-
-// module.exports = {
-//   puppeteerDriver
-// }

@@ -7,8 +7,3 @@ export const getDirname = (importMetaUrl: string) => {
 
   return __dirname
 }
-
-export const getRepoRoot = () => {
-  const dirname = getDirname(import.meta.url)
-  return path.resolve(dirname, '../..')
-}
