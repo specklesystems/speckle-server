@@ -1,6 +1,6 @@
 import {
   deleteWorkspaceRoleFactory,
-  getWorkspaceRoleFactory,
+  getWorkspaceRoleForUserFactory,
   getWorkspaceFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory
@@ -15,7 +15,7 @@ import { BasicTestUser, createTestUser } from '@/test/authHelper'
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
 const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
-const getWorkspaceRole = getWorkspaceRoleFactory({ db })
+const getWorkspaceRoleForUser = getWorkspaceRoleForUserFactory({ db })
 const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
 
 const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
@@ -23,7 +23,7 @@ const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
 
   const userRecord: BasicTestUser = {
     name: `test-user-${testId}`,
-    email: `test-user-${testId}@test.com`,
+    email: `test-user-${testId}@example.org`,
     password: '',
     id: '',
     role: 'server:user'
@@ -108,7 +108,7 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({ userId, workspaceId, role: 'workspace:member' })
       await deleteWorkspaceRole({ userId, workspaceId })
 
-      const role = await getWorkspaceRole({ userId, workspaceId })
+      const role = await getWorkspaceRoleForUser({ userId, workspaceId })
 
       expect(role).to.be.null
     })
