@@ -3,7 +3,9 @@ import {
   getWorkspaceRoleForUserFactory,
   getWorkspaceFactory,
   upsertWorkspaceFactory,
-  upsertWorkspaceRoleFactory
+  upsertWorkspaceRoleFactory,
+  getWorkspaceRolesFactory,
+  getWorkspaceRolesForUserFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
@@ -15,7 +17,9 @@ import { BasicTestUser, createTestUser } from '@/test/authHelper'
 const getWorkspace = getWorkspaceFactory({ db })
 const upsertWorkspace = upsertWorkspaceFactory({ db })
 const deleteWorkspaceRole = deleteWorkspaceRoleFactory({ db })
+const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
 const getWorkspaceRoleForUser = getWorkspaceRoleForUserFactory({ db })
+const getWorkspaceRolesForUser = getWorkspaceRolesForUserFactory({ db })
 const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
 
 const createAndStoreTestUser = async (): Promise<BasicTestUser> => {
@@ -138,6 +142,107 @@ describe('Workspace repositories', () => {
       await upsertWorkspaceRole({ userId, workspaceId, role: 'workspace:admin' })
 
       await expectToThrow(() => deleteWorkspaceRole({ userId, workspaceId }))
+    })
+  })
+
+  describe('getWorkspaceRolesFactory creates a function, that', () => {
+    it('returns all roles in a given workspace', async () => {
+      const { id: workspaceId } = await createAndStoreTestWorkspace()
+
+      const { id: userIdA } = await createAndStoreTestUser()
+      const { id: userIdB } = await createAndStoreTestUser()
+
+      await upsertWorkspaceRole({
+        workspaceId,
+        userId: userIdA,
+        role: 'workspace:admin'
+      })
+      await upsertWorkspaceRole({
+        workspaceId,
+        userId: userIdB,
+        role: 'workspace:admin'
+      })
+
+      const workspaceRoles = await getWorkspaceRoles({ workspaceId })
+
+      expect(workspaceRoles.length).to.equal(2)
+      expect(workspaceRoles.some(({ userId }) => userId === userIdA)).to.be.true
+      expect(workspaceRoles.some(({ userId }) => userId === userIdB)).to.be.true
+    })
+  })
+
+  describe('getWorkspaceRoleForUserFactory creates a function, that', () => {
+    it('returns the current role for a given user in a given workspace', async () => {
+      const { id: userId } = await createAndStoreTestUser()
+      const { id: workspaceId } = await createAndStoreTestWorkspace()
+
+      await upsertWorkspaceRole({ workspaceId, userId, role: 'workspace:admin' })
+
+      const workspaceRole = await getWorkspaceRoleForUser({ userId, workspaceId })
+
+      expect(workspaceRole).to.not.be.null
+      expect(workspaceRole?.userId).to.equal(userId)
+    })
+    it('returns `null` if the given user does not have a role in the given workspace', async () => {
+      const workspaceRole = await getWorkspaceRoleForUser({
+        userId: 'invalid-user-id',
+        workspaceId: 'invalid-workspace-id'
+      })
+
+      expect(workspaceRole).to.be.null
+    })
+  })
+
+  describe('getWorkspaceRolesForUserFactory creates a function, that', () => {
+    it('returns the current role for a given user across all workspaces', async () => {
+      const { id: userId } = await createAndStoreTestUser()
+
+      const { id: workspaceIdA } = await createAndStoreTestWorkspace()
+      const { id: workspaceIdB } = await createAndStoreTestWorkspace()
+
+      await upsertWorkspaceRole({
+        workspaceId: workspaceIdA,
+        userId,
+        role: 'workspace:admin'
+      })
+      await upsertWorkspaceRole({
+        workspaceId: workspaceIdB,
+        userId,
+        role: 'workspace:admin'
+      })
+
+      const workspaceRoles = await getWorkspaceRolesForUser({ userId })
+
+      expect(workspaceRoles.length).to.equal(2)
+      expect(workspaceRoles.some(({ workspaceId }) => workspaceId === workspaceIdA)).to
+        .be.true
+      expect(workspaceRoles.some(({ workspaceId }) => workspaceId === workspaceIdB)).to
+        .be.true
+    })
+    it('returns the current role for workspaces specified by the workspace id filter, if provided', async () => {
+      const { id: userId } = await createAndStoreTestUser()
+
+      const { id: workspaceIdA } = await createAndStoreTestWorkspace()
+      const { id: workspaceIdB } = await createAndStoreTestWorkspace()
+
+      await upsertWorkspaceRole({
+        workspaceId: workspaceIdA,
+        userId,
+        role: 'workspace:admin'
+      })
+      await upsertWorkspaceRole({
+        workspaceId: workspaceIdB,
+        userId,
+        role: 'workspace:admin'
+      })
+
+      const workspaceRoles = await getWorkspaceRolesForUser(
+        { userId },
+        { workspaceIdFilter: [workspaceIdA] }
+      )
+
+      expect(workspaceRoles.length).to.equal(1)
+      expect(workspaceRoles[0].workspaceId).to.equal(workspaceIdA)
     })
   })
 

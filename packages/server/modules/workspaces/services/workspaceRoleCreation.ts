@@ -1,7 +1,7 @@
 import {
   DeleteWorkspaceRole,
   EmitWorkspaceEvent,
-  GetWorkspaceRole,
+  GetWorkspaceRoleForUser,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceAcl } from '@/modules/workspaces/domain/types'
@@ -39,12 +39,12 @@ type WorkspaceRoleGetArgs = {
 }
 
 export const getWorkspaceRoleFactory =
-  ({ getWorkspaceRole }: { getWorkspaceRole: GetWorkspaceRole }) =>
+  ({ getWorkspaceRoleForUser }: { getWorkspaceRoleForUser: GetWorkspaceRoleForUser }) =>
   async ({
     userId,
     workspaceId
   }: WorkspaceRoleGetArgs): Promise<WorkspaceAcl | null> => {
-    return await getWorkspaceRole({ userId, workspaceId })
+    return await getWorkspaceRoleForUser({ userId, workspaceId })
   }
 
 export const setWorkspaceRoleFactory =
