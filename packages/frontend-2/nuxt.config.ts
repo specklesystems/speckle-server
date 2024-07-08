@@ -159,6 +159,31 @@ export default defineNuxtConfig({
         'access-control-allow-methods': 'GET',
         'Access-Control-Expose-Headers': '*'
       }
+    },
+    // Redirect old settings pages
+    '/server-management/projects': {
+      redirect: {
+        to: '/settings/server/projects',
+        statusCode: 301
+      }
+    },
+    '/server-management/active-users': {
+      redirect: {
+        to: '/settings/server/active-users',
+        statusCode: 301
+      }
+    },
+    '/server-management/pending-invitations': {
+      redirect: {
+        to: '/settings/server/pending-invitations',
+        statusCode: 301
+      }
+    },
+    '/server-management': {
+      redirect: {
+        to: '/settings/server/general',
+        statusCode: 301
+      }
     }
   },
 
