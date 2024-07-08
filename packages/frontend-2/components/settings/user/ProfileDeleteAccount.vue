@@ -1,6 +1,6 @@
 <template>
   <div>
-    <SettingsUserDeleteAccountDialog v-model:open="isOpen" :user="user" />
+    <SettingsUserProfileDeleteAccountDialog v-model:open="isOpen" :user="user" />
     <div class="flex flex-col space-y-6">
       <SettingsSectionHeader title="Delete Account" subheading />
       <div class="rounded border bg-foundation-page border-outline-3 text-sm py-4 px-6">

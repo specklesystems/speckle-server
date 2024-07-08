@@ -152,8 +152,6 @@ const props = defineProps<{
   /**
    * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
    */
-  // Temp fix
-  backgroundColor?: string
   onSubmit?: (e: SubmitEvent) => void
 }>()
 

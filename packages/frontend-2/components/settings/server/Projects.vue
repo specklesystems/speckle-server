@@ -82,7 +82,7 @@
       @infinite="infiniteLoad"
     />
 
-    <ServerManagementDeleteProjectDialog
+    <SettingsServerProjectDeleteDialog
       v-model:open="showProjectDeleteDialog"
       :project="projectToModify"
       title="Delete Project"

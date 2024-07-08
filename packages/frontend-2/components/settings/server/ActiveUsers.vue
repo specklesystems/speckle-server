@@ -83,20 +83,20 @@
       @infinite="infiniteLoad"
     />
 
-    <ServerManagementDeleteUserDialog
+    <SettingsServerDeleteUserDialog
       v-model:open="showUserDeleteDialog"
       :user="userToModify"
       :result-variables="resultVariables"
     />
 
-    <ServerManagementChangeUserRoleDialog
+    <SettingsServerChangeUserRoleDialog
       v-model:open="showChangeUserRoleDialog"
       :user="userToModify"
       :old-role="oldRole"
       :new-role="newRole"
       hide-closer
     />
-    <ServerManagementInviteDialog v-model:open="showInviteDialog" />
+    <SettingsServerInviteDialog v-model:open="showInviteDialog" />
   </div>
 </template>
 
