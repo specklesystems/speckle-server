@@ -1,14 +1,12 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    :title="selectedMenuItem || !isMobile ? null : 'Settings'"
-    fullscreen
-  >
+  <LayoutDialog v-model:open="isOpen" fullscreen>
     <template v-if="isMobile" #header>
       <div v-if="selectedMenuItem" class="flex md:hidden items-center">
         <ChevronLeftIcon class="w-5 h-5 -ml-1" @click="setSelectedMenuItem(null)" />
-        <h2 class="text-xl font-semibold ml-3">{{ selectedMenuItem?.title }}</h2>
       </div>
+      <h2 class="text-xl font-semibold ml-3">
+        {{ selectedMenuItem ? selectedMenuItem?.title : 'Settings' }}
+      </h2>
     </template>
     <div class="w-full h-full flex">
       <!-- <LayoutSidebar

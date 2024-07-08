@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog :open="open" max-width="md">
+  <LayoutDialog title="Delete account" :open="open" max-width="md">
     <form class="flex flex-col gap-2" @submit="onDelete">
       <div
         class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter dark:bg-danger-darker rounded-md select-none mb-4"

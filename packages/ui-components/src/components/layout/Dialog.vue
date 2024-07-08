@@ -37,15 +37,17 @@
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onFormSubmit"
             >
-              <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
+              <div
+                v-if="hasTitle"
+                :class="scrolledFromTop && 'relative z-20 shadow-lg'"
+              >
                 <div
-                  v-if="hasTitle"
                   class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-lg sm:text-2xl font-bold"
                 >
-                  <div v-if="props.title" class="w-full truncate pr-12">
+                  <div class="w-full truncate pr-12">
                     {{ title }}
+                    <slot name="header" />
                   </div>
-                  <slot v-else name="header" />
                 </div>
               </div>
 
@@ -163,7 +165,7 @@ useResizeObserver(
 
 const isForm = computed(() => !!props.onSubmit)
 const hasButtons = computed(() => props.buttons || slots.buttons)
-const hasTitle = computed(() => props.title || slots.header)
+const hasTitle = computed(() => !!props.title || !!slots.header)
 
 const open = computed({
   get: () => props.open,
