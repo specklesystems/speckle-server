@@ -1,10 +1,6 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
-    <h2 class="text-2xl font-semibold font-semibold hidden md:block">Projects</h2>
-    <p class="text-sm pt-6 md:pt-4">Manage projects across the server</p>
-
-    <hr class="my-6 md:my-10" />
-
+    <SettingsSectionHeader title="Projects" text="Manage projects across the server" />
     <div class="flex flex-col-reverse md:flex-row">
       <FormTextInput
         name="search"

@@ -1,10 +1,6 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
-    <h2 class="text-2xl font-semibold font-semibold hidden md:block">Active Users</h2>
-    <p class="text-sm pt-6 md:pt-4">Manage server members</p>
-
-    <hr class="my-6 md:my-10" />
-
+    <SettingsSectionHeader title="Active Users" text="Manage server members" />
     <div class="flex flex-col-reverse md:flex-row">
       <FormTextInput
         name="search"

@@ -1,12 +1,13 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
     <div class="flex flex-col">
-      <h2 class="text-2xl font-semibold hidden md:block">Developer Settings</h2>
-      <p class="text-sm pt-6 md:pt-4">Manage your tokens and authorized apps</p>
-      <hr class="my-6 md:my-10" />
+      <SettingsSectionHeader
+        title="Developer Settings"
+        text="Manage your tokens and authorized app"
+      />
       <div class="flex flex-col gap-6 md:gap-12">
         <div class="flex flex-col">
-          <DeveloperSettingsSectionHeader
+          <SettingsSectionHeader
             title="Explore GraphQL"
             class="md:gap-0"
             subheading
@@ -26,7 +27,7 @@
         </div>
         <hr />
         <div class="flex flex-col gap-4">
-          <DeveloperSettingsSectionHeader
+          <SettingsSectionHeader
             title="Access Tokens"
             subheading
             :buttons="[
@@ -49,14 +50,16 @@
               }
             ]"
           >
-            Personal Access Tokens can be used to access the Speckle API on this server;
-            they function like ordinary OAuth access tokens. Use them in your scripts or
-            apps!
-            <strong>
-              Treat them like a password: do not post them anywhere where they could be
-              accessed by others (e.g., public repos).
-            </strong>
-          </DeveloperSettingsSectionHeader>
+            <p class="text-sm pt-6 md:pt-4">
+              Personal Access Tokens can be used to access the Speckle API on this
+              server; they function like ordinary OAuth access tokens. Use them in your
+              scripts or apps!
+              <strong>
+                Treat them like a password: do not post them anywhere where they could
+                be accessed by others (e.g., public repos).
+              </strong>
+            </p>
+          </SettingsSectionHeader>
           <LayoutTable
             :columns="[
               { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
@@ -104,7 +107,7 @@
         </div>
         <hr />
         <div class="flex flex-col gap-4">
-          <DeveloperSettingsSectionHeader
+          <SettingsSectionHeader
             subheading
             title="Applications"
             :buttons="[
@@ -127,9 +130,11 @@
               }
             ]"
           >
-            Register and manage third-party Speckle Apps that, once authorised by a user
-            on this server, can act on their behalf.
-          </DeveloperSettingsSectionHeader>
+            <p class="text-sm pt-6 md:pt-4">
+              Register and manage third-party Speckle Apps that, once authorised by a
+              user on this server, can act on their behalf.
+            </p>
+          </SettingsSectionHeader>
           <LayoutTable
             :columns="[
               { id: 'name', header: 'Name', classes: 'col-span-3' },
@@ -187,7 +192,7 @@
         </div>
         <hr />
         <div class="flex flex-col gap-4">
-          <DeveloperSettingsSectionHeader
+          <SettingsSectionHeader
             subheading
             title="Authorized Apps"
             :buttons="[
@@ -203,9 +208,11 @@
               }
             ]"
           >
-            Here you can review the apps that you have granted access to. If something
-            looks suspicious, revoke the access.
-          </DeveloperSettingsSectionHeader>
+            <p class="text-sm pt-6 md:pt-4">
+              Here you can review the apps that you have granted access to. If something
+              looks suspicious, revoke the access.
+            </p>
+          </SettingsSectionHeader>
           <LayoutTable
             :columns="[
               { id: 'name', header: 'Name', classes: 'col-span-3 ' },
