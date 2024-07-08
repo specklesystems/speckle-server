@@ -70,39 +70,19 @@ export const getWorkspaceRolesForUserFactory =
     return await query
   }
 
-const isUserLastWorkspaceAdmin = (
-  workspaceRoles: WorkspaceAcl[],
-  userId: string
-): boolean => {
-  const workspaceAdmins = workspaceRoles.filter(
-    ({ role }) => role === 'workspace:admin'
-  )
-  const isUserAdmin = workspaceAdmins.some((role) => role.userId === userId)
-
-  return isUserAdmin && workspaceAdmins.length === 1
-}
-
 export const deleteWorkspaceRoleFactory =
   ({ db }: { db: Knex }): DeleteWorkspaceRole =>
   async ({ userId, workspaceId }) => {
-    // Protect against removing last admin in workspace
-    const workspaceRoles = await getWorkspaceRolesFactory({ db })({ workspaceId })
+    const deletedRoles = await tables
+      .workspacesAcl(db)
+      .where({ workspaceId, userId })
+      .delete('*')
 
-    if (isUserLastWorkspaceAdmin(workspaceRoles, userId)) {
-      throw new Error('Cannot remove last admin in workspace.')
-    }
-
-    // Bail early if user has no role
-    const currentRole = workspaceRoles.find((role) => role.userId === userId)
-
-    if (!currentRole) {
+    if (deletedRoles.length === 0) {
       return null
     }
 
-    // Perform delete
-    await tables.workspacesAcl(db).where({ workspaceId, userId }).delete()
-
-    return currentRole ?? null
+    return deletedRoles[0]
   }
 
 export const upsertWorkspaceRoleFactory =
@@ -112,16 +92,6 @@ export const upsertWorkspaceRoleFactory =
     const validRoles = Object.values(Roles.Workspace)
     if (!validRoles.includes(role)) {
       throw new Error(`Unexpected workspace role provided: ${role}`)
-    }
-
-    // Protect against removing last admin in workspace
-    const workspaceRoles = await getWorkspaceRolesFactory({ db })({ workspaceId })
-
-    if (
-      isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
-      role !== 'workspace:admin'
-    ) {
-      throw new Error('Cannot remove last admin in workspace.')
     }
 
     await tables

@@ -135,14 +135,6 @@ describe('Workspace repositories', () => {
 
       expect(deletedRole).to.be.null
     })
-    it('throws if target user is last workspace admin', async () => {
-      const { id: userId } = await createAndStoreTestUser()
-      const { id: workspaceId } = await createAndStoreTestWorkspace()
-
-      await upsertWorkspaceRole({ userId, workspaceId, role: 'workspace:admin' })
-
-      await expectToThrow(() => deleteWorkspaceRole({ userId, workspaceId }))
-    })
   })
 
   describe('getWorkspaceRolesFactory creates a function, that', () => {
@@ -256,16 +248,6 @@ describe('Workspace repositories', () => {
       }
 
       await expectToThrow(() => upsertWorkspaceRole(role))
-    })
-    it('throws if last admin is being removed', async () => {
-      const { id: userId } = await createAndStoreTestUser()
-      const { id: workspaceId } = await createAndStoreTestWorkspace()
-
-      await upsertWorkspaceRole({ workspaceId, userId, role: 'workspace:admin' })
-
-      await expectToThrow(() =>
-        upsertWorkspaceRole({ workspaceId, userId, role: 'workspace:member' })
-      )
     })
   })
 })
