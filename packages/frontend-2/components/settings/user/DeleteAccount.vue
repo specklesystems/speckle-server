@@ -8,7 +8,7 @@
         data. We will ask you to type in your email address and press the delete button.
       </div>
       <div>
-        <FormButton color="danger" @click="toggleModal">Delete account</FormButton>
+        <FormButton color="danger" @click="toggleModal">Delete Account</FormButton>
       </div>
     </div>
   </div>

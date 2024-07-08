@@ -1,13 +1,13 @@
 <template>
   <div class="flex flex-col space-y-6">
-    <h2 class="text-xl">Password change</h2>
+    <h2 class="text-xl">Change password</h2>
     <p class="text-sm">
       Press the button below to start the password reset process.
       <br />
       Once pressed, you will receive an e-mail with further instructions.
     </p>
     <div>
-      <FormButton color="default" @click="onClick">Reset password</FormButton>
+      <FormButton color="default" @click="onClick">Reset Password</FormButton>
     </div>
   </div>
 </template>

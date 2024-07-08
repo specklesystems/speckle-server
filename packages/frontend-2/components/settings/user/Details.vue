@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col gap-y-4">
-    <h2 class="text-xl">Your details</h2>
+    <h2 class="text-xl">Your Details</h2>
     <div class="grid md:grid-cols-2 pt-4">
       <div class="flex h-full items-center justify-center">
         <UserProfileEditDialogAvatar :user="user" size="xxl" />

@@ -1,7 +1,7 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
     <h2 class="text-2xl font-semibold font-semibold hidden md:block">Projects</h2>
-    <p class="text-sm pt-2 md:pt-4">And overview of all your projects</p>
+    <p class="text-sm pt-6 md:pt-4">Manage projects across the server</p>
 
     <hr class="my-6 md:my-10" />
 
