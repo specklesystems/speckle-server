@@ -12,6 +12,14 @@ const configs = [
     ignores: ['dist', 'public', 'docs']
   },
   {
+    files: ['webpack.config.renderPage.cjs'],
+    languageOptions: {
+      globals: {
+        ...globals.node
+      }
+    }
+  },
+  {
     files: ['**/*.js'],
     ignores: ['renderPage', '**/*.mjs', 'src/scripts/puppeteerDriver.js'],
     languageOptions: {
