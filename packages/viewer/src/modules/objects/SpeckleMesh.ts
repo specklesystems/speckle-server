@@ -2,10 +2,8 @@ import Logger from 'js-logger'
 import {
   BackSide,
   Box3,
-  Box3Helper,
   BufferAttribute,
   BufferGeometry,
-  Color,
   DataTexture,
   DoubleSide,
   FloatType,
@@ -25,7 +23,6 @@ import {
 } from 'three'
 import { BatchObject } from '../batching/BatchObject'
 import Materials from '../materials/Materials'
-import { ObjectLayers } from '../../IViewer'
 import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
 import { SpeckleRaycaster } from './SpeckleRaycaster'
 
@@ -75,9 +72,6 @@ export default class SpeckleMesh extends Mesh {
 
   public transformsTextureUniform: DataTexture
   public transformsArrayUniforms: Matrix4[] | null = null
-
-  private debugBatchBox = false
-  private boxHelper!: Box3Helper
 
   public get TAS(): TopLevelAccelerationStructure {
     return this.tas
@@ -244,11 +238,6 @@ export default class SpeckleMesh extends Mesh {
       this.geometry.boundingBox.copy(this.tas.bounds)
       if (!this.geometry.boundingSphere) this.geometry.boundingSphere = new Sphere()
       this.geometry.boundingBox.getBoundingSphere(this.geometry.boundingSphere)
-      if (!this.boxHelper && this.debugBatchBox) {
-        this.boxHelper = new Box3Helper(this.tas.bounds, new Color(0xff0000))
-        this.boxHelper.layers.set(ObjectLayers.PROPS)
-        if (this.parent) this.parent.add(this.boxHelper)
-      }
     }
   }
 

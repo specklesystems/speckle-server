@@ -604,9 +604,12 @@ export default class SpeckleRenderer {
 
   private addBatch(batch: Batch, parent: Object3D) {
     const batchRenderable = batch.renderObject
-    parent.add(batch.renderObject)
-    if (batchRenderable instanceof SpeckleMesh) {
-      parent.add(batchRenderable.TAS.bvhHelper)
+    parent.add(batchRenderable)
+    if (
+      batchRenderable instanceof SpeckleMesh ||
+      batchRenderable instanceof SpeckleInstancedMesh
+    ) {
+      if (batchRenderable.TAS.bvhHelper) parent.add(batchRenderable.TAS.bvhHelper)
     }
     if (batch.geometryType === GeometryType.MESH) {
       batchRenderable.traverse((obj: Object3D) => {
@@ -622,11 +625,6 @@ export default class SpeckleRenderer {
             ['USE_RTE', 'ALPHATEST_REJECTION']
           )
         }
-      })
-
-      const meshRenderable = batchRenderable as SpeckleMesh | SpeckleInstancedMesh
-      meshRenderable.TAS.boxHelpers.forEach((helper: Box3Helper) => {
-        this.scene.add(helper)
       })
     }
     this.viewer.World.expandWorld(batch.bounds)

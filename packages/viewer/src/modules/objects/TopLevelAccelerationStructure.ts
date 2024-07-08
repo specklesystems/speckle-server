@@ -1,17 +1,12 @@
 import {
   Box3,
-  Box3Helper,
   BufferAttribute,
-  BufferGeometry,
-  Color,
-  Float32BufferAttribute,
   FrontSide,
   Material,
   Matrix4,
   Mesh,
   Ray,
   Side,
-  Uint32BufferAttribute,
   Vector3
 } from 'three'
 import { MeshBVHVisualizer } from 'three-mesh-bvh'
@@ -42,7 +37,7 @@ import { AccelerationStructure } from './AccelerationStructure'
   fine as it is. If we really really really need that 100% accuracy, we'll just make it relative to the origin
  */
 export class TopLevelAccelerationStructure {
-  private static debugBoxes = false
+  private debugBVH = false
   private static cubeIndices = [
     // front
     0, 1, 2, 2, 3, 0,
@@ -62,7 +57,6 @@ export class TopLevelAccelerationStructure {
   public batchObjects: BatchObject[] = []
   public bounds: Box3 = new Box3(new Vector3(0, 0, 0), new Vector3(0, 0, 0))
 
-  public boxHelpers: Box3Helper[] = []
   public accelerationStructure: AccelerationStructure
   public bvhHelper: MeshBVHVisualizer
 
@@ -91,12 +85,6 @@ export class TopLevelAccelerationStructure {
         vertOffset / 3 + TopLevelAccelerationStructure.CUBE_VERTS
 
       vertOffset += TopLevelAccelerationStructure.CUBE_VERTS * 3
-
-      if (TopLevelAccelerationStructure.debugBoxes) {
-        const helper = new Box3Helper(boxBounds, new Color(0xff0000))
-        helper.layers.set(ObjectLayers.PROPS)
-        this.boxHelpers.push(helper)
-      }
     }
     this.accelerationStructure = new AccelerationStructure(
       AccelerationStructure.buildBVH(indices, vertices)
@@ -105,21 +93,16 @@ export class TopLevelAccelerationStructure {
     this.accelerationStructure.outputTransform = new Matrix4()
     this.accelerationStructure.inputOriginTransform = new Matrix4()
     this.accelerationStructure.outputOriginTransfom = new Matrix4()
-    const geom = new BufferGeometry()
-    geom.setIndex(new Uint32BufferAttribute(new Uint32Array(indices), 1))
-    geom.setAttribute(
-      'position',
-      new Float32BufferAttribute(new Float32Array(vertices), 3)
-    )
-    geom.computeBoundingBox()
 
-    const mesh = new Mesh(geom)
-    mesh.layers.set(ObjectLayers.OVERLAY)
-    mesh.geometry.boundsTree = this.accelerationStructure.bvh
-    this.bvhHelper = new MeshBVHVisualizer(mesh)
-    this.bvhHelper.layers.set(ObjectLayers.OVERLAY)
-    this.bvhHelper.children[0].layers.set(ObjectLayers.OVERLAY)
-    this.bvhHelper.update()
+    if (this.debugBVH) {
+      const mesh = new Mesh(this.accelerationStructure.geometry)
+      mesh.layers.set(ObjectLayers.OVERLAY)
+      mesh.geometry.boundsTree = this.accelerationStructure.bvh
+      this.bvhHelper = new MeshBVHVisualizer(mesh)
+      this.bvhHelper.layers.set(ObjectLayers.OVERLAY)
+      this.bvhHelper.children[0].layers.set(ObjectLayers.OVERLAY)
+      this.bvhHelper.update()
+    }
   }
 
   private updateVertArray(box: Box3, offset: number, outPositions: number[]) {
@@ -165,8 +148,6 @@ export class TopLevelAccelerationStructure {
       const basBox =
         this.batchObjects[k].accelerationStructure.getBoundingBox(boxBuffer)
       this.updateVertArray(basBox, start * 3, positions)
-
-      if (TopLevelAccelerationStructure.debugBoxes) this.boxHelpers[k].box.copy(basBox)
     }
     this.accelerationStructure.bvh.refit()
   }
@@ -349,6 +330,7 @@ export class TopLevelAccelerationStructure {
   public closestPointToPointHalfplane(
     point: Vector3,
     planeNormal: Vector3,
+    fallback?: number,
     target: HitPointInfo = {
       point: new Vector3(),
       distance: 0,
@@ -379,6 +361,26 @@ export class TopLevelAccelerationStructure {
       // @ts-ignore
       intersectsBounds: (_box: Box3, _isLeaf, score: number) => {
         return score < closestDistanceSq && score < maxThresholdSq
+      },
+      intersectsRange: (triangleOffset: number) => {
+        /** The index buffer for the bvh's geometry will *never* be undefined as it uses indexed geometry */
+        const indexBufferAttribute: BufferAttribute = this.accelerationStructure
+          .geometry.index as BufferAttribute
+        const vertIndex = indexBufferAttribute.array[triangleOffset * 3]
+        const batchObjectIndex = Math.trunc(
+          vertIndex / TopLevelAccelerationStructure.CUBE_VERTS
+        )
+        const batchObject: BatchObject = this.batchObjects[batchObjectIndex]
+        /** Because we cannot get a proper min distance to geometry when *Inside* the bounds of a batch object's bounds,
+         *  we just use the provided fallback value as min dist. Single meshes made of dijoint sets are particularly susceptible
+         *  to incorrect min dist calculation, unless we go inside their BAS. But we want to avoid that all cost speed reasons
+         */
+        const ret = batchObject.aabb.containsPoint(point)
+        if (ret && fallback !== undefined) {
+          closestDistanceSq = fallback * fallback
+        }
+        /** We do not interrupt traversal, there might be other closer valid geometry available */
+        return false
       },
 
       intersectsTriangle: (tri, triIndex) => {
