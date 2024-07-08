@@ -44,9 +44,16 @@
                 <div
                   class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-lg sm:text-2xl font-bold"
                 >
-                  <div class="w-full truncate pr-12">
-                    {{ title }}
-                    <slot name="header" />
+                  <div class="flex items-center pr-12">
+                    <ChevronLeftIcon
+                      v-if="showBackButton"
+                      class="w-5 h-5 -ml-1 mr-3"
+                      @click="$emit('back')"
+                    />
+                    <div class="w-full truncate">
+                      {{ title }}
+                      <slot name="header" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -112,7 +119,7 @@
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { FormButton, type LayoutDialogButton } from '~~/src/lib'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
 import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
 import { throttle } from 'lodash'
@@ -123,6 +130,7 @@ type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl' | 'fullscreen'
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
   (e: 'fully-closed'): void
+  (e: 'back'): void
 }>()
 
 const props = defineProps<{
@@ -130,6 +138,7 @@ const props = defineProps<{
   maxWidth?: MaxWidthValue
   fullscreen?: boolean
   hideCloser?: boolean
+  showBackButton?: boolean
   /**
    * Prevent modal from closing when the user clicks outside of the modal or presses Esc
    */

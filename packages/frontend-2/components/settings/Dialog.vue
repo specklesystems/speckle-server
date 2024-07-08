@@ -1,23 +1,16 @@
 <template>
-  <LayoutDialog v-model:open="isOpen" fullscreen>
-    <template v-if="isMobile" #header>
-      <div v-if="selectedMenuItem" class="flex md:hidden items-center">
-        <ChevronLeftIcon class="w-5 h-5 -ml-1" @click="setSelectedMenuItem(null)" />
-      </div>
-      <h2 class="text-xl font-semibold ml-3">
-        {{ selectedMenuItem ? selectedMenuItem?.title : 'Settings' }}
-      </h2>
-    </template>
+  <LayoutDialog
+    v-model:open="isOpen"
+    :title="isMobile ? (selectedMenuItem ? selectedMenuItem?.title : 'Settings') : null"
+    fullscreen
+    :show-back-button="!!(isMobile && selectedMenuItem)"
+    @back="setSelectedMenuItem(null)"
+  >
     <div class="w-full h-full flex">
-      <!-- <LayoutSidebar
-        v-if="!isMobile || !selectedMenuItem"
-        class="w-full md:w-56 lg:w-60 p-4 pt-6 bg-foundation-page md:border-r md:border-outline-3"
-      > -->
       <LayoutSidebar
         v-if="!isMobile || !selectedMenuItem"
         class="w-full md:w-56 lg:w-60 md:p-4 md:pt-6 md:bg-foundation-page md:border-r md:border-outline-3"
       >
-        <!-- <h1 class="text-xl pl-1 pb-6 font-semibold md:hidden">Settings</h1> -->
         <div class="flex-1">
           <LayoutSidebarMenu>
             <LayoutSidebarMenuGroup title="Account Settings">
@@ -45,7 +38,6 @@
           </LayoutSidebarMenu>
         </div>
       </LayoutSidebar>
-      <!-- simple-scrollbar overflow-y-scroll flex-1  -->
       <main
         v-if="selectedMenuItem"
         :class="[
@@ -61,7 +53,6 @@
 
 <script setup lang="ts">
 import type { defineComponent } from 'vue'
-import { ChevronLeftIcon } from '@heroicons/vue/24/solid'
 import SettingsUserProfile from './user/Profile.vue'
 import SettingsUserNotifications from './user/Notifications.vue'
 import SettingsUserDeveloper from './user/Developer.vue'
