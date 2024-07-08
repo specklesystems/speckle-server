@@ -3,7 +3,7 @@
     <NuxtLink
       v-if="!hasChildren"
       :to="to"
-      class="group flex items-center justify-between gap-2 shrink-0 text-sm select-none rounded-md w-full hover:bg-primary-muted p-1.5 cursor-pointer"
+      class="group flex items-center justify-between gap-2 shrink-0 text-sm select-none rounded-md w-full hover:bg-primary-muted py-1.5 px-5 bcursor-pointer"
       active-class="bg-foundation-focus hover:!bg-foundation-focus"
       :external="external"
       :target="external ? '_blank' : undefined"
@@ -46,7 +46,7 @@ import { ref, resolveDynamicComponent, useSlots } from 'vue'
 
 defineProps<{
   label: string
-  to: string
+  to?: string
   tag?: string
   external?: boolean
 }>()

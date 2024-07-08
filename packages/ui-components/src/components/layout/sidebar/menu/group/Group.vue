@@ -25,7 +25,7 @@
     </div>
 
     <div v-show="isOpen" class="flex flex-col">
-      <slot></slot>
+      <slot :class="$slots['title-icon'] && 'px-6'"></slot>
     </div>
   </div>
 </template>

@@ -6,7 +6,7 @@
     <hr class="my-6 md:my-10" />
 
     <div class="flex flex-col space-y-6">
-      <h2 class="text-xl">Server details</h2>
+      <h2 class="text-xl">Server Details</h2>
       <form class="flex flex-col gap-2" @submit="onSubmit">
         <div class="flex flex-col gap-4">
           <FormTextInput
@@ -73,7 +73,7 @@
       </form>
     </div>
     <hr class="my-6 md:my-10" />
-    <SettingsServerVersion />
+    <SettingsServerGeneralVersion />
   </div>
 </template>
 

@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col space-y-6">
-    <h2 class="text-xl">Speckle version</h2>
+    <h2 class="text-xl">Speckle Version</h2>
     <div class="flex items-center">
       <div class="w-[50%]">
         <p class="text-sm">
