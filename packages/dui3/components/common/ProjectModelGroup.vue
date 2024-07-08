@@ -11,7 +11,8 @@
       <div v-if="writeAccessRequested">Write access request is pending...</div>
       <div v-else class="flex w-full items-center justify-between">
         You do not have write access to this project.
-        <button
+        <!-- TODO: Enable later when FE2 is ready for accepting/denying requested accesses -->
+        <!-- <button
           v-if="isProjectReadOnly"
           v-tippy="'Request Write Access'"
           class="hover:text-primary"
@@ -27,7 +28,7 @@
                 )
             "
           />
-        </button>
+        </button> -->
       </div>
     </div>
     <button
@@ -95,27 +96,16 @@
   </div>
 </template>
 <script setup lang="ts">
-import {
-  provideApolloClient,
-  useMutation,
-  useQuery,
-  useSubscription
-} from '@vue/apollo-composable'
-import {
-  ChevronDownIcon,
-  ArrowTopRightOnSquareIcon,
-  LockClosedIcon
-} from '@heroicons/vue/20/solid'
+import { useQuery, useSubscription } from '@vue/apollo-composable'
+import { ChevronDownIcon, ArrowTopRightOnSquareIcon } from '@heroicons/vue/20/solid'
 import type { ProjectModelGroup } from '~~/store/hostApp'
 import { useHostAppStore } from '~~/store/hostApp'
-import type { DUIAccount } from '~~/store/accounts'
 import { useAccountStore } from '~~/store/accounts'
 import {
   projectDetailsQuery,
   versionCreatedSubscription,
   userProjectsUpdatedSubscription,
-  projectUpdatedSubscription,
-  requestProjectAccess
+  projectUpdatedSubscription
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import type { ApolloError } from '@apollo/client/errors'
@@ -134,10 +124,6 @@ const writeAccessRequested = ref(false)
 
 const hasAccountMatch = computed(() =>
   accountStore.isAccountExistsById(props.project.accountId)
-)
-
-const hasServerMatch = computed(() =>
-  accountStore.isAccountExistsByServer(props.project.serverUrl)
 )
 
 const projectAccount = computed(() =>
@@ -173,19 +159,24 @@ const isProjectReadOnly = computed(() => {
   return false
 })
 
-const requestWriteAccess = async () => {
-  if (hasServerMatch.value) {
-    const { mutate } = provideApolloClient((projectAccount.value as DUIAccount).client)(
-      () => useMutation(requestProjectAccess)
-    )
-    const res = await mutate({
-      input: projectDetails.value?.id as string
-    })
-    writeAccessRequested.value = true
-    // TODO: It throws if it has already pending request, handle it!
-    console.log(res)
-  }
-}
+// Enable later when FE2 is ready for accepting/denying requested accesses
+// const hasServerMatch = computed(() =>
+//   accountStore.isAccountExistsByServer(props.project.serverUrl)
+// )
+
+// const requestWriteAccess = async () => {
+//   if (hasServerMatch.value) {
+//     const { mutate } = provideApolloClient((projectAccount.value as DUIAccount).client)(
+//       () => useMutation(requestProjectAccess)
+//     )
+//     const res = await mutate({
+//       input: projectDetails.value?.id as string
+//     })
+//     writeAccessRequested.value = true
+//     // TODO: It throws if it has already pending request, handle it!
+//     console.log(res)
+//   }
+// }
 
 const { onResult: userProjectsUpdated } = useSubscription(
   userProjectsUpdatedSubscription,
