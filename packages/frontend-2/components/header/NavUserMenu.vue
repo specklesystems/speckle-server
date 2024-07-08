@@ -127,7 +127,7 @@
         </MenuItems>
       </Transition>
     </Menu>
-    <SettingsServerInviteDialog v-model:open="showInviteDialog" />
+    <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
     <SettingsDialog v-model:open="showSettingsDialog" />
   </div>
 </template>

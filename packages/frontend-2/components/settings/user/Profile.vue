@@ -6,7 +6,7 @@
     />
     <SettingsUserProfileDetails :user="user" />
     <hr class="my-6 md:my-10" />
-    <SettingsUserProfilePassword :user="user" />
+    <SettingsUserProfileChangePassword :user="user" />
     <hr class="my-6 md:my-10" />
     <SettingsUserProfileDeleteAccount :user="user" />
   </div>

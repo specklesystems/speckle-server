@@ -67,7 +67,7 @@
       </template>
     </LayoutTable>
 
-    <SettingsServerPendingInvitationDeleteDialog
+    <SettingsServerPendingInvitationsDeleteDialog
       v-model:open="showDeleteInvitationDialog"
       :invite="inviteToModify"
       :result-variables="resultVariables"
@@ -81,7 +81,7 @@
       class="py-4"
       @infinite="infiniteLoad"
     />
-    <SettingsServerInviteDialog v-model:open="showInviteDialog" />
+    <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
   </div>
 </template>
 

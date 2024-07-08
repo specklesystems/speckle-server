@@ -216,7 +216,7 @@
     >
       <template #header>Your First Upload</template>
     </OnboardingDialogFirstSend>
-    <SettingsServerInviteDialog
+    <SettingsServerUserInviteDialog
       v-model:open="showServerInviteDialog"
       @update:open="(v) => (!v ? markComplete(3) : '')"
     />

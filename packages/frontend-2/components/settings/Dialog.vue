@@ -45,7 +45,9 @@
           !isMobile && 'simple-scrollbar overflow-y-auto flex-1'
         ]"
       >
-        <component :is="selectedMenuItem?.component" class="pb-6" />
+        <div class="pb-6">
+          <component :is="selectedMenuItem?.component" />
+        </div>
       </main>
     </div>
   </LayoutDialog>

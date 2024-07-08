@@ -256,28 +256,28 @@
         </div>
       </div>
 
-      <DeveloperSettingsCreateTokenDialog
+      <SettingsUserDeveloperCreateTokenDialog
         v-model:open="showCreateTokenDialog"
         @token-created="(token) => handleTokenCreated(token)"
       />
-      <DeveloperSettingsDeleteDialog
+      <SettingsUserDeveloperDeleteDialog
         v-model:open="showDeleteDialog"
         :item="itemToModify"
       />
-      <DeveloperSettingsCreateEditApplicationDialog
+      <SettingsUserDeveloperCreateEditApplicationDialog
         v-model:open="showCreateEditApplicationDialog"
         :application="(itemToModify as ApplicationItem)"
         @application-created="handleApplicationCreated"
       />
-      <DeveloperSettingsRevealSecretDialog
+      <SettingsUserDeveloperRevealSecretDialog
         v-model:open="showRevealSecretDialog"
         :application="itemToModify && 'secret' in itemToModify ? itemToModify : null"
       />
-      <DeveloperSettingsCreateTokenSuccessDialog
+      <SettingsUserDeveloperCreateTokenSuccessDialog
         v-model:open="showCreateTokenSuccessDialog"
         :token="tokenSuccess"
       />
-      <DeveloperSettingsCreateApplicationSuccessDialog
+      <SettingsUserDeveloperCreateApplicationSuccessDialog
         v-model:open="showCreateApplicationSuccessDialog"
         :application="(itemToModify as ApplicationItem)"
       />
