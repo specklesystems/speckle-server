@@ -1,8 +1,7 @@
 import { Knex } from 'knex'
-import { USER_EMAILS_TABLE_NAME } from '../constants'
 
 export async function up(knex: Knex): Promise<void> {
-  await knex.schema.createTable(USER_EMAILS_TABLE_NAME, (table) => {
+  await knex.schema.createTable('user_emails', (table) => {
     table.string('id').notNullable().primary()
     table.string('email').notNullable()
     table.boolean('primary').defaultTo(false)
@@ -26,5 +25,5 @@ export async function up(knex: Knex): Promise<void> {
 }
 
 export async function down(knex: Knex): Promise<void> {
-  await knex.schema.dropTableIfExists(USER_EMAILS_TABLE_NAME)
+  await knex.schema.dropTableIfExists('user_emails')
 }
