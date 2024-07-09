@@ -2,7 +2,7 @@
   <div class="w-full h-full bg-foundation flex items-center justify-center">
     <!-- 
     Note: You might be asking yourself why do we need this route: the answer is that cloning 
-    a stream is not instant, and it might take some time to get it done. We want to display
+    a project is not instant, and it might take some time to get it done. We want to display
     some sort of progress to the user in the meantime. Moreover, it makes various composables 
     more sane to use rather than in the router navigation guards.
   -->
