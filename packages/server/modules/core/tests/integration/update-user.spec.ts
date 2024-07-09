@@ -1,0 +1,60 @@
+import { expect } from 'chai'
+import { createUser, getUser } from '../../services/users'
+import { beforeEach, describe, it } from 'mocha'
+import { beforeEachContext } from '@/test/hooks'
+import knexInstance from '@/db/knex'
+import { createRandomEmail, createRandomPassword } from '../../helpers/test-helpers'
+import { USER_EMAILS_TABLE_NAME } from '@/modules/user-emails/constants'
+import { updateUser } from '../../repositories/users'
+
+const db = knexInstance
+const userEmailsDB = db(USER_EMAILS_TABLE_NAME)
+
+describe('Users @core-users', () => {
+  beforeEach(async () => {
+    await beforeEachContext()
+  })
+
+  it('should throw an error if avatar is too big', async () => {
+    const longAvatar = ''.padEnd(524288, '1') + '0'
+    try {
+      await updateUser('123456', { avatar: longAvatar })
+
+      expect.fail('Did not throw')
+    } catch (err) {
+      expect((err as Error).message).eq(
+        'User avatar is too big, please try a smaller one'
+      )
+    }
+  })
+
+  it('should throw an error if update payload is empty', async () => {
+    try {
+      await updateUser('123456', {})
+
+      expect.fail('Did not throw')
+    } catch (err) {
+      expect((err as Error).message).eq('User update payload empty')
+    }
+  })
+
+  it('Should update user email if skipClean is true', async () => {
+    const email = createRandomEmail()
+    const newUser = {
+      name: 'John Doe',
+      email,
+      password: createRandomPassword()
+    }
+
+    const userId = await createUser(newUser)
+
+    const newEmail = createRandomEmail()
+    await updateUser(userId, { email: newEmail }, { skipClean: true })
+
+    const updated = await getUser(userId)
+    const updatedUserEmail = await userEmailsDB.where({ userId, primary: true }).first()
+
+    expect(updated.email).eq(newEmail)
+    expect(updatedUserEmail.email).eq(newEmail)
+  })
+})

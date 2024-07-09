@@ -6,6 +6,8 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserValidationError } from '@/modules/core/errors/user'
 import { Knex } from 'knex'
 import { Roles, ServerRoles } from '@speckle/shared'
+import { updateUserEmailFactory } from '@/modules/user-emails/repositories/userEmails'
+import knexInstance from '@/db/knex'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
@@ -206,6 +208,14 @@ export async function updateUser(
   validateInputRecord(update)
 
   const [newUser] = await Users.knex().where(Users.col.id, userId).update(update, '*')
+
+  if (update.email) {
+    await updateUserEmailFactory({ db: knexInstance })(
+      { userId, primary: true },
+      { email: update.email }
+    )
+  }
+
   return newUser as Nullable<UserRecord>
 }
 
