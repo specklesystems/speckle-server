@@ -25,7 +25,7 @@ module.exports = function (app) {
     prometheusClient.collectDefaultMetrics()
     const highfrequencyMonitoring = initHighFrequencyMonitoring({
       register: prometheusClient.register,
-      collectionPeriodMilliseconds: 1000
+      collectionPeriodMilliseconds: 100
     })
     highfrequencyMonitoring.start()
 
