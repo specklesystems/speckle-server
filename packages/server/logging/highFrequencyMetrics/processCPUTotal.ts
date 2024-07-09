@@ -1,4 +1,23 @@
+/**
+ * Adapted from prom-client: https://github.com/siimon/prom-client/tree/master/lib/metrics
+ * 
+   Copyright 2015 Simon Nyberg
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+ */
+
 import { Histogram, Registry } from 'prom-client'
+import type { Metric } from '@/logging/highFrequencyMetrics/highfrequencyMonitoring'
 
 const PROCESS_CPU_USER_SECONDS = 'process_cpu_user_seconds_total_high_frequency'
 const PROCESS_CPU_SYSTEM_SECONDS = 'process_cpu_system_seconds_total_high_frequency'
@@ -21,7 +40,10 @@ type MetricConfig = {
   buckets?: Record<BucketName, number[]>
 }
 
-export const processCpuTotal = (registry: Registry, config: MetricConfig = {}) => {
+export const processCpuTotal = (
+  registry: Registry,
+  config: MetricConfig = {}
+): Metric => {
   const registers = registry ? [registry] : undefined
   const namePrefix = config.prefix ?? ''
   const labels = config.labels ?? {}
@@ -53,7 +75,7 @@ export const processCpuTotal = (registry: Registry, config: MetricConfig = {}) =
   let lastCpuUsage = process.cpuUsage()
 
   return {
-    tick: () => {
+    collect: () => {
       const cpuUsage = process.cpuUsage()
 
       const userUsageMicros = cpuUsage.user - lastCpuUsage.user

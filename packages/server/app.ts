@@ -64,7 +64,6 @@ import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
 import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
-import { initHighFrequencyMonitoring } from '@/logging/highFrequencyMetrics/highfrequencyMonitoring'
 
 let graphqlServer: ApolloServer
 
@@ -418,11 +417,6 @@ export async function startHttp(
   }
 
   monitorActiveConnections(server)
-  const highfrequencyMonitoring = initHighFrequencyMonitoring({
-    register: prometheusClient.register,
-    collectionPeriodMilliseconds: 1000
-  })
-  const stopHighFrequencyMonitoring = highfrequencyMonitoring.start()
 
   app.set('port', port)
 
@@ -434,7 +428,6 @@ export async function startHttp(
       shutdownLogger.info('Shutting down (signal received)...')
     },
     onSignal: async () => {
-      stopHighFrequencyMonitoring()
       await shutdown()
     },
     onShutdown: () => {

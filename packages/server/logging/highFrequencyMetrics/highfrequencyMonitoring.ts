@@ -6,6 +6,7 @@
 
 import { Histogram, Registry } from 'prom-client'
 import { processCpuTotal } from '@/logging/highFrequencyMetrics/processCPUTotal'
+import { heapSizeAndUsed } from '@/logging/highFrequencyMetrics/heapSizeAndUsed'
 
 type MetricConfig = {
   prefix?: string
@@ -13,11 +14,15 @@ type MetricConfig = {
   buckets?: Record<string, number[]>
 }
 
+type HighFrequencyMonitor = {
+  start: () => () => void
+}
+
 export const initHighFrequencyMonitoring = (params: {
   register: Registry
   collectionPeriodMilliseconds: number
   config?: MetricConfig
-}) => {
+}): HighFrequencyMonitor => {
   const { register, collectionPeriodMilliseconds } = params
   const config = params.config ?? {}
   const registers = register ? [register] : undefined
@@ -25,7 +30,7 @@ export const initHighFrequencyMonitoring = (params: {
   const labels = config.labels ?? {}
   const labelNames = Object.keys(labels)
 
-  const metrics = [processCpuTotal(register, config)]
+  const metrics = [processCpuTotal(register, config), heapSizeAndUsed(register, config)]
 
   const selfMonitor = new Histogram({
     name: namePrefix + 'self_monitor_time_high_frequency',
@@ -44,8 +49,8 @@ export const initHighFrequencyMonitoring = (params: {
   }
 }
 
-interface Metric {
-  tick: () => void
+export interface Metric {
+  collect: () => void
 }
 
 const collectHighFrequencyMetrics = (params: {
@@ -58,7 +63,7 @@ const collectHighFrequencyMetrics = (params: {
     const intervalId = setInterval(() => {
       const end = selfMonitor.startTimer()
       for (const metric of metrics) {
-        metric.tick()
+        metric.collect()
       }
       end()
     }, collectionPeriodMilliseconds)
