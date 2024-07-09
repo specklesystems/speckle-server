@@ -449,6 +449,7 @@ export class Pipeline {
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setTexture('tDiffuseInterp', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
+    // console.log('Stationary begin')
   }
 
   public onStationaryEnd() {
@@ -462,6 +463,7 @@ export class Pipeline {
     this.dynamicAoPass.enabled = this._pipelineOptions.dynamicAoEnabled
     this.applySaoPass.setTexture('tDiffuse', this.dynamicAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
+    // console.log('Stationary End')
   }
 
   protected onAccumulationComplete() {
@@ -474,5 +476,6 @@ export class Pipeline {
     this.dynamicAoPass.enabled = this._pipelineOptions.dynamicAoEnabled
     this.applySaoPass.setTexture('tDiffuse', this.staticAoPass.outputTexture)
     this.applySaoPass.setRenderType(this._renderType)
+    // console.log('Accumulation complete')
   }
 }

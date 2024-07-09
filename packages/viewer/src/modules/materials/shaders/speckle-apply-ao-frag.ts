@@ -17,6 +17,8 @@ export const speckleApplyAoFrag = `
             #if ACCUMULATE == 1
                 vec3 staticSample = texture2D( tDiffuse, vUv ).rgb;
 			    gl_FragColor.rgb = mix(dynamicSample, staticSample, frameIndex/float(NUM_FRAMES));
+            #elif PASSTHROUGH == 1
+                gl_FragColor.rgb = texture2D( tDiffuse, vUv ).rgb;
             #else
                 gl_FragColor.rgb = dynamicSample;
             #endif

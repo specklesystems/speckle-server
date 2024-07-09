@@ -17,7 +17,7 @@ import {
 import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera'
 import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera'
 import Logger from 'js-logger'
-import { type IViewer, type SpeckleView } from '../../IViewer'
+import { UpdateFlags, type IViewer, type SpeckleView } from '../../IViewer'
 import { FlyControls, FlyControlsOptions } from './controls/FlyControls'
 import { SpeckleControls } from './controls/SpeckleControls'
 import { GeometryType } from '../batching/Batch'
@@ -330,14 +330,14 @@ export class CameraController extends Extension implements SpeckleCamera {
     if (this._renderingCamera === this.perspectiveCamera) return
     this.renderingCamera = this.perspectiveCamera
     this.setupPerspectiveCamera()
-    this.viewer.requestRender()
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET)
   }
 
   public setOrthoCameraOn(): void {
     if (this._renderingCamera === this.orthographicCamera) return
     this.renderingCamera = this.orthographicCamera
     this.setupOrthoCamera()
-    this.viewer.requestRender()
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET)
   }
 
   public toggleCameras(): void {

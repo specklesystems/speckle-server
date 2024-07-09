@@ -32,7 +32,8 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
     super()
     this.materialCopy = new ShaderMaterial({
       defines: {
-        ACCUMULATE: 0
+        ACCUMULATE: 0,
+        PASSTHROUGH: 0
       },
       uniforms: {
         tDiffuse: { value: null },
@@ -89,8 +90,12 @@ export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
   }
 
   setRenderType(type: RenderType) {
+    this.materialCopy.defines['PASSTHROUGH'] = 0
+
     if (type === RenderType.NORMAL) {
       this.materialCopy.defines['ACCUMULATE'] = 0
+      if (this.accumulatioFrames === this.frameIndex + 1)
+        this.materialCopy.defines['PASSTHROUGH'] = 1
     } else {
       this.materialCopy.defines['ACCUMULATE'] = 1
       this.frameIndex = 0
