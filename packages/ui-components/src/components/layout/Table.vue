@@ -43,7 +43,7 @@
               <div v-for="button in buttons" :key="button.label">
                 <FormButton
                   :icon-left="button.icon"
-                  size="sm"
+                  size="small"
                   color="secondary"
                   hide-text
                   :class="button.class"
@@ -78,7 +78,7 @@
 import { noop, isString } from 'lodash'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
-import type { FormButtonTextColor } from '~~/src/helpers/form/button'
+import type { LayoutTableColours } from '~~/src/helpers/layout/components'
 import { FormButton } from '~~/src/lib'
 
 export type TableColumn<I> = {
@@ -92,7 +92,7 @@ export interface RowButton<T = unknown> {
   label: string
   action: (item: T) => void | string
   class?: string
-  textColor?: FormButtonTextColor
+  textColor?: LayoutTableColours
 }
 
 const props = withDefaults(

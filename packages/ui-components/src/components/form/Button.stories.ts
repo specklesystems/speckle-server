@@ -102,16 +102,13 @@ export const Default: StoryObj = {
   play: rightClickPlay,
   args: {
     target: '_blank',
-    to: 'https://google.com',
     default: 'Button text',
     size: 'base',
     type: 'standard',
     fullWidth: false,
-    outlined: false,
-    rounded: false,
     text: false,
     link: false,
-    color: 'default',
+    variant: 'primary',
     disabled: false,
     submit: false,
     hideText: false,
@@ -126,71 +123,21 @@ export const Default: StoryObj = {
   }
 }
 
-export const Rounded: StoryObj = mergeStories(Default, {
+export const Subtle: StoryObj = mergeStories(Default, {
   args: {
-    rounded: true
+    variant: 'subtle'
   }
 })
 
-export const WarningButton: StoryObj = mergeStories(Default, {
+export const Outlined: StoryObj = mergeStories(Default, {
   args: {
-    color: 'warning'
-  }
-})
-
-export const InfoButton: StoryObj = mergeStories(Default, {
-  args: {
-    color: 'info'
+    variant: 'outline'
   }
 })
 
 export const DangerButton: StoryObj = mergeStories(Default, {
   args: {
-    color: 'danger'
-  }
-})
-
-export const SuccessButton: StoryObj = mergeStories(Default, {
-  args: {
-    color: 'success'
-  }
-})
-
-export const SecondaryButton: StoryObj = mergeStories(Default, {
-  args: {
-    color: 'secondary'
-  }
-})
-
-export const SecondaryWithCustomColor: StoryObj = mergeStories(Default, {
-  args: {
-    color: 'secondary',
-    textColor: 'danger'
-  }
-})
-
-export const InvertButton: StoryObj = mergeStories(Default, {
-  args: {
-    color: 'invert'
-  }
-})
-
-export const CardButton: StoryObj = mergeStories(Default, {
-  args: {
-    color: 'card'
-  }
-})
-
-export const RoundedOutlined: StoryObj = mergeStories(Default, {
-  args: {
-    rounded: true,
-    outlined: true
-  }
-})
-
-export const Outline: StoryObj = mergeStories(Default, {
-  args: {
-    outlined: true
+    variant: 'danger'
   }
 })
 
@@ -215,25 +162,13 @@ export const Text: StoryObj = mergeStories(Default, {
 
 export const Small: StoryObj = mergeStories(Default, {
   args: {
-    size: 'sm'
-  }
-})
-
-export const ExtraSmall: StoryObj = mergeStories(Default, {
-  args: {
-    size: 'xs'
+    size: 'small'
   }
 })
 
 export const Large: StoryObj = mergeStories(Default, {
   args: {
-    size: 'lg'
-  }
-})
-
-export const ExtraLarge: StoryObj = mergeStories(Default, {
-  args: {
-    size: 'xl'
+    size: 'large'
   }
 })
 

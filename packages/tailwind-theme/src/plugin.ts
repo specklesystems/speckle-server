@@ -35,8 +35,9 @@ export const lightThemeVariables = {
 
   /* outline variations */
   '--outline-1': '#3b82f6',
-  '--outline-2': '#93c5fd',
+  '--outline-2': '#DFDFDF',
   '--outline-3': '#cbd5e1',
+  '--outline-4': '#4B40C9',
 
   /* success variations */
   '--success': '#34d399',
@@ -93,8 +94,9 @@ export const darkThemeVariables = {
 
   /* outline variations */
   '--outline-1': '#a1a1aa',
-  '--outline-2': '#52525b',
+  '--outline-2': '#2E313F',
   '--outline-3': '#3f3f46',
+  '--outline-4': '#4B40C9',
 
   /* success variations */
   '--success': '#34d399',

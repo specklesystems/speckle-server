@@ -54,7 +54,8 @@ const config: Config = {
         outline: {
           1: 'var(--outline-1)',
           2: 'var(--outline-2)',
-          3: 'var(--outline-3)'
+          3: 'var(--outline-3)',
+          4: 'var(--outline-4)'
         },
         success: {
           DEFAULT: 'var(--success)',
