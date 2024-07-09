@@ -23,8 +23,8 @@ type MetricConfig = {
 
 export const processCpuTotal = (registry: Registry, config: MetricConfig = {}) => {
   const registers = registry ? [registry] : undefined
-  const namePrefix = config.prefix ? config.prefix : ''
-  const labels = config.labels ? config.labels : {}
+  const namePrefix = config.prefix ?? ''
+  const labels = config.labels ?? {}
   const labelNames = Object.keys(labels)
   const buckets = { ...DEFAULT_CPU_TOTAL_BUCKETS, ...config.buckets }
 
