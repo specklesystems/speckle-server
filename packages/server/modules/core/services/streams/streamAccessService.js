@@ -119,7 +119,8 @@ async function removeStreamCollaborator(
   await addStreamPermissionsRevokedActivity({
     streamId,
     activityUserId: removedById,
-    removedUserId: userId
+    removedUserId: userId,
+    stream
   })
 
   return stream

@@ -238,6 +238,13 @@ export async function addStreamPermissionsAddedActivity(params: {
         project: stream
       },
       ownerId: targetUserId
+    }),
+    publish(ProjectSubscriptions.ProjectUpdated, {
+      projectUpdated: {
+        id: streamId,
+        type: ProjectUpdatedMessageType.Updated,
+        project: stream
+      }
     })
   ])
 }
@@ -277,6 +284,13 @@ export async function addStreamInviteAcceptedActivity(params: {
         project: stream
       },
       ownerId: inviteTargetId
+    }),
+    publish(ProjectSubscriptions.ProjectUpdated, {
+      projectUpdated: {
+        id: streamId,
+        type: ProjectUpdatedMessageType.Updated,
+        project: stream
+      }
     })
   ])
 }
@@ -288,8 +302,9 @@ export async function addStreamPermissionsRevokedActivity(params: {
   streamId: string
   activityUserId: string
   removedUserId: string
+  stream: StreamRecord
 }) {
-  const { streamId, activityUserId, removedUserId } = params
+  const { streamId, activityUserId, removedUserId, stream } = params
   const isVoluntaryLeave = activityUserId === removedUserId
 
   await Promise.all([
@@ -318,6 +333,13 @@ export async function addStreamPermissionsRevokedActivity(params: {
         project: null
       },
       ownerId: removedUserId
+    }),
+    publish(ProjectSubscriptions.ProjectUpdated, {
+      projectUpdated: {
+        id: streamId,
+        type: ProjectUpdatedMessageType.Updated,
+        project: stream
+      }
     })
   ])
 }
@@ -330,19 +352,29 @@ export async function addStreamInviteSentOutActivity(params: {
   inviteTargetId: string
   inviterId: string
   inviteTargetEmail: string
+  stream: StreamRecord
 }) {
-  const { streamId, inviteTargetId, inviterId, inviteTargetEmail } = params
+  const { streamId, inviteTargetId, inviterId, inviteTargetEmail, stream } = params
   const targetDisplay = inviteTargetId || inviteTargetEmail
 
-  await saveActivity({
-    streamId,
-    resourceType: ResourceTypes.Stream,
-    resourceId: streamId,
-    actionType: ActionTypes.Stream.InviteSent,
-    userId: inviterId,
-    message: `User ${inviterId} has invited ${targetDisplay} to stream ${streamId}`,
-    info: { targetId: inviteTargetId || null, targetEmail: inviteTargetEmail || null }
-  })
+  await Promise.all([
+    saveActivity({
+      streamId,
+      resourceType: ResourceTypes.Stream,
+      resourceId: streamId,
+      actionType: ActionTypes.Stream.InviteSent,
+      userId: inviterId,
+      message: `User ${inviterId} has invited ${targetDisplay} to stream ${streamId}`,
+      info: { targetId: inviteTargetId || null, targetEmail: inviteTargetEmail || null }
+    }),
+    publish(ProjectSubscriptions.ProjectUpdated, {
+      projectUpdated: {
+        id: streamId,
+        type: ProjectUpdatedMessageType.Updated,
+        project: stream
+      }
+    })
+  ])
 }
 
 /**
@@ -352,17 +384,27 @@ export async function addStreamInviteDeclinedActivity(params: {
   streamId: string
   inviteTargetId: string
   inviterId: string
+  stream: StreamRecord
 }) {
-  const { streamId, inviteTargetId, inviterId } = params
-  await saveActivity({
-    streamId,
-    resourceType: ResourceTypes.Stream,
-    resourceId: streamId,
-    actionType: ActionTypes.Stream.InviteDeclined,
-    userId: inviteTargetId,
-    message: `User ${inviteTargetId} declined to join the stream ${streamId}`,
-    info: { targetId: inviteTargetId, inviterId }
-  })
+  const { streamId, inviteTargetId, inviterId, stream } = params
+  await Promise.all([
+    saveActivity({
+      streamId,
+      resourceType: ResourceTypes.Stream,
+      resourceId: streamId,
+      actionType: ActionTypes.Stream.InviteDeclined,
+      userId: inviteTargetId,
+      message: `User ${inviteTargetId} declined to join the stream ${streamId}`,
+      info: { targetId: inviteTargetId, inviterId }
+    }),
+    publish(ProjectSubscriptions.ProjectUpdated, {
+      projectUpdated: {
+        id: streamId,
+        type: ProjectUpdatedMessageType.Updated,
+        project: stream
+      }
+    })
+  ])
 }
 
 /**

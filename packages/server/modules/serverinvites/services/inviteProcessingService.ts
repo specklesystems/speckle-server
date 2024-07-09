@@ -16,6 +16,7 @@ import {
   DeleteServerOnlyInvites,
   DeleteStreamInvite,
   FindInvite,
+  FindResource,
   FindServerInvite,
   FindStreamInvite,
   UpdateAllInviteTargets
@@ -24,6 +25,7 @@ import {
   FinalizeStreamInvite,
   ResendInviteEmail
 } from '@/modules/serverinvites/services/operations'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
@@ -100,10 +102,12 @@ export const finalizeInvitedServerRegistrationFactory =
 export const finalizeStreamInviteFactory =
   ({
     findStreamInvite,
-    deleteInvitesByTarget
+    deleteInvitesByTarget,
+    findResource
   }: {
     findStreamInvite: FindStreamInvite
     deleteInvitesByTarget: DeleteInvitesByTarget
+    findResource: FindResource
   }): FinalizeStreamInvite =>
   async (accept, streamId, token, userId) => {
     const invite = await findStreamInvite(streamId, {
@@ -120,26 +124,14 @@ export const finalizeStreamInviteFactory =
       })
     }
 
-    // Invite found - accept or decline
-    if (accept) {
-      // Add access for user
-      const { role = Roles.Stream.Contributor, inviterId } = invite
-      // TODO: check role nullability
-      await addOrUpdateStreamCollaborator(streamId, userId, role!, inviterId, null, {
-        fromInvite: true
-      })
-
-      // Delete all invites to this stream
-      await deleteInvitesByTarget(
-        buildUserTarget(userId)!,
-        ResourceTargets.Streams,
-        streamId
-      )
-    } else {
-      await addStreamInviteDeclinedActivity({
-        streamId,
-        inviteTargetId: userId,
-        inviterId: invite.inviterId
+    const stream = await findResource(invite)
+    if (!stream) {
+      throw new StreamNotFoundError('Stream not found for invite', {
+        info: {
+          streamId,
+          token,
+          userId
+        }
       })
     }
 
@@ -149,6 +141,23 @@ export const finalizeStreamInviteFactory =
       ResourceTargets.Streams,
       streamId
     )
+
+    // Invite found - accept or decline
+    if (accept) {
+      // Add access for user
+      const { role = Roles.Stream.Contributor, inviterId } = invite
+      // TODO: check role nullability
+      await addOrUpdateStreamCollaborator(streamId, userId, role!, inviterId, null, {
+        fromInvite: true
+      })
+    } else {
+      await addStreamInviteDeclinedActivity({
+        streamId,
+        inviteTargetId: userId,
+        inviterId: invite.inviterId,
+        stream
+      })
+    }
   }
 
 /**

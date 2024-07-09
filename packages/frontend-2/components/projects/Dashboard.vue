@@ -184,6 +184,9 @@ const onDismissNewSpeckleBanner = () => {
   hasDismissedNewSpeckleBanner.value = true
 }
 
+// TODO: Invites updated doesnt show new ones?
+// TODO: Test all auto-accept/manual accept flows
+
 onUserProjectsUpdate((res) => {
   const activeUserId = activeUser.value?.id
   const event = res.data?.userProjectsUpdated
