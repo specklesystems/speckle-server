@@ -34,7 +34,8 @@
           v-for="project in projects"
           :key="project.id"
           :project="project"
-          @click="$emit('next', accountId, project)"
+          :disable-no-write-access-projects="disableNoWriteAccessProjects"
+          @click="handleProjectCardClick(project)"
         />
         <FormButton
           v-if="searchText && hasReachedEnd && showNewProject"
@@ -46,7 +47,7 @@
         </FormButton>
         <FormButton
           v-else
-          color="invert"
+          color="card"
           full-width
           :disabled="hasReachedEnd"
           @click="loadMore"
@@ -104,11 +105,15 @@ const emit = defineEmits<{
   (e: 'next', accountId: string, project: ProjectListProjectItemFragment): void
 }>()
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
     showNewProject?: boolean
+    /**
+     * For the send wizard - not allowing selecting projects we can't write to.
+     */
+    disableNoWriteAccessProjects?: boolean
   }>(),
-  { showNewProject: true }
+  { showNewProject: true, disableNoWriteAccessProjects: false }
 )
 
 const searchText = ref<string>()
@@ -135,6 +140,17 @@ const onSubmitCreateNewProject = handleSubmit(() => {
   // This works, but if we use handleSubmit(args) > args.name -> it is undefined in Production on netlify, but works fine on local dev
   void createNewProject(newProjectName.value as string)
 })
+
+const handleProjectCardClick = (project: ProjectListProjectItemFragment) => {
+  // TODO: error
+  if (
+    props.disableNoWriteAccessProjects &&
+    (!project.role || project.role === 'stream:reviewer')
+  ) {
+    return
+  }
+  emit('next', accountId.value, project)
+}
 
 const createNewProject = async (name: string) => {
   const account = accountStore.accounts.find(
@@ -181,6 +197,7 @@ watch(searchText, () => {
 watch(projectsResult, (newVal) => {
   if (
     newVal &&
+    newVal.activeUser &&
     newVal?.activeUser?.projects.items.length >= newVal?.activeUser?.projects.totalCount
   ) {
     hasReachedEnd.value = true

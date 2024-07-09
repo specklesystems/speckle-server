@@ -2,17 +2,16 @@
   <div
     v-if="projectDetails && !projectError"
     class="p-2 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
-    :class="isProjectReadOnly ? 'bg-red-500/10' : ''"
   >
-    <div
+    <!-- <div
       v-if="isProjectReadOnly"
       class="px-2 py-1 mb-1 flex w-full items-center text-xs text-foreground-2 justify-between bg-white rounded-md transition group shadow"
     >
       <div v-if="writeAccessRequested">Write access request is pending...</div>
       <div v-else class="flex w-full items-center justify-between">
         You do not have write access to this project.
-        <!-- TODO: Enable later when FE2 is ready for accepting/denying requested accesses -->
-        <!-- <button
+        TODO: Enable later when FE2 is ready for accepting/denying requested accesses
+        <button
           v-if="isProjectReadOnly"
           v-tippy="'Request Write Access'"
           class="hover:text-primary"
@@ -28,9 +27,9 @@
                 )
             "
           />
-        </button> -->
+        </button>
       </div>
-    </div>
+    </div> -->
     <button
       class="flex w-full items-center text-foreground-2 justify-between hover:bg-blue-500/10 rounded-md transition group"
       @click="showModels = !showModels"
@@ -44,8 +43,14 @@
         </div>
       </div>
 
-      <div class="flex items-center space-x-2 p-2">
-        <button v-tippy="'Open project in browser'" class="hover:text-primary">
+      <div class="">
+        <button
+          v-tippy="'Open project in browser'"
+          class="hover:text-primary flex items-center space-x-2 p-2"
+        >
+          <div class="text-xs text-left truncate select-none">
+            {{ projectDetails.role ? projectDetails.role.split(':')[1] : '' }}
+          </div>
           <ArrowTopRightOnSquareIcon
             class="w-4"
             @click.stop="
@@ -77,7 +82,7 @@
     v-if="projectError"
     class="px-2 py-4 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
   >
-    <CommonAlert color="info" with-dismiss @dismiss="projectError = undefined">
+    <CommonAlert color="danger" with-dismiss @dismiss="projectError = undefined">
       <template #title>
         Whoops - project
         <code>{{ project.projectId }}</code>

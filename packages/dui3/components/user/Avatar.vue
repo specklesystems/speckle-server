@@ -32,7 +32,7 @@ type UserAvatar = {
   avatar?: string | null | undefined
 }
 
-export type UserAvatarSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | 'editable'
+type UserAvatarSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | 'editable'
 
 const props = withDefaults(
   defineProps<{

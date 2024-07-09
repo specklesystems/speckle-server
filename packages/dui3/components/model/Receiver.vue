@@ -199,7 +199,7 @@ const errorNotification = computed(() => {
   const notification = {} as ModelCardNotification
   notification.dismissible = true
   notification.level = 'danger'
-  notification.text = props.modelCard.error
+  notification.text = props.modelCard.error.errorMessage
   notification.report = props.modelCard.report
   return notification
 })

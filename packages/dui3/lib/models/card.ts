@@ -13,7 +13,7 @@ export interface IModelCard extends IDiscriminatedObject {
   expired: boolean
   progress?: ModelCardProgress
   settings?: CardSetting[]
-  error?: string
+  error?: { errorMessage: string; dismissible: boolean }
   report?: ConversionResult[]
 }
 

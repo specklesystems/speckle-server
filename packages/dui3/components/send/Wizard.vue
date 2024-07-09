@@ -45,7 +45,7 @@
 
     <!-- Project selector wizard -->
     <div v-if="step === 1">
-      <WizardProjectSelector @next="selectProject" />
+      <WizardProjectSelector disable-no-write-access-projects @next="selectProject" />
     </div>
     <!-- Model selector wizard -->
     <div v-if="step === 2 && selectedProject && selectedAccountId" class="mt-10">
