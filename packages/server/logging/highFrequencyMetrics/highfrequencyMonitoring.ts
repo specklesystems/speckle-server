@@ -21,17 +21,11 @@ export const initHighFrequencyMonitoring = (params: {
   const { register, config, collectionPeriodMilliseconds } = params
   const metrics = [processCpuTotal(register, config)]
 
-  let _shouldStop = false
-  const shouldStop = () => _shouldStop
-  const stop = () => (_shouldStop = true)
-
   return {
     start: collectHighFrequencyMetrics({
-      shouldStop,
       metrics,
       collectionPeriodMilliseconds
-    }),
-    stop
+    })
   }
 }
 
@@ -39,19 +33,16 @@ interface Metric {
   tick: () => void
 }
 const collectHighFrequencyMetrics = (params: {
-  shouldStop: () => boolean
   collectionPeriodMilliseconds: number
   metrics: Metric[]
 }) => {
-  const { shouldStop, metrics, collectionPeriodMilliseconds } = params
-  return async () =>
-    setInterval(() => {
-      if (shouldStop()) {
-        return
-      }
-
+  const { metrics, collectionPeriodMilliseconds } = params
+  return () => {
+    const intervalId = setInterval(() => {
       for (const metric of metrics) {
         metric.tick()
       }
     }, collectionPeriodMilliseconds)
+    return () => clearInterval(intervalId)
+  }
 }

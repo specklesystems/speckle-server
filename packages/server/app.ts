@@ -422,7 +422,7 @@ export async function startHttp(
     register: prometheusClient.register,
     collectionPeriodMilliseconds: 1000
   })
-  highfrequencyMonitoring.start()
+  const stopHighFrequencyMonitoring = highfrequencyMonitoring.start()
 
   app.set('port', port)
 
@@ -434,7 +434,7 @@ export async function startHttp(
       shutdownLogger.info('Shutting down (signal received)...')
     },
     onSignal: async () => {
-      highfrequencyMonitoring.stop()
+      stopHighFrequencyMonitoring()
       await shutdown()
     },
     onShutdown: () => {
