@@ -279,7 +279,6 @@ enum ViewerKeyboardActions {
   ToggleModels = 'ToggleModels',
   ToggleExplorer = 'ToggleExplorer',
   ToggleDiscussions = 'ToggleDiscussions',
-  ToggleFilters = 'ToggleFilters',
   ToggleMeasurements = 'ToggleMeasurements',
   ToggleProjection = 'ToggleProjection',
   ToggleSectionBox = 'ToggleSectionBox',
@@ -379,7 +378,6 @@ const map: Record<ViewerKeyboardActions, [ModifierKeys[], string]> = {
   [ViewerKeyboardActions.ToggleModels]: [[ModifierKeys.Shift], 'm'],
   [ViewerKeyboardActions.ToggleExplorer]: [[ModifierKeys.Shift], 'e'],
   [ViewerKeyboardActions.ToggleDiscussions]: [[ModifierKeys.Shift], 't'],
-  [ViewerKeyboardActions.ToggleFilters]: [[ModifierKeys.Shift], 'f'],
   [ViewerKeyboardActions.ToggleMeasurements]: [[ModifierKeys.Shift], 'r'],
   [ViewerKeyboardActions.ToggleProjection]: [[ModifierKeys.Shift], 'p'],
   [ViewerKeyboardActions.ToggleSectionBox]: [[ModifierKeys.Shift], 'b'],
@@ -421,9 +419,6 @@ const handleKeyboardAction = (action: ViewerKeyboardActions) => {
       break
     case ViewerKeyboardActions.ToggleDiscussions:
       toggleActiveControl('discussions')
-      break
-    case ViewerKeyboardActions.ToggleFilters:
-      toggleActiveControl('filters')
       break
     case ViewerKeyboardActions.ToggleMeasurements:
       toggleMeasurements()
