@@ -34,7 +34,8 @@
   "dependencies": {
     "@speckle/shared": "workspace:^",
     "lodash": "^4.17.21",
-    "lodash-es": "^4.17.21"
+    "lodash-es": "^4.17.21",
+    "reflect-metadata": "^0.2.2"
   },
   "devDependencies": {
     "@types/lodash": "^4.17.5",

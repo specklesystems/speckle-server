@@ -3,10 +3,17 @@ extend type Stream {
   Returns a list of all the file uploads for this stream.
   """
   fileUploads: [FileUpload!]!
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Project.pendingImportedModels or Model.pendingImportedVersions instead."
+    )
+
   """
   Returns a specific file upload that belongs to this stream.
   """
   fileUpload(id: String!): FileUpload
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Project.pendingImportedModels or Model.pendingImportedVersions instead."
+    )
 }
 
 extend type Project {
@@ -123,4 +130,7 @@ extend type Subscription {
   Subscribe to changes to any of a project's file imports
   """
   projectFileImportUpdated(id: String!): ProjectFileImportUpdatedMessage!
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use projectPendingModelsUpdated or projectPendingVersionsUpdated instead."
+    )
 }
