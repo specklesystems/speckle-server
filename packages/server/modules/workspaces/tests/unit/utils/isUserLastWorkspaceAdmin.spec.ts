@@ -36,8 +36,8 @@ describe('given a workspace with one admin', () => {
   })
 
   describe('when testing an admin user', () => {
-    it('should return false', () => {
-      expect(isUserLastWorkspaceAdmin(workspaceRoles, 'admin')).to.be.false
+    it('should return true', () => {
+      expect(isUserLastWorkspaceAdmin(workspaceRoles, 'admin')).to.be.true
     })
   })
 })
