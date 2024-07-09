@@ -26,6 +26,14 @@ export const createProjectMutation = graphql(`
   }
 `)
 
+export const requestProjectAccess = graphql(`
+  mutation StreamAccessRequestCreate($input: String!) {
+    streamAccessRequestCreate(streamId: $input) {
+      id
+    }
+  }
+`)
+
 export const projectListFragment = graphql(`
   fragment ProjectListProjectItem on Project {
     id
@@ -217,6 +225,33 @@ export const versionCreatedSubscription = graphql(`
           name
           displayName
         }
+      }
+    }
+  }
+`)
+
+export const userProjectsUpdatedSubscription = graphql(`
+  subscription OnUserProjectsUpdated {
+    userProjectsUpdated {
+      id
+      project {
+        id
+        visibility
+        team {
+          id
+          role
+        }
+      }
+    }
+  }
+`)
+
+export const projectUpdatedSubscription = graphql(`
+  subscription ProjectUpdated($projectId: String!) {
+    projectUpdated(id: $projectId) {
+      id
+      project {
+        visibility
       }
     }
   }

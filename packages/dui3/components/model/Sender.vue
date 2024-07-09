@@ -3,6 +3,7 @@
     ref="cardBase"
     :model-card="modelCard"
     :project="project"
+    :readonly="readonly"
     @manual-publish-or-load="sendOrCancel"
   >
     <!-- <div class="grid grid-cols-2 py-2 max-[275px]:grid-cols-1 gap-2"> -->
@@ -20,7 +21,7 @@
           size="sm"
           color="card"
           class="flex min-w-0 transition hover:text-primary py-1"
-          :disabled="!!modelCard.progress"
+          :disabled="!!modelCard.progress || noWriteAccess"
           @click.stop="openFilterDialog = true"
         >
           <span class="">{{ modelCard.sendFilter?.name }}</span>
@@ -40,7 +41,7 @@
           color="secondary"
           size="xs"
           class="truncate mt-[2px]"
-          :disabled="!!modelCard.progress"
+          :disabled="!!modelCard.progress || noWriteAccess"
           @click.stop="openFilterDialog = true"
         >
           Publish current selection
@@ -110,6 +111,7 @@ const cardBase = ref<InstanceType<typeof ModelCardBase>>()
 const props = defineProps<{
   modelCard: ISenderModelCard
   project: ProjectModelGroup
+  readonly: boolean
 }>()
 
 const store = useHostAppStore()
@@ -119,6 +121,9 @@ app.$baseBinding.on('documentChanged', () => {
 })
 
 const sendOrCancel = () => {
+  if (props.readonly) {
+    return
+  }
   if (props.modelCard.progress) store.sendModelCancel(props.modelCard.modelCardId)
   else store.sendModel(props.modelCard.modelCardId)
 }
@@ -171,9 +176,9 @@ const expiredNotification = computed(() => {
 const errorNotification = computed(() => {
   if (!props.modelCard.error) return
   const notification = {} as ModelCardNotification
-  notification.dismissible = true
+  notification.dismissible = props.modelCard.error.dismissible
   notification.level = 'danger'
-  notification.text = props.modelCard.error
+  notification.text = props.modelCard.error.errorMessage
   notification.report = props.modelCard.report
   return notification
 })
@@ -191,5 +196,9 @@ const latestVersionNotification = computed(() => {
     action: () => cardBase.value?.viewModel()
   }
   return notification
+})
+
+const noWriteAccess = computed(() => {
+  return props.readonly
 })
 </script>

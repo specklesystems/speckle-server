@@ -3,6 +3,33 @@
     v-if="projectDetails && !projectError"
     class="p-2 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
   >
+    <!-- <div
+      v-if="isProjectReadOnly"
+      class="px-2 py-1 mb-1 flex w-full items-center text-xs text-foreground-2 justify-between bg-white rounded-md transition group shadow"
+    >
+      <div v-if="writeAccessRequested">Write access request is pending...</div>
+      <div v-else class="flex w-full items-center justify-between">
+        You do not have write access to this project.
+        TODO: Enable later when FE2 is ready for accepting/denying requested accesses
+        <button
+          v-if="isProjectReadOnly"
+          v-tippy="'Request Write Access'"
+          class="hover:text-primary"
+        >
+          <LockClosedIcon
+            class="w-4"
+            @click.stop="
+              requestWriteAccess(),
+                trackEvent(
+                  'DUI3 Action',
+                  { name: 'Request Write Access' },
+                  projectAccount?.accountInfo.id
+                )
+            "
+          />
+        </button>
+      </div>
+    </div> -->
     <button
       class="flex w-full items-center text-foreground-2 justify-between hover:bg-blue-500/10 rounded-md transition group"
       @click="showModels = !showModels"
@@ -16,8 +43,14 @@
         </div>
       </div>
 
-      <div class="rounded-md px-2 flex items-center space-x-2 justify-end">
-        <button v-tippy="'Open project in browser'" class="hover:text-primary">
+      <div class="">
+        <button
+          v-tippy="'Open project in browser'"
+          class="hover:text-primary flex items-center space-x-2 p-2"
+        >
+          <div class="text-xs text-left truncate select-none">
+            {{ projectDetails.role ? projectDetails.role.split(':')[1] : '' }}
+          </div>
           <ArrowTopRightOnSquareIcon
             class="w-4"
             @click.stop="
@@ -29,12 +62,13 @@
       </div>
     </button>
 
-    <div v-show="showModels" class="space-y-4 mt-3 pb-2">
+    <div v-show="showModels" class="space-y-4 mt-3 pb-1">
       <ModelSender
         v-for="model in project.senders"
         :key="model.modelCardId"
         :model-card="model"
         :project="project"
+        :readonly="isProjectReadOnly"
       />
       <ModelReceiver
         v-for="model in project.receivers"
@@ -48,7 +82,7 @@
     v-if="projectError"
     class="px-2 py-4 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
   >
-    <CommonAlert color="info" with-dismiss @dismiss="projectError = undefined">
+    <CommonAlert color="danger" with-dismiss @dismiss="projectError = undefined">
       <template #title>
         Whoops - project
         <code>{{ project.projectId }}</code>
@@ -74,7 +108,9 @@ import { useHostAppStore } from '~~/store/hostApp'
 import { useAccountStore } from '~~/store/accounts'
 import {
   projectDetailsQuery,
-  versionCreatedSubscription
+  versionCreatedSubscription,
+  userProjectsUpdatedSubscription,
+  projectUpdatedSubscription
 } from '~~/lib/graphql/mutationsAndQueries'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import type { ApolloError } from '@apollo/client/errors'
@@ -88,17 +124,27 @@ const props = defineProps<{
   project: ProjectModelGroup
 }>()
 
-const hasAccountMatch = !!accountStore.accounts.find(
-  (acc) => acc.accountInfo.id === props.project.accountId
+const showModels = ref(true)
+const writeAccessRequested = ref(false)
+
+const hasAccountMatch = computed(() =>
+  accountStore.isAccountExistsById(props.project.accountId)
 )
-const { result: projectDetailsResult, onError } = useQuery(
+
+const projectAccount = computed(() =>
+  accountStore.accountWithFallback(props.project.accountId, props.project.serverUrl)
+)
+
+const clientId = projectAccount.value.accountInfo.id
+
+const {
+  result: projectDetailsResult,
+  onError,
+  refetch: refetchProjectDetails
+} = useQuery(
   projectDetailsQuery,
   () => ({ projectId: props.project.projectId }),
-  () => ({
-    clientId: hasAccountMatch
-      ? props.project.accountId
-      : accountStore.activeAccount.accountInfo.id
-  })
+  () => ({ clientId })
 )
 
 const projectError = ref<string>()
@@ -107,12 +153,66 @@ onError((err: ApolloError) => {
 })
 const projectDetails = computed(() => projectDetailsResult.value?.project)
 
-const showModels = ref(true)
+const isProjectReadOnly = computed(() => {
+  if (!projectDetails.value) return true
+
+  if (
+    projectDetails.value?.role === null ||
+    projectDetails.value?.role === 'stream:reviewer'
+  )
+    return true
+  return false
+})
+
+// Enable later when FE2 is ready for accepting/denying requested accesses
+// const hasServerMatch = computed(() =>
+//   accountStore.isAccountExistsByServer(props.project.serverUrl)
+// )
+
+// const requestWriteAccess = async () => {
+//   if (hasServerMatch.value) {
+//     const { mutate } = provideApolloClient((projectAccount.value as DUIAccount).client)(
+//       () => useMutation(requestProjectAccess)
+//     )
+//     const res = await mutate({
+//       input: projectDetails.value?.id as string
+//     })
+//     writeAccessRequested.value = true
+//     // TODO: It throws if it has already pending request, handle it!
+//     console.log(res)
+//   }
+// }
+
+const { onResult: userProjectsUpdated } = useSubscription(
+  userProjectsUpdatedSubscription,
+  () => ({}),
+  () => ({ clientId })
+)
+
+const { onResult: projectUpdated } = useSubscription(
+  projectUpdatedSubscription,
+  () => ({ projectId: props.project.projectId }),
+  () => ({ clientId })
+)
+
+// to catch changes on visibility of project
+projectUpdated((res) => {
+  // TODO: FIX needed: whenever project visibility changed from "discoverable" to "private", we can't get message if the `clientId` is not part of the team
+  // validated with Fabians this is a current behavior.
+  if (!res.data) return
+  projectError.value = undefined // clean error, refetch will set it if any
+  refetchProjectDetails()
+})
+
+// to catch changes on team of the project
+userProjectsUpdated((res) => {
+  if (!res.data) return
+  refetchProjectDetails()
+  writeAccessRequested.value = false
+})
 
 const projectUrl = computed(() => {
-  const acc = accountStore.accounts.find(
-    (acc) => acc.accountInfo.id === props.project.accountId
-  )
+  const acc = accountStore.accounts.find((acc) => acc.accountInfo.id === clientId)
   return `${acc?.accountInfo.serverInfo.url as string}/projects/${
     props.project.projectId
   }`
@@ -122,11 +222,7 @@ const projectUrl = computed(() => {
 const { onResult } = useSubscription(
   versionCreatedSubscription,
   () => ({ projectId: props.project.projectId }),
-  () => ({
-    clientId: hasAccountMatch
-      ? props.project.accountId
-      : accountStore.activeAccount.accountInfo.id
-  })
+  () => ({ clientId })
 )
 
 onResult((res) => {

@@ -91,9 +91,11 @@ import { versionDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import type { VersionListItemFragment } from '~/lib/common/generated/gql/graphql'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 import { useInterval, watchOnce } from '@vueuse/core'
+import { useAccountStore } from '~~/store/accounts'
 
 const { trackEvent } = useMixpanel()
 const app = useNuxtApp()
+const accountStore = useAccountStore()
 
 const props = defineProps<{
   modelCard: IReceiverModelCard
@@ -103,6 +105,10 @@ const props = defineProps<{
 const store = useHostAppStore()
 
 const openVersionsDialog = ref(false)
+
+const projectAccount = computed(() =>
+  accountStore.accountWithFallback(props.project.accountId, props.project.serverUrl)
+)
 
 app.$baseBinding.on('documentChanged', () => {
   openVersionsDialog.value = false
@@ -193,7 +199,7 @@ const errorNotification = computed(() => {
   const notification = {} as ModelCardNotification
   notification.dismissible = true
   notification.level = 'danger'
-  notification.text = props.modelCard.error
+  notification.text = props.modelCard.error.errorMessage
   notification.report = props.modelCard.report
   return notification
 })
@@ -206,7 +212,7 @@ const { result: versionDetailsResult, refetch } = useQuery(
     versionId: props.modelCard.selectedVersionId
   }),
   () => ({
-    clientId: props.modelCard.accountId
+    clientId: projectAccount.value.accountInfo.id
   })
 )
 

@@ -19,6 +19,7 @@ import { defineStore } from 'pinia'
 export type ProjectModelGroup = {
   projectId: string
   accountId: string
+  serverUrl: string
   senders: ISenderModelCard[]
   receivers: IReceiverModelCard[]
 }
@@ -64,6 +65,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
         project = {
           projectId: model.projectId,
           accountId: model.accountId,
+          serverUrl: model.serverUrl,
           senders: [],
           receivers: []
         }
@@ -309,12 +311,19 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     model.progress = args.progress
   }
 
-  const setModelError = (args: { modelCardId: string; error: string }) => {
+  const setModelError = (args: {
+    modelCardId: string
+    error: string | { errorMessage: string; dismissible?: boolean }
+  }) => {
     const model = documentModelStore.value.models.find(
       (m) => m.modelCardId === args.modelCardId
     ) as IModelCard
     model.progress = undefined
-    model.error = args.error
+    if (typeof args.error === 'string') {
+      model.error = { errorMessage: args.error as string, dismissible: true }
+    } else {
+      model.error = args.error as { errorMessage: string; dismissible: boolean }
+    }
   }
 
   // NOTE: all bindings that need to send these model events should register.

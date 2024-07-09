@@ -9,10 +9,11 @@ export interface IModelCard extends IDiscriminatedObject {
   modelId: string
   projectId: string
   accountId: string
+  serverUrl: string
   expired: boolean
   progress?: ModelCardProgress
   settings?: CardSetting[]
-  error?: string
+  error?: { errorMessage: string; dismissible: boolean }
   report?: ConversionResult[]
 }
 
@@ -21,6 +22,7 @@ export class ModelCard extends DiscriminatedObject implements IModelCard {
   modelId!: string
   projectId!: string
   accountId!: string
+  serverUrl!: string
   expired: boolean
   progress: ModelCardProgress | undefined
   settings: CardSetting[] | undefined

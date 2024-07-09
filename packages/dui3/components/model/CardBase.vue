@@ -7,7 +7,9 @@
     <div v-if="modelData" class="relative px-2 py-2">
       <div class="relative flex items-center space-x-2 min-w-0">
         <div class="text-foreground-2 mt-[2px] flex items-center -space-x-2 relative">
+          <!-- CTA button -->
           <button
+            v-if="!noWriteAccess"
             v-tippy="buttonTooltip"
             class="z-10 transition hover:scale-110 rounded-full hover:shadow-md bg-foundation text-primary"
             @click.stop="$emit('manual-publish-or-load')"
@@ -19,6 +21,15 @@
             <template v-else>
               <XCircleIcon class="w-8" />
             </template>
+          </button>
+
+          <button
+            v-else
+            class="z-10 transition rounded-full hover:shadow-md bg-foundation"
+          >
+            <!-- <ExclamationCircleIcon class="w-8 text-danger" /> -->
+            <ArrowUpCircleIcon v-if="isSender" class="w-8 text-danger" />
+            <ArrowDownCircleIcon v-else class="w-8 text-danger" />
           </button>
 
           <UserAvatar
@@ -49,7 +60,7 @@
     <div v-else class="px-1 py-1">Error loading data.</div>
 
     <!-- Slot to allow senders or receivers to hoist their own buttons/ui -->
-    <div class="px-2">
+    <div v-if="!noWriteAccess" class="px-2">
       <slot></slot>
     </div>
 
@@ -73,34 +84,51 @@
         }}
       </div>
     </div>
-
     <!-- Card States: Expiry, errors, new version created, etc. -->
-    <slot name="states"></slot>
+    <div v-if="!noWriteAccess">
+      <slot name="states"></slot>
+    </div>
+    <div v-else>
+      <CommonModelNotification
+        :notification="{
+          modelCardId: modelCard.modelCardId,
+          dismissible: false,
+          level: 'danger',
+          text: 'You do not have write access: you cannot update this model. Contact the project owner!'
+        }"
+      />
+    </div>
   </div>
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'
 import { modelDetailsQuery } from '~/lib/graphql/mutationsAndQueries'
 import { CommonLoadingProgressBar } from '@speckle/ui-components'
-// import { CursorArrowRaysIcon } from '@heroicons/vue/24/outline'
 import { XCircleIcon } from '@heroicons/vue/20/solid'
 import { ArrowUpCircleIcon, ArrowDownCircleIcon } from '@heroicons/vue/24/solid'
 import type { ProjectModelGroup } from '~~/store/hostApp'
 import { useHostAppStore } from '~~/store/hostApp'
 import type { IModelCard } from '~~/lib/models/card'
-import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import type { ISenderModelCard } from 'lib/models/card/send'
 import type { IReceiverModelCard } from '~/lib/models/card/receiver'
 import { useMixpanel } from '~/lib/core/composables/mixpanel'
 
 const app = useNuxtApp()
+const store = useHostAppStore()
+const accStore = useAccountStore()
 const { trackEvent } = useMixpanel()
 
-const props = defineProps<{
-  modelCard: IModelCard
-  project: ProjectModelGroup
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelCard: IModelCard
+    project: ProjectModelGroup
+    readonly?: boolean
+  }>(),
+  {
+    readonly: false
+  }
+)
 
 defineEmits<{
   (e: 'manual-publish-or-load'): void
@@ -114,24 +142,23 @@ const buttonTooltip = computed(() => {
     : 'Load model'
 })
 
+const projectAccount = computed(() =>
+  accStore.accountWithFallback(props.project.accountId, props.project.serverUrl)
+)
+
+const clientId = projectAccount.value.accountInfo.id
+
 const { result: modelResult, loading } = useQuery(
   modelDetailsQuery,
   () => ({
     projectId: props.project.projectId,
     modelId: props.modelCard.modelId
   }),
-  () => ({ clientId: props.modelCard.accountId })
+  () => ({ clientId })
 )
 
 const modelData = computed(() => modelResult.value?.project.model)
 const queryData = computed(() => modelResult.value?.project)
-
-const store = useHostAppStore()
-const accStore = useAccountStore()
-
-const acc = accStore.accounts.find(
-  (acc) => acc.accountInfo.id === props.modelCard.accountId
-) as DUIAccount
 
 provide<IModelCard>('cardBase', props.modelCard)
 
@@ -162,13 +189,13 @@ const viewModel = () => {
   // previously with DUI2, it was Stream View but actually it is "Version View" now. Also having conflict with old/new terminology.
   trackEvent('DUI3 Action', { name: 'Version View' }, props.modelCard.accountId)
   app.$baseBinding.openUrl(
-    `${acc?.accountInfo.serverInfo.url}/projects/${props.modelCard?.projectId}/models/${props.modelCard.modelId}`
+    `${projectAccount.value.accountInfo.serverInfo.url}/projects/${props.modelCard?.projectId}/models/${props.modelCard.modelId}`
   )
 }
 
 const viewModelVersions = () => {
   app.$baseBinding.openUrl(
-    `${acc?.accountInfo.serverInfo.url}/projects/${props.modelCard?.projectId}/models/${props.modelCard.modelId}/versions`
+    `${projectAccount.value.accountInfo.serverInfo.url}/projects/${props.modelCard?.projectId}/models/${props.modelCard.modelId}/versions`
   )
 }
 
@@ -183,7 +210,8 @@ defineExpose({
 })
 
 const cardBgColor = computed(() => {
-  if (props.modelCard.error) return 'bg-red-500/10 hover:bg-red-500/20'
+  if (props.modelCard.error || noWriteAccess.value)
+    return 'bg-red-500/10 hover:bg-red-500/20'
   if (props.modelCard.expired) return 'bg-blue-500/10 hover:bg-blue-500/20'
   if (
     (props.modelCard as ISenderModelCard).latestCreatedVersionId ||
@@ -197,5 +225,9 @@ const cardBgColor = computed(() => {
   )
     return 'bg-orange-500/10'
   return 'bg-foundation hover:bg-blue-500/10'
+})
+
+const noWriteAccess = computed(() => {
+  return props.readonly && isSender.value
 })
 </script>
