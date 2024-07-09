@@ -25,26 +25,26 @@ export const deleteWorkspaceRoleFactory =
     deleteWorkspaceRole: DeleteWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
   }) =>
-    async ({
-      userId,
-      workspaceId
-    }: WorkspaceRoleDeleteArgs): Promise<WorkspaceAcl | null> => {
-      const workspaceRoles = await getWorkspaceRoles({ workspaceId })
+  async ({
+    userId,
+    workspaceId
+  }: WorkspaceRoleDeleteArgs): Promise<WorkspaceAcl | null> => {
+    const workspaceRoles = await getWorkspaceRoles({ workspaceId })
 
-      if (isUserLastWorkspaceAdmin(workspaceRoles, userId)) {
-        throw new WorkspaceAdminRequiredError()
-      }
-
-      const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
-
-      if (!deletedRole) {
-        return null
-      }
-
-      emitWorkspaceEvent({ event: WorkspaceEvents.RoleDeleted, payload: deletedRole })
-
-      return deletedRole
+    if (isUserLastWorkspaceAdmin(workspaceRoles, userId)) {
+      throw new WorkspaceAdminRequiredError()
     }
+
+    const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
+
+    if (!deletedRole) {
+      return null
+    }
+
+    emitWorkspaceEvent({ event: WorkspaceEvents.RoleDeleted, payload: deletedRole })
+
+    return deletedRole
+  }
 
 type WorkspaceRoleGetArgs = {
   userId: string
@@ -53,12 +53,12 @@ type WorkspaceRoleGetArgs = {
 
 export const getWorkspaceRoleFactory =
   ({ getWorkspaceRoleForUser }: { getWorkspaceRoleForUser: GetWorkspaceRoleForUser }) =>
-    async ({
-      userId,
-      workspaceId
-    }: WorkspaceRoleGetArgs): Promise<WorkspaceAcl | null> => {
-      return await getWorkspaceRoleForUser({ userId, workspaceId })
-    }
+  async ({
+    userId,
+    workspaceId
+  }: WorkspaceRoleGetArgs): Promise<WorkspaceAcl | null> => {
+    return await getWorkspaceRoleForUser({ userId, workspaceId })
+  }
 
 export const setWorkspaceRoleFactory =
   ({
@@ -70,20 +70,20 @@ export const setWorkspaceRoleFactory =
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
   }) =>
-    async ({ userId, workspaceId, role }: WorkspaceAcl): Promise<void> => {
-      const workspaceRoles = await getWorkspaceRoles({ workspaceId })
+  async ({ userId, workspaceId, role }: WorkspaceAcl): Promise<void> => {
+    const workspaceRoles = await getWorkspaceRoles({ workspaceId })
 
-      if (
-        isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
-        role !== 'workspace:admin'
-      ) {
-        throw new WorkspaceAdminRequiredError()
-      }
-
-      await upsertWorkspaceRole({ userId, workspaceId, role })
-
-      await emitWorkspaceEvent({
-        event: WorkspaceEvents.RoleUpdated,
-        payload: { userId, workspaceId, role }
-      })
+    if (
+      isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
+      role !== 'workspace:admin'
+    ) {
+      throw new WorkspaceAdminRequiredError()
     }
+
+    await upsertWorkspaceRole({ userId, workspaceId, role })
+
+    await emitWorkspaceEvent({
+      event: WorkspaceEvents.RoleUpdated,
+      payload: { userId, workspaceId, role }
+    })
+  }
