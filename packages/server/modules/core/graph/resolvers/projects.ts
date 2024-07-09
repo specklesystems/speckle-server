@@ -1,11 +1,13 @@
 import db from '@/db/knex'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
 import {
   ProjectVisibility,
   Resolvers,
   TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
+import { isWorkspacesModuleEnabled } from '@/modules/core/helpers/features'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import {
@@ -105,6 +107,10 @@ export = {
       }
 
       if (!!args.input?.workspaceId) {
+        if (!isWorkspacesModuleEnabled()) {
+          // Ugly but complete, will go away if/when resolver moved to workspaces module
+          throw new WorkspacesModuleDisabledError()
+        }
         await authorizeResolver(
           context.userId!,
           args.input.workspaceId,
