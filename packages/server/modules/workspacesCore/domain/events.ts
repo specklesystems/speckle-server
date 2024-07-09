@@ -6,9 +6,7 @@ export const WorkspaceEvents = {
 
 export type WorkspaceEvents = (typeof WorkspaceEvents)[keyof typeof WorkspaceEvents]
 
-type WorkspaceCreatedPayload = Workspace & {
-  createdByUserId: string
-}
+type WorkspaceCreatedPayload = Workspace
 
 export type WorkspaceEventsPayloads = {
   [WorkspaceEvents.Created]: WorkspaceCreatedPayload
