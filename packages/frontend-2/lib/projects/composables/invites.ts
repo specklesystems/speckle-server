@@ -13,10 +13,6 @@ export const useProjectInviteManager = () => {
     projectId: string
     inviteId?: string
   }) => {
-    if (import.meta.server) {
-      throw new Error('Invites cannot be processsed on the server')
-    }
-
     const { token, accept, projectId, inviteId } = params
     if (!token?.length || !projectId?.length) return false
 
