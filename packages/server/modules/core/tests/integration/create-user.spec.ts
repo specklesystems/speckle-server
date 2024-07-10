@@ -44,7 +44,7 @@ describe('Users @core-users', () => {
       await createUser({
         name: 'Dim Sum',
         email: createRandomEmail(),
-        password: createRandomPassword()
+        password: createRandomPassword(5)
       })
     } catch {
       return

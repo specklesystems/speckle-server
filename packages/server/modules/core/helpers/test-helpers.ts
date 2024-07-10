@@ -4,6 +4,6 @@ export function createRandomEmail() {
   return `${crs({ length: 6 })}@example.org`
 }
 
-export function createRandomPassword() {
-  return crs({ length: 10 })
+export function createRandomPassword(length?: number) {
+  return crs({ length: length ?? 10 })
 }
