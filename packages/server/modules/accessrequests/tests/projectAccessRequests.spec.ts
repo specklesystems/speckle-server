@@ -2,7 +2,7 @@ import {
   deleteRequestById,
   getPendingAccessRequest
 } from '@/modules/accessrequests/repositories'
-import { requestStreamAccess } from '@/modules/accessrequests/services/stream'
+import { requestProjectAccess } from '@/modules/accessrequests/services/stream'
 import { ActionTypes } from '@/modules/activitystream/helpers/types'
 import {
   ServerAccessRequests,
@@ -21,23 +21,22 @@ import {
 import { NotificationType } from '@/modules/notifications/helpers/types'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
-  createStreamAccessRequest,
-  getFullStreamAccessRequest,
-  getPendingStreamAccessRequests,
-  getStreamAccessRequest,
-  useStreamAccessRequest
-} from '@/test/graphql/accessRequests'
-import { StreamRole } from '@/test/graphql/generated/graphql'
+  CreateProjectAccessRequestDocument,
+  GetActiveUserFullProjectAccessRequestDocument,
+  GetActiveUserProjectAccessRequestDocument,
+  GetPendingProjectAccessRequestsDocument,
+  StreamRole,
+  UseProjectAccessRequestDocument
+} from '@/test/graphql/generated/graphql'
+import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
 import { truncateTables } from '@/test/hooks'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import {
   buildNotificationsStateTracker,
   NotificationsStateManager
 } from '@/test/notificationsHelper'
-import { buildAuthenticatedApolloServer } from '@/test/serverHelper'
 import { getStreamActivities } from '@/test/speckle-helpers/activityStreamHelper'
 import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import { noop } from 'lodash'
 
@@ -46,7 +45,7 @@ const isNotCollaboratorError = (e: unknown) =>
   e.message.includes('User is not a stream collaborator')
 
 const createReqAndGetId = async (userId: string, streamId: string) => {
-  const createReqRes = await requestStreamAccess(userId, streamId)
+  const createReqRes = await requestProjectAccess(userId, streamId)
   return createReqRes.id
 }
 
@@ -54,8 +53,8 @@ const cleanup = async () => {
   await truncateTables([Streams.name, ServerAccessRequests.name, Users.name])
 }
 
-describe('Stream access requests', () => {
-  let apollo: ApolloServer
+describe('Project access requests', () => {
+  let apollo: TestApolloServer
   let notificationsStateManager: NotificationsStateManager
 
   const me: BasicTestUser = {
@@ -105,7 +104,9 @@ describe('Stream access requests', () => {
       [otherGuysPublicStream, otherGuy],
       [myPrivateStream, me]
     ])
-    apollo = await buildAuthenticatedApolloServer(me.id)
+    apollo = await testApolloServer({
+      authUserId: me.id
+    })
     notificationsStateManager = buildNotificationsStateTracker()
   })
 
@@ -113,19 +114,36 @@ describe('Stream access requests', () => {
     notificationsStateManager.destroy()
   })
 
-  const createReq = (streamId: string) =>
-    createStreamAccessRequest(apollo, { streamId })
+  const createReq = async (projectId: string) =>
+    await apollo.execute(CreateProjectAccessRequestDocument, {
+      projectId
+    })
 
-  const getReq = (streamId: string) => getStreamAccessRequest(apollo, { streamId })
+  const getActiveUserReq = async (projectId: string) =>
+    await apollo.execute(GetActiveUserProjectAccessRequestDocument, {
+      projectId
+    })
 
-  const getStreamReqs = (streamId: string) =>
-    getPendingStreamAccessRequests(apollo, { streamId })
+  const getPendingProjectReqs = async (projectId: string) =>
+    await apollo.execute(GetPendingProjectAccessRequestsDocument, {
+      projectId
+    })
 
-  const useReq = (
+  const getFullActiveUserAccessRequest = async (projectId: string) =>
+    await apollo.execute(GetActiveUserFullProjectAccessRequestDocument, {
+      projectId
+    })
+
+  const useReq = async (
     requestId: string,
     accept: boolean,
     role: StreamRole = StreamRole.StreamContributor
-  ) => useStreamAccessRequest(apollo, { requestId, accept, role })
+  ) =>
+    await apollo.execute(UseProjectAccessRequestDocument, {
+      requestId,
+      accept,
+      role
+    })
 
   describe('when being created', () => {
     beforeEach(async () => {
@@ -155,13 +173,16 @@ describe('Stream access requests', () => {
 
       // req gets created
       expect(results).to.not.haveGraphQLErrors()
-      expect(results.data?.streamAccessRequestCreate.id).to.be.ok
-      expect(results.data?.streamAccessRequestCreate?.createdAt).to.be.ok
-      expect(results.data?.streamAccessRequestCreate?.requesterId).to.be.ok
-      expect(results.data?.streamAccessRequestCreate?.requester.id).to.eq(
-        results.data?.streamAccessRequestCreate?.requesterId
-      )
-      expect(results.data?.streamAccessRequestCreate.streamId).to.be.ok
+      expect(results.data?.projectMutations.accessRequestMutations.create.id).to.be.ok
+      expect(results.data?.projectMutations.accessRequestMutations.create.createdAt).to
+        .be.ok
+      expect(results.data?.projectMutations.accessRequestMutations.create.requesterId)
+        .to.be.ok
+      expect(
+        results.data?.projectMutations.accessRequestMutations.create.requester.id
+      ).to.eq(results.data?.projectMutations.accessRequestMutations.create.requesterId)
+      expect(results.data?.projectMutations.accessRequestMutations.create.projectId).to
+        .be.ok
 
       await waitForAck
 
@@ -185,17 +206,20 @@ describe('Stream access requests', () => {
     it('operation fails if request already exists', async () => {
       const firstResults = await createReq(otherGuysPrivateStream.id)
       expect(firstResults).to.not.haveGraphQLErrors()
-      expect(firstResults.data?.streamAccessRequestCreate.id).to.be.ok
+      expect(firstResults.data?.projectMutations.accessRequestMutations.create.id).to.be
+        .ok
 
       const secondResults = await createReq(otherGuysPrivateStream.id)
       expect(secondResults).to.haveGraphQLErrors('already has a pending access request')
-      expect(secondResults.data?.streamAccessRequestCreate.id).to.be.not.ok
+      expect(secondResults.data?.projectMutations.accessRequestMutations.create.id).to
+        .be.not.ok
     })
 
     it('operation fails if stream is nonexistant', async () => {
       const secondResults = await createReq('abcdef123')
       expect(secondResults).to.haveGraphQLErrors('non-existant resource')
-      expect(secondResults.data?.streamAccessRequestCreate.id).to.be.not.ok
+      expect(secondResults.data?.projectMutations.accessRequestMutations.create.id).to
+        .be.not.ok
     })
 
     it('operation fails if user already has a role on the stream', async () => {
@@ -208,7 +232,8 @@ describe('Stream access requests', () => {
 
       const secondResults = await createReq(otherGuysPrivateStream.id)
       expect(secondResults).to.haveGraphQLErrors('user already has access')
-      expect(secondResults.data?.streamAccessRequestCreate.id).to.be.not.ok
+      expect(secondResults.data?.projectMutations.accessRequestMutations.create.id).to
+        .be.not.ok
     })
   })
 
@@ -233,29 +258,27 @@ describe('Stream access requests', () => {
     })
 
     it('returns the request correctly', async () => {
-      const results = await getReq(otherGuysPrivateStream.id)
+      const results = await getActiveUserReq(otherGuysPrivateStream.id)
       expect(results).to.not.haveGraphQLErrors()
-      expect(results.data?.streamAccessRequest?.id).to.eq(myRequestId)
-      expect(results.data?.streamAccessRequest?.createdAt).to.be.ok
-      expect(results.data?.streamAccessRequest?.requesterId).to.be.ok
-      expect(results.data?.streamAccessRequest?.requester.id).to.eq(
-        results.data?.streamAccessRequest?.requesterId
+      expect(results.data?.activeUser?.projectAccessRequest?.id).to.eq(myRequestId)
+      expect(results.data?.activeUser?.projectAccessRequest?.createdAt).to.be.ok
+      expect(results.data?.activeUser?.projectAccessRequest?.requesterId).to.be.ok
+      expect(results.data?.activeUser?.projectAccessRequest?.requester.id).to.eq(
+        results.data?.activeUser?.projectAccessRequest?.requesterId
       )
-      expect(results.data?.streamAccessRequest?.streamId).to.be.ok
+      expect(results.data?.activeUser?.projectAccessRequest?.projectId).to.be.ok
     })
 
     it('returns null if no req found', async () => {
       await deleteRequestById(myRequestId)
 
-      const results = await getReq(otherGuysPrivateStream.id)
+      const results = await getActiveUserReq(otherGuysPrivateStream.id)
       expect(results).to.not.haveGraphQLErrors()
-      expect(results.data?.streamAccessRequest).to.eq(null)
+      expect(results.data?.activeUser?.projectAccessRequest).to.eq(null)
     })
 
     it('throws error if attempting to read private stream metadata before has access to it', async () => {
-      const results = await getFullStreamAccessRequest(apollo, {
-        streamId: otherGuysPrivateStream.id
-      })
+      const results = await getFullActiveUserAccessRequest(otherGuysPrivateStream.id)
 
       expect(results).to.haveGraphQLErrors(
         'User does not have required access to stream'
@@ -263,12 +286,10 @@ describe('Stream access requests', () => {
     })
 
     it('doesnt throw if attempting to read stream metadata on accessible stream', async () => {
-      const results = await getFullStreamAccessRequest(apollo, {
-        streamId: otherGuysPublicStream.id
-      })
+      const results = await getFullActiveUserAccessRequest(otherGuysPublicStream.id)
 
       expect(results).to.not.haveGraphQLErrors()
-      expect(results.data?.streamAccessRequest?.stream.id).to.be.ok
+      expect(results.data?.activeUser?.projectAccessRequest?.project.id).to.be.ok
     })
   })
 
@@ -293,24 +314,24 @@ describe('Stream access requests', () => {
     })
 
     it(`operation fails if reading from a non-owned stream`, async () => {
-      const results = await getStreamReqs(otherGuysPublicStream.id)
+      const results = await getPendingProjectReqs(otherGuysPublicStream.id)
       expect(results).to.haveGraphQLErrors('not authorized')
-      expect(results.data?.stream?.pendingAccessRequests).to.be.not.ok
-      expect(results.data?.stream?.id).to.be.ok
+      expect(results.data?.project?.pendingAccessRequests).to.be.not.ok
+      expect(results.data?.project?.id).to.be.ok
     })
 
     it('operation succeeds', async () => {
-      const results = await getStreamReqs(myPrivateStream.id)
+      const results = await getPendingProjectReqs(myPrivateStream.id)
       expect(results).to.not.haveGraphQLErrors()
 
-      expect(results.data?.stream?.pendingAccessRequests).to.have.lengthOf(2)
+      expect(results.data?.project?.pendingAccessRequests).to.have.lengthOf(2)
 
-      for (const pendingReq of results.data!.stream!.pendingAccessRequests!) {
+      for (const pendingReq of results.data!.project!.pendingAccessRequests!) {
         expect(pendingReq.id).to.be.ok
         expect(pendingReq.createdAt).to.be.ok
         expect(pendingReq.requesterId).to.be.ok
-        expect(pendingReq.streamId).to.be.ok
-        expect(pendingReq.stream.id).to.eq(results.data!.stream!.id)
+        expect(pendingReq.projectId).to.be.ok
+        expect(pendingReq.project.id).to.eq(results.data!.project!.id)
         expect(pendingReq.requester.id).to.eq(pendingReq.requesterId)
         expect([otherGuy.id, anotherGuy.id].includes(pendingReq.requesterId)).to.be.true
       }
@@ -335,7 +356,7 @@ describe('Stream access requests', () => {
     it('processing fails when pointing to nonexistant req', async () => {
       const results = await useReq('abcd', true)
       expect(results).to.haveGraphQLErrors('no request with this id exists')
-      expect(results.data?.streamAccessRequestUse).to.be.not.ok
+      expect(results.data?.projectMutations.accessRequestMutations.use).to.be.not.ok
     })
 
     it('processing fails when pointing to a req the user doesnt have access to', async () => {
@@ -346,7 +367,7 @@ describe('Stream access requests', () => {
 
       const results = await useReq(inaccessibleReqId, true)
       expect(results).to.haveGraphQLErrors('you must own the stream')
-      expect(results.data?.streamAccessRequestUse).to.be.not.ok
+      expect(results.data?.projectMutations.accessRequestMutations.use).to.be.not.ok
     })
 
     const validProcessingDataSet = [
@@ -362,7 +383,7 @@ describe('Stream access requests', () => {
       it(`${display} works`, async () => {
         const results = await useReq(validReqId, accept, role)
         expect(results).to.not.haveGraphQLErrors()
-        expect(results.data?.streamAccessRequestUse).to.be.ok
+        expect(results.data?.projectMutations.accessRequestMutations.use).to.be.ok
 
         // req should be deleted
         const req = await getPendingAccessRequest(validReqId)

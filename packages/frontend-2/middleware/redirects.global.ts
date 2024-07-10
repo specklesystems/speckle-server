@@ -14,8 +14,8 @@ import { ViewerHashStateKeys } from '~/lib/viewer/composables/setup/urlHashState
 
 const legacyBranchMetadataQuery = graphql(`
   query LegacyBranchRedirectMetadata($streamId: String!, $branchName: String!) {
-    stream(id: $streamId) {
-      branch(name: $branchName) {
+    project(id: $streamId) {
+      modelByName(name: $branchName) {
         id
       }
     }
@@ -24,10 +24,10 @@ const legacyBranchMetadataQuery = graphql(`
 
 const legacyViewerCommitMetadataQuery = graphql(`
   query LegacyViewerCommitRedirectMetadata($streamId: String!, $commitId: String!) {
-    stream(id: $streamId) {
-      commit(id: $commitId) {
+    project(id: $streamId) {
+      version(id: $commitId) {
         id
-        branch {
+        model {
           id
         }
       }
@@ -37,13 +37,13 @@ const legacyViewerCommitMetadataQuery = graphql(`
 
 const legacyViewerStreamMetadataQuery = graphql(`
   query LegacyViewerStreamRedirectMetadata($streamId: String!) {
-    stream(id: $streamId) {
+    project(id: $streamId) {
       id
-      commits(limit: 1) {
+      versions(limit: 1) {
         totalCount
         items {
           id
-          branch {
+          model {
             id
           }
         }
@@ -68,6 +68,7 @@ const adminPageRgx = /^\/admin\/?/
  */
 
 export default defineNuxtRouteMiddleware(async (to) => {
+  const logger = useLogger()
   const path = to.path
   const apollo = useApolloClientFromNuxt()
   const resourceBuilder = () => SpeckleViewer.ViewerRoute.resourceBuilder()
@@ -91,23 +92,33 @@ export default defineNuxtRouteMiddleware(async (to) => {
       const resourceIdString = resourceIdStringBuilder.addObject(viewerId).toString()
       return navigateTo(modelRoute(viewerStreamId, resourceIdString, hashState))
     } else {
-      const { data } = await apollo
+      const { data, errors } = await apollo
         .query({
           query: legacyViewerCommitMetadataQuery,
           variables: { streamId: viewerStreamId, commitId: viewerId }
         })
         .catch(convertThrowIntoFetchResult)
-      const branchId = data?.stream?.commit?.branch?.id
+      const branchId = data?.project?.version?.model?.id
 
-      return navigateTo(
-        branchId
-          ? modelRoute(
-              viewerStreamId,
-              resourceIdStringBuilder.addModel(branchId, viewerId).toString(),
-              hashState
-            )
-          : projectRoute(viewerStreamId)
-      )
+      if (branchId) {
+        return navigateTo(
+          modelRoute(
+            viewerStreamId,
+            resourceIdStringBuilder.addModel(branchId, viewerId).toString(),
+            hashState
+          )
+        )
+      } else {
+        logger.warn(
+          {
+            errors,
+            streamId: viewerStreamId,
+            commitId: viewerId
+          },
+          "Couldn't resolve legacy viewer redirect commit metadata"
+        )
+        return navigateTo(projectRoute(viewerStreamId))
+      }
     }
   }
 
@@ -131,6 +142,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     const branchName = to.query['branch'] as Optional<string> // get first branch commit
 
     if (!streamId?.length) {
+      logger.warn('No stream ID provided for embed viewer redirect')
       return navigateTo(homeRoute)
     }
 
@@ -141,27 +153,37 @@ export default defineNuxtRouteMiddleware(async (to) => {
         })
       )
     } else if (commitId?.length) {
-      const { data } = await apollo
+      const { data, errors } = await apollo
         .query({
           query: legacyViewerCommitMetadataQuery,
           variables: { streamId, commitId }
         })
         .catch(convertThrowIntoFetchResult)
-      const branchId = data?.stream?.commit?.branch?.id
+      const branchId = data?.project?.version?.model?.id
 
-      return navigateTo(
-        branchId
-          ? modelRoute(
-              streamId,
-              resourceBuilder().addModel(branchId, commitId).toString(),
-              {
-                [ViewerHashStateKeys.EmbedOptions]: JSON.stringify(embedOptions)
-              }
-            )
-          : projectRoute(viewerStreamId)
-      )
+      if (branchId) {
+        return navigateTo(
+          modelRoute(
+            streamId,
+            resourceBuilder().addModel(branchId, commitId).toString(),
+            {
+              [ViewerHashStateKeys.EmbedOptions]: JSON.stringify(embedOptions)
+            }
+          )
+        )
+      } else {
+        logger.warn(
+          {
+            errors,
+            streamId,
+            commitId
+          },
+          "Couldn't resolve legacy commit embed redirect metadata"
+        )
+        return navigateTo(projectRoute(streamId))
+      }
     } else if (branchName?.length) {
-      const { data } = await apollo
+      const { data, errors } = await apollo
         .query({
           query: legacyBranchMetadataQuery,
           variables: {
@@ -171,44 +193,63 @@ export default defineNuxtRouteMiddleware(async (to) => {
         })
         .catch(convertThrowIntoFetchResult)
 
-      return navigateTo(
-        data?.stream?.branch?.id
-          ? modelRoute(
-              streamId,
-              resourceBuilder().addModel(data.stream.branch.id).toString(),
-              {
-                [ViewerHashStateKeys.EmbedOptions]: JSON.stringify(embedOptions)
-              }
-            )
-          : projectRoute(streamId)
-      )
+      const branchId = data?.project?.modelByName?.id
+      if (branchId) {
+        return navigateTo(
+          modelRoute(streamId, resourceBuilder().addModel(branchId).toString(), {
+            [ViewerHashStateKeys.EmbedOptions]: JSON.stringify(embedOptions)
+          })
+        )
+      } else {
+        logger.warn(
+          {
+            errors,
+            streamId,
+            branchName: decodeURIComponent(branchName)
+          },
+          "Couldn't resolve legacy branch embed redirect metadata"
+        )
+        return navigateTo(projectRoute(streamId))
+      }
     } else {
-      const { data } = await apollo
+      const { data, errors } = await apollo
         .query({ query: legacyViewerStreamMetadataQuery, variables: { streamId } })
         .catch(convertThrowIntoFetchResult)
 
-      return navigateTo(
-        data?.stream?.commits?.items?.length && data.stream.commits.items[0].branch
-          ? modelRoute(
-              data.stream.id,
-              SpeckleViewer.ViewerRoute.resourceBuilder()
-                .addModel(
-                  data.stream.commits.items[0].branch.id,
-                  data.stream.commits.items[0].id
-                )
-                .toString(),
-              {
-                [ViewerHashStateKeys.EmbedOptions]: JSON.stringify(embedOptions)
-              }
-            )
-          : projectRoute(streamId)
-      )
+      if (
+        data?.project?.versions?.items?.length &&
+        data.project.versions.items[0].model
+      ) {
+        return navigateTo(
+          modelRoute(
+            data.project.id,
+            SpeckleViewer.ViewerRoute.resourceBuilder()
+              .addModel(
+                data.project.versions.items[0].model.id,
+                data.project.versions.items[0].id
+              )
+              .toString(),
+            {
+              [ViewerHashStateKeys.EmbedOptions]: JSON.stringify(embedOptions)
+            }
+          )
+        )
+      } else {
+        logger.warn(
+          {
+            errors,
+            streamId
+          },
+          "Couldn't resolve legacy stream embed redirect metadata"
+        )
+        return navigateTo(projectRoute(streamId))
+      }
     }
   }
 
   const [, branchStreamId, branchName] = path.match(streamBranchPageRgx) || []
   if (branchStreamId && branchName) {
-    const { data } = await apollo
+    const { data, errors } = await apollo
       .query({
         query: legacyBranchMetadataQuery,
         variables: {
@@ -217,13 +258,22 @@ export default defineNuxtRouteMiddleware(async (to) => {
         }
       })
       .catch(convertThrowIntoFetchResult)
-    const branchId = data?.stream?.branch?.id
+    const branchId = data?.project?.modelByName?.id
 
-    return navigateTo(
-      branchId
-        ? modelVersionsRoute(branchStreamId, branchId)
-        : projectRoute(branchStreamId)
-    )
+    if (branchId) {
+      return navigateTo(modelVersionsRoute(branchStreamId, branchId))
+    } else {
+      logger.warn(
+        {
+          errors,
+          streamId: branchStreamId,
+          branchName: decodeURIComponent(branchName)
+        },
+        "Couldn't resolve legacy branch redirect metadata"
+      )
+
+      return navigateTo(projectRoute(branchStreamId))
+    }
   }
 
   const [, streamId] = path.match(streamPageRgx) || []

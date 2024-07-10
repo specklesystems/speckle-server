@@ -206,7 +206,7 @@ extend type Mutation {
   streamsDelete(ids: [String!]): Boolean!
     @hasServerRole(role: SERVER_ADMIN)
     @deprecated(
-      reason: "Part of the old API surface and will be removed in the future."
+      reason: "Part of the old API surface and will be removed in the future. Use ProjectMutations.batchDelete instead."
     )
 
   """
