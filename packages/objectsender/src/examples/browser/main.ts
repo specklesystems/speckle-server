@@ -1,5 +1,5 @@
 import { Base, Chunkable, Detach, send as objectSend } from '../../index'
-import { createCommit } from './utils'
+import { createCommit, createProject } from './utils'
 
 interface ExampleAppWindow extends Window {
   send: typeof objectSend
@@ -37,7 +37,6 @@ const getInputValue = (key: string) => {
 appWindow.onload = () => {
   const serverUrl = localStorage.getItem('serverUrl')
   const apiToken = localStorage.getItem('apiToken')
-  const projectId = localStorage.getItem('projectId')
 
   if (serverUrl) {
     setInputValue('serverUrl', serverUrl)
@@ -45,21 +44,23 @@ appWindow.onload = () => {
   if (apiToken) {
     setInputValue('apiToken', apiToken)
   }
-  if (projectId) {
-    setInputValue('projectId', projectId)
-  }
 }
 
 appWindow.loadData = async () => {
   const serverUrl = getInputValue('serverUrl')
   const apiToken = getInputValue('apiToken')
-  const projectId = getInputValue('projectId')
 
   localStorage.setItem('serverUrl', serverUrl)
-  localStorage.setItem('projectId', projectId)
   localStorage.setItem('apiToken', apiToken)
 
   setInputValue('result', '...', { valueKey: 'textContent' })
+
+  const projectOutput = (await createProject({
+    serverUrl,
+    token: apiToken
+  })) as { data: { projectMutations: { create: { id: string } } } }
+  const projectId = projectOutput.data.projectMutations.create.id
+  console.log(`Created project: ${projectId}`)
 
   const sendParams = {
     projectId,
@@ -68,7 +69,7 @@ appWindow.loadData = async () => {
   }
 
   const t0 = performance.now()
-  const numberOfElements = 100
+  const numberOfElements = 800
   const meshesPerElement = 10
   const verticesPerMesh = 900
 
@@ -86,7 +87,7 @@ appWindow.loadData = async () => {
 
   const model = new Collection<Asset>(elements)
   let result = undefined
-  let commitDetails = undefined
+  let commitDetails: unknown = undefined
   try {
     result = await objectSend(model, sendParams)
     commitDetails = await createCommit(result, { ...sendParams, modelName: 'main' })
