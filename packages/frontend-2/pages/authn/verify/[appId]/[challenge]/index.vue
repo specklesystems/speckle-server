@@ -13,7 +13,7 @@
               <div class="label-light">{{ activeUser.name }}</div>
             </div>
             <CommonTextLink
-              size="xs"
+              size="small"
               :icon-right="ArrowsRightLeftIcon"
               no-underline
               @click="onSwitchAccounts"

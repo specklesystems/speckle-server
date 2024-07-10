@@ -57,7 +57,7 @@ const props = defineProps<{
    * outline: foundation background and outline
    * subtle: no styling
    */
-  variant: FormButtonStyle
+  variant?: FormButtonStyle
   /**
    * Whether the target location should be forcefully treated as an external URL
    * (for relative paths this will likely cause a redirect)
@@ -144,11 +144,13 @@ const bgAndBorderClasses = computed(() => {
     ]
   }
 
-  if (props.text) {
-    classParts.push(variantsText[props.variant] || variantsText.primary)
-  } else {
-    const variantClasses = variantsBgBorder[props.variant] || variantsBgBorder.primary
+  if (props.variant && props.text) {
+    classParts.push(variantsText[props.variant])
+  } else if (props.variant) {
+    const variantClasses = variantsBgBorder[props.variant]
     classParts.push(...variantClasses)
+  } else {
+    classParts.push(variantsText.primary)
   }
 
   return classParts.join(' ')

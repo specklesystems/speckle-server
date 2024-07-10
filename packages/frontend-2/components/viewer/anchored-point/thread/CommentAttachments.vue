@@ -4,7 +4,6 @@
       v-for="attachment in attachments.text.attachments || []"
       :key="attachment.id"
       :icon-left="resolveIconComponent(attachment)"
-      size="sm"
       @click="() => onAttachmentClick(attachment)"
     >
       <span class="truncate relative text-xs pl-1">

@@ -32,7 +32,6 @@
               :is="noButtons ? 'div' : CommonTextLink"
               external
               :to="fn.repo.url"
-              size="sm"
             >
               {{ fn.repo.owner }}
             </Component>
