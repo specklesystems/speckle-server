@@ -1,16 +1,20 @@
 import {
   addCommitCreatedActivity,
   addCommitDeletedActivity,
+  addCommitReceivedActivity,
   addCommitUpdatedActivity
 } from '@/modules/activitystream/services/commitActivity'
 import {
   CommitCreateError,
   CommitDeleteError,
+  CommitReceiveError,
   CommitUpdateError
 } from '@/modules/core/errors/commit'
 import { VersionEvents, VersionsEmitter } from '@/modules/core/events/versionsEmitter'
 import {
+  CommitReceivedInput,
   CommitUpdateInput,
+  MarkReceivedVersionInput,
   UpdateVersionInput
 } from '@/modules/core/graph/generated/graphql'
 import { CommitRecord } from '@/modules/core/helpers/types'
@@ -38,9 +42,35 @@ import {
 import { ensureError, MaybeNullOrUndefined, Nullable, Roles } from '@speckle/shared'
 import { has } from 'lodash'
 
-/**
- * Note: Doesn't notify subscriptions or save activityStream due to missing branchName
- */
+export async function markCommitReceivedAndNotify(params: {
+  input: MarkReceivedVersionInput | CommitReceivedInput
+  userId: string
+}) {
+  const { input, userId } = params
+
+  const oldInput: CommitReceivedInput =
+    'projectId' in input
+      ? {
+          ...input,
+          streamId: input.projectId,
+          commitId: input.versionId
+        }
+      : input
+
+  const commit = await getCommit(oldInput.commitId, { streamId: oldInput.streamId })
+  if (!commit) {
+    throw new CommitReceiveError(
+      `Failed to find commit with id ${oldInput.commitId} in stream ${oldInput.streamId}.`,
+      { info: params }
+    )
+  }
+
+  await addCommitReceivedActivity({
+    input: oldInput,
+    userId
+  })
+}
+
 export async function createCommitByBranchId(
   params: {
     streamId: string

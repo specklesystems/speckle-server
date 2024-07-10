@@ -41,7 +41,7 @@ repos:
       - id: helm-documentation
         name: Helm Json Schema
         language: system
-        files: utils/helm/speckle-server/values.yaml
+        files: utils\/helm\/speckle\-server\/values\.yaml
         entry: utils/helm/update-schema-json.sh
         description: If this fails it is because the values.yaml file was updated. Or has missing or incorrect documentation.
 

@@ -16,7 +16,6 @@ export type Scalars = {
   BigInt: { input: bigint; output: bigint; }
   /** A date-time string at UTC, such as 2007-12-03T10:15:30Z, compliant with the `date-time` format outlined in section 5.6 of the RFC 3339 profile of the ISO 8601 standard for representation of dates and times using the Gregorian calendar. */
   DateTime: { input: string; output: string; }
-  EmailAddress: { input: any; output: any; }
   /** The `JSONObject` scalar type represents JSON objects as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf). */
   JSONObject: { input: Record<string, unknown>; output: Record<string, unknown>; }
 };
@@ -801,6 +800,16 @@ export type CreateModelInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CreateVersionInput = {
+  message?: InputMaybe<Scalars['String']['input']>;
+  modelId: Scalars['String']['input'];
+  objectId: Scalars['String']['input'];
+  parents?: InputMaybe<Array<Scalars['String']['input']>>;
+  projectId: Scalars['String']['input'];
+  sourceApplication?: InputMaybe<Scalars['String']['input']>;
+  totalChildrenCount?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
@@ -991,6 +1000,13 @@ export type LimitedUserTimelineArgs = {
   limit?: Scalars['Int']['input'];
 };
 
+export type MarkReceivedVersionInput = {
+  message?: InputMaybe<Scalars['String']['input']>;
+  projectId: Scalars['String']['input'];
+  sourceApplication: Scalars['String']['input'];
+  versionId: Scalars['String']['input'];
+};
+
 export type Model = {
   __typename?: 'Model';
   author: LimitedUser;
@@ -1160,11 +1176,11 @@ export type Mutation = {
    * @deprecated Use commentMutations version
    */
   commentView: Scalars['Boolean']['output'];
-  /** @deprecated Part of the old API surface and will be removed in the future. */
+  /** @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.create instead. */
   commitCreate: Scalars['String']['output'];
   /** @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.delete instead. */
   commitDelete: Scalars['Boolean']['output'];
-  /** @deprecated Part of the old API surface and will be removed in the future. */
+  /** @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.markReceived instead. */
   commitReceive: Scalars['Boolean']['output'];
   /** @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.update/moveToModel instead. */
   commitUpdate: Scalars['Boolean']['output'];
@@ -1190,7 +1206,7 @@ export type Mutation = {
   inviteResend: Scalars['Boolean']['output'];
   modelMutations: ModelMutations;
   /** @deprecated Part of the old API surface and will be removed in the future. */
-  objectCreate: Array<Maybe<Scalars['String']['output']>>;
+  objectCreate: Array<Scalars['String']['output']>;
   projectMutations: ProjectMutations;
   /** (Re-)send the account verification e-mail */
   requestVerification: Scalars['Boolean']['output'];
@@ -1202,12 +1218,12 @@ export type Mutation = {
   serverInviteCreate: Scalars['Boolean']['output'];
   /**
    * Request access to a specific stream
-   * @deprecated Part of the old API surface and will be removed in the future.
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectAccessRequestMutations.create instead.
    */
   streamAccessRequestCreate: StreamAccessRequest;
   /**
    * Accept or decline a stream access request. Must be a stream owner to invoke this.
-   * @deprecated Part of the old API surface and will be removed in the future.
+   * @deprecated Part of the old API surface and will be removed in the future. Use ProjectAccessRequestMutations.use instead.
    */
   streamAccessRequestUse: Scalars['Boolean']['output'];
   /**
@@ -1264,7 +1280,7 @@ export type Mutation = {
    * @deprecated Part of the old API surface and will be removed in the future. Use ProjectMutations.updateRole instead.
    */
   streamUpdatePermission?: Maybe<Scalars['Boolean']['output']>;
-  /** @deprecated Part of the old API surface and will be removed in the future. */
+  /** @deprecated Part of the old API surface and will be removed in the future. Use ProjectMutations.batchDelete instead. */
   streamsDelete: Scalars['Boolean']['output'];
   /**
    * Used for broadcasting real time typing status in comment threads. Does not persist any info.
@@ -1581,6 +1597,7 @@ export type MutationWebhookUpdateArgs = {
 
 export type Object = {
   __typename?: 'Object';
+  /** @deprecated Not implemented. */
   applicationId?: Maybe<Scalars['String']['output']>;
   /**
    * Get any objects that this object references. In the case of commits, this will give you a commit's constituent objects.
@@ -1620,7 +1637,7 @@ export type ObjectChildrenArgs = {
 export type ObjectCollection = {
   __typename?: 'ObjectCollection';
   cursor?: Maybe<Scalars['String']['output']>;
-  objects: Array<Maybe<Object>>;
+  objects: Array<Object>;
   totalCount: Scalars['Int']['output'];
 };
 
@@ -1681,6 +1698,8 @@ export type Project = {
   blob?: Maybe<BlobMetadata>;
   /** Get the metadata collection of blobs stored for this stream. */
   blobs?: Maybe<BlobMetadataCollection>;
+  /** Get specific project comment/thread by ID */
+  comment?: Maybe<Comment>;
   /** All comment threads in this project */
   commentThreads: ProjectCommentCollection;
   createdAt: Scalars['DateTime']['output'];
@@ -1690,6 +1709,8 @@ export type Project = {
   invitedTeam?: Maybe<Array<PendingStreamCollaborator>>;
   /** Returns a specific model by its ID */
   model: Model;
+  /** Retrieve a specific project model by its ID */
+  modelByName: Model;
   /** Return a model tree of children for the specified model name */
   modelChildrenTree: Array<ModelsTreeItem>;
   /** Returns a flat list of all models */
@@ -1700,6 +1721,9 @@ export type Project = {
    */
   modelsTree: ModelsTreeItemCollection;
   name: Scalars['String']['output'];
+  object?: Maybe<Object>;
+  /** Pending project access requests */
+  pendingAccessRequests?: Maybe<Array<ProjectAccessRequest>>;
   /** Returns a list models that are being created from a file import */
   pendingImportedModels: Array<FileUpload>;
   /** Active user's role for this project. `null` if request is not authenticated, or the project is not explicitly shared with you. */
@@ -1743,6 +1767,11 @@ export type ProjectBlobsArgs = {
 };
 
 
+export type ProjectCommentArgs = {
+  id: Scalars['String']['input'];
+};
+
+
 export type ProjectCommentThreadsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectCommentsFilter>;
@@ -1752,6 +1781,11 @@ export type ProjectCommentThreadsArgs = {
 
 export type ProjectModelArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type ProjectModelByNameArgs = {
+  name: Scalars['String']['input'];
 };
 
 
@@ -1771,6 +1805,11 @@ export type ProjectModelsTreeArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<ProjectModelsTreeFilter>;
   limit?: Scalars['Int']['input'];
+};
+
+
+export type ProjectObjectArgs = {
+  id: Scalars['String']['input'];
 };
 
 
@@ -1798,6 +1837,38 @@ export type ProjectViewerResourcesArgs = {
 
 export type ProjectWebhooksArgs = {
   id?: InputMaybe<Scalars['String']['input']>;
+};
+
+/** Created when a user requests to become a contributor on a project */
+export type ProjectAccessRequest = {
+  __typename?: 'ProjectAccessRequest';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  /** Can only be selected if authed user has proper access */
+  project: Project;
+  projectId: Scalars['String']['output'];
+  requester: LimitedUser;
+  requesterId: Scalars['String']['output'];
+};
+
+export type ProjectAccessRequestMutations = {
+  __typename?: 'ProjectAccessRequestMutations';
+  /** Request access to a specific project */
+  create: ProjectAccessRequest;
+  /** Accept or decline a project access request. Must be a project owner to invoke this. */
+  use: Project;
+};
+
+
+export type ProjectAccessRequestMutationsCreateArgs = {
+  projectId: Scalars['String']['input'];
+};
+
+
+export type ProjectAccessRequestMutationsUseArgs = {
+  accept: Scalars['Boolean']['input'];
+  requestId: Scalars['String']['input'];
+  role?: StreamRole;
 };
 
 export type ProjectAutomationCreateInput = {
@@ -2042,7 +2113,11 @@ export enum ProjectModelsUpdatedMessageType {
 
 export type ProjectMutations = {
   __typename?: 'ProjectMutations';
+  /** Access request related mutations */
+  accessRequestMutations: ProjectAccessRequestMutations;
   automationMutations: ProjectAutomationMutations;
+  /** Batch delete projects */
+  batchDelete: Scalars['Boolean']['output'];
   /** Create new project */
   create: Project;
   /**
@@ -2065,6 +2140,11 @@ export type ProjectMutations = {
 
 export type ProjectMutationsAutomationMutationsArgs = {
   projectId: Scalars['ID']['input'];
+};
+
+
+export type ProjectMutationsBatchDeleteArgs = {
+  ids: Array<Scalars['String']['input']>;
 };
 
 
@@ -2231,7 +2311,7 @@ export type Query = {
   automateFunctions: AutomateFunctionCollection;
   /** Part of the automation/function creation handshake mechanism */
   automateValidateAuthCode: Scalars['Boolean']['output'];
-  /** @deprecated Part of the old API surface and will be removed in the future. */
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.comment instead. */
   comment?: Maybe<Comment>;
   /**
    * This query can be used in the following ways:
@@ -2270,7 +2350,7 @@ export type Query = {
   stream?: Maybe<Stream>;
   /**
    * Get authed user's stream access request
-   * @deprecated Part of the old API surface and will be removed in the future.
+   * @deprecated Part of the old API surface and will be removed in the future. Use User.projectAccessRequest instead.
    */
   streamAccessRequest?: Maybe<StreamAccessRequest>;
   /**
@@ -2635,7 +2715,7 @@ export type Stream = {
    * @deprecated Part of the old API surface and will be removed in the future. Use Project.blobs instead.
    */
   blobs?: Maybe<BlobMetadataCollection>;
-  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.model instead. */
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.model or Project.modelByName instead. */
   branch?: Maybe<Branch>;
   /** @deprecated Part of the old API surface and will be removed in the future. Use Project.models or Project.modelsTree instead. */
   branches?: Maybe<BranchCollection>;
@@ -2680,11 +2760,11 @@ export type Stream = {
   /** Whether the stream can be viewed by non-contributors */
   isPublic: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
-  /** @deprecated Part of the old API surface and will be removed in the future. */
+  /** @deprecated Part of the old API surface and will be removed in the future. Use Project.object instead. */
   object?: Maybe<Object>;
   /**
    * Pending stream access requests
-   * @deprecated Part of the old API surface and will be removed in the future.
+   * @deprecated Part of the old API surface and will be removed in the future. Use Project.pendingAccessRequests instead.
    */
   pendingAccessRequests?: Maybe<Array<StreamAccessRequest>>;
   /** Collaborators who have been invited, but not yet accepted. */
@@ -3188,6 +3268,8 @@ export type User = {
   name: Scalars['String']['output'];
   notificationPreferences: Scalars['JSONObject']['output'];
   profiles?: Maybe<Scalars['JSONObject']['output']>;
+  /** Get pending project access request, that the user made */
+  projectAccessRequest?: Maybe<ProjectAccessRequest>;
   /** Get all invitations to projects that the active user has */
   projectInvites: Array<PendingStreamCollaborator>;
   /** Get projects that the user participates in */
@@ -3250,6 +3332,15 @@ export type UserCommitsArgs = {
 export type UserFavoriteStreamsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: Scalars['Int']['input'];
+};
+
+
+/**
+ * Full user type, should only be used in the context of admin operations or
+ * when a user is reading/writing info about himself
+ */
+export type UserProjectAccessRequestArgs = {
+  projectId: Scalars['String']['input'];
 };
 
 
@@ -3397,15 +3488,27 @@ export type VersionCreatedTriggerDefinition = {
 
 export type VersionMutations = {
   __typename?: 'VersionMutations';
+  create: Version;
   delete: Scalars['Boolean']['output'];
+  markReceived: Scalars['Boolean']['output'];
   moveToModel: Model;
   requestGendoAIRender: Scalars['Boolean']['output'];
   update: Version;
 };
 
 
+export type VersionMutationsCreateArgs = {
+  input: CreateVersionInput;
+};
+
+
 export type VersionMutationsDeleteArgs = {
   input: DeleteVersionsInput;
+};
+
+
+export type VersionMutationsMarkReceivedArgs = {
+  input: MarkReceivedVersionInput;
 };
 
 

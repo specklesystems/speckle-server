@@ -7,7 +7,12 @@ import {
   Commit
 } from '@/modules/core/graph/generated/graphql'
 import { Roles, ServerRoles, StreamRoles } from '@/modules/core/helpers/mainConstants'
-import { BranchRecord, CommitRecord, StreamRecord } from '@/modules/core/helpers/types'
+import {
+  BranchRecord,
+  CommitRecord,
+  ObjectRecord,
+  StreamRecord
+} from '@/modules/core/helpers/types'
 import { Nullable } from '@speckle/shared'
 
 /**
@@ -71,6 +76,8 @@ export type ModelsTreeItemGraphQLReturn = Omit<ModelsTreeItem, 'model' | 'childr
    */
   projectId: string
 }
+
+export type ObjectGraphQLReturn = ObjectRecord
 
 /**
  * Return type for top-level mutations groupings like `projectMutations`, `activeUserMutations` etc.
