@@ -1,15 +1,35 @@
-import { Workspace } from '@/modules/workspaces/domain/types'
+import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
+
+export const workspaceEventNamespace = 'workspace' as const
+
+const workspaceEventPrefix = `${workspaceEventNamespace}.` as const
 
 export const WorkspaceEvents = {
-  Created: 'created'
+  Created: `${workspaceEventPrefix}created`,
+  RoleDeleted: `${workspaceEventPrefix}role-deleted`,
+  RoleUpdated: `${workspaceEventPrefix}role-updated`
 } as const
 
 export type WorkspaceEvents = (typeof WorkspaceEvents)[keyof typeof WorkspaceEvents]
 
 type WorkspaceCreatedPayload = Workspace & {
   createdByUserId: string
+  eventName: typeof WorkspaceEvents.Created
 }
+type WorkspaceRoleDeletedPayload = WorkspaceAcl & {
+  eventName: typeof WorkspaceEvents.RoleDeleted
+}
+type WorkspaceRoleUpdatedPayload = WorkspaceAcl & {
+  eventName: typeof WorkspaceEvents.RoleUpdated
+}
+
+// type AllWorkspaceEventPayloads = WorkspaceCreatedPayload | WorkspaceRoleDeletedPayload
+
+export const AllWorkspaceEvents = `${workspaceEventPrefix}*` as const
 
 export type WorkspaceEventsPayloads = {
   [WorkspaceEvents.Created]: WorkspaceCreatedPayload
+  [WorkspaceEvents.RoleDeleted]: WorkspaceRoleDeletedPayload
+  [WorkspaceEvents.RoleUpdated]: WorkspaceRoleUpdatedPayload
+  // [AllWorkspaceEvents]: AllWorkspaceEventPayloads
 }
