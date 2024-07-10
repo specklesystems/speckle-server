@@ -6,7 +6,7 @@
       is-selected
       @click="enterHandler"
     />
-    <FormButton v-else size="sm" @click="enterHandler">Invite {{ query }}</FormButton>
+    <FormButton v-else @click="enterHandler">Invite {{ query }}</FormButton>
   </div>
 </template>
 <script setup lang="ts">

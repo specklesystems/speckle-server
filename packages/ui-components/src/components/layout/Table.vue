@@ -44,10 +44,9 @@
                 <FormButton
                   :icon-left="button.icon"
                   size="small"
-                  color="secondary"
+                  variant="outline"
                   hide-text
                   :class="button.class"
-                  :text-color="button.textColor"
                   :to="isString(button.action) ? button.action : undefined"
                   @click.stop="!isString(button.action) ? button.action(item) : noop"
                 />

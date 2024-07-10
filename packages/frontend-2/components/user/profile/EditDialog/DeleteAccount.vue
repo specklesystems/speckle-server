@@ -34,7 +34,7 @@
           :rules="[stringMatchesEmail]"
         />
         <FormButton
-          color="danger"
+          variant="danger"
           submit
           :disabled="!!Object.values(errors).length || loading"
         >

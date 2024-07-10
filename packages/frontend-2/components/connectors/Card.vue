@@ -41,16 +41,14 @@
         >
           <FormButton
             v-if="tag.directDownload"
-            size="xs"
+            size="small"
             text
             @click="dialogOpen = true"
           >
             Downloads
           </FormButton>
           <ConnectorsVersionsDownloadDialog v-model:open="dialogOpen" :tag="tag" />
-          <FormButton size="sm" :to="tag.url" target="_blank" external>
-            Tutorials
-          </FormButton>
+          <FormButton :to="tag.url" target="_blank" external>Tutorials</FormButton>
         </div>
       </div>
     </div>

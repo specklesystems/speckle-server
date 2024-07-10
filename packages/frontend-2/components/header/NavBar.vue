@@ -26,9 +26,8 @@
           <FormButton
             v-if="!activeUser"
             :to="loginUrl.fullPath"
-            color="invert"
+            variant="outline"
             class="hidden md:flex"
-            size="sm"
           >
             Sign In
           </FormButton>

@@ -130,7 +130,7 @@
           />
         </div>
         <div v-if="itemCount <= singleCollectionItems.length" class="mb-2">
-          <FormButton size="xs" text full-width @click="itemCount += pageSize">
+          <FormButton size="small" text full-width @click="itemCount += pageSize">
             View More ({{ singleCollectionItems.length - itemCount }})
           </FormButton>
         </div>

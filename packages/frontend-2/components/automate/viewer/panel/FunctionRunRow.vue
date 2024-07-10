@@ -74,7 +74,7 @@
       <div v-if="hasValidContextView" class="border-t pt-2 border-foreground-2">
         <div>
           <FormButton
-            size="xs"
+            size="small"
             link
             class="truncate max-w-full"
             :to="functionRun.contextView || ''"
@@ -101,7 +101,7 @@
           />
           <FormButton
             v-if="pageRunLimit < results.values.objectResults.length"
-            size="xs"
+            size="small"
             color="card"
             class="w-full"
             @click="pageRunLimit += 10"

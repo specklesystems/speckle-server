@@ -70,8 +70,8 @@
         class="to-foundation group absolute inset-0 z-[21] flex h-full w-full items-center justify-end space-x-2 rounded bg-gradient-to-r from-blue-500/0 p-4"
       >
         <FormButton
-          color="danger"
-          size="xs"
+          variant="danger"
+          size="small"
           class="rounded-full"
           @click="$emit('remove', props.model.id)"
         >
@@ -97,13 +97,7 @@
         @view-changes="handleViewChanges"
       />
       <div class="mt-4 px-2 py-2">
-        <FormButton
-          full-width
-          text
-          size="sm"
-          :disabled="!showLoadMore"
-          @click="onLoadMore"
-        >
+        <FormButton full-width text :disabled="!showLoadMore" @click="onLoadMore">
           {{ showLoadMore ? 'View older versions' : 'No more versions' }}
         </FormButton>
       </div>

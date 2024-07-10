@@ -7,7 +7,7 @@
       {{ error.message }}
     </h2>
     <div v-if="isDev && error.stack" class="max-w-xl" v-html="error.stack" />
-    <FormButton :to="homeRoute" size="xl">Go Home</FormButton>
+    <FormButton :to="homeRoute" size="large">Go Home</FormButton>
   </div>
 </template>
 <script setup lang="ts">

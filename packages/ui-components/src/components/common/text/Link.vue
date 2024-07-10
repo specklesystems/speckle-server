@@ -22,7 +22,7 @@ import type { PropType } from 'vue'
 import type { Nullable, Optional } from '@speckle/shared'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 
-type LinkSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl'
+type LinkSize = 'small' | 'base' | 'large'
 const emit = defineEmits<{ (e: 'click', val: MouseEvent): void }>()
 
 const props = defineProps({

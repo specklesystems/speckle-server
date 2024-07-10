@@ -3,7 +3,7 @@
     <template #title>Models</template>
     <template #actions>
       <FormButton
-        size="xs"
+        size="small"
         text
         :icon-left="PlusIcon"
         :disabled="showRemove"
@@ -12,7 +12,7 @@
         Add
       </FormButton>
       <FormButton
-        size="xs"
+        size="small"
         text
         :icon-left="showRemove ? CheckIcon : MinusIcon"
         :disabled="!removeEnabled"

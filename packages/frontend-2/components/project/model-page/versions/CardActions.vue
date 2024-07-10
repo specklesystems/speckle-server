@@ -7,7 +7,7 @@
       @click.stop.prevent
       @chosen="onActionChosen"
     >
-      <FormButton size="sm" text @click="showActionsMenu = !showActionsMenu">
+      <FormButton text @click="showActionsMenu = !showActionsMenu">
         <EllipsisVerticalIcon class="w-4 h-4" />
       </FormButton>
     </LayoutMenu>

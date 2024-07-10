@@ -162,34 +162,53 @@ const isDisabled = computed(() => props.disabled || props.loading)
 const finalLeftIcon = computed(() => (props.loading ? ArrowPathIcon : props.iconLeft))
 
 const bgAndBorderClasses = computed(() => {
-  const classParts: string[] = ['border']
+  const classParts: string[] = []
 
-  switch (props.variant) {
-    case 'subtle':
-      classParts.push(
-        'bg-transparent border-transparent text-foreground',
-        'hover:bg-primary-muted focus-visible:border-foundation'
-      )
-      break
-    case 'outline':
-      classParts.push(
-        'bg-foundation border-outline-2 text-foreground',
-        'hover:bg-primary-muted focus-visible:border-foundation'
-      )
-      break
-    case 'danger':
-      classParts.push(
-        'bg-danger border-danger-darker text-foundation',
-        'hover:bg-danger-darker focus-visible:border-foundation'
-      )
-      break
-    case 'primary':
-    default:
-      classParts.push(
-        'bg-primary border-outline-1 text-foreground-on-primary',
-        'hover:bg-primary-focus focus-visible:border-foundation'
-      )
-      break
+  if (props.text) {
+    console.log('text')
+    switch (props.variant) {
+      case 'subtle':
+        classParts.push('text-foreground')
+        break
+      case 'outline':
+        classParts.push('text-foreground')
+        break
+      case 'danger':
+        classParts.push('text-danger')
+        break
+      case 'primary':
+      default:
+        classParts.push('text-primary')
+        break
+    }
+  } else {
+    switch (props.variant) {
+      case 'subtle':
+        classParts.push(
+          'bg-transparent border-transparent text-foreground',
+          'hover:bg-primary-muted focus-visible:border-foundation'
+        )
+        break
+      case 'outline':
+        classParts.push(
+          'bg-foundation border-outline-2 text-foreground',
+          'hover:bg-primary-muted focus-visible:border-foundation'
+        )
+        break
+      case 'danger':
+        classParts.push(
+          'bg-danger border-danger-darker text-foundation',
+          'hover:bg-danger-darker focus-visible:border-foundation'
+        )
+        break
+      case 'primary':
+      default:
+        classParts.push(
+          'bg-primary border-outline-1 text-foreground-on-primary',
+          'hover:bg-primary-focus focus-visible:border-foundation'
+        )
+        break
+    }
   }
 
   return classParts.join(' ')
@@ -219,7 +238,6 @@ const paddingClasses = computed(() => {
         return 'p-1'
     }
   }
-
   if (!props.text) {
     switch (props.size) {
       case 'small':
@@ -237,9 +255,13 @@ const generalClasses = computed(() => {
   const classParts: string[] = [
     'flex justify-center items-center',
     'font-semibold text-center select-none',
-    'rounded-[5px] outline outline-2 outline-transparent',
+    'outline outline-2 outline-transparent',
     'transition duration-200 ease-in-out focus-visible:outline-outline-4'
   ]
+
+  if (!props.text) {
+    classParts.push('rounded-[5px] border')
+  }
 
   if (props.fullWidth) {
     classParts.push('w-full')
@@ -255,12 +277,11 @@ const generalClasses = computed(() => {
 })
 
 const buttonClasses = computed(() => {
-  const isLinkOrText = props.link || props.text
   return [
     generalClasses.value,
     sizeClasses.value,
-    isLinkOrText ? '' : bgAndBorderClasses.value,
-    props.link ? '' : paddingClasses.value
+    bgAndBorderClasses.value,
+    paddingClasses.value
   ].join(' ')
 })
 

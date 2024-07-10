@@ -47,7 +47,7 @@
           <FormButton
             :icon-left="PencilIcon"
             full-width
-            outlined
+            variant="outline"
             @click="$emit('edit')"
           >
             Edit Details

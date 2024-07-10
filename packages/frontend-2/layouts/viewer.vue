@@ -4,13 +4,17 @@
       v-if="debug"
       class="pointer-events-none fixed bottom-0 z-40 flex w-full space-x-2 p-3 text-xs"
     >
-      <FormButton class="pointer-events-auto" size="xs" @click="toggleNavbar">
+      <FormButton class="pointer-events-auto" size="small" @click="toggleNavbar">
         nav
       </FormButton>
-      <FormButton class="pointer-events-auto" size="xs" @click="toggleViewerControls">
+      <FormButton
+        class="pointer-events-auto"
+        size="small"
+        @click="toggleViewerControls"
+      >
         viewer ctrls
       </FormButton>
-      <FormButton class="pointer-events-auto" size="xs" @click="toggleTour">
+      <FormButton class="pointer-events-auto" size="small" @click="toggleTour">
         tour ctrls
       </FormButton>
       <!-- <span>{{ tourState }}</span> -->

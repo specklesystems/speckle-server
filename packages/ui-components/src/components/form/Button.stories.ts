@@ -23,12 +23,6 @@ export default {
       ],
       control: { type: 'select' }
     },
-    outlined: {
-      type: 'boolean'
-    },
-    rounded: {
-      type: 'boolean'
-    },
     to: {
       type: 'string'
     },

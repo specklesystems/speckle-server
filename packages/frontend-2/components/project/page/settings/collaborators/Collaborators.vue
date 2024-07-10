@@ -39,8 +39,8 @@
             </span>
             <FormButton
               class="shrink-0"
-              color="danger"
-              size="xs"
+              variant="danger"
+              size="small"
               :disabled="loading"
               @click="
                 cancelInvite({

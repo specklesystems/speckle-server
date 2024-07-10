@@ -5,7 +5,7 @@
         v-if="!hideClose"
         class="absolute top-1.5 sm:top-2 right-0.5 sm:right-0 z-10"
       >
-        <FormButton size="sm" color="secondary" text @click="$emit('close')">
+        <FormButton variant="outline" text @click="$emit('close')">
           <XMarkIcon class="size-3 text-primary sm:text-foreground" />
         </FormButton>
       </div>

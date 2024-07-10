@@ -11,7 +11,7 @@
       <h1 class="text-2xl font-bold">Webhooks</h1>
       <div class="flex gap-2">
         <FormButton
-          color="secondary"
+          variant="outline"
           :icon-left="BookOpenIcon"
           to="https://speckle.guide/dev/server-webhooks.html"
           external

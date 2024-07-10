@@ -34,7 +34,7 @@
       >
         <FormButton
           text
-          size="xs"
+          size="small"
           target="_blank"
           external
           to="https://speckle.systems/blog/automate-with-speckle/"
@@ -45,7 +45,7 @@
         <div
           class="flex w-full justify-between order-1 sm:order-2 sm:justify-normal sm:w-auto sm:space-x-1"
         >
-          <FormButton color="secondary" @click="showDialog = false">Close</FormButton>
+          <FormButton variant="outline" @click="showDialog = false">Close</FormButton>
           <FormButton :to="viewUrl">
             Open {{ versionId ? 'Version' : 'Model' }}
           </FormButton>

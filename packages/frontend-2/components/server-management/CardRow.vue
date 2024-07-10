@@ -13,7 +13,7 @@
       </template>
       <template v-else-if="cta?.type === 'link'">
         <FormButton
-          color="invert"
+          variant="outline"
           class="shrink-0"
           :icon-right="ArrowTopRightOnSquareIcon"
           @click="cta?.action"

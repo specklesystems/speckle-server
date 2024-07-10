@@ -297,10 +297,10 @@ const buttonClasses = computed(() => {
 const actionSize = computed(() => {
   switch (props.size) {
     case 'xs':
-      return 'xs'
+      return 'small'
     case 'default':
     default:
-      return 'sm'
+      return 'base'
   }
 })
 </script>

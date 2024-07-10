@@ -7,7 +7,7 @@
         <h1 class="block h4 font-bold">Models</h1>
         <div class="flex items-center space-x-2 w-full mt-2 sm:w-auto sm:mt-0">
           <FormButton
-            color="secondary"
+            variant="outline"
             :to="allModelsRoute"
             class="grow inline-flex sm:grow-0 lg:hidden"
             @click="trackFederateAll"
@@ -67,7 +67,7 @@
             <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
           </div>
           <FormButton
-            color="secondary"
+            variant="outline"
             :to="allModelsRoute"
             class="hidden lg:inline-flex shrink-0"
             @click="trackFederateAll"

@@ -6,10 +6,11 @@
     <div class="text-xs">{{ verifyBannerText }}</div>
     <div class="">
       <FormButton
-        size="xs"
+        size="small"
+        text
         :disabled="loading"
         link
-        class="font-bold text-danger-darker"
+        class="mt-1"
         @click="requestVerification"
       >
         {{ verifyBannerCtaText }}

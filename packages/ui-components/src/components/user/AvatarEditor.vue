@@ -6,32 +6,28 @@
           v-tippy="'Rotate left'"
           :icon-left="ArrowUturnLeftIcon"
           hide-text
-          size="sm"
-          outlined
+          variant="outline"
           @click="rotateLeft"
         />
         <FormButton
           v-tippy="'Rotate right'"
           :icon-left="ArrowUturnRightIcon"
           hide-text
-          size="sm"
-          outlined
+          variant="outline"
           @click="rotateRight"
         />
         <FormButton
           v-tippy="'Flip vertically'"
           :icon-left="ArrowUpOnSquareIcon"
           hide-text
-          size="sm"
-          outlined
+          variant="outline"
           @click="flipVertical"
         />
         <FormButton
           v-tippy="'Flip horizontally'"
           :icon-left="ArrowLeftOnRectangleIcon"
           hide-text
-          size="sm"
-          outlined
+          variant="outline"
           @click="flipHorizontal"
         />
       </div>
@@ -68,25 +64,21 @@
           v-tippy="'Replace image'"
           :icon-left="PhotoIcon"
           hide-text
-          size="sm"
           @click="onReplace"
         />
         <FormButton
           v-tippy="'Remove'"
           :icon-left="XMarkIcon"
           hide-text
-          size="sm"
-          color="danger"
+          variant="danger"
           @click="onRemove"
         />
       </div>
     </div>
     <div class="flex mx-14 space-x-2">
       <div class="grow" />
-      <FormButton color="secondary" size="sm" @click="$emit('cancel')">
-        Close
-      </FormButton>
-      <FormButton size="sm" :disabled="disabled" @click="onSave">Save</FormButton>
+      <FormButton variant="outline" @click="$emit('cancel')">Close</FormButton>
+      <FormButton :disabled="disabled" @click="onSave">Save</FormButton>
     </div>
   </div>
 </template>

@@ -31,7 +31,7 @@
         </div>
         <div class="flex flex-wrap gap-1 sm:gap-2">
           <FormButton submit :disabled="anyMutationsLoading">Save</FormButton>
-          <FormButton color="secondary" @click="showNewModelCard = false">
+          <FormButton variant="outline" @click="showNewModelCard = false">
             Cancel
           </FormButton>
         </div>

@@ -56,7 +56,7 @@
               </span>
             </div>
             <div class="px-4">
-              <FormButton size="sm" text @click="downloadVersion(version)">
+              <FormButton text @click="downloadVersion(version)">
                 <span class="text-xs font-bold">
                   {{ version.Os === 0 ? 'Windows' : 'MacOS' }}
                 </span>

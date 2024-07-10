@@ -33,16 +33,7 @@
 <script setup lang="ts">
 import { CodeBracketIcon, ChevronRightIcon } from '@heroicons/vue/24/outline'
 import { useActiveUser } from '~/lib/auth/composables/activeUser'
-
-type FormButtonColor =
-  | 'default'
-  | 'invert'
-  | 'danger'
-  | 'warning'
-  | 'success'
-  | 'card'
-  | 'secondary'
-  | 'info'
+import type { FormButtonStyle } from '@speckle/ui-components/dist/helpers/form/button'
 
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
@@ -62,7 +53,7 @@ const isOpen = computed({
 
 const developerSettingsButton = computed(() => ({
   text: 'Manage',
-  color: 'default' as FormButtonColor,
+  color: 'default' as FormButtonStyle,
   to: '/developer-settings/',
   iconRight: ChevronRightIcon,
   onClick: () => {

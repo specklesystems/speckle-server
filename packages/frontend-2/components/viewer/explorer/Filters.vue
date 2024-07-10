@@ -6,7 +6,7 @@
         <FormButton
           v-tippy="'Change Filter'"
           text
-          size="xs"
+          size="small"
           :icon-right="showAllFilters ? ChevronUpIcon : ChevronDownIcon"
           class="capitalize"
           @click="showAllFilters = !showAllFilters"
@@ -19,7 +19,7 @@
           <FormButton
             v-if="title !== 'Object Type'"
             text
-            size="xs"
+            size="small"
             class="flex gap-1"
             @click="
               ;(showAllFilters = false),
@@ -32,7 +32,7 @@
           </FormButton>
           <FormButton
             v-tippy="'Toggle coloring'"
-            size="xs"
+            size="small"
             text
             @click="toggleColors()"
           >
@@ -74,7 +74,7 @@
           </button>
         </div>
         <div v-if="itemCount < relevantFiltersSearched.length" class="mb-2">
-          <FormButton size="xs" text full-width @click="itemCount += 30">
+          <FormButton size="small" text full-width @click="itemCount += 30">
             View More ({{ relevantFiltersSearched.length - itemCount }})
           </FormButton>
         </div>

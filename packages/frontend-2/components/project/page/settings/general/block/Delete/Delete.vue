@@ -6,7 +6,7 @@
         platform. This action is not reversible.
       </p>
       <template #bottom-buttons>
-        <FormButton color="danger" @click="showDeleteDialog = true">
+        <FormButton variant="danger" @click="showDeleteDialog = true">
           Delete Project
         </FormButton>
       </template>

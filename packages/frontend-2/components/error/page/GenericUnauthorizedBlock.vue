@@ -9,7 +9,7 @@
     >
       <FormButton
         v-if="!isLoggedIn"
-        size="lg"
+        size="large"
         full-width
         color="default"
         @click="() => goToLogin()"
@@ -17,7 +17,7 @@
         Sign In
       </FormButton>
       <FormButton
-        size="lg"
+        size="large"
         full-width
         :color="isLoggedIn ? 'default' : 'secondary'"
         :to="homeRoute"

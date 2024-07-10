@@ -9,7 +9,7 @@
         will receive an e-mail with further instructions.
       </div>
       <div class="flex justify-end">
-        <FormButton color="default" @click="onClick">Reset password</FormButton>
+        <FormButton @click="onClick">Reset password</FormButton>
       </div>
     </div>
   </LayoutDialogSection>

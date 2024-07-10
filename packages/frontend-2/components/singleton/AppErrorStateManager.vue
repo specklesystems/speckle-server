@@ -12,9 +12,9 @@
         <FormButton
           hide-text
           :icon-left="XMarkIcon"
-          color="invert"
+          variant="outline"
           text
-          size="lg"
+          size="large"
           @click="hideErrorStateBanner"
         />
       </div>

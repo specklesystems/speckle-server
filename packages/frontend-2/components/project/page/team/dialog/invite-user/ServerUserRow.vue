@@ -11,7 +11,7 @@
     >
       <FormButton
         :disabled="isButtonDisabled"
-        size="xs"
+        size="small"
         @click="() => $emit('invite-user', { user, streamRole })"
       >
         Invite

@@ -2,7 +2,7 @@
   <div class="flex items-center space-x-2">
     <div class="flex flex-col space-y-1 justify-between">
       <FormButton
-        size="xs"
+        size="small"
         hide-text
         :icon-left="ArrowUpIcon"
         :disabled="!moveUpEnabled"
@@ -11,8 +11,8 @@
       />
 
       <FormButton
-        size="xs"
-        color="danger"
+        size="small"
+        variant="danger"
         hide-text
         :icon-left="XMarkIcon"
         :disabled="!deleteEnabled"
@@ -20,7 +20,7 @@
         @click.stop="doDelete?.()"
       />
       <FormButton
-        size="xs"
+        size="small"
         hide-text
         :icon-left="ArrowDownIcon"
         :disabled="!moveDownEnabled"

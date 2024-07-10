@@ -3,7 +3,7 @@
     v-if="hasAnyFiltersApplied"
     class="bg-pink-300/0 flex justify-center items-center pointer-events-none transition-all duration-300 ease-in overflow-hidden h-8"
   >
-    <FormButton size="sm" class="pointer-events-auto" @click="trackAndResetFilters">
+    <FormButton class="pointer-events-auto" @click="trackAndResetFilters">
       Reset Filters
     </FormButton>
   </div>

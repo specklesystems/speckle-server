@@ -95,7 +95,7 @@
             </Disclosure>
           </div>
           <div class="flex space-x-2 w-full">
-            <FormButton color="secondary" full-width :disabled="loading" @click="deny">
+            <FormButton variant="outline" full-width :disabled="loading" @click="deny">
               Deny
             </FormButton>
             <FormButton full-width :disabled="loading" @click="allow">

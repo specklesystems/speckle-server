@@ -35,8 +35,8 @@
     <FormButton
       v-if="false"
       class="absolute -right-8 top-4"
-      color="danger"
-      size="xs"
+      variant="danger"
+      size="small"
       rounded
       hide-text
       :icon-left="XMarkIcon"

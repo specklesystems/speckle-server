@@ -38,7 +38,7 @@
         :class="isModelCardVariant ? ' opacity-50 group-hover:opacity-100' : ''"
       >
         Use our
-        <FormButton link size="sm" external target="_blank" :to="connectorsPageUrl">
+        <FormButton link external target="_blank" :to="connectorsPageUrl">
           connectors
         </FormButton>
         to publish a {{ modelName ? '' : 'new model' }} version to

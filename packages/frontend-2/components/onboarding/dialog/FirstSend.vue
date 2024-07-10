@@ -8,7 +8,9 @@
       controls
     />
     <div class="flex justify-center my-1">
-      <FormButton size="xl" class="shadow-md" @click="emit('done')">Got it!</FormButton>
+      <FormButton size="large" class="shadow-md" @click="emit('done')">
+        Got it!
+      </FormButton>
     </div>
   </OnboardingDialogBase>
 </template>

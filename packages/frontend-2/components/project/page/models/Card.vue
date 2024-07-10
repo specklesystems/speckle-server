@@ -69,7 +69,7 @@
             v-if="finalShowVersions"
             v-tippy="'View Version Gallery'"
             rounded
-            size="xs"
+            size="small"
             :to="modelVersionsRoute(projectId, model.id)"
             :class="`transition gap-0.5 ml-1 ${
               hovered ? 'inline-block opacity-100' : 'sm:hidden sm:opacity-0'

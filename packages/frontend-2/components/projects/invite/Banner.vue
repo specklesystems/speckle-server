@@ -15,7 +15,7 @@
       <div v-if="isLoggedIn" class="flex items-center justify-end w-full space-x-2">
         <FormButton
           :size="buttonSize"
-          color="danger"
+          variant="danger"
           text
           :full-width="block"
           @click="useInvite(false)"
@@ -130,7 +130,7 @@ const mainInfoBlockClasses = computed(() => {
 
   return classParts.join(' ')
 })
-const buttonSize = computed(() => (props.block ? 'lg' : 'sm'))
+const buttonSize = computed(() => (props.block ? 'large' : 'base'))
 const avatarSize = computed(() => (props.block ? 'xxl' : 'base'))
 
 const useInvite = async (accept: boolean) => {

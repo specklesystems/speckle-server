@@ -9,11 +9,10 @@
     </div>
     <template #actions>
       <FormButton
-        size="sm"
         text
-        color="danger"
+        variant="danger"
         :icon-left="TrashIcon"
-        class="font-normal py-1"
+        class="py-1"
         @click="() => clearMeasurements()"
       >
         Delete All Measurements
