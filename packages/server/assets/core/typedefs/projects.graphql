@@ -100,6 +100,11 @@ type ProjectMutations {
   delete(id: String!): Boolean! @hasServerRole(role: SERVER_USER)
 
   """
+  Batch delete projects
+  """
+  batchDelete(ids: [String!]!): Boolean! @hasServerRole(role: SERVER_ADMIN)
+
+  """
   Updates an existing project
   """
   update(update: ProjectUpdateInput!): Project! @hasServerRole(role: SERVER_USER)

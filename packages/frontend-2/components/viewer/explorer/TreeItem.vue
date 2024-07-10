@@ -307,8 +307,18 @@ const isNonEmptyObjectArray = (x: unknown) => isNonEmptyArray(x) && isObject(x[0
 const isObject = (x: unknown) =>
   typeof x === 'object' && !Array.isArray(x) && x !== null
 
-const isAllowedType = (node: ExplorerNode) =>
-  !['Objects.Other.DisplayStyle'].includes(node.raw?.speckle_type || '')
+const hiddenSpeckleTypes = [
+  'Objects.Other.DisplayStyle',
+  'Objects.Other.Revit.RevitMaterial',
+  'Objects.BuiltElements.Revit.ProjectInfo',
+  'Objects.BuiltElements.View',
+  'Objects.BuiltElements.View3D'
+]
+
+const isAllowedType = (node: ExplorerNode) => {
+  const speckleType = node.raw?.speckle_type || ''
+  return !hiddenSpeckleTypes.some((substring) => speckleType.includes(substring))
+}
 
 const unfold = ref(false)
 

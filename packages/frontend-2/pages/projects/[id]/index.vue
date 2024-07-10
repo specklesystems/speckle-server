@@ -3,7 +3,7 @@
     <div v-if="project">
       <ProjectsInviteBanner
         :invite="invite"
-        :show-stream-name="false"
+        :show-project-name="false"
         @processed="onInviteAccepted"
       />
       <div
