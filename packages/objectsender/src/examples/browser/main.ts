@@ -1,5 +1,6 @@
-import { send, Base, type SendResult } from '../../index'
+import { send, Base, type SendResult, Detach, Chunkable } from '../../index'
 import { times } from '#lodash'
+import { createCommit } from './utils'
 
 interface ExampleAppWindow extends Window {
   send: typeof import('../../index').send
@@ -70,6 +71,8 @@ appWindow.loadData = async () => {
       projectId,
       token: apiToken
     })
+
+    await createCommit(res, { serverUrl, projectId, token: apiToken })
   } catch (e) {
     const msg = e instanceof Error ? e.message : JSON.stringify(e)
     setInputValue('result', msg, { valueKey: 'textContent' })
@@ -108,7 +111,13 @@ function generateTestObject() {
         .fill(0)
         .map(() => new RandomFoo({ bar: 'baz baz baz' }))
     ],
-    '@(10)chunkedArr': times(100, () => 42)
+    detachedWithDecorator: new Collection<RandomFoo>('Collection of Foo', 'Foo', [
+      ...Array(10)
+        .fill(0)
+        .map(() => new RandomFoo())
+    ]),
+    '@(10)chunkedArr': times(100, () => 42),
+    some: new RandomJoe()
   })
 }
 
@@ -116,5 +125,35 @@ class RandomFoo extends Base {
   constructor(props?: Record<string, unknown>) {
     super(props)
     this.noise = Math.random().toString(16)
+  }
+}
+
+class RandomJoe extends Base {
+  @Detach()
+  @Chunkable(10)
+  numbers: number[]
+
+  constructor(props?: Record<string, unknown>) {
+    super(props)
+    this.numbers = times(100, () => 42)
+  }
+}
+
+export class Collection<T extends Base> extends Base {
+  @Detach()
+  elements: T[]
+  // eslint-disable-next-line camelcase
+  speckle_type = 'Speckle.Core.Models.Collection'
+
+  constructor(
+    name: string,
+    collectionType: string,
+    elements: T[] = [],
+    props?: Record<string, unknown>
+  ) {
+    super(props)
+    this.name = name
+    this.collectionType = collectionType
+    this.elements = elements
   }
 }
