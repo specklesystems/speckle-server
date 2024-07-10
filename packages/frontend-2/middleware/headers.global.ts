@@ -7,7 +7,7 @@ export default defineNuxtRouteMiddleware((to) => {
 
     // Check if the route is not an possible embedded route
     // If not add the header to prevent click highjacking
-    if (to.name !== 'projects-id-models-modelId') {
+    if (to.name !== 'model-viewer') {
       ssrContext.event.node.res.setHeader(
         'Content-Security-Policy',
         'frame-ancestors "none"'
