@@ -17,10 +17,9 @@
 </template>
 <script setup lang="ts">
 import { isObjectLike } from 'lodash'
-import type { PropType } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
 import { computed, resolveDynamicComponent } from 'vue'
-import type { Nullable, Optional } from '@speckle/shared'
+import type { Nullable } from '@speckle/shared'
 import { ArrowPathIcon } from '@heroicons/vue/24/solid'
 import type { FormButtonStyle, FormButtonSize } from '~~/src/helpers/form/button'
 
@@ -31,115 +30,70 @@ const emit = defineEmits<{
   (e: 'click', val: MouseEvent): void
 }>()
 
-const props = defineProps({
+const props = defineProps<{
   /**
    * URL to which to navigate - can be a relative (app) path or an absolute link for an external URL
    */
-  to: {
-    type: String as PropType<Optional<string>>,
-    required: false,
-    default: undefined
-  },
+  to?: string
   /**
    * Choose from one of 3 button sizes
    */
-  size: {
-    type: String as PropType<FormButtonSize>,
-    default: 'base'
-  },
+  size?: FormButtonSize
   /**
    * If set, will make the button take up all available space horizontally
    */
-  fullWidth: {
-    type: Boolean,
-    default: false
-  },
+  fullWidth?: boolean
   /**
    * Similar to "link", but without an underline and possibly in different colors
    */
-  text: {
-    type: Boolean,
-    default: false
-  },
+  text?: boolean
   /**
    * Will remove paddings and background. Use for links.
    */
-  link: {
-    type: Boolean,
-    default: false
-  },
+  link?: boolean
   /**
    * Variant:
    * primary: the default primary blue.
    * outline: foundation background and outline
    * subtle: no styling
    */
-  variant: {
-    type: String as PropType<FormButtonStyle>,
-    default: 'default'
-  },
+  variant: FormButtonStyle
   /**
    * Whether the target location should be forcefully treated as an external URL
    * (for relative paths this will likely cause a redirect)
    */
-  external: {
-    type: Boolean as PropType<Optional<boolean>>,
-    required: false,
-    default: undefined
-  },
+  external?: boolean
   /**
    * Whether to disable the button so that it can't be pressed
    */
-  disabled: {
-    type: Boolean as PropType<Optional<boolean>>,
-    required: false,
-    default: undefined
-  },
+  disabled?: boolean
   /**
    * If set, will have type set to "submit" to enable it to submit any parent forms
    */
-  submit: {
-    type: Boolean,
-    default: false
-  },
+  submit?: boolean
   /**
    * Add icon to the left from the text
    */
-  iconLeft: {
-    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
-    default: null
-  },
+  iconLeft?: Nullable<PropAnyComponent>
   /**
    * Add icon to the right from the text
    */
-  iconRight: {
-    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
-    default: null
-  },
+  iconRight?: Nullable<PropAnyComponent>
   /**
    * Hide default slot (when you want to show icons only)
    */
-  hideText: {
-    type: Boolean,
-    default: false
-  },
+  hideText?: boolean
   /**
    * Customize component to be used when rendering links.
    *
    * The component will try to dynamically resolve NuxtLink and RouterLink and use those, if this is set to null.
    */
-  linkComponent: {
-    type: [Object, Function] as PropType<Nullable<PropAnyComponent>>,
-    default: null
-  },
+  linkComponent?: Nullable<PropAnyComponent>
   /**
    * Disables the button and shows a spinning loader
    */
-  loading: {
-    type: Boolean,
-    default: false
-  }
-})
+  loading?: boolean
+}>()
 
 const NuxtLink = resolveDynamicComponent('NuxtLink')
 const RouterLink = resolveDynamicComponent('RouterLink')
@@ -164,51 +118,37 @@ const finalLeftIcon = computed(() => (props.loading ? ArrowPathIcon : props.icon
 const bgAndBorderClasses = computed(() => {
   const classParts: string[] = []
 
+  const variantsText = {
+    subtle: 'text-foreground',
+    outline: 'text-foreground',
+    danger: 'text-danger',
+    primary: 'text-primary'
+  }
+
+  const variantsBgBorder = {
+    subtle: [
+      'bg-transparent border-transparent text-foreground',
+      'hover:bg-primary-muted focus-visible:border-foundation'
+    ],
+    outline: [
+      'bg-foundation border-outline-2 text-foreground',
+      'hover:bg-primary-muted focus-visible:border-foundation'
+    ],
+    danger: [
+      'bg-danger border-danger-darker text-foundation',
+      'hover:bg-danger-darker focus-visible:border-foundation'
+    ],
+    primary: [
+      'bg-primary border-outline-1 text-foreground-on-primary',
+      'hover:bg-primary-focus focus-visible:border-foundation'
+    ]
+  }
+
   if (props.text) {
-    console.log('text')
-    switch (props.variant) {
-      case 'subtle':
-        classParts.push('text-foreground')
-        break
-      case 'outline':
-        classParts.push('text-foreground')
-        break
-      case 'danger':
-        classParts.push('text-danger')
-        break
-      case 'primary':
-      default:
-        classParts.push('text-primary')
-        break
-    }
+    classParts.push(variantsText[props.variant] || variantsText.primary)
   } else {
-    switch (props.variant) {
-      case 'subtle':
-        classParts.push(
-          'bg-transparent border-transparent text-foreground',
-          'hover:bg-primary-muted focus-visible:border-foundation'
-        )
-        break
-      case 'outline':
-        classParts.push(
-          'bg-foundation border-outline-2 text-foreground',
-          'hover:bg-primary-muted focus-visible:border-foundation'
-        )
-        break
-      case 'danger':
-        classParts.push(
-          'bg-danger border-danger-darker text-foundation',
-          'hover:bg-danger-darker focus-visible:border-foundation'
-        )
-        break
-      case 'primary':
-      default:
-        classParts.push(
-          'bg-primary border-outline-1 text-foreground-on-primary',
-          'hover:bg-primary-focus focus-visible:border-foundation'
-        )
-        break
-    }
+    const variantClasses = variantsBgBorder[props.variant] || variantsBgBorder.primary
+    classParts.push(...variantClasses)
   }
 
   return classParts.join(' ')
@@ -227,53 +167,54 @@ const sizeClasses = computed(() => {
 })
 
 const paddingClasses = computed(() => {
-  if (props.hideText && (props.iconLeft || props.iconRight)) {
-    switch (props.size) {
-      case 'small':
-        return 'p-1'
-      case 'large':
-        return 'p-2'
-      default:
-      case 'base':
-        return 'p-1'
-    }
+  const hasIconLeft = !!props.iconLeft
+  const hasIconRight = !!props.iconRight
+  const hideText = props.hideText
+
+  switch (props.size) {
+    case 'small':
+      if (hideText) return 'p-1'
+      if (hasIconLeft) return 'py-1 pr-2 pl-1'
+      if (hasIconRight) return 'py-1 pl-2 pr-1'
+      return 'px-2 py-1'
+    case 'large':
+      if (hideText) return 'p-2'
+      if (hasIconLeft) return 'py-2 pr-6 pl-4'
+      if (hasIconRight) return 'py-2 pl-6 pr-4'
+      return 'px-6 py-2'
+    case 'base':
+    default:
+      if (hideText) return 'p-1'
+      if (hasIconLeft) return 'py-1 pr-4 pl-2'
+      if (hasIconRight) return 'py-1 pl-4 pr-2'
+      return 'px-4 py-1'
   }
-  if (!props.text) {
-    switch (props.size) {
-      case 'small':
-        return 'px-2 py-1'
-      case 'large':
-        return 'px-6 py-2'
-      default:
-      case 'base':
-        return 'px-4 py-1'
-    }
-  } else return 'p-0'
 })
 
 const generalClasses = computed(() => {
-  const classParts: string[] = [
+  const baseClasses = [
     'flex justify-center items-center',
     'font-semibold text-center select-none',
     'outline outline-2 outline-transparent',
     'transition duration-200 ease-in-out focus-visible:outline-outline-4'
   ]
 
+  const additionalClasses = []
+
   if (!props.text) {
-    classParts.push('rounded-[5px] border')
+    additionalClasses.push('rounded-[5px] border')
   }
 
   if (props.fullWidth) {
-    classParts.push('w-full')
+    additionalClasses.push('w-full')
   } else {
-    classParts.push('max-w-max')
+    additionalClasses.push('max-w-max')
   }
-
   if (isDisabled.value) {
-    classParts.push('cursor-not-allowed')
+    additionalClasses.push('cursor-not-allowed')
   }
 
-  return classParts.join(' ')
+  return [...baseClasses, ...additionalClasses].join(' ')
 })
 
 const buttonClasses = computed(() => {

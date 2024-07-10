@@ -35,7 +35,7 @@ export default {
       type: 'function'
     },
     size: {
-      options: ['xs', 'sm', 'base', 'lg', 'xl'],
+      options: ['small', 'base', 'large'],
       control: { type: 'select' }
     },
     fullWidth: {

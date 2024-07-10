@@ -15,14 +15,14 @@
       </LayoutDialogSection>
       <UserProfileEditDialogChangePassword :user="user" />
       <UserProfileEditDialogDeleteAccount :user="user" @deleted="isOpen = false" />
-      <div class="text-xs text-foreground-2 mt-4">
+      <div class="text-xs text-foreground-2 mt-2 flex items-center">
         User ID:
-        <CommonTextLink size="xs" no-underline @click="copyUserId">
+        <CommonTextLink size="small" no-underline @click="copyUserId">
           #{{ user.id }}
         </CommonTextLink>
         <template v-if="distinctId">
           |
-          <CommonTextLink size="xs" no-underline @click="copyDistinctId">
+          <CommonTextLink size="small" no-underline @click="copyDistinctId">
             {{ distinctId }}
           </CommonTextLink>
         </template>

@@ -13,7 +13,12 @@
       <div
         class="opacity-0 transition-all absolute group-hover:opacity-100 inset-0 flex items-end justify-center bottom-4"
       >
-        <FormButton :disabled="disabled" variant="outline" @click="editMode = true">
+        <FormButton
+          size="small"
+          :disabled="disabled"
+          variant="outline"
+          @click="editMode = true"
+        >
           Change
         </FormButton>
       </div>
