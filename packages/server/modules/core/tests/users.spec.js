@@ -43,11 +43,7 @@ const {
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
 const { Scopes, Roles } = require('@speckle/shared')
-const { randomUUID } = require('crypto')
-
-function createRandomEmail() {
-  return `${randomUUID()}@example.org`
-}
+const { createRandomEmail } = require('../helpers/test-helpers')
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {

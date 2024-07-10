@@ -4,7 +4,7 @@ import { beforeEach, describe, it } from 'mocha'
 import { beforeEachContext } from '@/test/hooks'
 import { UserRecord } from '../../helpers/types'
 import knexInstance from '@/db/knex'
-import { createRandomEmail } from '../../helpers/test-helpers'
+import { createRandomEmail, createRandomPassword } from '../../helpers/test-helpers'
 import { USER_EMAILS_TABLE_NAME } from '@/modules/user-emails/constants'
 
 const db = knexInstance
@@ -19,7 +19,7 @@ describe('Users @core-users', () => {
     const newUser = {
       name: 'John Doe',
       email: createRandomEmail(),
-      password: 'sn3aky-1337-b1m'
+      password: createRandomPassword()
     }
 
     const actorId = await createUser(newUser)
@@ -31,7 +31,7 @@ describe('Users @core-users', () => {
     const user = {
       name: 'Marty McFly',
       email: createRandomEmail(),
-      password: 'something_future_proof'
+      password: createRandomPassword()
     }
 
     const userId = await createUser(user)
@@ -44,7 +44,7 @@ describe('Users @core-users', () => {
       await createUser({
         name: 'Dim Sum',
         email: createRandomEmail(),
-        password: '1234567'
+        password: createRandomPassword()
       })
     } catch {
       return
@@ -55,7 +55,7 @@ describe('Users @core-users', () => {
     const newUser = {
       name: 'John Doe',
       email: createRandomEmail(),
-      password: 'testthebest'
+      password: createRandomPassword()
     }
 
     // create user
@@ -77,7 +77,7 @@ describe('Users @core-users', () => {
     const userId = await createUser({
       name: 'John Doe',
       email,
-      password: 'testthebest'
+      password: createRandomPassword()
     })
 
     const user = (await getUserById({ userId })) as UserRecord
