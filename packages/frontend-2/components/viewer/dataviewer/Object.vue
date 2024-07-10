@@ -26,7 +26,7 @@ const props = defineProps<{
 }>()
 
 const { result, loading, load } = useLazyQuery(viewerRawObjectQuery, () => ({
-  streamId: projectId.value,
+  projectId: projectId.value,
   objectId: props.object['referencedId'] as string
 }))
 
@@ -35,7 +35,7 @@ if (props.object['referencedId']) {
 }
 
 const kvps = computed(() => {
-  const obj = (result.value?.stream?.object?.data || props.object) as Record<
+  const obj = (result.value?.project?.object?.data || props.object) as Record<
     string,
     unknown
   >

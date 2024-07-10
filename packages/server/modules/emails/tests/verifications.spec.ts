@@ -19,11 +19,12 @@ import { Express } from 'express'
 import { getUser } from '@/modules/core/repositories/users'
 import dayjs from 'dayjs'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
+import { USER_EMAILS_TABLE_NAME } from '@/modules/user-emails/constants'
 
 const mailerMock = EmailSendingServiceMock
 
 const cleanup = async () => {
-  await truncateTables([Users.name, EmailVerifications.name])
+  await truncateTables([Users.name, EmailVerifications.name, USER_EMAILS_TABLE_NAME])
 }
 
 describe('Email verifications @emails', () => {

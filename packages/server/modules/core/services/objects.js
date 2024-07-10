@@ -169,6 +169,9 @@ module.exports = {
     return ids
   },
 
+  /**
+   * @returns {Promise<string[]>}
+   */
   async createObjects(streamId, objects) {
     // TODO: Switch to knex batch inserting functionality
     // see http://knexjs.org/#Utility-BatchInsert
@@ -248,6 +251,9 @@ module.exports = {
     return ids
   },
 
+  /**
+   * @returns {Promise<Omit<import('@/modules/core/helpers/types').ObjectRecord, 'streamId'>>}
+   */
   async getObject({ streamId, objectId }) {
     const res = await Objects().where({ streamId, id: objectId }).select('*').first()
     if (!res) return null
@@ -288,6 +294,9 @@ module.exports = {
     return q.stream({ highWaterMark: 500 })
   },
 
+  /**
+   * @returns {Promise<{objects: import('@/modules/core/helpers/types').ObjectRecord[], cursor: string | null}>}
+   */
   async getObjectChildren({ streamId, objectId, limit, depth, select, cursor }) {
     limit = parseInt(limit) || 50
     depth = parseInt(depth) || 1000
@@ -370,8 +379,13 @@ module.exports = {
     return { objects: rows, cursor: lastId }
   },
 
-  // This query is inefficient on larger sets (n * 10k objects) as we need to return the total count on an arbitrarily (user) defined selection of objects.
-  // A possible future optimisation route would be to cache the total count of a query (as objects are immutable, it will not change) on a first run, and, if found on a subsequent round, do a simpler query and merge the total count result.
+  /**
+   *
+   * This query is inefficient on larger sets (n * 10k objects) as we need to return the total count on an arbitrarily (user) defined selection of objects.
+   * A possible future optimisation route would be to cache the total count of a query (as objects are immutable, it will not change) on a first run, and, if found on a subsequent round, do a simpler query and merge the total count result.
+   * @param {*} param0
+   * @returns {Promise<{objects: import('@/modules/core/helpers/types').ObjectRecord[], cursor: string | null, totalCount: number}>}
+   */
   async getObjectChildrenQuery({
     streamId,
     objectId,

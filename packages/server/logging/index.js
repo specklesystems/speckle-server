@@ -5,7 +5,10 @@ const { getMachineId } = require('./machineId')
 const prometheusClient = require('prom-client')
 const promBundle = require('express-prom-bundle')
 
-const { initKnexPrometheusMetrics } = require('./knexMonitoring')
+const { initKnexPrometheusMetrics } = require('@/logging/knexMonitoring')
+const {
+  initHighFrequencyMonitoring
+} = require('@/logging/highFrequencyMetrics/highfrequencyMonitoring')
 
 let prometheusInitialized = false
 
@@ -20,6 +23,11 @@ module.exports = function (app) {
       app: 'server'
     })
     prometheusClient.collectDefaultMetrics()
+    const highfrequencyMonitoring = initHighFrequencyMonitoring({
+      register: prometheusClient.register,
+      collectionPeriodMilliseconds: 100
+    })
+    highfrequencyMonitoring.start()
 
     initKnexPrometheusMetrics()
     const expressMetricsMiddleware = promBundle({

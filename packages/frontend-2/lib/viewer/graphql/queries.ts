@@ -136,8 +136,8 @@ export const viewerLoadedThreadsQuery = graphql(`
 `)
 
 export const viewerRawObjectQuery = graphql(`
-  query Stream($streamId: String!, $objectId: String!) {
-    stream(id: $streamId) {
+  query ViewerRawProjectObject($projectId: String!, $objectId: String!) {
+    project(id: $projectId) {
       id
       object(id: $objectId) {
         id
