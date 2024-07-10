@@ -1,21 +1,15 @@
-/* eslint-disable camelcase */
 import {
   fakeMixpanelClient,
   HOST_APP,
   type MixpanelClient
 } from '~/lib/common/helpers/mp'
-import Mixpanel from 'mixpanel'
-import type { Nullable, Optional } from '@speckle/shared'
-import { resolveMixpanelServerId } from '@speckle/shared'
+import type Mixpanel from 'mixpanel'
+import type { Nullable } from '@speckle/shared'
+import * as ServerMixpanelUtils from '@speckle/shared/dist/esm/observability/mixpanel'
 import { useApiOrigin } from '~/composables/env'
 import { useActiveUser } from '~/composables/globals'
 import { isFunction } from 'lodash-es'
-import UAParser from 'ua-parser-js'
 import { useWaitForActiveUser } from '~/lib/auth/composables/activeUser'
-
-/**
- * TODO: Move this to shared so that `server` can benefit from the same setup
- */
 
 /**
  * IMPORTANT: Do not import this on client-side, the code is only supposed to run in the browser
@@ -33,29 +27,28 @@ export const useServersideMixpanelClientBuilder = () => {
   const nuxtApp = useNuxtApp()
   const route = useRoute()
   const apiOrigin = useApiOrigin({ forcePublic: true })
-  const apiHostname = new URL(apiOrigin).hostname
-  const mixpanelServerId = resolveMixpanelServerId(apiHostname)
   const { distinctId } = useActiveUser()
   const logger = useLogger()
   const ssrContext = nuxtApp.ssrContext
   const waitForUser = useWaitForActiveUser()
 
-  const baseTrackingProperties = {
-    server_id: mixpanelServerId,
+  const baseTrackingProperties = ServerMixpanelUtils.buildBasePropertiesPayload({
     hostApp: HOST_APP,
+    serverOrigin: apiOrigin,
     speckleVersion: speckleServerVersion
-  }
+  })
 
   return async (): Promise<Nullable<MixpanelClient>> => {
-    if (!Mixpanel || !mixpanelTokenId.length || !mixpanelApiHost.length) {
+    if (!mixpanelTokenId.length || !mixpanelApiHost.length) {
       return null
     }
 
     // Init or retrieve the cached client
     const internalClient =
       cachedInternalClient ||
-      Mixpanel.init(mixpanelTokenId, {
-        host: new URL(mixpanelApiHost).hostname,
+      ServerMixpanelUtils.buildServerMixpanelClient({
+        tokenId: mixpanelTokenId,
+        apiHostname: new URL(mixpanelApiHost).hostname,
         debug: !!import.meta.dev && logCsrEmitProps
       })
     if (!cachedInternalClient) cachedInternalClient = internalClient
@@ -63,57 +56,14 @@ export const useServersideMixpanelClientBuilder = () => {
     await waitForUser()
 
     const coreTrackingProperties = () => {
-      const userProps = distinctId.value ? { distinct_id: distinctId.value } : {}
-
-      // User agent
-      const userAgentString = ssrContext?.event.node.req.headers[
-        'user-agent'
-      ] as Optional<string>
-      const uaParser = userAgentString ? new UAParser(userAgentString) : null
-      const uaProps = uaParser
-        ? {
-            $browser: uaParser.getBrowser().name,
-            $device: uaParser.getDevice().model,
-            $os: uaParser.getOS().name
-          }
-        : {}
-
-      // Referer
-      const refererHeader = ssrContext?.event.node.req.headers[
-        'referer'
-      ] as Optional<string>
-      const refererDomain = refererHeader ? new URL(refererHeader).hostname : null
-      const refererProps = {
-        ...(refererHeader ? { $referrer: refererHeader } : {}),
-        ...(refererDomain ? { $referring_domain: refererDomain } : {})
-      }
-
-      // Utm
-      const utmKeys = [
-        'utm_source',
-        'utm_medium',
-        'utm_campaign',
-        'utm_content',
-        'utm_term'
-      ]
-      const utmProps = utmKeys.reduce((acc, key) => {
-        const value = route.query[key] as Optional<string>
-        return value ? { ...acc, [key]: value } : acc
-      }, {})
-
-      // Remote addr
-      const remoteAddr =
-        (ssrContext?.event.node.req.headers['x-forwarded-for'] as Optional<string>) ||
-        ssrContext?.event.node.req.socket.remoteAddress
-      const remoteAddrProps = remoteAddr ? { ip: remoteAddr } : {}
-
       return {
         ...baseTrackingProperties,
-        ...userProps,
-        ...uaProps,
-        ...refererProps,
-        ...utmProps,
-        ...remoteAddrProps
+        ...ServerMixpanelUtils.buildPropertiesPayload({
+          distinctId: distinctId.value || undefined,
+          headers: ssrContext?.event.node.req.headers,
+          query: route.query,
+          remoteAddress: ssrContext?.event.node.req.socket.remoteAddress
+        })
       }
     }
 

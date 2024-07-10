@@ -186,7 +186,6 @@ const onDismissNewSpeckleBanner = () => {
 
 // TODO: Invites updated doesnt show new ones?
 // TODO: Test all auto-accept/manual accept flows
-// TODO: Mixpanel trakcing in backend
 
 onUserProjectsUpdate((res) => {
   const activeUserId = activeUser.value?.id

@@ -15728,6 +15728,7 @@ __metadata:
     "@types/pino-http": "npm:^5.8.4"
     "@types/sanitize-html": "npm:^2.6.2"
     "@types/supertest": "npm:^2.0.12"
+    "@types/ua-parser-js": "npm:^0.7.39"
     "@types/uuid": "npm:^9.0.0"
     "@types/verror": "npm:^1.10.6"
     "@types/yargs": "npm:^17.0.10"
@@ -15815,6 +15816,7 @@ __metadata:
     type-fest: "npm:^2.19.0"
     typescript: "npm:^4.6.4"
     typescript-eslint: "npm:^7.12.0"
+    ua-parser-js: "npm:^1.0.38"
     undici: "npm:^5.28.4"
     verror: "npm:^1.10.1"
     ws: "npm:^8.17.1"
@@ -15849,24 +15851,29 @@ __metadata:
     "@tiptap/core": "npm:^2.0.0-beta.176"
     "@types/lodash": "npm:^4.14.184"
     "@types/lodash-es": "npm:^4.17.12"
+    "@types/ua-parser-js": "npm:^0.7.39"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     lodash: "npm:^4.17.0"
     lodash-es: "npm:^4.17.21"
+    mixpanel: "npm:^0.17.0"
     pino: "npm:^8.7.0"
     pino-http: "npm:^8.0.0"
     tshy: "npm:^1.14.0"
     type-fest: "npm:^3.11.1"
     typescript: "npm:^4.5.4"
+    ua-parser-js: "npm:^1.0.38"
     znv: "npm:^0.4.0"
     zod: "npm:^3.22.4"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
+    mixpanel: ^0.17.0
     pino: ^8.7.0
     pino-http: ^8.0.0
     pino-pretty: ">=8.0.0"
+    ua-parser-js: ^1.0.38
     znv: ^0.4.0
     zod: ^3.22.4
   languageName: unknown
