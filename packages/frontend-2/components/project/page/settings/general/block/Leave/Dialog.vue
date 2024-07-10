@@ -29,7 +29,7 @@ const mp = useMixpanel()
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { variant: 'outline', fullWidth: true, outline: true },
     onClick: () => {
       isOpen.value = false
     }
@@ -37,7 +37,7 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Leave',
     props: {
-      color: 'danger',
+      variant: 'danger',
       fullWidth: true,
       outline: true,
       submit: true

@@ -198,14 +198,14 @@ const isPrivate = computed(() => {
 const discoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { variant: 'outline', fullWidth: true, outline: true },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: 'Copy Embed Code',
-    props: { color: 'default', fullWidth: true },
+    props: { fullWidth: true },
     onClick: () => {
       handleEmbedCodeCopy(iframeCode.value)
     }
@@ -215,7 +215,7 @@ const discoverableButtons = computed((): LayoutDialogButton[] => [
 const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { color: 'invert', fullWidth: true, outline: true },
+    props: { variant: 'outline', fullWidth: true, outline: true },
     onClick: () => {
       isOpen.value = false
     }

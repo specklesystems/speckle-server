@@ -5,7 +5,7 @@
     :buttons="[
       {
         text: 'Delete',
-        props: { color: 'danger', fullWidth: true, disabled: loading },
+        props: { variant: 'danger', fullWidth: true, disabled: loading },
         onClick: () => {
           onDelete()
         }

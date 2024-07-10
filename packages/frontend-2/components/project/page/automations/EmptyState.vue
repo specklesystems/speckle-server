@@ -8,14 +8,16 @@
           Speckle Automate empowers you to continuously monitor your published models,
           automatically ensuring project data standards, identifying potential design
           faults, and effortlessly creating delivery artifacts.
-          <CommonTextLink
+          <FormButton
             :icon-right="ArrowTopRightOnSquareIcon"
             target="_blank"
             external
+            variant="outline"
+            class="mx-auto my-2"
             to="https://speckle.systems/blog/automate-with-speckle/"
           >
             Learn more
-          </CommonTextLink>
+          </FormButton>
         </div>
       </div>
       <div>

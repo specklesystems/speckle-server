@@ -7,7 +7,7 @@
         onClick: () => {
           open = false
         },
-        props: { color: 'secondary', fullWidth: true }
+        props: { variant: 'outline', fullWidth: true }
       },
       ...(run && projectId && run.trigger.model && run.trigger.version
         ? [

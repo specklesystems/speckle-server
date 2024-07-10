@@ -150,7 +150,6 @@ const dialogButtons = computed((): Optional<LayoutDialogButton[]> => {
       ? prettyFileSize(dialogAttachment.value.fileSize)
       : 'Download',
     props: {
-      color: 'default',
       fullWidth: true,
       iconLeft: ArrowDownTrayIcon
     },

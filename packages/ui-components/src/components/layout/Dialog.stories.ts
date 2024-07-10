@@ -58,7 +58,7 @@ export const HeaderAndFooter = {
       {
         text: 'Close',
         props: {
-          color: 'secondary',
+          variant: 'outline',
           link: false,
           fullWidth: true,
           outline: true

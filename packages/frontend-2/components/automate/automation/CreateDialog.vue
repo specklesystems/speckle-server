@@ -215,9 +215,8 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'createTestAutomation',
           text: 'Create test automation',
           props: {
-            color: 'secondary',
-            iconLeft: CodeBracketIcon,
-            textColor: 'primary'
+            variant: 'outline',
+            iconLeft: CodeBracketIcon
           },
           onClick: () => {
             isTestAutomation.value = true
@@ -242,7 +241,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'fnParamsPrev',
           text: 'Previous',
           props: {
-            color: 'secondary',
+            variant: 'outline',
             iconLeft: ChevronLeftIcon,
             textColor: 'primary'
           },
@@ -264,9 +263,8 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'detailsPrev',
           text: 'Previous',
           props: {
-            color: 'secondary',
-            iconLeft: ChevronLeftIcon,
-            textColor: 'primary'
+            variant: 'outline',
+            iconLeft: ChevronLeftIcon
           },
           onClick: () => step.value--
         },
@@ -283,9 +281,8 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'detailsPrev',
           text: 'Back',
           props: {
-            color: 'secondary',
-            iconLeft: ChevronLeftIcon,
-            textColor: 'primary'
+            variant: 'outline',
+            iconLeft: ChevronLeftIcon
           },
           onClick: reset
         },

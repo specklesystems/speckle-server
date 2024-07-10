@@ -5,7 +5,7 @@
 
       <template #actions>
         <div class="flex items-center justify-between w-full">
-          <div v-if="!showRaw" class="flex items-center">
+          <div v-if="!showRaw" class="flex items-center gap-1">
             <FormButton
               size="small"
               text

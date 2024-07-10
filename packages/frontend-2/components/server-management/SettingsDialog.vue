@@ -120,12 +120,12 @@ const isOpen = defineModel<boolean>('open', { required: true })
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { variant: 'outline', fullWidth: true, outline: true },
     onClick: () => (isOpen.value = false)
   },
   {
     text: 'Save',
-    props: { color: 'default', fullWidth: true, outline: false },
+    props: { fullWidth: true, outline: false },
     onClick: onSubmit
   }
 ])

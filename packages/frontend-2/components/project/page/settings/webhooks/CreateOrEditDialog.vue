@@ -225,14 +225,14 @@ const resetWebhookModel = () => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { variant: 'outline', fullWidth: true, outline: true },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: props.webhook ? 'Save' : 'Create',
-    props: { color: 'default', fullWidth: true },
+    props: { fullWidth: true },
     onClick: onSubmit
   }
 ])

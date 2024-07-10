@@ -17,7 +17,7 @@
           <FormButton
             v-if="canContribute"
             class="grow inline-flex sm:grow-0 lg:hidden"
-            :icon-left="PlusIcon"
+            :icon-right="PlusIcon"
             @click="showNewDialog = true"
           >
             New
@@ -77,7 +77,7 @@
           <FormButton
             v-if="canContribute"
             class="hidden lg:inline-flex shrink-0"
-            :icon-left="PlusIcon"
+            :icon-right="PlusIcon"
             @click="showNewDialog = true"
           >
             New

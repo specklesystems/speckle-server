@@ -5,14 +5,14 @@
     :buttons="[
       {
         text: 'Cancel',
-        props: { color: 'secondary', fullWidth: true },
+        props: { variant: 'outline', fullWidth: true },
         onClick: () => {
           isOpen = false
         }
       },
       {
         text: 'Save',
-        props: { color: 'default', fullWidth: true, disabled: loading },
+        props: { fullWidth: true, disabled: loading },
         onClick: () => {
           onSubmit()
         }

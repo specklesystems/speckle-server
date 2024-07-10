@@ -99,14 +99,14 @@ watch(
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { variant: 'outline', fullWidth: true, outline: true },
     onClick: () => {
       openState.value = false
     }
   },
   {
     text: 'Create',
-    props: { color: 'default', fullWidth: true },
+    props: { fullWidth: true },
     onClick: () => {
       onSubmit()
     },

@@ -118,13 +118,6 @@ const finalLeftIcon = computed(() => (props.loading ? ArrowPathIcon : props.icon
 const bgAndBorderClasses = computed(() => {
   const classParts: string[] = []
 
-  const variantsText = {
-    subtle: 'text-foreground',
-    outline: 'text-foreground',
-    danger: 'text-danger',
-    primary: 'text-primary'
-  }
-
   const variantsBgBorder = {
     subtle: [
       'bg-transparent border-transparent text-foreground',
@@ -144,13 +137,40 @@ const bgAndBorderClasses = computed(() => {
     ]
   }
 
-  if (props.variant && props.text) {
-    classParts.push(variantsText[props.variant])
-  } else if (props.variant) {
-    const variantClasses = variantsBgBorder[props.variant]
-    classParts.push(...variantClasses)
+  const variant = props.variant || 'primary'
+
+  if (props.text || props.link) {
+    switch (variant) {
+      case 'subtle':
+        classParts.push('text-foreground')
+        break
+      case 'outline':
+        classParts.push('text-foreground')
+        break
+      case 'danger':
+        classParts.push('text-danger')
+        break
+      case 'primary':
+      default:
+        classParts.push('text-primary')
+        break
+    }
   } else {
-    classParts.push(variantsText.primary)
+    switch (variant) {
+      case 'subtle':
+        classParts.push(...variantsBgBorder.subtle)
+        break
+      case 'outline':
+        classParts.push(...variantsBgBorder.outline)
+        break
+      case 'danger':
+        classParts.push(...variantsBgBorder.danger)
+        break
+      case 'primary':
+      default:
+        classParts.push(...variantsBgBorder.primary)
+        break
+    }
   }
 
   return classParts.join(' ')
@@ -169,6 +189,10 @@ const sizeClasses = computed(() => {
 })
 
 const paddingClasses = computed(() => {
+  if (props.text || props.link) {
+    return 'p-0'
+  }
+
   const hasIconLeft = !!props.iconLeft
   const hasIconRight = !!props.iconRight
   const hideText = props.hideText
@@ -203,7 +227,7 @@ const generalClasses = computed(() => {
 
   const additionalClasses = []
 
-  if (!props.text) {
+  if (!props.text && !props.link) {
     additionalClasses.push('rounded-[5px] border')
   }
 

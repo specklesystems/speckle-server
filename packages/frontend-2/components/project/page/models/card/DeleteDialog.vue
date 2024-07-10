@@ -4,14 +4,14 @@
     :buttons="[
       {
         text: 'Cancel',
-        props: { color: 'secondary', fullWidth: true },
+        props: { variant: 'outline', fullWidth: true },
         onClick: () => {
           isOpen = false
         }
       },
       {
         text: 'Delete',
-        props: { color: 'danger', fullWidth: true, disabled: loading },
+        props: { variant: 'danger', fullWidth: true, disabled: loading },
         onClick: () => {
           onDelete()
         }

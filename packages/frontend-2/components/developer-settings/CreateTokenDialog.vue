@@ -110,14 +110,14 @@ const onSubmit = handleSubmit(async (tokenFormValues) => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { variant: 'outline', fullWidth: true, outline: true },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: 'Create',
-    props: { color: 'default', fullWidth: true },
+    props: { fullWidth: true },
     onClick: onSubmit
   }
 ])

@@ -31,7 +31,6 @@ export const Default: StoryObj = {
   }),
   args: {
     title: 'Dialog Section Title',
-    color: 'primary',
     icon: FaceSmileIcon,
     borderT: true,
     borderB: true

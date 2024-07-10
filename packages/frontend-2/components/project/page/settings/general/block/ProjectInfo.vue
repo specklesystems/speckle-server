@@ -115,7 +115,7 @@ const resetLocalState = () => {
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Discard Changes',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { variant: 'outline', fullWidth: true, outline: true },
     onClick: handleRedirection
   },
   {

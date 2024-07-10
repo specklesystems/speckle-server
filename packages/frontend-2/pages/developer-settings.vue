@@ -29,7 +29,7 @@
           :buttons="[
             {
               props: {
-                color: 'invert',
+                variant: 'outline',
                 to: 'https://speckle.guide/dev/tokens.html',
                 iconLeft: BookOpenIcon,
                 target: '_blank',
@@ -108,7 +108,7 @@
           :buttons="[
             {
               props: {
-                color: 'invert',
+                variant: 'outline',
                 to: 'https://speckle.guide/dev/apps.html',
                 target: '_blank',
                 external: true,
@@ -191,7 +191,7 @@
           :buttons="[
             {
               props: {
-                color: 'invert',
+                variant: 'outline',
                 to: 'https://speckle.guide/dev/apps.html',
                 target: '_blank',
                 external: true,
