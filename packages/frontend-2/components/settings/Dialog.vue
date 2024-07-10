@@ -21,7 +21,11 @@
                 v-for="(sidebarMenuItem, index) in sidebarConfig.user"
                 :key="`sidebarUserItem-${index}`"
                 :label="sidebarMenuItem.title"
-                @click="setSelectedMenuItem(sidebarMenuItem.path)"
+                :class="{
+                  'bg-foundation-focus hover:!bg-foundation-focus':
+                    selectedMenuItem?.path === sidebarMenuItem.path
+                }"
+                @click="setSelectedMenuItem(sidebarMenuItem)"
               />
             </LayoutSidebarMenuGroup>
             <LayoutSidebarMenuGroup title="Server Settings">
@@ -32,7 +36,11 @@
                 v-for="(sidebarMenuItem, index) in sidebarConfig.server"
                 :key="`sidebarServerItem-${index}`"
                 :label="sidebarMenuItem.title"
-                @click="setSelectedMenuItem(sidebarMenuItem.path)"
+                :class="{
+                  'bg-foundation-focus hover:!bg-foundation-focus':
+                    selectedMenuItem?.path === sidebarMenuItem.path
+                }"
+                @click="setSelectedMenuItem(sidebarMenuItem)"
               />
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenu>
@@ -65,6 +73,7 @@ import SettingsServerPendingInvitations from './server/PendingInvitations.vue'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
+import { settingsRoutes, homeRoute } from '~/lib/common/helpers/route'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
@@ -77,89 +86,101 @@ type MenuItem = {
   path: string
 }
 
-type SidebarConfig = {
-  [key: string]: {
-    [key: string]: MenuItem
-  }
-}
-
 const emit = defineEmits<{
   (e: 'update:open', val: boolean): void
 }>()
 
 const props = defineProps<{
   open: boolean
+  route?: string
+  originalRoute?: string
 }>()
 
+const router = useRouter()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smallerOrEqual('md')
-const router = useRouter()
-
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal: boolean) => emit('update:open', newVal)
-})
-
-const selectedMenuItem = computed(() => {
-  const path = router.currentRoute.value.path
-  for (const group in sidebarConfig) {
-    const menuItems = sidebarConfig[group]
-
-    for (const key in menuItems) {
-      const item = menuItems[key]
-
-      if (new RegExp(`${item.path}?$`, 'i').test(path)) {
-        return item
-      }
-    }
+const selectedMenuItem: MenuItem | null = shallowRef(null)
+const sidebarConfig: {
+  [key: string]: {
+    [key: string]: MenuItem
   }
-  return null
-})
-
-const sidebarConfig: SidebarConfig = {
+} = {
   user: {
     profile: {
       title: 'Profile',
       component: SettingsUserProfile,
-      path: '/settings/user/profile'
+      path: settingsRoutes.user.profile
     },
     notifications: {
       title: 'Notifications',
       component: SettingsUserNotifications,
-      path: '/settings/user/notifications'
+      path: settingsRoutes.user.notifications
     },
     developerSettings: {
       title: 'Developer Settings',
       component: SettingsUserDeveloper,
-      path: '/settings/user/developer-settings'
+      path: settingsRoutes.user.developerSettings
     }
   },
   server: {
     general: {
       title: 'General',
       component: SettingsServerGeneral,
-      path: '/settings/server/general'
+      path: settingsRoutes.server.general
     },
     projects: {
       title: 'Projects',
       component: SettingsServerProjects,
-      path: '/settings/server/projects'
+      path: settingsRoutes.server.projects
     },
     activeUsers: {
       title: 'Active Users',
       component: SettingsServerActiveUsers,
-      path: '/settings/server/active-users'
+      path: settingsRoutes.server.activeUsers
     },
     pendingInvitations: {
       title: 'Pending Invitations',
       component: SettingsServerPendingInvitations,
-      path: '/settings/server/pending-invitations'
+      path: settingsRoutes.server.pendingInvitations
     }
   }
 }
 
-function setSelectedMenuItem(path: string | null): void {
-  router.push({ path: path ?? '/settings' })
-  // history.pushState({}, '', path ?? '/settings')
+const isOpen = computed({
+  get: () => props.open,
+  set: (newVal: boolean) => emit('update:open', newVal)
+})
+
+watch(
+  isOpen,
+  (newVal, oldVal) => {
+    if (newVal && !oldVal) {
+      if (isMobile.value) {
+        history.pushState({}, '', '/settings')
+      } else {
+        // If not on mobile find the component matching the route
+        for (const group in sidebarConfig) {
+          for (const key in sidebarConfig[group]) {
+            const item = sidebarConfig[group][key]
+            if (item.path === props.route) {
+              setSelectedMenuItem(item)
+            }
+          }
+        }
+      }
+    } else if (!newVal && oldVal) {
+      // When closing the modal revert back to the original route
+      selectedMenuItem.value = null
+      router.replace({ path: props.originalRoute ?? homeRoute, force: true })
+    }
+  },
+  { immediate: true }
+)
+
+function setSelectedMenuItem(item: MenuItem | null): void {
+  selectedMenuItem.value = item
+  if (typeof window !== 'undefined') {
+    history.pushState({}, '', item ? item.path : settingsRoutes.default.settings)
+  }
 }
 </script>

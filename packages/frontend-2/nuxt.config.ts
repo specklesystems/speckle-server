@@ -184,6 +184,12 @@ export default defineNuxtConfig({
         to: '/settings/server/general',
         statusCode: 301
       }
+    },
+    '/profile': {
+      redirect: {
+        to: '/settings/user/profile',
+        statusCode: 301
+      }
     }
   },
 

@@ -39,7 +39,14 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="() => (showSettingsDialog = true)"
+              @click="
+                () =>
+                  toggleSettingsDialog(
+                    isMobile
+                      ? settingsRoutes.default.settings
+                      : settingsRoutes.user.profile
+                  )
+              "
             >
               <UserCircleIcon class="w-5 h-5" />
               Settings
@@ -51,7 +58,14 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="() => (showSettingsDialog = true)"
+              @click="
+                () =>
+                  toggleSettingsDialog(
+                    isMobile
+                      ? settingsRoutes.default.settings
+                      : settingsRoutes.server.general
+                  )
+              "
             >
               <ServerStackIcon class="w-5 h-5" />
               Server Settings
@@ -128,7 +142,11 @@
       </Transition>
     </Menu>
     <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
-    <SettingsDialog v-model:open="showSettingsDialog" />
+    <SettingsDialog
+      v-model:open="showSettingsDialog"
+      :route="settingsRoute"
+      :original-route="settingsOriginalRoute"
+    />
   </div>
 </template>
 <script setup lang="ts">
@@ -150,8 +168,14 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
-import { homeRoute, profileRoute, connectorsPageUrl } from '~/lib/common/helpers/route'
+import {
+  getSettingsRoute,
+  settingsRoutes,
+  connectorsPageUrl
+} from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
+import { useBreakpoints } from '@vueuse/core'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -161,28 +185,38 @@ const { logout } = useAuthManager()
 const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, toggleTheme } = useTheme()
 const { serverInfo } = useServerInfo()
-const router = useRouter()
+
 const route = useRoute()
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
+const settingsRoute = ref(null)
+const settingsOriginalRoute = ref(null)
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smallerOrEqual('md')
 const menuButtonId = useId()
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
-const isProfileRoute = computed(() => route.path === profileRoute)
+const isSettingsRoute = computed(() => !!getSettingsRoute(route.path))
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
 }
 
+const toggleSettingsDialog = (newRoute: string) => {
+  showSettingsDialog.value = true
+  settingsRoute.value = newRoute
+  settingsOriginalRoute.value = route.path
+}
+
 watch(
-  isProfileRoute,
+  isSettingsRoute,
   (newVal, oldVal) => {
     if (newVal && !oldVal) {
       showSettingsDialog.value = true
-      void router.replace({ path: homeRoute, force: true }) // in-place replace
+      settingsRoute.value = getSettingsRoute(route.path)
     }
   },
   { immediate: true }
