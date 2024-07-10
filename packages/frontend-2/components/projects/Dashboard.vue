@@ -184,8 +184,6 @@ const onDismissNewSpeckleBanner = () => {
   hasDismissedNewSpeckleBanner.value = true
 }
 
-// TODO: Test all auto-accept/manual accept flows + sign up backend emit
-
 onUserProjectsUpdate((res) => {
   const activeUserId = activeUser.value?.id
   const event = res.data?.userProjectsUpdated
