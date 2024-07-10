@@ -1,15 +1,14 @@
-import { send, Base, type SendResult, Detach, Chunkable } from '../../index'
-import { times } from '#lodash'
+import { Base, Chunkable, Detach, send as objectSend } from '../../index'
 import { createCommit } from './utils'
 
 interface ExampleAppWindow extends Window {
-  send: typeof import('../../index').send
+  send: typeof objectSend
   loadData: () => Promise<void>
 }
 
 const appWindow = window as unknown as ExampleAppWindow
 
-appWindow.send = send
+appWindow.send = objectSend
 
 const setInputValue = (
   key: string,
@@ -62,98 +61,83 @@ appWindow.loadData = async () => {
 
   setInputValue('result', '...', { valueKey: 'textContent' })
 
-  const obj = generateTestObject()
-  let res: SendResult | undefined = undefined
+  const sendParams = {
+    projectId,
+    token: apiToken,
+    serverUrl
+  }
 
+  const t0 = performance.now()
+  const numberOfElements = 100
+  const meshesPerElement = 10
+  const verticesPerMesh = 900
+
+  const elements = Array(numberOfElements)
+    .fill(0)
+    .map(
+      (v, i) =>
+        new Asset(
+          Array(meshesPerElement)
+            .fill(0)
+            .map(() => new Mesh(verticesPerMesh)),
+          { name: `Asset ${i}` }
+        )
+    )
+
+  const model = new Collection<Asset>(elements)
+  let result = undefined
+  let commitDetails = undefined
   try {
-    res = await send(obj, {
-      serverUrl,
-      projectId,
-      token: apiToken
-    })
-
-    await createCommit(res, { serverUrl, projectId, token: apiToken })
+    result = await objectSend(model, sendParams)
+    commitDetails = await createCommit(result, { ...sendParams, modelName: 'main' })
   } catch (e) {
-    const msg = e instanceof Error ? e.message : JSON.stringify(e)
-    setInputValue('result', msg, { valueKey: 'textContent' })
+    console.log(`Time of failure: ${new Date().toISOString()}`)
+    console.log(`Error: ${JSON.stringify(e)}`)
+    // log utc timestamp
     throw e
   }
 
-  const objectUrl = new URL(`/projects/${projectId}/models/${res.hash}`, serverUrl)
-  const objectLink = objectUrl.toString()
-  console.log(objectLink)
-
-  setInputValue('result', objectLink, { valueKey: 'textContent' })
+  const t1 = performance.now()
+  console.log(`Time taken: ${(t1 - t0) / 1000}s.`)
+  console.log(`Result: ${JSON.stringify(result)}`)
+  console.log(`Commit details: ${JSON.stringify(commitDetails)}`)
 }
+export class Mesh extends Base {
+  @Detach()
+  @Chunkable(31250)
+  vertices: number[]
 
-function generateTestObject() {
-  return new Base({
-    start: 'end',
-    primitiveArray: Array(100).fill(1),
-    normalObject: {
-      hello: 'world',
-      how: 'are',
-      you: '?',
-      inner: {
-        pasta: 'pesto',
-        qux: 'mux'
-      }
-    },
-    '@detachedValue': new RandomFoo({
-      '@nestedDetachedValue_1': new RandomFoo({
-        '@nestedDetachedValue_2': new RandomFoo({
-          '@nestedDetachedValue_3': new RandomFoo()
-        })
-      })
-    }),
-    '@detachedArray': [
-      ...Array(100)
-        .fill(0)
-        .map(() => new RandomFoo({ bar: 'baz baz baz' }))
-    ],
-    detachedWithDecorator: new Collection<RandomFoo>('Collection of Foo', 'Foo', [
-      ...Array(10)
-        .fill(0)
-        .map(() => new RandomFoo())
-    ]),
-    '@(10)chunkedArr': times(100, () => 42),
-    some: new RandomJoe()
-  })
-}
+  @Detach()
+  @Chunkable(62500)
+  faces: number[]
 
-class RandomFoo extends Base {
-  constructor(props?: Record<string, unknown>) {
+  constructor(nVertices: number = 15, props?: Record<string, unknown>) {
     super(props)
-    this.noise = Math.random().toString(16)
+    this.vertices = Array(nVertices)
+      .fill(0)
+      .map(() => Math.random() * 1000)
+    this.faces = Array((nVertices / 3) * 4)
+      .fill(0)
+      .map(() => Math.floor(Math.random() * nVertices))
   }
 }
 
-class RandomJoe extends Base {
+export class Asset extends Base {
   @Detach()
-  @Chunkable(10)
-  numbers: number[]
+  displayValue: Mesh[]
 
-  constructor(props?: Record<string, unknown>) {
+  constructor(meshes: Mesh[], props?: Record<string, unknown>) {
     super(props)
-    this.numbers = times(100, () => 42)
+    this.displayValue = meshes
   }
 }
 
 export class Collection<T extends Base> extends Base {
   @Detach()
   elements: T[]
-  // eslint-disable-next-line camelcase
-  speckle_type = 'Speckle.Core.Models.Collection'
 
-  constructor(
-    name: string,
-    collectionType: string,
-    elements: T[] = [],
-    props?: Record<string, unknown>
-  ) {
+  constructor(elements: T[], props?: Record<string, unknown>) {
     super(props)
-    this.name = name
-    this.collectionType = collectionType
     this.elements = elements
   }
 }

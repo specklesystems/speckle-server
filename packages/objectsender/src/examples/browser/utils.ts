@@ -11,7 +11,7 @@ export async function createCommit(
   res: SendResult,
   { serverUrl, projectId, token, modelName }: CreateCommitParams
 ) {
-  const response = await fetch(serverUrl + '/graphql', {
+  const response = await fetch(new URL('/graphql', serverUrl).toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
