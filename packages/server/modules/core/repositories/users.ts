@@ -8,6 +8,7 @@ import { Knex } from 'knex'
 import { Roles, ServerRoles } from '@speckle/shared'
 import { updateUserEmailFactory } from '@/modules/user-emails/repositories/userEmails'
 import knexInstance from '@/db/knex'
+import { markUserEmailAsVerifiedFactory } from '@/modules/user-emails/services/verification'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
@@ -162,6 +163,10 @@ export async function markUserAsVerified(email: string) {
     .update({
       [UserCols.verified]: true
     })
+
+  await markUserEmailAsVerifiedFactory({
+    updateUserEmail: updateUserEmailFactory({ db: knexInstance })
+  })(email.toLowerCase().trim())
 
   return !!(await q)
 }

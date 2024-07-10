@@ -6,9 +6,9 @@ export type CreateUserEmail = (
 
 export type UpdateUserEmail = (
   query:
-    | (Pick<UserEmail, 'email' | 'userId'> & { primary?: boolean })
+    | (Pick<UserEmail, 'email'> & { primary?: boolean })
     | (Pick<UserEmail, 'userId'> & { primary: true }),
-  update: Pick<Partial<UserEmail>, 'email' | 'primary'>
+  update: Pick<Partial<UserEmail>, 'email' | 'primary' | 'verified'>
 ) => Promise<UserEmail>
 
 export type DeleteUserEmail = ({
@@ -18,3 +18,5 @@ export type DeleteUserEmail = ({
   userId: string
   email: string
 }) => Promise<boolean>
+
+export type MarkUserEmailAsVerified = (email: string) => Promise<UserEmail>
