@@ -5,11 +5,7 @@
         <Component :is="icon" :class="iconClasses" aria-hidden="true" />
       </div>
       <div :class="mainContentContainerClasses">
-        <h3
-          v-if="hasTitle"
-          class="text-sm"
-          :class="[hasDescription ? 'font-medium' : '']"
-        >
+        <h3 v-if="hasTitle" class="text-sm" :class="{ 'font-medium': hasDescription }">
           <slot name="title">Title</slot>
         </h3>
         <div v-if="hasDescription" :class="descriptionWrapperClasses">
