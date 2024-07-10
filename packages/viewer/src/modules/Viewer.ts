@@ -139,7 +139,8 @@ export class Viewer extends EventEmitter implements IViewer {
 
   public constructor(
     container: HTMLElement,
-    params: ViewerParams = DefaultViewerParams
+    params: ViewerParams = DefaultViewerParams,
+    gl?: WebGLRenderingContext
   ) {
     super()
     Logger.useDefaults()
@@ -157,7 +158,7 @@ export class Viewer extends EventEmitter implements IViewer {
     this.inProgressOperations = 0
 
     this.speckleRenderer = new SpeckleRenderer(this.tree, this)
-    this.speckleRenderer.create(this.container)
+    this.speckleRenderer.create(this.container, gl)
     window.addEventListener('resize', this.resize.bind(this), false)
 
     this.propertyManager = new PropertyManager()
