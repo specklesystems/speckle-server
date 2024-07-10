@@ -168,20 +168,26 @@ const bgAndBorderClasses = computed(() => {
     case 'subtle':
       classParts.push(
         'bg-transparent border-transparent text-foreground',
-        'hover:bg-primary-muted focus:border-foundation'
+        'hover:bg-primary-muted focus-visible:border-foundation'
       )
       break
     case 'outline':
       classParts.push(
         'bg-foundation border-outline-2 text-foreground',
-        'hover:bg-primary-muted focus:border-foundation'
+        'hover:bg-primary-muted focus-visible:border-foundation'
+      )
+      break
+    case 'danger':
+      classParts.push(
+        'bg-danger border-danger-darker text-foundation',
+        'hover:bg-danger-darker focus-visible:border-foundation'
       )
       break
     case 'primary':
     default:
       classParts.push(
         'bg-primary border-outline-1 text-foreground-on-primary',
-        'hover:bg-primary-focus focus:border-foundation'
+        'hover:bg-primary-focus focus-visible:border-foundation'
       )
       break
   }
@@ -192,25 +198,39 @@ const bgAndBorderClasses = computed(() => {
 const sizeClasses = computed(() => {
   switch (props.size) {
     case 'small':
-      return 'text-xs leading-4 px-2 py-1'
+      return 'text-xs leading-4'
     case 'large':
-      return 'text-sm leading-6 px-6 py-2'
+      return 'text-sm leading-6'
     default:
     case 'base':
-      return 'text-[13px] leading-6 px-4 py-1'
+      return 'text-[13px] leading-6'
   }
 })
 
 const paddingClasses = computed(() => {
-  switch (props.size) {
-    case 'small':
-      return 'px-2 py-1'
-    case 'large':
-      return 'px-6 py-2'
-    default:
-    case 'base':
-      return 'px-4 py-1'
+  if (props.hideText && (props.iconLeft || props.iconRight)) {
+    switch (props.size) {
+      case 'small':
+        return 'p-1'
+      case 'large':
+        return 'p-2'
+      default:
+      case 'base':
+        return 'p-1'
+    }
   }
+
+  if (!props.text) {
+    switch (props.size) {
+      case 'small':
+        return 'px-2 py-1'
+      case 'large':
+        return 'px-6 py-2'
+      default:
+      case 'base':
+        return 'px-4 py-1'
+    }
+  } else return 'p-0'
 })
 
 const generalClasses = computed(() => {
@@ -218,7 +238,7 @@ const generalClasses = computed(() => {
     'flex justify-center items-center',
     'font-semibold text-center select-none',
     'rounded-[5px] outline outline-2 outline-transparent',
-    'transition duration-200 ease-in-out focus:outline-outline-4'
+    'transition duration-200 ease-in-out focus-visible:outline-outline-4'
   ]
 
   if (props.fullWidth) {

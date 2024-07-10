@@ -135,9 +135,21 @@ export const Outlined: StoryObj = mergeStories(Default, {
   }
 })
 
-export const DangerButton: StoryObj = mergeStories(Default, {
+export const Danger: StoryObj = mergeStories(Default, {
   args: {
     variant: 'danger'
+  }
+})
+
+export const Small: StoryObj = mergeStories(Default, {
+  args: {
+    size: 'small'
+  }
+})
+
+export const Large: StoryObj = mergeStories(Default, {
+  args: {
+    size: 'large'
   }
 })
 
@@ -157,18 +169,6 @@ export const Link: StoryObj = mergeStories(Default, {
 export const Text: StoryObj = mergeStories(Default, {
   args: {
     text: true
-  }
-})
-
-export const Small: StoryObj = mergeStories(Default, {
-  args: {
-    size: 'small'
-  }
-})
-
-export const Large: StoryObj = mergeStories(Default, {
-  args: {
-    size: 'large'
   }
 })
 
