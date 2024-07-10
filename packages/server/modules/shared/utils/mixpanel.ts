@@ -1,5 +1,5 @@
 import { Optional, resolveMixpanelUserId } from '@speckle/shared'
-import * as MixpanelUtils from '@speckle/shared/dist/commonjs/observability/mixpanel'
+import * as MixpanelUtils from '@speckle/shared/dist/commonjs/observability/mixpanel.js'
 import {
   enableMixpanel,
   getServerOrigin,

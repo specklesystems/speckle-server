@@ -5,7 +5,7 @@ import {
 } from '~/lib/common/helpers/mp'
 import type Mixpanel from 'mixpanel'
 import type { Nullable } from '@speckle/shared'
-import * as ServerMixpanelUtils from '@speckle/shared/dist/esm/observability/mixpanel'
+import * as ServerMixpanelUtils from '@speckle/shared/dist/esm/observability/mixpanel.js'
 import { useApiOrigin } from '~/composables/env'
 import { useActiveUser } from '~/composables/globals'
 import { isFunction } from 'lodash-es'
@@ -86,8 +86,7 @@ export const useServersideMixpanelClientBuilder = () => {
       })
     }
 
-    // TODO: Test, remove!
-    track(`Visit from backend!`)
+    // track(`TEST! Visit from backend!`)
 
     return {
       ...fakeMixpanelClient(),

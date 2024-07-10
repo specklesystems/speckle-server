@@ -11,12 +11,12 @@ export const buildServerMixpanelClient = (params: {
   debug?: boolean
 }) => {
   const { tokenId, apiHostname, debug } = params
-  Mixpanel.init(tokenId, {
+  const client = Mixpanel.init(tokenId, {
     host: apiHostname,
     debug
   })
 
-  return Mixpanel
+  return client
 }
 
 export const buildBasePropertiesPayload = (params: {
@@ -68,7 +68,7 @@ export const buildPropertiesPayload = (params: {
 
   // Referer
   const refererHeader = headers?.['referer'] as Optional<string>
-  const refererDomain = refererHeader ? new URL(refererHeader).hostname : null
+  const refererDomain = refererHeader ? new URL(refererHeader).host : null
   const refererProps = {
     ...(refererHeader ? { $referrer: refererHeader } : {}),
     ...(refererDomain ? { $referring_domain: refererDomain } : {})
