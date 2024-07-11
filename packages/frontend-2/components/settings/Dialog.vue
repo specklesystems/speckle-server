@@ -11,40 +11,38 @@
         v-if="!isMobile || !selectedMenuItem"
         class="w-full md:w-56 lg:w-60 md:p-4 md:pt-6 md:bg-foundation-page md:border-r md:border-outline-3"
       >
-        <div class="flex-1">
-          <LayoutSidebarMenu>
-            <LayoutSidebarMenuGroup title="Account Settings">
-              <template #title-icon>
-                <UserIcon />
-              </template>
-              <LayoutSidebarMenuGroupItem
-                v-for="(sidebarMenuItem, index) in sidebarConfig.user"
-                :key="`sidebarUserItem-${index}`"
-                :label="sidebarMenuItem.title"
-                :class="{
-                  'bg-foundation-focus hover:!bg-foundation-focus':
-                    selectedMenuItem?.path === sidebarMenuItem.path
-                }"
-                @click="setSelectedMenuItem(sidebarMenuItem)"
-              />
-            </LayoutSidebarMenuGroup>
-            <LayoutSidebarMenuGroup title="Server Settings">
-              <template #title-icon>
-                <ServerStackIcon />
-              </template>
-              <LayoutSidebarMenuGroupItem
-                v-for="(sidebarMenuItem, index) in sidebarConfig.server"
-                :key="`sidebarServerItem-${index}`"
-                :label="sidebarMenuItem.title"
-                :class="{
-                  'bg-foundation-focus hover:!bg-foundation-focus':
-                    selectedMenuItem?.path === sidebarMenuItem.path
-                }"
-                @click="setSelectedMenuItem(sidebarMenuItem)"
-              />
-            </LayoutSidebarMenuGroup>
-          </LayoutSidebarMenu>
-        </div>
+        <LayoutSidebarMenu>
+          <LayoutSidebarMenuGroup title="Account settings">
+            <template #title-icon>
+              <UserIcon />
+            </template>
+            <LayoutSidebarMenuGroupItem
+              v-for="(sidebarMenuItem, index) in sidebarConfig.user"
+              :key="`sidebarUserItem-${index}`"
+              :label="sidebarMenuItem.title"
+              :class="{
+                'bg-foundation-focus hover:!bg-foundation-focus':
+                  selectedMenuItem?.path === sidebarMenuItem.path
+              }"
+              @click="setSelectedMenuItem(sidebarMenuItem)"
+            />
+          </LayoutSidebarMenuGroup>
+          <LayoutSidebarMenuGroup title="Server settings">
+            <template #title-icon>
+              <ServerStackIcon />
+            </template>
+            <LayoutSidebarMenuGroupItem
+              v-for="(sidebarMenuItem, index) in sidebarConfig.server"
+              :key="`sidebarServerItem-${index}`"
+              :label="sidebarMenuItem.title"
+              :class="{
+                'bg-foundation-focus hover:!bg-foundation-focus':
+                  selectedMenuItem?.path === sidebarMenuItem.path
+              }"
+              @click="setSelectedMenuItem(sidebarMenuItem)"
+            />
+          </LayoutSidebarMenuGroup>
+        </LayoutSidebarMenu>
       </LayoutSidebar>
       <main
         v-if="selectedMenuItem"
@@ -117,7 +115,7 @@ const sidebarConfig: {
       path: settingsRoutes.user.notifications
     },
     developerSettings: {
-      title: 'Developer Settings',
+      title: 'Developer settings',
       component: SettingsUserDeveloper,
       path: settingsRoutes.user.developerSettings
     }
@@ -134,12 +132,12 @@ const sidebarConfig: {
       path: settingsRoutes.server.projects
     },
     activeUsers: {
-      title: 'Active Users',
+      title: 'Active users',
       component: SettingsServerActiveUsers,
       path: settingsRoutes.server.activeUsers
     },
     pendingInvitations: {
-      title: 'Pending Invitations',
+      title: 'Pending invitations',
       component: SettingsServerPendingInvitations,
       path: settingsRoutes.server.pendingInvitations
     }

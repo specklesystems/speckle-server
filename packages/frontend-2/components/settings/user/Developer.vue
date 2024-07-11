@@ -2,7 +2,7 @@
   <div class="md:max-w-5xl md:mx-auto">
     <div class="flex flex-col">
       <SettingsSectionHeader
-        title="Developer Settings"
+        title="Developer settings"
         text="Manage your tokens and authorized app"
       />
       <div class="flex flex-col gap-6 md:gap-12">
@@ -28,7 +28,7 @@
         <hr />
         <div class="flex flex-col gap-4">
           <SettingsSectionHeader
-            title="Access Tokens"
+            title="Access tokens"
             subheading
             :buttons="[
               {
@@ -39,14 +39,14 @@
                   target: '_blank',
                   external: true
                 },
-                label: 'Open Docs'
+                label: 'Open docs'
               },
               {
                 props: {
                   iconLeft: PlusIcon,
                   onClick: openCreateTokenDialog
                 },
-                label: 'New Token'
+                label: 'New token'
               }
             ]"
           >
@@ -119,14 +119,14 @@
                   external: true,
                   iconLeft: BookOpenIcon
                 },
-                label: 'Open Docs'
+                label: 'Open docs'
               },
               {
                 props: {
                   onClick: openCreateApplicationDialog,
                   iconLeft: PlusIcon
                 },
-                label: 'New Application'
+                label: 'New application'
               }
             ]"
           >
@@ -204,7 +204,7 @@
                   external: true,
                   iconLeft: BookOpenIcon
                 },
-                label: 'Open Docs'
+                label: 'Open docs'
               }
             ]"
           >

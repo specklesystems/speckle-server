@@ -1,7 +1,7 @@
 <template>
   <div class="md:max-w-xl md:mx-auto">
     <SettingsSectionHeader
-      title="User Profile"
+      title="User profile"
       text="Manage your profile information"
     />
     <SettingsUserProfileDetails :user="user" />

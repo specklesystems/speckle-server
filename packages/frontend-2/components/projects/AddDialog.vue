@@ -1,6 +1,5 @@
 <template>
-  <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
-    <template #header>Create new project</template>
+  <LayoutDialog v-model:open="open" title="test" fullscreen :buttons="dialogButtons">
     <form class="flex flex-col text-foreground" @submit="onSubmit">
       <div class="flex flex-col gap-3 mb-6">
         <FormTextInput

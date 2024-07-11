@@ -1,6 +1,6 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
-    <SettingsSectionHeader title="Active Users" text="Manage server members" />
+    <SettingsSectionHeader title="Active users" text="Manage server members" />
     <div class="flex flex-col-reverse md:flex-row">
       <FormTextInput
         name="search"
@@ -9,7 +9,7 @@
         full-width
         search
         :show-clear="!!searchString"
-        placeholder="Search Users"
+        placeholder="Search users"
         class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
         @update:model-value="debounceSearchUpdate"
         @change="($event) => searchUpdateHandler($event.value)"
@@ -24,7 +24,7 @@
       :columns="[
         { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
         { id: 'email', header: 'Email', classes: 'col-span-3 truncate' },
-        { id: 'emailState', header: 'Email State', classes: 'col-span-2' },
+        { id: 'emailState', header: 'Email state', classes: 'col-span-2' },
         { id: 'company', header: 'Company', classes: 'col-span-2 truncate' },
         { id: 'role', header: 'Role', classes: 'col-span-2' }
       ]"

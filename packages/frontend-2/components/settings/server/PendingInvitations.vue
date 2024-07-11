@@ -1,7 +1,7 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
     <SettingsSectionHeader
-      title="Pending Invitations"
+      title="Pending invitations"
       text="And overview of all your pending invititations"
     />
     <div class="flex flex-col-reverse md:flex-row">
@@ -12,7 +12,7 @@
         full-width
         search
         :show-clear="!!searchString"
-        placeholder="Search Invitations"
+        placeholder="Search invitations"
         class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
         @update:model-value="debounceSearchUpdate"
         @change="($event) => searchUpdateHandler($event.value)"
@@ -26,8 +26,8 @@
       class="mt-6 md:mt-8"
       :columns="[
         { id: 'email', header: 'Email', classes: 'col-span-5 truncate' },
-        { id: 'invitedBy', header: 'Invited By', classes: 'col-span-4' },
-        { id: 'resend', header: '', classes: 'col-span-3' }
+        { id: 'invitedBy', header: 'Invited by', classes: 'col-span-4' },
+        { id: 'resend', header: 'Resend', classes: 'col-span-3' }
       ]"
       :items="invites"
       :buttons="[
@@ -60,8 +60,8 @@
         >
           {{
             successfullyResentInvites.includes(item.id)
-              ? 'Invitation Resent'
-              : 'Resend Invitation'
+              ? 'Invitation resent'
+              : 'Resend invitation'
           }}
         </FormButton>
       </template>

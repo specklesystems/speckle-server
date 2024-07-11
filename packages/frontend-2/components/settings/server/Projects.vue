@@ -9,7 +9,7 @@
         full-width
         search
         :show-clear="!!searchString"
-        placeholder="Search Projects"
+        placeholder="Search projects"
         class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
         @update:model-value="debounceSearchUpdate"
         @change="($event) => searchUpdateHandler($event.value)"

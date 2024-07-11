@@ -2,7 +2,7 @@
   <div class="md:max-w-xl md:mx-auto">
     <SettingsSectionHeader title="General" text="Manage general server information" />
     <div class="flex flex-col space-y-6">
-      <SettingsSectionHeader title="Server Details" subheading />
+      <SettingsSectionHeader title="Server details" subheading />
       <form class="flex flex-col gap-2" @submit="onSubmit">
         <div class="flex flex-col gap-4">
           <FormTextInput
@@ -35,9 +35,9 @@
           <FormTextInput
             v-model="adminContact"
             color="foundation"
-            label="Admin Email"
+            label="Admin email"
             name="adminEmail"
-            placeholder="Admin Email"
+            placeholder="Admin email"
             show-label
             type="email"
           />
@@ -63,7 +63,7 @@
             />
           </div>
           <div>
-            <FormButton color="default" @click="onSubmit">Save Changes</FormButton>
+            <FormButton color="default" @click="onSubmit">Save changes</FormButton>
           </div>
         </div>
       </form>

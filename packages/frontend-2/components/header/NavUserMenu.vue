@@ -30,7 +30,7 @@
               :href="connectorsPageUrl"
             >
               <CloudArrowDownIcon class="w-5 h-5" />
-              Connector Downloads
+              Connector downloads
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
@@ -68,7 +68,7 @@
               "
             >
               <ServerStackIcon class="w-5 h-5" />
-              Server Settings
+              Server settings
             </NuxtLink>
           </MenuItem>
           <MenuItem v-slot="{ active }">
@@ -118,7 +118,7 @@
               @click="logout"
             >
               <ArrowLeftOnRectangleIcon class="w-5 h-5" />
-              Sign Out
+              Sign out
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="!activeUser && loginUrl" v-slot="{ active }">
