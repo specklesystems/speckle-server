@@ -1,4 +1,6 @@
 import { LogicError } from '@speckle/ui-components'
+import { provideApolloClient } from '@vue/apollo-composable'
+import { useApolloClientFromNuxt } from '~/lib/common/composables/graphql'
 import { fakeMixpanelClient, type MixpanelClient } from '~/lib/common/helpers/mp'
 
 /**
@@ -8,6 +10,7 @@ import { fakeMixpanelClient, type MixpanelClient } from '~/lib/common/helpers/mp
 
 export default defineNuxtPlugin(async () => {
   const logger = useLogger()
+  const apollo = useApolloClientFromNuxt()
 
   let mixpanel: MixpanelClient | undefined = undefined
 
@@ -15,7 +18,9 @@ export default defineNuxtPlugin(async () => {
     // Dynamic import to allow suppressing loading errors that happen because of adblock
     const builder = (await import('~/lib/core/clients/mp'))
       .useClientsideMixpanelClientBuilder
-    const build = builder()
+
+    // Not sure why, but apollo client is inaccessible so we have to explicitly provide it
+    const build = provideApolloClient(apollo)(() => builder())
     mixpanel = (await build()) || undefined
   } catch (e) {
     logger.warn(e, 'Failed to load mixpanel in CSR')
