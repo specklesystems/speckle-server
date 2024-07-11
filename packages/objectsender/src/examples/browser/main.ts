@@ -1,4 +1,4 @@
-import { Base, Chunkable, Detach, send as objectSend } from '../../index'
+import { Base, Chunkable, Detach, send as objectSend, SendResult } from '../../index'
 import { createCommit, createProject } from './utils'
 
 interface ExampleAppWindow extends Window {
@@ -69,7 +69,7 @@ appWindow.loadData = async () => {
   }
 
   const t0 = performance.now()
-  const numberOfElements = 800
+  const numberOfElements = 8000
   const meshesPerElement = 10
   const verticesPerMesh = 900
 
@@ -86,7 +86,7 @@ appWindow.loadData = async () => {
     )
 
   const model = new Collection<Asset>(elements)
-  let result = undefined
+  let result: SendResult | undefined = undefined
   let commitDetails: unknown = undefined
   try {
     result = await objectSend(model, sendParams)
@@ -101,7 +101,7 @@ appWindow.loadData = async () => {
   const t1 = performance.now()
   console.log(`Time taken: ${(t1 - t0) / 1000}s.`)
   console.log(`Result: ${JSON.stringify(result)}`)
-  console.log(`Commit details: ${JSON.stringify(commitDetails)}`)
+  console.log(`Commit ID: ${JSON.stringify(commitDetails)}`)
 }
 export class Mesh extends Base {
   @Detach()
