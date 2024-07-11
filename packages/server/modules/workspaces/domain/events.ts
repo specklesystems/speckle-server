@@ -14,22 +14,12 @@ export type WorkspaceEvents = (typeof WorkspaceEvents)[keyof typeof WorkspaceEve
 
 type WorkspaceCreatedPayload = Workspace & {
   createdByUserId: string
-  eventName: typeof WorkspaceEvents.Created
 }
-type WorkspaceRoleDeletedPayload = WorkspaceAcl & {
-  eventName: typeof WorkspaceEvents.RoleDeleted
-}
-type WorkspaceRoleUpdatedPayload = WorkspaceAcl & {
-  eventName: typeof WorkspaceEvents.RoleUpdated
-}
-
-// type AllWorkspaceEventPayloads = WorkspaceCreatedPayload | WorkspaceRoleDeletedPayload
-
-export const AllWorkspaceEvents = `${workspaceEventPrefix}*` as const
+type WorkspaceRoleDeletedPayload = WorkspaceAcl
+type WorkspaceRoleUpdatedPayload = WorkspaceAcl
 
 export type WorkspaceEventsPayloads = {
   [WorkspaceEvents.Created]: WorkspaceCreatedPayload
   [WorkspaceEvents.RoleDeleted]: WorkspaceRoleDeletedPayload
   [WorkspaceEvents.RoleUpdated]: WorkspaceRoleUpdatedPayload
-  // [AllWorkspaceEvents]: AllWorkspaceEventPayloads
 }

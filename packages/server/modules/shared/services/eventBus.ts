@@ -1,22 +1,33 @@
 import {
-  WorkspaceEvents,
   WorkspaceEventsPayloads,
   workspaceEventNamespace
 } from '@/modules/workspaces/domain/events'
 import { MaybeAsync } from '@speckle/shared'
+import { UnionToIntersection } from 'type-fest'
 
 import EventEmitter from 'eventemitter2'
 
 type EventWildcard = '*'
 
-// type EventNamespace = 'workspaces' | 'test'
+type TestEvents = {
+  ['test.string']: string
+  ['test.number']: number
+}
 
-// type EventNamesByNamespace<T extends EventNamespace> =
-//   T extends 'test' ? 'foo' | 'bar'
-//   : T extends 'workspaces' ? WorkspaceEvents : never
+// we should only ever extend this type, other helper types will be derived from this
+type EventsByNamespace = {
+  test: TestEvents
+  [workspaceEventNamespace]: WorkspaceEventsPayloads
+}
 
-// type EventNamesByNamespace<T extends EventNamespace> = [T] extends ['workspaces'] ? WorkspaceEvents : [T] extends ['test'] ? 'foo' | 'bar' : never
+type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>
 
+// generated union to collect all event
+type EventNamesByNamespace = {
+  [Namespace in keyof EventsByNamespace]: keyof EventsByNamespace[Namespace]
+}
+
+// generated type for a top level wildcard one level nested wildcards per namespace and each possible event
 type EventSubscriptionKey =
   | EventWildcard
   | `${keyof EventNamesByNamespace}.${EventWildcard}`
@@ -24,74 +35,41 @@ type EventSubscriptionKey =
       [Namespace in keyof EventNamesByNamespace]: EventNamesByNamespace[Namespace]
     }[keyof EventNamesByNamespace]
 
-// const x: EventSubscriptionKey = ''
+// generated flatten of each specific event name with the emitted event type
+type EventPayloadsMap = UnionToIntersection<
+  EventPayloadsByNamespaceMap[keyof EventPayloadsByNamespaceMap]
+>
 
-// const x: EventNamesByNamespace['test'] = ''
+type EventNames = keyof EventPayloadsMap
 
-type EventPayloadsByNamespace = {
-  workspace: WorkspaceEventsPayloads
+type EventPayloadsByNamespaceMap = {
+  // for each event namespace
+  [Key in keyof EventsByNamespace]: {
+    // for each event
+    [EventName in keyof EventsByNamespace[Key]]: {
+      // create a type with they original event as the payload, and the eventName
+      eventName: EventName
+      payload: EventsByNamespace[Key][EventName]
+    }
+  }
 }
 
 type EventPayload<T extends EventSubscriptionKey> = T extends EventWildcard
-  ? /** All payloads */ unknown
-  : T extends `${infer Namespace}.${EventWildcard}`
-  ? Namespace extends keyof EventPayloadsByNamespace
-    ? EventPayloadsByNamespace[Namespace][keyof EventPayloadsByNamespace[Namespace]]
-    : never /** All playloads of namespace */
-  : T extends `${infer Namespace}.${infer Event}`
-  ? EventPayloadsByNamespace[Namespace extends keyof EventPayloadsByNamespace
-      ? Namespace
-      : never][`${Namespace}.${Event}` extends keyof EventPayloadsByNamespace[Namespace extends keyof EventPayloadsByNamespace
-      ? Namespace
-      : never]
-      ? `${Namespace}.${Event}`
-      : never]
+  ? // if event key is "*", get all events from the flat object
+    EventPayloadsMap[keyof EventPayloadsMap]
+  : // else if, the key is a "namespace.*" wildcard
+  T extends `${infer Namespace}.${EventWildcard}`
+  ? // the Namespace needs to extend the keys of the type, otherwise we never
+    Namespace extends keyof EventPayloadsByNamespaceMap
+    ? // get the union type of all possible events in a namespace
+      EventPayloadsByNamespaceMap[Namespace][keyof EventPayloadsByNamespaceMap[Namespace]]
+    : never
+  : // else if, the key is a "namespace.event" concrete key
+  T extends keyof EventPayloadsMap
+  ? EventPayloadsMap[T]
   : never
 
-// type EventNames<T extends EventNamespace> = T extends EventNamespace ? keyof WorkspaceEventsPayloads : never
-
-// type EventSubscriptionKey<T> = [T] extends [EventNamespace] ? EventWildcard | `${T}.${EventWildcard}` | `${T}.${EventNamesByNamespace[T]}` : never
-
-// const x: EventSubscriptionKey<'workspaces'> =
-
-type EventName<T extends EventSubscriptionKey> = T extends EventWildcard
-  ? unknown /** all event names */
-  : T extends `${infer U}.${EventWildcard}`
-  ? EventNamesByNamespace[U extends keyof EventNamesByNamespace
-      ? U
-      : never] /** all event names in namespace */
-  : T /** Only provided key */
-
-// type EventPayload<T extends EventSubscriptionKey, U = EventName<T>> = T extends
-
-type EventNamesByNamespace = {
-  test: 'foo' | 'bar'
-  [workspaceEventNamespace]: WorkspaceEvents
-}
-
-const listen = <T extends EventSubscriptionKey>(
-  eventKey: T,
-  handler: (payload: EventPayload<T>, eventName: EventName<T>) => void
-) => {
-  // TODO
-}
-
-listen('*', (payload, eventName) => {})
-
-listen('workspace.*', (payload, eventName) => {
-  switch (eventName) {
-    case 'workspace.created': {
-      payload
-    }
-    case 'workspace.role-deleted': {
-      payload
-    }
-  }
-})
-
-listen('workspace.created', (payload, eventName) => {})
-
-export function initializeEventBus<P extends Record<string, unknown>>() {
+export function initializeEventBus() {
   const emitter = new EventEmitter({ wildcard: true })
 
   return {
@@ -100,11 +78,12 @@ export function initializeEventBus<P extends Record<string, unknown>>() {
      * execute. Any errors thrown in the listeners will bubble up and throw from
      * the part of code that triggers this emit() call.
      */
-    emit: async <K extends keyof P & string>(
-      eventName: K,
-      payload: P[K] & { eventName: K }
+    emit: async <EventName extends EventNames>(
+      eventName: EventName,
+      payload: EventTypes[EventName]
     ): Promise<unknown[]> => {
-      return emitter.emitAsync(eventName, payload)
+      // curate the proper payload here and eventName object here, before emitting
+      return emitter.emitAsync(eventName, { payload, eventName })
     },
 
     /**
@@ -116,21 +95,12 @@ export function initializeEventBus<P extends Record<string, unknown>>() {
     listen: <K extends EventSubscriptionKey>(
       eventName: K,
       // we should add some error type object here with a type discriminator
-      handler: (
-        payload: EventPayload<K>,
-        eventName: EventName<K>
-      ) => MaybeAsync<unknown>
+      handler: (event: EventPayload<K>) => MaybeAsync<unknown>
     ) => {
-      emitter.on(
-        eventName,
-        function (payload: EventPayload<K>) {
-          return handler(payload, this.event)
-        },
-        {
-          async: true,
-          promisify: true
-        }
-      )
+      emitter.on(eventName, handler, {
+        async: true,
+        promisify: true
+      })
 
       return () => {
         emitter.removeListener(eventName, handler)
@@ -146,15 +116,11 @@ export function initializeEventBus<P extends Record<string, unknown>>() {
   }
 }
 
-type AllEventPayloads = WorkspaceEventsPayloads[keyof WorkspaceEventsPayloads]
-
-type EventBusPayloads = WorkspaceEventsPayloads & { '*': AllEventPayloads }
-
-type EventBus = ReturnType<typeof initializeEventBus<EventBusPayloads>>
+type EventBus = ReturnType<typeof initializeEventBus>
 
 let eventBus: EventBus
 
 export function getEventBus(): EventBus {
-  if (!eventBus) eventBus = initializeEventBus<EventBusPayloads>()
+  if (!eventBus) eventBus = initializeEventBus()
   return eventBus
 }
