@@ -10,7 +10,7 @@ export default defineNuxtRouteMiddleware((to) => {
     if (to.name !== 'model-viewer') {
       ssrContext.event.node.res.setHeader(
         'Content-Security-Policy',
-        'frame-ancestors "none"'
+        "frame-ancestors 'none'"
       )
     }
   }
