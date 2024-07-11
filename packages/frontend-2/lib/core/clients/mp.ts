@@ -19,7 +19,6 @@ function getMixpanelServerId(): string {
 /**
  * Composable that builds the user (re-)identification function. Needs to be invoked on app
  * init and when the active user changes (e.g. after signing out/in)
- * Note: The returned function will only work on the client-side
  */
 function useMixpanelUserIdentification() {
   if (import.meta.server) return { reidentify: () => void 0 }

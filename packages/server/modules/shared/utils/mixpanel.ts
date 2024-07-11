@@ -58,7 +58,8 @@ export function mixpanel(params: {
         ...MixpanelUtils.buildPropertiesPayload({
           distinctId: mixpanelUserId,
           query: req?.query || {},
-          headers: req?.headers || {}
+          headers: req?.headers || {},
+          remoteAddress: req?.socket?.remoteAddress
         }),
         ...getBaseTrackingProperties(),
         ...(extraProperties || {})

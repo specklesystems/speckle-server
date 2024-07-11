@@ -12,7 +12,7 @@ import { isFunction } from 'lodash-es'
 import { useWaitForActiveUser } from '~/lib/auth/composables/activeUser'
 
 /**
- * IMPORTANT: Do not import this on client-side, the code is only supposed to run in the browser
+ * IMPORTANT: Do not import this on client-side, the code is only supposed to run in SSR
  */
 
 let cachedInternalClient: Nullable<Mixpanel.Mixpanel> = null
@@ -85,8 +85,6 @@ export const useServersideMixpanelClientBuilder = () => {
         )
       })
     }
-
-    // track(`TEST! Visit from backend!`)
 
     return {
       ...fakeMixpanelClient(),

@@ -3,8 +3,8 @@ import { fakeMixpanelClient, type MixpanelClient } from '~/lib/common/helpers/mp
 import { useServersideMixpanelClientBuilder } from '~/lib/core/clients/mpServer'
 
 /**
- * mixpanel-browser only supports being ran on the client-side (hence the name)! So it's only going to be accessible
- * in client-side execution branches
+ * mixpanel only supports being ran on the server-side! So it's only going to be accessible
+ * in SSR execution branches
  */
 
 type LimitedMixpanel = MixpanelClient
