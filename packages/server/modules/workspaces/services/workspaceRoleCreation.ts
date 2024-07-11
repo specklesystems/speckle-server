@@ -1,6 +1,8 @@
+import { grantStreamPermissions as repoGrantStreamPermissions } from '@/modules/core/repositories/streams'
 import {
   DeleteWorkspaceRole,
   EmitWorkspaceEvent,
+  GetWorkspaceProjects,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   UpsertWorkspaceRole
@@ -8,8 +10,8 @@ import {
 import { WorkspaceAcl } from '@/modules/workspaces/domain/types'
 import { WorkspaceAdminRequiredError } from '@/modules/workspaces/errors/workspace'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/utils/isUserLastWorkspaceAdmin'
+import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/utils/mapWorkspaceRoleToProjectRole'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
 
 type WorkspaceRoleDeleteArgs = {
   userId: string
@@ -61,35 +63,24 @@ export const getWorkspaceRoleFactory =
     return await getWorkspaceRoleForUser({ userId, workspaceId })
   }
 
-/**
- * Given the workspace role being assigned to a user, return the role we should grant the user
- * for all projects in the workspace.
- */
-const mapWorkspaceRoleToDefaultProjectRole = (
-  workspaceRole: WorkspaceRoles
-): StreamRoles => {
-  switch (workspaceRole) {
-    case 'workspace:guest':
-    case 'workspace:member':
-      return 'stream:reviewer'
-    case 'workspace:admin':
-      return 'stream:owner'
-  }
-}
-
 export const setWorkspaceRoleFactory =
   ({
+    getWorkspaceProjects,
     getWorkspaceRoles,
     upsertWorkspaceRole,
-    emitWorkspaceEvent
+    emitWorkspaceEvent,
+    grantStreamPermissions
   }: {
+    getWorkspaceProjects: GetWorkspaceProjects
     getWorkspaceRoles: GetWorkspaceRoles
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
+    // TODO: Create `core` domain and import type from there
+    grantStreamPermissions: typeof repoGrantStreamPermissions
   }) =>
   async ({ userId, workspaceId, role }: WorkspaceAcl): Promise<void> => {
+    // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
-
     if (
       isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
       role !== 'workspace:admin'
@@ -97,8 +88,20 @@ export const setWorkspaceRoleFactory =
       throw new WorkspaceAdminRequiredError()
     }
 
+    // Perform upsert
     await upsertWorkspaceRole({ userId, workspaceId, role })
 
+    // Update user role in all workspace projects
+    // TODO: Should these be in a transaction with the workspace role change?
+    const projectRole = mapWorkspaceRoleToProjectRole(role)
+    const workspaceProjects = await getWorkspaceProjects({ workspaceId })
+    await Promise.all(
+      workspaceProjects.map((project) =>
+        grantStreamPermissions({ streamId: project.id, userId, role: projectRole })
+      )
+    )
+
+    // Emit new role
     await emitWorkspaceEvent({
       event: WorkspaceEvents.RoleUpdated,
       payload: { userId, workspaceId, role }
