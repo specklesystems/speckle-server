@@ -121,19 +121,19 @@ const bgAndBorderClasses = computed(() => {
   const variantsBgBorder = {
     subtle: [
       'bg-transparent border-transparent text-foreground',
-      'hover:bg-primary-muted focus-visible:border-foundation'
+      'hover:bg-primary-muted disabled:hover:bg-transparent focus-visible:border-foundation'
     ],
     outline: [
       'bg-foundation border-outline-2 text-foreground',
-      'hover:bg-primary-muted focus-visible:border-foundation'
+      'hover:bg-primary-muted disabled:hover:bg-foundation focus-visible:border-foundation'
     ],
     danger: [
       'bg-danger border-danger-darker text-foundation',
-      'hover:bg-danger-darker focus-visible:border-foundation'
+      'hover:bg-danger-darker disabled:hover:bg-danger focus-visible:border-foundation'
     ],
     primary: [
       'bg-primary border-outline-1 text-foreground-on-primary',
-      'hover:bg-primary-focus focus-visible:border-foundation'
+      'hover:bg-primary-focus disabled:hover:bg-primary focus-visible:border-foundation'
     ]
   }
 
@@ -237,7 +237,7 @@ const generalClasses = computed(() => {
     additionalClasses.push('max-w-max')
   }
   if (isDisabled.value) {
-    additionalClasses.push('cursor-not-allowed')
+    additionalClasses.push('cursor-not-allowed opacity-60')
   }
 
   return [...baseClasses, ...additionalClasses].join(' ')

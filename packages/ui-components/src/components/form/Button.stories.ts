@@ -10,17 +10,8 @@ import { rightClick } from '~~/src/helpers/testing'
 export default {
   component: FormButton,
   argTypes: {
-    color: {
-      options: [
-        'default',
-        'invert',
-        'danger',
-        'warning',
-        'success',
-        'card',
-        'secondary',
-        'info'
-      ],
+    variant: {
+      options: ['primary', 'outline', 'subtle', 'danger'],
       control: { type: 'select' }
     },
     to: {
