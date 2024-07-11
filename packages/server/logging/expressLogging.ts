@@ -37,6 +37,7 @@ export const LoggingExpressMiddleware = HttpLogger({
     }
 
     if (req.url === '/readiness' || req.url === '/liveness') return 'debug'
+    if (req.url === '/metrics') return 'debug'
     return 'info'
   },
 
