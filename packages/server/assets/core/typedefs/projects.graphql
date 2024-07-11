@@ -30,6 +30,7 @@ input ProjectCreateInput {
   name: String
   description: String
   visibility: ProjectVisibility
+  workspaceId: String
 }
 
 input ProjectUpdateRoleInput {
@@ -98,6 +99,11 @@ type ProjectMutations {
   Delete an existing project
   """
   delete(id: String!): Boolean! @hasServerRole(role: SERVER_USER)
+
+  """
+  Batch delete projects
+  """
+  batchDelete(ids: [String!]!): Boolean! @hasServerRole(role: SERVER_ADMIN)
 
   """
   Updates an existing project
