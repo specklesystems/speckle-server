@@ -1,4 +1,4 @@
-import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
+import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { createWorkspaceFactory } from '@/modules/workspaces/services/workspaceCreation'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
@@ -60,15 +60,15 @@ describe('Workspace services', () => {
     it('emits a workspace created event', async () => {
       const eventData = {
         isCalled: false,
-        event: '',
+        eventName: '',
         payload: {}
       }
       const createWorkspace = createWorkspaceFactory({
         upsertWorkspace: async () => {},
         upsertWorkspaceRole: async () => {},
-        emitWorkspaceEvent: async ({ event, payload }) => {
+        emitWorkspaceEvent: async ({ eventName, payload }) => {
           eventData.isCalled = true
-          eventData.event = event
+          eventData.eventName = eventName
           eventData.payload = payload
           return []
         },
@@ -88,7 +88,7 @@ describe('Workspace services', () => {
       })
 
       expect(eventData.isCalled).to.equal(true)
-      expect(eventData.event).to.equal('created')
+      expect(eventData.eventName).to.equal('created')
       expect(eventData.payload).to.deep.equal(workspace)
     })
   })
