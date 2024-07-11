@@ -1,3 +1,4 @@
+import { ResourceTargets } from '@/modules/serverinvites/helpers/inviteHelper'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { SetNonNullable } from 'type-fest'
 
@@ -8,7 +9,7 @@ export type ServerInviteRecord = {
   createdAt: Date
   used: boolean
   message: Nullable<string>
-  resourceTarget: Nullable<string>
+  resourceTarget: typeof ResourceTargets.Streams | null
   resourceId: Nullable<string>
   role: Nullable<string>
   token: string

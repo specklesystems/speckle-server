@@ -1,7 +1,7 @@
 import {
   WorkspaceEventsPayloads,
   workspaceEventNamespace
-} from '@/modules/workspaces/domain/events'
+} from '@/modules/workspacesCore/domain/events'
 import { MaybeAsync } from '@speckle/shared'
 import { UnionToIntersection } from 'type-fest'
 
@@ -78,12 +78,12 @@ export function initializeEventBus() {
      * execute. Any errors thrown in the listeners will bubble up and throw from
      * the part of code that triggers this emit() call.
      */
-    emit: async <EventName extends EventNames>(
-      eventName: EventName,
+    emit: async <EventName extends EventNames>(args: {
+      eventName: EventName
       payload: EventTypes[EventName]
-    ): Promise<unknown[]> => {
+    }): Promise<unknown[]> => {
       // curate the proper payload here and eventName object here, before emitting
-      return emitter.emitAsync(eventName, { payload, eventName })
+      return emitter.emitAsync(args.eventName, args)
     },
 
     /**

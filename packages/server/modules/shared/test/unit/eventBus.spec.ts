@@ -1,6 +1,6 @@
 import { getEventBus, initializeEventBus } from '@/modules/shared/services/eventBus'
-import { WorkspaceEvents } from '@/modules/workspaces/domain/events'
-import { Workspace } from '@/modules/workspaces/domain/types'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
@@ -9,7 +9,6 @@ const createFakeWorkspace = (): Workspace => {
   return {
     id: cryptoRandomString({ length: 10 }),
     description: cryptoRandomString({ length: 10 }),
-    createdByUserId: 'foo',
     logoUrl: null,
     name: cryptoRandomString({ length: 10 }),
     updatedAt: new Date(),
@@ -30,11 +29,11 @@ describe('Event Bus', () => {
         eventNames.push(eventName)
       })
 
-      await testEventBus.emit('test.number', 1)
+      await testEventBus.emit({ eventName: 'test.number', payload: 1 })
       expect(eventNames.length).to.equal(0)
 
       const eventName = 'test.string' as const
-      await testEventBus.emit(eventName, 'fake event')
+      await testEventBus.emit({ eventName, payload: 'fake event' })
 
       expect(eventNames.length).to.equal(2)
       expect(eventNames).to.deep.equal([eventName, eventName])
@@ -50,12 +49,12 @@ describe('Event Bus', () => {
         eventNumbers.push(2)
       })
 
-      await testEventBus.emit('test.string', 'fake event')
+      await testEventBus.emit({ eventName: 'test.string', payload: 'fake event' })
       expect(eventNumbers.sort((a, b) => a - b)).to.deep.equal([1, 2])
 
       listenerOff()
 
-      await testEventBus.emit('test.string', 'fake event')
+      await testEventBus.emit({ eventName: 'test.string', payload: 'fake event' })
       expect(eventNumbers.sort((a, b) => a - b)).to.deep.equal([1, 1, 2])
     })
     it('returns results from listeners to the emitter', async () => {
@@ -66,7 +65,10 @@ describe('Event Bus', () => {
       }))
 
       const lookWhatHappened = 'echo this back to me'
-      const results = await testEventBus.emit('test.string', lookWhatHappened)
+      const results = await testEventBus.emit({
+        eventName: 'test.string',
+        payload: lookWhatHappened
+      })
 
       expect(results.length).to.equal(1)
       expect(results[0]).to.deep.equal({ outcome: lookWhatHappened })
@@ -80,7 +82,7 @@ describe('Event Bus', () => {
 
       const lookWhatHappened = 'kabumm'
       try {
-        await testEventBus.emit('test.string', lookWhatHappened)
+        await testEventBus.emit({ eventName: 'test.string', payload: lookWhatHappened })
         throw new Error('this should have thrown by now')
       } catch (error) {
         if (error instanceof Error) {
@@ -101,12 +103,12 @@ describe('Event Bus', () => {
         eventNumbers.push(2)
       })
 
-      await testEventBus.emit('test.string', 'test')
+      await testEventBus.emit({ eventName: 'test.string', payload: 'test' })
       expect(eventNumbers.sort((a, b) => a - b)).to.deep.equal([1, 2])
 
       testEventBus.destroy()
 
-      await testEventBus.emit('test.string', 'test')
+      await testEventBus.emit({ eventName: 'test.string', payload: 'test' })
       expect(eventNumbers.sort((a, b) => a - b)).to.deep.equal([1, 2])
     })
   })
@@ -131,7 +133,7 @@ describe('Event Bus', () => {
         eventName: WorkspaceEvents.Created
       }
 
-      await bus1.emit(WorkspaceEvents.Created, workspacePayload)
+      await bus1.emit({ eventName: WorkspaceEvents.Created, payload: workspacePayload })
 
       expect(workspaces.length).to.equal(2)
       expect(workspaces).to.deep.equal([workspacePayload, workspacePayload])
@@ -156,9 +158,12 @@ describe('Event Bus', () => {
 
       const workspace = createFakeWorkspace()
 
-      await eventBus.emit(WorkspaceEvents.Created, {
-        ...workspace,
-        createdByUserId: cryptoRandomString({ length: 10 })
+      await eventBus.emit({
+        eventName: WorkspaceEvents.Created,
+        payload: {
+          ...workspace,
+          createdByUserId: cryptoRandomString({ length: 10 })
+        }
       })
 
       const workspaceAcl = {
@@ -167,9 +172,15 @@ describe('Event Bus', () => {
         role: Roles.Workspace.Member
       }
 
-      await eventBus.emit(WorkspaceEvents.RoleDeleted, workspaceAcl)
+      await eventBus.emit({
+        eventName: WorkspaceEvents.RoleDeleted,
+        payload: workspaceAcl
+      })
 
-      await eventBus.emit(WorkspaceEvents.RoleUpdated, workspaceAcl)
+      await eventBus.emit({
+        eventName: WorkspaceEvents.RoleUpdated,
+        payload: workspaceAcl
+      })
 
       expect([workspace.id, workspaceAcl.userId, 'default']).to.deep.equal(events)
     })

@@ -58,6 +58,16 @@ export = {
 
       return model
     },
+    async modelByName(parent, args, ctx) {
+      const model = await ctx.loaders.streams.getStreamBranchByName
+        .forStream(parent.id)
+        .load(args.name)
+      if (!model) {
+        throw new BranchNotFoundError('Model not found')
+      }
+
+      return model
+    },
     async modelsTree(parent, args) {
       return await getProjectTopLevelModelsTree(parent.id, args)
     },

@@ -52,6 +52,7 @@ import {
   TokenResourceIdentifier,
   TokenResourceIdentifierType
 } from '@/modules/core/domain/tokens/types'
+import { ProjectEvents, ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & {
@@ -105,6 +106,8 @@ export async function createStreamReturnRecord(
       creatorId: ownerId
     })
   }
+
+  await ProjectsEmitter.emit(ProjectEvents.Created, { project: stream })
 
   return stream
 }

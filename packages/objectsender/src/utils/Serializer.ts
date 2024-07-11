@@ -4,6 +4,7 @@ import { ITransport } from '../transports/ITransport'
 import { Base } from './Base'
 import { IDisposable } from './IDisposable'
 import { isObjectLike, get } from '#lodash'
+import { getChunkSize, isChunkable, isDetached } from './Decorators'
 
 type BasicSpeckleObject = Record<string, unknown> & {
   speckle_type: string
@@ -61,13 +62,22 @@ export class Serializer implements IDisposable {
         continue
       }
 
-      const isDetachedProp = propKey.startsWith('@')
+      const isDetachedProp = propKey.startsWith('@') || isDetached(obj, propKey)
 
       // 2. chunked arrays
       const isArray = Array.isArray(value)
-      const isChunked = isArray ? propKey.match(/^@\((\d*)\)/) : false // chunk syntax
+      const isChunked = isArray
+        ? isChunkable(obj, propKey) || propKey.match(/^@\((\d*)\)/)
+        : false // chunk syntax
+
       if (isArray && isChunked && value.length !== 0 && typeof value[0] !== 'object') {
-        const chunkSize = isChunked[1] !== '' ? parseInt(isChunked[1]) : this.chunkSize
+        let chunkSize = this.chunkSize
+        if (typeof isChunked === 'boolean') {
+          chunkSize = getChunkSize(obj, propKey)
+        } else {
+          chunkSize = isChunked[1] !== '' ? parseInt(isChunked[1]) : this.chunkSize
+        }
+
         const chunkRefs = []
 
         let chunk = new DataChunk()
@@ -83,7 +93,13 @@ export class Serializer implements IDisposable {
         }
 
         if (chunk.data.length !== 0) chunkRefs.push(await this.#handleChunk(chunk))
-        traversed[propKey.replace(isChunked[0], '')] = chunkRefs // strip chunk syntax
+
+        if (typeof isChunked === 'boolean') {
+          traversed[propKey] = chunkRefs // no need to strip chunk syntax
+        } else {
+          traversed[propKey.replace(isChunked[0], '')] = chunkRefs // strip chunk syntax
+        }
+
         continue
       }
 

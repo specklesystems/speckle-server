@@ -1,6 +1,6 @@
 'use strict'
 const knex = require(`@/db/knex`)
-const { ForbiddenError, ApolloError } = require('apollo-server-express')
+const { ForbiddenError } = require('apollo-server-express')
 const {
   pubsub,
   StreamSubscriptions,
@@ -35,12 +35,38 @@ async function validateScopes(scopes, scope) {
     throw new ForbiddenError(errMsg, { scope })
 }
 
+const getUserAclEntry = async ({ aclTableName, userId, resourceId }) => {
+  if (!userId) {
+    return null
+  }
+
+  const query = { userId }
+
+  // Different acl tables have different names for the resource id column
+  switch (aclTableName) {
+    case 'server_acl': {
+      // No mutation necessary
+      break
+    }
+    case 'stream_acl': {
+      query.resourceId = resourceId
+      break
+    }
+    case 'workspace_acl': {
+      query.workspaceId = resourceId
+      break
+    }
+  }
+
+  return await knex(aclTableName).select('*').where(query).first()
+}
+
 /**
  * Checks the userId against the resource's acl.
  * @param  {string | null | undefined} userId
  * @param  {string} resourceId
  * @param  {string} requiredRole
- * @param {import('@/modules/serverinvites/services/operations').TokenResourceIdentifier[] | undefined | null} [userResourceAccessLimits]
+ * @param {import('@/modules/core/domain/tokens/types').TokenResourceIdentifier[] | undefined | null} [userResourceAccessLimits]
  */
 async function authorizeResolver(
   userId,
@@ -54,7 +80,7 @@ async function authorizeResolver(
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
   const role = roles.find((r) => r.name === requiredRole)
-  if (!role) throw new ApolloError('Unknown role: ' + requiredRole)
+  if (!role) throw new ForbiddenError('Unknown role: ' + requiredRole)
 
   const resourceRuleType = roleResourceTypeToTokenResourceType(role.resourceTarget)
   const isResourceLimited =
@@ -80,14 +106,16 @@ async function authorizeResolver(
       .first()
     if (isPublic && role.weight < 200) return true
   } catch {
-    throw new ApolloError(
+    throw new ForbiddenError(
       `Resource of type ${role.resourceTarget} with ${resourceId} not found`
     )
   }
 
-  const userAclEntry = userId
-    ? await knex(role.aclTableName).select('*').where({ resourceId, userId }).first()
-    : null
+  const userAclEntry = await getUserAclEntry({
+    aclTableName: role.aclTableName,
+    userId,
+    resourceId
+  })
 
   if (!userAclEntry) {
     throw new ForbiddenError('You are not authorized to access this resource.')
