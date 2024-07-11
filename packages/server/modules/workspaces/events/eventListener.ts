@@ -3,9 +3,10 @@ import {
   ProjectEvents,
   ProjectEventsPayloads
 } from '@/modules/core/events/projectsEmitter'
-import { getWorkspaceMembersFactory } from '@/modules/workspaces/repositories/workspaces'
+import { getWorkspaceRolesFactory } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import { grantStreamPermissions } from '@/modules/core/repositories/streams'
+import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/utils/mapWorkspaceRoleToProjectRole'
 
 async function onProjectCreated(
   payload: ProjectEventsPayloads[typeof ProjectEvents.Created]
@@ -17,16 +18,15 @@ async function onProjectCreated(
   }
 
   // Assign project roles for all workspace members
-  const workspaceMembers = await getWorkspaceMembersFactory({ db })({
-    workspaceId,
-    // Do not grant project roles to guests
-    // TODO: Viewer roles?
-    roles: ['workspace:admin', 'workspace:member']
-  })
+  const workspaceMembers = await getWorkspaceRolesFactory({ db })({ workspaceId })
 
   await Promise.all(
-    workspaceMembers.map(({ userId }) =>
-      grantStreamPermissions({ streamId, userId, role: 'stream:reviewer' })
+    workspaceMembers.map(({ userId, role }) =>
+      grantStreamPermissions({
+        streamId,
+        userId,
+        role: mapWorkspaceRoleToProjectRole(role)
+      })
     )
   )
 }
