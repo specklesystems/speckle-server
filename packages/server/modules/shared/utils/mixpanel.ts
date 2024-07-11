@@ -1,9 +1,5 @@
-/* eslint-disable camelcase */
-import {
-  Optional,
-  resolveMixpanelUserId,
-  resolveMixpanelServerId
-} from '@speckle/shared'
+import { Optional, resolveMixpanelUserId } from '@speckle/shared'
+import * as MixpanelUtils from '@speckle/shared/dist/commonjs/observability/mixpanel.js'
 import {
   enableMixpanel,
   getServerOrigin,
@@ -11,23 +7,18 @@ import {
 } from '@/modules/shared/helpers/envHelper'
 import Mixpanel from 'mixpanel'
 import { mixpanelLogger } from '@/logging/logging'
+import type express from 'express'
 
 let client: Optional<Mixpanel.Mixpanel> = undefined
 let baseTrackingProperties: Optional<Record<string, string>> = undefined
 
-function getMixpanelServerId(debug = false): string {
-  const canonicalUrl = getServerOrigin()
-  const url = new URL(canonicalUrl)
-  return debug ? url.hostname : resolveMixpanelServerId(url.hostname)
-}
-
 function getBaseTrackingProperties() {
   if (baseTrackingProperties) return baseTrackingProperties
-  baseTrackingProperties = {
-    server_id: getMixpanelServerId(),
+  baseTrackingProperties = MixpanelUtils.buildBasePropertiesPayload({
     hostApp: 'serverside',
+    serverOrigin: getServerOrigin(),
     speckleVersion: getServerVersion()
-  }
+  })
 
   return baseTrackingProperties
 }
@@ -35,8 +26,9 @@ function getBaseTrackingProperties() {
 export function initialize() {
   if (client || !enableMixpanel()) return
 
-  client = Mixpanel.init('acd87c5a50b56df91a795e999812a3a4', {
-    host: 'analytics.speckle.systems'
+  client = MixpanelUtils.buildServerMixpanelClient({
+    tokenId: 'acd87c5a50b56df91a795e999812a3a4',
+    apiHostname: 'analytics.speckle.systems'
   })
 }
 
@@ -51,24 +43,24 @@ export function getClient() {
 /**
  * Mixpanel tracking helper. An abstraction layer over the client that makes it a bit nicer to work with.
  */
-export function mixpanel(params: { userEmail: Optional<string> }) {
-  const { userEmail } = params
+export function mixpanel(params: {
+  userEmail: Optional<string>
+  req: Optional<express.Request>
+}) {
+  const { userEmail, req } = params
   const mixpanelUserId = userEmail?.length
     ? resolveMixpanelUserId(userEmail)
     : undefined
 
-  const getUserIdentificationProperties = () => ({
-    ...(mixpanelUserId
-      ? {
-          distinct_id: mixpanelUserId
-        }
-      : {})
-  })
-
   return {
     track: async (eventName: string, extraProperties?: Record<string, unknown>) => {
       const payload = {
-        ...getUserIdentificationProperties(),
+        ...MixpanelUtils.buildPropertiesPayload({
+          distinctId: mixpanelUserId,
+          query: req?.query || {},
+          headers: req?.headers || {},
+          remoteAddress: req?.socket?.remoteAddress
+        }),
         ...getBaseTrackingProperties(),
         ...(extraProperties || {})
       }
@@ -81,11 +73,7 @@ export function mixpanel(params: { userEmail: Optional<string> }) {
               {
                 eventName,
                 payload,
-                err: err || false,
-                debug: {
-                  userEmail,
-                  serverHostname: getMixpanelServerId(true)
-                }
+                ...(err ? { err } : {})
               },
               'Mixpanel track() invoked'
             )
@@ -99,5 +87,7 @@ export function mixpanel(params: { userEmail: Optional<string> }) {
     }
   }
 }
+
+export type MixpanelClient = ReturnType<typeof mixpanel>
 
 export { resolveMixpanelUserId }

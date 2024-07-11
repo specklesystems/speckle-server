@@ -18,7 +18,7 @@
           color="danger"
           text
           :full-width="block"
-          @click="useInvite(false)"
+          @click="processInvite(false)"
         >
           Decline
         </FormButton>
@@ -27,7 +27,7 @@
           :size="buttonSize"
           class="px-4"
           :icon-left="CheckIcon"
-          @click="useInvite(true)"
+          @click="processInvite(true)"
         >
           Accept
         </FormButton>
@@ -53,12 +53,10 @@ import {
   useNavigateToLogin,
   useNavigateToRegistration
 } from '~~/lib/common/helpers/route'
-import { useProcessProjectInvite } from '~~/lib/projects/composables/projectManagement'
 import { usePostAuthRedirect } from '~~/lib/auth/composables/postAuthRedirect'
 import type { Optional } from '@speckle/shared'
 import { CheckIcon } from '@heroicons/vue/24/solid'
-import { useMixpanel } from '~~/lib/core/composables/mp'
-import { ToastNotificationType, useGlobalToast } from '~/lib/common/composables/toast'
+import { useProjectInviteManager } from '~/lib/projects/composables/invites'
 
 graphql(`
   fragment ProjectsInviteBanner on PendingStreamCollaborator {
@@ -83,7 +81,6 @@ const props = withDefaults(
   defineProps<{
     invite?: ProjectsInviteBannerFragment
     showProjectName?: boolean
-    autoAccept?: boolean
     /**
      * Render this as a big block, instead of a small row. Used in full-page project access error pages.
      */
@@ -94,14 +91,12 @@ const props = withDefaults(
 
 const route = useRoute()
 const { isLoggedIn } = useActiveUser()
-const processInvite = useProcessProjectInvite()
+const { useInvite } = useProjectInviteManager()
 const postAuthRedirect = usePostAuthRedirect()
 const goToLogin = useNavigateToLogin()
 const goToSignUp = useNavigateToRegistration()
-const { triggerNotification } = useGlobalToast()
 
 const loading = ref(false)
-const mp = useMixpanel()
 const token = computed(
   () => props.invite?.token || (route.query.token as Optional<string>)
 )
@@ -133,34 +128,19 @@ const mainInfoBlockClasses = computed(() => {
 const buttonSize = computed(() => (props.block ? 'lg' : 'sm'))
 const avatarSize = computed(() => (props.block ? 'xxl' : 'base'))
 
-const useInvite = async (accept: boolean) => {
+const processInvite = async (accept: boolean) => {
   if (!token.value || !props.invite) return
 
   loading.value = true
-  const success = await processInvite(
-    {
-      projectId: props.invite.projectId,
-      accept,
-      token: token.value
-    },
-    { inviteId: props.invite.id }
-  )
-  loading.value = false
-
-  if (!success) return
-
-  emit('processed', { accepted: accept })
-  if (accept) {
-    triggerNotification({
-      type: ToastNotificationType.Success,
-      title: "You've joined the project!"
-    })
-  }
-
-  mp.track('Invite Action', {
-    type: 'project invite',
-    accepted: accept
+  const success = await useInvite({
+    projectId: props.invite.projectId,
+    accept,
+    token: token.value,
+    inviteId: props.invite.id
   })
+  loading.value = false
+  if (!success) return
+  emit('processed', { accepted: accept })
 }
 
 const onLoginSignupClick = async () => {
@@ -176,17 +156,5 @@ const onLoginSignupClick = async () => {
   } else {
     await goToSignUp({ query })
   }
-}
-
-if (import.meta.client) {
-  watch(
-    () => props.autoAccept,
-    async (newVal, oldVal) => {
-      if (newVal && !oldVal) {
-        await useInvite(true)
-      }
-    },
-    { immediate: true }
-  )
 }
 </script>
