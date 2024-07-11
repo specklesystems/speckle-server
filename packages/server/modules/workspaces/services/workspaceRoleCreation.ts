@@ -1,12 +1,13 @@
-import { grantStreamPermissions } from '@/modules/core/repositories/streams'
 import {
   DeleteWorkspaceRole,
   EmitWorkspaceEvent,
-  GetWorkspaceProjects,
-  GetWorkspaceRole,
+  GetWorkspaceRoleForUser,
+  GetWorkspaceRoles,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceAcl } from '@/modules/workspaces/domain/types'
+import { WorkspaceAdminRequiredError } from '@/modules/workspaces/errors/workspace'
+import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/utils/isUserLastWorkspaceAdmin'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { StreamRoles, WorkspaceRoles } from '@speckle/shared'
 
@@ -17,9 +18,11 @@ type WorkspaceRoleDeleteArgs = {
 
 export const deleteWorkspaceRoleFactory =
   ({
+    getWorkspaceRoles,
     deleteWorkspaceRole,
     emitWorkspaceEvent
   }: {
+    getWorkspaceRoles: GetWorkspaceRoles
     deleteWorkspaceRole: DeleteWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
   }) =>
@@ -27,11 +30,19 @@ export const deleteWorkspaceRoleFactory =
     userId,
     workspaceId
   }: WorkspaceRoleDeleteArgs): Promise<WorkspaceAcl | null> => {
+    const workspaceRoles = await getWorkspaceRoles({ workspaceId })
+
+    if (isUserLastWorkspaceAdmin(workspaceRoles, userId)) {
+      throw new WorkspaceAdminRequiredError()
+    }
+
     const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
 
-    if (!!deletedRole) {
-      emitWorkspaceEvent({ event: WorkspaceEvents.RoleDeleted, payload: deletedRole })
+    if (!deletedRole) {
+      return null
     }
+
+    emitWorkspaceEvent({ event: WorkspaceEvents.RoleDeleted, payload: deletedRole })
 
     return deletedRole
   }
@@ -42,12 +53,12 @@ type WorkspaceRoleGetArgs = {
 }
 
 export const getWorkspaceRoleFactory =
-  ({ getWorkspaceRole }: { getWorkspaceRole: GetWorkspaceRole }) =>
+  ({ getWorkspaceRoleForUser }: { getWorkspaceRoleForUser: GetWorkspaceRoleForUser }) =>
   async ({
     userId,
     workspaceId
   }: WorkspaceRoleGetArgs): Promise<WorkspaceAcl | null> => {
-    return await getWorkspaceRole({ userId, workspaceId })
+    return await getWorkspaceRoleForUser({ userId, workspaceId })
   }
 
 /**
@@ -68,30 +79,26 @@ const mapWorkspaceRoleToDefaultProjectRole = (
 
 export const setWorkspaceRoleFactory =
   ({
-    getWorkspaceProjects,
+    getWorkspaceRoles,
     upsertWorkspaceRole,
     emitWorkspaceEvent
   }: {
-    getWorkspaceProjects: GetWorkspaceProjects
+    getWorkspaceRoles: GetWorkspaceRoles
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
   }) =>
   async ({ userId, workspaceId, role }: WorkspaceAcl): Promise<void> => {
+    const workspaceRoles = await getWorkspaceRoles({ workspaceId })
+
+    if (
+      isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
+      role !== 'workspace:admin'
+    ) {
+      throw new WorkspaceAdminRequiredError()
+    }
+
     await upsertWorkspaceRole({ userId, workspaceId, role })
 
-    // Update user role on workspace projects
-    // TODO: How to handle demotions, if a user was previously granted contributor/owner?
-    const projectRole = mapWorkspaceRoleToDefaultProjectRole(role)
-
-    const workspaceProjects = await getWorkspaceProjects({ workspaceId })
-
-    await Promise.all(
-      workspaceProjects.map(({ id }) =>
-        grantStreamPermissions({ streamId: id, userId, role: projectRole })
-      )
-    )
-
-    // TODO: Should we return the final record from `upsert`, or `get`, instead of emitting args directly?
     await emitWorkspaceEvent({
       event: WorkspaceEvents.RoleUpdated,
       payload: { userId, workspaceId, role }

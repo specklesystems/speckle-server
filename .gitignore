@@ -15,7 +15,6 @@ packages/*/dist-cjs
 .nyc_output
 coverage/
 .idea
-test-queries
 
 **/.DS_Store
 .nvmrc

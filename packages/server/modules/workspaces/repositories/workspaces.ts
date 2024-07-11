@@ -3,8 +3,9 @@ import {
   DeleteWorkspaceRole,
   GetWorkspace,
   GetWorkspaceProjects,
-  GetWorkspaceRole,
+  GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
+  GetWorkspaceRolesForUser,
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -40,74 +41,53 @@ export const upsertWorkspaceFactory =
       .merge(['description', 'logoUrl', 'name', 'updatedAt'])
   }
 
-export const getWorkspaceRoleFactory =
-  ({ db }: { db: Knex }): GetWorkspaceRole =>
-  async ({ userId, workspaceId }) => {
-    const acl = await tables
-      .workspacesAcl(db)
-      .select('*')
-      .where({ userId, workspaceId })
-      .first()
+export const getWorkspaceRolesFactory =
+  ({ db }: { db: Knex }): GetWorkspaceRoles =>
+  async ({ workspaceId }) => {
+    return await tables.workspacesAcl(db).select('*').where({ workspaceId })
+  }
 
-    return acl || null
+export const getWorkspaceRoleForUserFactory =
+  ({ db }: { db: Knex }): GetWorkspaceRoleForUser =>
+  async ({ userId, workspaceId }) => {
+    return (
+      (await tables
+        .workspacesAcl(db)
+        .select('*')
+        .where({ userId, workspaceId })
+        .first()) ?? null
+    )
+  }
+
+export const getWorkspaceRolesForUserFactory =
+  ({ db }: { db: Knex }): GetWorkspaceRolesForUser =>
+  async ({ userId }, options) => {
+    const workspaceIdFilter = options?.workspaceIdFilter ?? []
+
+    const query = tables.workspacesAcl(db).select('*').where({ userId })
+
+    if (workspaceIdFilter.length > 0) {
+      query.whereIn('workspaceId', workspaceIdFilter)
+    }
+
+    return await query
   }
 
 export const deleteWorkspaceRoleFactory =
   ({ db }: { db: Knex }): DeleteWorkspaceRole =>
   async ({ userId, workspaceId }) => {
-    const workspacesAclTable = tables.workspacesAcl(db)
+    const deletedRoles = await tables
+      .workspacesAcl(db)
+      .where({ workspaceId, userId })
+      .delete('*')
 
-    // Get current role
-    const currentRoleQuery = workspacesAclTable
-      .where('userId', userId)
-      .and.where('workspaceId', workspaceId)
-      .first()
-    const currentRole = await currentRoleQuery
-
-    if (!currentRole) {
+    if (deletedRoles.length === 0) {
       return null
     }
 
-    // Protect against removing last admin in workspace
-    const workspaceAdmins = await workspacesAclTable.where('role', 'workspace:admin')
-
-    const targetUserIsAdmin = currentRole.role === 'workspace:admin'
-    const targetUserIsLastAdmin = workspaceAdmins.length === 1
-
-    if (targetUserIsAdmin && targetUserIsLastAdmin) {
-      throw new Error('Cannot remove last admin in workspace.')
-    }
-
-    // Perform delete
-    await currentRoleQuery.delete()
-
-    return currentRole
-  }
-
-export const getWorkspaceMembersFactory =
-  ({ db }: { db: Knex }): GetWorkspaceRoles =>
-  async ({
-    workspaceId,
-    roles = ['workspace:admin', 'workspace:member', 'workspace:guest']
-  }): Promise<WorkspaceAcl[]> => {
-    const memberRoles = await tables
-      .workspacesAcl(db)
-      .select('*')
-      .where('workspaceId', workspaceId)
-      .and.whereIn('role', roles)
-
-    return memberRoles
-  }
-
-export const getWorkspaceProjectsFactory =
-  ({ db }: { db: Knex }): GetWorkspaceProjects =>
-  async ({ workspaceId }) => {
-    const projects = await tables
-      .streams(db)
-      .select('*')
-      .where('workspaceId', workspaceId)
-
-    return projects
+    // Given `workspaceId` and `userId` define a primary key for `workspace_acl` table,
+    // query returns either 0 or 1 row in all cases
+    return deletedRoles[0]
   }
 
 export const upsertWorkspaceRoleFactory =
@@ -119,27 +99,20 @@ export const upsertWorkspaceRoleFactory =
       throw new Error(`Unexpected workspace role provided: ${role}`)
     }
 
-    const workspacesAclTable = tables.workspacesAcl(db)
-
-    // Protect against removing last admin in workspace
-    const workspaceAdmins = await workspacesAclTable.where('role', 'workspace:admin')
-
-    const targetUserIsWorkspaceAdmin = workspaceAdmins.some(
-      (acl) => acl.userId === userId
-    )
-    const targetUserNextRoleIsNotAdmin = role !== 'workspace:admin'
-    const targetUserIsLastAdmin = workspaceAdmins.length === 1
-
-    if (
-      targetUserIsWorkspaceAdmin &&
-      targetUserNextRoleIsNotAdmin &&
-      targetUserIsLastAdmin
-    ) {
-      throw new Error('Cannot remove last admin in workspace.')
-    }
-
-    await workspacesAclTable
+    await tables
+      .workspacesAcl(db)
       .insert({ userId, workspaceId, role })
       .onConflict(['userId', 'workspaceId'])
       .merge(['role'])
+  }
+
+export const getWorkspaceProjectsFactory =
+  ({ db }: { db: Knex }): GetWorkspaceProjects =>
+  async ({ workspaceId }) => {
+    const projects = await tables
+      .streams(db)
+      .select('*')
+      .where('workspaceId', workspaceId)
+
+    return projects
   }

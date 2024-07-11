@@ -22,13 +22,9 @@ const {
 const {
   createCommitByBranchName,
   updateCommitAndNotify,
-  deleteCommitAndNotify
+  deleteCommitAndNotify,
+  markCommitReceivedAndNotify
 } = require('@/modules/core/services/commit/management')
-const {
-  addCommitReceivedActivity
-} = require('@/modules/activitystream/services/commitActivity')
-
-const { getUser } = require('../../services/users')
 
 const { RateLimitError } = require('@/modules/core/errors/ratelimit')
 const {
@@ -231,18 +227,12 @@ module.exports = {
         context.resourceAccessRules
       )
 
-      const commit = await getCommitById({
-        streamId: args.input.streamId,
-        id: args.input.commitId
+      await markCommitReceivedAndNotify({
+        input: args.input,
+        userId: context.userId
       })
-      const user = await getUser(context.userId)
 
-      if (commit && user) {
-        await addCommitReceivedActivity({ input: args.input, userId: user.id })
-        return true
-      }
-
-      return false
+      return true
     },
 
     async commitDelete(_parent, args, context) {

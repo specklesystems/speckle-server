@@ -1,11 +1,18 @@
 extend type Stream {
   object(id: String!): Object
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Project.object instead."
+    )
+}
+
+extend type Project {
+  object(id: String!): Object
 }
 
 type Object {
   id: String!
   speckleType: String
-  applicationId: String
+  applicationId: String @deprecated(reason: "Not implemented.")
   createdAt: DateTime
   totalChildrenCount: Int
   """
@@ -29,11 +36,16 @@ type Object {
 type ObjectCollection {
   totalCount: Int!
   cursor: String
-  objects: [Object]!
+  objects: [Object!]!
 }
 
 extend type Mutation {
-  objectCreate(objectInput: ObjectCreateInput!): [String]!
+  objectCreate(objectInput: ObjectCreateInput!): [String!]!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "streams:write")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 input ObjectCreateInput {

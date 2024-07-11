@@ -26,7 +26,8 @@ definePageMeta({
   middleware: ['require-valid-project'],
   pageTransition: false, // NOTE: transitions fuck viewer up
   layoutTransition: false,
-  key: '/projects/:id/models/resources' // To prevent controls flickering on resource url param changes
+  key: '/projects/:id/models/resources', // To prevent controls flickering on resource url param changes
+  name: 'model-viewer'
 })
 
 const ViewerScope = resolveComponent('ViewerScope')

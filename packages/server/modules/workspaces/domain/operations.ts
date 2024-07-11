@@ -3,7 +3,6 @@ import {
   WorkspaceEventsPayloads
 } from '@/modules/workspacesCore/domain/events'
 import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
-import { WorkspaceRoles } from '@speckle/shared'
 import { StreamRecord } from '@/modules/core/helpers/types'
 
 /** Workspace */
@@ -20,7 +19,7 @@ type GetWorkspaceArgs = {
 
 export type GetWorkspace = (args: GetWorkspaceArgs) => Promise<Workspace | null>
 
-/** WorkspaceRole */
+/** Workspace Roles */
 
 type DeleteWorkspaceRoleArgs = {
   workspaceId: string
@@ -31,21 +30,37 @@ export type DeleteWorkspaceRole = (
   args: DeleteWorkspaceRoleArgs
 ) => Promise<WorkspaceAcl | null>
 
-type GetWorkspaceRoleArgs = {
+type GetWorkspaceRolesArgs = {
   workspaceId: string
+}
+
+/** Get all roles in a given workspaces. */
+export type GetWorkspaceRoles = (args: GetWorkspaceRolesArgs) => Promise<WorkspaceAcl[]>
+
+type GetWorkspaceRoleForUserArgs = {
+  userId: string
+  workspaceId: string
+}
+
+/** Get role for given user in a specific workspace. */
+export type GetWorkspaceRoleForUser = (
+  args: GetWorkspaceRoleForUserArgs
+) => Promise<WorkspaceAcl | null>
+
+type GetWorkspaceRolesForUserArgs = {
   userId: string
 }
 
-export type GetWorkspaceRole = (
-  args: GetWorkspaceRoleArgs
-) => Promise<WorkspaceAcl | null>
-
-type GetWorkspaceRolesArgs = {
-  workspaceId: string
-  roles: WorkspaceRoles[]
+type GetWorkspaceRolesForUserOptions = {
+  /** If provided, limit results to roles in given workspaces. */
+  workspaceIdFilter?: string[]
 }
 
-export type GetWorkspaceRoles = (args: GetWorkspaceRolesArgs) => Promise<WorkspaceAcl[]>
+/** Get roles for given user across several (or all) workspaces. */
+export type GetWorkspaceRolesForUser = (
+  args: GetWorkspaceRolesForUserArgs,
+  options?: GetWorkspaceRolesForUserOptions
+) => Promise<WorkspaceAcl[]>
 
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
 

@@ -13,15 +13,7 @@ export const basicProjectFieldsFragment = gql`
   }
 `
 
-/**
- * query: String
-    orderBy: String
-    visibility: String
-    limit: Int! = 25
-    cursor: String = null
- */
-
-export const adminProjectList = gql`
+export const adminProjectListQuery = gql`
   query AdminProjectList(
     $query: String
     $orderBy: String
@@ -47,4 +39,35 @@ export const adminProjectList = gql`
   }
 
   ${basicProjectFieldsFragment}
+`
+
+export const getProjectObjectQuery = gql`
+  query GetProjectObject($projectId: String!, $objectId: String!) {
+    project(id: $projectId) {
+      object(id: $objectId) {
+        id
+        createdAt
+      }
+    }
+  }
+`
+
+export const createProjectMutation = gql`
+  mutation CreateProject($input: ProjectCreateInput!) {
+    projectMutations {
+      create(input: $input) {
+        ...BasicProjectFields
+      }
+    }
+  }
+
+  ${basicProjectFieldsFragment}
+`
+
+export const batchDeleteProjectsMutation = gql`
+  mutation BatchDeleteProjects($ids: [String!]!) {
+    projectMutations {
+      batchDelete(ids: $ids)
+    }
+  }
 `
