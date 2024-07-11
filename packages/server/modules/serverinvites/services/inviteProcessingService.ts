@@ -136,6 +136,8 @@ export const finalizeStreamInviteFactory =
     }
 
     // Delete all invites to this stream
+    // We're doing this before processing the invite, to prevent a PROJECT UPDATED event
+    // from being fired with the invites still attached
     await deleteInvitesByTarget(
       buildUserTarget(userId)!,
       ResourceTargets.Streams,
