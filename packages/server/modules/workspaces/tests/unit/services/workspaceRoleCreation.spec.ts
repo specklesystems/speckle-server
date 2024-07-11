@@ -21,6 +21,7 @@ describe('Workspace role services', () => {
       let storedRoles: WorkspaceAcl[] = [role]
 
       const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+        getWorkspaceProjects: async () => [],
         getWorkspaceRoles: async () => storedRoles,
         deleteWorkspaceRole: async ({ userId, workspaceId }) => {
           const role = storedRoles.find(
@@ -31,7 +32,8 @@ describe('Workspace role services', () => {
 
           return role ?? null
         },
-        emitWorkspaceEvent: async () => []
+        emitWorkspaceEvent: async () => [],
+        revokeStreamPermissions: async () => ({} as StreamRecord)
       })
 
       const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
@@ -54,6 +56,7 @@ describe('Workspace role services', () => {
       const storedRoles: WorkspaceAcl[] = [role]
 
       const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+        getWorkspaceProjects: async () => [],
         getWorkspaceRoles: async () => storedRoles,
         deleteWorkspaceRole: async () => {
           return storedRoles[0]
@@ -64,7 +67,8 @@ describe('Workspace role services', () => {
           eventData.payload = payload
 
           return []
-        }
+        },
+        revokeStreamPermissions: async () => ({} as StreamRecord)
       })
 
       await deleteWorkspaceRole({ userId, workspaceId })
@@ -82,6 +86,7 @@ describe('Workspace role services', () => {
       let storedRoles: WorkspaceAcl[] = [role]
 
       const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+        getWorkspaceProjects: async () => [],
         getWorkspaceRoles: async () => storedRoles,
         deleteWorkspaceRole: async ({ userId, workspaceId }) => {
           const role = storedRoles.find(
@@ -92,10 +97,45 @@ describe('Workspace role services', () => {
 
           return role ?? null
         },
-        emitWorkspaceEvent: async () => []
+        emitWorkspaceEvent: async () => [],
+        revokeStreamPermissions: async () => ({} as StreamRecord)
       })
 
       await expectToThrow(() => deleteWorkspaceRole({ userId, workspaceId }))
+    })
+    it('deletes workspace project roles', async () => {
+      const userId = cryptoRandomString({ length: 10 })
+      const workspaceId = cryptoRandomString({ length: 10 })
+      const projectId = cryptoRandomString({ length: 10 })
+
+      const workspaceRole: WorkspaceAcl = {
+        userId,
+        workspaceId,
+        role: Roles.Workspace.Member
+      }
+      const workspaceRoles: WorkspaceAcl[] = [workspaceRole]
+      const workspaceProjects: StreamRecord[] = [{ id: projectId } as StreamRecord]
+
+      let projectRoles: StreamAclRecord[] = [
+        { userId, role: Roles.Stream.Contributor, resourceId: projectId }
+      ]
+
+      const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+        getWorkspaceProjects: async () => workspaceProjects,
+        getWorkspaceRoles: async () => workspaceRoles,
+        deleteWorkspaceRole: async () => ({} as WorkspaceAcl),
+        emitWorkspaceEvent: async () => [],
+        revokeStreamPermissions: async ({ streamId, userId }) => {
+          projectRoles = projectRoles.filter(
+            (role) => role.resourceId !== streamId && role.userId !== userId
+          )
+          return {} as StreamRecord
+        }
+      })
+
+      await deleteWorkspaceRole({ userId, workspaceId })
+
+      expect(projectRoles.length).to.equal(0)
     })
   })
 

@@ -1,4 +1,7 @@
-import { grantStreamPermissions as repoGrantStreamPermissions } from '@/modules/core/repositories/streams'
+import {
+  grantStreamPermissions as repoGrantStreamPermissions,
+  revokeStreamPermissions as repoRevokeStreamPermissions
+} from '@/modules/core/repositories/streams'
 import {
   DeleteWorkspaceRole,
   EmitWorkspaceEvent,
@@ -20,30 +23,43 @@ type WorkspaceRoleDeleteArgs = {
 
 export const deleteWorkspaceRoleFactory =
   ({
+    getWorkspaceProjects,
     getWorkspaceRoles,
     deleteWorkspaceRole,
-    emitWorkspaceEvent
+    emitWorkspaceEvent,
+    revokeStreamPermissions
   }: {
+    getWorkspaceProjects: GetWorkspaceProjects
     getWorkspaceRoles: GetWorkspaceRoles
     deleteWorkspaceRole: DeleteWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
+    revokeStreamPermissions: typeof repoRevokeStreamPermissions
   }) =>
   async ({
     userId,
     workspaceId
   }: WorkspaceRoleDeleteArgs): Promise<WorkspaceAcl | null> => {
+    // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
-
     if (isUserLastWorkspaceAdmin(workspaceRoles, userId)) {
       throw new WorkspaceAdminRequiredError()
     }
 
+    // Perform delete
     const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
-
     if (!deletedRole) {
       return null
     }
 
+    // Delete workspace project roles
+    const workspaceProjects = await getWorkspaceProjects({ workspaceId })
+    await Promise.all(
+      workspaceProjects.map(({ id: streamId }) =>
+        revokeStreamPermissions({ streamId, userId })
+      )
+    )
+
+    // Emit deleted role
     emitWorkspaceEvent({ event: WorkspaceEvents.RoleDeleted, payload: deletedRole })
 
     return deletedRole
