@@ -1,14 +1,15 @@
 import { useTimeoutFn } from '@vueuse/core'
-import type { Nullable } from '@speckle/shared'
-import { useScopedState } from '~/lib/common/composables/scopedState'
-import type { Ref } from 'vue'
+import type { Optional } from '@speckle/shared'
 import type { ToastNotification } from '@speckle/ui-components'
 import { ToastNotificationType } from '@speckle/ui-components'
+import { useSynchronizedCookie } from '~/lib/common/composables/reactiveCookie'
 
+/**
+ * Persisting toast state between reqs and between CSR & SSR loads so that we can trigger
+ * toasts anywhere and anytime
+ */
 const useGlobalToastState = () =>
-  useScopedState<Ref<Nullable<ToastNotification>>>('global-toast-state', () =>
-    ref(null)
-  )
+  useSynchronizedCookie<Optional<ToastNotification>>('global-toast-state')
 
 /**
  * Set up a new global toast manager/renderer (don't use this in multiple components that live at the same time)
@@ -19,6 +20,11 @@ export function useGlobalToastManager() {
   const currentNotification = ref(stateNotification.value)
   const readOnlyNotification = computed(() => currentNotification.value)
 
+  const dismiss = () => {
+    currentNotification.value = undefined
+    stateNotification.value = undefined
+  }
+
   const { start, stop } = useTimeoutFn(() => {
     dismiss()
   }, 4000)
@@ -27,6 +33,10 @@ export function useGlobalToastManager() {
     stateNotification,
     (newVal) => {
       if (!newVal) return
+      if (import.meta.server) {
+        currentNotification.value = newVal
+        return
+      }
 
       // First dismiss old notification, then set a new one on next tick
       // this is so that the old one actually disappears from the screen for the user,
@@ -41,13 +51,8 @@ export function useGlobalToastManager() {
         if (newVal.autoClose !== false) start()
       })
     },
-    { deep: true }
+    { deep: true, immediate: true }
   )
-
-  const dismiss = () => {
-    currentNotification.value = null
-    stateNotification.value = null
-  }
 
   return { currentNotification: readOnlyNotification, dismiss }
 }
@@ -57,12 +62,17 @@ export function useGlobalToastManager() {
  */
 export function useGlobalToast() {
   const stateNotification = useGlobalToastState()
+  const logger = useLogger()
 
   /**
    * Trigger a new toast notification
    */
   const triggerNotification = (notification: ToastNotification) => {
     stateNotification.value = notification
+
+    if (import.meta.server) {
+      logger.info('Queued SSR toast notification', notification)
+    }
   }
 
   return { triggerNotification }

@@ -4,7 +4,6 @@
       v-if="invite"
       :invite="invite"
       :show-stream-name="false"
-      :auto-accept="shouldAutoAcceptInvite"
       block
       @processed="onProcessed"
     />
@@ -12,7 +11,7 @@
   </NuxtErrorBoundary>
 </template>
 <script setup lang="ts">
-import type { Optional } from '@speckle/shared'
+import { waitForever, type Optional } from '@speckle/shared'
 import { useQuery } from '@vue/apollo-composable'
 import { projectRoute, useNavigateToHome } from '~/lib/common/helpers/route'
 import { projectInviteQuery } from '~~/lib/projects/graphql/queries'
@@ -23,7 +22,6 @@ const goHome = useNavigateToHome()
 
 const token = computed(() => route.query.token as Optional<string>)
 const projectId = computed(() => route.params.id as Optional<string>)
-const shouldAutoAcceptInvite = computed(() => route.query.accept === 'true')
 
 const { result } = useQuery(
   projectInviteQuery,
@@ -48,6 +46,7 @@ const onProcessed = async (val: { accepted: boolean }) => {
     } else {
       window.location.reload()
     }
+    await waitForever() // to prevent UI changes while reload is happening
   } else {
     await goHome()
   }
