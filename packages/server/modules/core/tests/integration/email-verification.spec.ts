@@ -1,14 +1,14 @@
 import { describe } from 'mocha'
-import { updateUserEmailFactory } from '../../repositories/userEmails'
+import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import knexInstance from '@/db/knex'
 import { createUser } from '@/modules/core/services/users'
 import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/test-helpers'
-import { USER_EMAILS_TABLE_NAME } from '../../constants'
-import { markUserEmailAsVerifiedFactory } from '../../services/verification'
+import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/email-verification'
 import { expect } from 'chai'
+import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 
 const userEmailTable = knexInstance(USER_EMAILS_TABLE_NAME)
 

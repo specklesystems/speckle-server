@@ -28,9 +28,7 @@ const {
 const { Roles } = require('@speckle/shared')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
-const {
-  createUserEmailFactory
-} = require('@/modules/user-emails/repositories/userEmails')
+const { createUserEmailFactory } = require('@/modules/core/repositories/userEmails')
 const knexInstance = require('@/db/knex')
 
 const _changeUserRole = async ({ userId, role }) =>

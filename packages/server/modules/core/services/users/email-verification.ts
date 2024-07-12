@@ -1,4 +1,7 @@
-import { MarkUserEmailAsVerified, UpdateUserEmail } from '../domain/operations'
+import {
+  MarkUserEmailAsVerified,
+  UpdateUserEmail
+} from '@/modules/core/domain/userEmails/operations'
 
 export const markUserEmailAsVerifiedFactory =
   ({

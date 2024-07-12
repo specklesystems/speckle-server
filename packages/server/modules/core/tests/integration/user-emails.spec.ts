@@ -3,10 +3,13 @@ import { createUser } from '@/modules/core/services/users'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import { getUserByEmail, markUserAsVerified } from '@/modules/core/repositories/users'
-import { deleteUserEmailFactory } from '@/modules/user-emails/repositories/userEmails'
+import { deleteUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import knexInstance from '@/db/knex'
-import { createRandomEmail, createRandomPassword } from '../../helpers/test-helpers'
-import { USER_EMAILS_TABLE_NAME } from '@/modules/user-emails/constants'
+import {
+  createRandomEmail,
+  createRandomPassword
+} from '@/modules/core/helpers/test-helpers'
+import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 
 const userEmailTable = knexInstance(USER_EMAILS_TABLE_NAME)
 

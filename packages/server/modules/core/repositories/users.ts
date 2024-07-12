@@ -6,9 +6,9 @@ import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserValidationError } from '@/modules/core/errors/user'
 import { Knex } from 'knex'
 import { Roles, ServerRoles } from '@speckle/shared'
-import { updateUserEmailFactory } from '@/modules/user-emails/repositories/userEmails'
+import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import knexInstance from '@/db/knex'
-import { markUserEmailAsVerifiedFactory } from '@/modules/user-emails/services/verification'
+import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/email-verification'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**

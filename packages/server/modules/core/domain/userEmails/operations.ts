@@ -1,4 +1,4 @@
-import { UserEmail } from './types'
+import { UserEmail } from '@/modules/core/domain/userEmails/types'
 
 export type CreateUserEmail = (
   userEmail: Pick<UserEmail, 'email' | 'userId'> & { primary?: boolean }

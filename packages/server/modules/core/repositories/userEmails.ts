@@ -1,8 +1,12 @@
 import { Knex } from 'knex'
 import crs from 'crypto-random-string'
-import { CreateUserEmail, DeleteUserEmail, UpdateUserEmail } from '../domain/operations'
-import { UserEmail } from '../domain/types'
-import { USER_EMAILS_TABLE_NAME } from '../constants'
+import {
+  CreateUserEmail,
+  DeleteUserEmail,
+  UpdateUserEmail
+} from '@/modules/core/domain/userEmails/operations'
+import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 
 export const createUserEmailFactory =
   ({ db }: { db: Knex }): CreateUserEmail =>

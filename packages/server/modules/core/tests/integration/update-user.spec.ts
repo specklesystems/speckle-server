@@ -1,11 +1,14 @@
 import { expect } from 'chai'
-import { createUser, getUser } from '../../services/users'
+import { createUser, getUser } from '@/modules/core/services/users'
 import { beforeEach, describe, it } from 'mocha'
 import { beforeEachContext } from '@/test/hooks'
 import knexInstance from '@/db/knex'
-import { createRandomEmail, createRandomPassword } from '../../helpers/test-helpers'
-import { USER_EMAILS_TABLE_NAME } from '@/modules/user-emails/constants'
-import { updateUser } from '../../repositories/users'
+import {
+  createRandomEmail,
+  createRandomPassword
+} from '@/modules/core/helpers/test-helpers'
+import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
+import { updateUser } from '@/modules/core/repositories/users'
 
 const db = knexInstance
 const userEmailsDB = db(USER_EMAILS_TABLE_NAME)
