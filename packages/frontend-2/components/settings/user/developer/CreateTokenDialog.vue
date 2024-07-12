@@ -5,7 +5,7 @@
     :buttons="dialogButtons"
     prevent-close-on-click-outside
   >
-    <template #header>Create Token</template>
+    <template #header>Create token</template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput

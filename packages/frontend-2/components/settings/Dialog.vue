@@ -1,10 +1,12 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    :title="isMobile ? (selectedMenuItem ? selectedMenuItem?.title : 'Settings') : null"
+    v-bind="
+      isMobile ? { title: selectedMenuItem ? selectedMenuItem.title : 'Settings' } : {}
+    "
     fullscreen
     :show-back-button="!!(isMobile && selectedMenuItem)"
-    @back="setSelectedMenuItem(null)"
+    @back="onBack"
   >
     <div class="w-full h-full flex">
       <LayoutSidebar
@@ -60,6 +62,7 @@
 </template>
 
 <script setup lang="ts">
+import { find, flatMap } from 'lodash-es'
 import type { defineComponent } from 'vue'
 import SettingsUserProfile from './user/Profile.vue'
 import SettingsUserNotifications from './user/Notifications.vue'
@@ -90,58 +93,55 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   open: boolean
-  route?: string
-  originalRoute?: string
+  route: string
+  originalRoute: string
 }>()
 
 const router = useRouter()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smallerOrEqual('md')
-const selectedMenuItem: MenuItem | null = shallowRef(null)
-const sidebarConfig: {
-  [key: string]: {
-    [key: string]: MenuItem
-  }
-} = {
-  user: {
-    profile: {
+
+const selectedMenuItem = shallowRef<MenuItem | null>(null)
+const sidebarConfig: { [key: string]: MenuItem[] } = {
+  user: [
+    {
       title: 'Profile',
       component: SettingsUserProfile,
       path: settingsRoutes.user.profile
     },
-    notifications: {
+    {
       title: 'Notifications',
       component: SettingsUserNotifications,
       path: settingsRoutes.user.notifications
     },
-    developerSettings: {
+    {
       title: 'Developer settings',
       component: SettingsUserDeveloper,
       path: settingsRoutes.user.developerSettings
     }
-  },
-  server: {
-    general: {
+  ],
+  server: [
+    {
       title: 'General',
       component: SettingsServerGeneral,
       path: settingsRoutes.server.general
     },
-    projects: {
+    {
       title: 'Projects',
       component: SettingsServerProjects,
       path: settingsRoutes.server.projects
     },
-    activeUsers: {
+    {
       title: 'Active users',
       component: SettingsServerActiveUsers,
       path: settingsRoutes.server.activeUsers
     },
-    pendingInvitations: {
+    {
       title: 'Pending invitations',
       component: SettingsServerPendingInvitations,
       path: settingsRoutes.server.pendingInvitations
     }
-  }
+  ]
 }
 
 const isOpen = computed({
@@ -154,31 +154,30 @@ watch(
   (newVal, oldVal) => {
     if (newVal && !oldVal) {
       if (isMobile.value) {
-        history.pushState({}, '', '/settings')
+        history.pushState({}, '', settingsRoutes.default.settings)
       } else {
-        // If not on mobile find the component matching the route
-        for (const group in sidebarConfig) {
-          for (const key in sidebarConfig[group]) {
-            const item = sidebarConfig[group][key]
-            if (item.path === props.route) {
-              setSelectedMenuItem(item)
-            }
-          }
+        const foundItem = find(flatMap(sidebarConfig), { path: props.route })
+        if (foundItem) {
+          setSelectedMenuItem(foundItem)
         }
       }
     } else if (!newVal && oldVal) {
-      // When closing the modal revert back to the original route
-      selectedMenuItem.value = null
       router.replace({ path: props.originalRoute ?? homeRoute, force: true })
     }
   },
   { immediate: true }
 )
 
-function setSelectedMenuItem(item: MenuItem | null): void {
+function setSelectedMenuItem(item: MenuItem): void {
   selectedMenuItem.value = item
-  if (typeof window !== 'undefined') {
-    history.pushState({}, '', item ? item.path : settingsRoutes.default.settings)
+
+  if (import.meta.browser) {
+    history.pushState({}, '', item.path)
   }
+}
+
+function onBack() {
+  selectedMenuItem.value = null
+  history.pushState({}, '', settingsRoutes.default.settingsh)
 }
 </script>

@@ -73,7 +73,7 @@ const notificationTypeMapping = ref({
 const localPreferences = ref({} as NotificationPreferences)
 
 const notificationPreferences = computed(
-  () => user.value.notificationPreferences as NotificationPreferences
+  () => user.value?.notificationPreferences as NotificationPreferences
 )
 
 const notificationChannels = computed(() => {

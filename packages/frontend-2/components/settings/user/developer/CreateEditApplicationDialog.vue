@@ -6,7 +6,7 @@
     prevent-close-on-click-outside
   >
     <template #header>
-      {{ props.application ? 'Edit Application' : 'Create Application' }}
+      {{ props.application ? 'Edit application' : 'Create application' }}
     </template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">

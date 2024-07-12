@@ -190,8 +190,8 @@ const route = useRoute()
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
-const settingsRoute = ref(null)
-const settingsOriginalRoute = ref(null)
+const settingsRoute = ref('')
+const settingsOriginalRoute = ref('')
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smallerOrEqual('md')
 const menuButtonId = useId()
@@ -216,7 +216,7 @@ watch(
   (newVal, oldVal) => {
     if (newVal && !oldVal) {
       showSettingsDialog.value = true
-      settingsRoute.value = getSettingsRoute(route.path)
+      settingsRoute.value = route.path
     }
   },
   { immediate: true }
