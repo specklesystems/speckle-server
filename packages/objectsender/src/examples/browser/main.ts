@@ -37,6 +37,7 @@ const getInputValue = (key: string) => {
 appWindow.onload = () => {
   const serverUrl = localStorage.getItem('serverUrl')
   const apiToken = localStorage.getItem('apiToken')
+  const numberElements = localStorage.getItem('numberElements')
 
   if (serverUrl) {
     setInputValue('serverUrl', serverUrl)
@@ -44,14 +45,19 @@ appWindow.onload = () => {
   if (apiToken) {
     setInputValue('apiToken', apiToken)
   }
+  if (numberElements) {
+    setInputValue('numberElements', numberElements)
+  }
 }
 
 appWindow.loadData = async () => {
   const serverUrl = getInputValue('serverUrl')
   const apiToken = getInputValue('apiToken')
+  const numberElements = getInputValue('numberElements')
 
   localStorage.setItem('serverUrl', serverUrl)
   localStorage.setItem('apiToken', apiToken)
+  localStorage.setItem('numberElements', numberElements)
 
   setInputValue('result', '...', { valueKey: 'textContent' })
 
@@ -69,14 +75,25 @@ appWindow.loadData = async () => {
   }
 
   const t0 = performance.now()
-  const numberOfElements = 8000
+  let numberOfElements: number = 0
+  try {
+    numberOfElements = parseInt(numberElements)
+  } catch (e) {
+    console.log(`Time of failure: ${new Date().toISOString()}`)
+    console.log(`Error: ${JSON.stringify(e)}`)
+    setInputValue('result', `Error: ${JSON.stringify(e)}`, {
+      valueKey: 'textContent'
+    })
+    // log utc timestamp
+    throw e
+  }
   const meshesPerElement = 10
   const verticesPerMesh = 900
 
   const elements = Array(numberOfElements)
     .fill(0)
     .map(
-      (v, i) =>
+      (_v, i) =>
         new Asset(
           Array(meshesPerElement)
             .fill(0)
@@ -87,13 +104,19 @@ appWindow.loadData = async () => {
 
   const model = new Collection<Asset>(elements)
   let result: SendResult | undefined = undefined
-  let commitDetails: unknown = undefined
+  let commitDetails: { data: { commitCreate: string } } | undefined = undefined
   try {
     result = await objectSend(model, sendParams)
-    commitDetails = await createCommit(result, { ...sendParams, modelName: 'main' })
+    commitDetails = (await createCommit(result, {
+      ...sendParams,
+      modelName: 'main'
+    })) as { data: { commitCreate: string } }
   } catch (e) {
     console.log(`Time of failure: ${new Date().toISOString()}`)
     console.log(`Error: ${JSON.stringify(e)}`)
+    setInputValue('result', `Error: ${JSON.stringify(e)}`, {
+      valueKey: 'textContent'
+    })
     // log utc timestamp
     throw e
   }
@@ -102,6 +125,9 @@ appWindow.loadData = async () => {
   console.log(`Time taken: ${(t1 - t0) / 1000}s.`)
   console.log(`Result: ${JSON.stringify(result)}`)
   console.log(`Commit ID: ${JSON.stringify(commitDetails)}`)
+  setInputValue('result', `Commit ID: ${commitDetails.data.commitCreate}`, {
+    valueKey: 'textContent'
+  })
 }
 export class Mesh extends Base {
   @Detach()
