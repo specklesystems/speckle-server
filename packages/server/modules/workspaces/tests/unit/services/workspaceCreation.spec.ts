@@ -3,6 +3,7 @@ import { createWorkspaceFactory } from '@/modules/workspaces/services/workspaceC
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
 describe('Workspace services', () => {
   describe('createWorkspaceFactory creates a function, that', () => {
@@ -88,7 +89,7 @@ describe('Workspace services', () => {
       })
 
       expect(eventData.isCalled).to.equal(true)
-      expect(eventData.eventName).to.equal('created')
+      expect(eventData.eventName).to.equal(WorkspaceEvents.Created)
       expect(eventData.payload).to.deep.equal(workspace)
     })
   })
