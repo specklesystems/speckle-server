@@ -90,7 +90,7 @@ describe('Workspace services', () => {
 
       expect(eventData.isCalled).to.equal(true)
       expect(eventData.eventName).to.equal(WorkspaceEvents.Created)
-      expect(eventData.payload).to.deep.equal(workspace)
+      expect(eventData.payload).to.deep.equal({ ...workspace, createdByUserId: userId })
     })
   })
 })
