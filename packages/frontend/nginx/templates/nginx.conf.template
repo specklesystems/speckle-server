@@ -103,6 +103,7 @@ http {
       index index.html;
       try_files $uri $uri/ /index.html;
       add_header Cache-Control "no-store, no-cache, must-revalidate";
+      add_header Content-Security-Policy "frame-ancestors 'none'";
     }
 
     location ~* ^/(favicon.ico|logo.svg|loadingImage.png|og_image.png) {
@@ -149,6 +150,7 @@ http {
       proxy_http_version 1.1;
       proxy_set_header Upgrade $http_upgrade;
       proxy_set_header Connection "upgrade";
+      add_header Content-Security-Policy "frame-ancestors 'none'";
     }
 
     error_page   500 502 503 504  /50x.html;
