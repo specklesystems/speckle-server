@@ -19,6 +19,7 @@ exports.init = (app) => {
 
   // sweet and simple
   app.get('/explorer', async (_req, res) => {
+    res.set('x-content-security-policy', "frame-ancestors 'none'")
     res.send(await getExplorerHtml())
   })
 }

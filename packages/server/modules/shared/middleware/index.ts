@@ -146,10 +146,12 @@ export function addLoadersToCtx(
  */
 export async function buildContext({
   req,
+  res,
   token,
   cleanLoadersEarly
 }: {
   req: MaybeNullOrUndefined<Request>
+  res: MaybeNullOrUndefined<Response>
   token: Nullable<string>
   cleanLoadersEarly?: boolean
 }): Promise<GraphQLContext> {
@@ -161,6 +163,8 @@ export async function buildContext({
     req?.log || Observability.getLogger(),
     'graphql'
   )
+
+  res?.setHeader('x-content-security-policy', "frame-ancestors 'none'")
 
   const delay = delayGraphqlResponsesBy()
   if (delay > 0) {
