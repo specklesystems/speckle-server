@@ -68,5 +68,10 @@
       "require": "lodash",
       "import": "lodash-es"
     }
-  }
+  },
+  "files": [
+    "dist",
+    "package.json",
+    "readme.md"
+  ]
 }
