@@ -6,33 +6,27 @@ import {
 import { getWorkspaceRolesFactory } from '@/modules/workspaces/repositories/workspaces'
 import db from '@/db/knex'
 import { grantStreamPermissions } from '@/modules/core/repositories/streams'
-import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/utils/mapWorkspaceRoleToProjectRole'
+import { grantWorkspaceProjectRolesFactory } from '@/modules/workspaces/services/workspaceProjectRoleCreation'
 
 async function onProjectCreated(
   payload: ProjectEventsPayloads[typeof ProjectEvents.Created]
 ) {
-  const { id: streamId, workspaceId } = payload.project
+  const { id: projectId, workspaceId } = payload.project
 
   if (!workspaceId) {
     return
   }
 
-  // Assign project roles for all workspace members
-  const workspaceMembers = await getWorkspaceRolesFactory({ db })({ workspaceId })
+  const grantWorkspaceProjectRoles = grantWorkspaceProjectRolesFactory({
+    getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+    // TODO: Instantiate via factory function
+    grantStreamPermissions
+  })
 
-  await Promise.all(
-    workspaceMembers.map(({ userId, role }) =>
-      grantStreamPermissions({
-        streamId,
-        userId,
-        role: mapWorkspaceRoleToProjectRole(role)
-      })
-    )
-  )
+  await grantWorkspaceProjectRoles({ projectId, workspaceId })
 }
 
 export function initializeEventListener() {
   const quitCbs = [ProjectsEmitter.listen(ProjectEvents.Created, onProjectCreated)]
-
   return () => quitCbs.forEach((quit) => quit())
 }

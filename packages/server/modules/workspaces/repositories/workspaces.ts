@@ -109,10 +109,7 @@ export const upsertWorkspaceRoleFactory =
 export const getWorkspaceProjectsFactory =
   ({ db }: { db: Knex }): GetWorkspaceProjects =>
   async ({ workspaceId }) => {
-    const projects = await tables
-      .streams(db)
-      .select('*')
-      .where('workspaceId', workspaceId)
+    const projects = await tables.streams(db).select('*').where({ workspaceId })
 
     return projects
   }
