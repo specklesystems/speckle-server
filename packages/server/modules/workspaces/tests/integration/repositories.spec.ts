@@ -10,7 +10,7 @@ import {
 import db from '@/db/knex'
 import cryptoRandomString from 'crypto-random-string'
 import { expect } from 'chai'
-import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
+import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { expectToThrow } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 
