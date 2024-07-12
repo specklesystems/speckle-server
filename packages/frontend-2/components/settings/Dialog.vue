@@ -5,7 +5,7 @@
       isMobile ? { title: selectedMenuItem ? selectedMenuItem.title : 'Settings' } : {}
     "
     fullscreen
-    :show-back-button="!!(isMobile && selectedMenuItem)"
+    :show-back-button="isMobile && !!selectedMenuItem"
     @back="onBack"
   >
     <div class="w-full h-full flex">
@@ -94,7 +94,7 @@ const emit = defineEmits<{
 const props = defineProps<{
   open: boolean
   route: string
-  originalRoute: string
+  originalRoute?: string
 }>()
 
 const router = useRouter()
@@ -162,7 +162,8 @@ watch(
         }
       }
     } else if (!newVal && oldVal) {
-      router.replace({ path: props.originalRoute ?? homeRoute, force: true })
+      const newRoute = props.originalRoute ? props.originalRoute : homeRoute
+      router.replace({ path: newRoute, force: true })
     }
   },
   { immediate: true }
@@ -178,6 +179,7 @@ function setSelectedMenuItem(item: MenuItem): void {
 
 function onBack() {
   selectedMenuItem.value = null
+
   history.pushState({}, '', settingsRoutes.default.settingsh)
 }
 </script>
