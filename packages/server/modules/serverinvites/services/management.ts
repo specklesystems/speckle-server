@@ -62,7 +62,7 @@ const isStreamInviteUseArgs = (
   i: MutationStreamInviteUseArgs | ProjectInviteUseInput
 ): i is MutationStreamInviteUseArgs => has(i, 'streamId')
 
-export const useStreamInviteAndNotify =
+export const useStreamInviteAndNotifyFactory =
   ({ finalizeStreamInvite }: { finalizeStreamInvite: FinalizeStreamInvite }) =>
   async (
     input: MutationStreamInviteUseArgs | ProjectInviteUseInput,

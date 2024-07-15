@@ -23,10 +23,7 @@ export abstract class SpeckleControls extends EventEmitter {
   abstract fitToSphere(sphere: Sphere): void
   abstract dispose(): void
 
-  /** The input position and target vectors will always be in basis where (0,1,0) is up */
   abstract fromPositionAndTarget(position: Vector3, target: Vector3): void
-  /** Always in basis where (0,1,0) is up */
   abstract getTarget(): Vector3
-  /** Always in basis where (0,1,0) is up */
   abstract getPosition(): Vector3
 }

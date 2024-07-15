@@ -30,7 +30,8 @@
       "import": "./utils/tailwind-configure.js",
       "require": "./utils/tailwind-configure.cjs",
       "types": "./utils/tailwind-configure.d.ts"
-    }
+    },
+    "./fonts/*": "./fonts/*"
   },
   "engines": {
     "node": "^18.19.0"

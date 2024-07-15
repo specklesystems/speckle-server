@@ -1,4 +1,3 @@
-import { registerOrUpdateScope, registerOrUpdateRole } from '@/modules/shared'
 import { moduleLogger } from '@/logging/logging'
 import {
   setupResultListener,
@@ -19,6 +18,9 @@ import Redis from 'ioredis'
 import { createRedisClient } from '@/modules/shared/redis/redis'
 import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import { UninitializedResourceAccessError } from '@/modules/shared/errors'
+import { registerOrUpdateScopeFactory } from '@/modules/shared/repositories/scopes'
+import db from '@/db/knex'
+import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
 
 let genericRedisClient: Optional<Redis> = undefined
 
@@ -42,14 +44,16 @@ const coreModule: SpeckleModule<{
     diffUpload(app)
     diffDownload(app)
 
+    const scopeRegisterFunc = registerOrUpdateScopeFactory({ db })
     // Register core-based scoeps
     for (const scope of scopes) {
-      await registerOrUpdateScope(scope)
+      await scopeRegisterFunc({ scope })
     }
 
+    const roleRegisterFunc = registerOrUpdateRole({ db })
     // Register core-based roles
     for (const role of roles) {
-      await registerOrUpdateRole(role)
+      await roleRegisterFunc({ role })
     }
 
     if (isInitial) {

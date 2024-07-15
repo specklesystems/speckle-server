@@ -120,7 +120,7 @@ const props = defineProps({
     default: undefined
   },
   /**
-   * Whether to only return owned streams from server
+   * Whether to only return owned projects from server
    */
   ownedOnly: {
     type: Boolean,

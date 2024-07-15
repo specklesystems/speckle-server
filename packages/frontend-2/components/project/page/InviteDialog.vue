@@ -25,7 +25,7 @@
       </FormTextInput>
       <div
         v-if="searchUsers.length || selectedEmails?.length"
-        class="flex flex-col border bg-foundation border-primary-muted -mt-6"
+        class="flex flex-col border bg-foundation border-primary-muted mt-2"
       >
         <template v-if="searchUsers.length">
           <ProjectPageTeamDialogInviteUserServerUserRow
@@ -43,6 +43,7 @@
           :stream-role="role"
           :disabled="loading"
           :is-guest-mode="isGuestMode"
+          class="mx-1 my-2"
           @invite-emails="($event) => onInviteUser($event.emails, $event.serverRole)"
         />
       </div>

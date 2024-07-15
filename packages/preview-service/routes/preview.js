@@ -9,6 +9,10 @@ const { reduce } = require('lodash')
 
 const shouldBeHeadless = process.env.PREVIEWS_HEADED !== 'true'
 
+const getChromiumExecutablePath = () =>
+  process.env.CHROMIUM_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
+const getPuppeteerUserDataDir = () => process.env.USER_DATA_DIR || '/tmp/puppeteer'
+
 async function pageFunction(objectUrl) {
   waitForAnimation = async (ms = 70) =>
     await new Promise((resolve) => {
@@ -60,8 +64,9 @@ async function pageFunction(objectUrl) {
 async function getScreenshot(objectUrl, boundLogger = logger) {
   const launchParams = {
     headless: shouldBeHeadless,
-    userDataDir: '/tmp/puppeteer',
-    executablePath: '/usr/bin/google-chrome-stable',
+    userDataDir: getPuppeteerUserDataDir(),
+    executablePath: getChromiumExecutablePath(),
+    protocolTimeout: 3600_000,
     // we trust the web content that is running, so can disable the sandbox
     // disabling the sandbox allows us to run the docker image without linux kernel privileges
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']

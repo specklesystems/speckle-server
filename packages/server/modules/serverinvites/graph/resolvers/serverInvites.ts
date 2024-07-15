@@ -11,18 +11,18 @@ import {
 } from '@/modules/serverinvites/services/inviteCreationService'
 import {
   createStreamInviteAndNotifyFactory,
-  useStreamInviteAndNotify
+  useStreamInviteAndNotifyFactory
 } from '@/modules/serverinvites/services/management'
 import {
-  cancelStreamInvite,
-  resendInvite,
-  deleteInvite,
-  finalizeStreamInvite
+  cancelStreamInviteFactory,
+  resendInviteFactory,
+  deleteInviteFactory,
+  finalizeStreamInviteFactory
 } from '@/modules/serverinvites/services/inviteProcessingService'
 import {
-  getServerInviteForToken,
-  getUserPendingStreamInvite,
-  getUserPendingStreamInvites
+  getServerInviteForTokenFactory,
+  getUserPendingStreamInviteFactory,
+  getUserPendingStreamInvitesFactory
 } from '@/modules/serverinvites/services/inviteRetrievalService'
 import { authorizeResolver } from '@/modules/shared'
 import { chunk } from 'lodash'
@@ -39,26 +39,26 @@ import {
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   queryAllUserStreamInvitesFactory,
-  deleteInviteFactory
+  deleteInviteFactory as deleteInviteFromDbFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 
 export = {
   Query: {
     async streamInvite(_parent, args, context) {
       const { streamId, token } = args
-      return getUserPendingStreamInvite({
+      return getUserPendingStreamInviteFactory({
         findStreamInvite: findStreamInviteFactory({ db })
       })(streamId, context.userId, token)
     },
     async projectInvite(_parent, args, context) {
       const { projectId, token } = args
-      return await getUserPendingStreamInvite({
+      return await getUserPendingStreamInviteFactory({
         findStreamInvite: findStreamInviteFactory({ db })
       })(projectId, context.userId, token)
     },
     async streamInvites(_parent, _args, context) {
       const { userId } = context
-      return getUserPendingStreamInvites({
+      return getUserPendingStreamInvitesFactory({
         queryAllUserStreamInvites: queryAllUserStreamInvitesFactory({
           db
         })
@@ -66,7 +66,7 @@ export = {
     },
     async serverInviteByToken(_parent, args) {
       const { token } = args
-      return getServerInviteForToken({
+      return getServerInviteForTokenFactory({
         findServerInvite: findServerInviteFactory({ db })
       })(token)
     }
@@ -202,10 +202,11 @@ export = {
     },
 
     async streamInviteUse(_parent, args, ctx) {
-      await useStreamInviteAndNotify({
-        finalizeStreamInvite: finalizeStreamInvite({
+      await useStreamInviteAndNotifyFactory({
+        finalizeStreamInvite: finalizeStreamInviteFactory({
           findStreamInvite: findStreamInviteFactory({ db }),
-          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db })
+          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+          findResource: findResourceFactory()
         })
       })(args, ctx.userId!, ctx.resourceAccessRules)
       return true
@@ -216,7 +217,7 @@ export = {
       const { userId, resourceAccessRules } = ctx
 
       await authorizeResolver(userId, streamId, Roles.Stream.Owner, resourceAccessRules)
-      await cancelStreamInvite({
+      await cancelStreamInviteFactory({
         findStreamInvite: findStreamInviteFactory({ db }),
         deleteStreamInvite: deleteStreamInviteFactory({ db })
       })(streamId, inviteId)
@@ -227,7 +228,7 @@ export = {
     async inviteResend(_parent, args) {
       const { inviteId } = args
 
-      await resendInvite({
+      await resendInviteFactory({
         findInvite: findInviteFactory({ db }),
         resendInviteEmail: resendInviteEmailFactory({
           findResource: findResourceFactory(),
@@ -241,9 +242,9 @@ export = {
     async inviteDelete(_parent, args) {
       const { inviteId } = args
 
-      await deleteInvite({
+      await deleteInviteFactory({
         findInvite: findInviteFactory({ db }),
-        deleteInvite: deleteInviteFactory({ db })
+        deleteInvite: deleteInviteFromDbFactory({ db })
       })(inviteId)
 
       return true

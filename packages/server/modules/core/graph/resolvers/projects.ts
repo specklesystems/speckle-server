@@ -1,11 +1,13 @@
 import db from '@/db/knex'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
 import {
   ProjectVisibility,
   Resolvers,
   TokenResourceIdentifierType
 } from '@/modules/core/graph/generated/graphql'
+import { isWorkspacesModuleEnabled } from '@/modules/core/helpers/features'
 import { Roles, Scopes, StreamRoles } from '@/modules/core/helpers/mainConstants'
 import { isResourceAllowed, toProjectIdWhitelist } from '@/modules/core/helpers/token'
 import {
@@ -39,16 +41,16 @@ import {
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/inviteCreationService'
 import {
-  cancelStreamInvite,
-  finalizeStreamInvite
+  cancelStreamInviteFactory,
+  finalizeStreamInviteFactory
 } from '@/modules/serverinvites/services/inviteProcessingService'
 import {
-  getPendingStreamCollaborators,
-  getUserPendingStreamInvites
+  getPendingStreamCollaboratorsFactory,
+  getUserPendingStreamInvitesFactory
 } from '@/modules/serverinvites/services/inviteRetrievalService'
 import {
   createStreamInviteAndNotifyFactory,
-  useStreamInviteAndNotify
+  useStreamInviteAndNotifyFactory
 } from '@/modules/serverinvites/services/management'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
@@ -89,6 +91,16 @@ export = {
     projectMutations: () => ({})
   },
   ProjectMutations: {
+    async batchDelete(_parent, args, ctx) {
+      const results = await Promise.all(
+        args.ids.map((id) =>
+          deleteStreamAndNotify(id, ctx.userId!, ctx.resourceAccessRules, {
+            skipAccessChecks: true
+          })
+        )
+      )
+      return results.every((res) => res === true)
+    },
     async delete(_parent, { id }, { userId, resourceAccessRules }) {
       return await deleteStreamAndNotify(id, userId!, resourceAccessRules)
     },
@@ -102,6 +114,19 @@ export = {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
+      }
+
+      if (!!args.input?.workspaceId) {
+        if (!isWorkspacesModuleEnabled()) {
+          // Ugly but complete, will go away if/when resolver moved to workspaces module
+          throw new WorkspacesModuleDisabledError()
+        }
+        await authorizeResolver(
+          context.userId!,
+          args.input.workspaceId,
+          Roles.Workspace.Member,
+          context.resourceAccessRules
+        )
       }
 
       const project = await createStreamReturnRecord(
@@ -199,10 +224,11 @@ export = {
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async use(_parent, args, ctx) {
-      await useStreamInviteAndNotify({
-        finalizeStreamInvite: finalizeStreamInvite({
+      await useStreamInviteAndNotifyFactory({
+        finalizeStreamInvite: finalizeStreamInviteFactory({
           findStreamInvite: findStreamInviteFactory({ db }),
-          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db })
+          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+          findResource: findResourceFactory()
         })
       })(args.input, ctx.userId!, ctx.resourceAccessRules)
       return true
@@ -214,7 +240,7 @@ export = {
         Roles.Stream.Owner,
         ctx.resourceAccessRules
       )
-      await cancelStreamInvite({
+      await cancelStreamInviteFactory({
         findStreamInvite: findStreamInviteFactory({ db }),
         deleteStreamInvite: deleteStreamInviteFactory({ db })
       })(args.projectId, args.inviteId)
@@ -254,7 +280,7 @@ export = {
     },
     async projectInvites(_parent, _args, context) {
       const { userId } = context
-      return await getUserPendingStreamInvites({
+      return await getUserPendingStreamInvitesFactory({
         queryAllUserStreamInvites: queryAllUserStreamInvitesFactory({
           db
         })
@@ -280,7 +306,7 @@ export = {
       return ctx.loaders.streams.getSourceApps.load(parent.id) || []
     },
     async invitedTeam(parent) {
-      return getPendingStreamCollaborators({
+      return getPendingStreamCollaboratorsFactory({
         queryAllStreamInvites: queryAllStreamInvitesFactory({ db })
       })(parent.id)
     },

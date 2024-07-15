@@ -199,14 +199,18 @@ export class Intersections {
     if (bounds) {
       this.boundsBuffer.copy(bounds)
       /** We slightly increase the tested bounds to account for fp precision issues which
-       *  have proven to arise exactly at the edge of the bounds
+       *  have proven to arise exactly at the edge of the bounds. Our BVH returns intersection
+       *  points ever so slightly off the actual surface, so for very thin geometries it might
+       *  fall outside of the bounds
        */
+      const offsetSize = new Vector3(
+        0.001 * (this.boundsBuffer.max.x - this.boundsBuffer.min.x),
+        0.001 * (this.boundsBuffer.max.y - this.boundsBuffer.min.y),
+        0.001 * (this.boundsBuffer.max.z - this.boundsBuffer.min.z)
+      )
+
       this.boundsBuffer.expandByVector(
-        new Vector3(
-          0.0001 * (this.boundsBuffer.max.x - this.boundsBuffer.min.x),
-          0.0001 * (this.boundsBuffer.max.y - this.boundsBuffer.min.y),
-          0.0001 * (this.boundsBuffer.max.z - this.boundsBuffer.min.z)
-        )
+        new Vector3(offsetSize.x, offsetSize.y, offsetSize.z)
       )
       results = results.filter((result) => {
         return (

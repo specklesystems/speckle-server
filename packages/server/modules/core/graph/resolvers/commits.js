@@ -1,6 +1,7 @@
 'use strict'
 
-const { UserInputError, ApolloError } = require('apollo-server-express')
+const { CommitNotFoundError } = require('@/modules/core/errors/commit')
+const { UserInputError } = require('apollo-server-express')
 const { withFilter } = require('graphql-subscriptions')
 const {
   pubsub,
@@ -21,18 +22,14 @@ const {
 const {
   createCommitByBranchName,
   updateCommitAndNotify,
-  deleteCommitAndNotify
+  deleteCommitAndNotify,
+  markCommitReceivedAndNotify
 } = require('@/modules/core/services/commit/management')
-const {
-  addCommitReceivedActivity
-} = require('@/modules/activitystream/services/commitActivity')
 
-const { getUser } = require('../../services/users')
-
+const { RateLimitError } = require('@/modules/core/errors/ratelimit')
 const {
   isRateLimitBreached,
-  getRateLimitResult,
-  RateLimitError
+  getRateLimitResult
 } = require('@/modules/core/services/ratelimiter')
 const {
   batchMoveCommits,
@@ -151,7 +148,7 @@ module.exports = {
           limit: 1
         })
         if (commits.length !== 0) return commits[0]
-        throw new ApolloError(
+        throw new CommitNotFoundError(
           'Cannot retrieve commit (there are no commits in this stream).'
         )
       }
@@ -230,18 +227,12 @@ module.exports = {
         context.resourceAccessRules
       )
 
-      const commit = await getCommitById({
-        streamId: args.input.streamId,
-        id: args.input.commitId
+      await markCommitReceivedAndNotify({
+        input: args.input,
+        userId: context.userId
       })
-      const user = await getUser(context.userId)
 
-      if (commit && user) {
-        await addCommitReceivedActivity({ input: args.input, userId: user.id })
-        return true
-      }
-
-      return false
+      return true
     },
 
     async commitDelete(_parent, args, context) {

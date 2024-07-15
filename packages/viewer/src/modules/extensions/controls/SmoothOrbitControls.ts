@@ -177,6 +177,10 @@ export class SmoothOrbitControls extends SpeckleControls {
     this._enabled = value
   }
 
+  public get up() {
+    return this._up
+  }
+
   public set up(value: Vector3) {
     this._up.copy(value)
     this._basisTransform.makeRotationFromQuaternion(
@@ -233,10 +237,13 @@ export class SmoothOrbitControls extends SpeckleControls {
 
     const v0 = new Vector3().copy(position)
     const v1 = new Vector3().copy(target)
-    v0.sub(v1)
+    /** Three.js Spherical assumes (0, 1, 0) as up... */
+    v0.sub(v1).applyMatrix4(this._basisTransformInv)
     const spherical = new Spherical()
     spherical.setFromCartesianCoords(v0.x, v0.y, v0.z)
     this.setOrbit(spherical.theta, spherical.phi, spherical.radius)
+    /** Three.js Spherical assumes (0, 1, 0) as up... */
+    v1.applyMatrix4(this._basisTransformInv)
     this.setTarget(v1.x, v1.y, v1.z)
   }
 
@@ -259,21 +266,17 @@ export class SmoothOrbitControls extends SpeckleControls {
   }
 
   /**
-   * Gets the current goal position. Needs to be in a basis with (0,1,0) as up
+   * Gets the current goal position
    */
   public getPosition(): Vector3 {
-    return this.positionFromSpherical(this.goalSpherical, this.origin).applyMatrix4(
-      this._basisTransformInv
-    )
+    return this.positionFromSpherical(this.goalSpherical, this.goalOrigin)
   }
 
   /**
    * Gets the point in model coordinates the model should orbit/pivot around.
-   * Needs to be in a basis with (0,1,0) as up
-   * We keep goalOrigin untransformed, so there is no need to transform back from the controller's defined basis
    */
   public getTarget(): Vector3 {
-    return this.goalOrigin.clone()
+    return this.goalOrigin.clone().applyMatrix4(this._basisTransform)
   }
 
   public isStationary(): boolean {
@@ -300,6 +303,19 @@ export class SmoothOrbitControls extends SpeckleControls {
     this.setFieldOfView(Math.exp(this.goalLogFov))
   }
 
+  /** Computes min/max radius values based on the current world size */
+  protected computeMinMaxRadius() {
+    if (this.world) {
+      const maxDistance = this.world.getRelativeOffset(10)
+      const minDistance = this.world.getRelativeOffset(0.01)
+      if (!isNaN(maxDistance) && !isNaN(minDistance))
+        Object.assign(this._options, {
+          maximumRadius: maxDistance,
+          minimumRadius: minDistance
+        })
+    }
+  }
+
   /**
    * Set the absolute orbital goal of the camera. The change will be
    * applied over a number of frames depending on configured acceleration and
@@ -321,6 +337,10 @@ export class SmoothOrbitControls extends SpeckleControls {
       minimumRadius,
       maximumRadius
     } = this._options
+
+    if (isNaN(minimumRadius) || isNaN(maximumRadius)) {
+      this.computeMinMaxRadius()
+    }
 
     const { theta, phi, radius } = this.goalSpherical
 
@@ -508,15 +528,7 @@ export class SmoothOrbitControls extends SpeckleControls {
       return false
     }
 
-    if (this.world) {
-      const maxDistance = this.world.getRelativeOffset(10)
-      const minDistance = this.world.getRelativeOffset(0.01)
-      this.applyOptions({
-        maximumRadius: maxDistance,
-        minimumRadius: minDistance
-      })
-      // radiusNormalisationRange = this.world.worldBox.getSize(new Vector3()).length()
-    }
+    this.computeMinMaxRadius()
 
     const { maximumPolarAngle } = this._options
 
@@ -640,6 +652,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     return height / (Math.tan(MathUtils.DEG2RAD * Math.exp(this.logFov) * 0.5) * 2)
   }*/
 
+  /** Three.js Spherical assumes (0, 1, 0) as up... */
   protected positionFromSpherical(spherical: Spherical, origin?: Vector3) {
     const position: Vector3 = new Vector3()
     position.setFromSpherical(spherical)
@@ -651,6 +664,7 @@ export class SmoothOrbitControls extends SpeckleControls {
     return position
   }
 
+  /** Three.js Spherical assumes (0, 1, 0) as up... */
   protected quaternionFromSpherical(spherical: Spherical) {
     const quaternion: Quaternion = new Quaternion()
     quaternion.setFromEuler(
@@ -819,7 +833,8 @@ export class SmoothOrbitControls extends SpeckleControls {
       this.panPerPixel
     dxy.multiplyScalar(metersPerPixel)
 
-    const target = this.getTarget()
+    /** This panProjection assumes (0, 1, 0) as up... */
+    const target = this.getTarget().applyMatrix4(this._basisTransformInv)
     target.add(dxy.applyMatrix3(this.panProjection))
     this.setTarget(target.x, target.y, target.z)
   }
