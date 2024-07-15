@@ -1,4 +1,4 @@
-import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/utils/isUserLastWorkspaceAdmin'
+import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/utils/roles'
 import { WorkspaceAcl } from '@/modules/workspaces/domain/types'
 import { expect } from 'chai'
 import { Roles } from '@speckle/shared'

@@ -1,6 +1,6 @@
 import { GetWorkspaceRoles } from '@/modules/workspaces/domain/operations'
 import { grantStreamPermissions as repoGrantStreamPermissions } from '@/modules/core/repositories/streams'
-import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/utils/mapWorkspaceRoleToProjectRole'
+import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/domain/roles'
 
 type GrantWorkspaceProjectRolesArgs = {
   projectId: string

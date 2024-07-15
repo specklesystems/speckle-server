@@ -5,3 +5,8 @@ export class WorkspaceAdminRequiredError extends BaseError {
   static code = 'WORKSPACE_ADMIN_REQUIRED_ERROR'
   static statusCode = 400
 }
+
+export class WorkspaceInvalidRoleError extends BaseError {
+  static defaultMessage = 'Invalid workspace role provided'
+  static code = 'WORKSPACE_INVALID_ROLE_ERROR'
+}

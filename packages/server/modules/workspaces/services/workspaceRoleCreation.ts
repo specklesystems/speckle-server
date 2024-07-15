@@ -13,8 +13,8 @@ import {
 import { WorkspaceAcl } from '@/modules/workspaces/domain/types'
 import { WorkspaceAdminRequiredError } from '@/modules/workspaces/errors/workspace'
 import { getAllWorkspaceProjectsForUserFactory } from '@/modules/workspaces/services/workspaceProjects'
-import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/utils/isUserLastWorkspaceAdmin'
-import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/utils/mapWorkspaceRoleToProjectRole'
+import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/utils/roles'
+import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/domain/roles'
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 
 type WorkspaceRoleDeleteArgs = {
