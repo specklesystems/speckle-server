@@ -5,7 +5,7 @@ import {
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
-import { Workspace } from '@/modules/workspaces/domain/types'
+import { Workspace } from '@/modules/workspacesCore/domain/types'
 import { Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 
@@ -47,7 +47,10 @@ export const createWorkspaceFactory =
       workspaceId: workspace.id
     })
 
-    await emitWorkspaceEvent({ event: WorkspaceEvents.Created, payload: workspace })
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Created,
+      payload: { ...workspace, createdByUserId: userId }
+    })
     // emit a workspace created event
 
     return workspace

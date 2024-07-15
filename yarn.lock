@@ -15431,6 +15431,7 @@ __metadata:
     "@types/mixpanel-browser": "npm:^2.38.0"
     "@types/node": "npm:^18.17.5"
     "@types/pino-http": "npm:^5.8.1"
+    "@types/ua-parser-js": "npm:^0.7.39"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
     "@vitejs/plugin-legacy": "npm:^5.4.1"
@@ -15455,6 +15456,7 @@ __metadata:
     marked: "npm:^5.1.0"
     marked-plaintext: "npm:^0.0.2"
     mitt: "npm:^3.0.0"
+    mixpanel: "npm:^0.18.0"
     mixpanel-browser: "npm:^2.45.0"
     nanoid: "npm:^3.0.0"
     nuxt: "npm:^3.12.2"
@@ -15480,6 +15482,7 @@ __metadata:
     tweetnacl-util: "npm:^0.15.1"
     type-fest: "npm:^3.5.1"
     typescript: "npm:^4.8.3"
+    ua-parser-js: "npm:^1.0.38"
     vee-validate: "npm:^4.7.0"
     vue-advanced-cropper: "npm:^2.8.8"
     vue-tippy: "npm:^6.0.0"
@@ -15628,6 +15631,7 @@ __metadata:
     lodash: "npm:^4.17.21"
     lodash-es: "npm:^4.17.21"
     prettier: "npm:^3.3.2"
+    reflect-metadata: "npm:^0.2.2"
     typescript: "npm:^5.2.2"
     vite: "npm:^5.2.0"
     vite-plugin-dts: "npm:^3.9.1"
@@ -15740,6 +15744,7 @@ __metadata:
     "@types/pino-http": "npm:^5.8.4"
     "@types/sanitize-html": "npm:^2.6.2"
     "@types/supertest": "npm:^2.0.12"
+    "@types/ua-parser-js": "npm:^0.7.39"
     "@types/uuid": "npm:^9.0.0"
     "@types/verror": "npm:^1.10.6"
     "@types/yargs": "npm:^17.0.10"
@@ -15827,6 +15832,7 @@ __metadata:
     type-fest: "npm:^2.19.0"
     typescript: "npm:^4.6.4"
     typescript-eslint: "npm:^7.12.0"
+    ua-parser-js: "npm:^1.0.38"
     undici: "npm:^5.28.4"
     verror: "npm:^1.10.1"
     ws: "npm:^8.17.1"
@@ -15861,24 +15867,29 @@ __metadata:
     "@tiptap/core": "npm:^2.0.0-beta.176"
     "@types/lodash": "npm:^4.14.184"
     "@types/lodash-es": "npm:^4.17.12"
+    "@types/ua-parser-js": "npm:^0.7.39"
     "@typescript-eslint/eslint-plugin": "npm:^7.12.0"
     "@typescript-eslint/parser": "npm:^7.12.0"
     eslint: "npm:^9.4.0"
     eslint-config-prettier: "npm:^9.1.0"
     lodash: "npm:^4.17.0"
     lodash-es: "npm:^4.17.21"
+    mixpanel: "npm:^0.17.0"
     pino: "npm:^8.7.0"
     pino-http: "npm:^8.0.0"
     tshy: "npm:^1.14.0"
     type-fest: "npm:^3.11.1"
     typescript: "npm:^4.5.4"
+    ua-parser-js: "npm:^1.0.38"
     znv: "npm:^0.4.0"
     zod: "npm:^3.22.4"
   peerDependencies:
     "@tiptap/core": ^2.0.0-beta.176
+    mixpanel: ^0.17.0
     pino: ^8.7.0
     pino-http: ^8.0.0
     pino-pretty: ">=8.0.0"
+    ua-parser-js: ^1.0.38
     znv: ^0.4.0
     zod: ^3.22.4
   languageName: unknown
@@ -19364,6 +19375,13 @@ __metadata:
   version: 2.0.2
   resolution: "@types/trusted-types@npm:2.0.2"
   checksum: 10/3371eef5f1c50e1c3c07a127c1207b262ba65b83dd167a1c460fc1b135a3fb0c97b9f508efebd383f239cc5dd5b7169093686a692a501fde9c3f7208657d9b0d
+  languageName: node
+  linkType: hard
+
+"@types/ua-parser-js@npm:^0.7.39":
+  version: 0.7.39
+  resolution: "@types/ua-parser-js@npm:0.7.39"
+  checksum: 10/8d173a79b37f9404cda49e848d82694c4854828ff20d94ddfba53bf9ccd9b4df16bf28f72786cf253a73305e9a54d2f2bb54ebfc144fca2496d3f3f025a79cb5
   languageName: node
   linkType: hard
 
@@ -38047,6 +38065,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"mixpanel@npm:^0.18.0":
+  version: 0.18.0
+  resolution: "mixpanel@npm:0.18.0"
+  dependencies:
+    https-proxy-agent: "npm:5.0.0"
+  checksum: 10/90cd6be667e75d5a34fc54c2b7947f9d095736f8925d68586143f73ad525503d3951e852b3ae4349df04f21a1fa810325023d20126c145ebaff96b03745b732c
+  languageName: node
+  linkType: hard
+
 "mjml-accordion@npm:4.13.0":
   version: 4.13.0
   resolution: "mjml-accordion@npm:4.13.0"
@@ -44847,6 +44874,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"reflect-metadata@npm:^0.2.2":
+  version: 0.2.2
+  resolution: "reflect-metadata@npm:0.2.2"
+  checksum: 10/1c93f9ac790fea1c852fde80c91b2760420069f4862f28e6fae0c00c6937a56508716b0ed2419ab02869dd488d123c4ab92d062ae84e8739ea7417fae10c4745
+  languageName: node
+  linkType: hard
+
 "regenerate-unicode-properties@npm:^10.0.1":
   version: 10.0.1
   resolution: "regenerate-unicode-properties@npm:10.0.1"
@@ -49441,6 +49475,13 @@ __metadata:
   version: 0.7.33
   resolution: "ua-parser-js@npm:0.7.33"
   checksum: 10/b648d065a8b42a852181346125d0e39c24df66944a1a965b3857ca3ff070f387c18dcc66a090832e5d08a511d27ab8c2f4020bd6f9c7bcc4e140af27ee1dfa4b
+  languageName: node
+  linkType: hard
+
+"ua-parser-js@npm:^1.0.38":
+  version: 1.0.38
+  resolution: "ua-parser-js@npm:1.0.38"
+  checksum: 10/f2345e9bd0f9c5f85bcaa434535fae88f4bb891538e568106f0225b2c2937fbfbeb5782bd22320d07b6b3d68b350b8861574c1d7af072ff9b2362fb72d326fd9
   languageName: node
   linkType: hard
 
