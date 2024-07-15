@@ -1,4 +1,3 @@
-import type { Dayjs } from 'dayjs'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import localizedFormat from 'dayjs/plugin/localizedFormat'
@@ -11,16 +10,17 @@ export default defineNuxtPlugin(() => {
   dayjs.extend(duration)
   dayjs.extend(updateLocale)
 
-  const customRelativeTime = (date: Dayjs): string => {
+  const customRelativeTime = (date: string): string => {
+    const pastDate = dayjs(date)
     const now = dayjs()
     const diffInMinutes = now.diff(date, 'minute')
     const diffInHours = now.diff(date, 'hour')
     const diffInDays = now.diff(date, 'day')
 
     if (diffInDays > 14) {
-      return date.year() === dayjs().year()
-        ? date.format('MMM D')
-        : date.format('MMM D, YYYY')
+      return pastDate.year() === now.year()
+        ? pastDate.format('MMM D')
+        : pastDate.format('MMM D, YYYY')
     } else if (diffInDays >= 1) {
       return diffInDays === 1 ? '1 day ago' : `${diffInDays} days ago`
     } else if (diffInHours <= 23 && diffInHours >= 1) {
@@ -33,17 +33,14 @@ export default defineNuxtPlugin(() => {
   }
 
   const isClockUnit = (date: string) => {
-    const formattedDate = dayjs(date)
-    const unit = customRelativeTime(formattedDate)
+    const unit = customRelativeTime(date)
     return unit.includes('second') || unit.includes('minute') || unit.includes('hour')
   }
 
   const getFullDate = (input: string) => dayjs(input).format('MMM D, YYYY, H:mm')
-  const getTrunicatedRelativeDate = (input: string) => customRelativeTime(dayjs(input))
+  const getTrunicatedRelativeDate = (input: string) => customRelativeTime(input)
   const getTrunicatedRelativeDateWithPrefix = (input: string) =>
-    isClockUnit(input)
-      ? customRelativeTime(dayjs(input))
-      : `on ${customRelativeTime(dayjs(input))}`
+    isClockUnit(input) ? customRelativeTime(input) : `on ${customRelativeTime(input)}`
 
   return {
     provide: {
