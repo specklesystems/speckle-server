@@ -180,6 +180,6 @@ function setSelectedMenuItem(item: MenuItem): void {
 function onBack() {
   selectedMenuItem.value = null
 
-  history.pushState({}, '', settingsRoutes.default.settingsh)
+  history.pushState({}, '', settingsRoutes.default.settings)
 }
 </script>
