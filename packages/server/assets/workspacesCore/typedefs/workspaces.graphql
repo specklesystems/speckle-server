@@ -2,26 +2,26 @@ extend type Query {
   workspace(id: String!): Workspace!
 }
 
-type WorkspaceCreateInput {
+input WorkspaceCreateInput {
   name: String!
   description: String
   logoUrl: String
 }
 
-type WorkspaceUpdateInput {
+input WorkspaceUpdateInput {
   id: String!
   name: String
   description: String
   logoUrl: String
 }
 
-type WorkspaceRoleUpdateInput {
+input WorkspaceRoleUpdateInput {
   userId: String!
   workspaceId: String!
   role: WorkspaceRole!
 }
 
-type WorkspaceRoleDeleteInput {
+input WorkspaceRoleDeleteInput {
   userId: String!
   workspaceId: String!
 }
