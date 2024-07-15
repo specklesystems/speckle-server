@@ -1,4 +1,4 @@
-import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
+import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import {
   DeleteWorkspaceRole,
   GetWorkspace,

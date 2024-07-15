@@ -356,7 +356,7 @@ export function useProcessProjectInvite() {
 
   return async (
     input: ProjectInviteUseInput,
-    options?: Partial<{ inviteId: string }>
+    options?: Partial<{ inviteId: string; skipToast: boolean }>
   ) => {
     if (!activeUser.value) return
 
@@ -365,28 +365,34 @@ export function useProcessProjectInvite() {
         mutation: useProjectInviteMutation,
         variables: { input },
         update: (cache, { data }) => {
-          if (!data?.projectMutations.invites.use || !options?.inviteId) return
+          if (!data?.projectMutations.invites.use) return
 
-          // Evict PendingStreamCollaborator
-          cache.evict({
-            id: getCacheId('PendingStreamCollaborator', options.inviteId)
-          })
+          if (options?.inviteId) {
+            // Evict PendingStreamCollaborator
+            cache.evict({
+              id: getCacheId('PendingStreamCollaborator', options.inviteId)
+            })
+          }
         }
       })
       .catch(convertThrowIntoFetchResult)
 
-    if (data?.projectMutations.invites.use) {
-      triggerNotification({
-        type: input.accept ? ToastNotificationType.Success : ToastNotificationType.Info,
-        title: input.accept ? 'Invite accepted' : 'Invite dismissed'
-      })
-    } else {
-      const errMsg = getFirstErrorMessage(errors)
-      triggerNotification({
-        type: ToastNotificationType.Danger,
-        title: "Couldn't process invite",
-        description: errMsg
-      })
+    if (!options?.skipToast) {
+      if (data?.projectMutations.invites.use) {
+        triggerNotification({
+          type: input.accept
+            ? ToastNotificationType.Success
+            : ToastNotificationType.Info,
+          title: input.accept ? 'Invite accepted' : 'Invite dismissed'
+        })
+      } else {
+        const errMsg = getFirstErrorMessage(errors)
+        triggerNotification({
+          type: ToastNotificationType.Danger,
+          title: "Couldn't process invite",
+          description: errMsg
+        })
+      }
     }
 
     return data?.projectMutations.invites.use

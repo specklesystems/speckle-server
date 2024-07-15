@@ -10,7 +10,7 @@ import {
   GetWorkspaceRoles,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
-import { WorkspaceAcl } from '@/modules/workspaces/domain/types'
+import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceAdminRequiredError } from '@/modules/workspaces/errors/workspace'
 import { getAllWorkspaceProjectsForUserFactory } from '@/modules/workspaces/services/workspaceProjects'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/utils/roles'
@@ -64,7 +64,7 @@ export const deleteWorkspaceRoleFactory =
     )
 
     // Emit deleted role
-    emitWorkspaceEvent({ event: WorkspaceEvents.RoleDeleted, payload: deletedRole })
+    emitWorkspaceEvent({ eventName: WorkspaceEvents.RoleDeleted, payload: deletedRole })
 
     return deletedRole
   }
@@ -125,7 +125,7 @@ export const setWorkspaceRoleFactory =
 
     // Emit new role
     await emitWorkspaceEvent({
-      event: WorkspaceEvents.RoleUpdated,
+      eventName: WorkspaceEvents.RoleUpdated,
       payload: { userId, workspaceId, role }
     })
   }

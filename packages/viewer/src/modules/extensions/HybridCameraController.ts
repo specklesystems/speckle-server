@@ -1,6 +1,6 @@
-import { clamp } from 'three/src/math/MathUtils'
-import { IViewer } from '../../IViewer'
-import { CameraController } from './CameraController'
+import { clamp } from 'three/src/math/MathUtils.js'
+import { IViewer } from '../../IViewer.js'
+import { CameraController } from './CameraController.js'
 type MoveType = 'forward' | 'back' | 'left' | 'right' | 'up' | 'down'
 
 export class HybridCameraController extends CameraController {

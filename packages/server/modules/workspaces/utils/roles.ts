@@ -1,5 +1,5 @@
-import { WorkspaceAcl } from '@/modules/workspaces/domain/types'
 import { Roles } from '@speckle/shared'
+import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 
 export const isUserLastWorkspaceAdmin = (
   workspaceRoles: WorkspaceAcl[],

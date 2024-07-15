@@ -1,5 +1,5 @@
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { WorkspaceAcl } from '@/modules/workspaces/domain/types'
+import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import {
   deleteWorkspaceRoleFactory,
   setWorkspaceRoleFactory
@@ -44,7 +44,7 @@ describe('Workspace role services', () => {
     it('emits a role-deleted event', async () => {
       const eventData = {
         isCalled: false,
-        event: '',
+        eventName: '',
         payload: {}
       }
 
@@ -60,9 +60,9 @@ describe('Workspace role services', () => {
         deleteWorkspaceRole: async () => {
           return storedRoles[0]
         },
-        emitWorkspaceEvent: async ({ event, payload }) => {
+        emitWorkspaceEvent: async ({ eventName, payload }) => {
           eventData.isCalled = true
-          eventData.event = event
+          eventData.eventName = eventName
           eventData.payload = payload
 
           return []
@@ -74,7 +74,7 @@ describe('Workspace role services', () => {
       await deleteWorkspaceRole({ userId, workspaceId })
 
       expect(eventData.isCalled).to.be.true
-      expect(eventData.event).to.equal(WorkspaceEvents.RoleDeleted)
+      expect(eventData.eventName).to.equal(WorkspaceEvents.RoleDeleted)
       expect(eventData.payload).to.deep.equal(role)
     })
     it('throws if attempting to delete the last admin from a workspace', async () => {
@@ -166,7 +166,7 @@ describe('Workspace role services', () => {
     it('emits a role-updated event', async () => {
       const eventData = {
         isCalled: false,
-        event: '',
+        eventName: '',
         payload: {}
       }
 
@@ -178,9 +178,9 @@ describe('Workspace role services', () => {
       const setWorkspaceRole = setWorkspaceRoleFactory({
         getWorkspaceRoles: async () => [],
         upsertWorkspaceRole: async () => {},
-        emitWorkspaceEvent: async ({ event, payload }) => {
+        emitWorkspaceEvent: async ({ eventName, payload }) => {
           eventData.isCalled = true
-          eventData.event = event
+          eventData.eventName = eventName
           eventData.payload = payload
 
           return []
@@ -192,7 +192,7 @@ describe('Workspace role services', () => {
       await setWorkspaceRole(role)
 
       expect(eventData.isCalled).to.be.true
-      expect(eventData.event).to.equal(WorkspaceEvents.RoleUpdated)
+      expect(eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
       expect(eventData.payload).to.deep.equal(role)
     })
     it('throws if attempting to remove the last admin in a workspace', async () => {

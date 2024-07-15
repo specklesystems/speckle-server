@@ -13,8 +13,8 @@ import {
   WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
-import SpeckleDisplaceMaterial from '../materials/SpeckleDisplaceMaterial'
-import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
+import SpeckleDisplaceMaterial from '../materials/SpeckleDisplaceMaterial.js'
+import { BaseSpecklePass, type SpecklePass } from './SpecklePass.js'
 
 export class StencilMaskPass extends BaseSpecklePass implements SpecklePass {
   private camera!: Camera

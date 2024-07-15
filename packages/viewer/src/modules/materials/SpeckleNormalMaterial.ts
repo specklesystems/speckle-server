@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
-import { speckleNormalVert } from './shaders/speckle-normal-vert'
-import { speckleNormalFrag } from './shaders/speckle-normal-frag'
+import { speckleNormalVert } from './shaders/speckle-normal-vert.js'
+import { speckleNormalFrag } from './shaders/speckle-normal-frag.js'
 import {
   BufferGeometry,
   Camera,
@@ -13,8 +13,8 @@ import {
   type MeshNormalMaterialParameters
 } from 'three'
 import { Matrix4 } from 'three'
-import { ExtendedMeshNormalMaterial, type Uniforms } from './SpeckleMaterial'
-import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
+import { ExtendedMeshNormalMaterial, type Uniforms } from './SpeckleMaterial.js'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
 
 class SpeckleNormalMaterial extends ExtendedMeshNormalMaterial {
   protected get vertexProgram(): string {
