@@ -43,7 +43,7 @@ const {
 const { createObject } = require('../services/objects')
 const { beforeEachContext } = require('@/test/hooks')
 const { Scopes, Roles } = require('@speckle/shared')
-const { createRandomEmail } = require('../helpers/test-helpers')
+const { createRandomEmail } = require('../helpers/testHelpers')
 
 describe('Actors & Tokens @user-services', () => {
   const myTestActor = {

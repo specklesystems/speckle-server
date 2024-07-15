@@ -118,8 +118,10 @@ module.exports = {
     await Acl().insert({ userId: newId, role: userRole })
 
     await createUserEmailFactory({ db: knexInstance })({
-      email: user.email,
-      userId: user.id
+      userEmail: {
+        email: user.email,
+        userId: user.id
+      }
     })
 
     await UsersEmitter.emit(UsersEvents.Created, { user: newUser })

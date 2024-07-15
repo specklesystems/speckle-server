@@ -8,7 +8,7 @@ import knexInstance from '@/db/knex'
 import {
   createRandomEmail,
   createRandomPassword
-} from '@/modules/core/helpers/test-helpers'
+} from '@/modules/core/helpers/testHelpers'
 import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 
 const userEmailTable = knexInstance(USER_EMAILS_TABLE_NAME)

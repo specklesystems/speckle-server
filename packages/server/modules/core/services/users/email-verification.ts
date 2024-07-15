@@ -10,4 +10,4 @@ export const markUserEmailAsVerifiedFactory =
     updateUserEmail: UpdateUserEmail
   }): MarkUserEmailAsVerified =>
   async (email) =>
-    updateUserEmail({ email }, { verified: true })
+    updateUserEmail({ query: { email }, update: { verified: true } })

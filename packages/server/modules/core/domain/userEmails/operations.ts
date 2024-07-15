@@ -1,15 +1,20 @@
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 
-export type CreateUserEmail = (
+export type CreateUserEmail = ({
+  userEmail
+}: {
   userEmail: Pick<UserEmail, 'email' | 'userId'> & { primary?: boolean }
-) => Promise<string>
+}) => Promise<string>
 
-export type UpdateUserEmail = (
+export type UpdateUserEmail = ({
+  query,
+  update
+}: {
   query:
     | (Pick<UserEmail, 'email'> & { primary?: boolean })
-    | (Pick<UserEmail, 'userId'> & { primary: true }),
+    | (Pick<UserEmail, 'userId'> & { primary: true })
   update: Pick<Partial<UserEmail>, 'email' | 'primary' | 'verified'>
-) => Promise<UserEmail>
+}) => Promise<UserEmail>
 
 export type DeleteUserEmail = ({
   userId,

@@ -5,7 +5,7 @@ import { createUser } from '@/modules/core/services/users'
 import {
   createRandomEmail,
   createRandomPassword
-} from '@/modules/core/helpers/test-helpers'
+} from '@/modules/core/helpers/testHelpers'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/email-verification'
 import { expect } from 'chai'
 import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'

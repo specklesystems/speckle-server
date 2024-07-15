@@ -10,7 +10,7 @@ import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 
 export const createUserEmailFactory =
   ({ db }: { db: Knex }): CreateUserEmail =>
-  async (userEmail) => {
+  async ({ userEmail }) => {
     const id = crs({ length: 10 })
 
     await db(USER_EMAILS_TABLE_NAME).insert({
@@ -24,7 +24,7 @@ export const createUserEmailFactory =
 
 export const updateUserEmailFactory =
   ({ db }: { db: Knex }): UpdateUserEmail =>
-  async (query, update) => {
+  async ({ query, update }) => {
     const [updated] = await db<UserEmail>(USER_EMAILS_TABLE_NAME)
       .where(query)
       .update(update, '*')

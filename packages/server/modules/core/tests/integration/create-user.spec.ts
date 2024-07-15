@@ -1,4 +1,4 @@
-import { assert, expect } from 'chai'
+import { expect } from 'chai'
 import { createUser, getUser, getUserById } from '@/modules/core/services/users'
 import { beforeEach, describe, it } from 'mocha'
 import { beforeEachContext } from '@/test/hooks'
@@ -7,8 +7,10 @@ import knexInstance from '@/db/knex'
 import {
   createRandomEmail,
   createRandomPassword
-} from '@/modules/core/helpers/test-helpers'
+} from '@/modules/core/helpers/testHelpers'
 import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
+import { expectToThrow } from '@/test/assertionHelper'
+import { PasswordTooShortError } from '../../errors/userinput'
 
 const db = knexInstance
 const userEmailsDB = db(USER_EMAILS_TABLE_NAME)
@@ -43,16 +45,14 @@ describe('Users @core-users', () => {
     expect(storedUser.email).to.equal(user.email.toLowerCase())
   })
   it('Should not create a user with a too small password', async () => {
-    try {
-      await createUser({
+    const err = (await expectToThrow(() =>
+      createUser({
         name: 'Dim Sum',
         email: createRandomEmail(),
         password: createRandomPassword(5)
       })
-    } catch {
-      return
-    }
-    assert.fail('short pwd')
+    )) as Error
+    expect(err.name).to.equal(PasswordTooShortError.name)
   })
   it('Should not create an user with the same email', async () => {
     const newUser = {
@@ -65,13 +65,8 @@ describe('Users @core-users', () => {
     await createUser(newUser)
 
     // try to create user with same email
-    await createUser(newUser)
-      .then(() => {
-        assert.fail('This should have failed with duplicate email error')
-      })
-      .catch((err) => {
-        expect(err.message).to.equal('Email taken. Try logging in?')
-      })
+    const err = (await expectToThrow(() => createUser(newUser))) as Error
+    expect(err.message).to.equal('Email taken. Try logging in?')
   })
 
   it('Should create a user with primary email', async () => {

@@ -215,10 +215,10 @@ export async function updateUser(
   const [newUser] = await Users.knex().where(Users.col.id, userId).update(update, '*')
 
   if (update.email) {
-    await updateUserEmailFactory({ db: knexInstance })(
-      { userId, primary: true },
-      { email: update.email }
-    )
+    await updateUserEmailFactory({ db: knexInstance })({
+      query: { userId, primary: true },
+      update: { email: update.email }
+    })
   }
 
   return newUser as Nullable<UserRecord>

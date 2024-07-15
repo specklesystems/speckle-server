@@ -6,9 +6,10 @@ import knexInstance from '@/db/knex'
 import {
   createRandomEmail,
   createRandomPassword
-} from '@/modules/core/helpers/test-helpers'
+} from '@/modules/core/helpers/testHelpers'
 import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 import { updateUser } from '@/modules/core/repositories/users'
+import { expectToThrow } from '@/test/assertionHelper'
 
 const db = knexInstance
 const userEmailsDB = db(USER_EMAILS_TABLE_NAME)
@@ -20,25 +21,17 @@ describe('Users @core-users', () => {
 
   it('should throw an error if avatar is too big', async () => {
     const longAvatar = ''.padEnd(524288, '1') + '0'
-    try {
-      await updateUser('123456', { avatar: longAvatar })
+    const err = await expectToThrow(() => updateUser('123456', { avatar: longAvatar }))
 
-      expect.fail('Did not throw')
-    } catch (err) {
-      expect((err as Error).message).eq(
-        'User avatar is too big, please try a smaller one'
-      )
-    }
+    expect((err as Error).message).eq(
+      'User avatar is too big, please try a smaller one'
+    )
   })
 
   it('should throw an error if update payload is empty', async () => {
-    try {
-      await updateUser('123456', {})
+    const err = await expectToThrow(() => updateUser('123456', {}))
 
-      expect.fail('Did not throw')
-    } catch (err) {
-      expect((err as Error).message).eq('User update payload empty')
-    }
+    expect((err as Error).message).eq('User update payload empty')
   })
 
   it('Should update user email if skipClean is true', async () => {
