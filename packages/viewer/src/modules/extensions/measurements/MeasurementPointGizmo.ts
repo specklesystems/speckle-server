@@ -21,12 +21,12 @@ import {
 } from 'three'
 import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js'
 import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js'
-import { Geometry } from '../../converter/Geometry'
-import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial'
-import { SpeckleText } from '../../objects/SpeckleText'
-import SpeckleTextMaterial from '../../materials/SpeckleTextMaterial'
-import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial'
-import { ObjectLayers } from '../../../IViewer'
+import { Geometry } from '../../converter/Geometry.js'
+import SpeckleLineMaterial from '../../materials/SpeckleLineMaterial.js'
+import { SpeckleText } from '../../objects/SpeckleText.js'
+import SpeckleTextMaterial from '../../materials/SpeckleTextMaterial.js'
+import SpeckleBasicMaterial from '../../materials/SpeckleBasicMaterial.js'
+import { ObjectLayers } from '../../../IViewer.js'
 
 export interface MeasurementPointGizmoStyle {
   fixedSize?: number | boolean

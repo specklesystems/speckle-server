@@ -1,6 +1,6 @@
 import { Box3, Material, Object3D, WebGLRenderer } from 'three'
 
-import { NodeRenderView } from '../tree/NodeRenderView'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
   AllBatchUpdateRange,
   type Batch,
@@ -8,11 +8,11 @@ import {
   type DrawGroup,
   GeometryType,
   NoneBatchUpdateRange
-} from './Batch'
+} from './Batch.js'
 
-import { SpeckleText } from '../objects/SpeckleText'
-import { ObjectLayers } from '../../IViewer'
-import Materials from '../materials/Materials'
+import { SpeckleText } from '../objects/SpeckleText.js'
+import { ObjectLayers } from '../../IViewer.js'
+import Materials from '../materials/Materials.js'
 
 export default class TextBatch implements Batch {
   public id: string

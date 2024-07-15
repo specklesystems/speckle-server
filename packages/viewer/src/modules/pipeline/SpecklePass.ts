@@ -8,7 +8,7 @@ import {
   WebGLRenderTarget
 } from 'three'
 import { Pass } from 'three/examples/jsm/postprocessing/Pass.js'
-import { ObjectLayers } from '../../IViewer'
+import { ObjectLayers } from '../../IViewer.js'
 
 export enum RenderType {
   NORMAL,

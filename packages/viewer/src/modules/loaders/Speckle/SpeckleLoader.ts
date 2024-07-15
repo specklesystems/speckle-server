@@ -1,10 +1,10 @@
-import Logger from 'js-logger'
-import SpeckleConverter from './SpeckleConverter'
-import { Loader, LoaderEvent } from '../Loader'
+import SpeckleConverter from './SpeckleConverter.js'
+import { Loader, LoaderEvent } from '../Loader.js'
 import ObjectLoader from '@speckle/objectloader'
-import { SpeckleGeometryConverter } from './SpeckleGeometryConverter'
-import { WorldTree, type SpeckleObject } from '../../..'
-import { AsyncPause } from '../../World'
+import { SpeckleGeometryConverter } from './SpeckleGeometryConverter.js'
+import { WorldTree, type SpeckleObject } from '../../../index.js'
+import { AsyncPause } from '../../World.js'
+import Logger from '../../utils/Logger.js'
 
 export class SpeckleLoader extends Loader {
   private loader: ObjectLoader
