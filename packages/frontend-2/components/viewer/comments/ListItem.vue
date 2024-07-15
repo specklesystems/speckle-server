@@ -47,7 +47,7 @@
         {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
       </span>
       <span v-tippy="$getFullDate(thread.createdAt)" class="text-foreground-2 text-xs">
-        {{ $getTrunicatedDate(thread.createdAt) }}
+        {{ $getTrunicatedRelativeDate(thread.createdAt) }}
       </span>
     </div>
   </div>

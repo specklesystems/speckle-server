@@ -30,7 +30,7 @@
         <div class="text-xs text-foreground-2 flex items-center">
           <ClockIcon class="w-4 h-4 mr-1" />
           <span v-tippy="$getFullDate(project.updatedAt)" class="-mt-px">
-            updated {{ $getTrunicatedDateWithPrefix(project.updatedAt) }}
+            updated {{ $getTrunicatedRelativeDateWithPrefix(project.updatedAt) }}
           </span>
         </div>
       </div>

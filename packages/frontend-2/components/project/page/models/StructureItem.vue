@@ -90,7 +90,7 @@
           >
             Updated
             <span v-tippy="$getFullDate(updatedAtFullDate)">
-              {{ $getTrunicatedDateWithPrefix(updatedAtFullDate) }}
+              {{ $getTrunicatedRelativeDateWithPrefix(updatedAtFullDate) }}
             </span>
           </div>
           <div class="text-xs text-foreground-2 flex items-center space-x-1">

@@ -2,7 +2,7 @@
   <div>
     updated
     <span v-tippy="$getFullDate(updatedAt)">
-      {{ $getTrunicatedDateWithPrefix(updatedAt) }}
+      {{ $getTrunicatedRelativeDateWithPrefix(updatedAt) }}
     </span>
   </div>
 </template>

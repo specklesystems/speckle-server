@@ -50,7 +50,7 @@
         >
           created
           <span v-tippy="$getFullDate(createdAt)">
-            {{ $getTrunicatedDateWithPrefix(createdAt) }}
+            {{ $getTrunicatedRelativeDateWithPrefix(createdAt) }}
           </span>
         </div>
         <div class="w-full flex" @click.stop>

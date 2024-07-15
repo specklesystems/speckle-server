@@ -14,7 +14,7 @@
           v-tippy="$getFullDate(comment.createdAt)"
           class="text-xs truncate text-foreground-2 font-medium"
         >
-          {{ $getTrunicatedDate(comment.createdAt) }}
+          {{ $getTrunicatedRelativeDate(comment.createdAt) }}
         </span>
         <!-- Note: disabled as archiving comments is now equivalent to "resolving" them. -->
         <!-- <div class="pl-2">

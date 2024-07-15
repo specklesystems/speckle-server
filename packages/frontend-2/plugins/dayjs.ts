@@ -5,59 +5,51 @@ import localizedFormat from 'dayjs/plugin/localizedFormat'
 import duration from 'dayjs/plugin/duration.js'
 import updateLocale from 'dayjs/plugin/updateLocale'
 
-// Only add YYYY if it is not this year
-const formatDate = (input: Dayjs) =>
-  input.year() === dayjs().year() ? input.format('MMM D') : input.format('MMM D, YYYY')
-
-const isClockUnit = (unit: string) =>
-  unit.includes('second') || unit.includes('minute') || unit.includes('hour')
-
 export default defineNuxtPlugin(() => {
   dayjs.extend(relativeTime)
   dayjs.extend(localizedFormat)
   dayjs.extend(duration)
   dayjs.extend(updateLocale)
 
-  dayjs.updateLocale('en', {
-    relativeTime: {
-      future: 'in %s',
-      past: (input: string) => {
-        const count = parseInt(input.split(' ')[0])
+  const customRelativeTime = (date: Dayjs): string => {
+    const now = dayjs()
+    const diffInMinutes = now.diff(date, 'minute')
+    const diffInHours = now.diff(date, 'hour')
+    const diffInDays = now.diff(date, 'day')
 
-        // Only add 'ago' to the returned string if it's a clock unit
-        if (isClockUnit(input)) {
-          return `${input} ago`
-        }
-
-        // Only format as days if less than 14 days ago
-        return input.includes('day') && count <= 14 ? `${count} days ago` : input
-      },
-      s: 'just now',
-      m: 'a minute',
-      mm: '%d minutes',
-      h: 'an hour',
-      hh: '%d hours',
-      d: 'a day',
-      dd: (count: number) =>
-        // If more than 14 days ago return the formatted dates instead of 'x days ago'
-        count <= 14 ? `${count} days ago` : formatDate(dayjs().subtract(count, 'day')),
-      M: (count: number) => formatDate(dayjs().subtract(count, 'month')),
-      MM: (count: number) => formatDate(dayjs().subtract(count, 'month')),
-      y: (count: number) => formatDate(dayjs().subtract(count, 'year')),
-      yy: (count: number) => formatDate(dayjs().subtract(count, 'year'))
+    if (diffInDays > 14) {
+      return date.year() === dayjs().year()
+        ? date.format('MMM D')
+        : date.format('MMM D, YYYY')
+    } else if (diffInDays >= 1) {
+      return diffInDays === 1 ? '1 day ago' : `${diffInDays} days ago`
+    } else if (diffInHours <= 23 && diffInHours >= 1) {
+      return diffInHours === 1 ? '1 hour ago' : `${diffInHours} hours ago`
+    } else if (diffInMinutes <= 59 && diffInMinutes >= 1) {
+      return diffInMinutes === 1 ? '1 minute ago' : `${diffInMinutes} minutes ago`
     }
-  })
 
-  const getFullDate = (input: string) => dayjs(input).format('MMM D, YYYY H:mm')
-  const getTrunicatedDate = (input: string) => dayjs(input).from(dayjs())
-  const getTrunicatedDateWithPrefix = (input: string) =>
-    isClockUnit(input) ? dayjs(input).from(dayjs()) : `on ${dayjs(input).from(dayjs())}`
+    return 'just now'
+  }
+
+  const isClockUnit = (date: string) => {
+    const formattedDate = dayjs(date)
+    const unit = customRelativeTime(formattedDate)
+    return unit.includes('second') || unit.includes('minute') || unit.includes('hour')
+  }
+
+  const getFullDate = (input: string) => dayjs(input).format('MMM D, YYYY, H:mm')
+  const getTrunicatedRelativeDate = (input: string) => customRelativeTime(dayjs(input))
+  const getTrunicatedRelativeDateWithPrefix = (input: string) =>
+    isClockUnit(input)
+      ? customRelativeTime(dayjs(input))
+      : `on ${customRelativeTime(dayjs(input))}`
 
   return {
     provide: {
       getFullDate,
-      getTrunicatedDate,
-      getTrunicatedDateWithPrefix
+      getTrunicatedRelativeDate,
+      getTrunicatedRelativeDateWithPrefix
     }
   }
 })

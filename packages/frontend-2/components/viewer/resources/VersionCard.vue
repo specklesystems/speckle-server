@@ -39,7 +39,7 @@
         v-tippy="$getFullDate(createdAt)"
         class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold shrink-0"
       >
-        <span>{{ isLatest ? 'Latest' : $getTrunicatedDate(createdAt) }}</span>
+        <span>{{ isLatest ? 'Latest' : $getTrunicatedRelativeDate(createdAt) }}</span>
       </div>
       <FormButton
         v-if="!isLoaded"

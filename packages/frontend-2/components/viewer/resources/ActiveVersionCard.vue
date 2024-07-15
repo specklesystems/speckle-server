@@ -13,7 +13,7 @@
       </div>
       <div class="italic text-foreground opacity-60 inline-block">
         <span v-tippy="$getFullDate(version.createdAt)">
-          {{ $getTrunicatedDate(version.createdAt) }}
+          {{ $getTrunicatedRelativeDate(version.createdAt) }}
         </span>
       </div>
     </div>
