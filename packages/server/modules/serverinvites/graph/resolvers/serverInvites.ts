@@ -205,7 +205,8 @@ export = {
       await useStreamInviteAndNotifyFactory({
         finalizeStreamInvite: finalizeStreamInviteFactory({
           findStreamInvite: findStreamInviteFactory({ db }),
-          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db })
+          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+          findResource: findResourceFactory()
         })
       })(args, ctx.userId!, ctx.resourceAccessRules)
       return true

@@ -3,8 +3,7 @@
     <div v-if="project">
       <ProjectsInviteBanner
         :invite="invite"
-        :show-stream-name="false"
-        :auto-accept="shouldAutoAcceptInvite"
+        :show-project-name="false"
         @processed="onInviteAccepted"
       />
       <div
@@ -71,7 +70,6 @@ definePageMeta({
 const route = useRoute()
 const router = useRouter()
 const projectId = computed(() => route.params.id as string)
-const shouldAutoAcceptInvite = computed(() => route.query.accept === 'true')
 const token = computed(() => route.query.token as Optional<string>)
 
 const pageFetchPolicy = usePageQueryStandardFetchPolicy()

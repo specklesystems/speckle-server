@@ -15,7 +15,7 @@
         :key="collaborator.id"
         class="bg-foundation flex items-center gap-2 py-3 px-4 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
       >
-        <UserAvatar :user="collaborator.user" size="sm" />
+        <UserAvatar :user="collaborator.user" />
         <span class="grow truncate text-sm">{{ collaborator.title }}</span>
 
         <template v-if="!collaborator.inviteId">
@@ -40,7 +40,7 @@
             <FormButton
               class="shrink-0"
               color="danger"
-              size="xs"
+              size="sm"
               :disabled="loading"
               @click="
                 cancelInvite({

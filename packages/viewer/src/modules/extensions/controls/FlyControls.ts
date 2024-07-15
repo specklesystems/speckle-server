@@ -8,9 +8,9 @@ import {
   Vector2,
   Vector3
 } from 'three'
-import { Damper, SETTLING_TIME } from '../../utils/Damper'
-import { SpeckleControls } from './SpeckleControls'
-import { World } from '../../World'
+import { Damper, SETTLING_TIME } from '../../utils/Damper.js'
+import { SpeckleControls } from './SpeckleControls.js'
+import { World } from '../../World.js'
 
 const _vectorBuff0 = new Vector3()
 const _changeEvent = { type: 'change' }

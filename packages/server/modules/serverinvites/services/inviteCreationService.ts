@@ -110,13 +110,14 @@ export const createAndSendInviteFactory =
     // send email and create activity stream item, if stream invite
     await Promise.all([
       emailsModule.sendEmail(emailParams),
-      ...(resourceTarget === ResourceTargets.Streams
+      ...(resourceTarget === ResourceTargets.Streams && resource
         ? [
             addStreamInviteSentOutActivity({
               streamId: resourceId!, // TODO: check null
               inviterId,
               inviteTargetEmail: userEmail!, // TODO: this should be properly typed
-              inviteTargetId: userId! // TODO: this should be properly typed
+              inviteTargetId: userId!, // TODO: this should be properly typed
+              stream: resource
             })
           ]
         : [])

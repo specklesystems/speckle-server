@@ -761,7 +761,7 @@ export async function createStream(
     trx: Knex.Transaction
   }>
 ) {
-  const { name, description } = input
+  const { name, description, workspaceId } = input
   const { ownerId, trx } = options || {}
 
   let shouldBePublic: boolean, shouldBeDiscoverable: boolean
@@ -782,7 +782,8 @@ export async function createStream(
     description: description || '',
     isPublic: shouldBePublic,
     isDiscoverable: shouldBeDiscoverable,
-    updatedAt: knex.fn.now()
+    updatedAt: knex.fn.now(),
+    workspaceId: workspaceId || null
   }
 
   // Create the stream & set up permissions

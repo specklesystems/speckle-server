@@ -1,5 +1,9 @@
 extend type Query {
   comment(id: String!, streamId: String!): Comment
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Project.comment instead."
+    )
+
   """
   This query can be used in the following ways:
   - get all the comments for a stream: **do not pass in any resource identifiers**.
@@ -11,7 +15,8 @@ extend type Query {
     limit: Int = 25
     cursor: String
     archived: Boolean! = false
-  ): CommentCollection @deprecated(reason: "Use 'commentThreads' fields instead")
+  ): CommentCollection
+    @deprecated(reason: "Use Project/Version/Model 'commentThreads' fields instead")
 }
 
 extend type Project {
@@ -23,6 +28,11 @@ extend type Project {
     limit: Int! = 25
     filter: ProjectCommentsFilter
   ): ProjectCommentCollection!
+
+  """
+  Get specific project comment/thread by ID
+  """
+  comment(id: String!): Comment
 }
 
 extend type Version {
@@ -51,6 +61,9 @@ extend type Stream {
   ```
   """
   commentCount: Int!
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 extend type Commit {
@@ -65,6 +78,9 @@ extend type Commit {
   ```
   """
   commentCount: Int!
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 extend type Object {
@@ -79,6 +95,9 @@ extend type Object {
   ```
   """
   commentCount: Int!
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 type CommentDataFilters {

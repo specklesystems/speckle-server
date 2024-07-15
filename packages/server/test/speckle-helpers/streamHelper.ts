@@ -9,7 +9,7 @@ export type BasicTestStream = {
   name: string
   isPublic: boolean
   /**
-   * The ID of the owner user
+   * The ID of the owner user. Will be filled in by createTestStream().
    */
   ownerId: string
   /**

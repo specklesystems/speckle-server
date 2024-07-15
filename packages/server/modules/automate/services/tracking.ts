@@ -72,7 +72,7 @@ const onAutomationRunStatusUpdated =
       automationWithRevision.projectId
     )
 
-    const mp = mixpanel({ userEmail })
+    const mp = mixpanel({ userEmail, req: undefined })
     await mp.track('Automate Function Run Finished', {
       automationId,
       automationRevisionId: automationWithRevision.id,
@@ -133,7 +133,7 @@ const onRunCreated =
           automationRun,
           automation.projectId
         )
-        const mp = mixpanel({ userEmail })
+        const mp = mixpanel({ userEmail, req: undefined })
         await mp.track('Automation Run Triggered', {
           automationId: automation.id,
           automationName: automation.name,

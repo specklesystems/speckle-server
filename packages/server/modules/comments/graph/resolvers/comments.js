@@ -5,7 +5,6 @@ const { getStream } = require('@/modules/core/services/streams')
 const { Roles } = require('@/modules/core/helpers/mainConstants')
 
 const {
-  getComment,
   getComments,
   getResourceCommentCount,
   createComment,
@@ -15,6 +14,7 @@ const {
   editComment,
   streamResourceCheck
 } = require('@/modules/comments/services/index')
+const { getComment } = require('@/modules/comments/repositories/comments')
 const {
   ensureCommentSchema
 } = require('@/modules/comments/services/commentTextService')
@@ -62,19 +62,27 @@ const {
   convertLegacyDataToState
 } = require('@/modules/comments/services/data')
 
+const getStreamComment = async ({ streamId, commentId }, ctx) => {
+  await authorizeProjectCommentsAccess({
+    projectId: streamId,
+    authCtx: ctx
+  })
+
+  const comment = await getComment({ id: commentId, userId: ctx.userId })
+  if (comment.streamId !== streamId)
+    throw new ApolloForbiddenError('You do not have access to this comment.')
+
+  return comment
+}
+
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
   Query: {
-    async comment(parent, args, context) {
-      await authorizeProjectCommentsAccess({
-        projectId: args.streamId,
-        authCtx: context
-      })
-
-      const comment = await getComment({ id: args.id, userId: context.userId })
-      if (comment.streamId !== args.streamId)
-        throw new ApolloForbiddenError('You do not have access to this comment.')
-      return comment
+    async comment(_parent, args, context) {
+      return await getStreamComment(
+        { streamId: args.streamId, commentId: args.id },
+        context
+      )
     },
 
     async comments(parent, args, context) {
@@ -210,6 +218,12 @@ module.exports = {
           threadsOnly: true
         }
       })
+    },
+    async comment(parent, args, context) {
+      return await getStreamComment(
+        { streamId: parent.id, commentId: args.id },
+        context
+      )
     }
   },
   Version: {

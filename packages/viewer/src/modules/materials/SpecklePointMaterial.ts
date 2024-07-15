@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
-import { specklePointVert } from './shaders/speckle-point-vert'
-import { specklePointFrag } from './shaders/speckle-point-frag'
+import { specklePointVert } from './shaders/speckle-point-vert.js'
+import { specklePointFrag } from './shaders/speckle-point-frag.js'
 import {
   type IUniform,
   Material,
@@ -13,8 +13,8 @@ import {
   BufferGeometry,
   Object3D
 } from 'three'
-import { ExtendedPointsMaterial, type Uniforms } from './SpeckleMaterial'
-import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
+import { ExtendedPointsMaterial, type Uniforms } from './SpeckleMaterial.js'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
 
 class SpecklePointMaterial extends ExtendedPointsMaterial {
   protected get vertexProgram(): string {

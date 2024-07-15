@@ -15,6 +15,11 @@ export class CommitCreateError extends BaseError {
   static code = 'COMMIT_CREATE_ERROR'
 }
 
+export class CommitReceiveError extends BaseError {
+  static defaultMessage = 'An issue occurred while receiving a commit'
+  static code = 'COMMIT_RECEIVE_ERROR'
+}
+
 export class CommitUpdateError extends BaseError {
   static defaultMessage = 'An issue occurred while updating a commit'
   static code = 'COMMIT_UPDATE_ERROR'
