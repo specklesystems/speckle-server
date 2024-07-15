@@ -11,17 +11,17 @@
       <div class="truncate text-foreground opacity-80">
         {{ version.message || 'no message' }}
       </div>
-      <div class="italic text-foreground opacity-60">
-        {{ timeAgo }}
+      <div class="italic text-foreground opacity-60 inline-block">
+        <span v-tippy="$getFullDate(version.createdAt)">
+          {{ $getTrunicatedDate(version.createdAt) }}
+        </span>
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import { EyeIcon } from '@heroicons/vue/24/solid'
-import { computed } from 'vue'
 
 interface Version {
   sourceApplication?: string | null
@@ -29,11 +29,7 @@ interface Version {
   createdAt: string
 }
 
-const props = defineProps<{
+defineProps<{
   version: Version
 }>()
-
-const timeAgo = computed(() => {
-  return dayjs(props.version.createdAt).from(dayjs())
-})
 </script>

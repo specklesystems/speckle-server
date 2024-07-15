@@ -4,27 +4,22 @@
       <PreviewImage :preview-url="version.previewUrl" />
     </div>
     <div
-      v-tippy="createdAt"
+      v-tippy="$getFullDate(version.createdAt)"
       class="bg-foundation-focus inline-block rounded-md px-2 text-xs font-bold truncate text-center py-1"
     >
-      {{ timeAgoCreatedAt }}
+      <span>
+        {{ $getTrunicatedDate(version.createdAt) }}
+      </span>
       <br />
       {{ isNewest ? 'New' : 'Old' }} Version
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import type { ViewerModelVersionCardItemFragment } from '~~/lib/common/generated/gql/graphql'
 
-const props = defineProps<{
+defineProps<{
   version: ViewerModelVersionCardItemFragment
   isNewest: boolean
 }>()
-
-const timeAgoCreatedAt = computed(() => dayjs(props.version.createdAt).from(dayjs()))
-
-const createdAt = computed(() => {
-  return dayjs(props.version.createdAt).format('LLL')
-})
 </script>

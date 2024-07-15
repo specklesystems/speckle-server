@@ -1,7 +1,9 @@
 <template>
   <div>
     updated
-    <b>{{ updatedAt }}</b>
+    <span v-tippy="$getFullDate(updatedAt)">
+      {{ $getTrunicatedDateWithPrefix(updatedAt) }}
+    </span>
   </div>
 </template>
 <script setup lang="ts">

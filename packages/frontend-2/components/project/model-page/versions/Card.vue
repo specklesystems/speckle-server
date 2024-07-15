@@ -49,7 +49,9 @@
           class="text-xs text-foreground-2 mr-1 opacity-0 truncate transition group-hover:opacity-100"
         >
           created
-          <b>{{ createdAt }}</b>
+          <span v-tippy="$getFullDate(createdAt)">
+            {{ $getTrunicatedDateWithPrefix(createdAt) }}
+          </span>
         </div>
         <div class="w-full flex" @click.stop>
           <FormCheckbox
@@ -86,7 +88,6 @@
   </div>
 </template>
 <script lang="ts" setup>
-import dayjs from 'dayjs'
 import type {
   PendingFileUploadFragment,
   ProjectModelPageVersionsCardVersionFragment
@@ -141,12 +142,12 @@ const showActionsMenu = ref(false)
 const hasAutomationStatus = computed(
   () => !isPendingVersionFragment(props.version) && props.version.automationsStatus
 )
-const createdAt = computed(() => {
-  const date = isPendingVersionFragment(props.version)
+const createdAt = computed(() =>
+  isPendingVersionFragment(props.version)
     ? props.version.convertedLastUpdate || props.version.uploadDate
     : props.version.createdAt
-  return dayjs(date).from(dayjs())
-})
+)
+
 const viewerRoute = computed(() => {
   if (isPendingVersionFragment(props.version)) return undefined
 

@@ -10,8 +10,11 @@
         <span class="grow truncate text-xs sm:text-sm font-bold">
           {{ comment.author.name }}
         </span>
-        <span class="text-xs truncate text-foreground-2 font-medium sm:font-bold">
-          {{ timeFromNow }}
+        <span
+          v-tippy="$getFullDate(comment.createdAt)"
+          class="text-xs truncate text-foreground-2 font-medium"
+        >
+          {{ $getTrunicatedDate(comment.createdAt) }}
         </span>
         <!-- Note: disabled as archiving comments is now equivalent to "resolving" them. -->
         <!-- <div class="pl-2">
@@ -43,14 +46,13 @@
   </div>
 </template>
 <script setup lang="ts">
-import dayjs from 'dayjs'
 // import { Roles } from '@speckle/shared'
 // import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import type { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gql/graphql'
 // import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 // import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
 
-const props = defineProps<{
+defineProps<{
   comment: ViewerCommentsReplyItemFragment
   projectId: string
 }>()
@@ -77,5 +79,4 @@ const emit = defineEmits<{
 // const absoluteDate = computed(() =>
 //   dayjs(props.comment.createdAt).toDate().toLocaleString()
 // )
-const timeFromNow = computed(() => dayjs(props.comment.createdAt).fromNow())
 </script>

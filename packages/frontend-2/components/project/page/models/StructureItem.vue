@@ -89,7 +89,9 @@
             class="text-xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
             Updated
-            <b>{{ updatedAt }}</b>
+            <span v-tippy="$getFullDate(updatedAtFullDate)">
+              {{ $getTrunicatedDateWithPrefix(updatedAtFullDate) }}
+            </span>
           </div>
           <div class="text-xs text-foreground-2 flex items-center space-x-1">
             <span>{{ model?.commentThreadCount.totalCount }}</span>
@@ -380,13 +382,13 @@ const hasChildren = computed(() =>
     : props.item.hasChildren
 )
 
-const updatedAt = computed(() => {
-  const date = isPendingFileUpload(props.item)
+const updatedAtFullDate = computed(() => {
+  return isPendingFileUpload(props.item)
     ? props.item.convertedLastUpdate || props.item.uploadDate
     : props.item.updatedAt
-
-  return dayjs(date).from(dayjs())
 })
+
+const updatedAt = computed(() => dayjs(updatedAtFullDate.value).from(dayjs()))
 
 const modelLink = computed(() => {
   if (

@@ -46,8 +46,8 @@
         {{ thread.replies.totalCount }}
         {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
       </span>
-      <span class="text-foreground-2 text-xs">
-        {{ formattedDate }}
+      <span v-tippy="$getFullDate(thread.createdAt)" class="text-foreground-2 text-xs">
+        {{ $getTrunicatedDate(thread.createdAt) }}
       </span>
     </div>
   </div>
@@ -62,7 +62,6 @@ import {
   useInjectedViewerLoadedResources,
   useInjectedViewerState
 } from '~~/lib/viewer/composables/setup'
-import dayjs from 'dayjs'
 import { ResourceType } from '~~/lib/common/generated/gql/graphql'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
@@ -91,8 +90,6 @@ const open = (id: string) => {
     source: 'sidebar'
   })
 }
-
-const formattedDate = computed(() => dayjs(props.thread.createdAt).from(dayjs()))
 
 const isThreadResourceLoaded = computed(() => {
   const thread = props.thread

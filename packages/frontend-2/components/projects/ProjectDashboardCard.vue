@@ -29,9 +29,8 @@
         </div> -->
         <div class="text-xs text-foreground-2 flex items-center">
           <ClockIcon class="w-4 h-4 mr-1" />
-          <span class="-mt-px">
-            updated
-            <b>{{ updatedAt }}</b>
+          <span v-tippy="$getFullDate(project.updatedAt)" class="-mt-px">
+            updated {{ $getTrunicatedDateWithPrefix(project.updatedAt) }}
           </span>
         </div>
       </div>
@@ -76,7 +75,6 @@
   </div>
 </template>
 <script lang="ts" setup>
-import dayjs from 'dayjs'
 import type { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
@@ -100,7 +98,6 @@ const models = computed(() => {
   const items = props.project.models?.items || []
   return items.slice(0, Math.max(0, 4 - pendingModels.value.length))
 })
-const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
 
 const hasNoModels = computed(() => !models.value.length && !pendingModels.value.length)
 const modelItemTotalCount = computed(

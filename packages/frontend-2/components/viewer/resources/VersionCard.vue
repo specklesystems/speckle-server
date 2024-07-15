@@ -36,10 +36,10 @@
       </div>
       <div
         v-show="showTimeline"
-        v-tippy="`${createdAt}`"
+        v-tippy="$getFullDate(createdAt)"
         class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold shrink-0"
       >
-        <span>{{ isLatest ? 'Latest' : timeAgoCreatedAt }}</span>
+        <span>{{ isLatest ? 'Latest' : $getTrunicatedDate(createdAt) }}</span>
       </div>
       <FormButton
         v-if="!isLoaded"
@@ -109,7 +109,6 @@ const isLatest = computed(() => props.isLatestVersion)
 
 const author = computed(() => props.version.authorUser)
 
-const timeAgoCreatedAt = computed(() => dayjs(props.version.createdAt).from(dayjs()))
 const createdAt = computed(() => {
   return dayjs(props.version.createdAt).format('LLL')
 })
