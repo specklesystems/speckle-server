@@ -644,7 +644,7 @@ jobs:
           command: |
             #!/usr/bin/env bash
             cp packages/preview-service/.env.example packages/preview-service/.env
-            sed -i~ '/^PG_CONNECTION_STRING=/s/=.*/="postgres://preview_service_test:preview_service_test@127.0.0.1:5432/preview_service_test"/' packages/preview-service/.env
+            sed -i~ '/^PG_CONNECTION_STRING=/s/=.*/="postgres:\/\/preview_service_test:preview_service_test@127.0.0.1:5432\/preview_service_test"/' packages/preview-service/.env
 
       - run:
           name: Run tests
