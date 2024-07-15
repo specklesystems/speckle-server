@@ -658,6 +658,11 @@ type BaseUserStreamsQueryParams = {
    * Only allow streams with the specified IDs to be returned
    */
   streamIdWhitelist?: string[]
+
+  /**
+   * Only allow streams that belong to the specified workspaces to be returned
+   */
+  workspaceIdWhitelist?: string[]
 }
 
 export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
@@ -684,7 +689,8 @@ function getUserStreamsQueryBase<
   forOtherUser,
   ownedOnly,
   withRoles,
-  streamIdWhitelist
+  streamIdWhitelist,
+  workspaceIdWhitelist
 }: BaseUserStreamsQueryParams) {
   const query = StreamAcl.knex<Array<S>>()
     .where(StreamAcl.col.userId, userId)
@@ -714,6 +720,10 @@ function getUserStreamsQueryBase<
 
   if (streamIdWhitelist?.length) {
     query.whereIn(Streams.col.id, streamIdWhitelist)
+  }
+
+  if (workspaceIdWhitelist?.length) {
+    query.whereIn(Streams.col.workspaceId, workspaceIdWhitelist)
   }
 
   return query

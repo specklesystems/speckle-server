@@ -21,7 +21,6 @@ describe('Workspace role services', () => {
       let storedRoles: WorkspaceAcl[] = [role]
 
       const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-        getWorkspaceProjects: async () => [],
         getWorkspaceRoles: async () => storedRoles,
         deleteWorkspaceRole: async ({ userId, workspaceId }) => {
           const role = storedRoles.find(
@@ -33,6 +32,7 @@ describe('Workspace role services', () => {
           return role ?? null
         },
         emitWorkspaceEvent: async () => [],
+        getUserStreams: async () => ({ streams: [], cursor: null }),
         revokeStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -56,7 +56,6 @@ describe('Workspace role services', () => {
       const storedRoles: WorkspaceAcl[] = [role]
 
       const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-        getWorkspaceProjects: async () => [],
         getWorkspaceRoles: async () => storedRoles,
         deleteWorkspaceRole: async () => {
           return storedRoles[0]
@@ -68,6 +67,7 @@ describe('Workspace role services', () => {
 
           return []
         },
+        getUserStreams: async () => ({ streams: [], cursor: null }),
         revokeStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -86,7 +86,6 @@ describe('Workspace role services', () => {
       let storedRoles: WorkspaceAcl[] = [role]
 
       const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-        getWorkspaceProjects: async () => [],
         getWorkspaceRoles: async () => storedRoles,
         deleteWorkspaceRole: async ({ userId, workspaceId }) => {
           const role = storedRoles.find(
@@ -98,6 +97,7 @@ describe('Workspace role services', () => {
           return role ?? null
         },
         emitWorkspaceEvent: async () => [],
+        getUserStreams: async () => ({ streams: [], cursor: null }),
         revokeStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -121,10 +121,10 @@ describe('Workspace role services', () => {
       ]
 
       const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-        getWorkspaceProjects: async () => workspaceProjects,
         getWorkspaceRoles: async () => workspaceRoles,
         deleteWorkspaceRole: async () => ({} as WorkspaceAcl),
         emitWorkspaceEvent: async () => [],
+        getUserStreams: async () => ({ streams: workspaceProjects, cursor: null }),
         revokeStreamPermissions: async ({ streamId, userId }) => {
           projectRoles = projectRoles.filter(
             (role) => role.resourceId !== streamId && role.userId !== userId
@@ -149,12 +149,12 @@ describe('Workspace role services', () => {
       const storedRoles: WorkspaceAcl[] = []
 
       const setWorkspaceRole = setWorkspaceRoleFactory({
-        getWorkspaceProjects: async () => [],
         getWorkspaceRoles: async () => storedRoles,
         upsertWorkspaceRole: async (role) => {
           storedRoles.push(role)
         },
         emitWorkspaceEvent: async () => [],
+        getUserStreams: async () => ({ streams: [], cursor: null }),
         grantStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -176,7 +176,6 @@ describe('Workspace role services', () => {
       const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
 
       const setWorkspaceRole = setWorkspaceRoleFactory({
-        getWorkspaceProjects: async () => [],
         getWorkspaceRoles: async () => [],
         upsertWorkspaceRole: async () => {},
         emitWorkspaceEvent: async ({ event, payload }) => {
@@ -186,6 +185,7 @@ describe('Workspace role services', () => {
 
           return []
         },
+        getUserStreams: async () => ({ streams: [], cursor: null }),
         grantStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -204,10 +204,10 @@ describe('Workspace role services', () => {
       const storedRoles: WorkspaceAcl[] = [role]
 
       const setWorkspaceRole = setWorkspaceRoleFactory({
-        getWorkspaceProjects: async () => [],
         getWorkspaceRoles: async () => storedRoles,
         upsertWorkspaceRole: async () => {},
         emitWorkspaceEvent: async () => [],
+        getUserStreams: async () => ({ streams: [], cursor: null }),
         grantStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -231,12 +231,12 @@ describe('Workspace role services', () => {
       const projectRoles: StreamAclRecord[] = []
 
       const setWorkspaceRole = setWorkspaceRoleFactory({
-        getWorkspaceProjects: async () => workspaceProjects,
         getWorkspaceRoles: async () => workspaceRoles,
         upsertWorkspaceRole: async (role) => {
           workspaceRoles.push(role)
         },
         emitWorkspaceEvent: async () => [],
+        getUserStreams: async () => ({ streams: workspaceProjects, cursor: null }),
         grantStreamPermissions: async (role) => {
           projectRoles.push({ ...role, resourceId: role.streamId })
           return {} as StreamRecord

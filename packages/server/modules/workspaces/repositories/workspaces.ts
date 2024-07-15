@@ -2,7 +2,6 @@ import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
 import {
   DeleteWorkspaceRole,
   GetWorkspace,
-  GetWorkspaceProjects,
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles,
   GetWorkspaceRolesForUser,
@@ -104,12 +103,4 @@ export const upsertWorkspaceRoleFactory =
       .insert({ userId, workspaceId, role })
       .onConflict(['userId', 'workspaceId'])
       .merge(['role'])
-  }
-
-export const getWorkspaceProjectsFactory =
-  ({ db }: { db: Knex }): GetWorkspaceProjects =>
-  async ({ workspaceId }) => {
-    const projects = await tables.streams(db).select('*').where({ workspaceId })
-
-    return projects
   }
