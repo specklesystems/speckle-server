@@ -4,11 +4,13 @@
       title="User profile"
       text="Manage your profile information"
     />
-    <SettingsUserProfileDetails :user="user" />
-    <hr class="my-6 md:my-10" />
-    <SettingsUserProfileChangePassword :user="user" />
-    <hr class="my-6 md:my-10" />
-    <SettingsUserProfileDeleteAccount :user="user" />
+    <template v-if="user">
+      <SettingsUserProfileDetails :user="user" />
+      <hr class="my-6 md:my-10" />
+      <SettingsUserProfileChangePassword :user="user" />
+      <hr class="my-6 md:my-10" />
+      <SettingsUserProfileDeleteAccount :user="user" />
+    </template>
   </div>
 </template>
 <script setup lang="ts">

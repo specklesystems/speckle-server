@@ -1,5 +1,5 @@
 <template>
-  <LayoutDialog title="Delete account" :open="open" max-width="md">
+  <LayoutDialog title="Delete account" :open="isOpen" max-width="md">
     <form class="flex flex-col gap-2" @submit="onDelete">
       <div
         class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter dark:bg-danger-darker rounded-md select-none mb-4"
@@ -71,6 +71,11 @@ const props = defineProps<{
   user: UserProfileEditDialogDeleteAccount_UserFragment
   open: boolean
 }>()
+
+const isOpen = computed({
+  get: () => props.open,
+  set: (newVal) => emit('update:open', newVal)
+})
 
 const { handleSubmit, errors } = useForm<{ deleteEmail: string }>()
 const { mutate, loading } = useDeleteAccount()

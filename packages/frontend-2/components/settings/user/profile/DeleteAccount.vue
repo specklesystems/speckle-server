@@ -15,8 +15,12 @@
 </template>
 
 <script setup lang="ts">
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
-const { activeUser: user } = useActiveUser()
+import type { UserProfileEditDialogDeleteAccount_UserFragment } from '~~/lib/common/generated/gql/graphql'
+
+defineProps<{
+  user: UserProfileEditDialogDeleteAccount_UserFragment
+}>()
+
 const isOpen = ref(false)
 
 function toggleModal() {
