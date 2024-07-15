@@ -3,7 +3,7 @@
     <SettingsSectionHeader title="Your details" subheading />
     <div class="grid md:grid-cols-2 pt-4">
       <div class="flex h-full items-center justify-center">
-        <UserProfileEditDialogAvatar :user="user" size="xxl" />
+        <SettingsUserProfileEditAvatar :user="user" size="xxl" />
       </div>
       <div class="pt-6 md:pt-0">
         <FormTextInput
