@@ -294,11 +294,11 @@ const getStatus = () => {
 
 const steps = ref([
   {
-    title: 'Install Manager ⚙️',
+    title: 'Install manager ⚙️',
     blurb: 'Use Manager to install the Speckle Connectors for your apps!',
     active: false,
     cta: "Let's go!",
-    postCompletionCta: 'Download Again',
+    postCompletionCta: 'Download again',
     action: () => {
       showManagerDownloadDialog.value = true
     },
@@ -316,11 +316,11 @@ const steps = ref([
     icon: ComputerDesktopIcon
   },
   {
-    title: 'Log In 🔑',
+    title: 'Log in 🔑',
     blurb: 'Authorise our application connectors to send data to Speckle.',
     active: false,
     cta: "Let's go!",
-    postCompletionCta: 'Login Again',
+    postCompletionCta: 'Login again',
     action: () => {
       showAccountLinkDialog.value = true
     },
@@ -338,11 +338,11 @@ const steps = ref([
     icon: UserPlusIcon
   },
   {
-    title: 'Your First Model Upload ⬆️',
+    title: 'Your first model upload ⬆️',
     blurb: 'Use your favourite design app to send your first model to Speckle.',
     active: false,
     cta: "Let's go!",
-    postCompletionCta: 'Show Again',
+    postCompletionCta: 'Show again',
     action: () => {
       showFirstSendDialog.value = true
     },
@@ -360,11 +360,11 @@ const steps = ref([
     icon: CloudArrowUpIcon
   },
   {
-    title: 'Enable Multiplayer 📢',
+    title: 'Enable multiplayer 📢',
     blurb: 'Share your project with your colleagues!',
     active: false,
     cta: "Let's go!",
-    postCompletionCta: 'Invite Again',
+    postCompletionCta: 'Invite again',
     action: () => {
       showServerInviteDialog.value = true
       //TODO: modify server invite dialog to include searchable project dropdown

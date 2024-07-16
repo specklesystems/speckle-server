@@ -30,7 +30,7 @@
               :href="connectorsPageUrl"
             >
               <CloudArrowDownIcon class="w-5 h-5" />
-              Connector Downloads
+              Connector downloads
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser" v-slot="{ active }">
@@ -42,7 +42,7 @@
               @click="() => (showProfileEditDialog = true)"
             >
               <UserAvatar :user="activeUser" size="sm" class="-ml-0.5 mr-px" />
-              Edit Profile
+              Edit profile
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="isAdmin" v-slot="{ active }">
@@ -54,7 +54,7 @@
               @click="goToServerManagement()"
             >
               <Cog6ToothIcon class="w-5 h-5" />
-              Server Management
+              Server management
             </NuxtLink>
           </MenuItem>
           <MenuItem v-slot="{ active }">
@@ -66,7 +66,7 @@
               @click="toggleTheme"
             >
               <Icon class="w-5 h-5" />
-              {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
+              {{ isDarkTheme ? 'Light mode' : 'Dark mode' }}
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser && !isGuest" v-slot="{ active }">
@@ -104,7 +104,7 @@
               @click="logout"
             >
               <ArrowLeftOnRectangleIcon class="w-5 h-5" />
-              Sign Out
+              Sign out
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="!activeUser && loginUrl" v-slot="{ active }">
@@ -116,7 +116,7 @@
               :to="loginUrl"
             >
               <ArrowRightOnRectangleIcon class="w-5 h-5" />
-              Sign In
+              Sign in
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="version">

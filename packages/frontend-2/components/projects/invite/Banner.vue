@@ -38,7 +38,7 @@
           full-width
           @click.stop.prevent="onLoginSignupClick"
         >
-          {{ isForRegisteredUser ? 'Log In' : 'Sign Up' }}
+          {{ isForRegisteredUser ? 'Log in' : 'Sign up' }}
         </FormButton>
       </template>
     </div>

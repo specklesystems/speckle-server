@@ -1,6 +1,6 @@
 <template>
   <OnboardingDialogBase v-model:open="openState">
-    <template #header>Install Manager ⚙️</template>
+    <template #header>Install manager ⚙️</template>
     <CommonVimeoEmbed
       vimeo-id="925892633"
       title="Onboarding: How to install Manager"
@@ -14,7 +14,7 @@
           class="shadow-md"
           @click.stop="downloadManager(os === 'Windows' ? 'exe' : 'dmg')"
         >
-          Download For {{ os }}
+          Download for {{ os }}
         </FormButton>
         <FormButton
           size="xs"

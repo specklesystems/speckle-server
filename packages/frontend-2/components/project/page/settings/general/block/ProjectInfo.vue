@@ -2,15 +2,15 @@
   <div class="flex flex-col gap-4">
     <ProjectPageSettingsBlock
       background
-      title="Project Info"
+      title="Project info"
       :disabled-message="disabled ? 'You must be a project owner' : undefined"
       :icon="PencilIcon"
     >
       <FormTextInput
         v-model="localProjectName"
         name="projectName"
-        label="Project Name"
-        placeholder="Project Name"
+        label="Project name"
+        placeholder="Project name"
         show-label
         color="foundation"
         class="mb-4"
@@ -19,7 +19,7 @@
       <FormTextArea
         v-model="localProjectDescription"
         name="projectDescription"
-        label="Project Description"
+        label="Project description"
         placeholder="Description (optional)"
         show-label
         color="foundation"
