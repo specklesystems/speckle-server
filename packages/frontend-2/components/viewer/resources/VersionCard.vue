@@ -36,10 +36,12 @@
       </div>
       <div
         v-show="showTimeline"
-        v-tippy="$getFullDate(createdAt)"
+        v-tippy="$getFullDate(version.createdAt)"
         class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold shrink-0"
       >
-        <span>{{ isLatest ? 'Latest' : $getTrunicatedRelativeDate(createdAt) }}</span>
+        <span>
+          {{ isLatest ? 'Latest' : $getTrunicatedRelativeDate(version.createdAt) }}
+        </span>
       </div>
       <FormButton
         v-if="!isLoaded"
@@ -108,10 +110,6 @@ const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
 
 const author = computed(() => props.version.authorUser)
-
-const createdAt = computed(() => {
-  return dayjs(props.version.createdAt).format('LLL')
-})
 
 const mp = useMixpanel()
 
