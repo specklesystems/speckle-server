@@ -1,5 +1,5 @@
 import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { WorkspaceAcl } from '@/modules/workspaces/domain/types'
+import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { grantWorkspaceProjectRolesFactory } from '@/modules/workspaces/services/workspaceProjectRoleCreation'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
