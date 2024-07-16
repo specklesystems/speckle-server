@@ -1,5 +1,5 @@
 extend type Query {
-  workspace(id: String!): Workspace!
+  workspace(id: String!): Workspace! @hasScope(scope: "workspace:read")
 }
 
 input WorkspaceCreateInput {
@@ -27,13 +27,13 @@ input WorkspaceRoleDeleteInput {
 }
 
 extend type Mutation {
-  workspaceMutations: WorkspaceMutations!
+  workspaceMutations: WorkspaceMutations! @hasServerRole(role: SERVER_USER)
 }
 
 type WorkspaceMutations {
-  create(input: WorkspaceCreateInput!): Workspace!
-  delete(workspaceId: String!): Workspace!
-  update(input: WorkspaceUpdateInput!): Workspace!
+  create(input: WorkspaceCreateInput!): Workspace! @hasScope(scope: "workspace:create")
+  delete(workspaceId: String!): Workspace! @hasScope(scope: "workspace:delete")
+  update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
   updateRole(input: WorkspaceRoleUpdateInput!): Boolean!
   deleteRole(input: WorkspaceRoleDeleteInput!): Boolean!
   invites: WorkspaceInviteMutations!

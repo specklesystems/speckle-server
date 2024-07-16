@@ -79,4 +79,4 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       }
     } as Resolvers)
-  : null
+  : {}
