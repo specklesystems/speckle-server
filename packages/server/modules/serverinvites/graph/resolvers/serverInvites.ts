@@ -1,10 +1,8 @@
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
-import {
-  buildUserTarget,
-  ResourceTargets
-} from '@/modules/serverinvites/helpers/inviteHelper'
+import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
+import { ResourceTargets } from '@/modules/serverinvites/helpers/legacyCore'
 import {
   createAndSendInviteFactory,
   resendInviteEmailFactory

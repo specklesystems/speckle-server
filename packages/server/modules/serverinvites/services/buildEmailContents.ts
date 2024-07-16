@@ -4,7 +4,7 @@ import { getServerInfo } from '@/modules/core/services/generic'
 import {
   ResourceTargets,
   isServerInvite
-} from '@/modules/serverinvites/helpers/inviteHelper'
+} from '@/modules/serverinvites/helpers/legacyCore'
 import {
   getRegistrationRoute,
   getStreamRoute

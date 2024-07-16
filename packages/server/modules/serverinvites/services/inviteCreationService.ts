@@ -4,11 +4,8 @@ import emailsModule from '@/modules/emails'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import sanitizeHtml from 'sanitize-html'
-import {
-  resolveTarget,
-  buildUserTarget,
-  ResourceTargets
-} from '@/modules/serverinvites/helpers/inviteHelper'
+import { resolveTarget, buildUserTarget } from '@/modules/serverinvites/helpers/core'
+import { ResourceTargets } from '@/modules/serverinvites/helpers/legacyCore'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { addStreamInviteSentOutActivity } from '@/modules/activitystream/services/streamActivity'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'

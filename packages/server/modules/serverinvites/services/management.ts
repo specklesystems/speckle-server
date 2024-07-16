@@ -6,10 +6,8 @@ import {
   StreamInviteCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
-import {
-  buildUserTarget,
-  ResourceTargets
-} from '@/modules/serverinvites/helpers/inviteHelper'
+import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
+import { ResourceTargets } from '@/modules/serverinvites/helpers/legacyCore'
 import { has } from 'lodash'
 import {
   ContextResourceAccessRules,

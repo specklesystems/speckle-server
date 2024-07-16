@@ -1,9 +1,7 @@
 import { Roles } from '@speckle/shared'
 
-import {
-  buildUserTarget,
-  ResourceTargets
-} from '@/modules/serverinvites/helpers/inviteHelper'
+import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
+import { ResourceTargets } from '@/modules/serverinvites/helpers/legacyCore'
 import { InviteResult } from '@/modules/serverinvites/services/operations'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import {

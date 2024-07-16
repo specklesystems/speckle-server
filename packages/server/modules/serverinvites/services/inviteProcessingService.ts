@@ -1,11 +1,11 @@
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getStreamRoute } from '@/modules/core/helpers/routeHelper'
 import { NoInviteFoundError } from '@/modules/serverinvites/errors'
+import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
 import {
   isStreamInvite,
-  buildUserTarget,
   ResourceTargets
-} from '@/modules/serverinvites/helpers/inviteHelper'
+} from '@/modules/serverinvites/helpers/legacyCore'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
 import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'

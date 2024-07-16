@@ -1,6 +1,6 @@
 import { ServerRoles, StreamRoles } from '@speckle/shared'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
-import { ResourceTargets } from '@/modules/serverinvites/helpers/inviteHelper'
+import { ResourceTargets } from '@/modules/serverinvites/helpers/legacyCore'
 import {
   ServerInviteRecord,
   StreamInviteRecord

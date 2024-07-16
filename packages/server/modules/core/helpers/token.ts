@@ -4,7 +4,7 @@ import {
 } from '@/modules/core/domain/tokens/types'
 import { TokenCreateError } from '@/modules/core/errors/user'
 import { TokenResourceAccessRecord } from '@/modules/core/helpers/types'
-import { ResourceTargets } from '@/modules/serverinvites/helpers/inviteHelper'
+import { ResourceTargets } from '@/modules/serverinvites/helpers/legacyCore'
 import { MaybeNullOrUndefined, Nullable, Optional, Scopes } from '@speckle/shared'
 import { differenceBy } from 'lodash'
 

@@ -5,12 +5,11 @@ import {
   UserWithOptionalRole
 } from '@/modules/core/repositories/users'
 import { ResourceNotResolvableError } from '@/modules/serverinvites/errors'
+import { resolveTarget, buildUserTarget } from '@/modules/serverinvites/helpers/core'
 import {
-  resolveTarget,
   ResourceTargets,
-  buildUserTarget,
   isServerInvite
-} from '@/modules/serverinvites/helpers/inviteHelper'
+} from '@/modules/serverinvites/helpers/legacyCore'
 import { uniq } from 'lodash'
 import { StreamWithOptionalRole, getStream } from '@/modules/core/repositories/streams'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'

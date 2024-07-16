@@ -8,7 +8,7 @@ import {
   resolveTarget,
   resolveInviteTargetTitle,
   buildUserTarget
-} from '@/modules/serverinvites/helpers/inviteHelper'
+} from '@/modules/serverinvites/helpers/core'
 import {
   ServerInviteRecord,
   StreamInviteRecord
