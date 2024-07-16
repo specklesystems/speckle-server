@@ -60,7 +60,7 @@ export const formattedFullDate = (date: ConfigType): string =>
  */
 export const formattedRelativeDate = (
   date: ConfigType,
-  options?: Partial<{ prefix: boolean; capitalize: true }>
+  options?: Partial<{ prefix: boolean; capitalize: boolean }>
 ): string => {
   if (options?.prefix) {
     return isClockUnit(date)
