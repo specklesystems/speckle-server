@@ -89,7 +89,9 @@
             class="text-xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
             Updated
-            <b>{{ updatedAt }}</b>
+            <span v-tippy="updatedAt.full">
+              {{ updatedAt.relative }}
+            </span>
           </div>
           <div class="text-xs text-foreground-2 flex items-center space-x-1">
             <span>{{ model?.commentThreadCount.totalCount }}</span>
@@ -173,7 +175,9 @@
           </div> -->
           <div class="text-xs text-foreground-2">
             Updated
-            <b>{{ updatedAt }}</b>
+            <span v-tippy="updatedAt.full">
+              {{ updatedAt.relative }}
+            </span>
           </div>
           <div class="text-xs text-foreground-2">
             <FormButton
@@ -232,7 +236,6 @@
   </div>
 </template>
 <script lang="ts" setup>
-import dayjs from 'dayjs'
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import {
@@ -385,7 +388,10 @@ const updatedAt = computed(() => {
     ? props.item.convertedLastUpdate || props.item.uploadDate
     : props.item.updatedAt
 
-  return dayjs(date).from(dayjs())
+  return {
+    full: formattedFullDate(date),
+    relative: formattedRelativeDate(date, { prefix: true })
+  }
 })
 
 const modelLink = computed(() => {

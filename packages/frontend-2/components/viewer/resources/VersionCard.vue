@@ -36,10 +36,12 @@
       </div>
       <div
         v-show="showTimeline"
-        v-tippy="`${createdAt}`"
+        v-tippy="createdAt.full"
         class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold shrink-0"
       >
-        <span>{{ isLatest ? 'Latest' : timeAgoCreatedAt }}</span>
+        <span>
+          {{ isLatest ? 'Latest' : createdAt.relative }}
+        </span>
       </div>
       <FormButton
         v-if="!isLoaded"
@@ -107,12 +109,14 @@ const emit = defineEmits<{
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
 
-const author = computed(() => props.version.authorUser)
-
-const timeAgoCreatedAt = computed(() => dayjs(props.version.createdAt).from(dayjs()))
 const createdAt = computed(() => {
-  return dayjs(props.version.createdAt).format('LLL')
+  return {
+    full: formattedFullDate(props.version.createdAt),
+    relative: formattedRelativeDate(props.version.createdAt, { capitalize: true })
+  }
 })
+
+const author = computed(() => props.version.authorUser)
 
 const mp = useMixpanel()
 
