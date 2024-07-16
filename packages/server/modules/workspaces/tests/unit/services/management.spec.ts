@@ -1,14 +1,105 @@
-import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
-import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import {
+  createWorkspaceFactory,
   deleteWorkspaceRoleFactory,
   setWorkspaceRoleFactory
-} from '@/modules/workspaces/services/workspaceRoleCreation'
-import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
-import { expectToThrow } from '@/test/assertionHelper'
+} from '@/modules/workspaces/services/management'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { StreamAclRecord, StreamRecord } from '@/modules/core/helpers/types'
+import { expectToThrow } from '@/test/assertionHelper'
+
+describe('Workspace services', () => {
+  describe('createWorkspaceFactory creates a function, that', () => {
+    it('stores the workspace', async () => {
+      const storedWorkspaces: Workspace[] = []
+      const createWorkspace = createWorkspaceFactory({
+        upsertWorkspace: async ({ workspace }: { workspace: Workspace }) => {
+          storedWorkspaces.push(workspace)
+        },
+        upsertWorkspaceRole: async () => {},
+        emitWorkspaceEvent: async () => [],
+        storeBlob: async () => cryptoRandomString({ length: 10 })
+      })
+
+      const workspaceInput = {
+        description: 'foobar',
+        logo: null,
+        name: cryptoRandomString({ length: 6 })
+      }
+      const workspace = await createWorkspace({
+        userId: cryptoRandomString({ length: 10 }),
+        workspaceInput
+      })
+      expect(storedWorkspaces.length).to.equal(1)
+      expect(storedWorkspaces[0]).to.deep.equal(workspace)
+    })
+    it('makes the workspace creator becomes a workspace:admin', async () => {
+      const storedRole: WorkspaceAcl[] = []
+      const createWorkspace = createWorkspaceFactory({
+        upsertWorkspace: async () => {},
+        upsertWorkspaceRole: async (workspaceAcl: WorkspaceAcl) => {
+          storedRole.push(workspaceAcl)
+        },
+        emitWorkspaceEvent: async () => [],
+        storeBlob: async () => cryptoRandomString({ length: 10 })
+      })
+
+      const workspaceInput = {
+        description: 'foobar',
+        logo: null,
+        name: cryptoRandomString({ length: 6 })
+      }
+      const userId = cryptoRandomString({ length: 10 })
+      const workspace = await createWorkspace({
+        userId,
+        workspaceInput
+      })
+      expect(storedRole.length).to.equal(1)
+      expect(storedRole[0]).to.deep.equal({
+        userId,
+        workspaceId: workspace.id,
+        role: Roles.Workspace.Admin
+      })
+    })
+    it('emits a workspace created event', async () => {
+      const eventData = {
+        isCalled: false,
+        eventName: '',
+        payload: {}
+      }
+      const createWorkspace = createWorkspaceFactory({
+        upsertWorkspace: async () => {},
+        upsertWorkspaceRole: async () => {},
+        emitWorkspaceEvent: async ({ eventName, payload }) => {
+          eventData.isCalled = true
+          eventData.eventName = eventName
+          eventData.payload = payload
+          return []
+        },
+        storeBlob: async () => cryptoRandomString({ length: 10 })
+      })
+
+      const workspaceInput = {
+        description: 'foobar',
+        logo: null,
+        name: cryptoRandomString({ length: 6 })
+      }
+      const userId = cryptoRandomString({ length: 10 })
+
+      const workspace = await createWorkspace({
+        userId,
+        workspaceInput
+      })
+
+      expect(eventData.isCalled).to.equal(true)
+      expect(eventData.eventName).to.equal(WorkspaceEvents.Created)
+      expect(eventData.payload).to.deep.equal({ ...workspace, createdByUserId: userId })
+    })
+  })
+})
 
 describe('Workspace role services', () => {
   describe('deleteWorkspaceRoleFactory creates a function, that', () => {
@@ -32,7 +123,7 @@ describe('Workspace role services', () => {
           return role ?? null
         },
         emitWorkspaceEvent: async () => [],
-        getUserStreams: async () => ({ streams: [], cursor: null }),
+        getStreams: async () => ({ streams: [], totalCount: 0, cursorDate: null }),
         revokeStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -67,7 +158,7 @@ describe('Workspace role services', () => {
 
           return []
         },
-        getUserStreams: async () => ({ streams: [], cursor: null }),
+        getStreams: async () => ({ streams: [], totalCount: 0, cursorDate: null }),
         revokeStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -97,7 +188,7 @@ describe('Workspace role services', () => {
           return role ?? null
         },
         emitWorkspaceEvent: async () => [],
-        getUserStreams: async () => ({ streams: [], cursor: null }),
+        getStreams: async () => ({ streams: [], totalCount: 0, cursorDate: null }),
         revokeStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -124,7 +215,11 @@ describe('Workspace role services', () => {
         getWorkspaceRoles: async () => workspaceRoles,
         deleteWorkspaceRole: async () => ({} as WorkspaceAcl),
         emitWorkspaceEvent: async () => [],
-        getUserStreams: async () => ({ streams: workspaceProjects, cursor: null }),
+        getStreams: async () => ({
+          streams: workspaceProjects,
+          totalCount: workspaceProjects.length,
+          cursorDate: null
+        }),
         revokeStreamPermissions: async ({ streamId, userId }) => {
           projectRoles = projectRoles.filter(
             (role) => role.resourceId !== streamId && role.userId !== userId
@@ -154,7 +249,7 @@ describe('Workspace role services', () => {
           storedRoles.push(role)
         },
         emitWorkspaceEvent: async () => [],
-        getUserStreams: async () => ({ streams: [], cursor: null }),
+        getStreams: async () => ({ streams: [], totalCount: 0, cursorDate: null }),
         grantStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -185,7 +280,7 @@ describe('Workspace role services', () => {
 
           return []
         },
-        getUserStreams: async () => ({ streams: [], cursor: null }),
+        getStreams: async () => ({ streams: [], totalCount: 0, cursorDate: null }),
         grantStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -207,7 +302,7 @@ describe('Workspace role services', () => {
         getWorkspaceRoles: async () => storedRoles,
         upsertWorkspaceRole: async () => {},
         emitWorkspaceEvent: async () => [],
-        getUserStreams: async () => ({ streams: [], cursor: null }),
+        getStreams: async () => ({ streams: [], totalCount: 0, cursor: null }),
         grantStreamPermissions: async () => ({} as StreamRecord)
       })
 
@@ -236,7 +331,11 @@ describe('Workspace role services', () => {
           workspaceRoles.push(role)
         },
         emitWorkspaceEvent: async () => [],
-        getUserStreams: async () => ({ streams: workspaceProjects, cursor: null }),
+        getStreams: async () => ({
+          streams: workspaceProjects,
+          totalCount: workspaceProjects.length,
+          cursorDate: null
+        }),
         grantStreamPermissions: async (role) => {
           projectRoles.push({ ...role, resourceId: role.streamId })
           return {} as StreamRecord

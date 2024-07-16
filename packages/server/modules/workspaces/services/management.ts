@@ -1,21 +1,74 @@
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import {
-  getUserStreams as repoGetUserStreams,
+  EmitWorkspaceEvent,
+  StoreBlob,
+  UpsertWorkspace,
+  UpsertWorkspaceRole
+} from '@/modules/workspaces/domain/operations'
+import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import { Roles } from '@speckle/shared'
+import cryptoRandomString from 'crypto-random-string'
+import {
   grantStreamPermissions as repoGrantStreamPermissions,
   revokeStreamPermissions as repoRevokeStreamPermissions
 } from '@/modules/core/repositories/streams'
+import { getStreams as repoGetStreams } from '@/modules/core/services/streams'
 import {
   DeleteWorkspaceRole,
-  EmitWorkspaceEvent,
   GetWorkspaceRoleForUser,
-  GetWorkspaceRoles,
-  UpsertWorkspaceRole
+  GetWorkspaceRoles
 } from '@/modules/workspaces/domain/operations'
-import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import { WorkspaceAdminRequiredError } from '@/modules/workspaces/errors/workspace'
-import { getAllWorkspaceProjectsForUserFactory } from '@/modules/workspaces/services/workspaceProjects'
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/utils/roles'
 import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/domain/roles'
-import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+
+type WorkspaceCreateArgs = {
+  workspaceInput: { name: string; description: string | null; logo: string | null }
+  userId: string
+}
+
+export const createWorkspaceFactory =
+  ({
+    upsertWorkspace,
+    upsertWorkspaceRole,
+    emitWorkspaceEvent,
+    storeBlob
+  }: {
+    upsertWorkspace: UpsertWorkspace
+    upsertWorkspaceRole: UpsertWorkspaceRole
+    storeBlob: StoreBlob
+    emitWorkspaceEvent: EmitWorkspaceEvent
+  }) =>
+  async ({ userId, workspaceInput }: WorkspaceCreateArgs): Promise<Workspace> => {
+    let logoUrl: string | null = null
+    if (workspaceInput.logo) {
+      logoUrl = await storeBlob(workspaceInput.logo)
+    }
+
+    const workspace = {
+      ...workspaceInput,
+      id: cryptoRandomString({ length: 10 }),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      logoUrl
+    }
+    await upsertWorkspace({ workspace })
+    // assign the creator as workspace administrator
+    await upsertWorkspaceRole({
+      userId,
+      role: Roles.Workspace.Admin,
+      workspaceId: workspace.id
+    })
+
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.Created,
+      payload: { ...workspace, createdByUserId: userId }
+    })
+    // emit a workspace created event
+
+    return workspace
+  }
 
 type WorkspaceRoleDeleteArgs = {
   userId: string
@@ -27,13 +80,13 @@ export const deleteWorkspaceRoleFactory =
     getWorkspaceRoles,
     deleteWorkspaceRole,
     emitWorkspaceEvent,
-    getUserStreams,
+    getStreams,
     revokeStreamPermissions
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     deleteWorkspaceRole: DeleteWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
-    getUserStreams: typeof repoGetUserStreams
+    getStreams: typeof repoGetStreams
     revokeStreamPermissions: typeof repoRevokeStreamPermissions
   }) =>
   async ({
@@ -53,14 +106,14 @@ export const deleteWorkspaceRoleFactory =
     }
 
     // Delete workspace project roles
-    const workspaceProjects = await getAllWorkspaceProjectsForUserFactory({
-      getUserStreams
-    })({ userId, workspaceId })
-
+    const projectIds: string[] = []
+    for await (const project of queryAllWorkspaceProjectsFactory({ getStreams })(
+      workspaceId
+    )) {
+      projectIds.push(project.id)
+    }
     await Promise.all(
-      workspaceProjects.map(({ id: streamId }) =>
-        revokeStreamPermissions({ streamId, userId })
-      )
+      projectIds.map((streamId) => revokeStreamPermissions({ streamId, userId }))
     )
 
     // Emit deleted role
@@ -88,14 +141,14 @@ export const setWorkspaceRoleFactory =
     getWorkspaceRoles,
     upsertWorkspaceRole,
     emitWorkspaceEvent,
-    getUserStreams,
+    getStreams,
     grantStreamPermissions
   }: {
     getWorkspaceRoles: GetWorkspaceRoles
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
     // TODO: Create `core` domain and import type from there
-    getUserStreams: typeof repoGetUserStreams
+    getStreams: typeof repoGetStreams
     grantStreamPermissions: typeof repoGrantStreamPermissions
   }) =>
   async ({ userId, workspaceId, role }: WorkspaceAcl): Promise<void> => {
@@ -114,11 +167,14 @@ export const setWorkspaceRoleFactory =
     // Update user role in all workspace projects
     // TODO: Should these be in a transaction with the workspace role change?
     const projectRole = mapWorkspaceRoleToProjectRole(role)
-    const workspaceProjects = await getAllWorkspaceProjectsForUserFactory({
-      getUserStreams
-    })({ userId, workspaceId })
+    const projectIds: string[] = []
+    for await (const project of queryAllWorkspaceProjectsFactory({ getStreams })(
+      workspaceId
+    )) {
+      projectIds.push(project.id)
+    }
     await Promise.all(
-      workspaceProjects.map(({ id: streamId }) =>
+      projectIds.map((streamId) =>
         grantStreamPermissions({ streamId, userId, role: projectRole })
       )
     )

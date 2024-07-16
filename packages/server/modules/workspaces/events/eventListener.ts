@@ -4,29 +4,49 @@ import {
   ProjectEventsPayloads
 } from '@/modules/core/events/projectsEmitter'
 import { getWorkspaceRolesFactory } from '@/modules/workspaces/repositories/workspaces'
-import db from '@/db/knex'
-import { grantStreamPermissions } from '@/modules/core/repositories/streams'
-import { grantWorkspaceProjectRolesFactory } from '@/modules/workspaces/services/workspaceProjectRoleCreation'
+import { grantStreamPermissions as repoGrantStreamPermissions } from '@/modules/core/repositories/streams'
+import { Knex } from 'knex'
+import { GetWorkspaceRoles } from '@/modules/workspaces/domain/operations'
+import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/domain/roles'
 
-async function onProjectCreated(
-  payload: ProjectEventsPayloads[typeof ProjectEvents.Created]
-) {
-  const { id: projectId, workspaceId } = payload.project
+export const onProjectCreatedFactory =
+  ({
+    getWorkspaceRoles,
+    grantStreamPermissions
+  }: {
+    getWorkspaceRoles: GetWorkspaceRoles
+    grantStreamPermissions: typeof repoGrantStreamPermissions
+  }) =>
+  async (payload: ProjectEventsPayloads[typeof ProjectEvents.Created]) => {
+    const { id: projectId, workspaceId } = payload.project
 
-  if (!workspaceId) {
-    return
+    if (!workspaceId) {
+      return
+    }
+
+    const workspaceMembers = await getWorkspaceRoles({ workspaceId })
+
+    await Promise.all(
+      workspaceMembers.map(({ userId, role: workspaceRole }) =>
+        grantStreamPermissions({
+          streamId: projectId,
+          userId,
+          role: mapWorkspaceRoleToProjectRole(workspaceRole)
+        })
+      )
+    )
   }
 
-  const grantWorkspaceProjectRoles = grantWorkspaceProjectRolesFactory({
-    getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-    // TODO: Instantiate via factory function
-    grantStreamPermissions
-  })
+export const initializeEventListenersFactory =
+  ({ db }: { db: Knex }) =>
+  () => {
+    const onProjectCreated = onProjectCreatedFactory({
+      getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+      // TODO: Instantiate via factory function
+      grantStreamPermissions: repoGrantStreamPermissions
+    })
 
-  await grantWorkspaceProjectRoles({ projectId, workspaceId })
-}
+    const quitCbs = [ProjectsEmitter.listen(ProjectEvents.Created, onProjectCreated)]
 
-export function initializeEventListener() {
-  const quitCbs = [ProjectsEmitter.listen(ProjectEvents.Created, onProjectCreated)]
-  return () => quitCbs.forEach((quit) => quit())
-}
+    return () => quitCbs.forEach((quit) => quit())
+  }

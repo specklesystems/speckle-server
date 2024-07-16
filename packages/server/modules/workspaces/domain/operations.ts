@@ -75,6 +75,17 @@ export type GetAllWorkspaceProjectsForUser = (
   args: GetAllWorkspaceProjectsForUserArgs
 ) => Promise<StreamRecord[]>
 
+/** Workspace Project Roles */
+
+type GrantWorkspaceProjectRolesArgs = {
+  projectId: string
+  workspaceId: string
+}
+
+export type GrantWorkspaceProjectRoles = (
+  args: GrantWorkspaceProjectRolesArgs
+) => Promise<void>
+
 /** Blob */
 
 export type StoreBlob = (args: string) => Promise<string>
