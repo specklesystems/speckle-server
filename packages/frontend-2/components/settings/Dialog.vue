@@ -92,7 +92,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   open: boolean
-  openServerPage?: boolean
+  openServerPage: boolean
 }>()
 
 const breakpoints = useBreakpoints(TailwindBreakpoints)
