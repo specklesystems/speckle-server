@@ -30,7 +30,7 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col h-[98vh] md:h-auto',
+                'transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col h-[98vh] h-[98dvh] md:h-auto',
                 fullscreen ? 'md:h-full' : 'md:max-h-[90vh]',
                 widthClasses
               ]"

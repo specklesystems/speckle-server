@@ -16,7 +16,7 @@
         <LayoutSidebarMenu>
           <LayoutSidebarMenuGroup title="Account settings">
             <template #title-icon>
-              <UserIcon />
+              <UserIcon class="h-5 w-5" />
             </template>
             <LayoutSidebarMenuGroupItem
               v-for="(sidebarMenuItem, index) in sidebarConfig.user"
@@ -31,7 +31,7 @@
           </LayoutSidebarMenuGroup>
           <LayoutSidebarMenuGroup title="Server settings">
             <template #title-icon>
-              <ServerStackIcon />
+              <ServerStackIcon class="h-5 w-5" />
             </template>
             <LayoutSidebarMenuGroupItem
               v-for="(sidebarMenuItem, index) in sidebarConfig.server"
