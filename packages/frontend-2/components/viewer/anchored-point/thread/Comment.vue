@@ -11,10 +11,10 @@
           {{ comment.author.name }}
         </span>
         <span
-          v-tippy="formattedFullDate(comment.createdAt)"
+          v-tippy="formattedFullDate(createdAt)"
           class="text-xs truncate text-foreground-2 font-medium"
         >
-          {{ formattedRelativeDate(comment.createdAt) }}
+          {{ formattedRelativeDate(createdAt, { capitalize: true }) }}
         </span>
         <!-- Note: disabled as archiving comments is now equivalent to "resolving" them. -->
         <!-- <div class="pl-2">
@@ -52,7 +52,7 @@ import type { ViewerCommentsReplyItemFragment } from '~~/lib/common/generated/gq
 // import { useInjectedViewerState } from '~~/lib/viewer/composables/setup'
 // import { useArchiveComment } from '~~/lib/viewer/composables/commentManagement'
 
-defineProps<{
+const props = defineProps<{
   comment: ViewerCommentsReplyItemFragment
   projectId: string
 }>()
@@ -60,6 +60,8 @@ defineProps<{
 const emit = defineEmits<{
   (e: 'mounted'): void
 }>()
+
+const createdAt = computed(() => props.comment.createdAt)
 
 // const archiveComment = useArchiveComment()
 // const { activeUser } = useActiveUser()

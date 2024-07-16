@@ -1,12 +1,5 @@
 import type { ConfigType } from 'dayjs'
 import dayjs from 'dayjs'
-import relativeTime from 'dayjs/plugin/relativeTime'
-import localizedFormat from 'dayjs/plugin/localizedFormat'
-import duration from 'dayjs/plugin/duration.js'
-
-dayjs.extend(relativeTime)
-dayjs.extend(localizedFormat)
-dayjs.extend(duration)
 
 /**
  * Converts a given date input into a relative time string
@@ -14,7 +7,7 @@ dayjs.extend(duration)
  * customRelativeTime('2023-07-16') - returns "Jul 16" or "Jul 16, 2023" if the year is different from the current year
  * customRelativeTime(new Date()) - returns "just now"
  */
-const customRelativeTime = (date: ConfigType): string => {
+const customRelativeTime = (date: ConfigType, capitalize?: boolean): string => {
   const pastDate = dayjs(date)
   const now = dayjs()
   const diffInMinutes = now.diff(date, 'minute')
@@ -33,7 +26,7 @@ const customRelativeTime = (date: ConfigType): string => {
     return diffInMinutes === 1 ? '1 minute ago' : `${diffInMinutes} minutes ago`
   }
 
-  return 'just now'
+  return capitalize ? 'Just now' : 'just now'
 }
 
 /**
@@ -67,13 +60,13 @@ export const formattedFullDate = (date: ConfigType): string =>
  */
 export const formattedRelativeDate = (
   date: ConfigType,
-  options?: Partial<{ prefix: boolean }>
+  options?: Partial<{ prefix: boolean; capitalize: true }>
 ): string => {
   if (options?.prefix) {
     return isClockUnit(date)
-      ? customRelativeTime(date)
+      ? customRelativeTime(date, options?.capitalize)
       : `on ${customRelativeTime(date)}`
   } else {
-    return customRelativeTime(date)
+    return customRelativeTime(date, options?.capitalize)
   }
 }

@@ -46,11 +46,8 @@
         {{ thread.replies.totalCount }}
         {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
       </span>
-      <span
-        v-tippy="formattedFullDate(thread.createdAt)"
-        class="text-foreground-2 text-xs"
-      >
-        {{ formattedRelativeDate(thread.createdAt) }}
+      <span v-tippy="formattedFullDate(createdAt)" class="text-foreground-2 text-xs">
+        {{ formattedRelativeDate(createdAt, { capitalize: true }) }}
       </span>
     </div>
   </div>
@@ -93,6 +90,8 @@ const open = (id: string) => {
     source: 'sidebar'
   })
 }
+
+const createdAt = computed(() => props.thread.createdAt)
 
 const isThreadResourceLoaded = computed(() => {
   const thread = props.thread
