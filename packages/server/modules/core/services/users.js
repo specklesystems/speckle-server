@@ -29,7 +29,7 @@ const { Roles } = require('@speckle/shared')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
 const { createUserEmailFactory } = require('@/modules/core/repositories/userEmails')
-const knexInstance = require('@/db/knex')
+const { db } = require('@/db/knex')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -117,7 +117,7 @@ module.exports = {
 
     await Acl().insert({ userId: newId, role: userRole })
 
-    await createUserEmailFactory({ db: knexInstance })({
+    await createUserEmailFactory({ db })({
       userEmail: {
         email: user.email,
         userId: user.id

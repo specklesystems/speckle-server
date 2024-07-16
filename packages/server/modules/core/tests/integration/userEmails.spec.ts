@@ -4,14 +4,14 @@ import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import { getUserByEmail, markUserAsVerified } from '@/modules/core/repositories/users'
 import { deleteUserEmailFactory } from '@/modules/core/repositories/userEmails'
-import knexInstance from '@/db/knex'
+import { db } from '@/db/knex'
 import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
 import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 
-const userEmailTable = knexInstance(USER_EMAILS_TABLE_NAME)
+const userEmailTable = db(USER_EMAILS_TABLE_NAME)
 
 describe('Core @user-emails', () => {
   before(async () => {
@@ -30,7 +30,7 @@ describe('Core @user-emails', () => {
         password: createRandomPassword()
       })
 
-      await deleteUserEmailFactory({ db: knexInstance })({
+      await deleteUserEmailFactory({ db })({
         userId,
         email
       })

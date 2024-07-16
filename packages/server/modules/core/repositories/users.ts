@@ -7,8 +7,8 @@ import { UserValidationError } from '@/modules/core/errors/user'
 import { Knex } from 'knex'
 import { Roles, ServerRoles } from '@speckle/shared'
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
-import knexInstance from '@/db/knex'
-import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/email-verification'
+import { db } from '@/db/knex'
+import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
@@ -165,8 +165,8 @@ export async function markUserAsVerified(email: string) {
     })
 
   await markUserEmailAsVerifiedFactory({
-    updateUserEmail: updateUserEmailFactory({ db: knexInstance })
-  })(email.toLowerCase().trim())
+    updateUserEmail: updateUserEmailFactory({ db })
+  })({ email: email.toLowerCase().trim() })
 
   return !!(await q)
 }
@@ -215,7 +215,7 @@ export async function updateUser(
   const [newUser] = await Users.knex().where(Users.col.id, userId).update(update, '*')
 
   if (update.email) {
-    await updateUserEmailFactory({ db: knexInstance })({
+    await updateUserEmailFactory({ db })({
       query: { userId, primary: true },
       update: { email: update.email }
     })

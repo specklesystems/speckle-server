@@ -24,4 +24,14 @@ export type DeleteUserEmail = ({
   email: string
 }) => Promise<boolean>
 
-export type MarkUserEmailAsVerified = (email: string) => Promise<UserEmail>
+export type MarkUserEmailAsVerified = ({
+  email
+}: {
+  email: string
+}) => Promise<UserEmail>
+
+export type FindPrimaryEmailForUser = ({
+  userId
+}: {
+  userId: string
+}) => Promise<UserEmail>

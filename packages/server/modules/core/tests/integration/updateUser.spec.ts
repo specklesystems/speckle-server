@@ -2,7 +2,7 @@ import { expect } from 'chai'
 import { createUser, getUser } from '@/modules/core/services/users'
 import { beforeEach, describe, it } from 'mocha'
 import { beforeEachContext } from '@/test/hooks'
-import knexInstance from '@/db/knex'
+import { db } from '@/db/knex'
 import {
   createRandomEmail,
   createRandomPassword
@@ -11,7 +11,6 @@ import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 import { updateUser } from '@/modules/core/repositories/users'
 import { expectToThrow } from '@/test/assertionHelper'
 
-const db = knexInstance
 const userEmailsDB = db(USER_EMAILS_TABLE_NAME)
 
 describe('Users @core-users', () => {
@@ -23,15 +22,13 @@ describe('Users @core-users', () => {
     const longAvatar = ''.padEnd(524288, '1') + '0'
     const err = await expectToThrow(() => updateUser('123456', { avatar: longAvatar }))
 
-    expect((err as Error).message).eq(
-      'User avatar is too big, please try a smaller one'
-    )
+    expect(err.message).eq('User avatar is too big, please try a smaller one')
   })
 
   it('should throw an error if update payload is empty', async () => {
     const err = await expectToThrow(() => updateUser('123456', {}))
 
-    expect((err as Error).message).eq('User update payload empty')
+    expect(err.message).eq('User update payload empty')
   })
 
   it('Should update user email if skipClean is true', async () => {

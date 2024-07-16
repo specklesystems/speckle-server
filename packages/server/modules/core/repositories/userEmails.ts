@@ -3,6 +3,7 @@ import crs from 'crypto-random-string'
 import {
   CreateUserEmail,
   DeleteUserEmail,
+  FindPrimaryEmailForUser,
   UpdateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
@@ -43,4 +44,15 @@ export const deleteUserEmailFactory =
       .delete()
 
     return true
+  }
+
+export const findPrimaryEmailForUserFactory =
+  ({ db }: { db: Knex }): FindPrimaryEmailForUser =>
+  async ({ userId }) => {
+    return db(USER_EMAILS_TABLE_NAME)
+      .where({
+        userId,
+        primary: true
+      })
+      .first()
   }

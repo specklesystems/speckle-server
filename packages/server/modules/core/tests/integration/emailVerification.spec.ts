@@ -1,16 +1,16 @@
 import { describe } from 'mocha'
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
-import knexInstance from '@/db/knex'
+import { db } from '@/db/knex'
 import { createUser } from '@/modules/core/services/users'
 import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
-import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/email-verification'
+import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { expect } from 'chai'
 import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 
-const userEmailTable = knexInstance(USER_EMAILS_TABLE_NAME)
+const userEmailTable = db(USER_EMAILS_TABLE_NAME)
 
 describe('Verification @user-emails', () => {
   it('should mark user email as verified', async () => {
@@ -23,8 +23,8 @@ describe('Verification @user-emails', () => {
     })
 
     await markUserEmailAsVerifiedFactory({
-      updateUserEmail: updateUserEmailFactory({ db: knexInstance })
-    })(email)
+      updateUserEmail: updateUserEmailFactory({ db })
+    })({ email })
 
     const userEmail = await userEmailTable.where({ email }).first()
     expect(userEmail.verified).to.be.true
