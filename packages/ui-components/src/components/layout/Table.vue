@@ -77,7 +77,6 @@
 import { noop, isString } from 'lodash'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
-import type { LayoutTableColours } from '~~/src/helpers/layout/components'
 import { FormButton } from '~~/src/lib'
 
 export type TableColumn<I> = {
@@ -91,7 +90,6 @@ export interface RowButton<T = unknown> {
   label: string
   action: (item: T) => void | string
   class?: string
-  textColor?: LayoutTableColours
 }
 
 const props = withDefaults(

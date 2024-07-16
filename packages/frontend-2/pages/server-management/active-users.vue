@@ -39,7 +39,14 @@
         { id: 'role', header: 'Role', classes: 'col-span-2' }
       ]"
       :items="users"
-      :buttons="[{ icon: TrashIcon, label: 'Delete', action: openUserDeleteDialog }]"
+      :buttons="[
+        {
+          icon: TrashIcon,
+          label: 'Delete',
+          action: openUserDeleteDialog,
+          class: '!text-danger'
+        }
+      ]"
     >
       <template #name="{ item }">
         <div class="flex items-center gap-2">

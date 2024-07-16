@@ -15,7 +15,7 @@
         <component :is="icon" v-if="icon" class="h-5 w-5"></component>
         <h3 class="text-xl font-bold">{{ title }}</h3>
       </div>
-      <div v-if="$slots['top-buttons']" class="flex gap-4">
+      <div v-if="$slots['top-buttons']" class="flex gap-2">
         <slot name="top-buttons" />
       </div>
     </div>

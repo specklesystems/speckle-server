@@ -1,10 +1,7 @@
 <template>
   <div class="bg-foundation rounded-lg overflow-hidden shadow flex flex-col">
     <div class="sticky top-0 z-50 flex flex-col bg-foundation">
-      <div
-        v-if="!hideClose"
-        class="absolute top-1.5 sm:top-2 right-0.5 sm:right-0 z-10"
-      >
+      <div v-if="!hideClose" class="absolute top-3 right-2 z-10">
         <FormButton variant="outline" text @click="$emit('close')">
           <XMarkIcon class="size-3 text-primary sm:text-foreground" />
         </FormButton>

@@ -219,7 +219,7 @@ const paddingClasses = computed(() => {
 
 const generalClasses = computed(() => {
   const baseClasses = [
-    'flex justify-center items-center',
+    'inline-flex justify-center items-center',
     'font-semibold text-center select-none',
     'outline outline-2 outline-transparent',
     'transition duration-200 ease-in-out focus-visible:outline-outline-4'

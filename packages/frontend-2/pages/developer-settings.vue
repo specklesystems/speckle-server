@@ -71,7 +71,7 @@
               icon: TrashIcon,
               label: 'Delete',
               action: openDeleteDialog,
-              textColor: 'danger'
+              class: '!text-danger'
             }
           ]"
         >
@@ -143,20 +143,19 @@
             {
               icon: LockOpenIcon,
               label: 'Reveal Secret',
-              action: openRevealSecretDialog,
-              textColor: 'primary'
+              action: openRevealSecretDialog
             },
             {
               icon: PencilIcon,
               label: 'Edit',
               action: openEditApplicationDialog,
-              textColor: 'primary'
+              class: '!text-primary'
             },
             {
               icon: TrashIcon,
               label: 'Delete',
               action: openDeleteDialog,
-              textColor: 'danger'
+              class: '!text-danger'
             }
           ]"
         >
@@ -216,7 +215,7 @@
               icon: XMarkIcon,
               label: 'Revoke Access',
               action: openDeleteDialog,
-              textColor: 'danger'
+              class: '!text-danger'
             }
           ]"
           row-items-align="stretch"

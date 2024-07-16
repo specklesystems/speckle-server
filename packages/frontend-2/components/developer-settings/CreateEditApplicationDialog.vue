@@ -14,6 +14,7 @@
           v-model="name"
           label="Name"
           help="The name of your app"
+          color="foundation"
           name="hookName"
           show-required
           :rules="[isRequired]"
@@ -41,6 +42,7 @@
           help="After authentication, the users will be redirected (together with an access token) to this URL."
           show-required
           name="redirectUrl"
+          color="foundation"
           show-label
           :rules="[isRequired, isUrl]"
           type="text"
@@ -48,6 +50,7 @@
         <FormTextInput
           v-model="description"
           label="Description"
+          color="foundation"
           help="A short description of your application."
           name="description"
           show-label

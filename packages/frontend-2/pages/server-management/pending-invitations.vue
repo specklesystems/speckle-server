@@ -38,7 +38,12 @@
       ]"
       :items="invites"
       :buttons="[
-        { icon: TrashIcon, label: 'Delete', action: openDeleteInvitationDialog }
+        {
+          icon: TrashIcon,
+          label: 'Delete',
+          action: openDeleteInvitationDialog,
+          class: '!text-danger'
+        }
       ]"
     >
       <template #email="{ item }">

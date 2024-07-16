@@ -36,7 +36,14 @@
         { id: 'contributors', header: 'Contributors', classes: 'col-span-2' }
       ]"
       :items="projects"
-      :buttons="[{ icon: TrashIcon, label: 'Delete', action: openProjectDeleteDialog }]"
+      :buttons="[
+        {
+          icon: TrashIcon,
+          label: 'Delete',
+          action: openProjectDeleteDialog,
+          class: '!text-danger'
+        }
+      ]"
       :on-row-click="handleProjectClick"
     >
       <template #name="{ item }">

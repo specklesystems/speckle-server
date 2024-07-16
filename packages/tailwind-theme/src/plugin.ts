@@ -269,7 +269,7 @@ export default plugin(function ({ addComponents, addBase }) {
       '@apply text-lg leading-6': {}
     },
     '.label': {
-      '@apply text-sm font-medium leading-5': {}
+      '@apply text-[13px] font-medium leading-5': {}
     },
     '.label--light': {
       '@apply font-normal': {}
