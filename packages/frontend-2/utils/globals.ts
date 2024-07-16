@@ -6,7 +6,6 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage as getFirstGqlErrorMessage
 } from '~/lib/common/helpers/graphql'
-import { formattedFullDate, formattedRelativeDate } from './dayjs'
 
 /**
  * Debugging helper to ensure variables are available in debugging scope
@@ -26,7 +25,5 @@ export {
   wrapRefWithTracking,
   noop,
   convertThrowIntoFetchResult,
-  getFirstGqlErrorMessage,
-  formattedFullDate,
-  formattedRelativeDate
+  getFirstGqlErrorMessage
 }
