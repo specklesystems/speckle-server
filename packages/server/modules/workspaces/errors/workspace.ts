@@ -10,3 +10,8 @@ export class WorkspaceInvalidRoleError extends BaseError {
   static defaultMessage = 'Invalid workspace role provided'
   static code = 'WORKSPACE_INVALID_ROLE_ERROR'
 }
+
+export class WorkspaceQueryError extends BaseError {
+  static defaultMessage = 'Unexpected error during query operation'
+  static code = 'WORKSPACE_QUERY_ERROR'
+}

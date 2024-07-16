@@ -1,5 +1,6 @@
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { getStreams as repoGetStreams } from '@/modules/core/services/streams'
+import { WorkspaceQueryError } from '@/modules/workspaces/errors/workspace'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -14,7 +15,7 @@ export const queryAllWorkspaceProjectsFactory = ({
     let iterationCount = 0
 
     do {
-      if (iterationCount > 500) throw new Error()
+      if (iterationCount > 500) throw new WorkspaceQueryError()
 
       const { streams, cursorDate } = await getStreams({
         cursor,
