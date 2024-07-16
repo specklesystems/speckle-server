@@ -4,11 +4,11 @@
       <PreviewImage :preview-url="version.previewUrl" />
     </div>
     <div
-      v-tippy="formattedFullDate(createdAt)"
+      v-tippy="createdAt.full"
       class="bg-foundation-focus inline-block rounded-md px-2 text-xs font-bold truncate text-center py-1"
     >
       <span>
-        {{ formattedRelativeDate(createdAt, { capitalize: true }) }}
+        {{ createdAt.relative }}
       </span>
       <br />
       {{ isNewest ? 'New' : 'Old' }} Version
@@ -23,5 +23,10 @@ const props = defineProps<{
   isNewest: boolean
 }>()
 
-const createdAt = computed(() => props.version.createdAt)
+const createdAt = computed(() => {
+  return {
+    full: formattedFullDate(props.version.createdAt),
+    relative: formattedRelativeDate(props.version.createdAt, { capitalize: true })
+  }
+})
 </script>

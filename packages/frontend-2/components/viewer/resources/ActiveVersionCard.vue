@@ -11,10 +11,11 @@
       <div class="truncate text-foreground opacity-80">
         {{ version.message || 'no message' }}
       </div>
-      <div class="italic text-foreground opacity-60 inline-block">
-        <span v-tippy="formattedFullDate(createdAt)">
-          {{ formattedRelativeDate(createdAt, { capitalize: true }) }}
-        </span>
+      <div
+        v-tippy="createdAt.full"
+        class="italic text-foreground opacity-60 inline-block"
+      >
+        {{ createdAt.relative }}
       </div>
     </div>
   </div>
@@ -33,5 +34,10 @@ const props = defineProps<{
   version: Version
 }>()
 
-const createdAt = computed(() => props.version.createdAt)
+const createdAt = computed(() => {
+  return {
+    full: formattedFullDate(props.version.createdAt),
+    relative: formattedRelativeDate(props.version.createdAt, { capitalize: true })
+  }
+})
 </script>

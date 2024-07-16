@@ -36,13 +36,11 @@
       </div>
       <div
         v-show="showTimeline"
-        v-tippy="formattedFullDate(createdAt)"
+        v-tippy="createdAt.full"
         class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold shrink-0"
       >
         <span>
-          {{
-            isLatest ? 'Latest' : formattedRelativeDate(createdAt, { capitalize: true })
-          }}
+          {{ isLatest ? 'Latest' : createdAt.relative }}
         </span>
       </div>
       <FormButton
@@ -110,7 +108,13 @@ const emit = defineEmits<{
 
 const isLoaded = computed(() => props.isLoadedVersion)
 const isLatest = computed(() => props.isLatestVersion)
-const createdAt = computed(() => props.version.createdAt)
+
+const createdAt = computed(() => {
+  return {
+    full: formattedFullDate(props.version.createdAt),
+    relative: formattedRelativeDate(props.version.createdAt, { capitalize: true })
+  }
+})
 
 const author = computed(() => props.version.authorUser)
 

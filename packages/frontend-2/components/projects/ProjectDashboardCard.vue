@@ -29,9 +29,9 @@
         </div> -->
         <div class="text-xs text-foreground-2 flex items-center">
           <ClockIcon class="w-4 h-4 mr-1" />
-          <span v-tippy="formattedFullDate(updatedAt)" class="-mt-px">
+          <span v-tippy="updatedAt.full" class="-mt-px">
             Updated
-            {{ formattedRelativeDate(updatedAt, { prefix: true }) }}
+            {{ updatedAt.relative }}
           </span>
         </div>
       </div>
@@ -86,7 +86,13 @@ const props = defineProps<{
 }>()
 
 const projectId = computed(() => props.project.id)
-const updatedAt = computed(() => props.project.updatedAt)
+
+const updatedAt = computed(() => {
+  return {
+    full: formattedFullDate(props.project.updatedAt),
+    relative: formattedRelativeDate(props.project.updatedAt, { prefix: true })
+  }
+})
 
 // Tracking updates to project, its models and versions
 useGeneralProjectPageUpdateTracking(

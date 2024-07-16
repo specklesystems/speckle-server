@@ -38,8 +38,8 @@
               {{ thread.repliesCount.totalCount }}
               {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
             </span>
-            <span v-tippy="formattedFullDate(updatedAt)" class="text-xs">
-              {{ formattedRelativeDate(updatedAt, { capitalize: true }) }}
+            <span v-tippy="updatedAt.full" class="text-xs">
+              {{ updatedAt.relative }}
             </span>
           </div>
         </div>
@@ -68,7 +68,12 @@ const hiddenReplyAuthorCount = computed(
   () => props.thread.replyAuthors.totalCount - props.thread.replyAuthors.items.length
 )
 
-const updatedAt = computed(() => props.thread.updatedAt)
+const updatedAt = computed(() => {
+  return {
+    full: formattedFullDate(props.thread.updatedAt),
+    relative: formattedRelativeDate(props.thread.updatedAt, { capitalize: true })
+  }
+})
 
 // Combined thread authors set of (original author + any respondents)
 const threadAuthors = computed(() => {

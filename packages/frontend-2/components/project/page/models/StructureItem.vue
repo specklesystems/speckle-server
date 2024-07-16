@@ -89,8 +89,8 @@
             class="text-xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
             Updated
-            <span v-tippy="formattedFullDate(updatedAt)">
-              {{ formattedRelativeDate(updatedAt, { prefix: true }) }}
+            <span v-tippy="updatedAt.full">
+              {{ updatedAt.relative }}
             </span>
           </div>
           <div class="text-xs text-foreground-2 flex items-center space-x-1">
@@ -175,8 +175,8 @@
           </div> -->
           <div class="text-xs text-foreground-2">
             Updated
-            <span v-tippy="formattedFullDate(updatedAt)">
-              {{ formattedRelativeDate(updatedAt, { prefix: true }) }}
+            <span v-tippy="updatedAt.full">
+              {{ updatedAt.relative }}
             </span>
           </div>
           <div class="text-xs text-foreground-2">
@@ -383,11 +383,16 @@ const hasChildren = computed(() =>
     : props.item.hasChildren
 )
 
-const updatedAt = computed(() =>
-  isPendingFileUpload(props.item)
+const updatedAt = computed(() => {
+  const date = isPendingFileUpload(props.item)
     ? props.item.convertedLastUpdate || props.item.uploadDate
     : props.item.updatedAt
-)
+
+  return {
+    full: formattedFullDate(date),
+    relative: formattedRelativeDate(date, { prefix: true })
+  }
+})
 
 const modelLink = computed(() => {
   if (

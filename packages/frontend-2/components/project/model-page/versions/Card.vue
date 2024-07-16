@@ -49,8 +49,8 @@
           class="text-xs text-foreground-2 mr-1 opacity-0 truncate transition group-hover:opacity-100"
         >
           Created
-          <span v-tippy="formattedFullDate(createdAt)">
-            {{ formattedRelativeDate(createdAt, { prefix: true }) }}
+          <span v-tippy="createdAt.full">
+            {{ createdAt.relative }}
           </span>
         </div>
         <div class="w-full flex" @click.stop>
@@ -142,11 +142,17 @@ const showActionsMenu = ref(false)
 const hasAutomationStatus = computed(
   () => !isPendingVersionFragment(props.version) && props.version.automationsStatus
 )
-const createdAt = computed(() =>
-  isPendingVersionFragment(props.version)
+
+const createdAt = computed(() => {
+  const date = isPendingVersionFragment(props.version)
     ? props.version.convertedLastUpdate || props.version.uploadDate
     : props.version.createdAt
-)
+
+  return {
+    full: formattedFullDate(date),
+    relative: formattedRelativeDate(date, { prefix: true })
+  }
+})
 
 const viewerRoute = computed(() => {
   if (isPendingVersionFragment(props.version)) return undefined

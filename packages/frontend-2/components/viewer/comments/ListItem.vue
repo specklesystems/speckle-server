@@ -46,8 +46,8 @@
         {{ thread.replies.totalCount }}
         {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
       </span>
-      <span v-tippy="formattedFullDate(createdAt)" class="text-foreground-2 text-xs">
-        {{ formattedRelativeDate(createdAt, { capitalize: true }) }}
+      <span v-tippy="createdAt.full" class="text-foreground-2 text-xs">
+        {{ createdAt.relative }}
       </span>
     </div>
   </div>
@@ -91,7 +91,12 @@ const open = (id: string) => {
   })
 }
 
-const createdAt = computed(() => props.thread.createdAt)
+const createdAt = computed(() => {
+  return {
+    full: formattedFullDate(props.thread.createdAt),
+    relative: formattedRelativeDate(props.thread.createdAt, { capitalize: true })
+  }
+})
 
 const isThreadResourceLoaded = computed(() => {
   const thread = props.thread

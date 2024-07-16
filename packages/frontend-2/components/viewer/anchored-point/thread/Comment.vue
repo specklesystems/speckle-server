@@ -11,10 +11,10 @@
           {{ comment.author.name }}
         </span>
         <span
-          v-tippy="formattedFullDate(createdAt)"
+          v-tippy="createdAt.full"
           class="text-xs truncate text-foreground-2 font-medium"
         >
-          {{ formattedRelativeDate(createdAt, { capitalize: true }) }}
+          {{ createdAt.relative }}
         </span>
         <!-- Note: disabled as archiving comments is now equivalent to "resolving" them. -->
         <!-- <div class="pl-2">
@@ -61,7 +61,12 @@ const emit = defineEmits<{
   (e: 'mounted'): void
 }>()
 
-const createdAt = computed(() => props.comment.createdAt)
+const createdAt = computed(() => {
+  return {
+    full: formattedFullDate(props.comment.createdAt),
+    relative: formattedRelativeDate(props.comment.createdAt, { capitalize: true })
+  }
+})
 
 // const archiveComment = useArchiveComment()
 // const { activeUser } = useActiveUser()

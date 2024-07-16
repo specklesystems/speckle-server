@@ -17,8 +17,8 @@
           class="bg-primary-muted text-primary rounded-full px-2 py-1 -ml-1"
         >
           Updated
-          <span v-tippy="formattedFullDate(lastUpdated)">
-            {{ formattedRelativeDate(lastUpdated, { prefix: true }) }}
+          <span v-tippy="lastUpdatedFormatted.full">
+            {{ lastUpdatedFormatted.relative }}
           </span>
         </span>
       </div>
@@ -72,4 +72,13 @@ const dialogOpen = ref(false)
 const lastUpdated = computed(() =>
   props.tag.versions?.length > 0 ? props.tag.versions[0].Date : undefined
 )
+
+const lastUpdatedFormatted = computed(() => {
+  return {
+    full: lastUpdated.value ? formattedFullDate(lastUpdated.value) : '',
+    relative: lastUpdated.value
+      ? formattedRelativeDate(lastUpdated.value, { prefix: true })
+      : ''
+  }
+})
 </script>

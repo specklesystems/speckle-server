@@ -25,11 +25,8 @@
     <div class="flex space-x-4 items-center flex-none pb-8 sm:pb-0">
       <div class="absolute sm:relative w-full bottom-2 sm:bottom-0 left-0 px-2 gap-8">
         <div class="w-full px-2 flex justify-between text-xs">
-          <span
-            v-tippy="formattedFullDate(updatedAt)"
-            class="text-foreground-2 text-xs"
-          >
-            {{ formattedRelativeDate(updatedAt, { capitalize: true }) }}
+          <span v-tippy="updatedAt.full" class="text-foreground-2 text-xs">
+            {{ updatedAt.relative }}
           </span>
           <span class="ml-4 text-xs font-bold text-primary">
             {{ thread.repliesCount.totalCount }}
@@ -61,7 +58,12 @@ const { backgroundImage } = useCommentScreenshotImage(
   computed(() => props.thread.screenshot)
 )
 
-const updatedAt = computed(() => props.thread.updatedAt)
+const updatedAt = computed(() => {
+  return {
+    full: formattedFullDate(props.thread.updatedAt),
+    relative: formattedRelativeDate(props.thread.updatedAt, { capitalize: true })
+  }
+})
 
 const hiddenReplyAuthorCount = computed(
   () => props.thread.replyAuthors.totalCount - props.thread.replyAuthors.items.length
