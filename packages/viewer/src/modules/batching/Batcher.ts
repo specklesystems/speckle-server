@@ -39,17 +39,20 @@ export default class Batcher {
   private maxBatchObjects = 0
   private maxBatchVertices = 500000
   private minInstancedBatchVertices = 10000
-  public materials: Materials
+  private materials: Materials
   public batches: { [id: string]: Batch } = {}
 
-  public constructor(maxUniformCount: number, floatTextures: boolean) {
+  public constructor(
+    materials: Materials,
+    maxUniformCount: number,
+    floatTextures: boolean
+  ) {
     this.maxHardwareUniformCount = maxUniformCount
     this.maxBatchObjects = Math.floor(
       (this.maxHardwareUniformCount - Materials.UNIFORM_VECTORS_USED) / 4
     )
     this.floatTextures = floatTextures
-    this.materials = new Materials()
-    void this.materials.createDefaultMaterials()
+    this.materials = materials
   }
 
   public async *makeBatches(

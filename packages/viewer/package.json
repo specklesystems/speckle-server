@@ -58,6 +58,7 @@
     "@speckle/objectloader": "workspace:^",
     "@speckle/shared": "workspace:^",
     "@types/flat": "^5.0.2",
+    "canvas": "^2.11.2",
     "flat": "^5.0.2",
     "js-logger": "1.6.1",
     "lodash-es": "^4.17.21",

@@ -6,32 +6,31 @@ import {
   DataTexture,
   DataTextureLoader,
   Matrix4,
-  Euler
+  Euler,
+  ClampToEdgeWrapping,
+  LinearFilter,
+  FloatType
 } from 'three'
 import { EXRLoader } from 'three/examples/jsm/loaders/EXRLoader.js'
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js'
 import { FontLoader, Font } from 'three/examples/jsm/loaders/FontLoader.js'
 import { type Asset, AssetType } from '../IViewer'
 import Logger from 'js-logger'
 import { RotatablePMREMGenerator } from './objects/RotatablePMREMGenerator'
+import { Image as CanvasImage, createCanvas } from 'canvas'
 
 export class Assets {
-  private static _cache: { [name: string]: Texture | Font } = {}
+  public static _cache: { [name: string]: Texture | Font } = {}
 
   private static getLoader(
-    src: string,
     assetType: AssetType
   ): TextureLoader | DataTextureLoader | null {
-    if (assetType === undefined) assetType = src.split('.').pop() as AssetType
     if (!Object.values(AssetType).includes(assetType)) {
-      Logger.warn(`Asset ${src} could not be loaded. Unknown type`)
+      Logger.warn(`Asset ${assetType} could not be loaded. Unknown type`)
       return null
     }
     switch (assetType) {
       case AssetType.TEXTURE_EXR:
         return new EXRLoader()
-      case AssetType.TEXTURE_HDR:
-        return new RGBELoader()
       case AssetType.TEXTURE_8BPP:
         return new TextureLoader()
       default:
@@ -61,19 +60,40 @@ export class Assets {
     }
 
     return new Promise<Texture>((resolve, reject) => {
-      const loader = Assets.getLoader(asset.src, asset.type)
+      const loader = Assets.getLoader(asset.type)
       if (loader) {
-        loader.load(
-          asset.src,
-          (texture) => {
-            this._cache[asset.id] = texture
-            resolve(Assets.hdriToPMREM(renderer, texture))
-          },
-          undefined,
-          (error: ErrorEvent) => {
-            reject(`Loading asset ${asset.id} failed ${error.message}`)
-          }
-        )
+        if (asset.src) {
+          loader.load(
+            asset.src,
+            (texture) => {
+              this._cache[asset.id] = texture
+              resolve(Assets.hdriToPMREM(renderer, texture))
+            },
+            undefined,
+            (error: ErrorEvent) => {
+              reject(`Loading asset ${asset.id} failed ${error.message}`)
+            }
+          )
+        } else if (asset.contentsBuffer) {
+          const texData = (loader as EXRLoader).parse(asset.contentsBuffer)
+          if (!texData) reject(`Loading asset ${asset.id} failed`)
+          const texture = new DataTexture(
+            texData.data,
+            texData.width,
+            texData.height,
+            texData.format,
+            FloatType,
+            undefined,
+            ClampToEdgeWrapping,
+            ClampToEdgeWrapping,
+            LinearFilter,
+            LinearFilter,
+            1
+          )
+          texture.needsUpdate = true
+          this._cache[asset.id] = texture
+          resolve(Assets.hdriToPMREM(renderer, texture))
+        }
       } else {
         reject(`Loading asset ${asset.id} failed`)
       }
@@ -85,64 +105,80 @@ export class Assets {
       return Promise.resolve(this._cache[asset.id] as Texture)
     }
     return new Promise<Texture>((resolve, reject) => {
-      // Hack to load 'data:image's - for some reason, the frontend receives the default
-      // gradient map as a data image url, rather than a file (?).
-      if (asset.src.includes('data:image')) {
-        const image = new Image()
-        image.src = asset.src
+      if (asset.src) {
+        if (asset.src.includes('data:image')) {
+          const image = new CanvasImage()
+          image.src = asset.src
+          image.onload = () => {
+            const canvas = createCanvas(image.width, image.height)
+            const ctx = canvas.getContext('2d')
+            ctx.drawImage(image, 0, 0)
+            const texture = new Texture(new Image())
+            texture.needsUpdate = true
+            this._cache[asset.id] = texture
+            resolve(texture)
+          }
+          image.onerror = (ev) => {
+            reject(`Loading asset ${asset.id} failed with ${ev.toString()}`)
+          }
+        } else {
+          const loader = Assets.getLoader(asset.type)
+          if (loader) {
+            if (asset.src) {
+              loader.load(
+                asset.src,
+                (texture) => {
+                  this._cache[asset.id] = texture
+                  resolve(this._cache[asset.id] as Texture)
+                },
+                undefined,
+                (error: ErrorEvent) => {
+                  reject(`Loading asset ${asset.id} failed ${error.message}`)
+                }
+              )
+            }
+          } else {
+            reject(`Loading asset ${asset.id} failed`)
+          }
+        }
+      }
+      if (asset.contentsBuffer) {
+        const image = new CanvasImage()
         image.onload = () => {
-          const texture = new Texture(image)
+          const canvas = createCanvas(image.width, image.height)
+          const ctx = canvas.getContext('2d')
+          ctx.drawImage(image, 0, 0)
+          const texture = new Texture(new Image())
           texture.needsUpdate = true
           this._cache[asset.id] = texture
           resolve(texture)
         }
-        image.onerror = (ev) => {
-          reject(`Loading asset ${asset.id} failed with ${ev.toString()}`)
+        image.onerror = (err) => {
+          throw err
         }
-      } else {
-        const loader = Assets.getLoader(asset.src, asset.type)
-        if (loader) {
-          loader.load(
-            asset.src,
-            (texture) => {
-              this._cache[asset.id] = texture
-              resolve(this._cache[asset.id] as Texture)
-            },
-            undefined,
-            (error: ErrorEvent) => {
-              reject(`Loading asset ${asset.id} failed ${error.message}`)
-            }
-          )
-        } else {
-          reject(`Loading asset ${asset.id} failed`)
-        }
+        image.src = Buffer.from(asset.contentsBuffer)
       }
     })
   }
 
-  public static getFont(asset: Asset | string): Promise<Font> {
-    let srcUrl: string | null = null
-    if ((<Asset>asset).src) {
-      srcUrl = (asset as Asset).src
-    } else {
-      srcUrl = asset as string
-    }
-
-    if (this._cache[srcUrl]) {
-      return Promise.resolve(this._cache[srcUrl] as Font)
+  public static getFont(asset: Asset): Promise<Font> {
+    if (this._cache[asset.id]) {
+      return Promise.resolve(this._cache[asset.id] as Font)
     }
 
     return new Promise<Font>((resolve, reject) => {
-      new FontLoader().load(
-        srcUrl as string,
-        (font: Font) => {
-          resolve(font)
-        },
-        undefined,
-        (error: ErrorEvent) => {
-          reject(`Loading asset ${srcUrl} failed ${error.message}`)
-        }
-      )
+      if (asset.src) {
+        new FontLoader().load(
+          asset.src,
+          (font: Font) => {
+            resolve(font)
+          },
+          undefined,
+          (error: ErrorEvent) => {
+            reject(`Loading asset ${asset.id} failed ${error.message}`)
+          }
+        )
+      }
     })
   }
 

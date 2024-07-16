@@ -49,11 +49,20 @@ export default class LineBatch implements Batch {
   }
 
   public get triCount(): number {
-    return 0
+    const indexCount = this.geometry.index ? this.geometry.index.count : 0
+    const buffer = (
+      this.geometry.attributes.instanceStart as InterleavedBufferAttribute
+    ).data as InstancedInterleavedBuffer
+    return (indexCount / 3) * buffer.meshPerAttribute * buffer.count
   }
 
   public get vertCount(): number {
-    return this.geometry.attributes.position.count * this.geometry.instanceCount
+    const buffer = (
+      this.geometry.attributes.instanceStart as InterleavedBufferAttribute
+    ).data as InstancedInterleavedBuffer
+    return (
+      this.geometry.attributes.position.count * buffer.meshPerAttribute * buffer.count
+    )
   }
 
   public constructor(id: string, subtreeId: string, renderViews: NodeRenderView[]) {
@@ -61,15 +70,19 @@ export default class LineBatch implements Batch {
     this.subtreeId = subtreeId
     this.renderViews = renderViews
   }
+
   public get pointCount(): number {
     return 0
   }
+
   public get lineCount(): number {
     /** Catering to typescript
      * There is no unniverse where the geometry is non-indexed. LineSegments2 are **explicitly** indexed
      */
-    const indexCount = this.geometry.index ? this.geometry.index.count : 0
-    return (indexCount / 3) * (this.geometry as never)['_maxInstanceCount']
+    const buffer = (
+      this.geometry.attributes.instanceStart as InterleavedBufferAttribute
+    ).data as InstancedInterleavedBuffer
+    return buffer.meshPerAttribute * buffer.count
   }
 
   public get renderObject(): Object3D {

@@ -240,6 +240,7 @@ export class Viewer extends EventEmitter implements IViewer {
           Logger.error('Fallback to null environment!')
         })
     }
+    await this.speckleRenderer.init()
   }
 
   on<T extends ViewerEvent>(

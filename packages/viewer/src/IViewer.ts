@@ -34,15 +34,15 @@ export interface ViewerParams {
 }
 export enum AssetType {
   TEXTURE_8BPP = 'png', // For now
-  TEXTURE_HDR = 'hdr',
   TEXTURE_EXR = 'exr',
   FONT_JSON = 'font-json'
 }
 
 export interface Asset {
   id: string
-  src: string
   type: AssetType
+  src?: string
+  contentsBuffer?: ArrayBuffer
 }
 
 /**

@@ -78,13 +78,17 @@ export class RenderingStats {
   public batchCount: number = 0
   public drawCalls: number = 0
   public trisCount: number = 0
+  public lineCount: number = 0
+  public pointCount: number = 0
   public vertCount: number = 0
 
   public batchDetails!: Array<{
     drawCalls: number
     minDrawCalls: number
-    tris: number
     verts: number
+    tris?: number
+    lines?: number
+    points?: number
   }>
 
   public frameStart() {
@@ -133,6 +137,7 @@ export default class SpeckleRenderer {
   public viewer: Viewer // TEMPORARY
   public pipeline: Pipeline
   public input: Input
+  public materials: Materials
 
   /********************************
    * Renderer and rendering flags */
@@ -295,14 +300,24 @@ export default class SpeckleRenderer {
         (a: number, c: Batch) => a + c.vertCount,
         0
       )),
+      (this._renderinStats.pointCount = batches.reduce(
+        (a: number, c: Batch) => a + c.pointCount,
+        0
+      )),
+      (this._renderinStats.lineCount = batches.reduce(
+        (a: number, c: Batch) => a + c.lineCount,
+        0
+      )),
       (this._renderinStats.batchDetails = batches.map((batch: Batch) => {
         return {
           type: batch.constructor.name,
           objCount: batch.renderViews.length,
           drawCalls: batch.drawCalls,
           minDrawCalls: batch.minDrawCalls,
-          tris: batch.triCount,
-          verts: batch.vertCount
+          verts: batch.vertCount,
+          ...(batch.triCount && { tris: batch.triCount }),
+          ...(batch.lineCount && { lines: batch.lineCount }),
+          ...(batch.pointCount && { points: batch.pointCount })
         }
       }))
     return this._renderinStats
@@ -345,7 +360,9 @@ export default class SpeckleRenderer {
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
     container.appendChild(this._renderer.domElement)
 
+    this.materials = new Materials()
     this.batcher = new Batcher(
+      this.materials,
       this.renderer.capabilities.maxVertexUniforms,
       this.renderer.capabilities.floatVertexTextures
     )
@@ -402,6 +419,10 @@ export default class SpeckleRenderer {
     }
 
     this._scene.add(this._shadowcatcher.shadowcatcherMesh)
+  }
+
+  public async init() {
+    await this.materials.createDefaultMaterials()
   }
 
   public update(deltaTime: number) {
@@ -709,11 +730,8 @@ export default class SpeckleRenderer {
         return {
           offset: value.batchStart,
           count: value.batchCount,
-          material: this.batcher.materials.getFilterMaterial(
-            value,
-            material
-          ) as Material,
-          materialOptions: this.batcher.materials.getFilterMaterialOptions(
+          material: this.materials.getFilterMaterial(value, material) as Material,
+          materialOptions: this.materials.getFilterMaterialOptions(
             material
           ) as FilterMaterialOptions
         }
@@ -729,7 +747,7 @@ export default class SpeckleRenderer {
   ) {
     for (const k in rvs) {
       const drawRanges = rvs[k].map((value: NodeRenderView) => {
-        const material = this.batcher.materials.getDataMaterial(value, materialData)
+        const material = this.materials.getDataMaterial(value, materialData)
         ;(material as unknown as SpeckleMaterial).setMaterialOptions(materialData)
         return {
           offset: value.batchStart,
