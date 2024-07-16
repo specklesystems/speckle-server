@@ -10,10 +10,6 @@ dayjs.extend(duration)
 
 /**
  * Converts a given date input into a relative time string
- *
- * @param {ConfigType} date - The date input to be formatted. Any valid dayjs input
- * @returns {string} The relative time string, such as "just now", "5 minutes ago", "2 days ago", or a formatted date
- *
  * @example
  * customRelativeTime('2023-07-16') - returns "Jul 16" or "Jul 16, 2023" if the year is different from the current year
  * customRelativeTime(new Date()) - returns "just now"
@@ -43,10 +39,6 @@ const customRelativeTime = (date: ConfigType): string => {
 /**
  * Determines if the given date input is formatting with a clock unit (seconds, minutes, or hours).
  * Only meant to be used by formattedRelativeDate() and formattedFullDate()
- *
- * @param {ConfigType} date - The date input to be formatted. Any valid dayjs input
- * @returns {boolean} True if the input represents a clock unit (seconds, minutes, or hours), false otherwise.
- *
  * @example
  * isClockUnit('2023-07-16') - returns false
  * isClockUnit(new Date()) - returns true or false depending on the current time
@@ -58,10 +50,6 @@ const isClockUnit = (date: ConfigType) => {
 
 /**
  * Formats a given date input into a full date string with our default format
- *
- * @param {ConfigType} date - The date input to be formatted. Any valid dayjs input
- * @returns {string} The formatted full date string
- *
  * @example
  * formattedFullDate('2023-12-01') - returns "Dec 12, 2023"
  */
@@ -70,18 +58,12 @@ export const formattedFullDate = (date: ConfigType): string =>
 
 /**
  * Formats a given date input into a relative time string with optional prefix
- *
- * @param {ConfigType} date - The date input to be formatted. Any valid dayjs input
- * @param {Object} [options] - Optional settings
- * @param {boolean} [options.prefix] - If true, adds the 'on' prefix to non-clock units
- * @returns {string} The formatted relative time string
- *
  * @example
  * Assuming today is January 1st 2024
  * formattedRelativeDate('2023-12-01') - returns "Dec 12, 2023"
  * formattedRelativeDate('2023-12-01', { prefix: true }) - returns "on Dec 12, 2023"
  * formattedRelativeDate('2023-12-31') -  returns "1 day ago"
- * * formattedRelativeDate('2023-12-31', { prefix: true }) -  returns "1 day ago"
+ * formattedRelativeDate('2023-12-31', { prefix: true }) -  returns "1 day ago"
  */
 export const formattedRelativeDate = (
   date: ConfigType,
