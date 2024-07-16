@@ -66,7 +66,7 @@
               @click="toggleTheme"
             >
               <Icon class="w-5 h-5" />
-              {{ isDarkTheme ? 'Light Mode' : 'Dark Mode' }}
+              {{ isDarkTheme ? 'Light mode' : 'Dark mode' }}
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser && !isGuest" v-slot="{ active }">
@@ -75,7 +75,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="toggleInviteDialog(true)"
+              @click="toggleInviteDialog"
             >
               <EnvelopeIcon class="w-5 h-5" />
               Invite to Speckle
