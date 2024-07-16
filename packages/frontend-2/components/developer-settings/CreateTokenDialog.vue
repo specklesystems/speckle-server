@@ -24,7 +24,7 @@
           name="scopes"
           label="Scopes"
           placeholder="Choose Scopes"
-          help="It's good practice to limit the scopes of your token to the absolute minimum. For example, if your application or script will only read and write streams, select just those scopes."
+          help="It's good practice to limit the scopes of your token to the absolute minimum. For example, if your application or script will only read and write projects/streams, select just those scopes."
           show-required
           :rules="[isItemSelected]"
           show-label

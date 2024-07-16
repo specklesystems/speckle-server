@@ -97,16 +97,16 @@ import {
 } from '@heroicons/vue/24/outline'
 import { XMarkIcon } from '@heroicons/vue/20/solid'
 import { computed } from 'vue'
-import type { Nullable } from '@speckle/shared'
+import type { MaybeNullOrUndefined } from '@speckle/shared'
 import { ToastNotificationType } from '~~/src/helpers/global/toast'
 import type { ToastNotification } from '~~/src/helpers/global/toast'
 
 const emit = defineEmits<{
-  (e: 'update:notification', val: Nullable<ToastNotification>): void
+  (e: 'update:notification', val: MaybeNullOrUndefined<ToastNotification>): void
 }>()
 
 const props = defineProps<{
-  notification: Nullable<ToastNotification>
+  notification: MaybeNullOrUndefined<ToastNotification>
 }>()
 
 const isTitleOnly = computed(

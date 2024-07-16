@@ -188,7 +188,7 @@ export async function mixpanelTrackerHelperMiddleware(
 ) {
   const ctx = req.context
   const user = ctx.userId ? await getUser(ctx.userId) : null
-  const mp = mixpanel({ userEmail: user?.email })
+  const mp = mixpanel({ userEmail: user?.email, req })
 
   req.mixpanel = mp
   next()

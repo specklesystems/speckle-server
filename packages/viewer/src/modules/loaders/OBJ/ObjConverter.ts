@@ -1,7 +1,7 @@
 import { Mesh, Object3D } from 'three'
-import { type TreeNode, WorldTree } from '../../tree/WorldTree'
-import type { ConverterResultDelegate } from '../Speckle/SpeckleConverter'
-import Logger from 'js-logger'
+import { type TreeNode, WorldTree } from '../../tree/WorldTree.js'
+import type { ConverterResultDelegate } from '../Speckle/SpeckleConverter.js'
+import Logger from '../../utils/Logger.js'
 
 export type ObjConverterNodeDelegate =
   | ((object: Object3D, node: TreeNode) => Promise<void>)

@@ -48,6 +48,9 @@ extend type Query {
   Validate password strength
   """
   userPwdStrength(pwd: String!): PasswordStrengthCheckResults!
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future."
+    )
 }
 
 type PasswordStrengthCheckResults {
@@ -78,6 +81,9 @@ when a user is reading/writing info about himself
 """
 type User {
   id: ID!
+  """
+  Only returned if API user is the user being requested or an admin
+  """
   email: String
   name: String!
   bio: String

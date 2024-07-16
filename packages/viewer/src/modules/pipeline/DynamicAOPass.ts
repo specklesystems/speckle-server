@@ -12,8 +12,8 @@ import {
   WebGLRenderer
 } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
-import { speckleSaoFrag } from '../materials/shaders/speckle-sao-frag'
-import { speckleSaoVert } from '../materials/shaders/speckle-sao-vert'
+import { speckleSaoFrag } from '../materials/shaders/speckle-sao-frag.js'
+import { speckleSaoVert } from '../materials/shaders/speckle-sao-vert.js'
 import { SAOShader } from 'three/examples/jsm/shaders/SAOShader.js'
 import { DepthLimitedBlurShader } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
 import { BlurShaderUtils } from 'three/examples/jsm/shaders/DepthLimitedBlurShader.js'
@@ -21,7 +21,7 @@ import type {
   InputDepthTextureUniform,
   InputNormalsTextureUniform,
   SpecklePass
-} from './SpecklePass'
+} from './SpecklePass.js'
 
 export enum NormalsType {
   DEFAULT = 0,

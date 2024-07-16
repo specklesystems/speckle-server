@@ -61,6 +61,8 @@ const {
   queryAllStreamInvitesFactory
 } = require('@/modules/serverinvites/repositories/serverInvites')
 const db = require('@/db/knex')
+const { isWorkspacesModuleEnabled } = require('@/modules/core/helpers/features')
+const { WorkspacesModuleDisabledError } = require('@/modules/core/errors/workspaces')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -257,6 +259,19 @@ module.exports = {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
+      }
+
+      if (args.stream.workspaceId) {
+        if (!isWorkspacesModuleEnabled()) {
+          // Ugly but complete, will go away if/when resolver moved to workspaces module
+          throw new WorkspacesModuleDisabledError()
+        }
+        await authorizeResolver(
+          context.userId,
+          args.stream.workspaceId,
+          Roles.Workspace.Member,
+          context.resourceAccessRules
+        )
       }
 
       const { id } = await createStreamReturnRecord(

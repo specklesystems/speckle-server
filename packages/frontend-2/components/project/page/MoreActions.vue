@@ -12,7 +12,7 @@
       <ProjectPageMoreActionsCard :class="cardWidthClasses">
         <template #title>Webhooks</template>
         <template #description>
-          If you need to use webhooks, ask the stream's owner to grant you ownership.
+          If you need to use webhooks, ask the project's owner to grant you ownership.
         </template>
       </ProjectPageMoreActionsCard>
     </div>

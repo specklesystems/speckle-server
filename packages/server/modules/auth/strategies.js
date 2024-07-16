@@ -95,7 +95,7 @@ module.exports = async (app) => {
         const userEmail = req.user.email
         const isInvite = !!req.user.isInvite
         if (userEmail) {
-          await mixpanel({ userEmail }).track('Sign Up', {
+          await mixpanel({ userEmail, req }).track('Sign Up', {
             isInvite
           })
         }
