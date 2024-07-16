@@ -89,8 +89,8 @@
             class="text-xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
             Updated
-            <span v-tippy="$getFullDate(updatedAtFullDate)">
-              {{ $getTrunicatedRelativeDateWithPrefix(updatedAtFullDate) }}
+            <span v-tippy="$getFullDate(updatedAt)">
+              {{ $getTrunicatedRelativeDateWithPrefix(updatedAt) }}
             </span>
           </div>
           <div class="text-xs text-foreground-2 flex items-center space-x-1">
@@ -175,7 +175,9 @@
           </div> -->
           <div class="text-xs text-foreground-2">
             Updated
-            <b>{{ updatedAt }}</b>
+            <span v-tippy="$getFullDate(updatedAt)" class="text-foreground-2 text-xs">
+              {{ $getTrunicatedRelativeDate(updatedAt) }}
+            </span>
           </div>
           <div class="text-xs text-foreground-2">
             <FormButton
@@ -234,7 +236,6 @@
   </div>
 </template>
 <script lang="ts" setup>
-import dayjs from 'dayjs'
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import {
@@ -382,13 +383,11 @@ const hasChildren = computed(() =>
     : props.item.hasChildren
 )
 
-const updatedAtFullDate = computed(() => {
-  return isPendingFileUpload(props.item)
+const updatedAt = computed(() =>
+  isPendingFileUpload(props.item)
     ? props.item.convertedLastUpdate || props.item.uploadDate
     : props.item.updatedAt
-})
-
-const updatedAt = computed(() => dayjs(updatedAtFullDate.value).from(dayjs()))
+)
 
 const modelLink = computed(() => {
   if (
