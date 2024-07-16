@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
-import { speckleDepthVert } from './shaders/speckle-depth-vert'
-import { speckleDepthFrag } from './shaders/speckle-depth-frag'
+import { speckleDepthVert } from './shaders/speckle-depth-vert.js'
+import { speckleDepthFrag } from './shaders/speckle-depth-frag.js'
 import {
   BufferGeometry,
   Camera,
@@ -12,8 +12,8 @@ import {
   type MeshDepthMaterialParameters
 } from 'three'
 import { Matrix4, Material } from 'three'
-import { ExtendedMeshDepthMaterial, type Uniforms } from './SpeckleMaterial'
-import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
+import { ExtendedMeshDepthMaterial, type Uniforms } from './SpeckleMaterial.js'
+import type { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
 
 class SpeckleDepthMaterial extends ExtendedMeshDepthMaterial {
   protected get vertexProgram(): string {

@@ -10,15 +10,15 @@ import {
   Side,
   Vector3
 } from 'three'
+import { BatchObject } from '../batching/BatchObject.js'
 import { ExtendedTriangle, HitPointInfo } from 'three-mesh-bvh'
-import { BatchObject } from '../batching/BatchObject'
 import type {
   ExtendedMeshIntersection,
   ExtendedShapeCastCallbacks,
   MeshIntersection
-} from './SpeckleRaycaster'
-import { ObjectLayers } from '../../IViewer'
-import { AccelerationStructure } from './AccelerationStructure'
+} from './SpeckleRaycaster.js'
+import { ObjectLayers } from '../../IViewer.js'
+import { AccelerationStructure } from './AccelerationStructure.js'
 
 /** 
  * 

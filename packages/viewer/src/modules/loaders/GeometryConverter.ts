@@ -1,5 +1,5 @@
-import { type GeometryData } from '../converter/Geometry'
-import type { NodeData } from '../tree/WorldTree'
+import { type GeometryData } from '../converter/Geometry.js'
+import type { NodeData } from '../tree/WorldTree.js'
 
 export enum SpeckleType {
   View3D = 'View3D',

@@ -1,5 +1,6 @@
 import { LogicError } from '@speckle/ui-components'
 import { fakeMixpanelClient, type MixpanelClient } from '~/lib/common/helpers/mp'
+import { useClientsideMixpanelClientBuilder } from '~/lib/core/clients/mp'
 
 /**
  * mixpanel-browser only supports being ran on the client-side (hence the name)! So it's only going to be accessible
@@ -8,14 +9,12 @@ import { fakeMixpanelClient, type MixpanelClient } from '~/lib/common/helpers/mp
 
 export default defineNuxtPlugin(async () => {
   const logger = useLogger()
+  const build = useClientsideMixpanelClientBuilder()
 
   let mixpanel: MixpanelClient | undefined = undefined
 
   try {
     // Dynamic import to allow suppressing loading errors that happen because of adblock
-    const builder = (await import('~/lib/core/clients/mp'))
-      .useClientsideMixpanelClientBuilder
-    const build = builder()
     mixpanel = (await build()) || undefined
   } catch (e) {
     logger.warn(e, 'Failed to load mixpanel in CSR')

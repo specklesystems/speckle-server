@@ -7,10 +7,10 @@ import {
   Vector3,
   type Intersection
 } from 'three'
-import { MeasurementPointGizmo } from './MeasurementPointGizmo'
-import { getConversionFactor } from '../../converter/Units'
-import { Measurement, MeasurementState } from './Measurement'
-import { ObjectLayers } from '../../../IViewer'
+import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
+import { getConversionFactor } from '../../converter/Units.js'
+import { Measurement, MeasurementState } from './Measurement.js'
+import { ObjectLayers } from '../../../IViewer.js'
 
 export class PerpendicularMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null

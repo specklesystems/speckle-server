@@ -1,8 +1,8 @@
-import { specklePointVert } from './shaders/speckle-point-vert'
-import { specklePointFrag } from './shaders/speckle-point-frag'
+import { specklePointVert } from './shaders/speckle-point-vert.js'
+import { specklePointFrag } from './shaders/speckle-point-frag.js'
 import { Material, NearestFilter, Texture, type PointsMaterialParameters } from 'three'
-import type { Uniforms } from './SpeckleMaterial'
-import SpecklePointMaterial from './SpecklePointMaterial'
+import type { Uniforms } from './SpeckleMaterial.js'
+import SpecklePointMaterial from './SpecklePointMaterial.js'
 
 class SpecklePointColouredMaterial extends SpecklePointMaterial {
   protected get vertexProgram(): string {

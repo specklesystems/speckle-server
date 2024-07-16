@@ -1,5 +1,5 @@
 import { OrthographicCamera, PerspectiveCamera, Sphere, Vector3 } from 'three'
-import EventEmitter from '../../EventEmitter'
+import EventEmitter from '../../EventEmitter.js'
 
 export abstract class SpeckleControls extends EventEmitter {
   protected _up: Vector3 = new Vector3(0, 1, 0)
