@@ -8,8 +8,8 @@ import {
 } from '@/modules/comments/services/commentTextService'
 import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
 import {
-  getComment,
-  getStreamCommentCount,
+  getComment as repoGetComment,
+  getStreamCommentCount as repoGetStreamCommentCount,
   markCommentViewed
 } from '@/modules/comments/repositories/comments'
 import { clamp } from 'lodash'
@@ -67,274 +67,274 @@ const resourceCheck = async (res: ResourceIdentifier, streamId: string) => {
   }
 }
 
-export = {
-  async streamResourceCheck({
-    streamId,
-    resources
-  }: {
-    streamId: string
-    resources: ResourceIdentifier[]
-  }) {
-    // this itches - a for loop with queries... but okay let's hit the road now
-    await Promise.all(resources.map((res) => resourceCheck(res, streamId)))
-  },
 
-  /**
-   * @deprecated Use 'createCommentThreadAndNotify()' instead
-   */
-  async createComment({
-    userId,
-    input
-  }: {
-    userId: string
-    input: CommentCreateInput
-  }) {
-    if (input.resources.length < 1)
-      throw Error('Must specify at least one resource as the comment target')
+export async function streamResourceCheck({
+  streamId,
+  resources
+}: {
+  streamId: string
+  resources: ResourceIdentifier[]
+}) {
+  // this itches - a for loop with queries... but okay let's hit the road now
+  await Promise.all(resources.map((res) => resourceCheck(res, streamId)))
+}
 
-    const commentResource = input.resources.find((r) => r?.resourceType === 'comment')
-    if (commentResource) throw new Error('Please use the comment reply mutation.')
+/**
+ * @deprecated Use 'createCommentThreadAndNotify()' instead
+ */
+export async function createComment({
+  userId,
+  input
+}: {
+  userId: string
+  input: CommentCreateInput
+}) {
+  if (input.resources.length < 1)
+    throw Error('Must specify at least one resource as the comment target')
 
-    // Stream checks
-    const streamResources = input.resources.filter((r) => r?.resourceType === 'stream')
-    if (streamResources.length > 1)
-      throw Error('Commenting on multiple streams is not supported')
+  const commentResource = input.resources.find((r) => r?.resourceType === 'comment')
+  if (commentResource) throw new Error('Please use the comment reply mutation.')
 
-    const [stream] = streamResources
-    if (stream && stream.resourceId !== input.streamId)
-      throw Error("Input streamId doesn't match the stream resource.resourceId")
+  // Stream checks
+  const streamResources = input.resources.filter((r) => r?.resourceType === 'stream')
+  if (streamResources.length > 1)
+    throw Error('Commenting on multiple streams is not supported')
 
-    const comment: Partial<CommentRecord> = {
+  const [stream] = streamResources
+  if (stream && stream.resourceId !== input.streamId)
+    throw Error("Input streamId doesn't match the stream resource.resourceId")
+
+  const comment: Partial<CommentRecord> = {
+    streamId: input.streamId,
+    text: input.text as SmartTextEditorValue,
+    data: input.data,
+    screenshot: input.screenshot ?? null
+  }
+
+  comment.id = crs({ length: 10 })
+  comment.authorId = userId
+
+  await validateInputAttachments(input.streamId, input.blobIds)
+  comment.text = buildCommentTextFromInput({
+    doc: input.text,
+    blobIds: input.blobIds
+  }) as unknown as string
+
+  const [newComment] = await Comments().insert(comment, '*')
+  try {
+    await module.exports.streamResourceCheck({
       streamId: input.streamId,
-      text: input.text as SmartTextEditorValue,
-      data: input.data,
-      screenshot: input.screenshot ?? null
-    }
-
-    comment.id = crs({ length: 10 })
-    comment.authorId = userId
-
-    await validateInputAttachments(input.streamId, input.blobIds)
-    comment.text = buildCommentTextFromInput({
-      doc: input.text,
-      blobIds: input.blobIds
-    }) as unknown as string
-
-    const [newComment] = await Comments().insert(comment, '*')
-    try {
-      await module.exports.streamResourceCheck({
-        streamId: input.streamId,
-        resources: input.resources
-      })
-      for (const res of input.resources) {
-        if (!res) continue
-        await CommentLinks().insert({
-          commentId: comment.id,
-          resourceId: res.resourceId,
-          resourceType: res.resourceType
-        })
-      }
-    } catch (e) {
-      await Comments().where({ id: comment.id }).delete() // roll back
-      throw e // pass on to resolver
-    }
-    await module.exports.viewComment({ userId, commentId: comment.id }) // so we don't self mark a comment as unread the moment it's created
-
-    await CommentsEmitter.emit(CommentsEvents.Created, {
-      comment: newComment
+      resources: input.resources
     })
+    for (const res of input.resources) {
+      if (!res) continue
+      await CommentLinks().insert({
+        commentId: comment.id,
+        resourceId: res.resourceId,
+        resourceType: res.resourceType
+      })
+    }
+  } catch (e) {
+    await Comments().where({ id: comment.id }).delete() // roll back
+    throw e // pass on to resolver
+  }
+  await module.exports.viewComment({ userId, commentId: comment.id }) // so we don't self mark a comment as unread the moment it's created
 
-    return newComment
-  },
+  await CommentsEmitter.emit(CommentsEvents.Created, {
+    comment: newComment
+  })
 
-  /**
-   * @deprecated Use 'createCommentReplyAndNotify()' instead
-   */
-  async createCommentReply({
+  return newComment
+}
+
+/**
+ * @deprecated Use 'createCommentReplyAndNotify()' instead
+ */
+export async function createCommentReply({
+  authorId,
+  parentCommentId,
+  streamId,
+  text,
+  data,
+  blobIds
+}: {
+  authorId: string
+  parentCommentId: string
+  streamId: string
+  text: SmartTextEditorValue
+  data: CommentRecord['data']
+  blobIds: string[]
+}) {
+  await validateInputAttachments(streamId, blobIds)
+  const comment = {
+    id: crs({ length: 10 }),
     authorId,
-    parentCommentId,
-    streamId,
-    text,
+    text: buildCommentTextFromInput({ doc: text, blobIds }),
     data,
-    blobIds
-  }: {
-    authorId: string
-    parentCommentId: string
-    streamId: string
-    text: SmartTextEditorValue
-    data: CommentRecord['data']
-    blobIds: string[]
-  }) {
-    await validateInputAttachments(streamId, blobIds)
-    const comment = {
-      id: crs({ length: 10 }),
-      authorId,
-      text: buildCommentTextFromInput({ doc: text, blobIds }),
-      data,
+    streamId,
+    parentComment: parentCommentId
+  }
+
+  const [newComment] = await Comments().insert(comment, '*')
+  try {
+    const commentLink: Omit<CommentLinkRecord, 'commentId'> = {
+      resourceId: parentCommentId,
+      resourceType: 'comment'
+    }
+    await module.exports.streamResourceCheck({
       streamId,
-      parentComment: parentCommentId
-    }
+      resources: [commentLink]
+    })
+    await CommentLinks().insert({ commentId: comment.id, ...commentLink })
+  } catch (e) {
+    await Comments().where({ id: comment.id }).delete() // roll back
+    throw e // pass on to resolver
+  }
+  await Comments().where({ id: parentCommentId }).update({ updatedAt: knex.fn.now() })
 
-    const [newComment] = await Comments().insert(comment, '*')
-    try {
-      const commentLink: Omit<CommentLinkRecord, 'commentId'> = {
-        resourceId: parentCommentId,
-        resourceType: 'comment'
-      }
-      await module.exports.streamResourceCheck({
-        streamId,
-        resources: [commentLink]
+  await CommentsEmitter.emit(CommentsEvents.Created, {
+    comment: newComment
+  })
+
+  return newComment
+}
+
+/**
+ * @deprecated Use 'editCommentAndNotify()'
+ */
+export async function editComment({
+  userId,
+  input,
+  matchUser = false
+}: {
+  userId: string
+  input: CommentEditInput
+  matchUser: boolean
+}) {
+  const editedComment = await Comments().where({ id: input.id }).first()
+  if (!editedComment) throw new Error("The comment doesn't exist")
+
+  if (matchUser && editedComment.authorId !== userId)
+    throw new ForbiddenError("You cannot edit someone else's comments")
+
+  await validateInputAttachments(input.streamId, input.blobIds)
+  const newText = buildCommentTextFromInput({
+    doc: input.text,
+    blobIds: input.blobIds
+  })
+  const [updatedComment] = await Comments()
+    .where({ id: input.id })
+    .update({ text: newText }, '*')
+
+  await CommentsEmitter.emit(CommentsEvents.Updated, {
+    previousComment: editedComment,
+    newComment: updatedComment
+  })
+
+  return updatedComment
+}
+
+/**
+ * @deprecated Use 'markCommentViewed()'
+ */
+export async function viewComment({ userId, commentId }: { userId: string; commentId: string }) {
+  await markCommentViewed(commentId, userId)
+}
+/**
+ * @deprecated Use repository method
+ */
+export const getComment = repoGetComment
+/**
+ * @deprecated Use 'archiveCommentAndNotify()'
+ */
+export async function archiveComment({
+  commentId,
+  userId,
+  streamId,
+  archived = true
+}: {
+  commentId: string
+  userId: string
+  streamId: string
+  archived: boolean
+}) {
+  const comment = await Comments().where({ id: commentId }).first()
+  if (!comment)
+    throw new Error(
+      `No comment ${commentId} exists, cannot change its archival status`
+    )
+
+  const aclEntry = await knex('stream_acl')
+    .select()
+    .where({ resourceId: streamId, userId })
+    .first()
+
+  if (comment.authorId !== userId) {
+    if (!aclEntry || aclEntry.role !== Roles.Stream.Owner)
+      throw new ForbiddenError("You don't have permission to archive the comment")
+  }
+
+  const [updatedComment] = await Comments()
+    .where({ id: commentId })
+    .update({ archived }, '*')
+  return updatedComment
+}
+
+/**
+ * @deprecated Use `getPaginatedProjectComments()` instead
+ */
+export async function getComments({
+  resources,
+  limit,
+  cursor,
+  userId = null,
+  replies = false,
+  streamId,
+  archived = false
+}: {
+  resources?: ResourceIdentifier[]
+  limit?: number
+  cursor?: string
+  userId: string | null
+  replies?: boolean
+  streamId: string
+  archived?: boolean
+}) {
+  const query = knex.with('comms', (cte) => {
+    cte.select().distinctOn('id').from('comments')
+    cte.join('comment_links', 'comments.id', '=', 'commentId')
+
+    if (userId) {
+      // link viewed At
+      cte.leftOuterJoin('comment_views', (b) => {
+        b.on('comment_views.commentId', '=', 'comments.id')
+        b.andOn('comment_views.userId', '=', knex.raw('?', userId))
       })
-      await CommentLinks().insert({ commentId: comment.id, ...commentLink })
-    } catch (e) {
-      await Comments().where({ id: comment.id }).delete() // roll back
-      throw e // pass on to resolver
-    }
-    await Comments().where({ id: parentCommentId }).update({ updatedAt: knex.fn.now() })
-
-    await CommentsEmitter.emit(CommentsEvents.Created, {
-      comment: newComment
-    })
-
-    return newComment
-  },
-
-  /**
-   * @deprecated Use 'editCommentAndNotify()'
-   */
-  async editComment({
-    userId,
-    input,
-    matchUser = false
-  }: {
-    userId: string
-    input: CommentEditInput
-    matchUser: boolean
-  }) {
-    const editedComment = await Comments().where({ id: input.id }).first()
-    if (!editedComment) throw new Error("The comment doesn't exist")
-
-    if (matchUser && editedComment.authorId !== userId)
-      throw new ForbiddenError("You cannot edit someone else's comments")
-
-    await validateInputAttachments(input.streamId, input.blobIds)
-    const newText = buildCommentTextFromInput({
-      doc: input.text,
-      blobIds: input.blobIds
-    })
-    const [updatedComment] = await Comments()
-      .where({ id: input.id })
-      .update({ text: newText }, '*')
-
-    await CommentsEmitter.emit(CommentsEvents.Updated, {
-      previousComment: editedComment,
-      newComment: updatedComment
-    })
-
-    return updatedComment
-  },
-
-  /**
-   * @deprecated Use 'markCommentViewed()'
-   */
-  async viewComment({ userId, commentId }: { userId: string; commentId: string }) {
-    await markCommentViewed(commentId, userId)
-  },
-  /**
-   * @deprecated Use repository method
-   */
-  getComment,
-  /**
-   * @deprecated Use 'archiveCommentAndNotify()'
-   */
-  async archiveComment({
-    commentId,
-    userId,
-    streamId,
-    archived = true
-  }: {
-    commentId: string
-    userId: string
-    streamId: string
-    archived: boolean
-  }) {
-    const comment = await Comments().where({ id: commentId }).first()
-    if (!comment)
-      throw new Error(
-        `No comment ${commentId} exists, cannot change its archival status`
-      )
-
-    const aclEntry = await knex('stream_acl')
-      .select()
-      .where({ resourceId: streamId, userId })
-      .first()
-
-    if (comment.authorId !== userId) {
-      if (!aclEntry || aclEntry.role !== Roles.Stream.Owner)
-        throw new ForbiddenError("You don't have permission to archive the comment")
     }
 
-    const [updatedComment] = await Comments()
-      .where({ id: commentId })
-      .update({ archived }, '*')
-    return updatedComment
-  },
+    if (resources && resources.length !== 0) {
+      cte.where((q) => {
+        // link resources
+        for (const res of resources) {
+          q.orWhere('comment_links.resourceId', '=', res.resourceId)
+        }
+      })
+    } else {
+      cte.where({ streamId })
+    }
+    if (!replies) {
+      cte.whereNull('parentComment')
+    }
+    cte.where('archived', '=', archived)
+  })
 
-  /**
-   * @deprecated Use `getPaginatedProjectComments()` instead
-   */
-  async getComments({
-    resources,
-    limit,
-    cursor,
-    userId = null,
-    replies = false,
-    streamId,
-    archived = false
-  }: {
-    resources?: ResourceIdentifier[]
-    limit?: number
-    cursor?: string
-    userId: string | null
-    replies?: boolean
-    streamId: string
-    archived?: boolean
-  }) {
-    const query = knex.with('comms', (cte) => {
-      cte.select().distinctOn('id').from('comments')
-      cte.join('comment_links', 'comments.id', '=', 'commentId')
+  query.select().from('comms')
 
-      if (userId) {
-        // link viewed At
-        cte.leftOuterJoin('comment_views', (b) => {
-          b.on('comment_views.commentId', '=', 'comments.id')
-          b.andOn('comment_views.userId', '=', knex.raw('?', userId))
-        })
-      }
+  // total count coming from our cte
+  query.joinRaw('right join (select count(*) from comms) c(total_count) on true')
 
-      if (resources && resources.length !== 0) {
-        cte.where((q) => {
-          // link resources
-          for (const res of resources) {
-            q.orWhere('comment_links.resourceId', '=', res.resourceId)
-          }
-        })
-      } else {
-        cte.where({ streamId })
-      }
-      if (!replies) {
-        cte.whereNull('parentComment')
-      }
-      cte.where('archived', '=', archived)
-    })
-
-    query.select().from('comms')
-
-    // total count coming from our cte
-    query.joinRaw('right join (select count(*) from comms) c(total_count) on true')
-
-    // get comment's all linked resources
-    query.joinRaw(`
+  // get comment's all linked resources
+  query.joinRaw(`
       join(
         select cl."commentId" as id, JSON_AGG(json_build_object('resourceId', cl."resourceId", 'resourceType', cl."resourceType")) as resources
         from comment_links cl
@@ -342,39 +342,39 @@ export = {
         group by cl."commentId"
       ) res using(id)`)
 
-    if (cursor) {
-      query.where('createdAt', '<', cursor)
-    }
+  if (cursor) {
+    query.where('createdAt', '<', cursor)
+  }
 
-    limit = clamp(limit ?? 10, 0, 100)
-    query.orderBy('createdAt', 'desc')
-    query.limit(limit || 1) // need at least 1 row to get totalCount
+  limit = clamp(limit ?? 10, 0, 100)
+  query.orderBy('createdAt', 'desc')
+  query.limit(limit || 1) // need at least 1 row to get totalCount
 
-    const rows = await query
-    const totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
-    const nextCursor = rows && rows.length > 0 ? rows[rows.length - 1].createdAt : null
+  const rows = await query
+  const totalCount = rows && rows.length > 0 ? parseInt(rows[0].total_count) : 0
+  const nextCursor = rows && rows.length > 0 ? rows[rows.length - 1].createdAt : null
 
-    return {
-      items: !limit ? [] : rows,
-      cursor: nextCursor ? nextCursor.toISOString() : null,
-      totalCount
-    }
-  },
-
-  async getResourceCommentCount({ resourceId }: { resourceId: string }) {
-    const [res] = await CommentLinks()
-      .count('commentId')
-      .where({ resourceId })
-      .join('comments', 'comments.id', '=', 'commentId')
-      .where('comments.archived', '=', false)
-
-    if (res && res.count) {
-      return parseInt(String(res.count))
-    }
-    return 0
-  },
-
-  async getStreamCommentCount({ streamId }: { streamId: string }) {
-    return (await getStreamCommentCount(streamId, { threadsOnly: true })) || 0
+  return {
+    items: !limit ? [] : rows,
+    cursor: nextCursor ? nextCursor.toISOString() : null,
+    totalCount
   }
 }
+
+export async function getResourceCommentCount({ resourceId }: { resourceId: string }) {
+  const [res] = await CommentLinks()
+    .count('commentId')
+    .where({ resourceId })
+    .join('comments', 'comments.id', '=', 'commentId')
+    .where('comments.archived', '=', false)
+
+  if (res && res.count) {
+    return parseInt(String(res.count))
+  }
+  return 0
+}
+
+export async function getStreamCommentCount({ streamId }: { streamId: string }) {
+  return (await repoGetStreamCommentCount(streamId, { threadsOnly: true })) || 0
+}
+

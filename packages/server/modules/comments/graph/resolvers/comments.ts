@@ -1,10 +1,10 @@
-const { pubsub } = require('@/modules/shared/utils/subscriptions')
-const { ForbiddenError: ApolloForbiddenError } = require('apollo-server-express')
-const { ForbiddenError } = require('@/modules/shared/errors')
-const { getStream } = require('@/modules/core/services/streams')
-const { Roles } = require('@/modules/core/helpers/mainConstants')
+import { pubsub } from '@/modules/shared/utils/subscriptions'
+import { ForbiddenError as ApolloForbiddenError } from 'apollo-server-express'
+import { ForbiddenError } from '@/modules/shared/errors'
+import { getStream } from '@/modules/core/services/streams'
+import { Roles } from '@/modules/core/helpers/mainConstants'
 
-const {
+import {
   getComments,
   getResourceCommentCount,
   createComment,
@@ -13,39 +13,39 @@ const {
   archiveComment,
   editComment,
   streamResourceCheck
-} = require('@/modules/comments/services/index')
-const { getComment } = require('@/modules/comments/repositories/comments')
-const {
+} from '@/modules/comments/services/index'
+import { getComment } from '@/modules/comments/repositories/comments'
+import {
   ensureCommentSchema
-} = require('@/modules/comments/services/commentTextService')
-const { withFilter } = require('graphql-subscriptions')
-const { has } = require('lodash')
-const {
+} from '@/modules/comments/services/commentTextService'
+import { withFilter } from 'graphql-subscriptions'
+import { has } from 'lodash'
+import {
   documentToBasicString
-} = require('@/modules/core/services/richTextEditorService')
-const {
+} from '@/modules/core/services/richTextEditorService'
+import {
   getPaginatedCommitComments,
   getPaginatedBranchComments,
   getPaginatedProjectComments
-} = require('@/modules/comments/services/retrieval')
-const {
+} from '@/modules/comments/services/retrieval'
+import {
   publish,
   ViewerSubscriptions,
   CommentSubscriptions,
   filteredSubscribe,
   ProjectSubscriptions
-} = require('@/modules/shared/utils/subscriptions')
-const {
+} from '@/modules/shared/utils/subscriptions'
+import {
   addCommentCreatedActivity,
   addCommentArchivedActivity,
   addReplyAddedActivity
-} = require('@/modules/activitystream/services/commentActivity')
-const {
+} from '@/modules/activitystream/services/commentActivity'
+import {
   getViewerResourceItemsUngrouped,
   getViewerResourcesForComment,
   doViewerResourcesFit
-} = require('@/modules/core/services/commit/viewerResources')
-const {
+} from '@/modules/core/services/commit/viewerResources'
+import {
   authorizeProjectCommentsAccess,
   authorizeCommentAccess,
   markViewed,
@@ -53,30 +53,31 @@ const {
   createCommentReplyAndNotify,
   editCommentAndNotify,
   archiveCommentAndNotify
-} = require('@/modules/comments/services/management')
-const {
+} from '@/modules/comments/services/management'
+import {
   isLegacyData,
   isDataStruct,
   formatSerializedViewerState,
   convertStateToLegacyData,
   convertLegacyDataToState
-} = require('@/modules/comments/services/data')
+} from '@/modules/comments/services/data'
+import { Resolvers } from '@/modules/core/graph/generated/graphql'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 
-const getStreamComment = async ({ streamId, commentId }, ctx) => {
+const getStreamComment = async ({ streamId, commentId }: { streamId: string, commentId: string }, ctx: GraphQLContext) => {
   await authorizeProjectCommentsAccess({
     projectId: streamId,
     authCtx: ctx
   })
 
   const comment = await getComment({ id: commentId, userId: ctx.userId })
-  if (comment.streamId !== streamId)
+  if (comment?.streamId !== streamId)
     throw new ApolloForbiddenError('You do not have access to this comment.')
 
   return comment
 }
 
-/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
-module.exports = {
+export = {
   Query: {
     async comment(_parent, args, context) {
       return await getStreamComment(
