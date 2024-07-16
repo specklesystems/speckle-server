@@ -34,12 +34,16 @@
           </div>
           <div class="truncate text-xs">
             <span
-              v-tippy="createdAt"
+              v-tippy="$getFullDate(loadedVersion?.createdAt)"
               :class="`${
                 showVersions ? 'text-foundation font-semibold' : ''
               } text-xs opacity-70`"
             >
-              {{ isLatest ? 'latest version' : timeAgoCreatedAt }}
+              {{
+                isLatest
+                  ? 'latest version'
+                  : $getTrunicatedRelativeDate(loadedVersion?.createdAt)
+              }}
             </span>
           </div>
         </div>
@@ -183,14 +187,6 @@ const latestVersion = computed(() => {
 })
 
 const isLatest = computed(() => loadedVersion.value?.id === latestVersion.value.id)
-
-const timeAgoCreatedAt = computed(() =>
-  dayjs(loadedVersion.value?.createdAt).from(dayjs())
-)
-
-const createdAt = computed(() => {
-  return dayjs(loadedVersion.value?.createdAt).format('LLL')
-})
 
 const latestVersionId = computed(() => latestVersion.value.id)
 
