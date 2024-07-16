@@ -28,7 +28,7 @@
         >
           <div class="flex items-center justify-between w-full">
             <div
-              class="block truncate grow text-left text-xs sm:text-sm"
+              class="block truncate grow text-left text-xs sm:text-[13px]"
               :class="[hasValueSelected ? 'text-foreground' : 'text-foreground-2']"
             >
               <template
@@ -106,7 +106,7 @@
                     ref="searchInput"
                     v-model="searchValue"
                     type="text"
-                    class="py-1 pl-7 w-full bg-foundation-page rounded-[5px] placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 border-outline-3 focus:border-outline-1 focus:ring-outline-1 text-sm"
+                    class="py-1 pl-7 w-full bg-foundation placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 border-outline-2 focus:border-outline-4 focus:!ring-0 text-[13px]"
                     :placeholder="searchPlaceholder"
                     @keydown.stop
                   />
@@ -464,9 +464,9 @@ const buttonsWrapperClasses = computed(() => {
   } else if (props.buttonStyle !== 'simple') {
     classParts.push('rounded-md border')
     if (isOpen.value) {
-      classParts.push('border-outline-1')
+      classParts.push('border-outline-4')
     } else {
-      classParts.push('border-outline-3')
+      classParts.push('border-outline-2 hover:border-outline-5')
     }
   }
 
