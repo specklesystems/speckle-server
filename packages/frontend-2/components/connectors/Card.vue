@@ -16,7 +16,10 @@
           v-if="lastUpdated"
           class="bg-primary-muted text-primary rounded-full px-2 py-1 -ml-1"
         >
-          updated {{ lastUpdated }}
+          updated
+          <span v-tippy="$getFullDate(lastUpdated)">
+            {{ $getTrunicatedRelativeDateWithPrefix(lastUpdated) }}
+          </span>
         </span>
       </div>
       <div class="flex items-center justify-between">
@@ -57,8 +60,6 @@
   </div>
 </template>
 <script setup lang="ts">
-import dayjs from 'dayjs'
-
 import { ShieldCheckIcon, GlobeEuropeAfricaIcon } from '@heroicons/vue/24/solid'
 import type { ConnectorTag } from '~~/lib/connectors'
 
@@ -69,8 +70,6 @@ const props = defineProps<{
 const dialogOpen = ref(false)
 
 const lastUpdated = computed(() =>
-  props.tag.versions?.length > 0
-    ? dayjs(props.tag.versions[0].Date).from(dayjs())
-    : undefined
+  props.tag.versions?.length > 0 ? props.tag.versions[0].Date : undefined
 )
 </script>
