@@ -39,6 +39,9 @@ export type ServerInviteRecord = {
   serverRole: Nullable<string>
 }
 
+/**
+ * @deprecated An invite record no longer just represents a single resource type.
+ */
 export type StreamInviteRecord = SetNonNullable<
   ServerInviteRecord,
   'resourceId' | 'resourceTarget'
