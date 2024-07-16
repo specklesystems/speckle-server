@@ -207,14 +207,14 @@
       @done="markComplete(1)"
       @cancel="showAccountLinkDialog = false"
     >
-      <template #header>Desktop Login</template>
+      <template #header>Desktop login</template>
     </OnboardingDialogAccountLink>
     <OnboardingDialogFirstSend
       v-model:open="showFirstSendDialog"
       @done="markComplete(2)"
       @cancel="showFirstSendDialog = false"
     >
-      <template #header>Your First Upload</template>
+      <template #header>Your first upload</template>
     </OnboardingDialogFirstSend>
     <ServerManagementInviteDialog
       v-model:open="showServerInviteDialog"
