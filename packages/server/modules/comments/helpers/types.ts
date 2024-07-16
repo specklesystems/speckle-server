@@ -1,4 +1,5 @@
 import { DataStruct, LegacyData } from '@/modules/comments/services/data'
+import { SmartTextEditorValue } from '@/modules/core/graph/generated/graphql'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 
 export type CommentLinkResourceType = 'stream' | 'commit' | 'object' | 'comment'
@@ -9,7 +10,7 @@ export interface CommentRecord {
   authorId: string
   createdAt: Date
   updatedAt: Date
-  text: Nullable<string>
+  text: Nullable<string | SmartTextEditorValue>
   screenshot: Nullable<string>
   data: Nullable<LegacyData | DataStruct>
   archived: boolean

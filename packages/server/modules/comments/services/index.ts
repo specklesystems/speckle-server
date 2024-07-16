@@ -1,24 +1,31 @@
 'use strict'
-const crs = require('crypto-random-string')
-const knex = require('@/db/knex')
-const { ForbiddenError } = require('@/modules/shared/errors')
-const {
+import crs from 'crypto-random-string'
+import knex from '@/db/knex'
+import { ForbiddenError } from '@/modules/shared/errors'
+import {
   buildCommentTextFromInput,
   validateInputAttachments
-} = require('@/modules/comments/services/commentTextService')
-const { CommentsEmitter, CommentsEvents } = require('@/modules/comments/events/emitter')
-const {
+} from '@/modules/comments/services/commentTextService'
+import { CommentsEmitter, CommentsEvents } from '@/modules/comments/events/emitter'
+import {
   getComment,
   getStreamCommentCount,
   markCommentViewed
-} = require('@/modules/comments/repositories/comments')
-const { clamp } = require('lodash')
-const { Roles } = require('@speckle/shared')
+} from '@/modules/comments/repositories/comments'
+import { clamp } from 'lodash'
+import { Roles } from '@speckle/shared'
+import { ResourceIdentifier } from '@/test/graphql/generated/graphql'
+import {
+  CommentCreateInput,
+  CommentEditInput,
+  SmartTextEditorValue
+} from '@/modules/core/graph/generated/graphql'
+import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
 
-const Comments = () => knex('comments')
-const CommentLinks = () => knex('comment_links')
+const Comments = () => knex<CommentRecord>('comments')
+const CommentLinks = () => knex<CommentLinkRecord>('comment_links')
 
-const resourceCheck = async (res, streamId) => {
+const resourceCheck = async (res: ResourceIdentifier, streamId: string) => {
   // The switch of doom: if something throws, we're out
   switch (res.resourceType) {
     case 'stream':
@@ -60,8 +67,14 @@ const resourceCheck = async (res, streamId) => {
   }
 }
 
-module.exports = {
-  async streamResourceCheck({ streamId, resources }) {
+export = {
+  async streamResourceCheck({
+    streamId,
+    resources
+  }: {
+    streamId: string
+    resources: ResourceIdentifier[]
+  }) {
     // this itches - a for loop with queries... but okay let's hit the road now
     await Promise.all(resources.map((res) => resourceCheck(res, streamId)))
   },
@@ -69,15 +82,21 @@ module.exports = {
   /**
    * @deprecated Use 'createCommentThreadAndNotify()' instead
    */
-  async createComment({ userId, input }) {
+  async createComment({
+    userId,
+    input
+  }: {
+    userId: string
+    input: CommentCreateInput
+  }) {
     if (input.resources.length < 1)
       throw Error('Must specify at least one resource as the comment target')
 
-    const commentResource = input.resources.find((r) => r.resourceType === 'comment')
+    const commentResource = input.resources.find((r) => r?.resourceType === 'comment')
     if (commentResource) throw new Error('Please use the comment reply mutation.')
 
     // Stream checks
-    const streamResources = input.resources.filter((r) => r.resourceType === 'stream')
+    const streamResources = input.resources.filter((r) => r?.resourceType === 'stream')
     if (streamResources.length > 1)
       throw Error('Commenting on multiple streams is not supported')
 
@@ -85,11 +104,11 @@ module.exports = {
     if (stream && stream.resourceId !== input.streamId)
       throw Error("Input streamId doesn't match the stream resource.resourceId")
 
-    const comment = {
+    const comment: Partial<CommentRecord> = {
       streamId: input.streamId,
-      text: input.text,
+      text: input.text as SmartTextEditorValue,
       data: input.data,
-      screenshot: input.screenshot
+      screenshot: input.screenshot ?? null
     }
 
     comment.id = crs({ length: 10 })
@@ -99,7 +118,7 @@ module.exports = {
     comment.text = buildCommentTextFromInput({
       doc: input.text,
       blobIds: input.blobIds
-    })
+    }) as unknown as string
 
     const [newComment] = await Comments().insert(comment, '*')
     try {
@@ -108,6 +127,7 @@ module.exports = {
         resources: input.resources
       })
       for (const res of input.resources) {
+        if (!res) continue
         await CommentLinks().insert({
           commentId: comment.id,
           resourceId: res.resourceId,
@@ -137,6 +157,13 @@ module.exports = {
     text,
     data,
     blobIds
+  }: {
+    authorId: string
+    parentCommentId: string
+    streamId: string
+    text: SmartTextEditorValue
+    data: CommentRecord['data']
+    blobIds: string[]
   }) {
     await validateInputAttachments(streamId, blobIds)
     const comment = {
@@ -150,7 +177,10 @@ module.exports = {
 
     const [newComment] = await Comments().insert(comment, '*')
     try {
-      const commentLink = { resourceId: parentCommentId, resourceType: 'comment' }
+      const commentLink: Omit<CommentLinkRecord, 'commentId'> = {
+        resourceId: parentCommentId,
+        resourceType: 'comment'
+      }
       await module.exports.streamResourceCheck({
         streamId,
         resources: [commentLink]
@@ -172,7 +202,15 @@ module.exports = {
   /**
    * @deprecated Use 'editCommentAndNotify()'
    */
-  async editComment({ userId, input, matchUser = false }) {
+  async editComment({
+    userId,
+    input,
+    matchUser = false
+  }: {
+    userId: string
+    input: CommentEditInput
+    matchUser: boolean
+  }) {
     const editedComment = await Comments().where({ id: input.id }).first()
     if (!editedComment) throw new Error("The comment doesn't exist")
 
@@ -199,7 +237,7 @@ module.exports = {
   /**
    * @deprecated Use 'markCommentViewed()'
    */
-  async viewComment({ userId, commentId }) {
+  async viewComment({ userId, commentId }: { userId: string; commentId: string }) {
     await markCommentViewed(commentId, userId)
   },
   /**
@@ -209,7 +247,17 @@ module.exports = {
   /**
    * @deprecated Use 'archiveCommentAndNotify()'
    */
-  async archiveComment({ commentId, userId, streamId, archived = true }) {
+  async archiveComment({
+    commentId,
+    userId,
+    streamId,
+    archived = true
+  }: {
+    commentId: string
+    userId: string
+    streamId: string
+    archived: boolean
+  }) {
     const comment = await Comments().where({ id: commentId }).first()
     if (!comment)
       throw new Error(
@@ -243,6 +291,14 @@ module.exports = {
     replies = false,
     streamId,
     archived = false
+  }: {
+    resources?: ResourceIdentifier[]
+    limit?: number
+    cursor?: string
+    userId: string | null
+    replies?: boolean
+    streamId: string
+    archived?: boolean
   }) {
     const query = knex.with('comms', (cte) => {
       cte.select().distinctOn('id').from('comments')
@@ -305,7 +361,7 @@ module.exports = {
     }
   },
 
-  async getResourceCommentCount({ resourceId }) {
+  async getResourceCommentCount({ resourceId }: { resourceId: string }) {
     const [res] = await CommentLinks()
       .count('commentId')
       .where({ resourceId })
@@ -313,12 +369,12 @@ module.exports = {
       .where('comments.archived', '=', false)
 
     if (res && res.count) {
-      return parseInt(res.count)
+      return parseInt(String(res.count))
     }
     return 0
   },
 
-  async getStreamCommentCount({ streamId }) {
+  async getStreamCommentCount({ streamId }: { streamId: string }) {
     return (await getStreamCommentCount(streamId, { threadsOnly: true })) || 0
   }
 }
