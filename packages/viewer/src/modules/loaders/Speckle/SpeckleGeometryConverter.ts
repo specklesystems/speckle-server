@@ -268,7 +268,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
           `Mesh (id ${node.raw.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
       }
-      colors = this.unpackColors(colorsRaw)
+      colors = this.unpackColors(colorsRaw, true)
     }
 
     return {
