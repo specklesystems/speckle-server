@@ -19,9 +19,6 @@ export const settingsRoutes: {
     [key: string]: string
   }
 } = {
-  default: {
-    settings: '/settings'
-  },
   user: {
     profile: '/settings/user/profile',
     notifications: '/settings/user/notifications',
@@ -33,18 +30,6 @@ export const settingsRoutes: {
     activeUsers: '/settings/server/active-users',
     pendingInvitations: '/settings/server/pending-invitations'
   }
-}
-
-export const getSettingsRoute = (route: string) => {
-  for (const group in settingsRoutes) {
-    for (const key in settingsRoutes[group]) {
-      if (route === settingsRoutes[group][key]) {
-        return settingsRoutes[group][key]
-      }
-    }
-  }
-
-  return null
 }
 
 export const projectRoute = (

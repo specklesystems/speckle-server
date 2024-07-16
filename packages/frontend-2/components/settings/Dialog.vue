@@ -6,7 +6,7 @@
     "
     fullscreen
     :show-back-button="isMobile && !!selectedMenuItem"
-    @back="onBack"
+    @back="selectedMenuItem = null"
   >
     <div class="w-full h-full flex">
       <LayoutSidebar
@@ -26,7 +26,7 @@
                 'bg-foundation-focus hover:!bg-foundation-focus':
                   selectedMenuItem?.path === sidebarMenuItem.path
               }"
-              @click="setSelectedMenuItem(sidebarMenuItem)"
+              @click="selectedMenuItem = sidebarMenuItem"
             />
           </LayoutSidebarMenuGroup>
           <LayoutSidebarMenuGroup title="Server settings">
@@ -41,7 +41,7 @@
                 'bg-foundation-focus hover:!bg-foundation-focus':
                   selectedMenuItem?.path === sidebarMenuItem.path
               }"
-              @click="setSelectedMenuItem(sidebarMenuItem)"
+              @click="selectedMenuItem = sidebarMenuItem"
             />
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
@@ -54,7 +54,7 @@
         ]"
       >
         <div class="pb-6">
-          <component :is="selectedMenuItem?.component" />
+          <component :is="selectedMenuItem.component" />
         </div>
       </main>
     </div>
@@ -62,7 +62,6 @@
 </template>
 
 <script setup lang="ts">
-import { find, flatMap } from 'lodash-es'
 import type { defineComponent } from 'vue'
 import SettingsUserProfile from './user/Profile.vue'
 import SettingsUserNotifications from './user/Notifications.vue'
@@ -74,7 +73,7 @@ import SettingsServerPendingInvitations from './server/PendingInvitations.vue'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
-import { settingsRoutes, homeRoute } from '~/lib/common/helpers/route'
+import { settingsRoutes } from '~/lib/common/helpers/route'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
@@ -93,55 +92,58 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   open: boolean
-  route: string
-  originalRoute?: string
+  openServerPage?: boolean
 }>()
 
-const router = useRouter()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smallerOrEqual('md')
 
 const selectedMenuItem = shallowRef<MenuItem | null>(null)
-const sidebarConfig: { [key: string]: MenuItem[] } = {
-  user: [
-    {
+
+const sidebarConfig: {
+  [key: string]: {
+    [key: string]: MenuItem
+  }
+} = {
+  user: {
+    profile: {
       title: 'Profile',
       component: SettingsUserProfile,
       path: settingsRoutes.user.profile
     },
-    {
+    notifications: {
       title: 'Notifications',
       component: SettingsUserNotifications,
       path: settingsRoutes.user.notifications
     },
-    {
+    developerSettings: {
       title: 'Developer settings',
       component: SettingsUserDeveloper,
       path: settingsRoutes.user.developerSettings
     }
-  ],
-  server: [
-    {
+  },
+  server: {
+    general: {
       title: 'General',
       component: SettingsServerGeneral,
       path: settingsRoutes.server.general
     },
-    {
+    projects: {
       title: 'Projects',
       component: SettingsServerProjects,
       path: settingsRoutes.server.projects
     },
-    {
+    activeUsers: {
       title: 'Active users',
       component: SettingsServerActiveUsers,
       path: settingsRoutes.server.activeUsers
     },
-    {
+    pendingInvitations: {
       title: 'Pending invitations',
       component: SettingsServerPendingInvitations,
       path: settingsRoutes.server.pendingInvitations
     }
-  ]
+  }
 }
 
 const isOpen = computed({
@@ -153,33 +155,15 @@ watch(
   isOpen,
   (newVal, oldVal) => {
     if (newVal && !oldVal) {
-      if (isMobile.value) {
-        history.pushState({}, '', settingsRoutes.default.settings)
-      } else {
-        const foundItem = find(flatMap(sidebarConfig), { path: props.route })
-        if (foundItem) {
-          setSelectedMenuItem(foundItem)
-        }
+      if (!isMobile.value) {
+        selectedMenuItem.value = props.openServerPage
+          ? sidebarConfig.user.profile
+          : sidebarConfig.server.general
       }
     } else if (!newVal && oldVal) {
-      const newRoute = props.originalRoute ? props.originalRoute : homeRoute
-      router.replace({ path: newRoute, force: true })
+      selectedMenuItem.value = null
     }
   },
   { immediate: true }
 )
-
-function setSelectedMenuItem(item: MenuItem): void {
-  selectedMenuItem.value = item
-
-  if (import.meta.browser) {
-    history.pushState({}, '', item.path)
-  }
-}
-
-function onBack() {
-  selectedMenuItem.value = null
-
-  history.pushState({}, '', settingsRoutes.default.settings)
-}
 </script>

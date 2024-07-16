@@ -39,14 +39,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="
-                () =>
-                  toggleSettingsDialog(
-                    isMobile
-                      ? settingsRoutes.default.settings
-                      : settingsRoutes.user.profile
-                  )
-              "
+              @click="toggleSettingsDialog(false)"
             >
               <UserCircleIcon class="w-5 h-5" />
               Settings
@@ -58,14 +51,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="
-                () =>
-                  toggleSettingsDialog(
-                    isMobile
-                      ? settingsRoutes.default.settings
-                      : settingsRoutes.server.general
-                  )
-              "
+              @click="toggleSettingsDialog"
             >
               <ServerStackIcon class="w-5 h-5" />
               Server settings
@@ -89,7 +75,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="toggleInviteDialog"
+              @click="toggleInviteDialog(true)"
             >
               <EnvelopeIcon class="w-5 h-5" />
               Invite to Speckle
@@ -144,8 +130,7 @@
     <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
     <SettingsDialog
       v-model:open="showSettingsDialog"
-      :route="settingsRoute"
-      :original-route="settingsOriginalRoute"
+      :open-server-page="settingsDialogOpenServerPage"
     />
   </div>
 </template>
@@ -168,14 +153,8 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
-import {
-  getSettingsRoute,
-  settingsRoutes,
-  connectorsPageUrl
-} from '~/lib/common/helpers/route'
+import { connectorsPageUrl } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
-import { useBreakpoints } from '@vueuse/core'
-import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -186,39 +165,21 @@ const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, toggleTheme } = useTheme()
 const { serverInfo } = useServerInfo()
 
-const route = useRoute()
-
 const showInviteDialog = ref(false)
+const settingsDialogOpenServerPage = ref(false)
 const showSettingsDialog = ref(false)
-const settingsRoute = ref('')
-const settingsOriginalRoute = ref('')
-const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isMobile = breakpoints.smallerOrEqual('md')
 const menuButtonId = useId()
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
-const isSettingsRoute = computed(() => !!getSettingsRoute(route.path))
 
-const toggleInviteDialog = () => {
+const toggleInviteDialog = (openServerPage: boolean) => {
   showInviteDialog.value = true
+  settingsDialogOpenServerPage.value = openServerPage
 }
 
-const toggleSettingsDialog = (newRoute: string) => {
+const toggleSettingsDialog = () => {
   showSettingsDialog.value = true
-  settingsRoute.value = newRoute
-  settingsOriginalRoute.value = route.path
 }
-
-watch(
-  isSettingsRoute,
-  (newVal, oldVal) => {
-    if (newVal && !oldVal) {
-      showSettingsDialog.value = true
-      settingsRoute.value = route.path
-    }
-  },
-  { immediate: true }
-)
 </script>
