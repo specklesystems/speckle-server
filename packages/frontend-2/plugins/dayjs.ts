@@ -27,7 +27,7 @@ export default defineNuxtPlugin(() => {
       return diffInMinutes === 1 ? '1 minute ago' : `${diffInMinutes} minutes ago`
     }
 
-    return 'just now'
+    return 'Just now'
   }
 
   const isClockUnit = (date: string) => {
