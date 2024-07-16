@@ -2438,7 +2438,7 @@ export type QueryCommentsArgs = {
   archived?: Scalars['Boolean']['input'];
   cursor?: InputMaybe<Scalars['String']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
-  resources?: InputMaybe<Array<InputMaybe<ResourceIdentifierInput>>>;
+  resources?: InputMaybe<Array<ResourceIdentifierInput>>;
   streamId: Scalars['String']['input'];
 };
 

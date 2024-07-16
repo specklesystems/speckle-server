@@ -15,13 +15,12 @@ import {
   streamResourceCheck
 } from '@/modules/comments/services/index'
 import { getComment } from '@/modules/comments/repositories/comments'
-import {
-  ensureCommentSchema
-} from '@/modules/comments/services/commentTextService'
+import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
 // import { withFilter } from 'graphql-subscriptions'
 import { has } from 'lodash'
 import {
-  documentToBasicString
+  documentToBasicString,
+  SmartTextEditorValueSchema
 } from '@/modules/core/services/richTextEditorService'
 import {
   getPaginatedCommitComments,
@@ -61,10 +60,19 @@ import {
   convertStateToLegacyData,
   convertLegacyDataToState
 } from '@/modules/comments/services/data'
-import { Resolvers, ResourceType } from '@/modules/core/graph/generated/graphql'
+import {
+  Resolvers,
+  ResourceIdentifier,
+  ResourceType
+} from '@/modules/core/graph/generated/graphql'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { CommentRecord } from '@/modules/comments/helpers/types'
+import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 
-const getStreamComment = async ({ streamId, commentId }: { streamId: string, commentId: string }, ctx: GraphQLContext) => {
+const getStreamComment = async (
+  { streamId, commentId }: { streamId: string; commentId: string },
+  ctx: GraphQLContext
+) => {
   await authorizeProjectCommentsAccess({
     projectId: streamId,
     authCtx: ctx
@@ -91,7 +99,7 @@ export = {
         projectId: args.streamId,
         authCtx: context
       })
-      return { ...(await getComments({ ...args, userId: context.userId })) }
+      return { ...(await getComments({ ...args, userId: context.userId! })) }
     }
   },
   Comment: {
@@ -105,7 +113,7 @@ export = {
         }
       }
 
-      const resources = [{ resourceId: parent.id, resourceType: 'comment' }]
+      const resources = [{ resourceId: parent.id, resourceType: ResourceType.Comment }]
       return await getComments({
         resources,
         replies: true,
@@ -118,11 +126,13 @@ export = {
      */
     text(parent) {
       const commentText = parent?.text || ''
-      return ensureCommentSchema(commentText)
+      return ensureCommentSchema(commentText as SmartTextEditorValueSchema)
     },
 
     rawText(parent) {
-      const { doc } = ensureCommentSchema(parent.text || '')
+      const { doc } = ensureCommentSchema(
+        (parent.text as SmartTextEditorValueSchema) || ''
+      )
       return documentToBasicString(doc)
     },
     async hasParent(parent) {
@@ -135,11 +145,13 @@ export = {
      * Resolve resources, if they weren't already preloaded
      */
     async resources(parent, _args, ctx) {
-      if (has(parent, 'resources')) return parent.resources
+      if (has(parent, 'resources'))
+        return (parent as CommentRecord & { resources: ResourceIdentifier[] }).resources
       return await ctx.loaders.comments.getResources.load(parent.id)
     },
     async viewedAt(parent, _args, ctx) {
-      if (has(parent, 'viewedAt')) return parent.viewedAt
+      if (has(parent, 'viewedAt'))
+        return (parent as CommentRecord & { viewedAt: Date }).viewedAt
       return await ctx.loaders.comments.getViewedAt.load(parent.id)
     },
     async author(parent, _args, ctx) {
@@ -230,6 +242,7 @@ export = {
   Version: {
     async commentThreads(parent, args, context) {
       const stream = await context.loaders.commits.getCommitStream.load(parent.id)
+      if (!stream) throw new StreamInvalidAccessError('Stream not found')
       await authorizeProjectCommentsAccess({
         projectId: stream.id,
         authCtx: context
@@ -238,7 +251,7 @@ export = {
         ...args,
         commitId: parent.id,
         filter: {
-          ...(args.filter || {}),
+          includeArchived: false,
           threadsOnly: true
         }
       })
@@ -254,7 +267,7 @@ export = {
         ...args,
         branchId: parent.id,
         filter: {
-          ...(args.filter || {}),
+          includeArchived: false,
           threadsOnly: true
         }
       })
@@ -263,6 +276,7 @@ export = {
   ViewerUserActivityMessage: {
     async user(parent, args, context) {
       const { userId } = parent
+      if (!userId) throw new ApolloForbiddenError('You are not authorized.')
       return context.loaders.users.getUser.load(userId)
     }
   },
@@ -290,6 +304,7 @@ export = {
   },
   CommentMutations: {
     async markViewed(_parent, args, ctx) {
+      if (!ctx.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeCommentAccess({
         authCtx: ctx,
         commentId: args.commentId
@@ -298,6 +313,7 @@ export = {
       return true
     },
     async create(_parent, args, ctx) {
+      if (!ctx.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeProjectCommentsAccess({
         projectId: args.input.projectId,
         authCtx: ctx,
@@ -306,6 +322,7 @@ export = {
       return await createCommentThreadAndNotify(args.input, ctx.userId)
     },
     async reply(_parent, args, ctx) {
+      if (!ctx.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeCommentAccess({
         commentId: args.input.threadId,
         authCtx: ctx,
@@ -314,6 +331,7 @@ export = {
       return await createCommentReplyAndNotify(args.input, ctx.userId)
     },
     async edit(_parent, args, ctx) {
+      if (!ctx.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeCommentAccess({
         authCtx: ctx,
         commentId: args.input.commentId,
@@ -322,6 +340,7 @@ export = {
       return await editCommentAndNotify(args.input, ctx.userId)
     },
     async archive(_parent, args, ctx) {
+      if (!ctx.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeCommentAccess({
         authCtx: ctx,
         commentId: args.commentId,
@@ -334,6 +353,7 @@ export = {
   Mutation: {
     commentMutations: () => ({}),
     async broadcastViewerUserActivity(_parent, args, context) {
+      if (!context.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeProjectCommentsAccess({
         projectId: args.projectId,
         authCtx: context
@@ -380,7 +400,7 @@ export = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !stream.role)
+      if (!stream?.allowPublicComments && !stream?.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
       await pubsub.publish(CommentSubscriptions.CommentThreadActivity, {
@@ -400,7 +420,7 @@ export = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !stream.role)
+      if (!stream?.allowPublicComments && !stream?.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
       const comment = await createComment({
@@ -420,6 +440,7 @@ export = {
 
     async commentEdit(parent, args, context) {
       // NOTE: This is NOT in use anywhere
+      if (!context.userId) throw new ApolloForbiddenError('You are not authorized.')
       const stream = await authorizeProjectCommentsAccess({
         projectId: args.input.streamId,
         authCtx: context,
@@ -437,6 +458,7 @@ export = {
 
     // used for flagging a comment as viewed
     async commentView(parent, args, context) {
+      if (!context.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context
@@ -446,6 +468,7 @@ export = {
     },
 
     async commentArchive(parent, args, context) {
+      if (!context.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context,
@@ -480,15 +503,15 @@ export = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !stream.role)
+      if (!stream?.allowPublicComments && !stream?.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
       const reply = await createCommentReply({
         authorId: context.userId,
         parentCommentId: args.input.parentComment,
         streamId: args.input.streamId,
-        text: args.input.text,
-        data: args.input.data,
+        text: args.input.text as SmartTextEditorValueSchema,
+        data: args.input.data ?? null,
         blobIds: args.input.blobIds
       })
 
@@ -549,12 +572,15 @@ export = {
             // prevents comment exfiltration by listening in to a auth'ed stream, but different commit ("stream hopping" for subscriptions)
             await streamResourceCheck({
               streamId: variables.streamId,
-              resources: variables.resourceIds.filter((resId): resId is string => !!resId).map((resId) => {
-                return {
-                  resourceId: resId,
-                  resourceType: resId.length === 10 ? ResourceType.Commit : ResourceType.Object
-                }
-              })
+              resources: variables.resourceIds
+                .filter((resId): resId is string => !!resId)
+                .map((resId) => {
+                  return {
+                    resourceId: resId,
+                    resourceType:
+                      resId.length === 10 ? ResourceType.Commit : ResourceType.Object
+                  }
+                })
             })
             for (const res of variables.resourceIds) {
               if (!res) continue

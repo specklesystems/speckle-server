@@ -245,7 +245,8 @@ type SubscriptionTypeMap = {
   }
   [CommentSubscriptions.CommentThreadActivity]: {
     payload: {
-      commentThreadActivity: Partial<CommentThreadActivityMessage> & Pick<CommentThreadActivityMessage, 'type'>
+      commentThreadActivity: Partial<CommentThreadActivityMessage> &
+        Pick<CommentThreadActivityMessage, 'type'>
       streamId: string
       commentId: string
     }
@@ -254,8 +255,8 @@ type SubscriptionTypeMap = {
   [CommentSubscriptions.ViewerActivity]: {
     payload: {
       userViewerActivity: MutationUserViewerActivityBroadcastArgs
-      streamId: string,
-      resourceId: string,
+      streamId: string
+      resourceId: string
       authorId: string
     }
     variables: SubscriptionUserViewerActivityArgs

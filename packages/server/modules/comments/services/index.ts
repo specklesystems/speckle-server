@@ -21,6 +21,7 @@ import {
   SmartTextEditorValue
 } from '@/modules/core/graph/generated/graphql'
 import { CommentLinkRecord, CommentRecord } from '@/modules/comments/helpers/types'
+import { SmartTextEditorValueSchema } from '@/modules/core/services/richTextEditorService'
 
 const Comments = () => knex<CommentRecord>('comments')
 const CommentLinks = () => knex<CommentLinkRecord>('comment_links')
@@ -67,7 +68,6 @@ const resourceCheck = async (res: ResourceIdentifier, streamId: string) => {
   }
 }
 
-
 export async function streamResourceCheck({
   streamId,
   resources
@@ -106,7 +106,7 @@ export async function createComment({
 
   const comment: Partial<CommentRecord> = {
     streamId: input.streamId,
-    text: input.text as SmartTextEditorValue,
+    text: input.text as SmartTextEditorValueSchema,
     data: input.data,
     screenshot: input.screenshot ?? null
   }
@@ -237,7 +237,13 @@ export async function editComment({
 /**
  * @deprecated Use 'markCommentViewed()'
  */
-export async function viewComment({ userId, commentId }: { userId: string; commentId: string }) {
+export async function viewComment({
+  userId,
+  commentId
+}: {
+  userId: string
+  commentId: string
+}) {
   await markCommentViewed(commentId, userId)
 }
 /**
@@ -260,9 +266,7 @@ export async function archiveComment({
 }) {
   const comment = await Comments().where({ id: commentId }).first()
   if (!comment)
-    throw new Error(
-      `No comment ${commentId} exists, cannot change its archival status`
-    )
+    throw new Error(`No comment ${commentId} exists, cannot change its archival status`)
 
   const aclEntry = await knex('stream_acl')
     .select()
@@ -281,6 +285,29 @@ export async function archiveComment({
 }
 
 /**
+ * One of `streamId` or `resources` expected. If both are provided, then
+ * `resources` takes precedence.
+ */
+type GetCommentsParams = {
+  // resources?: ResourceIdentifier[] | null
+  limit?: number | null
+  cursor?: string | null
+  userId?: string | null
+  replies?: boolean | null
+  // streamId: string
+  archived?: boolean | null
+} & (
+  | {
+      resources: ResourceIdentifier[]
+      streamId?: null
+    }
+  | {
+      resources?: ResourceIdentifier[] | null
+      streamId: string
+    }
+)
+
+/**
  * @deprecated Use `getPaginatedProjectComments()` instead
  */
 export async function getComments({
@@ -291,15 +318,7 @@ export async function getComments({
   replies = false,
   streamId,
   archived = false
-}: {
-  resources?: ResourceIdentifier[]
-  limit?: number
-  cursor?: string
-  userId: string | null
-  replies?: boolean
-  streamId: string
-  archived?: boolean
-}) {
+}: GetCommentsParams) {
   const query = knex.with('comms', (cte) => {
     cte.select().distinctOn('id').from('comments')
     cte.join('comment_links', 'comments.id', '=', 'commentId')
@@ -377,4 +396,3 @@ export async function getResourceCommentCount({ resourceId }: { resourceId: stri
 export async function getStreamCommentCount({ streamId }: { streamId: string }) {
   return (await repoGetStreamCommentCount(streamId, { threadsOnly: true })) || 0
 }
-

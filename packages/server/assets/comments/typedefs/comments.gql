@@ -11,7 +11,7 @@ extend type Query {
   """
   comments(
     streamId: String!
-    resources: [ResourceIdentifierInput]
+    resources: [ResourceIdentifierInput!]
     limit: Int = 25
     cursor: String
     archived: Boolean! = false
