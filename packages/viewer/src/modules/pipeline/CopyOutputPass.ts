@@ -7,10 +7,10 @@ import {
 } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 import { CopyShader } from 'three/examples/jsm/shaders/CopyShader.js'
-import { speckleCopyOutputFrag } from '../materials/shaders/speckle-copy-output-frag'
-import { speckleCopyOutputVert } from '../materials/shaders/speckle-copy-output-vert'
-import { PipelineOutputType } from './Pipeline'
-import type { InputColorTextureUniform, SpecklePass } from './SpecklePass'
+import { speckleCopyOutputFrag } from '../materials/shaders/speckle-copy-output-frag.js'
+import { speckleCopyOutputVert } from '../materials/shaders/speckle-copy-output-vert.js'
+import { PipelineOutputType } from './Pipeline.js'
+import type { InputColorTextureUniform, SpecklePass } from './SpecklePass.js'
 
 export class CopyOutputPass extends Pass implements SpecklePass {
   private fsQuad: FullScreenQuad

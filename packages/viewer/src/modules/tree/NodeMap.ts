@@ -1,5 +1,5 @@
-import Logger from 'js-logger'
-import { type TreeNode } from './WorldTree'
+import Logger from '../utils/Logger.js'
+import { type TreeNode } from './WorldTree.js'
 
 export class NodeMap {
   public static readonly COMPOUND_ID_CHAR = '~'

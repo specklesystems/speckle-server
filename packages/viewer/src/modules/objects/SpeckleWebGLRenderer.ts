@@ -1,5 +1,5 @@
 import { Camera, Matrix4, Vector3, WebGLRenderer } from 'three'
-import { Geometry } from '../converter/Geometry'
+import { Geometry } from '../converter/Geometry.js'
 export class RTEBuffers {
   private _cache: RTEBuffers | undefined
 

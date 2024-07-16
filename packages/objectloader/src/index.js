@@ -7,13 +7,13 @@ import {
   ObjectLoaderRuntimeError
 } from './errors/index.js'
 import { polyfillReadableStreamForAsyncIterator } from './helpers/stream.js'
-import { chunk } from 'lodash'
+import { chunk } from '#lodash'
 /**
  * Simple client that streams object info from a Speckle Server.
  * TODO: Object construction progress reporting is weird.
  */
 
-export default class ObjectLoader {
+class ObjectLoader {
   /**
    * Creates a new object loader instance.
    * @param {*} param0
@@ -613,3 +613,5 @@ function safariFix() {
     tryIdb()
   }).finally(() => clearInterval(intervalId))
 }
+
+export default ObjectLoader

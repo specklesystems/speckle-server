@@ -18,7 +18,7 @@
         <div class="flex-grow"></div>
         <div class="text-xs text-foreground-2 flex items-center">
           <UserCircleIcon class="w-4 h-4 mr-1" />
-          <span class="-mt-px">
+          <span class="-mt-px capitalize">
             {{ project.role?.split(':').reverse()[0] }}
           </span>
         </div>
@@ -29,9 +29,9 @@
         </div> -->
         <div class="text-xs text-foreground-2 flex items-center">
           <ClockIcon class="w-4 h-4 mr-1" />
-          <span class="-mt-px">
-            updated
-            <b>{{ updatedAt }}</b>
+          <span v-tippy="updatedAt.full" class="-mt-px">
+            Updated
+            {{ updatedAt.relative }}
           </span>
         </div>
       </div>
@@ -76,7 +76,6 @@
   </div>
 </template>
 <script lang="ts" setup>
-import dayjs from 'dayjs'
 import type { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
@@ -87,6 +86,13 @@ const props = defineProps<{
 }>()
 
 const projectId = computed(() => props.project.id)
+
+const updatedAt = computed(() => {
+  return {
+    full: formattedFullDate(props.project.updatedAt),
+    relative: formattedRelativeDate(props.project.updatedAt, { prefix: true })
+  }
+})
 
 // Tracking updates to project, its models and versions
 useGeneralProjectPageUpdateTracking(
@@ -100,7 +106,6 @@ const models = computed(() => {
   const items = props.project.models?.items || []
   return items.slice(0, Math.max(0, 4 - pendingModels.value.length))
 })
-const updatedAt = computed(() => dayjs(props.project.updatedAt).from(dayjs()))
 
 const hasNoModels = computed(() => !models.value.length && !pendingModels.value.length)
 const modelItemTotalCount = computed(

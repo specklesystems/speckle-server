@@ -18,11 +18,11 @@ import {
   Vector2
 } from 'three'
 import { TransformControls } from 'three/examples/jsm/controls/TransformControls.js'
-import { type IViewer, ObjectLayers } from '../../IViewer'
-import { Extension } from './Extension'
-import { CameraEvent } from '../objects/SpeckleCamera'
-import { InputEvent } from '../input/Input'
-import { CameraController } from './CameraController'
+import { type IViewer, ObjectLayers } from '../../IViewer.js'
+import { Extension } from './Extension.js'
+import { CameraEvent } from '../objects/SpeckleCamera.js'
+import { InputEvent } from '../input/Input.js'
+import { CameraController } from './CameraController.js'
 
 export enum SectionToolEvent {
   DragStart = 'section-box-drag-start',

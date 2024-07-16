@@ -66,7 +66,9 @@
   "imports": {
     "#lodash": {
       "require": "lodash",
-      "import": "lodash-es"
+      "import": "lodash-es",
+      "node": "lodash",
+      "default": "lodash-es"
     }
   }
 }

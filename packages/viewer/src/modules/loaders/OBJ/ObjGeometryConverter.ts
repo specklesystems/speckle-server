@@ -1,8 +1,8 @@
 import { Matrix4 } from 'three'
-import { type NodeData } from '../../..'
-import { type GeometryData } from '../../converter/Geometry'
-import { GeometryConverter, SpeckleType } from '../GeometryConverter'
-import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils'
+import { type NodeData } from '../../../index.js'
+import { type GeometryData } from '../../converter/Geometry.js'
+import { GeometryConverter, SpeckleType } from '../GeometryConverter.js'
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 
 export class ObjGeometryConverter extends GeometryConverter {
   public getSpeckleType(node: NodeData): SpeckleType {

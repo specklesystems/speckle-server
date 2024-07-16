@@ -64,7 +64,7 @@ const getEnabledModuleNames = () => {
     'serverinvites',
     'stats',
     'webhooks',
-    'workspaces'
+    'workspacesCore'
   ]
 
   if (FF_AUTOMATE_MODULE_ENABLED) moduleNames.push('automate')
