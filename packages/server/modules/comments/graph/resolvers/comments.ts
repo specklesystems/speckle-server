@@ -67,7 +67,6 @@ import {
 } from '@/modules/core/graph/generated/graphql'
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
 import { CommentRecord } from '@/modules/comments/helpers/types'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 
 const getStreamComment = async (
   { streamId, commentId }: { streamId: string; commentId: string },
@@ -242,9 +241,8 @@ export = {
   Version: {
     async commentThreads(parent, args, context) {
       const stream = await context.loaders.commits.getCommitStream.load(parent.id)
-      if (!stream) throw new StreamInvalidAccessError('Stream not found')
       await authorizeProjectCommentsAccess({
-        projectId: stream.id,
+        projectId: stream!.id,
         authCtx: context
       })
       return await getPaginatedCommitComments({
@@ -276,15 +274,13 @@ export = {
   ViewerUserActivityMessage: {
     async user(parent, args, context) {
       const { userId } = parent
-      if (!userId) throw new ApolloForbiddenError('You are not authorized.')
-      return context.loaders.users.getUser.load(userId)
+      return context.loaders.users.getUser.load(userId!)
     }
   },
   Stream: {
     async commentCount(parent, _args, context) {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ApolloForbiddenError('You are not authorized.')
-
       return await context.loaders.streams.getCommentThreadCount.load(parent.id)
     }
   },
@@ -304,56 +300,50 @@ export = {
   },
   CommentMutations: {
     async markViewed(_parent, args, ctx) {
-      if (!ctx.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeCommentAccess({
         authCtx: ctx,
         commentId: args.commentId
       })
-      await markViewed(args.commentId, ctx.userId)
+      await markViewed(args.commentId, ctx.userId!)
       return true
     },
     async create(_parent, args, ctx) {
-      if (!ctx.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeProjectCommentsAccess({
         projectId: args.input.projectId,
         authCtx: ctx,
         requireProjectRole: true
       })
-      return await createCommentThreadAndNotify(args.input, ctx.userId)
+      return await createCommentThreadAndNotify(args.input, ctx.userId!)
     },
     async reply(_parent, args, ctx) {
-      if (!ctx.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeCommentAccess({
         commentId: args.input.threadId,
         authCtx: ctx,
         requireProjectRole: true
       })
-      return await createCommentReplyAndNotify(args.input, ctx.userId)
+      return await createCommentReplyAndNotify(args.input, ctx.userId!)
     },
     async edit(_parent, args, ctx) {
-      if (!ctx.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeCommentAccess({
         authCtx: ctx,
         commentId: args.input.commentId,
         requireProjectRole: true
       })
-      return await editCommentAndNotify(args.input, ctx.userId)
+      return await editCommentAndNotify(args.input, ctx.userId!)
     },
     async archive(_parent, args, ctx) {
-      if (!ctx.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeCommentAccess({
         authCtx: ctx,
         commentId: args.commentId,
         requireProjectRole: true
       })
-      await archiveCommentAndNotify(args.commentId, ctx.userId, args.archived)
+      await archiveCommentAndNotify(args.commentId, ctx.userId!, args.archived)
       return true
     }
   },
   Mutation: {
     commentMutations: () => ({}),
     async broadcastViewerUserActivity(_parent, args, context) {
-      if (!context.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeProjectCommentsAccess({
         projectId: args.projectId,
         authCtx: context
@@ -363,7 +353,7 @@ export = {
         projectId: args.projectId,
         resourceItems: await getViewerResourceItemsUngrouped(args),
         viewerUserActivityBroadcasted: args.message,
-        userId: context.userId
+        userId: context.userId!
       })
       return true
     },
@@ -440,7 +430,6 @@ export = {
 
     async commentEdit(parent, args, context) {
       // NOTE: This is NOT in use anywhere
-      if (!context.userId) throw new ApolloForbiddenError('You are not authorized.')
       const stream = await authorizeProjectCommentsAccess({
         projectId: args.input.streamId,
         authCtx: context,
@@ -448,7 +437,7 @@ export = {
       })
       const matchUser = !stream.role
       try {
-        await editComment({ userId: context.userId, input: args.input, matchUser })
+        await editComment({ userId: context.userId!, input: args.input, matchUser })
         return true
       } catch (err) {
         if (err instanceof ForbiddenError) throw new ApolloForbiddenError(err.message)
@@ -458,17 +447,15 @@ export = {
 
     // used for flagging a comment as viewed
     async commentView(parent, args, context) {
-      if (!context.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context
       })
-      await viewComment({ userId: context.userId, commentId: args.commentId })
+      await viewComment({ userId: context.userId!, commentId: args.commentId })
       return true
     },
 
     async commentArchive(parent, args, context) {
-      if (!context.userId) throw new ApolloForbiddenError('You are not authorized.')
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context,
@@ -477,7 +464,7 @@ export = {
 
       let updatedComment
       try {
-        updatedComment = await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
+        updatedComment = await archiveComment({ ...args, userId: context.userId! }) // NOTE: permissions check inside service
       } catch (err) {
         if (err instanceof ForbiddenError) throw new ApolloForbiddenError(err.message)
         throw err
@@ -486,7 +473,7 @@ export = {
       await addCommentArchivedActivity({
         streamId: args.streamId,
         commentId: args.commentId,
-        userId: context.userId,
+        userId: context.userId!,
         input: args,
         comment: updatedComment
       })
