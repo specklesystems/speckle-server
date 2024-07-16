@@ -1,10 +1,5 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    :buttons="dialogButtons"
-    prevent-close-on-click-outside
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
     <template #header>
       {{ props.application ? 'Edit application' : 'Create application' }}
     </template>

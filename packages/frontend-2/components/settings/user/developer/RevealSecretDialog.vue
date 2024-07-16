@@ -1,10 +1,5 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    :buttons="dialogButtons"
-    prevent-close-on-click-outside
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
     <template #header>Reveal application secret</template>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 py-2 text-sm">
       <div class="text-center sm:text-right font-bold sm:font-normal">App Name:</div>

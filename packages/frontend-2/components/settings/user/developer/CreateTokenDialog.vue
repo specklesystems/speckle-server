@@ -1,10 +1,5 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    :buttons="dialogButtons"
-    prevent-close-on-click-outside
-  >
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
     <template #header>Create token</template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">

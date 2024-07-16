@@ -1,6 +1,9 @@
 <template>
   <div>
-    <SettingsUserProfileDeleteAccountDialog v-model:open="isOpen" :user="user" />
+    <SettingsUserProfileDeleteAccountDialog
+      v-model:open="showDeleteDialog"
+      :user="user"
+    />
     <div class="flex flex-col space-y-6">
       <SettingsSectionHeader title="Delete account" subheading />
       <div class="rounded border bg-foundation-page border-outline-3 text-sm py-4 px-6">
@@ -8,7 +11,9 @@
         data. We will ask you to type in your email address and press the delete button.
       </div>
       <div>
-        <FormButton color="danger" @click="toggleModal">Delete account</FormButton>
+        <FormButton color="danger" @click="toggleDeleteDialog">
+          Delete account
+        </FormButton>
       </div>
     </div>
   </div>
@@ -21,9 +26,9 @@ defineProps<{
   user: UserProfileEditDialogDeleteAccount_UserFragment
 }>()
 
-const isOpen = ref(false)
+const showDeleteDialog = ref(false)
 
-function toggleModal() {
-  isOpen.value = !isOpen.value
+function toggleDeleteDialog() {
+  showDeleteDialog.value = true
 }
 </script>
