@@ -38,8 +38,8 @@
               {{ thread.repliesCount.totalCount }}
               {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
             </span>
-            <span class="text-xs">
-              {{ updatedAt }}
+            <span v-tippy="$getFullDate(thread.updatedAt)" class="text-xs">
+              {{ $getTrunicatedRelativeDate(thread.updatedAt) }}
             </span>
           </div>
         </div>
@@ -48,7 +48,6 @@
   </NuxtLink>
 </template>
 <script setup lang="ts">
-import dayjs from 'dayjs'
 import type { ProjectPageLatestItemsCommentItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { useCommentScreenshotImage } from '~~/lib/projects/composables/previewImage'
 import { times } from 'lodash-es'
@@ -64,8 +63,6 @@ const props = defineProps<{
 const { screenshot } = useCommentScreenshotImage(
   computed(() => props.thread.screenshot)
 )
-
-const updatedAt = computed(() => dayjs(props.thread.updatedAt).from(dayjs()))
 
 const hiddenReplyAuthorCount = computed(
   () => props.thread.replyAuthors.totalCount - props.thread.replyAuthors.items.length

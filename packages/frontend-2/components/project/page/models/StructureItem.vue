@@ -175,8 +175,8 @@
           </div> -->
           <div class="text-xs text-foreground-2">
             Updated
-            <span v-tippy="$getFullDate(updatedAt)" class="text-foreground-2 text-xs">
-              {{ $getTrunicatedRelativeDate(updatedAt) }}
+            <span v-tippy="$getFullDate(updatedAt)">
+              {{ $getTrunicatedRelativeDateWithPrefix(updatedAt) }}
             </span>
           </div>
           <div class="text-xs text-foreground-2">
