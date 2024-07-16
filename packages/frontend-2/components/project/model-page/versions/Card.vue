@@ -49,8 +49,8 @@
           class="text-xs text-foreground-2 mr-1 opacity-0 truncate transition group-hover:opacity-100"
         >
           created
-          <span v-tippy="$getFullDate(createdAt)">
-            {{ $getTrunicatedRelativeDateWithPrefix(createdAt) }}
+          <span v-tippy="formattedFullDate(createdAt)">
+            {{ formattedRelativeDate(createdAt, { prefix: true }) }}
           </span>
         </div>
         <div class="w-full flex" @click.stop>

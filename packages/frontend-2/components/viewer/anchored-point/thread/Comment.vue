@@ -11,10 +11,10 @@
           {{ comment.author.name }}
         </span>
         <span
-          v-tippy="$getFullDate(comment.createdAt)"
+          v-tippy="formattedFullDate(comment.createdAt)"
           class="text-xs truncate text-foreground-2 font-medium"
         >
-          {{ $getTrunicatedRelativeDate(comment.createdAt) }}
+          {{ formattedRelativeDate(comment.createdAt) }}
         </span>
         <!-- Note: disabled as archiving comments is now equivalent to "resolving" them. -->
         <!-- <div class="pl-2">

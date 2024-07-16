@@ -12,8 +12,8 @@
         {{ version.message || 'no message' }}
       </div>
       <div class="italic text-foreground opacity-60 inline-block">
-        <span v-tippy="$getFullDate(version.createdAt)">
-          {{ $getTrunicatedRelativeDate(version.createdAt) }}
+        <span v-tippy="formattedFullDate(version.createdAt)">
+          {{ formattedRelativeDate(version.createdAt) }}
         </span>
       </div>
     </div>

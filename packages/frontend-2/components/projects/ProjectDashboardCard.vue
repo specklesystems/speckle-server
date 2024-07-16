@@ -18,7 +18,7 @@
         <div class="flex-grow"></div>
         <div class="text-xs text-foreground-2 flex items-center">
           <UserCircleIcon class="w-4 h-4 mr-1" />
-          <span class="-mt-px">
+          <span class="-mt-px capitalize">
             {{ project.role?.split(':').reverse()[0] }}
           </span>
         </div>
@@ -29,8 +29,9 @@
         </div> -->
         <div class="text-xs text-foreground-2 flex items-center">
           <ClockIcon class="w-4 h-4 mr-1" />
-          <span v-tippy="$getFullDate(project.updatedAt)" class="-mt-px">
-            updated {{ $getTrunicatedRelativeDateWithPrefix(project.updatedAt) }}
+          <span v-tippy="formattedFullDate(project.updatedAt)" class="-mt-px">
+            Updated
+            {{ formattedRelativeDate(project.updatedAt, { prefix: true }) }}
           </span>
         </div>
       </div>

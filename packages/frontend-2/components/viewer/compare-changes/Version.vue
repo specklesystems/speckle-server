@@ -4,11 +4,11 @@
       <PreviewImage :preview-url="version.previewUrl" />
     </div>
     <div
-      v-tippy="$getFullDate(version.createdAt)"
+      v-tippy="formattedFullDate(version.createdAt)"
       class="bg-foundation-focus inline-block rounded-md px-2 text-xs font-bold truncate text-center py-1"
     >
       <span>
-        {{ $getTrunicatedRelativeDate(version.createdAt) }}
+        {{ formattedRelativeDate(version.createdAt) }}
       </span>
       <br />
       {{ isNewest ? 'New' : 'Old' }} Version

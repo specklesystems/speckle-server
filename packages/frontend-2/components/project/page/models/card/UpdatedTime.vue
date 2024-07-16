@@ -1,8 +1,8 @@
 <template>
   <div>
-    updated
-    <span v-tippy="$getFullDate(updatedAt)">
-      {{ $getTrunicatedRelativeDateWithPrefix(updatedAt) }}
+    Updated
+    <span v-tippy="formattedFullDate(updatedAt)">
+      {{ formattedRelativeDate(updatedAt, { prefix: true }) }}
     </span>
   </div>
 </template>

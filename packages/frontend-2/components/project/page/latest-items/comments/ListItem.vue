@@ -26,10 +26,10 @@
       <div class="absolute sm:relative w-full bottom-2 sm:bottom-0 left-0 px-2 gap-8">
         <div class="w-full px-2 flex justify-between text-xs">
           <span
-            v-tippy="$getFullDate(thread.updatedAt)"
+            v-tippy="formattedFullDate(thread.updatedAt)"
             class="text-foreground-2 text-xs"
           >
-            {{ $getTrunicatedRelativeDate(thread.updatedAt) }}
+            {{ formattedRelativeDate(thread.updatedAt) }}
           </span>
           <span class="ml-4 text-xs font-bold text-primary">
             {{ thread.repliesCount.totalCount }}

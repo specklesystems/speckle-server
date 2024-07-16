@@ -36,11 +36,11 @@
       </div>
       <div
         v-show="showTimeline"
-        v-tippy="$getFullDate(version.createdAt)"
+        v-tippy="formattedFullDate(version.createdAt)"
         class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold shrink-0"
       >
         <span>
-          {{ isLatest ? 'Latest' : $getTrunicatedRelativeDate(version.createdAt) }}
+          {{ isLatest ? 'Latest' : formattedRelativeDate(version.createdAt) }}
         </span>
       </div>
       <FormButton

@@ -16,9 +16,9 @@
           v-if="lastUpdated"
           class="bg-primary-muted text-primary rounded-full px-2 py-1 -ml-1"
         >
-          updated
-          <span v-tippy="$getFullDate(lastUpdated)">
-            {{ $getTrunicatedRelativeDateWithPrefix(lastUpdated) }}
+          Updated
+          <span v-tippy="formattedFullDate(lastUpdated)">
+            {{ formattedRelativeDate(lastUpdated, { prefix: true }) }}
           </span>
         </span>
       </div>

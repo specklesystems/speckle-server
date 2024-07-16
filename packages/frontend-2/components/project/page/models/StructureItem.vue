@@ -89,8 +89,8 @@
             class="text-xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
             Updated
-            <span v-tippy="$getFullDate(updatedAt)">
-              {{ $getTrunicatedRelativeDateWithPrefix(updatedAt) }}
+            <span v-tippy="formattedFullDate(updatedAt)">
+              {{ formattedRelativeDate(updatedAt, { prefix: true }) }}
             </span>
           </div>
           <div class="text-xs text-foreground-2 flex items-center space-x-1">
@@ -175,8 +175,8 @@
           </div> -->
           <div class="text-xs text-foreground-2">
             Updated
-            <span v-tippy="$getFullDate(updatedAt)">
-              {{ $getTrunicatedRelativeDateWithPrefix(updatedAt) }}
+            <span v-tippy="formattedFullDate(updatedAt)">
+              {{ formattedRelativeDate(updatedAt, { prefix: true }) }}
             </span>
           </div>
           <div class="text-xs text-foreground-2">

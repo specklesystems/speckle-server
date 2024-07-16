@@ -34,7 +34,7 @@
           </div>
           <div class="truncate text-xs">
             <span
-              v-tippy="$getFullDate(loadedVersion?.createdAt)"
+              v-tippy="formattedFullDate(loadedVersion?.createdAt)"
               :class="`${
                 showVersions ? 'text-foundation font-semibold' : ''
               } text-xs opacity-70`"
@@ -42,7 +42,7 @@
               {{
                 isLatest
                   ? 'latest version'
-                  : $getTrunicatedRelativeDate(loadedVersion?.createdAt)
+                  : formattedRelativeDate(loadedVersion?.createdAt)
               }}
             </span>
           </div>
