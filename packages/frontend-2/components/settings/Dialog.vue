@@ -157,8 +157,8 @@ watch(
     if (newVal && !oldVal) {
       if (!isMobile.value) {
         selectedMenuItem.value = props.openServerPage
-          ? sidebarConfig.user.profile
-          : sidebarConfig.server.general
+          ? sidebarConfig.server.general
+          : sidebarConfig.user.profile
       }
     } else if (!newVal && oldVal) {
       selectedMenuItem.value = null

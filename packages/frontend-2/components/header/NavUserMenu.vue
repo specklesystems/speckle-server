@@ -51,7 +51,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="toggleSettingsDialog"
+              @click="toggleSettingsDialog(true)"
             >
               <ServerStackIcon class="w-5 h-5" />
               Server settings
@@ -174,12 +174,12 @@ const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
-const toggleInviteDialog = (openServerPage: boolean) => {
+const toggleInviteDialog = () => {
   showInviteDialog.value = true
-  settingsDialogOpenServerPage.value = openServerPage
 }
 
-const toggleSettingsDialog = () => {
+const toggleSettingsDialog = (openServerPage: boolean) => {
   showSettingsDialog.value = true
+  settingsDialogOpenServerPage.value = openServerPage
 }
 </script>

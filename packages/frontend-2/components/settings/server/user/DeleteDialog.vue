@@ -46,10 +46,8 @@ const props = defineProps<{
 const { triggerNotification } = useGlobalToast()
 const { mutate: adminDeleteUser } = useMutation(adminDeleteUserMutation)
 
-const isOpen = computed({
-  get: () => props.open,
-  set: (newVal: boolean) => emit('update:open', newVal)
-})
+const isOpen = defineModel<boolean>('open', { required: true })
+
 const deleteConfirmed = async () => {
   const userEmail = props.user?.email
   if (!userEmail) {
