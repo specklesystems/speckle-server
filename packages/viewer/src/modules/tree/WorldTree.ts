@@ -108,8 +108,14 @@ export class WorldTree {
     if (this.nodeMaps[parent.model.subtreeId]?.addNode(node)) parent.addChild(node)
   }
 
-  public removeNode(node: TreeNode): void {
+  public removeNode(node: TreeNode, removeChildren: boolean): void {
+    const children = node.children
+    this.nodeMaps[node.model.subtreeId]?.removeNode(node)
     node.drop()
+    if (!removeChildren || !children) return
+    for (let k = 0; k < children.length; k++) {
+      this.removeNode(children[k], removeChildren)
+    }
   }
 
   public findAll(predicate: SearchPredicate, node?: TreeNode): Array<TreeNode> {

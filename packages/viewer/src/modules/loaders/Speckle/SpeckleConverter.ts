@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { MathUtils } from 'three'
+import { MathUtils, Matrix4 } from 'three'
 import { type TreeNode, WorldTree } from '../../tree/WorldTree.js'
 import { NodeMap } from '../../tree/NodeMap.js'
-import type { SpeckleObject } from '../../../index.js'
+import { SpeckleType, type SpeckleObject } from '../../../index.js'
 import type ObjectLoader from '@speckle/objectloader'
 import Logger from '../../utils/Logger.js'
 
@@ -22,6 +22,8 @@ export default class SpeckleConverter {
   private spoofIDs = false
   private tree: WorldTree
   private typeLookupTable: { [type: string]: string } = {}
+  private instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
+  private instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
   private instanceCounter = 0
 
   private readonly NodeConverterMapping: {
@@ -44,6 +46,8 @@ export default class SpeckleConverter {
     RevitInstance: this.RevitInstanceToNode.bind(this),
     Text: this.TextToNode.bind(this),
     Dimension: this.DimensionToNode.bind(this),
+    InstanceDefinitionProxy: this.InstanceDefinitionProxyToNode.bind(this),
+    InstanceProxy: this.InstanceProxyToNode.bind(this),
     Parameter: null
   }
 
@@ -519,6 +523,105 @@ export default class SpeckleConverter {
         void this.parseInstanceElement(obj, elementObj, node)
       }
     }
+  }
+
+  private async InstanceDefinitionProxyToNode(obj: SpeckleObject, node: TreeNode) {
+    if (!obj.applicationId) {
+      Logger.warn(`Instance Definition Proxy ${obj.id} has no applicationId`)
+      return
+    }
+    this.instanceDefinitionLookupTable[obj.applicationId] = node
+  }
+
+  private getInstanceProxyDefinitionId(obj: SpeckleObject): string {
+    return (obj.DefinitionId || obj.definitionId) as string
+  }
+
+  private getInstanceProxyTransform(obj: SpeckleObject): Array<number> {
+    if (!(obj.transform || obj.Transform)) {
+      return new Matrix4().toArray()
+    }
+    return (obj.transform || obj.Transform) as Array<number>
+  }
+
+  private createTransformNode(obj: SpeckleObject) {
+    const transformNodeId = MathUtils.generateUUID()
+    const transformData = this.getEmptyTransformData(transformNodeId)
+    transformData.units = obj.units as string
+    transformData.matrix = this.getInstanceProxyTransform(obj)
+    return this.tree.parse({
+      id: transformNodeId,
+      raw: transformData,
+      atomic: false,
+      children: []
+    })
+  }
+
+  private async InstanceProxyToNode(obj: SpeckleObject, node: TreeNode) {
+    return
+  }
+
+  private async ConvertInstanceProxyToNode(obj: SpeckleObject, node: TreeNode) {
+    const definitionId = this.getInstanceProxyDefinitionId(obj)
+    if (!definitionId) {
+      Logger.warn(`Instance Proxy ${obj.id} has no definitionId`)
+      return
+    }
+    const definition = this.instanceDefinitionLookupTable[definitionId]
+    const transformNode = this.createTransformNode(obj)
+
+    this.tree.addNode(transformNode, node)
+    const objectApplicationIds = definition.model.raw.Objects
+    for (const objectApplicationId of objectApplicationIds) {
+      const speckleData = this.instancedObjectsLookupTable[objectApplicationId]
+      const instancedNode = this.tree.parse({
+        id: this.getCompoundId(speckleData.id, this.instanceCounter++),
+        raw: speckleData,
+        atomic: false,
+        children: [],
+        instanced: true
+      })
+      this.tree.addNode(instancedNode, transformNode)
+      await this.convertToNode(speckleData, instancedNode)
+    }
+  }
+
+  public async convertInstances() {
+    // uh, oh
+    this.NodeConverterMapping.InstanceProxy = this.ConvertInstanceProxyToNode.bind(this)
+    for (const k in this.instanceDefinitionLookupTable) {
+      const definition = this.instanceDefinitionLookupTable[k]
+      const objectApplicationIds = definition.model.raw.Objects
+      for (const objectApplicationId of objectApplicationIds) {
+        const objectNodes = this.tree.findAll((node: TreeNode) => {
+          // String vs int
+          return (
+            node.model.raw.applicationId === Number.parseInt(objectApplicationId) ||
+            node.model.raw.applicationId === objectApplicationId
+          )
+        })
+        const objectNode = objectNodes[0]
+        this.instancedObjectsLookupTable[objectApplicationId] = objectNode.model.raw
+
+        this.tree.removeNode(objectNode, true)
+      }
+    }
+    const plm: TreeNode[] = []
+    await this.tree.walkAsync((node: TreeNode) => {
+      const type = this.getSpeckleType(node.model.raw)
+      if (type !== SpeckleType.InstanceProxy) {
+        return true
+      }
+      plm.push(node)
+      return true
+    })
+    for (let i = 0; i < plm.length; i++) {
+      await this.convertToNode(plm[i].model.raw, plm[i])
+    }
+    // for (let k = 0; k < this.instanceProxies.length; k++) {
+    //   const node = this.instanceProxies[k]
+    //   await this.convertToNode(node.model.raw, node)
+    // }
   }
 
   private async PointcloudToNode(obj: SpeckleObject, node: TreeNode) {
