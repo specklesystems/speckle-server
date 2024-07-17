@@ -84,7 +84,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     const color = unref(props.color)
     if (color === 'foundation') {
       classParts.push(
-        'bg-foundation !border border-outline-2 hover:border-outline-5 focus:border-outline-4 !ring-0 focus:!outline-0 !text-[13px]'
+        'bg-foundation-page !border border-outline-2 hover:border-outline-5 focus:border-outline-4 !ring-0 focus:!outline-0 !text-[13px]'
       )
     } else if (color === 'transparent') {
       classParts.push('bg-transparent')

@@ -529,7 +529,7 @@ const buttonClasses = computed(() => {
       if (props.buttonStyle === 'tinted') {
         classParts.push('bg-foundation-page text-foreground')
       } else {
-        classParts.push('bg-foundation text-foreground')
+        classParts.push('bg-foundation-page text-foreground')
       }
     }
   }
