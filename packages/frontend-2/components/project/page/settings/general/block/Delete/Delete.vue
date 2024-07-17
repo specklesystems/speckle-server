@@ -1,13 +1,13 @@
 <template>
   <div>
-    <ProjectPageSettingsBlock background title="Delete Project" :icon="TrashIcon">
+    <ProjectPageSettingsBlock background title="Delete project" :icon="TrashIcon">
       <p>
         Permanently delete this project and all of its content from the Speckle
         platform. This action is not reversible.
       </p>
       <template #bottom-buttons>
         <FormButton color="danger" @click="showDeleteDialog = true">
-          Delete Project
+          Delete project
         </FormButton>
       </template>
     </ProjectPageSettingsBlock>

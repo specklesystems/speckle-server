@@ -14,7 +14,7 @@
           class="shadow-md"
           @click.stop="downloadManager(os === 'Windows' ? 'exe' : 'dmg')"
         >
-          Download For {{ os }}
+          Download for {{ os }}
         </FormButton>
         <FormButton
           size="xs"
