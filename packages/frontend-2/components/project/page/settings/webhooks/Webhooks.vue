@@ -26,7 +26,7 @@
           { id: 'data', header: 'Data', classes: 'col-span-5' },
           {
             id: 'triggers',
-            header: 'Trigger Events',
+            header: 'Trigger events',
             classes: 'col-span-6 whitespace-break-spaces text-xs'
           }
         ]"

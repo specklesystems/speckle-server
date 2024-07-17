@@ -11,7 +11,7 @@
 const emit = defineEmits<{ 'clear-search': [] }>()
 
 const cta = {
-  text: 'Clear Search',
+  text: 'Clear search',
   onClick: () => emit('clear-search')
 }
 </script>

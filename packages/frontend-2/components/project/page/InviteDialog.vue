@@ -1,6 +1,6 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
-    <template #header>Invite to Project</template>
+    <template #header>Invite to project</template>
     <div class="flex flex-col mt-2">
       <FormTextInput
         v-model="search"

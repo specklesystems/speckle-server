@@ -36,7 +36,7 @@
         { id: 'data', header: 'Data', classes: 'col-span-5' },
         {
           id: 'triggers',
-          header: 'Trigger Events',
+          header: 'Trigger events',
           classes: 'col-span-6 whitespace-break-spaces text-xs'
         }
       ]"
@@ -252,7 +252,7 @@ const onEnabledChange = async (item: WebhookItem, newValue: boolean) => {
   if (result?.data?.webhookUpdate) {
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: newValue ? 'Webhook Enabled' : 'Webhook Disabled'
+      title: newValue ? 'Webhook enabled' : 'Webhook disabled'
     })
   } else {
     triggerNotification({

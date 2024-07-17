@@ -49,7 +49,7 @@
             :icon-right="ArrowTopRightOnSquareIcon"
             @click="onViewParameters"
           >
-            View Parameters
+            View parameters
           </CommonTextLink>
         </div>
       </AutomateFunctionPageInfoBlock>
@@ -88,7 +88,7 @@
           :disabled="!hasReleases"
           @click="$emit('createAutomation')"
         >
-          Use in an Automation
+          Use in an automation
         </FormButton>
       </div>
     </div>

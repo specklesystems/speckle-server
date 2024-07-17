@@ -11,8 +11,8 @@
   >
     <template v-if="isTestAutomation" #header>
       Create
-      <span class="font-extrabold text-fancy-gradient">Test</span>
-      Automation
+      <span class="font-extrabold text-fancy-gradient">test</span>
+      automation
     </template>
     <div class="flex flex-col gap-6">
       <CommonStepsNumber
@@ -152,15 +152,15 @@ const stepsOrder = computed(() => [
 const stepsWidgetData = computed(() => [
   {
     step: AutomationCreateSteps.SelectFunction,
-    title: 'Select Function'
+    title: 'Select function'
   },
   {
     step: AutomationCreateSteps.FunctionParameters,
-    title: 'Set Parameters'
+    title: 'Set parameters'
   },
   {
     step: AutomationCreateSteps.AutomationDetails,
-    title: 'Add Details'
+    title: 'Add details'
   }
 ])
 
@@ -448,7 +448,7 @@ const onDetailsSubmit = handleDetailsSubmit(async () => {
       return
     }
 
-    mixpanel.track('Automation Created', {
+    mixpanel.track('Automation created', {
       automationId: aId,
       name,
       projectId: project.id,
