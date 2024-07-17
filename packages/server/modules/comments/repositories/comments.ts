@@ -305,7 +305,7 @@ export async function getCommentReplyAuthorIds(
   return reduce(
     results,
     (result, item) => {
-      ; (result[item.parentComment] || (result[item.parentComment] = [])).push(
+      ;(result[item.parentComment] || (result[item.parentComment] = [])).push(
         item.authorId
       )
       return result
@@ -523,9 +523,9 @@ async function getPaginatedProjectCommentsBaseQuery(
     if (latestModelResources.length) {
       const resolvedResourceItems = keyBy(
         options?.preloadedModelLatestVersions ||
-        (await resolvePaginatedProjectCommentsLatestModelResources(
-          filter?.resourceIdString
-        )),
+          (await resolvePaginatedProjectCommentsLatestModelResources(
+            filter?.resourceIdString
+          )),
         'branchId'
       )
 
