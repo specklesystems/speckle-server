@@ -18,7 +18,7 @@
             v-if="showIntro"
             class="flex-col justify-around px-2 h-full py-2 md:col-span-1 hidden lg:flex"
           >
-            <div>Quickstart Checklist</div>
+            <div>Quickstart checklist</div>
             <div class="text-sm text-foreground-2">
               Become a Speckle pro in four steps!
             </div>
