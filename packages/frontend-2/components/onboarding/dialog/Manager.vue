@@ -1,6 +1,6 @@
 <template>
   <OnboardingDialogBase v-model:open="openState">
-    <template #header>Install manager ⚙️</template>
+    <template #header>Install Manager ⚙️</template>
     <CommonVimeoEmbed
       vimeo-id="925892633"
       title="Onboarding: How to install Manager"

@@ -294,7 +294,7 @@ const getStatus = () => {
 
 const steps = ref([
   {
-    title: 'Install manager ⚙️',
+    title: 'Install Manager ⚙️',
     blurb: 'Use Manager to install the Speckle Connectors for your apps!',
     active: false,
     cta: "Let's go!",
