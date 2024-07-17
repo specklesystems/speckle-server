@@ -17,7 +17,7 @@ const props = withDefaults(
 )
 
 const clearSearchCta = ref({
-  text: 'Clear Search',
+  text: 'Clear search',
   onClick: () => emit('clear-search')
 })
 

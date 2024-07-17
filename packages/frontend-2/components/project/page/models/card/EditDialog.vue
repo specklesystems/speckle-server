@@ -19,14 +19,14 @@
       }
     ]"
   >
-    <template #header>Edit Model</template>
+    <template #header>Edit model</template>
     <form class="flex flex-col text-foreground" @submit="onSubmit">
       <div class="flex flex-col gap-6 mb-6">
         <FormTextInput
           v-model="newName"
           name="name"
           show-label
-          label="Model Name"
+          label="Model name"
           placeholder="model/name/here"
           :rules="rules"
           show-required
@@ -40,8 +40,8 @@
           v-model="newDescription"
           name="description"
           show-label
-          label="Model Description"
-          placeholder="Description (Optional)"
+          label="Model description"
+          placeholder="Description (optional)"
           color="foundation"
           :disabled="loading"
         />
