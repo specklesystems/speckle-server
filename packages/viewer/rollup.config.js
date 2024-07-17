@@ -31,7 +31,9 @@ const config = {
     // }),
     typescript({
       tsconfig: './tsconfig.build.json',
-      sourceMap: sourcemap
+      compilerOptions: {
+        ...(sourcemap ? { inlineSourceMap: true } : { sourceMap: false })
+      }
     }),
     babel({
       extensions: [...DEFAULT_EXTENSIONS, '.ts', '.tsx'],
