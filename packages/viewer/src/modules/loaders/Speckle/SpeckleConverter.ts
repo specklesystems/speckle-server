@@ -24,6 +24,7 @@ export default class SpeckleConverter {
   private typeLookupTable: { [type: string]: string } = {}
   private instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
   private instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
+  private instanceProxies: { [id: string]: TreeNode } = {}
   private instanceCounter = 0
 
   private readonly NodeConverterMapping: {
@@ -533,6 +534,15 @@ export default class SpeckleConverter {
     this.instanceDefinitionLookupTable[obj.applicationId] = node
   }
 
+  private async InstanceProxyToNode(obj: SpeckleObject, node: TreeNode) {
+    if (!obj.applicationId) {
+      Logger.warn(`Instance proxy ${obj.id} has no application id`)
+      return
+    }
+    this.instanceProxies[obj.applicationId] = node
+    return
+  }
+
   private getInstanceProxyDefinitionId(obj: SpeckleObject): string {
     return (obj.DefinitionId || obj.definitionId) as string
   }
@@ -555,10 +565,6 @@ export default class SpeckleConverter {
       atomic: false,
       children: []
     })
-  }
-
-  private async InstanceProxyToNode(obj: SpeckleObject, node: TreeNode) {
-    return
   }
 
   private async ConvertInstanceProxyToNode(obj: SpeckleObject, node: TreeNode) {
@@ -587,41 +593,55 @@ export default class SpeckleConverter {
   }
 
   public async convertInstances() {
-    // uh, oh
+    /** uh, oh */
     this.NodeConverterMapping.InstanceProxy = this.ConvertInstanceProxyToNode.bind(this)
+
+    /** Find the nodes that need to be 'consumed' */
+    const consumeApplicationIds: { [id: string]: TreeNode | null } = {}
+    let consumeApplicationIdsCount = 0
     for (const k in this.instanceDefinitionLookupTable) {
       const definition = this.instanceDefinitionLookupTable[k]
-      const objectApplicationIds = definition.model.raw.Objects
-      for (const objectApplicationId of objectApplicationIds) {
-        const objectNodes = this.tree.findAll((node: TreeNode) => {
-          // String vs int
-          return (
-            node.model.raw.applicationId === Number.parseInt(objectApplicationId) ||
-            node.model.raw.applicationId === objectApplicationId
-          )
-        })
-        const objectNode = objectNodes[0]
-        this.instancedObjectsLookupTable[objectApplicationId] = objectNode.model.raw
-
-        this.tree.removeNode(objectNode, true)
+      const objects = definition.model.raw.Objects as string[]
+      for (let i = 0; i < objects.length; i++) {
+        consumeApplicationIds[objects[i].toString()] = null
+        consumeApplicationIdsCount++
       }
     }
-    const plm: TreeNode[] = []
+    /** Do a short async walk */
     await this.tree.walkAsync((node: TreeNode) => {
-      const type = this.getSpeckleType(node.model.raw)
-      if (type !== SpeckleType.InstanceProxy) {
-        return true
+      if (!node.model.raw.applicationId) return true
+      const applicationId = node.model.raw.applicationId.toString()
+      if (consumeApplicationIds[applicationId] !== undefined) {
+        consumeApplicationIds[applicationId] = node
+        consumeApplicationIdsCount--
       }
-      plm.push(node)
+      /** Break out when all applicationIds are accounted for*/
+      if (consumeApplicationIdsCount === 0) return false
       return true
     })
-    for (let i = 0; i < plm.length; i++) {
-      await this.convertToNode(plm[i].model.raw, plm[i])
+
+    /** Consume them */
+    for (const k in consumeApplicationIds) {
+      const objectNode = consumeApplicationIds[k]
+      if (!objectNode) {
+        Logger.error(`Consumable applicationId ${k} could not be found`)
+        continue
+      }
+
+      /** Store the speckle object data */
+      this.instancedObjectsLookupTable[k] = objectNode.model.raw
+      /** Remove the instance from the list (if needed) */
+      delete this.instanceProxies[k]
+      /** Remove the node from the world tree */
+      this.tree.removeNode(objectNode, true)
     }
-    // for (let k = 0; k < this.instanceProxies.length; k++) {
-    //   const node = this.instanceProxies[k]
-    //   await this.convertToNode(node.model.raw, node)
-    // }
+
+    /** Remaining instance proxies should all be valid */
+    for (const k in this.instanceProxies) {
+      const node = this.instanceProxies[k]
+      /** Create the final instances */
+      await this.convertToNode(node.model.raw, node)
+    }
   }
 
   private async PointcloudToNode(obj: SpeckleObject, node: TreeNode) {

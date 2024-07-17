@@ -203,7 +203,8 @@ export class WorldTree {
       if (subtreeNode) {
         this.nodeMaps[subtreeNode[0].model.subtreeId].purge()
         delete this.nodeMaps[subtreeNode[0].model.subtreeId]
-        this.removeNode(subtreeNode[0])
+        // Potentially true?
+        this.removeNode(subtreeNode[0], false)
       }
       return
     }

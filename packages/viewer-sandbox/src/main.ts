@@ -395,7 +395,6 @@ const getStream = () => {
     // DUI3 blocks
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/c6f3f309a2'
     'https://latest.speckle.systems/projects/126cd4b7bb/models/6b62c61a22'
-    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/0a6a715a0a'
     // 'https://latest.speckle.systems/projects/126cd4b7bb/models/4dc5265453'
   )
 }
