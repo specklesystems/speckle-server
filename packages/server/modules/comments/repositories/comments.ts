@@ -305,7 +305,7 @@ export async function getCommentReplyAuthorIds(
   return reduce(
     results,
     (result, item) => {
-      ;(result[item.parentComment] || (result[item.parentComment] = [])).push(
+      ; (result[item.parentComment] || (result[item.parentComment] = [])).push(
         item.authorId
       )
       return result
@@ -466,15 +466,15 @@ export type PaginatedProjectCommentsParams = {
   cursor?: MaybeNullOrUndefined<string>
   filter?: MaybeNullOrUndefined<
     Partial<{
-      threadsOnly: boolean
-      includeArchived: boolean
-      archivedOnly: boolean
-      resourceIdString: string
+      threadsOnly: boolean | null
+      includeArchived: boolean | null
+      archivedOnly: boolean | null
+      resourceIdString: string | null
       /**
        * If true, will ignore the version parts of `model@version` identifiers and look for comments of
        * all versions of any selected comments
        */
-      allModelVersions: boolean
+      allModelVersions: boolean | null
     }>
   >
 }
@@ -523,9 +523,9 @@ async function getPaginatedProjectCommentsBaseQuery(
     if (latestModelResources.length) {
       const resolvedResourceItems = keyBy(
         options?.preloadedModelLatestVersions ||
-          (await resolvePaginatedProjectCommentsLatestModelResources(
-            filter?.resourceIdString
-          )),
+        (await resolvePaginatedProjectCommentsLatestModelResources(
+          filter?.resourceIdString
+        )),
         'branchId'
       )
 
