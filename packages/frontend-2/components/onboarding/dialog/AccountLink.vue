@@ -1,6 +1,6 @@
 <template>
   <OnboardingDialogBase v-model:open="openState">
-    <template #header>Log In 🔑</template>
+    <template #header>Log in 🔑</template>
     <CommonVimeoEmbed
       vimeo-id="925894038"
       title="Onboarding: Log in to your Speckle account"

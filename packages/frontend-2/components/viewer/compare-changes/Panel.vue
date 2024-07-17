@@ -28,7 +28,7 @@
         </div>
       </div>
       <div class="grow flex items-center space-x-2 py-2">
-        <label for="diffTime" class="sr-only">Diff Time</label>
+        <label for="diffTime" class="sr-only">Diff time</label>
         <input
           id="diffTime"
           v-model="localDiffTime"

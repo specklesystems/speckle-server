@@ -1,7 +1,7 @@
 <template>
   <ViewerCommentsPortalOrDiv v-if="shouldRenderSidebar" to="bottomPanel">
     <ViewerSidebar :open="sidebarOpen" @close="onClose">
-      <template #title><div class="select-none">Selection Info</div></template>
+      <template #title><div class="select-none">Selection info</div></template>
       <template #actions>
         <FormButton
           size="small"

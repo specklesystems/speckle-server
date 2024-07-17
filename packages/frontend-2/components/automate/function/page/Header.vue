@@ -3,7 +3,7 @@
     <Portal to="navigation">
       <HeaderNavLink
         :to="automationFunctionsRoute"
-        :name="'Automate Functions'"
+        :name="'Automate functions'"
       ></HeaderNavLink>
       <HeaderNavLink
         :to="automationFunctionRoute(fn.id)"
@@ -30,7 +30,7 @@
         :disabled="!hasReleases"
         @click="$emit('createAutomation')"
       >
-        Use in an Automation
+        Use in an automation
       </FormButton>
     </div>
   </div>

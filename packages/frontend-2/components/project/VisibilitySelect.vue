@@ -67,7 +67,7 @@ const items = ref<
   [ProjectVisibility.Unlisted]: {
     id: ProjectVisibility.Unlisted,
     description: 'Anyone with the link can view',
-    title: 'Link Shareable'
+    title: 'Link shareable'
   },
   [ProjectVisibility.Private]: {
     id: ProjectVisibility.Private,

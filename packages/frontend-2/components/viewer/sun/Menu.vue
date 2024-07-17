@@ -25,7 +25,7 @@
                 :show-label="false"
               />
             </div>
-            <span class="text-foreground text-sm">Sun Shadows</span>
+            <span class="text-foreground text-sm">Sun shadows</span>
           </div>
           <div class="flex items-center gap-1 px-2">
             <input

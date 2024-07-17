@@ -33,7 +33,7 @@
             @keypress="keyboardClick(handleCopyLink)"
           >
             <LinkIcon class="w-5 h-5" />
-            Copy Link
+            Copy link
           </div>
         </MenuItem>
         <MenuItem v-if="!isFederated" v-slot="{ active }">
@@ -59,7 +59,7 @@
             @keypress="keyboardClick(handleEmbed)"
           >
             <CodeBracketIcon class="w-5 h-5" />
-            Embed Model
+            Embed model
           </div>
         </MenuItem>
       </MenuItems>

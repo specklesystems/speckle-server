@@ -4,7 +4,7 @@
     <template #actions>
       <div class="flex justify-between items-center w-full">
         <FormButton
-          v-tippy="'Change Filter'"
+          v-tippy="'Change filter'"
           text
           size="small"
           :icon-right="showAllFilters ? ChevronUpIcon : ChevronDownIcon"
@@ -12,7 +12,7 @@
           @click="showAllFilters = !showAllFilters"
         >
           <span class="max-w-20 md:max-w-36 truncate">
-            {{ title.split('.').reverse()[0] || title || 'No Title' }}
+            {{ title.split('.').reverse()[0] || title || 'No title' }}
           </span>
         </FormButton>
         <div class="flex gap-1 divide-x divide-outline-3">

@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="open"
-    title="Edit Function"
+    title="Edit function"
     :buttons="buttons"
     max-width="md"
     buttons-wrapper-classes="justify-between"

@@ -113,9 +113,9 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
     }
   ],
   [
-    { title: 'Copy Link', id: ActionTypes.Share, icon: LinkIcon },
+    { title: 'Copy link', id: ActionTypes.Share, icon: LinkIcon },
     { title: 'Copy ID', id: ActionTypes.CopyId, icon: FingerPrintIcon },
-    { title: 'Embed Model', id: ActionTypes.Embed, icon: CodeBracketIcon }
+    { title: 'Embed model', id: ActionTypes.Embed, icon: CodeBracketIcon }
   ],
   [
     {

@@ -16,7 +16,7 @@
         color="default"
         @click="() => goToLogin()"
       >
-        Sign In
+        Sign in
       </FormButton>
       <FormButton
         size="large"
@@ -24,7 +24,7 @@
         :color="isLoggedIn ? 'default' : 'secondary'"
         :to="homeRoute"
       >
-        Go Home
+        Go home
       </FormButton>
     </div>
   </div>

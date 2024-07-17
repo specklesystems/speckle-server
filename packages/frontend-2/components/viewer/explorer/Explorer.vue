@@ -1,7 +1,7 @@
 <template>
   <div>
     <ViewerLayoutPanel @close="$emit('close')">
-      <template #title>Scene Explorer</template>
+      <template #title>Scene explorer</template>
 
       <template #actions>
         <div class="flex items-center justify-between w-full">
@@ -25,7 +25,7 @@
             </FormButton>
           </div>
           <div v-else>
-            <h4 class="font-bold whitespace-normal text-xs ml-1">Dev Mode</h4>
+            <h4 class="font-bold whitespace-normal text-xs ml-1">Dev mode</h4>
           </div>
 
           <FormButton
@@ -54,7 +54,7 @@
         >
           <ViewerExplorerTreeItem
             :tree-item="rootNode"
-            :sub-header="'Model Version'"
+            :sub-header="'Model version'"
             :debug="false"
             :expand-level="expandLevel"
             :manual-expand-level="manualExpandLevel"
@@ -148,7 +148,7 @@ const rootNodes = computed(() => {
       raw.type = model?.id
     } else {
       raw.name = 'Object'
-      raw.type = 'Single Object'
+      raw.type = 'Single object'
     }
 
     const res = node.model as ExplorerNode

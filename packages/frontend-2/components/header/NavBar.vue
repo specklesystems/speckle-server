@@ -29,7 +29,7 @@
             variant="outline"
             class="hidden md:flex"
           >
-            Sign In
+            Sign in
           </FormButton>
           <!-- Profile dropdown -->
           <HeaderNavUserMenu :login-url="loginUrl" />

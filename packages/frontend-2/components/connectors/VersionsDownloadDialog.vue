@@ -16,7 +16,7 @@
           full-width
           @click="downloadVersion(latestStableVersions.win as ConnectorVersion)"
         >
-          Download Latest Stable ({{ latestStableVersions.win.Number }}) Windows
+          Download latest stable ({{ latestStableVersions.win.Number }}) Windows
         </FormButton>
         <FormButton
           v-if="latestStableVersions.mac"
@@ -24,7 +24,7 @@
           text
           @click="downloadVersion(latestStableVersions.mac as ConnectorVersion)"
         >
-          Download Latest Stable ({{ latestStableVersions.mac.Number }}) Mac OS
+          Download latest stable ({{ latestStableVersions.mac.Number }}) Mac OS
         </FormButton>
       </div>
       <div class="flex items-center justify-between pt-5 gap-6 border-t">

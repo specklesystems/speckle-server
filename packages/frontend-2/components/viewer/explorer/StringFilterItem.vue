@@ -16,7 +16,7 @@
           :style="`background-color: #${color};`"
         ></span>
         <span class="truncate">
-          {{ item.value || 'No Name' }}
+          {{ item.value || 'No name' }}
         </span>
         <div class="flex">
           <span
