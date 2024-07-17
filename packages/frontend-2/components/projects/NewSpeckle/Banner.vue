@@ -7,14 +7,14 @@
         <div class="h-8 w-8 flex items-center justify-center">
           <SparklesIcon class="h-5 w-5 text-primary" />
         </div>
-        <div class="text-foreground text-sm">Announcing the New Speckle Web App</div>
+        <div class="text-foreground text-sm">Announcing the new Speckle web app</div>
       </div>
       <div class="flex gap-3">
         <FormButton size="sm" color="default" text @click="emit('dismissed')">
           Skip
         </FormButton>
         <FormButton size="sm" class="px-4" to="/" @click="showDialog = true">
-          See What's New
+          See what's new
         </FormButton>
       </div>
     </div>

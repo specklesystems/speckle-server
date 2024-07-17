@@ -19,7 +19,7 @@
     ]"
     max-width="sm"
   >
-    <template #header>Delete Model</template>
+    <template #header>Delete model</template>
     <div class="flex flex-col text-foreground">
       <p class="mb-2">
         Are you sure you want to delete the model

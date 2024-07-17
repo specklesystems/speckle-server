@@ -4,7 +4,7 @@
     <LayoutPanel class="max-w-lg mx-auto w-full">
       <div class="space-y-8 flex flex-col items-center">
         <h1 class="text-center h3 font-bold inline-block text-foreground bg-clip-text">
-          Authorize Application
+          Authorize application
         </h1>
         <template v-if="activeUser && app && !action">
           <div class="space-y-2 flex flex-col">
@@ -39,7 +39,7 @@
                 <div class="flex space-x-2 items-center">
                   <InformationCircleIcon class="h-5 w-5 shrink-0" />
                   <span class="font-bold text-left">
-                    App info & Requested permissions ({{ app.scopes.length }})
+                    App info & requested permissions ({{ app.scopes.length }})
                   </span>
                 </div>
                 <ChevronUpIcon
@@ -139,7 +139,7 @@
             </template>
             <div v-else class="flex space-x-2 items-center">
               <span>Could not resolve app.</span>
-              <CommonTextLink :to="homeRoute">Go Home</CommonTextLink>
+              <CommonTextLink :to="homeRoute">Go home</CommonTextLink>
             </div>
           </div>
           <div v-if="action" class="label-light text-foreground-2">

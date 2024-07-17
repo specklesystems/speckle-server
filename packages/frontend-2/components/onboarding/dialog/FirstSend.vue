@@ -1,6 +1,6 @@
 <template>
   <OnboardingDialogBase v-model:open="openState">
-    <template #header>Your First Model Upload ⬆️</template>
+    <template #header>Your first model upload ⬆️</template>
     <CommonVimeoEmbed
       vimeo-id="925894349"
       title="Onboarding: First Model Upload"

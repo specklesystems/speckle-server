@@ -1,6 +1,6 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
-    <template #header>Delete Project</template>
+    <template #header>Delete project</template>
     <div class="space-y-4">
       <p>
         Are you sure you want to permanently

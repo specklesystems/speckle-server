@@ -96,7 +96,7 @@
 
             <!-- Sun and lights -->
             <ViewerSunMenu
-              v-tippy="isSmallerOrEqualSm ? undefined : 'Light Controls'"
+              v-tippy="isSmallerOrEqualSm ? undefined : 'Light controls'"
             />
           </ViewerControlsButtonGroup>
           <ViewerControlsButtonGroup>
@@ -391,7 +391,7 @@ const modelsShortcut = ref(
   `Models ${getShortcutTitle(ViewerKeyboardActions.ToggleModels)}`
 )
 const explorerShortcut = ref(
-  `Scene Explorer ${getShortcutTitle(ViewerKeyboardActions.ToggleExplorer)}`
+  `Scene explorer ${getShortcutTitle(ViewerKeyboardActions.ToggleExplorer)}`
 )
 const discussionsShortcut = ref(
   `Discussions ${getShortcutTitle(ViewerKeyboardActions.ToggleDiscussions)}`
@@ -403,10 +403,10 @@ const projectionShortcut = ref(
   `Projection ${getShortcutTitle(ViewerKeyboardActions.ToggleProjection)}`
 )
 const sectionBoxShortcut = ref(
-  `Section Box ${getShortcutTitle(ViewerKeyboardActions.ToggleSectionBox)}`
+  `Section box ${getShortcutTitle(ViewerKeyboardActions.ToggleSectionBox)}`
 )
 const measureShortcut = ref(
-  `Measure Mode ${getShortcutTitle(ViewerKeyboardActions.ToggleMeasurements)}`
+  `Measure mode ${getShortcutTitle(ViewerKeyboardActions.ToggleMeasurements)}`
 )
 
 const handleKeyboardAction = (action: ViewerKeyboardActions) => {
