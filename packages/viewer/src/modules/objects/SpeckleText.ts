@@ -17,8 +17,8 @@ import {
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
 import { Text } from 'troika-three-text'
-import SpeckleBasicMaterial from '../materials/SpeckleBasicMaterial'
-import { ObjectLayers, type SpeckleObject } from '../../IViewer'
+import SpeckleBasicMaterial from '../materials/SpeckleBasicMaterial.js'
+import { ObjectLayers, type SpeckleObject } from '../../IViewer.js'
 
 export interface SpeckleTextParams {
   textValue?: string

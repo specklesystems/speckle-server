@@ -1,10 +1,10 @@
 import { Group } from 'three'
-import { Loader, LoaderEvent } from '../Loader'
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader'
-import { ObjConverter } from './ObjConverter'
-import { ObjGeometryConverter } from './ObjGeometryConverter'
-import Logger from 'js-logger'
-import { WorldTree } from '../../..'
+import { Loader, LoaderEvent } from '../Loader.js'
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js'
+import { ObjConverter } from './ObjConverter.js'
+import { ObjGeometryConverter } from './ObjGeometryConverter.js'
+import { WorldTree } from '../../../index.js'
+import Logger from '../../utils/Logger.js'
 
 export class ObjLoader extends Loader {
   private baseLoader: OBJLoader

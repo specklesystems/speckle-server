@@ -1,10 +1,10 @@
 import { Matrix4 } from 'three'
-import { type TreeNode, WorldTree } from './WorldTree'
-import Materials from '../materials/Materials'
-import { type NodeRenderData, NodeRenderView } from './NodeRenderView'
-import Logger from 'js-logger'
-import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter'
-import { Geometry } from '../converter/Geometry'
+import { type TreeNode, WorldTree } from './WorldTree.js'
+import Materials from '../materials/Materials.js'
+import { type NodeRenderData, NodeRenderView } from './NodeRenderView.js'
+import { GeometryConverter, SpeckleType } from '../loaders/GeometryConverter.js'
+import { Geometry } from '../converter/Geometry.js'
+import Logger from '../utils/Logger.js'
 
 export class RenderTree {
   private tree: WorldTree

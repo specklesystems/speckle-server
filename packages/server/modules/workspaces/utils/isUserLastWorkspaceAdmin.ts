@@ -1,4 +1,4 @@
-import { WorkspaceAcl } from '@/modules/workspaces/domain/types'
+import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 
 export const isUserLastWorkspaceAdmin = (
   workspaceRoles: WorkspaceAcl[],

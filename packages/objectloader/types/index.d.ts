@@ -13,7 +13,7 @@ export type ProgressStage = 'download' | 'construction'
 /**
  * ObjectLoader class
  */
-export default class ObjectLoader {
+class ObjectLoader {
   constructor(params: {
     serverUrl: string
     streamId: string
@@ -49,3 +49,5 @@ export default class ObjectLoader {
   async getObject(id: string): Promise<Record<string, unknown>>
   dispose(): void
 }
+
+export default ObjectLoader

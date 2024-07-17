@@ -23,16 +23,16 @@ import {
 } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
 
-import { speckleStaticAoGenerateVert } from '../materials/shaders/speckle-static-ao-generate-vert'
-import { speckleStaticAoGenerateFrag } from '../materials/shaders/speckle-static-ao-generate-frag'
-import { speckleStaticAoAccumulateVert } from '../materials/shaders/speckle-static-ao-accumulate-vert'
-import { speckleStaticAoAccumulateFrag } from '../materials/shaders/speckle-static-ao-accumulate-frag'
+import { speckleStaticAoGenerateVert } from '../materials/shaders/speckle-static-ao-generate-vert.js'
+import { speckleStaticAoGenerateFrag } from '../materials/shaders/speckle-static-ao-generate-frag.js'
+import { speckleStaticAoAccumulateVert } from '../materials/shaders/speckle-static-ao-accumulate-vert.js'
+import { speckleStaticAoAccumulateFrag } from '../materials/shaders/speckle-static-ao-accumulate-frag.js'
 import { SimplexNoise } from 'three/examples/jsm/math/SimplexNoise.js'
 import type {
   InputDepthTextureUniform,
   InputNormalsTextureUniform,
   SpeckleProgressivePass
-} from './SpecklePass'
+} from './SpecklePass.js'
 /**
  * SAO implementation inspired from bhouston previous SAO work
  */

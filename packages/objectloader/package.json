@@ -1,10 +1,32 @@
 {
   "name": "@speckle/objectloader",
-  "version": "2.5.4",
+  "version": "2.20.0-alpha5",
   "description": "Simple API helper to stream in objects from the Speckle Server.",
-  "main": "dist/objectloader.js",
+  "main": "dist/objectloader.cjs",
   "module": "dist/objectloader.esm.js",
   "types": "types/index.d.ts",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./types/index.d.ts",
+        "default": "./dist/objectloader.esm.js"
+      },
+      "require": {
+        "types": "./types/index.d.ts",
+        "default": "./dist/objectloader.cjs"
+      }
+    },
+    "./types": "./types/index.d.ts"
+  },
+  "imports": {
+    "#lodash": {
+      "require": "lodash",
+      "import": "lodash-es",
+      "node": "lodash",
+      "default": "lodash-es"
+    }
+  },
   "homepage": "https://speckle.systems",
   "repository": {
     "type": "git",
@@ -33,6 +55,8 @@
     "@babel/core": "^7.17.9",
     "@speckle/shared": "workspace:^",
     "core-js": "^3.21.1",
+    "lodash": "^4.17.21",
+    "lodash-es": "^4.17.21",
     "regenerator-runtime": "^0.13.7"
   },
   "devDependencies": {
@@ -43,6 +67,8 @@
     "@rollup/plugin-commonjs": "^21.0.3",
     "@rollup/plugin-node-resolve": "^13.1.3",
     "@rollup/plugin-terser": "^0.4.4",
+    "@types/lodash": "^4.17.5",
+    "@types/lodash-es": "^4.17.12",
     "cross-fetch": "^3.1.5",
     "eslint": "^9.4.0",
     "eslint-config-prettier": "^9.1.0",

@@ -1,9 +1,9 @@
 import TreeModel, { type Model } from 'tree-model'
-import { NodeRenderView } from './NodeRenderView'
-import { RenderTree } from './RenderTree'
-import Logger from 'js-logger'
-import { AsyncPause } from '../World'
-import { NodeMap } from './NodeMap'
+import { NodeRenderView } from './NodeRenderView.js'
+import { RenderTree } from './RenderTree.js'
+import { AsyncPause } from '../World.js'
+import { NodeMap } from './NodeMap.js'
+import Logger from '../utils/Logger.js'
 
 export type TreeNode = TreeModel.Node<NodeData>
 export type SearchPredicate = (node: TreeNode) => boolean

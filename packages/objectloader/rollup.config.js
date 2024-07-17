@@ -32,7 +32,7 @@ function buildConfig(isWebBuild = false) {
         ? []
         : [
             {
-              file: 'dist/objectloader.js',
+              file: 'dist/objectloader.cjs',
               format: 'cjs',
               sourcemap,
               exports: 'default'
