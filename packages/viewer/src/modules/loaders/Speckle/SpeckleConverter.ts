@@ -2,7 +2,7 @@
 import { MathUtils, Matrix4 } from 'three'
 import { type TreeNode, WorldTree } from '../../tree/WorldTree.js'
 import { NodeMap } from '../../tree/NodeMap.js'
-import { SpeckleType, type SpeckleObject } from '../../../index.js'
+import { type SpeckleObject } from '../../../index.js'
 import type ObjectLoader from '@speckle/objectloader'
 import Logger from '../../utils/Logger.js'
 
