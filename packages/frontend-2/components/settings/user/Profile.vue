@@ -1,9 +1,6 @@
 <template>
   <div class="md:max-w-xl md:mx-auto">
-    <SettingsSectionHeader
-      title="User profile"
-      text="Manage your profile information"
-    />
+    <SettingsSectionHeader title="Profile" text="Manage your profile information" />
     <template v-if="user">
       <SettingsUserProfileDetails :user="user" />
       <hr class="my-6 md:my-10" />
