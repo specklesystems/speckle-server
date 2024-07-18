@@ -1,4 +1,4 @@
-import { ServerAcl, Users, knex } from '@/modules/core/dbSchema'
+import { ServerAcl, USER_EMAILS_TABLE_NAME, Users, knex } from '@/modules/core/dbSchema'
 import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { clamp, isArray } from 'lodash'
@@ -51,15 +51,29 @@ export async function getUsers(
   userIds = isArray(userIds) ? userIds : [userIds]
 
   const q = Users.knex<UserWithOptionalRole[]>().whereIn(Users.col.id, userIds)
+  q.leftJoin(
+    USER_EMAILS_TABLE_NAME,
+    `${USER_EMAILS_TABLE_NAME}.userId`,
+    Users.col.id
+  ).where({ primary: true })
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { email, verified, ...usersCols } = Users.col
+  const columns: (Knex.Raw<UserRecord> | string)[] = [
+    ...Object.values(usersCols),
+    `${USER_EMAILS_TABLE_NAME}.email`,
+    `${USER_EMAILS_TABLE_NAME}.verified`
+  ]
   if (withRole) {
-    q.columns([
-      ...Object.values(Users.col),
-      // Getting first role from grouped results
-      knex.raw(`(array_agg("server_acl"."role"))[1] as role`)
-    ])
-    q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-    q.groupBy(Users.col.id)
+    // Getting first role from grouped results
+    columns.push(knex.raw(`(array_agg("server_acl"."role"))[1] as role`))
   }
+
+  q.columns(columns)
+  q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+  q.groupBy(Users.col.id)
+  q.groupBy(`${USER_EMAILS_TABLE_NAME}.email`)
+  q.groupBy(`${USER_EMAILS_TABLE_NAME}.verified`)
 
   return (await q).map((u) => (skipClean ? u : sanitizeUserRecord(u)))
 }
