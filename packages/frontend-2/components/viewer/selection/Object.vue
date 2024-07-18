@@ -21,7 +21,7 @@
             !unfold ? '-rotate-90' : 'rotate-0'
           }`"
         />
-        <div :class="`truncate text-xs font-bold ${headerClasses}`">
+        <div :class="`truncate text-body-2xs font-semibold ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
           <span
             v-if="(props.root || props.modifiedSibling) && isModifiedQuery.modified"
@@ -46,13 +46,13 @@
           }`"
         >
           <div
-            class="col-span-1 truncate text-xs font-bold mr-2"
+            class="col-span-1 truncate text-body-3xs mr-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
           </div>
           <div
-            class="group col-span-2 pl-1 truncate text-xs flex gap-1 items-center"
+            class="group col-span-2 pl-1 truncate text-body-3xs flex gap-1 items-center"
             :title="(kvp.value as string)"
           >
             <div class="flex gap-1 items-center w-full">
