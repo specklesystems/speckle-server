@@ -2,17 +2,15 @@
   <LayoutDialog
     v-model:open="isOpen"
     v-bind="
-      !isNotMobile
-        ? { title: selectedMenuItem ? selectedMenuItem.title : 'Settings' }
-        : {}
+      isMobile ? { title: selectedMenuItem ? selectedMenuItem.title : 'Settings' } : {}
     "
     fullscreen
-    :show-back-button="!isNotMobile && !!selectedMenuItem"
+    :show-back-button="isMobile && !!selectedMenuItem"
     @back="selectedMenuItem = null"
   >
     <div class="w-full h-full flex">
       <LayoutSidebar
-        v-if="isNotMobile || !selectedMenuItem"
+        v-if="!isMobile || !selectedMenuItem"
         class="w-full md:w-56 lg:w-60 md:p-4 md:pt-6 md:bg-foundation-page md:border-r md:border-outline-3"
       >
         <LayoutSidebarMenu>
@@ -52,7 +50,7 @@
         v-if="selectedMenuItem"
         :class="[
           'bg-foundation md:p-6 md:px-10 md:py-12 w-full md:bg-foundation',
-          isNotMobile && 'simple-scrollbar overflow-y-auto flex-1'
+          !isMobile && 'simple-scrollbar overflow-y-auto flex-1'
         ]"
       >
         <div class="pb-6">
@@ -100,7 +98,7 @@ const props = defineProps<{
 const route = useRoute()
 const router = useRouter()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isNotMobile = breakpoints.greater('md')
+const isMobile = breakpoints.smallerOrEqual('md')
 
 const selectedMenuItem = shallowRef<MenuItem | null>(null)
 
@@ -173,7 +171,7 @@ watch(
         // Set matching menu items if it exists
         if (matchingMenuItem) {
           selectedMenuItem.value = matchingMenuItem
-        } else if (isNotMobile.value) {
+        } else if (!isMobile.value) {
           // On desktop: if no matching query check if we can match it to server
           // Else open on the user profile page
           // On mobile we not select any item and show the sidebar
@@ -187,7 +185,7 @@ watch(
       }
 
       // Check if there is target prop, only on desktop toggle that page
-      if (isNotMobile.value && props.targetMenuItem) {
+      if (!isMobile.value && props.targetMenuItem) {
         const matchingMenuItem = getMenuItem(props.targetMenuItem)
         selectedMenuItem.value = matchingMenuItem
       }
