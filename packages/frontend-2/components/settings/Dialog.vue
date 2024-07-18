@@ -52,7 +52,7 @@
         v-if="selectedMenuItem"
         :class="[
           'bg-foundation md:p-6 md:px-10 md:py-12 w-full md:bg-foundation',
-          !isMobile && 'simple-scrollbar overflow-y-auto flex-1'
+          isNotMobile && 'simple-scrollbar overflow-y-auto flex-1'
         ]"
       >
         <div class="pb-6">
