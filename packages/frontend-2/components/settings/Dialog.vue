@@ -2,15 +2,17 @@
   <LayoutDialog
     v-model:open="isOpen"
     v-bind="
-      isMobile ? { title: selectedMenuItem ? selectedMenuItem.title : 'Settings' } : {}
+      !isNotMobile
+        ? { title: selectedMenuItem ? selectedMenuItem.title : 'Settings' }
+        : {}
     "
     fullscreen
-    :show-back-button="isMobile && !!selectedMenuItem"
+    :show-back-button="!isNotMobile && !!selectedMenuItem"
     @back="selectedMenuItem = null"
   >
     <div class="w-full h-full flex">
       <LayoutSidebar
-        v-if="!isMobile || !selectedMenuItem"
+        v-if="isNotMobile || !selectedMenuItem"
         class="w-full md:w-56 lg:w-60 md:p-4 md:pt-6 md:bg-foundation-page md:border-r md:border-outline-3"
       >
         <LayoutSidebarMenu>
@@ -98,7 +100,7 @@ const props = defineProps<{
 const route = useRoute()
 const router = useRouter()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-const isMobile = breakpoints.smallerOrEqual('md')
+const isNotMobile = breakpoints.greater('md')
 
 const selectedMenuItem = shallowRef<MenuItem | null>(null)
 
@@ -171,7 +173,7 @@ watch(
         // Set matching menu items if it exists
         if (matchingMenuItem) {
           selectedMenuItem.value = matchingMenuItem
-        } else if (!isMobile.value) {
+        } else if (isNotMobile.value) {
           // On desktop: if no matching query check if we can match it to server
           // Else open on the user profile page
           // On mobile we not select any item and show the sidebar
@@ -185,7 +187,7 @@ watch(
       }
 
       // Check if there is target prop, only on desktop toggle that page
-      if (!isMobile.value && props.targetMenuItem) {
+      if (isNotMobile.value && props.targetMenuItem) {
         const matchingMenuItem = getMenuItem(props.targetMenuItem)
         selectedMenuItem.value = matchingMenuItem
       }

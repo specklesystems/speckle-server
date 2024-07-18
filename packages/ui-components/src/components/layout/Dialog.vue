@@ -20,10 +20,10 @@
         >
           <TransitionChild
             as="template"
-            enter="ease-out duration-300"
+            enter="ease-out duration-5000"
             enter-from="md:opacity-0 translate-y-[100%] md:translate-y-4"
             enter-to="md:opacity-100 translate-y-0"
-            leave="ease-in duration-400"
+            leave="ease-in duration-5000"
             leave-from="md:opacity-100 translate-y-0"
             leave-to="md:opacity-0 translate-y-[100%] md:translate-y-4"
             @after-leave="$emit('fully-closed')"
@@ -198,11 +198,8 @@ const widthClasses = computed(() => {
   const classParts: string[] = ['w-full', 'sm:w-full']
 
   if (!props.fullscreen) {
-    classParts.push('sm:max-w-2xl')
+    classParts.push('md:max-w-2xl')
 
-    if (maxWidthWeight.value >= 1) {
-      classParts.push('md:max-w-2xl')
-    }
     if (maxWidthWeight.value >= 2) {
       classParts.push('lg:max-w-4xl')
     }
