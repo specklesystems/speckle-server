@@ -156,7 +156,7 @@
           </div>
         </div>
         <!-- Name -->
-        <div class="text-heading-lg text-foreground flex-grow text-left">
+        <div class="text-heading text-foreground flex-grow text-left">
           {{ name }}
         </div>
         <!-- Preview -->
