@@ -10,17 +10,18 @@ import {
   Vector2,
   Vector3
 } from 'three'
-import {
-  SmoothOrbitControlsOptions,
-  SmoothOrbitControls
-} from './controls/SmoothOrbitControls.js'
+
 import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera.js'
 import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera.js'
-import { type IViewer, type SpeckleView } from '../../IViewer.js'
 import { FlyControls, FlyControlsOptions } from './controls/FlyControls.js'
 import { SpeckleControls } from './controls/SpeckleControls.js'
 import Logger from '../utils/Logger.js'
 import { GeometryType } from '../batching/Batch.js'
+import { IViewer, SpeckleView, UpdateFlags } from '../../IViewer.js'
+import {
+  SmoothOrbitControlsOptions,
+  SmoothOrbitControls
+} from './controls/SmoothOrbitControls.js'
 
 // const UP: Vector3 = new Vector3(0, 1, 0)
 // const quatBuff = new Quaternion()
@@ -330,14 +331,14 @@ export class CameraController extends Extension implements SpeckleCamera {
     if (this._renderingCamera === this.perspectiveCamera) return
     this.renderingCamera = this.perspectiveCamera
     this.setupPerspectiveCamera()
-    this.viewer.requestRender()
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET)
   }
 
   public setOrthoCameraOn(): void {
     if (this._renderingCamera === this.orthographicCamera) return
     this.renderingCamera = this.orthographicCamera
     this.setupOrthoCamera()
-    this.viewer.requestRender()
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET)
   }
 
   public toggleCameras(): void {
