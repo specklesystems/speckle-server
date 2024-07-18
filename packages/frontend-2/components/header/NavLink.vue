@@ -2,7 +2,7 @@
   <div class="text-foreground hover:text-primary-focus transition last:truncate">
     <NuxtLink
       :to="to"
-      class="flex gap-1 items-center text-sm ml-0.5"
+      class="flex gap-1 items-center text-body-xs ml-0.5"
       active-class="text-primary text-heading group is-active"
     >
       <div v-if="separator">

@@ -59,7 +59,7 @@
         </div>
       </div>
       <template v-if="!isSmallerOrEqualSm" #footer>
-        <div class="text-foreground-2 text-xs select-none">
+        <div class="text-foreground-2 text-body-2xs select-none">
           Hold "shift" to select multiple objects
         </div>
       </template>

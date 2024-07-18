@@ -7,7 +7,7 @@
     @mouseenter="hovered = true"
   >
     <div
-      :class="['relative', defaultLinkDisabled ? 'cursor-pointer' : '']"
+      :class="['relative group/item', defaultLinkDisabled ? 'cursor-pointer' : '']"
       @click="$emit('click', $event)"
       @keypress="keyboardClick((e) => emit('click', e))"
     >
@@ -51,18 +51,16 @@
           >
             {{ nameParts[0] }}
           </div>
-          <div class="text-heading truncate text-foreground flex-shrink min-w-0">
+          <div class="text-heading-sm truncate text-foreground flex-shrink min-w-0">
             {{ nameParts[1] }}
           </div>
+          <ProjectPageModelsCardUpdatedTime
+            :updated-at="updatedAtFullDate"
+            class="hidden group-hover/item:block pb-1.5 -mt-0.5 text-body-3xs w-full text-foreground-2 truncate transition"
+          />
         </NuxtLink>
         <div class="hidden sm:flex grow" />
         <div class="flex items-center">
-          <ProjectPageModelsCardUpdatedTime
-            :updated-at="updatedAtFullDate"
-            :class="`text-body-3xs w-full text-foreground-2 sm:mr-1 truncate transition ${
-              hovered ? 'sm:w-auto' : 'sm:w-0'
-            }`"
-          />
           <FormButton
             v-if="finalShowVersions"
             v-tippy="'View Version Gallery'"
