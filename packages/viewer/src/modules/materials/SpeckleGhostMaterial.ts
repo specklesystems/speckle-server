@@ -1,6 +1,6 @@
-import { speckleGhostVert } from './shaders/speckle-ghost-vert'
-import { speckleGhostFrag } from './shaders/speckle-ghost-frag'
-import SpeckleBasicMaterial from './SpeckleBasicMaterial'
+import { speckleGhostVert } from './shaders/speckle-ghost-vert.js'
+import { speckleGhostFrag } from './shaders/speckle-ghost-frag.js'
+import SpeckleBasicMaterial from './SpeckleBasicMaterial.js'
 import type { MeshBasicMaterialParameters } from 'three'
 
 class SpeckleGhostMaterial extends SpeckleBasicMaterial {

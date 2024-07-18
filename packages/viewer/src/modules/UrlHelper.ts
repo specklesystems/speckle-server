@@ -1,5 +1,5 @@
 import { SpeckleViewer } from '@speckle/shared'
-import Logger from 'js-logger'
+import Logger from './utils/Logger.js'
 
 interface ReferencedObjectUrl {
   origin: string

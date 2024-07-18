@@ -1,30 +1,30 @@
 import { DoubleSide, Plane, Side, Vector2, WebGLRenderer } from 'three'
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js'
-import Batcher from '../batching/Batcher'
-import SpeckleRenderer from '../SpeckleRenderer'
-import { ApplySAOPass } from './ApplyAOPass'
-import { CopyOutputPass } from './CopyOutputPass'
-import { DepthPass, DepthSize, DepthType } from './DepthPass'
-import { NormalsPass } from './NormalsPass'
+import Batcher from '../batching/Batcher.js'
+import SpeckleRenderer from '../SpeckleRenderer.js'
+import { ApplySAOPass } from './ApplyAOPass.js'
+import { CopyOutputPass } from './CopyOutputPass.js'
+import { DepthPass, DepthSize, DepthType } from './DepthPass.js'
+import { NormalsPass } from './NormalsPass.js'
 import {
   DefaultDynamicAOPassParams,
   DynamicSAOPass,
   DynamicAOOutputType,
   type DynamicAOPassParams,
   NormalsType
-} from './DynamicAOPass'
+} from './DynamicAOPass.js'
 import {
   DefaultStaticAoPassParams,
   StaticAOPass,
   type StaticAoPassParams
-} from './StaticAOPass'
-import { BaseSpecklePass, RenderType, type SpecklePass } from './SpecklePass'
-import { ColorPass } from './ColorPass'
-import { StencilPass } from './StencilPass'
-import { StencilMaskPass } from './StencilMaskPass'
-import { OverlayPass } from './OverlayPass'
-import { ObjectLayers } from '../../IViewer'
-import type { BatchUpdateRange } from '../batching/Batch'
+} from './StaticAOPass.js'
+import { BaseSpecklePass, RenderType, type SpecklePass } from './SpecklePass.js'
+import { ColorPass } from './ColorPass.js'
+import { StencilPass } from './StencilPass.js'
+import { StencilMaskPass } from './StencilMaskPass.js'
+import { OverlayPass } from './OverlayPass.js'
+import { ObjectLayers } from '../../IViewer.js'
+import type { BatchUpdateRange } from '../batching/Batch.js'
 
 export enum PipelineOutputType {
   DEPTH_RGBA = 0,

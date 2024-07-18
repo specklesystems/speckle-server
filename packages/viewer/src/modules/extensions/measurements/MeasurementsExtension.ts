@@ -1,16 +1,16 @@
-import SpeckleRenderer from '../../SpeckleRenderer'
+import SpeckleRenderer from '../../SpeckleRenderer.js'
 
-import { type IViewer, ObjectLayers } from '../../../IViewer'
-import { PerpendicularMeasurement } from './PerpendicularMeasurement'
+import { type IViewer, ObjectLayers } from '../../../IViewer.js'
+import { PerpendicularMeasurement } from './PerpendicularMeasurement.js'
 import { Plane, Ray, Raycaster, Vector2, Vector3 } from 'three'
-import { PointToPointMeasurement } from './PointToPointMeasurement'
-import { Measurement, MeasurementState } from './Measurement'
-import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster'
-import Logger from 'js-logger'
-import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial'
-import { Extension } from '../Extension'
-import { InputEvent } from '../../input/Input'
-import { CameraController } from '../CameraController'
+import { PointToPointMeasurement } from './PointToPointMeasurement.js'
+import { Measurement, MeasurementState } from './Measurement.js'
+import { ExtendedMeshIntersection } from '../../objects/SpeckleRaycaster.js'
+import SpeckleGhostMaterial from '../../materials/SpeckleGhostMaterial.js'
+import { Extension } from '../Extension.js'
+import { InputEvent } from '../../input/Input.js'
+import { CameraController } from '../CameraController.js'
+import Logger from '../../utils/Logger.js'
 
 export enum MeasurementType {
   PERPENDICULAR,

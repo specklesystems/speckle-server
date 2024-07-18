@@ -1,4 +1,4 @@
-import { Extension } from './Extension'
+import { Extension } from './Extension.js'
 import {
   Box3,
   Camera,
@@ -10,17 +10,18 @@ import {
   Vector2,
   Vector3
 } from 'three'
+
+import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera.js'
+import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera.js'
+import { FlyControls, FlyControlsOptions } from './controls/FlyControls.js'
+import { SpeckleControls } from './controls/SpeckleControls.js'
+import Logger from '../utils/Logger.js'
+import { GeometryType } from '../batching/Batch.js'
+import { IViewer, SpeckleView, UpdateFlags } from '../../IViewer.js'
 import {
   SmoothOrbitControlsOptions,
   SmoothOrbitControls
-} from './controls/SmoothOrbitControls'
-import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera'
-import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera'
-import Logger from 'js-logger'
-import { UpdateFlags, type IViewer, type SpeckleView } from '../../IViewer'
-import { FlyControls, FlyControlsOptions } from './controls/FlyControls'
-import { SpeckleControls } from './controls/SpeckleControls'
-import { GeometryType } from '../batching/Batch'
+} from './controls/SmoothOrbitControls.js'
 
 // const UP: Vector3 = new Vector3(0, 1, 0)
 // const quatBuff = new Quaternion()

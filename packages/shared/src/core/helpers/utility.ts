@@ -1,4 +1,4 @@
-import { isNull, isNumber, isUndefined } from '#lodash'
+import { isNull, isNumber, isUndefined, noop } from '#lodash'
 import type {
   MaybeAsync,
   NonNullableProperties,
@@ -144,3 +144,5 @@ export const removeNullOrUndefinedKeys = <T extends Record<string, unknown>>(
 
 export const isArrayOf = <T>(arr: unknown, guard: (v: unknown) => v is T): arr is T[] =>
   Array.isArray(arr) && arr.every(guard)
+
+export const waitForever = (): Promise<never> => new Promise<never>(noop)

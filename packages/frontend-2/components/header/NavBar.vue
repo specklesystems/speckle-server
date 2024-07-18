@@ -30,7 +30,7 @@
             class="hidden md:flex"
             size="sm"
           >
-            Sign In
+            Sign in
           </FormButton>
           <!-- Profile dropdown -->
           <HeaderNavUserMenu :login-url="loginUrl" />

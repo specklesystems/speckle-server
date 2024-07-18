@@ -5,7 +5,7 @@
         <h1
           class="text-xl sm:text-3xl text-center font-bold bg-gradient-to-r py-1 from-blue-500 via-blue-400 to-blue-600 inline-block text-transparent bg-clip-text"
         >
-          Create your Speckle Account
+          Create your Speckle account
         </h1>
         <h2 class="text-sm sm:text-base text-center text-foreground-2">
           Connectivity, Collaboration and Automation for 3D

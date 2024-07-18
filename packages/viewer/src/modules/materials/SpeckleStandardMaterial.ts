@@ -1,6 +1,6 @@
 /* eslint-disable camelcase */
-import { speckleStandardVert } from './shaders/speckle-standard-vert'
-import { speckleStandardFrag } from './shaders/speckle-standard-frag'
+import { speckleStandardVert } from './shaders/speckle-standard-vert.js'
+import { speckleStandardFrag } from './shaders/speckle-standard-frag.js'
 import {
   ShaderLib,
   Vector3,
@@ -13,8 +13,8 @@ import {
   Object3D
 } from 'three'
 import { Matrix4 } from 'three'
-import { ExtendedMeshStandardMaterial, type Uniforms } from './SpeckleMaterial'
-import { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer'
+import { ExtendedMeshStandardMaterial, type Uniforms } from './SpeckleMaterial.js'
+import { SpeckleWebGLRenderer } from '../objects/SpeckleWebGLRenderer.js'
 
 class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
   protected originalRoughness: number | undefined
@@ -76,7 +76,6 @@ class SpeckleStandardMaterial extends ExtendedMeshStandardMaterial {
     toStandard.emissiveIntensity = fromStandard.emissiveIntensity
     toStandard.envMap = fromStandard.envMap
     toStandard.envMapIntensity = fromStandard.envMapIntensity
-    toStandard.refractionRatio = fromStandard.refractionRatio
     toStandard.originalRoughness = fromStandard.originalRoughness
     toStandard.artificialRoughness = fromStandard.artificialRoughness
 

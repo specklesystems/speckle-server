@@ -34,12 +34,12 @@
           </div>
           <div class="truncate text-xs">
             <span
-              v-tippy="createdAt"
+              v-tippy="createdAtFormatted.full"
               :class="`${
                 showVersions ? 'text-foundation font-semibold' : ''
               } text-xs opacity-70`"
             >
-              {{ isLatest ? 'latest version' : timeAgoCreatedAt }}
+              {{ isLatest ? 'Latest version' : createdAtFormatted.relative }}
             </span>
           </div>
         </div>
@@ -176,6 +176,15 @@ const loadedVersion = computed(() =>
   versions.value.find((v) => v.id === props.versionId)
 )
 
+const createdAt = computed(() => loadedVersion.value?.createdAt)
+
+const createdAtFormatted = computed(() => {
+  return {
+    full: formattedFullDate(createdAt.value),
+    relative: formattedRelativeDate(createdAt.value, { capitalize: true })
+  }
+})
+
 const latestVersion = computed(() => {
   return versions.value
     .slice()
@@ -183,14 +192,6 @@ const latestVersion = computed(() => {
 })
 
 const isLatest = computed(() => loadedVersion.value?.id === latestVersion.value.id)
-
-const timeAgoCreatedAt = computed(() =>
-  dayjs(loadedVersion.value?.createdAt).from(dayjs())
-)
-
-const createdAt = computed(() => {
-  return dayjs(loadedVersion.value?.createdAt).format('LLL')
-})
 
 const latestVersionId = computed(() => latestVersion.value.id)
 

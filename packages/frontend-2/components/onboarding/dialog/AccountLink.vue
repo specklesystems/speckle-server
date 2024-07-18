@@ -1,6 +1,6 @@
 <template>
   <OnboardingDialogBase v-model:open="openState">
-    <template #header>Log In 🔑</template>
+    <template #header>Log in 🔑</template>
     <CommonVimeoEmbed
       vimeo-id="925894038"
       title="Onboarding: Log in to your Speckle account"
@@ -9,7 +9,7 @@
     />
     <div class="flex justify-center mt-2">
       <FormButton size="xl" class="shadow-md" @click="authoriseManager()">
-        Authorize Manager
+        Authorize manager
       </FormButton>
     </div>
   </OnboardingDialogBase>

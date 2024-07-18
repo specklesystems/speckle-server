@@ -13,14 +13,14 @@ import {
   ZeroFactor
 } from 'three'
 import { FullScreenQuad, Pass } from 'three/examples/jsm/postprocessing/Pass.js'
-import { speckleApplyAoFrag } from '../materials/shaders/speckle-apply-ao-frag'
-import { speckleApplyAoVert } from '../materials/shaders/speckle-apply-ao-vert'
+import { speckleApplyAoFrag } from '../materials/shaders/speckle-apply-ao-frag.js'
+import { speckleApplyAoVert } from '../materials/shaders/speckle-apply-ao-vert.js'
 import {
   type InputColorTextureUniform,
   type InputColorInterpolateTextureUniform,
   type SpeckleProgressivePass,
   RenderType
-} from './SpecklePass'
+} from './SpecklePass.js'
 
 export class ApplySAOPass extends Pass implements SpeckleProgressivePass {
   private fsQuad: FullScreenQuad

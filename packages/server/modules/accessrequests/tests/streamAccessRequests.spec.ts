@@ -194,7 +194,7 @@ describe('Stream access requests', () => {
 
     it('operation fails if stream is nonexistant', async () => {
       const secondResults = await createReq('abcdef123')
-      expect(secondResults).to.haveGraphQLErrors('non-existant stream')
+      expect(secondResults).to.haveGraphQLErrors('non-existant resource')
       expect(secondResults.data?.streamAccessRequestCreate.id).to.be.not.ok
     })
 

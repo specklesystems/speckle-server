@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { MathUtils } from 'three'
-import { type TreeNode, WorldTree } from '../../tree/WorldTree'
-import Logger from 'js-logger'
-import { NodeMap } from '../../tree/NodeMap'
-import type { SpeckleObject } from '../../..'
+import { type TreeNode, WorldTree } from '../../tree/WorldTree.js'
+import { NodeMap } from '../../tree/NodeMap.js'
+import type { SpeckleObject } from '../../../index.js'
 import type ObjectLoader from '@speckle/objectloader'
+import Logger from '../../utils/Logger.js'
 
 export type ConverterResultDelegate = () => Promise<void>
 export type SpeckleConverterNodeDelegate =
