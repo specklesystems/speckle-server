@@ -17,7 +17,7 @@ import {
   Nullable
 } from '@/modules/shared/helpers/typeHelper'
 import { getUser } from '@/modules/core/repositories/users'
-import { Optional, wait } from '@speckle/shared'
+import { wait } from '@speckle/shared'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import * as Observability from '@speckle/shared/dist/commonjs/observability/index.js'
 import { pino } from 'pino'
@@ -135,7 +135,7 @@ export async function authContextMiddleware(
 export function addLoadersToCtx(
   ctx: Merge<
     Omit<GraphQLContext, 'loaders'>,
-    { log: Optional<pino.Logger>; res: MaybeNullOrUndefined<ServerResponse> }
+    { log?: pino.Logger; res?: MaybeNullOrUndefined<ServerResponse> }
   >,
   options?: Partial<{ cleanLoadersEarly: boolean }>
 ): GraphQLContext {

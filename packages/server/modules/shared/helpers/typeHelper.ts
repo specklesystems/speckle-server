@@ -48,9 +48,9 @@ export type GraphQLContext = AuthContext & {
    */
   loaders: RequestDataLoaders
 
-  log?: pino.Logger
+  log: pino.Logger
 
-  res?: MaybeNullOrUndefined<ServerResponse>
+  res: MaybeNullOrUndefined<ServerResponse>
 }
 
 export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }
