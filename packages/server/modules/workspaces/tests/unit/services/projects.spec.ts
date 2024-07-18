@@ -11,7 +11,7 @@ describe('Project retrieval services', () => {
       const foundProjects: StreamRecord[] = []
       const storedProjects: StreamRecord[] = [{ workspaceId } as StreamRecord]
 
-      const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
+      const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
         getStreams: async () => {
           return {
             streams: storedProjects,
@@ -21,8 +21,10 @@ describe('Project retrieval services', () => {
         }
       })
 
-      for await (const project of queryAllWorkspaceProjects(workspaceId)) {
-        foundProjects.push(project)
+      for await (const projectsPage of queryAllWorkspaceProjectsGenerator(
+        workspaceId
+      )) {
+        foundProjects.push(...projectsPage)
       }
 
       expect(foundProjects.length).to.equal(1)
@@ -36,7 +38,7 @@ describe('Project retrieval services', () => {
         { workspaceId } as StreamRecord
       ]
 
-      const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
+      const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
         getStreams: async ({ cursor }) => {
           return cursor
             ? { streams: [storedProjects[1]], totalCount: 1, cursorDate: null }
@@ -44,8 +46,10 @@ describe('Project retrieval services', () => {
         }
       })
 
-      for await (const project of queryAllWorkspaceProjects(workspaceId)) {
-        foundProjects.push(project)
+      for await (const projectsPage of queryAllWorkspaceProjectsGenerator(
+        workspaceId
+      )) {
+        foundProjects.push(...projectsPage)
       }
 
       expect(foundProjects.length).to.equal(2)
@@ -55,14 +59,16 @@ describe('Project retrieval services', () => {
 
       const foundProjects: StreamRecord[] = []
 
-      const queryAllWorkspaceProjects = queryAllWorkspaceProjectsFactory({
+      const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
         getStreams: async () => {
           return { streams: [], totalCount: 0, cursorDate: null }
         }
       })
 
-      for await (const project of queryAllWorkspaceProjects(workspaceId)) {
-        foundProjects.push(project)
+      for await (const projectsPage of queryAllWorkspaceProjectsGenerator(
+        workspaceId
+      )) {
+        foundProjects.push(...projectsPage)
       }
 
       expect(foundProjects.length).to.equal(0)

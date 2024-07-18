@@ -10,7 +10,7 @@ export const queryAllWorkspaceProjectsFactory = ({
 }) =>
   async function* queryAllWorkspaceProjects(
     workspaceId: string
-  ): AsyncGenerator<StreamRecord, void, unknown> {
+  ): AsyncGenerator<StreamRecord[], void, unknown> {
     let cursor: Date | null = null
     let iterationCount = 0
 
@@ -27,9 +27,7 @@ export const queryAllWorkspaceProjectsFactory = ({
         workspaceIdWhitelist: [workspaceId]
       })
 
-      for (const stream of streams ?? []) {
-        yield stream
-      }
+      yield streams
 
       cursor = cursorDate
       iterationCount++

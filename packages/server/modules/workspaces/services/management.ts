@@ -61,11 +61,11 @@ export const createWorkspaceFactory =
       workspaceId: workspace.id
     })
 
+    // emit a workspace created event
     await emitWorkspaceEvent({
       eventName: WorkspaceEvents.Created,
       payload: { ...workspace, createdByUserId: userId }
     })
-    // emit a workspace created event
 
     return workspace
   }
@@ -106,18 +106,22 @@ export const deleteWorkspaceRoleFactory =
     }
 
     // Delete workspace project roles
-    const projectIds: string[] = []
-    for await (const project of queryAllWorkspaceProjectsFactory({ getStreams })(
-      workspaceId
-    )) {
-      projectIds.push(project.id)
+    const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
+      getStreams
+    })
+    for await (const projectsPage of queryAllWorkspaceProjectsGenerator(workspaceId)) {
+      await Promise.all(
+        projectsPage.map(({ id: streamId }) =>
+          revokeStreamPermissions({ streamId, userId })
+        )
+      )
     }
-    await Promise.all(
-      projectIds.map((streamId) => revokeStreamPermissions({ streamId, userId }))
-    )
 
     // Emit deleted role
-    emitWorkspaceEvent({ eventName: WorkspaceEvents.RoleDeleted, payload: deletedRole })
+    await emitWorkspaceEvent({
+      eventName: WorkspaceEvents.RoleDeleted,
+      payload: deletedRole
+    })
 
     return deletedRole
   }
@@ -166,18 +170,17 @@ export const setWorkspaceRoleFactory =
 
     // Update user role in all workspace projects
     // TODO: Should these be in a transaction with the workspace role change?
+    const queryAllWorkspaceProjectsGenerator = queryAllWorkspaceProjectsFactory({
+      getStreams
+    })
     const projectRole = mapWorkspaceRoleToProjectRole(role)
-    const projectIds: string[] = []
-    for await (const project of queryAllWorkspaceProjectsFactory({ getStreams })(
-      workspaceId
-    )) {
-      projectIds.push(project.id)
-    }
-    await Promise.all(
-      projectIds.map((streamId) =>
-        grantStreamPermissions({ streamId, userId, role: projectRole })
+    for await (const projectsPage of queryAllWorkspaceProjectsGenerator(workspaceId)) {
+      await Promise.all(
+        projectsPage.map(({ id: streamId }) =>
+          grantStreamPermissions({ streamId, userId, role: projectRole })
+        )
       )
-    )
+    }
 
     // Emit new role
     await emitWorkspaceEvent({
