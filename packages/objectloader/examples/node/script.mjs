@@ -5,7 +5,7 @@ import fetch from 'cross-fetch'
 import ObjectLoader from '../../dist/objectloader.js'
 
 const loader = new ObjectLoader({
-  serverUrl: 'https://latest.speckle.dev',
+  serverUrl: 'https://latest.speckle.systems',
   streamId: '3ed8357f29',
   objectId: '0408ab9caaa2ebefb2dd7f1f671e7555',
   options: { enableCaching: false, excludeProps: [], fetch }

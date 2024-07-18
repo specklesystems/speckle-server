@@ -41,7 +41,7 @@ async function getOldResourceUrls(url: string, authToken?: string): Promise<stri
   if (url.includes('objects')) objsUrls.push(url)
 
   // supports urls that include overlay queries
-  // e.g., https://speckle.xyz/streams/a632e7a784/objects/457c45feffa6f954572e5e86fb6d4f25?overlay=cf8dc76247,f5adc1d991b3dceb4b5ad6b50f919a0e
+  // e.g., https://app.speckle.systems/streams/a632e7a784/objects/457c45feffa6f954572e5e86fb6d4f25?overlay=cf8dc76247,f5adc1d991b3dceb4b5ad6b50f919a0e
   if (url.includes('overlay=')) {
     const searchParams = new URLSearchParams(parsed.search)
     const resIds = searchParams.get('overlay')?.split(',')
