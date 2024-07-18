@@ -10,7 +10,7 @@
   >
     <div class="relative">
       <button
-        v-tippy="!modelValue.isExpanded ? 'New Comment' : 'Close'"
+        v-tippy="!modelValue.isExpanded ? 'New comment' : 'Close'"
         :class="`bg-foundation-2 ${
           modelValue.isExpanded ? 'outline outline-2 outline-primary' : ''
         } rounded-tr-full rounded-tl-full rounded-br-full w-8 h-8 -top-10 absolute flex justify-center items-center hover:shadow-md`"

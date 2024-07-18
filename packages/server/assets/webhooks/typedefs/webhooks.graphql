@@ -2,6 +2,9 @@ extend type Stream {
   webhooks(id: String): WebhookCollection!
     @hasServerRole(role: SERVER_USER)
     @hasScope(scope: "streams:write")
+    @deprecated(
+      reason: "Part of the old API surface and will be removed in the future. Use Project.webhooks instead."
+    )
 }
 
 extend type Project {

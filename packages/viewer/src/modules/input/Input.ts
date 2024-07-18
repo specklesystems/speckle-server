@@ -1,5 +1,5 @@
 import { Vector2 } from 'three'
-import EventEmitter from '../EventEmitter'
+import EventEmitter from '../EventEmitter.js'
 
 export enum InputEvent {
   PointerDown = 'pointer-down',

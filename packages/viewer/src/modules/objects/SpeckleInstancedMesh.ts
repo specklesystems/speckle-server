@@ -18,17 +18,17 @@ import {
   Vector3,
   type Intersection
 } from 'three'
-import { BatchObject } from '../batching/BatchObject'
-import Materials from '../materials/Materials'
-import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure'
-import { ObjectLayers } from '../../IViewer'
-import Logger from 'js-logger'
+import { BatchObject } from '../batching/BatchObject.js'
+import Materials from '../materials/Materials.js'
+import { TopLevelAccelerationStructure } from './TopLevelAccelerationStructure.js'
+import { ObjectLayers } from '../../IViewer.js'
 import {
   type DrawGroup,
   INSTANCE_GRADIENT_BUFFER_STRIDE,
   INSTANCE_TRANSFORM_BUFFER_STRIDE
-} from '../batching/Batch'
-import { SpeckleRaycaster } from './SpeckleRaycaster'
+} from '../batching/Batch.js'
+import { SpeckleRaycaster } from './SpeckleRaycaster.js'
+import Logger from '../utils/Logger.js'
 
 const _inverseMatrix = new Matrix4()
 const _ray = new Ray()

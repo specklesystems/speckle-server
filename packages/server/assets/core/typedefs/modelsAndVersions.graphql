@@ -40,6 +40,11 @@ extend type Project {
   Retrieve a specific project version by its ID
   """
   version(id: String!): Version
+
+  """
+  Retrieve a specific project model by its ID
+  """
+  modelByName(name: String!): Model!
 }
 
 extend type User {
@@ -174,10 +179,29 @@ input UpdateVersionInput {
   message: String
 }
 
+input CreateVersionInput {
+  projectId: String!
+  modelId: String!
+  objectId: String!
+  message: String
+  sourceApplication: String
+  totalChildrenCount: Int
+  parents: [String!]
+}
+
+input MarkReceivedVersionInput {
+  projectId: String!
+  versionId: String!
+  sourceApplication: String!
+  message: String
+}
+
 type VersionMutations {
   moveToModel(input: MoveVersionsInput!): Model!
   delete(input: DeleteVersionsInput!): Boolean!
   update(input: UpdateVersionInput!): Version!
+  create(input: CreateVersionInput!): Version!
+  markReceived(input: MarkReceivedVersionInput!): Boolean!
 }
 
 extend type Mutation {

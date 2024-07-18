@@ -66,7 +66,7 @@ const getUserAclEntry = async ({ aclTableName, userId, resourceId }) => {
  * @param  {string | null | undefined} userId
  * @param  {string} resourceId
  * @param  {string} requiredRole
- * @param {import('@/modules/serverinvites/services/operations').TokenResourceIdentifier[] | undefined | null} [userResourceAccessLimits]
+ * @param {import('@/modules/core/domain/tokens/types').TokenResourceIdentifier[] | undefined | null} [userResourceAccessLimits]
  */
 async function authorizeResolver(
   userId,

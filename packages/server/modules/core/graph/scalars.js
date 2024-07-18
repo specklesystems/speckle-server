@@ -13,8 +13,6 @@ exports.scalarResolvers = {
 exports.scalarSchemas = `
 scalar DateTime
 
-scalar EmailAddress
-
 scalar BigInt
 
 scalar JSONObject

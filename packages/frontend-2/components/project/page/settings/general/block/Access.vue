@@ -51,7 +51,7 @@ const radioOptions = computed(() => [
   },
   {
     value: ProjectVisibility.Unlisted,
-    title: 'Link Shareable',
+    title: 'Link shareable',
     introduction: 'Anyone with the link can view',
     icon: LinkIcon
   },

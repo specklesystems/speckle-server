@@ -1,7 +1,7 @@
 <template>
   <ViewerCommentsPortalOrDiv v-if="shouldRenderSidebar" to="bottomPanel">
     <ViewerSidebar :open="sidebarOpen" @close="onClose">
-      <template #title><div class="select-none">Selection Info</div></template>
+      <template #title><div class="select-none">Selection info</div></template>
       <template #actions>
         <FormButton size="xs" text color="secondary" @click.stop="hideOrShowSelection">
           <div
@@ -54,7 +54,7 @@
         </div>
         <div v-if="itemCount <= objects.length" class="mb-2">
           <FormButton size="xs" text full-width @click="itemCount += 10">
-            View More ({{ objects.length - itemCount }})
+            View more ({{ objects.length - itemCount }})
           </FormButton>
         </div>
       </div>

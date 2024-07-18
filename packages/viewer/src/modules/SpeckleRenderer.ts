@@ -24,48 +24,48 @@ import {
   PerspectiveCamera,
   OrthographicCamera
 } from 'three'
-import { type Batch, type BatchUpdateRange, GeometryType } from './batching/Batch'
-import Batcher from './batching/Batcher'
-import { Geometry } from './converter/Geometry'
-import Input, { InputEvent } from './input/Input'
-import { Intersections } from './Intersections'
-import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial'
-import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial'
-import { NodeRenderView } from './tree/NodeRenderView'
-import { Viewer } from './Viewer'
-import { WorldTree, type TreeNode } from './tree/WorldTree'
+import { type Batch, type BatchUpdateRange, GeometryType } from './batching/Batch.js'
+import Batcher from './batching/Batcher.js'
+import { Geometry } from './converter/Geometry.js'
+import Input, { InputEvent } from './input/Input.js'
+import { Intersections } from './Intersections.js'
+import SpeckleDepthMaterial from './materials/SpeckleDepthMaterial.js'
+import SpeckleStandardMaterial from './materials/SpeckleStandardMaterial.js'
+import { NodeRenderView } from './tree/NodeRenderView.js'
+import { Viewer } from './Viewer.js'
+import { WorldTree, type TreeNode } from './tree/WorldTree.js'
 import {
   DefaultLightConfiguration,
   ObjectLayers,
   type SelectionEvent,
   type SunLightConfiguration,
   ViewerEvent
-} from '../IViewer'
+} from '../IViewer.js'
 import {
   DefaultPipelineOptions,
   Pipeline,
   type PipelineOptions
-} from './pipeline/Pipeline'
-import { Shadowcatcher } from './Shadowcatcher'
-import SpeckleMesh from './objects/SpeckleMesh'
-import { type ExtendedIntersection } from './objects/SpeckleRaycaster'
-import { BatchObject } from './batching/BatchObject'
-import { CameraEvent, type SpeckleCamera } from './objects/SpeckleCamera'
+} from './pipeline/Pipeline.js'
+import { Shadowcatcher } from './Shadowcatcher.js'
+import SpeckleMesh from './objects/SpeckleMesh.js'
+import { type ExtendedIntersection } from './objects/SpeckleRaycaster.js'
+import { BatchObject } from './batching/BatchObject.js'
+import { CameraEvent, type SpeckleCamera } from './objects/SpeckleCamera.js'
 import Materials, {
   type RenderMaterial,
   type DisplayStyle,
   type FilterMaterial,
   type FilterMaterialOptions
-} from './materials/Materials'
-import { type MaterialOptions } from './materials/MaterialOptions'
-import { SpeckleMaterial } from './materials/SpeckleMaterial'
-import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer'
-import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter'
-import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh'
-import { BaseSpecklePass } from './pipeline/SpecklePass'
-import { MeshBatch } from './batching/MeshBatch'
+} from './materials/Materials.js'
+import { type MaterialOptions } from './materials/MaterialOptions.js'
+import { SpeckleMaterial } from './materials/SpeckleMaterial.js'
+import { SpeckleWebGLRenderer } from './objects/SpeckleWebGLRenderer.js'
+import { SpeckleTypeAllRenderables } from './loaders/GeometryConverter.js'
+import SpeckleInstancedMesh from './objects/SpeckleInstancedMesh.js'
+import { BaseSpecklePass } from './pipeline/SpecklePass.js'
+import { MeshBatch } from './batching/MeshBatch.js'
 import type { Pass } from 'three/examples/jsm/postprocessing/Pass.js'
-import { RenderTree } from './tree/RenderTree'
+import { RenderTree } from './tree/RenderTree.js'
 
 export class RenderingStats {
   private renderTimeAcc = 0
