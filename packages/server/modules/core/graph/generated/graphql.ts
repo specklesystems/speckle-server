@@ -3806,13 +3806,23 @@ export type WorkspaceInviteUseInput = {
   workspaceId: Scalars['String']['input'];
 };
 
+export type WorkspaceMetadata = {
+  __typename?: 'WorkspaceMetadata';
+  createdAt: Scalars['DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
-  create: Workspace;
-  delete: Workspace;
+  create: WorkspaceMetadata;
+  delete: WorkspaceMetadata;
   deleteRole: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
-  update: Workspace;
+  update: WorkspaceMetadata;
+  /** TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes */
   updateRole: Scalars['Boolean']['output'];
 };
 
@@ -4163,7 +4173,8 @@ export type ResolversTypes = {
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteMutations: ResolverTypeWrapper<Omit<WorkspaceInviteMutations, 'batchCreate' | 'cancel' | 'create'> & { batchCreate: ResolversTypes['Workspace'], cancel: ResolversTypes['Workspace'], create: ResolversTypes['Workspace'] }>;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
-  WorkspaceMutations: ResolverTypeWrapper<Omit<WorkspaceMutations, 'create' | 'delete' | 'invites' | 'update'> & { create: ResolversTypes['Workspace'], delete: ResolversTypes['Workspace'], invites: ResolversTypes['WorkspaceInviteMutations'], update: ResolversTypes['Workspace'] }>;
+  WorkspaceMetadata: ResolverTypeWrapper<WorkspaceMetadata>;
+  WorkspaceMutations: ResolverTypeWrapper<Omit<WorkspaceMutations, 'invites'> & { invites: ResolversTypes['WorkspaceInviteMutations'] }>;
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
@@ -4378,7 +4389,8 @@ export type ResolversParentTypes = {
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteMutations: Omit<WorkspaceInviteMutations, 'batchCreate' | 'cancel' | 'create'> & { batchCreate: ResolversParentTypes['Workspace'], cancel: ResolversParentTypes['Workspace'], create: ResolversParentTypes['Workspace'] };
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
-  WorkspaceMutations: Omit<WorkspaceMutations, 'create' | 'delete' | 'invites' | 'update'> & { create: ResolversParentTypes['Workspace'], delete: ResolversParentTypes['Workspace'], invites: ResolversParentTypes['WorkspaceInviteMutations'], update: ResolversParentTypes['Workspace'] };
+  WorkspaceMetadata: WorkspaceMetadata;
+  WorkspaceMutations: Omit<WorkspaceMutations, 'invites'> & { invites: ResolversParentTypes['WorkspaceInviteMutations'] };
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
@@ -5704,12 +5716,21 @@ export type WorkspaceInviteMutationsResolvers<ContextType = GraphQLContext, Pare
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type WorkspaceMetadataResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceMetadata'] = ResolversParentTypes['WorkspaceMetadata']> = {
+  createdAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceMutations'] = ResolversParentTypes['WorkspaceMutations']> = {
-  create?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsCreateArgs, 'input'>>;
-  delete?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteArgs, 'workspaceId'>>;
+  create?: Resolver<ResolversTypes['WorkspaceMetadata'], ParentType, ContextType, RequireFields<WorkspaceMutationsCreateArgs, 'input'>>;
+  delete?: Resolver<ResolversTypes['WorkspaceMetadata'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteArgs, 'workspaceId'>>;
   deleteRole?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteRoleArgs, 'input'>>;
   invites?: Resolver<ResolversTypes['WorkspaceInviteMutations'], ParentType, ContextType>;
-  update?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
+  update?: Resolver<ResolversTypes['WorkspaceMetadata'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
   updateRole?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
@@ -5842,6 +5863,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   WorkspaceCollaborator?: WorkspaceCollaboratorResolvers<ContextType>;
   WorkspaceCollection?: WorkspaceCollectionResolvers<ContextType>;
   WorkspaceInviteMutations?: WorkspaceInviteMutationsResolvers<ContextType>;
+  WorkspaceMetadata?: WorkspaceMetadataResolvers<ContextType>;
   WorkspaceMutations?: WorkspaceMutationsResolvers<ContextType>;
 };
 

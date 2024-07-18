@@ -1,6 +1,16 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
-import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
+import {
+  WorkspacesNotAutorizedError,
+  WorkspacesNotYetImplementedError
+} from '@/modules/workspaces/errors/workspace'
+import {
+  upsertWorkspaceFactory,
+  upsertWorkspaceRoleFactory
+} from '@/modules/workspaces/repositories/workspaces'
+import { createWorkspaceFactory } from '@/modules/workspaces/services/management'
+import db from '@/db/knex'
+import { getEventBus } from '@/modules/shared/services/eventBus'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -13,8 +23,37 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       WorkspaceMutations: {
-        create: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        create: async (_parent, args, context) => {
+          const { name, description, logoUrl } = args.input
+
+          if (!context.userId) {
+            throw new WorkspacesNotAutorizedError()
+          }
+
+          const { emit: emitWorkspaceEvent } = getEventBus()
+
+          const upsertWorkspace = upsertWorkspaceFactory({ db })
+          const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
+          // TODO: ???
+          const storeBlob = async () => ''
+
+          const createWorkspace = createWorkspaceFactory({
+            upsertWorkspace,
+            upsertWorkspaceRole,
+            emitWorkspaceEvent,
+            storeBlob
+          })
+
+          const workspace = await createWorkspace({
+            userId: context.userId,
+            workspaceInput: {
+              name,
+              description: description ?? null,
+              logoUrl: logoUrl ?? null
+            }
+          })
+
+          return workspace
         },
         delete: async () => {
           throw new WorkspacesNotYetImplementedError()

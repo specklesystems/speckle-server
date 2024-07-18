@@ -3796,13 +3796,23 @@ export type WorkspaceInviteUseInput = {
   workspaceId: Scalars['String']['input'];
 };
 
+export type WorkspaceMetadata = {
+  __typename?: 'WorkspaceMetadata';
+  createdAt: Scalars['DateTime']['output'];
+  description?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
-  create: Workspace;
-  delete: Workspace;
+  create: WorkspaceMetadata;
+  delete: WorkspaceMetadata;
   deleteRole: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
-  update: Workspace;
+  update: WorkspaceMetadata;
+  /** TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes */
   updateRole: Scalars['Boolean']['output'];
 };
 

@@ -22,10 +22,15 @@ import { WorkspaceAdminRequiredError } from '@/modules/workspaces/errors/workspa
 import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/utils/roles'
 import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/domain/roles'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { EventBus } from '@/modules/shared/services/eventBus'
 
 type WorkspaceCreateArgs = {
-  workspaceInput: { name: string; description: string | null; logo: string | null }
   userId: string
+  workspaceInput: {
+    name: string
+    description: string | null
+    logoUrl: string | null
+  }
 }
 
 export const createWorkspaceFactory =
@@ -38,12 +43,12 @@ export const createWorkspaceFactory =
     upsertWorkspace: UpsertWorkspace
     upsertWorkspaceRole: UpsertWorkspaceRole
     storeBlob: StoreBlob
-    emitWorkspaceEvent: EmitWorkspaceEvent
+    emitWorkspaceEvent: EventBus['emit']
   }) =>
   async ({ userId, workspaceInput }: WorkspaceCreateArgs): Promise<Workspace> => {
     let logoUrl: string | null = null
-    if (workspaceInput.logo) {
-      logoUrl = await storeBlob(workspaceInput.logo)
+    if (workspaceInput.logoUrl) {
+      logoUrl = await storeBlob(workspaceInput.logoUrl)
     }
 
     const workspace = {
