@@ -146,7 +146,7 @@ const buildDeleteWorkspaceRoleAndTestContext = (
     getWorkspaceRoles: async () => context.workspaceRoles,
     deleteWorkspaceRole: async (role) => {
       const isMatch = (acl: WorkspaceAcl): boolean => {
-        return acl.workspaceId === role.workspaceId && acl.userId === role.workspaceId
+        return acl.workspaceId === role.workspaceId && acl.userId === role.userId
       }
 
       const deletedRoleIndex = context.workspaceRoles.findIndex(isMatch)
@@ -300,7 +300,7 @@ describe('Workspace role services', () => {
 
       const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
         workspaceId,
-        workspaceRoles: [{ userId, workspaceId, role: Roles.Workspace.Admin }],
+        workspaceRoles: [{ userId, workspaceId, role: Roles.Workspace.Member }],
         workspaceProjects: [{ id: projectId } as StreamRecord],
         workspaceProjectRoles: [
           { userId, role: Roles.Stream.Contributor, resourceId: projectId }
