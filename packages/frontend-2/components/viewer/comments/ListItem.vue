@@ -2,7 +2,7 @@
 <template>
   <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
   <div
-    :class="`py-1 sm:py-2 my-1 sm:my-2 px-2 flex flex-col space-y-1 bg-foundation border-l-4 hover:shadow-lg hover:bg-primary-muted rounded transition cursor-pointer
+    :class="`py-1 sm:py-2 my-1 sm:my-2 px-2 flex flex-col bg-foundation border-l-4 hover:shadow-lg hover:bg-primary-muted rounded transition cursor-pointer
       ${isOpenInViewer ? 'border-primary' : 'border-transparent'}
     `"
     @click="open(thread.id)"
@@ -21,14 +21,14 @@
       ></FormButton>
     </div>
     <div class="flex items-center space-x-1">
-      <span class="grow truncate text-xs font-medium text-foreground-2">
+      <span class="grow truncate text-body-xs font-semibold text-foreground-2">
         {{ thread.author.name }}
         <span v-if="threadAuthors.length !== 1">
           & {{ thread.replyAuthors.totalCount }} others
         </span>
       </span>
     </div>
-    <div class="truncate text-xs sm:text-sm mb-1">
+    <div class="truncate text-body-xs mb-1">
       {{ thread.rawText }}
     </div>
     <div

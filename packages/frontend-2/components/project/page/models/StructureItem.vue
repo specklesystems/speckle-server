@@ -24,7 +24,7 @@
 
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
-          <NuxtLink :to="modelLink || ''" class="text-heading-lg text-foreground">
+          <NuxtLink :to="modelLink || ''" class="text-heading text-foreground">
             {{ name }}
           </NuxtLink>
           <span

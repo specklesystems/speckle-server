@@ -9,7 +9,7 @@
         <div>
           <CubeIcon class="w-6" />
         </div>
-        <div class="flex min-w-0 flex-grow flex-col space-y-0">
+        <div class="flex min-w-0 flex-grow flex-col">
           <div :class="`text-sm sm:text-base font-bold truncate min-w-0`">
             Object {{ object.objectId }}
           </div>

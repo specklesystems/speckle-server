@@ -37,7 +37,7 @@
               <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
                 <div
                   v-if="hasTitle"
-                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-4 sm:p-6 truncate text-heading-xl"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-4 sm:p-6 truncate text-heading-lg"
                 >
                   <div class="w-full truncate pr-12">
                     {{ title }}
@@ -64,7 +64,7 @@
               </button>
               <div
                 ref="slotContainer"
-                class="flex-1 simple-scrollbar overflow-y-auto text-body"
+                class="flex-1 simple-scrollbar overflow-y-auto text-body-sm"
                 :class="hasTitle ? 'px-4 pb-4 sm:px-6' : 'p-4 sm:p-6'"
                 @scroll="onScroll"
               >

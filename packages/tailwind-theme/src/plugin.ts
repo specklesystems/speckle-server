@@ -247,36 +247,36 @@ export default plugin(function ({ addComponents, addBase }) {
     },
     // New heading styles
     '.text-heading-2xl, .h1': {
-      '@apply font-medium text-3xl leading-10 tracking-tighter': {}
+      '@apply font-medium text-3xl leading-10 tracking-[-0.63px]': {}
     },
     '.text-heading-xl, .h2': {
-      '@apply font-medium text-2xl leading-8 tracking-tighter': {}
+      '@apply font-medium text-2xl leading-8 tracking-[-0.456px]': {}
     },
     '.text-heading-lg, .h3': {
-      '@apply font-medium text-lg leading-6 tracking-tighter': {}
+      '@apply font-medium text-lg leading-6 tracking-[-0.224px]': {}
     },
     '.text-heading, .h4': {
-      '@apply font-medium text-base leading-6 tracking-tighter': {}
+      '@apply font-medium text-base leading-6 tracking-[-0.176px]': {}
     },
     '.text-heading-sm, .h5, .h6': {
-      '@apply font-medium text-sm leading-6 tracking-tighter': {}
+      '@apply font-medium text-sm leading-6 tracking-[-0.096px]': {}
     },
 
     // New body styles
     '.text-body': {
-      '@apply text-base leading-6 tracking-tighter': {}
+      '@apply text-base leading-6 tracking-[-0.176px]': {}
     },
     '.text-body-sm': {
-      '@apply text-sm leading-6 tracking-tight': {}
+      '@apply text-sm leading-6 tracking-[-0.096px]': {}
     },
     '.text-body-xs': {
-      '@apply text-[13px] leading-6 tracking-tight': {}
+      '@apply text-[13px] leading-6 tracking-[-0.0325px]': {}
     },
     '.text-body-2xs': {
       '@apply text-xs leading-4': {}
     },
     '.text-body-3xs': {
-      '@apply text-[11px] leading-4 tracking-wide': {}
+      '@apply text-[11px] leading-4 tracking-[0.055px]': {}
     },
 
     '.label': {

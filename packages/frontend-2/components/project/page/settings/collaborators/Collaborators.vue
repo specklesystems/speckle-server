@@ -16,7 +16,7 @@
         class="bg-foundation flex items-center gap-2 py-3 px-4 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
       >
         <UserAvatar :user="collaborator.user" />
-        <span class="grow truncate text-sm">{{ collaborator.title }}</span>
+        <span class="grow truncate text-body-sm">{{ collaborator.title }}</span>
 
         <template v-if="!collaborator.inviteId">
           <ProjectPageTeamPermissionSelect

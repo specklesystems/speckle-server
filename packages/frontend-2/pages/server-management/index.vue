@@ -3,15 +3,13 @@
     <Portal to="navigation">
       <HeaderNavLink to="/server-management" name="Server Management"></HeaderNavLink>
     </Portal>
-    <div
-      class="flex flex-col md:flex-row space-y-2 space-x-2 justify-between mb-4 md:items-center"
-    >
+    <div class="flex flex-col md:flex-row gap-2 justify-between mb-2 md:items-center">
       <div>
-        <h5 class="h4">Your server at a glance</h5>
+        <h5 class="text-heading-xl">Your server at a glance</h5>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-10">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
       <ServerManagementCard
         :server-info="serverData"
         @cta-clicked="showDialog = true"

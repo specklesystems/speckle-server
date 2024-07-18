@@ -21,7 +21,7 @@
       "
     >
       <div
-        class="text-heading-lg flex items-center gap-1 sm:gap-2 select-none"
+        class="text-heading flex items-center gap-1 sm:gap-2 select-none"
         :class="titleClasses"
       >
         <div

@@ -23,21 +23,21 @@
         <div>
           <UserAvatar :user="loadedVersion?.authorUser" />
         </div>
-        <div class="flex min-w-0 flex-grow flex-col space-y-0">
+        <div class="flex min-w-0 flex-grow flex-col">
           <div
             v-tippy="modelName.subheader ? model.name : null"
             :class="`${
               showVersions ? 'text-foundation' : ''
-            } text-sm sm:text-base font-bold truncate min-w-0`"
+            } text-heading truncate min-w-0`"
           >
             {{ modelName.header }}
           </div>
-          <div class="truncate text-xs">
+          <div class="truncate -mt-1">
             <span
               v-tippy="createdAtFormatted.full"
               :class="`${
                 showVersions ? 'text-foundation font-semibold' : ''
-              } text-xs opacity-70`"
+              } text-body-2xs opacity-70`"
             >
               {{ isLatest ? 'Latest version' : createdAtFormatted.relative }}
             </span>

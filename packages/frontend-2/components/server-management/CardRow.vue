@@ -1,11 +1,11 @@
 <template>
-  <div class="flex flex-col gap-2">
-    <div class="flex items-center gap-1 text-foreground-2 text-sm">
+  <div class="flex flex-col">
+    <div class="flex items-center gap-1 text-foreground-2 text-body-sm">
       <Component :is="icon" class="h-4 w-4" />
       <span>{{ title }}</span>
     </div>
     <div class="flex justify-between items-center gap-4 sm:gap-8">
-      <span class="text-xl sm:text-2xl font-bold">{{ value }}</span>
+      <span class="text-heading-lg">{{ value }}</span>
       <template v-if="cta?.type === 'button'">
         <FormButton @click="cta?.action">
           {{ cta.label }}
@@ -23,7 +23,7 @@
       </template>
       <template v-else-if="cta?.type === 'text'">
         <div
-          class="flex items-center gap-1 text-xs text-center sm:text-sm opacity-50 shrink-0"
+          class="flex items-center gap-1 text-body-2xs text-center opacity-50 shrink-0"
         >
           <CheckCircleIcon class="h-4 w-4" />
           {{ cta.label }}

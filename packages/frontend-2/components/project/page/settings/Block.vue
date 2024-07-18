@@ -13,7 +13,7 @@
     >
       <div class="flex items-center gap-2">
         <component :is="icon" v-if="icon" class="h-5 w-5"></component>
-        <h3 class="text-heading-xl">{{ title }}</h3>
+        <h3 class="text-heading-lg">{{ title }}</h3>
       </div>
       <div v-if="$slots['top-buttons']" class="flex gap-4">
         <slot name="top-buttons" />
@@ -21,12 +21,12 @@
     </div>
     <div
       v-if="$slots.introduction"
-      class="text-foreground text-body"
+      class="text-foreground text-body-sm"
       :class="background ? 'px-4 sm:px-6 pt-4' : 'pt-6'"
     >
       <slot name="introduction" />
     </div>
-    <div class="flex flex-col" :class="background ? 'p-4 sm:p-6' : ''">
+    <div class="flex flex-col text-body-sm" :class="background ? 'p-4 sm:p-6' : ''">
       <slot />
     </div>
     <div

@@ -32,7 +32,7 @@
         <MenuItems
           class="absolute z-50 right-0 md:right-16 top-14 sm:top-16 w-full sm:w-64 origin-top-right bg-foundation-2 outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
-          <div class="p-2 text-sm font-bold bg-gray-50 dark:bg-foundation mb-2">
+          <div class="p-2 text-heading-sm bg-gray-50 dark:bg-foundation">
             Notifications
           </div>
           <!-- <div class="p-2 text-sm">TODO: project invites</div> -->

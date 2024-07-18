@@ -47,7 +47,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
   const labelClasses = computed(() => {
     const classParts = [
-      'flex label mb-1.5',
+      'flex text-body-xs mb-1.5',
       unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2'
     ]
     if (!unref(props.showLabel)) {

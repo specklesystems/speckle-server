@@ -6,7 +6,7 @@
       <div
         class="w-full md:w-48 flex flex-col col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1"
       >
-        <div class="text-heading-xl transition">
+        <div class="text-heading-lg transition">
           <NuxtLink
             :to="projectRoute(project.id)"
             class="break-words hover:text-primary"
@@ -18,7 +18,7 @@
         <div class="flex-grow"></div>
         <div class="text-xs text-foreground-2 flex items-center">
           <UserCircleIcon class="w-4 h-4 mr-1" />
-          <span class="text-body-2xs -mt-px capitalize">
+          <span class="text-body-3xs -mt-px capitalize">
             {{ project.role?.split(':').reverse()[0] }}
           </span>
         </div>
@@ -27,9 +27,9 @@
           <CubeIcon class="w-4 h-4 mr-1" />
           {{ project.models.totalCount }} models
         </div> -->
-        <div class="text-xs text-foreground-2 flex items-center">
+        <div class="text-foreground-2 flex items-center">
           <ClockIcon class="w-4 h-4 mr-1" />
-          <span v-tippy="updatedAt.full" class="text-body-2xs -mt-px">
+          <span v-tippy="updatedAt.full" class="text-body-3xs -mt-px">
             Updated
             {{ updatedAt.relative }}
           </span>

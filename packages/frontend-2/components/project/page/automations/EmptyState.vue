@@ -6,7 +6,7 @@
         <div class="text-heading-2xl text-fancy-gradient">
           Scale your digital impact
         </div>
-        <div class="text-foreground text-body">
+        <div class="text-foreground text-body-sm">
           Speckle Automate empowers you to continuously monitor your published models,
           automatically ensuring project data standards, identifying potential design
           faults, and effortlessly creating delivery artifacts.

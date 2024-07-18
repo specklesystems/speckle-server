@@ -4,12 +4,12 @@
     :to="threadLink"
   >
     <div
-      class="flex flex-col sm:flex-row sm:items-center flex-grow overflow-hidden space-x-2 mt-3 sm:mt-0"
+      class="flex flex-col sm:flex-row sm:items-center flex-grow overflow-hidden space-x-3 mt-3 sm:mt-0"
     >
       <div class="flex items-center flex-none space-x-1">
         <UserAvatarGroup v-if="!thread.archived" :users="allAvatars" :max-count="4" />
         <CheckCircleIcon v-else class="w-8 h-8 text-primary" />
-        <span class="text-heading">
+        <span class="text-heading-sm">
           {{ thread.author.name }}
           <template v-if="threadAuthors.length !== 1">
             & {{ thread.replyAuthors.totalCount }} others

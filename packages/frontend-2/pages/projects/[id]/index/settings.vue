@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h1 class="block text-heading-2xl mb-4 sm:mb-8">Settings</h1>
+    <h1 class="block text-heading-xl mb-4 sm:mb-8">Settings</h1>
     <LayoutTabsVertical
       v-model:active-item="activeSettingsPageTab"
       :items="settingsTabItems"
