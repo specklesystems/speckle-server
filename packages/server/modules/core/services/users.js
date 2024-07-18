@@ -28,6 +28,8 @@ const {
 const { Roles } = require('@speckle/shared')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
+const { createUserEmailFactory } = require('@/modules/core/repositories/userEmails')
+const { db } = require('@/db/knex')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -114,6 +116,13 @@ module.exports = {
         : expectedRole || Roles.Server.User
 
     await Acl().insert({ userId: newId, role: userRole })
+
+    await createUserEmailFactory({ db })({
+      userEmail: {
+        email: user.email,
+        userId: user.id
+      }
+    })
 
     await UsersEmitter.emit(UsersEvents.Created, { user: newUser })
 
