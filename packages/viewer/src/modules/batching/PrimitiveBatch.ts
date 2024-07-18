@@ -1,16 +1,16 @@
 import { Material, Object3D, BufferGeometry, BufferAttribute, Box3 } from 'three'
-import { NodeRenderView } from '../..'
+import { NodeRenderView } from '../../index.js'
 import {
   AllBatchUpdateRange,
   type Batch,
   type BatchUpdateRange,
   GeometryType,
   NoneBatchUpdateRange
-} from './Batch'
-import { type DrawGroup } from './Batch'
-import Materials from '../materials/Materials'
-import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
-import SpecklePointColouredMaterial from '../materials/SpecklePointColouredMaterial'
+} from './Batch.js'
+import { type DrawGroup } from './Batch.js'
+import Materials from '../materials/Materials.js'
+import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial.js'
+import SpecklePointColouredMaterial from '../materials/SpecklePointColouredMaterial.js'
 
 export abstract class Primitive<
   TGeometry extends BufferGeometry = BufferGeometry,

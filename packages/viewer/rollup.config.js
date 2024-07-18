@@ -1,7 +1,8 @@
 import { terser } from 'rollup-plugin-terser'
 import clean from 'rollup-plugin-delete'
 import pkg from './package.json'
-import typescript2 from 'rollup-plugin-typescript2'
+// import typescript2 from 'rollup-plugin-typescript2'
+import typescript from '@rollup/plugin-typescript'
 import { babel } from '@rollup/plugin-babel'
 import { DEFAULT_EXTENSIONS } from '@babel/core'
 import image from '@rollup/plugin-image'
@@ -17,21 +18,22 @@ const config = {
       file: 'dist/index.js',
       format: 'esm',
       sourcemap
-    },
-    {
-      file: 'dist/index.cjs',
-      format: 'cjs',
-      sourcemap
     }
   ],
   plugins: [
     clean({ targets: 'dist/*' }),
     image(),
-    typescript2({
-      tsconfigOverride: {
-        sourceMap: sourcemap
-      },
-      tsconfig: './tsconfig.build.json'
+    // typescript2({
+    //   tsconfigOverride: {
+    //     sourceMap: sourcemap
+    //   },
+    //   tsconfig: './tsconfig.build.json'
+    // }),
+    typescript({
+      tsconfig: './tsconfig.build.json',
+      compilerOptions: {
+        ...(sourcemap ? { inlineSourceMap: true } : { sourceMap: false })
+      }
     }),
     babel({
       extensions: [...DEFAULT_EXTENSIONS, '.ts', '.tsx'],

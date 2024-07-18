@@ -20,7 +20,7 @@ const lastBreadcrumbName = computed(() => {
   const hasObjects = loadedObjects.value.length !== 0
   const hasModels = loadedModels.value.length !== 0
   const isMixed = hasObjects && hasModels
-  if (totalLen > 1) return `Multiple ${isMixed ? 'Resources' : 'Models'}`
+  if (totalLen > 1) return `Multiple ${isMixed ? 'resources' : 'models'}`
 
   if (hasObjects) return `Object ${loadedObjects.value[0].objectId.substring(0, 3)}...`
   return loadedModels.value[0].model.name

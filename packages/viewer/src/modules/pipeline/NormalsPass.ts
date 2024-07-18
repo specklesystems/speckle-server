@@ -12,8 +12,8 @@ import {
   WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
-import SpeckleNormalMaterial from '../materials/SpeckleNormalMaterial'
-import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
+import SpeckleNormalMaterial from '../materials/SpeckleNormalMaterial.js'
+import { BaseSpecklePass, type SpecklePass } from './SpecklePass.js'
 
 export class NormalsPass extends BaseSpecklePass implements SpecklePass {
   private renderTarget: WebGLRenderTarget

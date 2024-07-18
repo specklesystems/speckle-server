@@ -2,7 +2,7 @@ import {
   WorkspaceEvents,
   WorkspaceEventsPayloads
 } from '@/modules/workspacesCore/domain/events'
-import { Workspace, WorkspaceAcl } from '@/modules/workspaces/domain/types'
+import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 
 /** Workspace */
 
@@ -70,6 +70,6 @@ export type StoreBlob = (args: string) => Promise<string>
 /** Events */
 
 export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
-  event: TEvent
+  eventName: TEvent
   payload: WorkspaceEventsPayloads[TEvent]
 }) => Promise<unknown[]>

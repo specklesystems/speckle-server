@@ -8,7 +8,7 @@ import {
   Matrix4,
   Vector3
 } from 'three'
-import { type SpeckleObject } from '../../IViewer'
+import { type SpeckleObject } from '../../IViewer.js'
 
 export enum GeometryAttributes {
   POSITION = 'POSITION',

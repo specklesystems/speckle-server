@@ -8,7 +8,7 @@
       <div class="flex items-center justify-between gap-4 py-3 text-xs">
         <div class="flex gap-1 items-center">
           <IconHandRotate class="h-5 w-5" />
-          rotatef
+          rotate
         </div>
         <div class="flex gap-1 items-center">
           <IconHandSelect class="h-5 w-5" />
