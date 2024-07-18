@@ -34,11 +34,6 @@ const buildCreateWorkspaceWithTestContext = (
     }
   }
 
-  for (const [key, value] of Object.entries(dependecyOverrides)) {
-    if (typeof value === 'undefined')
-      delete dependecyOverrides[key as keyof typeof dependecyOverrides]
-  }
-
   const deps: Parameters<typeof createWorkspaceFactory>[0] = {
     upsertWorkspace: async ({ workspace }: { workspace: Workspace }) => {
       context.storedWorkspaces.push(workspace)
@@ -112,109 +107,188 @@ describe('Workspace services', () => {
   })
 })
 
-// type WorkspaceRoleTestContext = {
-//   workspaceId: string
-//   workspaceRoles: WorkspaceAcl[],
-//   workspaceProjects: StreamRecord[],
-//   workspaceProjectRoles: StreamAclRecord[],
-//   eventData: {
-//     isCalled: boolean
-//     eventName: string
-//     eventPayload: unknown
-//   }
-// }
+type WorkspaceRoleTestContext = {
+  workspaceId: string
+  workspaceRoles: WorkspaceAcl[]
+  workspaceProjects: StreamRecord[]
+  workspaceProjectRoles: StreamAclRecord[]
+  eventData: {
+    isCalled: boolean
+    eventName: string
+    payload: unknown
+  }
+}
 
-// const build
+const getDefaultWorkspaceRoleTestContext = (): WorkspaceRoleTestContext => {
+  return {
+    workspaceId: cryptoRandomString({ length: 10 }),
+    workspaceRoles: [],
+    workspaceProjects: [],
+    workspaceProjectRoles: [],
+    eventData: {
+      isCalled: false,
+      eventName: '',
+      payload: {}
+    }
+  }
+}
+
+const buildDeleteWorkspaceRoleAndTestContext = (
+  contextOverrides: Partial<WorkspaceRoleTestContext> = {},
+  dependencyOverrides: Partial<Parameters<typeof deleteWorkspaceRoleFactory>[0]> = {}
+) => {
+  const context: WorkspaceRoleTestContext = {
+    ...getDefaultWorkspaceRoleTestContext(),
+    ...contextOverrides
+  }
+
+  const deps: Parameters<typeof deleteWorkspaceRoleFactory>[0] = {
+    getWorkspaceRoles: async () => context.workspaceRoles,
+    deleteWorkspaceRole: async (role) => {
+      const isMatch = (acl: WorkspaceAcl): boolean => {
+        return acl.workspaceId === role.workspaceId && acl.userId === role.workspaceId
+      }
+
+      const deletedRoleIndex = context.workspaceRoles.findIndex(isMatch)
+
+      if (deletedRoleIndex < 0) {
+        return null
+      }
+
+      const deletedRole = structuredClone(context.workspaceRoles[deletedRoleIndex])
+
+      context.workspaceRoles = context.workspaceRoles.filter((acl) => !isMatch(acl))
+
+      return deletedRole
+    },
+    emitWorkspaceEvent: async ({ eventName, payload }) => {
+      context.eventData.isCalled = true
+      context.eventData.eventName = eventName
+      context.eventData.payload = payload
+
+      return []
+    },
+    getStreams: async () => ({
+      streams: context.workspaceProjects,
+      totalCount: context.workspaceProjects.length,
+      cursorDate: null
+    }),
+    revokeStreamPermissions: async ({ streamId, userId }) => {
+      context.workspaceProjectRoles = context.workspaceProjectRoles.filter(
+        (role) => role.resourceId !== streamId && role.userId !== userId
+      )
+      return {} as StreamRecord
+    },
+    ...dependencyOverrides
+  }
+
+  const deleteWorkspaceRole = deleteWorkspaceRoleFactory(deps)
+
+  return { deleteWorkspaceRole, context }
+}
+
+const buildSetWorkspaceRoleAndTestContext = (
+  contextOverrides: Partial<WorkspaceRoleTestContext> = {},
+  dependencyOverrides: Partial<Parameters<typeof setWorkspaceRoleFactory>[0]> = {}
+) => {
+  const context = {
+    ...getDefaultWorkspaceRoleTestContext(),
+    ...contextOverrides
+  }
+
+  const deps: Parameters<typeof setWorkspaceRoleFactory>[0] = {
+    getWorkspaceRoles: async () => context.workspaceRoles,
+    upsertWorkspaceRole: async (role) => {
+      const currentRoleIndex = context.workspaceRoles.findIndex(
+        (acl) => acl.userId === role.userId && acl.workspaceId === role.workspaceId
+      )
+
+      if (currentRoleIndex >= 0) {
+        context.workspaceRoles[currentRoleIndex] = role
+      } else {
+        context.workspaceRoles.push(role)
+      }
+    },
+    emitWorkspaceEvent: async ({ eventName, payload }) => {
+      context.eventData.isCalled = true
+      context.eventData.eventName = eventName
+      context.eventData.payload = payload
+
+      return []
+    },
+    getStreams: async () => ({
+      streams: context.workspaceProjects,
+      totalCount: context.workspaceProjects.length,
+      cursorDate: null
+    }),
+    grantStreamPermissions: async (role) => {
+      const currentRoleIndex = context.workspaceProjectRoles.findIndex(
+        (acl) => acl.userId === role.userId && acl.resourceId === role.streamId
+      )
+
+      const streamAcl: StreamAclRecord = {
+        userId: role.userId,
+        role: role.role,
+        resourceId: role.streamId
+      }
+
+      if (currentRoleIndex > 0) {
+        context.workspaceProjectRoles[currentRoleIndex] = streamAcl
+      } else {
+        context.workspaceProjectRoles.push(streamAcl)
+      }
+
+      return {} as StreamRecord
+    },
+    ...dependencyOverrides
+  }
+
+  const setWorkspaceRole = setWorkspaceRoleFactory(deps)
+
+  return { setWorkspaceRole, context }
+}
 
 describe('Workspace role services', () => {
   describe('deleteWorkspaceRoleFactory creates a function, that', () => {
     it('deletes the workspace role', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-
       const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
 
-      let storedRoles: WorkspaceAcl[] = [role]
-
-      const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-        getWorkspaceRoles: async () => storedRoles,
-        deleteWorkspaceRole: async ({ userId, workspaceId }) => {
-          const role = storedRoles.find(
-            (r) => r.userId === userId && r.workspaceId === workspaceId
-          )
-
-          storedRoles = storedRoles.filter((r) => r.userId !== userId)
-
-          return role ?? null
-        },
-        emitWorkspaceEvent: async () => [],
-        getStreams: async () => ({ streams: [], totalCount: 0, cursorDate: null }),
-        revokeStreamPermissions: async () => ({} as StreamRecord)
+      const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
+        workspaceId,
+        workspaceRoles: [role]
       })
 
       const deletedRole = await deleteWorkspaceRole({ userId, workspaceId })
 
-      expect(storedRoles.length).to.equal(0)
+      expect(context.workspaceRoles.length).to.equal(0)
       expect(deletedRole).to.deep.equal(role)
     })
     it('emits a role-deleted event', async () => {
-      const eventData = {
-        isCalled: false,
-        eventName: '',
-        payload: {}
-      }
-
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-
       const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
 
-      const storedRoles: WorkspaceAcl[] = [role]
-
-      const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-        getWorkspaceRoles: async () => storedRoles,
-        deleteWorkspaceRole: async () => {
-          return storedRoles[0]
-        },
-        emitWorkspaceEvent: async ({ eventName, payload }) => {
-          eventData.isCalled = true
-          eventData.eventName = eventName
-          eventData.payload = payload
-
-          return []
-        },
-        getStreams: async () => ({ streams: [], totalCount: 0, cursorDate: null }),
-        revokeStreamPermissions: async () => ({} as StreamRecord)
+      const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
+        workspaceId,
+        workspaceRoles: [role]
       })
 
       await deleteWorkspaceRole({ userId, workspaceId })
 
-      expect(eventData.isCalled).to.be.true
-      expect(eventData.eventName).to.equal(WorkspaceEvents.RoleDeleted)
-      expect(eventData.payload).to.deep.equal(role)
+      expect(context.eventData.isCalled).to.be.true
+      expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleDeleted)
+      expect(context.eventData.payload).to.deep.equal(role)
     })
     it('throws if attempting to delete the last admin from a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-
       const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Admin }
 
-      let storedRoles: WorkspaceAcl[] = [role]
-
-      const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-        getWorkspaceRoles: async () => storedRoles,
-        deleteWorkspaceRole: async ({ userId, workspaceId }) => {
-          const role = storedRoles.find(
-            (r) => r.userId === userId && r.workspaceId === workspaceId
-          )
-
-          storedRoles = storedRoles.filter((r) => r.userId !== userId)
-
-          return role ?? null
-        },
-        emitWorkspaceEvent: async () => [],
-        getStreams: async () => ({ streams: [], totalCount: 0, cursorDate: null }),
-        revokeStreamPermissions: async () => ({} as StreamRecord)
+      const { deleteWorkspaceRole } = buildDeleteWorkspaceRoleAndTestContext({
+        workspaceId,
+        workspaceRoles: [role]
       })
 
       await expectToThrow(() => deleteWorkspaceRole({ userId, workspaceId }))
@@ -224,38 +298,18 @@ describe('Workspace role services', () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const projectId = cryptoRandomString({ length: 10 })
 
-      const workspaceRole: WorkspaceAcl = {
-        userId,
+      const { deleteWorkspaceRole, context } = buildDeleteWorkspaceRoleAndTestContext({
         workspaceId,
-        role: Roles.Workspace.Member
-      }
-      const workspaceRoles: WorkspaceAcl[] = [workspaceRole]
-      const workspaceProjects: StreamRecord[] = [{ id: projectId } as StreamRecord]
-
-      let projectRoles: StreamAclRecord[] = [
-        { userId, role: Roles.Stream.Contributor, resourceId: projectId }
-      ]
-
-      const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-        getWorkspaceRoles: async () => workspaceRoles,
-        deleteWorkspaceRole: async () => ({} as WorkspaceAcl),
-        emitWorkspaceEvent: async () => [],
-        getStreams: async () => ({
-          streams: workspaceProjects,
-          totalCount: workspaceProjects.length,
-          cursorDate: null
-        }),
-        revokeStreamPermissions: async ({ streamId, userId }) => {
-          projectRoles = projectRoles.filter(
-            (role) => role.resourceId !== streamId && role.userId !== userId
-          )
-          return {} as StreamRecord
-        }
+        workspaceRoles: [{ userId, workspaceId, role: Roles.Workspace.Admin }],
+        workspaceProjects: [{ id: projectId } as StreamRecord],
+        workspaceProjectRoles: [
+          { userId, role: Roles.Stream.Contributor, resourceId: projectId }
+        ]
       })
 
       await deleteWorkspaceRole({ userId, workspaceId })
 
-      expect(projectRoles.length).to.equal(0)
+      expect(context.workspaceProjectRoles.length).to.equal(0)
     })
   })
 
@@ -263,72 +317,40 @@ describe('Workspace role services', () => {
     it('sets the workspace role', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-
       const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
 
-      const storedRoles: WorkspaceAcl[] = []
-
-      const setWorkspaceRole = setWorkspaceRoleFactory({
-        getWorkspaceRoles: async () => storedRoles,
-        upsertWorkspaceRole: async (role) => {
-          storedRoles.push(role)
-        },
-        emitWorkspaceEvent: async () => [],
-        getStreams: async () => ({ streams: [], totalCount: 0, cursorDate: null }),
-        grantStreamPermissions: async () => ({} as StreamRecord)
+      const { setWorkspaceRole, context } = buildSetWorkspaceRoleAndTestContext({
+        workspaceId
       })
 
       await setWorkspaceRole(role)
 
-      expect(storedRoles.length).to.equal(1)
-      expect(storedRoles[0]).to.deep.equal(role)
+      expect(context.workspaceRoles.length).to.equal(1)
+      expect(context.workspaceRoles[0]).to.deep.equal(role)
     })
     it('emits a role-updated event', async () => {
-      const eventData = {
-        isCalled: false,
-        eventName: '',
-        payload: {}
-      }
-
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-
       const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
 
-      const setWorkspaceRole = setWorkspaceRoleFactory({
-        getWorkspaceRoles: async () => [],
-        upsertWorkspaceRole: async () => {},
-        emitWorkspaceEvent: async ({ eventName, payload }) => {
-          eventData.isCalled = true
-          eventData.eventName = eventName
-          eventData.payload = payload
-
-          return []
-        },
-        getStreams: async () => ({ streams: [], totalCount: 0, cursorDate: null }),
-        grantStreamPermissions: async () => ({} as StreamRecord)
+      const { setWorkspaceRole, context } = buildSetWorkspaceRoleAndTestContext({
+        workspaceId
       })
 
       await setWorkspaceRole(role)
 
-      expect(eventData.isCalled).to.be.true
-      expect(eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
-      expect(eventData.payload).to.deep.equal(role)
+      expect(context.eventData.isCalled).to.be.true
+      expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
+      expect(context.eventData.payload).to.deep.equal(role)
     })
     it('throws if attempting to remove the last admin in a workspace', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
-
       const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Admin }
 
-      const storedRoles: WorkspaceAcl[] = [role]
-
-      const setWorkspaceRole = setWorkspaceRoleFactory({
-        getWorkspaceRoles: async () => storedRoles,
-        upsertWorkspaceRole: async () => {},
-        emitWorkspaceEvent: async () => [],
-        getStreams: async () => ({ streams: [], totalCount: 0, cursor: null }),
-        grantStreamPermissions: async () => ({} as StreamRecord)
+      const { setWorkspaceRole } = buildSetWorkspaceRoleAndTestContext({
+        workspaceId,
+        workspaceRoles: [role]
       })
 
       await expectToThrow(() =>
@@ -345,34 +367,18 @@ describe('Workspace role services', () => {
         workspaceId,
         role: Roles.Workspace.Admin
       }
-      const workspaceRoles: WorkspaceAcl[] = []
-      const workspaceProjects: StreamRecord[] = [{ id: projectId } as StreamRecord]
 
-      const projectRoles: StreamAclRecord[] = []
-
-      const setWorkspaceRole = setWorkspaceRoleFactory({
-        getWorkspaceRoles: async () => workspaceRoles,
-        upsertWorkspaceRole: async (role) => {
-          workspaceRoles.push(role)
-        },
-        emitWorkspaceEvent: async () => [],
-        getStreams: async () => ({
-          streams: workspaceProjects,
-          totalCount: workspaceProjects.length,
-          cursorDate: null
-        }),
-        grantStreamPermissions: async (role) => {
-          projectRoles.push({ ...role, resourceId: role.streamId })
-          return {} as StreamRecord
-        }
+      const { setWorkspaceRole, context } = buildSetWorkspaceRoleAndTestContext({
+        workspaceId,
+        workspaceProjects: [{ id: projectId } as StreamRecord]
       })
 
       await setWorkspaceRole(workspaceRole)
 
-      expect(projectRoles.length).to.equal(1)
-      expect(projectRoles[0].userId).to.equal(userId)
-      expect(projectRoles[0].resourceId).to.equal(projectId)
-      expect(projectRoles[0].role).to.equal(Roles.Stream.Owner)
+      expect(context.workspaceProjectRoles.length).to.equal(1)
+      expect(context.workspaceProjectRoles[0].userId).to.equal(userId)
+      expect(context.workspaceProjectRoles[0].resourceId).to.equal(projectId)
+      expect(context.workspaceProjectRoles[0].role).to.equal(Roles.Stream.Owner)
     })
   })
 })
