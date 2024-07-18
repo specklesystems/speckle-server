@@ -120,7 +120,8 @@ module.exports = {
     await createUserEmailFactory({ db })({
       userEmail: {
         email: user.email,
-        userId: user.id
+        userId: user.id,
+        verified: user.verified
       }
     })
 
