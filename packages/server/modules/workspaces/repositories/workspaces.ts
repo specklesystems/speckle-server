@@ -10,8 +10,11 @@ import {
 } from '@/modules/workspaces/domain/operations'
 import { Knex } from 'knex'
 import { Roles } from '@speckle/shared'
+import { StreamRecord } from '@/modules/core/helpers/types'
+import { WorkspaceInvalidRoleError } from '@/modules/workspaces/errors/workspace'
 
 const tables = {
+  streams: (db: Knex) => db<StreamRecord>('streams'),
   workspaces: (db: Knex) => db<Workspace>('workspaces'),
   workspacesAcl: (db: Knex) => db<WorkspaceAcl>('workspace_acl')
 }
@@ -93,7 +96,7 @@ export const upsertWorkspaceRoleFactory =
     // Verify requested role is valid workspace role
     const validRoles = Object.values(Roles.Workspace)
     if (!validRoles.includes(role)) {
-      throw new Error(`Unexpected workspace role provided: ${role}`)
+      throw new WorkspaceInvalidRoleError()
     }
 
     await tables
