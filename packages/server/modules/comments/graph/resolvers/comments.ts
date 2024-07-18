@@ -82,6 +82,7 @@ const getStreamComment = async (
   return comment
 }
 
+// FIXME: Non-null assertions considered unsafe but are parity with previous .js logic
 export = {
   Query: {
     async comment(_parent, args, context) {
