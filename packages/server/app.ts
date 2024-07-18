@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 /* istanbul ignore file */
 import './bootstrap'
-import http from 'http'
+import http, { ServerResponse } from 'http'
 import express, { Express } from 'express'
 
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
@@ -191,7 +191,12 @@ function buildApolloSubscriptionServer(
         // Build context (Apollo Server v3 no longer triggers context building automatically
         // for subscriptions)
         try {
-          return await buildContext({ req: null, token, cleanLoadersEarly: false })
+          return await buildContext({
+            req: null,
+            res: null,
+            token,
+            cleanLoadersEarly: false
+          })
         } catch (e) {
           throw new ForbiddenError('Subscription context build failed')
         }
@@ -288,6 +293,14 @@ export async function buildApolloServer(
     persistedQueries: false,
     csrfPrevention: true,
     formatError: buildErrorFormatter(debug),
+    formatResponse: (response, query) => {
+      const { context } = query
+      if ('res' in context) {
+        const { res } = context as { res: ServerResponse }
+        res.setHeader('x-content-security-policy', "frame-ancestors 'none'")
+      }
+      return response
+    },
     debug,
     ...optionOverrides
   })
