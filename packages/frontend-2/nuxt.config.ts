@@ -163,31 +163,31 @@ export default defineNuxtConfig({
     // Redirect old settings pages
     '/server-management/projects': {
       redirect: {
-        to: '/settings/server/projects',
+        to: '/?settings=server/projects',
         statusCode: 301
       }
     },
     '/server-management/active-users': {
       redirect: {
-        to: '/settings/server/active-users',
+        to: '/?settings=server/active-users',
         statusCode: 301
       }
     },
     '/server-management/pending-invitations': {
       redirect: {
-        to: '/settings/server/pending-invitations',
+        to: '/?settings=server/pending-invitations',
         statusCode: 301
       }
     },
     '/server-management': {
       redirect: {
-        to: '/settings/server/general',
+        to: '/?settings=server/general',
         statusCode: 301
       }
     },
     '/profile': {
       redirect: {
-        to: '/settings/user/profile',
+        to: '/?settings=user/profile',
         statusCode: 301
       }
     },
