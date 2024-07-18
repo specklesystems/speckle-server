@@ -148,9 +148,9 @@ When committing to git, an automated script will run. This will check that your 
 - Note that `ggshield` requires you to [register an account](https://dashboard.gitguardian.com/auth/signup) and then [authorise with GitGuardian](https://github.com/GitGuardian/ggshield#initial-setup) before it can be used: `ggshield auth login`
 - Then run to enable pre-commit. This will run on every commit you make:
 
-```bash
-pre-commit install
-```
+  ```bash
+  pre-commit install
+  ```
 
 # Security
 
