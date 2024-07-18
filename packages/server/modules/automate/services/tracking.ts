@@ -83,6 +83,10 @@ const onAutomationRunStatusUpdated =
       durationInSeconds: dayjs(functionRun.updatedAt).diff(
         functionRun.createdAt,
         'second'
+      ),
+      durationInMilliseconds: dayjs(functionRun.updatedAt).diff(
+        functionRun.createdAt,
+        'millisecond'
       )
     })
   }
