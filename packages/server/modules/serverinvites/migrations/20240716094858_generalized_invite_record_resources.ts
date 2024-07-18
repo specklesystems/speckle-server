@@ -7,14 +7,14 @@ export async function up(knex: Knex): Promise<void> {
     // Been unused for a while now
     table.dropColumn('used')
 
-    // Add resources: Array<InviteResourceTarget> JSONB field
-    table.jsonb('resources').defaultTo('[]').notNullable()
+    // Add resource: InviteResourceTarget JSONB field
+    table.jsonb('resource').defaultTo('{}').notNullable()
   })
 }
 
 export async function down(knex: Knex): Promise<void> {
   await knex.schema.alterTable(TABLE_NAME, (table) => {
     table.boolean('used').defaultTo(false).notNullable()
-    table.dropColumn('resources')
+    table.dropColumn('resource')
   })
 }

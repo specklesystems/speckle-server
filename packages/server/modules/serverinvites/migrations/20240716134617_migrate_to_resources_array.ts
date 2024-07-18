@@ -8,6 +8,7 @@ type InviteResourceTarget = {
   resourceId: string
   resourceType: 'project' | 'server'
   role: string
+  primary: boolean
 }
 
 type ServerInviteRecord = {
@@ -16,7 +17,7 @@ type ServerInviteRecord = {
   inviterId: string
   createdAt: Date
   message: Nullable<string>
-  resources: Array<InviteResourceTarget>
+  resource: InviteResourceTarget
   resourceTarget: string | null
   resourceId: Nullable<string>
   role: Nullable<string>
@@ -25,40 +26,42 @@ type ServerInviteRecord = {
 }
 
 export async function up(knex: Knex): Promise<void> {
-  // Iterate over all rows and update the resources field
+  // Iterate over all rows and update the resources field w/ empty resource
   const qStream = knex
     .select<ServerInviteRecord[]>('*')
     .where((w1) => {
-      // Where resources JSONB array is empty
-      w1.where('resources', '[]').orWhereNull('resources')
+      // Where resource JSONB is empty
+      w1.where('resource', '{}').orWhereNull('resource')
     })
     .from(TABLE_NAME)
     .stream()
 
   let counter = 1
   for await (const row of qStream) {
-    const resources: InviteResourceTarget[] = []
-
-    // Add server resource
-    resources.push({
-      resourceId: '',
-      resourceType: 'server',
-      role: row.serverRole || Roles.Server.User
-    })
+    let resource: InviteResourceTarget
 
     // Add stream/project resource
     if (row.resourceTarget === 'streams' && row.resourceId) {
-      resources.push({
+      resource = {
         resourceId: row.resourceId,
         resourceType: 'project',
-        role: row.role || Roles.Stream.Contributor
-      })
+        role: row.role || Roles.Stream.Contributor,
+        primary: true
+      }
+    } else {
+      // Add server resource
+      resource = {
+        resourceId: '',
+        resourceType: 'server',
+        role: row.serverRole || Roles.Server.User,
+        primary: true
+      }
     }
 
     const updateQ = knex(TABLE_NAME)
       .where({ id: row.id })
       .update({
-        resources: JSON.stringify(resources),
+        resource: JSON.stringify(resource),
         resourceTarget: null,
         resourceId: null,
         role: null,
@@ -92,7 +95,7 @@ export async function down(knex: Knex): Promise<void> {
     .select<ServerInviteRecord[]>('*')
     .where((w1) => {
       // Where resources JSONB array isn't empty
-      w1.whereNot('resources', '[]').orWhereNotNull('resources')
+      w1.whereNot('resource', '{}').orWhereNotNull('resource')
     })
     .from(TABLE_NAME)
     .stream()
@@ -103,12 +106,12 @@ export async function down(knex: Knex): Promise<void> {
     let role = null as string | null
     let serverRole: string = Roles.Server.User
 
-    const serverResource = row.resources.find((r) => r.resourceType === 'server')
+    const serverResource = row.resource.resourceType === 'server' ? row.resource : null
     if (serverResource && serverResource.role) {
       serverRole = serverResource.role
     }
 
-    const streamResource = row.resources.find((r) => r.resourceType === 'project')
+    const streamResource = row.resource.resourceType === 'project' ? row.resource : null
     if (streamResource && streamResource.resourceId) {
       resourceTarget = 'streams'
       resourceId = streamResource.resourceId
@@ -118,7 +121,7 @@ export async function down(knex: Knex): Promise<void> {
     await knex(TABLE_NAME)
       .where({ id: row.id })
       .update({
-        resources: JSON.stringify([]),
+        resource: JSON.stringify({}),
         resourceTarget,
         resourceId,
         role,

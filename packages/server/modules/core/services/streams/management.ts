@@ -24,7 +24,7 @@ import { createBranch } from '@/modules/core/services/branches'
 import {
   createAndSendInviteFactory,
   inviteUsersToStreamFactory
-} from '@/modules/serverinvites/services/inviteCreationService'
+} from '@/modules/serverinvites/services/creation'
 import {
   StreamInvalidAccessError,
   StreamUpdateError

@@ -6,7 +6,7 @@ import { ResourceTargets } from '@/modules/serverinvites/helpers/legacyCore'
 import {
   createAndSendInviteFactory,
   resendInviteEmailFactory
-} from '@/modules/serverinvites/services/inviteCreationService'
+} from '@/modules/serverinvites/services/creation'
 import {
   createStreamInviteAndNotifyFactory,
   useStreamInviteAndNotifyFactory

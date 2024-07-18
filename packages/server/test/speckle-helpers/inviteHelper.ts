@@ -3,14 +3,15 @@ import { Roles } from '@speckle/shared'
 import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
 import { ResourceTargets } from '@/modules/serverinvites/helpers/legacyCore'
 import { InviteResult } from '@/modules/serverinvites/services/operations'
-import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import {
   findResourceFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { Knex } from 'knex'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/inviteCreationService'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import { BasicTestUser } from '@/test/authHelper'
+import { BasicTestStream } from '@/test/speckle-helpers/streamHelper'
 
 /**
  * Create a new invite. User & userId are alternatives for each other, and so
@@ -24,10 +25,10 @@ export const createInviteDirectlyFactory =
     async (
       invite: {
         email?: string
-        user?: UserRecord
+        user?: BasicTestUser
         userId?: string
         message?: string
-        stream?: StreamRecord
+        stream?: BasicTestStream
         streamId?: string
       },
       creatorId: string

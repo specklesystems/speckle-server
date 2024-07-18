@@ -1,6 +1,9 @@
-import { ResourceTargets } from '@/modules/serverinvites/helpers/legacyCore'
+import {
+  ProjectInviteResourceType,
+  ServerInviteResourceType
+} from '@/modules/serverinvites/domain/constants'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { SetNonNullable } from 'type-fest'
+import { ServerRoles, StreamRoles } from '@speckle/shared'
 
 export type InviteResourceTargetType = 'project' | 'server'
 
@@ -11,7 +14,21 @@ export type InviteResourceTarget<
   resourceId: string
   resourceType: T
   role: R
+  /**
+   * Whether or not this is the primary target for the invite
+   */
+  primary: boolean
 }
+
+export type ServerInviteResourceTarget = InviteResourceTarget<
+  typeof ServerInviteResourceType,
+  ServerRoles
+>
+
+export type ProjectInviteResourceTarget = InviteResourceTarget<
+  typeof ProjectInviteResourceType,
+  StreamRoles
+>
 
 export type ServerInviteRecord = {
   id: string
@@ -19,30 +36,6 @@ export type ServerInviteRecord = {
   inviterId: string
   createdAt: Date
   message: Nullable<string>
-  resources: Array<InviteResourceTarget>
-  /**
-   * @deprecated Use resources instead.
-   */
-  resourceTarget: typeof ResourceTargets.Streams | null
-  /**
-   * @deprecated Use resources instead
-   */
-  resourceId: Nullable<string>
-  /**
-   * @deprecated Use resources instead.
-   */
-  role: Nullable<string>
+  resource: InviteResourceTarget
   token: string
-  /**
-   * @deprecated Use resources instead
-   */
-  serverRole: Nullable<string>
 }
-
-/**
- * @deprecated An invite record no longer just represents a single resource type.
- */
-export type StreamInviteRecord = SetNonNullable<
-  ServerInviteRecord,
-  'resourceId' | 'resourceTarget'
->

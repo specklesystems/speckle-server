@@ -1,15 +1,17 @@
-import { ServerRoles, StreamRoles } from '@speckle/shared'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
-import { ResourceTargets } from '@/modules/serverinvites/helpers/legacyCore'
 import {
-  ServerInviteRecord,
-  StreamInviteRecord
+  ServerInvitesEventsKeys,
+  ServerInvitesEventsPayloads
+} from '@/modules/serverinvites/domain/events'
+import {
+  InviteResourceTarget,
+  InviteResourceTargetType,
+  ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
-import { StreamWithOptionalRole } from '@/modules/core/repositories/streams'
 
 export type QueryAllUserStreamInvites = (
   userId: string
-) => Promise<StreamInviteRecord[]>
+) => Promise<ServerInviteRecord[]>
 
 type FindStreamInviteArgs = {
   target?: string | null
@@ -20,43 +22,23 @@ type FindStreamInviteArgs = {
 export type FindStreamInvite = (
   streamId: string,
   args: FindStreamInviteArgs
-) => Promise<StreamInviteRecord | null>
+) => Promise<ServerInviteRecord | null>
 
 export type FindUserByTarget = (target: string) => Promise<UserWithOptionalRole | null>
 
-type Invite = {
-  resourceId?: string | null
-  resourceTarget?: typeof ResourceTargets.Streams | null
-}
-
-export type FindResource = (
-  args: Invite
-) => Promise<StreamWithOptionalRole | undefined | null>
-
-type ServerInviteRecordInsertModel = Pick<
-  ServerInviteRecord,
-  | 'id'
-  | 'target'
-  | 'inviterId'
-  | 'message'
-  | 'resourceTarget'
-  | 'resourceId'
-  | 'role'
-  | 'token'
-  | 'serverRole'
->
+export type ServerInviteRecordInsertModel = Omit<ServerInviteRecord, 'createdAt'>
 
 export type InsertInviteAndDeleteOld = (
   invite: ServerInviteRecordInsertModel,
   alternateTargets: string[]
-) => Promise<number[]>
+) => Promise<{ deleted: number[]; invite: ServerInviteRecord }>
 
 export type FindServerInvite = (
   email?: string,
   token?: string
 ) => Promise<ServerInviteRecord | null>
 
-export type QueryAllStreamInvites = (streamId: string) => Promise<StreamInviteRecord[]>
+export type QueryAllStreamInvites = (streamId: string) => Promise<ServerInviteRecord[]>
 
 export type DeleteAllStreamInvites = (streamId: string) => Promise<boolean>
 
@@ -88,9 +70,9 @@ export type FindInvite = (inviteId?: string) => Promise<ServerInviteRecord | nul
 export type DeleteInvite = (inviteId?: string) => Promise<boolean>
 
 export type DeleteInvitesByTarget = (
-  targets?: string | string[],
-  resourceTarget?: string,
-  resourceId?: string
+  targets: string | string[],
+  resourceType: InviteResourceTargetType,
+  resourceId: string
 ) => Promise<boolean>
 
 export type QueryInvites = (
@@ -107,8 +89,10 @@ export type CreateInviteParams = {
   target: string
   inviterId: string
   message?: string | null
-  resourceTarget?: typeof ResourceTargets.Streams
-  resourceId?: string
-  role?: StreamRoles
-  serverRole?: ServerRoles | null
+  primaryResourceTarget: InviteResourceTarget
 }
+
+export type EmitServerInvitesEvent = <TEvent extends ServerInvitesEventsKeys>(args: {
+  eventName: TEvent
+  payload: ServerInvitesEventsPayloads[TEvent]
+}) => Promise<unknown[]>

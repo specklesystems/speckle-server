@@ -1,11 +1,11 @@
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getStreamRoute } from '@/modules/core/helpers/routeHelper'
 import { NoInviteFoundError } from '@/modules/serverinvites/errors'
-import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
 import {
-  isStreamInvite,
-  ResourceTargets
-} from '@/modules/serverinvites/helpers/legacyCore'
+  buildUserTarget,
+  isProjectResourceTarget
+} from '@/modules/serverinvites/helpers/core'
+
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
 import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
@@ -16,7 +16,6 @@ import {
   DeleteServerOnlyInvites,
   DeleteStreamInvite,
   FindInvite,
-  FindResource,
   FindServerInvite,
   FindStreamInvite,
   UpdateAllInviteTargets
@@ -38,12 +37,14 @@ export const resolveAuthRedirectPathFactory = () => (invite?: ServerInviteRecord
     return getFrontendOrigin()
   }
 
+  /**
+   * @deprecated Deprecated user flow, only relevant in FE1. Thus no need to update it w/ support for workspaces
+   * and other new features.
+   */
   if (invite) {
-    const { resourceId } = invite
-
-    if (isStreamInvite(invite)) {
-      // TODO: check nullability
-      return `${getStreamRoute(resourceId!)}`
+    const primaryTarget = invite.resource
+    if (isProjectResourceTarget(primaryTarget)) {
+      return `${getStreamRoute(primaryTarget.resourceId)}`
     }
   }
 

@@ -39,7 +39,7 @@ import {
   queryAllStreamInvitesFactory,
   queryAllUserStreamInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/inviteCreationService'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
   cancelStreamInviteFactory,
   finalizeStreamInviteFactory

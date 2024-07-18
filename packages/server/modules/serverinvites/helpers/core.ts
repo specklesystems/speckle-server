@@ -1,8 +1,17 @@
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import {
+  ProjectInviteResourceType,
+  ServerInviteResourceType
+} from '@/modules/serverinvites/domain/constants'
+import {
+  InviteResourceTarget,
+  ProjectInviteResourceTarget,
+  ServerInviteRecord,
+  ServerInviteResourceTarget
+} from '@/modules/serverinvites/domain/types'
 import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 
-type ResolvedTargetData = {
+export type ResolvedTargetData = {
   userId: string | null
   userEmail: string | null
 }
@@ -51,3 +60,16 @@ export function resolveInviteTargetTitle(
 
   return userEmail!
 }
+
+export const isServerResourceTarget = (
+  target: InviteResourceTarget
+): target is ServerInviteResourceTarget =>
+  target.resourceType === ServerInviteResourceType
+
+export const isProjectResourceTarget = (
+  target: InviteResourceTarget
+): target is ProjectInviteResourceTarget =>
+  target.resourceType === ProjectInviteResourceType
+
+export const getPrimaryResourceTarget = (targets: InviteResourceTarget[]) =>
+  targets.find((t) => !!t.primary)
