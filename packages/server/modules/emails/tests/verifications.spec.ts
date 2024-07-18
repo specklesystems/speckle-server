@@ -1,4 +1,8 @@
-import { EmailVerifications, Users } from '@/modules/core/dbSchema'
+import {
+  EmailVerifications,
+  USER_EMAILS_TABLE_NAME,
+  Users
+} from '@/modules/core/dbSchema'
 import { BasicTestUser, createTestUser, createTestUsers } from '@/test/authHelper'
 import { buildApp, truncateTables } from '@/test/hooks'
 import {
@@ -19,7 +23,6 @@ import { Express } from 'express'
 import { getUser } from '@/modules/core/repositories/users'
 import dayjs from 'dayjs'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
-import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 
 const mailerMock = EmailSendingServiceMock
 
