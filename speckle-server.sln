@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.002.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "utils", "utils", "{D48C46C3-C708-459B-BA56-27D3E0D9C6EA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "large-models-sender", "utils\large-models-sender\large-models-sender.csproj", "{D22F08F9-8A12-419E-9746-F981EEC27B70}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D22F08F9-8A12-419E-9746-F981EEC27B70}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D22F08F9-8A12-419E-9746-F981EEC27B70}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D22F08F9-8A12-419E-9746-F981EEC27B70}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D22F08F9-8A12-419E-9746-F981EEC27B70}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D22F08F9-8A12-419E-9746-F981EEC27B70} = {D48C46C3-C708-459B-BA56-27D3E0D9C6EA}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {894B4C00-8968-4C3D-8DDC-24398CF38601}
+	EndGlobalSection
+EndGlobal
