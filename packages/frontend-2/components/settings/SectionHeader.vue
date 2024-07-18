@@ -5,7 +5,7 @@
       <h1 v-else class="text-2xl font-semibold font-semibold hidden md:block">
         {{ title }}
       </h1>
-      <div v-if="!!buttons" class="flex flex-wrap gap-2">
+      <div v-if="buttons > 0" class="flex flex-wrap gap-2">
         <FormButton
           v-for="(button, index) in buttons"
           :key="index"
