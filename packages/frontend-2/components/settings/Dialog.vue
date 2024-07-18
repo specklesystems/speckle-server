@@ -63,6 +63,7 @@
 
 <script setup lang="ts">
 import type { defineComponent } from 'vue'
+import type { LocationQueryValue } from 'vue-router'
 import SettingsUserProfile from './user/Profile.vue'
 import SettingsUserNotifications from './user/Notifications.vue'
 import SettingsUserDeveloper from './user/Developer.vue'
@@ -83,7 +84,6 @@ import {
 type MenuItem = {
   title: string
   component: ReturnType<typeof defineComponent>
-  path: string
 }
 
 const emit = defineEmits<{
@@ -92,7 +92,7 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   open: boolean
-  targetMenuItem?: string
+  targetMenuItem?: LocationQueryValue
 }>()
 
 const route = useRoute()
@@ -147,10 +147,10 @@ const isOpen = computed({
 })
 
 // Check if there is a matching menu item in the config
-const getMenuItem = (key: string): MenuItem | null => {
+const getMenuItem = (key: LocationQueryValue): MenuItem | null => {
   const categories = [menuItemConfig.user, menuItemConfig.server]
   for (const category of categories) {
-    if (key in category) {
+    if (key && key in category) {
       return category[key]
     }
   }
@@ -162,10 +162,11 @@ watch(
   isOpen,
   (newVal, oldVal) => {
     if (newVal && !oldVal) {
-      const settingsQuery: string | null = route.query?.settings
+      const settingsQuery: LocationQueryValue | LocationQueryValue[] =
+        route.query?.settings
 
       // Check if there is a settings query
-      if (settingsQuery) {
+      if (settingsQuery && typeof settingsQuery === 'string') {
         const matchingMenuItem = getMenuItem(settingsQuery)
         // Set matching menu items if it exists
         if (matchingMenuItem) {

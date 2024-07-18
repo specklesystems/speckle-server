@@ -154,7 +154,7 @@ import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
 import { connectorsPageUrl, settingsQueries } from '~/lib/common/helpers/route'
-import type { RouteLocationRaw } from 'vue-router'
+import type { RouteLocationRaw, LocationQueryValue } from 'vue-router'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -168,7 +168,7 @@ const { serverInfo } = useServerInfo()
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
-const settingsDialogTarget = ref(undefined)
+const settingsDialogTarget = ref<LocationQueryValue>(null)
 const menuButtonId = useId()
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
@@ -176,8 +176,9 @@ const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
 onMounted(() => {
-  if (route.query?.settings) {
-    toggleSettingsDialog(route.query.settings)
+  const settingsQuery = route.query?.settings
+  if (settingsQuery && typeof settingsQuery === 'string') {
+    toggleSettingsDialog(settingsQuery)
   }
 })
 
