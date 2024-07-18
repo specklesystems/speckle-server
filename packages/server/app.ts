@@ -1,7 +1,7 @@
 /* eslint-disable camelcase */
 /* istanbul ignore file */
 import './bootstrap'
-import http, { ServerResponse } from 'http'
+import http from 'http'
 import express, { Express } from 'express'
 
 // `express-async-errors` patches express to catch errors in async handlers. no variable needed
@@ -193,7 +193,6 @@ function buildApolloSubscriptionServer(
         try {
           return await buildContext({
             req: null,
-            res: null,
             token,
             cleanLoadersEarly: false
           })
@@ -293,12 +292,8 @@ export async function buildApolloServer(
     persistedQueries: false,
     csrfPrevention: true,
     formatError: buildErrorFormatter(debug),
-    formatResponse: (response, query) => {
-      const { context } = query
-      if ('res' in context) {
-        const { res } = context as { res: ServerResponse }
-        res.setHeader('x-content-security-policy', "frame-ancestors 'none'")
-      }
+    formatResponse: (response) => {
+      response.http?.headers.set('x-content-security-policy', "frame-ancestors 'none'")
       return response
     },
     debug,

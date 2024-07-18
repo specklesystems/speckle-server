@@ -26,7 +26,6 @@ import { Netmask } from 'netmask'
 import { Merge } from 'type-fest'
 import { resourceAccessRuleToIdentifier } from '@/modules/core/helpers/token'
 import { delayGraphqlResponsesBy } from '@/modules/shared/helpers/envHelper'
-import { ServerResponse } from 'http'
 
 export const authMiddlewareCreator = (steps: AuthPipelineFunction[]) => {
   const pipeline = authPipelineCreator(steps)
@@ -133,16 +132,13 @@ export async function authContextMiddleware(
 }
 
 export function addLoadersToCtx(
-  ctx: Merge<
-    Omit<GraphQLContext, 'loaders'>,
-    { log?: pino.Logger; res?: MaybeNullOrUndefined<ServerResponse> }
-  >,
+  ctx: Merge<Omit<GraphQLContext, 'loaders'>, { log?: pino.Logger }>,
   options?: Partial<{ cleanLoadersEarly: boolean }>
 ): GraphQLContext {
   const log =
     ctx.log || Observability.extendLoggerComponent(Observability.getLogger(), 'graphql')
   const loaders = buildRequestLoaders(ctx, options)
-  return { ...ctx, loaders, log, res: ctx.res }
+  return { ...ctx, loaders, log }
 }
 
 /**
@@ -150,12 +146,10 @@ export function addLoadersToCtx(
  */
 export async function buildContext({
   req,
-  res,
   token,
   cleanLoadersEarly
 }: {
   req: MaybeNullOrUndefined<Request>
-  res: MaybeNullOrUndefined<Response>
   token: Nullable<string>
   cleanLoadersEarly?: boolean
 }): Promise<GraphQLContext> {
@@ -178,8 +172,7 @@ export async function buildContext({
   return addLoadersToCtx(
     {
       ...ctx,
-      log,
-      res
+      log
     },
     { cleanLoadersEarly }
   )

@@ -10,7 +10,6 @@ import { AuthContext } from '@/modules/shared/authz'
 import { Express } from 'express'
 import { ConditionalKeys, SetRequired } from 'type-fest'
 import pino from 'pino'
-import { ServerResponse } from 'http'
 
 export type MarkNullableOptional<T> = SetRequired<
   Partial<T>,
@@ -49,8 +48,6 @@ export type GraphQLContext = AuthContext & {
   loaders: RequestDataLoaders
 
   log: pino.Logger
-
-  res: MaybeNullOrUndefined<ServerResponse>
 }
 
 export { Nullable, Optional, MaybeNullOrUndefined, MaybeAsync, MaybeFalsy }
