@@ -24,7 +24,7 @@
 
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
-          <NuxtLink :to="modelLink || ''" class="text-lg font-bold text-foreground">
+          <NuxtLink :to="modelLink || ''" class="text-heading-lg text-foreground">
             {{ name }}
           </NuxtLink>
           <span
@@ -86,7 +86,7 @@
         </div>
         <div v-else-if="hasVersions" class="flex items-center space-x-6 sm:space-x-10">
           <div
-            class="text-xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
+            class="text-body-2xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
             Updated
             <span v-tippy="updatedAt.full">
@@ -156,7 +156,7 @@
           </div>
         </div>
         <!-- Name -->
-        <div class="text-lg font-bold text-foreground flex-grow text-left">
+        <div class="text-heading-lg text-foreground flex-grow text-left">
           {{ name }}
         </div>
         <!-- Preview -->
@@ -173,24 +173,22 @@
               {{ child?.name }}
             </div>
           </div> -->
-          <div class="text-xs text-foreground-2">
+          <div class="text-body-2xs text-foreground-2">
             Updated
             <span v-tippy="updatedAt.full">
               {{ updatedAt.relative }}
             </span>
           </div>
-          <div class="text-xs text-foreground-2">
-            <FormButton
-              rounded
-              size="xs"
-              :icon-right="ArrowTopRightOnSquareIcon"
-              :to="viewAllUrl"
-              :disabled="!viewAllUrl"
-              @click.stop="trackFederateModels"
-            >
-              View all
-            </FormButton>
-          </div>
+          <FormButton
+            rounded
+            size="xs"
+            :icon-right="ArrowTopRightOnSquareIcon"
+            :to="viewAllUrl"
+            :disabled="!viewAllUrl"
+            @click.stop="trackFederateModels"
+          >
+            View all
+          </FormButton>
           <div :class="`ml-4 w-24 h-20`">
             <div
               class="w-full h-full rounded-md bg-primary-muted flex items-center justify-center"

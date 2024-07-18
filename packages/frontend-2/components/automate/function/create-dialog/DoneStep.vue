@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-6">
     <div class="flex items-center justify-center gap-0.5">
       <CheckCircleIcon class="h-9 w-9 text-success" />
-      <span class="h4 font-bold">Success</span>
+      <span class="h4">Success</span>
     </div>
     <div class="label-light">
       Your function is ready to go!

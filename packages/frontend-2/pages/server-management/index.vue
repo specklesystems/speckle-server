@@ -7,7 +7,7 @@
       class="flex flex-col md:flex-row space-y-2 space-x-2 justify-between mb-4 md:items-center"
     >
       <div>
-        <h5 class="h4 font-bold">Your server at a glance</h5>
+        <h5 class="h4">Your server at a glance</h5>
       </div>
     </div>
 

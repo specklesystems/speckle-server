@@ -69,7 +69,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
   const coreClasses = computed(() => {
     const classParts = [
-      'block w-full text-foreground transition-all',
+      'block w-full text-foreground transition-all text-body',
       coreInputClasses.value
     ]
 
@@ -113,7 +113,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
     hasHelpTip.value ? `${unref(props.name)}-${internalHelpTipId.value}` : undefined
   )
   const helpTipClasses = computed((): string => {
-    const classParts = ['mt-2 text-xs']
+    const classParts = ['mt-2 text-body-xs']
     classParts.push(error.value ? 'text-danger' : 'text-foreground-2')
     return classParts.join(' ')
   })

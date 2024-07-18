@@ -47,13 +47,11 @@
         <NuxtLink class="min-w-0 max-w-full cursor-pointer" :href="finalModelUrl">
           <div
             v-if="nameParts[0]"
-            class="text-xs text-foreground-2 relative -mb-1 truncate"
+            class="text-body-xs text-foreground-2 relative -mb-1.5 truncate"
           >
             {{ nameParts[0] }}
           </div>
-          <div
-            class="font-bold text-sm sm:text-base truncate text-foreground flex-shrink min-w-0"
-          >
+          <div class="text-heading-lg truncate text-foreground flex-shrink min-w-0">
             {{ nameParts[1] }}
           </div>
         </NuxtLink>

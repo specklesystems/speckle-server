@@ -3,7 +3,7 @@
     <NuxtLink
       :to="to"
       class="flex gap-1 items-center text-sm ml-0.5"
-      active-class="text-primary font-semibold group is-active"
+      active-class="text-primary text-heading group is-active"
     >
       <div v-if="separator">
         <ChevronRightIcon class="flex w-4 h-4 text-foreground-2" />

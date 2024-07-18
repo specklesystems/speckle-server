@@ -245,25 +245,40 @@ export default plugin(function ({ addComponents, addBase }) {
       '@apply font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 text-transparent bg-clip-text':
         {}
     },
-    // Font sizes
-    '.h1': {
-      '@apply text-5xl leading-10': {}
+    // New heading styles
+    '.text-heading-2xl, .h1': {
+      '@apply font-medium text-3xl leading-10 tracking-tighter': {}
     },
-    '.h2': {
-      '@apply text-4xl leading-10': {}
+    '.text-heading-xl, .h2': {
+      '@apply font-medium text-2xl leading-8 tracking-tighter': {}
     },
-    '.h3': {
-      '@apply text-3xl leading-9': {}
+    '.text-heading-lg, .h3': {
+      '@apply font-medium text-lg leading-6 tracking-tighter': {}
     },
-    '.h4': {
-      '@apply text-2xl leading-8': {}
+    '.text-heading, .h4': {
+      '@apply font-medium text-base leading-6 tracking-tighter': {}
     },
-    '.h5': {
-      '@apply text-xl leading-7': {}
+    '.text-heading-sm, .h5, .h6': {
+      '@apply font-medium text-sm leading-6 tracking-tighter': {}
     },
-    '.h6': {
-      '@apply text-lg leading-6': {}
+
+    // New body styles
+    '.text-body': {
+      '@apply text-base leading-6 tracking-tighter': {}
     },
+    '.text-body-sm': {
+      '@apply text-sm leading-6 tracking-tight': {}
+    },
+    '.text-body-xs': {
+      '@apply text-[13px] leading-6 tracking-tight': {}
+    },
+    '.text-body-2xs': {
+      '@apply text-xs leading-4': {}
+    },
+    '.text-body-3xs': {
+      '@apply text-[11px] leading-4 tracking-wide': {}
+    },
+
     '.label': {
       '@apply text-sm font-medium leading-5': {}
     },

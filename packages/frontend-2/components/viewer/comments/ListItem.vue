@@ -46,7 +46,7 @@
         {{ thread.replies.totalCount }}
         {{ thread.replies.totalCount === 1 ? 'reply' : 'replies' }}
       </span>
-      <span v-tippy="createdAt.full" class="text-foreground-2 text-xs">
+      <span v-tippy="createdAt.full" class="text-foreground-2 text-body-2xs">
         {{ createdAt.relative }}
       </span>
     </div>

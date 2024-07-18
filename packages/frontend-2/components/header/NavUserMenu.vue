@@ -37,7 +37,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-2.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-sm flex gap-2.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="() => (showProfileEditDialog = true)"
             >
@@ -49,7 +49,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-sm flex gap-3.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="goToServerManagement()"
             >
@@ -61,7 +61,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-sm flex gap-3.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleTheme"
             >
@@ -73,7 +73,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-sm flex gap-3.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleInviteDialog"
             >
@@ -85,7 +85,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-sm flex gap-3.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               target="_blank"
               to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
@@ -99,7 +99,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-danger cursor-pointer transition mx-1 rounded'
+                'text-body-sm flex gap-3.5 items-center px-3 py-2 text-danger cursor-pointer transition mx-1 rounded'
               ]"
               @click="logout"
             >
@@ -111,7 +111,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3.5 items-center px-3 py-2.5 text-sm text-primary cursor-pointer transition mx-1 rounded'
+                'flex gap-3.5 items-center px-3 py-2 text-sm text-primary cursor-pointer transition mx-1 rounded'
               ]"
               :to="loginUrl"
             >
