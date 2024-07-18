@@ -14,21 +14,21 @@ export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
 export const connectorsPageUrl = 'https://speckle.systems/features/connectors/'
 
-export const settingsRoutes: {
+export const settingsQueries: {
   [key: string]: {
     [key: string]: string
   }
 } = {
   user: {
-    profile: '/settings/user/profile',
-    notifications: '/settings/user/notifications',
-    developerSettings: '/settings/user/developer-settings'
+    profile: 'user/profile',
+    notifications: 'user/notifications',
+    developerSettings: 'user/developer-settings'
   },
   server: {
-    general: '/settings/server/general',
-    projects: '/settings/server/projects',
-    activeUsers: '/settings/server/active-users',
-    pendingInvitations: '/settings/server/pending-invitations'
+    general: 'server/general',
+    projects: 'server/projects',
+    activeUsers: 'server/active-users',
+    pendingInvitations: 'server/pending-invitations'
   }
 }
 

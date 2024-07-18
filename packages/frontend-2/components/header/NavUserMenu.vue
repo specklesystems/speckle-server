@@ -39,7 +39,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="toggleSettingsDialog(false)"
+              @click="toggleSettingsDialog(settingsQueries.user.profile)"
             >
               <UserCircleIcon class="w-5 h-5" />
               Settings
@@ -51,7 +51,7 @@
                 active ? 'bg-foundation-focus' : '',
                 'flex gap-3.5 items-center px-3 py-2.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
               ]"
-              @click="toggleSettingsDialog(true)"
+              @click="toggleSettingsDialog(settingsQueries.server.general)"
             >
               <ServerStackIcon class="w-5 h-5" />
               Server settings
@@ -130,7 +130,7 @@
     <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
     <SettingsDialog
       v-model:open="showSettingsDialog"
-      :open-server-page="settingsDialogOpenServerPage"
+      :target-menu-item="settingsDialogTarget"
     />
   </div>
 </template>
@@ -153,33 +153,40 @@ import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
-import { connectorsPageUrl } from '~/lib/common/helpers/route'
+import { connectorsPageUrl, settingsQueries } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
 }>()
 
+const route = useRoute()
 const { logout } = useAuthManager()
 const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, toggleTheme } = useTheme()
 const { serverInfo } = useServerInfo()
 
 const showInviteDialog = ref(false)
-const settingsDialogOpenServerPage = ref(false)
 const showSettingsDialog = ref(false)
+const settingsDialogTarget = ref(undefined)
 const menuButtonId = useId()
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
+onMounted(() => {
+  if (route.query?.settings) {
+    toggleSettingsDialog(route.query.settings)
+  }
+})
+
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
 }
 
-const toggleSettingsDialog = (openServerPage: boolean) => {
+const toggleSettingsDialog = (target: string) => {
   showSettingsDialog.value = true
-  settingsDialogOpenServerPage.value = openServerPage
+  settingsDialogTarget.value = target
 }
 </script>

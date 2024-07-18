@@ -190,54 +190,19 @@ export default defineNuxtConfig({
         to: '/settings/user/profile',
         statusCode: 301
       }
-    }
-  },
+    },
 
-  hooks: {
-    'pages:extend'(pages) {
-      // Adds settings routes so direct routes are available but will load the dashboard component
-      pages.push(
-        {
-          name: 'settings',
-          path: '/settings',
-          file: '~/pages/index.vue'
-        },
-        {
-          name: 'settings-user-profile',
-          path: '/settings/user/profile',
-          file: '~/pages/index.vue'
-        },
-        {
-          name: 'settings-user-notifications',
-          path: '/settings/user/notifications',
-          file: '~/pages/index.vue'
-        },
-        {
-          name: 'settings-user-developer-settings',
-          path: '/settings/user/developer-settings',
-          file: '~/pages/index.vue'
-        },
-        {
-          name: 'settings-server-general',
-          path: '/settings/server/general',
-          file: '~/pages/index.vue'
-        },
-        {
-          name: 'settings-server-active-users',
-          path: '/settings/server/active-users',
-          file: '~/pages/index.vue'
-        },
-        {
-          name: 'settings-server-pending-invitations',
-          path: '/settings/server/pending-invitations',
-          file: '~/pages/index.vue'
-        },
-        {
-          name: 'settings-server-projects',
-          path: '/settings/server/projects',
-          file: '~/pages/index.vue'
-        }
-      )
+    // Redirect settings 'route' to homepage with added query
+    '/settings/user/profile': { redirect: '/?settings=user/profile' },
+    '/settings/user/notifications': { redirect: '/?settings=user/notifications' },
+    '/settings/user/developer-settings': {
+      redirect: '/?settings=user/developer-settings'
+    },
+    '/settings/server/general': { redirect: '/?settings=server/general' },
+    '/settings/server/projects': { redirect: '/?settings=server/projects' },
+    '/settings/server/active-users': { redirect: '/?settings=server/active-users' },
+    '/settings/server/pending-invitations': {
+      redirect: '/?settings=server/pending-invitations'
     }
   },
 

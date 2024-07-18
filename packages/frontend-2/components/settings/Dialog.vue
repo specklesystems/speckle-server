@@ -19,12 +19,12 @@
               <UserIcon class="h-5 w-5" />
             </template>
             <LayoutSidebarMenuGroupItem
-              v-for="(sidebarMenuItem, index) in sidebarConfig.user"
+              v-for="(sidebarMenuItem, index) in menuItemConfig.user"
               :key="`sidebarUserItem-${index}`"
               :label="sidebarMenuItem.title"
               :class="{
                 'bg-foundation-focus hover:!bg-foundation-focus':
-                  selectedMenuItem?.path === sidebarMenuItem.path
+                  selectedMenuItem?.title === sidebarMenuItem.title
               }"
               @click="selectedMenuItem = sidebarMenuItem"
             />
@@ -34,12 +34,12 @@
               <ServerStackIcon class="h-5 w-5" />
             </template>
             <LayoutSidebarMenuGroupItem
-              v-for="(sidebarMenuItem, index) in sidebarConfig.server"
+              v-for="(sidebarMenuItem, index) in menuItemConfig.server"
               :key="`sidebarServerItem-${index}`"
               :label="sidebarMenuItem.title"
               :class="{
                 'bg-foundation-focus hover:!bg-foundation-focus':
-                  selectedMenuItem?.path === sidebarMenuItem.path
+                  selectedMenuItem?.title === sidebarMenuItem.title
               }"
               @click="selectedMenuItem = sidebarMenuItem"
             />
@@ -73,7 +73,7 @@ import SettingsServerPendingInvitations from './server/PendingInvitations.vue'
 import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
-import { settingsRoutes } from '~/lib/common/helpers/route'
+import { settingsQueries } from '~/lib/common/helpers/route'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
@@ -92,56 +92,51 @@ const emit = defineEmits<{
 
 const props = defineProps<{
   open: boolean
-  openServerPage: boolean
+  targetMenuItem?: string
 }>()
 
+const route = useRoute()
+const router = useRouter()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smallerOrEqual('md')
 
 const selectedMenuItem = shallowRef<MenuItem | null>(null)
 
-const sidebarConfig: {
+const menuItemConfig: {
   [key: string]: {
     [key: string]: MenuItem
   }
 } = {
   user: {
-    profile: {
+    [settingsQueries.user.profile]: {
       title: 'Profile',
-      component: SettingsUserProfile,
-      path: settingsRoutes.user.profile
+      component: SettingsUserProfile
     },
-    notifications: {
+    [settingsQueries.user.notifications]: {
       title: 'Notifications',
-      component: SettingsUserNotifications,
-      path: settingsRoutes.user.notifications
+      component: SettingsUserNotifications
     },
-    developerSettings: {
+    [settingsQueries.user.developerSettings]: {
       title: 'Developer settings',
-      component: SettingsUserDeveloper,
-      path: settingsRoutes.user.developerSettings
+      component: SettingsUserDeveloper
     }
   },
   server: {
-    general: {
+    [settingsQueries.server.general]: {
       title: 'General',
-      component: SettingsServerGeneral,
-      path: settingsRoutes.server.general
+      component: SettingsServerGeneral
     },
-    projects: {
+    [settingsQueries.server.projects]: {
       title: 'Projects',
-      component: SettingsServerProjects,
-      path: settingsRoutes.server.projects
+      component: SettingsServerProjects
     },
-    activeUsers: {
+    [settingsQueries.server.activeUsers]: {
       title: 'Active users',
-      component: SettingsServerActiveUsers,
-      path: settingsRoutes.server.activeUsers
+      component: SettingsServerActiveUsers
     },
-    pendingInvitations: {
+    [settingsQueries.server.pendingInvitations]: {
       title: 'Pending invitations',
-      component: SettingsServerPendingInvitations,
-      path: settingsRoutes.server.pendingInvitations
+      component: SettingsServerPendingInvitations
     }
   }
 }
@@ -151,14 +146,47 @@ const isOpen = computed({
   set: (newVal: boolean) => emit('update:open', newVal)
 })
 
+// Check if there is a matching menu item in the config
+const getMenuItem = (key: string): MenuItem | null => {
+  const categories = [menuItemConfig.user, menuItemConfig.server]
+  for (const category of categories) {
+    if (key in category) {
+      return category[key]
+    }
+  }
+
+  return null
+}
+
 watch(
   isOpen,
   (newVal, oldVal) => {
     if (newVal && !oldVal) {
-      if (!isMobile.value) {
-        selectedMenuItem.value = props.openServerPage
-          ? sidebarConfig.server.general
-          : sidebarConfig.user.profile
+      const settingsQuery: string | null = route.query?.settings
+
+      // Check if there is a settings query
+      if (settingsQuery) {
+        const matchingMenuItem = getMenuItem(settingsQuery)
+        // Set matching menu items if it exists
+        if (matchingMenuItem) {
+          selectedMenuItem.value = matchingMenuItem
+        } else if (!isMobile.value) {
+          // On desktop: if no matching query check if we can match it to server
+          // Else open on the user profile page
+          // On mobile we not select any item and show the sidebar
+          selectedMenuItem.value = settingsQuery.includes('server')
+            ? menuItemConfig.server[settingsQueries.server.general]
+            : menuItemConfig.user[settingsQueries.user.profile]
+        }
+
+        deleteSettingsQuery()
+        return
+      }
+
+      // Check if there is target prop, only on desktop toggle that page
+      if (!isMobile.value && props.targetMenuItem) {
+        const matchingMenuItem = getMenuItem(props.targetMenuItem)
+        selectedMenuItem.value = matchingMenuItem
       }
     } else if (!newVal && oldVal) {
       selectedMenuItem.value = null
@@ -166,4 +194,10 @@ watch(
   },
   { immediate: true }
 )
+
+const deleteSettingsQuery = (): void => {
+  const currentQueryParams = { ...route.query }
+  delete currentQueryParams.settings
+  router.push({ query: currentQueryParams })
+}
 </script>
