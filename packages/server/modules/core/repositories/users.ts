@@ -108,16 +108,24 @@ export async function listUsers({
   cursor: Date | null
 } & UserQuery): Promise<UserWithRole[]> {
   const sanitizedLimit = clamp(limit, 1, 200)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { verified, email, ...userCols } = Users.col
   const q = Users.knex<UserWithRole[]>()
     .orderBy(Users.col.createdAt, 'desc')
     .limit(sanitizedLimit)
     .columns([
-      ...Object.values(Users.col),
+      ...Object.values(userCols),
+      `${USER_EMAILS_TABLE_NAME}.email`,
+      `${USER_EMAILS_TABLE_NAME}.verified`,
       // Getting first role from grouped results
       knex.raw(`(array_agg("server_acl"."role"))[1] as role`)
     ])
     .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+    .leftJoin(USER_EMAILS_TABLE_NAME, `${USER_EMAILS_TABLE_NAME}.userId`, Users.col.id)
+    .where({ primary: true })
     .groupBy(Users.col.id)
+    .groupBy(`${USER_EMAILS_TABLE_NAME}.email`)
+    .groupBy(`${USER_EMAILS_TABLE_NAME}.verified`)
   if (cursor) q.where(Users.col.createdAt, '<', cursor)
   const users: UserWithRole[] = await getUsersBaseQuery(q, { query, role })
   return users.map((u) => sanitizeUserRecord(u))
