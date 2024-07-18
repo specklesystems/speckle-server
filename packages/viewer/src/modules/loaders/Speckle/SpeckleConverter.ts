@@ -554,6 +554,10 @@ export default class SpeckleConverter {
     return (obj.transform || obj.Transform) as Array<number>
   }
 
+  private getInstanceProxyDefinitionObjects(obj: SpeckleObject): Array<string> {
+    return (obj.Objects || obj.objects) as Array<string>
+  }
+
   private createTransformNode(obj: SpeckleObject) {
     const transformNodeId = MathUtils.generateUUID()
     const transformData = this.getEmptyTransformData(transformNodeId)
@@ -577,7 +581,9 @@ export default class SpeckleConverter {
     const transformNode = this.createTransformNode(obj)
 
     this.tree.addNode(transformNode, node)
-    const objectApplicationIds = definition.model.raw.Objects
+    const objectApplicationIds = this.getInstanceProxyDefinitionObjects(
+      definition.model.raw
+    )
     for (const objectApplicationId of objectApplicationIds) {
       const speckleData = this.instancedObjectsLookupTable[objectApplicationId]
       const instancedNode = this.tree.parse({
@@ -601,7 +607,7 @@ export default class SpeckleConverter {
     let consumeApplicationIdsCount = 0
     for (const k in this.instanceDefinitionLookupTable) {
       const definition = this.instanceDefinitionLookupTable[k]
-      const objects = definition.model.raw.Objects as string[]
+      const objects = this.getInstanceProxyDefinitionObjects(definition.model.raw)
       for (let i = 0; i < objects.length; i++) {
         consumeApplicationIds[objects[i].toString()] = null
         consumeApplicationIdsCount++
