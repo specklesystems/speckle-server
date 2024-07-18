@@ -30,7 +30,7 @@
           >
             <DialogPanel
               :class="[
-                'transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col h-[98vh] h-[98dvh] md:h-auto',
+                'dialog-panel transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col md:h-auto',
                 fullscreen ? 'md:h-full' : 'md:max-h-[90vh]',
                 widthClasses
               ]"
@@ -262,5 +262,10 @@ html.dialog-open {
 }
 html.dialog-open body {
   overflow: hidden !important;
+}
+/* Workaround because in Tailwind vh gets added after dvh */
+.dialog-panel {
+  height: 98vh;
+  height: 98dvh;
 }
 </style>

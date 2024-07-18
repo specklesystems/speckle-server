@@ -17,7 +17,11 @@
         </FormButton>
       </div>
     </div>
-    <p v-if="text" class="text-sm pt-6 md:pt-4 text-secondary-2">
+    <p
+      v-if="text"
+      class="text-sm pt-2 md:pt-4 text-secondary-2"
+      :class="{ 'pt-6': subheading }"
+    >
       {{ text }}
     </p>
     <hr v-if="!subheading" class="my-6 md:my-10" />
