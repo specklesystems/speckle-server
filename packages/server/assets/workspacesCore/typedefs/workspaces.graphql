@@ -34,8 +34,13 @@ type WorkspaceMutations {
   create(input: WorkspaceCreateInput!): Workspace! @hasScope(scope: "workspace:create")
   delete(workspaceId: String!): Workspace! @hasScope(scope: "workspace:delete")
   update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
+  """
+  TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes
+  """
   updateRole(input: WorkspaceRoleUpdateInput!): Boolean!
+    @hasScope(scope: "workspace:update")
   deleteRole(input: WorkspaceRoleDeleteInput!): Boolean!
+    @hasScope(scope: "workspace:update")
   invites: WorkspaceInviteMutations!
 }
 
@@ -62,9 +67,15 @@ input WorkspaceInviteUseInput {
 
 type WorkspaceInviteMutations {
   create(workspaceId: String!, input: WorkspaceInviteCreateInput!): Workspace!
+    @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
   batchCreate(workspaceId: String!, input: [WorkspaceInviteCreateInput!]!): Workspace!
+    @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
   use(input: WorkspaceInviteUseInput!): Boolean!
   cancel(workspaceId: String!, inviteId: String!): Workspace!
+    @hasScope(scope: "users:invite")
+    @hasServerRole(role: SERVER_USER)
 }
 
 type Workspace {
