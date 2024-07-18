@@ -42,18 +42,16 @@
         </div>
       </div>
       <div
-        class="h-auto sm:h-12 flex flex-col sm:flex-row sm:items-center px-2 py-1 gap-x-1"
+        class="h-auto sm:h-12 flex flex-col sm:flex-row sm:items-center px-2 pt-1 pb-2 gap-x-1"
       >
         <NuxtLink class="min-w-0 max-w-full cursor-pointer" :href="finalModelUrl">
           <div
             v-if="nameParts[0]"
-            class="text-xs text-foreground-2 relative -mb-1 truncate"
+            class="text-body-2xs text-foreground-2 relative -mb-0.5 truncate"
           >
             {{ nameParts[0] }}
           </div>
-          <div
-            class="font-bold text-sm sm:text-base truncate text-foreground flex-shrink min-w-0"
-          >
+          <div class="text-heading truncate text-foreground flex-shrink min-w-0">
             {{ nameParts[1] }}
           </div>
         </NuxtLink>
@@ -61,7 +59,7 @@
         <div class="flex items-center">
           <ProjectPageModelsCardUpdatedTime
             :updated-at="updatedAtFullDate"
-            :class="`text-xs w-full text-foreground-2 sm:mr-1 truncate transition ${
+            :class="`text-body-3xs w-full text-foreground-2 sm:mr-1 truncate transition ${
               hovered ? 'sm:w-auto' : 'sm:w-0'
             }`"
           />

@@ -31,14 +31,14 @@
             ></component>
             <div class="flex flex-col items-start text-left">
               <h4
-                class="font-bold text-base"
-                :class="option.introduction ? 'text-base' : 'text-sm'"
+                class="font-bold"
+                :class="option.introduction ? 'text-body-sm' : 'text-body-xs'"
               >
                 {{ option.title }}
               </h4>
               <div
                 v-if="option.introduction"
-                class="text-xs text-foreground-2 py-1 select-none"
+                class="text-body-xs text-foreground-2 pb-1 select-none"
               >
                 {{ option.introduction }}
               </div>

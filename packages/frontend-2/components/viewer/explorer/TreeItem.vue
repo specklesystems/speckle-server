@@ -36,7 +36,7 @@
                 : ''
             }`"
           >
-            <div class="truncate text-sm">
+            <div class="truncate text-body-sm">
               <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
               {{ header || headerAndSubheader.header }}
             </div>

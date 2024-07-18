@@ -7,7 +7,7 @@
       <slot name="image"></slot>
     </div>
     <div class="flex flex-col gap-1 items-center text-center">
-      <span class="text-foreground font-bold">{{ title }}</span>
+      <span class="text-foreground text-heading">{{ title }}</span>
       <span v-if="text" class="text-xs text-foreground-2">
         {{ text }}
       </span>

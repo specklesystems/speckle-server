@@ -14,7 +14,7 @@
         <div class="flex flex-col truncate">
           <div
             :class="[
-              'normal font-semibold text-foreground truncate',
+              'text-heading text-foreground truncate',
               noButtons ? '' : 'hover:underline'
             ]"
           >
@@ -26,7 +26,7 @@
               {{ fn.name }}
             </Component>
           </div>
-          <div class="label-light flex items-center space-x-1">
+          <div class="text-body-xs flex items-center space-x-1 -mt-1">
             <span>by</span>
             <Component
               :is="noButtons ? 'div' : CommonTextLink"
@@ -39,7 +39,7 @@
           </div>
         </div>
       </div>
-      <div class="label-light text-foreground-2 line-clamp-3 h-16 whitespace-normal">
+      <div class="text-body-xs text-foreground-2 line-clamp-3 h-18 whitespace-normal">
         {{ plaintextDescription }}
       </div>
       <div v-if="!noButtons" class="flex flex-col sm:flex-row sm:self-end gap-2">

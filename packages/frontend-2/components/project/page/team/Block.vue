@@ -4,9 +4,9 @@
       <div class="flex items-center">
         <div class="flex items-center justify-between w-full">
           <div class="flex items-center gap-1 flex-grow select-none">
-            <span class="text-foreground text-sm font-semibold">Collaborators</span>
+            <span class="text-heading-sm text-foreground">Collaborators</span>
           </div>
-          <div class="flex items-center text-sm capitalize">
+          <div class="text-body-xs flex items-center capitalize">
             {{ project.role?.split(':').reverse()[0] }}
           </div>
         </div>

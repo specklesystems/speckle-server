@@ -21,13 +21,13 @@
       leave-to-class="transform opacity-0 scale-95"
     >
       <MenuItems
-        class="absolute z-50 flex flex-col gap-1 right-0 sm:right-4 top-12 min-w-max w-full sm:w-44 p-1 origin-top-right bg-foundation-2 outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden text-sm"
+        class="absolute z-50 flex flex-col gap-1 right-0 sm:right-4 top-8 min-w-max w-full sm:w-36 p-1 origin-top-right bg-foundation-2 outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden text-sm"
       >
         <MenuItem v-slot="{ active }">
           <div
             :class="[
               active ? 'bg-foundation-focus' : '',
-              'flex gap-2 items-center px-2 py-1.5 text-sm text-foreground cursor-pointer transition rounded'
+              'flex gap-2 items-center px-2 py-1 text-body-xs text-foreground cursor-pointer transition rounded'
             ]"
             @click="handleCopyLink"
             @keypress="keyboardClick(handleCopyLink)"
@@ -40,7 +40,7 @@
           <div
             :class="[
               active ? 'bg-foundation-focus' : '',
-              'flex gap-2 items-center px-2 py-1.5 text-sm text-foreground cursor-pointer transition rounded'
+              'flex gap-2 items-center px-2 py-1 text-body-xs text-foreground cursor-pointer transition rounded'
             ]"
             @click="handleCopyId"
             @keypress="keyboardClick(handleCopyId)"
@@ -53,7 +53,7 @@
           <div
             :class="[
               active ? 'bg-foundation-focus' : '',
-              'flex gap-2 items-center px-2 py-1.5 text-sm text-foreground cursor-pointer transition rounded'
+              'flex gap-2 items-center px-2 py-1 text-body-xs text-foreground cursor-pointer transition rounded'
             ]"
             @click="handleEmbed"
             @keypress="keyboardClick(handleEmbed)"

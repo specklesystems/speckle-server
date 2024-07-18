@@ -381,16 +381,16 @@ const ringClasses = computed(() => {
 const sizeClasses = computed(() => {
   switch (props.size) {
     case 'xs':
-      return 'h-5 text-xs font-medium xxx-tracking-wide'
+      return 'h-5 text-body-2xs'
     case 'sm':
-      return 'h-6 text-sm font-medium xxx-tracking-wide'
+      return 'h-6 text-body-xs'
     case 'lg':
-      return 'h-10 text-lg font-semibold xxx-tracking-wide'
+      return 'h-10 text-body'
     case 'xl':
-      return 'h-14 text-xl font-bold xxx-tracking-wide'
+      return 'h-14 text-body-lg'
     default:
     case 'base':
-      return 'h-8 text-sm sm:text-base font-medium xxx-tracking-wide'
+      return 'h-8 text-body-sm'
   }
 })
 

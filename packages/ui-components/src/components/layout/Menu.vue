@@ -94,7 +94,7 @@ const buildButtonClassses = (params: {
 }) => {
   const { active, disabled, color } = params
   const classParts = [
-    'group flex gap-3 w-full items-center rounded-md px-2 py-1.5 text-sm'
+    'group flex gap-3 w-full items-center rounded-md px-2 py-1.5 text-body-sm'
   ]
 
   if (active && !color) {

@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="flex justify-between items-center mb-8">
-      <h1 class="block h4 font-bold">Discussions</h1>
+      <h1 class="block text-heading-xl">Discussions</h1>
       <div class="space-x-2 flex items-center">
         <FormCheckbox
           :id="checkboxId"

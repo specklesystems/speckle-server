@@ -3,7 +3,7 @@
   <div :class="[fullWidth ? 'w-full' : '', wrapperClasses]">
     <label :for="name" :class="labelClasses">
       <span>{{ title }}</span>
-      <div v-if="showRequired" class="text-danger text-xs opacity-80">*</div>
+      <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
     </label>
     <div class="relative">
       <div
@@ -53,7 +53,7 @@
           @click="clear"
           @keydown="clear"
         >
-          <span class="text-xs sr-only">Clear input</span>
+          <span class="text-body-xs sr-only">Clear input</span>
           <XMarkIcon class="h-5 w-5 text-foreground" aria-hidden="true" />
         </a>
         <div
@@ -67,7 +67,7 @@
         </div>
         <div
           v-if="!showLabel && showRequired && !errorMessage"
-          class="pointer-events-none absolute inset-y-0 mt-3 text-4xl right-0 flex items-center text-danger opacity-50"
+          class="pointer-events-none absolute inset-y-0 mt-3 text-heading-2xl right-0 flex items-center text-danger opacity-50"
           :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
         >
           *
@@ -307,14 +307,14 @@ const iconClasses = computed((): string => {
 const sizeClasses = computed((): string => {
   switch (props.size) {
     case 'sm':
-      return 'h-6 text-sm'
+      return 'h-6 text-body-sm'
     case 'lg':
       return 'h-10'
     case 'xl':
       return 'h-14'
     case 'base':
     default:
-      return 'h-8 text-sm'
+      return 'h-8 text-body-sm'
   }
 })
 

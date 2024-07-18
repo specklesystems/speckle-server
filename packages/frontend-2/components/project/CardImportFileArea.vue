@@ -34,7 +34,7 @@
       </div>
       <span
         v-else
-        class="text-foreground-2 text-center leading-7"
+        class="text-sm text-foreground-2 text-center"
         :class="isModelCardVariant ? ' opacity-50 group-hover:opacity-100' : ''"
       >
         Use our
