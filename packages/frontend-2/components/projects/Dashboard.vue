@@ -22,7 +22,7 @@
       v-if="!showEmptyState"
       class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
     >
-      <h1 class="text-heading-2xl">Projects</h1>
+      <h1 class="text-heading-xl">Projects</h1>
 
       <div
         class="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-2 grow md:justify-end"
