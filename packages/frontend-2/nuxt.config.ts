@@ -193,6 +193,7 @@ export default defineNuxtConfig({
     },
 
     // Redirect settings 'route' to homepage with added query
+    '/settings': { redirect: '/?settings=user/profile' },
     '/settings/user/profile': { redirect: '/?settings=user/profile' },
     '/settings/user/notifications': { redirect: '/?settings=user/notifications' },
     '/settings/user/developer-settings': {
