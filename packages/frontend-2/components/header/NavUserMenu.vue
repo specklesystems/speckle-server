@@ -136,6 +136,7 @@
 </template>
 <script setup lang="ts">
 import { isString } from 'lodash'
+import { useBreakpoints } from '@vueuse/core'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import {
   XMarkIcon,
@@ -150,6 +151,7 @@ import {
   ServerStackIcon
 } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
 import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
@@ -166,11 +168,14 @@ const { logout } = useAuthManager()
 const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, toggleTheme } = useTheme()
 const { serverInfo } = useServerInfo()
+const router = useRouter()
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
 const settingsDialogTarget = ref<string>(null)
 const menuButtonId = useId()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('md')
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => serverInfo.value?.version)
@@ -182,13 +187,25 @@ const toggleInviteDialog = () => {
 
 const toggleSettingsDialog = (target: string) => {
   showSettingsDialog.value = true
-  settingsDialogTarget.value = target
+
+  if (!isMobile.value) {
+    settingsDialogTarget.value = target
+  }
+}
+
+const deleteSettingsQuery = (): void => {
+  const currentQueryParams = { ...route.query }
+  delete currentQueryParams.settings
+  router.push({ query: currentQueryParams })
 }
 
 onMounted(() => {
   const settingsQuery = route.query?.settings
+
   if (settingsQuery && isString(settingsQuery)) {
-    toggleSettingsDialog(settingsQuery)
+    showSettingsDialog.value = true
+    settingsDialogTarget.value = settingsQuery
+    deleteSettingsQuery()
   }
 })
 </script>

@@ -125,7 +125,7 @@ import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
 import { throttle } from 'lodash'
 import { isClient } from '@vueuse/core'
 
-type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl' | 'fullscreen'
+type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void

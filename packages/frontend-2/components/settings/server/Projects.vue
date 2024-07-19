@@ -44,13 +44,13 @@
 
       <template #created="{ item }">
         <div class="text-xs">
-          {{ isProject(item) ? new Date(item.createdAt).toLocaleString('en-GB') : '' }}
+          {{ formattedFullDate(item.createdAt) }}
         </div>
       </template>
 
       <template #modified="{ item }">
         <div class="text-xs">
-          {{ isProject(item) ? new Date(item.updatedAt).toLocaleString('en-GB') : '' }}
+          {{ formattedFullDate(item.updatedAt) }}
         </div>
       </template>
 
