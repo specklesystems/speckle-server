@@ -466,15 +466,15 @@ export type PaginatedProjectCommentsParams = {
   cursor?: MaybeNullOrUndefined<string>
   filter?: MaybeNullOrUndefined<
     Partial<{
-      threadsOnly: boolean
-      includeArchived: boolean
-      archivedOnly: boolean
-      resourceIdString: string
+      threadsOnly: boolean | null
+      includeArchived: boolean | null
+      archivedOnly: boolean | null
+      resourceIdString: string | null
       /**
        * If true, will ignore the version parts of `model@version` identifiers and look for comments of
        * all versions of any selected comments
        */
-      allModelVersions: boolean
+      allModelVersions: boolean | null
     }>
   >
 }

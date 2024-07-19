@@ -1,10 +1,9 @@
-const { pubsub } = require('@/modules/shared/utils/subscriptions')
-const { ForbiddenError: ApolloForbiddenError } = require('apollo-server-express')
-const { ForbiddenError } = require('@/modules/shared/errors')
-const { getStream } = require('@/modules/core/services/streams')
-const { Roles } = require('@/modules/core/helpers/mainConstants')
-
-const {
+import { pubsub } from '@/modules/shared/utils/subscriptions'
+import { ForbiddenError as ApolloForbiddenError } from 'apollo-server-express'
+import { ForbiddenError } from '@/modules/shared/errors'
+import { getStream } from '@/modules/core/services/streams'
+import { Roles } from '@/modules/core/helpers/mainConstants'
+import {
   getComments,
   getResourceCommentCount,
   createComment,
@@ -13,39 +12,37 @@ const {
   archiveComment,
   editComment,
   streamResourceCheck
-} = require('@/modules/comments/services/index')
-const { getComment } = require('@/modules/comments/repositories/comments')
-const {
-  ensureCommentSchema
-} = require('@/modules/comments/services/commentTextService')
-const { withFilter } = require('graphql-subscriptions')
-const { has } = require('lodash')
-const {
-  documentToBasicString
-} = require('@/modules/core/services/richTextEditorService')
-const {
+} from '@/modules/comments/services/index'
+import { getComment } from '@/modules/comments/repositories/comments'
+import { ensureCommentSchema } from '@/modules/comments/services/commentTextService'
+import { has } from 'lodash'
+import {
+  documentToBasicString,
+  SmartTextEditorValueSchema
+} from '@/modules/core/services/richTextEditorService'
+import {
   getPaginatedCommitComments,
   getPaginatedBranchComments,
   getPaginatedProjectComments
-} = require('@/modules/comments/services/retrieval')
-const {
+} from '@/modules/comments/services/retrieval'
+import {
   publish,
   ViewerSubscriptions,
   CommentSubscriptions,
   filteredSubscribe,
   ProjectSubscriptions
-} = require('@/modules/shared/utils/subscriptions')
-const {
+} from '@/modules/shared/utils/subscriptions'
+import {
   addCommentCreatedActivity,
   addCommentArchivedActivity,
   addReplyAddedActivity
-} = require('@/modules/activitystream/services/commentActivity')
-const {
+} from '@/modules/activitystream/services/commentActivity'
+import {
   getViewerResourceItemsUngrouped,
   getViewerResourcesForComment,
   doViewerResourcesFit
-} = require('@/modules/core/services/commit/viewerResources')
-const {
+} from '@/modules/core/services/commit/viewerResources'
+import {
   authorizeProjectCommentsAccess,
   authorizeCommentAccess,
   markViewed,
@@ -53,30 +50,40 @@ const {
   createCommentReplyAndNotify,
   editCommentAndNotify,
   archiveCommentAndNotify
-} = require('@/modules/comments/services/management')
-const {
+} from '@/modules/comments/services/management'
+import {
   isLegacyData,
   isDataStruct,
   formatSerializedViewerState,
   convertStateToLegacyData,
   convertLegacyDataToState
-} = require('@/modules/comments/services/data')
+} from '@/modules/comments/services/data'
+import {
+  Resolvers,
+  ResourceIdentifier,
+  ResourceType
+} from '@/modules/core/graph/generated/graphql'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { CommentRecord } from '@/modules/comments/helpers/types'
 
-const getStreamComment = async ({ streamId, commentId }, ctx) => {
+const getStreamComment = async (
+  { streamId, commentId }: { streamId: string; commentId: string },
+  ctx: GraphQLContext
+) => {
   await authorizeProjectCommentsAccess({
     projectId: streamId,
     authCtx: ctx
   })
 
   const comment = await getComment({ id: commentId, userId: ctx.userId })
-  if (comment.streamId !== streamId)
+  if (comment?.streamId !== streamId)
     throw new ApolloForbiddenError('You do not have access to this comment.')
 
   return comment
 }
 
-/** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
-module.exports = {
+// FIXME: Non-null assertions considered unsafe but are parity with previous .js logic
+export = {
   Query: {
     async comment(_parent, args, context) {
       return await getStreamComment(
@@ -85,12 +92,18 @@ module.exports = {
       )
     },
 
-    async comments(parent, args, context) {
+    async comments(_parent, args, context) {
       await authorizeProjectCommentsAccess({
         projectId: args.streamId,
         authCtx: context
       })
-      return { ...(await getComments({ ...args, userId: context.userId })) }
+      return {
+        ...(await getComments({
+          ...args,
+          resources: args.resources?.filter((res): res is ResourceIdentifier => !!res),
+          userId: context.userId!
+        }))
+      }
     }
   },
   Comment: {
@@ -104,7 +117,7 @@ module.exports = {
         }
       }
 
-      const resources = [{ resourceId: parent.id, resourceType: 'comment' }]
+      const resources = [{ resourceId: parent.id, resourceType: ResourceType.Comment }]
       return await getComments({
         resources,
         replies: true,
@@ -117,11 +130,13 @@ module.exports = {
      */
     text(parent) {
       const commentText = parent?.text || ''
-      return ensureCommentSchema(commentText)
+      return ensureCommentSchema(commentText as SmartTextEditorValueSchema)
     },
 
     rawText(parent) {
-      const { doc } = ensureCommentSchema(parent.text || '')
+      const { doc } = ensureCommentSchema(
+        (parent.text as SmartTextEditorValueSchema) || ''
+      )
       return documentToBasicString(doc)
     },
     async hasParent(parent) {
@@ -134,11 +149,13 @@ module.exports = {
      * Resolve resources, if they weren't already preloaded
      */
     async resources(parent, _args, ctx) {
-      if (has(parent, 'resources')) return parent.resources
+      if (has(parent, 'resources'))
+        return (parent as CommentRecord & { resources: ResourceIdentifier[] }).resources
       return await ctx.loaders.comments.getResources.load(parent.id)
     },
     async viewedAt(parent, _args, ctx) {
-      if (has(parent, 'viewedAt')) return parent.viewedAt
+      if (has(parent, 'viewedAt'))
+        return (parent as CommentRecord & { viewedAt: Date }).viewedAt
       return await ctx.loaders.comments.getViewedAt.load(parent.id)
     },
     async author(parent, _args, ctx) {
@@ -230,14 +247,14 @@ module.exports = {
     async commentThreads(parent, args, context) {
       const stream = await context.loaders.commits.getCommitStream.load(parent.id)
       await authorizeProjectCommentsAccess({
-        projectId: stream.id,
+        projectId: stream!.id,
         authCtx: context
       })
       return await getPaginatedCommitComments({
         ...args,
         commitId: parent.id,
         filter: {
-          ...(args.filter || {}),
+          includeArchived: false,
           threadsOnly: true
         }
       })
@@ -253,7 +270,7 @@ module.exports = {
         ...args,
         branchId: parent.id,
         filter: {
-          ...(args.filter || {}),
+          includeArchived: false,
           threadsOnly: true
         }
       })
@@ -262,14 +279,13 @@ module.exports = {
   ViewerUserActivityMessage: {
     async user(parent, args, context) {
       const { userId } = parent
-      return context.loaders.users.getUser.load(userId)
+      return context.loaders.users.getUser.load(userId!)
     }
   },
   Stream: {
     async commentCount(parent, _args, context) {
       if (context.role === Roles.Server.ArchivedUser)
         throw new ApolloForbiddenError('You are not authorized.')
-
       return await context.loaders.streams.getCommentThreadCount.load(parent.id)
     }
   },
@@ -293,7 +309,7 @@ module.exports = {
         authCtx: ctx,
         commentId: args.commentId
       })
-      await markViewed(args.commentId, ctx.userId)
+      await markViewed(args.commentId, ctx.userId!)
       return true
     },
     async create(_parent, args, ctx) {
@@ -302,7 +318,7 @@ module.exports = {
         authCtx: ctx,
         requireProjectRole: true
       })
-      return await createCommentThreadAndNotify(args.input, ctx.userId)
+      return await createCommentThreadAndNotify(args.input, ctx.userId!)
     },
     async reply(_parent, args, ctx) {
       await authorizeCommentAccess({
@@ -310,7 +326,7 @@ module.exports = {
         authCtx: ctx,
         requireProjectRole: true
       })
-      return await createCommentReplyAndNotify(args.input, ctx.userId)
+      return await createCommentReplyAndNotify(args.input, ctx.userId!)
     },
     async edit(_parent, args, ctx) {
       await authorizeCommentAccess({
@@ -318,7 +334,7 @@ module.exports = {
         commentId: args.input.commentId,
         requireProjectRole: true
       })
-      return await editCommentAndNotify(args.input, ctx.userId)
+      return await editCommentAndNotify(args.input, ctx.userId!)
     },
     async archive(_parent, args, ctx) {
       await authorizeCommentAccess({
@@ -326,7 +342,7 @@ module.exports = {
         commentId: args.commentId,
         requireProjectRole: true
       })
-      await archiveCommentAndNotify(args.commentId, ctx.userId, args.archived)
+      await archiveCommentAndNotify(args.commentId, ctx.userId!, args.archived)
       return true
     }
   },
@@ -342,7 +358,7 @@ module.exports = {
         projectId: args.projectId,
         resourceItems: await getViewerResourceItemsUngrouped(args),
         viewerUserActivityBroadcasted: args.message,
-        userId: context.userId
+        userId: context.userId!
       })
       return true
     },
@@ -379,7 +395,7 @@ module.exports = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !stream.role)
+      if (!stream?.allowPublicComments && !stream?.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
       await pubsub.publish(CommentSubscriptions.CommentThreadActivity, {
@@ -399,7 +415,7 @@ module.exports = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !stream.role)
+      if (!stream?.allowPublicComments && !stream?.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
       const comment = await createComment({
@@ -426,7 +442,7 @@ module.exports = {
       })
       const matchUser = !stream.role
       try {
-        await editComment({ userId: context.userId, input: args.input, matchUser })
+        await editComment({ userId: context.userId!, input: args.input, matchUser })
         return true
       } catch (err) {
         if (err instanceof ForbiddenError) throw new ApolloForbiddenError(err.message)
@@ -440,7 +456,7 @@ module.exports = {
         projectId: args.streamId,
         authCtx: context
       })
-      await viewComment({ userId: context.userId, commentId: args.commentId })
+      await viewComment({ userId: context.userId!, commentId: args.commentId })
       return true
     },
 
@@ -453,7 +469,7 @@ module.exports = {
 
       let updatedComment
       try {
-        updatedComment = await archiveComment({ ...args, userId: context.userId }) // NOTE: permissions check inside service
+        updatedComment = await archiveComment({ ...args, userId: context.userId! }) // NOTE: permissions check inside service
       } catch (err) {
         if (err instanceof ForbiddenError) throw new ApolloForbiddenError(err.message)
         throw err
@@ -462,7 +478,7 @@ module.exports = {
       await addCommentArchivedActivity({
         streamId: args.streamId,
         commentId: args.commentId,
-        userId: context.userId,
+        userId: context.userId!,
         input: args,
         comment: updatedComment
       })
@@ -479,15 +495,15 @@ module.exports = {
         userId: context.userId
       })
 
-      if (!stream.allowPublicComments && !stream.role)
+      if (!stream?.allowPublicComments && !stream?.role)
         throw new ApolloForbiddenError('You are not authorized.')
 
       const reply = await createCommentReply({
         authorId: context.userId,
         parentCommentId: args.input.parentComment,
         streamId: args.input.streamId,
-        text: args.input.text,
-        data: args.input.data,
+        text: args.input.text as SmartTextEditorValueSchema,
+        data: args.input.data ?? null,
         blobIds: args.input.blobIds
       })
 
@@ -503,15 +519,15 @@ module.exports = {
   },
   Subscription: {
     userViewerActivity: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([CommentSubscriptions.ViewerActivity]),
+      subscribe: filteredSubscribe(
+        CommentSubscriptions.ViewerActivity,
         async (payload, variables, context) => {
           const stream = await getStream({
             streamId: payload.streamId,
             userId: context.userId
           })
 
-          if (!stream.allowPublicComments && !stream.role)
+          if (!stream?.allowPublicComments && !stream?.role)
             throw new ApolloForbiddenError('You are not authorized.')
 
           // dont report users activity to himself
@@ -527,15 +543,15 @@ module.exports = {
       )
     },
     commentActivity: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([CommentSubscriptions.CommentActivity]),
+      subscribe: filteredSubscribe(
+        CommentSubscriptions.CommentActivity,
         async (payload, variables, context) => {
           const stream = await getStream({
             streamId: payload.streamId,
             userId: context.userId
           })
 
-          if (!stream.allowPublicComments && !stream.role)
+          if (!stream?.allowPublicComments && !stream?.role)
             throw new ApolloForbiddenError('You are not authorized.')
 
           // if we're listening for a stream's root comments events
@@ -548,14 +564,18 @@ module.exports = {
             // prevents comment exfiltration by listening in to a auth'ed stream, but different commit ("stream hopping" for subscriptions)
             await streamResourceCheck({
               streamId: variables.streamId,
-              resources: variables.resourceIds.map((resId) => {
-                return {
-                  resourceId: resId,
-                  resourceType: resId.length === 10 ? 'commit' : 'object'
-                }
-              })
+              resources: variables.resourceIds
+                .filter((resId): resId is string => !!resId)
+                .map((resId) => {
+                  return {
+                    resourceId: resId,
+                    resourceType:
+                      resId.length === 10 ? ResourceType.Commit : ResourceType.Object
+                  }
+                })
             })
             for (const res of variables.resourceIds) {
+              if (!res) continue
               if (
                 payload.resourceIds.includes(res) &&
                 payload.streamId === variables.streamId
@@ -566,19 +586,21 @@ module.exports = {
           } catch {
             return false
           }
+
+          return false
         }
       )
     },
     commentThreadActivity: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([CommentSubscriptions.CommentThreadActivity]),
+      subscribe: filteredSubscribe(
+        CommentSubscriptions.CommentThreadActivity,
         async (payload, variables, context) => {
           const stream = await getStream({
             streamId: payload.streamId,
             userId: context.userId
           })
 
-          if (!stream.allowPublicComments && !stream.role)
+          if (!stream?.allowPublicComments && !stream?.role)
             throw new ApolloForbiddenError('You are not authorized.')
 
           return (
@@ -607,7 +629,7 @@ module.exports = {
             getViewerResourceItemsUngrouped(target)
           ])
 
-          if (!stream.isPublic && !stream.role)
+          if (!stream?.isPublic && !stream?.role)
             throw new ApolloForbiddenError('You are not authorized.')
 
           // dont report users activity to himself
@@ -642,7 +664,7 @@ module.exports = {
             getViewerResourceItemsUngrouped(target)
           ])
 
-          if (!(stream.isDiscoverable || stream.isPublic) && !stream.role)
+          if (!(stream?.isDiscoverable || stream?.isPublic) && !stream?.role)
             throw new ApolloForbiddenError('You are not authorized.')
 
           if (!target.resourceIdString) {
@@ -659,4 +681,4 @@ module.exports = {
       )
     }
   }
-}
+} as Resolvers
