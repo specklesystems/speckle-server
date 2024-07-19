@@ -58,7 +58,7 @@
                 v-tippy="
                   `${
                     user.sessionId === spotlightUserSessionId
-                      ? 'Stop Following'
+                      ? 'Stop following'
                       : 'Follow'
                   } ${user.user.name}`
                 "

@@ -1,7 +1,7 @@
 <template>
   <div>
     <FormTextInput
-      label="Select Function"
+      label="Select function"
       :show-label="showLabel"
       :show-required="showRequired"
       name="search"

@@ -4,7 +4,7 @@
       <template v-if="finalParams">
         <FormJsonForm :schema="finalParams" />
         <LayoutDialogSection
-          title="Parameter Schema"
+          title="Parameter schema"
           :icon="BeakerIcon"
           border-t
           border-b

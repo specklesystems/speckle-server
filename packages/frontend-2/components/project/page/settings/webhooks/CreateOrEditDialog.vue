@@ -6,7 +6,7 @@
     prevent-close-on-click-outside
   >
     <template #header>
-      {{ props.webhook ? 'Edit Webhook' : 'Create Webhook' }}
+      {{ props.webhook ? 'Edit webhook' : 'Create webhook' }}
     </template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-4">
@@ -45,7 +45,7 @@
           multiple
           name="triggers"
           label="Events"
-          placeholder="Choose Events"
+          placeholder="Choose events"
           mount-menu-on-body
           help="Choose what events will trigger this webhook."
           show-required

@@ -8,7 +8,7 @@
         :icon-right="showVisibilityOptions ? ChevronUpIcon : ChevronDownIcon"
         @click="showVisibilityOptions = !showVisibilityOptions"
       >
-        Discussion Visibility Options
+        Discussion visibility options
       </FormButton>
     </template>
     <div class="flex flex-col">
@@ -23,7 +23,7 @@
             text
             @click="hideBubbles = !hideBubbles"
           >
-            Show In 3D Model
+            Show in 3D model
           </FormButton>
         </div>
         <div>

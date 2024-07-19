@@ -49,7 +49,7 @@
                 })
               "
             >
-              Cancel Invite
+              Cancel invite
             </FormButton>
           </div>
         </template>

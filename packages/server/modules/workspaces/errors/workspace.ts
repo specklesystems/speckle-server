@@ -15,3 +15,8 @@ export class WorkspaceQueryError extends BaseError {
   static defaultMessage = 'Unexpected error during query operation'
   static code = 'WORKSPACE_QUERY_ERROR'
 }
+
+export class WorkspacesNotYetImplementedError extends BaseError {
+  static defaultMessage = 'Not yet implemented'
+  static code = 'WORKSPACES_NOT_YET_IMPLEMENTED_ERROR'
+}
