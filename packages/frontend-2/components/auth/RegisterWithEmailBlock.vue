@@ -5,8 +5,8 @@
       <FormTextInput
         type="text"
         name="name"
-        label="Full Name"
-        placeholder="My Name"
+        label="Full name"
+        placeholder="My name"
         :size="isSmallerOrEqualSm ? 'lg' : 'xl'"
         :rules="nameRules"
         :custom-icon="UserIcon"

@@ -1,6 +1,6 @@
 <template>
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
-    <template #title>Measure Mode</template>
+    <template #title>Measure mode</template>
     <div
       class="flex items-center gap-2 text-xs sm:text-sm px-3 py-1.5 sm:py-2 border-b border-outline-3 text-foreground-2"
     >
@@ -16,12 +16,12 @@
         class="font-normal py-1"
         @click="() => clearMeasurements()"
       >
-        Delete All Measurements
+        Delete all measurements
       </FormButton>
     </template>
     <div class="px-3 py-2 sm:p-3 flex flex-col gap-3 border-b border-outline-3">
       <div>
-        <h6 class="font-semibold text-xs sm:text-sm mb-2">Measurement Type</h6>
+        <h6 class="font-semibold text-xs sm:text-sm mb-2">Measurement type</h6>
         <FormRadio
           v-for="option in measurementTypeOptions"
           :key="option.value"
@@ -42,7 +42,7 @@
         :model-value="measurementParams.vertexSnap"
         @update:model-value="() => toggleMeasurementsSnap()"
       />
-      <span class="font-normal text-xs sm:text-sm">Snap to Vertices</span>
+      <span class="font-normal text-xs sm:text-sm">Snap to vertices</span>
     </div>
     <div class="p-3 flex flex-col gap-3">
       <div class="flex flex-col gap-2">

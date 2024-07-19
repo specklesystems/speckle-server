@@ -40,7 +40,7 @@
           class="shadow-md"
           @click="resumeSlideshow()"
         >
-          Resume Tour
+          Resume tour
         </FormButton>
       </div>
     </Transition>

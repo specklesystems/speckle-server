@@ -116,7 +116,7 @@
               :to="loginUrl"
             >
               <ArrowRightOnRectangleIcon class="w-5 h-5" />
-              Sign In
+              Sign in
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="version">

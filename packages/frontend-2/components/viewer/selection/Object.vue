@@ -26,7 +26,7 @@
           <span
             v-if="(props.root || props.modifiedSibling) && isModifiedQuery.modified"
           >
-            {{ isModifiedQuery.isNew ? '(New)' : '(Old)' }}
+            {{ isModifiedQuery.isNew ? '(new)' : '(old)' }}
           </span>
         </div>
       </button>
