@@ -5,7 +5,7 @@
         <div class="w-full md:w-4/12">
           <UserProfileEditDialogAvatar :user="user" size="xxl" />
         </div>
-        <div class="flex flex-col space-y-4 w-full md:w-9/12">
+        <div class="flex flex-col space-y-2 w-full md:w-9/12">
           <FormTextInput
             v-model="name"
             color="foundation"

@@ -9,7 +9,7 @@
     </Portal>
 
     <div class="flex justify-between items-center mb-8">
-      <h1 class="h4">Pending Invitations</h1>
+      <h1 class="text-heading-lg">Pending Invitations</h1>
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
         Invite
       </FormButton>
@@ -46,7 +46,7 @@
       </template>
 
       <template #invitedBy="{ item }">
-        <div class="flex items-center gap-2 py-1">
+        <div class="flex items-center gap-2 py-0.5">
           <UserAvatar v-if="isInvite(item)" :user="item.invitedBy" />
           <span class="truncate">
             {{ isInvite(item) ? item.invitedBy.name : '' }}

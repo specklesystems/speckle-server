@@ -49,6 +49,7 @@
         v-model="newsletterConsent"
         name="newsletter"
         label="Opt in for exclusive Speckle news and tips"
+        class="text-body-xs"
       />
     </div>
     <FormButton submit full-width class="mt-4" :disabled="loading || !isMounted">
@@ -59,7 +60,7 @@
       class="mt-2 text-xs text-foreground-2 text-center terms-of-service"
       v-html="serverInfo.termsOfService"
     />
-    <div class="mt-2 sm:mt-8 text-center text-xs sm:text-base">
+    <div class="mt-2 sm:mt-4 text-center text-body-sm">
       <span class="mr-2">Already have an account?</span>
       <CommonTextLink :to="finalLoginRoute" :icon-right="ArrowRightIcon">
         Log in

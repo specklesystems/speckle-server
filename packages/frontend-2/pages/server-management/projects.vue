@@ -6,7 +6,7 @@
     </Portal>
 
     <div class="flex justify-between items-center mb-8">
-      <h1 class="h4">Projects</h1>
+      <h1 class="text-heading-lg">Projects</h1>
       <FormButton :icon-left="PlusIcon" @click="openNewProject = true">New</FormButton>
     </div>
 

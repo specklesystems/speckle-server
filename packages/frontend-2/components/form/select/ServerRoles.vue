@@ -11,6 +11,7 @@
     :label-id="labelId"
     :button-id="buttonId"
     mount-menu-on-body
+    size="sm"
   >
     <template #nothing-selected>
       {{ multiple ? 'Select roles' : 'Select role' }}

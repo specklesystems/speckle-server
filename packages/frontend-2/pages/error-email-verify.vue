@@ -3,7 +3,7 @@
     <h1 class="h1 font-bold mb-14">Notice</h1>
     <div class="flex flex-col space-y-24 md:space-y-0 md:flex-row md:items-stretch">
       <div class="w-full md:w-72 lg:w-96 flex flex-col space-y-6 justify-between">
-        <div class="h4">
+        <div class="text-heading">
           You've previously registered with your
           <strong>e-mail address</strong>
           and a
@@ -18,7 +18,7 @@
       </div>
       <div class="hidden md:block border border-foreground my-4 mx-6" />
       <div class="w-full md:w-72 lg:w-96 flex flex-col space-y-6 justify-between">
-        <div class="h4">
+        <div class="text-heading">
           After
           <strong>verifying</strong>
           your e-mail address you can use also use the connected account to log in.

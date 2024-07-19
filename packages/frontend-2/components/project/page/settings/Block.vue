@@ -9,7 +9,7 @@
   >
     <div
       class="flex items-center gap-4 justify-between transition"
-      :class="background ? 'pt-4 px-4 sm:pt-6 sm:px-6' : ''"
+      :class="background ? 'pt-4 px-4 sm:px-6' : ''"
     >
       <div class="flex items-center gap-2">
         <component :is="icon" v-if="icon" class="h-5 w-5"></component>
@@ -26,12 +26,12 @@
     >
       <slot name="introduction" />
     </div>
-    <div class="flex flex-col text-body-sm" :class="background ? 'p-4 sm:p-6' : ''">
+    <div class="flex flex-col text-body-sm" :class="background ? 'p-4 sm:px-6' : ''">
       <slot />
     </div>
     <div
       v-if="disabledMessage || $slots['bottom-buttons']"
-      class="flex flex-col sm:flex-row gap-2 justify-between items-end sm:items-center bg-gray-50 dark:bg-foundation px-4 sm:px-6 py-4 border-t border-outline-3"
+      class="flex flex-col sm:flex-row gap-2 justify-between items-end sm:items-center bg-gray-50 dark:bg-foundation px-4 sm:px-6 py-2 border-t border-outline-3"
     >
       <div v-if="disabledMessage" class="text-xs flex gap-1 sm:items-center w-full">
         <ExclamationCircleIcon

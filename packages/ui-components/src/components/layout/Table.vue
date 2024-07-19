@@ -119,7 +119,7 @@ const paddingRightStyle = computed(() => {
 
 const rowsWrapperClasses = computed(() => {
   const classParts = [
-    'relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[750px] bg-foundation'
+    'relative grid grid-cols-12 items-center gap-6 px-4 py-0.5 min-w-[750px] bg-foundation text-body-xs'
   ]
 
   if (props.onRowClick && props.items.length) {
@@ -156,7 +156,7 @@ const getClasses = (column: C | undefined, colIndex: number): string => {
   const classParts = [getHeaderClasses(column, colIndex)]
 
   if (colIndex === 0) {
-    classParts.push(`bg-transparent py-3 ${column ? 'pr-5' : 'col-span-full'}`)
+    classParts.push(`bg-transparent py-2 ${column ? 'pr-5' : 'col-span-full'}`)
   } else {
     classParts.push(`my-2`)
   }
