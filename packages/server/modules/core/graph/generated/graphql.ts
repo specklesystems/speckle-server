@@ -4174,7 +4174,7 @@ export type ResolversTypes = {
   WorkspaceInviteMutations: ResolverTypeWrapper<Omit<WorkspaceInviteMutations, 'batchCreate' | 'cancel' | 'create'> & { batchCreate: ResolversTypes['Workspace'], cancel: ResolversTypes['Workspace'], create: ResolversTypes['Workspace'] }>;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
   WorkspaceMetadata: ResolverTypeWrapper<WorkspaceMetadata>;
-  WorkspaceMutations: ResolverTypeWrapper<Omit<WorkspaceMutations, 'invites'> & { invites: ResolversTypes['WorkspaceInviteMutations'] }>;
+  WorkspaceMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
@@ -4390,7 +4390,7 @@ export type ResolversParentTypes = {
   WorkspaceInviteMutations: Omit<WorkspaceInviteMutations, 'batchCreate' | 'cancel' | 'create'> & { batchCreate: ResolversParentTypes['Workspace'], cancel: ResolversParentTypes['Workspace'], create: ResolversParentTypes['Workspace'] };
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
   WorkspaceMetadata: WorkspaceMetadata;
-  WorkspaceMutations: Omit<WorkspaceMutations, 'invites'> & { invites: ResolversParentTypes['WorkspaceInviteMutations'] };
+  WorkspaceMutations: MutationsObjectGraphQLReturn;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
   WorkspaceUpdateInput: WorkspaceUpdateInput;

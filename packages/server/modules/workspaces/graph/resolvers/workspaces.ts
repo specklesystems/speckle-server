@@ -22,6 +22,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
           throw new WorkspacesNotYetImplementedError()
         }
       },
+      Mutation: {
+        workspaceMutations: () => ({})
+      },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
           const { name, description, logoUrl } = args.input
