@@ -54,7 +54,7 @@
         ]"
       >
         <div class="pb-6">
-          <component :is="selectedMenuItem.component" />
+          <component :is="selectedMenuItem.component" :user="user" />
         </div>
       </main>
     </div>
@@ -74,6 +74,7 @@ import { useBreakpoints } from '@vueuse/core'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { UserIcon, ServerStackIcon } from '@heroicons/vue/24/outline'
 import { settingsQueries } from '~/lib/common/helpers/route'
+import { useActiveUser } from '~/lib/auth/composables/activeUser'
 import {
   LayoutSidebar,
   LayoutSidebarMenu,
@@ -85,6 +86,7 @@ type MenuItem = {
   component: ReturnType<typeof defineComponent>
 }
 
+const { activeUser: user } = useActiveUser()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('md')
 
@@ -143,4 +145,14 @@ const selectedMenuItem = computed((): MenuItem | null => {
 
   return null
 })
+
+watch(
+  () => user.value,
+  (newVal) => {
+    if (!newVal) {
+      isOpen.value = false
+    }
+  },
+  { immediate: true }
+)
 </script>

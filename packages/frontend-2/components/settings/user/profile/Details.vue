@@ -2,7 +2,7 @@
   <div class="flex flex-col gap-y-4">
     <SettingsSectionHeader title="Your details" subheading />
     <div class="grid md:grid-cols-2 pt-4">
-      <div class="flex items-center justify-center">
+      <div class="flex h-full items-center justify-center">
         <SettingsUserProfileEditAvatar :user="user" size="xxl" />
       </div>
       <div class="pt-6 md:pt-0">
@@ -35,10 +35,7 @@
 <script setup lang="ts">
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
-import type {
-  UserProfileEditDialogBio_UserFragment,
-  UserUpdateInput
-} from '~~/lib/common/generated/gql/graphql'
+import type { User, UserUpdateInput } from '~~/lib/common/generated/gql/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useUpdateUserProfile } from '~~/lib/user/composables/management'
 
@@ -53,7 +50,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  user: UserProfileEditDialogBio_UserFragment
+  user: User
 }>()
 
 const { mutate } = useUpdateUserProfile()

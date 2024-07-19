@@ -20,10 +20,10 @@
 </template>
 
 <script setup lang="ts">
-import type { UserProfileEditDialogDeleteAccount_UserFragment } from '~~/lib/common/generated/gql/graphql'
+import type { User } from '~~/lib/common/generated/gql/graphql'
 
 defineProps<{
-  user: UserProfileEditDialogDeleteAccount_UserFragment
+  user: User
 }>()
 
 const showDeleteDialog = ref(false)

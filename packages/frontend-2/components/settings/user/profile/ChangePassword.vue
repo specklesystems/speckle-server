@@ -12,14 +12,17 @@
   </div>
 </template>
 <script setup lang="ts">
-import { useActiveUser } from '~~/lib/auth/composables/activeUser'
+import type { User } from '~~/lib/common/generated/gql/graphql'
 import { usePasswordReset } from '~~/lib/auth/composables/passwordReset'
 
-const { activeUser } = useActiveUser()
 const { sendResetEmail } = usePasswordReset()
 
+const props = defineProps<{
+  user: User
+}>()
+
 const onClick = async () => {
-  const email = activeUser.value?.email
+  const email = props.user.email
   if (!email) return
   await sendResetEmail(email)
 }
