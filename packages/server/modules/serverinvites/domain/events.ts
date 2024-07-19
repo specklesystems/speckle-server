@@ -5,7 +5,8 @@ export const serverinvitesEventNamespace = 'serverinvites' as const
 const prefix = `${serverinvitesEventNamespace}.` as const
 
 export const ServerInvitesEvents = {
-  Created: `${prefix}created`
+  Created: `${prefix}created`,
+  Finalized: `${prefix}finalized`
 } as const
 
 export type ServerInvitesEventsKeys =
@@ -14,5 +15,10 @@ export type ServerInvitesEventsKeys =
 export type ServerInvitesEventsPayloads = {
   [ServerInvitesEvents.Created]: {
     invite: ServerInviteRecord
+  }
+  [ServerInvitesEvents.Finalized]: {
+    invite: ServerInviteRecord
+    finalizerUserId: string
+    accept: boolean
   }
 }

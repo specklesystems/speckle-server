@@ -5,6 +5,11 @@ export class InviteCreateValidationError extends BaseError {
   static defaultMessage = 'An issue occurred while trying to create an invitation'
 }
 
+export class InviteFinalizingError extends BaseError {
+  static code = 'INVITE_FINALIZING_ERROR'
+  static defaultMessage = 'An issue occurred while finalizing the invitation'
+}
+
 export class NoInviteFoundError extends BaseError {
   static code = 'NO_INVITE_FOUND'
   static defaultMessage = 'No invitation for the related resources was found'

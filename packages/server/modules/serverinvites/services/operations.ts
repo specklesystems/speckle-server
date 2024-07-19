@@ -19,13 +19,6 @@ export type CreateAndSendInvite = (
   inviterResourceAccessLimits?: TokenResourceIdentifier[] | null
 ) => Promise<InviteResult>
 
-export type FinalizeStreamInvite = (
-  accept: boolean,
-  streamId: string,
-  token: string,
-  userId: string
-) => Promise<void>
-
 export type ResendInviteEmail = (invite: ServerInviteRecord) => Promise<void>
 
 export type CollectAndValidateResourceTargets = (params: {
@@ -45,3 +38,17 @@ export type BuildInviteEmailContents = (params: {
   emailParams: EmailTemplateParams
   subject: string
 }>
+
+/**
+ * This function should throw if there's validation issue
+ */
+export type ValidateResourceInviteBeforeFinalization = (params: {
+  invite: ServerInviteRecord
+  finalizerUserId: string
+  accept: boolean
+}) => MaybeAsync<void>
+
+/**
+ * Actually handle the invite being accepted or declined
+ */
+export type ProcessFinalizedResourceInvite = ValidateResourceInviteBeforeFinalization

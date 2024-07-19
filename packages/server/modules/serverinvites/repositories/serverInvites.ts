@@ -23,7 +23,6 @@ import {
   FindInviteByToken,
   FindServerInvite,
   FindServerInvites,
-  FindStreamInvite,
   InsertInviteAndDeleteOld,
   QueryAllStreamInvites,
   QueryAllUserStreamInvites,
@@ -390,15 +389,11 @@ export const deleteAllUserInvitesFactory =
 
 export const findInviteByTokenFactory =
   ({ db }: { db: Knex }): FindInviteByToken =>
-  async ({ token, resourceFilter }) => {
+  async ({ token }) => {
     if (!token?.length) return null
     const q = buildInvitesBaseQuery({ db })()
       .where(ServerInvites.col.token, token)
       .first()
-
-    if (resourceFilter) {
-      q.where((w1) => filterByResource(w1, resourceFilter))
-    }
 
     return (await q) || null
   }

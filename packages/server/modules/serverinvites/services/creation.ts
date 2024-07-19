@@ -36,11 +36,6 @@ import { MaybeNullOrUndefined } from '@speckle/shared'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { ServerInfo } from '@/modules/core/helpers/types'
 
-/**
- * TODO: Clean up concerns - maybe move bits out to separate functions for same abstraction level
- *
- */
-
 const getFinalTargetData = (
   target: string,
   targetUser: MaybeNullOrUndefined<UserWithOptionalRole>
@@ -142,7 +137,7 @@ export const createAndSendInviteFactory =
     }
 
     // Sanitize msg
-    // TODO: We should just use TipTap here
+    // TODO: Can we use TipTap here?
     if (message) {
       message = sanitizeMessage(message)
     }
@@ -171,14 +166,12 @@ export const createAndSendInviteFactory =
       targetData
     })
 
-    await Promise.all([
-      emitServerInvitesEvent({
-        eventName: ServerInvitesEvents.Created,
-        payload: {
-          invite: finalInvite
-        }
-      })
-    ])
+    await emitServerInvitesEvent({
+      eventName: ServerInvitesEvents.Created,
+      payload: {
+        invite: finalInvite
+      }
+    })
 
     return {
       inviteId: invite.id,

@@ -1,13 +1,13 @@
-import { Roles } from '@/modules/core/helpers/mainConstants'
 import { getStreamRoute } from '@/modules/core/helpers/routeHelper'
-import { NoInviteFoundError } from '@/modules/serverinvites/errors'
+import {
+  InviteFinalizingError,
+  NoInviteFoundError
+} from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
   isProjectResourceTarget
 } from '@/modules/serverinvites/helpers/core'
 
-import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
-import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
 import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
 import {
   InviteResourceTargetType,
@@ -17,18 +17,19 @@ import {
   DeleteInvite,
   DeleteInvitesByTarget,
   DeleteServerOnlyInvites,
-  DeleteStreamInvite,
+  EmitServerInvitesEvent,
   FindInvite,
-  FindInviteByToken,
   FindServerInvite,
-  FindStreamInvite,
+  InsertInviteAndDeleteOld,
   UpdateAllInviteTargets
 } from '@/modules/serverinvites/domain/operations'
 import {
-  FinalizeStreamInvite,
-  ResendInviteEmail
+  ProcessFinalizedResourceInvite,
+  ValidateResourceInviteBeforeFinalization
 } from '@/modules/serverinvites/services/operations'
-import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { ensureError } from '@speckle/shared'
+import { noop } from 'lodash'
+import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
@@ -103,22 +104,34 @@ export const finalizeInvitedServerRegistrationFactory =
 
 type FinalizeResourceInviteFactoryDeps = {
   findInvite: FindInvite
+  validateInvite: ValidateResourceInviteBeforeFinalization
+  processInvite: ProcessFinalizedResourceInvite
+  deleteInvitesByTarget: DeleteInvitesByTarget
+  insertInviteAndDeleteOld: InsertInviteAndDeleteOld
+  emitServerInvitesEvent: EmitServerInvitesEvent
 }
 
 export const finalizeResourceInviteFactory =
   (deps: FinalizeResourceInviteFactoryDeps) =>
   async (params: {
-    accepterId: string
+    finalizerUserId: string
     accept: boolean
     token: string
     resourceType?: InviteResourceTargetType
   }) => {
-    const { findInvite } = deps
-    const { accepterId, accept, token, resourceType } = params
+    const {
+      findInvite,
+      validateInvite,
+      processInvite,
+      deleteInvitesByTarget,
+      insertInviteAndDeleteOld,
+      emitServerInvitesEvent
+    } = deps
+    const { finalizerUserId, accept, token, resourceType } = params
 
     const invite = await findInvite({
       token,
-      target: buildUserTarget(accepterId),
+      target: buildUserTarget(finalizerUserId),
       resourceFilter: resourceType ? { resourceType } : undefined
     })
     if (!invite) {
@@ -130,137 +143,163 @@ export const finalizeResourceInviteFactory =
       )
     }
 
-    /**
-     * TODO: How to accept resource invite regardless from where?
-     * E.g.: Accepting project invite from project resolver
-     * SHOULD also accept the workspace aspect of the invite
-     *
-     * Maybe:
-     * - Collect resources again? Same as on invite creation
-     * - Same issue tho: Workspace code is not attached
-     *
-     * Maybe: Workspaces listen to ServerInviteAccepted? Or ProjectJoined?
-     *
-     * ValidateInvite first, validating the primary resourceType, which should
-     * absolutely be defined.
-     *
-     * Once that's done, just accept the invite - delete invite and send out
-     * events for accepting for all other types
-     */
-  }
-
-/**
- * Accept or decline a stream invite
- */
-export const finalizeStreamInviteFactory =
-  ({
-    findStreamInvite,
-    deleteInvitesByTarget,
-    findResource
-  }: {
-    findStreamInvite: FindStreamInvite
-    deleteInvitesByTarget: DeleteInvitesByTarget
-    findResource: FindResource
-  }): FinalizeStreamInvite =>
-  async (accept, streamId, token, userId) => {
-    const invite = await findStreamInvite(streamId, {
-      token,
-      target: buildUserTarget(userId)
+    await validateInvite({
+      invite,
+      finalizerUserId,
+      accept
     })
-    if (!invite) {
-      throw new NoInviteFoundError('Attempted to finalize nonexistant stream invite', {
-        info: {
-          streamId,
-          token,
-          userId
-        }
-      })
-    }
 
-    const stream = await findResource(invite)
-    if (!stream) {
-      throw new StreamNotFoundError('Stream not found for invite', {
-        info: {
-          streamId,
-          token,
-          userId
-        }
-      })
-    }
-
-    // Delete all invites to this stream
-    // We're doing this before processing the invite, to prevent a PROJECT UPDATED event
-    // from being fired with the invites still attached
+    // Delete invites first, so that any subscriptions fired by processInvite
+    // don't return the invite back to the frontend
     await deleteInvitesByTarget(
-      buildUserTarget(userId)!,
-      ResourceTargets.Streams,
-      streamId
+      buildUserTarget(finalizerUserId),
+      invite.resource.resourceType,
+      invite.resource.resourceId
     )
 
-    // Invite found - accept or decline
-    if (accept) {
-      // Add access for user
-      const { role = Roles.Stream.Contributor, inviterId } = invite
-      // TODO: check role nullability
-      await addOrUpdateStreamCollaborator(streamId, userId, role!, inviterId, null, {
-        fromInvite: true
+    // Process invite
+    try {
+      await processInvite({
+        invite,
+        finalizerUserId,
+        accept
       })
-    } else {
-      await addStreamInviteDeclinedActivity({
-        streamId,
-        inviteTargetId: userId,
-        inviterId: invite.inviterId,
-        stream
-      })
-    }
-  }
+    } catch (e) {
+      // If the invite finalization fails, re-insert the invite
+      await insertInviteAndDeleteOld(invite).catch(noop)
 
-/**
- * Cancel/decline a stream invite
- * TODO: What's the difference between this and finalizeStreamInvite? Canceled by owner maybe?
- */
-export const cancelStreamInviteFactory =
-  ({
-    findStreamInvite,
-    deleteStreamInvite
-  }: {
-    findStreamInvite: FindStreamInvite
-    deleteStreamInvite: DeleteStreamInvite
-  }) =>
-  async (streamId: string, inviteId: string) => {
-    const invite = await findStreamInvite(streamId, {
-      inviteId
-    })
-    if (!invite) {
-      throw new NoInviteFoundError('Attempted to process nonexistant stream invite', {
+      throw new InviteFinalizingError('Failed to process invite', {
+        cause: ensureError(e),
         info: {
-          streamId,
-          inviteId
+          finalizerUserId,
+          accept,
+          invite
         }
       })
     }
-    await deleteStreamInvite(invite.id)
+
+    await emitServerInvitesEvent({
+      eventName: ServerInvitesEvents.Finalized,
+      payload: {
+        invite,
+        accept,
+        finalizerUserId
+      }
+    })
   }
 
-/**
- * Re-send pending invite e-mail, without creating a new invite
- * TODO: WHy? Use creation factory thing instead
- */
-export const resendInviteFactory =
-  ({
-    findInvite,
-    resendInviteEmail
-  }: {
-    resendInviteEmail: ResendInviteEmail
-    findInvite: FindInvite
-  }) =>
-  async (inviteId: string) => {
-    const invite = await findInvite(inviteId)
-    if (!invite) {
-      throw new NoInviteFoundError('Attempted to re-send a nonexistant invite')
-    }
-    await resendInviteEmail(invite)
-  }
+// /**
+//  * Accept or decline a stream invite
+//  */
+// export const finalizeStreamInviteFactory =
+//   ({
+//     findStreamInvite,
+//     deleteInvitesByTarget,
+//     findResource
+//   }: {
+//     findStreamInvite: FindStreamInvite
+//     deleteInvitesByTarget: DeleteInvitesByTarget
+//     findResource: FindResource
+//   }): FinalizeStreamInvite =>
+//   async (accept, streamId, token, userId) => {
+//     const invite = await findStreamInvite(streamId, {
+//       token,
+//       target: buildUserTarget(userId)
+//     })
+//     if (!invite) {
+//       throw new NoInviteFoundError('Attempted to finalize nonexistant stream invite', {
+//         info: {
+//           streamId,
+//           token,
+//           userId
+//         }
+//       })
+//     }
+
+//     const stream = await findResource(invite)
+//     if (!stream) {
+//       throw new StreamNotFoundError('Stream not found for invite', {
+//         info: {
+//           streamId,
+//           token,
+//           userId
+//         }
+//       })
+//     }
+
+//     // Delete all invites to this stream
+//     // We're doing this before processing the invite, to prevent a PROJECT UPDATED event
+//     // from being fired with the invites still attached
+//     await deleteInvitesByTarget(
+//       buildUserTarget(userId)!,
+//       ResourceTargets.Streams,
+//       streamId
+//     )
+
+//     // Invite found - accept or decline
+//     if (accept) {
+//       // Add access for user
+//       const { role = Roles.Stream.Contributor, inviterId } = invite
+//       // TODO: check role nullability
+//       await addOrUpdateStreamCollaborator(streamId, userId, role!, inviterId, null, {
+//         fromInvite: true
+//       })
+//     } else {
+//       await addStreamInviteDeclinedActivity({
+//         streamId,
+//         inviteTargetId: userId,
+//         inviterId: invite.inviterId,
+//         stream
+//       })
+//     }
+//   }
+
+// /**
+//  * Cancel/decline a stream invite
+//  * TODO: What's the difference between this and finalizeStreamInvite? Canceled by owner maybe?
+//  */
+// export const cancelStreamInviteFactory =
+//   ({
+//     findStreamInvite,
+//     deleteStreamInvite
+//   }: {
+//     findStreamInvite: FindStreamInvite
+//     deleteStreamInvite: DeleteStreamInvite
+//   }) =>
+//   async (streamId: string, inviteId: string) => {
+//     const invite = await findStreamInvite(streamId, {
+//       inviteId
+//     })
+//     if (!invite) {
+//       throw new NoInviteFoundError('Attempted to process nonexistant stream invite', {
+//         info: {
+//           streamId,
+//           inviteId
+//         }
+//       })
+//     }
+//     await deleteStreamInvite(invite.id)
+//   }
+
+// /**
+//  * Re-send pending invite e-mail, without creating a new invite
+//  * TODO: WHy? Use creation factory thing instead
+//  */
+// export const resendInviteFactory =
+//   ({
+//     findInvite,
+//     resendInviteEmail
+//   }: {
+//     resendInviteEmail: ResendInviteEmail
+//     findInvite: FindInvite
+//   }) =>
+//   async (inviteId: string) => {
+//     const invite = await findInvite(inviteId)
+//     if (!invite) {
+//       throw new NoInviteFoundError('Attempted to re-send a nonexistant invite')
+//     }
+//     await resendInviteEmail(invite)
+//   }
 
 /**
  * Delete pending invite
