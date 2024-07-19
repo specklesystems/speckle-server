@@ -1,7 +1,11 @@
 import { UserRecord } from '@/modules/core/helpers/types'
 import { CreateInviteParams } from '@/modules/serverinvites/domain/operations'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
-import { ResourceTargets, isServerInvite, resolveTarget } from '../helpers/inviteHelper'
+import {
+  ResourceTargets,
+  isServerInvite,
+  resolveTarget
+} from '@/modules/serverinvites/helpers/inviteHelper'
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
 import { authorizeResolver } from '@/modules/shared'
 import { Roles } from '@speckle/shared'
