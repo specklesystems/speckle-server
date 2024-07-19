@@ -113,6 +113,7 @@ export const Scopes = Object.freeze(<const>{
   },
   Workspaces: {
     Create: 'workspace:create',
+    Read: 'workspace:read',
     Update: 'workspace:update',
     Delete: 'workspace:delete'
   }
@@ -140,7 +141,7 @@ export type AvailableScopes =
   | AppScopes
   | AutomateScopes
   | AutomateFunctionScopes
-  | WorkspaceRoles
+  | WorkspaceScopes
 
 /**
  * All scopes
