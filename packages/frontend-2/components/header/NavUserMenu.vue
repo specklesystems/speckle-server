@@ -130,7 +130,7 @@
     <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
     <SettingsDialog
       v-model:open="showSettingsDialog"
-      :target-menu-item="settingsDialogTarget"
+      v-model:target-menu-item="settingsDialogTarget"
     />
   </div>
 </template>
