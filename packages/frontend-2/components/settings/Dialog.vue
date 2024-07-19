@@ -138,6 +138,13 @@ const selectedMenuItem = computed((): menuItem | null => {
     }
   }
 
+  if (!isMobile.value) {
+    // Fallback for invalid queries/typos
+    return targetMenuItem.value.includes('server')
+      ? menuItemConfig.server.general
+      : menuItemConfig.user.profile
+  }
+
   return null
 })
 </script>
