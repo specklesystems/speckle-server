@@ -90,18 +90,7 @@
             </template>
 
             <template #scope="{ item }">
-              <div>
-                {{
-                  item.scopes
-                    ? item.scopes
-                        .map(
-                          (event, index, array) =>
-                            `"${event}"${index < array.length - 1 ? ',' : ''}`
-                        )
-                        .join(' ')
-                    : 'No scopes available'
-                }}
-              </div>
+              {{ getItemScopes(item) }}
             </template>
           </LayoutTable>
         </div>
@@ -177,16 +166,7 @@
             </template>
 
             <template #scope="{ item }">
-              <div>
-                {{
-                  item.scopes
-                    .map(
-                      (event, index, array) =>
-                        `"${event.name}"${index < array.length - 1 ? ',' : ''}`
-                    )
-                    .join(' ')
-                }}
-              </div>
+              {{ getItemScopes(item) }}
             </template>
           </LayoutTable>
         </div>
@@ -391,5 +371,15 @@ const handleApplicationCreated = (applicationId: string) => {
 const goToExplorer = () => {
   if (!import.meta.client) return
   window.location.href = new URL('/explorer', apiOrigin).toString()
+}
+
+const getItemScopes = (item: TokenItem | ApplicationItem): string => {
+  return item.scopes
+    ? item.scopes
+        .map(
+          (event, index, array) => `"${event}"${index < array.length - 1 ? ',' : ''}`
+        )
+        .join(' ')
+    : 'No scopes available'
 }
 </script>
