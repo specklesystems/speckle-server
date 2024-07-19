@@ -1,12 +1,10 @@
 <template>
   <LayoutPanel form class="mx-auto max-w-screen-md" @submit="onSubmit">
     <template #header>
-      <span class="h5 font-medium leading-7">
-        One step closer to resetting your password.
-      </span>
+      <span class="text-heading-sm">One step closer to resetting your password.</span>
     </template>
     <template #default>
-      <div class="flex flex-col space-y-8">
+      <div class="flex flex-col space-y-4 text-body-sm">
         <FormTextInput
           type="password"
           name="password"

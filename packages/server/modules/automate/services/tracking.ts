@@ -17,7 +17,6 @@ import { getCommit } from '@/modules/core/repositories/commits'
 import { getUserById } from '@/modules/core/services/users'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { throwUncoveredError } from '@speckle/shared'
-import dayjs from 'dayjs'
 
 const isFinished = (runStatus: AutomationRunStatus) => {
   const finishedStatuses: AutomationRunStatus[] = [
@@ -80,10 +79,8 @@ const onAutomationRunStatusUpdated =
       runId: run.id,
       functionRunId: functionRun.id,
       status: functionRun.status,
-      durationInSeconds: dayjs(functionRun.updatedAt).diff(
-        functionRun.createdAt,
-        'second'
-      )
+      durationInSeconds: functionRun.elapsed / 1000,
+      durationInMilliseconds: functionRun.elapsed
     })
   }
 

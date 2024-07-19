@@ -1,6 +1,6 @@
 import { expect } from 'chai'
 import { describe, it } from 'mocha'
-import { getNameFromUserInfo } from '../../domain/logic'
+import { getNameFromUserInfo } from '@/modules/auth/domain/logic'
 
 /* eslint-disable camelcase */
 describe('getNameFromUserInfo', () => {

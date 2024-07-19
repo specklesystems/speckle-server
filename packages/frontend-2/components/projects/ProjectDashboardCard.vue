@@ -37,7 +37,7 @@
         </div>
       </div>
       <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 flex-grow col-span-4 lg:col-span-3 w-full"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 flex-grow col-span-4 lg:col-span-3 w-full"
       >
         <ProjectPageModelsCard
           v-for="pendingModel in pendingModels"
@@ -60,7 +60,7 @@
         <ProjectCardImportFileArea
           v-if="hasNoModels"
           :project-id="project.id"
-          class="h-28 col-span-6"
+          class="h-28 col-span-4"
         />
       </div>
       <div

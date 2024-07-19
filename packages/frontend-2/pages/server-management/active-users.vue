@@ -9,7 +9,7 @@
     </Portal>
 
     <div class="flex justify-between items-center mb-8">
-      <h1 class="h4">Active Users</h1>
+      <h1 class="text-heading-lg">Active Users</h1>
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
         Invite
       </FormButton>

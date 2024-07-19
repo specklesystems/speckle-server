@@ -8,7 +8,7 @@
     }"
   >
     <div
-      class="flex justify-between items-center gap-4 sm:gap-8 py-3 sm:py-4 px-2"
+      class="flex justify-between items-center gap-4 sm:gap-8 py-2.5 px-2"
       :class="backgroundClass"
       tabindex="0"
       v-on="
@@ -21,13 +21,10 @@
       "
     >
       <div
-        class="text-heading flex items-center gap-1 sm:gap-2 select-none"
+        class="text-heading-sm flex items-center gap-1 sm:gap-2 select-none"
         :class="titleClasses"
       >
-        <div
-          v-if="$slots.icon || icon"
-          class="h-4 sm:h-5 w-4 sm:w-5 empty:h-0 empty:w-0"
-        >
+        <div v-if="$slots.icon || icon" class="h-4 w-4 empty:h-0 empty:w-0">
           <slot v-if="$slots.icon" name="icon" />
           <Component :is="icon" v-if="icon" class="w-full h-full" />
         </div>
@@ -36,7 +33,7 @@
       <div>
         <ChevronDownIcon
           v-if="!button && !alwaysOpen"
-          class="w-4 h-4 sm:w-5 sm:h-5 transition-all duration-400"
+          class="w-4 h-4 transition-all duration-400"
           :class="isExpanded && 'rotate-180'"
         />
         <FormButton
@@ -58,7 +55,7 @@
       class="transition-all duration-300 overflow-hidden"
       :class="[
         allowOverflow && isExpanded ? '!overflow-visible' : '',
-        isExpanded ? 'mb-3 mt-1' : '',
+        isExpanded ? 'mb-2 mt-1' : '',
         !button && !alwaysOpen ? 'cursor-pointer hover:bg-foundation' : ''
       ]"
       :style="

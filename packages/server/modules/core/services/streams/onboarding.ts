@@ -8,8 +8,8 @@ import { StreamRecord } from '@/modules/core/helpers/types'
 import { logger } from '@/logging/logging'
 import { createStreamReturnRecord } from '@/modules/core/services/streams/management'
 import { getOnboardingBaseProject } from '@/modules/cross-server-sync/services/onboardingProject'
-import { updateStream } from '../../repositories/streams'
-import { getUser } from '../users'
+import { updateStream } from '@/modules/core/repositories/streams'
+import { getUser } from '@/modules/core/services/users'
 import {
   ContextResourceAccessRules,
   isNewResourceAllowed

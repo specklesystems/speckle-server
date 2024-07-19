@@ -5,12 +5,12 @@
     </template>
     <table class="table-auto w-full rounded-t overflow-hidden">
       <thead class="text-foreground-1">
-        <tr>
-          <th class="bg-primary-muted py-2 px-4">Notification type</th>
+        <tr class="text-body-xs">
+          <th class="bg-primary-muted py-1.5 px-4">Notification type</th>
           <th
             v-for="channel in notificationChannels"
             :key="channel"
-            class="bg-primary-muted text-right py-2 px-4"
+            class="bg-primary-muted text-right py-1.5 px-4"
           >
             {{ capitalize(channel) }}
           </th>
@@ -18,13 +18,13 @@
       </thead>
       <tbody>
         <tr v-for="[type, settings] in Object.entries(localPreferences)" :key="type">
-          <td class="px-4 pb-1 pt-2 text-xs sm:text-sm">
+          <td class="px-4 pt-0.5 text-body-2xs">
             {{ notificationTypeMapping[type] || 'Unknown' }}
           </td>
           <td
             v-for="channel in notificationChannels"
             :key="channel"
-            class="flex justify-end pt-2 pr-4"
+            class="flex justify-end pt-0.5 pr-4"
           >
             <FormCheckbox
               :name="`${type} (${channel})`"

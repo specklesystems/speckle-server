@@ -1,4 +1,4 @@
-import { logger } from './logging'
+import { logger } from '@/logging/logging'
 import { randomUUID } from 'crypto'
 import HttpLogger from 'pino-http'
 import { IncomingMessage } from 'http'

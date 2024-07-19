@@ -9,11 +9,11 @@
     <div class="space-y-4">
       <div class="flex flex-col items-center space-y-2">
         <h1
-          class="text-center h3 font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+          class="text-center text-heading-xl font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
         >
           {{ title }}
         </h1>
-        <h2 class="text-center text-foreground-2">
+        <h2 class="text-center text-foreground-2 text-body-sm">
           {{ subtitle }}
         </h2>
       </div>
@@ -26,7 +26,7 @@
       <div>
         <div
           v-if="hasLocalStrategy"
-          class="text-center label text-foreground-2 mb-3 text-xs font-normal"
+          class="text-center text-foreground-2 mb-2 text-body-2xs font-normal"
         >
           {{
             hasThirdPartyStrategies
@@ -35,7 +35,7 @@
           }}
         </div>
         <AuthLoginWithEmailBlock v-if="hasLocalStrategy" :challenge="challenge" />
-        <div class="text-center">
+        <div class="text-center text-body-sm">
           <span class="mr-2">Don't have an account?</span>
           <CommonTextLink :to="finalRegisterRoute" :icon-right="ArrowRightIcon">
             Register

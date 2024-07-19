@@ -15,7 +15,7 @@
       </LayoutDialogSection>
       <UserProfileEditDialogChangePassword :user="user" />
       <UserProfileEditDialogDeleteAccount :user="user" @deleted="isOpen = false" />
-      <div class="text-xs text-foreground-2 mt-4">
+      <div class="text-body-3xs text-foreground-2 mt-4">
         User ID:
         <CommonTextLink size="xs" no-underline @click="copyUserId">
           #{{ user.id }}

@@ -4,7 +4,7 @@ import {
   createObjects,
   getObjectChildren,
   getObjectChildrenQuery
-} from '../../services/objects'
+} from '@/modules/core/services/objects'
 
 import { Roles } from '@speckle/shared'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'

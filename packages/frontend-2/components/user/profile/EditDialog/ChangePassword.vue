@@ -3,7 +3,7 @@
     <template #icon>
       <LockClosedIcon class="h-full w-full" />
     </template>
-    <div class="flex flex-col space-y-4">
+    <div class="flex flex-col space-y-2 text-body-xs">
       <div>
         Press the button below to start the password reset process. Once pressed, you
         will receive an e-mail with further instructions.

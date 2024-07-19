@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+/* eslint-disable  no-restricted-imports */
 /* istanbul ignore file */
 import './bootstrap'
 import http from 'http'
