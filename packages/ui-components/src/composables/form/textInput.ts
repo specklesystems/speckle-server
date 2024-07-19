@@ -47,7 +47,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
   const labelClasses = computed(() => {
     const classParts = [
-      'flex text-body-xs mb-1.5',
+      'flex text-body-xs font-semibold mb-1.5',
       unref(props.color) === 'foundation' ? 'text-foreground' : 'text-foreground-2'
     ]
     if (!unref(props.showLabel)) {
@@ -69,7 +69,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
 
   const coreClasses = computed(() => {
     const classParts = [
-      'block w-full text-foreground transition-all text-body',
+      'block w-full text-foreground transition-all text-body-sm',
       coreInputClasses.value
     ]
 
