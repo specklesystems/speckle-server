@@ -135,6 +135,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { isString } from 'lodash'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
 import {
   XMarkIcon,
@@ -154,7 +155,7 @@ import { useAuthManager } from '~~/lib/auth/composables/auth'
 import { useTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
 import { connectorsPageUrl, settingsQueries } from '~/lib/common/helpers/route'
-import type { RouteLocationRaw, LocationQueryValue } from 'vue-router'
+import type { RouteLocationRaw } from 'vue-router'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -168,19 +169,12 @@ const { serverInfo } = useServerInfo()
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
-const settingsDialogTarget = ref<LocationQueryValue>(null)
+const settingsDialogTarget = ref<string>(null)
 const menuButtonId = useId()
 
 const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
 const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
-
-onMounted(() => {
-  const settingsQuery = route.query?.settings
-  if (settingsQuery && typeof settingsQuery === 'string') {
-    toggleSettingsDialog(settingsQuery)
-  }
-})
 
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
@@ -190,4 +184,11 @@ const toggleSettingsDialog = (target: string) => {
   showSettingsDialog.value = true
   settingsDialogTarget.value = target
 }
+
+onMounted(() => {
+  const settingsQuery = route.query?.settings
+  if (settingsQuery && isString(settingsQuery)) {
+    toggleSettingsDialog(settingsQuery)
+  }
+})
 </script>

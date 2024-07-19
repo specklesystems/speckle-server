@@ -64,7 +64,6 @@ const stringMatchesEmail: GenericValidateFunction<string> = (val: string) => {
 
 const emit = defineEmits<{
   (e: 'deleted'): void
-  (e: 'update:open', val: boolean): void
 }>()
 
 const props = defineProps<{
