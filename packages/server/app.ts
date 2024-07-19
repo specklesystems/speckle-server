@@ -191,11 +191,7 @@ function buildApolloSubscriptionServer(
         // Build context (Apollo Server v3 no longer triggers context building automatically
         // for subscriptions)
         try {
-          return await buildContext({
-            req: null,
-            token,
-            cleanLoadersEarly: false
-          })
+          return await buildContext({ req: null, token, cleanLoadersEarly: false })
         } catch (e) {
           throw new ForbiddenError('Subscription context build failed')
         }
@@ -292,10 +288,6 @@ export async function buildApolloServer(
     persistedQueries: false,
     csrfPrevention: true,
     formatError: buildErrorFormatter(debug),
-    formatResponse: (response) => {
-      response.http?.headers.set('x-content-security-policy', "frame-ancestors 'none'")
-      return response
-    },
     debug,
     ...optionOverrides
   })
@@ -341,6 +333,16 @@ export async function init() {
   app.use(errorLoggingMiddleware)
   app.use(authContextMiddleware)
   app.use(createRateLimiterMiddleware())
+  app.use(
+    async (
+      _req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      res.setHeader('x-content-security-policy', "frame-ancestors 'none'")
+      next()
+    }
+  )
   app.use(mixpanelTrackerHelperMiddleware)
 
   app.use(Sentry.Handlers.errorHandler())
