@@ -188,9 +188,8 @@ const toggleInviteDialog = () => {
 const toggleSettingsDialog = (target: string) => {
   showSettingsDialog.value = true
 
-  if (!isMobile.value) {
-    settingsDialogTarget.value = target
-  }
+  // On mobile open the modal but dont set the target
+  settingsDialogTarget.value = !isMobile.value ? target : null
 }
 
 const deleteSettingsQuery = (): void => {
