@@ -39,7 +39,7 @@ export const createInviteDirectlyFactory =
 
       const streamId = invite.streamId || invite.stream?.id
 
-      const target = email || buildUserTarget(userId)
+      const target = email || buildUserTarget(userId!)
       if (!target) throw new Error('Cannot create invite without a target')
 
       return await createAndSendInviteFactory({

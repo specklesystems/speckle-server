@@ -8,6 +8,7 @@ import {
   InviteResourceTargetType,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
+import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
 
 export type QueryAllUserStreamInvites = (
   userId: string
@@ -65,7 +66,16 @@ export type QueryServerInvites = (
   cursor: Date | null
 ) => Promise<ServerInviteRecord[]>
 
-export type FindInvite = (inviteId?: string) => Promise<ServerInviteRecord | null>
+export type FindInvite = (params: {
+  inviteId?: string
+  token?: string
+  target?: string
+  resourceFilter?: ServerInviteResourceFilter
+}) => Promise<ServerInviteRecord | null>
+
+export type FindInviteByToken = (params: {
+  token: string
+}) => Promise<ServerInviteRecord | null>
 
 export type DeleteInvite = (inviteId?: string) => Promise<boolean>
 
@@ -80,10 +90,6 @@ export type QueryInvites = (
 ) => Promise<ServerInviteRecord[]>
 
 export type DeleteAllUserInvites = (userId: string) => Promise<boolean>
-
-export type FindInviteByToken = (
-  inviteToken?: string
-) => Promise<ServerInviteRecord | null>
 
 export type CreateInviteParams = {
   target: string

@@ -35,12 +35,17 @@ import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
-import { SetValuesNullable } from '@speckle/shared'
+import { isNonNullable, SetValuesNullable } from '@speckle/shared'
+
+export type ServerInviteResourceFilter = Partial<
+  SetValuesNullable<Pick<InviteResourceTarget, 'resourceId' | 'resourceType'>>
+>
 
 /**
  * TODO:
  * - Adjust services to use new resources col
  * - Refactor/drop old repo calls to support new flows
+ * - Fix tests
  */
 
 type InvitesRetrievalValidityFilter = (q: Knex.QueryBuilder) => Knex.QueryBuilder
@@ -97,9 +102,7 @@ const buildInvitesBaseQuery =
 
 const filterByResource = <Q extends Knex.QueryBuilder>(
   query: Q,
-  filter: Partial<
-    SetValuesNullable<Pick<InviteResourceTarget, 'resourceId' | 'resourceType'>>
-  >
+  filter: ServerInviteResourceFilter
 ) => {
   if (filter.resourceId) {
     query.whereRaw(`?? ->> 'resourceId' = ?`, [
@@ -175,39 +178,6 @@ export const queryAllUserStreamInvitesFactory =
     const res = await q
 
     return res
-  }
-
-/**
- * Retrieve a stream invite for the specified target, token or both.
- * Note: Either the target, inviteId or token must be set
- */
-export const findStreamInviteFactory =
-  ({ db }: { db: Knex }): FindStreamInvite =>
-  async (streamId, { target = null, token = null, inviteId = null } = {}) => {
-    if (!target && !token && !inviteId) return null
-
-    const q = buildInvitesBaseQuery({ db })().where((q) =>
-      filterByResource(q, {
-        resourceType: ProjectInviteResourceType,
-        resourceId: streamId
-      })
-    )
-
-    if (target) {
-      q.andWhere({
-        [ServerInvites.col.target]: target.toLowerCase()
-      })
-    } else if (inviteId) {
-      q.andWhere({
-        [ServerInvites.col.id]: inviteId
-      })
-    } else if (token) {
-      q.andWhere({
-        [ServerInvites.col.token]: token
-      })
-    }
-
-    return (await q.first()) || null
   }
 
 export const findServerInviteFactory =
@@ -349,11 +319,28 @@ export const queryServerInvitesFactory =
 
 export const findInviteFactory =
   ({ db }: { db: Knex }): FindInvite =>
-  async (inviteId) => {
-    if (!inviteId) return null
-    const q = buildInvitesBaseQuery({ db })()
-      .where(ServerInvites.col.id, inviteId)
-      .first()
+  async (params) => {
+    if (!Object.values(params).filter(isNonNullable).length) return null
+    const { inviteId, target, token, resourceFilter } = params
+
+    const q = buildInvitesBaseQuery({ db })().first()
+
+    if (inviteId) {
+      q.where(ServerInvites.col.id, inviteId)
+    }
+
+    if (target) {
+      q.where(ServerInvites.col.target, target)
+    }
+
+    if (token) {
+      q.where(ServerInvites.col.token, token)
+    }
+
+    if (resourceFilter) {
+      q.where((w1) => filterByResource(w1, resourceFilter))
+    }
+
     return (await q) || null
   }
 
@@ -403,10 +390,15 @@ export const deleteAllUserInvitesFactory =
 
 export const findInviteByTokenFactory =
   ({ db }: { db: Knex }): FindInviteByToken =>
-  async (inviteToken) => {
-    if (!inviteToken) return null
+  async ({ token, resourceFilter }) => {
+    if (!token?.length) return null
     const q = buildInvitesBaseQuery({ db })()
-      .where(ServerInvites.col.token, inviteToken)
+      .where(ServerInvites.col.token, token)
       .first()
+
+    if (resourceFilter) {
+      q.where((w1) => filterByResource(w1, resourceFilter))
+    }
+
     return (await q) || null
   }

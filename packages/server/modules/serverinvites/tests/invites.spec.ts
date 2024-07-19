@@ -58,7 +58,7 @@ async function validateInviteExistanceFromEmail(emailParams: SendEmailParams) {
   // Validate that invite exists
   const token = getInviteTokenFromEmailParams(emailParams)
   expect(token).to.be.ok
-  const invite = await findInviteByToken(token)
+  const invite = await findInviteByToken({ token })
   expect(invite).to.be.ok
 
   return invite
@@ -477,7 +477,7 @@ describe('[Stream & Server Invites]', () => {
 
         // Validate that invites no longer exist
         const invitesInDb = await Promise.all(
-          deletableInvites.map((i) => findInvite(i.inviteId))
+          deletableInvites.map((i) => findInvite({ inviteId: i.inviteId }))
         )
         expect(invitesInDb.every((i) => !i)).to.be.true
       })
@@ -634,7 +634,7 @@ describe('[Stream & Server Invites]', () => {
 
           expect(data?.streamInviteUse).to.be.ok
           expect(errors).to.not.be.ok
-          expect(await findInvite(inviteId)).to.be.not.ok
+          expect(await findInvite({ inviteId })).to.be.not.ok
 
           const userStreamRole = await getUserStreamRole(me.id, streamId)
           expect(userStreamRole).to.eq(accept ? Roles.Stream.Contributor : null)
@@ -722,7 +722,7 @@ describe('[Stream & Server Invites]', () => {
 
         expect(data?.streamInviteCancel).to.be.ok
         expect(errors).to.be.not.ok
-        expect(await findInvite(inviteId)).to.be.not.ok
+        expect(await findInvite({ inviteId })).to.be.not.ok
       })
 
       it('own pending collaborators can be retrieved', async () => {

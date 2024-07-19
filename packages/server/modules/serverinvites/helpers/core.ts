@@ -9,7 +9,7 @@ import {
   ServerInviteRecord,
   ServerInviteResourceTarget
 } from '@/modules/serverinvites/domain/types'
-import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
+import { Nullable } from '@speckle/shared'
 
 export type ResolvedTargetData = {
   userId: string | null
@@ -37,10 +37,7 @@ export function resolveTarget(target: string): ResolvedTargetData {
 /**
  * Build a valid target value from a user ID
  */
-export function buildUserTarget(
-  userId: MaybeNullOrUndefined<string>
-): Nullable<string> {
-  if (!userId) return null
+export function buildUserTarget(userId: string): string {
   return `@${userId}`
 }
 

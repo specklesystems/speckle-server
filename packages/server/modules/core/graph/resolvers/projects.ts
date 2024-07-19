@@ -43,7 +43,7 @@ import { createAndSendInviteFactory } from '@/modules/serverinvites/services/cre
 import {
   cancelStreamInviteFactory,
   finalizeStreamInviteFactory
-} from '@/modules/serverinvites/services/inviteProcessingService'
+} from '@/modules/serverinvites/services/processing'
 import {
   getPendingStreamCollaboratorsFactory,
   getUserPendingStreamInvitesFactory

@@ -16,7 +16,7 @@ import {
   resendInviteFactory,
   deleteInviteFactory,
   finalizeStreamInviteFactory
-} from '@/modules/serverinvites/services/inviteProcessingService'
+} from '@/modules/serverinvites/services/processing'
 import {
   getServerInviteForTokenFactory,
   getUserPendingStreamInviteFactory,

@@ -9,13 +9,17 @@ import {
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
 import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import {
+  InviteResourceTargetType,
+  ServerInviteRecord
+} from '@/modules/serverinvites/domain/types'
 import {
   DeleteInvite,
   DeleteInvitesByTarget,
   DeleteServerOnlyInvites,
   DeleteStreamInvite,
   FindInvite,
+  FindInviteByToken,
   FindServerInvite,
   FindStreamInvite,
   UpdateAllInviteTargets
@@ -97,6 +101,54 @@ export const finalizeInvitedServerRegistrationFactory =
     await updateAllInviteTargets(email, buildUserTarget(userId)!)
   }
 
+type FinalizeResourceInviteFactoryDeps = {
+  findInvite: FindInvite
+}
+
+export const finalizeResourceInviteFactory =
+  (deps: FinalizeResourceInviteFactoryDeps) =>
+  async (params: {
+    accepterId: string
+    accept: boolean
+    token: string
+    resourceType?: InviteResourceTargetType
+  }) => {
+    const { findInvite } = deps
+    const { accepterId, accept, token, resourceType } = params
+
+    const invite = await findInvite({
+      token,
+      target: buildUserTarget(accepterId),
+      resourceFilter: resourceType ? { resourceType } : undefined
+    })
+    if (!invite) {
+      throw new NoInviteFoundError(
+        'Attempted to finalize nonexistant resource invite',
+        {
+          info: params
+        }
+      )
+    }
+
+    /**
+     * TODO: How to accept resource invite regardless from where?
+     * E.g.: Accepting project invite from project resolver
+     * SHOULD also accept the workspace aspect of the invite
+     *
+     * Maybe:
+     * - Collect resources again? Same as on invite creation
+     * - Same issue tho: Workspace code is not attached
+     *
+     * Maybe: Workspaces listen to ServerInviteAccepted? Or ProjectJoined?
+     *
+     * ValidateInvite first, validating the primary resourceType, which should
+     * absolutely be defined.
+     *
+     * Once that's done, just accept the invite - delete invite and send out
+     * events for accepting for all other types
+     */
+  }
+
 /**
  * Accept or decline a stream invite
  */
@@ -165,6 +217,7 @@ export const finalizeStreamInviteFactory =
 
 /**
  * Cancel/decline a stream invite
+ * TODO: What's the difference between this and finalizeStreamInvite? Canceled by owner maybe?
  */
 export const cancelStreamInviteFactory =
   ({
@@ -191,6 +244,7 @@ export const cancelStreamInviteFactory =
 
 /**
  * Re-send pending invite e-mail, without creating a new invite
+ * TODO: WHy? Use creation factory thing instead
  */
 export const resendInviteFactory =
   ({
@@ -210,6 +264,7 @@ export const resendInviteFactory =
 
 /**
  * Delete pending invite
+ * TODO: Differnece between this and cancel?
  */
 export const deleteInviteFactory =
   ({
