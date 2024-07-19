@@ -1,6 +1,7 @@
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
 import { getStream } from '@/modules/core/repositories/streams'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { InviteFinalizingError } from '@/modules/serverinvites/errors'
 import {
   ProcessFinalizedResourceInvite,
@@ -19,6 +20,13 @@ export const validateProjectInviteBeforeFinalizationFactory =
   async (params) => {
     const { getProject } = deps
     const { invite, finalizerUserId } = params
+
+    if (invite.resource.resourceType !== ProjectInviteResourceType) {
+      throw new InviteFinalizingError(
+        'Attempting to finalize non-project invite as project invite',
+        { info: { invite, finalizerUserId } }
+      )
+    }
 
     const project = await getProject({
       streamId: invite.resource.resourceId,

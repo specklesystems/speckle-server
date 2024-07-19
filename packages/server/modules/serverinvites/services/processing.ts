@@ -9,10 +9,7 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 
 import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
-import {
-  InviteResourceTargetType,
-  ServerInviteRecord
-} from '@/modules/serverinvites/domain/types'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
   DeleteInvite,
   DeleteInvitesByTarget,
@@ -24,6 +21,7 @@ import {
   UpdateAllInviteTargets
 } from '@/modules/serverinvites/domain/operations'
 import {
+  FinalizeInvite,
   ProcessFinalizedResourceInvite,
   ValidateResourceInviteBeforeFinalization
 } from '@/modules/serverinvites/services/operations'
@@ -112,13 +110,8 @@ type FinalizeResourceInviteFactoryDeps = {
 }
 
 export const finalizeResourceInviteFactory =
-  (deps: FinalizeResourceInviteFactoryDeps) =>
-  async (params: {
-    finalizerUserId: string
-    accept: boolean
-    token: string
-    resourceType?: InviteResourceTargetType
-  }) => {
+  (deps: FinalizeResourceInviteFactoryDeps): FinalizeInvite =>
+  async (params) => {
     const {
       findInvite,
       validateInvite,

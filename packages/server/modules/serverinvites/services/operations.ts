@@ -5,6 +5,7 @@ import { EmailTemplateParams } from '@/modules/emails/services/emailRendering'
 import { CreateInviteParams } from '@/modules/serverinvites/domain/operations'
 import {
   InviteResourceTarget,
+  InviteResourceTargetType,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
 import { ResolvedTargetData } from '@/modules/serverinvites/helpers/core'
@@ -18,6 +19,13 @@ export type CreateAndSendInvite = (
   params: CreateInviteParams,
   inviterResourceAccessLimits?: TokenResourceIdentifier[] | null
 ) => Promise<InviteResult>
+
+export type FinalizeInvite = (params: {
+  finalizerUserId: string
+  accept: boolean
+  token: string
+  resourceType?: InviteResourceTargetType
+}) => Promise<void>
 
 export type ResendInviteEmail = (invite: ServerInviteRecord) => Promise<void>
 

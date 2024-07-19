@@ -1,24 +1,24 @@
-import { MaybeNullOrUndefined, Roles, ServerRoles, StreamRoles } from '@speckle/shared'
+import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
   MutationStreamInviteUseArgs,
   ProjectInviteCreateInput,
   ProjectInviteUseInput,
-  StreamInviteCreateInput
+  StreamInviteCreateInput,
+  TokenResourceIdentifier
 } from '@/modules/core/graph/generated/graphql'
-import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
-import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
-import { ResourceTargets } from '@/modules/serverinvites/helpers/legacyCore'
-import { has } from 'lodash'
 import {
   ContextResourceAccessRules,
   isResourceAllowed
 } from '@/modules/core/helpers/token'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
+import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
+import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
+import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
 import {
   CreateAndSendInvite,
-  FinalizeStreamInvite
+  FinalizeInvite
 } from '@/modules/serverinvites/services/operations'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
+import { has } from 'lodash'
 
 type FullProjectInviteCreateInput = ProjectInviteCreateInput & { projectId: string }
 
@@ -26,8 +26,8 @@ const isStreamInviteCreateInput = (
   i: StreamInviteCreateInput | FullProjectInviteCreateInput
 ): i is StreamInviteCreateInput => has(i, 'streamId')
 
-export const createStreamInviteAndNotifyFactory =
-  ({ createAndSendInvite }: { createAndSendInvite: CreateAndSendInvite }) =>
+export const createProjectInviteFactory =
+  (deps: { createAndSendInvite: CreateAndSendInvite }) =>
   async (
     input: StreamInviteCreateInput | FullProjectInviteCreateInput,
     inviterId: string,
@@ -40,17 +40,21 @@ export const createStreamInviteAndNotifyFactory =
     }
 
     const target = (userId ? buildUserTarget(userId) : email)!
-    await createAndSendInvite(
+    await deps.createAndSendInvite(
       {
         target,
         inviterId,
-        resourceTarget: ResourceTargets.Streams,
-        resourceId: isStreamInviteCreateInput(input) ? input.streamId : input.projectId,
-        role: (role as StreamRoles) || Roles.Stream.Contributor,
         message: isStreamInviteCreateInput(input)
           ? input.message || undefined
           : undefined,
-        serverRole: (input.serverRole as ServerRoles) || undefined
+        primaryResourceTarget: {
+          resourceType: ProjectInviteResourceType,
+          resourceId: isStreamInviteCreateInput(input)
+            ? input.streamId
+            : input.projectId,
+          role: role || Roles.Stream.Contributor,
+          primary: true
+        }
       },
       inviterResourceAccessRules
     )
@@ -60,8 +64,8 @@ const isStreamInviteUseArgs = (
   i: MutationStreamInviteUseArgs | ProjectInviteUseInput
 ): i is MutationStreamInviteUseArgs => has(i, 'streamId')
 
-export const useStreamInviteAndNotifyFactory =
-  ({ finalizeStreamInvite }: { finalizeStreamInvite: FinalizeStreamInvite }) =>
+export const useProjectInviteAndNotifyFactory =
+  (deps: { finalizeInvite: FinalizeInvite }) =>
   async (
     input: MutationStreamInviteUseArgs | ProjectInviteUseInput,
     userId: string,
@@ -77,7 +81,7 @@ export const useStreamInviteAndNotifyFactory =
       })
     ) {
       throw new StreamInvalidAccessError(
-        'You are not allowed to process an invite for this stream',
+        'You are not allowed to process an invite for this project',
         {
           info: {
             userId,
@@ -88,10 +92,10 @@ export const useStreamInviteAndNotifyFactory =
       )
     }
 
-    await finalizeStreamInvite(
+    await deps.finalizeInvite({
       accept,
-      isStreamInviteUseArgs(input) ? input.streamId : input.projectId,
+      resourceType: ProjectInviteResourceType,
       token,
-      userId
-    )
+      finalizerUserId: userId
+    })
   }
