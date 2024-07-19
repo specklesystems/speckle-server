@@ -1,19 +1,21 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
     <SettingsSectionHeader title="Projects" text="Manage projects across the server" />
-    <div class="flex flex-col-reverse md:flex-row">
-      <FormTextInput
-        name="search"
-        :custom-icon="MagnifyingGlassIcon"
-        color="foundation"
-        full-width
-        search
-        :show-clear="!!searchString"
-        placeholder="Search projects"
-        class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
-        @update:model-value="debounceSearchUpdate"
-        @change="($event) => searchUpdateHandler($event.value)"
-      />
+    <div class="flex flex-col-reverse md:justify-between md:flex-row md:gap-x-4">
+      <div class="relative w-full md:max-w-md mt-6 md:mt-0">
+        <FormTextInput
+          name="search"
+          :custom-icon="MagnifyingGlassIcon"
+          color="foundation"
+          full-width
+          search
+          :show-clear="!!search"
+          placeholder="Search projects"
+          class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
+          :model-value="bind.modelValue.value"
+          v-on="on"
+        />
+      </div>
       <FormButton :icon-left="PlusIcon" @click="openNewProject = true">New</FormButton>
     </div>
 
@@ -95,19 +97,21 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { debounce } from 'lodash-es'
 import { useQuery } from '@vue/apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { getProjectsQuery } from '~~/lib/server-management/graphql/queries'
 import type { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { isProject } from '~~/lib/server-management/helpers/utils'
+import { useDebouncedTextInput } from '@speckle/ui-components'
 
+const search = defineModel<string>('search')
+
+const { on, bind } = useDebouncedTextInput({ model: search })
 const logger = useLogger()
 const router = useRouter()
 
 const projectToModify = ref<ProjectItem | null>(null)
-const searchString = ref('')
 const showProjectDeleteDialog = ref(false)
 const infiniteLoaderId = ref('')
 const openNewProject = ref(false)
@@ -120,7 +124,7 @@ const {
   loading
 } = useQuery(getProjectsQuery, () => ({
   limit: 50,
-  query: searchString.value
+  query: search.value
 }))
 
 const moreToLoad = computed(
@@ -164,12 +168,6 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
     state.complete()
   }
 }
-
-const searchUpdateHandler = (value: string) => {
-  searchString.value = value
-}
-
-const debounceSearchUpdate = debounce(searchUpdateHandler, 500)
 
 const calculateLoaderId = () => {
   infiniteLoaderId.value = resultVariables.value?.query || ''

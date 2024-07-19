@@ -11,11 +11,11 @@
         color="foundation"
         full-width
         search
-        :show-clear="!!searchString"
+        :show-clear="!!search"
         placeholder="Search invitations"
         class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
-        @update:model-value="debounceSearchUpdate"
-        @change="($event) => searchUpdateHandler($event.value)"
+        :model-value="bind.modelValue.value"
+        v-on="on"
       />
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
         Invite
@@ -87,7 +87,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { debounce } from 'lodash-es'
 import { useQuery, useMutation } from '@vue/apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
 import type { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
@@ -100,13 +99,16 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
+import { useDebouncedTextInput } from '@speckle/ui-components'
+
+const search = defineModel<string>('search')
 
 const logger = useLogger()
 const { triggerNotification } = useGlobalToast()
 const { mutate: resendInvitationMutation } = useMutation(adminResendInviteMutation)
+const { on, bind } = useDebouncedTextInput({ model: search })
 
 const inviteToModify = ref<InviteItem | null>(null)
-const searchString = ref('')
 const showDeleteInvitationDialog = ref(false)
 const infiniteLoaderId = ref('')
 const successfullyResentInvites = ref<string[]>([])
@@ -120,7 +122,7 @@ const {
   loading
 } = useQuery(getInvitesQuery, () => ({
   limit: 50,
-  query: searchString.value
+  query: search.value
 }))
 
 const moreToLoad = computed(
@@ -185,12 +187,6 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
     state.complete()
   }
 }
-
-const searchUpdateHandler = (value: string) => {
-  searchString.value = value
-}
-
-const debounceSearchUpdate = debounce(searchUpdateHandler, 500)
 
 const calculateLoaderId = () => {
   infiniteLoaderId.value = resultVariables.value?.query || ''

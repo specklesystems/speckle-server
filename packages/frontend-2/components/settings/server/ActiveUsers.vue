@@ -1,19 +1,21 @@
 <template>
   <div class="md:max-w-5xl md:mx-auto">
     <SettingsSectionHeader title="Active users" text="Manage server members" />
-    <div class="flex flex-col-reverse md:flex-row">
-      <FormTextInput
-        name="search"
-        :custom-icon="MagnifyingGlassIcon"
-        color="foundation"
-        full-width
-        search
-        :show-clear="!!searchString"
-        placeholder="Search users"
-        class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
-        @update:model-value="debounceSearchUpdate"
-        @change="($event) => searchUpdateHandler($event.value)"
-      />
+    <div class="flex flex-col-reverse md:justify-between md:flex-row md:gap-x-4">
+      <div class="relative w-full md:max-w-md mt-6 md:mt-0">
+        <FormTextInput
+          name="search"
+          :custom-icon="MagnifyingGlassIcon"
+          color="foundation"
+          full-width
+          search
+          :show-clear="!!search"
+          placeholder="Search users"
+          class="rounded-md border border-outline-3"
+          :model-value="bind.modelValue.value"
+          v-on="on"
+        />
+      </div>
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
         Invite
       </FormButton>
@@ -103,7 +105,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useQuery } from '@vue/apollo-composable'
-import { debounce, isArray } from 'lodash-es'
+import { isArray } from 'lodash-es'
 import { useLogger } from '~~/composables/logging'
 import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, ServerRoles, Optional } from '@speckle/shared'
@@ -119,13 +121,17 @@ import {
   UserPlusIcon
 } from '@heroicons/vue/24/outline'
 import { useServerInfo } from '~~/lib/core/composables/server'
+import { useDebouncedTextInput } from '@speckle/ui-components'
+
+const search = defineModel<string>('search')
 
 const logger = useLogger()
 const { activeUser } = useActiveUser()
 const { isGuestMode } = useServerInfo()
+const { on, bind } = useDebouncedTextInput({ model: search })
 
 const userToModify: Ref<Nullable<UserItem>> = ref(null)
-const searchString = ref('')
+
 const showUserDeleteDialog = ref(false)
 const showChangeUserRoleDialog = ref(false)
 const newRole = ref<ServerRoles>()
@@ -134,7 +140,7 @@ const showInviteDialog = ref(false)
 
 const queryVariables = computed(() => ({
   limit: 50,
-  query: searchString.value
+  query: search.value
 }))
 
 const {
@@ -198,11 +204,11 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
   }
 }
 
-const searchUpdateHandler = (value: string) => {
-  searchString.value = value
-}
+// const searchUpdateHandler = (value: string) => {
+//   searchString.value = value
+// }
 
-const debounceSearchUpdate = debounce(searchUpdateHandler, 500)
+// const debounceSearchUpdate = debounce(searchUpdateHandler, 500)
 
 const calculateLoaderId = () => {
   infiniteLoaderId.value = resultVariables.value?.query || ''
