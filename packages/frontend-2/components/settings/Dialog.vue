@@ -26,7 +26,7 @@
                 'bg-foundation-focus hover:!bg-foundation-focus':
                   selectedMenuItem?.title === sidebarMenuItem.title
               }"
-              @click="targetMenuItem = key"
+              @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
           <LayoutSidebarMenuGroup title="Server settings">
@@ -41,7 +41,7 @@
                 'bg-foundation-focus hover:!bg-foundation-focus':
                   selectedMenuItem?.title === sidebarMenuItem.title
               }"
-              @click="targetMenuItem = key"
+              @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
@@ -88,11 +88,7 @@ type MenuItem = {
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('md')
 
-const menuItemConfig: {
-  [key: string]: {
-    [key: string]: MenuItem
-  }
-} = {
+const menuItemConfig = shallowRef<{ [key: string]: { [key: string]: MenuItem } }>({
   user: {
     [settingsQueries.user.profile]: {
       title: 'Profile',
@@ -125,24 +121,24 @@ const menuItemConfig: {
       component: SettingsServerPendingInvitations
     }
   }
-}
+})
 
 const isOpen = defineModel<boolean>('open', { required: true })
-const targetMenuItem = defineModel<string>('targetMenuItem', { required: false })
+const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: true })
 
-const selectedMenuItem = computed((): menuItem | null => {
-  const categories = [menuItemConfig.user, menuItemConfig.server]
+const selectedMenuItem = computed((): MenuItem | null => {
+  const categories = [menuItemConfig.value.user, menuItemConfig.value.server]
   for (const category of categories) {
-    if (targetMenuItem.value in category) {
+    if (targetMenuItem.value && targetMenuItem.value in category) {
       return category[targetMenuItem.value]
     }
   }
 
-  if (!isMobile.value) {
+  if (!isMobile.value && targetMenuItem.value) {
     // Fallback for invalid queries/typos
     return targetMenuItem.value.includes('server')
-      ? menuItemConfig.server.general
-      : menuItemConfig.user.profile
+      ? menuItemConfig.value.server.general
+      : menuItemConfig.value.user.profile
   }
 
   return null

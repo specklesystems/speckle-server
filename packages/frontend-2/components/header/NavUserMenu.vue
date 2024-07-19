@@ -172,7 +172,7 @@ const router = useRouter()
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
-const settingsDialogTarget = ref<string>(null)
+const settingsDialogTarget = ref<string | null>(null)
 const menuButtonId = useId()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('md')
