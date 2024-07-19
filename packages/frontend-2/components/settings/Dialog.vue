@@ -65,6 +65,7 @@
 import type { defineComponent } from 'vue'
 import SettingsUserProfile from '~/components/settings/user/Profile.vue'
 import SettingsUserNotifications from '~/components/settings/user/Notifications.vue'
+import SettingsUserEmails from '~/components/settings/user/Emails.vue'
 import SettingsUserDeveloper from '~/components/settings/user/Developer.vue'
 import SettingsServerGeneral from '~/components/settings/server/General.vue'
 import SettingsServerProjects from '~/components/settings/server/Projects.vue'
@@ -95,6 +96,10 @@ const menuItemConfig = shallowRef<{ [key: string]: { [key: string]: MenuItem } }
     [settingsQueries.user.profile]: {
       title: 'Profile',
       component: SettingsUserProfile
+    },
+    [settingsQueries.user.emails]: {
+      title: 'Emails',
+      component: SettingsUserEmails
     },
     [settingsQueries.user.notifications]: {
       title: 'Notifications',

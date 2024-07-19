@@ -16,7 +16,7 @@ export default {
   },
   argTypes: {
     maxWidth: {
-      options: ['sm', 'md', 'lg', 'xl'],
+      options: ['xs', 'sm', 'md', 'lg', 'xl'],
       control: { type: 'select' }
     }
   }

@@ -31,8 +31,8 @@
             <DialogPanel
               :class="[
                 'dialog-panel transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col md:h-auto',
-                fullscreen ? 'md:h-full' : 'md:max-h-[90vh]',
-                widthClasses
+                widthClasses,
+                fullscreen ? 'md:h-full' : 'md:max-h-[90vh]'
               ]"
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onFormSubmit"
@@ -42,7 +42,7 @@
                 :class="scrolledFromTop && 'relative z-20 shadow-lg'"
               >
                 <div
-                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-lg sm:text-2xl font-bold"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-lg sm:text-xl font-semibold"
                 >
                   <div class="flex items-center pr-12">
                     <ChevronLeftIcon
@@ -125,7 +125,7 @@ import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
 import { throttle } from 'lodash'
 import { isClient } from '@vueuse/core'
 
-type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
+type MaxWidthValue = 'xs' | 'sm' | 'md' | 'lg' | 'xl'
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
@@ -181,14 +181,16 @@ const open = computed({
 
 const maxWidthWeight = computed(() => {
   switch (props.maxWidth) {
-    case 'sm':
+    case 'xs':
       return 0
-    case 'md':
+    case 'sm':
       return 1
-    case 'lg':
+    case 'md':
       return 2
-    case 'xl':
+    case 'lg':
       return 3
+    case 'xl':
+      return 4
     default:
       return 10000
   }
@@ -198,15 +200,21 @@ const widthClasses = computed(() => {
   const classParts: string[] = ['w-full', 'sm:w-full']
 
   if (!props.fullscreen) {
-    classParts.push('md:max-w-2xl')
+    classParts.push('md:max-w-md')
 
+    if (maxWidthWeight.value >= 1) {
+      classParts.push('md:max-w-xl')
+    }
     if (maxWidthWeight.value >= 2) {
-      classParts.push('lg:max-w-4xl')
+      classParts.push('md:max-w-2xl')
     }
     if (maxWidthWeight.value >= 3) {
-      classParts.push('xl:max-w-6xl')
+      classParts.push('lg:max-w-4xl')
     }
     if (maxWidthWeight.value >= 4) {
+      classParts.push('xl:max-w-6xl')
+    }
+    if (maxWidthWeight.value >= 5) {
       classParts.push('2xl:max-w-7xl')
     }
   }
