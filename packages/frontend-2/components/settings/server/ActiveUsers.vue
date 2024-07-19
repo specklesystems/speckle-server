@@ -204,12 +204,6 @@ const infiniteLoad = async (state: InfiniteLoaderState) => {
   }
 }
 
-// const searchUpdateHandler = (value: string) => {
-//   searchString.value = value
-// }
-
-// const debounceSearchUpdate = debounce(searchUpdateHandler, 500)
-
 const calculateLoaderId = () => {
   infiniteLoaderId.value = resultVariables.value?.query || ''
 }
