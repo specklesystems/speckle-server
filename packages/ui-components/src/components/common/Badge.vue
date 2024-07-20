@@ -62,48 +62,29 @@ const badgeDotIconColorClasses = computed(
 
 const badgeClasses = computed(() => {
   const classParts: string[] = [
-    'inline-flex items-center',
+    'inline-flex items-center px-2 py-0.5',
     badgeColorClasses.value,
-    props.size === 'lg' ? 'px-3 py-0.5 label' : 'px-2.5 py-0.5 caption font-medium'
+    props.size === 'lg' ? 'label text-sm' : 'caption font-medium text-xs'
   ]
 
   if (props.rounded) {
     classParts.push('rounded')
-    classParts.push(
-      props.size === 'lg' ? 'px-2 py-0.5 label' : 'px-2.5 py-0.5 caption font-medium'
-    )
   } else {
     classParts.push('rounded-full')
-    classParts.push(
-      props.size === 'lg' ? 'px-2.5 py-0.5 label' : 'px-2.5 py-0.5 caption font-medium'
-    )
   }
 
   return classParts.join(' ')
 })
 
-const iconClasses = computed(() => {
-  const classParts: string[] = [
-    'mt-0.5 ml-0.5 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full focus:outline-none'
-  ]
+const iconClasses = computed(() => [
+  'mt-0.5 ml-0.5 inline-flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full focus:outline-none',
+  props.clickableIcon ? 'cursor-pointer' : 'cursor-default'
+])
 
-  if (props.clickableIcon) {
-    classParts.push('cursor-pointer')
-  } else {
-    classParts.push('cursor-default')
-  }
-
-  return classParts.join(' ')
-})
-
-const dotClasses = computed(() => {
-  const classParts: string[] = [
-    '-ml-0.5 mr-1.5 h-2 w-2',
-    badgeDotIconColorClasses.value
-  ]
-
-  return classParts.join(' ')
-})
+const dotClasses = computed(() => [
+  '-ml-0.5 mr-1.5 h-2 w-2',
+  badgeDotIconColorClasses.value
+])
 
 const onIconClick = (e: MouseEvent) => {
   if (!props.clickableIcon) {

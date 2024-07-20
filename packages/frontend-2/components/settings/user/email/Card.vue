@@ -8,7 +8,7 @@
       class="flex w-full gap-x-2 pb-4 md:pb-3"
     >
       <CommonBadge rounded :color-classes="badgeClasses">
-        <span class="capitalize">{{ emailData.status.toLowerCase() }}</span>
+        {{ emailData.status }}
       </CommonBadge>
       <FormButton
         v-if="emailData.status === 'UNVERIFIED'"
@@ -21,8 +21,8 @@
     </div>
     <div class="flex flex-col md:flex-row">
       <div class="flex-1">
-        <p class="text-xs font-semibold md:pt-1">{{ emailData.email }}</p>
-        <p v-if="description" class="text-xs pt-1 text-foreground">
+        <p class="text-sm font-semibold md:pt-1">{{ emailData.email }}</p>
+        <p v-if="description" class="text-xs pt-1 text-foreground-disabled">
           {{ description }}
         </p>
       </div>

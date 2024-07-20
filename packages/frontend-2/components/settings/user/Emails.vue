@@ -11,10 +11,10 @@
     <hr class="my-6 md:my-10" />
     <SettingsSectionHeader title="Add new email" subheading />
     <div class="flex flex-col md:flex-row gap-x-4 w-full justify-center pt-6">
-      <div class="w-1/2">
-        <span class="text-sm font-semibold">New email address</span>
+      <div class="w-1/2 flex items-center">
+        <span class="text-sm font-medium">New email address</span>
       </div>
-      <div class="flex flex-col md:flex-row gap-x-4 md:w-1/2">
+      <div class="flex flex-col md:flex-row gap-x-2 md:w-1/2">
         <FormTextInput
           v-model="email"
           color="foundation"
