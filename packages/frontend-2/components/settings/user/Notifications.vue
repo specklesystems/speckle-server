@@ -1,50 +1,52 @@
 <template>
-  <div class="md:max-w-xl md:mx-auto">
-    <SettingsSectionHeader
-      title="Notifications"
-      text="Manage your notification preferences"
-    />
-    <table class="table-auto w-full rounded-t overflow-hidden">
-      <thead class="text-foreground-1">
-        <tr>
-          <th class="pb-4 font-semibold text-sm text-left">Notification type</th>
-          <th
-            v-for="channel in notificationChannels"
-            :key="channel"
-            class="text-right font-semibold pb-4 text-sm"
+  <section>
+    <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
+      <SettingsSectionHeader
+        title="Notifications"
+        text="Manage your notification preferences"
+      />
+      <table class="table-auto w-full rounded-t overflow-hidden">
+        <thead class="text-foreground-1">
+          <tr>
+            <th class="pb-4 font-semibold text-sm text-left">Notification type</th>
+            <th
+              v-for="channel in notificationChannels"
+              :key="channel"
+              class="text-right font-semibold pb-4 text-sm"
+            >
+              {{ capitalize(channel) }}
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            v-for="[type, settings] in Object.entries(localPreferences)"
+            :key="type"
+            class="border-t"
           >
-            {{ capitalize(channel) }}
-          </th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="[type, settings] in Object.entries(localPreferences)"
-          :key="type"
-          class="border-t"
-        >
-          <td class="text-xs sm:text-sm py-4">
-            {{ notificationTypeMapping[type] || 'Unknown' }}
-          </td>
-          <td
-            v-for="channel in notificationChannels"
-            :key="channel"
-            class="flex justify-end py-4"
-          >
-            <FormCheckbox
-              :name="`${type} (${channel})`"
-              :disabled="loading"
-              hide-label
-              :model-value="settings[channel] || undefined"
-              @update:model-value="
-                ($event) => onUpdate({ value: !!$event, type, channel })
-              "
-            />
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <td class="text-xs sm:text-sm py-4">
+              {{ notificationTypeMapping[type] || 'Unknown' }}
+            </td>
+            <td
+              v-for="channel in notificationChannels"
+              :key="channel"
+              class="flex justify-end py-4"
+            >
+              <FormCheckbox
+                :name="`${type} (${channel})`"
+                :disabled="loading"
+                hide-label
+                :model-value="settings[channel] || undefined"
+                @update:model-value="
+                  ($event) => onUpdate({ value: !!$event, type, channel })
+                "
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 </template>
 <script setup lang="ts">
 import { capitalize, cloneDeep } from 'lodash-es'

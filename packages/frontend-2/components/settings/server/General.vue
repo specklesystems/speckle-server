@@ -1,76 +1,78 @@
 <template>
-  <div class="md:max-w-xl md:mx-auto">
-    <SettingsSectionHeader title="General" text="Manage general server information" />
-    <div class="flex flex-col space-y-6">
-      <SettingsSectionHeader title="Server details" subheading />
-      <form class="flex flex-col gap-2" @submit="onSubmit">
-        <div class="flex flex-col gap-4">
-          <FormTextInput
-            v-model="name"
-            label="Public name"
-            name="serverName"
-            color="foundation"
-            placeholder="Server name"
-            show-label
-            :show-required="true"
-            :rules="requiredRule"
-            type="text"
-          />
-          <FormTextArea
-            v-model="description"
-            color="foundation"
-            label="Description"
-            name="description"
-            placeholder="Description"
-            show-label
-          />
-          <FormTextInput
-            v-model="company"
-            color="foundation"
-            label="Owner"
-            name="owner"
-            placeholder="Owner"
-            show-label
-          />
-          <FormTextInput
-            v-model="adminContact"
-            color="foundation"
-            label="Admin email"
-            name="adminEmail"
-            placeholder="Admin email"
-            show-label
-            type="email"
-          />
-          <FormTextInput
-            v-model="termsOfService"
-            color="foundation"
-            label="URL to the Terms of Service"
-            name="terms"
-            show-label
-          />
-          <div class="text-sm flex flex-col gap-2 mt-2">
-            <FormCheckbox
-              v-model="inviteOnly"
-              label="Invite only mode - Only users with an invitation will be able to join"
-              name="inviteOnly"
+  <section>
+    <div class="md:max-w-xl md:mx-auto pb-6 md:pb-0">
+      <SettingsSectionHeader title="General" text="Manage general server information" />
+      <div class="flex flex-col space-y-6">
+        <SettingsSectionHeader title="Server details" subheading />
+        <form class="flex flex-col gap-2" @submit="onSubmit">
+          <div class="flex flex-col gap-4">
+            <FormTextInput
+              v-model="name"
+              label="Public name"
+              name="serverName"
+              color="foundation"
+              placeholder="Server name"
+              show-label
+              :show-required="true"
+              :rules="requiredRule"
+              type="text"
+            />
+            <FormTextArea
+              v-model="description"
+              color="foundation"
+              label="Description"
+              name="description"
+              placeholder="Description"
               show-label
             />
-            <FormCheckbox
-              v-model="guestModeEnabled"
-              label="Guest mode - Enables the 'Guest' server role, which allows users to only contribute to projects that they're invited to"
-              name="guestModeEnabled"
+            <FormTextInput
+              v-model="company"
+              color="foundation"
+              label="Owner"
+              name="owner"
+              placeholder="Owner"
               show-label
             />
+            <FormTextInput
+              v-model="adminContact"
+              color="foundation"
+              label="Admin email"
+              name="adminEmail"
+              placeholder="Admin email"
+              show-label
+              type="email"
+            />
+            <FormTextInput
+              v-model="termsOfService"
+              color="foundation"
+              label="URL to the Terms of Service"
+              name="terms"
+              show-label
+            />
+            <div class="text-sm flex flex-col gap-2 mt-2">
+              <FormCheckbox
+                v-model="inviteOnly"
+                label="Invite only mode - Only users with an invitation will be able to join"
+                name="inviteOnly"
+                show-label
+              />
+              <FormCheckbox
+                v-model="guestModeEnabled"
+                label="Guest mode - Enables the 'Guest' server role, which allows users to only contribute to projects that they're invited to"
+                name="guestModeEnabled"
+                show-label
+              />
+            </div>
+            <div>
+              <FormButton color="default" @click="onSubmit">Save changes</FormButton>
+            </div>
           </div>
-          <div>
-            <FormButton color="default" @click="onSubmit">Save changes</FormButton>
-          </div>
-        </div>
-      </form>
+        </form>
+      </div>
+      <hr class="my-6 md:my-10" />
+      <SettingsServerGeneralVersion />
     </div>
-    <hr class="my-6 md:my-10" />
-    <SettingsServerGeneralVersion />
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">

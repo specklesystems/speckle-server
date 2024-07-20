@@ -46,17 +46,15 @@
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
-      <main
+      <component
+        :is="selectedMenuItem.component"
         v-if="selectedMenuItem"
         :class="[
-          'bg-foundation md:p-6 md:px-10 md:py-12 w-full md:bg-foundation',
+          'bg-foundation md:px-10 md:py-12 md:bg-foundation w-full',
           !isMobile && 'simple-scrollbar overflow-y-auto flex-1'
         ]"
-      >
-        <div class="pb-6">
-          <component :is="selectedMenuItem.component" :user="user" />
-        </div>
-      </main>
+        :user="user"
+      />
     </div>
   </LayoutDialog>
 </template>

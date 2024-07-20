@@ -1,88 +1,90 @@
 <template>
-  <div class="md:max-w-5xl md:mx-auto">
-    <SettingsSectionHeader
-      title="Pending invitations"
-      text="And overview of all your pending invititations"
-    />
-    <div class="flex flex-col-reverse md:flex-row">
-      <FormTextInput
-        name="search"
-        :custom-icon="MagnifyingGlassIcon"
-        color="foundation"
-        full-width
-        search
-        :show-clear="!!search"
-        placeholder="Search invitations"
-        class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
-        :model-value="bind.modelValue.value"
-        v-on="on"
+  <section>
+    <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
+      <SettingsSectionHeader
+        title="Pending invitations"
+        text="And overview of all your pending invititations"
       />
-      <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
-        Invite
-      </FormButton>
-    </div>
-
-    <LayoutTable
-      class="mt-6 md:mt-8"
-      :columns="[
-        { id: 'email', header: 'Email', classes: 'col-span-5 truncate' },
-        { id: 'invitedBy', header: 'Invited by', classes: 'col-span-4' },
-        { id: 'resend', header: 'Resend', classes: 'col-span-3' }
-      ]"
-      :items="invites"
-      :buttons="[
-        { icon: TrashIcon, label: 'Delete', action: openDeleteInvitationDialog }
-      ]"
-    >
-      <template #email="{ item }">
-        {{ isInvite(item) ? item.email : '' }}
-      </template>
-
-      <template #invitedBy="{ item }">
-        <div class="flex items-center gap-2 py-1">
-          <UserAvatar v-if="isInvite(item)" :user="item.invitedBy" />
-          <span class="truncate">
-            {{ isInvite(item) ? item.invitedBy.name : '' }}
-          </span>
-        </div>
-      </template>
-
-      <template #resend="{ item }">
-        <FormButton
-          :link="true"
-          :class="{
-            'font-semibold': true,
-            'text-primary': !successfullyResentInvites.includes(item.id),
-            'text-foreground': successfullyResentInvites.includes(item.id)
-          }"
-          :disabled="successfullyResentInvites.includes(item.id)"
-          @click="resendInvitation(item as InviteItem)"
-        >
-          {{
-            successfullyResentInvites.includes(item.id)
-              ? 'Invitation resent'
-              : 'Resend invitation'
-          }}
+      <div class="flex flex-col-reverse md:flex-row">
+        <FormTextInput
+          name="search"
+          :custom-icon="MagnifyingGlassIcon"
+          color="foundation"
+          full-width
+          search
+          :show-clear="!!search"
+          placeholder="Search invitations"
+          class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
+          :model-value="bind.modelValue.value"
+          v-on="on"
+        />
+        <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
+          Invite
         </FormButton>
-      </template>
-    </LayoutTable>
+      </div>
 
-    <SettingsServerPendingInvitationsDeleteDialog
-      v-model:open="showDeleteInvitationDialog"
-      :invite="inviteToModify"
-      :result-variables="resultVariables"
-    />
+      <LayoutTable
+        class="mt-6 md:mt-8"
+        :columns="[
+          { id: 'email', header: 'Email', classes: 'col-span-5 truncate' },
+          { id: 'invitedBy', header: 'Invited by', classes: 'col-span-4' },
+          { id: 'resend', header: 'Resend', classes: 'col-span-3' }
+        ]"
+        :items="invites"
+        :buttons="[
+          { icon: TrashIcon, label: 'Delete', action: openDeleteInvitationDialog }
+        ]"
+      >
+        <template #email="{ item }">
+          {{ isInvite(item) ? item.email : '' }}
+        </template>
 
-    <CommonLoadingBar v-if="loading && !invites?.length" loading />
+        <template #invitedBy="{ item }">
+          <div class="flex items-center gap-2 py-1">
+            <UserAvatar v-if="isInvite(item)" :user="item.invitedBy" />
+            <span class="truncate">
+              {{ isInvite(item) ? item.invitedBy.name : '' }}
+            </span>
+          </div>
+        </template>
 
-    <InfiniteLoading
-      v-if="invites?.length"
-      :settings="{ identifier: infiniteLoaderId }"
-      class="py-4"
-      @infinite="infiniteLoad"
-    />
-    <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
-  </div>
+        <template #resend="{ item }">
+          <FormButton
+            :link="true"
+            :class="{
+              'font-semibold': true,
+              'text-primary': !successfullyResentInvites.includes(item.id),
+              'text-foreground': successfullyResentInvites.includes(item.id)
+            }"
+            :disabled="successfullyResentInvites.includes(item.id)"
+            @click="resendInvitation(item as InviteItem)"
+          >
+            {{
+              successfullyResentInvites.includes(item.id)
+                ? 'Invitation resent'
+                : 'Resend invitation'
+            }}
+          </FormButton>
+        </template>
+      </LayoutTable>
+
+      <SettingsServerPendingInvitationsDeleteDialog
+        v-model:open="showDeleteInvitationDialog"
+        :invite="inviteToModify"
+        :result-variables="resultVariables"
+      />
+
+      <CommonLoadingBar v-if="loading && !invites?.length" loading />
+
+      <InfiniteLoading
+        v-if="invites?.length"
+        :settings="{ identifier: infiniteLoaderId }"
+        class="py-4"
+        @infinite="infiniteLoad"
+      />
+      <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
+    </div>
+  </section>
 </template>
 
 <script setup lang="ts">

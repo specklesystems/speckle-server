@@ -1,105 +1,107 @@
 <template>
-  <div class="md:max-w-5xl md:mx-auto">
-    <SettingsSectionHeader title="Active users" text="Manage server members" />
-    <div class="flex flex-col-reverse md:justify-between md:flex-row md:gap-x-4">
-      <div class="relative w-full md:max-w-md mt-6 md:mt-0">
-        <FormTextInput
-          name="search"
-          :custom-icon="MagnifyingGlassIcon"
-          color="foundation"
-          full-width
-          search
-          :show-clear="!!search"
-          placeholder="Search users"
-          class="rounded-md border border-outline-3"
-          :model-value="bind.modelValue.value"
-          v-on="on"
-        />
+  <section>
+    <div class="md:max-w-5xl md:mx-auto pb-6 md:pb-0">
+      <SettingsSectionHeader title="Active users" text="Manage server members" />
+      <div class="flex flex-col-reverse md:justify-between md:flex-row md:gap-x-4">
+        <div class="relative w-full md:max-w-md mt-6 md:mt-0">
+          <FormTextInput
+            name="search"
+            :custom-icon="MagnifyingGlassIcon"
+            color="foundation"
+            full-width
+            search
+            :show-clear="!!search"
+            placeholder="Search users"
+            class="rounded-md border border-outline-3"
+            :model-value="bind.modelValue.value"
+            v-on="on"
+          />
+        </div>
+        <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
+          Invite
+        </FormButton>
       </div>
-      <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
-        Invite
-      </FormButton>
+
+      <LayoutTable
+        class="mt-6 md:mt-8"
+        :columns="[
+          { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
+          { id: 'email', header: 'Email', classes: 'col-span-3 truncate' },
+          { id: 'emailState', header: 'Email state', classes: 'col-span-2' },
+          { id: 'company', header: 'Company', classes: 'col-span-2 truncate' },
+          { id: 'role', header: 'Role', classes: 'col-span-2' }
+        ]"
+        :items="users"
+        :buttons="[{ icon: TrashIcon, label: 'Delete', action: openUserDeleteDialog }]"
+      >
+        <template #name="{ item }">
+          <div class="flex items-center gap-2">
+            <UserAvatar v-if="isUser(item)" :user="item" />
+            <span class="truncate">
+              {{ isUser(item) ? item.name : '' }}
+            </span>
+          </div>
+        </template>
+
+        <template #email="{ item }">
+          {{ isUser(item) ? item.email : '' }}
+        </template>
+
+        <template #emailState="{ item }">
+          <div class="flex items-center gap-2 select-none">
+            <template v-if="isUser(item) && item.verified">
+              <CheckCircleIcon class="h-4 w-4 text-primary" />
+              <span>Verified</span>
+            </template>
+            <template v-else>
+              <ExclamationCircleIcon class="h-4 w-4 text-danger" />
+              <span>Not verified</span>
+            </template>
+          </div>
+        </template>
+
+        <template #company="{ item }">
+          {{ isUser(item) ? item.company : '' }}
+        </template>
+
+        <template #role="{ item }">
+          <FormSelectServerRoles
+            :allow-guest="isGuestMode"
+            allow-admin
+            allow-archived
+            :model-value="isUser(item) ? item.role : undefined"
+            :disabled="isUser(item) && isCurrentUser(item)"
+            fully-control-value
+            @update:model-value="(newRoleValue) => isUser(item) && !isArray(newRoleValue) && newRoleValue && openChangeUserRoleDialog(item, newRoleValue as ServerRoles)"
+          />
+        </template>
+      </LayoutTable>
+
+      <CommonLoadingBar v-if="loading && !users?.length" loading />
+
+      <InfiniteLoading
+        v-if="users?.length"
+        :settings="{ identifier: infiniteLoaderId }"
+        class="-mt-24 -mb-24"
+        @infinite="infiniteLoad"
+      />
+
+      <SettingsServerUserDeleteDialog
+        v-model:open="showUserDeleteDialog"
+        :user="userToModify"
+        :result-variables="resultVariables"
+      />
+
+      <SettingsServerUserChangeRoleDialog
+        v-model:open="showChangeUserRoleDialog"
+        :user="userToModify"
+        :old-role="oldRole"
+        :new-role="newRole"
+        hide-closer
+      />
+      <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
     </div>
-
-    <LayoutTable
-      class="mt-6 md:mt-8"
-      :columns="[
-        { id: 'name', header: 'Name', classes: 'col-span-3 truncate' },
-        { id: 'email', header: 'Email', classes: 'col-span-3 truncate' },
-        { id: 'emailState', header: 'Email state', classes: 'col-span-2' },
-        { id: 'company', header: 'Company', classes: 'col-span-2 truncate' },
-        { id: 'role', header: 'Role', classes: 'col-span-2' }
-      ]"
-      :items="users"
-      :buttons="[{ icon: TrashIcon, label: 'Delete', action: openUserDeleteDialog }]"
-    >
-      <template #name="{ item }">
-        <div class="flex items-center gap-2">
-          <UserAvatar v-if="isUser(item)" :user="item" />
-          <span class="truncate">
-            {{ isUser(item) ? item.name : '' }}
-          </span>
-        </div>
-      </template>
-
-      <template #email="{ item }">
-        {{ isUser(item) ? item.email : '' }}
-      </template>
-
-      <template #emailState="{ item }">
-        <div class="flex items-center gap-2 select-none">
-          <template v-if="isUser(item) && item.verified">
-            <CheckCircleIcon class="h-4 w-4 text-primary" />
-            <span>Verified</span>
-          </template>
-          <template v-else>
-            <ExclamationCircleIcon class="h-4 w-4 text-danger" />
-            <span>Not verified</span>
-          </template>
-        </div>
-      </template>
-
-      <template #company="{ item }">
-        {{ isUser(item) ? item.company : '' }}
-      </template>
-
-      <template #role="{ item }">
-        <FormSelectServerRoles
-          :allow-guest="isGuestMode"
-          allow-admin
-          allow-archived
-          :model-value="isUser(item) ? item.role : undefined"
-          :disabled="isUser(item) && isCurrentUser(item)"
-          fully-control-value
-          @update:model-value="(newRoleValue) => isUser(item) && !isArray(newRoleValue) && newRoleValue && openChangeUserRoleDialog(item, newRoleValue as ServerRoles)"
-        />
-      </template>
-    </LayoutTable>
-
-    <CommonLoadingBar v-if="loading && !users?.length" loading />
-
-    <InfiniteLoading
-      v-if="users?.length"
-      :settings="{ identifier: infiniteLoaderId }"
-      class="-mt-24 -mb-24"
-      @infinite="infiniteLoad"
-    />
-
-    <SettingsServerUserDeleteDialog
-      v-model:open="showUserDeleteDialog"
-      :user="userToModify"
-      :result-variables="resultVariables"
-    />
-
-    <SettingsServerUserChangeRoleDialog
-      v-model:open="showChangeUserRoleDialog"
-      :user="userToModify"
-      :old-role="oldRole"
-      :new-role="newRole"
-      hide-closer
-    />
-    <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
