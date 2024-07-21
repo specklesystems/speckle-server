@@ -339,7 +339,7 @@ export async function init() {
       res: express.Response,
       next: express.NextFunction
     ) => {
-      res.setHeader('x-content-security-policy', "frame-ancestors 'none'")
+      res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
       next()
     }
   )
