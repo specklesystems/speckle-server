@@ -60,3 +60,7 @@ export type ValidateResourceInviteBeforeFinalization = (params: {
  * Actually handle the invite being accepted or declined
  */
 export type ProcessFinalizedResourceInvite = ValidateResourceInviteBeforeFinalization
+
+export type GetInvitationTargetUsers = (params: {
+  invites: ServerInviteRecord[]
+}) => Promise<{ [key: string]: UserWithOptionalRole }>

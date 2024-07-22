@@ -307,7 +307,7 @@ export const deleteInviteFactory =
     deleteInvite: DeleteInvite
   }) =>
   async (inviteId: string) => {
-    const invite = await findInvite(inviteId)
+    const invite = await findInvite({ inviteId })
     if (!invite) {
       throw new NoInviteFoundError('Attempted to delete a nonexistant invite')
     }

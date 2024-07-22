@@ -25,7 +25,7 @@ const {
 } = require('@/modules/core/services/ratelimiter')
 const {
   getPendingStreamCollaboratorsFactory
-} = require('@/modules/serverinvites/services/inviteRetrievalService')
+} = require('@/modules/serverinvites/services/retrieval')
 const { removePrivateFields } = require('@/modules/core/helpers/userHelper')
 const {
   removeStreamCollaborator
@@ -174,7 +174,7 @@ module.exports = {
     async pendingCollaborators(parent) {
       const { id: streamId } = parent
       return await getPendingStreamCollaboratorsFactory({
-        queryAllStreamInvites: queryAllStreamInvitesFactory({ db })
+        queryAllResourceInvites: queryAllStreamInvitesFactory({ db })
       })(streamId)
     },
 
@@ -429,7 +429,7 @@ module.exports = {
   },
   PendingStreamCollaborator: {
     /**
-     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
+     * @param {import('@/modules/serverinvites/services/retrieval').PendingStreamCollaboratorGraphQLType} parent
      */
     async invitedBy(parent, _args, ctx) {
       const { invitedById } = parent
@@ -439,7 +439,7 @@ module.exports = {
       return user ? removePrivateFields(user) : null
     },
     /**
-     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
+     * @param {import('@/modules/serverinvites/services/retrieval').PendingStreamCollaboratorGraphQLType} parent
      */
     async streamName(parent, _args, ctx) {
       const { streamId } = parent
@@ -447,7 +447,7 @@ module.exports = {
       return stream.name
     },
     /**
-     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
+     * @param {import('@/modules/serverinvites/services/retrieval').PendingStreamCollaboratorGraphQLType} parent
      */
     async token(parent, _args, ctx) {
       const authedUserId = ctx.userId

@@ -30,12 +30,13 @@ export type ProjectInviteResourceTarget = InviteResourceTarget<
   StreamRoles
 >
 
-export type ServerInviteRecord = {
-  id: string
-  target: string
-  inviterId: string
-  createdAt: Date
-  message: Nullable<string>
-  resource: InviteResourceTarget
-  token: string
-}
+export type ServerInviteRecord<R extends InviteResourceTarget = InviteResourceTarget> =
+  {
+    id: string
+    target: string
+    inviterId: string
+    createdAt: Date
+    message: Nullable<string>
+    resource: R
+    token: string
+  }

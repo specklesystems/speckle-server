@@ -47,7 +47,7 @@ import {
 import {
   getPendingStreamCollaboratorsFactory,
   getUserPendingStreamInvitesFactory
-} from '@/modules/serverinvites/services/inviteRetrievalService'
+} from '@/modules/serverinvites/services/retrieval'
 import {
   createStreamInviteAndNotifyFactory,
   useStreamInviteAndNotifyFactory
@@ -307,7 +307,7 @@ export = {
     },
     async invitedTeam(parent) {
       return getPendingStreamCollaboratorsFactory({
-        queryAllStreamInvites: queryAllStreamInvitesFactory({ db })
+        queryAllResourceInvites: queryAllStreamInvitesFactory({ db })
       })(parent.id)
     },
     async visibility(parent) {

@@ -21,7 +21,7 @@ import {
   getServerInviteForTokenFactory,
   getUserPendingStreamInviteFactory,
   getUserPendingStreamInvitesFactory
-} from '@/modules/serverinvites/services/inviteRetrievalService'
+} from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { chunk } from 'lodash'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'

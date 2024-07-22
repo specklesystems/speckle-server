@@ -10,21 +10,6 @@ import {
 } from '@/modules/serverinvites/domain/types'
 import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
 
-export type QueryAllUserStreamInvites = (
-  userId: string
-) => Promise<ServerInviteRecord[]>
-
-type FindStreamInviteArgs = {
-  target?: string | null
-  token?: string | null
-  inviteId?: string | null
-}
-
-export type FindStreamInvite = (
-  streamId: string,
-  args: FindStreamInviteArgs
-) => Promise<ServerInviteRecord | null>
-
 export type FindUserByTarget = (target: string) => Promise<UserWithOptionalRole | null>
 
 export type ServerInviteRecordInsertModel = Omit<ServerInviteRecord, 'createdAt'>
@@ -39,18 +24,12 @@ export type FindServerInvite = (
   token?: string
 ) => Promise<ServerInviteRecord | null>
 
-export type QueryAllStreamInvites = (streamId: string) => Promise<ServerInviteRecord[]>
-
-export type DeleteAllStreamInvites = (streamId: string) => Promise<boolean>
-
 export type DeleteServerOnlyInvites = (email?: string) => Promise<number | undefined>
 
 export type UpdateAllInviteTargets = (
   oldTargets?: string | string[],
   newTarget?: string
 ) => Promise<void>
-
-export type DeleteStreamInvite = (inviteId?: string) => Promise<number | undefined>
 
 export type CountServerInvites = (searchQuery: string | null) => Promise<number>
 
@@ -66,16 +45,46 @@ export type QueryServerInvites = (
   cursor: Date | null
 ) => Promise<ServerInviteRecord[]>
 
-export type FindInvite = (params: {
+export type QueryAllUserResourceInvites = <
+  T extends InviteResourceTargetType = InviteResourceTargetType,
+  R extends string = string
+>(params: {
+  userId: string
+  resourceType: T
+}) => Promise<ServerInviteRecord<InviteResourceTarget<T, R>>[]>
+
+export type QueryAllResourceInvites = <
+  T extends InviteResourceTargetType = InviteResourceTargetType,
+  R extends string = string
+>(
+  filter: Pick<InviteResourceTarget<T, R>, 'resourceId' | 'resourceType'>
+) => Promise<ServerInviteRecord<InviteResourceTarget<T, R>>[]>
+
+export type DeleteAllResourceInvites = <
+  T extends InviteResourceTargetType = InviteResourceTargetType,
+  R extends string = string
+>(
+  filter: Pick<InviteResourceTarget<T, R>, 'resourceId' | 'resourceType'>
+) => Promise<boolean>
+
+export type FindInvite = <
+  T extends InviteResourceTargetType = InviteResourceTargetType,
+  R extends string = string
+>(params: {
   inviteId?: string
   token?: string
   target?: string
-  resourceFilter?: ServerInviteResourceFilter
-}) => Promise<ServerInviteRecord | null>
+  resourceFilter?: ServerInviteResourceFilter<T, R>
+}) => Promise<ServerInviteRecord<InviteResourceTarget<T, R>> | null>
 
 export type FindInviteByToken = (params: {
   token: string
 }) => Promise<ServerInviteRecord | null>
+
+export type DeleteResourceInvite = (params: {
+  inviteId: string
+  resourceType: InviteResourceTargetType
+}) => Promise<number | undefined>
 
 export type DeleteInvite = (inviteId?: string) => Promise<boolean>
 

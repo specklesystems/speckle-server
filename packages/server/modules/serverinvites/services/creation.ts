@@ -2,7 +2,6 @@ import crs from 'crypto-random-string'
 import { getServerInfo } from '@/modules/core/services/generic'
 import emailsModule from '@/modules/emails'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
-import { Roles } from '@/modules/core/helpers/mainConstants'
 import sanitizeHtml from 'sanitize-html'
 import {
   resolveTarget,
@@ -10,14 +9,8 @@ import {
   ResolvedTargetData,
   getPrimaryResourceTarget
 } from '@/modules/serverinvites/helpers/core'
+import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
-  getUser,
-  getUsers,
-  UserWithOptionalRole
-} from '@/modules/core/repositories/users'
-import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import {
-  CreateInviteParams,
   EmitServerInvitesEvent,
   FindUserByTarget,
   InsertInviteAndDeleteOld,
@@ -31,7 +24,6 @@ import {
 } from '@/modules/serverinvites/services/operations'
 import { renderEmail } from '@/modules/emails/services/emailRendering'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
-import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { MaybeNullOrUndefined } from '@speckle/shared'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { ServerInfo } from '@/modules/core/helpers/types'
@@ -213,38 +205,4 @@ export const resendInviteEmailFactory =
       targetUser,
       targetData
     })
-  }
-
-/**
- * Invite users to be contributors for the specified stream
- */
-export const inviteUsersToStreamFactory =
-  ({ createAndSendInvite }: { createAndSendInvite: CreateAndSendInvite }) =>
-  async (
-    inviterId: string,
-    streamId: string,
-    userIds: string[],
-    inviterResourceAccessLimits?: TokenResourceIdentifier[] | null
-  ): Promise<boolean> => {
-    const users = await getUsers(userIds)
-    if (!users.length) return false
-
-    const inviteParamsArray = users.map(
-      (u): CreateInviteParams => ({
-        target: buildUserTarget(u.id)!,
-        inviterId,
-        primaryResourceTarget: {
-          resourceType: ProjectInviteResourceType,
-          resourceId: streamId,
-          role: Roles.Stream.Contributor,
-          primary: true
-        }
-      })
-    )
-
-    await Promise.all(
-      inviteParamsArray.map((p) => createAndSendInvite(p, inviterResourceAccessLimits))
-    )
-
-    return true
   }
