@@ -51,7 +51,8 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
   }
 }
 
-const userByEmailQuery = (email) => Users().whereRaw('lower(email) = lower(?)', [email])
+const userByEmailQuery = (email) =>
+  Users().whereRaw('lower("users"."email") = lower(?)', [email])
 
 const getUsersBaseQuery = (searchQuery = null) => {
   const query = Users()
@@ -194,7 +195,15 @@ module.exports = {
   },
 
   async getUserByEmail({ email }) {
-    const user = await userByEmailQuery(email).select('*').first()
+    const user = await userByEmailQuery(email)
+      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
+      .columns([
+        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .groupBy(UsersSchema.col.id)
+      .first()
     if (!user) return null
     delete user.passwordDigest
     return user
