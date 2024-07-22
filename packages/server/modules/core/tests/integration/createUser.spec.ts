@@ -9,8 +9,8 @@ import {
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
 import { expectToThrow } from '@/test/assertionHelper'
-import { PasswordTooShortError } from '../../errors/userinput'
-import { findPrimaryEmailForUserFactory } from '../../repositories/userEmails'
+import { PasswordTooShortError } from '@/modules/core/errors/userinput'
+import { findPrimaryEmailForUserFactory } from '@/modules/core/repositories/userEmails'
 
 describe('Users @core-users', () => {
   beforeEach(async () => {

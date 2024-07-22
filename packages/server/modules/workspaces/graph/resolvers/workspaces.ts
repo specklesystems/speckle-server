@@ -1,7 +1,7 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
-  WorkspacesNotAutorizedError,
+  WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
 } from '@/modules/workspaces/errors/workspace'
 import {
@@ -30,7 +30,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const { name, description, logoUrl } = args.input
 
           if (!context.userId) {
-            throw new WorkspacesNotAutorizedError()
+            throw new WorkspacesNotAuthorizedError()
           }
 
           const { emit: emitWorkspaceEvent } = getEventBus()

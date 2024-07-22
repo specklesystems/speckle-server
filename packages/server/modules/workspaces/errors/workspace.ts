@@ -21,7 +21,7 @@ export class WorkspacesNotYetImplementedError extends BaseError {
   static code = 'WORKSPACES_NOT_YET_IMPLEMENTED_ERROR'
 }
 
-export class WorkspacesNotAutorizedError extends BaseError {
+export class WorkspacesNotAuthorizedError extends BaseError {
   static defaultMessage = 'You are not authorized'
   static code = 'WORKSPACES_NOT_AUTHORIZED_ERROR'
   static statusCode = 401
