@@ -4,7 +4,8 @@ const crs = require('crypto-random-string')
 const knex = require('@/db/knex')
 const {
   ServerAcl: ServerAclSchema,
-  Users: UsersSchema
+  Users: UsersSchema,
+  UserEmails
 } = require('@/modules/core/dbSchema')
 const {
   validateUserPassword,
@@ -19,7 +20,7 @@ const { deleteStream } = require('./streams')
 const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const { getUserByEmail } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
-const { pick } = require('lodash')
+const { pick, omit } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
 const {
   UserInputError,
@@ -160,7 +161,17 @@ module.exports = {
    * @returns {Promise<import('@/modules/core/helpers/types').UserRecord | null>}
    */
   async getUserById({ userId }) {
-    const user = await Users().where({ id: userId }).select('*').first()
+    const user = await Users()
+      .where({ [UsersSchema.col.id]: userId })
+      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
+      .where({ primary: true, [UserEmails.col.userId]: userId })
+      .columns([
+        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .groupBy(UsersSchema.col.id)
+      .first()
     if (user) delete user.passwordDigest
     return user
   },
