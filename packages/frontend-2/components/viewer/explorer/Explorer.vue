@@ -7,7 +7,7 @@
         <div class="flex items-center justify-between w-full">
           <div v-if="!showRaw" class="flex items-center gap-1">
             <FormButton
-              size="small"
+              size="sm"
               text
               :icon-left="BarsArrowDownIcon"
               @click="expandLevel++"
@@ -15,7 +15,7 @@
               Unfold
             </FormButton>
             <FormButton
-              size="small"
+              size="sm"
               text
               :icon-left="BarsArrowUpIcon"
               :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
@@ -30,7 +30,7 @@
 
           <FormButton
             v-tippy="showRaw ? 'Switch back' : 'Switch to Dev Mode'"
-            size="small"
+            size="sm"
             text
             class="-mr-0.5 sm:-mr-1"
             variant="outline"

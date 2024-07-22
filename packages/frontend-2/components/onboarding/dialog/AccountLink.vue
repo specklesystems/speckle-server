@@ -8,7 +8,7 @@
       controls
     />
     <div class="flex justify-center mt-2">
-      <FormButton size="large" class="shadow-md" @click="authoriseManager()">
+      <FormButton size="lg" class="shadow-md" @click="authoriseManager()">
         Authorize Manager
       </FormButton>
     </div>

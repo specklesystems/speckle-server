@@ -14,7 +14,7 @@
         </div>
       </div>
       <div>
-        <FormButton size="large" full-width @click="showManagerDownloadDialog = true">
+        <FormButton size="lg" full-width @click="showManagerDownloadDialog = true">
           Download Manager
         </FormButton>
       </div>

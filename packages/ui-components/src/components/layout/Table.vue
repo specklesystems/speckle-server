@@ -43,7 +43,7 @@
               <div v-for="button in buttons" :key="button.label">
                 <FormButton
                   :icon-left="button.icon"
-                  size="small"
+                  size="sm"
                   variant="outline"
                   hide-text
                   :class="button.class"

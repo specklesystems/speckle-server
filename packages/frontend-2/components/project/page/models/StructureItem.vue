@@ -108,7 +108,7 @@
             <FormButton
               v-if="!isPendingFileUpload(item) && item.model"
               rounded
-              size="small"
+              size="sm"
               :to="modelVersionsRoute(project.id, item.model.id)"
               class="gap-0.5"
             >
@@ -182,7 +182,7 @@
           <div class="text-xs text-foreground-2">
             <FormButton
               rounded
-              size="small"
+              size="sm"
               :icon-right="ArrowTopRightOnSquareIcon"
               :to="viewAllUrl"
               :disabled="!viewAllUrl"

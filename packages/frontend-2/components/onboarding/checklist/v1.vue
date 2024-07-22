@@ -29,7 +29,7 @@
               <FormButton
                 v-if="!allCompleted"
                 text
-                size="small"
+                size="sm"
                 @click="dismissChecklistForever()"
               >
                 Don't show again
@@ -103,7 +103,7 @@
                       v-tippy="'Mark completed'"
                       text
                       link
-                      size="small"
+                      size="sm"
                       variant="outline"
                       @click.stop="markComplete(idx)"
                     >
@@ -117,7 +117,7 @@
                       v-if="step.completed && step.active"
                       text
                       link
-                      size="small"
+                      size="sm"
                       variant="outline"
                       @click.stop="step.action"
                     >
@@ -127,7 +127,7 @@
                   <div v-else-if="step.active" class="text-sm">
                     <FormButton
                       link
-                      size="small"
+                      size="sm"
                       variant="outline"
                       @click.stop="goToFirstUncompletedStep()"
                     >
@@ -148,7 +148,7 @@
             <FormButton
               v-if="!allCompleted"
               text
-              size="small"
+              size="sm"
               @click="dismissChecklistForever()"
             >
               Don't show again

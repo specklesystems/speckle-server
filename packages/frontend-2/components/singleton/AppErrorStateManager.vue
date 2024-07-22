@@ -14,7 +14,7 @@
           :icon-left="XMarkIcon"
           variant="outline"
           text
-          size="large"
+          size="lg"
           @click="hideErrorStateBanner"
         />
       </div>

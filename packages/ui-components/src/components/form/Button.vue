@@ -137,10 +137,8 @@ const bgAndBorderClasses = computed(() => {
     ]
   }
 
-  const variant = props.variant || 'primary'
-
   if (props.text || props.link) {
-    switch (variant) {
+    switch (props.variant) {
       case 'subtle':
         classParts.push('text-foreground')
         break
@@ -156,7 +154,7 @@ const bgAndBorderClasses = computed(() => {
         break
     }
   } else {
-    switch (variant) {
+    switch (props.variant) {
       case 'subtle':
         classParts.push(...variantsBgBorder.subtle)
         break
@@ -178,9 +176,9 @@ const bgAndBorderClasses = computed(() => {
 
 const sizeClasses = computed(() => {
   switch (props.size) {
-    case 'small':
+    case 'sm':
       return 'text-xs leading-4'
-    case 'large':
+    case 'lg':
       return 'text-sm leading-6'
     default:
     case 'base':
@@ -198,12 +196,12 @@ const paddingClasses = computed(() => {
   const hideText = props.hideText
 
   switch (props.size) {
-    case 'small':
+    case 'sm':
       if (hideText) return 'p-1'
       if (hasIconLeft) return 'py-1 pr-2 pl-1'
       if (hasIconRight) return 'py-1 pl-2 pr-1'
       return 'px-2 py-1'
-    case 'large':
+    case 'lg':
       if (hideText) return 'p-2'
       if (hasIconLeft) return 'py-2 pr-6 pl-4'
       if (hasIconRight) return 'py-2 pl-6 pr-4'
@@ -260,10 +258,10 @@ const iconClasses = computed(() => {
   }
 
   switch (props.size) {
-    case 'small':
+    case 'sm':
       classParts.push('h-4 w-4 p-0.5')
       break
-    case 'large':
+    case 'lg':
       classParts.push('h-6 w-6 p-1')
       break
     case 'base':

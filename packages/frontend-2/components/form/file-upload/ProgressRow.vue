@@ -36,7 +36,7 @@
       v-if="false"
       class="absolute -right-8 top-4"
       variant="danger"
-      size="small"
+      size="sm"
       rounded
       hide-text
       :icon-left="XMarkIcon"

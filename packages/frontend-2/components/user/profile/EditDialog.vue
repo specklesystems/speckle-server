@@ -17,12 +17,12 @@
       <UserProfileEditDialogDeleteAccount :user="user" @deleted="isOpen = false" />
       <div class="text-xs text-foreground-2 mt-2 flex gap-1 items-center">
         User ID:
-        <CommonTextLink size="small" no-underline @click="copyUserId">
+        <CommonTextLink size="sm" no-underline @click="copyUserId">
           #{{ user.id }}
         </CommonTextLink>
         <template v-if="distinctId">
           |
-          <CommonTextLink size="small" no-underline @click="copyDistinctId">
+          <CommonTextLink size="sm" no-underline @click="copyDistinctId">
             {{ distinctId }}
           </CommonTextLink>
         </template>

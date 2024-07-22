@@ -4,7 +4,7 @@
     <template #actions>
       <FormButton
         text
-        size="small"
+        size="sm"
         :icon-right="showVisibilityOptions ? ChevronUpIcon : ChevronDownIcon"
         @click="showVisibilityOptions = !showVisibilityOptions"
       >
@@ -18,7 +18,7 @@
       >
         <div>
           <FormButton
-            size="small"
+            size="sm"
             :icon-left="!hideBubbles ? CheckCircleIcon : CheckCircleIconOutlined"
             text
             @click="hideBubbles = !hideBubbles"
@@ -28,7 +28,7 @@
         </div>
         <div>
           <FormButton
-            size="small"
+            size="sm"
             :icon-left="includeArchived ? CheckCircleIcon : CheckCircleIconOutlined"
             text
             :disabled="commentThreadsMetadata?.totalArchivedCount === 0"
@@ -41,7 +41,7 @@
         </div>
         <div>
           <FormButton
-            size="small"
+            size="sm"
             :icon-left="loadedVersionsOnly ? CheckCircleIcon : CheckCircleIconOutlined"
             text
             class="!text-left"

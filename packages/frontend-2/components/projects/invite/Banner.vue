@@ -125,7 +125,7 @@ const mainInfoBlockClasses = computed(() => {
 
   return classParts.join(' ')
 })
-const buttonSize = computed(() => (props.block ? 'large' : 'base'))
+const buttonSize = computed(() => (props.block ? 'lg' : 'base'))
 const avatarSize = computed(() => (props.block ? 'xxl' : 'base'))
 
 const processInvite = async (accept: boolean) => {

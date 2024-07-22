@@ -105,7 +105,7 @@
               Following {{ spotlightUser?.userName.split(' ')[0] }}
               <FormButton
                 variant="outline"
-                size="small"
+                size="sm"
                 class="ml-1 -mr-1.5"
                 @click="() => (spotlightUserSessionId = null)"
               >

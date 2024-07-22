@@ -34,7 +34,7 @@
       >
         <FormButton
           text
-          size="small"
+          size="sm"
           target="_blank"
           external
           to="https://speckle.systems/blog/automate-with-speckle/"

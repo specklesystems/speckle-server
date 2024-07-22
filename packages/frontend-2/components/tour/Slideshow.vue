@@ -30,11 +30,11 @@
         v-show="!hasOpenComments"
         class="fixed bottom-0 left-0 w-full h-28 flex align-center p-10 items-center justify-center space-x-2 pointer-events-auto"
       >
-        <FormButton size="small" variant="outline" rounded @click="finishSlideshow()">
+        <FormButton size="sm" variant="outline" rounded @click="finishSlideshow()">
           Skip
         </FormButton>
         <FormButton
-          size="large"
+          size="lg"
           :icon-right="ArrowRightIcon"
           rounded
           class="shadow-md"

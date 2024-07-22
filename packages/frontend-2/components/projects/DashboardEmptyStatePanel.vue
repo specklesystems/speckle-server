@@ -12,7 +12,7 @@
         </h4>
       </div>
       <FormButton
-        size="large"
+        size="lg"
         full-width
         :to="to"
         :icon-left="buttonIcon"

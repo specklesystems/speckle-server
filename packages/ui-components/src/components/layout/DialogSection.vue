@@ -46,7 +46,7 @@
           :icon-right="
             button.expandContent && isExpanded ? undefined : button.iconRight
           "
-          size="small"
+          size="sm"
           @click="button?.onClick"
           v-on="button?.expandContent ? { click: toggleExpansion } : {}"
         >

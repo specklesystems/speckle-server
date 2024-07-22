@@ -44,7 +44,7 @@
         >
           <FormButton
             v-if="tag.directDownload"
-            size="small"
+            size="sm"
             text
             @click="dialogOpen = true"
           >

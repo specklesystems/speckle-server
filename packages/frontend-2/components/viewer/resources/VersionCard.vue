@@ -46,13 +46,13 @@
       <FormButton
         v-if="!isLoaded"
         v-tippy="'Shows a summary of added, deleted and changed elements.'"
-        size="small"
+        size="sm"
         text
         @click.stop="handleViewChanges"
       >
         View Changes
       </FormButton>
-      <FormButton v-else size="small" text disabled>Currently Viewing</FormButton>
+      <FormButton v-else size="sm" text disabled>Currently Viewing</FormButton>
     </div>
     <!-- Main stuff -->
     <div class="flex items-center space-x-1 pl-5">

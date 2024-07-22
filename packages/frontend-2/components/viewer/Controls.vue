@@ -226,7 +226,7 @@
           <div class="text-sm text-foreground-2">No models loaded.</div>
           <div>
             <FormButton
-              size="small"
+              size="sm"
               text
               :icon-left="PlusIcon"
               @click="openAddModel = true"

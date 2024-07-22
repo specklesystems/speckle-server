@@ -14,7 +14,7 @@
         v-if="!isReadonly"
         hide-text
         :icon-left="PlusIcon"
-        size="small"
+        size="sm"
         :disabled="!control.enabled || (appliedOptions.restrict && maxItemsReached)"
         @click="onAdd"
       />

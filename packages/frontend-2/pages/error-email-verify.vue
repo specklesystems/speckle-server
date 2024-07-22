@@ -11,7 +11,7 @@
           Please use those credentials to log in.
         </div>
         <div class="flex justify-center">
-          <FormButton size="large" :icon-left="ArrowLeftIcon" :to="loginRoute">
+          <FormButton size="lg" :icon-left="ArrowLeftIcon" :to="loginRoute">
             Go to Login
           </FormButton>
         </div>
@@ -26,7 +26,7 @@
         <div class="flex justify-center">
           <FormButton
             v-if="hasEmail"
-            size="large"
+            size="lg"
             :icon-left="PaperAirplaneIcon"
             :disabled="resendVerificationEmailLoading"
             @click="onResend"

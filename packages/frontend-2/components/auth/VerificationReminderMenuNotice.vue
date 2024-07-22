@@ -6,7 +6,7 @@
     <div class="text-xs">{{ verifyBannerText }}</div>
     <div class="">
       <FormButton
-        size="small"
+        size="sm"
         text
         :disabled="loading"
         link

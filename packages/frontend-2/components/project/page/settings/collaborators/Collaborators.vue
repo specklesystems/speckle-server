@@ -40,7 +40,7 @@
             <FormButton
               class="shrink-0"
               variant="danger"
-              size="small"
+              size="sm"
               :disabled="loading"
               @click="
                 cancelInvite({

@@ -3,12 +3,7 @@
     <ViewerSidebar :open="sidebarOpen" @close="onClose">
       <template #title><div class="select-none">Selection info</div></template>
       <template #actions>
-        <FormButton
-          size="small"
-          text
-          variant="outline"
-          @click.stop="hideOrShowSelection"
-        >
+        <FormButton size="sm" text variant="outline" @click.stop="hideOrShowSelection">
           <div
             v-if="!isHidden"
             class="flex items-center gap-1 text-foreground hover:text-primary"
@@ -21,7 +16,7 @@
             Hidden
           </div>
         </FormButton>
-        <FormButton size="small" text @click.stop="isolateOrUnisolateSelection">
+        <FormButton size="sm" text @click.stop="isolateOrUnisolateSelection">
           <div class="flex items-center gap-1">
             <div
               v-if="!isIsolated"
@@ -38,7 +33,7 @@
         </FormButton>
         <div class="flex justify-end w-full">
           <div v-tippy="`Open selection in new window`" class="max-w-max">
-            <FormButton size="small" text :to="selectionLink" target="_blank">
+            <FormButton size="sm" text :to="selectionLink" target="_blank">
               <span class="sr-only">Open selection in new window</span>
               <ArrowTopRightOnSquareIcon
                 class="w-4 text-foreground hover:text-primary"
@@ -58,7 +53,7 @@
           />
         </div>
         <div v-if="itemCount <= objects.length" class="mb-2">
-          <FormButton size="small" text full-width @click="itemCount += 10">
+          <FormButton size="sm" text full-width @click="itemCount += 10">
             View More ({{ objects.length - itemCount }})
           </FormButton>
         </div>

@@ -116,7 +116,7 @@
                   <span>Conversation started in a different version.</span>
                   <FormButton
                     v-tippy="'Load thread context'"
-                    size="small"
+                    size="sm"
                     text
                     @click="onLoadThreadContext"
                   >

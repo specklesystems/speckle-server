@@ -2,7 +2,7 @@
   <div class="flex flex-col items-start w-full">
     <div class="flex gap-2 flex-col sm:flex-row sm:justify-between w-full">
       <div class="flex flex-col items-start gap-1">
-        <CommonTextLink :icon-left="ArrowLeftIcon" size="small" :to="automationsLink">
+        <CommonTextLink :icon-left="ArrowLeftIcon" size="sm" :to="automationsLink">
           Back to Automations
         </CommonTextLink>
         <div class="flex flow-row justify-start items-center z-20">

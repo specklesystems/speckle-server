@@ -71,7 +71,7 @@
       >
         <FormButton
           variant="danger"
-          size="small"
+          size="sm"
           class="rounded-full"
           @click="$emit('remove', props.model.id)"
         >
