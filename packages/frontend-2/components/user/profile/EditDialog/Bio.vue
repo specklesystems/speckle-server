@@ -16,7 +16,7 @@
             show-label
             show-required
             :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
-            @change="save"
+            @change="handleNameChange"
           />
           <FormTextInput
             v-model="company"
@@ -67,6 +67,10 @@ const bio = ref('')
 
 const save = async () => {
   debouncedSave.cancel()
+  if (!name.value.trim()) {
+    return
+  }
+
   const input: UserUpdateInput = {}
   if (name.value !== props.user.name) input.name = name.value
   if (company.value !== props.user.company) input.company = company.value
@@ -86,6 +90,14 @@ watch(
   },
   { deep: true, immediate: true }
 )
+
+const handleNameChange = () => {
+  if (name.value.trim()) {
+    debouncedSave()
+  } else {
+    debouncedSave.cancel()
+  }
+}
 
 watch(() => [name.value, company.value, bio.value], debouncedSave)
 </script>
