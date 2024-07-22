@@ -3,9 +3,18 @@ import { Knex } from 'knex'
 import crs from 'crypto-random-string'
 
 export async function up(knex: Knex): Promise<void> {
-  const users = await knex<UserRecord>('users').select(['id', 'email', 'verified'])
+  const batchSize = 1000
+  const offset = 0
+  let users = []
 
-  if (users.length > 0) {
+  do {
+    users = await knex<UserRecord>('users')
+      .select(['id', 'email', 'verified'])
+      .limit(batchSize)
+      .offset(offset)
+
+    if (users.length === 0) return
+
     await knex('user_emails')
       .insert(
         users.map((user) => ({
@@ -18,7 +27,7 @@ export async function up(knex: Knex): Promise<void> {
       )
       .onConflict(['userId', 'email'])
       .ignore()
-  }
+  } while (users.length > 0)
 }
 
 export async function down(knex: Knex): Promise<void> {
