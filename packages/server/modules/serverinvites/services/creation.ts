@@ -12,6 +12,7 @@ import {
 import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
   EmitServerInvitesEvent,
+  FindInvite,
   FindUserByTarget,
   InsertInviteAndDeleteOld,
   ServerInviteRecordInsertModel
@@ -177,17 +178,23 @@ export const createAndSendInviteFactory =
 export const resendInviteEmailFactory =
   ({
     buildInviteEmailContents,
-    findUserByTarget
+    findUserByTarget,
+    findInvite
   }: {
     buildInviteEmailContents: BuildInviteEmailContents
     findUserByTarget: FindUserByTarget
+    findInvite: FindInvite
   }): ResendInviteEmail =>
-  async (invite) => {
+  async (params: { inviteId: string }) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })
-    const { inviterId } = invite
+    const { inviteId } = params
+    const invite = await findInvite({ inviteId })
+    if (!invite) {
+      throw new InviteCreateValidationError('Invite not found')
+    }
 
     const [inviter, targetUser, serverInfo] = await Promise.all([
-      getUser(inviterId),
+      getUser(invite.inviterId),
       findUserByTarget(invite.target),
       getServerInfo()
     ])

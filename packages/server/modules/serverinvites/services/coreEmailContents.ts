@@ -184,7 +184,7 @@ const buildProjectInviteContentsFactory =
 
 export type BuildInviteContentsFactoryDeps = BuildProjectInviteContentsFactoryDeps
 
-export const buildInviteContentsFactory =
+export const buildCoreInviteEmailContentsFactory =
   (deps: BuildProjectInviteContentsFactoryDeps): BuildInviteEmailContents =>
   (params) => {
     const { invite } = params

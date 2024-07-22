@@ -1,10 +1,10 @@
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
   MutationStreamInviteUseArgs,
   ProjectInviteCreateInput,
   ProjectInviteUseInput,
-  StreamInviteCreateInput,
-  TokenResourceIdentifier
+  StreamInviteCreateInput
 } from '@/modules/core/graph/generated/graphql'
 import {
   ContextResourceAccessRules,
@@ -234,9 +234,9 @@ export const getUserPendingProjectInviteFactory =
   }
 
 /**
- * Get pending stream collaborators (invited, but not accepted)
+ * Get pending project/stream collaborators (invited, but not accepted)
  */
-export const getPendingStreamCollaboratorsFactory =
+export const getPendingProjectCollaboratorsFactory =
   (deps: {
     queryAllResourceInvites: QueryAllResourceInvites
     getInvitationTargetUsers: GetInvitationTargetUsers

@@ -4,6 +4,7 @@ import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/s
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 import { InviteFinalizingError } from '@/modules/serverinvites/errors'
 import {
+  InviteFinalizationAction,
   ProcessFinalizedResourceInvite,
   ValidateResourceInviteBeforeFinalization
 } from '@/modules/serverinvites/services/operations'
@@ -19,7 +20,7 @@ export const validateProjectInviteBeforeFinalizationFactory =
   ): ValidateResourceInviteBeforeFinalization =>
   async (params) => {
     const { getProject } = deps
-    const { invite, finalizerUserId } = params
+    const { invite, finalizerUserId, action } = params
 
     if (invite.resource.resourceType !== ProjectInviteResourceType) {
       throw new InviteFinalizingError(
@@ -37,10 +38,19 @@ export const validateProjectInviteBeforeFinalizationFactory =
         'Attempting to finalize invite to a non-existant project'
       )
     }
-    if (project.role) {
-      throw new InviteFinalizingError(
-        'Attempting to finalize invite to a project that the user already has access to'
-      )
+
+    if (action === InviteFinalizationAction.CANCEL) {
+      if (project.role !== Roles.Stream.Owner) {
+        throw new InviteFinalizingError(
+          'Attempting to cancel invite to a project that the user does not own'
+        )
+      }
+    } else {
+      if (project.role) {
+        throw new InviteFinalizingError(
+          'Attempting to finalize invite to a project that the user already has access to'
+        )
+      }
     }
   }
 
@@ -54,7 +64,7 @@ export const processFinalizedProjectInviteFactory =
   (deps: ProcessFinalizedProjectInviteFactoryDeps): ProcessFinalizedResourceInvite =>
   async (params) => {
     const { getProject, addInviteDeclinedActivity, addProjectRole } = deps
-    const { invite, finalizerUserId, accept } = params
+    const { invite, finalizerUserId, action } = params
 
     const project = await getProject({ streamId: invite.resource.resourceId })
     if (!project) {
@@ -63,7 +73,7 @@ export const processFinalizedProjectInviteFactory =
       )
     }
 
-    if (accept) {
+    if (action === InviteFinalizationAction.ACCEPT) {
       await addProjectRole(
         project.id,
         finalizerUserId,
@@ -72,7 +82,7 @@ export const processFinalizedProjectInviteFactory =
         null,
         { fromInvite: true }
       )
-    } else {
+    } else if (action === InviteFinalizationAction.DECLINE) {
       await addInviteDeclinedActivity({
         streamId: invite.resource.resourceId,
         inviteTargetId: finalizerUserId,

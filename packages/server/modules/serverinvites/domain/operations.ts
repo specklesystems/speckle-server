@@ -1,14 +1,12 @@
 import { UserWithOptionalRole } from '@/modules/core/repositories/users'
-import {
-  ServerInvitesEventsKeys,
-  ServerInvitesEventsPayloads
-} from '@/modules/serverinvites/domain/events'
+import { ServerInvitesEventsKeys } from '@/modules/serverinvites/domain/events'
 import {
   InviteResourceTarget,
   InviteResourceTargetType,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
 import { ServerInviteResourceFilter } from '@/modules/serverinvites/repositories/serverInvites'
+import { EventBusPayloads } from '@/modules/shared/services/eventBus'
 
 export type FindUserByTarget = (target: string) => Promise<UserWithOptionalRole | null>
 
@@ -109,5 +107,5 @@ export type CreateInviteParams = {
 
 export type EmitServerInvitesEvent = <TEvent extends ServerInvitesEventsKeys>(args: {
   eventName: TEvent
-  payload: ServerInvitesEventsPayloads[TEvent]
+  payload: EventBusPayloads[TEvent]
 }) => Promise<unknown[]>

@@ -27,7 +27,7 @@ export type FinalizeInvite = (params: {
   resourceType?: InviteResourceTargetType
 }) => Promise<void>
 
-export type ResendInviteEmail = (invite: ServerInviteRecord) => Promise<void>
+export type ResendInviteEmail = (params: { inviteId: string }) => Promise<void>
 
 export type CollectAndValidateResourceTargets = (params: {
   input: CreateInviteParams
@@ -47,19 +47,34 @@ export type BuildInviteEmailContents = (params: {
   subject: string
 }>
 
+export enum InviteFinalizationAction {
+  ACCEPT = 'accept',
+  DECLINE = 'decline',
+  /**
+   * Cancel differs from decline in the way that only the resource owner can cancel the invite,
+   * invite target can only decline
+   */
+  CANCEL = 'cancel'
+}
+
 /**
  * This function should throw if there's validation issue
  */
 export type ValidateResourceInviteBeforeFinalization = (params: {
   invite: ServerInviteRecord
   finalizerUserId: string
-  accept: boolean
+  action: InviteFinalizationAction
 }) => MaybeAsync<void>
 
 /**
- * Actually handle the invite being accepted or declined
+ * Actually handle the invite being accepted or declined. The actual invite record
+ * is already deleted by this point and doesn't require handling.
  */
-export type ProcessFinalizedResourceInvite = ValidateResourceInviteBeforeFinalization
+export type ProcessFinalizedResourceInvite = (params: {
+  invite: ServerInviteRecord
+  finalizerUserId: string
+  action: InviteFinalizationAction.ACCEPT | InviteFinalizationAction.DECLINE
+}) => MaybeAsync<void>
 
 export type GetInvitationTargetUsers = (params: {
   invites: ServerInviteRecord[]

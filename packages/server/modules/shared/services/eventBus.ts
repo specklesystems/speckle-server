@@ -122,6 +122,7 @@ export function initializeEventBus() {
 }
 
 export type EventBus = ReturnType<typeof initializeEventBus>
+export type EventBusPayloads = EventTypes
 
 let eventBus: EventBus
 

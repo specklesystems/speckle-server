@@ -9,7 +9,10 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 
 import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
-import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
+import {
+  InviteResourceTargetType,
+  ServerInviteRecord
+} from '@/modules/serverinvites/domain/types'
 import {
   DeleteInvite,
   DeleteInvitesByTarget,
@@ -22,6 +25,7 @@ import {
 } from '@/modules/serverinvites/domain/operations'
 import {
   FinalizeInvite,
+  InviteFinalizationAction,
   ProcessFinalizedResourceInvite,
   ValidateResourceInviteBeforeFinalization
 } from '@/modules/serverinvites/services/operations'
@@ -136,10 +140,14 @@ export const finalizeResourceInviteFactory =
       )
     }
 
+    const action = accept
+      ? InviteFinalizationAction.ACCEPT
+      : InviteFinalizationAction.DECLINE
+
     await validateInvite({
       invite,
       finalizerUserId,
-      accept
+      action
     })
 
     // Delete invites first, so that any subscriptions fired by processInvite
@@ -155,7 +163,7 @@ export const finalizeResourceInviteFactory =
       await processInvite({
         invite,
         finalizerUserId,
-        accept
+        action
       })
     } catch (e) {
       // If the invite finalization fails, re-insert the invite
@@ -181,122 +189,46 @@ export const finalizeResourceInviteFactory =
     })
   }
 
-// /**
-//  * Accept or decline a stream invite
-//  */
-// export const finalizeStreamInviteFactory =
-//   ({
-//     findStreamInvite,
-//     deleteInvitesByTarget,
-//     findResource
-//   }: {
-//     findStreamInvite: FindStreamInvite
-//     deleteInvitesByTarget: DeleteInvitesByTarget
-//     findResource: FindResource
-//   }): FinalizeStreamInvite =>
-//   async (accept, streamId, token, userId) => {
-//     const invite = await findStreamInvite(streamId, {
-//       token,
-//       target: buildUserTarget(userId)
-//     })
-//     if (!invite) {
-//       throw new NoInviteFoundError('Attempted to finalize nonexistant stream invite', {
-//         info: {
-//           streamId,
-//           token,
-//           userId
-//         }
-//       })
-//     }
+export const cancelResourceInviteFactory =
+  (deps: {
+    findInvite: FindInvite
+    validateResourceAccess: ValidateResourceInviteBeforeFinalization
+    deleteInvite: DeleteInvite
+  }) =>
+  async (params: {
+    inviteId: string
+    resourceId: string
+    resourceType: InviteResourceTargetType
+    cancelerId: string
+  }) => {
+    const { findInvite, validateResourceAccess, deleteInvite } = deps
+    const { inviteId, resourceId, resourceType, cancelerId } = params
 
-//     const stream = await findResource(invite)
-//     if (!stream) {
-//       throw new StreamNotFoundError('Stream not found for invite', {
-//         info: {
-//           streamId,
-//           token,
-//           userId
-//         }
-//       })
-//     }
+    const invite = await findInvite({
+      inviteId,
+      resourceFilter: {
+        resourceId,
+        resourceType
+      }
+    })
+    if (!invite) {
+      throw new NoInviteFoundError('Attempted to cancel nonexistant invite', {
+        info: {
+          ...params
+        }
+      })
+    }
 
-//     // Delete all invites to this stream
-//     // We're doing this before processing the invite, to prevent a PROJECT UPDATED event
-//     // from being fired with the invites still attached
-//     await deleteInvitesByTarget(
-//       buildUserTarget(userId)!,
-//       ResourceTargets.Streams,
-//       streamId
-//     )
-
-//     // Invite found - accept or decline
-//     if (accept) {
-//       // Add access for user
-//       const { role = Roles.Stream.Contributor, inviterId } = invite
-//       // TODO: check role nullability
-//       await addOrUpdateStreamCollaborator(streamId, userId, role!, inviterId, null, {
-//         fromInvite: true
-//       })
-//     } else {
-//       await addStreamInviteDeclinedActivity({
-//         streamId,
-//         inviteTargetId: userId,
-//         inviterId: invite.inviterId,
-//         stream
-//       })
-//     }
-//   }
-
-// /**
-//  * Cancel/decline a stream invite
-//  * TODO: What's the difference between this and finalizeStreamInvite? Canceled by owner maybe?
-//  */
-// export const cancelStreamInviteFactory =
-//   ({
-//     findStreamInvite,
-//     deleteStreamInvite
-//   }: {
-//     findStreamInvite: FindStreamInvite
-//     deleteStreamInvite: DeleteStreamInvite
-//   }) =>
-//   async (streamId: string, inviteId: string) => {
-//     const invite = await findStreamInvite(streamId, {
-//       inviteId
-//     })
-//     if (!invite) {
-//       throw new NoInviteFoundError('Attempted to process nonexistant stream invite', {
-//         info: {
-//           streamId,
-//           inviteId
-//         }
-//       })
-//     }
-//     await deleteStreamInvite(invite.id)
-//   }
-
-// /**
-//  * Re-send pending invite e-mail, without creating a new invite
-//  * TODO: WHy? Use creation factory thing instead
-//  */
-// export const resendInviteFactory =
-//   ({
-//     findInvite,
-//     resendInviteEmail
-//   }: {
-//     resendInviteEmail: ResendInviteEmail
-//     findInvite: FindInvite
-//   }) =>
-//   async (inviteId: string) => {
-//     const invite = await findInvite(inviteId)
-//     if (!invite) {
-//       throw new NoInviteFoundError('Attempted to re-send a nonexistant invite')
-//     }
-//     await resendInviteEmail(invite)
-//   }
+    await validateResourceAccess({
+      invite,
+      finalizerUserId: cancelerId,
+      action: InviteFinalizationAction.CANCEL
+    })
+    await deleteInvite(invite.id)
+  }
 
 /**
- * Delete pending invite
- * TODO: Differnece between this and cancel?
+ * Delete pending invite - does no access checks!
  */
 export const deleteInviteFactory =
   ({
