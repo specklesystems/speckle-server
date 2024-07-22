@@ -19,7 +19,7 @@ import { Express } from 'express'
 import { getUser } from '@/modules/core/repositories/users'
 import dayjs from 'dayjs'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
-import { USER_EMAILS_TABLE_NAME } from '@/modules/user-emails/constants'
+import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 
 const mailerMock = EmailSendingServiceMock
 

@@ -106,7 +106,8 @@ export const adminProjectList = async (
     ...args,
     searchQuery: args.query,
     cursor: parsedCursor,
-    streamIdWhitelist: args.streamIdWhitelist
+    streamIdWhitelist: args.streamIdWhitelist,
+    workspaceIdWhitelist: null
   })
   const cursor = cursorDate ? convertDateToCursor(cursorDate) : null
   return {
