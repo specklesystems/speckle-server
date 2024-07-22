@@ -73,7 +73,7 @@
       <div class="absolute top-0 right-0">
         <div
           v-if="hasLabel"
-          class="rounded-bl-lg rounded-tr-[7px] text-xs px-2 py-1"
+          class="rounded-bl-lg rounded-tr-[7px] text-body-2xs px-2 py-1"
           :class="{
             'bg-foundation-focus text-foreground': fn.isFeatured,
             'bg-warning text-foreground-on-primary': isOutdated

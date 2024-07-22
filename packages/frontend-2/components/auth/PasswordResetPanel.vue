@@ -1,10 +1,10 @@
 <template>
   <LayoutPanel form class="mx-auto max-w-screen-md" @submit="onSubmit">
     <template #header>
-      <span class="text-heading-sm">Reset your account password</span>
+      <span class="text-heading">Reset your account password</span>
     </template>
     <template #default>
-      <div class="flex flex-col space-y-4 text-body-sm">
+      <div class="flex flex-col space-y-4 text-body-xs">
         <div>
           Type in the email address you used, so we can verify your account. We will
           send you instructions on how to reset your password.
@@ -12,6 +12,7 @@
         <div>
           <FormTextInput
             name="resetEmail"
+            color="foundation"
             type="email"
             placeholder="email@example.com"
             :rules="emailRules"
