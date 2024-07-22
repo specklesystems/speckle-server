@@ -28,7 +28,10 @@ const {
 const { Roles } = require('@speckle/shared')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
-const { createUserEmailFactory } = require('@/modules/core/repositories/userEmails')
+const {
+  createUserEmailFactory,
+  findPrimaryEmailForUserFactory
+} = require('@/modules/core/repositories/userEmails')
 const { db } = require('@/db/knex')
 
 const _changeUserRole = async ({ userId, role }) =>
@@ -138,10 +141,10 @@ module.exports = {
    * }>}
    */
   async findOrCreateUser({ user }) {
-    const existingUser = await userByEmailQuery(user.email)
-      .select(['id', 'email'])
-      .first()
-    if (existingUser) return existingUser
+    const userEmail = await findPrimaryEmailForUserFactory({ db })({
+      email: user.email
+    })
+    if (userEmail) return { id: userEmail.userId, email: userEmail.email }
 
     user.password = crs({ length: 20 })
     user.verified = true // because we trust the external identity provider, no?

@@ -7,7 +7,7 @@ import {
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { expect } from 'chai'
-import { getUsers, listUsers } from '@/modules/core/repositories/users'
+import { getUserByEmail, getUsers, listUsers } from '@/modules/core/repositories/users'
 
 describe('Find users @core', () => {
   describe('getUsers', () => {
@@ -85,6 +85,19 @@ describe('Find users @core', () => {
       expect(user.id).to.eq(userId)
       expect(user.email).to.eq(newEmail)
       expect(user.verified).to.eq(true)
+    })
+  })
+
+  describe('getUserByEmail', () => {
+    it('should ignore email casing', async () => {
+      const email = 'TeST@ExamPLE.oRg'
+      await createUser({
+        name: 'John Doe',
+        password: createRandomPassword(),
+        email
+      })
+      const user = await getUserByEmail(email)
+      expect(user!.email).to.equal('test@example.org')
     })
   })
 })

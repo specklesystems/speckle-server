@@ -30,8 +30,10 @@ export type MarkUserEmailAsVerified = ({
   email: string
 }) => Promise<UserEmail>
 
-export type FindPrimaryEmailForUser = ({
-  userId
-}: {
-  userId: string
-}) => Promise<UserEmail>
+export type FindPrimaryEmailForUser = (
+  query:
+    | {
+        userId: string
+      }
+    | { email: string }
+) => Promise<UserEmail>

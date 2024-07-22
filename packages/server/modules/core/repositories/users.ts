@@ -1,7 +1,7 @@
-import { ServerAcl, USER_EMAILS_TABLE_NAME, Users, knex } from '@/modules/core/dbSchema'
+import { ServerAcl, UserEmails, Users, knex } from '@/modules/core/dbSchema'
 import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
-import { clamp, isArray } from 'lodash'
+import { clamp, isArray, omit } from 'lodash'
 import { metaHelpers } from '@/modules/core/helpers/meta'
 import { UserValidationError } from '@/modules/core/errors/user'
 import { Knex } from 'knex'
@@ -9,6 +9,7 @@ import { Roles, ServerRoles } from '@speckle/shared'
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
+import { UserEmail } from '@/modules/core/domain/userEmails/types'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
@@ -51,29 +52,23 @@ export async function getUsers(
   userIds = isArray(userIds) ? userIds : [userIds]
 
   const q = Users.knex<UserWithOptionalRole[]>().whereIn(Users.col.id, userIds)
-  q.leftJoin(
-    USER_EMAILS_TABLE_NAME,
-    `${USER_EMAILS_TABLE_NAME}.userId`,
-    Users.col.id
-  ).where({ primary: true })
+  q.leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id).where({
+    primary: true
+  })
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { email, verified, ...usersCols } = Users.col
   const columns: (Knex.Raw<UserRecord> | string)[] = [
-    ...Object.values(usersCols),
-    `${USER_EMAILS_TABLE_NAME}.email`,
-    `${USER_EMAILS_TABLE_NAME}.verified`
+    ...Object.values(omit(Users.col, ['email', 'verified'])),
+    knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+    knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
   ]
   if (withRole) {
     // Getting first role from grouped results
     columns.push(knex.raw(`(array_agg("server_acl"."role"))[1] as role`))
+    q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
   }
 
   q.columns(columns)
-  q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
   q.groupBy(Users.col.id)
-  q.groupBy(`${USER_EMAILS_TABLE_NAME}.email`)
-  q.groupBy(`${USER_EMAILS_TABLE_NAME}.verified`)
 
   return (await q).map((u) => (skipClean ? u : sanitizeUserRecord(u)))
 }
@@ -108,24 +103,22 @@ export async function listUsers({
   cursor: Date | null
 } & UserQuery): Promise<UserWithRole[]> {
   const sanitizedLimit = clamp(limit, 1, 200)
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { verified, email, ...userCols } = Users.col
+
+  const userCols = omit(Users.col, ['email', 'verified'])
   const q = Users.knex<UserWithRole[]>()
     .orderBy(Users.col.createdAt, 'desc')
     .limit(sanitizedLimit)
     .columns([
       ...Object.values(userCols),
-      `${USER_EMAILS_TABLE_NAME}.email`,
-      `${USER_EMAILS_TABLE_NAME}.verified`,
       // Getting first role from grouped results
-      knex.raw(`(array_agg("server_acl"."role"))[1] as role`)
+      knex.raw(`(array_agg("server_acl"."role"))[1] as role`),
+      knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+      knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
     ])
     .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-    .leftJoin(USER_EMAILS_TABLE_NAME, `${USER_EMAILS_TABLE_NAME}.userId`, Users.col.id)
+    .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
     .where({ primary: true })
     .groupBy(Users.col.id)
-    .groupBy(`${USER_EMAILS_TABLE_NAME}.email`)
-    .groupBy(`${USER_EMAILS_TABLE_NAME}.verified`)
   if (cursor) q.where(Users.col.createdAt, '<', cursor)
   const users: UserWithRole[] = await getUsersBaseQuery(q, { query, role })
   return users.map((u) => sanitizeUserRecord(u))
@@ -158,19 +151,28 @@ export async function getUserByEmail(
   email: string,
   options?: Partial<{ skipClean: boolean; withRole: boolean }>
 ) {
-  const q = Users.knex<UserWithOptionalRole[]>().whereRaw('lower(email) = lower(?)', [
-    email
-  ])
-  if (options?.withRole) {
-    q.columns([
-      ...Object.values(Users.col),
-      // Getting first role from grouped results
-      knex.raw(`(array_agg("server_acl"."role"))[1] as role`)
-    ])
-    q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
-    q.groupBy(Users.col.id)
-  }
+  const userEmail = await db<UserEmail>(UserEmails.name)
+    .whereRaw('lower(email) = lower(?)', [email])
+    .first()
 
+  if (!userEmail) return null
+
+  const q = Users.knex<UserWithOptionalRole[]>().where(Users.col.id, userEmail.userId)
+  q.leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id).where({
+    primary: true
+  })
+  const columns: (Knex.Raw<UserRecord> | string)[] = [
+    ...Object.values(omit(Users.col, ['email', 'verified'])),
+    knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+    knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+  ]
+  if (options?.withRole) {
+    // Getting first role from grouped results
+    columns.push(knex.raw(`(array_agg("server_acl"."role"))[1] as role`))
+    q.leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
+  }
+  q.columns(columns)
+  q.groupBy(Users.col.id)
   const user = await q.first()
   return user ? (!options?.skipClean ? sanitizeUserRecord(user) : user) : null
 }
