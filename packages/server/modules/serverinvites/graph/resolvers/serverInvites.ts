@@ -142,7 +142,7 @@ export = {
           message: args.input.message,
           primaryResourceTarget: <ServerInviteResourceTarget>{
             resourceId: '',
-            role: args.input.serverRole as ServerRoles,
+            role: (args.input.serverRole as ServerRoles) || Roles.Server.User,
             resourceType: ServerInviteResourceType,
             primary: true
           }
@@ -197,7 +197,7 @@ export = {
                 message: params.message,
                 primaryResourceTarget: <ServerInviteResourceTarget>{
                   resourceId: '',
-                  role: params.serverRole as ServerRoles,
+                  role: (params.serverRole as ServerRoles) || Roles.Server.User,
                   resourceType: ServerInviteResourceType,
                   primary: true
                 }

@@ -34,6 +34,7 @@ generates:
         CommentReplyAuthorCollection: '@/modules/comments/helpers/graphTypes#CommentReplyAuthorCollectionGraphQLReturn'
         Comment: '@/modules/comments/helpers/graphTypes#CommentGraphQLReturn'
         PendingStreamCollaborator: '@/modules/serverinvites/helpers/graphTypes#PendingStreamCollaboratorGraphQLReturn'
+        StreamCollaborator: '@/modules/core/helpers/graphTypes#StreamCollaboratorGraphQLReturn'
         FileUpload: '@/modules/fileuploads/helpers/types#FileUploadGraphQLReturn'
         AutomateFunction: '@/modules/automate/helpers/graphTypes#AutomateFunctionGraphQLReturn'
         AutomateFunctionRelease: '@/modules/automate/helpers/graphTypes#AutomateFunctionReleaseGraphQLReturn'

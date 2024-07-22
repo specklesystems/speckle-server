@@ -3,7 +3,6 @@ import {
   ServerInvitesEventsPayloads
 } from '@/modules/serverinvites/domain/events'
 import {
-  getPrimaryResourceTarget,
   isProjectResourceTarget,
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
@@ -21,11 +20,7 @@ const onServerInviteCreatedFactory =
   ({ getStream, logger }: OnServerInviteCreatedFactoryDeps) =>
   async (payload: ServerInvitesEventsPayloads[typeof ServerInvitesEvents.Created]) => {
     const { invite } = payload
-    const primaryResourceTarget = getPrimaryResourceTarget(invite.resources)
-    if (!primaryResourceTarget) {
-      logger.warn('No primary resource target found for server invite', { invite })
-      return
-    }
+    const primaryResourceTarget = invite.resource
 
     if (!isProjectResourceTarget(primaryResourceTarget)) return
 

@@ -30,7 +30,11 @@ import {
   ViewerUserActivityMessage,
   GendoAiRender,
   SubscriptionProjectVersionGendoAiRenderUpdatedArgs,
-  SubscriptionProjectVersionGendoAiRenderCreatedArgs
+  SubscriptionProjectVersionGendoAiRenderCreatedArgs,
+  StreamUpdateInput,
+  ProjectUpdateInput,
+  SubscriptionStreamUpdatedArgs,
+  SubscriptionStreamDeletedArgs
 } from '@/modules/core/graph/generated/graphql'
 import { Merge } from 'type-fest'
 import {
@@ -237,6 +241,31 @@ type SubscriptionTypeMap = {
     }
     variables: SubscriptionProjectAutomationsUpdatedArgs
   }
+  /**
+   * OLD ONES
+   */
+  [StreamSubscriptions.UserStreamAdded]: {
+    payload: {
+      userStreamAdded: { id: string }
+      ownerId: string
+    }
+    variables: NoVariables
+  }
+  [StreamSubscriptions.UserStreamRemoved]: {
+    payload: {
+      userStreamRemoved: { id: string }
+      ownerId: string
+    }
+    variables: NoVariables
+  }
+  [StreamSubscriptions.StreamUpdated]: {
+    payload: { streamUpdated: StreamUpdateInput | ProjectUpdateInput; id: string }
+    variables: SubscriptionStreamUpdatedArgs
+  }
+  [StreamSubscriptions.StreamDeleted]: {
+    payload: { streamDeleted: { streamId: string }; streamId: string }
+    variables: SubscriptionStreamDeletedArgs
+  }
 } & { [k in SubscriptionEvent]: { payload: unknown; variables: unknown } }
 
 type SubscriptionEvent =
@@ -244,6 +273,7 @@ type SubscriptionEvent =
   | ProjectSubscriptions
   | ViewerSubscriptions
   | FileImportSubscriptions
+  | StreamSubscriptions
 
 /**
  * Publish a GQL subscription event

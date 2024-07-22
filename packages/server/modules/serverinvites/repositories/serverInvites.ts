@@ -5,7 +5,7 @@ import {
   UserWithOptionalRole
 } from '@/modules/core/repositories/users'
 import { resolveTarget, buildUserTarget } from '@/modules/serverinvites/helpers/core'
-import { uniq } from 'lodash'
+import { isObjectLike, uniq } from 'lodash'
 import {
   InviteResourceTarget,
   InviteResourceTargetType,
@@ -36,6 +36,7 @@ import {
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
 import { isNonNullable, SetValuesNullable } from '@speckle/shared'
+import { LogicError } from '@/modules/shared/errors'
 
 export type ServerInviteResourceFilter<
   T extends InviteResourceTargetType = InviteResourceTargetType,
@@ -53,24 +54,27 @@ export type ServerInviteResourceFilter<
 
 type InvitesRetrievalValidityFilter = (q: Knex.QueryBuilder) => Knex.QueryBuilder
 
-const projectInviteValidityFilter: InvitesRetrievalValidityFilter = (q) =>
-  q
-    .join(
-      knex.raw(
-        "LEFT JOIN :streams: ON :resourceCol: ->> 'resourceType' = :resourceType AND :resourceCol: ->> 'resourceId' = :streamIdCol:",
-        {
-          streams: Streams.name,
-          resourceCol: ServerInvites.col.resource,
-          resourceType: ProjectInviteResourceType,
-          streamIdCol: Streams.col.id
-        }
-      )
+const projectInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {
+  let finalQ = q.leftJoin(
+    knex.raw(
+      ":streams: ON :resourceCol: ->> 'resourceType' = :resourceType AND :resourceCol: ->> 'resourceId' = :streamIdCol:",
+      {
+        streams: Streams.name,
+        resourceCol: ServerInvites.col.resource,
+        resourceType: ProjectInviteResourceType,
+        streamIdCol: Streams.col.id
+      }
     )
-    .where((w1) => {
-      w1.whereNot((w2) =>
-        filterByResource(w2, { resourceType: ProjectInviteResourceType })
-      ).orWhereNotNull(Streams.col.id)
-    })
+  )
+
+  finalQ = finalQ.where((w1) => {
+    w1.whereNot((w2) =>
+      filterByResource(w2, { resourceType: ProjectInviteResourceType })
+    ).orWhereNotNull(Streams.col.id)
+  })
+
+  return finalQ
+}
 
 /**
  * Use this wherever you're retrieving invites, not necessarily where you're writing to them
@@ -92,9 +96,11 @@ const buildInvitesBaseQuery =
     const { sort = 'asc', filterQuery } = options || {}
 
     const q = db(ServerInvites.name)
-      .where((w1) => projectInviteValidityFilter(w1)) // single built in filter
       .select<R>(ServerInvites.cols)
       .orderBy(ServerInvites.col.createdAt, sort)
+
+    // single built in filter
+    projectInviteValidityFilter(q)
 
     if (filterQuery) {
       q.where(filterQuery)
@@ -153,11 +159,15 @@ export const insertInviteAndDeleteOldFactory =
       .whereIn(ServerInvites.col.target, allTargets)
       .delete()
 
-    await deleteQ
+    const deleted = (await deleteQ) || 0
 
     // Insert new
     invite.target = invite.target.toLowerCase() // Extra safety cause our schema is case sensitive
-    return db<ServerInviteRecord>(ServerInvites.name).insert(invite)
+    const [newInvite] = await db<ServerInviteRecord>(ServerInvites.name).insert(
+      invite,
+      '*'
+    )
+    return { deleted, invite: newInvite }
   }
 
 export const queryAllUserResourceInvitesFactory =
@@ -342,6 +352,9 @@ export const findInviteFactory =
     target?: string
     resourceFilter?: ServerInviteResourceFilter<T, R>
   }) => {
+    if (!isObjectLike(params)) {
+      throw new LogicError('Invalid params - expected a params object')
+    }
     if (!Object.values(params).filter(isNonNullable).length) return null
     const { inviteId, target, token, resourceFilter } = params
 

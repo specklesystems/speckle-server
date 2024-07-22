@@ -8,7 +8,11 @@ const AllScopes = FF_AUTOMATE_MODULE_ENABLED
   : BaseAllScopes.filter(
       (s: string) =>
         !(
-          [Scopes.AutomateFunctions.Read, Scopes.AutomateFunctions.Write] as string[]
+          [
+            Scopes.AutomateFunctions.Read,
+            Scopes.AutomateFunctions.Write,
+            Scopes.Automate.ReportResults
+          ] as string[]
         ).includes(s)
     )
 

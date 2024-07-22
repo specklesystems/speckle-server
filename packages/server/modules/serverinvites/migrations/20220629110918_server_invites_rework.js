@@ -28,7 +28,7 @@ exports.up = async function (knex) {
     table.unique(NEW_UNIQUE_IDX_COLS)
 
     // Add a FK to the users table for inviterId
-    table.foreign('inviterId').references('id').onDelete('cascade')
+    table.foreign('inviterId').references('id').inTable('users').onDelete('cascade')
 
     // Add idx to resourceTarget & resourceId for fast access
     table.index(NEW_IDX_2)

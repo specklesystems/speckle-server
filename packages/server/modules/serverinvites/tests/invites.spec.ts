@@ -9,7 +9,7 @@ import {
   createTestStreams,
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'
-import { createInviteDirectlyFactory } from '@/test/speckle-helpers/inviteHelper'
+import { createStreamInviteDirectlyFactory } from '@/test/speckle-helpers/inviteHelper'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import db from '@/db/knex'
 import {
@@ -52,7 +52,7 @@ function getInviteTokenFromEmailParams(emailParams: SendEmailParams) {
   const [, inviteId] = text.match(/\?token=(.*?)(\s|&)/i) || []
   return inviteId
 }
-const createInviteDirectly = createInviteDirectlyFactory({ db })
+const createInviteDirectly = createStreamInviteDirectlyFactory({ db })
 
 async function validateInviteExistanceFromEmail(emailParams: SendEmailParams) {
   // Validate that invite exists
@@ -158,8 +158,8 @@ describe('[Stream & Server Invites]', () => {
         })
 
         // Check that operation was successful
-        expect(result.data?.serverInviteCreate).to.be.ok
         expect(result.errors).to.be.not.ok
+        expect(result.data?.serverInviteCreate).to.be.ok
 
         // Check that email was sent out
         expect(sendEmailInvocations.args).to.have.lengthOf(1)
@@ -255,7 +255,7 @@ describe('[Stream & Server Invites]', () => {
         expect(result.data?.streamInviteCreate).to.be.not.ok
         expect(result.errors).to.be.ok
         expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-          'Unexpected stream invite role'
+          'Unexpected project invite role'
         )
       })
 
@@ -327,7 +327,7 @@ describe('[Stream & Server Invites]', () => {
           // Validate that invite exists
           const invite = await validateInviteExistanceFromEmail(emailParams)
           expect(invite).to.be.ok
-          expect(invite!.role).to.eq(role || Roles.Stream.Contributor)
+          expect(invite?.resource.role).to.eq(role || Roles.Stream.Contributor)
         })
       })
 
@@ -499,8 +499,8 @@ describe('[Stream & Server Invites]', () => {
           }))
         })
 
-        expect(result.data?.serverInviteBatchCreate).to.be.ok
         expect(result.errors).to.not.be.ok
+        expect(result.data?.serverInviteBatchCreate).to.be.ok
 
         expect(sendEmailInvocations.length()).to.eq(emails.length)
         for (const email of emails) {
@@ -564,7 +564,9 @@ describe('[Stream & Server Invites]', () => {
 
           const invite = await validateInviteExistanceFromEmail(emailParams!)
           expect(invite).to.be.ok
-          expect(invite!.role).to.eq(inputData.role || Roles.Stream.Contributor)
+          expect(invite?.resource.role).to.eq(
+            inputData.role || Roles.Stream.Contributor
+          )
         }
       })
     })

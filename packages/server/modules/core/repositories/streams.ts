@@ -39,7 +39,11 @@ import {
   StreamCreateInput,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
-import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
+import {
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional
+} from '@/modules/shared/helpers/typeHelper'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
@@ -664,11 +668,11 @@ export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
   /**
    * Max amount of streams per page. Defaults to 25, max is 50.
    */
-  limit?: number
+  limit?: MaybeNullOrUndefined<number>
   /**
    * Pagination cursor
    */
-  cursor?: string
+  cursor?: MaybeNullOrUndefined<string>
 }
 
 export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams

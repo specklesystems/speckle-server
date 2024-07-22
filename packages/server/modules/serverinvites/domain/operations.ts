@@ -15,7 +15,7 @@ export type ServerInviteRecordInsertModel = Omit<ServerInviteRecord, 'createdAt'
 export type InsertInviteAndDeleteOld = (
   invite: ServerInviteRecordInsertModel,
   alternateTargets?: string[]
-) => Promise<{ deleted: number[]; invite: ServerInviteRecord }>
+) => Promise<{ deleted: number; invite: ServerInviteRecord }>
 
 export type FindServerInvite = (
   email?: string,

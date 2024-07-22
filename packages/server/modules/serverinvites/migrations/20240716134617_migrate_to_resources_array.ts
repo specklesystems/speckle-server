@@ -4,6 +4,12 @@ import { Knex } from 'knex'
 
 const TABLE_NAME = 'server_invites'
 
+const OLD_UNIQUE_IDX_COLS = ['target', 'resourceTarget', 'resourceId']
+const OLD_IDX_2 = ['resourceTarget', 'resourceId']
+
+const NEW_IDX = ['resource']
+const NEW_UNIQUE_IDX = ['target', 'resource']
+
 type InviteResourceTarget = {
   resourceId: string
   resourceType: 'project' | 'server'
@@ -77,6 +83,9 @@ export async function up(knex: Knex): Promise<void> {
     table.dropColumn('resourceId')
     table.dropColumn('role')
     table.dropColumn('serverRole')
+
+    table.index(NEW_IDX)
+    table.unique(NEW_UNIQUE_IDX)
   })
 }
 
@@ -87,6 +96,9 @@ export async function down(knex: Knex): Promise<void> {
     table.string('resourceId', 256)
     table.string('role', 256)
     table.string('serverRole')
+
+    table.index(OLD_IDX_2)
+    table.unique(OLD_UNIQUE_IDX_COLS)
   })
 
   // Iterate over all rows and update the resources field
