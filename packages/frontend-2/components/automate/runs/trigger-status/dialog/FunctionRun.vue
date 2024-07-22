@@ -13,7 +13,7 @@
         </div>
         <AutomateFunctionLogo :logo="functionRun.function?.logo" size="xs" />
 
-        <div class="font-bold text-sm truncate">
+        <div class="font-semibold text-sm truncate">
           {{ automationName ? automationName + ' / ' : ''
           }}{{ functionRun.function?.name || 'Unknown function' }}
         </div>

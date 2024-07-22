@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col gap-4">
     <div class="flex flex-col md:flex-row gap-3 md:gap-0 justify-between">
-      <h2 v-if="subheading" class="h5 font-bold">{{ title }}</h2>
+      <h2 v-if="subheading" class="h5 font-semibold">{{ title }}</h2>
       <h1 v-else class="text-heading-lg">{{ title }}</h1>
       <div class="flex flex-wrap gap-2">
         <FormButton

@@ -31,7 +31,7 @@
             ></component>
             <div class="flex flex-col items-start text-left">
               <h4
-                class="font-bold"
+                class="font-semibold"
                 :class="option.introduction ? 'text-body-sm' : 'text-body-xs'"
               >
                 {{ option.title }}

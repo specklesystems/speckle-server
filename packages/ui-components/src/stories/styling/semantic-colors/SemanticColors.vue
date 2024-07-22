@@ -1,6 +1,6 @@
 <template>
   <div class="bg-foundation-page p-4 text-foreground space-y-4">
-    <div class="font-bold">
+    <div class="font-semibold">
       Click on any of the color links to copy the color name to your clipboard!
     </div>
     <div
@@ -8,7 +8,7 @@
       :key="colorBase"
       class="flex flex-col space-y-4"
     >
-      <span class="h3 font-bold leading-9 uppercase block">{{ colorBase }}</span>
+      <span class="text-heading-xl uppercase block">{{ colorBase }}</span>
       <p class="block">{{ definition.description }}</p>
       <div class="flex flex-wrap gap-4">
         <div

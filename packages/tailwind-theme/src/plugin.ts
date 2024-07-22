@@ -242,7 +242,7 @@ export default plugin(function ({ addComponents, addBase }) {
   addComponents({
     // Fancy gradient text
     '.text-fancy-gradient': {
-      '@apply font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 text-transparent bg-clip-text':
+      '@apply font-semibold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 text-transparent bg-clip-text':
         {}
     },
     // New heading styles

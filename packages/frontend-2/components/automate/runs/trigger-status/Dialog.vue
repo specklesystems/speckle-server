@@ -10,7 +10,9 @@
             />
           </div>
           <div class="flex min-w-0 flex-col gap-1">
-            <h4 :class="[`h6 sm:h5 font-bold whitespace-normal`, summary.titleColor]">
+            <h4
+              :class="[`h6 sm:h5 font-semibold whitespace-normal`, summary.titleColor]"
+            >
               {{ summary.title }}
             </h4>
             <div class="caption text-foreground-2 whitespace-normal">

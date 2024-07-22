@@ -7,10 +7,12 @@
   >
     <template #header>Reveal Application Secret</template>
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 py-2 text-sm">
-      <div class="text-center sm:text-right font-bold sm:font-normal">App Name:</div>
+      <div class="text-center sm:text-right font-semibold sm:font-normal">
+        App Name:
+      </div>
       <p class="truncate text-center sm:text-left">{{ props.application?.name }}</p>
       <div
-        class="text-center sm:text-right flex items-center justify-center sm:justify-end font-bold sm:font-normal"
+        class="text-center sm:text-right flex items-center justify-center sm:justify-end font-semibold sm:font-normal"
       >
         App Secret:
       </div>

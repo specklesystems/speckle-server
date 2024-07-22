@@ -29,7 +29,7 @@
         @click="isOpen = !isOpen"
       >
         <ChevronDownIcon :class="isOpen ? '' : 'rotate-180'" class="h-2.5 w-2.5" />
-        <h6 class="font-bold text-foreground-2 text-xs flex items-center gap-1.5">
+        <h6 class="font-semibold text-foreground-2 text-xs flex items-center gap-1.5">
           {{ label }}
         </h6>
       </button>
