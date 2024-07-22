@@ -12,9 +12,17 @@
 </template>
 
 <script setup lang="ts">
-import type { User } from '~~/lib/common/generated/gql/graphql'
+import type {
+  UserProfileEditDialogChangePassword_UserFragment,
+  UserProfileEditDialogBio_UserFragment,
+  UserProfileEditDialogDeleteAccount_UserFragment
+} from '~~/lib/common/generated/gql/graphql'
+
+type CombinedUser = UserProfileEditDialogChangePassword_UserFragment &
+  UserProfileEditDialogDeleteAccount_UserFragment &
+  UserProfileEditDialogBio_UserFragment
 
 defineProps<{
-  user: User
+  user: CombinedUser
 }>()
 </script>

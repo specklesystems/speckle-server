@@ -10,7 +10,7 @@
   />
 </template>
 <script setup lang="ts">
-import type { User } from '~~/lib/common/generated/gql/graphql'
+import type { UserProfileEditDialogAvatar_UserFragment } from '~~/lib/common/generated/gql/graphql'
 import { graphql } from '~~/lib/common/generated/gql'
 import { useUpdateUserProfile } from '~~/lib/user/composables/management'
 import type { MaybeNullOrUndefined } from '@speckle/shared'
@@ -25,7 +25,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  user: User
+  user: UserProfileEditDialogAvatar_UserFragment
   size: UserAvatarSize
 }>()
 

@@ -12,13 +12,21 @@
   </div>
 </template>
 <script setup lang="ts">
-import type { User } from '~~/lib/common/generated/gql/graphql'
+import type { UserProfileEditDialogChangePassword_UserFragment } from '~~/lib/common/generated/gql/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
 import { usePasswordReset } from '~~/lib/auth/composables/passwordReset'
+
+graphql(`
+  fragment UserProfileEditDialogChangePassword_User on User {
+    id
+    email
+  }
+`)
 
 const { sendResetEmail } = usePasswordReset()
 
 const props = defineProps<{
-  user: User
+  user: UserProfileEditDialogChangePassword_UserFragment
 }>()
 
 const onClick = async () => {

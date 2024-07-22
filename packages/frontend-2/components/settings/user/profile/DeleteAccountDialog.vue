@@ -46,7 +46,7 @@ import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { useForm } from 'vee-validate'
 import type { GenericValidateFunction } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
-import type { User } from '~~/lib/common/generated/gql/graphql'
+import type { UserProfileEditDialogDeleteAccount_UserFragment } from '~~/lib/common/generated/gql/graphql'
 import { useDeleteAccount } from '~~/lib/user/composables/management'
 
 graphql(`
@@ -67,7 +67,7 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  user: User
+  user: UserProfileEditDialogDeleteAccount_UserFragment
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })

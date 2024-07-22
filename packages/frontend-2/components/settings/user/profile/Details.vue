@@ -35,7 +35,10 @@
 <script setup lang="ts">
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
-import type { User, UserUpdateInput } from '~~/lib/common/generated/gql/graphql'
+import type {
+  UserProfileEditDialogBio_UserFragment,
+  UserUpdateInput
+} from '~~/lib/common/generated/gql/graphql'
 import { isRequired, isStringOfLength } from '~~/lib/common/helpers/validation'
 import { useUpdateUserProfile } from '~~/lib/user/composables/management'
 
@@ -50,7 +53,7 @@ graphql(`
 `)
 
 const props = defineProps<{
-  user: User
+  user: UserProfileEditDialogBio_UserFragment
 }>()
 
 const { mutate } = useUpdateUserProfile()
