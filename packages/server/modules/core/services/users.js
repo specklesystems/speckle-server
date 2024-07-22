@@ -178,7 +178,17 @@ module.exports = {
 
   // TODO: deprecate
   async getUser(id) {
-    const user = await Users().where({ id }).select('*').first()
+    const user = await Users()
+      .where({ [UsersSchema.col.id]: id })
+      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
+      .where({ primary: true, [UserEmails.col.userId]: id })
+      .columns([
+        ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+      .groupBy(UsersSchema.col.id)
+      .first()
     if (user) delete user.passwordDigest
     return user
   },
