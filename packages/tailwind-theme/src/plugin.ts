@@ -253,13 +253,13 @@ export default plugin(function ({ addComponents, addBase }) {
       '@apply font-medium text-2xl leading-8 tracking-[-0.456px]': {}
     },
     '.text-heading-lg, .h3': {
-      '@apply font-medium text-lg leading-6 tracking-[-0.224px]': {}
+      '@apply font-medium text-lg leading-6 tracking-[-0.252px]': {}
     },
     '.text-heading, .h4': {
       '@apply font-medium text-base leading-6 tracking-[-0.176px]': {}
     },
     '.text-heading-sm, .h5, .h6': {
-      '@apply font-medium text-sm leading-6 tracking-[-0.096px]': {}
+      '@apply font-medium text-sm leading-6 tracking-[-0.084px]': {}
     },
 
     // New body styles
@@ -267,10 +267,10 @@ export default plugin(function ({ addComponents, addBase }) {
       '@apply text-base leading-6 tracking-[-0.176px]': {}
     },
     '.text-body-sm': {
-      '@apply text-sm leading-6 tracking-[-0.096px]': {}
+      '@apply text-sm leading-6 tracking-[-0.084px]': {}
     },
     '.text-body-xs': {
-      '@apply text-[13px] leading-6 tracking-[-0.0325px]': {}
+      '@apply text-[13px] leading-6 tracking-[-0.032px]': {}
     },
     '.text-body-2xs': {
       '@apply text-xs leading-4': {}
