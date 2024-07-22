@@ -1,7 +1,8 @@
 secret:
-  ignored-paths:
-    - 'packages/server/modules/emails/tests'
-  ignored-matches:
+  ignored_paths:
+    - 'packages/server/modules/emails/tests/*'
+    - 'packages/server/modules/core/tests/*'
+  ignored_matches:
     - match: acd87c5a50b56df91a795e999812a3a4
       name: 'packages/frontend/src/bootstrapper.ts - mixpanel token'
     - match: c7bf45ffe02afaae52c8e37cdb1ae33165370be3b44a5da43e8cba43c7da5f33
