@@ -388,6 +388,11 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/122448a81e/models/f21aff1f4a'
     // Thin plane
     // 'https://app.speckle.systems/projects/20f72acc58/models/2cf8a736f8'
+    // Rhino sRGB vertex colors
+    // 'https://app.speckle.systems/projects/47bbaf594f/models/ef78e94f72'
+    // 'https://app.speckle.systems/projects/47bbaf594f/models/de52414725f8937b1f0e2f550ef9ca52'
+    // qGIS sRGB vertex colors
+    // 'https://latest.speckle.systems/projects/5a6609a4b9/models/10f4931e8c'
   )
 }
 

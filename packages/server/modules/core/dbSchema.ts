@@ -596,3 +596,5 @@ export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [
 ])
 
 export { knex }
+
+export const USER_EMAILS_TABLE_NAME = 'user_emails'

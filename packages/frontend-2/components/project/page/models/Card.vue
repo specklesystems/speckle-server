@@ -60,7 +60,7 @@
         <div class="hidden sm:flex grow" />
         <div class="flex items-center">
           <ProjectPageModelsCardUpdatedTime
-            :updated-at="updatedAt"
+            :updated-at="updatedAtFullDate"
             :class="`text-xs w-full text-foreground-2 sm:mr-1 truncate transition ${
               hovered ? 'sm:w-auto' : 'sm:w-0'
             }`"
@@ -117,7 +117,6 @@
   </div>
 </template>
 <script lang="ts" setup>
-import dayjs from 'dayjs'
 import type {
   PendingFileUploadFragment,
   ProjectPageLatestItemsModelItemFragment,
@@ -200,11 +199,10 @@ const defaultLinkDisabled = computed(
   () => props.disableDefaultLink || versionCount.value < 1
 )
 
-const updatedAt = computed(() => {
-  const date = isPendingModelFragment(props.model)
+const updatedAtFullDate = computed(() => {
+  return isPendingModelFragment(props.model)
     ? props.model.convertedLastUpdate || props.model.uploadDate
     : props.model.updatedAt
-  return dayjs(date).from(dayjs())
 })
 const finalShowVersions = computed(
   () => props.showVersions && !isPendingModelFragment(props.model)

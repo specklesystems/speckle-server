@@ -84,7 +84,7 @@
     <ServerManagementDeleteProjectDialog
       v-model:open="showProjectDeleteDialog"
       :project="projectToModify"
-      title="Delete Project"
+      title="Delete project"
       :result-variables="resultVariables"
     />
 

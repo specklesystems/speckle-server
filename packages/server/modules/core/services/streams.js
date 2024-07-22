@@ -84,6 +84,7 @@ module.exports = {
     visibility,
     searchQuery,
     streamIdWhitelist,
+    workspaceIdWhitelist,
     offset,
     publicOnly
   }) {
@@ -121,6 +122,11 @@ module.exports = {
     if (streamIdWhitelist?.length) {
       query.whereIn('id', streamIdWhitelist)
       countQuery.whereIn('id', streamIdWhitelist)
+    }
+
+    if (workspaceIdWhitelist?.length) {
+      query.whereIn('workspaceId', workspaceIdWhitelist)
+      countQuery.whereIn('workspaceId', workspaceIdWhitelist)
     }
 
     const [res] = await countQuery.count()

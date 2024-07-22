@@ -2,15 +2,16 @@ import { before } from 'mocha'
 import { createUser } from '@/modules/core/services/users'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
-import { getUserByEmail } from '@/modules/core/repositories/users'
-import crs from 'crypto-random-string'
+import { getUserByEmail, markUserAsVerified } from '@/modules/core/repositories/users'
+import { deleteUserEmailFactory } from '@/modules/core/repositories/userEmails'
+import { db } from '@/db/knex'
+import {
+  createRandomEmail,
+  createRandomPassword
+} from '@/modules/core/helpers/testHelpers'
+import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
 
-function createRandomEmail() {
-  return `${crs({ length: 6 })}@example.org`
-}
-function createRandomPassword() {
-  return crs({ length: 10 })
-}
+const userEmailTable = db(USER_EMAILS_TABLE_NAME)
 
 describe('Core @user-emails', () => {
   before(async () => {
@@ -23,19 +24,25 @@ describe('Core @user-emails', () => {
 
     it('should return user if user-email does not exist', async () => {
       const email = createRandomEmail()
-      await createUser({
+      const userId = await createUser({
         name: 'John Doe',
         email,
         password: createRandomPassword()
       })
-      // TODO: delete user email
+
+      await deleteUserEmailFactory({ db })({
+        userId,
+        email
+      })
 
       const user = (await getUserByEmail(email))!
       expect(user.name).to.eq('John Doe')
       expect(user.email).to.eq(email)
     })
+  })
 
-    it('should return user merged with user-email', async () => {
+  describe('markUserEmailAsVerified', () => {
+    it('should mark user email as verified', async () => {
       const email = createRandomEmail()
       await createUser({
         name: 'John Doe',
@@ -43,9 +50,10 @@ describe('Core @user-emails', () => {
         password: createRandomPassword()
       })
 
-      const user = (await getUserByEmail(email))!
-      expect(user.name).to.eq('John Doe')
-      expect(user.email).to.eq(email)
+      await markUserAsVerified(email)
+
+      const userEmail = await userEmailTable.where({ email }).first()
+      expect(userEmail.verified).to.be.true
     })
   })
 })

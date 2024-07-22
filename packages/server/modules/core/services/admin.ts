@@ -107,6 +107,7 @@ export const adminProjectList = async (
     searchQuery: args.query,
     cursor: parsedCursor,
     streamIdWhitelist: args.streamIdWhitelist,
+    workspaceIdWhitelist: null,
     offset: null,
     publicOnly: null
   })

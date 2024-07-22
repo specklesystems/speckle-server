@@ -10,17 +10,18 @@ import {
   Vector2,
   Vector3
 } from 'three'
-import {
-  SmoothOrbitControlsOptions,
-  SmoothOrbitControls
-} from './controls/SmoothOrbitControls.js'
+
 import { CameraProjection, type CameraEventPayload } from '../objects/SpeckleCamera.js'
 import { CameraEvent, type SpeckleCamera } from '../objects/SpeckleCamera.js'
-import { type IViewer, type SpeckleView } from '../../IViewer.js'
 import { FlyControls, FlyControlsOptions } from './controls/FlyControls.js'
 import { SpeckleControls } from './controls/SpeckleControls.js'
 import Logger from '../utils/Logger.js'
 import { GeometryType } from '../batching/Batch.js'
+import { IViewer, SpeckleView, UpdateFlags } from '../../IViewer.js'
+import {
+  SmoothOrbitControlsOptions,
+  SmoothOrbitControls
+} from './controls/SmoothOrbitControls.js'
 
 // const UP: Vector3 = new Vector3(0, 1, 0)
 // const quatBuff = new Quaternion()
@@ -330,14 +331,14 @@ export class CameraController extends Extension implements SpeckleCamera {
     if (this._renderingCamera === this.perspectiveCamera) return
     this.renderingCamera = this.perspectiveCamera
     this.setupPerspectiveCamera()
-    this.viewer.requestRender()
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET)
   }
 
   public setOrthoCameraOn(): void {
     if (this._renderingCamera === this.orthographicCamera) return
     this.renderingCamera = this.orthographicCamera
     this.setupOrthoCamera()
-    this.viewer.requestRender()
+    this.viewer.requestRender(UpdateFlags.RENDER_RESET)
   }
 
   public toggleCameras(): void {
@@ -368,18 +369,32 @@ export class CameraController extends Extension implements SpeckleCamera {
   }
 
   public updateCameraPlanes(targetVolume?: Box3, offsetScale: number = 1) {
+    const renderer = this.viewer.getRenderer()
+    if (!renderer.renderingCamera) return
+
+    if (!targetVolume) targetVolume = this.viewer.getRenderer().sceneBox
+    let nearPlane = this.computeNearCameraPlaneEmpiric(targetVolume, offsetScale)
     if (this._options.nearPlaneCalculation === NearPlaneCalculation.ACCURATE)
-      this.updateNearCameraPlaneAccurate(targetVolume, offsetScale)
-    else if (this._options.nearPlaneCalculation === NearPlaneCalculation.EMPIRIC)
-      this.updateNearCameraPlaneEmpiric(targetVolume, offsetScale)
+      nearPlane = this.computeNearCameraPlaneAccurate(
+        targetVolume,
+        offsetScale,
+        nearPlane
+      )
+    if (nearPlane) {
+      renderer.renderingCamera.near = nearPlane
+      renderer.renderingCamera.updateProjectionMatrix()
+    }
     this.updateFarCameraPlane()
   }
 
-  protected updateNearCameraPlaneEmpiric(targetVolume?: Box3, offsetScale: number = 1) {
+  protected computeNearCameraPlaneEmpiric(
+    targetVolume?: Box3,
+    offsetScale: number = 1
+  ): number | undefined {
     if (!targetVolume) return
 
     if (targetVolume.isEmpty()) {
-      Logger.error('Cannot set camera planes for empty volume')
+      Logger.warn('Cannot set camera planes for empty volume')
       return
     }
 
@@ -393,22 +408,17 @@ export class CameraController extends Extension implements SpeckleCamera {
     const fitWidthDistance = fitHeightDistance / camAspect
     const distance = offsetScale * Math.max(fitHeightDistance, fitWidthDistance)
 
-    this._renderingCamera.near =
-      this._renderingCamera === this.perspectiveCamera ? distance / 100 : 0.001
-    this._renderingCamera.updateProjectionMatrix()
+    return this.perspectiveCamera ? distance / 100 : 0.001
   }
 
-  protected updateNearCameraPlaneAccurate(
+  protected computeNearCameraPlaneAccurate(
     targetVolume?: Box3,
-    offsetScale: number = 1
-  ) {
-    const renderer = this.viewer.getRenderer()
-    if (!renderer.renderingCamera) return
-
-    const minDist = this.getClosestGeometryDistance()
+    offsetScale: number = 1,
+    fallback?: number
+  ): number | undefined {
+    const minDist = this.getClosestGeometryDistance(fallback)
     if (minDist === Number.POSITIVE_INFINITY) {
-      this.updateNearCameraPlaneEmpiric(targetVolume, offsetScale)
-      return
+      return this.computeNearCameraPlaneEmpiric(targetVolume, offsetScale)
     }
 
     const camFov =
@@ -422,9 +432,8 @@ export class CameraController extends Extension implements SpeckleCamera {
           Math.pow(Math.tan(((camFov / 180) * Math.PI) / 2), 2) *
             (Math.pow(camAspect, 2) + 1)
       )
-    renderer.renderingCamera.near = nearPlane
-    renderer.renderingCamera.updateProjectionMatrix()
     // console.log(minDist, nearPlane)
+    return nearPlane
   }
 
   protected updateFarCameraPlane() {
@@ -455,7 +464,7 @@ export class CameraController extends Extension implements SpeckleCamera {
     renderer.renderingCamera.updateProjectionMatrix()
   }
 
-  protected getClosestGeometryDistance(): number {
+  protected getClosestGeometryDistance(fallback?: number): number {
     const cameraPosition = this._renderingCamera.position
     const cameraTarget = this.getTarget()
     const cameraDir = new Vector3().subVectors(cameraTarget, cameraPosition).normalize()
@@ -467,7 +476,8 @@ export class CameraController extends Extension implements SpeckleCamera {
     for (let b = 0; b < batches.length; b++) {
       const result = batches[b].mesh.TAS.closestPointToPointHalfplane(
         cameraPosition,
-        cameraDir
+        cameraDir,
+        fallback
       )
       if (!result) continue
       minDist = Math.min(minDist, result.distance)
