@@ -9,7 +9,7 @@
         size="xs"
         :disabled="loading"
         link
-        class="font-bold text-danger-darker"
+        class="font-semibold text-danger-darker"
         @click="requestVerification"
       >
         {{ verifyBannerCtaText }}

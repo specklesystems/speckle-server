@@ -49,6 +49,7 @@ export type StreamRecord = {
   updatedAt: Date
   allowPublicComments: boolean
   isDiscoverable: boolean
+  workspaceId: Nullable<string>
 }
 
 export type StreamAclRecord = {

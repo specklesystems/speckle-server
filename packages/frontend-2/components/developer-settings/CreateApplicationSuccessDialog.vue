@@ -3,7 +3,7 @@
     <template #header>Create Application</template>
     <div class="flex flex-col gap-4 text-sm text-foreground">
       <div class="flex flex-col gap-3">
-        <h6 class="h6 font-bold text-center">Your new app is ready</h6>
+        <h6 class="h6 font-semibold text-center">Your new app is ready</h6>
         <div class="grid grid-cols-2 gap-x-6 gap-y-3 py-2 text-sm max-w-xs mx-auto">
           <div class="flex items-center">App Id:</div>
           <div class="w-40">

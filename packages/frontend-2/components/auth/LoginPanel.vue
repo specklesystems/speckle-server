@@ -9,7 +9,7 @@
     <div class="space-y-4">
       <div class="flex flex-col items-center space-y-2">
         <h1
-          class="text-center text-heading-xl font-bold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
+          class="text-center text-heading-xl font-semibold bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
         >
           {{ title }}
         </h1>

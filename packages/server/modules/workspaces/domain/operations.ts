@@ -2,6 +2,7 @@ import {
   WorkspaceEvents,
   WorkspaceEventsPayloads
 } from '@/modules/workspacesCore/domain/events'
+import { StreamRecord } from '@/modules/core/helpers/types'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 
 /** Workspace */
@@ -18,7 +19,7 @@ type GetWorkspaceArgs = {
 
 export type GetWorkspace = (args: GetWorkspaceArgs) => Promise<Workspace | null>
 
-/** WorkspaceRole */
+/** Workspace Roles */
 
 type DeleteWorkspaceRoleArgs = {
   workspaceId: string
@@ -62,6 +63,28 @@ export type GetWorkspaceRolesForUser = (
 ) => Promise<WorkspaceAcl[]>
 
 export type UpsertWorkspaceRole = (args: WorkspaceAcl) => Promise<void>
+
+/** Workspace Projects */
+
+type GetAllWorkspaceProjectsForUserArgs = {
+  userId: string
+  workspaceId: string
+}
+
+export type GetAllWorkspaceProjectsForUser = (
+  args: GetAllWorkspaceProjectsForUserArgs
+) => Promise<StreamRecord[]>
+
+/** Workspace Project Roles */
+
+type GrantWorkspaceProjectRolesArgs = {
+  projectId: string
+  workspaceId: string
+}
+
+export type GrantWorkspaceProjectRoles = (
+  args: GrantWorkspaceProjectRolesArgs
+) => Promise<void>
 
 /** Blob */
 

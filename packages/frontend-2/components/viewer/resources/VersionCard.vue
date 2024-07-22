@@ -37,7 +37,7 @@
       <div
         v-show="showTimeline"
         v-tippy="createdAt.full"
-        class="bg-foundation-focus inline-block rounded-full px-2 text-xs font-bold shrink-0"
+        class="bg-foundation-focus inline-block rounded-full px-2 text-body-xs font-semibold shrink-0"
       >
         <span>
           {{ isLatest ? 'Latest' : createdAt.relative }}
@@ -65,7 +65,7 @@
             {{ version.message || 'no message' }}
           </div>
         </div>
-        <div class="text-primary inline-block rounded-full pl-1 text-xs font-bold">
+        <div class="text-primary inline-block rounded-full pl-1 text-xs font-semibold">
           {{ version.sourceApplication }}
         </div>
       </div>

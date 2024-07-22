@@ -67,7 +67,7 @@
             :value="true"
             :disabled="selectionDisabled"
           />
-          <NuxtLink class="font-bold truncate" :href="viewerRoute">
+          <NuxtLink class="font-semibold truncate" :href="viewerRoute">
             {{ message }}
           </NuxtLink>
           <div class="grow" />

@@ -111,7 +111,8 @@ describe('Activity digest notifications @notifications', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
         allowPublicComments: true,
-        isDiscoverable: true
+        isDiscoverable: true,
+        workspaceId: null
       },
       activity: activities ?? [createActivity()]
     })

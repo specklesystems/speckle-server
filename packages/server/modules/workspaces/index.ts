@@ -6,6 +6,7 @@ import { SpeckleModule } from '@/modules/shared/helpers/typeHelper'
 import { workspaceRoles } from '@/modules/workspaces/roles'
 import { workspaceScopes } from '@/modules/workspaces/scopes'
 import { registerOrUpdateRole } from '@/modules/shared/repositories/roles'
+import { initializeEventListenersFactory } from '@/modules/workspaces/events/eventListener'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -20,9 +21,12 @@ const initRoles = () => {
 }
 
 const workspacesModule: SpeckleModule = {
-  async init() {
+  async init(_, isInitial) {
     if (!FF_WORKSPACES_MODULE_ENABLED) return
     moduleLogger.info('⚒️  Init workspaces module')
+    if (isInitial) {
+      initializeEventListenersFactory({ db })()
+    }
     await Promise.all([initScopes(), initRoles()])
   }
 }

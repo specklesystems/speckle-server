@@ -45,7 +45,7 @@
         </div>
         <div
           v-if="!showVersions"
-          class="flex flex-none items-center space-x-1 text-xs font-bold"
+          class="flex flex-none items-center space-x-1 text-xs font-semibold"
         >
           <IconVersions class="h-4 w-4" />
           <span>{{ model.versions?.totalCount }}</span>
@@ -54,7 +54,7 @@
           v-else
           :class="`${
             showVersions ? 'text-white' : ''
-          } flex flex-none items-center space-x-2 text-xs font-bold opacity-80 transition-opacity group-hover:opacity-100`"
+          } flex flex-none items-center space-x-2 text-xs font-semibold opacity-80 transition-opacity group-hover:opacity-100`"
         >
           <ChevronUpIcon class="h-4 w-4" />
         </div>

@@ -1,3 +1,4 @@
+import { Roles } from '@speckle/shared'
 import { WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 
 export const isUserLastWorkspaceAdmin = (
@@ -5,7 +6,7 @@ export const isUserLastWorkspaceAdmin = (
   userId: string
 ): boolean => {
   const workspaceAdmins = workspaceRoles.filter(
-    ({ role }) => role === 'workspace:admin'
+    ({ role }) => role === Roles.Workspace.Admin
   )
   const isUserAdmin = workspaceAdmins.some((role) => role.userId === userId)
 

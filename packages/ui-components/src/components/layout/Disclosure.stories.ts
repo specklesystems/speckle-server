@@ -32,7 +32,7 @@ export const Default: StoryObj = {
     <div>
       <LayoutDisclosure v-bind="args">
         <div class="flex flex-col text-foreground space-y-4">
-          <div class="h4 font-bold">Hello world!</div>
+          <div class="h4 font-semibold">Hello world!</div>
           <div>Lorem ipsum blah blah blah</div>
         </div>
       </LayoutDisclosure>

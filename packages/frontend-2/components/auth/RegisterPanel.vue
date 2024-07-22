@@ -3,7 +3,7 @@
     <div class="space-y-4">
       <div class="flex flex-col items-center sm:gap-2">
         <h1
-          class="text-heading-xl text-center font-bold bg-gradient-to-r py-1 from-blue-500 via-blue-400 to-blue-600 inline-block text-transparent bg-clip-text"
+          class="text-heading-xl text-center font-semibold bg-gradient-to-r py-1 from-blue-500 via-blue-400 to-blue-600 inline-block text-transparent bg-clip-text"
         >
           Create your Speckle account
         </h1>
