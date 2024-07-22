@@ -12,7 +12,7 @@
         </div>
         <div class="flex justify-center">
           <FormButton size="lg" :icon-left="ArrowLeftIcon" :to="loginRoute">
-            Go to Login
+            Go to login
           </FormButton>
         </div>
       </div>

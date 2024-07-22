@@ -4,12 +4,12 @@
       <HeaderNavLink to="/server-management" name="Server Management"></HeaderNavLink>
       <HeaderNavLink
         to="/server-management/pending-invitations"
-        name="Pending Invitations"
+        name="Pending Iivitations"
       ></HeaderNavLink>
     </Portal>
 
     <div class="flex justify-between items-center mb-8">
-      <h1 class="text-heading-lg">Pending Invitations</h1>
+      <h1 class="text-heading-lg">Pending invitations</h1>
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
         Invite
       </FormButton>
@@ -109,7 +109,7 @@ import {
 } from '~~/lib/common/helpers/graphql'
 
 useHead({
-  title: 'Pending Invitations'
+  title: 'Pending invitations'
 })
 
 definePageMeta({
