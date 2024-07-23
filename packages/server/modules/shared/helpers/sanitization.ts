@@ -46,3 +46,22 @@ export const sanitizeImageUrl = (
 
   return null
 }
+
+/**
+ * Return a shallow clone of the given object with null keys omitted.
+ */
+export const cullNullOrUndefinedValues = <T extends Record<string, unknown>>(
+  data: T
+): { [Key in keyof T]: Exclude<T[Key], null | undefined> } => {
+  const result: Record<string, unknown> = {}
+
+  for (const [key, value] of Object.entries(data)) {
+    if (value === null || typeof value === 'undefined') {
+      continue
+    }
+
+    result[key] = value
+  }
+
+  return result as { [Key in keyof T]: Exclude<T[Key], null | undefined> }
+}

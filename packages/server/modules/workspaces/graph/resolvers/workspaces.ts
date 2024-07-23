@@ -5,10 +5,14 @@ import {
   WorkspacesNotYetImplementedError
 } from '@/modules/workspaces/errors/workspace'
 import {
+  getWorkspaceFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
-import { createWorkspaceFactory } from '@/modules/workspaces/services/management'
+import {
+  createWorkspaceFactory,
+  updateWorkspaceFactory
+} from '@/modules/workspaces/services/management'
 import db from '@/db/knex'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
@@ -37,7 +41,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const upsertWorkspace = upsertWorkspaceFactory({ db })
           const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
-          // TODO: ???
+          // TODO: Integrate with blobstorage
           const storeBlob = async () => ''
 
           const createWorkspace = createWorkspaceFactory({
@@ -61,8 +65,30 @@ export = FF_WORKSPACES_MODULE_ENABLED
         delete: async () => {
           throw new WorkspacesNotYetImplementedError()
         },
-        update: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        update: async (_parent, args, context) => {
+          const { id: workspaceId, ...workspaceInput } = args.input
+
+          if (!context.userId) {
+            throw new WorkspacesNotAuthorizedError()
+          }
+
+          const { emit: emitWorkspaceEvent } = getEventBus()
+
+          const getWorkspace = getWorkspaceFactory({ db })
+          const upsertWorkspace = upsertWorkspaceFactory({ db })
+          // TODO: Integrate with blobstorage
+          const storeBlob = async () => ''
+
+          const updateWorkspace = updateWorkspaceFactory({
+            getWorkspace,
+            upsertWorkspace,
+            emitWorkspaceEvent,
+            storeBlob
+          })
+
+          const workspace = await updateWorkspace({ workspaceId, workspaceInput })
+
+          return workspace
         },
         updateRole: async () => {
           throw new WorkspacesNotYetImplementedError()
