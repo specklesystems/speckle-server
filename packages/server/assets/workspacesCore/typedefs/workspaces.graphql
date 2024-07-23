@@ -89,7 +89,10 @@ type Workspace {
   """
   role: String
   team: [WorkspaceCollaborator!]!
-  invitedTeam: [PendingWorkspaceCollaborator!]
+  """
+  Only available to workspace owners
+  """
+  invitedTeam: [PendingWorkspaceCollaborator!] @hasWorkspaceRole(role: ADMIN)
   projects(
     limit: Int! = 25
     cursor: String
@@ -167,10 +170,4 @@ extend type AdminQueries {
 
 input UserWorkspacesFilter {
   search: String
-}
-
-enum WorkspaceRole {
-  ADMIN
-  MEMBER
-  GUEST
 }

@@ -3714,6 +3714,7 @@ export type Workspace = {
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  /** Only available to workspace owners */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   name: Scalars['String']['output'];
   projects: ProjectCollection;
@@ -3803,6 +3804,7 @@ export type WorkspaceMutations = {
   deleteRole: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   update: Workspace;
+  /** TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes */
   updateRole: Scalars['Boolean']['output'];
 };
 

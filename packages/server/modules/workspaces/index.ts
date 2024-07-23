@@ -10,14 +10,14 @@ import { initializeEventListenersFactory } from '@/modules/workspaces/events/eve
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
-const initScopes = () => {
+const initScopes = async () => {
   const registerFunc = registerOrUpdateScopeFactory({ db })
-  return Promise.all(workspaceScopes.map((scope) => registerFunc({ scope })))
+  await Promise.all(workspaceScopes.map((scope) => registerFunc({ scope })))
 }
 
-const initRoles = () => {
+const initRoles = async () => {
   const registerFunc = registerOrUpdateRole({ db })
-  return Promise.all(workspaceRoles.map((role) => registerFunc({ role })))
+  await Promise.all(workspaceRoles.map((role) => registerFunc({ role })))
 }
 
 const workspacesModule: SpeckleModule = {

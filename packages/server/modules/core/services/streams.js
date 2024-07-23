@@ -77,6 +77,19 @@ module.exports = {
     return await deleteStreamFromDb(streamId)
   },
 
+  /**
+   * @param {Object} p
+   * @param {string | Date | null} [p.cursor]
+   * @param {number} p.limit
+   * @param {string | null} [p.orderBy]
+   * @param {string | null} [p.visibility]
+   * @param {string | null} [p.searchQuery]
+   * @param {string[] | null} [p.streamIdWhitelist]
+   * @param {string[] | null} [p.workspaceIdWhitelist]
+   * @param {number | null} [p.offset]
+   * @param {boolean | null} [p.publicOnly]
+   * @deprecated Use getStreams() from the repository directly
+   */
   async getStreams({
     cursor,
     limit,

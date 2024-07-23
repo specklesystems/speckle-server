@@ -7,7 +7,7 @@ import { getWorkspaceRolesFactory } from '@/modules/workspaces/repositories/work
 import { grantStreamPermissions as repoGrantStreamPermissions } from '@/modules/core/repositories/streams'
 import { Knex } from 'knex'
 import { GetWorkspaceRoles } from '@/modules/workspaces/domain/operations'
-import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/domain/roles'
+import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/helpers/roles'
 
 export const onProjectCreatedFactory =
   ({

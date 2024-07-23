@@ -2,7 +2,7 @@
 const fs = require('fs')
 const path = require('path')
 const { appRoot, packageRoot } = require('@/bootstrap')
-const { values, merge, camelCase } = require('lodash')
+const { values, merge, camelCase, reduce } = require('lodash')
 const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
 const { scalarResolvers } = require('./core/graph/scalars')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
@@ -150,9 +150,16 @@ const graphComponents = () => {
     // load directives
     const directivesPath = path.join(fullPath, 'graph', 'directives')
     if (fs.existsSync(directivesPath)) {
-      directiveBuilders = Object.assign(
-        ...values(autoloadFromDirectory(directivesPath))
-      )
+      directiveBuilders = {
+        ...directiveBuilders,
+        ...reduce(
+          values(autoloadFromDirectory(directivesPath)),
+          (acc, directivesObj) => {
+            return { ...acc, ...directivesObj }
+          },
+          {}
+        )
+      }
     }
   })
 

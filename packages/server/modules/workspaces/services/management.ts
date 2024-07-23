@@ -19,9 +19,12 @@ import {
   GetWorkspaceRoles
 } from '@/modules/workspaces/domain/operations'
 import { WorkspaceAdminRequiredError } from '@/modules/workspaces/errors/workspace'
-import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/utils/roles'
-import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/domain/roles'
+import {
+  isUserLastWorkspaceAdmin,
+  mapWorkspaceRoleToProjectRole
+} from '@/modules/workspaces/helpers/roles'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
+import { omit } from 'lodash'
 
 type WorkspaceCreateArgs = {
   workspaceInput: { name: string; description: string | null; logo: string | null }
@@ -47,7 +50,7 @@ export const createWorkspaceFactory =
     }
 
     const workspace = {
-      ...workspaceInput,
+      ...omit(workspaceInput, ['logo']),
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
       updatedAt: new Date(),

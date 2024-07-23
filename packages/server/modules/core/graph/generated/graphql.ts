@@ -3724,6 +3724,7 @@ export type Workspace = {
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  /** Only available to workspace owners */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   name: Scalars['String']['output'];
   projects: ProjectCollection;
@@ -3813,6 +3814,7 @@ export type WorkspaceMutations = {
   deleteRole: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   update: Workspace;
+  /** TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes */
   updateRole: Scalars['Boolean']['output'];
 };
 
@@ -4407,6 +4409,12 @@ export type HasStreamRoleDirectiveArgs = {
 };
 
 export type HasStreamRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasStreamRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+
+export type HasWorkspaceRoleDirectiveArgs = {
+  role: WorkspaceRole;
+};
+
+export type HasWorkspaceRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasWorkspaceRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
 export type IsOwnerDirectiveArgs = { };
 
@@ -5850,5 +5858,6 @@ export type DirectiveResolvers<ContextType = GraphQLContext> = {
   hasScopes?: HasScopesDirectiveResolver<any, any, ContextType>;
   hasServerRole?: HasServerRoleDirectiveResolver<any, any, ContextType>;
   hasStreamRole?: HasStreamRoleDirectiveResolver<any, any, ContextType>;
+  hasWorkspaceRole?: HasWorkspaceRoleDirectiveResolver<any, any, ContextType>;
   isOwner?: IsOwnerDirectiveResolver<any, any, ContextType>;
 };

@@ -1,9 +1,7 @@
-import {
-  WorkspaceEvents,
-  WorkspaceEventsPayloads
-} from '@/modules/workspacesCore/domain/events'
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+import { EventBusPayloads } from '@/modules/shared/services/eventBus'
 
 /** Workspace */
 
@@ -94,5 +92,5 @@ export type StoreBlob = (args: string) => Promise<string>
 
 export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   eventName: TEvent
-  payload: WorkspaceEventsPayloads[TEvent]
+  payload: EventBusPayloads[TEvent]
 }) => Promise<unknown[]>

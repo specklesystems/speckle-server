@@ -99,16 +99,18 @@ async function authorizeResolver(
     if (serverRoles.map((r) => r.role).includes(Roles.Server.Admin)) return requiredRole
   }
 
-  try {
-    const { isPublic } = await knex(role.resourceTarget)
-      .select('isPublic')
-      .where({ id: resourceId })
-      .first()
-    if (isPublic && role.weight < 200) return true
-  } catch {
-    throw new ForbiddenError(
-      `Resource of type ${role.resourceTarget} with ${resourceId} not found`
-    )
+  if (role.resourceTarget === 'streams') {
+    try {
+      const { isPublic } = await knex(role.resourceTarget)
+        .select('isPublic')
+        .where({ id: resourceId })
+        .first()
+      if (isPublic && role.weight < 200) return true
+    } catch {
+      throw new ForbiddenError(
+        `Resource of type ${role.resourceTarget} with ${resourceId} not found`
+      )
+    }
   }
 
   const userAclEntry = await getUserAclEntry({

@@ -69,6 +69,7 @@ generates:
       - 'typed-document-node'
     documents:
       - 'test/graphql/*.{js,ts}'
+      - 'modules/**/tests/helpers/graphql.ts'
     config:
       scalars:
         JSONObject: Record<string, unknown>

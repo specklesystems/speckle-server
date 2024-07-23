@@ -10,7 +10,7 @@ import { differenceBy } from 'lodash'
 export enum RoleResourceTargets {
   Streams = 'streams',
   Server = 'server',
-  Workspace = 'workspace'
+  Workspaces = 'workspaces'
 }
 
 export type ContextResourceAccessRules = MaybeNullOrUndefined<TokenResourceIdentifier[]>
@@ -30,6 +30,8 @@ export const roleResourceTypeToTokenResourceType = (
   switch (type) {
     case RoleResourceTargets.Streams:
       return 'project'
+    case RoleResourceTargets.Workspaces:
+      return 'workspace'
     default:
       return null
   }
