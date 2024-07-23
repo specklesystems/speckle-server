@@ -1,61 +1,55 @@
 <template>
   <div>
     <div
-      class="relative group flex flex-col items-stretch md:flex-row md:space-x-2 border-2 border-primary-muted hover:bg-primary-muted rounded-md p-3 transition overflow-hidden"
+      class="relative group flex flex-col items-stretch md:flex-row md:space-x-2 border border-outline-3 rounded-xl p-4 transition overflow-hidden"
     >
       <div
-        class="w-full md:w-48 flex flex-col justify-between col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1"
+        class="w-full md:w-48 flex flex-col justify-between col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1 pl-4 pr-6 py-2"
       >
-        <div class="text-heading-lg transition">
+        <div class="transition">
           <NuxtLink
             :to="projectRoute(project.id)"
-            class="break-words hover:text-primary"
+            class="break-words hover:text-primary text-heading-sm"
           >
             {{ project.name }}
           </NuxtLink>
-          <UserAvatarGroup :users="teamUsers" :max-count="2" class="mt-2" />
-        </div>
-        <div class="flex flex-col gap-1">
-          <div class="text-foreground-2 flex items-center">
-            <UserCircleIcon class="w-4 h-4 mr-1" />
-            <span class="text-body-3xs capitalize">
-              {{ project.role?.split(':').reverse()[0] }}
-            </span>
-          </div>
-          <!-- Note: commented out as we have the +x models indicator. Less clutter! -->
-          <!-- <div class="text-xs text-foreground-2 flex items-center">
-          <CubeIcon class="w-4 h-4 mr-1" />
-          {{ project.models.totalCount }} models
-        </div> -->
-          <div class="text-foreground-2 flex items-center">
+          <div class="text-foreground-2 flex items-center mt-2">
             <ClockIcon class="w-4 h-4 mr-1" />
             <span v-tippy="updatedAt.full" class="text-body-3xs">
               Updated
               {{ updatedAt.relative }}
             </span>
           </div>
+          <div class="text-foreground-2 flex items-center mt-1">
+            <UserCircleIcon class="w-4 h-4 mr-1" />
+            <span class="text-body-3xs capitalize">
+              {{ project.role?.split(':').reverse()[0] }}
+            </span>
+          </div>
+          <UserAvatarGroup :users="teamUsers" :max-count="2" class="mt-2" />
         </div>
       </div>
       <div
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 flex-grow col-span-4 lg:col-span-3 w-full"
+        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 flex-grow col-span-4 lg:col-span-3 w-full"
       >
         <ProjectPageModelsCard
           v-for="pendingModel in pendingModels"
           :key="pendingModel.id"
           :model="pendingModel"
           :project="project"
+          show-versions
           :project-id="project.id"
-          height="h-36"
+          height="h-48"
         />
         <ProjectPageModelsCard
           v-for="model in models"
           :key="model.id"
           :model="model"
           :project="project"
-          :show-versions="false"
+          show-versions
           :show-actions="false"
           :project-id="project.id"
-          height="h-36"
+          height="h-48"
         />
         <ProjectCardImportFileArea
           v-if="hasNoModels"
@@ -105,7 +99,7 @@ const teamUsers = computed(() => props.project.team.map((t) => t.user))
 const pendingModels = computed(() => props.project.pendingImportedModels)
 const models = computed(() => {
   const items = props.project.models?.items || []
-  return items.slice(0, Math.max(0, 6 - pendingModels.value.length))
+  return items.slice(0, Math.max(0, 3 - pendingModels.value.length))
 })
 
 const hasNoModels = computed(() => !models.value.length && !pendingModels.value.length)

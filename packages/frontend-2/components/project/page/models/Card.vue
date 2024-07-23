@@ -7,7 +7,7 @@
     @mouseenter="hovered = true"
   >
     <div
-      :class="['relative group/item', defaultLinkDisabled ? 'cursor-pointer' : '']"
+      :class="['relative group/item']"
       @click="$emit('click', $event)"
       @keypress="keyboardClick((e) => emit('click', e))"
     >
@@ -25,7 +25,11 @@
         />
         <template v-else-if="previewUrl">
           <NuxtLink :href="finalModelUrl" class="w-full h-full">
-            <PreviewImage :preview-url="previewUrl" />
+            <div
+              class="bg-foundation-page w-full h-full rounded-xl border border-outline-2"
+            >
+              <PreviewImage :preview-url="previewUrl" />
+            </div>
           </NuxtLink>
         </template>
         <div
@@ -41,39 +45,55 @@
           />
         </div>
       </div>
-      <div
-        class="h-auto sm:h-12 flex flex-col sm:flex-row sm:items-center px-2 pt-1 pb-2 gap-x-1"
-      >
-        <NuxtLink class="min-w-0 max-w-full cursor-pointer" :href="finalModelUrl">
+      <div class="flex flex-col sm:flex-row sm:items-center px-2 pt-1 pb-2 gap-x-1">
+        <div class="w-full">
           <div
             v-if="nameParts[0]"
-            class="text-body-2xs text-foreground-2 relative -mb-0.5 truncate"
+            class="text-body-2xs text-foreground-2 relative mt-1 truncate"
           >
             {{ nameParts[0] }}
           </div>
-          <div class="text-heading-sm truncate text-foreground flex-shrink min-w-0">
+          <div
+            class="text-body-xs font-semibold truncate text-foreground flex-shrink min-w-0"
+          >
             {{ nameParts[1] }}
           </div>
-          <ProjectPageModelsCardUpdatedTime
-            :updated-at="updatedAtFullDate"
-            class="hidden group-hover/item:block pb-1.5 -mt-0.5 text-body-3xs w-full text-foreground-2 truncate transition"
-          />
-        </NuxtLink>
+          <div class="flex justify-between items-center mt-auto pt-2 w-full">
+            <ProjectPageModelsCardUpdatedTime
+              class="text-body-3xs text-foreground-2"
+              :updated-at="updatedAtFullDate"
+            />
+            <div class="flex items-center gap-2">
+              <FormButton
+                v-if="!isPendingModelFragment(model)"
+                v-tippy="'View Version Gallery'"
+                rounded
+                link
+                color="outline"
+                size="sm"
+                class="flex items-center gap-1"
+                :to="modelDiscussionsRoute(projectId, model.id)"
+              >
+                <ChatBubbleLeftIcon class="h-4 w-4" />
+                {{ model.commentThreadCount.totalCount }}
+              </FormButton>
+              <FormButton
+                v-tippy="'View Comments'"
+                rounded
+                link
+                color="outline"
+                size="sm"
+                class="flex items-center gap-1"
+                :to="modelVersionsRoute(projectId, model.id)"
+              >
+                <IconVersions class="h-4 w-4" />
+                {{ versionCount }}
+              </FormButton>
+            </div>
+          </div>
+        </div>
         <div class="hidden sm:flex grow" />
         <div class="flex items-center">
-          <FormButton
-            v-if="finalShowVersions"
-            v-tippy="'View Version Gallery'"
-            rounded
-            size="sm"
-            :to="modelVersionsRoute(projectId, model.id)"
-            :class="`transition gap-0.5 ml-1 ${
-              hovered ? 'inline-block opacity-100' : 'sm:hidden sm:opacity-0'
-            }`"
-          >
-            <IconVersions class="h-4 w-4" />
-            {{ versionCount }}
-          </FormButton>
           <ProjectPageModelsActions
             v-if="project && showActions && !isPendingModelFragment(model)"
             v-model:open="showActionsMenu"
@@ -84,20 +104,6 @@
             @upload-version="triggerVersionUpload"
           />
         </div>
-      </div>
-      <div
-        v-if="
-          !isPendingModelFragment(model) && model.commentThreadCount.totalCount !== 0
-        "
-        :class="[
-          `z-10 absolute opacity-100 top-0 right-0 p-2 flex items-center transition`,
-          'border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center',
-          'rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2',
-          hovered ? 'sm:opacity-100' : 'sm:opacity-0'
-        ]"
-      >
-        <ChatBubbleLeftRightIcon class="w-4 h-4" />
-        <span>{{ model.commentThreadCount.totalCount }}</span>
       </div>
       <div
         v-if="!isPendingModelFragment(model) && model.automationsStatus"
@@ -118,8 +124,12 @@ import type {
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
-import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
+import { ChatBubbleLeftIcon } from '@heroicons/vue/24/outline'
+import {
+  modelRoute,
+  modelVersionsRoute,
+  modelDiscussionsRoute
+} from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
@@ -169,12 +179,8 @@ const hovered = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-md bg-foundation shadow transition border-2 border-transparent'
+    'group rounded-xl bg-foundation transition border-2 border-transparent bg-foundation-2 p-1'
   ]
-
-  if (!isPendingModelFragment(props.model)) {
-    classParts.push('hover:scale-[1.02] hover:border-outline-2 hover:shadow-xl')
-  }
 
   return classParts.join(' ')
 })
@@ -200,9 +206,7 @@ const updatedAtFullDate = computed(() => {
     ? props.model.convertedLastUpdate || props.model.uploadDate
     : props.model.updatedAt
 })
-const finalShowVersions = computed(
-  () => props.showVersions && !isPendingModelFragment(props.model)
-)
+
 const canEdit = computed(() => (props.project ? canModifyModels(props.project) : false))
 const versionCount = computed(() => {
   return isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount
