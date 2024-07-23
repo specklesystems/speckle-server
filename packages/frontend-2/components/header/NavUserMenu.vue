@@ -23,7 +23,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'flex gap-3 border-b border-primary items-center px-3 py-3 text-sm text-primary cursor-pointer transition mb-1'
+                'flex gap-3.5 border-b border-primary items-center px-3 py-3 text-sm text-primary cursor-pointer transition mb-1'
               ]"
               target="_blank"
               external
@@ -37,7 +37,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-foundation-focus' : '',
-                'text-body-sm flex gap-2.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
+                'text-body-sm flex gap-3.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleSettingsDialog(settingsQueries.user.profile)"
             >
