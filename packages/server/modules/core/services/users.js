@@ -54,19 +54,6 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
 const userByEmailQuery = (email) =>
   Users().whereRaw('lower("users"."email") = lower(?)', [email])
 
-const getUsersBaseQuery = (searchQuery = null) => {
-  const query = Users()
-  if (searchQuery) {
-    query.where((queryBuilder) => {
-      queryBuilder
-        .where('email', 'ILIKE', `%${searchQuery}%`)
-        .orWhere('name', 'ILIKE', `%${searchQuery}%`)
-        .orWhere('company', 'ILIKE', `%${searchQuery}%`)
-    })
-  }
-  return query
-}
-
 module.exports = {
   /*
     Users
@@ -331,16 +318,55 @@ module.exports = {
     const maxLimit = 200
     if (limit > maxLimit) limit = maxLimit
 
-    const query = getUsersBaseQuery(searchQuery)
-    query.limit(limit).offset(offset)
+    const query = Users()
+      .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
+      .columns([
+        ...Object.values(
+          omit(UsersSchema.col, ['email', 'verified', 'passwordDigest'])
+        ),
+        knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
+        knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
+      ])
+    if (searchQuery) {
+      query.where((queryBuilder) => {
+        queryBuilder
+          .where((qb) => {
+            qb.where(UserEmails.col.email, 'ILIKE', `%${searchQuery}%`).where({
+              primary: true
+            })
+          })
+          .orWhere(UsersSchema.col.name, 'ILIKE', `%${searchQuery}%`)
+          .orWhere(UsersSchema.col.company, 'ILIKE', `%${searchQuery}%`)
+      })
+    }
+    query
+      .groupBy(UsersSchema.col.id)
+      .orderBy(UsersSchema.col.createdAt)
+      .limit(limit)
+      .offset(offset)
 
-    const users = await query
-    users.map((user) => delete user.passwordDigest)
-    return users
+    return query
   },
 
   async countUsers(searchQuery = null) {
-    const query = getUsersBaseQuery(searchQuery)
+    const query = Users().leftJoin(
+      UserEmails.name,
+      UserEmails.col.userId,
+      UsersSchema.col.id
+    )
+    if (searchQuery) {
+      query.where((queryBuilder) => {
+        queryBuilder
+          .where((qb) => {
+            qb.where(UserEmails.col.email, 'ILIKE', `%${searchQuery}%`).where({
+              primary: true
+            })
+          })
+          .orWhere(UsersSchema.col.name, 'ILIKE', `%${searchQuery}%`)
+          .orWhere(UsersSchema.col.company, 'ILIKE', `%${searchQuery}%`)
+      })
+    }
+
     const [userCount] = await query.count()
     return parseInt(userCount.count)
   },
