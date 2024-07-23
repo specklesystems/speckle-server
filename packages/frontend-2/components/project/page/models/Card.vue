@@ -47,17 +47,33 @@
       </div>
       <div class="flex flex-col sm:flex-row sm:items-center px-2 pt-1 pb-2 gap-x-1">
         <div class="w-full">
-          <div
-            v-if="nameParts[0]"
-            class="text-body-2xs text-foreground-2 relative mt-1 truncate"
-          >
-            {{ nameParts[0] }}
+          <div class="flex justify-between">
+            <div>
+              <div
+                v-if="nameParts[0]"
+                class="text-body-2xs text-foreground-2 relative mt-1 truncate"
+              >
+                {{ nameParts[0] }}
+              </div>
+              <div
+                class="text-body-xs font-semibold truncate text-foreground flex-shrink min-w-0"
+              >
+                {{ nameParts[1] }}
+              </div>
+            </div>
+            <div class="flex items-center">
+              <ProjectPageModelsActions
+                v-if="project && showActions && !isPendingModelFragment(model)"
+                v-model:open="showActionsMenu"
+                :model="model"
+                :project="project"
+                :can-edit="canEdit"
+                @click.stop.prevent
+                @upload-version="triggerVersionUpload"
+              />
+            </div>
           </div>
-          <div
-            class="text-body-xs font-semibold truncate text-foreground flex-shrink min-w-0"
-          >
-            {{ nameParts[1] }}
-          </div>
+
           <div class="flex justify-between items-center mt-auto pt-2 w-full">
             <ProjectPageModelsCardUpdatedTime
               class="text-body-3xs text-foreground-2"
@@ -72,7 +88,6 @@
                 color="outline"
                 size="sm"
                 class="flex items-center gap-1"
-                :to="modelDiscussionsRoute(projectId, model.id)"
               >
                 <ChatBubbleLeftIcon class="h-4 w-4" />
                 {{ model.commentThreadCount.totalCount }}
@@ -91,18 +106,6 @@
               </FormButton>
             </div>
           </div>
-        </div>
-        <div class="hidden sm:flex grow" />
-        <div class="flex items-center">
-          <ProjectPageModelsActions
-            v-if="project && showActions && !isPendingModelFragment(model)"
-            v-model:open="showActionsMenu"
-            :model="model"
-            :project="project"
-            :can-edit="canEdit"
-            @click.stop.prevent
-            @upload-version="triggerVersionUpload"
-          />
         </div>
       </div>
       <div
@@ -125,11 +128,7 @@ import type {
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { ChatBubbleLeftIcon } from '@heroicons/vue/24/outline'
-import {
-  modelRoute,
-  modelVersionsRoute,
-  modelDiscussionsRoute
-} from '~~/lib/common/helpers/route'
+import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
