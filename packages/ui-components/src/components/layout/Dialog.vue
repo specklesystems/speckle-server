@@ -6,42 +6,54 @@
         enter="ease-out duration-300"
         enter-from="opacity-0"
         enter-to="opacity-100"
-        leave="ease-in duration-200"
+        leave="ease-in duration-400"
         leave-from="opacity-100"
         leave-to="opacity-0"
       >
         <div
-          class="fixed top-0 left-0 w-full h-full bg-neutral-100/70 dark:bg-neutral-900/70 transition-opacity backdrop-blur-xs"
+          class="fixed top-0 left-0 w-full h-full bg-black/70 dark:bg-neutral-900/70 transition-opacity"
         />
       </TransitionChild>
       <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
-        <div class="flex justify-center items-center h-full w-full p-4 sm:p-0">
+        <div
+          class="flex md:justify-center items-end md:items-center h-full w-full md:p-6"
+        >
           <TransitionChild
             as="template"
-            enter="ease-out duration-300"
-            enter-from="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-            enter-to="opacity-100 translate-y-0 sm:scale-100"
-            leave="ease-in duration-200"
-            leave-from="opacity-100 translate-y-0 sm:scale-100"
-            leave-to="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
+            enter="ease-out duration-5000"
+            enter-from="md:opacity-0 translate-y-[100%] md:translate-y-4"
+            enter-to="md:opacity-100 translate-y-0"
+            leave="ease-in duration-5000"
+            leave-from="md:opacity-100 translate-y-0"
+            leave-to="md:opacity-0 translate-y-[100%] md:translate-y-4"
             @after-leave="$emit('fully-closed')"
           >
             <DialogPanel
               :class="[
-                'transform rounded-lg text-foreground overflow-hidden bg-foundation text-left shadow-xl transition-all flex flex-col max-h-[90vh]',
+                'dialog-panel transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col md:h-auto',
+                fullscreen ? 'md:h-full' : 'md:max-h-[90vh]',
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onFormSubmit"
             >
-              <div :class="scrolledFromTop && 'relative z-20 shadow-lg'">
+              <div
+                v-if="hasTitle"
+                :class="scrolledFromTop && 'relative z-20 shadow-lg'"
+              >
                 <div
-                  v-if="hasTitle"
-                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-4 sm:p-6 truncate text-heading-lg"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-heading-lg"
                 >
-                  <div class="w-full truncate pr-12">
-                    {{ title }}
-                    <slot name="header"></slot>
+                  <div class="flex items-center pr-12">
+                    <ChevronLeftIcon
+                      v-if="showBackButton"
+                      class="w-5 h-5 -ml-1 mr-3"
+                      @click="$emit('back')"
+                    />
+                    <div class="w-full truncate">
+                      {{ title }}
+                      <slot name="header" />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -56,23 +68,26 @@
               <button
                 v-if="!hideCloser"
                 type="button"
-                class="absolute z-20 bg-foundation rounded-full p-1"
-                :class="hasTitle ? 'top-2 right-3 sm:top-4' : 'right-4 top-3'"
+                class="absolute z-20 bg-foundation hover:bg-foundation-page transition rounded-full p-1.5 shadow border top-5 right-5 border-outline-3"
                 @click="open = false"
               >
-                <XMarkIcon class="h-5 sm:h-6 w-5 sm:w-6" />
+                <XMarkIcon class="h-4 w-4 md:w-5 md:h-5" />
               </button>
               <div
                 ref="slotContainer"
-                class="flex-1 simple-scrollbar overflow-y-auto text-body-sm"
-                :class="hasTitle ? 'px-4 pb-4 sm:px-6' : 'p-4 sm:p-6'"
+                class="flex-1 simple-scrollbar overflow-y-auto text-body-xs"
+                :class="
+                  hasTitle
+                    ? `px-6 pb-4 ${fullscreen && 'md:p-0'}`
+                    : !fullscreen && 'p-6'
+                "
                 @scroll="onScroll"
               >
                 <slot>Put your content here!</slot>
               </div>
               <div
                 v-if="hasButtons"
-                class="relative z-50 flex p-4 sm:p-6 gap-3 shrink-0 bg-foundation"
+                class="relative z-50 flex p-6 gap-3 shrink-0 bg-foundation"
                 :class="{
                   'shadow-t': !scrolledToBottom,
                   [buttonsWrapperClasses || '']: true
@@ -104,7 +119,7 @@
 <script setup lang="ts">
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import { FormButton, type LayoutDialogButton } from '~~/src/lib'
-import { XMarkIcon } from '@heroicons/vue/24/outline'
+import { XMarkIcon, ChevronLeftIcon } from '@heroicons/vue/24/outline'
 import { useResizeObserver, type ResizeObserverCallback } from '@vueuse/core'
 import { computed, ref, useSlots, watch, onUnmounted } from 'vue'
 import { throttle } from 'lodash'
@@ -115,12 +130,15 @@ type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
   (e: 'fully-closed'): void
+  (e: 'back'): void
 }>()
 
 const props = defineProps<{
   open: boolean
   maxWidth?: MaxWidthValue
+  fullscreen?: boolean
   hideCloser?: boolean
+  showBackButton?: boolean
   /**
    * Prevent modal from closing when the user clicks outside of the modal or presses Esc
    */
@@ -154,7 +172,7 @@ useResizeObserver(
 
 const isForm = computed(() => !!props.onSubmit)
 const hasButtons = computed(() => props.buttons || slots.buttons)
-const hasTitle = computed(() => props.title || slots.header)
+const hasTitle = computed(() => !!props.title || !!slots.header)
 
 const open = computed({
   get: () => props.open,
@@ -177,19 +195,20 @@ const maxWidthWeight = computed(() => {
 })
 
 const widthClasses = computed(() => {
-  const classParts: string[] = ['w-full', 'sm:w-full sm:max-w-2xl']
+  const classParts: string[] = ['w-full', 'sm:w-full']
 
-  if (maxWidthWeight.value >= 1) {
+  if (!props.fullscreen) {
     classParts.push('md:max-w-2xl')
-  }
-  if (maxWidthWeight.value >= 2) {
-    classParts.push('lg:max-w-4xl')
-  }
-  if (maxWidthWeight.value >= 3) {
-    classParts.push('xl:max-w-6xl')
-  }
-  if (maxWidthWeight.value >= 4) {
-    classParts.push('2xl:max-w-7xl')
+
+    if (maxWidthWeight.value >= 2) {
+      classParts.push('lg:max-w-4xl')
+    }
+    if (maxWidthWeight.value >= 3) {
+      classParts.push('xl:max-w-6xl')
+    }
+    if (maxWidthWeight.value >= 4) {
+      classParts.push('2xl:max-w-7xl')
+    }
   }
 
   return classParts.join(' ')
@@ -240,5 +259,10 @@ html.dialog-open {
 }
 html.dialog-open body {
   overflow: hidden !important;
+}
+/* Workaround because in Tailwind vh gets added after dvh */
+.dialog-panel {
+  height: 98vh;
+  height: 98dvh;
 }
 </style>

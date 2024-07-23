@@ -13,7 +13,6 @@
           v-for="(column, colIndex) in columns"
           :key="column.id"
           :class="getHeaderClasses(column.id, colIndex)"
-          class="capitalize"
         >
           {{ column.header }}
         </div>
