@@ -6,7 +6,7 @@
         <template v-if="versions.length > 1">all of the selected versions</template>
         <template v-else-if="versions.length">
           the selected version
-          <span class="font-semibold">"{{ versions[0].message || 'no message' }}"</span>
+          <span class="font-medium">"{{ versions[0].message || 'no message' }}"</span>
         </template>
         to.
       </div>

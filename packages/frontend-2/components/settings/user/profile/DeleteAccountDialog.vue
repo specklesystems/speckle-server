@@ -9,7 +9,7 @@
         </div>
         <div>
           <p
-            class="text-body-xs font-semibold text-danger-darker dark:text-danger-lighter mb-1"
+            class="text-body-xs font-medium text-danger-darker dark:text-danger-lighter mb-1"
           >
             This action cannot be undone. We will delete all projects where you are the
             sole owner, and any associated data.

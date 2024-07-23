@@ -1,6 +1,6 @@
 <template>
   <LayoutDialog v-model:open="open" max-width="sm" :buttons="dialogButtons">
-    <h2 class="text-2xl sm:text-3xl font-semibold text-center sm:-mt-4 mb-2">
+    <h2 class="text-2xl sm:text-3xl font-medium text-center sm:-mt-4 mb-2">
       What's new in Speckle?
     </h2>
     <p class="text-foreground-2 text-center mb-6">A new way to collaborate in AEC.</p>

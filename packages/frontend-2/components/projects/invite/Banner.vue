@@ -3,7 +3,7 @@
     <div :class="mainInfoBlockClasses">
       <UserAvatar :user="invite.invitedBy" :size="avatarSize" />
       <div class="text-foreground">
-        <span class="font-semibold">{{ invite.invitedBy.name }}</span>
+        <span class="font-medium">{{ invite.invitedBy.name }}</span>
         has invited you to be part of the team from
         <template v-if="showProjectName">
           the project {{ invite.projectName }}.

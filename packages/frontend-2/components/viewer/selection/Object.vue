@@ -21,7 +21,7 @@
             !unfold ? '-rotate-90' : 'rotate-0'
           }`"
         />
-        <div :class="`truncate text-body-2xs font-semibold ${headerClasses}`">
+        <div :class="`truncate text-body-2xs font-medium ${headerClasses}`">
           {{ title || headerAndSubheader.header }}
           <span
             v-if="(props.root || props.modifiedSibling) && isModifiedQuery.modified"
@@ -93,7 +93,7 @@
       >
         <div class="text-foreground-2 grid grid-cols-3 pl-2">
           <div
-            class="col-span-1 truncate text-xs font-semibold"
+            class="col-span-1 truncate text-xs font-medium"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}
@@ -107,7 +107,7 @@
       <div v-for="(kvp, index) in categorisedValuePairs.primitiveArrays" :key="index">
         <div class="grid grid-cols-3">
           <div
-            class="col-span-1 truncate text-xs font-semibold pl-2"
+            class="col-span-1 truncate text-xs font-medium pl-2"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}

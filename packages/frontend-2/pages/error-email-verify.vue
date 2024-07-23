@@ -1,6 +1,6 @@
 <template>
   <div class="mt-20 flex flex-col items-center">
-    <h1 class="h1 font-semibold mb-14">Notice</h1>
+    <h1 class="h1 font-medium mb-14">Notice</h1>
     <div class="flex flex-col space-y-24 md:space-y-0 md:flex-row md:items-stretch">
       <div class="w-full md:w-72 lg:w-96 flex flex-col space-y-6 justify-between">
         <div class="text-heading">

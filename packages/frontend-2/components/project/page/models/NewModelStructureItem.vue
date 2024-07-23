@@ -6,7 +6,7 @@
       @click="showNewModelCard = true"
     >
       +
-      <span class="font-semibold ml-1">NEW</span>
+      <span class="font-medium ml-1">NEW</span>
     </button>
     <div
       v-if="showNewModelCard"

@@ -13,7 +13,7 @@
 
     <div
       v-if="!minimal"
-      class="text-sm mt-0 font-semibold"
+      class="text-sm mt-0 font-medium"
       :class="showTextOnMobile ? '' : 'hidden md:flex'"
     >
       Speckle

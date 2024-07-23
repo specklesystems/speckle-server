@@ -36,7 +36,7 @@
             <span
               v-tippy="createdAtFormatted.full"
               :class="`${
-                showVersions ? 'text-foundation font-semibold' : ''
+                showVersions ? 'text-foundation font-medium' : ''
               } text-body-2xs opacity-70`"
             >
               {{ isLatest ? 'Latest version' : createdAtFormatted.relative }}
@@ -45,7 +45,7 @@
         </div>
         <div
           v-if="!showVersions"
-          class="flex flex-none items-center space-x-1 text-xs font-semibold"
+          class="flex flex-none items-center space-x-1 text-xs font-medium"
         >
           <IconVersions class="h-4 w-4" />
           <span>{{ model.versions?.totalCount }}</span>
@@ -54,7 +54,7 @@
           v-else
           :class="`${
             showVersions ? 'text-white' : ''
-          } flex flex-none items-center space-x-2 text-xs font-semibold opacity-80 transition-opacity group-hover:opacity-100`"
+          } flex flex-none items-center space-x-2 text-xs font-medium opacity-80 transition-opacity group-hover:opacity-100`"
         >
           <ChevronUpIcon class="h-4 w-4" />
         </div>

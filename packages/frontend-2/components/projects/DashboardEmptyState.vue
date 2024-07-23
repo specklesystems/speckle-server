@@ -7,7 +7,7 @@
         class="h-32"
       />
     </div>
-    <h2 class="block font-semibold leading-8 text-center p-2 h3">
+    <h2 class="block font-medium leading-8 text-center p-2 h3">
       {{ isGuest ? 'No projects found!' : 'Create your first project!' }}
     </h2>
     <h4 class="block font-normal leading-8 text-center p-2">

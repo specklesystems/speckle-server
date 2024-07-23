@@ -14,7 +14,7 @@
         :alt="primaryText"
       />
       <div class="flex flex-col sm:flex-row sm:gap-1">
-        <span class="font-semibold">{{ primaryText }}</span>
+        <span class="font-medium">{{ primaryText }}</span>
         <span v-if="secondaryText">{{ secondaryText }}</span>
       </div>
     </div>
@@ -22,7 +22,7 @@
     <div class="flex gap-2">
       <a :href="url" target="_blank">
         <button
-          class="bg-white/90 hover:bg-white border border-transparent rounded py-1 px-2.5 text-[#27272a] font-semibold text-sm sm:text-base"
+          class="bg-white/90 hover:bg-white border border-transparent rounded py-1 px-2.5 text-[#27272a] font-medium text-sm sm:text-base"
         >
           Learn more
         </button>

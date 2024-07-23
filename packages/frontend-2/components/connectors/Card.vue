@@ -25,7 +25,7 @@
       <div class="flex items-center justify-between">
         <div>
           <div class="flex items-center space-x-1">
-            <div class="font-semibold truncate text-foreground">{{ tag.name }}</div>
+            <div class="font-medium truncate text-foreground">{{ tag.name }}</div>
             <span
               v-if="lastUpdated"
               class="text-xs bg-primary-muted text-primary rounded-full px-2 py-1 -ml-1 truncate"
