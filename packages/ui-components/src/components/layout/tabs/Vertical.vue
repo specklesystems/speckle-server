@@ -75,9 +75,7 @@ const buttonClass = computed(() => {
     ]
 
     if (isActive)
-      baseClasses.push(
-        'text-primary hover:text-primary bg-primary-muted border-primary'
-      )
+      baseClasses.push('text-primary hover:text-primary bg-foundation-2 border-primary')
     else baseClasses.push('border-transparent text-foreground')
 
     return baseClasses

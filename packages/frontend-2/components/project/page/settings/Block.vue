@@ -3,7 +3,7 @@
     class="flex flex-col w-full"
     :class="
       background
-        ? 'bg-foundation border border-outline-3 rounded-lg overflow-hidden '
+        ? 'bg-foundation border border-outline-2 rounded-lg overflow-hidden '
         : ''
     "
   >
@@ -31,7 +31,7 @@
     </div>
     <div
       v-if="disabledMessage || $slots['bottom-buttons']"
-      class="flex flex-col sm:flex-row gap-2 justify-between items-end sm:items-center bg-gray-50 dark:bg-foundation px-4 sm:px-6 py-2 border-t border-outline-3"
+      class="flex flex-col sm:flex-row gap-2 justify-between items-end sm:items-center bg-foundation px-4 sm:px-6 py-2 border-t border-outline-2"
     >
       <div v-if="disabledMessage" class="text-xs flex gap-1 sm:items-center w-full">
         <ExclamationCircleIcon

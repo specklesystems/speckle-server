@@ -78,24 +78,17 @@
               class="text-body-3xs text-foreground-2"
               :updated-at="updatedAtFullDate"
             />
-            <div class="flex items-center gap-2">
-              <FormButton
+            <div class="flex items-center gap-1">
+              <div
                 v-if="!isPendingModelFragment(model)"
-                v-tippy="'View Version Gallery'"
-                rounded
-                link
-                color="outline"
-                size="sm"
-                class="flex items-center gap-1"
+                class="flex items-center gap-1 text-body-2xs font-medium"
               >
                 <ChatBubbleLeftIcon class="h-4 w-4" />
                 {{ model.commentThreadCount.totalCount }}
-              </FormButton>
+              </div>
               <FormButton
                 v-tippy="'View Comments'"
-                rounded
-                link
-                color="outline"
+                color="subtle"
                 size="sm"
                 class="flex items-center gap-1"
                 :to="modelVersionsRoute(projectId, model.id)"

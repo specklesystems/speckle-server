@@ -8,6 +8,11 @@
     :class="buttonClasses"
     :disabled="isDisabled"
     role="button"
+    :style="
+      color !== 'subtle'
+        ? `box-shadow: -1px 1px 4px 0px #0000000a inset; box-shadow: 0px 2px 2px 0px #0000000d;`
+        : ''
+    "
     @click="onClick"
   >
     <Component :is="finalLeftIcon" v-if="finalLeftIcon" :class="iconClasses" />
@@ -182,7 +187,7 @@ const sizeClasses = computed(() => {
       return 'h-10 text-body-sm'
     default:
     case 'base':
-      return 'h-8 text-body-xs'
+      return 'h-8 text-body-xs leading-6'
   }
 })
 
