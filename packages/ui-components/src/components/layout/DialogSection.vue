@@ -39,7 +39,7 @@
         <FormButton
           v-if="button"
           :to="button.expandContent ? undefined : button.to"
-          :variant="button.expandContent && isExpanded ? 'outline' : button.color"
+          :color="button.expandContent && isExpanded ? 'outline' : button.color"
           :icon-right="
             button.expandContent && isExpanded ? undefined : button.iconRight
           "

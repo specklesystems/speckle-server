@@ -52,12 +52,12 @@ const props = defineProps<{
    */
   link?: boolean
   /**
-   * Variant:
+   * color:
    * primary: the default primary blue.
    * outline: foundation background and outline
    * subtle: no styling
    */
-  variant?: FormButtonStyle
+  color?: FormButtonStyle
   /**
    * Whether the target location should be forcefully treated as an external URL
    * (for relative paths this will likely cause a redirect)
@@ -118,7 +118,7 @@ const finalLeftIcon = computed(() => (props.loading ? ArrowPathIcon : props.icon
 const bgAndBorderClasses = computed(() => {
   const classParts: string[] = []
 
-  const variantsBgBorder = {
+  const colorsBgBorder = {
     subtle: [
       'bg-transparent border-transparent text-foreground',
       'hover:bg-primary-muted disabled:hover:bg-transparent focus-visible:border-foundation'
@@ -138,7 +138,7 @@ const bgAndBorderClasses = computed(() => {
   }
 
   if (props.text || props.link) {
-    switch (props.variant) {
+    switch (props.color) {
       case 'subtle':
         classParts.push('text-foreground')
         break
@@ -154,19 +154,19 @@ const bgAndBorderClasses = computed(() => {
         break
     }
   } else {
-    switch (props.variant) {
+    switch (props.color) {
       case 'subtle':
-        classParts.push(...variantsBgBorder.subtle)
+        classParts.push(...colorsBgBorder.subtle)
         break
       case 'outline':
-        classParts.push(...variantsBgBorder.outline)
+        classParts.push(...colorsBgBorder.outline)
         break
       case 'danger':
-        classParts.push(...variantsBgBorder.danger)
+        classParts.push(...colorsBgBorder.danger)
         break
       case 'primary':
       default:
-        classParts.push(...variantsBgBorder.primary)
+        classParts.push(...colorsBgBorder.primary)
         break
     }
   }

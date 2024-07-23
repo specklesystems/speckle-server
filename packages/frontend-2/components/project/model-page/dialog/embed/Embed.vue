@@ -198,7 +198,7 @@ const isPrivate = computed(() => {
 const discoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { variant: 'outline', fullWidth: true, outline: true },
+    props: { color: 'outline', fullWidth: true, outline: true },
     onClick: () => {
       isOpen.value = false
     }
@@ -215,7 +215,7 @@ const discoverableButtons = computed((): LayoutDialogButton[] => [
 const nonDiscoverableButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { variant: 'outline', fullWidth: true, outline: true },
+    props: { color: 'outline', fullWidth: true, outline: true },
     onClick: () => {
       isOpen.value = false
     }

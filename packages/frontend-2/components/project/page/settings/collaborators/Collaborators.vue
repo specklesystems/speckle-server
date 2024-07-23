@@ -39,7 +39,7 @@
             </span>
             <FormButton
               class="shrink-0"
-              variant="danger"
+              color="danger"
               size="sm"
               :disabled="loading"
               @click="

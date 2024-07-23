@@ -47,7 +47,7 @@
         <div
           class="flex w-full justify-between order-1 sm:order-2 sm:justify-normal sm:w-auto sm:space-x-1"
         >
-          <FormButton variant="outline" @click="showDialog = false">Close</FormButton>
+          <FormButton color="outline" @click="showDialog = false">Close</FormButton>
           <FormButton :to="viewUrl">
             Open {{ versionId ? 'Version' : 'Model' }}
           </FormButton>

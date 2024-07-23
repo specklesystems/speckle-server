@@ -6,28 +6,28 @@
           v-tippy="'Rotate left'"
           :icon-left="ArrowUturnLeftIcon"
           hide-text
-          variant="outline"
+          color="outline"
           @click="rotateLeft"
         />
         <FormButton
           v-tippy="'Rotate right'"
           :icon-left="ArrowUturnRightIcon"
           hide-text
-          variant="outline"
+          color="outline"
           @click="rotateRight"
         />
         <FormButton
           v-tippy="'Flip vertically'"
           :icon-left="ArrowUpOnSquareIcon"
           hide-text
-          variant="outline"
+          color="outline"
           @click="flipVertical"
         />
         <FormButton
           v-tippy="'Flip horizontally'"
           :icon-left="ArrowLeftOnRectangleIcon"
           hide-text
-          variant="outline"
+          color="outline"
           @click="flipHorizontal"
         />
       </div>
@@ -70,14 +70,14 @@
           v-tippy="'Remove'"
           :icon-left="XMarkIcon"
           hide-text
-          variant="danger"
+          color="danger"
           @click="onRemove"
         />
       </div>
     </div>
     <div class="flex mx-14 space-x-2">
       <div class="grow" />
-      <FormButton variant="outline" @click="$emit('cancel')">Close</FormButton>
+      <FormButton color="outline" @click="$emit('cancel')">Close</FormButton>
       <FormButton :disabled="disabled" @click="onSave">Save</FormButton>
     </div>
   </div>

@@ -6,7 +6,7 @@
     </template>
     <template #top-buttons>
       <FormButton
-        variant="outline"
+        color="outline"
         :icon-left="BookOpenIcon"
         to="https://speckle.guide/dev/server-webhooks.html"
         external

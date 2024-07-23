@@ -92,7 +92,7 @@
                     <FormButton
                       v-if="!step.completed && step.active"
                       :disabled="!step.active"
-                      variant="outline"
+                      color="outline"
                       @click.stop="step.action"
                     >
                       {{ step.cta }}
@@ -104,7 +104,7 @@
                       text
                       link
                       size="sm"
-                      variant="outline"
+                      color="outline"
                       @click.stop="markComplete(idx)"
                     >
                       <!-- Mark as complete -->
@@ -118,7 +118,7 @@
                       text
                       link
                       size="sm"
-                      variant="outline"
+                      color="outline"
                       @click.stop="step.action"
                     >
                       {{ step.postCompletionCta }}
@@ -128,7 +128,7 @@
                     <FormButton
                       link
                       size="sm"
-                      variant="outline"
+                      color="outline"
                       @click.stop="goToFirstUncompletedStep()"
                     >
                       Complete the previous step!
@@ -173,7 +173,7 @@
           </div>
           <div class="absolute right-2 top-3">
             <FormButton
-              variant="outline"
+              color="outline"
               :icon-left="XMarkIcon"
               hide-text
               @click="closeChecklist()"

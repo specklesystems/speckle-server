@@ -35,7 +35,7 @@
       <span
         v-else
         class="text-sm text-foreground-2 text-center"
-        :class="isModelCardVariant ? ' opacity-50 group-hover:opacity-100' : ''"
+        :class="isModelCardcolor ? ' opacity-50 group-hover:opacity-100' : ''"
       >
         Use our
         <FormButton link external target="_blank" :to="connectorsPageUrl">
@@ -79,13 +79,13 @@ const uploadZone = ref(
   }>
 )
 
-const isModelCardVariant = computed(() => !!props.modelName)
+const isModelCardcolor = computed(() => !!props.modelName)
 
 const getDashedBorderClasses = (isDraggingFiles: boolean) => {
   if (isDraggingFiles) return 'border-primary'
   if (errorMessage.value) return 'border-danger'
 
-  return isModelCardVariant.value ? 'border-blue-500/10' : 'border-outline-2'
+  return isModelCardcolor.value ? 'border-blue-500/10' : 'border-outline-2'
 }
 
 const triggerPicker = () => {

@@ -33,7 +33,7 @@
             size="sm"
             text
             class="-mr-0.5 sm:-mr-1"
-            variant="outline"
+            color="outline"
             @click="showRaw = !showRaw"
           >
             <CodeBracketIcon

@@ -15,7 +15,7 @@
       <div v-if="isLoggedIn" class="flex items-center justify-end w-full space-x-2">
         <FormButton
           :size="buttonSize"
-          variant="danger"
+          color="danger"
           text
           :full-width="block"
           @click="processInvite(false)"

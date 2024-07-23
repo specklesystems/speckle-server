@@ -215,7 +215,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'createTestAutomation',
           text: 'Create test automation',
           props: {
-            variant: 'outline',
+            color: 'outline',
             iconLeft: CodeBracketIcon
           },
           onClick: () => {
@@ -241,7 +241,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'fnParamsPrev',
           text: 'Previous',
           props: {
-            variant: 'outline',
+            color: 'outline',
             iconLeft: ChevronLeftIcon,
             class: '!text-primary'
           },
@@ -263,7 +263,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'detailsPrev',
           text: 'Previous',
           props: {
-            variant: 'outline',
+            color: 'outline',
             iconLeft: ChevronLeftIcon
           },
           onClick: () => step.value--
@@ -281,7 +281,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'detailsPrev',
           text: 'Back',
           props: {
-            variant: 'outline',
+            color: 'outline',
             iconLeft: ChevronLeftIcon
           },
           onClick: reset

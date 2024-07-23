@@ -5,7 +5,7 @@
     :buttons="[
       {
         text: 'Cancel',
-        props: { variant: 'outline', fullWidth: true },
+        props: { color: 'outline', fullWidth: true },
         onClick: () => {
           isOpen = false
         }

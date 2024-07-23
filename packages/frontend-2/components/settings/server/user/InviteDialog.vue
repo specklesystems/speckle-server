@@ -127,7 +127,7 @@ const onSubmit = handleSubmit(async (values) => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { variant: 'outline', fullWidth: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => {
       isOpen.value = false
     }

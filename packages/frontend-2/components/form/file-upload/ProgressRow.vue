@@ -35,7 +35,7 @@
     <FormButton
       v-if="false"
       class="absolute -right-8 top-4"
-      variant="danger"
+      color="danger"
       size="sm"
       rounded
       hide-text

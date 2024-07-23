@@ -12,7 +12,7 @@
 
       <FormButton
         size="sm"
-        variant="danger"
+        color="danger"
         hide-text
         :icon-left="XMarkIcon"
         :disabled="!deleteEnabled"

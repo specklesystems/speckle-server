@@ -3,7 +3,7 @@
     <ViewerSidebar :open="sidebarOpen" @close="onClose">
       <template #title><div class="select-none">Selection info</div></template>
       <template #actions>
-        <FormButton size="sm" text variant="outline" @click.stop="hideOrShowSelection">
+        <FormButton size="sm" text color="outline" @click.stop="hideOrShowSelection">
           <div
             v-if="!isHidden"
             class="flex items-center gap-1 text-foreground hover:text-primary"

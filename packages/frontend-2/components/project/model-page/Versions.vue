@@ -13,7 +13,7 @@
         class="flex flex-wrap space-y-2 sm:items-center sm:space-x-2 sm:space-y-0 sm:flex-nowrap"
       >
         <FormButton
-          variant="outline"
+          color="outline"
           class="w-full sm:w-auto"
           @click="selectedItems = []"
         >
@@ -21,7 +21,7 @@
         </FormButton>
         <div class="flex space-x-2 w-full sm:w-auto">
           <FormButton class="grow" @click="onBatchMoveTo">Move to</FormButton>
-          <FormButton variant="danger" class="grow" @click="onBatchDelete">
+          <FormButton color="danger" class="grow" @click="onBatchDelete">
             Delete
           </FormButton>
         </div>

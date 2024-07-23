@@ -44,7 +44,7 @@
         <span class="text-body-xs text-left">Color objects by status</span>
         <FormButton
           size="sm"
-          :variant="
+          :color="
             diffState.mode.value !== VisualDiffMode.COLORED ? 'outline' : undefined
           "
           @click="swapDiffMode()"

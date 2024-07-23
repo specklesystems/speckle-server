@@ -10,7 +10,7 @@
         Remove yourself from this project. To join again you will need to get invited.
       </p>
       <template #bottom-buttons>
-        <FormButton variant="danger" @click="showLeaveDialog = true">
+        <FormButton color="danger" @click="showLeaveDialog = true">
           Leave Project
         </FormButton>
       </template>

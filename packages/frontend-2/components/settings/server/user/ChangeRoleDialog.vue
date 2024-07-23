@@ -118,12 +118,12 @@ const changeUserRoleConfirmed = async () => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Change role',
-    props: { variant: 'danger', fullWidth: true },
+    props: { color: 'danger', fullWidth: true },
     onClick: changeUserRoleConfirmed
   },
   {
     text: 'Cancel',
-    props: { variant: 'outline', fullWidth: true, outline: true },
+    props: { color: 'outline', fullWidth: true, outline: true },
     onClick: () => emit('update:open', false)
   }
 ])

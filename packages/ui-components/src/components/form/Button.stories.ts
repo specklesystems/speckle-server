@@ -10,7 +10,7 @@ import { rightClick } from '~~/src/helpers/testing'
 export default {
   component: FormButton,
   argTypes: {
-    variant: {
+    color: {
       options: ['primary', 'outline', 'subtle', 'danger'],
       control: { type: 'select' }
     },
@@ -93,7 +93,7 @@ export const Default: StoryObj = {
     fullWidth: false,
     text: false,
     link: false,
-    variant: 'primary',
+    color: 'primary',
     disabled: false,
     submit: false,
     hideText: false,
@@ -110,19 +110,19 @@ export const Default: StoryObj = {
 
 export const Subtle: StoryObj = mergeStories(Default, {
   args: {
-    variant: 'subtle'
+    color: 'subtle'
   }
 })
 
 export const Outlined: StoryObj = mergeStories(Default, {
   args: {
-    variant: 'outline'
+    color: 'outline'
   }
 })
 
 export const Danger: StoryObj = mergeStories(Default, {
   args: {
-    variant: 'danger'
+    color: 'danger'
   }
 })
 

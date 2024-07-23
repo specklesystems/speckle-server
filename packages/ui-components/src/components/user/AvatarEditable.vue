@@ -16,7 +16,7 @@
         <FormButton
           size="sm"
           :disabled="disabled"
-          variant="outline"
+          color="outline"
           @click="editMode = true"
         >
           Change

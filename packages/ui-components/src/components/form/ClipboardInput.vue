@@ -18,7 +18,7 @@
     />
     <div class="absolute inset-0 right-2 flex justify-end items-center">
       <FormButton
-        variant="outline"
+        color="outline"
         :icon-left="copied ? ClipboardDocumentCheckIcon : ClipboardDocumentIcon"
         hide-text
         @click="handleCopy"

@@ -10,7 +10,7 @@
     <template #actions>
       <FormButton
         text
-        variant="danger"
+        color="danger"
         :icon-left="TrashIcon"
         class="py-1"
         @click="() => clearMeasurements()"

@@ -23,7 +23,7 @@ const open = defineModel<boolean>('open', { required: true })
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { variant: 'outline', fullWidth: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => {
       open.value = false
     }

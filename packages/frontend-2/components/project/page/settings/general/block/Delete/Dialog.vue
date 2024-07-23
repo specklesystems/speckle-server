@@ -61,7 +61,7 @@ const discussionText = computed(() =>
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Cancel',
-    props: { variant: 'outline', fullWidth: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => {
       isOpen.value = false
       projectNameInput.value = ''
@@ -70,7 +70,7 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Delete',
     props: {
-      variant: 'danger',
+      color: 'danger',
       fullWidth: true,
       outline: true,
       disabled: projectNameInput.value !== props.project.name

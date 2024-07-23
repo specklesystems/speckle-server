@@ -14,7 +14,7 @@
             :icon-right="ArrowTopRightOnSquareIcon"
             target="_blank"
             external
-            variant="outline"
+            color="outline"
             class="mx-auto my-2"
             to="https://speckle.systems/blog/automate-with-speckle/"
           >

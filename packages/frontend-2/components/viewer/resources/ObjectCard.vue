@@ -22,7 +22,7 @@
         class="group absolute inset-0 z-[21] flex h-full w-full items-center justify-end space-x-2 rounded bg-gradient-to-r from-transparent to-foundation p-4"
       >
         <FormButton
-          variant="danger"
+          color="danger"
           size="sm"
           class="rounded-full"
           @click="$emit('remove', props.object.objectId)"

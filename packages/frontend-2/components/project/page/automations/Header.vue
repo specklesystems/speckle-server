@@ -15,7 +15,7 @@
       />
       <FormButton
         :icon-left="ArrowTopRightOnSquareIcon"
-        variant="outline"
+        color="outline"
         class="shrink-0"
         :to="automationFunctionsRoute"
       >

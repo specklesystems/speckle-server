@@ -45,9 +45,7 @@
 
           <div class="flex items-center justify-between pointer-events-auto mt-4">
             <slot name="actions">
-              <FormButton text variant="outline" @click="$emit('skip')">
-                Skip
-              </FormButton>
+              <FormButton text color="outline" @click="$emit('skip')">Skip</FormButton>
               <div class="flex justify-center space-x-2">
                 <FormButton
                   v-show="index !== 0"

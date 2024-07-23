@@ -174,7 +174,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'authorizeClose',
           text: 'Close',
           props: {
-            variant: 'outline',
+            color: 'outline',
             fullWidth: true
           },
           onClick: () => (open.value = false)
@@ -207,7 +207,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'detailsPrevious',
           text: 'Previous',
           props: {
-            variant: 'outline',
+            color: 'outline',
             iconLeft: ChevronLeftIcon,
             color: '!text-primary'
           },
@@ -226,7 +226,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           id: 'doneClose',
           text: 'Close',
           props: {
-            variant: 'outline',
+            color: 'outline',
             fullWidth: true
           },
           onClick: () => (open.value = false)

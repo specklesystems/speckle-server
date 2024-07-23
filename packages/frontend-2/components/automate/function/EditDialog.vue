@@ -32,7 +32,7 @@ const buttons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
     props: {
-      variant: 'outline',
+      color: 'outline',
       class: '!text-primary'
     },
     onClick: () => (open.value = false)

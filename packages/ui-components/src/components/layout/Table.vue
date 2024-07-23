@@ -43,7 +43,7 @@
                 <FormButton
                   :icon-left="button.icon"
                   size="sm"
-                  variant="outline"
+                  color="outline"
                   hide-text
                   :class="button.class"
                   :to="isString(button.action) ? button.action : undefined"
