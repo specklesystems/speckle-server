@@ -3,7 +3,7 @@
     <template v-if="hasItems">
       <ProjectPageLatestItemsCommentsGrid
         v-if="gridOrList === GridListToggleValue.Grid"
-        :threads="resul"
+        :threads="result"
       />
       <ProjectPageLatestItemsCommentsList v-else :threads="result" />
       <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
