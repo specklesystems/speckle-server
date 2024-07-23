@@ -8,7 +8,7 @@
       ></HeaderNavLink>
     </Portal>
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <h1 class="text-2xl font-bold">Webhooks</h1>
+      <h1 class="text-2xl font-semibold">Webhooks</h1>
       <div class="flex gap-2">
         <FormButton
           variant="outline"
@@ -68,7 +68,7 @@
       <template #data="{ item }">
         <div class="flex flex-col">
           <h3
-            class="font-bold text-base truncate"
+            class="font-semibold text-base truncate"
             :class="{ 'opacity-60': !item.enabled }"
           >
             {{ item.description }}

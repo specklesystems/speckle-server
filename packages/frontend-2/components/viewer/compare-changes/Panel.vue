@@ -6,7 +6,7 @@
       </FormButton>
     </template>
     <div class="flex flex-col space-y-2 text-sm p-2">
-      <div class="text-xs bg-blue-500/20 text-primary p-1 rounded">
+      <div class="text-body-2xs bg-blue-500/20 text-primary p-1 rounded">
         This is an experimental feature.
       </div>
       <div class="flex space-x-2">
@@ -41,7 +41,7 @@
         />
       </div>
       <div class="flex items-center justify-between w-full px-1">
-        <span class="text-xs text-left">Color objects by status</span>
+        <span class="text-body-xs text-left">Color objects by status</span>
         <FormButton
           size="sm"
           :variant="

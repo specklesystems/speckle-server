@@ -10,7 +10,7 @@
           class="flex items-center space-x-2 group hover:cursor-pointer"
           :to="seeAllUrl"
         >
-          <h2 class="h4 font-bold transition group-hover:text-primary">
+          <h2 class="h4 transition group-hover:text-primary">
             {{ title }}
           </h2>
 

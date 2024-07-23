@@ -3,7 +3,7 @@
     :is="linkComponent"
     v-if="!hasChildren"
     :to="to"
-    class="group flex items-center justify-between gap-2 shrink-0 text-sm select-none rounded-md w-full hover:bg-primary-muted py-1.5 px-5 cursor-pointer"
+    class="group flex items-center justify-between gap-2 shrink-0 text-body-xs select-none rounded-md w-full hover:bg-primary-muted py-1.5 px-5 cursor-pointer"
     exact-active-class="bg-foundation-focus hover:!bg-foundation-focus"
     :external="external"
     :target="external ? '_blank' : undefined"
@@ -29,7 +29,7 @@
       @click="isOpen = !isOpen"
     >
       <ChevronDownIcon :class="isOpen ? '' : 'rotate-180'" class="h-2.5 w-2.5" />
-      <h6 class="font-bold text-foreground-2 text-xs flex items-center gap-1.5">
+      <h6 class="text-heading-sm text-foreground-2 flex items-center gap-1.5">
         {{ label }}
       </h6>
     </button>

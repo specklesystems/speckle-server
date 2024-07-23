@@ -11,7 +11,7 @@
     >
       <ListboxLabel
         :id="labelId"
-        class="flex label text-foreground mb-1.5 text-[13px]"
+        class="flex text-heading-sm text-foreground mb-1.5"
         :class="{ 'sr-only': !showLabel }"
         :for="buttonId"
       >

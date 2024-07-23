@@ -25,7 +25,7 @@
             <span class="min-w-6">{{ item.title }}</span>
             <div
               v-if="item.count"
-              class="rounded-full px-2 text-[11px] transition-all min-w-6"
+              class="rounded-full px-2 text-body-3xs transition-all min-w-6"
               :class="
                 activeItem?.id === item.id
                   ? 'text-primary bg-blue-100'
@@ -69,7 +69,7 @@ const buttonClass = computed(() => {
       'relative',
       'flex items-center gap-1.5',
       'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent',
-      'text-base',
+      'text-body-sm',
       'border-l-2',
       'py-1'
     ]

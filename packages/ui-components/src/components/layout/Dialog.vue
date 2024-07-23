@@ -42,7 +42,7 @@
                 :class="scrolledFromTop && 'relative z-20 shadow-lg'"
               >
                 <div
-                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-lg sm:text-2xl font-bold"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-heading-lg"
                 >
                   <div class="flex items-center pr-12">
                     <ChevronLeftIcon
@@ -75,7 +75,7 @@
               </button>
               <div
                 ref="slotContainer"
-                class="flex-1 simple-scrollbar overflow-y-auto text-sm sm:text-base"
+                class="flex-1 simple-scrollbar overflow-y-auto text-body-xs"
                 :class="
                   hasTitle
                     ? `px-6 pb-4 ${fullscreen && 'md:p-0'}`

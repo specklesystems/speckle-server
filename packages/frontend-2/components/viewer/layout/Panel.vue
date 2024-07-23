@@ -10,9 +10,7 @@
         v-if="$slots.title"
         class="flex items-center py-2 px-3 border-b border-outline-3 dark:border-foundation-2 bg-foundation"
       >
-        <div
-          class="flex items-center h-full w-full pr-8 font-semibold sm:font-bold text-sm text-primary"
-        >
+        <div class="flex items-center h-full w-full pr-8 text-heading-sm text-primary">
           <span class="truncate">
             <slot name="title"></slot>
           </span>

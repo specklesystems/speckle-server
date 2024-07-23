@@ -48,7 +48,7 @@
             <div class="w-full min-w-[10rem]">
               <p
                 v-if="notification.title"
-                class="text-foreground font-bold"
+                class="text-foreground font-semibold"
                 :class="isTitleOnly ? 'text-sm' : 'text-base'"
               >
                 {{ notification.title }}

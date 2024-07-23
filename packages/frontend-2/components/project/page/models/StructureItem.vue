@@ -4,7 +4,7 @@
   <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation w-full py-1 pr-2 sm:pr-4 flex flex-col sm:flex-row rounded-md shadow hover:shadow-xl hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
+      class="group relative bg-foundation w-full pr-2 sm:pr-4 flex flex-col sm:flex-row rounded-md shadow hover:shadow-xl hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
     >
       <div class="flex items-center flex-grow order-2 sm:order-1">
         <!-- Icon -->
@@ -24,7 +24,7 @@
 
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
-          <NuxtLink :to="modelLink || ''" class="text-lg font-bold text-foreground">
+          <NuxtLink :to="modelLink || ''" class="text-heading text-foreground">
             {{ name }}
           </NuxtLink>
           <span
@@ -86,7 +86,7 @@
         </div>
         <div v-else-if="hasVersions" class="flex items-center space-x-6 sm:space-x-10">
           <div
-            class="text-xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
+            class="text-body-2xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
             Updated
             <span v-tippy="updatedAt.full">
@@ -126,7 +126,7 @@
       <!-- Preview or icon section -->
       <div
         v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
-        class="w-24 h-20 ml-4"
+        class="w-20 h-16 ml-4"
       >
         <NuxtLink :to="modelLink || ''" class="h-full w-full">
           <PreviewImage
@@ -149,14 +149,14 @@
       >
         <!-- Icon -->
         <div>
-          <div class="mx-2 flex items-center hover:text-primary text-foreground-2 h-16">
+          <div class="mx-2 flex items-center hover:text-primary text-foreground-2 h-14">
             <ChevronDownIcon
               :class="`w-4 h-4 transition ${expanded ? 'rotate-180' : ''}`"
             />
           </div>
         </div>
         <!-- Name -->
-        <div class="text-lg font-bold text-foreground flex-grow text-left">
+        <div class="text-heading text-foreground flex-grow text-left">
           {{ name }}
         </div>
         <!-- Preview -->
@@ -173,25 +173,23 @@
               {{ child?.name }}
             </div>
           </div> -->
-          <div class="text-xs text-foreground-2">
+          <div class="text-body-2xs text-foreground-2">
             Updated
             <span v-tippy="updatedAt.full">
               {{ updatedAt.relative }}
             </span>
           </div>
-          <div class="text-xs text-foreground-2">
-            <FormButton
-              rounded
-              size="sm"
-              :icon-right="ArrowTopRightOnSquareIcon"
-              :to="viewAllUrl"
-              :disabled="!viewAllUrl"
-              @click.stop="trackFederateModels"
-            >
-              View all
-            </FormButton>
-          </div>
-          <div :class="`ml-4 w-24 h-20`">
+          <FormButton
+            rounded
+            size="sm"
+            :icon-right="ArrowTopRightOnSquareIcon"
+            :to="viewAllUrl"
+            :disabled="!viewAllUrl"
+            @click.stop="trackFederateModels"
+          >
+            View all
+          </FormButton>
+          <div :class="`ml-4 w-16 h-12`">
             <div
               class="w-full h-full rounded-md bg-primary-muted flex items-center justify-center"
             >
@@ -203,7 +201,7 @@
       <!-- Children list -->
       <div
         v-if="hasChildren && expanded && !isPendingFileUpload(item)"
-        class="pl-8 mt-4 space-y-4"
+        class="pl-8 mt-2 space-y-2"
       >
         <div v-if="childrenLoading" class="mr-8">
           <CommonLoadingBar loading />

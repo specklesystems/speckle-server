@@ -24,7 +24,7 @@
             :key="type"
             class="border-t"
           >
-            <td class="text-xs sm:text-sm py-4">
+            <td class="text-body-xs py-4">
               {{ notificationTypeMapping[type] || 'Unknown' }}
             </td>
             <td

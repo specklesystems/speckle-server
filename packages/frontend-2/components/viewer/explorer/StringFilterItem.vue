@@ -9,7 +9,7 @@
       :title="item.value"
       @click="setSelection()"
     >
-      <div class="flex gap-1 items-center flex-shrink truncate text-xs sm:text-sm">
+      <div class="flex gap-1 items-center flex-shrink truncate text-body-2xs">
         <span
           v-if="color"
           class="w-3 h-3 rounded"

@@ -2,7 +2,7 @@
 <template>
   <div
     v-if="cleanReadmeHtml.length"
-    :class="proseClasses"
+    class="prose-sm max-w-auto overflow-auto"
     v-html="cleanReadmeHtml"
   ></div>
   <div v-else class="italic text-center">No readme found</div>
@@ -55,16 +55,4 @@ const { html: cleanReadmeHtml } = useMarkdown(
   computed(() => finalMarkdown.value),
   { key: 'CommonProseGithubReadme' }
 )
-
-const proseClasses = ref([
-  'prose max-w-none',
-  'prose-img:inline',
-  'prose-img:my-0',
-  'prose-h1:h1 prose-h1:font-normal',
-  'prose-h2:h2',
-  'prose-h3:h3',
-  'prose-h4:h4',
-  'prose-h5:h5',
-  'dark:prose-invert'
-])
 </script>

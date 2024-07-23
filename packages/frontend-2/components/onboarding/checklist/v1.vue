@@ -18,8 +18,8 @@
             v-if="showIntro"
             class="flex-col justify-around px-2 h-full py-2 md:col-span-1 hidden lg:flex"
           >
-            <div>Quickstart checklist</div>
-            <div class="text-sm text-foreground-2">
+            <div class="text-heading-sm">Quickstart checklist</div>
+            <div class="text-body-sm text-foreground-2">
               Become a Speckle pro in four steps!
             </div>
             <div class="space-x-1">
@@ -59,7 +59,7 @@
                 "
               >
                 <div
-                  :class="`text-lg sm:text-xl font-bold flex items-center justify-between ${
+                  :class="`text-lg sm:text-xl font-semibold flex items-center justify-between ${
                     step.active ? 'text-foreground-on-primary' : 'text-foreground-2'
                   }`"
                 >
@@ -74,7 +74,7 @@
                 <div
                   :class="`${
                     step.active
-                      ? 'font-bold text-sm sm:text-base text-foreground-on-primary'
+                      ? 'font-semibold text-sm sm:text-base text-foreground-on-primary'
                       : ''
                   }`"
                 >
@@ -110,7 +110,7 @@
                       <!-- Mark as complete -->
                       <OutlineCheckCircleIcon class="w-4 h-4" />
                     </FormButton>
-                    <span v-if="step.completed" class="text-xs font-bold">
+                    <span v-if="step.completed" class="text-xs font-semibold">
                       Completed!
                     </span>
                     <FormButton

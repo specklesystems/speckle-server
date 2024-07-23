@@ -2,8 +2,8 @@
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
     <template #header>Get your colleagues in!</template>
     <form @submit="onSubmit">
-      <div class="flex flex-col space-y-4 text-foreground">
-        <p class="text-sm mb-1">
+      <div class="flex flex-col gap-y-4 text-foreground">
+        <p class="text-body-xs mb-1">
           Speckle will send a server invite link to the email(-s) below. You can also
           add a personal message if you want to. To add multiple e-mails, seperate them
           with commas.

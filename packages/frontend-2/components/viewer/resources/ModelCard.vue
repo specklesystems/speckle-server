@@ -23,21 +23,21 @@
         <div>
           <UserAvatar :user="loadedVersion?.authorUser" />
         </div>
-        <div class="flex min-w-0 flex-grow flex-col space-y-0">
+        <div class="flex min-w-0 flex-grow flex-col">
           <div
             v-tippy="modelName.subheader ? model.name : null"
             :class="`${
               showVersions ? 'text-foundation' : ''
-            } text-sm sm:text-base font-bold truncate min-w-0`"
+            } text-heading truncate min-w-0`"
           >
             {{ modelName.header }}
           </div>
-          <div class="truncate text-xs">
+          <div class="truncate -mt-1">
             <span
               v-tippy="createdAtFormatted.full"
               :class="`${
                 showVersions ? 'text-foundation font-semibold' : ''
-              } text-xs opacity-70`"
+              } text-body-2xs opacity-70`"
             >
               {{ isLatest ? 'Latest version' : createdAtFormatted.relative }}
             </span>
@@ -45,7 +45,7 @@
         </div>
         <div
           v-if="!showVersions"
-          class="flex flex-none items-center space-x-1 text-xs font-bold"
+          class="flex flex-none items-center space-x-1 text-xs font-semibold"
         >
           <IconVersions class="h-4 w-4" />
           <span>{{ model.versions?.totalCount }}</span>
@@ -54,7 +54,7 @@
           v-else
           :class="`${
             showVersions ? 'text-white' : ''
-          } flex flex-none items-center space-x-2 text-xs font-bold opacity-80 transition-opacity group-hover:opacity-100`"
+          } flex flex-none items-center space-x-2 text-xs font-semibold opacity-80 transition-opacity group-hover:opacity-100`"
         >
           <ChevronUpIcon class="h-4 w-4" />
         </div>
