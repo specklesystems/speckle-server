@@ -4,7 +4,7 @@
   <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation w-full pr-2 sm:pr-4 flex flex-col sm:flex-row rounded-md shadow hover:shadow-xl hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
+      class="group relative bg-foundation-2 w-full pr-2 sm:pr-4 flex flex-col sm:flex-row rounded-md hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
     >
       <div class="flex items-center flex-grow order-2 sm:order-1">
         <!-- Icon -->
@@ -84,7 +84,7 @@
             class="h-full w-full"
           />
         </div>
-        <div v-else-if="hasVersions" class="flex items-center space-x-6 sm:space-x-10">
+        <div v-else-if="hasVersions" class="flex items-center space-x-6">
           <div
             class="text-body-2xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
@@ -93,7 +93,7 @@
               {{ updatedAt.relative }}
             </span>
           </div>
-          <div class="text-xs text-foreground-2 flex items-center space-x-1">
+          <div class="text-body-xs text-foreground flex items-center space-x-1">
             <span>{{ model?.commentThreadCount.totalCount }}</span>
             <ChatBubbleLeftRightIcon class="w-4 h-4" />
           </div>
@@ -111,6 +111,7 @@
               size="sm"
               :to="modelVersionsRoute(project.id, item.model.id)"
               class="gap-0.5"
+              color="subtle"
             >
               <IconVersions class="h-4 w-4" />
               {{ model?.versionCount.totalCount }}
@@ -126,9 +127,12 @@
       <!-- Preview or icon section -->
       <div
         v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
-        class="w-20 h-16 ml-4"
+        class="w-20 h-16 ml-4 py-1"
       >
-        <NuxtLink :to="modelLink || ''" class="h-full w-full">
+        <NuxtLink
+          :to="modelLink || ''"
+          class="h-full w-full block bg-foundation rounded-lg border border-outline-2"
+        >
           <PreviewImage
             v-if="item.model?.previewUrl"
             :preview-url="item.model.previewUrl"
@@ -143,7 +147,7 @@
       class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
     >
       <button
-        class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md shadow hover:shadow-xl cursor-pointer hover:bg-primary-muted transition-all"
+        class="group bg-foundation-2 w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:bg-primary-muted transition-all"
         href="/test"
         @click.stop="expanded = !expanded"
       >

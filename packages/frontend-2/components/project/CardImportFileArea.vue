@@ -34,11 +34,11 @@
       </div>
       <span
         v-else
-        class="text-sm text-foreground-2 text-center"
-        :class="isModelCardcolor ? ' opacity-50 group-hover:opacity-100' : ''"
+        class="text-body-2xs text-foreground-2 text-center"
+        :class="isModelCardcolor ? ' opacity-60 group-hover:opacity-100' : ''"
       >
         Use our
-        <FormButton link external target="_blank" :to="connectorsPageUrl">
+        <FormButton link external target="_blank" size="sm" :to="connectorsPageUrl">
           connectors
         </FormButton>
         to publish a {{ modelName ? '' : 'new model' }} version to

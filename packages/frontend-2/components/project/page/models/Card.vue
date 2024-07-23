@@ -1,13 +1,14 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div
+  <NuxtLink
     :class="containerClasses"
+    :href="finalModelUrl"
     @mouseleave=";(showActionsMenu = false), (hovered = false)"
     @mouseenter="hovered = true"
   >
     <div
-      :class="['relative group/item']"
+      class="relative"
       @click="$emit('click', $event)"
       @keypress="keyboardClick((e) => emit('click', e))"
     >
@@ -24,13 +25,11 @@
           class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
         />
         <template v-else-if="previewUrl">
-          <NuxtLink :href="finalModelUrl" class="w-full h-full">
-            <div
-              class="bg-foundation-page w-full h-full rounded-xl border border-outline-2"
-            >
-              <PreviewImage :preview-url="previewUrl" />
-            </div>
-          </NuxtLink>
+          <div
+            class="bg-foundation-page w-full h-full rounded-xl border border-outline-2"
+          >
+            <PreviewImage :preview-url="previewUrl" />
+          </div>
         </template>
         <div
           v-if="!isPendingModelFragment(model)"
@@ -119,7 +118,7 @@
         />
       </div>
     </div>
-  </div>
+  </NuxtLink>
 </template>
 <script lang="ts" setup>
 import type {
@@ -178,7 +177,7 @@ const hovered = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-xl bg-foundation transition border-2 border-transparent bg-foundation-2 p-1'
+    'group hover:bg-primary-muted rounded-xl transition border-2 border-transparent bg-foundation-2 p-1'
   ]
 
   return classParts.join(' ')

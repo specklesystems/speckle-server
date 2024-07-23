@@ -18,11 +18,11 @@
       <MenuItems
         ref="menuItems"
         :class="[
-          'absolute mt-2 w-40 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation-page shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40',
+          'absolute mt-2 w-44 origin-top-right divide-y divide-outline-3 rounded-md bg-foundation-page shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-40',
           menuDirection === HorizontalDirection.Left ? 'right-0' : ''
         ]"
       >
-        <div v-for="(group, i) in items" :key="i" class="py-1">
+        <div v-for="(group, i) in items" :key="i" class="p-1">
           <MenuItem
             v-for="item in group"
             v-slot="{ active, disabled }"
@@ -98,7 +98,7 @@ const buildButtonClassses = (params: {
   ]
 
   if (active && !color) {
-    classParts.push('bg-foundation-focus text-foreground')
+    classParts.push('bg-primary-muted text-foreground')
   } else if (disabled) {
     classParts.push('text-foreground-disabled')
   } else if (color === 'danger' && active) {
