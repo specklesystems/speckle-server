@@ -4,7 +4,7 @@
       <HeaderNavLink to="/server-management" name="Server Management"></HeaderNavLink>
       <HeaderNavLink
         to="/server-management/pending-invitations"
-        name="Pending Iivitations"
+        name="Pending Invitations"
       ></HeaderNavLink>
     </Portal>
 
