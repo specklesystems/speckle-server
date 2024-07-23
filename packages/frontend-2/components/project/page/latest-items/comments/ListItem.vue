@@ -28,7 +28,7 @@
           <span v-tippy="updatedAt.full" class="text-foreground-2 text-xs">
             {{ updatedAt.relative }}
           </span>
-          <span class="ml-4 text-body-xs font-semibold text-primary">
+          <span class="ml-4 text-body-xs font-medium text-primary">
             {{ thread.repliesCount.totalCount }}
             {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
           </span>

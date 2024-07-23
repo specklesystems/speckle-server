@@ -36,7 +36,7 @@
                 : ''
             }`"
           >
-            <div :class="`truncate text-body-xs ${unfold ? 'font-semibold' : ''}`">
+            <div :class="`truncate text-body-xs ${unfold ? 'font-medium' : ''}`">
               <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
               {{ header || headerAndSubheader.header }}
             </div>

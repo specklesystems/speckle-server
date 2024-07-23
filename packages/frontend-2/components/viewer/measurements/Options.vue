@@ -45,7 +45,7 @@
     </div>
     <div class="p-3 flex flex-col gap-3">
       <div class="flex flex-col gap-2">
-        <h6 class="font-semibold text-xs sm:text-sm">Units</h6>
+        <h6 class="font-medium text-xs sm:text-sm">Units</h6>
         <ViewerMeasurementsUnitSelect
           v-model="selectedUnit"
           mount-menu-on-body

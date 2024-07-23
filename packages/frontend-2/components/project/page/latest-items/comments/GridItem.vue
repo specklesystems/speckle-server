@@ -34,7 +34,7 @@
         >
           <div class="truncate text-body-sm">{{ thread.rawText }}</div>
           <div class="space-x-1">
-            <span class="text-body-2xs font-semibold text-primary">
+            <span class="text-body-2xs font-medium text-primary">
               {{ thread.repliesCount.totalCount }}
               {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
             </span>

@@ -23,7 +23,7 @@
         <template v-if="versions.length > 1">the selected versions,</template>
         <template v-else-if="versions.length">
           the selected version
-          <span class="inline font-semibold">"{{ versions[0].message }}",</span>
+          <span class="inline font-medium">"{{ versions[0].message }}",</span>
         </template>
         please click on the button below!
       </p>

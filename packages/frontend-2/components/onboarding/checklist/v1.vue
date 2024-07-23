@@ -59,7 +59,7 @@
                 "
               >
                 <div
-                  :class="`text-lg sm:text-xl font-semibold flex items-center justify-between ${
+                  :class="`text-lg sm:text-xl font-medium flex items-center justify-between ${
                     step.active ? 'text-foreground-on-primary' : 'text-foreground-2'
                   }`"
                 >
@@ -74,7 +74,7 @@
                 <div
                   :class="`${
                     step.active
-                      ? 'font-semibold text-sm sm:text-base text-foreground-on-primary'
+                      ? 'font-medium text-sm sm:text-base text-foreground-on-primary'
                       : ''
                   }`"
                 >
@@ -110,7 +110,7 @@
                       <!-- Mark as complete -->
                       <OutlineCheckCircleIcon class="w-4 h-4" />
                     </FormButton>
-                    <span v-if="step.completed" class="text-xs font-semibold">
+                    <span v-if="step.completed" class="text-xs font-medium">
                       Completed!
                     </span>
                     <FormButton

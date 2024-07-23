@@ -38,12 +38,12 @@
         <div class="gap-y-2 text-body-sm">
           <div v-if="latestRelease">
             <span>Last published:&nbsp;</span>
-            <CommonText class="font-semibold" :text="publishedAt" />
+            <CommonText class="font-medium" :text="publishedAt" />
           </div>
           <div>
             <span>Used by:&nbsp;</span>
             <CommonText
-              class="font-semibold"
+              class="font-medium"
               :text="`${fn.automationCount} automations`"
             />
           </div>

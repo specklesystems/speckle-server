@@ -10,7 +10,7 @@
       :class="`grid grid-cols-3 pr-1 ${expandable ? 'cursor-pointer' : ''}`"
       @click="handleExpand"
     >
-      <div class="col-span-1 mr-1 flex items-center text-foreground-2 font-semibold">
+      <div class="col-span-1 mr-1 flex items-center text-foreground-2 font-medium">
         <ChevronRightIcon
           v-if="expandable"
           :class="`w-3 ${expanded ? 'rotate-90' : ''} transition shrink-0 `"
