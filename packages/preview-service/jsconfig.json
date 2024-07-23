@@ -1,5 +1,0 @@
-{
-  "extends": "../../jsconfig.base.json",
-  "compilerOptions": {},
-  "include": ["*.js", "bg_service", "bin/www", "render_page", "routes"]
-}

@@ -10,17 +10,31 @@ This is an overview of this service:
 
 ## Run locally
 
-With an updated viewer installed in the current directory, you should first build the frontend-part of the preview service: The simple webpage with the viewer that will be accessed with Puppeteer to generate the preview:
+To run the preview service locally, you need to have a running database and server service. You can use the docker-compose file in the root of this repository to start the database. Please follow instructions in the packages/server README to start the server service. The server is required to provide the database migrations.
 
+Firstly, copy the `.env.example` file to `.env` and fill in the required values.
+
+```bash
+cp .env.example .env
 ```
+
+The install the dependencies with:
+
+```bash
+yarn install
+```
+
+Then build the service:
+
+```bash
 yarn build
 ```
 
-This should be rerun whenever you make changes to the viewer (if you make local viewer changes, don't forget to build the viewer module before running this)
+This builds both typescript and webpack (for the page that is deployed to chromium to create the views). It should be rerun whenever you make changes to the viewer (if you make local viewer changes, don't forget to build the viewer module before running this)
 
-After the viewer web page is up to date, run the preview service with:
+Finally, you can run the preview service with:
 
-```
+```bash
 yarn dev
 ```
 
@@ -28,10 +42,16 @@ This will use the default dev DB connection of `postgres://speckle:speckle@127.0
 
 ### In a docker image
 
-Once you build the previewservice Dockerfile, you can run it like so:
+Navigate to the root of this git repository and build the preview service Dockerfile:
 
+```bash
+docker build -f packages/preview-service/Dockerfile -t speckle-preview-service:local .
 ```
-docker run --rm -p 3001:3001 -e PG_CONNECTION_STRING=postgres://speckle:speckle@host.docker.internal/speckle {IMAGEID}
+
+Once you have built the preview service Dockerfile, you can run it like so:
+
+```bash
+docker run --rm -p 3001:3001 -e PORT=3001 -e PG_CONNECTION_STRING=postgres://speckle:speckle@host.docker.internal/speckle speckle-preview-service:local
 ```
 
 ## Deployment notes
@@ -42,4 +62,4 @@ You must limit the PreviewService container memory to a value that you want to a
 
 To limit the container memory when running with `docker run`, you can use the `-m` flag.
 
-With docker compose, you must use a docker compose file at version 2 (not 3) and use the `mem_limit` option.
+To limit the memory used in the v3 docker compose file, you can use the `mem_limit` key in the `preview-service` service definition.
