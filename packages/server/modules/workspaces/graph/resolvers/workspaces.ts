@@ -1,11 +1,13 @@
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import {
+  WorkspaceNotFoundError,
   WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
 } from '@/modules/workspaces/errors/workspace'
 import {
   getWorkspaceFactory,
+  getWorkspaceRolesForUserFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
@@ -15,15 +17,23 @@ import {
 } from '@/modules/workspaces/services/management'
 import db from '@/db/knex'
 import { getEventBus } from '@/modules/shared/services/eventBus'
+import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
 export = FF_WORKSPACES_MODULE_ENABLED
   ? ({
       Query: {
-        workspace: async () => {
-          // Get workspace by id
-          throw new WorkspacesNotYetImplementedError()
+        workspace: async (_parent, args) => {
+          const { id: workspaceId } = args
+
+          const workspace = await getWorkspaceFactory({ db })({ workspaceId })
+
+          if (!workspace) {
+            throw new WorkspaceNotFoundError()
+          }
+
+          return workspace
         }
       },
       Mutation: {
@@ -130,9 +140,26 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       User: {
-        workspaces: async () => {
-          // Get roles for user, get workspaces
-          throw new WorkspacesNotYetImplementedError()
+        workspaces: async (_parent, _args, context) => {
+          if (!context.userId) {
+            throw new WorkspacesNotAuthorizedError()
+          }
+
+          const getWorkspace = getWorkspaceFactory({ db })
+          const getWorkspaceRolesForUser = getWorkspaceRolesForUserFactory({ db })
+
+          const getWorkspacesForUser = getWorkspacesForUserFactory({
+            getWorkspace,
+            getWorkspaceRolesForUser
+          })
+
+          const workspaces = await getWorkspacesForUser({ userId: context.userId })
+
+          // TODO: Pagination
+          return {
+            items: workspaces,
+            totalCount: workspaces.length
+          }
         }
       },
       Project: {
