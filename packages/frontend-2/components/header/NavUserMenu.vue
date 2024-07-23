@@ -158,6 +158,7 @@ import { useTheme } from '~~/lib/core/composables/theme'
 import { useServerInfo } from '~/lib/core/composables/server'
 import { connectorsPageUrl, settingsQueries } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -169,6 +170,7 @@ const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, toggleTheme } = useTheme()
 const { serverInfo } = useServerInfo()
 const router = useRouter()
+const { triggerNotification } = useGlobalToast()
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
@@ -202,6 +204,15 @@ onMounted(() => {
   const settingsQuery = route.query?.settings
 
   if (settingsQuery && isString(settingsQuery)) {
+    if (settingsQuery.includes('server') && !isAdmin.value) {
+      triggerNotification({
+        type: ToastNotificationType.Danger,
+        title: "You don't have access to server settings"
+      })
+
+      return
+    }
+
     showSettingsDialog.value = true
     settingsDialogTarget.value = settingsQuery
     deleteSettingsQuery()

@@ -29,7 +29,7 @@
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
-          <LayoutSidebarMenuGroup title="Server settings">
+          <LayoutSidebarMenuGroup v-if="isAdmin" title="Server settings">
             <template #title-icon>
               <ServerStackIcon class="h-5 w-5" />
             </template>
@@ -78,6 +78,7 @@ import {
   LayoutSidebarMenu,
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
+import { Roles } from '@speckle/shared'
 
 type MenuItem = {
   title: string
@@ -126,6 +127,7 @@ const menuItemConfig = shallowRef<{ [key: string]: { [key: string]: MenuItem } }
 const isOpen = defineModel<boolean>('open', { required: true })
 const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: true })
 
+const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const selectedMenuItem = computed((): MenuItem | null => {
   const categories = [menuItemConfig.value.user, menuItemConfig.value.server]
   for (const category of categories) {
@@ -136,7 +138,7 @@ const selectedMenuItem = computed((): MenuItem | null => {
 
   if (!isMobile.value && targetMenuItem.value) {
     // Fallback for invalid queries/typos
-    return targetMenuItem.value.includes('server')
+    return targetMenuItem.value.includes('server') && isAdmin.value
       ? menuItemConfig.value.server.general
       : menuItemConfig.value.user.profile
   }
