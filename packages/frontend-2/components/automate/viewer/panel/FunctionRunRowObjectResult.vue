@@ -157,18 +157,18 @@ const iconAndColor = computed(() => {
     case 'ERROR':
       return {
         icon: XMarkIcon,
-        color: 'text-danger font-semibold'
+        color: 'text-danger font-medium'
       }
     case 'WARNING':
       return {
         icon: ExclamationTriangleIcon,
-        color: 'text-warning font-semibold'
+        color: 'text-warning font-medium'
       }
     case 'INFO':
     default:
       return {
         icon: InformationCircleIcon,
-        color: 'text-foreground font-semibold'
+        color: 'text-foreground font-medium'
       }
   }
 })

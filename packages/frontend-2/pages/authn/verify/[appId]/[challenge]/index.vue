@@ -24,7 +24,7 @@
             </CommonTextLink>
           </div>
           <div class="text-foreground h4 text-center">
-            <span class="text-primary font-semibold">
+            <span class="text-primary font-medium">
               <ShieldCheckIcon
                 v-if="trustByDefault"
                 class="h-6 w-6 inline-block relative -top-1"
@@ -40,7 +40,7 @@
               >
                 <div class="flex space-x-2 items-center">
                   <InformationCircleIcon class="h-5 w-5 shrink-0" />
-                  <span class="font-semibold text-left">
+                  <span class="font-medium text-left">
                     App info & requested permissions ({{ app.scopes.length }})
                   </span>
                 </div>
@@ -56,14 +56,14 @@
                 <table v-if="app.author || app.description?.length" class="table-fixed">
                   <tbody>
                     <tr v-if="app.author">
-                      <td class="font-semibold pr-2 w-[100px]">Author:</td>
+                      <td class="font-medium pr-2 w-[100px]">Author:</td>
                       <td class="inline-flex space-x-1 items-center">
                         <UserAvatar :user="app.author" size="sm" />
                         <span>{{ app.author.name }}</span>
                       </td>
                     </tr>
                     <tr v-if="app.description?.length">
-                      <td class="align-top font-semibold pr-2">Description:</td>
+                      <td class="align-top font-medium pr-2">Description:</td>
                       <td>
                         {{ app.description }}
                       </td>
@@ -71,7 +71,7 @@
                   </tbody>
                 </table>
                 <div class="space-y-4">
-                  <div class="font-semibold">Permissions:</div>
+                  <div class="font-medium">Permissions:</div>
                   <!-- <ul v-if="false" class="list-disc list-inside space-y-4">
                   <li v-for="scope in app.scopes" :key="scope?.name">
                     <span>{{ scope.description }}</span>
@@ -83,7 +83,7 @@
                       :key="group"
                     >
                       <li>
-                        <span class="font-semibold">{{ group }}</span>
+                        <span class="font-medium">{{ group }}</span>
                         <ul class="ps-5 list-[circle] list-outside">
                           <li v-for="desc in scope" :key="desc">
                             <span>{{ desc }}</span>
@@ -127,15 +127,15 @@
           <div class="text-center">
             <template v-if="app">
               <template v-if="action === ChosenAction.Allow">
-                <span class="font-semibold text-primary">{{ app?.name }}</span>
+                <span class="font-medium text-primary">{{ app?.name }}</span>
                 is connected to your
-                <span class="font-semibold">Speckle</span>
+                <span class="font-medium">Speckle</span>
                 account.
               </template>
               <template v-else>
-                <span class="font-semibold text-primary">{{ app?.name }}</span>
+                <span class="font-medium text-primary">{{ app?.name }}</span>
                 has not been connected to your
-                <span class="font-semibold">Speckle</span>
+                <span class="font-medium">Speckle</span>
                 account.
               </template>
             </template>

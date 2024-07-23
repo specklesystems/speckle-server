@@ -21,7 +21,7 @@
       ></FormButton>
     </div>
     <div class="flex items-center space-x-1">
-      <span class="grow truncate text-body-xs font-semibold text-foreground-2">
+      <span class="grow truncate text-body-xs font-medium text-foreground-2">
         {{ thread.author.name }}
         <span v-if="threadAuthors.length !== 1">
           & {{ thread.replyAuthors.totalCount }} others

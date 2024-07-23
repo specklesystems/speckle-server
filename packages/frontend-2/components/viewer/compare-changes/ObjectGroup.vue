@@ -7,7 +7,7 @@
     @click="setSelection()"
     @keypress="keyboardClick(setSelection)"
   >
-    <div :class="`text-heading-xl -mb-1 font-semibold truncate max-w-full ${color}`">
+    <div :class="`text-heading-xl -mb-1 font-medium truncate max-w-full ${color}`">
       {{ objectCount }}
     </div>
     <div class="text-body-xs -mb-1">{{ name }}</div>
