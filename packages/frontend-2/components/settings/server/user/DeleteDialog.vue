@@ -1,6 +1,6 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
-    <template #header>Delete User</template>
+    <template #header>Delete user</template>
     <div class="flex flex-col gap-6">
       <p>
         Are you sure you want to

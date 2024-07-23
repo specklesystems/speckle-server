@@ -159,6 +159,51 @@ export default defineNuxtConfig({
         'access-control-allow-methods': 'GET',
         'Access-Control-Expose-Headers': '*'
       }
+    },
+    // Redirect old settings pages
+    '/server-management/projects': {
+      redirect: {
+        to: '/?settings=server/projects',
+        statusCode: 301
+      }
+    },
+    '/server-management/active-users': {
+      redirect: {
+        to: '/?settings=server/active-users',
+        statusCode: 301
+      }
+    },
+    '/server-management/pending-invitations': {
+      redirect: {
+        to: '/?settings=server/pending-invitations',
+        statusCode: 301
+      }
+    },
+    '/server-management': {
+      redirect: {
+        to: '/?settings=server/general',
+        statusCode: 301
+      }
+    },
+    '/profile': {
+      redirect: {
+        to: '/?settings=user/profile',
+        statusCode: 301
+      }
+    },
+
+    // Redirect settings 'route' to homepage with added query
+    '/settings': { redirect: '/?settings=user/profile' },
+    '/settings/user/profile': { redirect: '/?settings=user/profile' },
+    '/settings/user/notifications': { redirect: '/?settings=user/notifications' },
+    '/settings/user/developer-settings': {
+      redirect: '/?settings=user/developer-settings'
+    },
+    '/settings/server/general': { redirect: '/?settings=server/general' },
+    '/settings/server/projects': { redirect: '/?settings=server/projects' },
+    '/settings/server/active-users': { redirect: '/?settings=server/active-users' },
+    '/settings/server/pending-invitations': {
+      redirect: '/?settings=server/pending-invitations'
     }
   },
 

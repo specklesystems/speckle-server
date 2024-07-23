@@ -1,11 +1,6 @@
 <template>
-  <LayoutDialog
-    v-model:open="isOpen"
-    max-width="sm"
-    :buttons="dialogButtons"
-    prevent-close-on-click-outside
-  >
-    <template #header>Create Token</template>
+  <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
+    <template #header>Create token</template>
     <form @submit="onSubmit">
       <div class="flex flex-col gap-6">
         <FormTextInput
@@ -13,6 +8,8 @@
           label="Name"
           help="A name to remember this token by. For example, the name of the script or application you're planning to use it in!"
           name="hookName"
+          placeholder="Token name"
+          color="foundation"
           :rules="[isRequired]"
           show-required
           show-label

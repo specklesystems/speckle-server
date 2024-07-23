@@ -19,7 +19,7 @@ export function markClassesUsed(classes: string[]) {
  */
 export enum TailwindBreakpoints {
   sm = 640,
-  md = 746,
+  md = 768,
   lg = 1024,
   xl = 1280,
   '2xl' = 1536

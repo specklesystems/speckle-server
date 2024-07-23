@@ -1,18 +1,18 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
-    <template #header>Create Application</template>
+    <template #header>Create application</template>
     <div class="flex flex-col gap-4 text-sm text-foreground">
       <div class="flex flex-col gap-3">
         <h6 class="h6 font-semibold text-center">Your new app is ready</h6>
         <div class="grid grid-cols-2 gap-x-6 gap-y-3 py-2 text-sm max-w-xs mx-auto">
-          <div class="flex items-center">App Id:</div>
+          <div class="flex items-center">App id:</div>
           <div class="w-40">
             <CommonClipboardInputWithToast
               v-if="props.application?.id"
               :value="props.application?.id"
             />
           </div>
-          <div class="flex items-center">App Secret:</div>
+          <div class="flex items-center">App secret:</div>
           <div class="w-40">
             <CommonClipboardInputWithToast
               v-if="props.application?.secret"

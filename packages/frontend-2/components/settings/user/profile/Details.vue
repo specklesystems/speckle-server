@@ -1,41 +1,38 @@
 <template>
-  <div class="flex flex-col space-y-4 mb-8">
-    <div class="flex flex-col space-y-4">
-      <div class="flex flex-col md:flex-row gap-2 sm:gap-8 items-center">
-        <div class="w-full md:w-4/12">
-          <UserProfileEditDialogAvatar :user="user" size="xxl" />
-        </div>
-        <div class="flex flex-col space-y-2 w-full md:w-9/12">
-          <FormTextInput
-            v-model="name"
-            color="foundation"
-            label="Name"
-            name="name"
-            placeholder="John Doe"
-            :custom-icon="UserIcon"
-            show-label
-            show-required
-            :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
-            @change="save"
-          />
-          <FormTextInput
-            v-model="company"
-            color="foundation"
-            label="Company"
-            name="company"
-            placeholder="Example Ltd."
-            :custom-icon="BriefcaseIcon"
-            show-label
-            :rules="[isStringOfLength({ maxLength: 512 })]"
-            @change="save"
-          />
-        </div>
+  <div class="flex flex-col gap-y-4">
+    <SettingsSectionHeader title="Your details" subheading />
+    <div class="grid md:grid-cols-2 pt-4">
+      <div class="flex h-full items-center justify-center">
+        <SettingsUserProfileEditAvatar :user="user" size="xxl" />
+      </div>
+      <div class="pt-6 md:pt-0">
+        <FormTextInput
+          v-model="name"
+          class="pt-2 pb-1"
+          color="foundation"
+          label="Name"
+          name="name"
+          placeholder="John Doe"
+          show-label
+          :rules="[isRequired, isStringOfLength({ maxLength: 512 })]"
+          @change="save"
+        />
+        <hr class="mt-4 mb-2" />
+        <FormTextInput
+          v-model="company"
+          color="foundation"
+          label="Company"
+          name="company"
+          placeholder="Example Ltd."
+          show-label
+          :rules="[isStringOfLength({ maxLength: 512 })]"
+          @change="save"
+        />
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { UserIcon, BriefcaseIcon } from '@heroicons/vue/24/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import type {

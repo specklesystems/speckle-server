@@ -14,6 +14,24 @@ export const downloadManagerRoute = '/download-manager'
 export const serverManagementRoute = '/server-management'
 export const connectorsPageUrl = 'https://speckle.systems/features/connectors/'
 
+export const settingsQueries: {
+  [key: string]: {
+    [key: string]: string
+  }
+} = {
+  user: {
+    profile: 'user/profile',
+    notifications: 'user/notifications',
+    developerSettings: 'user/developer-settings'
+  },
+  server: {
+    general: 'server/general',
+    projects: 'server/projects',
+    activeUsers: 'server/active-users',
+    pendingInvitations: 'server/pending-invitations'
+  }
+}
+
 export const projectRoute = (
   id: string,
   tab?: 'models' | 'discussions' | 'automations' | 'settings'

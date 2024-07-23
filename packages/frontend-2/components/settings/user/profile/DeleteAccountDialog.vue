@@ -1,8 +1,5 @@
 <template>
-  <LayoutDialogSection border-b title="Delete Account" title-color="danger">
-    <template #icon>
-      <TrashIcon class="h-full w-full" />
-    </template>
+  <LayoutDialog v-model:open="isOpen" title="Delete account" max-width="md">
     <form class="flex flex-col gap-2" @submit="onDelete">
       <div
         class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 py-3 px-4 bg-danger-lighter dark:bg-danger-darker rounded-md select-none mb-2"
@@ -44,11 +41,10 @@
         </FormButton>
       </div>
     </form>
-  </LayoutDialogSection>
+  </LayoutDialog>
 </template>
 <script setup lang="ts">
-import { LayoutDialogSection } from '@speckle/ui-components'
-import { TrashIcon, ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
+import { ExclamationTriangleIcon } from '@heroicons/vue/24/outline'
 import { useForm } from 'vee-validate'
 import type { GenericValidateFunction } from 'vee-validate'
 import { graphql } from '~~/lib/common/generated/gql'
@@ -75,6 +71,8 @@ const emit = defineEmits<{
 const props = defineProps<{
   user: UserProfileEditDialogDeleteAccount_UserFragment
 }>()
+
+const isOpen = defineModel<boolean>('open', { required: true })
 
 const { handleSubmit, errors } = useForm<{ deleteEmail: string }>()
 const { mutate, loading } = useDeleteAccount()
