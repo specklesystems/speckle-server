@@ -1,8 +1,8 @@
 <template>
   <div class="flex flex-col">
     <div class="flex flex-col md:flex-row gap-3 md:gap-0 justify-between">
-      <h2 v-if="subheading" class="text-heading">{{ title }}</h2>
-      <h1 v-else class="text-heading-lg hidden md:block">
+      <h2 v-if="subheading" class="text-heading-lg">{{ title }}</h2>
+      <h1 v-else class="text-heading-xl hidden md:block">
         {{ title }}
       </h1>
       <div v-if="buttons.length > 0" class="flex flex-wrap gap-2">
@@ -19,12 +19,12 @@
     </div>
     <p
       v-if="text"
-      class="text-sm pt-2 md:pt-4 text-secondary-2"
+      class="text-body-xs text-foreground-2"
       :class="{ 'pt-6': subheading }"
     >
       {{ text }}
     </p>
-    <hr v-if="!subheading" class="my-6 md:my-10" />
+    <hr v-if="!subheading" class="my-4" />
     <slot />
   </div>
 </template>
