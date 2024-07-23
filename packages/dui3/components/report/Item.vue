@@ -37,6 +37,14 @@
           <ChevronUpIcon class="w-4" />
         </div>
       </button>
+      <button
+        v-if="reportItem.status !== 1"
+        v-tippy="'See object on Web'"
+        class="block rounded-lg transition hover:bg-primary-muted ml-1"
+        @click.stop="openObjectOnWeb"
+      >
+        <ArrowTopRightOnSquareIcon class="w-4" />
+      </button>
     </div>
   </button>
   <div
@@ -58,7 +66,8 @@ import {
   ExclamationCircleIcon,
   CheckCircleIcon,
   ChevronUpIcon,
-  ChevronDownIcon
+  ChevronDownIcon,
+  ArrowTopRightOnSquareIcon
 } from '@heroicons/vue/24/solid'
 import type { ConversionResult } from '~/lib/conversions/conversionResult'
 import { useAccountStore } from '~/store/accounts'
@@ -83,6 +92,12 @@ const details = computed(() =>
     : `${props.reportItem.sourceType} > ${props.reportItem.resultType}`
 )
 
+const openObjectOnWeb = () => {
+  // This is a POC implementation. Later we will highlight object(s) within the model. Currently it is done by 'Isolate' filter on viewer but there is no direct URL to achieve this.
+  const url = `${acc?.accountInfo.serverInfo.url}/projects/${cardBase?.projectId}/models/${props.reportItem.sourceId}`
+  app.$openUrl(url)
+}
+
 const highlightObject = () => {
   // sender reports highlight in source app
   if (cardBase.typeDiscriminator.toLowerCase().includes('send')) {
@@ -95,11 +110,6 @@ const highlightObject = () => {
     app.$baseBinding.highlightObjects([props.reportItem.resultId])
     return
   }
-
-  // lastly, open in browser for failed receive reports
-  // This is a POC implementation. Later we will highlight object(s) within the model. Currently it is done by 'Isolate' filter on viewer but there is no direct URL to achieve this.
-  const url = `${acc?.accountInfo.serverInfo.url}/projects/${cardBase?.projectId}/models/${props.reportItem.sourceId}`
-  app.$openUrl(url)
 }
 
 const copyToClipboard = (text: string) => {
