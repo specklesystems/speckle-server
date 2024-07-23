@@ -177,12 +177,12 @@ const bgAndBorderClasses = computed(() => {
 const sizeClasses = computed(() => {
   switch (props.size) {
     case 'sm':
-      return 'text-xs leading-4'
+      return 'h-6 text-body-2xs'
     case 'lg':
-      return 'text-sm leading-6'
+      return 'h-10 text-body-sm'
     default:
     case 'base':
-      return 'text-[13px] leading-6'
+      return 'h-8 text-body-xs'
   }
 })
 

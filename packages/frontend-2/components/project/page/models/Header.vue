@@ -17,10 +17,9 @@
           <FormButton
             v-if="canContribute"
             class="grow inline-flex sm:grow-0 lg:hidden"
-            :icon-right="PlusIcon"
             @click="showNewDialog = true"
           >
-            New
+            New model
           </FormButton>
         </div>
       </div>
@@ -77,10 +76,9 @@
           <FormButton
             v-if="canContribute"
             class="hidden lg:inline-flex shrink-0"
-            :icon-right="PlusIcon"
             @click="showNewDialog = true"
           >
-            New
+            New model
           </FormButton>
         </div>
       </div>
@@ -99,7 +97,6 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { PlusIcon } from '@heroicons/vue/20/solid'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 

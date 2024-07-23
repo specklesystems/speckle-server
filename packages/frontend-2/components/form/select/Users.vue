@@ -58,7 +58,7 @@
     <template #option="{ item }">
       <div class="flex items-center">
         <UserAvatar :user="item" no-border class="mr-2" size="sm" />
-        <span class="truncate">{{ item.name }}</span>
+        <span class="truncate text-body-2xs">{{ item.name }}</span>
       </div>
     </template>
   </FormSelectBase>
