@@ -1,12 +1,16 @@
 import { buildApolloServer } from '@/app'
 import { addLoadersToCtx } from '@/modules/shared/middleware'
 import { AllScopes, Roles } from '@speckle/shared'
-import { ApolloServer, gql } from 'apollo-server-express'
-import knex from '@/db/knex'
+import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import { createUser } from '@/modules/core/services/users'
 import { createToken } from '@/modules/core/services/tokens'
 import cryptoRandomString from 'crypto-random-string'
+import {
+  createWorkspaceQuery,
+  getWorkspaceQuery,
+  updateWorkspaceQuery
+} from '@/modules/workspaces/tests/e2e/graph/queries'
 
 describe('WorkspaceMutations type mutations', () => {
   let apollo: ApolloServer
@@ -41,29 +45,33 @@ describe('WorkspaceMutations type mutations', () => {
     it('should create a workspace', async () => {
       const workspaceName = cryptoRandomString({ length: 6 })
 
-      const { data } = await apollo?.executeOperation({
-        query: gql`
-          mutation ($input: WorkspaceCreateInput!) {
-            workspaceMutations {
-              create(input: $input) {
-                id
-              }
-            }
-          }
-        `,
-        variables: {
-          input: {
-            name: workspaceName
-          }
+      const { id } = await createWorkspaceQuery(apollo, { name: workspaceName })
+
+      const workspace = await getWorkspaceQuery(apollo, { workspaceId: id })
+
+      expect(workspace).to.exist
+      expect(workspace?.name).to.equal(workspaceName)
+    })
+  })
+
+  describe('update', () => {
+    it('should update a workspace', async () => {
+      const { id: workspaceId } = await createWorkspaceQuery(apollo, {
+        name: cryptoRandomString({ length: 6 })
+      })
+
+      const workspaceName = cryptoRandomString({ length: 6 })
+
+      await updateWorkspaceQuery(apollo, {
+        workspaceId,
+        workspaceInput: {
+          name: workspaceName
         }
       })
 
-      const { id } = data?.workspaceMutations.create
+      const workspace = await getWorkspaceQuery(apollo, { workspaceId })
 
-      const workspace = await knex('workspaces').where({ id }).first()
-
-      expect(workspace).to.exist
-      expect(workspace.name).to.equal(workspaceName)
+      expect(workspace?.name).to.equal(workspaceName)
     })
   })
 })
