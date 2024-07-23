@@ -1,6 +1,5 @@
 import { ApolloServer, gql } from 'apollo-server-express'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
-import knex from '@/db/knex'
 
 type CreateWorkspaceInput = {
   name: string
@@ -10,7 +9,7 @@ export const createWorkspaceQuery = async (
   apollo: ApolloServer,
   input: CreateWorkspaceInput
 ): Promise<Workspace> => {
-  const { data } = await apollo?.executeOperation({
+  const { data } = await apollo.executeOperation({
     query: gql`
       mutation ($input: WorkspaceCreateInput!) {
         workspaceMutations {
@@ -38,12 +37,54 @@ type GetWorkspaceInput = {
   workspaceId: string
 }
 
-// TODO: Use gql endpoint when implemented
 export const getWorkspaceQuery = async (
-  _apollo: ApolloServer,
+  apollo: ApolloServer,
   input: GetWorkspaceInput
-): Promise<Workspace | undefined> => {
-  return await knex<Workspace>('workspaces').where({ id: input.workspaceId }).first()
+): Promise<Workspace> => {
+  const { data } = await apollo.executeOperation({
+    query: gql`
+      query ($workspaceId: String!) {
+        workspace(id: $workspaceId) {
+          id
+          name
+          description
+          createdAt
+          updatedAt
+        }
+      }
+    `,
+    variables: {
+      workspaceId: input.workspaceId
+    }
+  })
+
+  if (!data) {
+    throw new Error('Workspace not found')
+  }
+
+  return data.workspace as Workspace
+}
+
+export const getActiveUserWorkspacesQuery = async (
+  apollo: ApolloServer
+): Promise<Workspace[]> => {
+  const { data } = await apollo.executeOperation({
+    query: gql`
+      query {
+        activeUser {
+          id
+          email
+          workspaces {
+            items {
+              id
+            }
+          }
+        }
+      }
+    `
+  })
+
+  return (data?.activeUser?.workspaces?.items as Workspace[]) ?? []
 }
 
 type UpdateWorkspaceInput = {

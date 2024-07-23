@@ -1,44 +1,20 @@
-import { buildApolloServer } from '@/app'
-import { addLoadersToCtx } from '@/modules/shared/middleware'
-import { AllScopes, Roles } from '@speckle/shared'
 import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
-import { createUser } from '@/modules/core/services/users'
-import { createToken } from '@/modules/core/services/tokens'
 import cryptoRandomString from 'crypto-random-string'
 import {
   createWorkspaceQuery,
   getWorkspaceQuery,
   updateWorkspaceQuery
 } from '@/modules/workspaces/tests/e2e/graph/queries'
+import { createTestApolloServer } from '@/modules/workspaces/tests/e2e/utils/apollo'
+import { createTestUserAndToken } from '@/modules/workspaces/tests/e2e/utils/user'
 
 describe('WorkspaceMutations type mutations', () => {
   let apollo: ApolloServer
 
   before(async () => {
-    const userId = await createUser({
-      name: 'John Speckle',
-      email: 'test-user@example.org',
-      password: 'high-quality-password'
-    })
-
-    const { token } = await createToken({
-      userId,
-      name: "John's test token",
-      scopes: AllScopes
-    })
-
-    apollo = await buildApolloServer({
-      context: () => {
-        return addLoadersToCtx({
-          auth: true,
-          userId,
-          role: Roles.Server.Admin,
-          token,
-          scopes: AllScopes
-        })
-      }
-    })
+    const { userId, token } = await createTestUserAndToken()
+    apollo = await createTestApolloServer(userId, token)
   })
 
   describe('create', () => {
