@@ -65,7 +65,7 @@ export const formattedRelativeDate = (
   if (options?.prefix) {
     return isClockUnit(date)
       ? customRelativeTime(date, options?.capitalize)
-      : `${customRelativeTime(date)}`
+      : `on ${customRelativeTime(date)}`
   } else {
     return customRelativeTime(date, options?.capitalize)
   }
