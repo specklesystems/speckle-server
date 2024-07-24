@@ -29,9 +29,10 @@ import {
   ProcessFinalizedResourceInvite,
   ValidateResourceInviteBeforeFinalization
 } from '@/modules/serverinvites/services/operations'
-import { ensureError } from '@speckle/shared'
+import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
 import { noop } from 'lodash'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
+import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
@@ -124,7 +125,13 @@ export const finalizeResourceInviteFactory =
       insertInviteAndDeleteOld,
       emitServerInvitesEvent
     } = deps
-    const { finalizerUserId, accept, token, resourceType } = params
+    const {
+      finalizerUserId,
+      accept,
+      token,
+      resourceType,
+      finalizerResourceAccessLimits
+    } = params
 
     const invite = await findInvite({
       token,
@@ -147,7 +154,8 @@ export const finalizeResourceInviteFactory =
     await validateInvite({
       invite,
       finalizerUserId,
-      action
+      action,
+      finalizerResourceAccessLimits
     })
 
     // Delete invites first, so that any subscriptions fired by processInvite
@@ -200,9 +208,16 @@ export const cancelResourceInviteFactory =
     resourceId: string
     resourceType: InviteResourceTargetType
     cancelerId: string
+    cancelerResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   }) => {
     const { findInvite, validateResourceAccess, deleteInvite } = deps
-    const { inviteId, resourceId, resourceType, cancelerId } = params
+    const {
+      inviteId,
+      resourceId,
+      resourceType,
+      cancelerId,
+      cancelerResourceAccessLimits
+    } = params
 
     const invite = await findInvite({
       inviteId,
@@ -222,7 +237,8 @@ export const cancelResourceInviteFactory =
     await validateResourceAccess({
       invite,
       finalizerUserId: cancelerId,
-      action: InviteFinalizationAction.CANCEL
+      action: InviteFinalizationAction.CANCEL,
+      finalizerResourceAccessLimits: cancelerResourceAccessLimits
     })
     await deleteInvite(invite.id)
   }

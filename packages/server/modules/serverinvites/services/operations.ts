@@ -17,11 +17,12 @@ export type InviteResult = {
 }
 export type CreateAndSendInvite = (
   params: CreateInviteParams,
-  inviterResourceAccessLimits?: TokenResourceIdentifier[] | null
+  inviterResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 ) => Promise<InviteResult>
 
 export type FinalizeInvite = (params: {
   finalizerUserId: string
+  finalizerResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   accept: boolean
   token: string
   resourceType?: InviteResourceTargetType
@@ -32,7 +33,7 @@ export type ResendInviteEmail = (params: { inviteId: string }) => Promise<void>
 export type CollectAndValidateResourceTargets = (params: {
   input: CreateInviteParams
   inviter: UserWithOptionalRole
-  inviterResourceAccessLimits?: TokenResourceIdentifier[] | null
+  inviterResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   target: ResolvedTargetData
   targetUser: MaybeNullOrUndefined<UserWithOptionalRole>
   serverInfo: ServerInfo
@@ -63,6 +64,7 @@ export enum InviteFinalizationAction {
 export type ValidateResourceInviteBeforeFinalization = (params: {
   invite: ServerInviteRecord
   finalizerUserId: string
+  finalizerResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
   action: InviteFinalizationAction
 }) => MaybeAsync<void>
 

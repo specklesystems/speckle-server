@@ -1,4 +1,5 @@
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
+import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { getStream } from '@/modules/core/repositories/streams'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
 import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
@@ -20,7 +21,7 @@ export const validateProjectInviteBeforeFinalizationFactory =
   ): ValidateResourceInviteBeforeFinalization =>
   async (params) => {
     const { getProject } = deps
-    const { invite, finalizerUserId, action } = params
+    const { invite, finalizerUserId, action, finalizerResourceAccessLimits } = params
 
     if (invite.resource.resourceType !== ProjectInviteResourceType) {
       throw new InviteFinalizingError(
@@ -51,6 +52,18 @@ export const validateProjectInviteBeforeFinalizationFactory =
           'Attempting to finalize invite to a project that the user already has access to'
         )
       }
+    }
+
+    if (
+      !isResourceAllowed({
+        resourceId: project.id,
+        resourceType: 'project',
+        resourceAccessRules: finalizerResourceAccessLimits
+      })
+    ) {
+      throw new InviteFinalizingError(
+        'You are not allowed to process an invite for this project'
+      )
     }
   }
 

@@ -1,15 +1,11 @@
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import {
   MutationStreamInviteUseArgs,
   ProjectInviteCreateInput,
   ProjectInviteUseInput,
   StreamInviteCreateInput
 } from '@/modules/core/graph/generated/graphql'
-import {
-  ContextResourceAccessRules,
-  isResourceAllowed
-} from '@/modules/core/helpers/token'
+import { ContextResourceAccessRules } from '@/modules/core/helpers/token'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
@@ -82,10 +78,6 @@ export const createProjectInviteFactory =
     )
   }
 
-const isStreamInviteUseArgs = (
-  i: MutationStreamInviteUseArgs | ProjectInviteUseInput
-): i is MutationStreamInviteUseArgs => has(i, 'streamId')
-
 export const useProjectInviteAndNotifyFactory =
   (deps: { finalizeInvite: FinalizeInvite }) =>
   async (
@@ -95,30 +87,12 @@ export const useProjectInviteAndNotifyFactory =
   ) => {
     const { accept, token } = input
 
-    if (
-      !isResourceAllowed({
-        resourceId: isStreamInviteUseArgs(input) ? input.streamId : input.projectId,
-        resourceType: 'project',
-        resourceAccessRules: userResourceAccessRules
-      })
-    ) {
-      throw new StreamInvalidAccessError(
-        'You are not allowed to process an invite for this project',
-        {
-          info: {
-            userId,
-            userResourceAccessRules,
-            input
-          }
-        }
-      )
-    }
-
     await deps.finalizeInvite({
       accept,
       resourceType: ProjectInviteResourceType,
       token,
-      finalizerUserId: userId
+      finalizerUserId: userId,
+      finalizerResourceAccessLimits: userResourceAccessRules
     })
   }
 

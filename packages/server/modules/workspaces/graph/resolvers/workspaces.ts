@@ -162,7 +162,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
             resourceId: args.workspaceId,
             inviteId: args.inviteId,
             cancelerId: ctx.userId!,
-            resourceType: WorkspaceInviteResourceType
+            resourceType: WorkspaceInviteResourceType,
+            cancelerResourceAccessLimits: ctx.resourceAccessRules
           })
           return ctx.loaders.workspaces!.getWorkspace.load(args.workspaceId)
         }

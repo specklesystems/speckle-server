@@ -284,7 +284,8 @@ export = {
         inviteId,
         resourceId: streamId,
         resourceType: ProjectInviteResourceType,
-        cancelerId: userId!
+        cancelerId: userId!,
+        cancelerResourceAccessLimits: resourceAccessRules
       })
 
       return true
@@ -406,7 +407,8 @@ export = {
         resourceId: args.projectId,
         inviteId: args.inviteId,
         cancelerId: ctx.userId!,
-        resourceType: ProjectInviteResourceType
+        resourceType: ProjectInviteResourceType,
+        cancelerResourceAccessLimits: ctx.resourceAccessRules
       })
       return ctx.loaders.streams.getStream.load(args.projectId)
     }

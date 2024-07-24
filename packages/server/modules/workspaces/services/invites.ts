@@ -1,6 +1,10 @@
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
-import { WorkspaceInviteCreateInput } from '@/modules/core/graph/generated/graphql'
+import {
+  TokenResourceIdentifierType,
+  WorkspaceInviteCreateInput
+} from '@/modules/core/graph/generated/graphql'
 import { getWorkspaceRoute } from '@/modules/core/helpers/routeHelper'
+import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { QueryAllResourceInvites } from '@/modules/serverinvites/domain/operations'
@@ -270,7 +274,7 @@ export const getPendingWorkspaceCollaboratorsFactory =
 export const validateWorkspaceInviteBeforeFinalizationFactory =
   (deps: { getWorkspace: GetWorkspace }): ValidateResourceInviteBeforeFinalization =>
   async (params) => {
-    const { invite, finalizerUserId, action } = params
+    const { invite, finalizerUserId, action, finalizerResourceAccessLimits } = params
 
     if (invite.resource.resourceType !== WorkspaceInviteResourceType) {
       throw new InviteFinalizingError(
@@ -301,5 +305,17 @@ export const validateWorkspaceInviteBeforeFinalizationFactory =
           'Attempting to finalize invite to a workspace that the user already has access to'
         )
       }
+    }
+
+    if (
+      !isResourceAllowed({
+        resourceId: workspace.id,
+        resourceType: TokenResourceIdentifierType.Workspace,
+        resourceAccessRules: finalizerResourceAccessLimits
+      })
+    ) {
+      throw new InviteFinalizingError(
+        'You are not allowed to process an invite for this workspace'
+      )
     }
   }
