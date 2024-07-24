@@ -5,19 +5,21 @@
         title="Pending invitations"
         text="And overview of all your pending invititations"
       />
-      <div class="flex flex-col-reverse md:flex-row">
-        <FormTextInput
-          name="search"
-          :custom-icon="MagnifyingGlassIcon"
-          color="foundation"
-          full-width
-          search
-          :show-clear="!!search"
-          placeholder="Search invitations"
-          class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
-          :model-value="bind.modelValue.value"
-          v-on="on"
-        />
+      <div class="flex flex-col-reverse md:justify-between md:flex-row md:gap-x-4">
+        <div class="relative w-full md:max-w-md mt-6 md:mt-0">
+          <FormTextInput
+            name="search"
+            :custom-icon="MagnifyingGlassIcon"
+            color="foundation"
+            full-width
+            search
+            :show-clear="!!search"
+            placeholder="Search invitations"
+            class="rounded-md border border-outline-3"
+            :model-value="bind.modelValue.value"
+            v-on="on"
+          />
+        </div>
         <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
           Invite
         </FormButton>
@@ -71,17 +73,15 @@
       <SettingsServerPendingInvitationsDeleteDialog
         v-model:open="showDeleteInvitationDialog"
         :invite="inviteToModify"
-        :result-variables="resultVariables"
       />
-
-      <CommonLoadingBar v-if="loading && !invites?.length" loading />
 
       <InfiniteLoading
         v-if="invites?.length"
-        :settings="{ identifier: infiniteLoaderId }"
+        :settings="{ identifier }"
         class="py-4"
-        @infinite="infiniteLoad"
+        @infinite="onInfiniteLoad"
       />
+
       <SettingsServerUserInviteDialog v-model:open="showInviteDialog" />
     </div>
   </section>
@@ -89,11 +89,9 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuery, useMutation } from '@vue/apollo-composable'
+import { useMutation } from '@vue/apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon, UserPlusIcon } from '@heroicons/vue/24/outline'
 import type { ItemType, InviteItem } from '~~/lib/server-management/helpers/types'
-import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
-import { getInvitesQuery } from '~~/lib/server-management/graphql/queries'
 import { adminResendInviteMutation } from '~~/lib/server-management/graphql/mutations'
 import { isInvite } from '~~/lib/server-management/helpers/utils'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
@@ -102,39 +100,38 @@ import {
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
 import { useDebouncedTextInput } from '@speckle/ui-components'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
+import { getInvitesQuery } from '~~/lib/server-management/graphql/queries'
 
-const search = defineModel<string>('search')
-
-const logger = useLogger()
 const { triggerNotification } = useGlobalToast()
 const { mutate: resendInvitationMutation } = useMutation(adminResendInviteMutation)
-const { on, bind } = useDebouncedTextInput({ model: search })
+const { on, bind, value: search } = useDebouncedTextInput()
 
 const inviteToModify = ref<InviteItem | null>(null)
 const showDeleteInvitationDialog = ref(false)
-const infiniteLoaderId = ref('')
 const successfullyResentInvites = ref<string[]>([])
 const showInviteDialog = ref(false)
 
 const {
-  result: extraPagesResult,
-  fetchMore: fetchMorePages,
-  variables: resultVariables,
-  onResult,
-  loading
-} = useQuery(getInvitesQuery, () => ({
-  limit: 50,
-  query: search.value
-}))
+  identifier,
+  onInfiniteLoad,
+  query: { result }
+} = usePaginatedQuery({
+  query: getInvitesQuery,
+  baseVariables: computed(() => ({
+    query: search.value?.length ? search.value : null,
+    limit: 50
+  })),
+  resolveKey: (vars) => [vars.query || ''],
+  resolveCurrentResult: (res) => res?.admin.inviteList,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
 
-const moreToLoad = computed(
-  () =>
-    !extraPagesResult.value?.admin?.inviteList ||
-    extraPagesResult.value.admin.inviteList.items.length <
-      extraPagesResult.value.admin.inviteList.totalCount
-)
-
-const invites = computed(() => extraPagesResult.value?.admin.inviteList.items || [])
+const invites = computed(() => result.value?.admin.inviteList.items || [])
 
 const openDeleteInvitationDialog = (item: ItemType) => {
   if (isInvite(item)) {
@@ -168,35 +165,7 @@ const resendInvitation = async (item: InviteItem) => {
   }
 }
 
-const infiniteLoad = async (state: InfiniteLoaderState) => {
-  const cursor = extraPagesResult.value?.admin?.inviteList.cursor || null
-  if (!moreToLoad.value || !cursor) return state.complete()
-
-  try {
-    await fetchMorePages({
-      variables: {
-        cursor
-      }
-    })
-  } catch (e) {
-    logger.error(e)
-    state.error()
-    return
-  }
-
-  state.loaded()
-  if (!moreToLoad.value) {
-    state.complete()
-  }
-}
-
-const calculateLoaderId = () => {
-  infiniteLoaderId.value = resultVariables.value?.query || ''
-}
-
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
 }
-
-onResult(calculateLoaderId)
 </script>
