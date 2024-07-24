@@ -57,7 +57,7 @@
             <FormButton
               v-if="attachments.length > 1"
               size="sm"
-              color="card"
+              color="outline"
               class="mt-1"
               @click="showAttachmentDialog = true"
             >
