@@ -105,7 +105,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
@@ -393,6 +393,10 @@ const getStream = () => {
     // 'https://app.speckle.systems/projects/47bbaf594f/models/de52414725f8937b1f0e2f550ef9ca52'
     // qGIS sRGB vertex colors
     // 'https://latest.speckle.systems/projects/5a6609a4b9/models/10f4931e8c'
+    // DUI3 blocks
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/c6f3f309a2'
+    'https://latest.speckle.systems/projects/126cd4b7bb/models/6b62c61a22'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/4dc5265453'
   )
 }
 
