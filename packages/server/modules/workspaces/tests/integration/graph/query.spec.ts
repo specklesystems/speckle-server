@@ -1,40 +1,68 @@
-import { ApolloServer } from 'apollo-server-express'
 import { expect } from 'chai'
 import cryptoRandomString from 'crypto-random-string'
 import {
-  createWorkspaceQuery,
-  getWorkspaceQuery
-} from '@/modules/workspaces/tests/integration/graph/graph/queries'
-import { createTestApolloServer } from '@/modules/workspaces/tests/integration/graph/utils/apollo'
-import { expectToThrow } from '@/test/assertionHelper'
-import { createTestUserAndToken } from '@/modules/workspaces/tests/integration/graph/utils/user'
+  createTestContext,
+  testApolloServer,
+  TestApolloServer
+} from '@/test/graphqlHelper'
+import {
+  BasicTestUser,
+  createAuthTokenForUser,
+  createTestUser
+} from '@/test/authHelper'
+import { AllScopes, Roles } from '@speckle/shared'
+import {
+  CreateWorkspaceDocument,
+  GetWorkspaceDocument
+} from '@/test/graphql/generated/graphql'
 
 describe('Root Query type', () => {
-  let apollo: ApolloServer
+  let apollo: TestApolloServer
+
+  const testUser: BasicTestUser = {
+    id: '',
+    name: 'John Speckle',
+    email: 'root-query-type-user@example.org',
+    role: Roles.Server.Admin
+  }
 
   before(async () => {
-    const { userId, token } = await createTestUserAndToken()
-    apollo = await createTestApolloServer(userId, token)
+    await createTestUser(testUser)
+    const token = await createAuthTokenForUser(testUser.id, AllScopes)
+    apollo = await testApolloServer({
+      context: createTestContext({
+        auth: true,
+        userId: testUser.id,
+        token,
+        role: testUser.role,
+        scopes: AllScopes
+      })
+    })
   })
 
   describe('workspace', () => {
     let workspaceId = ''
 
     before(async () => {
-      const { id } = await createWorkspaceQuery(apollo, { name: 'test workspace' })
-      workspaceId = id
+      const { data } = await apollo.execute(CreateWorkspaceDocument, {
+        input: {
+          name: 'Test Workspace '
+        }
+      })
+
+      workspaceId = data?.workspaceMutations.create.id ?? ''
     })
 
     it('should return a workspace that exists', async () => {
-      const workspace = await getWorkspaceQuery(apollo, { workspaceId })
-
-      expect(workspace).to.exist
+      const { data } = await apollo.execute(GetWorkspaceDocument, { workspaceId })
+      expect(data?.workspace).to.exist
     })
 
     it('throw a not found error if the workspace does not exist', async () => {
-      await expectToThrow(() =>
-        getWorkspaceQuery(apollo, { workspaceId: cryptoRandomString({ length: 6 }) })
-      )
+      const res = await apollo.execute(GetWorkspaceDocument, {
+        workspaceId: cryptoRandomString({ length: 6 })
+      })
+      expect(res).to.haveGraphQLErrors('not found')
     })
   })
 })

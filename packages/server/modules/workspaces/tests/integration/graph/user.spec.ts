@@ -1,32 +1,56 @@
 import {
-  createWorkspaceQuery,
-  getActiveUserWorkspacesQuery
-} from '@/modules/workspaces/tests/integration/graph/graph/queries'
-import { createTestApolloServer } from '@/modules/workspaces/tests/integration/graph/utils/apollo'
-import { createTestUserAndToken } from '@/modules/workspaces/tests/integration/graph/utils/user'
-import { ApolloServer } from 'apollo-server-express'
+  createTestContext,
+  testApolloServer,
+  TestApolloServer
+} from '@/test/graphqlHelper'
+import {
+  BasicTestUser,
+  createAuthTokenForUser,
+  createTestUser
+} from '@/test/authHelper'
+import { AllScopes, Roles } from '@speckle/shared'
 import { expect } from 'chai'
+import {
+  CreateWorkspaceDocument,
+  GetActiveUserWorkspacesDocument
+} from '@/test/graphql/generated/graphql'
 
 describe('User type queries', () => {
-  let apollo: ApolloServer
+  let apollo: TestApolloServer
+
+  const testUser: BasicTestUser = {
+    id: '',
+    name: 'John Speckle',
+    email: 'user-type-user@example.org',
+    role: Roles.Server.Admin
+  }
 
   before(async () => {
-    const { userId, token } = await createTestUserAndToken()
-    apollo = await createTestApolloServer(userId, token)
+    await createTestUser(testUser)
+    const token = await createAuthTokenForUser(testUser.id, AllScopes)
+    apollo = await testApolloServer({
+      context: createTestContext({
+        auth: true,
+        userId: testUser.id,
+        token,
+        role: testUser.role,
+        scopes: AllScopes
+      })
+    })
   })
 
   describe('workspaces', () => {
     before(async () => {
       await Promise.all(
         ['Workspace A', 'Workspace B'].map((name) =>
-          createWorkspaceQuery(apollo, { name })
+          apollo.execute(CreateWorkspaceDocument, { input: { name } })
         )
       )
     })
 
     it('should return all workspaces for a user', async () => {
-      const workspaces = await getActiveUserWorkspacesQuery(apollo)
-      expect(workspaces.length).to.equal(2)
+      const { data } = await apollo.execute(GetActiveUserWorkspacesDocument, {})
+      expect(data?.activeUser?.workspaces?.items?.length).to.equal(2)
     })
   })
 })

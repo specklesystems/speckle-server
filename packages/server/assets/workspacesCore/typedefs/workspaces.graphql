@@ -34,7 +34,7 @@ extend type Mutation {
 
 type WorkspaceMutations {
   create(input: WorkspaceCreateInput!): Workspace!
-    @hasServerRoles(role: SERVER_ADMIN)
+    @hasServerRole(role: SERVER_ADMIN)
     @hasScope(scope: "workspace:create")
   delete(workspaceId: String!): Workspace! @hasScope(scope: "workspace:delete")
   update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
