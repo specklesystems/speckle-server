@@ -1,5 +1,7 @@
 extend type Query {
-  workspace(id: String!): Workspace! @hasScope(scope: "workspace:read")
+  workspace(id: String!): Workspace!
+    @hasServerRole(role: SERVER_USER)
+    @hasScope(scope: "workspace:read")
 }
 
 input WorkspaceCreateInput {
@@ -31,7 +33,9 @@ extend type Mutation {
 }
 
 type WorkspaceMutations {
-  create(input: WorkspaceCreateInput!): Workspace! @hasScope(scope: "workspace:create")
+  create(input: WorkspaceCreateInput!): Workspace!
+    @hasServerRoles(role: SERVER_ADMIN)
+    @hasScope(scope: "workspace:create")
   delete(workspaceId: String!): Workspace! @hasScope(scope: "workspace:delete")
   update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
   """
