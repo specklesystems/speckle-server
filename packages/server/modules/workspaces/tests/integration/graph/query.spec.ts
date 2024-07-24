@@ -4,10 +4,10 @@ import cryptoRandomString from 'crypto-random-string'
 import {
   createWorkspaceQuery,
   getWorkspaceQuery
-} from '@/modules/workspaces/tests/e2e/graph/queries'
-import { createTestApolloServer } from '@/modules/workspaces/tests/e2e/utils/apollo'
+} from '@/modules/workspaces/tests/integration/graph/graph/queries'
+import { createTestApolloServer } from '@/modules/workspaces/tests/integration/graph/utils/apollo'
 import { expectToThrow } from '@/test/assertionHelper'
-import { createTestUserAndToken } from '@/modules/workspaces/tests/e2e/utils/user'
+import { createTestUserAndToken } from '@/modules/workspaces/tests/integration/graph/utils/user'
 
 describe('Root Query type', () => {
   let apollo: ApolloServer

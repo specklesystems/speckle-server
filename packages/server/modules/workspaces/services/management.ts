@@ -27,7 +27,7 @@ import { isUserLastWorkspaceAdmin } from '@/modules/workspaces/utils/roles'
 import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/domain/roles'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { EventBus } from '@/modules/shared/services/eventBus'
-import { cullNullOrUndefinedValues } from '@/modules/shared/helpers/sanitization'
+import { removeNullOrUndefinedKeys } from '@speckle/shared'
 
 const tryStoreBlobFactory =
   (storeBlob: StoreBlob) =>
@@ -119,7 +119,7 @@ export const updateWorkspaceFactory =
 
     const workspace = {
       ...currentWorkspace,
-      ...cullNullOrUndefinedValues(workspaceInput),
+      ...removeNullOrUndefinedKeys(workspaceInput),
       updatedAt: new Date(),
       logoUrl
     }

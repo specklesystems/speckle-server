@@ -31,11 +31,9 @@ extend type Mutation {
 }
 
 type WorkspaceMutations {
-  create(input: WorkspaceCreateInput!): WorkspaceMetadata!
-    @hasScope(scope: "workspace:create")
-  delete(workspaceId: String!): WorkspaceMetadata! @hasScope(scope: "workspace:delete")
-  update(input: WorkspaceUpdateInput!): WorkspaceMetadata!
-    @hasScope(scope: "workspace:update")
+  create(input: WorkspaceCreateInput!): Workspace! @hasScope(scope: "workspace:create")
+  delete(workspaceId: String!): Workspace! @hasScope(scope: "workspace:delete")
+  update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
   """
   TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes
   """
@@ -78,14 +76,6 @@ type WorkspaceInviteMutations {
   cancel(workspaceId: String!, inviteId: String!): Workspace!
     @hasScope(scope: "users:invite")
     @hasServerRole(role: SERVER_USER)
-}
-
-type WorkspaceMetadata {
-  id: ID!
-  name: String!
-  description: String
-  createdAt: DateTime!
-  updatedAt: DateTime!
 }
 
 type Workspace {

@@ -51,7 +51,7 @@ generates:
         ProjectTriggeredAutomationsStatusUpdatedMessage: '@/modules/automate/helpers/graphTypes#ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn'
         ProjectAutomationsUpdatedMessage: '@/modules/automate/helpers/graphTypes#ProjectAutomationsUpdatedMessageGraphQLReturn'
         UserAutomateInfo: '@/modules/automate/helpers/graphTypes#UserAutomateInfoGraphQLReturn'
-        Workspace: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceRecordGraphQLReturn'
+        Workspace: '@/modules/workspacesCore/helpers/graphTypes#WorkspaceGraphQLReturn'
         WorkspaceMutations: '@/modules/core/helpers/graphTypes#MutationsObjectGraphQLReturn'
   modules/cross-server-sync/graph/generated/graphql.ts:
     plugins:

@@ -27,7 +27,11 @@ export const getWorkspacesForUserFactory =
       const workspacesBatch = await Promise.all(
         workspaceRoleBatch.map(({ workspaceId }) => getWorkspace({ workspaceId }))
       )
-      workspaces.push(...workspacesBatch.filter((workspace) => !isNull(workspace)))
+      workspaces.push(
+        ...workspacesBatch.filter(
+          (workspace): workspace is Workspace => !isNull(workspace)
+        )
+      )
     }
 
     return workspaces
