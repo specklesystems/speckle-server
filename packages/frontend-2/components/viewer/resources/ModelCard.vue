@@ -16,8 +16,8 @@
       <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
       <div
         :class="`${
-          showVersions ? 'bg-primary' : 'bg-foundation hover:bg-primary-muted'
-        } group sticky cursor-pointer top-0 z-20 flex h-10 sm:h-20 min-w-0 max-w-full items-center justify-between space-x-2 p-2 select-none`"
+          showVersions ? 'bg-primary' : 'bg-foundation hover:bg-foundation-2'
+        } group sticky cursor-pointer top-0 z-20 flex h-10 sm:h-16 min-w-0 max-w-full items-center justify-between space-x-2 px-2 py-1 select-none`"
         @click="showVersions = !showVersions"
       >
         <div>
@@ -28,7 +28,7 @@
             v-tippy="modelName.subheader ? model.name : null"
             :class="`${
               showVersions ? 'text-foundation' : ''
-            } text-heading truncate min-w-0`"
+            } text-heading-sm truncate min-w-0`"
           >
             {{ modelName.header }}
           </div>
@@ -36,7 +36,7 @@
             <span
               v-tippy="createdAtFormatted.full"
               :class="`${
-                showVersions ? 'text-foundation font-medium' : ''
+                showVersions ? 'text-foundation' : ''
               } text-body-2xs opacity-70`"
             >
               {{ isLatest ? 'Latest version' : createdAtFormatted.relative }}
@@ -71,7 +71,7 @@
       >
         <FormButton
           color="danger"
-          size="xs"
+          size="sm"
           class="rounded-full"
           @click="$emit('remove', props.model.id)"
         >
@@ -97,13 +97,7 @@
         @view-changes="handleViewChanges"
       />
       <div class="mt-4 px-2 py-2">
-        <FormButton
-          full-width
-          text
-          size="sm"
-          :disabled="!showLoadMore"
-          @click="onLoadMore"
-        >
+        <FormButton full-width text :disabled="!showLoadMore" @click="onLoadMore">
           {{ showLoadMore ? 'View older versions' : 'No more versions' }}
         </FormButton>
       </div>

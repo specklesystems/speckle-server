@@ -4,7 +4,7 @@
     <div class="text-sm">
       <slot>No data found!</slot>
     </div>
-    <FormButton v-if="cta" size="sm" :to="cta?.to" @click="onCtaClick">
+    <FormButton v-if="cta" :to="cta?.to" @click="onCtaClick">
       {{ cta.text }}
     </FormButton>
   </div>

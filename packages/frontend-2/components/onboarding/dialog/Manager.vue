@@ -10,14 +10,14 @@
     <div class="mt-2">
       <div v-if="hasSupportedOs" class="flex justify-center flex-col space-y-2">
         <FormButton
-          size="xl"
+          size="lg"
           class="shadow-md"
           @click.stop="downloadManager(os === 'Windows' ? 'exe' : 'dmg')"
         >
           Download for {{ os }}
         </FormButton>
         <FormButton
-          size="xs"
+          size="sm"
           text
           @click.stop="downloadManager(os === 'Windows' ? 'dmg' : 'exe')"
         >

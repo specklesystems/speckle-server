@@ -12,7 +12,11 @@
       <div
         class="flex flex-wrap space-y-2 sm:items-center sm:space-x-2 sm:space-y-0 sm:flex-nowrap"
       >
-        <FormButton outlined class="w-full sm:w-auto" @click="selectedItems = []">
+        <FormButton
+          color="outline"
+          class="w-full sm:w-auto"
+          @click="selectedItems = []"
+        >
           Clear selection
         </FormButton>
         <div class="flex space-x-2 w-full sm:w-auto">

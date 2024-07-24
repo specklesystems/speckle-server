@@ -7,7 +7,6 @@
       <p class="text-sm mt-2">
         <span v-show="!hasAddedOverlay">
           <FormButton
-            size="sm"
             link
             :icon-right="hasAddedOverlay ? CheckIcon : null"
             :disabled="hasAddedOverlay"

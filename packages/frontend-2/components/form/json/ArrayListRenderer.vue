@@ -12,10 +12,9 @@
       </div>
       <FormButton
         v-if="!isReadonly"
-        color="success"
         hide-text
         :icon-left="PlusIcon"
-        size="xs"
+        size="sm"
         :disabled="!control.enabled || (appliedOptions.restrict && maxItemsReached)"
         @click="onAdd"
       />

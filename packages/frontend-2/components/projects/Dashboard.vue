@@ -47,7 +47,7 @@
           />
           <FormButton
             v-if="!isGuest"
-            :icon-left="PlusIcon"
+            :icon-right="PlusIcon"
             @click="openNewProject = true"
           >
             New

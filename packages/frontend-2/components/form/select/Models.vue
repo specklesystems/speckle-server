@@ -52,7 +52,7 @@
     </template>
     <template #option="{ item }">
       <div class="flex items-center">
-        <span class="truncate">{{ item.name }}</span>
+        <span class="truncate text-body-2xs">{{ item.name }}</span>
       </div>
     </template>
     <template #nothing-found>

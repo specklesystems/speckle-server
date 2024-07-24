@@ -60,7 +60,7 @@ const colorDefinitions: Ref<Record<string, ColorDefinition>> = ref({
   },
   outline: {
     description: 'Outline/border/divider colors',
-    variations: ['1', '2', '3']
+    variations: ['1', '2', '3', '4', '5']
   },
   success: {
     description: 'For success messages/icons/notifications',
@@ -132,6 +132,8 @@ markClassesUsed([
   'bg-danger-darker',
   'bg-outline-1',
   'bg-outline-2',
-  'bg-outline-3'
+  'bg-outline-3',
+  'bg-outline-4',
+  'bg-outline-5'
 ])
 </script>

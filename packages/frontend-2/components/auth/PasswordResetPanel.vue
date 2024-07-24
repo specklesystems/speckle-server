@@ -23,7 +23,7 @@
     <template #footer>
       <div class="flex flex-col gap-y-2">
         <FormButton submit full-width :disabled="loading">Send reset e-mail</FormButton>
-        <FormButton color="secondary" :to="homeRoute">Go home</FormButton>
+        <FormButton color="outline" :to="homeRoute">Go Home</FormButton>
       </div>
     </template>
   </LayoutPanel>

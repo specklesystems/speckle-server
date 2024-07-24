@@ -15,7 +15,7 @@
             search
             :show-clear="!!search"
             placeholder="Search projects"
-            class="rounded-md border border-outline-3 md:max-w-md mt-6 md:mt-0"
+            class="rounded-md border border-outline-3"
             :model-value="bind.modelValue.value"
             v-on="on"
           />
@@ -83,20 +83,17 @@
         </template>
       </LayoutTable>
 
-      <CommonLoadingBar v-if="loading && !projects?.length" loading />
-
       <InfiniteLoading
         v-if="projects?.length"
-        :settings="{ identifier: infiniteLoaderId }"
+        :settings="{ identifier }"
         class="py-4"
-        @infinite="infiniteLoad"
+        @infinite="onInfiniteLoad"
       />
 
       <SettingsServerProjectDeleteDialog
         v-model:open="showProjectDeleteDialog"
         :project="projectToModify"
         title="Delete project"
-        :result-variables="resultVariables"
       />
 
       <ProjectsAddDialog v-model:open="openNewProject" />
@@ -106,44 +103,40 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuery } from '@vue/apollo-composable'
 import { MagnifyingGlassIcon, TrashIcon, PlusIcon } from '@heroicons/vue/24/outline'
 import { getProjectsQuery } from '~~/lib/server-management/graphql/queries'
 import type { ItemType, ProjectItem } from '~~/lib/server-management/helpers/types'
-import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import { isProject } from '~~/lib/server-management/helpers/utils'
 import { useDebouncedTextInput } from '@speckle/ui-components'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
-const search = defineModel<string>('search')
-
-const { on, bind } = useDebouncedTextInput({ model: search })
-const logger = useLogger()
+const { on, bind, value: search } = useDebouncedTextInput()
 const router = useRouter()
 
 const projectToModify = ref<ProjectItem | null>(null)
 const showProjectDeleteDialog = ref(false)
-const infiniteLoaderId = ref('')
 const openNewProject = ref(false)
 
 const {
-  result: extraPagesResult,
-  fetchMore: fetchMorePages,
-  variables: resultVariables,
-  onResult,
-  loading
-} = useQuery(getProjectsQuery, () => ({
-  limit: 50,
-  query: search.value
-}))
+  identifier,
+  onInfiniteLoad,
+  query: { result }
+} = usePaginatedQuery({
+  query: getProjectsQuery,
+  baseVariables: computed(() => ({
+    query: search.value?.length ? search.value : null,
+    limit: 50
+  })),
+  resolveKey: (vars) => [vars.query || ''],
+  resolveCurrentResult: (res) => res?.admin.projectList,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
 
-const moreToLoad = computed(
-  () =>
-    !extraPagesResult.value?.admin?.projectList ||
-    extraPagesResult.value.admin.projectList.items.length <
-      extraPagesResult.value.admin.projectList.totalCount
-)
-
-const projects = computed(() => extraPagesResult.value?.admin.projectList.items || [])
+const projects = computed(() => result.value?.admin.projectList.items || [])
 
 const openProjectDeleteDialog = (item: ItemType) => {
   if (isProject(item)) {
@@ -155,32 +148,4 @@ const openProjectDeleteDialog = (item: ItemType) => {
 const handleProjectClick = (item: ItemType) => {
   router.push(`/projects/${item.id}`)
 }
-
-const infiniteLoad = async (state: InfiniteLoaderState) => {
-  const cursor = extraPagesResult.value?.admin?.projectList.cursor || null
-  if (!moreToLoad.value || !cursor) return state.complete()
-
-  try {
-    await fetchMorePages({
-      variables: {
-        cursor
-      }
-    })
-  } catch (e) {
-    logger.error(e)
-    state.error()
-    return
-  }
-
-  state.loaded()
-  if (!moreToLoad.value) {
-    state.complete()
-  }
-}
-
-const calculateLoaderId = () => {
-  infiniteLoaderId.value = resultVariables.value?.query || ''
-}
-
-onResult(calculateLoaderId)
 </script>

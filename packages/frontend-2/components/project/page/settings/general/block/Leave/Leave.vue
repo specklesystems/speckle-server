@@ -11,7 +11,7 @@
       </p>
       <template #bottom-buttons>
         <FormButton color="danger" @click="showLeaveDialog = true">
-          Leave project
+          Leave Project
         </FormButton>
       </template>
     </ProjectPageSettingsBlock>

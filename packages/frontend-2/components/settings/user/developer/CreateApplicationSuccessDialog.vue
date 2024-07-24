@@ -68,7 +68,7 @@ const authUrl = computed(() => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { color: 'default', fullWidth: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => (isOpen.value = false)
   }
 ])

@@ -2,18 +2,17 @@
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
     <template #title>Measure mode</template>
     <div
-      class="flex items-center gap-2 text-xs sm:text-sm px-3 py-1.5 sm:py-2 border-b border-outline-3 text-foreground-2"
+      class="flex items-center gap-2 text-xs sm:text-sm px-3 py-1.5 border-b border-outline-3 text-foreground-2"
     >
       <InformationCircleIcon class="h-5 w-5 sm:h-6 sm:h-6 shrink-0" />
       <span class="text-body-2xs">Reloading will delete all measurements</span>
     </div>
     <template #actions>
       <FormButton
-        size="sm"
         text
         color="danger"
         :icon-left="TrashIcon"
-        class="font-normal py-1"
+        class="py-1"
         @click="() => clearMeasurements()"
       >
         Delete all measurements

@@ -1,17 +1,44 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div
+  <NuxtLink
     :class="containerClasses"
+    :href="finalModelUrl"
     @mouseleave=";(showActionsMenu = false), (hovered = false)"
     @mouseenter="hovered = true"
   >
     <div
-      :class="['relative group/item', defaultLinkDisabled ? 'cursor-pointer' : '']"
+      class="relative"
       @click="$emit('click', $event)"
       @keypress="keyboardClick((e) => emit('click', e))"
     >
-      <div :class="`${height} flex items-center justify-center`">
+      <div class="flex justify-between items-center">
+        <div class="px-2">
+          <div
+            v-if="nameParts[0]"
+            class="text-body-2xs text-foreground-2 relative truncate"
+          >
+            {{ nameParts[0] }}
+          </div>
+          <div
+            class="text-body-xs font-semibold truncate text-foreground flex-shrink min-w-0 pb-2"
+          >
+            {{ nameParts[1] }}
+          </div>
+        </div>
+        <div class="-mt-1">
+          <ProjectPageModelsActions
+            v-if="project && showActions && !isPendingModelFragment(model)"
+            v-model:open="showActionsMenu"
+            :model="model"
+            :project="project"
+            :can-edit="canEdit"
+            @click.stop.prevent
+            @upload-version="triggerVersionUpload"
+          />
+        </div>
+      </div>
+      <div class="flex items-center justify-center">
         <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
           :upload="model"
@@ -24,9 +51,11 @@
           class="px-4 w-full text-foreground-2 text-sm flex flex-col items-center space-y-1"
         />
         <template v-else-if="previewUrl">
-          <NuxtLink :href="finalModelUrl" class="w-full h-full">
+          <div
+            class="bg-foundation-page w-full h-48 rounded-xl border border-outline-2"
+          >
             <PreviewImage :preview-url="previewUrl" />
-          </NuxtLink>
+          </div>
         </template>
         <div
           v-if="!isPendingModelFragment(model)"
@@ -41,63 +70,27 @@
           />
         </div>
       </div>
-      <div
-        class="h-auto sm:h-12 flex flex-col sm:flex-row sm:items-center px-2 pt-1 pb-2 gap-x-1"
-      >
-        <NuxtLink class="min-w-0 max-w-full cursor-pointer" :href="finalModelUrl">
-          <div
-            v-if="nameParts[0]"
-            class="text-body-2xs text-foreground-2 relative -mb-0.5 truncate"
-          >
-            {{ nameParts[0] }}
+      <div class="flex flex-col">
+        <div class="w-full">
+          <div class="flex justify-between items-center mt-auto pt-2 px-2 w-full">
+            <ProjectPageModelsCardUpdatedTime
+              class="text-body-3xs text-foreground-2"
+              :updated-at="updatedAtFullDate"
+            />
+            <div class="flex items-center gap-1">
+              <FormButton
+                v-tippy="'View Comments'"
+                color="subtle"
+                size="sm"
+                class="flex items-center gap-1 !text-foreground-2"
+                :to="modelVersionsRoute(projectId, model.id)"
+              >
+                <ClockIcon class="h-5 w-5" />
+                {{ versionCount }}
+              </FormButton>
+            </div>
           </div>
-          <div class="text-heading-sm truncate text-foreground flex-shrink min-w-0">
-            {{ nameParts[1] }}
-          </div>
-          <ProjectPageModelsCardUpdatedTime
-            :updated-at="updatedAtFullDate"
-            class="hidden group-hover/item:block pb-1.5 -mt-0.5 text-body-3xs w-full text-foreground-2 truncate transition"
-          />
-        </NuxtLink>
-        <div class="hidden sm:flex grow" />
-        <div class="flex items-center">
-          <FormButton
-            v-if="finalShowVersions"
-            v-tippy="'View Version Gallery'"
-            rounded
-            size="xs"
-            :to="modelVersionsRoute(projectId, model.id)"
-            :class="`transition gap-0.5 ml-1 ${
-              hovered ? 'inline-block opacity-100' : 'sm:hidden sm:opacity-0'
-            }`"
-          >
-            <IconVersions class="h-4 w-4" />
-            {{ versionCount }}
-          </FormButton>
-          <ProjectPageModelsActions
-            v-if="project && showActions && !isPendingModelFragment(model)"
-            v-model:open="showActionsMenu"
-            :model="model"
-            :project="project"
-            :can-edit="canEdit"
-            @click.stop.prevent
-            @upload-version="triggerVersionUpload"
-          />
         </div>
-      </div>
-      <div
-        v-if="
-          !isPendingModelFragment(model) && model.commentThreadCount.totalCount !== 0
-        "
-        :class="[
-          `z-10 absolute opacity-100 top-0 right-0 p-2 flex items-center transition`,
-          'border-2 border-primary-muted h-8 bg-foundation shadow-md justify-center',
-          'rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2',
-          hovered ? 'sm:opacity-100' : 'sm:opacity-0'
-        ]"
-      >
-        <ChatBubbleLeftRightIcon class="w-4 h-4" />
-        <span>{{ model.commentThreadCount.totalCount }}</span>
       </div>
       <div
         v-if="!isPendingModelFragment(model) && model.automationsStatus"
@@ -110,7 +103,7 @@
         />
       </div>
     </div>
-  </div>
+  </NuxtLink>
 </template>
 <script lang="ts" setup>
 import type {
@@ -118,7 +111,7 @@ import type {
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
+import { ClockIcon } from '@heroicons/vue/24/outline'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
@@ -147,12 +140,10 @@ const props = withDefaults(
     showVersions?: boolean
     showActions?: boolean
     disableDefaultLink?: boolean
-    height?: string
   }>(),
   {
     showVersions: true,
-    showActions: true,
-    height: 'h-64'
+    showActions: true
   }
 )
 
@@ -169,12 +160,8 @@ const hovered = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-md bg-foundation shadow transition border-2 border-transparent'
+    'group rounded-xl bg-foundation-2 border border-outline-3 hover:border-outline-2 px-2 py-2.5'
   ]
-
-  if (!isPendingModelFragment(props.model)) {
-    classParts.push('hover:scale-[1.02] hover:border-outline-2 hover:shadow-xl')
-  }
 
   return classParts.join(' ')
 })
@@ -200,9 +187,7 @@ const updatedAtFullDate = computed(() => {
     ? props.model.convertedLastUpdate || props.model.uploadDate
     : props.model.updatedAt
 })
-const finalShowVersions = computed(
-  () => props.showVersions && !isPendingModelFragment(props.model)
-)
+
 const canEdit = computed(() => (props.project ? canModifyModels(props.project) : false))
 const versionCount = computed(() => {
   return isPendingModelFragment(props.model) ? 0 : props.model.versionCount.totalCount

@@ -14,7 +14,7 @@
           icon: EyeIcon,
           label: 'View',
           action: onView,
-          textColor: 'primary'
+          class: '!text-primary'
         }
       ]"
       empty-message="Automation does not have any runs"

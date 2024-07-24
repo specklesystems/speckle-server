@@ -9,7 +9,6 @@
       <br />
       <CommonTextLink
         :icon-right="ArrowTopRightOnSquareIcon"
-        size="sm"
         external
         :to="repoLink"
         target="_blank"
@@ -19,7 +18,6 @@
       or
       <CommonTextLink
         :icon-right="ArrowTopRightOnSquareIcon"
-        size="sm"
         external
         :to="repoCodespaceLink"
         target="_blank"

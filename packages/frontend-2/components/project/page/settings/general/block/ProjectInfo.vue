@@ -26,7 +26,12 @@
         :disabled="disabled"
       />
       <template #bottom-buttons>
-        <FormButton text :disabled="!hasChanges" @click="resetLocalState">
+        <FormButton
+          color="subtle"
+          text
+          :disabled="!hasChanges"
+          @click="resetLocalState"
+        >
           Cancel
         </FormButton>
         <FormButton :disabled="!hasChanges" @click="emitUpdate">Update</FormButton>
@@ -115,7 +120,7 @@ const resetLocalState = () => {
 const dialogButtons = computed<LayoutDialogButton[]>(() => [
   {
     text: 'Discard Changes',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { color: 'outline', fullWidth: true, outline: true },
     onClick: handleRedirection
   },
   {

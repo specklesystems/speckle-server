@@ -24,7 +24,7 @@
       />
     </div>
     <div class="mt-1">
-      <CommonTextLink :to="forgottenPasswordRoute" size="sm">
+      <CommonTextLink :to="forgottenPasswordRoute">
         Forgot your password?
       </CommonTextLink>
     </div>

@@ -7,7 +7,7 @@
         <h1 class="block text-heading-xl">Models</h1>
         <div class="flex items-center space-x-2 w-full mt-2 sm:w-auto sm:mt-0">
           <FormButton
-            color="secondary"
+            color="outline"
             :to="allModelsRoute"
             class="grow inline-flex sm:grow-0 lg:hidden"
             @click="trackFederateAll"
@@ -17,10 +17,9 @@
           <FormButton
             v-if="canContribute"
             class="grow inline-flex sm:grow-0 lg:hidden"
-            :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
-            New
+            New model
           </FormButton>
         </div>
       </div>
@@ -67,7 +66,7 @@
             <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
           </div>
           <FormButton
-            color="secondary"
+            color="outline"
             :to="allModelsRoute"
             class="hidden lg:inline-flex shrink-0"
             @click="trackFederateAll"
@@ -77,10 +76,9 @@
           <FormButton
             v-if="canContribute"
             class="hidden lg:inline-flex shrink-0"
-            :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
-            New
+            New model
           </FormButton>
         </div>
       </div>
@@ -99,7 +97,6 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { PlusIcon } from '@heroicons/vue/20/solid'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 

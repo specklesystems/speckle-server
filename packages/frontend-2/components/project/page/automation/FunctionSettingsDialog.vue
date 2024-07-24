@@ -62,7 +62,7 @@
           View function
         </FormButton>
         <div class="grow" />
-        <FormButton outlined @click="open = false">Close</FormButton>
+        <FormButton color="outline" @click="open = false">Close</FormButton>
         <FormButton
           :disabled="hasErrors || loading || !hasRequiredData || !selectedModel"
           @click="onSave"

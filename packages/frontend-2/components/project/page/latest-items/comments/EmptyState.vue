@@ -36,11 +36,7 @@
     </template>
     <template #cta>
       <div v-if="showButton" class="mt-3">
-        <FormButton
-          size="sm"
-          :icon-left="PlusIcon"
-          @click="() => $emit('new-discussion')"
-        >
+        <FormButton :icon-left="PlusIcon" @click="() => $emit('new-discussion')">
           New discussion
         </FormButton>
       </div>

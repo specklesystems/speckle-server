@@ -3,7 +3,7 @@
     class="flex flex-col w-full"
     :class="
       background
-        ? 'bg-foundation border border-outline-3 rounded-lg overflow-hidden '
+        ? 'bg-foundation border border-outline-2 rounded-lg overflow-hidden '
         : ''
     "
   >
@@ -15,7 +15,7 @@
         <component :is="icon" v-if="icon" class="h-5 w-5"></component>
         <h3 class="text-heading-lg">{{ title }}</h3>
       </div>
-      <div v-if="$slots['top-buttons']" class="flex gap-4">
+      <div v-if="$slots['top-buttons']" class="flex gap-2">
         <slot name="top-buttons" />
       </div>
     </div>
@@ -31,7 +31,7 @@
     </div>
     <div
       v-if="disabledMessage || $slots['bottom-buttons']"
-      class="flex flex-col sm:flex-row gap-2 justify-between items-end sm:items-center bg-gray-50 dark:bg-foundation px-4 sm:px-6 py-2 border-t border-outline-3"
+      class="flex flex-col sm:flex-row gap-2 justify-between items-end sm:items-center bg-foundation px-4 sm:px-6 py-2 border-t border-outline-2"
     >
       <div v-if="disabledMessage" class="text-xs flex gap-1 sm:items-center w-full">
         <ExclamationCircleIcon

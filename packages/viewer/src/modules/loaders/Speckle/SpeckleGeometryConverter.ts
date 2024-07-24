@@ -70,6 +70,8 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         return this.TextToGeometryData(node)
       case SpeckleType.Transform:
         return this.TransformToGeometryData(node)
+      case SpeckleType.InstanceProxy:
+        return this.InstanceProxyToGeometyData(node)
       case SpeckleType.Unknown:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
@@ -172,6 +174,11 @@ export class SpeckleGeometryConverter extends GeometryConverter {
 
   /** REVIT INSTANCE */
   private RevitInstanceToGeometryData(node: NodeData): GeometryData | null {
+    node
+    return null
+  }
+
+  private InstanceProxyToGeometyData(node: NodeData): GeometryData | null {
     node
     return null
   }

@@ -16,13 +16,13 @@
     <div class="flex flex-col items-center space-y-4">
       <FormButton
         v-if="!isGuest"
-        size="xl"
+        size="lg"
         class="shadow-lg"
         @click="$emit('create-project')"
       >
         Create a project
       </FormButton>
-      <FormButton text size="xs" to="/onboarding?force=true">
+      <FormButton text size="sm" to="/onboarding?force=true">
         {{
           isGuest
             ? 'Go through the onboarding again?'

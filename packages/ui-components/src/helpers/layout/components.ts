@@ -46,3 +46,5 @@ export type LayoutDialogButton = {
    */
   id?: string
 }
+
+export type LayoutTableColours = 'primary' | 'outline' | 'subtle' | 'danger'

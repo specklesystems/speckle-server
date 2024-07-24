@@ -38,12 +38,12 @@
         />
         <FormButton
           v-if="button"
-          size="sm"
           :to="button.expandContent ? undefined : button.to"
-          :color="button.expandContent && isExpanded ? 'invert' : button.color"
+          :color="button.expandContent && isExpanded ? 'outline' : button.color"
           :icon-right="
             button.expandContent && isExpanded ? undefined : button.iconRight
           "
+          size="sm"
           @click="button?.onClick"
           v-on="button?.expandContent ? { click: toggleExpansion } : {}"
         >
@@ -90,18 +90,9 @@ import { ChevronDownIcon } from '@heroicons/vue/24/outline'
 import { FormButton } from '~~/src/lib'
 import { keyboardClick } from '~~/src/helpers/global/accessibility'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
+import type { FormButtonStyle } from '~~/src/helpers/form/button'
 
 type TitleColor = 'default' | 'danger' | 'warning' | 'success' | 'secondary' | 'info'
-
-type FormButtonColor =
-  | 'default'
-  | 'invert'
-  | 'danger'
-  | 'warning'
-  | 'success'
-  | 'card'
-  | 'secondary'
-  | 'info'
 
 const props = defineProps({
   title: String,
@@ -117,7 +108,7 @@ const props = defineProps({
         expandContent?: boolean
         text: string
         to?: string
-        color: FormButtonColor
+        color: FormButtonStyle
         iconRight?: PropAnyComponent | undefined
         onClick?: () => void
       }

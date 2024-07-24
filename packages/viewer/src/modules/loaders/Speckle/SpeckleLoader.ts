@@ -128,6 +128,8 @@ export class SpeckleLoader extends Loader {
       return Promise.resolve(false)
     }
 
+    await this.converter.convertInstances()
+
     const t0 = performance.now()
     const geometryConverter = new SpeckleGeometryConverter()
 

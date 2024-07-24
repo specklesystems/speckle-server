@@ -34,11 +34,11 @@
       </div>
       <span
         v-else
-        class="text-sm text-foreground-2 text-center"
-        :class="isModelCardVariant ? ' opacity-50 group-hover:opacity-100' : ''"
+        class="text-body-2xs text-foreground-2 text-center"
+        :class="isModelCardcolor ? ' opacity-60 group-hover:opacity-100' : ''"
       >
         Use our
-        <FormButton link size="sm" external target="_blank" :to="connectorsPageUrl">
+        <FormButton link external target="_blank" size="sm" :to="connectorsPageUrl">
           connectors
         </FormButton>
         to publish a {{ modelName ? '' : 'new model' }} version to
@@ -79,13 +79,13 @@ const uploadZone = ref(
   }>
 )
 
-const isModelCardVariant = computed(() => !!props.modelName)
+const isModelCardcolor = computed(() => !!props.modelName)
 
 const getDashedBorderClasses = (isDraggingFiles: boolean) => {
   if (isDraggingFiles) return 'border-primary'
   if (errorMessage.value) return 'border-danger'
 
-  return isModelCardVariant.value ? 'border-blue-500/10' : 'border-outline-2'
+  return isModelCardcolor.value ? 'border-blue-500/10' : 'border-outline-2'
 }
 
 const triggerPicker = () => {

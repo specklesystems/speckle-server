@@ -1,7 +1,7 @@
 <template>
   <ViewerLayoutPanel @close="$emit('close')">
     <template #actions>
-      <FormButton size="xs" text :icon-left="ChevronLeftIcon" @click="clearDiff">
+      <FormButton size="sm" text :icon-left="ChevronLeftIcon" @click="clearDiff">
         Back
       </FormButton>
     </template>
@@ -43,8 +43,10 @@
       <div class="flex items-center justify-between w-full px-1">
         <span class="text-body-xs text-left">Color objects by status</span>
         <FormButton
-          size="xs"
-          :outlined="diffState.mode.value !== VisualDiffMode.COLORED"
+          size="sm"
+          :color="
+            diffState.mode.value !== VisualDiffMode.COLORED ? 'outline' : undefined
+          "
           @click="swapDiffMode()"
         >
           {{ diffState.mode.value === VisualDiffMode.COLORED ? 'ON' : 'OFF' }}

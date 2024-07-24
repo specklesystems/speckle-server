@@ -15,7 +15,7 @@
               <div class="label-light">{{ activeUser.name }}</div>
             </div>
             <CommonTextLink
-              size="xs"
+              size="sm"
               :icon-right="ArrowsRightLeftIcon"
               no-underline
               @click="onSwitchAccounts"
@@ -97,7 +97,7 @@
             </Disclosure>
           </div>
           <div class="flex space-x-2 w-full">
-            <FormButton color="secondary" full-width :disabled="loading" @click="deny">
+            <FormButton color="outline" full-width :disabled="loading" @click="deny">
               Deny
             </FormButton>
             <FormButton full-width :disabled="loading" @click="allow">

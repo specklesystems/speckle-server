@@ -32,7 +32,6 @@
               :is="noButtons ? 'div' : CommonTextLink"
               external
               :to="fn.repo.url"
-              size="sm"
             >
               {{ fn.repo.owner }}
             </Component>
@@ -47,7 +46,7 @@
           <FormButton
             :icon-left="PencilIcon"
             full-width
-            outlined
+            color="outline"
             @click="$emit('edit')"
           >
             Edit Details

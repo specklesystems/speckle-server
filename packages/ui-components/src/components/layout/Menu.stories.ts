@@ -76,7 +76,7 @@ export const Default: StoryType = {
         @chosen="chosen"
         @update:open="args['update:open']"
       >
-        <FormButton size="sm" @click="showMenu = !showMenu">
+        <FormButton @click="showMenu = !showMenu">
           <EllipsisVerticalIcon class="w-4 h-4" />
           Click me!
         </FormButton>

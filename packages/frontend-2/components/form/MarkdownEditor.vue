@@ -14,7 +14,7 @@
       <div class="grow" />
       <CommonTextLink
         v-if="!isEditing || !isPreviewDisabled"
-        size="xs"
+        size="sm"
         @click="toggleEditor"
       >
         {{ isEditing ? 'Preview' : 'Editor' }}

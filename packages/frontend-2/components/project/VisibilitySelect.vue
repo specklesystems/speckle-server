@@ -21,7 +21,7 @@
         <div class="label">
           {{ isArray(value) ? value[0].title : value.title }}
         </div>
-        <span class="text-foreground-2 text-xs sm:text-sm">
+        <span class="text-foreground-2 text-xs">
           {{ isArray(value) ? value[0].description : value.description }}
         </span>
       </div>
@@ -29,7 +29,7 @@
     <template #option="{ item }">
       <div class="flex flex-col">
         <div class="label">{{ item.title }}</div>
-        <div class="label label--light text-foreground-2 text-xs sm:text-sm">
+        <div class="label label--light text-foreground-2 text-xs">
           {{ item.description }}
         </div>
       </div>

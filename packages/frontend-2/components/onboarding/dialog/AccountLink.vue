@@ -8,8 +8,8 @@
       controls
     />
     <div class="flex justify-center mt-2">
-      <FormButton size="xl" class="shadow-md" @click="authoriseManager()">
-        Authorize manager
+      <FormButton size="lg" class="shadow-md" @click="authoriseManager()">
+        Authorize Manager
       </FormButton>
     </div>
   </OnboardingDialogBase>
