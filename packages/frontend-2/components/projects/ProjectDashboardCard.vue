@@ -54,7 +54,7 @@
       </div>
       <div
         v-if="modelItemTotalCount > 4"
-        class="absolute -right-11 hover:right-0 top-1/2 translate -translate-y-1/2 bg-foundation text-primary text-xs font-semibold transition-all opacity-0 group-hover:opacity-100 rounded-l-md shadow-md px-1 py-12"
+        class="absolute -right-11 hover:right-0 top-1/2 translate -translate-y-1/2 bg-foundation text-primary text-xs font-medium transition-all opacity-0 group-hover:opacity-100 rounded-l-md shadow-md px-1 py-12"
       >
         <NuxtLink :to="allProjectModelsRoute(project.id) + '/'">
           +{{ modelItemTotalCount - 4 }} more model{{

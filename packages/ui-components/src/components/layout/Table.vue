@@ -6,7 +6,7 @@
     >
       <div
         v-if="items.length > 0"
-        class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
+        class="grid z-10 grid-cols-12 items-center gap-6 font-medium bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
         :style="{ paddingRight: paddingRightStyle }"
       >
         <div

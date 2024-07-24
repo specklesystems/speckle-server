@@ -64,6 +64,10 @@ const props = defineProps<{
    */
   color?: FormButtonStyle
   /**
+   * Should rounded-full be added?:
+   */
+  rounded?: boolean
+  /**
    * Whether the target location should be forcefully treated as an external URL
    * (for relative paths this will likely cause a redirect)
    */
@@ -140,6 +144,10 @@ const bgAndBorderClasses = computed(() => {
       'bg-primary border-outline-1 text-foreground-on-primary',
       'hover:bg-primary-focus disabled:hover:bg-primary focus-visible:border-foundation'
     ]
+  }
+
+  if (props.rounded) {
+    classParts.push('!rounded-full')
   }
 
   if (props.text || props.link) {
