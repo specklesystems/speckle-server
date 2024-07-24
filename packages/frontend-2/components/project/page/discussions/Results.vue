@@ -43,7 +43,9 @@ const {
     projectId: props.project.id,
     filter: { includeArchived: !!props.includeArchived }
   })),
-  resolveKey: (vars) => [vars.projectId, vars.filter],
+  resolveKey: (vars) => {
+    return { projectId: vars.projectId, ...vars.filter }
+  },
   resolveCurrentResult: (res) => res?.project.commentThreads,
   resolveNextPageVariables: (baseVars, cursor) => ({
     ...baseVars,
