@@ -45,12 +45,8 @@
             class="w-56 grow md:grow-0"
             fixed-height
           />
-          <FormButton
-            v-if="!isGuest"
-            :icon-right="PlusIcon"
-            @click="openNewProject = true"
-          >
-            New
+          <FormButton v-if="!isGuest" @click="openNewProject = true">
+            New project
           </FormButton>
         </div>
       </div>
@@ -79,7 +75,6 @@ import {
   useSubscription
 } from '@vue/apollo-composable'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
-import { PlusIcon } from '@heroicons/vue/20/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import {
