@@ -19,6 +19,7 @@ export enum SpeckleType {
   RevitInstance = 'RevitInstance',
   Text = 'Text',
   Transform = 'Transform',
+  InstanceProxy = 'InstanceProxy',
   Unknown = 'Unknown'
 }
 
