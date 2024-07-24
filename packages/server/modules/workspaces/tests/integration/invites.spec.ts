@@ -2,7 +2,8 @@ import {
   assignToWorkspaces,
   BasicTestWorkspace,
   createTestWorkspaces,
-  createWorkspaceInviteDirectly
+  createWorkspaceInviteDirectly,
+  unassignFromWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import {
@@ -20,8 +21,13 @@ import {
   CancelWorkspaceInviteMutationVariables,
   CreateWorkspaceInviteDocument,
   CreateWorkspaceInviteMutationVariables,
+  GetMyWorkspaceInvitesDocument,
+  GetWorkspaceInviteDocument,
+  GetWorkspaceInviteQueryVariables,
   GetWorkspaceWithTeamDocument,
   GetWorkspaceWithTeamQueryVariables,
+  UseWorkspaceInviteDocument,
+  UseWorkspaceInviteMutationVariables,
   WorkspaceRole
 } from '@/test/graphql/generated/graphql'
 import { expect } from 'chai'
@@ -36,10 +42,8 @@ import { db } from '@/db/knex'
 
 /**
  * TODO:
- * - Token filled
- * - invitedTeam inacceessible (hasWorkspaceROle)
- *
- * - Register w/ project/server/workspace invite
+ * - Register w/ project/server/workspace invite + use as resource invite after
+ * - workspaceInvites
  */
 
 enum InviteByTarget {
@@ -482,6 +486,129 @@ describe('Workspaces Invites', () => {
         })
         expect(invite).to.be.ok
       })
+    })
+
+    describe('and looking at a specific invite', () => {
+      const myInviteTargetWorkspace: BasicTestWorkspace = {
+        name: 'My Invite Target Workspace',
+        id: '',
+        ownerId: ''
+      }
+
+      const processableInvite = {
+        workspaceId: '',
+        inviteId: '',
+        token: ''
+      }
+
+      const useInvite = async (
+        args: UseWorkspaceInviteMutationVariables,
+        options?: ExecuteOperationOptions
+      ) => apollo.execute(UseWorkspaceInviteDocument, args, options)
+
+      const getInvite = async (
+        args: GetWorkspaceInviteQueryVariables,
+        options?: ExecuteOperationOptions
+      ) => apollo.execute(GetWorkspaceInviteDocument, args, options)
+
+      const getMyInvites = async (options?: ExecuteOperationOptions) =>
+        apollo.execute(GetMyWorkspaceInvitesDocument, {}, options)
+
+      before(async () => {
+        await truncateTables([ServerInvites.name])
+        await createTestWorkspaces([[myInviteTargetWorkspace, me]])
+      })
+
+      beforeEach(async () => {
+        const inviteData = await createWorkspaceInviteDirectly(
+          {
+            workspaceId: myInviteTargetWorkspace.id,
+            input: {
+              userId: otherGuy.id,
+              role: WorkspaceRole.Member
+            }
+          },
+          me.id
+        )
+        processableInvite.workspaceId = myInviteTargetWorkspace.id
+        processableInvite.inviteId = inviteData.inviteId
+        processableInvite.token = inviteData.token
+      })
+
+      afterEach(async () => {
+        await unassignFromWorkspace(myInviteTargetWorkspace, otherGuy)
+      })
+
+      it("can't retrieve it if not the invitee", async () => {
+        const res = await getInvite({
+          workspaceId: myInviteTargetWorkspace.id,
+          token: processableInvite.token
+        })
+
+        expect(res).to.not.haveGraphQLErrors('')
+        expect(res.data?.workspaceInvite).to.be.not.ok
+      })
+
+      itEach(
+        [{ withToken: true }, { withToken: false }],
+        (test) =>
+          `can retrieve it if the invitee ${
+            test.withToken ? 'and specifying token' : 'and omitting token'
+          }`,
+        async (test) => {
+          const res = await getInvite(
+            {
+              workspaceId: myInviteTargetWorkspace.id,
+              token: test.withToken ? processableInvite.token : undefined
+            },
+            {
+              context: {
+                userId: otherGuy.id
+              }
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors('')
+          expect(res.data?.workspaceInvite).to.be.ok
+          expect(res.data!.workspaceInvite!.inviteId).to.equal(
+            processableInvite.inviteId
+          )
+          expect(res.data!.workspaceInvite!.workspaceId).to.equal(
+            myInviteTargetWorkspace.id
+          )
+          expect(res.data!.workspaceInvite!.token).to.equal(processableInvite.token)
+        }
+      )
+
+      itEach(
+        [{ hasSome: true }, { hasSome: false }],
+        (test) =>
+          `can get all of my invites ${
+            test.hasSome ? 'when there are some' : 'when there are none'
+          }`,
+        async (test) => {
+          const res = await getMyInvites({
+            context: {
+              userId: test.hasSome ? otherGuy.id : me.id
+            }
+          })
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.activeUser?.workspaceInvites).to.be.ok
+
+          if (test.hasSome) {
+            expect(res.data?.activeUser?.workspaceInvites).to.have.length(1)
+            expect(res.data?.activeUser?.workspaceInvites![0].inviteId).to.equal(
+              processableInvite.inviteId
+            )
+            expect(res.data?.activeUser?.workspaceInvites![0].workspaceId).to.equal(
+              myInviteTargetWorkspace.id
+            )
+          } else {
+            expect(res.data?.activeUser?.workspaceInvites).to.have.length(0)
+          }
+        }
+      )
     })
   })
 })

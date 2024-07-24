@@ -1,5 +1,11 @@
 extend type Query {
   workspace(id: String!): Workspace! @hasScope(scope: "workspace:read")
+
+  """
+  Look for an invitation to a workspace, for the current user (authed or not). If token
+  isn't specified, the server will look for any valid invite.
+  """
+  workspaceInvite(workspaceId: String!, token: String): PendingWorkspaceCollaborator
 }
 
 input WorkspaceCreateInput {
@@ -60,7 +66,6 @@ input WorkspaceInviteCreateInput {
 }
 
 input WorkspaceInviteUseInput {
-  workspaceId: String!
   token: String!
   accept: Boolean!
 }
@@ -142,6 +147,14 @@ extend type User {
     cursor: String = null
     filter: UserWorkspacesFilter
   ): WorkspaceCollection! @isOwner
+
+  """
+  Get all invitations to workspaces that the active user has
+  """
+  workspaceInvites: [PendingWorkspaceCollaborator!]!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "workspace:read")
+    @isOwner
 }
 
 extend type Project {

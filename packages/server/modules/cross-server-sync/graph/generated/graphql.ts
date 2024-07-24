@@ -2413,6 +2413,11 @@ export type Query = {
    */
   userSearch: UserSearchResultCollection;
   workspace: Workspace;
+  /**
+   * Look for an invitation to a workspace, for the current user (authed or not). If token
+   * isn't specified, the server will look for any valid invite.
+   */
+  workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
 };
 
 
@@ -2541,6 +2546,12 @@ export type QueryUserSearchArgs = {
 
 export type QueryWorkspaceArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type QueryWorkspaceInviteArgs = {
+  token?: InputMaybe<Scalars['String']['input']>;
+  workspaceId: Scalars['String']['input'];
 };
 
 /** Deprecated: Used by old stream-based mutations */
@@ -3344,6 +3355,8 @@ export type User = {
    * Note: Only count resolution is currently implemented
    */
   versions: CountOnlyCollection;
+  /** Get all invitations to workspaces that the active user has */
+  workspaceInvites: Array<PendingWorkspaceCollaborator>;
   /** Get the workspaces for the user */
   workspaces: WorkspaceCollection;
 };
@@ -3795,7 +3808,6 @@ export type WorkspaceInviteMutationsUseArgs = {
 export type WorkspaceInviteUseInput = {
   accept: Scalars['Boolean']['input'];
   token: Scalars['String']['input'];
-  workspaceId: Scalars['String']['input'];
 };
 
 export type WorkspaceMutations = {

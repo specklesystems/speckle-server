@@ -103,3 +103,34 @@ export const cancelInviteMutation = gql`
   ${basicWorkspaceFragment}
   ${basicPendingWorkspaceCollaboratorFragment}
 `
+export const useInviteMutation = gql`
+  mutation UseWorkspaceInvite($input: WorkspaceInviteUseInput!) {
+    workspaceMutations {
+      invites {
+        use(input: $input)
+      }
+    }
+  }
+`
+
+export const getWorkspaceInviteQuery = gql`
+  query GetWorkspaceInvite($workspaceId: String!, $token: String) {
+    workspaceInvite(workspaceId: $workspaceId, token: $token) {
+      ...BasicPendingWorkspaceCollaborator
+    }
+  }
+
+  ${basicPendingWorkspaceCollaboratorFragment}
+`
+
+export const getMyWorkspaceInvitesQuery = gql`
+  query GetMyWorkspaceInvites {
+    activeUser {
+      workspaceInvites {
+        ...BasicPendingWorkspaceCollaborator
+      }
+    }
+  }
+
+  ${basicPendingWorkspaceCollaboratorFragment}
+`

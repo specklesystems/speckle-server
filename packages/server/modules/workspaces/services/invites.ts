@@ -7,14 +7,20 @@ import { getWorkspaceRoute } from '@/modules/core/helpers/routeHelper'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { LimitedUserRecord } from '@/modules/core/helpers/types'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { QueryAllResourceInvites } from '@/modules/serverinvites/domain/operations'
+import { getUser } from '@/modules/core/repositories/users'
+import {
+  FindInvite,
+  QueryAllResourceInvites,
+  QueryAllUserResourceInvites
+} from '@/modules/serverinvites/domain/operations'
 import {
   InviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
 import {
   InviteCreateValidationError,
-  InviteFinalizingError
+  InviteFinalizingError,
+  NoInviteFoundError
 } from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
@@ -35,6 +41,7 @@ import {
   CreateAndSendInvite,
   GetInvitationTargetUsers,
   InviteFinalizationAction,
+  ProcessFinalizedResourceInvite,
   ValidateResourceInviteBeforeFinalization
 } from '@/modules/serverinvites/services/operations'
 import { authorizeResolver } from '@/modules/shared'
@@ -234,6 +241,58 @@ function buildPendingWorkspaceCollaboratorModel(
   }
 }
 
+export const getUserPendingWorkspaceInviteFactory =
+  (deps: { findInvite: FindInvite; getUser: typeof getUser }) =>
+  async (params: {
+    workspaceId: string
+    userId: MaybeNullOrUndefined<string>
+    token: MaybeNullOrUndefined<string>
+  }) => {
+    const { workspaceId, userId, token } = params
+    if (!userId && !token) return null
+
+    const invite = await deps.findInvite<
+      typeof WorkspaceInviteResourceType,
+      WorkspaceRoles
+    >({
+      target: userId ? buildUserTarget(userId) : undefined,
+      token: token || undefined,
+      resourceFilter: {
+        resourceType: WorkspaceInviteResourceType,
+        resourceId: workspaceId
+      }
+    })
+    if (!invite) return null
+
+    const targetUserId = resolveTarget(invite.target).userId
+    const targetUser = targetUserId ? await deps.getUser(targetUserId) : null
+
+    return buildPendingWorkspaceCollaboratorModel(invite, targetUser)
+  }
+
+export const getUserPendingWorkspaceInvitesFactory =
+  (deps: {
+    getUserResourceInvites: QueryAllUserResourceInvites
+    getUser: typeof getUser
+  }) =>
+  async (userId: string): Promise<PendingWorkspaceCollaboratorGraphQLReturn[]> => {
+    if (!userId) return []
+
+    const targetUser = await deps.getUser(userId)
+    if (!targetUser) {
+      throw new NoInviteFoundError('Nonexistant user specified')
+    }
+
+    const invites = await deps.getUserResourceInvites<
+      typeof WorkspaceInviteResourceType,
+      WorkspaceRoles
+    >({
+      userId,
+      resourceType: WorkspaceInviteResourceType
+    })
+    return invites.map((i) => buildPendingWorkspaceCollaboratorModel(i, targetUser))
+  }
+
 export const getPendingWorkspaceCollaboratorsFactory =
   (deps: {
     queryAllResourceInvites: QueryAllResourceInvites
@@ -317,5 +376,27 @@ export const validateWorkspaceInviteBeforeFinalizationFactory =
       throw new InviteFinalizingError(
         'You are not allowed to process an invite for this workspace'
       )
+    }
+  }
+
+export const processFinalizedWorkspaceInviteFactory =
+  (deps: { getWorkspace: GetWorkspace }): ProcessFinalizedResourceInvite =>
+  async (params) => {
+    const { invite, finalizerUserId, action } = params
+
+    const workspace = deps.getWorkspace({
+      workspaceId: invite.resource.resourceId,
+      userId: finalizerUserId
+    })
+    if (!workspace) {
+      throw new InviteFinalizingError(
+        'Attempting to finalize invite to a non-existant workspace'
+      )
+    }
+
+    if (action === InviteFinalizationAction.ACCEPT) {
+      // TODO
+    } else if (action === InviteFinalizationAction.DECLINE) {
+      // TODO
     }
   }

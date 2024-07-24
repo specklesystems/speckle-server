@@ -2,17 +2,22 @@ import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
 import { getStream } from '@/modules/core/repositories/streams'
-import { getUsers } from '@/modules/core/repositories/users'
+import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
   deleteInviteFactory,
+  deleteInvitesByTargetFactory,
   findInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
-  queryAllResourceInvitesFactory
+  queryAllResourceInvitesFactory,
+  queryAllUserResourceInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
-import { cancelResourceInviteFactory } from '@/modules/serverinvites/services/processing'
+import {
+  cancelResourceInviteFactory,
+  finalizeResourceInviteFactory
+} from '@/modules/serverinvites/services/processing'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
 import { authorizeResolver } from '@/modules/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
@@ -31,6 +36,9 @@ import {
   collectAndValidateWorkspaceTargetsFactory,
   createWorkspaceInviteFactory,
   getPendingWorkspaceCollaboratorsFactory,
+  getUserPendingWorkspaceInviteFactory,
+  getUserPendingWorkspaceInvitesFactory,
+  processFinalizedWorkspaceInviteFactory,
   validateWorkspaceInviteBeforeFinalizationFactory
 } from '@/modules/workspaces/services/invites'
 import { Roles } from '@speckle/shared'
@@ -74,6 +82,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
           )
 
           return workspace
+        },
+        workspaceInvite: async (_parent, args, ctx) => {
+          const getPendingInvite = getUserPendingWorkspaceInviteFactory({
+            findInvite: findInviteFactory({ db }),
+            getUser
+          })
+
+          return await getPendingInvite({
+            userId: ctx.userId!,
+            token: args.token,
+            workspaceId: args.workspaceId
+          })
         }
       },
       Mutation: {
@@ -139,8 +159,33 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return ctx.loaders.workspaces!.getWorkspace.load(args.workspaceId)
         },
-        use: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        use: async (_parent, args, ctx) => {
+          const finalizeInvite = finalizeResourceInviteFactory({
+            findInvite: findInviteFactory({ db }),
+            deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
+            insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+            emitServerInvitesEvent: ({ eventName, payload }) =>
+              getEventBus().emit({
+                eventName,
+                payload
+              }),
+            validateInvite: validateWorkspaceInviteBeforeFinalizationFactory({
+              getWorkspace: getWorkspaceFactory({ db })
+            }),
+            processInvite: processFinalizedWorkspaceInviteFactory({
+              getWorkspace: getWorkspaceFactory({ db })
+            })
+          })
+
+          await finalizeInvite({
+            finalizerUserId: ctx.userId!,
+            finalizerResourceAccessLimits: ctx.resourceAccessRules,
+            token: args.input.token,
+            accept: args.input.accept,
+            resourceType: WorkspaceInviteResourceType
+          })
+
+          return true
         },
         cancel: async (_parent, args, ctx) => {
           await authorizeResolver(
@@ -232,8 +277,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       User: {
         workspaces: async () => {
-          // Get roles for user, get workspaces
           throw new WorkspacesNotYetImplementedError()
+        },
+        workspaceInvites: async (parent) => {
+          const getInvites = getUserPendingWorkspaceInvitesFactory({
+            getUser,
+            getUserResourceInvites: queryAllUserResourceInvitesFactory({ db })
+          })
+
+          return await getInvites(parent.id)
         }
       },
       Project: {
