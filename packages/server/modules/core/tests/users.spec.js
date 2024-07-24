@@ -1,10 +1,6 @@
 /* istanbul ignore file */
-const bcrypt = require('bcrypt')
-const crs = require('crypto-random-string')
 const expect = require('chai').expect
 const assert = require('assert')
-
-const knex = require('@/db/knex')
 
 const {
   changeUserRole,

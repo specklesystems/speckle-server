@@ -3,7 +3,6 @@ import { createUser } from '@/modules/core/services/users'
 import { beforeEachContext } from '@/test/hooks'
 import { expect } from 'chai'
 import { getUserByEmail, markUserAsVerified } from '@/modules/core/repositories/users'
-import { deleteUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import {
   createRandomEmail,

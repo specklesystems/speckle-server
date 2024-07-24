@@ -1,7 +1,7 @@
 import { LimitedUserRecord, UserRecord } from '@/modules/core/helpers/types'
 import { Knex } from 'knex'
 import { pick } from 'lodash'
-import { UserEmails, Users } from '../dbSchema'
+import { UserEmails, Users } from '@/modules/core/dbSchema'
 
 /**
  * Fields from the entity that users can see about other users
