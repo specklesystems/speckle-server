@@ -17,7 +17,10 @@ const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
 const { deleteStream } = require('./streams')
-const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
+const {
+  LIMITED_USER_FIELDS,
+  getUsersBaseQuery
+} = require('@/modules/core/helpers/userHelper')
 const { getUserByEmail } = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { pick, omit } = require('lodash')
@@ -327,25 +330,12 @@ module.exports = {
         knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
         knex.raw(`(array_agg("user_emails"."verified"))[1] as verified`)
       ])
-    if (searchQuery) {
-      query.where((queryBuilder) => {
-        queryBuilder
-          .where((qb) => {
-            qb.where(UserEmails.col.email, 'ILIKE', `%${searchQuery}%`).where({
-              primary: true
-            })
-          })
-          .orWhere(UsersSchema.col.name, 'ILIKE', `%${searchQuery}%`)
-          .orWhere(UsersSchema.col.company, 'ILIKE', `%${searchQuery}%`)
-      })
-    }
-    query
+
+    return getUsersBaseQuery(query, { searchQuery })
       .groupBy(UsersSchema.col.id)
       .orderBy(UsersSchema.col.createdAt)
       .limit(limit)
       .offset(offset)
-
-    return query
   },
 
   async countUsers(searchQuery = null) {
@@ -354,20 +344,8 @@ module.exports = {
       UserEmails.col.userId,
       UsersSchema.col.id
     )
-    if (searchQuery) {
-      query.where((queryBuilder) => {
-        queryBuilder
-          .where((qb) => {
-            qb.where(UserEmails.col.email, 'ILIKE', `%${searchQuery}%`).where({
-              primary: true
-            })
-          })
-          .orWhere(UsersSchema.col.name, 'ILIKE', `%${searchQuery}%`)
-          .orWhere(UsersSchema.col.company, 'ILIKE', `%${searchQuery}%`)
-      })
-    }
 
-    const [userCount] = await query.count()
+    const [userCount] = await getUsersBaseQuery(query, { searchQuery }).count()
     return parseInt(userCount.count)
   },
 

@@ -10,6 +10,7 @@ import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
+import { getUsersBaseQuery } from '@/modules/core/helpers/userHelper'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
@@ -78,18 +79,6 @@ type UserQuery = {
   role: ServerRoles | null
 }
 
-const getUsersBaseQuery = (q: Knex.QueryBuilder, { query, role }: UserQuery) => {
-  if (query) {
-    q.where((queryBuilder) => {
-      queryBuilder
-        .where('email', 'ILIKE', `%${query}%`)
-        .orWhere('name', 'ILIKE', `%${query}%`)
-        .orWhere('company', 'ILIKE', `%${query}%`)
-    })
-  }
-  if (role) q.where({ role })
-  return q
-}
 /**
  * List users
  */
@@ -120,18 +109,18 @@ export async function listUsers({
     .where({ primary: true })
     .groupBy(Users.col.id)
   if (cursor) q.where(Users.col.createdAt, '<', cursor)
-  const users: UserWithRole[] = await getUsersBaseQuery(q, { query, role })
+  const users: UserWithRole[] = await getUsersBaseQuery(q, { searchQuery: query, role })
   return users.map((u) => sanitizeUserRecord(u))
 }
 
 export async function countUsers(args: UserQuery): Promise<number> {
-  // const result = await getUsersBaseQuery(Users.knex(), args).countDistinct(Users.col.id)
   const q = Users.knex()
     .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
     .countDistinct(Users.col.id)
-  const result = await getUsersBaseQuery(q, args)
-  // .groupBy(Users.col.id)
-  // const result = await q
+  const result = await getUsersBaseQuery(q, {
+    searchQuery: args.query,
+    role: args.role
+  })
   return parseInt(result[0]['count'])
 }
 
