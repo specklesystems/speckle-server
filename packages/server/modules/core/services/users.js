@@ -34,9 +34,13 @@ const { getServerInfo } = require('@/modules/core/services/generic')
 const { sanitizeImageUrl } = require('@/modules/shared/helpers/sanitization')
 const {
   createUserEmailFactory,
-  findPrimaryEmailForUserFactory
+  findPrimaryEmailForUserFactory,
+  findEmailFactory
 } = require('@/modules/core/repositories/userEmails')
 const { db } = require('@/db/knex')
+const {
+  findUserByTargetFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -53,9 +57,6 @@ const _ensureAtleastOneAdminRemains = async (userId) => {
     }
   }
 }
-
-const userByEmailQuery = (email) =>
-  Users().whereRaw('lower("users"."email") = lower(?)', [email])
 
 module.exports = {
   /*
@@ -99,8 +100,10 @@ module.exports = {
     }
     delete user.password
 
-    const usr = await userByEmailQuery(user.email).select('id').first()
-    if (usr) throw new UserInputError('Email taken. Try logging in?')
+    const userEmail = await findEmailFactory({ db })({
+      email: user.email
+    })
+    if (userEmail) throw new UserInputError('Email taken. Try logging in?')
 
     const [newUser] = (await Users().insert(user, UsersSchema.cols)) || []
     if (!newUser) throw new Error("Couldn't create user")
@@ -185,8 +188,10 @@ module.exports = {
   },
 
   async getUserByEmail({ email }) {
-    const user = await userByEmailQuery(email)
+    const user = await Users()
       .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
+      .where({ primary: true })
+      .whereRaw('lower("user_emails"."email") = lower(?)', [email])
       .columns([
         ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
         knex.raw(`(array_agg("user_emails"."email"))[1] as email`),

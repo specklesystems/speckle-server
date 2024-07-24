@@ -37,3 +37,5 @@ export type FindPrimaryEmailForUser = (
       }
     | { email: string }
 ) => Promise<UserEmail>
+
+export type FindEmail = (query: Partial<UserEmail>) => Promise<UserEmail>
