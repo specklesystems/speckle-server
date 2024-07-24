@@ -50,3 +50,24 @@ export const createWorkspaceInvite = gql`
   ${basicWorkspaceFragment}
   ${basicPendingWorkspaceCollaboratorFragment}
 `
+
+export const batchCreateWorkspaceInvites = gql`
+  mutation BatchCreateWorkspaceInvites(
+    $workspaceId: String!
+    $input: [WorkspaceInviteCreateInput!]!
+  ) {
+    workspaceMutations {
+      invites {
+        batchCreate(workspaceId: $workspaceId, input: $input) {
+          ...BasicWorkspace
+          invitedTeam {
+            ...BasicPendingWorkspaceCollaborator
+          }
+        }
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+  ${basicPendingWorkspaceCollaboratorFragment}
+`

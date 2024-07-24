@@ -1,8 +1,7 @@
 import {
   assignToWorkspaces,
   BasicTestWorkspace,
-  createTestWorkspaces,
-  unassignFromWorkspace
+  createTestWorkspaces
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
@@ -10,6 +9,8 @@ import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { describe } from 'mocha'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import {
+  BatchCreateWorkspaceInvitesDocument,
+  BatchCreateWorkspaceInvitesMutationVariables,
   CreateWorkspaceInviteDocument,
   CreateWorkspaceInviteMutationVariables,
   WorkspaceRole
@@ -19,14 +20,15 @@ import { validateInviteExistanceFromEmail } from '@/test/speckle-helpers/inviteH
 import { Roles } from '@speckle/shared'
 import { itEach } from '@/test/assertionHelper'
 import { ServerInvites } from '@/modules/core/dbSchema'
+import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
+import { times } from 'lodash'
 
 /**
  * TODO:
- * - Create w/ email, create w/ user id
- * - Create by admins only
- * - Resource access rules (token w/o access to workspace)
- * - Token empty
+ * - Token filled
  * - invitedTeam inacceessible (hasWorkspaceROle)
+ *
+ * - Register w/ project/server/workspace invite
  */
 
 enum InviteByTarget {
@@ -92,11 +94,18 @@ describe('Workspaces Invites', () => {
     })
 
     describe('and inviting to workspace', () => {
-      const createInvite = (args: CreateWorkspaceInviteMutationVariables) =>
-        apollo.execute(CreateWorkspaceInviteDocument, args)
+      const createInvite = (
+        args: CreateWorkspaceInviteMutationVariables,
+        ctx?: NonNullable<Parameters<(typeof apollo)['execute']>[2]>['context']
+      ) =>
+        apollo.execute(CreateWorkspaceInviteDocument, args, {
+          context: ctx
+        })
+
+      const batchCreateInvites = (args: BatchCreateWorkspaceInvitesMutationVariables) =>
+        apollo.execute(BatchCreateWorkspaceInvitesDocument, args)
 
       afterEach(async () => {
-        await unassignFromWorkspace(myFirstWorkspace, otherGuy)
         await truncateTables([ServerInvites.name])
       })
 
@@ -128,6 +137,18 @@ describe('Workspaces Invites', () => {
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
 
+      it("doesn't work if neither email nor user id specified", async () => {
+        const res = await createInvite({
+          workspaceId: myFirstWorkspace.id,
+          input: {
+            role: WorkspaceRole.Member
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors('Either email or userId must be specified')
+        expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
+      })
+
       it("doesn't work if not workspace admin", async () => {
         const res = await createInvite({
           workspaceId: otherGuysWorkspace.id,
@@ -139,6 +160,47 @@ describe('Workspaces Invites', () => {
 
         expect(res).to.haveGraphQLErrors('You are not authorized')
         expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
+      })
+
+      it('batch inviting fails if more than 10 invites', async () => {
+        const res = await batchCreateInvites({
+          workspaceId: myFirstWorkspace.id,
+          input: times(11, () => ({
+            email: `asdasasd${Math.random()}@gmail.com`,
+            role: WorkspaceRole.Member
+          }))
+        })
+
+        expect(res).to.haveGraphQLErrors(
+          'Maximum 10 invites can be sent at once by non admins'
+        )
+        expect(res.data?.workspaceMutations?.invites?.batchCreate).to.not.be.ok
+      })
+
+      it('batch inviting works', async () => {
+        const count = 10
+
+        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
+          'sendEmail',
+          async () => true,
+          { times: count }
+        )
+
+        const res = await batchCreateInvites({
+          workspaceId: myFirstWorkspace.id,
+          input: times(count, () => ({
+            email: `asdasasd${Math.random()}@gmail.com`,
+            role: WorkspaceRole.Member
+          }))
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceMutations?.invites?.batchCreate).to.be.ok
+        expect(
+          res.data?.workspaceMutations?.invites?.batchCreate?.invitedTeam
+        ).to.have.length(count)
+
+        expect(sendEmailInvocations.args).to.have.lengthOf(count)
       })
 
       itEach(
@@ -191,6 +253,31 @@ describe('Workspaces Invites', () => {
         }
       )
 
+      it("doesn't work if inviting to a workspace that the token doesn't have access to", async () => {
+        const res = await createInvite(
+          {
+            workspaceId: myFirstWorkspace.id,
+            input: {
+              userId: otherGuy.id,
+              role: WorkspaceRole.Member
+            }
+          },
+          {
+            resourceAccessRules: [
+              {
+                id: otherGuysWorkspace.id,
+                type: TokenResourceIdentifierType.Workspace
+              }
+            ]
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors(
+          'You are not authorized to access this resource'
+        )
+        expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
+      })
+
       itEach(
         [InviteByTarget.Email, InviteByTarget.Id],
         (type) => `fails when inviting user by ${type} that already has a role`,
@@ -213,5 +300,7 @@ describe('Workspaces Invites', () => {
         }
       )
     })
+
+    describe('and administrating invites', () => {})
   })
 })
