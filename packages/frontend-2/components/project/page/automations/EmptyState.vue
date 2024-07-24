@@ -48,7 +48,7 @@
     <div v-if="isAutomateEnabled" class="flex flex-col gap-9">
       <div class="flex gap-2 flex-col sm:flex-row sm:justify-between sm:items-center">
         <h2 class="text-heading-xl">Featured functions</h2>
-        <FormButton color="secondary" class="shrink-0" :to="automationFunctionsRoute">
+        <FormButton color="outline" class="shrink-0" :to="automationFunctionsRoute">
           Explore all functions
         </FormButton>
       </div>

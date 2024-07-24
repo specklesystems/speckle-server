@@ -9,19 +9,13 @@
     <div
       class="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:space-x-2 items-center"
     >
-      <FormButton
-        v-if="!isLoggedIn"
-        size="lg"
-        full-width
-        color="default"
-        @click="() => goToLogin()"
-      >
+      <FormButton v-if="!isLoggedIn" size="lg" full-width @click="() => goToLogin()">
         Sign in
       </FormButton>
       <FormButton
         size="lg"
         full-width
-        :color="isLoggedIn ? 'default' : 'secondary'"
+        :color="isLoggedIn ? 'primary' : 'outline'"
         :to="homeRoute"
       >
         Go home

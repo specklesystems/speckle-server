@@ -11,7 +11,7 @@
       </div>
       <div class="flex justify-end w-[50%]">
         <FormButton
-          color="secondary"
+          color="outline"
           :disabled="isLatestVersion"
           @click="openGithubReleasePage"
         >
