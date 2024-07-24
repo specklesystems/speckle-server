@@ -64,7 +64,7 @@
               />
             </div>
             <div>
-              <FormButton color="default" @click="onSubmit">Save changes</FormButton>
+              <FormButton color="primary" @click="onSubmit">Save changes</FormButton>
             </div>
           </div>
         </form>
