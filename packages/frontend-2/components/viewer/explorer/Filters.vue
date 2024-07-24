@@ -6,6 +6,7 @@
         <FormButton
           v-tippy="'Change filter'"
           text
+          color="subtle"
           size="sm"
           :icon-right="showAllFilters ? ChevronUpIcon : ChevronDownIcon"
           class="capitalize"
@@ -33,11 +34,12 @@
           <FormButton
             v-tippy="'Toggle coloring'"
             size="sm"
+            color="subtle"
             text
             @click="toggleColors()"
           >
-            <IconColouringOutline v-if="!colors" class="w-4 h-4 text-primary" />
-            <IconColouring v-else class="w-4 h-4 text-primary" />
+            <IconColouringOutline v-if="!colors" class="w-4 h-4" />
+            <IconColouring v-else class="w-4 h-4" />
           </FormButton>
         </div>
       </div>

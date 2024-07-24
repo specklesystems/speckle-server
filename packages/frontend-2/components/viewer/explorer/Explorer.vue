@@ -8,6 +8,7 @@
           <div v-if="!showRaw" class="flex items-center gap-1">
             <FormButton
               size="sm"
+              color="subtle"
               text
               :icon-left="BarsArrowDownIcon"
               @click="expandLevel++"
@@ -16,6 +17,7 @@
             </FormButton>
             <FormButton
               size="sm"
+              color="subtle"
               text
               :icon-left="BarsArrowUpIcon"
               :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
@@ -31,9 +33,8 @@
           <FormButton
             v-tippy="showRaw ? 'Switch back' : 'Switch to Dev Mode'"
             size="sm"
-            text
-            class="-mr-0.5 sm:-mr-1"
-            color="outline"
+            class="-mr-1"
+            color="subtle"
             @click="showRaw = !showRaw"
           >
             <CodeBracketIcon
@@ -47,11 +48,7 @@
         v-if="!showRaw && rootNodes.length !== 0"
         class="relative flex flex-col gap-y-2 py-2"
       >
-        <div
-          v-for="(rootNode, idx) in rootNodes"
-          :key="idx"
-          class="bg-foundation rounded-lg"
-        >
+        <div v-for="(rootNode, idx) in rootNodes" :key="idx" class="rounded-xl">
           <ViewerExplorerTreeItem
             :tree-item="rootNode"
             :sub-header="'Model version'"

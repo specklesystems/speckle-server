@@ -5,6 +5,7 @@
       <FormButton
         text
         size="sm"
+        color="subtle"
         :icon-right="showVisibilityOptions ? ChevronUpIcon : ChevronDownIcon"
         @click="showVisibilityOptions = !showVisibilityOptions"
       >

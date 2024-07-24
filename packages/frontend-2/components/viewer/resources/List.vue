@@ -4,6 +4,7 @@
     <template #actions>
       <FormButton
         size="sm"
+        color="subtle"
         text
         :icon-left="PlusIcon"
         :disabled="showRemove"
@@ -13,6 +14,7 @@
       </FormButton>
       <FormButton
         size="sm"
+        color="subtle"
         text
         :icon-left="showRemove ? CheckIcon : MinusIcon"
         :disabled="!removeEnabled"
@@ -21,7 +23,7 @@
         {{ showRemove ? 'Done' : 'Remove' }}
       </FormButton>
     </template>
-    <div class="flex flex-col space-y-2 px-1 py-3">
+    <div class="flex flex-col space-y-2 px-1 py-2">
       <template v-if="resourceItems.length">
         <div
           v-for="({ model, versionId }, index) in modelsAndVersionIds"

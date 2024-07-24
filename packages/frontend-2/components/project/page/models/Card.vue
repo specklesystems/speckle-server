@@ -12,7 +12,33 @@
       @click="$emit('click', $event)"
       @keypress="keyboardClick((e) => emit('click', e))"
     >
-      <div :class="`${height} flex items-center justify-center`">
+      <div class="flex justify-between items-center">
+        <div class="px-2">
+          <div
+            v-if="nameParts[0]"
+            class="text-body-2xs text-foreground-2 relative truncate"
+          >
+            {{ nameParts[0] }}
+          </div>
+          <div
+            class="text-body-xs font-semibold truncate text-foreground flex-shrink min-w-0 pb-2"
+          >
+            {{ nameParts[1] }}
+          </div>
+        </div>
+        <div class="-mt-1">
+          <ProjectPageModelsActions
+            v-if="project && showActions && !isPendingModelFragment(model)"
+            v-model:open="showActionsMenu"
+            :model="model"
+            :project="project"
+            :can-edit="canEdit"
+            @click.stop.prevent
+            @upload-version="triggerVersionUpload"
+          />
+        </div>
+      </div>
+      <div class="flex items-center justify-center">
         <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
           :upload="model"
@@ -26,7 +52,7 @@
         />
         <template v-else-if="previewUrl">
           <div
-            class="bg-foundation-page w-full h-full rounded-xl border border-outline-2"
+            class="bg-foundation-page w-full h-48 rounded-xl border border-outline-2"
           >
             <PreviewImage :preview-url="previewUrl" />
           </div>
@@ -44,56 +70,22 @@
           />
         </div>
       </div>
-      <div class="flex flex-col sm:flex-row sm:items-center px-2 pt-1 pb-2 gap-x-1">
+      <div class="flex flex-col">
         <div class="w-full">
-          <div class="flex justify-between">
-            <div>
-              <div
-                v-if="nameParts[0]"
-                class="text-body-2xs text-foreground-2 relative mt-1 truncate"
-              >
-                {{ nameParts[0] }}
-              </div>
-              <div
-                class="text-body-xs font-semibold truncate text-foreground flex-shrink min-w-0"
-              >
-                {{ nameParts[1] }}
-              </div>
-            </div>
-            <div class="flex items-center">
-              <ProjectPageModelsActions
-                v-if="project && showActions && !isPendingModelFragment(model)"
-                v-model:open="showActionsMenu"
-                :model="model"
-                :project="project"
-                :can-edit="canEdit"
-                @click.stop.prevent
-                @upload-version="triggerVersionUpload"
-              />
-            </div>
-          </div>
-
-          <div class="flex justify-between items-center mt-auto pt-2 w-full">
+          <div class="flex justify-between items-center mt-auto pt-2 px-2 w-full">
             <ProjectPageModelsCardUpdatedTime
               class="text-body-3xs text-foreground-2"
               :updated-at="updatedAtFullDate"
             />
             <div class="flex items-center gap-1">
-              <div
-                v-if="!isPendingModelFragment(model)"
-                class="flex items-center gap-1 text-body-2xs font-medium"
-              >
-                <ChatBubbleLeftIcon class="h-4 w-4" />
-                {{ model.commentThreadCount.totalCount }}
-              </div>
               <FormButton
                 v-tippy="'View Comments'"
                 color="subtle"
                 size="sm"
-                class="flex items-center gap-1"
+                class="flex items-center gap-1 !text-foreground-2"
                 :to="modelVersionsRoute(projectId, model.id)"
               >
-                <IconVersions class="h-4 w-4" />
+                <ClockIcon class="h-5 w-5" />
                 {{ versionCount }}
               </FormButton>
             </div>
@@ -119,7 +111,7 @@ import type {
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { ChatBubbleLeftIcon } from '@heroicons/vue/24/outline'
+import { ClockIcon } from '@heroicons/vue/24/outline'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
@@ -148,12 +140,10 @@ const props = withDefaults(
     showVersions?: boolean
     showActions?: boolean
     disableDefaultLink?: boolean
-    height?: string
   }>(),
   {
     showVersions: true,
-    showActions: true,
-    height: 'h-64'
+    showActions: true
   }
 )
 
@@ -170,7 +160,7 @@ const hovered = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group hover:bg-primary-muted rounded-xl transition border-2 border-transparent bg-foundation-2 p-1'
+    'group rounded-xl bg-foundation-2 border border-outline-3 hover:border-outline-2 px-2 py-2.5'
   ]
 
   return classParts.join(' ')

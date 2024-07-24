@@ -9,7 +9,7 @@
     :disabled="isDisabled"
     role="button"
     :style="
-      color !== 'subtle'
+      color !== 'subtle' && !text
         ? `box-shadow: -1px 1px 4px 0px #0000000a inset; box-shadow: 0px 2px 2px 0px #0000000d;`
         : ''
     "
@@ -264,7 +264,7 @@ const iconClasses = computed(() => {
 
   switch (props.size) {
     case 'sm':
-      classParts.push('h-4 w-4 p-0.5')
+      classParts.push('h-5 w-5 p-0.5')
       break
     case 'lg':
       classParts.push('h-6 w-6 p-1')

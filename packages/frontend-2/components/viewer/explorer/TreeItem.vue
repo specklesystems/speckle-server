@@ -8,7 +8,7 @@
         <div class="flex w-5 flex-shrink-0 justify-center overflow-hidden">
           <button
             v-if="isSingleCollection || isMultipleCollection"
-            class="hover:bg-primary-muted hover:text-primary flex h-full w-full items-center justify-center rounded"
+            class="hover:bg-foundation-2 hover:text-primary flex h-full w-full items-center justify-center rounded"
             @click="manualUnfoldToggle()"
           >
             <ChevronDownIcon
@@ -20,8 +20,8 @@
         </div>
         <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
         <div
-          :class="`hover:bg-primary-muted group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1 hover:shadow-md
-            ${isSelected ? 'border-primary bg-primary-muted' : 'border-transparent'}
+          :class="`hover:bg-foundation-2 group flex flex-grow cursor-pointer items-center space-x-1 overflow-hidden rounded border-l-4 pl-2 pr-1
+            ${isSelected ? 'border-primary bg-foundation-2' : 'border-transparent'}
           `"
           @click="(e:MouseEvent) => setSelection(e)"
           @mouseenter="highlightObject"

@@ -1,10 +1,8 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="`bg-foundation group relative block w-full space-y-2 rounded-md pb-2 text-left ${
-      clickable
-        ? 'hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer'
-        : ' bg-primary-muted cursor-default'
+    :class="`bg-foundation-2 group relative block w-full space-y-2 rounded-md pb-2 text-left ${
+      clickable ? 'hover:bg-primary-muted cursor-pointer' : 'cursor-default'
     }
     ${isLoaded ? '' : ''}
     `"
@@ -52,7 +50,9 @@
       >
         View Changes
       </FormButton>
-      <FormButton v-else size="sm" text disabled>Currently Viewing</FormButton>
+      <FormButton v-else size="sm" text class="cursor-not-allowed">
+        Currently Viewing
+      </FormButton>
     </div>
     <!-- Main stuff -->
     <div class="flex items-center space-x-1 pl-5">

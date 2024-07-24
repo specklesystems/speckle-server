@@ -6,27 +6,21 @@
       <div
         class="w-full md:w-48 flex flex-col justify-between col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1 pl-4 pr-6 py-2"
       >
-        <div class="transition">
+        <div class="flex flex-col">
           <NuxtLink
             :to="projectRoute(project.id)"
-            class="break-words hover:text-primary text-heading-sm"
+            class="break-words hover:text-primary text-heading-sm mb-2"
           >
             {{ project.name }}
           </NuxtLink>
-          <div class="text-foreground-2 flex items-center mt-2">
-            <ClockIcon class="w-4 h-4 mr-1" />
-            <span v-tippy="updatedAt.full" class="text-body-3xs">
-              Updated
-              {{ updatedAt.relative }}
-            </span>
-          </div>
-          <div class="text-foreground-2 flex items-center mt-1">
-            <UserCircleIcon class="w-4 h-4 mr-1" />
-            <span class="text-body-3xs capitalize">
-              {{ project.role?.split(':').reverse()[0] }}
-            </span>
-          </div>
-          <UserAvatarGroup :users="teamUsers" :max-count="2" class="mt-2" />
+          <span v-tippy="updatedAt.full" class="text-body-3xs mb-1">
+            Updated
+            {{ updatedAt.relative }}
+          </span>
+          <span class="text-body-3xs capitalize mb-2">
+            {{ project.role?.split(':').reverse()[0] }}
+          </span>
+          <UserAvatarGroup :users="teamUsers" :max-count="2" />
         </div>
       </div>
       <div
@@ -73,7 +67,6 @@
 </template>
 <script lang="ts" setup>
 import type { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
-import { UserCircleIcon, ClockIcon } from '@heroicons/vue/24/outline'
 import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 
