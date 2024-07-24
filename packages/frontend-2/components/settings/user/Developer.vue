@@ -15,7 +15,7 @@
               :buttons="[
                 {
                   props: {
-                    color: 'secondary',
+                    color: 'outline',
                     target: '_blank',
                     external: true,
                     iconLeft: BookOpenIcon
@@ -34,7 +34,7 @@
               :buttons="[
                 {
                   props: {
-                    color: 'secondary',
+                    color: 'outline',
                     to: 'https://speckle.guide/dev/tokens.html',
                     iconLeft: BookOpenIcon,
                     target: '_blank',
@@ -77,7 +77,7 @@
                   icon: TrashIcon,
                   label: 'Delete',
                   action: openDeleteDialog,
-                  textColor: 'danger'
+                  class: 'text-danger'
                 }
               ]"
             >
@@ -100,10 +100,11 @@
             <SettingsSectionHeader
               subheading
               title="Applications"
+              å
               :buttons="[
                 {
                   props: {
-                    color: 'secondary',
+                    color: 'outline',
                     to: 'https://speckle.guide/dev/apps.html',
                     target: '_blank',
                     external: true,
@@ -141,19 +142,19 @@
                   icon: LockOpenIcon,
                   label: 'Reveal Secret',
                   action: openRevealSecretDialog,
-                  textColor: 'primary'
+                  class: 'text-primary'
                 },
                 {
                   icon: PencilIcon,
                   label: 'Edit',
                   action: openEditApplicationDialog,
-                  textColor: 'primary'
+                  class: 'text-primary'
                 },
                 {
                   icon: TrashIcon,
                   label: 'Delete',
                   action: openDeleteDialog,
-                  textColor: 'danger'
+                  class: 'text-danger'
                 }
               ]"
             >
@@ -179,7 +180,7 @@
               :buttons="[
                 {
                   props: {
-                    color: 'secondary',
+                    color: 'outline',
                     to: 'https://speckle.guide/dev/apps.html',
                     target: '_blank',
                     external: true,
@@ -210,7 +211,7 @@
                   icon: XMarkIcon,
                   label: 'Revoke Access',
                   action: openDeleteDialog,
-                  textColor: 'danger'
+                  class: 'text-danger'
                 }
               ]"
               row-items-align="stretch"

@@ -1,6 +1,6 @@
 <template>
   <div class="w-full flex justify-center">
-    <FormButton :to="to" color="card" @click="$emit('click', $event)">
+    <FormButton :to="to" color="outline" @click="$emit('click', $event)">
       View all
     </FormButton>
   </div>

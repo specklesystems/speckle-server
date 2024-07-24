@@ -209,7 +209,7 @@ const buttons = computed((): LayoutDialogButton[] => {
           props: {
             color: 'outline',
             iconLeft: ChevronLeftIcon,
-            color: '!text-primary'
+            class: '!text-primary'
           },
           onClick: () => step.value--
         },

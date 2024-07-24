@@ -102,7 +102,7 @@
           <FormButton
             v-if="pageRunLimit < results.values.objectResults.length"
             size="sm"
-            color="card"
+            color="outline"
             class="w-full"
             @click="pageRunLimit += 10"
           >
