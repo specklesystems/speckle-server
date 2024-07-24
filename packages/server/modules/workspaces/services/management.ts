@@ -163,7 +163,7 @@ export const setWorkspaceRoleFactory =
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
     if (
       isUserLastWorkspaceAdmin(workspaceRoles, userId) &&
-      role !== 'workspace:admin'
+      role !== Roles.Workspace.Admin
     ) {
       throw new WorkspaceAdminRequiredError()
     }

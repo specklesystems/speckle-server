@@ -1,10 +1,12 @@
 import {
+  assignToWorkspaces,
   BasicTestWorkspace,
-  createTestWorkspaces
+  createTestWorkspaces,
+  unassignFromWorkspace
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
 import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
-import { beforeEachContext } from '@/test/hooks'
+import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { describe } from 'mocha'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import {
@@ -14,6 +16,9 @@ import {
 } from '@/test/graphql/generated/graphql'
 import { expect } from 'chai'
 import { validateInviteExistanceFromEmail } from '@/test/speckle-helpers/inviteHelper'
+import { Roles } from '@speckle/shared'
+import { itEach } from '@/test/assertionHelper'
+import { ServerInvites } from '@/modules/core/dbSchema'
 
 /**
  * TODO:
@@ -24,18 +29,27 @@ import { validateInviteExistanceFromEmail } from '@/test/speckle-helpers/inviteH
  * - invitedTeam inacceessible (hasWorkspaceROle)
  */
 
+enum InviteByTarget {
+  Email = 'email',
+  Id = 'id'
+}
+
 describe('Workspaces Invites', () => {
   const me: BasicTestUser = {
     name: 'Authenticated server invites guy',
     email: 'serverinvitesguy@gmail.com',
-    password: 'sn3aky-1337-b1m',
     id: ''
   }
 
   const otherGuy: BasicTestUser = {
     name: 'Some Other DUde',
     email: 'otherguy111@gmail.com',
-    password: 'sn3aky-1337-b1m',
+    id: ''
+  }
+
+  const myWorkspaceFriend: BasicTestUser = {
+    name: 'My Workspace Friend',
+    email: 'myworkspacefriend@asdasd.com',
     id: ''
   }
 
@@ -45,10 +59,23 @@ describe('Workspaces Invites', () => {
     ownerId: ''
   }
 
+  const otherGuysWorkspace: BasicTestWorkspace = {
+    name: 'Other Guy Workspace',
+    id: '',
+    ownerId: ''
+  }
+
   before(async () => {
     await beforeEachContext()
-    await createTestUsers([me, otherGuy])
-    await createTestWorkspaces([[myFirstWorkspace, me]])
+    await createTestUsers([me, otherGuy, myWorkspaceFriend])
+    await createTestWorkspaces([
+      [myFirstWorkspace, me],
+      [otherGuysWorkspace, otherGuy]
+    ])
+    await assignToWorkspaces([
+      [otherGuysWorkspace, me, Roles.Workspace.Member],
+      [myFirstWorkspace, myWorkspaceFriend, Roles.Workspace.Member]
+    ])
   })
 
   afterEach(() => {
@@ -68,38 +95,123 @@ describe('Workspaces Invites', () => {
       const createInvite = (args: CreateWorkspaceInviteMutationVariables) =>
         apollo.execute(CreateWorkspaceInviteDocument, args)
 
-      it('works when inviting user by ID', async () => {
-        const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
-          'sendEmail',
-          async () => true
-        )
+      afterEach(async () => {
+        await unassignFromWorkspace(myFirstWorkspace, otherGuy)
+        await truncateTables([ServerInvites.name])
+      })
 
+      it("doesn't work when inviting user to workspace that doesn't exist", async () => {
         const res = await createInvite({
-          workspaceId: myFirstWorkspace.id,
+          workspaceId: 'a',
           input: {
             userId: otherGuy.id,
             role: WorkspaceRole.Member
           }
         })
 
-        expect(res).to.not.haveGraphQLErrors()
-        expect(res.data?.workspaceMutations?.invites?.create).to.be.ok
-
-        const workspace = res.data!.workspaceMutations!.invites!.create
-        expect(workspace.invitedTeam).to.have.length(1)
-        expect(workspace.invitedTeam![0].invitedBy.id).to.equal(me.id)
-        expect(workspace.invitedTeam![0].user?.id).to.equal(otherGuy.id)
-        expect(workspace.invitedTeam![0].token).to.be.not.ok
-
-        expect(sendEmailInvocations.args).to.have.lengthOf(1)
-        const emailParams = sendEmailInvocations.args[0][0]
-        expect(emailParams).to.be.ok
-        expect(emailParams.to).to.eq(otherGuy.email)
-        expect(emailParams.subject).to.be.ok
-
-        // Validate that invite exists
-        await validateInviteExistanceFromEmail(emailParams)
+        expect(res).to.haveGraphQLErrors(
+          'You are not authorized to access this resource'
+        )
+        expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
       })
+
+      it("doesn't work when inviting nonexistant user ID", async () => {
+        const res = await createInvite({
+          workspaceId: myFirstWorkspace.id,
+          input: {
+            userId: 'a',
+            role: WorkspaceRole.Member
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors('Attempting to invite an invalid user')
+        expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
+      })
+
+      it("doesn't work if not workspace admin", async () => {
+        const res = await createInvite({
+          workspaceId: otherGuysWorkspace.id,
+          input: {
+            userId: myWorkspaceFriend.id,
+            role: WorkspaceRole.Member
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
+      })
+
+      itEach(
+        [InviteByTarget.Email, InviteByTarget.Id],
+        (type) => `works when inviting user by ${type}`,
+        async (type) => {
+          const sendEmailInvocations = EmailSendingServiceMock.hijackFunction(
+            'sendEmail',
+            async () => true
+          )
+
+          const randomUnregisteredEmail = 'randomunregisteredguy@email.com'
+
+          const res = await createInvite({
+            workspaceId: myFirstWorkspace.id,
+            input: {
+              ...(type === InviteByTarget.Email
+                ? { email: randomUnregisteredEmail }
+                : {}),
+              ...(type === InviteByTarget.Id ? { userId: otherGuy.id } : {}),
+              role: WorkspaceRole.Member
+            }
+          })
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.workspaceMutations?.invites?.create).to.be.ok
+
+          const workspace = res.data!.workspaceMutations!.invites!.create
+          expect(workspace.invitedTeam).to.have.length(1)
+          expect(workspace.invitedTeam![0].invitedBy.id).to.equal(me.id)
+          expect(workspace.invitedTeam![0].token).to.be.not.ok
+
+          if (type === InviteByTarget.Email) {
+            expect(workspace.invitedTeam![0].user).to.be.not.ok
+            expect(workspace.invitedTeam![0].title).to.equal(randomUnregisteredEmail)
+          } else {
+            expect(workspace.invitedTeam![0].user?.id).to.equal(otherGuy.id)
+          }
+
+          expect(sendEmailInvocations.args).to.have.lengthOf(1)
+          const emailParams = sendEmailInvocations.args[0][0]
+          expect(emailParams).to.be.ok
+          expect(emailParams.to).to.eq(
+            type === InviteByTarget.Id ? otherGuy.email : randomUnregisteredEmail
+          )
+          expect(emailParams.subject).to.be.ok
+
+          // Validate that invite exists
+          await validateInviteExistanceFromEmail(emailParams)
+        }
+      )
+
+      itEach(
+        [InviteByTarget.Email, InviteByTarget.Id],
+        (type) => `fails when inviting user by ${type} that already has a role`,
+        async (type) => {
+          const res = await createInvite({
+            workspaceId: myFirstWorkspace.id,
+            input: {
+              ...(type === InviteByTarget.Email
+                ? { email: myWorkspaceFriend.email }
+                : {}),
+              ...(type === InviteByTarget.Id ? { userId: myWorkspaceFriend.id } : {}),
+              role: WorkspaceRole.Member
+            }
+          })
+
+          expect(res).to.haveGraphQLErrors(
+            'The target user is already a member of the specified workspace'
+          )
+          expect(res.data?.workspaceMutations?.invites?.create).to.not.be.ok
+        }
+      )
     })
   })
 })
