@@ -9,14 +9,13 @@ import {
   createTestStreams,
   getUserStreamRole
 } from '@/test/speckle-helpers/streamHelper'
-import { createStreamInviteDirectlyFactory } from '@/test/speckle-helpers/inviteHelper'
+import {
+  createStreamInviteDirectlyFactory,
+  validateInviteExistanceFromEmail
+} from '@/test/speckle-helpers/inviteHelper'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import db from '@/db/knex'
-import {
-  findInviteByTokenFactory,
-  findInviteFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { SendEmailParams } from '@/modules/emails/services/sending'
+import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { BasicTestUser, createTestUser } from '@/test/authHelper'
 import {
   createTestContext,
@@ -44,25 +43,8 @@ async function cleanup() {
   await truncateTables([ServerInvites.name, Streams.name, Users.name])
 }
 
-const findInviteByToken = findInviteByTokenFactory({ db })
 const findInvite = findInviteFactory({ db })
-
-function getInviteTokenFromEmailParams(emailParams: SendEmailParams) {
-  const { text } = emailParams
-  const [, inviteId] = text.match(/\?token=(.*?)(\s|&)/i) || []
-  return inviteId
-}
 const createInviteDirectly = createStreamInviteDirectlyFactory({ db })
-
-async function validateInviteExistanceFromEmail(emailParams: SendEmailParams) {
-  // Validate that invite exists
-  const token = getInviteTokenFromEmailParams(emailParams)
-  expect(token).to.be.ok
-  const invite = await findInviteByToken({ token })
-  expect(invite).to.be.ok
-
-  return invite
-}
 
 const mailerMock = EmailSendingServiceMock
 

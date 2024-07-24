@@ -1,4 +1,4 @@
-import { InvalidArgumentError } from '@/modules/shared/errors'
+import { InvalidArgumentError, LogicError } from '@/modules/shared/errors'
 import { getFrontendOrigin, useNewFrontend } from '@/modules/shared/helpers/envHelper'
 import { MaybeNullOrUndefined } from '@/modules/shared/helpers/typeHelper'
 
@@ -6,6 +6,14 @@ import { MaybeNullOrUndefined } from '@/modules/shared/helpers/typeHelper'
  * Collection of functions for resolving relative routes from the backend, so that they aren't duplicated
  * all over the place
  */
+
+export function getWorkspaceRoute(workspaceId: string): string {
+  if (!useNewFrontend()) {
+    throw new LogicError('Workspaces are not supported in the old frontend')
+  }
+
+  return `/workspaces/${workspaceId}`
+}
 
 export function getStreamRoute(streamId: string): string {
   return useNewFrontend() ? `/projects/${streamId}` : `/streams/${streamId}`

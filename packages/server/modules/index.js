@@ -9,6 +9,7 @@ const { makeExecutableSchema } = require('@graphql-tools/schema')
 const { moduleLogger } = require('@/logging/logging')
 const { addMocksToSchema } = require('@graphql-tools/mock')
 const { getFeatureFlags } = require('@/modules/shared/helpers/envHelper')
+const { isNonNullable } = require('@speckle/shared')
 
 /**
  * Cached speckle module requires
@@ -110,6 +111,32 @@ exports.shutdown = async () => {
     await module.shutdown?.()
   }
   moduleLogger.info('...module shutdown finished')
+}
+
+/**
+ * Autoloads dataloaders from all modules
+ * @returns {import('@/modules/shared/helpers/graphqlHelper').RequestDataLoadersBuilder<unknown>[]}
+ */
+exports.graphDataloadersBuilders = () => {
+  let dataLoaders = []
+
+  // load code modules from /modules
+  const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
+  codeModuleDirs.forEach((file) => {
+    const fullPath = path.join(`${appRoot}/modules`, file)
+
+    // load dataloaders
+    const directivesPath = path.join(fullPath, 'graph', 'dataloaders')
+    if (fs.existsSync(directivesPath)) {
+      const newLoaders = values(autoloadFromDirectory(directivesPath))
+        .map((l) => l.default)
+        .filter(isNonNullable)
+
+      dataLoaders = [...dataLoaders, ...newLoaders]
+    }
+  })
+
+  return dataLoaders
 }
 
 /**

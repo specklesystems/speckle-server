@@ -3,6 +3,7 @@ import { Roles } from '@speckle/shared'
 import { buildUserTarget } from '@/modules/serverinvites/helpers/core'
 import { InviteResult } from '@/modules/serverinvites/services/operations'
 import {
+  findInviteByTokenFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
@@ -18,6 +19,9 @@ import {
   ProjectInviteResourceType,
   ServerInviteResourceType
 } from '@/modules/serverinvites/domain/constants'
+import { SendEmailParams } from '@/modules/emails/services/sending'
+import { db } from '@/db/knex'
+import { expect } from 'chai'
 
 /**
  * Create a new invite. User & userId are alternatives for each other, and so
@@ -73,3 +77,21 @@ export const createStreamInviteDirectlyFactory =
       }
     })
   }
+
+function getInviteTokenFromEmailParams(emailParams: SendEmailParams) {
+  const { text } = emailParams
+  const [, inviteId] = text.match(/\?token=(.*?)(\s|&)/i) || []
+  return inviteId
+}
+
+export async function validateInviteExistanceFromEmail(emailParams: SendEmailParams) {
+  const findInviteByToken = findInviteByTokenFactory({ db })
+
+  // Validate that invite exists
+  const token = getInviteTokenFromEmailParams(emailParams)
+  expect(token).to.be.ok
+  const invite = await findInviteByToken({ token })
+  expect(invite).to.be.ok
+
+  return invite
+}

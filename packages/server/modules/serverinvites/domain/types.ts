@@ -5,7 +5,13 @@ import {
 import { Nullable } from '@/modules/shared/helpers/typeHelper'
 import { ServerRoles, StreamRoles } from '@speckle/shared'
 
-export type InviteResourceTargetType = 'project' | 'server'
+export interface InviteResourceTargetTypeMap {
+  project: 'project'
+  server: 'server'
+}
+
+export type InviteResourceTargetType =
+  InviteResourceTargetTypeMap[keyof InviteResourceTargetTypeMap]
 
 export type InviteResourceTarget<
   T extends InviteResourceTargetType = InviteResourceTargetType,
