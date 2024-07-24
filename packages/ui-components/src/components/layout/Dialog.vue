@@ -11,7 +11,7 @@
         leave-to="opacity-0"
       >
         <div
-          class="fixed top-0 left-0 w-full h-full bg-black/70 dark:bg-neutral-900/70 transition-opacity"
+          class="fixed top-0 left-0 w-full h-full backdrop-blur-xs bg-black/60 dark:bg-neutral-900/60 transition-opacity"
         />
       </TransitionChild>
       <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
@@ -30,7 +30,7 @@
           >
             <DialogPanel
               :class="[
-                'dialog-panel transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col md:h-auto',
+                'dialog-panel transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl flex flex-col md:h-auto border border-outline-2',
                 fullscreen ? 'md:h-full' : 'md:max-h-[90vh]',
                 widthClasses
               ]"
@@ -39,10 +39,11 @@
             >
               <div
                 v-if="hasTitle"
+                class="border-b border-outline-2"
                 :class="scrolledFromTop && 'relative z-20 shadow-lg'"
               >
                 <div
-                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-heading-lg"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[3rem] px-6 py-4 truncate text-heading"
                 >
                   <div class="flex items-center pr-12">
                     <ChevronLeftIcon
@@ -65,20 +66,24 @@
               -->
               <button class="hidden" type="button" />
 
-              <button
+              <FormButton
                 v-if="!hideCloser"
-                type="button"
-                class="absolute z-20 bg-foundation hover:bg-foundation-page transition rounded-full p-1.5 shadow border top-5 right-5 border-outline-3"
+                color="subtle"
+                size="sm"
+                :icon-right="XMarkIcon"
+                rounded
+                hide-text
+                class="absolute z-20 top-4 right-2"
                 @click="open = false"
               >
-                <XMarkIcon class="h-4 w-4 md:w-5 md:h-5" />
-              </button>
+                Close
+              </FormButton>
               <div
                 ref="slotContainer"
                 class="flex-1 simple-scrollbar overflow-y-auto text-body-xs"
                 :class="
                   hasTitle
-                    ? `px-6 pb-4 ${fullscreen && 'md:p-0'}`
+                    ? `px-6 py-4  ${fullscreen && 'md:p-0'}`
                     : !fullscreen && 'p-6'
                 "
                 @scroll="onScroll"
@@ -87,7 +92,7 @@
               </div>
               <div
                 v-if="hasButtons"
-                class="relative z-50 flex p-6 gap-3 shrink-0 bg-foundation"
+                class="relative z-50 flex px-6 py-3 gap-3 shrink-0 bg-foundation border-t border-outline-2"
                 :class="{
                   'shadow-t': !scrolledToBottom,
                   [buttonsWrapperClasses || '']: true

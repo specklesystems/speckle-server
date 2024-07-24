@@ -10,7 +10,7 @@
         text
         :disabled="loading"
         link
-        class="font-semibold text-danger-darker"
+        class="font-medium text-danger-darker"
         @click="requestVerification"
       >
         {{ verifyBannerCtaText }}

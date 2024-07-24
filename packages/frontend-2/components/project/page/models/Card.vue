@@ -21,7 +21,7 @@
             {{ nameParts[0] }}
           </div>
           <div
-            class="text-body-xs font-semibold truncate text-foreground flex-shrink min-w-0 pb-2"
+            class="text-body-xs font-medium truncate text-foreground flex-shrink min-w-0 pb-2"
           >
             {{ nameParts[1] }}
           </div>
