@@ -1,18 +1,27 @@
 import {
   assignToWorkspaces,
   BasicTestWorkspace,
-  createTestWorkspaces
+  createTestWorkspaces,
+  createWorkspaceInviteDirectly
 } from '@/modules/workspaces/tests/helpers/creation'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
-import { testApolloServer, TestApolloServer } from '@/test/graphqlHelper'
+import {
+  ExecuteOperationOptions,
+  testApolloServer,
+  TestApolloServer
+} from '@/test/graphqlHelper'
 import { beforeEachContext, truncateTables } from '@/test/hooks'
 import { describe } from 'mocha'
 import { EmailSendingServiceMock } from '@/test/mocks/global'
 import {
   BatchCreateWorkspaceInvitesDocument,
   BatchCreateWorkspaceInvitesMutationVariables,
+  CancelWorkspaceInviteDocument,
+  CancelWorkspaceInviteMutationVariables,
   CreateWorkspaceInviteDocument,
   CreateWorkspaceInviteMutationVariables,
+  GetWorkspaceWithTeamDocument,
+  GetWorkspaceWithTeamQueryVariables,
   WorkspaceRole
 } from '@/test/graphql/generated/graphql'
 import { expect } from 'chai'
@@ -22,6 +31,8 @@ import { itEach } from '@/test/assertionHelper'
 import { ServerInvites } from '@/modules/core/dbSchema'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { times } from 'lodash'
+import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import { db } from '@/db/knex'
 
 /**
  * TODO:
@@ -87,6 +98,16 @@ describe('Workspaces Invites', () => {
   describe('when authenticated', () => {
     let apollo: TestApolloServer
 
+    const createInvite = (
+      args: CreateWorkspaceInviteMutationVariables,
+      options?: ExecuteOperationOptions
+    ) => apollo.execute(CreateWorkspaceInviteDocument, args, options)
+
+    const batchCreateInvites = (
+      args: BatchCreateWorkspaceInvitesMutationVariables,
+      options?: ExecuteOperationOptions
+    ) => apollo.execute(BatchCreateWorkspaceInvitesDocument, args, options)
+
     before(async () => {
       apollo = await testApolloServer({
         authUserId: me.id
@@ -94,17 +115,6 @@ describe('Workspaces Invites', () => {
     })
 
     describe('and inviting to workspace', () => {
-      const createInvite = (
-        args: CreateWorkspaceInviteMutationVariables,
-        ctx?: NonNullable<Parameters<(typeof apollo)['execute']>[2]>['context']
-      ) =>
-        apollo.execute(CreateWorkspaceInviteDocument, args, {
-          context: ctx
-        })
-
-      const batchCreateInvites = (args: BatchCreateWorkspaceInvitesMutationVariables) =>
-        apollo.execute(BatchCreateWorkspaceInvitesDocument, args)
-
       afterEach(async () => {
         await truncateTables([ServerInvites.name])
       })
@@ -173,6 +183,46 @@ describe('Workspaces Invites', () => {
 
         expect(res).to.haveGraphQLErrors(
           'Maximum 10 invites can be sent at once by non admins'
+        )
+        expect(res.data?.workspaceMutations?.invites?.batchCreate).to.not.be.ok
+      })
+
+      it('batch inviting fails if not workspace admin', async () => {
+        const res = await batchCreateInvites({
+          workspaceId: otherGuysWorkspace.id,
+          input: times(10, () => ({
+            email: `asdasasd${Math.random()}@gmail.com`,
+            role: WorkspaceRole.Member
+          }))
+        })
+
+        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res.data?.workspaceMutations?.invites?.batchCreate).to.not.be.ok
+      })
+
+      it('batch inviting fails if resourceAccessRules prevent workspace access', async () => {
+        const res = await batchCreateInvites(
+          {
+            workspaceId: myFirstWorkspace.id,
+            input: times(10, () => ({
+              email: `asdasasd${Math.random()}@gmail.com`,
+              role: WorkspaceRole.Member
+            }))
+          },
+          {
+            context: {
+              resourceAccessRules: [
+                {
+                  id: otherGuysWorkspace.id,
+                  type: TokenResourceIdentifierType.Workspace
+                }
+              ]
+            }
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors(
+          'You are not authorized to access this resource'
         )
         expect(res.data?.workspaceMutations?.invites?.batchCreate).to.not.be.ok
       })
@@ -263,12 +313,14 @@ describe('Workspaces Invites', () => {
             }
           },
           {
-            resourceAccessRules: [
-              {
-                id: otherGuysWorkspace.id,
-                type: TokenResourceIdentifierType.Workspace
-              }
-            ]
+            context: {
+              resourceAccessRules: [
+                {
+                  id: otherGuysWorkspace.id,
+                  type: TokenResourceIdentifierType.Workspace
+                }
+              ]
+            }
           }
         )
 
@@ -301,6 +353,135 @@ describe('Workspaces Invites', () => {
       )
     })
 
-    describe('and administrating invites', () => {})
+    describe('and administrating invites', () => {
+      const myAdministrationWorkspace: BasicTestWorkspace = {
+        name: 'My Administration Workspace',
+        id: '',
+        ownerId: ''
+      }
+
+      const cancelableInvite = {
+        workspaceId: '',
+        inviteId: ''
+      }
+
+      const cancelInvite = async (
+        args: CancelWorkspaceInviteMutationVariables,
+        options?: ExecuteOperationOptions
+      ) => apollo.execute(CancelWorkspaceInviteDocument, args, options)
+
+      before(async () => {
+        await createTestWorkspaces([[myAdministrationWorkspace, me]])
+        await assignToWorkspaces([
+          [myAdministrationWorkspace, myWorkspaceFriend, Roles.Workspace.Guest]
+        ])
+        await batchCreateInvites(
+          {
+            workspaceId: myAdministrationWorkspace.id,
+            input: times(10, () => ({
+              email: `aszzzdasasd${Math.random()}@gmail.com`,
+              role: WorkspaceRole.Member
+            }))
+          },
+          { assertNoErrors: true }
+        )
+      })
+
+      beforeEach(async () => {
+        const inviteData = await createWorkspaceInviteDirectly(
+          {
+            workspaceId: myAdministrationWorkspace.id,
+            input: {
+              email: 'someRandomCancelableInviteGuy@asdasd.com',
+              role: WorkspaceRole.Member
+            }
+          },
+          me.id
+        )
+        cancelableInvite.workspaceId = myAdministrationWorkspace.id
+        cancelableInvite.inviteId = inviteData.inviteId
+      })
+
+      const getWorkspaceWithTeam = async (
+        args: GetWorkspaceWithTeamQueryVariables,
+        options?: ExecuteOperationOptions
+      ) => apollo.execute(GetWorkspaceWithTeamDocument, args, options)
+
+      it("can't list invites, if not admin", async () => {
+        const res = await getWorkspaceWithTeam(
+          {
+            workspaceId: myAdministrationWorkspace.id
+          },
+          {
+            context: {
+              userId: myWorkspaceFriend.id
+            }
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res.data?.workspace).to.be.ok
+        expect(res.data?.workspace.invitedTeam).to.be.not.ok
+      })
+
+      it('can list invites, if admin', async () => {
+        const res = await getWorkspaceWithTeam({
+          workspaceId: myAdministrationWorkspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspace).to.be.ok
+        expect(res.data?.workspace.invitedTeam).to.have.length(10)
+      })
+
+      it("can't cancel invite, if not admin", async () => {
+        const res = await cancelInvite(cancelableInvite, {
+          context: {
+            userId: myWorkspaceFriend.id
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res.data?.workspaceMutations?.invites?.cancel).to.not.be.ok
+
+        const invite = await findInviteFactory({ db })({
+          inviteId: cancelableInvite.inviteId
+        })
+        expect(invite).to.be.ok
+      })
+
+      it('can cancel invite, if admin', async () => {
+        const res = await cancelInvite(cancelableInvite)
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceMutations?.invites?.cancel).to.be.ok
+
+        const invite = await findInviteFactory({ db })({
+          inviteId: cancelableInvite.inviteId
+        })
+        expect(invite).to.be.not.ok
+      })
+
+      it("can't cancel invite if resourceAccessRules prevent it", async () => {
+        const res = await cancelInvite(cancelableInvite, {
+          context: {
+            resourceAccessRules: [
+              {
+                id: otherGuysWorkspace.id,
+                type: TokenResourceIdentifierType.Workspace
+              }
+            ]
+          }
+        })
+
+        expect(res).to.haveGraphQLErrors('You are not authorized')
+        expect(res.data?.workspaceMutations?.invites?.cancel).to.not.be.ok
+
+        const invite = await findInviteFactory({ db })({
+          inviteId: cancelableInvite.inviteId
+        })
+        expect(invite).to.be.ok
+      })
+    })
   })
 })

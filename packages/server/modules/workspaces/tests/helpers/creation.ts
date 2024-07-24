@@ -1,22 +1,35 @@
 import { db } from '@/db/knex'
 import {
+  getStream,
   grantStreamPermissions,
   revokeStreamPermissions
 } from '@/modules/core/repositories/streams'
 import { getStreams } from '@/modules/core/services/streams'
+import {
+  findUserByTargetFactory,
+  insertInviteAndDeleteOldFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import {
   getWorkspaceRolesFactory,
   upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
-  deleteWorkspaceRoleFactory as dbDeleteWorkspaceRoleFactory
+  deleteWorkspaceRoleFactory as dbDeleteWorkspaceRoleFactory,
+  getWorkspaceFactory
 } from '@/modules/workspaces/repositories/workspaces'
+import {
+  buildWorkspaceInviteEmailContentsFactory,
+  collectAndValidateWorkspaceTargetsFactory,
+  createWorkspaceInviteFactory
+} from '@/modules/workspaces/services/invites'
 import {
   createWorkspaceFactory,
   setWorkspaceRoleFactory,
   deleteWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
 import { BasicTestUser } from '@/test/authHelper'
+import { CreateWorkspaceInviteMutationVariables } from '@/test/graphql/generated/graphql'
 import { MaybeNullOrUndefined, Roles, WorkspaceRoles } from '@speckle/shared'
 
 export type BasicTestWorkspace = {
@@ -111,4 +124,37 @@ export const createTestWorkspaces = async (
   pairs: [BasicTestWorkspace, BasicTestUser][]
 ) => {
   await Promise.all(pairs.map((p) => createTestWorkspace(p[0], p[1])))
+}
+
+export const createWorkspaceInviteDirectly = async (
+  args: CreateWorkspaceInviteMutationVariables,
+  inviterId: string
+) => {
+  const createAndSendInvite = createAndSendInviteFactory({
+    findUserByTarget: findUserByTargetFactory(),
+    insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+    collectAndValidateResourceTargets: collectAndValidateWorkspaceTargetsFactory({
+      getStream,
+      getWorkspace: getWorkspaceFactory({ db })
+    }),
+    buildInviteEmailContents: buildWorkspaceInviteEmailContentsFactory({
+      getStream,
+      getWorkspace: getWorkspaceFactory({ db })
+    }),
+    emitServerInvitesEvent: ({ eventName, payload }) =>
+      getEventBus().emit({
+        eventName,
+        payload
+      })
+  })
+
+  const createInvite = createWorkspaceInviteFactory({
+    createAndSendInvite
+  })
+
+  return await createInvite({
+    ...args,
+    inviterId,
+    inviterResourceAccessRules: null
+  })
 }

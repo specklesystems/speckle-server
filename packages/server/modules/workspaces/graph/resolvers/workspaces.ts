@@ -5,15 +5,23 @@ import { getStream } from '@/modules/core/repositories/streams'
 import { getUsers } from '@/modules/core/repositories/users'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
+  deleteInviteFactory,
+  findInviteFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory,
   queryAllResourceInvitesFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
 import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
+import { cancelResourceInviteFactory } from '@/modules/serverinvites/services/processing'
 import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
+import { authorizeResolver } from '@/modules/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
-import { WorkspacesNotYetImplementedError } from '@/modules/workspaces/errors/workspace'
+import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
+import {
+  WorkspaceNotFoundError,
+  WorkspacesNotYetImplementedError
+} from '@/modules/workspaces/errors/workspace'
 import {
   getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory
@@ -22,7 +30,8 @@ import {
   buildWorkspaceInviteEmailContentsFactory,
   collectAndValidateWorkspaceTargetsFactory,
   createWorkspaceInviteFactory,
-  getPendingWorkspaceCollaboratorsFactory
+  getPendingWorkspaceCollaboratorsFactory,
+  validateWorkspaceInviteBeforeFinalizationFactory
 } from '@/modules/workspaces/services/invites'
 import { Roles } from '@speckle/shared'
 import { chunk } from 'lodash'
@@ -51,9 +60,20 @@ const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 export = FF_WORKSPACES_MODULE_ENABLED
   ? ({
       Query: {
-        workspace: async () => {
-          // Get workspace by id
-          throw new WorkspacesNotYetImplementedError()
+        workspace: async (_parent, args, ctx) => {
+          const workspace = await ctx.loaders.workspaces!.getWorkspace.load(args.id)
+          if (!workspace) {
+            throw new WorkspaceNotFoundError()
+          }
+
+          await authorizeResolver(
+            ctx.userId,
+            args.id,
+            Roles.Workspace.Guest,
+            ctx.resourceAccessRules
+          )
+
+          return workspace
         }
       },
       Mutation: {
@@ -122,8 +142,29 @@ export = FF_WORKSPACES_MODULE_ENABLED
         use: async () => {
           throw new WorkspacesNotYetImplementedError()
         },
-        cancel: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        cancel: async (_parent, args, ctx) => {
+          await authorizeResolver(
+            ctx.userId,
+            args.workspaceId,
+            Roles.Workspace.Admin,
+            ctx.resourceAccessRules
+          )
+
+          const cancelInvite = cancelResourceInviteFactory({
+            findInvite: findInviteFactory({ db }),
+            deleteInvite: deleteInviteFactory({ db }),
+            validateResourceAccess: validateWorkspaceInviteBeforeFinalizationFactory({
+              getWorkspace: getWorkspaceFactory({ db })
+            })
+          })
+
+          await cancelInvite({
+            resourceId: args.workspaceId,
+            inviteId: args.inviteId,
+            cancelerId: ctx.userId!,
+            resourceType: WorkspaceInviteResourceType
+          })
+          return ctx.loaders.workspaces!.getWorkspace.load(args.workspaceId)
         }
       },
       Workspace: {

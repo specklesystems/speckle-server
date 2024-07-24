@@ -20,3 +20,9 @@ export class WorkspacesNotYetImplementedError extends BaseError {
   static defaultMessage = 'Not yet implemented'
   static code = 'WORKSPACES_NOT_YET_IMPLEMENTED_ERROR'
 }
+
+export class WorkspaceNotFoundError extends BaseError {
+  static defaultMessage = 'Workspace not found'
+  static code = 'WORKSPACE_NOT_FOUND_ERROR'
+  static statusCode = 404
+}

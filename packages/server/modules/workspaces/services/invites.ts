@@ -8,7 +8,10 @@ import {
   InviteResourceTarget,
   ServerInviteRecord
 } from '@/modules/serverinvites/domain/types'
-import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
+import {
+  InviteCreateValidationError,
+  InviteFinalizingError
+} from '@/modules/serverinvites/errors'
 import {
   buildUserTarget,
   resolveInviteTargetTitle,
@@ -26,7 +29,9 @@ import {
   BuildInviteEmailContents,
   CollectAndValidateResourceTargets,
   CreateAndSendInvite,
-  GetInvitationTargetUsers
+  GetInvitationTargetUsers,
+  InviteFinalizationAction,
+  ValidateResourceInviteBeforeFinalization
 } from '@/modules/serverinvites/services/operations'
 import { authorizeResolver } from '@/modules/shared'
 import { getFrontendOrigin } from '@/modules/shared/helpers/envHelper'
@@ -66,7 +71,7 @@ export const createWorkspaceInviteFactory =
       primary: true
     }
 
-    await deps.createAndSendInvite(
+    return await deps.createAndSendInvite(
       {
         target,
         inviterId,
@@ -260,4 +265,41 @@ export const getPendingWorkspaceCollaboratorsFactory =
     }
 
     return results
+  }
+
+export const validateWorkspaceInviteBeforeFinalizationFactory =
+  (deps: { getWorkspace: GetWorkspace }): ValidateResourceInviteBeforeFinalization =>
+  async (params) => {
+    const { invite, finalizerUserId, action } = params
+
+    if (invite.resource.resourceType !== WorkspaceInviteResourceType) {
+      throw new InviteFinalizingError(
+        'Attempting to finalize non-workspace invite as workspace invite',
+        { info: { invite, finalizerUserId } }
+      )
+    }
+
+    const workspace = await deps.getWorkspace({
+      workspaceId: invite.resource.resourceId,
+      userId: finalizerUserId
+    })
+    if (!workspace) {
+      throw new InviteFinalizingError(
+        'Attempting to finalize invite to a non-existant workspace'
+      )
+    }
+
+    if (action === InviteFinalizationAction.CANCEL) {
+      if (workspace.role !== Roles.Workspace.Admin) {
+        throw new InviteFinalizingError(
+          'Attempting to cancel invite to a workspace that the user does not own'
+        )
+      }
+    } else {
+      if (workspace.role) {
+        throw new InviteFinalizingError(
+          'Attempting to finalize invite to a workspace that the user already has access to'
+        )
+      }
+    }
   }

@@ -30,7 +30,7 @@ export const basicPendingWorkspaceCollaboratorFragment = gql`
   }
 `
 
-export const createWorkspaceInvite = gql`
+export const createWorkspaceInviteQuery = gql`
   mutation CreateWorkspaceInvite(
     $workspaceId: String!
     $input: WorkspaceInviteCreateInput!
@@ -51,7 +51,7 @@ export const createWorkspaceInvite = gql`
   ${basicPendingWorkspaceCollaboratorFragment}
 `
 
-export const batchCreateWorkspaceInvites = gql`
+export const batchCreateWorkspaceInvitesQuery = gql`
   mutation BatchCreateWorkspaceInvites(
     $workspaceId: String!
     $input: [WorkspaceInviteCreateInput!]!
@@ -59,6 +59,38 @@ export const batchCreateWorkspaceInvites = gql`
     workspaceMutations {
       invites {
         batchCreate(workspaceId: $workspaceId, input: $input) {
+          ...BasicWorkspace
+          invitedTeam {
+            ...BasicPendingWorkspaceCollaborator
+          }
+        }
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+  ${basicPendingWorkspaceCollaboratorFragment}
+`
+
+export const getWorkspaceWithTeamQuery = gql`
+  query GetWorkspaceWithTeam($workspaceId: String!) {
+    workspace(id: $workspaceId) {
+      ...BasicWorkspace
+      invitedTeam {
+        ...BasicPendingWorkspaceCollaborator
+      }
+    }
+  }
+
+  ${basicWorkspaceFragment}
+  ${basicPendingWorkspaceCollaboratorFragment}
+`
+
+export const cancelInviteMutation = gql`
+  mutation CancelWorkspaceInvite($workspaceId: String!, $inviteId: String!) {
+    workspaceMutations {
+      invites {
+        cancel(workspaceId: $workspaceId, inviteId: $inviteId) {
           ...BasicWorkspace
           invitedTeam {
             ...BasicPendingWorkspaceCollaborator
