@@ -21,6 +21,8 @@ import { IReceiveBindingKey } from '~/lib/bindings/definitions/IReceiveBinding'
 
 import type { ISelectionBinding } from '~/lib/bindings/definitions/ISelectionBinding'
 import { ISelectionBindingKey } from '~/lib/bindings/definitions/ISelectionBinding'
+import type { ITopLevelExpectionHandlerBinding } from '~/lib/bindings/definitions/ITopLevelExceptionHandlerBinding'
+import { ITopLevelExpectionHandlerBindingKey } from '~/lib/bindings/definitions/ITopLevelExceptionHandlerBinding'
 
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
@@ -58,6 +60,11 @@ export default defineNuxtPlugin(async () => {
     ISelectionBindingKey
   )
 
+  const topLevelExceptionHandlerBinding =
+    await tryHoistBinding<ITopLevelExpectionHandlerBinding>(
+      ITopLevelExpectionHandlerBindingKey
+    )
+
   // Any binding implments these two methods below, we just choose one to
   // expose globally to the app.
   const showDevTools = () => {
@@ -78,6 +85,7 @@ export default defineNuxtPlugin(async () => {
       sendBinding,
       receiveBinding,
       selectionBinding,
+      topLevelExceptionHandlerBinding,
       showDevTools,
       openUrl
     }
