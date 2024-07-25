@@ -4,7 +4,7 @@
     <template #actions>
       <FormButton
         size="sm"
-        color="subtle"
+        color="primary"
         text
         :icon-left="PlusIcon"
         :disabled="showRemove"

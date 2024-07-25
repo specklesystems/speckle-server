@@ -17,6 +17,7 @@
           <FormButton
             v-if="canContribute"
             class="grow inline-flex sm:grow-0 lg:hidden"
+            :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
             New model
@@ -76,6 +77,7 @@
           <FormButton
             v-if="canContribute"
             class="hidden lg:inline-flex shrink-0"
+            :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
             New model
@@ -87,6 +89,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { PlusIcon } from '@heroicons/vue/24/outline'
 import { SourceApps, SpeckleViewer } from '@speckle/shared'
 import type { SourceAppDefinition } from '@speckle/shared'
 import { debounce } from 'lodash-es'

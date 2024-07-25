@@ -13,7 +13,7 @@
         class="flex items-center py-2 px-3 border-b border-outline-2"
       >
         <div
-          class="flex items-center h-full w-full pr-8 text-heading-sm text-foreground"
+          class="flex items-center h-full w-full pr-8 text-heading-sm text-foreground font-semibold"
         >
           <span class="truncate">
             <slot name="title"></slot>

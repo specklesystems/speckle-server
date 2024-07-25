@@ -2,18 +2,15 @@
   <Component
     :is="concreteComponent"
     v-if="!isLoggedIn"
-    fancy-glow
     no-shadow
-    class="max-w-lg mx-auto w-full"
+    class="mx-auto w-full"
   >
     <div class="space-y-4">
-      <div class="flex flex-col items-center space-y-2">
-        <h1
-          class="text-center text-heading-xl font-medium bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 inline-block py-1 text-transparent bg-clip-text"
-        >
+      <div class="flex flex-col items-center gap-y-2">
+        <h1 class="text-heading-xl text-center inline-block">
           {{ title }}
         </h1>
-        <h2 class="text-center text-foreground-2 text-body-sm">
+        <h2 class="text-body-sm text-center text-foreground-2">
           {{ subtitle }}
         </h2>
       </div>
@@ -51,7 +48,7 @@ import { useQuery } from '@vue/apollo-composable'
 import { AuthStrategy } from '~~/lib/auth/helpers/strategies'
 import { useLoginOrRegisterUtils, useAuthManager } from '~~/lib/auth/composables/auth'
 import { loginServerInfoQuery } from '~~/lib/auth/graphql/queries'
-import { LayoutDialog, LayoutPanel } from '@speckle/ui-components'
+import { LayoutDialog } from '@speckle/ui-components'
 import { ArrowRightIcon } from '@heroicons/vue/20/solid'
 import { registerRoute } from '~~/lib/common/helpers/route'
 
@@ -81,7 +78,7 @@ const finalRegisterRoute = computed(() => {
 })
 
 const concreteComponent = computed(() => {
-  return props.dialogMode ? LayoutDialog : LayoutPanel
+  return props.dialogMode ? LayoutDialog : 'div'
 })
 
 const { result } = useQuery(loginServerInfoQuery)

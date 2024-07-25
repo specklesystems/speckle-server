@@ -8,7 +8,7 @@
           <div v-if="!showRaw" class="flex items-center gap-1">
             <FormButton
               size="sm"
-              color="subtle"
+              color="primary"
               text
               :icon-left="BarsArrowDownIcon"
               @click="expandLevel++"
@@ -17,7 +17,7 @@
             </FormButton>
             <FormButton
               size="sm"
-              color="subtle"
+              color="primary"
               text
               :icon-left="BarsArrowUpIcon"
               :disabled="expandLevel <= -1 && manualExpandLevel <= -1"
