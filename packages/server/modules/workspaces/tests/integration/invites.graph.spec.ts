@@ -58,7 +58,7 @@ enum InviteByTarget {
   Id = 'id'
 }
 
-describe('Workspaces Invites', () => {
+describe('Workspaces Invites GQL', () => {
   const me: BasicTestUser = {
     name: 'Authenticated server invites guy',
     email: 'serverinvitesguy@gmail.com',

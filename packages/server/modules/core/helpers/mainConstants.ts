@@ -1,11 +1,13 @@
 import { Roles, Scopes, AllScopes as BaseAllScopes } from '@speckle/shared'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 
-const { FF_AUTOMATE_MODULE_ENABLED } = getFeatureFlags()
+const { FF_AUTOMATE_MODULE_ENABLED, FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
-const AllScopes = FF_AUTOMATE_MODULE_ENABLED
-  ? BaseAllScopes
-  : BaseAllScopes.filter(
+const buildAllScopes = () => {
+  let base = BaseAllScopes
+
+  if (!FF_AUTOMATE_MODULE_ENABLED) {
+    base = base.filter(
       (s: string) =>
         !(
           [
@@ -15,6 +17,26 @@ const AllScopes = FF_AUTOMATE_MODULE_ENABLED
           ] as string[]
         ).includes(s)
     )
+  }
+
+  if (!FF_WORKSPACES_MODULE_ENABLED) {
+    base = base.filter(
+      (s: string) =>
+        !(
+          [
+            Scopes.Workspaces.Create,
+            Scopes.Workspaces.Read,
+            Scopes.Workspaces.Update,
+            Scopes.Workspaces.Delete
+          ] as string[]
+        ).includes(s)
+    )
+  }
+
+  return base
+}
+
+const AllScopes = buildAllScopes()
 
 export type { ServerRoles, StreamRoles } from '@speckle/shared'
 export { Roles, Scopes, AllScopes }

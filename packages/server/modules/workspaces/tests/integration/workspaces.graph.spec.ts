@@ -19,7 +19,7 @@ import {
 } from '@/test/graphql/generated/graphql'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
 
-describe('workspaces module gql operations', () => {
+describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
 
   const testUser: BasicTestUser = {
