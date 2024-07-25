@@ -4,24 +4,9 @@
   <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation-2 w-full pr-2 sm:pr-4 flex flex-col sm:flex-row rounded-md hover:bg-primary-muted transition-all border-l-2 border-primary-muted hover:border-primary items-stretch"
+      class="group relative bg-foundation-2 w-full pr-2 sm:pr-4 flex flex-col sm:flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
     >
-      <div class="flex items-center flex-grow order-2 sm:order-1">
-        <!-- Icon -->
-        <template v-if="model">
-          <CubeIcon
-            v-if="model.versionCount.totalCount !== 0"
-            class="w-4 h-4 text-foreground-2 mx-2 shrink-0"
-          />
-          <CubeTransparentIcon v-else class="w-4 h-4 text-foreground-2 mx-2 shrink-0" />
-        </template>
-        <template v-else-if="pendingModel">
-          <ArrowUpOnSquareIcon class="w-4 h-4 text-foreground-2 mx-2" />
-        </template>
-        <template v-else>
-          <div class="w-4 h-4 mx-2" />
-        </template>
-
+      <div class="flex items-center flex-grow order-2 sm:order-1 sm:pl-4">
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
           <NuxtLink :to="modelLink || ''" class="text-heading text-foreground">
@@ -131,7 +116,7 @@
       >
         <NuxtLink
           :to="modelLink || ''"
-          class="h-full w-full block bg-foundation rounded-lg border border-outline-2"
+          class="h-full w-full block bg-foundation rounded-lg border border-outline-3"
         >
           <PreviewImage
             v-if="item.model?.previewUrl"
@@ -147,7 +132,7 @@
       class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
     >
       <button
-        class="group bg-foundation-2 w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:bg-primary-muted transition-all"
+        class="group bg-foundation-2 w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:bg-primary-muted transition-all border border-outline-3 border-l-0"
         href="/test"
         @click.stop="expanded = !expanded"
       >
@@ -184,9 +169,8 @@
             </span>
           </div>
           <FormButton
-            rounded
             size="sm"
-            :icon-right="ArrowTopRightOnSquareIcon"
+            color="outline"
             :to="viewAllUrl"
             :disabled="!viewAllUrl"
             @click.stop="trackFederateModels"
@@ -240,14 +224,7 @@
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import {
-  FolderIcon,
-  CubeIcon,
-  CubeTransparentIcon,
-  ChatBubbleLeftRightIcon,
-  ArrowTopRightOnSquareIcon,
-  ArrowUpOnSquareIcon
-} from '@heroicons/vue/24/outline'
+import { FolderIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageModelsStructureItem_ProjectFragment,
