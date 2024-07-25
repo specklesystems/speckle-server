@@ -100,11 +100,13 @@ async function authorizeResolver(
   }
 
   try {
-    const { isPublic } = await knex(role.resourceTarget)
-      .select('isPublic')
-      .where({ id: resourceId })
-      .first()
-    if (isPublic && role.weight < 200) return true
+    if (role.resourceTarget !== 'workspace') {
+      const { isPublic } = await knex(role.resourceTarget)
+        .select('isPublic')
+        .where({ id: resourceId })
+        .first()
+      if (isPublic && role.weight < 200) return true
+    }
   } catch {
     throw new ForbiddenError(
       `Resource of type ${role.resourceTarget} with ${resourceId} not found`

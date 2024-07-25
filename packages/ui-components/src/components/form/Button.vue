@@ -210,18 +210,18 @@ const paddingClasses = computed(() => {
 
   switch (props.size) {
     case 'sm':
-      if (hideText) return 'p-1'
+      if (hideText) return 'w-6'
       if (hasIconLeft) return 'py-1 pr-2 pl-1'
       if (hasIconRight) return 'py-1 pl-2 pr-1'
       return 'px-2 py-1'
     case 'lg':
-      if (hideText) return 'p-2'
+      if (hideText) return 'w-10'
       if (hasIconLeft) return 'py-2 pr-6 pl-4'
       if (hasIconRight) return 'py-2 pl-6 pr-4'
       return 'px-6 py-2'
     case 'base':
     default:
-      if (hideText) return 'p-1'
+      if (hideText) return 'w-8'
       if (hasIconLeft) return 'py-1 pr-4 pl-2'
       if (hasIconRight) return 'py-1 pl-4 pr-2'
       return 'px-4 py-1'
@@ -244,7 +244,7 @@ const generalClasses = computed(() => {
 
   if (props.fullWidth) {
     additionalClasses.push('w-full')
-  } else {
+  } else if (!props.hideText) {
     additionalClasses.push('max-w-max')
   }
   if (isDisabled.value) {
