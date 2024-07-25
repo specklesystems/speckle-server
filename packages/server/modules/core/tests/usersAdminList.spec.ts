@@ -190,7 +190,7 @@ describe('[Admin users list]', () => {
   })
 
   after(async () => {
-    // await cleanup()
+    await cleanup()
   })
 
   it('All users and invites are paginated & returned correctly and in correct order', async () => {
