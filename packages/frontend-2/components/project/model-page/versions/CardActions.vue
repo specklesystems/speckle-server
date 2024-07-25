@@ -88,7 +88,7 @@ const actionsItems = computed<LayoutMenuItem<VersionActionTypes>[][]>(() => [
   ],
   [
     {
-      title: 'Delete',
+      title: 'Delete...',
       id: VersionActionTypes.Delete,
       disabled: !!props.selectionDisabled,
       disabledTooltip: disabledMessage.value,

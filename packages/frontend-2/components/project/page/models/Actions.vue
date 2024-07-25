@@ -113,7 +113,7 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   ],
   [
     {
-      title: 'Delete',
+      title: 'Delete...',
       id: ActionTypes.Delete,
       disabled: isMain.value || !props.canEdit
     }
