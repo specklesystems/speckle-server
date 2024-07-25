@@ -51,12 +51,7 @@ import {
 } from '@/test/speckle-helpers/streamHelper'
 import { authorizeResolver } from '@/modules/shared'
 import { ForbiddenError } from 'apollo-server-express'
-
-/**
- * TODO:
- * - Register w/ project/server/workspace invite + use as resource invite after
- * - Retrieval validation (dont pull in invite for invalid/deleted workspace) + clean up invites on deletion
- */
+import { Workspaces } from '@/modules/workspaces/helpers/db'
 
 enum InviteByTarget {
   Email = 'email',
@@ -607,10 +602,9 @@ describe('Workspaces Invites', () => {
       })
 
       afterEach(async () => {
-        await Promise.all([
-          unassignFromWorkspace(myInviteTargetWorkspace, otherGuy),
-          leaveStream(myInviteTargetWorkspaceStream1, otherGuy)
-        ])
+        // Serial execution to avoid race conditions
+        await unassignFromWorkspace(myInviteTargetWorkspace, otherGuy)
+        await leaveStream(myInviteTargetWorkspaceStream1, otherGuy)
       })
 
       it("can't retrieve it if not the invitee", async () => {
@@ -621,6 +615,60 @@ describe('Workspaces Invites', () => {
 
         expect(res).to.not.haveGraphQLErrors('')
         expect(res.data?.workspaceInvite).to.be.not.ok
+      })
+
+      it("can't retrieve broken invite with invalid workspaceIds", async () => {
+        const brokenWorkspace: BasicTestWorkspace = {
+          name: 'Broken Workspace',
+          id: 'a',
+          ownerId: ''
+        }
+        await createTestWorkspaces([[brokenWorkspace, me]])
+
+        const brokenInvite = await createWorkspaceInviteDirectly(
+          {
+            workspaceId: brokenWorkspace.id,
+            input: {
+              userId: otherGuy.id,
+              role: WorkspaceRole.Member
+            }
+          },
+          me.id
+        )
+        expect(brokenInvite.inviteId).to.be.ok
+
+        // Db query directly, cause this isn't a supported use case
+        await Workspaces.knex()
+          .where({ [Workspaces.col.id]: brokenWorkspace.id })
+          .del()
+
+        const res1 = await getInvite(
+          {
+            workspaceId: brokenWorkspace.id
+          },
+          {
+            context: {
+              userId: otherGuy.id
+            }
+          }
+        )
+
+        expect(res1).to.not.haveGraphQLErrors('')
+        expect(res1.data?.workspaceInvite).to.eq(null)
+
+        const res2 = await getMyInvites({
+          context: {
+            userId: otherGuy.id
+          }
+        })
+
+        expect(res2).to.not.haveGraphQLErrors()
+        expect(res2.data?.activeUser?.workspaceInvites).to.be.ok
+        expect(
+          res2.data!.activeUser!.workspaceInvites.find(
+            (i) => i.workspaceId === brokenWorkspace.id
+          )
+        ).to.not.be.ok
       })
 
       itEach(

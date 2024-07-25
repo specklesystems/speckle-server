@@ -18,7 +18,6 @@ import {
   DeleteAllUserInvites,
   DeleteInvite,
   DeleteInvitesByTarget,
-  DeleteResourceInvite,
   DeleteServerOnlyInvites,
   FindInvite,
   FindInviteByToken,
@@ -45,14 +44,7 @@ export type ServerInviteResourceFilter<
   SetValuesNullable<Pick<InviteResourceTarget<T, R>, 'resourceId' | 'resourceType'>>
 >
 
-/**
- * TODO:
- * - Refactor/drop old repo calls to support new flows
- * - collectResourceCollection - no need to process as an array maybe? or maybe collect on finalize also
- * workspace subscriptions?
- */
-
-type InvitesRetrievalValidityFilter = (q: Knex.QueryBuilder) => Knex.QueryBuilder
+export type InvitesRetrievalValidityFilter = (q: Knex.QueryBuilder) => Knex.QueryBuilder
 
 const projectInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {
   let finalQ = q.leftJoin(
@@ -103,13 +95,13 @@ const buildInvitesBaseQuery =
     projectInviteValidityFilter(q)
 
     if (filterQuery) {
-      q.where(filterQuery)
+      filterQuery(q)
     }
 
     return q
   }
 
-const filterByResource = <Q extends Knex.QueryBuilder>(
+export const filterByResource = <Q extends Knex.QueryBuilder>(
   query: Q,
   filter: ServerInviteResourceFilter
 ) => {
@@ -171,7 +163,13 @@ export const insertInviteAndDeleteOldFactory =
   }
 
 export const queryAllUserResourceInvitesFactory =
-  ({ db }: { db: Knex }): QueryAllUserResourceInvites =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): QueryAllUserResourceInvites =>
   async <
     T extends InviteResourceTargetType = InviteResourceTargetType,
     R extends string = string
@@ -186,7 +184,7 @@ export const queryAllUserResourceInvitesFactory =
 
     const q = buildInvitesBaseQuery({ db })<
       ServerInviteRecord<InviteResourceTarget<T, R>>[]
-    >()
+    >({ filterQuery })
       .where({
         [ServerInvites.col.target]: target
       })
@@ -201,11 +199,17 @@ export const queryAllUserResourceInvitesFactory =
   }
 
 export const findServerInviteFactory =
-  ({ db }: { db: Knex }): FindServerInvite =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): FindServerInvite =>
   async (email, token) => {
     if (!email && !token) return null
 
-    const q = buildInvitesBaseQuery({ db })()
+    const q = buildInvitesBaseQuery({ db })({ filterQuery })
 
     if (email) {
       q.andWhere({
@@ -221,7 +225,13 @@ export const findServerInviteFactory =
   }
 
 export const queryAllResourceInvitesFactory =
-  ({ db }: { db: Knex }): QueryAllResourceInvites =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): QueryAllResourceInvites =>
   async <
     T extends InviteResourceTargetType = InviteResourceTargetType,
     R extends string = string
@@ -232,7 +242,7 @@ export const queryAllResourceInvitesFactory =
 
     return await buildInvitesBaseQuery({ db })<
       ServerInviteRecord<InviteResourceTarget<T, R>>[]
-    >().where((q) => filterByResource(q, filter))
+    >({ filterQuery }).where((q) => filterByResource(q, filter))
   }
 
 export const deleteAllResourceInvitesFactory =
@@ -283,24 +293,10 @@ export const updateAllInviteTargetsFactory =
       .update(ServerInvitesCols.target, newTarget.toLowerCase())
   }
 
-export const deleteResourceInviteFactory =
-  ({ db }: { db: Knex }): DeleteResourceInvite =>
-  async (params: { inviteId: string; resourceType: InviteResourceTargetType }) => {
-    const { inviteId, resourceType } = params
-    if (!inviteId) return
-
-    return db(ServerInvites.name)
-      .where({
-        [ServerInvites.col.id]: inviteId
-      })
-      .andWhere((q) => filterByResource(q, { resourceType }))
-      .delete()
-  }
-
 const findServerInvitesBaseQueryFactory =
-  ({ db }: { db: Knex }) =>
+  ({ db, filterQuery }: { db: Knex; filterQuery?: InvitesRetrievalValidityFilter }) =>
   (searchQuery: string | null, sort: 'asc' | 'desc' = 'asc'): Knex.QueryBuilder => {
-    const q = buildInvitesBaseQuery({ db })({ sort })
+    const q = buildInvitesBaseQuery({ db })({ sort, filterQuery })
 
     if (searchQuery) {
       // TODO: Is this safe from SQL injection?
@@ -313,9 +309,15 @@ const findServerInvitesBaseQueryFactory =
   }
 
 export const countServerInvitesFactory =
-  ({ db }: { db: Knex }): CountServerInvites =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): CountServerInvites =>
   async (searchQuery) => {
-    const q = findServerInvitesBaseQueryFactory({ db })(searchQuery)
+    const q = findServerInvitesBaseQueryFactory({ db, filterQuery })(searchQuery)
     const [count] = await db()
       .count()
       .from((q as Knex.QueryBuilder).as('sq1'))
@@ -323,18 +325,33 @@ export const countServerInvitesFactory =
   }
 
 export const findServerInvitesFactory =
-  ({ db }: { db: Knex }): FindServerInvites =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): FindServerInvites =>
   async (searchQuery, limit, offset) => {
-    const q = findServerInvitesBaseQueryFactory({ db })(
+    const q = findServerInvitesBaseQueryFactory({ db, filterQuery })(
       searchQuery
     ) as Knex.QueryBuilder
     return q.limit(limit).offset(offset) as Promise<ServerInviteRecord[]>
   }
 
 export const queryServerInvitesFactory =
-  ({ db }: { db: Knex }): QueryServerInvites =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): QueryServerInvites =>
   async (searchQuery, limit, cursor) => {
-    const q = findServerInvitesBaseQueryFactory({ db })(searchQuery, 'desc')
+    const q = findServerInvitesBaseQueryFactory({ db, filterQuery })(
+      searchQuery,
+      'desc'
+    )
     q.limit(limit)
 
     if (cursor) q.where(ServerInvites.col.createdAt, '<', cursor.toISOString())
@@ -342,7 +359,13 @@ export const queryServerInvitesFactory =
   }
 
 export const findInviteFactory =
-  ({ db }: { db: Knex }): FindInvite =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): FindInvite =>
   async <
     T extends InviteResourceTargetType = InviteResourceTargetType,
     R extends string = string
@@ -360,7 +383,7 @@ export const findInviteFactory =
 
     const q = buildInvitesBaseQuery({ db })<
       ServerInviteRecord<InviteResourceTarget<T, R>>[]
-    >().first()
+    >({ filterQuery }).first()
 
     if (inviteId) {
       q.where(ServerInvites.col.id, inviteId)
@@ -409,10 +432,19 @@ export const deleteInvitesByTargetFactory =
   }
 
 export const queryInvitesFactory =
-  ({ db }: { db: Knex }): QueryInvites =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): QueryInvites =>
   async (inviteIds) => {
     if (!inviteIds?.length) return []
-    return buildInvitesBaseQuery({ db })().whereIn(ServerInvites.col.id, inviteIds)
+    return buildInvitesBaseQuery({ db })({ filterQuery }).whereIn(
+      ServerInvites.col.id,
+      inviteIds
+    )
   }
 
 export const deleteAllUserInvitesFactory =
@@ -426,10 +458,16 @@ export const deleteAllUserInvitesFactory =
   }
 
 export const findInviteByTokenFactory =
-  ({ db }: { db: Knex }): FindInviteByToken =>
+  ({
+    db,
+    filterQuery
+  }: {
+    db: Knex
+    filterQuery?: InvitesRetrievalValidityFilter
+  }): FindInviteByToken =>
   async ({ token }) => {
     if (!token?.length) return null
-    const q = buildInvitesBaseQuery({ db })()
+    const q = buildInvitesBaseQuery({ db })({ filterQuery })
       .where(ServerInvites.col.token, token)
       .first()
 

@@ -79,11 +79,6 @@ export type FindInviteByToken = (params: {
   token: string
 }) => Promise<ServerInviteRecord | null>
 
-export type DeleteResourceInvite = (params: {
-  inviteId: string
-  resourceType: InviteResourceTargetType
-}) => Promise<number | undefined>
-
 export type DeleteInvite = (inviteId?: string) => Promise<boolean>
 
 export type DeleteInvitesByTarget = (

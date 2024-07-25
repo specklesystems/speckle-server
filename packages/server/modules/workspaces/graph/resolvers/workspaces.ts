@@ -32,7 +32,8 @@ import {
   getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory,
   getWorkspaceRolesFactory,
-  upsertWorkspaceRoleFactory
+  upsertWorkspaceRoleFactory,
+  workspaceInviteValidityFilter
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -89,7 +90,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         workspaceInvite: async (_parent, args, ctx) => {
           const getPendingInvite = getUserPendingWorkspaceInviteFactory({
-            findInvite: findInviteFactory({ db }),
+            findInvite: findInviteFactory({
+              db,
+              filterQuery: workspaceInviteValidityFilter
+            }),
             getUser
           })
 
@@ -108,6 +112,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
           throw new WorkspacesNotYetImplementedError()
         },
         delete: async () => {
+          // TODO: Remember to also delete pending workspace invites
           throw new WorkspacesNotYetImplementedError()
         },
         update: async () => {
@@ -243,7 +248,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
         },
         invitedTeam: async (parent) => {
           const getPendingTeam = getPendingWorkspaceCollaboratorsFactory({
-            queryAllResourceInvites: queryAllResourceInvitesFactory({ db }),
+            queryAllResourceInvites: queryAllResourceInvitesFactory({
+              db,
+              filterQuery: workspaceInviteValidityFilter
+            }),
             getInvitationTargetUsers: getInvitationTargetUsersFactory({ getUsers })
           })
 
@@ -297,7 +305,10 @@ export = FF_WORKSPACES_MODULE_ENABLED
         workspaceInvites: async (parent) => {
           const getInvites = getUserPendingWorkspaceInvitesFactory({
             getUser,
-            getUserResourceInvites: queryAllUserResourceInvitesFactory({ db })
+            getUserResourceInvites: queryAllUserResourceInvitesFactory({
+              db,
+              filterQuery: workspaceInviteValidityFilter
+            })
           })
 
           return await getInvites(parent.id)

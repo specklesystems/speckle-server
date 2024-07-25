@@ -22,9 +22,14 @@ import {
   WorkspaceAcl as DbWorkspaceAcl,
   Workspaces
 } from '@/modules/workspaces/helpers/db'
-import { knex, ServerAcl, Users } from '@/modules/core/dbSchema'
+import { knex, ServerAcl, ServerInvites, Users } from '@/modules/core/dbSchema'
 import { UserWithRole } from '@/modules/core/repositories/users'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import {
+  filterByResource,
+  InvitesRetrievalValidityFilter
+} from '@/modules/serverinvites/repositories/serverInvites'
+import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 
 const tables = {
   streams: (db: Knex) => db<StreamRecord>('streams'),
@@ -182,3 +187,23 @@ export const getWorkspaceCollaboratorsFactory =
 
     return items
   }
+
+export const workspaceInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {
+  return q
+    .leftJoin(
+      knex.raw(
+        ":workspaces: ON :resourceCol: ->> 'resourceType' = :resourceType AND :resourceCol: ->> 'resourceId' = :workspaceIdCol:",
+        {
+          workspaces: Workspaces.name,
+          resourceCol: ServerInvites.col.resource,
+          resourceType: WorkspaceInviteResourceType,
+          workspaceIdCol: Workspaces.col.id
+        }
+      )
+    )
+    .where((w1) => {
+      w1.whereNot((w2) =>
+        filterByResource(w2, { resourceType: WorkspaceInviteResourceType })
+      ).orWhereNotNull(Workspaces.col.id)
+    })
+}
