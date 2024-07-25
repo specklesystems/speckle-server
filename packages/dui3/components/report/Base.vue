@@ -18,6 +18,30 @@
       :title="`Report`"
       chromium65-compatibility
     >
+      <template #header>
+        <div class="flex mt-2 space-x-2 p-1">
+          <button
+            class="flex items-center justify-center hover:ring-2 border border-foreground-3 rounded-md p-1 text-xs text-success"
+            :class="successToggle ? 'border-2 border-success' : ''"
+            @click="successToggle = !successToggle"
+          >
+            <CheckCircleIcon
+              class="w-4 mr-1 stroke-green-500 text-green-500"
+            ></CheckCircleIcon>
+            {{ numberOfSuccess }}
+          </button>
+          <button
+            class="flex items-center justify-center hover:ring-2 border border-foreground-3 rounded-md p-1 text-xs text-danger"
+            :class="failedToggle ? 'border-2 border-danger' : ''"
+            @click="failedToggle = !failedToggle"
+          >
+            <ExclamationCircleIcon
+              class="w-4 mr-1 stroke-red-500 text-red-500"
+            ></ExclamationCircleIcon>
+            {{ numberOfFailed }}
+          </button>
+        </div>
+      </template>
       <div class="flex flex-col space-y-1">
         <ReportItem
           v-for="(item, index) in reportLimited"
@@ -34,7 +58,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import { InformationCircleIcon, ExclamationCircleIcon } from '@heroicons/vue/20/solid'
+import {
+  InformationCircleIcon,
+  ExclamationCircleIcon,
+  CheckCircleIcon
+} from '@heroicons/vue/20/solid'
 import type { ConversionResult } from '~~/lib/conversions/conversionResult'
 
 const props = defineProps<{
@@ -42,6 +70,10 @@ const props = defineProps<{
 }>()
 
 const showReportDialog = ref(false)
+
+const successToggle = ref(false) // Status 1
+const failedToggle = ref(true) // Status 4
+
 const toggleDialog = () => {
   showReportDialog.value = !showReportDialog.value
 }
@@ -51,8 +83,29 @@ const reportSlice = ref(10)
 const reportLimited = computed(() => reportSorted.value.slice(0, reportSlice.value))
 // Sort to errors first
 const reportSorted = computed(() =>
-  [...props.report].sort((a, b) => b.status - a.status)
+  [...filteredReports.value].sort((a, b) => b.status - a.status)
 )
+// Filter according to toggles
+const filteredReports = computed(() => {
+  return props.report
+    .filter((report) => {
+      if (successToggle.value && report.status === 1) {
+        return true
+      }
+      if (failedToggle.value && report.status === 4) {
+        return true
+      }
+      // TODO: do more later!
+      return false
+    })
+    .sort((a, b) => b.status - a.status)
+})
+
+const numberOfSuccess = computed(
+  () => props.report.filter((r) => r.status === 1).length
+)
+
+const numberOfFailed = computed(() => props.report.filter((r) => r.status === 4).length)
 
 const summary = computed(() => {
   const failed = props.report.filter((item) => item.status === 4)
