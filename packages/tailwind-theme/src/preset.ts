@@ -58,6 +58,11 @@ const config: Config = {
           4: 'var(--outline-4)',
           5: 'var(--outline-5)'
         },
+        highlight: {
+          1: 'var(--highlight-1)',
+          2: 'var(--highlight-2)',
+          3: 'var(--highlight-3)'
+        },
         success: {
           DEFAULT: 'var(--success)',
           lighter: 'var(--success-lighter)',

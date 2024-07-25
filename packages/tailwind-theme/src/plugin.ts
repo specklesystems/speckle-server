@@ -37,6 +37,11 @@ export const lightThemeVariables = {
   '--outline-4': '#4B40C9',
   '--outline-5': '#C4C4C4',
 
+  /* highlight variations */
+  '--highlight-1': '#F4F4F4',
+  '--highlight-2': '#F2F2F2',
+  '--highlight-3': '#EDEDED',
+
   /* success variations */
   '--success': '#34D399',
   '--success-lighter': '#53EDB5',
@@ -92,6 +97,11 @@ export const darkThemeVariables = {
   '--outline-3': '#282833',
   '--outline-4': '#4B40C9',
   '--outline-5': '#434559',
+
+  /* highlight variations */
+  '--highlight-1': '#22242E',
+  '--highlight-2': '#292B39',
+  '--highlight-3': '#323445',
 
   /* success variations */
   '--success': '#34D399',
