@@ -4,7 +4,7 @@
   <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation-2 w-full pr-2 sm:pr-4 flex flex-col sm:flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
+      class="group relative bg-foundation-2 w-full p-2 flex flex-col sm:flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
     >
       <div class="flex items-center flex-grow order-2 sm:order-1 sm:pl-4">
         <!-- Name -->
@@ -112,7 +112,7 @@
       <!-- Preview or icon section -->
       <div
         v-if="!isPendingFileUpload(item) && item.model?.previewUrl && !pendingVersion"
-        class="w-20 h-16 ml-4 py-1"
+        class="w-20 h-16"
       >
         <NuxtLink
           :to="modelLink || ''"
@@ -145,7 +145,8 @@
           </div>
         </div>
         <!-- Name -->
-        <div class="text-heading text-foreground flex-grow text-left">
+        <FolderIcon class="w-4 h-4 text-foreground" />
+        <div class="ml-2 text-heading text-foreground flex-grow text-left">
           {{ name }}
         </div>
         <!-- Preview -->
@@ -177,13 +178,6 @@
           >
             View all
           </FormButton>
-          <div :class="`ml-4 w-16 h-12`">
-            <div
-              class="w-full h-full rounded-md bg-primary-muted flex items-center justify-center"
-            >
-              <FolderIcon class="w-4 h-4 text-blue-500/50" />
-            </div>
-          </div>
         </div>
       </button>
       <!-- Children list -->
