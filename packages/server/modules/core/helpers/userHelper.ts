@@ -36,7 +36,7 @@ export const getUsersBaseQuery = (
       queryBuilder
         .where((qb) => {
           qb.where(UserEmails.col.email, 'ILIKE', `%${searchQuery}%`).where({
-            primary: true
+            [UserEmails.col.primary]: true
           })
         })
         .orWhere(Users.col.name, 'ILIKE', `%${searchQuery}%`)

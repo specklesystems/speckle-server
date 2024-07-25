@@ -54,7 +54,7 @@ export async function getUsers(
 
   const q = Users.knex<UserWithOptionalRole[]>().whereIn(Users.col.id, userIds)
   q.leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id).where({
-    primary: true
+    [UserEmails.col.primary]: true
   })
 
   const columns: (Knex.Raw<UserRecord> | string)[] = [
@@ -106,7 +106,7 @@ export async function listUsers({
     ])
     .leftJoin(ServerAcl.name, ServerAcl.col.userId, Users.col.id)
     .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
-    .where({ primary: true })
+    .where({ [UserEmails.col.primary]: true })
     .groupBy(Users.col.id)
   if (cursor) q.where(Users.col.createdAt, '<', cursor)
   const users: UserWithRole[] = await getUsersBaseQuery(q, { searchQuery: query, role })
@@ -148,7 +148,7 @@ export async function getUserByEmail(
 
   const q = Users.knex<UserWithOptionalRole[]>().where(Users.col.id, userEmail.userId)
   q.leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id).where({
-    primary: true
+    [UserEmails.col.primary]: true
   })
   const columns: (Knex.Raw<UserRecord> | string)[] = [
     ...Object.values(omit(Users.col, ['email', 'verified'])),

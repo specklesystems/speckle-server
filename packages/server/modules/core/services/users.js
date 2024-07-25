@@ -38,9 +38,6 @@ const {
   findEmailFactory
 } = require('@/modules/core/repositories/userEmails')
 const { db } = require('@/db/knex')
-const {
-  findUserByTargetFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
 
 const _changeUserRole = async ({ userId, role }) =>
   await Acl().where({ userId }).update({ role })
@@ -158,7 +155,7 @@ module.exports = {
     const user = await Users()
       .where({ [UsersSchema.col.id]: userId })
       .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .where({ primary: true, [UserEmails.col.userId]: userId })
+      .where({ [UserEmails.col.primary]: true, [UserEmails.col.userId]: userId })
       .columns([
         ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
         knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
@@ -175,7 +172,7 @@ module.exports = {
     const user = await Users()
       .where({ [UsersSchema.col.id]: id })
       .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .where({ primary: true, [UserEmails.col.userId]: id })
+      .where({ [UserEmails.col.primary]: true, [UserEmails.col.userId]: id })
       .columns([
         ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
         knex.raw(`(array_agg("user_emails"."email"))[1] as email`),
@@ -190,7 +187,7 @@ module.exports = {
   async getUserByEmail({ email }) {
     const user = await Users()
       .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
-      .where({ primary: true })
+      .where({ [UserEmails.col.primary]: true })
       .whereRaw('lower("user_emails"."email") = lower(?)', [email])
       .columns([
         ...Object.values(omit(UsersSchema.col, ['email', 'verified'])),
