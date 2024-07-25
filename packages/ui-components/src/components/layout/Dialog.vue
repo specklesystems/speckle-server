@@ -72,7 +72,7 @@
                 size="sm"
                 :icon-right="XMarkIcon"
                 hide-text
-                class="absolute z-20 top-4 right-2"
+                class="absolute z-20 top-4 right-5"
                 @click="open = false"
               >
                 Close
