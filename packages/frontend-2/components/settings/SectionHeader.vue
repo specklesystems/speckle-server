@@ -19,7 +19,7 @@
     </div>
     <p
       v-if="text"
-      class="text-body-xs text-foreground-2 pt-3"
+      class="text-body-xs text-foreground-2 pt-1"
       :class="{ 'pt-6': subheading }"
     >
       {{ text }}
