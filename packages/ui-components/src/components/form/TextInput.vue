@@ -1,11 +1,24 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
-  <div :class="[fullWidth ? 'w-full' : '', wrapperClasses]">
-    <label :for="name" :class="labelClasses">
-      <span>{{ title }}</span>
-      <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
-    </label>
-    <div class="relative">
+  <div :class="computedWrapperClasses">
+    <div :class="labelPosition === 'left' ? 'w-full md:w-6/12' : 'w-full'">
+      <label :for="name" :class="labelClasses">
+        <span>{{ title }}</span>
+        <div v-if="showRequired" class="text-danger text-body-xs opacity-80">*</div>
+      </label>
+      <p
+        v-if="labelPosition === 'left' && helpTipId && !hideHelpTip"
+        :id="helpTipId"
+        :class="helpTipClasses"
+      >
+        {{ helpTip }}
+      </p>
+    </div>
+
+    <div
+      class="relative"
+      :class="labelPosition === 'left' ? 'w-full md:w-6/12' : 'w-full'"
+    >
       <div
         v-if="customIcon"
         class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
@@ -64,7 +77,11 @@
         </div>
       </slot>
     </div>
-    <p v-if="helpTipId && !hideHelpTip" :id="helpTipId" :class="helpTipClasses">
+    <p
+      v-if="labelPosition === 'top' && helpTipId && !hideHelpTip"
+      :id="helpTipId"
+      :class="['mt-0.5', helpTipClasses]"
+    >
       {{ helpTip }}
     </p>
   </div>
@@ -81,6 +98,7 @@ import type { PropAnyComponent } from '~~/src/helpers/common/components'
 type InputType = 'text' | 'email' | 'password' | 'url' | 'search' | 'number' | string
 type InputSize = 'sm' | 'base' | 'lg' | 'xl'
 type InputColor = 'page' | 'foundation' | 'transparent'
+type LabelPosition = 'top' | 'left'
 
 defineOptions({
   inheritAttrs: false
@@ -197,13 +215,13 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  fullWidth: {
-    type: Boolean,
-    default: false
-  },
   inputClasses: {
     type: String,
     default: null
+  },
+  fullWidth: {
+    type: Boolean,
+    default: false
   },
   hideErrorMessage: {
     type: Boolean,
@@ -216,6 +234,10 @@ const props = defineProps({
   color: {
     type: String as PropType<InputColor>,
     default: 'page'
+  },
+  labelPosition: {
+    type: String as PropType<LabelPosition>,
+    default: 'top'
   }
 })
 
@@ -297,6 +319,21 @@ const sizeClasses = computed((): string => {
     default:
       return 'h-8 text-body-sm'
   }
+})
+
+const computedWrapperClasses = computed(() => {
+  const classes = ['flex', props.wrapperClasses]
+  if (props.fullWidth) {
+    classes.push('w-full')
+  }
+
+  if (props.labelPosition === 'top') {
+    classes.push('flex-col')
+  }
+  if (props.labelPosition === 'left') {
+    classes.push('w-full gap-1 md:gap-8 flex-col md:flex-row')
+  }
+  return classes.join(' ')
 })
 
 defineExpose({ focus })

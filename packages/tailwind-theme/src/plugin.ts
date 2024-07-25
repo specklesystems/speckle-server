@@ -35,7 +35,7 @@ export const lightThemeVariables = {
   '--outline-2': '#DFDFDF',
   '--outline-3': '#E2E8F0',
   '--outline-4': '#4B40C9',
-  '--outline-5': '#4B40C9',
+  '--outline-5': '#C4C4C4',
 
   /* success variations */
   '--success': '#34D399',
