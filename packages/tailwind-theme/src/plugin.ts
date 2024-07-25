@@ -330,7 +330,7 @@ export default plugin(function ({ addComponents, addBase }) {
     // Simple scrollbar (OSX-like) to use instead of the ugly browser one
     '.simple-scrollbar': {
       'scrollbar-width': 'var(--simple-scrollbar-width)',
-      'scrollbar-color': 'var(--foreground-2)',
+      'scrollbar-color': 'var(--outline-5)',
       '&::-webkit-scrollbar': {
         width: 'var(--simple-scrollbar-width)',
         height: '6px'
@@ -341,10 +341,10 @@ export default plugin(function ({ addComponents, addBase }) {
       },
       '&::-webkit-scrollbar-thumb': {
         'border-radius': '15px',
-        background: 'var(--foreground-2)'
+        background: 'var(--outline-5)'
       },
       '&::-webkit-scrollbar-thumb:hover': {
-        background: 'var(--foreground-2)'
+        background: 'var(--outline-5)'
       },
       '&::-webkit-scrollbar-thumb:active': {
         background: 'rgba(90 90 90 10100%)'
