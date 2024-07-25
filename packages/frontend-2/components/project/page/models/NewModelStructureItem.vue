@@ -2,11 +2,11 @@
   <div>
     <button
       v-show="!showNewModelCard"
-      class="group flex w-full rounded-md items-center text-primary text-xs px-2 py-1 transition hover:bg-foundation-focus dark:hover:bg-primary-muted"
+      class="group flex rounded-md items-center text-primary text-xs px-2 py-1 transition hover:bg-foundation-focus dark:hover:bg-primary-muted"
       @click="showNewModelCard = true"
     >
       +
-      <span class="font-medium ml-1">NEW</span>
+      <span class="font-medium ml-1">New</span>
     </button>
     <div
       v-if="showNewModelCard"
