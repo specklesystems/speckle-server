@@ -17,7 +17,6 @@
             <CommonTextLink
               size="sm"
               :icon-right="ArrowsRightLeftIcon"
-              no-underline
               @click="onSwitchAccounts"
             >
               Not you? Switch accounts

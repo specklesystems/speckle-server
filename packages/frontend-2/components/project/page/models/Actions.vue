@@ -11,7 +11,6 @@
       <FormButton
         color="subtle"
         hide-text
-        size="sm"
         :icon-right="EllipsisHorizontalIcon"
         class="!text-foreground-2"
         @click="onButtonClick"

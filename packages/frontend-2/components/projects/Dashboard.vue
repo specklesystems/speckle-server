@@ -45,7 +45,11 @@
             class="w-56 grow md:grow-0"
             fixed-height
           />
-          <FormButton v-if="!isGuest" @click="openNewProject = true">
+          <FormButton
+            v-if="!isGuest"
+            :icon-left="PlusIcon"
+            @click="openNewProject = true"
+          >
             New project
           </FormButton>
         </div>
@@ -68,6 +72,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { PlusIcon } from '@heroicons/vue/24/outline'
 import {
   useApolloClient,
   useQuery,

@@ -116,7 +116,7 @@ export function initializeEventBus() {
   }
 }
 
-type EventBus = ReturnType<typeof initializeEventBus>
+export type EventBus = ReturnType<typeof initializeEventBus>
 
 let eventBus: EventBus
 

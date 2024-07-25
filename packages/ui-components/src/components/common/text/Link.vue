@@ -1,7 +1,7 @@
 <template>
   <FormButton
-    :link="!noUnderline"
-    :text="noUnderline"
+    :link="underline"
+    :text="!underline"
     :to="to"
     :external="external"
     :disabled="disabled"
@@ -70,7 +70,7 @@ const props = defineProps({
     type: Boolean,
     default: false
   },
-  noUnderline: {
+  underline: {
     type: Boolean,
     default: false
   }

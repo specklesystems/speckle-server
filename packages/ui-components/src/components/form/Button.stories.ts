@@ -26,7 +26,7 @@ export default {
       type: 'function'
     },
     size: {
-      options: ['small', 'base', 'large'],
+      options: ['sm', 'base', 'lg'],
       control: { type: 'select' }
     },
     fullWidth: {
@@ -128,13 +128,13 @@ export const Danger: StoryObj = mergeStories(Default, {
 
 export const Small: StoryObj = mergeStories(Default, {
   args: {
-    size: 'small'
+    size: 'sm'
   }
 })
 
 export const Large: StoryObj = mergeStories(Default, {
   args: {
-    size: 'large'
+    size: 'lg'
   }
 })
 

@@ -1,18 +1,13 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <NuxtLink
-    :class="containerClasses"
-    :href="finalModelUrl"
-    @mouseleave=";(showActionsMenu = false), (hovered = false)"
-    @mouseenter="hovered = true"
-  >
+  <NuxtLink :class="containerClasses" :href="finalModelUrl">
     <div
       class="relative"
       @click="$emit('click', $event)"
       @keypress="keyboardClick((e) => emit('click', e))"
     >
-      <div class="flex justify-between items-center">
+      <div class="flex justify-between items-center h-10">
         <div class="px-2">
           <div
             v-if="nameParts[0]"
@@ -21,24 +16,22 @@
             {{ nameParts[0] }}
           </div>
           <div
-            class="text-body-xs font-medium truncate text-foreground flex-shrink min-w-0 pb-2"
+            class="text-body-xs font-medium truncate text-foreground flex-shrink min-w-0"
           >
             {{ nameParts[1] }}
           </div>
         </div>
-        <div class="-mt-1">
-          <ProjectPageModelsActions
-            v-if="project && showActions && !isPendingModelFragment(model)"
-            v-model:open="showActionsMenu"
-            :model="model"
-            :project="project"
-            :can-edit="canEdit"
-            @click.stop.prevent
-            @upload-version="triggerVersionUpload"
-          />
-        </div>
+        <ProjectPageModelsActions
+          v-if="project && showActions && !isPendingModelFragment(model)"
+          v-model:open="showActionsMenu"
+          :model="model"
+          :project="project"
+          :can-edit="canEdit"
+          @click.stop.prevent
+          @upload-version="triggerVersionUpload"
+        />
       </div>
-      <div class="flex items-center justify-center">
+      <div class="flex items-center justify-center my-1">
         <ProjectPendingFileImportStatus
           v-if="isPendingModelFragment(model)"
           :upload="model"
@@ -60,36 +53,32 @@
         <div
           v-if="!isPendingModelFragment(model)"
           v-show="!previewUrl && !pendingVersion"
-          class="h-48 w-full px-4 flex items-center"
+          class="h-48 w-full"
         >
           <ProjectCardImportFileArea
             ref="importArea"
             :project-id="projectId"
             :model-name="model.name"
-            class="h-32 w-full"
+            class="w-full h-full"
           />
         </div>
       </div>
-      <div class="flex flex-col">
-        <div class="w-full">
-          <div class="flex justify-between items-center mt-auto pt-2 px-2 w-full">
-            <ProjectPageModelsCardUpdatedTime
-              class="text-body-3xs text-foreground-2"
-              :updated-at="updatedAtFullDate"
-            />
-            <div class="flex items-center gap-1">
-              <FormButton
-                v-tippy="'View Comments'"
-                color="subtle"
-                size="sm"
-                class="flex items-center gap-1 !text-foreground-2 -mr-1"
-                :to="modelVersionsRoute(projectId, model.id)"
-              >
-                <ClockIcon class="h-5 w-5" />
-                {{ versionCount }}
-              </FormButton>
-            </div>
-          </div>
+      <div class="flex justify-between items-center w-full h-8 pl-2">
+        <ProjectPageModelsCardUpdatedTime
+          class="text-body-3xs text-foreground-2"
+          :updated-at="updatedAtFullDate"
+        />
+        <div class="flex items-center gap-1">
+          <FormButton
+            v-tippy="'View Comments'"
+            color="subtle"
+            size="sm"
+            class="flex items-center gap-1 !text-foreground-2"
+            :to="modelVersionsRoute(projectId, model.id)"
+          >
+            <IconVersions class="h-4 w-4" />
+            {{ versionCount }}
+          </FormButton>
         </div>
       </div>
       <div
@@ -111,7 +100,6 @@ import type {
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { ClockIcon } from '@heroicons/vue/24/outline'
 import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
@@ -156,11 +144,10 @@ const importArea = ref(
   }>
 )
 const showActionsMenu = ref(false)
-const hovered = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-xl bg-foundation-2 border border-outline-3 hover:border-outline-2 px-2 py-2.5'
+    'group rounded-xl bg-foundation-2 border border-outline-3 hover:border-outline-2 p-2'
   ]
 
   return classParts.join(' ')
