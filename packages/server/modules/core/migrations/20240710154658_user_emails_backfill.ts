@@ -1,23 +1,17 @@
-import { UserRecord } from '@/modules/core/helpers/types'
 import { Knex } from 'knex'
 import crs from 'crypto-random-string'
+import { scanTableFactory } from '@/modules/core/helpers/scanTable'
 
 export async function up(knex: Knex): Promise<void> {
   const batchSize = 1000
-  const offset = 0
-  let users = []
 
-  do {
-    users = await knex<UserRecord>('users')
-      .select(['id', 'email', 'verified'])
-      .limit(batchSize)
-      .offset(offset)
-
-    if (users.length === 0) return
-
+  for await (const rows of scanTableFactory({ db: knex })({
+    tableName: 'users',
+    batchSize
+  })) {
     await knex('user_emails')
       .insert(
-        users.map((user) => ({
+        rows.map((user) => ({
           id: crs({ length: 10 }),
           userId: user.id,
           email: user.email,
@@ -27,7 +21,7 @@ export async function up(knex: Knex): Promise<void> {
       )
       .onConflict(['userId', 'email'])
       .ignore()
-  } while (users.length > 0)
+  }
 }
 
 export async function down(knex: Knex): Promise<void> {
