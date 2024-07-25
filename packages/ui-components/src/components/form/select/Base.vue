@@ -621,7 +621,7 @@ const finalItems = computed(() => {
 
 const listboxOptionsClasses = computed(() => {
   const classParts = [
-    'rounded-md py-1 label label--light border border-outline-3 shadow-md mt-1 bg-foundation'
+    'rounded-md bg-foundation py-1 label label--light border border-outline-3 shadow-md mt-1 '
   ]
 
   if (props.mountMenuOnBody) {
