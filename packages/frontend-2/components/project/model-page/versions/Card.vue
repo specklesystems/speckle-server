@@ -3,7 +3,7 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div
-    class="group rounded-xl bg-foundation-2 border border-outline-3 hover:border-outline-2"
+    class="group rounded-xl bg-foundation-2 border border-transparent hover:border-outline-2"
     @mouseleave="showActionsMenu = false"
   >
     <div class="flex flex-col p-3 pt-2" @click="$emit('click', $event)">
