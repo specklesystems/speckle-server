@@ -62,7 +62,7 @@ export const createTestWorkspace = async (
     workspaceInput: {
       name: workspace.name,
       description: workspace.description || null,
-      logo: workspace.logoUrl || null
+      logoUrl: workspace.logoUrl || null
     }
   })
 

@@ -1,6 +1,7 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import {
   EmitWorkspaceEvent,
+  GetWorkspace,
   StoreBlob,
   UpsertWorkspace,
   UpsertWorkspaceRole
@@ -18,17 +19,36 @@ import {
   GetWorkspaceRoleForUser,
   GetWorkspaceRoles
 } from '@/modules/workspaces/domain/operations'
-import { WorkspaceAdminRequiredError } from '@/modules/workspaces/errors/workspace'
+import {
+  WorkspaceAdminRequiredError,
+  WorkspaceNotFoundError
+} from '@/modules/workspaces/errors/workspace'
 import {
   isUserLastWorkspaceAdmin,
   mapWorkspaceRoleToProjectRole
 } from '@/modules/workspaces/helpers/roles'
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
-import { omit } from 'lodash'
+import { EventBus } from '@/modules/shared/services/eventBus'
+import { removeNullOrUndefinedKeys } from '@speckle/shared'
+import { authorizeResolver } from '@/modules/shared'
+
+const tryStoreBlobFactory =
+  (storeBlob: StoreBlob) =>
+  async (blob?: string | null): Promise<string | null> => {
+    let logoUrl: string | null = null
+    if (blob) {
+      logoUrl = await storeBlob(blob)
+    }
+    return logoUrl
+  }
 
 type WorkspaceCreateArgs = {
-  workspaceInput: { name: string; description: string | null; logo: string | null }
   userId: string
+  workspaceInput: {
+    name: string
+    description: string | null
+    logoUrl: string | null
+  }
 }
 
 export const createWorkspaceFactory =
@@ -40,17 +60,14 @@ export const createWorkspaceFactory =
   }: {
     upsertWorkspace: UpsertWorkspace
     upsertWorkspaceRole: UpsertWorkspaceRole
+    emitWorkspaceEvent: EventBus['emit']
     storeBlob: StoreBlob
-    emitWorkspaceEvent: EmitWorkspaceEvent
   }) =>
   async ({ userId, workspaceInput }: WorkspaceCreateArgs): Promise<Workspace> => {
-    let logoUrl: string | null = null
-    if (workspaceInput.logo) {
-      logoUrl = await storeBlob(workspaceInput.logo)
-    }
+    const logoUrl = await tryStoreBlobFactory(storeBlob)(workspaceInput.logoUrl)
 
     const workspace = {
-      ...omit(workspaceInput, ['logo']),
+      ...workspaceInput,
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -69,6 +86,57 @@ export const createWorkspaceFactory =
       eventName: WorkspaceEvents.Created,
       payload: { ...workspace, createdByUserId: userId }
     })
+
+    return workspace
+  }
+
+type WorkspaceUpdateArgs = {
+  /** Id of user performing the operation */
+  workspaceUpdaterId: string
+  workspaceId: string
+  workspaceInput: {
+    name?: string | null
+    description?: string | null
+    logoUrl?: string | null
+  }
+}
+
+export const updateWorkspaceFactory =
+  ({
+    getWorkspace,
+    upsertWorkspace,
+    emitWorkspaceEvent,
+    storeBlob
+  }: {
+    getWorkspace: GetWorkspace
+    upsertWorkspace: UpsertWorkspace
+    emitWorkspaceEvent: EventBus['emit']
+    storeBlob: StoreBlob
+  }) =>
+  async ({
+    workspaceUpdaterId,
+    workspaceId,
+    workspaceInput
+  }: WorkspaceUpdateArgs): Promise<Workspace> => {
+    await authorizeResolver(workspaceUpdaterId, workspaceId, Roles.Workspace.Admin)
+
+    const currentWorkspace = await getWorkspace({ workspaceId })
+
+    if (!currentWorkspace) {
+      throw new WorkspaceNotFoundError()
+    }
+
+    const logoUrl = await tryStoreBlobFactory(storeBlob)(workspaceInput.logoUrl)
+
+    const workspace = {
+      ...currentWorkspace,
+      ...removeNullOrUndefinedKeys(workspaceInput),
+      updatedAt: new Date(),
+      logoUrl
+    }
+
+    await upsertWorkspace({ workspace })
+    await emitWorkspaceEvent({ eventName: WorkspaceEvents.Updated, payload: workspace })
 
     return workspace
   }

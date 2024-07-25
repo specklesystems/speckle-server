@@ -26,12 +26,15 @@ import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
   WorkspaceNotFoundError,
+  WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
 } from '@/modules/workspaces/errors/workspace'
 import {
   getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory,
   getWorkspaceRolesFactory,
+  getWorkspaceRolesForUserFactory,
+  upsertWorkspaceFactory,
   upsertWorkspaceRoleFactory,
   workspaceInviteValidityFilter
 } from '@/modules/workspaces/repositories/workspaces'
@@ -45,7 +48,12 @@ import {
   processFinalizedWorkspaceInviteFactory,
   validateWorkspaceInviteBeforeFinalizationFactory
 } from '@/modules/workspaces/services/invites'
-import { setWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import {
+  createWorkspaceFactory,
+  setWorkspaceRoleFactory,
+  updateWorkspaceFactory
+} from '@/modules/workspaces/services/management'
+import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
 import { Roles } from '@speckle/shared'
 import { chunk } from 'lodash'
 
@@ -108,15 +116,62 @@ export = FF_WORKSPACES_MODULE_ENABLED
         workspaceMutations: () => ({})
       },
       WorkspaceMutations: {
-        create: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        create: async (_parent, args, context) => {
+          const { name, description, logoUrl } = args.input
+
+          const { emit: emitWorkspaceEvent } = getEventBus()
+
+          const upsertWorkspace = upsertWorkspaceFactory({ db })
+          const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
+          // TODO: Integrate with blobstorage
+          const storeBlob = async () => ''
+
+          const createWorkspace = createWorkspaceFactory({
+            upsertWorkspace,
+            upsertWorkspaceRole,
+            emitWorkspaceEvent,
+            storeBlob
+          })
+
+          const workspace = await createWorkspace({
+            userId: context.userId!,
+            workspaceInput: {
+              name,
+              description: description ?? null,
+              logoUrl: logoUrl ?? null
+            }
+          })
+
+          return workspace
         },
         delete: async () => {
           // TODO: Remember to also delete pending workspace invites
           throw new WorkspacesNotYetImplementedError()
         },
-        update: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        update: async (_parent, args, context) => {
+          const { id: workspaceId, ...workspaceInput } = args.input
+
+          const { emit: emitWorkspaceEvent } = getEventBus()
+
+          const getWorkspace = getWorkspaceFactory({ db })
+          const upsertWorkspace = upsertWorkspaceFactory({ db })
+          // TODO: Integrate with blobstorage
+          const storeBlob = async () => ''
+
+          const updateWorkspace = updateWorkspaceFactory({
+            getWorkspace,
+            upsertWorkspace,
+            emitWorkspaceEvent,
+            storeBlob
+          })
+
+          const workspace = await updateWorkspace({
+            workspaceId,
+            workspaceInput,
+            workspaceUpdaterId: context.userId!
+          })
+
+          return workspace
         },
         updateRole: async () => {
           throw new WorkspacesNotYetImplementedError()
@@ -299,8 +354,26 @@ export = FF_WORKSPACES_MODULE_ENABLED
         }
       },
       User: {
-        workspaces: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        workspaces: async (_parent, _args, context) => {
+          if (!context.userId) {
+            throw new WorkspacesNotAuthorizedError()
+          }
+
+          const getWorkspace = getWorkspaceFactory({ db })
+          const getWorkspaceRolesForUser = getWorkspaceRolesForUserFactory({ db })
+
+          const getWorkspacesForUser = getWorkspacesForUserFactory({
+            getWorkspace,
+            getWorkspaceRolesForUser
+          })
+
+          const workspaces = await getWorkspacesForUser({ userId: context.userId })
+
+          // TODO: Pagination
+          return {
+            items: workspaces,
+            totalCount: workspaces.length
+          }
         },
         workspaceInvites: async (parent) => {
           const getInvites = getUserPendingWorkspaceInvitesFactory({

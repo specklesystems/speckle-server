@@ -16,6 +16,12 @@ export class WorkspaceQueryError extends BaseError {
   static code = 'WORKSPACE_QUERY_ERROR'
 }
 
+export class WorkspacesNotAuthorizedError extends BaseError {
+  static defaultMessage = 'You are not authorized'
+  static code = 'WORKSPACES_NOT_AUTHORIZED_ERROR'
+  static statusCode = 401
+}
+
 export class WorkspacesNotYetImplementedError extends BaseError {
   static defaultMessage = 'Not yet implemented'
   static code = 'WORKSPACES_NOT_YET_IMPLEMENTED_ERROR'

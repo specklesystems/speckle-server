@@ -1,6 +1,6 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="sm" :buttons="dialogButtons">
-    <template #header>Change Role</template>
+    <template #header>Change role</template>
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <p>
         Are you sure you want to
@@ -117,7 +117,7 @@ const changeUserRoleConfirmed = async () => {
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
-    text: 'Change Role',
+    text: 'Change role',
     props: { color: 'danger', fullWidth: true },
     onClick: changeUserRoleConfirmed
   },

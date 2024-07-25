@@ -2416,6 +2416,8 @@ export type Query = {
   /**
    * Look for an invitation to a workspace, for the current user (authed or not). If token
    * isn't specified, the server will look for any valid invite.
+   *
+   * If token is specified, it will return the corresponding invite even if it belongs to a different user.
    */
   workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
 };
