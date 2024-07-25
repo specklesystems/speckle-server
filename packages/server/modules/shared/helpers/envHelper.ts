@@ -46,7 +46,7 @@ export function getBooleanFromEnv(envVarKey: string, aDefault = false): boolean 
  * Whether the server is supposed to serve frontend 2.0
  */
 export function useNewFrontend() {
-  return getBooleanFromEnv('USE_FRONTEND_2')
+  return getBooleanFromEnv('USE_FRONTEND_2', isTestEnv())
 }
 
 export function enableNewFrontendMessaging() {
