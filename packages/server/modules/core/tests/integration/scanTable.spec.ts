@@ -13,6 +13,10 @@ import {
 const scanTable = scanTableFactory<UserRecord>({ db })
 
 describe('Helpers scanTable @core', () => {
+  before(async () => {
+    await db(Users.name).delete()
+  })
+
   it('should scan table', async () => {
     const users = Array.from(Array(10)).map(() => ({
       id: crs({ length: 6 }),

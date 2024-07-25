@@ -9,18 +9,20 @@ export async function up(knex: Knex): Promise<void> {
     tableName: 'users',
     batchSize
   })) {
-    await knex('user_emails')
-      .insert(
-        rows.map((user) => ({
-          id: crs({ length: 10 }),
-          userId: user.id,
-          email: user.email,
-          verified: user.verified,
-          primary: true
-        }))
-      )
-      .onConflict(['userId', 'email'])
-      .ignore()
+    if (rows.length) {
+      await knex('user_emails')
+        .insert(
+          rows.map((user) => ({
+            id: crs({ length: 10 }),
+            userId: user.id,
+            email: user.email,
+            verified: user.verified,
+            primary: true
+          }))
+        )
+        .onConflict(['userId', 'email'])
+        .ignore()
+    }
   }
 }
 
