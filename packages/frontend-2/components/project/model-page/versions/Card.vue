@@ -8,7 +8,10 @@
   >
     <div class="flex flex-col p-3 pt-2" @click="$emit('click', $event)">
       <div class="flex justify-between items-center">
-        <NuxtLink class="text-heading-sm truncate" :href="viewerRoute">
+        <NuxtLink
+          class="text-body-xs font-medium truncate text-foreground pl-1"
+          :href="viewerRoute"
+        >
           {{ message }}
         </NuxtLink>
         <ProjectModelPageVersionsCardActions
@@ -25,7 +28,7 @@
       </div>
       <div>
         <div
-          class="h-48 flex items-center justify-center relative bg-foundation border border-outline-3 my-3 rounded-xl"
+          class="h-48 flex items-center justify-center relative bg-foundation border border-outline-3 mb-3 mt-2 rounded-xl"
         >
           <ProjectPendingFileImportStatus
             v-if="isPendingVersionFragment(version)"
