@@ -68,14 +68,13 @@ const buttonClass = computed(() => {
     const baseClasses = [
       'relative',
       'flex items-center gap-1.5',
-      'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent',
+      'hover:bg-highlight-2',
+      'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-md',
       'text-body-xs font-medium',
-      'border-l-2',
       'py-1'
     ]
 
-    if (isActive)
-      baseClasses.push('text-primary hover:text-primary bg-foundation-2 border-primary')
+    if (isActive) baseClasses.push('bg-primary-muted')
     else baseClasses.push('border-transparent text-foreground')
 
     return baseClasses

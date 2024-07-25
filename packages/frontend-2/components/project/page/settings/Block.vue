@@ -12,7 +12,6 @@
       :class="background ? 'pt-4 px-4 sm:px-6' : ''"
     >
       <div class="flex items-center gap-2">
-        <component :is="icon" v-if="icon" class="h-5 w-5"></component>
         <h3 class="text-heading-lg">{{ title }}</h3>
       </div>
       <div v-if="$slots['top-buttons']" class="flex gap-2">
@@ -50,12 +49,10 @@
   </div>
 </template>
 <script setup lang="ts">
-import type { PropAnyComponent } from '@speckle/ui-components'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 
 defineProps<{
   title: string
-  icon?: PropAnyComponent
   background?: boolean
   disabledMessage?: string
 }>()

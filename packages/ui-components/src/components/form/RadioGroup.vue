@@ -3,7 +3,7 @@
     <div class="flex flex-col sm:flex-row items-stretch gap-3 w-full">
       <div v-for="option in options" :key="option.value" class="w-full flex flex-col">
         <button
-          class="relative w-full h-full select-none rounded-md shadow border"
+          class="relative w-full h-full select-none rounded-md border"
           :class="[
             selected === option.value
               ? 'bg-foundation-page border-outline-1'

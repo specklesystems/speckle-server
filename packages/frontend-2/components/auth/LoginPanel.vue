@@ -6,7 +6,7 @@
     class="mx-auto w-full"
   >
     <div class="space-y-4">
-      <div class="flex flex-col items-center gap-y-2">
+      <div class="flex flex-col items-center gap-y-2 pb-4">
         <h1 class="text-heading-xl text-center inline-block">
           {{ title }}
         </h1>
@@ -23,13 +23,9 @@
       <div>
         <div
           v-if="hasLocalStrategy"
-          class="text-center text-foreground-2 mb-2 text-body-2xs font-normal"
+          class="text-center text-foreground-2 mb-2 text-body-2xs font-normal mt-2"
         >
-          {{
-            hasThirdPartyStrategies
-              ? 'Or login with your email'
-              : 'Login with your email'
-          }}
+          {{ hasThirdPartyStrategies ? 'Or login with your email' : '' }}
         </div>
         <AuthLoginWithEmailBlock v-if="hasLocalStrategy" :challenge="challenge" />
         <div class="text-center text-body-sm">

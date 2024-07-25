@@ -1,7 +1,9 @@
 <template>
   <ProjectPageSettingsBlock title="Collaborators">
     <template #introduction>
-      <p>Invite new collaborators and set permissions.</p>
+      <p class="text-body-xs text-foreground">
+        Invite new collaborators and set permissions.
+      </p>
     </template>
     <template #top-buttons>
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
