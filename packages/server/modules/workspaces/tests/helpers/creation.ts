@@ -63,7 +63,8 @@ export const createTestWorkspace = async (
       name: workspace.name,
       description: workspace.description || null,
       logoUrl: workspace.logoUrl || null
-    }
+    },
+    userResourceAccessLimits: null
   })
 
   workspace.id = finalWorkspace.id
