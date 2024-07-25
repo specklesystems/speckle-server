@@ -253,11 +253,13 @@ export const getUserPendingWorkspaceInviteFactory =
     const { workspaceId, userId, token } = params
     if (!userId && !token) return null
 
+    const userTarget = userId ? buildUserTarget(userId) : undefined
+
     const invite = await deps.findInvite<
       typeof WorkspaceInviteResourceType,
       WorkspaceRoles
     >({
-      target: userId ? buildUserTarget(userId) : undefined,
+      target: !token ? userTarget : undefined,
       token: token || undefined,
       resourceFilter: {
         resourceType: WorkspaceInviteResourceType,

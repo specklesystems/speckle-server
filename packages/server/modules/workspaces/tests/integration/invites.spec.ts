@@ -607,14 +607,24 @@ describe('Workspaces Invites', () => {
         await leaveStream(myInviteTargetWorkspaceStream1, otherGuy)
       })
 
-      it("can't retrieve it if not the invitee", async () => {
+      it("can't retrieve it if not the invitee and no token specified", async () => {
+        const res = await getInvite({
+          workspaceId: myInviteTargetWorkspace.id
+        })
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceInvite).to.be.not.ok
+      })
+
+      it('can retrieve it even if not the invitee, as long as the token is valid', async () => {
         const res = await getInvite({
           workspaceId: myInviteTargetWorkspace.id,
           token: processableWorkspaceInvite.token
         })
 
-        expect(res).to.not.haveGraphQLErrors('')
-        expect(res.data?.workspaceInvite).to.be.not.ok
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.workspaceInvite).to.be.ok
+        expect(res.data!.workspaceInvite?.user!.id).to.equal(otherGuy.id)
       })
 
       it("can't retrieve broken invite with invalid workspaceIds", async () => {
