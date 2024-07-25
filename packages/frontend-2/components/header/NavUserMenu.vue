@@ -23,14 +23,13 @@
             <MenuItem v-slot="{ active }">
               <NuxtLink
                 :class="[
-                  active ? 'bg-foundation-focus' : '',
-                  'text-body-sm flex gap-3.5 items-center px-3 py-2 text-primary cursor-pointer transition mx-1 rounded'
+                  active ? 'bg-highlight-1' : '',
+                  'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
                 target="_blank"
                 external
                 :href="connectorsPageUrl"
               >
-                <CloudArrowDownIcon class="w-5 h-5" />
                 Connector downloads
               </NuxtLink>
             </MenuItem>
@@ -38,62 +37,57 @@
           <MenuItem v-if="activeUser" v-slot="{ active }">
             <NuxtLink
               :class="[
-                active ? 'bg-foundation-focus' : '',
-                'text-body-sm flex gap-3.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
+                active ? 'bg-highlight-1' : '',
+                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleSettingsDialog(settingsQueries.user.profile)"
             >
-              <UserCircleIcon class="w-5 h-5" />
               Settings
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="isAdmin" v-slot="{ active }">
             <NuxtLink
               :class="[
-                active ? 'bg-foundation-focus' : '',
-                'text-body-sm flex gap-3.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
+                active ? 'bg-highlight-1' : '',
+                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleSettingsDialog(settingsQueries.server.general)"
             >
-              <ServerStackIcon class="w-5 h-5" />
               Server settings
             </NuxtLink>
           </MenuItem>
           <MenuItem v-slot="{ active }">
             <NuxtLink
               :class="[
-                active ? 'bg-foundation-focus' : '',
-                'text-body-sm flex gap-3.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
+                active ? 'bg-highlight-1' : '',
+                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleTheme"
             >
-              <Icon class="w-5 h-5" />
               {{ isDarkTheme ? 'Light mode' : 'Dark mode' }}
             </NuxtLink>
           </MenuItem>
           <MenuItem v-if="activeUser && !isGuest" v-slot="{ active }">
             <NuxtLink
               :class="[
-                active ? 'bg-foundation-focus' : '',
-                'text-body-sm flex gap-3.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
+                active ? 'bg-highlight-1' : '',
+                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleInviteDialog"
             >
-              <EnvelopeIcon class="w-5 h-5" />
               Invite to Speckle
             </NuxtLink>
           </MenuItem>
           <MenuItem v-slot="{ active }">
             <NuxtLink
               :class="[
-                active ? 'bg-foundation-focus' : '',
-                'text-body-sm flex gap-3.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
+                active ? 'bg-highlight-1' : '',
+                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               target="_blank"
               to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
               external
             >
-              <ChatBubbleLeftRightIcon class="w-5 h-5" />
               Feedback
             </NuxtLink>
           </MenuItem>
@@ -101,27 +95,32 @@
             <MenuItem v-if="activeUser" v-slot="{ active }">
               <NuxtLink
                 :class="[
-                  active ? 'bg-foundation-focus' : '',
-                  'text-body-sm flex gap-3.5 items-center px-3 py-2 text-foreground cursor-pointer transition mx-1 rounded'
+                  active ? 'bg-highlight-1' : '',
+                  'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
                 @click="logout"
               >
-                <ArrowRightOnRectangleIcon class="w-5 h-5" />
                 Log out
               </NuxtLink>
             </MenuItem>
             <MenuItem v-if="!activeUser && loginUrl" v-slot="{ active }">
               <NuxtLink
                 :class="[
-                  active ? 'bg-foundation-focus' : '',
-                  'flex gap-3.5 items-center px-3 py-2 text-sm text-foreground cursor-pointer transition mx-1 rounded'
+                  active ? 'bg-highlight-1' : '',
+                  'flex px-2 py-1.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
                 :to="loginUrl"
               >
-                <ArrowLeftOnRectangleIcon class="w-5 h-5" />
                 Log in
               </NuxtLink>
             </MenuItem>
+            <div v-if="version" class="border-t border-outline-3 py-1 mt-1">
+              <MenuItem>
+                <div class="px-3 pt-1 text-tiny text-foreground-2">
+                  Version {{ version }}
+                </div>
+              </MenuItem>
+            </div>
           </div>
         </MenuItems>
       </Transition>
@@ -137,18 +136,7 @@
 import { isString } from 'lodash'
 import { useBreakpoints } from '@vueuse/core'
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/vue'
-import {
-  XMarkIcon,
-  ArrowLeftOnRectangleIcon,
-  ArrowRightOnRectangleIcon,
-  SunIcon,
-  MoonIcon,
-  EnvelopeIcon,
-  CloudArrowDownIcon,
-  ChatBubbleLeftRightIcon,
-  UserCircleIcon,
-  ServerStackIcon
-} from '@heroicons/vue/24/outline'
+import { XMarkIcon } from '@heroicons/vue/24/outline'
 import { Roles } from '@speckle/shared'
 import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 import { useActiveUser } from '~~/lib/auth/composables/activeUser'
@@ -157,6 +145,7 @@ import { useTheme } from '~~/lib/core/composables/theme'
 import { connectorsPageUrl, settingsQueries } from '~/lib/common/helpers/route'
 import type { RouteLocationRaw } from 'vue-router'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { useServerInfo } from '~/lib/core/composables/server'
 
 defineProps<{
   loginUrl?: RouteLocationRaw
@@ -168,6 +157,7 @@ const { activeUser, isGuest } = useActiveUser()
 const { isDarkTheme, toggleTheme } = useTheme()
 const router = useRouter()
 const { triggerNotification } = useGlobalToast()
+const { serverInfo } = useServerInfo()
 
 const showInviteDialog = ref(false)
 const showSettingsDialog = ref(false)
@@ -176,7 +166,7 @@ const menuButtonId = useId()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('md')
 
-const Icon = computed(() => (isDarkTheme.value ? SunIcon : MoonIcon))
+const version = computed(() => serverInfo.value?.version)
 const isAdmin = computed(() => activeUser.value?.role === Roles.Server.Admin)
 
 const toggleInviteDialog = () => {
