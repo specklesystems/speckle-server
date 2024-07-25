@@ -8,7 +8,7 @@
       @keypress="keyboardClick((e) => emit('click', e))"
     >
       <div class="flex justify-between items-center h-10">
-        <div class="px-2">
+        <div class="px-2 select-none">
           <div
             v-if="nameParts[0]"
             class="text-body-2xs text-foreground-2 relative truncate"
@@ -147,7 +147,7 @@ const showActionsMenu = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-xl bg-foundation-2 border border-outline-3 hover:border-outline-2 p-2'
+    'group rounded-xl bg-foundation-2 border border-outline-3 hover:border-outline-5 p-2'
   ]
 
   return classParts.join(' ')

@@ -116,7 +116,7 @@ const hovered = ref(false)
 const panorama = ref(null as Nullable<HTMLDivElement>)
 
 const mainPreviewClasses = computed(
-  () => 'w-full h-full bg-contain bg-no-repeat bg-center'
+  () => 'w-full h-full bg-cover bg-no-repeat bg-center'
 )
 
 const parentWidth = ref(0)

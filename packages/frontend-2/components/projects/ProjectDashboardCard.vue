@@ -13,11 +13,14 @@
           >
             {{ project.name }}
           </NuxtLink>
-          <span v-tippy="updatedAt.full" class="text-body-3xs mb-1">
+          <span
+            v-tippy="updatedAt.full"
+            class="text-body-3xs mb-1 text-foreground-2 select-none"
+          >
             Updated
             {{ updatedAt.relative }}
           </span>
-          <span class="text-body-3xs capitalize mb-2">
+          <span class="text-body-3xs capitalize mb-2 text-foreground-2 select-none">
             {{ project.role?.split(':').reverse()[0] }}
           </span>
           <UserAvatarGroup :users="teamUsers" :max-count="2" />
