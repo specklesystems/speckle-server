@@ -77,19 +77,16 @@
         </template>
       </LayoutTable>
 
-      <CommonLoadingBar v-if="loading && !users?.length" loading />
-
       <InfiniteLoading
         v-if="users?.length"
-        :settings="{ identifier: infiniteLoaderId }"
-        class="-mt-24 -mb-24"
-        @infinite="infiniteLoad"
+        :settings="{ identifier }"
+        class="py-4"
+        @infinite="onInfiniteLoad"
       />
 
       <SettingsServerUserDeleteDialog
         v-model:open="showUserDeleteDialog"
         :user="userToModify"
-        :result-variables="resultVariables"
       />
 
       <SettingsServerUserChangeRoleDialog
@@ -106,10 +103,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { useQuery } from '@vue/apollo-composable'
 import { isArray } from 'lodash-es'
-import { useLogger } from '~~/composables/logging'
-import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
 import type { Nullable, ServerRoles, Optional } from '@speckle/shared'
 import { getUsersQuery } from '~~/lib/server-management/graphql/queries'
 import type { ItemType, UserItem } from '~~/lib/server-management/helpers/types'
@@ -124,45 +118,39 @@ import {
 } from '@heroicons/vue/24/outline'
 import { useServerInfo } from '~~/lib/core/composables/server'
 import { useDebouncedTextInput } from '@speckle/ui-components'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
-const search = defineModel<string>('search')
-
-const logger = useLogger()
 const { activeUser } = useActiveUser()
 const { isGuestMode } = useServerInfo()
-const { on, bind } = useDebouncedTextInput({ model: search })
+const { on, bind, value: search } = useDebouncedTextInput()
 
 const userToModify: Ref<Nullable<UserItem>> = ref(null)
-
 const showUserDeleteDialog = ref(false)
 const showChangeUserRoleDialog = ref(false)
 const newRole = ref<ServerRoles>()
-const infiniteLoaderId = ref('')
 const showInviteDialog = ref(false)
 
-const queryVariables = computed(() => ({
-  limit: 50,
-  query: search.value
-}))
-
 const {
-  result: extraPagesResult,
-  fetchMore: fetchMorePages,
-  variables: resultVariables,
-  onResult,
-  loading
-} = useQuery(getUsersQuery, queryVariables)
+  identifier,
+  onInfiniteLoad,
+  query: { result }
+} = usePaginatedQuery({
+  query: getUsersQuery,
+  baseVariables: computed(() => ({
+    query: search.value?.length ? search.value : null,
+    limit: 50
+  })),
+  resolveKey: (vars) => [vars.query || ''],
+  resolveCurrentResult: (res) => res?.admin.userList,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
 
 const oldRole = computed(() => userToModify.value?.role as Optional<ServerRoles>)
-
-const moreToLoad = computed(
-  () =>
-    !extraPagesResult.value?.admin?.userList ||
-    extraPagesResult.value.admin.userList.items.length <
-      extraPagesResult.value.admin.userList.totalCount
-)
-
-const users = computed(() => extraPagesResult.value?.admin.userList.items || [])
+const users = computed(() => result.value?.admin.userList.items || [])
 
 const isCurrentUser = (userItem: UserItem) => {
   return userItem.id === activeUser.value?.id
@@ -184,35 +172,7 @@ const openChangeUserRoleDialog = (user: UserItem, newRoleValue: ServerRoles) => 
   showChangeUserRoleDialog.value = true
 }
 
-const infiniteLoad = async (state: InfiniteLoaderState) => {
-  const cursor = extraPagesResult.value?.admin?.userList.cursor || null
-  if (!moreToLoad.value || !cursor) return state.complete()
-
-  try {
-    await fetchMorePages({
-      variables: {
-        cursor
-      }
-    })
-  } catch (e) {
-    logger.error(e)
-    state.error()
-    return
-  }
-
-  state.loaded()
-  if (!moreToLoad.value) {
-    state.complete()
-  }
-}
-
-const calculateLoaderId = () => {
-  infiniteLoaderId.value = resultVariables.value?.query || ''
-}
-
 const toggleInviteDialog = () => {
   showInviteDialog.value = true
 }
-
-onResult(calculateLoaderId)
 </script>

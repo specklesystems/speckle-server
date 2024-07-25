@@ -5,6 +5,7 @@ import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from 
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn, UserAutomateInfoGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
+import { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -3813,6 +3814,7 @@ export type WorkspaceMutations = {
   deleteRole: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   update: Workspace;
+  /** TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes */
   updateRole: Scalars['Boolean']['output'];
 };
 
@@ -4156,14 +4158,14 @@ export type ResolversTypes = {
   WebhookEvent: ResolverTypeWrapper<WebhookEvent>;
   WebhookEventCollection: ResolverTypeWrapper<WebhookEventCollection>;
   WebhookUpdateInput: WebhookUpdateInput;
-  Workspace: ResolverTypeWrapper<Omit<Workspace, 'invitedTeam' | 'projects' | 'team'> & { invitedTeam?: Maybe<Array<ResolversTypes['PendingWorkspaceCollaborator']>>, projects: ResolversTypes['ProjectCollection'], team: Array<ResolversTypes['WorkspaceCollaborator']> }>;
+  Workspace: ResolverTypeWrapper<WorkspaceGraphQLReturn>;
   WorkspaceCollaborator: ResolverTypeWrapper<Omit<WorkspaceCollaborator, 'user'> & { user: ResolversTypes['LimitedUser'] }>;
   WorkspaceCollection: ResolverTypeWrapper<Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversTypes['Workspace']> }>;
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteMutations: ResolverTypeWrapper<Omit<WorkspaceInviteMutations, 'batchCreate' | 'cancel' | 'create'> & { batchCreate: ResolversTypes['Workspace'], cancel: ResolversTypes['Workspace'], create: ResolversTypes['Workspace'] }>;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
-  WorkspaceMutations: ResolverTypeWrapper<Omit<WorkspaceMutations, 'create' | 'delete' | 'invites' | 'update'> & { create: ResolversTypes['Workspace'], delete: ResolversTypes['Workspace'], invites: ResolversTypes['WorkspaceInviteMutations'], update: ResolversTypes['Workspace'] }>;
+  WorkspaceMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
@@ -4371,14 +4373,14 @@ export type ResolversParentTypes = {
   WebhookEvent: WebhookEvent;
   WebhookEventCollection: WebhookEventCollection;
   WebhookUpdateInput: WebhookUpdateInput;
-  Workspace: Omit<Workspace, 'invitedTeam' | 'projects' | 'team'> & { invitedTeam?: Maybe<Array<ResolversParentTypes['PendingWorkspaceCollaborator']>>, projects: ResolversParentTypes['ProjectCollection'], team: Array<ResolversParentTypes['WorkspaceCollaborator']> };
+  Workspace: WorkspaceGraphQLReturn;
   WorkspaceCollaborator: Omit<WorkspaceCollaborator, 'user'> & { user: ResolversParentTypes['LimitedUser'] };
   WorkspaceCollection: Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversParentTypes['Workspace']> };
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
   WorkspaceInviteMutations: Omit<WorkspaceInviteMutations, 'batchCreate' | 'cancel' | 'create'> & { batchCreate: ResolversParentTypes['Workspace'], cancel: ResolversParentTypes['Workspace'], create: ResolversParentTypes['Workspace'] };
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
-  WorkspaceMutations: Omit<WorkspaceMutations, 'create' | 'delete' | 'invites' | 'update'> & { create: ResolversParentTypes['Workspace'], delete: ResolversParentTypes['Workspace'], invites: ResolversParentTypes['WorkspaceInviteMutations'], update: ResolversParentTypes['Workspace'] };
+  WorkspaceMutations: MutationsObjectGraphQLReturn;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
   WorkspaceUpdateInput: WorkspaceUpdateInput;

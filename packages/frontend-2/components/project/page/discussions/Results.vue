@@ -3,29 +3,23 @@
     <template v-if="hasItems">
       <ProjectPageLatestItemsCommentsGrid
         v-if="gridOrList === GridListToggleValue.Grid"
-        :threads="extraPagesResult"
+        :threads="result"
       />
-      <ProjectPageLatestItemsCommentsList v-else :threads="extraPagesResult" />
-      <InfiniteLoading
-        :settings="{ identifier: infiniteLoaderId }"
-        @infinite="infiniteLoad"
-      />
+      <ProjectPageLatestItemsCommentsList v-else :threads="result" />
+      <InfiniteLoading :settings="{ identifier }" @infinite="onInfiniteLoad" />
     </template>
+
     <div v-else class="mt-8">
       <ProjectPageLatestItemsCommentsEmptyState />
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { useQuery } from '@vue/apollo-composable'
 import { graphql } from '~~/lib/common/generated/gql'
-import type {
-  ProjectCommentsFilter,
-  ProjectDiscussionsPageResults_ProjectFragment
-} from '~~/lib/common/generated/gql/graphql'
-import type { InfiniteLoaderState } from '~~/lib/global/helpers/components'
+import type { ProjectDiscussionsPageResults_ProjectFragment } from '~~/lib/common/generated/gql/graphql'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
 import { latestCommentThreadsQuery } from '~~/lib/projects/graphql/queries'
+import { usePaginatedQuery } from '~/lib/common/composables/graphql'
 
 graphql(`
   fragment ProjectDiscussionsPageResults_Project on Project {
@@ -39,61 +33,28 @@ const props = defineProps<{
   includeArchived: boolean
 }>()
 
-const logger = useLogger()
-
-const queryFilterVariables = computed(
-  (): ProjectCommentsFilter => ({
-    includeArchived: !!props.includeArchived
-  })
-)
-
-const infiniteLoaderId = ref('')
 const {
-  result: extraPagesResult,
-  fetchMore: fetchMorePages,
-  variables: resultVariables,
-  onResult
-} = useQuery(latestCommentThreadsQuery, () => ({
-  projectId: props.project.id,
-  filter: queryFilterVariables.value
-}))
+  identifier,
+  onInfiniteLoad,
+  query: { result }
+} = usePaginatedQuery({
+  query: latestCommentThreadsQuery,
+  baseVariables: computed(() => ({
+    projectId: props.project.id,
+    filter: { includeArchived: !!props.includeArchived }
+  })),
+  resolveKey: (vars) => {
+    return { projectId: vars.projectId, ...vars.filter }
+  },
+  resolveCurrentResult: (res) => res?.project.commentThreads,
+  resolveNextPageVariables: (baseVars, cursor) => ({
+    ...baseVars,
+    cursor
+  }),
+  resolveCursorFromVariables: (vars) => vars.cursor
+})
 
 const hasItems = computed(
-  () => !!(extraPagesResult.value?.project?.commentThreads.items || []).length
+  () => !!(result.value?.project?.commentThreads.items || []).length
 )
-
-const moreToLoad = computed(
-  () =>
-    !extraPagesResult.value?.project ||
-    extraPagesResult.value.project.commentThreads.items.length <
-      extraPagesResult.value.project.commentThreads.totalCount
-)
-
-const infiniteLoad = async (state: InfiniteLoaderState) => {
-  const cursor = extraPagesResult.value?.project?.commentThreads.cursor || null
-  if (!moreToLoad.value || !cursor) return state.complete()
-
-  try {
-    await fetchMorePages({
-      variables: {
-        cursor
-      }
-    })
-  } catch (e) {
-    logger.error(e)
-    state.error()
-    return
-  }
-
-  state.loaded()
-  if (!moreToLoad.value) {
-    state.complete()
-  }
-}
-
-const calculateLoaderId = () => {
-  infiniteLoaderId.value = JSON.stringify(resultVariables.value?.filter || {})
-}
-
-onResult(calculateLoaderId)
 </script>
