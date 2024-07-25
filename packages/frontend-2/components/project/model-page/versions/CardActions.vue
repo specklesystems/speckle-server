@@ -7,9 +7,13 @@
       @click.stop.prevent
       @chosen="onActionChosen"
     >
-      <FormButton text @click="showActionsMenu = !showActionsMenu">
-        <EllipsisHorizontalIcon class="w-4 h-4 text-foreground" />
-      </FormButton>
+      <FormButton
+        color="subtle"
+        hide-text
+        :icon-right="EllipsisHorizontalIcon"
+        class="!text-foreground-2"
+        @click="showActionsMenu = !showActionsMenu"
+      ></FormButton>
     </LayoutMenu>
   </div>
 </template>
