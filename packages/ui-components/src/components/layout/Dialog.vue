@@ -30,7 +30,7 @@
           >
             <DialogPanel
               :class="[
-                'dialog-panel transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl flex flex-col md:h-auto border border-outline-2',
+                'dialog-panel transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl flex flex-col md:h-auto border border-outline-2 bg-foundation-2',
                 fullscreen ? 'md:h-full' : 'md:max-h-[90vh]',
                 widthClasses
               ]"
@@ -71,7 +71,6 @@
                 color="subtle"
                 size="sm"
                 :icon-right="XMarkIcon"
-                rounded
                 hide-text
                 class="absolute z-20 top-4 right-2"
                 @click="open = false"
