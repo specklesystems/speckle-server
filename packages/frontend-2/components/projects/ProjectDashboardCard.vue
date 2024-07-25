@@ -22,6 +22,16 @@
           </span>
           <UserAvatarGroup :users="teamUsers" :max-count="2" />
         </div>
+        <div>
+          <FormButton
+            :to="allProjectModelsRoute(project.id) + '/'"
+            size="sm"
+            color="outline"
+            :icon-right="ChevronRightIcon"
+          >
+            {{ modelItemTotalCount }} models
+          </FormButton>
+        </div>
       </div>
       <div
         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 flex-grow col-span-4 lg:col-span-3 w-full"
@@ -52,23 +62,15 @@
           class="h-28 col-span-4"
         />
       </div>
-      <div
-        v-if="modelItemTotalCount > 4"
-        class="absolute -right-11 hover:right-0 top-1/2 translate -translate-y-1/2 bg-foundation text-primary text-xs font-medium transition-all opacity-0 group-hover:opacity-100 rounded-l-md shadow-md px-1 py-12"
-      >
-        <NuxtLink :to="allProjectModelsRoute(project.id) + '/'">
-          +{{ modelItemTotalCount - 4 }} more model{{
-            modelItemTotalCount - 4 !== 1 ? 's' : ''
-          }}
-        </NuxtLink>
-      </div>
     </div>
   </div>
 </template>
 <script lang="ts" setup>
+import { FormButton } from '@speckle/ui-components'
 import type { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
 import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
+import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
