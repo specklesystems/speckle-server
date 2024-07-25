@@ -9,7 +9,7 @@
         <div class="flex flex-col">
           <NuxtLink
             :to="projectRoute(project.id)"
-            class="break-words hover:text-primary text-heading-sm mb-2"
+            class="break-words hover:text-primary text-heading mb-2"
           >
             {{ project.name }}
           </NuxtLink>
