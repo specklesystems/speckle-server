@@ -5,7 +5,7 @@
     :disabled="isUploading"
     :size-limit="maxSizeInBytes"
     :accept="accept"
-    class="flex items-center"
+    class="flex items-center h-full"
     @files-selected="onFilesSelected"
   >
     <div
