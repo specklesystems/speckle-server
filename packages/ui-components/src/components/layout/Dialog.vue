@@ -30,7 +30,7 @@
           >
             <DialogPanel
               :class="[
-                'dialog-panel transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl flex flex-col md:h-auto border border-outline-2 bg-foundation-2',
+                'dialog-panel transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all text-left shadow-xl flex flex-col md:h-auto border border-outline-2 bg-foundation-page',
                 fullscreen ? 'md:h-full' : 'md:max-h-[90vh]',
                 widthClasses
               ]"
@@ -91,7 +91,7 @@
               </div>
               <div
                 v-if="hasButtons"
-                class="relative z-50 flex px-6 py-3 gap-3 shrink-0 bg-foundation border-t border-outline-2"
+                class="relative z-50 flex px-6 py-3 gap-3 shrink-0 bg-foundation-page border-t border-outline-2"
                 :class="{
                   'shadow-t': !scrolledToBottom,
                   [buttonsWrapperClasses || '']: true
@@ -202,8 +202,12 @@ const widthClasses = computed(() => {
   const classParts: string[] = ['w-full', 'sm:w-full']
 
   if (!props.fullscreen) {
-    classParts.push('md:max-w-2xl')
-
+    if (maxWidthWeight.value === 0) {
+      classParts.push('md:max-w-lg')
+    }
+    if (maxWidthWeight.value >= 1) {
+      classParts.push('md:max-w-2xl')
+    }
     if (maxWidthWeight.value >= 2) {
       classParts.push('lg:max-w-4xl')
     }
