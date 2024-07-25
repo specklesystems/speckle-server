@@ -8,13 +8,13 @@
       @chosen="onActionChosen"
     >
       <FormButton text @click="showActionsMenu = !showActionsMenu">
-        <EllipsisVerticalIcon class="w-4 h-4" />
+        <EllipsisHorizontalIcon class="w-4 h-4 text-foreground" />
       </FormButton>
     </LayoutMenu>
   </div>
 </template>
 <script setup lang="ts">
-import { EllipsisVerticalIcon } from '@heroicons/vue/24/solid'
+import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
 import {
   TrashIcon,
   PencilIcon,
