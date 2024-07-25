@@ -129,19 +129,19 @@ const bgAndBorderClasses = computed(() => {
 
   const colorsBgBorder = {
     subtle: [
-      'bg-transparent border-transparent text-foreground',
+      'bg-transparent border-transparent text-foreground font-medium',
       'hover:bg-primary-muted disabled:hover:bg-transparent focus-visible:border-foundation'
     ],
     outline: [
-      'bg-foundation border-outline-2 text-foreground',
+      'bg-foundation border-outline-2 text-foreground font-medium',
       'hover:bg-primary-muted disabled:hover:bg-foundation focus-visible:border-foundation'
     ],
     danger: [
-      'bg-danger border-danger-darker text-foundation',
+      'bg-danger border-danger-darker text-foundation font-medium',
       'hover:bg-danger-darker disabled:hover:bg-danger focus-visible:border-foundation'
     ],
     primary: [
-      'bg-primary border-outline-1 text-foreground-on-primary',
+      'bg-primary border-outline-1 text-foreground-on-primary font-semibold',
       'hover:bg-primary-focus disabled:hover:bg-primary focus-visible:border-foundation'
     ]
   }
@@ -195,7 +195,7 @@ const sizeClasses = computed(() => {
       return 'h-10 text-body-sm'
     default:
     case 'base':
-      return 'h-8 text-body-xs leading-6'
+      return 'h-8 text-body-xs'
   }
 })
 
@@ -231,7 +231,7 @@ const paddingClasses = computed(() => {
 const generalClasses = computed(() => {
   const baseClasses = [
     'inline-flex justify-center items-center',
-    'font-semibold text-center select-none',
+    'text-center select-none',
     'outline outline-2 outline-transparent',
     'transition duration-200 ease-in-out focus-visible:outline-outline-4'
   ]
@@ -239,7 +239,7 @@ const generalClasses = computed(() => {
   const additionalClasses = []
 
   if (!props.text && !props.link) {
-    additionalClasses.push('rounded-[5px] border')
+    additionalClasses.push('rounded-md border')
   }
 
   if (props.fullWidth) {
