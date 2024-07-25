@@ -12,7 +12,7 @@ import {
   grantStreamPermissions as repoGrantStreamPermissions,
   revokeStreamPermissions as repoRevokeStreamPermissions
 } from '@/modules/core/repositories/streams'
-import { getStreams as repoGetStreams } from '@/modules/core/services/streams'
+import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
 import {
   DeleteWorkspaceRole,
   GetWorkspaceRoleForUser,
@@ -89,7 +89,7 @@ export const deleteWorkspaceRoleFactory =
     getWorkspaceRoles: GetWorkspaceRoles
     deleteWorkspaceRole: DeleteWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
-    getStreams: typeof repoGetStreams
+    getStreams: typeof serviceGetStreams
     revokeStreamPermissions: typeof repoRevokeStreamPermissions
   }) =>
   async ({
@@ -155,7 +155,7 @@ export const setWorkspaceRoleFactory =
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EmitWorkspaceEvent
     // TODO: Create `core` domain and import type from there
-    getStreams: typeof repoGetStreams
+    getStreams: typeof serviceGetStreams
     grantStreamPermissions: typeof repoGrantStreamPermissions
   }) =>
   async ({ userId, workspaceId, role }: WorkspaceAcl): Promise<void> => {

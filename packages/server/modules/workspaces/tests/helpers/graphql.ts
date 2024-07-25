@@ -134,3 +134,13 @@ export const getMyWorkspaceInvitesQuery = gql`
 
   ${basicPendingWorkspaceCollaboratorFragment}
 `
+
+export const createWorkspaceProjectInviteMutation = gql`
+  mutation UseWorkspaceProjectInvite($input: ProjectInviteUseInput!) {
+    projectMutations {
+      invites {
+        use(input: $input)
+      }
+    }
+  }
+`

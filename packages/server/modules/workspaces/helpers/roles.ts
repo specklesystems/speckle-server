@@ -29,6 +29,19 @@ export const mapWorkspaceRoleToProjectRole = (
   }
 }
 
+export const mapProjectRoleToWorkspaceRole = (
+  projectRole: StreamRoles
+): WorkspaceRoles => {
+  switch (projectRole) {
+    case Roles.Stream.Contributor:
+      return Roles.Workspace.Member
+    case Roles.Stream.Reviewer:
+      return Roles.Workspace.Guest
+    case Roles.Stream.Owner:
+      return Roles.Workspace.Admin
+  }
+}
+
 export const mapGqlWorkspaceRoleToMainRole = (
   gqlRole: WorkspaceRole
 ): WorkspaceRoles => {

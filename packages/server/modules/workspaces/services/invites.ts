@@ -50,6 +50,7 @@ import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constan
 import { GetWorkspace } from '@/modules/workspaces/domain/operations'
 import { WorkspaceInviteResourceTarget } from '@/modules/workspaces/domain/types'
 import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/roles'
+import { setWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import { MaybeNullOrUndefined, Nullable, Roles, WorkspaceRoles } from '@speckle/shared'
 
@@ -110,10 +111,11 @@ export const collectAndValidateWorkspaceTargetsFactory =
     }))
 
     const { input, inviter, targetUser, inviterResourceAccessLimits } = params
+    const primaryResourceTarget = input.primaryResourceTarget
     const primaryWorkspaceResourceTarget = isWorkspaceResourceTarget(
-      input.primaryResourceTarget
+      primaryResourceTarget
     )
-      ? input.primaryResourceTarget
+      ? primaryResourceTarget
       : null
     if (!primaryWorkspaceResourceTarget) {
       return [...baseTargets]
@@ -380,11 +382,21 @@ export const validateWorkspaceInviteBeforeFinalizationFactory =
   }
 
 export const processFinalizedWorkspaceInviteFactory =
-  (deps: { getWorkspace: GetWorkspace }): ProcessFinalizedResourceInvite =>
+  (deps: {
+    getWorkspace: GetWorkspace
+    setWorkspaceRole: ReturnType<typeof setWorkspaceRoleFactory>
+  }): ProcessFinalizedResourceInvite =>
   async (params) => {
     const { invite, finalizerUserId, action } = params
 
-    const workspace = deps.getWorkspace({
+    if (!isWorkspaceResourceTarget(invite.resource)) {
+      throw new InviteFinalizingError(
+        'Attempting to finalize non-workspace invite as workspace invite',
+        { info: params }
+      )
+    }
+
+    const workspace = await deps.getWorkspace({
       workspaceId: invite.resource.resourceId,
       userId: finalizerUserId
     })
@@ -394,9 +406,15 @@ export const processFinalizedWorkspaceInviteFactory =
       )
     }
 
+    const target = resolveTarget(invite.target)
+
     if (action === InviteFinalizationAction.ACCEPT) {
-      // TODO
+      await deps.setWorkspaceRole({
+        userId: target.userId!,
+        workspaceId: workspace.id,
+        role: invite.resource.role || Roles.Workspace.Member
+      })
     } else if (action === InviteFinalizationAction.DECLINE) {
-      // TODO
+      // TODO: Emit activityStream event?
     }
   }

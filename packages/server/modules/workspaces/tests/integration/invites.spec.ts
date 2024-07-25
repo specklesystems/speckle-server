@@ -28,22 +28,34 @@ import {
   GetWorkspaceWithTeamQueryVariables,
   UseWorkspaceInviteDocument,
   UseWorkspaceInviteMutationVariables,
+  UseWorkspaceProjectInviteDocument,
+  UseWorkspaceProjectInviteMutationVariables,
   WorkspaceRole
 } from '@/test/graphql/generated/graphql'
 import { expect } from 'chai'
-import { validateInviteExistanceFromEmail } from '@/test/speckle-helpers/inviteHelper'
-import { Roles } from '@speckle/shared'
-import { itEach } from '@/test/assertionHelper'
+import {
+  createStreamInviteDirectlyFactory,
+  validateInviteExistanceFromEmail
+} from '@/test/speckle-helpers/inviteHelper'
+import { MaybeAsync, Roles } from '@speckle/shared'
+import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { ServerInvites } from '@/modules/core/dbSchema'
 import { TokenResourceIdentifierType } from '@/modules/core/graph/generated/graphql'
 import { times } from 'lodash'
 import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { db } from '@/db/knex'
+import {
+  BasicTestStream,
+  createTestStreams,
+  leaveStream
+} from '@/test/speckle-helpers/streamHelper'
+import { authorizeResolver } from '@/modules/shared'
+import { ForbiddenError } from 'apollo-server-express'
 
 /**
  * TODO:
  * - Register w/ project/server/workspace invite + use as resource invite after
- * - workspaceInvites
+ * - Retrieval validation (dont pull in invite for invalid/deleted workspace) + clean up invites on deletion
  */
 
 enum InviteByTarget {
@@ -435,7 +447,7 @@ describe('Workspaces Invites', () => {
 
         expect(res).to.not.haveGraphQLErrors()
         expect(res.data?.workspace).to.be.ok
-        expect(res.data?.workspace.invitedTeam).to.have.length(10)
+        expect(res.data?.workspace.invitedTeam).to.have.length(11)
       })
 
       it("can't cancel invite, if not admin", async () => {
@@ -494,9 +506,21 @@ describe('Workspaces Invites', () => {
         id: '',
         ownerId: ''
       }
+      const myInviteTargetWorkspaceStream1: BasicTestStream = {
+        name: 'My Invite Target Workspace Stream 1',
+        id: '',
+        ownerId: '',
+        isPublic: false
+      }
 
-      const processableInvite = {
+      const processableWorkspaceInvite = {
         workspaceId: '',
+        inviteId: '',
+        token: ''
+      }
+
+      const processableProjectInvite = {
+        projectId: '',
         inviteId: '',
         token: ''
       }
@@ -514,13 +538,49 @@ describe('Workspaces Invites', () => {
       const getMyInvites = async (options?: ExecuteOperationOptions) =>
         apollo.execute(GetMyWorkspaceInvitesDocument, {}, options)
 
+      const useProjectInvite = async (
+        args: UseWorkspaceProjectInviteMutationVariables,
+        options?: ExecuteOperationOptions
+      ) => apollo.execute(UseWorkspaceProjectInviteDocument, args, options)
+
+      const validateResourceAccess = async (params: { shouldHaveAccess: boolean }) => {
+        const { shouldHaveAccess } = params
+
+        const wrapAccessCheck = async (fn: () => MaybeAsync<unknown>) => {
+          if (shouldHaveAccess) {
+            await fn()
+          } else {
+            const e = await expectToThrow(fn)
+            expect(e instanceof ForbiddenError).to.be.true
+          }
+        }
+
+        await wrapAccessCheck(() =>
+          authorizeResolver(
+            otherGuy.id,
+            myInviteTargetWorkspace.id,
+            Roles.Workspace.Guest
+          )
+        )
+        await wrapAccessCheck(() =>
+          authorizeResolver(
+            otherGuy.id,
+            myInviteTargetWorkspaceStream1.id,
+            Roles.Stream.Reviewer
+          )
+        )
+      }
+
       before(async () => {
         await truncateTables([ServerInvites.name])
         await createTestWorkspaces([[myInviteTargetWorkspace, me]])
+
+        myInviteTargetWorkspaceStream1.workspaceId = myInviteTargetWorkspace.id
+        await createTestStreams([[myInviteTargetWorkspaceStream1, me]])
       })
 
       beforeEach(async () => {
-        const inviteData = await createWorkspaceInviteDirectly(
+        const workspaceInvite = await createWorkspaceInviteDirectly(
           {
             workspaceId: myInviteTargetWorkspace.id,
             input: {
@@ -530,19 +590,33 @@ describe('Workspaces Invites', () => {
           },
           me.id
         )
-        processableInvite.workspaceId = myInviteTargetWorkspace.id
-        processableInvite.inviteId = inviteData.inviteId
-        processableInvite.token = inviteData.token
+        processableWorkspaceInvite.workspaceId = myInviteTargetWorkspace.id
+        processableWorkspaceInvite.inviteId = workspaceInvite.inviteId
+        processableWorkspaceInvite.token = workspaceInvite.token
+
+        const projectInvite = await createStreamInviteDirectlyFactory({ db })(
+          {
+            user: otherGuy,
+            stream: myInviteTargetWorkspaceStream1
+          },
+          me.id
+        )
+        processableProjectInvite.projectId = myInviteTargetWorkspaceStream1.id
+        processableProjectInvite.inviteId = projectInvite.inviteId
+        processableProjectInvite.token = projectInvite.token
       })
 
       afterEach(async () => {
-        await unassignFromWorkspace(myInviteTargetWorkspace, otherGuy)
+        await Promise.all([
+          unassignFromWorkspace(myInviteTargetWorkspace, otherGuy),
+          leaveStream(myInviteTargetWorkspaceStream1, otherGuy)
+        ])
       })
 
       it("can't retrieve it if not the invitee", async () => {
         const res = await getInvite({
           workspaceId: myInviteTargetWorkspace.id,
-          token: processableInvite.token
+          token: processableWorkspaceInvite.token
         })
 
         expect(res).to.not.haveGraphQLErrors('')
@@ -559,7 +633,7 @@ describe('Workspaces Invites', () => {
           const res = await getInvite(
             {
               workspaceId: myInviteTargetWorkspace.id,
-              token: test.withToken ? processableInvite.token : undefined
+              token: test.withToken ? processableWorkspaceInvite.token : undefined
             },
             {
               context: {
@@ -571,12 +645,14 @@ describe('Workspaces Invites', () => {
           expect(res).to.not.haveGraphQLErrors('')
           expect(res.data?.workspaceInvite).to.be.ok
           expect(res.data!.workspaceInvite!.inviteId).to.equal(
-            processableInvite.inviteId
+            processableWorkspaceInvite.inviteId
           )
           expect(res.data!.workspaceInvite!.workspaceId).to.equal(
             myInviteTargetWorkspace.id
           )
-          expect(res.data!.workspaceInvite!.token).to.equal(processableInvite.token)
+          expect(res.data!.workspaceInvite!.token).to.equal(
+            processableWorkspaceInvite.token
+          )
         }
       )
 
@@ -599,7 +675,7 @@ describe('Workspaces Invites', () => {
           if (test.hasSome) {
             expect(res.data?.activeUser?.workspaceInvites).to.have.length(1)
             expect(res.data?.activeUser?.workspaceInvites![0].inviteId).to.equal(
-              processableInvite.inviteId
+              processableWorkspaceInvite.inviteId
             )
             expect(res.data?.activeUser?.workspaceInvites![0].workspaceId).to.equal(
               myInviteTargetWorkspace.id
@@ -609,6 +685,63 @@ describe('Workspaces Invites', () => {
           }
         }
       )
+
+      itEach(
+        [{ accept: true }, { accept: false }],
+        ({ accept }) => `can ${accept ? 'accept' : 'decline'} the invite`,
+        async ({ accept }) => {
+          const res = await useInvite(
+            {
+              input: {
+                accept,
+                token: processableWorkspaceInvite.token
+              }
+            },
+            {
+              context: {
+                userId: otherGuy.id
+              }
+            }
+          )
+
+          expect(res).to.not.haveGraphQLErrors()
+          expect(res.data?.workspaceMutations?.invites?.use).to.be.ok
+
+          const invite = await findInviteFactory({ db })({
+            inviteId: processableWorkspaceInvite.inviteId
+          })
+          expect(invite).to.be.not.ok
+
+          await validateResourceAccess({ shouldHaveAccess: accept })
+        }
+      )
+
+      it('accepting workspace project invite also adds user to workspace', async () => {
+        const res = await useProjectInvite(
+          {
+            input: {
+              token: processableProjectInvite.token,
+              accept: true,
+              projectId: processableProjectInvite.projectId
+            }
+          },
+          {
+            context: {
+              userId: otherGuy.id
+            }
+          }
+        )
+
+        expect(res).to.not.haveGraphQLErrors()
+        expect(res.data?.projectMutations?.invites?.use).to.be.ok
+
+        const invite = await findInviteFactory({ db })({
+          inviteId: processableProjectInvite.inviteId
+        })
+        expect(invite).to.be.not.ok
+
+        await validateResourceAccess({ shouldHaveAccess: true })
+      })
     })
   })
 })

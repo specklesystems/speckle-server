@@ -65,17 +65,20 @@ export const createStreamInviteDirectlyFactory =
         })
     })
 
-    return await createAndSendInvite({
-      target,
-      inviterId: creatorId,
-      message: invite.message,
-      primaryResourceTarget: {
-        resourceType: streamId ? ProjectInviteResourceType : ServerInviteResourceType,
-        resourceId: streamId || '',
-        role: streamId ? Roles.Stream.Contributor : Roles.Server.User,
-        primary: true
-      }
-    })
+    return await createAndSendInvite(
+      {
+        target,
+        inviterId: creatorId,
+        message: invite.message,
+        primaryResourceTarget: {
+          resourceType: streamId ? ProjectInviteResourceType : ServerInviteResourceType,
+          resourceId: streamId || '',
+          role: streamId ? Roles.Stream.Contributor : Roles.Server.User,
+          primary: true
+        }
+      },
+      null
+    )
   }
 
 function getInviteTokenFromEmailParams(emailParams: SendEmailParams) {

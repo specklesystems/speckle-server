@@ -987,6 +987,19 @@ export async function revokeStreamPermissions(params: {
 }) {
   const { streamId, userId } = params
 
+  const existingPermission = await StreamAcl.knex()
+    .where({
+      [StreamAcl.col.resourceId]: streamId,
+      [StreamAcl.col.userId]: userId
+    })
+    .first()
+  if (!existingPermission) {
+    // User already doesn't have permissions
+    return await Streams.knex<StreamRecord>()
+      .where({ [Streams.col.id]: streamId })
+      .first()
+  }
+
   const [streamAclEntriesCount] = await StreamAcl.knex()
     .where({ resourceId: streamId })
     .count<{ count: string }[]>()
@@ -997,11 +1010,7 @@ export async function revokeStreamPermissions(params: {
       { info: { streamId, userId } }
     )
 
-  const aclEntry = await StreamAcl.knex()
-    .where({ resourceId: streamId, userId })
-    .select<StreamAclRecord[]>('*')
-    .first()
-
+  const aclEntry = existingPermission
   if (aclEntry?.role === Roles.Stream.Owner) {
     const [countObj] = await StreamAcl.knex()
       .where({

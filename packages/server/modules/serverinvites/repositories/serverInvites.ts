@@ -47,9 +47,9 @@ export type ServerInviteResourceFilter<
 
 /**
  * TODO:
- * - Adjust services to use new resources col
  * - Refactor/drop old repo calls to support new flows
- * - Fix tests
+ * - collectResourceCollection - no need to process as an array maybe? or maybe collect on finalize also
+ * workspace subscriptions?
  */
 
 type InvitesRetrievalValidityFilter = (q: Knex.QueryBuilder) => Knex.QueryBuilder

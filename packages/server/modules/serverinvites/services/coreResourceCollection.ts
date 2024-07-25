@@ -15,10 +15,9 @@ const collectAndValidateServerTargetFactory =
   (): CollectAndValidateResourceTargets => (params) => {
     const { input, inviter, targetUser, serverInfo } = params
 
-    const primaryServerResourceTarget = isServerResourceTarget(
-      input.primaryResourceTarget
-    )
-      ? input.primaryResourceTarget
+    const primaryResourceTarget = input.primaryResourceTarget
+    const primaryServerResourceTarget = isServerResourceTarget(primaryResourceTarget)
+      ? primaryResourceTarget
       : null
 
     // If not primarily a server invite and user already exists, skip adding the server target
@@ -76,10 +75,9 @@ const collectAndValidateProjectTargetFactory =
   async (params) => {
     const { input, inviter, targetUser, inviterResourceAccessLimits } = params
 
-    const primaryProjectResourceTarget = isProjectResourceTarget(
-      input.primaryResourceTarget
-    )
-      ? input.primaryResourceTarget
+    const primaryResourceTarget = input.primaryResourceTarget
+    const primaryProjectResourceTarget = isProjectResourceTarget(primaryResourceTarget)
+      ? primaryResourceTarget
       : null
 
     if (!primaryProjectResourceTarget) {

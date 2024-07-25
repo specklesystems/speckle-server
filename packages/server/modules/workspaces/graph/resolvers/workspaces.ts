@@ -1,8 +1,9 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { getStream } from '@/modules/core/repositories/streams'
+import { getStream, grantStreamPermissions } from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
+import { getStreams } from '@/modules/core/services/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
 import {
   deleteInviteFactory,
@@ -29,7 +30,9 @@ import {
 } from '@/modules/workspaces/errors/workspace'
 import {
   getWorkspaceCollaboratorsFactory,
-  getWorkspaceFactory
+  getWorkspaceFactory,
+  getWorkspaceRolesFactory,
+  upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import {
   buildWorkspaceInviteEmailContentsFactory,
@@ -41,6 +44,7 @@ import {
   processFinalizedWorkspaceInviteFactory,
   validateWorkspaceInviteBeforeFinalizationFactory
 } from '@/modules/workspaces/services/invites'
+import { setWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { Roles } from '@speckle/shared'
 import { chunk } from 'lodash'
 
@@ -173,7 +177,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
               getWorkspace: getWorkspaceFactory({ db })
             }),
             processInvite: processFinalizedWorkspaceInviteFactory({
-              getWorkspace: getWorkspaceFactory({ db })
+              getWorkspace: getWorkspaceFactory({ db }),
+              setWorkspaceRole: setWorkspaceRoleFactory({
+                getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+                upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+                emitWorkspaceEvent: ({ eventName, payload }) =>
+                  getEventBus().emit({
+                    eventName,
+                    payload
+                  }),
+                getStreams,
+                grantStreamPermissions
+              })
             })
           })
 
