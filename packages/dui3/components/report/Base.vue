@@ -87,18 +87,16 @@ const reportSorted = computed(() =>
 )
 // Filter according to toggles
 const filteredReports = computed(() => {
-  return props.report
-    .filter((report) => {
-      if (successToggle.value && report.status === 1) {
-        return true
-      }
-      if (failedToggle.value && report.status === 4) {
-        return true
-      }
-      // TODO: do more later!
-      return false
-    })
-    .sort((a, b) => b.status - a.status)
+  return props.report.filter((report) => {
+    if (successToggle.value && report.status === 1) {
+      return true
+    }
+    if (failedToggle.value && report.status === 4) {
+      return true
+    }
+    // TODO: do more later!
+    return false
+  })
 })
 
 const numberOfSuccess = computed(
