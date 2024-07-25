@@ -28,6 +28,7 @@ import { mapWorkspaceRoleToProjectRole } from '@/modules/workspaces/domain/roles
 import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { EventBus } from '@/modules/shared/services/eventBus'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
+import { authorizeResolver } from '@/modules/shared'
 
 const tryStoreBlobFactory =
   (storeBlob: StoreBlob) =>
@@ -88,6 +89,8 @@ export const createWorkspaceFactory =
   }
 
 type WorkspaceUpdateArgs = {
+  /** Id of user performing the operation */
+  workspaceUpdaterId: string
   workspaceId: string
   workspaceInput: {
     name?: string | null
@@ -108,7 +111,13 @@ export const updateWorkspaceFactory =
     emitWorkspaceEvent: EventBus['emit']
     storeBlob: StoreBlob
   }) =>
-  async ({ workspaceId, workspaceInput }: WorkspaceUpdateArgs): Promise<Workspace> => {
+  async ({
+    workspaceUpdaterId,
+    workspaceId,
+    workspaceInput
+  }: WorkspaceUpdateArgs): Promise<Workspace> => {
+    await authorizeResolver(workspaceUpdaterId, workspaceId, Roles.Workspace.Admin)
+
     const currentWorkspace = await getWorkspace({ workspaceId })
 
     if (!currentWorkspace) {

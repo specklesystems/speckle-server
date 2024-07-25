@@ -18,8 +18,6 @@ import {
 import db from '@/db/knex'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
-import { authorizeResolver } from '@/modules/shared'
-import { Roles } from '@speckle/shared'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
 
@@ -77,8 +75,6 @@ export = FF_WORKSPACES_MODULE_ENABLED
         update: async (_parent, args, context) => {
           const { id: workspaceId, ...workspaceInput } = args.input
 
-          await authorizeResolver(context.userId, workspaceId, Roles.Workspace.Admin)
-
           const { emit: emitWorkspaceEvent } = getEventBus()
 
           const getWorkspace = getWorkspaceFactory({ db })
@@ -93,7 +89,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
             storeBlob
           })
 
-          const workspace = await updateWorkspace({ workspaceId, workspaceInput })
+          const workspace = await updateWorkspace({
+            workspaceId,
+            workspaceInput,
+            workspaceUpdaterId: context.userId!
+          })
 
           return workspace
         },
