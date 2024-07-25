@@ -38,7 +38,7 @@
         </div>
       </button>
       <button
-        v-if="reportItem.status !== 1"
+        v-if="reportItem.status !== 1 && !isSender"
         v-tippy="'See object on Web'"
         class="block rounded-lg transition hover:bg-primary-muted ml-1"
         @click.stop="openObjectOnWeb"
@@ -72,8 +72,10 @@ import {
 import type { ConversionResult } from '~/lib/conversions/conversionResult'
 import { useAccountStore } from '~/store/accounts'
 import type { IModelCard } from 'lib/models/card'
+import { useHostAppStore } from '~/store/hostApp'
 
 const app = useNuxtApp()
+const hostAppStore = useHostAppStore()
 const accStore = useAccountStore()
 
 const showDetails = ref<boolean>(false)
@@ -83,6 +85,13 @@ const props = defineProps<{
 }>()
 
 const cardBase = inject('cardBase') as IModelCard
+
+const isSender = computed(() =>
+  hostAppStore.models
+    .find((m) => m.modelCardId === cardBase.modelCardId)
+    ?.typeDiscriminator.toLowerCase()
+    .includes('sender')
+)
 
 const acc = accStore.accounts.find((acc) => acc.accountInfo.id === cardBase.accountId)
 
