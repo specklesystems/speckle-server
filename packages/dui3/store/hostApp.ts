@@ -341,6 +341,9 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
   app.$selectionBinding?.on('setGlobalNotification', setNotification)
   app.$testBindings?.on('setGlobalNotification', setNotification)
 
+  // Dummy binding to communicate with proper bridge for top level exceptions
+  app.$topLevelExceptionHandlerBinding?.on('setGlobalNotification', setNotification)
+
   app.$sendBinding?.on('setModelError', setModelError)
   app.$receiveBinding?.on('setModelError', setModelError)
   app.$baseBinding.on('setModelError', setModelError)
