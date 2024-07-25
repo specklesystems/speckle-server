@@ -69,7 +69,7 @@
             class="h-full w-full"
           />
         </div>
-        <div v-else-if="hasVersions" class="flex items-center space-x-6">
+        <div v-else-if="hasVersions" class="flex items-center space-x-4">
           <div
             class="text-body-2xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
@@ -124,7 +124,6 @@
           />
         </NuxtLink>
       </div>
-      <div v-else class="h-20" />
     </div>
     <!-- Doubling up for mixed items -->
     <div
