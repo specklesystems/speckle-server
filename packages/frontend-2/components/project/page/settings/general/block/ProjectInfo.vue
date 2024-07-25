@@ -26,12 +26,7 @@
         :disabled="disabled"
       />
       <template #bottom-buttons>
-        <FormButton
-          color="subtle"
-          text
-          :disabled="!hasChanges"
-          @click="resetLocalState"
-        >
+        <FormButton color="subtle" :disabled="!hasChanges" @click="resetLocalState">
           Cancel
         </FormButton>
         <FormButton :disabled="!hasChanges" @click="emitUpdate">Update</FormButton>
