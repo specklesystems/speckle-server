@@ -60,13 +60,13 @@
         <div
           v-if="!isPendingModelFragment(model)"
           v-show="!previewUrl && !pendingVersion"
-          class="h-full w-full p-4"
+          class="h-48 w-full px-4 flex items-center"
         >
           <ProjectCardImportFileArea
             ref="importArea"
             :project-id="projectId"
             :model-name="model.name"
-            class="h-full w-full"
+            class="h-32 w-full"
           />
         </div>
       </div>
@@ -82,7 +82,7 @@
                 v-tippy="'View Comments'"
                 color="subtle"
                 size="sm"
-                class="flex items-center gap-1 !text-foreground-2"
+                class="flex items-center gap-1 !text-foreground-2 -mr-1"
                 :to="modelVersionsRoute(projectId, model.id)"
               >
                 <ClockIcon class="h-5 w-5" />
