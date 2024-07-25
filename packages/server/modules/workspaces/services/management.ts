@@ -7,7 +7,7 @@ import {
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
 import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
-import { Roles } from '@speckle/shared'
+import { MaybeNullOrUndefined, Roles } from '@speckle/shared'
 import cryptoRandomString from 'crypto-random-string'
 import {
   grantStreamPermissions as repoGrantStreamPermissions,
@@ -31,6 +31,12 @@ import { queryAllWorkspaceProjectsFactory } from '@/modules/workspaces/services/
 import { EventBus } from '@/modules/shared/services/eventBus'
 import { removeNullOrUndefinedKeys } from '@speckle/shared'
 import { authorizeResolver } from '@/modules/shared'
+import { isNewResourceAllowed } from '@/modules/core/helpers/token'
+import {
+  TokenResourceIdentifier,
+  TokenResourceIdentifierType
+} from '@/modules/core/domain/tokens/types'
+import { ForbiddenError } from '@/modules/shared/errors'
 
 const tryStoreBlobFactory =
   (storeBlob: StoreBlob) =>
@@ -49,6 +55,7 @@ type WorkspaceCreateArgs = {
     description: string | null
     logoUrl: string | null
   }
+  userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
 
 export const createWorkspaceFactory =
@@ -63,7 +70,20 @@ export const createWorkspaceFactory =
     emitWorkspaceEvent: EventBus['emit']
     storeBlob: StoreBlob
   }) =>
-  async ({ userId, workspaceInput }: WorkspaceCreateArgs): Promise<Workspace> => {
+  async ({
+    userId,
+    workspaceInput,
+    userResourceAccessLimits
+  }: WorkspaceCreateArgs): Promise<Workspace> => {
+    if (
+      !isNewResourceAllowed({
+        resourceType: TokenResourceIdentifierType.Workspace,
+        resourceAccessRules: userResourceAccessLimits
+      })
+    ) {
+      throw new ForbiddenError('You are not authorized to create a workspace')
+    }
+
     const logoUrl = await tryStoreBlobFactory(storeBlob)(workspaceInput.logoUrl)
 
     const workspace = {
@@ -99,6 +119,7 @@ type WorkspaceUpdateArgs = {
     description?: string | null
     logoUrl?: string | null
   }
+  updaterResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
 
 export const updateWorkspaceFactory =
@@ -116,9 +137,15 @@ export const updateWorkspaceFactory =
   async ({
     workspaceUpdaterId,
     workspaceId,
-    workspaceInput
+    workspaceInput,
+    updaterResourceAccessLimits
   }: WorkspaceUpdateArgs): Promise<Workspace> => {
-    await authorizeResolver(workspaceUpdaterId, workspaceId, Roles.Workspace.Admin)
+    await authorizeResolver(
+      workspaceUpdaterId,
+      workspaceId,
+      Roles.Workspace.Admin,
+      updaterResourceAccessLimits
+    )
 
     const currentWorkspace = await getWorkspace({ workspaceId })
 

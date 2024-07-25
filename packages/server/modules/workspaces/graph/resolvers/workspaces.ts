@@ -139,7 +139,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
               name,
               description: description ?? null,
               logoUrl: logoUrl ?? null
-            }
+            },
+            userResourceAccessLimits: context.resourceAccessRules
           })
 
           return workspace
@@ -168,7 +169,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
           const workspace = await updateWorkspace({
             workspaceId,
             workspaceInput,
-            workspaceUpdaterId: context.userId!
+            workspaceUpdaterId: context.userId!,
+            updaterResourceAccessLimits: context.resourceAccessRules
           })
 
           return workspace

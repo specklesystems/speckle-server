@@ -554,14 +554,16 @@ describe('Workspaces Invites GQL', () => {
           authorizeResolver(
             otherGuy.id,
             myInviteTargetWorkspace.id,
-            Roles.Workspace.Guest
+            Roles.Workspace.Guest,
+            null
           )
         )
         await wrapAccessCheck(() =>
           authorizeResolver(
             otherGuy.id,
             myInviteTargetWorkspaceStream1.id,
-            Roles.Stream.Reviewer
+            Roles.Stream.Reviewer,
+            null
           )
         )
       }
