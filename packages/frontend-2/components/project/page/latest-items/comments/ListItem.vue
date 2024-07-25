@@ -17,7 +17,7 @@
         </span>
       </div>
       <div
-        class="min-w-0 max-w-full truncate text-body-sm flex-auto text-foreground-2 mt-2 sm:mt-0"
+        class="min-w-0 max-w-full truncate text-body-xs flex-auto text-foreground-3 mt-2 sm:mt-0"
       >
         {{ thread.rawText }}
       </div>
@@ -35,7 +35,7 @@
         </div>
       </div>
       <div
-        class="bg-cover bg-no-repeat bg-center w-20 h-20 rounded-md"
+        class="bg-cover bg-no-repeat bg-center w-16 h-16 rounded-md"
         :style="{ backgroundImage }"
       />
     </div>
