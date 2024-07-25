@@ -7,22 +7,12 @@
     </label>
     <div class="relative">
       <div
-        v-if="hasLeadingIcon"
+        v-if="customIcon"
         class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
       >
         <Component
           :is="customIcon"
           v-if="customIcon"
-          :class="leadingIconClasses"
-          aria-hidden="true"
-        />
-        <EnvelopeIcon
-          v-else-if="type === 'email'"
-          :class="leadingIconClasses"
-          aria-hidden="true"
-        />
-        <KeyIcon
-          v-else-if="type === 'password'"
           :class="leadingIconClasses"
           aria-hidden="true"
         />
@@ -81,12 +71,7 @@
 </template>
 <script setup lang="ts">
 import type { RuleExpression } from 'vee-validate'
-import {
-  ExclamationCircleIcon,
-  EnvelopeIcon,
-  KeyIcon,
-  XMarkIcon
-} from '@heroicons/vue/20/solid'
+import { ExclamationCircleIcon, XMarkIcon } from '@heroicons/vue/20/solid'
 import { computed, ref, toRefs, useSlots } from 'vue'
 import type { PropType } from 'vue'
 import type { Nullable, Optional } from '@speckle/shared'
@@ -278,14 +263,10 @@ const leadingIconClasses = computed(() => {
   return classParts.join(' ')
 })
 
-const hasLeadingIcon = computed(
-  () => ['email', 'password'].includes(props.type) || props.customIcon
-)
-
 const iconClasses = computed((): string => {
   const classParts: string[] = []
 
-  if (hasLeadingIcon.value) {
+  if (props.customIcon) {
     classParts.push('pl-8')
   } else {
     classParts.push('pl-2')

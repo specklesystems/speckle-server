@@ -6,7 +6,8 @@
         name="email"
         label="E-mail"
         placeholder="Enter your email"
-        size="xl"
+        size="lg"
+        color="foundation"
         :rules="emailRules"
         show-label
         :disabled="loading"
@@ -17,7 +18,8 @@
         name="password"
         label="Password"
         placeholder="Enter your password"
-        size="xl"
+        color="foundation"
+        size="lg"
         :rules="passwordRules"
         show-label
         :disabled="loading"
@@ -28,7 +30,13 @@
         Forgot your password?
       </CommonTextLink>
     </div>
-    <FormButton submit full-width class="my-8" :disabled="loading || !isMounted">
+    <FormButton
+      size="lg"
+      submit
+      full-width
+      class="mt-8 mb-4"
+      :disabled="loading || !isMounted"
+    >
       Log in
     </FormButton>
   </form>
