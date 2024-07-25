@@ -23,12 +23,12 @@
               Become a Speckle pro in four steps!
             </div>
             <div class="space-x-1">
-              <FormButton v-if="!allCompleted" @click="dismissChecklist()">
+              <FormButton v-if="!allCompleted" size="sm" @click="dismissChecklist()">
                 I'll do it later
               </FormButton>
               <FormButton
                 v-if="!allCompleted"
-                text
+                color="subtle"
                 size="sm"
                 @click="dismissChecklistForever()"
               >
@@ -93,6 +93,7 @@
                       v-if="!step.completed && step.active"
                       :disabled="!step.active"
                       color="outline"
+                      size="sm"
                       @click.stop="step.action"
                     >
                       {{ step.cta }}
@@ -108,15 +109,13 @@
                       @click.stop="markComplete(idx)"
                     >
                       <!-- Mark as complete -->
-                      <OutlineCheckCircleIcon class="w-4 h-4" />
+                      <OutlineCheckCircleIcon class="w-4 h-4 text-foundation" />
                     </FormButton>
                     <span v-if="step.completed" class="text-xs font-medium">
                       Completed!
                     </span>
                     <FormButton
                       v-if="step.completed && step.active"
-                      text
-                      link
                       size="sm"
                       color="outline"
                       @click.stop="step.action"
@@ -126,7 +125,6 @@
                   </div>
                   <div v-else-if="step.active" class="text-sm">
                     <FormButton
-                      link
                       size="sm"
                       color="outline"
                       @click.stop="goToFirstUncompletedStep()"
@@ -142,12 +140,12 @@
             v-if="showIntro"
             class="lg:hidden col-span-5 pb-3 pt-2 text-center space-x-2"
           >
-            <FormButton v-if="!allCompleted" @click="dismissChecklist()">
+            <FormButton v-if="!allCompleted" size="sm" @click="dismissChecklist()">
               I'll do it later
             </FormButton>
             <FormButton
               v-if="!allCompleted"
-              text
+              color="subtle"
               size="sm"
               @click="dismissChecklistForever()"
             >
