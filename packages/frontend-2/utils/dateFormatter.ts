@@ -69,7 +69,7 @@ export const formattedRelativeDate = (
   if (options?.prefix) {
     return isTimeframe(date)
       ? customRelativeTime(date, options?.capitalize)
-      : `${customRelativeTime(date)}`
+      : `on ${customRelativeTime(date)}`
   } else {
     return customRelativeTime(date, options?.capitalize)
   }
