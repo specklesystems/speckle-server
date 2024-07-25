@@ -56,12 +56,12 @@ export const Default: StoryType = {
   },
   args: {
     notification: {
-      type: ToastNotificationType.Info,
+      type: 1,
       title: 'Title',
       description: 'Description',
+
       cta: {
-        title: 'CTA',
-        onClick: () => console.log('Clicked')
+        title: 'CTA'
       }
     }
   }

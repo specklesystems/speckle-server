@@ -50,7 +50,7 @@
         :is="selectedMenuItem.component"
         v-if="selectedMenuItem"
         :class="[
-          'bg-foundation md:px-10 md:py-12 md:bg-foundation w-full',
+          'md:bg-foundation md:px-10 md:py-12 md:bg-foundation w-full',
           !isMobile && 'simple-scrollbar overflow-y-auto flex-1'
         ]"
         :user="user"

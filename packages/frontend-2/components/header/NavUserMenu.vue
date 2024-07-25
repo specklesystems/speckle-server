@@ -24,7 +24,7 @@
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
+                  'text-body-sm flex px-2 py-1.5 text-primary cursor-pointer transition mx-1 rounded'
                 ]"
                 target="_blank"
                 external
