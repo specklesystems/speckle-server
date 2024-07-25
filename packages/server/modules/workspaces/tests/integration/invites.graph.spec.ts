@@ -774,6 +774,38 @@ describe('Workspaces Invites GQL', () => {
         }
       )
 
+      it("can't acccept invite, if token resource access rules prevent it", async () => {
+        const res = await useInvite(
+          {
+            input: {
+              accept: true,
+              token: processableWorkspaceInvite.token
+            }
+          },
+          {
+            context: {
+              userId: otherGuy.id,
+              resourceAccessRules: [
+                {
+                  id: otherGuysWorkspace.id,
+                  type: TokenResourceIdentifierType.Workspace
+                }
+              ]
+            }
+          }
+        )
+
+        expect(res).to.haveGraphQLErrors(
+          'You are not allowed to process an invite for this workspace'
+        )
+        expect(res.data?.workspaceMutations?.invites?.use).to.not.be.ok
+
+        const invite = await findInviteFactory({ db })({
+          inviteId: processableWorkspaceInvite.inviteId
+        })
+        expect(invite).to.be.ok
+      })
+
       it('accepting workspace project invite also adds user to workspace', async () => {
         const res = await useProjectInvite(
           {

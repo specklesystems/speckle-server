@@ -51,10 +51,15 @@ const graphqlChaiPlugin: Chai.ChaiPlugin = (_chai, utils) => {
           throw e
         }
 
+        const getPrettyErrors = () => `\nErrors: ${JSON.stringify(errorsArr, null, 2)}`
+
         let msg = ''
         if (shouldHaveErrors) {
           if (matchMessage) {
-            msg = `Expected GraphQL response to have errors containing "${matchMessage}", but found none`
+            msg = `Expected GraphQL response to have errors containing "${matchMessage}", but`
+            msg += errorsArr.length
+              ? ' only found others' + getPrettyErrors()
+              : ' found none'
           } else {
             msg = 'Expected GraphQL response to have errors, but found none'
           }
@@ -65,7 +70,7 @@ const graphqlChaiPlugin: Chai.ChaiPlugin = (_chai, utils) => {
             msg = 'Expected GraphQL response to have no errors, but found some'
           }
 
-          msg += `\nErrors: ${JSON.stringify(errorsArr, null, 2)}`
+          msg += getPrettyErrors()
         }
 
         throw new AssertionError(msg)
