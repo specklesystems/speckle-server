@@ -8,7 +8,7 @@
   >
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation-2 w-full p-2 flex flex-col sm:flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
+      class="group relative bg-foundation w-full p-2 flex flex-col sm:flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
     >
       <div class="flex items-center flex-grow order-2 sm:order-1 sm:pl-4">
         <!-- Name -->
@@ -120,7 +120,7 @@
       >
         <NuxtLink
           :to="modelLink || ''"
-          class="h-full w-full block bg-foundation rounded-lg border border-outline-3"
+          class="h-full w-full block bg-foundation-2 rounded-lg border border-outline-3"
         >
           <PreviewImage
             v-if="item.model?.previewUrl"
@@ -135,7 +135,7 @@
       class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
     >
       <button
-        class="group bg-foundation-2 w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:border-outline-5 transition-all border border-outline-3 border-l-0"
+        class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:border-outline-5 transition-all border border-outline-3 border-l-0"
         href="/test"
         @click.stop="expanded = !expanded"
       >
