@@ -3,7 +3,7 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div
-    class="group rounded-xl bg-foundation-2 border border-outline-3 hover:border-outline-5"
+    class="group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5"
     @mouseleave="showActionsMenu = false"
   >
     <div class="flex flex-col p-3 pt-2" @click="$emit('click', $event)">
@@ -28,7 +28,7 @@
       </div>
       <div>
         <div
-          class="h-48 flex items-center justify-center relative bg-foundation border border-outline-3 mb-3 mt-2 rounded-xl"
+          class="h-48 flex items-center justify-center relative bg-foundation-2 border border-outline-3 mb-3 mt-2 rounded-xl"
         >
           <ProjectPendingFileImportStatus
             v-if="isPendingVersionFragment(version)"
