@@ -69,7 +69,7 @@
             class="h-full w-full"
           />
         </div>
-        <div v-else-if="hasVersions" class="flex items-center space-x-3">
+        <div v-else-if="hasVersions" class="flex items-center space-x-2">
           <div
             class="text-body-2xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
@@ -78,7 +78,7 @@
               {{ updatedAt.relative }}
             </span>
           </div>
-          <div class="text-body-xs text-foreground flex items-center space-x-1">
+          <div class="text-body-xs text-foreground flex items-center space-x-1 pl-2">
             <span>{{ model?.commentThreadCount.totalCount }}</span>
             <ChatBubbleLeftRightIcon class="w-4 h-4" />
           </div>
@@ -149,7 +149,7 @@
           {{ name }}
         </div>
         <!-- Preview -->
-        <div class="flex items-center space-x-3">
+        <div class="flex items-center space-x-4">
           <!-- Commented out so that we need to load less data, can be added back -->
           <!-- <div
             v-for="(child, index) in item.children"
