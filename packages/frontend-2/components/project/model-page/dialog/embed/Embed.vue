@@ -82,7 +82,7 @@
               title="Preview"
               width="600"
               height="400"
-              class="shrink-0 w-[600px] h-[400px] mx-auto"
+              class="shrink-0 w-[600px] h-[400px] mx-auto border border-outline-2"
             />
           </LayoutDialogSection>
         </div>
