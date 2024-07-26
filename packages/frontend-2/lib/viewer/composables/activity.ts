@@ -214,7 +214,7 @@ export function useViewerUserActivityTracking(params: {
       !Object.keys(users.value).includes(incomingSessionId)
     ) {
       triggerNotification({
-        description: `${userData.userName} joined.`,
+        title: `${userData.userName} joined.`,
         type: ToastNotificationType.Info
       })
     }
