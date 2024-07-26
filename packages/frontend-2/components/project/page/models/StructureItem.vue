@@ -1,7 +1,11 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
+  <NuxtLink
+    :to="modelLink || ''"
+    class="space-y-4 relative"
+    @mouseleave="showActionsMenu = false"
+  >
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
       class="group relative bg-foundation w-full p-2 flex flex-col sm:flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
@@ -9,9 +13,9 @@
       <div class="flex items-center flex-grow order-2 sm:order-1 sm:pl-4">
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
-          <NuxtLink :to="modelLink || ''" class="text-heading text-foreground">
+          <span class="text-heading text-foreground">
             {{ name }}
-          </NuxtLink>
+          </span>
           <span
             v-if="model"
             class="opacity-100 sm:opacity-0 group-hover:opacity-100 transition"
@@ -79,8 +83,8 @@
             </span>
           </div>
           <div class="text-body-xs text-foreground flex items-center space-x-1 pl-2">
+            <IconDiscussions class="w-4 h-4" />
             <span>{{ model?.commentThreadCount.totalCount }}</span>
-            <ChatBubbleLeftRightIcon class="w-4 h-4" />
           </div>
           <div v-if="model?.automationsStatus">
             <AutomateRunsTriggerStatus
@@ -89,7 +93,7 @@
               :model-id="model.id"
             />
           </div>
-          <div class="text-xs text-foreground-2">
+          <div class="flex gap-2 items-center">
             <FormButton
               v-if="!isPendingFileUpload(item) && item.model"
               rounded
@@ -98,7 +102,7 @@
               class="gap-0.5"
               color="subtle"
             >
-              <ClockIcon class="h-4 w-4" />
+              <IconVersions class="h-4 w-4" />
               {{ model?.versionCount.totalCount }}
             </FormButton>
           </div>
@@ -131,7 +135,7 @@
       class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
     >
       <button
-        class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:bg-primary-muted transition-all border border-outline-3 border-l-0"
+        class="group bg-foundation-2 w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:border-outline-5 transition-all border border-outline-3 border-l-0"
         href="/test"
         @click.stop="expanded = !expanded"
       >
@@ -212,16 +216,12 @@
         </div>
       </div>
     </div>
-  </div>
+  </NuxtLink>
 </template>
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import {
-  FolderIcon,
-  ChatBubbleLeftRightIcon,
-  ClockIcon
-} from '@heroicons/vue/24/outline'
+import { FolderIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageModelsStructureItem_ProjectFragment,

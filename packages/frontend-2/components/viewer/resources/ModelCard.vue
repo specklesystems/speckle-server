@@ -47,7 +47,7 @@
           v-if="!showVersions"
           class="flex flex-none items-center space-x-1 text-xs font-medium"
         >
-          <ClockIcon class="h-4 w-4" />
+          <IconVersions class="h-4 w-4" />
           <span>{{ model.versions?.totalCount }}</span>
         </div>
         <div
@@ -108,7 +108,6 @@
 import dayjs from 'dayjs'
 import { graphql } from '~~/lib/common/generated/gql'
 import { XMarkIcon, ChevronUpIcon } from '@heroicons/vue/24/solid'
-import { ClockIcon } from '@heroicons/vue/24/outline'
 import type {
   ViewerLoadedResourcesQuery,
   ViewerModelVersionCardItemFragment
