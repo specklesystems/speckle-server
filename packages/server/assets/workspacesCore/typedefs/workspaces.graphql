@@ -44,14 +44,14 @@ type WorkspaceMutations {
   create(input: WorkspaceCreateInput!): Workspace!
     @hasServerRole(role: SERVER_ADMIN)
     @hasScope(scope: "workspace:create")
-  delete(workspaceId: String!): Workspace! @hasScope(scope: "workspace:delete")
+  delete(workspaceId: String!): Boolean! @hasScope(scope: "workspace:delete")
   update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
   """
   TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes
   """
-  updateRole(input: WorkspaceRoleUpdateInput!): Boolean!
+  updateRole(input: WorkspaceRoleUpdateInput!): Workspace!
     @hasScope(scope: "workspace:update")
-  deleteRole(input: WorkspaceRoleDeleteInput!): Boolean!
+  deleteRole(input: WorkspaceRoleDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
   invites: WorkspaceInviteMutations!
 }

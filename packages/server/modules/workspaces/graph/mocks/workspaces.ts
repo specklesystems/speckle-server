@@ -3,7 +3,7 @@ import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { faker } from '@faker-js/faker'
 import { Roles } from '@speckle/shared'
-import { times } from 'lodash'
+import { omit, times } from 'lodash'
 import { WorkspaceNotFoundError } from '@/modules/workspaces/errors/workspace'
 
 const { FF_WORKSPACES_MODULE_ENABLED } = getFeatureFlags()
@@ -13,10 +13,97 @@ const workspaceName = () =>
 
 const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
   ? {
-      resolvers: ({
-        helpers: { getObject, getObjectField, getObjectWithValues, getParentField }
-      }) => {
+      resolvers: ({ helpers: { getObject, getObjectWithValues, getParentField } }) => {
         return {
+          WorkspaceMutations: {
+            create: (_parent, args) => {
+              if (args.input.name === 'error') {
+                throw new Error('Fake workspace create error')
+              }
+
+              return getObjectWithValues('Workspace', omit(args.input, ['logoUrl']))
+            },
+            delete: () => {
+              const val = faker.datatype.boolean()
+              if (!val) {
+                throw new Error('Fake workspace delete error')
+              }
+
+              return val
+            },
+            update: (_parent, args) => {
+              if (args.input.name === 'error') {
+                throw new Error('Fake workspace update error')
+              }
+
+              return getObjectWithValues('Workspace', omit(args.input, ['logoUrl']))
+            },
+            updateRole: (_parent, args) => {
+              const val = faker.datatype.boolean()
+
+              if (val) {
+                throw new Error('Fake update role error')
+              }
+
+              return getObjectWithValues('Workspace', {
+                id: args.input.workspaceId
+              })
+            },
+            deleteRole: (_parent, args) => {
+              const val = faker.datatype.boolean()
+
+              if (val) {
+                throw new Error('Fake delete role error')
+              }
+
+              return getObjectWithValues('Workspace', {
+                id: args.input.workspaceId
+              })
+            }
+          },
+          WorkspaceInviteMutations: {
+            create: (_parent, args) => {
+              const val = faker.datatype.boolean()
+
+              if (val) {
+                throw new Error('Fake invite create error')
+              }
+
+              return getObjectWithValues('Workspace', {
+                id: args.workspaceId
+              })
+            },
+            batchCreate: (_parent, args) => {
+              const val = faker.datatype.boolean()
+
+              if (val) {
+                throw new Error('Fake batch create invite error')
+              }
+
+              return getObjectWithValues('Workspace', {
+                id: args.workspaceId
+              })
+            },
+            use: () => {
+              const val = faker.datatype.boolean()
+              if (!val) {
+                throw new Error('Fake use invite error')
+              }
+
+              return val
+            },
+            cancel: (_parent, args) => {
+              const val = faker.datatype.boolean()
+
+              if (val) {
+                throw new Error('Fake cancel invite error')
+              }
+
+              return getObjectWithValues('Workspace', {
+                id: args.workspaceId
+              })
+            }
+          },
           Query: {
             workspace: (_parent, args) => {
               if (args.id === '404') {
@@ -45,7 +132,7 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
               )
           },
           Workspace: {
-            role: (parent) => getObjectField('Workspace', parent.id, 'role'),
+            role: () => faker.helpers.arrayElement(Object.values(Roles.Workspace)),
             team: () =>
               times(faker.number.int({ min: 1, max: 5 }), () =>
                 getObject('WorkspaceCollaborator')
@@ -61,6 +148,9 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
               getObjectWithValues('ProjectCollection', {
                 cursor: args.cursor ? null : undefined
               })
+          },
+          WorkspaceCollaborator: {
+            role: () => faker.helpers.arrayElement(Object.values(Roles.Server))
           },
           PendingWorkspaceCollaborator: {
             user: (parent) => {
@@ -95,11 +185,7 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
       mocks: {
         Workspace: () => ({
           name: workspaceName(),
-          description: faker.lorem.sentence(),
-          role: faker.helpers.arrayElement(Object.values(Roles.Workspace))
-        }),
-        WorkspaceCollaborator: () => ({
-          role: faker.helpers.arrayElement(Object.values(Roles.Server))
+          description: faker.lorem.sentence()
         }),
         PendingWorkspaceCollaborator: () => ({
           inviteId: faker.string.uuid(),
