@@ -1,6 +1,6 @@
 <template>
   <NuxtLink
-    class="relative bg-foundation-2 w-full py-1 px-2 flex sm:items-center space-x-2 rounded-md cursor-pointer transition-all border border-outline-3 hover:border-outline-5"
+    class="relative bg-foundation w-full py-1 px-2 flex sm:items-center space-x-2 rounded-md cursor-pointer transition-all border border-outline-3 hover:border-outline-5"
     :to="threadLink"
   >
     <div
