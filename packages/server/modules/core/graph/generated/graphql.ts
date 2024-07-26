@@ -1714,6 +1714,7 @@ export type PendingWorkspaceCollaborator = {
   id: Scalars['ID']['output'];
   inviteId: Scalars['String']['output'];
   invitedBy: LimitedUser;
+  /** Target workspace role */
   role: Scalars['String']['output'];
   /** E-mail address or name of the invited user */
   title: Scalars['String']['output'];

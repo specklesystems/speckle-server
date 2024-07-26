@@ -212,7 +212,7 @@ exports.graphSchema = (mocksConfig) => {
 /**
  * Load GQL mock configs from speckle modules
  * @param {string[]} moduleWhitelist
- * @returns {Record<string, import('@/modules/mocks').SpeckleModuleMocksConfig>}
+ * @returns {Record<string, import('@/modules/shared/helpers/mocks').SpeckleModuleMocksConfig>}
  */
 exports.moduleMockConfigs = (moduleWhitelist) => {
   const enabledModuleNames = intersection(getEnabledModuleNames(), moduleWhitelist)

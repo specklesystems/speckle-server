@@ -12,7 +12,7 @@ import {
 import { VersionCreationTriggerType } from '@/modules/automate/helpers/types'
 import { BranchCommits, Branches, Commits } from '@/modules/core/dbSchema'
 import { AutomateRunStatus } from '@/modules/core/graph/generated/graphql'
-import { SpeckleModuleMocksConfig } from '@/modules/mocks'
+import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { faker } from '@faker-js/faker'
 import { Automate, isNullOrUndefined, SourceAppNames } from '@speckle/shared'
@@ -51,7 +51,7 @@ const getRandomModelVersion = async (offset?: number) => {
 
 const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
   ? {
-      resolvers: (store) => ({
+      resolvers: ({ store }) => ({
         AutomationRevisionTriggerDefinition: {
           __resolveType: () => 'VersionCreatedTriggerDefinition'
         },
@@ -68,7 +68,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
         Query: {
           automateFunctions: (_parent, args) => {
             const forceZero = false
-            const count = forceZero ? 0 : faker.datatype.number({ min: 0, max: 20 })
+            const count = forceZero ? 0 : faker.number.int({ min: 0, max: 20 })
 
             const isFeatured = args.filter?.featuredFunctionsOnly
 
@@ -92,7 +92,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
             const forceAutomations = false
             const forceNoAutomations = false
 
-            const limit = faker.datatype.number({ min: 0, max: 20 })
+            const limit = faker.number.int({ min: 0, max: 20 })
             let count
             if (forceNoAutomations) {
               count = 0
@@ -132,13 +132,13 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
         Automation: {
           creationPublicKeys: () => {
             // Random sized array of string keys
-            return [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(() =>
+            return [...new Array(faker.number.int({ min: 0, max: 5 }))].map(() =>
               faker.datatype.uuid()
             )
           },
           runs: () => {
             const forceZero = false
-            const count = forceZero ? 0 : faker.datatype.number({ min: 0, max: 20 })
+            const count = forceZero ? 0 : faker.number.int({ min: 0, max: 20 })
 
             return {
               cursor: null,
@@ -150,7 +150,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
         },
         AutomationRevision: {
           triggerDefinitions: async (parent) => {
-            const rand = faker.datatype.number({ min: 0, max: 2 })
+            const rand = faker.number.int({ min: 0, max: 2 })
             const res = (
               await Promise.all([getRandomModelVersion(), getRandomModelVersion(1)])
             ).slice(0, rand)
@@ -210,7 +210,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
               ...(isNullOrUndefined(enabled) ? {} : { enabled })
             }
           },
-          trigger: () => faker.datatype.string(10),
+          trigger: () => faker.string.sample(10),
           createRevision: () => store.get('AutomationRevision') as any
         },
         UserAutomateInfo: {
@@ -219,8 +219,8 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           },
           availableGithubOrgs: () => {
             // Random string array
-            return [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(() =>
-              faker.company.companyName()
+            return [...new Array(faker.number.int({ min: 0, max: 5 }))].map(() =>
+              faker.company.name()
             )
           }
         },
@@ -234,7 +234,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           //   return rand ? (store.get('LimitedUser') as any) : activeUser
           // }
           releases: () => store.get('AutomateFunctionReleaseCollection') as any,
-          automationCount: () => faker.datatype.number({ min: 0, max: 99 })
+          automationCount: () => faker.number.int({ min: 0, max: 99 })
         },
         AutomateFunctionRelease: {
           function: () => store.get('AutomateFunction') as any
@@ -270,7 +270,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           functions: () => [undefined] // array of 1 always,
         }),
         Automation: () => ({
-          name: () => faker.company.companyName(),
+          name: () => faker.company.name(),
           enabled: () => faker.datatype.boolean()
         }),
         AutomateFunction: () => ({
@@ -284,7 +284,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           },
           repoUrl: () =>
             'https://github.com/specklesystems/speckle-automate-code-compliance-window-safety',
-          automationCount: () => faker.datatype.number({ min: 0, max: 99 }),
+          automationCount: () => faker.number.int({ min: 0, max: 99 }),
           description: () => {
             // Example markdown description
             return `# ${faker.commerce.productName()}\n${faker.lorem.paragraphs(
@@ -296,11 +296,11 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
             const base = SourceAppNames
 
             // Random assortment from base
-            return base.filter(faker.datatype.boolean)
+            return base.filter(() => faker.datatype.boolean())
           },
           tags: () => {
             // Random string array
-            return [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(() =>
+            return [...new Array(faker.number.int({ min: 0, max: 5 }))].map(() =>
               faker.lorem.word()
             )
           }
@@ -308,18 +308,18 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
         AutomateFunctionRelease: () => ({
           versionTag: () => {
             // Fake semantic version
-            return `${faker.datatype.number({
+            return `${faker.number.int({
               min: 0,
               max: 9
-            })}.${faker.datatype.number({
+            })}.${faker.number.int({
               min: 0,
               max: 9
-            })}.${faker.datatype.number({ min: 0, max: 9 })}`
+            })}.${faker.number.int({ min: 0, max: 9 })}`
           },
           commitId: () => '0c259d384a4df3cce3f24667560e5124e68f202f',
           inputSchema: () => {
             // random fro 1 to 3
-            const rand = faker.datatype.number({ min: 1, max: 3 })
+            const rand = faker.number.int({ min: 1, max: 3 })
             switch (rand) {
               case 1:
                 return {
@@ -347,26 +347,26 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
         }),
         AutomateRun: () => ({
           reason: () => faker.lorem.sentence(),
-          id: () => faker.random.alphaNumeric(20),
+          id: () => faker.string.alphanumeric(20),
           createdAt: () =>
             faker.date
               .recent(undefined, dayjs().subtract(1, 'day').toDate())
               .toISOString(),
           updatedAt: () => faker.date.recent().toISOString(),
-          functionRuns: () => [...new Array(faker.datatype.number({ min: 1, max: 5 }))],
+          functionRuns: () => [...new Array(faker.number.int({ min: 1, max: 5 }))],
           statusMessage: () => faker.lorem.sentence()
         }),
         AutomateFunctionRun: () => ({
           contextView: () => `/`,
-          elapsed: () => faker.datatype.number({ min: 0, max: 600 }),
+          elapsed: () => faker.number.int({ min: 0, max: 600 }),
           statusMessage: () => faker.lorem.sentence(),
           results: (): Automate.AutomateTypes.ResultsSchema => {
             return {
               version: Automate.AutomateTypes.RESULTS_SCHEMA_VERSION,
               values: {
                 objectResults: [],
-                blobIds: [...new Array(faker.datatype.number({ min: 0, max: 5 }))].map(
-                  () => faker.datatype.uuid()
+                blobIds: [...new Array(faker.number.int({ min: 0, max: 5 }))].map(() =>
+                  faker.string.uuid()
                 )
               }
             }

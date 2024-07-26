@@ -126,6 +126,9 @@ type PendingWorkspaceCollaborator {
   E-mail address or name of the invited user
   """
   title: String!
+  """
+  Target workspace role
+  """
   role: String!
   invitedBy: LimitedUser!
   """
