@@ -2,8 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
-import { IMockStore, IMocks, isRef } from '@graphql-tools/mock'
-import { random } from 'lodash'
+import { IMockStore, IMocks, isRef, Ref } from '@graphql-tools/mock'
+import { isObjectLike, random } from 'lodash'
 
 export type SpeckleModuleMocksConfig = {
   resolvers?: (params: {
@@ -13,21 +13,54 @@ export type SpeckleModuleMocksConfig = {
   mocks?: IMocks
 }
 
-export const mockStoreHelpers = (store: IMockStore) => {
-  const getId = (type: string, id: string) => `${type}:${id}`
+type SimpleRef = { type: string; id: string }
+const isSimpleRef = (obj: any): obj is SimpleRef =>
+  isObjectLike(obj) && Object.keys(obj).length === 2 && 'type' in obj && 'id' in obj
 
+export const mockStoreHelpers = (store: IMockStore) => {
   return {
-    getId,
-    getObject: <T = any>(type: string, id?: string) => store.get(type, id) as T,
-    getObjectWithValues: <T = any>(type: string, values: Record<string, any>) => {
-      console.log('a', values)
-      return store.get(type, values) as T
+    /**
+     * Get mock reference. It can be returned from resolvers and converted to the actual mock
+     * when outputted to response.
+     */
+    getMockRef: <T = any>(
+      type: string,
+      options?: {
+        /**
+         * The id of the object to get. If object w/ this ID already exists in the mock store,
+         * it will be retrieved from there. Otherwise, a new object will be created.
+         */
+        id?: string
+        /**
+         * Additional field values that should be set on the object
+         */
+        values?: Record<string, any>
+      }
+    ) => {
+      const { id, values } = options || {}
+      const ret = values
+        ? store.get(type, {
+            ...values,
+            ...(id ? { id } : {})
+          })
+        : store.get(type, id)
+      return ret as T
     },
-    getObjectField: <T = any>(type: string, id: string, field: string) =>
-      store.get(type, getId(id, type), field) as T,
-    getParentField: <T = any>(refOrParent: any, field: string) => {
-      if (isRef(refOrParent)) return store.get(refOrParent, field) as T
-      return refOrParent[field] as T
+    /**
+     * Get value from a mock reference or plain object.
+     *
+     * Useful when you need to access something from parent, where you don't know if it's
+     * gonna be a mock reference or the actual object.
+     * Also useful for just getting arbitrary field values from mock refs.
+     */
+    getFieldValue: <T = any>(
+      refOrObj: Record<string, unknown> | Ref | SimpleRef,
+      field: string
+    ) => {
+      if (isRef(refOrObj)) return store.get(refOrObj, field) as T
+      if (isSimpleRef(refOrObj))
+        return store.get(refOrObj.type, refOrObj.id, field) as T
+      return refOrObj[field] as T
     }
   }
 }

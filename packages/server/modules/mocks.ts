@@ -24,17 +24,20 @@ const buildBaseConfig = async (): Promise<SpeckleModuleMocksConfig> => {
   const faker = (await import('@faker-js/faker')).faker
 
   return {
-    resolvers: ({ helpers: { getObjectField, getParentField } }) => ({
+    resolvers: ({ helpers: { getFieldValue } }) => ({
       LimitedUser: {
         role: (parent) =>
-          getObjectField('LimitedUser', getParentField(parent, 'id'), 'role')
+          getFieldValue(
+            { type: 'LimitedUser', id: getFieldValue(parent, 'id') },
+            'role'
+          )
       },
       ProjectCollection: {
         items: async (parent) => {
           // In case a real project collection was built, we skip mocking it
           if (has(parent, 'items')) return parent.items
 
-          const count = getParentField(parent, 'totalCount')
+          const count = getFieldValue(parent, 'totalCount')
 
           // To avoid having to mock projects fully, we pull real ones from the DB
           return await getRandomDbRecords({ tableName: Streams.name, min: count })
