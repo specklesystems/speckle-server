@@ -16,15 +16,15 @@ const mocks: SpeckleModuleMocksConfig = {
     BlobMetadata: () => ({
       fileName: () => faker.system.fileName(),
       fileType: () => faker.system.mimeType(),
-      fileSize: () => faker.datatype.number({ min: 1, max: 1000 })
+      fileSize: () => faker.number.int({ min: 1, max: 1000 })
     }),
     Model: () => ({
-      id: () => faker.datatype.uuid(),
+      id: () => faker.string.uuid(),
       name: () => faker.commerce.productName(),
       previewUrl: () => faker.image.imageUrl()
     }),
     Version: () => ({
-      id: () => faker.random.alphaNumeric(10)
+      id: () => faker.string.alphanumeric(10)
     })
   }
 }

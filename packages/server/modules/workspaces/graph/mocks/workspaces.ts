@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-return */
-import { SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
+import { listMock, SpeckleModuleMocksConfig } from '@/modules/shared/helpers/mocks'
 import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { faker } from '@faker-js/faker'
 import { Roles } from '@speckle/shared'
@@ -13,7 +13,15 @@ const workspaceName = () =>
 
 const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
   ? {
-      resolvers: ({ helpers: { getFieldValue, getMockRef } }) => {
+      resolvers: ({
+        helpers: {
+          getFieldValue,
+          getMockRef,
+          resolveFromMockParent,
+          addMockRefValues,
+          resolveAndCache
+        }
+      }) => {
         return {
           WorkspaceMutations: {
             create: (_parent, args) => {
@@ -124,71 +132,70 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
             }
           },
           User: {
-            workspaces: (_parent, args) =>
+            workspaces: resolveAndCache((_parent, args) =>
               getMockRef('WorkspaceCollection', {
                 values: {
                   cursor: args.cursor ? null : undefined
                 }
-              }),
-            workspaceInvites: () =>
+              })
+            ),
+            workspaceInvites: resolveAndCache(() =>
               times(faker.number.int({ min: 0, max: 2 }), () =>
                 getMockRef('PendingWorkspaceCollaborator')
               )
+            )
           },
           Workspace: {
-            role: (parent) => getFieldValue(parent, 'role'),
-            team: () =>
-              times(faker.number.int({ min: 1, max: 5 }), () =>
-                getMockRef('WorkspaceCollaborator')
-              ),
-            invitedTeam: (parent) =>
-              times(faker.number.int({ min: 1, max: 5 }), () =>
-                getMockRef('PendingWorkspaceCollaborator', {
-                  values: {
-                    workspaceId: getFieldValue(parent, 'id'),
-                    workspaceName: getFieldValue(parent, 'name')
-                  }
+            role: resolveFromMockParent(),
+            team: resolveFromMockParent(),
+            invitedTeam: resolveFromMockParent({
+              mapRefs: (mock, { parent }) =>
+                addMockRefValues(mock, {
+                  workspaceId: getFieldValue(parent, 'id'),
+                  workspaceName: getFieldValue(parent, 'name')
                 })
-              ),
-            projects: (_parent, args) =>
+            }),
+            projects: resolveAndCache((_parent, args) =>
               getMockRef('ProjectCollection', {
                 values: {
                   cursor: args.cursor ? null : undefined
                 }
               })
+            )
           },
           WorkspaceCollaborator: {
-            role: (parent) => getFieldValue(parent, 'role')
+            role: resolveFromMockParent()
           },
           PendingWorkspaceCollaborator: {
-            user: (parent) => {
+            user: resolveAndCache((parent) => {
               const title = getFieldValue<string>(parent, 'title')
               const isEmail = title.includes('@')
               if (isEmail) return null
 
               return getMockRef('LimitedUser', { values: { name: title } })
-            },
-            invitedBy: () => getMockRef('LimitedUser')
+            }),
+            invitedBy: resolveAndCache(() => getMockRef('LimitedUser'))
           },
           Project: {
-            workspace: () => {
+            workspace: resolveAndCache(() => {
               return faker.datatype.boolean() ? getMockRef('Workspace') : null
-            }
+            })
           },
           AdminQueries: {
-            workspaceList: (_parent, args) =>
+            workspaceList: resolveAndCache((_parent, args) =>
               getMockRef('WorkspaceCollection', {
                 values: {
                   cursor: args.cursor ? null : undefined
                 }
               })
+            )
           },
           WorkspaceCollection: {
-            items: (parent) => {
+            items: resolveAndCache((parent) => {
               const count = getFieldValue(parent, 'totalCount')
 
               return times(count, () => getMockRef('Workspace'))
-            }
+            })
           }
         }
       },
@@ -196,7 +203,9 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
         Workspace: () => ({
           name: workspaceName(),
           description: faker.lorem.sentence(),
-          role: faker.helpers.arrayElement(Object.values(Roles.Workspace))
+          role: faker.helpers.arrayElement(Object.values(Roles.Workspace)),
+          team: listMock(1, 5),
+          invitedTeam: listMock(1, 5)
         }),
         WorkspaceCollaborator: () => ({
           role: () => faker.helpers.arrayElement(Object.values(Roles.Server))

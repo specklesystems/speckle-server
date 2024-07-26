@@ -133,7 +133,7 @@ const mocks: SpeckleModuleMocksConfig = FF_AUTOMATE_MODULE_ENABLED
           creationPublicKeys: () => {
             // Random sized array of string keys
             return [...new Array(faker.number.int({ min: 0, max: 5 }))].map(() =>
-              faker.datatype.uuid()
+              faker.string.uuid()
             )
           },
           runs: () => {

@@ -47,7 +47,7 @@ const buildBaseConfig = async (): Promise<SpeckleModuleMocksConfig> => {
     mocks: {
       // Primitives
       JSONObject: () => ({}),
-      ID: () => faker.datatype.uuid(),
+      ID: () => faker.string.uuid(),
       DateTime: () => faker.date.recent().toISOString(),
       Boolean: () => faker.datatype.boolean(),
       // Base objects
@@ -61,7 +61,7 @@ const buildBaseConfig = async (): Promise<SpeckleModuleMocksConfig> => {
         role: Roles.Server.User
       }),
       Project: () => ({
-        id: faker.datatype.uuid(),
+        id: faker.string.uuid(),
         name: faker.commerce.productName(),
         description: faker.lorem.sentence(),
         visibility: faker.helpers.arrayElement(Object.values(ProjectVisibility)),
