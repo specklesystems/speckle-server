@@ -76,7 +76,7 @@
             class="flex items-center gap-1 !text-foreground-2"
             :to="modelVersionsRoute(projectId, model.id)"
           >
-            <IconVersions class="h-4 w-4" />
+            <ClockIcon class="h-4 w-4" />
             {{ versionCount }}
           </FormButton>
         </div>
@@ -95,6 +95,7 @@
   </NuxtLink>
 </template>
 <script lang="ts" setup>
+import { ClockIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageLatestItemsModelItemFragment,

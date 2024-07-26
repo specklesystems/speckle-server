@@ -69,7 +69,7 @@
             class="h-full w-full"
           />
         </div>
-        <div v-else-if="hasVersions" class="flex items-center space-x-4">
+        <div v-else-if="hasVersions" class="flex items-center space-x-3">
           <div
             class="text-body-2xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
           >
@@ -98,7 +98,7 @@
               class="gap-0.5"
               color="subtle"
             >
-              <IconVersions class="h-4 w-4" />
+              <ClockIcon class="h-4 w-4" />
               {{ model?.versionCount.totalCount }}
             </FormButton>
           </div>
@@ -149,7 +149,7 @@
           {{ name }}
         </div>
         <!-- Preview -->
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-3">
           <!-- Commented out so that we need to load less data, can be added back -->
           <!-- <div
             v-for="(child, index) in item.children"
@@ -217,7 +217,11 @@
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
 import { ChevronDownIcon, PlusIcon } from '@heroicons/vue/20/solid'
-import { FolderIcon, ChatBubbleLeftRightIcon } from '@heroicons/vue/24/outline'
+import {
+  FolderIcon,
+  ChatBubbleLeftRightIcon,
+  ClockIcon
+} from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageModelsStructureItem_ProjectFragment,
