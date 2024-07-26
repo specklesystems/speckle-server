@@ -633,6 +633,7 @@ export default class SpeckleConverter {
         consumeApplicationIdsCount++
       }
     }
+
     /** Do a short async walk */
     await this.tree.walkAsync((node: TreeNode) => {
       if (!node.model.raw.applicationId) return true
@@ -672,6 +673,8 @@ export default class SpeckleConverter {
 
   public async applyMaterials() {
     let count = Object.keys(this.renderMaterialMap).length
+    if (count === 0) return
+
     /** Do a short async walk */
     await this.tree.walkAsync((node: TreeNode) => {
       if (!node.model.raw.applicationId) return true
