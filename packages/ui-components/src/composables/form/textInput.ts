@@ -60,7 +60,7 @@ export function useTextInputCore<V extends string | string[] = string>(params: {
   const coreInputClasses = computed(() => {
     const classParts: string[] = [
       'focus:outline-none disabled:cursor-not-allowed disabled:bg-foundation-disabled',
-      'disabled:text-disabled-muted placeholder:text-foreground-2',
+      'disabled:text-disabled-muted placeholder:outline-5',
       'rounded-md'
     ]
 

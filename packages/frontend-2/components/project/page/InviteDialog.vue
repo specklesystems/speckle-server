@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
     <template #header>Invite to project</template>
-    <div class="flex flex-col mt-2">
+    <div class="flex flex-col my-2">
       <FormTextInput
         v-model="search"
         name="search"

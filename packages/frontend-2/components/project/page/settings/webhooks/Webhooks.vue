@@ -1,8 +1,10 @@
 <template>
   <ProjectPageSettingsBlock title="Webhooks">
     <template #introduction>
-      Subscribe to events and get notified in real time. Use to trigger CI apps,
-      automation workflows, and more.
+      <p class="text-body-xs text-foreground">
+        Subscribe to events and get notified in real time. Use to trigger CI apps,
+        automation workflows, and more.
+      </p>
     </template>
     <template #top-buttons>
       <FormButton

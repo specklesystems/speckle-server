@@ -1,7 +1,7 @@
 <template>
   <div class="flex flex-col space-y-6">
     <SettingsSectionHeader title="Change password" subheading />
-    <p class="text-sm">
+    <p class="text-body-xs text-foreground">
       Press the button below to start the password reset process.
       <br />
       Once pressed, you will receive an e-mail with further instructions.

@@ -25,14 +25,16 @@
           </span>
           <UserAvatarGroup :users="teamUsers" :max-count="2" />
         </div>
-        <div>
+        <div class="pt-3">
           <FormButton
             :to="allProjectModelsRoute(project.id) + '/'"
             size="sm"
             color="outline"
             :icon-right="ChevronRightIcon"
           >
-            {{ modelItemTotalCount }} models
+            {{
+              `${modelItemTotalCount} ${modelItemTotalCount === 1 ? 'model' : 'models'}`
+            }}
           </FormButton>
         </div>
       </div>

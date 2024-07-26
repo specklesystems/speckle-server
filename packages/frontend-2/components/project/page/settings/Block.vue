@@ -9,10 +9,9 @@
   >
     <div
       class="flex items-center gap-4 justify-between transition"
-      :class="background ? 'pt-4 px-4 sm:px-6' : ''"
+      :class="background ? 'pt-4 px-4 sm:px-6 sm:pt-6' : ''"
     >
       <div class="flex items-center gap-2">
-        <component :is="icon" v-if="icon" class="h-5 w-5"></component>
         <h3 class="text-heading-lg">{{ title }}</h3>
       </div>
       <div v-if="$slots['top-buttons']" class="flex gap-2">
@@ -26,7 +25,10 @@
     >
       <slot name="introduction" />
     </div>
-    <div class="flex flex-col text-body-sm" :class="background ? 'p-4 sm:px-6' : ''">
+    <div
+      class="flex flex-col text-body-sm"
+      :class="background ? 'p-4 sm:pb-6 sm:px-6' : ''"
+    >
       <slot />
     </div>
     <div
@@ -43,19 +45,17 @@
         </span>
       </div>
       <div v-else></div>
-      <div v-if="$slots['bottom-buttons']" class="flex gap-2">
+      <div v-if="$slots['bottom-buttons']" class="flex gap-2 py-2">
         <slot name="bottom-buttons" />
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import type { PropAnyComponent } from '@speckle/ui-components'
 import { ExclamationCircleIcon } from '@heroicons/vue/24/outline'
 
 defineProps<{
   title: string
-  icon?: PropAnyComponent
   background?: boolean
   disabledMessage?: string
 }>()

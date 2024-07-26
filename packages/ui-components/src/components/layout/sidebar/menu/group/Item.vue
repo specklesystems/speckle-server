@@ -3,7 +3,7 @@
     :is="linkComponent"
     v-if="!hasChildren"
     :to="to"
-    class="group flex items-center justify-between gap-2 shrink-0 text-body-xs select-none rounded-md w-full hover:bg-primary-muted py-1.5 px-5 cursor-pointer"
+    class="group flex items-center justify-between gap-2 shrink-0 text-body-xs select-none rounded-md w-full hover:bg-primary-muted py-1 px-5 cursor-pointer"
     exact-active-class="bg-foundation-focus hover:!bg-foundation-focus"
     :external="external"
     :target="external ? '_blank' : undefined"

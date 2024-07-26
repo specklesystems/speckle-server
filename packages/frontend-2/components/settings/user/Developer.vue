@@ -51,14 +51,15 @@
                 }
               ]"
             >
-              <p class="text-sm pt-6 md:pt-4">
+              <p class="text-body-xs pt-6 md:pt-4 text-foreground">
                 Personal Access Tokens can be used to access the Speckle API on this
                 server; they function like ordinary OAuth access tokens. Use them in
                 your scripts or apps!
-                <strong>
+                <br />
+                <span class="font-semibold">
                   Treat them like a password: do not post them anywhere where they could
                   be accessed by others (e.g., public repos).
-                </strong>
+                </span>
               </p>
             </SettingsSectionHeader>
             <LayoutTable
@@ -121,7 +122,7 @@
                 }
               ]"
             >
-              <p class="text-sm pt-6 md:pt-4">
+              <p class="text-body-xs pt-6 md:pt-4 text-foreground">
                 Register and manage third-party Speckle Apps that, once authorised by a
                 user on this server, can act on their behalf.
               </p>

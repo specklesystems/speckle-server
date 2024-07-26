@@ -152,7 +152,7 @@ const resendInvitation = async (item: InviteItem) => {
     successfullyResentInvites.value.push(inviteId)
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Invitation Resent',
+      title: 'Invitation sesent',
       description: 'The invitation has been successfully resent'
     })
   } else {

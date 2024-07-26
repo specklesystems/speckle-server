@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="isOpen"
-    :max-width="isPrivate ? 'sm' : 'md'"
+    max-width="md"
     :buttons="isPrivate ? nonDiscoverableButtons : discoverableButtons"
   >
     <template v-if="isPrivate" #header>Change access permissions</template>
@@ -46,9 +46,7 @@
             <template #icon>
               <Cog6ToothIcon class="h-full w-full" />
             </template>
-            <div
-              class="flex flex-col gap-1.5 sm:gap-2 ml-5 sm:ml-7 text-sm cursor-default"
-            >
+            <div class="flex flex-col gap-1.5 sm:gap-2 text-body-xs cursor-default">
               <div v-for="option in embedDialogOptions" :key="option.id">
                 <label
                   :for="`option-${option.id}`"
@@ -204,7 +202,7 @@ const discoverableButtons = computed((): LayoutDialogButton[] => [
     }
   },
   {
-    text: 'Copy Embed Code',
+    text: 'Copy embed code',
     props: { fullWidth: true },
     onClick: () => {
       handleEmbedCodeCopy(iframeCode.value)

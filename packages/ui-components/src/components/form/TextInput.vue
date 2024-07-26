@@ -70,7 +70,7 @@
         </div>
         <div
           v-if="!showLabel && showRequired && !errorMessage"
-          class="pointer-events-none absolute inset-y-0 mt-3 text-heading-2xl right-0 flex items-center text-danger opacity-50"
+          class="ppointer-events-none absolute inset-y-0 mt-2 text-body right-0 flex items-center text-danger pr-2.5"
           :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
         >
           *
@@ -80,7 +80,7 @@
     <p
       v-if="labelPosition === 'top' && helpTipId && !hideHelpTip"
       :id="helpTipId"
-      :class="['mt-0.5', helpTipClasses]"
+      :class="['mt-1.5', helpTipClasses]"
     >
       {{ helpTip }}
     </p>

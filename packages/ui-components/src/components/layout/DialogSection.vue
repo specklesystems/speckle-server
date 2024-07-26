@@ -56,7 +56,7 @@
       :class="[
         allowOverflow && isExpanded ? '!overflow-visible' : '',
         isExpanded ? 'mb-2 mt-1' : '',
-        !button && !alwaysOpen ? 'cursor-pointer hover:bg-foundation' : ''
+        !button && !alwaysOpen ? 'cursor-pointer hover:bg-foundation-page' : ''
       ]"
       :style="
         alwaysOpen
@@ -132,11 +132,7 @@ const backgroundClass = computed(() => {
   const classes = []
 
   if (!props.button && !props.alwaysOpen) {
-    classes.push('cursor-pointer', 'hover:bg-foundation')
-  }
-
-  if (isExpanded.value) {
-    classes.push('bg-foundation')
+    classes.push('cursor-pointer', 'hover:bg-foundation-page-2')
   }
 
   return classes
