@@ -25,6 +25,7 @@ export default class SpeckleConverter {
   private instanceDefinitionLookupTable: { [id: string]: TreeNode } = {}
   private instancedObjectsLookupTable: { [id: string]: SpeckleObject } = {}
   private instanceProxies: { [id: string]: TreeNode } = {}
+  private renderMaterialMap: { [id: string]: SpeckleObject } = {}
   private instanceCounter = 0
 
   private readonly NodeConverterMapping: {
@@ -49,6 +50,7 @@ export default class SpeckleConverter {
     Dimension: this.DimensionToNode.bind(this),
     InstanceDefinitionProxy: this.InstanceDefinitionProxyToNode.bind(this),
     InstanceProxy: this.InstanceProxyToNode.bind(this),
+    RenderMaterialProxy: this.RenderMaterialProxyToNode.bind(this),
     Parameter: null
   }
 
@@ -543,6 +545,24 @@ export default class SpeckleConverter {
     return
   }
 
+  private async RenderMaterialProxyToNode(obj: SpeckleObject, _node: TreeNode) {
+    if (!obj.value) {
+      Logger.error(`Render Material Proxy ${obj.id} has no render material value!`)
+      return
+    }
+    if (!obj.objects || !Array.isArray(obj.objects) || obj.objects.length === 0) {
+      Logger.warn(`Render Material Proxy ${obj.id} has no target objects!`)
+    }
+    const renderMaterialValue = obj.value as SpeckleObject
+    const targetObjects = obj.objects as []
+    for (let k = 0; k < targetObjects.length; k++) {
+      if (this.renderMaterialMap[targetObjects[k]]) {
+        Logger.error(`Overwritting renderMaterial ${targetObjects[k]}`)
+      }
+      this.renderMaterialMap[targetObjects[k]] = renderMaterialValue
+    }
+  }
+
   private getInstanceProxyDefinitionId(obj: SpeckleObject): string {
     return (obj.DefinitionId || obj.definitionId) as string
   }
@@ -648,6 +668,22 @@ export default class SpeckleConverter {
       /** Create the final instances */
       await this.convertToNode(node.model.raw, node)
     }
+  }
+
+  public async applyMaterials() {
+    let count = Object.keys(this.renderMaterialMap).length
+    /** Do a short async walk */
+    await this.tree.walkAsync((node: TreeNode) => {
+      if (!node.model.raw.applicationId) return true
+      const applicationId = node.model.raw.applicationId.toString()
+      if (this.renderMaterialMap[applicationId] !== undefined) {
+        node.model.raw.renderMaterial = this.renderMaterialMap[applicationId]
+        count--
+      }
+      /** Break out when all applicationIds are accounted for*/
+      if (count === 0) return false
+      return true
+    })
   }
 
   private async PointcloudToNode(obj: SpeckleObject, node: TreeNode) {
