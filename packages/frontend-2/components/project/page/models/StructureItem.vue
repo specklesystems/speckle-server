@@ -8,7 +8,7 @@
   >
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation w-full p-2 flex flex-col sm:flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
+      class="group relative bg-foundation-2 w-full p-2 flex flex-col sm:flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
     >
       <div class="flex items-center flex-grow order-2 sm:order-1 sm:pl-4">
         <!-- Name -->
