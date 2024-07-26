@@ -50,13 +50,6 @@
                 :version-id="version.id"
               />
             </div>
-            <div
-              v-if="version.commentThreadCount.totalCount !== 0"
-              class="absolute top-0 right-0 p-2 flex items-center h-8 bg-foundation border border-outline-2 justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2"
-            >
-              <ChatBubbleLeftRightIcon class="w-4 h-4" />
-              <span>{{ version.commentThreadCount.totalCount }}</span>
-            </div>
           </template>
         </div>
         <div class="flex items-center">
@@ -83,6 +76,13 @@
             v-if="!isPendingVersionFragment(version)"
             class="flex space-x-1 items-center"
           >
+            <div
+              v-if="version.commentThreadCount.totalCount !== 0"
+              class="text-body-xs text-foreground flex items-center space-x-1 pl-2"
+            >
+              <IconDiscussions class="w-4 h-4" />
+              <span>{{ version?.commentThreadCount.totalCount }}</span>
+            </div>
             <UserAvatar :user="version.authorUser" />
             <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
           </div>
@@ -101,7 +101,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
 import type { VersionActionTypes } from '~~/lib/projects/helpers/components'
 import { isPendingVersionFragment } from '~~/lib/projects/helpers/models'
-import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
 
 graphql(`
   fragment ProjectModelPageVersionsCardVersion on Version {

@@ -69,6 +69,16 @@
           :updated-at="updatedAtFullDate"
         />
         <div class="flex items-center gap-1">
+          <div
+            v-if="!isPendingModelFragment(model)"
+            class="flex items-center gap-1 !text-foreground-2"
+            :to="modelVersionsRoute(projectId, model.id)"
+          >
+            <IconDiscussions class="h-4 w-4" />
+            <span class="text-body-2xs font-medium">
+              {{ model.commentThreadCount.totalCount }}
+            </span>
+          </div>
           <FormButton
             v-tippy="'View Comments'"
             color="subtle"
@@ -76,7 +86,7 @@
             class="flex items-center gap-1 !text-foreground-2"
             :to="modelVersionsRoute(projectId, model.id)"
           >
-            <ClockIcon class="h-4 w-4" />
+            <IconVersions class="h-4 w-4" />
             {{ versionCount }}
           </FormButton>
         </div>
@@ -95,7 +105,6 @@
   </NuxtLink>
 </template>
 <script lang="ts" setup>
-import { ClockIcon } from '@heroicons/vue/24/outline'
 import type {
   PendingFileUploadFragment,
   ProjectPageLatestItemsModelItemFragment,
