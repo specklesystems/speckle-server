@@ -4,7 +4,7 @@
   <div class="space-y-4 relative" @mouseleave="showActionsMenu = false">
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation-2 w-full p-2 flex flex-col sm:flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
+      class="group relative bg-foundation w-full p-2 flex flex-col sm:flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
     >
       <div class="flex items-center flex-grow order-2 sm:order-1 sm:pl-4">
         <!-- Name -->
@@ -131,7 +131,7 @@
       class="border-l-2 border-primary-muted hover:border-primary transition rounded-md"
     >
       <button
-        class="group bg-foundation-2 w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:bg-primary-muted transition-all border border-outline-3 border-l-0"
+        class="group bg-foundation w-full py-1 pr-2 sm:pr-4 flex items-center rounded-md cursor-pointer hover:bg-primary-muted transition-all border border-outline-3 border-l-0"
         href="/test"
         @click.stop="expanded = !expanded"
       >
