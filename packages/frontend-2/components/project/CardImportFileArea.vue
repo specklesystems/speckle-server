@@ -34,7 +34,9 @@
       </div>
       <span v-else class="text-body-xs text-foreground-2 text-center select-none">
         Use our
-        <NuxtLink target="_blank" :to="connectorsPageUrl">connectors</NuxtLink>
+        <NuxtLink target="_blank" :to="connectorsPageUrl" class="font-semibold">
+          connectors
+        </NuxtLink>
         to publish a {{ modelName ? '' : 'new model' }} version to
         {{ modelName ? 'this model' : 'this project' }}, or drag and drop a IFC/OBJ/STL
         file here.

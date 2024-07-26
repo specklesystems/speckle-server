@@ -21,7 +21,7 @@
       leave-to-class="transform opacity-0 scale-95"
     >
       <MenuItems
-        class="absolute z-50 flex flex-col gap-1 right-0 sm:right-4 top-8 min-w-max w-full sm:w-36 p-1 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden text-sm"
+        class="absolute z-50 flex flex-col gap-1 right-0 sm:right-4 top-8 min-w-max w-full sm:w-32 p-1 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden text-sm mt-1"
       >
         <MenuItem v-slot="{ active }">
           <div
@@ -32,7 +32,6 @@
             @click="handleCopyLink"
             @keypress="keyboardClick(handleCopyLink)"
           >
-            <LinkIcon class="w-5 h-5" />
             Copy link
           </div>
         </MenuItem>
@@ -45,7 +44,6 @@
             @click="handleCopyId"
             @keypress="keyboardClick(handleCopyId)"
           >
-            <FingerPrintIcon class="w-5 h-5" />
             Copy ID
           </div>
         </MenuItem>
@@ -58,7 +56,6 @@
             @click="handleEmbed"
             @keypress="keyboardClick(handleEmbed)"
           >
-            <CodeBracketIcon class="w-5 h-5" />
             Embed model
           </div>
         </MenuItem>
@@ -69,12 +66,7 @@
 </template>
 <script setup lang="ts">
 import { Menu, MenuButton, MenuItems, MenuItem } from '@headlessui/vue'
-import {
-  LinkIcon,
-  FingerPrintIcon,
-  CodeBracketIcon,
-  ShareIcon
-} from '@heroicons/vue/24/outline'
+import { ShareIcon } from '@heroicons/vue/24/outline'
 import { ChevronDownIcon } from '@heroicons/vue/20/solid'
 import { SpeckleViewer } from '@speckle/shared'
 import { keyboardClick } from '@speckle/ui-components'

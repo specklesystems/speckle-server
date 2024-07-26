@@ -10,7 +10,7 @@
     </button>
     <div
       v-if="showNewModelCard"
-      class="w-full p-2 flex items-center rounded-md transition bg-foundation-focus dark:bg-primary-muted"
+      class="w-full p-2 flex items-center rounded-md transition bg-foundation-2 border border-outline-3"
     >
       <form
         class="flex items-center justify-between w-full space-x-2"
