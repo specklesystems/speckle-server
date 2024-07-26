@@ -43,7 +43,7 @@
           <div
             class="flex items-center justify-between pl-3 pr-2.5 h-10 border-b border-outline-3"
           >
-            <div v-if="$slots.title" class="font-medium text-sm text-foundation">
+            <div v-if="$slots.title" class="font-medium text-sm text-forground">
               <slot name="title"></slot>
             </div>
             <div class="flex items-center gap-0.5">
