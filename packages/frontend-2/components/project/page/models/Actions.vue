@@ -96,12 +96,12 @@ const isMain = computed(() => props.model.name === 'main')
 const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     {
-      title: 'Edit',
+      title: 'Edit...',
       id: ActionTypes.Rename,
       disabled: !props.canEdit
     },
     {
-      title: 'Upload new version',
+      title: 'Upload new version...',
       id: ActionTypes.UploadVersion,
       disabled: !props.canEdit
     }
@@ -109,7 +109,7 @@ const actionsItems = computed<LayoutMenuItem[][]>(() => [
   [
     { title: 'Copy link', id: ActionTypes.Share },
     { title: 'Copy ID', id: ActionTypes.CopyId },
-    { title: 'Embed model', id: ActionTypes.Embed }
+    { title: 'Embed model...', id: ActionTypes.Embed }
   ],
   [
     {
