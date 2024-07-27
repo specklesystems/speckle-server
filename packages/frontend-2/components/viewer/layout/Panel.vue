@@ -1,6 +1,6 @@
 <template>
   <div
-    class="bg-foundation rounded-xl overflow-hidden border border-outline-2 flex flex-col"
+    class="bg-foundation rounded-xl overflow-hidden border border-outline-2 flex flex-col shadow"
   >
     <div class="sticky top-0 z-50 flex flex-col bg-foundation">
       <div v-if="!hideClose" class="absolute top-2 right-0.5 z-10">
