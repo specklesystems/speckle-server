@@ -96,7 +96,7 @@
 
             <!-- Sun and lights -->
             <ViewerSunMenu
-              v-tippy="isSmallerOrEqualSm ? undefined : 'Light controls'"
+              v-tippy="isSmallerOrEqualSm ? undefined : 'Light Controls'"
             />
           </ViewerControlsButtonGroup>
           <ViewerControlsButtonGroup>
@@ -152,27 +152,29 @@
     <div
       v-if="activeControl !== 'none'"
       ref="resizeHandle"
-      class="absolute z-10 ml-12 md:ml-14 max-h-[calc(100dvh-4.5rem)] w-7 mt-[4.6rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
-      :style="`left:${width - 4}px; height:${height ? height - 14 : 0}px`"
+      class="absolute z-10 pl-12 md:pl-14 max-h-[calc(100dvh-4.5rem)] w-7 mt-[4.2rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
+      :style="`left:${width - 4}px; height:${height}px`"
       @mousedown="startResizing"
     >
       <div
-        class="relative z-30 w-1 ml-1 h-full pt-[4.2rem] bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-r"
+        class="relative z-30 w-3 ml-1 h-full pt-[4.2rem] bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition rounded-r"
       ></div>
       <div
-        class="w-7 h-8 mr-1 bg-primary group-hover:primary-focus rounded-r -translate-x-1 opacity-0 group-hover:opacity-100 group-hover:translate-x-0 transition cursor-ew-resize flex items-center justify-center group-hover:shadow-xl"
+        class="w-7 h-8 mr-1 bg-foundation group-hover:bg-outline-2 rounded-r -translate-x-10 group-hover:translate-x-0 transition cursor-ew-resize flex items-center justify-center group-hover:shadow-xl"
       >
-        <ArrowsRightLeftIcon class="h-3 w-3 transition text-foundation -ml-[2px]" />
+        <ArrowsRightLeftIcon
+          class="h-3 w-3 transition opacity-0 group-hover:opacity-80 text-outline-1 -ml-[2px]"
+        />
       </div>
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 pl-12 pr-2 md:pr-0 md:pl-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
       } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
-      :style="`width:${width + 4}px;`"
+      :style="`width: ${isMobile ? '100%' : `${width + 4}px`};`"
     >
       <div v-if="activeControl.length !== 0 && activeControl === 'measurements'">
         <KeepAlive>
@@ -224,7 +226,7 @@
           <div class="text-sm text-foreground-2">No models loaded.</div>
           <div>
             <FormButton
-              size="sm"
+              size="xs"
               text
               :icon-left="PlusIcon"
               @click="openAddModel = true"
@@ -268,20 +270,16 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
-import { onKeyStroke, useEventListener, useResizeObserver } from '@vueuse/core'
+import {
+  onKeyStroke,
+  useEventListener,
+  useResizeObserver,
+  useBreakpoints
+} from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const isGendoEnabled = useIsGendoModuleEnabled()
-
-enum ViewerKeyboardActions {
-  ToggleModels = 'ToggleModels',
-  ToggleExplorer = 'ToggleExplorer',
-  ToggleDiscussions = 'ToggleDiscussions',
-  ToggleMeasurements = 'ToggleMeasurements',
-  ToggleProjection = 'ToggleProjection',
-  ToggleSectionBox = 'ToggleSectionBox',
-  ZoomExtentsOrSelection = 'ZoomExtentsOrSelection'
-}
 
 const width = ref(360)
 const scrollableControlsContainer = ref(null as Nullable<HTMLDivElement>)
@@ -346,6 +344,8 @@ const {
   toggleProjection,
   camera: { isOrthoProjection }
 } = useCameraUtilities()
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value
@@ -372,71 +372,27 @@ const {
   diff: { enabled }
 } = useInjectedViewerInterfaceState()
 
-const map: Record<ViewerKeyboardActions, [ModifierKeys[], string]> = {
-  [ViewerKeyboardActions.ToggleModels]: [[ModifierKeys.Shift], 'm'],
-  [ViewerKeyboardActions.ToggleExplorer]: [[ModifierKeys.Shift], 'e'],
-  [ViewerKeyboardActions.ToggleDiscussions]: [[ModifierKeys.Shift], 't'],
-  [ViewerKeyboardActions.ToggleMeasurements]: [[ModifierKeys.Shift], 'r'],
-  [ViewerKeyboardActions.ToggleProjection]: [[ModifierKeys.Shift], 'p'],
-  [ViewerKeyboardActions.ToggleSectionBox]: [[ModifierKeys.Shift], 'b'],
-  [ViewerKeyboardActions.ZoomExtentsOrSelection]: [[ModifierKeys.Shift], 'space']
-}
-
-const getShortcutTitle = (action: ViewerKeyboardActions) =>
-  `(${getKeyboardShortcutTitle([...map[action][0], map[action][1]])})`
-
 const modelsShortcut = ref(
-  `Models ${getShortcutTitle(ViewerKeyboardActions.ToggleModels)}`
+  `Models (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'm'])})`
 )
 const explorerShortcut = ref(
-  `Scene explorer ${getShortcutTitle(ViewerKeyboardActions.ToggleExplorer)}`
+  `Scene Explorer (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'e'])})`
 )
 const discussionsShortcut = ref(
-  `Discussions ${getShortcutTitle(ViewerKeyboardActions.ToggleDiscussions)}`
+  `Discussions (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 't'])})`
 )
 const zoomExtentsShortcut = ref(
-  `Fit to screen ${getShortcutTitle(ViewerKeyboardActions.ZoomExtentsOrSelection)}`
+  `Fit to screen (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'Space'])})`
 )
 const projectionShortcut = ref(
-  `Projection ${getShortcutTitle(ViewerKeyboardActions.ToggleProjection)}`
+  `Projection (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'p'])})`
 )
 const sectionBoxShortcut = ref(
-  `Section box ${getShortcutTitle(ViewerKeyboardActions.ToggleSectionBox)}`
+  `Section Box (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'b'])})`
 )
 const measureShortcut = ref(
-  `Measure mode ${getShortcutTitle(ViewerKeyboardActions.ToggleMeasurements)}`
+  `Measure Mode (${getKeyboardShortcutTitle([ModifierKeys.AltOrOpt, 'd'])})`
 )
-
-const handleKeyboardAction = (action: ViewerKeyboardActions) => {
-  switch (action) {
-    case ViewerKeyboardActions.ToggleModels:
-      toggleActiveControl('models')
-      break
-    case ViewerKeyboardActions.ToggleExplorer:
-      toggleActiveControl('explorer')
-      break
-    case ViewerKeyboardActions.ToggleDiscussions:
-      toggleActiveControl('discussions')
-      break
-    case ViewerKeyboardActions.ToggleMeasurements:
-      toggleMeasurements()
-      break
-    case ViewerKeyboardActions.ToggleProjection:
-      trackAndtoggleProjection()
-      break
-    case ViewerKeyboardActions.ToggleSectionBox:
-      toggleSectionBox()
-      break
-    case ViewerKeyboardActions.ZoomExtentsOrSelection:
-      trackAndzoomExtentsOrSelection()
-      break
-  }
-}
-
-Object.entries(map).forEach(([actionKey, [modifiers, key]]) => {
-  const action = actionKey as ViewerKeyboardActions
-  onKeyboardShortcut(modifiers, key, () => handleKeyboardAction(action))
-})
 
 const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
@@ -447,6 +403,33 @@ const toggleActiveControl = (control: ActiveControl) => {
   }
   activeControl.value = activeControl.value === control ? 'none' : control
 }
+
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'm', () => {
+  toggleActiveControl('models')
+})
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'e', () => {
+  toggleActiveControl('explorer')
+})
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'f', () => {
+  toggleActiveControl('filters')
+})
+onKeyboardShortcut([ModifierKeys.AltOrOpt], ['t'], () => {
+  toggleActiveControl('discussions')
+})
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'd', () => {
+  toggleActiveControl('measurements')
+})
+
+// Viewer actions kbd shortcuts
+onKeyboardShortcut([ModifierKeys.AltOrOpt], ' ', () => {
+  trackAndzoomExtentsOrSelection()
+})
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'p', () => {
+  toggleProjection()
+})
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 'b', () => {
+  toggleSectionBox()
+})
 
 const mp = useMixpanel()
 watch(activeControl, (newVal) => {
