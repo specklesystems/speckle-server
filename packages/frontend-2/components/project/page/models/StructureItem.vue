@@ -120,7 +120,7 @@
       >
         <NuxtLink
           :to="modelLink || ''"
-          class="h-full w-full block bg-foundation-2 rounded-lg border border-outline-3"
+          class="h-full w-full block bg-foundation-page rounded-lg border border-outline-3"
         >
           <PreviewImage
             v-if="item.model?.previewUrl"

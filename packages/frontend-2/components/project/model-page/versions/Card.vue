@@ -28,7 +28,7 @@
       </div>
       <div>
         <div
-          class="h-48 flex items-center justify-center relative bg-foundation-2 border border-outline-3 mb-3 mt-2 rounded-xl"
+          class="h-48 flex items-center justify-center relative bg-foundation-page border border-outline-3 mb-3 mt-2 rounded-xl"
         >
           <ProjectPendingFileImportStatus
             v-if="isPendingVersionFragment(version)"
