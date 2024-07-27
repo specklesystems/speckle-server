@@ -41,12 +41,12 @@
         class="flex w-full"
       >
         <div
-          :class="`grid grid-cols-3 w-full pl-2 ${
+          :class="`grid grid-cols-3 w-full pl-2 py-0.5 ${
             kvp.value === null || kvp.value === undefined ? 'text-foreground-2' : ''
           }`"
         >
           <div
-            class="col-span-1 truncate text-body-3xs mr-2"
+            class="col-span-1 truncate text-body-3xs mr-2 font-medium"
             :title="(kvp.key as string)"
           >
             {{ kvp.key }}

@@ -19,15 +19,6 @@
 </template>
 <script setup lang="ts">
 import { EllipsisHorizontalIcon } from '@heroicons/vue/24/solid'
-import {
-  TrashIcon,
-  PencilIcon,
-  LinkIcon,
-  FingerPrintIcon,
-  ArrowRightOnRectangleIcon,
-  CursorArrowRaysIcon,
-  CodeBracketIcon
-} from '@heroicons/vue/24/outline'
 import type { LayoutMenuItem } from '~~/lib/layout/helpers/components'
 import { useCopyModelLink } from '~~/lib/projects/composables/modelManagement'
 import { VersionActionTypes } from '~~/lib/projects/helpers/components'
@@ -62,11 +53,10 @@ const showActionsMenu = computed({
 const actionsItems = computed<LayoutMenuItem<VersionActionTypes>[][]>(() => [
   [
     {
-      title: 'Edit message',
+      title: 'Edit message...',
       id: VersionActionTypes.EditMessage,
       disabled: !!props.selectionDisabled,
-      disabledTooltip: disabledMessage.value,
-      icon: PencilIcon
+      disabledTooltip: disabledMessage.value
     }
   ],
   [
@@ -74,30 +64,26 @@ const actionsItems = computed<LayoutMenuItem<VersionActionTypes>[][]>(() => [
       title: 'Select',
       id: VersionActionTypes.Select,
       disabled: !!props.selectionDisabled,
-      disabledTooltip: disabledMessage.value,
-      icon: CursorArrowRaysIcon
+      disabledTooltip: disabledMessage.value
     },
     {
-      title: 'Move to',
+      title: 'Move to...',
       id: VersionActionTypes.MoveTo,
       disabled: !!props.selectionDisabled,
-      disabledTooltip: disabledMessage.value,
-      icon: ArrowRightOnRectangleIcon
+      disabledTooltip: disabledMessage.value
     }
   ],
   [
-    { title: 'Copy link', id: VersionActionTypes.Share, icon: LinkIcon },
-    { title: 'Copy ID', id: VersionActionTypes.CopyId, icon: FingerPrintIcon },
-    { title: 'Embed model', id: VersionActionTypes.EmbedModel, icon: CodeBracketIcon }
+    { title: 'Copy link', id: VersionActionTypes.Share },
+    { title: 'Copy ID', id: VersionActionTypes.CopyId },
+    { title: 'Embed model...', id: VersionActionTypes.EmbedModel }
   ],
   [
     {
       title: 'Delete...',
       id: VersionActionTypes.Delete,
       disabled: !!props.selectionDisabled,
-      disabledTooltip: disabledMessage.value,
-      icon: TrashIcon,
-      color: 'danger'
+      disabledTooltip: disabledMessage.value
     }
   ]
 ])

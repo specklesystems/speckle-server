@@ -69,6 +69,16 @@
           :updated-at="updatedAtFullDate"
         />
         <div class="flex items-center gap-1">
+          <div
+            v-if="!isPendingModelFragment(model)"
+            class="flex items-center gap-1 !text-foreground-2"
+            :to="modelVersionsRoute(projectId, model.id)"
+          >
+            <IconDiscussions class="h-4 w-4" />
+            <span class="text-body-2xs font-medium">
+              {{ model.commentThreadCount.totalCount }}
+            </span>
+          </div>
           <FormButton
             v-tippy="'View Comments'"
             color="subtle"
@@ -147,7 +157,7 @@ const showActionsMenu = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-xl bg-foundation-2 border border-outline-3 hover:border-outline-5 p-2'
+    'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 p-2 cursor-pointer'
   ]
 
   return classParts.join(' ')

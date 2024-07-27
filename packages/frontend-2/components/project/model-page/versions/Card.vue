@@ -3,7 +3,7 @@
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
   <div
-    class="group rounded-xl bg-foundation-2 border border-outline-3 hover:border-outline-5"
+    class="group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5"
     @mouseleave="showActionsMenu = false"
   >
     <div class="flex flex-col p-3 pt-2" @click="$emit('click', $event)">
@@ -28,7 +28,7 @@
       </div>
       <div>
         <div
-          class="h-48 flex items-center justify-center relative bg-foundation border border-outline-3 mb-3 mt-2 rounded-xl"
+          class="h-48 flex items-center justify-center relative bg-foundation-page border border-outline-3 mb-3 mt-2 rounded-xl"
         >
           <ProjectPendingFileImportStatus
             v-if="isPendingVersionFragment(version)"
@@ -49,13 +49,6 @@
                 :model-id="modelId"
                 :version-id="version.id"
               />
-            </div>
-            <div
-              v-if="version.commentThreadCount.totalCount !== 0"
-              class="absolute top-0 right-0 p-2 flex items-center h-8 bg-foundation border border-outline-2 justify-center rounded-tr-full rounded-tl-full rounded-br-full text-xs m-2"
-            >
-              <ChatBubbleLeftRightIcon class="w-4 h-4" />
-              <span>{{ version.commentThreadCount.totalCount }}</span>
             </div>
           </template>
         </div>
@@ -83,6 +76,13 @@
             v-if="!isPendingVersionFragment(version)"
             class="flex space-x-1 items-center"
           >
+            <div
+              v-if="version.commentThreadCount.totalCount !== 0"
+              class="text-body-xs text-foreground flex items-center space-x-1 pl-2"
+            >
+              <IconDiscussions class="w-4 h-4" />
+              <span>{{ version?.commentThreadCount.totalCount }}</span>
+            </div>
             <UserAvatar :user="version.authorUser" />
             <SourceAppBadge v-if="sourceApp" :source-app="sourceApp" />
           </div>
@@ -101,7 +101,6 @@ import { graphql } from '~~/lib/common/generated/gql'
 import { SpeckleViewer, SourceApps } from '@speckle/shared'
 import type { VersionActionTypes } from '~~/lib/projects/helpers/components'
 import { isPendingVersionFragment } from '~~/lib/projects/helpers/models'
-import { ChatBubbleLeftRightIcon } from '@heroicons/vue/24/solid'
 
 graphql(`
   fragment ProjectModelPageVersionsCardVersion on Version {

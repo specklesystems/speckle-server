@@ -179,7 +179,7 @@ const onSubmit = handleSubmit(async () => {
     triggerNotification({
       type: ToastNotificationType.Danger,
       title: 'Saving failed',
-      description: `Failed to update server info`
+      description: 'Failed to update server info'
     })
   }
 })

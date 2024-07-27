@@ -8,7 +8,6 @@
       <div class="pt-6 md:pt-0">
         <FormTextInput
           v-model="name"
-          class="pt-2 pb-1"
           color="foundation"
           label="Name"
           name="name"

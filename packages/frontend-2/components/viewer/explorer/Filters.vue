@@ -16,12 +16,12 @@
             {{ title.split('.').reverse()[0] || title || 'No title' }}
           </span>
         </FormButton>
-        <div class="flex gap-1 divide-x divide-outline-3">
+        <div class="flex divide-x divide-outline-3">
           <FormButton
             v-if="title !== 'Object Type'"
             text
             size="sm"
-            class="flex gap-1"
+            class="flex gap-1 pr-2"
             @click="
               ;(showAllFilters = false),
                 removePropertyFilter(),
@@ -33,6 +33,7 @@
           </FormButton>
           <FormButton
             v-tippy="'Toggle coloring'"
+            class="pl-2"
             size="sm"
             color="subtle"
             text
