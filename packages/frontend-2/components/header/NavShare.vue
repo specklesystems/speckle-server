@@ -21,13 +21,13 @@
       leave-to-class="transform opacity-0 scale-95"
     >
       <MenuItems
-        class="absolute z-50 flex flex-col gap-1 right-0 sm:right-4 top-8 min-w-max w-full sm:w-32 p-1 origin-top-right bg-foundation outline outline-2 outline-primary-muted rounded-md shadow-lg overflow-hidden text-sm mt-1"
+        class="absolute z-50 flex flex-col gap-1 right-0 sm:right-4 top-8 min-w-max w-full sm:w-32 py-1 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden mt-1"
       >
         <MenuItem v-slot="{ active }">
           <div
             :class="[
-              active ? 'bg-foundation-focus' : '',
-              'flex gap-2 items-center px-2 py-1 text-body-xs text-foreground cursor-pointer transition rounded'
+              active ? 'bg-highlight-1' : '',
+              'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
             ]"
             @click="handleCopyLink"
             @keypress="keyboardClick(handleCopyLink)"
@@ -38,8 +38,8 @@
         <MenuItem v-if="!isFederated" v-slot="{ active }">
           <div
             :class="[
-              active ? 'bg-foundation-focus' : '',
-              'flex gap-2 items-center px-2 py-1 text-body-xs text-foreground cursor-pointer transition rounded'
+              active ? 'bg-highlight-1' : '',
+              'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
             ]"
             @click="handleCopyId"
             @keypress="keyboardClick(handleCopyId)"
@@ -50,8 +50,8 @@
         <MenuItem v-slot="{ active }">
           <div
             :class="[
-              active ? 'bg-foundation-focus' : '',
-              'flex gap-2 items-center px-2 py-1 text-body-xs text-foreground cursor-pointer transition rounded'
+              active ? 'bg-highlight-1' : '',
+              'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
             ]"
             @click="handleEmbed"
             @keypress="keyboardClick(handleEmbed)"
