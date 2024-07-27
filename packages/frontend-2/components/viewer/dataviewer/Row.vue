@@ -1,9 +1,13 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="`w-full bg-foundation-2 hover:bg-blue-500/5 rounded pl-1 py-0.5 border-l-2 text-body-2xs ${
-      expandable ? 'border-blue-500' : 'border-transparent'
-    } ${expanded ? 'border-neutral-500 border-opacity-30' : ''}`"
+    class="w-full hover:bg-blue-500/5 rounded pl-1 py-0.5 border-l-2 text-body-2xs"
+    :class="[
+      expandable
+        ? 'border-primary bg-foundation-page'
+        : 'border-transparent bg-foundation',
+      expanded ? 'border-neutral-500 border-opacity-30' : ''
+    ]"
   >
     <!-- eslint-disable-next-line vuejs-accessibility/click-events-have-key-events -->
     <div
