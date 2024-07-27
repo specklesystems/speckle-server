@@ -226,7 +226,7 @@
           <div class="text-sm text-foreground-2">No models loaded.</div>
           <div>
             <FormButton
-              size="xs"
+              size="sm"
               text
               :icon-left="PlusIcon"
               @click="openAddModel = true"
@@ -413,7 +413,7 @@ onKeyboardShortcut([ModifierKeys.AltOrOpt], 'e', () => {
 onKeyboardShortcut([ModifierKeys.AltOrOpt], 'f', () => {
   toggleActiveControl('filters')
 })
-onKeyboardShortcut([ModifierKeys.AltOrOpt], ['t'], () => {
+onKeyboardShortcut([ModifierKeys.AltOrOpt], 't', () => {
   toggleActiveControl('discussions')
 })
 onKeyboardShortcut([ModifierKeys.AltOrOpt], 'd', () => {
