@@ -157,7 +157,7 @@ const showActionsMenu = ref(false)
 
 const containerClasses = computed(() => {
   const classParts = [
-    'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 p-2'
+    'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 p-2 cursor-pointer'
   ]
 
   return classParts.join(' ')
