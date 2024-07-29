@@ -4,7 +4,7 @@
       class="relative group flex flex-col items-stretch md:flex-row md:space-x-2 border border-outline-3 rounded-xl p-4 transition bg-foundation"
     >
       <div
-        class="w-full md:w-48 flex md:flex-col justify-between col-span-3 lg:col-span-1 mb-4 md:mb-0 md:flex-shrink-0 space-x-1 md:space-x-0 md:space-y-1 pl-4 pr-6 py-2"
+        class="w-full md:w-48 flex flex-col justify-between col-span-3 lg:col-span-1 mb-4 md:mb-0 flex-shrink-0 space-y-1 pl-4 pr-6 py-2"
       >
         <div class="flex flex-col">
           <NuxtLink
@@ -25,12 +25,11 @@
           </span>
           <UserAvatarGroup :users="teamUsers" :max-count="2" />
         </div>
-        <div class="pt-1 md:pt-3 flex">
+        <div class="pt-3">
           <FormButton
             :to="allProjectModelsRoute(project.id) + '/'"
             size="sm"
             color="outline"
-            class="flex-shrink-0"
             :icon-right="ChevronRightIcon"
           >
             {{
@@ -61,6 +60,7 @@
           show-actions
           :project-id="project.id"
           height="h-48"
+          @click="router.push(modelRoute(project.id, model.id))"
         />
         <ProjectCardImportFileArea
           v-if="hasNoModels"
@@ -74,13 +74,19 @@
 <script lang="ts" setup>
 import { FormButton } from '@speckle/ui-components'
 import type { ProjectDashboardItemFragment } from '~~/lib/common/generated/gql/graphql'
-import { projectRoute, allProjectModelsRoute } from '~~/lib/common/helpers/route'
+import {
+  projectRoute,
+  allProjectModelsRoute,
+  modelRoute
+} from '~~/lib/common/helpers/route'
 import { useGeneralProjectPageUpdateTracking } from '~~/lib/projects/composables/projectPages'
 import { ChevronRightIcon } from '@heroicons/vue/20/solid'
 
 const props = defineProps<{
   project: ProjectDashboardItemFragment
 }>()
+
+const router = useRouter()
 
 const projectId = computed(() => props.project.id)
 

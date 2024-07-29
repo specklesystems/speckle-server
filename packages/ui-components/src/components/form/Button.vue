@@ -231,7 +231,7 @@ const paddingClasses = computed(() => {
 const generalClasses = computed(() => {
   const baseClasses = [
     'inline-flex justify-center items-center',
-    'text-center select-none',
+    'text-center select-none whitespace-nowrap',
     'outline outline-2 outline-transparent',
     'transition duration-200 ease-in-out focus-visible:outline-outline-4'
   ]
