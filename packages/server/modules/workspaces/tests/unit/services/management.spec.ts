@@ -73,7 +73,11 @@ describe('Workspace services', () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
 
       const { userId, workspaceInput } = getCreateWorkspaceInput()
-      const workspace = await createWorkspace({ userId, workspaceInput })
+      const workspace = await createWorkspace({
+        userId,
+        workspaceInput,
+        userResourceAccessLimits: null
+      })
 
       expect(context.storedWorkspaces.length).to.equal(1)
       expect(context.storedWorkspaces[0]).to.deep.equal(workspace)
@@ -82,7 +86,11 @@ describe('Workspace services', () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
 
       const { userId, workspaceInput } = getCreateWorkspaceInput()
-      const workspace = await createWorkspace({ userId, workspaceInput })
+      const workspace = await createWorkspace({
+        userId,
+        workspaceInput,
+        userResourceAccessLimits: null
+      })
 
       expect(context.storedRoles.length).to.equal(1)
       expect(context.storedRoles[0]).to.deep.equal({
@@ -95,7 +103,11 @@ describe('Workspace services', () => {
       const { context, createWorkspace } = buildCreateWorkspaceWithTestContext()
 
       const { userId, workspaceInput } = getCreateWorkspaceInput()
-      const workspace = await createWorkspace({ userId, workspaceInput })
+      const workspace = await createWorkspace({
+        userId,
+        workspaceInput,
+        userResourceAccessLimits: null
+      })
 
       expect(context.eventData.isCalled).to.equal(true)
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.Created)

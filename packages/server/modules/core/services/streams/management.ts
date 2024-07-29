@@ -21,10 +21,7 @@ import {
   updateStream
 } from '@/modules/core/repositories/streams'
 import { createBranch } from '@/modules/core/services/branches'
-import {
-  createAndSendInviteFactory,
-  inviteUsersToStreamFactory
-} from '@/modules/serverinvites/services/inviteCreationService'
+import { createAndSendInviteFactory } from '@/modules/serverinvites/services/creation'
 import {
   StreamInvalidAccessError,
   StreamUpdateError
@@ -42,8 +39,7 @@ import {
 } from '@/modules/core/helpers/token'
 import { authorizeResolver } from '@/modules/shared'
 import {
-  deleteAllStreamInvitesFactory,
-  findResourceFactory,
+  deleteAllResourceInvitesFactory,
   findUserByTargetFactory,
   insertInviteAndDeleteOldFactory
 } from '@/modules/serverinvites/repositories/serverInvites'
@@ -53,6 +49,12 @@ import {
   TokenResourceIdentifierType
 } from '@/modules/core/domain/tokens/types'
 import { ProjectEvents, ProjectsEmitter } from '@/modules/core/events/projectsEmitter'
+import { inviteUsersToProjectFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { getUsers } from '@/modules/core/repositories/users'
+import { collectAndValidateCoreTargetsFactory } from '@/modules/serverinvites/services/coreResourceCollection'
+import { buildCoreInviteEmailContentsFactory } from '@/modules/serverinvites/services/coreEmailContents'
+import { getEventBus } from '@/modules/shared/services/eventBus'
+import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 
 export async function createStreamReturnRecord(
   params: (StreamCreateInput | ProjectCreateInput) & {
@@ -88,12 +90,23 @@ export async function createStreamReturnRecord(
   // Invite contributors?
   if (!isProjectCreateInput(params) && params.withContributors?.length) {
     // TODO: should be injected in the resolver
-    await inviteUsersToStreamFactory({
+    await inviteUsersToProjectFactory({
       createAndSendInvite: createAndSendInviteFactory({
-        findResource: findResourceFactory(),
         findUserByTarget: findUserByTargetFactory(),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db })
-      })
+        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
+        collectAndValidateResourceTargets: collectAndValidateCoreTargetsFactory({
+          getStream
+        }),
+        buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
+          getStream
+        }),
+        emitEvent: ({ eventName, payload }) =>
+          getEventBus().emit({
+            eventName,
+            payload
+          })
+      }),
+      getUsers
     })(ownerId, streamId, params.withContributors, ownerResourceAccessRules)
   }
 
@@ -144,8 +157,14 @@ export async function deleteStreamAndNotify(
 
   // TODO: use proper injection once we refactor this module
   // Delete after event so we can do authz
-  const deleteAllStreamInvites = deleteAllStreamInvitesFactory({ db })
-  await Promise.all([deleteAllStreamInvites(streamId), deleteStream(streamId)])
+  const deleteAllStreamInvites = deleteAllResourceInvitesFactory({ db })
+  await Promise.all([
+    deleteAllStreamInvites({
+      resourceId: streamId,
+      resourceType: ProjectInviteResourceType
+    }),
+    deleteStream(streamId)
+  ])
   return true
 }
 

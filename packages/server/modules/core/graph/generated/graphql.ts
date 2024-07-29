@@ -1,11 +1,11 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
-import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, ObjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, MutationsObjectGraphQLReturn, LimitedUserGraphQLReturn, GraphQLEmptyReturn } from '@/modules/core/helpers/graphTypes';
+import { StreamGraphQLReturn, CommitGraphQLReturn, ProjectGraphQLReturn, ObjectGraphQLReturn, VersionGraphQLReturn, ServerInviteGraphQLReturnType, ModelGraphQLReturn, ModelsTreeItemGraphQLReturn, MutationsObjectGraphQLReturn, LimitedUserGraphQLReturn, GraphQLEmptyReturn, StreamCollaboratorGraphQLReturn } from '@/modules/core/helpers/graphTypes';
 import { StreamAccessRequestGraphQLReturn, ProjectAccessRequestGraphQLReturn } from '@/modules/accessrequests/helpers/graphTypes';
 import { CommentReplyAuthorCollectionGraphQLReturn, CommentGraphQLReturn } from '@/modules/comments/helpers/graphTypes';
 import { PendingStreamCollaboratorGraphQLReturn } from '@/modules/serverinvites/helpers/graphTypes';
 import { FileUploadGraphQLReturn } from '@/modules/fileuploads/helpers/types';
 import { AutomateFunctionGraphQLReturn, AutomateFunctionReleaseGraphQLReturn, AutomationGraphQLReturn, AutomationRevisionGraphQLReturn, AutomationRevisionFunctionGraphQLReturn, AutomateRunGraphQLReturn, AutomationRunTriggerGraphQLReturn, AutomationRevisionTriggerDefinitionGraphQLReturn, AutomateFunctionRunGraphQLReturn, TriggeredAutomationsStatusGraphQLReturn, ProjectAutomationMutationsGraphQLReturn, ProjectTriggeredAutomationsStatusUpdatedMessageGraphQLReturn, ProjectAutomationsUpdatedMessageGraphQLReturn, UserAutomateInfoGraphQLReturn } from '@/modules/automate/helpers/graphTypes';
-import { WorkspaceGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
+import { WorkspaceGraphQLReturn, WorkspaceMutationsGraphQLReturn, WorkspaceInviteMutationsGraphQLReturn, PendingWorkspaceCollaboratorGraphQLReturn, WorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes';
 import { GraphQLContext } from '@/modules/shared/helpers/typeHelper';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -3258,7 +3258,8 @@ export type TokenResourceIdentifierInput = {
 };
 
 export enum TokenResourceIdentifierType {
-  Project = 'project'
+  Project = 'project',
+  Workspace = 'workspace'
 }
 
 export type TriggeredAutomationsStatus = {
@@ -4060,7 +4061,7 @@ export type ResolversTypes = {
   PasswordStrengthCheckFeedback: ResolverTypeWrapper<PasswordStrengthCheckFeedback>;
   PasswordStrengthCheckResults: ResolverTypeWrapper<PasswordStrengthCheckResults>;
   PendingStreamCollaborator: ResolverTypeWrapper<PendingStreamCollaboratorGraphQLReturn>;
-  PendingWorkspaceCollaborator: ResolverTypeWrapper<Omit<PendingWorkspaceCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversTypes['LimitedUser'], user?: Maybe<ResolversTypes['LimitedUser']> }>;
+  PendingWorkspaceCollaborator: ResolverTypeWrapper<PendingWorkspaceCollaboratorGraphQLReturn>;
   Project: ResolverTypeWrapper<ProjectGraphQLReturn>;
   ProjectAccessRequest: ResolverTypeWrapper<ProjectAccessRequestGraphQLReturn>;
   ProjectAccessRequestMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
@@ -4126,7 +4127,7 @@ export type ResolversTypes = {
   SortDirection: SortDirection;
   Stream: ResolverTypeWrapper<StreamGraphQLReturn>;
   StreamAccessRequest: ResolverTypeWrapper<StreamAccessRequestGraphQLReturn>;
-  StreamCollaborator: ResolverTypeWrapper<StreamCollaborator>;
+  StreamCollaborator: ResolverTypeWrapper<StreamCollaboratorGraphQLReturn>;
   StreamCollection: ResolverTypeWrapper<Omit<StreamCollection, 'items'> & { items?: Maybe<Array<ResolversTypes['Stream']>> }>;
   StreamCreateInput: StreamCreateInput;
   StreamInviteCreateInput: StreamInviteCreateInput;
@@ -4175,13 +4176,13 @@ export type ResolversTypes = {
   WebhookEventCollection: ResolverTypeWrapper<WebhookEventCollection>;
   WebhookUpdateInput: WebhookUpdateInput;
   Workspace: ResolverTypeWrapper<WorkspaceGraphQLReturn>;
-  WorkspaceCollaborator: ResolverTypeWrapper<Omit<WorkspaceCollaborator, 'user'> & { user: ResolversTypes['LimitedUser'] }>;
+  WorkspaceCollaborator: ResolverTypeWrapper<WorkspaceCollaboratorGraphQLReturn>;
   WorkspaceCollection: ResolverTypeWrapper<Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversTypes['Workspace']> }>;
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
-  WorkspaceInviteMutations: ResolverTypeWrapper<Omit<WorkspaceInviteMutations, 'batchCreate' | 'cancel' | 'create'> & { batchCreate: ResolversTypes['Workspace'], cancel: ResolversTypes['Workspace'], create: ResolversTypes['Workspace'] }>;
+  WorkspaceInviteMutations: ResolverTypeWrapper<WorkspaceInviteMutationsGraphQLReturn>;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
-  WorkspaceMutations: ResolverTypeWrapper<MutationsObjectGraphQLReturn>;
+  WorkspaceMutations: ResolverTypeWrapper<WorkspaceMutationsGraphQLReturn>;
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
@@ -4292,7 +4293,7 @@ export type ResolversParentTypes = {
   PasswordStrengthCheckFeedback: PasswordStrengthCheckFeedback;
   PasswordStrengthCheckResults: PasswordStrengthCheckResults;
   PendingStreamCollaborator: PendingStreamCollaboratorGraphQLReturn;
-  PendingWorkspaceCollaborator: Omit<PendingWorkspaceCollaborator, 'invitedBy' | 'user'> & { invitedBy: ResolversParentTypes['LimitedUser'], user?: Maybe<ResolversParentTypes['LimitedUser']> };
+  PendingWorkspaceCollaborator: PendingWorkspaceCollaboratorGraphQLReturn;
   Project: ProjectGraphQLReturn;
   ProjectAccessRequest: ProjectAccessRequestGraphQLReturn;
   ProjectAccessRequestMutations: MutationsObjectGraphQLReturn;
@@ -4345,7 +4346,7 @@ export type ResolversParentTypes = {
   SmartTextEditorValue: SmartTextEditorValue;
   Stream: StreamGraphQLReturn;
   StreamAccessRequest: StreamAccessRequestGraphQLReturn;
-  StreamCollaborator: StreamCollaborator;
+  StreamCollaborator: StreamCollaboratorGraphQLReturn;
   StreamCollection: Omit<StreamCollection, 'items'> & { items?: Maybe<Array<ResolversParentTypes['Stream']>> };
   StreamCreateInput: StreamCreateInput;
   StreamInviteCreateInput: StreamInviteCreateInput;
@@ -4390,13 +4391,13 @@ export type ResolversParentTypes = {
   WebhookEventCollection: WebhookEventCollection;
   WebhookUpdateInput: WebhookUpdateInput;
   Workspace: WorkspaceGraphQLReturn;
-  WorkspaceCollaborator: Omit<WorkspaceCollaborator, 'user'> & { user: ResolversParentTypes['LimitedUser'] };
+  WorkspaceCollaborator: WorkspaceCollaboratorGraphQLReturn;
   WorkspaceCollection: Omit<WorkspaceCollection, 'items'> & { items: Array<ResolversParentTypes['Workspace']> };
   WorkspaceCreateInput: WorkspaceCreateInput;
   WorkspaceInviteCreateInput: WorkspaceInviteCreateInput;
-  WorkspaceInviteMutations: Omit<WorkspaceInviteMutations, 'batchCreate' | 'cancel' | 'create'> & { batchCreate: ResolversParentTypes['Workspace'], cancel: ResolversParentTypes['Workspace'], create: ResolversParentTypes['Workspace'] };
+  WorkspaceInviteMutations: WorkspaceInviteMutationsGraphQLReturn;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
-  WorkspaceMutations: MutationsObjectGraphQLReturn;
+  WorkspaceMutations: WorkspaceMutationsGraphQLReturn;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
@@ -4425,6 +4426,12 @@ export type HasStreamRoleDirectiveArgs = {
 };
 
 export type HasStreamRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasStreamRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
+
+export type HasWorkspaceRoleDirectiveArgs = {
+  role: WorkspaceRole;
+};
+
+export type HasWorkspaceRoleDirectiveResolver<Result, Parent, ContextType = GraphQLContext, Args = HasWorkspaceRoleDirectiveArgs> = DirectiveResolverFn<Result, Parent, ContextType, Args>;
 
 export type IsOwnerDirectiveArgs = { };
 
@@ -5870,5 +5877,6 @@ export type DirectiveResolvers<ContextType = GraphQLContext> = {
   hasScopes?: HasScopesDirectiveResolver<any, any, ContextType>;
   hasServerRole?: HasServerRoleDirectiveResolver<any, any, ContextType>;
   hasStreamRole?: HasStreamRoleDirectiveResolver<any, any, ContextType>;
+  hasWorkspaceRole?: HasWorkspaceRoleDirectiveResolver<any, any, ContextType>;
   isOwner?: IsOwnerDirectiveResolver<any, any, ContextType>;
 };
