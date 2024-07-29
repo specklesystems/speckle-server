@@ -13,11 +13,7 @@
         <ExclamationCircleIcon v-else class="w-4 text-warning" />
       </button>
     </slot>
-    <LayoutDialog
-      v-model:open="showReportDialog"
-      :title="`Report`"
-      chromium65-compatibility
-    >
+    <LayoutDialog v-model:open="showReportDialog" :title="`Report`" fullscreen="none">
       <template #header>
         <div class="flex mt-2 space-x-2 p-1">
           <button

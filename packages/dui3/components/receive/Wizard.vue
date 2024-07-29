@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="showReceiveDialog"
-    chromium65-compatibility
+    fullscreen="none"
     @fully-closed="step = 1"
   >
     <template #header>
@@ -18,7 +18,7 @@
       <!-- Step progress indicator: shows selected project and model -->
       <div
         v-if="selectedProject"
-        class="mt-1 absolute rounded-b-md shadow bg-foundation-2 h-10 w-full -ml-4 text-foreground-2 text-sm font-normal px-4 flex items-center min-w-0"
+        class="mt-1 absolute rounded-b-md shadow bg-foundation-2 h-10 w-full -ml-6 text-foreground-2 text-sm font-normal px-4 flex items-center min-w-0"
       >
         <button
           v-tippy="'Change project'"

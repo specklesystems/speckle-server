@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="showSendDialog"
-    chromium65-compatibility
+    fullscreen="none"
     @fully-closed="step = 1"
   >
     <template #header>

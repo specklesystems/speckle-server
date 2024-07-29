@@ -1,7 +1,7 @@
 <template>
   <LayoutDialog
     v-model:open="store.showErrorDialog"
-    chromium65-compatibility
+    fullscreen="none"
     @close="store.showErrorDialog = false"
     @fully-closed="store.setHostAppError(null)"
   >

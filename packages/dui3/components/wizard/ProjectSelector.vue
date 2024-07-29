@@ -59,7 +59,7 @@
     <LayoutDialog
       v-model:open="showNewProjectDialog"
       title="Create new project"
-      chromium65-compatibility
+      fullscreen="none"
     >
       <form @submit="onSubmitCreateNewProject">
         <FormTextInput

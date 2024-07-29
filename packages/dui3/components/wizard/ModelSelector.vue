@@ -36,7 +36,7 @@
         <LayoutDialog
           v-model:open="showSelectionHasProblemsDialog"
           title="Warning"
-          chromium65-compatibility
+          fullscreen="none"
         >
           <div class="mx-1">
             <p v-if="hasNonZeroVersionsProblem" class="mb-2 text-sm">
@@ -89,7 +89,7 @@
     <LayoutDialog
       v-model:open="showNewModelDialog"
       title="Create new model"
-      chromium65-compatibility
+      fullscreen="none"
     >
       <form @submit="onSubmit">
         <FormTextInput

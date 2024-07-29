@@ -54,7 +54,7 @@
     <LayoutDialog
       v-model:open="openFilterDialog"
       :title="`Change filter for ${cardBase?.modelData?.displayName}`"
-      chromium65-compatibility
+      fullscreen="none"
     >
       <FilterListSelect :filter="modelCard.sendFilter" @update:filter="updateFilter" />
       <div class="mt-2 flex">

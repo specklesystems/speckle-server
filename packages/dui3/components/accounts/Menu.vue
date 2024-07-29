@@ -9,7 +9,7 @@
     <LayoutDialog
       v-model:open="showAccountsDialog"
       title="Select account"
-      chromium65-compatibility
+      fullscreen="none"
     >
       <CommonLoadingBar :loading="isLoading" class="my-0" />
       <AccountsItem

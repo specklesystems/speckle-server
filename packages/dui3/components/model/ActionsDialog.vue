@@ -9,7 +9,7 @@
     <LayoutDialog
       v-model:open="openModelCardActionsDialog"
       :title="`${modelName} actions`"
-      chromium65-compatibility
+      fullscreen="none"
     >
       <div class="-mx-1">
         <ReportBase v-if="modelCard.report" :report="modelCard.report">

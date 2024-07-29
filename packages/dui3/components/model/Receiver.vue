@@ -40,7 +40,7 @@
     </div>
     <LayoutDialog
       v-model:open="openVersionsDialog"
-      chromium65-compatibility
+      fullscreen="none"
       title="Change loaded version"
     >
       <WizardVersionSelector
