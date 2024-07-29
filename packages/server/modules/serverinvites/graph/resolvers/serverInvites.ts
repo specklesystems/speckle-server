@@ -330,7 +330,14 @@ export = {
         createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
       })
 
-      await createProjectInvite(args, ctx.userId!, ctx.resourceAccessRules)
+      await createProjectInvite(
+        {
+          projectId: args.projectId,
+          ...args.input
+        },
+        ctx.userId!,
+        ctx.resourceAccessRules
+      )
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async batchCreate(_parent, args, ctx) {

@@ -26,9 +26,12 @@ import {
   BatchCreateServerInviteDocument,
   BatchCreateStreamInviteDocument,
   CancelStreamInviteDocument,
+  CreateProjectInviteDocument,
+  CreateProjectInviteMutationVariables,
   CreateServerInviteDocument,
   CreateStreamInviteDocument,
   DeleteInviteDocument,
+  GetOwnProjectInvitesDocument,
   GetStreamInviteDocument,
   GetStreamInvitesDocument,
   GetStreamPendingCollaboratorsDocument,
@@ -195,6 +198,9 @@ describe('[Stream & Server Invites]', () => {
       const createInvite = (input: StreamInviteCreateInput) =>
         apollo.execute(CreateStreamInviteDocument, { input })
 
+      const createProjectInvite = (args: CreateProjectInviteMutationVariables) =>
+        apollo.execute(CreateProjectInviteDocument, args)
+
       before(async () => {
         // Create a stream and make sure otherGuy is already a contributor there
         await createTestStream(otherGuyAlreadyInvitedStream, me)
@@ -241,112 +247,177 @@ describe('[Stream & Server Invites]', () => {
         )
       })
 
-      const userTypesDataSet = [
-        {
-          display: 'registered user',
-          user: otherGuy,
-          stream: myPrivateStream,
-          email: null
-        },
-        {
-          display: 'registered user (with custom role)',
-          user: otherGuy,
-          stream: myPrivateStream,
-          email: null,
-          role: Roles.Stream.Owner
-        },
-        {
-          display: 'unregistered user',
-          user: null,
-          stream: myPrivateStream,
-          email: 'randomer22@lool.com'
-        },
-        {
-          display: 'unregistered user (with custom role)',
-          user: null,
-          stream: myPrivateStream,
-          email: 'randomer22@lool.com',
-          Role: Roles.Stream.Reviewer
-        }
-      ]
+      const createInviteTypes = [{ projectInvite: false }, { projectInvite: true }]
 
-      userTypesDataSet.forEach(({ display, user, stream, email, role }) => {
-        it(`can invite a ${display}`, async () => {
-          const messagePart1 = '1234hiiiiduuuuude'
-          const messagePart2 = 'yepppppp'
-          const unsanitaryMessage = `<a href="https://google.com">${messagePart1}</a> <script>${messagePart2}</script>`
-          const targetEmail = email || user?.email
+      createInviteTypes.forEach(({ projectInvite }) => {
+        const userTypesDataSet = [
+          {
+            display: 'registered user',
+            user: otherGuy,
+            stream: myPrivateStream,
+            email: null
+          },
+          {
+            display: 'registered user (with custom role)',
+            user: otherGuy,
+            stream: myPrivateStream,
+            email: null,
+            role: Roles.Stream.Owner
+          },
+          {
+            display: 'unregistered user',
+            user: null,
+            stream: myPrivateStream,
+            email: 'randomer22@lool.com'
+          },
+          {
+            display: 'unregistered user (with custom role)',
+            user: null,
+            stream: myPrivateStream,
+            email: 'randomer22@lool.com',
+            Role: Roles.Stream.Reviewer
+          }
+        ]
 
-          const sendEmailInvocations = mailerMock.hijackFunction(
-            'sendEmail',
-            async () => true
-          )
+        userTypesDataSet.forEach(({ display, user, stream, email, role }) => {
+          it(`can ${
+            projectInvite ? 'project' : 'stream'
+          } invite a ${display}`, async () => {
+            const messagePart1 = '1234hiiiiduuuuude'
+            const messagePart2 = 'yepppppp'
+            const unsanitaryMessage = `<a href="https://google.com">${messagePart1}</a> <script>${messagePart2}</script>`
+            const targetEmail = email || user?.email
 
-          const result = await createInvite({
-            email,
-            message: unsanitaryMessage,
-            userId: user?.id || null,
-            streamId: stream.id,
-            role: role || null
+            const sendEmailInvocations = mailerMock.hijackFunction(
+              'sendEmail',
+              async () => true
+            )
+
+            if (projectInvite) {
+              const result = await createProjectInvite({
+                projectId: stream.id,
+                input: {
+                  email,
+                  userId: user?.id || null,
+                  role: role || null
+                }
+              })
+
+              // Check that operation was successful
+              expect(result.data?.projectMutations.invites.create).to.be.ok
+              expect(result.errors).to.be.not.ok
+            } else {
+              const result = await createInvite({
+                email,
+                message: unsanitaryMessage,
+                userId: user?.id || null,
+                streamId: stream.id,
+                role: role || null
+              })
+
+              // Check that operation was successful
+              expect(result.data?.streamInviteCreate).to.be.ok
+              expect(result.errors).to.be.not.ok
+            }
+
+            // Check that email was sent out
+            const emailParams = sendEmailInvocations.args[0][0]
+            expect(emailParams).to.be.ok
+            expect(emailParams.to).to.eq(targetEmail)
+            expect(emailParams.subject).to.be.ok
+
+            // Check that message was sanitized
+            if (!projectInvite) {
+              expect(emailParams.text).to.contain(messagePart1)
+              expect(emailParams.text).to.not.contain(messagePart2)
+              expect(emailParams.html).to.contain(messagePart1)
+              expect(emailParams.html).to.not.contain(messagePart2)
+            }
+
+            // Validate that invite exists
+            const invite = await validateInviteExistanceFromEmail(emailParams)
+            expect(invite).to.be.ok
+            expect(invite?.resource.role).to.eq(role || Roles.Stream.Contributor)
           })
-
-          // Check that operation was successful
-          expect(result.data?.streamInviteCreate).to.be.ok
-          expect(result.errors).to.be.not.ok
-
-          // Check that email was sent out
-          const emailParams = sendEmailInvocations.args[0][0]
-          expect(emailParams).to.be.ok
-          expect(emailParams.to).to.eq(targetEmail)
-          expect(emailParams.subject).to.be.ok
-
-          // Check that message was sanitized
-          expect(emailParams.text).to.contain(messagePart1)
-          expect(emailParams.text).to.not.contain(messagePart2)
-          expect(emailParams.html).to.contain(messagePart1)
-          expect(emailParams.html).to.not.contain(messagePart2)
-
-          // Validate that invite exists
-          const invite = await validateInviteExistanceFromEmail(emailParams)
-          expect(invite).to.be.ok
-          expect(invite?.resource.role).to.eq(role || Roles.Stream.Contributor)
-        })
-      })
-
-      it("can't invite user to a nonexistant stream", async () => {
-        const result = await createInvite({
-          email: 'whocares@really.com',
-          streamId: 'ayoooooooo'
         })
 
-        expect(result.data).to.not.be.ok
-        expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-          'not found'
-        )
-      })
+        it(`can't ${
+          projectInvite ? 'project' : 'stream'
+        } invite user to a nonexistant stream`, async () => {
+          const params = {
+            email: 'whocares@really.com',
+            streamId: 'ayoooooooo'
+          }
 
-      it("can't invite user to a stream, if not its owner", async () => {
-        const result = await createInvite({
-          email: 'whocares@really.com',
-          streamId: otherGuysStream.id
+          const result = projectInvite
+            ? await createProjectInvite({
+                projectId: params.streamId,
+                input: {
+                  email: params.email
+                }
+              })
+            : await createInvite({
+                email: params.email,
+                streamId: params.streamId
+              })
+
+          expect(result.data).to.not.be.ok
+          expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
+            'not found'
+          )
         })
 
-        expect(result.data).to.not.be.ok
-        expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-          'You are not authorized to access this resource'
-        )
-      })
+        it(`can't ${
+          projectInvite ? 'project' : 'stream'
+        } invite user to a stream, if not its owner`, async () => {
+          const params = {
+            email: 'whocares@really.com',
+            streamId: otherGuysStream.id
+          }
 
-      it("can't invite a nonexistant user ID to a stream", async () => {
-        const result = await createInvite({
-          userId: 'bababooey',
-          streamId: myPrivateStream.id
+          const result = projectInvite
+            ? await createProjectInvite({
+                projectId: params.streamId,
+                input: {
+                  email: params.email
+                }
+              })
+            : await createInvite({
+                email: params.email,
+                streamId: params.streamId
+              })
+
+          expect(result.data).to.not.be.ok
+          expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
+            'You are not authorized to access this resource'
+          )
         })
 
-        expect(result.data).to.not.be.ok
-        expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
-          'Attempting to invite an invalid user'
-        )
+        it(`can't ${
+          projectInvite ? 'project' : 'stream'
+        } invite a nonexistant user ID to a stream`, async () => {
+          const params = {
+            userId: 'bababooey',
+            streamId: myPrivateStream.id
+          }
+
+          const result = projectInvite
+            ? await createProjectInvite({
+                projectId: params.streamId,
+                input: {
+                  userId: params.userId
+                }
+              })
+            : await createInvite({
+                userId: params.userId,
+                streamId: params.streamId
+              })
+
+          expect(result.data).to.not.be.ok
+          expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
+            'Attempting to invite an invalid user'
+          )
+        })
       })
     })
 
@@ -787,7 +858,7 @@ describe('[Stream & Server Invites]', () => {
         apollo = await testApolloServer({ authUserId: ownInvitesGuy.id })
       })
 
-      it('all invites can be retrieved successfully', async () => {
+      it('all stream invites can be retrieved successfully', async () => {
         const { data, errors } = await apollo.execute(GetStreamInvitesDocument, {})
 
         expect(errors).to.be.not.ok
@@ -797,6 +868,20 @@ describe('[Stream & Server Invites]', () => {
         const expectedStreamIds = [myPrivateStream.id, otherGuysStream.id]
         const firstInvite = data!.streamInvites[0]
         const secondInvite = data!.streamInvites[1]
+        expect(expectedStreamIds.includes(firstInvite.streamId)).to.be.ok
+        expect(expectedStreamIds.includes(secondInvite.streamId)).to.be.ok
+      })
+
+      it('all project invites can be retrieved successfully', async () => {
+        const { data, errors } = await apollo.execute(GetOwnProjectInvitesDocument, {})
+
+        expect(errors).to.be.not.ok
+        expect(data?.activeUser?.projectInvites).to.be.ok
+        expect(data!.activeUser!.projectInvites.length).to.eq(2)
+
+        const expectedStreamIds = [myPrivateStream.id, otherGuysStream.id]
+        const firstInvite = data!.activeUser!.projectInvites[0]
+        const secondInvite = data!.activeUser!.projectInvites[1]
         expect(expectedStreamIds.includes(firstInvite.streamId)).to.be.ok
         expect(expectedStreamIds.includes(secondInvite.streamId)).to.be.ok
       })
