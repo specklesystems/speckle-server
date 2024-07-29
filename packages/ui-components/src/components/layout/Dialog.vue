@@ -16,7 +16,12 @@
       </TransitionChild>
       <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
         <div
-          class="flex md:justify-center items-end md:items-center h-full w-full md:p-6"
+          class="flex md:justify-center h-full w-full md:p-6"
+          :class="[
+            fullscreen === 'none' || fullscreen === 'desktop'
+              ? 'p-4 items-center'
+              : 'items-end md:items-center'
+          ]"
         >
           <TransitionChild
             as="template"
@@ -30,8 +35,15 @@
           >
             <DialogPanel
               :class="[
-                'dialog-panel transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col md:h-auto',
-                fullscreen ? 'md:h-full' : 'md:max-h-[90vh]',
+                'transform md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col md:h-auto',
+                isFullscreenDesktop
+                  ? 'md:h-full md:h-[98vh] md:!h-[98dvh]'
+                  : 'md:max-h-[90vh]',
+                fullscreen === 'mobile' && 'max-md:h-[98vh] max-md:!h-[98dvh]',
+                fullscreen === 'all' && 'h-[98vh] !h-[98dvh]',
+                fullscreen === 'none' || fullscreen === 'desktop'
+                  ? 'rounded-lg max-h-[90vh]'
+                  : 'rounded-t-lg',
                 widthClasses
               ]"
               :as="isForm ? 'form' : 'div'"
@@ -78,8 +90,8 @@
                 class="flex-1 simple-scrollbar overflow-y-auto text-sm sm:text-base"
                 :class="
                   hasTitle
-                    ? `px-6 pb-4 ${fullscreen && 'md:p-0'}`
-                    : !fullscreen && 'p-6'
+                    ? `px-6 pb-4 ${isFullscreenDesktop && 'md:p-0'}`
+                    : !isFullscreenDesktop && 'p-6'
                 "
                 @scroll="onScroll"
               >
@@ -126,6 +138,7 @@ import { throttle } from 'lodash'
 import { isClient } from '@vueuse/core'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
+type FullscreenValues = 'mobile' | 'desktop' | 'all' | 'none'
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
@@ -133,27 +146,32 @@ const emit = defineEmits<{
   (e: 'back'): void
 }>()
 
-const props = defineProps<{
-  open: boolean
-  maxWidth?: MaxWidthValue
-  fullscreen?: boolean
-  hideCloser?: boolean
-  showBackButton?: boolean
-  /**
-   * Prevent modal from closing when the user clicks outside of the modal or presses Esc
-   */
-  preventCloseOnClickOutside?: boolean
-  title?: string
-  buttons?: Array<LayoutDialogButton>
-  /**
-   * Extra classes to apply to the button container.
-   */
-  buttonsWrapperClasses?: string
-  /**
-   * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
-   */
-  onSubmit?: (e: SubmitEvent) => void
-}>()
+const props = withDefaults(
+  defineProps<{
+    open: boolean
+    maxWidth?: MaxWidthValue
+    fullscreen?: FullscreenValues
+    hideCloser?: boolean
+    showBackButton?: boolean
+    /**
+     * Prevent modal from closing when the user clicks outside of the modal or presses Esc
+     */
+    preventCloseOnClickOutside?: boolean
+    title?: string
+    buttons?: Array<LayoutDialogButton>
+    /**
+     * Extra classes to apply to the button container.
+     */
+    buttonsWrapperClasses?: string
+    /**
+     * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
+     */
+    onSubmit?: (e: SubmitEvent) => void
+  }>(),
+  {
+    fullscreen: 'mobile'
+  }
+)
 
 const slots = useSlots()
 
@@ -197,7 +215,7 @@ const maxWidthWeight = computed(() => {
 const widthClasses = computed(() => {
   const classParts: string[] = ['w-full', 'sm:w-full']
 
-  if (!props.fullscreen) {
+  if (!isFullscreenDesktop.value) {
     classParts.push('md:max-w-2xl')
 
     if (maxWidthWeight.value >= 2) {
@@ -213,6 +231,10 @@ const widthClasses = computed(() => {
 
   return classParts.join(' ')
 })
+
+const isFullscreenDesktop = computed(
+  () => props.fullscreen === 'desktop' || props.fullscreen === 'all'
+)
 
 const onClose = () => {
   if (props.preventCloseOnClickOutside) return
@@ -259,10 +281,5 @@ html.dialog-open {
 }
 html.dialog-open body {
   overflow: hidden !important;
-}
-/* Workaround because in Tailwind vh gets added after dvh */
-.dialog-panel {
-  height: 98vh;
-  height: 98dvh;
 }
 </style>
