@@ -11,6 +11,9 @@ export = !FF_WORKSPACES_MODULE_ENABLED
           throw new WorkspacesModuleDisabledError()
         }
       },
+      Mutation: {
+        workspaceMutations: () => ({})
+      },
       WorkspaceMutations: {
         create: async () => {
           throw new WorkspacesModuleDisabledError()
@@ -26,7 +29,8 @@ export = !FF_WORKSPACES_MODULE_ENABLED
         },
         deleteRole: async () => {
           throw new WorkspacesModuleDisabledError()
-        }
+        },
+        invites: () => ({})
       },
       WorkspaceInviteMutations: {
         create: async () => {

@@ -13,7 +13,7 @@ type BaseInnerSchemaConfig<T extends string, C extends string> = {
   /**
    * Get `knex(tableName)` QueryBuilder instance. Use the generic argument to type the results of the query.
    */
-  knex: <TResult = any>() => Knex.QueryBuilder<any, TResult>
+  knex: <TResult = any>(db?: Knex) => Knex.QueryBuilder<any, TResult>
   /**
    * Get names of table columns. The names can be prefixed with the table name or not, depending
    * on whether `withoutTablePrefix` was set when accessing the helper.
@@ -137,7 +137,7 @@ const createBaseInnerSchemaConfigBuilder =
 
     return {
       name: aliasedTableName as T,
-      knex: () => knex(aliasedTableName),
+      knex: (db?: Knex) => (knex || db)(aliasedTableName),
       col: reduce(
         columns,
         (prev, curr) => {
@@ -163,7 +163,7 @@ const createBaseInnerSchemaConfigBuilder =
  * @param tableName
  * @param columns
  */
-function buildTableHelper<
+export function buildTableHelper<
   T extends string,
   C extends string,
   M extends Optional<MetaSchemaConfig<any, any, any>>
@@ -338,13 +338,9 @@ export const ServerInvites = buildTableHelper('server_invites', [
   'target',
   'inviterId',
   'createdAt',
-  'used',
   'message',
-  'resourceTarget',
-  'resourceId',
-  'role',
-  'token',
-  'serverRole'
+  'resource',
+  'token'
 ])
 
 export const PasswordResetTokens = buildTableHelper('pwdreset_tokens', [

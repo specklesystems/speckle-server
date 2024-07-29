@@ -1,5 +1,5 @@
 const { countUsers, getUsers } = require('@/modules/core/services/users')
-const { resolveTarget } = require('@/modules/serverinvites/helpers/inviteHelper')
+const { resolveTarget } = require('@/modules/serverinvites/helpers/core')
 const { clamp } = require('lodash')
 
 /**

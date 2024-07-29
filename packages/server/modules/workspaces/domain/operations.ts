@@ -1,9 +1,13 @@
+import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
+import { LimitedUserRecord, StreamRecord } from '@/modules/core/helpers/types'
 import {
-  WorkspaceEvents,
-  WorkspaceEventsPayloads
-} from '@/modules/workspacesCore/domain/events'
-import { StreamRecord } from '@/modules/core/helpers/types'
-import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
+  Workspace,
+  WorkspaceAcl,
+  WorkspaceWithOptionalRole
+} from '@/modules/workspacesCore/domain/types'
+import { EventBusPayloads } from '@/modules/shared/services/eventBus'
+import { WorkspaceRoles } from '@speckle/shared'
+import { UserWithRole } from '@/modules/core/repositories/users'
 
 /** Workspace */
 
@@ -13,13 +17,27 @@ type UpsertWorkspaceArgs = {
 
 export type UpsertWorkspace = (args: UpsertWorkspaceArgs) => Promise<void>
 
-type GetWorkspaceArgs = {
+export type GetWorkspace = (args: {
   workspaceId: string
-}
+  userId?: string
+}) => Promise<WorkspaceWithOptionalRole | null>
 
-export type GetWorkspace = (args: GetWorkspaceArgs) => Promise<Workspace | null>
+export type GetWorkspaces = (args: {
+  workspaceIds: string[]
+  userId?: string
+}) => Promise<WorkspaceWithOptionalRole[]>
 
 /** Workspace Roles */
+
+export type GetWorkspaceCollaborators = (args: {
+  workspaceId: string
+  /**
+   * Optionally filter by role
+   */
+  role?: WorkspaceRoles
+}) => Promise<
+  Array<UserWithRole<LimitedUserRecord> & { workspaceRole: WorkspaceRoles }>
+>
 
 type DeleteWorkspaceRoleArgs = {
   workspaceId: string
@@ -94,5 +112,5 @@ export type StoreBlob = (args: string) => Promise<string>
 
 export type EmitWorkspaceEvent = <TEvent extends WorkspaceEvents>(args: {
   eventName: TEvent
-  payload: WorkspaceEventsPayloads[TEvent]
+  payload: EventBusPayloads[TEvent]
 }) => Promise<unknown[]>
