@@ -4,7 +4,7 @@
     v-bind="
       isMobile ? { title: selectedMenuItem ? selectedMenuItem.title : 'Settings' } : {}
     "
-    fullscreen
+    fullscreen="all"
     :show-back-button="isMobile && !!selectedMenuItem"
     @back="targetMenuItem = null"
   >

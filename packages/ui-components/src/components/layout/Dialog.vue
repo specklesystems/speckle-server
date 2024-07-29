@@ -16,24 +16,34 @@
       </TransitionChild>
       <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
         <div
-          class="flex md:justify-center items-end md:items-center h-full w-full md:p-6"
+          class="flex md:justify-center h-full w-full md:p-6"
+          :class="[
+            fullscreen === 'none' || fullscreen === 'desktop'
+              ? 'p-4 items-center'
+              : 'items-end md:items-center'
+          ]"
         >
           <TransitionChild
             as="template"
             enter="ease-out duration-5000"
-            enter-from="md:opacity-0 translate-y-[100%] md:translate-y-4"
+            :enter-from="`md:opacity-0 ${
+              fullscreen === 'mobile' || fullscreen === 'all'
+                ? 'translate-y-[100%]'
+                : 'translate-y-4'
+            } md:translate-y-4`"
             enter-to="md:opacity-100 translate-y-0"
             leave="ease-in duration-5000"
             leave-from="md:opacity-100 translate-y-0"
-            leave-to="md:opacity-0 translate-y-[100%] md:translate-y-4"
+            :leave-to="`md:opacity-0 ${
+              fullscreen === 'mobile' || fullscreen === 'all'
+                ? 'translate-y-[100%]'
+                : 'translate-y-4'
+            } md:translate-y-4`"
             @after-leave="$emit('fully-closed')"
           >
             <DialogPanel
-              :class="[
-                'dialog-panel transform rounded-t-lg md:rounded-xl text-foreground overflow-hidden transition-all text-left shadow-xl flex flex-col md:h-auto border border-outline-2 bg-foundation-page',
-                fullscreen ? 'md:h-full' : 'md:max-h-[90vh]',
-                widthClasses
-              ]"
+              :class="dialogPanelClasses"
+              dialog-panel-classes
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onFormSubmit"
             >
@@ -75,18 +85,9 @@
                 class="absolute z-20 top-4 right-5"
                 @click="open = false"
               >
-                Close
+                <XMarkIcon class="h-4 w-4 md:w-5 md:h-5" />
               </FormButton>
-              <div
-                ref="slotContainer"
-                class="flex-1 simple-scrollbar overflow-y-auto text-body-xs"
-                :class="
-                  hasTitle
-                    ? `px-6 py-4  ${fullscreen && 'md:p-0'}`
-                    : !fullscreen && 'p-6'
-                "
-                @scroll="onScroll"
-              >
+              <div ref="slotContainer" :class="slotContainerClasses" @scroll="onScroll">
                 <slot>Put your content here!</slot>
               </div>
               <div
@@ -130,6 +131,7 @@ import { throttle } from 'lodash'
 import { isClient } from '@vueuse/core'
 
 type MaxWidthValue = 'sm' | 'md' | 'lg' | 'xl'
+type FullscreenValues = 'mobile' | 'desktop' | 'all' | 'none'
 
 const emit = defineEmits<{
   (e: 'update:open', v: boolean): void
@@ -137,27 +139,32 @@ const emit = defineEmits<{
   (e: 'back'): void
 }>()
 
-const props = defineProps<{
-  open: boolean
-  maxWidth?: MaxWidthValue
-  fullscreen?: boolean
-  hideCloser?: boolean
-  showBackButton?: boolean
-  /**
-   * Prevent modal from closing when the user clicks outside of the modal or presses Esc
-   */
-  preventCloseOnClickOutside?: boolean
-  title?: string
-  buttons?: Array<LayoutDialogButton>
-  /**
-   * Extra classes to apply to the button container.
-   */
-  buttonsWrapperClasses?: string
-  /**
-   * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
-   */
-  onSubmit?: (e: SubmitEvent) => void
-}>()
+const props = withDefaults(
+  defineProps<{
+    open: boolean
+    maxWidth?: MaxWidthValue
+    fullscreen?: FullscreenValues
+    hideCloser?: boolean
+    showBackButton?: boolean
+    /**
+     * Prevent modal from closing when the user clicks outside of the modal or presses Esc
+     */
+    preventCloseOnClickOutside?: boolean
+    title?: string
+    buttons?: Array<LayoutDialogButton>
+    /**
+     * Extra classes to apply to the button container.
+     */
+    buttonsWrapperClasses?: string
+    /**
+     * If set, the modal will be wrapped in a form element and the `onSubmit` callback will be invoked when the user submits the form
+     */
+    onSubmit?: (e: SubmitEvent) => void
+  }>(),
+  {
+    fullscreen: 'mobile'
+  }
+)
 
 const slots = useSlots()
 
@@ -201,7 +208,9 @@ const maxWidthWeight = computed(() => {
 const widthClasses = computed(() => {
   const classParts: string[] = ['w-full', 'sm:w-full']
 
-  if (!props.fullscreen) {
+  if (!isFullscreenDesktop.value) {
+    classParts.push('md:max-w-2xl')
+
     if (maxWidthWeight.value === 0) {
       classParts.push('md:max-w-lg')
     }
@@ -217,6 +226,54 @@ const widthClasses = computed(() => {
     if (maxWidthWeight.value >= 4) {
       classParts.push('2xl:max-w-7xl')
     }
+  }
+
+  return classParts.join(' ')
+})
+
+const isFullscreenDesktop = computed(
+  () => props.fullscreen === 'desktop' || props.fullscreen === 'all'
+)
+
+const dialogPanelClasses = computed(() => {
+  const classParts: string[] = [
+    'transform md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation-page text-left shadow-xl border border-outline-2 flex flex-col md:h-auto'
+  ]
+
+  if (isFullscreenDesktop.value) {
+    classParts.push('md:h-full md:h-[98vh] md:!h-[98dvh]')
+  } else {
+    classParts.push('md:max-h-[90vh]')
+  }
+
+  if (props.fullscreen === 'mobile') {
+    classParts.push('max-md:h-[98vh] max-md:!h-[98dvh]')
+  }
+
+  if (props.fullscreen === 'all') {
+    classParts.push('h-[98vh] !h-[98dvh]')
+  }
+
+  if (props.fullscreen === 'none' || props.fullscreen === 'desktop') {
+    classParts.push('rounded-lg max-h-[90vh]')
+  } else {
+    classParts.push('rounded-t-lg')
+  }
+
+  classParts.push(widthClasses.value)
+  return classParts.join(' ')
+})
+
+const slotContainerClasses = computed(() => {
+  const classParts: string[] = ['flex-1 simple-scrollbar overflow-y-auto text-body-xs']
+
+  if (hasTitle.value) {
+    classParts.push('px-6 pb-4')
+    if (isFullscreenDesktop.value) {
+      classParts.push('md:p-0')
+    }
+  } else if (!isFullscreenDesktop.value) {
+    classParts.push('p-6')
   }
 
   return classParts.join(' ')
@@ -267,10 +324,5 @@ html.dialog-open {
 }
 html.dialog-open body {
   overflow: hidden !important;
-}
-/* Workaround because in Tailwind vh gets added after dvh */
-.dialog-panel {
-  height: 98vh;
-  height: 98dvh;
 }
 </style>
