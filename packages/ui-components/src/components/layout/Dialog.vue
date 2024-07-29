@@ -26,11 +26,19 @@
           <TransitionChild
             as="template"
             enter="ease-out duration-5000"
-            enter-from="md:opacity-0 translate-y-[100%] md:translate-y-4"
+            :enter-from="`md:opacity-0 ${
+              fullscreen === 'mobile' || fullscreen === 'all'
+                ? 'translate-y-[100%]'
+                : 'translate-y-4'
+            } md:translate-y-4`"
             enter-to="md:opacity-100 translate-y-0"
             leave="ease-in duration-5000"
             leave-from="md:opacity-100 translate-y-0"
-            leave-to="md:opacity-0 translate-y-[100%] md:translate-y-4"
+            :leave-to="`md:opacity-0 ${
+              fullscreen === 'mobile' || fullscreen === 'all'
+                ? 'translate-y-[100%]'
+                : 'translate-y-4'
+            } md:translate-y-4`"
             @after-leave="$emit('fully-closed')"
           >
             <DialogPanel
