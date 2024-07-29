@@ -3817,11 +3817,10 @@ export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   create: Workspace;
   delete: Scalars['Boolean']['output'];
-  deleteRole: Workspace;
+  deleteRole: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   update: Workspace;
-  /** TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes */
-  updateRole: Workspace;
+  updateRole: Scalars['Boolean']['output'];
 };
 
 

@@ -1,7 +1,11 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { getStream, grantStreamPermissions } from '@/modules/core/repositories/streams'
+import {
+  getStream,
+  grantStreamPermissions,
+  revokeStreamPermissions
+} from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
@@ -29,7 +33,9 @@ import {
   WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
 } from '@/modules/workspaces/errors/workspace'
+import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/roles'
 import {
+  deleteWorkspaceRoleFactory as repoDeleteWorkspaceRoleFactory,
   getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory,
   getWorkspaceRolesFactory,
@@ -50,8 +56,9 @@ import {
 } from '@/modules/workspaces/services/invites'
 import {
   createWorkspaceFactory,
-  setWorkspaceRoleFactory,
-  updateWorkspaceFactory
+  deleteWorkspaceRoleFactory,
+  updateWorkspaceFactory,
+  updateWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
 import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
 import { Roles } from '@speckle/shared'
@@ -119,18 +126,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
         create: async (_parent, args, context) => {
           const { name, description, logoUrl } = args.input
 
-          const { emit: emitWorkspaceEvent } = getEventBus()
-
-          const upsertWorkspace = upsertWorkspaceFactory({ db })
-          const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
-          // TODO: Integrate with blobstorage
-          const storeBlob = async () => ''
-
           const createWorkspace = createWorkspaceFactory({
-            upsertWorkspace,
-            upsertWorkspaceRole,
-            emitWorkspaceEvent,
-            storeBlob
+            upsertWorkspace: upsertWorkspaceFactory({ db }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit,
+            // TODO: Integrate with blobstorage
+            storeBlob: async () => ''
           })
 
           const workspace = await createWorkspace({
@@ -152,18 +153,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
         update: async (_parent, args, context) => {
           const { id: workspaceId, ...workspaceInput } = args.input
 
-          const { emit: emitWorkspaceEvent } = getEventBus()
-
-          const getWorkspace = getWorkspaceFactory({ db })
-          const upsertWorkspace = upsertWorkspaceFactory({ db })
-          // TODO: Integrate with blobstorage
-          const storeBlob = async () => ''
-
           const updateWorkspace = updateWorkspaceFactory({
-            getWorkspace,
-            upsertWorkspace,
-            emitWorkspaceEvent,
-            storeBlob
+            getWorkspace: getWorkspaceFactory({ db }),
+            upsertWorkspace: upsertWorkspaceFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit,
+            // TODO: Integrate with blobstorage
+            storeBlob: async () => ''
           })
 
           const workspace = await updateWorkspace({
@@ -175,11 +170,37 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return workspace
         },
-        updateRole: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        updateRole: async (_parent, args) => {
+          const { userId, workspaceId, role } = args.input
+
+          const updateWorkspaceRole = updateWorkspaceRoleFactory({
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit,
+            getStreams,
+            grantStreamPermissions
+          })
+
+          await updateWorkspaceRole({
+            userId,
+            workspaceId,
+            role: mapGqlWorkspaceRoleToMainRole(role)
+          })
+
+          return true
         },
-        deleteRole: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        deleteRole: async (_parent, args) => {
+          const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+            getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
+            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit,
+            getStreams,
+            revokeStreamPermissions
+          })
+
+          await deleteWorkspaceRole(args.input)
+
+          return true
         },
         invites: () => ({})
       },
@@ -240,7 +261,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             }),
             processInvite: processFinalizedWorkspaceInviteFactory({
               getWorkspace: getWorkspaceFactory({ db }),
-              setWorkspaceRole: setWorkspaceRoleFactory({
+              updateWorkspaceRole: updateWorkspaceRoleFactory({
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
                 emitWorkspaceEvent: ({ eventName, payload }) =>

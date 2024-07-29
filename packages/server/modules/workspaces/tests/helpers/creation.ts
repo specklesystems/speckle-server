@@ -25,7 +25,7 @@ import {
 } from '@/modules/workspaces/services/invites'
 import {
   createWorkspaceFactory,
-  setWorkspaceRoleFactory,
+  updateWorkspaceRoleFactory,
   deleteWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
 import { BasicTestUser } from '@/test/authHelper'
@@ -76,7 +76,7 @@ export const assignToWorkspace = async (
   user: BasicTestUser,
   role?: WorkspaceRoles
 ) => {
-  const setWorkspaceRole = setWorkspaceRoleFactory({
+  const updateWorkspaceRole = updateWorkspaceRoleFactory({
     getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args),
@@ -84,7 +84,7 @@ export const assignToWorkspace = async (
     grantStreamPermissions
   })
 
-  await setWorkspaceRole({
+  await updateWorkspaceRole({
     userId: user.id,
     workspaceId: workspace.id,
     role: role || Roles.Workspace.Member

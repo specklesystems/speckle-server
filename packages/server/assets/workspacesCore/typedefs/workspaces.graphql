@@ -46,13 +46,12 @@ type WorkspaceMutations {
     @hasScope(scope: "workspace:create")
   delete(workspaceId: String!): Boolean! @hasScope(scope: "workspace:delete")
   update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
-  """
-  TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes
-  """
-  updateRole(input: WorkspaceRoleUpdateInput!): Workspace!
+  updateRole(input: WorkspaceRoleUpdateInput!): Boolean!
     @hasScope(scope: "workspace:update")
-  deleteRole(input: WorkspaceRoleDeleteInput!): Workspace!
+    @hasWorkspaceRole(role: ADMIN)
+  deleteRole(input: WorkspaceRoleDeleteInput!): Boolean!
     @hasScope(scope: "workspace:update")
+    @hasWorkspaceRole(role: ADMIN)
   invites: WorkspaceInviteMutations!
 }
 

@@ -238,7 +238,7 @@ export const getWorkspaceRoleFactory =
     return await getWorkspaceRoleForUser({ userId, workspaceId })
   }
 
-export const setWorkspaceRoleFactory =
+export const updateWorkspaceRoleFactory =
   ({
     getWorkspaceRoles,
     upsertWorkspaceRole,

@@ -3828,11 +3828,10 @@ export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   create: Workspace;
   delete: Scalars['Boolean']['output'];
-  deleteRole: Workspace;
+  deleteRole: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   update: Workspace;
-  /** TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes */
-  updateRole: Workspace;
+  updateRole: Scalars['Boolean']['output'];
 };
 
 
@@ -5734,10 +5733,10 @@ export type WorkspaceInviteMutationsResolvers<ContextType = GraphQLContext, Pare
 export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceMutations'] = ResolversParentTypes['WorkspaceMutations']> = {
   create?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsCreateArgs, 'input'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteArgs, 'workspaceId'>>;
-  deleteRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteRoleArgs, 'input'>>;
+  deleteRole?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteRoleArgs, 'input'>>;
   invites?: Resolver<ResolversTypes['WorkspaceInviteMutations'], ParentType, ContextType>;
   update?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
-  updateRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;
+  updateRole?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
