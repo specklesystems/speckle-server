@@ -42,18 +42,8 @@
             @after-leave="$emit('fully-closed')"
           >
             <DialogPanel
-              :class="[
-                'transform md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col md:h-auto',
-                isFullscreenDesktop
-                  ? 'md:h-full md:h-[98vh] md:!h-[98dvh]'
-                  : 'md:max-h-[90vh]',
-                fullscreen === 'mobile' && 'max-md:h-[98vh] max-md:!h-[98dvh]',
-                fullscreen === 'all' && 'h-[98vh] !h-[98dvh]',
-                fullscreen === 'none' || fullscreen === 'desktop'
-                  ? 'rounded-lg max-h-[90vh]'
-                  : 'rounded-t-lg',
-                widthClasses
-              ]"
+              :class="dialogPanelClasses"
+              dialog-panel-classes
               :as="isForm ? 'form' : 'div'"
               @submit.prevent="onFormSubmit"
             >
@@ -93,16 +83,7 @@
               >
                 <XMarkIcon class="h-4 w-4 md:w-5 md:h-5" />
               </button>
-              <div
-                ref="slotContainer"
-                class="flex-1 simple-scrollbar overflow-y-auto text-sm sm:text-base"
-                :class="
-                  hasTitle
-                    ? `px-6 pb-4 ${isFullscreenDesktop && 'md:p-0'}`
-                    : !isFullscreenDesktop && 'p-6'
-                "
-                @scroll="onScroll"
-              >
+              <div ref="slotContainer" :class="slotContainerClasses" @scroll="onScroll">
                 <slot>Put your content here!</slot>
               </div>
               <div
@@ -243,6 +224,52 @@ const widthClasses = computed(() => {
 const isFullscreenDesktop = computed(
   () => props.fullscreen === 'desktop' || props.fullscreen === 'all'
 )
+
+const dialogPanelClasses = computed(() => {
+  const classParts: string[] = [
+    'transform md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col md:h-auto'
+  ]
+
+  if (isFullscreenDesktop.value) {
+    classParts.push('md:h-full md:h-[98vh] md:!h-[98dvh]')
+  } else {
+    classParts.push('md:max-h-[90vh]')
+  }
+
+  if (props.fullscreen === 'mobile') {
+    classParts.push('max-md:h-[98vh] max-md:!h-[98dvh]')
+  }
+
+  if (props.fullscreen === 'all') {
+    classParts.push('h-[98vh] !h-[98dvh]')
+  }
+
+  if (props.fullscreen === 'none' || props.fullscreen === 'desktop') {
+    classParts.push('rounded-lg max-h-[90vh]')
+  } else {
+    classParts.push('rounded-t-lg')
+  }
+
+  classParts.push(widthClasses.value)
+  return classParts.join(' ')
+})
+
+const slotContainerClasses = computed(() => {
+  const classParts: string[] = [
+    'flex-1 simple-scrollbar overflow-y-auto text-sm sm:text-base'
+  ]
+
+  if (hasTitle.value) {
+    classParts.push('px-6 pb-4')
+    if (isFullscreenDesktop.value) {
+      classParts.push('md:p-0')
+    }
+  } else if (!isFullscreenDesktop.value) {
+    classParts.push('p-6')
+  }
+
+  return classParts.join(' ')
+})
 
 const onClose = () => {
   if (props.preventCloseOnClickOutside) return
