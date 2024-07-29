@@ -1,6 +1,6 @@
 import { Box3, Material, Object3D, WebGLRenderer } from 'three'
-import { type FilterMaterialOptions } from '../materials/Materials'
-import { NodeRenderView } from '../tree/NodeRenderView'
+import { type FilterMaterialOptions } from '../materials/Materials.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
 
 export enum GeometryType {
   MESH,

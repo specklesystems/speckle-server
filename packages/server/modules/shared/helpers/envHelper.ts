@@ -232,6 +232,14 @@ export function ignoreMissingMigrations() {
 }
 
 /**
+ * Whether to enable GQL API mocks
+ */
+export const mockedApiModules = () => {
+  const base = process.env.MOCKED_API_MODULES
+  return (base || '').split(',').map((x) => x.trim())
+}
+
+/**
  * URL of a project on any FE2 speckle server that will be pulled in and used as the onboarding stream
  */
 export function getOnboardingStreamUrl() {

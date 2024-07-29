@@ -7,7 +7,7 @@
       <FormTextInput
         name="search"
         color="foundation"
-        placeholder="Search Automations"
+        placeholder="Search automations..."
         wrapper-classes="shrink-0"
         show-clear
         :model-value="bind.modelValue.value"
@@ -28,14 +28,14 @@
           :disabled="!!disabledCreateBecauseOf"
           @click="$emit('new-automation')"
         >
-          New Automation
+          New
         </FormButton>
       </div>
     </div>
   </div>
 </template>
 <script setup lang="ts">
-import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/24/outline'
+import { ArrowTopRightOnSquareIcon, PlusIcon } from '@heroicons/vue/20/solid'
 import { useDebouncedTextInput } from '@speckle/ui-components'
 import { automationFunctionsRoute } from '~/lib/common/helpers/route'
 

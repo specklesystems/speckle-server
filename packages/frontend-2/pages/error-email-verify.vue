@@ -12,7 +12,7 @@
         </div>
         <div class="flex justify-center">
           <FormButton size="xl" :icon-left="ArrowLeftIcon" :to="loginRoute">
-            Go to Login
+            Go to login
           </FormButton>
         </div>
       </div>
@@ -31,7 +31,7 @@
             :disabled="resendVerificationEmailLoading"
             @click="onResend"
           >
-            Resend Verification
+            Resend verification
           </FormButton>
         </div>
       </div>

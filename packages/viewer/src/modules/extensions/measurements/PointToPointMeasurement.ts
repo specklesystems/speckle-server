@@ -1,8 +1,8 @@
 import { Box3, Camera, Plane, Raycaster, Vector2, type Intersection } from 'three'
-import { MeasurementPointGizmo } from './MeasurementPointGizmo'
-import { getConversionFactor } from '../../converter/Units'
-import { Measurement, MeasurementState } from './Measurement'
-import { ObjectLayers } from '../../../IViewer'
+import { MeasurementPointGizmo } from './MeasurementPointGizmo.js'
+import { getConversionFactor } from '../../converter/Units.js'
+import { Measurement, MeasurementState } from './Measurement.js'
+import { ObjectLayers } from '../../../IViewer.js'
 
 export class PointToPointMeasurement extends Measurement {
   private startGizmo: MeasurementPointGizmo | null = null

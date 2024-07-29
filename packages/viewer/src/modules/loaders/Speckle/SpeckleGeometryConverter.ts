@@ -1,10 +1,10 @@
-import { Geometry, type GeometryData } from '../../converter/Geometry'
-import MeshTriangulationHelper from '../../converter/MeshTriangulationHelper'
-import { getConversionFactor } from '../../converter/Units'
-import { type NodeData } from '../../tree/WorldTree'
+import { Geometry, type GeometryData } from '../../converter/Geometry.js'
+import MeshTriangulationHelper from '../../converter/MeshTriangulationHelper.js'
+import { getConversionFactor } from '../../converter/Units.js'
+import { type NodeData } from '../../tree/WorldTree.js'
 import { Box3, EllipseCurve, Matrix4, Vector2, Vector3 } from 'three'
-import Logger from 'js-logger'
-import { GeometryConverter, SpeckleType } from '../GeometryConverter'
+import { GeometryConverter, SpeckleType } from '../GeometryConverter.js'
+import Logger from '../../utils/Logger.js'
 
 export class SpeckleGeometryConverter extends GeometryConverter {
   public typeLookupTable: { [type: string]: SpeckleType } = {}
@@ -70,6 +70,8 @@ export class SpeckleGeometryConverter extends GeometryConverter {
         return this.TextToGeometryData(node)
       case SpeckleType.Transform:
         return this.TransformToGeometryData(node)
+      case SpeckleType.InstanceProxy:
+        return this.InstanceProxyToGeometyData(node)
       case SpeckleType.Unknown:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
@@ -176,6 +178,11 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     return null
   }
 
+  private InstanceProxyToGeometyData(node: NodeData): GeometryData | null {
+    node
+    return null
+  }
+
   /**
    * POINT CLOUD
    */
@@ -268,7 +275,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
           `Mesh (id ${node.raw.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
       }
-      colors = this.unpackColors(colorsRaw)
+      colors = this.unpackColors(colorsRaw, true)
     }
 
     return {

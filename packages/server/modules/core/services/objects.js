@@ -169,6 +169,9 @@ module.exports = {
     return ids
   },
 
+  /**
+   * @returns {Promise<string[]>}
+   */
   async createObjects(streamId, objects) {
     // TODO: Switch to knex batch inserting functionality
     // see http://knexjs.org/#Utility-BatchInsert
@@ -248,6 +251,9 @@ module.exports = {
     return ids
   },
 
+  /**
+   * @returns {Promise<Omit<import('@/modules/core/helpers/types').ObjectRecord, 'streamId'>>}
+   */
   async getObject({ streamId, objectId }) {
     const res = await Objects().where({ streamId, id: objectId }).select('*').first()
     if (!res) return null
@@ -257,9 +263,20 @@ module.exports = {
   },
 
   async getObjectChildrenStream({ streamId, objectId }) {
-    const q = Closures()
+    const q = knex.with(
+      'object_children_closure',
+      knex.raw(
+        `SELECT objects.id as parent, d.key as child, d.value as mindepth, ? as "streamId"
+        FROM objects
+        JOIN jsonb_each_text(objects.data->'__closure') d ON true
+        where objects.id = ?`,
+        [streamId, objectId]
+      )
+    )
     q.select('id')
     q.select(knex.raw('data::text as "dataText"'))
+    q.from('object_children_closure')
+
     q.rightJoin('objects', function () {
       this.on('objects.streamId', '=', 'object_children_closure.streamId').andOn(
         'objects.id',
@@ -277,6 +294,9 @@ module.exports = {
     return q.stream({ highWaterMark: 500 })
   },
 
+  /**
+   * @returns {Promise<{objects: import('@/modules/core/helpers/types').ObjectRecord[], cursor: string | null}>}
+   */
   async getObjectChildren({ streamId, objectId, limit, depth, select, cursor }) {
     limit = parseInt(limit) || 50
     depth = parseInt(depth) || 1000
@@ -286,7 +306,7 @@ module.exports = {
     const q = knex.with(
       'object_children_closure',
       knex.raw(
-        `SELECT objects.id as parent, d.key as child, d.value as minDepth, ? as "streamId"
+        `SELECT objects.id as parent, d.key as child, d.value as mindepth, ? as "streamId"
         FROM objects
         JOIN jsonb_each_text(objects.data->'__closure') d ON true
         where objects.id = ?`,
@@ -328,7 +348,7 @@ module.exports = {
           objectId
         ])
       )
-      .andWhere(knex.raw('object_children_closure."mindepth" < ?', [depth]))
+      .andWhere(knex.raw('object_children_closure.mindepth < ?', [depth]))
       .andWhere(knex.raw('id > ?', [cursor ? cursor : '0']))
       .orderBy('objects.id')
       .limit(limit)
@@ -359,8 +379,13 @@ module.exports = {
     return { objects: rows, cursor: lastId }
   },
 
-  // This query is inefficient on larger sets (n * 10k objects) as we need to return the total count on an arbitrarily (user) defined selection of objects.
-  // A possible future optimisation route would be to cache the total count of a query (as objects are immutable, it will not change) on a first run, and, if found on a subsequent round, do a simpler query and merge the total count result.
+  /**
+   *
+   * This query is inefficient on larger sets (n * 10k objects) as we need to return the total count on an arbitrarily (user) defined selection of objects.
+   * A possible future optimisation route would be to cache the total count of a query (as objects are immutable, it will not change) on a first run, and, if found on a subsequent round, do a simpler query and merge the total count result.
+   * @param {*} param0
+   * @returns {Promise<{objects: import('@/modules/core/helpers/types').ObjectRecord[], cursor: string | null, totalCount: number}>}
+   */
   async getObjectChildrenQuery({
     streamId,
     objectId,
@@ -398,6 +423,16 @@ module.exports = {
     const operatorsWhitelist = ['=', '>', '>=', '<', '<=', '!=']
 
     const mainQuery = knex
+      .with(
+        'object_children_closure',
+        knex.raw(
+          `SELECT objects.id as parent, d.key as child, d.value as mindepth, ? as "streamId"
+        FROM objects
+        JOIN jsonb_each_text(objects.data->'__closure') d ON true
+        where objects.id = ?`,
+          [streamId, objectId]
+        )
+      )
       .with('objs', (cteInnerQuery) => {
         // always select the id
         cteInnerQuery.select('id').from('object_children_closure')
@@ -431,7 +466,7 @@ module.exports = {
           })
           .where('object_children_closure.streamId', streamId)
           .andWhere('parent', objectId)
-          .andWhere('minDepth', '<', depth)
+          .andWhere('mindepth', '<', depth)
 
         // Add user provided filters/queries.
         if (Array.isArray(query) && query.length > 0) {

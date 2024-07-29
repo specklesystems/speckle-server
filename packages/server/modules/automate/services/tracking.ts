@@ -17,7 +17,6 @@ import { getCommit } from '@/modules/core/repositories/commits'
 import { getUserById } from '@/modules/core/services/users'
 import { mixpanel } from '@/modules/shared/utils/mixpanel'
 import { throwUncoveredError } from '@speckle/shared'
-import dayjs from 'dayjs'
 
 const isFinished = (runStatus: AutomationRunStatus) => {
   const finishedStatuses: AutomationRunStatus[] = [
@@ -72,7 +71,7 @@ const onAutomationRunStatusUpdated =
       automationWithRevision.projectId
     )
 
-    const mp = mixpanel({ userEmail })
+    const mp = mixpanel({ userEmail, req: undefined })
     await mp.track('Automate Function Run Finished', {
       automationId,
       automationRevisionId: automationWithRevision.id,
@@ -80,10 +79,8 @@ const onAutomationRunStatusUpdated =
       runId: run.id,
       functionRunId: functionRun.id,
       status: functionRun.status,
-      durationInSeconds: dayjs(functionRun.updatedAt).diff(
-        functionRun.createdAt,
-        'second'
-      )
+      durationInSeconds: functionRun.elapsed / 1000,
+      durationInMilliseconds: functionRun.elapsed
     })
   }
 
@@ -133,7 +130,7 @@ const onRunCreated =
           automationRun,
           automation.projectId
         )
-        const mp = mixpanel({ userEmail })
+        const mp = mixpanel({ userEmail, req: undefined })
         await mp.track('Automation Run Triggered', {
           automationId: automation.id,
           automationName: automation.name,

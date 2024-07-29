@@ -1,6 +1,6 @@
 'use strict'
 const knex = require(`@/db/knex`)
-const { ForbiddenError, ApolloError } = require('apollo-server-express')
+const { ForbiddenError } = require('apollo-server-express')
 const {
   pubsub,
   StreamSubscriptions,
@@ -11,12 +11,12 @@ const { Roles } = require('@speckle/shared')
 const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 
 const { ServerAcl: ServerAclSchema } = require('@/modules/core/dbSchema')
-const { getRoles } = require('@/modules/shared/roles')
+const { getRolesFactory } = require('@/modules/shared/repositories/roles')
 const {
   roleResourceTypeToTokenResourceType,
   isResourceAllowed
 } = require('@/modules/core/helpers/token')
-
+const db = require('@/db/knex')
 const ServerAcl = () => ServerAclSchema.knex()
 
 /**
@@ -35,12 +35,38 @@ async function validateScopes(scopes, scope) {
     throw new ForbiddenError(errMsg, { scope })
 }
 
+const getUserAclEntry = async ({ aclTableName, userId, resourceId }) => {
+  if (!userId) {
+    return null
+  }
+
+  const query = { userId }
+
+  // Different acl tables have different names for the resource id column
+  switch (aclTableName) {
+    case 'server_acl': {
+      // No mutation necessary
+      break
+    }
+    case 'stream_acl': {
+      query.resourceId = resourceId
+      break
+    }
+    case 'workspace_acl': {
+      query.workspaceId = resourceId
+      break
+    }
+  }
+
+  return await knex(aclTableName).select('*').where(query).first()
+}
+
 /**
  * Checks the userId against the resource's acl.
  * @param  {string | null | undefined} userId
  * @param  {string} resourceId
  * @param  {string} requiredRole
- * @param {import('@/modules/core/graph/generated/graphql').TokenResourceIdentifier[] | undefined | null} [userResourceAccessLimits]
+ * @param {import('@/modules/core/domain/tokens/types').TokenResourceIdentifier[] | undefined | null} [userResourceAccessLimits]
  */
 async function authorizeResolver(
   userId,
@@ -49,12 +75,12 @@ async function authorizeResolver(
   userResourceAccessLimits
 ) {
   userId = userId || null
-  const roles = await getRoles()
+  const roles = await getRolesFactory({ db })()
 
   // TODO: Cache these results with a TTL of 1 mins or so, it's pointless to query the db every time we get a ping.
 
   const role = roles.find((r) => r.name === requiredRole)
-  if (!role) throw new ApolloError('Unknown role: ' + requiredRole)
+  if (!role) throw new ForbiddenError('Unknown role: ' + requiredRole)
 
   const resourceRuleType = roleResourceTypeToTokenResourceType(role.resourceTarget)
   const isResourceLimited =
@@ -74,20 +100,24 @@ async function authorizeResolver(
   }
 
   try {
-    const { isPublic } = await knex(role.resourceTarget)
-      .select('isPublic')
-      .where({ id: resourceId })
-      .first()
-    if (isPublic && role.weight < 200) return true
+    if (role.resourceTarget !== 'workspace') {
+      const { isPublic } = await knex(role.resourceTarget)
+        .select('isPublic')
+        .where({ id: resourceId })
+        .first()
+      if (isPublic && role.weight < 200) return true
+    }
   } catch {
-    throw new ApolloError(
+    throw new ForbiddenError(
       `Resource of type ${role.resourceTarget} with ${resourceId} not found`
     )
   }
 
-  const userAclEntry = userId
-    ? await knex(role.aclTableName).select('*').where({ resourceId, userId }).first()
-    : null
+  const userAclEntry = await getUserAclEntry({
+    aclTableName: role.aclTableName,
+    userId,
+    resourceId
+  })
 
   if (!userAclEntry) {
     throw new ForbiddenError('You are not authorized to access this resource.')
@@ -99,37 +129,10 @@ async function authorizeResolver(
   throw new ForbiddenError('You are not authorized.')
 }
 
-const Scopes = () => knex('scopes')
-
-async function registerOrUpdateScope(scope) {
-  await knex.raw(
-    `${Scopes()
-      .insert(scope)
-      .toString()} on conflict (name) do update set public = ?, description = ? `,
-    [scope.public, scope.description]
-  )
-  return
-}
-
-const UserRoles = () => knex('user_roles')
-async function registerOrUpdateRole(role) {
-  await knex.raw(
-    `${UserRoles()
-      .insert(role)
-      .toString()} on conflict (name) do update set weight = ?, description = ?, "resourceTarget" = ? `,
-    [role.weight, role.description, role.resourceTarget]
-  )
-  return
-}
-
 module.exports = {
-  registerOrUpdateScope,
-  registerOrUpdateRole,
-  // validateServerRole,
   validateScopes,
   authorizeResolver,
   pubsub,
-  getRoles,
   StreamPubsubEvents: StreamSubscriptions,
   CommitPubsubEvents: CommitSubscriptions,
   BranchPubsubEvents: BranchSubscriptions

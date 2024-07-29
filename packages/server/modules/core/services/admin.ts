@@ -1,12 +1,13 @@
+import db from '@/db/knex'
 import { ServerInviteGraphQLReturnType } from '@/modules/core/helpers/graphTypes'
 import { StreamRecord, UserRecord } from '@/modules/core/helpers/types'
 import { listUsers, countUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
-import { ServerInviteRecord } from '@/modules/serverinvites/helpers/types'
+import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import {
-  countServerInvites,
-  queryServerInvites
-} from '@/modules/serverinvites/repositories'
+  countServerInvitesFactory,
+  queryServerInvitesFactory
+} from '@/modules/serverinvites/repositories/serverInvites'
 import { BaseError } from '@/modules/shared/errors/base'
 import { ServerRoles } from '@speckle/shared'
 
@@ -75,9 +76,10 @@ export const adminInviteList = async (
   args: CollectionQueryArgs
 ): Promise<Collection<ServerInviteGraphQLReturnType>> => {
   const parsedCursor = args.cursor ? parseCursorToDate(args.cursor) : null
+  // TODO: injection
   const [totalCount, inviteItems] = await Promise.all([
-    countServerInvites(args.query),
-    queryServerInvites(args.query, args.limit, parsedCursor)
+    countServerInvitesFactory({ db })(args.query),
+    queryServerInvitesFactory({ db })(args.query, args.limit, parsedCursor)
   ])
   const items = inviteItems.map((invite: ServerInviteRecord) => {
     return {
@@ -104,7 +106,8 @@ export const adminProjectList = async (
     ...args,
     searchQuery: args.query,
     cursor: parsedCursor,
-    streamIdWhitelist: args.streamIdWhitelist
+    streamIdWhitelist: args.streamIdWhitelist,
+    workspaceIdWhitelist: null
   })
   const cursor = cursorDate ? convertDateToCursor(cursorDate) : null
   return {

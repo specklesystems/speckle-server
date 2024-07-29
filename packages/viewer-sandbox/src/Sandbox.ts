@@ -14,7 +14,8 @@ import {
   SpeckleLoader,
   ObjLoader,
   UrlHelper,
-  LoaderEvent
+  LoaderEvent,
+  UpdateFlags
 } from '@speckle/viewer'
 import { FolderApi, Pane } from 'tweakpane'
 import { DiffResult } from '@speckle/viewer'
@@ -24,7 +25,6 @@ import { SelectionExtension } from '@speckle/viewer'
 import { FilteringExtension } from '@speckle/viewer'
 import { MeasurementsExtension } from '@speckle/viewer'
 import { CameraController } from '@speckle/viewer'
-import { UpdateFlags } from '@speckle/viewer'
 import { AssetType, Assets } from '@speckle/viewer'
 import Neutral from '../assets/hdri/Neutral.png'
 import Mild from '../assets/hdri/Mild.png'
@@ -67,7 +67,7 @@ export default class Sandbox {
   public pipelineParams = {
     pipelineOutput: 8,
     accumulationFrames: 16,
-    dynamicAoEnabled: true,
+    dynamicAoEnabled: false,
     dynamicAoParams: {
       intensity: 1.5,
       scale: 0,
@@ -175,7 +175,7 @@ export default class Sandbox {
       this.addViewControls()
       this.properties = await this.viewer.getObjectProperties()
     })
-    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent) => {
+    viewer.on(ViewerEvent.ObjectClicked, (selectionEvent: SelectionEvent | null) => {
       if (selectionEvent && selectionEvent.hits) {
         const firstHitNode = selectionEvent.hits[0].node
         if (firstHitNode) {
@@ -297,12 +297,12 @@ export default class Sandbox {
         // })
         // const origin = unionBox.getCenter(new Vector3())
         objects.forEach((obj: BatchObject) => {
-          // obj.transformTRS(position.value, rotation.value, scale.value, origin)
-          obj.position = new Vector3(
-            position.value.x,
-            position.value.y,
-            position.value.z
-          )
+          obj.transformTRS(position.value)
+          // obj.position = new Vector3(
+          //   position.value.x,
+          //   position.value.y,
+          //   position.value.z
+          // )
         })
         this.viewer.requestRender()
       })
@@ -487,10 +487,23 @@ export default class Sandbox {
         this.viewer
           .getExtension(CameraController)
           .setCameraView({ azimuth: Math.PI / 12, polar: 0 }, false)
-        this.viewer.getRenderer().resetPipeline()
+        this.viewer.requestRender(UpdateFlags.RENDER_RESET)
         await waitForAnimation(1000)
       }
     })
+
+    this.tabs.pages[0]
+      .addInput({ dampening: 30 }, 'dampening', {
+        label: 'Dampening',
+        min: 0,
+        max: 300,
+        step: 10
+      })
+      .on('change', (value) => {
+        this.viewer.getExtension(CameraController).options = {
+          damperDecay: value.value
+        }
+      })
 
     const canonicalViewsFolder = this.tabs.pages[0].addFolder({
       title: 'Canonical Views',
@@ -670,6 +683,12 @@ export default class Sandbox {
       title: 'Dynamic AO',
       expanded: false
     })
+    dynamicAoFolder
+      .addInput(this.pipelineParams, 'dynamicAoEnabled')
+      .on('change', () => {
+        this.viewer.getRenderer().pipelineOptions = this.pipelineParams
+        this.viewer.requestRender()
+      })
 
     dynamicAoFolder
       .addInput(this.pipelineParams.dynamicAoParams, 'intensity', { min: 0, max: 5 })

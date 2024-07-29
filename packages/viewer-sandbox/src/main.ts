@@ -2,14 +2,14 @@ import {
   DefaultViewerParams,
   SelectionEvent,
   ViewerEvent,
-  Viewer
+  Viewer,
+  CameraController
 } from '@speckle/viewer'
 
 import './style.css'
 import Sandbox from './Sandbox'
 import {
   SelectionExtension,
-  CameraController,
   MeasurementsExtension,
   ExplodeExtension,
   DiffExtension,
@@ -105,7 +105,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
@@ -363,8 +363,7 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/b4086833f8/commits/94df4c6d16?overlay=c5b9c260ea,e3dc287d61,eaedd7d0a5,7f126ce0dd,02fee34ce3,9bda31611f,110282c4db,533c311e29,bf6814d779,1ba52affcf,cc4e75125e,3fd628e4e3'
     // Nice towers
     // 'https://latest.speckle.dev/streams/f4efe4bd7f/objects/5083dffc2ce54ce64c1fc4fab48ca877'
-    // 'http://127.0.0.1:3000/streams/30b75f0dea/objects/db765ed44ae10176c0bf8ba60d1ce67d'
-
+    //
     // 'https://speckle.xyz/streams/7b253e5c4c/commits/025fcbb9cf'
     // BIG railway
     // 'https://latest.speckle.dev/streams/a64b432b34/commits/cf7725e404'
@@ -378,6 +377,26 @@ const getStream = () => {
     // 'https://speckle.xyz/streams/8f73d360e7/commits/2cb768cecd'
     // Shiny
     // 'https://latest.speckle.systems/projects/e8b81c24f5/models/759186b9ec'
+    // 'https://latest.speckle.systems/projects/c1faab5c62/models/c8ca2dcbe2@f79f9fe600'
+    // 'https://app.speckle.systems/projects/7591c56179/models/0185a7c62e'
+    // 'https://app.speckle.systems/projects/24c98619ac/models/38639656b8'
+    // 'https://app.speckle.systems/projects/96c43c61a6/models/fd12973e73'
+    // 'https://latest.speckle.systems/projects/2099ac4b5f/models/5d6eb30c16'
+    // Points with display style
+    // 'https://latest.speckle.systems/projects/7117052f4e/models/95c27a604d@1fa0e17f84'
+    // Sum fucking pipes
+    // 'https://app.speckle.systems/projects/122448a81e/models/f21aff1f4a'
+    // Thin plane
+    // 'https://app.speckle.systems/projects/20f72acc58/models/2cf8a736f8'
+    // Rhino sRGB vertex colors
+    // 'https://app.speckle.systems/projects/47bbaf594f/models/ef78e94f72'
+    // 'https://app.speckle.systems/projects/47bbaf594f/models/de52414725f8937b1f0e2f550ef9ca52'
+    // qGIS sRGB vertex colors
+    // 'https://latest.speckle.systems/projects/5a6609a4b9/models/10f4931e8c'
+    // DUI3 blocks
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/c6f3f309a2'
+    'https://latest.speckle.systems/projects/126cd4b7bb/models/6b62c61a22'
+    // 'https://latest.speckle.systems/projects/126cd4b7bb/models/4dc5265453'
   )
 }
 

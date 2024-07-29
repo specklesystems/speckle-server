@@ -1,26 +1,25 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
-    <template #header>Delete Project</template>
+    <template #header>Delete project</template>
     <div class="space-y-4">
       <p>
         Are you sure you want to permanently
         <strong>delete “{{ project.name }}”</strong>
         and all its contents, including
-        <strong>({{ project.models.totalCount }}) {{ modelText }}</strong>
+        <strong>{{ project.models.totalCount }} {{ modelText }}</strong>
         <span v-if="project.commentThreads.totalCount">
           and
-          <strong>
-            ({{ project.commentThreads.totalCount }}) {{ discussionText }}
-          </strong>
+          <strong>{{ project.commentThreads.totalCount }} {{ discussionText }}</strong>
         </span>
         ?
       </p>
-      <p>To confirm deletion, type the project name below and press Delete.</p>
+      <p>To confirm deletion, type the project name below.</p>
       <FormTextInput
         v-model="projectNameInput"
         name="projectNameConfirm"
         label="Project name"
-        placeholder="Type the project name here"
+        size="lg"
+        placeholder="Type the project name here..."
         full-width
         hide-error-message
         class="text-sm"

@@ -7,7 +7,7 @@ import {
   WebGLRenderTarget,
   WebGLRenderer
 } from 'three'
-import { BaseSpecklePass, type SpecklePass } from './SpecklePass'
+import { BaseSpecklePass, type SpecklePass } from './SpecklePass.js'
 
 export class OverlayPass extends BaseSpecklePass implements SpecklePass {
   private camera!: Camera

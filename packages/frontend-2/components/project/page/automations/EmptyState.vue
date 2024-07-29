@@ -26,7 +26,7 @@
             :disabled="!!disabledCreateBecauseOf"
             @click="$emit('new-automation')"
           >
-            New Automation
+            New automation
           </FormButton>
         </div>
         <FormButton
@@ -37,15 +37,15 @@
           target="_blank"
           to="https://docs.google.com/forms/d/e/1FAIpQLSc5e4q0gyG8VkGqA3gRzN71c4TDu0P9W0PXeVarFu_8po3qRA/viewform"
         >
-          Sign Up for Beta
+          Sign up for beta
         </FormButton>
       </div>
     </div>
     <div v-if="isAutomateEnabled" class="flex flex-col gap-9">
       <div class="flex gap-2 flex-col sm:flex-row sm:justify-between sm:items-center">
-        <h2 class="h5 font-bold">Featured Functions</h2>
+        <h2 class="h5 font-bold">Featured functions</h2>
         <FormButton color="secondary" class="shrink-0" :to="automationFunctionsRoute">
-          Explore All Functions
+          Explore all functions
         </FormButton>
       </div>
       <AutomateFunctionCardView v-if="functions.length">

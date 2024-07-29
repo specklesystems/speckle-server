@@ -1,13 +1,11 @@
 <template>
   <ViewerLayoutPanel move-actions-to-bottom @close="$emit('close')">
-    <template #title>Measure Mode</template>
+    <template #title>Measure mode</template>
     <div
       class="flex items-center gap-2 text-xs sm:text-sm px-3 py-1.5 sm:py-2 border-b border-outline-3 text-foreground-2"
     >
       <InformationCircleIcon class="h-5 w-5 sm:h-6 sm:h-6 shrink-0" />
-      <span class="max-w-[210px]">
-        Reloading the model will delete all measurements.
-      </span>
+      <span class="text-xs">Reloading will delete all measurements</span>
     </div>
     <template #actions>
       <FormButton
@@ -18,12 +16,12 @@
         class="font-normal py-1"
         @click="() => clearMeasurements()"
       >
-        Delete All Measurements
+        Delete all measurements
       </FormButton>
     </template>
     <div class="px-3 py-2 sm:p-3 flex flex-col gap-3 border-b border-outline-3">
       <div>
-        <h6 class="font-semibold text-xs sm:text-sm mb-2">Measurement Type</h6>
+        <h6 class="font-semibold text-xs sm:text-sm mb-2">Measurement type</h6>
         <FormRadio
           v-for="option in measurementTypeOptions"
           :key="option.value"
@@ -44,7 +42,7 @@
         :model-value="measurementParams.vertexSnap"
         @update:model-value="() => toggleMeasurementsSnap()"
       />
-      <span class="font-normal text-xs sm:text-sm">Snap to Vertices</span>
+      <span class="font-normal text-xs sm:text-sm">Snap to vertices</span>
     </div>
     <div class="p-3 flex flex-col gap-3">
       <div class="flex flex-col gap-2">
@@ -74,12 +72,6 @@
         </div>
       </div>
     </div>
-    <Portal to="pocket-tip">
-      <ViewerTip class="hidden sm:flex">
-        <strong>Tip:</strong>
-        Right click to cancel measurement
-      </ViewerTip>
-    </Portal>
   </ViewerLayoutPanel>
 </template>
 <script setup lang="ts">

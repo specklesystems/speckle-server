@@ -3,23 +3,23 @@
     v-model:open="isOpen"
     :buttons="[
       {
-        text: 'Delete',
-        props: { color: 'danger', fullWidth: true, disabled: loading },
-        onClick: () => {
-          onDelete()
-        }
-      },
-      {
         text: 'Cancel',
         props: { color: 'secondary', fullWidth: true },
         onClick: () => {
           isOpen = false
         }
+      },
+      {
+        text: 'Delete',
+        props: { color: 'danger', fullWidth: true, disabled: loading },
+        onClick: () => {
+          onDelete()
+        }
       }
     ]"
     max-width="sm"
   >
-    <template #header>Delete Model</template>
+    <template #header>Delete model</template>
     <div class="flex flex-col text-foreground">
       <p class="mb-2">
         Are you sure you want to delete the model
@@ -28,7 +28,7 @@
       </p>
       <p>
         This action is irreversible and all of the versions inside of this model will be
-        deleted also!
+        deleted.
       </p>
     </div>
   </LayoutDialog>

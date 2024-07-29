@@ -1,19 +1,19 @@
 import { Color, DoubleSide, FrontSide, Material, Texture, Vector2 } from 'three'
-import { GeometryType } from '../batching/Batch'
-import { type TreeNode } from '../tree/WorldTree'
-import { NodeRenderView } from '../tree/NodeRenderView'
-import SpeckleLineMaterial from './SpeckleLineMaterial'
-import SpeckleStandardMaterial from './SpeckleStandardMaterial'
-import SpecklePointMaterial from './SpecklePointMaterial'
-import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial'
+import { GeometryType } from '../batching/Batch.js'
+import { type TreeNode } from '../tree/WorldTree.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
+import SpeckleLineMaterial from './SpeckleLineMaterial.js'
+import SpeckleStandardMaterial from './SpeckleStandardMaterial.js'
+import SpecklePointMaterial from './SpecklePointMaterial.js'
+import SpeckleStandardColoredMaterial from './SpeckleStandardColoredMaterial.js'
 import defaultGradientTexture from '../../assets/gradient.png'
-import { Assets } from '../Assets'
-import { getConversionFactor } from '../converter/Units'
-import SpeckleGhostMaterial from './SpeckleGhostMaterial'
-import SpeckleTextMaterial from './SpeckleTextMaterial'
-import { SpeckleMaterial } from './SpeckleMaterial'
-import SpecklePointColouredMaterial from './SpecklePointColouredMaterial'
-import { type Asset, AssetType, type MaterialOptions } from '../../IViewer'
+import { Assets } from '../Assets.js'
+import { getConversionFactor } from '../converter/Units.js'
+import SpeckleGhostMaterial from './SpeckleGhostMaterial.js'
+import SpeckleTextMaterial from './SpeckleTextMaterial.js'
+import { SpeckleMaterial } from './SpeckleMaterial.js'
+import SpecklePointColouredMaterial from './SpecklePointColouredMaterial.js'
+import { type Asset, AssetType, type MaterialOptions } from '../../IViewer.js'
 
 const defaultGradient: Asset = {
   id: 'defaultGradient',
@@ -255,8 +255,8 @@ export default class Materials {
           renderView.geometryType === GeometryType.TEXT)
           ? Materials.renderMaterialToString(materialData)
           : Materials.isDisplayStyle(materialData) &&
-            renderView.geometryType !== GeometryType.MESH &&
-            renderView.geometryType !== GeometryType.POINT
+            // && renderView.geometryType !== GeometryType.POINT // Allow Points to use displayStyle
+            renderView.geometryType !== GeometryType.MESH
           ? Materials.displayStyleToString(materialData)
           : ''
       if ((materialData as MaterialOptions).stencilOutlines) {
@@ -438,7 +438,7 @@ export default class Materials {
         size: 2,
         sizeAttenuation: false
       },
-      ['USE_RTE']
+      ['USE_RTE', 'USE_GRADIENT_RAMP']
     )
     ;(this.pointCloudColouredMaterial as SpecklePointMaterial).toneMapped = false
     this.pointCloudGradientMaterial = new SpecklePointColouredMaterial(
@@ -448,7 +448,7 @@ export default class Materials {
         size: 2,
         sizeAttenuation: false
       },
-      ['USE_RTE']
+      ['USE_RTE', 'USE_GRADIENT_RAMP']
     )
     ;(
       this.pointCloudGradientMaterial as SpecklePointColouredMaterial

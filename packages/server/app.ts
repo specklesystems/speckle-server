@@ -1,4 +1,5 @@
 /* eslint-disable camelcase */
+/* eslint-disable  no-restricted-imports */
 /* istanbul ignore file */
 import './bootstrap'
 import http from 'http'
@@ -63,6 +64,7 @@ import { redactSensitiveVariables } from '@/logging/loggingHelper'
 import { buildMocksConfig } from '@/modules/mocks'
 import { defaultErrorHandler } from '@/modules/core/rest/defaultErrorHandler'
 import { migrateDbToLatest } from '@/db/migrations'
+import { statusCodePlugin } from '@/modules/core/graph/plugins/statusCode'
 
 let graphqlServer: ApolloServer
 
@@ -254,6 +256,7 @@ export async function buildApolloServer(
     schema,
     context: buildContext,
     plugins: [
+      statusCodePlugin,
       require('@/logging/apolloPlugin'),
       ApolloServerPluginLandingPageLocalDefault({
         embed: true,
@@ -331,6 +334,16 @@ export async function init() {
   app.use(errorLoggingMiddleware)
   app.use(authContextMiddleware)
   app.use(createRateLimiterMiddleware())
+  app.use(
+    async (
+      _req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      res.setHeader('Content-Security-Policy', "frame-ancestors 'none'")
+      next()
+    }
+  )
   app.use(mixpanelTrackerHelperMiddleware)
 
   app.use(Sentry.Handlers.errorHandler())

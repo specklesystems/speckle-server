@@ -261,7 +261,8 @@ export const Streams = buildTableHelper(
     'createdAt',
     'updatedAt',
     'allowPublicComments',
-    'isDiscoverable'
+    'isDiscoverable',
+    'workspaceId'
   ],
   StreamsMeta
 )
@@ -599,3 +600,5 @@ export const GendoAIRenders = buildTableHelper('gendo_ai_renders', [
 ])
 
 export { knex }
+
+export const USER_EMAILS_TABLE_NAME = 'user_emails'

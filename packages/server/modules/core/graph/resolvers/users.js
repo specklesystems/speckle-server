@@ -14,13 +14,20 @@ const { ActionTypes } = require('@/modules/activitystream/helpers/types')
 const { validateScopes } = require(`@/modules/shared`)
 const zxcvbn = require('zxcvbn')
 const {
-  getAdminUsersListCollection
+  getAdminUsersListCollection,
+  getTotalCounts
 } = require('@/modules/core/services/users/adminUsersListService')
 const { Roles, Scopes } = require('@speckle/shared')
 const { markOnboardingComplete } = require('@/modules/core/repositories/users')
 const { UsersMeta } = require('@/modules/core/dbSchema')
 const { getServerInfo } = require('@/modules/core/services/generic')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
+const {
+  deleteAllUserInvitesFactory,
+  countServerInvitesFactory,
+  findServerInvitesFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const db = require('@/db/knex')
 
 /** @type {import('@/modules/core/graph/generated/graphql').Resolvers} */
 module.exports = {
@@ -60,7 +67,12 @@ module.exports = {
     },
 
     async adminUsers(_parent, args) {
-      return await getAdminUsersListCollection(args)
+      return await getAdminUsersListCollection({
+        findServerInvites: findServerInvitesFactory({ db }),
+        getTotalCounts: getTotalCounts({
+          countServerInvites: countServerInvitesFactory({ db })
+        })
+      })(args)
     },
 
     async userSearch(parent, args, context) {
@@ -151,7 +163,9 @@ module.exports = {
       const user = await getUserByEmail({ email: args.userConfirmation.email })
       if (!user) return false
 
-      await deleteUser(user.id)
+      await deleteUser({
+        deleteAllUserInvites: deleteAllUserInvitesFactory({ db })
+      })(user.id)
       return true
     },
 
@@ -168,7 +182,9 @@ module.exports = {
       await throwForNotHavingServerRole(context, Roles.Server.Guest)
       await validateScopes(context.scopes, Scopes.Profile.Delete)
 
-      await deleteUser(context.userId, args.user)
+      await deleteUser({
+        deleteAllUserInvites: deleteAllUserInvitesFactory({ db })
+      })(context.userId, args.user)
 
       await saveActivity({
         streamId: null,

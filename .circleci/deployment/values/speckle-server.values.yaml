@@ -14,6 +14,7 @@ server:
     local:
       enabled: true
   logLevel: debug
+  logPretty: true
 
   email:
     enabled: false
@@ -32,6 +33,7 @@ objects:
     local:
       enabled: true
   logLevel: debug
+  logPretty: true
 
   email:
     enabled: false
@@ -44,18 +46,23 @@ objects:
 
 frontend_2:
   enabled: true
+  logPretty: false #FIX: FE2 does not yet support 'true' https://linear.app/speckle/issue/WEB-1166/frontend-2-does-not-support-nuxt-public-log-pretty=true-in-docker
 
 preview_service:
   replicas: 0
+  logPretty: true
 
 webhook_service:
   replicas: 0
+  logPretty: true
 
 fileimport_service:
   replicas: 0
+  logPretty: true
 
 monitoring:
   replicas: 0
+  logPretty: true
 
 s3:
   endpoint: 'http://minio.minio.svc.cluster.local:9000'

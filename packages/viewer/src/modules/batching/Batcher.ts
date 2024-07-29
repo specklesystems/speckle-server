@@ -1,29 +1,29 @@
 import { MathUtils } from 'three'
-import LineBatch from './LineBatch'
+import LineBatch from './LineBatch.js'
 import Materials, {
   FilterMaterialType,
   type DisplayStyle,
   type RenderMaterial
-} from '../materials/Materials'
-import { NodeRenderView } from '../tree/NodeRenderView'
+} from '../materials/Materials.js'
+import { NodeRenderView } from '../tree/NodeRenderView.js'
 import {
   type Batch,
   type BatchUpdateRange,
   GeometryType,
   NoneBatchUpdateRange
-} from './Batch'
+} from './Batch.js'
 import { Material, WebGLRenderer } from 'three'
-import Logger from 'js-logger'
-import { AsyncPause } from '../World'
-import { RenderTree } from '../tree/RenderTree'
-import TextBatch from './TextBatch'
-import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh'
-import { SpeckleType } from '../loaders/GeometryConverter'
-import { type TreeNode, WorldTree } from '../..'
-import { InstancedMeshBatch } from './InstancedMeshBatch'
-import { Geometry } from '../converter/Geometry'
-import { MeshBatch } from './MeshBatch'
-import { PointBatch } from './PointBatch'
+import { AsyncPause } from '../World.js'
+import { RenderTree } from '../tree/RenderTree.js'
+import TextBatch from './TextBatch.js'
+import SpeckleMesh, { TransformStorage } from '../objects/SpeckleMesh.js'
+import { SpeckleType } from '../loaders/GeometryConverter.js'
+import { type TreeNode, WorldTree } from '../../index.js'
+import { InstancedMeshBatch } from './InstancedMeshBatch.js'
+import { Geometry } from '../converter/Geometry.js'
+import { MeshBatch } from './MeshBatch.js'
+import { PointBatch } from './PointBatch.js'
+import Logger from '../utils/Logger.js'
 
 type BatchTypeMap = {
   [GeometryType.MESH]: MeshBatch
@@ -331,7 +331,9 @@ export default class Batcher {
     } else if (geometryType === GeometryType.LINE) {
       matRef = renderViews[0].renderData.displayStyle
     } else if (geometryType === GeometryType.POINT) {
-      matRef = renderViews[0].renderData.renderMaterial
+      matRef =
+        renderViews[0].renderData.renderMaterial ||
+        renderViews[0].renderData.displayStyle
     } else if (geometryType === GeometryType.POINT_CLOUD) {
       matRef = renderViews[0].renderData.renderMaterial
     } else if (geometryType === GeometryType.TEXT) {

@@ -143,9 +143,9 @@ export async function getStreams(
  * Get a single stream. If userId is specified, the role will be resolved as well.
  */
 export async function getStream(
-  params: { streamId: string; userId?: string },
+  params: { streamId?: string; userId?: string },
   options?: Partial<{ trx: Knex.Transaction }>
-) {
+): Promise<Optional<StreamWithOptionalRole>> {
   const { streamId, userId } = params
   if (!streamId) throw new InvalidArgumentError('Invalid stream ID')
 
@@ -761,7 +761,7 @@ export async function createStream(
     trx: Knex.Transaction
   }>
 ) {
-  const { name, description } = input
+  const { name, description, workspaceId } = input
   const { ownerId, trx } = options || {}
 
   let shouldBePublic: boolean, shouldBeDiscoverable: boolean
@@ -782,7 +782,8 @@ export async function createStream(
     description: description || '',
     isPublic: shouldBePublic,
     isDiscoverable: shouldBeDiscoverable,
-    updatedAt: knex.fn.now()
+    updatedAt: knex.fn.now(),
+    workspaceId: workspaceId || null
   }
 
   // Create the stream & set up permissions

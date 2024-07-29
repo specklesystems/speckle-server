@@ -20,12 +20,11 @@ const {
 
 const { authorizeResolver, validateScopes } = require(`@/modules/shared`)
 const {
-  RateLimitError,
   getRateLimitResult,
   isRateLimitBreached
 } = require('@/modules/core/services/ratelimiter')
 const {
-  getPendingStreamCollaborators
+  getPendingStreamCollaboratorsFactory
 } = require('@/modules/serverinvites/services/inviteRetrievalService')
 const { removePrivateFields } = require('@/modules/core/helpers/userHelper')
 const {
@@ -49,6 +48,7 @@ const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
 const { Roles, Scopes } = require('@speckle/shared')
 const { StreamNotFoundError } = require('@/modules/core/errors/stream')
 const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
+const { RateLimitError } = require('@/modules/core/errors/ratelimit')
 
 const {
   toProjectIdWhitelist,
@@ -57,6 +57,12 @@ const {
 const {
   TokenResourceIdentifierType
 } = require('@/modules/core/graph/generated/graphql')
+const {
+  queryAllStreamInvitesFactory
+} = require('@/modules/serverinvites/repositories/serverInvites')
+const db = require('@/db/knex')
+const { isWorkspacesModuleEnabled } = require('@/modules/core/helpers/features')
+const { WorkspacesModuleDisabledError } = require('@/modules/core/errors/workspaces')
 
 // subscription events
 const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
@@ -167,7 +173,9 @@ module.exports = {
 
     async pendingCollaborators(parent) {
       const { id: streamId } = parent
-      return await getPendingStreamCollaborators(streamId)
+      return await getPendingStreamCollaboratorsFactory({
+        queryAllStreamInvites: queryAllStreamInvitesFactory({ db })
+      })(streamId)
     },
 
     async favoritedDate(parent, _args, ctx) {
@@ -251,6 +259,19 @@ module.exports = {
       const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
+      }
+
+      if (args.stream.workspaceId) {
+        if (!isWorkspacesModuleEnabled()) {
+          // Ugly but complete, will go away if/when resolver moved to workspaces module
+          throw new WorkspacesModuleDisabledError()
+        }
+        await authorizeResolver(
+          context.userId,
+          args.stream.workspaceId,
+          Roles.Workspace.Member,
+          context.resourceAccessRules
+        )
       }
 
       const { id } = await createStreamReturnRecord(

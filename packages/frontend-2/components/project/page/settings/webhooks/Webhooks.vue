@@ -7,7 +7,6 @@
     <template #top-buttons>
       <FormButton
         color="secondary"
-        text-color="primary"
         :icon-left="BookOpenIcon"
         to="https://speckle.guide/dev/server-webhooks.html"
         external
@@ -16,7 +15,7 @@
         Docs
       </FormButton>
       <FormButton :icon-left="PlusIcon" @click="openCreateWebhookDialog">
-        Create
+        New
       </FormButton>
     </template>
     <template v-if="webhooks.length !== 0">
@@ -27,7 +26,7 @@
           { id: 'data', header: 'Data', classes: 'col-span-5' },
           {
             id: 'triggers',
-            header: 'Trigger Events',
+            header: 'Trigger events',
             classes: 'col-span-6 whitespace-break-spaces text-xs'
           }
         ]"
@@ -124,12 +123,11 @@
 import { useMutation, useQuery } from '@vue/apollo-composable'
 import {
   PlusIcon,
-  BookOpenIcon,
   InformationCircleIcon,
   CheckCircleIcon,
   XCircleIcon
 } from '@heroicons/vue/20/solid'
-import { TrashIcon, PencilIcon } from '@heroicons/vue/24/outline'
+import { TrashIcon, PencilIcon, BookOpenIcon } from '@heroicons/vue/24/outline'
 import { FormSwitch, LayoutTable } from '@speckle/ui-components'
 import { projectWebhooksQuery } from '~~/lib/projects/graphql/queries'
 import { updateWebhookMutation } from '~~/lib/projects/graphql/mutations'

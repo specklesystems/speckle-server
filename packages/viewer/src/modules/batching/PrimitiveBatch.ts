@@ -1,15 +1,16 @@
 import { Material, Object3D, BufferGeometry, BufferAttribute, Box3 } from 'three'
-import { NodeRenderView } from '../..'
+import { NodeRenderView } from '../../index.js'
 import {
   AllBatchUpdateRange,
   type Batch,
   type BatchUpdateRange,
   GeometryType,
   NoneBatchUpdateRange
-} from './Batch'
-import { type DrawGroup } from './Batch'
-import Materials from '../materials/Materials'
-import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial'
+} from './Batch.js'
+import { type DrawGroup } from './Batch.js'
+import Materials from '../materials/Materials.js'
+import SpeckleStandardColoredMaterial from '../materials/SpeckleStandardColoredMaterial.js'
+import SpecklePointColouredMaterial from '../materials/SpecklePointColouredMaterial.js'
 
 export abstract class Primitive<
   TGeometry extends BufferGeometry = BufferGeometry,
@@ -244,7 +245,10 @@ export abstract class PrimitiveBatch implements Batch {
          *  because otherwise three.js won't properly update our custom uniforms
          */
         if (range.materialOptions.rampTexture !== undefined) {
-          if (range.material instanceof SpeckleStandardColoredMaterial) {
+          if (
+            range.material instanceof SpeckleStandardColoredMaterial ||
+            range.material instanceof SpecklePointColouredMaterial
+          ) {
             range.material.setGradientTexture(range.materialOptions.rampTexture)
           }
         }

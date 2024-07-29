@@ -22,7 +22,7 @@
       >
         <div
           v-show="item.expanded"
-          class="transition hover:bg-foundation bg-white/80 dark:bg-neutral-800/90 dark:hover:bg-neutral-800 backdrop-blur-sm rounded-lg shadow-md mb-8 mx-2 px-4 py-4 gap-2 sm:gap-4 sm:ml-12 sm:max-w-xs pointer-events-auto"
+          class="transition bg-foundation rounded-lg shadow-md mb-8 mx-2 px-4 py-4 gap-2 sm:gap-4 sm:ml-12 sm:max-w-xs pointer-events-auto"
         >
           <div
             class="sm:hidden flex items-center justify-center w-full gap-3 mt-1 mb-3"

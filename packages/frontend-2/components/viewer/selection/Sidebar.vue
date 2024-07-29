@@ -1,41 +1,43 @@
 <template>
   <ViewerCommentsPortalOrDiv v-if="shouldRenderSidebar" to="bottomPanel">
     <ViewerSidebar :open="sidebarOpen" @close="onClose">
-      <template #title><div class="select-none">Selection Info</div></template>
+      <template #title><div class="select-none">Selection info</div></template>
       <template #actions>
-        <FormButton
-          size="xs"
-          color="secondary"
-          class="opacity-80 hover:opacity-100"
-          @click.stop="hideOrShowSelection"
-        >
-          <div v-if="!isHidden" class="flex items-center gap-1">
+        <FormButton size="xs" text color="secondary" @click.stop="hideOrShowSelection">
+          <div
+            v-if="!isHidden"
+            class="flex items-center gap-1 text-foreground hover:text-primary"
+          >
             <EyeSlashIcon class="h-4 w-4" />
             Hide
           </div>
-          <div v-else class="flex items-center gap-1">
-            <EyeIcon class="h-4 w-4" />
-            Unhide
+          <div v-else class="flex items-center gap-1 text-primary">
+            <EyeSlashIcon class="h-4 w-4" />
+            Hidden
           </div>
         </FormButton>
-        <FormButton
-          size="xs"
-          color="secondary"
-          class="hover:opacity-100"
-          :class="isIsolated ? 'text-primary opacity-100' : 'opacity-80'"
-          @click.stop="isolateOrUnisolateSelection"
-        >
+        <FormButton size="xs" text @click.stop="isolateOrUnisolateSelection">
           <div class="flex items-center gap-1">
-            <FunnelIconOutline v-if="!isIsolated" class="h-4 w-4" />
-            <FunnelIcon v-else class="h-4 w-4" />
-            Isolate
+            <div
+              v-if="!isIsolated"
+              class="flex items-center gap-1 text-foreground hover:text-primary"
+            >
+              <FunnelIconOutline class="h-4 w-4" />
+              Isolate
+            </div>
+            <div v-else class="flex items-center gap-1 text-primary">
+              <FunnelIcon class="h-4 w-4" />
+              Isolated
+            </div>
           </div>
         </FormButton>
         <div class="flex justify-end w-full">
           <div v-tippy="`Open selection in new window`" class="max-w-max">
-            <FormButton size="xs" :to="selectionLink" color="secondary" target="_blank">
+            <FormButton size="xs" text :to="selectionLink" target="_blank">
               <span class="sr-only">Open selection in new window</span>
-              <ArrowTopRightOnSquareIcon class="w-4" />
+              <ArrowTopRightOnSquareIcon
+                class="w-4 text-foreground hover:text-primary"
+              />
             </FormButton>
           </div>
         </div>
@@ -52,7 +54,7 @@
         </div>
         <div v-if="itemCount <= objects.length" class="mb-2">
           <FormButton size="xs" text full-width @click="itemCount += 10">
-            View More ({{ objects.length - itemCount }})
+            View more ({{ objects.length - itemCount }})
           </FormButton>
         </div>
       </div>
@@ -66,7 +68,6 @@
 </template>
 <script setup lang="ts">
 import {
-  EyeIcon,
   EyeSlashIcon,
   FunnelIcon,
   ArrowTopRightOnSquareIcon

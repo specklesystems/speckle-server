@@ -11,6 +11,11 @@ export const Roles = Object.freeze(<const>{
     Contributor: 'stream:contributor',
     Reviewer: 'stream:reviewer'
   },
+  Workspace: {
+    Admin: 'workspace:admin',
+    Member: 'workspace:member',
+    Guest: 'workspace:guest'
+  },
   Server: {
     Admin: 'server:admin',
     User: 'server:user',
@@ -41,11 +46,32 @@ export const RoleInfo = Object.freeze(<const>{
     [Roles.Server.User]: 'User',
     [Roles.Server.Guest]: 'Guest',
     [Roles.Server.ArchivedUser]: 'Archived'
+  },
+  Workspace: {
+    [Roles.Workspace.Admin]: {
+      title: 'Admin',
+      description:
+        'A role assigned workspace administrators. They have full control over the workspace.'
+    },
+    [Roles.Workspace.Member]: {
+      title: 'Member',
+      description:
+        'A role assigned workspace members. They have access to resources in the workspace.'
+    },
+    [Roles.Workspace.Guest]: {
+      title: 'Member',
+      description:
+        'A role assigned workspace guests. Their access to resources in the workspace is limited to resources they have explicit roles on.'
+    }
   }
 })
 
 export type ServerRoles = (typeof Roles)['Server'][keyof (typeof Roles)['Server']]
+export type WorkspaceRoles =
+  (typeof Roles)['Workspace'][keyof (typeof Roles)['Workspace']]
 export type StreamRoles = (typeof Roles)['Stream'][keyof (typeof Roles)['Stream']]
+
+export type AvailableRoles = ServerRoles | StreamRoles | WorkspaceRoles
 
 /**
  * Speckle scope constants
@@ -84,8 +110,38 @@ export const Scopes = Object.freeze(<const>{
   AutomateFunctions: {
     Read: 'automate-functions:read',
     Write: 'automate-functions:write'
+  },
+  Workspaces: {
+    Create: 'workspace:create',
+    Read: 'workspace:read',
+    Update: 'workspace:update',
+    Delete: 'workspace:delete'
   }
 })
+
+export type StreamScopes = (typeof Scopes)['Streams'][keyof (typeof Scopes)['Streams']]
+export type ProfileScopes = (typeof Scopes)['Profile'][keyof (typeof Scopes)['Profile']]
+export type UserScopes = (typeof Scopes)['Users'][keyof (typeof Scopes)['Users']]
+export type ServerScopes = (typeof Scopes)['Server'][keyof (typeof Scopes)['Server']]
+export type TokenScopes = (typeof Scopes)['Tokens'][keyof (typeof Scopes)['Tokens']]
+export type AppScopes = (typeof Scopes)['Apps'][keyof (typeof Scopes)['Apps']]
+export type AutomateScopes =
+  (typeof Scopes)['Automate'][keyof (typeof Scopes)['Automate']]
+export type AutomateFunctionScopes =
+  (typeof Scopes)['AutomateFunctions'][keyof (typeof Scopes)['AutomateFunctions']]
+export type WorkspaceScopes =
+  (typeof Scopes)['Workspaces'][keyof (typeof Scopes)['Workspaces']]
+
+export type AvailableScopes =
+  | StreamScopes
+  | ProfileScopes
+  | UserScopes
+  | ServerScopes
+  | TokenScopes
+  | AppScopes
+  | AutomateScopes
+  | AutomateFunctionScopes
+  | WorkspaceScopes
 
 /**
  * All scopes
