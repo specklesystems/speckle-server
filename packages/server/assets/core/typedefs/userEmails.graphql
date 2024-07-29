@@ -15,11 +15,23 @@ extend type Query {
 input CreateUserEmailInput {
   email: String!
 }
+input DeleteUserEmailInput {
+  id: ID!
+}
+input SetPrimaryUserEmailInput {
+  id: ID!
+}
 
 extend type Mutation {
   createUserEmail(input: CreateUserEmailInput!): ID!
     @hasServerRole(role: SERVER_GUEST)
     @hasScope(scope: "profile:email")
 
+  deleteUserEmail(input: DeleteUserEmailInput!): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
 
+  setPrimaryUserEmail(input: SetPrimaryUserEmailInput!): Boolean!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
 }

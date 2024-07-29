@@ -10,6 +10,7 @@ import { createPersonalAccessToken } from '@/modules/core/services/tokens'
 import { Scopes } from '@speckle/shared'
 import { createUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
+import { UserEmails } from '@/modules/core/dbSchema'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 
 describe('User emails graphql @core', () => {
@@ -86,4 +87,79 @@ describe('User emails graphql @core', () => {
     })
   })
 
+  describe('deleteUserEmail mutation', () => {
+    it('should delete email for user', async () => {
+      const { app, server } = await beforeEachContext()
+      const { sendRequest } = await initializeTestServer(server, app)
+
+      const userId = await createUser({
+        name: 'emails user',
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+      const email = createRandomEmail()
+
+      const id = await createUserEmailFactory({ db })({
+        userEmail: {
+          email,
+          userId,
+          primary: false
+        }
+      })
+
+      const token = `Bearer ${await createPersonalAccessToken(
+        userId,
+        'test token user emails',
+        [Scopes.Profile.Email]
+      )}`
+
+      const res = await sendRequest(token, {
+        query:
+          'mutation deleteUserEmail($input: DeleteUserEmailInput!) { deleteUserEmail(input: $input) }',
+        variables: { input: { id } }
+      })
+
+      expect(res.error).to.not.ok
+
+      expect(res.body.data.deleteUserEmail).to.be.true
+    })
+  })
+
+  describe('setPrimaryUserEmail mutation', () => {
+    it('should set primary email for user', async () => {
+      const { app, server } = await beforeEachContext()
+      const { sendRequest } = await initializeTestServer(server, app)
+
+      const userId = await createUser({
+        name: 'emails user',
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+      const email = createRandomEmail()
+
+      const id = await createUserEmailFactory({ db })({
+        userEmail: {
+          email,
+          userId,
+          primary: false
+        }
+      })
+
+      const token = `Bearer ${await createPersonalAccessToken(
+        userId,
+        'test token user emails',
+        [Scopes.Profile.Email]
+      )}`
+
+      const res = await sendRequest(token, {
+        query:
+          'mutation setPrimaryUserEmail($input: SetPrimaryUserEmailInput!) { setPrimaryUserEmail(input: $input) }',
+        variables: { input: { id } }
+      })
+
+      expect(res.error).to.not.ok
+
+      expect(res.body.data.setPrimaryUserEmail).to.be.true
+    })
+  })
 })
