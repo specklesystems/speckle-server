@@ -840,14 +840,16 @@ describe('[Stream & Server Invites]', () => {
         await Promise.all([
           createInviteDirectly(
             {
-              user: ownInvitesGuy,
-              stream: myPrivateStream
+              stream: myPrivateStream,
+              // SPecifically w/ email
+              email: ownInvitesGuy.email
             },
             me.id
           ),
           createInviteDirectly(
             {
-              user: ownInvitesGuy,
+              // Specifically w/ id
+              userId: ownInvitesGuy.id,
               stream: otherGuysStream
             },
             otherGuy.id
