@@ -9,7 +9,7 @@
     />
     <div class="flex justify-center mt-2">
       <FormButton size="lg" class="shadow-md" @click="authoriseManager()">
-        Authorize Manager
+        Authorize manager
       </FormButton>
     </div>
   </OnboardingDialogBase>
