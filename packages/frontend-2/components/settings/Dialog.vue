@@ -45,23 +45,6 @@
             />
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
-
-        <div class="text-23s text-foreground-2">
-          User ID:
-          <CommonTextLink v-if="user" size="xs" no-underline @click="copyUserId">
-            #{{ user.id }}
-          </CommonTextLink>
-          <template v-if="distinctId">
-            <CommonTextLink
-              class="turncate"
-              size="xs"
-              no-underline
-              @click="copyDistinctId"
-            >
-              {{ distinctId }}
-            </CommonTextLink>
-          </template>
-        </div>
       </LayoutSidebar>
       <component
         :is="selectedMenuItem.component"
@@ -102,8 +85,7 @@ type MenuItem = {
   component: ReturnType<typeof defineComponent>
 }
 
-const { copy } = useClipboard()
-const { activeUser: user, distinctId } = useActiveUser()
+const { activeUser: user } = useActiveUser()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
 const isMobile = breakpoints.smaller('md')
 
@@ -173,11 +155,4 @@ watch(
   },
   { immediate: true }
 )
-
-const copyUserId = () => {
-  copy(user.value.id)
-}
-const copyDistinctId = () => {
-  copy(distinctId.value)
-}
 </script>
