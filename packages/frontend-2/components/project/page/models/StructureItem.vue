@@ -99,12 +99,12 @@
 
             <div class="flex gap-2 items-center">
               <FormButton
-                v-if="!isPendingFileUpload(item) && item.model"
+                v-if="!isPendingFileUpload(item) && model?.id"
                 rounded
                 size="sm"
                 class="gap-0.5"
                 color="subtle"
-                @click.stop="router.push(modelVersionsRoute(project.id, item.model.id))"
+                @click.stop="onVersionsClick"
               >
                 <IconVersions class="h-4 w-4" />
                 {{ model?.versionCount.totalCount }}
@@ -416,6 +416,12 @@ const triggerVersionUpload = () => {
 const onCardClick = () => {
   if (model.value) {
     router.push(modelRoute(props.project.id, model.value.id))
+  }
+}
+
+const onVersionsClick = () => {
+  if (model.value) {
+    router.push(modelVersionsRoute(props.project.id, model.value.id))
   }
 }
 </script>
