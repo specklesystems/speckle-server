@@ -24,6 +24,7 @@ const defaultGradient: Asset = {
 export interface RenderMaterial {
   id: string
   color: number
+  emissive: number
   opacity: number
   roughness: number
   metalness: number
@@ -122,6 +123,7 @@ export default class Materials {
       renderMaterial = {
         id: materialNode.model.raw.renderMaterial.id,
         color: materialNode.model.raw.renderMaterial.diffuse,
+        emissive: materialNode.model.raw.renderMaterial.emissive,
         opacity:
           materialNode.model.raw.renderMaterial.opacity !== undefined
             ? materialNode.model.raw.renderMaterial.opacity
@@ -664,7 +666,7 @@ export default class Materials {
     const mat: SpeckleStandardMaterial = new SpeckleStandardMaterial(
       {
         color: materialData.color,
-        emissive: 0x0,
+        emissive: 0x0, // materialData.emissive. Disabling this for now
         roughness: materialData.roughness,
         metalness: materialData.metalness,
         opacity: materialData.opacity,
@@ -677,6 +679,7 @@ export default class Materials {
     mat.depthWrite = mat.transparent ? false : true
     mat.clipShadows = true
     mat.color.convertSRGBToLinear()
+    mat.emissive.convertSRGBToLinear()
     mat.updateArtificialRoughness(Materials.DEFAULT_ARTIFICIAL_ROUGHNESS)
     return mat
   }
