@@ -36,7 +36,11 @@ export const hasWorkspaceRole: GraphqlDirectiveBuilder = () => {
             const [parent, , context, info] = args
 
             // Validate stream role only if parent is a Stream type
-            if (['Workspace'].includes(info.parentType?.name) && parent) {
+            if (
+              ['Workspace'].includes(info.parentType?.name) &&
+              parent &&
+              !('$ref' in parent)
+            ) {
               if (!parent.id) {
                 // This should never happen as long as our resolvers always return workspaces with their IDs
                 throw new ForbiddenError(
