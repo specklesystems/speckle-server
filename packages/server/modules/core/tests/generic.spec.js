@@ -160,7 +160,8 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       const role = await authorizeResolver(
         serverOwner.id,
         myStream.id,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        null
       )
       expect(role).to.equal(Roles.Stream.Owner)
     })
@@ -171,7 +172,8 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       const role = await authorizeResolver(
         serverOwner.id,
         myStream.id,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        null
       )
       expect(role).to.equal(Roles.Stream.Contributor)
     })
@@ -180,7 +182,8 @@ describe('Generic AuthN & AuthZ controller tests', () => {
         await authorizeResolver(
           serverOwner.id,
           notMyStream.id,
-          Roles.Stream.Contributor
+          Roles.Stream.Contributor,
+          null
         )
         throw 'This should have thrown'
       } catch (e) {
@@ -195,14 +198,20 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       const role = await authorizeResolver(
         serverOwner.id,
         notMyStream.id,
-        Roles.Stream.Contributor
+        Roles.Stream.Contributor,
+        null
       )
       expect(role).to.equal(Roles.Stream.Contributor)
     })
 
     it('should not allow server:users to be anything if adminOverride is disabled', async () => {
       try {
-        await authorizeResolver(otherGuy.id, myStream.id, Roles.Stream.Contributor)
+        await authorizeResolver(
+          otherGuy.id,
+          myStream.id,
+          Roles.Stream.Contributor,
+          null
+        )
         throw 'This should have thrown'
       } catch (e) {
         expect(e instanceof ForbiddenError)
@@ -213,7 +222,12 @@ describe('Generic AuthN & AuthZ controller tests', () => {
       envHelperMock.enable()
       envHelperMock.mockFunction('adminOverrideEnabled', () => true)
       try {
-        await authorizeResolver(otherGuy.id, myStream.id, Roles.Stream.Contributor)
+        await authorizeResolver(
+          otherGuy.id,
+          myStream.id,
+          Roles.Stream.Contributor,
+          null
+        )
         throw 'This should have thrown'
       } catch (e) {
         expect(e instanceof ForbiddenError)

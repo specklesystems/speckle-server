@@ -349,9 +349,9 @@ export async function addStreamPermissionsRevokedActivity(params: {
  */
 export async function addStreamInviteSentOutActivity(params: {
   streamId: string
-  inviteTargetId: string
+  inviteTargetId: string | null
   inviterId: string
-  inviteTargetEmail: string
+  inviteTargetEmail: string | null
   stream: StreamRecord
 }) {
   const { streamId, inviteTargetId, inviterId, inviteTargetEmail, stream } = params

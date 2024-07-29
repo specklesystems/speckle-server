@@ -3,7 +3,7 @@ import { truncateTables } from '@/test/hooks'
 import { createUser } from '@/modules/core/services/users'
 import { createStream } from '@/modules/core/services/streams'
 import { times, clamp } from 'lodash'
-import { createInviteDirectlyFactory } from '@/test/speckle-helpers/inviteHelper'
+import { createStreamInviteDirectlyFactory } from '@/test/speckle-helpers/inviteHelper'
 import { getAdminUsersList } from '@/test/graphql/users'
 import { buildApolloServer } from '@/app'
 import { addLoadersToCtx } from '@/modules/shared/middleware'
@@ -17,7 +17,7 @@ import db from '@/db/knex'
 // To ensure that the invites are created in the correct order, we need to wait a bit between each creation
 const WAIT_TIMEOUT = 5
 
-const createInviteDirectly = createInviteDirectlyFactory({ db })
+const createInviteDirectly = createStreamInviteDirectlyFactory({ db })
 
 function randomEl<T>(array: T[]): T {
   return array[Math.floor(Math.random() * array.length)]

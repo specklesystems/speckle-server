@@ -1,8 +1,5 @@
-'use strict'
-const { UserInputError } = require('apollo-server-express')
-const { withFilter } = require('graphql-subscriptions')
-
-const {
+import { UserInputError } from 'apollo-server-express'
+import {
   getStream,
   getStreams,
   getStreamUsers,
@@ -11,76 +8,56 @@ const {
   getActiveUserStreamFavoriteDate,
   getStreamFavoritesCount,
   getOwnedFavoritesCount
-} = require('@/modules/core/services/streams')
-
-const {
-  pubsub,
-  StreamSubscriptions: StreamPubsubEvents
-} = require(`@/modules/shared/utils/subscriptions`)
-
-const { authorizeResolver, validateScopes } = require(`@/modules/shared`)
-const {
+} from '@/modules/core/services/streams'
+import {
+  filteredSubscribe,
+  StreamSubscriptions
+} from '@/modules/shared/utils/subscriptions'
+import { authorizeResolver, validateScopes } from '@/modules/shared'
+import {
   getRateLimitResult,
   isRateLimitBreached
-} = require('@/modules/core/services/ratelimiter')
-const {
-  getPendingStreamCollaboratorsFactory
-} = require('@/modules/serverinvites/services/inviteRetrievalService')
-const { removePrivateFields } = require('@/modules/core/helpers/userHelper')
-const {
-  removeStreamCollaborator
-} = require('@/modules/core/services/streams/streamAccessService')
-const {
-  getDiscoverableStreams
-} = require('@/modules/core/services/streams/discoverableStreams')
-const { has } = require('lodash')
-const {
+} from '@/modules/core/services/ratelimiter'
+import { getPendingProjectCollaboratorsFactory } from '@/modules/serverinvites/services/projectInviteManagement'
+import { removePrivateFields } from '@/modules/core/helpers/userHelper'
+import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
+import { getDiscoverableStreams } from '@/modules/core/services/streams/discoverableStreams'
+import { get } from 'lodash'
+import {
   getUserStreamsCount,
   getUserStreams
-} = require('@/modules/core/repositories/streams')
-const {
+} from '@/modules/core/repositories/streams'
+import {
   deleteStreamAndNotify,
   updateStreamAndNotify,
   createStreamReturnRecord,
   updateStreamRoleAndNotify
-} = require('@/modules/core/services/streams/management')
-const { adminOverrideEnabled } = require('@/modules/shared/helpers/envHelper')
-const { Roles, Scopes } = require('@speckle/shared')
-const { StreamNotFoundError } = require('@/modules/core/errors/stream')
-const { throwForNotHavingServerRole } = require('@/modules/shared/authz')
-const { RateLimitError } = require('@/modules/core/errors/ratelimit')
+} from '@/modules/core/services/streams/management'
+import { adminOverrideEnabled } from '@/modules/shared/helpers/envHelper'
+import { Roles, Scopes } from '@speckle/shared'
+import { StreamNotFoundError } from '@/modules/core/errors/stream'
+import { throwForNotHavingServerRole } from '@/modules/shared/authz'
+import { RateLimitError } from '@/modules/core/errors/ratelimit'
 
-const {
-  toProjectIdWhitelist,
-  isResourceAllowed
-} = require('@/modules/core/helpers/token')
-const {
-  TokenResourceIdentifierType
-} = require('@/modules/core/graph/generated/graphql')
-const {
-  queryAllStreamInvitesFactory
-} = require('@/modules/serverinvites/repositories/serverInvites')
-const db = require('@/db/knex')
-const { isWorkspacesModuleEnabled } = require('@/modules/core/helpers/features')
-const { WorkspacesModuleDisabledError } = require('@/modules/core/errors/workspaces')
+import { toProjectIdWhitelist, isResourceAllowed } from '@/modules/core/helpers/token'
+import {
+  Resolvers,
+  TokenResourceIdentifierType,
+  UserStreamsArgs
+} from '@/modules/core/graph/generated/graphql'
+import { queryAllResourceInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
+import db from '@/db/knex'
+import { isWorkspacesModuleEnabled } from '@/modules/core/helpers/features'
+import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
+import { getInvitationTargetUsersFactory } from '@/modules/serverinvites/services/retrieval'
+import { getUsers } from '@/modules/core/repositories/users'
 
-// subscription events
-const USER_STREAM_ADDED = StreamPubsubEvents.UserStreamAdded
-const USER_STREAM_REMOVED = StreamPubsubEvents.UserStreamRemoved
-const STREAM_UPDATED = StreamPubsubEvents.StreamUpdated
-const STREAM_DELETED = StreamPubsubEvents.StreamDeleted
-
-const _deleteStream = async (_parent, args, context, options) => {
-  const { skipAccessChecks = false } = options || {}
-  return await deleteStreamAndNotify(
-    args.id,
-    context.userId,
-    context.resourceAccessRules,
-    { skipAccessChecks }
-  )
-}
-
-const getUserStreamsCore = async (forOtherUser, parent, args, streamIdWhitelist) => {
+const getUserStreamsCore = async (
+  forOtherUser: boolean,
+  parent: { id: string },
+  args: UserStreamsArgs,
+  streamIdWhitelist?: string[]
+) => {
   const totalCount = await getUserStreamsCount({
     userId: parent.id,
     forOtherUser,
@@ -101,7 +78,7 @@ const getUserStreamsCore = async (forOtherUser, parent, args, streamIdWhitelist)
 /**
  * @type {import('@/modules/core/graph/generated/graphql').Resolvers}
  */
-module.exports = {
+export = {
   Query: {
     async stream(_, args, context) {
       const stream = await getStream({ streamId: args.id, userId: context.userId })
@@ -126,16 +103,16 @@ module.exports = {
 
     async streams(parent, args, context) {
       const totalCount = await getUserStreamsCount({
-        userId: context.userId,
-        searchQuery: args.query,
+        userId: context.userId!,
+        searchQuery: args.query || undefined,
         streamIdWhitelist: toProjectIdWhitelist(context.resourceAccessRules)
       })
 
       const { cursor, streams } = await getUserStreams({
-        userId: context.userId,
+        userId: context.userId!,
         limit: args.limit,
         cursor: args.cursor,
-        searchQuery: args.query,
+        searchQuery: args.query || undefined,
         streamIdWhitelist: toProjectIdWhitelist(context.resourceAccessRules)
       })
       return { totalCount, cursor, items: streams }
@@ -148,7 +125,7 @@ module.exports = {
       )
     },
 
-    async adminStreams(parent, args) {
+    async adminStreams(parent, args, ctx) {
       if (args.limit && args.limit > 50)
         throw new UserInputError('Cannot return more than 50 items at a time.')
 
@@ -156,10 +133,11 @@ module.exports = {
         offset: args.offset,
         limit: args.limit,
         orderBy: args.orderBy,
-        publicOnly: args.publicOnly,
+        publicOnly: null,
         searchQuery: args.query,
         visibility: args.visibility,
-        streamIdWhitelist: toProjectIdWhitelist(args.resourceAccessRules)
+        streamIdWhitelist: toProjectIdWhitelist(ctx.resourceAccessRules),
+        cursor: null
       })
       return { totalCount, items: streams }
     }
@@ -173,8 +151,9 @@ module.exports = {
 
     async pendingCollaborators(parent) {
       const { id: streamId } = parent
-      return await getPendingStreamCollaboratorsFactory({
-        queryAllStreamInvites: queryAllStreamInvitesFactory({ db })
+      return await getPendingProjectCollaboratorsFactory({
+        queryAllResourceInvites: queryAllResourceInvitesFactory({ db }),
+        getInvitationTargetUsers: getInvitationTargetUsersFactory({ getUsers })
       })(streamId)
     },
 
@@ -198,7 +177,8 @@ module.exports = {
 
     async role(parent, _args, ctx) {
       // If role already resolved, return that
-      if (has(parent, 'role')) return parent.role
+      const role = get(parent, 'role') as string | undefined
+      if (role?.length) return role
 
       // Otherwise resolve it now through a dataloader
       return await ctx.loaders.streams.getRole.load(parent.id)
@@ -256,7 +236,7 @@ module.exports = {
   },
   Mutation: {
     async streamCreate(parent, args, context) {
-      const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId)
+      const rateLimitResult = await getRateLimitResult('STREAM_CREATE', context.userId!)
       if (isRateLimitBreached(rateLimitResult)) {
         throw new RateLimitError(rateLimitResult)
       }
@@ -277,7 +257,7 @@ module.exports = {
       const { id } = await createStreamReturnRecord(
         {
           ...args.stream,
-          ownerId: context.userId,
+          ownerId: context.userId!,
           ownerResourceAccessRules: context.resourceAccessRules
         },
         { createActivity: true }
@@ -289,24 +269,30 @@ module.exports = {
     async streamUpdate(parent, args, context) {
       await updateStreamAndNotify(
         args.stream,
-        context.userId,
+        context.userId!,
         context.resourceAccessRules
       )
       return true
     },
 
     async streamDelete(parent, args, context) {
-      return await _deleteStream(parent, args, context)
+      return await deleteStreamAndNotify(
+        args.id,
+        context.userId!,
+        context.resourceAccessRules,
+        { skipAccessChecks: false }
+      )
     },
 
     async streamsDelete(parent, args, context) {
       const results = await Promise.all(
-        args.ids.map(async (id) => {
-          const newArgs = { ...args }
-          newArgs.id = id
-          return await _deleteStream(parent, newArgs, context, {
-            skipAccessChecks: true
-          })
+        (args.ids || []).map(async (id) => {
+          return await deleteStreamAndNotify(
+            id,
+            context.userId!,
+            context.resourceAccessRules,
+            { skipAccessChecks: true }
+          )
         })
       )
       return results.every((res) => res === true)
@@ -315,7 +301,7 @@ module.exports = {
     async streamUpdatePermission(parent, args, context) {
       const result = await updateStreamRoleAndNotify(
         args.permissionParams,
-        context.userId,
+        context.userId!,
         context.resourceAccessRules
       )
       return !!result
@@ -324,7 +310,7 @@ module.exports = {
     async streamRevokePermission(parent, args, context) {
       const result = await updateStreamRoleAndNotify(
         args.permissionParams,
-        context.userId,
+        context.userId!,
         context.resourceAccessRules
       )
       return !!result
@@ -335,7 +321,7 @@ module.exports = {
       const { userId, resourceAccessRules } = ctx
 
       return await favoriteStream({
-        userId,
+        userId: userId!,
         streamId,
         favorited,
         userResourceAccessRules: resourceAccessRules
@@ -346,7 +332,12 @@ module.exports = {
       const { streamId } = args
       const { userId } = ctx
 
-      await removeStreamCollaborator(streamId, userId, userId, ctx.resourceAccessRules)
+      await removeStreamCollaborator(
+        streamId,
+        userId!,
+        userId!,
+        ctx.resourceAccessRules
+      )
 
       return true
     }
@@ -354,9 +345,9 @@ module.exports = {
 
   Subscription: {
     userStreamAdded: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([USER_STREAM_ADDED]),
-        (payload, variables, context) => {
+      subscribe: filteredSubscribe(
+        StreamSubscriptions.UserStreamAdded,
+        (payload, _variables, context) => {
           const hasResourceAccess = isResourceAllowed({
             resourceId: payload.userStreamAdded.id,
             resourceType: TokenResourceIdentifierType.Project,
@@ -371,11 +362,10 @@ module.exports = {
         }
       )
     },
-
     userStreamRemoved: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([USER_STREAM_REMOVED]),
-        (payload, variables, context) => {
+      subscribe: filteredSubscribe(
+        StreamSubscriptions.UserStreamRemoved,
+        (payload, _variables, context) => {
           const hasResourceAccess = isResourceAllowed({
             resourceId: payload.userStreamRemoved.id,
             resourceType: TokenResourceIdentifierType.Project,
@@ -391,8 +381,8 @@ module.exports = {
     },
 
     streamUpdated: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([STREAM_UPDATED]),
+      subscribe: filteredSubscribe(
+        StreamSubscriptions.StreamUpdated,
         async (payload, variables, context) => {
           await authorizeResolver(
             context.userId,
@@ -406,8 +396,8 @@ module.exports = {
     },
 
     streamDeleted: {
-      subscribe: withFilter(
-        () => pubsub.asyncIterator([STREAM_DELETED]),
+      subscribe: filteredSubscribe(
+        StreamSubscriptions.StreamDeleted,
         async (payload, variables, context) => {
           await authorizeResolver(
             context.userId,
@@ -428,9 +418,6 @@ module.exports = {
     }
   },
   PendingStreamCollaborator: {
-    /**
-     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
-     */
     async invitedBy(parent, _args, ctx) {
       const { invitedById } = parent
       if (!invitedById) return null
@@ -438,17 +425,11 @@ module.exports = {
       const user = await ctx.loaders.users.getUser.load(invitedById)
       return user ? removePrivateFields(user) : null
     },
-    /**
-     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
-     */
     async streamName(parent, _args, ctx) {
       const { streamId } = parent
       const stream = await ctx.loaders.streams.getStream.load(streamId)
-      return stream.name
+      return stream!.name
     },
-    /**
-     * @param {import('@/modules/serverinvites/services/inviteRetrievalService').PendingStreamCollaboratorGraphQLType} parent
-     */
     async token(parent, _args, ctx) {
       const authedUserId = ctx.userId
       const targetUserId = parent.user?.id
@@ -463,4 +444,4 @@ module.exports = {
       return invite?.token || null
     }
   }
-}
+} as Resolvers

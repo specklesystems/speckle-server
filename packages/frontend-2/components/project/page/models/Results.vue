@@ -20,6 +20,7 @@
         :contributors="contributors"
         @update:loading="finalLoading = $event"
         @clear-search="clearSearch"
+        @model-clicked="(val) => router.push(modelRoute(projectId, val.id))"
       />
     </div>
   </div>
@@ -32,6 +33,7 @@ import type {
   ProjectModelsPageResults_ProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
 import { GridListToggleValue } from '~~/lib/layout/helpers/components'
+import { modelRoute } from '~~/lib/common/helpers/route'
 
 graphql(`
   fragment ProjectModelsPageResults_Project on Project {
@@ -54,6 +56,8 @@ const props = defineProps<{
   sourceApps: SourceAppDefinition[]
   contributors: FormUsersSelectItemFragment[]
 }>()
+
+const router = useRouter()
 
 const finalSearch = computed({
   get: () => props.search,

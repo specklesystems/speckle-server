@@ -9,6 +9,7 @@ import { addLoadersToCtx } from '@/modules/shared/middleware'
 import { buildUnauthenticatedApolloServer } from '@/test/serverHelper'
 import { Roles } from '@/modules/core/helpers/mainConstants'
 import { AllScopes } from '@speckle/shared'
+import { expect } from 'chai'
 
 type TypedGraphqlResponse<R = Record<string, any>> = GraphQLResponse & {
   data: Nullable<R>
@@ -90,6 +91,10 @@ export const testApolloServer = async (params?: {
        * Optionally override the instance's context
        */
       context: Parameters<typeof createTestContext>[0]
+      /**
+       * Whether to add an assertion that there were no GQL errors
+       */
+      assertNoErrors: boolean
     }>
   ): Promise<TypedGraphqlResponse<R>> => {
     const realInstance = options?.context
@@ -101,13 +106,20 @@ export const testApolloServer = async (params?: {
         })
       : instance
 
-    return (await realInstance.executeOperation({
+    const res = (await realInstance.executeOperation({
       query,
       variables
     })) as TypedGraphqlResponse<R>
+
+    if (options?.assertNoErrors) {
+      expect(res).to.not.haveGraphQLErrors()
+    }
+
+    return res
   }
 
   return { execute, server: instance }
 }
 
 export type TestApolloServer = Awaited<ReturnType<typeof testApolloServer>>
+export type ExecuteOperationOptions = Parameters<TestApolloServer['execute']>[2]

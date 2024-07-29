@@ -13,7 +13,7 @@ import {
   ObjectRecord,
   StreamRecord
 } from '@/modules/core/helpers/types'
-import { Nullable } from '@speckle/shared'
+import { MaybeNullOrUndefined, Nullable } from '@speckle/shared'
 
 /**
  * The types of objects we return in resolvers often don't have the exact type as the object in the schema.
@@ -124,4 +124,12 @@ export type ServerInviteGraphQLReturnType = {
   id: string
   email: string
   invitedById: string
+}
+
+export type StreamCollaboratorGraphQLReturn = {
+  id: string
+  name: string
+  role: string
+  company?: MaybeNullOrUndefined<string>
+  avatar?: MaybeNullOrUndefined<string>
 }

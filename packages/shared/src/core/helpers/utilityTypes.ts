@@ -28,3 +28,10 @@ export type NullableKeysToOptional<T> = Omit<T, NullableKeys<T>> &
 export type NonNullableProperties<T> = {
   [K in keyof T]: NonNullable<T[K]>
 }
+
+/**
+ * Create a type that makes all object values nullable
+ */
+export type SetValuesNullable<T> = {
+  [P in keyof T]: T[P] | null
+}

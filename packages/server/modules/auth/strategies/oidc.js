@@ -10,7 +10,7 @@ const {
   validateServerInvite,
   finalizeInvitedServerRegistrationFactory,
   resolveAuthRedirectPathFactory
-} = require('@/modules/serverinvites/services/inviteProcessingService')
+} = require('@/modules/serverinvites/services/processing')
 const { logger } = require('@/logging/logging')
 const {
   getOidcDiscoveryUrl,

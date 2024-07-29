@@ -1,9 +1,11 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <NuxtLink
-    :to="modelLink || ''"
+  <div
     class="space-y-4 relative"
+    :class="model ? 'cursor-pointer' : undefined"
+    @click="onCardClick"
     @mouseleave="showActionsMenu = false"
   >
     <div
@@ -12,7 +14,9 @@
     >
       <div class="flex items-center flex-grow order-2 sm:order-1 pl-2 sm:pl-4">
         <!-- Name -->
-        <div class="flex justify-start space-x-2 items-center">
+        <div
+          class="flex justify-between sm:justify-start gap-2 items-center w-full sm:w-auto"
+        >
           <span class="text-heading text-foreground">
             {{ name }}
           </span>
@@ -73,11 +77,8 @@
             class="h-full w-full"
           />
         </div>
-        <div
-          v-else-if="hasVersions"
-          class="flex items-end md:items-center flex-col md:flex-row md:space-x-2 space-y-1.5 md:space-y-0"
-        >
-          <div class="text-body-3xs text-foreground-2">
+        <div v-else-if="hasVersions" class="hidden sm:flex items-center gap-x-2">
+          <div class="text-body-3xs text-foreground-2 text-right">
             Updated
             <span v-tippy="updatedAt.full">
               {{ updatedAt.relative }}
@@ -157,7 +158,7 @@
           {{ name }}
         </div>
         <!-- Preview -->
-        <div class="flex items-center space-x-4">
+        <div class="flex flex-col items-end sm:flex-row sm:items-center gap-1 sm:gap-4">
           <!-- Commented out so that we need to load less data, can be added back -->
           <!-- <div
             v-for="(child, index) in item.children"
@@ -212,15 +213,10 @@
             />
           </div>
         </template>
-        <div v-if="canContribute" class="mr-8">
-          <ProjectPageModelsNewModelStructureItem
-            :project-id="project.id"
-            :parent-model-name="item.fullName"
-          />
-        </div>
+        <div v-if="canContribute" class="mr-8"></div>
       </div>
     </div>
-  </NuxtLink>
+  </div>
 </template>
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
@@ -288,6 +284,8 @@ const props = defineProps<{
 }>()
 
 provide('projectId', props.project.id)
+
+const router = useRouter()
 
 const importArea = ref(
   null as Nullable<{
@@ -413,5 +411,11 @@ const onModelUpdated = () => {
 
 const triggerVersionUpload = () => {
   importArea.value?.triggerPicker()
+}
+
+const onCardClick = () => {
+  if (model.value) {
+    router.push(modelRoute(props.project.id, model.value.id))
+  }
 }
 </script>

@@ -65,6 +65,14 @@ export const mockStoreHelpers = (store: IMockStore) => {
     return ret as T
   }
 
+  const setMockValues = (ref: Ref | SimpleRef, values: Record<string, any>) => {
+    if (isRef(ref)) {
+      store.set(ref, values)
+    } else {
+      store.set(ref.type, ref.id, values)
+    }
+  }
+
   const getFieldValue = <T = any>(
     refOrObj: Record<string, unknown> | Ref | SimpleRef,
     field: string
@@ -174,7 +182,11 @@ export const mockStoreHelpers = (store: IMockStore) => {
      * Or it may be a MockRef, but for some reason you can't just define the field in the mock definition
      * and need a resolver
      */
-    resolveAndCache
+    resolveAndCache,
+    /**
+     * Set/update values into a mock in the mockstore. Useful in mocked mutations.
+     */
+    setMockValues
   }
 }
 

@@ -77,6 +77,19 @@ module.exports = {
     return await deleteStreamFromDb(streamId)
   },
 
+  /**
+   * @param {Object} p
+   * @param {string | Date | null} [p.cursor]
+   * @param {number} p.limit
+   * @param {string | null} [p.orderBy]
+   * @param {string | null} [p.visibility]
+   * @param {string | null} [p.searchQuery]
+   * @param {string[] | null} [p.streamIdWhitelist]
+   * @param {string[] | null} [p.workspaceIdWhitelist]
+   * @param {number | null} [p.offset]
+   * @param {boolean | null} [p.publicOnly]
+   * @deprecated Use getStreams() from the repository directly
+   */
   async getStreams({
     cursor,
     limit,
@@ -84,7 +97,9 @@ module.exports = {
     visibility,
     searchQuery,
     streamIdWhitelist,
-    workspaceIdWhitelist
+    workspaceIdWhitelist,
+    offset,
+    publicOnly
   }) {
     const query = knex.select().from('streams')
 
@@ -101,6 +116,11 @@ module.exports = {
       query.where(whereFunc)
       countQuery.where(whereFunc)
     }
+
+    if (publicOnly) {
+      visibility = 'public'
+    }
+
     if (visibility && visibility !== 'all') {
       if (!['private', 'public'].includes(visibility))
         throw new Error('Stream visibility should be either private, public or all')
@@ -133,12 +153,20 @@ module.exports = {
 
     if (cursor) query.where(columnName, order === 'desc' ? '<' : '>', cursor)
 
-    const rows = await query.orderBy(`${columnName}`, order).limit(limit)
+    query.orderBy(`${columnName}`, order).limit(limit)
+    if (offset) {
+      query.offset(offset)
+    }
+
+    const rows = await query
 
     const cursorDate = rows.length ? rows.slice(-1)[0][columnName] : null
     return { streams: rows, totalCount: count, cursorDate }
   },
 
+  /**
+   * @returns {Promise<{role: string, id: string, name: string, company: string, avatar: string}[]>}
+   */
   async getStreamUsers({ streamId }) {
     const query = StreamAcl.knex()
       .columns({ role: 'stream_acl.role' }, 'id', 'name', 'company', 'avatar')
@@ -158,7 +186,7 @@ module.exports = {
    * @param {string} p.streamId
    * @param {boolean} [p.favorited] Whether to favorite or unfavorite (true by default)
    * @param {import('@/modules/core/helpers/token').ContextResourceAccessRules} [p.userResourceAccessRules] Resource access rules (if any) for the user doing the favoriting
-   * @returns {Promise<Object>} Updated stream
+   * @returns {Promise<import('@/modules/core/helpers/types').StreamRecord>} Updated stream
    */
   async favoriteStream({ userId, streamId, favorited, userResourceAccessRules }) {
     // Check if user has access to stream
@@ -186,7 +214,7 @@ module.exports = {
    * @param {Object} p
    * @param {string} p.userId
    * @param {number} [p.limit] Defaults to 25
-   * @param {string} [p.cursor] Optionally specify date after which to look for favorites
+   * @param {string|null} [p.cursor] Optionally specify date after which to look for favorites
    * @param {string[] | undefined} [p.streamIdWhitelist] Optionally specify a list of stream IDs to filter by
    * @returns
    */
@@ -212,7 +240,7 @@ module.exports = {
    * @param {Object} p
    * @param {import('@/modules/shared/index').GraphQLContext} p.ctx
    * @param {string} p.streamId
-   * @param {Promise<string| null>}
+   * @returns {Promise<string | null>}
    */
   async getActiveUserStreamFavoriteDate({ ctx, streamId }) {
     if (!ctx.userId) {

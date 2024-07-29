@@ -8,7 +8,7 @@ const {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
   resolveAuthRedirectPathFactory
-} = require('@/modules/serverinvites/services/inviteProcessingService')
+} = require('@/modules/serverinvites/services/processing')
 const { passportAuthenticate } = require('@/modules/auth/services/passportService')
 const { logger } = require('@/logging/logging')
 const {

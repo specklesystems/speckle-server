@@ -85,6 +85,7 @@ import {
 } from '@/modules/automate/errors/executionEngine'
 import { queryInvitesFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import db from '@/db/knex'
+import { graphDataloadersBuilders } from '@/modules'
 
 const simpleTupleCacheKey = (key: [string, string]) => `${key[0]}:${key[1]}`
 
@@ -133,8 +134,13 @@ export function buildRequestLoaders(
   const userId = ctx.userId
 
   const createLoader = buildDataLoaderCreator(options?.cleanLoadersEarly || false)
+  const modulesLoaders = graphDataloadersBuilders()
 
   const loaders = {
+    ...(Object.assign(
+      {},
+      ...modulesLoaders.map((l) => l({ ctx, createLoader }))
+    ) as Record<string, unknown>),
     streams: {
       getAutomation: (() => {
         type AutomationDataLoader = DataLoader<string, Nullable<AutomationRecord>>
@@ -649,4 +655,7 @@ export function buildRequestLoaders(
   }
 }
 
-export type RequestDataLoaders = ReturnType<typeof buildRequestLoaders>
+export interface AllRequestDataLoaders {}
+
+export type RequestDataLoaders = ReturnType<typeof buildRequestLoaders> &
+  AllRequestDataLoaders

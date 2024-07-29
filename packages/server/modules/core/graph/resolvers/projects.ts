@@ -1,4 +1,3 @@
-import db from '@/db/knex'
 import { RateLimitError } from '@/modules/core/errors/ratelimit'
 import { StreamNotFoundError } from '@/modules/core/errors/stream'
 import { WorkspacesModuleDisabledError } from '@/modules/core/errors/workspaces'
@@ -28,30 +27,6 @@ import {
 } from '@/modules/core/services/streams/management'
 import { createOnboardingStream } from '@/modules/core/services/streams/onboarding'
 import { removeStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
-import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
-import {
-  deleteInvitesByTargetFactory,
-  deleteStreamInviteFactory,
-  findResourceFactory,
-  findStreamInviteFactory,
-  findUserByTargetFactory,
-  insertInviteAndDeleteOldFactory,
-  queryAllStreamInvitesFactory,
-  queryAllUserStreamInvitesFactory
-} from '@/modules/serverinvites/repositories/serverInvites'
-import { createAndSendInviteFactory } from '@/modules/serverinvites/services/inviteCreationService'
-import {
-  cancelStreamInviteFactory,
-  finalizeStreamInviteFactory
-} from '@/modules/serverinvites/services/inviteProcessingService'
-import {
-  getPendingStreamCollaboratorsFactory,
-  getUserPendingStreamInvitesFactory
-} from '@/modules/serverinvites/services/inviteRetrievalService'
-import {
-  createStreamInviteAndNotifyFactory,
-  useStreamInviteAndNotifyFactory
-} from '@/modules/serverinvites/services/management'
 import { authorizeResolver, validateScopes } from '@/modules/shared'
 import { throwForNotHavingServerRole } from '@/modules/shared/authz'
 import {
@@ -59,7 +34,7 @@ import {
   ProjectSubscriptions,
   UserSubscriptions
 } from '@/modules/shared/utils/subscriptions'
-import { chunk, has } from 'lodash'
+import { has } from 'lodash'
 
 export = {
   Query: {
@@ -161,92 +136,6 @@ export = {
     },
     invites: () => ({})
   },
-  ProjectInviteMutations: {
-    async create(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.projectId,
-        Roles.Stream.Owner,
-        ctx.resourceAccessRules
-      )
-      const createAndSendInvite = createAndSendInviteFactory({
-        findResource: findResourceFactory(),
-        findUserByTarget: findUserByTargetFactory(),
-        insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db })
-      })
-      await createStreamInviteAndNotifyFactory({
-        createAndSendInvite
-      })(
-        {
-          ...args.input,
-          projectId: args.projectId
-        },
-        ctx.userId!,
-        ctx.resourceAccessRules
-      )
-      return ctx.loaders.streams.getStream.load(args.projectId)
-    },
-    async batchCreate(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.projectId,
-        Roles.Stream.Owner,
-        ctx.resourceAccessRules
-      )
-
-      const inviteCount = args.input.length
-      if (inviteCount > 10 && ctx.role !== Roles.Server.Admin) {
-        throw new InviteCreateValidationError(
-          'Maximum 10 invites can be sent at once by non admins'
-        )
-      }
-
-      const inputBatches = chunk(args.input, 10)
-      for (const batch of inputBatches) {
-        await Promise.all(
-          batch.map((i) =>
-            createStreamInviteAndNotifyFactory({
-              createAndSendInvite: createAndSendInviteFactory({
-                findResource: findResourceFactory(),
-                findUserByTarget: findUserByTargetFactory(),
-                insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({
-                  db
-                })
-              })
-            })(
-              { ...i, projectId: args.projectId },
-              ctx.userId!,
-              ctx.resourceAccessRules
-            )
-          )
-        )
-      }
-      return ctx.loaders.streams.getStream.load(args.projectId)
-    },
-    async use(_parent, args, ctx) {
-      await useStreamInviteAndNotifyFactory({
-        finalizeStreamInvite: finalizeStreamInviteFactory({
-          findStreamInvite: findStreamInviteFactory({ db }),
-          deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
-          findResource: findResourceFactory()
-        })
-      })(args.input, ctx.userId!, ctx.resourceAccessRules)
-      return true
-    },
-    async cancel(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.projectId,
-        Roles.Stream.Owner,
-        ctx.resourceAccessRules
-      )
-      await cancelStreamInviteFactory({
-        findStreamInvite: findStreamInviteFactory({ db }),
-        deleteStreamInvite: deleteStreamInviteFactory({ db })
-      })(args.projectId, args.inviteId)
-      return ctx.loaders.streams.getStream.load(args.projectId)
-    }
-  },
   User: {
     async projects(_parent, args, ctx) {
       // If limit=0 & no filter, short-cut full execution and use data loader
@@ -277,14 +166,6 @@ export = {
       })
 
       return { totalCount, cursor, items: streams }
-    },
-    async projectInvites(_parent, _args, context) {
-      const { userId } = context
-      return await getUserPendingStreamInvitesFactory({
-        queryAllUserStreamInvites: queryAllUserStreamInvitesFactory({
-          db
-        })
-      })(userId!)
     }
   },
   Project: {
@@ -305,11 +186,7 @@ export = {
     async sourceApps(parent, _args, ctx) {
       return ctx.loaders.streams.getSourceApps.load(parent.id) || []
     },
-    async invitedTeam(parent) {
-      return getPendingStreamCollaboratorsFactory({
-        queryAllStreamInvites: queryAllStreamInvitesFactory({ db })
-      })(parent.id)
-    },
+
     async visibility(parent) {
       const { isPublic, isDiscoverable } = parent
       if (!isPublic) return ProjectVisibility.Private
