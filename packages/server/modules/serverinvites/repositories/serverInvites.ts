@@ -38,10 +38,12 @@ import { isNonNullable, SetValuesNullable } from '@speckle/shared'
 import { LogicError } from '@/modules/shared/errors'
 
 export type ServerInviteResourceFilter<
-  T extends InviteResourceTargetType = InviteResourceTargetType,
-  R extends string = string
+  TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+  RoleType extends string = string
 > = Partial<
-  SetValuesNullable<Pick<InviteResourceTarget<T, R>, 'resourceId' | 'resourceType'>>
+  SetValuesNullable<
+    Pick<InviteResourceTarget<TargetType, RoleType>, 'resourceId' | 'resourceType'>
+  >
 >
 
 export type InvitesRetrievalValidityFilter = (q: Knex.QueryBuilder) => Knex.QueryBuilder
@@ -73,7 +75,7 @@ const projectInviteValidityFilter: InvitesRetrievalValidityFilter = (q) => {
  */
 const buildInvitesBaseQuery =
   ({ db }: { db: Knex }) =>
-  <R = ServerInviteRecord[]>(
+  <Result = ServerInviteRecord[]>(
     options?: Partial<{
       /**
        * Sort order. Defaults to 'asc'.
@@ -88,7 +90,7 @@ const buildInvitesBaseQuery =
     const { sort = 'asc', filterQuery } = options || {}
 
     const q = db(ServerInvites.name)
-      .select<R>(ServerInvites.cols)
+      .select<Result>(ServerInvites.cols)
       .orderBy(ServerInvites.col.createdAt, sort)
 
     // single built in filter
@@ -171,11 +173,11 @@ export const queryAllUserResourceInvitesFactory =
     filterQuery?: InvitesRetrievalValidityFilter
   }): QueryAllUserResourceInvites =>
   async <
-    T extends InviteResourceTargetType = InviteResourceTargetType,
-    R extends string = string
+    TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+    RoleType extends string = string
   >(params: {
     userId: string
-    resourceType: T
+    resourceType: TargetType
   }) => {
     const { userId, resourceType } = params
     if (!userId) return []
@@ -183,7 +185,7 @@ export const queryAllUserResourceInvitesFactory =
     const target = buildUserTarget(userId)
 
     const q = buildInvitesBaseQuery({ db })<
-      ServerInviteRecord<InviteResourceTarget<T, R>>[]
+      ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]
     >({ filterQuery })
       .where({
         [ServerInvites.col.target]: target
@@ -233,25 +235,31 @@ export const queryAllResourceInvitesFactory =
     filterQuery?: InvitesRetrievalValidityFilter
   }): QueryAllResourceInvites =>
   async <
-    T extends InviteResourceTargetType = InviteResourceTargetType,
-    R extends string = string
+    TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+    RoleType extends string = string
   >(
-    filter: Pick<InviteResourceTarget<T, R>, 'resourceId' | 'resourceType'>
+    filter: Pick<
+      InviteResourceTarget<TargetType, RoleType>,
+      'resourceId' | 'resourceType'
+    >
   ) => {
     if (!filter.resourceId) return []
 
     return await buildInvitesBaseQuery({ db })<
-      ServerInviteRecord<InviteResourceTarget<T, R>>[]
+      ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]
     >({ filterQuery }).where((q) => filterByResource(q, filter))
   }
 
 export const deleteAllResourceInvitesFactory =
   ({ db }: { db: Knex }): DeleteAllResourceInvites =>
   async <
-    T extends InviteResourceTargetType = InviteResourceTargetType,
-    R extends string = string
+    TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+    RoleType extends string = string
   >(
-    filter: Pick<InviteResourceTarget<T, R>, 'resourceId' | 'resourceType'>
+    filter: Pick<
+      InviteResourceTarget<TargetType, RoleType>,
+      'resourceId' | 'resourceType'
+    >
   ) => {
     if (!filter.resourceId) return false
 
@@ -367,13 +375,13 @@ export const findInviteFactory =
     filterQuery?: InvitesRetrievalValidityFilter
   }): FindInvite =>
   async <
-    T extends InviteResourceTargetType = InviteResourceTargetType,
-    R extends string = string
+    TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+    RoleType extends string = string
   >(params: {
     inviteId?: string
     token?: string
     target?: string
-    resourceFilter?: ServerInviteResourceFilter<T, R>
+    resourceFilter?: ServerInviteResourceFilter<TargetType, RoleType>
   }) => {
     if (!isObjectLike(params)) {
       throw new LogicError('Invalid params - expected a params object')
@@ -382,7 +390,7 @@ export const findInviteFactory =
     const { inviteId, target, token, resourceFilter } = params
 
     const q = buildInvitesBaseQuery({ db })<
-      ServerInviteRecord<InviteResourceTarget<T, R>>[]
+      ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]
     >({ filterQuery }).first()
 
     if (inviteId) {

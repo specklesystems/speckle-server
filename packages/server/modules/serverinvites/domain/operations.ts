@@ -42,36 +42,42 @@ export type QueryServerInvites = (
 ) => Promise<ServerInviteRecord[]>
 
 export type QueryAllUserResourceInvites = <
-  T extends InviteResourceTargetType = InviteResourceTargetType,
-  R extends string = string
+  TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+  RoleType extends string = string
 >(params: {
   userId: string
-  resourceType: T
-}) => Promise<ServerInviteRecord<InviteResourceTarget<T, R>>[]>
+  resourceType: TargetType
+}) => Promise<ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]>
 
 export type QueryAllResourceInvites = <
-  T extends InviteResourceTargetType = InviteResourceTargetType,
-  R extends string = string
+  TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+  RoleType extends string = string
 >(
-  filter: Pick<InviteResourceTarget<T, R>, 'resourceId' | 'resourceType'>
-) => Promise<ServerInviteRecord<InviteResourceTarget<T, R>>[]>
+  filter: Pick<
+    InviteResourceTarget<TargetType, RoleType>,
+    'resourceId' | 'resourceType'
+  >
+) => Promise<ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>>[]>
 
 export type DeleteAllResourceInvites = <
-  T extends InviteResourceTargetType = InviteResourceTargetType,
-  R extends string = string
+  TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+  RoleType extends string = string
 >(
-  filter: Pick<InviteResourceTarget<T, R>, 'resourceId' | 'resourceType'>
+  filter: Pick<
+    InviteResourceTarget<TargetType, RoleType>,
+    'resourceId' | 'resourceType'
+  >
 ) => Promise<boolean>
 
 export type FindInvite = <
-  T extends InviteResourceTargetType = InviteResourceTargetType,
-  R extends string = string
+  TargetType extends InviteResourceTargetType = InviteResourceTargetType,
+  RoleType extends string = string
 >(params: {
   inviteId?: string
   token?: string
   target?: string
-  resourceFilter?: ServerInviteResourceFilter<T, R>
-}) => Promise<ServerInviteRecord<InviteResourceTarget<T, R>> | null>
+  resourceFilter?: ServerInviteResourceFilter<TargetType, RoleType>
+}) => Promise<ServerInviteRecord<InviteResourceTarget<TargetType, RoleType>> | null>
 
 export type FindInviteByToken = (params: {
   token: string

@@ -14,12 +14,12 @@ export type InviteResourceTargetType =
   InviteResourceTargetTypeMap[keyof InviteResourceTargetTypeMap]
 
 export type InviteResourceTarget<
-  T extends InviteResourceTargetType = InviteResourceTargetType,
-  R extends string = string
+  ResourceType extends InviteResourceTargetType = InviteResourceTargetType,
+  RoleType extends string = string
 > = {
   resourceId: string
-  resourceType: T
-  role: R
+  resourceType: ResourceType
+  role: RoleType
   /**
    * Whether or not this is the primary target for the invite
    */
@@ -36,13 +36,14 @@ export type ProjectInviteResourceTarget = InviteResourceTarget<
   StreamRoles
 >
 
-export type ServerInviteRecord<R extends InviteResourceTarget = InviteResourceTarget> =
-  {
-    id: string
-    target: string
-    inviterId: string
-    createdAt: Date
-    message: Nullable<string>
-    resource: R
-    token: string
-  }
+export type ServerInviteRecord<
+  Resource extends InviteResourceTarget = InviteResourceTarget
+> = {
+  id: string
+  target: string
+  inviterId: string
+  createdAt: Date
+  message: Nullable<string>
+  resource: Resource
+  token: string
+}
