@@ -10047,10 +10047,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@faker-js/faker@npm:^7.1.0":
-  version: 7.1.0
-  resolution: "@faker-js/faker@npm:7.1.0"
-  checksum: 10/62161e9ac25ab55db7d5fc2ea6177b94be07107275ef11137b88645cd2d41845f5d301077f84ee4663977bf9d42776bb244a23595b791deb9afa4c91366d5d2f
+"@faker-js/faker@npm:^8.4.1":
+  version: 8.4.1
+  resolution: "@faker-js/faker@npm:8.4.1"
+  checksum: 10/5983c2ea64f26055ad6648de748878e11ebe2fb751e3c7435ae141cdffabc2dccfe4c4f49da69a3d2add71e21b415c683ac5fba196fab0d5ed6779fbec436c80
   languageName: node
   linkType: hard
 
@@ -15550,7 +15550,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.276.0"
     "@aws-sdk/lib-storage": "npm:^3.100.0"
     "@bull-board/express": "npm:^4.2.2"
-    "@faker-js/faker": "npm:^7.1.0"
+    "@faker-js/faker": "npm:^8.4.1"
     "@godaddy/terminus": "npm:^4.9.0"
     "@graphql-codegen/cli": "npm:^5.0.2"
     "@graphql-codegen/typed-document-node": "npm:^5.0.7"
