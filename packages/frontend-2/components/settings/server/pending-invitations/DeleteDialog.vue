@@ -128,7 +128,7 @@ const dialogButtons: LayoutDialogButton[] = [
   },
   {
     text: 'Cancel',
-    props: { color: 'outline', fullWidth: true, outline: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => (isOpen.value = false)
   }
 ]

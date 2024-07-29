@@ -96,7 +96,7 @@
 
             <!-- Sun and lights -->
             <ViewerSunMenu
-              v-tippy="isSmallerOrEqualSm ? undefined : 'Light Controls'"
+              v-tippy="isSmallerOrEqualSm ? undefined : 'Light controls'"
             />
           </ViewerControlsButtonGroup>
           <ViewerControlsButtonGroup>

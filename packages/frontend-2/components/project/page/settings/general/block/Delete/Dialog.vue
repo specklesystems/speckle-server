@@ -1,6 +1,6 @@
 <template>
   <LayoutDialog v-model:open="isOpen" max-width="md" :buttons="dialogButtons">
-    <template #header>Delete Project</template>
+    <template #header>Delete project</template>
     <div class="space-y-4 text-sm">
       <p>
         Are you sure you want to permanently
@@ -72,7 +72,6 @@ const dialogButtons = computed<LayoutDialogButton[]>(() => [
     props: {
       color: 'danger',
       fullWidth: true,
-      outline: true,
       disabled: projectNameInput.value !== props.project.name
     },
     onClick: async () => {

@@ -68,7 +68,7 @@
                 <div class="flex-grow"></div>
                 <FormButton
                   v-show="isDragged"
-                  v-tippy="'Pop In'"
+                  v-tippy="'Pop in'"
                   :icon-left="ArrowTopRightOnSquareIcon"
                   text
                   hide-text

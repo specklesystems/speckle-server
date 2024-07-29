@@ -79,7 +79,6 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Create',
     props: {
       fullWidth: true,
-      outline: true,
       submit: true
     },
     onClick: onSubmit

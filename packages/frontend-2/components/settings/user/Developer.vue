@@ -101,7 +101,6 @@
             <SettingsSectionHeader
               subheading
               title="Applications"
-              å
               :buttons="[
                 {
                   props: {

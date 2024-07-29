@@ -9,7 +9,7 @@
       </div>
       <template #bottom-buttons>
         <FormButton color="danger" @click="showDeleteDialog = true">
-          Delete Project
+          Delete project
         </FormButton>
       </template>
     </ProjectPageSettingsBlock>

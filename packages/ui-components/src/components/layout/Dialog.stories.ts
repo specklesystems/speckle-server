@@ -60,8 +60,7 @@ export const HeaderAndFooter = {
         props: {
           color: 'outline',
           link: false,
-          fullWidth: true,
-          outline: true
+          fullWidth: true
         }
       },
       {

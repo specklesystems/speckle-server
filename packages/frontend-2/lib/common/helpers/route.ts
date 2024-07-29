@@ -57,6 +57,7 @@ export const modelRoute = (
   }`
 export const modelVersionsRoute = (projectId: string, modelId: string) =>
   `/projects/${projectId}/models/${modelId}/versions`
+
 // Temp change to allProjectModelsRoute until tab routing is implemented
 export const allProjectModelsRoute = (projectId: string) => `/projects/${projectId}`
 
