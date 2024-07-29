@@ -10,7 +10,7 @@ import {
   createAuthTokenForUser,
   createTestUser
 } from '@/test/authHelper'
-import { AllScopes, Roles } from '@speckle/shared'
+import { Roles } from '@speckle/shared'
 import {
   CreateWorkspaceDocument,
   GetActiveUserWorkspacesDocument,
@@ -18,8 +18,10 @@ import {
   UpdateWorkspaceDocument
 } from '@/test/graphql/generated/graphql'
 import { Workspace } from '@/modules/workspacesCore/domain/types'
+import { beforeEachContext } from '@/test/hooks'
+import { AllScopes } from '@/modules/core/helpers/mainConstants'
 
-describe('workspaces module gql operations', () => {
+describe('Workspaces GQL CRUD', () => {
   let apollo: TestApolloServer
 
   const testUser: BasicTestUser = {
@@ -30,6 +32,7 @@ describe('workspaces module gql operations', () => {
   }
 
   before(async () => {
+    await beforeEachContext()
     await createTestUser(testUser)
     const token = await createAuthTokenForUser(testUser.id, AllScopes)
     apollo = await testApolloServer({
