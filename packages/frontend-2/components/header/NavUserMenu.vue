@@ -19,12 +19,12 @@
         <MenuItems
           class="absolute right-4 top-14 w-56 origin-top-right bg-foundation outline outline-1 outline-primary-muted rounded-md shadow-lg overflow-hidden"
         >
-          <div class="border-b border-outline-3 py-1.5 mb-2">
+          <div class="border-b border-outline-3 py-1 mb-1">
             <MenuItem v-slot="{ active }">
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'text-body-sm flex px-2 py-1.5 text-primary cursor-pointer transition mx-1.5 rounded'
+                  'text-body-sm flex px-2 py-1.5 text-primary cursor-pointer transition mx-1 rounded'
                 ]"
                 target="_blank"
                 external
@@ -38,7 +38,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
+                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleSettingsDialog(settingsQueries.user.profile)"
             >
@@ -49,7 +49,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
+                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleSettingsDialog(settingsQueries.server.general)"
             >
@@ -60,7 +60,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
+                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleTheme"
             >
@@ -71,7 +71,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
+                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               @click="toggleInviteDialog"
             >
@@ -82,7 +82,7 @@
             <NuxtLink
               :class="[
                 active ? 'bg-highlight-1' : '',
-                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
+                'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
               ]"
               target="_blank"
               to="https://docs.google.com/forms/d/e/1FAIpQLSeTOU8i0KwpgBG7ONimsh4YMqvLKZfSRhWEOz4W0MyjQ1lfAQ/viewform"
@@ -91,12 +91,12 @@
               Feedback
             </NuxtLink>
           </MenuItem>
-          <div class="border-t border-outline-3 py-1.5 mt-1.5">
+          <div class="border-t border-outline-3 py-1 mt-1">
             <MenuItem v-if="activeUser" v-slot="{ active }">
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1.5 rounded'
+                  'text-body-sm flex px-2 py-1.5 text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
                 @click="logout"
               >
@@ -107,16 +107,16 @@
               <NuxtLink
                 :class="[
                   active ? 'bg-highlight-1' : '',
-                  'flex px-2 py-1.5 text-sm text-foreground cursor-pointer transition mx-1.5 rounded'
+                  'flex px-2 py-1.5 text-sm text-foreground cursor-pointer transition mx-1 rounded'
                 ]"
                 :to="loginUrl"
               >
                 Log in
               </NuxtLink>
             </MenuItem>
-            <div v-if="version" class="border-t border-outline-3 py-1 mt-1.5">
+            <div v-if="version" class="border-t border-outline-3 py-1 mt-1">
               <MenuItem>
-                <div class="px-3.5 pt-1 text-tiny text-foreground-2">
+                <div class="px-3 pt-1 text-tiny text-foreground-2">
                   Version {{ version }}
                 </div>
               </MenuItem>
