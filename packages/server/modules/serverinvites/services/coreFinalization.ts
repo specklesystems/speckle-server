@@ -1,4 +1,5 @@
 import { addStreamInviteDeclinedActivity } from '@/modules/activitystream/services/streamActivity'
+import { StreamInvalidAccessError } from '@/modules/core/errors/stream'
 import { isResourceAllowed } from '@/modules/core/helpers/token'
 import { getStream } from '@/modules/core/repositories/streams'
 import { addOrUpdateStreamCollaborator } from '@/modules/core/services/streams/streamAccessService'
@@ -87,14 +88,24 @@ export const processFinalizedProjectInviteFactory =
     }
 
     if (action === InviteFinalizationAction.ACCEPT) {
-      await addProjectRole(
-        project.id,
-        finalizerUserId,
-        invite.resource.role || Roles.Stream.Contributor,
-        invite.inviterId,
-        null,
-        { fromInvite: true }
-      )
+      try {
+        await addProjectRole(
+          project.id,
+          finalizerUserId,
+          invite.resource.role || Roles.Stream.Contributor,
+          invite.inviterId,
+          null,
+          { fromInvite: true }
+        )
+      } catch (e) {
+        if (!(e instanceof StreamInvalidAccessError)) {
+          throw e
+        }
+
+        throw new InviteFinalizingError(
+          'Original inviter no longer has the rights to invite you to this project'
+        )
+      }
     } else if (action === InviteFinalizationAction.DECLINE) {
       await addInviteDeclinedActivity({
         streamId: invite.resource.resourceId,
