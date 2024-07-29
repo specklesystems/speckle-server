@@ -94,6 +94,7 @@ type Workspace {
   description: String
   createdAt: DateTime!
   updatedAt: DateTime!
+  logoUrl: String
   """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """

@@ -7,6 +7,16 @@ export const workspaceFragment = gql`
     description
     createdAt
     updatedAt
+    logoUrl
+  }
+`
+
+export const workspaceTeamFragment = gql`
+  fragment TestWorkspaceTeam on Workspace {
+    team {
+      id
+      role
+    }
   }
 `
 
@@ -25,9 +35,11 @@ export const getWorkspaceQuery = gql`
   query GetWorkspace($workspaceId: String!) {
     workspace(id: $workspaceId) {
       ...TestWorkspace
+      ...TestWorkspaceTeam
     }
   }
   ${workspaceFragment}
+  ${workspaceTeamFragment}
 `
 
 export const updateWorkspaceQuery = gql`
@@ -52,4 +64,20 @@ export const getActiveUserWorkspacesQuery = gql`
     }
   }
   ${workspaceFragment}
+`
+
+export const updateWorkspaceRoleQuery = gql`
+  mutation UpdateWorkspaceRole($input: WorkspaceRoleUpdateInput!) {
+    workspaceMutations {
+      updateRole(input: $input)
+    }
+  }
+`
+
+export const deleteWorkspaceRoleQuery = gql`
+  mutation DeleteWorkspaceRole($input: WorkspaceRoleDeleteInput!) {
+    workspaceMutations {
+      deleteRole(input: $input)
+    }
+  }
 `
