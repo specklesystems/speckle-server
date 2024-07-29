@@ -55,6 +55,8 @@ const copyUserId = () => {
 }
 
 const copyDistinctId = () => {
-  copy(distinctId.value)
+  if (distinctId.value) {
+    copy(distinctId.value)
+  }
 }
 </script>
