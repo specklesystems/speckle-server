@@ -268,12 +268,12 @@ const slotContainerClasses = computed(() => {
   const classParts: string[] = ['flex-1 simple-scrollbar overflow-y-auto text-body-xs']
 
   if (hasTitle.value) {
-    classParts.push('px-6 pb-4')
+    classParts.push('px-6 py-4')
     if (isFullscreenDesktop.value) {
       classParts.push('md:p-0')
     }
   } else if (!isFullscreenDesktop.value) {
-    classParts.push('p-6')
+    classParts.push('px-6 py-4')
   }
 
   return classParts.join(' ')
