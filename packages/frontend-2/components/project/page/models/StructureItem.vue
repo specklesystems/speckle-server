@@ -1,9 +1,11 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <NuxtLink
-    :to="modelLink || ''"
+  <div
     class="space-y-4 relative"
+    :class="model ? 'cursor-pointer' : undefined"
+    @click="onCardClick"
     @mouseleave="showActionsMenu = false"
   >
     <div
@@ -211,15 +213,10 @@
             />
           </div>
         </template>
-        <div v-if="canContribute" class="mr-8">
-          <ProjectPageModelsNewModelStructureItem
-            :project-id="project.id"
-            :parent-model-name="item.fullName"
-          />
-        </div>
+        <div v-if="canContribute" class="mr-8"></div>
       </div>
     </div>
-  </NuxtLink>
+  </div>
 </template>
 <script lang="ts" setup>
 import { modelVersionsRoute, modelRoute } from '~~/lib/common/helpers/route'
@@ -287,6 +284,8 @@ const props = defineProps<{
 }>()
 
 provide('projectId', props.project.id)
+
+const router = useRouter()
 
 const importArea = ref(
   null as Nullable<{
@@ -412,5 +411,11 @@ const onModelUpdated = () => {
 
 const triggerVersionUpload = () => {
   importArea.value?.triggerPicker()
+}
+
+const onCardClick = () => {
+  if (model.value) {
+    router.push(modelRoute(props.project.id, model.value.id))
+  }
 }
 </script>

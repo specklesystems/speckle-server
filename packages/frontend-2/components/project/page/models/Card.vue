@@ -1,12 +1,9 @@
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <NuxtLink :class="containerClasses" :href="finalModelUrl">
-    <div
-      class="relative"
-      @click="$emit('click', $event)"
-      @keypress="keyboardClick((e) => emit('click', e))"
-    >
+  <div :class="containerClasses">
+    <div class="relative" @click="onCardClick">
       <div class="flex justify-between items-center h-10">
         <div class="px-2 select-none">
           <div
@@ -102,7 +99,7 @@
         />
       </div>
     </div>
-  </NuxtLink>
+  </div>
 </template>
 <script lang="ts" setup>
 import type {
@@ -110,12 +107,11 @@ import type {
   ProjectPageLatestItemsModelItemFragment,
   ProjectPageModelsCardProjectFragment
 } from '~~/lib/common/generated/gql/graphql'
-import { modelRoute, modelVersionsRoute } from '~~/lib/common/helpers/route'
+import { modelVersionsRoute } from '~~/lib/common/helpers/route'
 import { graphql } from '~~/lib/common/generated/gql'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { isPendingModelFragment } from '~~/lib/projects/helpers/models'
 import type { Nullable, Optional } from '@speckle/shared'
-import { keyboardClick } from '@speckle/ui-components'
 
 graphql(`
   fragment ProjectPageModelsCardProject on Project {
@@ -160,6 +156,10 @@ const containerClasses = computed(() => {
     'group rounded-xl bg-foundation border border-outline-3 hover:border-outline-5 p-2 w-full'
   ]
 
+  if (!defaultLinkDisabled.value) {
+    classParts.push('cursor-pointer')
+  }
+
   return classParts.join(' ')
 })
 const nameParts = computed(() => {
@@ -196,9 +196,16 @@ const pendingVersion = computed(() => {
     : props.model.pendingImportedVersions[0]
 })
 
-const finalModelUrl = computed(() =>
-  defaultLinkDisabled.value ? undefined : modelRoute(props.projectId, props.model.id)
-)
+const onCardClick = (event: KeyboardEvent | MouseEvent) => {
+  if (
+    !previewUrl.value &&
+    !pendingVersion.value &&
+    !isPendingModelFragment(props.model)
+  ) {
+    return
+  }
+  emit('click', event)
+}
 
 const triggerVersionUpload = () => {
   importArea.value?.triggerPicker()
