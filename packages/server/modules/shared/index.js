@@ -66,7 +66,7 @@ const getUserAclEntry = async ({ aclTableName, userId, resourceId }) => {
  * @param  {string | null | undefined} userId
  * @param  {string} resourceId
  * @param  {string} requiredRole
- * @param {import('@/modules/core/domain/tokens/types').TokenResourceIdentifier[] | undefined | null} [userResourceAccessLimits]
+ * @param {import('@/modules/core/domain/tokens/types').TokenResourceIdentifier[] | undefined | null} userResourceAccessLimits
  */
 async function authorizeResolver(
   userId,
@@ -99,18 +99,18 @@ async function authorizeResolver(
     if (serverRoles.map((r) => r.role).includes(Roles.Server.Admin)) return requiredRole
   }
 
-  try {
-    if (role.resourceTarget !== 'workspace') {
+  if (role.resourceTarget === 'streams') {
+    try {
       const { isPublic } = await knex(role.resourceTarget)
         .select('isPublic')
         .where({ id: resourceId })
         .first()
       if (isPublic && role.weight < 200) return true
+    } catch {
+      throw new ForbiddenError(
+        `Resource of type ${role.resourceTarget} with ${resourceId} not found`
+      )
     }
-  } catch {
-    throw new ForbiddenError(
-      `Resource of type ${role.resourceTarget} with ${resourceId} not found`
-    )
   }
 
   const userAclEntry = await getUserAclEntry({
