@@ -1,8 +1,7 @@
-'use strict'
 const fs = require('fs')
 const path = require('path')
 const { appRoot, packageRoot } = require('@/bootstrap')
-const { values, merge, camelCase, reduce } = require('lodash')
+const { values, merge, camelCase, reduce, intersection } = require('lodash')
 const baseTypeDefs = require('@/modules/core/graph/schema/baseTypeDefs')
 const { scalarResolvers } = require('./core/graph/scalars')
 const { makeExecutableSchema } = require('@graphql-tools/schema')
@@ -241,4 +240,39 @@ exports.graphSchema = (mocksConfig) => {
   }
 
   return schema
+}
+
+/**
+ * Load GQL mock configs from speckle modules
+ * @param {string[]} moduleWhitelist
+ * @returns {Record<string, import('@/modules/shared/helpers/mocks').SpeckleModuleMocksConfig>}
+ */
+exports.moduleMockConfigs = (moduleWhitelist) => {
+  const enabledModuleNames = intersection(getEnabledModuleNames(), moduleWhitelist)
+
+  // Config default exports keyed by module name
+  const mockConfigs = {}
+  if (!enabledModuleNames.length) return mockConfigs
+
+  // load code modules from /modules
+  const codeModuleDirs = fs.readdirSync(`${appRoot}/modules`)
+  codeModuleDirs.forEach((moduleName) => {
+    const fullPath = path.join(`${appRoot}/modules`, moduleName)
+    if (!enabledModuleNames.includes(moduleName)) return
+
+    // load mock config
+    const mocksFolderPath = path.join(fullPath, 'graph', 'mocks')
+    if (fs.existsSync(mocksFolderPath)) {
+      // We only take the first mocks.ts file we find (for now)
+      const mainConfig = values(autoloadFromDirectory(mocksFolderPath))
+        .map((l) => l.default)
+        .filter(isNonNullable)[0]
+
+      if (mainConfig && Object.values(mainConfig).length) {
+        mockConfigs[moduleName] = mainConfig
+      }
+    }
+  })
+
+  return mockConfigs
 }
