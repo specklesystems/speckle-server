@@ -369,6 +369,32 @@ describe('[Stream & Server Invites]', () => {
 
         it(`can't ${
           projectInvite ? 'project' : 'stream'
+        } invite user w/ broken stream identifier`, async () => {
+          const params = {
+            email: 'whocares@really.com',
+            streamId: ''
+          }
+
+          const result = projectInvite
+            ? await createProjectInvite({
+                projectId: params.streamId,
+                input: {
+                  email: params.email
+                }
+              })
+            : await createInvite({
+                email: params.email,
+                streamId: params.streamId
+              })
+
+          expect(result.data).to.not.be.ok
+          expect((result.errors || []).map((e) => e.message).join('|')).to.contain(
+            'Invalid project ID'
+          )
+        })
+
+        it(`can't ${
+          projectInvite ? 'project' : 'stream'
         } invite user to a stream, if not its owner`, async () => {
           const params = {
             email: 'whocares@really.com',
