@@ -17,7 +17,6 @@ import {
   DeleteInvite,
   DeleteInvitesByTarget,
   DeleteServerOnlyInvites,
-  EmitServerInvitesEvent,
   FindInvite,
   FindServerInvite,
   InsertInviteAndDeleteOld,
@@ -33,6 +32,7 @@ import { ensureError, MaybeNullOrUndefined } from '@speckle/shared'
 import { noop } from 'lodash'
 import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { TokenResourceIdentifier } from '@/modules/core/domain/tokens/types'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 
 /**
  * Resolve the relative auth redirect path, after registering with an invite
@@ -111,7 +111,7 @@ type FinalizeResourceInviteFactoryDeps = {
   processInvite: ProcessFinalizedResourceInvite
   deleteInvitesByTarget: DeleteInvitesByTarget
   insertInviteAndDeleteOld: InsertInviteAndDeleteOld
-  emitServerInvitesEvent: EmitServerInvitesEvent
+  emitEvent: EventBusEmit
 }
 
 export const finalizeResourceInviteFactory =
@@ -123,7 +123,7 @@ export const finalizeResourceInviteFactory =
       processInvite,
       deleteInvitesByTarget,
       insertInviteAndDeleteOld,
-      emitServerInvitesEvent
+      emitEvent
     } = deps
     const {
       finalizerUserId,
@@ -187,7 +187,7 @@ export const finalizeResourceInviteFactory =
       })
     }
 
-    await emitServerInvitesEvent({
+    await emitEvent({
       eventName: ServerInvitesEvents.Finalized,
       payload: {
         invite,

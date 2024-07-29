@@ -100,7 +100,7 @@ export async function createStreamReturnRecord(
         buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
           getStream
         }),
-        emitServerInvitesEvent: ({ eventName, payload }) =>
+        emitEvent: ({ eventName, payload }) =>
           getEventBus().emit({
             eventName,
             payload

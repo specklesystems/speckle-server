@@ -64,7 +64,7 @@ const buildCreateAndSendServerOrProjectInvite = () =>
     buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
       getStream
     }),
-    emitServerInvitesEvent: ({ eventName, payload }) =>
+    emitEvent: ({ eventName, payload }) =>
       getEventBus().emit({
         eventName,
         payload
@@ -259,7 +259,7 @@ export = {
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
           insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          emitServerInvitesEvent: (...args) => getEventBus().emit(...args)
+          emitEvent: (...args) => getEventBus().emit(...args)
         })
       })
 
@@ -380,7 +380,7 @@ export = {
           }),
           deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
           insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-          emitServerInvitesEvent: (...args) => getEventBus().emit(...args)
+          emitEvent: (...args) => getEventBus().emit(...args)
         })
       })
 

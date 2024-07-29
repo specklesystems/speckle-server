@@ -142,7 +142,7 @@ export const createWorkspaceInviteDirectly = async (
       getStream,
       getWorkspace: getWorkspaceFactory({ db })
     }),
-    emitServerInvitesEvent: ({ eventName, payload }) =>
+    emitEvent: ({ eventName, payload }) =>
       getEventBus().emit({
         eventName,
         payload

@@ -69,7 +69,7 @@ const buildCreateAndSendWorkspaceInvite = () =>
       getStream,
       getWorkspace: getWorkspaceFactory({ db })
     }),
-    emitServerInvitesEvent: ({ eventName, payload }) =>
+    emitEvent: ({ eventName, payload }) =>
       getEventBus().emit({
         eventName,
         payload
@@ -230,7 +230,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             findInvite: findInviteFactory({ db }),
             deleteInvitesByTarget: deleteInvitesByTargetFactory({ db }),
             insertInviteAndDeleteOld: insertInviteAndDeleteOldFactory({ db }),
-            emitServerInvitesEvent: ({ eventName, payload }) =>
+            emitEvent: ({ eventName, payload }) =>
               getEventBus().emit({
                 eventName,
                 payload

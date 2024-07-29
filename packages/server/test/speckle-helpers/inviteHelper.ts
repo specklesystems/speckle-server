@@ -58,7 +58,7 @@ export const createStreamInviteDirectlyFactory =
       buildInviteEmailContents: buildCoreInviteEmailContentsFactory({
         getStream
       }),
-      emitServerInvitesEvent: ({ eventName, payload }) =>
+      emitEvent: ({ eventName, payload }) =>
         getEventBus().emit({
           eventName,
           payload

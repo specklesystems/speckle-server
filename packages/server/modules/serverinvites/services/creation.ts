@@ -11,7 +11,6 @@ import {
 } from '@/modules/serverinvites/helpers/core'
 import { getUser, UserWithOptionalRole } from '@/modules/core/repositories/users'
 import {
-  EmitServerInvitesEvent,
   FindInvite,
   FindUserByTarget,
   InsertInviteAndDeleteOld,
@@ -28,6 +27,7 @@ import { ServerInvitesEvents } from '@/modules/serverinvites/domain/events'
 import { MaybeNullOrUndefined } from '@speckle/shared'
 import { ServerInviteRecord } from '@/modules/serverinvites/domain/types'
 import { ServerInfo } from '@/modules/core/helpers/types'
+import { EventBusEmit } from '@/modules/shared/services/eventBus'
 
 const getFinalTargetData = (
   target: string,
@@ -85,13 +85,13 @@ export const createAndSendInviteFactory =
     insertInviteAndDeleteOld,
     collectAndValidateResourceTargets,
     buildInviteEmailContents,
-    emitServerInvitesEvent
+    emitEvent
   }: {
     findUserByTarget: FindUserByTarget
     insertInviteAndDeleteOld: InsertInviteAndDeleteOld
     collectAndValidateResourceTargets: CollectAndValidateResourceTargets
     buildInviteEmailContents: BuildInviteEmailContents
-    emitServerInvitesEvent: EmitServerInvitesEvent
+    emitEvent: EventBusEmit
   }): CreateAndSendInvite =>
   async (params, inviterResourceAccessLimits?) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })
@@ -159,7 +159,7 @@ export const createAndSendInviteFactory =
       targetData
     })
 
-    await emitServerInvitesEvent({
+    await emitEvent({
       eventName: ServerInvitesEvents.Created,
       payload: {
         invite: finalInvite
