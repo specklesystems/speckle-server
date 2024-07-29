@@ -102,9 +102,9 @@
                 v-if="!isPendingFileUpload(item) && item.model"
                 rounded
                 size="sm"
-                :to="modelVersionsRoute(project.id, item.model.id)"
                 class="gap-0.5"
                 color="subtle"
+                @click.stop="router.push(modelVersionsRoute(project.id, item.model.id))"
               >
                 <IconVersions class="h-4 w-4" />
                 {{ model?.versionCount.totalCount }}

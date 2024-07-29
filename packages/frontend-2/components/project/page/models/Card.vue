@@ -77,11 +77,11 @@
             </span>
           </div>
           <FormButton
-            v-tippy="'View Comments'"
+            v-tippy="'View Versions'"
             color="subtle"
             size="sm"
             class="flex items-center gap-1 !text-foreground-2"
-            :to="modelVersionsRoute(projectId, model.id)"
+            @click.stop="router.push(modelVersionsRoute(projectId, model.id))"
           >
             <IconVersions class="h-4 w-4" />
             {{ versionCount }}
@@ -143,6 +143,8 @@ const props = withDefaults(
 
 // TODO: Get rid of this, its not reactive. Is it even necessary?
 provide('projectId', props.projectId)
+
+const router = useRouter()
 
 const importArea = ref(
   null as Nullable<{
