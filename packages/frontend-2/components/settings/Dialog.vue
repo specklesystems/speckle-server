@@ -11,7 +11,7 @@
     <div class="w-full h-full flex">
       <LayoutSidebar
         v-if="!isMobile || !selectedMenuItem"
-        class="w-full md:w-56 lg:w-72 md:p-4 md:pt-6 md:bg-foundation-page md:border-r md:border-outline-3"
+        class="w-full md:w-56 lg:w-60 md:p-4 md:pt-6 md:bg-foundation-page md:border-r md:border-outline-3"
       >
         <LayoutSidebarMenu>
           <LayoutSidebarMenuGroup title="Account settings">
