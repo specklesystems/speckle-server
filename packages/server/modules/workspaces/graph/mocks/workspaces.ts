@@ -19,7 +19,8 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
           getMockRef,
           resolveFromMockParent,
           addMockRefValues,
-          resolveAndCache
+          resolveAndCache,
+          setMockValues
         }
       }) => {
         return {
@@ -44,7 +45,15 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
                 throw new Error('Fake workspace update error')
               }
 
-              return getMockRef('Workspace', { values: omit(args.input, ['logoUrl']) })
+              setMockValues(
+                {
+                  type: 'Workspace',
+                  id: args.input.id
+                },
+                omit(args.input, ['logoUrl', 'id'])
+              )
+
+              return getMockRef('Workspace', { id: args.input.id })
             },
             updateRole: (_parent, args) => {
               const val = faker.datatype.boolean()
@@ -164,7 +173,8 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
             )
           },
           WorkspaceCollaborator: {
-            role: resolveFromMockParent()
+            role: resolveFromMockParent(),
+            user: resolveFromMockParent()
           },
           PendingWorkspaceCollaborator: {
             user: resolveAndCache((parent) => {
@@ -174,7 +184,9 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
 
               return getMockRef('LimitedUser', { values: { name: title } })
             }),
-            invitedBy: resolveAndCache(() => getMockRef('LimitedUser'))
+            invitedBy: resolveAndCache(() => getMockRef('LimitedUser')),
+            workspaceName: resolveFromMockParent(),
+            token: resolveFromMockParent()
           },
           Project: {
             workspace: resolveAndCache(() => {

@@ -6,6 +6,10 @@ import { MaybeAsync } from '@speckle/shared'
 import { UnionToIntersection } from 'type-fest'
 
 import EventEmitter from 'eventemitter2'
+import {
+  serverinvitesEventNamespace,
+  ServerInvitesEventsPayloads
+} from '@/modules/serverinvites/domain/events'
 
 type EventWildcard = '*'
 
@@ -18,6 +22,7 @@ type TestEvents = {
 type EventsByNamespace = {
   test: TestEvents
   [workspaceEventNamespace]: WorkspaceEventsPayloads
+  [serverinvitesEventNamespace]: ServerInvitesEventsPayloads
 }
 
 type EventTypes = UnionToIntersection<EventsByNamespace[keyof EventsByNamespace]>
@@ -117,6 +122,8 @@ export function initializeEventBus() {
 }
 
 export type EventBus = ReturnType<typeof initializeEventBus>
+export type EventBusPayloads = EventTypes
+export type EventBusEmit = EventBus['emit']
 
 let eventBus: EventBus
 
