@@ -24,7 +24,13 @@ const buildBaseConfig = async (): Promise<SpeckleModuleMocksConfig> => {
   const faker = (await import('@faker-js/faker')).faker
 
   return {
-    resolvers: ({ helpers: { getFieldValue } }) => ({
+    resolvers: ({ helpers: { getFieldValue }, store }) => ({
+      Query: {
+        _: () => {
+          store.reset()
+          return 'Mock Store reset!'
+        }
+      },
       LimitedUser: {
         role: (parent) =>
           getFieldValue(
