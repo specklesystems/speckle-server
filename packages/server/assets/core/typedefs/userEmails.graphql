@@ -1,0 +1,14 @@
+type UserEmail {
+  id: ID!
+  email: String!
+  verified: Boolean!
+  primary: Boolean!
+  userId: ID!
+}
+
+extend type Query {
+  userEmails: [UserEmail]
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
+}
+

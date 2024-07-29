@@ -809,6 +809,10 @@ export type CreateModelInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CreateUserEmailInput = {
+  email: Scalars['String']['input'];
+};
+
 export type CreateVersionInput = {
   message?: InputMaybe<Scalars['String']['input']>;
   modelId: Scalars['String']['input'];
@@ -822,6 +826,10 @@ export type CreateVersionInput = {
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
+};
+
+export type DeleteUserEmailInput = {
+  id: Scalars['ID']['input'];
 };
 
 export type DeleteVersionsInput = {
@@ -1203,6 +1211,8 @@ export type Mutation = {
    * @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.moveToModel instead.
    */
   commitsMove: Scalars['Boolean']['output'];
+  createUserEmail: Scalars['ID']['output'];
+  deleteUserEmail: Scalars['Boolean']['output'];
   /**
    * Delete a pending invite
    * Note: The required scope to invoke this is not given out to app or personal access tokens
@@ -1225,6 +1235,7 @@ export type Mutation = {
   serverInviteBatchCreate: Scalars['Boolean']['output'];
   /** Invite a new user to the speckle server and return the invite ID */
   serverInviteCreate: Scalars['Boolean']['output'];
+  setPrimaryUserEmail: Scalars['Boolean']['output'];
   /**
    * Request access to a specific stream
    * @deprecated Part of the old API surface and will be removed in the future. Use ProjectAccessRequestMutations.create instead.
@@ -1446,6 +1457,16 @@ export type MutationCommitsMoveArgs = {
 };
 
 
+export type MutationCreateUserEmailArgs = {
+  input: CreateUserEmailInput;
+};
+
+
+export type MutationDeleteUserEmailArgs = {
+  input: DeleteUserEmailInput;
+};
+
+
 export type MutationInviteDeleteArgs = {
   inviteId: Scalars['String']['input'];
 };
@@ -1478,6 +1499,11 @@ export type MutationServerInviteBatchCreateArgs = {
 
 export type MutationServerInviteCreateArgs = {
   input: ServerInviteCreateInput;
+};
+
+
+export type MutationSetPrimaryUserEmailArgs = {
+  input: SetPrimaryUserEmailInput;
 };
 
 
@@ -2403,6 +2429,7 @@ export type Query = {
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
    */
   user?: Maybe<User>;
+  userEmails?: Maybe<Array<Maybe<UserEmail>>>;
   /**
    * Validate password strength
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -2722,6 +2749,10 @@ export type ServerWorkspacesInfo = {
    * Since workspaces need a backend logic to be enabled, this is not enough as a feature flag.
    */
   workspacesEnabled: Scalars['Boolean']['output'];
+};
+
+export type SetPrimaryUserEmailInput = {
+  id: Scalars['ID']['input'];
 };
 
 export type SmartTextEditorValue = {
@@ -3452,6 +3483,15 @@ export type UserAutomateInfo = {
 
 export type UserDeleteInput = {
   email: Scalars['String']['input'];
+};
+
+export type UserEmail = {
+  __typename?: 'UserEmail';
+  email: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  primary: Scalars['Boolean']['output'];
+  userId: Scalars['ID']['output'];
+  verified: Scalars['Boolean']['output'];
 };
 
 export type UserProjectsFilter = {

@@ -4,6 +4,7 @@ import {
   CreateUserEmail,
   DeleteUserEmail,
   FindEmail,
+  FindEmailsByUserId,
   FindPrimaryEmailForUser,
   UpdateUserEmail
 } from '@/modules/core/domain/userEmails/operations'
@@ -69,3 +70,12 @@ export const findEmailFactory =
       })
       .first()
   }
+export const findEmailsByUserIdFactory =
+  ({ db }: { db: Knex }): FindEmailsByUserId =>
+  async ({ userId }) => {
+    if (!userId) return []
+    return db(UserEmails.name).where({
+      [UserEmails.col.userId]: userId
+    })
+  }
+
