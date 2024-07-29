@@ -47,4 +47,43 @@ describe('User emails graphql @core', () => {
     })
   })
 
+  describe('createUserEmail mutation', () => {
+    it('should create new email for user', async () => {
+      const { app, server } = await beforeEachContext()
+      const { sendRequest } = await initializeTestServer(server, app)
+
+      const userId = await createUser({
+        name: 'emails user',
+        email: createRandomEmail(),
+        password: createRandomPassword()
+      })
+      const email = createRandomEmail()
+
+      const token = `Bearer ${await createPersonalAccessToken(
+        userId,
+        'test token user emails',
+        [Scopes.Profile.Email]
+      )}`
+
+      const res = await sendRequest(token, {
+        query:
+          'mutation createUserEmail($input: CreateUserEmailInput!) { createUserEmail(input: $input) }',
+        variables: { input: { email } }
+      })
+
+      expect(res.error).to.not.ok
+
+      const userEmail = await db<UserEmail>(UserEmails.name)
+        .where({
+          userId,
+          email
+        })
+        .first()
+
+      expect(res.body.data.createUserEmail).to.eq(userEmail!.id)
+      expect(userEmail!.email).to.eq(email)
+      expect(userEmail!.userId).to.eq(userId)
+    })
+  })
+
 })

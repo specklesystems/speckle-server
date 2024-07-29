@@ -12,3 +12,14 @@ extend type Query {
     @hasScope(scope: "profile:email")
 }
 
+input CreateUserEmailInput {
+  email: String!
+}
+
+extend type Mutation {
+  createUserEmail(input: CreateUserEmailInput!): ID!
+    @hasServerRole(role: SERVER_GUEST)
+    @hasScope(scope: "profile:email")
+
+
+}

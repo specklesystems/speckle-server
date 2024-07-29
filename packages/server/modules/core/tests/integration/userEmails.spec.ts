@@ -9,6 +9,9 @@ import {
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
 import { UserEmails } from '@/modules/core/dbSchema'
+import {
+  createUserEmailFactory,
+} from '@/modules/core/repositories/userEmails'
 
 const userEmailTable = db(UserEmails.name)
 
