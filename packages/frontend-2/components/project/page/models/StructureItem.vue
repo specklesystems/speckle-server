@@ -8,9 +8,9 @@
   >
     <div
       v-if="itemType !== StructureItemType.ModelWithOnlySubmodels"
-      class="group relative bg-foundation w-full p-2 flex flex-col sm:flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
+      class="group relative bg-foundation w-full p-2 flex flex-row rounded-md transition-all border border-outline-3 hover:border-outline-5 items-stretch"
     >
-      <div class="flex items-center flex-grow order-2 sm:order-1 sm:pl-4">
+      <div class="flex items-center flex-grow order-2 sm:order-1 pl-2 sm:pl-4">
         <!-- Name -->
         <div class="flex justify-start space-x-2 items-center">
           <span class="text-heading text-foreground">
@@ -73,38 +73,42 @@
             class="h-full w-full"
           />
         </div>
-        <div v-else-if="hasVersions" class="flex items-center space-x-2">
-          <div
-            class="text-body-2xs text-foreground-2 absolute top-2 right-2 z-10 sm:relative sm:top-auto sm:right-auto"
-          >
+        <div
+          v-else-if="hasVersions"
+          class="flex items-end md:items-center flex-col md:flex-row md:space-x-2 space-y-1.5 md:space-y-0"
+        >
+          <div class="text-body-3xs text-foreground-2">
             Updated
             <span v-tippy="updatedAt.full">
               {{ updatedAt.relative }}
             </span>
           </div>
-          <div class="text-body-xs text-foreground flex items-center space-x-1 pl-2">
-            <IconDiscussions class="w-4 h-4" />
-            <span>{{ model?.commentThreadCount.totalCount }}</span>
-          </div>
-          <div v-if="model?.automationsStatus">
-            <AutomateRunsTriggerStatus
-              :project-id="project.id"
-              :status="model.automationsStatus"
-              :model-id="model.id"
-            />
-          </div>
-          <div class="flex gap-2 items-center">
-            <FormButton
-              v-if="!isPendingFileUpload(item) && item.model"
-              rounded
-              size="sm"
-              :to="modelVersionsRoute(project.id, item.model.id)"
-              class="gap-0.5"
-              color="subtle"
-            >
-              <IconVersions class="h-4 w-4" />
-              {{ model?.versionCount.totalCount }}
-            </FormButton>
+          <div class="space-x-2 flex flex-row pils">
+            <div class="text-body-xs text-foreground flex items-center space-x-1 pl-2">
+              <IconDiscussions class="w-4 h-4" />
+              <span>{{ model?.commentThreadCount.totalCount }}</span>
+            </div>
+            <div v-if="model?.automationsStatus">
+              <AutomateRunsTriggerStatus
+                :project-id="project.id"
+                :status="model.automationsStatus"
+                :model-id="model.id"
+              />
+            </div>
+
+            <div class="flex gap-2 items-center">
+              <FormButton
+                v-if="!isPendingFileUpload(item) && item.model"
+                rounded
+                size="sm"
+                :to="modelVersionsRoute(project.id, item.model.id)"
+                class="gap-0.5"
+                color="subtle"
+              >
+                <IconVersions class="h-4 w-4" />
+                {{ model?.versionCount.totalCount }}
+              </FormButton>
+            </div>
           </div>
         </div>
         <ProjectPendingFileImportStatus

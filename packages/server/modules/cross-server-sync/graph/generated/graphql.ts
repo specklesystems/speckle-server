@@ -1703,6 +1703,7 @@ export type PendingWorkspaceCollaborator = {
   id: Scalars['ID']['output'];
   inviteId: Scalars['String']['output'];
   invitedBy: LimitedUser;
+  /** Target workspace role */
   role: Scalars['String']['output'];
   /** E-mail address or name of the invited user */
   title: Scalars['String']['output'];
@@ -2413,6 +2414,13 @@ export type Query = {
    */
   userSearch: UserSearchResultCollection;
   workspace: Workspace;
+  /**
+   * Look for an invitation to a workspace, for the current user (authed or not). If token
+   * isn't specified, the server will look for any valid invite.
+   *
+   * If token is specified, it will return the corresponding invite even if it belongs to a different user.
+   */
+  workspaceInvite?: Maybe<PendingWorkspaceCollaborator>;
 };
 
 
@@ -2541,6 +2549,12 @@ export type QueryUserSearchArgs = {
 
 export type QueryWorkspaceArgs = {
   id: Scalars['String']['input'];
+};
+
+
+export type QueryWorkspaceInviteArgs = {
+  token?: InputMaybe<Scalars['String']['input']>;
+  workspaceId: Scalars['String']['input'];
 };
 
 /** Deprecated: Used by old stream-based mutations */
@@ -3343,6 +3357,8 @@ export type User = {
    * Note: Only count resolution is currently implemented
    */
   versions: CountOnlyCollection;
+  /** Get all invitations to workspaces that the active user has */
+  workspaceInvites: Array<PendingWorkspaceCollaborator>;
   /** Get the workspaces for the user */
   workspaces: WorkspaceCollection;
 };
@@ -3714,6 +3730,7 @@ export type Workspace = {
   createdAt: Scalars['DateTime']['output'];
   description?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
+  /** Only available to workspace owners */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
   name: Scalars['String']['output'];
   projects: ProjectCollection;
@@ -3793,18 +3810,17 @@ export type WorkspaceInviteMutationsUseArgs = {
 export type WorkspaceInviteUseInput = {
   accept: Scalars['Boolean']['input'];
   token: Scalars['String']['input'];
-  workspaceId: Scalars['String']['input'];
 };
 
 export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   create: Workspace;
-  delete: Workspace;
-  deleteRole: Scalars['Boolean']['output'];
+  delete: Scalars['Boolean']['output'];
+  deleteRole: Workspace;
   invites: WorkspaceInviteMutations;
   update: Workspace;
   /** TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes */
-  updateRole: Scalars['Boolean']['output'];
+  updateRole: Workspace;
 };
 
 
