@@ -4,7 +4,7 @@
     class="bg-pink-300/0 flex justify-center items-center pointer-events-none transition-all duration-300 ease-in overflow-hidden h-8"
   >
     <FormButton class="pointer-events-auto" @click="trackAndResetFilters">
-      Reset Filters
+      Reset filters
     </FormButton>
   </div>
 </template>
