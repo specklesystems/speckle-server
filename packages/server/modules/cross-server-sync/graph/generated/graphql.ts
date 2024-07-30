@@ -2933,7 +2933,6 @@ export type StreamCreateInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   /** Optionally specify user IDs of users that you want to invite to be contributors to this stream */
   withContributors?: InputMaybe<Array<Scalars['String']['input']>>;
-  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type StreamInviteCreateInput = {
@@ -3733,6 +3732,7 @@ export type Workspace = {
   id: Scalars['ID']['output'];
   /** Only available to workspace owners */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
+  logoUrl?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   projects: ProjectCollection;
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */

@@ -7,6 +7,17 @@ export const workspaceFragment = gql`
     description
     createdAt
     updatedAt
+    logoUrl
+  }
+`
+
+export const workspaceProjectFragment = gql`
+  fragment TestWorkspaceProject on Project {
+    id
+    name
+    description
+    createdAt
+    updatedAt
   }
 `
 
@@ -52,4 +63,30 @@ export const getActiveUserWorkspacesQuery = gql`
     }
   }
   ${workspaceFragment}
+`
+
+export const createWorkspaceProjectQuery = gql`
+  mutation CreateWorkspaceProject($input: ProjectCreateInput!) {
+    projectMutations {
+      create(input: $input) {
+        ...TestWorkspaceProject
+      }
+    }
+  }
+  ${workspaceProjectFragment}
+`
+
+export const getWorkspaceProjects = gql`
+  query GetWorkspaceProjects($id: String!) {
+    workspace(id: $id) {
+      projects {
+        items {
+          ...TestWorkspaceProject
+        }
+        cursor
+        totalCount
+      }
+    }
+  }
+  ${workspaceProjectFragment}
 `

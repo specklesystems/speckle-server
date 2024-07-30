@@ -53,6 +53,7 @@ import {
   setWorkspaceRoleFactory,
   updateWorkspaceFactory
 } from '@/modules/workspaces/services/management'
+import { getWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
 import { Roles } from '@speckle/shared'
 import { chunk } from 'lodash'
@@ -314,9 +315,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return await getPendingTeam({ workspaceId: parent.id })
         },
-        projects: async () => {
-          // Get projects in workspace
-          throw new WorkspacesNotYetImplementedError()
+        projects: async (parent, args) => {
+          const getWorkspaceProjects = getWorkspaceProjectsFactory({ getStreams })
+          return await getWorkspaceProjects(
+            {
+              workspaceId: parent.id
+            },
+            {
+              limit: args.limit ?? 25,
+              cursor: args.cursor ?? null,
+              filter: args.filter ?? null
+            }
+          )
         }
       },
       WorkspaceCollaborator: {
