@@ -4,7 +4,7 @@
   <div v-keyboard-clickable :class="containerClasses" @click="onCardClick">
     <div class="relative">
       <div class="flex justify-between items-center h-10">
-        <div class="px-2 select-none">
+        <div class="px-2 select-none w-full max-w-[80%]">
           <div
             v-if="nameParts[0]"
             class="text-body-2xs text-foreground-2 relative truncate"
