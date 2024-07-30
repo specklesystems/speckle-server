@@ -6,7 +6,7 @@
     v-keyboard-clickable
     class="space-y-4 relative"
     :class="model && !isEmptyModel ? 'cursor-pointer' : undefined"
-    @click="isEmptyModel ? undefined : onCardClick"
+    @click="onCardClick"
     @mouseleave="showActionsMenu = false"
   >
     <div
@@ -419,7 +419,7 @@ const triggerVersionUpload = () => {
 }
 
 const onCardClick = () => {
-  if (model.value) {
+  if (model.value && !isEmptyModel.value) {
     router.push(modelRoute(props.project.id, model.value.id))
   }
 }
