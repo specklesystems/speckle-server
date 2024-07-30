@@ -92,7 +92,76 @@ describe('Workspace project GQL CRUD', () => {
     })
   })
 
-  // describe('when querying workspace projects', () => {
+  describe('when querying workspace projects', () => {
+    before(async () => {
+      const workspaceProjects = [
+        { name: 'Workspace Project A', workspaceId: workspace.id },
+        { name: 'Workspace Project B', workspaceId: workspace.id },
+        { name: 'Workspace Project C', workspaceId: workspace.id }
+      ]
 
-  // })
+      await Promise.all(
+        workspaceProjects.map((input) =>
+          apollo.execute(CreateWorkspaceProjectDocument, { input })
+        )
+      )
+    })
+
+    it('should return multiple projects', async () => {
+      const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+        id: workspace.id
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(res.data?.workspace.projects.items.length).to.equal(3)
+    })
+
+    it('should respect limits', async () => {
+      const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+        id: workspace.id,
+        limit: 1
+      })
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(res.data?.workspace.projects.items.length).to.equal(1)
+    })
+
+    it('should respect pagination', async () => {
+      const resA = await apollo.execute(GetWorkspaceProjectsDocument, {
+        id: workspace.id,
+        limit: 1
+      })
+
+      const resB = await apollo.execute(GetWorkspaceProjectsDocument, {
+        id: workspace.id,
+        limit: 1,
+        cursor: resA.data?.workspace.projects.cursor
+      })
+
+      const projectA = resA.data?.workspace.projects.items[0]
+      const projectB = resB.data?.workspace.projects.items[0]
+
+      expect(resA).to.not.haveGraphQLErrors()
+      expect(resB).to.not.haveGraphQLErrors()
+      expect(projectA).to.exist
+      expect(projectB).to.exist
+      expect(projectA?.name).to.not.equal(projectB?.name)
+    })
+
+    it('should respect search filters', async () => {
+      const res = await apollo.execute(GetWorkspaceProjectsDocument, {
+        id: workspace.id,
+        limit: 1,
+        filter: {
+          search: 'Workspace Project B'
+        }
+      })
+
+      const project = res.data?.workspace.projects.items[0]
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(project).to.exist
+      expect(project?.name).to.equal('Workspace Project B')
+    })
+  })
 })

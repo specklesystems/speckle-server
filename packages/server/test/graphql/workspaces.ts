@@ -77,9 +77,14 @@ export const createWorkspaceProjectQuery = gql`
 `
 
 export const getWorkspaceProjects = gql`
-  query GetWorkspaceProjects($id: String!) {
+  query GetWorkspaceProjects(
+    $id: String!
+    $limit: Int
+    $cursor: String
+    $filter: UserProjectsFilter
+  ) {
     workspace(id: $id) {
-      projects {
+      projects(limit: $limit, cursor: $cursor, filter: $filter) {
         items {
           ...TestWorkspaceProject
         }
