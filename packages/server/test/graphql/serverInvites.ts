@@ -83,6 +83,18 @@ export const streamInvitesQuery = gql`
   ${streamInviteFragment}
 `
 
+export const getOwnProjectInvitesQuery = gql`
+  query GetOwnProjectInvites {
+    activeUser {
+      projectInvites {
+        ...StreamInviteData
+      }
+    }
+  }
+
+  ${streamInviteFragment}
+`
+
 export const useStreamInviteMutation = gql`
   mutation UseStreamInvite($accept: Boolean!, $streamId: String!, $token: String!) {
     streamInviteUse(accept: $accept, streamId: $streamId, token: $token)
@@ -106,6 +118,18 @@ export const streamPendingCollaboratorsQuery = gql`
         user {
           id
           name
+        }
+      }
+    }
+  }
+`
+
+export const createProjectInviteMutation = gql`
+  mutation CreateProjectInvite($projectId: ID!, $input: ProjectInviteCreateInput!) {
+    projectMutations {
+      invites {
+        create(projectId: $projectId, input: $input) {
+          id
         }
       }
     }

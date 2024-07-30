@@ -57,6 +57,13 @@ export const createProjectInviteFactory =
       throw new InviteCreateValidationError('Either email or userId must be specified')
     }
 
+    const resourceId = isStreamInviteCreateInput(input)
+      ? input.streamId
+      : input.projectId
+    if (!resourceId?.length) {
+      throw new InviteCreateValidationError('Invalid project ID specified')
+    }
+
     const target = (userId ? buildUserTarget(userId) : email)!
     await deps.createAndSendInvite(
       {
@@ -67,9 +74,7 @@ export const createProjectInviteFactory =
           : undefined,
         primaryResourceTarget: {
           resourceType: ProjectInviteResourceType,
-          resourceId: isStreamInviteCreateInput(input)
-            ? input.streamId
-            : input.projectId,
+          resourceId,
           role: role || Roles.Stream.Contributor,
           primary: true
         }

@@ -75,6 +75,8 @@ export class SpeckleGeometryConverter extends GeometryConverter {
       case SpeckleType.Unknown:
         // console.warn(`Skipping geometry conversion for ${type}`)
         return null
+      default:
+        return null
     }
   }
 
@@ -178,6 +180,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
     return null
   }
 
+  /** DUI3 INSTANCE PROXY */
   private InstanceProxyToGeometyData(node: NodeData): GeometryData | null {
     node
     return null
@@ -275,6 +278,7 @@ export class SpeckleGeometryConverter extends GeometryConverter {
           `Mesh (id ${node.raw.id}) colours are mismatched with vertice counts. The number of colours must equal the number of vertices.`
         )
       }
+      /** We want the colors in linear space */
       colors = this.unpackColors(colorsRaw, true)
     }
 

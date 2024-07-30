@@ -1,8 +1,9 @@
-<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
+<!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <template>
   <div
+    v-keyboard-clickable
     class="space-y-4 relative"
     :class="model ? 'cursor-pointer' : undefined"
     @click="onCardClick"

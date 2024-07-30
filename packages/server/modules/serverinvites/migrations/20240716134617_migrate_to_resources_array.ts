@@ -57,7 +57,7 @@ export async function down(knex: Knex): Promise<void> {
     table.string('serverRole')
 
     table.index(OLD_IDX_2)
-    table.index(OLD_UNIQUE_IDX_COLS)
+    table.unique(OLD_UNIQUE_IDX_COLS)
   })
 
   // Move back from resource to old fields

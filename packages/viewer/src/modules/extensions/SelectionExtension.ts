@@ -29,6 +29,7 @@ const DefaultSelectionExtensionOptions: SelectionExtensionOptions = {
   selectionMaterialData: {
     id: MathUtils.generateUUID(),
     color: 0x047efb,
+    emissive: 0x0,
     opacity: 1,
     roughness: 1,
     metalness: 0,
