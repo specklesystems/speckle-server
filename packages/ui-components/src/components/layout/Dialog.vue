@@ -241,17 +241,13 @@ const dialogPanelClasses = computed(() => {
   ]
 
   if (isFullscreenDesktop.value) {
-    classParts.push('md:h-full md:h-[98vh] md:!h-[98dvh]')
+    classParts.push('md:h-full')
   } else {
     classParts.push('md:max-h-[90vh]')
   }
 
-  if (props.fullscreen === 'mobile') {
+  if (props.fullscreen === 'mobile' || props.fullscreen === 'all') {
     classParts.push('max-md:h-[98vh] max-md:!h-[98dvh]')
-  }
-
-  if (props.fullscreen === 'all') {
-    classParts.push('h-[98vh] !h-[98dvh]')
   }
 
   if (props.fullscreen === 'none' || props.fullscreen === 'desktop') {
