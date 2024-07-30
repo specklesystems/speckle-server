@@ -154,12 +154,6 @@ export = {
     },
 
     async streamInviteCreate(_parent, args, context) {
-      await authorizeResolver(
-        context.userId,
-        args.input.streamId,
-        Roles.Stream.Owner,
-        context.resourceAccessRules
-      )
       const createProjectInvite = createProjectInviteFactory({
         createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
       })
@@ -320,17 +314,18 @@ export = {
   },
   ProjectInviteMutations: {
     async create(_parent, args, ctx) {
-      await authorizeResolver(
-        ctx.userId,
-        args.projectId,
-        Roles.Stream.Owner,
-        ctx.resourceAccessRules
-      )
       const createProjectInvite = createProjectInviteFactory({
         createAndSendInvite: buildCreateAndSendServerOrProjectInvite()
       })
 
-      await createProjectInvite(args, ctx.userId!, ctx.resourceAccessRules)
+      await createProjectInvite(
+        {
+          projectId: args.projectId,
+          ...args.input
+        },
+        ctx.userId!,
+        ctx.resourceAccessRules
+      )
       return ctx.loaders.streams.getStream.load(args.projectId)
     },
     async batchCreate(_parent, args, ctx) {
