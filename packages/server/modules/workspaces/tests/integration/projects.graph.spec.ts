@@ -80,13 +80,13 @@ describe('Workspace project GQL CRUD', () => {
         id: workspace.id
       })
 
+      const workspaceProject = getRes.data?.workspace.projects.items.find(
+        (project) => project.name === projectName
+      )
+
       expect(createRes).to.not.haveGraphQLErrors()
       expect(getRes).to.not.haveGraphQLErrors()
-      expect(
-        getRes.data?.workspace.projects.items.some(
-          (project) => project.name === projectName
-        )
-      ).to.be.true
+      expect(workspaceProject).to.exist
     })
   })
 })
