@@ -10,14 +10,16 @@
           Speckle Automate empowers you to continuously monitor your published models,
           automatically ensuring project data standards, identifying potential design
           faults, and effortlessly creating delivery artifacts.
-          <CommonTextLink
+          <FormButton
             :icon-right="ArrowTopRightOnSquareIcon"
             target="_blank"
             external
+            color="outline"
+            class="mx-auto my-2"
             to="https://speckle.systems/blog/automate-with-speckle/"
           >
             Learn more
-          </CommonTextLink>
+          </FormButton>
         </div>
       </div>
       <div>
@@ -46,7 +48,7 @@
     <div v-if="isAutomateEnabled" class="flex flex-col gap-9">
       <div class="flex gap-2 flex-col sm:flex-row sm:justify-between sm:items-center">
         <h2 class="text-heading-xl">Featured functions</h2>
-        <FormButton color="secondary" class="shrink-0" :to="automationFunctionsRoute">
+        <FormButton color="outline" class="shrink-0" :to="automationFunctionsRoute">
           Explore all functions
         </FormButton>
       </div>

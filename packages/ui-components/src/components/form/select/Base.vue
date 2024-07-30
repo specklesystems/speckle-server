@@ -28,7 +28,7 @@
         >
           <div class="flex items-center justify-between w-full">
             <div
-              class="block truncate grow text-left text-xs sm:text-sm"
+              class="block truncate grow text-left text-xs sm:text-[13px]"
               :class="[hasValueSelected ? 'text-foreground' : 'text-foreground-2']"
             >
               <template
@@ -106,7 +106,7 @@
                     ref="searchInput"
                     v-model="searchValue"
                     type="text"
-                    class="py-1 pl-7 w-full bg-foundation-page rounded-[5px] placeholder:font-normal normal placeholder:text-foreground-2 focus:outline-none focus:ring-1 border-outline-3 focus:border-outline-1 focus:ring-outline-1 text-sm"
+                    class="py-1 pl-7 w-full bg-foundation placeholder:font-normal normal placeholder:text-foreground-2 text-[13px]"
                     :placeholder="searchPlaceholder"
                     @keydown.stop
                   />
@@ -456,17 +456,17 @@ const buttonsWrapperClasses = computed(() => {
 
   if (error.value) {
     classParts.push('hover:shadow rounded-md')
-    classParts.push('text-danger-darker focus:border-danger focus:ring-danger')
+    classParts.push('text-danger-darker focus:border-danger')
 
     if (props.buttonStyle !== 'simple') {
-      classParts.push('outline outline-2 outline-danger')
+      classParts.push('border border-danger')
     }
   } else if (props.buttonStyle !== 'simple') {
     classParts.push('rounded-md border')
     if (isOpen.value) {
-      classParts.push('border-outline-1')
+      classParts.push('border-outline-4')
     } else {
-      classParts.push('border-outline-3')
+      classParts.push('border-outline-2 hover:border-outline-5 focus:outline-0')
     }
   }
 
@@ -481,8 +481,6 @@ const commonButtonClasses = computed(() => {
   const classParts: string[] = []
 
   if (props.buttonStyle !== 'simple') {
-    // classParts.push('group-hover:shadow')
-    // classParts.push('outline outline-2 outline-primary-muted ')
     classParts.push(
       isDisabled.value ? 'bg-foundation-disabled text-foreground-disabled' : ''
     )
@@ -520,7 +518,7 @@ const buttonClasses = computed(() => {
   const classParts = [
     'relative z-[2]',
     'normal rounded-md cursor-pointer transition truncate flex-1',
-    'flex items-center',
+    'flex items-center focus:outline-outline-4 focus:outline-1',
     commonButtonClasses.value
   ]
 
@@ -529,7 +527,7 @@ const buttonClasses = computed(() => {
 
     if (!isDisabled.value) {
       if (props.buttonStyle === 'tinted') {
-        classParts.push('bg-foundation-page text-foreground')
+        classParts.push('bg-foundation text-foreground')
       } else {
         classParts.push('bg-foundation text-foreground')
       }
@@ -623,7 +621,7 @@ const finalItems = computed(() => {
 
 const listboxOptionsClasses = computed(() => {
   const classParts = [
-    'rounded-md bg-foundation-2 py-1 label label--light border border-outline-3 shadow-md mt-1 '
+    'rounded-md bg-foundation py-1 label label--light border border-outline-3 shadow-md mt-1 '
   ]
 
   if (props.mountMenuOnBody) {

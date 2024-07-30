@@ -1,7 +1,9 @@
 <template>
   <ProjectPageSettingsBlock title="Collaborators">
     <template #introduction>
-      <p>Invite new collaborators and set permissions.</p>
+      <p class="text-body-xs text-foreground">
+        Invite new collaborators and set permissions.
+      </p>
     </template>
     <template #top-buttons>
       <FormButton :icon-left="UserPlusIcon" @click="toggleInviteDialog">
@@ -13,7 +15,7 @@
       <div
         v-for="collaborator in collaboratorListItems"
         :key="collaborator.id"
-        class="bg-foundation flex items-center gap-2 py-1 px-3 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
+        class="bg-foundation flex items-center gap-2 py-2 px-3 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
       >
         <UserAvatar :user="collaborator.user" />
         <span class="grow truncate text-body-xs">{{ collaborator.title }}</span>

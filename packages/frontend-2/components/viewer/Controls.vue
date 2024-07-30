@@ -152,7 +152,7 @@
     <div
       v-if="activeControl !== 'none'"
       ref="resizeHandle"
-      class="absolute z-10 ml-12 md:ml-14 max-h-[calc(100dvh-4.5rem)] w-7 mt-[4.2rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
+      class="absolute z-10 pl-12 md:pl-14 max-h-[calc(100dvh-4.5rem)] w-7 mt-[4.2rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
       :style="`left:${width - 4}px; height:${height}px`"
       @mousedown="startResizing"
     >
@@ -169,12 +169,12 @@
     </div>
     <div
       ref="scrollableControlsContainer"
-      :class="`simple-scrollbar absolute z-10 ml-12 md:ml-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition ${
+      :class="`simple-scrollbar absolute z-10 pl-12 pr-2 md:pr-0 md:pl-14 mb-4 max-h-[calc(100dvh-4.5rem)] overflow-y-auto px-[2px] py-[2px] transition ${
         activeControl !== 'none'
           ? 'translate-x-0 opacity-100'
           : '-translate-x-[100%] opacity-0'
       } ${isEmbedEnabled ? 'mt-1.5' : 'mt-[4rem]'}`"
-      :style="`width:${width + 4}px;`"
+      :style="`width: ${isMobile ? '100%' : `${width + 4}px`};`"
     >
       <div v-if="activeControl.length !== 0 && activeControl === 'measurements'">
         <KeepAlive>
@@ -226,7 +226,7 @@
           <div class="text-sm text-foreground-2">No models loaded.</div>
           <div>
             <FormButton
-              size="xs"
+              size="sm"
               text
               :icon-left="PlusIcon"
               @click="openAddModel = true"
@@ -270,8 +270,14 @@ import { useMixpanel } from '~~/lib/core/composables/mp'
 import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
 import { useEmbed } from '~/lib/viewer/composables/setup/embed'
 import { useViewerTour } from '~/lib/viewer/composables/tour'
-import { onKeyStroke, useEventListener, useResizeObserver } from '@vueuse/core'
+import {
+  onKeyStroke,
+  useEventListener,
+  useResizeObserver,
+  useBreakpoints
+} from '@vueuse/core'
 import { useFunctionRunsStatusSummary } from '~/lib/automate/composables/runStatus'
+import { TailwindBreakpoints } from '~~/lib/common/helpers/tailwind'
 
 const isGendoEnabled = useIsGendoModuleEnabled()
 
@@ -348,6 +354,9 @@ const {
   toggleProjection,
   camera: { isOrthoProjection }
 } = useCameraUtilities()
+
+const breakpoints = useBreakpoints(TailwindBreakpoints)
+const isMobile = breakpoints.smaller('sm')
 
 const allAutomationRuns = computed(() => {
   const allAutomationStatuses = modelsAndVersionIds.value

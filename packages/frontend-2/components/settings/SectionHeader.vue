@@ -19,12 +19,12 @@
     </div>
     <p
       v-if="text"
-      class="text-body-xs text-foreground-2"
+      class="text-body-xs text-foreground-2 pt-1"
       :class="{ 'pt-6': subheading }"
     >
       {{ text }}
     </p>
-    <hr v-if="!subheading" class="my-4" />
+    <hr v-if="!subheading" class="my-6 md:my-10" />
     <slot />
   </div>
 </template>

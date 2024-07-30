@@ -6,7 +6,7 @@
     >
       <div
         v-if="items.length > 0"
-        class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
+        class="grid z-10 grid-cols-12 items-center gap-6 font-medium bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
         :style="{ paddingRight: paddingRightStyle }"
       >
         <div
@@ -43,10 +43,9 @@
                 <FormButton
                   :icon-left="button.icon"
                   size="sm"
-                  color="secondary"
+                  color="outline"
                   hide-text
                   :class="button.class"
-                  :text-color="button.textColor"
                   :to="isString(button.action) ? button.action : undefined"
                   @click.stop="!isString(button.action) ? button.action(item) : noop"
                 />
@@ -77,7 +76,6 @@
 import { noop, isString } from 'lodash'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
-import type { FormButtonTextColor } from '~~/src/helpers/form/button'
 import { FormButton } from '~~/src/lib'
 
 export type TableColumn<I> = {
@@ -91,7 +89,6 @@ export interface RowButton<T = unknown> {
   label: string
   action: (item: T) => void | string
   class?: string
-  textColor?: FormButtonTextColor
 }
 
 const props = withDefaults(

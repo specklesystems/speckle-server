@@ -11,12 +11,10 @@
       <UserAvatarGroup :users="threadAuthors" />
       <FormButton
         v-tippy="thread.archived ? 'Unresolve' : 'Resolve'"
-        size="sm"
         :icon-left="thread.archived ? CheckCircleIcon : CheckCircleIconOutlined"
         text
         hide-text
         :disabled="!canArchiveOrUnarchive"
-        :color="thread.archived ? 'default' : 'default'"
         @click.stop="toggleCommentResolvedStatus()"
       ></FormButton>
     </div>

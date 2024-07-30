@@ -63,7 +63,7 @@
             </div>
             <div
               v-if="item.tag"
-              class="text-[10px] leading-tight py-0.5 text-foreground-on-primary font-medium px-1.5 rounded-full bg-gradient-to-tr from-[#7025EB] to-primary select-none mt-0.5"
+              class="text-body-3xs font-medium py-0.5 px-1.5 bg-info-lighter uppercase text-outline-4 rounded"
             >
               {{ item.tag }}
             </div>

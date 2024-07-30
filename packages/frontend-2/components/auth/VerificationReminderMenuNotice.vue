@@ -1,15 +1,16 @@
 <template>
   <div
     v-if="shouldShowBanner"
-    class="flex flex-col mx-2 mt-1 mb-2 px-2 py-1.5 text-dark border border-outline-2 bg-foundation rounded-md"
+    class="flex flex-col mx-2 mt-1 mb-2 px-2 py-1.5 text-dark border border-outline-2 bg-foundation-1 rounded-md"
   >
     <div class="text-body-xs">{{ verifyBannerText }}</div>
     <div class="">
       <FormButton
-        size="xs"
+        size="sm"
+        text
         :disabled="loading"
         link
-        class="font-semibold text-danger-darker"
+        class="font-medium text-danger-darker"
         @click="requestVerification"
       >
         {{ verifyBannerCtaText }}

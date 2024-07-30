@@ -23,7 +23,7 @@
       >
         <FormButton
           color="danger"
-          size="xs"
+          size="sm"
           class="rounded-full"
           @click="$emit('remove', props.object.objectId)"
         >

@@ -60,6 +60,10 @@ const colorDefinitions: Ref<Record<string, ColorDefinition>> = ref({
   },
   outline: {
     description: 'Outline/border/divider colors',
+    variations: ['1', '2', '3', '4', '5']
+  },
+  highlight: {
+    description: 'Used in hover states or anywhere to signal interaction',
     variations: ['1', '2', '3']
   },
   success: {
@@ -132,6 +136,11 @@ markClassesUsed([
   'bg-danger-darker',
   'bg-outline-1',
   'bg-outline-2',
-  'bg-outline-3'
+  'bg-outline-3',
+  'bg-outline-4',
+  'bg-outline-5',
+  'bg-highlight-1',
+  'bg-highlight-2',
+  'bg-highlight-3'
 ])
 </script>

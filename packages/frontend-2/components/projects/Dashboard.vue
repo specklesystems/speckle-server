@@ -50,7 +50,7 @@
             :icon-left="PlusIcon"
             @click="openNewProject = true"
           >
-            New
+            New project
           </FormButton>
         </div>
       </div>
@@ -72,6 +72,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { PlusIcon } from '@heroicons/vue/24/outline'
 import {
   useApolloClient,
   useQuery,
@@ -79,7 +80,6 @@ import {
   useSubscription
 } from '@vue/apollo-composable'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
-import { PlusIcon } from '@heroicons/vue/20/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import {

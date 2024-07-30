@@ -1,10 +1,8 @@
 <template>
-  <LayoutPanel fancy-glow no-shadow class="max-w-lg mx-auto w-full">
-    <div class="space-y-4">
-      <div class="flex flex-col items-center sm:gap-2">
-        <h1
-          class="text-heading-xl text-center bg-gradient-to-r py-1 from-blue-500 via-blue-400 to-blue-600 inline-block text-transparent bg-clip-text"
-        >
+  <div class="--mx-auto w-full">
+    <div class="space-y-6">
+      <div class="flex flex-col items-center gap-y-2">
+        <h1 class="text-heading-xl text-center inline-block">
           Create your Speckle account
         </h1>
         <h2 class="text-body-sm text-center text-foreground-2">
@@ -47,7 +45,7 @@
         </div>
       </template>
     </div>
-  </LayoutPanel>
+  </div>
 </template>
 <script setup lang="ts">
 import { useQuery } from '@vue/apollo-composable'

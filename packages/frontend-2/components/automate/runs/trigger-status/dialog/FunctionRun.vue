@@ -56,8 +56,8 @@
             </div>
             <FormButton
               v-if="attachments.length > 1"
-              size="xs"
-              color="card"
+              size="sm"
+              color="outline"
               class="mt-1"
               @click="showAttachmentDialog = true"
             >
@@ -81,7 +81,7 @@
           <div class="flex-shrink-0">
             <FormButton
               v-if="functionRun.contextView"
-              size="xs"
+              size="sm"
               :to="functionRun.contextView"
               target="_blank"
             >

@@ -11,7 +11,7 @@
         leave-to="opacity-0"
       >
         <div
-          class="fixed top-0 left-0 w-full h-full bg-black/70 dark:bg-neutral-900/70 transition-opacity"
+          class="fixed top-0 left-0 w-full h-full backdrop-blur-xs bg-black/60 dark:bg-neutral-900/60 transition-opacity"
         />
       </TransitionChild>
       <div class="fixed top-0 left-0 z-10 h-screen !h-[100dvh] w-screen">
@@ -49,10 +49,11 @@
             >
               <div
                 v-if="hasTitle"
+                class="border-b border-outline-2"
                 :class="scrolledFromTop && 'relative z-20 shadow-lg'"
               >
                 <div
-                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[4rem] p-6 truncate text-heading-lg"
+                  class="flex items-center justify-start rounded-t-lg shrink-0 min-h-[2rem] sm:min-h-[3rem] px-6 py-4 truncate text-heading"
                 >
                   <div class="flex items-center pr-12">
                     <ChevronLeftIcon
@@ -75,20 +76,23 @@
               -->
               <button class="hidden" type="button" />
 
-              <button
+              <FormButton
                 v-if="!hideCloser"
-                type="button"
-                class="absolute z-20 bg-foundation hover:bg-foundation-page transition rounded-full p-1.5 shadow border top-5 right-5 border-outline-3"
+                color="subtle"
+                size="sm"
+                :icon-right="XMarkIcon"
+                hide-text
+                class="absolute z-20 top-4 right-5"
                 @click="open = false"
               >
                 <XMarkIcon class="h-4 w-4 md:w-5 md:h-5" />
-              </button>
+              </FormButton>
               <div ref="slotContainer" :class="slotContainerClasses" @scroll="onScroll">
                 <slot>Put your content here!</slot>
               </div>
               <div
                 v-if="hasButtons"
-                class="relative z-50 flex p-6 gap-3 shrink-0 bg-foundation"
+                class="relative z-50 flex px-6 py-3 gap-3 shrink-0 bg-foundation-page border-t border-outline-2"
                 :class="{
                   'shadow-t': !scrolledToBottom,
                   [buttonsWrapperClasses || '']: true
@@ -207,6 +211,12 @@ const widthClasses = computed(() => {
   if (!isFullscreenDesktop.value) {
     classParts.push('md:max-w-2xl')
 
+    if (maxWidthWeight.value === 0) {
+      classParts.push('md:max-w-lg')
+    }
+    if (maxWidthWeight.value >= 1) {
+      classParts.push('md:max-w-2xl')
+    }
     if (maxWidthWeight.value >= 2) {
       classParts.push('lg:max-w-4xl')
     }
@@ -227,7 +237,7 @@ const isFullscreenDesktop = computed(
 
 const dialogPanelClasses = computed(() => {
   const classParts: string[] = [
-    'transform md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation text-left shadow-xl  flex flex-col md:h-auto'
+    'transform md:rounded-xl text-foreground overflow-hidden transition-all bg-foundation-page text-left shadow-xl border border-outline-2 flex flex-col md:h-auto'
   ]
 
   if (isFullscreenDesktop.value) {
@@ -255,17 +265,15 @@ const dialogPanelClasses = computed(() => {
 })
 
 const slotContainerClasses = computed(() => {
-  const classParts: string[] = [
-    'flex-1 simple-scrollbar overflow-y-auto text-sm sm:text-base'
-  ]
+  const classParts: string[] = ['flex-1 simple-scrollbar overflow-y-auto text-body-xs']
 
   if (hasTitle.value) {
-    classParts.push('px-6 pb-4')
+    classParts.push('px-6 py-4')
     if (isFullscreenDesktop.value) {
       classParts.push('md:p-0')
     }
   } else if (!isFullscreenDesktop.value) {
-    classParts.push('p-6')
+    classParts.push('px-6 py-4')
   }
 
   return classParts.join(' ')
