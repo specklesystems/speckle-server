@@ -3,11 +3,11 @@
     <div class="space-y-4">
       <div class="flex flex-col items-center sm:gap-2">
         <h1
-          class="text-xl sm:text-3xl text-center font-bold bg-gradient-to-r py-1 from-blue-500 via-blue-400 to-blue-600 inline-block text-transparent bg-clip-text"
+          class="text-heading-xl text-center bg-gradient-to-r py-1 from-blue-500 via-blue-400 to-blue-600 inline-block text-transparent bg-clip-text"
         >
           Create your Speckle account
         </h1>
-        <h2 class="text-sm sm:text-base text-center text-foreground-2">
+        <h2 class="text-body-sm text-center text-foreground-2">
           Connectivity, Collaboration and Automation for 3D
         </h2>
       </div>
@@ -34,7 +34,7 @@
         <div>
           <div
             v-if="hasThirdPartyStrategies && hasLocalStrategy"
-            class="text-center label text-foreground-2 mb-3 text-xs font-normal"
+            class="text-center text-foreground-2 mb-3 text-body-2xs font-normal"
           >
             Or sign up with your email
           </div>

@@ -4,12 +4,12 @@
     :to="threadLink"
   >
     <div
-      class="flex flex-col sm:flex-row sm:items-center flex-grow overflow-hidden space-x-2 mt-3 sm:mt-0"
+      class="flex flex-col sm:flex-row sm:items-center flex-grow overflow-hidden space-x-3 mt-3 sm:mt-0"
     >
-      <div class="flex items-center flex-none space-x-1 text-sm font-semibold">
+      <div class="flex items-center flex-none space-x-1">
         <UserAvatarGroup v-if="!thread.archived" :users="allAvatars" :max-count="4" />
         <CheckCircleIcon v-else class="w-8 h-8 text-primary" />
-        <span>
+        <span class="text-heading-sm">
           {{ thread.author.name }}
           <template v-if="threadAuthors.length !== 1">
             & {{ thread.replyAuthors.totalCount }} others
@@ -17,18 +17,18 @@
         </span>
       </div>
       <div
-        class="min-w-0 max-w-full truncate text-sm flex-auto text-foreground-2 mt-2 sm:mt-0"
+        class="min-w-0 max-w-full truncate text-body-sm flex-auto text-foreground-2 mt-2 sm:mt-0"
       >
         {{ thread.rawText }}
       </div>
     </div>
     <div class="flex space-x-4 items-center flex-none pb-8 sm:pb-0">
       <div class="absolute sm:relative w-full bottom-2 sm:bottom-0 left-0 px-2 gap-8">
-        <div class="w-full px-2 flex justify-between text-xs">
+        <div class="w-full px-2 flex justify-between items-center text-xs">
           <span v-tippy="updatedAt.full" class="text-foreground-2 text-xs">
             {{ updatedAt.relative }}
           </span>
-          <span class="ml-4 text-xs font-bold text-primary">
+          <span class="ml-4 text-body-xs font-medium text-primary">
             {{ thread.repliesCount.totalCount }}
             {{ thread.repliesCount.totalCount === 1 ? 'reply' : 'replies' }}
           </span>

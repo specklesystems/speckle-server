@@ -37,9 +37,9 @@
 
       <div class="flex flex-col lg:flex-row gap-8 mb-6">
         <div class="flex-1 order-1 lg:order-2">
-          <h4 class="font-bold text-sm text-foreground-2 mb-2 ml-0.5">Embed code</h4>
+          <h4 class="text-heading-sm text-foreground-2 mb-1 ml-0.5">Embed code</h4>
           <FormClipboardInput :value="iframeCode" is-multiline />
-          <p class="text-sm sm:text-base text-foreground-2 mt-2 mb-5 ml-0.5">
+          <p class="text-body-xs text-foreground-2 mt-2 mb-5 ml-0.5">
             Copy this code to embed your model in a webpage or document.
           </p>
           <LayoutDialogSection border-b border-t title="Options">

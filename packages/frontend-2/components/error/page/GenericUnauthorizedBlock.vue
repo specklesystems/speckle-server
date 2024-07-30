@@ -2,7 +2,7 @@
   <div class="flex flex-col space-y-8 mt-12">
     <div class="flex flex-col justify-center sm:flex-row sm:space-x-2 items-center">
       <LockClosedIcon class="w-12 h-12 text-primary shrink-0" />
-      <h1 class="h3 font-bold">
+      <h1 class="text-heading-xl">
         You are not authorized to access this {{ resourceType }}.
       </h1>
     </div>

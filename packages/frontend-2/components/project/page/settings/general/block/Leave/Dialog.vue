@@ -3,7 +3,7 @@
     <template #header>Leave project</template>
     <div class="space-y-4">
       <p>Are you sure you want to leave this project?</p>
-      <p class="font-bold my-2">
+      <p class="font-medium my-2">
         Leaving this project removes your access to its data and functionalities.
       </p>
       <p>You can only rejoin if invited back by a project owner.</p>

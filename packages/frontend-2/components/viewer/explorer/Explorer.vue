@@ -25,7 +25,7 @@
             </FormButton>
           </div>
           <div v-else>
-            <h4 class="font-bold whitespace-normal text-xs ml-1">Dev mode</h4>
+            <h4 class="font-medium whitespace-normal text-body-2xs ml-1">Dev mode</h4>
           </div>
 
           <FormButton

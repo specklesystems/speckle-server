@@ -59,7 +59,7 @@
         <template #data="{ item }">
           <div class="flex flex-col">
             <h3
-              class="font-bold text-sm truncate"
+              class="font-medium text-sm truncate"
               :class="{ 'opacity-60': !item.enabled }"
             >
               {{ item.description }}

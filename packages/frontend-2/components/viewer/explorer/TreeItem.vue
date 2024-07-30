@@ -30,17 +30,17 @@
           @focusout="unhighlightObject"
         >
           <div
-            :class="`truncate ${unfold ? 'font-semibold' : ''} ${
+            :class="`truncate ${
               isHidden || (!isIsolated && stateHasIsolatedObjectsInGeneral)
                 ? 'text-foreground-2'
                 : ''
             }`"
           >
-            <div class="truncate text-sm">
+            <div :class="`truncate text-body-xs ${unfold ? 'font-medium' : ''}`">
               <!-- Note, enforce header from parent if provided (used in the case of root nodes) -->
               {{ header || headerAndSubheader.header }}
             </div>
-            <div class="text-tiny text-foreground-2 truncate">
+            <div class="text-body-3xs text-foreground-2 truncate -mt-0.5">
               {{ subHeader || headerAndSubheader.subheader }}
             </div>
             <div v-if="debug" class="text-tiny text-foreground-2">

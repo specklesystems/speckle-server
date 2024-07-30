@@ -12,7 +12,7 @@
         @mouseenter="rotateGently(Math.random() * 2)"
         @mouseleave="rotateGently(Math.random() * 2)"
       >
-        <h2 class="text-center text-2xl font-bold">
+        <h2 class="text-center text-2xl font-medium">
           Welcome, {{ activeUser?.name?.split(' ')[0] }}!
         </h2>
         <p class="text-center text-sm">
@@ -43,7 +43,7 @@
         @mouseenter="rotateGently(Math.random() * 2)"
         @mouseleave="rotateGently(Math.random() * 2)"
       >
-        <h2 class="text-center text-2xl font-bold">Thanks!</h2>
+        <h2 class="text-center text-2xl font-medium">Thanks!</h2>
         <p class="text-center text-sm">
           Last thing! Please select the role that best describes you:
         </p>

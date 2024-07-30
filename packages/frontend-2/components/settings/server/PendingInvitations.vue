@@ -54,7 +54,7 @@
           <FormButton
             :link="true"
             :class="{
-              'font-semibold': true,
+              'font-medium': true,
               'text-primary': !successfullyResentInvites.includes(item.id),
               'text-foreground': successfullyResentInvites.includes(item.id)
             }"

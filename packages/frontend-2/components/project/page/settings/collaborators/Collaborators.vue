@@ -13,10 +13,10 @@
       <div
         v-for="collaborator in collaboratorListItems"
         :key="collaborator.id"
-        class="bg-foundation flex items-center gap-2 py-3 px-4 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
+        class="bg-foundation flex items-center gap-2 py-1 px-3 border-t border-x last:border-b border-outline-3 first:rounded-t-lg last:rounded-b-lg"
       >
         <UserAvatar :user="collaborator.user" />
-        <span class="grow truncate text-sm">{{ collaborator.title }}</span>
+        <span class="grow truncate text-body-xs">{{ collaborator.title }}</span>
 
         <template v-if="!collaborator.inviteId">
           <ProjectPageTeamPermissionSelect
@@ -28,7 +28,7 @@
             @update:model-value="onCollaboratorRoleChange(collaborator, $event)"
             @delete="onCollaboratorRoleChange(collaborator, null)"
           />
-          <span v-else class="shrink-0 text-sm">
+          <span v-else class="shrink-0 text-body-2xs">
             {{ roleSelectItems[collaborator.role].title }}
           </span>
         </template>

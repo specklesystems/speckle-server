@@ -1,7 +1,7 @@
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
 <template>
   <div
-    :class="`w-full bg-foundation-2 hover:bg-blue-500/5 rounded pl-1 py-1 border-l-2 text-xs ${
+    :class="`w-full bg-foundation-2 hover:bg-blue-500/5 rounded pl-1 py-0.5 border-l-2 text-body-2xs ${
       expandable ? 'border-blue-500' : 'border-transparent'
     } ${expanded ? 'border-neutral-500 border-opacity-30' : ''}`"
   >
@@ -10,7 +10,7 @@
       :class="`grid grid-cols-3 pr-1 ${expandable ? 'cursor-pointer' : ''}`"
       @click="handleExpand"
     >
-      <div class="col-span-1 mr-1 flex items-center text-foreground-2 font-semibold">
+      <div class="col-span-1 mr-1 flex items-center text-foreground-2 font-medium">
         <ChevronRightIcon
           v-if="expandable"
           :class="`w-3 ${expanded ? 'rotate-90' : ''} transition shrink-0 `"

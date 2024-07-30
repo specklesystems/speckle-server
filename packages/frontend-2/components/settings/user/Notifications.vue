@@ -8,11 +8,11 @@
       <table class="table-auto w-full rounded-t overflow-hidden">
         <thead class="text-foreground-1">
           <tr>
-            <th class="pb-4 font-semibold text-sm text-left">Notification type</th>
+            <th class="pb-4 font-medium text-sm text-left">Notification type</th>
             <th
               v-for="channel in notificationChannels"
               :key="channel"
-              class="text-right font-semibold pb-4 text-sm"
+              class="text-right font-medium pb-4 text-sm"
             >
               {{ capitalize(channel) }}
             </th>
@@ -24,7 +24,7 @@
             :key="type"
             class="border-t"
           >
-            <td class="text-xs sm:text-sm py-4">
+            <td class="text-body-xs py-4">
               {{ notificationTypeMapping[type] || 'Unknown' }}
             </td>
             <td

@@ -8,7 +8,7 @@
     ]"
     @click="($event) => $emit('click', $event)"
   >
-    <span class="normal font-bold truncate">{{ item.name }}</span>
+    <span class="normal font-medium truncate">{{ item.name }}</span>
     <span v-if="item.company" class="label label--light truncate">
       {{ item.company }}
     </span>

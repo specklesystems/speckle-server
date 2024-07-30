@@ -13,7 +13,7 @@
         placeholder="Project name"
         show-label
         color="foundation"
-        class="mb-4"
+        class="mb-2"
         :disabled="disabled"
       />
       <FormTextArea

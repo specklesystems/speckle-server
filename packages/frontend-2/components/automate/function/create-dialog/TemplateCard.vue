@@ -11,7 +11,7 @@
         :style="{ backgroundImage: `url(${template.logo})` }"
       />
       <div class="flex space-x-1 justify-start items-center self-start">
-        <div class="h6 font-bold text-foreground">{{ template.title }}</div>
+        <div class="h6 font-medium text-foreground">{{ template.title }}</div>
         <div v-tippy="'Click to read more'">
           <CommonTextLink size="xs" external :to="template.url" target="_blank">
             <InformationCircleIcon class="h-4 w-4 hover:text-primary" />

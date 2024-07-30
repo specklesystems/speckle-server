@@ -7,7 +7,7 @@
           class="animate-ping absolute bg-primary rounded-full h-8 w-8"
         ></div>
         <div
-          class="sm:absolute bg-foundation group-hover:scale-125 scale transition rounded-full h-8 w-8 flex items-center justify-center text-primary cursor-pointer select-none text-sm font-bold"
+          class="sm:absolute bg-foundation group-hover:scale-125 scale transition rounded-full h-8 w-8 flex items-center justify-center text-primary cursor-pointer select-none text-sm font-medium"
         >
           <span>{{ index + 1 }}</span>
           <!-- <span v-if="!expanded">{{ index + 1 }}</span>
