@@ -24,7 +24,6 @@ import cryptoRandomString from 'crypto-random-string'
 
 describe('Workspace project GQL CRUD', () => {
   let apollo: TestApolloServer
-  let workspace: BasicTestWorkspace
 
   const testUser: BasicTestUser = {
     id: '',
@@ -55,19 +54,23 @@ describe('Workspace project GQL CRUD', () => {
         scopes: AllScopes
       })
     })
-
-    const testWorkspace: BasicTestWorkspace = {
-      id: '',
-      ownerId: testUser.id,
-      name: 'My Test Workspace'
-    }
-
-    await createTestWorkspace(testWorkspace, testUser)
-
-    workspace = testWorkspace
   })
 
   describe('when specifying a workspace id during project creation', () => {
+    let workspace: BasicTestWorkspace
+
+    before(async () => {
+      const testWorkspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: testUser.id,
+        name: 'My Test Workspace'
+      }
+
+      await createTestWorkspace(testWorkspace, testUser)
+
+      workspace = testWorkspace
+    })
+
     it('should create the project in that workspace', async () => {
       const projectName = cryptoRandomString({ length: 6 })
 
@@ -93,7 +96,19 @@ describe('Workspace project GQL CRUD', () => {
   })
 
   describe('when querying workspace projects', () => {
+    let workspace: BasicTestWorkspace
+
     before(async () => {
+      const testWorkspace: BasicTestWorkspace = {
+        id: '',
+        ownerId: testUser.id,
+        name: 'My Test Workspace'
+      }
+
+      await createTestWorkspace(testWorkspace, testUser)
+
+      workspace = testWorkspace
+
       const workspaceProjects = [
         { name: 'Workspace Project A', workspaceId: workspace.id },
         { name: 'Workspace Project B', workspaceId: workspace.id },
