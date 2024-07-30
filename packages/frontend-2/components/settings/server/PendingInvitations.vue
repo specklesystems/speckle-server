@@ -53,6 +53,7 @@
         <template #resend="{ item }">
           <FormButton
             :link="true"
+            text
             :class="{
               'font-medium': true,
               'text-primary': !successfullyResentInvites.includes(item.id),

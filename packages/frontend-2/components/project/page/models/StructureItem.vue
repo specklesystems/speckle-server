@@ -5,8 +5,8 @@
   <div
     v-keyboard-clickable
     class="space-y-4 relative"
-    :class="model ? 'cursor-pointer' : undefined"
-    @click="onCardClick"
+    :class="model && !isEmptyModel ? 'cursor-pointer' : undefined"
+    @click="isEmptyModel ? undefined : onCardClick"
     @mouseleave="showActionsMenu = false"
   >
     <div
@@ -404,6 +404,10 @@ const {
 )
 
 const children = computed(() => childrenResult.value?.project?.modelChildrenTree || [])
+
+const isEmptyModel = computed(() => {
+  return itemType.value === StructureItemType.EmptyModel
+})
 
 const onModelUpdated = () => {
   emit('model-updated')
