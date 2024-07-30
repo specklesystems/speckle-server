@@ -1,9 +1,8 @@
 <!-- eslint-disable vuejs-accessibility/click-events-have-key-events -->
 <!-- eslint-disable vuejs-accessibility/no-static-element-interactions -->
-<!-- eslint-disable vuejs-accessibility/mouse-events-have-key-events -->
 <template>
-  <div :class="containerClasses">
-    <div class="relative" @click="onCardClick">
+  <div v-keyboard-clickable :class="containerClasses" @click="onCardClick">
+    <div class="relative">
       <div class="flex justify-between items-center h-10">
         <div class="px-2 select-none">
           <div
