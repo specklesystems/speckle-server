@@ -10,8 +10,7 @@ import {
   DeleteWorkspaceRoleDocument,
   GetWorkspaceDocument,
   UpdateWorkspaceRoleDocument,
-  Workspace,
-  WorkspaceRole
+  Workspace
 } from '@/test/graphql/generated/graphql'
 import {
   createTestContext,
@@ -95,7 +94,7 @@ describe('Workspaces Roles GQL', () => {
 
       expect(res).to.not.haveGraphQLErrors()
       expect(userRole).to.exist
-      expect(userRole?.role).to.equal(WorkspaceRole.Admin)
+      expect(userRole?.role).to.equal(Roles.Workspace.Admin)
     })
 
     it('should update a role that exists', async () => {
@@ -116,7 +115,7 @@ describe('Workspaces Roles GQL', () => {
 
       expect(res).to.not.haveGraphQLErrors()
       expect(userRole).to.exist
-      expect(userRole?.role).to.equal(WorkspaceRole.Member)
+      expect(userRole?.role).to.equal(Roles.Workspace.Member)
     })
 
     it('should throw if attempting to remove last admin', async () => {
