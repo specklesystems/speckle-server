@@ -5,7 +5,7 @@
   <div
     v-keyboard-clickable
     class="space-y-4 relative"
-    :class="model ? 'cursor-pointer' : undefined"
+    :class="model && !isEmptyModel ? 'cursor-pointer' : undefined"
     @click="onCardClick"
     @mouseleave="showActionsMenu = false"
   >
@@ -405,6 +405,10 @@ const {
 
 const children = computed(() => childrenResult.value?.project?.modelChildrenTree || [])
 
+const isEmptyModel = computed(() => {
+  return itemType.value === StructureItemType.EmptyModel
+})
+
 const onModelUpdated = () => {
   emit('model-updated')
   refetchChildren()
@@ -415,7 +419,7 @@ const triggerVersionUpload = () => {
 }
 
 const onCardClick = () => {
-  if (model.value) {
+  if (model.value && !isEmptyModel.value) {
     router.push(modelRoute(props.project.id, model.value.id))
   }
 }
