@@ -152,18 +152,18 @@
     <div
       v-if="activeControl !== 'none'"
       ref="resizeHandle"
-      class="absolute z-10 pl-12 md:pl-14 max-h-[calc(100dvh-4.5rem)] w-7 mt-[4.2rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
-      :style="`left:${width - 4}px; height:${height}px`"
+      class="absolute z-10 max-h-[calc(100dvh-4.5rem)] w-7 mt-[4.3rem] hidden sm:flex group overflow-hidden items-center rounded-r cursor-ew-resize z-30"
+      :style="`left:${width - 2}px; height:${height - 10}px`"
       @mousedown="startResizing"
     >
       <div
-        class="relative z-30 w-3 ml-1 h-full pt-[4.2rem] bg-transparent group-hover:bg-outline-2 cursor-ew-resize transition rounded-r"
+        class="relative z-30 w-1 mt-2 ml-1 h-full pt-[4.2rem] bg-transparent group-hover:bg-primary cursor-ew-resize transition rounded-r"
       ></div>
       <div
-        class="w-7 h-8 mr-1 bg-foundation group-hover:bg-outline-2 rounded-r -translate-x-10 group-hover:translate-x-0 transition cursor-ew-resize flex items-center justify-center group-hover:shadow-xl"
+        class="w-7 h-8 mr-1 bg-transparent group-hover:bg-primary rounded-r -translate-x-1 group-hover:translate-x-0 transition cursor-ew-resize flex items-center justify-center group-hover:shadow-xl"
       >
         <ArrowsRightLeftIcon
-          class="h-3 w-3 transition opacity-0 group-hover:opacity-80 text-outline-1 -ml-[2px]"
+          class="h-3 w-3 transition opacity-0 group-hover:opacity-100 text-foundation -ml-[2px]"
         />
       </div>
     </div>
