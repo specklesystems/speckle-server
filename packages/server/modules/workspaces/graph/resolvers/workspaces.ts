@@ -118,7 +118,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, logoUrl } = args.input
+          const { name, description } = args.input
 
           const { emit: emitWorkspaceEvent } = getEventBus()
 
@@ -138,8 +138,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId!,
             workspaceInput: {
               name,
-              description: description ?? null,
-              logoUrl: logoUrl ?? null
+              description: description || null,
+              // TODO: Resolve how logos will be created
+              logoUrl: null
             },
             userResourceAccessLimits: context.resourceAccessRules
           })
@@ -322,9 +323,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
               workspaceId: parent.id
             },
             {
-              limit: args.limit ?? 25,
-              cursor: args.cursor ?? null,
-              filter: args.filter ?? null
+              limit: args.limit || 25,
+              cursor: args.cursor || null,
+              filter: { ...(args.filter || {}) }
             }
           )
         }

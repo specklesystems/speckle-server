@@ -1,4 +1,3 @@
-import { UserProjectsFilter } from '@/modules/core/graph/generated/graphql'
 import { StreamRecord } from '@/modules/core/helpers/types'
 import { convertDateToCursor, parseCursorToDate } from '@/modules/core/services/admin'
 import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
@@ -43,7 +42,9 @@ type GetWorkspaceProjectsArgs = {
 type GetWorkspaceProjectsOptions = {
   limit: number | null
   cursor: string | null
-  filter: UserProjectsFilter | null
+  filter: {
+    search?: string | null
+  } | null
 }
 
 type GetWorkspaceProjectsReturnValue = {
@@ -61,9 +62,9 @@ export const getWorkspaceProjectsFactory =
     const { streams, cursorDate } = await getStreams({
       cursor: opts.cursor ? parseCursorToDate(opts.cursor) : null,
       orderBy: null,
-      limit: opts.limit ?? 25,
+      limit: opts.limit || 25,
       visibility: null,
-      searchQuery: null,
+      searchQuery: opts.filter?.search || null,
       streamIdWhitelist: null,
       workspaceIdWhitelist: [args.workspaceId]
     })

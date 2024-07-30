@@ -1,14 +1,16 @@
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import {
+  BasicTestWorkspace,
+  createTestWorkspace
+} from '@/modules/workspaces/tests/helpers/creation'
+import {
   BasicTestUser,
   createAuthTokenForUser,
   createTestUser
 } from '@/test/authHelper'
 import {
-  CreateWorkspaceDocument,
   CreateWorkspaceProjectDocument,
-  GetWorkspaceProjectsDocument,
-  Workspace
+  GetWorkspaceProjectsDocument
 } from '@/test/graphql/generated/graphql'
 import {
   createTestContext,
@@ -22,7 +24,7 @@ import cryptoRandomString from 'crypto-random-string'
 
 describe('Workspace project GQL CRUD', () => {
   let apollo: TestApolloServer
-  let workspace: Omit<Workspace, 'projects' | 'team'>
+  let workspace: BasicTestWorkspace
 
   const testUser: BasicTestUser = {
     id: '',
@@ -54,15 +56,15 @@ describe('Workspace project GQL CRUD', () => {
       })
     })
 
-    const { data } = await apollo.execute(CreateWorkspaceDocument, {
-      input: { name: 'My Test Workspace' }
-    })
-
-    if (!data) {
-      throw new Error('Error during test setup!')
+    const testWorkspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: testUser.id,
+      name: 'My Test Workspace'
     }
 
-    workspace = data.workspaceMutations.create
+    await createTestWorkspace(testWorkspace, testUser)
+
+    workspace = testWorkspace
   })
 
   describe('when specifying a workspace id during project creation', () => {
@@ -89,4 +91,8 @@ describe('Workspace project GQL CRUD', () => {
       expect(workspaceProject).to.exist
     })
   })
+
+  // describe('when querying workspace projects', () => {
+
+  // })
 })
