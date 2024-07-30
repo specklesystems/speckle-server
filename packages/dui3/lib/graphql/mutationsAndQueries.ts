@@ -1,8 +1,20 @@
 import { graphql } from '~~/lib/common/generated/gql'
 
-export const createCommitMutation = graphql(`
-  mutation CommitCreate($commit: CommitCreateInput!) {
-    commitCreate(commit: $commit)
+export const createVersionMutation = graphql(`
+  mutation VersionMutations($input: CreateVersionInput!) {
+    versionMutations {
+      create(input: $input) {
+        id
+      }
+    }
+  }
+`)
+
+export const markReceivedVersionMutation = graphql(`
+  mutation MarkReceivedVersion($input: MarkReceivedVersionInput!) {
+    versionMutations {
+      markReceived(input: $input)
+    }
   }
 `)
 

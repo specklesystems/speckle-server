@@ -4,7 +4,8 @@ import type { ProgressStage } from '@speckle/objectloader'
 import ObjectLoader from '@speckle/objectloader'
 import { provideApolloClient, useMutation } from '@vue/apollo-composable'
 import {
-  createCommitMutation,
+  createVersionMutation,
+  markReceivedVersionMutation,
   versionDetailsQuery
 } from '~/lib/graphql/mutationsAndQueries'
 import type { DUIAccount } from '~/store/accounts'
@@ -155,6 +156,18 @@ export class SketchupBridge extends BaseBridge {
       rootObj
     ]
 
+    const markReceived = provideApolloClient((account as DUIAccount).client)(() =>
+      useMutation(markReceivedVersionMutation)
+    )
+
+    await markReceived.mutate({
+      input: {
+        versionId: eventPayload.selectedVersionId,
+        projectId: eventPayload.projectId,
+        sourceApplication: 'Sketchup'
+      }
+    })
+
     // CONVERSION WILL START AFTER THAT
     await this.runMethod('afterGetObjects', args as unknown as unknown[])
   }
@@ -208,13 +221,13 @@ export class SketchupBridge extends BaseBridge {
       sourceApplication: 'sketchup',
       message: message || 'send from sketchup'
     }
-    const commitCreate = await this.createVersion(args)
+    const versionId = await this.createVersion(args)
 
     const hostAppStore = useHostAppStore()
     // TODO: Alignment needed
     hostAppStore.setModelSendResult({
       modelCardId: args.modelCardId,
-      versionId: commitCreate as string,
+      versionId: versionId as string,
       sendConversionResults
     })
   }
@@ -225,18 +238,18 @@ export class SketchupBridge extends BaseBridge {
     const account = accounts.value.find((acc) => acc.accountInfo.id === args.accountId)
 
     const createVersion = provideApolloClient((account as DUIAccount).client)(() =>
-      useMutation(createCommitMutation)
+      useMutation(createVersionMutation)
     )
 
     const result = await createVersion.mutate({
-      commit: {
-        branchName: args.modelId,
+      input: {
+        modelId: args.modelId,
         objectId: args.objectId,
         sourceApplication: 'Sketchup',
-        streamId: args.projectId
+        projectId: args.projectId
       }
     })
-    return result?.data?.commitCreate
+    return result?.data?.versionMutations?.create?.id
   }
 
   public async create(): Promise<boolean> {
