@@ -130,6 +130,16 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     )
   }
 
+  const removeProjectModels = async (projectId: string) => {
+    const modelsToRemove = documentModelStore.value.models.filter(
+      (item) => item.projectId === projectId
+    )
+
+    for (const modelToRemove of modelsToRemove) {
+      await removeModel(modelToRemove)
+    }
+  }
+
   /**
    * Send filters
    */
@@ -417,6 +427,7 @@ export const useHostAppStore = defineStore('hostAppStore', () => {
     addModel,
     patchModel,
     removeModel,
+    removeProjectModels,
     sendModel,
     receiveModel,
     sendModelCancel,

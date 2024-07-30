@@ -82,7 +82,11 @@
     v-if="projectError"
     class="px-2 py-4 bg-foundation dark:bg-neutral-700/10 rounded-md shadow"
   >
-    <CommonAlert color="danger" with-dismiss @dismiss="projectError = undefined">
+    <CommonAlert
+      color="danger"
+      with-dismiss
+      @dismiss="askDismissProjectQuestionDialog = true"
+    >
       <template #title>
         Whoops - project
         <code>{{ project.projectId }}</code>
@@ -98,6 +102,23 @@
         </div>
       </template>
     </CommonAlert>
+    <LayoutDialog v-model:open="askDismissProjectQuestionDialog" fullscreen="none">
+      <template #header>Remove Project</template>
+      <div class="text-xs mb-4">Do you want to remove the project from this file?</div>
+      <div class="flex justify-between center py-2 space-x-3">
+        <FormButton size="sm" full-width @click="removeProjectModels">Yes</FormButton>
+        <FormButton
+          size="sm"
+          color="secondary"
+          full-width
+          @click="
+            ;(askDismissProjectQuestionDialog = false), (projectError = undefined)
+          "
+        >
+          Hide error
+        </FormButton>
+      </div>
+    </LayoutDialog>
   </div>
 </template>
 <script setup lang="ts">
@@ -125,6 +146,7 @@ const props = defineProps<{
 }>()
 
 const showModels = ref(true)
+const askDismissProjectQuestionDialog = ref(false)
 const writeAccessRequested = ref(false)
 
 const hasAccountMatch = computed(() =>
@@ -146,6 +168,11 @@ const {
   () => ({ projectId: props.project.projectId }),
   () => ({ clientId })
 )
+
+const removeProjectModels = async () => {
+  await hostAppStore.removeProjectModels(props.project.projectId)
+  askDismissProjectQuestionDialog.value = false
+}
 
 const projectError = ref<string>()
 onError((err: ApolloError) => {
