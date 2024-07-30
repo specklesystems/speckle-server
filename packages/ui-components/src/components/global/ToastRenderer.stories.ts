@@ -56,7 +56,7 @@ export const Default: StoryType = {
   },
   args: {
     notification: {
-      type: 1,
+      type: ToastNotificationType.Info,
       title: 'Title',
       description: 'Description',
 
