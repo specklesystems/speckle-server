@@ -1,16 +1,17 @@
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { mapMainWorkspaceRoleToGqlRole } from '@/modules/workspaces/helpers/roles'
 import {
+  BasicTestWorkspace,
+  createTestWorkspace
+} from '@/modules/workspaces/tests/helpers/creation'
+import {
   BasicTestUser,
   createAuthTokenForUser,
   createTestUser
 } from '@/test/authHelper'
 import {
-  CreateWorkspaceDocument,
-  DeleteWorkspaceRoleDocument,
   GetWorkspaceDocument,
-  UpdateWorkspaceRoleDocument,
-  Workspace
+  UpdateWorkspaceRoleDocument
 } from '@/test/graphql/generated/graphql'
 import {
   createTestContext,
@@ -23,7 +24,7 @@ import { expect } from 'chai'
 
 describe('Workspaces Roles GQL', () => {
   let apollo: TestApolloServer
-  let workspace: Omit<Workspace, 'projects' | 'team'>
+  let workspace: BasicTestWorkspace
 
   const testAdminUser: BasicTestUser = {
     id: '',
@@ -55,23 +56,24 @@ describe('Workspaces Roles GQL', () => {
       })
     })
 
-    const { data } = await apollo.execute(CreateWorkspaceDocument, {
-      input: { name: 'Test Workspace' }
-    })
-
-    if (!data) {
-      throw new Error()
+    const testWorkspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: testAdminUser.id,
+      name: 'My Test Workspace'
     }
 
-    workspace = data?.workspaceMutations.create
+    await createTestWorkspace(testWorkspace, testAdminUser)
+
+    workspace = testWorkspace
   })
 
   describe('update workspace role', () => {
     after(async () => {
-      await apollo.execute(DeleteWorkspaceRoleDocument, {
+      await apollo.execute(UpdateWorkspaceRoleDocument, {
         input: {
           userId: testMemberUser.id,
-          workspaceId: workspace.id
+          workspaceId: workspace.id,
+          role: null
         }
       })
     })
@@ -143,10 +145,11 @@ describe('Workspaces Roles GQL', () => {
     })
 
     it('should delete the specified role', async () => {
-      const res = await apollo.execute(DeleteWorkspaceRoleDocument, {
+      const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
         input: {
           userId: testMemberUser.id,
-          workspaceId: workspace.id
+          workspaceId: workspace.id,
+          role: null
         }
       })
 
@@ -162,10 +165,11 @@ describe('Workspaces Roles GQL', () => {
     })
 
     it('should throw if attempting to remove last admin', async () => {
-      const res = await apollo.execute(DeleteWorkspaceRoleDocument, {
+      const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
         input: {
           userId: testAdminUser.id,
-          workspaceId: workspace.id
+          workspaceId: workspace.id,
+          role: null
         }
       })
 

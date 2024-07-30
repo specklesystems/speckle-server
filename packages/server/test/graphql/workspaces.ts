@@ -69,15 +69,12 @@ export const getActiveUserWorkspacesQuery = gql`
 export const updateWorkspaceRoleQuery = gql`
   mutation UpdateWorkspaceRole($input: WorkspaceRoleUpdateInput!) {
     workspaceMutations {
-      updateRole(input: $input)
-    }
-  }
-`
-
-export const deleteWorkspaceRoleQuery = gql`
-  mutation DeleteWorkspaceRole($input: WorkspaceRoleDeleteInput!) {
-    workspaceMutations {
-      deleteRole(input: $input)
+      updateRole(input: $input) {
+        team {
+          id
+          role
+        }
+      }
     }
   }
 `

@@ -28,7 +28,10 @@ input WorkspaceUpdateInput {
 input WorkspaceRoleUpdateInput {
   userId: String!
   workspaceId: String!
-  role: WorkspaceRole!
+  """
+  Leave role null to revoke access entirely
+  """
+  role: WorkspaceRole
 }
 
 input WorkspaceRoleDeleteInput {
@@ -46,10 +49,7 @@ type WorkspaceMutations {
     @hasScope(scope: "workspace:create")
   delete(workspaceId: String!): Boolean! @hasScope(scope: "workspace:delete")
   update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
-  updateRole(input: WorkspaceRoleUpdateInput!): Boolean!
-    @hasScope(scope: "workspace:update")
-    @hasWorkspaceRole(role: ADMIN)
-  deleteRole(input: WorkspaceRoleDeleteInput!): Boolean!
+  updateRole(input: WorkspaceRoleUpdateInput!): Workspace!
     @hasScope(scope: "workspace:update")
     @hasWorkspaceRole(role: ADMIN)
   invites: WorkspaceInviteMutations!

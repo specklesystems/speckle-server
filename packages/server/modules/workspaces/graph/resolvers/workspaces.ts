@@ -173,34 +173,36 @@ export = FF_WORKSPACES_MODULE_ENABLED
         updateRole: async (_parent, args) => {
           const { userId, workspaceId, role } = args.input
 
-          const updateWorkspaceRole = updateWorkspaceRoleFactory({
-            getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-            emitWorkspaceEvent: getEventBus().emit,
-            getStreams,
-            grantStreamPermissions
-          })
+          const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
+          const emitWorkspaceEvent = getEventBus().emit
 
-          await updateWorkspaceRole({
-            userId,
-            workspaceId,
-            role: mapGqlWorkspaceRoleToMainRole(role)
-          })
+          if (!role) {
+            const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+              deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
+              getWorkspaceRoles,
+              emitWorkspaceEvent,
+              getStreams,
+              revokeStreamPermissions
+            })
 
-          return true
-        },
-        deleteRole: async (_parent, args) => {
-          const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
-            getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
-            deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
-            emitWorkspaceEvent: getEventBus().emit,
-            getStreams,
-            revokeStreamPermissions
-          })
+            await deleteWorkspaceRole(args.input)
+          } else {
+            const updateWorkspaceRole = updateWorkspaceRoleFactory({
+              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+              getWorkspaceRoles,
+              emitWorkspaceEvent,
+              getStreams,
+              grantStreamPermissions
+            })
 
-          await deleteWorkspaceRole(args.input)
+            await updateWorkspaceRole({
+              userId,
+              workspaceId,
+              role: mapGqlWorkspaceRoleToMainRole(role)
+            })
+          }
 
-          return true
+          return await getWorkspaceFactory({ db })({ workspaceId })
         },
         invites: () => ({})
       },

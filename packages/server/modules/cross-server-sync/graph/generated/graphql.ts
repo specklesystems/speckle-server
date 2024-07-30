@@ -3818,10 +3818,9 @@ export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   create: Workspace;
   delete: Scalars['Boolean']['output'];
-  deleteRole: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   update: Workspace;
-  updateRole: Scalars['Boolean']['output'];
+  updateRole: Workspace;
 };
 
 
@@ -3832,11 +3831,6 @@ export type WorkspaceMutationsCreateArgs = {
 
 export type WorkspaceMutationsDeleteArgs = {
   workspaceId: Scalars['String']['input'];
-};
-
-
-export type WorkspaceMutationsDeleteRoleArgs = {
-  input: WorkspaceRoleDeleteInput;
 };
 
 
@@ -3861,7 +3855,8 @@ export type WorkspaceRoleDeleteInput = {
 };
 
 export type WorkspaceRoleUpdateInput = {
-  role: WorkspaceRole;
+  /** Leave role null to revoke access entirely */
+  role?: InputMaybe<WorkspaceRole>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
 };

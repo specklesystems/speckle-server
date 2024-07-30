@@ -3829,10 +3829,9 @@ export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   create: Workspace;
   delete: Scalars['Boolean']['output'];
-  deleteRole: Scalars['Boolean']['output'];
   invites: WorkspaceInviteMutations;
   update: Workspace;
-  updateRole: Scalars['Boolean']['output'];
+  updateRole: Workspace;
 };
 
 
@@ -3843,11 +3842,6 @@ export type WorkspaceMutationsCreateArgs = {
 
 export type WorkspaceMutationsDeleteArgs = {
   workspaceId: Scalars['String']['input'];
-};
-
-
-export type WorkspaceMutationsDeleteRoleArgs = {
-  input: WorkspaceRoleDeleteInput;
 };
 
 
@@ -3872,7 +3866,8 @@ export type WorkspaceRoleDeleteInput = {
 };
 
 export type WorkspaceRoleUpdateInput = {
-  role: WorkspaceRole;
+  /** Leave role null to revoke access entirely */
+  role?: InputMaybe<WorkspaceRole>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
 };
@@ -5735,10 +5730,9 @@ export type WorkspaceInviteMutationsResolvers<ContextType = GraphQLContext, Pare
 export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceMutations'] = ResolversParentTypes['WorkspaceMutations']> = {
   create?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsCreateArgs, 'input'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteArgs, 'workspaceId'>>;
-  deleteRole?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteRoleArgs, 'input'>>;
   invites?: Resolver<ResolversTypes['WorkspaceInviteMutations'], ParentType, ContextType>;
   update?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
-  updateRole?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;
+  updateRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
