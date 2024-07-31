@@ -57,7 +57,7 @@ describe('Workspace project GQL CRUD', () => {
   describe('when specifying a workspace id during project creation', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
-      ownerId: testUser.id,
+      ownerId: '',
       name: 'My Test Workspace'
     }
 
@@ -92,7 +92,7 @@ describe('Workspace project GQL CRUD', () => {
   describe('when querying workspace projects', () => {
     const workspace: BasicTestWorkspace = {
       id: '',
-      ownerId: testUser.id,
+      ownerId: '',
       name: 'My Test Workspace'
     }
 
