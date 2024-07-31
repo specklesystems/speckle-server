@@ -11,6 +11,11 @@ export class WorkspaceInvalidRoleError extends BaseError {
   static code = 'WORKSPACE_INVALID_ROLE_ERROR'
 }
 
+export class WorkspaceInvalidLogoError extends BaseError {
+  static defaultMessage = 'Provided logo is not valid'
+  static code = 'WORKSPACE_INVALID_LOGO_ERROR'
+}
+
 export class WorkspaceQueryError extends BaseError {
   static defaultMessage = 'Unexpected error during query operation'
   static code = 'WORKSPACE_QUERY_ERROR'

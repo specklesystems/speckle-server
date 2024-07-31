@@ -124,14 +124,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const upsertWorkspace = upsertWorkspaceFactory({ db })
           const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
-          // TODO: Integrate with blobstorage
-          const storeBlob = async () => ''
 
           const createWorkspace = createWorkspaceFactory({
             upsertWorkspace,
             upsertWorkspaceRole,
-            emitWorkspaceEvent,
-            storeBlob
+            emitWorkspaceEvent
           })
 
           const workspace = await createWorkspace({
@@ -139,8 +136,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             workspaceInput: {
               name,
               description: description || null,
-              // TODO: Resolve how logos will be created
-              logoUrl: null
+              logo: null
             },
             userResourceAccessLimits: context.resourceAccessRules
           })
@@ -158,14 +154,11 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           const getWorkspace = getWorkspaceFactory({ db })
           const upsertWorkspace = upsertWorkspaceFactory({ db })
-          // TODO: Integrate with blobstorage
-          const storeBlob = async () => ''
 
           const updateWorkspace = updateWorkspaceFactory({
             getWorkspace,
             upsertWorkspace,
-            emitWorkspaceEvent,
-            storeBlob
+            emitWorkspaceEvent
           })
 
           const workspace = await updateWorkspace({

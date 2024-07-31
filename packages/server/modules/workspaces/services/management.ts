@@ -2,7 +2,6 @@ import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import {
   EmitWorkspaceEvent,
   GetWorkspace,
-  StoreBlob,
   UpsertWorkspace,
   UpsertWorkspaceRole
 } from '@/modules/workspaces/domain/operations'
@@ -37,23 +36,14 @@ import {
   TokenResourceIdentifierType
 } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
-
-const tryStoreBlobFactory =
-  (storeBlob: StoreBlob) =>
-  async (blob?: string | null): Promise<string | null> => {
-    let logoUrl: string | null = null
-    if (blob) {
-      logoUrl = await storeBlob(blob)
-    }
-    return logoUrl
-  }
+import { validateImageString } from '@/modules/workspaces/helpers/images'
 
 type WorkspaceCreateArgs = {
   userId: string
   workspaceInput: {
     name: string
     description: string | null
-    logoUrl: string | null
+    logo: string | null
   }
   userResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
@@ -62,13 +52,11 @@ export const createWorkspaceFactory =
   ({
     upsertWorkspace,
     upsertWorkspaceRole,
-    emitWorkspaceEvent,
-    storeBlob
+    emitWorkspaceEvent
   }: {
     upsertWorkspace: UpsertWorkspace
     upsertWorkspaceRole: UpsertWorkspaceRole
     emitWorkspaceEvent: EventBus['emit']
-    storeBlob: StoreBlob
   }) =>
   async ({
     userId,
@@ -84,14 +72,11 @@ export const createWorkspaceFactory =
       throw new ForbiddenError('You are not authorized to create a workspace')
     }
 
-    const logoUrl = await tryStoreBlobFactory(storeBlob)(workspaceInput.logoUrl)
-
     const workspace = {
       ...workspaceInput,
       id: cryptoRandomString({ length: 10 }),
       createdAt: new Date(),
-      updatedAt: new Date(),
-      logoUrl
+      updatedAt: new Date()
     }
     await upsertWorkspace({ workspace })
     // assign the creator as workspace administrator
@@ -117,7 +102,7 @@ type WorkspaceUpdateArgs = {
   workspaceInput: {
     name?: string | null
     description?: string | null
-    logoUrl?: string | null
+    logo?: string | null
   }
   updaterResourceAccessLimits: MaybeNullOrUndefined<TokenResourceIdentifier[]>
 }
@@ -126,13 +111,11 @@ export const updateWorkspaceFactory =
   ({
     getWorkspace,
     upsertWorkspace,
-    emitWorkspaceEvent,
-    storeBlob
+    emitWorkspaceEvent
   }: {
     getWorkspace: GetWorkspace
     upsertWorkspace: UpsertWorkspace
     emitWorkspaceEvent: EventBus['emit']
-    storeBlob: StoreBlob
   }) =>
   async ({
     workspaceUpdaterId,
@@ -147,19 +130,20 @@ export const updateWorkspaceFactory =
       updaterResourceAccessLimits
     )
 
+    if (!!workspaceInput.logo) {
+      validateImageString(workspaceInput.logo)
+    }
+
     const currentWorkspace = await getWorkspace({ workspaceId })
 
     if (!currentWorkspace) {
       throw new WorkspaceNotFoundError()
     }
 
-    const logoUrl = await tryStoreBlobFactory(storeBlob)(workspaceInput.logoUrl)
-
     const workspace = {
       ...currentWorkspace,
       ...removeNullOrUndefinedKeys(workspaceInput),
-      updatedAt: new Date(),
-      logoUrl
+      updatedAt: new Date()
     }
 
     await upsertWorkspace({ workspace })

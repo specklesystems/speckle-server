@@ -91,7 +91,7 @@ export const upsertWorkspaceFactory =
       .workspaces(db)
       .insert(workspace)
       .onConflict('id')
-      .merge(['description', 'logoUrl', 'name', 'updatedAt'])
+      .merge(['description', 'logo', 'name', 'updatedAt'])
   }
 
 export const getWorkspaceRolesFactory =
