@@ -41,7 +41,7 @@
             v-tippy="
               item.disabled && item.disabledMessage ? item.disabledMessage : undefined
             "
-            class="absolute inset-0"
+            class="absolute top-0 right-0 left-0 bottom-0"
           ></div>
           <div class="flex gap-2 items-center px-2">
             <component

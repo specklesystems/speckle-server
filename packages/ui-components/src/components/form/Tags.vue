@@ -115,7 +115,7 @@
                 </span>
                 <span
                   v-if="selected"
-                  class="absolute inset-y-0 right-0 flex items-center pr-4"
+                  class="absolute top-0 bottom-0 right-0 flex items-center pr-4"
                   :class="{ 'text-primary': active, 'text-foreground': !active }"
                 >
                   <CheckIcon class="h-5 w-5" aria-hidden="true" />
