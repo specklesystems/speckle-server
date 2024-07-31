@@ -4,10 +4,10 @@
       class="flex flex-col space-y-2 lg:space-y-0 lg:flex-row lg:justify-between lg:items-center mb-4"
     >
       <div class="flex justify-between items-center flex-wrap sm:flex-nowrap">
-        <h1 class="block h4 font-bold">Models</h1>
+        <h1 class="block text-heading-xl">Models</h1>
         <div class="flex items-center space-x-2 w-full mt-2 sm:w-auto sm:mt-0">
           <FormButton
-            color="secondary"
+            color="outline"
             :to="allModelsRoute"
             class="grow inline-flex sm:grow-0 lg:hidden"
             @click="trackFederateAll"
@@ -20,7 +20,7 @@
             :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
-            New
+            New model
           </FormButton>
         </div>
       </div>
@@ -67,7 +67,7 @@
             <LayoutGridListToggle v-model="finalGridOrList" class="shrink-0" />
           </div>
           <FormButton
-            color="secondary"
+            color="outline"
             :to="allModelsRoute"
             class="hidden lg:inline-flex shrink-0"
             @click="trackFederateAll"
@@ -80,7 +80,7 @@
             :icon-left="PlusIcon"
             @click="showNewDialog = true"
           >
-            New
+            New model
           </FormButton>
         </div>
       </div>
@@ -89,6 +89,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { PlusIcon } from '@heroicons/vue/24/outline'
 import { SourceApps, SpeckleViewer } from '@speckle/shared'
 import type { SourceAppDefinition } from '@speckle/shared'
 import { debounce } from 'lodash-es'
@@ -99,7 +100,6 @@ import type {
 } from '~~/lib/common/generated/gql/graphql'
 import { modelRoute } from '~~/lib/common/helpers/route'
 import type { GridListToggleValue } from '~~/lib/layout/helpers/components'
-import { PlusIcon } from '@heroicons/vue/20/solid'
 import { canModifyModels } from '~~/lib/projects/helpers/permissions'
 import { useMixpanel } from '~~/lib/core/composables/mp'
 

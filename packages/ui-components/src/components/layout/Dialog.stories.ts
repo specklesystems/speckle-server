@@ -58,10 +58,9 @@ export const HeaderAndFooter = {
       {
         text: 'Close',
         props: {
-          color: 'secondary',
+          color: 'outline',
           link: false,
-          fullWidth: true,
-          outline: true
+          fullWidth: true
         }
       },
       {
@@ -117,7 +116,7 @@ export const WithSlotButtons: StoryObj = {
       <FormButton @click="() => open = true">Trigger dialog</FormButton>
       <LayoutDialog v-model:open="open" v-bind="args">
         <div class="flex flex-col text-foreground space-y-4">
-          <div class="h4 font-bold">Hello world!</div>
+          <div class="h4 font-semibold">Hello world!</div>
           <div>Lorem ipsum blah blah blah</div>
         </div>
         <template #buttons>

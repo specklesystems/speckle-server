@@ -7,7 +7,7 @@
         class="h-32"
       />
     </div>
-    <h2 class="block font-bold leading-8 text-center p-2 h3">
+    <h2 class="block font-medium leading-8 text-center p-2 h3">
       {{ isGuest ? 'No projects found!' : 'Create your first project!' }}
     </h2>
     <h4 class="block font-normal leading-8 text-center p-2">
@@ -16,13 +16,13 @@
     <div class="flex flex-col items-center space-y-4">
       <FormButton
         v-if="!isGuest"
-        size="xl"
+        size="lg"
         class="shadow-lg"
         @click="$emit('create-project')"
       >
         Create a project
       </FormButton>
-      <FormButton text size="xs" to="/onboarding?force=true">
+      <FormButton text size="sm" to="/onboarding?force=true">
         {{
           isGuest
             ? 'Go through the onboarding again?'

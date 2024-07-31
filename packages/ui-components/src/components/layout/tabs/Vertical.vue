@@ -25,7 +25,7 @@
             <span class="min-w-6">{{ item.title }}</span>
             <div
               v-if="item.count"
-              class="rounded-full px-2 text-[11px] transition-all min-w-6"
+              class="rounded-full px-2 text-body-3xs transition-all min-w-6"
               :class="
                 activeItem?.id === item.id
                   ? 'text-primary bg-blue-100'
@@ -36,7 +36,7 @@
             </div>
             <div
               v-if="item.tag"
-              class="text-[10px] leading-tight py-0.5 text-foreground-on-primary font-medium px-1.5 rounded-full bg-gradient-to-tr from-[#7025EB] to-primary select-none mt-0.5"
+              class="text-body-3xs font-medium py-0.5 px-1.5 bg-info-lighter uppercase text-outline-4 rounded"
             >
               {{ item.tag }}
             </div>
@@ -68,16 +68,13 @@ const buttonClass = computed(() => {
     const baseClasses = [
       'relative',
       'flex items-center gap-1.5',
-      'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent',
-      'text-base',
-      'border-l-2',
+      'hover:bg-highlight-2',
+      'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-md',
+      'text-body-xs font-medium',
       'py-1'
     ]
 
-    if (isActive)
-      baseClasses.push(
-        'text-primary hover:text-primary bg-primary-muted border-primary'
-      )
+    if (isActive) baseClasses.push('bg-primary-muted')
     else baseClasses.push('border-transparent text-foreground')
 
     return baseClasses

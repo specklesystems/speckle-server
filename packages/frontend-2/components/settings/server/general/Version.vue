@@ -4,14 +4,14 @@
     <div class="flex items-center">
       <div class="w-[50%]">
         <p class="text-sm">
-          <span class="font-semibold">Current version:</span>
+          <span class="font-medium">Current version:</span>
           {{ currentVersion }}
         </p>
         <p v-if="!isLatestVersion" class="text-sm pt-2">New version available</p>
       </div>
       <div class="flex justify-end w-[50%]">
         <FormButton
-          color="secondary"
+          color="outline"
           :disabled="isLatestVersion"
           @click="openGithubReleasePage"
         >

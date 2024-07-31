@@ -4,7 +4,7 @@
       <div class="flex flex-col md:flex-row gap-4">
         <div class="flex flex-row justify-start items-cetner gap-4">
           <RouterLink
-            class="h5 font-bold text-foreground hover:underline"
+            class="h5 font-medium text-foreground hover:underline"
             :to="projectAutomationRoute(projectId, automation.id)"
           >
             {{ automation.name }}
@@ -25,7 +25,7 @@
       </div>
 
       <CommonTextLink
-        class="font-bold"
+        class="font-medium"
         :to="projectAutomationRoute(projectId, automation.id)"
       >
         View Details
