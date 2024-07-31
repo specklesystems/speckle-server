@@ -1,5 +1,5 @@
 <template>
-  <div class="flex items-center gap-2">
+  <div class="flex items-center space-x-2">
     <HeadlessSwitch
       :id="id || name"
       v-model="enabled"
@@ -8,7 +8,7 @@
       :disabled="disabled"
     >
       <div
-        class="absolute top-0 left-0 right-0 bottom-0 flex items-center gap-2 px-1 text-white"
+        class="absolute top-0 left-0 right-0 bottom-0 flex items-center space-x-2 px-1 text-white"
       >
         <CheckIcon
           class="h-5 w-5 drop-shadow-md"

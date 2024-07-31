@@ -1,7 +1,7 @@
 <template>
-  <div class="flex gap-8 flex-col lg:flex-row">
+  <div class="flex space-y-8 lg:space-y-0 lg:space-x-8 flex-col lg:flex-row">
     <div class="lg:w-2/12">
-      <div class="flex w-full flex-col gap-1">
+      <div class="flex w-full flex-col space-y-1">
         <button
           v-for="item in items"
           :key="item.id"
@@ -16,7 +16,7 @@
             "
             class="absolute top-0 right-0 left-0 bottom-0"
           ></div>
-          <div class="flex gap-2 items-center px-2">
+          <div class="flex space-x-2 items-center px-2">
             <component
               :is="item.icon"
               v-if="item.icon"
@@ -67,7 +67,7 @@ const buttonClass = computed(() => {
     const isActive = activeItem.value?.id === item.id
     const baseClasses = [
       'relative',
-      'flex items-center gap-1.5',
+      'flex items-center space-x-1.5',
       'hover:bg-highlight-2',
       'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent rounded-md',
       'text-body-xs font-medium',

@@ -331,7 +331,7 @@ const computedWrapperClasses = computed(() => {
     classes.push('flex-col')
   }
   if (props.labelPosition === 'left') {
-    classes.push('w-full gap-1 md:gap-8 flex-col md:flex-row')
+    classes.push('w-full space-y-1 sm:space-y-0 sm:space-x-8 flex-col sm:flex-row')
   }
   return classes.join(' ')
 })

@@ -92,7 +92,7 @@
               </div>
               <div
                 v-if="hasButtons"
-                class="relative z-50 flex px-6 py-3 gap-3 shrink-0 bg-foundation-page border-t border-outline-2"
+                class="relative z-50 flex px-6 py-3 space-x-3 shrink-0 bg-foundation-page border-t border-outline-2"
                 :class="{
                   'shadow-t': !scrolledToBottom,
                   [buttonsWrapperClasses || '']: true

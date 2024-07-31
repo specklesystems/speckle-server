@@ -3,7 +3,7 @@
     aria-live="assertive"
     class="pointer-events-none fixed top-0 right-0 left-0 bottom-0 flex items-end px-4 py-6 mt-10 sm:items-start sm:p-6 z-50"
   >
-    <div class="flex w-full flex-col items-center gap-4 sm:items-end">
+    <div class="flex w-full flex-col items-center space-y-4 sm:items-end">
       <!-- Notification panel, dynamically insert this into the live region when it needs to be displayed -->
       <Transition
         enter-active-class="transform ease-out duration-300 transition"
@@ -18,7 +18,7 @@
           class="pointer-events-auto w-full max-w-[20rem] overflow-hidden rounded bg-foundation text-foreground shadow-lg border border-outline-2 p-3"
           :class="{ 'pb-2': isTitleOnly }"
         >
-          <div class="flex gap-2">
+          <div class="flex space-x-2">
             <div class="flex-shrink-0 mt-1">
               <CheckCircleIcon
                 v-if="notification.type === ToastNotificationType.Success"

@@ -3,12 +3,12 @@
     :is="linkComponent"
     v-if="!hasChildren"
     :to="to"
-    class="group flex items-center justify-between gap-2 shrink-0 text-body-xs select-none rounded-md w-full hover:bg-primary-muted py-1 px-5 cursor-pointer"
+    class="group flex items-center justify-between space-x-2 shrink-0 text-body-xs select-none rounded-md w-full hover:bg-primary-muted py-1 px-5 cursor-pointer"
     exact-active-class="bg-foundation-focus hover:!bg-foundation-focus"
     :external="external"
     :target="external ? '_blank' : undefined"
   >
-    <div class="flex items-center gap-2">
+    <div class="flex items-center space-x-2">
       <div v-if="$slots.icon" class="h-5 w-5 flex items-center justify-center">
         <slot name="icon" />
       </div>
@@ -25,11 +25,11 @@
   </component>
   <div v-else class="flex flex-col">
     <button
-      class="group flex gap-1.5 items-center w-full hover:bg-foundation-3 rounded-md p-0.5 cursor-pointer"
+      class="group flex space-x-1.5 items-center w-full hover:bg-foundation-3 rounded-md p-0.5 cursor-pointer"
       @click="isOpen = !isOpen"
     >
       <ChevronDownIcon :class="isOpen ? '' : 'rotate-180'" class="h-2.5 w-2.5" />
-      <h6 class="text-heading-sm text-foreground-2 flex items-center gap-1.5">
+      <h6 class="text-heading-sm text-foreground-2 flex items-center space-x-1.5">
         {{ label }}
       </h6>
     </button>
