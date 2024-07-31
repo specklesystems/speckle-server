@@ -85,25 +85,13 @@ export const Default: StoryObj = {
 
 export const Small: StoryObj = mergeStories(Default, {
   args: {
-    size: 'sm'
-  }
-})
-
-export const ExtraSmall: StoryObj = mergeStories(Default, {
-  args: {
-    size: 'xs'
+    size: 'small'
   }
 })
 
 export const Large: StoryObj = mergeStories(Default, {
   args: {
-    size: 'lg'
-  }
-})
-
-export const ExtraLarge: StoryObj = mergeStories(Default, {
-  args: {
-    size: 'xl'
+    size: 'large'
   }
 })
 

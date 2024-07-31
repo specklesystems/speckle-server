@@ -35,14 +35,17 @@
         </div>
       </AutomateFunctionPageInfoBlock>
       <AutomateFunctionPageInfoBlock :icon="InformationCircleIcon" title="Info">
-        <div class="space-y-3">
+        <div class="gap-y-2 text-body-sm">
           <div v-if="latestRelease">
             <span>Last published:&nbsp;</span>
-            <CommonText class="font-bold" :text="publishedAt" />
+            <CommonText class="font-medium" :text="publishedAt" />
           </div>
           <div>
             <span>Used by:&nbsp;</span>
-            <CommonText class="font-bold" :text="`${fn.automationCount} automations`" />
+            <CommonText
+              class="font-medium"
+              :text="`${fn.automationCount} automations`"
+            />
           </div>
           <CommonTextLink
             v-if="latestRelease?.inputSchema"
@@ -71,8 +74,8 @@
       class="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center"
     >
       <div>
-        <div class="font-bold mb-2">Ready to go?</div>
-        <div class="label-light text-foreground-2">
+        <div class="text-heading-lg mb-2">Ready to go?</div>
+        <div class="label-light text-foreground-2 text-body-xs">
           Use this function to create an automation on your project.
         </div>
       </div>

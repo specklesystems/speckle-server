@@ -53,8 +53,9 @@
         <template #resend="{ item }">
           <FormButton
             :link="true"
+            text
             :class="{
-              'font-semibold': true,
+              'font-medium': true,
               'text-primary': !successfullyResentInvites.includes(item.id),
               'text-foreground': successfullyResentInvites.includes(item.id)
             }"
@@ -152,7 +153,7 @@ const resendInvitation = async (item: InviteItem) => {
     successfullyResentInvites.value.push(inviteId)
     triggerNotification({
       type: ToastNotificationType.Success,
-      title: 'Invitation Resent',
+      title: 'Invitation resent',
       description: 'The invitation has been successfully resent'
     })
   } else {

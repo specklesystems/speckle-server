@@ -15,7 +15,7 @@
               :buttons="[
                 {
                   props: {
-                    color: 'secondary',
+                    color: 'outline',
                     target: '_blank',
                     external: true,
                     iconLeft: BookOpenIcon
@@ -34,7 +34,7 @@
               :buttons="[
                 {
                   props: {
-                    color: 'secondary',
+                    color: 'outline',
                     to: 'https://speckle.guide/dev/tokens.html',
                     iconLeft: BookOpenIcon,
                     target: '_blank',
@@ -51,14 +51,15 @@
                 }
               ]"
             >
-              <p class="text-sm pt-6 md:pt-4">
+              <p class="text-body-xs pt-6 md:pt-4 text-foreground">
                 Personal Access Tokens can be used to access the Speckle API on this
                 server; they function like ordinary OAuth access tokens. Use them in
                 your scripts or apps!
-                <strong>
+                <br />
+                <span class="font-semibold">
                   Treat them like a password: do not post them anywhere where they could
                   be accessed by others (e.g., public repos).
-                </strong>
+                </span>
               </p>
             </SettingsSectionHeader>
             <LayoutTable
@@ -77,7 +78,7 @@
                   icon: TrashIcon,
                   label: 'Delete',
                   action: openDeleteDialog,
-                  textColor: 'danger'
+                  class: 'text-danger'
                 }
               ]"
             >
@@ -103,7 +104,7 @@
               :buttons="[
                 {
                   props: {
-                    color: 'secondary',
+                    color: 'outline',
                     to: 'https://speckle.guide/dev/apps.html',
                     target: '_blank',
                     external: true,
@@ -120,7 +121,7 @@
                 }
               ]"
             >
-              <p class="text-sm pt-6 md:pt-4">
+              <p class="text-body-xs pt-6 md:pt-4 text-foreground">
                 Register and manage third-party Speckle Apps that, once authorised by a
                 user on this server, can act on their behalf.
               </p>
@@ -141,19 +142,19 @@
                   icon: LockOpenIcon,
                   label: 'Reveal Secret',
                   action: openRevealSecretDialog,
-                  textColor: 'primary'
+                  class: 'text-primary'
                 },
                 {
                   icon: PencilIcon,
                   label: 'Edit',
                   action: openEditApplicationDialog,
-                  textColor: 'primary'
+                  class: 'text-primary'
                 },
                 {
                   icon: TrashIcon,
                   label: 'Delete',
                   action: openDeleteDialog,
-                  textColor: 'danger'
+                  class: 'text-danger'
                 }
               ]"
             >
@@ -179,7 +180,7 @@
               :buttons="[
                 {
                   props: {
-                    color: 'secondary',
+                    color: 'outline',
                     to: 'https://speckle.guide/dev/apps.html',
                     target: '_blank',
                     external: true,
@@ -210,7 +211,7 @@
                   icon: XMarkIcon,
                   label: 'Revoke Access',
                   action: openDeleteDialog,
-                  textColor: 'danger'
+                  class: 'text-danger'
                 }
               ]"
               row-items-align="stretch"

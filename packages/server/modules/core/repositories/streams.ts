@@ -39,7 +39,11 @@ import {
   StreamCreateInput,
   StreamUpdateInput
 } from '@/modules/core/graph/generated/graphql'
-import { Nullable, Optional } from '@/modules/shared/helpers/typeHelper'
+import {
+  MaybeNullOrUndefined,
+  Nullable,
+  Optional
+} from '@/modules/shared/helpers/typeHelper'
 import { decodeCursor, encodeCursor } from '@/modules/shared/helpers/graphqlHelper'
 import dayjs from 'dayjs'
 import cryptoRandomString from 'crypto-random-string'
@@ -664,11 +668,11 @@ export type UserStreamsQueryParams = BaseUserStreamsQueryParams & {
   /**
    * Max amount of streams per page. Defaults to 25, max is 50.
    */
-  limit?: number
+  limit?: MaybeNullOrUndefined<number>
   /**
    * Pagination cursor
    */
-  cursor?: string
+  cursor?: MaybeNullOrUndefined<string>
 }
 
 export type UserStreamsQueryCountParams = BaseUserStreamsQueryParams
@@ -983,6 +987,19 @@ export async function revokeStreamPermissions(params: {
 }) {
   const { streamId, userId } = params
 
+  const existingPermission = await StreamAcl.knex()
+    .where({
+      [StreamAcl.col.resourceId]: streamId,
+      [StreamAcl.col.userId]: userId
+    })
+    .first()
+  if (!existingPermission) {
+    // User already doesn't have permissions
+    return await Streams.knex<StreamRecord>()
+      .where({ [Streams.col.id]: streamId })
+      .first()
+  }
+
   const [streamAclEntriesCount] = await StreamAcl.knex()
     .where({ resourceId: streamId })
     .count<{ count: string }[]>()
@@ -993,11 +1010,7 @@ export async function revokeStreamPermissions(params: {
       { info: { streamId, userId } }
     )
 
-  const aclEntry = await StreamAcl.knex()
-    .where({ resourceId: streamId, userId })
-    .select<StreamAclRecord[]>('*')
-    .first()
-
+  const aclEntry = existingPermission
   if (aclEntry?.role === Roles.Stream.Owner) {
     const [countObj] = await StreamAcl.knex()
       .where({

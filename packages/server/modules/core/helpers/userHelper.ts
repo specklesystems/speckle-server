@@ -26,23 +26,3 @@ export function removePrivateFields(
 }
 
 export type { LimitedUserRecord, UserRecord }
-
-export const getUsersBaseQuery = (
-  query: Knex.QueryBuilder,
-  { searchQuery, role }: { searchQuery: string | null; role: string | null }
-) => {
-  if (searchQuery) {
-    query.where((queryBuilder) => {
-      queryBuilder
-        .where((qb) => {
-          qb.where(UserEmails.col.email, 'ILIKE', `%${searchQuery}%`).where({
-            [UserEmails.col.primary]: true
-          })
-        })
-        .orWhere(Users.col.name, 'ILIKE', `%${searchQuery}%`)
-        .orWhere(Users.col.company, 'ILIKE', `%${searchQuery}%`)
-    })
-  }
-  if (role) query.where({ role })
-  return query
-}

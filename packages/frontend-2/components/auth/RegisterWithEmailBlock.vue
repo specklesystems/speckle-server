@@ -7,9 +7,9 @@
         name="name"
         label="Full name"
         placeholder="My name"
-        :size="isSmallerOrEqualSm ? 'lg' : 'xl'"
+        size="lg"
         :rules="nameRules"
-        :custom-icon="UserIcon"
+        color="foundation"
         show-label
         :disabled="loading"
         auto-focus
@@ -19,8 +19,9 @@
         type="email"
         name="email"
         label="Email"
-        placeholder="example@email.com"
-        :size="isSmallerOrEqualSm ? 'lg' : 'xl'"
+        placeholder="Email"
+        size="lg"
+        color="foundation"
         :rules="emailRules"
         show-label
         :disabled="isEmailDisabled"
@@ -31,16 +32,15 @@
         name="password"
         label="Password"
         placeholder="Type a strong password"
-        :size="isSmallerOrEqualSm ? 'lg' : 'xl'"
+        color="foundation"
+        size="lg"
         :rules="passwordRules"
         show-label
         :disabled="loading"
       />
     </div>
-    <AuthPasswordChecks :password="password" class="mt-2 overflow-hidden h-12 sm:h-8" />
-    <div
-      class="mt-3 text-xs flex items-center justify-center text-foreground-2 space-x-2"
-    >
+    <AuthPasswordChecks :password="password" class="mt-2 h-12 sm:h-8" />
+    <div class="mt-8 text-body-2xs flex px-2 text-foreground-2 space-x-2">
       <!-- 
         Note the newsletter consent box is here because i got very confused re layout of the panel
         and didn't figure out a better way to put it where i needed it to be
@@ -49,17 +49,24 @@
         v-model="newsletterConsent"
         name="newsletter"
         label="Opt in for exclusive Speckle news and tips"
+        class="text-body-xs"
       />
     </div>
-    <FormButton submit full-width class="mt-4" :disabled="loading || !isMounted">
+    <FormButton
+      submit
+      full-width
+      size="lg"
+      class="mt-5"
+      :disabled="loading || !isMounted"
+    >
       Sign up
     </FormButton>
     <div
       v-if="serverInfo.termsOfService"
-      class="mt-2 text-xs text-foreground-2 text-center terms-of-service"
+      class="mt-2 text-body-2xs text-foreground-2 text-center terms-of-service"
       v-html="serverInfo.termsOfService"
     />
-    <div class="mt-2 sm:mt-8 text-center text-xs sm:text-base">
+    <div class="mt-2 sm:mt-4 text-center text-body-sm">
       <span class="mr-2">Already have an account?</span>
       <CommonTextLink :to="finalLoginRoute" :icon-right="ArrowRightIcon">
         Log in
@@ -77,8 +84,7 @@ import { loginRoute } from '~~/lib/common/helpers/route'
 import { passwordRules } from '~~/lib/auth/helpers/validation'
 import { graphql } from '~~/lib/common/generated/gql'
 import type { ServerTermsOfServicePrivacyPolicyFragmentFragment } from '~~/lib/common/generated/gql/graphql'
-import { UserIcon, ArrowRightIcon } from '@heroicons/vue/20/solid'
-import { useIsSmallerOrEqualThanBreakpoint } from '~~/composables/browser'
+import { ArrowRightIcon } from '@heroicons/vue/20/solid'
 import { useMounted } from '@vueuse/core'
 
 /**
@@ -115,8 +121,6 @@ const emailRules = [isEmail]
 const nameRules = [isRequired]
 
 const newsletterConsent = inject<Ref<boolean>>('newsletterconsent')
-
-const { isSmallerOrEqualSm } = useIsSmallerOrEqualThanBreakpoint()
 
 const isEmailDisabled = computed(() => !!props.inviteEmail?.length || loading.value)
 

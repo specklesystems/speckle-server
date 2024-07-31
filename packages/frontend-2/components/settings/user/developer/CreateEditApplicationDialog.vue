@@ -9,8 +9,8 @@
           v-model="name"
           label="Name"
           help="The name of your app"
-          name="hookName"
           color="foundation"
+          name="hookName"
           show-required
           :rules="[isRequired]"
           show-label
@@ -45,9 +45,9 @@
         <FormTextInput
           v-model="description"
           label="Description"
+          color="foundation"
           help="A short description of your application."
           name="description"
-          color="foundation"
           show-label
           type="text"
         />
@@ -199,14 +199,14 @@ const onSubmit = handleSubmit(async (applicationFormValues) => {
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: props.application ? 'Save' : 'Create',
-    props: { color: 'default', fullWidth: true },
+    props: { fullWidth: true },
     onClick: onSubmit
   }
 ])

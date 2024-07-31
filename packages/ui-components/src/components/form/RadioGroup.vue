@@ -3,7 +3,7 @@
     <div class="flex flex-col sm:flex-row items-stretch gap-3 w-full">
       <div v-for="option in options" :key="option.value" class="w-full flex flex-col">
         <button
-          class="relative w-full h-full select-none rounded-md shadow border"
+          class="relative w-full h-full select-none rounded-md border"
           :class="[
             selected === option.value
               ? 'bg-foundation-page border-outline-1'
@@ -31,14 +31,14 @@
             ></component>
             <div class="flex flex-col items-start text-left">
               <h4
-                class="font-bold text-base"
-                :class="option.introduction ? 'text-base' : 'text-sm'"
+                class="font-medium"
+                :class="option.introduction ? 'text-body-sm' : 'text-body-xs'"
               >
                 {{ option.title }}
               </h4>
               <div
                 v-if="option.introduction"
-                class="text-xs text-foreground-2 py-1 select-none"
+                class="text-body-xs text-foreground-2 pb-1 select-none"
               >
                 {{ option.introduction }}
               </div>

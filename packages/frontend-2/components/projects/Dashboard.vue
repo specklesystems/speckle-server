@@ -22,7 +22,7 @@
       v-if="!showEmptyState"
       class="flex flex-col space-y-2 md:flex-row md:items-center mb-8 pt-4"
     >
-      <h1 class="h4 font-bold">Projects</h1>
+      <h1 class="text-heading-xl">Projects</h1>
 
       <div
         class="flex flex-col space-y-2 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-2 grow md:justify-end"
@@ -50,7 +50,7 @@
             :icon-left="PlusIcon"
             @click="openNewProject = true"
           >
-            New
+            New project
           </FormButton>
         </div>
       </div>
@@ -72,6 +72,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import { PlusIcon } from '@heroicons/vue/24/outline'
 import {
   useApolloClient,
   useQuery,
@@ -79,7 +80,6 @@ import {
   useSubscription
 } from '@vue/apollo-composable'
 import { projectsDashboardQuery } from '~~/lib/projects/graphql/queries'
-import { PlusIcon } from '@heroicons/vue/20/solid'
 import { debounce } from 'lodash-es'
 import { graphql } from '~~/lib/common/generated/gql'
 import {

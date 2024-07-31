@@ -7,7 +7,7 @@
   >
     <div class="flex flex-col gap-6 text-sm text-foreground">
       <div class="flex flex-col gap-3">
-        <h6 class="h6 font-bold text-center">Your new token:</h6>
+        <h6 class="h6 font-medium text-center">Your new token:</h6>
         <CommonClipboardInputWithToast :value="props.token" />
       </div>
       <div
@@ -41,7 +41,7 @@ const isOpen = defineModel<boolean>('open', { required: true })
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Close',
-    props: { color: 'default', fullWidth: true },
+    props: { fullWidth: true },
     onClick: () => (isOpen.value = false)
   }
 ])

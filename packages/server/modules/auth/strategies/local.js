@@ -14,7 +14,7 @@ const {
   validateServerInviteFactory,
   finalizeInvitedServerRegistrationFactory,
   resolveAuthRedirectPathFactory
-} = require('@/modules/serverinvites/services/inviteProcessingService')
+} = require('@/modules/serverinvites/services/processing')
 const { getIpFromRequest } = require('@/modules/shared/utils/ip')
 const { NoInviteFoundError } = require('@/modules/serverinvites/errors')
 const {

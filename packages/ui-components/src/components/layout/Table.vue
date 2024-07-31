@@ -6,7 +6,7 @@
     >
       <div
         v-if="items.length > 0"
-        class="grid z-10 grid-cols-12 items-center gap-6 font-semibold bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
+        class="grid z-10 grid-cols-12 items-center gap-6 font-medium bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
         :style="{ paddingRight: paddingRightStyle }"
       >
         <div
@@ -43,10 +43,9 @@
                 <FormButton
                   :icon-left="button.icon"
                   size="sm"
-                  color="secondary"
+                  color="outline"
                   hide-text
                   :class="button.class"
-                  :text-color="button.textColor"
                   :to="isString(button.action) ? button.action : undefined"
                   @click.stop="!isString(button.action) ? button.action(item) : noop"
                 />
@@ -77,7 +76,6 @@
 import { noop, isString } from 'lodash'
 import { computed } from 'vue'
 import type { PropAnyComponent } from '~~/src/helpers/common/components'
-import type { FormButtonTextColor } from '~~/src/helpers/form/button'
 import { FormButton } from '~~/src/lib'
 
 export type TableColumn<I> = {
@@ -91,7 +89,6 @@ export interface RowButton<T = unknown> {
   label: string
   action: (item: T) => void | string
   class?: string
-  textColor?: FormButtonTextColor
 }
 
 const props = withDefaults(
@@ -118,7 +115,7 @@ const paddingRightStyle = computed(() => {
 
 const rowsWrapperClasses = computed(() => {
   const classParts = [
-    'relative grid grid-cols-12 items-center gap-6 px-4 py-1 min-w-[750px] bg-foundation'
+    'relative grid grid-cols-12 items-center gap-6 px-4 py-0.5 min-w-[750px] bg-foundation text-body-xs'
   ]
 
   if (props.onRowClick && props.items.length) {
@@ -155,7 +152,7 @@ const getClasses = (column: C | undefined, colIndex: number): string => {
   const classParts = [getHeaderClasses(column, colIndex)]
 
   if (colIndex === 0) {
-    classParts.push(`bg-transparent py-3 ${column ? 'pr-5' : 'col-span-full'}`)
+    classParts.push(`bg-transparent py-2 ${column ? 'pr-5' : 'col-span-full'}`)
   } else {
     classParts.push(`my-2`)
   }

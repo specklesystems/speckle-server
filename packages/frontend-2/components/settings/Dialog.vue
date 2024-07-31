@@ -4,14 +4,14 @@
     v-bind="
       isMobile ? { title: selectedMenuItem ? selectedMenuItem.title : 'Settings' } : {}
     "
-    fullscreen
+    fullscreen="all"
     :show-back-button="isMobile && !!selectedMenuItem"
     @back="targetMenuItem = null"
   >
     <div class="w-full h-full flex">
       <LayoutSidebar
         v-if="!isMobile || !selectedMenuItem"
-        class="w-full md:w-56 lg:w-60 md:p-4 md:pt-6 md:bg-foundation-page md:border-r md:border-outline-3"
+        class="w-full md:w-56 lg:w-60 md:p-4 md:pt-6 md:bg-foundation md:border-r md:border-outline-3"
       >
         <LayoutSidebarMenu>
           <LayoutSidebarMenuGroup title="Account settings">
@@ -23,7 +23,7 @@
               :key="key"
               :label="sidebarMenuItem.title"
               :class="{
-                'bg-foundation-focus hover:!bg-foundation-focus':
+                'bg-highlight-2 hover:!bg-highlight-2':
                   selectedMenuItem?.title === sidebarMenuItem.title
               }"
               @click="targetMenuItem = `${key}`"
@@ -38,7 +38,7 @@
               :key="key"
               :label="sidebarMenuItem.title"
               :class="{
-                'bg-foundation-focus hover:!bg-foundation-focus':
+                'bg-highlight-2 hover:!bg-highlight-2':
                   selectedMenuItem?.title === sidebarMenuItem.title
               }"
               @click="targetMenuItem = `${key}`"
@@ -50,7 +50,7 @@
         :is="selectedMenuItem.component"
         v-if="selectedMenuItem"
         :class="[
-          'bg-foundation md:px-10 md:py-12 md:bg-foundation w-full',
+          'md:bg-foundation md:px-10 md:py-12 md:bg-foundation-page w-full',
           !isMobile && 'simple-scrollbar overflow-y-auto flex-1'
         ]"
         :user="user"

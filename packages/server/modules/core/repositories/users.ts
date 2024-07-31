@@ -9,8 +9,6 @@ import { Roles, ServerRoles } from '@speckle/shared'
 import { updateUserEmailFactory } from '@/modules/core/repositories/userEmails'
 import { db } from '@/db/knex'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
-import { UserEmail } from '@/modules/core/domain/userEmails/types'
-import { getUsersBaseQuery } from '@/modules/core/helpers/userHelper'
 
 export type UserWithOptionalRole<User extends LimitedUserRecord = UserRecord> = User & {
   /**
@@ -40,6 +38,28 @@ function sanitizeUserRecord<T extends Nullable<UserRecord>>(user: T): T {
   if (!user) return user
   delete user.passwordDigest
   return user
+}
+
+// This function is exported because it is used in services
+// Once we will refactor services this one should not be exported
+export const getUsersBaseQuery = (
+  query: Knex.QueryBuilder,
+  { searchQuery, role }: { searchQuery: string | null; role: string | null }
+) => {
+  if (searchQuery) {
+    query.where((queryBuilder) => {
+      queryBuilder
+        .where((qb) => {
+          qb.where(UserEmails.col.email, 'ILIKE', `%${searchQuery}%`).where({
+            [UserEmails.col.primary]: true
+          })
+        })
+        .orWhere(Users.col.name, 'ILIKE', `%${searchQuery}%`)
+        .orWhere(Users.col.company, 'ILIKE', `%${searchQuery}%`)
+    })
+  }
+  if (role) query.where({ role })
+  return query
 }
 
 /**
@@ -140,16 +160,12 @@ export async function getUserByEmail(
   email: string,
   options?: Partial<{ skipClean: boolean; withRole: boolean }>
 ) {
-  const userEmail = await db<UserEmail>(UserEmails.name)
-    .whereRaw('lower(email) = lower(?)', [email])
-    .first()
-
-  if (!userEmail) return null
-
-  const q = Users.knex<UserWithOptionalRole[]>().where(Users.col.id, userEmail.userId)
-  q.leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id).where({
-    [UserEmails.col.primary]: true
-  })
+  const q = Users.knex<UserWithOptionalRole[]>()
+    .leftJoin(UserEmails.name, UserEmails.col.userId, Users.col.id)
+    .where({
+      [UserEmails.col.primary]: true
+    })
+    .whereRaw('lower("user_emails"."email") = lower(?)', [email])
   const columns: (Knex.Raw<UserRecord> | string)[] = [
     ...Object.values(omit(Users.col, ['email', 'verified'])),
     knex.raw(`(array_agg("user_emails"."email"))[1] as email`),

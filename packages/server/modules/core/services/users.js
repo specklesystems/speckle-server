@@ -17,11 +17,11 @@ const Users = () => UsersSchema.knex()
 const Acl = () => ServerAclSchema.knex()
 
 const { deleteStream } = require('./streams')
+const { LIMITED_USER_FIELDS } = require('@/modules/core/helpers/userHelper')
 const {
-  LIMITED_USER_FIELDS,
+  getUserByEmail,
   getUsersBaseQuery
-} = require('@/modules/core/helpers/userHelper')
-const { getUserByEmail } = require('@/modules/core/repositories/users')
+} = require('@/modules/core/repositories/users')
 const { UsersEmitter, UsersEvents } = require('@/modules/core/events/usersEmitter')
 const { pick, omit } = require('lodash')
 const { dbLogger } = require('@/logging/logging')
@@ -150,6 +150,7 @@ module.exports = {
   /**
    * @param {{userId: string}} param0
    * @returns {Promise<import('@/modules/core/helpers/types').UserRecord | null>}
+   *TODO: this should be moved to repository
    */
   async getUserById({ userId }) {
     const user = await Users()
@@ -184,6 +185,7 @@ module.exports = {
     return user
   },
 
+  // TODO: this should be moved to repository
   async getUserByEmail({ email }) {
     const user = await Users()
       .leftJoin(UserEmails.name, UserEmails.col.userId, UsersSchema.col.id)
@@ -273,6 +275,7 @@ module.exports = {
   },
 
   /**
+   * TODO: this should be moved to repository
    * @param {{ deleteAllUserInvites: import('@/modules/serverinvites/domain/operations').DeleteAllUserInvites }} param0
    */
   deleteUser({ deleteAllUserInvites }) {
@@ -314,6 +317,7 @@ module.exports = {
   },
 
   /**
+   * TODO: this should be moved to repositories
    * Get all users or filter them with the specified searchQuery. This is meant for
    * server admins, because it exposes the User object (& thus the email).
    * @returns {Promise<import('@/modules/core/helpers/userHelper').UserRecord[]>}
@@ -340,6 +344,7 @@ module.exports = {
       .offset(offset)
   },
 
+  // TODO: this should be moved to repositories
   async countUsers(searchQuery = null) {
     const query = Users().leftJoin(
       UserEmails.name,

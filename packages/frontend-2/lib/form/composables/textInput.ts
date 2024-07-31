@@ -47,7 +47,7 @@ export function useTextInputCore(params: {
 
   const coreClasses = computed(() => {
     const classParts = [
-      'block w-full rounded focus:outline-none bg-foundation-page text-foreground transition-all',
+      'block w-full rounded focus:outline-none bg-foundation text-foreground transition-all',
       'disabled:cursor-not-allowed disabled:bg-foundation-disabled disabled:text-disabled-muted',
       'placeholder:text-foreground-2'
     ]

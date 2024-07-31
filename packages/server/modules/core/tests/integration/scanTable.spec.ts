@@ -9,12 +9,13 @@ import {
   createRandomEmail,
   createRandomPassword
 } from '@/modules/core/helpers/testHelpers'
+import { truncateTables } from '@/test/hooks'
 
 const scanTable = scanTableFactory<UserRecord>({ db })
 
 describe('Helpers scanTable @core', () => {
   before(async () => {
-    await db(Users.name).delete()
+    await truncateTables([Users.name])
   })
 
   it('should scan table', async () => {

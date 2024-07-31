@@ -3,7 +3,7 @@
     <div :class="mainInfoBlockClasses">
       <UserAvatar :user="invite.invitedBy" :size="avatarSize" />
       <div class="text-foreground">
-        <span class="font-bold">{{ invite.invitedBy.name }}</span>
+        <span class="font-medium">{{ invite.invitedBy.name }}</span>
         has invited you to be part of the team from
         <template v-if="showProjectName">
           the project {{ invite.projectName }}.
@@ -125,7 +125,7 @@ const mainInfoBlockClasses = computed(() => {
 
   return classParts.join(' ')
 })
-const buttonSize = computed(() => (props.block ? 'lg' : 'sm'))
+const buttonSize = computed(() => (props.block ? 'lg' : 'base'))
 const avatarSize = computed(() => (props.block ? 'xxl' : 'base'))
 
 const processInvite = async (accept: boolean) => {
