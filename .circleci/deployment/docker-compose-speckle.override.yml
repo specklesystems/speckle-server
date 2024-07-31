@@ -1,0 +1,18 @@
+services:
+  speckle-ingress:
+    image: speckle/speckle-docker-compose-ingress
+
+  speckle-frontend-2:
+    image: speckle/speckle-frontend-2
+
+  speckle-server:
+    image: speckle/speckle-server
+
+  preview-service:
+    image: speckle/speckle-preview-service
+
+  webhook-service:
+    image: speckle/speckle-webhook-service
+
+  fileimport-service:
+    image: speckle/speckle-fileimport-service
