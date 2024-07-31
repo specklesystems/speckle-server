@@ -174,7 +174,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
         updateRole: async (_parent, args, context) => {
           const { userId, workspaceId, role } = args.input
 
-          authorizeResolver(context.userId, workspaceId, Roles.Workspace.Admin, null)
+          authorizeResolver(
+            context.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
 
           const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
           const emitWorkspaceEvent = getEventBus().emit
