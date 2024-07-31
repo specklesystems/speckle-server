@@ -55,15 +55,6 @@ export const mapGqlWorkspaceRoleToMainRole = (
   }
 }
 
-export const mapMainWorkspaceRoleToGqlRole = (
-  workspaceRole: WorkspaceRoles
-): WorkspaceRole => {
-  switch (workspaceRole) {
-    case Roles.Workspace.Admin:
-      return WorkspaceRole.Admin
-    case Roles.Workspace.Member:
-      return WorkspaceRole.Member
-    case Roles.Workspace.Guest:
-      return WorkspaceRole.Guest
-  }
+export const isWorkspaceRole = (role: string): role is WorkspaceRoles => {
+  return (Object.values(Roles.Workspace) as string[]).includes(role)
 }

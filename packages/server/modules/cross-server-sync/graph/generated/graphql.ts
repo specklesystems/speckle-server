@@ -3856,7 +3856,7 @@ export type WorkspaceRoleDeleteInput = {
 
 export type WorkspaceRoleUpdateInput = {
   /** Leave role null to revoke access entirely */
-  role?: InputMaybe<WorkspaceRole>;
+  role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
 };

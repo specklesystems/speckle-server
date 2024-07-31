@@ -29,11 +29,12 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
+  WorkspaceInvalidRoleError,
   WorkspaceNotFoundError,
   WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
 } from '@/modules/workspaces/errors/workspace'
-import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/roles'
+import { isWorkspaceRole } from '@/modules/workspaces/helpers/roles'
 import {
   deleteWorkspaceRoleFactory as repoDeleteWorkspaceRoleFactory,
   getWorkspaceCollaboratorsFactory,
@@ -170,7 +171,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return workspace
         },
-        updateRole: async (_parent, args) => {
+        updateRole: async (_parent, args, context) => {
           const { userId, workspaceId, role } = args.input
 
           const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
@@ -185,8 +186,15 @@ export = FF_WORKSPACES_MODULE_ENABLED
               revokeStreamPermissions
             })
 
-            await deleteWorkspaceRole(args.input)
+            await deleteWorkspaceRole({
+              role: args.input,
+              roleUpdaterId: context.userId!
+            })
           } else {
+            if (!isWorkspaceRole(role)) {
+              throw new WorkspaceInvalidRoleError()
+            }
+
             const updateWorkspaceRole = updateWorkspaceRoleFactory({
               upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
               getWorkspaceRoles,
@@ -196,9 +204,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
             })
 
             await updateWorkspaceRole({
-              userId,
-              workspaceId,
-              role: mapGqlWorkspaceRoleToMainRole(role)
+              role: {
+                userId,
+                workspaceId,
+                role
+              },
+              roleUpdaterId: context.userId!
             })
           }
 

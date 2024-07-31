@@ -1,5 +1,4 @@
 import { AllScopes } from '@/modules/core/helpers/mainConstants'
-import { mapMainWorkspaceRoleToGqlRole } from '@/modules/workspaces/helpers/roles'
 import {
   BasicTestWorkspace,
   createTestWorkspace
@@ -24,7 +23,12 @@ import { expect } from 'chai'
 
 describe('Workspaces Roles GQL', () => {
   let apollo: TestApolloServer
-  let workspace: BasicTestWorkspace
+
+  const workspace: BasicTestWorkspace = {
+    id: '',
+    ownerId: '',
+    name: 'My Test Workspace'
+  }
 
   const testAdminUser: BasicTestUser = {
     id: '',
@@ -55,16 +59,7 @@ describe('Workspaces Roles GQL', () => {
         scopes: AllScopes
       })
     })
-
-    const testWorkspace: BasicTestWorkspace = {
-      id: '',
-      ownerId: testAdminUser.id,
-      name: 'My Test Workspace'
-    }
-
-    await createTestWorkspace(testWorkspace, testAdminUser)
-
-    workspace = testWorkspace
+    await createTestWorkspace(workspace, testAdminUser)
   })
 
   describe('update workspace role', () => {
@@ -83,7 +78,7 @@ describe('Workspaces Roles GQL', () => {
         input: {
           userId: testMemberUser.id,
           workspaceId: workspace.id,
-          role: mapMainWorkspaceRoleToGqlRole(Roles.Workspace.Admin)
+          role: Roles.Workspace.Admin
         }
       })
 
@@ -104,20 +99,26 @@ describe('Workspaces Roles GQL', () => {
         input: {
           userId: testMemberUser.id,
           workspaceId: workspace.id,
-          role: mapMainWorkspaceRoleToGqlRole(Roles.Workspace.Member)
+          role: Roles.Workspace.Member
         }
       })
 
-      const { data } = await apollo.execute(GetWorkspaceDocument, {
-        workspaceId: workspace.id
-      })
-      const userRole = data?.workspace.team.find(
-        (user) => user.id === testMemberUser.id
-      )
+      const roles = res.data?.workspaceMutations.updateRole.team
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(userRole).to.exist
-      expect(userRole?.role).to.equal(Roles.Workspace.Member)
+      expect(roles?.some((role) => role.id === testMemberUser.id)).to.be.true
+    })
+
+    it('should throw if setting an invalid role', async () => {
+      const res = await apollo.execute(UpdateWorkspaceRoleDocument, {
+        input: {
+          userId: testMemberUser.id,
+          workspaceId: workspace.id,
+          role: 'not-a-role'
+        }
+      })
+
+      expect(res).to.haveGraphQLErrors('Invalid workspace role')
     })
 
     it('should throw if attempting to remove last admin', async () => {
@@ -125,7 +126,7 @@ describe('Workspaces Roles GQL', () => {
         input: {
           userId: testAdminUser.id,
           workspaceId: workspace.id,
-          role: mapMainWorkspaceRoleToGqlRole(Roles.Workspace.Member)
+          role: Roles.Workspace.Member
         }
       })
 
@@ -139,7 +140,7 @@ describe('Workspaces Roles GQL', () => {
         input: {
           userId: testMemberUser.id,
           workspaceId: workspace.id,
-          role: mapMainWorkspaceRoleToGqlRole(Roles.Workspace.Member)
+          role: Roles.Workspace.Member
         }
       })
     })
@@ -153,15 +154,10 @@ describe('Workspaces Roles GQL', () => {
         }
       })
 
-      const { data } = await apollo.execute(GetWorkspaceDocument, {
-        workspaceId: workspace.id
-      })
-      const userRole = data?.workspace.team.find(
-        (user) => user.id === testMemberUser.id
-      )
+      const roles = res.data?.workspaceMutations.updateRole.team
 
       expect(res).to.not.haveGraphQLErrors()
-      expect(userRole).to.not.exist
+      expect(roles?.some((role) => role.id === testMemberUser.id)).to.be.false
     })
 
     it('should throw if attempting to remove last admin', async () => {
