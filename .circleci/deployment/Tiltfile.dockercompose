@@ -37,5 +37,5 @@ dc_resource('fileimport-service', resource_deps=[], labels=['speckle'])
 dc_resource('webhook-service', resource_deps=['postgres'], labels=['speckle'])
 
 # Test the Speckle resources
-docker_compose('../../docker-compose-test.yml', 'docker-compose-test.override.yml')
+docker_compose(['../../docker-compose-test.yml', 'docker-compose-test.override.yml'])
 dc_resource('test', resource_deps=['speckle-server', 'speckle-frontend-2'], labels=['test']) # --exit-code-from test
