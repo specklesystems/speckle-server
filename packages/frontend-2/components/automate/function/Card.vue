@@ -7,7 +7,7 @@
     :target="externalMoreInfo ? '_blank' : undefined"
   >
     <div
-      class="px-4 py-4 flex flex-col gap-3 rounded-lg border border-outline-3 bg-foundation relative"
+      class="px-4 py-4 flex flex-col gap-3 rounded-lg border border-outline-3 bg-foundation relative h-full"
     >
       <div class="flex gap-3 items-center" :class="{ 'w-4/5': hasLabel }">
         <AutomateFunctionLogo :logo="fn.logo" />
