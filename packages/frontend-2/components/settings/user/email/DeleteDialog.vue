@@ -2,18 +2,19 @@
   <LayoutDialog
     v-model:open="isOpen"
     title="Delete email address"
-    max-width="xs"
+    max-width="sm"
     :buttons="dialogButtons"
   >
-    <p>
+    <p class="text-body-xs text-foreground">
       Are you sure you want to remove
-      <span class="font-semibold">{{ emailAddress }}</span>
+      <span class="font-medium">{{ emailAddress }}</span>
       from your account?
     </p>
   </LayoutDialog>
 </template>
 
 <script setup lang="ts">
+import type { LayoutDialogButton } from '@speckle/ui-components'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
 const props = defineProps<{
@@ -30,14 +31,14 @@ const { triggerNotification } = useGlobalToast()
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
     text: 'Cancel',
-    props: { color: 'secondary', fullWidth: true, outline: true },
+    props: { color: 'outline', fullWidth: true },
     onClick: () => {
       isOpen.value = false
     }
   },
   {
     text: 'Delete',
-    props: { color: 'default', fullWidth: true },
+    props: { color: 'primary', fullWidth: true },
     onClick: () => {
       emit('deleted')
       isOpen.value = false

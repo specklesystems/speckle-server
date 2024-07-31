@@ -1,33 +1,35 @@
 <template>
-  <div class="md:max-w-xl md:mx-auto">
-    <SettingsSectionHeader title="Emails" text="Manage email addresses" />
-    <SettingsSectionHeader title="Your emails" subheading />
-    <SettingsUserEmailCards
-      class="pt-6"
-      :email-data="dummyData"
-      @deleted="onDelete"
-      @make-primary="onMakePrimary"
-    />
-    <hr class="my-6 md:my-10" />
-    <SettingsSectionHeader title="Add new email" subheading />
-    <div class="flex flex-col md:flex-row gap-x-4 w-full justify-center pt-6">
-      <div class="w-1/2 flex items-center">
-        <span class="text-sm font-medium">New email address</span>
-      </div>
-      <div class="flex flex-col md:flex-row gap-x-2 md:w-1/2">
-        <FormTextInput
-          v-model="email"
-          color="foundation"
-          label="email"
-          name="email"
-          :rules="emailRules"
-          placeholder="Email address"
-          wrapper-classes="flex-1 py-3 md:py-0"
-        />
-        <FormButton @click="onSubmit">Add</FormButton>
+  <section>
+    <div class="md:max-w-xl md:mx-auto">
+      <SettingsSectionHeader title="Emails" text="Manage email addresses" />
+      <SettingsSectionHeader title="Your emails" subheading />
+      <SettingsUserEmailCards
+        class="pt-6"
+        :email-data="dummyData"
+        @deleted="onDelete"
+        @set-primary="onSetPrimary"
+      />
+      <hr class="my-6 md:my-10" />
+      <SettingsSectionHeader title="Add new email" subheading />
+      <div class="flex flex-col md:flex-row gap-x-4 w-full justify-center pt-6">
+        <div class="w-1/2 flex items-center">
+          <span class="text-body-xs font-medium">New email address</span>
+        </div>
+        <div class="flex flex-col md:flex-row gap-x-2 md:w-1/2">
+          <FormTextInput
+            v-model="email"
+            color="foundation"
+            label="email"
+            name="email"
+            :rules="emailRules"
+            placeholder="Email address"
+            wrapper-classes="flex-1 py-3 md:py-0"
+          />
+          <FormButton @click="onSubmit">Add</FormButton>
+        </div>
       </div>
     </div>
-  </div>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -79,7 +81,7 @@ const onDelete = (id: number) => {
   dummyData.value = dummyData.value.filter((item) => item.id !== id)
 }
 
-const onMakePrimary = (id: number) => {
+const onSetPrimary = (id: number) => {
   let primaryItem = null
 
   dummyData.value.forEach((item) => {

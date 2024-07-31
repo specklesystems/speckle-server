@@ -12,8 +12,8 @@
       </CommonBadge>
       <FormButton
         v-if="emailData.status === 'UNVERIFIED'"
-        color="secondary"
-        size="xs"
+        color="outline"
+        size="sm"
         @click="resendVerificationEmail"
       >
         Resend verification email
@@ -21,8 +21,10 @@
     </div>
     <div class="flex flex-col md:flex-row">
       <div class="flex-1">
-        <p class="text-sm font-semibold md:pt-1">{{ emailData.email }}</p>
-        <p v-if="description" class="text-xs pt-1 text-foreground-disabled">
+        <p class="text-body-xs font-medium text-foreground md:pt-0.5">
+          {{ emailData.email }}
+        </p>
+        <p v-if="description" class="text-body-2xs pt-1 text-foreground-2">
           {{ description }}
         </p>
       </div>
@@ -30,15 +32,15 @@
         <FormButton
           v-if="emailData.status !== 'PRIMARY'"
           :disabled="emailData.status !== 'VERIFIED'"
-          color="secondary"
+          color="outline"
           size="sm"
-          @click="toggleMakePrimaryDialog"
+          @click="toggleSetPrimaryDialog"
         >
           Set as primary
         </FormButton>
         <FormButton
           :disabled="emailData.status === 'PRIMARY'"
-          color="secondary"
+          color="outline"
           size="sm"
           @click="toggleDeleteDialog"
         >
@@ -48,10 +50,10 @@
     </div>
   </li>
 
-  <SettingsUserEmailMakePrimaryDialog
-    v-model:open="showMakePrimaryDialog"
+  <SettingsUserEmailSetPrimaryDialog
+    v-model:open="showSetPrimaryDialog"
     :email-address="emailData.email"
-    @make-primary="$emit('make-primary')"
+    @set-primary="$emit('set-primary')"
   />
 
   <SettingsUserEmailDeleteDialog
@@ -79,13 +81,13 @@ const props = defineProps<{
 // TEMP
 defineEmits<{
   (e: 'deleted'): void
-  (e: 'make-primary'): void
+  (e: 'set-primary'): void
 }>()
 
 const { triggerNotification } = useGlobalToast()
 
 const showDeleteDialog = ref(false)
-const showMakePrimaryDialog = ref(false)
+const showSetPrimaryDialog = ref(false)
 
 const badgeClasses = computed(() => {
   const classes = {
@@ -106,8 +108,8 @@ const description = computed(() => {
   return null
 })
 
-const toggleMakePrimaryDialog = () => {
-  showMakePrimaryDialog.value = true
+const toggleSetPrimaryDialog = () => {
+  showSetPrimaryDialog.value = true
 }
 
 const toggleDeleteDialog = () => {
