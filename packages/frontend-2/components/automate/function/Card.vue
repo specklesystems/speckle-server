@@ -6,9 +6,7 @@
     :external="externalMoreInfo"
     :target="externalMoreInfo ? '_blank' : undefined"
   >
-    <div
-      class="px-4 py-4 flex flex-col gap-3 rounded-lg border border-outline-3 bg-foundation relative"
-    >
+    <div class="px-4 py-4 flex flex-col gap-3 rounded-lg bg-foundation relative h-full">
       <div class="flex gap-3 items-center" :class="{ 'w-4/5': hasLabel }">
         <AutomateFunctionLogo :logo="fn.logo" />
         <div class="flex flex-col truncate">
@@ -136,7 +134,9 @@ const classes = computed(() => {
   if (props.selected) {
     classParts.push('ring-2 ring-primary')
   } else if (props.noButtons) {
-    classParts.push('ring-outline-2 hover:ring-2 cursor-pointer')
+    classParts.push(
+      'border border-1 border-outline-2 hover:border-outline-5 cursor-pointer'
+    )
   }
 
   return classParts.join(' ')
