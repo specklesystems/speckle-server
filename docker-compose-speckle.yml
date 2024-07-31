@@ -27,6 +27,8 @@ services:
       NUXT_PUBLIC_BACKEND_API_ORIGIN: 'http://speckle-server:3000'
       NUXT_PUBLIC_LOG_LEVEL: 'warn'
       NUXT_REDIS_URL: 'redis://redis'
+      LOG_LEVEL: 'info'
+      # LOG_PRETTY: 'true' #FIXME currently causes a failure
 
   speckle-server:
     build:
@@ -54,6 +56,7 @@ services:
 
       STRATEGY_LOCAL: 'true'
       LOG_LEVEL: 'info'
+      LOG_PRETTY: 'true'
 
       POSTGRES_URL: 'postgres'
       POSTGRES_USER: 'speckle'
@@ -87,6 +90,7 @@ services:
     environment:
       HOST: '127.0.0.1'
       LOG_LEVEL: 'info'
+      LOG_PRETTY: 'true'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
     ports:
       - 127.0.0.1:3001:3001
@@ -100,6 +104,7 @@ services:
     restart: always
     environment:
       LOG_LEVEL: 'info'
+      LOG_PRETTY: 'true'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
 
   fileimport-service:
@@ -111,6 +116,7 @@ services:
     restart: always
     environment:
       LOG_LEVEL: 'info'
+      LOG_PRETTY: 'true'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
       SPECKLE_SERVER_URL: 'http://speckle-server:3000'
       FILE_IMPORT_TIME_LIMIT_MIN: 10
