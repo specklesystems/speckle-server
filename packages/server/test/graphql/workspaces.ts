@@ -81,7 +81,7 @@ export const getWorkspaceProjects = gql`
     $id: String!
     $limit: Int
     $cursor: String
-    $filter: UserProjectsFilter
+    $filter: WorkspaceProjectsFilter
   ) {
     workspace(id: $id) {
       projects(limit: $limit, cursor: $cursor, filter: $filter) {

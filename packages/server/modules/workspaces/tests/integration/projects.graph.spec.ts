@@ -6,7 +6,7 @@ import {
 import {
   BasicTestUser,
   createAuthTokenForUser,
-  createTestUser
+  createTestUsers
 } from '@/test/authHelper'
 import {
   CreateWorkspaceProjectDocument,
@@ -41,9 +41,7 @@ describe('Workspace project GQL CRUD', () => {
 
   before(async () => {
     await beforeEachContext()
-    await Promise.all(
-      [testUser, testNonWorkspaceMemberUser].map((user) => createTestUser(user))
-    )
+    await createTestUsers([testUser, testNonWorkspaceMemberUser])
     const token = await createAuthTokenForUser(testUser.id, AllScopes)
     apollo = await testApolloServer({
       context: createTestContext({
@@ -57,18 +55,14 @@ describe('Workspace project GQL CRUD', () => {
   })
 
   describe('when specifying a workspace id during project creation', () => {
-    let workspace: BasicTestWorkspace
+    const workspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: testUser.id,
+      name: 'My Test Workspace'
+    }
 
     before(async () => {
-      const testWorkspace: BasicTestWorkspace = {
-        id: '',
-        ownerId: testUser.id,
-        name: 'My Test Workspace'
-      }
-
-      await createTestWorkspace(testWorkspace, testUser)
-
-      workspace = testWorkspace
+      await createTestWorkspace(workspace, testUser)
     })
 
     it('should create the project in that workspace', async () => {
@@ -96,18 +90,14 @@ describe('Workspace project GQL CRUD', () => {
   })
 
   describe('when querying workspace projects', () => {
-    let workspace: BasicTestWorkspace
+    const workspace: BasicTestWorkspace = {
+      id: '',
+      ownerId: testUser.id,
+      name: 'My Test Workspace'
+    }
 
     before(async () => {
-      const testWorkspace: BasicTestWorkspace = {
-        id: '',
-        ownerId: testUser.id,
-        name: 'My Test Workspace'
-      }
-
-      await createTestWorkspace(testWorkspace, testUser)
-
-      workspace = testWorkspace
+      await createTestWorkspace(workspace, testUser)
 
       const workspaceProjects = [
         { name: 'Workspace Project A', workspaceId: workspace.id },
