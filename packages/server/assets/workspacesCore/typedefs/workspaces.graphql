@@ -15,7 +15,6 @@ extend type Query {
 input WorkspaceCreateInput {
   name: String!
   description: String
-  logoUrl: String
 }
 
 input WorkspaceUpdateInput {
@@ -93,6 +92,9 @@ type Workspace {
   description: String
   createdAt: DateTime!
   updatedAt: DateTime!
+  """
+  Optional url for workspace logo image
+  """
   logoUrl: String
   """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
@@ -106,8 +108,15 @@ type Workspace {
   projects(
     limit: Int! = 25
     cursor: String
-    filter: UserProjectsFilter
+    filter: WorkspaceProjectsFilter
   ): ProjectCollection!
+}
+
+input WorkspaceProjectsFilter {
+  """
+  Filter out projects by name
+  """
+  search: String
 }
 
 type WorkspaceCollaborator {

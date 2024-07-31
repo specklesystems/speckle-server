@@ -5,7 +5,7 @@
     </div>
     <div
       v-tippy="createdAt.full"
-      class="bg-foundation-focus inline-block rounded-md px-2 text-xs font-bold truncate text-center py-1"
+      class="bg-foundation-focus inline-block rounded-md px-2 text-body-2xs font-medium truncate text-center py-1"
     >
       <span>
         {{ createdAt.relative }}

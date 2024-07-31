@@ -95,7 +95,8 @@ export const createAndSendInviteFactory =
   }): CreateAndSendInvite =>
   async (params, inviterResourceAccessLimits?) => {
     const sendInviteEmail = sendInviteEmailFactory({ buildInviteEmailContents })
-    const { inviterId, target } = params
+    const { inviterId } = params
+    let { target } = params
     let { message } = params
 
     const [inviter, targetUser, serverInfo] = await Promise.all([
@@ -109,6 +110,10 @@ export const createAndSendInviteFactory =
     const targetData = getFinalTargetData(target, targetUser)
     if (targetData.userId && !targetUser) {
       throw new InviteCreateValidationError('Attempting to invite an invalid user')
+    }
+
+    if (targetData.userId) {
+      target = buildUserTarget(targetData.userId)!
     }
 
     if (message && message.length >= 1024) {

@@ -61,6 +61,7 @@ import {
   updateWorkspaceFactory,
   updateWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
+import { getWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
 import { Roles } from '@speckle/shared'
 import { chunk } from 'lodash'
@@ -125,7 +126,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
       },
       WorkspaceMutations: {
         create: async (_parent, args, context) => {
-          const { name, description, logoUrl } = args.input
+          const { name, description } = args.input
 
           const createWorkspace = createWorkspaceFactory({
             upsertWorkspace: upsertWorkspaceFactory({ db }),
@@ -139,8 +140,9 @@ export = FF_WORKSPACES_MODULE_ENABLED
             userId: context.userId!,
             workspaceInput: {
               name,
-              description: description ?? null,
-              logoUrl: logoUrl ?? null
+              description: description || null,
+              // TODO: Resolve how logos will be created
+              logoUrl: null
             },
             userResourceAccessLimits: context.resourceAccessRules
           })
@@ -345,9 +347,18 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return await getPendingTeam({ workspaceId: parent.id })
         },
-        projects: async () => {
-          // Get projects in workspace
-          throw new WorkspacesNotYetImplementedError()
+        projects: async (parent, args) => {
+          const getWorkspaceProjects = getWorkspaceProjectsFactory({ getStreams })
+          return await getWorkspaceProjects(
+            {
+              workspaceId: parent.id
+            },
+            {
+              limit: args.limit || 25,
+              cursor: args.cursor || null,
+              filter: { ...(args.filter || {}) }
+            }
+          )
         }
       },
       WorkspaceCollaborator: {

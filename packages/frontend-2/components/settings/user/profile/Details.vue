@@ -2,13 +2,12 @@
   <div class="flex flex-col gap-y-4">
     <SettingsSectionHeader title="Your details" subheading />
     <div class="grid md:grid-cols-2 pt-4">
-      <div class="flex h-full items-center justify-center">
+      <div class="flex items-center justify-center">
         <SettingsUserProfileEditAvatar :user="user" size="xxl" />
       </div>
       <div class="pt-6 md:pt-0">
         <FormTextInput
           v-model="name"
-          class="pt-2 pb-1"
           color="foundation"
           label="Name"
           name="name"

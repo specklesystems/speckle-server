@@ -3,7 +3,7 @@
     class="flex even:bg-primary-muted odd:bg-foundation-2 p-2 items-center space-x-2"
   >
     <UserAvatar :user="user" />
-    <span class="grow truncate text-sm">{{ user.name }}</span>
+    <span class="grow truncate text-body-sm">{{ user.name }}</span>
     <span
       v-tippy="
         isTryingToSetGuestOwner ? `Server guests can't be project owners` : undefined
@@ -11,6 +11,7 @@
     >
       <FormButton
         :disabled="isButtonDisabled"
+        size="sm"
         @click="() => $emit('invite-user', { user, streamRole })"
       >
         Invite

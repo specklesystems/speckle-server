@@ -1,5 +1,5 @@
 <template>
-  <div v-if="topLevelItems.length && project" class="space-y-4 max-w-full">
+  <div v-if="topLevelItems.length && project" class="space-y-2 max-w-full">
     <div v-for="item in topLevelItems" :key="item.id">
       <ProjectPageModelsStructureItem
         :item="item"
