@@ -174,6 +174,8 @@ export = FF_WORKSPACES_MODULE_ENABLED
         updateRole: async (_parent, args, context) => {
           const { userId, workspaceId, role } = args.input
 
+          authorizeResolver(context.userId, workspaceId, Roles.Workspace.Admin, null)
+
           const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
           const emitWorkspaceEvent = getEventBus().emit
 
@@ -186,10 +188,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               revokeStreamPermissions
             })
 
-            await deleteWorkspaceRole({
-              role: args.input,
-              roleUpdaterId: context.userId!
-            })
+            await deleteWorkspaceRole(args.input)
           } else {
             if (!isWorkspaceRole(role)) {
               throw new WorkspaceInvalidRoleError()
@@ -203,14 +202,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
               grantStreamPermissions
             })
 
-            await updateWorkspaceRole({
-              role: {
-                userId,
-                workspaceId,
-                role
-              },
-              roleUpdaterId: context.userId!
-            })
+            await updateWorkspaceRole({ userId, workspaceId, role })
           }
 
           return await getWorkspaceFactory({ db })({ workspaceId })

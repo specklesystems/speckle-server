@@ -169,12 +169,8 @@ export const updateWorkspaceFactory =
   }
 
 type WorkspaceRoleDeleteArgs = {
-  role: {
-    userId: string
-    workspaceId: string
-  }
-  /** The user performing the update operation. */
-  roleUpdaterId: string
+  userId: string
+  workspaceId: string
 }
 
 export const deleteWorkspaceRoleFactory =
@@ -191,11 +187,10 @@ export const deleteWorkspaceRoleFactory =
     getStreams: typeof serviceGetStreams
     revokeStreamPermissions: typeof repoRevokeStreamPermissions
   }) =>
-  async (args: WorkspaceRoleDeleteArgs): Promise<WorkspaceAcl | null> => {
-    const { workspaceId, userId } = args.role
-
-    authorizeResolver(args.roleUpdaterId, workspaceId, Roles.Workspace.Admin, null)
-
+  async ({
+    workspaceId,
+    userId
+  }: WorkspaceRoleDeleteArgs): Promise<WorkspaceAcl | null> => {
     // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
     if (isUserLastWorkspaceAdmin(workspaceRoles, userId)) {
@@ -243,12 +238,6 @@ export const getWorkspaceRoleFactory =
     return await getWorkspaceRoleForUser({ userId, workspaceId })
   }
 
-type WorkspaceRoleUpdateArgs = {
-  role: WorkspaceAcl
-  /** The user performing the update operation. */
-  roleUpdaterId: string
-}
-
 export const updateWorkspaceRoleFactory =
   ({
     getWorkspaceRoles,
@@ -264,11 +253,7 @@ export const updateWorkspaceRoleFactory =
     getStreams: typeof serviceGetStreams
     grantStreamPermissions: typeof repoGrantStreamPermissions
   }) =>
-  async (args: WorkspaceRoleUpdateArgs): Promise<void> => {
-    const { workspaceId, userId, role } = args.role
-
-    authorizeResolver(args.roleUpdaterId, workspaceId, Roles.Workspace.Admin, null)
-
+  async ({ workspaceId, userId, role }: WorkspaceAcl): Promise<void> => {
     // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
     if (
