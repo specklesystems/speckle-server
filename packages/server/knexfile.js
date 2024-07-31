@@ -7,7 +7,8 @@ const fs = require('fs')
 const path = require('path')
 const {
   isTestEnv,
-  ignoreMissingMigrations
+  ignoreMissingMigrations,
+  postgresMaxConnections
 } = require('@/modules/shared/helpers/envHelper')
 
 function walk(dir) {
@@ -66,7 +67,7 @@ if (env.POSTGRES_USER && env.POSTGRES_PASSWORD) {
 // this is why the new datetime columns are created like this
 // table.specificType('createdAt', 'TIMESTAMPTZ(3)').defaultTo(knex.fn.now())
 
-const postgresMaxConnections = parseInt(env.POSTGRES_MAX_CONNECTIONS_SERVER) || 4
+const pgMaxConnections = postgresMaxConnections()
 
 /** @type {import('knex').Knex.Config} */
 const commonConfig = {
@@ -76,7 +77,7 @@ const commonConfig = {
     loadExtensions: isTestEnv() ? ['.js', '.ts'] : ['.js'],
     directory: migrationDirs
   },
-  pool: { min: 0, max: postgresMaxConnections }
+  pool: { min: 0, max: pgMaxConnections }
 }
 
 /** @type {Object<string, import('knex').Knex.Config>} */

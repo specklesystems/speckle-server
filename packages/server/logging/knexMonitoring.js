@@ -2,6 +2,7 @@
 /* eslint-disable no-unused-vars */
 'use strict'
 
+const { postgresMaxConnections } = require('@/modules/shared/helpers/envHelper')
 const knex = require('../db/knex')
 const prometheusClient = require('prom-client')
 
@@ -15,8 +16,6 @@ let metricQueryDuration = null
 let metricQueryErrors = null
 
 const queryStartTime = {}
-const postgresMaxConnections =
-  parseInt(process.env.POSTGRES_MAX_CONNECTIONS_SERVER) || 4
 
 module.exports = {
   initKnexPrometheusMetrics() {
@@ -64,8 +63,7 @@ module.exports = {
       name: 'speckle_server_knex_remaining_capacity',
       help: 'Remaining capacity of the DB connection pool',
       collect() {
-        const postgresMaxConnections =
-          parseInt(process.env.POSTGRES_MAX_CONNECTIONS_SERVER) || 4
+        const pgMaxConnections = postgresMaxConnections()
         const demand =
           knex.client.pool.numUsed() +
           knex.client.pool.numPendingCreates() +

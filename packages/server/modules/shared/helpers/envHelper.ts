@@ -309,3 +309,7 @@ export const getFeatureFlags = () => Environment.getFeatureFlags()
 export function isEmailEnabled() {
   return process.env.EMAIL === 'true'
 }
+
+export function postgresMaxConnections() {
+  return getIntFromEnv('POSTGRES_MAX_CONNECTIONS_SERVER' || '4')
+}
