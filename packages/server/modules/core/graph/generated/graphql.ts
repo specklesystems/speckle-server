@@ -819,6 +819,10 @@ export type CreateModelInput = {
   projectId: Scalars['ID']['input'];
 };
 
+export type CreateUserEmailInput = {
+  email: Scalars['String']['input'];
+};
+
 export type CreateVersionInput = {
   message?: InputMaybe<Scalars['String']['input']>;
   modelId: Scalars['String']['input'];
@@ -832,6 +836,10 @@ export type CreateVersionInput = {
 export type DeleteModelInput = {
   id: Scalars['ID']['input'];
   projectId: Scalars['ID']['input'];
+};
+
+export type DeleteUserEmailInput = {
+  id: Scalars['ID']['input'];
 };
 
 export type DeleteVersionsInput = {
@@ -1213,6 +1221,8 @@ export type Mutation = {
    * @deprecated Part of the old API surface and will be removed in the future. Use VersionMutations.moveToModel instead.
    */
   commitsMove: Scalars['Boolean']['output'];
+  createUserEmail: Scalars['ID']['output'];
+  deleteUserEmail: Scalars['Boolean']['output'];
   /**
    * Delete a pending invite
    * Note: The required scope to invoke this is not given out to app or personal access tokens
@@ -1235,6 +1245,7 @@ export type Mutation = {
   serverInviteBatchCreate: Scalars['Boolean']['output'];
   /** Invite a new user to the speckle server and return the invite ID */
   serverInviteCreate: Scalars['Boolean']['output'];
+  setPrimaryUserEmail: Scalars['Boolean']['output'];
   /**
    * Request access to a specific stream
    * @deprecated Part of the old API surface and will be removed in the future. Use ProjectAccessRequestMutations.create instead.
@@ -1456,6 +1467,16 @@ export type MutationCommitsMoveArgs = {
 };
 
 
+export type MutationCreateUserEmailArgs = {
+  input: CreateUserEmailInput;
+};
+
+
+export type MutationDeleteUserEmailArgs = {
+  input: DeleteUserEmailInput;
+};
+
+
 export type MutationInviteDeleteArgs = {
   inviteId: Scalars['String']['input'];
 };
@@ -1488,6 +1509,11 @@ export type MutationServerInviteBatchCreateArgs = {
 
 export type MutationServerInviteCreateArgs = {
   input: ServerInviteCreateInput;
+};
+
+
+export type MutationSetPrimaryUserEmailArgs = {
+  input: SetPrimaryUserEmailInput;
 };
 
 
@@ -2414,6 +2440,7 @@ export type Query = {
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
    */
   user?: Maybe<User>;
+  userEmails?: Maybe<Array<Maybe<UserEmail>>>;
   /**
    * Validate password strength
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -2746,6 +2773,10 @@ export type ServerWorkspacesInfo = {
    * Since workspaces need a backend logic to be enabled, this is not enough as a feature flag.
    */
   workspacesEnabled: Scalars['Boolean']['output'];
+};
+
+export type SetPrimaryUserEmailInput = {
+  id: Scalars['ID']['input'];
 };
 
 export type SmartTextEditorValue = {
@@ -3480,6 +3511,15 @@ export type UserDeleteInput = {
   email: Scalars['String']['input'];
 };
 
+export type UserEmail = {
+  __typename?: 'UserEmail';
+  email: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  primary: Scalars['Boolean']['output'];
+  userId: Scalars['ID']['output'];
+  verified: Scalars['Boolean']['output'];
+};
+
 export type UserProjectsFilter = {
   /** Only include projects where user has the specified roles */
   onlyWithRoles?: InputMaybe<Array<Scalars['String']['input']>>;
@@ -4028,9 +4068,11 @@ export type ResolversTypes = {
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
+  CreateUserEmailInput: CreateUserEmailInput;
   CreateVersionInput: CreateVersionInput;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   DeleteModelInput: DeleteModelInput;
+  DeleteUserEmailInput: DeleteUserEmailInput;
   DeleteVersionsInput: DeleteVersionsInput;
   DiscoverableStreamsSortType: DiscoverableStreamsSortType;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
@@ -4122,6 +4164,7 @@ export type ResolversTypes = {
   ServerStatistics: ResolverTypeWrapper<GraphQLEmptyReturn>;
   ServerStats: ResolverTypeWrapper<ServerStats>;
   ServerWorkspacesInfo: ResolverTypeWrapper<ServerWorkspacesInfo>;
+  SetPrimaryUserEmailInput: SetPrimaryUserEmailInput;
   SmartTextEditorValue: ResolverTypeWrapper<SmartTextEditorValue>;
   SortDirection: SortDirection;
   Stream: ResolverTypeWrapper<StreamGraphQLReturn>;
@@ -4149,6 +4192,7 @@ export type ResolversTypes = {
   User: ResolverTypeWrapper<Omit<User, 'automateInfo' | 'commits' | 'favoriteStreams' | 'projectAccessRequest' | 'projectInvites' | 'projects' | 'streams' | 'workspaceInvites' | 'workspaces'> & { automateInfo: ResolversTypes['UserAutomateInfo'], commits?: Maybe<ResolversTypes['CommitCollection']>, favoriteStreams: ResolversTypes['StreamCollection'], projectAccessRequest?: Maybe<ResolversTypes['ProjectAccessRequest']>, projectInvites: Array<ResolversTypes['PendingStreamCollaborator']>, projects: ResolversTypes['ProjectCollection'], streams: ResolversTypes['StreamCollection'], workspaceInvites: Array<ResolversTypes['PendingWorkspaceCollaborator']>, workspaces: ResolversTypes['WorkspaceCollection'] }>;
   UserAutomateInfo: ResolverTypeWrapper<UserAutomateInfoGraphQLReturn>;
   UserDeleteInput: UserDeleteInput;
+  UserEmail: ResolverTypeWrapper<UserEmail>;
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: ResolverTypeWrapper<Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversTypes['Project']> }>;
   UserProjectsUpdatedMessageType: UserProjectsUpdatedMessageType;
@@ -4262,9 +4306,11 @@ export type ResolversParentTypes = {
   CreateCommentInput: CreateCommentInput;
   CreateCommentReplyInput: CreateCommentReplyInput;
   CreateModelInput: CreateModelInput;
+  CreateUserEmailInput: CreateUserEmailInput;
   CreateVersionInput: CreateVersionInput;
   DateTime: Scalars['DateTime']['output'];
   DeleteModelInput: DeleteModelInput;
+  DeleteUserEmailInput: DeleteUserEmailInput;
   DeleteVersionsInput: DeleteVersionsInput;
   DiscoverableStreamsSortingInput: DiscoverableStreamsSortingInput;
   EditCommentInput: EditCommentInput;
@@ -4343,6 +4389,7 @@ export type ResolversParentTypes = {
   ServerStatistics: GraphQLEmptyReturn;
   ServerStats: ServerStats;
   ServerWorkspacesInfo: ServerWorkspacesInfo;
+  SetPrimaryUserEmailInput: SetPrimaryUserEmailInput;
   SmartTextEditorValue: SmartTextEditorValue;
   Stream: StreamGraphQLReturn;
   StreamAccessRequest: StreamAccessRequestGraphQLReturn;
@@ -4367,6 +4414,7 @@ export type ResolversParentTypes = {
   User: Omit<User, 'automateInfo' | 'commits' | 'favoriteStreams' | 'projectAccessRequest' | 'projectInvites' | 'projects' | 'streams' | 'workspaceInvites' | 'workspaces'> & { automateInfo: ResolversParentTypes['UserAutomateInfo'], commits?: Maybe<ResolversParentTypes['CommitCollection']>, favoriteStreams: ResolversParentTypes['StreamCollection'], projectAccessRequest?: Maybe<ResolversParentTypes['ProjectAccessRequest']>, projectInvites: Array<ResolversParentTypes['PendingStreamCollaborator']>, projects: ResolversParentTypes['ProjectCollection'], streams: ResolversParentTypes['StreamCollection'], workspaceInvites: Array<ResolversParentTypes['PendingWorkspaceCollaborator']>, workspaces: ResolversParentTypes['WorkspaceCollection'] };
   UserAutomateInfo: UserAutomateInfoGraphQLReturn;
   UserDeleteInput: UserDeleteInput;
+  UserEmail: UserEmail;
   UserProjectsFilter: UserProjectsFilter;
   UserProjectsUpdatedMessage: Omit<UserProjectsUpdatedMessage, 'project'> & { project?: Maybe<ResolversParentTypes['Project']> };
   UserRoleInput: UserRoleInput;
@@ -4983,6 +5031,8 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   commitUpdate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitUpdateArgs, 'commit'>>;
   commitsDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsDeleteArgs, 'input'>>;
   commitsMove?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationCommitsMoveArgs, 'input'>>;
+  createUserEmail?: Resolver<ResolversTypes['ID'], ParentType, ContextType, RequireFields<MutationCreateUserEmailArgs, 'input'>>;
+  deleteUserEmail?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationDeleteUserEmailArgs, 'input'>>;
   inviteDelete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteDeleteArgs, 'inviteId'>>;
   inviteResend?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationInviteResendArgs, 'inviteId'>>;
   modelMutations?: Resolver<ResolversTypes['ModelMutations'], ParentType, ContextType>;
@@ -4993,6 +5043,7 @@ export type MutationResolvers<ContextType = GraphQLContext, ParentType extends R
   serverInfoUpdate?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType, RequireFields<MutationServerInfoUpdateArgs, 'info'>>;
   serverInviteBatchCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteBatchCreateArgs, 'input'>>;
   serverInviteCreate?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationServerInviteCreateArgs, 'input'>>;
+  setPrimaryUserEmail?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationSetPrimaryUserEmailArgs, 'input'>>;
   streamAccessRequestCreate?: Resolver<ResolversTypes['StreamAccessRequest'], ParentType, ContextType, RequireFields<MutationStreamAccessRequestCreateArgs, 'streamId'>>;
   streamAccessRequestUse?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<MutationStreamAccessRequestUseArgs, 'accept' | 'requestId' | 'role'>>;
   streamCreate?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType, RequireFields<MutationStreamCreateArgs, 'stream'>>;
@@ -5284,6 +5335,7 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   streamInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
   streams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryStreamsArgs, 'limit'>>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<QueryUserArgs>>;
+  userEmails?: Resolver<Maybe<Array<Maybe<ResolversTypes['UserEmail']>>>, ParentType, ContextType>;
   userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
   userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'emailOnly' | 'limit' | 'query'>>;
   workspace?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceArgs, 'id'>>;
@@ -5577,6 +5629,15 @@ export type UserAutomateInfoResolvers<ContextType = GraphQLContext, ParentType e
   __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
 };
 
+export type UserEmailResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserEmail'] = ResolversParentTypes['UserEmail']> = {
+  email?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  primary?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  userId?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  verified?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
+  __isTypeOf?: IsTypeOfResolverFn<ParentType, ContextType>;
+};
+
 export type UserProjectsUpdatedMessageResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['UserProjectsUpdatedMessage'] = ResolversParentTypes['UserProjectsUpdatedMessage']> = {
   id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   project?: Resolver<Maybe<ResolversTypes['Project']>, ParentType, ContextType>;
@@ -5852,6 +5913,7 @@ export type Resolvers<ContextType = GraphQLContext> = {
   TriggeredAutomationsStatus?: TriggeredAutomationsStatusResolvers<ContextType>;
   User?: UserResolvers<ContextType>;
   UserAutomateInfo?: UserAutomateInfoResolvers<ContextType>;
+  UserEmail?: UserEmailResolvers<ContextType>;
   UserProjectsUpdatedMessage?: UserProjectsUpdatedMessageResolvers<ContextType>;
   UserSearchResultCollection?: UserSearchResultCollectionResolvers<ContextType>;
   Version?: VersionResolvers<ContextType>;
