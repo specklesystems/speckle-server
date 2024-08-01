@@ -50,31 +50,35 @@ workflows:
             tags:
               ignore: /.*/
 
-      - deployment-test-docker-compose:
+      #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
+      # - deployment-test-docker-compose:
+      #     filters: &filters-deployment-testing
+      #       tags:
+      #         # run tests for any commit on any branch, including any tags
+      #         only: /.*/
+      #     requires:
+      #       - get-version
+      #       - pre-commit
+      #       - deployment-testing-approval
+      #       - test-frontend-2
+      #       - test-viewer
+      #       - test-objectsender
+      #       - test-server
+      #       - docker-build-server
+      #       - docker-build-frontend
+      #       - docker-build-frontend-2
+      #       - docker-build-previews
+      #       - docker-build-webhooks
+      #       - docker-build-file-imports
+      #       - docker-build-test-container
+      #       - docker-build-monitor-container
+      #       - docker-build-docker-compose-ingress
+
+      - deployment-test-helm-chart:
           filters: &filters-deployment-testing
             tags:
               # run tests for any commit on any branch, including any tags
               only: /.*/
-          requires:
-            - get-version
-            - pre-commit
-            - deployment-testing-approval
-            - test-frontend-2
-            - test-viewer
-            - test-objectsender
-            - test-server
-            - docker-build-server
-            - docker-build-frontend
-            - docker-build-frontend-2
-            - docker-build-previews
-            - docker-build-webhooks
-            - docker-build-file-imports
-            - docker-build-test-container
-            - docker-build-monitor-container
-            - docker-build-docker-compose-ingress
-
-      - deployment-test-helm-chart:
-          filters: *filters-deployment-testing
           requires:
             - get-version
             - pre-commit
