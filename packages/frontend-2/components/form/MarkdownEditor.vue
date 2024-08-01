@@ -25,6 +25,7 @@
       v-model="value"
       textarea-classes="font-mono"
       :name="name"
+      color="foundation"
       :label="label"
       :show-label="false"
       :show-required="showRequired"

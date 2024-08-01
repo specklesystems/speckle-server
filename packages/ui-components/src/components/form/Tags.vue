@@ -76,7 +76,7 @@
         class="relative px-0.5"
       >
         <ComboboxOptions
-          class="absolute top-1 max-h-60 w-full overflow-auto simple-scrollbar rounded-md bg-foundation-2 py-1 shadow label label--light outline outline-2 outline-primary-muted focus:outline-none"
+          class="absolute top-1 max-h-60 w-full overflow-auto simple-scrollbar rounded-md bg-foundation py-1 shadow label label--light outline outline-2 outline-primary-muted focus:outline-none"
         >
           <div
             v-if="isAutocompleteLoading"
@@ -273,9 +273,9 @@ const inputWrapperClasses = computed(() => {
       classParts.push('ring-1 ring-danger')
     }
   } else {
-    classParts.push('border-2 border-transparent')
+    classParts.push('border border-outline-3')
     if (isInputFocused.value) {
-      classParts.push('ring-2 ring-outline-2')
+      classParts.push('ring-1 ring-outline-3')
     }
   }
 
