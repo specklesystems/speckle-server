@@ -10,7 +10,7 @@
     >
       <span class="text-heading-xl uppercase block">{{ colorBase }}</span>
       <p class="block">{{ definition.description }}</p>
-      <div class="flex flex-wrap gap-4">
+      <div class="flex flex-wrap space-x-4">
         <div
           v-for="(variation, i) in definition.variations"
           :key="i"
