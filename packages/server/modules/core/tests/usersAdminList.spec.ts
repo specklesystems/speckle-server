@@ -214,8 +214,8 @@ describe('[Admin users list]', () => {
         offset
       })
 
-      expect(data?.adminUsers).to.be.ok
       expect(errors).to.be.not.ok
+      expect(data?.adminUsers).to.be.ok
 
       expect(data?.adminUsers?.totalCount).to.eq(totalCount)
       expect(data?.adminUsers?.items).to.have.length(expectedItemCount)

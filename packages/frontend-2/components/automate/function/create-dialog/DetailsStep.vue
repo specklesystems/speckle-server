@@ -15,6 +15,7 @@
           name="name"
           label="Name"
           placeholder="Function Name"
+          color="foundation"
           help="This will be used as the function's display name and also as the name of the Git repository."
           show-label
           show-required
@@ -44,6 +45,7 @@
     />
     <FormTags
       name="tags"
+      color="foundation"
       label="Tags"
       show-label
       show-clear
