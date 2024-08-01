@@ -288,7 +288,7 @@ workflows:
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
-            - deployment-test-docker-compose
+            # - deployment-test-docker-compose #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
             - deployment-test-helm-chart
             - docker-publish-docker-compose-ingress
             - docker-publish-file-imports
