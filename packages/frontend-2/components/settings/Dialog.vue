@@ -60,7 +60,7 @@
                   'bg-highlight-2 hover:!bg-highlight-2':
                     targetMenuItem === key && targetWorkspaceId === workspaceItem.id
                 }"
-                @click="onWorkspaceMenuItemClick(workspaceItem.id, key)"
+                @click="onWorkspaceMenuItemClick(workspaceItem.id, `${key}`)"
               />
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenuGroup>
@@ -185,9 +185,9 @@ const selectedMenuItem = computed((): MenuItem | null => {
 })
 
 // Keep track of the selected workspace ID, to open the page for the correct workspace
-const onWorkspaceMenuItemClick = (id: string, target: string | number) => {
+const onWorkspaceMenuItemClick = (id: string, target: string) => {
   targetWorkspaceId.value = id
-  targetMenuItem.value = `${target}`
+  targetMenuItem.value = target
 }
 
 watch(
