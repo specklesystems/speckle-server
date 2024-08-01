@@ -12,13 +12,36 @@ import {
 } from '@/modules/core/domain/userEmails/operations'
 import { UserEmail } from '@/modules/core/domain/userEmails/types'
 import { UserEmails } from '@/modules/core/dbSchema'
-import { UserEmailDeleteError } from '@/modules/core/errors/useremails'
+import {
+  UserEmailDeleteError,
+  UserEmailPrimaryAlreadyExistsError
+} from '@/modules/core/errors/userEmails'
+
+const checkPrimaryEmail =
+  ({ db }: { db: Knex }) =>
+  async ({ userId }: { userId: string }, options?: { trx?: Knex.Transaction }) => {
+    const q = db<UserEmail>(UserEmails.name).where({ primary: true, userId }).first()
+
+    if (options?.trx) {
+      q.transacting(options.trx)
+    }
+
+    const primaryEmail = await q
+
+    if (primaryEmail) {
+      throw new UserEmailPrimaryAlreadyExistsError()
+    }
+  }
 
 export const createUserEmailFactory =
   ({ db }: { db: Knex }): CreateUserEmail =>
   async ({ userEmail }) => {
     const id = crs({ length: 10 })
     const { email, ...rest } = userEmail
+
+    if (rest.primary) {
+      await checkPrimaryEmail({ db })(rest)
+    }
 
     await db(UserEmails.name).insert({
       id,
@@ -33,7 +56,13 @@ export const createUserEmailFactory =
 export const updateUserEmailFactory =
   ({ db }: { db: Knex }): UpdateUserEmail =>
   async ({ query, update }, options) => {
+    const queryWithUserId = query as Pick<UserEmail, 'userId'>
+    if (queryWithUserId.userId && update.primary) {
+      await checkPrimaryEmail({ db })(queryWithUserId, options)
+    }
+
     const q = db<UserEmail>(UserEmails.name).where(query).update(update, '*')
+
     if (options?.trx) q.transacting(options.trx)
 
     const [updated] = await q

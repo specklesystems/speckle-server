@@ -18,7 +18,7 @@ export type UpdateUserEmail = (
       | (Pick<UserEmail, 'userId'> & { primary: true })
     update: Pick<Partial<UserEmail>, 'email' | 'primary' | 'verified'>
   },
-  { trx }?: { trx: Knex.Transaction }
+  options?: { trx: Knex.Transaction }
 ) => Promise<UserEmail>
 
 export type DeleteUserEmail = (

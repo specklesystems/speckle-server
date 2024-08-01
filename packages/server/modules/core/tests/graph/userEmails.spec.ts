@@ -158,7 +158,6 @@ describe('User emails graphql @core', () => {
       })
 
       expect(res.error).to.not.ok
-
       expect(res.body.data.setPrimaryUserEmail).to.be.true
     })
   })
