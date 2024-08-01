@@ -50,31 +50,35 @@ workflows:
             tags:
               ignore: /.*/
 
-      - deployment-test-docker-compose:
+      #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
+      # - deployment-test-docker-compose:
+      #     filters: &filters-deployment-testing
+      #       tags:
+      #         # run tests for any commit on any branch, including any tags
+      #         only: /.*/
+      #     requires:
+      #       - get-version
+      #       - pre-commit
+      #       - deployment-testing-approval
+      #       - test-frontend-2
+      #       - test-viewer
+      #       - test-objectsender
+      #       - test-server
+      #       - docker-build-server
+      #       - docker-build-frontend
+      #       - docker-build-frontend-2
+      #       - docker-build-previews
+      #       - docker-build-webhooks
+      #       - docker-build-file-imports
+      #       - docker-build-test-container
+      #       - docker-build-monitor-container
+      #       - docker-build-docker-compose-ingress
+
+      - deployment-test-helm-chart:
           filters: &filters-deployment-testing
             tags:
               # run tests for any commit on any branch, including any tags
               only: /.*/
-          requires:
-            - get-version
-            - pre-commit
-            - deployment-testing-approval
-            - test-frontend-2
-            - test-viewer
-            - test-objectsender
-            - test-server
-            - docker-build-server
-            - docker-build-frontend
-            - docker-build-frontend-2
-            - docker-build-previews
-            - docker-build-webhooks
-            - docker-build-file-imports
-            - docker-build-test-container
-            - docker-build-monitor-container
-            - docker-build-docker-compose-ingress
-
-      - deployment-test-helm-chart:
-          filters: *filters-deployment-testing
           requires:
             - get-version
             - pre-commit
@@ -288,7 +292,7 @@ workflows:
             tags:
               only: &filters-tag /^[0-9]+\.[0-9]+\.[0-9]+$/
           requires:
-            - deployment-test-docker-compose
+            # - deployment-test-docker-compose #FIXME uncomment when nix https://search.nixos.org/packages?channel=24.05&show=tilt&from=0&size=50&sort=relevance&type=packages&query=tilt supports tilt >v0.33.12 which includes docker compose up --wait flag
             - deployment-test-helm-chart
             - docker-publish-docker-compose-ingress
             - docker-publish-file-imports
@@ -740,7 +744,7 @@ jobs:
 
   deployment-test-docker-compose:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.05.1
       docker_layer_caching: true
     resource_class: large
     working_directory: *work-dir
@@ -770,7 +774,7 @@ jobs:
           paths:
             - /nix
       - run: cat workspace/env-vars >> $BASH_ENV
-      - run: nix-shell --run "tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
+      - run: nix-shell --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.dockercompose" ./.circleci/deployment/docker-compose-shell.nix
 
   deployment-test-helm-chart:
     machine:
@@ -844,7 +848,7 @@ jobs:
           name: Deploy Kubernetes resources to cluster
           command: |
             nix-shell \
-            --run "tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
+            --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
