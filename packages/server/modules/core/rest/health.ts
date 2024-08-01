@@ -15,7 +15,7 @@ export default (app: express.Application) => {
 }
 
 const handleLiveness: express.RequestHandler = async (req, res) => {
-  if (!hasStartupCompleted()) {
+  if (!hasStartupCompleted.get()) {
     req.log.error('Liveness health check failed. Startup has not yet completed.')
     res.status(500).json({
       message: 'Startup has not yet completed.'
@@ -51,7 +51,7 @@ const handleLiveness: express.RequestHandler = async (req, res) => {
 }
 
 const handleReadiness: express.RequestHandler = async (req, res) => {
-  if (!hasStartupCompleted()) {
+  if (!hasStartupCompleted.get()) {
     req.log.error('Readiness health check failed. Startup has not yet completed.')
     res.status(500).json({
       message: 'Startup has not yet completed.'

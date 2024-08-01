@@ -297,10 +297,17 @@ export async function buildApolloServer(
   return server
 }
 
-let startupCompleted = false
-export function hasStartupCompleted() {
-  return startupCompleted
-}
+export const hasStartupCompleted = (() => {
+  let startupHasCompleted = false
+  return {
+    get: () => {
+      return startupHasCompleted
+    },
+    set: () => {
+      startupHasCompleted = true
+    }
+  }
+})()
 
 /**
  * Initialises all server (express/subscription/http) instances
@@ -381,7 +388,7 @@ export async function init() {
   // At the very end adding default error handler middleware
   app.use(defaultErrorHandler)
 
-  startupCompleted = true
+  hasStartupCompleted.set()
 
   return { app, graphqlServer, server, subscriptionServer }
 }
