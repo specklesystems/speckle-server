@@ -12,16 +12,18 @@
             name="name"
             placeholder="Example Ltd."
             show-label
+            :disabled="!isAdmin"
             @change="save"
           />
           <hr class="mt-4 mb-2" />
           <FormTextInput
             v-model="description"
             color="foundation"
-            label="Company"
-            name="company"
+            label="Description"
+            name="description"
             placeholder="This is your workspace"
             show-label
+            :disabled="!isAdmin"
             @change="save"
           />
         </div>
@@ -36,7 +38,7 @@
           ask you to type in your workspace name and press the delete button.
         </div>
         <div>
-          <FormButton color="danger" @click="toggleDeleteDialog">
+          <FormButton :disabled="!isAdmin" color="danger" @click="toggleDeleteDialog">
             Delete workspace
           </FormButton>
         </div>
@@ -60,6 +62,7 @@ import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
 
 const props = defineProps<{
   workspaceId: string
+  isAdmin?: boolean
 }>()
 
 const { triggerNotification } = useGlobalToast()

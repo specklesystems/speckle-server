@@ -28,44 +28,42 @@
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
-          <template v-if="isAdmin">
-            <LayoutSidebarMenuGroup title="Server settings">
-              <template #title-icon>
-                <ServerStackIcon class="h-5 w-5" />
-              </template>
+          <LayoutSidebarMenuGroup v-if="isAdmin" title="Server settings">
+            <template #title-icon>
+              <ServerStackIcon class="h-5 w-5" />
+            </template>
+            <LayoutSidebarMenuGroupItem
+              v-for="(sidebarMenuItem, key) in menuItemConfig.server"
+              :key="key"
+              :label="sidebarMenuItem.title"
+              :class="{
+                'bg-highlight-2 hover:!bg-highlight-2': targetMenuItem === key
+              }"
+              @click="targetMenuItem = `${key}`"
+            />
+          </LayoutSidebarMenuGroup>
+          <LayoutSidebarMenuGroup v-if="hasWorkspaceItems" title="Workspace settings">
+            <template #title-icon>
+              <ServerStackIcon class="h-5 w-5" />
+            </template>
+            <LayoutSidebarMenuGroup
+              v-for="(workspaceItem, index) in workspaceItems"
+              :key="index"
+              :title="workspaceItem.name"
+              collapsible
+            >
               <LayoutSidebarMenuGroupItem
-                v-for="(sidebarMenuItem, key) in menuItemConfig.server"
+                v-for="(workspaceMenuItem, key) in menuItemConfig.workspace"
                 :key="key"
-                :label="sidebarMenuItem.title"
+                :label="workspaceMenuItem.title"
                 :class="{
-                  'bg-highlight-2 hover:!bg-highlight-2': targetMenuItem === key
+                  'bg-highlight-2 hover:!bg-highlight-2':
+                    targetMenuItem === key && targetWorkspaceId === workspaceItem.id
                 }"
-                @click="targetMenuItem = `${key}`"
+                @click="onWorkspaceMenuItemClick(workspaceItem.id, key)"
               />
             </LayoutSidebarMenuGroup>
-            <LayoutSidebarMenuGroup v-if="hasWorkspaceItems" title="Workspace settings">
-              <template #title-icon>
-                <ServerStackIcon class="h-5 w-5" />
-              </template>
-              <LayoutSidebarMenuGroup
-                v-for="(workspaceItem, index) in workspaceItems"
-                :key="index"
-                :title="workspaceItem.name"
-                collapsible
-              >
-                <LayoutSidebarMenuGroupItem
-                  v-for="(workspaceMenuItem, key) in menuItemConfig.workspace"
-                  :key="key"
-                  :label="workspaceMenuItem.title"
-                  :class="{
-                    'bg-highlight-2 hover:!bg-highlight-2':
-                      targetMenuItem === key && targetWorkspaceId === workspaceItem.id
-                  }"
-                  @click="onWorkspaceMenuItemClick(workspaceItem.id, key)"
-                />
-              </LayoutSidebarMenuGroup>
-            </LayoutSidebarMenuGroup>
-          </template>
+          </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
       <component
@@ -77,6 +75,7 @@
         ]"
         :user="user"
         :workspace-id="targetWorkspaceId"
+        :is-admin="isAdmin"
       />
     </div>
   </LayoutDialog>
