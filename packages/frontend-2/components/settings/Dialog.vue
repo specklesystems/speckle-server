@@ -163,18 +163,22 @@ const workspaceItems = computed(() =>
 const hasWorkspaceItems = computed(() => workspaceItems.value.length > 0)
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const selectedMenuItem = computed((): MenuItem | null => {
-  const categories = menuItemConfig.value
-
-  for (const key of ['user', 'server', 'workspace']) {
-    if (targetMenuItem.value && targetMenuItem.value in categories[key]) {
-      return categories[key][targetMenuItem.value]
+  const categories = [
+    menuItemConfig.value.user,
+    menuItemConfig.value.server,
+    menuItemConfig.value.workspace
+  ]
+  for (const category of categories) {
+    if (targetMenuItem.value && targetMenuItem.value in category) {
+      return category[targetMenuItem.value]
     }
   }
 
   if (!isMobile.value && targetMenuItem.value) {
+    // Fallback for invalid queries/typos
     return targetMenuItem.value.includes('server') && isAdmin.value
-      ? categories.server.general
-      : categories.user.profile
+      ? menuItemConfig.value.server.general
+      : menuItemConfig.value.user.profile
   }
 
   return null
