@@ -33,6 +33,10 @@ const emit = defineEmits<{
 }>()
 
 const onDelete = (id: string, email: string) => {
+  emit('delete', id, email)
+}
+
+const onSetPrimary = (id: string, email: string) => {
   emit('set-primary', id, email)
 }
 </script>
