@@ -7,14 +7,14 @@
       <CommonBadge
         v-if="emailData.primary"
         rounded
-        color-classes="bg-primary text-foundation"
+        color-classes="bg-info-lighter text-outline-4"
       >
         Primary
       </CommonBadge>
       <CommonBadge
         v-if="!emailData.verified"
         rounded
-        color-classes="bg-foundation-disabled text-foreground-disabled"
+        color-classes="bg-outline-3 text-foreground-3"
       >
         Unverified
       </CommonBadge>

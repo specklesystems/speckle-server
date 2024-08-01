@@ -67,7 +67,7 @@ const email = ref('')
 
 const emailItems = computed(() =>
   userEmailsResult.value?.userEmails
-    ? orderBy(userEmailsResult.value?.userEmails, ['primary'], ['desc'])
+    ? orderBy(userEmailsResult.value.userEmails, ['primary'], ['desc'])
     : []
 )
 
