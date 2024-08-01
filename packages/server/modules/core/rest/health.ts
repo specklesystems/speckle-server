@@ -15,9 +15,21 @@ export default (app: express.Application) => {
 }
 
 const handleLiveness: express.RequestHandler = async (req, res) => {
+  if (!hasStartupCompleted()) {
+    req.log.error('Liveness health check failed. Startup has not yet completed.')
+    res.status(500).json({
+      message: 'Startup has not yet completed.'
+    })
+    res.send()
+    return
+  }
+
   const postgres = await isPostgresAlive()
   if (!postgres.isAlive) {
-    req.log.error(postgres.err, 'Health check failed. Postgres is not available.')
+    req.log.error(
+      postgres.err,
+      'Liveness health check failed. Postgres is not available.'
+    )
     res.status(500).json({
       message: 'Postgres is not available',
       error: postgres.err
@@ -28,7 +40,7 @@ const handleLiveness: express.RequestHandler = async (req, res) => {
 
   const redis = await isRedisAlive()
   if (!redis.isAlive) {
-    req.log.error(redis.err, 'Health check failed. Redis is not available.')
+    req.log.error(redis.err, 'Liveness health check failed. Redis is not available.')
     res.status(500).json({
       message: 'Redis is not available.',
       error: redis.err
@@ -50,7 +62,10 @@ const handleReadiness: express.RequestHandler = async (req, res) => {
 
   const postgres = await isPostgresAlive()
   if (!postgres.isAlive) {
-    req.log.error(postgres.err, 'Health check failed. Postgres is not available.')
+    req.log.error(
+      postgres.err,
+      'Readiness health check failed. Postgres is not available.'
+    )
     res.status(500).json({
       message: 'Postgres is not available',
       error: postgres.err
@@ -61,7 +76,7 @@ const handleReadiness: express.RequestHandler = async (req, res) => {
 
   const redis = await isRedisAlive()
   if (!redis.isAlive) {
-    req.log.error(redis.err, 'Health check failed. Redis is not available.')
+    req.log.error(redis.err, 'Readiness health check failed. Redis is not available.')
     res.status(500).json({
       message: 'Redis is not available.',
       error: redis.err
@@ -73,7 +88,8 @@ const handleReadiness: express.RequestHandler = async (req, res) => {
   const numFreeConnections = await numberOfFreeConnections(db)
   //less than 5%
   if (Math.floor((numFreeConnections * 100) / postgresMaxConnections()) < 5) {
-    const message = 'Insufficient free database connections.'
+    const message =
+      'Readiness health check failed. Insufficient free database connections.'
     req.log.error(message)
     res.status(500).json({
       message
