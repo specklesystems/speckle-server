@@ -6,12 +6,12 @@ export const scanTableFactory = <TRecord extends object>({
   db: Knex<TRecord>
 }) =>
   async function* ({ tableName, batchSize }: { tableName: string; batchSize: number }) {
-    const [rowsCount] = await db(tableName).count()
-    const MAX_LIMIT = parseInt(rowsCount.count.toString())
     let offset = 0
 
-    while (offset <= MAX_LIMIT) {
-      yield db<TRecord>(tableName).limit(batchSize).offset(offset)
+    let rows = []
+    do {
+      rows = await db<TRecord>(tableName).limit(batchSize).offset(offset)
+      yield rows
       offset += batchSize
-    }
+    } while (rows.length > 0 || offset > batchSize * 1000)
   }
