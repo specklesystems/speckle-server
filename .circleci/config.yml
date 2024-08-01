@@ -740,7 +740,7 @@ jobs:
 
   deployment-test-docker-compose:
     machine:
-      image: ubuntu-2204:2024.01.1
+      image: ubuntu-2204:2024.05.1
       docker_layer_caching: true
     resource_class: large
     working_directory: *work-dir
