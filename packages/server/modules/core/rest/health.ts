@@ -1,8 +1,10 @@
 import * as express from 'express'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
+import { getRedisUrl, postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
 import type { Redis } from 'ioredis'
+import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
+import { db } from '@/db/knex'
 
 export default (app: express.Application) => {
   app.options('/liveness')
@@ -67,18 +69,18 @@ const handleReadiness: express.RequestHandler = async (req, res) => {
     return
   }
 
-  // const numFreeConnections = await numberOfFreeConnections(db)
-  // //less than 5%
-  // if (Math.floor((numFreeConnections * 100) / postgresMaxConnections()) < 5) {
-  //   const message =
-  //     'Readiness health check failed. Insufficient free database connections.'
-  //   req.log.error(message)
-  //   res.status(500).json({
-  //     message
-  //   })
-  //   res.send()
-  //   return
-  // }
+  const numFreeConnections = await numberOfFreeConnections(db)
+  //unready if less than 5%
+  if (Math.floor((numFreeConnections * 100) / postgresMaxConnections()) < 5) {
+    const message =
+      'Readiness health check failed. Insufficient free database connections.'
+    req.log.error(message)
+    res.status(500).json({
+      message
+    })
+    res.send()
+    return
+  }
 
   res.status(200)
   res.send()
