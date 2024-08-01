@@ -1,11 +1,8 @@
 import * as express from 'express'
 import { getServerInfo } from '@/modules/core/services/generic'
 import { createRedisClient } from '@/modules/shared/redis/redis'
-import { getRedisUrl, postgresMaxConnections } from '@/modules/shared/helpers/envHelper'
+import { getRedisUrl } from '@/modules/shared/helpers/envHelper'
 import type { Redis } from 'ioredis'
-import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
-import { db } from '@/db/knex'
-import { hasStartupCompleted } from '@/app'
 
 export default (app: express.Application) => {
   app.options('/liveness')
@@ -15,15 +12,6 @@ export default (app: express.Application) => {
 }
 
 const handleLiveness: express.RequestHandler = async (req, res) => {
-  if (!hasStartupCompleted.get()) {
-    req.log.error('Liveness health check failed. Startup has not yet completed.')
-    res.status(500).json({
-      message: 'Startup has not yet completed.'
-    })
-    res.send()
-    return
-  }
-
   const postgres = await isPostgresAlive()
   if (!postgres.isAlive) {
     req.log.error(
@@ -48,18 +36,12 @@ const handleLiveness: express.RequestHandler = async (req, res) => {
     res.send()
     return
   }
+
+  res.status(200)
+  res.send()
 }
 
 const handleReadiness: express.RequestHandler = async (req, res) => {
-  if (!hasStartupCompleted.get()) {
-    req.log.error('Readiness health check failed. Startup has not yet completed.')
-    res.status(500).json({
-      message: 'Startup has not yet completed.'
-    })
-    res.send()
-    return
-  }
-
   const postgres = await isPostgresAlive()
   if (!postgres.isAlive) {
     req.log.error(
@@ -85,18 +67,21 @@ const handleReadiness: express.RequestHandler = async (req, res) => {
     return
   }
 
-  const numFreeConnections = await numberOfFreeConnections(db)
-  //less than 5%
-  if (Math.floor((numFreeConnections * 100) / postgresMaxConnections()) < 5) {
-    const message =
-      'Readiness health check failed. Insufficient free database connections.'
-    req.log.error(message)
-    res.status(500).json({
-      message
-    })
-    res.send()
-    return
-  }
+  // const numFreeConnections = await numberOfFreeConnections(db)
+  // //less than 5%
+  // if (Math.floor((numFreeConnections * 100) / postgresMaxConnections()) < 5) {
+  //   const message =
+  //     'Readiness health check failed. Insufficient free database connections.'
+  //   req.log.error(message)
+  //   res.status(500).json({
+  //     message
+  //   })
+  //   res.send()
+  //   return
+  // }
+
+  res.status(200)
+  res.send()
 }
 
 type CheckResponse = { isAlive: true } | { isAlive: false; err: unknown }
