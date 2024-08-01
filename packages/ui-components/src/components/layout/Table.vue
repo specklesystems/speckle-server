@@ -6,7 +6,7 @@
     >
       <div
         v-if="items.length > 0"
-        class="grid z-10 grid-cols-12 items-center gap-6 font-medium bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
+        class="grid z-10 grid-cols-12 items-center space-x-6 font-medium bg-foundation-page rounded-t-lg w-full border-b border-outline-3 pb-2 pt-4 px-4 min-w-[750px]"
         :style="{ paddingRight: paddingRightStyle }"
       >
         <div
@@ -38,7 +38,7 @@
                 </slot>
               </div>
             </template>
-            <div class="absolute right-1.5 gap-1 flex items-center p-0 h-full">
+            <div class="absolute right-1.5 space-x-1 flex items-center p-0 h-full">
               <div v-for="button in buttons" :key="button.label">
                 <FormButton
                   :icon-left="button.icon"
@@ -115,7 +115,7 @@ const paddingRightStyle = computed(() => {
 
 const rowsWrapperClasses = computed(() => {
   const classParts = [
-    'relative grid grid-cols-12 items-center gap-6 px-4 py-0.5 min-w-[750px] bg-foundation text-body-xs'
+    'relative grid grid-cols-12 items-center space-x-6 px-4 py-0.5 min-w-[750px] bg-foundation text-body-xs'
   ]
 
   if (props.onRowClick && props.items.length) {

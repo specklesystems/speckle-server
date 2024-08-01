@@ -98,7 +98,7 @@
                 <span class="sr-only label text-foreground">Search</span>
                 <div class="relative">
                   <div
-                    class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
+                    class="pointer-events-none absolute top-0 bottom-0 left-0 flex items-center pl-2"
                   >
                     <MagnifyingGlassIcon class="h-4 w-4 text-foreground-2" />
                   </div>
@@ -162,7 +162,7 @@
                         v-if="!hideCheckmarks && selected"
                         :class="[
                           active ? 'text-primary' : 'text-foreground',
-                          'absolute inset-y-0 right-0 flex items-center pr-4'
+                          'absolute top-0 bottom-0 right-0 flex items-center pr-4'
                         ]"
                       >
                         <CheckIcon class="h-5 w-5" aria-hidden="true" />
