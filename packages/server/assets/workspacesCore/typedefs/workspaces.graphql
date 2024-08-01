@@ -15,7 +15,6 @@ extend type Query {
 input WorkspaceCreateInput {
   name: String!
   description: String
-  logoUrl: String
 }
 
 input WorkspaceUpdateInput {
@@ -28,7 +27,10 @@ input WorkspaceUpdateInput {
 input WorkspaceRoleUpdateInput {
   userId: String!
   workspaceId: String!
-  role: WorkspaceRole!
+  """
+  Leave role null to revoke access entirely
+  """
+  role: String
 }
 
 input WorkspaceRoleDeleteInput {
@@ -46,12 +48,7 @@ type WorkspaceMutations {
     @hasScope(scope: "workspace:create")
   delete(workspaceId: String!): Boolean! @hasScope(scope: "workspace:delete")
   update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
-  """
-  TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes
-  """
   updateRole(input: WorkspaceRoleUpdateInput!): Workspace!
-    @hasScope(scope: "workspace:update")
-  deleteRole(input: WorkspaceRoleDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
   invites: WorkspaceInviteMutations!
 }
@@ -96,6 +93,10 @@ type Workspace {
   createdAt: DateTime!
   updatedAt: DateTime!
   """
+  Optional url for workspace logo image
+  """
+  logoUrl: String
+  """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """
   role: String
@@ -107,8 +108,15 @@ type Workspace {
   projects(
     limit: Int! = 25
     cursor: String
-    filter: UserProjectsFilter
+    filter: WorkspaceProjectsFilter
   ): ProjectCollection!
+}
+
+input WorkspaceProjectsFilter {
+  """
+  Filter out projects by name
+  """
+  search: String
 }
 
 type WorkspaceCollaborator {
