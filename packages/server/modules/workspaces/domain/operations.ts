@@ -27,6 +27,12 @@ export type GetWorkspaces = (args: {
   userId?: string
 }) => Promise<WorkspaceWithOptionalRole[]>
 
+type DeleteWorkspaceArgs = {
+  workspaceId: string
+}
+
+export type DeleteWorkspace = (args: DeleteWorkspaceArgs) => Promise<void>
+
 /** Workspace Roles */
 
 export type GetWorkspaceCollaborators = (args: {
