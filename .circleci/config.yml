@@ -844,7 +844,7 @@ jobs:
           name: Deploy Kubernetes resources to cluster
           command: |
             nix-shell \
-            --run "tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
+            --run "LOAD_DOCKER='true' tilt ci --file ./.circleci/deployment/Tiltfile.helm --context kind-speckle-server --timeout 10m" \
             ./.circleci/deployment/helm-chart-shell.nix
 
   docker-build: &build-job
