@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative flex gap-2 mb-2 last:mb-0"
+    class="relative flex space-x-2 mb-2 last:mb-0"
     :class="description && inlineDescription ? 'items-start' : 'items-center'"
   >
     <div class="flex h-6 items-center">
@@ -21,11 +21,11 @@
     </div>
     <div
       class="text-xs sm:text-sm"
-      :class="inlineDescription ? 'flex gap-2 items-center' : ''"
+      :class="inlineDescription ? 'flex space-x-2 items-center' : ''"
     >
       <label
         :for="finalId"
-        class="text-foreground flex gap-2 items-center"
+        class="text-foreground flex space-x-2 items-center"
         :class="{ 'sr-only': hideLabel }"
       >
         <div v-if="icon">

@@ -1,10 +1,10 @@
 <template>
-  <div class="bg-foundation-page p-4 text-foreground flex flex-col gap-4">
+  <div class="bg-foundation-page p-4 text-foreground flex flex-col space-y-4">
     <div class="font-semibold">Text Styles Demo</div>
 
-    <div class="flex gap-4">
+    <div class="flex space-x-4">
       <!-- Headings -->
-      <div class="flex flex-col gap-4 text-body-xs bg-foundation p-4">
+      <div class="flex flex-col space-y-4 text-body-xs bg-foundation p-4">
         <div class="rounded flex flex-col">
           <span class="text-heading-2xl">text-heading-2xl</span>
           <span class="italic">
@@ -38,7 +38,7 @@
       </div>
 
       <!-- Body text styles -->
-      <div class="flex flex-col gap-4 text-body-xs bg-foundation p-4">
+      <div class="flex flex-col space-y-4 text-body-xs bg-foundation p-4">
         <div class="rounded flex flex-col">
           <span class="text-body">text-body</span>
           <span class="italic">
