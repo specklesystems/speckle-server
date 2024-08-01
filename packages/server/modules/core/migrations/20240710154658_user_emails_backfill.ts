@@ -35,12 +35,8 @@ export async function up(knex: Knex): Promise<void> {
     }
     currentIteration++
     coreLogger.debug(`Completed iteration ${currentIteration}`)
-
-    if (currentIteration > maxLoops + 2) {
-      throw new Error('Stopping migration to avoid infinite loop')
-    }
   }
-  coreLogger.debug('Migration user_emails_backfill started')
+  coreLogger.debug('Migration user_emails_backfill completed')
 }
 
 export async function down(knex: Knex): Promise<void> {
