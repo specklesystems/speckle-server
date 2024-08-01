@@ -23,8 +23,7 @@
               :key="key"
               :label="sidebarMenuItem.title"
               :class="{
-                'bg-highlight-2 hover:!bg-highlight-2':
-                  selectedMenuItem?.title === sidebarMenuItem.title
+                'bg-highlight-2 hover:!bg-highlight-2': targetMenuItem === key
               }"
               @click="targetMenuItem = `${key}`"
             />
@@ -38,11 +37,32 @@
               :key="key"
               :label="sidebarMenuItem.title"
               :class="{
-                'bg-highlight-2 hover:!bg-highlight-2':
-                  selectedMenuItem?.title === sidebarMenuItem.title
+                'bg-highlight-2 hover:!bg-highlight-2': targetMenuItem === key
               }"
               @click="targetMenuItem = `${key}`"
             />
+          </LayoutSidebarMenuGroup>
+          <LayoutSidebarMenuGroup v-if="hasWorkspaceItems" title="Workspace settings">
+            <template #title-icon>
+              <ServerStackIcon class="h-5 w-5" />
+            </template>
+            <LayoutSidebarMenuGroup
+              v-for="(workspaceItem, index) in workspaceItems"
+              :key="index"
+              :title="workspaceItem.name"
+              collapsible
+            >
+              <LayoutSidebarMenuGroupItem
+                v-for="(workspaceMenuItem, key) in menuItemConfig.workspace"
+                :key="key"
+                :label="workspaceMenuItem.title"
+                :class="{
+                  'bg-highlight-2 hover:!bg-highlight-2':
+                    targetMenuItem === key && targetWorkspaceId === workspaceItem.id
+                }"
+                @click="onWorkspaceMenuItemClick(workspaceItem.id, key)"
+              />
+            </LayoutSidebarMenuGroup>
           </LayoutSidebarMenuGroup>
         </LayoutSidebarMenu>
       </LayoutSidebar>
@@ -79,6 +99,8 @@ import {
   LayoutSidebarMenuGroup
 } from '@speckle/ui-components'
 import { Roles } from '@speckle/shared'
+import { useQuery } from '@vue/apollo-composable'
+import { settingsSidebarWorkspacesQuery } from '~/lib/settings/graphql/queries'
 
 type MenuItem = {
   title: string
@@ -87,7 +109,10 @@ type MenuItem = {
 
 const { activeUser: user } = useActiveUser()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
+const { result: workspaceResult } = useQuery(settingsSidebarWorkspacesQuery)
+
 const isMobile = breakpoints.smaller('md')
+const targetWorkspaceId = ref<string | null>(null)
 
 const menuItemConfig = shallowRef<{ [key: string]: { [key: string]: MenuItem } }>({
   user: {
@@ -121,30 +146,45 @@ const menuItemConfig = shallowRef<{ [key: string]: { [key: string]: MenuItem } }
       title: 'Pending invitations',
       component: SettingsServerPendingInvitations
     }
+  },
+  workspace: {
+    // Workspace meny items will be added here, such as general and members
   }
 })
 
 const isOpen = defineModel<boolean>('open', { required: true })
 const targetMenuItem = defineModel<string | null>('targetMenuItem', { required: true })
 
+const workspaceItems = computed(() =>
+  workspaceResult.value?.activeUser
+    ? workspaceResult.value.activeUser.workspaces.items
+    : []
+)
+const hasWorkspaceItems = computed(() => workspaceItems.value.length > 0)
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const selectedMenuItem = computed((): MenuItem | null => {
-  const categories = [menuItemConfig.value.user, menuItemConfig.value.server]
-  for (const category of categories) {
-    if (targetMenuItem.value && targetMenuItem.value in category) {
-      return category[targetMenuItem.value]
+  const categories = menuItemConfig.value
+
+  for (const key of ['user', 'server', 'workspace']) {
+    if (targetMenuItem.value && targetMenuItem.value in categories[key]) {
+      return categories[key][targetMenuItem.value]
     }
   }
 
   if (!isMobile.value && targetMenuItem.value) {
-    // Fallback for invalid queries/typos
     return targetMenuItem.value.includes('server') && isAdmin.value
-      ? menuItemConfig.value.server.general
-      : menuItemConfig.value.user.profile
+      ? categories.server.general
+      : categories.user.profile
   }
 
   return null
 })
+
+// Keep track of the selected workspace ID, to open the page for the correct workspace
+const onWorkspaceMenuItemClick = (id: string, target: string | number) => {
+  targetWorkspaceId.value = id
+  targetMenuItem.value = `${target}`
+}
 
 watch(
   () => user.value,
