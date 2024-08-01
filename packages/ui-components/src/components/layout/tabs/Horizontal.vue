@@ -1,5 +1,5 @@
 <template>
-  <div class="relative z-10 flex space-x-4 md:space-x-6 flex-col">
+  <div class="relative z-10 flex flex-col space-y-4 md:space-y-6">
     <!-- Left Arrow Button -->
     <div
       class="absolute left-[-2px] top-[-2px] z-20 pr-8 bg-gradient-to-r from-foundation-page to-transparent"
@@ -15,7 +15,7 @@
     <div class="absolute left-0 z-10 w-full h-[1px] mt-px bg-outline-3 top-8"></div>
     <div
       ref="scrollContainer"
-      class="relative flex overflow-x-auto hide-scrollbar space-x-8 w-full"
+      class="relative overflow-x-auto hide-scrollbar w-full"
       @scroll="handleScroll"
     >
       <div
