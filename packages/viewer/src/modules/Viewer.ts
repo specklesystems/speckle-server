@@ -176,8 +176,8 @@ export class Viewer extends EventEmitter implements IViewer {
   }
 
   public resize() {
-    const width = this.container.offsetWidth
-    const height = this.container.offsetHeight
+    const width = 128 //his.container.offsetWidth
+    const height = 128 //this.container.offsetHeight
     this.speckleRenderer.resize(width, height)
     Object.values(this.extensions).forEach((value: Extension) => {
       value.onResize()
@@ -200,7 +200,7 @@ export class Viewer extends EventEmitter implements IViewer {
     }
   }
 
-  private frame() {
+  public frame() {
     this.update()
     this.render()
   }
@@ -216,7 +216,7 @@ export class Viewer extends EventEmitter implements IViewer {
       ext.onLateUpdate(delta)
     })
     this.stats?.update()
-    requestAnimationFrame(this.frame.bind(this))
+    // requestAnimationFrame(this.frame.bind(this))
   }
 
   private render() {

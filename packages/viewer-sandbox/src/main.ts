@@ -105,7 +105,7 @@ const getStream = () => {
     // prettier-ignore
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8?c=%5B-7.66134,10.82932,6.41935,-0.07739,-13.88552,1.8697,0,1%5D'
     // Revit sample house (good for bim-like stuff with many display meshes)
-    'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+    // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/c1faab5c62/commits/ab1a1ab2b6'
     // 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
     // 'https://latest.speckle.dev/streams/58b5648c4d/commits/60371ecb2d'
@@ -177,7 +177,7 @@ const getStream = () => {
     // MEPs (whatever they are)
     // 'https://latest.speckle.dev/streams/85bc4f61c6/commits/8575fe2978'
     // Alex cubes
-    // 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
+    'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
     // Alex more cubes
     // 'https://latest.speckle.dev/streams/4658eb53b9/commits/31a8d5ff2b'
     // Tekla

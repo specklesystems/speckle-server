@@ -12,7 +12,6 @@ import {
   Mesh,
   Object3D,
   Plane,
-  RGBADepthPacking,
   Scene,
   Sphere,
   Spherical,
@@ -22,7 +21,9 @@ import {
   VSMShadowMap,
   Vector2,
   PerspectiveCamera,
-  OrthographicCamera
+  OrthographicCamera,
+  MeshBasicMaterial,
+  SphereGeometry
 } from 'three'
 import { type Batch, type BatchUpdateRange, GeometryType } from './batching/Batch'
 import Batcher from './batching/Batcher'
@@ -355,6 +356,7 @@ export default class SpeckleRenderer {
     this._renderer.shadowMap.needsUpdate = true
     this._renderer.physicallyCorrectLights = true
     this._renderer.autoClearStencil = false
+    this._renderer.autoClearColor = false
 
     this.container = container
     this._renderer.setSize(container.offsetWidth, container.offsetHeight)
@@ -547,7 +549,7 @@ export default class SpeckleRenderer {
     this._needsRender = true
     this.pipeline.reset()
   }
-
+  private pixels = new Uint8Array(128 * 128 * 4)
   public render(): void {
     if (this._renderOverride) {
       this._renderOverride()
@@ -559,7 +561,20 @@ export default class SpeckleRenderer {
       this._renderinStats.frameStart()
       this.batcher.render(this.renderer)
       this._needsRender = this.pipeline.render()
-      // this._needsRender = true
+      const width = 128
+      const height = 128
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      //@ts-ignore
+      if (this.rootGroup.children.length > 0) {
+        const gl = this._renderer.getContext()
+
+        gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, this.pixels)
+        process.stdout.write(['P3\n# gl.ppm\n', width, ' ', height, '\n255\n'].join(''))
+        for (let i = 0; i < this.pixels.length; i += 4) {
+          process.stdout.write(this.pixels[i] + '')
+        }
+      }
+      this._needsRender = true
       this._renderinStats.frameEnd()
 
       if (this.sunConfiguration.shadowcatcher && this._shadowcatcher) {
@@ -567,6 +582,7 @@ export default class SpeckleRenderer {
       }
       // console.log('Get transparent time -> ', InstancedMeshBatch.transparentTime)
     }
+    this._needsRender = true
   }
 
   public resize(width: number, height: number) {
@@ -596,10 +612,16 @@ export default class SpeckleRenderer {
       }
     }
 
+    const geometry = new SphereGeometry(15, 32, 16)
+    const material = new MeshBasicMaterial({ color: 0xffff00 })
+    const sphere = new Mesh(geometry, material)
+    sphere.layers.set(ObjectLayers.PROPS)
+    this.scene.add(sphere)
+
     for await (const batch of generator) {
       if (!batch) continue
 
-      this.addBatch(batch, subtreeGroup)
+      // this.addBatch(batch, subtreeGroup)
       if (batch.geometryType === GeometryType.MESH) {
         this.updateDirectLights()
       }
@@ -623,7 +645,7 @@ export default class SpeckleRenderer {
     if (this._speckleCamera) this._speckleCamera.updateCameraPlanes(this.sceneBox)
     delete this.cancel[renderTree.id]
   }
-
+  /*
   private addBatch(batch: Batch, parent: Object3D) {
     const batchRenderable = batch.renderObject
     parent.add(batch.renderObject)
@@ -651,7 +673,7 @@ export default class SpeckleRenderer {
     }
     this.viewer.World.expandWorld(batch.bounds)
   }
-
+  */
   public removeRenderTree(subtreeId: string) {
     this.rootGroup.remove(this.rootGroup.getObjectByName(subtreeId) as Object3D)
     this.updateShadowCatcher()

@@ -11,9 +11,9 @@ import {
 } from '../src'
 import { readFile } from 'fs/promises'
 
-test('Viewer', { timeout: 20000 }, async () => {
-  const width = 64
-  const height = 64
+test('Viewer', { timeout: 50000 }, async () => {
+  const width = 128
+  const height = 128
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   const gl = require('gl')(width, height, { preserveDrawingBuffer: true })
   gl
@@ -40,23 +40,21 @@ test('Viewer', { timeout: 20000 }, async () => {
   try {
     await viewer.init()
   } catch (e) {}
-  viewer.createExtension(CameraController)
+  const options = viewer.getRenderer().pipelineOptions
+  options.pipelineOutput = 2
+  viewer.getRenderer().setSunLightConfiguration({ shadowcatcher: false })
+  viewer.getRenderer().pipelineOptions = options
+  viewer.resize()
+  const camera = viewer.createExtension(CameraController)
 
   viewer.on(ViewerEvent.LoadComplete, () => {
-    viewer.getRenderer().render()
-    setTimeout(() => {
-      const pixels = new Uint8Array(width * height * 4)
-      gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, pixels)
-      process.stdout.write(['P3\n# gl.ppm\n', width, ' ', height, '\n255\n'].join(''))
-      for (let i = 0; i < pixels.length; i += 4) {
-        for (let j = 0; j < 3; ++j) {
-          process.stdout.write(pixels[i + j] + ' ')
-        }
-      }
-    }, 1000)
+    camera.setCameraView(undefined, false)
+    setInterval(() => {
+      viewer.frame()
+    }, 3000)
   })
 
-  const url = 'https://speckle.xyz/streams/da9e320dad/commits/5388ef24b8'
+  const url = 'https://latest.speckle.dev/streams/4658eb53b9/commits/d8ec9cccf7'
   const authToken = localStorage.getItem(
     url.includes('latest') ? 'AuthTokenLatest' : 'AuthToken'
   ) as string
@@ -70,7 +68,10 @@ test('Viewer', { timeout: 20000 }, async () => {
       true,
       undefined
     )
-    await viewer.loadObject(loader, false)
+    await viewer.loadObject(loader, true)
   }
+  await new Promise((resolve) => {
+    setTimeout(resolve, 20000)
+  })
   // console.warn(viewer.getRenderer().renderingStats)
 })

@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import {
   Camera,
   Color,
   Material,
+  NearestFilter,
   OrthographicCamera,
   PerspectiveCamera,
   Scene,
@@ -19,7 +21,7 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
   private clearColor: Color
   private clearAlpha = 0
   private clearDepth = true
-
+  private renderTarget: WebGLRenderTarget
   public onBeforeRenderOpauqe: (() => void) | undefined = undefined
   public onAfterRenderOpaque: (() => void) | undefined = undefined
   public onBeforeRenderTransparent: (() => void) | undefined = undefined
@@ -27,6 +29,10 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
 
   public constructor() {
     super()
+    this.renderTarget = new WebGLRenderTarget(256, 256, {
+      minFilter: NearestFilter,
+      magFilter: NearestFilter
+    })
   }
   public get displayName(): string {
     return 'COLOR'
@@ -43,7 +49,7 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
   render(
     renderer: WebGLRenderer,
     _writeBuffer: WebGLRenderTarget,
-    readBuffer: WebGLRenderTarget
+    _readBuffer: WebGLRenderTarget
   ) {
     if (!this.camera || !this.scene) return
 
@@ -71,21 +77,22 @@ export class ColorPass extends BaseSpecklePass implements SpecklePass {
 
     this.applyLayers(this.camera)
 
-    renderer.setRenderTarget(this.renderToScreen ? null : readBuffer)
-
+    renderer.setRenderTarget(this.renderTarget)
+    // renderer.setClearColor(new Color(0xff0000), 1)
+    // renderer.clearColor()
     // TODO: Avoid using autoClear properties, see https://github.com/mrdoob/three.js/pull/15571#issuecomment-465669600
-    if (this.clear)
-      renderer.clear(
-        renderer.autoClearColor,
-        renderer.autoClearDepth,
-        renderer.autoClearStencil
-      )
+    // if (this.clear)
+    //   renderer.clear(
+    //     renderer.autoClearColor,
+    //     renderer.autoClearDepth,
+    //     renderer.autoClearStencil
+    //   )
     if (this.onBeforeRenderOpauqe) this.onBeforeRenderOpauqe()
     renderer.render(this.scene, this.camera)
     if (this.onAfterRenderOpaque) this.onAfterRenderOpaque()
-    if (this.onBeforeRenderTransparent) this.onBeforeRenderTransparent()
-    renderer.render(this.scene, this.camera)
-    if (this.onAfterRenderTransparent) this.onAfterRenderTransparent()
+    // if (this.onBeforeRenderTransparent) this.onBeforeRenderTransparent()
+    // renderer.render(this.scene, this.camera)
+    // if (this.onAfterRenderTransparent) this.onAfterRenderTransparent()
 
     if (this.clearColor) {
       renderer.setClearColor(this._oldClearColor, oldClearAlpha)
