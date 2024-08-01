@@ -75,8 +75,6 @@ services:
       USE_FRONTEND_2: true
       FRONTEND_ORIGIN: 'http://127.0.0.1'
       ONBOARDING_STREAM_URL: 'https://latest.speckle.systems/projects/843d07eb10'
-    ports:
-      - 127.0.0.1:3000:3000
 
   preview-service:
     build:
@@ -91,8 +89,6 @@ services:
       HOST: '127.0.0.1'
       LOG_LEVEL: 'info'
       PG_CONNECTION_STRING: 'postgres://speckle:speckle@postgres/speckle'
-    ports:
-      - 127.0.0.1:3001:3001
 
   webhook-service:
     build:
