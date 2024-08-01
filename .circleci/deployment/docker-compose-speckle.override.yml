@@ -7,7 +7,7 @@ services:
 
   speckle-server:
     image: speckle/speckle-server
-    environment':
+    environment:
       ENABLE_MP: 'false'
 
   preview-service:
