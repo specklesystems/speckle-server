@@ -2,7 +2,6 @@
 /* eslint-disable no-unused-vars */
 'use strict'
 
-const { postgresMaxConnections } = require('@/modules/shared/helpers/envHelper')
 const knex = require('../db/knex')
 const prometheusClient = require('prom-client')
 const { numberOfFreeConnections } = require('@/modules/shared/helpers/dbHelper')
