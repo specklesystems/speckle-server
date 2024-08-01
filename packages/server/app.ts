@@ -297,6 +297,11 @@ export async function buildApolloServer(
   return server
 }
 
+let startupCompleted = false
+export function hasStartupCompleted() {
+  return startupCompleted
+}
+
 /**
  * Initialises all server (express/subscription/http) instances
  */
@@ -375,6 +380,8 @@ export async function init() {
 
   // At the very end adding default error handler middleware
   app.use(defaultErrorHandler)
+
+  startupCompleted = true
 
   return { app, graphqlServer, server, subscriptionServer }
 }

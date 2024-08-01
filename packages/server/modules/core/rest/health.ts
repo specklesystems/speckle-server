@@ -5,6 +5,7 @@ import { getRedisUrl, postgresMaxConnections } from '@/modules/shared/helpers/en
 import type { Redis } from 'ioredis'
 import { numberOfFreeConnections } from '@/modules/shared/helpers/dbHelper'
 import { db } from '@/db/knex'
+import { hasStartupCompleted } from '@/app'
 
 export default (app: express.Application) => {
   app.options('/liveness')
@@ -38,6 +39,15 @@ const handleLiveness: express.RequestHandler = async (req, res) => {
 }
 
 const handleReadiness: express.RequestHandler = async (req, res) => {
+  if (!hasStartupCompleted()) {
+    req.log.error('Readiness health check failed. Startup has not yet completed.')
+    res.status(500).json({
+      message: 'Startup has not yet completed.'
+    })
+    res.send()
+    return
+  }
+
   const postgres = await isPostgresAlive()
   if (!postgres.isAlive) {
     req.log.error(postgres.err, 'Health check failed. Postgres is not available.')
