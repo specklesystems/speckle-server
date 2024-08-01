@@ -31,7 +31,7 @@ import {
   convertThrowIntoFetchResult,
   getFirstErrorMessage
 } from '~~/lib/common/helpers/graphql'
-
+import { homeRoute } from '~/lib/common/helpers/route'
 import type { SettingsWorkspaceGeneralDelete_WorkspaceFragment } from '~~/lib/common/generated/gql/graphql'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 
@@ -63,6 +63,7 @@ const onDelete = async () => {
       title: 'Workspace deleted',
       description: `The ${props.workspace.name} workspace has been deleted`
     })
+    navigateTo(homeRoute)
   } else {
     const errorMessage = getFirstErrorMessage(result?.errors)
     triggerNotification({
