@@ -12,3 +12,14 @@ export const settingsSidebarWorkspacesQuery = graphql(`
     }
   }
 `)
+
+export const settingsUserEmailsQuery = graphql(`
+  query SettingsUserEmails {
+    userEmails {
+      email
+      id
+      primary
+      verified
+    }
+  }
+`)

@@ -26,6 +26,7 @@ const emit = defineEmits<{
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
+
 const { triggerNotification } = useGlobalToast()
 
 const dialogButtons = computed((): LayoutDialogButton[] => [

@@ -1,17 +1,25 @@
 <template>
-  <li
-    class="border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6"
-    :class="`${emailData.status === 'VERIFIED' && 'py-6 md:py-10'}`"
-  >
+  <li class="border-x border-b first:border-t first:rounded-t-lg last:rounded-b-lg p-6">
     <div
-      v-if="emailData.status === 'PRIMARY' || emailData.status === 'UNVERIFIED'"
+      v-if="emailData.primary || !emailData.verified"
       class="flex w-full gap-x-2 pb-4 md:pb-3"
     >
-      <CommonBadge rounded :color-classes="badgeClasses">
-        {{ emailData.status }}
+      <CommonBadge
+        v-if="emailData.primary"
+        rounded
+        color-classes="bg-primary text-foundation"
+      >
+        Primary
+      </CommonBadge>
+      <CommonBadge
+        v-if="!emailData.verified"
+        rounded
+        color-classes="bg-foundation-disabled text-foreground-disabled"
+      >
+        Unverified
       </CommonBadge>
       <FormButton
-        v-if="emailData.status === 'UNVERIFIED'"
+        v-if="!emailData.verified"
         color="outline"
         size="sm"
         @click="resendVerificationEmail"
@@ -30,8 +38,7 @@
       </div>
       <div class="flex gap-x-2 pt-4 md:pt-0">
         <FormButton
-          v-if="emailData.status !== 'PRIMARY'"
-          :disabled="emailData.status !== 'VERIFIED'"
+          :disabled="!emailData.verified || emailData.primary"
           color="outline"
           size="sm"
           @click="toggleSetPrimaryDialog"
@@ -39,7 +46,7 @@
           Set as primary
         </FormButton>
         <FormButton
-          :disabled="emailData.status === 'PRIMARY'"
+          :disabled="emailData.primary"
           color="outline"
           size="sm"
           @click="toggleDeleteDialog"
@@ -59,28 +66,20 @@
   <SettingsUserEmailDeleteDialog
     v-model:open="showDeleteDialog"
     :email-address="emailData.email"
-    @deleted="$emit('deleted')"
+    @delete="$emit('delete')"
   />
 </template>
 
 <script setup lang="ts">
+import type { SettingsUserEmailCards_UserEmailFragment } from '~~/lib/common/generated/gql/graphql'
 import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
-type EmailStatus = 'PRIMARY' | 'UNVERIFIED' | 'VERIFIED'
-
-type EmailData = {
-  email: string
-  status: EmailStatus
-  id: number
-}
-
 const props = defineProps<{
-  emailData: EmailData
+  emailData: SettingsUserEmailCards_UserEmailFragment
 }>()
 
-// TEMP
 defineEmits<{
-  (e: 'deleted'): void
+  (e: 'delete'): void
   (e: 'set-primary'): void
 }>()
 
@@ -89,19 +88,10 @@ const { triggerNotification } = useGlobalToast()
 const showDeleteDialog = ref(false)
 const showSetPrimaryDialog = ref(false)
 
-const badgeClasses = computed(() => {
-  const classes = {
-    PRIMARY: 'bg-blue-100 text-blue-800',
-    UNVERIFIED: 'bg-foundation-disabled text-foreground-disabled',
-    VERIFIED: ''
-  }
-  return classes[props.emailData.status]
-})
-
 const description = computed(() => {
-  if (props.emailData.status === 'PRIMARY') {
+  if (props.emailData.primary) {
     return 'Used for sign in and notifications'
-  } else if (props.emailData.status === 'UNVERIFIED') {
+  } else if (!props.emailData.verified) {
     return 'Unverified email cannot be set as primary'
   }
 

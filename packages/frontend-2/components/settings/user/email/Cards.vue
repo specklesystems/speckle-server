@@ -1,27 +1,38 @@
 <template>
   <ul class="flex flex-col">
     <SettingsUserEmailCard
-      v-for="(email, i) in emailData"
-      :key="`email-${i}`"
+      v-for="(email, index) in emailData"
+      :key="`email-${index}`"
       :email-data="email"
-      @deleted="$emit('deleted', email.id)"
-      @make-primary="$emit('make-primary', email.id)"
+      @delete="onDelete(email.id, email.email)"
+      @set-primary="onSetPrimary(email.id, email.email)"
     />
   </ul>
 </template>
 
 <script setup lang="ts">
-defineProps<{
-  emailData: {
-    email: string
-    status: 'PRIMARY' | 'UNVERIFIED' | 'VERIFIED'
-    id: number
+import type { SettingsUserEmailCards_UserEmailFragment } from '~~/lib/common/generated/gql/graphql'
+import { graphql } from '~~/lib/common/generated/gql'
+
+graphql(`
+  fragment SettingsUserEmailCards_UserEmail on UserEmail {
+    email
+    id
+    primary
+    verified
   }
+`)
+
+defineProps<{
+  emailData: SettingsUserEmailCards_UserEmailFragment[]
 }>()
 
-// TEMP
-defineEmits<{
-  (e: 'deleted', id: number): void
-  (e: 'make-primary', id: number): void
+const emit = defineEmits<{
+  (e: 'delete', id: string, email: string): void
+  (e: 'set-primary', id: string, email: string): void
 }>()
+
+const onDelete = (id: string, email: string) => {
+  emit('set-primary', id, email)
+}
 </script>

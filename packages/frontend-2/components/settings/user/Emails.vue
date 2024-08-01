@@ -5,8 +5,8 @@
       <SettingsSectionHeader title="Your emails" subheading />
       <SettingsUserEmailCards
         class="pt-6"
-        :email-data="dummyData"
-        @deleted="onDelete"
+        :email-data="emailItems"
+        @delete="onDeleteEmail"
         @set-primary="onSetPrimary"
       />
       <hr class="my-6 md:my-10" />
@@ -25,7 +25,7 @@
             placeholder="Email address"
             wrapper-classes="flex-1 py-3 md:py-0"
           />
-          <FormButton @click="onSubmit">Add</FormButton>
+          <FormButton @click="onAddEmailSubmit">Add</FormButton>
         </div>
       </div>
     </div>
@@ -33,69 +33,89 @@
 </template>
 
 <script setup lang="ts">
+import { orderBy } from 'lodash-es'
 import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
 import { isEmail, isRequired } from '~~/lib/common/helpers/validation'
 import { useForm } from 'vee-validate'
+import { useQuery, useMutation } from '@vue/apollo-composable'
+import { settingsUserEmailsQuery } from '~/lib/settings/graphql/queries'
+import {
+  settingsCreateUserEmailMutation,
+  settingsDeleteUserEmailMutation,
+  settingsSetPrimaryUserEmailMutation
+} from '~/lib/settings/graphql/mutations'
+import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
 
 type FormValues = { email: string }
 
 const { handleSubmit } = useForm<FormValues>()
 const { triggerNotification } = useGlobalToast()
+const { result: userEmailsResult } = useQuery(settingsUserEmailsQuery)
+const { mutate: createMutation } = useMutation(settingsCreateUserEmailMutation, {
+  refetchQueries: [{ query: settingsUserEmailsQuery }]
+})
+const { mutate: deleteMutation } = useMutation(settingsDeleteUserEmailMutation, {
+  refetchQueries: [{ query: settingsUserEmailsQuery }]
+})
+const { mutate: updateMutation } = useMutation(settingsSetPrimaryUserEmailMutation, {
+  refetchQueries: [{ query: settingsUserEmailsQuery }]
+})
 
 const emailRules = [isEmail, isRequired]
-// Placeholder
-const dummyData = ref([
-  {
-    email: 'jaap.stam@houthakker.com',
-    status: 'PRIMARY',
-    id: 1
-  },
-  {
-    email: 'lerat@1899.com',
-    status: 'UNVERIFIED',
-    id: 2
-  },
-  {
-    email: 'jte@kiffe.com',
-    status: 'VERIFIED',
-    id: 3
-  }
-])
 
 const email = ref('')
 
-const onSubmit = handleSubmit(() => {
-  triggerNotification({
-    type: ToastNotificationType.Success,
-    title: `${email.value} added`
-  })
+const emailItems = computed(() =>
+  userEmailsResult.value?.userEmails
+    ? orderBy(userEmailsResult.value?.userEmails, ['primary'], ['desc'])
+    : []
+)
 
-  // Placeholder
-  dummyData.value.push({
-    email,
-    status: 'UNVERIFIED'
-  })
+const onAddEmailSubmit = handleSubmit(async () => {
+  const result = await createMutation({ input: { email: email.value } })
+  if (result?.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: `${email.value} added`
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: errorMessage
+    })
+  }
 })
 
-const onDelete = (id: number) => {
-  dummyData.value = dummyData.value.filter((item) => item.id !== id)
+const onDeleteEmail = async (id: string, email: string) => {
+  const result = await deleteMutation({ input: { id } })
+  if (result?.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: `${email} deleted`
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: errorMessage
+    })
+  }
 }
 
-const onSetPrimary = (id: number) => {
-  let primaryItem = null
-
-  dummyData.value.forEach((item) => {
-    if (item.id === id) {
-      item.status = 'PRIMARY'
-      primaryItem = item
-    } else if (item.status === 'PRIMARY') {
-      item.status = 'VERIFIED'
-    }
-  })
-
-  if (primaryItem) {
-    dummyData.value = dummyData.value.filter((item) => item.id !== id)
-    dummyData.value.unshift(primaryItem)
+const onSetPrimary = async (id: string, email: string) => {
+  const result = await updateMutation({ input: { id } })
+  if (result?.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: `Made ${email} primary`
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: errorMessage
+    })
   }
 }
 </script>

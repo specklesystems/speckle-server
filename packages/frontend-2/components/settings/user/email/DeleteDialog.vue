@@ -15,18 +15,16 @@
 
 <script setup lang="ts">
 import type { LayoutDialogButton } from '@speckle/ui-components'
-import { useGlobalToast, ToastNotificationType } from '~~/lib/common/composables/toast'
 
-const props = defineProps<{
+defineProps<{
   emailAddress: string
 }>()
 
 const emit = defineEmits<{
-  (e: 'deleted'): void
+  (e: 'delete'): void
 }>()
 
 const isOpen = defineModel<boolean>('open', { required: true })
-const { triggerNotification } = useGlobalToast()
 
 const dialogButtons = computed((): LayoutDialogButton[] => [
   {
@@ -40,12 +38,12 @@ const dialogButtons = computed((): LayoutDialogButton[] => [
     text: 'Delete',
     props: { color: 'primary', fullWidth: true },
     onClick: () => {
-      emit('deleted')
+      emit('delete')
       isOpen.value = false
-      triggerNotification({
-        type: ToastNotificationType.Success,
-        title: `Email ${props.emailAddress} removed`
-      })
+      // triggerNotification({
+      //   type: ToastNotificationType.Success,
+      //   title: `Email ${props.emailAddress} removed`
+      // })
     }
   }
 ])
