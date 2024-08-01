@@ -39,7 +39,8 @@ dc_resource('webhook-service', resource_deps=['postgres'], labels=['speckle'])
 # Test the Speckle resources
 docker_compose(['../../docker-compose-test.yml', 'docker-compose-test.override.yml'])
 dc_resource('test', resource_deps=['speckle-server', 'speckle-frontend-2'], labels=['test']) # --exit-code-from test
-local_resource('echo "probing test"',
+local_resource('test probe',
+    cmd = 'echo "probing test"',
     deps = ['test'],
     readiness_probe = probe(exec = exec_action(['bash -c "[ \'0\' $(docker inspect $(docker ps -aqf "name=speckle-server-test-1") --format=\'{{.State.ExitCode}}\') ]"']))
   )
