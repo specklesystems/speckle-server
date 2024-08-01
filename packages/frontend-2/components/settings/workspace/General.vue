@@ -43,9 +43,9 @@
       </div>
     </div>
     <SettingsWorkspaceGeneralDeleteDialog
-      v-if="result"
+      v-if="workspaceResult"
       v-model:open="showDeleteDialog"
-      :workspace="result.workspace"
+      :workspace="workspaceResult.workspace"
     />
   </section>
 </template>
@@ -55,13 +55,16 @@ import { useQuery, useMutation } from '@vue/apollo-composable'
 import { settingsUpdateWorkspaceMutation } from '~/lib/settings/graphql/mutations'
 import { settingsWorkspaceGeneralQuery } from '~/lib/settings/graphql/queries'
 import type { WorkspaceUpdateInput } from '~~/lib/common/generated/gql/graphql'
+import { ToastNotificationType, useGlobalToast } from '~~/lib/common/composables/toast'
+import { getFirstErrorMessage } from '~~/lib/common/helpers/graphql'
 
 const props = defineProps<{
   workspaceId: string
 }>()
 
+const { triggerNotification } = useGlobalToast()
 const { mutate: updateMutation } = useMutation(settingsUpdateWorkspaceMutation)
-const { result } = useQuery(settingsWorkspaceGeneralQuery, () => ({
+const { result: workspaceResult } = useQuery(settingsWorkspaceGeneralQuery, () => ({
   id: props.workspaceId
 }))
 
@@ -70,16 +73,30 @@ const description = ref('')
 const showDeleteDialog = ref(false)
 
 const save = async () => {
-  if (!result.value?.workspace) return
+  if (!workspaceResult.value?.workspace) return
 
   const input: WorkspaceUpdateInput = {
-    id: result.value.workspace.id
+    id: workspaceResult.value.workspace.id
   }
-  if (name.value !== result.value.workspace.name) input.name = name.value
-  if (description.value !== result.value.workspace.description)
+  if (name.value !== workspaceResult.value.workspace.name) input.name = name.value
+  if (description.value !== workspaceResult.value.workspace.description)
     input.description = description.value
 
-  await updateMutation({ input })
+  const result = await updateMutation({ input })
+
+  if (result?.data) {
+    triggerNotification({
+      type: ToastNotificationType.Success,
+      title: 'Workspace updated'
+    })
+  } else {
+    const errorMessage = getFirstErrorMessage(result?.errors)
+    triggerNotification({
+      type: ToastNotificationType.Danger,
+      title: 'Workspace update failed',
+      description: errorMessage
+    })
+  }
 }
 
 function toggleDeleteDialog() {
@@ -87,11 +104,11 @@ function toggleDeleteDialog() {
 }
 
 watch(
-  () => result,
+  () => workspaceResult,
   () => {
-    if (result.value?.workspace) {
-      name.value = result.value.workspace.name
-      description.value = result.value.workspace.description ?? ''
+    if (workspaceResult.value?.workspace) {
+      name.value = workspaceResult.value.workspace.name
+      description.value = workspaceResult.value.workspace.description ?? ''
     }
   },
   { deep: true, immediate: true }
