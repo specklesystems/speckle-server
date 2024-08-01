@@ -11,19 +11,18 @@
       />
       <hr class="my-6 md:my-10" />
       <SettingsSectionHeader title="Add new email" subheading />
-      <div class="flex flex-col md:flex-row gap-x-4 w-full justify-center pt-6">
-        <div class="w-1/2 flex items-center">
-          <span class="text-body-xs font-medium">New email address</span>
-        </div>
-        <div class="flex flex-col md:flex-row gap-x-2 md:w-1/2">
+      <div class="flex flex-col md:flex-row w-full pt-4 md:pt-6 pb-6">
+        <div class="flex flex-col md:flex-row gap-x-2 w-full">
           <FormTextInput
             v-model="email"
             color="foundation"
-            label="email"
+            label-position="left"
+            label="Email address"
             name="email"
             :rules="emailRules"
             placeholder="Email address"
-            wrapper-classes="flex-1 py-3 md:py-0"
+            show-label
+            wrapper-classes="flex-1 py-3 md:py-0 w-full"
           />
           <FormButton @click="onAddEmailSubmit">Add</FormButton>
         </div>
