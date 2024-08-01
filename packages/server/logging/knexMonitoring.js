@@ -5,6 +5,7 @@
 const { postgresMaxConnections } = require('@/modules/shared/helpers/envHelper')
 const knex = require('../db/knex')
 const prometheusClient = require('prom-client')
+const { numberOfFreeConnections } = require('@/modules/shared/helpers/dbHelper')
 
 let metricFree = null
 let metricUsed = null
@@ -63,14 +64,7 @@ module.exports = {
       name: 'speckle_server_knex_remaining_capacity',
       help: 'Remaining capacity of the DB connection pool',
       collect() {
-        const pgMaxConnections = postgresMaxConnections()
-        const demand =
-          knex.client.pool.numUsed() +
-          knex.client.pool.numPendingCreates() +
-          knex.client.pool.numPendingValidations() +
-          knex.client.pool.numPendingAcquires()
-
-        this.set(Math.max(postgresMaxConnections - demand, 0))
+        this.set(numberOfFreeConnections(knex))
       }
     })
 
