@@ -1,7 +1,11 @@
 import { db } from '@/db/knex'
 import { Resolvers } from '@/modules/core/graph/generated/graphql'
 import { removePrivateFields } from '@/modules/core/helpers/userHelper'
-import { getStream, grantStreamPermissions } from '@/modules/core/repositories/streams'
+import {
+  getStream,
+  grantStreamPermissions,
+  revokeStreamPermissions
+} from '@/modules/core/repositories/streams'
 import { getUser, getUsers } from '@/modules/core/repositories/users'
 import { getStreams } from '@/modules/core/services/streams'
 import { InviteCreateValidationError } from '@/modules/serverinvites/errors'
@@ -25,11 +29,14 @@ import { getFeatureFlags } from '@/modules/shared/helpers/envHelper'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 import {
+  WorkspaceInvalidRoleError,
   WorkspaceNotFoundError,
   WorkspacesNotAuthorizedError,
   WorkspacesNotYetImplementedError
 } from '@/modules/workspaces/errors/workspace'
+import { isWorkspaceRole } from '@/modules/workspaces/helpers/roles'
 import {
+  deleteWorkspaceRoleFactory as repoDeleteWorkspaceRoleFactory,
   getWorkspaceCollaboratorsFactory,
   getWorkspaceFactory,
   getWorkspaceRolesFactory,
@@ -50,8 +57,9 @@ import {
 } from '@/modules/workspaces/services/invites'
 import {
   createWorkspaceFactory,
-  setWorkspaceRoleFactory,
-  updateWorkspaceFactory
+  deleteWorkspaceRoleFactory,
+  updateWorkspaceFactory,
+  updateWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
 import { getWorkspaceProjectsFactory } from '@/modules/workspaces/services/projects'
 import { getWorkspacesForUserFactory } from '@/modules/workspaces/services/retrieval'
@@ -120,18 +128,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
         create: async (_parent, args, context) => {
           const { name, description } = args.input
 
-          const { emit: emitWorkspaceEvent } = getEventBus()
-
-          const upsertWorkspace = upsertWorkspaceFactory({ db })
-          const upsertWorkspaceRole = upsertWorkspaceRoleFactory({ db })
-          // TODO: Integrate with blobstorage
-          const storeBlob = async () => ''
-
           const createWorkspace = createWorkspaceFactory({
-            upsertWorkspace,
-            upsertWorkspaceRole,
-            emitWorkspaceEvent,
-            storeBlob
+            upsertWorkspace: upsertWorkspaceFactory({ db }),
+            upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit,
+            // TODO: Integrate with blobstorage
+            storeBlob: async () => ''
           })
 
           const workspace = await createWorkspace({
@@ -154,18 +156,12 @@ export = FF_WORKSPACES_MODULE_ENABLED
         update: async (_parent, args, context) => {
           const { id: workspaceId, ...workspaceInput } = args.input
 
-          const { emit: emitWorkspaceEvent } = getEventBus()
-
-          const getWorkspace = getWorkspaceFactory({ db })
-          const upsertWorkspace = upsertWorkspaceFactory({ db })
-          // TODO: Integrate with blobstorage
-          const storeBlob = async () => ''
-
           const updateWorkspace = updateWorkspaceFactory({
-            getWorkspace,
-            upsertWorkspace,
-            emitWorkspaceEvent,
-            storeBlob
+            getWorkspace: getWorkspaceFactory({ db }),
+            upsertWorkspace: upsertWorkspaceFactory({ db }),
+            emitWorkspaceEvent: getEventBus().emit,
+            // TODO: Integrate with blobstorage
+            storeBlob: async () => ''
           })
 
           const workspace = await updateWorkspace({
@@ -177,11 +173,46 @@ export = FF_WORKSPACES_MODULE_ENABLED
 
           return workspace
         },
-        updateRole: async () => {
-          throw new WorkspacesNotYetImplementedError()
-        },
-        deleteRole: async () => {
-          throw new WorkspacesNotYetImplementedError()
+        updateRole: async (_parent, args, context) => {
+          const { userId, workspaceId, role } = args.input
+
+          authorizeResolver(
+            context.userId,
+            workspaceId,
+            Roles.Workspace.Admin,
+            context.resourceAccessRules
+          )
+
+          const getWorkspaceRoles = getWorkspaceRolesFactory({ db })
+          const emitWorkspaceEvent = getEventBus().emit
+
+          if (!role) {
+            const deleteWorkspaceRole = deleteWorkspaceRoleFactory({
+              deleteWorkspaceRole: repoDeleteWorkspaceRoleFactory({ db }),
+              getWorkspaceRoles,
+              emitWorkspaceEvent,
+              getStreams,
+              revokeStreamPermissions
+            })
+
+            await deleteWorkspaceRole(args.input)
+          } else {
+            if (!isWorkspaceRole(role)) {
+              throw new WorkspaceInvalidRoleError()
+            }
+
+            const updateWorkspaceRole = updateWorkspaceRoleFactory({
+              upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
+              getWorkspaceRoles,
+              emitWorkspaceEvent,
+              getStreams,
+              grantStreamPermissions
+            })
+
+            await updateWorkspaceRole({ userId, workspaceId, role })
+          }
+
+          return await getWorkspaceFactory({ db })({ workspaceId })
         },
         invites: () => ({})
       },
@@ -242,7 +273,7 @@ export = FF_WORKSPACES_MODULE_ENABLED
             }),
             processInvite: processFinalizedWorkspaceInviteFactory({
               getWorkspace: getWorkspaceFactory({ db }),
-              setWorkspaceRole: setWorkspaceRoleFactory({
+              updateWorkspaceRole: updateWorkspaceRoleFactory({
                 getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
                 upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
                 emitWorkspaceEvent: ({ eventName, payload }) =>

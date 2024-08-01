@@ -65,17 +65,6 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
               return getMockRef('Workspace', {
                 id: args.input.workspaceId
               })
-            },
-            deleteRole: (_parent, args) => {
-              const val = faker.datatype.boolean()
-
-              if (val) {
-                throw new Error('Fake delete role error')
-              }
-
-              return getMockRef('Workspace', {
-                id: args.input.workspaceId
-              })
             }
           },
           WorkspaceInviteMutations: {
