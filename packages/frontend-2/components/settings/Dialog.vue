@@ -148,7 +148,7 @@ const menuItemConfig = shallowRef<{ [key: string]: { [key: string]: MenuItem } }
     }
   },
   workspace: {
-    // Workspace meny items will be added here, such as general and members
+    // Workspace menu items will be added here, general, members and projects
   }
 })
 
