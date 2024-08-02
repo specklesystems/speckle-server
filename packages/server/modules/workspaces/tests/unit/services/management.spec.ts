@@ -2,7 +2,7 @@ import { Workspace, WorkspaceAcl } from '@/modules/workspacesCore/domain/types'
 import {
   createWorkspaceFactory,
   deleteWorkspaceRoleFactory,
-  setWorkspaceRoleFactory
+  updateWorkspaceRoleFactory
 } from '@/modules/workspaces/services/management'
 import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
@@ -199,16 +199,16 @@ const buildDeleteWorkspaceRoleAndTestContext = (
   return { deleteWorkspaceRole, context }
 }
 
-const buildSetWorkspaceRoleAndTestContext = (
+const buildUpdateWorkspaceRoleAndTestContext = (
   contextOverrides: Partial<WorkspaceRoleTestContext> = {},
-  dependencyOverrides: Partial<Parameters<typeof setWorkspaceRoleFactory>[0]> = {}
+  dependencyOverrides: Partial<Parameters<typeof updateWorkspaceRoleFactory>[0]> = {}
 ) => {
   const context = {
     ...getDefaultWorkspaceRoleTestContext(),
     ...contextOverrides
   }
 
-  const deps: Parameters<typeof setWorkspaceRoleFactory>[0] = {
+  const deps: Parameters<typeof updateWorkspaceRoleFactory>[0] = {
     getWorkspaceRoles: async () => context.workspaceRoles,
     upsertWorkspaceRole: async (role) => {
       const currentRoleIndex = context.workspaceRoles.findIndex(
@@ -255,9 +255,9 @@ const buildSetWorkspaceRoleAndTestContext = (
     ...dependencyOverrides
   }
 
-  const setWorkspaceRole = setWorkspaceRoleFactory(deps)
+  const updateWorkspaceRole = updateWorkspaceRoleFactory(deps)
 
-  return { setWorkspaceRole, context }
+  return { updateWorkspaceRole, context }
 }
 
 describe('Workspace role services', () => {
@@ -325,17 +325,17 @@ describe('Workspace role services', () => {
     })
   })
 
-  describe('setWorkspaceRoleFactory creates a function, that', () => {
+  describe('updateWorkspaceRoleFactory creates a function, that', () => {
     it('sets the workspace role', async () => {
       const userId = cryptoRandomString({ length: 10 })
       const workspaceId = cryptoRandomString({ length: 10 })
       const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
 
-      const { setWorkspaceRole, context } = buildSetWorkspaceRoleAndTestContext({
+      const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
         workspaceId
       })
 
-      await setWorkspaceRole(role)
+      await updateWorkspaceRole(role)
 
       expect(context.workspaceRoles.length).to.equal(1)
       expect(context.workspaceRoles[0]).to.deep.equal(role)
@@ -345,11 +345,11 @@ describe('Workspace role services', () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Member }
 
-      const { setWorkspaceRole, context } = buildSetWorkspaceRoleAndTestContext({
+      const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
         workspaceId
       })
 
-      await setWorkspaceRole(role)
+      await updateWorkspaceRole(role)
 
       expect(context.eventData.isCalled).to.be.true
       expect(context.eventData.eventName).to.equal(WorkspaceEvents.RoleUpdated)
@@ -360,13 +360,13 @@ describe('Workspace role services', () => {
       const workspaceId = cryptoRandomString({ length: 10 })
       const role: WorkspaceAcl = { userId, workspaceId, role: Roles.Workspace.Admin }
 
-      const { setWorkspaceRole } = buildSetWorkspaceRoleAndTestContext({
+      const { updateWorkspaceRole } = buildUpdateWorkspaceRoleAndTestContext({
         workspaceId,
         workspaceRoles: [role]
       })
 
       await expectToThrow(() =>
-        setWorkspaceRole({ ...role, role: Roles.Workspace.Member })
+        updateWorkspaceRole({ ...role, role: Roles.Workspace.Member })
       )
     })
     it('sets roles on workspace projects', async () => {
@@ -380,12 +380,12 @@ describe('Workspace role services', () => {
         role: Roles.Workspace.Admin
       }
 
-      const { setWorkspaceRole, context } = buildSetWorkspaceRoleAndTestContext({
+      const { updateWorkspaceRole, context } = buildUpdateWorkspaceRoleAndTestContext({
         workspaceId,
         workspaceProjects: [{ id: projectId } as StreamRecord]
       })
 
-      await setWorkspaceRole(workspaceRole)
+      await updateWorkspaceRole(workspaceRole)
 
       expect(context.workspaceProjectRoles.length).to.equal(1)
       expect(context.workspaceProjectRoles[0].userId).to.equal(userId)

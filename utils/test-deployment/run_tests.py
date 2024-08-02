@@ -41,6 +41,16 @@ if not SPECKLE_SERVER.startswith("http://") and not SPECKLE_SERVER.startswith(
 
 print(f"ℹ️ Using Speckle server '{SPECKLE_SERVER}'")
 
+# Test that the server backend is accessible
+client = SpeckleClient(
+    SPECKLE_SERVER,
+    use_ssl=SPECKLE_SERVER.startswith("https://"),
+    verify_certificate=VERIFY_CERTIFICATE,
+)
+server_info = client.server.get()
+assert isinstance(server_info, ServerInfo), "❌ GraphQL ServerInfo query error"
+print(f"✅ GraphQL operation succeeded. Server name: {server_info.name}")
+
 # Test if frontend is accessible
 if FRONTEND_VERSION == "1":
     frontend_response = requests.get(
@@ -60,16 +70,6 @@ else:
     print(f"❌ Unknown frontend version '{FRONTEND_VERSION}'")
     exit(1)
 print("✅ Frontend accessible")
-
-# Test basic unauthenticated operation using specklepy
-client = SpeckleClient(
-    SPECKLE_SERVER,
-    use_ssl=SPECKLE_SERVER.startswith("https://"),
-    verify_certificate=VERIFY_CERTIFICATE,
-)
-server_info = client.server.get()
-assert isinstance(server_info, ServerInfo), "❌ GraphQL ServerInfo query error"
-print(f"✅ GraphQL operation succeeded. Server name: {server_info.name}")
 
 # Test that the deployed server version matches the expected version
 SERVER_VERSION = ""

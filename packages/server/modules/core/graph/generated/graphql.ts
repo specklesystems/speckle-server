@@ -2440,7 +2440,6 @@ export type Query = {
    * @deprecated To be removed in the near future! Use 'activeUser' to get info about the active user or 'otherUser' to get info about another user.
    */
   user?: Maybe<User>;
-  userEmails?: Maybe<Array<Maybe<UserEmail>>>;
   /**
    * Validate password strength
    * @deprecated Part of the old API surface and will be removed in the future.
@@ -2975,7 +2974,6 @@ export type StreamCreateInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   /** Optionally specify user IDs of users that you want to invite to be contributors to this stream */
   withContributors?: InputMaybe<Array<Scalars['String']['input']>>;
-  workspaceId?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type StreamInviteCreateInput = {
@@ -3355,6 +3353,7 @@ export type User = {
   createdAt?: Maybe<Scalars['DateTime']['output']>;
   /** Only returned if API user is the user being requested or an admin */
   email?: Maybe<Scalars['String']['output']>;
+  emails: Array<UserEmail>;
   /**
    * All the streams that a active user has favorited.
    * Note: You can't use this to retrieve another user's favorite streams.
@@ -3784,6 +3783,8 @@ export type Workspace = {
   id: Scalars['ID']['output'];
   /** Only available to workspace owners */
   invitedTeam?: Maybe<Array<PendingWorkspaceCollaborator>>;
+  /** Optional url for workspace logo image */
+  logoUrl?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   projects: ProjectCollection;
   /** Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you. */
@@ -3795,7 +3796,7 @@ export type Workspace = {
 
 export type WorkspaceProjectsArgs = {
   cursor?: InputMaybe<Scalars['String']['input']>;
-  filter?: InputMaybe<UserProjectsFilter>;
+  filter?: InputMaybe<WorkspaceProjectsFilter>;
   limit?: Scalars['Int']['input'];
 };
 
@@ -3815,7 +3816,6 @@ export type WorkspaceCollection = {
 
 export type WorkspaceCreateInput = {
   description?: InputMaybe<Scalars['String']['input']>;
-  logoUrl?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
 };
 
@@ -3868,10 +3868,8 @@ export type WorkspaceMutations = {
   __typename?: 'WorkspaceMutations';
   create: Workspace;
   delete: Scalars['Boolean']['output'];
-  deleteRole: Workspace;
   invites: WorkspaceInviteMutations;
   update: Workspace;
-  /** TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes */
   updateRole: Workspace;
 };
 
@@ -3886,11 +3884,6 @@ export type WorkspaceMutationsDeleteArgs = {
 };
 
 
-export type WorkspaceMutationsDeleteRoleArgs = {
-  input: WorkspaceRoleDeleteInput;
-};
-
-
 export type WorkspaceMutationsUpdateArgs = {
   input: WorkspaceUpdateInput;
 };
@@ -3898,6 +3891,11 @@ export type WorkspaceMutationsUpdateArgs = {
 
 export type WorkspaceMutationsUpdateRoleArgs = {
   input: WorkspaceRoleUpdateInput;
+};
+
+export type WorkspaceProjectsFilter = {
+  /** Filter out projects by name */
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 export enum WorkspaceRole {
@@ -3912,7 +3910,8 @@ export type WorkspaceRoleDeleteInput = {
 };
 
 export type WorkspaceRoleUpdateInput = {
-  role: WorkspaceRole;
+  /** Leave role null to revoke access entirely */
+  role?: InputMaybe<Scalars['String']['input']>;
   userId: Scalars['String']['input'];
   workspaceId: Scalars['String']['input'];
 };
@@ -4227,6 +4226,7 @@ export type ResolversTypes = {
   WorkspaceInviteMutations: ResolverTypeWrapper<WorkspaceInviteMutationsGraphQLReturn>;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
   WorkspaceMutations: ResolverTypeWrapper<WorkspaceMutationsGraphQLReturn>;
+  WorkspaceProjectsFilter: WorkspaceProjectsFilter;
   WorkspaceRole: WorkspaceRole;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
@@ -4446,6 +4446,7 @@ export type ResolversParentTypes = {
   WorkspaceInviteMutations: WorkspaceInviteMutationsGraphQLReturn;
   WorkspaceInviteUseInput: WorkspaceInviteUseInput;
   WorkspaceMutations: WorkspaceMutationsGraphQLReturn;
+  WorkspaceProjectsFilter: WorkspaceProjectsFilter;
   WorkspaceRoleDeleteInput: WorkspaceRoleDeleteInput;
   WorkspaceRoleUpdateInput: WorkspaceRoleUpdateInput;
   WorkspaceUpdateInput: WorkspaceUpdateInput;
@@ -5334,7 +5335,6 @@ export type QueryResolvers<ContextType = GraphQLContext, ParentType extends Reso
   streamInvites?: Resolver<Array<ResolversTypes['PendingStreamCollaborator']>, ParentType, ContextType>;
   streams?: Resolver<Maybe<ResolversTypes['StreamCollection']>, ParentType, ContextType, RequireFields<QueryStreamsArgs, 'limit'>>;
   user?: Resolver<Maybe<ResolversTypes['User']>, ParentType, ContextType, Partial<QueryUserArgs>>;
-  userEmails?: Resolver<Maybe<Array<Maybe<ResolversTypes['UserEmail']>>>, ParentType, ContextType>;
   userPwdStrength?: Resolver<ResolversTypes['PasswordStrengthCheckResults'], ParentType, ContextType, RequireFields<QueryUserPwdStrengthArgs, 'pwd'>>;
   userSearch?: Resolver<ResolversTypes['UserSearchResultCollection'], ParentType, ContextType, RequireFields<QueryUserSearchArgs, 'archived' | 'emailOnly' | 'limit' | 'query'>>;
   workspace?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<QueryWorkspaceArgs, 'id'>>;
@@ -5601,6 +5601,7 @@ export type UserResolvers<ContextType = GraphQLContext, ParentType extends Resol
   createdApps?: Resolver<Maybe<Array<ResolversTypes['ServerApp']>>, ParentType, ContextType>;
   createdAt?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
   email?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  emails?: Resolver<Array<ResolversTypes['UserEmail']>, ParentType, ContextType>;
   favoriteStreams?: Resolver<ResolversTypes['StreamCollection'], ParentType, ContextType, RequireFields<UserFavoriteStreamsArgs, 'limit'>>;
   hasPendingVerification?: Resolver<Maybe<ResolversTypes['Boolean']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
@@ -5762,6 +5763,7 @@ export type WorkspaceResolvers<ContextType = GraphQLContext, ParentType extends 
   description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   invitedTeam?: Resolver<Maybe<Array<ResolversTypes['PendingWorkspaceCollaborator']>>, ParentType, ContextType>;
+  logoUrl?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   projects?: Resolver<ResolversTypes['ProjectCollection'], ParentType, ContextType, RequireFields<WorkspaceProjectsArgs, 'limit'>>;
   role?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -5795,7 +5797,6 @@ export type WorkspaceInviteMutationsResolvers<ContextType = GraphQLContext, Pare
 export type WorkspaceMutationsResolvers<ContextType = GraphQLContext, ParentType extends ResolversParentTypes['WorkspaceMutations'] = ResolversParentTypes['WorkspaceMutations']> = {
   create?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsCreateArgs, 'input'>>;
   delete?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteArgs, 'workspaceId'>>;
-  deleteRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsDeleteRoleArgs, 'input'>>;
   invites?: Resolver<ResolversTypes['WorkspaceInviteMutations'], ParentType, ContextType>;
   update?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateArgs, 'input'>>;
   updateRole?: Resolver<ResolversTypes['Workspace'], ParentType, ContextType, RequireFields<WorkspaceMutationsUpdateRoleArgs, 'input'>>;

@@ -18,7 +18,7 @@
       :model-value="value"
       class="relative z-10 text-sm text-foreground font-mono"
     />
-    <div class="absolute inset-0 right-2 flex justify-end items-center">
+    <div class="absolute top-2 right-2 flex justify-end items-center">
       <FormButton
         color="outline"
         :icon-left="copied ? ClipboardDocumentCheckIcon : ClipboardDocumentIcon"

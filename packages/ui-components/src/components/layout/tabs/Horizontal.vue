@@ -1,5 +1,5 @@
 <template>
-  <div class="relative z-10 flex gap-4 md:gap-6 flex-col">
+  <div class="relative z-10 flex flex-col space-y-4 md:space-y-6">
     <!-- Left Arrow Button -->
     <div
       class="absolute left-[-2px] top-[-2px] z-20 pr-8 bg-gradient-to-r from-foundation-page to-transparent"
@@ -15,7 +15,7 @@
     <div class="absolute left-0 z-10 w-full h-[1px] mt-px bg-outline-3 top-8"></div>
     <div
       ref="scrollContainer"
-      class="relative flex overflow-x-auto hide-scrollbar gap-8 w-full"
+      class="relative overflow-x-auto hide-scrollbar w-full"
       @scroll="handleScroll"
     >
       <div
@@ -24,7 +24,7 @@
         :class="isInitialSetup ? 'bg-transparent' : 'bg-primary'"
       ></div>
 
-      <div ref="buttonContainer" class="flex w-full gap-2 sm:gap-3">
+      <div ref="buttonContainer" class="flex w-full space-x-2 sm:space-x-3">
         <button
           v-for="item in items"
           :key="item.id"
@@ -41,9 +41,9 @@
             v-tippy="
               item.disabled && item.disabledMessage ? item.disabledMessage : undefined
             "
-            class="absolute inset-0"
+            class="absolute top-0 right-0 left-0 bottom-0"
           ></div>
-          <div class="flex gap-2 items-center px-2">
+          <div class="flex space-x-2 items-center px-2">
             <component
               :is="item.icon"
               v-if="item.icon"
@@ -120,7 +120,7 @@ const buttonClass = computed(() => {
       'items-center',
       'disabled:opacity-60 disabled:hover:border-transparent disabled:cursor-not-allowed disabled:hover:bg-transparent',
       'text-body-sm',
-      'gap-1.5',
+      'space-x-1.5',
       'hover:sm:border-outline-2',
       'pb-2',
       'border-b-[2px]',

@@ -50,7 +50,7 @@ import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constan
 import { GetWorkspace } from '@/modules/workspaces/domain/operations'
 import { WorkspaceInviteResourceTarget } from '@/modules/workspaces/domain/types'
 import { mapGqlWorkspaceRoleToMainRole } from '@/modules/workspaces/helpers/roles'
-import { setWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { PendingWorkspaceCollaboratorGraphQLReturn } from '@/modules/workspacesCore/helpers/graphTypes'
 import { MaybeNullOrUndefined, Nullable, Roles, WorkspaceRoles } from '@speckle/shared'
 
@@ -386,7 +386,7 @@ export const validateWorkspaceInviteBeforeFinalizationFactory =
 export const processFinalizedWorkspaceInviteFactory =
   (deps: {
     getWorkspace: GetWorkspace
-    setWorkspaceRole: ReturnType<typeof setWorkspaceRoleFactory>
+    updateWorkspaceRole: ReturnType<typeof updateWorkspaceRoleFactory>
   }): ProcessFinalizedResourceInvite =>
   async (params) => {
     const { invite, finalizerUserId, action } = params
@@ -411,7 +411,7 @@ export const processFinalizedWorkspaceInviteFactory =
     const target = resolveTarget(invite.target)
 
     if (action === InviteFinalizationAction.ACCEPT) {
-      await deps.setWorkspaceRole({
+      await deps.updateWorkspaceRole({
         userId: target.userId!,
         workspaceId: workspace.id,
         role: invite.resource.role || Roles.Workspace.Member
