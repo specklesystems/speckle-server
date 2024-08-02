@@ -210,7 +210,7 @@ const documents = {
     "\n  mutation UpdateWorkspace($input: WorkspaceUpdateInput!) {\n    workspaceMutations {\n      update(input: $input) {\n        description\n        name\n      }\n    }\n  }\n": types.UpdateWorkspaceDocument,
     "\n  mutation DeleteWorkspace($workspaceId: String!) {\n    workspaceMutations {\n      delete(workspaceId: $workspaceId)\n    }\n  }\n": types.DeleteWorkspaceDocument,
     "\n  query SettingsSidebarWorkspaces {\n    activeUser {\n      workspaces {\n        items {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.SettingsSidebarWorkspacesDocument,
-    "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      id\n      name\n      description\n      logoUrl\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
+    "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      id\n      name\n      description\n      logo\n    }\n  }\n": types.SettingsWorkspaceGeneralDocument,
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
@@ -1053,7 +1053,7 @@ export function graphql(source: "\n  query SettingsSidebarWorkspaces {\n    acti
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
-export function graphql(source: "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      id\n      name\n      description\n      logoUrl\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      id\n      name\n      description\n      logoUrl\n    }\n  }\n"];
+export function graphql(source: "\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      id\n      name\n      description\n      logo\n    }\n  }\n"): (typeof documents)["\n  query SettingsWorkspaceGeneral($id: String!) {\n    workspace(id: $id) {\n      id\n      name\n      description\n      logo\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */

@@ -21,7 +21,7 @@ import {
   resolveTarget
 } from '@/modules/serverinvites/helpers/core'
 import { logger } from '@/logging/logging'
-import { setWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 
 export const onProjectCreatedFactory =
@@ -56,7 +56,7 @@ export const onInviteFinalizedFactory =
   (deps: {
     getStream: typeof getStream
     logger: typeof logger
-    setWorkspaceRole: ReturnType<typeof setWorkspaceRoleFactory>
+    updateWorkspaceRole: ReturnType<typeof updateWorkspaceRoleFactory>
   }) =>
   async (
     payload: ServerInvitesEventsPayloads[typeof ServerInvitesEvents.Finalized]
@@ -83,7 +83,7 @@ export const onInviteFinalizedFactory =
     if (!project.workspaceId) return
 
     // Add user to workspace
-    await deps.setWorkspaceRole({
+    await deps.updateWorkspaceRole({
       role: mapProjectRoleToWorkspaceRole(project.role),
       userId: targetUserId,
       workspaceId: project.workspaceId

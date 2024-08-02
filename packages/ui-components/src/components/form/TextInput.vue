@@ -21,7 +21,7 @@
     >
       <div
         v-if="customIcon"
-        class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2"
+        class="pointer-events-none absolute top-0 bottom-0 left-0 flex items-center pl-2"
       >
         <Component
           :is="customIcon"
@@ -52,7 +52,7 @@
         <a
           v-if="shouldShowClear"
           title="Clear input"
-          class="absolute inset-y-0 right-0 flex items-center pr-2 cursor-pointer"
+          class="absolute top-0 bottom-0 right-0 flex items-center pr-2 cursor-pointer"
           @click="clear"
           @keydown="clear"
         >
@@ -62,7 +62,7 @@
         <div
           v-if="errorMessage"
           :class="[
-            'pointer-events-none absolute inset-y-0 right-0 flex items-center',
+            'pointer-events-none absolute top-0 bottom-0 right-0 flex items-center',
             shouldShowClear ? 'pr-8' : 'pr-2'
           ]"
         >
@@ -70,7 +70,7 @@
         </div>
         <div
           v-if="!showLabel && showRequired && !errorMessage"
-          class="ppointer-events-none absolute inset-y-0 mt-2 text-body right-0 flex items-center text-danger pr-2.5"
+          class="ppointer-events-none absolute top-0 bottom-0 mt-2 text-body right-0 flex items-center text-danger pr-2.5"
           :class="[shouldShowClear ? 'pr-8' : 'pr-2']"
         >
           *
@@ -331,7 +331,7 @@ const computedWrapperClasses = computed(() => {
     classes.push('flex-col')
   }
   if (props.labelPosition === 'left') {
-    classes.push('w-full gap-1 md:gap-8 flex-col md:flex-row')
+    classes.push('w-full space-y-1 sm:space-y-0 sm:space-x-8 flex-col sm:flex-row')
   }
   return classes.join(' ')
 })

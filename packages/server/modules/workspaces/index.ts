@@ -12,7 +12,7 @@ import {
   upsertWorkspaceRoleFactory
 } from '@/modules/workspaces/repositories/workspaces'
 import { getStream, grantStreamPermissions } from '@/modules/core/repositories/streams'
-import { setWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
+import { updateWorkspaceRoleFactory } from '@/modules/workspaces/services/management'
 import { getEventBus } from '@/modules/shared/services/eventBus'
 import { getStreams } from '@/modules/core/services/streams'
 
@@ -39,7 +39,7 @@ const workspacesModule: SpeckleModule = {
         grantStreamPermissions,
         getStream,
         logger: moduleLogger,
-        setWorkspaceRole: setWorkspaceRoleFactory({
+        updateWorkspaceRole: updateWorkspaceRoleFactory({
           getWorkspaceRoles: getWorkspaceRolesFactory({ db }),
           upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
           emitWorkspaceEvent: (...args) => getEventBus().emit(...args),

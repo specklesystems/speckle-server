@@ -30,7 +30,7 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
                 throw new Error('Fake workspace create error')
               }
 
-              return getMockRef('Workspace', { values: omit(args.input, ['logoUrl']) })
+              return getMockRef('Workspace', { values: omit(args.input, ['logo']) })
             },
             delete: () => {
               const val = faker.datatype.boolean()
@@ -50,7 +50,7 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
                   type: 'Workspace',
                   id: args.input.id
                 },
-                omit(args.input, ['logoUrl', 'id'])
+                omit(args.input, ['logo', 'id'])
               )
 
               return getMockRef('Workspace', { id: args.input.id })
@@ -60,17 +60,6 @@ const config: SpeckleModuleMocksConfig = FF_WORKSPACES_MODULE_ENABLED
 
               if (val) {
                 throw new Error('Fake update role error')
-              }
-
-              return getMockRef('Workspace', {
-                id: args.input.workspaceId
-              })
-            },
-            deleteRole: (_parent, args) => {
-              const val = faker.datatype.boolean()
-
-              if (val) {
-                throw new Error('Fake delete role error')
               }
 
               return getMockRef('Workspace', {

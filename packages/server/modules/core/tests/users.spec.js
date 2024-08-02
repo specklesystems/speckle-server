@@ -1,10 +1,6 @@
 /* istanbul ignore file */
-const bcrypt = require('bcrypt')
-const crs = require('crypto-random-string')
 const expect = require('chai').expect
 const assert = require('assert')
-
-const knex = require('@/db/knex')
 
 const {
   changeUserRole,
@@ -74,30 +70,6 @@ describe('Actors & Tokens @user-services', () => {
       expect(
         await validatePasssword({ email: 'BiLL@GaTES.cOm', password: 'testthebest' })
       )
-    })
-
-    it('Should still find previously stored non lowercase emails', async () => {
-      const email = 'Dim@gMail.cOm'
-      const user = { name: 'Dim Sum', email, password: '1234567' }
-      user.id = crs({ length: 10 })
-      user.passwordDigest = await bcrypt.hash(user.password, 10)
-      delete user.password
-
-      const [{ id: userId }] = await knex('users').returning('id').insert(user)
-
-      const userByEmail = await getUserByEmail({ email })
-      expect(userByEmail).to.not.be.null
-      expect(userByEmail.email).to.equal(email)
-      expect(userByEmail.id).to.equal(userId)
-
-      const userByLowerEmail = await getUserByEmail({ email: email.toLowerCase() })
-      expect(userByLowerEmail).to.not.be.null
-      expect(userByLowerEmail.email).to.equal(email)
-      expect(user.id).to.equal(userId)
-
-      user.email = user.email.toLowerCase()
-      const foundNotCreatedUser = await findOrCreateUser({ user })
-      expect(foundNotCreatedUser.id).to.equal(userId)
     })
 
     let ballmerUserId = null

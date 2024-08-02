@@ -19,7 +19,7 @@ export const settingsWorkspaceGeneralQuery = graphql(`
       id
       name
       description
-      logoUrl
+      logo
     }
   }
 `)

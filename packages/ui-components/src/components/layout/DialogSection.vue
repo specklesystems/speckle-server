@@ -8,7 +8,7 @@
     }"
   >
     <div
-      class="flex justify-between items-center gap-4 sm:gap-8 py-2.5 px-2"
+      class="flex justify-between items-center space-x-4 sm:space-x-8 py-2.5 px-2"
       :class="backgroundClass"
       tabindex="0"
       v-on="
@@ -21,7 +21,7 @@
       "
     >
       <div
-        class="text-heading-sm flex items-center gap-1 sm:gap-2 select-none"
+        class="text-heading-sm flex items-center space-x-1 sm:space-x-2 select-none"
         :class="titleClasses"
       >
         <div v-if="$slots.icon || icon" class="h-4 w-4 empty:h-0 empty:w-0">

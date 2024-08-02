@@ -21,13 +21,19 @@ input WorkspaceUpdateInput {
   id: String!
   name: String
   description: String
-  logoUrl: String
+  """
+  Logo image as base64-encoded string
+  """
+  logo: String
 }
 
 input WorkspaceRoleUpdateInput {
   userId: String!
   workspaceId: String!
-  role: WorkspaceRole!
+  """
+  Leave role null to revoke access entirely
+  """
+  role: String
 }
 
 input WorkspaceRoleDeleteInput {
@@ -45,12 +51,7 @@ type WorkspaceMutations {
     @hasScope(scope: "workspace:create")
   delete(workspaceId: String!): Boolean! @hasScope(scope: "workspace:delete")
   update(input: WorkspaceUpdateInput!): Workspace! @hasScope(scope: "workspace:update")
-  """
-  TODO: `@hasWorkspaceRole(role: WORKSPACE_ADMIN)` for role changes
-  """
   updateRole(input: WorkspaceRoleUpdateInput!): Workspace!
-    @hasScope(scope: "workspace:update")
-  deleteRole(input: WorkspaceRoleDeleteInput!): Workspace!
     @hasScope(scope: "workspace:update")
   invites: WorkspaceInviteMutations!
 }
@@ -95,9 +96,9 @@ type Workspace {
   createdAt: DateTime!
   updatedAt: DateTime!
   """
-  Optional url for workspace logo image
+  Logo image as base64-encoded string
   """
-  logoUrl: String
+  logo: String
   """
   Active user's role for this workspace. `null` if request is not authenticated, or the workspace is not explicitly shared with you.
   """

@@ -42,25 +42,28 @@
               @click="targetMenuItem = `${key}`"
             />
           </LayoutSidebarMenuGroup>
-          <LayoutSidebarMenuGroup v-if="hasWorkspaceItems" title="Workspace settings">
+          <LayoutSidebarMenuGroup
+            v-if="isWorkspacesEnabled && hasWorkspaceItems"
+            title="Workspace settings"
+          >
             <template #title-icon>
               <ServerStackIcon class="h-5 w-5" />
             </template>
             <LayoutSidebarMenuGroup
-              v-for="(workspaceItem, index) in workspaceItems"
-              :key="index"
+              v-for="(workspaceItem, key) in workspaceItems"
+              :key="key"
               :title="workspaceItem.name"
               collapsible
             >
               <LayoutSidebarMenuGroupItem
-                v-for="(workspaceMenuItem, key) in menuItemConfig.workspace"
-                :key="key"
+                v-for="(workspaceMenuItem, itemKey) in menuItemConfig.workspace"
+                :key="`${key}-${itemKey}`"
                 :label="workspaceMenuItem.title"
                 :class="{
                   'bg-highlight-2 hover:!bg-highlight-2':
-                    targetMenuItem === key && targetWorkspaceId === workspaceItem.id
+                    targetMenuItem === itemKey && targetWorkspaceId === workspaceItem.id
                 }"
-                @click="onWorkspaceMenuItemClick(workspaceItem.id, key)"
+                @click="onWorkspaceMenuItemClick(workspaceItem.id, `${itemKey}`)"
               />
             </LayoutSidebarMenuGroup>
           </LayoutSidebarMenuGroup>
@@ -112,7 +115,10 @@ type MenuItem = {
 
 const { activeUser: user } = useActiveUser()
 const breakpoints = useBreakpoints(TailwindBreakpoints)
-const { result: workspaceResult } = useQuery(settingsSidebarWorkspacesQuery)
+const isWorkspacesEnabled = useIsWorkspacesEnabled()
+const { result: workspaceResult } = useQuery(settingsSidebarWorkspacesQuery, null, {
+  enabled: isWorkspacesEnabled.value
+})
 
 const isMobile = breakpoints.smaller('md')
 const targetWorkspaceId = ref<string | null>(null)
@@ -169,26 +175,30 @@ const workspaceItems = computed(() =>
 const hasWorkspaceItems = computed(() => workspaceItems.value.length > 0)
 const isAdmin = computed(() => user.value?.role === Roles.Server.Admin)
 const selectedMenuItem = computed((): MenuItem | null => {
-  const categories = menuItemConfig.value
-
-  for (const key of ['user', 'server', 'workspace']) {
-    if (targetMenuItem.value && targetMenuItem.value in categories[key]) {
-      return categories[key][targetMenuItem.value]
+  const categories = [
+    menuItemConfig.value.user,
+    menuItemConfig.value.server,
+    menuItemConfig.value.workspace
+  ]
+  for (const category of categories) {
+    if (targetMenuItem.value && targetMenuItem.value in category) {
+      return category[targetMenuItem.value]
     }
   }
 
   if (!isMobile.value && targetMenuItem.value) {
     return targetMenuItem.value.includes('server') && isAdmin.value
-      ? categories.server.general
-      : categories.user.profile
+      ? menuItemConfig.value.server.general
+      : menuItemConfig.value.user.profile
   }
 
   return null
 })
 
-const onWorkspaceMenuItemClick = (id: string, target: string | number) => {
+// Keep track of the selected workspace ID, to open the page for the correct workspace
+const onWorkspaceMenuItemClick = (id: string, target: string) => {
   targetWorkspaceId.value = id
-  targetMenuItem.value = `${target}`
+  targetMenuItem.value = target
 }
 
 watch(
