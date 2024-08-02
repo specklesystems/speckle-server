@@ -13,12 +13,12 @@ export type UpdateUserEmail = (
     update
   }: {
     query:
-      | (Pick<UserEmail, 'id' | 'userId'> & { primary?: boolean })
-      | (Pick<UserEmail, 'email'> & { primary?: boolean })
-      | (Pick<UserEmail, 'userId'> & { primary: true })
+    | (Pick<UserEmail, 'id' | 'userId'> & { primary?: boolean })
+    | (Pick<UserEmail, 'email'> & { primary?: boolean })
+    | (Pick<UserEmail, 'userId'> & { primary: true })
     update: Pick<Partial<UserEmail>, 'email' | 'primary' | 'verified'>
   },
-  { trx }?: { trx: Knex.Transaction }
+  options?: { trx: Knex.Transaction }
 ) => Promise<UserEmail>
 
 export type DeleteUserEmail = (
@@ -34,8 +34,8 @@ export type MarkUserEmailAsVerified = ({
 export type FindPrimaryEmailForUser = (
   query:
     | {
-        userId: string
-      }
+      userId: string
+    }
     | { email: string }
 ) => Promise<UserEmail>
 
@@ -43,7 +43,7 @@ export type FindEmail = (query: Partial<UserEmail>) => Promise<UserEmail>
 
 export type FindEmailsByUserId = ({
   userId
-}: Pick<UserEmail, 'userId'>) => Promise<UserEmail[]>
+}: Pick<Partial<UserEmail>, 'userId'>) => Promise<UserEmail[]>
 
 export type CountEmailsByUserId = ({
   userId

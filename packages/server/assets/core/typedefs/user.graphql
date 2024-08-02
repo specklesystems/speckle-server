@@ -85,6 +85,7 @@ type User {
   Only returned if API user is the user being requested or an admin
   """
   email: String
+  emails: [UserEmail!]! @isOwner
   name: String!
   bio: String
   company: String
