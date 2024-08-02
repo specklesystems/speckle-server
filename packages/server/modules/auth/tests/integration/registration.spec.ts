@@ -1,23 +1,37 @@
+import { db } from '@/db/knex'
 import {
+  generateRegistrationParams,
   localAuthRestApi,
-  LocalAuthRestApiHelpers,
-  RegisterParams
+  LocalAuthRestApiHelpers
 } from '@/modules/auth/tests/helpers/registration'
+import { AllScopes } from '@/modules/core/helpers/mainConstants'
 import { updateServerInfo } from '@/modules/core/services/generic'
+import { findInviteFactory } from '@/modules/serverinvites/repositories/serverInvites'
 import { expectToThrow, itEach } from '@/test/assertionHelper'
 import { BasicTestUser, createTestUsers } from '@/test/authHelper'
+import { UseStreamInviteDocument } from '@/test/graphql/generated/graphql'
+import {
+  createTestContext,
+  testApolloServer,
+  TestApolloServer
+} from '@/test/graphqlHelper'
 import { beforeEachContext } from '@/test/hooks'
 import {
   createServerInviteDirectly,
   createStreamInviteDirectly
 } from '@/test/speckle-helpers/inviteHelper'
-import { BasicTestStream, createTestStreams } from '@/test/speckle-helpers/streamHelper'
-import { faker } from '@faker-js/faker'
+import {
+  BasicTestStream,
+  createTestStreams,
+  getUserStreamRole
+} from '@/test/speckle-helpers/streamHelper'
+import { Roles } from '@speckle/shared'
 import { expect } from 'chai'
-import { random } from 'lodash'
 
 describe('Server registration', () => {
   let restApi: LocalAuthRestApiHelpers
+  let apollo: TestApolloServer
+
   const basicAdminUser: BasicTestUser = {
     name: 'Some Admin Guy',
     email: 'admindude123@asdasd.com',
@@ -34,60 +48,28 @@ describe('Server registration', () => {
   before(async () => {
     const ctx = await beforeEachContext()
     restApi = localAuthRestApi({ express: ctx.app })
+    apollo = await testApolloServer({
+      authUserId: basicAdminUser.id
+    })
 
     await createTestUsers([basicAdminUser])
     await createTestStreams([[basicAdminStream, basicAdminUser]])
   })
 
   describe('with local strategy (email/pw)', () => {
-    const generateRegistrationParams = (): RegisterParams => ({
-      challenge: faker.string.uuid(),
-      user: {
-        email: (random(0, 1000) + faker.internet.email()).toLowerCase(),
-        password: faker.internet.password(),
-        name: faker.person.fullName()
-      }
-    })
-
-    const register = async (
-      params: RegisterParams,
-      options?: Partial<{
-        /**
-         * In case you want the challenge in the 2nd call to be different
-         */
-        getTokenFromAccessCodeChallenge: string
-      }>
-    ) => {
-      const accessCode = await restApi.registerAndGetAccessCode(params)
-      expect(accessCode).to.be.ok
-
-      const token = await restApi.getTokenFromAccessCode({
-        accessCode,
-        challenge: options?.getTokenFromAccessCodeChallenge ?? params.challenge
-      })
-      expect(token).to.be.ok
-
-      const user = await restApi.authCheck({ token })
-      expect(user).to.be.ok
-      expect(user.email).to.equal(params.user.email)
-      expect(user.name).to.equal(params.user.name)
-
-      return params
-    }
-
     it('works', async () => {
       const challenge = 'asd123'
       const params = generateRegistrationParams()
       params.challenge = challenge
 
-      await register(params)
+      await restApi.register(params)
     })
 
     it('fails without challenge', async () => {
       const params = generateRegistrationParams()
       params.challenge = ''
 
-      const e = await expectToThrow(async () => await register(params))
+      const e = await expectToThrow(async () => await restApi.register(params))
       expect(e.message).to.contain('no challenge detected')
     })
 
@@ -102,7 +84,7 @@ describe('Server registration', () => {
         const params = generateRegistrationParams()
         params.user[key] = ''
 
-        const e = await expectToThrow(async () => await register(params))
+        const e = await expectToThrow(async () => await restApi.register(params))
         expect(e.message).to.contain(msg)
       }
     )
@@ -111,7 +93,7 @@ describe('Server registration', () => {
       const params = generateRegistrationParams()
       params.inviteToken = 'bababa'
 
-      const e = await expectToThrow(async () => await register(params))
+      const e = await expectToThrow(async () => await restApi.register(params))
       expect(e.message).to.contain('Wrong e-mail address or invite token')
     })
 
@@ -120,9 +102,54 @@ describe('Server registration', () => {
 
       const e = await expectToThrow(
         async () =>
-          await register(params, { getTokenFromAccessCodeChallenge: 'mismatched' })
+          await restApi.register(params, {
+            getTokenFromAccessCodeChallenge: 'mismatched'
+          })
       )
       expect(e.message).to.contain('Invalid request')
+    })
+
+    it('works with stream invite and allows joining stream afterwards', async () => {
+      const params = generateRegistrationParams()
+
+      const invite = await createStreamInviteDirectly(
+        {
+          email: params.user.email,
+          stream: basicAdminStream
+        },
+        basicAdminUser.id
+      )
+      expect(invite.token).to.be.ok
+
+      params.inviteToken = invite.token
+
+      const newUser = await restApi.register(params)
+
+      const res = await apollo.execute(
+        UseStreamInviteDocument,
+        {
+          accept: true,
+          token: invite.token,
+          streamId: basicAdminStream.id
+        },
+        {
+          context: createTestContext({
+            userId: newUser.id,
+            auth: true,
+            role: Roles.Server.User,
+            token: 'asd',
+            scopes: AllScopes
+          })
+        }
+      )
+
+      expect(res).to.not.haveGraphQLErrors()
+      expect(res.data?.streamInviteUse).to.be.ok
+      expect(await findInviteFactory({ db })({ inviteId: invite.inviteId })).to.be.not
+        .ok
+
+      const userStreamRole = await getUserStreamRole(newUser.id, basicAdminStream.id)
+      expect(userStreamRole).to.be.ok
     })
 
     const inviteOnlyModeSettings = [{ inviteOnly: true }, { inviteOnly: false }]
@@ -141,7 +168,7 @@ describe('Server registration', () => {
           it('fails without invite token', async () => {
             const params = generateRegistrationParams()
 
-            const e = await expectToThrow(async () => await register(params))
+            const e = await expectToThrow(async () => await restApi.register(params))
             expect(e.message).to.contain('This server is invite only')
           })
         }
@@ -171,7 +198,7 @@ describe('Server registration', () => {
 
             params.inviteToken = invite.token
 
-            await register(params)
+            await restApi.register(params)
           }
         )
       })

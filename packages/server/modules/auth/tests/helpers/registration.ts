@@ -1,6 +1,8 @@
+import { faker } from '@faker-js/faker'
 import { getRelativeUrl } from '@speckle/shared'
+import { expect } from 'chai'
 import type { Express } from 'express'
-import { has, isString } from 'lodash'
+import { has, isString, random } from 'lodash'
 import request from 'supertest'
 
 const fakeOrigin = 'http://fake.com'
@@ -134,11 +136,47 @@ export const localAuthRestApi = (params: { express: Express }) => {
     return body.data.activeUser
   }
 
+  const register = async (
+    params: RegisterParams,
+    options?: Partial<{
+      /**
+       * In case you want the challenge in the 2nd call to be different
+       */
+      getTokenFromAccessCodeChallenge: string
+    }>
+  ) => {
+    const accessCode = await registerAndGetAccessCode(params)
+    expect(accessCode).to.be.ok
+
+    const token = await getTokenFromAccessCode({
+      accessCode,
+      challenge: options?.getTokenFromAccessCodeChallenge ?? params.challenge
+    })
+    expect(token).to.be.ok
+
+    const user = await authCheck({ token })
+    expect(user).to.be.ok
+    expect(user.email).to.equal(params.user.email)
+    expect(user.name).to.equal(params.user.name)
+
+    return user
+  }
+
   return {
     registerAndGetAccessCode,
     getTokenFromAccessCode,
-    authCheck
+    authCheck,
+    register
   }
 }
 
 export type LocalAuthRestApiHelpers = ReturnType<typeof localAuthRestApi>
+
+export const generateRegistrationParams = (): RegisterParams => ({
+  challenge: faker.string.uuid(),
+  user: {
+    email: (random(0, 1000) + faker.internet.email()).toLowerCase(),
+    password: faker.internet.password(),
+    name: faker.person.fullName()
+  }
+})
