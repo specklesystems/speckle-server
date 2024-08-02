@@ -3,15 +3,17 @@
     <div v-if="title" class="select-none mb-1">
       <button
         v-if="collapsible"
-        class="group flex gap-1.5 items-center w-full hover:bg-foundation-3 rounded-md p-0.5"
+        class="group flex space-x-1.5 items-center w-full hover:bg-foundation-3 rounded-md p-0.5"
         @click="isOpen = !isOpen"
       >
         <ChevronDownIcon :class="isOpen ? '' : 'rotate-180'" class="h-2.5 w-2.5" />
-        <h6 class="font-semibold text-foreground-2 text-xs flex items-center gap-1.5">
+        <h6
+          class="font-semibold text-foreground-2 text-xs flex items-center space-x-1.5"
+        >
           {{ title }}
         </h6>
       </button>
-      <div v-else class="flex gap-1 items-center w-full p-1 text-foreground-2">
+      <div v-else class="flex space-x-1 items-center w-full p-1 text-foreground-2">
         <div
           v-if="$slots['title-icon']"
           class="h-5 w-5 flex items-center justify-center"

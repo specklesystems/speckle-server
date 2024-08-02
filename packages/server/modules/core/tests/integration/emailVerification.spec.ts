@@ -8,9 +8,9 @@ import {
 } from '@/modules/core/helpers/testHelpers'
 import { markUserEmailAsVerifiedFactory } from '@/modules/core/services/users/emailVerification'
 import { expect } from 'chai'
-import { USER_EMAILS_TABLE_NAME } from '@/modules/core/dbSchema'
+import { UserEmails } from '@/modules/core/dbSchema'
 
-const userEmailTable = db(USER_EMAILS_TABLE_NAME)
+const userEmailTable = db(UserEmails.name)
 
 describe('Verification @user-emails', () => {
   it('should mark user email as verified', async () => {

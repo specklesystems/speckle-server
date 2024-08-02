@@ -51,7 +51,7 @@ const createAndStoreTestWorkspace = async (): Promise<Workspace> => {
     createdAt: new Date(),
     updatedAt: new Date(),
     description: null,
-    logoUrl: null
+    logo: null
   }
 
   await upsertWorkspace({ workspace })

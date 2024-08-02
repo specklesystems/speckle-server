@@ -563,6 +563,9 @@ Generate the environment variables for Speckle server and Speckle objects deploy
 - name: FF_AUTOMATE_MODULE_ENABLED
   value: {{ .Values.featureFlags.automateModuleEnabled | quote }}
 
+- name: FF_WORKSPACES_MODULE_ENABLED
+  value: {{ .Values.featureFlags.workspaceModuleEnabled | quote }}
+
 {{- if .Values.featureFlags.automateModuleEnabled }}
 - name: SPECKLE_AUTOMATE_URL
   value: {{ .Values.server.speckleAutomateUrl }}
