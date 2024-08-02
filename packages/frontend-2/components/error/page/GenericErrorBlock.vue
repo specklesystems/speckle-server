@@ -7,7 +7,7 @@
       <h2 class="h2 text-foreground-2 mx-4 break-words max-w-full">
         {{ error.message }}
       </h2>
-      <div class="text-foreground-2 text-xs">Reference #{{ reqId }}</div>
+      <div class="text-foreground-2 text-body-3xs">Reference #{{ reqId }}</div>
     </div>
 
     <div v-if="isDev && error.stack" class="max-w-xl" v-html="error.stack" />
