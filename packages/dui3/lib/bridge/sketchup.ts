@@ -1,9 +1,57 @@
 import { uniqueId } from 'lodash-es'
 import { BaseBridge } from './base'
+import type { ProgressStage } from '@speckle/objectloader'
+import ObjectLoader from '@speckle/objectloader'
+import { provideApolloClient, useMutation } from '@vue/apollo-composable'
+import {
+  createVersionMutation,
+  markReceivedVersionMutation,
+  versionDetailsQuery
+} from '~/lib/graphql/mutationsAndQueries'
+import type { DUIAccount } from '~/store/accounts'
+import { useAccountStore } from '~/store/accounts'
+import { useHostAppStore } from '~/store/hostApp'
+import type { ConversionResult } from '~/lib/conversions/conversionResult'
+import { storeToRefs } from 'pinia'
 
 declare let sketchup: {
   exec: (data: Record<string, unknown>) => void
   getCommands: (viewId: string) => void
+}
+
+type SendViaBrowserArgs = {
+  modelCardId: string
+  projectId: string
+  modelId: string
+  token: string
+  serverUrl: string
+  accountId: string
+  message: string
+  sendConversionResults: ConversionResult[]
+  sendObject: {
+    id: string // the root object id which should be used for creating the version
+    totalChildrenCount: number
+    batches: string[]
+  }
+}
+
+type ReceiveViaBrowserArgs = {
+  modelCardId: string
+  projectId: string
+  modelId: string
+  objectId: string
+  accountId: string
+  selectedVersionId: string
+}
+
+type CreateVersionArgs = {
+  modelCardId: string
+  projectId: string
+  modelId: string
+  accountId: string
+  objectId: string
+  message?: string
+  sourceApplication?: string
 }
 
 /**
@@ -24,7 +72,8 @@ export class SketchupBridge extends BaseBridge {
     }
   >
   private bindingName: string
-  private TIMEOUT_MS = 2000 // 2s
+  private TIMEOUT_MS = 5000 // 2s
+  private NON_TIMEOUT_METHODS = ['send', 'afterGetObjects']
   public isInitalized: Promise<boolean>
   private resolveIsInitializedPromise!: (v: boolean) => unknown
   private rejectIsInitializedPromise!: (message: string) => unknown
@@ -51,7 +100,156 @@ export class SketchupBridge extends BaseBridge {
 
   // NOTE: Overriden emit as we do not need to parse the data back - the Sketchup bridge already parses it for us.
   emit(eventName: string, payload: string): void {
-    this.emitter.emit(eventName, payload as unknown as Record<string, unknown>)
+    const eventPayload = payload as unknown as Record<string, unknown>
+
+    if (eventName === 'sendViaBrowser')
+      this.sendViaBrowser(eventPayload as SendViaBrowserArgs)
+    else if (eventName === 'receiveViaBrowser')
+      this.receiveViaBrowser(eventPayload as ReceiveViaBrowserArgs)
+
+    return this.emitter.emit(eventName, eventPayload)
+  }
+
+  private async receiveViaBrowser(eventPayload: ReceiveViaBrowserArgs) {
+    const accountStore = useAccountStore()
+    const hostAppStore = useHostAppStore()
+    const { accounts } = storeToRefs(accountStore)
+    const account = accounts.value.find(
+      (acc) => acc.accountInfo.id === eventPayload.accountId
+    )
+    provideApolloClient((account as DUIAccount).client)
+
+    // useQuery cannot use in outside of VueComponent.
+    const result = await (account as DUIAccount).client.query({
+      query: versionDetailsQuery,
+      variables: {
+        projectId: eventPayload.projectId,
+        versionId: eventPayload.selectedVersionId,
+        modelId: eventPayload.modelId
+      }
+    })
+
+    const loader = new ObjectLoader({
+      serverUrl: account?.accountInfo.serverInfo.url as string,
+      token: account?.accountInfo.token as string,
+      streamId: eventPayload.projectId,
+      objectId: result.data.project.model.version.referencedObject
+    })
+
+    const updateProgress = (e: {
+      stage: ProgressStage
+      current: number
+      total: number
+    }) => {
+      const progress = e.current / e.total
+      hostAppStore.handleModelProgressEvents({
+        modelCardId: eventPayload.modelCardId,
+        progress: { status: 'Downloading', progress }
+      })
+    }
+
+    // eslint-disable-next-line @typescript-eslint/await-thenable
+    const rootObj = await loader.getAndConstructObject(updateProgress)
+    const args = [
+      eventPayload.modelCardId,
+      result.data.project.model.version.sourceApplication,
+      rootObj
+    ]
+
+    const markReceived = provideApolloClient((account as DUIAccount).client)(() =>
+      useMutation(markReceivedVersionMutation)
+    )
+
+    await markReceived.mutate({
+      input: {
+        versionId: eventPayload.selectedVersionId,
+        projectId: eventPayload.projectId,
+        sourceApplication: 'Sketchup'
+      }
+    })
+
+    // CONVERSION WILL START AFTER THAT
+    await this.runMethod('afterGetObjects', args as unknown as unknown[])
+  }
+
+  /**
+   * Internal sketchup method for sending data via the browser.
+   * @param eventPayload
+   */
+  private async sendViaBrowser(eventPayload: SendViaBrowserArgs) {
+    const {
+      serverUrl,
+      token,
+      projectId,
+      accountId,
+      modelId,
+      modelCardId,
+      sendObject,
+      sendConversionResults,
+      message
+    } = eventPayload
+    this.emit('setModelProgress', {
+      modelCardId,
+      progress: {
+        status: 'Uploading',
+        progress: 0
+      }
+    } as unknown as string)
+    // TODO: More of a question: why are we not sending multiple batches at once?
+    // What's in a batch? etc. To look at optmizing this and not blocking the
+    // main thread.
+    const promises = [] as Promise<Response>[]
+    sendObject.batches.forEach((batch) => {
+      const formData = new FormData()
+      formData.append(`batch-1`, new Blob([batch], { type: 'application/json' }))
+      promises.push(
+        fetch(`${serverUrl}/objects/${projectId}`, {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token },
+          body: formData
+        })
+      )
+    })
+    await Promise.all(promises)
+
+    const args: CreateVersionArgs = {
+      modelCardId,
+      projectId,
+      modelId,
+      accountId,
+      objectId: sendObject.id,
+      sourceApplication: 'sketchup',
+      message: message || 'send from sketchup'
+    }
+    const versionId = await this.createVersion(args)
+
+    const hostAppStore = useHostAppStore()
+    // TODO: Alignment needed
+    hostAppStore.setModelSendResult({
+      modelCardId: args.modelCardId,
+      versionId: versionId as string,
+      sendConversionResults
+    })
+  }
+
+  public async createVersion(args: CreateVersionArgs) {
+    const accountStore = useAccountStore()
+    const { accounts } = storeToRefs(accountStore)
+    const account = accounts.value.find((acc) => acc.accountInfo.id === args.accountId)
+
+    const createVersion = provideApolloClient((account as DUIAccount).client)(() =>
+      useMutation(createVersionMutation)
+    )
+
+    const result = await createVersion.mutate({
+      input: {
+        modelId: args.modelId,
+        objectId: args.objectId,
+        sourceApplication: 'Sketchup',
+        projectId: args.projectId
+      }
+    })
+    return result?.data?.versionMutations?.create?.id
   }
 
   public async create(): Promise<boolean> {
@@ -116,12 +314,15 @@ export class SketchupBridge extends BaseBridge {
       this.requests[requestId] = {
         resolve,
         reject,
-        rejectTimerId: window.setTimeout(() => {
-          reject(
-            `Sketchup response timed out - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
-          )
-          delete this.requests[requestId]
-        }, this.TIMEOUT_MS)
+        rejectTimerId: window.setTimeout(
+          () => {
+            reject(
+              `Sketchup response timed out for ${methodName} - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
+            )
+            delete this.requests[requestId]
+          },
+          this.NON_TIMEOUT_METHODS.includes(methodName) ? 3600000 : this.TIMEOUT_MS
+        )
       }
     })
   }
@@ -157,5 +358,9 @@ export class SketchupBridge extends BaseBridge {
     window.alert(
       'Sketchup cannot do this. The dev tools menu is accessible via a right click.'
     )
+  }
+
+  public openUrl(url: string) {
+    window.open(url)
   }
 }

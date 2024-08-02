@@ -1,3 +1,4 @@
+import { BaseBridgeErrorHandler } from '~/lib/bridge/errorHandler'
 import type { Emitter } from 'nanoevents'
 import { createNanoEvents } from 'nanoevents'
 
@@ -10,6 +11,7 @@ export class BaseBridge {
 
   constructor() {
     this.emitter = createNanoEvents()
+    new BaseBridgeErrorHandler(this.emitter) // Where we set error to hostApp store
   }
 
   // NOTE: these do not need to be typed extra in here, as they will be properly typed on the specific binding's interface.

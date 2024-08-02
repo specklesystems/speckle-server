@@ -1,26 +1,28 @@
 import type { IRawBridge } from '~/lib/bridge/definitions'
-
-import { GenericBridge } from '~/lib/bridge/generic'
+import { GenericBridge } from '~/lib/bridge/generic-v2'
 import { SketchupBridge } from '~/lib/bridge/sketchup'
 
 import type { IBasicConnectorBinding } from '~/lib/bindings/definitions/IBasicConnectorBinding'
-import {
-  IBasicConnectorBindingKey,
-  MockedBaseBinding
-} from '~/lib/bindings/definitions/IBasicConnectorBinding'
+import type { IAccountBinding } from '~/lib/bindings/definitions/IAccountBinding'
+import { IAccountBindingKey } from '~/lib/bindings/definitions/IAccountBinding'
 
 import type { ITestBinding } from '~/lib/bindings/definitions/ITestBinding'
-import {
-  ITestBindingKey,
-  MockedTestBinding
-} from '~/lib/bindings/definitions/ITestBinding'
+import { ITestBindingKey } from '~/lib/bindings/definitions/ITestBinding'
 
 import type { IConfigBinding } from '~/lib/bindings/definitions/IConfigBinding'
-import {
-  IConfigBindingKey,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  MockedConfigBinding
-} from '~/lib/bindings/definitions/IConfigBinding'
+import { IConfigBindingKey } from '~/lib/bindings/definitions/IConfigBinding'
+
+import { IBasicConnectorBindingKey } from '~/lib/bindings/definitions/IBasicConnectorBinding'
+
+import type { ISendBinding } from '~/lib/bindings/definitions/ISendBinding'
+import { ISendBindingKey } from '~/lib/bindings/definitions/ISendBinding'
+import type { IReceiveBinding } from '~/lib/bindings/definitions/IReceiveBinding'
+import { IReceiveBindingKey } from '~/lib/bindings/definitions/IReceiveBinding'
+
+import type { ISelectionBinding } from '~/lib/bindings/definitions/ISelectionBinding'
+import { ISelectionBindingKey } from '~/lib/bindings/definitions/ISelectionBinding'
+import type { ITopLevelExpectionHandlerBinding } from '~/lib/bindings/definitions/ITopLevelExceptionHandlerBinding'
+import { ITopLevelExpectionHandlerBindingKey } from '~/lib/bindings/definitions/ITopLevelExceptionHandlerBinding'
 
 // Makes TS happy
 declare let globalThis: Record<string, unknown> & {
@@ -35,35 +37,55 @@ declare let globalThis: Record<string, unknown> & {
  * strip or customize functionality from the ui itself.
  */
 export default defineNuxtPlugin(async () => {
-  // Registers some default test bindings.
-  const testBindings =
-    (await tryHoistBinding<ITestBinding>(ITestBindingKey)) || new MockedTestBinding()
-
-  // Tries to register some non-existant bindings.
+  // Registers a set of non existent bindings as a test.
   const nonExistantBindings = await tryHoistBinding('nonExistantBindings')
 
-  // Registers a set of default bindings.
-  const baseBinding =
-    (await tryHoistBinding<IBasicConnectorBinding>(IBasicConnectorBindingKey)) ||
-    new MockedBaseBinding()
+  // Registers some default test bindings.
+  const testBindings = await tryHoistBinding<ITestBinding>(ITestBindingKey)
 
-  // UI configuration bindings.
+  // Actual bindings follow below.
   const configBinding = await tryHoistBinding<IConfigBinding>(IConfigBindingKey)
 
+  const accountBinding = await tryHoistBinding<IAccountBinding>(IAccountBindingKey)
+
+  const baseBinding = await tryHoistBinding<IBasicConnectorBinding>(
+    IBasicConnectorBindingKey
+  )
+
+  const sendBinding = await tryHoistBinding<ISendBinding>(ISendBindingKey)
+
+  const receiveBinding = await tryHoistBinding<IReceiveBinding>(IReceiveBindingKey)
+
+  const selectionBinding = await tryHoistBinding<ISelectionBinding>(
+    ISelectionBindingKey
+  )
+
+  const topLevelExceptionHandlerBinding =
+    await tryHoistBinding<ITopLevelExpectionHandlerBinding>(
+      ITopLevelExpectionHandlerBindingKey
+    )
+
+  // Any binding implments these two methods below, we just choose one to
+  // expose globally to the app.
   const showDevTools = () => {
-    baseBinding.showDevTools()
+    configBinding.showDevTools()
   }
 
   const openUrl = (url: string) => {
-    baseBinding.openUrl(url)
+    configBinding.openUrl(url)
   }
 
   return {
     provide: {
-      testBindings,
       nonExistantBindings,
-      baseBinding,
+      testBindings,
       configBinding,
+      accountBinding,
+      baseBinding,
+      sendBinding,
+      receiveBinding,
+      selectionBinding,
+      topLevelExceptionHandlerBinding,
       showDevTools,
       openUrl
     }
@@ -96,8 +118,24 @@ const tryHoistBinding = async <T>(name: string) => {
   const res = await tempBridge?.create()
   if (res) bridge = tempBridge
 
-  if (!bridge) console.warn(`Failed to bind ${name} binding.`)
+  if (!bridge) {
+    console.warn(`Failed to bind ${name} binding.`)
+    return bridge as unknown as T
+  }
 
   globalThis[name] = bridge
+  console.log(
+    `%c✔ ${name} connector binding added succesfully.`,
+    'color: green; font-weight: bold; font-size: small'
+  )
   return bridge as unknown as T
 }
+
+// const hoistMockBinding = (mockBinding: BaseBridge, name: string) => {
+//   globalThis[name] = mockBinding
+//   console.log(
+//     `%c✔ Mocked ${name} binding added succesfully.`,
+//     'color: green; font-weight: bold; font-size: small'
+//   )
+//   return mockBinding
+// }
