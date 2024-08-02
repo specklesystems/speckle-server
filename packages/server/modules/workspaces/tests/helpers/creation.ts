@@ -43,7 +43,7 @@ export type BasicTestWorkspace = {
   ownerId: string
   name: string
   description?: string
-  logoUrl?: string
+  logo?: string
 }
 
 export const createTestWorkspace = async (
@@ -53,7 +53,6 @@ export const createTestWorkspace = async (
   const createWorkspace = createWorkspaceFactory({
     upsertWorkspace: upsertWorkspaceFactory({ db }),
     upsertWorkspaceRole: upsertWorkspaceRoleFactory({ db }),
-    storeBlob: () => Promise.resolve(''),
     emitWorkspaceEvent: (...args) => getEventBus().emit(...args)
   })
 
@@ -62,7 +61,7 @@ export const createTestWorkspace = async (
     workspaceInput: {
       name: workspace.name,
       description: workspace.description || null,
-      logoUrl: workspace.logoUrl || null
+      logo: workspace.logo || null
     },
     userResourceAccessLimits: null
   })

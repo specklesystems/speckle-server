@@ -7,7 +7,7 @@ export const workspaceFragment = gql`
     description
     createdAt
     updatedAt
-    logoUrl
+    logo
   }
 `
 

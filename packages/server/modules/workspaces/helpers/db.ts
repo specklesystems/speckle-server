@@ -6,7 +6,7 @@ export const Workspaces = buildTableHelper('workspaces', [
   'description',
   'createdAt',
   'updatedAt',
-  'logoUrl'
+  'logo'
 ])
 
 export const WorkspaceAcl = buildTableHelper('workspace_acl', [
