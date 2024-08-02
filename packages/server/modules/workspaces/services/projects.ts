@@ -2,6 +2,9 @@ import { StreamRecord } from '@/modules/core/helpers/types'
 import { convertDateToCursor, parseCursorToDate } from '@/modules/core/services/admin'
 import { getStreams as serviceGetStreams } from '@/modules/core/services/streams'
 import { WorkspaceQueryError } from '@/modules/workspaces/errors/workspace'
+import { deleteStream as repoDeleteStream } from '@/modules/core/repositories/streams'
+import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
+import { ProjectInviteResourceType } from '@/modules/serverinvites/domain/constants'
 
 export const queryAllWorkspaceProjectsFactory = ({
   getStreams
@@ -74,4 +77,26 @@ export const getWorkspaceProjectsFactory =
       cursor: cursorDate ? convertDateToCursor(cursorDate) : null,
       totalCount: streams.length
     }
+  }
+
+type DeleteWorkspaceProjectArgs = {
+  projectId: string
+}
+
+export const deleteWorkspaceProjectFactory =
+  ({
+    deleteStream,
+    deleteAllResourceInvites
+  }: {
+    deleteStream: typeof repoDeleteStream
+    deleteAllResourceInvites: DeleteAllResourceInvites
+  }) =>
+  async ({ projectId }: DeleteWorkspaceProjectArgs): Promise<void> => {
+    await Promise.all([
+      deleteStream(projectId),
+      deleteAllResourceInvites({
+        resourceId: projectId,
+        resourceType: ProjectInviteResourceType
+      })
+    ])
   }

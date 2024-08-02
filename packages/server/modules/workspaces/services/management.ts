@@ -1,5 +1,6 @@
 import { WorkspaceEvents } from '@/modules/workspacesCore/domain/events'
 import {
+  DeleteWorkspace,
   EmitWorkspaceEvent,
   GetWorkspace,
   UpsertWorkspace,
@@ -37,6 +38,9 @@ import {
 } from '@/modules/core/domain/tokens/types'
 import { ForbiddenError } from '@/modules/shared/errors'
 import { validateImageString } from '@/modules/workspaces/helpers/images'
+import { GraphQLContext } from '@/modules/shared/helpers/typeHelper'
+import { DeleteAllResourceInvites } from '@/modules/serverinvites/domain/operations'
+import { WorkspaceInviteResourceType } from '@/modules/workspaces/domain/constants'
 
 type WorkspaceCreateArgs = {
   userId: string
@@ -150,6 +154,42 @@ export const updateWorkspaceFactory =
     await emitWorkspaceEvent({ eventName: WorkspaceEvents.Updated, payload: workspace })
 
     return workspace
+  }
+
+type WorkspaceDeleteArgs = {
+  workspaceId: string
+}
+
+type WorkspaceDeleteContext = Required<
+  Pick<GraphQLContext, 'userId' | 'resourceAccessRules'>
+>
+
+export const deleteWorkspaceFactory =
+  ({
+    deleteWorkspace,
+    deleteAllResourceInvites
+  }: {
+    deleteWorkspace: DeleteWorkspace
+    deleteAllResourceInvites: DeleteAllResourceInvites
+  }) =>
+  async (
+    { workspaceId }: WorkspaceDeleteArgs,
+    context: WorkspaceDeleteContext
+  ): Promise<void> => {
+    await authorizeResolver(
+      context.userId,
+      workspaceId,
+      Roles.Workspace.Admin,
+      context.resourceAccessRules
+    )
+
+    await Promise.all([
+      deleteWorkspace({ workspaceId }),
+      deleteAllResourceInvites({
+        resourceId: workspaceId,
+        resourceType: WorkspaceInviteResourceType
+      })
+    ])
   }
 
 type WorkspaceRoleDeleteArgs = {
