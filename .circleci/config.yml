@@ -22,7 +22,7 @@ workflows:
               # run tests for any commit on any branch, including any tags
               only: /.*/
 
-      - test-server-ff-workspaces:
+      - test-server-no-ff:
           filters: *filters-allow-all
 
       - test-frontend-2:
@@ -67,7 +67,7 @@ workflows:
       #       - test-viewer
       #       - test-objectsender
       #       - test-server
-      #       - test-server-ff-workspaces
+      #       - test-server-no-ff
       #       - docker-build-server
       #       - docker-build-frontend
       #       - docker-build-frontend-2
@@ -91,7 +91,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
-            - test-server-ff-workspaces
+            - test-server-no-ff
             - docker-build-server
             - docker-build-frontend
             - docker-build-frontend-2
@@ -185,7 +185,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
-            - test-server-ff-workspaces
+            - test-server-no-ff
 
       - docker-publish-frontend:
           context: *docker-hub-context
@@ -199,7 +199,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
-            - test-server-ff-workspaces
+            - test-server-no-ff
 
       - docker-publish-frontend-2:
           context: *docker-hub-context
@@ -213,7 +213,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
-            - test-server-ff-workspaces
+            - test-server-no-ff
 
       - docker-publish-webhooks:
           context: *docker-hub-context
@@ -227,7 +227,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
-            - test-server-ff-workspaces
+            - test-server-no-ff
 
       - docker-publish-file-imports:
           context: *docker-hub-context
@@ -241,7 +241,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
-            - test-server-ff-workspaces
+            - test-server-no-ff
 
       - docker-publish-previews:
           context: *docker-hub-context
@@ -255,7 +255,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
-            - test-server-ff-workspaces
+            - test-server-no-ff
 
       - docker-publish-test-container:
           context: *docker-hub-context
@@ -269,7 +269,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
-            - test-server-ff-workspaces
+            - test-server-no-ff
 
       - docker-publish-monitor-container:
           context: *docker-hub-context
@@ -283,7 +283,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
-            - test-server-ff-workspaces
+            - test-server-no-ff
 
       - docker-publish-docker-compose-ingress:
           context: *docker-hub-context
@@ -297,7 +297,7 @@ workflows:
             - test-viewer
             - test-objectsender
             - test-server
-            - test-server-ff-workspaces
+            - test-server-no-ff
 
       - publish-helm-chart:
           filters: &filters-publish
@@ -336,7 +336,7 @@ workflows:
           requires:
             - get-version
             - test-server
-            - test-server-ff-workspaces
+            - test-server-no-ff
             - test-ui-components
             - test-frontend-2
             - test-viewer
@@ -463,7 +463,6 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
-      FF_AUTOMATE_MODULE_ENABLED: 'false'
       AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
     steps:
       - checkout
@@ -532,7 +531,7 @@ jobs:
       # path: packages/server/coverage/lcov-report
       # destination: package/server/coverage
 
-  test-server-ff-workspaces:
+  test-server-no-ff:
     <<: *test-server-job
     environment:
       NODE_ENV: test
@@ -549,8 +548,10 @@ jobs:
       S3_CREATE_BUCKET: 'true'
       REDIS_URL: 'redis://127.0.0.1:6379'
       S3_REGION: '' # optional, defaults to 'us-east-1'
-      FF_AUTOMATE_MODULE_ENABLED: 'true'
       AUTOMATE_ENCRYPTION_KEYS_PATH: 'test/assets/automate/encryptionKeys.json'
+      FF_AUTOMATE_MODULE_ENABLED: 'false' # Disable all FFs
+      FF_WORKSPACES_MODULE_ENABLED: 'false'
+      FF_GENDOAI_MODULE_ENABLED: 'false'
 
   test-frontend-2:
     docker: &docker-node-browsers-image
