@@ -146,3 +146,5 @@ export const isArrayOf = <T>(arr: unknown, guard: (v: unknown) => v is T): arr i
   Array.isArray(arr) && arr.every(guard)
 
 export const waitForever = (): Promise<never> => new Promise<never>(noop)
+
+export const getRelativeUrl = (url: URL) => url.pathname + url.search + url.hash

@@ -1,8 +1,11 @@
+import { getRelativeUrl } from '@speckle/shared'
 import type { Express } from 'express'
-import { isString } from 'lodash'
+import { has, isString } from 'lodash'
 import request from 'supertest'
 
 const fakeOrigin = 'http://fake.com'
+export const appId = 'spklwebapp' // same values as on FE
+export const appSecret = 'spklwebapp'
 
 export type RegisterParams = {
   challenge: string
@@ -14,6 +17,13 @@ export type RegisterParams = {
     name: string
     company?: string
   }
+}
+
+export type RequestTokenParams = {
+  accessCode: string
+  challenge: string
+  appId?: string
+  appSecret?: string
 }
 
 export const localAuthRestApi = (params: { express: Express }) => {
@@ -28,12 +38,14 @@ export const localAuthRestApi = (params: { express: Express }) => {
           ? body.err
           : body.message || 'An issue occurred while resolving access code'
         throw new Error(errMsg)
+      } else if (res.text?.length) {
+        throw new Error(res.text)
       }
 
       throw new Error('Authentication request unexpectedly did not redirect')
     }
 
-    const redirectUrl = res.xhr
+    const redirectUrl = res.header['location']
     const accessCode = new URL(redirectUrl).searchParams.get('access_code')
     if (!accessCode) {
       throw new Error('Unable to resolver access_code from auth response')
@@ -44,9 +56,6 @@ export const localAuthRestApi = (params: { express: Express }) => {
 
   const registerAndGetAccessCode = async (params: RegisterParams) => {
     const { challenge, user, inviteToken, newsletter } = params
-    if (!user.email || !user.password || !user.name) {
-      throw new Error("Can't register without a valid email, password and name!")
-    }
 
     const registerUrl = new URL(`/auth/local/register`, fakeOrigin)
     registerUrl.searchParams.append('challenge', challenge)
@@ -58,9 +67,8 @@ export const localAuthRestApi = (params: { express: Express }) => {
       registerUrl.searchParams.append('newsletter', 'true')
     }
 
-    const relativeUrl = registerUrl.pathname + registerUrl.search
+    const relativeUrl = getRelativeUrl(registerUrl)
 
-    // POST against express instance
     const res = await request(express)
       .post(relativeUrl)
       .send(user)
@@ -69,8 +77,59 @@ export const localAuthRestApi = (params: { express: Express }) => {
     return await resolveAccessCode(res)
   }
 
+  const getTokenFromAccessCode = async (params: RequestTokenParams) => {
+    const { accessCode, challenge } = params
+
+    const url = '/auth/token'
+    const res = await request(express)
+      .post(url)
+      .send({
+        accessCode,
+        challenge,
+        appId: has(params, 'appId') ? params.appId : appId,
+        appSecret: has(params, 'appSecret') ? params.appSecret : appSecret
+      })
+      .set('Content-Type', 'application/json')
+
+    if (!res.ok) {
+      throw new Error('Failed to get token from access code')
+    }
+
+    const data = res.body as { token: string; refreshToken: string }
+    if (!data.token) {
+      throw new Error("Couldn't resolve token through access code.")
+    }
+
+    return data.token
+  }
+
+  const authCheck = async (params: { token: string }) => {
+    const query = 'query LocalAuthRestApiAuthCheck { activeUser { id email name } }'
+    const res = await request(express)
+      .post('/graphql')
+      .set('Authorization', `Bearer ${params.token}`)
+      .send({ query })
+
+    if (!res.ok) {
+      throw new Error('Failed to check auth')
+    }
+
+    const body = res.body as {
+      data: { activeUser?: { id: string; name: string; email: string } }
+      errors?: { message: string; extensions: Record<string, string> }[]
+    }
+    if (!body.data.activeUser) {
+      const err = body.errors?.[0]?.message || 'Unknown issue occurred'
+      throw new Error('Auth check failed: ' + err)
+    }
+
+    return body.data.activeUser
+  }
+
   return {
-    registerAndGetAccessCode
+    registerAndGetAccessCode,
+    getTokenFromAccessCode,
+    authCheck
   }
 }
 
