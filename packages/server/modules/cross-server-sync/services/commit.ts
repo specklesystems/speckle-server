@@ -554,7 +554,7 @@ const loadAllObjectsFromParent = async (
         () =>
           Promise.race([
             createNewObject(typedObj, targetStreamId, { logger }),
-            timeoutAt(30 * 1000, `Object create timed out! - ${id}`)
+            timeoutAt(10 * 1000, `Object create timed out! - ${id}`)
           ]),
         3
       )

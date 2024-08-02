@@ -40,7 +40,11 @@
               <PreviewImage :preview-url="version.previewUrl" />
             </NuxtLink>
             <div
-              v-if="!isPendingVersionFragment(version) && version.automationsStatus"
+              v-if="
+                isAutomateModuleEnabled &&
+                !isPendingVersionFragment(version) &&
+                version.automationsStatus
+              "
               class="absolute top-1 left-0 p-2"
             >
               <AutomateRunsTriggerStatus
@@ -139,6 +143,8 @@ const props = defineProps<{
   selected?: boolean
   selectionDisabled?: boolean
 }>()
+
+const isAutomateModuleEnabled = useIsAutomateModuleEnabled()
 
 const showActionsMenu = ref(false)
 

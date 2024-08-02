@@ -172,8 +172,8 @@ export const deleteWorkspaceRoleFactory =
     revokeStreamPermissions: typeof repoRevokeStreamPermissions
   }) =>
   async ({
-    userId,
-    workspaceId
+    workspaceId,
+    userId
   }: WorkspaceRoleDeleteArgs): Promise<WorkspaceAcl | null> => {
     // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
@@ -222,7 +222,7 @@ export const getWorkspaceRoleFactory =
     return await getWorkspaceRoleForUser({ userId, workspaceId })
   }
 
-export const setWorkspaceRoleFactory =
+export const updateWorkspaceRoleFactory =
   ({
     getWorkspaceRoles,
     upsertWorkspaceRole,
@@ -237,7 +237,7 @@ export const setWorkspaceRoleFactory =
     getStreams: typeof serviceGetStreams
     grantStreamPermissions: typeof repoGrantStreamPermissions
   }) =>
-  async ({ userId, workspaceId, role }: WorkspaceAcl): Promise<void> => {
+  async ({ workspaceId, userId, role }: WorkspaceAcl): Promise<void> => {
     // Protect against removing last admin
     const workspaceRoles = await getWorkspaceRoles({ workspaceId })
     if (

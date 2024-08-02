@@ -206,6 +206,7 @@ const documents = {
     "\n  query AdminPanelProjectsList(\n    $query: String\n    $orderBy: String\n    $limit: Int!\n    $visibility: String\n    $cursor: String\n  ) {\n    admin {\n      projectList(\n        query: $query\n        orderBy: $orderBy\n        limit: $limit\n        visibility: $visibility\n        cursor: $cursor\n      ) {\n        cursor\n        items {\n          id\n          name\n          visibility\n          createdAt\n          updatedAt\n          models {\n            totalCount\n          }\n          versions {\n            totalCount\n          }\n          team {\n            id\n            user {\n              name\n              id\n              avatar\n            }\n          }\n        }\n        totalCount\n        cursor\n      }\n    }\n  }\n": types.AdminPanelProjectsListDocument,
     "\n  query AdminPanelInvitesList($limit: Int!, $cursor: String, $query: String) {\n    admin {\n      inviteList(limit: $limit, cursor: $cursor, query: $query) {\n        cursor\n        items {\n          email\n          id\n          invitedBy {\n            id\n            name\n          }\n        }\n        totalCount\n      }\n    }\n  }\n": types.AdminPanelInvitesListDocument,
     "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n": types.InviteServerUserDocument,
+    "\n  query SettingsSidebarWorkspaces {\n    activeUser {\n      workspaces {\n        items {\n          id\n          name\n        }\n      }\n    }\n  }\n": types.SettingsSidebarWorkspacesDocument,
     "\n  fragment AppAuthorAvatar on AppAuthor {\n    id\n    name\n    avatar\n  }\n": types.AppAuthorAvatarFragmentDoc,
     "\n  fragment LimitedUserAvatar on LimitedUser {\n    id\n    name\n    avatar\n  }\n": types.LimitedUserAvatarFragmentDoc,
     "\n  fragment ActiveUserAvatar on User {\n    id\n    name\n    avatar\n  }\n": types.ActiveUserAvatarFragmentDoc,
@@ -1029,6 +1030,10 @@ export function graphql(source: "\n  query AdminPanelInvitesList($limit: Int!, $
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
 export function graphql(source: "\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n"): (typeof documents)["\n  mutation InviteServerUser($input: [ServerInviteCreateInput!]!) {\n    serverInviteBatchCreate(input: $input)\n  }\n"];
+/**
+ * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
+ */
+export function graphql(source: "\n  query SettingsSidebarWorkspaces {\n    activeUser {\n      workspaces {\n        items {\n          id\n          name\n        }\n      }\n    }\n  }\n"): (typeof documents)["\n  query SettingsSidebarWorkspaces {\n    activeUser {\n      workspaces {\n        items {\n          id\n          name\n        }\n      }\n    }\n  }\n"];
 /**
  * The graphql function is used to parse GraphQL queries into a document that can be used by GraphQL clients.
  */
