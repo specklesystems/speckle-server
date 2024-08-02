@@ -34,7 +34,7 @@ import {
 } from '@/test/graphql/generated/graphql'
 import { expect } from 'chai'
 import {
-  createStreamInviteDirectlyFactory,
+  createStreamInviteDirectly,
   validateInviteExistanceFromEmail
 } from '@/test/speckle-helpers/inviteHelper'
 import { MaybeAsync, Roles } from '@speckle/shared'
@@ -591,7 +591,7 @@ describe('Workspaces Invites GQL', () => {
         processableWorkspaceInvite.inviteId = workspaceInvite.inviteId
         processableWorkspaceInvite.token = workspaceInvite.token
 
-        const projectInvite = await createStreamInviteDirectlyFactory({ db })(
+        const projectInvite = await createStreamInviteDirectly(
           {
             user: otherGuy,
             stream: myInviteTargetWorkspaceStream1
