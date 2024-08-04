@@ -1,6 +1,6 @@
 import type { IRawBridge } from '~/lib/bridge/definitions'
 import { GenericBridge } from '~/lib/bridge/generic-v2'
-import { SketchupBridge } from '~/lib/bridge/sketchup'
+import { SketchupBridge } from '~/lib/bridge/sketchup-v2'
 
 import type { IBasicConnectorBinding } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import type { IAccountBinding } from '~/lib/bindings/definitions/IAccountBinding'
