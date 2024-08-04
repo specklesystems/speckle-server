@@ -193,6 +193,11 @@ export abstract class ServerBridge extends BaseBridge {
       }
     })
 
+    hostAppStore.handleModelProgressEvents({
+      modelCardId: eventPayload.modelCardId,
+      progress: { status: 'Converting' }
+    })
+
     // CONVERSION WILL START AFTER THAT
     await this.runMethod('afterGetObjects', args as unknown as unknown[])
   }
