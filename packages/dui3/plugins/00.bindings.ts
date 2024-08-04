@@ -1,6 +1,7 @@
 import type { IRawBridge } from '~/lib/bridge/definitions'
 import { GenericBridge } from '~/lib/bridge/generic-v2'
 import { SketchupBridge } from '~/lib/bridge/sketchup-v2'
+import { ArchicadBridge } from '~/lib/bridge/archicad'
 
 import type { IBasicConnectorBinding } from '~/lib/bindings/definitions/IBasicConnectorBinding'
 import type { IAccountBinding } from '~/lib/bindings/definitions/IAccountBinding'
@@ -29,6 +30,7 @@ declare let globalThis: Record<string, unknown> & {
   CefSharp?: { BindObjectAsync: (name: string) => Promise<void> }
   chrome?: { webview: { hostObjects: Record<string, IRawBridge> } }
   sketchup?: Record<string, unknown>
+  DG?: Record<string, unknown>
 }
 
 /**
@@ -99,8 +101,8 @@ export default defineNuxtPlugin(async () => {
  * @returns null if the binding was not found, or the binding.
  */
 const tryHoistBinding = async <T>(name: string) => {
-  let bridge: GenericBridge | SketchupBridge | null = null
-  let tempBridge: GenericBridge | SketchupBridge | null = null
+  let bridge: GenericBridge | SketchupBridge | ArchicadBridge | null = null
+  let tempBridge: GenericBridge | SketchupBridge | ArchicadBridge | null = null
 
   if (globalThis.CefSharp) {
     await globalThis.CefSharp.BindObjectAsync(name)
@@ -113,6 +115,11 @@ const tryHoistBinding = async <T>(name: string) => {
 
   if (globalThis.sketchup && !tempBridge) {
     tempBridge = new SketchupBridge(name)
+  }
+
+  if (globalThis.DG && !tempBridge) {
+    // TODO: need to check later whether object bind to `globalThis` or `DG` object
+    tempBridge = new ArchicadBridge(globalThis[name] as unknown as IRawBridge, name)
   }
 
   const res = await tempBridge?.create()
