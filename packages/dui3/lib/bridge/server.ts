@@ -65,14 +65,17 @@ export abstract class ServerBridge extends BaseBridge {
   >
 
   public TIMEOUT_MS = 5000
-  public NON_TIMEOUT_METHODS = ['send', 'afterGetObjects']
+  public NON_TIMEOUT_METHODS = [
+    'send', // send conversion might takes quite a lot of times
+    'afterGetObjects' // receive conversion might takes quite a lot of times after objects get from server
+  ]
   public bindingName: string
   constructor(bindingName: string) {
     super()
     this.bindingName = bindingName
   }
 
-  // NOTE: Overriden emit as we do not need to parse the data back - the Sketchup bridge already parses it for us.
+  // NOTE: Overriden emit as we do not need to parse the data back - the Server bridge already parses it for us.
   emit(eventName: string, payload: string): void {
     const eventPayload = payload as unknown as Record<string, unknown>
 
@@ -85,7 +88,7 @@ export abstract class ServerBridge extends BaseBridge {
   }
 
   /**
-   * Internal calls to Sketchup.
+   * Internal calls to ServerBridge as sketchup, archicad etc..
    * @param methodName
    * @param args
    */
@@ -93,6 +96,7 @@ export abstract class ServerBridge extends BaseBridge {
     const requestId = uniqueId(this.bindingName)
     this.execMethod(methodName, requestId, args)
 
+    const hostAppStore = useHostAppStore()
     return new Promise((resolve, reject) => {
       this.requests[requestId] = {
         resolve,
@@ -100,7 +104,7 @@ export abstract class ServerBridge extends BaseBridge {
         rejectTimerId: window.setTimeout(
           () => {
             reject(
-              `Sketchup response timed out for ${methodName} - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
+              `${hostAppStore.hostAppName} response timed out for ${methodName} - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
             )
             delete this.requests[requestId]
           },
@@ -111,9 +115,6 @@ export abstract class ServerBridge extends BaseBridge {
   }
 
   public receiveResponse(requestId: string, data: object) {
-    console.log('receiveResponse', requestId, data)
-    console.log('requests', this.requests)
-
     if (!this.requests[requestId])
       throw new Error(`No request found with id ${requestId}.`)
 
@@ -197,7 +198,7 @@ export abstract class ServerBridge extends BaseBridge {
   }
 
   /**
-   * Internal sketchup method for sending data via the browser.
+   * Internal server bridge method for sending data via the browser.
    * @param eventPayload
    */
   private async sendViaBrowser(eventPayload: SendViaBrowserArgs) {
