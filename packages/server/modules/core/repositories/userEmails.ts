@@ -32,9 +32,13 @@ export const createUserEmailFactory =
 
 export const updateUserEmailFactory =
   ({ db }: { db: Knex }): UpdateUserEmail =>
-  async ({ query, update }, options) => {
+  async ({ query, update }) => {
+    const queryWithUserId = query as Pick<UserEmail, 'userId'>
+    if (queryWithUserId.userId && update.primary) {
+      await checkPrimaryEmail({ db })(queryWithUserId)
+    }
+
     const q = db<UserEmail>(UserEmails.name).where(query).update(update, '*')
-    if (options?.trx) q.transacting(options.trx)
 
     const [updated] = await q
     return updated
@@ -102,20 +106,14 @@ export const setPrimaryUserEmailFactory =
   ({ db }: { db: Knex }): SetPrimaryUserEmail =>
   async ({ id, userId }) => {
     await db.transaction(async (trx) => {
-      await updateUserEmailFactory({ db })(
-        {
-          query: { userId, primary: true },
-          update: { primary: false }
-        },
-        { trx }
-      )
-      await updateUserEmailFactory({ db })(
-        {
-          query: { id, userId },
-          update: { primary: true }
-        },
-        { trx }
-      )
+      await updateUserEmailFactory({ db: trx })({
+        query: { userId, primary: true },
+        update: { primary: false }
+      })
+      await updateUserEmailFactory({ db: trx })({
+        query: { id, userId },
+        update: { primary: true }
+      })
     })
     return true
   }
