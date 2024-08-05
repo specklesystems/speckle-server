@@ -11,10 +11,9 @@ import { storeToRefs } from 'pinia'
 import type { DUIAccount } from '~/store/accounts'
 import { useAccountStore } from '~/store/accounts'
 import { useHostAppStore } from '~/store/hostApp'
-import { uniqueId } from 'lodash-es'
-import { BaseBridge } from '~/lib/bridge/base'
+import { GenericBridge } from 'lib/bridge/generic-v2'
 
-type SendViaBrowserArgs = {
+export type SendViaBrowserArgs = {
   modelCardId: string
   projectId: string
   modelId: string
@@ -30,7 +29,7 @@ type SendViaBrowserArgs = {
   }
 }
 
-type ReceiveViaBrowserArgs = {
+export type ReceiveViaBrowserArgs = {
   modelCardId: string
   projectId: string
   modelId: string
@@ -39,7 +38,7 @@ type ReceiveViaBrowserArgs = {
   selectedVersionId: string
 }
 
-type CreateVersionArgs = {
+export type CreateVersionArgs = {
   modelCardId: string
   projectId: string
   modelId: string
@@ -49,93 +48,22 @@ type CreateVersionArgs = {
   sourceApplication?: string
 }
 
-export abstract class ServerBridge extends BaseBridge {
-  protected abstract execMethod(
-    methodName: string,
-    requestId: string,
-    args: unknown[]
-  ): void
-  private requests = {} as Record<
-    string,
-    {
-      resolve: (value: unknown) => void
-      reject: (reason: string | Error) => void
-      rejectTimerId: number
-    }
-  >
-
-  public TIMEOUT_MS = 5000
-  public NON_TIMEOUT_METHODS = [
-    'send', // send conversion might takes quite a lot of times
-    'afterGetObjects' // receive conversion might takes quite a lot of times after objects get from server
-  ]
-  public bindingName: string
-  constructor(bindingName: string) {
-    super()
-    this.bindingName = bindingName
-  }
-
+// TODO: Once ruby codebase aligned with it, sketchup will consume this bridge too!
+export class ServerBridge extends GenericBridge {
   // NOTE: Overriden emit as we do not need to parse the data back - the Server bridge already parses it for us.
   emit(eventName: string, payload: string): void {
     const eventPayload = payload as unknown as Record<string, unknown>
 
-    if (eventName === 'sendViaBrowser')
-      this.sendViaBrowser(eventPayload as SendViaBrowserArgs)
-    else if (eventName === 'receiveViaBrowser')
-      this.receiveViaBrowser(eventPayload as ReceiveViaBrowserArgs)
-
-    return this.emitter.emit(eventName, eventPayload)
+    if (eventName === 'sendByBrowser')
+      this.sendByBrowser(eventPayload as SendViaBrowserArgs)
+    // we will switch to https://www.npmjs.com/package/@speckle/objectsender
+    else if (eventName === 'receiveByBrowser')
+      this.receiveByBrowser(eventPayload as ReceiveViaBrowserArgs)
+    // Archicad is not likely to hit here yet!
+    else return this.emitter.emit(eventName, eventPayload)
   }
 
-  /**
-   * Internal calls to ServerBridge as sketchup, archicad etc..
-   * @param methodName
-   * @param args
-   */
-  public async runMethod(methodName: string, args: unknown[]): Promise<unknown> {
-    const requestId = uniqueId(this.bindingName)
-    this.execMethod(methodName, requestId, args)
-
-    const hostAppStore = useHostAppStore()
-    return new Promise((resolve, reject) => {
-      this.requests[requestId] = {
-        resolve,
-        reject,
-        rejectTimerId: window.setTimeout(
-          () => {
-            reject(
-              `${hostAppStore.hostAppName} response timed out for ${methodName} - did not receive anything back in good time (${this.TIMEOUT_MS}ms).`
-            )
-            delete this.requests[requestId]
-          },
-          this.NON_TIMEOUT_METHODS.includes(methodName) ? 3600000 : this.TIMEOUT_MS
-        )
-      }
-    })
-  }
-
-  public receiveResponse(requestId: string, data: object) {
-    if (!this.requests[requestId])
-      throw new Error(`No request found with id ${requestId}.`)
-
-    const request = this.requests[requestId]
-    try {
-      // eslint-disable-next-line no-prototype-builtins
-      if (data && data.hasOwnProperty('error')) {
-        console.error(data)
-        throw new Error(`Error running ${requestId}. See log above.`)
-      }
-
-      request.resolve(data)
-    } catch (e) {
-      request.reject(e as Error)
-    } finally {
-      window.clearTimeout(request.rejectTimerId)
-      delete this.requests[requestId]
-    }
-  }
-
-  private async receiveViaBrowser(eventPayload: ReceiveViaBrowserArgs) {
+  private async receiveByBrowser(eventPayload: ReceiveViaBrowserArgs) {
     const accountStore = useAccountStore()
     const hostAppStore = useHostAppStore()
     const { accounts } = storeToRefs(accountStore)
@@ -206,7 +134,7 @@ export abstract class ServerBridge extends BaseBridge {
    * Internal server bridge method for sending data via the browser.
    * @param eventPayload
    */
-  private async sendViaBrowser(eventPayload: SendViaBrowserArgs) {
+  private async sendByBrowser(eventPayload: SendViaBrowserArgs) {
     const {
       serverUrl,
       token,
@@ -263,7 +191,7 @@ export abstract class ServerBridge extends BaseBridge {
     })
   }
 
-  public async createVersion(args: CreateVersionArgs) {
+  private async createVersion(args: CreateVersionArgs) {
     const accountStore = useAccountStore()
     const { accounts } = storeToRefs(accountStore)
     const account = accounts.value.find((acc) => acc.accountInfo.id === args.accountId)
@@ -283,9 +211,5 @@ export abstract class ServerBridge extends BaseBridge {
       }
     })
     return result?.data?.versionMutations?.create?.id
-  }
-
-  public openUrl(url: string) {
-    window.open(url)
   }
 }
